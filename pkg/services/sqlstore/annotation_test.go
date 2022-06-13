@@ -18,6 +18,9 @@ import (
 )
 
 func TestIntegrationAnnotations(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	sql := sqlstore.InitTestDB(t)
 	repo := sqlstore.NewSQLAnnotationRepo(sql)
 
@@ -380,6 +383,9 @@ func TestIntegrationAnnotations(t *testing.T) {
 }
 
 func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	sql := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{})
 	repo := sqlstore.NewSQLAnnotationRepo(sql)
 	dashboardStore := dashboardstore.ProvideDashboardStore(sql)
