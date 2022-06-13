@@ -32,31 +32,28 @@ func ProvideHTTPService(store StorageService) HTTPStorageService {
 }
 
 func UploadErrorToStatusCode(err error) int {
-	if errors.Is(err, ErrUploadFeatureDisabled) {
-		return 404
-	}
-
-	if errors.Is(err, ErrUnsupportedFolder) {
+	switch {
+	case errors.Is(err, ErrUploadFeatureDisabled):
 		return 400
-	}
 
-	if errors.Is(err, ErrFileTooBig) {
+	case errors.Is(err, ErrUnsupportedFolder):
 		return 400
-	}
 
-	if errors.Is(err, ErrInvalidPath) {
+	case errors.Is(err, ErrFileTooBig):
 		return 400
-	}
 
-	if errors.Is(err, ErrInvalidFileType) {
+	case errors.Is(err, ErrInvalidPath):
 		return 400
-	}
 
-	if errors.Is(err, ErrFileAlreadyExists) {
+	case errors.Is(err, ErrInvalidFileType):
 		return 400
-	}
 
-	return 500
+	case errors.Is(err, ErrFileAlreadyExists):
+		return 400
+
+	default:
+		return 500
+	}
 }
 
 func (s *httpStorage) Upload(c *models.ReqContext) response.Response {
