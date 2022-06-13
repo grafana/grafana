@@ -3,7 +3,7 @@ import React, { FC, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { IconButton, LinkButton, Link, useStyles2, ConfirmModal, Badge } from '@grafana/ui';
+import { IconButton, LinkButton, Link, useStyles2, ConfirmModal } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AlertManagerCortexConfig, MuteTimeInterval, TimeInterval } from 'app/plugins/datasource/alertmanager/types';
 
@@ -22,6 +22,7 @@ import { makeAMLink } from '../../utils/misc';
 import { AsyncRequestState, initialAsyncRequestState } from '../../utils/redux';
 import { DynamicTable, DynamicTableItemProps, DynamicTableColumnProps } from '../DynamicTable';
 import { EmptyAreaWithCTA } from '../EmptyAreaWithCTA';
+import { ProvisioningBadge } from '../Provisioning';
 
 interface Props {
   alertManagerSourceName: string;
@@ -125,7 +126,7 @@ function useColumns(alertManagerSourceName: string, hideActions = false, setMute
         renderCell: function renderName({ data }) {
           return (
             <>
-              {data.name} {data.provenance && <Badge text={'Provisioned'} color={'purple'} />}
+              {data.name} {data.provenance && <ProvisioningBadge />}
             </>
           );
         },

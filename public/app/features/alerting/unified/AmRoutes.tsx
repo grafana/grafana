@@ -11,6 +11,7 @@ import { useCleanup } from '../../../core/hooks/useCleanup';
 import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { NoAlertManagerWarning } from './components/NoAlertManagerWarning';
+import { ProvisioningAlert } from './components/Provisioning';
 import { AmRootRoute } from './components/amroutes/AmRootRoute';
 import { AmSpecificRouting } from './components/amroutes/AmSpecificRouting';
 import { MuteTimingsTable } from './components/amroutes/MuteTimingsTable';
@@ -125,12 +126,7 @@ const AmRoutes: FC = () => {
           {resultError.message || 'Unknown error.'}
         </Alert>
       )}
-      {isProvisioned && (
-        <Alert severity="info" title="These notification policies have been provisioned">
-          These notification policies were added by config and cannot be modified using the UI. Please contact your
-          server admin to update these notification policies.
-        </Alert>
-      )}
+      {isProvisioned && <ProvisioningAlert type={'root notification policy'} />}
       {resultLoading && <LoadingPlaceholder text="Loading Alertmanager config..." />}
       {result && !resultLoading && !resultError && (
         <>

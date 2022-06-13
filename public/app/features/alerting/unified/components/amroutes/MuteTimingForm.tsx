@@ -22,6 +22,7 @@ import { createMuteTiming, defaultTimeInterval } from '../../utils/mute-timings'
 import { initialAsyncRequestState } from '../../utils/redux';
 import { AlertManagerPicker } from '../AlertManagerPicker';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
+import { ProvisioningAlert } from '../Provisioning';
 
 import { MuteTimingTimeInterval } from './MuteTimingTimeInterval';
 
@@ -110,12 +111,7 @@ const MuteTimingForm = ({ muteTiming, showError, provenance }: Props) => {
         disabled
         dataSources={alertManagers}
       />
-      {provenance && (
-        <Alert title={'This mute timing has been provisioned'} severity="info">
-          This mute timing was added by config and cannot be modified using the UI. Please contact your server admin to
-          update this mute timing.
-        </Alert>
-      )}
+      {provenance && <ProvisioningAlert type="mute timing" />}
       {result && !loading && (
         <FormProvider {...formApi}>
           <form onSubmit={formApi.handleSubmit(onSubmit)} data-testid="mute-timing-form">

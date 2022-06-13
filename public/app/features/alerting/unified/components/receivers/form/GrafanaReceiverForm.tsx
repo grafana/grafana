@@ -1,7 +1,7 @@
 import React, { FC, useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 
-import { Alert, LoadingPlaceholder } from '@grafana/ui';
+import { LoadingPlaceholder } from '@grafana/ui';
 import {
   AlertManagerCortexConfig,
   GrafanaManagedReceiverConfig,
@@ -23,6 +23,7 @@ import {
   grafanaReceiverToFormValues,
   updateConfigWithReceiver,
 } from '../../../utils/receiver-form';
+import { ProvisioningAlert } from '../../Provisioning';
 
 import { GrafanaCommonChannelSettings } from './GrafanaCommonChannelSettings';
 import { ReceiverForm } from './ReceiverForm';
@@ -118,12 +119,7 @@ export const GrafanaReceiverForm: FC<Props> = ({ existing, alertManagerSourceNam
   if (grafanaNotifiers.result) {
     return (
       <>
-        {hasProvisionedItems && (
-          <Alert title={'This contact point has been provisioned'} severity="info">
-            This contact point was added by config and cannot be modified using the UI. Please contact your server admin
-            to update this contact point.
-          </Alert>
-        )}
+        {hasProvisionedItems && <ProvisioningAlert type={'contact point'} />}
 
         <ReceiverForm<GrafanaChannelValues>
           readOnly={readOnly}
