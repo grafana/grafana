@@ -3771,10 +3771,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@daybrush/utils@npm:1.6.0, @daybrush/utils@npm:^1.0.0, @daybrush/utils@npm:^1.1.1, @daybrush/utils@npm:^1.3.1, @daybrush/utils@npm:^1.4.0, @daybrush/utils@npm:^1.6.0":
+"@daybrush/utils@npm:1.6.0, @daybrush/utils@npm:^1.0.0, @daybrush/utils@npm:^1.1.1, @daybrush/utils@npm:^1.3.1, @daybrush/utils@npm:^1.4.0":
   version: 1.6.0
   resolution: "@daybrush/utils@npm:1.6.0"
   checksum: 2579bc17e0d53ffbcb01c14c1f6baf32294f42b370e597d855e11cc5ab4de975502e91114c3e5bd05f76c8a6f83352c40ba60ac74c2fd1c3a741ce2e8899b137
+  languageName: node
+  linkType: hard
+
+"@daybrush/utils@npm:1.7.0, @daybrush/utils@npm:^1.7.0":
+  version: 1.7.0
+  resolution: "@daybrush/utils@npm:1.7.0"
+  checksum: 5ffaae919493c9c656ec7d712c71d94af3bcd6059567e278718322c9995635a8b7ed57b37ee496393841abd58bfbec2e1531a4bb0030b74c919102942d27c31c
   languageName: node
   linkType: hard
 
@@ -7780,7 +7787,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@scena/event-emitter@npm:^1.0.2, @scena/event-emitter@npm:^1.0.3, @scena/event-emitter@npm:^1.0.5":
+"@scena/event-emitter@npm:^1.0.2, @scena/event-emitter@npm:^1.0.5":
   version: 1.0.5
   resolution: "@scena/event-emitter@npm:1.0.5"
   dependencies:
@@ -20091,6 +20098,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"gesto@npm:^1.9.0":
+  version: 1.9.0
+  resolution: "gesto@npm:1.9.0"
+  dependencies:
+    "@daybrush/utils": ^1.0.0
+    "@scena/event-emitter": ^1.0.2
+  checksum: 4ee8631c4b68d0ed6a6adec417422f799a646f25438e9788246d4696c5376aee65fb2e54b057f98726c998d36dd8f015f9fa828af89bc0b07189799078bd2543
+  languageName: node
+  linkType: hard
+
 "get-caller-file@npm:^2.0.5":
   version: 2.0.5
   resolution: "get-caller-file@npm:2.0.5"
@@ -20789,7 +20806,7 @@ __metadata:
     monaco-promql: 1.7.4
     mousetrap: 1.6.5
     mousetrap-global-bind: 1.1.0
-    moveable: 0.29.8
+    moveable: 0.30.0
     mutationobserver-shim: 0.3.7
     ngtemplate-loader: 2.1.0
     node-notifier: 10.0.1
@@ -20820,7 +20837,7 @@ __metadata:
     react-hook-form: 7.5.3
     react-inlinesvg: 3.0.0
     react-loadable: 5.5.0
-    react-moveable: 0.32.7
+    react-moveable: 0.33.0
     react-popper: 2.3.0
     react-popper-tooltip: ^4.3.1
     react-redux: 7.2.6
@@ -26275,14 +26292,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"moveable@npm:0.29.8":
-  version: 0.29.8
-  resolution: "moveable@npm:0.29.8"
+"moveable@npm:0.30.0":
+  version: 0.30.0
+  resolution: "moveable@npm:0.30.0"
   dependencies:
-    "@scena/event-emitter": ^1.0.3
-    react-compat-moveable: ~0.17.8
-    react-simple-compat: ^1.2.1
-  checksum: debf5d3bcd53de48d654a67d90ee35adc13691ea17d72abbfcbbcfba228e22fbea06635c10553f3f6c5fcc5e6f9c7e176ebbdd03998223820ddc5776b4575a34
+    "@scena/event-emitter": ^1.0.5
+    react-compat-moveable: ~0.18.0
+    react-moveable: ~0.33.0
+    react-simple-compat: ^1.2.2
+  checksum: de7955430761e2582443b51d10841f246c28ba7ec5abb97675d4d05a322891bc75d6b5c943b76096f9b718b371e63b7b2ca045e203608d0a9d153b0845405f38
   languageName: node
   linkType: hard
 
@@ -30314,23 +30332,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-compat-moveable@npm:~0.17.8":
-  version: 0.17.8
-  resolution: "react-compat-moveable@npm:0.17.8"
+"react-compat-moveable@npm:~0.18.0":
+  version: 0.18.0
+  resolution: "react-compat-moveable@npm:0.18.0"
   dependencies:
-    "@daybrush/utils": ^1.6.0
+    "@daybrush/utils": ^1.7.0
     "@egjs/agent": ^2.2.1
     "@egjs/children-differ": ^1.0.1
     "@scena/dragscroll": ^1.1.1
     "@scena/matrix": ^1.1.1
     css-to-mat: ^1.0.3
     framework-utils: ^1.1.0
-    gesto: ^1.7.0
+    gesto: ^1.9.0
     overlap-area: ^1.0.0
     react-compat-css-styled: ^1.0.8
     react-css-styled: ^1.0.3
-    react-moveable: ~0.32.7
-  checksum: fa370828c85c585614ef7fb4ef6d5567904b916972f428e53ec342a8b905124084c82442fa44f4c50d4f6ab413fbc85de1fce88598e59c59671c638b495f1c77
+    react-moveable: ~0.33.0
+  checksum: f63b5cb9b853c1f2e0e8b356d599be22cf8ba005d9a1b87001b5843dd06e27693b0dd82d75aa3bc2487e88328b4577bf4e439f9f798f81b19d61c7c8ca1715a2
   languageName: node
   linkType: hard
 
@@ -30734,11 +30752,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-moveable@npm:0.32.7, react-moveable@npm:~0.32.7":
-  version: 0.32.7
-  resolution: "react-moveable@npm:0.32.7"
+"react-moveable@npm:0.33.0, react-moveable@npm:~0.33.0":
+  version: 0.33.0
+  resolution: "react-moveable@npm:0.33.0"
   dependencies:
-    "@daybrush/utils": ^1.6.0
+    "@daybrush/utils": ^1.7.0
     "@egjs/agent": ^2.2.1
     "@egjs/children-differ": ^1.0.1
     "@scena/dragscroll": ^1.1.1
@@ -30746,10 +30764,10 @@ __metadata:
     "@scena/matrix": ^1.1.1
     css-to-mat: ^1.0.3
     framework-utils: ^1.1.0
-    gesto: ^1.7.0
+    gesto: ^1.9.0
     overlap-area: ^1.0.0
     react-css-styled: ^1.0.3
-  checksum: d1737af5cc9ffe243047f2100910ae7aa610808ea74ea8928b7568ae8638b39986a5735288eec9fab29d5d899163b5021dd0f674a197522d2639df9eb6e48da2
+  checksum: bbe59318599977a9bbe2a6b85fe94709d2aa4bc971f37a294469b88ac6e01ee2db4a40a9a8ff6b3b10ed6afa743d3669d1bdd6dcbccf53d1fc11339d61aa9f4a
   languageName: node
   linkType: hard
 
@@ -30993,13 +31011,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-simple-compat@npm:1.2.1, react-simple-compat@npm:^1.2.1":
-  version: 1.2.1
-  resolution: "react-simple-compat@npm:1.2.1"
+"react-simple-compat@npm:1.2.2, react-simple-compat@npm:^1.2.2":
+  version: 1.2.2
+  resolution: "react-simple-compat@npm:1.2.2"
   dependencies:
     "@daybrush/utils": ^1.0.0
     "@egjs/list-differ": ^1.0.0
-  checksum: 07a47e750fd0cef65bbdc23007ca7fe1c61283dbd04219a0e46a655f9cb58c13165f1d384c9d4e56efee3a44df111bfb89bf966e1ef8842610e22578359b70c2
+  checksum: a594292328225ec46b155fe90c6f6c5ec7499642a7cac586bb460452908a244b12f85499a8f80e4d1eeb60512fce33d912e3558bdb9744ed15c0a80cdf0fcfc8
   languageName: node
   linkType: hard
 
