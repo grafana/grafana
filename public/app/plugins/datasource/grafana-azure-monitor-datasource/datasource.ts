@@ -11,6 +11,7 @@ import {
   LoadingState,
   ScopedVars,
 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
 import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analytics_datasource';
@@ -18,7 +19,7 @@ import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
 import AzureResourceGraphDatasource from './azure_resource_graph/azure_resource_graph_datasource';
 import ResourcePickerData from './resourcePicker/resourcePickerData';
 import { AzureDataSourceJsonData, AzureMonitorQuery, AzureQueryType, DatasourceValidationResult } from './types';
-import { logAzureMonitorEvent } from './utils/logging';
+import { getAzureMonitorEvent } from './utils/logging';
 import migrateAnnotation from './utils/migrateAnnotation';
 import { datasourceMigrations } from './utils/migrateQuery';
 import { VariableSupport } from './variables';
@@ -78,7 +79,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
         continue;
       }
 
-      logAzureMonitorEvent(target, '-', 'grafana_query_sent');
+      reportInteraction('grafana_query_sent', getAzureMonitorEvent(target));
 
       // Initialize the list of queries
       if (!byType.has(target.queryType)) {

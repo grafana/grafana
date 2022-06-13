@@ -1,5 +1,5 @@
 import { locationUtil, setWeekStart } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -11,7 +11,7 @@ import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { toStateKey } from 'app/features/variables/utils';
 import { AzureMonitorQuery } from 'app/plugins/datasource/grafana-azure-monitor-datasource/types';
-import { logAzureMonitorEvent } from 'app/plugins/datasource/grafana-azure-monitor-datasource/utils/logging';
+import { getAzureMonitorEvent } from 'app/plugins/datasource/grafana-azure-monitor-datasource/utils/logging';
 import { DashboardDTO, DashboardInitPhase, DashboardRoutes, StoreState, ThunkDispatch, ThunkResult } from 'app/types';
 
 import { createDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
@@ -211,9 +211,18 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     dashboard.panels.forEach((panel) => {
       if (panel.datasource?.type === 'grafana-azure-monitor-datasource' || panel.datasource?.uid === '-- Mixed --') {
         panel.targets.forEach((target) => {
+          let dsSpecific = {};
           if (target.datasource?.type === 'grafana-azure-monitor-datasource') {
-            logAzureMonitorEvent(target as AzureMonitorQuery, dashDTO.dashboard.uid, 'dashboard_loaded');
+            dsSpecific = getAzureMonitorEvent(target as AzureMonitorQuery);
           }
+          reportInteraction('dashboard_loaded', {
+            dashboard_id: dashDTO.dashboard.uid,
+            hidden: target.hide,
+            datasource: target.datasource?.type,
+            grafana_version: config.buildInfo.version,
+            //plugin_version: ???
+            ...dsSpecific,
+          });
         });
       }
     });
