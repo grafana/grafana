@@ -15,6 +15,8 @@ func TestCanGetRouteNameFromContext(t *testing.T) {
 
 		expected string
 	}{
+		{namedHandler: "", path: "/public/img/apple-touch-icon.png", expected: "public-assets"},
+		{namedHandler: "", path: "/favicon.ico", expected: "public-assets"},
 		{namedHandler: "", path: "/robots.txt", expected: "/robots.txt"},
 		{namedHandler: "", path: "/debug/pprof/heap", expected: "/debug/pprof-handlers"},
 		{namedHandler: "", path: "/debug/pprof/allocs", expected: "/debug/pprof-handlers"},
