@@ -37,11 +37,11 @@ Query caching works for all [Enterprise data sources](https://grafana.com/grafan
 
 - CloudWatch Metrics
 - Google Cloud Monitoring
-- InfluxDB
 - Microsoft SQL Server
 - MySQL
 - Postgres
 - Tempo
+- InfluxDB (using Flux query language)
 
 Some data sources, such as Elasticsearch, Prometheus, and Loki, cache queries themselves, so Grafana query caching does not improve performance.
 
