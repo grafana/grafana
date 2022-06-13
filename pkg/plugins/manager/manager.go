@@ -41,12 +41,12 @@ type PluginSource struct {
 }
 
 func ProvideService(grafanaCfg *setting.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service,
-	pluginFs filestore.Manager) (*PluginManager, error) {
+	pluginRepo repository.Service, pluginFs filestore.Manager) (*PluginManager, error) {
 	pm := New(plugins.FromGrafanaCfg(grafanaCfg), pluginRegistry, []PluginSource{
 		{Class: plugins.Core, Paths: corePluginPaths(grafanaCfg)},
 		{Class: plugins.Bundled, Paths: []string{grafanaCfg.BundledPluginsPath}},
 		{Class: plugins.External, Paths: append([]string{grafanaCfg.PluginsPath}, pluginSettingPaths(grafanaCfg)...)},
-	}, pluginLoader, pluginFs)
+	}, pluginLoader, pluginRepo, pluginFs)
 	if err := pm.Init(); err != nil {
 		return nil, err
 	}
@@ -54,12 +54,13 @@ func ProvideService(grafanaCfg *setting.Cfg, pluginRegistry registry.Service, pl
 }
 
 func New(cfg *plugins.Cfg, pluginRegistry registry.Service, pluginSources []PluginSource, pluginLoader loader.Service,
-	pluginFs filestore.Manager) *PluginManager {
+	pluginRepo repository.Service, pluginFs filestore.Manager) *PluginManager {
 	return &PluginManager{
 		cfg:            cfg,
 		pluginLoader:   pluginLoader,
 		pluginSources:  pluginSources,
 		pluginRegistry: pluginRegistry,
+		pluginRepo:     pluginRepo,
 		pluginFs:       pluginFs,
 		log:            log.New("plugin.manager"),
 	}

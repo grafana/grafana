@@ -36,7 +36,7 @@ func TestPluginManager_Init(t *testing.T) {
 			{Class: plugins.Bundled, Paths: []string{"path1"}},
 			{Class: plugins.Core, Paths: []string{"path2"}},
 			{Class: plugins.External, Paths: []string{"path3"}},
-		}, loader, &fakeFsManager{})
+		}, loader, &fakePluginRepo{}, &fakeFsManager{})
 
 		err := pm.Init()
 		require.NoError(t, err)
@@ -355,7 +355,7 @@ func TestPluginManager_registeredPlugins(t *testing.T) {
 				testPluginID: decommissionedPlugin,
 				"test-app":   {},
 			},
-		}, []PluginSource{}, &fakeLoader{}, &fakeFsManager{})
+		}, []PluginSource{}, &fakeLoader{}, &fakePluginRepo{}, &fakeFsManager{})
 
 		require.True(t, decommissionedPlugin.IsDecommissioned())
 
@@ -603,7 +603,7 @@ func createManager(t *testing.T, cbs ...func(*PluginManager)) *PluginManager {
 		DevMode: false,
 	}
 
-	pm := New(cfg, newFakePluginRegistry(), nil, &fakeLoader{}, &fakeFsManager{})
+	pm := New(cfg, newFakePluginRegistry(), nil, &fakeLoader{}, &fakePluginRepo{}, &fakeFsManager{})
 
 	for _, cb := range cbs {
 		cb(pm)
@@ -630,7 +630,7 @@ func newScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *managerS
 	}
 
 	loader := &fakeLoader{}
-	manager := New(cfg, registry.NewInMemory(), nil, loader, &fakeFsManager{})
+	manager := New(cfg, registry.NewInMemory(), nil, loader, &fakePluginRepo{}, &fakeFsManager{})
 	manager.pluginLoader = loader
 	ctx := &managerScenarioCtx{
 		manager: manager,
