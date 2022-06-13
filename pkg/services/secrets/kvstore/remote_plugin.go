@@ -2,7 +2,7 @@ package kvstore
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -30,10 +30,10 @@ func (kv *secretsKVStorePlugin) Get(ctx context.Context, orgId int64, namespace 
 	if err != nil {
 		return "", false, err
 	} else if res.UserFriendlyError != "" {
-		err = fmt.Errorf(res.UserFriendlyError)
+		err = wrapUserFriendlySecretError(res.UserFriendlyError)
 	}
 
-	return res.DecryptedValue, res.Exists, wrapSecretError(err)
+	return res.DecryptedValue, res.Exists, err
 }
 
 // Set an item in the store
@@ -49,10 +49,10 @@ func (kv *secretsKVStorePlugin) Set(ctx context.Context, orgId int64, namespace 
 
 	res, err := kv.secretsPlugin.Set(ctx, req)
 	if err == nil && res.UserFriendlyError != "" {
-		err = fmt.Errorf(res.UserFriendlyError)
+		err = wrapUserFriendlySecretError(res.UserFriendlyError)
 	}
 
-	return wrapSecretError(err)
+	return err
 }
 
 // Del deletes an item from the store.
@@ -67,10 +67,10 @@ func (kv *secretsKVStorePlugin) Del(ctx context.Context, orgId int64, namespace 
 
 	res, err := kv.secretsPlugin.Del(ctx, req)
 	if err == nil && res.UserFriendlyError != "" {
-		err = fmt.Errorf(res.UserFriendlyError)
+		err = wrapUserFriendlySecretError(res.UserFriendlyError)
 	}
 
-	return wrapSecretError(err)
+	return err
 }
 
 // Keys get all keys for a given namespace. To query for all
@@ -89,10 +89,10 @@ func (kv *secretsKVStorePlugin) Keys(ctx context.Context, orgId int64, namespace
 	if err != nil {
 		return nil, err
 	} else if res.UserFriendlyError != "" {
-		err = fmt.Errorf(res.UserFriendlyError)
+		err = wrapUserFriendlySecretError(res.UserFriendlyError)
 	}
 
-	return parseKeys(res.Keys), wrapSecretError(err)
+	return parseKeys(res.Keys), err
 }
 
 // Rename an item in the store
@@ -108,10 +108,10 @@ func (kv *secretsKVStorePlugin) Rename(ctx context.Context, orgId int64, namespa
 
 	res, err := kv.secretsPlugin.Rename(ctx, req)
 	if err == nil && res.UserFriendlyError != "" {
-		err = fmt.Errorf(res.UserFriendlyError)
+		err = wrapUserFriendlySecretError(res.UserFriendlyError)
 	}
 
-	return wrapSecretError(err)
+	return err
 }
 
 func parseKeys(keys []*smp.Key) []Key {
@@ -125,6 +125,6 @@ func parseKeys(keys []*smp.Key) []Key {
 	return newKeys
 }
 
-func wrapSecretError(err error) models.ErrDatasourceSecretsPlugin {
-	return models.ErrDatasourceSecretsPlugin{Err: err}
+func wrapUserFriendlySecretError(ufe string) models.ErrDatasourceSecretsPlugin {
+	return models.ErrDatasourceSecretsPlugin{Err: errors.New(ufe)}
 }
