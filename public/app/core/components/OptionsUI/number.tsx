@@ -6,8 +6,7 @@ import {
   toFloatOrUndefined,
   NumberFieldConfigSettings,
 } from '@grafana/data';
-
-import { Input } from '../Input/Input';
+import { Input } from '@grafana/ui';
 
 export const NumberValueEditor: React.FC<FieldConfigEditorProps<number, NumberFieldConfigSettings>> = ({
   value,
