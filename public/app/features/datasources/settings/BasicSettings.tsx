@@ -1,8 +1,10 @@
-import React, { FC } from 'react';
+import React, { FC, useState } from 'react';
 
 import { DataSourceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { InlineField, InlineSwitch, Input, LinkButton } from '@grafana/ui';
+
+import { ChangeUIDModal } from './ChangeUIDModal';
 
 export interface Props {
   dataSource: DataSourceSettings;
@@ -11,10 +13,12 @@ export interface Props {
 }
 
 const BasicSettings: FC<Props> = ({ dataSource, onDefaultChange, onNameChange }) => {
+  const [showModal, setShowModal] = useState(false);
+
   return (
     <div className="gf-form-group" aria-label="Datasource settings page basic settings">
       <div className="gf-form-inline">
-        <div className="gf-form max-width-30">
+        <div className="max-width-30">
           <InlineField
             label="Name"
             tooltip="The name is used when you select the data source in panels. The default data source is
@@ -49,7 +53,7 @@ const BasicSettings: FC<Props> = ({ dataSource, onDefaultChange, onNameChange })
           <InlineField
             label="Identifer (uid)"
             labelWidth={15}
-            tooltip="This is the logical id Grafana will use to refer to this data source in dashboard and query models"
+            tooltip="This is the logical id that is used in references to this data sources"
             grow
             disabled
           >
@@ -61,13 +65,14 @@ const BasicSettings: FC<Props> = ({ dataSource, onDefaultChange, onNameChange })
               onChange={(event) => onNameChange(event.currentTarget.value)}
               suffix={
                 !dataSource.readOnly && (
-                  <LinkButton fill="text" size="sm">
+                  <LinkButton fill="text" size="sm" onClick={() => setShowModal(true)}>
                     Change
                   </LinkButton>
                 )
               }
             />
           </InlineField>
+          {showModal && <ChangeUIDModal dataSource={dataSource} onDismiss={() => setShowModal(false)} />}
         </div>
       </div>
     </div>

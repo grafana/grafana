@@ -5,8 +5,11 @@ import BasicSettings, { Props } from './BasicSettings';
 
 const setup = () => {
   const props: Props = {
-    dataSourceName: 'Graphite',
-    isDefault: false,
+    dataSource: {
+      id: 1,
+      name: 'Name',
+      uid: 'asd',
+    } as any,
     onDefaultChange: jest.fn(),
     onNameChange: jest.fn(),
   };
