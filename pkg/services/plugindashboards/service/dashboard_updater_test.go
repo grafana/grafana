@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
@@ -468,9 +469,12 @@ type scenarioContext struct {
 func scenario(t *testing.T, desc string, input scenarioInput, f func(ctx *scenarioContext)) {
 	t.Helper()
 
+	tracer, err := tracing.InitializeTracerForTest()
+	require.NoError(t, err)
+
 	sCtx := &scenarioContext{
 		t:                              t,
-		bus:                            bus.New(),
+		bus:                            bus.ProvideBus(tracer),
 		importDashboardArgs:            []*dashboardimport.ImportDashboardRequest{},
 		getPluginSettingsByIdArgs:      []*models.GetPluginSettingByIdQuery{},
 		updatePluginSettingVersionArgs: []*models.UpdatePluginSettingVersionCmd{},
