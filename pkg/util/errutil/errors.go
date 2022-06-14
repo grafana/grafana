@@ -80,6 +80,18 @@ func (b Base) Errorf(format string, args ...interface{}) Error {
 	}
 }
 
+// Is validates that an Error has the same reason and messageID as the
+// Base.
+func (b Base) Is(err error) bool {
+	gfErr := Error{}
+	ok := errors.As(err, &gfErr)
+	if !ok {
+		return false
+	}
+
+	return b.reason.Status() == gfErr.Reason.Status() && b.messageID == gfErr.MessageID
+}
+
 // Error is the error type for errors within Grafana, extending
 // the Go error type with Grafana specific metadata to reduce
 // boilerplate error handling for status codes and internationalization
