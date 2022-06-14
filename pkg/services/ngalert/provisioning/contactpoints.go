@@ -429,6 +429,8 @@ groupLoop:
 					},
 				}
 				cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers, newGroup)
+				// Drop it from the old spot.
+				receiverGroup.GrafanaManagedReceivers = append(receiverGroup.GrafanaManagedReceivers[:i], receiverGroup.GrafanaManagedReceivers[i+1:]...)
 				configModified = true
 				break groupLoop
 			}

@@ -7,11 +7,13 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/prometheus/alertmanager/config"
 	"github.com/stretchr/testify/require"
 )
 
@@ -252,5 +254,296 @@ func createTestContactPoint() definitions.EmbeddedContactPoint {
 		Name:     "test-contact-point",
 		Type:     "slack",
 		Settings: settings,
+	}
+}
+
+func TestStitchReceivers(t *testing.T) {
+	type testCase struct {
+		name        string
+		new         *apimodels.PostableGrafanaReceiver
+		expModified bool
+		expCfg      apimodels.PostableApiAlertingConfig
+	}
+
+	cases := []testCase{
+		{
+			name: "non matching receiver by UID, no change",
+			new: &apimodels.PostableGrafanaReceiver{
+				UID: "does not exist",
+			},
+			expModified: false,
+			expCfg:      createTestConfigWithReceivers().AlertmanagerConfig,
+		},
+		{
+			name: "matching receiver with unchanged name, replaces",
+			new: &apimodels.PostableGrafanaReceiver{
+				UID:  "ghi",
+				Name: "receiver-2",
+				Type: "teams",
+			},
+			expModified: true,
+			expCfg: apimodels.PostableApiAlertingConfig{
+				Receivers: []*apimodels.PostableApiReceiver{
+					{
+						Receiver: config.Receiver{
+							Name: "receiver-1",
+						},
+						PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{
+								{
+									UID:  "abc",
+									Name: "receiver-1",
+									Type: "slack",
+								},
+							},
+						},
+					},
+					{
+						Receiver: config.Receiver{
+							Name: "receiver-2",
+						},
+						PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{
+								{
+									UID:  "def",
+									Name: "receiver-2",
+									Type: "slack",
+								},
+								{
+									UID:  "ghi",
+									Name: "receiver-2",
+									Type: "teams",
+								},
+								{
+									UID:  "jkl",
+									Name: "receiver-2",
+									Type: "discord",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "rename with only one receiver in group, renames group",
+			new: &apimodels.PostableGrafanaReceiver{
+				UID:  "abc",
+				Name: "new-receiver",
+				Type: "slack",
+			},
+			expModified: true,
+			expCfg: apimodels.PostableApiAlertingConfig{
+				Receivers: []*apimodels.PostableApiReceiver{
+					{
+						Receiver: config.Receiver{
+							Name: "new-receiver",
+						},
+						PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{
+								{
+									UID:  "abc",
+									Name: "new-receiver",
+									Type: "slack",
+								},
+							},
+						},
+					},
+					{
+						Receiver: config.Receiver{
+							Name: "receiver-2",
+						},
+						PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{
+								{
+									UID:  "def",
+									Name: "receiver-2",
+									Type: "slack",
+								},
+								{
+									UID:  "ghi",
+									Name: "receiver-2",
+									Type: "email",
+								},
+								{
+									UID:  "jkl",
+									Name: "receiver-2",
+									Type: "discord",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "rename to another existing group, moves receiver",
+			new: &apimodels.PostableGrafanaReceiver{
+				UID:  "def",
+				Name: "receiver-1",
+				Type: "slack",
+			},
+			expModified: true,
+			expCfg: apimodels.PostableApiAlertingConfig{
+				Receivers: []*apimodels.PostableApiReceiver{
+					{
+						Receiver: config.Receiver{
+							Name: "receiver-1",
+						},
+						PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{
+								{
+									UID:  "abc",
+									Name: "receiver-1",
+									Type: "slack",
+								},
+								{
+									UID:  "def",
+									Name: "receiver-1",
+									Type: "slack",
+								},
+							},
+						},
+					},
+					{
+						Receiver: config.Receiver{
+							Name: "receiver-2",
+						},
+						PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{
+								{
+									UID:  "ghi",
+									Name: "receiver-2",
+									Type: "email",
+								},
+								{
+									UID:  "jkl",
+									Name: "receiver-2",
+									Type: "discord",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "rename to a name that doesn't exist, creates new group and moves",
+			new: &apimodels.PostableGrafanaReceiver{
+				UID:  "jkl",
+				Name: "brand-new-group",
+				Type: "opsgenie",
+			},
+			expModified: true,
+			expCfg: apimodels.PostableApiAlertingConfig{
+				Receivers: []*apimodels.PostableApiReceiver{
+					{
+						Receiver: config.Receiver{
+							Name: "receiver-1",
+						},
+						PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{
+								{
+									UID:  "abc",
+									Name: "receiver-1",
+									Type: "slack",
+								},
+							},
+						},
+					},
+					{
+						Receiver: config.Receiver{
+							Name: "receiver-2",
+						},
+						PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{
+								{
+									UID:  "def",
+									Name: "receiver-2",
+									Type: "slack",
+								},
+								{
+									UID:  "ghi",
+									Name: "receiver-2",
+									Type: "email",
+								},
+							},
+						},
+					},
+					{
+						Receiver: config.Receiver{
+							Name: "brand-new-group",
+						},
+						PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{
+								{
+									UID:  "jkl",
+									Name: "brand-new-group",
+									Type: "opsgenie",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			cfg := createTestConfigWithReceivers()
+
+			modified := stitchReceiver(cfg, c.new)
+
+			require.Equal(t, c.expModified, modified)
+			require.Equal(t, c.expCfg, cfg.AlertmanagerConfig)
+		})
+	}
+}
+
+func createTestConfigWithReceivers() *apimodels.PostableUserConfig {
+	return &apimodels.PostableUserConfig{
+		AlertmanagerConfig: apimodels.PostableApiAlertingConfig{
+			Receivers: []*apimodels.PostableApiReceiver{
+				{
+					Receiver: config.Receiver{
+						Name: "receiver-1",
+					},
+					PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
+						GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{
+							{
+								UID:  "abc",
+								Name: "receiver-1",
+								Type: "slack",
+							},
+						},
+					},
+				},
+				{
+					Receiver: config.Receiver{
+						Name: "receiver-2",
+					},
+					PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
+						GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{
+							{
+								UID:  "def",
+								Name: "receiver-2",
+								Type: "slack",
+							},
+							{
+								UID:  "ghi",
+								Name: "receiver-2",
+								Type: "email",
+							},
+							{
+								UID:  "jkl",
+								Name: "receiver-2",
+								Type: "discord",
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 }
