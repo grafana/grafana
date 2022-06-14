@@ -24,8 +24,9 @@ const updateLocation = debounce((query) => locationService.partial(query), 300);
 export const useSearchQuery = (defaults: Partial<DashboardQuery>) => {
   const queryParams = parseRouteParams(locationService.getSearchObject());
   const initialState = { ...defaultQuery, ...defaults, ...queryParams };
-  if (!initialState.layout?.length) {
-    initialState.layout = localStorage.getItem(SEARCH_SELECTED_LAYOUT) as SearchLayout;
+  const selectedLayout = localStorage.getItem(SEARCH_SELECTED_LAYOUT) as SearchLayout;
+  if (!queryParams.layout?.length && selectedLayout?.length) {
+    initialState.layout = selectedLayout;
   }
   const [query, dispatch] = useReducer(queryReducer, initialState);
 
