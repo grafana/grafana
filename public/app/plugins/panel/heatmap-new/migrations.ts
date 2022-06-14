@@ -1,7 +1,7 @@
 import { FieldConfigSource, PanelModel, PanelTypeChangedHandler } from '@grafana/data';
 import { AxisPlacement, ScaleDistribution, VisibilityMode } from '@grafana/schema';
 import {
-  HeatmapBucketLayout,
+  HeatmapCellLayout,
   HeatmapCalculationMode,
   HeatmapCalculationOptions,
 } from 'app/features/transformers/calculateHeatmap/models.gen';
@@ -81,8 +81,8 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
       min: oldYAxis.min,
       max: oldYAxis.max,
     },
-    bucketFrame: {
-      layout: getHeatmapBucketLayout(angular.yBucketBound),
+    rowsFrame: {
+      layout: getHeatmapCellLayout(angular.yBucketBound),
     },
     legend: {
       show: Boolean(angular.legend.show),
@@ -127,16 +127,16 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
   return { fieldConfig, options };
 }
 
-function getHeatmapBucketLayout(v?: string): HeatmapBucketLayout {
+function getHeatmapCellLayout(v?: string): HeatmapCellLayout {
   switch (v) {
     case 'upper':
-      return HeatmapBucketLayout.ge;
+      return HeatmapCellLayout.ge;
     case 'lower':
-      return HeatmapBucketLayout.le;
+      return HeatmapCellLayout.le;
     case 'middle':
-      return HeatmapBucketLayout.unknown;
+      return HeatmapCellLayout.unknown;
   }
-  return HeatmapBucketLayout.auto;
+  return HeatmapCellLayout.auto;
 }
 
 function asNumber(v: any, defaultValue?: number): number | undefined {
