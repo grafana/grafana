@@ -14,6 +14,7 @@ import { CloudWatchLogsQueryField } from './LogsQueryField';
 
 type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> & {
   allowCustomValue?: boolean;
+  query: CloudWatchLogsQuery;
 };
 
 const labelClass = css`
