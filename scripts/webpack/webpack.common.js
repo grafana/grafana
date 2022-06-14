@@ -69,6 +69,13 @@ module.exports = {
   module: {
     rules: [
       {
+        // is required only because of @grafana/agent-web, as soon as the package has a js module build, this one can be removed
+        test: /\.m?js/,
+        resolve: {
+          fullySpecified: false,
+        },
+      },
+      {
         test: require.resolve('jquery'),
         loader: 'expose-loader',
         options: {
