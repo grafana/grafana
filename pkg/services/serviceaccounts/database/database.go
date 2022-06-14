@@ -137,6 +137,7 @@ func (s *ServiceAccountsStoreImpl) ConvertToServiceAccounts(ctx context.Context,
 			err := s.CreateServiceAccountFromApikey(ctx, key)
 			if err != nil {
 				s.log.Error("converting to service account failed with error", "keyId", key.Id, "error", err)
+				return err
 			}
 		}
 	}

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -104,6 +105,53 @@ func TestStore_RetrieveServiceAccount(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, c.user.Login, dto.Login)
 				require.Len(t, dto.Teams, 0)
+			}
+		})
+	}
+}
+
+func TestStore_MigrateApiKeys(t *testing.T) {
+	cases := []struct {
+		desc        string
+		key         tests.TestApiKey
+		expectedErr error
+	}{
+		{
+			desc:        "api key should be migrated to service account token",
+			key:         tests.TestApiKey{Name: "Test1", Role: models.ROLE_EDITOR, OrgId: 1},
+			expectedErr: nil,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.desc, func(t *testing.T) {
+			db, store := setupTestDatabase(t)
+			store.sqlStore.Cfg.AutoAssignOrg = true
+			store.sqlStore.Cfg.AutoAssignOrgId = 1
+			store.sqlStore.Cfg.AutoAssignOrgRole = "Viewer"
+			err := store.sqlStore.CreateOrg(context.Background(), &models.CreateOrgCommand{Name: "main"})
+			require.NoError(t, err)
+			key := tests.SetupApiKey(t, db, c.key)
+			err = store.ConvertToServiceAccounts(context.Background(), key.OrgId, []int64{key.Id})
+			if c.expectedErr != nil {
+				require.ErrorIs(t, err, c.expectedErr)
+			} else {
+				require.NoError(t, err)
+
+				serviceAccounts, err := store.SearchOrgServiceAccounts(context.Background(), key.OrgId, "", "all", 1, 50, &models.SignedInUser{UserId: 1, OrgId: 1, Permissions: map[int64]map[string][]string{
+					key.OrgId: {
+						"serviceaccounts:read": {"serviceaccounts:id:*"},
+					},
+				}})
+				require.NoError(t, err)
+				require.Equal(t, int64(1), serviceAccounts.TotalCount)
+				saMigrated := serviceAccounts.ServiceAccounts[0]
+				require.Equal(t, string(key.Role), saMigrated.Role)
+
+				tokens, err := store.ListTokens(context.Background(), key.OrgId, saMigrated.Id)
+				require.NoError(t, err)
+				require.Equal(t, len(tokens), 1)
+
 			}
 		})
 	}

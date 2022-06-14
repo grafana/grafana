@@ -19,6 +19,12 @@ type TestUser struct {
 	IsServiceAccount bool
 }
 
+type TestApiKey struct {
+	Name  string
+	Role  models.RoleType
+	OrgId int64
+}
+
 func SetupUserServiceAccount(t *testing.T, sqlStore *sqlstore.SQLStore, testUser TestUser) *models.User {
 	role := string(models.ROLE_VIEWER)
 	if testUser.Role != "" {
@@ -33,6 +39,23 @@ func SetupUserServiceAccount(t *testing.T, sqlStore *sqlstore.SQLStore, testUser
 	})
 	require.NoError(t, err)
 	return u1
+}
+
+func SetupApiKey(t *testing.T, sqlStore *sqlstore.SQLStore, testKey TestApiKey) *models.ApiKey {
+	role := models.ROLE_VIEWER
+	if testKey.Role != "" {
+		role = testKey.Role
+	}
+
+	addKeyCmd := &models.AddApiKeyCommand{
+		Name:  testKey.Name,
+		Role:  role,
+		OrgId: testKey.OrgId,
+		Key:   "secret",
+	}
+	err := sqlStore.AddAPIKey(context.Background(), addKeyCmd)
+	require.NoError(t, err)
+	return addKeyCmd.Result
 }
 
 // create mock for serviceaccountservice
