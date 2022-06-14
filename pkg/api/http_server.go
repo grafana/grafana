@@ -151,7 +151,7 @@ type HTTPServer struct {
 	DatasourcePermissionsService permissions.DatasourcePermissionsService
 	commentsService              *comments.Service
 	AlertNotificationService     *alerting.AlertNotificationService
-	DashboardsnapshotsService    *dashboardsnapshots.Service
+	dashboardsnapshotsService    dashboardsnapshots.Service
 	PluginSettings               *pluginSettings.Service
 	AvatarCacheServer            *avatar.AvatarCacheServer
 	preferenceService            pref.Service
@@ -191,7 +191,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	notificationService *notifications.NotificationService, dashboardService dashboards.DashboardService,
 	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService dashboards.FolderService,
 	datasourcePermissionsService permissions.DatasourcePermissionsService, alertNotificationService *alerting.AlertNotificationService,
-	dashboardsnapshotsService *dashboardsnapshots.Service, commentsService *comments.Service, pluginSettings *pluginSettings.Service,
+	dashboardsnapshotsService dashboardsnapshots.Service, commentsService *comments.Service, pluginSettings *pluginSettings.Service,
 	avatarCacheServer *avatar.AvatarCacheServer, preferenceService pref.Service, entityEventsService store.EntityEventsService,
 	teamsPermissionsService accesscontrol.TeamPermissionsService, folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
@@ -266,7 +266,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		commentsService:              commentsService,
 		teamPermissionsService:       teamsPermissionsService,
 		AlertNotificationService:     alertNotificationService,
-		DashboardsnapshotsService:    dashboardsnapshotsService,
+		dashboardsnapshotsService:    dashboardsnapshotsService,
 		PluginSettings:               pluginSettings,
 		AvatarCacheServer:            avatarCacheServer,
 		preferenceService:            preferenceService,
