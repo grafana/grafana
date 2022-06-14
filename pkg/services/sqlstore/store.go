@@ -12,11 +12,6 @@ type Store interface {
 	GetDataSourceStats(ctx context.Context, query *models.GetDataSourceStatsQuery) error
 	GetDataSourceAccessStats(ctx context.Context, query *models.GetDataSourceAccessStatsQuery) error
 	GetSystemStats(ctx context.Context, query *models.GetSystemStatsQuery) error
-	DeleteExpiredSnapshots(ctx context.Context, cmd *models.DeleteExpiredSnapshotsCommand) error
-	CreateDashboardSnapshot(ctx context.Context, cmd *models.CreateDashboardSnapshotCommand) error
-	DeleteDashboardSnapshot(ctx context.Context, cmd *models.DeleteDashboardSnapshotCommand) error
-	GetDashboardSnapshot(ctx context.Context, query *models.GetDashboardSnapshotQuery) error
-	SearchDashboardSnapshots(ctx context.Context, query *models.GetDashboardSnapshotsQuery) error
 	GetOrgByName(name string) (*models.Org, error)
 	CreateOrg(ctx context.Context, cmd *models.CreateOrgCommand) error
 	CreateOrgWithMember(name string, userID int64) (models.Org, error)

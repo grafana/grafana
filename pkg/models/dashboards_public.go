@@ -10,6 +10,11 @@ var (
 		StatusCode: 404,
 		Status:     "not-found",
 	}
+	ErrPublicDashboardPanelNotFound = DashboardErr{
+		Reason:     "Panel not found in dashboard",
+		StatusCode: 404,
+		Status:     "not-found",
+	}
 	ErrPublicDashboardIdentifierNotSet = DashboardErr{
 		Reason:     "No Uid for public dashboard specified",
 		StatusCode: 400,

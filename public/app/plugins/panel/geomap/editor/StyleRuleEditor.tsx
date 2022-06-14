@@ -13,7 +13,7 @@ import { defaultStyleConfig, StyleConfig } from '../style/types';
 import { ComparisonOperation, FeatureStyleConfig } from '../types';
 import { getUniqueFeatureValues, LayerContentInfo } from '../utils/getFeatures';
 import { getSelectionInfo } from '../utils/selection';
-import { NumberInput } from '@grafana/ui/src/components/NumberInput/NumberInput';
+import { NumberInput } from 'app/core/components/NumberInput/NumberInput';
 
 export interface StyleRuleEditorSettings {
   features: Observable<FeatureLike[]>;

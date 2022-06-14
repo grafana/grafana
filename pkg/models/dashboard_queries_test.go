@@ -36,6 +36,17 @@ const (
           "interval": "",
           "legendFormat": "",
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "promds2"
+          },
+          "exemplar": true,
+          "expr": "query2",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "B"
         }
       ],
       "title": "Panel Title",
@@ -94,7 +105,7 @@ func TestGetQueriesFromDashboard(t *testing.T) {
 		queries := GetQueriesFromDashboard(json)
 		require.Len(t, queries, 1)
 		require.Contains(t, queries, int64(2))
-		require.Len(t, queries[2], 1)
+		require.Len(t, queries[2], 2)
 		query, err := queries[2][0].MarshalJSON()
 		require.NoError(t, err)
 		require.JSONEq(t, `{
@@ -107,6 +118,19 @@ func TestGetQueriesFromDashboard(t *testing.T) {
             "interval": "",
             "legendFormat": "",
             "refId": "A"
+		}`, string(query))
+		query, err = queries[2][1].MarshalJSON()
+		require.NoError(t, err)
+		require.JSONEq(t, `{
+            "datasource": {
+              "type": "prometheus",
+              "uid": "promds2"
+            },
+            "exemplar": true,
+            "expr": "query2",
+            "interval": "",
+            "legendFormat": "",
+            "refId": "B"
 		}`, string(query))
 	})
 
@@ -128,5 +152,59 @@ func TestGetQueriesFromDashboard(t *testing.T) {
             "legendFormat": "",
             "refId": "A"
 		}`, string(query))
+	})
+}
+
+func TestGroupQueriesByDataSource(t *testing.T) {
+	t.Run("can divide queries by datasource", func(t *testing.T) {
+		queries := []*simplejson.Json{
+			simplejson.MustJson([]byte(`{
+				"datasource": {
+					"type": "prometheus",
+					"uid": "_yxMP8Ynk"
+				},
+				"exemplar": true,
+				"expr": "go_goroutines{job=\"$job\"}",
+				"interval": "",
+				"legendFormat": "",
+				"refId": "A"
+			}`)),
+			simplejson.MustJson([]byte(`{
+				"datasource": {
+					"type": "prometheus",
+					"uid": "promds2"
+				},
+				"exemplar": true,
+				"expr": "query2",
+				"interval": "",
+				"legendFormat": "",
+				"refId": "B"
+			}`)),
+		}
+
+		queriesByDatasource := GroupQueriesByDataSource(queries)
+		require.Len(t, queriesByDatasource, 2)
+		require.Contains(t, queriesByDatasource, []*simplejson.Json{simplejson.MustJson([]byte(`{
+            "datasource": {
+              "type": "prometheus",
+              "uid": "_yxMP8Ynk"
+            },
+            "exemplar": true,
+            "expr": "go_goroutines{job=\"$job\"}",
+            "interval": "",
+            "legendFormat": "",
+            "refId": "A"
+		}`))})
+		require.Contains(t, queriesByDatasource, []*simplejson.Json{simplejson.MustJson([]byte(`{
+            "datasource": {
+              "type": "prometheus",
+              "uid": "promds2"
+            },
+            "exemplar": true,
+            "expr": "query2",
+            "interval": "",
+            "legendFormat": "",
+            "refId": "B"
+		}`))})
 	})
 }

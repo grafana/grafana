@@ -1,7 +1,6 @@
 import React, { PureComponent } from 'react';
 
-import { Field } from '../Forms/Field';
-import { Input } from '../Input/Input';
+import { Field, Input } from '@grafana/ui';
 
 interface Props {
   value?: number;
