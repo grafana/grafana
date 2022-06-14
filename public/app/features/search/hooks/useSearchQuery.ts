@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useReducer } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
+import { SEARCH_SELECTED_LAYOUT } from '../constants';
 import {
   ADD_TAG,
   CLEAR_FILTERS,
@@ -22,7 +23,12 @@ const updateLocation = debounce((query) => locationService.partial(query), 300);
 
 export const useSearchQuery = (defaults: Partial<DashboardQuery>) => {
   const queryParams = parseRouteParams(locationService.getSearchObject());
-  const initialState = { ...defaultQuery, ...defaults, ...queryParams };
+  const initialState = {
+    ...defaultQuery,
+    ...defaults,
+    layout: localStorage.getItem(SEARCH_SELECTED_LAYOUT) as SearchLayout,
+    ...queryParams,
+  };
   const [query, dispatch] = useReducer(queryReducer, initialState);
 
   const onQueryChange = useCallback((query: string) => {
