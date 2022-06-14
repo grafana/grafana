@@ -89,6 +89,13 @@ describe('SharePublic', () => {
 
     fireEvent.click(screen.getByText('Public Dashboard'));
 
-    await waitFor(() => screen.getByText('Welcome to Grafana public dashboards alpha!'));
+    await screen.findByText('Welcome to Grafana public dashboards alpha!');
   });
+
+  // test when checkboxes show up
+  // test checkboxes hidden
+  // test url hidden
+  // test url shows up
+  //
+  // test checking if current version of dashboard in state is persisted to db
 });
