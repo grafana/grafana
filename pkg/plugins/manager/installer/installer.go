@@ -609,7 +609,6 @@ func extractSymlink(basePath string, file *zip.File, filePath string) error {
 // isSymlinkRelativeTo checks whether symlinkDestPath is relative to basePath.
 // symlinkOrigPath is the path to file holding the symbolic link.
 func isSymlinkRelativeTo(basePath string, symlinkDestPath string, symlinkOrigPath string) bool {
-	fmt.Println(basePath, symlinkDestPath, symlinkOrigPath)
 	if filepath.IsAbs(symlinkDestPath) {
 		return false
 	} else {
