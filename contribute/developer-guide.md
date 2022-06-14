@@ -2,6 +2,10 @@
 
 This guide helps you get started developing Grafana.
 
+> Or, You Can directly start Developing on Remote Cloud Dev Environment
+
+[![Open grafana in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/grafana/grafana)
+
 ## Dependencies
 
 Make sure you have the following dependencies installed before setting up your developer environment:
