@@ -148,7 +148,7 @@ import "github.com/grafana/grafana/pkg/models"
 // 403: forbiddenError
 // 500: internalServerError
 
-// swagger:route POST /user/revoke-auth-token signed_in_user revokeSignedINAuthTokenCmd
+// swagger:route POST /user/revoke-auth-token signed_in_user revokeSignedInAuthToken
 //
 // Revoke an auth token of the actual User.
 //
@@ -161,26 +161,55 @@ import "github.com/grafana/grafana/pkg/models"
 // 403: forbiddenError
 // 500: internalServerError
 
-// swagger:parameters starDashboard unstarDashboard
-type DashboardIDParam struct {
+// swagger:parameters updateSignedInUser
+type UpdateSignedInUserParams struct {
+	// To change the email, name, login, theme, provide another one.
+	// in:body
+	// required:true
+	Body models.UpdateUserCommand `json:"body"`
+}
+
+// swagger:parameters userSetUsingOrg
+type UserSetUsingOrgParams struct {
+	// in:path
+	// required:true
+	OrgID int64 `json:"org_id"`
+}
+
+// swagger:parameters starDashboard
+type StarDashboardParams struct {
+	// in:path
+	// required:true
+	DashboardID string `json:"dashboard_id"`
+}
+
+// swagger:parameters unstarDashboard
+type UnstarDashboardParams struct {
 	// in:path
 	// required:true
 	DashboardID string `json:"dashboard_id"`
 }
 
 // swagger:parameters setHelpFlag
-type FlagIDParam struct {
+type SetHelpFlagParams struct {
 	// in:path
 	// required:true
 	FlagID string `json:"flag_id"`
 }
 
-// swagger:parameters updateUser changeUserPassword
-type ChangeUserPasswordParam struct {
+// swagger:parameters changeUserPassword
+type ChangeUserPasswordParams struct {
 	// To change the email, name, login, theme, provide another one.
 	// in:body
 	// required:true
 	Body models.ChangeUserPasswordCommand `json:"body"`
+}
+
+// swagger:parameters revokeSignedInAuthToken
+type RevokeSignedINAuthTokenCmdParams struct {
+	// in:body
+	// required:true
+	Body models.RevokeAuthTokenCmd `json:"body"`
 }
 
 // swagger:response helpFlagResponse
