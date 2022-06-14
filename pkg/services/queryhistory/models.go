@@ -12,6 +12,7 @@ var (
 	ErrQueryAlreadyStarred  = errors.New("query was already starred")
 )
 
+// QueryHistory is the model for query history definitions
 type QueryHistory struct {
 	ID            int64  `xorm:"pk autoincr 'id'"`
 	UID           string `xorm:"uid"`
@@ -23,15 +24,11 @@ type QueryHistory struct {
 	Queries       *simplejson.Json
 }
 
+// QueryHistory is the model for query history star definitions
 type QueryHistoryStar struct {
 	ID       int64  `xorm:"pk autoincr 'id'"`
 	QueryUID string `xorm:"query_uid"`
 	UserID   int64  `xorm:"user_id"`
-}
-
-type CreateQueryInQueryHistoryCommand struct {
-	DatasourceUID string           `json:"datasourceUid"`
-	Queries       *simplejson.Json `json:"queries"`
 }
 
 type SearchInQueryHistoryQuery struct {
@@ -43,10 +40,6 @@ type SearchInQueryHistoryQuery struct {
 	Limit          int      `json:"limit"`
 	From           int64    `json:"from"`
 	To             int64    `json:"to"`
-}
-
-type PatchQueryCommentInQueryHistoryCommand struct {
-	Comment string `json:"comment"`
 }
 
 type QueryHistoryDTO struct {
@@ -75,14 +68,10 @@ type QueryHistorySearchResponse struct {
 	Result QueryHistorySearchResult `json:"result"`
 }
 
-// DeleteQueryFromQueryHistoryResponse is the response struct for deleting a query from query history
-type DeleteQueryFromQueryHistoryResponse struct {
+// QueryHistoryDeleteQueryResponse is the response struct for deleting a query from query history
+type QueryHistoryDeleteQueryResponse struct {
 	ID      int64  `json:"id"`
 	Message string `json:"message"`
-}
-
-type MigrateQueriesToQueryHistoryCommand struct {
-	Queries []QueryToMigrate `json:"queries"`
 }
 
 type QueryToMigrate struct {
@@ -97,4 +86,29 @@ type QueryHistoryMigrationResponse struct {
 	Message      string `json:"message"`
 	TotalCount   int    `json:"totalCount"`
 	StarredCount int    `json:"starredCount"`
+}
+
+// CreateQueryInQueryHistoryCommand is the command for adding query history
+// swagger:model
+type CreateQueryInQueryHistoryCommand struct {
+	// UID of the data source for which are queries stored.
+	// example: PE1C5CBDA0504A6A3
+	DatasourceUID string `json:"datasourceUid"`
+	// The JSON model of queries.
+	// required: true
+	Queries *simplejson.Json `json:"queries"`
+}
+
+// PatchQueryCommentInQueryHistoryCommand is the command for updating comment for query in query history
+// swagger:model
+type PatchQueryCommentInQueryHistoryCommand struct {
+	// Updated comment
+	Comment string `json:"comment"`
+}
+
+// MigrateQueriesToQueryHistoryCommand is the command used for migration of old queries into query history
+// swagger:model
+type MigrateQueriesToQueryHistoryCommand struct {
+	// Array of queries to store in query history.
+	Queries []QueryToMigrate `json:"queries"`
 }

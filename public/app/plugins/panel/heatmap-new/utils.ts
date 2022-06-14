@@ -1,20 +1,33 @@
 import { MutableRefObject, RefObject } from 'react';
 import uPlot from 'uplot';
 
-import { DataFrameType, GrafanaTheme2, TimeRange } from '@grafana/data';
+import {
+  DataFrameType,
+  formattedValueToString,
+  getValueFormat,
+  GrafanaTheme2,
+  incrRoundDn,
+  incrRoundUp,
+  TimeRange,
+} from '@grafana/data';
 import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';
+import { readHeatmapScanlinesCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
+import { HeatmapCellLayout } from 'app/features/transformers/calculateHeatmap/models.gen';
 
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 
-import { BucketLayout, HeatmapData } from './fields';
+import { HeatmapData } from './fields';
+import { PanelFieldConfig, YAxisConfig } from './models.gen';
 
 interface PathbuilderOpts {
   each: (u: uPlot, seriesIdx: number, dataIdx: number, lft: number, top: number, wid: number, hgt: number) => void;
   gap?: number | null;
-  hideThreshold?: number;
+  hideLE?: number;
+  hideGE?: number;
   xAlign?: -1 | 0 | 1;
   yAlign?: -1 | 0 | 1;
+  ySizeDivisor?: number;
   disp: {
     fill: {
       values: (u: uPlot, seriesIndex: number) => number[];
@@ -51,8 +64,12 @@ interface PrepConfigOpts {
   palette: string[];
   exemplarColor: string;
   cellGap?: number | null; // in css pixels
-  hideThreshold?: number;
-  yAxisReverse?: boolean;
+  hideLE?: number;
+  hideGE?: number;
+  valueMin?: number;
+  valueMax?: number;
+  yAxisConfig: YAxisConfig;
+  ySizeDivisor?: number;
 }
 
 export function prepConfig(opts: PrepConfigOpts) {
@@ -67,8 +84,12 @@ export function prepConfig(opts: PrepConfigOpts) {
     getTimeRange,
     palette,
     cellGap,
-    hideThreshold,
-    yAxisReverse,
+    hideLE,
+    hideGE,
+    valueMin,
+    valueMax,
+    yAxisConfig,
+    ySizeDivisor,
   } = opts;
 
   const pxRatio = devicePixelRatio;
@@ -205,7 +226,10 @@ export function prepConfig(opts: PrepConfigOpts) {
     theme: theme,
   });
 
-  const shouldUseLogScale = heatmapType === DataFrameType.HeatmapSparse;
+  const yFieldConfig = dataRef.current?.heatmap?.fields[1]?.config?.custom as PanelFieldConfig | undefined;
+  const yScale = yFieldConfig?.scaleDistribution ?? { type: ScaleDistribution.Linear };
+  const yAxisReverse = Boolean(yAxisConfig.reverse);
+  const shouldUseLogScale = yScale.type !== ScaleDistribution.Linear || heatmapType === DataFrameType.HeatmapSparse;
 
   builder.addScale({
     scaleKey: 'y',
@@ -215,71 +239,135 @@ export function prepConfig(opts: PrepConfigOpts) {
     direction: yAxisReverse ? ScaleDirection.Down : ScaleDirection.Up,
     // should be tweakable manually
     distribution: shouldUseLogScale ? ScaleDistribution.Log : ScaleDistribution.Linear,
-    log: 2,
-    range: shouldUseLogScale
-      ? undefined
-      : (u, dataMin, dataMax) => {
-          let bucketSize = dataRef.current?.yBucketSize;
+    log: yScale.log ?? 2,
+    range:
+      // sparse already accounts for le/ge by explicit yMin & yMax cell bounds, so use default log ranging
+      heatmapType === DataFrameType.HeatmapSparse
+        ? undefined
+        : // dense and ordinal only have one of yMin|yMax|y, so expand range by one cell in the direction of le/ge/unknown
+          (u, dataMin, dataMax) => {
+            // logarithmic expansion
+            if (shouldUseLogScale) {
+              let yExp = u.scales['y'].log!;
 
-          if (bucketSize === 0) {
-            bucketSize = 1;
-          }
+              let minExpanded = false;
+              let maxExpanded = false;
 
-          if (bucketSize) {
-            if (dataRef.current?.yLayout === BucketLayout.le) {
-              dataMin -= bucketSize!;
-            } else if (dataRef.current?.yLayout === BucketLayout.ge) {
-              dataMax += bucketSize!;
-            } else {
-              dataMin -= bucketSize! / 2;
-              dataMax += bucketSize! / 2;
+              if (ySizeDivisor !== 1) {
+                let log = yExp === 2 ? Math.log2 : Math.log10;
+
+                let minLog = log(dataMin);
+                let maxLog = log(dataMax);
+
+                if (!Number.isInteger(minLog)) {
+                  dataMin = yExp ** incrRoundDn(minLog, 1);
+                  minExpanded = true;
+                }
+
+                if (!Number.isInteger(maxLog)) {
+                  dataMax = yExp ** incrRoundUp(maxLog, 1);
+                  maxExpanded = true;
+                }
+              }
+
+              if (dataRef.current?.yLayout === HeatmapCellLayout.le) {
+                if (!minExpanded) {
+                  dataMin /= yExp;
+                }
+              } else if (dataRef.current?.yLayout === HeatmapCellLayout.ge) {
+                if (!maxExpanded) {
+                  dataMax *= yExp;
+                }
+              } else {
+                dataMin /= yExp / 2;
+                dataMax *= yExp / 2;
+              }
             }
-          } else {
-            // how to expand scale range if inferred non-regular or log buckets?
-          }
+            // linear expansion
+            else {
+              let bucketSize = dataRef.current?.yBucketSize;
 
-          return [dataMin, dataMax];
-        },
+              if (bucketSize === 0) {
+                bucketSize = 1;
+              }
+
+              if (bucketSize) {
+                if (dataRef.current?.yLayout === HeatmapCellLayout.le) {
+                  dataMin -= bucketSize!;
+                } else if (dataRef.current?.yLayout === HeatmapCellLayout.ge) {
+                  dataMax += bucketSize!;
+                } else {
+                  dataMin -= bucketSize! / 2;
+                  dataMax += bucketSize! / 2;
+                }
+              } else {
+                // how to expand scale range if inferred non-regular or log buckets?
+              }
+            }
+            return [dataMin, dataMax];
+          },
   });
 
-  const hasLabeledY = dataRef.current?.yAxisValues != null;
+  const isOrdianalY = readHeatmapScanlinesCustomMeta(dataRef.current?.heatmap).yOrdinalDisplay != null;
+  const disp = dataRef.current?.heatmap?.fields[1].display ?? getValueFormat('short');
 
   builder.addAxis({
     scaleKey: 'y',
-    placement: AxisPlacement.Left,
+    show: yAxisConfig.axisPlacement !== AxisPlacement.Hidden,
+    placement: yAxisConfig.axisPlacement || AxisPlacement.Left,
+    size: yAxisConfig.axisWidth || null,
+    label: yAxisConfig.axisLabel,
     theme: theme,
-    splits: hasLabeledY
-      ? () => {
-          const ys = dataRef.current?.heatmap?.fields[1].values.toArray()!;
-          const splits = ys.slice(0, ys.length - ys.lastIndexOf(ys[0]));
+    formatValue: (v: any) => formattedValueToString(disp(v)),
+    splits: isOrdianalY
+      ? (self: uPlot) => {
+          const meta = readHeatmapScanlinesCustomMeta(dataRef.current?.heatmap);
+          if (!meta.yOrdinalDisplay) {
+            return [0, 1]; //?
+          }
+          let splits = meta.yOrdinalDisplay.map((v, idx) => idx);
 
-          const bucketSize = dataRef.current?.yBucketSize!;
-
-          if (dataRef.current?.yLayout === BucketLayout.le) {
-            splits.unshift(ys[0] - bucketSize);
-          } else {
-            splits.push(ys[ys.length - 1] + bucketSize);
+          switch (dataRef.current?.yLayout) {
+            case HeatmapCellLayout.le:
+              splits.unshift(-1);
+              break;
+            case HeatmapCellLayout.ge:
+              splits.push(splits.length);
+              break;
           }
 
+          // Skip labels when the height is too small
+          if (self.height < 60) {
+            splits = [splits[0], splits[splits.length - 1]];
+          } else {
+            while (splits.length > 3 && (self.height - 15) / splits.length < 10) {
+              splits = splits.filter((v, idx) => idx % 2 === 0); // remove half the items
+            }
+          }
           return splits;
         }
       : undefined,
-    values: hasLabeledY
-      ? () => {
-          const yAxisValues = dataRef.current?.yAxisValues?.slice()!;
-
-          if (dataRef.current?.yLayout === BucketLayout.le) {
-            yAxisValues.unshift('0.0'); // assumes dense layout where lowest bucket's low bound is 0-ish
-          } else if (dataRef.current?.yLayout === BucketLayout.ge) {
-            yAxisValues.push('+Inf');
+    values: isOrdianalY
+      ? (self: uPlot, splits) => {
+          const meta = readHeatmapScanlinesCustomMeta(dataRef.current?.heatmap);
+          if (meta.yOrdinalDisplay) {
+            return splits.map((v) => {
+              const txt = meta.yOrdinalDisplay[v];
+              if (!txt && v < 0) {
+                // Check prometheus style labels
+                if ('le' === meta.yMatchWithLabel) {
+                  return '0.0';
+                }
+              }
+              return txt;
+            });
           }
-
-          return yAxisValues;
+          return splits.map((v) => `${v}`);
         }
       : undefined,
   });
 
-  const pathBuilder = heatmapType === DataFrameType.HeatmapScanlines ? heatmapPathsDense : heatmapPathsSparse;
+  const pathBuilder = heatmapType === DataFrameType.HeatmapCells ? heatmapPathsDense : heatmapPathsSparse;
 
   // heatmap layer
   builder.addSeries({
@@ -306,18 +394,25 @@ export function prepConfig(opts: PrepConfigOpts) {
         });
       },
       gap: cellGap,
-      hideThreshold,
-      xAlign: dataRef.current?.xLayout === BucketLayout.le ? -1 : dataRef.current?.xLayout === BucketLayout.ge ? 1 : 0,
-      yAlign: ((dataRef.current?.yLayout === BucketLayout.le
+      hideLE,
+      hideGE,
+      xAlign:
+        dataRef.current?.xLayout === HeatmapCellLayout.le
+          ? -1
+          : dataRef.current?.xLayout === HeatmapCellLayout.ge
+          ? 1
+          : 0,
+      yAlign: ((dataRef.current?.yLayout === HeatmapCellLayout.le
         ? -1
-        : dataRef.current?.yLayout === BucketLayout.ge
+        : dataRef.current?.yLayout === HeatmapCellLayout.ge
         ? 1
         : 0) * (yAxisReverse ? -1 : 1)) as -1 | 0 | 1,
+      ySizeDivisor,
       disp: {
         fill: {
           values: (u, seriesIdx) => {
-            let countFacetIdx = heatmapType === DataFrameType.HeatmapScanlines ? 2 : 3;
-            return countsToFills(u.data[seriesIdx][countFacetIdx] as unknown as number[], palette);
+            let countFacetIdx = heatmapType === DataFrameType.HeatmapCells ? 2 : 3;
+            return valuesToFills(u.data[seriesIdx][countFacetIdx] as unknown as number[], palette, valueMin, valueMax);
           },
           index: palette,
         },
@@ -402,7 +497,7 @@ export function prepConfig(opts: PrepConfigOpts) {
 const CRISP_EDGES_GAP_MIN = 4;
 
 export function heatmapPathsDense(opts: PathbuilderOpts) {
-  const { disp, each, gap = 1, hideThreshold = 0, xAlign = 1, yAlign = 1 } = opts;
+  const { disp, each, gap = 1, hideLE = -Infinity, hideGE = Infinity, xAlign = 1, yAlign = 1, ySizeDivisor = 1 } = opts;
 
   const pxRatio = devicePixelRatio;
 
@@ -451,8 +546,22 @@ export function heatmapPathsDense(opts: PathbuilderOpts) {
         let xBinIncr = xs[yBinQty] - xs[0];
 
         // uniform tile sizes based on zoom level
-        let xSize = Math.abs(valToPosX(xBinIncr, scaleX, xDim, xOff) - valToPosX(0, scaleX, xDim, xOff));
-        let ySize = Math.abs(valToPosY(yBinIncr, scaleY, yDim, yOff) - valToPosY(0, scaleY, yDim, yOff));
+        let xSize: number;
+        let ySize: number;
+
+        if (scaleX.distr === 3) {
+          xSize = Math.abs(valToPosX(xs[0] * scaleX.log!, scaleX, xDim, xOff) - valToPosX(xs[0], scaleX, xDim, xOff));
+        } else {
+          xSize = Math.abs(valToPosX(xBinIncr, scaleX, xDim, xOff) - valToPosX(0, scaleX, xDim, xOff));
+        }
+
+        if (scaleY.distr === 3) {
+          ySize =
+            Math.abs(valToPosY(ys[0] * scaleY.log!, scaleY, yDim, yOff) - valToPosY(ys[0], scaleY, yDim, yOff)) /
+            ySizeDivisor;
+        } else {
+          ySize = Math.abs(valToPosY(yBinIncr, scaleY, yDim, yOff) - valToPosY(0, scaleY, yDim, yOff)) / ySizeDivisor;
+        }
 
         // clamp min tile size to 1px
         xSize = Math.max(1, round(xSize - cellGap));
@@ -472,14 +581,7 @@ export function heatmapPathsDense(opts: PathbuilderOpts) {
         );
 
         for (let i = 0; i < dlen; i++) {
-          // filter out 0 counts and out of view
-          if (
-            counts[i] > hideThreshold &&
-            xs[i] + xBinIncr >= scaleX.min! &&
-            xs[i] - xBinIncr <= scaleX.max! &&
-            ys[i] + yBinIncr >= scaleY.min! &&
-            ys[i] - yBinIncr <= scaleY.max!
-          ) {
+          if (counts[i] > hideLE && counts[i] < hideGE) {
             let cx = cxs[~~(i / yBinQty)];
             let cy = cys[i % yBinQty];
 
@@ -569,7 +671,7 @@ export function heatmapPathsPoints(opts: PointsBuilderOpts, exemplarColor: strin
 // accepts xMax, yMin, yMax, count
 // xbinsize? x tile sizes are uniform?
 export function heatmapPathsSparse(opts: PathbuilderOpts) {
-  const { disp, each, gap = 1, hideThreshold = 0 } = opts;
+  const { disp, each, gap = 1, hideLE = -Infinity, hideGE = Infinity } = opts;
 
   const pxRatio = devicePixelRatio;
 
@@ -640,7 +742,7 @@ export function heatmapPathsSparse(opts: PathbuilderOpts) {
         let xSizeUniform = xOffs.get(xMaxs.find((v) => v !== xMaxs[0])) - xOffs.get(xMaxs[0]);
 
         for (let i = 0; i < dlen; i++) {
-          if (counts[i] <= hideThreshold) {
+          if (counts[i] <= hideLE || counts[i] >= hideGE) {
             continue;
           }
 
@@ -662,19 +764,11 @@ export function heatmapPathsSparse(opts: PathbuilderOpts) {
           let x = xMaxPx;
           let y = yMinPx;
 
-          // filter out 0 counts and out of view
-          // if (
-          //   xs[i] + xBinIncr >= scaleX.min! &&
-          //   xs[i] - xBinIncr <= scaleX.max! &&
-          //   ys[i] + yBinIncr >= scaleY.min! &&
-          //   ys[i] - yBinIncr <= scaleY.max!
-          // ) {
           let fillPath = fillPaths[fills[i]];
 
           rect(fillPath, x, y, xSize, ySize);
 
           each(u, 1, i, x, y, xSize, ySize);
-          //  }
         }
 
         u.ctx.save();
@@ -695,29 +789,36 @@ export function heatmapPathsSparse(opts: PathbuilderOpts) {
   };
 }
 
-export const countsToFills = (counts: number[], palette: string[]) => {
-  // TODO: integrate 1e-9 hideThreshold?
-  const hideThreshold = 0;
+export const valuesToFills = (values: number[], palette: string[], minValue?: number, maxValue?: number) => {
+  if (minValue == null) {
+    minValue = Infinity;
 
-  let minCount = Infinity;
-  let maxCount = -Infinity;
-
-  for (let i = 0; i < counts.length; i++) {
-    if (counts[i] > hideThreshold) {
-      minCount = Math.min(minCount, counts[i]);
-      maxCount = Math.max(maxCount, counts[i]);
+    for (let i = 0; i < values.length; i++) {
+      minValue = Math.min(minValue, values[i]);
     }
   }
 
-  let range = maxCount - minCount;
+  if (maxValue == null) {
+    maxValue = -Infinity;
+
+    for (let i = 0; i < values.length; i++) {
+      maxValue = Math.max(maxValue, values[i]);
+    }
+  }
+
+  let range = maxValue - minValue;
 
   let paletteSize = palette.length;
 
-  let indexedFills = Array(counts.length);
+  let indexedFills = Array(values.length);
 
-  for (let i = 0; i < counts.length; i++) {
+  for (let i = 0; i < values.length; i++) {
     indexedFills[i] =
-      counts[i] === 0 ? -1 : Math.min(paletteSize - 1, Math.floor((paletteSize * (counts[i] - minCount)) / range));
+      values[i] < minValue
+        ? 0
+        : values[i] > maxValue
+        ? paletteSize - 1
+        : Math.min(paletteSize - 1, Math.floor((paletteSize * (values[i] - minValue)) / range));
   }
 
   return indexedFills;

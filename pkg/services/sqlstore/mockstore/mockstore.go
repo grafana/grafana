@@ -21,8 +21,6 @@ type SQLStoreMock struct {
 	ExpectedAlert                  *models.Alert
 	ExpectedPluginSetting          *models.PluginSetting
 	ExpectedDashboards             []*models.Dashboard
-	ExpectedDashboardVersion       *models.DashboardVersion
-	ExpectedDashboardVersions      []*models.DashboardVersion
 	ExpectedDashboardAclInfoList   []*models.DashboardAclInfoDTO
 	ExpectedUserOrgList            []*models.UserOrgDTO
 	ExpectedOrgListResponse        OrgListResponse
@@ -341,10 +339,6 @@ func (m *SQLStoreMock) WithTransactionalDbSession(ctx context.Context, callback 
 }
 
 func (m *SQLStoreMock) InTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetDashboardVersions(ctx context.Context, query *models.GetDashboardVersionsQuery) error {
 	return m.ExpectedError
 }
 

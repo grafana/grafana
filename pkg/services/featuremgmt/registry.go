@@ -2,6 +2,7 @@
 //  pkg/services/featuremgmt/registry.go
 // Then run tests in:
 //  pkg/services/featuremgmt/toggles_gen_test.go
+// twice to generate and validate the feature flag files
 
 package featuremgmt
 
@@ -73,11 +74,10 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:         "lokiBackendMode",
-			Description:  "Loki datasource works as backend datasource",
+			Name:         "tempoApmTable",
+			Description:  "Show APM table",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
-			Expression:   "true", // Enabled by default
 		},
 		{
 			Name:        "prometheus_azure_auth",
@@ -118,6 +118,11 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:        "lokiDataframeApi",
+			Description: "use experimental loki api for websocket streaming (early prototype)",
+			State:       FeatureStateAlpha,
+		},
+		{
 			Name:        "swaggerUi",
 			Description: "Serves swagger UI",
 			State:       FeatureStateBeta,
@@ -145,11 +150,6 @@ var (
 		{
 			Name:        "storage",
 			Description: "Configurable storage for dashboards, datasources, and resources",
-			State:       FeatureStateAlpha,
-		},
-		{
-			Name:        "alertProvisioning",
-			Description: "Provisioning-friendly routes for alerting",
 			State:       FeatureStateAlpha,
 		},
 		{
@@ -204,11 +204,10 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:            "azureMonitorExperimentalUI",
-			Description:     "Use grafana-experimental UI in Azure Monitor",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-			FrontendOnly:    true,
+			Name:         "azureMonitorExperimentalUI",
+			Description:  "Use grafana-experimental UI in Azure Monitor",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
 		},
 		{
 			Name:         "traceToMetrics",
@@ -228,6 +227,12 @@ var (
 			RequiresRestart: true,
 		},
 		{
+			Name:         "autoMigrateGraphPanels",
+			Description:  "Replace the angular graph panel with timeseries",
+			State:        FeatureStateBeta,
+			FrontendOnly: true,
+		},
+		{
 			Name:        "prometheusWideSeries",
 			Description: "Enable wide series responses in the Prometheus datasource",
 			State:       FeatureStateAlpha,
@@ -237,6 +242,26 @@ var (
 			Description:  "Allow elements nesting",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+		},
+		{
+			Name:         "cloudMonitoringExperimentalUI",
+			Description:  "Use grafana-experimental UI in Cloud Monitoring",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:        "logRequestsInstrumentedAsUnknown",
+			Description: "Logs the path for requests that are instrumented as unknown",
+		},
+		{
+			Name:        "dataConnectionsConsole",
+			Description: "Enables a new top-level page called Data Connections. This page is an experiment for better grouping of installing / configuring data sources and other plugins.",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "internationalization",
+			Description: "Enables work-in-progress internationalization",
+			State:       FeatureStateAlpha,
 		},
 	}
 )

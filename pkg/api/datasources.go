@@ -48,7 +48,6 @@ func (hs *HTTPServer) GetDataSources(c *models.ReqContext) response.Response {
 			Type:      ds.Type,
 			TypeName:  ds.Type,
 			Access:    ds.Access,
-			Password:  ds.Password,
 			Database:  ds.Database,
 			User:      ds.User,
 			BasicAuth: ds.BasicAuth,
@@ -93,12 +92,7 @@ func (hs *HTTPServer) GetDataSourceById(c *models.ReqContext) response.Response 
 		return response.Error(500, "Failed to query datasources", err)
 	}
 
-	filtered, err := hs.filterDatasourcesByQueryPermission(c.Req.Context(), c.SignedInUser, []*models.DataSource{query.Result})
-	if err != nil || len(filtered) != 1 {
-		return response.Error(404, "Data source not found", err)
-	}
-
-	dto := hs.convertModelToDtos(c.Req.Context(), filtered[0])
+	dto := hs.convertModelToDtos(c.Req.Context(), query.Result)
 
 	// Add accesscontrol metadata
 	dto.AccessControl = hs.getAccessControlMetadata(c, c.OrgId, datasources.ScopePrefix, dto.UID)
@@ -152,12 +146,7 @@ func (hs *HTTPServer) GetDataSourceByUID(c *models.ReqContext) response.Response
 		return response.Error(http.StatusInternalServerError, "Failed to query datasource", err)
 	}
 
-	filtered, err := hs.filterDatasourcesByQueryPermission(c.Req.Context(), c.SignedInUser, []*models.DataSource{ds})
-	if err != nil || len(filtered) != 1 {
-		return response.Error(404, "Data source not found", err)
-	}
-
-	dto := hs.convertModelToDtos(c.Req.Context(), filtered[0])
+	dto := hs.convertModelToDtos(c.Req.Context(), ds)
 
 	// Add accesscontrol metadata
 	dto.AccessControl = hs.getAccessControlMetadata(c, c.OrgId, datasources.ScopePrefix, dto.UID)
@@ -398,12 +387,7 @@ func (hs *HTTPServer) GetDataSourceByName(c *models.ReqContext) response.Respons
 		return response.Error(500, "Failed to query datasources", err)
 	}
 
-	filtered, err := hs.filterDatasourcesByQueryPermission(c.Req.Context(), c.SignedInUser, []*models.DataSource{query.Result})
-	if err != nil || len(filtered) != 1 {
-		return response.Error(404, "Data source not found", err)
-	}
-
-	dto := hs.convertModelToDtos(c.Req.Context(), filtered[0])
+	dto := hs.convertModelToDtos(c.Req.Context(), query.Result)
 	return response.JSON(http.StatusOK, &dto)
 }
 
@@ -481,25 +465,23 @@ func (hs *HTTPServer) CallDatasourceResourceWithUID(c *models.ReqContext) {
 
 func (hs *HTTPServer) convertModelToDtos(ctx context.Context, ds *models.DataSource) dtos.DataSource {
 	dto := dtos.DataSource{
-		Id:                ds.Id,
-		UID:               ds.Uid,
-		OrgId:             ds.OrgId,
-		Name:              ds.Name,
-		Url:               ds.Url,
-		Type:              ds.Type,
-		Access:            ds.Access,
-		Password:          ds.Password,
-		Database:          ds.Database,
-		User:              ds.User,
-		BasicAuth:         ds.BasicAuth,
-		BasicAuthUser:     ds.BasicAuthUser,
-		BasicAuthPassword: ds.BasicAuthPassword,
-		WithCredentials:   ds.WithCredentials,
-		IsDefault:         ds.IsDefault,
-		JsonData:          ds.JsonData,
-		SecureJsonFields:  map[string]bool{},
-		Version:           ds.Version,
-		ReadOnly:          ds.ReadOnly,
+		Id:               ds.Id,
+		UID:              ds.Uid,
+		OrgId:            ds.OrgId,
+		Name:             ds.Name,
+		Url:              ds.Url,
+		Type:             ds.Type,
+		Access:           ds.Access,
+		Database:         ds.Database,
+		User:             ds.User,
+		BasicAuth:        ds.BasicAuth,
+		BasicAuthUser:    ds.BasicAuthUser,
+		WithCredentials:  ds.WithCredentials,
+		IsDefault:        ds.IsDefault,
+		JsonData:         ds.JsonData,
+		SecureJsonFields: map[string]bool{},
+		Version:          ds.Version,
+		ReadOnly:         ds.ReadOnly,
 	}
 
 	secrets, err := hs.DataSourcesService.DecryptedValues(ctx, ds)

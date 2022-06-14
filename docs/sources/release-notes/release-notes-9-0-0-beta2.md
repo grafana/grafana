@@ -81,29 +81,7 @@ module.exports.getWebpackConfig = (config, options) => ({
 });
 ```
 
-Please refer to the webpack build error messages or the [official migration guide](https://webpack.js.org/migrate/5/) for assistance with fallbacks.
-
-**Which issue(s) this PR fixes**:
-
-<!--
-
-- Automatically closes linked issue when the Pull Request is merged.
-
-Usage: "Fixes #<issue number>", or "Fixes (paste link of issue)"
-
--->
-
-Fixes #
-
-**Special notes for your reviewer**:
-
-It does not bump the following dependencies to the very latest due to the latest versions being ES modules:
-
-- ora
-- globby
-- execa
-- chalk
-  Issue [#47826](https://github.com/grafana/grafana/issues/47826)
+Please refer to the webpack build error messages or the [official migration guide](https://webpack.js.org/migrate/5/) for assistance with fallbacks. Issue [#47826](https://github.com/grafana/grafana/issues/47826)
 
 We have changed the internals of `backendSrv.fetch()` to throw an error when the response is an incorrect JSON.
 
