@@ -687,11 +687,11 @@ func createRequestContext(orgID int64, role models2.RoleType, params map[string]
 	}
 }
 
-func createPermissionsForRules(rules []*models.AlertRule) []*accesscontrol.Permission {
-	var permissions []*accesscontrol.Permission
+func createPermissionsForRules(rules []*models.AlertRule) []accesscontrol.Permission {
+	var permissions []accesscontrol.Permission
 	for _, rule := range rules {
 		for _, query := range rule.Data {
-			permissions = append(permissions, &accesscontrol.Permission{
+			permissions = append(permissions, accesscontrol.Permission{
 				Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID),
 			})
 		}
