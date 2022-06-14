@@ -2,6 +2,7 @@ import { PluggableMap } from 'ol';
 import BaseLayer from 'ol/layer/Base';
 import { ReactNode } from 'react';
 
+import { EventBus } from '../events';
 import { GrafanaTheme2 } from '../themes';
 import { PanelData } from '../types';
 import { PanelOptionsEditorBuilder } from '../utils';
@@ -106,5 +107,10 @@ export interface MapLayerRegistryItem<TConfig = MapLayerOptions> extends Registr
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: (map: PluggableMap, options: MapLayerOptions<TConfig>, theme: GrafanaTheme2) => Promise<MapLayerHandler>;
+  create: (
+    map: PluggableMap,
+    options: MapLayerOptions<TConfig>,
+    eventBus: EventBus,
+    theme: GrafanaTheme2
+  ) => Promise<MapLayerHandler>;
 }

@@ -5,6 +5,7 @@ import {
   GrafanaTheme2,
   PluginState,
   SelectableValue,
+  EventBus,
 } from '@grafana/data';
 import Map from 'ol/Map';
 import VectorLayer from 'ol/layer/Vector';
@@ -72,7 +73,7 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: async (map: Map, options: MapLayerOptions<GeoJSONMapperConfig>, theme: GrafanaTheme2) => {
+  create: async (map: Map, options: MapLayerOptions<GeoJSONMapperConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
     const config = { ...defaultOptions, ...options.config };
 
     const source = new VectorSource({

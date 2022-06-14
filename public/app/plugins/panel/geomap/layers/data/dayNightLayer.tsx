@@ -3,14 +3,23 @@ import {
   MapLayerOptions,
   PanelData,
   GrafanaTheme2,
+  EventBus,
+  DataHoverEvent,
+  DataHoverClearEvent,
 } from '@grafana/data';
 import Map from 'ol/Map';
 import VectorLayer from 'ol/layer/Vector';
-import { Fill, Stroke, Style } from 'ol/style';
+import VectorSource from 'ol/source/Vector';
+import { Fill, Stroke, Style, Circle } from 'ol/style';
 import {Group as LayerGroup} from 'ol/layer';
+import Feature from 'ol/Feature';
+import Point from 'ol/geom/Point';
 
 import DayNight from 'ol-ext/source/DayNight';
-import { Vector } from 'ol/source';
+import { fromLonLat } from 'ol/proj';
+import { Subscription } from 'rxjs';
+import { MultiLineString } from 'ol/geom';
+import { Coordinate } from 'ol/coordinate';
 
 export enum ShowTime {
   From = 'from',
@@ -20,10 +29,14 @@ export enum ShowTime {
 // Configuration options for Circle overlays
 export interface DayNightConfig {
   show: ShowTime;
+  sun: boolean;
+  nightColor: string;
 }
 
 const defaultConfig: DayNightConfig = {
   show: ShowTime.To,
+  sun: false,
+  nightColor: 'rgb(0,0,0)'
 };
 
 export const DAY_NIGHT_LAYER_ID = 'dayNight';
@@ -51,7 +64,7 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
    * @param options
    * @param theme
    */
-  create: async (map: Map, options: MapLayerOptions<DayNightConfig>, theme: GrafanaTheme2) => {
+  create: async (map: Map, options: MapLayerOptions<DayNightConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
     // Assert default values
     const config = {
       ...defaultConfig,
@@ -62,51 +75,146 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
 
     // DayNight source
     const source = new DayNight({ });
+    const sourceMethods = Object.getPrototypeOf(source);
+    const sourceLine = new DayNight({ });
+    const sourceLineMethods = Object.getPrototypeOf(sourceLine);
 
+    // Night polygon
     const vectorLayer = new VectorLayer({
       source,
       style: new Style({
-        // image: new Circle({
-        //   radius: 5,
-        //   fill: new Fill({ color: 'red' })
-        // }),
         fill: new Fill({
-          color: [50,0,50,.5]
+          color: theme.visualization.getColorByName(config.nightColor)
         })
       })
     });
 
-    const lineLayer = new VectorLayer({
-      source: new Vector({ }),
-      style: new Style({
-        // image: new Circle({
-        //   radius: 5,
-        //   fill: new Fill({ color: 'red' })
-        // }),
+    // Night line (for crosshair sharing)
+    const nightLineLayer = new VectorLayer({
+      source: new VectorSource({
+        features: [],
+      }),
+      style: new Style ({
         stroke: new Stroke({
-          color: [50,0,0,.5],
-          width: 4,
+          color: '#607D8B',
+          width: 1.5,
+          lineDash: [2, 3],
+        })
+      }),
+    });
+    
+    // Sun circle
+    const sunFeature = new Feature({
+      geometry: new Point([]),
+    });
+
+    const sunLayer = new VectorLayer({
+      source: new VectorSource({
+        features: [sunFeature],
+      }),
+      style: new Style({
+        image: new Circle({
+          radius: 13,
+          fill: new Fill({color: 'rgb(253,184,19)'}),
+        })
+      }),
+    });
+
+    // Sun line (for crosshair sharing)
+    const sunLineFeature = new Feature({
+      geometry: new Point([]),
+    });
+
+    const sunLineStyle = new Style({
+      image: new Circle({
+        radius: 13,
+        stroke: new Stroke({
+          color: 'rgb(253,184,19)',
+          width: 1.5
         })
       })
     });
 
-    const layer = new LayerGroup({
-      layers: [vectorLayer, lineLayer]
+    const sunLineStyleDash = new Style({
+      image: new Circle({
+        radius: 15,
+        stroke: new Stroke({
+          color: '#607D8B',
+          width: 1.5,
+          lineDash: [2,3]
+        })
+      })
     });
+
+    const sunLineLayer = new VectorLayer({
+      source: new VectorSource({
+        features: [sunLineFeature],
+      }),
+      style: [sunLineStyleDash, sunLineStyle],
+    });
+
+    // Build group of layers
+    // TODO: add blended night region to "connect" current night region to lines
+    const layer = new LayerGroup({
+      layers: config.sun? [vectorLayer, sunLayer, sunLineLayer, nightLineLayer] : [vectorLayer, nightLineLayer]
+    });
+
+    // Crosshair sharing subscriptions
+    const subscriptions = new Subscription();
+
+    subscriptions.add(
+      eventBus.subscribe(DataHoverEvent, (event) => {
+        if (event.payload.data && event.payload.rowIndex) {
+          const lineTime = new Date(event.payload.data.fields[0].values.toArray()[event.payload.rowIndex]);
+          const nightLinePoints = sourceLine.getCoordinates(lineTime.toString(), 'line');
+          nightLineLayer.getSource()?.clear();
+          const lineStringArray:Coordinate[][] = [];
+          for (let l = 0; l < nightLinePoints.length - 1; l++){
+            const x1:number = Object.values(nightLinePoints[l])[0];
+            const y1:number = Object.values(nightLinePoints[l])[1];
+            const x2:number = Object.values(nightLinePoints[l+1])[0];
+            const y2:number = Object.values(nightLinePoints[l+1])[1];
+            const lineString = [fromLonLat([x1, y1]),fromLonLat([x2, y2])];
+            lineStringArray.push(lineString);
+          }
+          nightLineLayer.getSource()?.addFeature(new Feature({
+              geometry: new MultiLineString(lineStringArray),
+            }))
+
+          let sunLinePos: number[] = [];
+          sunLinePos = sourceLineMethods.getSunPosition(lineTime);
+          sunLineFeature.getGeometry()?.setCoordinates(fromLonLat(sunLinePos));
+          sunLineFeature.setStyle([sunLineStyle, sunLineStyleDash]);
+        }
+      })
+    );
+
+    subscriptions.add(
+      eventBus.subscribe(DataHoverClearEvent, (event) => {
+        nightLineLayer.getSource()?.clear();
+        sunLineFeature.setStyle(new Style({}));
+      })
+    );
 
     return {
       init: () => layer,
       update: (data: PanelData) => {
         const from = new Date(data.timeRange.from.valueOf());
         const to = new Date(data.timeRange.to.valueOf());
-        source.setTime(to);
+        let selectedTime: Date = new Date();
+        let sunPos: number[] = [];
+        // TODO: add option for "Both"
+        if (config.show === ShowTime.From){
+          selectedTime = from;
+        } else {
+          selectedTime = to;
+        }
 
-        const src = lineLayer.getSource()!;
-        src.clear();
-
-        const points = source.getCoordinates(from as any) as unknown as Array<[number,number]>
-        console.log( 'COORDS', points.length, points );
-        //src.addFeature(new Feature(new LineString(points)));
+        source.setTime(selectedTime);
+        if (config.sun){
+          sunPos = sourceMethods.getSunPosition(selectedTime);
+          sunFeature.getGeometry()?.setCoordinates(fromLonLat(sunPos));
+        }
       },
 
       // Marker overlay options
@@ -123,6 +231,19 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
             },
             defaultValue: defaultConfig.show,
           });
+        builder.addColorPicker({
+          path: 'config.nightColor',
+          name: 'Night region color',
+          description: 'Pick color of night region',
+          defaultValue: 'rgb(0,0,0)',
+          settings: [{enableNamedColors: false}],
+        });
+        builder.addBooleanSwitch({
+          path: 'config.sun',
+          name: 'Display sun',
+          description: 'Show the sun',
+          defaultValue: defaultConfig.sun,
+        });
       },
     };
   },

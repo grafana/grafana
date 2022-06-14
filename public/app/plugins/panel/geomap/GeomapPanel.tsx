@@ -503,7 +503,7 @@ export class GeomapPanel extends Component<Props, State> {
       return Promise.reject('unknown layer: ' + options.type);
     }
 
-    const handler = await item.create(map, options, config.theme2);
+    const handler = await item.create(map, options, this.props.eventBus, config.theme2);
     const layer = handler.init();
 
     if (handler.update) {
