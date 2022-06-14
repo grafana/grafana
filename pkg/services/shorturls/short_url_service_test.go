@@ -80,7 +80,7 @@ func TestShortURLService(t *testing.T) {
 
 		shortURL, err := service.GetShortURLByUID(context.Background(), user, "testnotfounduid")
 		require.Error(t, err)
-		require.True(t, models.ErrShortURLNotFound.BaseOf(err))
+		require.True(t, models.ErrShortURLNotFound.Is(err))
 		require.Nil(t, shortURL)
 	})
 }

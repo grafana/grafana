@@ -7,7 +7,11 @@ import (
 )
 
 var (
-	ErrShortURLNotFound = errutil.NewBase(errutil.StatusNotFound, "shorturl.not-found")
+	ErrShortURLBadRequest   = errutil.NewBase(errutil.StatusBadRequest, "shorturl.bad-request")
+	ErrShortURLNotFound     = errutil.NewBase(errutil.StatusNotFound, "shorturl.not-found")
+	ErrShortURLAbsolutePath = errutil.NewBase(errutil.StatusValidationFailed, "shorturl.absolute-path", errutil.WithPublicMessage("Path should be relative"))
+	ErrShortURLInvalidPath  = errutil.NewBase(errutil.StatusValidationFailed, "shorturl.invalid-path", errutil.WithPublicMessage("Invalid short URL path"))
+	ErrShortURLInternal     = errutil.NewBase(errutil.StatusInternal, "shorturl.internal")
 )
 
 type ShortUrl struct {

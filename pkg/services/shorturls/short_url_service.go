@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var getTime = time.Now
@@ -26,12 +25,6 @@ type Service interface {
 	UpdateLastSeenAt(ctx context.Context, shortURL *models.ShortUrl) error
 	DeleteStaleShortURLs(ctx context.Context, cmd *models.DeleteShortUrlCommand) error
 }
-
-var (
-	errAbsolutePath = errutil.NewBase(errutil.StatusValidationFailed, "shorturl.absolute-path", errutil.WithPublicMessage("Path should be relative"))
-	errInvalidPath  = errutil.NewBase(errutil.StatusValidationFailed, "shorturl.invalid-path", errutil.WithPublicMessage("Invalid short URL path"))
-	errInternal     = errutil.NewBase(errutil.StatusInternal, "shorturl.internal")
-)
 
 type ShortURLService struct {
 	SQLStore *sqlstore.SQLStore
@@ -73,10 +66,10 @@ func (s ShortURLService) CreateShortURL(ctx context.Context, user *models.Signed
 	relPath = strings.TrimSpace(relPath)
 
 	if path.IsAbs(relPath) {
-		return nil, errAbsolutePath.Errorf("expected relative path: %s", relPath)
+		return nil, models.ErrShortURLAbsolutePath.Errorf("expected relative path: %s", relPath)
 	}
 	if strings.Contains(relPath, "../") {
-		return nil, errInvalidPath.Errorf("path cannot contain '../': %s", relPath)
+		return nil, models.ErrShortURLInvalidPath.Errorf("path cannot contain '../': %s", relPath)
 	}
 
 	now := time.Now().Unix()
@@ -93,7 +86,7 @@ func (s ShortURLService) CreateShortURL(ctx context.Context, user *models.Signed
 		return err
 	})
 	if err != nil {
-		return nil, errInternal.Errorf("failed to insert shorturl: %w", err)
+		return nil, models.ErrShortURLInternal.Errorf("failed to insert shorturl: %w", err)
 	}
 
 	return &shortURL, nil
