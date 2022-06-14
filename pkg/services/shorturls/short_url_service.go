@@ -45,7 +45,7 @@ func (s ShortURLService) GetShortURLByUID(ctx context.Context, user *models.Sign
 			return err
 		}
 		if !exists {
-			return models.ErrShortURLNotFound
+			return models.ErrShortURLNotFound.Errorf("short URL not found")
 		}
 
 		return nil

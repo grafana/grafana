@@ -1,7 +1,6 @@
 package api
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -51,7 +50,7 @@ func (hs *HTTPServer) redirectFromShortURL(c *models.ReqContext) {
 
 	shortURL, err := hs.ShortURLService.GetShortURLByUID(c.Req.Context(), c.SignedInUser, shortURLUID)
 	if err != nil {
-		if errors.Is(err, models.ErrShortURLNotFound) {
+		if models.ErrShortURLNotFound.BaseOf(err) {
 			hs.log.Debug("Not redirecting short URL since not found")
 			return
 		}

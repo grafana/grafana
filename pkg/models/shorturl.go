@@ -1,12 +1,13 @@
 package models
 
 import (
-	"errors"
 	"time"
+
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var (
-	ErrShortURLNotFound = errors.New("short URL not found")
+	ErrShortURLNotFound = errutil.NewBase(errutil.StatusNotFound, "shorturl.not-found")
 )
 
 type ShortUrl struct {
