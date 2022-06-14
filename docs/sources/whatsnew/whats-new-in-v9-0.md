@@ -110,9 +110,9 @@ Refer to the [Dashboard previews topic](https://grafana.com/docs/grafana/next/da
 
 {{< figure src="/static/img/docs/dashboards/dashboard-previews.png" max-width="750px" caption="Dashboard previews" >}}
 
-## Panel title search
+## Panel title search (opt-in beta)
 
-In addition to searching dashboards by title, you can now search panels as well. If a panel’s title matches your search query, it will be displayed in the search results.
+Grafana 9 has a feature toggle `panelTitleSearch`. When enabled, it tells Grafana to use a new search engine. Instead of using SQL queries, the new search uses an in-memory full-text index. That provides a better search experience and additionally allows searching through panel titles.
 
 ## Expanding the navigation bar
 
@@ -234,6 +234,26 @@ You can find the complete list of breaking changes in the links below. Please ch
 - https://grafana.com/docs/grafana/next/release-notes/release-notes-9-0-0-beta2/
 - https://grafana.com/docs/grafana/next/release-notes/release-notes-9-0-0-beta3/
 - https://grafana.com/docs/grafana/next/release-notes/release-notes-9-0-0
+
+### Envelope encryption enabled by default
+
+Since v8.3 a new kind of encryption called "envelope encryption" was added, for those secrets stored in the Grafana
+database (data source credentials, alerting notification channel credentials, oauth tokens, etc), behind a feature
+toggle named `envelopeEncryption`.
+
+In v9.0, `envelopeEncryption` feature toggle has been replaced in favor of `disableEnvelopeEncryption` and envelope encryption is
+the encryption mechanism used by default.
+
+Therefore, any secret created or updated in Grafana v9.0 won't be decryptable by any previous Grafana version unless the
+feature toggle `envelopeEncryption` is enabled in the previous version (only available since v8.3).
+This needs to be considered in high availability setups, progressive rollouts or in case of need to roll back to a previous Grafana version for any reason.
+
+The recommendation here is to enable `envelopeEncryption` for older versions, or alternatively enable `disableEnvelopeEncryption`
+before upgrading to v9.0. However, the latter is probably going to be removed in one of the next releases, so we hugely
+encourage to move on with envelope encryption.
+
+Find [here]({{< relref "../setup-grafana/configure-security/configure-database-encryption/" >}}) more details and some
+possible workarounds in case you end up in an undesired situation.
 
 ## A note on Grafana Enterprise licensing
 
