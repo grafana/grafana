@@ -55,7 +55,7 @@ func NewScreenshotImageService(screenshots screenshot.ScreenshotService, store s
 // from the configuration.
 func NewScreenshotImageServiceFromCfg(cfg *setting.Cfg, metrics prometheus.Registerer,
 	db *store.DBstore, ds dashboards.DashboardService, rs rendering.Service) (ImageService, error) {
-	if !cfg.UnifiedAlerting.Screenshots.Enabled {
+	if !cfg.UnifiedAlerting.Screenshots.Capture {
 		return &ScreenshotImageService{
 			screenshots: &screenshot.ScreenshotUnavailableService{},
 		}, nil

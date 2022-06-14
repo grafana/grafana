@@ -19,13 +19,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 func setUpGetOrgUsersDB(t *testing.T, sqlStore *sqlstore.SQLStore) {
-	setting.AutoAssignOrg = true
-	setting.AutoAssignOrgId = int(testOrgID)
+	sqlStore.Cfg.AutoAssignOrg = true
+	sqlStore.Cfg.AutoAssignOrgId = int(testOrgID)
 
 	_, err := sqlStore.CreateUser(context.Background(), models.CreateUserCommand{Email: "testUser@grafana.com", Login: testUserLogin})
 	require.NoError(t, err)

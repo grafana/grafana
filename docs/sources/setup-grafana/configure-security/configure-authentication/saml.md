@@ -407,3 +407,20 @@ The keys you provide should look like:
 ...
 -----END PRIVATE KEY-----
 ```
+
+### SAML login attempts fail with request response "origin not allowed"
+
+When the user logs in using SAML and gets presented with "origin not allowed", the user might be issuing the login from an IdP (identity provider) service or the user is behind a reverse proxy. This potentially happens as Grafana's CSRF checks deem the requests to be invalid. For more information [CSRF](https://owasp.org/www-community/attacks/csrf).
+
+To solve this issue, you can configure either the [`csrf_trusted_origins`]({{< relref "../../configure-grafana/#csrf-trusted-origins" >}}) or [`csrf_additional_headers`]({{< relref "../../configure-grafana/#csrf_additional_headers" >}}) option in the SAML configuration.
+
+Example of a configuration file:
+
+```bash
+# config.ini
+...
+[security]
+csrf_trusted_origins = https://grafana.example.com
+csrf_additional_headers = X-Forwarded-Host
+...
+```

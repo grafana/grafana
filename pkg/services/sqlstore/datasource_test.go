@@ -17,6 +17,9 @@ import (
 )
 
 func TestIntegrationDataAccess(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	defaultAddDatasourceCommand := models.AddDataSourceCommand{
 		OrgId:  10,
 		Name:   "nisse",
@@ -429,6 +432,9 @@ func TestIntegrationDataAccess(t *testing.T) {
 }
 
 func TestIntegrationGetDefaultDataSource(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	InitTestDB(t)
 
 	t.Run("should return error if there is no default datasource", func(t *testing.T) {
