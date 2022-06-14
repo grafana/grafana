@@ -218,18 +218,19 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSo
 	}
 
 	cmd.UpdateSecretFn = func() error {
+		var secretsErr error
+		if query.Result.Name != cmd.Name {
+			secretsErr = s.SecretsStore.Rename(ctx, cmd.OrgId, query.Result.Name, secretType, cmd.Name)
+		}
+		if secretsErr != nil {
+			return secretsErr
+		}
+
 		return s.SecretsStore.Set(ctx, cmd.OrgId, cmd.Name, secretType, string(secret))
 	}
 
 	if err = s.SQLStore.UpdateDataSource(ctx, cmd); err != nil {
 		return err
-	}
-
-	if query.Result.Name != cmd.Name {
-		err = s.SecretsStore.Rename(ctx, cmd.OrgId, query.Result.Name, secretType, cmd.Name)
-		if err != nil {
-			return err
-		}
 	}
 
 	return nil
