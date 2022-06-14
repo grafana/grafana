@@ -299,10 +299,15 @@ export class PanelModel implements DataConfigSource, IPanelModel {
 
   /** Should not increment configRev here as this is called for all panels on grid init */
   updateGridPos(newPos: GridPos) {
+    if (isEqual(this.gridPos, newPos)) {
+      return;
+    }
+
     this.gridPos.x = newPos.x;
     this.gridPos.y = newPos.y;
     this.gridPos.w = newPos.w;
     this.gridPos.h = newPos.h;
+    this.configRev++;
   }
 
   runAllPanelQueries(dashboardId: number, dashboardTimezone: string, timeData: TimeOverrideResult, width: number) {
