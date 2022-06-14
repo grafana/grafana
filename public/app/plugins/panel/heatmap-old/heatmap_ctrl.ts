@@ -155,6 +155,9 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
 
     this.onCardColorChange = this.onCardColorChange.bind(this);
+
+    // Make sure we do not save the version so migration to react version is kicked off
+    delete this.panel.pluginVersion;
   }
 
   onInitEditMode() {

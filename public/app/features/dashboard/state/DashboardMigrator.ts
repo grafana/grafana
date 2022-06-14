@@ -781,12 +781,9 @@ export class DashboardMigrator {
       panelUpgrades.push((panel: any) => {
         const type = panel.type ?? '';
         if (type === 'heatmap-new') {
-          // alpha flavor
           panel.type = 'heatmap';
-          // other options changes?
-        } else if (type === 'heatmap' && panel?.options && Object.keys(panel.options).length < 1) {
-          delete panel.pluginVersion; // this will kick off standard panel migration path
         }
+        delete panel.pluginVersion; // this will kick off standard panel version migration path
         return panel;
       });
     }
