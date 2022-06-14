@@ -9,14 +9,15 @@ To programatically get the list, execute in the browser console:
   }});
   i;
  
-That list is not complete so we should merge that list with the one below. You can do with any js console:
+Note: Validate that the output makes sense, the format of the page may change.
+ 
+That list is not complete so we should merge it with the one below. You can do with a node console:
  
   const u = require('lodash')
   const new = [list from above]
   const logsResourceTypes = [this list]
   console.dir(u.uniq(logsResourceTypes.concat(new)).sort(), {'maxArrayLength': null})
  
-Note: Validate that the output makes sense, the format of the page may change.
  */
 
 export const logsResourceTypes = [
