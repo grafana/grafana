@@ -101,7 +101,21 @@ import (
 // 422: unprocessableEntityError
 // 500: internalServerError
 
-// swagger:parameters getDashboardByUID deleteDashboardByUID getDashboardPermissionsWithUid postDashboardPermissionsWithUid getDashboardVersionByUID
+// swagger:parameters getDashboardByUID
+type GetDashboardByUIDParams struct {
+	// in:path
+	// required:true
+	UID string `json:"uid"`
+}
+
+// swagger:parameters deleteDashboardByUID
+type DeleteDashboardByUIDParams struct {
+	// in:path
+	// required:true
+	UID string `json:"uid"`
+}
+
+// swagger:parameters getDashboardPermissionsWithUid postDashboardPermissionsWithUid getDashboardVersionByUID
 // swagger:parameters getDashboardVersionsByUID restoreDashboardVersionByUID
 type UID struct {
 	// in:path
