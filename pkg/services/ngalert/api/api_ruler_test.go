@@ -659,6 +659,75 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 	})
 }
 
+func TestVerifyProvisionedRulesNotAffected(t *testing.T) {
+	orgID := rand.Int63()
+	group := models.GenerateGroupKey(orgID)
+	affectedGroups := make(map[models.AlertRuleGroupKey][]*models.AlertRule)
+	var allRules []*models.AlertRule
+	{
+		rules := models.GenerateAlertRules(rand.Intn(3)+1, models.AlertRuleGen(withGroupKey(group)))
+		allRules = append(allRules, rules...)
+		affectedGroups[group] = rules
+		for i := 0; i < rand.Intn(3)+1; i++ {
+			g := models.GenerateGroupKey(orgID)
+			rules := models.GenerateAlertRules(rand.Intn(3)+1, models.AlertRuleGen(withGroupKey(g)))
+			allRules = append(allRules, rules...)
+			affectedGroups[g] = rules
+		}
+	}
+	ch := &changes{
+		GroupKey:       group,
+		AffectedGroups: affectedGroups,
+	}
+
+	t.Run("should return error if at least one rule in affected groups is provisioned", func(t *testing.T) {
+		rand.Shuffle(len(allRules), func(i, j int) {
+			allRules[j], allRules[i] = allRules[i], allRules[j]
+		})
+		expectedGroup := make(map[string]struct{})
+		storeResult := make(map[string]models.Provenance, len(allRules))
+		for i := 0; i < rand.Intn(len(allRules)-1)+1; i++ {
+			prov := models.ProvenanceAPI
+			if rand.Int63()%2 == 0 {
+				prov = models.ProvenanceFile
+			}
+			storeResult[allRules[i].UID] = prov
+			expectedGroup[allRules[i].GetGroupKey().String()] = struct{}{}
+		}
+
+		provenanceStore := &provisioning.MockProvisioningStore{}
+		provenanceStore.EXPECT().GetProvenances(mock.Anything, orgID, "alertRule").Return(storeResult, nil)
+
+		result := verifyProvisionedRulesNotAffected(context.Background(), provenanceStore, orgID, ch)
+		require.Error(t, result)
+		require.ErrorIs(t, result, errProvisionedAlerts)
+		for key := range expectedGroup {
+			assert.Contains(t, result.Error(), key)
+		}
+	})
+
+	t.Run("should return nil if all have ProvenanceNone", func(t *testing.T) {
+		storeResult := make(map[string]models.Provenance, len(allRules))
+		for _, rule := range allRules {
+			storeResult[rule.UID] = models.ProvenanceNone
+		}
+
+		provenanceStore := &provisioning.MockProvisioningStore{}
+		provenanceStore.EXPECT().GetProvenances(mock.Anything, orgID, "alertRule").Return(storeResult, nil)
+
+		result := verifyProvisionedRulesNotAffected(context.Background(), provenanceStore, orgID, ch)
+		require.NoError(t, result)
+	})
+
+	t.Run("should return nil if no alerts have provisioning status", func(t *testing.T) {
+		provenanceStore := &provisioning.MockProvisioningStore{}
+		provenanceStore.EXPECT().GetProvenances(mock.Anything, orgID, "alertRule").Return(make(map[string]models.Provenance, len(allRules)), nil)
+
+		result := verifyProvisionedRulesNotAffected(context.Background(), provenanceStore, orgID, ch)
+		require.NoError(t, result)
+	})
+}
+
 func createService(ac *acMock.Mock, store *store.FakeRuleStore, scheduler schedule.ScheduleService) *RulerSrv {
 	return &RulerSrv{
 		xactManager:     store,

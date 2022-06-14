@@ -525,7 +525,9 @@ type ruleUpdate struct {
 }
 
 type changes struct {
-	GroupKey       ngmodels.AlertRuleGroupKey
+	GroupKey ngmodels.AlertRuleGroupKey
+	// AffectedGroups contains all rules of all groups that are affected by these changes.
+	// For example, during moving a rule from one group to another this map will contain all rules from two groups
 	AffectedGroups map[ngmodels.AlertRuleGroupKey][]*ngmodels.AlertRule
 	New            []*ngmodels.AlertRule
 	Update         []ruleUpdate
