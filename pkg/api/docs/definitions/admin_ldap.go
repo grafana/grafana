@@ -61,8 +61,15 @@ package definitions
 // 500: internalServerError
 
 // swagger:parameters getLDAPUser
-type UserNameParam struct {
+type GetLDAPUserParams struct {
 	// in:path
 	// required:true
-	UserID string `json:"user_name"`
+	UserName string `json:"user_name"`
+}
+
+// swagger:parameters syncLDAPUser
+type SyncLDAPUserParams struct {
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
 }
