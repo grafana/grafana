@@ -56,35 +56,35 @@ function ErrorAlert(props: { error: DataQueryError }) {
   );
 }
 
-type VisualisationData = {
-  logsVolumeData?: DataQueryResponse;
-  logLinesBased: boolean;
-  range: AbsoluteTimeRange;
-};
-
 function createVisualisationData(
   logLinesBased: DataQueryResponse | undefined,
   logLinesBasedVisibleRange: AbsoluteTimeRange | undefined,
   fullRangeData: DataQueryResponse | undefined,
   absoluteRange: AbsoluteTimeRange
-): VisualisationData {
-  const logLinesFrames = logLinesBased?.data;
-  if (logLinesFrames && logLinesFrames.length) {
+):
+  | {
+      logsVolumeData: DataQueryResponse;
+      logLinesBased: boolean;
+      range: AbsoluteTimeRange;
+    }
+  | undefined {
+  if (fullRangeData !== undefined) {
     return {
-      logsVolumeData: {
-        data: logLinesFrames,
-        state: logLinesBased?.state,
-      },
+      logsVolumeData: fullRangeData,
+      logLinesBased: false,
+      range: absoluteRange,
+    };
+  }
+
+  if (logLinesBased !== undefined) {
+    return {
+      logsVolumeData: logLinesBased,
       logLinesBased: true,
       range: logLinesBasedVisibleRange || absoluteRange,
     };
   }
 
-  return {
-    logsVolumeData: fullRangeData,
-    logLinesBased: false,
-    range: absoluteRange,
-  };
+  return undefined;
 }
 
 export function LogsVolumePanel(props: Props) {
@@ -94,20 +94,26 @@ export function LogsVolumePanel(props: Props) {
   const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
   const height = 150;
 
-  const { logsVolumeData, logLinesBased, range } = createVisualisationData(
+  const data = createVisualisationData(
     props.logLinesBasedData,
     props.logLinesBasedDataVisibleRange,
     props.logsVolumeData,
     props.absoluteRange
   );
 
+  if (data === undefined) {
+    return null;
+  }
+
+  const { logsVolumeData, logLinesBased, range } = data;
+
+  if (logsVolumeData.error !== undefined) {
+    return <ErrorAlert error={logsVolumeData.error} />;
+  }
+
   let LogsVolumePanelContent;
 
-  if (!logsVolumeData) {
-    return null;
-  } else if (logsVolumeData?.error) {
-    return <ErrorAlert error={logsVolumeData?.error} />;
-  } else if (logsVolumeData?.state === LoadingState.Loading) {
+  if (logsVolumeData?.state === LoadingState.Loading) {
     LogsVolumePanelContent = <span>Log volume is loading...</span>;
   } else if (logsVolumeData?.data) {
     if (logsVolumeData.data.length > 0) {
