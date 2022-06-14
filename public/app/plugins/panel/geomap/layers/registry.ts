@@ -1,7 +1,14 @@
 import Map from 'ol/Map';
 
-import { MapLayerRegistryItem, Registry, MapLayerOptions, GrafanaTheme2 } from '@grafana/data';
-import { config } from 'app/core/config';
+import {
+  MapLayerRegistryItem,
+  Registry,
+  MapLayerOptions,
+  GrafanaTheme2,
+  SelectableValue,
+  PluginState,
+} from '@grafana/data';
+import { config, hasAlphaPanels } from 'app/core/config';
 
 import { basemapLayers } from './basemaps';
 import { carto } from './basemaps/carto';
@@ -42,3 +49,30 @@ export const geomapLayerRegistry = new Registry<MapLayerRegistryItem<any>>(() =>
   ...basemapLayers, // simple basemaps
   ...dataLayers, // Layers with update functions
 ]);
+
+interface RegistrySelectInfo {
+  options: Array<SelectableValue<string>>;
+  current: Array<SelectableValue<string>>;
+}
+
+function getLayersSelection(items: Array<MapLayerRegistryItem<any>>, current?: string): RegistrySelectInfo {
+  const res: RegistrySelectInfo = { options: [], current: [] };
+  for (const layer of items) {
+    if (layer.state === PluginState.alpha && !hasAlphaPanels) {
+      continue;
+    }
+    const opt = { label: layer.name, value: layer.id, description: layer.description };
+    res.options.push(opt);
+    if (layer.id === current) {
+      res.current.push(opt);
+    }
+  }
+  return res;
+}
+
+export function getLayersOptions(basemap: boolean, current?: string): RegistrySelectInfo {
+  if (basemap) {
+    return getLayersSelection([defaultBaseLayer, ...basemapLayers], current);
+  }
+  return getLayersSelection([...dataLayers, ...basemapLayers], current);
+}

@@ -245,13 +245,13 @@ func (bucketAgg BucketAgg) generateSettingsForDSL() map[string]interface{} {
 
 func addDateHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, timeFrom, timeTo int64) es.AggBuilder {
 	aggBuilder.DateHistogram(bucketAgg.ID, bucketAgg.Field, func(a *es.DateHistogramAgg, b es.AggBuilder) {
-		a.Interval = bucketAgg.Settings.Get("interval").MustString("auto")
+		a.FixedInterval = bucketAgg.Settings.Get("interval").MustString("auto")
 		a.MinDocCount = bucketAgg.Settings.Get("min_doc_count").MustInt(0)
 		a.ExtendedBounds = &es.ExtendedBounds{Min: timeFrom, Max: timeTo}
 		a.Format = bucketAgg.Settings.Get("format").MustString(es.DateFormatEpochMS)
 
-		if a.Interval == "auto" {
-			a.Interval = "$__interval"
+		if a.FixedInterval == "auto" {
+			a.FixedInterval = "$__interval"
 		}
 
 		if offset, err := bucketAgg.Settings.Get("offset").String(); err == nil {

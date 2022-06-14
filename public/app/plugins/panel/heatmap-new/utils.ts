@@ -13,7 +13,7 @@ import {
 import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';
 import { readHeatmapScanlinesCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
-import { HeatmapBucketLayout } from 'app/features/transformers/calculateHeatmap/models.gen';
+import { HeatmapCellLayout } from 'app/features/transformers/calculateHeatmap/models.gen';
 
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 
@@ -270,11 +270,11 @@ export function prepConfig(opts: PrepConfigOpts) {
                 }
               }
 
-              if (dataRef.current?.yLayout === HeatmapBucketLayout.le) {
+              if (dataRef.current?.yLayout === HeatmapCellLayout.le) {
                 if (!minExpanded) {
                   dataMin /= yExp;
                 }
-              } else if (dataRef.current?.yLayout === HeatmapBucketLayout.ge) {
+              } else if (dataRef.current?.yLayout === HeatmapCellLayout.ge) {
                 if (!maxExpanded) {
                   dataMax *= yExp;
                 }
@@ -292,9 +292,9 @@ export function prepConfig(opts: PrepConfigOpts) {
               }
 
               if (bucketSize) {
-                if (dataRef.current?.yLayout === HeatmapBucketLayout.le) {
+                if (dataRef.current?.yLayout === HeatmapCellLayout.le) {
                   dataMin -= bucketSize!;
-                } else if (dataRef.current?.yLayout === HeatmapBucketLayout.ge) {
+                } else if (dataRef.current?.yLayout === HeatmapCellLayout.ge) {
                   dataMax += bucketSize!;
                 } else {
                   dataMin -= bucketSize! / 2;
@@ -328,10 +328,10 @@ export function prepConfig(opts: PrepConfigOpts) {
           let splits = meta.yOrdinalDisplay.map((v, idx) => idx);
 
           switch (dataRef.current?.yLayout) {
-            case HeatmapBucketLayout.le:
+            case HeatmapCellLayout.le:
               splits.unshift(-1);
               break;
-            case HeatmapBucketLayout.ge:
+            case HeatmapCellLayout.ge:
               splits.push(splits.length);
               break;
           }
@@ -367,7 +367,7 @@ export function prepConfig(opts: PrepConfigOpts) {
       : undefined,
   });
 
-  const pathBuilder = heatmapType === DataFrameType.HeatmapScanlines ? heatmapPathsDense : heatmapPathsSparse;
+  const pathBuilder = heatmapType === DataFrameType.HeatmapCells ? heatmapPathsDense : heatmapPathsSparse;
 
   // heatmap layer
   builder.addSeries({
@@ -397,21 +397,21 @@ export function prepConfig(opts: PrepConfigOpts) {
       hideLE,
       hideGE,
       xAlign:
-        dataRef.current?.xLayout === HeatmapBucketLayout.le
+        dataRef.current?.xLayout === HeatmapCellLayout.le
           ? -1
-          : dataRef.current?.xLayout === HeatmapBucketLayout.ge
+          : dataRef.current?.xLayout === HeatmapCellLayout.ge
           ? 1
           : 0,
-      yAlign: ((dataRef.current?.yLayout === HeatmapBucketLayout.le
+      yAlign: ((dataRef.current?.yLayout === HeatmapCellLayout.le
         ? -1
-        : dataRef.current?.yLayout === HeatmapBucketLayout.ge
+        : dataRef.current?.yLayout === HeatmapCellLayout.ge
         ? 1
         : 0) * (yAxisReverse ? -1 : 1)) as -1 | 0 | 1,
       ySizeDivisor,
       disp: {
         fill: {
           values: (u, seriesIdx) => {
-            let countFacetIdx = heatmapType === DataFrameType.HeatmapScanlines ? 2 : 3;
+            let countFacetIdx = heatmapType === DataFrameType.HeatmapCells ? 2 : 3;
             return valuesToFills(u.data[seriesIdx][countFacetIdx] as unknown as number[], palette, valueMin, valueMax);
           },
           index: palette,

@@ -239,7 +239,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesPut should return 404 if datasource not found",
 				url:          fmt.Sprintf("/api/datasources/%v", "12345678"),
 				method:       http.MethodPut,
-				permissions: []*ac.Permission{
+				permissions: []ac.Permission{
 					{
 						Action: datasources.ActionWrite,
 						Scope:  datasources.ScopeAll,
@@ -254,7 +254,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesGet should return 200 for user with correct permissions",
 				url:          "/api/datasources/",
 				method:       http.MethodGet,
-				permissions:  []*ac.Permission{{Action: datasources.ActionRead, Scope: datasources.ScopeAll}},
+				permissions:  []ac.Permission{{Action: datasources.ActionRead, Scope: datasources.ScopeAll}},
 			},
 		},
 		{
@@ -263,7 +263,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesGet should return 403 for user without required permissions",
 				url:          "/api/datasources/",
 				method:       http.MethodGet,
-				permissions:  []*ac.Permission{{Action: "wrong"}},
+				permissions:  []ac.Permission{{Action: "wrong"}},
 			},
 		},
 		{
@@ -273,7 +273,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesPost should return 200 for user with correct permissions",
 				url:          "/api/datasources/",
 				method:       http.MethodPost,
-				permissions:  []*ac.Permission{{Action: datasources.ActionCreate}},
+				permissions:  []ac.Permission{{Action: datasources.ActionCreate}},
 			},
 			expectedDS: &testDatasource,
 		},
@@ -283,7 +283,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesPost should return 403 for user without required permissions",
 				url:          "/api/datasources/",
 				method:       http.MethodPost,
-				permissions:  []*ac.Permission{{Action: "wrong"}},
+				permissions:  []ac.Permission{{Action: "wrong"}},
 			},
 		},
 		{
@@ -293,7 +293,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesPut should return 200 for user with correct permissions",
 				url:          fmt.Sprintf("/api/datasources/%v", testDatasource.Id),
 				method:       http.MethodPut,
-				permissions: []*ac.Permission{
+				permissions: []ac.Permission{
 					{
 						Action: datasources.ActionWrite,
 						Scope:  fmt.Sprintf("datasources:id:%v", testDatasource.Id),
@@ -308,7 +308,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesPut should return 403 for user without required permissions",
 				url:          fmt.Sprintf("/api/datasources/%v", testDatasource.Id),
 				method:       http.MethodPut,
-				permissions:  []*ac.Permission{{Action: "wrong"}},
+				permissions:  []ac.Permission{{Action: "wrong"}},
 			},
 		},
 		{
@@ -318,7 +318,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesPut should return 403 for read only datasource",
 				url:          fmt.Sprintf("/api/datasources/%v", testDatasourceReadOnly.Id),
 				method:       http.MethodPut,
-				permissions: []*ac.Permission{
+				permissions: []ac.Permission{
 					{
 						Action: datasources.ActionWrite,
 						Scope:  fmt.Sprintf("datasources:id:%v", testDatasourceReadOnly.Id),
@@ -333,7 +333,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesDeleteByID should return 200 for user with correct permissions",
 				url:          fmt.Sprintf("/api/datasources/%v", testDatasource.Id),
 				method:       http.MethodDelete,
-				permissions: []*ac.Permission{
+				permissions: []ac.Permission{
 					{
 						Action: datasources.ActionDelete,
 						Scope:  fmt.Sprintf("datasources:id:%v", testDatasource.Id),
@@ -348,7 +348,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesDeleteByID should return 403 for user without required permissions",
 				url:          fmt.Sprintf("/api/datasources/%v", testDatasource.Id),
 				method:       http.MethodDelete,
-				permissions:  []*ac.Permission{{Action: "wrong"}},
+				permissions:  []ac.Permission{{Action: "wrong"}},
 			},
 		},
 		{
@@ -357,7 +357,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesDeleteByUID should return 200 for user with correct permissions",
 				url:          fmt.Sprintf("/api/datasources/uid/%v", testDatasource.Uid),
 				method:       http.MethodDelete,
-				permissions: []*ac.Permission{
+				permissions: []ac.Permission{
 					{
 						Action: datasources.ActionDelete,
 						Scope:  fmt.Sprintf("datasources:uid:%v", testDatasource.Uid),
@@ -372,7 +372,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesDeleteByUID should return 403 for user without required permissions",
 				url:          fmt.Sprintf("/api/datasources/uid/%v", testDatasource.Uid),
 				method:       http.MethodDelete,
-				permissions:  []*ac.Permission{{Action: "wrong"}},
+				permissions:  []ac.Permission{{Action: "wrong"}},
 			},
 		},
 		{
@@ -381,7 +381,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesDeleteByName should return 200 for user with correct permissions",
 				url:          fmt.Sprintf("/api/datasources/name/%v", testDatasource.Name),
 				method:       http.MethodDelete,
-				permissions: []*ac.Permission{
+				permissions: []ac.Permission{
 					{
 						Action: datasources.ActionDelete,
 						Scope:  fmt.Sprintf("datasources:name:%v", testDatasource.Name),
@@ -396,7 +396,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesDeleteByName should return 403 for user without required permissions",
 				url:          fmt.Sprintf("/api/datasources/name/%v", testDatasource.Name),
 				method:       http.MethodDelete,
-				permissions:  []*ac.Permission{{Action: "wrong"}},
+				permissions:  []ac.Permission{{Action: "wrong"}},
 			},
 		},
 		{
@@ -405,7 +405,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesGetByID should return 200 for user with correct permissions",
 				url:          fmt.Sprintf("/api/datasources/%v", testDatasource.Id),
 				method:       http.MethodGet,
-				permissions: []*ac.Permission{
+				permissions: []ac.Permission{
 					{
 						Action: datasources.ActionRead,
 						Scope:  fmt.Sprintf("datasources:id:%v", testDatasource.Id),
@@ -420,7 +420,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesGetByID should return 403 for user without required permissions",
 				url:          fmt.Sprintf("/api/datasources/%v", testDatasource.Id),
 				method:       http.MethodGet,
-				permissions:  []*ac.Permission{{Action: "wrong"}},
+				permissions:  []ac.Permission{{Action: "wrong"}},
 			},
 		},
 		{
@@ -429,7 +429,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesGetByUID should return 200 for user with correct permissions",
 				url:          fmt.Sprintf("/api/datasources/uid/%v", testDatasource.Uid),
 				method:       http.MethodGet,
-				permissions: []*ac.Permission{
+				permissions: []ac.Permission{
 					{
 						Action: datasources.ActionRead,
 						Scope:  fmt.Sprintf("datasources:uid:%v", testDatasource.Uid),
@@ -444,7 +444,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesGetByUID should return 403 for user without required permissions",
 				url:          fmt.Sprintf("/api/datasources/uid/%v", testDatasource.Uid),
 				method:       http.MethodGet,
-				permissions:  []*ac.Permission{{Action: "wrong"}},
+				permissions:  []ac.Permission{{Action: "wrong"}},
 			},
 		},
 		{
@@ -453,7 +453,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesGetByName should return 200 for user with correct permissions",
 				url:          fmt.Sprintf("/api/datasources/name/%v", testDatasource.Name),
 				method:       http.MethodGet,
-				permissions: []*ac.Permission{
+				permissions: []ac.Permission{
 					{
 						Action: datasources.ActionRead,
 						Scope:  fmt.Sprintf("datasources:name:%v", testDatasource.Name),
@@ -468,7 +468,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesGetByName should return 403 for user without required permissions",
 				url:          fmt.Sprintf("/api/datasources/name/%v", testDatasource.Name),
 				method:       http.MethodGet,
-				permissions:  []*ac.Permission{{Action: "wrong"}},
+				permissions:  []ac.Permission{{Action: "wrong"}},
 			},
 			expectedDS: &testDatasource,
 		},
@@ -478,7 +478,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesGetIdByName should return 200 for user with correct permissions",
 				url:          fmt.Sprintf("/api/datasources/id/%v", testDatasource.Name),
 				method:       http.MethodGet,
-				permissions: []*ac.Permission{
+				permissions: []ac.Permission{
 					{
 						Action: datasources.ActionIDRead,
 						Scope:  fmt.Sprintf("datasources:name:%v", testDatasource.Name),
@@ -493,7 +493,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesGetIdByName should return 403 for user without required permissions",
 				url:          fmt.Sprintf("/api/datasources/id/%v", testDatasource.Name),
 				method:       http.MethodGet,
-				permissions:  []*ac.Permission{{Action: "wrong"}},
+				permissions:  []ac.Permission{{Action: "wrong"}},
 			},
 			expectedDS: &testDatasource,
 		},

@@ -46,7 +46,7 @@ interface Field {
 }
 ```
 
-Let's look an example. The table below demonstrates a data frame with two fields, _time_ and _temperature_.
+Let's look at an example. The table below demonstrates a data frame with two fields, _time_ and _temperature_.
 
 | time                | temperature |
 | ------------------- | ----------- |
