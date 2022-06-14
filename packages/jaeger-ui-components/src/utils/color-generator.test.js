@@ -29,21 +29,3 @@ it('gives different colors for each for each key', () => {
   const colorTwo = getColorByKey('serviceB', createTheme());
   expect(colorOne).not.toBe(colorTwo);
 });
-
-it('should clear cache', () => {
-  clear();
-  const colorOne = getColorByKey('serviceA', createTheme());
-  clear();
-  const colorTwo = getColorByKey('serviceB', createTheme());
-  expect(colorOne).toBe(colorTwo);
-});
-
-it('should not allow red', () => {
-  clear();
-  getColorByKey('serviceA', createTheme());
-  getColorByKey('serviceB', createTheme());
-  getColorByKey('serviceC', createTheme());
-  getColorByKey('serviceD', createTheme());
-  const colorFive = getColorByKey('serviceE', createTheme());
-  expect(colorFive).not.toBe('#E24D42');
-});
