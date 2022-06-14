@@ -5,7 +5,6 @@ import { Alert, Button, Checkbox, ClipboardButton, Field, FieldSet, Icon, Input,
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { appEvents } from 'app/core/core';
-import { VariableModel } from 'app/features/variables/types';
 import { dispatch } from 'app/store/store';
 
 import {
@@ -27,12 +26,12 @@ interface Acknowledgements {
 }
 
 export const SharePublicDashboard = (props: Props) => {
+  const dashboardVariables = props.dashboard.getVariables();
   const [publicDashboard, setPublicDashboardConfig] = useState<PublicDashboard>({
     isEnabled: false,
     uid: '',
     dashboardUid: props.dashboard.uid,
   });
-  const [dashboardVariables, setDashboardVariables] = useState<VariableModel[]>([]);
   const [acknowledgements, setAcknowledgements] = useState<Acknowledgements>({
     public: false,
     datasources: false,
@@ -42,8 +41,7 @@ export const SharePublicDashboard = (props: Props) => {
 
   useEffect(() => {
     getPublicDashboardConfig(props.dashboard.uid, setPublicDashboardConfig).catch();
-    setDashboardVariables(props.dashboard.getVariables());
-  }, [props]);
+  }, [props.dashboard.uid]);
 
   const onSavePublicConfig = () => {
     if (dashboardHasTemplateVariables(dashboardVariables)) {
@@ -56,10 +54,6 @@ export const SharePublicDashboard = (props: Props) => {
     savePublicDashboardConfig(props.dashboard.uid, publicDashboard, setPublicDashboardConfig).catch();
   };
 
-  const getPublicDashboardUrl = () => {
-    return generatePublicDashboardUrl(publicDashboard);
-  };
-
   const onShareUrlCopy = () => {
     appEvents.emit(AppEvents.alertSuccess, ['Content copied to clipboard']);
   };
@@ -67,7 +61,6 @@ export const SharePublicDashboard = (props: Props) => {
   const onAcknowledge = useCallback(
     (field: string, checked: boolean) => {
       setAcknowledgements({ ...acknowledgements, [field]: checked });
-      console.log(acknowledgements);
     },
     [acknowledgements]
   );
@@ -81,7 +74,6 @@ export const SharePublicDashboard = (props: Props) => {
 
   return (
     <>
-      {console.log('rendered')}
       <p>Welcome to Grafana public dashboards alpha!</p>
       <p>
         To allow the current dashboard to be published publicly, toggle the switch. For now we do not support template
@@ -92,7 +84,6 @@ export const SharePublicDashboard = (props: Props) => {
           This dashboard cannot be made public because it has template variables
         </Alert>
       )}
-      <br />
       We&apos;d love your feedback. To share, please comment on this{' '}
       <a
         href="https://github.com/grafana/grafana/discussions/49253"
@@ -107,18 +98,23 @@ export const SharePublicDashboard = (props: Props) => {
         <div>
           Before you click Save, please acknowledge the following information: <br />
           <FieldSet>
-            <Checkbox
-              label="Your entire dashboard will be public"
-              value={acknowledgements.public}
-              onChange={(e) => onAcknowledge('public', e.currentTarget.checked)}
-            />
             <br />
-            <Checkbox
-              label="Publishing currently only works with a subset of datasources"
-              value={acknowledgements.datasources}
-              description="learn more about supported datasources"
-              onChange={(e) => onAcknowledge('datasources', e.currentTarget.checked)}
-            />
+            <div>
+              <Checkbox
+                label="Your entire dashboard will be public"
+                value={acknowledgements.public}
+                onChange={(e) => onAcknowledge('public', e.currentTarget.checked)}
+              />
+            </div>
+            <br />
+            <div>
+              <Checkbox
+                label="Publishing currently only works with a subset of datasources"
+                value={acknowledgements.datasources}
+                onChange={(e) => onAcknowledge('datasources', e.currentTarget.checked)}
+              />
+              <Icon name="info-circle" />
+            </div>
             <br />
             <Checkbox
               label="Variables can be sensitive and are currently not recommended"
@@ -138,7 +134,7 @@ export const SharePublicDashboard = (props: Props) => {
           </FieldSet>
         </div>
       )}
-      {acknowledged() && (
+      {(publicDashboardPersisted(publicDashboard) || acknowledged()) && (
         <div>
           <h4 className="share-modal-info-text">Public Dashboard Configuration</h4>
           <FieldSet>
@@ -168,13 +164,19 @@ export const SharePublicDashboard = (props: Props) => {
                 onChange={() => setPublicDashboardConfig({ ...publicDashboard, isEnabled: !publicDashboard.isEnabled })}
               />
             </Field>
-            {publicDashboardPersisted(publicDashboard) && (
+            {publicDashboardPersisted(publicDashboard) && publicDashboard.isEnabled && (
               <Field label="Link URL">
                 <Input
                   value={generatePublicDashboardUrl(publicDashboard)}
                   readOnly
                   addonAfter={
-                    <ClipboardButton variant="primary" getText={getPublicDashboardUrl} onClipboardCopy={onShareUrlCopy}>
+                    <ClipboardButton
+                      variant="primary"
+                      getText={() => {
+                        return generatePublicDashboardUrl(publicDashboard);
+                      }}
+                      onClipboardCopy={onShareUrlCopy}
+                    >
                       <Icon name="copy" /> Copy
                     </ClipboardButton>
                   }
