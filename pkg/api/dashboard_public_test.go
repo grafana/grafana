@@ -109,7 +109,7 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 				require.NoError(t, err)
 
 				assert.Equal(t, DashboardUid, dashResp.Dashboard.Get("Uid").MustString())
-				assert.Equal(t, true, dashResp.Meta.IsPublic)
+				assert.Equal(t, true, dashResp.Meta.IsEnabled)
 				assert.Equal(t, false, dashResp.Meta.CanEdit)
 				assert.Equal(t, false, dashResp.Meta.CanDelete)
 				assert.Equal(t, false, dashResp.Meta.CanSave)
@@ -126,7 +126,7 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 }
 
 func TestAPIGetPublicDashboardConfig(t *testing.T) {
-	pdc := &models.PublicDashboard{IsEnabled: true}
+	pubdash := &models.PublicDashboard{IsEnabled: true}
 
 	testCases := []struct {
 		Name                  string
@@ -139,7 +139,7 @@ func TestAPIGetPublicDashboardConfig(t *testing.T) {
 			Name:                  "retrieves public dashboard config when dashboard is found",
 			DashboardUid:          "1",
 			ExpectedHttpResponse:  http.StatusOK,
-			PublicDashboardResult: pdc,
+			PublicDashboardResult: pubdash,
 			PublicDashboardError:  nil,
 		},
 		{
