@@ -297,6 +297,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.isViewing = isViewing;
   }
 
+  /** Should not increment configRev here as this is called for all panels on grid init */
   updateGridPos(newPos: GridPos) {
     this.gridPos.x = newPos.x;
     this.gridPos.y = newPos.y;
