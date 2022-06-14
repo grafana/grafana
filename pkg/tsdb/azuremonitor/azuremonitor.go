@@ -279,7 +279,6 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 			return nil, err
 		} else {
 			body, err := io.ReadAll(metricsRes.Body)
-			fmt.Println("here", body, err)
 			if err != nil {
 				return nil, err
 			}
