@@ -24,7 +24,7 @@ const _ = grpc.SupportPackageIsVersion7
 type SecretsManagerClient interface {
 	GetSecret(ctx context.Context, in *GetSecretRequest, opts ...grpc.CallOption) (*GetSecretResponse, error)
 	SetSecret(ctx context.Context, in *SetSecretRequest, opts ...grpc.CallOption) (*SetSecretResponse, error)
-	DeleteSecret(ctx context.Context, in *DeleteSecretRequest, opts ...grpc.CallOption) (*DeleteSecretResponse, error)
+	DeleteSecret(ctx context.Context, in *DelSecretRequest, opts ...grpc.CallOption) (*DelSecretResponse, error)
 	ListSecrets(ctx context.Context, in *ListSecretsRequest, opts ...grpc.CallOption) (*ListSecretsResponse, error)
 	RenameSecret(ctx context.Context, in *RenameSecretRequest, opts ...grpc.CallOption) (*RenameSecretResponse, error)
 }
@@ -55,8 +55,8 @@ func (c *secretsManagerClient) SetSecret(ctx context.Context, in *SetSecretReque
 	return out, nil
 }
 
-func (c *secretsManagerClient) DeleteSecret(ctx context.Context, in *DeleteSecretRequest, opts ...grpc.CallOption) (*DeleteSecretResponse, error) {
-	out := new(DeleteSecretResponse)
+func (c *secretsManagerClient) DeleteSecret(ctx context.Context, in *DelSecretRequest, opts ...grpc.CallOption) (*DelSecretResponse, error) {
+	out := new(DelSecretResponse)
 	err := c.cc.Invoke(ctx, "/secretsmanagerplugin.SecretsManager/DeleteSecret", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -88,7 +88,7 @@ func (c *secretsManagerClient) RenameSecret(ctx context.Context, in *RenameSecre
 type SecretsManagerServer interface {
 	GetSecret(context.Context, *GetSecretRequest) (*GetSecretResponse, error)
 	SetSecret(context.Context, *SetSecretRequest) (*SetSecretResponse, error)
-	DeleteSecret(context.Context, *DeleteSecretRequest) (*DeleteSecretResponse, error)
+	DeleteSecret(context.Context, *DelSecretRequest) (*DelSecretResponse, error)
 	ListSecrets(context.Context, *ListSecretsRequest) (*ListSecretsResponse, error)
 	RenameSecret(context.Context, *RenameSecretRequest) (*RenameSecretResponse, error)
 	mustEmbedUnimplementedSecretsManagerServer()
@@ -104,7 +104,7 @@ func (UnimplementedSecretsManagerServer) GetSecret(context.Context, *GetSecretRe
 func (UnimplementedSecretsManagerServer) SetSecret(context.Context, *SetSecretRequest) (*SetSecretResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetSecret not implemented")
 }
-func (UnimplementedSecretsManagerServer) DeleteSecret(context.Context, *DeleteSecretRequest) (*DeleteSecretResponse, error) {
+func (UnimplementedSecretsManagerServer) DeleteSecret(context.Context, *DelSecretRequest) (*DelSecretResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteSecret not implemented")
 }
 func (UnimplementedSecretsManagerServer) ListSecrets(context.Context, *ListSecretsRequest) (*ListSecretsResponse, error) {
@@ -163,7 +163,7 @@ func _SecretsManager_SetSecret_Handler(srv interface{}, ctx context.Context, dec
 }
 
 func _SecretsManager_DeleteSecret_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteSecretRequest)
+	in := new(DelSecretRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -175,7 +175,7 @@ func _SecretsManager_DeleteSecret_Handler(srv interface{}, ctx context.Context, 
 		FullMethod: "/secretsmanagerplugin.SecretsManager/DeleteSecret",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SecretsManagerServer).DeleteSecret(ctx, req.(*DeleteSecretRequest))
+		return srv.(SecretsManagerServer).DeleteSecret(ctx, req.(*DelSecretRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

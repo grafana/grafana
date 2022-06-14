@@ -57,7 +57,7 @@ func (kv *secretsKVStorePlugin) Set(ctx context.Context, orgId int64, namespace 
 
 // Del deletes an item from the store.
 func (kv *secretsKVStorePlugin) Del(ctx context.Context, orgId int64, namespace string, typ string) error {
-	req := &smp.DeleteSecretRequest{
+	req := &smp.DelSecretRequest{
 		KeyDescriptor: &smp.Key{
 			OrgId:     orgId,
 			Namespace: namespace,

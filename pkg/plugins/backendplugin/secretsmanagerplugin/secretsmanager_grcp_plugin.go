@@ -38,7 +38,7 @@ func (sm *SecretsManagerGRPCClient) SetSecret(ctx context.Context, req *SetSecre
 }
 
 // Del deletes an item from the store.
-func (sm *SecretsManagerGRPCClient) DeleteSecret(ctx context.Context, req *DeleteSecretRequest, opts ...grpc.CallOption) (*DeleteSecretResponse, error) {
+func (sm *SecretsManagerGRPCClient) DeleteSecret(ctx context.Context, req *DelSecretRequest, opts ...grpc.CallOption) (*DelSecretResponse, error) {
 	return sm.SecretsManagerClient.DeleteSecret(ctx, req)
 }
 
