@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/require"
 )
@@ -15,6 +16,9 @@ var theme = models.ThemeDark
 var kind = models.ThumbnailKindDefault
 
 func TestIntegrationSqlStorage(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	var sqlStore *SQLStore
 	var savedFolder *models.Dashboard
 
@@ -295,8 +299,8 @@ func updateTestDashboard(t *testing.T, sqlStore *SQLStore, dashboard *models.Das
 	require.Nil(t, err)
 
 	err = sqlStore.WithDbSession(context.Background(), func(sess *DBSession) error {
-		dashVersion := &models.DashboardVersion{
-			DashboardId:   dash.Id,
+		dashVersion := &dashver.DashboardVersion{
+			DashboardID:   dash.Id,
 			ParentVersion: parentVersion,
 			RestoredFrom:  cmd.RestoredFrom,
 			Version:       dash.Version,

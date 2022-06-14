@@ -16,6 +16,9 @@ import (
 )
 
 func TestIntegrationGetDashboardVersion(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	ss := sqlstore.InitTestDB(t)
 	dashVerStore := sqlStore{db: ss}
 
@@ -54,11 +57,14 @@ func TestIntegrationGetDashboardVersion(t *testing.T) {
 
 		_, err := dashVerStore.Get(context.Background(), &query)
 		require.Error(t, err)
-		assert.Equal(t, models.ErrDashboardVersionNotFound, err)
+		assert.Equal(t, dashver.ErrDashboardVersionNotFound, err)
 	})
 }
 
 func TestIntegrationDeleteExpiredVersions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	versionsToWrite := 10
 	ss := sqlstore.InitTestDB(t)
 	dashVerStore := sqlStore{db: ss}
@@ -80,6 +86,9 @@ func TestIntegrationDeleteExpiredVersions(t *testing.T) {
 }
 
 func TestIntegrationListDashboardVersions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	ss := sqlstore.InitTestDB(t)
 	dashVerStore := sqlStore{db: ss, dialect: ss.Dialect}
 	savedDash := insertTestDashboard(t, ss, "test dash 43", 1, 0, false, "diff-all")
@@ -165,8 +174,8 @@ func insertTestDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, title string
 	dash.Data.Set("uid", dash.Uid)
 
 	err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		dashVersion := &models.DashboardVersion{
-			DashboardId:   dash.Id,
+		dashVersion := &dashver.DashboardVersion{
+			DashboardID:   dash.Id,
 			ParentVersion: dash.Version,
 			RestoredFrom:  cmd.RestoredFrom,
 			Version:       dash.Version,
@@ -227,8 +236,8 @@ func updateTestDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, dashboard *m
 	require.Nil(t, err)
 
 	err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		dashVersion := &models.DashboardVersion{
-			DashboardId:   dash.Id,
+		dashVersion := &dashver.DashboardVersion{
+			DashboardID:   dash.Id,
 			ParentVersion: parentVersion,
 			RestoredFrom:  cmd.RestoredFrom,
 			Version:       dash.Version,
