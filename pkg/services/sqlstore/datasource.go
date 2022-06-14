@@ -136,7 +136,7 @@ func (ss *SQLStore) DeleteDataSourceSecrets(ctx context.Context, cmd *models.Del
 			return models.ErrDataSourceIdentifierNotSet
 		}
 
-		result, err := sess.Exec("UPDATE data_source SET secure_json_data=NULL WHERE org_id=? AND uid=?", cmd.OrgID, cmd.UID)
+		result, err := sess.Exec("UPDATE data_source SET secure_json_data=? WHERE org_id=? AND uid=?", "{}", cmd.OrgID, cmd.UID)
 		if err != nil {
 			return err
 		}
