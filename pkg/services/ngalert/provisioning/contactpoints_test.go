@@ -260,6 +260,7 @@ func createTestContactPoint() definitions.EmbeddedContactPoint {
 func TestStitchReceivers(t *testing.T) {
 	type testCase struct {
 		name        string
+		initial     *apimodels.PostableUserConfig
 		new         *apimodels.PostableGrafanaReceiver
 		expModified bool
 		expCfg      apimodels.PostableApiAlertingConfig
@@ -487,11 +488,75 @@ func TestStitchReceivers(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:    "rename an inconsistent group in the database, algorithm fixes it",
+			initial: createInconsistentTestConfigWithReceivers(),
+			new: &apimodels.PostableGrafanaReceiver{
+				UID:  "ghi",
+				Name: "brand-new-group",
+				Type: "opsgenie",
+			},
+			expModified: true,
+			expCfg: apimodels.PostableApiAlertingConfig{
+				Receivers: []*apimodels.PostableApiReceiver{
+					{
+						Receiver: config.Receiver{
+							Name: "receiver-1",
+						},
+						PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{
+								{
+									UID:  "abc",
+									Name: "receiver-1",
+									Type: "slack",
+								},
+							},
+						},
+					},
+					{
+						Receiver: config.Receiver{
+							Name: "receiver-2",
+						},
+						PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{
+								{
+									UID:  "def",
+									Name: "receiver-2",
+									Type: "slack",
+								},
+								{
+									UID:  "jkl",
+									Name: "receiver-2",
+									Type: "discord",
+								},
+							},
+						},
+					},
+					{
+						Receiver: config.Receiver{
+							Name: "brand-new-group",
+						},
+						PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{
+								{
+									UID:  "ghi",
+									Name: "brand-new-group",
+									Type: "opsgenie",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			cfg := createTestConfigWithReceivers()
+			if c.initial != nil {
+				cfg = c.initial
+			}
 
 			modified := stitchReceiver(cfg, c.new)
 
@@ -533,6 +598,54 @@ func createTestConfigWithReceivers() *apimodels.PostableUserConfig {
 							{
 								UID:  "ghi",
 								Name: "receiver-2",
+								Type: "email",
+							},
+							{
+								UID:  "jkl",
+								Name: "receiver-2",
+								Type: "discord",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+// This is an invalid config, with inconsistently named receivers (intentionally).
+func createInconsistentTestConfigWithReceivers() *apimodels.PostableUserConfig {
+	return &apimodels.PostableUserConfig{
+		AlertmanagerConfig: apimodels.PostableApiAlertingConfig{
+			Receivers: []*apimodels.PostableApiReceiver{
+				{
+					Receiver: config.Receiver{
+						Name: "receiver-1",
+					},
+					PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
+						GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{
+							{
+								UID:  "abc",
+								Name: "receiver-1",
+								Type: "slack",
+							},
+						},
+					},
+				},
+				{
+					Receiver: config.Receiver{
+						Name: "receiver-2",
+					},
+					PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
+						GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{
+							{
+								UID:  "def",
+								Name: "receiver-2",
+								Type: "slack",
+							},
+							{
+								UID:  "ghi",
+								Name: "receiver-3",
 								Type: "email",
 							},
 							{
