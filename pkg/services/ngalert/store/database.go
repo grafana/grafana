@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -22,7 +23,7 @@ type AlertingStore interface {
 	GetAllLatestAlertmanagerConfiguration(ctx context.Context) ([]*models.AlertConfiguration, error)
 	SaveAlertmanagerConfiguration(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error
 	SaveAlertmanagerConfigurationWithCallback(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd, callback SaveCallback) error
-	UpdateAlertManagerConfiguration(cmd *models.SaveAlertmanagerConfigurationCmd) error
+	UpdateAlertmanagerConfiguration(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error
 }
 
 // DBstore stores the alert definitions and instances in the database.
@@ -30,8 +31,10 @@ type DBstore struct {
 	// the base scheduler tick rate; it's used for validating definition interval
 	BaseInterval time.Duration
 	// default alert definiiton interval
-	DefaultInterval time.Duration
-	SQLStore        *sqlstore.SQLStore
-	Logger          log.Logger
-	FolderService   dashboards.FolderService
+	DefaultInterval  time.Duration
+	SQLStore         *sqlstore.SQLStore
+	Logger           log.Logger
+	FolderService    dashboards.FolderService
+	AccessControl    accesscontrol.AccessControl
+	DashboardService dashboards.DashboardService
 }

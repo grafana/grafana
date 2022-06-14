@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
 import { Story } from '@storybook/react';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+import React, { useState } from 'react';
+
 import { Pagination } from '@grafana/ui';
-import mdx from './Pagination.mdx';
+
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+
 import { Props } from './Pagination';
+import mdx from './Pagination.mdx';
 
 export default {
   title: 'Buttons/Pagination',

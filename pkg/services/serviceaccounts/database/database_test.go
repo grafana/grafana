@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -15,17 +14,24 @@ import (
 func TestStore_CreateServiceAccount(t *testing.T) {
 	_, store := setupTestDatabase(t)
 	t.Run("create service account", func(t *testing.T) {
-		saDTO, err := store.CreateServiceAccount(context.Background(), 1, "new Service Account")
+		serviceAccountName := "new Service Account"
+		serviceAccountOrgId := int64(1)
+
+		saDTO, err := store.CreateServiceAccount(context.Background(), serviceAccountOrgId, serviceAccountName)
 		require.NoError(t, err)
 		assert.Equal(t, "sa-new-service-account", saDTO.Login)
-		assert.Equal(t, "new Service Account", saDTO.Name)
+		assert.Equal(t, serviceAccountName, saDTO.Name)
 		assert.Equal(t, 0, int(saDTO.Tokens))
 
-		retrieved, err := store.RetrieveServiceAccount(context.Background(), 1, saDTO.Id)
+		retrieved, err := store.RetrieveServiceAccount(context.Background(), serviceAccountOrgId, saDTO.Id)
 		require.NoError(t, err)
 		assert.Equal(t, "sa-new-service-account", retrieved.Login)
-		assert.Equal(t, "new Service Account", retrieved.Name)
-		assert.Equal(t, 1, int(retrieved.OrgId))
+		assert.Equal(t, serviceAccountName, retrieved.Name)
+		assert.Equal(t, serviceAccountOrgId, retrieved.OrgId)
+
+		retrievedId, err := store.RetrieveServiceAccountIdByName(context.Background(), serviceAccountOrgId, serviceAccountName)
+		require.NoError(t, err)
+		assert.Equal(t, saDTO.Id, retrievedId)
 	})
 }
 
@@ -99,21 +105,4 @@ func TestStore_RetrieveServiceAccount(t *testing.T) {
 			}
 		})
 	}
-}
-func TestStore_RetrieveServiceAccountWithTeams(t *testing.T) {
-	userToCreate := tests.TestUser{Login: "servicetestwithTeam@admin", IsServiceAccount: true}
-	db, store := setupTestDatabase(t)
-	user := tests.SetupUserServiceAccount(t, db, userToCreate)
-
-	team, err := store.sqlStore.CreateTeam("serviceTeam", "serviceTeam", user.OrgId)
-	require.NoError(t, err)
-
-	err = store.sqlStore.AddTeamMember(user.Id, user.OrgId, team.Id, false, models.PERMISSION_VIEW)
-	require.NoError(t, err)
-
-	dto, err := store.RetrieveServiceAccount(context.Background(), user.OrgId, user.Id)
-	require.NoError(t, err)
-	require.Equal(t, userToCreate.Login, dto.Login)
-	require.Len(t, dto.Teams, 1)
-	require.Equal(t, "serviceTeam", dto.Teams[0])
 }

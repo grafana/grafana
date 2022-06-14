@@ -1,6 +1,7 @@
 import { Vector } from '../types/vector';
-import { vectorToArray } from './vectorToArray';
 import { BinaryOperation } from '../utils/binaryOperators';
+
+import { vectorToArray } from './vectorToArray';
 
 /**
  * @public

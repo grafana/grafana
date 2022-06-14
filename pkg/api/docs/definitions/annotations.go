@@ -16,6 +16,15 @@ import (
 // 401: unauthorisedError
 // 500: internalServerError
 
+// swagger:route GET /annotations/{annotation_id} annotations getAnnotation
+//
+// Get Annotation by Id.
+//
+// Responses:
+// 200: getAnnotationResponse
+// 401: unauthorisedError
+// 500: internalServerError
+
 // swagger:route POST /annotations/mass-delete annotations massDeleteAnnotations
 //
 // Delete multiple annotations.
@@ -29,7 +38,7 @@ import (
 //
 // Create Annotation.
 //
-// Creates an annotation in the Grafana database. The dashboardId and panelId fields are optional. If they are not specified then a global annotation is created and can be queried in any dashboard that adds the Grafana annotations data source. When creating a region annotation include the timeEnd property.
+// Creates an annotation in the Grafana database. The dashboardId and panelId fields are optional. If they are not specified then an organization annotation is created and can be queried in any dashboard that adds the Grafana annotations data source. When creating a region annotation include the timeEnd property.
 // The format for `time` and `timeEnd` should be epoch numbers in millisecond resolution.
 // The response for this HTTP request is slightly different in versions prior to v6.4. In prior versions you would also get an endId if you where creating a region. But in 6.4 regions are represented using a single event with time and timeEnd properties.
 //
@@ -104,8 +113,15 @@ import (
 // 401: unauthorisedError
 // 500: internalServerError
 
-// swagger:parameters updateAnnotation patchAnnotation deleteAnnotation
-type AnnotationIDParam struct {
+// swagger:parameters getAnnotation
+type GetAnnotationParams struct {
+	// in:path
+	// required:true
+	AnnotationID string `json:"annotation_id"`
+}
+
+// swagger:parameters deleteAnnotation
+type DeleteAnnotationParams struct {
 	// in:path
 	// required:true
 	AnnotationID string `json:"annotation_id"`
@@ -141,7 +157,7 @@ type GetAnnotationsParams struct {
 	// in:query
 	// required:false
 	Limit int64 `json:"limit"`
-	// Use this to filter global annotations. Organization annotations are annotations from an annotation data source that are not connected specifically to a dashboard or panel. You can filter by multiple tags.
+	// Use this to filter organization annotations. Organization annotations are annotations from an annotation data source that are not connected specifically to a dashboard or panel. You can filter by multiple tags.
 	// in:query
 	// required:false
 	// type: array
@@ -178,7 +194,7 @@ type GetAnnotationTagssParams struct {
 type MassDeleteAnnotationsParams struct {
 	// in:body
 	// required:true
-	Body dtos.DeleteAnnotationsCmd `json:"body"`
+	Body dtos.MassDeleteAnnotationsCmd `json:"body"`
 }
 
 // swagger:parameters createAnnotation
@@ -197,6 +213,9 @@ type CreateGraphiteAnnotationParams struct {
 
 // swagger:parameters updateAnnotation
 type UpdateAnnotationParams struct {
+	// in:path
+	// required:true
+	AnnotationID string `json:"annotation_id"`
 	// in:body
 	// required:true
 	Body dtos.UpdateAnnotationsCmd `json:"body"`
@@ -204,6 +223,9 @@ type UpdateAnnotationParams struct {
 
 // swagger:parameters patchAnnotation
 type PatchAnnotationParams struct {
+	// in:path
+	// required:true
+	AnnotationID string `json:"annotation_id"`
 	// in:body
 	// required:true
 	Body dtos.PatchAnnotationsCmd `json:"body"`
@@ -214,6 +236,13 @@ type GetAnnotationsResponse struct {
 	// The response message
 	// in: body
 	Body []*annotations.ItemDTO `json:"body"`
+}
+
+// swagger:response getAnnotationResponse
+type GetAnnotationResponse struct {
+	// The response message
+	// in: body
+	Body *annotations.ItemDTO `json:"body"`
 }
 
 // swagger:response createAnnotationResponse

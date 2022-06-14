@@ -1,4 +1,8 @@
 import React, { FC, useEffect, useState } from 'react';
+
+import { selectors } from '@grafana/e2e-selectors';
+import { DataSourcePicker } from '@grafana/runtime';
+import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import {
   Button,
   Field,
@@ -10,11 +14,8 @@ import {
   InputControl,
   Legend,
 } from '@grafana/ui';
-import { DataSourcePicker } from '@grafana/runtime';
-import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
-import { selectors } from '@grafana/e2e-selectors';
-
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+
 import {
   DashboardInput,
   DashboardInputs,
@@ -23,6 +24,7 @@ import {
   LibraryPanelInputState,
 } from '../state/reducers';
 import { validateTitle, validateUid } from '../utils/validation';
+
 import { ImportDashboardLibraryPanelsList } from './ImportDashboardLibraryPanelsList';
 
 interface Props extends Pick<FormAPI<ImportDashboardDTO>, 'register' | 'errors' | 'control' | 'getValues' | 'watch'> {

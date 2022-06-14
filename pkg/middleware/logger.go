@@ -17,12 +17,14 @@ package middleware
 
 import (
 	"net/http"
+	"net/url"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	cw "github.com/weaveworks/common/tracing"
 )
 
 func Logger(cfg *setting.Cfg) web.Handler {
@@ -33,7 +35,7 @@ func Logger(cfg *setting.Cfg) web.Handler {
 		c.Next()
 
 		timeTaken := time.Since(start) / time.Millisecond
-
+		duration := time.Since(start).String()
 		ctx := contexthandler.FromContext(c.Req.Context())
 		if ctx != nil && ctx.PerfmonTimer != nil {
 			ctx.PerfmonTimer.Observe(float64(timeTaken))
@@ -53,12 +55,13 @@ func Logger(cfg *setting.Cfg) web.Handler {
 				"status", status,
 				"remote_addr", c.RemoteAddr(),
 				"time_ms", int64(timeTaken),
+				"duration", duration,
 				"size", rw.Size(),
-				"referer", req.Referer(),
+				"referer", sanitizeURL(ctx, req.Referer()),
 			}
 
-			traceID, exist := cw.ExtractTraceID(ctx.Req.Context())
-			if exist {
+			traceID := tracing.TraceIDFromContext(ctx.Req.Context(), false)
+			if traceID != "" {
 				logParams = append(logParams, "traceID", traceID)
 			}
 
@@ -69,4 +72,17 @@ func Logger(cfg *setting.Cfg) web.Handler {
 			}
 		}
 	}
+}
+
+func sanitizeURL(ctx *models.ReqContext, s string) string {
+	if s == "" {
+		return s
+	}
+
+	u, err := url.ParseRequestURI(s)
+	if err != nil {
+		ctx.Logger.Warn("Received invalid referer in request headers, removed for log forgery prevention")
+		return ""
+	}
+	return u.String()
 }

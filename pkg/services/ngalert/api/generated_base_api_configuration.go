@@ -4,7 +4,6 @@
  *
  *Do not manually edit these files, please find ngalert/api/swagger-codegen/ for commands on how to generate them.
  */
-
 package api
 
 import (
@@ -12,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -28,15 +28,12 @@ type ConfigurationApiForkingService interface {
 func (f *ForkedConfigurationApi) RouteDeleteNGalertConfig(ctx *models.ReqContext) response.Response {
 	return f.forkRouteDeleteNGalertConfig(ctx)
 }
-
 func (f *ForkedConfigurationApi) RouteGetAlertmanagers(ctx *models.ReqContext) response.Response {
 	return f.forkRouteGetAlertmanagers(ctx)
 }
-
 func (f *ForkedConfigurationApi) RouteGetNGalertConfig(ctx *models.ReqContext) response.Response {
 	return f.forkRouteGetNGalertConfig(ctx)
 }
-
 func (f *ForkedConfigurationApi) RoutePostNGalertConfig(ctx *models.ReqContext) response.Response {
 	conf := apimodels.PostableNGalertConfig{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
@@ -87,5 +84,5 @@ func (api *API) RegisterConfigurationApiEndpoints(srv ConfigurationApiForkingSer
 				m,
 			),
 		)
-	})
+	}, middleware.ReqSignedIn)
 }

@@ -1,12 +1,16 @@
 import React from 'react';
-import { AlertingSettings, DataSourceHttpSettings, Alert } from '@grafana/ui';
+
+import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
 import { DataSourcePluginOptionsEditorProps, DataSourceSettings } from '@grafana/data';
+import { AlertingSettings, DataSourceHttpSettings, Alert } from '@grafana/ui';
 import { config } from 'app/core/config';
-import { PromOptions } from '../types';
-import { AzureAuthSettings } from './AzureAuthSettings';
-import { PromSettings } from './PromSettings';
-import { hasCredentials, setDefaultCredentials, resetCredentials } from './AzureCredentialsConfig';
 import { getAllAlertmanagerDataSources } from 'app/features/alerting/unified/utils/alertmanager';
+
+import { PromOptions } from '../types';
+
+import { AzureAuthSettings } from './AzureAuthSettings';
+import { hasCredentials, setDefaultCredentials, resetCredentials } from './AzureCredentialsConfig';
+import { PromSettings } from './PromSettings';
 
 export type Props = DataSourcePluginOptionsEditorProps<PromOptions>;
 export const ConfigEditor = (props: Props) => {
@@ -14,7 +18,7 @@ export const ConfigEditor = (props: Props) => {
   const alertmanagers = getAllAlertmanagerDataSources();
 
   const azureAuthSettings = {
-    azureAuthSupported: config.featureToggles['prometheus_azure_auth'] ?? false,
+    azureAuthSupported: !!config.featureToggles.prometheus_azure_auth,
     getAzureAuthEnabled: (config: DataSourceSettings<any, any>): boolean => hasCredentials(config),
     setAzureAuthEnabled: (config: DataSourceSettings<any, any>, enabled: boolean) =>
       enabled ? setDefaultCredentials(config) : resetCredentials(config),
@@ -36,6 +40,7 @@ export const ConfigEditor = (props: Props) => {
         onChange={onOptionsChange}
         sigV4AuthToggleEnabled={config.sigV4AuthEnabled}
         azureAuthSettings={azureAuthSettings}
+        renderSigV4Editor={<SIGV4ConnectionConfig {...props}></SIGV4ConnectionConfig>}
       />
 
       <AlertingSettings<PromOptions>

@@ -1,8 +1,24 @@
-import { getPreloadedState, getRootReducer, RootReducerType } from './helpers';
-import { variableAdapters } from '../adapters';
-import { createQueryVariableAdapter } from '../query/adapter';
-import { createConstantVariableAdapter } from '../constant/adapter';
+import { DataSourceRef, LoadingState } from '@grafana/data/src';
+import { setDataSourceSrv } from '@grafana/runtime/src';
+
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
+import { toAsyncOfResult } from '../../query/state/DashboardQueryRunner/testHelpers';
+import { variableAdapters } from '../adapters';
+import { createAdHocVariableAdapter } from '../adhoc/adapter';
+import { createConstantVariableAdapter } from '../constant/adapter';
+import { createDataSourceVariableAdapter } from '../datasource/adapter';
+import { createDataSourceOptions } from '../datasource/reducer';
+import { cleanEditorState } from '../editor/reducer';
+import { cleanPickerState } from '../pickers/OptionsPicker/reducer';
+import { setVariableQueryRunner } from '../query/VariableQueryRunner';
+import { createQueryVariableAdapter } from '../query/adapter';
+import { adHocBuilder, constantBuilder, datasourceBuilder, queryBuilder } from '../shared/testing/builders';
+import { TransactionStatus, VariableModel } from '../types';
+import { toVariablePayload } from '../utils';
+
+import { initVariablesTransaction } from './actions';
+import { getPreloadedState, getRootReducer, RootReducerType } from './helpers';
+import { toKeyedAction } from './keyedVariablesReducer';
 import {
   addVariable,
   changeVariableProp,
@@ -11,27 +27,13 @@ import {
   variableStateFetching,
   variableStateNotStarted,
 } from './sharedReducer';
-import { adHocBuilder, constantBuilder, datasourceBuilder, queryBuilder } from '../shared/testing/builders';
-import { cleanEditorState } from '../editor/reducer';
 import {
   initialTransactionState,
   variablesClearTransaction,
   variablesCompleteTransaction,
   variablesInitTransaction,
 } from './transactionReducer';
-import { cleanPickerState } from '../pickers/OptionsPicker/reducer';
 import { cleanVariables } from './variablesReducer';
-import { createAdHocVariableAdapter } from '../adhoc/adapter';
-import { createDataSourceVariableAdapter } from '../datasource/adapter';
-import { DataSourceRef, LoadingState } from '@grafana/data/src';
-import { setDataSourceSrv } from '@grafana/runtime/src';
-import { TransactionStatus, VariableModel } from '../types';
-import { toAsyncOfResult } from '../../query/state/DashboardQueryRunner/testHelpers';
-import { setVariableQueryRunner } from '../query/VariableQueryRunner';
-import { createDataSourceOptions } from '../datasource/reducer';
-import { initVariablesTransaction } from './actions';
-import { toKeyedAction } from './keyedVariablesReducer';
-import { toVariablePayload } from '../utils';
 
 variableAdapters.setInit(() => [
   createQueryVariableAdapter(),

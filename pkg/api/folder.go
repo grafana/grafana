@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
+	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -34,7 +35,7 @@ func (hs *HTTPServer) GetFolders(c *models.ReqContext) response.Response {
 		})
 	}
 
-	return response.JSON(200, result)
+	return response.JSON(http.StatusOK, result)
 }
 
 func (hs *HTTPServer) GetFolderByUID(c *models.ReqContext) response.Response {
@@ -44,7 +45,7 @@ func (hs *HTTPServer) GetFolderByUID(c *models.ReqContext) response.Response {
 	}
 
 	g := guardian.New(c.Req.Context(), folder.Id, c.OrgId, c.SignedInUser)
-	return response.JSON(200, hs.toFolderDto(c.Req.Context(), g, folder))
+	return response.JSON(http.StatusOK, hs.toFolderDto(c.Req.Context(), g, folder))
 }
 
 func (hs *HTTPServer) GetFolderByID(c *models.ReqContext) response.Response {
@@ -52,13 +53,13 @@ func (hs *HTTPServer) GetFolderByID(c *models.ReqContext) response.Response {
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
-	folder, err := hs.folderService.GetFolderByID(c.Req.Context(), c.SignedInUser, c.OrgId, id)
+	folder, err := hs.folderService.GetFolderByID(c.Req.Context(), c.SignedInUser, id, c.OrgId)
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
 	g := guardian.New(c.Req.Context(), folder.Id, c.OrgId, c.SignedInUser)
-	return response.JSON(200, hs.toFolderDto(c.Req.Context(), g, folder))
+	return response.JSON(http.StatusOK, hs.toFolderDto(c.Req.Context(), g, folder))
 }
 
 func (hs *HTTPServer) CreateFolder(c *models.ReqContext) response.Response {
@@ -70,9 +71,17 @@ func (hs *HTTPServer) CreateFolder(c *models.ReqContext) response.Response {
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
+	if hs.entityEventsService != nil {
+		if err := hs.entityEventsService.SaveEvent(c.Req.Context(), store.SaveEventCmd{
+			EntityId:  store.CreateDatabaseEntityId(folder.Uid, c.OrgId, store.EntityTypeFolder),
+			EventType: store.EntityEventTypeCreate,
+		}); err != nil {
+			hs.log.Warn("failed to save folder entity event", "uid", folder.Uid, "error", err)
+		}
+	}
 
 	g := guardian.New(c.Req.Context(), folder.Id, c.OrgId, c.SignedInUser)
-	return response.JSON(200, hs.toFolderDto(c.Req.Context(), g, folder))
+	return response.JSON(http.StatusOK, hs.toFolderDto(c.Req.Context(), g, folder))
 }
 
 func (hs *HTTPServer) UpdateFolder(c *models.ReqContext) response.Response {
@@ -84,9 +93,17 @@ func (hs *HTTPServer) UpdateFolder(c *models.ReqContext) response.Response {
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
+	if hs.entityEventsService != nil {
+		if err := hs.entityEventsService.SaveEvent(c.Req.Context(), store.SaveEventCmd{
+			EntityId:  store.CreateDatabaseEntityId(cmd.Uid, c.OrgId, store.EntityTypeFolder),
+			EventType: store.EntityEventTypeUpdate,
+		}); err != nil {
+			hs.log.Warn("failed to save folder entity event", "uid", cmd.Uid, "error", err)
+		}
+	}
 
 	g := guardian.New(c.Req.Context(), cmd.Result.Id, c.OrgId, c.SignedInUser)
-	return response.JSON(200, hs.toFolderDto(c.Req.Context(), g, cmd.Result))
+	return response.JSON(http.StatusOK, hs.toFolderDto(c.Req.Context(), g, cmd.Result))
 }
 
 func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // temporarily adding this function to HTTPServer, will be removed from HTTPServer when librarypanels featuretoggle is removed
@@ -98,12 +115,21 @@ func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // 
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	f, err := hs.folderService.DeleteFolder(c.Req.Context(), c.SignedInUser, c.OrgId, web.Params(c.Req)[":uid"], c.QueryBool("forceDeleteRules"))
+	uid := web.Params(c.Req)[":uid"]
+	f, err := hs.folderService.DeleteFolder(c.Req.Context(), c.SignedInUser, c.OrgId, uid, c.QueryBool("forceDeleteRules"))
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
+	if hs.entityEventsService != nil {
+		if err := hs.entityEventsService.SaveEvent(c.Req.Context(), store.SaveEventCmd{
+			EntityId:  store.CreateDatabaseEntityId(uid, c.OrgId, store.EntityTypeFolder),
+			EventType: store.EntityEventTypeDelete,
+		}); err != nil {
+			hs.log.Warn("failed to save folder entity event", "uid", uid, "error", err)
+		}
+	}
 
-	return response.JSON(200, util.DynMap{
+	return response.JSON(http.StatusOK, util.DynMap{
 		"title":   f.Title,
 		"message": fmt.Sprintf("Folder %s deleted", f.Title),
 		"id":      f.Id,

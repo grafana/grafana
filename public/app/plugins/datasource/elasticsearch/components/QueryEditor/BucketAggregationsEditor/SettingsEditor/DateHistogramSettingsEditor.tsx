@@ -1,14 +1,17 @@
+import { uniqueId } from 'lodash';
 import React, { useRef } from 'react';
 import { GroupBase, OptionsOrGroups } from 'react-select';
-import { InlineField, Input, Select, TimeZonePicker } from '@grafana/ui';
-import { DateHistogram } from '../aggregations';
-import { bucketAggregationConfig } from '../utils';
-import { useDispatch } from '../../../../hooks/useStatelessReducer';
+
 import { InternalTimeZones, SelectableValue } from '@grafana/data';
-import { changeBucketAggregationSetting } from '../state/actions';
-import { inlineFieldProps } from '.';
-import { uniqueId } from 'lodash';
+import { InlineField, Input, Select, TimeZonePicker } from '@grafana/ui';
+
+import { useDispatch } from '../../../../hooks/useStatelessReducer';
 import { useCreatableSelectPersistedBehaviour } from '../../../hooks/useCreatableSelectPersistedBehaviour';
+import { DateHistogram } from '../aggregations';
+import { changeBucketAggregationSetting } from '../state/actions';
+import { bucketAggregationConfig } from '../utils';
+
+import { inlineFieldProps } from '.';
 
 const defaultIntervalOptions: Array<SelectableValue<string>> = [
   { label: 'auto', value: 'auto' },
@@ -56,7 +59,6 @@ export const DateHistogramSettingsEditor = ({ bucketAgg }: Props) => {
     <>
       <InlineField label="Interval" {...inlineFieldProps}>
         <Select
-          menuShouldPortal
           inputId={uniqueId('es-date_histogram-interval')}
           isValidNewOption={isValidNewOption}
           filterOption={optionStartsWithValue}

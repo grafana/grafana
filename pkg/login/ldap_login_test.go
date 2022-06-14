@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
+	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/multildap"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
@@ -28,7 +29,8 @@ func TestLoginUsingLDAP(t *testing.T) {
 			return config, nil
 		}
 
-		enabled, err := loginUsingLDAP(context.Background(), sc.loginUserQuery)
+		loginService := &logintest.LoginServiceFake{}
+		enabled, err := loginUsingLDAP(context.Background(), sc.loginUserQuery, loginService)
 		require.EqualError(t, err, errTest.Error())
 
 		assert.True(t, enabled)
@@ -39,7 +41,8 @@ func TestLoginUsingLDAP(t *testing.T) {
 		setting.LDAPEnabled = false
 
 		sc.withLoginResult(false)
-		enabled, err := loginUsingLDAP(context.Background(), sc.loginUserQuery)
+		loginService := &logintest.LoginServiceFake{}
+		enabled, err := loginUsingLDAP(context.Background(), sc.loginUserQuery, loginService)
 		require.NoError(t, err)
 
 		assert.False(t, enabled)

@@ -1,8 +1,10 @@
-import { findHighlightChunksInText, GrafanaTheme2 } from '@grafana/data';
 import ansicolor from 'ansicolor';
 import React, { PureComponent } from 'react';
 // @ts-ignore
 import Highlighter from 'react-highlight-words';
+
+import { findHighlightChunksInText, GrafanaTheme2 } from '@grafana/data';
+
 import { withTheme2 } from '../../themes';
 import { Themeable2 } from '../../types';
 
@@ -80,6 +82,7 @@ export class UnThemedLogMessageAnsi extends PureComponent<Props, State> {
     return chunks.map((chunk, index) => {
       const chunkText = this.props.highlight?.searchWords ? (
         <Highlighter
+          key={index}
           textToHighlight={chunk.text}
           searchWords={this.props.highlight.searchWords}
           findChunks={findHighlightChunksInText}

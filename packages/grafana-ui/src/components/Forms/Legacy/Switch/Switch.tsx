@@ -1,8 +1,9 @@
-import React, { PureComponent } from 'react';
-import { uniqueId } from 'lodash';
 import { Placement } from '@popperjs/core';
-import { Tooltip } from '../../../Tooltip/Tooltip';
+import { uniqueId } from 'lodash';
+import React, { PureComponent } from 'react';
+
 import { Icon } from '../../..';
+import { Tooltip } from '../../../Tooltip/Tooltip';
 
 export interface Props {
   label: string;

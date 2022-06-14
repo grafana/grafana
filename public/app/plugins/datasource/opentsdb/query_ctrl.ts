@@ -1,7 +1,8 @@
-import { map, size, has } from 'lodash';
-import { QueryCtrl } from 'app/plugins/sdk';
 import { auto } from 'angular';
+import { map, size, has } from 'lodash';
+
 import { textUtil, rangeUtil } from '@grafana/data';
+import { QueryCtrl } from 'app/plugins/sdk';
 
 export class OpenTsQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';

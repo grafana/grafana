@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package queryhistory
 
 import (
@@ -114,6 +111,12 @@ func testScenarioWithMultipleQueriesInQueryHistory(t *testing.T, desc string, fn
 		sc.reqContext.Req.Body = mockRequestBody(command1)
 		resp1 := sc.service.createHandler(sc.reqContext)
 		sc.initialResult = validateAndUnMarshalResponse(t, resp1)
+
+		// Add comment
+		cmd := PatchQueryCommentInQueryHistoryCommand{Comment: "test comment 2"}
+		sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
+		sc.reqContext.Req.Body = mockRequestBody(cmd)
+		sc.service.patchCommentHandler(sc.reqContext)
 
 		time.Sleep(1 * time.Second)
 		command2 := CreateQueryInQueryHistoryCommand{

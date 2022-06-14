@@ -1,14 +1,16 @@
 import React, { FC, useCallback } from 'react';
+
 import {
   FieldNamePickerConfigSettings,
   StandardEditorProps,
   StandardEditorsRegistryItem,
   StringFieldConfigSettings,
 } from '@grafana/data';
-import { Button, InlineField, InlineFieldRow, RadioButtonGroup, StringValueEditor } from '@grafana/ui';
+import { Button, InlineField, InlineFieldRow, RadioButtonGroup } from '@grafana/ui';
+import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
+import { StringValueEditor } from 'app/core/components/OptionsUI/string';
 
 import { TextDimensionConfig, TextDimensionMode, TextDimensionOptions } from '../types';
-import { FieldNamePicker } from '../../../../../packages/grafana-ui/src/components/MatchersUI/FieldNamePicker';
 
 const textOptions = [
   { label: 'Fixed', value: TextDimensionMode.Fixed, description: 'Fixed value' },

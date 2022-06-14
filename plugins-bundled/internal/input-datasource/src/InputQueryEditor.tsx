@@ -2,12 +2,11 @@
 import React, { PureComponent } from 'react';
 
 // Types
+import { DataFrame, toCSV, SelectableValue, MutableDataFrame, QueryEditorProps } from '@grafana/data';
+import { Select, TableInputCSV, LinkButton, Icon, InlineField } from '@grafana/ui';
+
 import { InputDatasource, describeDataFrame } from './InputDatasource';
 import { InputQuery, InputOptions } from './types';
-
-import { Select, TableInputCSV, LinkButton, Icon, InlineField } from '@grafana/ui';
-import { DataFrame, toCSV, SelectableValue, MutableDataFrame, QueryEditorProps } from '@grafana/data';
-
 import { dataFrameToCSV } from './utils';
 
 type Props = QueryEditorProps<InputDatasource, InputQuery, InputOptions>;
@@ -69,11 +68,11 @@ export class InputQueryEditor extends PureComponent<Props, State> {
       <div>
         <InlineField label="Data" labelWidth={8}>
           <>
-            <Select menuShouldPortal width={20} options={options} value={selected} onChange={this.onSourceChange} />
+            <Select width={20} options={options} value={selected} onChange={this.onSourceChange} />
             {query.data ? (
               <div style={{ alignSelf: 'center' }}>{describeDataFrame(query.data)}</div>
             ) : (
-              <LinkButton variant="link" href={`datasources/edit/${uid}/`}>
+              <LinkButton fill="text" href={`datasources/edit/${uid}/`}>
                 {name}: {describeDataFrame(datasource.data)} &nbsp;&nbsp;
                 <Icon name="pen" />
               </LinkButton>

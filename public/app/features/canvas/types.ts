@@ -10,11 +10,25 @@ export interface Placement {
   height?: number;
 }
 
-export interface Anchor {
-  top?: boolean;
-  left?: boolean;
-  right?: boolean;
-  bottom?: boolean;
+export interface Constraint {
+  horizontal?: HorizontalConstraint;
+  vertical?: VerticalConstraint;
+}
+
+export enum HorizontalConstraint {
+  Left = 'left',
+  Right = 'right',
+  LeftRight = 'leftright',
+  Center = 'center',
+  Scale = 'scale',
+}
+
+export enum VerticalConstraint {
+  Top = 'top',
+  Bottom = 'bottom',
+  TopBottom = 'topbottom',
+  Center = 'center',
+  Scale = 'scale',
 }
 
 export enum BackgroundImageSize {
@@ -34,4 +48,13 @@ export interface BackgroundConfig {
 export interface LineConfig {
   color?: ColorDimensionConfig;
   width?: number;
+}
+
+export enum QuickPlacement {
+  Top = 'top',
+  Bottom = 'bottom',
+  Left = 'left',
+  Right = 'right',
+  HorizontalCenter = 'hcenter',
+  VerticalCenter = 'vcenter',
 }

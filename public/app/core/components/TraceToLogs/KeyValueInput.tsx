@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
+import React from 'react';
+
 import { GrafanaTheme, KeyValue } from '@grafana/data';
 import { SegmentInput, useStyles, InlineLabel, Icon } from '@grafana/ui';
-import React from 'react';
 
 const EQ_WIDTH = 3; // = 24px in inline label
 
@@ -64,6 +65,7 @@ const KeyValueInput = ({
               onClick={() => onChange([...values.slice(0, idx), ...values.slice(idx + 1)])}
               className="gf-form-label query-part"
               aria-label="Remove tag"
+              type="button"
             >
               <Icon name="times" />
             </button>
@@ -72,6 +74,7 @@ const KeyValueInput = ({
                 onClick={() => onChange([...values, { key: '', value: '' }])}
                 className="gf-form-label query-part"
                 aria-label="Add tag"
+                type="button"
               >
                 <Icon name="plus" />
               </button>
@@ -83,6 +86,7 @@ const KeyValueInput = ({
           onClick={() => onChange([...values, { key: '', value: '' }])}
           className="gf-form-label query-part"
           aria-label="Add tag"
+          type="button"
         >
           <Icon name="plus" />
         </button>

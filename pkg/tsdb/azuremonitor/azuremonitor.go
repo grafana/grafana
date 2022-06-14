@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/Masterminds/semver"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
@@ -15,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/deprecated"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/loganalytics"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/metrics"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/resourcegraph"
@@ -30,14 +28,7 @@ func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, t
 		azureResourceGraph: &resourcegraph.AzureResourceGraphDatasource{Proxy: proxy},
 	}
 
-	// Insights Analytics and Application Insights were deprecated in Grafana 8.x and
-	// will be finally removed with Grafana 9
-	if setting.BuildVersion != "" && semver.MustParse(setting.BuildVersion).Compare(semver.MustParse("9.0.0-beta1")) < 0 {
-		executors[deprecated.InsightsAnalytics] = &deprecated.InsightsAnalyticsDatasource{Proxy: proxy}
-		executors[deprecated.AppInsights] = &deprecated.ApplicationInsightsDatasource{Proxy: proxy}
-	}
-
-	im := datasource.NewInstanceManager(NewInstanceSettings(cfg, *httpClientProvider, executors))
+	im := datasource.NewInstanceManager(NewInstanceSettings(cfg, httpClientProvider, executors))
 
 	s := &Service{
 		im:        im,
@@ -68,7 +59,7 @@ type Service struct {
 	tracer          tracing.Tracer
 }
 
-func getDatasourceService(cfg *setting.Cfg, clientProvider httpclient.Provider, dsInfo types.DatasourceInfo, routeName string) (types.DatasourceService, error) {
+func getDatasourceService(cfg *setting.Cfg, clientProvider *httpclient.Provider, dsInfo types.DatasourceInfo, routeName string) (types.DatasourceService, error) {
 	route := dsInfo.Routes[routeName]
 	client, err := newHTTPClient(route, dsInfo, cfg, clientProvider)
 	if err != nil {
@@ -80,7 +71,7 @@ func getDatasourceService(cfg *setting.Cfg, clientProvider httpclient.Provider, 
 	}, nil
 }
 
-func NewInstanceSettings(cfg *setting.Cfg, clientProvider httpclient.Provider, executors map[string]azDatasourceExecutor) datasource.InstanceFactoryFunc {
+func NewInstanceSettings(cfg *setting.Cfg, clientProvider *httpclient.Provider, executors map[string]azDatasourceExecutor) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonData, err := simplejson.NewJson(settings.JSONData)
 		if err != nil {

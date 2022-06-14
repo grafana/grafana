@@ -1,7 +1,10 @@
-import React from 'react';
 import { Story, Meta } from '@storybook/react';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+import React from 'react';
+
 import { ButtonCascader } from '@grafana/ui';
+
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+
 import { ButtonCascaderProps } from './ButtonCascader';
 
 export default {

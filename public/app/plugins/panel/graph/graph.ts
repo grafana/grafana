@@ -10,23 +10,9 @@ import './jquery.flot.events';
 
 import $ from 'jquery';
 import { clone, find, flatten, isUndefined, map, max as _max, min as _min, sortBy as _sortBy, toNumber } from 'lodash';
-import { tickStep } from 'app/core/utils/ticks';
-import { updateLegendValues } from 'app/core/core';
-import { coreModule } from 'app/angular/core_module';
-import GraphTooltip from './graph_tooltip';
-import { ThresholdManager } from './threshold_manager';
-import { TimeRegionManager } from './time_region_manager';
-import { EventManager } from './event_manager';
-import { convertToHistogramData } from './histogram';
-import { alignYLevel } from './align_yaxes';
-import config from 'app/core/config';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { GraphLegendProps, Legend } from './Legend/Legend';
 
-import { GraphCtrl } from './module';
-import { graphTickFormatter, graphTimeFormat, IconName, MenuItemProps, MenuItemsGroup } from '@grafana/ui';
-import { provideTheme } from 'app/core/utils/ConfigProvider';
 import {
   DataFrame,
   DataFrameView,
@@ -49,11 +35,27 @@ import {
   PanelEvents,
   toUtc,
 } from '@grafana/data';
-import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
-import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { graphTickFormatter, graphTimeFormat, IconName, MenuItemProps, MenuItemsGroup } from '@grafana/ui';
+import { coreModule } from 'app/angular/core_module';
+import config from 'app/core/config';
+import { updateLegendValues } from 'app/core/core';
 import { ContextSrv } from 'app/core/services/context_srv';
+import { provideTheme } from 'app/core/utils/ConfigProvider';
+import { tickStep } from 'app/core/utils/ticks';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
+
 import { DashboardModel } from '../../../features/dashboard/state';
+
+import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
+import { GraphLegendProps, Legend } from './Legend/Legend';
+import { alignYLevel } from './align_yaxes';
+import { EventManager } from './event_manager';
+import GraphTooltip from './graph_tooltip';
+import { convertToHistogramData } from './histogram';
+import { GraphCtrl } from './module';
+import { ThresholdManager } from './threshold_manager';
+import { TimeRegionManager } from './time_region_manager';
 import { isLegacyGraphHoverEvent } from './utils';
 
 const LegendWithThemeProvider = provideTheme(Legend);

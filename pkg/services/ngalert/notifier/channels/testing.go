@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 // mockTimeNow replaces function timeNow to return constant time.
@@ -48,3 +49,16 @@ func (ns *notificationServiceMock) SendEmailCommandHandler(ctx context.Context, 
 }
 
 func mockNotificationService() *notificationServiceMock { return &notificationServiceMock{} }
+
+type fakeImageStore struct {
+	Images []*ngmodels.Image
+}
+
+func (f *fakeImageStore) GetImage(ctx context.Context, token string) (*ngmodels.Image, error) {
+	for _, img := range f.Images {
+		if img.Token == token {
+			return img, nil
+		}
+	}
+	return nil, ngmodels.ErrImageNotFound
+}

@@ -1,4 +1,5 @@
 import { castArray, isEqual } from 'lodash';
+
 import {
   DataQuery,
   getDataSourceRef,
@@ -8,7 +9,36 @@ import {
   UrlQueryMap,
   UrlQueryValue,
 } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
+import { notifyApp } from 'app/core/actions';
+import { contextSrv } from 'app/core/services/context_srv';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { DashboardModel } from 'app/features/dashboard/state';
+import { store } from 'app/store/store';
 
+import { createErrorNotification } from '../../../core/copy/appNotification';
+import { appEvents } from '../../../core/core';
+import { getBackendSrv } from '../../../core/services/backend_srv';
+import { Graph } from '../../../core/utils/dag';
+import { AppNotification, StoreState, ThunkResult } from '../../../types';
+import { getDatasourceSrv } from '../../plugins/datasource_srv';
+import { getTemplateSrv, TemplateSrv } from '../../templating/template_srv';
+import { variableAdapters } from '../adapters';
+import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../constants';
+import { cleanEditorState } from '../editor/reducer';
+import {
+  hasCurrent,
+  hasLegacyVariableSupport,
+  hasOptions,
+  hasStandardVariableSupport,
+  isAdHoc,
+  isConstant,
+  isMulti,
+  isQuery,
+} from '../guard';
+import { getAllAffectedPanelIdsForVariableChange } from '../inspect/utils';
+import { cleanPickerState } from '../pickers/OptionsPicker/reducer';
+import { alignCurrentWithMulti } from '../shared/multiOptions';
 import {
   DashboardVariableModel,
   initialVariableModelState,
@@ -27,44 +57,6 @@ import {
   VariableWithMultiSupport,
   VariableWithOptions,
 } from '../types';
-import { AppNotification, StoreState, ThunkResult } from '../../../types';
-import { getIfExistsLastKey, getVariable, getVariablesByKey, getVariablesState } from './selectors';
-import { variableAdapters } from '../adapters';
-import { Graph } from '../../../core/utils/dag';
-import { notifyApp } from 'app/core/actions';
-import {
-  addVariable,
-  changeVariableProp,
-  setCurrentVariableValue,
-  variableStateCompleted,
-  variableStateFailed,
-  variableStateFetching,
-  variableStateNotStarted,
-} from './sharedReducer';
-import { KeyedVariableIdentifier } from './types';
-import { contextSrv } from 'app/core/services/context_srv';
-import { getTemplateSrv, TemplateSrv } from '../../templating/template_srv';
-import { alignCurrentWithMulti } from '../shared/multiOptions';
-import {
-  hasCurrent,
-  hasLegacyVariableSupport,
-  hasOptions,
-  hasStandardVariableSupport,
-  isAdHoc,
-  isConstant,
-  isMulti,
-  isQuery,
-} from '../guard';
-import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { DashboardModel } from 'app/features/dashboard/state';
-import { createErrorNotification } from '../../../core/copy/appNotification';
-import {
-  variablesClearTransaction,
-  variablesCompleteTransaction,
-  variablesInitTransaction,
-} from './transactionReducer';
-import { getBackendSrv } from '../../../core/services/backend_srv';
-import { cleanVariables } from './variablesReducer';
 import {
   ensureStringValues,
   ExtendedUrlQueryMap,
@@ -75,15 +67,25 @@ import {
   toStateKey,
   toVariablePayload,
 } from '../utils';
-import { store } from 'app/store/store';
-import { getDatasourceSrv } from '../../plugins/datasource_srv';
-import { cleanEditorState } from '../editor/reducer';
-import { cleanPickerState } from '../pickers/OptionsPicker/reducer';
-import { locationService } from '@grafana/runtime';
-import { appEvents } from '../../../core/core';
-import { getAllAffectedPanelIdsForVariableChange } from '../inspect/utils';
-import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../constants';
+
 import { toKeyedAction } from './keyedVariablesReducer';
+import { getIfExistsLastKey, getVariable, getVariablesByKey, getVariablesState } from './selectors';
+import {
+  addVariable,
+  changeVariableProp,
+  setCurrentVariableValue,
+  variableStateCompleted,
+  variableStateFailed,
+  variableStateFetching,
+  variableStateNotStarted,
+} from './sharedReducer';
+import {
+  variablesClearTransaction,
+  variablesCompleteTransaction,
+  variablesInitTransaction,
+} from './transactionReducer';
+import { KeyedVariableIdentifier } from './types';
+import { cleanVariables } from './variablesReducer';
 
 // process flow queryVariable
 // thunk => processVariables
@@ -271,19 +273,11 @@ export const processVariableDependencies = async (variable: VariableModel, state
     throw new Error(`rootStateKey not found for variable with id:${variable.id}`);
   }
 
-  const dependencies: VariableModel[] = [];
-
-  for (const otherVariable of getVariablesByKey(variable.rootStateKey, state)) {
-    if (variable === otherVariable) {
-      continue;
-    }
-
-    if (variableAdapters.getIfExists(variable.type)) {
-      if (variableAdapters.get(variable.type).dependsOn(variable, otherVariable)) {
-        dependencies.push(otherVariable);
-      }
-    }
+  if (isDependencyGraphCircular(variable, state)) {
+    throw new Error('Circular dependency in dashboard variables detected. Dashboard may not work as expected.');
   }
+
+  const dependencies = getDirectDependencies(variable, state);
 
   if (!isWaitingForDependencies(variable.rootStateKey, dependencies, state)) {
     return;
@@ -301,6 +295,44 @@ export const processVariableDependencies = async (variable: VariableModel, state
       }
     });
   });
+};
+
+const isDependencyGraphCircular = (
+  variable: VariableModel,
+  state: StoreState,
+  encounteredDependencyIds: Set<string> = new Set()
+): boolean => {
+  if (encounteredDependencyIds.has(variable.id)) {
+    return true;
+  }
+
+  encounteredDependencyIds = new Set([...encounteredDependencyIds, variable.id]);
+
+  return getDirectDependencies(variable, state).some((dependency) => {
+    return isDependencyGraphCircular(dependency, state, encounteredDependencyIds);
+  });
+};
+
+const getDirectDependencies = (variable: VariableModel, state: StoreState) => {
+  if (!variable.rootStateKey) {
+    return [];
+  }
+
+  const directDependencies: VariableModel[] = [];
+
+  for (const otherVariable of getVariablesByKey(variable.rootStateKey, state)) {
+    if (variable === otherVariable) {
+      continue;
+    }
+
+    if (variableAdapters.getIfExists(variable.type)) {
+      if (variableAdapters.get(variable.type).dependsOn(variable, otherVariable)) {
+        directDependencies.push(otherVariable);
+      }
+    }
+  }
+
+  return directDependencies;
 };
 
 const isWaitingForDependencies = (key: string, dependencies: VariableModel[], state: StoreState): boolean => {

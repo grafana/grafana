@@ -1,6 +1,7 @@
-import { EchoEvent, EchoEventType } from '@grafana/runtime';
 import { Event as SentryEvent } from '@sentry/browser';
 import { Response } from '@sentry/types';
+
+import { EchoEvent, EchoEventType } from '@grafana/runtime';
 
 export interface BaseTransport {
   sendEvent(event: SentryEvent): PromiseLike<Response>;

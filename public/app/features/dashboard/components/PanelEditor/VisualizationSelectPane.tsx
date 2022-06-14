@@ -1,21 +1,24 @@
-import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { css } from '@emotion/css';
+import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useLocalStorage } from 'react-use';
+
 import { GrafanaTheme, PanelData, SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Button, CustomScrollbar, FilterInput, RadioButtonGroup, useStyles } from '@grafana/ui';
+import { Field } from '@grafana/ui/src/components/Forms/Field';
+import { LS_VISUALIZATION_SELECT_TAB_KEY } from 'app/core/constants';
+import { PanelLibraryOptionsGroup } from 'app/features/library-panels/components/PanelLibraryOptionsGroup/PanelLibraryOptionsGroup';
+import { VisualizationSuggestions } from 'app/features/panel/components/VizTypePicker/VisualizationSuggestions';
+import { VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
+
+import { VizTypePicker } from '../../../panel/components/VizTypePicker/VizTypePicker';
 import { changePanelPlugin } from '../../../panel/state/actions';
 import { PanelModel } from '../../state/PanelModel';
-import { useDispatch, useSelector } from 'react-redux';
-import { VizTypePicker } from '../../../panel/components/VizTypePicker/VizTypePicker';
-import { Field } from '@grafana/ui/src/components/Forms/Field';
-import { PanelLibraryOptionsGroup } from 'app/features/library-panels/components/PanelLibraryOptionsGroup/PanelLibraryOptionsGroup';
-import { toggleVizPicker } from './state/reducers';
-import { selectors } from '@grafana/e2e-selectors';
 import { getPanelPluginWithFallback } from '../../state/selectors';
-import { VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
-import { VisualizationSuggestions } from 'app/features/panel/components/VizTypePicker/VisualizationSuggestions';
-import { useLocalStorage } from 'react-use';
+
+import { toggleVizPicker } from './state/reducers';
 import { VisualizationSelectPaneTab } from './types';
-import { LS_VISUALIZATION_SELECT_TAB_KEY } from 'app/core/constants';
 
 interface Props {
   panel: PanelModel;

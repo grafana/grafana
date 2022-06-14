@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -17,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -85,7 +85,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 	urlParams := c.Req.URL.Query()
 	if _, disableAutoLogin := urlParams["disableAutoLogin"]; disableAutoLogin {
 		hs.log.Debug("Auto login manually disabled")
-		c.HTML(200, getViewIndex(), viewData)
+		c.HTML(http.StatusOK, getViewIndex(), viewData)
 		return
 	}
 
@@ -109,7 +109,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 		// to login again via OAuth and enter to a redirect loop
 		cookies.DeleteCookie(c.Resp, loginErrorCookieName, hs.CookieOptionsFromCfg)
 		viewData.Settings["loginError"] = loginError
-		c.HTML(200, getViewIndex(), viewData)
+		c.HTML(http.StatusOK, getViewIndex(), viewData)
 		return
 	}
 
@@ -144,7 +144,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 		return
 	}
 
-	c.HTML(200, getViewIndex(), viewData)
+	c.HTML(http.StatusOK, getViewIndex(), viewData)
 }
 
 func (hs *HTTPServer) tryOAuthAutoLogin(c *models.ReqContext) bool {
@@ -167,7 +167,7 @@ func (hs *HTTPServer) tryOAuthAutoLogin(c *models.ReqContext) bool {
 
 func (hs *HTTPServer) LoginAPIPing(c *models.ReqContext) response.Response {
 	if c.IsSignedIn || c.IsAnonymous {
-		return response.JSON(200, "Logged in")
+		return response.JSON(http.StatusOK, "Logged in")
 	}
 
 	return response.Error(401, "Unauthorized", nil)
@@ -209,7 +209,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
 		Cfg:        hs.Cfg,
 	}
 
-	err := login.AuthenticateUserFunc(c.Req.Context(), authQuery)
+	err := hs.authenticator.AuthenticateUser(c.Req.Context(), authQuery)
 	authModule = authQuery.AuthModule
 	if err != nil {
 		resp = response.Error(401, "Invalid username or password", err)
@@ -276,7 +276,7 @@ func (hs *HTTPServer) loginUserWithUser(user *models.User, c *models.ReqContext)
 	ctx := context.WithValue(c.Req.Context(), models.RequestURIKey{}, c.Req.RequestURI)
 	userToken, err := hs.AuthTokenService.CreateToken(ctx, user, ip, c.Req.UserAgent())
 	if err != nil {
-		return errutil.Wrap("failed to create auth token", err)
+		return fmt.Errorf("%v: %w", "failed to create auth token", err)
 	}
 	c.UserToken = userToken
 

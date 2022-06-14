@@ -1,17 +1,19 @@
 import { of, throwError } from 'rxjs';
-import { getDefaultTimeRange, LoadingState, VariableSupportType } from '@grafana/data';
 import { delay } from 'rxjs/operators';
 
-import { UpdateOptionsResults, VariableQueryRunner } from './VariableQueryRunner';
+import { getDefaultTimeRange, LoadingState, VariableSupportType } from '@grafana/data';
+
 import { queryBuilder } from '../shared/testing/builders';
-import { QueryRunner, QueryRunners } from './queryRunners';
-import { KeyedVariableIdentifier } from '../state/types';
-import { QueryVariableModel } from '../types';
-import { updateVariableOptions } from './reducer';
+import { getPreloadedState } from '../state/helpers';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { initialTransactionState } from '../state/transactionReducer';
-import { getPreloadedState } from '../state/helpers';
+import { KeyedVariableIdentifier } from '../state/types';
+import { QueryVariableModel } from '../types';
 import { toKeyedVariableIdentifier } from '../utils';
+
+import { UpdateOptionsResults, VariableQueryRunner } from './VariableQueryRunner';
+import { QueryRunner, QueryRunners } from './queryRunners';
+import { updateVariableOptions } from './reducer';
 
 type DoneCallback = {
   (...args: any[]): any;

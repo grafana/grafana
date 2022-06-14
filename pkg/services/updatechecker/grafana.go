@@ -28,7 +28,7 @@ type GrafanaService struct {
 
 func ProvideGrafanaService(cfg *setting.Cfg) *GrafanaService {
 	return &GrafanaService{
-		enabled:        cfg.CheckForUpdates,
+		enabled:        cfg.CheckForGrafanaUpdates,
 		grafanaVersion: cfg.BuildVersion,
 		httpClient:     http.Client{Timeout: 10 * time.Second},
 		log:            log.New("grafana.update.checker"),

@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
@@ -18,7 +17,7 @@ import (
 
 // GET /api/user/signup/options
 func GetSignUpOptions(c *models.ReqContext) response.Response {
-	return response.JSON(200, util.DynMap{
+	return response.JSON(http.StatusOK, util.DynMap{
 		"verifyEmailEnabled": setting.VerifyEmailEnabled,
 		"autoAssignOrg":      setting.AutoAssignOrg,
 	})
@@ -55,7 +54,7 @@ func (hs *HTTPServer) SignUp(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to create signup", err)
 	}
 
-	if err := bus.Publish(c.Req.Context(), &events.SignUpStarted{
+	if err := hs.bus.Publish(c.Req.Context(), &events.SignUpStarted{
 		Email: form.Email,
 		Code:  cmd.Code,
 	}); err != nil {
@@ -64,7 +63,7 @@ func (hs *HTTPServer) SignUp(c *models.ReqContext) response.Response {
 
 	metrics.MApiUserSignUpStarted.Inc()
 
-	return response.JSON(200, util.DynMap{"status": "SignUpCreated"})
+	return response.JSON(http.StatusOK, util.DynMap{"status": "SignUpCreated"})
 }
 
 func (hs *HTTPServer) SignUpStep2(c *models.ReqContext) response.Response {
@@ -102,7 +101,7 @@ func (hs *HTTPServer) SignUpStep2(c *models.ReqContext) response.Response {
 	}
 
 	// publish signup event
-	if err := bus.Publish(c.Req.Context(), &events.SignUpCompleted{
+	if err := hs.bus.Publish(c.Req.Context(), &events.SignUpCompleted{
 		Email: user.Email,
 		Name:  user.NameOrFallback(),
 	}); err != nil {
@@ -135,7 +134,7 @@ func (hs *HTTPServer) SignUpStep2(c *models.ReqContext) response.Response {
 
 	metrics.MApiUserSignUpCompleted.Inc()
 
-	return response.JSON(200, apiResponse)
+	return response.JSON(http.StatusOK, apiResponse)
 }
 
 func (hs *HTTPServer) verifyUserSignUpEmail(ctx context.Context, email string, code string) (bool, response.Response) {

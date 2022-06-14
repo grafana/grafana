@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
@@ -35,14 +36,14 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 	store := sqlstore.InitTestDB(t)
 	svcmock := tests.ServiceAccountMock{}
 
-	autoAssignOrg := setting.AutoAssignOrg
-	setting.AutoAssignOrg = true
+	autoAssignOrg := store.Cfg.AutoAssignOrg
+	store.Cfg.AutoAssignOrg = true
 	defer func() {
-		setting.AutoAssignOrg = autoAssignOrg
+		store.Cfg.AutoAssignOrg = autoAssignOrg
 	}()
 
 	orgCmd := &models.CreateOrgCommand{Name: "Some Test Org"}
-	err := sqlstore.CreateOrg(context.Background(), orgCmd)
+	err := store.CreateOrg(context.Background(), orgCmd)
 	require.Nil(t, err)
 
 	type testCreateSATestCase struct {
@@ -60,8 +61,8 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 			wantID: "sa-new-sa",
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
-					return []*accesscontrol.Permission{{Action: serviceaccounts.ActionCreate}}, nil
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
+					return []accesscontrol.Permission{{Action: serviceaccounts.ActionCreate}}, nil
 				},
 				false,
 			),
@@ -73,8 +74,8 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 			wantError: "service account name already in use",
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
-					return []*accesscontrol.Permission{{Action: serviceaccounts.ActionCreate}}, nil
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
+					return []accesscontrol.Permission{{Action: serviceaccounts.ActionCreate}}, nil
 				},
 				false,
 			),
@@ -86,8 +87,8 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 			wantError: "required value Name must not be empty",
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
-					return []*accesscontrol.Permission{{Action: serviceaccounts.ActionCreate}}, nil
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
+					return []accesscontrol.Permission{{Action: serviceaccounts.ActionCreate}}, nil
 				},
 				false,
 			),
@@ -98,8 +99,8 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 			body: map[string]interface{}{},
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
-					return []*accesscontrol.Permission{}, nil
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
+					return []accesscontrol.Permission{}, nil
 				},
 				false,
 			),
@@ -170,8 +171,8 @@ func TestServiceAccountsAPI_DeleteServiceAccount(t *testing.T) {
 			user: tests.TestUser{Login: "servicetest1@admin", IsServiceAccount: true},
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
-					return []*accesscontrol.Permission{{Action: serviceaccounts.ActionDelete, Scope: serviceaccounts.ScopeAll}}, nil
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
+					return []accesscontrol.Permission{{Action: serviceaccounts.ActionDelete, Scope: serviceaccounts.ScopeAll}}, nil
 				},
 				false,
 			),
@@ -194,8 +195,8 @@ func TestServiceAccountsAPI_DeleteServiceAccount(t *testing.T) {
 			user: tests.TestUser{Login: "servicetest2@admin", IsServiceAccount: true},
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
-					return []*accesscontrol.Permission{}, nil
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
+					return []accesscontrol.Permission{}, nil
 				},
 				false,
 			),
@@ -227,7 +228,7 @@ func setupTestServer(t *testing.T, svc *tests.ServiceAccountMock,
 	m := web.New()
 	signedUser := &models.SignedInUser{
 		OrgId:   1,
-		OrgRole: models.ROLE_ADMIN,
+		OrgRole: models.ROLE_VIEWER,
 	}
 
 	m.Use(func(c *web.Context) {
@@ -237,7 +238,7 @@ func setupTestServer(t *testing.T, svc *tests.ServiceAccountMock,
 			SignedInUser: signedUser,
 			Logger:       log.New("serviceaccounts-test"),
 		}
-		c.Map(ctx)
+		c.Req = c.Req.WithContext(ctxkey.Set(c.Req.Context(), ctx))
 	})
 	a.RouterRegister.Register(m.Router)
 	return m, a
@@ -259,8 +260,8 @@ func TestServiceAccountsAPI_RetrieveServiceAccount(t *testing.T) {
 			user: &tests.TestUser{Login: "servicetest1@admin", IsServiceAccount: true},
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
-					return []*accesscontrol.Permission{{Action: serviceaccounts.ActionRead, Scope: serviceaccounts.ScopeAll}}, nil
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
+					return []accesscontrol.Permission{{Action: serviceaccounts.ActionRead, Scope: serviceaccounts.ScopeAll}}, nil
 				},
 				false,
 			),
@@ -271,8 +272,8 @@ func TestServiceAccountsAPI_RetrieveServiceAccount(t *testing.T) {
 			user: &tests.TestUser{Login: "servicetest2@admin", IsServiceAccount: true},
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
-					return []*accesscontrol.Permission{}, nil
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
+					return []accesscontrol.Permission{}, nil
 				},
 				false,
 			),
@@ -284,8 +285,8 @@ func TestServiceAccountsAPI_RetrieveServiceAccount(t *testing.T) {
 			Id:   12,
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
-					return []*accesscontrol.Permission{{Action: serviceaccounts.ActionRead, Scope: serviceaccounts.ScopeAll}}, nil
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
+					return []accesscontrol.Permission{{Action: serviceaccounts.ActionRead, Scope: serviceaccounts.ScopeAll}}, nil
 				},
 				false,
 			),
@@ -344,21 +345,35 @@ func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
 		Id           int
 	}
 
-	role := models.ROLE_ADMIN
+	viewerRole := models.ROLE_VIEWER
+	editorRole := models.ROLE_EDITOR
 	var invalidRole models.RoleType = "InvalidRole"
 	testCases := []testUpdateSATestCase{
 		{
 			desc: "should be ok to update serviceaccount with permissions",
-			user: &tests.TestUser{Login: "servicetest1@admin", IsServiceAccount: true, Role: "Editor", Name: "Unaltered"},
-			body: &serviceaccounts.UpdateServiceAccountForm{Name: newString("New Name"), Role: &role},
+			user: &tests.TestUser{Login: "servicetest1@admin", IsServiceAccount: true, Role: "Viewer", Name: "Unaltered"},
+			body: &serviceaccounts.UpdateServiceAccountForm{Name: newString("New Name"), Role: &viewerRole},
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
-					return []*accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: serviceaccounts.ScopeAll}}, nil
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
+					return []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: serviceaccounts.ScopeAll}}, nil
 				},
 				false,
 			),
 			expectedCode: http.StatusOK,
+		},
+		{
+			desc: "should be forbidden to set role higher than user's role",
+			user: &tests.TestUser{Login: "servicetest2@admin", IsServiceAccount: true, Role: "Viewer", Name: "Unaltered 2"},
+			body: &serviceaccounts.UpdateServiceAccountForm{Name: newString("New Name 2"), Role: &editorRole},
+			acmock: tests.SetupMockAccesscontrol(
+				t,
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
+					return []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: serviceaccounts.ScopeAll}}, nil
+				},
+				false,
+			),
+			expectedCode: http.StatusForbidden,
 		},
 		{
 			desc: "bad request when invalid role",
@@ -366,8 +381,8 @@ func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
 			body: &serviceaccounts.UpdateServiceAccountForm{Name: newString("NameB"), Role: &invalidRole},
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
-					return []*accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: serviceaccounts.ScopeAll}}, nil
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
+					return []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: serviceaccounts.ScopeAll}}, nil
 				},
 				false,
 			),
@@ -375,12 +390,12 @@ func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
 		},
 		{
 			desc: "should be forbidden to update serviceaccount if no permissions",
-			user: &tests.TestUser{Login: "servicetest2@admin", IsServiceAccount: true},
+			user: &tests.TestUser{Login: "servicetest4@admin", IsServiceAccount: true},
 			body: nil,
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
-					return []*accesscontrol.Permission{}, nil
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
+					return []accesscontrol.Permission{}, nil
 				},
 				false,
 			),
@@ -393,8 +408,8 @@ func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
 			Id:   12,
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
-					return []*accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: serviceaccounts.ScopeAll}}, nil
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
+					return []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: serviceaccounts.ScopeAll}}, nil
 				},
 				false,
 			),
@@ -437,9 +452,10 @@ func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
 				err := json.Unmarshal(actual.Body.Bytes(), &actualBody)
 				require.NoError(t, err)
 				assert.Equal(t, scopeID, int(actualBody["id"].(float64)))
-				assert.Equal(t, string(*tc.body.Role), actualBody["role"].(string))
 				assert.Equal(t, *tc.body.Name, actualBody["name"].(string))
-				assert.Equal(t, tc.user.Login, actualBody["login"].(string))
+				serviceAccountData := actualBody["serviceaccount"].(map[string]interface{})
+				assert.Equal(t, string(*tc.body.Role), serviceAccountData["role"].(string))
+				assert.Equal(t, tc.user.Login, serviceAccountData["login"].(string))
 
 				// Ensure the user was updated in DB
 				sa, err := saAPI.store.RetrieveServiceAccount(context.Background(), 1, int64(scopeID))

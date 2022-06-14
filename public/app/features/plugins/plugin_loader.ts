@@ -1,36 +1,36 @@
-// eslint-disable-next-line lodash/import-scope
-import _ from 'lodash';
-import kbn from 'app/core/utils/kbn';
-import moment from 'moment'; // eslint-disable-line no-restricted-imports
+import * as emotion from '@emotion/css';
+import * as d3 from 'd3';
 import jquery from 'jquery';
-
-// Experimental module exports
+import _ from 'lodash'; // eslint-disable-line lodash/import-scope
+import moment from 'moment'; // eslint-disable-line no-restricted-imports
 import prismjs from 'prismjs';
-import slate from 'slate';
-// @ts-ignore
-import slateReact from '@grafana/slate-react';
-// @ts-ignore
-import slatePlain from 'slate-plain-serializer';
 import react from 'react';
 import reactDom from 'react-dom';
 import * as reactRedux from 'react-redux';
+import * as reactRouter from 'react-router-dom';
 import * as redux from 'redux';
+import * as rxjs from 'rxjs';
+import * as rxjsOperators from 'rxjs/operators';
+import slate from 'slate';
+import slatePlain from 'slate-plain-serializer';
 
+import * as grafanaData from '@grafana/data';
+import * as grafanaRuntime from '@grafana/runtime';
+import slateReact from '@grafana/slate-react';
+import * as grafanaUIraw from '@grafana/ui';
 import config from 'app/core/config';
-import TimeSeries from 'app/core/time_series2';
-import TableModel from 'app/core/table_model';
 import { appEvents, contextSrv } from 'app/core/core';
-import * as flatten from 'app/core/utils/flatten';
-import * as ticks from 'app/core/utils/ticks';
 import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
-import builtInPlugins from './built_in_plugins';
-import * as d3 from 'd3';
-import * as emotion from '@emotion/css';
-import * as grafanaData from '@grafana/data';
-import * as grafanaUIraw from '@grafana/ui';
-import * as grafanaRuntime from '@grafana/runtime';
+import TableModel from 'app/core/table_model';
+import TimeSeries from 'app/core/time_series2';
+import * as flatten from 'app/core/utils/flatten';
+import kbn from 'app/core/utils/kbn';
+import * as ticks from 'app/core/utils/ticks';
+
 import { GenericDataSourcePlugin } from '../datasources/settings/PluginSettings';
+
+import builtInPlugins from './built_in_plugins';
 import { locateWithCache, registerPluginInCache } from './pluginCacheBuster';
 
 // Help the 6.4 to 6.5 migration
@@ -41,12 +41,6 @@ grafanaUI.PanelPlugin = grafanaData.PanelPlugin;
 grafanaUI.DataSourcePlugin = grafanaData.DataSourcePlugin;
 grafanaUI.AppPlugin = grafanaData.AppPlugin;
 grafanaUI.DataSourceApi = grafanaData.DataSourceApi;
-
-// rxjs
-import * as rxjs from 'rxjs';
-import * as rxjsOperators from 'rxjs/operators';
-// routing
-import * as reactRouter from 'react-router-dom';
 
 grafanaRuntime.SystemJS.registry.set('plugin-loader', grafanaRuntime.SystemJS.newModule({ locate: locateWithCache }));
 

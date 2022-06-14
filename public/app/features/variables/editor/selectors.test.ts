@@ -1,16 +1,17 @@
-import {
-  getAdhocVariableEditorState,
-  getDatasourceVariableEditorState,
-  getQueryVariableEditorState,
-} from './selectors';
+import { DataSourceApi } from '@grafana/data';
+
+import { LegacyVariableQueryEditor } from './LegacyVariableQueryEditor';
 import {
   AdHocVariableEditorState,
   DataSourceVariableEditorState,
   initialVariableEditorState,
   QueryVariableEditorState,
 } from './reducer';
-import { LegacyVariableQueryEditor } from './LegacyVariableQueryEditor';
-import { DataSourceApi } from '@grafana/data';
+import {
+  getAdhocVariableEditorState,
+  getDatasourceVariableEditorState,
+  getQueryVariableEditorState,
+} from './selectors';
 
 const adhocExtended: AdHocVariableEditorState = {
   dataSources: [

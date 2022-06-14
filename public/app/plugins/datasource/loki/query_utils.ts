@@ -1,4 +1,5 @@
 import { escapeRegExp } from 'lodash';
+
 import { PIPE_PARSERS } from './syntax';
 import { LokiQuery, LokiQueryType } from './types';
 
@@ -22,9 +23,9 @@ export function getHighlighterExpressionsFromQuery(input: string): string[] {
       break;
     }
     // Drop terms for negative filters
-    const filterOperator = expression.substr(filterStart, 2);
-    const skip = expression.substr(filterStart).search(/!=|!~/) === 0;
-    expression = expression.substr(filterStart + 2);
+    const filterOperator = expression.slice(filterStart, filterStart + 2);
+    const skip = expression.slice(filterStart).search(/!=|!~/) === 0;
+    expression = expression.slice(filterStart + 2);
     if (skip) {
       continue;
     }
@@ -34,8 +35,8 @@ export function getHighlighterExpressionsFromQuery(input: string): string[] {
     if (filterEnd === -1) {
       filterTerm = expression.trim();
     } else {
-      filterTerm = expression.substr(0, filterEnd).trim();
-      expression = expression.substr(filterEnd);
+      filterTerm = expression.slice(0, filterEnd).trim();
+      expression = expression.slice(filterEnd);
     }
 
     const quotedTerm = filterTerm.match(/"(.*?)"/);
@@ -79,8 +80,13 @@ export function addParsedLabelToQuery(expr: string, key: string, value: string |
 // - does not have `.instant`
 // - does not have `.range`
 export function getNormalizedLokiQuery(query: LokiQuery): LokiQuery {
+  //  if queryType field contains invalid data we behave as if the queryType is empty
+  const { queryType } = query;
+  const hasValidQueryType =
+    queryType === LokiQueryType.Range || queryType === LokiQueryType.Instant || queryType === LokiQueryType.Stream;
+
   // if queryType exists, it is respected
-  if (query.queryType !== undefined) {
+  if (hasValidQueryType) {
     const { instant, range, ...rest } = query;
     return rest;
   }

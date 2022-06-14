@@ -1,7 +1,9 @@
-import React from 'react';
 import { render, waitFor } from '@testing-library/react';
-import { PlaylistPage, PlaylistPageProps } from './PlaylistPage';
+import React from 'react';
+
 import { locationService } from '../../../../packages/grafana-runtime/src';
+
+import { PlaylistPage, PlaylistPageProps } from './PlaylistPage';
 
 const fnMock = jest.fn();
 
@@ -67,6 +69,7 @@ describe('PlaylistPage', () => {
             { title: 'Middle item', type: 'dashboard_by_id', order: 2, value: '2' },
             { title: 'Last item', type: 'dashboard_by_tag', order: 2, value: 'Last item' },
           ],
+          uid: 'playlist-0',
         },
       ]);
       const { getByText } = getTestContext();

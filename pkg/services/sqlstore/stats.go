@@ -5,19 +5,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
-
-func (ss *SQLStore) addStatsQueryAndCommandHandlers() {
-	bus.AddHandler("sql", ss.GetAdminStats)
-	bus.AddHandler("sql", ss.GetSystemUserCountStats)
-	bus.AddHandler("sql", ss.GetAlertNotifiersUsageStats)
-	bus.AddHandler("sql", ss.GetDataSourceAccessStats)
-	bus.AddHandler("sql", ss.GetDataSourceStats)
-	bus.AddHandler("sql", ss.GetSystemStats)
-}
 
 const activeUserTimeLimit = time.Hour * 24 * 30
 const dailyActiveUserTimeLimit = time.Hour * 24
@@ -112,6 +102,8 @@ func (ss *SQLStore) GetSystemStats(ctx context.Context, query *models.GetSystemS
 		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("api_key") + `WHERE service_account_id IS NULL) AS api_keys,`)
 		sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("library_element")+` WHERE kind = ?) AS library_panels,`, models.PanelElement)
 		sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("library_element")+` WHERE kind = ?) AS library_variables,`, models.VariableElement)
+		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("data_keys") + `) AS data_keys,`)
+		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("data_keys") + `WHERE active = true) AS active_data_keys,`)
 
 		sb.Write(ss.roleCounterSQL(ctx))
 

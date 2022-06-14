@@ -1,8 +1,9 @@
 import { css, cx } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data';
-import { Button, useStyles2 } from '@grafana/ui';
 import React, { FC } from 'react';
 import { Link } from 'react-router-dom';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { Button, useStyles2 } from '@grafana/ui';
 
 interface Props {
   title: string;
@@ -32,7 +33,9 @@ export const ReceiversSection: FC<Props> = ({
         </div>
         {showButton && (
           <Link to={addButtonTo}>
-            <Button icon="plus">{addButtonLabel}</Button>
+            <Button type="button" icon="plus">
+              {addButtonLabel}
+            </Button>
           </Link>
         )}
       </div>

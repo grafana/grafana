@@ -1,11 +1,14 @@
-import React from 'react';
-import { Story } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
+import { Story } from '@storybook/react';
+import React from 'react';
+
 import { Alert, AlertVariant, VerticalGroup } from '@grafana/ui';
-import { Props } from './Alert';
+
+import { StoryExample } from '../../utils/storybook/StoryExample';
 import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 import mdx from '../Alert/Alert.mdx';
-import { StoryExample } from '../../utils/storybook/StoryExample';
+
+import { Props } from './Alert';
 
 const severities: AlertVariant[] = ['error', 'warning', 'info', 'success'];
 

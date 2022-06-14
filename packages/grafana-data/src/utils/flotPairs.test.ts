@@ -1,7 +1,8 @@
 import { MutableDataFrame } from '../dataframe/MutableDataFrame';
-import { getFlotPairs, getFlotPairsConstant } from './flotPairs';
-import { TimeRange } from '../types/time';
 import { dateTime } from '../datetime/moment_wrapper';
+import { TimeRange } from '../types/time';
+
+import { getFlotPairs, getFlotPairsConstant } from './flotPairs';
 
 describe('getFlotPairs', () => {
   const series = new MutableDataFrame({

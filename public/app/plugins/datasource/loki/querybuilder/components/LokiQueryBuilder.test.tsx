@@ -1,10 +1,13 @@
-import React from 'react';
 import { render, screen, getAllByRole, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { LokiQueryBuilder } from './LokiQueryBuilder';
-import { LokiDatasource } from '../../datasource';
-import { LokiVisualQuery } from '../types';
+import React from 'react';
+
 import { PanelData } from '@grafana/data';
+
+import { LokiDatasource } from '../../datasource';
+import { LokiOperationId, LokiVisualQuery } from '../types';
+
+import { LokiQueryBuilder } from './LokiQueryBuilder';
 
 const defaultQuery: LokiVisualQuery = {
   labels: [{ op: '=', label: 'baz', value: 'bar' }],
@@ -15,11 +18,21 @@ describe('LokiQueryBuilder', () => {
   it('tries to load labels when no labels are selected', async () => {
     const { datasource } = setup();
     datasource.languageProvider.fetchSeriesLabels = jest.fn().mockReturnValue({ job: ['a'], instance: ['b'] });
-    userEvent.click(screen.getByLabelText('Add'));
+    await userEvent.click(screen.getByLabelText('Add'));
     const labels = screen.getByText(/Labels/);
-    const selects = getAllByRole(labels.parentElement!, 'combobox');
-    userEvent.click(selects[3]);
+    const selects = getAllByRole(labels.parentElement!.parentElement!.parentElement!, 'combobox');
+    await userEvent.click(selects[3]);
     await waitFor(() => expect(screen.getByText('job')).toBeInTheDocument());
+  });
+
+  it('shows error for query with operations and no stream selector', async () => {
+    setup({ labels: [], operations: [{ id: LokiOperationId.Logfmt, params: [] }] });
+    expect(screen.getByText('You need to specify at least 1 label filter (stream selector)')).toBeInTheDocument();
+  });
+
+  it('shows no error for query with empty __line_contains operation and no stream selector', async () => {
+    setup({ labels: [], operations: [{ id: LokiOperationId.LineContains, params: [''] }] });
+    expect(screen.queryByText('You need to specify at least 1 label filter (stream selector)')).not.toBeInTheDocument();
   });
 });
 

@@ -1,9 +1,11 @@
 import React from 'react';
+
 import { Button, Input, Switch, Form, Field, InputControl, HorizontalGroup } from '@grafana/ui';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { SaveDashboardFormProps } from '../types';
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
+
+import { SaveDashboardFormProps } from '../types';
 
 interface SaveDashboardAsFormDTO {
   title: string;

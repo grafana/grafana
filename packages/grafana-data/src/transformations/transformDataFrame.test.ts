@@ -1,11 +1,12 @@
-import { ReducerID } from './fieldReducer';
-import { DataTransformerID } from './transformers/ids';
 import { toDataFrame } from '../dataframe/processDataFrame';
-import { mockTransformationsRegistry } from '../utils/tests/mockTransformationsRegistry';
-import { reduceTransformer } from './transformers/reduce';
-import { filterFieldsByNameTransformer } from './transformers/filterByName';
-import { transformDataFrame } from './transformDataFrame';
 import { FieldType } from '../types';
+import { mockTransformationsRegistry } from '../utils/tests/mockTransformationsRegistry';
+
+import { ReducerID } from './fieldReducer';
+import { transformDataFrame } from './transformDataFrame';
+import { filterFieldsByNameTransformer } from './transformers/filterByName';
+import { DataTransformerID } from './transformers/ids';
+import { reduceTransformer } from './transformers/reduce';
 
 const seriesAWithSingleField = toDataFrame({
   name: 'A',

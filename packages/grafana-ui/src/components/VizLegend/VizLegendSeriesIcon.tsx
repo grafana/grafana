@@ -1,6 +1,8 @@
 import React, { useCallback } from 'react';
+
 import { SeriesColorPicker } from '../ColorPicker/ColorPicker';
 import { usePanelContext } from '../PanelChrome';
+
 import { SeriesIcon } from './SeriesIcon';
 
 interface Props {

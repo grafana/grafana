@@ -115,6 +115,7 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
             0,
             0,
           ],
+          "noDeleteOnFetchRejection": false,
           "noDisposeOnSet": false,
           "noUpdateTTL": false,
           "prev": Uint8Array [
@@ -136,6 +137,7 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
           "ttlAutopurge": false,
           "ttlResolution": 1,
           "updateAgeOnGet": false,
+          "updateAgeOnHas": false,
           "valList": Array [
             null,
             null,
@@ -200,6 +202,7 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
             0,
             0,
           ],
+          "noDeleteOnFetchRejection": false,
           "noDisposeOnSet": false,
           "noUpdateTTL": false,
           "prev": Uint8Array [
@@ -221,6 +224,7 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
           "ttlAutopurge": false,
           "ttlResolution": 1,
           "updateAgeOnGet": false,
+          "updateAgeOnHas": false,
           "valList": Array [
             null,
             null,

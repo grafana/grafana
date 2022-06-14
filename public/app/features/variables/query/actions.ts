@@ -1,20 +1,22 @@
 import { Subscription } from 'rxjs';
-import { getDataSourceSrv, toDataQueryError } from '@grafana/runtime';
-import { DataSourceRef } from '@grafana/data';
 
-import { updateOptions } from '../state/actions';
-import { QueryVariableModel } from '../types';
+import { DataSourceRef } from '@grafana/data';
+import { getDataSourceSrv, toDataQueryError } from '@grafana/runtime';
+
 import { ThunkResult } from '../../../types';
-import { getVariable, getVariablesState } from '../state/selectors';
+import { getVariableQueryEditor } from '../editor/getVariableQueryEditor';
 import { addVariableEditorError, changeVariableEditorExtended, removeVariableEditorError } from '../editor/reducer';
+import { getQueryVariableEditorState } from '../editor/selectors';
+import { updateOptions } from '../state/actions';
+import { toKeyedAction } from '../state/keyedVariablesReducer';
+import { getVariable, getVariablesState } from '../state/selectors';
 import { changeVariableProp } from '../state/sharedReducer';
 import { KeyedVariableIdentifier } from '../state/types';
-import { getVariableQueryEditor } from '../editor/getVariableQueryEditor';
+import { QueryVariableModel } from '../types';
+import { hasOngoingTransaction, toKeyedVariableIdentifier, toVariablePayload } from '../utils';
+
 import { getVariableQueryRunner } from './VariableQueryRunner';
 import { variableQueryObserver } from './variableQueryObserver';
-import { hasOngoingTransaction, toKeyedVariableIdentifier, toVariablePayload } from '../utils';
-import { toKeyedAction } from '../state/keyedVariablesReducer';
-import { getQueryVariableEditorState } from '../editor/selectors';
 
 export const updateQueryVariableOptions = (
   identifier: KeyedVariableIdentifier,

@@ -1,11 +1,13 @@
+import chalk from 'chalk';
 import execa = require('execa');
 import { promises as fs } from 'fs';
-import * as path from 'path';
-import chalk from 'chalk';
-import { useSpinner } from '../utils/useSpinner';
-import { Task, TaskRunner } from './task';
-import { cloneDeep } from 'lodash';
 import globby from 'globby';
+import { cloneDeep } from 'lodash';
+import * as path from 'path';
+
+import { useSpinner } from '../utils/useSpinner';
+
+import { Task, TaskRunner } from './task';
 
 const clean = (cwd: string) => useSpinner('Cleaning', () => execa('npm', ['run', 'clean'], { cwd }));
 

@@ -1,11 +1,11 @@
 import React, { useMemo, useState } from 'react';
 
-import { Button, Checkbox, Form, TextArea } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
-
-import { DashboardModel } from 'app/features/dashboard/state';
-import { SaveDashboardData, SaveDashboardOptions } from '../types';
 import { Stack } from '@grafana/experimental';
+import { Button, Checkbox, Form, TextArea } from '@grafana/ui';
+import { DashboardModel } from 'app/features/dashboard/state';
+
+import { SaveDashboardData, SaveDashboardOptions } from '../types';
 
 interface FormDTO {
   message: string;
@@ -42,6 +42,7 @@ export const SaveDashboardForm = ({
           return;
         }
         setSaving(true);
+        options = { ...options, message: data.message };
         const result = await onSubmit(saveModel.clone, options, dashboard);
         if (result.status === 'success') {
           if (options.saveVariables) {
@@ -51,15 +52,16 @@ export const SaveDashboardForm = ({
             dashboard.resetOriginalTime();
           }
           onSuccess();
+        } else {
+          setSaving(false);
         }
-        setSaving(false);
       }}
     >
       {({ register, errors }) => (
         <Stack direction="column" gap={2}>
           {hasTimeChanged && (
             <Checkbox
-              checked={options.saveTimerange}
+              checked={!!options.saveTimerange}
               onChange={() =>
                 onOptionsChange({
                   ...options,
@@ -72,7 +74,7 @@ export const SaveDashboardForm = ({
           )}
           {hasVariableChanged && (
             <Checkbox
-              checked={options.saveVariables}
+              checked={!!options.saveVariables}
               onChange={() =>
                 onOptionsChange({
                   ...options,
@@ -96,7 +98,7 @@ export const SaveDashboardForm = ({
               icon={saving ? 'fa fa-spinner' : undefined}
               aria-label={selectors.pages.SaveDashboardModal.save}
             >
-              {saving ? '' : 'Save'}
+              Save
             </Button>
             {!saveModel.hasChanges && <div>No changes to save</div>}
           </Stack>

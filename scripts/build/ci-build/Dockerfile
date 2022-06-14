@@ -110,7 +110,7 @@ RUN rm dockerize-linux-amd64-v${DOCKERIZE_VERSION}.tar.gz
 # Use old Debian (this has support into 2022) in order to ensure binary compatibility with older glibc's.
 FROM debian:stretch-20210208
 
-ENV GOVERSION=1.17.8 \
+ENV GOVERSION=1.17.11 \
     PATH=/usr/local/go/bin:$PATH \
     GOPATH=/go \
     NODEVERSION=16.14.0-1nodesource1 \
@@ -147,8 +147,10 @@ RUN apt-get update && \
         unzip &&        \
     gem install -N fpm && \
     ln -s /usr/bin/llvm-dsymutil-6.0 /usr/bin/dsymutil && \
-    curl -fsL https://deb.nodesource.com/setup_16.x | bash - && \
-    apt-get update && apt-get install -yq nodejs=${NODEVERSION} && \
+    curl -fsS https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add -  && \
+    curl -O https://deb.nodesource.com/node_16.x/pool/main/n/nodejs/nodejs_${NODEVERSION}_amd64.deb &&\
+    dpkg -i nodejs_${NODEVERSION}_amd64.deb &&\
+    rm nodejs_${NODEVERSION}_amd64.deb &&\
     curl -fsS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && \
     echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list && \
     apt-get update && apt-get install -yq yarn=${YARNVERSION} && \

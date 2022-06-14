@@ -1,11 +1,13 @@
-import React, { FC, useCallback, useMemo, useState } from 'react';
-import { Field, GrafanaTheme, SelectableValue } from '@grafana/data';
 import { css, cx } from '@emotion/css';
+import React, { FC, useCallback, useMemo, useState } from 'react';
 
-import { TableStyles } from './styles';
-import { stylesFactory, useStyles, useTheme2 } from '../../themes';
+import { Field, GrafanaTheme, SelectableValue } from '@grafana/data';
+
 import { Button, ClickOutsideWrapper, HorizontalGroup, IconButton, Label, VerticalGroup } from '..';
+import { stylesFactory, useStyles, useTheme2 } from '../../themes';
+
 import { FilterList } from './FilterList';
+import { TableStyles } from './styles';
 import { calculateUniqueFieldValues, getFilteredOptions, valuesToOptions } from './utils';
 
 interface Props {

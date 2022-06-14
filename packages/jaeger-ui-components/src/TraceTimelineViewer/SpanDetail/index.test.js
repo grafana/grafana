@@ -14,17 +14,19 @@
 
 jest.mock('../utils');
 
-import React from 'react';
 import { shallow } from 'enzyme';
+import React from 'react';
+
+import LabeledList from '../../common/LabeledList';
+import traceGenerator from '../../demo/trace-generators';
+import transformTraceData from '../../model/transform-trace-data';
+import { formatDuration } from '../utils';
 
 import AccordianKeyValues from './AccordianKeyValues';
 import AccordianLogs from './AccordianLogs';
 import DetailState from './DetailState';
-import SpanDetail from './index';
-import { formatDuration } from '../utils';
-import LabeledList from '../../common/LabeledList';
-import traceGenerator from '../../demo/trace-generators';
-import transformTraceData from '../../model/transform-trace-data';
+
+import SpanDetail, { getAbsoluteTime } from './index';
 
 describe('<SpanDetail>', () => {
   let wrapper;
@@ -33,10 +35,12 @@ describe('<SpanDetail>', () => {
   const span = transformTraceData(traceGenerator.trace({ numberOfSpans: 1 })).spans[0];
   const detailState = new DetailState().toggleLogs().toggleProcess().toggleReferences().toggleTags();
   const traceStartTime = 5;
+  const topOfExploreViewRef = jest.fn();
   const props = {
     detailState,
     span,
     traceStartTime,
+    topOfExploreViewRef,
     logItemToggle: jest.fn(),
     logsToggle: jest.fn(),
     processToggle: jest.fn(),
@@ -44,6 +48,7 @@ describe('<SpanDetail>', () => {
     warningsToggle: jest.fn(),
     referencesToggle: jest.fn(),
     createFocusSpanLink: jest.fn(),
+    topOfViewRefType: 'Explore',
   };
   span.logs = [
     {
@@ -132,6 +137,12 @@ describe('<SpanDetail>', () => {
         .map((item) => item.label)
         .sort()
     ).toEqual(words);
+  });
+
+  it('start time shows the absolute time', () => {
+    const startTime = wrapper.find(LabeledList).prop('items')[2].value;
+    const absoluteTime = getAbsoluteTime(span.startTime);
+    expect(startTime).toContain(absoluteTime);
   });
 
   it('renders the span tags', () => {

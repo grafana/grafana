@@ -1,7 +1,9 @@
 import React, { FC, useCallback } from 'react';
+
 import { DataFrame, QueryResultMetaNotice } from '@grafana/data';
-import { PanelHeaderNotice } from './PanelHeaderNotice';
 import { locationService } from '@grafana/runtime';
+
+import { PanelHeaderNotice } from './PanelHeaderNotice';
 
 interface Props {
   panelId: number;
