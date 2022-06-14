@@ -11,6 +11,21 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestInstall(t *testing.T) {
+	testDir := "./test"
+	err := os.Mkdir(testDir, os.ModePerm)
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		err = os.RemoveAll(testDir)
+		require.NoError(t, err)
+	})
+
+	i := &Installer{log: &fakeLogger{}}
+	err = i.Install(context.Background(), "test-app", testDir, ".", "./testdata/plugin-with-symlinks.zip", "")
+	require.NoError(t, err)
+}
+
 func TestUninstall(t *testing.T) {
 	i := &Installer{log: &fakeLogger{}}
 
