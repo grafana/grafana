@@ -26,17 +26,7 @@ import {
   displayNameOverrideProcessor,
   FieldNamePickerConfigSettings,
 } from '@grafana/data';
-import {
-  NumberValueEditor,
-  SliderValueEditor,
-  RadioButtonGroup,
-  StringValueEditor,
-  StringArrayEditor,
-  SelectValueEditor,
-  MultiSelectValueEditor,
-  TimeZonePicker,
-  Switch,
-} from '@grafana/ui';
+import { RadioButtonGroup, TimeZonePicker, Switch } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
 import { ThresholdsValueEditor } from 'app/features/dimensions/editors/ThresholdsEditor/thresholds';
 import { ValueMappingsEditor } from 'app/features/dimensions/editors/ValueMappingsEditor/ValueMappingsEditor';
@@ -45,7 +35,13 @@ import { DashboardPicker, DashboardPickerOptions } from './DashboardPicker';
 import { ColorValueEditor } from './color';
 import { FieldColorEditor } from './fieldColor';
 import { DataLinksValueEditor } from './links';
+import { MultiSelectValueEditor } from './multiSelect';
+import { NumberValueEditor } from './number';
+import { SelectValueEditor } from './select';
+import { SliderValueEditor } from './slider';
 import { StatsPickerEditor } from './stats';
+import { StringValueEditor } from './string';
+import { StringArrayEditor } from './strings';
 import { UnitValueEditor } from './units';
 
 /**
