@@ -1,4 +1,3 @@
-import { keyframes } from '@emotion/react';
 import { MutableRefObject, RefObject } from 'react';
 import uPlot, { Cursor } from 'uplot';
 
@@ -102,6 +101,9 @@ export function prepConfig(opts: PrepConfigOpts) {
     sync,
   } = opts;
 
+  const xScaleKey = 'x';
+  const xScaleUnit = 'time';
+
   const pxRatio = devicePixelRatio;
 
   let heatmapType = dataRef.current?.heatmap?.meta?.type;
@@ -141,8 +143,8 @@ export function prepConfig(opts: PrepConfigOpts) {
   onzoom &&
     builder.addHook('setSelect', (u) => {
       onzoom({
-        xMin: u.posToVal(u.select.left, 'x'),
-        xMax: u.posToVal(u.select.left + u.select.width, 'x'),
+        xMin: u.posToVal(u.select.left, xScaleKey),
+        xMax: u.posToVal(u.select.left + u.select.width, xScaleKey),
       });
       u.setSelect({ left: 0, top: 0, width: 0, height: 0 }, false);
     });
@@ -150,7 +152,7 @@ export function prepConfig(opts: PrepConfigOpts) {
   // this is a tmp hack because in mode: 2, uplot does not currently call scales.x.range() for setData() calls
   // scales.x.range() typically reads back from drilled-down panelProps.timeRange via getTimeRange()
   builder.addHook('setData', (u) => {
-    //let [min, max] = (u.scales!.x!.range! as uPlot.Range.Function)(u, 0, 100, 'x');
+    //let [min, max] = (u.scales!.x!.range! as uPlot.Range.Function)(u, 0, 100, xScaleKey);
 
     let { min: xMin, max: xMax } = u.scales!.x;
 
@@ -159,7 +161,7 @@ export function prepConfig(opts: PrepConfigOpts) {
 
     if (xMin !== min || xMax !== max) {
       queueMicrotask(() => {
-        u.setScale('x', { min, max });
+        u.setScale(xScaleKey, { min, max });
       });
     }
   });
@@ -168,9 +170,6 @@ export function prepConfig(opts: PrepConfigOpts) {
   builder.addHook('syncRect', (u, r) => {
     rect = r;
   });
-
-  const xScaleKey = 'x';
-  const xScaleUnit = 'time';
 
   const payload: DataHoverPayload = {
     point: {
@@ -240,7 +239,7 @@ export function prepConfig(opts: PrepConfigOpts) {
   builder.setMode(2);
 
   builder.addScale({
-    scaleKey: 'x',
+    scaleKey: xScaleKey,
     isTime: true,
     orientation: ScaleOrientation.Horizontal,
     direction: ScaleDirection.Right,
@@ -251,7 +250,7 @@ export function prepConfig(opts: PrepConfigOpts) {
   });
 
   builder.addAxis({
-    scaleKey: 'x',
+    scaleKey: xScaleKey,
     placement: AxisPlacement.Bottom,
     isTime: true,
     theme: theme,
@@ -404,7 +403,7 @@ export function prepConfig(opts: PrepConfigOpts) {
   builder.addSeries({
     facets: [
       {
-        scale: 'x',
+        scale: xScaleKey,
         auto: true,
         sorted: 1,
       },
@@ -457,7 +456,7 @@ export function prepConfig(opts: PrepConfigOpts) {
   builder.addSeries({
     facets: [
       {
-        scale: 'x',
+        scale: xScaleKey,
         auto: true,
         sorted: 1,
       },
@@ -522,30 +521,26 @@ export function prepConfig(opts: PrepConfigOpts) {
     },
   };
 
-  if (sync && sync() !== DashboardCursorSync.Off) {
-    cursor.sync = {
-      key: '__global_',
-      filters: {
-        pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {
-          if (sync && sync() === DashboardCursorSync.Off) {
-            return false;
-          }
+  const isSyncOff = sync && sync() === DashboardCursorSync.Off;
 
-          if (x < 0) {
-            payload.point[xScaleUnit] = null;
-            eventBus.publish(new DataHoverClearEvent());
-          } else {
-            payload.point[xScaleUnit] = src.posToVal(x, xScaleKey);
-            eventBus.publish(hoverEvent);
-          }
+  cursor.sync = {
+    key: '__global_',
+    filters: {
+      pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {
+        if (x < 0) {
+          payload.point[xScaleUnit] = null;
+          eventBus.publish(new DataHoverClearEvent());
+        } else {
+          payload.point[xScaleUnit] = src.posToVal(x, xScaleKey);
+          eventBus.publish(hoverEvent);
+        }
 
-          return true;
-        },
+        return !isSyncOff;
       },
-      scales: [xScaleKey, xScaleKey],
-      match: [(a, b) => a === b, () => false],
-    };
-  }
+    },
+    scales: [xScaleKey, xScaleKey],
+    match: isSyncOff ? [() => false, () => false] : [(a, b) => a === b, () => false],
+  };
 
   builder.setSync();
   builder.setCursor(cursor);
