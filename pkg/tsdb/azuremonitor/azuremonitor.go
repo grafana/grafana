@@ -243,7 +243,7 @@ func checkAzureLogAnalyticsHealth(dsInfo types.DatasourceInfo) (*http.Response, 
 	return res, nil
 }
 
-func checkAzureMonitorGraphHealth(dsInfo types.DatasourceInfo) (*http.Response, error) {
+func checkAzureMonitorResourceGraphHealth(dsInfo types.DatasourceInfo) (*http.Response, error) {
 	body, err := json.Marshal(map[string]interface{}{
 		"query":         "Resources | project id | limit 1",
 		"subscriptions": []string{dsInfo.Settings.SubscriptionId},
