@@ -83,11 +83,11 @@ func (ds DataSource) AllowedCookies() []string {
 
 // Specific error type for grpc secrets management so that we can show more detailed plugin errors to users
 type ErrDatasourceSecretsPluginUserFriendly struct {
-	Err error
+	Err string
 }
 
 func (e ErrDatasourceSecretsPluginUserFriendly) Error() string {
-	return e.Err.Error()
+	return e.Err
 }
 
 // ----------------------

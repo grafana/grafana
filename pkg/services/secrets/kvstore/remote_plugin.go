@@ -2,7 +2,6 @@ package kvstore
 
 import (
 	"context"
-	"errors"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -126,5 +125,5 @@ func parseKeys(keys []*smp.Key) []Key {
 }
 
 func wrapUserFriendlySecretError(ufe string) models.ErrDatasourceSecretsPluginUserFriendly {
-	return models.ErrDatasourceSecretsPluginUserFriendly{Err: errors.New(ufe)}
+	return models.ErrDatasourceSecretsPluginUserFriendly{Err: ufe}
 }
