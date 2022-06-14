@@ -19,7 +19,7 @@ import "github.com/grafana/grafana/pkg/models"
 // 500: internalServerError
 
 // swagger:parameters search
-type SearchParameters struct {
+type SearchParams struct {
 	// Search Query
 	// in:query
 	// required: false

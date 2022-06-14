@@ -28,28 +28,28 @@ type SecretsManagerGRPCClient struct {
 }
 
 // Get an item from the store
-func (sm *SecretsManagerGRPCClient) Get(ctx context.Context, req *GetSecretRequest, opts ...grpc.CallOption) (*GetSecretResponse, error) {
-	return sm.SecretsManagerClient.Get(ctx, req)
+func (sm *SecretsManagerGRPCClient) GetSecret(ctx context.Context, req *GetSecretRequest, opts ...grpc.CallOption) (*GetSecretResponse, error) {
+	return sm.SecretsManagerClient.GetSecret(ctx, req)
 }
 
 // Set an item in the store
-func (sm *SecretsManagerGRPCClient) Set(ctx context.Context, req *SetSecretRequest, opts ...grpc.CallOption) (*SetSecretResponse, error) {
-	return sm.SecretsManagerClient.Set(ctx, req)
+func (sm *SecretsManagerGRPCClient) SetSecret(ctx context.Context, req *SetSecretRequest, opts ...grpc.CallOption) (*SetSecretResponse, error) {
+	return sm.SecretsManagerClient.SetSecret(ctx, req)
 }
 
 // Del deletes an item from the store.
-func (sm *SecretsManagerGRPCClient) Del(ctx context.Context, req *DelSecretRequest, opts ...grpc.CallOption) (*DelSecretResponse, error) {
-	return sm.SecretsManagerClient.Del(ctx, req)
+func (sm *SecretsManagerGRPCClient) DeleteSecret(ctx context.Context, req *DeleteSecretRequest, opts ...grpc.CallOption) (*DeleteSecretResponse, error) {
+	return sm.SecretsManagerClient.DeleteSecret(ctx, req)
 }
 
 // Keys get all keys for a given namespace.
-func (sm *SecretsManagerGRPCClient) Keys(ctx context.Context, req *ListSecretsRequest, opts ...grpc.CallOption) (*ListSecretsResponse, error) {
-	return sm.SecretsManagerClient.Keys(ctx, req)
+func (sm *SecretsManagerGRPCClient) ListSecrets(ctx context.Context, req *ListSecretsRequest, opts ...grpc.CallOption) (*ListSecretsResponse, error) {
+	return sm.SecretsManagerClient.ListSecrets(ctx, req)
 }
 
 // Rename an item in the store
-func (sm *SecretsManagerGRPCClient) Rename(ctx context.Context, req *RenameSecretRequest, opts ...grpc.CallOption) (*RenameSecretResponse, error) {
-	return sm.SecretsManagerClient.Rename(ctx, req)
+func (sm *SecretsManagerGRPCClient) RenameSecret(ctx context.Context, req *RenameSecretRequest, opts ...grpc.CallOption) (*RenameSecretResponse, error) {
+	return sm.SecretsManagerClient.RenameSecret(ctx, req)
 }
 
 var _ SecretsManagerClient = &SecretsManagerGRPCClient{}

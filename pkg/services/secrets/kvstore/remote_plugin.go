@@ -26,7 +26,7 @@ func (kv *secretsKVStorePlugin) Get(ctx context.Context, orgId int64, namespace 
 			Type:      typ,
 		},
 	}
-	res, err := kv.secretsPlugin.Get(ctx, req)
+	res, err := kv.secretsPlugin.GetSecret(ctx, req)
 	if err != nil {
 		return "", false, err
 	} else if res.UserFriendlyError != "" {
@@ -47,7 +47,7 @@ func (kv *secretsKVStorePlugin) Set(ctx context.Context, orgId int64, namespace 
 		Value: value,
 	}
 
-	res, err := kv.secretsPlugin.Set(ctx, req)
+	res, err := kv.secretsPlugin.SetSecret(ctx, req)
 	if err == nil && res.UserFriendlyError != "" {
 		err = wrapUserFriendlySecretError(res.UserFriendlyError)
 	}
@@ -57,7 +57,7 @@ func (kv *secretsKVStorePlugin) Set(ctx context.Context, orgId int64, namespace 
 
 // Del deletes an item from the store.
 func (kv *secretsKVStorePlugin) Del(ctx context.Context, orgId int64, namespace string, typ string) error {
-	req := &smp.DelSecretRequest{
+	req := &smp.DeleteSecretRequest{
 		KeyDescriptor: &smp.Key{
 			OrgId:     orgId,
 			Namespace: namespace,
@@ -65,7 +65,7 @@ func (kv *secretsKVStorePlugin) Del(ctx context.Context, orgId int64, namespace 
 		},
 	}
 
-	res, err := kv.secretsPlugin.Del(ctx, req)
+	res, err := kv.secretsPlugin.DeleteSecret(ctx, req)
 	if err == nil && res.UserFriendlyError != "" {
 		err = wrapUserFriendlySecretError(res.UserFriendlyError)
 	}
@@ -85,7 +85,7 @@ func (kv *secretsKVStorePlugin) Keys(ctx context.Context, orgId int64, namespace
 		AllOrganizations: orgId == AllOrganizations,
 	}
 
-	res, err := kv.secretsPlugin.Keys(ctx, req)
+	res, err := kv.secretsPlugin.ListSecrets(ctx, req)
 	if err != nil {
 		return nil, err
 	} else if res.UserFriendlyError != "" {
@@ -106,7 +106,7 @@ func (kv *secretsKVStorePlugin) Rename(ctx context.Context, orgId int64, namespa
 		NewNamespace: newNamespace,
 	}
 
-	res, err := kv.secretsPlugin.Rename(ctx, req)
+	res, err := kv.secretsPlugin.RenameSecret(ctx, req)
 	if err == nil && res.UserFriendlyError != "" {
 		err = wrapUserFriendlySecretError(res.UserFriendlyError)
 	}
