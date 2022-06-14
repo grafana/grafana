@@ -538,7 +538,7 @@ export function prepConfig(opts: PrepConfigOpts) {
         return !isSyncOff;
       },
     },
-    scales: [xScaleKey, xScaleKey],
+    scales: [xScaleKey, xScaleKey], // y is set to x so that it is a real scale, but will not match "y" elsewhere
     match: isSyncOff ? [() => false, () => false] : [(a, b) => a === b, () => false],
   };
 
