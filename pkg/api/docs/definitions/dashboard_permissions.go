@@ -63,11 +63,30 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:parameters postDashboardPermissions updateFolderPermissions postDashboardPermissionsWithUid
-type PostDashboardPermissionsParam struct {
+// swagger:parameters getDashboardPermissions
+type GetDashboardPermissionsParams struct {
+	// in:path
+	DashboardID int64
+}
+
+// swagger:parameters postDashboardPermissions
+type PostDashboardPermissionsParams struct {
 	// in:body
 	// required:true
 	Body dtos.UpdateDashboardAclCommand
+	// in:path
+	DashboardID int64
+}
+
+// swagger:parameters postDashboardPermissionsWithUid
+type PostDashboardPermissionsWithUIDParams struct {
+	// in:body
+	// required:true
+	Body dtos.UpdateDashboardAclCommand
+	// in:path
+	// required:true
+	// description: The dashboard UID
+	UID string `json:"uid"`
 }
 
 // swagger:response getDashboardPermissionsResponse
