@@ -1,3 +1,4 @@
+import { keyframes } from '@emotion/react';
 import { MutableRefObject, RefObject } from 'react';
 import uPlot, { Cursor } from 'uplot';
 
@@ -168,6 +169,17 @@ export function prepConfig(opts: PrepConfigOpts) {
     rect = r;
   });
 
+  const xScaleKey = 'x';
+  const xScaleUnit = 'time';
+
+  const payload: DataHoverPayload = {
+    point: {
+      [xScaleUnit]: null,
+    },
+    data: dataRef.current?.heatmap,
+  };
+  const hoverEvent = new DataHoverEvent(payload);
+
   let pendingOnleave = 0;
 
   onhover &&
@@ -175,20 +187,25 @@ export function prepConfig(opts: PrepConfigOpts) {
       if (u.cursor.idxs != null) {
         for (let i = 0; i < u.cursor.idxs.length; i++) {
           const sel = u.cursor.idxs[i];
-          if (sel != null && !isToolTipOpen.current) {
-            if (pendingOnleave) {
-              clearTimeout(pendingOnleave);
-              pendingOnleave = 0;
+          if (sel != null) {
+            const { left, top } = u.cursor;
+            payload.rowIndex = sel;
+            payload.point[xScaleUnit] = u.posToVal(left!, xScaleKey);
+            eventBus.publish(hoverEvent);
+
+            if (!isToolTipOpen.current) {
+              if (pendingOnleave) {
+                clearTimeout(pendingOnleave);
+                pendingOnleave = 0;
+              }
+              onhover({
+                seriesIdx: i,
+                dataIdx: sel,
+                pageX: rect.left + left!,
+                pageY: rect.top + top!,
+              });
             }
-
-            onhover({
-              seriesIdx: i,
-              dataIdx: sel,
-              pageX: rect.left + u.cursor.left!,
-              pageY: rect.top + u.cursor.top!,
-            });
-
-            return; // only show the first one
+            return;
           }
         }
       }
@@ -196,7 +213,12 @@ export function prepConfig(opts: PrepConfigOpts) {
       if (!isToolTipOpen.current) {
         // if tiles have gaps, reduce flashing / re-render (debounce onleave by 100ms)
         if (!pendingOnleave) {
-          pendingOnleave = setTimeout(() => onhover(null), 100) as any;
+          pendingOnleave = setTimeout(() => {
+            onhover(null);
+            payload.rowIndex = undefined;
+            payload.point[xScaleUnit] = null;
+            eventBus.publish(hoverEvent);
+          }, 100) as any;
         }
       }
     });
@@ -501,33 +523,26 @@ export function prepConfig(opts: PrepConfigOpts) {
   };
 
   if (sync && sync() !== DashboardCursorSync.Off) {
-    const xScaleKey = 'x';
-    const xScaleUnit = 'time';
-
-    const payload: DataHoverPayload = {
-      point: {
-        [xScaleUnit]: null,
-      },
-      data: dataRef.current?.heatmap,
-    };
-    const hoverEvent = new DataHoverEvent(payload);
     cursor.sync = {
       key: '__global_',
       filters: {
         pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {
-          payload.rowIndex = dataIdx; // not the matched cell :thinking:
-          if (x < 0 && y < 0) {
+          if (sync && sync() === DashboardCursorSync.Off) {
+            return false;
+          }
+
+          if (x < 0) {
             payload.point[xScaleUnit] = null;
             eventBus.publish(new DataHoverClearEvent());
           } else {
             payload.point[xScaleUnit] = src.posToVal(x, xScaleKey);
             eventBus.publish(hoverEvent);
-            hoverEvent.payload.down = undefined;
           }
+
           return true;
         },
       },
-      scales: [xScaleKey, '--'],
+      scales: [xScaleKey, xScaleKey],
       match: [(a, b) => a === b, () => false],
     };
   }
