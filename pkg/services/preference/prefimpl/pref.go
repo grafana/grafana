@@ -92,6 +92,9 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 				Theme:           cmd.Theme,
 				Created:         time.Now(),
 				Updated:         time.Now(),
+				JSONData: &pref.PreferenceJSONData{
+					Locale: cmd.Locale,
+				},
 			}
 			_, err = s.store.Insert(ctx, preference)
 			if err != nil {
@@ -106,8 +109,10 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 	preference.Theme = cmd.Theme
 	preference.Updated = time.Now()
 	preference.Version += 1
-	preference.JSONData = &pref.PreferenceJSONData{}
 	preference.HomeDashboardID = cmd.HomeDashboardID
+	preference.JSONData = &pref.PreferenceJSONData{
+		Locale: cmd.Locale,
+	}
 
 	if cmd.Navbar != nil {
 		preference.JSONData.Navbar = *cmd.Navbar
@@ -139,6 +144,13 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 		}
 	} else {
 		exists = true
+	}
+
+	if cmd.Locale != nil {
+		if preference.JSONData == nil {
+			preference.JSONData = &pref.PreferenceJSONData{}
+		}
+		preference.JSONData.Locale = *cmd.Locale
 	}
 
 	if cmd.Navbar != nil {

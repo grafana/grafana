@@ -4734,7 +4734,7 @@ __metadata:
     calculate-size: 1.1.1
     classnames: 2.3.1
     common-tags: 1.8.2
-    core-js: 3.22.5
+    core-js: 3.23.0
     css-loader: 6.7.1
     css-minimizer-webpack-plugin: 4.0.0
     csstype: 3.1.0
@@ -4743,7 +4743,7 @@ __metadata:
     enzyme: 3.11.0
     expose-loader: 4.0.0
     hoist-non-react-statics: 3.3.2
-    immutable: 4.0.0
+    immutable: 4.1.0
     is-hotkey: 0.2.0
     jquery: 3.6.0
     lodash: 4.17.21
@@ -4757,7 +4757,7 @@ __metadata:
     prismjs: 1.28.0
     process: ^0.11.10
     raw-loader: 4.0.2
-    rc-cascader: 3.5.0
+    rc-cascader: 3.6.0
     rc-drawer: 4.4.3
     rc-slider: 9.7.5
     rc-time-picker: ^3.7.3
@@ -4765,7 +4765,7 @@ __metadata:
     react-beautiful-dnd: 13.1.0
     react-calendar: 3.7.0
     react-colorful: 5.5.1
-    react-custom-scrollbars-2: 4.4.0
+    react-custom-scrollbars-2: 4.5.0
     react-docgen-typescript-loader: 3.7.2
     react-dom: 17.0.2
     react-dropzone: 12.0.4
@@ -15773,10 +15773,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"core-js@npm:3.22.5":
-  version: 3.22.5
-  resolution: "core-js@npm:3.22.5"
-  checksum: d3d7495d7cdde01cf9ac3debc5087afc3c8dd56baa4953d9ccbb46b1a80872c79d14c1e6343c664c9c0fade288ab44c70b54dd34f879a71e6eff6fffeab84e00
+"core-js@npm:3.23.0":
+  version: 3.23.0
+  resolution: "core-js@npm:3.23.0"
+  checksum: 4fcfec8133bd31ae34482bcdf891d8dcff4a64de656b82749c56d984b227cc107f755104aefb884b284f78d3e59fad24592de039ff7f78e60316cd4ade734af4
   languageName: node
   linkType: hard
 
@@ -20739,7 +20739,7 @@ __metadata:
     comlink: 4.3.1
     common-tags: 1.8.2
     copy-webpack-plugin: 9.0.1
-    core-js: 3.22.5
+    core-js: 3.23.0
     css-loader: 6.7.1
     css-minimizer-webpack-plugin: 4.0.0
     cypress: 9.5.1
@@ -20778,7 +20778,7 @@ __metadata:
     husky: 8.0.1
     iconscout-unicons-tarball: "https://github.com/grafana/icons/tarball/63056cd833ba7ee4e94904492b3a8c0cabc38d28"
     immer: 9.0.14
-    immutable: 4.0.0
+    immutable: 4.1.0
     jest: 28.1.0
     jest-canvas-mock: 2.4.0
     jest-date-mock: 1.0.8
@@ -20822,7 +20822,7 @@ __metadata:
     prismjs: 1.28.0
     prop-types: 15.8.1
     raw-loader: 4.0.2
-    rc-cascader: 3.5.0
+    rc-cascader: 3.6.0
     rc-drawer: 4.4.3
     rc-slider: 9.7.5
     rc-time-picker: 3.7.3
@@ -21800,10 +21800,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"immutable@npm:4.0.0, immutable@npm:^4.0.0":
-  version: 4.0.0
-  resolution: "immutable@npm:4.0.0"
-  checksum: 4b5e9181e4d5fa06728a481835ec09c86367e5d03268666c95b522b7644ab891098022e4479a43c4c81a68f2ed82f10751ce5d33e208d7b873b6e7f9dfaf4d87
+"immutable@npm:4.1.0":
+  version: 4.1.0
+  resolution: "immutable@npm:4.1.0"
+  checksum: b9bc1f14fb18eb382d48339c064b24a1f97ae4cf43102e0906c0a6e186a27afcd18b55ca4a0b63c98eefb58143e2b5ebc7755a5fb4da4a7ad84b7a6096ac5b13
   languageName: node
   linkType: hard
 
@@ -21811,6 +21811,13 @@ __metadata:
   version: 3.8.2
   resolution: "immutable@npm:3.8.2"
   checksum: 41909b386950ff84ca3cfca77c74cfc87d225a914e98e6c57996fa81a328da61a7c32216d6d5abad40f54747ffdc5c4b02b102e6ad1a504c1752efde8041f964
+  languageName: node
+  linkType: hard
+
+"immutable@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "immutable@npm:4.0.0"
+  checksum: 4b5e9181e4d5fa06728a481835ec09c86367e5d03268666c95b522b7644ab891098022e4479a43c4c81a68f2ed82f10751ce5d33e208d7b873b6e7f9dfaf4d87
   languageName: node
   linkType: hard
 
@@ -30001,20 +30008,20 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-cascader@npm:3.5.0":
-  version: 3.5.0
-  resolution: "rc-cascader@npm:3.5.0"
+"rc-cascader@npm:3.6.0":
+  version: 3.6.0
+  resolution: "rc-cascader@npm:3.6.0"
   dependencies:
     "@babel/runtime": ^7.12.5
     array-tree-filter: ^2.1.0
     classnames: ^2.3.1
     rc-select: ~14.1.0
-    rc-tree: ~5.5.0
+    rc-tree: ~5.6.3
     rc-util: ^5.6.1
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: 458df17782a57f1bd97cd231f9462fef1c02c53b26153c1110b80e11a5841ed94e4260cf7f75a5fa844bf1107dbc39043918d64f00dd05e5e3529db01d5d73c2
+  checksum: edf3aca269a70cc23a332458f7d816591279bfcdb90b0645e1b0ad14c12f25ee6c95ed939cc36b09b7a08a13f9beec13be07750f87d4d748bb1ca2cdcca4c52f
   languageName: node
   linkType: hard
 
@@ -30137,19 +30144,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-tree@npm:~5.5.0":
-  version: 5.5.0
-  resolution: "rc-tree@npm:5.5.0"
+"rc-tree@npm:~5.6.3":
+  version: 5.6.5
+  resolution: "rc-tree@npm:5.6.5"
   dependencies:
     "@babel/runtime": ^7.10.1
     classnames: 2.x
     rc-motion: ^2.0.1
     rc-util: ^5.16.1
-    rc-virtual-list: ^3.4.2
+    rc-virtual-list: ^3.4.8
   peerDependencies:
     react: "*"
     react-dom: "*"
-  checksum: 5ea172eef6530b0741697dbaccddeb959d8e183e89a64c61774c82f5f92a686ad7e050d38ad11dab7d5595cd391ae5428251b9624a74040b268a22a457c39c2d
+  checksum: 107efb7dbf6d44faf11072c4c53277f234ecd8d0c5a5cb387d5d9ac18b96098fa9cef3312f52589930c5562fd708f4da50f3b7880b27b2405c6ac558dce9f037
   languageName: node
   linkType: hard
 
@@ -30239,17 +30246,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-virtual-list@npm:^3.4.2":
-  version: 3.4.4
-  resolution: "rc-virtual-list@npm:3.4.4"
+"rc-virtual-list@npm:^3.4.8":
+  version: 3.4.8
+  resolution: "rc-virtual-list@npm:3.4.8"
   dependencies:
     classnames: ^2.2.6
     rc-resize-observer: ^1.0.0
-    rc-util: ^5.0.7
+    rc-util: ^5.15.0
   peerDependencies:
     react: "*"
     react-dom: "*"
-  checksum: d80c212e1f670afd3ccb876ac47b6b1b242c99b41a7777504af867f26a7be840129ecc9ef4ed6de356c8f2391fc495750597da418d06ea760740e30292d7ffec
+  checksum: 946fcd43daeadd41429475d9945747f5b60bbed6d7b94ae042242504c5caa27a3a3512c96139a65571d9163d9f0f2a3105220e6289bc1191306536c7b5444216
   languageName: node
   linkType: hard
 
@@ -30362,17 +30369,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-custom-scrollbars-2@npm:4.4.0":
-  version: 4.4.0
-  resolution: "react-custom-scrollbars-2@npm:4.4.0"
+"react-custom-scrollbars-2@npm:4.5.0":
+  version: 4.5.0
+  resolution: "react-custom-scrollbars-2@npm:4.5.0"
   dependencies:
     dom-css: ^2.0.0
     prop-types: ^15.5.10
     raf: ^3.1.0
   peerDependencies:
-    react: ^0.14.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
-    react-dom: ^0.14.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
-  checksum: 4d79b36538f9f182ef2658e8f03c122596d70d78e357e494e5d6bd0efe1c283045451aa73a48ce87c3bcc8df9bb2b29fb2446626456401218175a2ad24a14ca0
+    react: ^0.14.0 || ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0
+    react-dom: ^0.14.0 || ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0
+  checksum: b264629c0bfcc292106540f802e4d4281fb4acfab93ab259dcde096b72f135a1be6f2fcf636478f9e9bce6e15a9c6eb624c799184bb478073bb7ace86588a1de
   languageName: node
   linkType: hard
 
