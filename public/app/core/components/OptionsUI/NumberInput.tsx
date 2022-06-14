@@ -1,3 +1,4 @@
+import { debounce } from 'lodash';
 import React, { PureComponent } from 'react';
 
 import { Field, Input } from '@grafana/ui';
@@ -26,10 +27,10 @@ interface State {
 
 export class NumberInput extends PureComponent<Props, State> {
   state: State = { text: '', inputCorrected: false };
+  inputRef = React.createRef<HTMLInputElement>();
 
   componentDidMount() {
     this.setState({
-      ...this.state,
       text: isNaN(this.props.value!) ? '' : `${this.props.value}`,
     });
   }
@@ -43,15 +44,24 @@ export class NumberInput extends PureComponent<Props, State> {
     }
   }
 
-  onBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+  updateValue = () => {
     let value: number | undefined = undefined;
-    const txt = e.currentTarget.value;
-    if (txt && !isNaN(e.currentTarget.valueAsNumber)) {
-      value = e.currentTarget.valueAsNumber;
+    const txt = this.inputRef.current?.value;
+    if (txt?.length) {
+      value = +txt;
+      if (isNaN(value)) {
+        return;
+      }
     }
-    this.props.onChange(value);
-    this.setState({ ...this.state, inputCorrected: false });
+    if (value !== this.props.value) {
+      this.props.onChange(value);
+    }
+    if (this.state.inputCorrected) {
+      this.setState({ inputCorrected: false });
+    }
   };
+
+  updateValueDebounced = debounce(this.updateValue, 500); // 1/2 second delay
 
   onChange = (e: React.FocusEvent<HTMLInputElement>) => {
     let newValue: string | undefined = undefined;
@@ -71,15 +81,15 @@ export class NumberInput extends PureComponent<Props, State> {
       }
     }
     this.setState({
-      ...this.state,
       text: newValue ? newValue : '',
       inputCorrected: corrected,
     });
+    this.updateValueDebounced();
   };
 
   onKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      this.onBlur(e as any);
+      this.updateValue();
     }
   };
 
@@ -87,13 +97,14 @@ export class NumberInput extends PureComponent<Props, State> {
     return (
       <Input
         type="number"
+        ref={this.inputRef}
         min={this.props.min}
         max={this.props.max}
         step={this.props.step}
         autoFocus={this.props.autoFocus}
         value={this.state.text}
         onChange={this.onChange}
-        onBlur={this.onBlur}
+        onBlur={this.updateValue}
         onKeyPress={this.onKeyPress}
         placeholder={this.props.placeholder}
       />
@@ -103,8 +114,19 @@ export class NumberInput extends PureComponent<Props, State> {
   render() {
     const { inputCorrected } = this.state;
     if (inputCorrected) {
+      let range = '';
+      let { min, max } = this.props;
+      if (max == null) {
+        if (min != null) {
+          range = `< ${min}`;
+        }
+      } else if (min != null) {
+        range = `${min} < > ${max}`;
+      } else {
+        range = `> ${max}`;
+      }
       return (
-        <Field invalid={inputCorrected} error={'Cannot go beyond range'}>
+        <Field invalid={inputCorrected} error={`Value out of range ${range} `}>
           {this.renderInput()}
         </Field>
       );
