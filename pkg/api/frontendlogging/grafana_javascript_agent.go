@@ -2,11 +2,7 @@ package frontendlogging
 
 import (
 	"fmt"
-
-	"github.com/grafana/grafana/pkg/infra/log"
 )
-
-var grafanaJavascriptAgentLogger = log.New("frontendlogging")
 
 type FrontendGrafanaJavascriptAgentEvent struct {
 	Exceptions   []Exception   `json:"exceptions,omitempty"`
@@ -45,8 +41,8 @@ func (event *FrontendGrafanaJavascriptAgentEvent) AddMetaToContext(ctx CtxVector
 }
 
 func (event *FrontendGrafanaJavascriptAgentEvent) AddExceptionToContext(ctx CtxVector) []interface{} {
-	for _, exception := range event.Exceptions {
-		transformedException := TransformException(&exception)
+	for exception := range event.Exceptions {
+		transformedException := TransformException(&event.Exceptions[exception])
 		ctx = append(ctx, "exception", transformedException)
 	}
 	return ctx

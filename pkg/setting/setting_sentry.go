@@ -22,5 +22,4 @@ func (cfg *Cfg) readSentryConfig() {
 			EndpointBurst:  raw.Key("log_endpoint_burst_limit").MustInt(),
 		}
 	}
-
 }
