@@ -37,3 +37,13 @@ it('should clear cache', () => {
   const colorTwo = getColorByKey('serviceB', createTheme());
   expect(colorOne).toBe(colorTwo);
 });
+
+it('should not allow red', () => {
+  clear();
+  getColorByKey('serviceA', createTheme());
+  getColorByKey('serviceB', createTheme());
+  getColorByKey('serviceC', createTheme());
+  getColorByKey('serviceD', createTheme());
+  const colorFive = getColorByKey('serviceE', createTheme());
+  expect(colorFive).not.toBe('#E24D42');
+});

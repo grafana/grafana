@@ -79,7 +79,7 @@ func NewGoogleChatNotifier(config *GoogleChatConfig, images ImageStore, ns notif
 
 // Notify send an alert notification to Google Chat.
 func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	gcn.log.Debug("Executing Google Chat notification")
+	gcn.log.Debug("executing Google Chat notification")
 
 	var tmplErr error
 	tmpl, _ := TmplText(ctx, gcn.tmpl, as, gcn.log, &tmplErr)
@@ -119,7 +119,7 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 			},
 		})
 	} else {
-		gcn.log.Warn("Grafana External URL setting is missing or invalid. Skipping 'open in grafana' button to prevent google from displaying empty alerts.", "ruleURL", ruleURL)
+		gcn.log.Warn("Grafana external URL setting is missing or invalid. Skipping 'open in grafana' button to prevent Google from displaying empty alerts.", "ruleURL", ruleURL)
 	}
 
 	// Add text paragraph widget for the build version and timestamp.
@@ -190,7 +190,7 @@ func (gcn *GoogleChatNotifier) SendResolved() bool {
 func (gcn *GoogleChatNotifier) isUrlAbsolute(urlToCheck string) bool {
 	parsed, err := url.Parse(urlToCheck)
 	if err != nil {
-		gcn.log.Warn("Could not parse URL", "urlToCheck", urlToCheck)
+		gcn.log.Warn("could not parse URL", "urlToCheck", urlToCheck)
 		return false
 	}
 

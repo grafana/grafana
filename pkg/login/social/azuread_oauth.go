@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/util/errutil"
 
 	"golang.org/x/oauth2"
 	"gopkg.in/square/go-jose.v2/jwt"
@@ -58,12 +57,12 @@ func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*Bas
 
 	parsedToken, err := jwt.ParseSigned(idToken.(string))
 	if err != nil {
-		return nil, errutil.Wrapf(err, "error parsing id token")
+		return nil, fmt.Errorf("error parsing id token: %w", err)
 	}
 
 	var claims azureClaims
 	if err := parsedToken.UnsafeClaimsWithoutVerification(&claims); err != nil {
-		return nil, errutil.Wrapf(err, "error getting claims from id token")
+		return nil, fmt.Errorf("error getting claims from id token: %w", err)
 	}
 
 	email := extractEmail(claims)
@@ -186,12 +185,12 @@ func extractGroups(client *http.Client, claims azureClaims, token *oauth2.Token)
 		// See https://docs.microsoft.com/en-us/graph/migrate-azure-ad-graph-overview
 		parsedToken, err := jwt.ParseSigned(token.AccessToken)
 		if err != nil {
-			return nil, errutil.Wrapf(err, "error parsing id token")
+			return nil, fmt.Errorf("error parsing id token: %w", err)
 		}
 
 		var accessClaims azureAccessClaims
 		if err := parsedToken.UnsafeClaimsWithoutVerification(&accessClaims); err != nil {
-			return nil, errutil.Wrapf(err, "error getting claims from access token")
+			return nil, fmt.Errorf("error getting claims from access token: %w", err)
 		}
 		endpoint = fmt.Sprintf("https://graph.microsoft.com/v1.0/%s/users/%s/getMemberObjects", accessClaims.TenantID, claims.ID)
 	}

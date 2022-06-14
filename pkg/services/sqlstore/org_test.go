@@ -11,11 +11,14 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/setting"
+	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestIntegrationAccountDataAccess(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	t.Run("Testing Account DB Access", func(t *testing.T) {
 		sqlStore := InitTestDB(t)
 		testUser := &models.SignedInUser{
@@ -78,9 +81,9 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 		})
 
 		t.Run("Given single org mode", func(t *testing.T) {
-			setting.AutoAssignOrg = true
-			setting.AutoAssignOrgId = 1
-			setting.AutoAssignOrgRole = "Viewer"
+			sqlStore.Cfg.AutoAssignOrg = true
+			sqlStore.Cfg.AutoAssignOrgId = 1
+			sqlStore.Cfg.AutoAssignOrgRole = "Viewer"
 
 			t.Run("Users should be added to default organization", func(t *testing.T) {
 				ac1cmd := models.CreateUserCommand{Login: "ac1", Email: "ac1@test.com", Name: "ac1 name"}
@@ -105,9 +108,9 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 
 		t.Run("Given single org and 2 users inserted", func(t *testing.T) {
 			sqlStore = InitTestDB(t)
-			setting.AutoAssignOrg = true
-			setting.AutoAssignOrgId = 1
-			setting.AutoAssignOrgRole = "Viewer"
+			sqlStore.Cfg.AutoAssignOrg = true
+			sqlStore.Cfg.AutoAssignOrgId = 1
+			sqlStore.Cfg.AutoAssignOrgRole = "Viewer"
 
 			ac1cmd := models.CreateUserCommand{Login: "ac1", Email: "ac1@test.com", Name: "ac1 name"}
 			ac2cmd := models.CreateUserCommand{Login: "ac2", Email: "ac2@test.com", Name: "ac2 name"}
@@ -146,7 +149,7 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 
 		t.Run("Given two saved users", func(t *testing.T) {
 			sqlStore = InitTestDB(t)
-			setting.AutoAssignOrg = false
+			sqlStore.Cfg.AutoAssignOrg = false
 
 			ac1cmd := models.CreateUserCommand{Login: "ac1", Email: "ac1@test.com", Name: "ac1 name"}
 			ac2cmd := models.CreateUserCommand{Login: "ac2", Email: "ac2@test.com", Name: "ac2 name", IsAdmin: true}
@@ -442,8 +445,8 @@ func insertTestDashboard(t *testing.T, sqlStore *SQLStore, title string, orgId i
 	dash.Data.Set("uid", dash.Uid)
 
 	err = sqlStore.WithDbSession(context.Background(), func(sess *DBSession) error {
-		dashVersion := &models.DashboardVersion{
-			DashboardId:   dash.Id,
+		dashVersion := &dashver.DashboardVersion{
+			DashboardID:   dash.Id,
 			ParentVersion: dash.Version,
 			RestoredFrom:  cmd.RestoredFrom,
 			Version:       dash.Version,

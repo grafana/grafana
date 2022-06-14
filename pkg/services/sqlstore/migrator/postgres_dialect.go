@@ -10,7 +10,6 @@ import (
 	"github.com/golang-migrate/migrate/v4/database"
 	"github.com/lib/pq"
 
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"xorm.io/xorm"
 )
 
@@ -162,17 +161,17 @@ func (db *PostgresDialect) TruncateDBTables() error {
 		case "dashboard_acl":
 			// keep default dashboard permissions
 			if _, err := sess.Exec(fmt.Sprintf("DELETE FROM %v WHERE dashboard_id != -1 AND org_id != -1;", db.Quote(table.Name))); err != nil {
-				return errutil.Wrapf(err, "failed to truncate table %q", table.Name)
+				return fmt.Errorf("failed to truncate table %q: %w", table.Name, err)
 			}
 			if _, err := sess.Exec(fmt.Sprintf("ALTER SEQUENCE %v RESTART WITH 3;", db.Quote(fmt.Sprintf("%v_id_seq", table.Name)))); err != nil {
-				return errutil.Wrapf(err, "failed to reset table %q", table.Name)
+				return fmt.Errorf("failed to reset table %q: %w", table.Name, err)
 			}
 		default:
 			if _, err := sess.Exec(fmt.Sprintf("TRUNCATE TABLE %v RESTART IDENTITY CASCADE;", db.Quote(table.Name))); err != nil {
 				if db.isUndefinedTable(err) {
 					continue
 				}
-				return errutil.Wrapf(err, "failed to truncate table %q", table.Name)
+				return fmt.Errorf("failed to truncate table %q: %w", table.Name, err)
 			}
 		}
 	}
@@ -218,7 +217,7 @@ func (db *PostgresDialect) PostInsertId(table string, sess *xorm.Session) error 
 
 	// sync primary key sequence of org table
 	if _, err := sess.Exec("SELECT setval('org_id_seq', (SELECT max(id) FROM org));"); err != nil {
-		return errutil.Wrapf(err, "failed to sync primary key for org table")
+		return fmt.Errorf("failed to sync primary key for org table: %w", err)
 	}
 	return nil
 }

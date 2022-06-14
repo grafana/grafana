@@ -28,7 +28,7 @@ type dataFrames struct {
 // NewDecodedDataFrames instantiates DataFrames from decoded frames.
 //
 // This should be the primary function for creating DataFrames if you're implementing a plugin.
-// In a Grafana alerting scenario it needs to operate on decoded frames, which is why this function is
+// In a Grafana Alerting scenario it needs to operate on decoded frames, which is why this function is
 // preferrable. When encoded data frames are needed, e.g. returned from Grafana HTTP API, it will
 // happen automatically when MarshalJSON() is called.
 func NewDecodedDataFrames(decodedFrames data.Frames) DataFrames {

@@ -6,12 +6,14 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestIntegrationUserDataAccess(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	ss := InitTestDB(t)
 	user := &models.SignedInUser{
 		OrgId:       1,
@@ -74,10 +76,10 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	t.Run("Testing DB - create user assigned to other organization", func(t *testing.T) {
 		ss = InitTestDB(t)
 
-		autoAssignOrg := setting.AutoAssignOrg
-		setting.AutoAssignOrg = true
+		autoAssignOrg := ss.Cfg.AutoAssignOrg
+		ss.Cfg.AutoAssignOrg = true
 		defer func() {
-			setting.AutoAssignOrg = autoAssignOrg
+			ss.Cfg.AutoAssignOrg = autoAssignOrg
 		}()
 
 		orgCmd := &models.CreateOrgCommand{Name: "Some Test Org"}

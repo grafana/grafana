@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useAsync, useDebounce } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
+import { Observable } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Spinner, Button } from '@grafana/ui';
@@ -28,22 +29,25 @@ type SearchViewProps = {
   showManage: boolean;
   folderDTO?: FolderDTO;
   hidePseudoFolders?: boolean; // Recent + starred
+  onQueryTextChange: (newQueryText: string) => void;
   includePanels: boolean;
   setIncludePanels: (v: boolean) => void;
+  keyboardEvents: Observable<React.KeyboardEvent>;
 };
 
 export const SearchView = ({
   showManage,
   folderDTO,
   queryText,
+  onQueryTextChange,
   hidePseudoFolders,
   includePanels,
   setIncludePanels,
+  keyboardEvents,
 }: SearchViewProps) => {
   const styles = useStyles2(getStyles);
 
-  const { query, onQueryChange, onTagFilterChange, onTagAdd, onDatasourceChange, onSortChange, onLayoutChange } =
-    useSearchQuery({});
+  const { query, onTagFilterChange, onTagAdd, onDatasourceChange, onSortChange, onLayoutChange } = useSearchQuery({});
   query.query = queryText; // Use the query value passed in from parent rather than from URL
 
   const [searchSelection, setSearchSelection] = useState(newSearchSelection());
@@ -126,7 +130,7 @@ export const SearchView = ({
     clearSelection();
     setListKey(Date.now());
     // trigger again the search to the backend
-    onQueryChange(query.query);
+    onQueryTextChange(query.query);
   };
 
   const renderResults = () => {
@@ -145,7 +149,7 @@ export const SearchView = ({
             variant="secondary"
             onClick={() => {
               if (query.query) {
-                onQueryChange('');
+                onQueryTextChange('');
               }
               if (query.tag?.length) {
                 onTagFilterChange([]);
@@ -200,6 +204,7 @@ export const SearchView = ({
               width: width,
               height: height,
               onTagSelected: onTagAdd,
+              keyboardEvents,
               onDatasourceChange: query.datasource ? onDatasourceChange : undefined,
             };
 
@@ -238,7 +243,7 @@ export const SearchView = ({
           onLayoutChange={(v) => {
             if (v === SearchLayout.Folders) {
               if (query.query) {
-                onQueryChange(''); // parent will clear the sort
+                onQueryTextChange(''); // parent will clear the sort
               }
             }
             onLayoutChange(v);
