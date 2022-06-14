@@ -41,7 +41,7 @@ func ProvideBackgroundServiceRegistry(
 	thumbnailsService thumbs.Service, StorageService store.StorageService, searchService searchV2.SearchService,
 	entityEventsService store.EntityEventsService, datasourceSecretMigrationService datasources.SecretMigrationService,
 	// Need to make sure these are initialized, is there a better place to put them?
-	_ *dashboardsnapshots.Service, _ *alerting.AlertNotificationService,
+	_ dashboardsnapshots.Service, _ *alerting.AlertNotificationService,
 	_ serviceaccounts.Service, _ *guardian.Provider,
 	_ *plugindashboardsservice.DashboardUpdater,
 ) *BackgroundServiceRegistry {

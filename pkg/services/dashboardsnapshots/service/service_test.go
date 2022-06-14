@@ -1,27 +1,25 @@
-package dashboardsnapshots
+package service
 
 import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/secrets/database"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	dashsnapdb "github.com/grafana/grafana/pkg/services/dashboardsnapshots/database"
+	"github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/require"
 )
 
 func TestDashboardSnapshotsService(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
+	dsStore := dashsnapdb.ProvideStore(sqlStore)
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
-
-	s := &Service{
-		SQLStore:       sqlStore,
-		SecretsService: secretsService,
-	}
+	s := ProvideService(dsStore, secretsService)
 
 	origSecret := setting.SecretKey
 	setting.SecretKey = "dashboard_snapshot_service_test"
@@ -47,7 +45,7 @@ func TestDashboardSnapshotsService(t *testing.T) {
 		err = s.CreateDashboardSnapshot(ctx, &cmd)
 		require.NoError(t, err)
 
-		decrypted, err := s.SecretsService.Decrypt(ctx, cmd.Result.DashboardEncrypted)
+		decrypted, err := s.secretsService.Decrypt(ctx, cmd.Result.DashboardEncrypted)
 		require.NoError(t, err)
 
 		require.Equal(t, rawDashboard, decrypted)

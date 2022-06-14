@@ -2,11 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { FieldConfigEditorProps, StringFieldConfigSettings, GrafanaTheme } from '@grafana/data';
-
-import { stylesFactory, getTheme } from '../../themes';
-import { Button } from '../Button';
-import { Icon } from '../Icon/Icon';
-import { Input } from '../Input/Input';
+import { stylesFactory, getTheme, Button, Icon, Input } from '@grafana/ui';
 
 type Props = FieldConfigEditorProps<string[], StringFieldConfigSettings>;
 interface State {
