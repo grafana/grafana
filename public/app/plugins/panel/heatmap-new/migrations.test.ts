@@ -28,9 +28,6 @@ describe('Heatmap Migrations', () => {
           "overrides": Array [],
         },
         "options": Object {
-          "bucketFrame": Object {
-            "layout": "auto",
-          },
           "calculate": true,
           "calculation": Object {
             "xBuckets": Object {
@@ -66,6 +63,9 @@ describe('Heatmap Migrations', () => {
           },
           "legend": Object {
             "show": true,
+          },
+          "rowsFrame": Object {
+            "layout": "auto",
           },
           "showValue": "never",
           "tooltip": Object {

@@ -30,6 +30,14 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   const dispatch = useDispatch();
   const rulesDataSourceNames = useMemo(getAllRulesSourceNames, []);
 
+  // backwards compat for "Inactive" state filter
+  useEffect(() => {
+    if (props.options.stateFilter.inactive === true) {
+      props.options.stateFilter.normal = true; // enable the normal filter
+    }
+    props.options.stateFilter.inactive = undefined; // now disable inactive
+  }, [props.options.stateFilter]);
+
   useEffect(() => {
     dispatch(fetchAllPromRulesAction());
     const interval = setInterval(() => dispatch(fetchAllPromRulesAction()), RULE_LIST_POLL_INTERVAL_MS);
@@ -127,7 +135,7 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: PromRule
     return (
       (options.stateFilter.firing && rule.rule.state === PromAlertingRuleState.Firing) ||
       (options.stateFilter.pending && rule.rule.state === PromAlertingRuleState.Pending) ||
-      (options.stateFilter.inactive && rule.rule.state === PromAlertingRuleState.Inactive)
+      (options.stateFilter.normal && rule.rule.state === PromAlertingRuleState.Inactive)
     );
   });
 

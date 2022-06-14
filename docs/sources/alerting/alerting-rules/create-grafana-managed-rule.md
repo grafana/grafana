@@ -15,7 +15,7 @@ weight: 400
 
 # Create a Grafana managed alerting rule
 
-Grafana allows you to create alerting rules that query one or more data sources, reduce or transform the results and compare them to each other or to fix thresholds. When these are executed, Grafana sends notifications to the contact point. For information on Grafana alerting, see [About Grafana alerting]({{< relref "../about-alerting/" >}}) which explains the various components of Grafana alerting. We also recommend that you familiarize yourself with some of the [fundamental concepts]({{< relref "../fundamentals/" >}}) of Grafana alerting.
+Grafana allows you to create alerting rules that query one or more data sources, reduce or transform the results and compare them to each other or to fix thresholds. When these are executed, Grafana sends notifications to the contact point. For information on Grafana Alerting, see [About Grafana Alerting]({{< relref "../about-alerting/" >}}) which explains the various components of Grafana Alerting. We also recommend that you familiarize yourself with some of the [fundamental concepts]({{< relref "../fundamentals/" >}}) of Grafana Alerting.
 
 ## Add Grafana managed rule
 

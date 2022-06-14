@@ -55,7 +55,7 @@ func (s *ServiceAccountMock) Migrated(ctx context.Context, orgID int64) bool {
 }
 
 func SetupMockAccesscontrol(t *testing.T,
-	userpermissionsfunc func(c context.Context, siu *models.SignedInUser, opt accesscontrol.Options) ([]*accesscontrol.Permission, error),
+	userpermissionsfunc func(c context.Context, siu *models.SignedInUser, opt accesscontrol.Options) ([]accesscontrol.Permission, error),
 	disableAccessControl bool) *accesscontrolmock.Mock {
 	t.Helper()
 	acmock := accesscontrolmock.New()
