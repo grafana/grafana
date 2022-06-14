@@ -12,6 +12,8 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -137,6 +139,14 @@ func callCreateFolder(sc *scenarioContext) {
 func createFolderScenario(t *testing.T, desc string, url string, routePattern string, folderService dashboards.FolderService,
 	cmd models.CreateFolderCommand, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
+		aclMockResp := []*models.DashboardAclInfoDTO{}
+		dashSvc := &dashboards.FakeDashboardService{}
+		dashSvc.On("GetDashboardAclInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardAclInfoListQuery")).Run(func(args mock.Arguments) {
+			q := args.Get(1).(*models.GetDashboardAclInfoListQuery)
+			q.Result = aclMockResp
+		}).Return(nil)
+		store := mockstore.NewSQLStoreMock()
+		guardian.InitLegacyGuardian(store, dashSvc)
 		hs := HTTPServer{
 			Cfg:           setting.NewCfg(),
 			folderService: folderService,
