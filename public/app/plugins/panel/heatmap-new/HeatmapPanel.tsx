@@ -1,17 +1,7 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useMemo, useRef, useState, useEffect } from 'react';
-import { Subscription, throttleTime } from 'rxjs';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 
-import {
-  DataFrameType,
-  DataHoverClearEvent,
-  DataHoverEvent,
-  GrafanaTheme2,
-  PanelProps,
-  reduceField,
-  ReducerID,
-  TimeRange,
-} from '@grafana/data';
+import { DataFrameType, GrafanaTheme2, PanelProps, reduceField, ReducerID, TimeRange } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { ScaleDistributionConfig } from '@grafana/schema';
 import {
@@ -64,37 +54,6 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
       return { warning: `${ex}` };
     }
   }, [data, options, theme]);
-
-  // Listen to events
-  useEffect(() => {
-    const subs = new Subscription();
-    subs.add(
-      eventBus
-        .getStream(DataHoverEvent)
-        .pipe(throttleTime(50))
-        .subscribe({
-          next: (evt) => {
-            if (eventBus === evt.origin) {
-              return;
-            }
-            console.log('GOT', { ...evt.payload.point }); // object is mutated, so spred to get each event
-          },
-        })
-    );
-    subs.add(
-      eventBus
-        .getStream(DataHoverClearEvent)
-        .pipe(throttleTime(50))
-        .subscribe({
-          next: () => {
-            console.log('CLEAR tooltip!!');
-          },
-        })
-    );
-    return () => {
-      subs.unsubscribe();
-    };
-  });
 
   const facets = useMemo(() => {
     let exemplarsXFacet: number[] = []; // "Time" field
