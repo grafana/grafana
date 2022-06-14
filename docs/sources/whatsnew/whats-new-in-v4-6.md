@@ -1,12 +1,19 @@
-+++
-title = "What's new in Grafana v4.6"
-description = "Feature and improvement highlights for Grafana v4.6"
-keywords = ["grafana", "new", "documentation", "4.6", "release notes"]
-aliases = ["/docs/grafana/latest/guides/whats-new-in-v4-6/"]
-weight = -13
-[_build]
-list = false
-+++
+---
+_build:
+  list: false
+aliases:
+  - /docs/grafana/latest/guides/whats-new-in-v4-6/
+  - /docs/grafana/latest/whatsnew/whats-new-in-v4-6/
+description: Feature and improvement highlights for Grafana v4.6
+keywords:
+  - grafana
+  - new
+  - documentation
+  - '4.6'
+  - release notes
+title: What's new in Grafana v4.6
+weight: -13
+---
 
 # What's new in Grafana v4.6
 
@@ -17,7 +24,7 @@ Grafana v4.6 brings many enhancements to Annotations, Cloudwatch and Prometheus.
 {{< figure src="/static/img/docs/v46/add_annotation_region.png"  max-width= "800px" >}}
 
 You can now add annotation events and regions right from the graph panel! Just hold Ctrl/Cmd+Click or drag region to open the **Add Annotation** view. The
-[Annotations]({{< relref "../dashboards/annotations.md" >}}) documentation is updated to include details on this new exciting feature.
+[Annotations]({{< relref "../dashboards/annotations/" >}}) documentation is updated to include details on this new exciting feature.
 
 ### Cloudwatch
 

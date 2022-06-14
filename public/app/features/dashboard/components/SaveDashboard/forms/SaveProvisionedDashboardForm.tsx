@@ -67,7 +67,9 @@ export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({
           <ClipboardButton getText={() => dashboardJSON} onClipboardCopy={onCopyToClipboardSuccess}>
             Copy JSON to clipboard
           </ClipboardButton>
-          <Button onClick={saveToFile}>Save JSON to file</Button>
+          <Button type="submit" onClick={saveToFile}>
+            Save JSON to file
+          </Button>
         </HorizontalGroup>
       </Stack>
     </>

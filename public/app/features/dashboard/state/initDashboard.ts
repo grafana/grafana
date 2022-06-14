@@ -60,6 +60,9 @@ async function fetchDashboard(
         dashDTO.meta.canStar = false;
         return dashDTO;
       }
+      case DashboardRoutes.Public: {
+        return await dashboardLoaderSrv.loadDashboard('public', args.urlSlug, args.urlUid);
+      }
       case DashboardRoutes.Normal: {
         const dashDTO: DashboardDTO = await dashboardLoaderSrv.loadDashboard(args.urlType, args.urlSlug, args.urlUid);
 
@@ -212,6 +215,7 @@ export function getNewDashboardModelData(urlFolderId?: string | null): any {
     meta: {
       canStar: false,
       canShare: false,
+      canDelete: false,
       isNew: true,
       folderId: 0,
     },

@@ -116,7 +116,6 @@ type SpanDetailProps = {
   stackTracesToggle: (spanID: string) => void;
   referenceItemToggle: (spanID: string, reference: TraceSpanReference) => void;
   referencesToggle: (spanID: string) => void;
-  focusSpan: (uiFind: string) => void;
   createSpanLink?: SpanLinkFunc;
   focusedSpanId?: string;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
@@ -137,7 +136,6 @@ export default function SpanDetail(props: SpanDetailProps) {
     stackTracesToggle,
     referencesToggle,
     referenceItemToggle,
-    focusSpan,
     createSpanLink,
     createFocusSpanLink,
     topOfViewRefType,
@@ -190,7 +188,7 @@ export default function SpanDetail(props: SpanDetailProps) {
       : []),
   ];
   const styles = useStyles2(getStyles);
-  const link = createSpanLink?.(span);
+  const links = createSpanLink?.(span);
   const focusSpanLink = createFocusSpanLink(traceID, spanID);
 
   return (
@@ -201,8 +199,11 @@ export default function SpanDetail(props: SpanDetailProps) {
           <LabeledList className={ubTxRightAlign} divider={true} items={overviewItems} />
         </div>
       </div>
-      {link ? (
-        <DataLinkButton link={{ ...link, title: 'Logs for this span' } as any} buttonProps={{ icon: 'gf-logs' }} />
+      {links?.logLinks?.[0] ? (
+        <DataLinkButton
+          link={{ ...links?.logLinks?.[0], title: 'Logs for this span' } as any}
+          buttonProps={{ icon: 'gf-logs' }}
+        />
       ) : null}
       <Divider className={ubMy1} type={'horizontal'} />
       <div>
@@ -281,7 +282,7 @@ export default function SpanDetail(props: SpanDetailProps) {
             openedItems={referencesState.openedItems}
             onToggle={() => referencesToggle(spanID)}
             onItemToggle={(reference) => referenceItemToggle(spanID, reference)}
-            focusSpan={focusSpan}
+            createFocusSpanLink={createFocusSpanLink}
           />
         )}
         {topOfViewRefType === TopOfViewRefType.Explore && (

@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package sqlstore
 
 import (
@@ -19,7 +16,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestDataAccess(t *testing.T) {
+func TestIntegrationDataAccess(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	defaultAddDatasourceCommand := models.AddDataSourceCommand{
 		OrgId:  10,
 		Name:   "nisse",
@@ -431,7 +431,10 @@ func TestDataAccess(t *testing.T) {
 	})
 }
 
-func TestGetDefaultDataSource(t *testing.T) {
+func TestIntegrationGetDefaultDataSource(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	InitTestDB(t)
 
 	t.Run("should return error if there is no default datasource", func(t *testing.T) {

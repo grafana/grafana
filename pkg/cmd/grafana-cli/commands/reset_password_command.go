@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 const AdminUserId = 1
@@ -57,7 +56,7 @@ func resetPasswordCommand(c utils.CommandLine, sqlStore *sqlstore.SQLStore) erro
 	}
 
 	if err := sqlStore.ChangeUserPassword(context.Background(), &cmd); err != nil {
-		return errutil.Wrapf(err, "failed to update user password")
+		return fmt.Errorf("failed to update user password: %w", err)
 	}
 
 	logger.Infof("\n")

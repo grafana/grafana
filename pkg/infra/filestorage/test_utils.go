@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package filestorage
 
 import (
@@ -137,7 +134,6 @@ type queryListFiles struct {
 
 type queryListFoldersInput struct {
 	path    string
-	paging  *Paging
 	options *ListOptions
 }
 
@@ -200,7 +196,7 @@ func handleCommand(t *testing.T, ctx context.Context, cmd interface{}, cmdName s
 }
 
 func runChecks(t *testing.T, stepName string, path string, output interface{}, checks []interface{}) {
-	if checks == nil || len(checks) == 0 {
+	if len(checks) == 0 {
 		return
 	}
 
@@ -235,17 +231,17 @@ func runChecks(t *testing.T, stepName string, path string, output interface{}, c
 		for _, check := range checks {
 			runFileMetadataCheck(o, check, interfaceName(check))
 		}
-	case ListResponse:
+	case *ListResponse:
 		for _, check := range checks {
 			c := check
 			checkName := interfaceName(c)
 			switch c := check.(type) {
 			case listSizeCheck:
-				require.Equal(t, c.v, len(o.Files), "%s %s", stepName, path)
+				require.Equal(t, c.v, len(o.Files), "%s %s\nReceived %s", stepName, path, o)
 			case listHasMoreCheck:
-				require.Equal(t, c.v, o.HasMore, "%s %s", stepName, path)
+				require.Equal(t, c.v, o.HasMore, "%s %s\nReceived %s", stepName, path, o)
 			case listLastPathCheck:
-				require.Equal(t, c.v, o.LastPath, "%s %s", stepName, path)
+				require.Equal(t, c.v, o.LastPath, "%s %s\nReceived %s", stepName, path, o)
 			default:
 				t.Fatalf("unrecognized list check %s", checkName)
 			}
@@ -254,7 +250,6 @@ func runChecks(t *testing.T, stepName string, path string, output interface{}, c
 	default:
 		t.Fatalf("unrecognized output %s", interfaceName(output))
 	}
-
 }
 
 func formatPathStructure(files []*File) string {
@@ -290,7 +285,7 @@ func handleQuery(t *testing.T, ctx context.Context, query interface{}, queryName
 		require.NoError(t, err, "%s: should be able to list files in %s", queryName, inputPath)
 		require.NotNil(t, resp)
 		if q.list != nil && len(q.list) > 0 {
-			runChecks(t, queryName, inputPath, *resp, q.list)
+			runChecks(t, queryName, inputPath, resp, q.list)
 		} else {
 			require.NotNil(t, resp, "%s %s", queryName, inputPath)
 			require.Equal(t, false, resp.HasMore, "%s %s", queryName, inputPath)
@@ -360,5 +355,4 @@ func executeTestStep(t *testing.T, ctx context.Context, step interface{}, stepNu
 	default:
 		t.Fatalf("unrecognized step %s", name)
 	}
-
 }

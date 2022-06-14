@@ -1,8 +1,10 @@
-+++
-title = "Map a special value"
-weight = 50
-aliases = ["/docs/sources/panels/format-data/map-a-special-value/"]
-+++
+---
+aliases:
+  - /docs/grafana/latest/panels/format-data/map-a-special-value/
+  - /docs/sources/panels/format-data/map-a-special-value/
+title: Map a special value
+weight: 50
+---
 
 # Map a special value
 
@@ -10,7 +12,7 @@ Map a special value when you want to format uncommon, boolean, or empty values.
 
 ## Before you begin
 
-- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).
+- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel/" >}}).
 
 **To map a special value**:
 

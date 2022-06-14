@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package store
 
 import (
@@ -14,7 +11,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestAlertManagerHash(t *testing.T) {
+func TestIntegrationAlertManagerHash(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	sqlStore := sqlstore.InitTestDB(t)
 	store := &DBstore{
 		SQLStore: sqlStore,

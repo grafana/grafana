@@ -38,7 +38,6 @@ export const FillBellowToEditor: React.FC<FieldOverrideEditorProps<string, any>>
 
   return (
     <Select
-      menuShouldPortal
       options={names}
       value={current}
       onChange={(v) => {

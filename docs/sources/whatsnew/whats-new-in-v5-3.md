@@ -1,12 +1,19 @@
-+++
-title = "What's new in Grafana v5.3"
-description = "Feature and improvement highlights for Grafana v5.3"
-keywords = ["grafana", "new", "documentation", "5.3", "release notes"]
-aliases = ["/docs/grafana/latest/guides/whats-new-in-v5-3/"]
-weight = -17
-[_build]
-list = false
-+++
+---
+_build:
+  list: false
+aliases:
+  - /docs/grafana/latest/guides/whats-new-in-v5-3/
+  - /docs/grafana/latest/whatsnew/whats-new-in-v5-3/
+description: Feature and improvement highlights for Grafana v5.3
+keywords:
+  - grafana
+  - new
+  - documentation
+  - '5.3'
+  - release notes
+title: What's new in Grafana v5.3
+weight: -17
+---
 
 # What's new in Grafana v5.3
 
@@ -37,7 +44,7 @@ The Grafana Stackdriver plugin comes with support for automatic unit detection. 
 The data source is still in the `beta` phase, meaning it's currently in active development and is still missing one important feature - templating queries.
 Please try it out, but be aware of that it might be subject to changes and possible bugs. We would love to hear your feedback.
 
-Refer to [Using Google Stackdriver in Grafana]({{< relref "../datasources/google-cloud-monitoring/_index.md" >}}) for more detailed information on how to get started and use it.
+Refer to [Using Google Stackdriver in Grafana]({{< relref "../datasources/google-cloud-monitoring/" >}}) for more detailed information on how to get started and use it.
 
 ## TV and Kiosk Mode
 
@@ -56,7 +63,7 @@ certain view mode enabled. Additionally, this also enables [playlists](/dashboar
 
 ## Notification Reminders
 
-Do you use Grafana alerting and have some notifications that are more important than others? Then it's possible to set reminders so that you continue to be alerted until the problem is fixed. This is done on the notification channel itself and will affect all alerts that use that channel.
+Do you use Grafana Alerting and have some notifications that are more important than others? Then it's possible to set reminders so that you continue to be alerted until the problem is fixed. This is done on the notification channel itself and will affect all alerts that use that channel.
 For additional examples of why reminders might be useful for you, see [multiple series](/alerting/alerts-overview/#multiple-series).
 
 For more information about how to enable and configure reminders, refer to [alerting reminders](/alerting/notifications/#send-reminders).

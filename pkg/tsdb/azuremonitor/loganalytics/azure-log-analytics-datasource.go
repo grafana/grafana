@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azlog"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/macros"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 // AzureLogAnalyticsDatasource calls the Azure Log Analytics API's
@@ -227,7 +226,7 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		azlog.Debug("Failed to create request", "error", err)
-		return nil, errutil.Wrap("failed to create request", err)
+		return nil, fmt.Errorf("%v: %w", "failed to create request", err)
 	}
 	req.URL.Path = "/"
 	req.Header.Set("Content-Type", "application/json")

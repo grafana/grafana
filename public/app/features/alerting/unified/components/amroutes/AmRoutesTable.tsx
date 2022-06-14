@@ -63,8 +63,8 @@ export const updatedRoute = (routes: FormAmRoute[], updatedRoute: FormAmRoute): 
   return newRoutes;
 };
 
-export const deleteRoute = (routes: FormAmRoute[], routeToRemove: FormAmRoute): FormAmRoute[] => {
-  return routes.filter((route) => route.id !== routeToRemove.id);
+export const deleteRoute = (routes: FormAmRoute[], routeId: string): FormAmRoute[] => {
+  return routes.filter((route) => route.id !== routeId);
 };
 
 export const AmRoutesTable: FC<AmRoutesTableProps> = ({
@@ -78,7 +78,7 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
   alertManagerSourceName,
 }) => {
   const [editMode, setEditMode] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+  const [deletingRouteId, setDeletingRouteId] = useState<string | undefined>(undefined);
   const [expandedId, setExpandedId] = useState<string | number>();
   const permissions = getNotificationsPermissions(alertManagerSourceName);
   const canEditRoutes = contextSrv.hasPermission(permissions.update);
@@ -106,7 +106,7 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
     {
       id: 'groupBy',
       label: 'Group by',
-      renderCell: (item) => item.data.groupBy.join(', ') || '-',
+      renderCell: (item) => (item.data.overrideGrouping && item.data.groupBy.join(', ')) || '-',
       size: 5,
     },
     {
@@ -155,23 +155,11 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
                       aria-label="Delete route"
                       name="trash-alt"
                       onClick={() => {
-                        setShowDeleteModal(true);
+                        setDeletingRouteId(item.data.id);
                       }}
                       type="button"
                     />
                   </HorizontalGroup>
-                  <ConfirmModal
-                    isOpen={showDeleteModal}
-                    title="Delete notification policy"
-                    body="Deleting this notification policy will permanently remove it. Are you sure you want to delete this policy?"
-                    confirmText="Yes, delete"
-                    icon="exclamation-triangle"
-                    onConfirm={() => {
-                      const newRoutes = deleteRoute(routes, item.data);
-                      onChange(newRoutes);
-                    }}
-                    onDismiss={() => setShowDeleteModal(false)}
-                  />
                 </>
               );
             },
@@ -209,45 +197,62 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
   }
 
   return (
-    <DynamicTable
-      cols={cols}
-      isExpandable={true}
-      items={dynamicTableRoutes}
-      testIdGenerator={() => 'am-routes-row'}
-      onCollapse={collapseItem}
-      onExpand={expandItem}
-      isExpanded={(item) => expandedId === item.id}
-      renderExpandedContent={(item: RouteTableItemProps) =>
-        isAddMode || editMode ? (
-          <AmRoutesExpandedForm
-            onCancel={() => {
-              if (isAddMode) {
-                onCancelAdd();
-              }
-              setEditMode(false);
-            }}
-            onSave={(data) => {
-              const newRoutes = updatedRoute(routes, data);
+    <>
+      <DynamicTable
+        cols={cols}
+        isExpandable={true}
+        items={dynamicTableRoutes}
+        testIdGenerator={() => 'am-routes-row'}
+        onCollapse={collapseItem}
+        onExpand={expandItem}
+        isExpanded={(item) => expandedId === item.id}
+        renderExpandedContent={(item: RouteTableItemProps) =>
+          isAddMode || editMode ? (
+            <AmRoutesExpandedForm
+              onCancel={() => {
+                if (isAddMode) {
+                  onCancelAdd();
+                }
+                setEditMode(false);
+              }}
+              onSave={(data) => {
+                const newRoutes = updatedRoute(routes, data);
 
-              setEditMode(false);
-              onChange(newRoutes);
-            }}
-            receivers={receivers}
-            routes={item.data}
-          />
-        ) : (
-          <AmRoutesExpandedRead
-            onChange={(data) => {
-              const newRoutes = updatedRoute(routes, data);
-              onChange(newRoutes);
-            }}
-            receivers={receivers}
-            routes={item.data}
-            readOnly={readOnly}
-            alertManagerSourceName={alertManagerSourceName}
-          />
-        )
-      }
-    />
+                setEditMode(false);
+                onChange(newRoutes);
+              }}
+              receivers={receivers}
+              routes={item.data}
+            />
+          ) : (
+            <AmRoutesExpandedRead
+              onChange={(data) => {
+                const newRoutes = updatedRoute(routes, data);
+                onChange(newRoutes);
+              }}
+              receivers={receivers}
+              routes={item.data}
+              readOnly={readOnly}
+              alertManagerSourceName={alertManagerSourceName}
+            />
+          )
+        }
+      />
+      <ConfirmModal
+        isOpen={!!deletingRouteId}
+        title="Delete notification policy"
+        body="Deleting this notification policy will permanently remove it. Are you sure you want to delete this policy?"
+        confirmText="Yes, delete"
+        icon="exclamation-triangle"
+        onConfirm={() => {
+          if (deletingRouteId) {
+            const newRoutes = deleteRoute(routes, deletingRouteId);
+            onChange(newRoutes);
+            setDeletingRouteId(undefined);
+          }
+        }}
+        onDismiss={() => setDeletingRouteId(undefined)}
+      />
+    </>
   );
 };

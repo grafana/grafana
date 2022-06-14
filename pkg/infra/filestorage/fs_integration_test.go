@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package filestorage
 
 import (
@@ -13,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"gocloud.dev/blob"
 )
 
@@ -35,9 +33,19 @@ func runTestCase(t *testing.T, testCase fsTestCase, ctx context.Context, filesto
 	}
 }
 
+type backend string
+
+const (
+	backendSQL           backend = "sql"
+	backendSQLNested     backend = "sqlNested"
+	backendInMem         backend = "inMem"
+	backendLocalFS       backend = "localFS"
+	backendLocalFSNested backend = "localFSNested"
+)
+
 func runTests(createCases func() []fsTestCase, t *testing.T) {
 	var testLogger log.Logger
-	//var sqlStore *sqlstore.SQLStore
+	var sqlStore *sqlstore.SQLStore
 	var filestorage FileStorage
 	var ctx context.Context
 	var tempDir string
@@ -49,7 +57,7 @@ func runTests(createCases func() []fsTestCase, t *testing.T) {
 
 	cleanUp := func() {
 		testLogger = nil
-		//sqlStore = nil
+		sqlStore = nil
 		if filestorage != nil {
 			_ = filestorage.close()
 			filestorage = nil
@@ -65,17 +73,17 @@ func runTests(createCases func() []fsTestCase, t *testing.T) {
 		filestorage = NewCdkBlobStorage(testLogger, bucket, "", nil)
 	}
 
-	//setupSqlFS := func() {
-	//	commonSetup()
-	//	sqlStore = sqlstore.InitTestDB(t)
-	//	filestorage = NewDbStorage(testLogger, sqlStore, nil, "/")
-	//}
-	//
-	//setupSqlFSNestedPath := func() {
-	//	commonSetup()
-	//	sqlStore = sqlstore.InitTestDB(t)
-	//	filestorage = NewDbStorage(testLogger, sqlStore, nil, "/dashboards/")
-	//}
+	setupSqlFS := func() {
+		commonSetup()
+		sqlStore = sqlstore.InitTestDB(t)
+		filestorage = NewDbStorage(testLogger, sqlStore, nil, "/")
+	}
+
+	setupSqlFSNestedPath := func() {
+		commonSetup()
+		sqlStore = sqlstore.InitTestDB(t)
+		filestorage = NewDbStorage(testLogger, sqlStore, nil, "/5/dashboards/")
+	}
 
 	setupLocalFs := func() {
 		commonSetup()
@@ -114,31 +122,43 @@ func runTests(createCases func() []fsTestCase, t *testing.T) {
 
 	backends := []struct {
 		setup func()
-		name  string
+		name  backend
 	}{
 		{
 			setup: setupLocalFs,
-			name:  "Local FS",
+			name:  backendLocalFS,
 		},
 		{
 			setup: setupLocalFsNestedPath,
-			name:  "Local FS with nested path",
+			name:  backendLocalFSNested,
 		},
 		{
 			setup: setupInMemFS,
-			name:  "In-mem FS",
+			name:  backendInMem,
 		},
-		//{
-		//	setup: setupSqlFS,
-		//	name:  "SQL FS",
-		//},
-		//{
-		//	setup: setupSqlFSNestedPath,
-		//	name:  "SQL FS with nested path",
-		//},
+		{
+			setup: setupSqlFS,
+			name:  backendSQL,
+		},
+		{
+			setup: setupSqlFSNestedPath,
+			name:  backendSQLNested,
+		},
+	}
+
+	skipBackends := map[backend]bool{
+		backendInMem:         false,
+		backendSQL:           false,
+		backendLocalFS:       false,
+		backendLocalFSNested: false,
+		backendSQLNested:     false,
 	}
 
 	for _, backend := range backends {
+		if skipBackends[backend.name] {
+			continue
+		}
+
 		for _, tt := range createCases() {
 			t.Run(fmt.Sprintf("%s: %s", backend.name, tt.name), func(t *testing.T) {
 				backend.setup()
@@ -149,7 +169,10 @@ func runTests(createCases func() []fsTestCase, t *testing.T) {
 	}
 }
 
-func TestFsStorage(t *testing.T) {
+func TestIntegrationFsStorage(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	//skipTest := true
 	emptyContents := make([]byte, 0)
 	pngImage, _ := base64.StdEncoding.DecodeString(pngImageBase64)

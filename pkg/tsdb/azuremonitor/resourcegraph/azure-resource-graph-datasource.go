@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/loganalytics"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/macros"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 // AzureResourceGraphResponse is the json response object from the Azure Resource Graph Analytics API.
@@ -229,7 +228,7 @@ func (e *AzureResourceGraphDatasource) createRequest(ctx context.Context, dsInfo
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(reqBody))
 	if err != nil {
 		azlog.Debug("Failed to create request", "error", err)
-		return nil, errutil.Wrap("failed to create request", err)
+		return nil, fmt.Errorf("%v: %w", "failed to create request", err)
 	}
 	req.URL.Path = "/"
 	req.Header.Set("Content-Type", "application/json")

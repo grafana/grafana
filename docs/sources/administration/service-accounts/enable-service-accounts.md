@@ -1,11 +1,14 @@
 ---
-title: 'Enable service accounts in Grafana'
-menuTitle: 'Enable service accounts'
-description: 'This topic shows you how to to enable the service accounts feature in Grafana'
-weight: 40
+aliases:
+  - /docs/grafana/latest/administration/service-accounts/enable-service-accounts/
+description: This topic shows you how to to enable the service accounts feature in
+  Grafana
 keywords:
   - Feature toggle
   - Service accounts
+menuTitle: Enable service accounts
+title: Enable service accounts in Grafana
+weight: 40
 ---
 
 # Enable service accounts in Grafana
@@ -22,7 +25,7 @@ You can enable service accounts by:
 This topic shows you how to enable service accounts by modifying the Grafana configuration file.
 
 1. Sign in to the Grafana server and locate the configuration file. For more information about finding the configuration file, refer to LINK.
-2. Open the configuration file and locate the [feature toggles section]({{< relref "../../administration/configuration.md#feature_toggles" >}}). Add `serviceAccounts` as a [feature_toggle]({{< relref "../../administration/configuration.md#feature_toggle" >}}).
+2. Open the configuration file and locate the [feature toggles section]({{< relref "../../setup-grafana/configure-grafana/#feature_toggles" >}}). Add `serviceAccounts` as a [feature_toggle]({{< relref "../../setup-grafana/configure-grafana/#feature_toggle" >}}).
 
 ```
 [feature_toggles]
@@ -36,6 +39,6 @@ enable = serviceAccounts
 
 This topic shows you how to enable service accounts by setting environment variables before starting Grafana.
 
-Follow the instructions to [override configuration with environment variables]({{< relref "../../administration/configuration.md#override-configuration-with-environment-variables" >}}). Set the following environment variable: `GF_FEATURE_TOGGLES_ENABLE = serviceAccounts`.
+Follow the instructions to [override configuration with environment variables]({{< relref "../../setup-grafana/configure-grafana/#override-configuration-with-environment-variables" >}}). Set the following environment variable: `GF_FEATURE_TOGGLES_ENABLE = serviceAccounts`.
 
 > **Note:** Environment variables override configuration file settings.

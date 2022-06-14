@@ -20,7 +20,10 @@ import {
   DataFrame,
   GrafanaTheme2,
   LoadingState,
+  SplitOpen,
+  DataQueryResponse,
 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { TooltipDisplayMode } from '@grafana/schema';
 import {
   RadioButtonGroup,
@@ -40,6 +43,7 @@ import { ExploreId } from 'app/types/explore';
 import { ExploreGraph } from './ExploreGraph';
 import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
+import { LogsVolumePanel } from './LogsVolumePanel';
 
 const SETTINGS_KEYS = {
   showLabels: 'grafana.explore.logs.showLabels',
@@ -51,6 +55,7 @@ const SETTINGS_KEYS = {
 
 interface Props extends Themeable2 {
   width: number;
+  splitOpen: SplitOpen;
   logRows: LogRowModel[];
   logsMeta?: LogsMetaItem[];
   logsSeries?: DataFrame[];
@@ -64,6 +69,9 @@ interface Props extends Themeable2 {
   scanning?: boolean;
   scanRange?: RawTimeRange;
   exploreId: ExploreId;
+  datasourceType?: string;
+  logsVolumeData: DataQueryResponse | undefined;
+  loadLogsVolumeData: (exploreId: ExploreId) => void;
   showContextToggle?: (row?: LogRowModel) => boolean;
   onChangeTime: (range: AbsoluteTimeRange) => void;
   onClickFilterLabel?: (key: string, value: string) => void;
@@ -138,6 +146,10 @@ class UnthemedLogs extends PureComponent<Props, State> {
   };
 
   onChangeDedup = (dedupStrategy: LogsDedupStrategy) => {
+    reportInteraction('grafana_explore_logs_deduplication_clicked', {
+      deduplicationType: dedupStrategy,
+      datasourceType: this.props.datasourceType,
+    });
     this.setState({ dedupStrategy });
   };
 
@@ -268,10 +280,13 @@ class UnthemedLogs extends PureComponent<Props, State> {
   render() {
     const {
       width,
+      splitOpen,
       logRows,
       logsMeta,
       logsSeries,
       visibleRange,
+      logsVolumeData,
+      loadLogsVolumeData,
       loading = false,
       loadingState,
       onClickFilterLabel,
@@ -335,6 +350,16 @@ class UnthemedLogs extends PureComponent<Props, State> {
             />
           </>
         ) : undefined}
+        <LogsVolumePanel
+          absoluteRange={absoluteRange}
+          width={width}
+          logsVolumeData={logsVolumeData}
+          onUpdateTimeRange={onChangeTime}
+          timeZone={timeZone}
+          splitOpen={splitOpen}
+          onLoadLogsVolume={() => loadLogsVolumeData(exploreId)}
+          onHiddenSeriesChanged={this.onToggleLogLevel}
+        />
         <div className={styles.logOptions} ref={this.topLogsRef}>
           <InlineFieldRow>
             <InlineField label="Time" className={styles.horizontalInlineLabel} transparent>
@@ -465,7 +490,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
             </Button>
           </div>
         )}
-
         {scanning && (
           <div className={styles.noData}>
             <span>{scanText}</span>

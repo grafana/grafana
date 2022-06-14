@@ -3,10 +3,10 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
+import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
 
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
-import { selectOptionInTest } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import {
   AlertManagerCortexConfig,
@@ -646,6 +646,7 @@ const clickSelectOption = async (selectElement: HTMLElement, optionText: string)
 const updateTiming = async (selectElement: HTMLElement, value: string, timeUnit: string): Promise<void> => {
   const input = byRole('textbox').get(selectElement);
   const select = byRole('combobox').get(selectElement);
+  await userEvent.clear(input);
   await userEvent.type(input, value);
   await userEvent.click(select);
   await selectOptionInTest(selectElement, timeUnit);

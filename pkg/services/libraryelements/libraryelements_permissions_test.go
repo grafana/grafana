@@ -48,6 +48,7 @@ func TestLibraryElementPermissions(t *testing.T) {
 		{models.ROLE_ADMIN, viewerOnlyPermissions, viewerOnlyDesc, 200},
 		{models.ROLE_ADMIN, everyonePermissions, everyoneDesc, 200},
 		{models.ROLE_ADMIN, noPermissions, noDesc, 200},
+
 		{models.ROLE_EDITOR, defaultPermissions, defaultDesc, 200},
 		{models.ROLE_EDITOR, adminOnlyPermissions, adminOnlyDesc, 403},
 		{models.ROLE_EDITOR, editorOnlyPermissions, editorOnlyDesc, 200},
@@ -55,6 +56,7 @@ func TestLibraryElementPermissions(t *testing.T) {
 		{models.ROLE_EDITOR, viewerOnlyPermissions, viewerOnlyDesc, 403},
 		{models.ROLE_EDITOR, everyonePermissions, everyoneDesc, 200},
 		{models.ROLE_EDITOR, noPermissions, noDesc, 403},
+
 		{models.ROLE_VIEWER, defaultPermissions, defaultDesc, 403},
 		{models.ROLE_VIEWER, adminOnlyPermissions, adminOnlyDesc, 403},
 		{models.ROLE_VIEWER, editorOnlyPermissions, editorOnlyDesc, 403},

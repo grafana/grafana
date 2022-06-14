@@ -190,6 +190,14 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					Element:      alerting.ElementTypeTextArea,
 					PropertyName: "message",
 				},
+				{ // New in 9.0.
+					Label:        "Subject",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Description:  "Templated subject of the email",
+					PropertyName: "subject",
+					Placeholder:  `{{ template "default.title" . }}`,
+				},
 			},
 		},
 		{
@@ -854,6 +862,20 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					Placeholder:  "https://api.opsgenie.com/v2/alerts",
 					PropertyName: "apiUrl",
 					Required:     true,
+				},
+				{
+					Label:        "Message",
+					Description:  "Alert text limited to 130 characters.",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Placeholder:  `{{ template "default.title" . }}`,
+					PropertyName: "message",
+				},
+				{
+					Label:        "Description",
+					Description:  "A description of the incident.",
+					Element:      alerting.ElementTypeTextArea,
+					PropertyName: "description",
 				},
 				{
 					Label:        "Auto close incidents",

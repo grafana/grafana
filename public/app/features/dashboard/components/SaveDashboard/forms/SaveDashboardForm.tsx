@@ -61,7 +61,7 @@ export const SaveDashboardForm = ({
         <Stack direction="column" gap={2}>
           {hasTimeChanged && (
             <Checkbox
-              checked={options.saveTimerange}
+              checked={!!options.saveTimerange}
               onChange={() =>
                 onOptionsChange({
                   ...options,
@@ -74,7 +74,7 @@ export const SaveDashboardForm = ({
           )}
           {hasVariableChanged && (
             <Checkbox
-              checked={options.saveVariables}
+              checked={!!options.saveVariables}
               onChange={() =>
                 onOptionsChange({
                   ...options,

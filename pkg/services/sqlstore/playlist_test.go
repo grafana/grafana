@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package sqlstore
 
 import (
@@ -11,7 +8,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestPlaylistDataAccess(t *testing.T) {
+func TestIntegrationPlaylistDataAccess(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	ss := InitTestDB(t)
 
 	t.Run("Can create playlist", func(t *testing.T) {
