@@ -265,7 +265,7 @@ describe('AzureMonitor resourcePickerData', () => {
         type: 'Resource',
         location: 'North Europe',
         resourceGroupName: 'rgName',
-        typeLabel: 'Virtual machine',
+        typeLabel: 'Virtual machines',
         uri: '/subscriptions/subId/resourceGroups/rgName/providers/Microsoft.Compute/virtualMachines/vmname',
       });
     });
@@ -295,7 +295,7 @@ describe('AzureMonitor resourcePickerData', () => {
         type: 'ResourceGroup',
         location: 'North Europe',
         resourceGroupName: 'rgName',
-        typeLabel: 'Resource Group',
+        typeLabel: 'Resource groups',
         uri: '/subscriptions/subId/resourceGroups/rgName',
       });
     });

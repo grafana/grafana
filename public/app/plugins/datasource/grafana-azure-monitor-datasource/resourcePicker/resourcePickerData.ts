@@ -6,11 +6,10 @@ import {
   logsSupportedLocationsKusto,
   logsSupportedResourceTypesKusto,
   resourceTypeDisplayNames,
+  supportedMetricNamespacesKusto,
 } from '../azureMetadata';
-import SupportedNamespaces from '../azure_monitor/supported_namespaces';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../components/ResourcePicker/types';
 import { addResources, parseResourceURI } from '../components/ResourcePicker/utils';
-import { getAzureCloud } from '../credentials';
 import {
   AzureDataSourceJsonData,
   AzureGraphResponse,
@@ -26,14 +25,11 @@ import { routeNames } from '../utils/common';
 const RESOURCE_GRAPH_URL = '/providers/Microsoft.ResourceGraph/resources?api-version=2021-03-01';
 export default class ResourcePickerData extends DataSourceWithBackend<AzureMonitorQuery, AzureDataSourceJsonData> {
   private resourcePath: string;
-  private supportedMetricNamespaces: string[];
   resultLimit = 200;
 
   constructor(instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>) {
     super(instanceSettings);
     this.resourcePath = `${routeNames.resourceGraph}`;
-    const cloud = getAzureCloud(instanceSettings);
-    this.supportedMetricNamespaces = new SupportedNamespaces(cloud).get();
   }
 
   async fetchInitialRows(currentSelection?: string): Promise<ResourceRowGroup> {
@@ -74,7 +70,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
       metrics: `
         resources
         | where id contains "${searchPhrase}"
-        | where type in (${this.supportedMetricNamespaces.map((ns) => `"${ns.toLowerCase()}"`).join(',')})
+        | where type in (${supportedMetricNamespacesKusto})
         | order by tolower(name) asc
         | limit ${this.resultLimit}
       `,
