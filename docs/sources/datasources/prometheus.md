@@ -104,6 +104,12 @@ The "Validate selector" button will check with Prometheus how many time series a
 
 ### Builder mode
 
+The following video demonstrates how to use the visual Prometheus query builder available in Grafana version 9.0.
+
+{{< vimeo 720004179 >}}
+
+</br>
+
 #### Toolbar
 
 In addition to `Run query` button and mode switcher, in builder mode additional elements are available:
