@@ -84,7 +84,7 @@ func TestExtractFiles(t *testing.T) {
 		require.Equal(t, "-rwxr-xr-x", fileInfo.Mode().String())
 	})
 
-	t.Run("Should extract relative symlinks", func(t *testing.T) {
+	t.Run("Should extract file with relative symlink", func(t *testing.T) {
 		skipWindows(t)
 
 		err := i.extractFiles("testdata/plugin-with-symlink.zip", "plugin-with-symlink", pluginsDir)
@@ -92,15 +92,43 @@ func TestExtractFiles(t *testing.T) {
 
 		_, err = os.Stat(pluginsDir + "/plugin-with-symlink/symlink_to_txt")
 		require.NoError(t, err)
+
+		target, err := filepath.EvalSymlinks(pluginsDir + "/plugin-with-symlink/symlink_to_txt")
+		require.NoError(t, err)
+		require.Equal(t, pluginsDir+"/plugin-with-symlink/text.txt", target)
 	})
 
-	t.Run("Should not extract absolute symlinks", func(t *testing.T) {
+	t.Run("Should extract directory with relative symlink", func(t *testing.T) {
+		skipWindows(t)
+
+		err := i.extractFiles("testdata/plugin-with-symlink-dir.zip", "plugin-with-symlink-dir", pluginsDir)
+		require.NoError(t, err)
+
+		_, err = os.Stat(pluginsDir + "/plugin-with-symlink-dir/symlink_to_dir")
+		require.NoError(t, err)
+
+		target, err := filepath.EvalSymlinks(pluginsDir + "/plugin-with-symlink-dir/symlink_to_dir")
+		require.NoError(t, err)
+		require.Equal(t, pluginsDir+"/plugin-with-symlink-dir/dir", target)
+	})
+
+	t.Run("Should not extract file with absolute symlink", func(t *testing.T) {
 		skipWindows(t)
 
 		err := i.extractFiles("testdata/plugin-with-absolute-symlink.zip", "plugin-with-absolute-symlink", pluginsDir)
 		require.NoError(t, err)
 
 		_, err = os.Stat(pluginsDir + "/plugin-with-absolute-symlink/test.txt")
+		require.True(t, os.IsNotExist(err))
+	})
+
+	t.Run("Should not extract directory with absolute symlink", func(t *testing.T) {
+		skipWindows(t)
+
+		err := i.extractFiles("testdata/plugin-with-absolute-symlink-dir.zip", "plugin-with-absolute-symlink-dir", pluginsDir)
+		require.NoError(t, err)
+
+		_, err = os.Stat(pluginsDir + "/plugin-with-absolute-symlink-dir/target")
 		require.True(t, os.IsNotExist(err))
 	})
 
