@@ -100,8 +100,7 @@ func (a *AlertStoreMock) SetAlertState(_ context.Context, _ *models.SetAlertStat
 
 func TestEngineProcessJob(t *testing.T) {
 	usMock := &usagestats.UsageStatsMock{T: t}
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
+	tracer := tracing.InitializeTracerForTest()
 
 	store := &AlertStoreMock{}
 	engine := ProvideAlertEngine(nil, nil, nil, usMock, ossencryption.ProvideService(), nil, tracer, store, setting.NewCfg(), nil, nil)

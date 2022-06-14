@@ -14,8 +14,7 @@ import (
 
 func newBus(t *testing.T) bus.Bus {
 	t.Helper()
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
+	tracer := tracing.InitializeTracerForTest()
 	return bus.ProvideBus(tracer)
 }
 

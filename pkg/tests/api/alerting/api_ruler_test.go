@@ -13,7 +13,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	acdb "github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -23,9 +22,6 @@ import (
 
 func TestAlertRulePermissions(t *testing.T) {
 	// Setup Grafana and its Database
-	_, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
-
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -44,7 +40,7 @@ func TestAlertRulePermissions(t *testing.T) {
 	})
 
 	// Create the namespace we'll save our alerts to.
-	err = createFolder(t, "folder1", grafanaListedAddr, "grafana", "password")
+	err := createFolder(t, "folder1", grafanaListedAddr, "grafana", "password")
 	require.NoError(t, err)
 
 	err = createFolder(t, "folder2", grafanaListedAddr, "grafana", "password")
@@ -332,8 +328,6 @@ func createRule(t *testing.T, grafanaListedAddr string, folder string, user, pas
 }
 
 func TestAlertRuleConflictingTitle(t *testing.T) {
-	_, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
@@ -354,7 +348,7 @@ func TestAlertRuleConflictingTitle(t *testing.T) {
 	})
 
 	// Create the namespace we'll save our alerts to.
-	err = createFolder(t, "folder1", grafanaListedAddr, "admin", "admin")
+	err := createFolder(t, "folder1", grafanaListedAddr, "admin", "admin")
 	require.NoError(t, err)
 	// Create the namespace we'll save our alerts to.
 	err = createFolder(t, "folder2", grafanaListedAddr, "admin", "admin")
@@ -472,9 +466,6 @@ func TestAlertRuleConflictingTitle(t *testing.T) {
 }
 
 func TestRulerRulesFilterByDashboard(t *testing.T) {
-	_, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
-
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{"ngalert"},
 		DisableAnonymous:     true,
@@ -492,7 +483,7 @@ func TestRulerRulesFilterByDashboard(t *testing.T) {
 
 	dashboardUID := "default"
 	// Create the namespace under default organisation (orgID = 1) where we'll save our alerts to.
-	err = createFolder(t, "default", grafanaListedAddr, "grafana", "password")
+	err := createFolder(t, "default", grafanaListedAddr, "grafana", "password")
 	require.NoError(t, err)
 	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
 

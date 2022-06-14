@@ -473,8 +473,7 @@ type scenarioContext struct {
 func scenario(t *testing.T, desc string, input scenarioInput, f func(ctx *scenarioContext)) {
 	t.Helper()
 
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
+	tracer := tracing.InitializeTracerForTest()
 
 	sCtx := &scenarioContext{
 		t:                              t,
