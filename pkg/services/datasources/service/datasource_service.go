@@ -17,7 +17,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -37,7 +36,6 @@ type Service struct {
 	features           featuremgmt.FeatureToggles
 	permissionsService accesscontrol.DatasourcePermissionsService
 	ac                 accesscontrol.AccessControl
-	log                log.Logger
 
 	ptc proxyTransportCache
 }
@@ -67,12 +65,10 @@ func ProvideService(
 		features:           features,
 		permissionsService: datasourcePermissionsService,
 		ac:                 ac,
-		log:                log.New("datasource.service"),
 	}
 
 	ac.RegisterScopeAttributeResolver(NewNameScopeResolver(store))
 	ac.RegisterScopeAttributeResolver(NewIDScopeResolver(store))
-	go s.MigrateSecrets(context.Background())
 
 	return s
 }
@@ -330,50 +326,6 @@ func (s *Service) DecryptLegacySecrets(ctx context.Context, ds *models.DataSourc
 		secureJsonData[k] = string(decrypted)
 	}
 	return secureJsonData, nil
-}
-
-func (s *Service) MigrateSecrets(ctx context.Context) error {
-	query := &models.GetDataSourcesQuery{}
-	err := s.GetDataSources(ctx, query)
-	if err != nil {
-		return err
-	}
-
-	s.log.Debug("starting data source secret migration")
-	for _, ds := range query.Result {
-		hasMigration, _ := ds.JsonData.Get("secretMigrationComplete").Bool()
-		if !hasMigration {
-			secureJsonData, err := s.DecryptLegacySecrets(ctx, ds)
-			if err != nil {
-				return err
-			}
-
-			jsonData, err := json.Marshal(secureJsonData)
-			if err != nil {
-				return err
-			}
-
-			err = s.SecretsStore.Set(ctx, ds.OrgId, ds.Name, secretType, string(jsonData))
-			if err != nil {
-				return err
-			}
-
-			ds.JsonData.Set("secretMigrationComplete", true)
-			err = s.UpdateDataSource(ctx, &models.UpdateDataSourceCommand{Id: ds.Id, OrgId: ds.OrgId, Uid: ds.Uid, JsonData: ds.JsonData})
-			if err != nil {
-				return err
-			}
-		}
-
-		if s.features.IsEnabled(featuremgmt.FlagDisableSecretsCompatibility) && len(ds.SecureJsonData) > 0 {
-			err := s.DeleteDataSourceSecrets(ctx, &models.DeleteDataSourceSecretsCommand{UID: ds.Uid, OrgID: ds.OrgId, ID: ds.Id})
-			if err != nil {
-				return err
-			}
-		}
-	}
-	s.log.Debug("data source secret migration complete")
-	return nil
 }
 
 func (s *Service) DecryptedValue(ctx context.Context, ds *models.DataSource, key string) (string, bool, error) {

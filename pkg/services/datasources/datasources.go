@@ -7,6 +7,7 @@ import (
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/registry"
 )
 
 // DataSourceService interface for interacting with datasources.
@@ -50,6 +51,12 @@ type DataSourceService interface {
 	// DecryptedPassword decrypts the encrypted datasource password and returns the
 	// decrypted value.
 	DecryptedPassword(ctx context.Context, ds *models.DataSource) (string, error)
+
+	// DeleteDataSourceSecrets deletes the secure json data stored in the data source table
+	DeleteDataSourceSecrets(ctx context.Context, cmd *models.DeleteDataSourceSecretsCommand) error
+
+	// DecryptLegacySecrets decrypts the encrypted data stored in the SecureJsonData field
+	DecryptLegacySecrets(ctx context.Context, ds *models.DataSource) (map[string]string, error)
 }
 
 // CacheService interface for retrieving a cached datasource.
@@ -59,4 +66,9 @@ type CacheService interface {
 
 	// GetDatasourceByUID gets a datasource identified by datasource unique identifier (UID).
 	GetDatasourceByUID(ctx context.Context, datasourceUID string, user *models.SignedInUser, skipCache bool) (*models.DataSource, error)
+}
+
+// SecretMigrationService is used to migrate legacy secrets to new unified secrets.
+type SecretMigrationService interface {
+	registry.BackgroundService
 }

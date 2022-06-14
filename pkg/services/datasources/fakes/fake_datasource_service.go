@@ -122,3 +122,11 @@ func (s *FakeDataSourceService) DecryptedBasicAuthPassword(ctx context.Context, 
 func (s *FakeDataSourceService) DecryptedPassword(ctx context.Context, ds *models.DataSource) (string, error) {
 	return "", nil
 }
+
+func (s *FakeDataSourceService) DeleteDataSourceSecrets(ctx context.Context, cmd *models.DeleteDataSourceSecretsCommand) error {
+	return nil
+}
+
+func (s *FakeDataSourceService) DecryptLegacySecrets(ctx context.Context, ds *models.DataSource) (map[string]string, error) {
+	return make(map[string]string), nil
+}
