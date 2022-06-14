@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -41,7 +42,8 @@ type RulerSrv struct {
 }
 
 var (
-	errQuotaReached = errors.New("quota has been exceeded")
+	errQuotaReached      = errors.New("quota has been exceeded")
+	errProvisionedAlerts = errors.New("request affects rules groups created via provisioning API")
 )
 
 // RouteDeleteAlertRules deletes all alert rules user is authorized to access in the namespace (request parameter :Namespace)
@@ -568,6 +570,32 @@ type changes struct {
 
 func (c *changes) isEmpty() bool {
 	return len(c.Update)+len(c.New)+len(c.Delete) == 0
+}
+
+// verifyProvisionedRulesNotAffected check that neither of provisioned alerts are affected by changes.
+// Returns errProvisionedAlerts if there is at least one rule in groups affected by changes that was provisioned.
+func verifyProvisionedRulesNotAffected(ctx context.Context, provenanceStore provisioning.ProvisioningStore, orgID int64, ch *changes) error {
+	provenances, err := provenanceStore.GetProvenances(ctx, orgID, (&ngmodels.AlertRule{}).ResourceType())
+	if err != nil {
+		return err
+	}
+	errorMsg := strings.Builder{}
+	for group, alertRules := range ch.AffectedGroups {
+		for _, rule := range alertRules {
+			if provenance, exists := provenances[rule.UID]; (exists && provenance == ngmodels.ProvenanceNone) || !exists {
+				continue
+			}
+			if errorMsg.Len() > 0 {
+				errorMsg.WriteRune(',')
+			}
+			errorMsg.WriteString(group.String())
+			break
+		}
+	}
+	if errorMsg.Len() == 0 {
+		return nil
+	}
+	return fmt.Errorf("%w: [%s]", errProvisionedAlerts, errorMsg.String())
 }
 
 // calculateChanges calculates the difference between rules in the group in the database and the submitted rules. If a submitted rule has UID it tries to find it in the database (in other groups).
