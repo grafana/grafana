@@ -111,7 +111,7 @@ export const GrafanaReceiverForm: FC<Props> = ({ existing, alertManagerSourceNam
 
   // if any receivers in the contact point have a "provenance", the entire contact point should be readOnly
   const hasProvisionedItems = existing
-    ? existing.grafana_managed_receiver_configs?.some((item) => Boolean(item.provenance))
+    ? (existing.grafana_managed_receiver_configs ?? []).some((item) => Boolean(item.provenance))
     : false;
 
   const readOnly = isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName) || hasProvisionedItems;

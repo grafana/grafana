@@ -27,7 +27,7 @@ interface Props<R extends ChannelValues> {
   takenReceiverNames: string[]; // will validate that user entered receiver name is not one of these
   commonSettingsComponent: CommonSettingsComponentType;
   initialValues?: ReceiverFormValues<R>;
-  readOnly?: boolean;
+  readOnly: boolean;
 }
 
 export function ReceiverForm<R extends ChannelValues>({
