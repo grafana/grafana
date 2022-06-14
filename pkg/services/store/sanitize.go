@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func (s *standardStorageService) transformUploadRequest(ctx context.Context, user *models.SignedInUser, req *UploadRequest, storagePath string) (error, *filestorage.UpsertFileCommand) {
+func (s *standardStorageService) sanitizeUploadRequest(ctx context.Context, user *models.SignedInUser, req *UploadRequest, storagePath string) (error, *filestorage.UpsertFileCommand) {
 	if req.EntityType == EntityTypeImage {
 		ext := filepath.Ext(req.Path)
 		if ext == ".svg" {

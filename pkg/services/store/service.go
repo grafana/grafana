@@ -45,8 +45,8 @@ type StorageService interface {
 
 	validateUploadRequest(ctx context.Context, user *models.SignedInUser, req *UploadRequest, storagePath string) validationResult
 
-	// transformUploadRequest sanitizes the upload request and converts it into a command accepted by the FileStorage API
-	transformUploadRequest(ctx context.Context, user *models.SignedInUser, req *UploadRequest, storagePath string) (error, *filestorage.UpsertFileCommand)
+	// sanitizeUploadRequest sanitizes the upload request and converts it into a command accepted by the FileStorage API
+	sanitizeUploadRequest(ctx context.Context, user *models.SignedInUser, req *UploadRequest, storagePath string) (error, *filestorage.UpsertFileCommand)
 }
 
 type standardStorageService struct {
@@ -149,9 +149,9 @@ func (s *standardStorageService) Upload(ctx context.Context, user *models.Signed
 		return ErrValidationFailed
 	}
 
-	err, upsertCommand := s.transformUploadRequest(ctx, user, req, storagePath)
+	err, upsertCommand := s.sanitizeUploadRequest(ctx, user, req, storagePath)
 	if err != nil {
-		grafanaStorageLogger.Error("failed while transforming the upload request", "filetype", req.MimeType, "path", req.Path, "error", err)
+		grafanaStorageLogger.Error("failed while sanitizing the upload request", "filetype", req.MimeType, "path", req.Path, "error", err)
 		return ErrUploadInternalError
 	}
 
