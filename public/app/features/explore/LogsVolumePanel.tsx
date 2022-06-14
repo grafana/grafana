@@ -56,18 +56,18 @@ function ErrorAlert(props: { error: DataQueryError }) {
   );
 }
 
-type MergedInfo = {
+type VisualisationData = {
   logsVolumeData?: DataQueryResponse;
   logLinesBased: boolean;
   range: AbsoluteTimeRange;
 };
 
-function mergeFullRangeAndLogsBasedData(
+function createVisualisationData(
   logLinesBased: DataQueryResponse | undefined,
   logLinesBasedVisibleRange: AbsoluteTimeRange | undefined,
   fullRangeData: DataQueryResponse | undefined,
   absoluteRange: AbsoluteTimeRange
-): MergedInfo {
+): VisualisationData {
   const logLinesFrames = logLinesBased?.data;
   if (logLinesFrames && logLinesFrames.length) {
     return {
@@ -94,7 +94,7 @@ export function LogsVolumePanel(props: Props) {
   const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
   const height = 150;
 
-  const { logsVolumeData, logLinesBased, range } = mergeFullRangeAndLogsBasedData(
+  const { logsVolumeData, logLinesBased, range } = createVisualisationData(
     props.logLinesBasedData,
     props.logLinesBasedDataVisibleRange,
     props.logsVolumeData,
