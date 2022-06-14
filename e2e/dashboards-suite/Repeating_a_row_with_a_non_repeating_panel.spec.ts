@@ -1,7 +1,7 @@
 import { e2e } from '@grafana/e2e';
 const PAGE_UNDER_TEST = 'k3PEoCpnk/repeating-a-row-with-a-non-repeating-panel-and-horizontal-repeating-panel';
 
-describe('Repeating empty rows', () => {
+describe('Repeating a row with repeated panels and a non-repeating panel', () => {
   beforeEach(() => {
     e2e.flows.login('admin', 'admin');
   });
