@@ -37,6 +37,19 @@ func TestGetPublicDashboard(t *testing.T) {
 			dashResp:  &models.Dashboard{IsPublic: true},
 		},
 		{
+			name: "puts pubdash time settings into dashboard",
+			uid:  "abc123",
+			storeResp: &storeResp{
+				pd: &models.PublicDashboard{TimeSettings: `{"from": "now-8", "to": "now"}`},
+				d: &models.Dashboard{
+					IsPublic: true,
+					Data:     simplejson.NewFromAny(map[string]interface{}{"time": map[string]interface{}{"from": "abc", "to": "123"}}),
+				},
+				err: nil},
+			errResp:  nil,
+			dashResp: &models.Dashboard{IsPublic: true, Data: simplejson.NewFromAny(map[string]interface{}{"time": map[string]interface{}{"from": "now-8", "to": "now"}})},
+		},
+		{
 			name:      "returns ErrPublicDashboardNotFound when isPublic is false",
 			uid:       "abc123",
 			storeResp: &storeResp{pd: &models.PublicDashboard{}, d: &models.Dashboard{IsPublic: false}, err: nil},
@@ -224,6 +237,7 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 			pdc.PublicDashboard.Uid,
 			49,
 		)
+
 		require.ErrorContains(t, err, "Panel not found")
 	})
 

@@ -25,7 +25,16 @@ func (dr *DashboardServiceImpl) GetPublicDashboard(ctx context.Context, dashboar
 		return nil, models.ErrPublicDashboardNotFound
 	}
 
-	// FIXME maybe insert logic to substitute pdc.TimeSettings into d
+	// Replace dashboard time range with pubdash time range
+	if pdc.TimeSettings != "" {
+		var pdcTimeSettings map[string]interface{}
+		err = json.Unmarshal([]byte(pdc.TimeSettings), &pdcTimeSettings)
+		if err != nil {
+			return nil, err
+		}
+
+		d.Data.Set("time", pdcTimeSettings)
+	}
 
 	return d, nil
 }
