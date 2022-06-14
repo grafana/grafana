@@ -196,6 +196,11 @@ func (qs *QuotaService) getQuotaScopes(target string) ([]models.QuotaScope, erro
 			models.QuotaScope{Name: "org", Target: target, DefaultLimit: qs.Cfg.Quota.Org.AlertRule},
 		)
 		return scopes, nil
+	case "files_in_sql":
+		scopes = append(scopes,
+			models.QuotaScope{Name: "global", Target: target, DefaultLimit: qs.Cfg.Quota.Global.FilesInSQL},
+		)
+		return scopes, nil
 	default:
 		return scopes, ErrInvalidQuotaTarget
 	}

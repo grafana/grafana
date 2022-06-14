@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -22,12 +23,14 @@ type HTTPStorageService interface {
 }
 
 type httpStorage struct {
-	store StorageService
+	store        StorageService
+	quotaService *quota.QuotaService
 }
 
-func ProvideHTTPService(store StorageService) HTTPStorageService {
+func ProvideHTTPService(store StorageService, quotaService *quota.QuotaService) HTTPStorageService {
 	return &httpStorage{
-		store: store,
+		store:        store,
+		quotaService: quotaService,
 	}
 }
 
@@ -57,6 +60,16 @@ func UploadErrorToStatusCode(err error) int {
 }
 
 func (s *httpStorage) Upload(c *models.ReqContext) response.Response {
+	// assumes we are only uploading to the SQL database - TODO: refactor once we introduce object stores
+	quotaReached, err := s.quotaService.CheckQuotaReached(c.Req.Context(), "files_in_sql", nil)
+	if err != nil {
+		return response.Error(500, "Internal server error", err)
+	}
+
+	if quotaReached {
+		return response.Error(400, "File quota reached", errors.New("file quota reached"))
+	}
+
 	// 32 MB is the default used by FormFile()
 	if err := c.Req.ParseMultipartForm(32 << 20); err != nil {
 		return response.Error(400, "error in parsing form", err)
