@@ -206,7 +206,7 @@ func createTestSnapshot(t *testing.T, dashStore *DashboardSnapshotStore, key str
 	// Set expiry date manually - to be able to create expired snapshots
 	if expires < 0 {
 		expireDate := time.Now().Add(time.Second * time.Duration(expires))
-		err = dashStore.sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		err = dashStore.store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 			_, err := sess.Exec("UPDATE dashboard_snapshot SET expires = ? WHERE id = ?", expireDate, cmd.Result.Id)
 			return err
 		})
