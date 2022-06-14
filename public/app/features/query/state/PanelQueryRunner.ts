@@ -362,7 +362,8 @@ async function getDataSource(
   publicDashboardUid?: string
 ): Promise<DataSourceApi> {
   if (publicDashboardUid) {
-    return new PublicDashboardDataSource();
+    const ds = datasource as DataSourceApi;
+    return new PublicDashboardDataSource(ds.id, ds.uid);
   }
 
   if (datasource && (datasource as any).query) {

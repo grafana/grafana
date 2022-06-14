@@ -90,7 +90,8 @@ func (hs *HTTPServer) QueryPublicDashboard(c *models.ReqContext) response.Respon
 		return handleDashboardErr(http.StatusInternalServerError, "Failed to get queries for public dashboard", err)
 	}
 
-	resp, err := hs.queryDataService.QueryDataMultipleSources(c.Req.Context(), nil, c.SkipCache, reqDTO, true)
+	user := models.SignedInUser{IsAnonymous: true, OrgId: c.OrgId}
+	resp, err := hs.queryDataService.QueryDataMultipleSources(c.Req.Context(), &user, c.SkipCache, reqDTO, true)
 
 	if err != nil {
 		return hs.handleQueryMetricsError(err)
