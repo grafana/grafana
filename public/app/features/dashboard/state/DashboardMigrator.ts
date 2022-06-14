@@ -25,7 +25,7 @@ import {
 } from '@grafana/data';
 import { getDataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import { AxisPlacement, GraphFieldConfig } from '@grafana/ui';
-import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/editors/registry';
+import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 import { config } from 'app/core/config';
 import {
   DEFAULT_PANEL_SPAN,
