@@ -12,9 +12,9 @@ jest.mock('../../core/components/TagFilter/TagFilter', () => ({
   },
 }));
 
-function getTestContext({ name, interval, items }: Partial<Playlist> = {}) {
+function getTestContext({ name, interval, items, uid }: Partial<Playlist> = {}) {
   const onSubmitMock = jest.fn();
-  const playlist = { name, items, interval } as unknown as Playlist;
+  const playlist = { name, items, interval, uid } as unknown as Playlist;
   const { rerender } = render(<PlaylistForm onSubmit={onSubmitMock} playlist={playlist} />);
 
   return { onSubmitMock, playlist, rerender };
@@ -28,6 +28,7 @@ const playlist: Playlist = {
     { title: 'Middle item', type: 'dashboard_by_id', order: 2, value: '2' },
     { title: 'Last item', type: 'dashboard_by_tag', order: 2, value: 'Last item' },
   ],
+  uid: 'foo',
 };
 
 function rows() {
@@ -135,7 +136,15 @@ describe('PlaylistForm', () => {
 
       await userEvent.click(screen.getByRole('button', { name: /save/i }));
       expect(onSubmitMock).toHaveBeenCalledTimes(1);
-      expect(onSubmitMock).toHaveBeenCalledWith(playlist);
+      expect(onSubmitMock).toHaveBeenCalledWith({
+        name: 'A test playlist',
+        interval: '10m',
+        items: [
+          { title: 'First item', type: 'dashboard_by_id', order: 1, value: '1' },
+          { title: 'Middle item', type: 'dashboard_by_id', order: 2, value: '2' },
+          { title: 'Last item', type: 'dashboard_by_tag', order: 2, value: 'Last item' },
+        ],
+      });
     });
 
     describe('and name is missing', () => {
