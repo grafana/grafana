@@ -195,31 +195,27 @@ func checkAzureMonitorMetricsHealth(dsInfo types.DatasourceInfo) (*http.Response
 }
 
 func checkAzureLogAnalyticsHealth(dsInfo types.DatasourceInfo) (*http.Response, error) {
-	defaultWorkspaceId := dsInfo.Settings.LogAnalyticsDefaultWorkspace
-
-	if defaultWorkspaceId == "" {
-		workspacesUrl := fmt.Sprintf("%v/subscriptions/%v/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview", dsInfo.Routes["Azure Monitor"].URL, dsInfo.Settings.SubscriptionId)
-		workspacesReq, err := http.NewRequest(http.MethodGet, workspacesUrl, nil)
-		if err != nil {
-			return nil, err
-		}
-		res, err := dsInfo.Services["Azure Monitor"].HTTPClient.Do(workspacesReq)
-		if err != nil {
-			return nil, err
-		}
-		var target struct {
-			Value []types.LogAnalyticsWorkspaceResponse
-		}
-		err = json.NewDecoder(res.Body).Decode(&target)
-		if err != nil {
-			return nil, err
-		}
-
-		if len(target.Value) == 0 {
-			return nil, errors.New("no default workspace found")
-		}
-		defaultWorkspaceId = target.Value[0].Properties.CustomerId
+	workspacesUrl := fmt.Sprintf("%v/subscriptions/%v/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview", dsInfo.Routes["Azure Monitor"].URL, dsInfo.Settings.SubscriptionId)
+	workspacesReq, err := http.NewRequest(http.MethodGet, workspacesUrl, nil)
+	if err != nil {
+		return nil, err
 	}
+	res, err := dsInfo.Services["Azure Monitor"].HTTPClient.Do(workspacesReq)
+	if err != nil {
+		return nil, err
+	}
+	var target struct {
+		Value []types.LogAnalyticsWorkspaceResponse
+	}
+	err = json.NewDecoder(res.Body).Decode(&target)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(target.Value) == 0 {
+		return nil, errors.New("no default workspace found")
+	}
+	defaultWorkspaceId := target.Value[0].Properties.CustomerId
 
 	body, err := json.Marshal(map[string]interface{}{
 		"query": "AzureActivity | limit 1",
@@ -235,7 +231,7 @@ func checkAzureLogAnalyticsHealth(dsInfo types.DatasourceInfo) (*http.Response, 
 		return nil, err
 	}
 
-	res, err := dsInfo.Services["Azure Log Analytics"].HTTPClient.Do(workspaceReq)
+	res, err = dsInfo.Services["Azure Log Analytics"].HTTPClient.Do(workspaceReq)
 	if err != nil {
 		return nil, err
 	}
@@ -295,8 +291,15 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 
 	logsRes, err := checkAzureLogAnalyticsHealth(dsInfo)
 	if err != nil || logsRes.StatusCode != 200 {
+		status = backend.HealthStatusError
+		logAnalyticsLog = "Error connecting to Azure Log Analytics endpoint."
 		if err != nil {
-			return nil, err
+			if err.Error() == "no default workspace found" {
+				status = backend.HealthStatusUnknown
+				logAnalyticsLog = "No Log Analytics workspaces found."
+			} else {
+				return nil, err
+			}
 		} else {
 			body, err := io.ReadAll(logsRes.Body)
 			if err != nil {
@@ -304,8 +307,6 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 			}
 			backend.Logger.Error(string(body))
 		}
-		status = backend.HealthStatusError
-		logAnalyticsLog = "Error connecting to Azure Log Analytics endpoint."
 	}
 
 	resourceGraphRes, err := checkAzureMonitorGraphHealth(dsInfo)
@@ -324,14 +325,20 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	}
 
 	defer func() {
-		if err := metricsRes.Body.Close(); err != nil {
-			backend.Logger.Error("Failed to close response body", "err", err)
+		if metricsRes != nil {
+			if err := metricsRes.Body.Close(); err != nil {
+				backend.Logger.Error("Failed to close response body", "err", err)
+			}
 		}
-		if err := logsRes.Body.Close(); err != nil {
-			backend.Logger.Error("Failed to close response body", "err", err)
+		if logsRes != nil {
+			if err := logsRes.Body.Close(); logsRes != nil && err != nil {
+				backend.Logger.Error("Failed to close response body", "err", err)
+			}
 		}
-		if err := resourceGraphRes.Body.Close(); err != nil {
-			backend.Logger.Error("Failed to close response body", "err", err)
+		if resourceGraphRes != nil {
+			if err := resourceGraphRes.Body.Close(); resourceGraphRes != nil && err != nil {
+				backend.Logger.Error("Failed to close response body", "err", err)
+			}
 		}
 	}()
 

@@ -180,6 +180,69 @@ func NewTestClient(fn RoundTripFunc) *http.Client {
 }
 
 func TestCheckHealth(t *testing.T) {
+	logAnalyticsResponse := func(empty bool) *http.Response {
+		if !empty {
+			body := struct {
+				Value []types.LogAnalyticsWorkspaceResponse
+			}{Value: []types.LogAnalyticsWorkspaceResponse{{
+				Id:       "abcd-1234",
+				Location: "location",
+				Name:     "test-workspace",
+				Properties: types.LogAnalyticsWorkspaceProperties{
+					CreatedDate: "",
+					CustomerId:  "abcd-1234",
+					Features:    types.LogAnalyticsWorkspaceFeatures{},
+				},
+				ProvisioningState:               "provisioned",
+				PublicNetworkAccessForIngestion: "enabled",
+				PublicNetworkAccessForQuery:     "disabled",
+				RetentionInDays:                 0},
+			}}
+			bodyMarshal, err := json.Marshal(body)
+			if err != nil {
+				t.Error(err)
+			}
+			return &http.Response{
+				StatusCode: 200,
+				Body:       ioutil.NopCloser(bytes.NewBuffer(bodyMarshal)),
+				Header:     make(http.Header),
+			}
+		} else {
+			body := struct {
+				Value []types.LogAnalyticsWorkspaceResponse
+			}{Value: []types.LogAnalyticsWorkspaceResponse{}}
+			bodyMarshal, err := json.Marshal(body)
+			if err != nil {
+				t.Error(err)
+			}
+			return &http.Response{
+				StatusCode: 200,
+				Body:       ioutil.NopCloser(bytes.NewBuffer(bodyMarshal)),
+				Header:     make(http.Header),
+			}
+		}
+	}
+	azureMonitorClient := func(logAnalyticsEmpty bool, fail bool) *http.Client {
+		return NewTestClient(func(req *http.Request) *http.Response {
+			if strings.Contains(req.URL.String(), "workspaces") {
+				return logAnalyticsResponse(logAnalyticsEmpty)
+			} else {
+				if !fail {
+					return &http.Response{
+						StatusCode: 200,
+						Body:       ioutil.NopCloser(bytes.NewBufferString("OK")),
+						Header:     make(http.Header),
+					}
+				} else {
+					return &http.Response{
+						StatusCode: 404,
+						Body:       ioutil.NopCloser(bytes.NewBufferString("not found")),
+						Header:     make(http.Header),
+					}
+				}
+			}
+		})
+	}
 	okClient := NewTestClient(func(req *http.Request) *http.Response {
 		return &http.Response{
 			StatusCode: 200,
@@ -197,11 +260,10 @@ func TestCheckHealth(t *testing.T) {
 
 	cloud := "AzureCloud"
 	tests := []struct {
-		name                   string
-		errorExpected          bool
-		expectedResult         *backend.CheckHealthResult
-		customServices         map[string]types.DatasourceService
-		customInstanceSettings types.AzureMonitorSettings
+		name           string
+		errorExpected  bool
+		expectedResult *backend.CheckHealthResult
+		customServices map[string]types.DatasourceService
 	}{
 		{
 			name:          "Successfully queries all endpoints",
@@ -213,7 +275,7 @@ func TestCheckHealth(t *testing.T) {
 			customServices: map[string]types.DatasourceService{
 				azureMonitor: {
 					URL:        routes[cloud]["Azure Monitor"].URL,
-					HTTPClient: okClient,
+					HTTPClient: azureMonitorClient(false, false),
 				},
 				azureLogAnalytics: {
 					URL:        routes[cloud]["Azure Log Analytics"].URL,
@@ -222,9 +284,7 @@ func TestCheckHealth(t *testing.T) {
 				azureResourceGraph: {
 					URL:        routes[cloud]["Azure Resource Graph"].URL,
 					HTTPClient: okClient,
-				}}, customInstanceSettings: types.AzureMonitorSettings{
-				LogAnalyticsDefaultWorkspace: "workspace-id",
-			},
+				}},
 		},
 		{
 			name:          "Successfully queries all endpoints except metrics",
@@ -236,7 +296,7 @@ func TestCheckHealth(t *testing.T) {
 			customServices: map[string]types.DatasourceService{
 				azureMonitor: {
 					URL:        routes[cloud]["Azure Monitor"].URL,
-					HTTPClient: failClient,
+					HTTPClient: azureMonitorClient(false, true),
 				},
 				azureLogAnalytics: {
 					URL:        routes[cloud]["Azure Log Analytics"].URL,
@@ -245,9 +305,7 @@ func TestCheckHealth(t *testing.T) {
 				azureResourceGraph: {
 					URL:        routes[cloud]["Azure Resource Graph"].URL,
 					HTTPClient: okClient,
-				}}, customInstanceSettings: types.AzureMonitorSettings{
-				LogAnalyticsDefaultWorkspace: "workspace-id",
-			},
+				}},
 		},
 		{
 			name:          "Successfully queries all endpoints except log analytics",
@@ -259,7 +317,7 @@ func TestCheckHealth(t *testing.T) {
 			customServices: map[string]types.DatasourceService{
 				azureMonitor: {
 					URL:        routes[cloud]["Azure Monitor"].URL,
-					HTTPClient: okClient,
+					HTTPClient: azureMonitorClient(false, false),
 				},
 				azureLogAnalytics: {
 					URL:        routes[cloud]["Azure Log Analytics"].URL,
@@ -268,9 +326,7 @@ func TestCheckHealth(t *testing.T) {
 				azureResourceGraph: {
 					URL:        routes[cloud]["Azure Resource Graph"].URL,
 					HTTPClient: okClient,
-				}}, customInstanceSettings: types.AzureMonitorSettings{
-				LogAnalyticsDefaultWorkspace: "workspace-id",
-			},
+				}},
 		},
 		{
 			name:          "Successfully queries all endpoints except resource graph",
@@ -282,7 +338,7 @@ func TestCheckHealth(t *testing.T) {
 			customServices: map[string]types.DatasourceService{
 				azureMonitor: {
 					URL:        routes[cloud]["Azure Monitor"].URL,
-					HTTPClient: okClient,
+					HTTPClient: azureMonitorClient(false, false),
 				},
 				azureLogAnalytics: {
 					URL:        routes[cloud]["Azure Log Analytics"].URL,
@@ -292,55 +348,18 @@ func TestCheckHealth(t *testing.T) {
 					URL:        routes[cloud]["Azure Resource Graph"].URL,
 					HTTPClient: failClient,
 				}},
-			customInstanceSettings: types.AzureMonitorSettings{
-				LogAnalyticsDefaultWorkspace: "workspace-id",
-			},
 		},
 		{
-			name:          "Successfully queries all endpoints even when default workspace ID is undefined",
+			name:          "Successfully returns UNKNOWN status if no log analytics workspace is found",
 			errorExpected: false,
 			expectedResult: &backend.CheckHealthResult{
 				Status:  backend.HealthStatusError,
-				Message: "1. Successfully connected to Azure Monitor endpoint.\n2. Successfully connected to Azure Log Analytics endpoint.\n3. Error connecting to Azure Resource Graph endpoint.",
+				Message: "1. Successfully connected to Azure Monitor endpoint.\n2. No Log Analytics workspaces found.\n3. Error connecting to Azure Resource Graph endpoint.",
 			},
 			customServices: map[string]types.DatasourceService{
 				azureMonitor: {
-					URL: routes[cloud]["Azure Monitor"].URL,
-					HTTPClient: NewTestClient(func(req *http.Request) *http.Response {
-						if strings.Contains(req.URL.String(), "workspaces") {
-							body := struct {
-								Value []types.LogAnalyticsWorkspaceResponse
-							}{Value: []types.LogAnalyticsWorkspaceResponse{{
-								Id:       "abcd-1234",
-								Location: "location",
-								Name:     "test-workspace",
-								Properties: types.LogAnalyticsWorkspaceProperties{
-									CreatedDate: "",
-									CustomerId:  "abcd-1234",
-									Features:    types.LogAnalyticsWorkspaceFeatures{},
-								},
-								ProvisioningState:               "provisioned",
-								PublicNetworkAccessForIngestion: "enabled",
-								PublicNetworkAccessForQuery:     "disabled",
-								RetentionInDays:                 0},
-							}}
-							bodyMarshal, err := json.Marshal(body)
-							if err != nil {
-								t.Error(err)
-							}
-							return &http.Response{
-								StatusCode: 200,
-								Body:       ioutil.NopCloser(bytes.NewBuffer(bodyMarshal)),
-								Header:     make(http.Header),
-							}
-						} else {
-							return &http.Response{
-								StatusCode: 200,
-								Body:       ioutil.NopCloser(bytes.NewBufferString("OK")),
-								Header:     make(http.Header),
-							}
-						}
-					}),
+					URL:        routes[cloud]["Azure Monitor"].URL,
+					HTTPClient: azureMonitorClient(true, false),
 				},
 				azureLogAnalytics: {
 					URL:        routes[cloud]["Azure Log Analytics"].URL,
@@ -350,9 +369,6 @@ func TestCheckHealth(t *testing.T) {
 					URL:        routes[cloud]["Azure Resource Graph"].URL,
 					HTTPClient: failClient,
 				}},
-			customInstanceSettings: types.AzureMonitorSettings{
-				LogAnalyticsDefaultWorkspace: "",
-			},
 		},
 	}
 
@@ -368,7 +384,6 @@ func TestCheckHealth(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			instance.services = tt.customServices
-			instance.settings = tt.customInstanceSettings
 			s := &Service{
 				im: instance,
 			}
