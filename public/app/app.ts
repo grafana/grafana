@@ -205,7 +205,6 @@ function initEchoSrv() {
     );
   }
   if (config.grafanaJavascriptAgent.enabled) {
-    console.log('Registering GrafanaJavascriptAgentBackend');
     registerEchoBackend(
       new GrafanaJavascriptAgentBackend({
         ...config.grafanaJavascriptAgent,

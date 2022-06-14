@@ -94,6 +94,9 @@ export class GrafanaBootConfig implements GrafanaConfig {
   grafanaJavascriptAgent = {
     enabled: false,
     customEndpoint: '',
+    errorInstrumentalizationEnabled: true,
+    consoleInstrumentalizationEnabled: false,
+    webVitalsInstrumentalizationEnabled: false,
   };
   pluginCatalogURL = 'https://grafana.com/grafana/plugins/';
   pluginAdminEnabled = true;

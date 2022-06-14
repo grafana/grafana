@@ -1,10 +1,13 @@
 package setting
 
 type GrafanaJavascriptAgent struct {
-	Enabled        bool   `json:"enabled"`
-	CustomEndpoint string `json:"customEndpoint"`
-	EndpointRPS    int    `json:"-"`
-	EndpointBurst  int    `json:"-"`
+	Enabled                             bool   `json:"enabled"`
+	CustomEndpoint                      string `json:"customEndpoint"`
+	EndpointRPS                         int    `json:"-"`
+	EndpointBurst                       int    `json:"-"`
+	ErrorInstrumentalizationEnabled     bool   `json:"errorInstrumentalizationEnabled"`
+	ConsoleInstrumentalizationEnabled   bool   `json:"consoleInstrumentalizationEnabled"`
+	WebVitalsInstrumentalizationEnabled bool   `json:"webVitalsInstrumentalizationEnabled"`
 }
 
 func (cfg *Cfg) readGrafanaJavascriptAgentConfig() {
@@ -12,10 +15,13 @@ func (cfg *Cfg) readGrafanaJavascriptAgentConfig() {
 	provider := raw.Key("provider").MustString("sentry")
 	if provider == "grafana" {
 		cfg.GrafanaJavascriptAgent = GrafanaJavascriptAgent{
-			Enabled:        raw.Key("enabled").MustBool(true),
-			CustomEndpoint: raw.Key("custom_endpoint").String(),
-			EndpointRPS:    raw.Key("log_endpoint_requests_per_second_limit").MustInt(),
-			EndpointBurst:  raw.Key("log_endpoint_burst_limit").MustInt(),
+			Enabled:                             raw.Key("enabled").MustBool(true),
+			CustomEndpoint:                      raw.Key("custom_endpoint").String(),
+			EndpointRPS:                         raw.Key("log_endpoint_requests_per_second_limit").MustInt(),
+			EndpointBurst:                       raw.Key("log_endpoint_burst_limit").MustInt(),
+			ErrorInstrumentalizationEnabled:     raw.Key("instrumentations_errors_enabled").MustBool(true),
+			ConsoleInstrumentalizationEnabled:   raw.Key("instrumentations_console_enabled").MustBool(true),
+			WebVitalsInstrumentalizationEnabled: raw.Key("instrumentations_webvitals_enabled").MustBool(true),
 		}
 	}
 }

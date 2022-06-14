@@ -3,7 +3,6 @@ import {
   BrowserConfig,
   ErrorsInstrumentation,
   ConsoleInstrumentation,
-  LogLevel,
   WebVitalsInstrumentation,
 } from '@grafana/agent-web';
 import { BuildInfo } from '@grafana/data';
@@ -15,6 +14,9 @@ export interface GrafanaJavascriptAgentBackendOptions extends BrowserConfig {
   buildInfo: BuildInfo;
   customEndpoint: string;
   user: User;
+  errorInstrumentalizationEnabled: boolean;
+  consoleInstrumentalizationEnabled: boolean;
+  webVitalsInstrumentalizationEnabled: boolean;
 }
 
 export class GrafanaJavascriptAgentBackend
@@ -24,6 +26,18 @@ export class GrafanaJavascriptAgentBackend
   private agentInstance;
 
   constructor(public options: GrafanaJavascriptAgentBackendOptions) {
+    // configure instrumentalizations
+    const instrumentations = [];
+    if (options.errorInstrumentalizationEnabled) {
+      instrumentations.push(new ErrorsInstrumentation());
+    }
+    if (options.consoleInstrumentalizationEnabled) {
+      instrumentations.push(new ConsoleInstrumentation());
+    }
+    if (options.webVitalsInstrumentalizationEnabled) {
+      instrumentations.push(new WebVitalsInstrumentation());
+    }
+
     // initialize GrafanaJavascriptAgent so it can set up it's hooks and start collecting errors
     const grafanaJavaScriptAgentOptions: BrowserConfig = {
       app: {
@@ -31,13 +45,7 @@ export class GrafanaJavascriptAgentBackend
         environment: options.buildInfo.env,
       },
       url: options.customEndpoint || '/log',
-      instrumentations: [
-        new ErrorsInstrumentation(),
-        new ConsoleInstrumentation({
-          disabledLevels: [LogLevel.TRACE, LogLevel.ERROR], // console.log will be captured
-        }),
-        new WebVitalsInstrumentation(),
-      ],
+      instrumentations,
     };
     this.agentInstance = initializeAgent(grafanaJavaScriptAgentOptions);
     if (options.user) {
