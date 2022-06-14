@@ -176,6 +176,16 @@ func TestStore_MigrateAllApiKeys(t *testing.T) {
 			expectedServiceAccouts: 2,
 			expectedErr:            nil,
 		},
+		{
+			desc: "api keys from another orgs shouldn't be migrated",
+			keys: []tests.TestApiKey{
+				{Name: "test1", Role: models.ROLE_EDITOR, Key: "secret1", OrgId: 2},
+				{Name: "test2", Role: models.ROLE_EDITOR, Key: "secret2", OrgId: 2},
+			},
+			orgId:                  1,
+			expectedServiceAccouts: 0,
+			expectedErr:            nil,
+		},
 	}
 
 	for _, c := range cases {
@@ -191,26 +201,27 @@ func TestStore_MigrateAllApiKeys(t *testing.T) {
 				tests.SetupApiKey(t, db, key)
 			}
 
-			err = store.MigrateApiKeysToServiceAccounts(context.Background(), 1)
+			err = store.MigrateApiKeysToServiceAccounts(context.Background(), c.orgId)
 			if c.expectedErr != nil {
 				require.ErrorIs(t, err, c.expectedErr)
 			} else {
 				require.NoError(t, err)
 
-				serviceAccounts, err := store.SearchOrgServiceAccounts(context.Background(), c.orgId, "", "all", 1, 50, &models.SignedInUser{UserId: 1, OrgId: c.orgId, Permissions: map[int64]map[string][]string{
+				serviceAccounts, err := store.SearchOrgServiceAccounts(context.Background(), c.orgId, "", "all", 1, 50, &models.SignedInUser{UserId: 101, OrgId: c.orgId, Permissions: map[int64]map[string][]string{
 					c.orgId: {
 						"serviceaccounts:read": {"serviceaccounts:id:*"},
 					},
 				}})
 				require.NoError(t, err)
 				require.Equal(t, c.expectedServiceAccouts, serviceAccounts.TotalCount)
-				saMigrated := serviceAccounts.ServiceAccounts[0]
-				require.Equal(t, string(c.keys[0].Role), saMigrated.Role)
+				if c.expectedServiceAccouts > 0 {
+					saMigrated := serviceAccounts.ServiceAccounts[0]
+					require.Equal(t, string(c.keys[0].Role), saMigrated.Role)
 
-				tokens, err := store.ListTokens(context.Background(), c.orgId, saMigrated.Id)
-				require.NoError(t, err)
-				require.Equal(t, len(tokens), 1)
-
+					tokens, err := store.ListTokens(context.Background(), c.orgId, saMigrated.Id)
+					require.NoError(t, err)
+					require.Equal(t, len(tokens), 1)
+				}
 			}
 		})
 	}
