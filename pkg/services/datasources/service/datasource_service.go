@@ -565,7 +565,7 @@ func awsServiceNamespace(dsType string) string {
 	switch dsType {
 	case models.DS_ES, models.DS_ES_OPEN_DISTRO, models.DS_ES_OPENSEARCH:
 		return "es"
-	case models.DS_PROMETHEUS:
+	case models.DS_PROMETHEUS, models.DS_ALERTMANAGER:
 		return "aps"
 	default:
 		panic(fmt.Sprintf("Unsupported datasource %q", dsType))
