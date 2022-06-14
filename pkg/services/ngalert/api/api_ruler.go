@@ -343,7 +343,6 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 
 // updateAlertRulesInGroup calculates changes (rules to add,update,delete), verifies that the user is authorized to do the calculated changes and updates database.
 // All operations are performed in a single transaction
-// nolint: gocyclo
 func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, groupKey ngmodels.AlertRuleGroupKey, rules []*ngmodels.AlertRule) response.Response {
 	var finalChanges *changes
 	hasAccess := accesscontrol.HasAccess(srv.ac, c)
@@ -370,43 +369,8 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, groupKey ngmod
 			}
 		}
 
-		provenances, err := srv.provenanceStore.GetProvenances(c.Req.Context(), c.OrgId, (&ngmodels.AlertRule{}).ResourceType())
-		if err != nil {
+		if err := verifyProvisionedRulesNotAffected(c.Req.Context(), srv.provenanceStore, c.OrgId, groupChanges); err != nil {
 			return err
-		}
-
-		// New rules don't need to be checked for provenance, just copy the whole slice.
-		finalChanges = &changes{}
-		finalChanges.New = groupChanges.New
-		for _, rule := range groupChanges.Update {
-			if provenance, exists := provenances[rule.Existing.UID]; (exists && provenance == ngmodels.ProvenanceNone) || !exists {
-				finalChanges.Update = append(finalChanges.Update, rule)
-			}
-		}
-		for _, rule := range groupChanges.Delete {
-			if provenance, exists := provenances[rule.UID]; (exists && provenance == ngmodels.ProvenanceNone) || !exists {
-				finalChanges.Delete = append(finalChanges.Delete, rule)
-			}
-		}
-
-		if finalChanges.isEmpty() {
-			logger.Info("no changes detected that have 'none' provenance in the request. Do nothing",
-				"provenance_invalid_add", len(groupChanges.New),
-				"provenance_invalid_update", len(groupChanges.Update),
-				"provenance_invalid_delete", len(groupChanges.Delete))
-			return nil
-		}
-
-		if len(groupChanges.Delete) > len(finalChanges.Delete) {
-			logger.Info("provenance is not 'none' for one or many rules in the group that should be deleted. those rules will be skipped",
-				"expected", len(groupChanges.Delete),
-				"allowed", len(groupChanges.Delete))
-		}
-
-		if len(groupChanges.Update) > len(finalChanges.Update) {
-			logger.Info("provenance is not 'none' for one or many rules in the group that should be updated. those rules will be skipped",
-				"expected", len(groupChanges.Update),
-				"allowed", len(groupChanges.Update))
 		}
 
 		logger.Debug("updating database with the authorized changes", "add", len(finalChanges.New), "update", len(finalChanges.New), "delete", len(finalChanges.Delete))
@@ -463,7 +427,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, groupKey ngmod
 	if err != nil {
 		if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
 			return ErrResp(http.StatusNotFound, err, "failed to update rule group")
-		} else if errors.Is(err, ngmodels.ErrAlertRuleFailedValidation) {
+		} else if errors.Is(err, ngmodels.ErrAlertRuleFailedValidation) || errors.Is(err, errProvisionedAlerts) {
 			return ErrResp(http.StatusBadRequest, err, "failed to update rule group")
 		} else if errors.Is(err, errQuotaReached) {
 			return ErrResp(http.StatusForbidden, err, "")
