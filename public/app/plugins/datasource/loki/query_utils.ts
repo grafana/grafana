@@ -80,8 +80,15 @@ export function addParsedLabelToQuery(expr: string, key: string, value: string |
 // - does not have `.instant`
 // - does not have `.range`
 export function getNormalizedLokiQuery(query: LokiQuery): LokiQuery {
+  // for historical reasons, the queryType field might
+  // contain some invalid data. in that case we behave
+  // as if the queryType is empty
+  const { queryType } = query;
+  const hasValidQueryType =
+    queryType === LokiQueryType.Range || queryType === LokiQueryType.Instant || queryType === LokiQueryType.Stream;
+
   // if queryType exists, it is respected
-  if (query.queryType !== undefined) {
+  if (hasValidQueryType) {
     const { instant, range, ...rest } = query;
     return rest;
   }
