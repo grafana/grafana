@@ -18,7 +18,7 @@ export function ChangeUIDModal({ onDismiss, dataSource }: Props): ReactElement {
         <Field label="New uid">
           <Input defaultValue={dataSource.uid} />
         </Field>
-        <Button fill="text">List all current references</Button>
+        {/* <Button>List all current references</Button> */}
       </FieldSet>
       <Modal.ButtonRow>
         <Button variant="secondary" onClick={onDismiss} fill="outline">
