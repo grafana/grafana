@@ -76,6 +76,7 @@ interface PrepConfigOpts {
   valueMax?: number;
   yAxisConfig: YAxisConfig;
   ySizeDivisor?: number;
+  sync?: () => DashboardCursorSync;
 }
 
 export function prepConfig(opts: PrepConfigOpts) {
@@ -97,6 +98,7 @@ export function prepConfig(opts: PrepConfigOpts) {
     valueMax,
     yAxisConfig,
     ySizeDivisor,
+    sync,
   } = opts;
 
   const pxRatio = devicePixelRatio;
@@ -498,49 +500,35 @@ export function prepConfig(opts: PrepConfigOpts) {
     },
   };
 
-  const sync = () => DashboardCursorSync.Crosshair;
-
   if (sync && sync() !== DashboardCursorSync.Off) {
     const xScaleKey = 'x';
-    const yScaleKey = 'y';
     const xScaleUnit = 'time';
 
     const payload: DataHoverPayload = {
       point: {
-        [xScaleKey]: null,
-        //  [yScaleKey]: null,
+        [xScaleUnit]: null,
       },
-      //  data: frame,
+      data: dataRef.current?.heatmap,
     };
     const hoverEvent = new DataHoverEvent(payload);
     cursor.sync = {
       key: '__global_',
       filters: {
         pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {
-          if (sync && sync() === DashboardCursorSync.Off) {
-            return false;
-          }
-
-          payload.rowIndex = dataIdx;
+          payload.rowIndex = dataIdx; // not the matched cell :thinking:
           if (x < 0 && y < 0) {
             payload.point[xScaleUnit] = null;
-            payload.point[yScaleKey] = null;
             eventBus.publish(new DataHoverClearEvent());
           } else {
-            // convert the points
             payload.point[xScaleUnit] = src.posToVal(x, xScaleKey);
-            //  payload.point[yScaleKey] = src.posToVal(y, yScaleKey);
-            //   payload.point.panelRelY = y > 0 ? y / h : 1; // used by old graph panel to position tooltip
             eventBus.publish(hoverEvent);
             hoverEvent.payload.down = undefined;
           }
           return true;
         },
       },
-      // ??? setSeries: syncMode === DashboardCursorSync.Tooltip,
-      //TODO: remove any once https://github.com/leeoniya/uPlot/pull/611 got merged or the typing is fixed
-      scales: [xScaleKey, yScaleKey],
-      match: [() => true, () => true],
+      scales: [xScaleKey, '--'],
+      match: [(a, b) => a === b, () => false],
     };
   }
 
