@@ -84,7 +84,7 @@ func TestExtractFiles(t *testing.T) {
 		require.Equal(t, "-rwxr-xr-x", fileInfo.Mode().String())
 	})
 
-	t.Run("Should extract symlinks", func(t *testing.T) {
+	t.Run("Should extract relative symlinks", func(t *testing.T) {
 		skipWindows(t)
 
 		err := i.extractFiles("testdata/plugin-with-symlink.zip", "plugin-with-symlink", pluginsDir)
@@ -92,6 +92,16 @@ func TestExtractFiles(t *testing.T) {
 
 		_, err = os.Stat(pluginsDir + "/plugin-with-symlink/symlink_to_txt")
 		require.NoError(t, err)
+	})
+
+	t.Run("Should not extract absolute symlinks", func(t *testing.T) {
+		skipWindows(t)
+
+		err := i.extractFiles("testdata/plugin-with-absolute-symlink.zip", "plugin-with-absolute-symlink", pluginsDir)
+		require.NoError(t, err)
+
+		_, err = os.Stat(pluginsDir + "/plugin-with-absolute-symlink/test.txt")
+		require.True(t, os.IsNotExist(err))
 	})
 
 	t.Run("Should detect if archive members point outside of the destination directory", func(t *testing.T) {
@@ -165,6 +175,59 @@ func TestRemoveGitBuildFromName(t *testing.T) {
 	for p, exp := range paths {
 		name := removeGitBuildFromName(p, "datasource-kairosdb")
 		require.Equal(t, exp, name)
+	}
+}
+
+func TestIsSymlinkRelativeTo(t *testing.T) {
+	tcs := []struct {
+		desc            string
+		basePath        string
+		symlinkDestPath string
+		symlinkOrigPath string
+		expected        bool
+	}{
+		{
+			desc:            "Symbolic link pointing to relative file within basePath should return true",
+			basePath:        "/dir",
+			symlinkDestPath: "test.txt",
+			symlinkOrigPath: "/dir/sub-dir/test1.txt",
+			expected:        true,
+		},
+		{
+			desc:            "Symbolic link pointing to relative file within basePath should return true",
+			basePath:        "/dir",
+			symlinkDestPath: "test.txt",
+			symlinkOrigPath: "/dir/test1.txt",
+			expected:        true,
+		},
+		{
+			desc:            "Symbolic link pointing to relative file within basePath should return true",
+			basePath:        "/dir",
+			symlinkDestPath: "../etc/test.txt",
+			symlinkOrigPath: "/dir/sub-dir/test1.txt",
+			expected:        true,
+		},
+		{
+			desc:            "Symbolic link pointing to absolute directory outside basePath should return false",
+			basePath:        "/dir",
+			symlinkDestPath: "/etc/test.txt",
+			symlinkOrigPath: "/dir/sub-dir/test1.txt",
+			expected:        false,
+		},
+		{
+			desc:            "Symbolic link pointing to relative file outside basePath should return false",
+			basePath:        "/dir",
+			symlinkDestPath: "../../etc/test.txt",
+			symlinkOrigPath: "/dir/sub-dir/test1.txt",
+			expected:        false,
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.desc, func(t *testing.T) {
+			actual := isSymlinkRelativeTo(tc.basePath, tc.symlinkDestPath, tc.symlinkOrigPath)
+			require.Equal(t, tc.expected, actual)
+		})
 	}
 }
 

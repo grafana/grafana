@@ -565,7 +565,7 @@ func (i *Installer) extractFiles(archiveFile string, pluginID string, dest strin
 		}
 
 		if isSymlink(zf) {
-			if err := extractSymlink(zf, dstPath); err != nil {
+			if err := extractSymlink(existingInstallDir, zf, dstPath); err != nil {
 				i.log.Warn("failed to extract symlink", "err", err)
 				continue
 			}
@@ -584,7 +584,7 @@ func isSymlink(file *zip.File) bool {
 	return file.Mode()&os.ModeSymlink == os.ModeSymlink
 }
 
-func extractSymlink(file *zip.File, filePath string) error {
+func extractSymlink(basePath string, file *zip.File, filePath string) error {
 	// symlink target is the contents of the file
 	src, err := file.Open()
 	if err != nil {
@@ -594,10 +594,38 @@ func extractSymlink(file *zip.File, filePath string) error {
 	if _, err := io.Copy(buf, src); err != nil {
 		return fmt.Errorf("%v: %w", "failed to copy symlink contents", err)
 	}
-	if err := os.Symlink(strings.TrimSpace(buf.String()), filePath); err != nil {
+
+	symlinkPath := strings.TrimSpace(buf.String())
+	if !isSymlinkRelativeTo(basePath, symlinkPath, filePath) {
+		return fmt.Errorf("symlink %q pointing outside plugin directory is not allowed", filePath)
+	}
+
+	if err := os.Symlink(symlinkPath, filePath); err != nil {
 		return fmt.Errorf("failed to make symbolic link for %v: %w", filePath, err)
 	}
 	return nil
+}
+
+// isSymlinkRelativeTo checks whether symlinkDestPath is relative to basePath.
+// symlinkOrigPath is the path to file holding the symbolic link.
+func isSymlinkRelativeTo(basePath string, symlinkDestPath string, symlinkOrigPath string) bool {
+	fmt.Println(basePath, symlinkDestPath, symlinkOrigPath)
+	if filepath.IsAbs(symlinkDestPath) {
+		return false
+	} else {
+		fileDir := filepath.Dir(symlinkOrigPath)
+		cleanPath := filepath.Clean(filepath.Join(fileDir, "/", symlinkDestPath))
+		p, err := filepath.Rel(basePath, cleanPath)
+		if err != nil {
+			return false
+		}
+
+		if strings.HasPrefix(p, ".."+string(filepath.Separator)) {
+			return false
+		}
+	}
+
+	return true
 }
 
 func extractFile(file *zip.File, filePath string) (err error) {
