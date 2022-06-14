@@ -3,6 +3,7 @@ package installer
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -10,6 +11,36 @@ import (
 
 	"github.com/stretchr/testify/require"
 )
+
+func TestInstall(t *testing.T) {
+	testDir := "./testdata/tmpInstallPluginDir"
+	err := os.Mkdir(testDir, os.ModePerm)
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		err = os.RemoveAll(testDir)
+		require.NoError(t, err)
+	})
+
+	pluginID := "test-app"
+
+	i := &Installer{log: &fakeLogger{}}
+	err = i.Install(context.Background(), pluginID, "", testDir, "./testdata/plugin-with-symlinks.zip", "")
+	require.NoError(t, err)
+
+	// verify extracted contents
+	files, err := ioutil.ReadDir(filepath.Join(testDir, pluginID))
+	require.NoError(t, err)
+	require.Len(t, files, 6)
+	require.Equal(t, files[0].Name(), "MANIFEST.txt")
+	require.Equal(t, files[1].Name(), "dashboards")
+	require.Equal(t, files[2].Name(), "extra")
+	require.Equal(t, os.ModeSymlink, files[2].Mode())
+	require.Equal(t, files[3].Name(), "plugin.json")
+	require.Equal(t, files[4].Name(), "symlink_to_txt")
+	require.Equal(t, os.ModeSymlink, files[4].Mode())
+	require.Equal(t, files[5].Name(), "text.txt")
+}
 
 func TestUninstall(t *testing.T) {
 	i := &Installer{log: &fakeLogger{}}
