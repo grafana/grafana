@@ -1,10 +1,10 @@
 import React, { FC } from 'react';
 import { useObservable } from 'react-use';
 import { Subject } from 'rxjs';
-import { NumberInput } from 'app/core/components/NumberInput/NumberInput';
 
 import { SelectableValue, StandardEditorProps } from '@grafana/data';
 import { Field, HorizontalGroup, InlineField, InlineFieldRow, Select, VerticalGroup } from '@grafana/ui';
+import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 import { HorizontalConstraint, Placement, VerticalConstraint } from 'app/features/canvas';
 
 import { PanelOptions } from '../models.gen';

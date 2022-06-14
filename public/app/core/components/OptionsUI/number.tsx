@@ -1,7 +1,8 @@
 import React, { useCallback } from 'react';
-import { FieldConfigEditorProps, NumberFieldConfigSettings } from '@grafana/data';
-import { NumberInput } from '../NumberInput/NumberInput';
 
+import { FieldConfigEditorProps, NumberFieldConfigSettings } from '@grafana/data';
+
+import { NumberInput } from './NumberInput';
 
 export const NumberValueEditor: React.FC<FieldConfigEditorProps<number, NumberFieldConfigSettings>> = ({
   value,
