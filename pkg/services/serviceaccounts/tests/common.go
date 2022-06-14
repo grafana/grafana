@@ -23,6 +23,7 @@ type TestApiKey struct {
 	Name  string
 	Role  models.RoleType
 	OrgId int64
+	Key   string
 }
 
 func SetupUserServiceAccount(t *testing.T, sqlStore *sqlstore.SQLStore, testUser TestUser) *models.User {
@@ -51,7 +52,12 @@ func SetupApiKey(t *testing.T, sqlStore *sqlstore.SQLStore, testKey TestApiKey) 
 		Name:  testKey.Name,
 		Role:  role,
 		OrgId: testKey.OrgId,
-		Key:   "secret",
+	}
+
+	if testKey.Key != "" {
+		addKeyCmd.Key = testKey.Key
+	} else {
+		addKeyCmd.Key = "secret"
 	}
 	err := sqlStore.AddAPIKey(context.Background(), addKeyCmd)
 	require.NoError(t, err)
