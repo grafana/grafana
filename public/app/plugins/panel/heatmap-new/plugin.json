@@ -1,5 +1,6 @@
 {
   "type": "panel",
+  "dummy": "dummy",
   "name": "Heatmap (new)",
   "id": "heatmap-new",
   "state": "beta",
