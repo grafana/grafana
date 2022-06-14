@@ -64,14 +64,14 @@ function createVisualisationData(
 ):
   | {
       logsVolumeData: DataQueryResponse;
-      logLinesBased: boolean;
+      fullRangeData: boolean;
       range: AbsoluteTimeRange;
     }
   | undefined {
   if (fullRangeData !== undefined) {
     return {
       logsVolumeData: fullRangeData,
-      logLinesBased: false,
+      fullRangeData: true,
       range: absoluteRange,
     };
   }
@@ -79,7 +79,7 @@ function createVisualisationData(
   if (logLinesBased !== undefined) {
     return {
       logsVolumeData: logLinesBased,
-      logLinesBased: true,
+      fullRangeData: false,
       range: logLinesBasedVisibleRange || absoluteRange,
     };
   }
@@ -105,7 +105,7 @@ export function LogsVolumePanel(props: Props) {
     return null;
   }
 
-  const { logsVolumeData, logLinesBased, range } = data;
+  const { logsVolumeData, fullRangeData, range } = data;
 
   if (logsVolumeData.error !== undefined) {
     return <ErrorAlert error={logsVolumeData.error} />;
@@ -138,13 +138,7 @@ export function LogsVolumePanel(props: Props) {
   }
 
   let extraInfo;
-  if (logLinesBased) {
-    extraInfo = (
-      <div className={styles.oldInfoText}>
-        This datasource does not support full-range histograms. The graph is based on the logs seen in the response.
-      </div>
-    );
-  } else {
+  if (fullRangeData) {
     const zoomRatio = logsLevelZoomRatio(logsVolumeData, range);
 
     if (zoomRatio !== undefined && zoomRatio < 1) {
@@ -154,6 +148,12 @@ export function LogsVolumePanel(props: Props) {
         </InlineField>
       );
     }
+  } else {
+    extraInfo = (
+      <div className={styles.oldInfoText}>
+        This datasource does not support full-range histograms. The graph is based on the logs seen in the response.
+      </div>
+    );
   }
   return (
     <Collapse label="" isOpen={true} loading={logsVolumeData?.state === LoadingState.Loading}>
