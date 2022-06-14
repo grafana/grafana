@@ -15,10 +15,10 @@ import { Alert, Button, Collapse, InlineField, TooltipDisplayMode, useStyles2, u
 import { ExploreGraph } from './ExploreGraph';
 
 type Props = {
-  logLinesBasedData?: DataQueryResponse;
-  logLinesBasedDataVisibleRange?: AbsoluteTimeRange;
-  logsVolumeData?: DataQueryResponse;
+  logsVolumeData: DataQueryResponse | undefined;
   absoluteRange: AbsoluteTimeRange;
+  logLinesBasedData: DataQueryResponse | undefined;
+  logLinesBasedDataVisibleRange: AbsoluteTimeRange | undefined;
   timeZone: TimeZone;
   splitOpen: SplitOpen;
   width: number;
