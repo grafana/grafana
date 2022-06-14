@@ -60,11 +60,6 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
                 setResource={setResource}
                 resourceUri={query.azureMonitor?.resourceUri}
               />
-            </EditorFieldGroup>
-          </EditorRow>
-
-          <EditorRow>
-            <EditorFieldGroup>
               <MetricNamespaceField
                 metricNamespaces={metricNamespaces}
                 query={query}
