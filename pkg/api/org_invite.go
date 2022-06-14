@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
@@ -206,7 +205,7 @@ func (hs *HTTPServer) CompleteInvite(c *models.ReqContext) response.Response {
 		return response.Error(500, "failed to create user", err)
 	}
 
-	if err := bus.Publish(c.Req.Context(), &events.SignUpCompleted{
+	if err := hs.bus.Publish(c.Req.Context(), &events.SignUpCompleted{
 		Name:  user.NameOrFallback(),
 		Email: user.Email,
 	}); err != nil {
