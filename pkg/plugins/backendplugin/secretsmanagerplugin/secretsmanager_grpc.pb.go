@@ -22,11 +22,11 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SecretsManagerClient interface {
-	Get(ctx context.Context, in *GetSecretRequest, opts ...grpc.CallOption) (*GetSecretResponse, error)
-	Set(ctx context.Context, in *SetSecretRequest, opts ...grpc.CallOption) (*SetSecretResponse, error)
-	Del(ctx context.Context, in *DelSecretRequest, opts ...grpc.CallOption) (*DelSecretResponse, error)
-	Keys(ctx context.Context, in *ListSecretsRequest, opts ...grpc.CallOption) (*ListSecretsResponse, error)
-	Rename(ctx context.Context, in *RenameSecretRequest, opts ...grpc.CallOption) (*RenameSecretResponse, error)
+	GetSecret(ctx context.Context, in *GetSecretRequest, opts ...grpc.CallOption) (*GetSecretResponse, error)
+	SetSecret(ctx context.Context, in *SetSecretRequest, opts ...grpc.CallOption) (*SetSecretResponse, error)
+	DeleteSecret(ctx context.Context, in *DelSecretRequest, opts ...grpc.CallOption) (*DelSecretResponse, error)
+	ListSecrets(ctx context.Context, in *ListSecretsRequest, opts ...grpc.CallOption) (*ListSecretsResponse, error)
+	RenameSecret(ctx context.Context, in *RenameSecretRequest, opts ...grpc.CallOption) (*RenameSecretResponse, error)
 }
 
 type secretsManagerClient struct {
@@ -37,45 +37,45 @@ func NewSecretsManagerClient(cc grpc.ClientConnInterface) SecretsManagerClient {
 	return &secretsManagerClient{cc}
 }
 
-func (c *secretsManagerClient) Get(ctx context.Context, in *GetSecretRequest, opts ...grpc.CallOption) (*GetSecretResponse, error) {
+func (c *secretsManagerClient) GetSecret(ctx context.Context, in *GetSecretRequest, opts ...grpc.CallOption) (*GetSecretResponse, error) {
 	out := new(GetSecretResponse)
-	err := c.cc.Invoke(ctx, "/secretsmanagerplugin.SecretsManager/Get", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/secretsmanagerplugin.SecretsManager/GetSecret", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *secretsManagerClient) Set(ctx context.Context, in *SetSecretRequest, opts ...grpc.CallOption) (*SetSecretResponse, error) {
+func (c *secretsManagerClient) SetSecret(ctx context.Context, in *SetSecretRequest, opts ...grpc.CallOption) (*SetSecretResponse, error) {
 	out := new(SetSecretResponse)
-	err := c.cc.Invoke(ctx, "/secretsmanagerplugin.SecretsManager/Set", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/secretsmanagerplugin.SecretsManager/SetSecret", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *secretsManagerClient) Del(ctx context.Context, in *DelSecretRequest, opts ...grpc.CallOption) (*DelSecretResponse, error) {
+func (c *secretsManagerClient) DeleteSecret(ctx context.Context, in *DelSecretRequest, opts ...grpc.CallOption) (*DelSecretResponse, error) {
 	out := new(DelSecretResponse)
-	err := c.cc.Invoke(ctx, "/secretsmanagerplugin.SecretsManager/Del", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/secretsmanagerplugin.SecretsManager/DeleteSecret", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *secretsManagerClient) Keys(ctx context.Context, in *ListSecretsRequest, opts ...grpc.CallOption) (*ListSecretsResponse, error) {
+func (c *secretsManagerClient) ListSecrets(ctx context.Context, in *ListSecretsRequest, opts ...grpc.CallOption) (*ListSecretsResponse, error) {
 	out := new(ListSecretsResponse)
-	err := c.cc.Invoke(ctx, "/secretsmanagerplugin.SecretsManager/Keys", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/secretsmanagerplugin.SecretsManager/ListSecrets", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *secretsManagerClient) Rename(ctx context.Context, in *RenameSecretRequest, opts ...grpc.CallOption) (*RenameSecretResponse, error) {
+func (c *secretsManagerClient) RenameSecret(ctx context.Context, in *RenameSecretRequest, opts ...grpc.CallOption) (*RenameSecretResponse, error) {
 	out := new(RenameSecretResponse)
-	err := c.cc.Invoke(ctx, "/secretsmanagerplugin.SecretsManager/Rename", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/secretsmanagerplugin.SecretsManager/RenameSecret", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -86,11 +86,11 @@ func (c *secretsManagerClient) Rename(ctx context.Context, in *RenameSecretReque
 // All implementations must embed UnimplementedSecretsManagerServer
 // for forward compatibility
 type SecretsManagerServer interface {
-	Get(context.Context, *GetSecretRequest) (*GetSecretResponse, error)
-	Set(context.Context, *SetSecretRequest) (*SetSecretResponse, error)
-	Del(context.Context, *DelSecretRequest) (*DelSecretResponse, error)
-	Keys(context.Context, *ListSecretsRequest) (*ListSecretsResponse, error)
-	Rename(context.Context, *RenameSecretRequest) (*RenameSecretResponse, error)
+	GetSecret(context.Context, *GetSecretRequest) (*GetSecretResponse, error)
+	SetSecret(context.Context, *SetSecretRequest) (*SetSecretResponse, error)
+	DeleteSecret(context.Context, *DelSecretRequest) (*DelSecretResponse, error)
+	ListSecrets(context.Context, *ListSecretsRequest) (*ListSecretsResponse, error)
+	RenameSecret(context.Context, *RenameSecretRequest) (*RenameSecretResponse, error)
 	mustEmbedUnimplementedSecretsManagerServer()
 }
 
@@ -98,20 +98,20 @@ type SecretsManagerServer interface {
 type UnimplementedSecretsManagerServer struct {
 }
 
-func (UnimplementedSecretsManagerServer) Get(context.Context, *GetSecretRequest) (*GetSecretResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
+func (UnimplementedSecretsManagerServer) GetSecret(context.Context, *GetSecretRequest) (*GetSecretResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetSecret not implemented")
 }
-func (UnimplementedSecretsManagerServer) Set(context.Context, *SetSecretRequest) (*SetSecretResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Set not implemented")
+func (UnimplementedSecretsManagerServer) SetSecret(context.Context, *SetSecretRequest) (*SetSecretResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetSecret not implemented")
 }
-func (UnimplementedSecretsManagerServer) Del(context.Context, *DelSecretRequest) (*DelSecretResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Del not implemented")
+func (UnimplementedSecretsManagerServer) DeleteSecret(context.Context, *DelSecretRequest) (*DelSecretResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteSecret not implemented")
 }
-func (UnimplementedSecretsManagerServer) Keys(context.Context, *ListSecretsRequest) (*ListSecretsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Keys not implemented")
+func (UnimplementedSecretsManagerServer) ListSecrets(context.Context, *ListSecretsRequest) (*ListSecretsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListSecrets not implemented")
 }
-func (UnimplementedSecretsManagerServer) Rename(context.Context, *RenameSecretRequest) (*RenameSecretResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Rename not implemented")
+func (UnimplementedSecretsManagerServer) RenameSecret(context.Context, *RenameSecretRequest) (*RenameSecretResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RenameSecret not implemented")
 }
 func (UnimplementedSecretsManagerServer) mustEmbedUnimplementedSecretsManagerServer() {}
 
@@ -126,92 +126,92 @@ func RegisterSecretsManagerServer(s grpc.ServiceRegistrar, srv SecretsManagerSer
 	s.RegisterService(&SecretsManager_ServiceDesc, srv)
 }
 
-func _SecretsManager_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _SecretsManager_GetSecret_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetSecretRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SecretsManagerServer).Get(ctx, in)
+		return srv.(SecretsManagerServer).GetSecret(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/secretsmanagerplugin.SecretsManager/Get",
+		FullMethod: "/secretsmanagerplugin.SecretsManager/GetSecret",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SecretsManagerServer).Get(ctx, req.(*GetSecretRequest))
+		return srv.(SecretsManagerServer).GetSecret(ctx, req.(*GetSecretRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SecretsManager_Set_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _SecretsManager_SetSecret_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(SetSecretRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SecretsManagerServer).Set(ctx, in)
+		return srv.(SecretsManagerServer).SetSecret(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/secretsmanagerplugin.SecretsManager/Set",
+		FullMethod: "/secretsmanagerplugin.SecretsManager/SetSecret",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SecretsManagerServer).Set(ctx, req.(*SetSecretRequest))
+		return srv.(SecretsManagerServer).SetSecret(ctx, req.(*SetSecretRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SecretsManager_Del_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _SecretsManager_DeleteSecret_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DelSecretRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SecretsManagerServer).Del(ctx, in)
+		return srv.(SecretsManagerServer).DeleteSecret(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/secretsmanagerplugin.SecretsManager/Del",
+		FullMethod: "/secretsmanagerplugin.SecretsManager/DeleteSecret",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SecretsManagerServer).Del(ctx, req.(*DelSecretRequest))
+		return srv.(SecretsManagerServer).DeleteSecret(ctx, req.(*DelSecretRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SecretsManager_Keys_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _SecretsManager_ListSecrets_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListSecretsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SecretsManagerServer).Keys(ctx, in)
+		return srv.(SecretsManagerServer).ListSecrets(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/secretsmanagerplugin.SecretsManager/Keys",
+		FullMethod: "/secretsmanagerplugin.SecretsManager/ListSecrets",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SecretsManagerServer).Keys(ctx, req.(*ListSecretsRequest))
+		return srv.(SecretsManagerServer).ListSecrets(ctx, req.(*ListSecretsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SecretsManager_Rename_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _SecretsManager_RenameSecret_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RenameSecretRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SecretsManagerServer).Rename(ctx, in)
+		return srv.(SecretsManagerServer).RenameSecret(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/secretsmanagerplugin.SecretsManager/Rename",
+		FullMethod: "/secretsmanagerplugin.SecretsManager/RenameSecret",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SecretsManagerServer).Rename(ctx, req.(*RenameSecretRequest))
+		return srv.(SecretsManagerServer).RenameSecret(ctx, req.(*RenameSecretRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -224,24 +224,24 @@ var SecretsManager_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*SecretsManagerServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Get",
-			Handler:    _SecretsManager_Get_Handler,
+			MethodName: "GetSecret",
+			Handler:    _SecretsManager_GetSecret_Handler,
 		},
 		{
-			MethodName: "Set",
-			Handler:    _SecretsManager_Set_Handler,
+			MethodName: "SetSecret",
+			Handler:    _SecretsManager_SetSecret_Handler,
 		},
 		{
-			MethodName: "Del",
-			Handler:    _SecretsManager_Del_Handler,
+			MethodName: "DeleteSecret",
+			Handler:    _SecretsManager_DeleteSecret_Handler,
 		},
 		{
-			MethodName: "Keys",
-			Handler:    _SecretsManager_Keys_Handler,
+			MethodName: "ListSecrets",
+			Handler:    _SecretsManager_ListSecrets_Handler,
 		},
 		{
-			MethodName: "Rename",
-			Handler:    _SecretsManager_Rename_Handler,
+			MethodName: "RenameSecret",
+			Handler:    _SecretsManager_RenameSecret_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
