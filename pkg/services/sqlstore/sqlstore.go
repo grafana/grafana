@@ -14,6 +14,7 @@ import (
 	"github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	"xorm.io/xorm"
+	"xorm.io/xorm/dialects"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/fs"
@@ -58,7 +59,7 @@ func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, mig
 	// This change will make xorm use an empty default schema for postgres and
 	// by that mimic the functionality of how it was functioning before
 	// xorm's changes above.
-	xorm.DefaultPostgresSchema = ""
+	dialects.DefaultPostgresSchema = ""
 	s, err := newSQLStore(cfg, cacheService, nil, migrations, bus, tracer)
 	if err != nil {
 		return nil, err
@@ -360,12 +361,12 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 	// configure sql logging
 	debugSQL := ss.Cfg.Raw.Section("database").Key("log_queries").MustBool(false)
 	if !debugSQL {
-		engine.SetLogger(&xorm.DiscardLogger{})
+		// engine.SetLogger(NewXormLogger(log.LvlInfo, log.NewLogfmtLogger(gokitlog.NewSyncWriter(ioutil.Discard))))
 	} else {
 		// add stack to database calls to be able to see what repository initiated queries. Top 7 items from the stack as they are likely in the xorm library.
 		engine.SetLogger(NewXormLogger(log.LvlInfo, log.WithSuffix(log.New("sqlstore.xorm"), log.CallerContextKey, log.StackCaller(log.DefaultCallerDepth))))
 		engine.ShowSQL(true)
-		engine.ShowExecTime(true)
+		// engine.ShowExecTime([]bool{true})
 	}
 
 	ss.engine = engine
