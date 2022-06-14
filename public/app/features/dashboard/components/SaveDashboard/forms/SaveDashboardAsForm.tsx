@@ -19,7 +19,6 @@ const getSaveAsDashboardClone = (dashboard: DashboardModel) => {
   clone.uid = '';
   clone.title += ' Copy';
   clone.editable = true;
-  clone.hideControls = false;
 
   // remove alerts if source dashboard is already persisted
   // do not want to create alert dupes

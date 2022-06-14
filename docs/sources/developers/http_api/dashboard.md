@@ -406,7 +406,6 @@ Content-Type: application/json
 {
   "dashboard": {
     "editable":false,
-    "hideControls":true,
     "nav":[
       {
         "enable":false,

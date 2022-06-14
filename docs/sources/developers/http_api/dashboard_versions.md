@@ -177,7 +177,6 @@ Content-Length: 1300
     "editable": true,
     "gnetId": null,
     "graphTooltip": 0,
-    "hideControls": false,
     "id": 1,
     "links": [
 
@@ -290,7 +289,6 @@ Content-Length: 1300
     "editable": true,
     "gnetId": null,
     "graphTooltip": 0,
-    "hideControls": false,
     "id": 1,
     "links": [
 

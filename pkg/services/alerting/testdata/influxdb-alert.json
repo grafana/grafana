@@ -7,7 +7,6 @@
     "style": "dark",
     "timezone": "browser",
     "editable": true,
-    "hideControls": false,
     "sharedCrosshair": false,
     "rows": [
       {

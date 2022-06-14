@@ -29,7 +29,6 @@ title: 'HTTP Snapshot API '
     {
       "dashboard": {
         "editable":false,
-        "hideControls":true,
         "nav":[
         {
           "enable":false,
@@ -157,7 +156,6 @@ Content-Type: application/json
   },
   "dashboard": {
     "editable":false,
-    "hideControls":true,
     "nav": [
       {
         "enable":false,
