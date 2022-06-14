@@ -4,14 +4,13 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 func (ss *SQLStore) CreatePlaylist(ctx context.Context, cmd *models.CreatePlaylistCommand) error {
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		uid, err := generateAndValidateNewPlaylistUid(sess, cmd.OrgId)
 		if err != nil {
-			return errutil.Wrapf(err, "Failed to generate UID for playlist %q", cmd.Name)
+			return err
 		}
 
 		playlist := models.Playlist{
