@@ -1,7 +1,7 @@
 import { FieldConfigSource, PanelModel, PanelTypeChangedHandler } from '@grafana/data';
 import { AxisPlacement, ScaleDistribution, VisibilityMode } from '@grafana/schema';
 import {
-  HeatmapBucketLayout,
+  HeatmapCellLayout,
   HeatmapCalculationMode,
   HeatmapCalculationOptions,
 } from 'app/features/transformers/calculateHeatmap/models.gen';
@@ -60,6 +60,9 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
         },
       };
     }
+
+    fieldConfig.defaults.unit = oldYAxis.format;
+    fieldConfig.defaults.decimals = oldYAxis.decimals;
   }
 
   const options: PanelOptions = {
@@ -69,15 +72,17 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
       ...defaultPanelOptions.color,
       steps: 128, // best match with existing colors
     },
-    cellGap: asNumber(angular.cards?.cardPadding),
-    cellSize: asNumber(angular.cards?.cardRound),
+    cellGap: asNumber(angular.cards?.cardPadding, 2),
+    cellRadius: asNumber(angular.cards?.cardRound), // just to keep it
     yAxis: {
       axisPlacement: oldYAxis.show === false ? AxisPlacement.Hidden : AxisPlacement.Left,
       reverse: Boolean(angular.reverseYBuckets),
       axisWidth: oldYAxis.width ? +oldYAxis.width : undefined,
+      min: oldYAxis.min,
+      max: oldYAxis.max,
     },
-    bucket: {
-      layout: getHeatmapBucketLayout(angular.yBucketBound),
+    rowsFrame: {
+      layout: getHeatmapCellLayout(angular.yBucketBound),
     },
     legend: {
       show: Boolean(angular.legend.show),
@@ -122,21 +127,24 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
   return { fieldConfig, options };
 }
 
-function getHeatmapBucketLayout(v?: string): HeatmapBucketLayout {
+function getHeatmapCellLayout(v?: string): HeatmapCellLayout {
   switch (v) {
     case 'upper':
-      return HeatmapBucketLayout.ge;
+      return HeatmapCellLayout.ge;
     case 'lower':
-      return HeatmapBucketLayout.le;
+      return HeatmapCellLayout.le;
     case 'middle':
-      return HeatmapBucketLayout.unknown;
+      return HeatmapCellLayout.unknown;
   }
-  return HeatmapBucketLayout.auto;
+  return HeatmapCellLayout.auto;
 }
 
-function asNumber(v: any): number | undefined {
+function asNumber(v: any, defaultValue?: number): number | undefined {
+  if (v == null || v === '') {
+    return defaultValue;
+  }
   const num = +v;
-  return isNaN(num) ? undefined : num;
+  return isNaN(num) ? defaultValue : num;
 }
 
 export const heatmapMigrationHandler = (panel: PanelModel): Partial<PanelOptions> => {

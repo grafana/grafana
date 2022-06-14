@@ -21,7 +21,9 @@ import {
   DataHoverClearEvent,
   DataHoverEvent,
   FrameGeometrySourceMode,
+  getFrameMatchers,
   GrafanaTheme,
+  MapLayerHandler,
   MapLayerOptions,
   PanelData,
   PanelProps,
@@ -251,9 +253,7 @@ export class GeomapPanel extends Component<Props, State> {
    */
   dataChanged(data: PanelData) {
     for (const state of this.layers) {
-      if (state.handler.update) {
-        state.handler.update(data);
-      }
+      this.applyLayerFilter(state.handler, state.options);
     }
   }
 
@@ -403,7 +403,7 @@ export class GeomapPanel extends Component<Props, State> {
       {
         layerFilter: (l) => {
           const hoverLayerState = (l as any).__state as MapLayerState;
-          return hoverLayerState.options.tooltip !== false;
+          return hoverLayerState?.options?.tooltip !== false;
         },
       }
     );
@@ -464,13 +464,12 @@ export class GeomapPanel extends Component<Props, State> {
     const layers = this.layers.slice(0);
     try {
       const info = await this.initLayer(this.map, newOptions, current.isBasemap);
+      layers[layerIndex]?.handler.dispose?.();
       layers[layerIndex] = info;
       group.setAt(layerIndex, info.layer);
 
       // initialize with new data
-      if (info.handler.update) {
-        info.handler.update(this.props.data);
-      }
+      this.applyLayerFilter(info.handler, newOptions);
     } catch (err) {
       console.warn('ERROR', err);
       return false;
@@ -505,9 +504,8 @@ export class GeomapPanel extends Component<Props, State> {
 
     const handler = await item.create(map, options, this.props.eventBus, config.theme2);
     const layer = handler.init();
-
-    if (handler.update) {
-      handler.update(this.props.data);
+    if (options.opacity != null) {
+      layer.setOpacity(1 - options.opacity);
     }
 
     if (!options.name) {
@@ -533,7 +531,24 @@ export class GeomapPanel extends Component<Props, State> {
 
     this.byName.set(UID, state);
     (state.layer as any).__state = state;
+
+    this.applyLayerFilter(handler, options);
+
     return state;
+  }
+
+  applyLayerFilter(handler: MapLayerHandler<any>, options: MapLayerOptions<any>): void {
+    if (handler.update) {
+      let panelData = this.props.data;
+      if (options.filterData) {
+        const matcherFunc = getFrameMatchers(options.filterData);
+        panelData = {
+          ...panelData,
+          series: panelData.series.filter(matcherFunc),
+        };
+      }
+      handler.update(panelData);
+    }
   }
 
   initMapView(config: MapViewConfig, layers?: Collection<BaseLayer>): View {

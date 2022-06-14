@@ -4,7 +4,7 @@ import { ReactNode } from 'react';
 
 import { EventBus } from '../events';
 import { GrafanaTheme2 } from '../themes';
-import { PanelData } from '../types';
+import { MatcherConfig, PanelData } from '../types';
 import { PanelOptionsEditorBuilder } from '../utils';
 import { RegistryItemWithOptions } from '../utils/Registry';
 
@@ -59,6 +59,9 @@ export interface MapLayerOptions<TConfig = any> {
   // Common method to define geometry fields
   location?: FrameGeometrySource;
 
+  // Defines which data query refId is associated with the layer
+  filterData?: MatcherConfig;
+
   // Common properties:
   // https://openlayers.org/en/latest/apidoc/module-ol_layer_Base-BaseLayer.html
   // Layer opacity (0-1)
@@ -73,7 +76,15 @@ export interface MapLayerOptions<TConfig = any> {
  */
 export interface MapLayerHandler<TConfig = any> {
   init: () => BaseLayer;
+  /**
+   * The update function should only be implemented if the layer type makes use of query data
+   */
   update?: (data: PanelData) => void;
+
+  /** Optional callback to cleaup before getting removed */
+  dispose?: () => void;
+
+  /** return react node for the legend */
   legend?: ReactNode;
 
   /**
@@ -99,9 +110,9 @@ export interface MapLayerRegistryItem<TConfig = MapLayerOptions> extends Registr
   showLocation?: boolean;
 
   /**
-   * Show transparency controls in UI (for non-basemaps)
+   * Hide transparency controls in UI
    */
-  showOpacity?: boolean;
+  hideOpacity?: boolean;
 
   /**
    * Function that configures transformation and returns a transformer

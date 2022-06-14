@@ -198,6 +198,7 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
 
     return {
       init: () => layer,
+      dispose: () => subscriptions.unsubscribe(),
       update: (data: PanelData) => {
         const from = new Date(data.timeRange.from.valueOf());
         const to = new Date(data.timeRange.to.valueOf());

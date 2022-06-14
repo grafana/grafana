@@ -86,7 +86,6 @@ type SpanDetailRowProps = {
   span: TraceSpan;
   tagsToggle: (spanID: string) => void;
   traceStartTime: number;
-  focusSpan: (uiFind: string) => void;
   hoverIndentGuideIds: Set<string>;
   addHoverIndentGuideId: (spanID: string) => void;
   removeHoverIndentGuideId: (spanID: string) => void;
@@ -122,7 +121,6 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
       span,
       tagsToggle,
       traceStartTime,
-      focusSpan,
       hoverIndentGuideIds,
       addHoverIndentGuideId,
       removeHoverIndentGuideId,
@@ -169,7 +167,6 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
               span={span}
               tagsToggle={tagsToggle}
               traceStartTime={traceStartTime}
-              focusSpan={focusSpan}
               createSpanLink={createSpanLink}
               focusedSpanId={focusedSpanId}
               createFocusSpanLink={createFocusSpanLink}
