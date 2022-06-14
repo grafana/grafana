@@ -11,29 +11,29 @@ import (
 
 // Gets public dashboard via generated Uid
 func (dr *DashboardServiceImpl) GetPublicDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error) {
-	pdc, d, err := dr.dashboardStore.GetPublicDashboard(dashboardUid)
+	pubdash, d, err := dr.dashboardStore.GetPublicDashboard(dashboardUid)
 
 	if err != nil {
 		return nil, err
 	}
 
-	if pdc == nil || d == nil {
+	if pubdash == nil || d == nil {
 		return nil, models.ErrPublicDashboardNotFound
 	}
 
-	if !pdc.IsEnabled {
+	if !pubdash.IsEnabled {
 		return nil, models.ErrPublicDashboardNotFound
 	}
 
 	// Replace dashboard time range with pubdash time range
-	if pdc.TimeSettings != "" {
-		var pdcTimeSettings map[string]interface{}
-		err = json.Unmarshal([]byte(pdc.TimeSettings), &pdcTimeSettings)
+	if pubdash.TimeSettings != "" {
+		var pdTimeSettings map[string]interface{}
+		err = json.Unmarshal([]byte(pubdash.TimeSettings), &pdTimeSettings)
 		if err != nil {
 			return nil, err
 		}
 
-		d.Data.Set("time", pdcTimeSettings)
+		d.Data.Set("time", pdTimeSettings)
 	}
 
 	return d, nil
@@ -62,21 +62,21 @@ func (dr *DashboardServiceImpl) SavePublicDashboardConfig(ctx context.Context, d
 	cmd.PublicDashboard.OrgId = dto.OrgId
 	cmd.PublicDashboard.DashboardUid = dto.DashboardUid
 
-	pdc, err := dr.dashboardStore.SavePublicDashboardConfig(cmd)
+	pubdash, err := dr.dashboardStore.SavePublicDashboardConfig(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	return pdc, nil
+	return pubdash, nil
 }
 
 func (dr *DashboardServiceImpl) BuildPublicDashboardMetricRequest(ctx context.Context, publicDashboardUid string, panelId int64) (dtos.MetricRequest, error) {
-	publicDashboardConfig, dashboard, err := dr.dashboardStore.GetPublicDashboard(publicDashboardUid)
+	publicDashboard, dashboard, err := dr.dashboardStore.GetPublicDashboard(publicDashboardUid)
 	if err != nil {
 		return dtos.MetricRequest{}, err
 	}
 
-	if !dashboard.IsPublic {
+	if !publicDashboard.IsEnabled {
 		return dtos.MetricRequest{}, models.ErrPublicDashboardNotFound
 	}
 
@@ -84,7 +84,7 @@ func (dr *DashboardServiceImpl) BuildPublicDashboardMetricRequest(ctx context.Co
 		From string `json:"from"`
 		To   string `json:"to"`
 	}
-	err = json.Unmarshal([]byte(publicDashboardConfig.TimeSettings), &timeSettings)
+	err = json.Unmarshal([]byte(publicDashboard.TimeSettings), &timeSettings)
 	if err != nil {
 		return dtos.MetricRequest{}, err
 	}
