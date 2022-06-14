@@ -12,8 +12,7 @@ import (
 // Get all the contact points.
 //
 //     Responses:
-//       200: Route
-//       400: ValidationError
+//       200: ContactPoints
 
 // swagger:route POST /api/v1/provisioning/contact-points provisioning stable RoutePostContactpoints
 //
@@ -23,7 +22,7 @@ import (
 //     - application/json
 //
 //     Responses:
-//       202: Ack
+//       202: EmbeddedContactPoint
 //       400: ValidationError
 
 // swagger:route PUT /api/v1/provisioning/contact-points/{UID} provisioning stable RoutePutContactpoint
@@ -45,12 +44,11 @@ import (
 //     - application/json
 //
 //     Responses:
-//       202: Ack
-//       400: ValidationError
+//       204: description: The contact point was deleted successfully.
 
 // swagger:parameters RoutePutContactpoint RouteDeleteContactpoints
 type ContactPointUIDReference struct {
-	// UID should be the contact point unique identifier
+	// UID is the contact point unique identifier
 	// in:path
 	UID string
 }
@@ -61,8 +59,12 @@ type ContactPointPayload struct {
 	Body EmbeddedContactPoint
 }
 
+// swagger:model
+type ContactPoints []EmbeddedContactPoint
+
 // EmbeddedContactPoint is the contact point type that is used
 // by grafanas embedded alertmanager implementation.
+// swagger:model
 type EmbeddedContactPoint struct {
 	// UID is the unique identifier of the contact point. The UID can be
 	// set by the user.

@@ -79,34 +79,34 @@ to
     console.log(`Text "${copiedText}" was copied!`);
   }}
 />
-``` Issue [#49847](https://github.com/grafana/grafana/issues/49847)
+```
 
+Issue [#49847](https://github.com/grafana/grafana/issues/49847)
 
 The following RBAC action renames have been carried out:
 
-* `users.authtoken:update` -> `users.authtoken:write`;
-* `users.password:update` -> `users.password:write`;
-* `users.permissions:update` -> `users.permissions:write`;
-* `users.quotas:update` -> `users.quotas:write`;
-* `org.users.role:update` -> `org.users:write`;
-* `alert.instances:update` -> `alert.instances:write`;
-* `alert.rules:update` -> `alert.rules:write`;
-* `users.authtoken:list` -> `users.authtoken:read`;
-* `users.quotas:list` -> `users.quotas:read`;
-* `users.teams:read` -> replaced by `users.read` + `teams:read`
+- `users.authtoken:update` -> `users.authtoken:write`;
+- `users.password:update` -> `users.password:write`;
+- `users.permissions:update` -> `users.permissions:write`;
+- `users.quotas:update` -> `users.quotas:write`;
+- `org.users.role:update` -> `org.users:write`;
+- `alert.instances:update` -> `alert.instances:write`;
+- `alert.rules:update` -> `alert.rules:write`;
+- `users.authtoken:list` -> `users.authtoken:read`;
+- `users.quotas:list` -> `users.quotas:read`;
+- `users.teams:read` -> replaced by `users.read` + `teams:read`
 
 We've added a migration from the old action names to the new names and have updated our documentation. But you will have to update any scripts and provisioning files that are using the old action names. Issue [#49730](https://github.com/grafana/grafana/issues/49730)
 
-
 The following RBAC action renames have been carried out:
 
-* `reports.admin:write` -> `reports:write`;
-* `reports.admin:create` -> `reports:create`;
-* `licensing:update` -> `licensing:write`;
-* `roles:list` -> `roles:read`;
-* `teams.roles:list` -> `teams.roles:read`;
-* `users.roles:list` -> `users.roles:read`;
-* `users.permissions:list` -> `users.permissions:read`
+- `reports.admin:write` -> `reports:write`;
+- `reports.admin:create` -> `reports:create`;
+- `licensing:update` -> `licensing:write`;
+- `roles:list` -> `roles:read`;
+- `teams.roles:list` -> `teams.roles:read`;
+- `users.roles:list` -> `users.roles:read`;
+- `users.permissions:list` -> `users.permissions:read`
 
 We've added a migration from the old action names to the new names and have updated our documentation. But you will have to update any scripts and provisioning files that are using the old action names. Issue [#3372](https://github.com/grafana/grafana/issues/3372)
 
@@ -194,7 +194,7 @@ module.exports.getWebpackConfig = (config, options) => ({
     },
   },
 });
-````
+```
 
 Please refer to the webpack build error messages or the [official migration guide](https://webpack.js.org/migrate/5/) for assistance with fallbacks.
 

@@ -2,7 +2,9 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 )
@@ -23,7 +25,16 @@ func (dr *DashboardServiceImpl) GetPublicDashboard(ctx context.Context, dashboar
 		return nil, models.ErrPublicDashboardNotFound
 	}
 
-	// FIXME insert logic to substitute pdc.TimeSettings into d
+	// Replace dashboard time range with pubdash time range
+	if pdc.TimeSettings != "" {
+		var pdcTimeSettings map[string]interface{}
+		err = json.Unmarshal([]byte(pdc.TimeSettings), &pdcTimeSettings)
+		if err != nil {
+			return nil, err
+		}
+
+		d.Data.Set("time", pdcTimeSettings)
+	}
 
 	return d, nil
 }
@@ -57,4 +68,36 @@ func (dr *DashboardServiceImpl) SavePublicDashboardConfig(ctx context.Context, d
 	}
 
 	return pdc, nil
+}
+
+func (dr *DashboardServiceImpl) BuildPublicDashboardMetricRequest(ctx context.Context, publicDashboardUid string, panelId int64) (dtos.MetricRequest, error) {
+	publicDashboardConfig, dashboard, err := dr.dashboardStore.GetPublicDashboard(publicDashboardUid)
+	if err != nil {
+		return dtos.MetricRequest{}, err
+	}
+
+	if !dashboard.IsPublic {
+		return dtos.MetricRequest{}, models.ErrPublicDashboardNotFound
+	}
+
+	var timeSettings struct {
+		From string `json:"from"`
+		To   string `json:"to"`
+	}
+	err = json.Unmarshal([]byte(publicDashboardConfig.TimeSettings), &timeSettings)
+	if err != nil {
+		return dtos.MetricRequest{}, err
+	}
+
+	queriesByPanel := models.GetQueriesFromDashboard(dashboard.Data)
+
+	if _, ok := queriesByPanel[panelId]; !ok {
+		return dtos.MetricRequest{}, models.ErrPublicDashboardPanelNotFound
+	}
+
+	return dtos.MetricRequest{
+		From:    timeSettings.From,
+		To:      timeSettings.To,
+		Queries: queriesByPanel[panelId],
+	}, nil
 }
