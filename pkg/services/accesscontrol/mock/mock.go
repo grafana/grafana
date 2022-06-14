@@ -25,7 +25,7 @@ type Calls struct {
 
 type Mock struct {
 	// Unless an override is provided, permissions will be returned by GetUserPermissions
-	permissions []*accesscontrol.Permission
+	permissions []accesscontrol.Permission
 	// Unless an override is provided, disabled will be returned by IsDisabled
 	disabled bool
 	// Unless an override is provided, builtInRoles will be returned by GetUserBuiltInRoles
@@ -36,7 +36,7 @@ type Mock struct {
 
 	// Override functions
 	EvaluateFunc                       func(context.Context, *models.SignedInUser, accesscontrol.Evaluator) (bool, error)
-	GetUserPermissionsFunc             func(context.Context, *models.SignedInUser, accesscontrol.Options) ([]*accesscontrol.Permission, error)
+	GetUserPermissionsFunc             func(context.Context, *models.SignedInUser, accesscontrol.Options) ([]accesscontrol.Permission, error)
 	IsDisabledFunc                     func() bool
 	DeclareFixedRolesFunc              func(...accesscontrol.RoleRegistration) error
 	GetUserBuiltInRolesFunc            func(user *models.SignedInUser) []string
@@ -53,7 +53,7 @@ func New() *Mock {
 	mock := &Mock{
 		Calls:          Calls{},
 		disabled:       false,
-		permissions:    []*accesscontrol.Permission{},
+		permissions:    []accesscontrol.Permission{},
 		builtInRoles:   []string{},
 		scopeResolvers: accesscontrol.NewScopeResolvers(),
 	}
@@ -65,7 +65,7 @@ func (m Mock) GetUsageStats(ctx context.Context) map[string]interface{} {
 	return make(map[string]interface{})
 }
 
-func (m Mock) WithPermissions(permissions []*accesscontrol.Permission) *Mock {
+func (m Mock) WithPermissions(permissions []accesscontrol.Permission) *Mock {
 	m.permissions = permissions
 	return &m
 }
@@ -104,7 +104,7 @@ func (m *Mock) Evaluate(ctx context.Context, user *models.SignedInUser, evaluato
 
 // GetUserPermissions returns user permissions.
 // This mock return m.permissions unless an override is provided.
-func (m *Mock) GetUserPermissions(ctx context.Context, user *models.SignedInUser, opts accesscontrol.Options) ([]*accesscontrol.Permission, error) {
+func (m *Mock) GetUserPermissions(ctx context.Context, user *models.SignedInUser, opts accesscontrol.Options) ([]accesscontrol.Permission, error) {
 	m.Calls.GetUserPermissions = append(m.Calls.GetUserPermissions, []interface{}{ctx, user, opts})
 	// Use override if provided
 	if m.GetUserPermissionsFunc != nil {
