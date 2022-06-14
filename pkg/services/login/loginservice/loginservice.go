@@ -28,6 +28,7 @@ func ProvideService(
 		AuthInfoService:   authInfoService,
 		UsageStatsService: usageStatsService,
 	}
+	login.InitMetrics()
 	return s
 }
 
