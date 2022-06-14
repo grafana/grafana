@@ -97,8 +97,8 @@ export class MySqlDatasource extends SqlDatasource {
             return [];
           }
           if (parts.length === 1) {
-            const tables = await this.fetchTables(path[0]);
-            return tables.map((t) => ({ name: t, completion: `${t}\`` }));
+            const tables = await this.fetchTables(parts[0]);
+            return tables.map((t) => ({ name: t, completion: t }));
           } else {
             return [];
           }

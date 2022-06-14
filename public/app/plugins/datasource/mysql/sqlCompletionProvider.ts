@@ -7,7 +7,7 @@ import {
   LanguageCompletionProvider,
   LinkedToken,
   StatementPlacementProvider,
-  StatementPosition,
+  // StatementPosition,
   SuggestionKindProvider,
   TableDefinition,
   TokenType,
@@ -34,13 +34,9 @@ export const getSqlCompletionProvider: (args: CompletionProviderGetterArgs) => L
         let processedToken = token;
         let tablePath = processedToken.value;
 
-        while (processedToken.next && processedToken?.next?.value !== '`') {
+        while (processedToken.next) {
           tablePath += processedToken.next.value;
           processedToken = processedToken.next;
-        }
-
-        if (tablePath.trim().startsWith('`')) {
-          return tablePath.slice(1);
         }
 
         return tablePath;
@@ -57,7 +53,7 @@ export const getSqlCompletionProvider: (args: CompletionProviderGetterArgs) => L
     },
     supportedFunctions: () => AGGREGATE_FNS,
     supportedOperators: () => OPERATORS,
-    customSuggestionKinds: customSuggestionKinds(getTables),
+    customSuggestionKinds: customSuggestionKinds(getTables, getColumns),
     customStatementPlacement,
   });
 
@@ -77,33 +73,35 @@ export const customStatementPlacement: StatementPlacementProvider = () => [
       return Boolean(
         currentToken?.is(TokenType.Delimiter, '.') ||
           (currentToken?.is(TokenType.Whitespace) && currentToken?.previous?.is(TokenType.Delimiter, '.')) ||
-          (currentToken?.value === '`' && currentToken?.previous?.is(TokenType.Delimiter, '.')) ||
-          (currentToken?.isNumber() && currentToken.value.endsWith('.')) || // number with dot at the end like "projectname-21342."
-          (currentToken?.value === '`' && isTypingTableIn(currentToken))
+          // (currentToken?.value === '`' && currentToken?.previous?.is(TokenType.Delimiter, '.')) ||
+          (currentToken?.isNumber() && currentToken.value.endsWith('.')) // number with dot at the end like "projectname-21342."
+        // (currentToken?.value === '`' && isTypingTableIn(currentToken))
       );
     },
   },
+  // TODO - remove - frin big query
   // Overriding default behaviour of AfterFrom resolver
-  {
-    id: StatementPosition.AfterFrom,
-    overrideDefault: true,
-    resolve: (currentToken) => {
-      const untilFrom = currentToken?.getPreviousUntil(TokenType.Keyword, [], 'from');
-      if (!untilFrom) {
-        return false;
-      }
-      let q = '';
-      for (let i = untilFrom?.length - 1; i >= 0; i--) {
-        q += untilFrom[i].value;
-      }
+  // {
+  //   id: StatementPosition.AfterFrom,
+  //   overrideDefault: true,
+  //   resolve: (currentToken) => {
+  //     const untilFrom = currentToken?.getPreviousUntil(TokenType.Keyword, [], 'from');
+  //     if (!untilFrom) {
+  //       return false;
+  //     }
+  //     let q = '';
+  //     for (let i = untilFrom?.length - 1; i >= 0; i--) {
+  //       q += untilFrom[i].value;
+  //     }
 
-      return q.startsWith('`') && q.endsWith('`');
-    },
-  },
+  //     return q.startsWith('`') && q.endsWith('`');
+  //   },
+  // },
 ];
 
 export const customSuggestionKinds: (
-  getTables: CompletionProviderGetterArgs['getTables']
+  getTables: CompletionProviderGetterArgs['getTables'],
+  getFields: CompletionProviderGetterArgs['getColumns']
   // getTableSchema: CompletionProviderGetterArgs['getTableSchema']
 ) => SuggestionKindProvider = (getTables) => () =>
   [
@@ -128,49 +126,75 @@ export const customSuggestionKinds: (
         }));
       },
     },
+    // {
+    //   id: CustomSuggestionKind.TablesWithinDataset,
+    //   applyTo: [StatementPosition.AfterFrom],
+    //   suggestionsResolver: async (ctx) => {
+    //     console.log('after from');
+    //     const tablePath = ctx.currentToken ? getTablePath(ctx.currentToken) : '';
+    //     const t = await getTables.current(tablePath);
+
+    //     return t.map((table) => ({
+    //       label: table.name,
+    //       insertText: table.completion ?? table.name,
+    //       command: { id: 'editor.action.triggerSuggest', title: '' },
+    //       kind: CompletionItemKind.Field,
+    //       sortText: CompletionItemPriority.High,
+    //       range: {
+    //         ...ctx.range,
+    //         startColumn: ctx.range.endColumn,
+    //         endColumn: ctx.range.endColumn,
+    //       },
+    //     }));
+    //   }
+    // }
   ];
 
 export function getTablePath(token: LinkedToken) {
   let processedToken = token;
   let tablePath = '';
   while (processedToken?.previous && !processedToken.previous.isWhiteSpace()) {
-    tablePath = processedToken.value + tablePath;
     processedToken = processedToken.previous;
+    tablePath = processedToken.value + tablePath;
   }
 
   tablePath = tablePath.trim();
 
-  if (tablePath.startsWith('`')) {
-    tablePath = tablePath.slice(1);
-  }
+  // TODO - remove - frin big query
 
-  if (tablePath.endsWith('`')) {
-    tablePath = tablePath.slice(0, -1);
-  }
+  // if (tablePath.startsWith('`')) {
+  //   tablePath = tablePath.slice(1);
+  // }
+
+  // if (tablePath.endsWith('`')) {
+  //   tablePath = tablePath.slice(0, -1);
+  // }
 
   return tablePath;
 }
 
-function isTypingTableIn(token: LinkedToken | null, l?: boolean) {
-  if (!token) {
-    return false;
-  }
-  const tokens = token.getPreviousUntil(TokenType.Keyword, [], 'from');
-  if (!tokens) {
-    return false;
-  }
+// TODO - not sure if we need this
+// function isTypingTableIn(token: LinkedToken | null, l?: boolean) {
+//   if (!token) {
+//     return false;
+//   }
+//   const tokens = token.getPreviousUntil(TokenType.Keyword, [], 'from');
+//   if (!tokens) {
+//     return false;
+//   }
 
-  let path = '';
-  for (let i = tokens.length - 1; i >= 0; i--) {
-    path += tokens[i].value;
-  }
+//   let path = '';
+//   for (let i = tokens.length - 1; i >= 0; i--) {
+//     path += tokens[i].value;
+//   }
 
-  if (path.startsWith('`')) {
-    path = path.slice(1);
-  }
+//   // TODO - remove - frin big query
+//   // if (path.startsWith('`')) {
+//   //   path = path.slice(1);
+//   // }
 
-  return path.split('.').length === 2;
-}
+//   return path.split('.').length === 2;
+// }
 
 export async function fetchColumns(db: DB, q: SQLQuery) {
   const cols = await db.fields(q);
