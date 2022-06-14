@@ -130,11 +130,29 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 
 	reader, ok := s.dashboardIndex.getOrgReader(orgID)
 	if !ok {
-		go func() {
-			s.dashboardIndex.buildSignals <- orgID
-		}()
-		rsp.Error = errors.New("search index is not ready, try again later")
-		return rsp
+		// For non-main organization indexes are built lazily.
+		// If we don't have an index then we are blocking here until an index for
+		// an organization is ready. This actually takes time only during the first
+		// access, all the consequent search requests do not fall into this branch.
+		doneIndexing := make(chan error, 1)
+		signal := buildSignal{orgID: orgID, done: doneIndexing}
+		select {
+		case s.dashboardIndex.buildSignals <- signal:
+		case <-ctx.Done():
+			rsp.Error = ctx.Err()
+			return rsp
+		}
+		select {
+		case err := <-doneIndexing:
+			if err != nil {
+				rsp.Error = err
+				return rsp
+			}
+		case <-ctx.Done():
+			rsp.Error = ctx.Err()
+			return rsp
+		}
+		reader, _ = s.dashboardIndex.getOrgReader(orgID)
 	}
 
 	return doSearchQuery(ctx, s.logger, reader, filter, q, s.extender.GetQueryExtender(q), s.cfg.AppSubURL)

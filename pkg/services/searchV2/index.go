@@ -50,6 +50,13 @@ type dashboard struct {
 	info     *extract.DashboardInfo
 }
 
+// buildSignal is sent when search index is accessed in organization for which
+// we have not constructed an index yet.
+type buildSignal struct {
+	orgID int64
+	done  chan error
+}
+
 type dashboardIndex struct {
 	mu             sync.RWMutex
 	loader         dashboardLoader
@@ -57,7 +64,7 @@ type dashboardIndex struct {
 	perOrgWriter   map[int64]*bluge.Writer // orgId -> bluge writer
 	eventStore     eventStore
 	logger         log.Logger
-	buildSignals   chan int64
+	buildSignals   chan buildSignal
 	extender       DocumentExtender
 	folderIdLookup folderUIDLookup
 }
@@ -69,7 +76,7 @@ func newDashboardIndex(dashLoader dashboardLoader, evStore eventStore, extender 
 		perOrgReader:   map[int64]*bluge.Reader{},
 		perOrgWriter:   map[int64]*bluge.Writer{},
 		logger:         log.New("dashboardIndex"),
-		buildSignals:   make(chan int64),
+		buildSignals:   make(chan buildSignal),
 		extender:       extender,
 		folderIdLookup: folderIDs,
 	}
@@ -102,16 +109,18 @@ func (i *dashboardIndex) run(ctx context.Context) error {
 		select {
 		case <-partialUpdateTicker.C:
 			lastEventID = i.applyIndexUpdates(ctx, lastEventID)
-		case orgID := <-i.buildSignals:
+		case signal := <-i.buildSignals:
 			i.mu.RLock()
-			_, ok := i.perOrgWriter[orgID]
+			_, ok := i.perOrgWriter[signal.orgID]
 			if ok {
 				// Index for org already exists, do nothing.
 				i.mu.RUnlock()
+				close(signal.done)
 				continue
 			}
 			i.mu.RUnlock()
-			_, _ = i.buildOrgIndex(ctx, orgID)
+			_, err = i.buildOrgIndex(ctx, signal.orgID)
+			signal.done <- err
 		case <-fullReIndexTicker.C:
 			started := time.Now()
 			i.reIndexFromScratch(ctx)
