@@ -21,7 +21,7 @@ export const PlaylistPageList = ({ playlists, setStartPlaylist, setPlaylistToDel
   return (
     <ul className={styles.list}>
       {playlists!.map((playlist: PlaylistDTO) => (
-        <li className={styles.listItem} key={playlist.id.toString()}>
+        <li className={styles.listItem} key={playlist.uid}>
           <Card>
             <Card.Heading>
               {playlist.name}
@@ -33,7 +33,7 @@ export const PlaylistPageList = ({ playlists, setStartPlaylist, setPlaylistToDel
                     iconSize="lg"
                     onClick={() => {
                       showModal(ShareModal, {
-                        playlistId: playlist.id,
+                        playlistUid: playlist.uid,
                         onDismiss: hideModal,
                       });
                     }}
@@ -47,12 +47,12 @@ export const PlaylistPageList = ({ playlists, setStartPlaylist, setPlaylistToDel
               </Button>
               {contextSrv.isEditor && (
                 <>
-                  <LinkButton key="edit" variant="secondary" href={`/playlists/edit/${playlist.id}`} icon="cog">
+                  <LinkButton key="edit" variant="secondary" href={`/playlists/edit/${playlist.uid}`} icon="cog">
                     Edit playlist
                   </LinkButton>
                   <Button
                     disabled={false}
-                    onClick={() => setPlaylistToDelete({ id: playlist.id, name: playlist.name })}
+                    onClick={() => setPlaylistToDelete({ id: playlist.id, uid: playlist.uid, name: playlist.name })}
                     icon="trash-alt"
                     variant="destructive"
                   >

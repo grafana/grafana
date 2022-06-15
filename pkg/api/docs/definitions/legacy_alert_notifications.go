@@ -108,7 +108,7 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:route PUT /alert-notifications/uid/{notification_channel_uid} legacy_alerts_notification_channels updateAlertNotificationChannelBYUID
+// swagger:route PUT /alert-notifications/uid/{notification_channel_uid} legacy_alerts_notification_channels updateAlertNotificationChannelByUID
 //
 // Update notification channel by UID.
 //
@@ -134,46 +134,66 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:parameters updateAlertNotificationChannel getAlertNotificationChannelByID deleteAlertNotificationChannel
-type NotificationIDParam struct {
+// swagger:parameters deleteAlertNotificationChannel
+type DeleteAlertNotificationChannelParams struct {
 	// in:path
 	// required:true
 	NotificationID int64 `json:"notification_channel_id"`
 }
 
-// swagger:parameters getAlertNotificationChannelByUID updateAlertNotificationChannelBYUID deleteAlertNotificationChannelByUID
-type NotificationUIDParam struct {
+// swagger:parameters getAlertNotificationChannelByID
+type GetAlertNotificationChannelByIDParams struct {
+	// in:path
+	// required:true
+	NotificationID int64 `json:"notification_channel_id"`
+}
+
+// swagger:parameters deleteAlertNotificationChannelByUID
+type DeleteAlertNotificationChannelByUIDParams struct {
+	// in:path
+	// required:true
+	NotificationUID string `json:"notification_channel_uid"`
+}
+
+// swagger:parameters getAlertNotificationChannelByUID
+type GetAlertNotificationChannelByUIDParams struct {
 	// in:path
 	// required:true
 	NotificationUID string `json:"notification_channel_uid"`
 }
 
 // swagger:parameters notificationChannelTest
-type NotificationChannelTestParam struct {
+type NotificationChannelTestParams struct {
 	// in:body
 	// required:true
 	Body dtos.NotificationTestCommand `json:"body"`
 }
 
 // swagger:parameters createAlertNotificationChannel
-type CreateAlertNotificationChannelParam struct {
+type CreateAlertNotificationChannelParams struct {
 	// in:body
 	// required:true
 	Body models.CreateAlertNotificationCommand `json:"body"`
 }
 
 // swagger:parameters updateAlertNotificationChannel
-type UpdateAlertNotificationChannelParam struct {
+type UpdateAlertNotificationChannelParams struct {
 	// in:body
 	// required:true
 	Body models.UpdateAlertNotificationCommand `json:"body"`
+	// in:path
+	// required:true
+	NotificationID int64 `json:"notification_channel_id"`
 }
 
-// swagger:parameters updateAlertNotificationChannelBYUID
-type UpdateAlertNotificationChannelBYUIDParam struct {
+// swagger:parameters updateAlertNotificationChannelByUID
+type UpdateAlertNotificationChannelBYUIDParams struct {
 	// in:body
 	// required:true
 	Body models.UpdateAlertNotificationWithUidCommand `json:"body"`
+	// in:path
+	// required:true
+	NotificationUID string `json:"notification_channel_uid"`
 }
 
 // swagger:response getAlertNotificationChannelsResponse

@@ -1,6 +1,9 @@
 package definitions
 
-import "github.com/grafana/grafana/pkg/models"
+import (
+	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/models"
+)
 
 // swagger:route GET /orgs/{org_id} orgs getOrgByID
 //
@@ -183,10 +186,82 @@ import "github.com/grafana/grafana/pkg/models"
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:parameters getOrgByID adminUpdateOrg adminUpdateOrgAddress adminDeleteOrg adminGetOrgUsers
-// swagger:parameters adminAddOrgUser adminUpdateOrgUser adminDeleteOrgUser
-// swagger:parameters getOrgQuota updateOrgQuota userSetUsingOrg
-type OrgIDParam struct {
+// swagger:parameters getOrgQuota
+type GetOrgQuotaParams struct {
+	// in:path
+	// required:true
+	OrgID int64 `json:"org_id"`
+}
+
+// swagger:parameters adminUpdateOrgAddress
+type AdminUpdateOrgAddressParams struct {
+	// in:body
+	// required:true
+	Body dtos.UpdateOrgAddressForm `json:"body"`
+	// in:path
+	// required:true
+	OrgID int64 `json:"org_id"`
+}
+
+// swagger:parameters adminUpdateOrgUser
+type AdminUpdateOrgUserParams struct {
+	// in:body
+	// required:true
+	Body models.UpdateOrgUserCommand `json:"body"`
+	// in:path
+	// required:true
+	OrgID int64 `json:"org_id"`
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
+}
+
+// swagger:parameters getOrgByID
+type GetOrgByIDParams struct {
+	// in:path
+	// required:true
+	OrgID int64 `json:"org_id"`
+}
+
+// swagger:parameters adminDeleteOrgUser
+type AdminDeleteOrgUserParams struct {
+	// in:path
+	// required:true
+	OrgID int64 `json:"org_id"`
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
+}
+
+// swagger:parameters adminDeleteOrg
+type AdminDeleteOrgParams struct {
+	// in:path
+	// required:true
+	OrgID int64 `json:"org_id"`
+}
+
+// swagger:parameters adminGetOrgUsers
+type AdminGetOrgUsersParams struct {
+	// in:path
+	// required:true
+	OrgID int64 `json:"org_id"`
+}
+
+// swagger:parameters adminUpdateOrg
+type AdminUpdateOrgParams struct {
+	// in:body
+	// required:true
+	Body dtos.UpdateOrgForm `json:"body"`
+	// in:path
+	// required:true
+	OrgID int64 `json:"org_id"`
+}
+
+// swagger:parameters adminAddOrgUser
+type AdminAddOrgUserParams struct {
+	// in:body
+	// required:true
+	Body models.AddOrgUserCommand `json:"body"`
 	// in:path
 	// required:true
 	OrgID int64 `json:"org_id"`
@@ -206,7 +281,7 @@ type CreateOrgParam struct {
 	Body models.CreateOrgCommand `json:"body"`
 }
 
-// swagger:parameters searchOrg searchTeams
+// swagger:parameters searchOrg
 type SearchOrgParams struct {
 	// in:query
 	// required:false
@@ -229,6 +304,12 @@ type UpdateOrgQuotaParam struct {
 	// in:body
 	// required:true
 	Body models.UpdateOrgQuotaCmd `json:"body"`
+	// in:path
+	// required:true
+	QuotaTarget string `json:"quota_target"`
+	// in:path
+	// required:true
+	OrgID int64 `json:"org_id"`
 }
 
 // swagger:response createOrgResponse
