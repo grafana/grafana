@@ -537,31 +537,31 @@ func verifyNoPluginErrors(t *testing.T, pm *PluginManager) {
 	}
 }
 
-type fakePluginProcessManager struct {
-	started map[string]int
-	stopped map[string]int
-}
-
-func newFakePluginProcessManager() *fakePluginProcessManager {
-	return &fakePluginProcessManager{
-		started: make(map[string]int),
-		stopped: make(map[string]int),
-	}
-}
-
-func (f *fakePluginProcessManager) Start(_ context.Context, pluginID string) error {
-	f.started[pluginID] += 1
-	return nil
-}
-
-func (f *fakePluginProcessManager) Stop(_ context.Context, pluginID string) error {
-	f.stopped[pluginID] += 1
-	return nil
-}
-
-func (f *fakePluginProcessManager) Shutdown(_ context.Context) {
-
-}
+//type fakePluginProcessManager struct {
+//	started map[string]int
+//	stopped map[string]int
+//}
+//
+//func newFakePluginProcessManager() *fakePluginProcessManager {
+//	return &fakePluginProcessManager{
+//		started: make(map[string]int),
+//		stopped: make(map[string]int),
+//	}
+//}
+//
+//func (f *fakePluginProcessManager) Start(_ context.Context, pluginID string) error {
+//	f.started[pluginID] += 1
+//	return nil
+//}
+//
+//func (f *fakePluginProcessManager) Stop(_ context.Context, pluginID string) error {
+//	f.stopped[pluginID] += 1
+//	return nil
+//}
+//
+//func (f *fakePluginProcessManager) Shutdown(_ context.Context) {
+//
+//}
 
 type fakePluginInstaller struct {
 	installCount   int
