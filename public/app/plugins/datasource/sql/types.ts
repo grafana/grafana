@@ -31,6 +31,7 @@ export interface SqlQueryForInterpolation {
 
 export interface SQLOptions extends DataSourceJsonData {
   timeInterval: string;
+  database: string;
 }
 
 export type ResultFormat = 'time_series' | 'table';
@@ -103,7 +104,6 @@ const backWardToOption = (value: string) => ({ label: value, value } as Selectab
 export const toOption = toOptionFromData ?? backWardToOption;
 
 export interface ResourceSelectorProps {
-  // apiClient: BigQueryAPI;
   disabled?: boolean;
   className?: string;
   applyDefault?: boolean;
@@ -120,7 +120,6 @@ export interface DB {
   init: (datasourceId?: string) => Promise<boolean>;
   datasets: () => Promise<string[]>;
   tables: (dataset?: string) => Promise<string[]>;
-  tableSchema: (query: SQLQuery | string) => Promise<TableSchema>;
   fields: (query: SQLQuery, order?: boolean) => Promise<SQLSelectableValue[]>;
   validateQuery: (query: SQLQuery, range?: TimeRange) => Promise<ValidationResults>;
   dsID: () => string;

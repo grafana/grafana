@@ -1,5 +1,3 @@
-// import { useCallback } from 'react';
-
 import {
   ColumnDefinition,
   CompletionItemKind,
@@ -7,7 +5,7 @@ import {
   LanguageCompletionProvider,
   LinkedToken,
   StatementPlacementProvider,
-  // StatementPosition,
+  StatementPosition,
   SuggestionKindProvider,
   TableDefinition,
   TokenType,
@@ -19,11 +17,11 @@ import { DB, SQLQuery } from '../sql/types';
 interface CompletionProviderGetterArgs {
   getColumns: React.MutableRefObject<(t: SQLQuery) => Promise<ColumnDefinition[]>>;
   getTables: React.MutableRefObject<(d?: string) => Promise<TableDefinition[]>>;
-  // getTableSchema: React.MutableRefObject<(p: string, d: string, t: string) => Promise<TableSchema | null>>;
+  fetchMeta: React.MutableRefObject<(d?: string) => Promise<TableDefinition[]>>;
 }
 
 export const getSqlCompletionProvider: (args: CompletionProviderGetterArgs) => LanguageCompletionProvider =
-  ({ getColumns, getTables }) =>
+  ({ getColumns, getTables, fetchMeta }) =>
   () => ({
     triggerCharacters: ['.', ' ', '$', ',', '(', "'"],
     tables: {
@@ -53,7 +51,7 @@ export const getSqlCompletionProvider: (args: CompletionProviderGetterArgs) => L
     },
     supportedFunctions: () => AGGREGATE_FNS,
     supportedOperators: () => OPERATORS,
-    customSuggestionKinds: customSuggestionKinds(getTables, getColumns),
+    customSuggestionKinds: customSuggestionKinds(getTables, getColumns, fetchMeta),
     customStatementPlacement,
   });
 
@@ -73,37 +71,17 @@ export const customStatementPlacement: StatementPlacementProvider = () => [
       return Boolean(
         currentToken?.is(TokenType.Delimiter, '.') ||
           (currentToken?.is(TokenType.Whitespace) && currentToken?.previous?.is(TokenType.Delimiter, '.')) ||
-          // (currentToken?.value === '`' && currentToken?.previous?.is(TokenType.Delimiter, '.')) ||
           (currentToken?.isNumber() && currentToken.value.endsWith('.')) // number with dot at the end like "projectname-21342."
-        // (currentToken?.value === '`' && isTypingTableIn(currentToken))
       );
     },
   },
-  // TODO - remove - frin big query
-  // Overriding default behaviour of AfterFrom resolver
-  // {
-  //   id: StatementPosition.AfterFrom,
-  //   overrideDefault: true,
-  //   resolve: (currentToken) => {
-  //     const untilFrom = currentToken?.getPreviousUntil(TokenType.Keyword, [], 'from');
-  //     if (!untilFrom) {
-  //       return false;
-  //     }
-  //     let q = '';
-  //     for (let i = untilFrom?.length - 1; i >= 0; i--) {
-  //       q += untilFrom[i].value;
-  //     }
-
-  //     return q.startsWith('`') && q.endsWith('`');
-  //   },
-  // },
 ];
 
 export const customSuggestionKinds: (
   getTables: CompletionProviderGetterArgs['getTables'],
-  getFields: CompletionProviderGetterArgs['getColumns']
-  // getTableSchema: CompletionProviderGetterArgs['getTableSchema']
-) => SuggestionKindProvider = (getTables) => () =>
+  getFields: CompletionProviderGetterArgs['getColumns'],
+  fetchMeta: CompletionProviderGetterArgs['fetchMeta']
+) => SuggestionKindProvider = (getTables, _, fetchMeta) => () =>
   [
     {
       id: CustomSuggestionKind.TablesWithinDataset,
@@ -126,28 +104,30 @@ export const customSuggestionKinds: (
         }));
       },
     },
-    // {
-    //   id: CustomSuggestionKind.TablesWithinDataset,
-    //   applyTo: [StatementPosition.AfterFrom],
-    //   suggestionsResolver: async (ctx) => {
-    //     console.log('after from');
-    //     const tablePath = ctx.currentToken ? getTablePath(ctx.currentToken) : '';
-    //     const t = await getTables.current(tablePath);
-
-    //     return t.map((table) => ({
-    //       label: table.name,
-    //       insertText: table.completion ?? table.name,
-    //       command: { id: 'editor.action.triggerSuggest', title: '' },
-    //       kind: CompletionItemKind.Field,
-    //       sortText: CompletionItemPriority.High,
-    //       range: {
-    //         ...ctx.range,
-    //         startColumn: ctx.range.endColumn,
-    //         endColumn: ctx.range.endColumn,
-    //       },
-    //     }));
-    //   }
-    // }
+    {
+      id: 'metaAfterWhere',
+      applyTo: [StatementPosition.WhereKeyword],
+      suggestionsResolver: async (ctx) => {
+        // console.log('after where ' + ctx.currentToken?.value);
+        // const tablePath = ctx.currentToken ? getTablePath(ctx.currentToken) : '';
+        const tablePath = ctx.currentToken?.value || '';
+        console.log(tablePath);
+        const t = await fetchMeta.current(tablePath);
+        console.log(t);
+        return t.map((table) => ({
+          label: table.name,
+          insertText: table.completion ?? table.name,
+          command: { id: 'editor.action.triggerSuggest', title: '' },
+          kind: CompletionItemKind.Field,
+          sortText: CompletionItemPriority.High,
+          range: {
+            ...ctx.range,
+            startColumn: ctx.range.endColumn,
+            endColumn: ctx.range.endColumn,
+          },
+        }));
+      },
+    },
   ];
 
 export function getTablePath(token: LinkedToken) {
@@ -159,17 +139,6 @@ export function getTablePath(token: LinkedToken) {
   }
 
   tablePath = tablePath.trim();
-
-  // TODO - remove - frin big query
-
-  // if (tablePath.startsWith('`')) {
-  //   tablePath = tablePath.slice(1);
-  // }
-
-  // if (tablePath.endsWith('`')) {
-  //   tablePath = tablePath.slice(0, -1);
-  // }
-
   return tablePath;
 }
 
