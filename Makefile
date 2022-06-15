@@ -92,7 +92,7 @@ gen-cue: ## Do all CUE/Thema code generation
 	go generate ./pkg/framework/coremodel
 	go generate ./public/app/plugins
 
-gen-go: $(WIRE)
+gen-go: $(WIRE) gen-cue
 	@echo "generate go files"
 	$(WIRE) gen -tags $(WIRE_TAGS) ./pkg/server ./pkg/cmd/grafana-cli/runner
 
