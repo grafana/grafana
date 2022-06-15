@@ -38,6 +38,7 @@ func hasExpired(expiration *int64) bool {
 
 const sevenDaysAhead = 7 * 24 * time.Hour
 
+// GET /api/serviceaccounts/:serviceAccountId/tokens
 func (api *ServiceAccountsAPI) ListTokens(ctx *models.ReqContext) response.Response {
 	saID, err := strconv.ParseInt(web.Params(ctx.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {
@@ -76,6 +77,7 @@ func (api *ServiceAccountsAPI) ListTokens(ctx *models.ReqContext) response.Respo
 }
 
 // CreateNewToken adds an API key to a service account
+// POST /api/serviceaccounts/:serviceAccountId/tokens
 func (api *ServiceAccountsAPI) CreateToken(c *models.ReqContext) response.Response {
 	saID, err := strconv.ParseInt(web.Params(c.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {
@@ -136,6 +138,7 @@ func (api *ServiceAccountsAPI) CreateToken(c *models.ReqContext) response.Respon
 }
 
 // DeleteToken deletes service account tokens
+// DELETE /api/serviceaccounts/:serviceAccountId/tokens/:tokenId
 func (api *ServiceAccountsAPI) DeleteToken(c *models.ReqContext) response.Response {
 	saID, err := strconv.ParseInt(web.Params(c.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {

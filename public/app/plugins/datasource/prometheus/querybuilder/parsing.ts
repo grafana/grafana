@@ -43,9 +43,11 @@ export function buildVisualQueryFromString(expr: string): Context {
   } catch (err) {
     // Not ideal to log it here, but otherwise we would lose the stack trace.
     console.error(err);
-    context.errors.push({
-      text: err.message,
-    });
+    if (err instanceof Error) {
+      context.errors.push({
+        text: err.message,
+      });
+    }
   }
 
   // If we have empty query, we want to reset errors

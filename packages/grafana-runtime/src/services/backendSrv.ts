@@ -123,6 +123,10 @@ export interface FetchError<T = any> {
   config: BackendSrvRequest;
 }
 
+export function isFetchError(e: unknown): e is FetchError {
+  return typeof e === 'object' && e !== null && 'status' in e && 'data' in e;
+}
+
 /**
  * Used to communicate via http(s) to a remote backend such as the Grafana backend,
  * a datasource etc. The BackendSrv is using the {@link https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API | Fetch API}
