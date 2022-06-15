@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -135,6 +136,12 @@ func TestStore_AddServiceAccountToTeam(t *testing.T) {
 			if c.expectedErr != nil {
 				require.ErrorIs(t, err, c.expectedErr)
 			}
+			teamQuery := models.GetTeamMembersQuery{OrgId: sa.OrgId, TeamId: team.Id}
+			err = db.GetTeamMembers(context.Background(), &teamQuery)
+			require.NoError(t, err)
+			require.Equal(t, len(teamQuery.Result), 1)
+			require.Equal(t, teamQuery.Result[0].UserId, sa.Id)
+			require.Equal(t, teamQuery.Result[0].Permission, models.PERMISSION_VIEW)
 		})
 	}
 }
