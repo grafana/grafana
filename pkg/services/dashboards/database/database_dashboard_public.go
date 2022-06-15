@@ -106,13 +106,6 @@ func (d *DashboardStore) GetPublicDashboardConfig(orgId int64, dashboardUid stri
 // persists public dashboard configuration
 func (d *DashboardStore) SavePublicDashboardConfig(cmd models.SavePublicDashboardConfigCommand) (*models.PublicDashboard, error) {
 	err := d.sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		// if public dashboard is persisted, delete it and recreate
-		if cmd.PublicDashboard.IsPersisted() {
-			if _, err := sess.Exec("DELETE FROM dashboard_public WHERE uid=?", cmd.PublicDashboard.Uid); err != nil {
-				return err
-			}
-		}
-
 		_, err := sess.Insert(&cmd.PublicDashboard)
 		if err != nil {
 			return err
@@ -125,5 +118,22 @@ func (d *DashboardStore) SavePublicDashboardConfig(cmd models.SavePublicDashboar
 		return nil, err
 	}
 
+	return &cmd.PublicDashboard, nil
+}
+
+// updates existing public dashboard configuration
+func (d *DashboardStore) UpdatePublicDashboardConfig(cmd models.SavePublicDashboardConfigCommand) (*models.PublicDashboard, error) {
+	err := d.sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		_, err := sess.Update(&cmd.PublicDashboard)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
 	return &cmd.PublicDashboard, nil
 }

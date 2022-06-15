@@ -12,16 +12,16 @@ func addPublicDashboardMigration(mg *Migrator) {
 			{Name: "dashboard_uid", Type: DB_NVarchar, Length: 40, Nullable: false},
 			{Name: "org_id", Type: DB_BigInt, Nullable: false},
 
-			{Name: "time_settings", Type: DB_Text, Nullable: false},
+			{Name: "time_settings", Type: DB_Text, Nullable: false, Default: "{}"},
 			{Name: "template_variables", Type: DB_MediumText, Nullable: true},
 
 			//{Name: "access_token", Type: DB_NVarchar, Length: 32},
 
 			{Name: "created_by", Type: DB_Int, Nullable: false},
-			//{Name: "created_at", Type: DB_DateTime, Nullable: false},
+			{Name: "updated_by", Type: DB_Int, Nullable: false},
 
-			//{Name: "updated_by", Type: DB_Int, Nullable: false},
-			//{Name: "updated_at", Type: DB_DateTime, Nullable: false},
+			{Name: "created_at", Type: DB_DateTime, Nullable: false},
+			{Name: "updated_at", Type: DB_DateTime, Nullable: false},
 		},
 		Indices: []*Index{
 			{Cols: []string{"uid"}, Type: UniqueIndex},

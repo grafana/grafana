@@ -69,6 +69,7 @@ func TestIntegrationGetPublicDashboard(t *testing.T) {
 				Uid:          "abc1234",
 				DashboardUid: "nevergonnafindme",
 				OrgId:        savedDashboard.OrgId,
+				TimeSettings: TimeSettings,
 			},
 		})
 		require.NoError(t, err)

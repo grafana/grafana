@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
@@ -49,31 +50,55 @@ func (dr *DashboardServiceImpl) SavePublicDashboardConfig(ctx context.Context, d
 		return nil, models.ErrDashboardIdentifierNotSet
 	}
 
-	cmd := models.SavePublicDashboardConfigCommand{
-		DashboardUid:    dto.DashboardUid,
-		OrgId:           dto.OrgId,
-		PublicDashboard: *dto.PublicDashboard,
+	// shouldn't need this
+	// default timesettings to {}
+	//if len(dto.PublicDashboard.TimeSettings.Get("from").MustString("")) == 0 {
+	//dto.PublicDashboard.TimeSettings = simplejson.MustJson([]byte(`{}`))
+	//}
+
+	if dto.PublicDashboard.Uid == "" {
+		return dr.savePublicDashboardConfig(context.Background(), dto)
 	}
 
-	cmd.PublicDashboard.OrgId = dto.OrgId
-	cmd.PublicDashboard.DashboardUid = dto.DashboardUid
+	return dr.updatePublicDashboardConfig(context.Background(), dto)
+}
 
-	// populate additional fields
-	if !cmd.PublicDashboard.IsPersisted() {
-		cmd.PublicDashboard.CreatedBy = dto.UserId
-		uid, err := dr.dashboardStore.GenerateNewPublicDashboardUid()
-		if err != nil {
-			return nil, err
-		}
-		cmd.PublicDashboard.Uid = uid
-	}
-
-	pubdash, err := dr.dashboardStore.SavePublicDashboardConfig(cmd)
+func (dr *DashboardServiceImpl) savePublicDashboardConfig(ctx context.Context, dto *dashboards.SavePublicDashboardConfigDTO) (*models.PublicDashboard, error) {
+	uid, err := dr.dashboardStore.GenerateNewPublicDashboardUid()
 	if err != nil {
 		return nil, err
 	}
 
-	return pubdash, nil
+	cmd := models.SavePublicDashboardConfigCommand{
+		DashboardUid: dto.DashboardUid,
+		OrgId:        dto.OrgId,
+		PublicDashboard: models.PublicDashboard{
+			Uid:          uid,
+			DashboardUid: dto.DashboardUid,
+			OrgId:        dto.OrgId,
+			IsEnabled:    dto.PublicDashboard.IsEnabled,
+			TimeSettings: dto.PublicDashboard.TimeSettings,
+			CreatedBy:    dto.UserId,
+			CreatedAt:    time.Now(),
+		},
+	}
+
+	return dr.dashboardStore.SavePublicDashboardConfig(cmd)
+}
+
+func (dr *DashboardServiceImpl) updatePublicDashboardConfig(ctx context.Context, dto *dashboards.SavePublicDashboardConfigDTO) (*models.PublicDashboard, error) {
+	cmd := models.SavePublicDashboardConfigCommand{
+		DashboardUid: dto.DashboardUid,
+		OrgId:        dto.OrgId,
+		PublicDashboard: models.PublicDashboard{
+			IsEnabled:    dto.PublicDashboard.IsEnabled,
+			TimeSettings: dto.PublicDashboard.TimeSettings,
+			UpdatedBy:    dto.UserId,
+			UpdatedAt:    time.Now(),
+		},
+	}
+
+	return dr.dashboardStore.SavePublicDashboardConfig(cmd)
 }
 
 func (dr *DashboardServiceImpl) BuildPublicDashboardMetricRequest(ctx context.Context, publicDashboardUid string, panelId int64) (dtos.MetricRequest, error) {

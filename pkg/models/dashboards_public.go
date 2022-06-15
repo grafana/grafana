@@ -1,6 +1,8 @@
 package models
 
 import (
+	"time"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
@@ -31,7 +33,12 @@ type PublicDashboard struct {
 	OrgId        int64            `json:"-" xorm:"org_id"` // Don't ever marshal orgId to Json
 	TimeSettings *simplejson.Json `json:"timeSettings" xorm:"time_settings"`
 	IsEnabled    bool             `json:"isEnabled" xorm:"is_enabled"`
-	CreatedBy    int64            `json:"createdBy" xorm:"created_by"`
+
+	CreatedBy int64 `json:"createdBy" xorm:"created_by"`
+	UpdatedBy int64 `json:"updatedBy" xorm:"updated_by"`
+
+	CreatedAt time.Time `json:"createdAt" xorm:"created_at"`
+	UpdatedAt time.Time `json:"updatedAt" xorm:"updated_at"`
 }
 
 func (pd PublicDashboard) TableName() string {
