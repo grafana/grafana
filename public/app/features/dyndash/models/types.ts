@@ -2,14 +2,14 @@ import { Subscribable } from 'rxjs';
 
 import { PanelData, TimeRange } from '@grafana/data';
 
-export interface SceneItemState {
+export interface SceneObjectState {
   key?: string;
-  size?: SceneItemSizing;
-  $timeRange?: SceneItem<SceneTimeRangeState>;
-  $data?: SceneItem<SceneDataState>;
+  size?: SceneObjectSize;
+  $timeRange?: SceneObject<SceneTimeRangeState>;
+  $data?: SceneObject<SceneDataState>;
 }
 
-export interface SceneItemSizing {
+export interface SceneObjectSize {
   width?: number | string;
   height?: number | string;
   x?: number;
@@ -24,32 +24,37 @@ export interface SceneComponentProps<T> {
   model: T;
 }
 
-export interface SceneDataState extends SceneItemState {
+export interface SceneDataState extends SceneObjectState {
   data?: PanelData;
 }
 
-export interface SceneTimeRangeState extends SceneItemState {
+export interface SceneTimeRangeState extends SceneObjectState {
   timeRange: TimeRange;
 }
 
-export interface SceneItem<TState extends SceneItemState = SceneItemState> extends Subscribable<TState> {
+export interface SceneObject<TState extends SceneObjectState = SceneObjectState> extends Subscribable<TState> {
   state: TState;
   isMounted?: boolean;
+  parent?: SceneObject<any>;
 
-  Component(props: SceneComponentProps<SceneItem<TState>>): React.ReactElement | null;
+  /** Utility hook that wraps useObservable. Used by React components to subscribes to state changes */
   useState(): TState;
-  setState(state: TState): void;
+  /** How to modify state */
+  setState(state: Partial<TState>): void;
+  /** Utility hook for main component so that object knows when it's mounted */
   useMount(): this;
-
   onMount(): void;
   onUnmount(): void;
   clone(state?: Partial<TState>): this;
+
+  /** A React component to use for rendering the object */
+  Component(props: SceneComponentProps<SceneObject<TState>>): React.ReactElement | null;
 }
 
-export type SceneItemList<T = SceneItemState> = Array<SceneItem<T>>;
+export type SceneObjectList<T = SceneObjectState> = Array<SceneObject<T>>;
 
-export interface SceneLayoutState extends SceneItemState {
-  children: SceneItemList;
+export interface SceneLayoutState extends SceneObjectState {
+  children: SceneObjectList;
 }
 
-export type SceneLayout<T extends SceneLayoutState = SceneLayoutState> = SceneItem<T>;
+export type SceneLayout<T extends SceneLayoutState = SceneLayoutState> = SceneObject<T>;

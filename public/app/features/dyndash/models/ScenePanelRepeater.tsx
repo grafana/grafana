@@ -3,14 +3,14 @@ import React from 'react';
 import { LoadingState, PanelData } from '@grafana/data';
 
 import { SceneDataNode } from './SceneDataNode';
-import { SceneItemBase } from './SceneItem';
-import { SceneComponentProps, SceneItem, SceneItemList, SceneItemState, SceneLayoutState } from './types';
+import { SceneObjectBase } from './SceneObjectBase';
+import { SceneComponentProps, SceneObject, SceneObjectList, SceneObjectState, SceneLayoutState } from './types';
 
-interface RepeatOptions extends SceneItemState {
-  layout: SceneItem<SceneLayoutState>;
+interface RepeatOptions extends SceneObjectState {
+  layout: SceneObject<SceneLayoutState>;
 }
 
-export class ScenePanelRepeater extends SceneItemBase<RepeatOptions> {
+export class ScenePanelRepeater extends SceneObjectBase<RepeatOptions> {
   onMount() {
     super.onMount();
 
@@ -28,7 +28,7 @@ export class ScenePanelRepeater extends SceneItemBase<RepeatOptions> {
   performRepeat(data: PanelData) {
     // assume parent is a layout
     const firstChild = this.state.layout.state.children[0]!;
-    const newChildren: SceneItemList = [];
+    const newChildren: SceneObjectList = [];
 
     for (const series of data.series) {
       const clone = firstChild.clone({

@@ -8,15 +8,15 @@ import {
   SceneComponentProps,
   SceneTimeRangeState,
   SceneDataState,
-  SceneItem,
+  SceneObject,
   SceneLayoutState,
-  SceneItemState,
+  SceneObjectState,
 } from './types';
 
-export abstract class SceneItemBase<TState extends SceneItemState> implements SceneItem<TState> {
+export abstract class SceneObjectBase<TState extends SceneObjectState> implements SceneObject<TState> {
   subject = new ReplaySubject<TState>();
   state: TState;
-  parent?: SceneItemBase<any>;
+  parent?: SceneObjectBase<any>;
   subs = new Subscription();
   isMounted?: boolean;
 
@@ -32,12 +32,12 @@ export abstract class SceneItemBase<TState extends SceneItemState> implements Sc
 
   private setParent() {
     for (const propValue of Object.values(this.state)) {
-      if (propValue instanceof SceneItemBase) {
+      if (propValue instanceof SceneObjectBase) {
         propValue.parent = this;
       }
     }
 
-    const children = (this.state as any).children as Array<SceneItemBase<any>>;
+    const children = (this.state as any).children as Array<SceneObjectBase<any>>;
     if (children) {
       for (const child of children) {
         child.parent = this;
@@ -58,7 +58,7 @@ export abstract class SceneItemBase<TState extends SceneItemState> implements Sc
     this.subject.next(this.state);
   }
 
-  Component(_: SceneComponentProps<SceneItem<TState>>): React.ReactElement | null {
+  Component(_: SceneComponentProps<SceneObject<TState>>): React.ReactElement | null {
     return null;
   }
 
@@ -83,7 +83,7 @@ export abstract class SceneItemBase<TState extends SceneItemState> implements Sc
   }
 
   /**
-   * The scene object needs to know when the react component is mounted to trigger query and other workflows
+   * The scene object needs to know when the react component is mounted to trigger query and other lazy actions
    */
   useMount() {
     // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -109,7 +109,7 @@ export abstract class SceneItemBase<TState extends SceneItemState> implements Sc
   /**
    * Will walk up the scene object graph to the closest $timeRange scene object
    */
-  getTimeRange(): SceneItem<SceneTimeRangeState> {
+  getTimeRange(): SceneObject<SceneTimeRangeState> {
     const { $timeRange } = this.state;
     if ($timeRange) {
       return $timeRange;
@@ -125,7 +125,7 @@ export abstract class SceneItemBase<TState extends SceneItemState> implements Sc
   /**
    * Will walk up the scene object graph to the closest $data scene object
    */
-  getData(): SceneItem<SceneDataState> {
+  getData(): SceneObject<SceneDataState> {
     const { $data } = this.state;
     if ($data) {
       return $data;
@@ -161,7 +161,7 @@ export abstract class SceneItemBase<TState extends SceneItemState> implements Sc
     // Clone any SceneItems in state
     for (const key in clonedState) {
       const propValue = clonedState[key];
-      if (propValue instanceof SceneItemBase) {
+      if (propValue instanceof SceneObjectBase) {
         clonedState[key] = propValue.clone();
       }
     }

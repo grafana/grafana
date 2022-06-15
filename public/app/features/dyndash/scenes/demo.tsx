@@ -139,12 +139,3 @@ export function getScenePanelRepeaterTest(): Scene {
 
   return scene;
 }
-
-// {
-//           refId: 'A',
-//           datasource: {
-//             uid: 'gdev-prometheus',
-//             type: 'prometheus',
-//           },
-//           expr: 'sum(rate(grafana_http_request_duration_seconds_count{job="grafana"}[$__rate_interval]))'
-//         },

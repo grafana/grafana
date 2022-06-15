@@ -2,15 +2,15 @@ import React from 'react';
 
 import { IconName, Input, ToolbarButton } from '@grafana/ui';
 
-import { SceneItemBase } from './SceneItem';
-import { SceneComponentProps, SceneItemState } from './types';
+import { SceneObjectBase } from './SceneObjectBase';
+import { SceneComponentProps, SceneObjectState } from './types';
 
-export interface ToolbarButtonState extends SceneItemState {
+export interface ToolbarButtonState extends SceneObjectState {
   icon: IconName;
   onClick: () => void;
 }
 
-export class SceneToolbarButton extends SceneItemBase<ToolbarButtonState> {
+export class SceneToolbarButton extends SceneObjectBase<ToolbarButtonState> {
   Component = ({ model }: SceneComponentProps<SceneToolbarButton>) => {
     const state = model.useState();
 
@@ -18,12 +18,12 @@ export class SceneToolbarButton extends SceneItemBase<ToolbarButtonState> {
   };
 }
 
-export interface SceneToolbarInputState extends SceneItemState {
+export interface SceneToolbarInputState extends SceneObjectState {
   value?: string;
   onChange: (value: number) => void;
 }
 
-export class SceneToolbarInput extends SceneItemBase<SceneToolbarInputState> {
+export class SceneToolbarInput extends SceneObjectBase<SceneToolbarInputState> {
   Component = ({ model }: SceneComponentProps<SceneToolbarInput>) => {
     const state = model.useState();
 

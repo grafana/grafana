@@ -5,17 +5,17 @@ import { FieldConfigSource } from '@grafana/data';
 import { PanelRenderer } from '@grafana/runtime';
 import { PanelChrome } from '@grafana/ui';
 
-import { SceneItemBase } from './SceneItem';
-import { SceneComponentProps, SceneItemState } from './types';
+import { SceneObjectBase } from './SceneObjectBase';
+import { SceneComponentProps, SceneObjectState } from './types';
 
-export interface VizPanelState extends SceneItemState {
+export interface VizPanelState extends SceneObjectState {
   title?: string;
   pluginId: string;
   options?: any;
   fieldConfig?: FieldConfigSource;
 }
 
-export class VizPanel extends SceneItemBase<VizPanelState> {
+export class VizPanel extends SceneObjectBase<VizPanelState> {
   Component = ScenePanelRenderer;
 }
 

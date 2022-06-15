@@ -16,10 +16,10 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getNextRequestId } from 'app/features/query/state/PanelQueryRunner';
 import { runRequest } from 'app/features/query/state/runRequest';
 
-import { SceneItemBase } from './SceneItem';
-import { SceneItemState } from './types';
+import { SceneObjectBase } from './SceneObjectBase';
+import { SceneObjectState } from './types';
 
-export interface QueryRunnerState extends SceneItemState {
+export interface QueryRunnerState extends SceneObjectState {
   data?: PanelData;
   queries: DataQueryExtended[];
 }
@@ -28,7 +28,7 @@ export interface DataQueryExtended extends DataQuery {
   [key: string]: any;
 }
 
-export class SceneQueryRunner extends SceneItemBase<QueryRunnerState> {
+export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
   private querySub?: Unsubscribable;
 
   onMount() {

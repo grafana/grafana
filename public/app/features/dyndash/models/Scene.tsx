@@ -1,17 +1,17 @@
-import React, { CSSProperties } from 'react';
+import React from 'react';
 
 import { PageToolbar } from '@grafana/ui';
 
-import { SceneItemBase } from './SceneItem';
-import { SceneComponentProps, SceneItemState, SceneItem } from './types';
+import { SceneObjectBase } from './SceneObjectBase';
+import { SceneComponentProps, SceneObjectState, SceneObject } from './types';
 
-interface SceneState extends SceneItemState {
+interface SceneState extends SceneObjectState {
   title: string;
-  layout: SceneItem<any>;
-  actions?: Array<SceneItem<any>>;
+  layout: SceneObject<any>;
+  actions?: Array<SceneObject<any>>;
 }
 
-export class Scene extends SceneItemBase<SceneState> {
+export class Scene extends SceneObjectBase<SceneState> {
   Component = SceneRenderer;
 }
 
@@ -36,30 +36,3 @@ const SceneRenderer = React.memo<SceneComponentProps<Scene>>(({ model }) => {
 });
 
 SceneRenderer.displayName = 'SceneRenderer';
-
-export interface PanelState extends SceneItemState {
-  title?: string;
-}
-
-export class ScenePanel extends SceneItemBase<PanelState> {
-  Component = ScenePanelRenderer;
-}
-
-const ScenePanelRenderer = React.memo<SceneComponentProps<ScenePanel>>(({ model }) => {
-  const state = model.useState();
-
-  return <div style={getItemStyles()}>{state.title && <h2>{state.title}</h2>}</div>;
-});
-
-ScenePanelRenderer.displayName = 'ScenePanelRenderer';
-
-function getItemStyles() {
-  const style: CSSProperties = {
-    display: 'flex',
-    border: '1px solid red',
-    height: '100%',
-    width: '100%',
-  };
-
-  return style;
-}

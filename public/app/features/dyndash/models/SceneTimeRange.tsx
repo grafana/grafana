@@ -4,15 +4,15 @@ import { TimeRange } from '@grafana/data';
 import { RefreshPicker, ToolbarButtonRow } from '@grafana/ui';
 import { TimePickerWithHistory } from 'app/core/components/TimePicker/TimePickerWithHistory';
 
-import { SceneItemBase } from './SceneItem';
-import { SceneItemState } from './types';
+import { SceneObjectBase } from './SceneObjectBase';
+import { SceneObjectState } from './types';
 
-interface TimeRangeState extends SceneItemState {
+interface TimeRangeState extends SceneObjectState {
   timeRange: TimeRange;
   hidePicker?: boolean;
 }
 
-export class SceneTimeRange extends SceneItemBase<TimeRangeState> {
+export class SceneTimeRange extends SceneObjectBase<TimeRangeState> {
   Component = SceneTimeRangeRenderer;
 
   onTimeRangeChange = (timeRange: TimeRange) => {
