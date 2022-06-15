@@ -58,6 +58,7 @@ export class GrafanaJavascriptAgentBackend
       transports: [new EchoSrvTransport()],
     };
     this.agentInstance = initializeAgent(grafanaJavaScriptAgentOptions);
+
     if (options.user) {
       this.agentInstance.api.setUser({
         email: options.user.email,
@@ -67,7 +68,6 @@ export class GrafanaJavascriptAgentBackend
   }
 
   addEvent = (e: EchoEvent) => {
-    console.log('addEvent is called with: ', e);
     this.transports.forEach((t) => t.send(e.payload));
   };
 
