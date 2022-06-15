@@ -176,7 +176,7 @@
     "terser-webpack-plugin": "5.3.1",
     "ts-loader": "8.0.11",
     "typescript": "4.6.4",
-    "webpack": "5.72.1",
+    "webpack": "5.73.0",
     "webpack-filter-warnings-plugin": "1.2.1"
   },
   "types": "src/index.ts"

@@ -130,15 +130,14 @@ func (s *Service) extractFiles(_ context.Context, pluginArchive *zip.ReadCloser,
 		}
 
 		if isSymlink(zf) {
-			if !allowSymlink(pluginID) {
-				s.log.Warn("%v: plugin archive contains a symlink, which is not allowed. Skipping", zf.Name)
-				continue
-			}
-			if err := extractSymlink(zf, dstPath); err != nil {
+			if err := extractSymlink(installDir, zf, dstPath); err != nil {
 				s.log.Warn("failed to extract symlink", "err", err)
 				continue
 			}
-		} else if err := extractFile(zf, dstPath); err != nil {
+			continue
+		}
+
+		if err := extractFile(zf, dstPath); err != nil {
 			return "", fmt.Errorf("%v: %w", "failed to extract file", err)
 		}
 	}
@@ -150,7 +149,7 @@ func isSymlink(file *zip.File) bool {
 	return file.Mode()&os.ModeSymlink == os.ModeSymlink
 }
 
-func extractSymlink(file *zip.File, filePath string) error {
+func extractSymlink(basePath string, file *zip.File, filePath string) error {
 	// symlink target is the contents of the file
 	src, err := file.Open()
 	if err != nil {
@@ -160,10 +159,37 @@ func extractSymlink(file *zip.File, filePath string) error {
 	if _, err := io.Copy(buf, src); err != nil {
 		return fmt.Errorf("%v: %w", "failed to copy symlink contents", err)
 	}
-	if err := os.Symlink(strings.TrimSpace(buf.String()), filePath); err != nil {
+
+	symlinkPath := strings.TrimSpace(buf.String())
+	if !isSymlinkRelativeTo(basePath, symlinkPath, filePath) {
+		return fmt.Errorf("symlink %q pointing outside plugin directory is not allowed", filePath)
+	}
+
+	if err := os.Symlink(symlinkPath, filePath); err != nil {
 		return fmt.Errorf("failed to make symbolic link for %v: %w", filePath, err)
 	}
 	return nil
+}
+
+// isSymlinkRelativeTo checks whether symlinkDestPath is relative to basePath.
+// symlinkOrigPath is the path to file holding the symbolic link.
+func isSymlinkRelativeTo(basePath string, symlinkDestPath string, symlinkOrigPath string) bool {
+	if filepath.IsAbs(symlinkDestPath) {
+		return false
+	} else {
+		fileDir := filepath.Dir(symlinkOrigPath)
+		cleanPath := filepath.Clean(filepath.Join(fileDir, "/", symlinkDestPath))
+		p, err := filepath.Rel(basePath, cleanPath)
+		if err != nil {
+			return false
+		}
+
+		if strings.HasPrefix(p, ".."+string(filepath.Separator)) {
+			return false
+		}
+	}
+
+	return true
 }
 
 func extractFile(file *zip.File, filePath string) (err error) {
@@ -174,13 +200,13 @@ func extractFile(file *zip.File, filePath string) (err error) {
 	}
 
 	// We can ignore the gosec G304 warning on this one, since the variable part of the file path stems
-	// from command line flag "destPath", and the only possible damage would be writing to the wrong directory.
+	// from command line flag "pluginsDir", and the only possible damage would be writing to the wrong directory.
 	// If the user shouldn't be writing to this directory, they shouldn't have the permission in the file system.
 	// nolint:gosec
 	dst, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, fileMode)
 	if err != nil {
 		if os.IsPermission(err) {
-			return ErrPermissionDenied{Path: filePath}
+			return fmt.Errorf("could not create %q, permission denied, make sure you have write access to plugin dir", filePath)
 		}
 
 		unwrappedError := errors.Unwrap(err)
@@ -240,8 +266,4 @@ func toPluginDTO(pluginID, pluginDir string) (*InstalledPlugin, error) {
 	}
 
 	return res, nil
-}
-
-func allowSymlink(pluginID string) bool {
-	return strings.HasPrefix(pluginID, "grafana-")
 }

@@ -237,12 +237,12 @@
     "testing-library-selector": "0.2.1",
     "ts-jest": "28.0.3",
     "ts-loader": "9.2.6",
-    "ts-node": "10.7.0",
+    "ts-node": "10.8.1",
     "typescript": "4.6.4",
     "wait-on": "6.0.1",
-    "webpack": "5.72.1",
+    "webpack": "5.73.0",
     "webpack-bundle-analyzer": "4.5.0",
-    "webpack-cli": "4.9.2",
+    "webpack-cli": "4.10.0",
     "webpack-dev-server": "4.9.0",
     "webpack-merge": "5.8.0"
   },
@@ -401,7 +401,7 @@
     "@rushstack/node-core-library": "3.45.5",
     "@rushstack/rig-package": "0.3.11",
     "@rushstack/ts-command-line": "4.11.0",
-    "@storybook/react/webpack": "5.72.1",
+    "@storybook/react/webpack": "5.73.0",
     "node-fetch": "2.6.7"
   },
   "workspaces": {
