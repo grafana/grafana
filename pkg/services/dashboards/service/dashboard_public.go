@@ -101,12 +101,9 @@ func (dr *DashboardServiceImpl) updatePublicDashboardConfig(ctx context.Context,
 	return dr.dashboardStore.UpdatePublicDashboardConfig(ctx, cmd)
 }
 
-func (dr *DashboardServiceImpl) BuildPublicDashboardMetricRequest(ctx context.Context, publicDashboardAccessToken string, panelId int64) (dtos.MetricRequest, error) {
-	publicDashboard, dashboard, err := dr.dashboardStore.GetPublicDashboard(ctx, publicDashboardAccessToken)
-	if err != nil {
-		return dtos.MetricRequest{}, err
-	}
-
+// BuildPublicDashboardMetricRequest merges public dashboard parameters with
+// dashboard and returns a metrics request to be sent to query backend
+func (dr *DashboardServiceImpl) BuildPublicDashboardMetricRequest(ctx context.Context, dashboard *models.Dashboard, publicDashboard *models.PublicDashboard, panelId int64) (dtos.MetricRequest, error) {
 	if !publicDashboard.IsEnabled {
 		return dtos.MetricRequest{}, models.ErrPublicDashboardNotFound
 	}
