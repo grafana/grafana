@@ -114,7 +114,7 @@ You can now provide detailed information to alert notification recipients by inj
 
 {{< figure src="/static/img/docs/alerting/alert-notification-template-7-4.png" max-width="700px" caption="Variable support in alert notifications" >}}
 
-For more information, refer to the [alert notification docs](https://grafana.com/docs/grafana/latest/alerting/old-alerting/add-notification-template/).
+For more information, refer to the [alert notification docs]({{< ref "/docs/grafana/v8.5/alerting/old-alerting/add-notification-template/" >}}).
 
 ### Content security policy support
 

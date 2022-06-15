@@ -210,11 +210,10 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:            "azureMonitorExperimentalUI",
-			Description:     "Use grafana-experimental UI in Azure Monitor",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-			FrontendOnly:    true,
+			Name:         "azureMonitorExperimentalUI",
+			Description:  "Use grafana-experimental UI in Azure Monitor",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
 		},
 		{
 			Name:         "traceToMetrics",
@@ -236,6 +235,11 @@ var (
 		{
 			Name:        "prometheusWideSeries",
 			Description: "Enable wide series responses in the Prometheus datasource",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "logRequestsInstrumentedAsUnknown",
+			Description: "Logs the path for requests that are instrumented as unknown",
 			State:       FeatureStateAlpha,
 		},
 	}
