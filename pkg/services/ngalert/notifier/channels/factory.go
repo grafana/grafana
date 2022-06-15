@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	store_error "github.com/grafana/grafana/pkg/services/ngalert/store/error"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/prometheus/alertmanager/template"
 )
@@ -21,6 +22,13 @@ type FactoryConfig struct {
 
 type ImageStore interface {
 	GetImage(ctx context.Context, token string) (*models.Image, error)
+}
+
+type UnavailableImageStore struct{}
+
+// Get returns the image with the corresponding token, or ErrImageNotFound.
+func (u *UnavailableImageStore) GetImage(ctx context.Context, token string) (*models.Image, error) {
+	return nil, store_error.ErrImagesUnavailable
 }
 
 func NewFactoryConfig(config *NotificationChannelConfig, notificationService notifications.Service,

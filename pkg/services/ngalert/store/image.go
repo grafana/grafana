@@ -8,6 +8,7 @@ import (
 	"github.com/gofrs/uuid"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	store_error "github.com/grafana/grafana/pkg/services/ngalert/store/error"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -31,7 +32,7 @@ func (st DBstore) GetImage(ctx context.Context, token string) (*models.Image, er
 			return fmt.Errorf("failed to get image: %w", err)
 		}
 		if !exists {
-			return models.ErrImageNotFound
+			return store_error.ErrImageNotFound
 		}
 		return nil
 	}); err != nil {
@@ -48,7 +49,7 @@ func (st DBstore) GetImages(ctx context.Context, tokens []string) ([]models.Imag
 		return nil, err
 	}
 	if len(imgs) < len(tokens) {
-		return imgs, models.ErrImageNotFound
+		return imgs, store_error.ErrImageNotFound
 	}
 	return imgs, nil
 }

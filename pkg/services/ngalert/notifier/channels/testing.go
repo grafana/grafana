@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	store_error "github.com/grafana/grafana/pkg/services/ngalert/store/error"
 )
 
 // mockTimeNow replaces function timeNow to return constant time.
@@ -60,5 +61,5 @@ func (f *fakeImageStore) GetImage(ctx context.Context, token string) (*ngmodels.
 			return img, nil
 		}
 	}
-	return nil, ngmodels.ErrImageNotFound
+	return nil, store_error.ErrImageNotFound
 }

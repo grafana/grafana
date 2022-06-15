@@ -21,6 +21,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	store_error "github.com/grafana/grafana/pkg/services/ngalert/store/error"
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -37,9 +38,55 @@ const (
 
 var (
 	// Provides current time. Can be overwritten in tests.
-	timeNow              = time.Now
-	ErrImagesUnavailable = errors.New("alert screenshots are unavailable")
+	timeNow = time.Now
 )
+
+// firstImage returns the first image and the alert for which the image was
+// found. It returns nil if images are unavailable or if no images were found.
+func firstImage(ctx context.Context, images ImageStore, alerts ...*types.Alert) (*models.Image, *types.Alert, error) {
+	for _, alert := range alerts {
+		img, err := getImage(ctx, images, *alert)
+		if err != nil {
+			// Images are unavailable at this time
+			if errors.Is(err, store_error.ErrImagesUnavailable) {
+				return nil, nil, nil
+			} else if !errors.Is(err, store_error.ErrImageNotFound) {
+				return nil, nil, fmt.Errorf("could not get image for alert %s: %w", alert, err)
+			}
+		} else if img != nil {
+			// img and err are both nil when the alert does not have an image
+			// token annotation
+			return img, alert, nil
+		}
+	}
+	return nil, nil, nil
+}
+
+// getImage returns the image for the alert or an error.
+//
+// If the alert does not have an image token annotation then nil is returned.
+// If the alert has an image token annotation but the image could not be found
+// then ErrImageNotFound is returned.
+func getImage(ctx context.Context, images ImageStore, alert types.Alert) (*models.Image, error) {
+	ctx, cancelFunc := context.WithTimeout(ctx, ImageStoreTimeout)
+	defer cancelFunc()
+
+	token := getTokenFromAnnotations(alert.Annotations)
+	if token == "" {
+		return nil, nil
+	}
+
+	img, err := images.GetImage(ctx, token)
+	if err != nil {
+		if errors.Is(err, store_error.ErrImageNotFound) {
+			return nil, err
+		} else {
+			return nil, fmt.Errorf("failed to get image: %w", err)
+		}
+	}
+
+	return img, nil
+}
 
 // For each alert, attempts to load the models.Image for an image token
 // associated with the alert, then calls forEachFunc with the index of the
@@ -72,7 +119,7 @@ func withStoredImage(ctx context.Context, l log.Logger, imageStore ImageStore, i
 	img, err := imageStore.GetImage(timeoutCtx, imgToken)
 	cancel()
 
-	if errors.Is(err, models.ErrImageNotFound) || errors.Is(err, ErrImagesUnavailable) {
+	if errors.Is(err, store_error.ErrImageNotFound) || errors.Is(err, store_error.ErrImagesUnavailable) {
 		err := imageFunc(index, nil)
 		if err != nil {
 			return err
@@ -97,7 +144,7 @@ func openImage(path string) (io.ReadCloser, error) {
 	fp := filepath.Clean(path)
 	_, err := os.Stat(fp)
 	if os.IsNotExist(err) || os.IsPermission(err) {
-		return nil, models.ErrImageNotFound
+		return nil, store_error.ErrImageNotFound
 	}
 
 	f, err := os.Open(fp)
@@ -113,13 +160,6 @@ func getTokenFromAnnotations(annotations model.LabelSet) string {
 		return string(value)
 	}
 	return ""
-}
-
-type UnavailableImageStore struct{}
-
-// Get returns the image with the corresponding token, or ErrImageNotFound.
-func (u *UnavailableImageStore) GetImage(ctx context.Context, token string) (*models.Image, error) {
-	return nil, ErrImagesUnavailable
 }
 
 type receiverInitError struct {

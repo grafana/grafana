@@ -20,7 +20,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -291,12 +290,14 @@ var sendSlackRequest = func(request *http.Request, logger log.Logger) (retErr er
 }
 
 func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, alrts []*types.Alert) (*slackMessage, error) {
-	alerts := types.Alerts(alrts...)
 	var tmplErr error
 	tmpl, _ := TmplText(ctx, sn.tmpl, alrts, sn.log, &tmplErr)
+	if tmplErr != nil {
+		sn.log.Warn("failed to template Slack message", "err", tmplErr.Error())
+	}
 
-	ruleURL := joinUrlPath(sn.tmpl.ExternalURL.String(), "/alerting/list", sn.log)
-
+	titleLink := joinUrlPath(sn.tmpl.ExternalURL.String(), "/alerting/list", sn.log)
+	alerts := types.Alerts(alrts...)
 	req := &slackMessage{
 		Channel:   tmpl(sn.Recipient),
 		Username:  tmpl(sn.Username),
@@ -312,24 +313,18 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, alrts []*types.A
 				Footer:     "Grafana v" + setting.BuildVersion,
 				FooterIcon: FooterIconURL,
 				Ts:         time.Now().Unix(),
-				TitleLink:  ruleURL,
+				TitleLink:  titleLink,
 				Text:       tmpl(sn.Text),
 				Fields:     nil, // TODO. Should be a config.
 			},
 		},
 	}
 
-	_ = withStoredImage(ctx, sn.log, sn.images,
-		func(index int, image *ngmodels.Image) error {
-			if image != nil {
-				req.Attachments[0].ImageURL = image.URL
-			}
-			return nil
-		},
-		0, alrts...)
-
-	if tmplErr != nil {
-		sn.log.Warn("failed to template Slack message", "err", tmplErr.Error())
+	image, _, err := firstImage(ctx, sn.images, alrts...)
+	if err != nil {
+		sn.log.Error("failed to retrieve first image for alerts", "err", err)
+	} else if image != nil {
+		req.Attachments[0].ImageURL = image.URL
 	}
 
 	mentionsBuilder := strings.Builder{}

@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	store_error "github.com/grafana/grafana/pkg/services/ngalert/store/error"
 )
 
 type FakeConfigStore struct {
@@ -20,15 +21,15 @@ type FakeConfigStore struct {
 
 // Saves the image or returns an error.
 func (f *FakeConfigStore) SaveImage(ctx context.Context, img *models.Image) error {
-	return models.ErrImageNotFound
+	return store_error.ErrImageNotFound
 }
 
 func (f *FakeConfigStore) GetImage(ctx context.Context, token string) (*models.Image, error) {
-	return nil, models.ErrImageNotFound
+	return nil, store_error.ErrImageNotFound
 }
 
 func (f *FakeConfigStore) GetImages(ctx context.Context, tokens []string) ([]models.Image, error) {
-	return nil, models.ErrImageNotFound
+	return nil, store_error.ErrImageNotFound
 }
 
 func NewFakeConfigStore(t *testing.T, configs map[int64]*models.AlertConfiguration) FakeConfigStore {

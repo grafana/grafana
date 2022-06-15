@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	store_error "github.com/grafana/grafana/pkg/services/ngalert/store/error"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -224,7 +225,7 @@ func (d DiscordNotifier) constructAttachments(ctx context.Context, as []*types.A
 				base := filepath.Base(image.Path)
 				url := fmt.Sprintf("attachment://%s", base)
 				reader, err := openImage(image.Path)
-				if err != nil && !errors.Is(err, ngmodels.ErrImageNotFound) {
+				if err != nil && !errors.Is(err, store_error.ErrImageNotFound) {
 					d.log.Warn("failed to retrieve image data from store", "err", err)
 					return nil
 				}

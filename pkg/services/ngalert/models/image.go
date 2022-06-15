@@ -1,12 +1,8 @@
 package models
 
 import (
-	"errors"
 	"time"
 )
-
-// ErrImageNotFound is returned when the image does not exist.
-var ErrImageNotFound = errors.New("image not found")
 
 type Image struct {
 	ID        int64     `xorm:"pk autoincr 'id'"`
