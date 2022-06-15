@@ -76,7 +76,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades: PanelSchemeUpgradeHandler[] = [];
-    this.dashboard.schemaVersion = 37;
+    this.dashboard.schemaVersion = 36;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -775,17 +775,6 @@ export class DashboardMigrator {
           return panel;
         });
       }
-    }
-
-    if (oldVersion < 37) {
-      panelUpgrades.push((panel: any) => {
-        const type = panel.type ?? '';
-        if (type === 'heatmap-new') {
-          panel.type = 'heatmap';
-        }
-        delete panel.pluginVersion; // this will kick off standard panel version migration path
-        return panel;
-      });
     }
 
     if (panelUpgrades.length === 0) {

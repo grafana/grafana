@@ -224,10 +224,17 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       (this as any)[property] = model[property];
     }
 
-    // Special 'graph' migration logic
-    if (this.type === 'graph' && config?.featureToggles?.autoMigrateGraphPanels) {
-      this.autoMigrateFrom = this.type;
-      this.type = 'timeseries';
+    switch (this.type) {
+      case 'graph':
+        if (config?.featureToggles?.autoMigrateGraphPanels) {
+          this.autoMigrateFrom = this.type;
+          this.type = 'timeseries';
+        }
+        break;
+      case 'heatmap-new':
+        this.autoMigrateFrom = this.type;
+        this.type = 'heatmap';
+        break;
     }
 
     // defaults
