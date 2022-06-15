@@ -22,8 +22,7 @@ func TestIntegrationEngineTimeouts(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	usMock := &usagestats.UsageStatsMock{T: t}
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
+	tracer := tracing.InitializeTracerForTest()
 	engine := ProvideAlertEngine(nil, nil, nil, usMock, ossencryption.ProvideService(), nil, tracer, nil, setting.NewCfg(), nil, nil)
 	setting.AlertingNotificationTimeout = 30 * time.Second
 	setting.AlertingMaxAttempts = 3

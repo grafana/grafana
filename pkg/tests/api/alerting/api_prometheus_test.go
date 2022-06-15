@@ -15,7 +15,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acdb "github.com/grafana/grafana/pkg/services/accesscontrol/database"
@@ -26,9 +25,6 @@ import (
 )
 
 func TestPrometheusRules(t *testing.T) {
-	_, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
-
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -46,7 +42,7 @@ func TestPrometheusRules(t *testing.T) {
 	})
 
 	// Create the namespace we'll save our alerts to.
-	err = createFolder(t, "default", grafanaListedAddr, "grafana", "password")
+	err := createFolder(t, "default", grafanaListedAddr, "grafana", "password")
 	require.NoError(t, err)
 	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
 
@@ -324,8 +320,6 @@ func TestPrometheusRules(t *testing.T) {
 }
 
 func TestPrometheusRulesFilterByDashboard(t *testing.T) {
-	_, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{"ngalert"},
 		DisableAnonymous:     true,
@@ -343,7 +337,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 
 	// Create the namespace we'll save our alerts to.
 	dashboardUID := "default"
-	err = createFolder(t, dashboardUID, grafanaListedAddr, "grafana", "password")
+	err := createFolder(t, dashboardUID, grafanaListedAddr, "grafana", "password")
 	require.NoError(t, err)
 	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
 
@@ -620,9 +614,6 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 }
 
 func TestPrometheusRulesPermissions(t *testing.T) {
-	_, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
-
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -643,7 +634,7 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 	permissionsStore := acdb.ProvideService(store)
 
 	// Create the namespace we'll save our alerts to.
-	err = createFolder(t, "folder1", grafanaListedAddr, "grafana", "password")
+	err := createFolder(t, "folder1", grafanaListedAddr, "grafana", "password")
 	require.NoError(t, err)
 
 	// Create the namespace we'll save our alerts to.
