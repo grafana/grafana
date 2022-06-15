@@ -63,6 +63,7 @@ const defaultPanelConfig: grafanaData.DataConfigSource = {
   getFieldOverrideOptions: () => undefined,
   getTransformations: () => undefined,
   getDataSupport: () => ({ annotations: false, alertStates: false }),
+  getDataSourceRef: () => ({ type: 'test', uid: 'TestDB-uid' }),
 };
 
 function describeQueryRunnerScenario(
@@ -258,6 +259,7 @@ describe('PanelQueryRunner', () => {
       }),
       getTransformations: () => undefined,
       getDataSupport: () => ({ annotations: false, alertStates: false }),
+      getDataSourceRef: () => ({ type: 'test', uid: 'TestDB-uid' }),
     }
   );
 
@@ -282,6 +284,7 @@ describe('PanelQueryRunner', () => {
       // @ts-ignore
       getTransformations: () => [{} as unknown as grafanaData.DataTransformerConfig],
       getDataSupport: () => ({ annotations: false, alertStates: false }),
+      getDataSourceRef: () => ({ type: 'test', uid: 'TestDB-uid' }),
     }
   );
 
@@ -325,6 +328,7 @@ describe('PanelQueryRunner', () => {
       // @ts-ignore
       getTransformations: () => [{} as unknown as grafanaData.DataTransformerConfig],
       getDataSupport: () => ({ annotations: false, alertStates: false }),
+      getDataSourceRef: () => ({ type: 'test', uid: 'TestDB-uid' }),
     }
   );
 

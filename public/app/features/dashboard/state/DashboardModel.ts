@@ -317,9 +317,16 @@ export class DashboardModel implements TimeModel {
     const currentVariables = this.getVariablesFromState(this.uid);
 
     copy.templating = {
-      list: currentVariables.map((variable) =>
-        variableAdapters.get(variable.type).getSaveModel(variable, defaults.saveVariables)
-      ),
+      list: currentVariables
+        .map((variable) => {
+          const adapter = variableAdapters.get(variable.type);
+          if (adapter.getSaveModel) {
+            return adapter.getSaveModel(variable, defaults.saveVariables);
+          }
+
+          return null;
+        })
+        .filter((value) => value !== null),
     };
 
     if (!defaults.saveVariables) {

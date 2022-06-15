@@ -35,9 +35,6 @@ export const timeRangeCondition: ConditionInfo<TimeRangeConditionOptions, TimeRa
     }
     return false;
   },
-  evaluate: (options) => (args) => {
-    return true;
-  },
   editor: ({ onChange, options }) => {
     return (
       <Select

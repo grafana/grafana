@@ -14,6 +14,7 @@ import { notifyApp } from 'app/core/actions';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
+import { conditionsRegistry } from 'app/plugins/datasource/conditional/ConditionsRegistry';
 import { store } from 'app/store/store';
 
 import { createErrorNotification } from '../../../core/copy/appNotification';
@@ -42,6 +43,7 @@ import { alignCurrentWithMulti } from '../shared/multiOptions';
 import {
   DashboardVariableModel,
   initialVariableModelState,
+  KeyValueVariableModel,
   OrgVariableModel,
   QueryVariableModel,
   TransactionStatus,
@@ -69,7 +71,13 @@ import {
 } from '../utils';
 
 import { toKeyedAction } from './keyedVariablesReducer';
-import { getIfExistsLastKey, getVariable, getVariablesByKey, getVariablesState } from './selectors';
+import {
+  getIfExistsLastKey,
+  getNewVariableIndex,
+  getVariable,
+  getVariablesByKey,
+  getVariablesState,
+} from './selectors';
 import {
   addVariable,
   changeVariableProp,
@@ -84,7 +92,7 @@ import {
   variablesCompleteTransaction,
   variablesInitTransaction,
 } from './transactionReducer';
-import { KeyedVariableIdentifier } from './types';
+import { AddVariable, KeyedVariableIdentifier } from './types';
 import { cleanVariables } from './variablesReducer';
 
 // process flow queryVariable
@@ -138,6 +146,55 @@ export const initDashboardTemplating = (key: string, dashboard: DashboardModel):
     const variables = getVariablesByKey(key, getState());
     for (const variable of variables) {
       dispatch(toKeyedAction(key, variableStateNotStarted(toVariablePayload(variable))));
+    }
+  };
+};
+
+/**
+ * Initializes the dynamic key/value variables used by the ConditionalDataSource
+ */
+export const initDynamicVariables = (rootStateKey: string, queryParams: UrlQueryMap): ThunkResult<void> => {
+  return (dispatch, getState) => {
+    const conditionsDefs = conditionsRegistry.list();
+    const params = { ...queryParams };
+    for (let i = 0; i < conditionsDefs.length; i++) {
+      const variablePrefix = conditionsDefs[i].variablePrefix;
+      if (variablePrefix) {
+        for (const variableName of Object.keys(params)) {
+          const value = params[variableName];
+          if (variableName.includes(variablePrefix) && value) {
+            {
+              const id = variableName.replace('var-', '');
+              const index = getNewVariableIndex(rootStateKey, getState());
+              const model: KeyValueVariableModel = {
+                type: 'keyValue',
+                rootStateKey,
+                name: id,
+                key: variableName.replace(`var-${variablePrefix}`, ''),
+                id,
+                global: false,
+                hide: VariableHide.dontHide,
+                skipUrlSync: false,
+                index,
+                state: LoadingState.Done,
+                error: null,
+                description: '',
+                query: value.toString(),
+                options: [{ selected: true, value: value.toString(), text: value.toString() }],
+                current: { selected: true, value: value.toString(), text: value.toString() },
+              };
+
+              dispatch(
+                toKeyedAction(
+                  rootStateKey,
+                  addVariable(toVariablePayload<AddVariable>({ type: 'keyValue', id }, { global: false, model, index }))
+                )
+              );
+              delete params[variableName];
+            }
+          }
+        }
+      }
     }
   };
 };
@@ -740,7 +797,8 @@ const getQueryWithVariables = (key: string, getState: () => StoreState): UrlQuer
     }
 
     const adapter = variableAdapters.get(variable.type);
-    queryParamsNew['var-' + variable.name] = adapter.getValueForUrl(variable);
+    const urlValue = adapter.getValueForUrl(variable);
+    queryParamsNew['var-' + variable.name] = urlValue;
   }
 
   return queryParamsNew;
@@ -767,8 +825,11 @@ export const initVariablesTransaction =
       dispatch(addSystemTemplateVariables(uid, dashboard));
       // Load all variables into redux store
       dispatch(initDashboardTemplating(uid, dashboard));
+
       // Migrate data source name to ref
       dispatch(migrateVariablesDatasourceNameToRef(uid));
+
+      await dispatch(initDynamicVariables(uid, locationService.getSearchObject()));
       // Process all variable updates
       await dispatch(processVariables(uid));
       // Set transaction as complete

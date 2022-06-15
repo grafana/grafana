@@ -10,10 +10,22 @@ export interface QueryConditionExecutionContext {
 
 export interface ConditionInfo<TOptions = any, TArgs = any> extends RegistryItemWithOptions {
   type: QueryConditionType;
+  /**
+   * Given condition configuration returns boolean representing condition being met or not
+   */
   execute: (options: TOptions, context: QueryConditionExecutionContext) => boolean;
-  evaluate: (options: TOptions) => (args: TArgs) => boolean;
+  /**
+   * Component used to render the condition config
+   */
   editor: React.ComponentType<ConditionUIProps<TOptions>>;
+  /**
+   * Returns a string that will be used as a name of a dynamic variable created by this condition
+   */
   getVariableName: (options: TOptions) => string;
+  /**
+   * Prefix used to identify dynamic variables created by this condition
+   */
+  variablePrefix?: string;
 }
 
 export interface ConditionUIProps<TOptions = any> {

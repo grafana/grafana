@@ -1,23 +1,26 @@
 import { Observable } from 'rxjs';
 
 import {
-  QueryConditionType,
   DataFrame,
   DataQuery,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
   Field,
+  FieldMatcherID,
+  fieldMatchers,
+  LoadingState,
   QueryConditionConfig,
   QueryConditionExecutionContext,
+  QueryConditionType,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
-import { variableAdapters } from 'app/features/variables/adapters';
-import { constantBuilder } from 'app/features/variables/shared/testing/builders';
+import { VariableAdapter, variableAdapters } from 'app/features/variables/adapters';
 import { toKeyedAction } from 'app/features/variables/state/keyedVariablesReducer';
 import { getLastKey, getNewVariableIndex, getVariable } from 'app/features/variables/state/selectors';
 import { addVariable } from 'app/features/variables/state/sharedReducer';
 import { AddVariable, VariableIdentifier } from 'app/features/variables/state/types';
+import { KeyValueVariableModel, VariableHide } from 'app/features/variables/types';
 import { toKeyedVariableIdentifier, toStateKey, toVariablePayload } from 'app/features/variables/utils';
 import { store } from 'app/store/store';
 
@@ -148,9 +151,10 @@ export function getConditionalDataLinksSupplier(targets: ConditionalDataSourceQu
     for (let i = 0; i < conditions.length; i++) {
       for (let j = 0; j < conditions[i]?.length; j++) {
         const conditionDef = conditionsRegistry.getIfExists(conditions[i][j].id);
-        const fieldMatcher = conditionDef?.evaluate(conditions[i][j].options);
+        const regexFieldMatcher = fieldMatchers.get(FieldMatcherID.byRegexp);
+        const fieldMatcher = regexFieldMatcher.get(conditions[i][j].options.pattern);
 
-        if (fieldMatcher && fieldMatcher({ field, frame, allFrames })) {
+        if (fieldMatcher && fieldMatcher(field, frame, allFrames)) {
           return async (evt: any, origin: any) => {
             const state = store.getState();
 
@@ -162,12 +166,23 @@ export function getConditionalDataLinksSupplier(targets: ConditionalDataSourceQu
             const global = false;
             const index = getNewVariableIndex(rootStateKey, state);
 
-            const variable = constantBuilder()
-              .withId(id)
-              .withoutOptions()
-              .withName(id)
-              .withRootStateKey(rootStateKey)
-              .build();
+            const variable: KeyValueVariableModel = {
+              id,
+              rootStateKey,
+              index,
+              type: 'keyValue',
+              skipUrlSync: false,
+              global: true,
+              hide: VariableHide.dontHide,
+              key: id,
+              error: null,
+              state: LoadingState.Done,
+              description: '',
+              name: id,
+              query: '',
+              options: [{ selected: true, value: '', text: '' }],
+              current: { selected: true, value: '', text: '' },
+            };
 
             store.dispatch(
               toKeyedAction(
@@ -176,9 +191,12 @@ export function getConditionalDataLinksSupplier(targets: ConditionalDataSourceQu
               )
             );
 
-            const existing = getVariable(toKeyedVariableIdentifier(variable), store.getState());
+            const existing = getVariable(
+              toKeyedVariableIdentifier(variable),
+              store.getState()
+            ) as KeyValueVariableModel;
             const value = origin.field.values.get(origin.rowIndex);
-            const adapter = variableAdapters.get('constant');
+            const adapter = variableAdapters.get('keyValue') as VariableAdapter<KeyValueVariableModel>;
             await adapter.setValue(existing, { selected: true, value, text: value ? value.toString() : '' }, true);
           };
         }

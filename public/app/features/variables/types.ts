@@ -89,6 +89,9 @@ export interface TextBoxVariableModel extends VariableWithOptions {
 
 export interface ConstantVariableModel extends VariableWithOptions {}
 
+export interface KeyValueVariableModel extends VariableWithOptions {
+  key: string;
+}
 export interface VariableWithMultiSupport extends VariableWithOptions {
   multi: boolean;
   includeAll: boolean;

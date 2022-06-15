@@ -22,7 +22,7 @@ describe('createTextBoxVariableAdapter', () => {
 
         const adapter = variableAdapters.get('textbox');
 
-        const result = adapter.getSaveModel(text, false);
+        const result = adapter.getSaveModel!(text, false);
 
         expect(result).toEqual({
           name: 'text',
@@ -52,7 +52,7 @@ describe('createTextBoxVariableAdapter', () => {
 
         const adapter = variableAdapters.get('textbox');
 
-        const result = adapter.getSaveModel(text, true);
+        const result = adapter.getSaveModel!(text, true);
 
         expect(result).toEqual({
           name: 'text',
