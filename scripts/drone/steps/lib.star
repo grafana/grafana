@@ -888,7 +888,7 @@ def postgres_integration_tests_step(edition, ver_mode):
             'devenv/docker/blocks/postgres_tests/setup.sql',
             # Make sure that we don't use cached results for another database
             'go clean -testcache',
-            'GRAFANA_TEST_DB=postgres go test -run Integration -covermode=atomic -timeout=30m ./pkg/...',
+            "GRAFANA_TEST_DB=postgres go list './pkg/...'  | xargs go test -run Integration -covermode=atomic -timeout=30m",
         ],
     }
 
@@ -911,7 +911,7 @@ def mysql_integration_tests_step(edition, ver_mode):
             'cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass',
             # Make sure that we don't use cached results for another database
             'go clean -testcache',
-            'GRAFANA_TEST_DB=mysql go test -run Integration -covermode=atomic -timeout=30m ./pkg/...',
+            "GRAFANA_TEST_DB=mysql go list './pkg/...'  | xargs go test -run Integration -covermode=atomic -timeout=30m",
         ],
     }
 
