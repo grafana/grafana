@@ -71,7 +71,7 @@
                   {
                     "targetBlank": false,
                     "title": "",
-                    "url": "d/dyzn5SK7z/alert-consumption?${sub:queryparam}&${rg:queryparam}&${__url_time_range}&var-mc=Fired&var-mc=Resolved&var-as=New&var-as=Acknowledged&var-as=Closed&var-sev=Sev0&var-sev=Sev1&var-sev=Sev2&var-sev=Sev3&var-sev=Sev4&${__url_time_range}"
+                    "url": "d/dyzn5SK7z/azure-alert-consumption?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${__url_time_range}&var-mc=Fired&var-mc=Resolved&var-as=New&var-as=Acknowledged&var-as=Closed&var-sev=Sev0&var-sev=Sev1&var-sev=Sev2&var-sev=Sev3&var-sev=Sev4&${__url_time_range}"
                   }
                 ]
               }
@@ -170,7 +170,7 @@
                   {
                     "targetBlank": false,
                     "title": "",
-                    "url": "d/dyzn5SK7z/alert-consumption?${sub:queryparam}&${rg:queryparam}&${__url_time_range}&var-mc=Fired&var-mc=Resolved&var-as=New&var-as=Acknowledged&var-as=Closed&var-sev=Sev0&${__url_time_range}"
+                    "url": "d/dyzn5SK7z/azure-alert-consumption?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${__url_time_range}&var-mc=Fired&var-mc=Resolved&var-as=New&var-as=Acknowledged&var-as=Closed&var-sev=Sev0&${__url_time_range}"
                   }
                 ]
               }
@@ -269,7 +269,7 @@
                   {
                     "targetBlank": false,
                     "title": "",
-                    "url": "d/dyzn5SK7z/alert-consumption?${sub:queryparam}&${rg:queryparam}&${__url_time_range}&var-mc=Fired&var-mc=Resolved&var-as=New&var-as=Acknowledged&var-as=Closed&var-sev=Sev1&${__url_time_range}"
+                    "url": "d/dyzn5SK7z/azure-alert-consumption?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${__url_time_range}&var-mc=Fired&var-mc=Resolved&var-as=New&var-as=Acknowledged&var-as=Closed&var-sev=Sev1&${__url_time_range}"
                   }
                 ]
               }
@@ -368,7 +368,7 @@
                   {
                     "targetBlank": false,
                     "title": "",
-                    "url": "d/dyzn5SK7z/alert-consumption?${sub:queryparam}&${rg:queryparam}&${__url_time_range}&var-mc=Fired&var-mc=Resolved&var-as=New&var-as=Acknowledged&var-as=Closed&var-sev=Sev2&${__url_time_range}"
+                    "url": "d/dyzn5SK7z/azure-alert-consumption?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${__url_time_range}&var-mc=Fired&var-mc=Resolved&var-as=New&var-as=Acknowledged&var-as=Closed&var-sev=Sev2&${__url_time_range}"
                   }
                 ]
               }
@@ -467,7 +467,7 @@
                   {
                     "targetBlank": false,
                     "title": "",
-                    "url": "d/dyzn5SK7z/alert-consumption?${sub:queryparam}&${rg:queryparam}&${__url_time_range}&var-mc=Fired&var-mc=Resolved&var-as=New&var-as=Acknowledged&var-as=Closed&var-sev=Sev3&${__url_time_range}"
+                    "url": "d/dyzn5SK7z/azure-alert-consumption?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${__url_time_range}&var-mc=Fired&var-mc=Resolved&var-as=New&var-as=Acknowledged&var-as=Closed&var-sev=Sev3&${__url_time_range}"
                   }
                 ]
               }
@@ -566,7 +566,7 @@
                   {
                     "targetBlank": false,
                     "title": "",
-                    "url": "d/dyzn5SK7z/alert-consumption?${sub:queryparam}&${rg:queryparam}&${__url_time_range}&var-mc=Fired&var-mc=Resolved&var-as=New&var-as=Acknowledged&var-as=Closed&var-sev=Sev4&${__url_time_range}"
+                    "url": "d/dyzn5SK7z/azure-alert-consumption?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${__url_time_range}&var-mc=Fired&var-mc=Resolved&var-as=New&var-as=Acknowledged&var-as=Closed&var-sev=Sev4&${__url_time_range}"
                   }
                 ]
               }
