@@ -3,6 +3,7 @@ package database
 import (
 	"testing"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -10,6 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+var TimeSettings, _ = simplejson.NewJson([]byte(`{"from": "now-12", "to": "now"}`))
 
 // GetPublicDashboard
 func TestIntegrationGetPublicDashboard(t *testing.T) {
@@ -33,6 +36,7 @@ func TestIntegrationGetPublicDashboard(t *testing.T) {
 				Uid:          "abc1234",
 				DashboardUid: savedDashboard.Uid,
 				OrgId:        savedDashboard.OrgId,
+				TimeSettings: TimeSettings,
 			},
 		})
 		require.NoError(t, err)
@@ -109,7 +113,7 @@ func TestIntegrationGetPublicDashboardConfig(t *testing.T) {
 				Uid:          "pubdash-uid",
 				DashboardUid: savedDashboard.Uid,
 				OrgId:        savedDashboard.OrgId,
-				TimeSettings: "{from: now, to: then}",
+				TimeSettings: simplejson.NewFromAny(map[string]interface{}{"from": "now-8", "to": "now"}),
 			},
 		})
 		require.NoError(t, err)
@@ -144,6 +148,7 @@ func TestIntegrationSavePublicDashboardConfig(t *testing.T) {
 				Uid:          "pubdash-uid",
 				DashboardUid: savedDashboard.Uid,
 				OrgId:        savedDashboard.OrgId,
+				TimeSettings: TimeSettings,
 			},
 		})
 		require.NoError(t, err)
@@ -204,7 +209,7 @@ func TestIntegrationSavePublicDashboardConfig(t *testing.T) {
 				Uid:          pdUid,
 				DashboardUid: savedDashboard.Uid,
 				OrgId:        savedDashboard.OrgId,
-				TimeSettings: "{}",
+				TimeSettings: simplejson.NewFromAny(map[string]interface{}{"from": "now-8", "to": "now"}),
 			},
 		})
 		require.NoError(t, err)
