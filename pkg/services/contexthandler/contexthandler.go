@@ -229,6 +229,8 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 	var keyString string
 	if len(parts) == 2 && parts[0] == "Bearer" {
 		keyString = parts[1]
+	} else if reqContext.Query("auth_token") != "" {
+		keyString = reqContext.Query("auth_token")
 	} else {
 		username, password, err := util.DecodeBasicAuthHeader(header)
 		if err == nil && username == "api_key" {
