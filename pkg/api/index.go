@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/navlinks"
+	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -745,6 +746,39 @@ func (hs *HTTPServer) editorInAnyFolder(c *models.ReqContext) bool {
 }
 
 func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewData, error) {
+	if c.Query("auth_token") != "" {
+		decoded, err := apikeygenprefix.Decode(c.Query("auth_token"))
+		if err != nil {
+			return nil, err
+		}
+
+		hash, err := decoded.Hash()
+		if err != nil {
+			return nil, err
+		}
+
+		key, err := hs.SQLStore.GetAPIKeyByHash(c.Req.Context(), hash)
+		if err != nil {
+			return nil, err
+		}
+
+		query := &models.GetSignedInUserQuery{
+			UserId: *key.ServiceAccountId,
+			OrgId:  key.OrgId,
+		}
+
+		if err := hs.SQLStore.GetSignedInUser(c.Req.Context(), query); err != nil {
+			return nil, err
+		}
+
+		c.IsSignedIn = true
+		c.OrgRole = key.Role
+		c.ApiKeyId = key.Id
+		c.OrgId = key.OrgId
+		c.IsSignedIn = true
+		c.SignedInUser = query.Result
+	}
+
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	hasEditPerm := hasAccess(hs.editorInAnyFolder, ac.EvalAny(ac.EvalPermission(dashboards.ActionDashboardsCreate), ac.EvalPermission(dashboards.ActionFoldersCreate)))
 
