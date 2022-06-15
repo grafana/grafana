@@ -93,6 +93,9 @@ func (c *Client) QueryResource(ctx context.Context, req *backend.CallResourceReq
 		return nil, err
 	}
 	reqUrlParsed, err := url.Parse(req.URL)
+	if err != nil {
+		return nil, err
+	}
 
 	baseUrlParsed.Path = path.Join(baseUrlParsed.Path, req.Path)
 	baseUrlParsed.RawQuery = reqUrlParsed.RawQuery
