@@ -164,7 +164,6 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 		loggedInUserScenarioWithRole(t,
 			"Should gracefully delete local snapshot when remote snapshot has already been removed when calling DELETE on",
 			"DELETE", "/api/snapshots/12345", "/api/snapshots/:key", models.ROLE_EDITOR, func(sc *scenarioContext) {
-
 				var writeErr error
 				ts := setupRemoteServer(func(rw http.ResponseWriter, req *http.Request) {
 					rw.WriteHeader(500)
