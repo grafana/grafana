@@ -64,7 +64,7 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardAsFormProps> = ({
       await validationSrv.validateNewDashboardName(getFormValues().$folder.id, dashboardName);
       return true;
     } catch (e) {
-      return e.message;
+      return e instanceof Error ? e.message : 'Dashboard name is invalid';
     }
   };
 

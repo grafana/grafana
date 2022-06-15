@@ -73,6 +73,16 @@ type MetricRequest struct {
 	HTTPRequest *http.Request `json:"-"`
 }
 
+func (mr *MetricRequest) CloneWithQueries(queries []*simplejson.Json) MetricRequest {
+	return MetricRequest{
+		From:        mr.From,
+		To:          mr.To,
+		Queries:     queries,
+		Debug:       mr.Debug,
+		HTTPRequest: mr.HTTPRequest,
+	}
+}
+
 func GetGravatarUrl(text string) string {
 	if setting.DisableGravatar {
 		return setting.AppSubUrl + "/public/img/user_profile.png"

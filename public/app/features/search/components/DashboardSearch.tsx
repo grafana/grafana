@@ -8,6 +8,7 @@ import { CustomScrollbar, IconButton, stylesFactory, useStyles2, useTheme2 } fro
 
 import { SEARCH_PANELS_LOCAL_STORAGE_KEY } from '../constants';
 import { useDashboardSearch } from '../hooks/useDashboardSearch';
+import { useKeyNavigationListener } from '../hooks/useSearchKeyboardSelection';
 import { useSearchQuery } from '../hooks/useSearchQuery';
 import { SearchView } from '../page/components/SearchView';
 
@@ -42,7 +43,10 @@ function DashboardSearchNew({ onCloseSearch }: Props) {
     e.preventDefault();
     setInputValue(e.currentTarget.value);
   };
+
   useDebounce(() => onQueryChange(inputValue), 200, [inputValue]);
+
+  const { onKeyDown, keyboardEvents } = useKeyNavigationListener();
 
   return (
     <div tabIndex={0} className={styles.overlay}>
@@ -54,6 +58,7 @@ function DashboardSearchNew({ onCloseSearch }: Props) {
               placeholder={includePanels ? 'Search dashboards and panels by name' : 'Search dashboards by name'}
               value={inputValue}
               onChange={onSearchQueryChange}
+              onKeyDown={onKeyDown}
               tabIndex={0}
               spellCheck={false}
               className={styles.input}
@@ -74,6 +79,7 @@ function DashboardSearchNew({ onCloseSearch }: Props) {
             queryText={query.query}
             includePanels={includePanels!}
             setIncludePanels={setIncludePanels}
+            keyboardEvents={keyboardEvents}
           />
         </div>
       </div>

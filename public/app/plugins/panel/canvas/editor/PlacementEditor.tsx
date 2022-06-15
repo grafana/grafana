@@ -4,8 +4,8 @@ import { Subject } from 'rxjs';
 
 import { SelectableValue, StandardEditorProps } from '@grafana/data';
 import { Field, HorizontalGroup, InlineField, InlineFieldRow, Select, VerticalGroup } from '@grafana/ui';
+import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 import { HorizontalConstraint, Placement, VerticalConstraint } from 'app/features/canvas';
-import { NumberInput } from 'app/features/dimensions/editors/NumberInput';
 
 import { PanelOptions } from '../models.gen';
 

@@ -58,15 +58,18 @@ import (
 // 400: badRequestError
 // 500: internalServerError
 
-// swagger:parameters getAlertByID pauseAlert
-type AlertIDParam struct {
+// swagger:parameters getAlertByID
+type GetAlertByIDParams struct {
 	// in:path
 	// required:true
 	AlertID string `json:"alert_id"`
 }
 
 // swagger:parameters pauseAlert
-type PauseAlertParam struct {
+type PauseAlertParams struct {
+	// in:path
+	// required:true
+	AlertID string `json:"alert_id"`
 	// in:body
 	// required:true
 	Body dtos.PauseAlertCommand `json:"body"`
@@ -122,13 +125,13 @@ type GetAlertsParams struct {
 }
 
 // swagger:parameters testAlert
-type TestAlertParam struct {
+type TestAlertParams struct {
 	// in:body
 	Body dtos.AlertTestCommand `json:"body"`
 }
 
 // swagger:parameters getDashboardStates
-type GetDashboardStatesParam struct {
+type GetDashboardStatesParams struct {
 	// in:query
 	// required: true
 	DashboardID int64 `json:"dashboardId"`

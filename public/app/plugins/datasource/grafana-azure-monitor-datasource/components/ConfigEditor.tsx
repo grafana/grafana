@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 
 import { DataSourcePluginOptionsEditorProps, SelectableValue, updateDatasourcePluginOption } from '@grafana/data';
-import { getBackendSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import { getBackendSrv, getTemplateSrv, isFetchError, TemplateSrv } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 
 import ResponseParser from '../azure_monitor/response_parser';
@@ -70,13 +70,15 @@ export class ConfigEditor extends PureComponent<Props, State> {
       this.setState({ error: undefined });
       return ResponseParser.parseSubscriptionsForSelect(result);
     } catch (err) {
-      this.setState({
-        error: {
-          title: 'Error requesting subscriptions',
-          description: 'Could not request subscriptions from Azure. Check your credentials and try again.',
-          details: err?.data?.message,
-        },
-      });
+      if (isFetchError(err)) {
+        this.setState({
+          error: {
+            title: 'Error requesting subscriptions',
+            description: 'Could not request subscriptions from Azure. Check your credentials and try again.',
+            details: err?.data?.message,
+          },
+        });
+      }
       return Promise.resolve([]);
     }
   };
