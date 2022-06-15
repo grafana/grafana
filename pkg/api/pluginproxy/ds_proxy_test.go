@@ -37,8 +37,7 @@ import (
 func TestDataSourceProxy_routeRule(t *testing.T) {
 	cfg := &setting.Cfg{}
 	httpClientProvider := httpclient.NewProvider()
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
+	tracer := tracing.InitializeTracerForTest()
 
 	t.Run("Plugin with routes", func(t *testing.T) {
 		routes := []*plugins.Route{
@@ -628,8 +627,7 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 		}, ds
 	}
 
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
+	tracer := tracing.InitializeTracerForTest()
 
 	t.Run("When response header Set-Cookie is not set should remove proxied Set-Cookie header", func(t *testing.T) {
 		ctx, ds := setUp(t)
@@ -765,13 +763,12 @@ func TestNewDataSourceProxy_InvalidURL(t *testing.T) {
 		Url:  "://host/root",
 	}
 	cfg := &setting.Cfg{}
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
+	tracer := tracing.InitializeTracerForTest()
 	var routes []*plugins.Route
 	secretsStore := kvstore.SetupTestService(t)
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	dsService := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
-	_, err = NewDataSourceProxy(&ds, routes, &ctx, "api/method", cfg, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer)
+	_, err := NewDataSourceProxy(&ds, routes, &ctx, "api/method", cfg, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer)
 	require.Error(t, err)
 	assert.True(t, strings.HasPrefix(err.Error(), `validation of data source URL "://host/root" failed`))
 }
@@ -786,14 +783,13 @@ func TestNewDataSourceProxy_ProtocolLessURL(t *testing.T) {
 		Url:  "127.0.01:5432",
 	}
 	cfg := &setting.Cfg{}
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
+	tracer := tracing.InitializeTracerForTest()
 
 	var routes []*plugins.Route
 	secretsStore := kvstore.SetupTestService(t)
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	dsService := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
-	_, err = NewDataSourceProxy(&ds, routes, &ctx, "api/method", cfg, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer)
+	_, err := NewDataSourceProxy(&ds, routes, &ctx, "api/method", cfg, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer)
 
 	require.NoError(t, err)
 }
@@ -804,8 +800,7 @@ func TestNewDataSourceProxy_MSSQL(t *testing.T) {
 		Context:      &web.Context{},
 		SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_EDITOR},
 	}
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
+	tracer := tracing.InitializeTracerForTest()
 
 	tcs := []struct {
 		description string
@@ -858,8 +853,7 @@ func getDatasourceProxiedRequest(t *testing.T, ctx *models.ReqContext, cfg *sett
 		Type: "custom",
 		Url:  "http://host/root/",
 	}
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
+	tracer := tracing.InitializeTracerForTest()
 
 	var routes []*plugins.Route
 	secretsStore := kvstore.SetupTestService(t)
@@ -978,8 +972,7 @@ func createAuthTest(t *testing.T, secretsStore kvstore.SecretsKVStore, dsType st
 
 func runDatasourceAuthTest(t *testing.T, secretsService secrets.Service, secretsStore kvstore.SecretsKVStore, cfg *setting.Cfg, test *testCase) {
 	ctx := &models.ReqContext{}
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
+	tracer := tracing.InitializeTracerForTest()
 
 	var routes []*plugins.Route
 	dsService := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
@@ -1011,8 +1004,7 @@ func Test_PathCheck(t *testing.T) {
 			Method:  http.MethodGet,
 		},
 	}
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
+	tracer := tracing.InitializeTracerForTest()
 
 	setUp := func() (*models.ReqContext, *http.Request) {
 		req, err := http.NewRequest("GET", "http://localhost/asd", nil)
