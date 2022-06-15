@@ -1,6 +1,8 @@
 package orgimpl
 
 import (
+	"context"
+
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -10,42 +12,52 @@ import (
 const MainOrgName = "Main Org."
 
 type store interface {
-	CreateIsh(*org.Org) (int64, error)
-	Get(int64) (*org.Org, error)
+	CreateIsh(context.Context, *org.Org) (int64, error)
+	Get(context.Context, int64) (*org.Org, error)
 }
 
 type sqlStore struct {
-	db   db.DB
-	sess *sqlstore.DBSession
+	db db.DB
 }
 
-func (ss *sqlStore) Get(orgID int64) (*org.Org, error) {
+func (ss *sqlStore) Get(ctx context.Context, orgID int64) (*org.Org, error) {
 	var orga org.Org
-	has, err := ss.sess.Where("id=?", orgID).Get(&orga)
+	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		has, err := sess.Where("id=?", orgID).Get(&orga)
+		if err != nil {
+			return err
+		}
+		if !has {
+			return org.ErrOrgNotFound
+		}
+		return nil
+	})
 	if err != nil {
 		return nil, err
-	}
-	if !has {
-		return nil, org.ErrOrgNotFound
 	}
 	return &orga, nil
 }
 
-func (ss *sqlStore) CreateIsh(org *org.Org) (int64, error) {
-	if org.ID != 0 {
-		if _, err := ss.sess.InsertId(&org); err != nil {
-			return 0, err
+func (ss *sqlStore) CreateIsh(ctx context.Context, org *org.Org) (int64, error) {
+	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		if org.ID != 0 {
+			if _, err := sess.InsertId(&org); err != nil {
+				return err
+			}
+		} else {
+			if _, err := sess.InsertOne(&org); err != nil {
+				return err
+			}
 		}
-	} else {
-		if _, err := ss.sess.InsertOne(&org); err != nil {
-			return 0, err
-		}
-	}
-
-	ss.sess.PublishAfterCommit(&events.OrgCreated{
-		Timestamp: org.Created,
-		Id:        org.ID,
-		Name:      org.Name,
+		sess.PublishAfterCommit(&events.OrgCreated{
+			Timestamp: org.Created,
+			Id:        org.ID,
+			Name:      org.Name,
+		})
+		return nil
 	})
+	if err != nil {
+		return 0, err
+	}
 	return org.ID, nil
 }

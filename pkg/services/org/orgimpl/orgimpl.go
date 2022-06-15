@@ -1,6 +1,7 @@
 package orgimpl
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -13,24 +14,26 @@ import (
 
 type Service struct {
 	store store
+	cfg   *setting.Cfg
 }
 
-func ProvideService(db db.DB) org.Service {
+func ProvideService(db db.DB, cfg *setting.Cfg) org.Service {
 	return &Service{
 		store: &sqlStore{
 			db: db,
 		},
+		cfg: cfg,
 	}
 }
 
-func (s *Service) GetIDForNewUser(cmd user.CreateUserCommand) (int64, error) {
+func (s *Service) GetIDForNewUser(ctx context.Context, cmd user.CreateUserCommand) (int64, error) {
 	var orga org.Org
 	if cmd.SkipOrgSetup {
 		return -1, nil
 	}
 
 	if setting.AutoAssignOrg && cmd.OrgID != 0 {
-		_, err := s.store.Get(cmd.OrgID)
+		_, err := s.store.Get(ctx, cmd.OrgID)
 		if err != nil {
 			return -1, err
 		}
@@ -43,7 +46,7 @@ func (s *Service) GetIDForNewUser(cmd user.CreateUserCommand) (int64, error) {
 	}
 
 	if setting.AutoAssignOrg {
-		orga, err := s.store.Get(cmd.OrgID)
+		orga, err := s.store.Get(ctx, int64(s.cfg.AutoAssignOrgId))
 		if err != nil {
 			return 0, err
 		}
@@ -65,5 +68,5 @@ func (s *Service) GetIDForNewUser(cmd user.CreateUserCommand) (int64, error) {
 	orga.Created = time.Now()
 	orga.Updated = time.Now()
 
-	return s.store.CreateIsh(&orga)
+	return s.store.CreateIsh(ctx, &orga)
 }

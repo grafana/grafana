@@ -17,16 +17,18 @@ type Service struct {
 	orgService org.Service
 }
 
-func ProvideService(db db.DB) user.Service {
+func ProvideService(db db.DB, orgService org.Service) user.Service {
 	return &Service{
 		store: &sqlStore{
 			db: db,
 		},
+		orgService: orgService,
 	}
 }
 
 func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
-	orgID, err := s.orgService.GetIDForNewUser(*cmd)
+	orgID, err := s.orgService.GetIDForNewUser(ctx, *cmd)
+	cmd.OrgID = orgID
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +36,7 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 	if cmd.Email == "" {
 		cmd.Email = cmd.Login
 	}
-	cmd.OrgID = orgID
+
 	usr, err := s.store.Get(ctx, cmd)
 	if err != nil {
 		return nil, err
@@ -59,7 +61,7 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 		usr.Password = encodedPassword
 	}
 
-	err = s.store.Create(ctx, cmd)
+	err = s.store.Create(ctx, usr)
 	if err != nil {
 		return nil, err
 	}

@@ -69,6 +69,7 @@ import (
 	ngmetrics "github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	plugindashboardsservice "github.com/grafana/grafana/pkg/services/plugindashboards/service"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
@@ -267,6 +268,7 @@ var wireBasicSet = wire.NewSet(
 	starimpl.ProvideService,
 	dashverimpl.ProvideService,
 	userimpl.ProvideService,
+	orgimpl.ProvideService,
 )
 
 var wireSet = wire.NewSet(
