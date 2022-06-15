@@ -251,10 +251,25 @@ export function prepConfig(opts: PrepConfigOpts) {
               ? uPlot.rangeLog(dataMin, dataMax, (yScale.log ?? 2) as unknown as uPlot.Scale.LogBase, true)
               : [dataMin, dataMax];
 
-            return [yAxisConfig.min ?? scaleMin, yAxisConfig.max ?? scaleMax];
+            let { min: explicitMin, max: explicitMax } = yAxisConfig;
+
+            if (shouldUseLogScale) {
+              // guard against <= 0
+              if (explicitMin != null && explicitMin > 0) {
+                scaleMin = explicitMin;
+              }
+
+              if (explicitMax != null && explicitMax > 0) {
+                scaleMax = explicitMax;
+              }
+            }
+
+            return [scaleMin, scaleMax];
           }
         : // dense and ordinal only have one of yMin|yMax|y, so expand range by one cell in the direction of le/ge/unknown
           (u, dataMin, dataMax) => {
+            let { min: explicitMin, max: explicitMax } = yAxisConfig;
+
             // logarithmic expansion
             if (shouldUseLogScale) {
               let yExp = u.scales['y'].log!;
@@ -291,6 +306,15 @@ export function prepConfig(opts: PrepConfigOpts) {
                 dataMin /= yExp / 2;
                 dataMax *= yExp / 2;
               }
+
+              // guard against <= 0
+              if (explicitMin != null && explicitMin > 0) {
+                dataMin = explicitMin;
+              }
+
+              if (explicitMax != null && explicitMax > 0) {
+                dataMax = explicitMax;
+              }
             }
             // linear expansion
             else {
@@ -312,8 +336,12 @@ export function prepConfig(opts: PrepConfigOpts) {
               } else {
                 // how to expand scale range if inferred non-regular or log buckets?
               }
+
+              dataMin = explicitMin ?? dataMin;
+              dataMax = explicitMax ?? dataMax;
             }
-            return [yAxisConfig.min ?? dataMin, yAxisConfig.max ?? dataMax];
+
+            return [dataMin, dataMax];
           },
   });
 

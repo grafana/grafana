@@ -48,7 +48,8 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
   .setPanelOptions((builder, context) => {
     const opts = context.options ?? defaultPanelOptions;
 
-    let isOrdinalY: boolean | undefined = undefined;
+    let isOrdinalY = false;
+
     try {
       const v = prepareHeatmapData({ series: context.data } as PanelData, opts, config.theme2);
       isOrdinalY = readHeatmapScanlinesCustomMeta(v.heatmap).yOrdinalDisplay != null;
@@ -89,7 +90,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       },
     });
 
-    if (isOrdinalY !== true) {
+    if (!isOrdinalY) {
       // if undefined, then show the min+max
       builder
         .addNumberInput({
