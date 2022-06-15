@@ -18,11 +18,11 @@ import * as React from 'react';
 import IoAlert from 'react-icons/lib/io/alert';
 import IoArrowRightA from 'react-icons/lib/io/arrow-right-a';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, TraceKeyValuePair } from '@grafana/data';
 import { stylesFactory, withTheme2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';
-import { SpanLinkFunc, TNil } from '../types';
+import { SpanBarOptions, SpanLinkFunc, TNil } from '../types';
 import { SpanLinks } from '../types/links';
 import { TraceSpan } from '../types/trace';
 
@@ -295,6 +295,7 @@ type SpanBarRowProps = {
   className?: string;
   theme: GrafanaTheme2;
   color: string;
+  spanBarOptions: SpanBarOptions | undefined;
   columnDivision: number;
   isChildrenExpanded: boolean;
   isDetailExpanded: boolean;
@@ -357,6 +358,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
     const {
       className,
       color,
+      spanBarOptions,
       columnDivision,
       isChildrenExpanded,
       isDetailExpanded,
@@ -383,7 +385,19 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
       operationName,
       process: { serviceName },
     } = span;
-    const label = formatDuration(duration);
+
+    let label = ''; //formatDuration(duration);
+    const tagSetting = spanBarOptions?.tag ?? '';
+    if (tagSetting !== '' && span.tags) {
+      const foundObj = span.tags.filter((tag: TraceKeyValuePair) => {
+        return tag.key === tagSetting;
+      });
+
+      if (foundObj && foundObj.length > 0) {
+        label = `(${foundObj[0].value.toString()})`;
+      }
+    }
+
     const viewBounds = getViewedBounds(span.startTime, span.startTime + span.duration);
     const viewStart = viewBounds.start;
     const viewEnd = viewBounds.end;
@@ -478,7 +492,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
                 )}
               </span>
               <small className={styles.endpointName}>{rpc ? rpc.operationName : operationName}</small>
-              <small className={styles.endpointName}> | {label}</small>
+              <small className={styles.endpointName}> {label}</small>
             </a>
             {createSpanLink &&
               (() => {
