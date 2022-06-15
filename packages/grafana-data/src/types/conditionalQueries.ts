@@ -8,7 +8,7 @@ export interface QueryConditionExecutionContext {
   variables: VariableModel[];
 }
 
-export interface ConditionInfo<TOptions = any, TArgs = any> extends RegistryItemWithOptions {
+export interface ConditionInfo<TOptions = any> extends RegistryItemWithOptions {
   type: QueryConditionType;
   /**
    * Given condition configuration returns boolean representing condition being met or not

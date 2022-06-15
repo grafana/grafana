@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { QueryConditionID, GrafanaTheme2, QueryConditionConfig, SelectableValue } from '@grafana/data';
-import { Field, useStyles2, ValuePicker } from '@grafana/ui';
+import { Icon, Tooltip, useStyles2, ValuePicker } from '@grafana/ui';
 
 import { conditionsRegistry } from './ConditionsRegistry';
 
@@ -24,14 +24,18 @@ const QueryConditionRow: React.FC<QueryConditionRowProps> = ({ condition, onChan
   const EditorComponent = conditionDef.editor;
 
   return (
-    <div className={styles.condition}>
-      <Field
-        style={{ marginBottom: 0 }}
-        label={`Condition: ${conditionDef.name}`}
-        description={conditionDef.description}
-      >
+    <div className={styles.conditionWrapper}>
+      <div className={styles.header}>
+        <span className={styles.name}>Condition: {conditionDef.name}</span>
+        {conditionDef.description && (
+          <Tooltip content={conditionDef.description}>
+            <Icon name="info-circle" />
+          </Tooltip>
+        )}
+      </div>
+      <div className={styles.conditionEditor}>
         <EditorComponent onChange={onChange} options={condition.options} />
-      </Field>
+      </div>
     </div>
   );
 };
@@ -79,10 +83,24 @@ const getStyles = (theme: GrafanaTheme2) => {
     wrapper: css`
       margin-bottom: ${theme.spacing(1)};
     `,
-    condition: css`
-      padding: ${theme.spacing(1)};
+    header: css`
+      border-bottom: 1px solid ${theme.colors.border.weak};
+      padding: ${theme.spacing(0.5, 1)};
+      font-size: ${theme.typography.body.fontSize};
+      display: flex;
+      align-items: center;
+    `,
+    name: css`
+      margin-right: ${theme.spacing(1)};
+    `,
+    conditionWrapper: css`
+      border-radius: ${theme.shape.borderRadius(1)};
+      border: 1px solid ${theme.colors.border.weak};
       background: ${theme.colors.background.secondary};
       margin-bottom: ${theme.spacing(0.5)};
+    `,
+    conditionEditor: css`
+      padding: ${theme.spacing(1, 1, 0, 1)};
     `,
   };
 };
