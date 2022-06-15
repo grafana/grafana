@@ -4799,7 +4799,7 @@ __metadata:
     react-table: 7.8.0
     react-test-renderer: 17.0.2
     react-transition-group: 4.4.2
-    react-use: 17.3.2
+    react-use: 17.4.0
     react-window: 1.8.7
     rimraf: 3.0.2
     rollup: 2.74.1
@@ -20870,7 +20870,7 @@ __metadata:
     react-table: 7.8.0
     react-test-renderer: 17.0.2
     react-transition-group: 4.4.2
-    react-use: 17.3.2
+    react-use: 17.4.0
     react-virtualized-auto-sizer: 1.0.6
     react-window: 1.8.7
     react-window-infinite-loader: ^1.0.7
@@ -31177,9 +31177,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-use@npm:17.3.2":
-  version: 17.3.2
-  resolution: "react-use@npm:17.3.2"
+"react-use@npm:17.4.0":
+  version: 17.4.0
+  resolution: "react-use@npm:17.4.0"
   dependencies:
     "@types/js-cookie": ^2.2.6
     "@xobotyi/scrollbar-width": ^1.9.5
@@ -31196,9 +31196,9 @@ __metadata:
     ts-easing: ^0.2.0
     tslib: ^2.1.0
   peerDependencies:
-    react: ^16.8.0  || ^17.0.0
-    react-dom: ^16.8.0  || ^17.0.0
-  checksum: 7379460f51b78c5375f8e039f59305c55efb75205d49a18d579154fcccfddf98fa9460a734e7d4cf3b1be8f1c15ec86feeab0d846fbaaa1fea425da83aaf117c
+    react: ^16.8.0  || ^17.0.0 || ^18.0.0
+    react-dom: ^16.8.0  || ^17.0.0 || ^18.0.0
+  checksum: 0889da919b49a186de375ec15d2778b954ae981c523acd17dd496e4a4da7b6190efe7993491e1b85fdd6de3e745d08a4eaba4caa35408d570b5f1de550f35d11
   languageName: node
   linkType: hard
 
