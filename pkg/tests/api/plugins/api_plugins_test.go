@@ -95,7 +95,11 @@ func TestPlugins(t *testing.T) {
 				if !same {
 					if updateSnapshotFlag {
 						t.Log("updating snapshot results")
-						updateRespSnapshot(t, tc.expRespPath, string(b))
+						var prettyJSON bytes.Buffer
+						if err := json.Indent(&prettyJSON, b, "", "  "); err != nil {
+							t.FailNow()
+						}
+						updateRespSnapshot(t, tc.expRespPath, prettyJSON.String())
 					}
 					t.FailNow()
 				}
