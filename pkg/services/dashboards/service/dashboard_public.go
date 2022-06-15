@@ -9,8 +9,8 @@ import (
 )
 
 // Gets public dashboard via generated Uid
-func (dr *DashboardServiceImpl) GetPublicDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error) {
-	pubdash, d, err := dr.dashboardStore.GetPublicDashboard(dashboardUid)
+func (dr *DashboardServiceImpl) GetPublicDashboard(ctx context.Context, uid string) (*models.Dashboard, error) {
+	pubdash, d, err := dr.dashboardStore.GetPublicDashboard(ctx, uid)
 
 	if err != nil {
 		return nil, err
@@ -62,12 +62,9 @@ func (dr *DashboardServiceImpl) SavePublicDashboardConfig(ctx context.Context, d
 	return pubdash, nil
 }
 
-func (dr *DashboardServiceImpl) BuildPublicDashboardMetricRequest(ctx context.Context, publicDashboardUid string, panelId int64) (dtos.MetricRequest, error) {
-	publicDashboard, dashboard, err := dr.dashboardStore.GetPublicDashboard(publicDashboardUid)
-	if err != nil {
-		return dtos.MetricRequest{}, err
-	}
-
+// BuildPublicDashboardMetricRequest merges public dashboard parameters with
+// dashboard and returns a metrics request to be sent to query backend
+func (dr *DashboardServiceImpl) BuildPublicDashboardMetricRequest(ctx context.Context, dashboard *models.Dashboard, publicDashboard *models.PublicDashboard, panelId int64) (dtos.MetricRequest, error) {
 	if !publicDashboard.IsEnabled {
 		return dtos.MetricRequest{}, models.ErrPublicDashboardNotFound
 	}

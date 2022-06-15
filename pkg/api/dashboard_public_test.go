@@ -18,10 +18,14 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/query"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web/webtest"
 
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
@@ -325,10 +329,14 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 	t.Run("Returns query data when feature toggle is enabled", func(t *testing.T) {
 		server, fakeDashboardService := setup(true)
 
+		fakeDashboardService.On("GetPublicDashboard", mock.Anything, mock.Anything).Return(&models.Dashboard{}, nil)
+		fakeDashboardService.On("GetPublicDashboardConfig", mock.Anything, mock.Anything, mock.Anything).Return(&models.PublicDashboard{}, nil)
+
 		fakeDashboardService.On(
 			"BuildPublicDashboardMetricRequest",
 			mock.Anything,
-			"abc123",
+			mock.Anything,
+			mock.Anything,
 			int64(2),
 		).Return(dtos.MetricRequest{
 			Queries: []*simplejson.Json{
@@ -384,10 +392,13 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 	t.Run("Status code is 500 when the query fails", func(t *testing.T) {
 		server, fakeDashboardService := setup(true)
 
+		fakeDashboardService.On("GetPublicDashboard", mock.Anything, mock.Anything).Return(&models.Dashboard{}, nil)
+		fakeDashboardService.On("GetPublicDashboardConfig", mock.Anything, mock.Anything, mock.Anything).Return(&models.PublicDashboard{}, nil)
 		fakeDashboardService.On(
 			"BuildPublicDashboardMetricRequest",
 			mock.Anything,
-			"abc123",
+			mock.Anything,
+			mock.Anything,
 			int64(2),
 		).Return(dtos.MetricRequest{
 			Queries: []*simplejson.Json{
@@ -421,10 +432,13 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 	t.Run("Status code is 200 when a panel has queries from multiple datasources", func(t *testing.T) {
 		server, fakeDashboardService := setup(true)
 
+		fakeDashboardService.On("GetPublicDashboard", mock.Anything, mock.Anything).Return(&models.Dashboard{}, nil)
+		fakeDashboardService.On("GetPublicDashboardConfig", mock.Anything, mock.Anything, mock.Anything).Return(&models.PublicDashboard{}, nil)
 		fakeDashboardService.On(
 			"BuildPublicDashboardMetricRequest",
 			mock.Anything,
-			"abc123",
+			mock.Anything,
+			mock.Anything,
 			int64(2),
 		).Return(dtos.MetricRequest{
 			Queries: []*simplejson.Json{
@@ -503,4 +517,105 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 		require.NoError(t, resp.Body.Close())
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 	})
+}
+
+func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T) {
+	config := setting.NewCfg()
+	db := sqlstore.InitTestDB(t)
+	scenario := setupHTTPServerWithCfgDb(t, false, false, config, db, db, featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards))
+	scenario.initCtx.SkipCache = true
+	cacheService := service.ProvideCacheService(localcache.ProvideService(), db)
+	qds := query.ProvideService(
+		nil,
+		cacheService,
+		nil,
+		&fakePluginRequestValidator{},
+		&fakeDatasources.FakeDataSourceService{},
+		&fakePluginClient{
+			QueryDataHandlerFunc: func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+				resp := backend.Responses{
+					"A": backend.DataResponse{
+						Frames: []*data.Frame{{}},
+					},
+				}
+				return &backend.QueryDataResponse{Responses: resp}, nil
+			},
+		},
+		&fakeOAuthTokenService{},
+	)
+	scenario.hs.queryDataService = qds
+
+	_ = db.AddDataSource(context.Background(), &models.AddDataSourceCommand{
+		Uid:      "ds1",
+		OrgId:    1,
+		Name:     "laban",
+		Type:     models.DS_MYSQL,
+		Access:   models.DS_ACCESS_DIRECT,
+		Url:      "http://test",
+		Database: "site",
+		ReadOnly: true,
+	})
+
+	// Create Dashboard
+	saveDashboardCmd := models.SaveDashboardCommand{
+		OrgId:    1,
+		FolderId: 1,
+		IsFolder: false,
+		Dashboard: simplejson.NewFromAny(map[string]interface{}{
+			"id":    nil,
+			"title": "test",
+			"panels": []map[string]interface{}{
+				{
+					"id": 1,
+					"targets": []map[string]interface{}{
+						{
+							"datasource": map[string]string{
+								"type": "mysql",
+								"uid":  "ds1",
+							},
+							"refId": "A",
+						},
+					},
+				},
+			},
+		}),
+	}
+	dashboard, _ := scenario.dashboardsStore.SaveDashboard(saveDashboardCmd)
+
+	// Create public dashboard
+	publicDashboard := models.PublicDashboard{IsEnabled: true, DashboardUid: dashboard.Uid, OrgId: dashboard.OrgId}
+	savePubDashboardCmd := models.SavePublicDashboardConfigCommand{DashboardUid: dashboard.Uid, OrgId: dashboard.OrgId, PublicDashboard: publicDashboard}
+	pubdash, _ := scenario.dashboardsStore.SavePublicDashboardConfig(savePubDashboardCmd)
+
+	response := callAPI(
+		scenario.server,
+		http.MethodPost,
+		fmt.Sprintf("/api/public/dashboards/%s/panels/1/query", pubdash.Uid),
+		strings.NewReader(`{}`),
+		t,
+	)
+
+	require.Equal(t, http.StatusOK, response.Code)
+	bodyBytes, err := ioutil.ReadAll(response.Body)
+	require.NoError(t, err)
+	require.JSONEq(
+		t,
+		`{
+				"results": {
+					"A": {
+						"frames": [
+							{
+								"data": {
+									"values": []
+								},
+								"schema": {
+									"fields": []
+								}
+							}
+						]
+					}
+				}
+			}`,
+		string(bodyBytes),
+	)
 }

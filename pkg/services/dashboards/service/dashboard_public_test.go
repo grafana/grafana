@@ -165,7 +165,7 @@ func TestSavePublicDashboard(t *testing.T) {
 func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
 	dashboardStore := database.ProvideDashboardStore(sqlStore)
-	dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
+	publicDashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
 	nonPublicDashboard := insertTestDashboard(t, dashboardStore, "testNonPublicDashie", 1, 0, true)
 
 	service := &DashboardServiceImpl{
@@ -174,8 +174,8 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 	}
 
 	dto := &dashboards.SavePublicDashboardConfigDTO{
-		DashboardUid: dashboard.Uid,
-		OrgId:        dashboard.OrgId,
+		DashboardUid: publicDashboard.Uid,
+		OrgId:        publicDashboard.OrgId,
 		PublicDashboard: &models.PublicDashboard{
 			IsEnabled:    true,
 			DashboardUid: "NOTTHESAME",
@@ -184,7 +184,7 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 		},
 	}
 
-	pubdash, err := service.SavePublicDashboardConfig(context.Background(), dto)
+	publicDashboardPD, err := service.SavePublicDashboardConfig(context.Background(), dto)
 	require.NoError(t, err)
 
 	nonPublicDto := &dashboards.SavePublicDashboardConfigDTO{
@@ -198,13 +198,14 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 		},
 	}
 
-	_, err = service.SavePublicDashboardConfig(context.Background(), nonPublicDto)
+	nonPublicDashboardPD, err := service.SavePublicDashboardConfig(context.Background(), nonPublicDto)
 	require.NoError(t, err)
 
 	t.Run("extracts queries from provided dashboard", func(t *testing.T) {
 		reqDTO, err := service.BuildPublicDashboardMetricRequest(
 			context.Background(),
-			pubdash.Uid,
+			publicDashboard,
+			publicDashboardPD,
 			1,
 		)
 		require.NoError(t, err)
@@ -239,7 +240,8 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 	t.Run("returns an error when panel missing", func(t *testing.T) {
 		_, err := service.BuildPublicDashboardMetricRequest(
 			context.Background(),
-			pubdash.Uid,
+			publicDashboard,
+			publicDashboardPD,
 			49,
 		)
 
@@ -249,7 +251,8 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 	t.Run("returns an error when dashboard not public", func(t *testing.T) {
 		_, err := service.BuildPublicDashboardMetricRequest(
 			context.Background(),
-			nonPublicDashboard.Uid,
+			nonPublicDashboard,
+			nonPublicDashboardPD,
 			2,
 		)
 		require.ErrorContains(t, err, "Public dashboard not found")
@@ -267,19 +270,19 @@ func insertTestDashboard(t *testing.T, dashboardStore *database.DashboardStore, 
 			"id":    nil,
 			"title": title,
 			"tags":  tags,
-			"panels": []map[string]interface{}{
-				{
+			"panels": []interface{}{
+				map[string]interface{}{
 					"id": 1,
-					"targets": []map[string]interface{}{
-						{
-							"datasource": map[string]string{
+					"targets": []interface{}{
+						map[string]interface{}{
+							"datasource": map[string]interface{}{
 								"type": "mysql",
 								"uid":  "ds1",
 							},
 							"refId": "A",
 						},
-						{
-							"datasource": map[string]string{
+						map[string]interface{}{
+							"datasource": map[string]interface{}{
 								"type": "prometheus",
 								"uid":  "ds2",
 							},
@@ -287,11 +290,11 @@ func insertTestDashboard(t *testing.T, dashboardStore *database.DashboardStore, 
 						},
 					},
 				},
-				{
+				map[string]interface{}{
 					"id": 2,
-					"targets": []map[string]interface{}{
-						{
-							"datasource": map[string]string{
+					"targets": []interface{}{
+						map[string]interface{}{
+							"datasource": map[string]interface{}{
 								"type": "mysql",
 								"uid":  "ds3",
 							},

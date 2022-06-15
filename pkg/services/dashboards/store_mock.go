@@ -298,13 +298,13 @@ func (_m *FakeDashboardStore) GetProvisionedDataByDashboardUID(orgID int64, dash
 	return r0, r1
 }
 
-// GetPublicDashboard provides a mock function with given fields: uid
-func (_m *FakeDashboardStore) GetPublicDashboard(uid string) (*models.PublicDashboard, *models.Dashboard, error) {
-	ret := _m.Called(uid)
+// GetPublicDashboard provides a mock function with given fields: ctx, uid
+func (_m *FakeDashboardStore) GetPublicDashboard(ctx context.Context, uid string) (*models.PublicDashboard, *models.Dashboard, error) {
+	ret := _m.Called(ctx, uid)
 
 	var r0 *models.PublicDashboard
-	if rf, ok := ret.Get(0).(func(string) *models.PublicDashboard); ok {
-		r0 = rf(uid)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *models.PublicDashboard); ok {
+		r0 = rf(ctx, uid)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*models.PublicDashboard)
@@ -312,8 +312,8 @@ func (_m *FakeDashboardStore) GetPublicDashboard(uid string) (*models.PublicDash
 	}
 
 	var r1 *models.Dashboard
-	if rf, ok := ret.Get(1).(func(string) *models.Dashboard); ok {
-		r1 = rf(uid)
+	if rf, ok := ret.Get(1).(func(context.Context, string) *models.Dashboard); ok {
+		r1 = rf(ctx, uid)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(*models.Dashboard)
@@ -321,8 +321,8 @@ func (_m *FakeDashboardStore) GetPublicDashboard(uid string) (*models.PublicDash
 	}
 
 	var r2 error
-	if rf, ok := ret.Get(2).(func(string) error); ok {
-		r2 = rf(uid)
+	if rf, ok := ret.Get(2).(func(context.Context, string) error); ok {
+		r2 = rf(ctx, uid)
 	} else {
 		r2 = ret.Error(2)
 	}

@@ -10,14 +10,14 @@ import (
 )
 
 // retrieves public dashboard configuration
-func (d *DashboardStore) GetPublicDashboard(uid string) (*models.PublicDashboard, *models.Dashboard, error) {
+func (d *DashboardStore) GetPublicDashboard(ctx context.Context, uid string) (*models.PublicDashboard, *models.Dashboard, error) {
 	if uid == "" {
 		return nil, nil, models.ErrPublicDashboardIdentifierNotSet
 	}
 
 	// get public dashboard
 	pdRes := &models.PublicDashboard{Uid: uid}
-	err := d.sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		has, err := sess.Get(pdRes)
 		if err != nil {
 			return err
