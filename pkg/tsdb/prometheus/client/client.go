@@ -94,7 +94,7 @@ func (c *Client) QueryResource(ctx context.Context, req *backend.CallResourceReq
 	}
 	reqUrlParsed, err := url.Parse(req.URL)
 
-	baseUrlParsed.Path = path.Join(baseUrlParsed.Path, req.URL)
+	baseUrlParsed.Path = path.Join(baseUrlParsed.Path, req.Path)
 	baseUrlParsed.RawQuery = reqUrlParsed.RawQuery
 
 	return c.fetch(ctx, req.Method, baseUrlParsed, nil, req.Body)
