@@ -2,6 +2,8 @@ package shorturls
 
 import (
 	"context"
+	"path"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -36,7 +38,7 @@ func (s ShortURLService) GetShortURLByUID(ctx context.Context, user *models.Sign
 			return err
 		}
 		if !exists {
-			return models.ErrShortURLNotFound
+			return models.ErrShortURLNotFound.Errorf("short URL not found")
 		}
 
 		return nil
@@ -60,12 +62,21 @@ func (s ShortURLService) UpdateLastSeenAt(ctx context.Context, shortURL *models.
 	})
 }
 
-func (s ShortURLService) CreateShortURL(ctx context.Context, user *models.SignedInUser, path string) (*models.ShortUrl, error) {
+func (s ShortURLService) CreateShortURL(ctx context.Context, user *models.SignedInUser, relPath string) (*models.ShortUrl, error) {
+	relPath = strings.TrimSpace(relPath)
+
+	if path.IsAbs(relPath) {
+		return nil, models.ErrShortURLAbsolutePath.Errorf("expected relative path: %s", relPath)
+	}
+	if strings.Contains(relPath, "../") {
+		return nil, models.ErrShortURLInvalidPath.Errorf("path cannot contain '../': %s", relPath)
+	}
+
 	now := time.Now().Unix()
 	shortURL := models.ShortUrl{
 		OrgId:     user.OrgId,
 		Uid:       util.GenerateShortUID(),
-		Path:      path,
+		Path:      relPath,
 		CreatedBy: user.UserId,
 		CreatedAt: now,
 	}
@@ -75,7 +86,7 @@ func (s ShortURLService) CreateShortURL(ctx context.Context, user *models.Signed
 		return err
 	})
 	if err != nil {
-		return nil, err
+		return nil, models.ErrShortURLInternal.Errorf("failed to insert shorturl: %w", err)
 	}
 
 	return &shortURL, nil
