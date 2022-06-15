@@ -40,8 +40,10 @@ func TestClient(t *testing.T) {
 			}
 			res, err := client.QueryResource(context.Background(), req)
 			defer func() {
-				if err := res.Body.Close(); err != nil {
-					logger.Warn("Error", "err", err)
+				if res != nil && res.Body != nil {
+					if err := res.Body.Close(); err != nil {
+						logger.Warn("Error", "err", err)
+					}
 				}
 			}()
 			require.NoError(t, err)
@@ -63,8 +65,10 @@ func TestClient(t *testing.T) {
 			}
 			res, err := client.QueryResource(context.Background(), req)
 			defer func() {
-				if err := res.Body.Close(); err != nil {
-					logger.Warn("Error", "err", err)
+				if res != nil && res.Body != nil {
+					if err := res.Body.Close(); err != nil {
+						logger.Warn("Error", "err", err)
+					}
 				}
 			}()
 			require.NoError(t, err)
