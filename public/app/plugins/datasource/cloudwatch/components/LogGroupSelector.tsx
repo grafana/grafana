@@ -61,7 +61,7 @@ export const LogGroupSelector: React.FC<LogGroupSelectorProps> = ({
         });
         return logGroups.map(toOption);
       } catch (err) {
-        let errMessage: string = err;
+        let errMessage = err as string;
         if (typeof err !== 'string') {
           try {
             errMessage = JSON.stringify(err);
