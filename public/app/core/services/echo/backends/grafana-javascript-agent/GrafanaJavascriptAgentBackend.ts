@@ -1,13 +1,16 @@
+import { BaseTransport } from '@grafana/agent-core';
 import {
   initializeAgent,
   BrowserConfig,
   ErrorsInstrumentation,
   ConsoleInstrumentation,
   WebVitalsInstrumentation,
+  FetchTransport,
 } from '@grafana/agent-web';
 import { BuildInfo } from '@grafana/data';
 import { EchoBackend, EchoEvent, EchoEventType } from '@grafana/runtime';
 
+import { EchoSrvTransport } from './EchoSrvTransport';
 import { GrafanaJavascriptAgentEchoEvent, User } from './types';
 
 export interface GrafanaJavascriptAgentBackendOptions extends BrowserConfig {
@@ -24,10 +27,17 @@ export class GrafanaJavascriptAgentBackend
 {
   supportedEvents = [EchoEventType.GrafanaJavascriptAgent];
   private agentInstance;
+  transports: BaseTransport[];
 
   constructor(public options: GrafanaJavascriptAgentBackendOptions) {
     // configure instrumentalizations
     const instrumentations = [];
+    this.transports = [];
+
+    if (options.customEndpoint) {
+      this.transports.push(new FetchTransport({ url: options.customEndpoint }));
+    }
+
     if (options.errorInstrumentalizationEnabled) {
       instrumentations.push(new ErrorsInstrumentation());
     }
@@ -44,8 +54,8 @@ export class GrafanaJavascriptAgentBackend
         version: options.buildInfo.version,
         environment: options.buildInfo.env,
       },
-      url: options.customEndpoint || '/log',
       instrumentations,
+      transports: [new EchoSrvTransport()],
     };
     this.agentInstance = initializeAgent(grafanaJavaScriptAgentOptions);
     if (options.user) {
@@ -57,7 +67,8 @@ export class GrafanaJavascriptAgentBackend
   }
 
   addEvent = (e: EchoEvent) => {
-    this.agentInstance.api.pushLog(e.payload);
+    console.log('addEvent is called with: ', e);
+    this.transports.forEach((t) => t.send(e.payload));
   };
 
   // backend will log events to stdout, and at least in case of hosted grafana they will be

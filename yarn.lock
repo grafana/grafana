@@ -20686,6 +20686,7 @@ __metadata:
     "@emotion/css": 11.9.0
     "@emotion/eslint-plugin": 11.7.0
     "@emotion/react": 11.9.0
+    "@grafana/agent-core": ^0.2.0
     "@grafana/agent-web": ^0.2.0
     "@grafana/api-documenter": 7.11.2
     "@grafana/aws-sdk": 0.0.36

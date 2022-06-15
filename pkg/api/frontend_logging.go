@@ -55,11 +55,15 @@ func GrafanaJavascriptAgentLogMessageHandler() frontendLogMessageHandler {
 			return response.Error(http.StatusBadRequest, "bad request data", err)
 		}
 		var ctx = frontendlogging.CtxVector{}
+
+		// Meta object is standard across event types, adding it globally.
 		ctx = event.AddMetaToContext(ctx)
 
 		if event.Logs != nil && len(event.Logs) > 0 {
-			ctx = append(ctx, "original_timestamp", event.Logs[0].Timestamp)
-			grafanaJavascriptAgentLogger.Info(event.Logs[0].Message, ctx...)
+			for _, logEntry := range event.Logs {
+				ctx = append(ctx, "original_timestamp", logEntry.Timestamp)
+				grafanaJavascriptAgentLogger.Info(logEntry.Message, ctx...)
+			}
 		}
 
 		if event.Measurements != nil && len(event.Measurements) > 0 {
