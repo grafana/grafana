@@ -1,24 +1,27 @@
-package sqlstore
+package database
 
 import (
 	"context"
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	sqlstore := InitTestDB(t)
+	sqlstore := sqlstore.InitTestDB(t)
+	dashStore := ProvideStore(sqlstore)
 
 	origSecret := setting.SecretKey
 	setting.SecretKey = "dashboard_snapshot_testing"
@@ -42,12 +45,12 @@ func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 			OrgId:              1,
 		}
 
-		err = sqlstore.CreateDashboardSnapshot(context.Background(), &cmd)
+		err = dashStore.CreateDashboardSnapshot(context.Background(), &cmd)
 		require.NoError(t, err)
 
 		t.Run("Should be able to get snapshot by key", func(t *testing.T) {
 			query := models.GetDashboardSnapshotQuery{Key: "hej"}
-			err := sqlstore.GetDashboardSnapshot(context.Background(), &query)
+			err := dashStore.GetDashboardSnapshot(context.Background(), &query)
 			require.NoError(t, err)
 
 			assert.NotNil(t, query.Result)
@@ -69,7 +72,7 @@ func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 				OrgId:        1,
 				SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_ADMIN},
 			}
-			err := sqlstore.SearchDashboardSnapshots(context.Background(), &query)
+			err := dashStore.SearchDashboardSnapshots(context.Background(), &query)
 			require.NoError(t, err)
 
 			t.Run("Should return all the snapshots", func(t *testing.T) {
@@ -83,7 +86,7 @@ func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 				OrgId:        1,
 				SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_EDITOR, UserId: 1000},
 			}
-			err := sqlstore.SearchDashboardSnapshots(context.Background(), &query)
+			err := dashStore.SearchDashboardSnapshots(context.Background(), &query)
 			require.NoError(t, err)
 
 			t.Run("Should return all the snapshots", func(t *testing.T) {
@@ -97,7 +100,7 @@ func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 				OrgId:        1,
 				SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_EDITOR, UserId: 2},
 			}
-			err := sqlstore.SearchDashboardSnapshots(context.Background(), &query)
+			err := dashStore.SearchDashboardSnapshots(context.Background(), &query)
 			require.NoError(t, err)
 
 			t.Run("Should not return any snapshots", func(t *testing.T) {
@@ -116,7 +119,7 @@ func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 				UserId: 0,
 				OrgId:  1,
 			}
-			err := sqlstore.CreateDashboardSnapshot(context.Background(), &cmd)
+			err := dashStore.CreateDashboardSnapshot(context.Background(), &cmd)
 			require.NoError(t, err)
 
 			t.Run("Should not return any snapshots", func(t *testing.T) {
@@ -124,7 +127,7 @@ func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 					OrgId:        1,
 					SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_EDITOR, IsAnonymous: true, UserId: 0},
 				}
-				err := sqlstore.SearchDashboardSnapshots(context.Background(), &query)
+				err := dashStore.SearchDashboardSnapshots(context.Background(), &query)
 				require.NoError(t, err)
 
 				require.NotNil(t, query.Result)
@@ -148,36 +151,37 @@ func TestIntegrationDeleteExpiredSnapshots(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	sqlstore := InitTestDB(t)
+	sqlstore := sqlstore.InitTestDB(t)
+	dashStore := ProvideStore(sqlstore)
 
 	t.Run("Testing dashboard snapshots clean up", func(t *testing.T) {
 		setting.SnapShotRemoveExpired = true
 
-		nonExpiredSnapshot := createTestSnapshot(t, sqlstore, "key1", 48000)
-		createTestSnapshot(t, sqlstore, "key2", -1200)
-		createTestSnapshot(t, sqlstore, "key3", -1200)
+		nonExpiredSnapshot := createTestSnapshot(t, dashStore, "key1", 48000)
+		createTestSnapshot(t, dashStore, "key2", -1200)
+		createTestSnapshot(t, dashStore, "key3", -1200)
 
-		err := sqlstore.DeleteExpiredSnapshots(context.Background(), &models.DeleteExpiredSnapshotsCommand{})
+		err := dashStore.DeleteExpiredSnapshots(context.Background(), &models.DeleteExpiredSnapshotsCommand{})
 		require.NoError(t, err)
 
 		query := models.GetDashboardSnapshotsQuery{
 			OrgId:        1,
 			SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_ADMIN},
 		}
-		err = sqlstore.SearchDashboardSnapshots(context.Background(), &query)
+		err = dashStore.SearchDashboardSnapshots(context.Background(), &query)
 		require.NoError(t, err)
 
 		assert.Len(t, query.Result, 1)
 		assert.Equal(t, nonExpiredSnapshot.Key, query.Result[0].Key)
 
-		err = sqlstore.DeleteExpiredSnapshots(context.Background(), &models.DeleteExpiredSnapshotsCommand{})
+		err = dashStore.DeleteExpiredSnapshots(context.Background(), &models.DeleteExpiredSnapshotsCommand{})
 		require.NoError(t, err)
 
 		query = models.GetDashboardSnapshotsQuery{
 			OrgId:        1,
 			SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_ADMIN},
 		}
-		err = sqlstore.SearchDashboardSnapshots(context.Background(), &query)
+		err = dashStore.SearchDashboardSnapshots(context.Background(), &query)
 		require.NoError(t, err)
 
 		require.Len(t, query.Result, 1)
@@ -185,7 +189,7 @@ func TestIntegrationDeleteExpiredSnapshots(t *testing.T) {
 	})
 }
 
-func createTestSnapshot(t *testing.T, sqlstore *SQLStore, key string, expires int64) *models.DashboardSnapshot {
+func createTestSnapshot(t *testing.T, dashStore *DashboardSnapshotStore, key string, expires int64) *models.DashboardSnapshot {
 	cmd := models.CreateDashboardSnapshotCommand{
 		Key:       key,
 		DeleteKey: "delete" + key,
@@ -196,13 +200,16 @@ func createTestSnapshot(t *testing.T, sqlstore *SQLStore, key string, expires in
 		OrgId:   1,
 		Expires: expires,
 	}
-	err := sqlstore.CreateDashboardSnapshot(context.Background(), &cmd)
+	err := dashStore.CreateDashboardSnapshot(context.Background(), &cmd)
 	require.NoError(t, err)
 
 	// Set expiry date manually - to be able to create expired snapshots
 	if expires < 0 {
 		expireDate := time.Now().Add(time.Second * time.Duration(expires))
-		_, err = sqlstore.engine.Exec("UPDATE dashboard_snapshot SET expires = ? WHERE id = ?", expireDate, cmd.Result.Id)
+		err = dashStore.store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			_, err := sess.Exec("UPDATE dashboard_snapshot SET expires = ? WHERE id = ?", expireDate, cmd.Result.Id)
+			return err
+		})
 		require.NoError(t, err)
 	}
 
