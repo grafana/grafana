@@ -28,6 +28,10 @@ func (s *ServiceAccountsStoreImpl) ListTokens(ctx context.Context, orgId int64, 
 
 func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, serviceAccountId int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) error {
 	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		if _, err := s.RetrieveServiceAccount(ctx, cmd.OrgId, serviceAccountId); err != nil {
+			return err
+		}
+
 		key := models.ApiKey{OrgId: cmd.OrgId, Name: cmd.Name}
 		exists, _ := sess.Get(&key)
 		if exists {
@@ -43,7 +47,7 @@ func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, s
 			return &ErrInvalidExpirationSAToken{}
 		}
 
-		t := models.ApiKey{
+		token := models.ApiKey{
 			OrgId:            cmd.OrgId,
 			Name:             cmd.Name,
 			Role:             models.ROLE_VIEWER,
@@ -54,19 +58,19 @@ func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, s
 			ServiceAccountId: &serviceAccountId,
 		}
 
-		if _, err := sess.Insert(&t); err != nil {
+		if _, err := sess.Insert(&token); err != nil {
 			return err
 		}
-		cmd.Result = &t
+		cmd.Result = &token
 		return nil
 	})
 }
 
-func (s *ServiceAccountsStoreImpl) DeleteServiceAccountToken(ctx context.Context, orgID, serviceAccountID, tokenID int64) error {
+func (s *ServiceAccountsStoreImpl) DeleteServiceAccountToken(ctx context.Context, orgId, serviceAccountId, tokenId int64) error {
 	rawSQL := "DELETE FROM api_key WHERE id=? and org_id=? and service_account_id=?"
 
 	return s.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		result, err := sess.Exec(rawSQL, tokenID, orgID, serviceAccountID)
+		result, err := sess.Exec(rawSQL, tokenId, orgId, serviceAccountId)
 		if err != nil {
 			return err
 		}
@@ -81,8 +85,8 @@ func (s *ServiceAccountsStoreImpl) DeleteServiceAccountToken(ctx context.Context
 }
 
 // assignApiKeyToServiceAccount sets the API key service account ID
-func (s *ServiceAccountsStoreImpl) assignApiKeyToServiceAccount(sess *sqlstore.DBSession, apikeyId int64, saccountId int64) error {
-	key := models.ApiKey{Id: apikeyId}
+func (s *ServiceAccountsStoreImpl) assignApiKeyToServiceAccount(sess *sqlstore.DBSession, apiKeyId int64, serviceAccountId int64) error {
+	key := models.ApiKey{Id: apiKeyId}
 	exists, err := sess.Get(&key)
 	if err != nil {
 		s.log.Warn("API key not loaded", "err", err)
@@ -92,7 +96,7 @@ func (s *ServiceAccountsStoreImpl) assignApiKeyToServiceAccount(sess *sqlstore.D
 		s.log.Warn("API key not found", "err", err)
 		return models.ErrApiKeyNotFound
 	}
-	key.ServiceAccountId = &saccountId
+	key.ServiceAccountId = &serviceAccountId
 
 	if _, err := sess.ID(key.Id).Update(&key); err != nil {
 		s.log.Warn("Could not update api key", "err", err)
