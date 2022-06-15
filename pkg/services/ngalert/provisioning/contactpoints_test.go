@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
@@ -260,16 +259,16 @@ func createTestContactPoint() definitions.EmbeddedContactPoint {
 func TestStitchReceivers(t *testing.T) {
 	type testCase struct {
 		name        string
-		initial     *apimodels.PostableUserConfig
-		new         *apimodels.PostableGrafanaReceiver
+		initial     *definitions.PostableUserConfig
+		new         *definitions.PostableGrafanaReceiver
 		expModified bool
-		expCfg      apimodels.PostableApiAlertingConfig
+		expCfg      definitions.PostableApiAlertingConfig
 	}
 
 	cases := []testCase{
 		{
 			name: "non matching receiver by UID, no change",
-			new: &apimodels.PostableGrafanaReceiver{
+			new: &definitions.PostableGrafanaReceiver{
 				UID: "does not exist",
 			},
 			expModified: false,
@@ -277,20 +276,20 @@ func TestStitchReceivers(t *testing.T) {
 		},
 		{
 			name: "matching receiver with unchanged name, replaces",
-			new: &apimodels.PostableGrafanaReceiver{
+			new: &definitions.PostableGrafanaReceiver{
 				UID:  "ghi",
 				Name: "receiver-2",
 				Type: "teams",
 			},
 			expModified: true,
-			expCfg: apimodels.PostableApiAlertingConfig{
-				Receivers: []*apimodels.PostableApiReceiver{
+			expCfg: definitions.PostableApiAlertingConfig{
+				Receivers: []*definitions.PostableApiReceiver{
 					{
 						Receiver: config.Receiver{
 							Name: "receiver-1",
 						},
-						PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
-							GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{
+						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
 								{
 									UID:  "abc",
 									Name: "receiver-1",
@@ -303,8 +302,8 @@ func TestStitchReceivers(t *testing.T) {
 						Receiver: config.Receiver{
 							Name: "receiver-2",
 						},
-						PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
-							GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{
+						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
 								{
 									UID:  "def",
 									Name: "receiver-2",
@@ -328,20 +327,20 @@ func TestStitchReceivers(t *testing.T) {
 		},
 		{
 			name: "rename with only one receiver in group, renames group",
-			new: &apimodels.PostableGrafanaReceiver{
+			new: &definitions.PostableGrafanaReceiver{
 				UID:  "abc",
 				Name: "new-receiver",
 				Type: "slack",
 			},
 			expModified: true,
-			expCfg: apimodels.PostableApiAlertingConfig{
-				Receivers: []*apimodels.PostableApiReceiver{
+			expCfg: definitions.PostableApiAlertingConfig{
+				Receivers: []*definitions.PostableApiReceiver{
 					{
 						Receiver: config.Receiver{
 							Name: "new-receiver",
 						},
-						PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
-							GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{
+						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
 								{
 									UID:  "abc",
 									Name: "new-receiver",
@@ -354,8 +353,8 @@ func TestStitchReceivers(t *testing.T) {
 						Receiver: config.Receiver{
 							Name: "receiver-2",
 						},
-						PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
-							GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{
+						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
 								{
 									UID:  "def",
 									Name: "receiver-2",
@@ -379,20 +378,20 @@ func TestStitchReceivers(t *testing.T) {
 		},
 		{
 			name: "rename to another existing group, moves receiver",
-			new: &apimodels.PostableGrafanaReceiver{
+			new: &definitions.PostableGrafanaReceiver{
 				UID:  "def",
 				Name: "receiver-1",
 				Type: "slack",
 			},
 			expModified: true,
-			expCfg: apimodels.PostableApiAlertingConfig{
-				Receivers: []*apimodels.PostableApiReceiver{
+			expCfg: definitions.PostableApiAlertingConfig{
+				Receivers: []*definitions.PostableApiReceiver{
 					{
 						Receiver: config.Receiver{
 							Name: "receiver-1",
 						},
-						PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
-							GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{
+						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
 								{
 									UID:  "abc",
 									Name: "receiver-1",
@@ -410,8 +409,8 @@ func TestStitchReceivers(t *testing.T) {
 						Receiver: config.Receiver{
 							Name: "receiver-2",
 						},
-						PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
-							GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{
+						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
 								{
 									UID:  "ghi",
 									Name: "receiver-2",
@@ -430,20 +429,20 @@ func TestStitchReceivers(t *testing.T) {
 		},
 		{
 			name: "rename to a name that doesn't exist, creates new group and moves",
-			new: &apimodels.PostableGrafanaReceiver{
+			new: &definitions.PostableGrafanaReceiver{
 				UID:  "jkl",
 				Name: "brand-new-group",
 				Type: "opsgenie",
 			},
 			expModified: true,
-			expCfg: apimodels.PostableApiAlertingConfig{
-				Receivers: []*apimodels.PostableApiReceiver{
+			expCfg: definitions.PostableApiAlertingConfig{
+				Receivers: []*definitions.PostableApiReceiver{
 					{
 						Receiver: config.Receiver{
 							Name: "receiver-1",
 						},
-						PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
-							GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{
+						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
 								{
 									UID:  "abc",
 									Name: "receiver-1",
@@ -456,8 +455,8 @@ func TestStitchReceivers(t *testing.T) {
 						Receiver: config.Receiver{
 							Name: "receiver-2",
 						},
-						PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
-							GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{
+						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
 								{
 									UID:  "def",
 									Name: "receiver-2",
@@ -475,8 +474,8 @@ func TestStitchReceivers(t *testing.T) {
 						Receiver: config.Receiver{
 							Name: "brand-new-group",
 						},
-						PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
-							GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{
+						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
 								{
 									UID:  "jkl",
 									Name: "brand-new-group",
@@ -491,20 +490,20 @@ func TestStitchReceivers(t *testing.T) {
 		{
 			name:    "rename an inconsistent group in the database, algorithm fixes it",
 			initial: createInconsistentTestConfigWithReceivers(),
-			new: &apimodels.PostableGrafanaReceiver{
+			new: &definitions.PostableGrafanaReceiver{
 				UID:  "ghi",
 				Name: "brand-new-group",
 				Type: "opsgenie",
 			},
 			expModified: true,
-			expCfg: apimodels.PostableApiAlertingConfig{
-				Receivers: []*apimodels.PostableApiReceiver{
+			expCfg: definitions.PostableApiAlertingConfig{
+				Receivers: []*definitions.PostableApiReceiver{
 					{
 						Receiver: config.Receiver{
 							Name: "receiver-1",
 						},
-						PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
-							GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{
+						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
 								{
 									UID:  "abc",
 									Name: "receiver-1",
@@ -517,8 +516,8 @@ func TestStitchReceivers(t *testing.T) {
 						Receiver: config.Receiver{
 							Name: "receiver-2",
 						},
-						PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
-							GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{
+						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
 								{
 									UID:  "def",
 									Name: "receiver-2",
@@ -536,8 +535,8 @@ func TestStitchReceivers(t *testing.T) {
 						Receiver: config.Receiver{
 							Name: "brand-new-group",
 						},
-						PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
-							GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{
+						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
 								{
 									UID:  "ghi",
 									Name: "brand-new-group",
@@ -566,16 +565,16 @@ func TestStitchReceivers(t *testing.T) {
 	}
 }
 
-func createTestConfigWithReceivers() *apimodels.PostableUserConfig {
-	return &apimodels.PostableUserConfig{
-		AlertmanagerConfig: apimodels.PostableApiAlertingConfig{
-			Receivers: []*apimodels.PostableApiReceiver{
+func createTestConfigWithReceivers() *definitions.PostableUserConfig {
+	return &definitions.PostableUserConfig{
+		AlertmanagerConfig: definitions.PostableApiAlertingConfig{
+			Receivers: []*definitions.PostableApiReceiver{
 				{
 					Receiver: config.Receiver{
 						Name: "receiver-1",
 					},
-					PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
-						GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{
+					PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
+						GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
 							{
 								UID:  "abc",
 								Name: "receiver-1",
@@ -588,8 +587,8 @@ func createTestConfigWithReceivers() *apimodels.PostableUserConfig {
 					Receiver: config.Receiver{
 						Name: "receiver-2",
 					},
-					PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
-						GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{
+					PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
+						GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
 							{
 								UID:  "def",
 								Name: "receiver-2",
@@ -614,16 +613,16 @@ func createTestConfigWithReceivers() *apimodels.PostableUserConfig {
 }
 
 // This is an invalid config, with inconsistently named receivers (intentionally).
-func createInconsistentTestConfigWithReceivers() *apimodels.PostableUserConfig {
-	return &apimodels.PostableUserConfig{
-		AlertmanagerConfig: apimodels.PostableApiAlertingConfig{
-			Receivers: []*apimodels.PostableApiReceiver{
+func createInconsistentTestConfigWithReceivers() *definitions.PostableUserConfig {
+	return &definitions.PostableUserConfig{
+		AlertmanagerConfig: definitions.PostableApiAlertingConfig{
+			Receivers: []*definitions.PostableApiReceiver{
 				{
 					Receiver: config.Receiver{
 						Name: "receiver-1",
 					},
-					PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
-						GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{
+					PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
+						GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
 							{
 								UID:  "abc",
 								Name: "receiver-1",
@@ -636,8 +635,8 @@ func createInconsistentTestConfigWithReceivers() *apimodels.PostableUserConfig {
 					Receiver: config.Receiver{
 						Name: "receiver-2",
 					},
-					PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
-						GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{
+					PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
+						GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
 							{
 								UID:  "def",
 								Name: "receiver-2",
