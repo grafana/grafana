@@ -1,14 +1,16 @@
 import React from 'react';
 
-import { FieldConfigProperty, FieldType, identityOverrideProcessor, PanelPlugin } from '@grafana/data';
+import { FieldConfigProperty, FieldType, identityOverrideProcessor, PanelData, PanelPlugin } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { AxisPlacement, GraphFieldConfig, ScaleDistribution, ScaleDistributionConfig } from '@grafana/schema';
 import { addHideFrom, ScaleDistributionEditor } from '@grafana/ui/src/options/builder';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { addHeatmapCalculationOptions } from 'app/features/transformers/calculateHeatmap/editor/helper';
+import { readHeatmapScanlinesCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 import { HeatmapCellLayout } from 'app/features/transformers/calculateHeatmap/models.gen';
 
 import { HeatmapPanel } from './HeatmapPanel';
+import { prepareHeatmapData } from './fields';
 import { heatmapChangedHandler, heatmapMigrationHandler } from './migrations';
 import { PanelOptions, defaultPanelOptions, HeatmapColorMode, HeatmapColorScale } from './models.gen';
 import { colorSchemes, quantizeScheme } from './palettes';
@@ -46,6 +48,12 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
   .setPanelOptions((builder, context) => {
     const opts = context.options ?? defaultPanelOptions;
 
+    let isOrdinalY: boolean | undefined = undefined;
+    try {
+      const v = prepareHeatmapData({ series: context.data } as PanelData, opts, config.theme2);
+      isOrdinalY = readHeatmapScanlinesCustomMeta(v.heatmap).yOrdinalDisplay != null;
+    } catch {}
+
     let category = ['Heatmap'];
 
     builder.addRadio({
@@ -81,23 +89,26 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       },
     });
 
-    builder
-      .addNumberInput({
-        path: 'yAxis.min',
-        name: 'Min value',
-        settings: {
-          placeholder: 'Auto',
-        },
-        category,
-      })
-      .addTextInput({
-        path: 'yAxis.max',
-        name: 'Max value',
-        settings: {
-          placeholder: 'Auto',
-        },
-        category,
-      });
+    if (isOrdinalY !== true) {
+      // if undefined, then show the min+max
+      builder
+        .addNumberInput({
+          path: 'yAxis.min',
+          name: 'Min value',
+          settings: {
+            placeholder: 'Auto',
+          },
+          category,
+        })
+        .addTextInput({
+          path: 'yAxis.max',
+          name: 'Max value',
+          settings: {
+            placeholder: 'Auto',
+          },
+          category,
+        });
+    }
 
     builder
       .addNumberInput({
