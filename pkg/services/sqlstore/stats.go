@@ -2,7 +2,6 @@ package sqlstore
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -106,7 +105,7 @@ func (ss *SQLStore) GetSystemStats(ctx context.Context, query *models.GetSystemS
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("data_keys") + `) AS data_keys,`)
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("data_keys") + `WHERE active = true) AS active_data_keys,`)
 
-		sb.Write(`(SELECT COUNT(*) FROM` + fmt.Sprintf(ss.duplicateUserEntriesSQL(ctx)) + `) AS duplicate_user_entries`)
+		sb.Write(`(SELECT COUNT(*) FROM (` + ss.duplicateUserEntriesSQL(ctx) + `)) AS duplicate_user_entries,`)
 
 		sb.Write(ss.roleCounterSQL(ctx))
 
@@ -143,11 +142,9 @@ func (ss *SQLStore) roleCounterSQL(ctx context.Context) string {
 
 func (ss *SQLStore) duplicateUserEntriesSQL(ctx context.Context) string {
 	userDialect := dialect.Quote("user")
-	sqlQuery := `SELECT 
-		u.login,
-		u.email,
-		(SELECT login from ` + userDialect + `WHERE (LOWER(login) = LOWER(u.login)) AND (login != u.login)) as dup_login,
-		(SELECT email from ` + userDialect + `WHERE (LOWER(email) = LOWER(u.email)) AND (email != u.email)) as dup_email,
+	sqlQuery := `SELECT
+		(SELECT login from ` + userDialect + ` WHERE (LOWER(login) = LOWER(u.login)) AND (login != u.login)) AS dup_login,
+		(SELECT email from ` + userDialect + ` WHERE (LOWER(email) = LOWER(u.email)) AND (email != u.email)) AS dup_email
 	FROM ` + userDialect + ` AS u
 	WHERE (dup_login IS NOT NULL OR dup_email IS NOT NULL)
 	`

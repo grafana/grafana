@@ -8,7 +8,6 @@ import (
 
 	"github.com/go-kit/log"
 	"github.com/grafana/grafana/pkg/infra/log/level"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -113,7 +112,6 @@ func Test_teamSync(t *testing.T) {
 
 func Test_upsertUser_loginUserStats(t *testing.T) {
 	authInfoMock := &logintest.AuthInfoServiceFake{}
-	UsageStatsMock := &usagestats.UsageStatsMock{}
 
 	store := &mockstore.SQLStoreMock{
 		ExpectedUserOrgList:     createUserOrgDTO(),
@@ -121,10 +119,9 @@ func Test_upsertUser_loginUserStats(t *testing.T) {
 	}
 
 	login := Implementation{
-		QuotaService:      &quota.QuotaService{},
-		AuthInfoService:   authInfoMock,
-		SQLStore:          store,
-		UsageStatsService: &UsageStatsMock,
+		QuotaService:    &quota.QuotaService{},
+		AuthInfoService: authInfoMock,
+		SQLStore:        store,
 	}
 
 	upsertCmd := &models.UpsertUserCommand{ExternalUser: &models.ExternalUserInfo{Email: "test_user@example.org"}}

@@ -21,14 +21,14 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 		query := models.GetSystemStatsQuery{}
 		err := sqlStore.GetSystemStats(context.Background(), &query)
 		require.NoError(t, err)
-		assert.Equal(t, int64(3), query.Result.Users)
+		assert.Equal(t, int64(5), query.Result.Users)
 		assert.Equal(t, int64(0), query.Result.Editors)
 		assert.Equal(t, int64(0), query.Result.Viewers)
 		assert.Equal(t, int64(3), query.Result.Admins)
 		assert.Equal(t, int64(0), query.Result.LibraryPanels)
 		assert.Equal(t, int64(0), query.Result.LibraryVariables)
 		assert.Equal(t, int64(1), query.Result.APIKeys)
-		assert.Equal(t, int64(1), query.Result.DuplicateUsers)
+		assert.Equal(t, int64(2), query.Result.DuplicateUserEntries)
 	})
 
 	t.Run("Get system user count stats should not results in error", func(t *testing.T) {
@@ -133,24 +133,23 @@ func populateDB(t *testing.T, sqlStore *SQLStore) {
 	err = sqlStore.AddAPIKey(context.Background(), addAPIKeyCmd)
 	require.NoError(t, err)
 
-
 	// TODO: make it possible for the duplicate user to bypass the sqlLite tests
 	// add additional user with duplicate email where DOMAIN is upper case
 	dupUserEmailcmd := models.CreateUserCommand{
-		Email:   "usertest1@TEST.com",
+		Email:   "userduplicatetest1@TEST.com",
 		Name:    "user name 1",
-		Login:   "user_test_1_login",
-		OrgName: "Org 1",
+		Login:   "user_duplicate_TEST_1_login",
+		OrgName: "Org duplicate test 1",
 	}
 	_, err = sqlStore.CreateUser(context.Background(), dupUserEmailcmd)
 	require.NoError(t, err)
 
 	// add additional user with duplicate login where DOMAIN is upper case
 	dupUserLogincmd := models.CreateUserCommand{
-		Email:   "usertest1@test.com",
+		Email:   "userduplicatetest1@test.com",
 		Name:    "user name 1",
-		Login:   "USER_TEST_1_LOGIN",
-		OrgName: "Org 1",
+		Login:   "user_duplicate_test_1_login",
+		OrgName: "Org duplicate test 2", // need to be in two separate orgs
 	}
 	_, err = sqlStore.CreateUser(context.Background(), dupUserLogincmd)
 	require.NoError(t, err)
