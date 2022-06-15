@@ -113,7 +113,12 @@ export const LogGroupSelector: React.FC<LogGroupSelectorProps> = ({
         .then((logGroups) => {
           const newSelectedLogGroups = intersection(
             selectedLogGroups,
-            logGroups.map(({ value }) => value).filter((value): value is string => !!value)
+            logGroups.reduce((acc, { value }) => {
+              if (value) {
+                return [...acc, value];
+              }
+              return acc;
+            }, [] as string[])
           );
           onChange(newSelectedLogGroups);
           setAvailableLogGroups(logGroups);
