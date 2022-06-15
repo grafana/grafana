@@ -28,7 +28,7 @@ func (cmd Command) upgradeCommand(c utils.CommandLine) error {
 			return errutil.Wrapf(err, "failed to remove plugin '%s'", pluginName)
 		}
 
-		return InstallPlugin(pluginName, "", c, cmd.Client)
+		return InstallPlugin(pluginName, "", c)
 	}
 
 	logger.Infof("%s %s is up to date \n", color.GreenString("✔"), pluginName)
