@@ -42,7 +42,7 @@ interface RolePickerMenuProps {
   onUpdate: (newRoles: Role[], newBuiltInRole?: OrgRole) => void;
   onClear?: () => void;
   updateDisabled?: boolean;
-  offset: number;
+  offset: { vertical: number; horizontal: number };
 }
 
 export const RolePickerMenu = ({
@@ -181,9 +181,10 @@ export const RolePickerMenu = ({
       className={cx(
         styles.menu,
         customStyles.menuWrapper,
+        { [customStyles.menuLeft]: offset.horizontal > 0 },
         css`
-          bottom: ${offset > 0 ? `${offset}px` : 'unset'};
-          top: ${offset < 0 ? `${Math.abs(offset)}px` : 'unset'};
+          bottom: ${offset.vertical > 0 ? `${offset.vertical}px` : 'unset'};
+          top: ${offset.vertical < 0 ? `${Math.abs(offset.vertical)}px` : 'unset'};
         `
       )}
     >
@@ -226,6 +227,7 @@ export const RolePickerMenu = ({
                           selectedOptions={selectedOptions}
                           onSelect={onChange}
                           onClear={onClearSubMenu}
+                          showOnLeft={offset.horizontal > 0}
                         />
                       )}
                     </RoleMenuGroupOption>
@@ -278,7 +280,7 @@ export const RolePickerMenu = ({
           </HorizontalGroup>
         </div>
       </div>
-      <div ref={subMenuNode}></div>
+      <div ref={subMenuNode} />
     </div>
   );
 };
@@ -317,6 +319,7 @@ interface RolePickerSubMenuProps {
   disabledOptions?: Role[];
   onSelect: (option: Role) => void;
   onClear?: () => void;
+  showOnLeft?: boolean;
 }
 
 export const RolePickerSubMenu = ({
@@ -325,6 +328,7 @@ export const RolePickerSubMenu = ({
   disabledOptions,
   onSelect,
   onClear,
+  showOnLeft,
 }: RolePickerSubMenuProps): JSX.Element => {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
@@ -337,7 +341,10 @@ export const RolePickerSubMenu = ({
   };
 
   return (
-    <div className={customStyles.subMenu} aria-label="Role picker submenu">
+    <div
+      className={cx(customStyles.subMenu, { [customStyles.subMenuLeft]: showOnLeft })}
+      aria-label="Role picker submenu"
+    >
       <CustomScrollbar autoHide={false} autoHeightMax={`${MENU_MAX_HEIGHT}px`} hideHorizontalTrack>
         <div className={styles.optionBody}>
           {options.map((option, i) => (
@@ -506,7 +513,7 @@ export const RoleMenuGroupOption = React.forwardRef<HTMLDivElement, RoleMenuGrou
           />
           <div className={cx(styles.optionBody, customStyles.menuOptionBody)}>
             <span>{data.displayName || data.name}</span>
-            <span className={customStyles.menuOptionExpand}></span>
+            <span className={customStyles.menuOptionExpand} />
           </div>
           {root && children && (
             <Portal className={customStyles.subMenuPortal} root={root}>
@@ -552,18 +559,24 @@ export const getStyles = (theme: GrafanaTheme2) => {
         padding-top: ${theme.spacing(1)};
       }
     `,
+    menuLeft: css`
+      right: 0;
+      flex-direction: row-reverse;
+    `,
     subMenu: css`
       height: 100%;
       min-width: 260px;
       display: flex;
       flex-direction: column;
-      border-left-style: solid;
-      border-left-width: 1px;
-      border-left-color: ${theme.components.input.borderColor};
+      border-left: 1px solid ${theme.components.input.borderColor};
 
       & > div {
         padding-top: ${theme.spacing(1)};
       }
+    `,
+    subMenuLeft: css`
+      border-right: 1px solid ${theme.components.input.borderColor};
+      border-left: unset;
     `,
     groupHeader: css`
       padding: ${theme.spacing(0, 4)};

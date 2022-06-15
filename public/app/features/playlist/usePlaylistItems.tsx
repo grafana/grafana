@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 
-import { DashboardPickerItem } from 'app/core/components/editors/DashboardPickerByID';
+import { DashboardPickerItem } from 'app/core/components/OptionsUI/DashboardPickerByID';
 
 import { PlaylistItem } from './types';
 
