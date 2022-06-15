@@ -37,7 +37,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   };
 
   const frames = useMemo(() => {
-    return prepareGraphableFields(data.series, timeRange, config.theme2);
+    return prepareGraphableFields(data.series, config.theme2, timeRange);
   }, [data, timeRange]);
 
   if (!frames) {

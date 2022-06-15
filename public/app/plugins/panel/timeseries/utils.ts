@@ -17,8 +17,8 @@ import { nullToValue } from '@grafana/ui/src/components/GraphNG/nullToValue';
  */
 export function prepareGraphableFields(
   series: DataFrame[],
-  timeRange: TimeRange,
-  theme: GrafanaTheme2
+  theme: GrafanaTheme2,
+  timeRange?: TimeRange
 ): DataFrame[] | null {
   if (!series?.length) {
     return null;
@@ -33,12 +33,15 @@ export function prepareGraphableFields(
 
     let hasTimeField = false;
     let hasValueField = false;
+    let nulledFrame = frame;
 
-    let nulledFrame = applyNullInsertThreshold({
-      frame,
-      refFieldPseudoMin: timeRange.from.valueOf(),
-      refFieldPseudoMax: timeRange.to.valueOf(),
-    });
+    if (timeRange !== undefined) {
+      nulledFrame = applyNullInsertThreshold({
+        frame,
+        refFieldPseudoMin: timeRange.from.valueOf(),
+        refFieldPseudoMax: timeRange.to.valueOf(),
+      });
+    }
 
     // Mark the field state as having a null threhold applied
     frame.fields[0].state = {
