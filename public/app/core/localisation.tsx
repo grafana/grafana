@@ -43,18 +43,20 @@ interface I18nProviderProps {
 }
 export function I18nProvider({ children }: I18nProviderProps) {
   useEffect(() => {
-    // TODO: Use locale preference instead of weekStart
-    let loc;
-    switch (config.bootData.user.weekStart) {
-      case 'saturday':
-        loc = 'es';
-        break;
-      case 'sunday':
-        loc = 'fr';
-        break;
-      default:
-        loc = 'en';
-        break;
+    let loc = 'en';
+    if (config.featureToggles.internationalization) {
+      // TODO: Use locale preference instead of weekStart
+      switch (config.bootData.user.weekStart) {
+        case 'saturday':
+          loc = 'es';
+          break;
+        case 'sunday':
+          loc = 'fr';
+          break;
+        default:
+          loc = 'en';
+          break;
+      }
     }
 
     getI18n(loc);
