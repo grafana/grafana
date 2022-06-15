@@ -3,6 +3,7 @@ package searchV2
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -59,7 +60,16 @@ func (s *StandardSearchService) IsDisabled() bool {
 }
 
 func (s *StandardSearchService) Run(ctx context.Context) error {
-	return s.dashboardIndex.run(ctx)
+	orgQuery := &models.SearchOrgsQuery{}
+	err := s.sql.SearchOrgs(ctx, orgQuery)
+	if err != nil {
+		return fmt.Errorf("can't get org list: %w", err)
+	}
+	orgIDs := make([]int64, 0, len(orgQuery.Result))
+	for _, org := range orgQuery.Result {
+		orgIDs = append(orgIDs, org.Id)
+	}
+	return s.dashboardIndex.run(ctx, orgIDs)
 }
 
 func (s *StandardSearchService) RegisterDashboardIndexExtender(ext DashboardIndexExtender) {
@@ -128,31 +138,10 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 		return rsp
 	}
 
-	reader, ok := s.dashboardIndex.getOrgReader(orgID)
-	if !ok {
-		// For non-main organization indexes are built lazily.
-		// If we don't have an index then we are blocking here until an index for
-		// an organization is ready. This actually takes time only during the first
-		// access, all the consequent search requests do not fall into this branch.
-		doneIndexing := make(chan error, 1)
-		signal := buildSignal{orgID: orgID, done: doneIndexing}
-		select {
-		case s.dashboardIndex.buildSignals <- signal:
-		case <-ctx.Done():
-			rsp.Error = ctx.Err()
-			return rsp
-		}
-		select {
-		case err := <-doneIndexing:
-			if err != nil {
-				rsp.Error = err
-				return rsp
-			}
-		case <-ctx.Done():
-			rsp.Error = ctx.Err()
-			return rsp
-		}
-		reader, _ = s.dashboardIndex.getOrgReader(orgID)
+	reader, err := s.dashboardIndex.getOrCreateReader(ctx, orgID)
+	if err != nil {
+		rsp.Error = err
+		return rsp
 	}
 
 	return doSearchQuery(ctx, s.logger, reader, filter, q, s.extender.GetQueryExtender(q), s.cfg.AppSubURL)

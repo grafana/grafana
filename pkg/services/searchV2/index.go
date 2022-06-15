@@ -82,7 +82,7 @@ func newDashboardIndex(dashLoader dashboardLoader, evStore eventStore, extender 
 	}
 }
 
-func (i *dashboardIndex) run(ctx context.Context) error {
+func (i *dashboardIndex) run(ctx context.Context, orgIDs []int64) error {
 	fullReIndexTicker := time.NewTicker(5 * time.Minute)
 	defer fullReIndexTicker.Stop()
 
@@ -98,9 +98,9 @@ func (i *dashboardIndex) run(ctx context.Context) error {
 		lastEventID = lastEvent.Id
 	}
 
-	err = i.buildInitialIndex(ctx)
+	err = i.buildInitialIndexes(ctx, orgIDs)
 	if err != nil {
-		return fmt.Errorf("can't build initial dashboard search index: %w", err)
+		return err
 	}
 
 	i.eventStore.OnEvent(i.applyEventOnIndex)
@@ -131,20 +131,32 @@ func (i *dashboardIndex) run(ctx context.Context) error {
 	}
 }
 
-func (i *dashboardIndex) buildInitialIndex(ctx context.Context) error {
+func (i *dashboardIndex) buildInitialIndexes(ctx context.Context, orgIDs []int64) error {
+	started := time.Now()
+	i.logger.Info("Start building in-memory indexes")
+	for _, orgID := range orgIDs {
+		err := i.buildInitialIndex(ctx, orgID)
+		if err != nil {
+			return fmt.Errorf("can't build initial dashboard search index for org %d: %w", orgID, err)
+		}
+	}
+	i.logger.Info("Finish building in-memory indexes", "elapsed", time.Since(started))
+	return nil
+}
+
+func (i *dashboardIndex) buildInitialIndex(ctx context.Context, orgID int64) error {
 	memCtx, memCancel := context.WithCancel(ctx)
 	if os.Getenv("GF_SEARCH_DEBUG") != "" {
 		go i.debugMemStats(memCtx, 200*time.Millisecond)
 	}
 
-	// Build on start for orgID 1 but keep lazy for others.
 	started := time.Now()
-	numDashboards, err := i.buildOrgIndex(ctx, 1)
+	numDashboards, err := i.buildOrgIndex(ctx, orgID)
 	if err != nil {
 		memCancel()
-		return fmt.Errorf("can't build dashboard search index for org ID 1: %w", err)
+		return fmt.Errorf("can't build dashboard search index for org ID %d: %w", orgID, err)
 	}
-	i.logger.Info("Indexing for main org finished", "mainOrgIndexElapsed", time.Since(started), "numDashboards", numDashboards)
+	i.logger.Info("Indexing for org finished", "orgIndexElapsed", time.Since(started), "orgId", orgID, "numDashboards", numDashboards)
 	memCancel()
 
 	if os.Getenv("GF_SEARCH_DEBUG") != "" {
@@ -152,7 +164,7 @@ func (i *dashboardIndex) buildInitialIndex(ctx context.Context) error {
 		// match to a memory consumption, but at least make give some relative difference understanding.
 		// Moreover, changes in indexing can cause additional memory consumption upon initial index build
 		// which is not reflected here.
-		i.reportSizeOfIndexDiskBackup(1)
+		i.reportSizeOfIndexDiskBackup(orgID)
 	}
 	return nil
 }
@@ -268,6 +280,33 @@ func (i *dashboardIndex) getOrgReader(orgID int64) (*bluge.Reader, bool) {
 	defer i.mu.RUnlock()
 	r, ok := i.perOrgReader[orgID]
 	return r, ok
+}
+
+func (i *dashboardIndex) getOrCreateReader(ctx context.Context, orgID int64) (*bluge.Reader, error) {
+	reader, ok := i.getOrgReader(orgID)
+	if !ok {
+		// For non-main organization indexes are built lazily.
+		// If we don't have an index then we are blocking here until an index for
+		// an organization is ready. This actually takes time only during the first
+		// access, all the consequent search requests do not fall into this branch.
+		doneIndexing := make(chan error, 1)
+		signal := buildSignal{orgID: orgID, done: doneIndexing}
+		select {
+		case i.buildSignals <- signal:
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		}
+		select {
+		case err := <-doneIndexing:
+			if err != nil {
+				return nil, err
+			}
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		}
+		reader, _ = i.getOrgReader(orgID)
+	}
+	return reader, nil
 }
 
 func (i *dashboardIndex) getOrgWriter(orgID int64) (*bluge.Writer, bool) {
