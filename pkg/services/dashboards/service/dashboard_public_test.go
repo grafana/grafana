@@ -15,6 +15,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var TimeSettings, _ = simplejson.NewJson([]byte(`{"from": "now-12", "to": "now"}`))
+var dashboardData = simplejson.NewFromAny(map[string]interface{}{"time": map[string]interface{}{"from": "now-8", "to": "now"}})
+var mergedDashboardData = simplejson.NewFromAny(map[string]interface{}{"time": map[string]interface{}{"from": "now-12", "to": "now"}})
+
 func TestGetPublicDashboard(t *testing.T) {
 	type storeResp struct {
 		pd  *models.PublicDashboard
@@ -30,30 +34,37 @@ func TestGetPublicDashboard(t *testing.T) {
 		dashResp  *models.Dashboard
 	}{
 		{
-			name:      "returns a dashboard",
-			uid:       "abc123",
-			storeResp: &storeResp{pd: &models.PublicDashboard{IsEnabled: true}, d: &models.Dashboard{Uid: "mydashboard"}, err: nil},
-			errResp:   nil,
-			dashResp:  &models.Dashboard{Uid: "mydashboard"},
+			name: "returns a dashboard",
+			uid:  "abc123",
+			storeResp: &storeResp{
+				pd:  &models.PublicDashboard{IsEnabled: true},
+				d:   &models.Dashboard{Uid: "mydashboard", Data: dashboardData},
+				err: nil,
+			},
+			errResp:  nil,
+			dashResp: &models.Dashboard{Uid: "mydashboard", Data: dashboardData},
 		},
 		{
 			name: "puts pubdash time settings into dashboard",
 			uid:  "abc123",
 			storeResp: &storeResp{
-				pd: &models.PublicDashboard{IsEnabled: true, TimeSettings: `{"from": "now-8", "to": "now"}`},
-				d: &models.Dashboard{
-					Data: simplejson.NewFromAny(map[string]interface{}{"time": map[string]interface{}{"from": "abc", "to": "123"}}),
-				},
-				err: nil},
+				pd:  &models.PublicDashboard{IsEnabled: true, TimeSettings: TimeSettings},
+				d:   &models.Dashboard{Data: dashboardData},
+				err: nil,
+			},
 			errResp:  nil,
-			dashResp: &models.Dashboard{Data: simplejson.NewFromAny(map[string]interface{}{"time": map[string]interface{}{"from": "now-8", "to": "now"}})},
+			dashResp: &models.Dashboard{Data: mergedDashboardData},
 		},
 		{
-			name:      "returns ErrPublicDashboardNotFound when isPublic is false",
-			uid:       "abc123",
-			storeResp: &storeResp{pd: &models.PublicDashboard{IsEnabled: false}, d: &models.Dashboard{Uid: "mydashboard"}, err: nil},
-			errResp:   models.ErrPublicDashboardNotFound,
-			dashResp:  nil,
+			name: "returns ErrPublicDashboardNotFound when isPublic is false",
+			uid:  "abc123",
+			storeResp: &storeResp{
+				pd:  &models.PublicDashboard{IsEnabled: false},
+				d:   &models.Dashboard{Uid: "mydashboard"},
+				err: nil,
+			},
+			errResp:  models.ErrPublicDashboardNotFound,
+			dashResp: nil,
 		},
 		{
 			name:      "returns ErrPublicDashboardNotFound if PublicDashboard missing",
@@ -120,6 +131,7 @@ func TestSavePublicDashboard(t *testing.T) {
 		assert.Equal(t, dashboard.OrgId, pubdash.OrgId)
 	})
 
+	t.Run("PLACEHOLDER - validate pubdash time variables", func(t *testing.T) {})
 	t.Run("PLACEHOLDER - dashboard with template variables cannot be saved", func(t *testing.T) {
 		//sqlStore := sqlstore.InitTestDB(t)
 		//dashboardStore := database.ProvideDashboardStore(sqlStore)
@@ -168,7 +180,7 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 			IsEnabled:    true,
 			DashboardUid: "NOTTHESAME",
 			OrgId:        9999999,
-			TimeSettings: `{"from": "FROM", "to": "TO"}`,
+			TimeSettings: TimeSettings,
 		},
 	}
 
@@ -182,7 +194,7 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 			IsEnabled:    false,
 			DashboardUid: "NOTTHESAME",
 			OrgId:        9999999,
-			TimeSettings: `{"from": "FROM", "to": "TO"}`,
+			TimeSettings: TimeSettings,
 		},
 	}
 
@@ -197,8 +209,8 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		require.Equal(t, "FROM", reqDTO.From)
-		require.Equal(t, "TO", reqDTO.To)
+		require.Equal(t, TimeSettings.Get("from").MustString(), reqDTO.From)
+		require.Equal(t, TimeSettings.Get("to").MustString(), reqDTO.To)
 		require.Len(t, reqDTO.Queries, 2)
 		require.Equal(
 			t,
