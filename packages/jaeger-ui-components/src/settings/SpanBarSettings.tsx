@@ -24,10 +24,10 @@ export default function SpanBarSettings({ options, onOptionsChange }: Props) {
 
   return (
     <div className={css({ width: '100%' })}>
-      <h3 className="page-heading">Span Bar Row Identifier</h3>
+      <h3 className="page-heading">Span bar row identifier</h3>
 
       <div className={styles.infoText}>
-        Select a tag key (from which the value will be extracted) and added to the span bar row.
+        Enter a tag key (from which the value will be extracted) and added to the span bar row.
       </div>
 
       <InlineFieldRow className={styles.row}>
