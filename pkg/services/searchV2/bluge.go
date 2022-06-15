@@ -33,6 +33,7 @@ const (
 	documentFieldTransformer = "transformer"
 	documentFieldDSUID       = "ds_uid"
 	documentFieldDSType      = "ds_type"
+	documentFieldCreatedAt   = "created_at"
 	documentFieldUpdatedAt   = "updated_at"
 )
 
@@ -144,6 +145,7 @@ func getFolderDashboardDoc(dash dashboard) *bluge.Document {
 
 	return newSearchDocument(uid, dash.info.Title, dash.info.Description, url).
 		AddField(bluge.NewKeywordField(documentFieldKind, string(entityKindFolder)).Aggregatable().StoreValue()).
+		AddField(bluge.NewDateTimeField(documentFieldCreatedAt, dash.created).Sortable()).
 		AddField(bluge.NewDateTimeField(documentFieldUpdatedAt, dash.updated).Sortable())
 }
 
@@ -154,6 +156,7 @@ func getNonFolderDashboardDoc(dash dashboard, location string) *bluge.Document {
 	doc := newSearchDocument(dash.uid, dash.info.Title, dash.info.Description, url).
 		AddField(bluge.NewKeywordField(documentFieldKind, string(entityKindDashboard)).Aggregatable().StoreValue()).
 		AddField(bluge.NewKeywordField(documentFieldLocation, location).Aggregatable().StoreValue()).
+		AddField(bluge.NewDateTimeField(documentFieldCreatedAt, dash.created).Sortable()).
 		AddField(bluge.NewDateTimeField(documentFieldUpdatedAt, dash.updated).Sortable())
 
 	for _, tag := range dash.info.Tags {

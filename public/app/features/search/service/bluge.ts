@@ -190,8 +190,11 @@ const sortFields = [
   { name: 'errors_last_30_days', display: 'Errors 30 days' },
 ];
 
-// Enterprise only sort field values for dashboards
-const sortTimeFields = [{ name: 'updated_at', display: 'Updated time' }];
+// Enterprise only time sort field values for dashboards
+const sortTimeFields = [
+  { name: 'created_at', display: 'Created time' },
+  { name: 'updated_at', display: 'Updated time' },
+];
 
 /** Given the internal field name, this gives a reasonable display name for the table colum header */
 function getSortFieldDisplayName(name: string) {
