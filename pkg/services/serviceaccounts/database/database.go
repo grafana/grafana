@@ -377,6 +377,7 @@ func (s *ServiceAccountsStoreImpl) MigrateApiKeysToServiceAccounts(ctx context.C
 				s.log.Error("migating to service accounts failed with error", err)
 				return err
 			}
+			s.log.Debug("API key converted to service account token", "keyId", key.Id)
 		}
 	}
 	if err := s.kvStore.Set(ctx, orgId, "serviceaccounts", "migrationStatus", "1"); err != nil {
@@ -418,15 +419,12 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(ctx context.Co
 			return fmt.Errorf("failed to create service account: %w", errCreateSA)
 		}
 
-		if errUpdateKey := s.assignApiKeyToServiceAccount(sess, key.Id, newSA.Id); errUpdateKey != nil {
-			// TODO: roll back and delete service account user
-			return fmt.Errorf(
-				"failed to attach new service account to API key for keyId: %d and newServiceAccountId: %d with error: %w",
-				key.Id, newSA.Id, errUpdateKey,
-			)
+		if err := s.assignApiKeyToServiceAccount(sess, key.Id, newSA.Id); err != nil {
+			if err := s.sqlStore.DeleteUser(ctx, &models.DeleteUserCommand{UserId: newSA.Id}); err != nil {
+				s.log.Error("Error deleting service account", "error", err)
+			}
+			return fmt.Errorf("failed to migrate API key to service account token: %w", err)
 		}
-
-		s.log.Debug("Updated basic api key", "keyId", key.Id, "newServiceAccountId", newSA.Id)
 
 		return nil
 	})
