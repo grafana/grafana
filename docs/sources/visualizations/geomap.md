@@ -43,6 +43,7 @@ There are four-layer types to choose from in the Geomap visualization.
 - **Marker** renders a marker at each data point.
 - **Heatmap** visualizes a heatmap of the data.
 - **GeoJSON** renders static data from a geojson file.
+- **Base Layer** Loads a world map from the chosen tile server.
 
 ### Layer Controls
 
@@ -115,7 +116,7 @@ The GeoJSON layer allows you to select and load a static GeoJSON file from the f
 
 ## Base layer
 
-The base layer loads in a blank world map from the tile server to the Grafana panel. Several base layer options are available each with specific configuration options to style the base map. The default base layer is CartoDB base map. Custom default base layers can be defined in the `.ini` configuration file.
+The base layer loads in a blank world map from the tile server to the Grafana panel. Several base layer options are available each with specific configuration options to style the base map. Base layers can be added to the Data layer stack using layer controls or configured separately using the Base layer panel option. The default base layer is CartoDB base map. Custom default base layers can be defined in the `.ini` configuration file.
 
 ![Base layer options](/static/img/docs/geomap-panel/geomap-baselayer-8-1-0.png)
 
@@ -180,4 +181,4 @@ default_baselayer_config = `{
 }`
 ```
 
-`enable_custom_baselayers` allows you to enable or disable custom open source base maps that are already implemented. The default is `true`.
+`enable_custom_baselayers` allows you too enable or disable custom open source base maps that are already implemented. The default is `true`.
