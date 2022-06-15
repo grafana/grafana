@@ -41,7 +41,7 @@ export function deleteApiKey(id: number): ThunkResult<void> {
 export function migrateApiKey(id: number): ThunkResult<void> {
   return async (dispatch) => {
     try {
-      await getBackendSrv().post(`/api/serviceaccounts/convert/${id}`);
+      await getBackendSrv().post(`/api/serviceaccounts/migrate/${id}`);
     } finally {
       dispatch(loadApiKeys());
     }

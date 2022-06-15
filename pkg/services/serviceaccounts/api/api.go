@@ -77,7 +77,7 @@ func (api *ServiceAccountsAPI) RegisterAPIEndpoints(
 			accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.HideApiKeysTab))
 		serviceAccountsRoute.Post("/migrate", auth(middleware.ReqOrgAdmin,
 			accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.MigrateApiKeysToServiceAccounts))
-		serviceAccountsRoute.Post("/convert/:keyId", auth(middleware.ReqOrgAdmin,
+		serviceAccountsRoute.Post("/migrate/:keyId", auth(middleware.ReqOrgAdmin,
 			accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.ConvertToServiceAccount))
 		serviceAccountsRoute.Post("/revert/:keyId", auth(middleware.ReqOrgAdmin,
 			accesscontrol.EvalPermission(serviceaccounts.ActionDelete)), routing.Wrap(api.RevertApiKey))
