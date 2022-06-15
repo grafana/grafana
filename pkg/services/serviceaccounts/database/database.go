@@ -31,12 +31,12 @@ func NewServiceAccountsStore(store *sqlstore.SQLStore, kvStore kvstore.KVStore) 
 }
 
 // CreateServiceAccount creates service account
-func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, orgID int64, name string) (saDTO *serviceaccounts.ServiceAccountDTO, err error) {
+func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, orgId int64, name string) (saDTO *serviceaccounts.ServiceAccountDTO, err error) {
 	generatedLogin := "sa-" + strings.ToLower(name)
 	generatedLogin = strings.ReplaceAll(generatedLogin, " ", "-")
 	cmd := models.CreateUserCommand{
 		Login:            generatedLogin,
-		OrgId:            orgID,
+		OrgId:            orgId,
 		Name:             name,
 		IsServiceAccount: true,
 	}
@@ -60,13 +60,13 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, org
 
 // UpdateServiceAccount updates service account
 func (s *ServiceAccountsStoreImpl) UpdateServiceAccount(ctx context.Context,
-	orgID, serviceAccountID int64,
+	orgId, serviceAccountId int64,
 	saForm *serviceaccounts.UpdateServiceAccountForm) (*serviceaccounts.ServiceAccountProfileDTO, error) {
 	updatedUser := &serviceaccounts.ServiceAccountProfileDTO{}
 
 	err := s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var err error
-		updatedUser, err = s.RetrieveServiceAccount(ctx, orgID, serviceAccountID)
+		updatedUser, err = s.RetrieveServiceAccount(ctx, orgId, serviceAccountId)
 		if err != nil {
 			return err
 		}
@@ -81,7 +81,7 @@ func (s *ServiceAccountsStoreImpl) UpdateServiceAccount(ctx context.Context,
 			orgUser.Role = *saForm.Role
 			orgUser.Updated = updateTime
 
-			if _, err := sess.Where("org_id = ? AND user_id = ?", orgID, serviceAccountID).Update(&orgUser); err != nil {
+			if _, err := sess.Where("org_id = ? AND user_id = ?", orgId, serviceAccountId).Update(&orgUser); err != nil {
 				return err
 			}
 
@@ -104,7 +104,7 @@ func (s *ServiceAccountsStoreImpl) UpdateServiceAccount(ctx context.Context,
 				updatedUser.Name = *saForm.Name
 			}
 
-			if _, err := sess.ID(serviceAccountID).Update(&user); err != nil {
+			if _, err := sess.ID(serviceAccountId).Update(&user); err != nil {
 				return err
 			}
 		}
@@ -124,16 +124,16 @@ func ServiceAccountDeletions() []string {
 }
 
 // DeleteServiceAccount deletes service account and all associated tokens
-func (s *ServiceAccountsStoreImpl) DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error {
+func (s *ServiceAccountsStoreImpl) DeleteServiceAccount(ctx context.Context, orgId, serviceAccountId int64) error {
 	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		return s.deleteServiceAccount(sess, orgID, serviceAccountID)
+		return s.deleteServiceAccount(sess, orgId, serviceAccountId)
 	})
 }
 
-func (s *ServiceAccountsStoreImpl) deleteServiceAccount(sess *sqlstore.DBSession, orgID, serviceAccountID int64) error {
+func (s *ServiceAccountsStoreImpl) deleteServiceAccount(sess *sqlstore.DBSession, orgId, serviceAccountId int64) error {
 	user := models.User{}
 	has, err := sess.Where(`org_id = ? and id = ? and is_service_account = ?`,
-		orgID, serviceAccountID, s.sqlStore.Dialect.BooleanStr(true)).Get(&user)
+		orgId, serviceAccountId, s.sqlStore.Dialect.BooleanStr(true)).Get(&user)
 	if err != nil {
 		return err
 	}
@@ -149,8 +149,8 @@ func (s *ServiceAccountsStoreImpl) deleteServiceAccount(sess *sqlstore.DBSession
 	return nil
 }
 
-// RetrieveServiceAccountByID returns a service account by its ID
-func (s *ServiceAccountsStoreImpl) RetrieveServiceAccount(ctx context.Context, orgID, serviceAccountID int64) (*serviceaccounts.ServiceAccountProfileDTO, error) {
+// RetrieveServiceAccount returns a service account by its ID
+func (s *ServiceAccountsStoreImpl) RetrieveServiceAccount(ctx context.Context, orgId, serviceAccountId int64) (*serviceaccounts.ServiceAccountProfileDTO, error) {
 	serviceAccount := &serviceaccounts.ServiceAccountProfileDTO{}
 
 	err := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
@@ -162,10 +162,10 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccount(ctx context.Context, o
 		whereParams := make([]interface{}, 0)
 
 		whereConditions = append(whereConditions, "org_user.org_id = ?")
-		whereParams = append(whereParams, orgID)
+		whereParams = append(whereParams, orgId)
 
 		whereConditions = append(whereConditions, "org_user.user_id = ?")
-		whereParams = append(whereParams, serviceAccountID)
+		whereParams = append(whereParams, serviceAccountId)
 
 		whereConditions = append(whereConditions,
 			fmt.Sprintf("%s.is_service_account = %s",
@@ -198,7 +198,7 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccount(ctx context.Context, o
 	return serviceAccount, err
 }
 
-func (s *ServiceAccountsStoreImpl) RetrieveServiceAccountIdByName(ctx context.Context, orgID int64, name string) (int64, error) {
+func (s *ServiceAccountsStoreImpl) RetrieveServiceAccountIdByName(ctx context.Context, orgId int64, name string) (int64, error) {
 	serviceAccount := &struct {
 		Id int64
 	}{}
@@ -215,7 +215,7 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccountIdByName(ctx context.Co
 				s.sqlStore.Dialect.Quote("user"),
 				s.sqlStore.Dialect.BooleanStr(true)),
 		}
-		whereParams := []interface{}{name, orgID}
+		whereParams := []interface{}{name, orgId}
 
 		sess.Where(strings.Join(whereConditions, " AND "), whereParams...)
 
@@ -240,7 +240,7 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccountIdByName(ctx context.Co
 }
 
 func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(
-	ctx context.Context, orgID int64, query string, filter serviceaccounts.ServiceAccountFilter, page int, limit int,
+	ctx context.Context, orgId int64, query string, filter serviceaccounts.ServiceAccountFilter, page int, limit int,
 	signedInUser *models.SignedInUser,
 ) (*serviceaccounts.SearchServiceAccountsResult, error) {
 	searchResult := &serviceaccounts.SearchServiceAccountsResult{
@@ -258,7 +258,7 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(
 		whereParams := make([]interface{}, 0)
 
 		whereConditions = append(whereConditions, "org_user.org_id = ?")
-		whereParams = append(whereParams, orgID)
+		whereParams = append(whereParams, orgId)
 
 		whereConditions = append(whereConditions,
 			fmt.Sprintf("%s.is_service_account = %s",
@@ -345,8 +345,8 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(
 	return searchResult, nil
 }
 
-func (s *ServiceAccountsStoreImpl) GetAPIKeysMigrationStatus(ctx context.Context, orgID int64) (status *serviceaccounts.APIKeysMigrationStatus, err error) {
-	migrationStatus, exists, err := s.kvStore.Get(ctx, orgID, "serviceaccounts", "migrationStatus")
+func (s *ServiceAccountsStoreImpl) GetAPIKeysMigrationStatus(ctx context.Context, orgId int64) (status *serviceaccounts.APIKeysMigrationStatus, err error) {
+	migrationStatus, exists, err := s.kvStore.Get(ctx, orgId, "serviceaccounts", "migrationStatus")
 	if err != nil {
 		return nil, err
 	}
@@ -361,15 +361,15 @@ func (s *ServiceAccountsStoreImpl) GetAPIKeysMigrationStatus(ctx context.Context
 	}
 }
 
-func (s *ServiceAccountsStoreImpl) HideApiKeysTab(ctx context.Context, orgID int64) error {
-	if err := s.kvStore.Set(ctx, orgID, "serviceaccounts", "hideApiKeys", "1"); err != nil {
+func (s *ServiceAccountsStoreImpl) HideApiKeysTab(ctx context.Context, orgId int64) error {
+	if err := s.kvStore.Set(ctx, orgId, "serviceaccounts", "hideApiKeys", "1"); err != nil {
 		s.log.Error("Failed to hide API keys tab", err)
 	}
 	return nil
 }
 
-func (s *ServiceAccountsStoreImpl) MigrateApiKeysToServiceAccounts(ctx context.Context, orgID int64) error {
-	basicKeys := s.sqlStore.GetAllAPIKeys(ctx, orgID)
+func (s *ServiceAccountsStoreImpl) MigrateApiKeysToServiceAccounts(ctx context.Context, orgId int64) error {
+	basicKeys := s.sqlStore.GetAllAPIKeys(ctx, orgId)
 	if len(basicKeys) > 0 {
 		for _, key := range basicKeys {
 			err := s.CreateServiceAccountFromApikey(ctx, key)
@@ -379,14 +379,14 @@ func (s *ServiceAccountsStoreImpl) MigrateApiKeysToServiceAccounts(ctx context.C
 			}
 		}
 	}
-	if err := s.kvStore.Set(ctx, orgID, "serviceaccounts", "migrationStatus", "1"); err != nil {
+	if err := s.kvStore.Set(ctx, orgId, "serviceaccounts", "migrationStatus", "1"); err != nil {
 		s.log.Error("Failed to write API keys migration status", err)
 	}
 	return nil
 }
 
-func (s *ServiceAccountsStoreImpl) MigrateApiKey(ctx context.Context, orgID int64, keyId int64) error {
-	basicKeys := s.sqlStore.GetAllAPIKeys(ctx, orgID)
+func (s *ServiceAccountsStoreImpl) MigrateApiKey(ctx context.Context, orgId int64, keyId int64) error {
+	basicKeys := s.sqlStore.GetAllAPIKeys(ctx, orgId)
 	if len(basicKeys) == 0 {
 		return fmt.Errorf("no API keys to convert found")
 	}
