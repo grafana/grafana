@@ -28,7 +28,7 @@ export const AlertInstanceStateFilter = ({ className, onStateFilterChange, state
   const stateOptions = useMemo(() => (filterType === 'grafana' ? grafanaOptions : promOptions), [filterType]);
 
   return (
-    <div className={className}>
+    <div className={className} data-testid="alert-instance-state-filter">
       <Label>State</Label>
       <RadioButtonGroup
         options={stateOptions}
