@@ -15,7 +15,7 @@ title: What's new in Grafana v9.0
 weight: -33
 ---
 
-# What’s new in Grafana v9.0 ((beta))
+# What’s new in Grafana v9.0
 
 As tradition goes, GrafanaCon - our yearly community event for Grafana open source users, is also where we launch the latest software release of Grafana. Keeping up with tradition, we are excited to be announcing Grafana v9.0 - a release that elevates Grafana’s ease of use, discovery of data through new and improved visualizations and a default Grafana Alerting experience.
 
@@ -23,7 +23,7 @@ A big focus for Grafana is making observability and data visualization and analy
 
 The release also includes a brand-new powerful and fast heatmap visualization, a more accessible navigation menu, improvements to dashboard search, advanced security and authentication features, and more.
 
-We’ve summarized what’s new in the beta release here. If you’d like all the details you can check out the complete [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md).
+We’ve summarized what’s new in the release here. If you’d like all the details you can check out the complete [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md).
 
 ## Prometheus query builder
 
@@ -110,9 +110,9 @@ Refer to the [Dashboard previews topic](https://grafana.com/docs/grafana/next/da
 
 {{< figure src="/static/img/docs/dashboards/dashboard-previews.png" max-width="750px" caption="Dashboard previews" >}}
 
-## Panel title search
+## Panel title search (opt-in beta)
 
-In addition to searching dashboards by title, you can now search panels as well. If a panel’s title matches your search query, it will be displayed in the search results.
+Grafana 9 has a feature toggle `panelTitleSearch`. When enabled, it tells Grafana to use a new search engine. Instead of using SQL queries, the new search uses an in-memory full-text index. That provides a better search experience and additionally allows searching through panel titles.
 
 ## Expanding the navigation bar
 

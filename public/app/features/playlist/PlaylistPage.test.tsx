@@ -69,6 +69,7 @@ describe('PlaylistPage', () => {
             { title: 'Middle item', type: 'dashboard_by_id', order: 2, value: '2' },
             { title: 'Last item', type: 'dashboard_by_tag', order: 2, value: 'Last item' },
           ],
+          uid: 'playlist-0',
         },
       ]);
       const { getByText } = getTestContext();
