@@ -151,7 +151,6 @@ func TestStore_MigrateApiKeys(t *testing.T) {
 				tokens, err := store.ListTokens(context.Background(), key.OrgId, saMigrated.Id)
 				require.NoError(t, err)
 				require.Len(t, tokens, 1)
-
 			}
 		})
 	}
