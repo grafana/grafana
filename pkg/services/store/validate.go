@@ -17,12 +17,12 @@ var (
 		".png":  true,
 		".webp": true,
 	}
-	imageExtensionsToMatchingMimeType = map[string]string{
-		".jpg":  "image/jpg",
-		".jpeg": "image/jpg",
-		".gif":  "image/gif",
-		".png":  "image/png",
-		".webp": "image/webp",
+	imageExtensionsToMatchingMimeTypes = map[string]map[string]bool{
+		".jpg":  {"image/jpg": true, "image/jpeg": true},
+		".jpeg": {"image/jpg": true, "image/jpeg": true},
+		".gif":  {"image/gif": true},
+		".png":  {"image/png": true},
+		".webp": {"image/webp": true},
 	}
 )
 
@@ -56,7 +56,7 @@ func (s *standardStorageService) validateImage(ctx context.Context, user *models
 	}
 
 	mimeType := s.detectMimeType(ctx, user, uploadRequest)
-	if imageExtensionsToMatchingMimeType[ext] != mimeType {
+	if !imageExtensionsToMatchingMimeTypes[ext][mimeType] {
 		return fail("mismatched extension and file contents")
 	}
 
@@ -68,7 +68,6 @@ func (s *standardStorageService) validateUploadRequest(ctx context.Context, user
 	// TODO: validateProperties
 
 	if err := filestorage.ValidatePath(storagePath); err != nil {
-		grafanaStorageLogger.Info("uploading file failed due to invalid path", "filetype", req.MimeType, "path", req.Path, "err", err)
 		return fail("path validation failed: " + err.Error())
 	}
 
