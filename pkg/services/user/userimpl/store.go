@@ -14,8 +14,6 @@ import (
 type store interface {
 	Create(context.Context, *user.User) error
 	Get(context.Context, *user.CreateUserCommand) (*user.User, error)
-	// ????
-	Insert(context.Context, *models.OrgUser) error
 }
 
 type sqlStore struct {
@@ -40,16 +38,6 @@ func (ss *sqlStore) Create(ctx context.Context, cmd *user.User) error {
 		return nil
 	})
 	return err
-}
-
-func (ss *sqlStore) Insert(ctx context.Context, cmd *models.OrgUser) error {
-	return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		if _, err := sess.Insert(cmd); err != nil {
-			return err
-		}
-
-		return nil
-	})
 }
 
 func (ss *sqlStore) Get(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {

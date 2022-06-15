@@ -73,6 +73,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/orguser/orguserimpl"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	plugindashboardsservice "github.com/grafana/grafana/pkg/services/plugindashboards/service"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
@@ -276,6 +277,7 @@ var wireBasicSet = wire.NewSet(
 	dashverimpl.ProvideService,
 	userimpl.ProvideService,
 	orgimpl.ProvideService,
+	orguserimpl.ProvideService,
 )
 
 var wireSet = wire.NewSet(

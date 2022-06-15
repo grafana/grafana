@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/orguser"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -13,16 +13,18 @@ import (
 )
 
 type Service struct {
-	store      store
-	orgService org.Service
+	store          store
+	orgService     org.Service
+	orgUserService orguser.Service
 }
 
-func ProvideService(db db.DB, orgService org.Service) user.Service {
+func ProvideService(db db.DB, orgService org.Service, orgUserService orguser.Service) user.Service {
 	return &Service{
 		store: &sqlStore{
 			db: db,
 		},
-		orgService: orgService,
+		orgService:     orgService,
+		orgUserService: orgUserService,
 	}
 }
 
@@ -68,22 +70,22 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 
 	// create org user link
 	if !cmd.SkipOrgSetup {
-		orgUser := models.OrgUser{
-			OrgId:   orgID,
-			UserId:  usr.ID,
-			Role:    models.ROLE_ADMIN,
+		orgUser := orguser.OrgUser{
+			OrgID:   orgID,
+			UserID:  usr.ID,
+			Role:    orguser.ROLE_ADMIN,
 			Created: time.Now(),
 			Updated: time.Now(),
 		}
 
 		if setting.AutoAssignOrg && !usr.IsAdmin {
 			if len(cmd.DefaultOrgRole) > 0 {
-				orgUser.Role = models.RoleType(cmd.DefaultOrgRole)
+				orgUser.Role = orguser.RoleType(cmd.DefaultOrgRole)
 			} else {
-				orgUser.Role = models.RoleType(setting.AutoAssignOrgRole)
+				orgUser.Role = orguser.RoleType(setting.AutoAssignOrgRole)
 			}
 		}
-		err = s.store.Insert(ctx, &orgUser)
+		err = s.orgUserService.Insert(ctx, &orgUser)
 		if err != nil {
 			return nil, err
 		}
