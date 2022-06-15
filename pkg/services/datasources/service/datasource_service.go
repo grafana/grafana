@@ -182,7 +182,6 @@ func (s *Service) AddDataSource(ictx context.Context, cmd *models.AddDataSourceC
 		}
 
 		return nil
-
 	})
 }
 
