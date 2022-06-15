@@ -5,10 +5,15 @@ import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { byRole } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { setBackendSrv } from '@grafana/runtime';
 
 import { DashboardModel } from '../../state';
 
 import { GeneralSettingsUnconnected as GeneralSettings, Props } from './GeneralSettings';
+
+setBackendSrv({
+  get: jest.fn().mockResolvedValue([]),
+} as any);
 
 const setupTestContext = (options: Partial<Props>) => {
   const defaults: Props = {

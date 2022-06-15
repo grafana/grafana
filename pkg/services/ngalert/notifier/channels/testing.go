@@ -2,11 +2,60 @@ package channels
 
 import (
 	"context"
+	"encoding/base64"
+	"os"
+	"testing"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
+
+// deleteFunc deletes the fake image.
+type deleteFunc func()
+
+// newFakeImageStore creates a fake image on disk and returns an image
+// with a token, path and URL. The test should call deleteFunc to delete
+// the image from disk at the end of the test.
+func newFakeImageStore(t *testing.T) (ImageStore, deleteFunc) {
+	f, err := os.CreateTemp("", "ngalert-test-image-*.png")
+	if err != nil {
+		t.Fatalf("failed to create temp image: %s", err)
+	}
+
+	// 1x1 transparent PNG
+	b, err := base64.StdEncoding.DecodeString("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=")
+	if err != nil {
+		t.Fatalf("failed to decode PNG data: %s", err)
+	}
+
+	if _, err := f.Write(b); err != nil {
+		t.Fatalf("failed to write to file: %s", err)
+	}
+
+	if err := f.Close(); err != nil {
+		t.Fatalf("failed to close file: %s", err)
+	}
+
+	fn := func() {
+		if err := os.Remove(f.Name()); err != nil {
+			t.Fatalf("failed to delete file: %s", err)
+		}
+	}
+
+	store := &fakeImageStore{
+		Images: []*ngmodels.Image{
+			{
+				Token:     "test-image",
+				Path:      f.Name(),
+				URL:       "https://www.example.com/test-image.jpg",
+				CreatedAt: time.Now().UTC(),
+			},
+		},
+	}
+
+	return store, fn
+}
 
 // mockTimeNow replaces function timeNow to return constant time.
 // It returns a function that resets the variable back to its original value.

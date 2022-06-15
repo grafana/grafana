@@ -7,10 +7,8 @@ import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
 import { LayerDragDropList } from 'app/core/components/Layers/LayerDragDropList';
 
 import { GeomapInstanceState } from '../GeomapPanel';
-import { geomapLayerRegistry } from '../layers/registry';
+import { getLayersOptions } from '../layers/registry';
 import { GeomapPanelOptions, MapLayerState } from '../types';
-
-import { dataLayerFilter } from './layerEditor';
 
 type LayersEditorProps = StandardEditorProps<any, any, GeomapPanelOptions, GeomapInstanceState>;
 
@@ -61,7 +59,7 @@ export const LayersEditor = (props: LayersEditorProps) => {
       <Container>
         <AddLayerButton
           onChange={(v) => actions.addlayer(v.value!)}
-          options={geomapLayerRegistry.selectOptions(undefined, dataLayerFilter).options}
+          options={getLayersOptions(false).options}
           label={'Add layer'}
         />
       </Container>

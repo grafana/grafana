@@ -6,9 +6,10 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Input, useStyles2, Spinner } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
-import { FolderDTO } from 'app/types';
+import { FolderDTO, AccessControlAction } from 'app/types';
 
 import { SEARCH_PANELS_LOCAL_STORAGE_KEY } from '../constants';
+import { useKeyNavigationListener } from '../hooks/useSearchKeyboardSelection';
 import { useSearchQuery } from '../hooks/useSearchQuery';
 import { SearchView } from '../page/components/SearchView';
 
@@ -22,6 +23,7 @@ export const ManageDashboardsNew = React.memo(({ folder }: Props) => {
   const styles = useStyles2(getStyles);
   // since we don't use "query" from use search... it is not actually loaded from the URL!
   const { query, onQueryChange } = useSearchQuery({});
+  const { onKeyDown, keyboardEvents } = useKeyNavigationListener();
 
   // TODO: we need to refactor DashboardActions to use folder.uid instead
   const folderId = folder?.id;
@@ -50,6 +52,7 @@ export const ManageDashboardsNew = React.memo(({ folder }: Props) => {
           <Input
             value={inputValue}
             onChange={onSearchQueryChange}
+            onKeyDown={onKeyDown}
             autoFocus
             spellCheck={false}
             placeholder={includePanels ? 'Search for dashboards and panels' : 'Search for dashboards'}
@@ -57,7 +60,14 @@ export const ManageDashboardsNew = React.memo(({ folder }: Props) => {
             suffix={false ? <Spinner /> : null}
           />
         </div>
-        <DashboardActions isEditor={isEditor} canEdit={hasEditPermissionInFolders || canSave} folderId={folderId} />
+        <DashboardActions
+          folderId={folderId}
+          canCreateFolders={contextSrv.hasAccess(AccessControlAction.FoldersCreate, isEditor)}
+          canCreateDashboards={contextSrv.hasAccess(
+            AccessControlAction.DashboardsCreate,
+            hasEditPermissionInFolders || !!canSave
+          )}
+        />
       </div>
 
       <SearchView
@@ -70,6 +80,7 @@ export const ManageDashboardsNew = React.memo(({ folder }: Props) => {
         hidePseudoFolders={true}
         includePanels={includePanels!}
         setIncludePanels={setIncludePanels}
+        keyboardEvents={keyboardEvents}
       />
     </>
   );

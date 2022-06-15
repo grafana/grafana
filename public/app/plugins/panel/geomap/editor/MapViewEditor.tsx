@@ -3,7 +3,7 @@ import React, { FC, useMemo, useCallback } from 'react';
 
 import { StandardEditorProps, SelectableValue } from '@grafana/data';
 import { Button, InlineField, InlineFieldRow, Select, VerticalGroup } from '@grafana/ui';
-import { NumberInput } from 'app/features/dimensions/editors/NumberInput';
+import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 import { GeomapInstanceState } from '../GeomapPanel';
 import { GeomapPanelOptions, MapViewConfig } from '../types';

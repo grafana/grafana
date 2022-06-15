@@ -34,7 +34,7 @@ the dashboard, and will also be added as a required input when the dashboard is 
 
 ## Import dashboard
 
-To import a dashboard click the + icon in the side menu, and then click **Import**.
+To import a dashboard click **Import** under the **Dashboards** icon in the side menu.
 
 {{< figure src="/static/img/docs/v70/import_step1.png" max-width="700px" >}}
 

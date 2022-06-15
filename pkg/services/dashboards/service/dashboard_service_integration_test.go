@@ -22,6 +22,9 @@ import (
 const testOrgID int64 = 1
 
 func TestIntegrationIntegratedDashboardService(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	t.Run("Given saved folders and dashboards in organization A", func(t *testing.T) {
 		// Basic validation tests
 
