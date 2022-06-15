@@ -724,6 +724,9 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 func (sch *schedule) saveAlertStates(ctx context.Context, states []*state.State) {
 	sch.log.Debug("saving alert states", "count", len(states))
 	for _, s := range states {
+		if s.StateReason == ngmodels.StateReasonMissingSeries {
+			continue
+		}
 		cmd := ngmodels.SaveAlertInstanceCommand{
 			RuleOrgID:         s.OrgID,
 			RuleUID:           s.AlertRuleUID,
