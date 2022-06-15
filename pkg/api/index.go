@@ -573,41 +573,6 @@ func (hs *HTTPServer) buildAlertNavLinks(c *models.ReqContext) []*dtos.NavLink {
 	return nil
 }
 
-func (hs *HTTPServer) buildCreateNavLinks(c *models.ReqContext) []*dtos.NavLink {
-	hasAccess := ac.HasAccess(hs.AccessControl, c)
-	var children []*dtos.NavLink
-
-	if hasAccess(ac.ReqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsCreate)) {
-		children = append(children, &dtos.NavLink{Text: "Dashboard", Icon: "apps", Url: hs.Cfg.AppSubURL + "/dashboard/new", Id: "create-dashboard"})
-	}
-
-	if hasAccess(ac.ReqOrgAdminOrEditor, ac.EvalPermission(dashboards.ActionFoldersCreate)) {
-		children = append(children, &dtos.NavLink{
-			Text: "Folder", SubTitle: "Create a new folder to organize your dashboards", Id: "folder",
-			Icon: "folder-plus", Url: hs.Cfg.AppSubURL + "/dashboards/folder/new",
-		})
-	}
-
-	if hasAccess(ac.ReqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsCreate)) {
-		children = append(children, &dtos.NavLink{
-			Text: "Import", SubTitle: "Import dashboard from file or Grafana.com", Id: "import", Icon: "import",
-			Url: hs.Cfg.AppSubURL + "/dashboard/import",
-		})
-	}
-
-	_, uaIsDisabledForOrg := hs.Cfg.UnifiedAlerting.DisabledOrgs[c.OrgId]
-	uaVisibleForOrg := hs.Cfg.UnifiedAlerting.IsEnabled() && !uaIsDisabledForOrg
-
-	if uaVisibleForOrg && hasAccess(ac.ReqSignedIn, ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleCreate), ac.EvalPermission(ac.ActionAlertingRuleExternalWrite))) {
-		children = append(children, &dtos.NavLink{
-			Text: "New alert rule", SubTitle: "Create an alert rule", Id: "alert",
-			Icon: "bell", Url: hs.Cfg.AppSubURL + "/alerting/new",
-		})
-	}
-
-	return children
-}
-
 func (hs *HTTPServer) buildDataConnectionsNavLink(c *models.ReqContext) *dtos.NavLink {
 	var children []*dtos.NavLink
 	var navLink *dtos.NavLink
