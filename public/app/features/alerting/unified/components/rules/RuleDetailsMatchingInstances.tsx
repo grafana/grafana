@@ -87,7 +87,7 @@ export function RuleDetailsMatchingInstances(props: Props): JSX.Element | null {
   const visibleInstances = itemsDisplayLimit ? alerts.slice(0, visibleInstancesLimit) : alerts;
   const hiddenInstances = difference(alerts, visibleInstances);
 
-  const countAllByState = countBy(alerts, (alert) => mapStateWithReasonToBaseState(alert.state));
+  const countAllByState = countBy(promRule.alerts, (alert) => mapStateWithReasonToBaseState(alert.state));
   const hiddenByState = countBy(hiddenInstances, (instance) => mapStateWithReasonToBaseState(instance.state));
 
   const hiddenItemsCount = alerts.length - visibleInstances.length;

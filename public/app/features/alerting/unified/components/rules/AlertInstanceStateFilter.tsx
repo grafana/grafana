@@ -1,8 +1,6 @@
-import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data/src';
-import { RadioButtonGroup, Label, useStyles2 } from '@grafana/ui';
+import { Label, RadioButtonGroup, Tag } from '@grafana/ui';
 import { GrafanaAlertState } from 'app/types/unified-alerting-dto';
 
 interface Props {
@@ -14,13 +12,13 @@ interface Props {
 
 export const AlertInstanceStateFilter = React.memo<Props>(
   ({ className, onStateFilterChange, stateFilter, itemPerStateStats }) => {
-    const styles = useStyles2(getStyles);
-
     const stateOptions = Object.values(GrafanaAlertState).map((value) => ({
       label: value,
       value,
       component: () => {
-        return itemPerStateStats ? <span className={styles.counter}>{itemPerStateStats[value]}</span> : null;
+        return itemPerStateStats && itemPerStateStats[value] ? (
+          <Tag name={itemPerStateStats[value].toFixed(0)} colorIndex={9} />
+        ) : null;
       },
     }));
 
@@ -43,12 +41,3 @@ export const AlertInstanceStateFilter = React.memo<Props>(
 );
 
 AlertInstanceStateFilter.displayName = 'AlertInstanceStateFilter';
-
-function getStyles(theme: GrafanaTheme2) {
-  return {
-    counter: css`
-      display: inline-block;
-      color: ${theme.colors.text.maxContrast};
-    `,
-  };
-}
