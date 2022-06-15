@@ -208,14 +208,14 @@ func TestOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			desc:         "UsersLookupGet should return 200 for user with correct permissions",
 			url:          "/api/org/users/lookup",
 			method:       http.MethodGet,
-			permissions:  []*accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll}},
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll}},
 		},
 		{
 			expectedCode: http.StatusForbidden,
 			desc:         "UsersLookupGet should return 403 for user without required permissions",
 			url:          "/api/org/users/lookup",
 			method:       http.MethodGet,
-			permissions:  []*accesscontrol.Permission{{Action: "wrong"}},
+			permissions:  []accesscontrol.Permission{{Action: "wrong"}},
 		},
 	}
 

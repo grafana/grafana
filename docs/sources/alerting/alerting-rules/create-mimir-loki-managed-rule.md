@@ -16,7 +16,7 @@ weight: 400
 
 # Create a Grafana Mimir or Loki managed alerting rule
 
-Grafana allows you to create alerting rules for an external Grafana Mimir or Loki instance that has ruler API enabled. For information on Grafana alerting, see [About Grafana alerting]({{< relref "../about-alerting/" >}}) which explains the various components of Grafana alerting. We also recommend that you familiarize yourself with some of the [fundamental concepts]({{< relref "../fundamentals/" >}}) of Grafana alerting.
+Grafana allows you to create alerting rules for an external Grafana Mimir or Loki instance that has ruler API enabled. For information on Grafana Alerting, see [About Grafana Alerting]({{< relref "../about-alerting/" >}}) which explains the various components of Grafana Alerting. We also recommend that you familiarize yourself with some of the [fundamental concepts]({{< relref "../fundamentals/" >}}) of Grafana Alerting.
 
 ## Before you begin
 

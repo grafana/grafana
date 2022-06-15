@@ -35,8 +35,8 @@ coreModule.directive('bsTypeahead', [
             return value;
           },
         });
-        var typeahead = element.dat('typeahead');
-        typeahead.lookup = function (ev: any) {
+        var typeahead = element.data('typeahead');
+        typeahead.lookup = function () {
           var items;
           this.query = this.$element.val() || '';
           if (this.query.length < this.options.minLength) {

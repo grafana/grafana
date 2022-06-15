@@ -27,6 +27,9 @@ func TestSensuGoNotifier(t *testing.T) {
 	require.NoError(t, err)
 	tmpl.ExternalURL = externalURL
 
+	images, deleteFunc := newFakeImageStore(t)
+	defer deleteFunc()
+
 	cases := []struct {
 		name         string
 		settings     string
@@ -42,7 +45,7 @@ func TestSensuGoNotifier(t *testing.T) {
 				{
 					Alert: model.Alert{
 						Labels:      model.LabelSet{"__alert_rule_uid__": "rule uid", "alertname": "alert1", "lbl1": "val1"},
-						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh", "__alertScreenshotToken__": "test-image"},
 					},
 				},
 			},
@@ -57,7 +60,8 @@ func TestSensuGoNotifier(t *testing.T) {
 					"metadata": map[string]interface{}{
 						"name": "default",
 						"labels": map[string]string{
-							"ruleURL": "http://localhost/alerting/list",
+							"imageURL": "https://www.example.com/test-image.jpg",
+							"ruleURL":  "http://localhost/alerting/list",
 						},
 					},
 					"output":   "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
@@ -84,12 +88,12 @@ func TestSensuGoNotifier(t *testing.T) {
 				{
 					Alert: model.Alert{
 						Labels:      model.LabelSet{"__alert_rule_uid__": "rule uid", "alertname": "alert1", "lbl1": "val1"},
-						Annotations: model.LabelSet{"ann1": "annv1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__alertScreenshotToken__": "test-image"},
 					},
 				}, {
 					Alert: model.Alert{
 						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val2"},
-						Annotations: model.LabelSet{"ann1": "annv2"},
+						Annotations: model.LabelSet{"ann1": "annv2", "__alertScreenshotToken__": "test-image-2"},
 					},
 				},
 			},
@@ -104,7 +108,8 @@ func TestSensuGoNotifier(t *testing.T) {
 					"metadata": map[string]interface{}{
 						"name": "grafana_rule_0",
 						"labels": map[string]string{
-							"ruleURL": "http://localhost/alerting/list",
+							"imageURL": "https://www.example.com/test-image.jpg",
+							"ruleURL":  "http://localhost/alerting/list",
 						},
 					},
 					"output":   "2 alerts are firing, 0 are resolved",
@@ -157,7 +162,7 @@ func TestSensuGoNotifier(t *testing.T) {
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
-			sn := NewSensuGoNotifier(cfg, webhookSender, tmpl)
+			sn := NewSensuGoNotifier(cfg, images, webhookSender, tmpl)
 			ok, err := sn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.False(t, ok)

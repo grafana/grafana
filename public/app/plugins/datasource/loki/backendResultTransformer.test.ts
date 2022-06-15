@@ -186,4 +186,50 @@ describe('loki backendResultTransformer', () => {
     );
     expect(result.data[0]?.meta?.custom?.error).toBe('Error when parsing some of the logs');
   });
+
+  it('improve loki escaping error message when query contains escape', () => {
+    const response: DataQueryResponse = {
+      data: [],
+      error: {
+        refId: 'A',
+        message: 'parse error at line 1, col 2: invalid char escape',
+      },
+    };
+
+    const result = transformBackendResult(
+      response,
+      [
+        {
+          refId: 'A',
+          expr: '{place="g\\arden"}',
+        },
+      ],
+      []
+    );
+    expect(result.error?.message).toBe(
+      `parse error at line 1, col 2: invalid char escape. Make sure that all special characters are escaped with \\. For more information on escaping of special characters visit LogQL documentation at https://grafana.com/docs/loki/latest/logql/.`
+    );
+  });
+
+  it('do not change loki escaping error message when query does not contain escape', () => {
+    const response: DataQueryResponse = {
+      data: [],
+      error: {
+        refId: 'A',
+        message: 'parse error at line 1, col 2: invalid char escape',
+      },
+    };
+
+    const result = transformBackendResult(
+      response,
+      [
+        {
+          refId: 'A',
+          expr: '{place="garden"}',
+        },
+      ],
+      []
+    );
+    expect(result.error?.message).toBe('parse error at line 1, col 2: invalid char escape');
+  });
 });

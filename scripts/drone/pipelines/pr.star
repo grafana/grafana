@@ -91,6 +91,7 @@ def pr_test_backend():
         identify_runner_step(),
         download_grabpl_step(),
         gen_version_step(ver_mode),
+        verify_gen_cue_step(),
         wire_install_step(),
     ]
     test_steps = [
@@ -102,7 +103,7 @@ def pr_test_backend():
         test_backend_integration_step(edition="oss"),
     ]
     return pipeline(
-        name='pr-test-backend', edition="oss", trigger=get_pr_trigger(include_paths=['pkg/**', 'packaging/**', '.drone.yml', 'conf/**', 'go.sum', 'go.mod']), services=[], steps=init_steps + test_steps,
+        name='pr-test-backend', edition="oss", trigger=get_pr_trigger(include_paths=['pkg/**', 'packaging/**', '.drone.yml', 'conf/**', 'go.sum', 'go.mod', 'public/app/plugins/**/plugin.json']), services=[], steps=init_steps + test_steps,
     )
 
 
@@ -114,6 +115,7 @@ def pr_pipelines(edition):
         identify_runner_step(),
         download_grabpl_step(),
         gen_version_step(ver_mode),
+        verify_gen_cue_step(),
         wire_install_step(),
         yarn_install_step(),
     ]
@@ -123,7 +125,6 @@ def pr_pipelines(edition):
         build_frontend_step(edition=edition, ver_mode=ver_mode),
         build_frontend_package_step(edition=edition, ver_mode=ver_mode),
         build_plugins_step(edition=edition),
-        verify_gen_cue_step(),
     ]
     integration_test_steps = [
         postgres_integration_tests_step(edition=edition, ver_mode=ver_mode),

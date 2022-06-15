@@ -10,6 +10,9 @@ import (
 )
 
 func TestIntegrationGetQueriesFromQueryHistory(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	testScenario(t, "When users tries to get query in empty query history, it should return empty result",
 		func(t *testing.T, sc scenarioContext) {
 			sc.reqContext.Req.Form.Add("datasourceUid", "test")

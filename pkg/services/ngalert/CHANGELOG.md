@@ -45,6 +45,10 @@ Scopes must have an order to ensure consistency and ease of search, this helps u
 
 ## Grafana Alerting - main / unreleased
 
+- [FEATURE] use optimistic lock by version field when updating alert rules #50274
+- [ENHANCEMENT] Scheduler: Drop ticks if rule evaluation is too slow and adds a metric grafana_alerting_schedule_rule_evaluations_missed_total to track missed evaluations per rule #48885
+- [ENHANCEMENT] Ticker to tick at predictable time #50197
+
 ## 9.0.0
 
 - [ENHANCEMENT] Scheduler: Ticker expose new metrics. In legacy, metrics are prefixed with `legacy_` #47828, #48190
@@ -54,7 +58,13 @@ Scopes must have an order to ensure consistency and ease of search, this helps u
 - [ENHANCEMENT] Create folder 'General Alerting' when Grafana starts from the scratch #48866
 - [ENHANCEMENT] Rule changes authorization logic to use UID folder scope instead of ID scope #48970
 - [ENHANCEMENT] Scheduler: ticker to support stopping #48142
-- [ENHANCEMENT] Scheduler: Adds new metrics to track rules that might be scheduled.
+- [ENHANCEMENT] Optional custom title and description for OpsGenie #50131
+- [ENHANCEMENT] Scheduler: Adds new metrics to track rules that might be scheduled #49874
+  - `grafana_alerting_schedule_alert_rules `
+  - `grafana_alerting_schedule_alert_rules_hash `
+- [CHANGE] Scheduler: Renaming of metrics to make them consistent with similar metrics exposed by the component #49874
+  - `grafana_alerting_get_alert_rules_duration_seconds` to `grafana_alerting_schedule_periodic_duration_seconds`
+  - `grafana_alerting_schedule_periodic_duration_seconds` to `grafana_alerting_schedule_query_alert_rules_duration_seconds`
 - [FEATURE] Indicate whether routes are provisioned when GETting Alertmanager configuration #47857
 - [FEATURE] Indicate whether contact point is provisioned when GETting Alertmanager configuration #48323
 - [FEATURE] Indicate whether alert rule is provisioned when GETting the rule #48458

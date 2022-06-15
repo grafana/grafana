@@ -720,20 +720,6 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 	})
 
 	t.Run("Given two dashboards being compared", func(t *testing.T) {
-		dashboardvs := []*models.DashboardVersion{
-			{
-				DashboardId: 1,
-				Version:     1,
-				Data: simplejson.NewFromAny(map[string]interface{}{
-					"title": "Dash1",
-				})},
-			{
-				DashboardId: 2,
-				Version:     2,
-				Data: simplejson.NewFromAny(map[string]interface{}{
-					"title": "Dash2",
-				})},
-		}
 		fakeDashboardVersionService := dashvertest.NewDashboardVersionServiceFake()
 		fakeDashboardVersionService.ExpectedDashboardVersions = []*dashver.DashboardVersion{
 			{
@@ -751,7 +737,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				}),
 			},
 		}
-		sqlmock := mockstore.SQLStoreMock{ExpectedDashboardVersions: dashboardvs}
+		sqlmock := mockstore.SQLStoreMock{}
 		setUp := func() {
 			dashSvc := dashboards.NewFakeDashboardService(t)
 			dashSvc.On("GetDashboardAclInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardAclInfoListQuery")).Return(nil)
@@ -859,12 +845,6 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			Version: 1,
 		}
 		mockSQLStore := mockstore.NewSQLStoreMock()
-		mockSQLStore.ExpectedDashboardVersions = []*models.DashboardVersion{
-			{
-				DashboardId: 2,
-				Version:     1,
-				Data:        fakeDash.Data,
-			}}
 		restoreDashboardVersionScenario(t, "When calling POST on", "/api/dashboards/id/1/restore",
 			"/api/dashboards/id/:dashboardId/restore", dashboardService, fakeDashboardVersionService, cmd, func(sc *scenarioContext) {
 				callRestoreDashboardVersion(sc)

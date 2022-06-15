@@ -63,7 +63,7 @@ certain view mode enabled. Additionally, this also enables [playlists](/dashboar
 
 ## Notification Reminders
 
-Do you use Grafana alerting and have some notifications that are more important than others? Then it's possible to set reminders so that you continue to be alerted until the problem is fixed. This is done on the notification channel itself and will affect all alerts that use that channel.
+Do you use Grafana Alerting and have some notifications that are more important than others? Then it's possible to set reminders so that you continue to be alerted until the problem is fixed. This is done on the notification channel itself and will affect all alerts that use that channel.
 For additional examples of why reminders might be useful for you, see [multiple series](/alerting/alerts-overview/#multiple-series).
 
 For more information about how to enable and configure reminders, refer to [alerting reminders](/alerting/notifications/#send-reminders).

@@ -52,7 +52,7 @@ export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
     if (!playlistToDelete) {
       return;
     }
-    deletePlaylist(playlistToDelete.id).finally(() => {
+    deletePlaylist(playlistToDelete.uid).finally(() => {
       setForcePlaylistsFetch(forcePlaylistsFetch + 1);
       setPlaylistToDelete(undefined);
     });

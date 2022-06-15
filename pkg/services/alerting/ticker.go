@@ -32,7 +32,7 @@ func NewTicker(c clock.Clock, interval time.Duration, metric *metrics.Ticker) *T
 	t := &Ticker{
 		C:        make(chan time.Time),
 		clock:    c,
-		last:     c.Now(),
+		last:     getStartTick(c, interval),
 		interval: interval,
 		metrics:  metric,
 		stopCh:   make(chan struct{}),
@@ -42,9 +42,14 @@ func NewTicker(c clock.Clock, interval time.Duration, metric *metrics.Ticker) *T
 	return t
 }
 
+func getStartTick(clk clock.Clock, interval time.Duration) time.Time {
+	nano := clk.Now().UnixNano()
+	return time.Unix(0, nano-(nano%interval.Nanoseconds()))
+}
+
 func (t *Ticker) run() {
 	logger := log.New("ticker")
-	logger.Info("starting")
+	logger.Info("starting", "first_tick", t.last.Add(t.interval))
 LOOP:
 	for {
 		next := t.last.Add(t.interval) // calculate the time of the next tick
