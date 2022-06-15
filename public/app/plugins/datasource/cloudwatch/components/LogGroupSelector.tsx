@@ -61,13 +61,11 @@ export const LogGroupSelector: React.FC<LogGroupSelectorProps> = ({
         });
         return logGroups.map(toOption);
       } catch (err) {
-        let errMessage = 'unknown error';
+        let errMessage = err;
         if (typeof err !== 'string') {
           try {
             errMessage = JSON.stringify(err);
           } catch (e) {}
-        } else {
-          errMessage = err;
         }
         dispatch(notifyApp(createErrorNotification(errMessage)));
         return [];
@@ -89,18 +87,19 @@ export const LogGroupSelector: React.FC<LogGroupSelectorProps> = ({
     // See https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_LogGroup.html for the source of the pattern below
     const logGroupNamePattern = /^[\.\-_/#A-Za-z0-9]+$/;
     if (!logGroupNamePattern.test(searchTerm)) {
+      if (searchTerm !== '') {
+        dispatch(notifyApp(createErrorNotification('Invalid Log Group name: ' + searchTerm)));
+      }
       return Promise.resolve();
     }
 
     setLoadingLogGroups(true);
-    try {
-      const matchingLogGroups = await fetchLogGroupOptions(region, searchTerm);
-      setAvailableLogGroups(unionBy(availableLogGroups, matchingLogGroups, 'value'));
-    } finally {
-      setLoadingLogGroups(false);
-    }
+    const matchingLogGroups = await fetchLogGroupOptions(region, searchTerm);
+    setAvailableLogGroups(unionBy(availableLogGroups, matchingLogGroups, 'value'));
+    setLoadingLogGroups(false);
   };
 
+  // Reset the log group options if the datasource or region change and are saved
   useEffect(() => {
     async function resetLogGroups() {
       // Don't call describeLogGroups if datasource or region is undefined
@@ -127,7 +126,7 @@ export const LogGroupSelector: React.FC<LogGroupSelectorProps> = ({
     saved && resetLogGroups();
     // this hook shouldn't get called every time selectedLogGroups or onChange updates
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [datasource, fetchLogGroupOptions, region, saved]);
+  }, [datasource, region, saved]);
 
   const onOpenLogGroupMenu = async () => {
     if (onOpenMenu) {
