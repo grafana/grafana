@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -42,12 +44,16 @@ type ScheduleService interface {
 	DroppedAlertmanagersFor(orgID int64) []*url.URL
 	// UpdateAlertRule notifies scheduler that a rule has been changed
 	UpdateAlertRule(key ngmodels.AlertRuleKey)
+	// UpdateAlertRulesByNamespaceUID notifies scheduler that all rules in a namespace should be updated.
+	UpdateAlertRulesByNamespaceUID(ctx context.Context, orgID int64, uid string) error
 	// DeleteAlertRule notifies scheduler that a rule has been changed
 	DeleteAlertRule(key ngmodels.AlertRuleKey)
 	// the following are used by tests only used for tests
 	evalApplied(ngmodels.AlertRuleKey, time.Time)
 	stopApplied(ngmodels.AlertRuleKey)
 	overrideCfg(cfg SchedulerCfg)
+
+	folderUpdateHandler(ctx context.Context, evt *events.FolderUpdated) error
 }
 
 type schedule struct {
@@ -98,6 +104,9 @@ type schedule struct {
 	adminConfigPollInterval time.Duration
 	disabledOrgs            map[int64]struct{}
 	minRuleInterval         time.Duration
+
+	// bus is used to hook into events that should cause rule updates.
+	bus bus.Bus
 }
 
 // SchedulerCfg is the scheduler configuration.
@@ -121,7 +130,7 @@ type SchedulerCfg struct {
 }
 
 // NewScheduler returns a new schedule.
-func NewScheduler(cfg SchedulerCfg, expressionService *expr.Service, appURL *url.URL, stateManager *state.Manager) *schedule {
+func NewScheduler(cfg SchedulerCfg, expressionService *expr.Service, appURL *url.URL, stateManager *state.Manager, bus bus.Bus) *schedule {
 	ticker := alerting.NewTicker(cfg.C, cfg.BaseInterval, cfg.Metrics.Ticker)
 
 	sch := schedule{
@@ -149,7 +158,11 @@ func NewScheduler(cfg SchedulerCfg, expressionService *expr.Service, appURL *url
 		adminConfigPollInterval: cfg.AdminConfigPollInterval,
 		disabledOrgs:            cfg.DisabledOrgs,
 		minRuleInterval:         cfg.MinRuleInterval,
+		bus:                     bus,
 	}
+
+	bus.AddEventListener(sch.folderUpdateHandler)
+
 	return &sch
 }
 
@@ -313,6 +326,26 @@ func (sch *schedule) UpdateAlertRule(key ngmodels.AlertRuleKey) {
 		return
 	}
 	ruleInfo.update()
+}
+
+// UpdateAlertRulesByNamespaceUID looks for the active rule evaluation for every rule in the given namespace and commands it to update the rule.
+func (sch *schedule) UpdateAlertRulesByNamespaceUID(ctx context.Context, orgID int64, uid string) error {
+	q := ngmodels.ListAlertRulesQuery{
+		OrgID:         orgID,
+		NamespaceUIDs: []string{uid},
+	}
+	if err := sch.ruleStore.ListAlertRules(ctx, &q); err != nil {
+		return err
+	}
+
+	for _, r := range q.Result {
+		sch.UpdateAlertRule(ngmodels.AlertRuleKey{
+			OrgID: orgID,
+			UID:   r.UID,
+		})
+	}
+
+	return nil
 }
 
 // DeleteAlertRule stops evaluation of the rule, deletes it from active rules, and cleans up state cache.
@@ -670,6 +703,11 @@ func (sch *schedule) saveAlertStates(ctx context.Context, states []*state.State)
 			sch.log.Error("failed to save alert state", "uid", s.AlertRuleUID, "orgId", s.OrgID, "labels", s.Labels.String(), "state", s.State.String(), "msg", err.Error())
 		}
 	}
+}
+
+// folderUpdateHandler listens for folder update events and updates all rules in the given folder.
+func (sch *schedule) folderUpdateHandler(ctx context.Context, evt *events.FolderUpdated) error {
+	return sch.UpdateAlertRulesByNamespaceUID(ctx, evt.OrgID, evt.UID)
 }
 
 // overrideCfg is only used on tests.

@@ -4,7 +4,10 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"time"
 
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -222,6 +225,17 @@ func (f *FolderServiceImpl) UpdateFolder(ctx context.Context, user *models.Signe
 		return err
 	}
 	cmd.Result = folder
+
+	if err := bus.Publish(ctx, &events.FolderUpdated{
+		Timestamp: time.Now(),
+		Title:     folder.Title,
+		ID:        dash.Id,
+		UID:       dash.Uid,
+		OrgID:     orgID,
+	}); err != nil {
+		f.log.Error("failed to publish FolderUpdated event", "folder", folder.Title, "user", user.UserId, "error", err)
+	}
+
 	return nil
 }
 
