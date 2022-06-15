@@ -1,5 +1,5 @@
 import { PluginError, PluginMeta, renderMarkdown } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, isFetchError } from '@grafana/runtime';
 
 import { API_ROOT, GCOM_API_ROOT } from './constants';
 import { isLocalPluginVisible, isRemotePluginVisible } from './helpers';
@@ -45,8 +45,10 @@ async function getRemotePlugin(id: string): Promise<RemotePlugin | undefined> {
   try {
     return await getBackendSrv().get(`${GCOM_API_ROOT}/plugins/${id}`, {});
   } catch (error) {
-    // It can happen that GCOM is not available, in that case we show a limited set of information to the user.
-    error.isHandled = true;
+    if (isFetchError(error)) {
+      // It can happen that GCOM is not available, in that case we show a limited set of information to the user.
+      error.isHandled = true;
+    }
     return;
   }
 }
@@ -66,8 +68,10 @@ async function getPluginVersions(id: string, isPublished: boolean): Promise<Vers
       grafanaDependency: v.grafanaDependency,
     }));
   } catch (error) {
-    // It can happen that GCOM is not available, in that case we show a limited set of information to the user.
-    error.isHandled = true;
+    if (isFetchError(error)) {
+      // It can happen that GCOM is not available, in that case we show a limited set of information to the user.
+      error.isHandled = true;
+    }
     return [];
   }
 }
@@ -79,7 +83,9 @@ async function getLocalPluginReadme(id: string): Promise<string> {
 
     return markdownAsHtml;
   } catch (error) {
-    error.isHandled = true;
+    if (isFetchError(error)) {
+      error.isHandled = true;
+    }
     return '';
   }
 }
