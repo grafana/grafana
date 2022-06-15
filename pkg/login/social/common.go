@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/jmespath/go-jmespath"
 )
 
@@ -88,7 +87,7 @@ func (s *SocialBase) searchJSONForAttr(attributePath string, data []byte) (inter
 
 	val, err := jmespath.Search(attributePath, buf)
 	if err != nil {
-		return "", errutil.Wrapf(err, "failed to search user info JSON response with provided path: %q", attributePath)
+		return "", fmt.Errorf("failed to search user info JSON response with provided path: %q: %w", attributePath, err)
 	}
 
 	return val, nil

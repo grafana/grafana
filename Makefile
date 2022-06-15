@@ -68,7 +68,7 @@ ensure_go-swagger_mac:
 	-x "github.com/prometheus/alertmanager" \
 	-i pkg/api/docs/tags.json
 
-swagger-api-spec-mac: gen-go --swagger-api-spec-mac $(MERGED_SPEC_TARGET) validate-api-spec
+swagger-api-spec-mac: gen-go --swagger-api-spec-mac $(MERGED_SPEC_TARGET) validate-api-spec-mac
 
 validate-api-spec: $(MERGED_SPEC_TARGET) ## Validate API spec
 	docker run --rm -it \
@@ -78,6 +78,9 @@ validate-api-spec: $(MERGED_SPEC_TARGET) ## Validate API spec
 	-v $$(pwd):/grafana \
 	-w $$(pwd)/pkg/api/docs quay.io/goswagger/swagger:$(SWAGGER_TAG) \
 	validate /grafana/$(<)
+
+validate-api-spec-mac: $(MERGED_SPEC_TARGET) ## Validate API spec
+	swagger validate $(<)
 
 clean-api-spec:
 	rm $(SPEC_TARGET) $(MERGED_SPEC_TARGET)

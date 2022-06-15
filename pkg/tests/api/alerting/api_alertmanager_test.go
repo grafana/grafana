@@ -2743,6 +2743,9 @@ func rulesNamespaceWithoutVariableValues(t *testing.T, b []byte) (string, map[st
 func createUser(t *testing.T, store *sqlstore.SQLStore, cmd models.CreateUserCommand) int64 {
 	t.Helper()
 
+	store.Cfg.AutoAssignOrg = true
+	store.Cfg.AutoAssignOrgId = 1
+
 	u, err := store.CreateUser(context.Background(), cmd)
 	require.NoError(t, err)
 	return u.Id

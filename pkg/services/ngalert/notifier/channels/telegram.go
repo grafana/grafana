@@ -7,11 +7,12 @@ import (
 	"fmt"
 	"mime/multipart"
 
+	"github.com/prometheus/alertmanager/template"
+	"github.com/prometheus/alertmanager/types"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
-	"github.com/prometheus/alertmanager/template"
-	"github.com/prometheus/alertmanager/types"
 )
 
 var (
@@ -95,7 +96,7 @@ func (tn *TelegramNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 	w := multipart.NewWriter(&body)
 	defer func() {
 		if err := w.Close(); err != nil {
-			tn.log.Warn("Failed to close writer", "err", err)
+			tn.log.Warn("failed to close writer", "err", err)
 		}
 	}()
 	boundary := GetBoundary()
@@ -129,7 +130,7 @@ func (tn *TelegramNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 	}
 
 	if err := tn.ns.SendWebhookSync(ctx, cmd); err != nil {
-		tn.log.Error("Failed to send webhook", "error", err, "webhook", tn.Name)
+		tn.log.Error("failed to send webhook", "err", err, "webhook", tn.Name)
 		return false, err
 	}
 

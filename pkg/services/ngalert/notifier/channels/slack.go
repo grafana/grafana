@@ -14,14 +14,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/template"
+	"github.com/prometheus/alertmanager/types"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/prometheus/alertmanager/config"
-	"github.com/prometheus/alertmanager/template"
-	"github.com/prometheus/alertmanager/types"
 )
 
 var SlackAPIEndpoint = "https://slack.com/api/chat.postMessage"
@@ -199,7 +200,7 @@ func (sn *SlackNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bo
 		return false, fmt.Errorf("marshal json: %w", err)
 	}
 
-	sn.log.Debug("Sending Slack API request", "url", sn.URL.String(), "data", string(b))
+	sn.log.Debug("sending Slack API request", "url", sn.URL.String(), "data", string(b))
 	request, err := http.NewRequestWithContext(ctx, http.MethodPost, sn.URL.String(), bytes.NewReader(b))
 	if err != nil {
 		return false, fmt.Errorf("failed to create HTTP request: %w", err)
@@ -212,7 +213,7 @@ func (sn *SlackNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bo
 			panic("Token should be set when using the Slack chat API")
 		}
 	} else {
-		sn.log.Debug("Adding authorization header to HTTP request")
+		sn.log.Debug("adding authorization header to HTTP request")
 		request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", sn.Token))
 	}
 
@@ -252,7 +253,7 @@ var sendSlackRequest = func(request *http.Request, logger log.Logger) (retErr er
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			logger.Warn("Failed to close response body", "err", err)
+			logger.Warn("failed to close response body", "err", err)
 		}
 	}()
 
@@ -285,7 +286,7 @@ var sendSlackRequest = func(request *http.Request, logger log.Logger) (retErr er
 		return fmt.Errorf("failed to make Slack API request: %s", rslt.Err)
 	}
 
-	logger.Debug("Sending Slack API request succeeded", "url", request.URL.String(), "statusCode", resp.Status)
+	logger.Debug("sending Slack API request succeeded", "url", request.URL.String(), "statusCode", resp.Status)
 	return nil
 }
 

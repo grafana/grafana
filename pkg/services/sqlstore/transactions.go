@@ -11,14 +11,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var tsclogger = log.New("sqlstore.transactions")
 
 // WithTransactionalDbSession calls the callback with a session within a transaction.
 func (ss *SQLStore) WithTransactionalDbSession(ctx context.Context, callback DBTransactionFunc) error {
-	return inTransactionWithRetryCtx(ctx, ss.engine, callback, 0)
+	return inTransactionWithRetryCtx(ctx, ss.engine, ss.bus, callback, 0)
 }
 
 func (ss *SQLStore) InTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
@@ -26,17 +25,13 @@ func (ss *SQLStore) InTransaction(ctx context.Context, fn func(ctx context.Conte
 }
 
 func (ss *SQLStore) inTransactionWithRetry(ctx context.Context, fn func(ctx context.Context) error, retry int) error {
-	return inTransactionWithRetryCtx(ctx, ss.engine, func(sess *DBSession) error {
+	return inTransactionWithRetryCtx(ctx, ss.engine, ss.bus, func(sess *DBSession) error {
 		withValue := context.WithValue(ctx, ContextSessionKey{}, sess)
 		return fn(withValue)
 	}, retry)
 }
 
-func inTransactionWithRetry(callback DBTransactionFunc, engine *xorm.Engine, retry int) error {
-	return inTransactionWithRetryCtx(context.Background(), engine, callback, retry)
-}
-
-func inTransactionWithRetryCtx(ctx context.Context, engine *xorm.Engine, callback DBTransactionFunc, retry int) error {
+func inTransactionWithRetryCtx(ctx context.Context, engine *xorm.Engine, bus bus.Bus, callback DBTransactionFunc, retry int) error {
 	sess, isNew, err := startSessionOrUseExisting(ctx, engine, true)
 	if err != nil {
 		return err
@@ -63,17 +58,17 @@ func inTransactionWithRetryCtx(ctx context.Context, engine *xorm.Engine, callbac
 	var sqlError sqlite3.Error
 	if errors.As(err, &sqlError) && retry < 5 && (sqlError.Code == sqlite3.ErrLocked || sqlError.Code == sqlite3.ErrBusy) {
 		if rollErr := sess.Rollback(); rollErr != nil {
-			return errutil.Wrapf(err, "Rolling back transaction due to error failed: %s", rollErr)
+			return fmt.Errorf("rolling back transaction due to error failed: %s: %w", rollErr, err)
 		}
 
 		time.Sleep(time.Millisecond * time.Duration(10))
 		sqlog.Info("Database locked, sleeping then retrying", "error", err, "retry", retry)
-		return inTransactionWithRetry(callback, engine, retry+1)
+		return inTransactionWithRetryCtx(ctx, engine, bus, callback, retry+1)
 	}
 
 	if err != nil {
 		if rollErr := sess.Rollback(); rollErr != nil {
-			return errutil.Wrapf(err, "Rolling back transaction due to error failed: %s", rollErr)
+			return fmt.Errorf("rolling back transaction due to error failed: %s: %w", rollErr, err)
 		}
 		return err
 	}

@@ -2,7 +2,8 @@ import React, { FC, useCallback } from 'react';
 
 import { AppEvents, StandardEditorProps, StandardEditorsRegistryItem, StringFieldConfigSettings } from '@grafana/data';
 import { config, getBackendSrv } from '@grafana/runtime';
-import { Button, InlineField, InlineFieldRow, JSONFormatter, StringValueEditor } from '@grafana/ui';
+import { Button, InlineField, InlineFieldRow, JSONFormatter } from '@grafana/ui';
+import { StringValueEditor } from 'app/core/components/OptionsUI/string';
 import { appEvents } from 'app/core/core';
 
 export interface APIEditorConfig {

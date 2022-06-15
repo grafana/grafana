@@ -1,11 +1,12 @@
 package commands
 
 import (
+	"fmt"
+
 	"github.com/fatih/color"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 func (cmd Command) upgradeCommand(c utils.CommandLine) error {
@@ -25,7 +26,7 @@ func (cmd Command) upgradeCommand(c utils.CommandLine) error {
 
 	if shouldUpgrade(localPlugin.Info.Version, &plugin) {
 		if err := services.RemoveInstalledPlugin(pluginsDir, pluginName); err != nil {
-			return errutil.Wrapf(err, "failed to remove plugin '%s'", pluginName)
+			return fmt.Errorf("failed to remove plugin '%s': %w", pluginName, err)
 		}
 
 		return InstallPlugin(pluginName, "", c, cmd.Client)

@@ -2,10 +2,9 @@ package store
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"io/ioutil"
-	"mime/multipart"
-	"net/http"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
@@ -20,8 +19,19 @@ import (
 
 var grafanaStorageLogger = log.New("grafanaStorageLogger")
 
+var ErrUploadFeatureDisabled = errors.New("upload feature is disabled")
+var ErrUnsupportedFolder = errors.New("unsupported folder for uploads")
+var ErrFileTooBig = errors.New("file is too big")
+var ErrInvalidPath = errors.New("path is invalid")
+var ErrUploadInternalError = errors.New("upload internal error")
+var ErrInvalidFileType = errors.New("invalid file type")
+var ErrFileAlreadyExists = errors.New("file exists")
+
 const RootPublicStatic = "public-static"
+const RootUpload = "upload"
+
 const MAX_UPLOAD_SIZE = 1024 * 1024 // 1MB
+
 type StorageService interface {
 	registry.BackgroundService
 
@@ -31,7 +41,7 @@ type StorageService interface {
 	// Read raw file contents out of the store
 	Read(ctx context.Context, user *models.SignedInUser, path string) (*filestorage.File, error)
 
-	Upload(ctx context.Context, user *models.SignedInUser, form *multipart.Form) (*Response, error)
+	Upload(ctx context.Context, user *models.SignedInUser, req UploadRequest) error
 
 	Delete(ctx context.Context, user *models.SignedInUser, path string) error
 }
@@ -39,14 +49,6 @@ type StorageService interface {
 type standardStorageService struct {
 	sql  *sqlstore.SQLStore
 	tree *nestedTree
-}
-
-type Response struct {
-	path       string
-	statusCode int
-	message    string
-	fileName   string
-	err        bool
 }
 
 func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles, cfg *setting.Cfg) StorageService {
@@ -68,7 +70,7 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 		storages := make([]storageRuntime, 0)
 		if features.IsEnabled(featuremgmt.FlagStorageLocalUpload) {
 			config := &StorageSQLConfig{orgId: orgId}
-			storages = append(storages, newSQLStorage("upload", "Local file upload", config, sql).setBuiltin(true))
+			storages = append(storages, newSQLStorage(RootUpload, "Local file upload", config, sql).setBuiltin(true))
 		}
 		return storages
 	}
@@ -122,71 +124,72 @@ func isFileTypeValid(filetype string) bool {
 	return false
 }
 
-func (s *standardStorageService) Upload(ctx context.Context, user *models.SignedInUser, form *multipart.Form) (*Response, error) {
-	response := Response{
-		path: "upload",
-	}
-	upload, _ := s.tree.getRoot(getOrgId(user), "upload")
+type UploadRequest struct {
+	Contents           []byte
+	MimeType           string
+	Path               string
+	CacheControl       string
+	ContentDisposition string
+	Properties         map[string]string
+
+	OverwriteExistingFile bool
+}
+
+func (s *standardStorageService) Upload(ctx context.Context, user *models.SignedInUser, req UploadRequest) error {
+	upload, _ := s.tree.getRoot(getOrgId(user), RootUpload)
 	if upload == nil {
-		response.statusCode = 404
-		response.message = "upload feature is not enabled"
-		response.err = true
-		return &response, fmt.Errorf("upload feature is not enabled")
+		return ErrUploadFeatureDisabled
 	}
 
-	files := form.File["file"]
-	for _, fileHeader := range files {
-		// Restrict the size of each uploaded file to 1MB based on the header
-		if fileHeader.Size > MAX_UPLOAD_SIZE {
-			response.statusCode = 400
-			response.message = "The uploaded image is too big"
-			response.err = true
-			return &response, nil
-		}
-		// restrict file size based on file size
-		// open each file to copy contents
-		file, err := fileHeader.Open()
-		if err != nil {
-			return nil, err
-		}
-		err = file.Close()
-		if err != nil {
-			return nil, err
-		}
-		data, err := ioutil.ReadAll(file)
-		if err != nil {
-			return nil, err
-		}
-
-		filetype := http.DetectContentType(data)
-		path := "/" + fileHeader.Filename
-
-		grafanaStorageLogger.Info("uploading a file", "filetype", filetype, "path", path)
-		// only allow images to be uploaded
-		if !isFileTypeValid(filetype) {
-			return &Response{
-				statusCode: 400,
-				message:    "unsupported file type uploaded",
-				err:        true,
-			}, nil
-		}
-		err = upload.Upsert(ctx, &filestorage.UpsertFileCommand{
-			Path:     path,
-			Contents: data,
-		})
-		if err != nil {
-			return nil, err
-		}
-		response.message = "Uploaded successfully"
-		response.statusCode = 200
-		response.fileName = fileHeader.Filename
-		response.path = "upload/" + fileHeader.Filename
+	if !strings.HasPrefix(req.Path, RootUpload+"/") {
+		return ErrUnsupportedFolder
 	}
-	return &response, nil
+
+	validFileType := isFileTypeValid(req.MimeType)
+	if !validFileType {
+		return ErrInvalidFileType
+	}
+
+	grafanaStorageLogger.Info("uploading a file", "filetype", req.MimeType, "path", req.Path)
+
+	storagePath := strings.TrimPrefix(req.Path, RootUpload)
+
+	if err := filestorage.ValidatePath(storagePath); err != nil {
+		grafanaStorageLogger.Info("uploading file failed due to invalid path", "filetype", req.MimeType, "path", req.Path, "err", err)
+		return ErrInvalidPath
+	}
+
+	if !req.OverwriteExistingFile {
+		file, err := upload.Get(ctx, storagePath)
+		if err != nil {
+			grafanaStorageLogger.Error("failed while checking file existence", "err", err, "path", req.Path)
+			return ErrUploadInternalError
+		}
+
+		if file != nil {
+			return ErrFileAlreadyExists
+		}
+	}
+
+	err := upload.Upsert(ctx, &filestorage.UpsertFileCommand{
+		Path:               storagePath,
+		Contents:           req.Contents,
+		MimeType:           req.MimeType,
+		CacheControl:       req.CacheControl,
+		ContentDisposition: req.ContentDisposition,
+		Properties:         req.Properties,
+	})
+
+	if err != nil {
+		grafanaStorageLogger.Error("failed while uploading the file", "err", err, "path", req.Path)
+		return ErrUploadInternalError
+	}
+
+	return nil
 }
 
 func (s *standardStorageService) Delete(ctx context.Context, user *models.SignedInUser, path string) error {
-	upload, _ := s.tree.getRoot(getOrgId(user), "upload")
+	upload, _ := s.tree.getRoot(getOrgId(user), RootUpload)
 	if upload == nil {
 		return fmt.Errorf("upload feature is not enabled")
 	}

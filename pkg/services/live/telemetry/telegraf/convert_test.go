@@ -41,7 +41,7 @@ func checkTestData(t *testing.T, file string) *backend.DataResponse {
 		dr.Frames = append(dr.Frames, w.Frame())
 	}
 
-	experimental.CheckGoldenJSONResponse(t, "testdata", file, dr, true)
+	experimental.CheckGoldenJSONResponse(t, "testdata", file, dr, false)
 	return dr
 }
 

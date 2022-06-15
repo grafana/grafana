@@ -32,6 +32,7 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 	defer dashboardStore.AssertExpectations(t)
 
 	features := featuremgmt.WithFeatures()
+	ac := accesscontrolmock.New()
 	folderPermissions := accesscontrolmock.NewMockedPermissionsService()
 	dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
 
@@ -42,7 +43,7 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 		folderPermissionsService:    folderPermissions,
 		dashboardPermissionsService: dashboardPermissions,
 		dashboardService: service.ProvideDashboardService(
-			settings, dashboardStore, nil, features, folderPermissions, dashboardPermissions,
+			settings, dashboardStore, nil, features, folderPermissions, dashboardPermissions, ac,
 		),
 		AccessControl: accesscontrolmock.New().WithDisabled(),
 	}

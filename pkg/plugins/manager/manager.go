@@ -24,6 +24,7 @@ var _ plugins.Client = (*PluginManager)(nil)
 var _ plugins.Store = (*PluginManager)(nil)
 var _ plugins.StaticRouteResolver = (*PluginManager)(nil)
 var _ plugins.RendererManager = (*PluginManager)(nil)
+var _ plugins.SecretsPluginManager = (*PluginManager)(nil)
 
 type PluginManager struct {
 	cfg             *plugins.Cfg
@@ -110,6 +111,16 @@ func (m *PluginManager) loadPlugins(ctx context.Context, class plugins.Class, pa
 func (m *PluginManager) Renderer() *plugins.Plugin {
 	for _, p := range m.availablePlugins(context.TODO()) {
 		if p.IsRenderer() {
+			return p
+		}
+	}
+
+	return nil
+}
+
+func (m *PluginManager) SecretsManager() *plugins.Plugin {
+	for _, p := range m.availablePlugins(context.TODO()) {
+		if p.IsSecretsManager() {
 			return p
 		}
 	}

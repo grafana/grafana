@@ -611,6 +611,14 @@ Current core features that will stop working:
 
 Before we disable angular support by default we plan to migrate these remaining areas to React.
 
+### csrf_trusted_origins
+
+List of additional allowed URLs to pass by the CSRF check. Suggested when authentication comes from an IdP.
+
+### csrf_additional_headers
+
+List of allowed headers to be set by the user. Suggested to use for if authentication lives behind reverse proxies.
+
 ## [snapshots]
 
 ### external_enabled
@@ -1177,11 +1185,11 @@ Sets a global limit on number of alert rules that can be created. Default is -1 
 
 ## [unified_alerting]
 
-For more information about the Grafana alerts, refer to [About Grafana alerting]({{< relref "../../alerting/" >}}).
+For more information about the Grafana alerts, refer to [About Grafana Alerting]({{< relref "../../alerting/" >}}).
 
 ### enabled
 
-Enable the Unified Alerting sub-system and interface. When enabled we'll migrate all of your alert rules and notification channels to the new system. New alert rules will be created and your notification channels will be converted into an Alertmanager configuration. Previous data is preserved to enable backwards compatibility but new data is removed. The default value is `false`.
+Enable or disable Grafana Alerting. If enabled, we’ll migrate all your alert rules and notification channels to the new system as alert rules and notification channels you had previously defined will be converted into an Alertmanager configuration. Legacy alerting data is preserved to enable backwards compatibility. If disabled, all your legacy alerting data will be available again, but the data you created using Grafana Alerting will be deleted. Set force_migration=true to avoid deletion of data. The default value is `true`.
 
 Alerting Rules migrated from dashboards and panels will include a link back via the `annotations`.
 
@@ -1259,13 +1267,31 @@ The interval string is a possibly signed sequence of decimal numbers, followed b
 
 <hr>
 
+## [unified_alerting.screenshots]
+
+For more information about screenshots, refer to [Images in notifications]({{< relref "../../alerting/images-in-notifications" >}}).
+
+### capture
+
+Enable screenshots in notifications. This option requires a remote HTTP image rendering service. Please see `[rendering]` for further configuration options.
+
+### max_concurrent_screenshots
+
+The maximum number of screenshots that can be taken at the same time. This option is different from `concurrent_render_request_limit` as `max_concurrent_screenshots` sets the number of concurrent screenshots that can be taken at the same time for all firing alerts where as concurrent_render_request_limit sets the total number of concurrent screenshots across all Grafana services.
+
+### upload_external_image_storage
+
+Uploads screenshots to the local Grafana server or remote storage such as Azure, S3 and GCS. Please see `[external_image_storage]` for further configuration options. If this option is false then screenshots will be persisted to disk for up to `temp_data_lifetime`.
+
+<hr>
+
 ## [alerting]
 
 For more information about the legacy dashboard alerting feature in Grafana, refer to [Alerts overview]({{< relref "../../alerting/" >}}).
 
 ### enabled
 
-Set to `false` to [enable Grafana alerting]({{<relref "#unified_alerting">}}) and to disable legacy alerting engine. to disable Grafana alerting, set to `true`.
+Set to `false` to [enable Grafana Alerting]({{<relref "#unified_alerting">}}) and to disable legacy alerting engine. to disable Grafana Alerting, set to `true`.
 
 ### execute_alerts
 

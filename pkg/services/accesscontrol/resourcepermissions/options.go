@@ -39,6 +39,4 @@ type Options struct {
 	OnSetBuiltInRole func(session *sqlstore.DBSession, orgID int64, builtInRole, resourceID, permission string) error
 	// InheritedScopesSolver if configured can generate additional scopes that will be used when fetching permissions for a resource
 	InheritedScopesSolver InheritedScopesSolver
-	// InheritedScopePrefixes if configured are used to create evaluators with the scopes returned by InheritedScopesSolver
-	InheritedScopePrefixes []string
 }

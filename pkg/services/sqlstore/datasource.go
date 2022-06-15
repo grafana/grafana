@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 // GetDataSource adds a datasource to the query model by querying by org_id as well as
@@ -146,7 +145,7 @@ func (ss *SQLStore) AddDataSource(ctx context.Context, cmd *models.AddDataSource
 		if cmd.Uid == "" {
 			uid, err := generateNewDatasourceUid(sess, cmd.OrgId)
 			if err != nil {
-				return errutil.Wrapf(err, "Failed to generate UID for datasource %q", cmd.Name)
+				return fmt.Errorf("failed to generate UID for datasource %q: %w", cmd.Name, err)
 			}
 			cmd.Uid = uid
 		}

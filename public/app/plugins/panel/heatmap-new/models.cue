@@ -14,20 +14,24 @@
 
 package grafanaschema
 
-Panel: {
-    lineages: [
-        [
-            {
-                PanelOptions: {
-                    // anything for now
-                    ...
-                } @cuetsy(kind="interface")
-                PanelFieldConfig: {
-                    // anything for now
-                    ...
-                } @cuetsy(kind="interface")
-            }
-        ]
-    ]
-    migrations: []
+import "github.com/grafana/thema"
+
+Panel: thema.#Lineage & {
+	name: "heatmap-new"
+	seqs: [
+		{
+			schemas: [
+				{
+					PanelOptions: {
+						// anything for now
+						...
+					} @cuetsy(kind="interface")
+					PanelFieldConfig: {
+						// anything for now
+						...
+					} @cuetsy(kind="interface")
+				},
+			]
+		},
+	]
 }

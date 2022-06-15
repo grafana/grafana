@@ -92,12 +92,7 @@ func (hs *HTTPServer) GetDataSourceById(c *models.ReqContext) response.Response 
 		return response.Error(500, "Failed to query datasources", err)
 	}
 
-	filtered, err := hs.filterDatasourcesByQueryPermission(c.Req.Context(), c.SignedInUser, []*models.DataSource{query.Result})
-	if err != nil || len(filtered) != 1 {
-		return response.Error(404, "Data source not found", err)
-	}
-
-	dto := hs.convertModelToDtos(c.Req.Context(), filtered[0])
+	dto := hs.convertModelToDtos(c.Req.Context(), query.Result)
 
 	// Add accesscontrol metadata
 	dto.AccessControl = hs.getAccessControlMetadata(c, c.OrgId, datasources.ScopePrefix, dto.UID)
@@ -151,12 +146,7 @@ func (hs *HTTPServer) GetDataSourceByUID(c *models.ReqContext) response.Response
 		return response.Error(http.StatusInternalServerError, "Failed to query datasource", err)
 	}
 
-	filtered, err := hs.filterDatasourcesByQueryPermission(c.Req.Context(), c.SignedInUser, []*models.DataSource{ds})
-	if err != nil || len(filtered) != 1 {
-		return response.Error(404, "Data source not found", err)
-	}
-
-	dto := hs.convertModelToDtos(c.Req.Context(), filtered[0])
+	dto := hs.convertModelToDtos(c.Req.Context(), ds)
 
 	// Add accesscontrol metadata
 	dto.AccessControl = hs.getAccessControlMetadata(c, c.OrgId, datasources.ScopePrefix, dto.UID)
@@ -397,12 +387,7 @@ func (hs *HTTPServer) GetDataSourceByName(c *models.ReqContext) response.Respons
 		return response.Error(500, "Failed to query datasources", err)
 	}
 
-	filtered, err := hs.filterDatasourcesByQueryPermission(c.Req.Context(), c.SignedInUser, []*models.DataSource{query.Result})
-	if err != nil || len(filtered) != 1 {
-		return response.Error(404, "Data source not found", err)
-	}
-
-	dto := hs.convertModelToDtos(c.Req.Context(), filtered[0])
+	dto := hs.convertModelToDtos(c.Req.Context(), query.Result)
 	return response.JSON(http.StatusOK, &dto)
 }
 

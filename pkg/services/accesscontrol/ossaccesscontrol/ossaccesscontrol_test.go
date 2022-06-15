@@ -35,10 +35,10 @@ func setupTestEnv(t testing.TB) *OSSAccessControlService {
 }
 
 // extractRawPermissionsHelper extracts action and scope fields only from a permission slice
-func extractRawPermissionsHelper(perms []*accesscontrol.Permission) []*accesscontrol.Permission {
-	res := make([]*accesscontrol.Permission, len(perms))
+func extractRawPermissionsHelper(perms []accesscontrol.Permission) []accesscontrol.Permission {
+	res := make([]accesscontrol.Permission, len(perms))
 	for i, p := range perms {
-		res[i] = &accesscontrol.Permission{Action: p.Action, Scope: p.Scope}
+		res[i] = accesscontrol.Permission{Action: p.Action, Scope: p.Scope}
 	}
 	return res
 }
@@ -421,8 +421,8 @@ func TestOSSAccessControlService_GetUserPermissions(t *testing.T) {
 
 			rawUserPerms := extractRawPermissionsHelper(userPerms)
 
-			assert.Contains(t, rawUserPerms, &tt.wantPerm, "Expected resolution of raw permission")
-			assert.NotContains(t, rawUserPerms, &tt.rawPerm, "Expected raw permission to have been resolved")
+			assert.Contains(t, rawUserPerms, tt.wantPerm, "Expected resolution of raw permission")
+			assert.NotContains(t, rawUserPerms, tt.rawPerm, "Expected raw permission to have been resolved")
 		})
 	}
 }
