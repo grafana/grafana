@@ -111,7 +111,7 @@ func (kv *kvStoreSQL) Keys(ctx context.Context, orgId int64, namespace string, k
 }
 
 // Items get all items a given namespace and org. To query for all
-//// organizations the constant 'kvstore.AllOrganizations' can be passed as orgId.
+// organizations the constant 'kvstore.AllOrganizations' can be passed as orgId.
 func (kv *kvStoreSQL) Items(ctx context.Context, orgId int64, namespace string) ([]Item, error) {
 	var items []Item
 	err := kv.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
