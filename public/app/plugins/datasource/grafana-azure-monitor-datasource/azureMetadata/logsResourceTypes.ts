@@ -193,5 +193,3 @@ export const logsResourceTypes = [
   'microsoft.web/sites',
   'microsoft.web/sites/slots',
 ];
-
-export const logsSupportedResourceTypesKusto = logsResourceTypes.map((v) => `"${v}"`).join(',');
