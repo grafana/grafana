@@ -7,6 +7,7 @@ import { ConfirmModal } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
 import { getNavModel } from 'app/core/selectors/navModel';
+import { contextSrv } from 'app/core/services/context_srv';
 import { StoreState } from 'app/types';
 
 import EmptyListCTA from '../../core/components/EmptyListCTA/EmptyListCTA';
@@ -64,6 +65,7 @@ export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
       buttonIcon="plus"
       buttonLink="playlists/new"
       buttonTitle="Create Playlist"
+      buttonDisabled={!contextSrv.isEditor}
       proTip="You can use playlists to cycle dashboards on TVs without user control"
       proTipLink="http://docs.grafana.org/reference/playlist/"
       proTipLinkTitle="Learn more"
@@ -79,7 +81,7 @@ export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
         {showSearch && (
           <PageActionBar
             searchQuery={searchQuery}
-            linkButton={{ title: 'New playlist', href: '/playlists/new' }}
+            linkButton={contextSrv.isEditor && { title: 'New playlist', href: '/playlists/new' }}
             setSearchQuery={setSearchQuery}
           />
         )}
