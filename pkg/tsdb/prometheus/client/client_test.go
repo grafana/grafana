@@ -35,8 +35,10 @@ func TestClient(t *testing.T) {
 				Path:          "/api/v1/series",
 				Method:        http.MethodPost,
 				URL:           "/api/v1/series",
-				Headers:       nil,
-				Body:          []byte("match%5B%5D: ALERTS\nstart: 1655271408\nend: 1655293008"),
+				Headers: map[string][]string{
+					"X-custom-header": {"foo"},
+				},
+				Body: []byte("match%5B%5D: ALERTS\nstart: 1655271408\nend: 1655293008"),
 			}
 			res, err := client.QueryResource(context.Background(), req)
 			defer func() {
@@ -53,6 +55,11 @@ func TestClient(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, []byte("match%5B%5D: ALERTS\nstart: 1655271408\nend: 1655293008"), body)
 			require.Equal(t, "http://localhost:9090/api/v1/series", doer.Req.URL.String())
+			require.Equal(
+				t,
+				http.Header{"Content-Type": []string{"application/x-www-form-urlencoded"}, "X-custom-header": {"foo"}},
+				doer.Req.Header,
+			)
 		})
 
 		t.Run("sends correct GET request", func(t *testing.T) {
@@ -61,7 +68,9 @@ func TestClient(t *testing.T) {
 				Path:          "/api/v1/series",
 				Method:        http.MethodGet,
 				URL:           "api/v1/series?match%5B%5D=ALERTS&start=1655272558&end=1655294158",
-				Headers:       nil,
+				Headers: map[string][]string{
+					"X-custom-header": {"foo"},
+				},
 			}
 			res, err := client.QueryResource(context.Background(), req)
 			defer func() {
@@ -78,6 +87,7 @@ func TestClient(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, []byte{}, body)
 			require.Equal(t, "http://localhost:9090/api/v1/series?match%5B%5D=ALERTS&start=1655272558&end=1655294158", doer.Req.URL.String())
+			require.Equal(t, http.Header{"X-custom-header": {"foo"}}, doer.Req.Header)
 		})
 	})
 }

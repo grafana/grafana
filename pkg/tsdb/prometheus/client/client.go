@@ -43,7 +43,7 @@ func (c *Client) QueryRange(ctx context.Context, q *models.Query) (*http.Respons
 	qs.Set("end", formatTime(tr.End))
 	qs.Set("step", strconv.FormatFloat(tr.Step.Seconds(), 'f', -1, 64))
 
-	return c.fetch(ctx, c.method, u, qs, nil)
+	return c.fetch(ctx, c.method, u, qs, nil, nil)
 }
 
 func (c *Client) QueryInstant(ctx context.Context, q *models.Query) (*http.Response, error) {
@@ -61,7 +61,7 @@ func (c *Client) QueryInstant(ctx context.Context, q *models.Query) (*http.Respo
 		qs.Set("time", formatTime(tr.End))
 	}
 
-	return c.fetch(ctx, c.method, u, qs, nil)
+	return c.fetch(ctx, c.method, u, qs, nil, nil)
 }
 
 func (c *Client) QueryExemplars(ctx context.Context, q *models.Query) (*http.Response, error) {
@@ -78,13 +78,7 @@ func (c *Client) QueryExemplars(ctx context.Context, q *models.Query) (*http.Res
 	qs.Set("start", formatTime(tr.Start))
 	qs.Set("end", formatTime(tr.End))
 
-	return c.fetch(ctx, c.method, u, qs, nil)
-}
-
-type FetchReq struct {
-	Method      string
-	Url         *url.URL
-	QueryString url.Values
+	return c.fetch(ctx, c.method, u, qs, nil, nil)
 }
 
 func (c *Client) QueryResource(ctx context.Context, req *backend.CallResourceRequest) (*http.Response, error) {
@@ -102,10 +96,10 @@ func (c *Client) QueryResource(ctx context.Context, req *backend.CallResourceReq
 	baseUrlParsed.Path = path.Join(baseUrlParsed.Path, req.Path)
 	baseUrlParsed.RawQuery = reqUrlParsed.RawQuery
 
-	return c.fetch(ctx, req.Method, baseUrlParsed, nil, req.Body)
+	return c.fetch(ctx, req.Method, baseUrlParsed, nil, req.Body, req.Headers)
 }
 
-func (c *Client) fetch(ctx context.Context, method string, u *url.URL, qs url.Values, body []byte) (*http.Response, error) {
+func (c *Client) fetch(ctx context.Context, method string, u *url.URL, qs url.Values, body []byte, headers http.Header) (*http.Response, error) {
 	// The qs arg seems to be used in some callers of this method, but you can already pass them in the URL object
 	if strings.ToUpper(method) == http.MethodGet && qs != nil {
 		u.RawQuery = qs.Encode()
@@ -114,6 +108,11 @@ func (c *Client) fetch(ctx context.Context, method string, u *url.URL, qs url.Va
 	request, err := http.NewRequestWithContext(ctx, method, u.String(), bodyReader)
 	if err != nil {
 		return nil, err
+	}
+
+	if headers != nil {
+		// Otherwise Header should be already non nil so don't need to init it
+		request.Header = headers
 	}
 
 	// This may not be true but right now we don't have more information here and seems like we send just this type
