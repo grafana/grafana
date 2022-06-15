@@ -12,11 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import * as React from 'react';
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import { useStyles2 } from '@grafana/ui';
+import * as React from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
+
 import { autoColor } from '../Theme';
 
 const getStyles = (divider: boolean) => (theme: GrafanaTheme2) => {

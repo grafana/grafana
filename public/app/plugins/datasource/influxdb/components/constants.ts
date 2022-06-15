@@ -1,4 +1,5 @@
 import { SelectableValue } from '@grafana/data';
+
 import { ResultFormat } from '../types';
 
 export const RESULT_FORMATS: Array<SelectableValue<ResultFormat>> = [

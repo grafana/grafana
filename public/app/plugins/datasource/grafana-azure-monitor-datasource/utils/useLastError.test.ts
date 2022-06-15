@@ -1,4 +1,5 @@
 import { renderHook, act } from '@testing-library/react-hooks';
+
 import useLastError from './useLastError';
 
 describe('AzureMonitor: useLastError', () => {

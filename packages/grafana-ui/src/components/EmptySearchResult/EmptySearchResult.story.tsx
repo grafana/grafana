@@ -1,6 +1,8 @@
 import React from 'react';
-import { EmptySearchResult } from './EmptySearchResult';
+
 import { withCenteredStory } from '@grafana/ui/src/utils/storybook/withCenteredStory';
+
+import { EmptySearchResult } from './EmptySearchResult';
 import mdx from './EmptySearchResult.mdx';
 
 export default {

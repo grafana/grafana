@@ -1,10 +1,11 @@
-import React, { FC, useCallback, useMemo, useState } from 'react';
 import { noop } from 'lodash';
+import React, { FC, useCallback, useMemo, useState } from 'react';
+import { useAsync } from 'react-use';
+
 import { CoreApp, DataQuery } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { useAsync } from 'react-use';
-import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 import { LokiQuery } from 'app/plugins/datasource/loki/types';
+import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
 export interface ExpressionEditorProps {
   value?: string;

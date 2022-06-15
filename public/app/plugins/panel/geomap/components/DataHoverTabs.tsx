@@ -1,4 +1,5 @@
 import React, { Dispatch, SetStateAction } from 'react';
+
 import { Tab, TabsBar } from '@grafana/ui';
 
 import { GeomapLayerHover } from '../event';

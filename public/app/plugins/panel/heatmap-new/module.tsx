@@ -1,61 +1,152 @@
 import React from 'react';
-import { GraphFieldConfig, VisibilityMode } from '@grafana/schema';
-import { Field, FieldType, PanelPlugin } from '@grafana/data';
-import { commonOptionsBuilder } from '@grafana/ui';
-import { HeatmapPanel } from './HeatmapPanel';
-import {
-  PanelOptions,
-  defaultPanelOptions,
-  HeatmapSourceMode,
-  HeatmapColorMode,
-  HeatmapColorScale,
-} from './models.gen';
-import { HeatmapSuggestionsSupplier } from './suggestions';
-import { heatmapChangedHandler } from './migrations';
-import { addHeatmapCalculationOptions } from 'app/features/transformers/calculateHeatmap/editor/helper';
-import { colorSchemes, quantizeScheme } from './palettes';
+
+import { FieldConfigProperty, FieldType, identityOverrideProcessor, PanelPlugin } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { AxisPlacement, GraphFieldConfig, ScaleDistribution, ScaleDistributionConfig } from '@grafana/schema';
+import { addHideFrom, ScaleDistributionEditor } from '@grafana/ui/src/options/builder';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
+import { addHeatmapCalculationOptions } from 'app/features/transformers/calculateHeatmap/editor/helper';
+import { HeatmapBucketLayout } from 'app/features/transformers/calculateHeatmap/models.gen';
+
+import { HeatmapPanel } from './HeatmapPanel';
+import { heatmapChangedHandler, heatmapMigrationHandler } from './migrations';
+import { PanelOptions, defaultPanelOptions, HeatmapColorMode, HeatmapColorScale } from './models.gen';
+import { colorSchemes, quantizeScheme } from './palettes';
+import { HeatmapSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPanel)
-  .useFieldConfig()
+  .useFieldConfig({
+    // This keeps: unit, decimals, displayName
+    disableStandardOptions: [
+      FieldConfigProperty.Color,
+      FieldConfigProperty.Thresholds,
+      FieldConfigProperty.Min,
+      FieldConfigProperty.Max,
+      FieldConfigProperty.Mappings,
+      FieldConfigProperty.NoValue,
+    ],
+    useCustomConfig: (builder) => {
+      builder.addCustomEditor<void, ScaleDistributionConfig>({
+        id: 'scaleDistribution',
+        path: 'scaleDistribution',
+        name: 'Y axis scale',
+        category: ['Heatmap'],
+        editor: ScaleDistributionEditor as any,
+        override: ScaleDistributionEditor as any,
+        defaultValue: { type: ScaleDistribution.Linear },
+        shouldApply: (f) => f.type === FieldType.number,
+        process: identityOverrideProcessor,
+        hideFromDefaults: true,
+      });
+      addHideFrom(builder); // for tooltip etc
+    },
+  })
   .setPanelChangeHandler(heatmapChangedHandler)
-  // .setMigrationHandler(heatmapMigrationHandler)
+  .setMigrationHandler(heatmapMigrationHandler)
   .setPanelOptions((builder, context) => {
     const opts = context.options ?? defaultPanelOptions;
 
     let category = ['Heatmap'];
 
     builder.addRadio({
-      path: 'source',
-      name: 'Source',
-      defaultValue: HeatmapSourceMode.Auto,
+      path: 'calculate',
+      name: 'Calculate from data',
+      defaultValue: defaultPanelOptions.calculate,
       category,
       settings: {
         options: [
-          { label: 'Auto', value: HeatmapSourceMode.Auto },
-          { label: 'Calculate', value: HeatmapSourceMode.Calculate },
-          { label: 'Raw data', description: 'The results are already heatmap buckets', value: HeatmapSourceMode.Data },
+          { label: 'Yes', value: true },
+          { label: 'No', value: false },
         ],
       },
     });
 
-    if (opts.source === HeatmapSourceMode.Calculate) {
-      addHeatmapCalculationOptions('heatmap.', builder, opts.heatmap, category);
+    if (opts.calculate) {
+      addHeatmapCalculationOptions('calculation.', builder, opts.calculation, category);
     }
 
-    category = ['Colors'];
+    category = ['Y Axis'];
 
-    builder.addFieldNamePicker({
-      path: `color.field`,
-      name: 'Color with field',
+    builder.addRadio({
+      path: 'yAxis.axisPlacement',
+      name: 'Placement',
+      defaultValue: defaultPanelOptions.yAxis.axisPlacement ?? AxisPlacement.Left,
       category,
       settings: {
-        filter: (f: Field) => f.type === FieldType.number,
-        noFieldsMessage: 'No numeric fields found',
-        placeholderText: 'Auto',
+        options: [
+          { label: 'Left', value: AxisPlacement.Left },
+          { label: 'Right', value: AxisPlacement.Right },
+          { label: 'Hidden', value: AxisPlacement.Hidden },
+        ],
       },
     });
+
+    // TODO: support clamping the min/max range when there is a real axis
+    if (false && opts.calculate) {
+      builder
+        .addNumberInput({
+          path: 'yAxis.min',
+          name: 'Min value',
+          settings: {
+            placeholder: 'Auto',
+          },
+          category,
+        })
+        .addTextInput({
+          path: 'yAxis.max',
+          name: 'Max value',
+          settings: {
+            placeholder: 'Auto',
+          },
+          category,
+        });
+    }
+
+    builder
+      .addNumberInput({
+        path: 'yAxis.axisWidth',
+        name: 'Axis width',
+        defaultValue: defaultPanelOptions.yAxis.axisWidth,
+        settings: {
+          placeholder: 'Auto',
+          min: 5, // smaller should just be hidden
+        },
+        category,
+      })
+      .addTextInput({
+        path: 'yAxis.axisLabel',
+        name: 'Axis label',
+        defaultValue: defaultPanelOptions.yAxis.axisLabel,
+        settings: {
+          placeholder: 'Auto',
+        },
+        category,
+      });
+
+    if (!opts.calculate) {
+      builder.addRadio({
+        path: 'bucketFrame.layout',
+        name: 'Tick alignment',
+        defaultValue: defaultPanelOptions.bucketFrame?.layout ?? HeatmapBucketLayout.auto,
+        category,
+        settings: {
+          options: [
+            { label: 'Auto', value: HeatmapBucketLayout.auto },
+            { label: 'Top (LE)', value: HeatmapBucketLayout.le },
+            { label: 'Middle', value: HeatmapBucketLayout.unknown },
+            { label: 'Bottom (GE)', value: HeatmapBucketLayout.ge },
+          ],
+        },
+      });
+    }
+    builder.addBooleanSwitch({
+      path: 'yAxis.reverse',
+      name: 'Reverse',
+      defaultValue: defaultPanelOptions.yAxis.reverse === true,
+      category,
+    });
+
+    category = ['Colors'];
 
     builder.addRadio({
       path: `color.mode`,
@@ -81,7 +172,6 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
     builder.addRadio({
       path: `color.scale`,
       name: 'Scale',
-      description: '',
       defaultValue: defaultPanelOptions.color.scale,
       category,
       settings: {
@@ -138,7 +228,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       .addCustomEditor({
         id: '__scale__',
         path: `__scale__`,
-        name: 'Scale',
+        name: '',
         category,
         editor: () => {
           const palette = quantizeScheme(opts.color, config.theme2);
@@ -150,28 +240,42 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
         },
       });
 
+    builder
+      .addNumberInput({
+        path: 'color.min',
+        name: 'Start color scale from value',
+        defaultValue: defaultPanelOptions.color.min,
+        settings: {
+          placeholder: 'Auto (min)',
+        },
+        category,
+      })
+      .addNumberInput({
+        path: 'color.max',
+        name: 'End color scale at value',
+        defaultValue: defaultPanelOptions.color.max,
+        settings: {
+          placeholder: 'Auto (max)',
+        },
+        category,
+      });
+
     category = ['Display'];
 
     builder
-      .addRadio({
-        path: 'showValue',
-        name: 'Show values',
-        defaultValue: defaultPanelOptions.showValue,
-        category,
-        settings: {
-          options: [
-            { value: VisibilityMode.Auto, label: 'Auto' },
-            { value: VisibilityMode.Always, label: 'Always' },
-            { value: VisibilityMode.Never, label: 'Never' },
-          ],
-        },
-      })
-      .addNumberInput({
-        path: 'hideThreshold',
-        name: 'Hide cell counts <=',
-        defaultValue: 1e-9,
-        category,
-      })
+      // .addRadio({
+      //   path: 'showValue',
+      //   name: 'Show values',
+      //   defaultValue: defaultPanelOptions.showValue,
+      //   category,
+      //   settings: {
+      //     options: [
+      //       { value: VisibilityMode.Auto, label: 'Auto' },
+      //       { value: VisibilityMode.Always, label: 'Always' },
+      //       { value: VisibilityMode.Never, label: 'Never' },
+      //     ],
+      //   },
+      // })
       .addSliderInput({
         name: 'Cell gap',
         path: 'cellGap',
@@ -182,36 +286,34 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
           max: 25,
         },
       })
-      // .addSliderInput({
-      //   name: 'Cell radius',
-      //   path: 'cellRadius',
-      //   defaultValue: defaultPanelOptions.cellRadius,
-      //   category,
-      //   settings: {
-      //     min: 0,
-      //     max: 100,
-      //   },
-      // })
-      .addRadio({
-        path: 'yAxisLabels',
-        name: 'Axis labels',
-        defaultValue: 'auto',
-        category,
+      .addNumberInput({
+        path: 'filterValues.le',
+        name: 'Hide cells with values <=',
+        defaultValue: defaultPanelOptions.filterValues?.le,
         settings: {
-          options: [
-            { value: 'auto', label: 'Auto' },
-            { value: 'middle', label: 'Middle' },
-            { value: 'bottom', label: 'Bottom' },
-            { value: 'top', label: 'Top' },
-          ],
+          placeholder: 'None',
         },
+        category,
       })
-      .addBooleanSwitch({
-        path: 'yAxisReverse',
-        name: 'Reverse buckets',
-        defaultValue: defaultPanelOptions.yAxisReverse === true,
+      .addNumberInput({
+        path: 'filterValues.ge',
+        name: 'Hide cells with values >=',
+        defaultValue: defaultPanelOptions.filterValues?.ge,
+        settings: {
+          placeholder: 'None',
+        },
         category,
       });
+    // .addSliderInput({
+    //   name: 'Cell radius',
+    //   path: 'cellRadius',
+    //   defaultValue: defaultPanelOptions.cellRadius,
+    //   category,
+    //   settings: {
+    //     min: 0,
+    //     max: 100,
+    //   },
+    // })
 
     category = ['Tooltip'];
 
@@ -222,6 +324,18 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       category,
     });
 
+    if (!opts.calculate) {
+      builder.addTextInput({
+        path: 'bucketFrame.value',
+        name: 'Cell value name',
+        defaultValue: defaultPanelOptions.bucketFrame?.value,
+        settings: {
+          placeholder: 'Value',
+        },
+        category,
+      });
+    }
+
     builder.addBooleanSwitch({
       path: 'tooltip.yHistogram',
       name: 'Show histogram (Y axis)',
@@ -230,7 +344,20 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       showIf: (opts) => opts.tooltip.show,
     });
 
-    // custom legend?
-    commonOptionsBuilder.addLegendOptions(builder);
+    category = ['Legend'];
+    builder.addBooleanSwitch({
+      path: 'legend.show',
+      name: 'Show legend',
+      defaultValue: defaultPanelOptions.legend.show,
+      category,
+    });
+
+    category = ['Exemplars'];
+    builder.addColorPicker({
+      path: 'exemplars.color',
+      name: 'Color',
+      defaultValue: defaultPanelOptions.exemplars.color,
+      category,
+    });
   })
   .setSuggestionsSupplier(new HeatmapSuggestionsSupplier());

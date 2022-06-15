@@ -1,5 +1,6 @@
-import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import { chunk, initial, startCase, uniqBy } from 'lodash';
+
+import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
 import { AGGREGATIONS, ALIGNMENTS, SYSTEM_LABELS } from './constants';
 import CloudMonitoringDatasource from './datasource';

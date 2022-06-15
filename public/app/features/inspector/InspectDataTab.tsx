@@ -1,5 +1,8 @@
+import { css } from '@emotion/css';
+import { saveAs } from 'file-saver';
 import React, { PureComponent } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
+
 import {
   applyFieldOverrides,
   applyRawFieldOverrides,
@@ -14,19 +17,18 @@ import {
   transformDataFrame,
   TimeZone,
 } from '@grafana/data';
-import { Button, Spinner, Table } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
+import { Button, Spinner, Table } from '@grafana/ui';
+import { config } from 'app/core/config';
+import { dataFrameToLogsModel } from 'app/core/logs_model';
+import { PanelModel } from 'app/features/dashboard/state';
+import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
+import { transformToJaeger } from 'app/plugins/datasource/jaeger/responseTransform';
+import { transformToOTLP } from 'app/plugins/datasource/tempo/resultTransformer';
+import { transformToZipkin } from 'app/plugins/datasource/zipkin/utils/transforms';
+
 import { InspectDataOptions } from './InspectDataOptions';
 import { getPanelInspectorStyles } from './styles';
-import { config } from 'app/core/config';
-import { saveAs } from 'file-saver';
-import { css } from '@emotion/css';
-import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
-import { PanelModel } from 'app/features/dashboard/state';
-import { dataFrameToLogsModel } from 'app/core/logs_model';
-import { transformToJaeger } from 'app/plugins/datasource/jaeger/responseTransform';
-import { transformToZipkin } from 'app/plugins/datasource/zipkin/utils/transforms';
-import { transformToOTLP } from 'app/plugins/datasource/tempo/resultTransformer';
 
 interface Props {
   isLoading: boolean;
@@ -170,6 +172,20 @@ export class InspectDataTab extends PureComponent<Props, State> {
     saveAs(blob, fileName);
   };
 
+  exportServiceGraph = () => {
+    const { data, panel } = this.props;
+    if (!data) {
+      return;
+    }
+
+    const blob = new Blob([JSON.stringify(data)], {
+      type: 'application/json',
+    });
+    const displayTitle = panel ? panel.getDisplayTitle() : 'Explore';
+    const fileName = `${displayTitle}-service-graph-${dateTimeFormat(new Date())}.json`;
+    saveAs(blob, fileName);
+  };
+
   onDataFrameChange = (item: SelectableValue<DataTransformerID | number>) => {
     this.setState({
       transformId:
@@ -230,6 +246,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
     const dataFrame = dataFrames[index];
     const hasLogs = dataFrames.some((df) => df?.meta?.preferredVisualisationType === 'logs');
     const hasTraces = dataFrames.some((df) => df?.meta?.preferredVisualisationType === 'trace');
+    const hasServiceGraph = dataFrames.some((df) => df?.meta?.preferredVisualisationType === 'nodeGraph');
 
     return (
       <div className={styles.wrap} aria-label={selectors.components.PanelInspector.Data.content}>
@@ -278,6 +295,18 @@ export class InspectDataTab extends PureComponent<Props, State> {
               `}
             >
               Download traces
+            </Button>
+          )}
+          {hasServiceGraph && (
+            <Button
+              variant="primary"
+              onClick={this.exportServiceGraph}
+              className={css`
+                margin-bottom: 10px;
+                margin-left: 10px;
+              `}
+            >
+              Download service graph
             </Button>
           )}
         </div>

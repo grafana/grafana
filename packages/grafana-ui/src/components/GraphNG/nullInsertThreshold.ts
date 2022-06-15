@@ -9,14 +9,24 @@ const INSERT_MODES = {
   plusone: (prev: number, next: number, threshold: number) => prev + 1,
 };
 
-export function applyNullInsertThreshold(
-  frame: DataFrame,
-  refFieldName?: string | null,
-  refFieldPseudoMax: number | null = null,
-  insertMode: InsertMode = INSERT_MODES.threshold
-): DataFrame {
-  if (frame.length === 0) {
-    return frame;
+interface NullInsertOptions {
+  frame: DataFrame;
+  refFieldName?: string | null;
+  refFieldPseudoMax?: number;
+  refFieldPseudoMin?: number;
+  insertMode?: InsertMode;
+}
+
+export function applyNullInsertThreshold(opts: NullInsertOptions): DataFrame {
+  if (opts.frame.length === 0) {
+    return opts.frame;
+  }
+
+  let thorough = true;
+  let { frame, refFieldName, refFieldPseudoMax, refFieldPseudoMin, insertMode } = opts;
+
+  if (!insertMode) {
+    insertMode = INSERT_MODES.threshold;
   }
 
   const refField = frame.fields.find((field) => {
@@ -49,7 +59,15 @@ export function applyNullInsertThreshold(
 
     const frameValues = frame.fields.map((field) => field.values.toArray());
 
-    const filledFieldValues = nullInsertThreshold(refValues, frameValues, threshold, refFieldPseudoMax, insertMode);
+    const filledFieldValues = nullInsertThreshold(
+      refValues,
+      frameValues,
+      threshold,
+      refFieldPseudoMin,
+      refFieldPseudoMax,
+      insertMode,
+      thorough
+    );
 
     if (filledFieldValues === frameValues) {
       return frame;
@@ -75,19 +93,46 @@ function nullInsertThreshold(
   refValues: number[],
   frameValues: any[][],
   threshold: number,
+  refFieldPseudoMin: number | null = null,
   // will insert a trailing null when refFieldPseudoMax > last datapoint + threshold
   refFieldPseudoMax: number | null = null,
-  getInsertValue: InsertMode
+  getInsertValue: InsertMode,
+  // will insert the value at every missing interval
+  thorough: boolean
 ) {
   const len = refValues.length;
   let prevValue: number = refValues[0];
-  const refValuesNew: number[] = [prevValue];
+  const refValuesNew: number[] = [];
 
+  // Continiuously add the threshold to the minimum value
+  // While this is less than "prevValue" which is the lowest
+  // time value in the sequence add in time frames
+  if (refFieldPseudoMin != null) {
+    let minValue = refFieldPseudoMin - threshold;
+
+    while (minValue < prevValue - threshold) {
+      let nextValue = minValue + threshold;
+      refValuesNew.push(getInsertValue(minValue, nextValue, threshold));
+      minValue = nextValue;
+    }
+  }
+
+  // Insert initial value
+  refValuesNew.push(prevValue);
+
+  // Fill nulls when a value is greater than
+  // the threshold value
   for (let i = 1; i < len; i++) {
     const curValue = refValues[i];
 
-    if (curValue - prevValue > threshold) {
+    while (curValue - prevValue > threshold) {
       refValuesNew.push(getInsertValue(prevValue, curValue, threshold));
+
+      prevValue += threshold;
+
+      if (!thorough) {
+        break;
+      }
     }
 
     refValuesNew.push(curValue);
@@ -95,8 +140,12 @@ function nullInsertThreshold(
     prevValue = curValue;
   }
 
-  if (refFieldPseudoMax != null && prevValue + threshold <= refFieldPseudoMax) {
-    refValuesNew.push(getInsertValue(prevValue, refFieldPseudoMax, threshold));
+  // At the end of the sequence
+  if (refFieldPseudoMax != null) {
+    while (prevValue + threshold <= refFieldPseudoMax) {
+      refValuesNew.push(getInsertValue(prevValue, refFieldPseudoMax, threshold));
+      prevValue += threshold;
+    }
   }
 
   const filledLen = refValuesNew.length;

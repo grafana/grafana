@@ -1,9 +1,12 @@
 import React from 'react';
-import { Button, Field, Input } from '@grafana/ui';
-import { OptionField } from './fields/OptionField';
-import { ChannelValues, ReceiverFormValues } from '../../../types/receiver-form';
 import { useFormContext, FieldError, FieldErrors, DeepMap } from 'react-hook-form';
+
+import { Button, Field, Input } from '@grafana/ui';
 import { NotificationChannelOption, NotificationChannelSecureFields } from 'app/types';
+
+import { ChannelValues, ReceiverFormValues } from '../../../types/receiver-form';
+
+import { OptionField } from './fields/OptionField';
 
 export interface Props<R extends ChannelValues> {
   defaultValues: R;

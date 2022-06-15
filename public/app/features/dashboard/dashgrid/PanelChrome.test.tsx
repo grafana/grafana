@@ -1,14 +1,16 @@
+import { act, render, screen } from '@testing-library/react';
 import React, { FC } from 'react';
-import { ReplaySubject } from 'rxjs';
 import { Provider } from 'react-redux';
 import configureMockStore from 'redux-mock-store';
-import { act, render, screen } from '@testing-library/react';
+import { ReplaySubject } from 'rxjs';
+
 import { EventBusSrv, getDefaultTimeRange, LoadingState, PanelData, PanelPlugin, PanelProps } from '@grafana/data';
 
-import { PanelChrome, Props } from './PanelChrome';
-import { DashboardModel, PanelModel } from '../state';
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import { setTimeSrv, TimeSrv } from '../services/TimeSrv';
+import { DashboardModel, PanelModel } from '../state';
+
+import { PanelChrome, Props } from './PanelChrome';
 
 jest.mock('app/core/profiler', () => ({
   profiler: {
@@ -45,6 +47,9 @@ function setupTestContext(options: Partial<Props>) {
       panelInitialized: jest.fn(),
       getTimezone: () => 'browser',
       events: new EventBusSrv(),
+      meta: {
+        isPublic: false,
+      },
     } as unknown as DashboardModel,
     plugin: {
       meta: { skipDataQuery: false },

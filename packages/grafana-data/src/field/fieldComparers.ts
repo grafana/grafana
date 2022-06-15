@@ -1,7 +1,8 @@
+import { isNumber } from 'lodash';
+
+import { dateTime } from '../datetime';
 import { Field, FieldType } from '../types/dataFrame';
 import { Vector } from '../types/vector';
-import { dateTime } from '../datetime';
-import { isNumber } from 'lodash';
 
 type IndexComparer = (a: number, b: number) => number;
 

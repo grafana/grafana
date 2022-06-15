@@ -1,7 +1,9 @@
 import { css, cx } from '@emotion/css';
+import React, { FC, useState } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { IconSize, useStyles2 } from '@grafana/ui';
-import React, { FC, useState } from 'react';
+
 import { CollapseToggle } from '../../CollapseToggle';
 
 interface Props {

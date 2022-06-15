@@ -1,9 +1,12 @@
-import React, { memo, cloneElement, FC, useMemo, useContext, ReactNode } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { memo, cloneElement, FC, useMemo, useContext, ReactNode } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
+
 import { useStyles2, useTheme2 } from '../../themes';
-import { CardContainer, CardContainerProps, getCardContainerStyles } from './CardContainer';
 import { getFocusStyles } from '../../themes/mixins';
+
+import { CardContainer, CardContainerProps, getCardContainerStyles } from './CardContainer';
 
 /**
  * @public
@@ -44,17 +47,7 @@ const CardContext = React.createContext<{
  *
  * @public
  */
-export const Card: CardInterface = ({
-  disabled,
-  href,
-  onClick,
-  children,
-  heading: deprecatedHeading,
-  description: deprecatedDescription,
-  isSelected,
-  className,
-  ...htmlProps
-}) => {
+export const Card: CardInterface = ({ disabled, href, onClick, children, isSelected, className, ...htmlProps }) => {
   const hasHeadingComponent = useMemo(
     () =>
       React.Children.toArray(children).some(
@@ -78,8 +71,6 @@ export const Card: CardInterface = ({
     >
       <CardContext.Provider value={{ href, onClick: onCardClick, disabled, isSelected }}>
         {!hasHeadingComponent && <Heading />}
-        {deprecatedHeading && <Heading>{deprecatedHeading}</Heading>}
-        {deprecatedDescription && <Description>{deprecatedDescription}</Description>}
         {children}
       </CardContext.Provider>
     </CardContainer>
@@ -90,9 +81,6 @@ interface ChildProps {
   className?: string;
   disabled?: boolean;
   children?: React.ReactNode;
-
-  /** @deprecated Use `className` to add new styles */
-  styles?: ReturnType<typeof getCardStyles>;
 }
 
 /** Main heading for the card */

@@ -1,17 +1,21 @@
-+++
-title = "Logs in Explore"
-description = "Logs in Explore"
-keywords = ["explore", "logs",]
-weight = 15
-+++
+---
+aliases:
+  - /docs/grafana/latest/explore/logs-integration/
+description: Logs in Explore
+keywords:
+  - explore
+  - logs
+title: Logs in Explore
+weight: 15
+---
 
 # Logs in Explore
 
 Along with metrics, Explore allows you to investigate your logs in the following data sources:
 
-- [Elasticsearch]({{< relref "../datasources/elasticsearch.md" >}})
-- [InfluxDB]({{< relref "../datasources/influxdb/_index.md" >}})
-- [Loki]({{< relref "../datasources/loki.md" >}})
+- [Elasticsearch]({{< relref "../datasources/elasticsearch/" >}})
+- [InfluxDB]({{< relref "../datasources/influxdb/" >}})
+- [Loki]({{< relref "../datasources/loki/" >}})
 
 During an infrastructure monitoring and incident response, you can dig deeper into the metrics and logs to find the cause. Explore also allows you to correlate metrics and logs by viewing them side-by-side. This creates a new debugging workflow:
 
@@ -24,6 +28,8 @@ During an infrastructure monitoring and incident response, you can dig deeper in
 Results of log queries are shown as histograms in the graph and individual logs are explained in the following sections.
 
 If the data source supports a full range log volume histogram, the graph with log distribution for all entered log queries is shown automatically. This feature is currently supported by Elasticsearch and Loki data sources.
+
+**NOTE:** In Loki, this full range log volume histogram is rendered by metric query which can be expensive depending on time range queried. This query may be particularly challenging for smaller Loki installations to process. To mitigate this, we recommend using a proxy like [nginx](https://www.nginx.com/) in front of Loki to set a custom timeout (e.g. 10 seconds) for these queries. Log volume histogram queries can be identified by looking for queries with the HTTP header `X-Query-Tags` with value `Source=logvolhist`; these headers are added by Grafana to all log volume histogram queries.
 
 If the data source does not support loading full range log volume histogram, the logs model computes a time series based on the log row counts bucketed by an automatically calculated time interval, and the first log row's timestamp then anchors the start of the histogram from the result. The end of the time series is anchored to the time picker's **To** range.
 
@@ -125,7 +131,7 @@ If your logs are structured in `json` or `logfmt`, then you can show or hide det
 
 As mentioned, one of the log integrations is for the new open source log aggregation system from Grafana Labs - [Loki](https://github.com/grafana/loki). Loki is designed to be very cost effective, as it does not index the contents of the logs, but rather a set of labels for each log stream. The logs from Loki are queried in a similar way to querying with label selectors in Prometheus. It uses labels to group log streams which can be made to match up with your Prometheus labels. For more information about Grafana Loki, refer to [Grafana Loki](https://github.com/grafana/loki) or the Grafana Labs hosted variant: [Grafana Cloud Logs](https://grafana.com/loki).
 
-For more information, refer to [Loki's data source documentation]({{< relref "../datasources/loki.md" >}}) on how to query for log data.
+For more information, refer to [Loki's data source documentation]({{< relref "../datasources/loki/" >}}) on how to query for log data.
 
 #### Switch from metrics to logs
 

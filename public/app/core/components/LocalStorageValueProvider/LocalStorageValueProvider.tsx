@@ -1,4 +1,5 @@
 import React, { PureComponent } from 'react';
+
 import store from '../../store';
 
 export interface Props<T> {

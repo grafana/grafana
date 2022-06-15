@@ -1,17 +1,20 @@
-import { ConfirmModal, useStyles2 } from '@grafana/ui';
-import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import React, { FC, Fragment, useMemo, useState } from 'react';
+import { useDispatch } from 'react-redux';
+
+import { ConfirmModal, useStyles2 } from '@grafana/ui';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
+
+import { Authorize } from '../../components/Authorize';
+import { deleteTemplateAction } from '../../state/actions';
 import { getAlertTableStyles } from '../../styles/table';
+import { getNotificationsPermissions } from '../../utils/access-control';
+import { makeAMLink } from '../../utils/misc';
 import { CollapseToggle } from '../CollapseToggle';
 import { DetailsField } from '../DetailsField';
 import { ActionIcon } from '../rules/ActionIcon';
+
 import { ReceiversSection } from './ReceiversSection';
-import { makeAMLink } from '../../utils/misc';
-import { useDispatch } from 'react-redux';
-import { deleteTemplateAction } from '../../state/actions';
-import { contextSrv } from 'app/core/services/context_srv';
-import { Authorize } from '../../components/Authorize';
-import { getNotificationsPermissions } from '../../utils/access-control';
 
 interface Props {
   config: AlertManagerCortexConfig;

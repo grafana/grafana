@@ -1,4 +1,5 @@
 import React, { PureComponent } from 'react';
+
 import { Field, Input } from '@grafana/ui';
 
 interface Props {

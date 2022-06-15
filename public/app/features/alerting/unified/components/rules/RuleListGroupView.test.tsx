@@ -1,15 +1,18 @@
-import { locationService } from '@grafana/runtime';
 import { render } from '@testing-library/react';
-import { contextSrv } from 'app/core/services/context_srv';
-import { configureStore } from 'app/store/configureStore';
-import { AccessControlAction } from 'app/types';
-import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 import { byRole } from 'testing-library-selector';
+
+import { locationService } from '@grafana/runtime';
+import { contextSrv } from 'app/core/services/context_srv';
+import { configureStore } from 'app/store/configureStore';
+import { AccessControlAction } from 'app/types';
+import { CombinedRuleNamespace } from 'app/types/unified-alerting';
+
 import { mockCombinedRule, mockDataSource } from '../../mocks';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+
 import { RuleListGroupView } from './RuleListGroupView';
 
 const ui = {

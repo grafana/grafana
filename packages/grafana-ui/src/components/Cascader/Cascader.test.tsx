@@ -1,8 +1,9 @@
-import React from 'react';
-import { Cascader, CascaderOption, CascaderProps } from './Cascader';
 import { act, render, screen } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import { UserEvent } from '@testing-library/user-event/dist/types/setup';
+import React from 'react';
+
+import { Cascader, CascaderOption, CascaderProps } from './Cascader';
 
 const options = [
   {
@@ -49,7 +50,7 @@ describe('Cascader', () => {
     let user: UserEvent;
 
     beforeEach(() => {
-      jest.useFakeTimers('modern');
+      jest.useFakeTimers();
       // Need to use delay: null here to work with fakeTimers
       // see https://github.com/testing-library/user-event/issues/833
       user = userEvent.setup({ delay: null });

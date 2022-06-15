@@ -1,11 +1,12 @@
 import React, { FC } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { Input, Field, Form, Button, FieldSet, VerticalGroup } from '@grafana/ui';
 
+import { Input, Field, Form, Button, FieldSet, VerticalGroup } from '@grafana/ui';
 import { SharedPreferences } from 'app/core/components/SharedPreferences/SharedPreferences';
-import { updateTeam } from './state/actions';
+import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, Team } from 'app/types';
-import { contextSrv } from 'app/core/core';
+
+import { updateTeam } from './state/actions';
 
 const mapDispatchToProps = {
   updateTeam,

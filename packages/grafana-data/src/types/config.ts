@@ -1,10 +1,12 @@
+import { SystemDateFormatSettings } from '../datetime';
+import { MapLayerOptions } from '../geo/layer';
+import { GrafanaTheme2 } from '../themes';
+
 import { DataSourceInstanceSettings } from './datasource';
+import { FeatureToggles } from './featureToggles.gen';
 import { PanelPluginMeta } from './panel';
 import { GrafanaTheme } from './theme';
-import { SystemDateFormatSettings } from '../datetime';
-import { GrafanaTheme2 } from '../themes';
-import { MapLayerOptions } from '../geo/layer';
-import { FeatureToggles } from './featureToggles.gen';
+
 import { NavLinkDTO, OrgRole } from '.';
 
 /**
@@ -131,6 +133,7 @@ export interface BootData {
  * @internal
  */
 export interface GrafanaConfig {
+  isPublicDashboardView: boolean;
   datasources: { [str: string]: DataSourceInstanceSettings };
   panels: { [key: string]: PanelPluginMeta };
   minRefreshInterval: string;
@@ -151,6 +154,7 @@ export interface GrafanaConfig {
   alertingMinInterval: number;
   authProxyEnabled: boolean;
   exploreEnabled: boolean;
+  queryHistoryEnabled: boolean;
   helpEnabled: boolean;
   profileEnabled: boolean;
   ldapEnabled: boolean;
@@ -159,6 +163,8 @@ export interface GrafanaConfig {
   autoAssignOrg: boolean;
   verifyEmailEnabled: boolean;
   oauth: OAuthSettings;
+  rbacEnabled: boolean;
+  rbacBuiltInRoleAssignmentEnabled: boolean;
   disableUserSignUp: boolean;
   loginHint: string;
   passwordHint: string;

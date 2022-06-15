@@ -10,8 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -90,13 +88,13 @@ func (hs *HTTPServer) CreateOrg(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	acEnabled := hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol)
+	acEnabled := !hs.AccessControl.IsDisabled()
 	if !acEnabled && !(setting.AllowUserOrgCreate || c.IsGrafanaAdmin) {
 		return response.Error(403, "Access denied", nil)
 	}
 
 	cmd.UserId = c.UserId
-	if err := sqlstore.CreateOrg(c.Req.Context(), &cmd); err != nil {
+	if err := hs.SQLStore.CreateOrg(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, models.ErrOrgNameTaken) {
 			return response.Error(409, "Organization name taken", err)
 		}

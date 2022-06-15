@@ -1,5 +1,7 @@
 import { toDataFrame, FieldType, ReducerID } from '@grafana/data';
+
 import { FieldConfigHandlerKey } from '../fieldToConfigMapping/fieldToConfigMapping';
+
 import { extractConfigFromQuery, ConfigFromQueryTransformOptions } from './configFromQuery';
 
 describe('config from data', () => {

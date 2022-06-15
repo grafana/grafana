@@ -11,8 +11,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	datasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
@@ -28,12 +27,10 @@ func TestService(t *testing.T) {
 
 	cfg := setting.NewCfg()
 
-	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-
 	s := Service{
-		cfg:            cfg,
-		dataService:    me,
-		secretsService: secretsService,
+		cfg:               cfg,
+		dataService:       me,
+		dataSourceService: &datasources.FakeDataSourceService{},
 	}
 
 	queries := []Query{

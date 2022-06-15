@@ -1,6 +1,7 @@
 import '@grafana/runtime';
-import { fetchAnnotations, sortStateHistory } from './annotations';
 import { StateHistoryItem } from 'app/types/unified-alerting';
+
+import { fetchAnnotations, sortStateHistory } from './annotations';
 
 const get = jest.fn(() => {
   return new Promise((resolve) => {

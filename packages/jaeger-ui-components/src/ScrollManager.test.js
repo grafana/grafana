@@ -14,8 +14,8 @@
 
 jest.mock('./scroll-page');
 
-import { scrollBy, scrollTo } from './scroll-page';
 import ScrollManager from './ScrollManager';
+import { scrollBy, scrollTo } from './scroll-page';
 
 const SPAN_HEIGHT = 2;
 

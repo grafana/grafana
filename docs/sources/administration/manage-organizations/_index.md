@@ -1,16 +1,16 @@
 ---
-title: 'Manage organizations'
-menuTitle: 'Manage organizations'
-description: 'Describes how to use organizations to isolate dashboard to users and teams.'
-weight: 300
 aliases:
-  [
-    docs/grafana/latest/manage-users/server-admin/_index.md,
-    docs/grafana/latest/manage-users/server-admin/server-admin-manage-orgs.md,
-  ]
+  - /docs/grafana/latest/administration/manage-organizations/
+  - /docs/grafana/latest/manage-users/server-admin/
+  - /docs/grafana/latest/manage-users/server-admin/server-admin-manage-orgs/
+description: Describes how to use organizations to isolate dashboard to users and
+  teams.
 keywords:
   - organizations
   - dashboards
+menuTitle: Manage organizations
+title: Manage organizations
+weight: 300
 ---
 
 # Manage organizations
@@ -42,7 +42,7 @@ The following table summarizes the resources you can share and/or isolate using 
 
 The member of one organization cannot view dashboards assigned to another organization. However, a user can belong to multiple organizations.
 
-Grafana Server Administrators are responsible for creating organizations. For more information about the Grafana Server Administrator role, refer to [Grafana server administrators]({{< relref "../manage-users-and-permissions/about-users-and-permissions.md#Grafana server administrators" >}}).
+Grafana Server Administrators are responsible for creating organizations. For more information about the Grafana Server Administrator role, refer to [Grafana server administrators]({{< relref "../manage-users-and-permissions/about-users-and-permissions/#Grafana server administrators" >}}).
 
 ## View a list of organizations
 
@@ -80,9 +80,9 @@ Create an organization when you want to isolate dashboards and other resources f
 
 1. On the **Preferences** tab, select a home dashboard, time zone, and week start.
 
-   For more information about preferences, refer to [Preferences]({{< relref "../preferences/_index.md" >}}).
+   For more information about preferences, refer to [Preferences]({{< relref "../preferences/" >}}).
 
-For more information about adding users to an organization, refer to [Add a user to an organization]({{< relref "../manage-users-and-permissions/manage-server-users/add-remove-user-to-org.md" >}}).
+For more information about adding users to an organization, refer to [Add a user to an organization]({{< relref "../manage-users-and-permissions/manage-server-users/add-remove-user-to-org/" >}}).
 
 ## Delete an organization
 

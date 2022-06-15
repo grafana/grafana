@@ -1,10 +1,11 @@
 import { map } from 'rxjs/operators';
 
-import { noopTransformer } from './noop';
 import { DataFrame, Field } from '../../types/dataFrame';
-import { DataTransformerID } from './ids';
 import { DataTransformerInfo, MatcherConfig } from '../../types/transformations';
 import { getFieldMatcher, getFrameMatchers } from '../matchers';
+
+import { DataTransformerID } from './ids';
+import { noopTransformer } from './noop';
 
 export interface FilterOptions {
   include?: MatcherConfig;

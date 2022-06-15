@@ -1,10 +1,12 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
 import selectEvent from 'react-select-event';
-import { AdHocFilter } from './AdHocFilter';
-import { AdHocVariableFilter } from '../../types';
+
 import { setDataSourceSrv } from '../../../../../../packages/grafana-runtime';
+import { AdHocVariableFilter } from '../../types';
+
+import { AdHocFilter } from './AdHocFilter';
 
 describe('AdHocFilter', () => {
   it('renders filters', async () => {

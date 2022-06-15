@@ -1,8 +1,10 @@
-import React from 'react';
 import { fireEvent, render, RenderResult } from '@testing-library/react';
+import React from 'react';
+
 import { dateTimeParse, TimeRange } from '@grafana/data';
-import { TimeRangeForm } from './TimeRangeForm';
 import { selectors } from '@grafana/e2e-selectors';
+
+import { TimeRangeForm } from './TimeRangeForm';
 
 type TimeRangeFormRenderResult = RenderResult & {
   getCalendarDayByLabelText(label: string): HTMLButtonElement;

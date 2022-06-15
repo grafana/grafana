@@ -1,7 +1,9 @@
+import { mergeMap, from } from 'rxjs';
+
 import { ArrayVector, DataFrame, DataTransformerID, DataTransformerInfo, FieldType } from '@grafana/data';
 import { createGeometryCollection, createLineBetween } from 'app/features/geo/format/utils';
 import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';
-import { mergeMap, from } from 'rxjs';
+
 import { SpatialOperation, SpatialAction, SpatialTransformOptions } from './models.gen';
 import { doGeomeryCalculation, toLineString } from './utils';
 

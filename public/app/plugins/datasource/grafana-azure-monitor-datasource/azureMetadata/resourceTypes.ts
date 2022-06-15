@@ -552,6 +552,11 @@ export const resourceTypeMetadata = [
     displayName: 'WorkerPools',
     supportsLogs: true,
   },
+  {
+    resourceType: 'microsoft.resources/subscriptions/resourcegroups',
+    displayName: 'Resource Group',
+    supportsLogs: true,
+  },
 ];
 
 export const logsSupportedResourceTypesKusto = resourceTypeMetadata

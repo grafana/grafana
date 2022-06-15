@@ -1,4 +1,5 @@
 import { ArrayVector, FieldDTO } from '@grafana/data';
+
 import { ZipkinSpan } from '../types';
 
 export const testResponse: ZipkinSpan[] = [

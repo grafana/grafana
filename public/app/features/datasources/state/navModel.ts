@@ -1,11 +1,12 @@
 import { DataSourceSettings, PluginType, PluginInclude, NavModel, NavModelItem } from '@grafana/data';
 import { featureEnabled } from '@grafana/runtime';
+import { ProBadge } from 'app/core/components/Upgrade/ProBadge';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types';
-import { ProBadge } from 'app/core/components/Upgrade/ProBadge';
-import { GenericDataSourcePlugin } from '../settings/PluginSettings';
+
 import { highlightTrial } from '../../admin/utils';
+import { GenericDataSourcePlugin } from '../settings/PluginSettings';
 
 const loadingDSType = 'Loading';
 
@@ -153,7 +154,6 @@ export function getDataSourceLoadingNav(pageName: string): NavModel {
       access: '',
       basicAuth: false,
       basicAuthUser: '',
-      basicAuthPassword: '',
       withCredentials: false,
       database: '',
       id: 1,
@@ -162,7 +162,6 @@ export function getDataSourceLoadingNav(pageName: string): NavModel {
       jsonData: { authType: 'credentials', defaultRegion: 'eu-west-2' },
       name: 'Loading',
       orgId: 1,
-      password: '',
       readOnly: false,
       type: loadingDSType,
       typeName: loadingDSType,

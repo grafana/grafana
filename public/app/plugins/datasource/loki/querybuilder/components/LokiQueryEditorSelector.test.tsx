@@ -1,11 +1,33 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { LokiDatasource } from '../../datasource';
 import { cloneDeep, defaultsDeep } from 'lodash';
-import { LokiQuery, LokiQueryType } from '../../types';
-import { LokiQueryEditorSelector } from './LokiQueryEditorSelector';
+import React from 'react';
+
 import { QueryEditorMode } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
+
+import { LokiDatasource } from '../../datasource';
+import { LokiQuery, LokiQueryType } from '../../types';
+
+import { LokiQueryEditorSelector } from './LokiQueryEditorSelector';
+
+jest.mock('@grafana/runtime', () => {
+  return {
+    ...jest.requireActual('@grafana/runtime'),
+    reportInteraction: jest.fn(),
+  };
+});
+
+jest.mock('app/core/store', () => {
+  return {
+    get() {
+      return undefined;
+    },
+    set() {},
+    getObject(key: string, defaultValue: any) {
+      return defaultValue;
+    },
+  };
+});
 
 const defaultQuery = {
   refId: 'A',
@@ -83,23 +105,14 @@ describe('LokiQueryEditorSelector', () => {
   });
 
   it('Can enable raw query', async () => {
-    const { onChange } = renderWithMode(QueryEditorMode.Builder);
-    expect(screen.queryByLabelText('selector')).not.toBeInTheDocument();
-
+    renderWithMode(QueryEditorMode.Builder);
+    expect(screen.queryByLabelText('selector')).toBeInTheDocument();
     screen.getByLabelText('Raw query').click();
-
-    expect(onChange).toBeCalledWith({
-      refId: 'A',
-      expr: defaultQuery.expr,
-      queryType: 'range',
-      editorMode: QueryEditorMode.Builder,
-      rawQuery: true,
-    });
+    expect(screen.queryByLabelText('selector')).not.toBeInTheDocument();
   });
 
-  it('Should show raw query', async () => {
+  it('Should show raw query by default', async () => {
     renderWithProps({
-      rawQuery: true,
       editorMode: QueryEditorMode.Builder,
       expr: '{job="grafana"}',
     });

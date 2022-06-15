@@ -17,8 +17,8 @@ import (
 	"github.com/grafana/thema/load"
 )
 
-var ctx *cue.Context = cuecontext.New()
-var lib thema.Library = thema.NewLibrary(ctx)
+var ctx = cuecontext.New()
+var lib = thema.NewLibrary(ctx)
 
 // ProvideCUEContext is a wire service provider of a central cue.Context.
 func ProvideCUEContext() *cue.Context {
@@ -82,13 +82,20 @@ func LoadGrafanaInstancesWithThema(
 	return lin, nil
 }
 
+// prefixWithGrafanaCUE constructs an fs.FS that merges the provided fs.FS with one
+// containing grafana's cue.mod at the root. The provided prefix should be the
+//
+// The returned fs.FS is suitable for passing to a CUE loader, such as
+// cuelang.org/cue/load.Instances or
+// github.com/grafana/thema/load.InstancesWithThema.
 func prefixWithGrafanaCUE(prefix string, inputfs fs.FS) (fs.FS, error) {
 	m := fstest.MapFS{
-		filepath.Join("cue.mod", "module.cue"): &fstest.MapFile{Data: []byte(`module: "github.com/grafana/grafana"`)},
+		// fstest can recognize only forward slashes.
+		filepath.ToSlash(filepath.Join("cue.mod", "module.cue")): &fstest.MapFile{Data: []byte(`module: "github.com/grafana/grafana"`)},
 	}
 
 	prefix = filepath.FromSlash(prefix)
-	err := fs.WalkDir(inputfs, ".", (func(path string, d fs.DirEntry, err error) error {
+	err := fs.WalkDir(inputfs, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -107,10 +114,10 @@ func prefixWithGrafanaCUE(prefix string, inputfs fs.FS) (fs.FS, error) {
 		if err != nil {
 			return err
 		}
-
-		m[filepath.Join(prefix, path)] = &fstest.MapFile{Data: b}
+		// fstest can recognize only forward slashes.
+		m[filepath.ToSlash(filepath.Join(prefix, path))] = &fstest.MapFile{Data: b}
 		return nil
-	}))
+	})
 
 	return m, err
 }

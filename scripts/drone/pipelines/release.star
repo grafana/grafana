@@ -39,8 +39,7 @@ load(
     'upload_packages_step',
     'store_packages_step',
     'upload_cdn_step',
-    'validate_scuemata_step',
-    'ensure_cuetsified_step',
+    'verify_gen_cue_step',
     'publish_images_step',
     'trigger_oss'
 )
@@ -82,7 +81,7 @@ def retrieve_npm_packages_step():
         'name': 'retrieve-npm-packages',
         'image': publish_image,
         'depends_on': [
-            'grabpl',
+            'yarn-install',
         ],
         'environment': {
             'GCP_KEY': from_secret('gcp_key'),
@@ -181,15 +180,13 @@ def get_steps(edition, ver_mode):
         build_frontend_step(edition=edition, ver_mode=ver_mode),
         build_frontend_package_step(edition=edition, ver_mode=ver_mode),
         build_plugins_step(edition=edition, sign=True),
-        validate_scuemata_step(),
-        ensure_cuetsified_step(),
+        verify_gen_cue_step(),
     ]
 
     integration_test_steps = [
         postgres_integration_tests_step(edition=edition, ver_mode=ver_mode),
         mysql_integration_tests_step(edition=edition, ver_mode=ver_mode),
     ]
-
 
     if include_enterprise2:
         test_steps.extend([
@@ -402,18 +399,25 @@ def publish_packages_pipeline():
         'event': ['promote'],
         'target': ['public'],
     }
-    steps = [
+    oss_steps = [
         download_grabpl_step(),
         store_packages_step(edition='oss', ver_mode='release'),
+    ]
+
+    enterprise_steps = [
+        download_grabpl_step(),
         store_packages_step(edition='enterprise', ver_mode='release'),
+    ]
+    deps = [
+        'publish-artifacts-public',
+        'publish-docker-oss-public',
+        'publish-docker-enterprise-public'
     ]
 
     return [pipeline(
-        name='publish-packages', trigger=trigger, steps=steps, edition="all", depends_on=[
-            'publish-artifacts-public',
-            'publish-docker-oss-public',
-            'publish-docker-enterprise-public'
-        ]
+        name='publish-packages-oss', trigger=trigger, steps=oss_steps, edition="all", depends_on=deps
+    ), pipeline(
+        name='publish-packages-enterprise', trigger=trigger, steps=enterprise_steps, edition="all", depends_on=deps
     )]
 
 def publish_npm_pipelines(mode):

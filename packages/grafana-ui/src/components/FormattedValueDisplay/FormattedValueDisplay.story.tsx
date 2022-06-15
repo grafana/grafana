@@ -1,6 +1,8 @@
 import React from 'react';
-import { FormattedValueDisplay } from './FormattedValueDisplay';
+
 import { withCenteredStory } from '@grafana/ui/src/utils/storybook/withCenteredStory';
+
+import { FormattedValueDisplay } from './FormattedValueDisplay';
 import mdx from './FormattedValueDisplay.mdx';
 
 export default {

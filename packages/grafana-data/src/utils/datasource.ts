@@ -1,4 +1,5 @@
 import { isString } from 'lodash';
+
 import {
   DataSourcePluginOptionsEditorProps,
   SelectableValue,

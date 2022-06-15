@@ -94,6 +94,11 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{string(models.ROLE_ADMIN)},
 	}
 
+	// when running oss or enterprise without a license all users should be able to query data sources
+	if !hs.License.FeatureEnabled("accesscontrol.enforcement") {
+		datasourcesReaderRole.Grants = []string{string(models.ROLE_VIEWER)}
+	}
+
 	datasourcesWriterRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Version:     3,
@@ -130,21 +135,6 @@ func (hs *HTTPServer) declareFixedRoles() error {
 					Action: datasources.ActionIDRead,
 					Scope:  datasources.ScopeAll,
 				},
-			},
-		},
-		Grants: []string{string(models.ROLE_VIEWER)},
-	}
-
-	datasourcesCompatibilityReaderRole := ac.RoleRegistration{
-		Role: ac.RoleDTO{
-			Version:     3,
-			Name:        "fixed:datasources:compatibility:querier",
-			DisplayName: "Data source compatibility querier",
-			Description: "Only used for open source compatibility. Query data sources.",
-			Group:       "Infrequently used",
-			Permissions: []ac.Permission{
-				{Action: datasources.ActionQuery},
-				{Action: datasources.ActionRead},
 			},
 		},
 		Grants: []string{string(models.ROLE_VIEWER)},
@@ -328,7 +318,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Group:       "Dashboards",
 			Permissions: []ac.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
-				{Action: ac.ActionDashboardsCreate, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
+				{Action: dashboards.ActionDashboardsCreate, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
 			},
 		},
 		Grants: []string{"Editor"},
@@ -342,7 +332,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Description: "Read all dashboards.",
 			Group:       "Dashboards",
 			Permissions: []ac.Permission{
-				{Action: ac.ActionDashboardsRead, Scope: ac.ScopeDashboardsAll},
+				{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeDashboardsAll},
 			},
 		},
 		Grants: []string{"Admin"},
@@ -356,11 +346,11 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Group:       "Dashboards",
 			Description: "Create, read, write or delete all dashboards and their permissions.",
 			Permissions: ac.ConcatPermissions(dashboardsReaderRole.Role.Permissions, []ac.Permission{
-				{Action: ac.ActionDashboardsWrite, Scope: ac.ScopeDashboardsAll},
-				{Action: ac.ActionDashboardsDelete, Scope: ac.ScopeDashboardsAll},
-				{Action: ac.ActionDashboardsCreate, Scope: dashboards.ScopeFoldersAll},
-				{Action: ac.ActionDashboardsPermissionsRead, Scope: ac.ScopeDashboardsAll},
-				{Action: ac.ActionDashboardsPermissionsWrite, Scope: ac.ScopeDashboardsAll},
+				{Action: dashboards.ActionDashboardsWrite, Scope: dashboards.ScopeDashboardsAll},
+				{Action: dashboards.ActionDashboardsDelete, Scope: dashboards.ScopeDashboardsAll},
+				{Action: dashboards.ActionDashboardsCreate, Scope: dashboards.ScopeFoldersAll},
+				{Action: dashboards.ActionDashboardsPermissionsRead, Scope: dashboards.ScopeDashboardsAll},
+				{Action: dashboards.ActionDashboardsPermissionsWrite, Scope: dashboards.ScopeDashboardsAll},
 			}),
 		},
 		Grants: []string{"Admin"},
@@ -389,7 +379,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Group:       "Folders",
 			Permissions: []ac.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
-				{Action: ac.ActionDashboardsRead, Scope: dashboards.ScopeFoldersAll},
+				{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeFoldersAll},
 			},
 		},
 		Grants: []string{"Admin"},
@@ -408,19 +398,19 @@ func (hs *HTTPServer) declareFixedRoles() error {
 					{Action: dashboards.ActionFoldersCreate},
 					{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersAll},
 					{Action: dashboards.ActionFoldersDelete, Scope: dashboards.ScopeFoldersAll},
-					{Action: ac.ActionDashboardsWrite, Scope: dashboards.ScopeFoldersAll},
-					{Action: ac.ActionDashboardsDelete, Scope: dashboards.ScopeFoldersAll},
-					{Action: ac.ActionDashboardsCreate, Scope: dashboards.ScopeFoldersAll},
-					{Action: ac.ActionDashboardsPermissionsRead, Scope: dashboards.ScopeFoldersAll},
-					{Action: ac.ActionDashboardsPermissionsWrite, Scope: dashboards.ScopeFoldersAll},
+					{Action: dashboards.ActionDashboardsWrite, Scope: dashboards.ScopeFoldersAll},
+					{Action: dashboards.ActionDashboardsDelete, Scope: dashboards.ScopeFoldersAll},
+					{Action: dashboards.ActionDashboardsCreate, Scope: dashboards.ScopeFoldersAll},
+					{Action: dashboards.ActionDashboardsPermissionsRead, Scope: dashboards.ScopeFoldersAll},
+					{Action: dashboards.ActionDashboardsPermissionsWrite, Scope: dashboards.ScopeFoldersAll},
 				}),
 		},
 		Grants: []string{"Admin"},
 	}
 
 	return hs.AccessControl.DeclareFixedRoles(
-		provisioningWriterRole, datasourcesReaderRole, datasourcesWriterRole, datasourcesIdReaderRole,
-		datasourcesCompatibilityReaderRole, orgReaderRole, orgWriterRole,
+		provisioningWriterRole, datasourcesReaderRole, datasourcesWriterRole,
+		datasourcesIdReaderRole, orgReaderRole, orgWriterRole,
 		orgMaintainerRole, teamsCreatorRole, teamsWriterRole, datasourcesExplorerRole,
 		annotationsReaderRole, dashboardAnnotationsWriterRole, annotationsWriterRole,
 		dashboardsCreatorRole, dashboardsReaderRole, dashboardsWriterRole,

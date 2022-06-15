@@ -1,6 +1,8 @@
-import React, { HTMLProps } from 'react';
-import { GrafanaTheme2 } from '@grafana/data';
 import { css, cx } from '@emotion/css';
+import React, { HTMLProps } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+
 import { stylesFactory, useTheme2 } from '../../themes';
 import { getFocusStyle, sharedInputStyle } from '../Forms/commonStyles';
 

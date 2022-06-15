@@ -1,7 +1,8 @@
+import { css, cx } from '@emotion/css';
 import React from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, IconName, Link, useTheme2 } from '@grafana/ui';
-import { css, cx } from '@emotion/css';
 
 export interface Props {
   icon?: IconName;
@@ -28,12 +29,12 @@ export function NavBarMenuItem({
   isMobile = false,
 }: Props) {
   const theme = useTheme2();
-  const styles = getStyles(theme, isActive, Boolean(icon));
+  const styles = getStyles(theme, isActive);
   const elStyle = cx(styles.element, styleOverrides);
   const linkContent = (
     <div className={styles.linkContent}>
       {icon && <Icon data-testid="dropdown-child-icon" name={icon} />}
-      <span>{text}</span>
+      <div className={styles.linkText}>{text}</div>
       {target === '_blank' && (
         <Icon data-testid="external-link-icon" name="external-link-alt" className={styles.externalLinkIcon} />
       )}
@@ -76,12 +77,17 @@ export function NavBarMenuItem({
 
 NavBarMenuItem.displayName = 'NavBarMenuItem';
 
-const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], hasIcon: boolean) => ({
+const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
   linkContent: css({
-    display: 'grid',
-    placeItems: 'center',
-    gridAutoFlow: 'column',
+    alignItems: 'center',
+    display: 'flex',
     gap: '0.5rem',
+    width: '100%',
+  }),
+  linkText: css({
+    textOverflow: 'ellipsis',
+    overflow: 'hidden',
+    whiteSpace: 'nowrap',
   }),
   externalLinkIcon: css({
     color: theme.colors.text.secondary,
@@ -97,8 +103,9 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], hasIcon: b
     fontSize: 'inherit',
     height: '100%',
     overflowWrap: 'anywhere',
-    padding: !hasIcon ? `${theme.spacing(0.5, 2)}` : '5px 12px 5px 10px',
+    padding: theme.spacing(0.5, 2),
     textAlign: 'left',
+    width: '100%',
     '&:hover, &:focus-visible': {
       backgroundColor: theme.colors.action.hover,
       color: theme.colors.text.primary,

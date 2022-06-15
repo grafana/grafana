@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { getColorByKey, clear } from './color-generator';
 import { createTheme } from '@grafana/data';
+
+import { getColorByKey, clear } from './color-generator';
 
 it('gives the same color for the same key', () => {
   clear();
@@ -35,4 +36,14 @@ it('should clear cache', () => {
   clear();
   const colorTwo = getColorByKey('serviceB', createTheme());
   expect(colorOne).toBe(colorTwo);
+});
+
+it('should not allow red', () => {
+  clear();
+  getColorByKey('serviceA', createTheme());
+  getColorByKey('serviceB', createTheme());
+  getColorByKey('serviceC', createTheme());
+  getColorByKey('serviceD', createTheme());
+  const colorFive = getColorByKey('serviceE', createTheme());
+  expect(colorFive).not.toBe('#E24D42');
 });

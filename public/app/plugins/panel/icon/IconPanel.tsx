@@ -1,8 +1,9 @@
 import React, { Component } from 'react';
+
 import { PanelProps } from '@grafana/data';
-import { PanelOptions } from './models.gen';
-import { ElementState } from 'app/features/canvas/runtime/element';
+import { HorizontalConstraint, VerticalConstraint } from 'app/features/canvas';
 import { iconItem } from 'app/features/canvas/elements/icon';
+import { ElementState } from 'app/features/canvas/runtime/element';
 import {
   ColorDimensionConfig,
   DimensionContext,
@@ -16,7 +17,8 @@ import {
   ScaleDimensionConfig,
   TextDimensionConfig,
 } from 'app/features/dimensions';
-import { HorizontalConstraint, VerticalConstraint } from 'app/features/canvas';
+
+import { PanelOptions } from './models.gen';
 
 interface Props extends PanelProps<PanelOptions> {}
 

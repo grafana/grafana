@@ -1,12 +1,15 @@
-import React, { FC, useCallback, useMemo, useState } from 'react';
-import pluralize from 'pluralize';
-import { Icon, useStyles2 } from '@grafana/ui';
-import { Alert } from 'app/types/unified-alerting';
-import { GrafanaTheme2, PanelProps } from '@grafana/data';
 import { css } from '@emotion/css';
-import { GroupMode, UnifiedAlertListOptions } from './types';
+import { noop } from 'lodash';
+import pluralize from 'pluralize';
+import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
+
+import { GrafanaTheme2, PanelProps } from '@grafana/data';
+import { Icon, useStyles2 } from '@grafana/ui';
 import { AlertInstancesTable } from 'app/features/alerting/unified/components/rules/AlertInstancesTable';
 import { sortAlerts } from 'app/features/alerting/unified/utils/misc';
+import { Alert } from 'app/types/unified-alerting';
+
+import { GroupMode, UnifiedAlertListOptions } from './types';
 import { filterAlerts } from './util';
 
 interface Props {
@@ -29,12 +32,24 @@ export const AlertInstances: FC<Props> = ({ alerts, options }) => {
     [alerts, options]
   );
 
+  const hiddenInstances = alerts.length - filteredAlerts.length;
+
+  const uncollapsible = filteredAlerts.length > 0;
+  const toggleShowInstances = uncollapsible ? toggleDisplayInstances : noop;
+
+  useEffect(() => {
+    if (filteredAlerts.length === 0) {
+      setDisplayInstances(false);
+    }
+  }, [filteredAlerts]);
+
   return (
     <div>
       {options.groupMode === GroupMode.Default && (
-        <div className={styles.instance} onClick={() => toggleDisplayInstances()}>
-          <Icon name={displayInstances ? 'angle-down' : 'angle-right'} size={'md'} />
+        <div className={uncollapsible ? styles.clickable : ''} onClick={() => toggleShowInstances()}>
+          {uncollapsible && <Icon name={displayInstances ? 'angle-down' : 'angle-right'} size={'md'} />}
           <span>{`${filteredAlerts.length} ${pluralize('instance', filteredAlerts.length)}`}</span>
+          {hiddenInstances > 0 && <span>, {`${hiddenInstances} hidden by filters`}</span>}
         </div>
       )}
       {displayInstances && <AlertInstancesTable instances={filteredAlerts} />}
@@ -43,7 +58,7 @@ export const AlertInstances: FC<Props> = ({ alerts, options }) => {
 };
 
 const getStyles = (_: GrafanaTheme2) => ({
-  instance: css`
+  clickable: css`
     cursor: pointer;
   `,
 });

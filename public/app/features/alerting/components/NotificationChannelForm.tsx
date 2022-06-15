@@ -1,13 +1,15 @@
-import React, { FC, useEffect } from 'react';
 import { css } from '@emotion/css';
+import React, { FC, useEffect } from 'react';
+
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { Button, FormAPI, HorizontalGroup, stylesFactory, useTheme, Spinner } from '@grafana/ui';
+import config from 'app/core/config';
+
 import { NotificationChannelType, NotificationChannelDTO, NotificationChannelSecureFields } from '../../../types';
-import { NotificationSettings } from './NotificationSettings';
+
 import { BasicSettings } from './BasicSettings';
 import { ChannelSettings } from './ChannelSettings';
-
-import config from 'app/core/config';
+import { NotificationSettings } from './NotificationSettings';
 
 interface Props
   extends Pick<FormAPI<NotificationChannelDTO>, 'control' | 'errors' | 'register' | 'watch' | 'getValues'> {

@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 )
@@ -42,7 +41,7 @@ func NewSQLAnnotationRepo(sql *SQLStore) SQLAnnotationRepo {
 }
 
 func (r *SQLAnnotationRepo) Save(item *annotations.Item) error {
-	return inTransaction(func(sess *DBSession) error {
+	return r.sql.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
 		tags := models.ParseTagPairs(item.Tags)
 		item.Tags = models.JoinTagPairs(tags)
 		item.Created = timeNow().UnixNano() / int64(time.Millisecond)
@@ -229,7 +228,7 @@ func (r *SQLAnnotationRepo) Find(ctx context.Context, query *annotations.ItemQue
 			}
 		}
 
-		if r.sql.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
+		if !ac.IsDisabled(r.sql.Cfg) {
 			acFilter, acArgs, err := getAccessControlFilter(query.SignedInUser)
 			if err != nil {
 				return err

@@ -3,6 +3,7 @@ package datamigrations
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/fatih/color"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
@@ -11,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var (
@@ -71,11 +71,14 @@ func migrateColumn(session *sqlstore.DBSession, column string) (int, error) {
 	err := session.Find(&rows)
 
 	if err != nil {
-		return 0, errutil.Wrapf(err, "failed to select column: %s", column)
+		return 0, fmt.Errorf("failed to select column: %s: %w", column, err)
 	}
 
 	rowsUpdated, err := updateRows(session, rows, column)
-	return rowsUpdated, errutil.Wrapf(err, "failed to update column: %s", column)
+	if err != nil {
+		return rowsUpdated, fmt.Errorf("failed to update column: %s: %w", column, err)
+	}
+	return rowsUpdated, err
 }
 
 func updateRows(session *sqlstore.DBSession, rows []map[string][]byte, passwordFieldName string) (int, error) {
@@ -89,7 +92,7 @@ func updateRows(session *sqlstore.DBSession, rows []map[string][]byte, passwordF
 
 		data, err := json.Marshal(newSecureJSONData)
 		if err != nil {
-			return 0, errutil.Wrap("marshaling newSecureJsonData failed", err)
+			return 0, fmt.Errorf("%v: %w", "marshaling newSecureJsonData failed", err)
 		}
 
 		newRow := map[string]interface{}{"secure_json_data": data, passwordFieldName: ""}

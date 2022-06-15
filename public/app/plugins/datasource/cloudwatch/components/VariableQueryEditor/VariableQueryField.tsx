@@ -1,6 +1,8 @@
+import React from 'react';
+
 import { SelectableValue } from '@grafana/data';
 import { InlineField, Select } from '@grafana/ui';
-import React from 'react';
+
 import { VariableQueryType } from '../../types';
 
 const LABEL_WIDTH = 20;
@@ -27,7 +29,6 @@ export const VariableQueryField = <T extends string | VariableQueryType>({
   return (
     <InlineField label={label} labelWidth={LABEL_WIDTH} htmlFor={inputId}>
       <Select
-        menuShouldPortal
         aria-label={label}
         width={25}
         allowCustomValue={allowCustomValue}

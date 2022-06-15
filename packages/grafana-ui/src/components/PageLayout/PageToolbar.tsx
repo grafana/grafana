@@ -1,14 +1,16 @@
-import React, { FC, ReactNode } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { FC, ReactNode } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+
+import { Link } from '..';
+import { styleMixins } from '../../themes';
 import { useStyles2 } from '../../themes/ThemeContext';
+import { getFocusStyles } from '../../themes/mixins';
 import { IconName } from '../../types';
 import { Icon } from '../Icon/Icon';
-import { styleMixins } from '../../themes';
 import { IconButton } from '../IconButton/IconButton';
-import { selectors } from '@grafana/e2e-selectors';
-import { Link } from '..';
-import { getFocusStyles } from '../../themes/mixins';
 
 export interface Props {
   pageIcon?: IconName;
@@ -71,7 +73,6 @@ export const PageToolbar: FC<Props> = React.memo(
               tooltip="Go back (Esc)"
               tooltipPlacement="bottom"
               size="xxl"
-              surface="dashboard"
               aria-label={selectors.components.BackButton.backArrow}
               onClick={onGoBack}
             />

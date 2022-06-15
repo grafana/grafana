@@ -1,6 +1,7 @@
-import React from 'react';
 import { render, screen, fireEvent, waitFor, getByText } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
+
 import { NodeGraph } from './NodeGraph';
 import { makeEdgesDataFrame, makeNodesDataFrame } from './utils';
 

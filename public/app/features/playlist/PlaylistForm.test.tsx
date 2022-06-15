@@ -1,10 +1,10 @@
-import React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { within } from '@testing-library/dom';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
 
-import { Playlist } from './types';
 import { PlaylistForm } from './PlaylistForm';
+import { Playlist } from './types';
 
 jest.mock('../../core/components/TagFilter/TagFilter', () => ({
   TagFilter: () => {
@@ -133,8 +133,8 @@ describe('PlaylistForm', () => {
     it('then the correct item should be submitted', async () => {
       const { onSubmitMock } = getTestContext(playlist);
 
-      fireEvent.submit(screen.getByRole('button', { name: /save/i }));
-      await waitFor(() => expect(onSubmitMock).toHaveBeenCalledTimes(1));
+      await userEvent.click(screen.getByRole('button', { name: /save/i }));
+      expect(onSubmitMock).toHaveBeenCalledTimes(1);
       expect(onSubmitMock).toHaveBeenCalledWith(playlist);
     });
 
@@ -142,8 +142,8 @@ describe('PlaylistForm', () => {
       it('then an alert should appear and nothing should be submitted', async () => {
         const { onSubmitMock } = getTestContext({ ...playlist, name: undefined });
 
-        fireEvent.submit(screen.getByRole('button', { name: /save/i }));
-        expect(await screen.findAllByRole('alert')).toHaveLength(1);
+        await userEvent.click(screen.getByRole('button', { name: /save/i }));
+        expect(screen.getAllByRole('alert')).toHaveLength(1);
         expect(onSubmitMock).not.toHaveBeenCalled();
       });
     });
@@ -153,8 +153,8 @@ describe('PlaylistForm', () => {
         const { onSubmitMock } = getTestContext(playlist);
 
         await userEvent.clear(screen.getByRole('textbox', { name: /playlist interval/i }));
-        fireEvent.submit(screen.getByRole('button', { name: /save/i }));
-        expect(await screen.findAllByRole('alert')).toHaveLength(1);
+        await userEvent.click(screen.getByRole('button', { name: /save/i }));
+        expect(screen.getAllByRole('alert')).toHaveLength(1);
         expect(onSubmitMock).not.toHaveBeenCalled();
       });
     });

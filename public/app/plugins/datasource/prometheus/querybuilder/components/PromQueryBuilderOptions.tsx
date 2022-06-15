@@ -1,13 +1,24 @@
 import React, { SyntheticEvent } from 'react';
-import { EditorRow, EditorField } from '@grafana/experimental';
+
 import { CoreApp, SelectableValue } from '@grafana/data';
-import { RadioButtonGroup, Select, Switch } from '@grafana/ui';
-import { QueryOptionGroup } from '../shared/QueryOptionGroup';
-import { PromQuery } from '../../types';
-import { FORMAT_OPTIONS, INTERVAL_FACTOR_OPTIONS } from '../../components/PromQueryEditor';
+import { EditorRow, EditorField, EditorSwitch } from '@grafana/experimental';
+import { AutoSizeInput, RadioButtonGroup, Select } from '@grafana/ui';
+
 import { getQueryTypeChangeHandler, getQueryTypeOptions } from '../../components/PromExploreExtraField';
+import { FORMAT_OPTIONS, INTERVAL_FACTOR_OPTIONS } from '../../components/PromQueryEditor';
+import { PromQuery } from '../../types';
+import { QueryOptionGroup } from '../shared/QueryOptionGroup';
+
 import { getLegendModeLabel, PromQueryLegendEditor } from './PromQueryLegendEditor';
-import { AutoSizeInput } from '../shared/AutoSizeInput';
+
+export interface UIOptions {
+  exemplars: boolean;
+  type: boolean;
+  format: boolean;
+  minStep: boolean;
+  legend: boolean;
+  resolution: boolean;
+}
 
 export interface Props {
   query: PromQuery;
@@ -79,14 +90,13 @@ export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange
         </EditorField>
         {shouldShowExemplarSwitch(query, app) && (
           <EditorField label="Exemplars">
-            <Switch value={query.exemplar} onChange={onExemplarChange} />
+            <EditorSwitch value={query.exemplar} onChange={onExemplarChange} />
           </EditorField>
         )}
         {query.intervalFactor && query.intervalFactor > 1 && (
           <EditorField label="Resolution">
             <Select
               aria-label="Select resolution"
-              menuShouldPortal
               isSearchable={false}
               options={INTERVAL_FACTOR_OPTIONS}
               onChange={onIntervalFactorChange}
@@ -116,11 +126,7 @@ function getCollapsedInfo(query: PromQuery, formatOption: string, queryType: str
 
   items.push(`Legend: ${getLegendModeLabel(query.legendFormat)}`);
   items.push(`Format: ${formatOption}`);
-
-  if (query.interval) {
-    items.push(`Step ${query.interval}`);
-  }
-
+  items.push(`Step ${query.interval}`);
   items.push(`Type: ${queryType}`);
 
   if (query.exemplar) {

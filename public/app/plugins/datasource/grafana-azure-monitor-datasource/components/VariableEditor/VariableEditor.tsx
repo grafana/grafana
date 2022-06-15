@@ -1,12 +1,14 @@
+import React, { ChangeEvent, useCallback, useEffect, useState } from 'react';
+
 import { SelectableValue } from '@grafana/data';
 import { Alert, InlineField, Input, Select } from '@grafana/ui';
-import React, { ChangeEvent, useCallback, useEffect, useState } from 'react';
-import { AzureMonitorQuery, AzureQueryType } from '../../types';
-import LogsQueryEditor from '../LogsQueryEditor';
+
 import DataSource from '../../datasource';
-import useLastError from '../../utils/useLastError';
-import { Space } from '../Space';
 import { migrateStringQueriesToObjectQueries } from '../../grafanaTemplateVariableFns';
+import { AzureMonitorQuery, AzureQueryType } from '../../types';
+import useLastError from '../../utils/useLastError';
+import LogsQueryEditor from '../LogsQueryEditor';
+import { Space } from '../Space';
 
 const AZURE_QUERY_VARIABLE_TYPE_OPTIONS = [
   { label: 'Grafana Query Function', value: AzureQueryType.GrafanaTemplateVariableFn },

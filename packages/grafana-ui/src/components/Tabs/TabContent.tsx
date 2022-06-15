@@ -1,7 +1,9 @@
-import React, { FC, HTMLAttributes, ReactNode } from 'react';
-import { stylesFactory, useTheme2 } from '../../themes';
 import { css, cx } from '@emotion/css';
+import React, { FC, HTMLAttributes, ReactNode } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
+
+import { stylesFactory, useTheme2 } from '../../themes';
 
 interface Props extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;

@@ -1,11 +1,14 @@
-import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
+
 import config from 'app/core/config';
-import { Props, ChangePasswordPage } from './ChangePasswordPage';
-import { initialUserState } from './state/reducers';
+
 import { getNavModel } from '../../core/selectors/navModel';
 import { backendSrv } from '../../core/services/backend_srv';
+
+import { Props, ChangePasswordPage } from './ChangePasswordPage';
+import { initialUserState } from './state/reducers';
 
 const defaultProps: Props = {
   ...initialUserState,

@@ -1,4 +1,5 @@
 import { Event, Severity } from '@sentry/browser';
+
 import { CustomEndpointTransport } from './CustomEndpointTransport';
 
 describe('CustomEndpointTransport', () => {
