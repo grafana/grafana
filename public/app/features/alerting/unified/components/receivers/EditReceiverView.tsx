@@ -19,7 +19,7 @@ export const EditReceiverView: FC<Props> = ({ config, receiverName, alertManager
   if (!receiver) {
     return (
       <Alert severity="error" title="Receiver not found">
-        Sorry, this receiver does not seem to exit.
+        Sorry, this receiver does not seem to exist.
       </Alert>
     );
   }
