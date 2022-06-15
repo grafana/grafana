@@ -222,7 +222,7 @@ export function addQueryRow(
   return (dispatch, getState) => {
     const queries = getState().explore[exploreId]!.queries;
     const query = {
-      ...(datasource?.getDefaultQuery && datasource.getDefaultQuery(CoreApp.Explore)),
+      ...datasource?.getDefaultQuery?.(CoreApp.Explore),
       ...generateEmptyQuery(queries, index),
     };
 
