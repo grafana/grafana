@@ -4,6 +4,8 @@ import React, { useEffect } from 'react';
 
 import config from 'app/core/config';
 
+import { messages } from '../../locales/en/messages';
+
 let i18nInstance: I18n;
 
 export async function getI18n(locale = 'en') {
@@ -11,11 +13,13 @@ export async function getI18n(locale = 'en') {
     return i18nInstance;
   }
   // Dynamically load the messages for the user's locale
-  const imp = await import(`../../locales/${locale}/messages`).catch((err) => {
-    // TODO: Properly return an error if we can't find the messages for a locale
-    return err;
-  });
-  i18n.load(locale, imp.messages);
+  const imp =
+    config.featureToggles.internationalization &&
+    (await import(`../../locales/${locale}/messages`).catch((err) => {
+      // TODO: Properly return an error if we can't find the messages for a locale
+      return err;
+    }));
+  i18n.load(locale, imp?.messages || messages);
 
   // Browser support for Intl.PluralRules is good and covers what we support in .browserlistrc,
   // but because this could potentially be in a the critical path of loading the frontend lets
@@ -43,7 +47,7 @@ interface I18nProviderProps {
 }
 export function I18nProvider({ children }: I18nProviderProps) {
   useEffect(() => {
-    let loc = 'en';
+    let loc;
     if (config.featureToggles.internationalization) {
       // TODO: Use locale preference instead of weekStart
       switch (config.bootData.user.weekStart) {
