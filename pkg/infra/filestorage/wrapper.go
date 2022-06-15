@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"mime"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -14,7 +13,6 @@ import (
 
 var (
 	directoryMarker = ".___gf_dir_marker___"
-	pathRegex       = regexp.MustCompile(`(^/$)|(^(/[A-Za-z0-9!\-_.*'() ]+)+$)`)
 )
 
 type wrapper struct {
@@ -100,37 +98,8 @@ func getName(path string) string {
 	return split[len(split)-1]
 }
 
-func validatePath(path string) error {
-	if !filepath.IsAbs(path) {
-		return ErrRelativePath
-	}
-
-	if path == Delimiter {
-		return nil
-	}
-
-	if filepath.Clean(path) != path {
-		return ErrNonCanonicalPath
-	}
-
-	if strings.HasSuffix(path, Delimiter) {
-		return ErrPathEndsWithDelimiter
-	}
-
-	if len(path) > 1000 {
-		return ErrPathTooLong
-	}
-
-	matches := pathRegex.MatchString(path)
-	if !matches {
-		return ErrPathInvalid
-	}
-
-	return nil
-}
-
 func (b wrapper) validatePath(path string) error {
-	if err := validatePath(path); err != nil {
+	if err := ValidatePath(path); err != nil {
 		b.log.Error("Path failed validation", "path", path, "error", err)
 		return err
 	}

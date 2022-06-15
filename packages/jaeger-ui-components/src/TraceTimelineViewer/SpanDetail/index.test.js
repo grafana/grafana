@@ -26,7 +26,7 @@ import AccordianKeyValues from './AccordianKeyValues';
 import AccordianLogs from './AccordianLogs';
 import DetailState from './DetailState';
 
-import SpanDetail from './index';
+import SpanDetail, { getAbsoluteTime } from './index';
 
 describe('<SpanDetail>', () => {
   let wrapper;
@@ -137,6 +137,12 @@ describe('<SpanDetail>', () => {
         .map((item) => item.label)
         .sort()
     ).toEqual(words);
+  });
+
+  it('start time shows the absolute time', () => {
+    const startTime = wrapper.find(LabeledList).prop('items')[2].value;
+    const absoluteTime = getAbsoluteTime(span.startTime);
+    expect(startTime).toContain(absoluteTime);
   });
 
   it('renders the span tags', () => {
