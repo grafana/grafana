@@ -3771,10 +3771,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@daybrush/utils@npm:1.6.0, @daybrush/utils@npm:^1.0.0, @daybrush/utils@npm:^1.1.1, @daybrush/utils@npm:^1.3.1, @daybrush/utils@npm:^1.4.0, @daybrush/utils@npm:^1.6.0":
+"@daybrush/utils@npm:1.6.0, @daybrush/utils@npm:^1.0.0, @daybrush/utils@npm:^1.1.1, @daybrush/utils@npm:^1.3.1, @daybrush/utils@npm:^1.4.0":
   version: 1.6.0
   resolution: "@daybrush/utils@npm:1.6.0"
   checksum: 2579bc17e0d53ffbcb01c14c1f6baf32294f42b370e597d855e11cc5ab4de975502e91114c3e5bd05f76c8a6f83352c40ba60ac74c2fd1c3a741ce2e8899b137
+  languageName: node
+  linkType: hard
+
+"@daybrush/utils@npm:1.7.0, @daybrush/utils@npm:^1.7.0":
+  version: 1.7.0
+  resolution: "@daybrush/utils@npm:1.7.0"
+  checksum: 5ffaae919493c9c656ec7d712c71d94af3bcd6059567e278718322c9995635a8b7ed57b37ee496393841abd58bfbec2e1531a4bb0030b74c919102942d27c31c
   languageName: node
   linkType: hard
 
@@ -4253,9 +4260,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/input-datasource@workspace:plugins-bundled/internal/input-datasource"
   dependencies:
-    "@grafana/data": 9.0.0-pre
-    "@grafana/toolkit": 9.0.0-pre
-    "@grafana/ui": 9.0.0-pre
+    "@grafana/data": 9.1.0-pre
+    "@grafana/toolkit": 9.1.0-pre
+    "@grafana/ui": 9.1.0-pre
     "@types/jest": 26.0.15
     "@types/lodash": 4.14.149
     "@types/react": 17.0.30
@@ -4293,17 +4300,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/data@9.0.0-pre, @grafana/data@workspace:*, @grafana/data@workspace:packages/grafana-data":
+"@grafana/data@9.1.0-pre, @grafana/data@workspace:*, @grafana/data@workspace:packages/grafana-data":
   version: 0.0.0-use.local
   resolution: "@grafana/data@workspace:packages/grafana-data"
   dependencies:
     "@braintree/sanitize-url": 6.0.0
-    "@grafana/schema": 9.0.0-pre
+    "@grafana/schema": 9.1.0-pre
     "@grafana/tsconfig": ^1.2.0-rc1
     "@rollup/plugin-commonjs": 22.0.0
     "@rollup/plugin-json": 4.1.0
     "@rollup/plugin-node-resolve": 13.3.0
-    "@swc/helpers": 0.3.13
+    "@swc/helpers": 0.4.0
     "@testing-library/dom": 8.13.0
     "@testing-library/jest-dom": 5.16.4
     "@testing-library/react": 12.1.4
@@ -4351,7 +4358,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/e2e-selectors@9.0.0-pre, @grafana/e2e-selectors@workspace:*, @grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors":
+"@grafana/e2e-selectors@9.1.0-pre, @grafana/e2e-selectors@workspace:*, @grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors":
   version: 0.0.0-use.local
   resolution: "@grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors"
   dependencies:
@@ -4375,7 +4382,7 @@ __metadata:
     "@babel/core": 7.18.2
     "@babel/preset-env": 7.18.2
     "@cypress/webpack-preprocessor": 5.12.0
-    "@grafana/e2e-selectors": 9.0.0-pre
+    "@grafana/e2e-selectors": 9.1.0-pre
     "@grafana/tsconfig": ^1.2.0-rc1
     "@mochajs/json-file-reporter": ^1.2.0
     "@rollup/plugin-commonjs": 22.0.0
@@ -4464,10 +4471,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/runtime@workspace:packages/grafana-runtime"
   dependencies:
-    "@grafana/data": 9.0.0-pre
-    "@grafana/e2e-selectors": 9.0.0-pre
+    "@grafana/data": 9.1.0-pre
+    "@grafana/e2e-selectors": 9.1.0-pre
     "@grafana/tsconfig": ^1.2.0-rc1
-    "@grafana/ui": 9.0.0-pre
+    "@grafana/ui": 9.1.0-pre
     "@rollup/plugin-commonjs": 22.0.0
     "@rollup/plugin-node-resolve": 13.3.0
     "@sentry/browser": 6.19.7
@@ -4496,7 +4503,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/schema@9.0.0-pre, @grafana/schema@workspace:*, @grafana/schema@workspace:packages/grafana-schema":
+"@grafana/schema@9.1.0-pre, @grafana/schema@workspace:*, @grafana/schema@workspace:packages/grafana-schema":
   version: 0.0.0-use.local
   resolution: "@grafana/schema@workspace:packages/grafana-schema"
   dependencies:
@@ -4504,7 +4511,7 @@ __metadata:
     "@rollup/plugin-commonjs": 22.0.0
     "@rollup/plugin-json": 4.1.0
     "@rollup/plugin-node-resolve": 13.3.0
-    "@swc/helpers": 0.3.13
+    "@swc/helpers": 0.4.0
     rimraf: 3.0.2
     rollup: 2.74.1
     rollup-plugin-sourcemaps: 0.6.3
@@ -4543,7 +4550,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/toolkit@9.0.0-pre, @grafana/toolkit@workspace:*, @grafana/toolkit@workspace:packages/grafana-toolkit":
+"@grafana/toolkit@9.1.0-pre, @grafana/toolkit@workspace:*, @grafana/toolkit@workspace:packages/grafana-toolkit":
   version: 0.0.0-use.local
   resolution: "@grafana/toolkit@workspace:packages/grafana-toolkit"
   dependencies:
@@ -4559,10 +4566,10 @@ __metadata:
     "@babel/preset-env": ^7.16.11
     "@babel/preset-react": ^7.16.7
     "@babel/preset-typescript": ^7.16.7
-    "@grafana/data": 9.0.0-pre
+    "@grafana/data": 9.1.0-pre
     "@grafana/eslint-config": ^3.0.0
     "@grafana/tsconfig": ^1.2.0-rc1
-    "@grafana/ui": 9.0.0-pre
+    "@grafana/ui": 9.1.0-pre
     "@jest/core": 27.5.1
     "@types/command-exists": ^1.2.0
     "@types/eslint": 8.4.1
@@ -4645,7 +4652,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/ui@9.0.0-pre, @grafana/ui@workspace:*, @grafana/ui@workspace:packages/grafana-ui":
+"@grafana/ui@9.1.0-pre, @grafana/ui@workspace:*, @grafana/ui@workspace:packages/grafana-ui":
   version: 0.0.0-use.local
   resolution: "@grafana/ui@workspace:packages/grafana-ui"
   dependencies:
@@ -4653,9 +4660,9 @@ __metadata:
     "@emotion/css": 11.9.0
     "@emotion/react": 11.9.0
     "@grafana/aws-sdk": 0.0.36
-    "@grafana/data": 9.0.0-pre
-    "@grafana/e2e-selectors": 9.0.0-pre
-    "@grafana/schema": 9.0.0-pre
+    "@grafana/data": 9.1.0-pre
+    "@grafana/e2e-selectors": 9.1.0-pre
+    "@grafana/schema": 9.1.0-pre
     "@grafana/slate-react": 0.22.10-grafana
     "@grafana/tsconfig": ^1.2.0-rc1
     "@mdx-js/react": 1.6.22
@@ -4685,7 +4692,7 @@ __metadata:
     "@storybook/manager-webpack5": 6.4.21
     "@storybook/react": 6.4.21
     "@storybook/theming": 6.4.21
-    "@swc/helpers": 0.3.13
+    "@swc/helpers": 0.4.0
     "@testing-library/dom": 8.13.0
     "@testing-library/jest-dom": 5.16.4
     "@testing-library/react": 12.1.4
@@ -4693,7 +4700,7 @@ __metadata:
     "@testing-library/user-event": 14.2.0
     "@types/classnames": 2.3.0
     "@types/common-tags": ^1.8.0
-    "@types/d3": 7.1.0
+    "@types/d3": 7.4.0
     "@types/enzyme": 3.10.12
     "@types/enzyme-adapter-react-16": 1.0.6
     "@types/grafana__slate-react": "npm:@types/slate-react@0.22.5"
@@ -4727,7 +4734,7 @@ __metadata:
     calculate-size: 1.1.1
     classnames: 2.3.1
     common-tags: 1.8.2
-    core-js: 3.22.5
+    core-js: 3.23.0
     css-loader: 6.7.1
     css-minimizer-webpack-plugin: 4.0.0
     csstype: 3.1.0
@@ -4736,7 +4743,7 @@ __metadata:
     enzyme: 3.11.0
     expose-loader: 4.0.0
     hoist-non-react-statics: 3.3.2
-    immutable: 4.0.0
+    immutable: 4.1.0
     is-hotkey: 0.2.0
     jquery: 3.6.0
     lodash: 4.17.21
@@ -4750,7 +4757,7 @@ __metadata:
     prismjs: 1.28.0
     process: ^0.11.10
     raw-loader: 4.0.2
-    rc-cascader: 3.5.0
+    rc-cascader: 3.6.0
     rc-drawer: 4.4.3
     rc-slider: 9.7.5
     rc-time-picker: ^3.7.3
@@ -4758,7 +4765,7 @@ __metadata:
     react-beautiful-dnd: 13.1.0
     react-calendar: 3.7.0
     react-colorful: 5.5.1
-    react-custom-scrollbars-2: 4.4.0
+    react-custom-scrollbars-2: 4.5.0
     react-docgen-typescript-loader: 3.7.2
     react-dom: 17.0.2
     react-dropzone: 12.0.4
@@ -4892,10 +4899,10 @@ __metadata:
   resolution: "@jaegertracing/jaeger-ui-components@workspace:packages/jaeger-ui-components"
   dependencies:
     "@emotion/css": 11.9.0
-    "@grafana/data": 9.0.0-pre
-    "@grafana/e2e-selectors": 9.0.0-pre
+    "@grafana/data": 9.1.0-pre
+    "@grafana/e2e-selectors": 9.1.0-pre
     "@grafana/tsconfig": ^1.2.0-rc1
-    "@grafana/ui": 9.0.0-pre
+    "@grafana/ui": 9.1.0-pre
     "@testing-library/jest-dom": 5.16.4
     "@testing-library/react": 12.1.4
     "@testing-library/user-event": 14.2.0
@@ -7608,16 +7615,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-types/shared@npm:3.12.0":
-  version: 3.12.0
-  resolution: "@react-types/shared@npm:3.12.0"
-  peerDependencies:
-    react: ^16.8.0 || ^17.0.0-rc.1
-  checksum: 400590e560154506919debb3bdf3c54760176e7d6b521c94a45730e7388366b874f0167be0f6710c2a9bd35f9edbf895b0147881689ac0242880c532ababe369
-  languageName: node
-  linkType: hard
-
-"@react-types/shared@npm:^3.13.0":
+"@react-types/shared@npm:3.13.0, @react-types/shared@npm:^3.13.0":
   version: 3.13.0
   resolution: "@react-types/shared@npm:3.13.0"
   peerDependencies:
@@ -7789,7 +7787,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@scena/event-emitter@npm:^1.0.2, @scena/event-emitter@npm:^1.0.3, @scena/event-emitter@npm:^1.0.5":
+"@scena/event-emitter@npm:^1.0.2, @scena/event-emitter@npm:^1.0.5":
   version: 1.0.5
   resolution: "@scena/event-emitter@npm:1.0.5"
   dependencies:
@@ -9423,12 +9421,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@swc/helpers@npm:0.3.13":
-  version: 0.3.13
-  resolution: "@swc/helpers@npm:0.3.13"
+"@swc/helpers@npm:0.4.0":
+  version: 0.4.0
+  resolution: "@swc/helpers@npm:0.4.0"
   dependencies:
     tslib: ^2.4.0
-  checksum: 55f51d222cf4fd17309aa89040bc07263243264a42c980bd53e47bc4f6803353d6bc45fe40e8558c707135999e8115bf9b6d5a55535b1d3e5e858f4e569353cf
+  checksum: a77b61e13007cbd7b2b175db355c95ebc4f550690ee354a160eda48db8b2ae5ac663c74bdbdf44c3f5ed743f0d0d369420ef248a6b9f07038b623fa336f8bc3e
   languageName: node
   linkType: hard
 
@@ -10047,9 +10045,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/d3@npm:7.1.0":
-  version: 7.1.0
-  resolution: "@types/d3@npm:7.1.0"
+"@types/d3@npm:7.4.0":
+  version: 7.4.0
+  resolution: "@types/d3@npm:7.4.0"
   dependencies:
     "@types/d3-array": "*"
     "@types/d3-axis": "*"
@@ -10081,7 +10079,7 @@ __metadata:
     "@types/d3-timer": "*"
     "@types/d3-transition": "*"
     "@types/d3-zoom": "*"
-  checksum: a3062e95410e0bbe52f2ebddc6ca909050f3ed495c18dfda649d1a5a22d2bd69b54e288d45fb304765cc3c425422b381865f598fdb816989348477c96bb2430e
+  checksum: d1383f5fca7c4a819d57eb4bccc387dccaa7cb4c24d56388e5247954db6c88f5fb7c74d156165dfe044f1da8d4d510796c8d8487b5956d8270a94a1182a6e00f
   languageName: node
   linkType: hard
 
@@ -15775,10 +15773,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"core-js@npm:3.22.5":
-  version: 3.22.5
-  resolution: "core-js@npm:3.22.5"
-  checksum: d3d7495d7cdde01cf9ac3debc5087afc3c8dd56baa4953d9ccbb46b1a80872c79d14c1e6343c664c9c0fade288ab44c70b54dd34f879a71e6eff6fffeab84e00
+"core-js@npm:3.23.0":
+  version: 3.23.0
+  resolution: "core-js@npm:3.23.0"
+  checksum: 4fcfec8133bd31ae34482bcdf891d8dcff4a64de656b82749c56d984b227cc107f755104aefb884b284f78d3e59fad24592de039ff7f78e60316cd4ade734af4
   languageName: node
   linkType: hard
 
@@ -18354,9 +18352,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-jest@npm:26.2.2":
-  version: 26.2.2
-  resolution: "eslint-plugin-jest@npm:26.2.2"
+"eslint-plugin-jest@npm:26.5.3":
+  version: 26.5.3
+  resolution: "eslint-plugin-jest@npm:26.5.3"
   dependencies:
     "@typescript-eslint/utils": ^5.10.0
   peerDependencies:
@@ -18367,7 +18365,7 @@ __metadata:
       optional: true
     jest:
       optional: true
-  checksum: c1299a0bb465196d3c8a26ee892e29398b91bb741fe69ac6b19b54096f795142a152355ca520d80c778fb588ba2282a7c625ef204c17fe65ee94709d16970d46
+  checksum: 16897c56eadf3da19a96e18b1bd983bbd0a34ad9545d5bc6f9ee67d2940e6e2fd2f067f44dbbb26dcaf17c75c0132f89a06a09ff5169761ce48c9708a2acf7d7
   languageName: node
   linkType: hard
 
@@ -20100,6 +20098,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"gesto@npm:^1.9.0":
+  version: 1.9.0
+  resolution: "gesto@npm:1.9.0"
+  dependencies:
+    "@daybrush/utils": ^1.0.0
+    "@scena/event-emitter": ^1.0.2
+  checksum: 4ee8631c4b68d0ed6a6adec417422f799a646f25438e9788246d4696c5376aee65fb2e54b057f98726c998d36dd8f015f9fa828af89bc0b07189799078bd2543
+  languageName: node
+  linkType: hard
+
 "get-caller-file@npm:^2.0.5":
   version: 2.0.5
   resolution: "get-caller-file@npm:2.0.5"
@@ -20636,14 +20644,14 @@ __metadata:
     "@react-types/button": 3.5.0
     "@react-types/menu": 3.6.0
     "@react-types/overlays": 3.6.0
-    "@react-types/shared": 3.12.0
+    "@react-types/shared": 3.13.0
     "@reduxjs/toolkit": 1.8.1
     "@rtsao/plugin-proposal-class-properties": 7.0.1-patch.1
     "@sentry/browser": 6.19.7
     "@sentry/types": 6.19.7
     "@sentry/utils": 6.19.7
     "@swc/core": 1.2.187
-    "@swc/helpers": 0.3.13
+    "@swc/helpers": 0.4.0
     "@testing-library/dom": 8.13.0
     "@testing-library/jest-dom": 5.16.4
     "@testing-library/react": 12.1.4
@@ -20653,7 +20661,7 @@ __metadata:
     "@types/angular-route": 1.7.2
     "@types/classnames": 2.3.0
     "@types/common-tags": ^1.8.0
-    "@types/d3": 7.1.0
+    "@types/d3": 7.4.0
     "@types/d3-force": ^2.1.0
     "@types/d3-scale-chromatic": 1.3.1
     "@types/debounce-promise": 3.1.4
@@ -20731,7 +20739,7 @@ __metadata:
     comlink: 4.3.1
     common-tags: 1.8.2
     copy-webpack-plugin: 9.0.1
-    core-js: 3.22.5
+    core-js: 3.23.0
     css-loader: 6.7.1
     css-minimizer-webpack-plugin: 4.0.0
     cypress: 9.5.1
@@ -20747,7 +20755,7 @@ __metadata:
     eslint: 8.17.0
     eslint-config-prettier: 8.5.0
     eslint-plugin-import: ^2.26.0
-    eslint-plugin-jest: 26.2.2
+    eslint-plugin-jest: 26.5.3
     eslint-plugin-jsdoc: 39.3.0
     eslint-plugin-lodash: 7.4.0
     eslint-plugin-react: 7.29.4
@@ -20770,7 +20778,7 @@ __metadata:
     husky: 8.0.1
     iconscout-unicons-tarball: "https://github.com/grafana/icons/tarball/63056cd833ba7ee4e94904492b3a8c0cabc38d28"
     immer: 9.0.14
-    immutable: 4.0.0
+    immutable: 4.1.0
     jest: 28.1.0
     jest-canvas-mock: 2.4.0
     jest-date-mock: 1.0.8
@@ -20798,7 +20806,7 @@ __metadata:
     monaco-promql: 1.7.4
     mousetrap: 1.6.5
     mousetrap-global-bind: 1.1.0
-    moveable: 0.29.8
+    moveable: 0.30.0
     mutationobserver-shim: 0.3.7
     ngtemplate-loader: 2.1.0
     node-notifier: 10.0.1
@@ -20814,7 +20822,7 @@ __metadata:
     prismjs: 1.28.0
     prop-types: 15.8.1
     raw-loader: 4.0.2
-    rc-cascader: 3.5.0
+    rc-cascader: 3.6.0
     rc-drawer: 4.4.3
     rc-slider: 9.7.5
     rc-time-picker: 3.7.3
@@ -20829,7 +20837,7 @@ __metadata:
     react-hook-form: 7.5.3
     react-inlinesvg: 3.0.0
     react-loadable: 5.5.0
-    react-moveable: 0.32.7
+    react-moveable: 0.33.0
     react-popper: 2.3.0
     react-popper-tooltip: ^4.3.1
     react-redux: 7.2.6
@@ -20855,7 +20863,7 @@ __metadata:
     rimraf: 3.0.2
     rst2html: "github:thoward/rst2html#990cb89f2a300cdd9151790be377c4c0840df809"
     rxjs: 7.5.5
-    sass: 1.51.0
+    sass: 1.52.3
     sass-loader: 13.0.0
     selecto: 1.16.2
     semver: 7.3.7
@@ -21791,10 +21799,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"immutable@npm:4.0.0, immutable@npm:^4.0.0":
-  version: 4.0.0
-  resolution: "immutable@npm:4.0.0"
-  checksum: 4b5e9181e4d5fa06728a481835ec09c86367e5d03268666c95b522b7644ab891098022e4479a43c4c81a68f2ed82f10751ce5d33e208d7b873b6e7f9dfaf4d87
+"immutable@npm:4.1.0":
+  version: 4.1.0
+  resolution: "immutable@npm:4.1.0"
+  checksum: b9bc1f14fb18eb382d48339c064b24a1f97ae4cf43102e0906c0a6e186a27afcd18b55ca4a0b63c98eefb58143e2b5ebc7755a5fb4da4a7ad84b7a6096ac5b13
   languageName: node
   linkType: hard
 
@@ -21802,6 +21810,13 @@ __metadata:
   version: 3.8.2
   resolution: "immutable@npm:3.8.2"
   checksum: 41909b386950ff84ca3cfca77c74cfc87d225a914e98e6c57996fa81a328da61a7c32216d6d5abad40f54747ffdc5c4b02b102e6ad1a504c1752efde8041f964
+  languageName: node
+  linkType: hard
+
+"immutable@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "immutable@npm:4.0.0"
+  checksum: 4b5e9181e4d5fa06728a481835ec09c86367e5d03268666c95b522b7644ab891098022e4479a43c4c81a68f2ed82f10751ce5d33e208d7b873b6e7f9dfaf4d87
   languageName: node
   linkType: hard
 
@@ -26283,14 +26298,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"moveable@npm:0.29.8":
-  version: 0.29.8
-  resolution: "moveable@npm:0.29.8"
+"moveable@npm:0.30.0":
+  version: 0.30.0
+  resolution: "moveable@npm:0.30.0"
   dependencies:
-    "@scena/event-emitter": ^1.0.3
-    react-compat-moveable: ~0.17.8
-    react-simple-compat: ^1.2.1
-  checksum: debf5d3bcd53de48d654a67d90ee35adc13691ea17d72abbfcbbcfba228e22fbea06635c10553f3f6c5fcc5e6f9c7e176ebbdd03998223820ddc5776b4575a34
+    "@scena/event-emitter": ^1.0.5
+    react-compat-moveable: ~0.18.0
+    react-moveable: ~0.33.0
+    react-simple-compat: ^1.2.2
+  checksum: de7955430761e2582443b51d10841f246c28ba7ec5abb97675d4d05a322891bc75d6b5c943b76096f9b718b371e63b7b2ca045e203608d0a9d153b0845405f38
   languageName: node
   linkType: hard
 
@@ -29991,20 +30007,20 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-cascader@npm:3.5.0":
-  version: 3.5.0
-  resolution: "rc-cascader@npm:3.5.0"
+"rc-cascader@npm:3.6.0":
+  version: 3.6.0
+  resolution: "rc-cascader@npm:3.6.0"
   dependencies:
     "@babel/runtime": ^7.12.5
     array-tree-filter: ^2.1.0
     classnames: ^2.3.1
     rc-select: ~14.1.0
-    rc-tree: ~5.5.0
+    rc-tree: ~5.6.3
     rc-util: ^5.6.1
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: 458df17782a57f1bd97cd231f9462fef1c02c53b26153c1110b80e11a5841ed94e4260cf7f75a5fa844bf1107dbc39043918d64f00dd05e5e3529db01d5d73c2
+  checksum: edf3aca269a70cc23a332458f7d816591279bfcdb90b0645e1b0ad14c12f25ee6c95ed939cc36b09b7a08a13f9beec13be07750f87d4d748bb1ca2cdcca4c52f
   languageName: node
   linkType: hard
 
@@ -30127,19 +30143,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-tree@npm:~5.5.0":
-  version: 5.5.0
-  resolution: "rc-tree@npm:5.5.0"
+"rc-tree@npm:~5.6.3":
+  version: 5.6.5
+  resolution: "rc-tree@npm:5.6.5"
   dependencies:
     "@babel/runtime": ^7.10.1
     classnames: 2.x
     rc-motion: ^2.0.1
     rc-util: ^5.16.1
-    rc-virtual-list: ^3.4.2
+    rc-virtual-list: ^3.4.8
   peerDependencies:
     react: "*"
     react-dom: "*"
-  checksum: 5ea172eef6530b0741697dbaccddeb959d8e183e89a64c61774c82f5f92a686ad7e050d38ad11dab7d5595cd391ae5428251b9624a74040b268a22a457c39c2d
+  checksum: 107efb7dbf6d44faf11072c4c53277f234ecd8d0c5a5cb387d5d9ac18b96098fa9cef3312f52589930c5562fd708f4da50f3b7880b27b2405c6ac558dce9f037
   languageName: node
   linkType: hard
 
@@ -30229,17 +30245,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-virtual-list@npm:^3.4.2":
-  version: 3.4.4
-  resolution: "rc-virtual-list@npm:3.4.4"
+"rc-virtual-list@npm:^3.4.8":
+  version: 3.4.8
+  resolution: "rc-virtual-list@npm:3.4.8"
   dependencies:
     classnames: ^2.2.6
     rc-resize-observer: ^1.0.0
-    rc-util: ^5.0.7
+    rc-util: ^5.15.0
   peerDependencies:
     react: "*"
     react-dom: "*"
-  checksum: d80c212e1f670afd3ccb876ac47b6b1b242c99b41a7777504af867f26a7be840129ecc9ef4ed6de356c8f2391fc495750597da418d06ea760740e30292d7ffec
+  checksum: 946fcd43daeadd41429475d9945747f5b60bbed6d7b94ae042242504c5caa27a3a3512c96139a65571d9163d9f0f2a3105220e6289bc1191306536c7b5444216
   languageName: node
   linkType: hard
 
@@ -30322,23 +30338,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-compat-moveable@npm:~0.17.8":
-  version: 0.17.8
-  resolution: "react-compat-moveable@npm:0.17.8"
+"react-compat-moveable@npm:~0.18.0":
+  version: 0.18.0
+  resolution: "react-compat-moveable@npm:0.18.0"
   dependencies:
-    "@daybrush/utils": ^1.6.0
+    "@daybrush/utils": ^1.7.0
     "@egjs/agent": ^2.2.1
     "@egjs/children-differ": ^1.0.1
     "@scena/dragscroll": ^1.1.1
     "@scena/matrix": ^1.1.1
     css-to-mat: ^1.0.3
     framework-utils: ^1.1.0
-    gesto: ^1.7.0
+    gesto: ^1.9.0
     overlap-area: ^1.0.0
     react-compat-css-styled: ^1.0.8
     react-css-styled: ^1.0.3
-    react-moveable: ~0.32.7
-  checksum: fa370828c85c585614ef7fb4ef6d5567904b916972f428e53ec342a8b905124084c82442fa44f4c50d4f6ab413fbc85de1fce88598e59c59671c638b495f1c77
+    react-moveable: ~0.33.0
+  checksum: f63b5cb9b853c1f2e0e8b356d599be22cf8ba005d9a1b87001b5843dd06e27693b0dd82d75aa3bc2487e88328b4577bf4e439f9f798f81b19d61c7c8ca1715a2
   languageName: node
   linkType: hard
 
@@ -30352,17 +30368,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-custom-scrollbars-2@npm:4.4.0":
-  version: 4.4.0
-  resolution: "react-custom-scrollbars-2@npm:4.4.0"
+"react-custom-scrollbars-2@npm:4.5.0":
+  version: 4.5.0
+  resolution: "react-custom-scrollbars-2@npm:4.5.0"
   dependencies:
     dom-css: ^2.0.0
     prop-types: ^15.5.10
     raf: ^3.1.0
   peerDependencies:
-    react: ^0.14.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
-    react-dom: ^0.14.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
-  checksum: 4d79b36538f9f182ef2658e8f03c122596d70d78e357e494e5d6bd0efe1c283045451aa73a48ce87c3bcc8df9bb2b29fb2446626456401218175a2ad24a14ca0
+    react: ^0.14.0 || ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0
+    react-dom: ^0.14.0 || ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0
+  checksum: b264629c0bfcc292106540f802e4d4281fb4acfab93ab259dcde096b72f135a1be6f2fcf636478f9e9bce6e15a9c6eb624c799184bb478073bb7ace86588a1de
   languageName: node
   linkType: hard
 
@@ -30742,11 +30758,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-moveable@npm:0.32.7, react-moveable@npm:~0.32.7":
-  version: 0.32.7
-  resolution: "react-moveable@npm:0.32.7"
+"react-moveable@npm:0.33.0, react-moveable@npm:~0.33.0":
+  version: 0.33.0
+  resolution: "react-moveable@npm:0.33.0"
   dependencies:
-    "@daybrush/utils": ^1.6.0
+    "@daybrush/utils": ^1.7.0
     "@egjs/agent": ^2.2.1
     "@egjs/children-differ": ^1.0.1
     "@scena/dragscroll": ^1.1.1
@@ -30754,10 +30770,10 @@ __metadata:
     "@scena/matrix": ^1.1.1
     css-to-mat: ^1.0.3
     framework-utils: ^1.1.0
-    gesto: ^1.7.0
+    gesto: ^1.9.0
     overlap-area: ^1.0.0
     react-css-styled: ^1.0.3
-  checksum: d1737af5cc9ffe243047f2100910ae7aa610808ea74ea8928b7568ae8638b39986a5735288eec9fab29d5d899163b5021dd0f674a197522d2639df9eb6e48da2
+  checksum: bbe59318599977a9bbe2a6b85fe94709d2aa4bc971f37a294469b88ac6e01ee2db4a40a9a8ff6b3b10ed6afa743d3669d1bdd6dcbccf53d1fc11339d61aa9f4a
   languageName: node
   linkType: hard
 
@@ -31001,13 +31017,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-simple-compat@npm:1.2.1, react-simple-compat@npm:^1.2.1":
-  version: 1.2.1
-  resolution: "react-simple-compat@npm:1.2.1"
+"react-simple-compat@npm:1.2.2, react-simple-compat@npm:^1.2.2":
+  version: 1.2.2
+  resolution: "react-simple-compat@npm:1.2.2"
   dependencies:
     "@daybrush/utils": ^1.0.0
     "@egjs/list-differ": ^1.0.0
-  checksum: 07a47e750fd0cef65bbdc23007ca7fe1c61283dbd04219a0e46a655f9cb58c13165f1d384c9d4e56efee3a44df111bfb89bf966e1ef8842610e22578359b70c2
+  checksum: a594292328225ec46b155fe90c6f6c5ec7499642a7cac586bb460452908a244b12f85499a8f80e4d1eeb60512fce33d912e3558bdb9744ed15c0a80cdf0fcfc8
   languageName: node
   linkType: hard
 
@@ -32439,16 +32455,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sass@npm:1.51.0":
-  version: 1.51.0
-  resolution: "sass@npm:1.51.0"
+"sass@npm:1.52.3":
+  version: 1.52.3
+  resolution: "sass@npm:1.52.3"
   dependencies:
     chokidar: ">=3.0.0 <4.0.0"
     immutable: ^4.0.0
     source-map-js: ">=0.6.2 <2.0.0"
   bin:
     sass: sass.js
-  checksum: d674fd87be863961d5e5233a148e381a72b06ca1749ffd95a08be2c3f4aa8fc77e3e21840347a84d7d4542cbf97cd6f9bfae19ecb1f5eefa6c207a3d8f923dbc
+  checksum: 175a073c0e7b67d1baff6d3969431228002ece681886cebc2a354c241134ff120fda5c12a0465989966dacfb1ca518d85507304f4d4cd03d4a91d71dbc77d978
   languageName: node
   linkType: hard
 
