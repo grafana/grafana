@@ -700,7 +700,7 @@ func TestVerifyProvisionedRulesNotAffected(t *testing.T) {
 
 		result := verifyProvisionedRulesNotAffected(context.Background(), provenanceStore, orgID, ch)
 		require.Error(t, result)
-		require.ErrorIs(t, result, errProvisionedAlerts)
+		require.ErrorIs(t, result, errProvisionedResource)
 		for key := range expectedGroup {
 			assert.Contains(t, result.Error(), key)
 		}

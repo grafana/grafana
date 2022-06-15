@@ -42,8 +42,8 @@ type RulerSrv struct {
 }
 
 var (
-	errQuotaReached      = errors.New("quota has been exceeded")
-	errProvisionedAlerts = errors.New("request affects rules groups created via provisioning API")
+	errQuotaReached        = errors.New("quota has been exceeded")
+	errProvisionedResource = errors.New("request affects resources created via provisioning API")
 )
 
 // RouteDeleteAlertRules deletes all alert rules user is authorized to access in the namespace (request parameter :Namespace)
@@ -427,7 +427,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, groupKey ngmod
 	if err != nil {
 		if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
 			return ErrResp(http.StatusNotFound, err, "failed to update rule group")
-		} else if errors.Is(err, ngmodels.ErrAlertRuleFailedValidation) || errors.Is(err, errProvisionedAlerts) {
+		} else if errors.Is(err, ngmodels.ErrAlertRuleFailedValidation) || errors.Is(err, errProvisionedResource) {
 			return ErrResp(http.StatusBadRequest, err, "failed to update rule group")
 		} else if errors.Is(err, errQuotaReached) {
 			return ErrResp(http.StatusForbidden, err, "")
@@ -539,7 +539,7 @@ func (c *changes) isEmpty() bool {
 }
 
 // verifyProvisionedRulesNotAffected check that neither of provisioned alerts are affected by changes.
-// Returns errProvisionedAlerts if there is at least one rule in groups affected by changes that was provisioned.
+// Returns errProvisionedResource if there is at least one rule in groups affected by changes that was provisioned.
 func verifyProvisionedRulesNotAffected(ctx context.Context, provenanceStore provisioning.ProvisioningStore, orgID int64, ch *changes) error {
 	provenances, err := provenanceStore.GetProvenances(ctx, orgID, (&ngmodels.AlertRule{}).ResourceType())
 	if err != nil {
@@ -561,7 +561,7 @@ func verifyProvisionedRulesNotAffected(ctx context.Context, provenanceStore prov
 	if errorMsg.Len() == 0 {
 		return nil
 	}
-	return fmt.Errorf("%w: [%s]", errProvisionedAlerts, errorMsg.String())
+	return fmt.Errorf("%w: alert rule group [%s]", errProvisionedResource, errorMsg.String())
 }
 
 // calculateChanges calculates the difference between rules in the group in the database and the submitted rules. If a submitted rule has UID it tries to find it in the database (in other groups).
