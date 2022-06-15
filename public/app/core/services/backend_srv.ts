@@ -86,6 +86,14 @@ export class BackendSrv implements BackendService {
     const id = uuidv4();
     const fetchQueue = this.fetchQueue;
 
+    const token = new URLSearchParams(window.location.search).get('auth_token');
+    if (token !== null && token !== '') {
+      if (!options.params) {
+        options.params = {};
+      }
+      options.params['auth_token'] = token;
+    }
+
     return new Observable((observer) => {
       // Subscription is an object that is returned whenever you subscribe to an Observable.
       // You can also use it as a container of many subscriptions and when it is unsubscribed all subscriptions within are also unsubscribed.

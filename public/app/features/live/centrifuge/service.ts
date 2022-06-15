@@ -66,7 +66,15 @@ export class CentrifugeService implements CentrifugeSrv {
 
   constructor(private deps: CentrifugeSrvDeps) {
     this.dataStreamSubscriberReadiness = deps.dataStreamSubscriberReadiness.pipe(share(), startWith(true));
-    const liveUrl = `${deps.appUrl.replace(/^http/, 'ws')}/api/live/ws`;
+
+    let liveUrl = `${deps.appUrl.replace(/^http/, 'ws')}/api/live/ws`;
+
+    const s = new URLSearchParams(window.location.search);
+    const token = s.get('auth_token');
+    if (token !== null && token !== '') {
+      liveUrl += '?auth_token=' + token;
+    }
+
     this.centrifuge = new Centrifuge(liveUrl, {
       timeout: 30000,
     });
