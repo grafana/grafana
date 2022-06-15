@@ -93,11 +93,13 @@ func (i *dashboardIndex) sync(ctx context.Context) error {
 }
 
 func (i *dashboardIndex) run(ctx context.Context) error {
-	fullReIndexTicker := time.NewTicker(5 * time.Minute)
-	defer fullReIndexTicker.Stop()
+	reIndexInterval := 5 * time.Minute
+	fullReIndexTimer := time.NewTimer(reIndexInterval)
+	defer fullReIndexTimer.Stop()
 
-	partialUpdateTicker := time.NewTicker(5 * time.Second)
-	defer partialUpdateTicker.Stop()
+	partialUpdateInterval := 5 * time.Second
+	partialUpdateTimer := time.NewTimer(partialUpdateInterval)
+	defer partialUpdateTimer.Stop()
 
 	var lastEventID int64
 	lastEvent, err := i.eventStore.GetLastEvent(ctx)
@@ -113,15 +115,17 @@ func (i *dashboardIndex) run(ctx context.Context) error {
 		return fmt.Errorf("can't build initial dashboard search index: %w", err)
 	}
 
-	//i.eventStore.OnEvent(i.applyEventOnIndex)
+	// Channel to handle signals about asynchronous full re-indexing completion.
+	reIndexDoneCh := make(chan int64, 1)
 
 	for {
 		select {
 		case doneCh := <-i.syncCh:
 			lastEventID = i.applyIndexUpdates(ctx, lastEventID)
 			close(doneCh)
-		case <-partialUpdateTicker.C:
+		case <-partialUpdateTimer.C:
 			lastEventID = i.applyIndexUpdates(ctx, lastEventID)
+			partialUpdateTimer.Reset(partialUpdateInterval)
 		case orgID := <-i.buildSignals:
 			i.mu.RLock()
 			_, ok := i.perOrgWriter[orgID]
@@ -132,10 +136,28 @@ func (i *dashboardIndex) run(ctx context.Context) error {
 			}
 			i.mu.RUnlock()
 			_, _ = i.buildOrgIndex(ctx, orgID)
-		case <-fullReIndexTicker.C:
-			started := time.Now()
-			i.reIndexFromScratch(ctx)
-			i.logger.Info("Full re-indexing finished", "fullReIndexElapsed", time.Since(started))
+		case <-fullReIndexTimer.C:
+			lastIndexedEventID := lastEventID
+			go func() {
+				// Do full re-index asynchronously to avoid blocking index synchronization
+				// on read for a long time.
+				started := time.Now()
+				i.logger.Info("Start re-indexing")
+				i.reIndexFromScratch(ctx)
+				i.logger.Info("Full re-indexing finished", "fullReIndexElapsed", time.Since(started))
+				reIndexDoneCh <- lastIndexedEventID
+			}()
+		case lastIndexedEventID := <-reIndexDoneCh:
+			// Asynchronous re-indexing is finished. Set lastEventID to the value which
+			// was actual at the re-indexing start – so that we could re-apply all the
+			// events happened during async index build process and make sure it's consistent.
+			if lastEventID != lastIndexedEventID {
+				i.logger.Info("Re-apply event ID to last indexed", "currentEventID", lastEventID, "lastIndexedEventID", lastIndexedEventID)
+				lastEventID = lastIndexedEventID
+				// Apply events immediately.
+				partialUpdateTimer.Reset(0)
+			}
+			fullReIndexTimer.Reset(reIndexInterval)
 		case <-ctx.Done():
 			return ctx.Err()
 		}
