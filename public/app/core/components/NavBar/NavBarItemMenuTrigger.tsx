@@ -172,7 +172,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
         setMenuIdOpen(item.id);
         state.open();
       }
-      e.target.scrollIntoView({
+      e.target.scrollIntoView?.({
         block: 'nearest',
       });
     },
