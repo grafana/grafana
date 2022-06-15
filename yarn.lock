@@ -3221,6 +3221,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/runtime@npm:^7.18.3":
+  version: 7.18.3
+  resolution: "@babel/runtime@npm:7.18.3"
+  dependencies:
+    regenerator-runtime: ^0.13.4
+  checksum: db8526226aa02cfa35a5a7ac1a34b5f303c62a1f000c7db48cb06c6290e616483e5036ab3c4e7a84d0f3be6d4e2148d5fe5cec9564bf955f505c3e764b83d7f1
+  languageName: node
+  linkType: hard
+
 "@babel/template@npm:^7.12.7, @babel/template@npm:^7.16.7":
   version: 7.16.7
   resolution: "@babel/template@npm:7.16.7"
@@ -7174,7 +7183,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@popperjs/core@npm:2.11.5":
+"@popperjs/core@npm:2.11.5, @popperjs/core@npm:^2.11.5":
   version: 2.11.5
   resolution: "@popperjs/core@npm:2.11.5"
   checksum: fd7f9dca3fb716d7426332b6ee283f88d2724c0ab342fb678865a640bad403dfb9eeebd8204a406986162f7e2b33394f104320008b74d0e9066d7322f70ea35d
@@ -20849,7 +20858,7 @@ __metadata:
     react-loadable: 5.5.0
     react-moveable: 0.33.0
     react-popper: 2.3.0
-    react-popper-tooltip: ^4.3.1
+    react-popper-tooltip: 4.4.1
     react-redux: 7.2.6
     react-refresh: 0.13.0
     react-resizable: 3.0.4
@@ -30781,6 +30790,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-popper-tooltip@npm:4.4.1":
+  version: 4.4.1
+  resolution: "react-popper-tooltip@npm:4.4.1"
+  dependencies:
+    "@babel/runtime": ^7.18.3
+    "@popperjs/core": ^2.11.5
+    react-popper: ^2.3.0
+  peerDependencies:
+    react: ">=16.6.0"
+    react-dom: ">=16.6.0"
+  checksum: 58dacdf9bc106731bfa533b6616576ce297e3cc2abbf7d014dc81e98dd25c2dd48cc13e17e5bc5a65d8fd58012fbb018b0755328f2ade4eb19da634c20c6c9d8
+  languageName: node
+  linkType: hard
+
 "react-popper-tooltip@npm:^3.1.1":
   version: 3.1.1
   resolution: "react-popper-tooltip@npm:3.1.1"
@@ -30809,7 +30832,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-popper@npm:2.3.0":
+"react-popper@npm:2.3.0, react-popper@npm:^2.3.0":
   version: 2.3.0
   resolution: "react-popper@npm:2.3.0"
   dependencies:
