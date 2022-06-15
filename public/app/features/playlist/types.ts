@@ -2,6 +2,7 @@ export interface PlaylistDTO {
   id: number;
   name: string;
   startUrl?: string;
+  uid: string;
 }
 
 export type PlaylistMode = boolean | 'tv';
@@ -17,6 +18,7 @@ export interface Playlist {
   name: string;
   interval: string;
   items?: PlaylistItem[];
+  uid: string;
 }
 
 export interface PlaylistItem {

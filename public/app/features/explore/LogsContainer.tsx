@@ -131,6 +131,7 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
           <Collapse label="Logs" loading={loading} isOpen className={styleOverridesForStickyNavigation}>
             <Logs
               exploreId={exploreId}
+              datasourceType={this.props.datasourceInstance?.type}
               logRows={logRows}
               logsMeta={logsMeta}
               logsSeries={logsSeries}

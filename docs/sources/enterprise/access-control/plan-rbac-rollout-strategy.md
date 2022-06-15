@@ -47,12 +47,7 @@ You can take advantage of your current authentication provider to manage user an
 For example:
 
 1. Map SAML, LDAP, or Oauth roles to Grafana basic roles (viewer, editor, or admin).
-2. Use the Grafana Enterprise team sync feature to synchronize teams from your SAML, LDAP, or Oauth provider to Grafana.
-
-   - If a team does not exist in Grafana, team sync creates it.
-   - If a team exists in Grafana, team sync updates its membership.
-
-   For more information about team sync, refer to [Team sync]({{< relref "../../setup-grafana/configure-security/configure-team-sync/" >}}).
+2. Use the Grafana Enterprise team sync feature to synchronize teams from your SAML, LDAP, or Oauth provider to Grafana. For more information about team sync, refer to [Team sync]({{< relref "../../setup-grafana/configure-security/configure-team-sync/" >}}).
 
 3. Within Grafana, assign RBAC permissions to users and teams.
 
