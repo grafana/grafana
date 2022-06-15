@@ -40,14 +40,6 @@ func (event *FrontendGrafanaJavascriptAgentEvent) AddMetaToContext(ctx CtxVector
 	return ctx
 }
 
-func (event *FrontendGrafanaJavascriptAgentEvent) AddExceptionToContext(ctx CtxVector) []interface{} {
-	for exception := range event.Exceptions {
-		transformedException := TransformException(&event.Exceptions[exception])
-		ctx = append(ctx, "exception", transformedException)
-	}
-	return ctx
-}
-
 func (event *FrontendGrafanaJavascriptAgentEvent) ConvertMeasurementsToInterfaceMap() map[string]interface{} {
 	interfaceMap := make(map[string]interface{})
 	if event.Measurements != nil && len(event.Measurements) > 0 {

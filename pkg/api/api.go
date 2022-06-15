@@ -621,5 +621,5 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Post("/log", middleware.RateLimit(hs.Cfg.Sentry.EndpointRPS, hs.Cfg.Sentry.EndpointBurst, time.Now),
 		routing.Wrap(NewFrontendLogMessageHandler(sourceMapStore)))
 	r.Post("/log-grafana-javascript-agent", middleware.RateLimit(hs.Cfg.GrafanaJavascriptAgent.EndpointRPS, hs.Cfg.GrafanaJavascriptAgent.EndpointBurst, time.Now),
-		routing.Wrap(GrafanaJavascriptAgentLogMessageHandler()))
+		routing.Wrap(GrafanaJavascriptAgentLogMessageHandler(sourceMapStore)))
 }

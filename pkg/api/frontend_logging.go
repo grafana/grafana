@@ -48,7 +48,7 @@ func NewFrontendLogMessageHandler(store *frontendlogging.SourceMapStore) fronten
 	}
 }
 
-func GrafanaJavascriptAgentLogMessageHandler() frontendLogMessageHandler {
+func GrafanaJavascriptAgentLogMessageHandler(store *frontendlogging.SourceMapStore) frontendLogMessageHandler {
 	return func(c *models.ReqContext) response.Response {
 		event := frontendlogging.FrontendGrafanaJavascriptAgentEvent{}
 		if err := web.Bind(c.Req, &event); err != nil {
@@ -76,9 +76,12 @@ func GrafanaJavascriptAgentLogMessageHandler() frontendLogMessageHandler {
 			}
 		}
 		if event.Exceptions != nil && len(event.Exceptions) > 0 {
-			event.AddExceptionToContext(ctx)
-			ctx = append(ctx, "original_timestamp", event.Exceptions[0].Timestamp)
-			grafanaJavascriptAgentLogger.Info(event.Exceptions[0].Message(), ctx...)
+			for _, exception := range event.Exceptions {
+				transformedException := frontendlogging.TransformException(&exception, store)
+				ctx = append(ctx, "exception", transformedException)
+				ctx = append(ctx, "original_timestamp", exception.Timestamp)
+				grafanaJavascriptAgentLogger.Info(exception.Message(), ctx...)
+			}
 		}
 		return response.Success("ok")
 	}
