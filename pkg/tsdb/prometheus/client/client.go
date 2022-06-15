@@ -88,6 +88,8 @@ type FetchReq struct {
 }
 
 func (c *Client) QueryResource(ctx context.Context, req *backend.CallResourceRequest) (*http.Response, error) {
+	// The way URL is represented in CallResourceRequest and what we need for the fetch function is different
+	// so here we have to do a bit of parsing, so we can then compose it with the base url in correct way.
 	baseUrlParsed, err := url.ParseRequestURI(c.baseUrl)
 	if err != nil {
 		return nil, err
@@ -104,6 +106,7 @@ func (c *Client) QueryResource(ctx context.Context, req *backend.CallResourceReq
 }
 
 func (c *Client) fetch(ctx context.Context, method string, u *url.URL, qs url.Values, body []byte) (*http.Response, error) {
+	// The qs arg seems to be used in some callers of this method, but you can already pass them in the URL object
 	if strings.ToUpper(method) == http.MethodGet && qs != nil {
 		u.RawQuery = qs.Encode()
 	}
@@ -113,6 +116,8 @@ func (c *Client) fetch(ctx context.Context, method string, u *url.URL, qs url.Va
 		return nil, err
 	}
 
+	// This may not be true but right now we don't have more information here and seems like we send just this type
+	// of encoding right now if it is a POST
 	if strings.ToUpper(method) == http.MethodPost {
 		request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	}
