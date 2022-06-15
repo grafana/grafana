@@ -230,6 +230,7 @@ export function prepConfig(opts: PrepConfigOpts) {
   const yScale = yFieldConfig?.scaleDistribution ?? { type: ScaleDistribution.Linear };
   const yAxisReverse = Boolean(yAxisConfig.reverse);
   const shouldUseLogScale = yScale.type !== ScaleDistribution.Linear || heatmapType === DataFrameType.HeatmapSparse;
+  const isOrdianalY = readHeatmapScanlinesCustomMeta(dataRef.current?.heatmap).yOrdinalDisplay != null;
 
   builder.addScale({
     scaleKey: 'y',
@@ -241,9 +242,17 @@ export function prepConfig(opts: PrepConfigOpts) {
     distribution: shouldUseLogScale ? ScaleDistribution.Log : ScaleDistribution.Linear,
     log: yScale.log ?? 2,
     range:
-      // sparse already accounts for le/ge by explicit yMin & yMax cell bounds, so use default log ranging
+      // sparse already accounts for le/ge by explicit yMin & yMax cell bounds, so no need to expand y range
       heatmapType === DataFrameType.HeatmapSparse
-        ? undefined
+        ? (u, dataMin, dataMax) => {
+            let scaleMin: number | null, scaleMax: number | null;
+
+            [scaleMin, scaleMax] = shouldUseLogScale
+              ? uPlot.rangeLog(dataMin, dataMax, (yScale.log ?? 2) as unknown as uPlot.Scale.LogBase, true)
+              : [dataMin, dataMax];
+
+            return [yAxisConfig.min ?? scaleMin, yAxisConfig.max ?? scaleMax];
+          }
         : // dense and ordinal only have one of yMin|yMax|y, so expand range by one cell in the direction of le/ge/unknown
           (u, dataMin, dataMax) => {
             // logarithmic expansion
@@ -304,11 +313,10 @@ export function prepConfig(opts: PrepConfigOpts) {
                 // how to expand scale range if inferred non-regular or log buckets?
               }
             }
-            return [dataMin, dataMax];
+            return [yAxisConfig.min ?? dataMin, yAxisConfig.max ?? dataMax];
           },
   });
 
-  const isOrdianalY = readHeatmapScanlinesCustomMeta(dataRef.current?.heatmap).yOrdinalDisplay != null;
   const disp = dataRef.current?.heatmap?.fields[1].display ?? getValueFormat('short');
 
   builder.addAxis({

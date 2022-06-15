@@ -81,26 +81,23 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       },
     });
 
-    // TODO: support clamping the min/max range when there is a real axis
-    if (false && opts.calculate) {
-      builder
-        .addNumberInput({
-          path: 'yAxis.min',
-          name: 'Min value',
-          settings: {
-            placeholder: 'Auto',
-          },
-          category,
-        })
-        .addTextInput({
-          path: 'yAxis.max',
-          name: 'Max value',
-          settings: {
-            placeholder: 'Auto',
-          },
-          category,
-        });
-    }
+    builder
+      .addNumberInput({
+        path: 'yAxis.min',
+        name: 'Min value',
+        settings: {
+          placeholder: 'Auto',
+        },
+        category,
+      })
+      .addTextInput({
+        path: 'yAxis.max',
+        name: 'Max value',
+        settings: {
+          placeholder: 'Auto',
+        },
+        category,
+      });
 
     builder
       .addNumberInput({
