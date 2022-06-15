@@ -22,8 +22,7 @@ func TestHTTPClientProvider(t *testing.T) {
 		t.Cleanup(func() {
 			newProviderFunc = origNewProviderFunc
 		})
-		tracer, err := tracing.InitializeTracerForTest()
-		require.NoError(t, err)
+		tracer := tracing.InitializeTracerForTest()
 		_ = New(&setting.Cfg{SigV4AuthEnabled: false}, &validations.OSSPluginRequestValidator{}, tracer)
 		require.Len(t, providerOpts, 1)
 		o := providerOpts[0]
@@ -47,8 +46,7 @@ func TestHTTPClientProvider(t *testing.T) {
 		t.Cleanup(func() {
 			newProviderFunc = origNewProviderFunc
 		})
-		tracer, err := tracing.InitializeTracerForTest()
-		require.NoError(t, err)
+		tracer := tracing.InitializeTracerForTest()
 		_ = New(&setting.Cfg{SigV4AuthEnabled: true}, &validations.OSSPluginRequestValidator{}, tracer)
 		require.Len(t, providerOpts, 1)
 		o := providerOpts[0]

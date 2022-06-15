@@ -1,12 +1,8 @@
 import React, { useCallback } from 'react';
 
-import {
-  FieldConfigEditorProps,
-  toIntegerOrUndefined,
-  toFloatOrUndefined,
-  NumberFieldConfigSettings,
-} from '@grafana/data';
-import { Input } from '@grafana/ui';
+import { FieldConfigEditorProps, NumberFieldConfigSettings } from '@grafana/data';
+
+import { NumberInput } from './NumberInput';
 
 export const NumberValueEditor: React.FC<FieldConfigEditorProps<number, NumberFieldConfigSettings>> = ({
   value,
@@ -16,41 +12,20 @@ export const NumberValueEditor: React.FC<FieldConfigEditorProps<number, NumberFi
   const { settings } = item;
 
   const onValueChange = useCallback(
-    (e: React.SyntheticEvent) => {
-      if (e.hasOwnProperty('key')) {
-        // handling keyboard event
-        const evt = e as React.KeyboardEvent<HTMLInputElement>;
-        if (evt.key === 'Enter') {
-          onChange(
-            settings?.integer
-              ? toIntegerOrUndefined(evt.currentTarget.value)
-              : toFloatOrUndefined(evt.currentTarget.value)
-          );
-        }
-      } else {
-        // handling form event
-        const evt = e as React.FormEvent<HTMLInputElement>;
-        onChange(
-          settings?.integer
-            ? toIntegerOrUndefined(evt.currentTarget.value)
-            : toFloatOrUndefined(evt.currentTarget.value)
-        );
-      }
+    (value: number | undefined) => {
+      onChange(settings?.integer && value !== undefined ? Math.floor(value) : value);
     },
     [onChange, settings?.integer]
   );
 
-  const defaultValue = value === undefined || value === null || isNaN(value) ? '' : value.toString();
   return (
-    <Input
-      defaultValue={defaultValue}
+    <NumberInput
+      value={value}
       min={settings?.min}
       max={settings?.max}
-      type="number"
       step={settings?.step}
       placeholder={settings?.placeholder}
-      onBlur={onValueChange}
-      onKeyDown={onValueChange}
+      onChange={onValueChange}
     />
   );
 };

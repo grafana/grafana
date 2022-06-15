@@ -15,6 +15,7 @@ import {
   serviceAccountsFetchBegin,
   serviceAccountsFetched,
   serviceAccountsFetchEnd,
+  apiKeysMigrationStatusLoaded,
   stateFilterChanged,
 } from './reducers';
 
@@ -38,6 +39,13 @@ export function fetchACOptions(): ThunkResult<void> {
     } catch (error) {
       console.error(error);
     }
+  };
+}
+
+export function getApiKeysMigrationStatus(): ThunkResult<void> {
+  return async (dispatch) => {
+    const result = await getBackendSrv().get('/api/serviceaccounts/migrationstatus');
+    dispatch(apiKeysMigrationStatusLoaded(!!result?.migrated));
   };
 }
 
