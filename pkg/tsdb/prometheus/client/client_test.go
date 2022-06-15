@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/stretchr/testify/require"
 )
 
@@ -24,7 +25,6 @@ func (doer *MockDoer) Do(req *http.Request) (*http.Response, error) {
 
 func TestClient(t *testing.T) {
 	t.Run("QueryResource", func(t *testing.T) {
-
 		doer := &MockDoer{}
 		// The method here does not really matter for resource calls
 		client := NewClient(doer, http.MethodGet, "http://localhost:9090")
@@ -39,7 +39,11 @@ func TestClient(t *testing.T) {
 				Body:          []byte("match%5B%5D: ALERTS\nstart: 1655271408\nend: 1655293008"),
 			}
 			res, err := client.QueryResource(context.Background(), req)
-			defer res.Body.Close()
+			defer func() {
+				if err := res.Body.Close(); err != nil {
+					logger.Warn("Error", "err", err)
+				}
+			}()
 			require.NoError(t, err)
 			require.NotNil(t, doer.Req)
 			require.Equal(t, http.MethodPost, doer.Req.Method)
@@ -58,7 +62,11 @@ func TestClient(t *testing.T) {
 				Headers:       nil,
 			}
 			res, err := client.QueryResource(context.Background(), req)
-			defer res.Body.Close()
+			defer func() {
+				if err := res.Body.Close(); err != nil {
+					logger.Warn("Error", "err", err)
+				}
+			}()
 			require.NoError(t, err)
 			require.NotNil(t, doer.Req)
 			require.Equal(t, http.MethodGet, doer.Req.Method)
