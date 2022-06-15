@@ -1,7 +1,7 @@
 import { lastValueFrom } from 'rxjs';
 
 import { urlUtil } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import {
   AlertmanagerAlert,
   AlertManagerCortexConfig,
@@ -18,7 +18,6 @@ import {
   ExternalAlertmanagerConfig,
 } from 'app/plugins/datasource/alertmanager/types';
 
-import { isFetchError } from '../utils/alertmanager';
 import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 // "grafana" for grafana-managed, otherwise a datasource name
@@ -39,6 +38,7 @@ export async function fetchAlertManagerConfig(alertManagerSourceName: string): P
     // if no config has been uploaded to grafana, it returns error instead of latest config
     if (
       alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME &&
+      isFetchError(e) &&
       e.data?.message?.includes('could not find an Alertmanager configuration')
     ) {
       return {

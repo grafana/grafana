@@ -84,7 +84,7 @@ import (
 // 500: internalServerError
 
 // swagger:parameters getDashboardVersions getDashboardVersion restoreDashboardVersion
-// swagger:parameters getDashboardPermissions postDashboardPermissions
+// swagger:parameters getDashboardPermissions
 // swagger:parameters renderReportPDF
 type DashboardIdParam struct {
 	// in:path
