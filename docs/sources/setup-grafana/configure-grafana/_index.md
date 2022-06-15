@@ -1273,9 +1273,11 @@ concurrent_render_request_limit.
 that can be taken at the same time for all firing alerts.
 * concurrent_render_request_limit sets the total number of concurrent screenshots across all Grafana services.
 
+The default value is `5`.
+
 ### upload_external_image_storage
 
-Uploads screenshots to the local Grafana server or remote storage such as Azure, S3 and GCS. For more configuration options, refer to [[external_image_storage]]({{< relref "#external_image_storage" >}}). If this option is false,screenshots will be persisted to disk for up to temp_data_lifetime.
+Uploads screenshots to the local Grafana server or remote storage such as Azure, S3 and GCS. For more configuration options, refer to [[external_image_storage]]({{< relref "#external_image_storage" >}}). If this option is false,screenshots will be persisted to disk for up to temp_data_lifetime. The default value is `false`.
 
 ## [alerting]
 
