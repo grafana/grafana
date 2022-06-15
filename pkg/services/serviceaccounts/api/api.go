@@ -269,7 +269,7 @@ func (api *ServiceAccountsAPI) ConvertToServiceAccount(ctx *models.ReqContext) r
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Key ID is invalid", err)
 	}
-	if err := api.store.ConvertToServiceAccounts(ctx.Req.Context(), ctx.OrgId, []int64{keyId}); err == nil {
+	if err := api.store.MigrateApiKey(ctx.Req.Context(), ctx.OrgId, keyId); err == nil {
 		return response.Success("Service accounts converted")
 	} else {
 		return response.Error(http.StatusInternalServerError, "Error converting API key", err)

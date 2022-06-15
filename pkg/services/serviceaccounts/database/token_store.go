@@ -7,9 +7,26 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"xorm.io/xorm"
 )
 
-func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, saID int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) error {
+func (s *ServiceAccountsStoreImpl) ListTokens(ctx context.Context, orgId int64, serviceAccountId int64) ([]*models.ApiKey, error) {
+	result := make([]*models.ApiKey, 0)
+	err := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		var sess *xorm.Session
+
+		quotedUser := s.sqlStore.Dialect.Quote("user")
+		sess = dbSession.
+			Join("inner", quotedUser, quotedUser+".id = api_key.service_account_id").
+			Where(quotedUser+".org_id=? AND "+quotedUser+".id=?", orgId, serviceAccountId).
+			Asc("api_key.name")
+
+		return sess.Find(&result)
+	})
+	return result, err
+}
+
+func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, serviceAccountId int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) error {
 	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		key := models.ApiKey{OrgId: cmd.OrgId, Name: cmd.Name}
 		exists, _ := sess.Get(&key)
@@ -34,7 +51,7 @@ func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, s
 			Created:          updated,
 			Updated:          updated,
 			Expires:          expires,
-			ServiceAccountId: &saID,
+			ServiceAccountId: &serviceAccountId,
 		}
 
 		if _, err := sess.Insert(&t); err != nil {

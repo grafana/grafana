@@ -132,7 +132,7 @@ func TestStore_MigrateApiKeys(t *testing.T) {
 			err := store.sqlStore.CreateOrg(context.Background(), &models.CreateOrgCommand{Name: "main"})
 			require.NoError(t, err)
 			key := tests.SetupApiKey(t, db, c.key)
-			err = store.ConvertToServiceAccounts(context.Background(), key.OrgId, []int64{key.Id})
+			err = store.MigrateApiKey(context.Background(), key.OrgId, key.Id)
 			if c.expectedErr != nil {
 				require.ErrorIs(t, err, c.expectedErr)
 			} else {
@@ -250,7 +250,7 @@ func TestStore_RevertApiKey(t *testing.T) {
 			require.NoError(t, err)
 
 			key := tests.SetupApiKey(t, db, c.key)
-			err = store.ConvertToServiceAccounts(context.Background(), key.OrgId, []int64{key.Id})
+			err = store.MigrateApiKey(context.Background(), key.OrgId, key.Id)
 			require.NoError(t, err)
 			err = store.RevertApiKey(context.Background(), key.Id)
 
