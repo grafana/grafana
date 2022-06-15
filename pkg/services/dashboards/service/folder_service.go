@@ -26,12 +26,15 @@ type FolderServiceImpl struct {
 	searchService    *search.SearchService
 	features         featuremgmt.FeatureToggles
 	permissions      accesscontrol.FolderPermissionsService
+
+	// bus is currently used to publish events that cause scheduler to update rules.
+	bus bus.Bus
 }
 
 func ProvideFolderService(
 	cfg *setting.Cfg, dashboardService dashboards.DashboardService, dashboardStore dashboards.Store,
 	searchService *search.SearchService, features featuremgmt.FeatureToggles, folderPermissionsService accesscontrol.FolderPermissionsService,
-	ac accesscontrol.AccessControl,
+	ac accesscontrol.AccessControl, bus bus.Bus,
 ) *FolderServiceImpl {
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(dashboardStore))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(dashboardStore))
@@ -44,6 +47,7 @@ func ProvideFolderService(
 		searchService:    searchService,
 		features:         features,
 		permissions:      folderPermissionsService,
+		bus:              bus,
 	}
 }
 
@@ -226,7 +230,7 @@ func (f *FolderServiceImpl) UpdateFolder(ctx context.Context, user *models.Signe
 	}
 	cmd.Result = folder
 
-	if err := bus.Publish(ctx, &events.FolderUpdated{
+	if err := f.bus.Publish(ctx, &events.FolderUpdated{
 		Timestamp: time.Now(),
 		Title:     folder.Title,
 		ID:        dash.Id,
