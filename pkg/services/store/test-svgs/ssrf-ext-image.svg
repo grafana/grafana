@@ -1,0 +1,11 @@
+<svg
+        xmlns:svg="http://www.w3.org/2000/svg"
+        xmlns="http://www.w3.org/2000/svg"
+        xmlns:xlink="http://www.w3.org/1999/xlink"
+        style="overflow: hidden; position: relative;"
+        width="300"
+        height="200">
+
+    <image x="10" y="10" width="276" height="110" xlink:href="http://images.google.com/intl/es_ALL/images/logos/images_logo_lg.gif"  id="image3204" />
+    <rect x="0" y="150" height="10" width="300" style="fill: black"/>
+</svg>

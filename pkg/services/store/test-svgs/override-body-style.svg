@@ -1,0 +1,6 @@
+<svg  xmlns="http://www.w3.org/2000/svg">
+    <style>
+        body { background-color: red !important; }
+    </style>
+    <text x="0" y="20" font-size="20">test</text>
+</svg>

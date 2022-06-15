@@ -13,6 +13,7 @@ var (
 	allowedImageExtensions = map[string]bool{
 		".jpg":  true,
 		".jpeg": true,
+		".svg":  true,
 		".gif":  true,
 		".png":  true,
 		".webp": true,
@@ -23,6 +24,7 @@ var (
 		".gif":  {"image/gif": true},
 		".png":  {"image/png": true},
 		".webp": {"image/webp": true},
+		".svg":  {"text/xml; charset=utf-8": true, "text/plain; charset=utf-8": true},
 	}
 )
 
