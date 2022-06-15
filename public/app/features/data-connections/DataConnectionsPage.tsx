@@ -17,9 +17,9 @@ export default function DataConnectionsPage(): React.ReactElement | null {
     <Page navModel={navModel}>
       <Page.Contents>
         <Switch>
-          <Route exact path={ROUTES.Plugins} component={Plugins} />
-          <Route exact path={ROUTES.CloudIntegrations} component={CloudIntegrations} />
-          <Route exact path={ROUTES.RecordedQueries} component={RecordedQueries} />
+          <Route path={ROUTES.Plugins} component={Plugins} />
+          <Route path={ROUTES.CloudIntegrations} component={CloudIntegrations} />
+          <Route path={ROUTES.RecordedQueries} component={RecordedQueries} />
 
           {/* Default page */}
           <Route component={DataSources} />
