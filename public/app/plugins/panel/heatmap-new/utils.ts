@@ -1,8 +1,13 @@
 import { MutableRefObject, RefObject } from 'react';
-import uPlot from 'uplot';
+import uPlot, { Cursor } from 'uplot';
 
 import {
+  DashboardCursorSync,
   DataFrameType,
+  DataHoverClearEvent,
+  DataHoverEvent,
+  DataHoverPayload,
+  EventBus,
   formattedValueToString,
   getValueFormat,
   GrafanaTheme2,
@@ -55,6 +60,7 @@ export interface HeatmapZoomEvent {
 interface PrepConfigOpts {
   dataRef: RefObject<HeatmapData>;
   theme: GrafanaTheme2;
+  eventBus: EventBus;
   onhover?: null | ((evt?: HeatmapHoverEvent | null) => void);
   onclick?: null | ((evt?: any) => void);
   onzoom?: null | ((evt: HeatmapZoomEvent) => void);
@@ -70,12 +76,14 @@ interface PrepConfigOpts {
   valueMax?: number;
   yAxisConfig: YAxisConfig;
   ySizeDivisor?: number;
+  sync?: () => DashboardCursorSync;
 }
 
 export function prepConfig(opts: PrepConfigOpts) {
   const {
     dataRef,
     theme,
+    eventBus,
     onhover,
     onclick,
     onzoom,
@@ -90,7 +98,11 @@ export function prepConfig(opts: PrepConfigOpts) {
     valueMax,
     yAxisConfig,
     ySizeDivisor,
+    sync,
   } = opts;
+
+  const xScaleKey = 'x';
+  const xScaleUnit = 'time';
 
   const pxRatio = devicePixelRatio;
 
@@ -131,8 +143,8 @@ export function prepConfig(opts: PrepConfigOpts) {
   onzoom &&
     builder.addHook('setSelect', (u) => {
       onzoom({
-        xMin: u.posToVal(u.select.left, 'x'),
-        xMax: u.posToVal(u.select.left + u.select.width, 'x'),
+        xMin: u.posToVal(u.select.left, xScaleKey),
+        xMax: u.posToVal(u.select.left + u.select.width, xScaleKey),
       });
       u.setSelect({ left: 0, top: 0, width: 0, height: 0 }, false);
     });
@@ -140,7 +152,7 @@ export function prepConfig(opts: PrepConfigOpts) {
   // this is a tmp hack because in mode: 2, uplot does not currently call scales.x.range() for setData() calls
   // scales.x.range() typically reads back from drilled-down panelProps.timeRange via getTimeRange()
   builder.addHook('setData', (u) => {
-    //let [min, max] = (u.scales!.x!.range! as uPlot.Range.Function)(u, 0, 100, 'x');
+    //let [min, max] = (u.scales!.x!.range! as uPlot.Range.Function)(u, 0, 100, xScaleKey);
 
     let { min: xMin, max: xMax } = u.scales!.x;
 
@@ -149,7 +161,7 @@ export function prepConfig(opts: PrepConfigOpts) {
 
     if (xMin !== min || xMax !== max) {
       queueMicrotask(() => {
-        u.setScale('x', { min, max });
+        u.setScale(xScaleKey, { min, max });
       });
     }
   });
@@ -159,6 +171,14 @@ export function prepConfig(opts: PrepConfigOpts) {
     rect = r;
   });
 
+  const payload: DataHoverPayload = {
+    point: {
+      [xScaleUnit]: null,
+    },
+    data: dataRef.current?.heatmap,
+  };
+  const hoverEvent = new DataHoverEvent(payload);
+
   let pendingOnleave = 0;
 
   onhover &&
@@ -166,20 +186,25 @@ export function prepConfig(opts: PrepConfigOpts) {
       if (u.cursor.idxs != null) {
         for (let i = 0; i < u.cursor.idxs.length; i++) {
           const sel = u.cursor.idxs[i];
-          if (sel != null && !isToolTipOpen.current) {
-            if (pendingOnleave) {
-              clearTimeout(pendingOnleave);
-              pendingOnleave = 0;
+          if (sel != null) {
+            const { left, top } = u.cursor;
+            payload.rowIndex = sel;
+            payload.point[xScaleUnit] = u.posToVal(left!, xScaleKey);
+            eventBus.publish(hoverEvent);
+
+            if (!isToolTipOpen.current) {
+              if (pendingOnleave) {
+                clearTimeout(pendingOnleave);
+                pendingOnleave = 0;
+              }
+              onhover({
+                seriesIdx: i,
+                dataIdx: sel,
+                pageX: rect.left + left!,
+                pageY: rect.top + top!,
+              });
             }
-
-            onhover({
-              seriesIdx: i,
-              dataIdx: sel,
-              pageX: rect.left + u.cursor.left!,
-              pageY: rect.top + u.cursor.top!,
-            });
-
-            return; // only show the first one
+            return;
           }
         }
       }
@@ -187,7 +212,12 @@ export function prepConfig(opts: PrepConfigOpts) {
       if (!isToolTipOpen.current) {
         // if tiles have gaps, reduce flashing / re-render (debounce onleave by 100ms)
         if (!pendingOnleave) {
-          pendingOnleave = setTimeout(() => onhover(null), 100) as any;
+          pendingOnleave = setTimeout(() => {
+            onhover(null);
+            payload.rowIndex = undefined;
+            payload.point[xScaleUnit] = null;
+            eventBus.publish(hoverEvent);
+          }, 100) as any;
         }
       }
     });
@@ -209,7 +239,7 @@ export function prepConfig(opts: PrepConfigOpts) {
   builder.setMode(2);
 
   builder.addScale({
-    scaleKey: 'x',
+    scaleKey: xScaleKey,
     isTime: true,
     orientation: ScaleOrientation.Horizontal,
     direction: ScaleDirection.Right,
@@ -220,7 +250,7 @@ export function prepConfig(opts: PrepConfigOpts) {
   });
 
   builder.addAxis({
-    scaleKey: 'x',
+    scaleKey: xScaleKey,
     placement: AxisPlacement.Bottom,
     isTime: true,
     theme: theme,
@@ -232,8 +262,12 @@ export function prepConfig(opts: PrepConfigOpts) {
   const shouldUseLogScale = yScale.type !== ScaleDistribution.Linear || heatmapType === DataFrameType.HeatmapSparse;
   const isOrdianalY = readHeatmapScanlinesCustomMeta(dataRef.current?.heatmap).yOrdinalDisplay != null;
 
+  // random to prevent syncing y in other heatmaps
+  // TODO: try to match TimeSeries y keygen algo to sync with TimeSeries panels (when not isOrdianalY)
+  const yScaleKey = 'y_' + (Math.random() + 1).toString(36).substring(7);
+
   builder.addScale({
-    scaleKey: 'y',
+    scaleKey: yScaleKey,
     isTime: false,
     // distribution: ScaleDistribution.Ordinal, // does not work with facets/scatter yet
     orientation: ScaleOrientation.Vertical,
@@ -272,7 +306,7 @@ export function prepConfig(opts: PrepConfigOpts) {
 
             // logarithmic expansion
             if (shouldUseLogScale) {
-              let yExp = u.scales['y'].log!;
+              let yExp = u.scales[yScaleKey].log!;
 
               let minExpanded = false;
               let maxExpanded = false;
@@ -348,7 +382,7 @@ export function prepConfig(opts: PrepConfigOpts) {
   const disp = dataRef.current?.heatmap?.fields[1].display ?? getValueFormat('short');
 
   builder.addAxis({
-    scaleKey: 'y',
+    scaleKey: yScaleKey,
     show: yAxisConfig.axisPlacement !== AxisPlacement.Hidden,
     placement: yAxisConfig.axisPlacement || AxisPlacement.Left,
     size: yAxisConfig.axisWidth || null,
@@ -409,12 +443,12 @@ export function prepConfig(opts: PrepConfigOpts) {
   builder.addSeries({
     facets: [
       {
-        scale: 'x',
+        scale: xScaleKey,
         auto: true,
         sorted: 1,
       },
       {
-        scale: 'y',
+        scale: yScaleKey,
         auto: true,
       },
     ],
@@ -462,12 +496,12 @@ export function prepConfig(opts: PrepConfigOpts) {
   builder.addSeries({
     facets: [
       {
-        scale: 'x',
+        scale: xScaleKey,
         auto: true,
         sorted: 1,
       },
       {
-        scale: 'y',
+        scale: yScaleKey,
         auto: true,
       },
     ],
@@ -490,7 +524,7 @@ export function prepConfig(opts: PrepConfigOpts) {
     scaleKey: '', // facets' scales used (above)
   });
 
-  builder.setCursor({
+  const cursor: Cursor = {
     drag: {
       x: true,
       y: false,
@@ -525,7 +559,30 @@ export function prepConfig(opts: PrepConfigOpts) {
         };
       },
     },
-  });
+  };
+
+  if (sync && sync() !== DashboardCursorSync.Off) {
+    cursor.sync = {
+      key: '__global_',
+      filters: {
+        pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {
+          if (x < 0) {
+            payload.point[xScaleUnit] = null;
+            eventBus.publish(new DataHoverClearEvent());
+          } else {
+            payload.point[xScaleUnit] = src.posToVal(x, xScaleKey);
+            eventBus.publish(hoverEvent);
+          }
+
+          return true;
+        },
+      },
+    };
+
+    builder.setSync();
+  }
+
+  builder.setCursor(cursor);
 
   return builder;
 }
