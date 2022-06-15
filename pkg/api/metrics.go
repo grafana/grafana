@@ -112,16 +112,16 @@ func (hs *HTTPServer) toJsonStreamingResponse(qdr *backend.QueryDataResponse) re
 		qr := queryResponse{Frames: resp.Frames, Error: resp.Error, Status: http.StatusOK}
 		if resp.Error != nil {
 			statusCode = statusWhenError
-
-			switch resp.ErrorStatus {
-			case backend.Undefined:
-				qr.Status = http.StatusInternalServerError
-			case backend.ConnectionError:
-				qr.Status = http.StatusBadGateway
-			case backend.Timeout:
-				qr.Status = http.StatusGatewayTimeout
-			default:
-				qr.Status = http.StatusBadRequest
+			qr.Status = http.StatusBadRequest
+			if resp.ErrorDetails != nil {
+				switch resp.ErrorDetails.Status {
+				case backend.Undefined:
+					qr.Status = http.StatusInternalServerError
+				case backend.ConnectionError:
+					qr.Status = http.StatusBadGateway
+				case backend.Timeout:
+					qr.Status = http.StatusGatewayTimeout
+				}
 			}
 		}
 		res[refID] = qr
