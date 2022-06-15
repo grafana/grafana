@@ -10,6 +10,7 @@ import { CatalogPlugin, PluginTabIds } from '../types';
 
 import { AppConfigCtrlWrapper } from './AppConfigWrapper';
 import { PluginDashboards } from './PluginDashboards';
+import { PluginUsage } from './PluginUsage';
 
 type Props = {
   plugin: CatalogPlugin;
@@ -58,6 +59,14 @@ export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.E
         );
       }
     }
+  }
+
+  if (pageId === PluginTabIds.USAGE && pluginConfig) {
+    return (
+      <div className={styles.container}>
+        <PluginUsage plugin={pluginConfig?.meta} />
+      </div>
+    );
   }
 
   if (pageId === PluginTabIds.DASHBOARDS && pluginConfig) {
