@@ -46,7 +46,7 @@ type AzureResourceGraphQuery struct {
 	TimeRange         backend.TimeRange
 }
 
-const argAPIVersion = "2021-06-01-preview"
+const ArgAPIVersion = "2021-06-01-preview"
 const argQueryProviderName = "/providers/Microsoft.ResourceGraph/resources"
 
 func (e *AzureResourceGraphDatasource) ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) {
@@ -123,7 +123,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 	dataResponse := backend.DataResponse{}
 
 	params := url.Values{}
-	params.Add("api-version", argAPIVersion)
+	params.Add("api-version", ArgAPIVersion)
 
 	dataResponseErrorWithExecuted := func(err error) backend.DataResponse {
 		dataResponse = backend.DataResponse{Error: err}

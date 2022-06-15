@@ -180,7 +180,7 @@ func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (types.DatasourceIn
 }
 
 func checkAzureMonitorMetricsHealth(dsInfo types.DatasourceInfo) (*http.Response, error) {
-	url := fmt.Sprintf("%v/subscriptions?api-version=2019-03-01", dsInfo.Routes["Azure Monitor"].URL)
+	url := fmt.Sprintf("%v/subscriptions?api-version=%v", dsInfo.Routes["Azure Monitor"].URL, metrics.AzureMonitorAPIVersion)
 	request, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
@@ -247,7 +247,7 @@ func checkAzureMonitorResourceGraphHealth(dsInfo types.DatasourceInfo) (*http.Re
 	if err != nil {
 		return nil, err
 	}
-	url := fmt.Sprintf("%v/providers/Microsoft.ResourceGraph/resources?api-version=2021-06-01-preview", dsInfo.Routes["Azure Resource Graph"].URL)
+	url := fmt.Sprintf("%v/providers/Microsoft.ResourceGraph/resources?api-version=%v", dsInfo.Routes["Azure Resource Graph"].URL, resourcegraph.ArgAPIVersion)
 	request, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(body))
 	request.Header.Set("Content-Type", "application/json")
 	if err != nil {
