@@ -62,7 +62,7 @@ func (api *ServiceAccountsAPI) RegisterAPIEndpoints(
 		serviceAccountsRoute.Get("/:serviceAccountId", auth(middleware.ReqOrgAdmin,
 			accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeID)), routing.Wrap(api.RetrieveServiceAccount))
 		serviceAccountsRoute.Patch("/:serviceAccountId", auth(middleware.ReqOrgAdmin,
-			accesscontrol.EvalPermission(serviceaccounts.ActionWrite, serviceaccounts.ScopeID)), routing.Wrap(api.updateServiceAccount))
+			accesscontrol.EvalPermission(serviceaccounts.ActionWrite, serviceaccounts.ScopeID)), routing.Wrap(api.UpdateServiceAccount))
 		serviceAccountsRoute.Delete("/:serviceAccountId", auth(middleware.ReqOrgAdmin,
 			accesscontrol.EvalPermission(serviceaccounts.ActionDelete, serviceaccounts.ScopeID)), routing.Wrap(api.DeleteServiceAccount))
 		serviceAccountsRoute.Get("/:serviceAccountId/tokens", auth(middleware.ReqOrgAdmin,
@@ -105,6 +105,7 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *models.ReqContext) respon
 	return response.JSON(http.StatusCreated, serviceAccount)
 }
 
+// DELETE /api/serviceaccounts/:serviceAccountId
 func (api *ServiceAccountsAPI) DeleteServiceAccount(ctx *models.ReqContext) response.Response {
 	scopeID, err := strconv.ParseInt(web.Params(ctx.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {
@@ -117,6 +118,7 @@ func (api *ServiceAccountsAPI) DeleteServiceAccount(ctx *models.ReqContext) resp
 	return response.Success("Service account deleted")
 }
 
+// GET /api/serviceaccounts/migrationstatus
 func (api *ServiceAccountsAPI) GetAPIKeysMigrationStatus(ctx *models.ReqContext) response.Response {
 	upgradeStatus, err := api.store.GetAPIKeysMigrationStatus(ctx.Req.Context(), ctx.OrgId)
 	if err != nil {
@@ -125,6 +127,7 @@ func (api *ServiceAccountsAPI) GetAPIKeysMigrationStatus(ctx *models.ReqContext)
 	return response.JSON(http.StatusOK, upgradeStatus)
 }
 
+// POST /api/serviceaccounts/hideapikeys
 func (api *ServiceAccountsAPI) HideApiKeysTab(ctx *models.ReqContext) response.Response {
 	if err := api.store.HideApiKeysTab(ctx.Req.Context(), ctx.OrgId); err != nil {
 		return response.Error(http.StatusInternalServerError, "Internal server error", err)
@@ -132,6 +135,7 @@ func (api *ServiceAccountsAPI) HideApiKeysTab(ctx *models.ReqContext) response.R
 	return response.Success("API keys hidden")
 }
 
+// POST /api/serviceaccounts/migrate
 func (api *ServiceAccountsAPI) MigrateApiKeysToServiceAccounts(ctx *models.ReqContext) response.Response {
 	if err := api.store.MigrateApiKeysToServiceAccounts(ctx.Req.Context(), ctx.OrgId); err == nil {
 		return response.Success("API keys migrated to service accounts")
@@ -140,6 +144,7 @@ func (api *ServiceAccountsAPI) MigrateApiKeysToServiceAccounts(ctx *models.ReqCo
 	}
 }
 
+// POST /api/serviceaccounts/migrate/:keyId
 func (api *ServiceAccountsAPI) ConvertToServiceAccount(ctx *models.ReqContext) response.Response {
 	keyId, err := strconv.ParseInt(web.Params(ctx.Req)[":keyId"], 10, 64)
 	if err != nil {
@@ -152,6 +157,7 @@ func (api *ServiceAccountsAPI) ConvertToServiceAccount(ctx *models.ReqContext) r
 	}
 }
 
+// POST /api/serviceaccounts/revert/:keyId
 func (api *ServiceAccountsAPI) RevertApiKey(ctx *models.ReqContext) response.Response {
 	keyId, err := strconv.ParseInt(web.Params(ctx.Req)[":keyId"], 10, 64)
 	if err != nil {
@@ -180,6 +186,7 @@ func (api *ServiceAccountsAPI) getAccessControlMetadata(c *models.ReqContext, sa
 	return accesscontrol.GetResourcesMetadata(c.Req.Context(), permissions, "serviceaccounts:id:", saIDs)
 }
 
+// GET /api/serviceaccounts/:serviceAccountId
 func (api *ServiceAccountsAPI) RetrieveServiceAccount(ctx *models.ReqContext) response.Response {
 	scopeID, err := strconv.ParseInt(web.Params(ctx.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {
@@ -210,7 +217,8 @@ func (api *ServiceAccountsAPI) RetrieveServiceAccount(ctx *models.ReqContext) re
 	return response.JSON(http.StatusOK, serviceAccount)
 }
 
-func (api *ServiceAccountsAPI) updateServiceAccount(c *models.ReqContext) response.Response {
+// PATCH /api/serviceaccounts/:serviceAccountId
+func (api *ServiceAccountsAPI) UpdateServiceAccount(c *models.ReqContext) response.Response {
 	scopeID, err := strconv.ParseInt(web.Params(c.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Service Account ID is invalid", err)
