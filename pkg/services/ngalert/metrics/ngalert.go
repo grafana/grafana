@@ -56,6 +56,7 @@ type Scheduler struct {
 	SchedulableAlertRulesHash           prometheus.Gauge
 	UpdateSchedulableAlertRulesDuration prometheus.Histogram
 	Ticker                              *legacyMetrics.Ticker
+	EvaluationMissed                    *prometheus.CounterVec
 }
 
 type MultiOrgAlertmanager struct {
@@ -179,7 +180,7 @@ func newSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Namespace: Namespace,
 				Subsystem: Subsystem,
 				Name:      "schedule_alert_rules",
-				Help:      "The number of alert rules being considered for evaluation each tick.",
+				Help:      "The number of alert rules that could be considered for evaluation at the next tick.",
 			},
 		),
 		SchedulableAlertRulesHash: promauto.With(r).NewGauge(
@@ -187,7 +188,7 @@ func newSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Namespace: Namespace,
 				Subsystem: Subsystem,
 				Name:      "schedule_alert_rules_hash",
-				Help:      "A hash of the alert rules over time.",
+				Help:      "A hash of the alert rules that could be considered for evaluation at the next tick.",
 			}),
 		UpdateSchedulableAlertRulesDuration: promauto.With(r).NewHistogram(
 			prometheus.HistogramOpts{
@@ -199,6 +200,15 @@ func newSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 			},
 		),
 		Ticker: legacyMetrics.NewTickerMetrics(r),
+		EvaluationMissed: promauto.With(r).NewCounterVec(
+			prometheus.CounterOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "schedule_rule_evaluations_missed_total",
+				Help:      "The total number of rule evaluations missed due to a slow rule evaluation.",
+			},
+			[]string{"org", "name"},
+		),
 	}
 }
 

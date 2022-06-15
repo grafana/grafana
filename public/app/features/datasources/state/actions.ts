@@ -1,7 +1,14 @@
 import { lastValueFrom } from 'rxjs';
 
 import { DataSourcePluginMeta, DataSourceSettings, locationUtil } from '@grafana/data';
-import { DataSourceWithBackend, getDataSourceSrv, locationService } from '@grafana/runtime';
+import {
+  DataSourceWithBackend,
+  getDataSourceSrv,
+  HealthCheckError,
+  HealthCheckResultDetails,
+  isFetchError,
+  locationService,
+} from '@grafana/runtime';
 import { updateNavIndex } from 'app/core/actions';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
@@ -77,7 +84,9 @@ export const initDataSourceSettings = (
 
       dispatch(initDataSourceSettingsSucceeded(importedPlugin));
     } catch (err) {
-      dispatch(initDataSourceSettingsFailed(err));
+      if (err instanceof Error) {
+        dispatch(initDataSourceSettingsFailed(err));
+      }
     }
   };
 };
@@ -104,9 +113,17 @@ export const testDataSource = (
 
         dispatch(testDataSourceSucceeded(result));
       } catch (err) {
-        const { statusText, message: errMessage, details, data } = err;
+        let message: string | undefined;
+        let details: HealthCheckResultDetails;
 
-        const message = errMessage || data?.message || 'HTTP error ' + statusText;
+        if (err instanceof HealthCheckError) {
+          message = err.message;
+          details = err.details;
+        } else if (isFetchError(err)) {
+          message = err.data.message ?? `HTTP error ${err.statusText}`;
+        } else if (err instanceof Error) {
+          message = err.message;
+        }
 
         dispatch(testDataSourceFailed({ message, details }));
       }

@@ -257,7 +257,7 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 	result := apimodels.NamespaceConfigResponse{}
 
 	if len(namespaceMap) == 0 {
-		srv.log.Debug("User has no access to any namespaces")
+		srv.log.Debug("user has no access to any namespaces")
 		return response.JSON(http.StatusOK, result)
 	}
 
@@ -467,6 +467,8 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, groupKey ngmod
 			return ErrResp(http.StatusForbidden, err, "")
 		} else if errors.Is(err, ErrAuthorization) {
 			return ErrResp(http.StatusUnauthorized, err, "")
+		} else if errors.Is(err, store.ErrOptimisticLock) {
+			return ErrResp(http.StatusConflict, err, "")
 		}
 		return ErrResp(http.StatusInternalServerError, err, "failed to update rule group")
 	}

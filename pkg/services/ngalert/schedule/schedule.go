@@ -338,6 +338,11 @@ func (sch *schedule) DeleteAlertRule(key models.AlertRuleKey) {
 	}
 	// stop rule evaluation
 	ruleInfo.stop()
+
+	// Our best bet at this point is that we update the metrics with what we hope to schedule in the next tick.
+	alertRules := sch.schedulableAlertRules.all()
+	sch.metrics.SchedulableAlertRules.Set(float64(len(alertRules)))
+	sch.metrics.SchedulableAlertRulesHash.Set(float64(hashUIDs(alertRules)))
 }
 
 func (sch *schedule) adminConfigSync(ctx context.Context) error {
@@ -392,8 +397,14 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 			// so, at the end, the remaining registered alert rules are the deleted ones
 			registeredDefinitions := sch.registry.keyMap()
 
+			// While these are the rules that we iterate over, at the moment there's no 100% guarantee that they'll be
+			// scheduled as rules could be removed before we get a chance to evaluate them.
+			sch.metrics.SchedulableAlertRules.Set(float64(len(alertRules)))
+			sch.metrics.SchedulableAlertRulesHash.Set(float64(hashUIDs(alertRules)))
+
 			type readyToRunItem struct {
 				key      models.AlertRuleKey
+				ruleName string
 				ruleInfo *alertRuleInfo
 				version  int64
 			}
@@ -427,7 +438,7 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 
 				itemFrequency := item.IntervalSeconds / int64(sch.baseInterval.Seconds())
 				if item.IntervalSeconds != 0 && tickNum%itemFrequency == 0 {
-					readyToRun = append(readyToRun, readyToRunItem{key: key, ruleInfo: ruleInfo, version: itemVersion})
+					readyToRun = append(readyToRun, readyToRunItem{key: key, ruleName: item.Title, ruleInfo: ruleInfo, version: itemVersion})
 				}
 
 				// remove the alert rule from the registered alert rules
@@ -443,9 +454,15 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 				item := readyToRun[i]
 
 				time.AfterFunc(time.Duration(int64(i)*step), func() {
-					success := item.ruleInfo.eval(tick, item.version)
+					success, dropped := item.ruleInfo.eval(tick, item.version)
 					if !success {
-						sch.log.Debug("Scheduled evaluation was canceled because evaluation routine was stopped", "uid", item.key.UID, "org", item.key.OrgID, "time", tick)
+						sch.log.Debug("scheduled evaluation was canceled because evaluation routine was stopped", "uid", item.key.UID, "org", item.key.OrgID, "time", tick)
+						return
+					}
+					if dropped != nil {
+						sch.log.Warn("Alert rule evaluation is too slow - dropped tick", "uid", item.key.UID, "org", item.key.OrgID, "time", tick)
+						orgID := fmt.Sprint(item.key.OrgID)
+						sch.metrics.EvaluationMissed.WithLabelValues(orgID, item.ruleName).Inc()
 					}
 				})
 			}
@@ -606,12 +623,12 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 				return nil
 			})
 			if err != nil {
-				logger.Error("updating rule failed after all retries", "error", err)
+				logger.Error("updating rule failed after all retries", "err", err)
 			}
 		// evalCh - used by the scheduler to signal that evaluation is needed.
 		case ctx, ok := <-evalCh:
 			if !ok {
-				logger.Debug("Evaluation channel has been closed. Exiting")
+				logger.Debug("evaluation channel has been closed. Exiting")
 				return nil
 			}
 			if evalRunning {

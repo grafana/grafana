@@ -37,6 +37,9 @@ func (t *TestCase) Value() string {
 }
 
 func TestIntegrationKVStore(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	kv := createTestableKVStore(t)
 
 	ctx := context.Background()

@@ -634,9 +634,9 @@ func (hs *HTTPServer) GetDashboardVersion(c *models.ReqContext) response.Respons
 		creator = hs.getUserLogin(c.Req.Context(), res.CreatedBy)
 	}
 
-	dashVersionMeta := &models.DashboardVersionMeta{
-		Id:            res.ID,
-		DashboardId:   res.DashboardID,
+	dashVersionMeta := &dashver.DashboardVersionMeta{
+		ID:            res.ID,
+		DashboardID:   res.DashboardID,
 		DashboardUID:  dashUID,
 		Data:          res.Data,
 		ParentVersion: res.ParentVersion,
@@ -691,7 +691,7 @@ func (hs *HTTPServer) CalculateDashboardDiff(c *models.ReqContext) response.Resp
 
 	baseVersionRes, err := hs.dashboardVersionService.Get(c.Req.Context(), &baseVersionQuery)
 	if err != nil {
-		if errors.Is(err, models.ErrDashboardVersionNotFound) {
+		if errors.Is(err, dashver.ErrDashboardVersionNotFound) {
 			return response.Error(404, "Dashboard version not found", err)
 		}
 		return response.Error(500, "Unable to compute diff", err)
@@ -705,7 +705,7 @@ func (hs *HTTPServer) CalculateDashboardDiff(c *models.ReqContext) response.Resp
 
 	newVersionRes, err := hs.dashboardVersionService.Get(c.Req.Context(), &newVersionQuery)
 	if err != nil {
-		if errors.Is(err, models.ErrDashboardVersionNotFound) {
+		if errors.Is(err, dashver.ErrDashboardVersionNotFound) {
 			return response.Error(404, "Dashboard version not found", err)
 		}
 		return response.Error(500, "Unable to compute diff", err)
@@ -717,7 +717,7 @@ func (hs *HTTPServer) CalculateDashboardDiff(c *models.ReqContext) response.Resp
 	result, err := dashdiffs.CalculateDiff(c.Req.Context(), &options, baseData, newData)
 
 	if err != nil {
-		if errors.Is(err, models.ErrDashboardVersionNotFound) {
+		if errors.Is(err, dashver.ErrDashboardVersionNotFound) {
 			return response.Error(404, "Dashboard version not found", err)
 		}
 		return response.Error(500, "Unable to compute diff", err)
