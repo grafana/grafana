@@ -11,6 +11,9 @@ import (
 )
 
 func TestIntegrationStatsDataAccess(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	sqlStore := InitTestDB(t)
 	populateDB(t, sqlStore)
 

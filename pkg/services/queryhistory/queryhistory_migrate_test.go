@@ -10,6 +10,9 @@ import (
 )
 
 func TestIntegrationMigrateQueriesToQueryHistory(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	testScenario(t, "When users tries to migrate 1 query in query history it should succeed",
 		func(t *testing.T, sc scenarioContext) {
 			command := MigrateQueriesToQueryHistoryCommand{

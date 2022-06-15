@@ -13,17 +13,19 @@ export enum DataFrameType {
   DirectoryListing = 'directory-listing',
 
   /**
-   * First field is X, the rest are bucket values
+   * First field is X, the rest are ordinal values used as rows in the heatmap
    */
-  HeatmapBuckets = 'heatmap-buckets',
+  HeatmapRows = 'heatmap-rows',
 
   /**
    * Explicit fields for:
    *  xMin, yMin, count, ...
    *
    * All values in the grid exist and have regular spacing
+   *
+   * If the y value is actually ordinal, use `meta.custom` to specify the bucket lookup values
    */
-  HeatmapScanlines = 'heatmap-scanlines',
+  HeatmapCells = 'heatmap-cells',
 
   /**
    *  WIP sparse heatmap support

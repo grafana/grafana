@@ -87,6 +87,10 @@ const (
 	// support websocket streaming for loki (early prototype)
 	FlagLokiLive = "lokiLive"
 
+	// FlagLokiDataframeApi
+	// use experimental loki api for websocket streaming (early prototype)
+	FlagLokiDataframeApi = "lokiDataframeApi"
+
 	// FlagSwaggerUi
 	// Serves swagger UI
 	FlagSwaggerUi = "swaggerUi"
@@ -162,6 +166,10 @@ const (
 	// FlagValidateDashboardsOnSave
 	// Validate dashboard JSON POSTed to api/dashboards/db
 	FlagValidateDashboardsOnSave = "validateDashboardsOnSave"
+
+	// FlagAutoMigrateGraphPanels
+	// Replace the angular graph panel with timeseries
+	FlagAutoMigrateGraphPanels = "autoMigrateGraphPanels"
 
 	// FlagPrometheusWideSeries
 	// Enable wide series responses in the Prometheus datasource
