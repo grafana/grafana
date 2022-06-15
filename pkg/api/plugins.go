@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 
@@ -360,6 +361,8 @@ func (hs *HTTPServer) InstallPlugin(c *models.ReqContext) response.Response {
 
 	err := hs.pluginManager.Add(c.Req.Context(), pluginID, dto.Version, plugins.CompatabilityOpts{
 		GrafanaVersion: hs.Cfg.BuildVersion,
+		OS:             strings.ToLower(runtime.GOOS),
+		Arch:           runtime.GOARCH,
 	})
 	if err != nil {
 		var dupeErr plugins.DuplicateError
