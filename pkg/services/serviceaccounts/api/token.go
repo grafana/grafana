@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	failedToDeleteMsg = "Failed to delete API key"
+	failedToDeleteMsg = "Failed to delete service account token"
 	ServiceID         = "sa"
 )
 
@@ -76,7 +76,7 @@ func (api *ServiceAccountsAPI) ListTokens(ctx *models.ReqContext) response.Respo
 	}
 }
 
-// CreateNewToken adds an API key to a service account
+// CreateNewToken adds a token to a service account
 // POST /api/serviceaccounts/:serviceAccountId/tokens
 func (api *ServiceAccountsAPI) CreateToken(c *models.ReqContext) response.Response {
 	saID, err := strconv.ParseInt(web.Params(c.Req)[":serviceAccountId"], 10, 64)
@@ -113,7 +113,7 @@ func (api *ServiceAccountsAPI) CreateToken(c *models.ReqContext) response.Respon
 
 	newKeyInfo, err := apikeygenprefix.New(ServiceID)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Generating API key failed", err)
+		return response.Error(http.StatusInternalServerError, "Generating service account token failed", err)
 	}
 
 	cmd.Key = newKeyInfo.HashedKey
@@ -125,7 +125,7 @@ func (api *ServiceAccountsAPI) CreateToken(c *models.ReqContext) response.Respon
 		if errors.Is(err, models.ErrDuplicateApiKey) {
 			return response.Error(http.StatusConflict, err.Error(), nil)
 		}
-		return response.Error(http.StatusInternalServerError, "Failed to add API Key", err)
+		return response.Error(http.StatusInternalServerError, "Failed to add service account token", err)
 	}
 
 	result := &dtos.NewApiKeyResult{
@@ -171,5 +171,5 @@ func (api *ServiceAccountsAPI) DeleteToken(c *models.ReqContext) response.Respon
 		return response.Error(status, failedToDeleteMsg, err)
 	}
 
-	return response.Success("API key deleted")
+	return response.Success("Service account token deleted")
 }
