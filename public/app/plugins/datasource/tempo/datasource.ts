@@ -108,8 +108,8 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   lokiSearch?: {
     datasourceUid?: string;
   };
-  spanBar?: SpanBarOptions;
   uploadedJson?: string | ArrayBuffer | null = null;
+  spanBar?: SpanBarOptions;
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<TempoJsonData>,
