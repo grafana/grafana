@@ -684,16 +684,9 @@ func TestVerifyProvisionedRulesNotAffected(t *testing.T) {
 		rand.Shuffle(len(allRules), func(i, j int) {
 			allRules[j], allRules[i] = allRules[i], allRules[j]
 		})
-		expectedGroup := make(map[string]struct{})
 		storeResult := make(map[string]models.Provenance, len(allRules))
-		for i := 0; i < rand.Intn(len(allRules)-1)+1; i++ {
-			prov := models.ProvenanceAPI
-			if rand.Int63()%2 == 0 {
-				prov = models.ProvenanceFile
-			}
-			storeResult[allRules[i].UID] = prov
-			expectedGroup[allRules[i].GetGroupKey().String()] = struct{}{}
-		}
+		storeResult[allRules[0].UID] = models.ProvenanceAPI
+		storeResult[allRules[1].UID] = models.ProvenanceFile
 
 		provenanceStore := &provisioning.MockProvisioningStore{}
 		provenanceStore.EXPECT().GetProvenances(mock.Anything, orgID, "alertRule").Return(storeResult, nil)
@@ -701,9 +694,8 @@ func TestVerifyProvisionedRulesNotAffected(t *testing.T) {
 		result := verifyProvisionedRulesNotAffected(context.Background(), provenanceStore, orgID, ch)
 		require.Error(t, result)
 		require.ErrorIs(t, result, errProvisionedResource)
-		for key := range expectedGroup {
-			assert.Contains(t, result.Error(), key)
-		}
+		assert.Contains(t, result.Error(), allRules[0].GetGroupKey().String())
+		assert.Contains(t, result.Error(), allRules[1].GetGroupKey().String())
 	})
 
 	t.Run("should return nil if all have ProvenanceNone", func(t *testing.T) {
