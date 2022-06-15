@@ -61,11 +61,13 @@ export const LogGroupSelector: React.FC<LogGroupSelectorProps> = ({
         });
         return logGroups.map(toOption);
       } catch (err) {
-        let errMessage = err as string;
+        let errMessage = 'unknown error';
         if (typeof err !== 'string') {
           try {
             errMessage = JSON.stringify(err);
           } catch (e) {}
+        } else {
+          errMessage = err;
         }
         dispatch(notifyApp(createErrorNotification(errMessage)));
         return [];
