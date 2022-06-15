@@ -285,9 +285,9 @@ export function prepConfig(opts: PrepConfigOpts) {
               ? uPlot.rangeLog(dataMin, dataMax, (yScale.log ?? 2) as unknown as uPlot.Scale.LogBase, true)
               : [dataMin, dataMax];
 
-            let { min: explicitMin, max: explicitMax } = yAxisConfig;
+            if (shouldUseLogScale && !isOrdianalY) {
+              let { min: explicitMin, max: explicitMax } = yAxisConfig;
 
-            if (shouldUseLogScale) {
               // guard against <= 0
               if (explicitMin != null && explicitMin > 0) {
                 scaleMin = explicitMin;
@@ -341,13 +341,15 @@ export function prepConfig(opts: PrepConfigOpts) {
                 dataMax *= yExp / 2;
               }
 
-              // guard against <= 0
-              if (explicitMin != null && explicitMin > 0) {
-                dataMin = explicitMin;
-              }
+              if (!isOrdianalY) {
+                // guard against <= 0
+                if (explicitMin != null && explicitMin > 0) {
+                  dataMin = explicitMin;
+                }
 
-              if (explicitMax != null && explicitMax > 0) {
-                dataMax = explicitMax;
+                if (explicitMax != null && explicitMax > 0) {
+                  dataMax = explicitMax;
+                }
               }
             }
             // linear expansion
@@ -371,8 +373,10 @@ export function prepConfig(opts: PrepConfigOpts) {
                 // how to expand scale range if inferred non-regular or log buckets?
               }
 
-              dataMin = explicitMin ?? dataMin;
-              dataMax = explicitMax ?? dataMax;
+              if (!isOrdianalY) {
+                dataMin = explicitMin ?? dataMin;
+                dataMax = explicitMax ?? dataMax;
+              }
             }
 
             return [dataMin, dataMax];
