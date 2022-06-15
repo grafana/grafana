@@ -46,8 +46,7 @@ func (ss *SQLStore) GetAPIKeys(ctx context.Context, query *models.GetApiKeysQuer
 func (ss *SQLStore) GetAllAPIKeys(ctx context.Context, orgID int64) []*models.ApiKey {
 	result := make([]*models.ApiKey, 0)
 	err := ss.WithDbSession(ctx, func(dbSession *DBSession) error {
-		sess := dbSession.
-			Where("(expires IS NULL OR expires >= ?) AND service_account_id IS NULL", timeNow().Unix()).Asc("name")
+		sess := dbSession.Where("service_account_id IS NULL").Asc("name")
 		if orgID != -1 {
 			sess = sess.Where("org_id=?", orgID)
 		}
