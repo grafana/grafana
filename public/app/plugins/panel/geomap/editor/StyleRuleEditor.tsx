@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
 
 import { GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
 import { Button, InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
-import { NumberInput } from 'app/features/dimensions/editors/NumberInput';
+import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 import { StyleEditor } from '../layers/data/StyleEditor';
 import { DEFAULT_STYLE_RULE } from '../layers/data/geojsonLayer';

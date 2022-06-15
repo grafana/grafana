@@ -54,7 +54,9 @@ export function SearchForm({ datasource, query, onChange }: Props) {
         const filteredOptions = options.filter((item) => (item.value ? fuzzyMatch(item.value, query).found : false));
         return filteredOptions;
       } catch (error) {
-        dispatch(notifyApp(createErrorNotification('Error', error)));
+        if (error instanceof Error) {
+          dispatch(notifyApp(createErrorNotification('Error', error)));
+        }
         return [];
       } finally {
         setIsLoading((prevValue) => ({ ...prevValue, [loaderOfType]: false }));
