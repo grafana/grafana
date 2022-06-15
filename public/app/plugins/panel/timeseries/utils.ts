@@ -6,13 +6,20 @@ import {
   getDisplayProcessor,
   GrafanaTheme2,
   isBooleanUnit,
+  TimeRange,
 } from '@grafana/data';
 import { GraphFieldConfig, LineInterpolation } from '@grafana/schema';
+import { applyNullInsertThreshold } from '@grafana/ui/src/components/GraphNG/nullInsertThreshold';
+import { nullToValue } from '@grafana/ui/src/components/GraphNG/nullToValue';
 
 /**
  * Returns null if there are no graphable fields
  */
-export function prepareGraphableFields(series: DataFrame[], theme: GrafanaTheme2): DataFrame[] | null {
+export function prepareGraphableFields(
+  series: DataFrame[],
+  timeRange: TimeRange,
+  theme: GrafanaTheme2
+): DataFrame[] | null {
   if (!series?.length) {
     return null;
   }
@@ -27,7 +34,19 @@ export function prepareGraphableFields(series: DataFrame[], theme: GrafanaTheme2
     let hasTimeField = false;
     let hasValueField = false;
 
-    for (const field of frame.fields) {
+    let nulledFrame = applyNullInsertThreshold({
+      frame,
+      refFieldPseudoMin: timeRange.from.valueOf(),
+      refFieldPseudoMax: timeRange.to.valueOf(),
+    });
+
+    // Mark the field state as having a null threhold applied
+    frame.fields[0].state = {
+      ...frame.fields[0].state,
+      nullThresholdApplied: true,
+    };
+
+    for (const field of nullToValue(nulledFrame).fields) {
       switch (field.type) {
         case FieldType.time:
           hasTimeField = true;
