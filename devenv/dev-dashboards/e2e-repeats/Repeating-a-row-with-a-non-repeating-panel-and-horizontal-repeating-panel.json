@@ -44,7 +44,7 @@
       "id": 2,
       "panels": [],
       "repeat": "row",
-      "title": "Row title $row",
+      "title": "Row $row",
       "type": "row"
     },
     {
@@ -119,7 +119,7 @@
           "sort": "none"
         }
       },
-      "title": "Panel Title",
+      "title": "Row $row non-repeating panel",
       "type": "timeseries"
     },
     {
@@ -196,7 +196,7 @@
       },
       "repeat": "horizontal",
       "repeatDirection": "h",
-      "title": "Horizontal repeating $horizontal",
+      "title": "Row $row repeating panel $horizontal",
       "type": "timeseries"
     }
   ],

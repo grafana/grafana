@@ -46,14 +46,17 @@ type NGAlert struct {
 }
 
 type Scheduler struct {
-	Registerer               prometheus.Registerer
-	BehindSeconds            prometheus.Gauge
-	EvalTotal                *prometheus.CounterVec
-	EvalFailures             *prometheus.CounterVec
-	EvalDuration             *prometheus.SummaryVec
-	GetAlertRulesDuration    prometheus.Histogram
-	SchedulePeriodicDuration prometheus.Histogram
-	Ticker                   *legacyMetrics.Ticker
+	Registerer                          prometheus.Registerer
+	BehindSeconds                       prometheus.Gauge
+	EvalTotal                           *prometheus.CounterVec
+	EvalFailures                        *prometheus.CounterVec
+	EvalDuration                        *prometheus.SummaryVec
+	SchedulePeriodicDuration            prometheus.Histogram
+	SchedulableAlertRules               prometheus.Gauge
+	SchedulableAlertRulesHash           prometheus.Gauge
+	UpdateSchedulableAlertRulesDuration prometheus.Histogram
+	Ticker                              *legacyMetrics.Ticker
+	EvaluationMissed                    *prometheus.CounterVec
 }
 
 type MultiOrgAlertmanager struct {
@@ -163,15 +166,6 @@ func newSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 			},
 			[]string{"org"},
 		),
-		GetAlertRulesDuration: promauto.With(r).NewHistogram(
-			prometheus.HistogramOpts{
-				Namespace: Namespace,
-				Subsystem: Subsystem,
-				Name:      "get_alert_rules_duration_seconds",
-				Help:      "The time taken to get all alert rules.",
-				Buckets:   []float64{0.1, 0.25, 0.5, 1, 2, 5, 10},
-			},
-		),
 		SchedulePeriodicDuration: promauto.With(r).NewHistogram(
 			prometheus.HistogramOpts{
 				Namespace: Namespace,
@@ -181,7 +175,40 @@ func newSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Buckets:   []float64{0.1, 0.25, 0.5, 1, 2, 5, 10},
 			},
 		),
+		SchedulableAlertRules: promauto.With(r).NewGauge(
+			prometheus.GaugeOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "schedule_alert_rules",
+				Help:      "The number of alert rules that could be considered for evaluation at the next tick.",
+			},
+		),
+		SchedulableAlertRulesHash: promauto.With(r).NewGauge(
+			prometheus.GaugeOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "schedule_alert_rules_hash",
+				Help:      "A hash of the alert rules that could be considered for evaluation at the next tick.",
+			}),
+		UpdateSchedulableAlertRulesDuration: promauto.With(r).NewHistogram(
+			prometheus.HistogramOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "schedule_query_alert_rules_duration_seconds",
+				Help:      "The time taken to fetch alert rules from the database.",
+				Buckets:   []float64{0.1, 0.25, 0.5, 1, 2, 5, 10},
+			},
+		),
 		Ticker: legacyMetrics.NewTickerMetrics(r),
+		EvaluationMissed: promauto.With(r).NewCounterVec(
+			prometheus.CounterOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "schedule_rule_evaluations_missed_total",
+				Help:      "The total number of rule evaluations missed due to a slow rule evaluation.",
+			},
+			[]string{"org", "name"},
+		),
 	}
 }
 

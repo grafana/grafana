@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/plugins/manager/installer"
-	"github.com/grafana/grafana/pkg/util/errutil"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 )
@@ -147,7 +146,7 @@ func InstallPlugin(pluginName, version string, c utils.CommandLine, client utils
 	res, _ := services.ReadPlugin(pluginFolder, pluginName)
 	for _, v := range res.Dependencies.Plugins {
 		if err := InstallPlugin(v.ID, "", c, client); err != nil {
-			return errutil.Wrapf(err, "failed to install plugin '%s'", v.ID)
+			return fmt.Errorf("failed to install plugin '%s': %w", v.ID, err)
 		}
 
 		logger.Infof("Installed dependency: %v ✔\n", v.ID)
@@ -313,7 +312,7 @@ func extractSymlink(file *zip.File, filePath string) error {
 		return fmt.Errorf("%v: %w", "failed to copy symlink contents", err)
 	}
 	if err := os.Symlink(strings.TrimSpace(buf.String()), filePath); err != nil {
-		return errutil.Wrapf(err, "failed to make symbolic link for %v", filePath)
+		return fmt.Errorf("failed to make symbolic link for %v: %w", filePath, err)
 	}
 	return nil
 }

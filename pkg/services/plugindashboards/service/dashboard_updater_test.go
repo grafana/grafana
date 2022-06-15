@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
@@ -444,6 +445,10 @@ func (s *dashboardServiceMock) DeleteDashboard(_ context.Context, dashboardId in
 	return nil
 }
 
+func (s *dashboardServiceMock) GetDashboardByPublicUid(ctx context.Context, dashboardPublicUid string) (*models.Dashboard, error) {
+	return nil, nil
+}
+
 type scenarioInput struct {
 	storedPluginSettings []*pluginsettings.DTO
 	installedPlugins     []plugins.PluginDTO
@@ -468,9 +473,11 @@ type scenarioContext struct {
 func scenario(t *testing.T, desc string, input scenarioInput, f func(ctx *scenarioContext)) {
 	t.Helper()
 
+	tracer := tracing.InitializeTracerForTest()
+
 	sCtx := &scenarioContext{
 		t:                              t,
-		bus:                            bus.New(),
+		bus:                            bus.ProvideBus(tracer),
 		importDashboardArgs:            []*dashboardimport.ImportDashboardRequest{},
 		getPluginSettingsByIdArgs:      []*models.GetPluginSettingByIdQuery{},
 		updatePluginSettingVersionArgs: []*models.UpdatePluginSettingVersionCmd{},

@@ -7,23 +7,17 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/stretchr/testify/require"
 )
 
 func TestProvisioning(t *testing.T) {
-	_, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
-
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
 		AppModeProduction:     true,
-		EnableFeatureToggles:  []string{featuremgmt.FlagAlertProvisioning},
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
@@ -66,24 +60,24 @@ func TestProvisioning(t *testing.T) {
 			require.Equal(t, 401, resp.StatusCode)
 		})
 
-		t.Run("viewer GET should succeed", func(t *testing.T) {
+		t.Run("viewer GET should 403", func(t *testing.T) {
 			req := createTestRequest("GET", url, "viewer", "")
 
 			resp, err := http.DefaultClient.Do(req)
 			require.NoError(t, err)
 			require.NoError(t, resp.Body.Close())
 
-			require.Equal(t, 200, resp.StatusCode)
+			require.Equal(t, 403, resp.StatusCode)
 		})
 
-		t.Run("editor GET should succeed", func(t *testing.T) {
+		t.Run("editor GET should 403", func(t *testing.T) {
 			req := createTestRequest("GET", url, "editor", "")
 
 			resp, err := http.DefaultClient.Do(req)
 			require.NoError(t, err)
 			require.NoError(t, resp.Body.Close())
 
-			require.Equal(t, 200, resp.StatusCode)
+			require.Equal(t, 403, resp.StatusCode)
 		})
 
 		t.Run("admin GET should succeed", func(t *testing.T) {
@@ -116,14 +110,14 @@ func TestProvisioning(t *testing.T) {
 			require.Equal(t, 403, resp.StatusCode)
 		})
 
-		t.Run("editor PUT should succeed", func(t *testing.T) {
+		t.Run("editor PUT should 403", func(t *testing.T) {
 			req := createTestRequest("PUT", url, "editor", body)
 
 			resp, err := http.DefaultClient.Do(req)
 			require.NoError(t, err)
 			require.NoError(t, resp.Body.Close())
 
-			require.Equal(t, 202, resp.StatusCode)
+			require.Equal(t, 403, resp.StatusCode)
 		})
 
 		t.Run("admin PUT should succeed", func(t *testing.T) {
@@ -159,24 +153,24 @@ func TestProvisioning(t *testing.T) {
 			require.Equal(t, 401, resp.StatusCode)
 		})
 
-		t.Run("viewer GET should succeed", func(t *testing.T) {
+		t.Run("viewer GET should 403", func(t *testing.T) {
 			req := createTestRequest("GET", url, "viewer", "")
 
 			resp, err := http.DefaultClient.Do(req)
 			require.NoError(t, err)
 			require.NoError(t, resp.Body.Close())
 
-			require.Equal(t, 200, resp.StatusCode)
+			require.Equal(t, 403, resp.StatusCode)
 		})
 
-		t.Run("editor GET should succeed", func(t *testing.T) {
+		t.Run("editor GET should 403", func(t *testing.T) {
 			req := createTestRequest("GET", url, "editor", "")
 
 			resp, err := http.DefaultClient.Do(req)
 			require.NoError(t, err)
 			require.NoError(t, resp.Body.Close())
 
-			require.Equal(t, 200, resp.StatusCode)
+			require.Equal(t, 403, resp.StatusCode)
 		})
 
 		t.Run("admin GET should succeed", func(t *testing.T) {
@@ -209,14 +203,14 @@ func TestProvisioning(t *testing.T) {
 			require.Equal(t, 403, resp.StatusCode)
 		})
 
-		t.Run("editor POST should succeed", func(t *testing.T) {
+		t.Run("editor POST should 403", func(t *testing.T) {
 			req := createTestRequest("POST", url, "editor", body)
 
 			resp, err := http.DefaultClient.Do(req)
 			require.NoError(t, err)
 			require.NoError(t, resp.Body.Close())
 
-			require.Equal(t, 202, resp.StatusCode)
+			require.Equal(t, 403, resp.StatusCode)
 		})
 
 		t.Run("admin POST should succeed", func(t *testing.T) {
@@ -243,24 +237,24 @@ func TestProvisioning(t *testing.T) {
 			require.Equal(t, 401, resp.StatusCode)
 		})
 
-		t.Run("viewer GET should succeed", func(t *testing.T) {
+		t.Run("viewer GET should 403", func(t *testing.T) {
 			req := createTestRequest("GET", url, "viewer", "")
 
 			resp, err := http.DefaultClient.Do(req)
 			require.NoError(t, err)
 			require.NoError(t, resp.Body.Close())
 
-			require.Equal(t, 200, resp.StatusCode)
+			require.Equal(t, 403, resp.StatusCode)
 		})
 
-		t.Run("editor GET should succeed", func(t *testing.T) {
+		t.Run("editor GET should 403", func(t *testing.T) {
 			req := createTestRequest("GET", url, "editor", "")
 
 			resp, err := http.DefaultClient.Do(req)
 			require.NoError(t, err)
 			require.NoError(t, resp.Body.Close())
 
-			require.Equal(t, 200, resp.StatusCode)
+			require.Equal(t, 403, resp.StatusCode)
 		})
 
 		t.Run("admin GET should succeed", func(t *testing.T) {
@@ -287,24 +281,24 @@ func TestProvisioning(t *testing.T) {
 			require.Equal(t, 401, resp.StatusCode)
 		})
 
-		t.Run("viewer GET should succeed", func(t *testing.T) {
+		t.Run("viewer GET should 403", func(t *testing.T) {
 			req := createTestRequest("GET", url, "viewer", "")
 
 			resp, err := http.DefaultClient.Do(req)
 			require.NoError(t, err)
 			require.NoError(t, resp.Body.Close())
 
-			require.Equal(t, 200, resp.StatusCode)
+			require.Equal(t, 403, resp.StatusCode)
 		})
 
-		t.Run("editor GET should succeed", func(t *testing.T) {
+		t.Run("editor GET should 403", func(t *testing.T) {
 			req := createTestRequest("GET", url, "editor", "")
 
 			resp, err := http.DefaultClient.Do(req)
 			require.NoError(t, err)
 			require.NoError(t, resp.Body.Close())
 
-			require.Equal(t, 200, resp.StatusCode)
+			require.Equal(t, 403, resp.StatusCode)
 		})
 
 		t.Run("admin GET should succeed", func(t *testing.T) {

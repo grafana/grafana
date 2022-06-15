@@ -1,5 +1,5 @@
 import { locationUtil, setWeekStart } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
+import { config, isFetchError, locationService } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -61,13 +61,7 @@ async function fetchDashboard(
         return dashDTO;
       }
       case DashboardRoutes.Public: {
-        const dashDTO: DashboardDTO = await dashboardLoaderSrv.loadDashboard(args.urlType, args.urlSlug, args.urlUid);
-        // Make sure new endpoint to fetch dashboard DTO sets these as false
-        dashDTO.meta.canEdit = false;
-        dashDTO.meta.canMakeEditable = false;
-        dashDTO.meta.isPublic = true;
-
-        return dashDTO;
+        return await dashboardLoaderSrv.loadDashboard('public', args.urlSlug, args.urlUid);
       }
       case DashboardRoutes.Normal: {
         const dashDTO: DashboardDTO = await dashboardLoaderSrv.loadDashboard(args.urlType, args.urlSlug, args.urlUid);
@@ -96,7 +90,7 @@ async function fetchDashboard(
     }
   } catch (err) {
     // Ignore cancelled errors
-    if (err.cancelled) {
+    if (isFetchError(err) && err.cancelled) {
       return null;
     }
 
@@ -190,7 +184,9 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
 
       keybindingSrv.setupDashboardBindings(dashboard);
     } catch (err) {
-      dispatch(notifyApp(createErrorNotification('Dashboard init failed', err)));
+      if (err instanceof Error) {
+        dispatch(notifyApp(createErrorNotification('Dashboard init failed', err)));
+      }
       console.error(err);
     }
 

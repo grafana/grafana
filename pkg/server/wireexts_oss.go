@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
+	secretsStore "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/thumbs"
 	"github.com/grafana/grafana/pkg/services/validations"
@@ -93,6 +94,8 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(plugins.BackendFactoryProvider), new(*provider.Service)),
 	validations.ProvideValidator,
 	wire.Bind(new(models.PluginRequestValidator), new(*validations.OSSPluginRequestValidator)),
+	secretsStore.ProvideRemotePluginCheck,
+	wire.Bind(new(secretsStore.UseRemoteSecretsPluginCheck), new(*secretsStore.OSSRemoteSecretsPluginCheck)),
 )
 
 var wireExtsSet = wire.NewSet(

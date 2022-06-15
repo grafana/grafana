@@ -169,7 +169,7 @@ func (i *Installer) Install(ctx context.Context, pluginID, version, pluginsDir, 
 	for _, dep := range res.Dependencies.Plugins {
 		i.log.Infof("Fetching %s dependencies...", res.ID)
 		if err := i.Install(ctx, dep.ID, normalizeVersion(dep.Version), pluginsDir, "", pluginRepoURL); err != nil {
-			return fmt.Errorf("%v: %w", fmt.Sprintf("failed to install plugin %s", dep.ID), err)
+			return fmt.Errorf("failed to install plugin %s: %w", dep.ID, err)
 		}
 	}
 
@@ -608,7 +608,7 @@ func extractSymlink(file *zip.File, filePath string) error {
 		return fmt.Errorf("%v: %w", "failed to copy symlink contents", err)
 	}
 	if err := os.Symlink(strings.TrimSpace(buf.String()), filePath); err != nil {
-		return fmt.Errorf("%v: %w", fmt.Sprintf("failed to make symbolic link for %v", filePath), err)
+		return fmt.Errorf("failed to make symbolic link for %v: %w", filePath, err)
 	}
 	return nil
 }

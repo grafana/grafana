@@ -16,6 +16,10 @@ type Store interface {
 	Plugins(ctx context.Context, pluginTypes ...Type) []PluginDTO
 }
 
+type UpdateInfo struct {
+	PluginZipURL string
+}
+
 // Client is used to communicate with backend plugin implementations.
 type Client interface {
 	backend.QueryDataHandler
@@ -23,10 +27,6 @@ type Client interface {
 	backend.StreamHandler
 	backend.CallResourceHandler
 	backend.CollectMetricsHandler
-}
-
-type UpdateInfo struct {
-	PluginZipURL string
 }
 
 // BackendFactoryProvider provides a backend factory for a provided plugin.
@@ -37,4 +37,9 @@ type BackendFactoryProvider interface {
 type RendererManager interface {
 	// Renderer returns a renderer plugin.
 	Renderer() *Plugin
+}
+
+type SecretsPluginManager interface {
+	// SecretsManager returns a secretsmanager plugin
+	SecretsManager() *Plugin
 }

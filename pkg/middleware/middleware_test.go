@@ -640,10 +640,9 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg, mockSQLStore *mockstore.S
 	userAuthTokenSvc := auth.NewFakeUserAuthTokenService()
 	renderSvc := &fakeRenderService{}
 	authJWTSvc := models.NewFakeJWTService()
-	tracer, err := tracing.InitializeTracerForTest()
+	tracer := tracing.InitializeTracerForTest()
 	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginService, mockSQLStore)
 	authenticator := &logintest.AuthenticatorFake{ExpectedUser: &models.User{}}
-	require.NoError(t, err)
 	return contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, mockSQLStore, tracer, authProxy, loginService, authenticator)
 }
 

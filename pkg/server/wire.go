@@ -6,6 +6,7 @@ package server
 import (
 	"github.com/google/wire"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -51,6 +52,8 @@ import (
 	dashboardstore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
+	dashsnapstore "github.com/grafana/grafana/pkg/services/dashboardsnapshots/database"
+	dashsnapsvc "github.com/grafana/grafana/pkg/services/dashboardsnapshots/service"
 	"github.com/grafana/grafana/pkg/services/dashboardversion/dashverimpl"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -80,7 +83,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/queryhistory"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
-	"github.com/grafana/grafana/pkg/services/schemaloader"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -152,6 +154,7 @@ var wireBasicSet = wire.NewSet(
 	managerStore.ProvideService,
 	wire.Bind(new(plugins.Store), new(*managerStore.Service)),
 	wire.Bind(new(plugins.RendererManager), new(*managerStore.Service)),
+	wire.Bind(new(plugins.SecretsPluginManager), new(*managerStore.Service)),
 	pluginDashboards.ProvideFileStoreManager,
 	wire.Bind(new(pluginDashboards.FileStore), new(*pluginDashboards.FileStoreManager)),
 	loader.ProvideService,
@@ -206,7 +209,6 @@ var wireBasicSet = wire.NewSet(
 	contexthandler.ProvideService,
 	jwt.ProvideService,
 	wire.Bind(new(models.JWTService), new(*jwt.AuthService)),
-	schemaloader.ProvideService,
 	ngalert.ProvideService,
 	librarypanels.ProvideService,
 	wire.Bind(new(librarypanels.Service), new(*librarypanels.LibraryPanelService)),
@@ -226,7 +228,10 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(secrets.Service), new(*secretsManager.SecretsService)),
 	secretsDatabase.ProvideSecretsStore,
 	wire.Bind(new(secrets.Store), new(*secretsDatabase.SecretsStoreImpl)),
-	dashboardsnapshots.ProvideService,
+	dashsnapstore.ProvideStore,
+	wire.Bind(new(dashboardsnapshots.Store), new(*dashsnapstore.DashboardSnapshotStore)),
+	wire.Bind(new(dashboardsnapshots.Service), new(*dashsnapsvc.ServiceImpl)),
+	dashsnapsvc.ProvideService,
 	datasourceservice.ProvideService,
 	wire.Bind(new(datasources.DataSourceService), new(*datasourceservice.Service)),
 	pluginSettings.ProvideService,
