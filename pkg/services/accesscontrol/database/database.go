@@ -20,8 +20,8 @@ type AccessControlStore struct {
 	sql *sqlstore.SQLStore
 }
 
-func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]*accesscontrol.Permission, error) {
-	result := make([]*accesscontrol.Permission, 0)
+func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]accesscontrol.Permission, error) {
+	result := make([]accesscontrol.Permission, 0)
 	err := s.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		filter, params := userRolesFilter(query.OrgID, query.UserID, query.Roles)
 

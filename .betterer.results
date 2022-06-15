@@ -65,7 +65,7 @@ exports[`no enzyme tests`] = {
     "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanDetail/KeyValuesTable.test.js:3813002651": [
       [14, 19, 13, "RegExp match", "2409514259"]
     ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanDetail/index.test.js:2816619357": [
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanDetail/index.test.js:700147304": [
       [16, 19, 13, "RegExp match", "2409514259"]
     ],
     "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanDetailRow.test.js:2623922632": [
@@ -110,9 +110,6 @@ exports[`no enzyme tests`] = {
     "public/app/features/alerting/TestRuleResult.test.tsx:2358420489": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/api-keys/ApiKeysAddedModal.test.tsx:3246264379": [
-      [0, 20, 13, "RegExp match", "2409514259"]
-    ],
     "public/app/features/dashboard/components/ShareModal/ShareLink.test.tsx:2357087833": [
       [0, 35, 13, "RegExp match", "2409514259"]
     ],
@@ -140,26 +137,8 @@ exports[`no enzyme tests`] = {
     "public/app/features/folders/FolderSettingsPage.test.tsx:1109052730": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/invites/InviteesTable.test.tsx:3612992381": [
-      [0, 19, 13, "RegExp match", "2409514259"]
-    ],
     "public/app/features/org/OrgDetailsPage.test.tsx:3835042085": [
       [0, 19, 13, "RegExp match", "2409514259"]
-    ],
-    "public/app/features/org/OrgProfile.test.tsx:623809345": [
-      [0, 19, 13, "RegExp match", "2409514259"]
-    ],
-    "public/app/features/teams/TeamPages.test.tsx:3990420214": [
-      [0, 19, 13, "RegExp match", "2409514259"]
-    ],
-    "public/app/features/teams/TeamSettings.test.tsx:2043271249": [
-      [0, 19, 13, "RegExp match", "2409514259"]
-    ],
-    "public/app/features/users/UsersListPage.test.tsx:2518052139": [
-      [0, 19, 13, "RegExp match", "2409514259"]
-    ],
-    "public/app/plugins/datasource/cloud-monitoring/components/Aggregation.test.tsx:3822406835": [
-      [1, 19, 13, "RegExp match", "2409514259"]
     ],
     "public/app/plugins/datasource/cloudwatch/components/ConfigEditor.test.tsx:227258837": [
       [0, 19, 13, "RegExp match", "2409514259"]

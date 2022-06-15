@@ -205,7 +205,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     zIndex: theme.zIndex.sidemenu,
     padding: `${theme.spacing(1)} 0`,
     position: 'relative',
-    width: `calc(${theme.spacing(7)} + 1px)`,
+    width: theme.components.sidemenu.width,
     borderRight: `1px solid ${theme.colors.border.weak}`,
 
     [theme.breakpoints.down('md')]: {

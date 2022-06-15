@@ -47,15 +47,17 @@ export const updateQueryVariableOptions = (
         getVariableQueryRunner().queueRequest({ identifier, datasource, searchFilter });
       });
     } catch (err) {
-      const error = toDataQueryError(err);
-      const { rootStateKey } = identifier;
-      if (getVariablesState(rootStateKey, getState()).editor.id === identifier.id) {
-        dispatch(
-          toKeyedAction(rootStateKey, addVariableEditorError({ errorProp: 'update', errorText: error.message }))
-        );
-      }
+      if (err instanceof Error) {
+        const error = toDataQueryError(err);
+        const { rootStateKey } = identifier;
+        if (getVariablesState(rootStateKey, getState()).editor.id === identifier.id) {
+          dispatch(
+            toKeyedAction(rootStateKey, addVariableEditorError({ errorProp: 'update', errorText: error.message }))
+          );
+        }
 
-      throw error;
+        throw error;
+      }
     }
   };
 };
