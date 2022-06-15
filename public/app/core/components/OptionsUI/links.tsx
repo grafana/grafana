@@ -6,8 +6,7 @@ import {
   FieldConfigEditorProps,
   VariableSuggestionsScope,
 } from '@grafana/data';
-
-import { DataLinksInlineEditor } from '../DataLinks/DataLinksInlineEditor/DataLinksInlineEditor';
+import { DataLinksInlineEditor } from '@grafana/ui';
 
 export const DataLinksValueEditor: React.FC<FieldConfigEditorProps<DataLink[], DataLinksFieldConfigSettings>> = ({
   value,

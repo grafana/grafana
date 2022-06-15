@@ -99,6 +99,7 @@ debug.test
 /packaging/**/*.deb
 /packaging/**/*.tar.gz
 /packaging/**/*.tar.gz.sha256
+pkg/cmd/grafana-server/__debug_bin
 
 # Ignore OSX indexing
 .DS_Store
@@ -165,4 +166,3 @@ public/locales/_build/
 public/locales/**/*.js
 
 deployment_tools_config.json
-

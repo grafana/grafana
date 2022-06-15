@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
@@ -55,7 +54,7 @@ func (hs *HTTPServer) SignUp(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to create signup", err)
 	}
 
-	if err := bus.Publish(c.Req.Context(), &events.SignUpStarted{
+	if err := hs.bus.Publish(c.Req.Context(), &events.SignUpStarted{
 		Email: form.Email,
 		Code:  cmd.Code,
 	}); err != nil {
@@ -102,7 +101,7 @@ func (hs *HTTPServer) SignUpStep2(c *models.ReqContext) response.Response {
 	}
 
 	// publish signup event
-	if err := bus.Publish(c.Req.Context(), &events.SignUpCompleted{
+	if err := hs.bus.Publish(c.Req.Context(), &events.SignUpCompleted{
 		Email: user.Email,
 		Name:  user.NameOrFallback(),
 	}); err != nil {
