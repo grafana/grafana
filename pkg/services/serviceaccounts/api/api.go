@@ -105,87 +105,6 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *models.ReqContext) respon
 	return response.JSON(http.StatusCreated, serviceAccount)
 }
 
-// DELETE /api/serviceaccounts/:serviceAccountId
-func (api *ServiceAccountsAPI) DeleteServiceAccount(ctx *models.ReqContext) response.Response {
-	scopeID, err := strconv.ParseInt(web.Params(ctx.Req)[":serviceAccountId"], 10, 64)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "serviceAccountId is invalid", err)
-	}
-	err = api.service.DeleteServiceAccount(ctx.Req.Context(), ctx.OrgId, scopeID)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Service account deletion error", err)
-	}
-	return response.Success("Service account deleted")
-}
-
-// GET /api/serviceaccounts/migrationstatus
-func (api *ServiceAccountsAPI) GetAPIKeysMigrationStatus(ctx *models.ReqContext) response.Response {
-	upgradeStatus, err := api.store.GetAPIKeysMigrationStatus(ctx.Req.Context(), ctx.OrgId)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Internal server error", err)
-	}
-	return response.JSON(http.StatusOK, upgradeStatus)
-}
-
-// POST /api/serviceaccounts/hideapikeys
-func (api *ServiceAccountsAPI) HideApiKeysTab(ctx *models.ReqContext) response.Response {
-	if err := api.store.HideApiKeysTab(ctx.Req.Context(), ctx.OrgId); err != nil {
-		return response.Error(http.StatusInternalServerError, "Internal server error", err)
-	}
-	return response.Success("API keys hidden")
-}
-
-// POST /api/serviceaccounts/migrate
-func (api *ServiceAccountsAPI) MigrateApiKeysToServiceAccounts(ctx *models.ReqContext) response.Response {
-	if err := api.store.MigrateApiKeysToServiceAccounts(ctx.Req.Context(), ctx.OrgId); err == nil {
-		return response.Success("API keys migrated to service accounts")
-	} else {
-		return response.Error(http.StatusInternalServerError, "Internal server error", err)
-	}
-}
-
-// POST /api/serviceaccounts/migrate/:keyId
-func (api *ServiceAccountsAPI) ConvertToServiceAccount(ctx *models.ReqContext) response.Response {
-	keyId, err := strconv.ParseInt(web.Params(ctx.Req)[":keyId"], 10, 64)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "Key ID is invalid", err)
-	}
-	if err := api.store.ConvertToServiceAccounts(ctx.Req.Context(), ctx.OrgId, []int64{keyId}); err == nil {
-		return response.Success("Service accounts converted")
-	} else {
-		return response.Error(http.StatusInternalServerError, "Error converting API key", err)
-	}
-}
-
-// POST /api/serviceaccounts/revert/:keyId
-func (api *ServiceAccountsAPI) RevertApiKey(ctx *models.ReqContext) response.Response {
-	keyId, err := strconv.ParseInt(web.Params(ctx.Req)[":keyId"], 10, 64)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "Key ID is invalid", err)
-	}
-	if err := api.store.RevertApiKey(ctx.Req.Context(), keyId); err != nil {
-		return response.Error(http.StatusInternalServerError, "Error reverting API key", err)
-	}
-	return response.Success("API key reverted")
-}
-
-func (api *ServiceAccountsAPI) getAccessControlMetadata(c *models.ReqContext, saIDs map[string]bool) map[string]accesscontrol.Metadata {
-	if api.accesscontrol.IsDisabled() || !c.QueryBool("accesscontrol") {
-		return map[string]accesscontrol.Metadata{}
-	}
-
-	if c.SignedInUser.Permissions == nil {
-		return map[string]accesscontrol.Metadata{}
-	}
-
-	permissions, ok := c.SignedInUser.Permissions[c.OrgId]
-	if !ok {
-		return map[string]accesscontrol.Metadata{}
-	}
-
-	return accesscontrol.GetResourcesMetadata(c.Req.Context(), permissions, "serviceaccounts:id:", saIDs)
-}
-
 // GET /api/serviceaccounts/:serviceAccountId
 func (api *ServiceAccountsAPI) RetrieveServiceAccount(ctx *models.ReqContext) response.Response {
 	scopeID, err := strconv.ParseInt(web.Params(ctx.Req)[":serviceAccountId"], 10, 64)
@@ -259,6 +178,19 @@ func (api *ServiceAccountsAPI) UpdateServiceAccount(c *models.ReqContext) respon
 	})
 }
 
+// DELETE /api/serviceaccounts/:serviceAccountId
+func (api *ServiceAccountsAPI) DeleteServiceAccount(ctx *models.ReqContext) response.Response {
+	scopeID, err := strconv.ParseInt(web.Params(ctx.Req)[":serviceAccountId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "serviceAccountId is invalid", err)
+	}
+	err = api.service.DeleteServiceAccount(ctx.Req.Context(), ctx.OrgId, scopeID)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Service account deletion error", err)
+	}
+	return response.Success("Service account deleted")
+}
+
 // SearchOrgServiceAccountsWithPaging is an HTTP handler to search for org users with paging.
 // GET /api/serviceaccounts/search
 func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *models.ReqContext) response.Response {
@@ -303,4 +235,72 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *models.ReqC
 	}
 
 	return response.JSON(http.StatusOK, serviceAccountSearch)
+}
+
+// GET /api/serviceaccounts/migrationstatus
+func (api *ServiceAccountsAPI) GetAPIKeysMigrationStatus(ctx *models.ReqContext) response.Response {
+	upgradeStatus, err := api.store.GetAPIKeysMigrationStatus(ctx.Req.Context(), ctx.OrgId)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Internal server error", err)
+	}
+	return response.JSON(http.StatusOK, upgradeStatus)
+}
+
+// POST /api/serviceaccounts/hideapikeys
+func (api *ServiceAccountsAPI) HideApiKeysTab(ctx *models.ReqContext) response.Response {
+	if err := api.store.HideApiKeysTab(ctx.Req.Context(), ctx.OrgId); err != nil {
+		return response.Error(http.StatusInternalServerError, "Internal server error", err)
+	}
+	return response.Success("API keys hidden")
+}
+
+// POST /api/serviceaccounts/migrate
+func (api *ServiceAccountsAPI) MigrateApiKeysToServiceAccounts(ctx *models.ReqContext) response.Response {
+	if err := api.store.MigrateApiKeysToServiceAccounts(ctx.Req.Context(), ctx.OrgId); err == nil {
+		return response.Success("API keys migrated to service accounts")
+	} else {
+		return response.Error(http.StatusInternalServerError, "Internal server error", err)
+	}
+}
+
+// POST /api/serviceaccounts/migrate/:keyId
+func (api *ServiceAccountsAPI) ConvertToServiceAccount(ctx *models.ReqContext) response.Response {
+	keyId, err := strconv.ParseInt(web.Params(ctx.Req)[":keyId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Key ID is invalid", err)
+	}
+	if err := api.store.ConvertToServiceAccounts(ctx.Req.Context(), ctx.OrgId, []int64{keyId}); err == nil {
+		return response.Success("Service accounts converted")
+	} else {
+		return response.Error(http.StatusInternalServerError, "Error converting API key", err)
+	}
+}
+
+// POST /api/serviceaccounts/revert/:keyId
+func (api *ServiceAccountsAPI) RevertApiKey(ctx *models.ReqContext) response.Response {
+	keyId, err := strconv.ParseInt(web.Params(ctx.Req)[":keyId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Key ID is invalid", err)
+	}
+	if err := api.store.RevertApiKey(ctx.Req.Context(), keyId); err != nil {
+		return response.Error(http.StatusInternalServerError, "Error reverting API key", err)
+	}
+	return response.Success("API key reverted")
+}
+
+func (api *ServiceAccountsAPI) getAccessControlMetadata(c *models.ReqContext, saIDs map[string]bool) map[string]accesscontrol.Metadata {
+	if api.accesscontrol.IsDisabled() || !c.QueryBool("accesscontrol") {
+		return map[string]accesscontrol.Metadata{}
+	}
+
+	if c.SignedInUser.Permissions == nil {
+		return map[string]accesscontrol.Metadata{}
+	}
+
+	permissions, ok := c.SignedInUser.Permissions[c.OrgId]
+	if !ok {
+		return map[string]accesscontrol.Metadata{}
+	}
+
+	return accesscontrol.GetResourcesMetadata(c.Req.Context(), permissions, "serviceaccounts:id:", saIDs)
 }
