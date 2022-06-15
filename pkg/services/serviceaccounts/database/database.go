@@ -68,23 +68,27 @@ func ServiceAccountDeletions() []string {
 
 func (s *ServiceAccountsStoreImpl) DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error {
 	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		user := models.User{}
-		has, err := sess.Where(`org_id = ? and id = ? and is_service_account = ?`,
-			orgID, serviceAccountID, s.sqlStore.Dialect.BooleanStr(true)).Get(&user)
+		return s.deleteServiceAccount(sess, orgID, serviceAccountID)
+	})
+}
+
+func (s *ServiceAccountsStoreImpl) deleteServiceAccount(sess *sqlstore.DBSession, orgID, serviceAccountID int64) error {
+	user := models.User{}
+	has, err := sess.Where(`org_id = ? and id = ? and is_service_account = ?`,
+		orgID, serviceAccountID, s.sqlStore.Dialect.BooleanStr(true)).Get(&user)
+	if err != nil {
+		return err
+	}
+	if !has {
+		return serviceaccounts.ErrServiceAccountNotFound
+	}
+	for _, sql := range ServiceAccountDeletions() {
+		_, err := sess.Exec(sql, user.Id)
 		if err != nil {
 			return err
 		}
-		if !has {
-			return serviceaccounts.ErrServiceAccountNotFound
-		}
-		for _, sql := range ServiceAccountDeletions() {
-			_, err := sess.Exec(sql, user.Id)
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	})
+	}
+	return nil
 }
 
 func (s *ServiceAccountsStoreImpl) GetAPIKeysMigrationStatus(ctx context.Context, orgID int64) (status *serviceaccounts.APIKeysMigrationStatus, err error) {
@@ -161,6 +165,7 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(ctx context.Co
 		}
 
 		if errUpdateKey := s.assignApiKeyToServiceAccount(sess, key.Id, newSA.Id); errUpdateKey != nil {
+			// TODO: roll back and delete service account user
 			return fmt.Errorf(
 				"failed to attach new service account to API key for keyId: %d and newServiceAccountId: %d with error: %w",
 				key.Id, newSA.Id, errUpdateKey,
@@ -463,7 +468,6 @@ func (s *ServiceAccountsStoreImpl) RevertApiKey(ctx context.Context, keyId int64
 	}
 
 	err = s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		// Delete service account
 		user := models.User{}
 		has, err := sess.Where(`org_id = ? and id = ? and is_service_account = ?`,
 			key.OrgId, *key.ServiceAccountId, s.sqlStore.Dialect.BooleanStr(true)).Get(&user)
@@ -473,9 +477,12 @@ func (s *ServiceAccountsStoreImpl) RevertApiKey(ctx context.Context, keyId int64
 		if !has {
 			return serviceaccounts.ErrServiceAccountNotFound
 		}
-
 		// Detach API key from service account
 		if err := s.detachApiKeyFromServiceAccount(sess, key.Id); err != nil {
+			return err
+		}
+		// Delete service account
+		if err := s.deleteServiceAccount(sess, key.OrgId, *key.ServiceAccountId); err != nil {
 			return err
 		}
 		return nil

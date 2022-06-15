@@ -150,7 +150,7 @@ func TestStore_MigrateApiKeys(t *testing.T) {
 
 				tokens, err := store.ListTokens(context.Background(), key.OrgId, saMigrated.Id)
 				require.NoError(t, err)
-				require.Equal(t, len(tokens), 1)
+				require.Len(t, tokens, 1)
 
 			}
 		})
@@ -220,8 +220,63 @@ func TestStore_MigrateAllApiKeys(t *testing.T) {
 
 					tokens, err := store.ListTokens(context.Background(), c.orgId, saMigrated.Id)
 					require.NoError(t, err)
-					require.Equal(t, len(tokens), 1)
+					require.Len(t, tokens, 1)
 				}
+			}
+		})
+	}
+}
+
+func TestStore_RevertApiKey(t *testing.T) {
+	cases := []struct {
+		desc        string
+		key         tests.TestApiKey
+		expectedErr error
+	}{
+		{
+			desc:        "service account token should be reverted to api key",
+			key:         tests.TestApiKey{Name: "Test1", Role: models.ROLE_EDITOR, OrgId: 1},
+			expectedErr: nil,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.desc, func(t *testing.T) {
+			db, store := setupTestDatabase(t)
+			store.sqlStore.Cfg.AutoAssignOrg = true
+			store.sqlStore.Cfg.AutoAssignOrgId = 1
+			store.sqlStore.Cfg.AutoAssignOrgRole = "Viewer"
+			err := store.sqlStore.CreateOrg(context.Background(), &models.CreateOrgCommand{Name: "main"})
+			require.NoError(t, err)
+
+			key := tests.SetupApiKey(t, db, c.key)
+			err = store.ConvertToServiceAccounts(context.Background(), key.OrgId, []int64{key.Id})
+			require.NoError(t, err)
+			err = store.RevertApiKey(context.Background(), key.Id)
+
+			if c.expectedErr != nil {
+				require.ErrorIs(t, err, c.expectedErr)
+			} else {
+				require.NoError(t, err)
+
+				serviceAccounts, err := store.SearchOrgServiceAccounts(context.Background(), key.OrgId, "", "all", 1, 50, &models.SignedInUser{UserId: 1, OrgId: 1, Permissions: map[int64]map[string][]string{
+					key.OrgId: {
+						"serviceaccounts:read": {"serviceaccounts:id:*"},
+					},
+				}})
+				require.NoError(t, err)
+				// Service account should be deleted
+				require.Equal(t, int64(0), serviceAccounts.TotalCount)
+
+				apiKeys := store.sqlStore.GetAllAPIKeys(context.Background(), 1)
+				require.Len(t, apiKeys, 1)
+				apiKey := apiKeys[0]
+				require.Equal(t, c.key.Name, apiKey.Name)
+				require.Equal(t, c.key.OrgId, apiKey.OrgId)
+				require.Equal(t, c.key.Role, apiKey.Role)
+				require.Equal(t, key.Key, apiKey.Key)
+				// Api key should not be linked to service account
+				require.Nil(t, apiKey.ServiceAccountId)
 			}
 		})
 	}

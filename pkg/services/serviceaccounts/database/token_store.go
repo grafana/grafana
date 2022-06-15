@@ -99,7 +99,7 @@ func (s *ServiceAccountsStoreImpl) detachApiKeyFromServiceAccount(sess *sqlstore
 	}
 	key.ServiceAccountId = nil
 
-	if _, err := sess.ID(key.Id).Update(&key); err != nil {
+	if _, err := sess.ID(key.Id).AllCols().Update(&key); err != nil {
 		s.log.Error("Could not update api key", "err", err)
 		return err
 	}
