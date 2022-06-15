@@ -275,6 +275,8 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 
 	metricsRes, err := checkAzureMonitorMetricsHealth(dsInfo)
 	if err != nil || metricsRes.StatusCode != 200 {
+		status = backend.HealthStatusError
+		metricsLog = "Error connecting to Azure Monitor endpoint."
 		if err != nil {
 			return nil, err
 		} else {
@@ -282,10 +284,9 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 			if err != nil {
 				return nil, err
 			}
+			metricsLog = string(body)
 			backend.Logger.Error(string(body))
 		}
-		status = backend.HealthStatusError
-		metricsLog = "Error connecting to Azure Monitor endpoint."
 	}
 
 	logsRes, err := checkAzureLogAnalyticsHealth(dsInfo)
@@ -304,12 +305,15 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 			if err != nil {
 				return nil, err
 			}
+			logAnalyticsLog = string(body)
 			backend.Logger.Error(string(body))
 		}
 	}
 
 	resourceGraphRes, err := checkAzureMonitorResourceGraphHealth(dsInfo)
 	if err != nil || resourceGraphRes.StatusCode != 200 {
+		status = backend.HealthStatusError
+		graphLog = "Error connecting to Azure Resource Graph endpoint."
 		if err != nil {
 			return nil, err
 		} else {
@@ -317,10 +321,9 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 			if err != nil {
 				return nil, err
 			}
+			graphLog = string(body)
 			backend.Logger.Error(string(body))
 		}
-		status = backend.HealthStatusError
-		graphLog = "Error connecting to Azure Resource Graph endpoint."
 	}
 
 	defer func() {
