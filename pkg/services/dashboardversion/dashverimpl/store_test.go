@@ -16,6 +16,9 @@ import (
 )
 
 func TestIntegrationGetDashboardVersion(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	ss := sqlstore.InitTestDB(t)
 	dashVerStore := sqlStore{db: ss}
 
@@ -59,6 +62,9 @@ func TestIntegrationGetDashboardVersion(t *testing.T) {
 }
 
 func TestIntegrationDeleteExpiredVersions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	versionsToWrite := 10
 	ss := sqlstore.InitTestDB(t)
 	dashVerStore := sqlStore{db: ss}
@@ -80,6 +86,9 @@ func TestIntegrationDeleteExpiredVersions(t *testing.T) {
 }
 
 func TestIntegrationListDashboardVersions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	ss := sqlstore.InitTestDB(t)
 	dashVerStore := sqlStore{db: ss, dialect: ss.Dialect}
 	savedDash := insertTestDashboard(t, ss, "test dash 43", 1, 0, false, "diff-all")

@@ -345,6 +345,10 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
       const enabledLegendValues = pickBy(angular.legend);
       options.legend.calcs = getReducersFromLegend(enabledLegendValues);
     }
+
+    if (angular.legend.sideWidth) {
+      options.legend.width = angular.legend.sideWidth;
+    }
   }
 
   const tooltipConfig = angular.tooltip;

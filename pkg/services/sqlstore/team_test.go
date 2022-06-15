@@ -14,6 +14,9 @@ import (
 )
 
 func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	t.Run("Testing Team commands & queries", func(t *testing.T) {
 		sqlStore := InitTestDB(t)
 		testUser := &models.SignedInUser{
@@ -405,6 +408,9 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 }
 
 func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	type searchTeamsTestCase struct {
 		desc             string
 		query            *models.SearchTeamsQuery
@@ -478,6 +484,9 @@ func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
 // TestSQLStore_GetTeamMembers_ACFilter tests the accesscontrol filtering of
 // team members based on the signed in user permissions
 func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	testOrgID := int64(2)
 	userIds := make([]int64, 4)
 

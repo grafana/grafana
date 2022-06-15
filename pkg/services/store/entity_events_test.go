@@ -11,6 +11,9 @@ import (
 )
 
 func TestIntegrationEntityEventsService(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	var ctx context.Context
 	var service EntityEventsService
 
@@ -135,6 +138,9 @@ func TestIntegrationEntityEventsService(t *testing.T) {
 }
 
 func TestIntegrationCreateDatabaseEntityId(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	tests := []struct {
 		name       string
 		entityType EntityType

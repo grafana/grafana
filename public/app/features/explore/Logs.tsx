@@ -23,6 +23,7 @@ import {
   SplitOpen,
   DataQueryResponse,
 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { TooltipDisplayMode } from '@grafana/schema';
 import {
   RadioButtonGroup,
@@ -68,6 +69,7 @@ interface Props extends Themeable2 {
   scanning?: boolean;
   scanRange?: RawTimeRange;
   exploreId: ExploreId;
+  datasourceType?: string;
   logsVolumeData: DataQueryResponse | undefined;
   loadLogsVolumeData: (exploreId: ExploreId) => void;
   showContextToggle?: (row?: LogRowModel) => boolean;
@@ -144,6 +146,10 @@ class UnthemedLogs extends PureComponent<Props, State> {
   };
 
   onChangeDedup = (dedupStrategy: LogsDedupStrategy) => {
+    reportInteraction('grafana_explore_logs_deduplication_clicked', {
+      deduplicationType: dedupStrategy,
+      datasourceType: this.props.datasourceType,
+    });
     this.setState({ dedupStrategy });
   };
 
