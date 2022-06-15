@@ -15,7 +15,6 @@ import (
 	"net/url"
 	"os"
 	"runtime"
-	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/plugins/logger"
@@ -38,7 +37,7 @@ func newClient(skipTLSVerify bool, logger logger.Logger) *Client {
 	}
 }
 
-func (c *Client) download(_ context.Context, pluginZipURL, checksum, grafanaVersion string) (*repository.PluginArchive, error) {
+func (c *Client) download(_ context.Context, pluginZipURL, checksum string, compatOpts repository.CompatabilityOpts) (*repository.PluginArchive, error) {
 	// Create temp file for downloading zip file
 	tmpFile, err := ioutil.TempFile("", "*.zip")
 	if err != nil {
@@ -52,7 +51,7 @@ func (c *Client) download(_ context.Context, pluginZipURL, checksum, grafanaVers
 
 	c.log.Debugf("Installing plugin from %s", pluginZipURL)
 
-	err = c.downloadFile(tmpFile, pluginZipURL, checksum, grafanaVersion)
+	err = c.downloadFile(tmpFile, pluginZipURL, checksum, compatOpts)
 	if err != nil {
 		if err := tmpFile.Close(); err != nil {
 			c.log.Warn("Failed to close file", "err", err)
@@ -70,7 +69,7 @@ func (c *Client) download(_ context.Context, pluginZipURL, checksum, grafanaVers
 	}, nil
 }
 
-func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum, grafanaVersion string) (err error) {
+func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum string, compatOpts repository.CompatabilityOpts) (err error) {
 	// Try handling URL as a local file path first
 	if _, err := os.Stat(pluginURL); err == nil {
 		// TODO re-verify
@@ -108,7 +107,7 @@ func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum, grafanaVers
 				if err != nil {
 					return
 				}
-				err = c.downloadFile(tmpFile, pluginURL, checksum, grafanaVersion)
+				err = c.downloadFile(tmpFile, pluginURL, checksum, compatOpts)
 			} else {
 				c.retryCount = 0
 				failure := fmt.Sprintf("%v", r)
@@ -128,7 +127,7 @@ func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum, grafanaVers
 
 	// Using no timeout here as some plugins can be bigger and smaller timeout would prevent to download a plugin on
 	// slow network. As this is CLI operation hanging is not a big of an issue as user can just abort.
-	bodyReader, err := c.sendReqNoTimeout(u, grafanaVersion)
+	bodyReader, err := c.sendReqNoTimeout(u, compatOpts)
 	if err != nil {
 		return err
 	}
@@ -152,8 +151,8 @@ func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum, grafanaVers
 	return nil
 }
 
-func (c *Client) sendReq(url *url.URL, grafanaVersion string) ([]byte, error) {
-	req, err := c.createReq(url, grafanaVersion)
+func (c *Client) sendReq(url *url.URL, compatOpts repository.CompatabilityOpts) ([]byte, error) {
+	req, err := c.createReq(url, compatOpts.GrafanaVersion)
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +161,7 @@ func (c *Client) sendReq(url *url.URL, grafanaVersion string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	bodyReader, err := c.handleResp(res, grafanaVersion)
+	bodyReader, err := c.handleResp(res, compatOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -174,8 +173,8 @@ func (c *Client) sendReq(url *url.URL, grafanaVersion string) ([]byte, error) {
 	return ioutil.ReadAll(bodyReader)
 }
 
-func (c *Client) sendReqNoTimeout(url *url.URL, grafanaVersion string) (io.ReadCloser, error) {
-	req, err := c.createReq(url, grafanaVersion)
+func (c *Client) sendReqNoTimeout(url *url.URL, compatOpts repository.CompatabilityOpts) (io.ReadCloser, error) {
+	req, err := c.createReq(url, compatOpts.GrafanaVersion)
 	if err != nil {
 		return nil, err
 	}
@@ -184,7 +183,7 @@ func (c *Client) sendReqNoTimeout(url *url.URL, grafanaVersion string) (io.ReadC
 	if err != nil {
 		return nil, err
 	}
-	return c.handleResp(res, grafanaVersion)
+	return c.handleResp(res, compatOpts)
 }
 
 func (c *Client) createReq(url *url.URL, grafanaVersion string) (*http.Request, error) {
@@ -201,7 +200,7 @@ func (c *Client) createReq(url *url.URL, grafanaVersion string) (*http.Request, 
 	return req, err
 }
 
-func (c *Client) handleResp(res *http.Response, grafanaVersion string) (io.ReadCloser, error) {
+func (c *Client) handleResp(res *http.Response, compatOpts repository.CompatabilityOpts) (io.ReadCloser, error) {
 	if res.StatusCode/100 == 4 {
 		body, err := ioutil.ReadAll(res.Body)
 		defer func() {
@@ -220,7 +219,7 @@ func (c *Client) handleResp(res *http.Response, grafanaVersion string) (io.ReadC
 		} else {
 			message = jsonBody["message"]
 		}
-		return nil, repository.Response4xxError{StatusCode: res.StatusCode, Message: message, SystemInfo: SystemInfo(grafanaVersion)}
+		return nil, repository.Response4xxError{StatusCode: res.StatusCode, Message: message, SystemInfo: compatOpts.String()}
 	}
 
 	if res.StatusCode/100 != 2 {
@@ -250,14 +249,4 @@ func makeHttpClient(skipTLSVerify bool, timeout time.Duration) http.Client {
 		Timeout:   timeout,
 		Transport: tr,
 	}
-}
-
-func SystemInfo(grafanaVersion string) string {
-	return fmt.Sprintf("Grafana v%s %s", grafanaVersion, osAndArchString())
-}
-
-func osAndArchString() string {
-	osString := strings.ToLower(runtime.GOOS)
-	arch := runtime.GOARCH
-	return osString + "-" + arch
 }

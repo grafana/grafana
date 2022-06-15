@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/Masterminds/semver"
@@ -77,6 +78,12 @@ func (m *PluginManager) Add(ctx context.Context, pluginID, version string, opts 
 		return plugins.ErrInvalidPluginVersionFormat
 	}
 
+	compatOpts := repository.CompatabilityOpts{
+		GrafanaVersion: opts.GrafanaVersion,
+		OS:             strings.ToLower(runtime.GOOS),
+		Arch:           runtime.GOARCH,
+	}
+
 	var pluginArchive *repository.PluginArchive
 	if plugin, exists := m.plugin(ctx, pluginID); exists {
 		if !plugin.IsExternalPlugin() {
@@ -91,9 +98,7 @@ func (m *PluginManager) Add(ctx context.Context, pluginID, version string, opts 
 		}
 
 		// get plugin update information to confirm if target update is possible
-		dlOpts, err := m.pluginRepo.GetPluginDownloadOptions(ctx, pluginID, version, repository.CompatabilityOpts{
-			GrafanaVersion: opts.GrafanaVersion,
-		})
+		dlOpts, err := m.pluginRepo.GetPluginDownloadOptions(ctx, pluginID, version, compatOpts)
 		if err != nil {
 			return err
 		}
@@ -117,25 +122,19 @@ func (m *PluginManager) Add(ctx context.Context, pluginID, version string, opts 
 		}
 
 		if dlOpts.PluginZipURL != "" {
-			pluginArchive, err = m.pluginRepo.GetPluginArchiveByURL(ctx, dlOpts.PluginZipURL, repository.CompatabilityOpts{
-				GrafanaVersion: opts.GrafanaVersion,
-			})
+			pluginArchive, err = m.pluginRepo.GetPluginArchiveByURL(ctx, dlOpts.PluginZipURL, compatOpts)
 			if err != nil {
 				return err
 			}
 		} else {
-			pluginArchive, err = m.pluginRepo.GetPluginArchive(ctx, pluginID, dlOpts.Version, repository.CompatabilityOpts{
-				GrafanaVersion: opts.GrafanaVersion,
-			})
+			pluginArchive, err = m.pluginRepo.GetPluginArchive(ctx, pluginID, dlOpts.Version, compatOpts)
 			if err != nil {
 				return err
 			}
 		}
 	} else {
 		var err error
-		pluginArchive, err = m.pluginRepo.GetPluginArchive(ctx, pluginID, version, repository.CompatabilityOpts{
-			GrafanaVersion: opts.GrafanaVersion,
-		})
+		pluginArchive, err = m.pluginRepo.GetPluginArchive(ctx, pluginID, version, compatOpts)
 		if err != nil {
 			return err
 		}
@@ -150,8 +149,7 @@ func (m *PluginManager) Add(ctx context.Context, pluginID, version string, opts 
 	pathsToScan := []string{extractedArchive.Path}
 	for _, dep := range extractedArchive.Dependencies {
 		m.log.Info("Fetching %s dependencies...", dep.ID)
-		d, err := m.pluginRepo.GetPluginArchive(ctx, dep.ID, dep.Version,
-			repository.CompatabilityOpts{GrafanaVersion: opts.GrafanaVersion})
+		d, err := m.pluginRepo.GetPluginArchive(ctx, dep.ID, dep.Version, compatOpts)
 		if err != nil {
 			return fmt.Errorf("%v: %w", fmt.Sprintf("failed to download plugin %s from repository", dep.ID), err)
 		}

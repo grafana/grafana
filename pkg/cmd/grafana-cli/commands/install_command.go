@@ -65,20 +65,22 @@ func (cmd Command) installCommand(c utils.CommandLine) error {
 
 	repo := service.New(skipTLSVerify, c.PluginRepoURL(), services.Logger)
 
+	compatOpts := repository.CompatabilityOpts{
+		GrafanaVersion: services.GrafanaVersion,
+		OS:             strings.ToLower(runtime.GOOS),
+		Arch:           runtime.GOARCH,
+	}
+
 	ctx := context.Background()
 	var archive *repository.PluginArchive
 	var err error
 	if pluginZipURL != "" {
-		archive, err = repo.GetPluginArchiveByURL(ctx, pluginZipURL,
-			repository.CompatabilityOpts{GrafanaVersion: services.GrafanaVersion},
-		)
+		archive, err = repo.GetPluginArchiveByURL(ctx, pluginZipURL, compatOpts)
 		if err != nil {
 			return err
 		}
 	} else {
-		archive, err = repo.GetPluginArchive(ctx, pluginID, version,
-			repository.CompatabilityOpts{GrafanaVersion: services.GrafanaVersion},
-		)
+		archive, err = repo.GetPluginArchive(ctx, pluginID, version, compatOpts)
 		if err != nil {
 			return err
 		}
@@ -92,8 +94,7 @@ func (cmd Command) installCommand(c utils.CommandLine) error {
 
 	for _, dep := range extractedArchive.Dependencies {
 		services.Logger.Info("Fetching %s dependency...", dep.ID)
-		d, err := repo.GetPluginArchive(ctx, dep.ID, dep.Version,
-			repository.CompatabilityOpts{GrafanaVersion: services.GrafanaVersion})
+		d, err := repo.GetPluginArchive(ctx, dep.ID, dep.Version, compatOpts)
 		if err != nil {
 			return fmt.Errorf("%v: %w", fmt.Sprintf("failed to download plugin %s from repository", dep.ID), err)
 		}

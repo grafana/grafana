@@ -1,6 +1,10 @@
 package repository
 
-import "context"
+import (
+	"context"
+	"fmt"
+	"strings"
+)
 
 // Service is responsible for retrieving plugin information from a repository.
 type Service interface {
@@ -14,4 +18,14 @@ type Service interface {
 
 type CompatabilityOpts struct {
 	GrafanaVersion string
+	OS             string
+	Arch           string
+}
+
+func (co CompatabilityOpts) OSAndArch() string {
+	return fmt.Sprintf("%s-%s", strings.ToLower(co.OS), co.Arch)
+}
+
+func (co CompatabilityOpts) String() string {
+	return fmt.Sprintf("Grafana v%s %s", co.GrafanaVersion, co.OSAndArch())
 }
