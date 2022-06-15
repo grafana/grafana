@@ -925,6 +925,141 @@ func TestVerifyProvisionedRulesNotAffected(t *testing.T) {
 	})
 }
 
+func TestCalculateAutomaticChanges(t *testing.T) {
+	orgID := rand.Int63()
+
+	t.Run("should mark all rules in affected groups", func(t *testing.T) {
+		group := models.GenerateGroupKey(orgID)
+		rules := models.GenerateAlertRules(10, models.AlertRuleGen(withGroupKey(group)))
+		// copy rules to make sure that the function does not modify the original rules
+		copies := make([]*models.AlertRule, 0, len(rules))
+		for _, rule := range rules {
+			copies = append(copies, models.CopyRule(rule))
+		}
+
+		var updates []ruleUpdate
+		for i := 0; i < 5; i++ {
+			ruleCopy := models.CopyRule(copies[i])
+			ruleCopy.Title += util.GenerateShortUID()
+			updates = append(updates, ruleUpdate{
+				Existing: copies[i],
+				New:      ruleCopy,
+			})
+		}
+
+		// simulate adding new rules, updating a few existing and delete some from the same rule
+		ch := &changes{
+			GroupKey: group,
+			AffectedGroups: map[models.AlertRuleGroupKey][]*models.AlertRule{
+				group: copies,
+			},
+			New:    models.GenerateAlertRules(2, models.AlertRuleGen(withGroupKey(group))),
+			Update: updates,
+			Delete: rules[5:7],
+		}
+
+		result := calculateAutomaticChanges(ch)
+
+		require.NotEqual(t, ch, result)
+		require.Equal(t, ch.GroupKey, result.GroupKey)
+		require.Equal(t, map[models.AlertRuleGroupKey][]*models.AlertRule{
+			group: rules,
+		}, result.AffectedGroups)
+		require.Equal(t, ch.New, result.New)
+		require.Equal(t, rules[5:7], result.Delete)
+		var expected []ruleUpdate
+		expected = append(expected, updates...)
+		// all rules that were not updated directly by user should be added to the
+		for _, rule := range rules[7:] {
+			expected = append(expected, ruleUpdate{
+				Existing: rule,
+				New:      rule,
+			})
+		}
+		require.Equal(t, expected, result.Update)
+	})
+
+	t.Run("should re-index rules in affected groups other than updated", func(t *testing.T) {
+		group := models.GenerateGroupKey(orgID)
+		rules := models.GenerateAlertRules(3, models.AlertRuleGen(withGroupKey(group), models.WithSequentialGroupIndex()))
+		group2 := models.GenerateGroupKey(orgID)
+		rules2 := models.GenerateAlertRules(4, models.AlertRuleGen(withGroupKey(group2), models.WithSequentialGroupIndex()))
+
+		movedIndex := rand.Intn(len(rules2) - 1)
+		movedRule := rules2[movedIndex]
+		copyRule := models.CopyRule(movedRule)
+		copyRule.RuleGroup = group.RuleGroup
+		copyRule.NamespaceUID = group.NamespaceUID
+		copyRule.RuleGroupIndex = len(rules)
+		update := ruleUpdate{
+			Existing: movedRule,
+			New:      copyRule,
+		}
+
+		shuffled := make([]*models.AlertRule, 0, len(rules2))
+		copy(shuffled, rules2)
+		rand.Shuffle(len(shuffled), func(i, j int) {
+			shuffled[i], shuffled[j] = shuffled[j], shuffled[i]
+		})
+
+		// simulate moving a rule from one group to another.
+		ch := &changes{
+			GroupKey: group,
+			AffectedGroups: map[models.AlertRuleGroupKey][]*models.AlertRule{
+				group:  rules,
+				group2: shuffled,
+			},
+			Update: []ruleUpdate{
+				update,
+			},
+		}
+
+		result := calculateAutomaticChanges(ch)
+
+		require.NotEqual(t, ch, result)
+		require.Equal(t, ch.GroupKey, result.GroupKey)
+		require.Equal(t, ch.AffectedGroups, result.AffectedGroups)
+		require.Equal(t, ch.New, result.New)
+		require.Equal(t, ch.Delete, result.Delete)
+
+		require.Equal(t, ch.Update, result.Update[0:1])
+
+		require.Contains(t, result.Update, update)
+		for _, rule := range rules {
+			assert.Containsf(t, result.Update, ruleUpdate{
+				Existing: rule,
+				New:      rule,
+			}, "automatic changes expected to contain all rules of the updated group")
+		}
+
+		// calculate expected index of the rules in the source group after the move
+		expectedReindex := make(map[string]int, len(rules2)-1)
+		idx := 1
+		for _, rule := range rules2 {
+			if rule.UID == movedRule.UID {
+				continue
+			}
+			expectedReindex[rule.UID] = idx
+			idx++
+		}
+
+		for _, upd := range result.Update {
+			expectedIdx, ok := expectedReindex[upd.Existing.UID]
+			if !ok {
+				continue
+			}
+			diff := upd.Existing.Diff(upd.New)
+			if upd.Existing.RuleGroupIndex != expectedIdx {
+				require.Lenf(t, diff, 1, fmt.Sprintf("the rule in affected group should be re-indexed to %d but it still has index %d. Moved rule with index %d", expectedIdx, upd.Existing.RuleGroupIndex, movedIndex))
+				require.Equal(t, "RuleGroupIndex", diff[0].Path)
+				require.Equal(t, expectedIdx, upd.New.RuleGroupIndex)
+			} else {
+				require.Empty(t, diff)
+			}
+		}
+	})
+}
+
 func createService(ac *acMock.Mock, store *store.FakeRuleStore, scheduler schedule.ScheduleService) *RulerSrv {
 	return &RulerSrv{
 		xactManager:     store,

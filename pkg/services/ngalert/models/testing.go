@@ -125,6 +125,14 @@ func WithUniqueGroupIndex() AlertRuleMutator {
 	}
 }
 
+func WithSequentialGroupIndex() AlertRuleMutator {
+	idx := 1
+	return func(rule *AlertRule) {
+		rule.RuleGroupIndex = idx
+		idx++
+	}
+}
+
 func GenerateAlertQuery() AlertQuery {
 	f := rand.Intn(10) + 5
 	t := rand.Intn(f)

@@ -360,10 +360,10 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, groupKey ngmod
 			return err
 		}
 
-		finalChanges = groupChanges
+		finalChanges = calculateAutomaticChanges(finalChanges)
 		logger.Debug("updating database with the authorized changes", "add", len(finalChanges.New), "update", len(finalChanges.New), "delete", len(finalChanges.Delete))
 
-		finalChanges = calculateAutomaticChanges(finalChanges)
+		
 
 		if len(finalChanges.Update) > 0 || len(finalChanges.New) > 0 {
 			updates := make([]store.UpdateRule, 0, len(finalChanges.Update))
@@ -448,50 +448,6 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, groupKey ngmod
 	}
 
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "rule group updated successfully"})
-}
-
-// calculateAutomaticChanges scans all affected groups and creates either a noop update that will increment the version of each rule as well as re-index other groups.
-// this is needed to make sure that there are no any concurrent changes made to all affected groups.
-// Returns a copy of changes enriched with either noop or group index changes for all rules in
-func calculateAutomaticChanges(ch *changes) *changes {
-	updatingRules := make(map[ngmodels.AlertRuleKey]struct{}, len(ch.Delete)+len(ch.Update))
-	for _, update := range ch.Update {
-		updatingRules[update.Existing.GetKey()] = struct{}{}
-	}
-	for _, del := range ch.Delete {
-		updatingRules[del.GetKey()] = struct{}{}
-	}
-	var toUpdate []ruleUpdate
-	for groupKey, rules := range ch.AffectedGroups {
-		ngmodels.RulesGroup(rules).SortByGroupIndex()
-		idx := 1
-		for _, rule := range rules {
-			if _, ok := updatingRules[rule.GetKey()]; ok { // exclude rules that are going to be either updated or deleted
-				continue
-			}
-			upd := ruleUpdate{
-				Existing: rule,
-				New:      rule,
-			}
-			toUpdate = append(toUpdate, upd)
-			if groupKey == ch.GroupKey {
-				continue // do not reindex rules in the group that is being updated because all rules are already re-indexed
-			}
-			if rule.RuleGroupIndex != idx {
-				upd.New = ngmodels.CopyRule(rule)
-				upd.New.RuleGroupIndex = idx
-				upd.Diff = rule.Diff(upd.New, alertRuleFieldsToIgnoreInDiff...)
-			}
-			idx++
-		}
-	}
-	return &changes{
-		GroupKey:       ch.GroupKey,
-		AffectedGroups: ch.AffectedGroups,
-		New:            ch.New,
-		Update:         append(ch.Update, toUpdate...),
-		Delete:         ch.Delete,
-	}
 }
 
 func toGettableRuleGroupConfig(groupName string, rules []*ngmodels.AlertRule, namespaceID int64, provenanceRecords map[string]ngmodels.Provenance) apimodels.GettableRuleGroupConfig {
@@ -681,6 +637,51 @@ func calculateChanges(ctx context.Context, ruleStore store.RuleStore, groupKey n
 		Delete:         toDelete,
 		Update:         toUpdate,
 	}, nil
+}
+
+// calculateAutomaticChanges scans all affected groups and creates either a noop update that will increment the version of each rule as well as re-index other groups.
+// this is needed to make sure that there are no any concurrent changes made to all affected groups.
+// Returns a copy of changes enriched with either noop or group index changes for all rules in
+func calculateAutomaticChanges(ch *changes) *changes {
+	updatingRules := make(map[ngmodels.AlertRuleKey]struct{}, len(ch.Delete)+len(ch.Update))
+	for _, update := range ch.Update {
+		updatingRules[update.Existing.GetKey()] = struct{}{}
+	}
+	for _, del := range ch.Delete {
+		updatingRules[del.GetKey()] = struct{}{}
+	}
+	var toUpdate []ruleUpdate
+	for groupKey, rules := range ch.AffectedGroups {
+		if groupKey != ch.GroupKey {
+			ngmodels.RulesGroup(rules).SortByGroupIndex()
+		}
+		idx := 1
+		for _, rule := range rules {
+			if _, ok := updatingRules[rule.GetKey()]; ok { // exclude rules that are going to be either updated or deleted
+				continue
+			}
+			upd := ruleUpdate{
+				Existing: rule,
+				New:      rule,
+			}
+			if groupKey != ch.GroupKey {
+				if rule.RuleGroupIndex != idx {
+					upd.New = ngmodels.CopyRule(rule)
+					upd.New.RuleGroupIndex = idx
+					upd.Diff = rule.Diff(upd.New, alertRuleFieldsToIgnoreInDiff...)
+				}
+				idx++
+			}
+			toUpdate = append(toUpdate, upd)
+		}
+	}
+	return &changes{
+		GroupKey:       ch.GroupKey,
+		AffectedGroups: ch.AffectedGroups,
+		New:            ch.New,
+		Update:         append(ch.Update, toUpdate...),
+		Delete:         ch.Delete,
+	}
 }
 
 // alertRuleFieldsToIgnoreInDiff contains fields that the AlertRule.Diff should ignore
