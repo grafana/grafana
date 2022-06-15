@@ -182,7 +182,7 @@ func (api *ServiceAccountsAPI) UpdateServiceAccount(c *models.ReqContext) respon
 func (api *ServiceAccountsAPI) DeleteServiceAccount(ctx *models.ReqContext) response.Response {
 	scopeID, err := strconv.ParseInt(web.Params(ctx.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {
-		return response.Error(http.StatusBadRequest, "serviceAccountId is invalid", err)
+		return response.Error(http.StatusBadRequest, "Service account ID is invalid", err)
 	}
 	err = api.service.DeleteServiceAccount(ctx.Req.Context(), ctx.OrgId, scopeID)
 	if err != nil {
