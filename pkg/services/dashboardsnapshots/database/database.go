@@ -1,21 +1,37 @@
-package sqlstore
+package database
 
 import (
 	"context"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+type DashboardSnapshotStore struct {
+	store db.DB
+	log   log.Logger
+}
+
+// DashboardStore implements the Store interface
+var _ dashboardsnapshots.Store = (*DashboardSnapshotStore)(nil)
+
+func ProvideStore(db db.DB) *DashboardSnapshotStore {
+	return &DashboardSnapshotStore{store: db, log: log.New("dashboardsnapshot.store")}
+}
 
 // DeleteExpiredSnapshots removes snapshots with old expiry dates.
 // SnapShotRemoveExpired is deprecated and should be removed in the future.
 // Snapshot expiry is decided by the user when they share the snapshot.
-func (ss *SQLStore) DeleteExpiredSnapshots(ctx context.Context, cmd *models.DeleteExpiredSnapshotsCommand) error {
-	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+func (d *DashboardSnapshotStore) DeleteExpiredSnapshots(ctx context.Context, cmd *models.DeleteExpiredSnapshotsCommand) error {
+	return d.store.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		if !setting.SnapShotRemoveExpired {
-			sqlog.Warn("[Deprecated] The snapshot_remove_expired setting is outdated. Please remove from your config.")
+			d.log.Warn("[Deprecated] The snapshot_remove_expired setting is outdated. Please remove from your config.")
 			return nil
 		}
 
@@ -30,8 +46,8 @@ func (ss *SQLStore) DeleteExpiredSnapshots(ctx context.Context, cmd *models.Dele
 	})
 }
 
-func (ss *SQLStore) CreateDashboardSnapshot(ctx context.Context, cmd *models.CreateDashboardSnapshotCommand) error {
-	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+func (d *DashboardSnapshotStore) CreateDashboardSnapshot(ctx context.Context, cmd *models.CreateDashboardSnapshotCommand) error {
+	return d.store.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		// never
 		var expires = time.Now().Add(time.Hour * 24 * 365 * 50)
 		if cmd.Expires > 0 {
@@ -60,16 +76,16 @@ func (ss *SQLStore) CreateDashboardSnapshot(ctx context.Context, cmd *models.Cre
 	})
 }
 
-func (ss *SQLStore) DeleteDashboardSnapshot(ctx context.Context, cmd *models.DeleteDashboardSnapshotCommand) error {
-	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+func (d *DashboardSnapshotStore) DeleteDashboardSnapshot(ctx context.Context, cmd *models.DeleteDashboardSnapshotCommand) error {
+	return d.store.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var rawSQL = "DELETE FROM dashboard_snapshot WHERE delete_key=?"
 		_, err := sess.Exec(rawSQL, cmd.DeleteKey)
 		return err
 	})
 }
 
-func (ss *SQLStore) GetDashboardSnapshot(ctx context.Context, query *models.GetDashboardSnapshotQuery) error {
-	return ss.WithDbSession(ctx, func(dbSess *DBSession) error {
+func (d *DashboardSnapshotStore) GetDashboardSnapshot(ctx context.Context, query *models.GetDashboardSnapshotQuery) error {
+	return d.store.WithDbSession(ctx, func(dbSess *sqlstore.DBSession) error {
 		snapshot := models.DashboardSnapshot{Key: query.Key, DeleteKey: query.DeleteKey}
 		has, err := dbSess.Get(&snapshot)
 
@@ -86,11 +102,9 @@ func (ss *SQLStore) GetDashboardSnapshot(ctx context.Context, query *models.GetD
 
 // SearchDashboardSnapshots returns a list of all snapshots for admins
 // for other roles, it returns snapshots created by the user
-func (ss *SQLStore) SearchDashboardSnapshots(ctx context.Context, query *models.GetDashboardSnapshotsQuery) error {
-	return ss.WithDbSession(ctx, func(dbSess *DBSession) error {
+func (d *DashboardSnapshotStore) SearchDashboardSnapshots(ctx context.Context, query *models.GetDashboardSnapshotsQuery) error {
+	return d.store.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var snapshots = make(models.DashboardSnapshotsList, 0)
-
-		sess := ss.NewSession(ctx)
 		if query.Limit > 0 {
 			sess.Limit(query.Limit)
 		}

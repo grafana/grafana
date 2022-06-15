@@ -269,8 +269,7 @@ func TestEmailNotifierIntegration(t *testing.T) {
 func createCoreEmailService(t *testing.T) *notifications.NotificationService {
 	t.Helper()
 
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
+	tracer := tracing.InitializeTracerForTest()
 	bus := bus.ProvideBus(tracer)
 
 	cfg := setting.NewCfg()

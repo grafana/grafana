@@ -22,8 +22,11 @@ type Store interface {
 	RetrieveServiceAccount(ctx context.Context, orgID, serviceAccountID int64) (*ServiceAccountProfileDTO, error)
 	RetrieveServiceAccountIdByName(ctx context.Context, orgID int64, name string) (int64, error)
 	DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error
-	UpgradeServiceAccounts(ctx context.Context) error
-	ConvertToServiceAccounts(ctx context.Context, keys []int64) error
+	GetAPIKeysMigrationStatus(ctx context.Context, orgID int64) (*APIKeysMigrationStatus, error)
+	HideApiKeysTab(ctx context.Context, orgID int64) error
+	MigrateApiKeysToServiceAccounts(ctx context.Context, orgID int64) error
+	MigrateApiKey(ctx context.Context, orgID int64, keyId int64) error
+	RevertApiKey(ctx context.Context, keyId int64) error
 	ListTokens(ctx context.Context, orgID int64, serviceAccount int64) ([]*models.ApiKey, error)
 	DeleteServiceAccountToken(ctx context.Context, orgID, serviceAccountID, tokenID int64) error
 	AddServiceAccountToken(ctx context.Context, serviceAccountID int64, cmd *AddServiceAccountTokenCommand) error

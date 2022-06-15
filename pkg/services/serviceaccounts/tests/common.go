@@ -23,6 +23,12 @@ type TestTeam struct {
 	Name  string
 	Email string
 }
+type TestApiKey struct {
+	Name  string
+	Role  models.RoleType
+	OrgId int64
+	Key   string
+}
 
 func SetupUserServiceAccount(t *testing.T, sqlStore *sqlstore.SQLStore, testUser TestUser) *models.User {
 	role := string(models.ROLE_VIEWER)
@@ -38,6 +44,28 @@ func SetupUserServiceAccount(t *testing.T, sqlStore *sqlstore.SQLStore, testUser
 	})
 	require.NoError(t, err)
 	return u1
+}
+
+func SetupApiKey(t *testing.T, sqlStore *sqlstore.SQLStore, testKey TestApiKey) *models.ApiKey {
+	role := models.ROLE_VIEWER
+	if testKey.Role != "" {
+		role = testKey.Role
+	}
+
+	addKeyCmd := &models.AddApiKeyCommand{
+		Name:  testKey.Name,
+		Role:  role,
+		OrgId: testKey.OrgId,
+	}
+
+	if testKey.Key != "" {
+		addKeyCmd.Key = testKey.Key
+	} else {
+		addKeyCmd.Key = "secret"
+	}
+	err := sqlStore.AddAPIKey(context.Background(), addKeyCmd)
+	require.NoError(t, err)
+	return addKeyCmd.Result
 }
 
 // create mock for serviceaccountservice
@@ -77,18 +105,21 @@ var _ serviceaccounts.Store = new(ServiceAccountsStoreMock)
 var _ serviceaccounts.Service = new(ServiceAccountMock)
 
 type Calls struct {
-	CreateServiceAccount           []interface{}
-	RetrieveServiceAccount         []interface{}
-	DeleteServiceAccount           []interface{}
-	UpgradeServiceAccounts         []interface{}
-	ConvertServiceAccounts         []interface{}
-	ListTokens                     []interface{}
-	DeleteServiceAccountToken      []interface{}
-	UpdateServiceAccount           []interface{}
-	AddServiceAccountToken         []interface{}
-	AddServiceAccountToTeam        []interface{}
-	SearchOrgServiceAccounts       []interface{}
-	RetrieveServiceAccountIdByName []interface{}
+	CreateServiceAccount            []interface{}
+	RetrieveServiceAccount          []interface{}
+	DeleteServiceAccount            []interface{}
+	GetAPIKeysMigrationStatus       []interface{}
+	HideApiKeysTab                  []interface{}
+	MigrateApiKeysToServiceAccounts []interface{}
+	MigrateApiKey                   []interface{}
+	RevertApiKey                    []interface{}
+	ListTokens                      []interface{}
+	DeleteServiceAccountToken       []interface{}
+	UpdateServiceAccount            []interface{}
+	AddServiceAccountToken          []interface{}
+	SearchOrgServiceAccounts        []interface{}
+	RetrieveServiceAccountIdByName  []interface{}
+	AddServiceAccountToTeam         []interface{}
 }
 
 type ServiceAccountsStoreMock struct {
@@ -112,13 +143,28 @@ func (s *ServiceAccountsStoreMock) DeleteServiceAccount(ctx context.Context, org
 	return nil
 }
 
-func (s *ServiceAccountsStoreMock) UpgradeServiceAccounts(ctx context.Context) error {
-	s.Calls.UpgradeServiceAccounts = append(s.Calls.UpgradeServiceAccounts, []interface{}{ctx})
+func (s *ServiceAccountsStoreMock) HideApiKeysTab(ctx context.Context, orgID int64) error {
+	s.Calls.HideApiKeysTab = append(s.Calls.HideApiKeysTab, []interface{}{ctx})
 	return nil
 }
 
-func (s *ServiceAccountsStoreMock) ConvertToServiceAccounts(ctx context.Context, keys []int64) error {
-	s.Calls.ConvertServiceAccounts = append(s.Calls.ConvertServiceAccounts, []interface{}{ctx})
+func (s *ServiceAccountsStoreMock) GetAPIKeysMigrationStatus(ctx context.Context, orgID int64) (*serviceaccounts.APIKeysMigrationStatus, error) {
+	s.Calls.GetAPIKeysMigrationStatus = append(s.Calls.GetAPIKeysMigrationStatus, []interface{}{ctx})
+	return nil, nil
+}
+
+func (s *ServiceAccountsStoreMock) MigrateApiKeysToServiceAccounts(ctx context.Context, orgID int64) error {
+	s.Calls.MigrateApiKeysToServiceAccounts = append(s.Calls.MigrateApiKeysToServiceAccounts, []interface{}{ctx})
+	return nil
+}
+
+func (s *ServiceAccountsStoreMock) MigrateApiKey(ctx context.Context, orgID int64, keyId int64) error {
+	s.Calls.MigrateApiKey = append(s.Calls.MigrateApiKey, []interface{}{ctx})
+	return nil
+}
+
+func (s *ServiceAccountsStoreMock) RevertApiKey(ctx context.Context, keyId int64) error {
+	s.Calls.RevertApiKey = append(s.Calls.RevertApiKey, []interface{}{ctx})
 	return nil
 }
 
