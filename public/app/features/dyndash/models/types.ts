@@ -33,18 +33,31 @@ export interface SceneTimeRangeState extends SceneObjectState {
 }
 
 export interface SceneObject<TState extends SceneObjectState = SceneObjectState> extends Subscribable<TState> {
+  /** The current state */
   state: TState;
+
+  /** True when there is a React component mounted for this Object */
   isMounted?: boolean;
+
+  /** SceneObject parent */
   parent?: SceneObject<any>;
 
   /** Utility hook that wraps useObservable. Used by React components to subscribes to state changes */
   useState(): TState;
+
   /** How to modify state */
   setState(state: Partial<TState>): void;
+
   /** Utility hook for main component so that object knows when it's mounted */
   useMount(): this;
+
+  /** Called when component mounts. A place to register event listeners add subscribe to state changes */
   onMount(): void;
+
+  /** Called when component unmounts. Unsubscribe to events */
   onUnmount(): void;
+
+  /** Returns a deep clone this object and all it's children */
   clone(state?: Partial<TState>): this;
 
   /** A React component to use for rendering the object */

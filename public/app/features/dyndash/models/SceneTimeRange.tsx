@@ -30,11 +30,6 @@ export class SceneTimeRange extends SceneObjectBase<TimeRangeState> {
 function SceneTimeRangeRenderer({ model }: { model: SceneTimeRange }) {
   const { hidePicker, timeRange } = model.useState();
 
-  useEffect(() => {
-    console.log('Time range mount');
-    return () => console.log('Time range unmount');
-  }, []);
-
   if (hidePicker) {
     return null;
   }
