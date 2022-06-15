@@ -45,35 +45,37 @@ func (api *ServiceAccountsAPI) ListTokens(ctx *models.ReqContext) response.Respo
 		return response.Error(http.StatusBadRequest, "Service Account ID is invalid", err)
 	}
 
-	if saTokens, err := api.store.ListTokens(ctx.Req.Context(), ctx.OrgId, saID); err == nil {
-		result := make([]*TokenDTO, len(saTokens))
-		for i, t := range saTokens {
-			var expiration *time.Time = nil
-			var secondsUntilExpiration float64 = 0
+	saTokens, err := api.store.ListTokens(ctx.Req.Context(), ctx.OrgId, saID)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Internal server error", err)
 
-			isExpired := hasExpired(t.Expires)
-			if t.Expires != nil {
-				v := time.Unix(*t.Expires, 0)
-				expiration = &v
-				if !isExpired && (*expiration).Before(time.Now().Add(sevenDaysAhead)) {
-					secondsUntilExpiration = time.Until(*expiration).Seconds()
-				}
-			}
+	}
 
-			result[i] = &TokenDTO{
-				Id:                     t.Id,
-				Name:                   t.Name,
-				Created:                &t.Created,
-				Expiration:             expiration,
-				SecondsUntilExpiration: &secondsUntilExpiration,
-				HasExpired:             isExpired,
+	result := make([]*TokenDTO, len(saTokens))
+	for i, t := range saTokens {
+		var expiration *time.Time = nil
+		var secondsUntilExpiration float64 = 0
+
+		isExpired := hasExpired(t.Expires)
+		if t.Expires != nil {
+			v := time.Unix(*t.Expires, 0)
+			expiration = &v
+			if !isExpired && (*expiration).Before(time.Now().Add(sevenDaysAhead)) {
+				secondsUntilExpiration = time.Until(*expiration).Seconds()
 			}
 		}
 
-		return response.JSON(http.StatusOK, result)
-	} else {
-		return response.Error(http.StatusInternalServerError, "Internal server error", err)
+		result[i] = &TokenDTO{
+			Id:                     t.Id,
+			Name:                   t.Name,
+			Created:                &t.Created,
+			Expiration:             expiration,
+			SecondsUntilExpiration: &secondsUntilExpiration,
+			HasExpired:             isExpired,
+		}
 	}
+
+	return response.JSON(http.StatusOK, result)
 }
 
 // CreateNewToken adds a token to a service account
