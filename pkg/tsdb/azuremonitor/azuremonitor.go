@@ -276,7 +276,6 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	metricsRes, err := checkAzureMonitorMetricsHealth(dsInfo)
 	if err != nil || metricsRes.StatusCode != 200 {
 		status = backend.HealthStatusError
-		metricsLog = "Error connecting to Azure Monitor endpoint."
 		if err != nil {
 			return nil, err
 		} else {
@@ -284,7 +283,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 			if err != nil {
 				return nil, err
 			}
-			metricsLog = string(body)
+			metricsLog = fmt.Sprintf("Error connecting to Azure Monitor endpoint: %s", string(body))
 			backend.Logger.Error(string(body))
 		}
 	}
@@ -292,7 +291,6 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	logsRes, err := checkAzureLogAnalyticsHealth(dsInfo)
 	if err != nil || logsRes.StatusCode != 200 {
 		status = backend.HealthStatusError
-		logAnalyticsLog = "Error connecting to Azure Log Analytics endpoint."
 		if err != nil {
 			if err.Error() == "no default workspace found" {
 				status = backend.HealthStatusUnknown
@@ -305,7 +303,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 			if err != nil {
 				return nil, err
 			}
-			logAnalyticsLog = string(body)
+			logAnalyticsLog = fmt.Sprintf("Error connecting to Azure Log Analytics endpoint: %s", string(body))
 			backend.Logger.Error(string(body))
 		}
 	}
@@ -313,7 +311,6 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	resourceGraphRes, err := checkAzureMonitorResourceGraphHealth(dsInfo)
 	if err != nil || resourceGraphRes.StatusCode != 200 {
 		status = backend.HealthStatusError
-		graphLog = "Error connecting to Azure Resource Graph endpoint."
 		if err != nil {
 			return nil, err
 		} else {
@@ -321,7 +318,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 			if err != nil {
 				return nil, err
 			}
-			graphLog = string(body)
+			graphLog = fmt.Sprintf("Error connecting to Azure Resource Graph endpoint: %s", string(body))
 			backend.Logger.Error(string(body))
 		}
 	}
