@@ -16,9 +16,8 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analytics_datasource';
 import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
 import AzureResourceGraphDatasource from './azure_resource_graph/azure_resource_graph_datasource';
-import { getAuthType } from './credentials';
 import ResourcePickerData from './resourcePicker/resourcePickerData';
-import { AzureDataSourceJsonData, AzureMonitorQuery, AzureQueryType, DatasourceValidationResult } from './types';
+import { AzureDataSourceJsonData, AzureMonitorQuery, AzureQueryType } from './types';
 import migrateAnnotation from './utils/migrateAnnotation';
 import { datasourceMigrations } from './utils/migrateQuery';
 import { VariableSupport } from './variables';
@@ -144,41 +143,6 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
 
   async annotationQuery(options: any) {
     return this.azureLogAnalyticsDatasource.annotationQuery(options);
-  }
-
-  private isValidConfigField(field?: string): boolean {
-    return typeof field === 'string' && field.length > 0;
-  }
-
-  private validateDatasource(): DatasourceValidationResult | undefined {
-    const authType = getAuthType(this.instanceSettings);
-
-    if (authType === 'clientsecret') {
-      if (!this.isValidConfigField(this.instanceSettings.jsonData.tenantId)) {
-        return {
-          status: 'error',
-          message: 'The Tenant Id field is required.',
-        };
-      }
-
-      if (!this.isValidConfigField(this.instanceSettings.jsonData.clientId)) {
-        return {
-          status: 'error',
-          message: 'The Client Id field is required.',
-        };
-      }
-    }
-
-    return undefined;
-  }
-
-  async testDatasource(): Promise<DatasourceValidationResult> {
-    const validationError = this.validateDatasource();
-    if (validationError) {
-      return Promise.resolve(validationError);
-    }
-
-    return await super.testDatasource();
   }
 
   /* Azure Monitor REST API methods */
