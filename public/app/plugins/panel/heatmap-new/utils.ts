@@ -260,6 +260,7 @@ export function prepConfig(opts: PrepConfigOpts) {
   const yScale = yFieldConfig?.scaleDistribution ?? { type: ScaleDistribution.Linear };
   const yAxisReverse = Boolean(yAxisConfig.reverse);
   const shouldUseLogScale = yScale.type !== ScaleDistribution.Linear || heatmapType === DataFrameType.HeatmapSparse;
+  const isOrdianalY = readHeatmapScanlinesCustomMeta(dataRef.current?.heatmap).yOrdinalDisplay != null;
 
   // random to prevent syncing y in other heatmaps
   // TODO: try to match TimeSeries y keygen algo to sync with TimeSeries panels (when not isOrdianalY)
@@ -275,11 +276,34 @@ export function prepConfig(opts: PrepConfigOpts) {
     distribution: shouldUseLogScale ? ScaleDistribution.Log : ScaleDistribution.Linear,
     log: yScale.log ?? 2,
     range:
-      // sparse already accounts for le/ge by explicit yMin & yMax cell bounds, so use default log ranging
+      // sparse already accounts for le/ge by explicit yMin & yMax cell bounds, so no need to expand y range
       heatmapType === DataFrameType.HeatmapSparse
-        ? undefined
+        ? (u, dataMin, dataMax) => {
+            let scaleMin: number | null, scaleMax: number | null;
+
+            [scaleMin, scaleMax] = shouldUseLogScale
+              ? uPlot.rangeLog(dataMin, dataMax, (yScale.log ?? 2) as unknown as uPlot.Scale.LogBase, true)
+              : [dataMin, dataMax];
+
+            if (shouldUseLogScale && !isOrdianalY) {
+              let { min: explicitMin, max: explicitMax } = yAxisConfig;
+
+              // guard against <= 0
+              if (explicitMin != null && explicitMin > 0) {
+                scaleMin = explicitMin;
+              }
+
+              if (explicitMax != null && explicitMax > 0) {
+                scaleMax = explicitMax;
+              }
+            }
+
+            return [scaleMin, scaleMax];
+          }
         : // dense and ordinal only have one of yMin|yMax|y, so expand range by one cell in the direction of le/ge/unknown
           (u, dataMin, dataMax) => {
+            let { min: explicitMin, max: explicitMax } = yAxisConfig;
+
             // logarithmic expansion
             if (shouldUseLogScale) {
               let yExp = u.scales[yScaleKey].log!;
@@ -316,6 +340,17 @@ export function prepConfig(opts: PrepConfigOpts) {
                 dataMin /= yExp / 2;
                 dataMax *= yExp / 2;
               }
+
+              if (!isOrdianalY) {
+                // guard against <= 0
+                if (explicitMin != null && explicitMin > 0) {
+                  dataMin = explicitMin;
+                }
+
+                if (explicitMax != null && explicitMax > 0) {
+                  dataMax = explicitMax;
+                }
+              }
             }
             // linear expansion
             else {
@@ -337,12 +372,17 @@ export function prepConfig(opts: PrepConfigOpts) {
               } else {
                 // how to expand scale range if inferred non-regular or log buckets?
               }
+
+              if (!isOrdianalY) {
+                dataMin = explicitMin ?? dataMin;
+                dataMax = explicitMax ?? dataMax;
+              }
             }
+
             return [dataMin, dataMax];
           },
   });
 
-  const isOrdianalY = readHeatmapScanlinesCustomMeta(dataRef.current?.heatmap).yOrdinalDisplay != null;
   const disp = dataRef.current?.heatmap?.fields[1].display ?? getValueFormat('short');
 
   builder.addAxis({
