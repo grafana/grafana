@@ -261,8 +261,12 @@ export function prepConfig(opts: PrepConfigOpts) {
   const yAxisReverse = Boolean(yAxisConfig.reverse);
   const shouldUseLogScale = yScale.type !== ScaleDistribution.Linear || heatmapType === DataFrameType.HeatmapSparse;
 
+  // random to prevent syncing y in other heatmaps
+  // TODO: try to match TimeSeries y keygen algo to sync with TimeSeries panels (when not isOrdianalY)
+  const yScaleKey = 'y_' + (Math.random() + 1).toString(36).substring(7);
+
   builder.addScale({
-    scaleKey: 'y',
+    scaleKey: yScaleKey,
     isTime: false,
     // distribution: ScaleDistribution.Ordinal, // does not work with facets/scatter yet
     orientation: ScaleOrientation.Vertical,
@@ -278,7 +282,7 @@ export function prepConfig(opts: PrepConfigOpts) {
           (u, dataMin, dataMax) => {
             // logarithmic expansion
             if (shouldUseLogScale) {
-              let yExp = u.scales['y'].log!;
+              let yExp = u.scales[yScaleKey].log!;
 
               let minExpanded = false;
               let maxExpanded = false;
@@ -342,7 +346,7 @@ export function prepConfig(opts: PrepConfigOpts) {
   const disp = dataRef.current?.heatmap?.fields[1].display ?? getValueFormat('short');
 
   builder.addAxis({
-    scaleKey: 'y',
+    scaleKey: yScaleKey,
     show: yAxisConfig.axisPlacement !== AxisPlacement.Hidden,
     placement: yAxisConfig.axisPlacement || AxisPlacement.Left,
     size: yAxisConfig.axisWidth || null,
@@ -408,7 +412,7 @@ export function prepConfig(opts: PrepConfigOpts) {
         sorted: 1,
       },
       {
-        scale: 'y',
+        scale: yScaleKey,
         auto: true,
       },
     ],
@@ -461,7 +465,7 @@ export function prepConfig(opts: PrepConfigOpts) {
         sorted: 1,
       },
       {
-        scale: 'y',
+        scale: yScaleKey,
         auto: true,
       },
     ],
@@ -521,28 +525,27 @@ export function prepConfig(opts: PrepConfigOpts) {
     },
   };
 
-  const isSyncOff = sync && sync() === DashboardCursorSync.Off;
+  if (sync && sync() !== DashboardCursorSync.Off) {
+    cursor.sync = {
+      key: '__global_',
+      filters: {
+        pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {
+          if (x < 0) {
+            payload.point[xScaleUnit] = null;
+            eventBus.publish(new DataHoverClearEvent());
+          } else {
+            payload.point[xScaleUnit] = src.posToVal(x, xScaleKey);
+            eventBus.publish(hoverEvent);
+          }
 
-  cursor.sync = {
-    key: '__global_',
-    filters: {
-      pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {
-        if (x < 0) {
-          payload.point[xScaleUnit] = null;
-          eventBus.publish(new DataHoverClearEvent());
-        } else {
-          payload.point[xScaleUnit] = src.posToVal(x, xScaleKey);
-          eventBus.publish(hoverEvent);
-        }
-
-        return !isSyncOff;
+          return true;
+        },
       },
-    },
-    scales: [xScaleKey, xScaleKey], // y is set to x so that it is a real scale, but will not match "y" elsewhere
-    match: isSyncOff ? [() => false, () => false] : [(a, b) => a === b, () => false],
-  };
+    };
 
-  builder.setSync();
+    builder.setSync();
+  }
+
   builder.setCursor(cursor);
 
   return builder;
