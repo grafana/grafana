@@ -109,3 +109,19 @@ func (kv *kvStoreSQL) Keys(ctx context.Context, orgId int64, namespace string, k
 	})
 	return keys, err
 }
+
+// Items get all items a given namespace and org. To query for all
+//// organizations the constant 'kvstore.AllOrganizations' can be passed as orgId.
+func (kv *kvStoreSQL) Items(ctx context.Context, orgId int64, namespace string) ([]Item, error) {
+	var items []Item
+	err := kv.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		query := dbSession.Where("namespace = ?", namespace)
+		if orgId != AllOrganizations {
+			query.And("org_id = ?", orgId)
+		}
+
+		return query.Find(&items)
+	})
+
+	return items, err
+}

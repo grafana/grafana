@@ -241,4 +241,20 @@ func TestIntegrationKVStore(t *testing.T) {
 		require.NoError(t, err, "querying a not existing namespace and key should not throw an error")
 		require.Len(t, keys, 0, "querying a not existing namespace and key should return an empty slice")
 	})
+
+	t.Run("Get all values per org", func(t *testing.T) {
+		for _, tc := range testCases {
+			items, err := kv.Items(ctx, tc.OrgId, tc.Namespace)
+			require.NoError(t, err)
+			require.Equal(t, *items[0].Key, tc.Key)
+			require.Equal(t, items[0].Value, tc.Value())
+		}
+	})
+
+	t.Run("Get all values for all orgs", func(t *testing.T) {
+		items, err := kv.Items(ctx, AllOrganizations, "testing1")
+		require.NoError(t, err)
+		require.Equal(t, items[0].Value, testCases[0].Value())
+		require.Equal(t, items[1].Value, testCases[2].Value())
+	})
 }
