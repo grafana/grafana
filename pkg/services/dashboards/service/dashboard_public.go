@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"encoding/json"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
@@ -25,16 +24,9 @@ func (dr *DashboardServiceImpl) GetPublicDashboard(ctx context.Context, dashboar
 		return nil, models.ErrPublicDashboardNotFound
 	}
 
-	// Replace dashboard time range with pubdash time range
-	if pubdash.TimeSettings != "" {
-		var pdTimeSettings map[string]interface{}
-		err = json.Unmarshal([]byte(pubdash.TimeSettings), &pdTimeSettings)
-		if err != nil {
-			return nil, err
-		}
-
-		d.Data.Set("time", pdTimeSettings)
-	}
+	ts := pubdash.BuildTimeSettings(d)
+	d.Data.SetPath([]string{"time", "from"}, ts.From)
+	d.Data.SetPath([]string{"time", "to"}, ts.To)
 
 	return d, nil
 }
@@ -80,24 +72,17 @@ func (dr *DashboardServiceImpl) BuildPublicDashboardMetricRequest(ctx context.Co
 		return dtos.MetricRequest{}, models.ErrPublicDashboardNotFound
 	}
 
-	var timeSettings struct {
-		From string `json:"from"`
-		To   string `json:"to"`
-	}
-	err = json.Unmarshal([]byte(publicDashboard.TimeSettings), &timeSettings)
-	if err != nil {
-		return dtos.MetricRequest{}, err
-	}
-
 	queriesByPanel := models.GetQueriesFromDashboard(dashboard.Data)
 
 	if _, ok := queriesByPanel[panelId]; !ok {
 		return dtos.MetricRequest{}, models.ErrPublicDashboardPanelNotFound
 	}
 
+	ts := publicDashboard.BuildTimeSettings(dashboard)
+
 	return dtos.MetricRequest{
-		From:    timeSettings.From,
-		To:      timeSettings.To,
+		From:    ts.From,
+		To:      ts.To,
 		Queries: queriesByPanel[panelId],
 	}, nil
 }
