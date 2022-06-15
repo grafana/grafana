@@ -75,7 +75,7 @@ func newDashboardIndex(dashLoader dashboardLoader, evStore eventStore, extender 
 	}
 }
 
-func (i *dashboardIndex) run(ctx context.Context) error {
+func (i *dashboardIndex) run(ctx context.Context, reIndexSignalCh chan struct{}) error {
 	fullReIndexTicker := time.NewTicker(5 * time.Minute)
 	defer fullReIndexTicker.Stop()
 
@@ -116,6 +116,9 @@ func (i *dashboardIndex) run(ctx context.Context) error {
 			started := time.Now()
 			i.reIndexFromScratch(ctx)
 			i.logger.Info("Full re-indexing finished", "fullReIndexElapsed", time.Since(started))
+		case <-reIndexSignalCh:
+			i.logger.Info("Full re-indexing due to external signal")
+			i.reIndexFromScratch(ctx)
 		case <-ctx.Done():
 			return ctx.Err()
 		}

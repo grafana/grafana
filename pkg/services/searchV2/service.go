@@ -27,6 +27,7 @@ type StandardSearchService struct {
 	logger         log.Logger
 	dashboardIndex *dashboardIndex
 	extender       DashboardIndexExtender
+	reIndexCh      chan struct{}
 }
 
 func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore store.EntityEventsService, ac accesscontrol.AccessControl) SearchService {
@@ -45,8 +46,9 @@ func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore s
 			extender.GetDocumentExtender(),
 			newFolderIDLookup(sql),
 		),
-		logger:   log.New("searchV2"),
-		extender: extender,
+		logger:    log.New("searchV2"),
+		extender:  extender,
+		reIndexCh: make(chan struct{}, 1),
 	}
 	return s
 }
@@ -59,7 +61,15 @@ func (s *StandardSearchService) IsDisabled() bool {
 }
 
 func (s *StandardSearchService) Run(ctx context.Context) error {
-	return s.dashboardIndex.run(ctx)
+	return s.dashboardIndex.run(ctx, s.reIndexCh)
+}
+
+func (s *StandardSearchService) TriggerReIndex() {
+	select {
+	case s.reIndexCh <- struct{}{}:
+	default:
+		// channel is full => re-index will happen soon anyway.
+	}
 }
 
 func (s *StandardSearchService) RegisterDashboardIndexExtender(ext DashboardIndexExtender) {
