@@ -33,15 +33,12 @@ export function prepareGraphableFields(
 
     let hasTimeField = false;
     let hasValueField = false;
-    let nulledFrame = frame;
 
-    if (timeRange !== undefined) {
-      nulledFrame = applyNullInsertThreshold({
-        frame,
-        refFieldPseudoMin: timeRange.from.valueOf(),
-        refFieldPseudoMax: timeRange.to.valueOf(),
-      });
-    }
+    let nulledFrame = applyNullInsertThreshold({
+      frame,
+      refFieldPseudoMin: timeRange?.from.valueOf(),
+      refFieldPseudoMax: timeRange?.to.valueOf(),
+    });
 
     // Mark the field state as having a null threhold applied
     frame.fields[0].state = {

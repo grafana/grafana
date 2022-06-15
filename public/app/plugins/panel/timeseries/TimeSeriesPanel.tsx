@@ -36,9 +36,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
     return getFieldLinksForExplore({ field, rowIndex, splitOpenFn: onSplitOpen, range: timeRange });
   };
 
-  const frames = useMemo(() => {
-    return prepareGraphableFields(data.series, config.theme2, timeRange);
-  }, [data, timeRange]);
+  const frames = useMemo(() => prepareGraphableFields(data.series, config.theme2, timeRange), [data, timeRange]);
 
   if (!frames) {
     return (
