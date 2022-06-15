@@ -138,7 +138,7 @@ export class QueryGroup extends PureComponent<Props, State> {
     const ds = !dsSettings?.meta.mixed ? dsSettings : defaultDataSource;
 
     return {
-      ...(this.state.dataSource?.getDefaultQuery && this.state.dataSource.getDefaultQuery(CoreApp.PanelEditor)),
+      ...this.state.dataSource?.getDefaultQuery?.(CoreApp.PanelEditor),
       datasource: { uid: ds?.uid, type: ds?.type },
     };
   }
