@@ -77,20 +77,22 @@ export const emptyRoute: FormAmRoute = {
   muteTimeIntervals: [],
 };
 
-//returns route, and a record mapping id to existing route route
+//returns route, and a record mapping id to existing route
 export const amRouteToFormAmRoute = (route: Route | undefined): [FormAmRoute, Record<string, Route>] => {
-  if (!route || Object.keys(route).length === 0) {
+  if (!route) {
     return [emptyRoute, {}];
   }
-
-  const [groupWaitValue, groupWaitValueType] = intervalToValueAndType(route.group_wait, ['', 's']);
-  const [groupIntervalValue, groupIntervalValueType] = intervalToValueAndType(route.group_interval, ['', 'm']);
-  const [repeatIntervalValue, repeatIntervalValueType] = intervalToValueAndType(route.repeat_interval, ['', 'h']);
 
   const id = String(Math.random());
   const id2route = {
     [id]: route,
   };
+
+  if (Object.keys(route).length === 0) {
+    const formAmRoute = { ...emptyRoute, id };
+    return [formAmRoute, id2route];
+  }
+
   const formRoutes: FormAmRoute[] = [];
   route.routes?.forEach((subRoute) => {
     const [subFormRoute, subId2Route] = amRouteToFormAmRoute(subRoute);
@@ -104,6 +106,10 @@ export const amRouteToFormAmRoute = (route: Route | undefined): [FormAmRoute, Re
     : route.object_matchers?.map(
         (matcher) => ({ name: matcher[0], operator: matcher[1], value: matcher[2] } as MatcherFieldValue)
       ) ?? [];
+
+  const [groupWaitValue, groupWaitValueType] = intervalToValueAndType(route.group_wait, ['', 's']);
+  const [groupIntervalValue, groupIntervalValueType] = intervalToValueAndType(route.group_interval, ['', 'm']);
+  const [repeatIntervalValue, repeatIntervalValueType] = intervalToValueAndType(route.repeat_interval, ['', 'h']);
 
   return [
     {

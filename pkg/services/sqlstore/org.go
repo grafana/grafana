@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 	"xorm.io/xorm"
 )
 
@@ -103,13 +102,13 @@ func isOrgNameTaken(name string, existingId int64, sess *DBSession) (bool, error
 	return false, nil
 }
 
-func createOrg(name string, userID int64, engine *xorm.Engine) (models.Org, error) {
+func (ss *SQLStore) createOrg(ctx context.Context, name string, userID int64, engine *xorm.Engine) (models.Org, error) {
 	org := models.Org{
 		Name:    name,
 		Created: time.Now(),
 		Updated: time.Now(),
 	}
-	if err := inTransactionWithRetryCtx(context.Background(), engine, func(sess *DBSession) error {
+	if err := inTransactionWithRetryCtx(ctx, engine, ss.bus, func(sess *DBSession) error {
 		if isNameTaken, err := isOrgNameTaken(name, 0, sess); err != nil {
 			return err
 		} else if isNameTaken {
@@ -146,11 +145,11 @@ func createOrg(name string, userID int64, engine *xorm.Engine) (models.Org, erro
 
 // CreateOrgWithMember creates an organization with a certain name and a certain user as member.
 func (ss *SQLStore) CreateOrgWithMember(name string, userID int64) (models.Org, error) {
-	return createOrg(name, userID, ss.engine)
+	return ss.createOrg(context.Background(), name, userID, ss.engine)
 }
 
 func (ss *SQLStore) CreateOrg(ctx context.Context, cmd *models.CreateOrgCommand) error {
-	org, err := createOrg(cmd.Name, cmd.UserId, ss.engine)
+	org, err := ss.createOrg(ctx, cmd.Name, cmd.UserId, ss.engine)
 	if err != nil {
 		return err
 	}
@@ -292,52 +291,6 @@ func (ss *SQLStore) getOrCreateOrg(sess *DBSession, orgName string) (int64, erro
 
 		org.Name = MainOrgName
 		org.Id = int64(ss.Cfg.AutoAssignOrgId)
-	} else {
-		org.Name = orgName
-	}
-
-	org.Created = time.Now()
-	org.Updated = time.Now()
-
-	if org.Id != 0 {
-		if _, err := sess.InsertId(&org); err != nil {
-			return 0, err
-		}
-	} else {
-		if _, err := sess.InsertOne(&org); err != nil {
-			return 0, err
-		}
-	}
-
-	sess.publishAfterCommit(&events.OrgCreated{
-		Timestamp: org.Created,
-		Id:        org.Id,
-		Name:      org.Name,
-	})
-
-	return org.Id, nil
-}
-
-func getOrCreateOrg(sess *DBSession, orgName string) (int64, error) {
-	var org models.Org
-	if setting.AutoAssignOrg {
-		has, err := sess.Where("id=?", setting.AutoAssignOrgId).Get(&org)
-		if err != nil {
-			return 0, err
-		}
-		if has {
-			return org.Id, nil
-		}
-
-		if setting.AutoAssignOrgId != 1 {
-			sqlog.Error("Could not create user: organization ID does not exist", "orgID",
-				setting.AutoAssignOrgId)
-			return 0, fmt.Errorf("could not create user: organization ID %d does not exist",
-				setting.AutoAssignOrgId)
-		}
-
-		org.Name = MainOrgName
-		org.Id = int64(setting.AutoAssignOrgId)
 	} else {
 		org.Name = orgName
 	}

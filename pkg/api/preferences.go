@@ -80,6 +80,7 @@ func (hs *HTTPServer) getPreferencesFor(ctx context.Context, orgID, userID, team
 	}
 
 	if preference.JSONData != nil {
+		dto.Locale = preference.JSONData.Locale
 		dto.Navbar = preference.JSONData.Navbar
 		dto.QueryHistory = preference.JSONData.QueryHistory
 	}
@@ -117,6 +118,7 @@ func (hs *HTTPServer) updatePreferencesFor(ctx context.Context, orgID, userID, t
 		OrgID:           orgID,
 		TeamID:          teamId,
 		Theme:           dtoCmd.Theme,
+		Locale:          dtoCmd.Locale,
 		Timezone:        dtoCmd.Timezone,
 		WeekStart:       dtoCmd.WeekStart,
 		HomeDashboardID: dtoCmd.HomeDashboardID,
@@ -165,6 +167,7 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 		Timezone:        dtoCmd.Timezone,
 		WeekStart:       dtoCmd.WeekStart,
 		HomeDashboardID: dtoCmd.HomeDashboardID,
+		Locale:          dtoCmd.Locale,
 		Navbar:          dtoCmd.Navbar,
 		QueryHistory:    dtoCmd.QueryHistory,
 	}

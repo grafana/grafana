@@ -8,8 +8,8 @@ import {
   outerJoinDataFrames,
   PanelData,
 } from '@grafana/data';
-import { calculateHeatmapFromData, bucketsToScanlines } from 'app/features/transformers/calculateHeatmap/heatmap';
-import { HeatmapBucketLayout } from 'app/features/transformers/calculateHeatmap/models.gen';
+import { calculateHeatmapFromData, rowsToCellsHeatmap } from 'app/features/transformers/calculateHeatmap/heatmap';
+import { HeatmapCellLayout } from 'app/features/transformers/calculateHeatmap/models.gen';
 
 import { PanelOptions } from './models.gen';
 
@@ -24,8 +24,8 @@ export interface HeatmapData {
   xBucketCount?: number;
   yBucketCount?: number;
 
-  xLayout?: HeatmapBucketLayout;
-  yLayout?: HeatmapBucketLayout;
+  xLayout?: HeatmapCellLayout;
+  yLayout?: HeatmapCellLayout;
 
   // Print a heatmap cell value
   display?: (v: number) => string;
@@ -48,34 +48,34 @@ export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme
   }
 
   // Check for known heatmap types
-  let bucketHeatmap: DataFrame | undefined = undefined;
+  let rowsHeatmap: DataFrame | undefined = undefined;
   for (const frame of frames) {
     switch (frame.meta?.type) {
       case DataFrameType.HeatmapSparse:
         return getSparseHeatmapData(frame, exemplars, theme);
 
-      case DataFrameType.HeatmapScanlines:
+      case DataFrameType.HeatmapCells:
         return getHeatmapData(frame, exemplars, theme);
 
-      case DataFrameType.HeatmapBuckets:
-        bucketHeatmap = frame; // the default format
+      case DataFrameType.HeatmapRows:
+        rowsHeatmap = frame; // the default format
     }
   }
 
   // Everything past here assumes a field for each row in the heatmap (buckets)
-  if (!bucketHeatmap) {
+  if (!rowsHeatmap) {
     if (frames.length > 1) {
-      bucketHeatmap = [
+      rowsHeatmap = [
         outerJoinDataFrames({
           frames,
         })!,
       ][0];
     } else {
-      bucketHeatmap = frames[0];
+      rowsHeatmap = frames[0];
     }
   }
 
-  return getHeatmapData(bucketsToScanlines({ ...options.bucketFrame, frame: bucketHeatmap }), exemplars, theme);
+  return getHeatmapData(rowsToCellsHeatmap({ ...options.rowsFrame, frame: rowsHeatmap }), exemplars, theme);
 }
 
 const getSparseHeatmapData = (
@@ -99,7 +99,7 @@ const getSparseHeatmapData = (
 };
 
 const getHeatmapData = (frame: DataFrame, exemplars: DataFrame | undefined, theme: GrafanaTheme2): HeatmapData => {
-  if (frame.meta?.type !== DataFrameType.HeatmapScanlines) {
+  if (frame.meta?.type !== DataFrameType.HeatmapCells) {
     return {
       warning: 'Expected heatmap scanlines format',
       heatmap: frame,
@@ -147,17 +147,9 @@ const getHeatmapData = (frame: DataFrame, exemplars: DataFrame | undefined, them
 
     // TODO: improve heuristic
     xLayout:
-      xName === 'xMax'
-        ? HeatmapBucketLayout.le
-        : xName === 'xMin'
-        ? HeatmapBucketLayout.ge
-        : HeatmapBucketLayout.unknown,
+      xName === 'xMax' ? HeatmapCellLayout.le : xName === 'xMin' ? HeatmapCellLayout.ge : HeatmapCellLayout.unknown,
     yLayout:
-      yName === 'yMax'
-        ? HeatmapBucketLayout.le
-        : yName === 'yMin'
-        ? HeatmapBucketLayout.ge
-        : HeatmapBucketLayout.unknown,
+      yName === 'yMax' ? HeatmapCellLayout.le : yName === 'yMin' ? HeatmapCellLayout.ge : HeatmapCellLayout.unknown,
 
     display: (v) => formattedValueToString(disp(v)),
   };

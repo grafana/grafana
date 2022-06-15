@@ -6,7 +6,7 @@ import { AxisPlacement, GraphFieldConfig, ScaleDistribution, ScaleDistributionCo
 import { addHideFrom, ScaleDistributionEditor } from '@grafana/ui/src/options/builder';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { addHeatmapCalculationOptions } from 'app/features/transformers/calculateHeatmap/editor/helper';
-import { HeatmapBucketLayout } from 'app/features/transformers/calculateHeatmap/models.gen';
+import { HeatmapCellLayout } from 'app/features/transformers/calculateHeatmap/models.gen';
 
 import { HeatmapPanel } from './HeatmapPanel';
 import { heatmapChangedHandler, heatmapMigrationHandler } from './migrations';
@@ -125,16 +125,16 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
 
     if (!opts.calculate) {
       builder.addRadio({
-        path: 'bucketFrame.layout',
+        path: 'rowsFrame.layout',
         name: 'Tick alignment',
-        defaultValue: defaultPanelOptions.bucketFrame?.layout ?? HeatmapBucketLayout.auto,
+        defaultValue: defaultPanelOptions.rowsFrame?.layout ?? HeatmapCellLayout.auto,
         category,
         settings: {
           options: [
-            { label: 'Auto', value: HeatmapBucketLayout.auto },
-            { label: 'Top (LE)', value: HeatmapBucketLayout.le },
-            { label: 'Middle', value: HeatmapBucketLayout.unknown },
-            { label: 'Bottom (GE)', value: HeatmapBucketLayout.ge },
+            { label: 'Auto', value: HeatmapCellLayout.auto },
+            { label: 'Top (LE)', value: HeatmapCellLayout.le },
+            { label: 'Middle', value: HeatmapCellLayout.unknown },
+            { label: 'Bottom (GE)', value: HeatmapCellLayout.ge },
           ],
         },
       });
@@ -326,9 +326,9 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
 
     if (!opts.calculate) {
       builder.addTextInput({
-        path: 'bucketFrame.value',
+        path: 'rowsFrame.value',
         name: 'Cell value name',
-        defaultValue: defaultPanelOptions.bucketFrame?.value,
+        defaultValue: defaultPanelOptions.rowsFrame?.value,
         settings: {
           placeholder: 'Value',
         },
