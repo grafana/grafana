@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import pluralize from 'pluralize';
+import { countBy, difference, lowerFirst } from 'lodash';
 import React, { useMemo, useState } from 'react';
 
 import { GrafanaTheme } from '@grafana/data';
@@ -23,17 +23,32 @@ type Props = {
   itemsDisplayLimit?: number;
 };
 
-function ShowMoreInstances(props: { hiddenItemsCount: number; ruleViewPageLink: string }) {
+interface ShowMoreStats {
+  totalItemsCount: number;
+  visibleItemsCount: number;
+  hiddenItemsCount: number;
+  hiddenCountByState: Record<string, number>;
+}
+
+function ShowMoreInstances(props: { ruleViewPageLink: string; stats: ShowMoreStats }) {
   const styles = useStyles(getStyles);
+  const { ruleViewPageLink, stats } = props;
+
+  const hiddenInstancesStatus = Object.entries(stats.hiddenCountByState)
+    .map(([state, count]) => {
+      return `${count} ${lowerFirst(state)}`;
+    })
+    .join(', ');
 
   return (
     <div className={styles.footerRow}>
       <div>
-        +{props.hiddenItemsCount} more {pluralize('item', props.hiddenItemsCount)}...
+        Showing {stats.visibleItemsCount} out of {stats.totalItemsCount} instances, {hiddenInstancesStatus} hidden for
+        brevity
       </div>
-      {props.ruleViewPageLink && (
-        <LinkButton href={props.ruleViewPageLink} size="sm" variant="secondary">
-          Show all alert instances
+      {ruleViewPageLink && (
+        <LinkButton href={ruleViewPageLink} size="sm" variant="secondary">
+          Show all {stats.totalItemsCount} alert instances
         </LinkButton>
       )}
     </div>
@@ -68,12 +83,26 @@ export function RuleDetailsMatchingInstances(props: Props): JSX.Element | null {
     return null;
   }
 
-  const visibleInstances = itemsDisplayLimit ? alerts.slice(0, itemsDisplayLimit) : alerts;
+  const visibleInstancesLimit = 3;
+  const visibleInstances = itemsDisplayLimit ? alerts.slice(0, visibleInstancesLimit) : alerts;
+  const hiddenInstances = difference(alerts, visibleInstances);
+
+  const countAllByState = countBy(alerts, (alert) => mapStateWithReasonToBaseState(alert.state));
+  const hiddenByState = countBy(hiddenInstances, (instance) => mapStateWithReasonToBaseState(instance.state));
+
   const hiddenItemsCount = alerts.length - visibleInstances.length;
+
+  const stats: ShowMoreStats = {
+    totalItemsCount: alerts.length,
+    visibleItemsCount: visibleInstances.length,
+    hiddenItemsCount: hiddenInstances.length,
+    hiddenCountByState: hiddenByState,
+  };
+
   const ruleViewPageLink = createViewLink(namespace.rulesSource, props.rule, location.pathname + location.search);
 
   const footerRow = hiddenItemsCount ? (
-    <ShowMoreInstances hiddenItemsCount={hiddenItemsCount} ruleViewPageLink={ruleViewPageLink} />
+    <ShowMoreInstances stats={stats} ruleViewPageLink={ruleViewPageLink} />
   ) : undefined;
 
   return (
@@ -90,6 +119,7 @@ export function RuleDetailsMatchingInstances(props: Props): JSX.Element | null {
             className={styles.rowChild}
             stateFilter={alertState}
             onStateFilterChange={setAlertState}
+            itemPerStateStats={countAllByState}
           />
         </div>
       </div>

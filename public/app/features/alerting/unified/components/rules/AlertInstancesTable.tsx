@@ -1,4 +1,3 @@
-import { css } from '@emotion/css';
 import React, { FC, useMemo } from 'react';
 
 import { Alert } from 'app/types/unified-alerting';
@@ -40,15 +39,6 @@ export const AlertInstancesTable: FC<Props> = ({ instances, pagination, footerRo
     />
   );
 };
-
-export const getStyles = () => ({
-  footerRow: css`
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-  `,
-});
 
 const columns: AlertTableColumnProps[] = [
   {
