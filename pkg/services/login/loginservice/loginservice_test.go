@@ -70,8 +70,8 @@ func Test_teamSync(t *testing.T) {
 	}
 
 	upserCmd := &models.UpsertUserCommand{ExternalUser: &models.ExternalUserInfo{Email: "test_user@example.org"}}
-	expectedUser := &models.User{
-		Id:    1,
+	expectedUser := &user.User{
+		ID:    1,
 		Email: "test_user@example.org",
 		Name:  "test_user",
 		Login: "test_user",
