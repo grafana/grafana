@@ -106,6 +106,13 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
       jaegerQuery = omit(jaegerQuery, 'operation');
     }
 
+    if (jaegerQuery.tags) {
+      jaegerQuery = {
+        ...jaegerQuery,
+        tags: convertTagsLogfmt(jaegerQuery.tags.toString()),
+      };
+    }
+
     // TODO: this api is internal, used in jaeger ui. Officially they have gRPC api that should be used.
     return this._request(`/api/traces`, {
       ...jaegerQuery,
@@ -140,7 +147,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
     if (query.tags && this.templateSrv.containsTemplate(query.tags)) {
       expandedQuery = {
         ...query,
-        tags: convertTagsLogfmt(this.templateSrv.replace(query.tags, scopedVars)),
+        tags: this.templateSrv.replace(query.tags, scopedVars),
       };
     }
 

@@ -159,7 +159,7 @@ describe('JaegerDatasource', () => {
       })
     );
     expect(mock).toBeCalledWith({
-      url: `${defaultSettings.url}/api/traces?service=jaeger-query&tags=error%3Dtrue&start=1531468681000&end=1531489712000&lookback=custom`,
+      url: `${defaultSettings.url}/api/traces?service=jaeger-query&tags=%7B%22error%22%3A%22true%22%7D&start=1531468681000&end=1531489712000&lookback=custom`,
     });
   });
 
