@@ -38,7 +38,8 @@ func TestClient(t *testing.T) {
 				Headers:       nil,
 				Body:          []byte("match%5B%5D: ALERTS\nstart: 1655271408\nend: 1655293008"),
 			}
-			_, err := client.QueryResource(context.Background(), req)
+			res, err := client.QueryResource(context.Background(), req)
+			defer res.Body.Close()
 			require.NoError(t, err)
 			require.NotNil(t, doer.Req)
 			require.Equal(t, http.MethodPost, doer.Req.Method)
@@ -56,7 +57,8 @@ func TestClient(t *testing.T) {
 				URL:           "api/v1/series?match%5B%5D=ALERTS&start=1655272558&end=1655294158",
 				Headers:       nil,
 			}
-			_, err := client.QueryResource(context.Background(), req)
+			res, err := client.QueryResource(context.Background(), req)
+			defer res.Body.Close()
 			require.NoError(t, err)
 			require.NotNil(t, doer.Req)
 			require.Equal(t, http.MethodGet, doer.Req.Method)
