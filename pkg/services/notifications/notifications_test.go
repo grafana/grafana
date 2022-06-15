@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -12,8 +13,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func newBus(t *testing.T) bus.Bus {
+	t.Helper()
+	tracer, err := tracing.InitializeTracerForTest()
+	require.NoError(t, err)
+	return bus.ProvideBus(tracer)
+}
+
 func TestProvideService(t *testing.T) {
-	bus := bus.New()
+	bus := newBus(t)
 
 	t.Run("When invalid from_address in configuration", func(t *testing.T) {
 		cfg := createSmtpConfig()
@@ -33,7 +41,7 @@ func TestProvideService(t *testing.T) {
 }
 
 func TestSendEmailSync(t *testing.T) {
-	bus := bus.New()
+	bus := newBus(t)
 
 	t.Run("When sending emails synchronously", func(t *testing.T) {
 		ns, mailer := createSut(t, bus)
@@ -174,7 +182,7 @@ func TestSendEmailSync(t *testing.T) {
 }
 
 func TestSendEmailAsync(t *testing.T) {
-	bus := bus.New()
+	bus := newBus(t)
 
 	t.Run("When sending reset email password", func(t *testing.T) {
 		sut, _ := createSut(t, bus)

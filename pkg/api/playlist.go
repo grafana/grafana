@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"net/http"
-	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
@@ -11,13 +10,9 @@ import (
 )
 
 func (hs *HTTPServer) ValidateOrgPlaylist(c *models.ReqContext) {
-	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
-	if err != nil {
-		c.JsonApiErr(http.StatusBadRequest, "id is invalid", nil)
-		return
-	}
-	query := models.GetPlaylistByIdQuery{Id: id}
-	err = hs.SQLStore.GetPlaylist(c.Req.Context(), &query)
+	uid := web.Params(c.Req)[":uid"]
+	query := models.GetPlaylistByUidQuery{UID: uid, OrgId: c.OrgId}
+	err := hs.SQLStore.GetPlaylist(c.Req.Context(), &query)
 
 	if err != nil {
 		c.JsonApiErr(404, "Playlist not found", err)
@@ -58,20 +53,18 @@ func (hs *HTTPServer) SearchPlaylists(c *models.ReqContext) response.Response {
 }
 
 func (hs *HTTPServer) GetPlaylist(c *models.ReqContext) response.Response {
-	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "id is invalid", err)
-	}
-	cmd := models.GetPlaylistByIdQuery{Id: id}
+	uid := web.Params(c.Req)[":uid"]
+	cmd := models.GetPlaylistByUidQuery{UID: uid, OrgId: c.OrgId}
 
 	if err := hs.SQLStore.GetPlaylist(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Playlist not found", err)
 	}
 
-	playlistDTOs, _ := hs.LoadPlaylistItemDTOs(c.Req.Context(), id)
+	playlistDTOs, _ := hs.LoadPlaylistItemDTOs(c.Req.Context(), uid, c.OrgId)
 
 	dto := &models.PlaylistDTO{
 		Id:       cmd.Result.Id,
+		UID:      cmd.Result.UID,
 		Name:     cmd.Result.Name,
 		Interval: cmd.Result.Interval,
 		OrgId:    cmd.Result.OrgId,
@@ -81,8 +74,8 @@ func (hs *HTTPServer) GetPlaylist(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, dto)
 }
 
-func (hs *HTTPServer) LoadPlaylistItemDTOs(ctx context.Context, id int64) ([]models.PlaylistItemDTO, error) {
-	playlistitems, err := hs.LoadPlaylistItems(ctx, id)
+func (hs *HTTPServer) LoadPlaylistItemDTOs(ctx context.Context, uid string, orgId int64) ([]models.PlaylistItemDTO, error) {
+	playlistitems, err := hs.LoadPlaylistItems(ctx, uid, orgId)
 
 	if err != nil {
 		return nil, err
@@ -104,8 +97,8 @@ func (hs *HTTPServer) LoadPlaylistItemDTOs(ctx context.Context, id int64) ([]mod
 	return playlistDTOs, nil
 }
 
-func (hs *HTTPServer) LoadPlaylistItems(ctx context.Context, id int64) ([]models.PlaylistItem, error) {
-	itemQuery := models.GetPlaylistItemsByIdQuery{PlaylistId: id}
+func (hs *HTTPServer) LoadPlaylistItems(ctx context.Context, uid string, orgId int64) ([]models.PlaylistItem, error) {
+	itemQuery := models.GetPlaylistItemsByUidQuery{PlaylistUID: uid, OrgId: orgId}
 	if err := hs.SQLStore.GetPlaylistItem(ctx, &itemQuery); err != nil {
 		return nil, err
 	}
@@ -114,12 +107,9 @@ func (hs *HTTPServer) LoadPlaylistItems(ctx context.Context, id int64) ([]models
 }
 
 func (hs *HTTPServer) GetPlaylistItems(c *models.ReqContext) response.Response {
-	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "id is invalid", err)
-	}
+	uid := web.Params(c.Req)[":uid"]
 
-	playlistDTOs, err := hs.LoadPlaylistItemDTOs(c.Req.Context(), id)
+	playlistDTOs, err := hs.LoadPlaylistItemDTOs(c.Req.Context(), uid, c.OrgId)
 
 	if err != nil {
 		return response.Error(500, "Could not load playlist items", err)
@@ -129,12 +119,9 @@ func (hs *HTTPServer) GetPlaylistItems(c *models.ReqContext) response.Response {
 }
 
 func (hs *HTTPServer) GetPlaylistDashboards(c *models.ReqContext) response.Response {
-	playlistID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "id is invalid", err)
-	}
+	playlistUID := web.Params(c.Req)[":uid"]
 
-	playlists, err := hs.LoadPlaylistDashboards(c.Req.Context(), c.OrgId, c.SignedInUser, playlistID)
+	playlists, err := hs.LoadPlaylistDashboards(c.Req.Context(), c.OrgId, c.SignedInUser, playlistUID)
 	if err != nil {
 		return response.Error(500, "Could not load dashboards", err)
 	}
@@ -143,12 +130,9 @@ func (hs *HTTPServer) GetPlaylistDashboards(c *models.ReqContext) response.Respo
 }
 
 func (hs *HTTPServer) DeletePlaylist(c *models.ReqContext) response.Response {
-	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "id is invalid", err)
-	}
+	uid := web.Params(c.Req)[":uid"]
 
-	cmd := models.DeletePlaylistCommand{Id: id, OrgId: c.OrgId}
+	cmd := models.DeletePlaylistCommand{UID: uid, OrgId: c.OrgId}
 	if err := hs.SQLStore.DeletePlaylist(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to delete playlist", err)
 	}
@@ -176,17 +160,13 @@ func (hs *HTTPServer) UpdatePlaylist(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	cmd.OrgId = c.OrgId
-	var err error
-	cmd.Id, err = strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "id is invalid", err)
-	}
+	cmd.UID = web.Params(c.Req)[":uid"]
 
 	if err := hs.SQLStore.UpdatePlaylist(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to save playlist", err)
 	}
 
-	playlistDTOs, err := hs.LoadPlaylistItemDTOs(c.Req.Context(), cmd.Id)
+	playlistDTOs, err := hs.LoadPlaylistItemDTOs(c.Req.Context(), cmd.UID, c.OrgId)
 	if err != nil {
 		return response.Error(500, "Failed to save playlist", err)
 	}

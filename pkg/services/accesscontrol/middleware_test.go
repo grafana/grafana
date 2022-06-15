@@ -34,7 +34,7 @@ func TestMiddleware(t *testing.T) {
 		{
 			desc: "should pass middleware for correct permissions",
 			ac: mock.New().WithPermissions(
-				[]*accesscontrol.Permission{{Action: "users:read", Scope: "users:*"}},
+				[]accesscontrol.Permission{{Action: "users:read", Scope: "users:*"}},
 			),
 			evaluator:      accesscontrol.EvalPermission("users:read", "users:*"),
 			expectFallback: false,
@@ -43,7 +43,7 @@ func TestMiddleware(t *testing.T) {
 		{
 			desc: "should not reach endpoint when missing permissions",
 			ac: mock.New().WithPermissions(
-				[]*accesscontrol.Permission{{Action: "users:read", Scope: "users:1"}},
+				[]accesscontrol.Permission{{Action: "users:read", Scope: "users:1"}},
 			),
 			evaluator:      accesscontrol.EvalPermission("users:read", "users:*"),
 			expectFallback: false,

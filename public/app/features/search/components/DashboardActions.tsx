@@ -4,11 +4,11 @@ import { HorizontalGroup, LinkButton } from '@grafana/ui';
 
 export interface Props {
   folderId?: number;
-  isEditor: boolean;
-  canEdit?: boolean;
+  canCreateFolders?: boolean;
+  canCreateDashboards?: boolean;
 }
 
-export const DashboardActions: FC<Props> = ({ folderId, isEditor, canEdit }) => {
+export const DashboardActions: FC<Props> = ({ folderId, canCreateFolders = false, canCreateDashboards = false }) => {
   const actionUrl = (type: string) => {
     let url = `dashboard/${type}`;
 
@@ -22,9 +22,9 @@ export const DashboardActions: FC<Props> = ({ folderId, isEditor, canEdit }) => 
   return (
     <div>
       <HorizontalGroup spacing="md" align="center">
-        {canEdit && <LinkButton href={actionUrl('new')}>New Dashboard</LinkButton>}
-        {!folderId && isEditor && <LinkButton href="dashboards/folder/new">New Folder</LinkButton>}
-        {canEdit && <LinkButton href={actionUrl('import')}>Import</LinkButton>}
+        {canCreateDashboards && <LinkButton href={actionUrl('new')}>New Dashboard</LinkButton>}
+        {!folderId && canCreateFolders && <LinkButton href="dashboards/folder/new">New Folder</LinkButton>}
+        {canCreateDashboards && <LinkButton href={actionUrl('import')}>Import</LinkButton>}
       </HorizontalGroup>
     </div>
   );

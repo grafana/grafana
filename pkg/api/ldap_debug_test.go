@@ -515,7 +515,7 @@ func TestLDAP_AccessControl(t *testing.T) {
 			method:       http.MethodPost,
 			desc:         "ReloadLDAPCfg should return 200 for user with correct permissions",
 			expectedCode: http.StatusOK,
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: accesscontrol.ActionLDAPConfigReload},
 			},
 		},
@@ -524,7 +524,7 @@ func TestLDAP_AccessControl(t *testing.T) {
 			method:       http.MethodPost,
 			desc:         "ReloadLDAPCfg should return 403 for user without required permissions",
 			expectedCode: http.StatusForbidden,
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: "wrong"},
 			},
 		},
@@ -533,7 +533,7 @@ func TestLDAP_AccessControl(t *testing.T) {
 			method:       http.MethodGet,
 			desc:         "GetLDAPStatus should return 200 for user without required permissions",
 			expectedCode: http.StatusOK,
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: accesscontrol.ActionLDAPStatusRead},
 			},
 		},
@@ -542,7 +542,7 @@ func TestLDAP_AccessControl(t *testing.T) {
 			method:       http.MethodGet,
 			desc:         "GetLDAPStatus should return 200 for user without required permissions",
 			expectedCode: http.StatusForbidden,
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: "wrong"},
 			},
 		},
@@ -551,7 +551,7 @@ func TestLDAP_AccessControl(t *testing.T) {
 			method:       http.MethodGet,
 			desc:         "GetUserFromLDAP should return 200 for user with required permissions",
 			expectedCode: http.StatusOK,
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: accesscontrol.ActionLDAPUsersRead},
 			},
 		},
@@ -560,7 +560,7 @@ func TestLDAP_AccessControl(t *testing.T) {
 			method:       http.MethodGet,
 			desc:         "GetUserFromLDAP should return 403 for user without required permissions",
 			expectedCode: http.StatusForbidden,
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: "wrong"},
 			},
 		},
@@ -569,7 +569,7 @@ func TestLDAP_AccessControl(t *testing.T) {
 			method:       http.MethodPost,
 			desc:         "PostSyncUserWithLDAP should return 200 for user without required permissions",
 			expectedCode: http.StatusOK,
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: accesscontrol.ActionLDAPUsersSync},
 			},
 		},
@@ -578,7 +578,7 @@ func TestLDAP_AccessControl(t *testing.T) {
 			method:       http.MethodPost,
 			desc:         "PostSyncUserWithLDAP should return 200 for user without required permissions",
 			expectedCode: http.StatusForbidden,
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: "wrong"},
 			},
 		},

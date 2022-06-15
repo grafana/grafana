@@ -77,12 +77,6 @@
         "parameters": [
           {
             "type": "string",
-            "name": "roleUID",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
             "name": "builtinRole",
             "in": "path",
             "required": true
@@ -92,6 +86,12 @@
             "description": "A flag indicating if the assignment is global or not. If set to false, the default org ID of the authenticated user will be used from the request to remove assignment.",
             "name": "global",
             "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "roleUID",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -142,7 +142,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/SetUserRolesCommand"
+              "$ref": "#/definitions/CreateRoleWithPermissionsCommand"
             }
           }
         ],
@@ -195,18 +195,18 @@
         "operationId": "updateRoleWithPermissions",
         "parameters": [
           {
-            "type": "string",
-            "name": "roleUID",
-            "in": "path",
-            "required": true
-          },
-          {
             "name": "body",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/UpdateRoleCommand"
             }
+          },
+          {
+            "type": "string",
+            "name": "roleUID",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -347,19 +347,19 @@
         "operationId": "addTeamRole",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "name": "teamId",
-            "in": "path",
-            "required": true
-          },
-          {
             "name": "body",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/AddTeamRoleCommand"
             }
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "teamId",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -421,7 +421,7 @@
         }
       }
     },
-    "/access-control/users/{user_id}/roles": {
+    "/access-control/users/{userId}/roles": {
       "get": {
         "description": "Lists the roles that have been directly assigned to a given user. The list does not include built-in roles (Viewer, Editor, Admin or Grafana Admin), and it does not include roles that have been inherited from a team.\n\nYou need to have a permission with action `users.roles:list` and scope `users:id:\u003cuser ID\u003e`.",
         "tags": ["access_control", "enterprise"],
@@ -431,7 +431,7 @@
           {
             "type": "integer",
             "format": "int64",
-            "name": "user_id",
+            "name": "userId",
             "in": "path",
             "required": true
           }
@@ -458,9 +458,17 @@
         "operationId": "setUserRoles",
         "parameters": [
           {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/SetUserRolesCommand"
+            }
+          },
+          {
             "type": "integer",
             "format": "int64",
-            "name": "user_id",
+            "name": "userId",
             "in": "path",
             "required": true
           }
@@ -490,19 +498,19 @@
         "operationId": "addUserRole",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "name": "user_id",
-            "in": "path",
-            "required": true
-          },
-          {
             "name": "body",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/AddUserRoleCommand"
             }
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "userId",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -521,7 +529,7 @@
         }
       }
     },
-    "/access-control/users/{user_id}/roles/{roleUID}": {
+    "/access-control/users/{userId}/roles/{roleUID}": {
       "delete": {
         "description": "Revoke a role from a user. For bulk updates consider Set user role assignments.\n\nYou need to have a permission with action `users.roles:remove` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only unassign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to unassign a role which will allow to do that. This is done to prevent escalation of privileges.",
         "tags": ["access_control", "enterprise"],
@@ -529,11 +537,10 @@
         "operationId": "removeUserRole",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "name": "user_id",
-            "in": "path",
-            "required": true
+            "type": "boolean",
+            "description": "A flag indicating if the assignment is global or not. If set to false, the default org ID of the authenticated user will be used from the request to remove assignment.",
+            "name": "global",
+            "in": "query"
           },
           {
             "type": "string",
@@ -542,10 +549,11 @@
             "required": true
           },
           {
-            "type": "boolean",
-            "description": "A flag indicating if the assignment is global or not. If set to false, the default org ID of the authenticated user will be used from the request to remove assignment.",
-            "name": "global",
-            "in": "query"
+            "type": "integer",
+            "format": "int64",
+            "name": "userId",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -1334,19 +1342,19 @@
             "required": true
           },
           {
+            "type": "integer",
+            "format": "int64",
+            "name": "user_id",
+            "in": "path",
+            "required": true
+          },
+          {
             "name": "body",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/UpdateUserQuotaCmd"
             }
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "user_id",
-            "in": "path",
-            "required": true
           }
         ],
         "responses": {
@@ -1569,14 +1577,8 @@
         "description": "Updates an existing notification channel identified by uid.",
         "tags": ["legacy_alerts_notification_channels"],
         "summary": "Update notification channel by UID.",
-        "operationId": "updateAlertNotificationChannelBYUID",
+        "operationId": "updateAlertNotificationChannelByUID",
         "parameters": [
-          {
-            "type": "string",
-            "name": "notification_channel_uid",
-            "in": "path",
-            "required": true
-          },
           {
             "name": "body",
             "in": "body",
@@ -1584,6 +1586,12 @@
             "schema": {
               "$ref": "#/definitions/UpdateAlertNotificationWithUidCommand"
             }
+          },
+          {
+            "type": "string",
+            "name": "notification_channel_uid",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -1676,19 +1684,19 @@
         "operationId": "updateAlertNotificationChannel",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "name": "notification_channel_id",
-            "in": "path",
-            "required": true
-          },
-          {
             "name": "body",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/UpdateAlertNotificationCommand"
             }
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "notification_channel_id",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -2947,18 +2955,18 @@
         "operationId": "postDashboardPermissionsWithUid",
         "parameters": [
           {
-            "type": "string",
-            "name": "uid",
-            "in": "path",
-            "required": true
-          },
-          {
             "name": "Body",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/UpdateDashboardAclCommand"
             }
+          },
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -3268,13 +3276,13 @@
         "parameters": [
           {
             "type": "string",
-            "name": "uid",
+            "name": "datasource_proxy_route",
             "in": "path",
             "required": true
           },
           {
             "type": "string",
-            "name": "datasource_proxy_route",
+            "name": "uid",
             "in": "path",
             "required": true
           }
@@ -3307,14 +3315,22 @@
         "operationId": "datasourceProxyPOSTByUIDcalls",
         "parameters": [
           {
+            "name": "DatasourceProxyParam",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object"
+            }
+          },
+          {
             "type": "string",
-            "name": "uid",
+            "name": "datasource_proxy_route",
             "in": "path",
             "required": true
           },
           {
             "type": "string",
-            "name": "datasource_proxy_route",
+            "name": "uid",
             "in": "path",
             "required": true
           }
@@ -3394,13 +3410,13 @@
         "parameters": [
           {
             "type": "string",
-            "name": "id",
+            "name": "datasource_proxy_route",
             "in": "path",
             "required": true
           },
           {
             "type": "string",
-            "name": "datasource_proxy_route",
+            "name": "id",
             "in": "path",
             "required": true
           }
@@ -3434,10 +3450,12 @@
         "deprecated": true,
         "parameters": [
           {
-            "type": "string",
-            "name": "id",
-            "in": "path",
-            "required": true
+            "name": "DatasourceProxyParam",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object"
+            }
           },
           {
             "type": "string",
@@ -3446,12 +3464,10 @@
             "required": true
           },
           {
-            "name": "DatasourceProxyParam",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "type": "object"
-            }
+            "type": "string",
+            "name": "id",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -3562,18 +3578,18 @@
         "operationId": "updateDatasourceByUID",
         "parameters": [
           {
-            "type": "string",
-            "name": "uid",
-            "in": "path",
-            "required": true
-          },
-          {
             "name": "Body",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/UpdateDataSourceCommand"
             }
+          },
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -3884,18 +3900,18 @@
         "deprecated": true,
         "parameters": [
           {
-            "type": "string",
-            "name": "id",
-            "in": "path",
-            "required": true
-          },
-          {
             "name": "Body",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/UpdateDataSourceCommand"
             }
+          },
+          {
+            "type": "string",
+            "name": "id",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -4325,18 +4341,18 @@
         "operationId": "updateFolderPermissions",
         "parameters": [
           {
+            "type": "string",
+            "name": "folder_uid",
+            "in": "path",
+            "required": true
+          },
+          {
             "name": "Body",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/UpdateDashboardAclCommand"
             }
-          },
-          {
-            "type": "string",
-            "name": "folder_uid",
-            "in": "path",
-            "required": true
           }
         ],
         "responses": {
@@ -4570,18 +4586,18 @@
         "operationId": "updateLibraryElement",
         "parameters": [
           {
-            "type": "string",
-            "name": "library_element_uid",
-            "in": "path",
-            "required": true
-          },
-          {
             "name": "body",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/PatchLibraryElementCommand"
             }
+          },
+          {
+            "type": "string",
+            "name": "library_element_uid",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -5589,6 +5605,14 @@
         "operationId": "updateOrgQuota",
         "parameters": [
           {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateOrgQuotaCmd"
+            }
+          },
+          {
             "type": "string",
             "name": "quota_target",
             "in": "path",
@@ -5600,14 +5624,6 @@
             "name": "org_id",
             "in": "path",
             "required": true
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/UpdateOrgQuotaCmd"
-            }
           }
         ],
         "responses": {
@@ -5783,6 +5799,262 @@
           },
           "403": {
             "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/query-history": {
+      "get": {
+        "description": "Returns a list of queries in the query history that matches the search criteria.\nQuery history search supports pagination. Use the `limit` parameter to control the maximum number of queries returned; the default limit is 100.\nYou can also use the `page` query parameter to fetch queries from any page other than the first one.",
+        "tags": ["query_history"],
+        "summary": "Query history search.",
+        "operationId": "searchQueries",
+        "parameters": [
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "List of data source UIDs to search for",
+            "name": "datasourceUid",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Text inside query or comments that is searched for",
+            "name": "searchString",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "description": "Flag indicating if only starred queries should be returned",
+            "name": "onlyStarred",
+            "in": "query"
+          },
+          {
+            "enum": ["time-desc", "time-asc"],
+            "type": "string",
+            "default": "time-desc",
+            "description": "Sort method",
+            "name": "sort",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "Use this parameter to access hits beyond limit. Numbering starts at 1. limit param acts as page size.",
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "Limit the number of returned results",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "From range for the query history search",
+            "name": "from",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "To range for the query history search",
+            "name": "to",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getQueryHistorySearchResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "description": "Adds new query to query history.",
+        "tags": ["query_history"],
+        "summary": "Add query to query history.",
+        "operationId": "createQuery",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreateQueryInQueryHistoryCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getQueryHistoryResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/query-history/migrate": {
+      "post": {
+        "description": "Adds multiple queries to query history.",
+        "tags": ["query_history"],
+        "summary": "Migrate queries to query history.",
+        "operationId": "migrateQueries",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/MigrateQueriesToQueryHistoryCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getQueryHistoryMigrationResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/query-history/star/{query_history_uid}": {
+      "post": {
+        "description": "Adds star to query in query history as specified by the UID.",
+        "tags": ["query_history"],
+        "summary": "Add star to query in query history.",
+        "operationId": "starQuery",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "query_history_uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getQueryHistoryResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "delete": {
+        "description": "Removes star from query in query history as specified by the UID.",
+        "tags": ["query_history"],
+        "summary": "Remove star to query in query history.",
+        "operationId": "unstarQuery",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "query_history_uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getQueryHistoryResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/query-history/{query_history_uid}": {
+      "delete": {
+        "description": "Deletes an existing query in query history as specified by the UID. This operation cannot be reverted.",
+        "tags": ["query_history"],
+        "summary": "Delete query in query history.",
+        "operationId": "deleteQuery",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "query_history_uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getQueryHistoryDeleteQueryResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "patch": {
+        "description": "Updates comment for query in query history as specified by the UID.",
+        "tags": ["query_history"],
+        "summary": "Update comment for query in query history.",
+        "operationId": "patchQueryComment",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "query_history_uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/PatchQueryCommentInQueryHistoryCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getQueryHistoryResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
           },
           "500": {
             "$ref": "#/responses/internalServerError"
@@ -6317,19 +6589,19 @@
         "operationId": "updateReport",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "name": "reportID",
-            "in": "path",
-            "required": true
-          },
-          {
             "name": "body",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/CreateOrUpdateConfigCmd"
             }
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "reportID",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -6879,14 +7151,14 @@
           {
             "type": "integer",
             "format": "int64",
-            "name": "groupId",
+            "name": "teamId",
             "in": "path",
             "required": true
           },
           {
             "type": "integer",
             "format": "int64",
-            "name": "teamId",
+            "name": "groupId",
             "in": "path",
             "required": true
           }
@@ -6950,18 +7222,18 @@
         "operationId": "updateTeam",
         "parameters": [
           {
-            "type": "string",
-            "name": "team_id",
-            "in": "path",
-            "required": true
-          },
-          {
             "name": "body",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/UpdateTeamCommand"
             }
+          },
+          {
+            "type": "string",
+            "name": "team_id",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -7053,6 +7325,14 @@
         "operationId": "addTeamMember",
         "parameters": [
           {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/AddTeamMemberCommand"
+            }
+          },
+          {
             "type": "string",
             "name": "team_id",
             "in": "path",
@@ -7085,18 +7365,18 @@
         "operationId": "updateTeamMember",
         "parameters": [
           {
-            "type": "string",
-            "name": "team_id",
-            "in": "path",
-            "required": true
-          },
-          {
             "name": "body",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/UpdateTeamMemberCommand"
             }
+          },
+          {
+            "type": "string",
+            "name": "team_id",
+            "in": "path",
+            "required": true
           },
           {
             "type": "integer",
@@ -7523,7 +7803,7 @@
         "description": "Revokes the given auth token (device) for the actual user. User of issued auth token (device) will no longer be logged in and will be required to authenticate again upon next activity.",
         "tags": ["signed_in_user"],
         "summary": "Revoke an auth token of the actual User.",
-        "operationId": "revokeSignedINAuthTokenCmd",
+        "operationId": "revokeSignedInAuthToken",
         "parameters": [
           {
             "name": "body",
@@ -7809,13 +8089,6 @@
         "operationId": "updateUser",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "name": "user_id",
-            "in": "path",
-            "required": true
-          },
-          {
             "description": "To change the email, name, login, theme, provide another one.",
             "name": "body",
             "in": "body",
@@ -7823,6 +8096,13 @@
             "schema": {
               "$ref": "#/definitions/UpdateUserCommand"
             }
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "user_id",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -7908,6 +8188,541 @@
           },
           "500": {
             "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/v1/provisioning/alert-rules": {
+      "post": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Create a new alert rule.",
+        "operationId": "RoutePostAlertRule",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/AlertRule"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "AlertRule",
+            "schema": {
+              "$ref": "#/definitions/AlertRule"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      }
+    },
+    "/v1/provisioning/alert-rules/{UID}": {
+      "get": {
+        "tags": ["provisioning"],
+        "summary": "Get a specific alert rule by UID.",
+        "operationId": "RouteGetAlertRule",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Alert rule UID",
+            "name": "UID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "AlertRule",
+            "schema": {
+              "$ref": "#/definitions/AlertRule"
+            }
+          },
+          "404": {
+            "description": " Not found."
+          }
+        }
+      },
+      "put": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Update an existing alert rule.",
+        "operationId": "RoutePutAlertRule",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Alert rule UID",
+            "name": "UID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/AlertRule"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "AlertRule",
+            "schema": {
+              "$ref": "#/definitions/AlertRule"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["provisioning"],
+        "summary": "Delete a specific alert rule by UID.",
+        "operationId": "RouteDeleteAlertRule",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Alert rule UID",
+            "name": "UID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": " The alert rule was deleted successfully."
+          }
+        }
+      }
+    },
+    "/v1/provisioning/contact-points": {
+      "get": {
+        "tags": ["provisioning"],
+        "summary": "Get all the contact points.",
+        "operationId": "RouteGetContactpoints",
+        "responses": {
+          "200": {
+            "description": "ContactPoints",
+            "schema": {
+              "$ref": "#/definitions/ContactPoints"
+            }
+          }
+        }
+      },
+      "post": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Create a contact point.",
+        "operationId": "RoutePostContactpoints",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/EmbeddedContactPoint"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "EmbeddedContactPoint",
+            "schema": {
+              "$ref": "#/definitions/EmbeddedContactPoint"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      }
+    },
+    "/v1/provisioning/contact-points/{UID}": {
+      "put": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Update an existing contact point.",
+        "operationId": "RoutePutContactpoint",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "UID is the contact point unique identifier",
+            "name": "UID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/EmbeddedContactPoint"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Ack",
+            "schema": {
+              "$ref": "#/definitions/Ack"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "delete": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Delete a contact point.",
+        "operationId": "RouteDeleteContactpoints",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "UID is the contact point unique identifier",
+            "name": "UID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": " The contact point was deleted successfully."
+          }
+        }
+      }
+    },
+    "/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
+      "put": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Update the interval of a rule group.",
+        "operationId": "RoutePutAlertRuleGroup",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "FolderUID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "Group",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/AlertRuleGroup"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "AlertRuleGroup",
+            "schema": {
+              "$ref": "#/definitions/AlertRuleGroup"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      }
+    },
+    "/v1/provisioning/mute-timings": {
+      "get": {
+        "tags": ["provisioning"],
+        "summary": "Get all the mute timings.",
+        "operationId": "RouteGetMuteTimings",
+        "responses": {
+          "200": {
+            "description": "MuteTimings",
+            "schema": {
+              "$ref": "#/definitions/MuteTimings"
+            }
+          }
+        }
+      },
+      "post": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Create a new mute timing.",
+        "operationId": "RoutePostMuteTiming",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/MuteTimeInterval"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "MuteTimeInterval",
+            "schema": {
+              "$ref": "#/definitions/MuteTimeInterval"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      }
+    },
+    "/v1/provisioning/mute-timings/{name}": {
+      "get": {
+        "tags": ["provisioning"],
+        "summary": "Get a mute timing.",
+        "operationId": "RouteGetMuteTiming",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "Mute timing name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "MuteTimeInterval",
+            "schema": {
+              "$ref": "#/definitions/MuteTimeInterval"
+            }
+          },
+          "404": {
+            "description": " Not found."
+          }
+        }
+      },
+      "put": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Replace an existing mute timing.",
+        "operationId": "RoutePutMuteTiming",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "Mute timing name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/MuteTimeInterval"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "MuteTimeInterval",
+            "schema": {
+              "$ref": "#/definitions/MuteTimeInterval"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["provisioning"],
+        "summary": "Delete a mute timing.",
+        "operationId": "RouteDeleteMuteTiming",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "Mute timing name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": " The mute timing was deleted successfully."
+          }
+        }
+      }
+    },
+    "/v1/provisioning/policies": {
+      "get": {
+        "tags": ["provisioning"],
+        "summary": "Get the notification policy tree.",
+        "operationId": "RouteGetPolicyTree",
+        "responses": {
+          "200": {
+            "description": "Route",
+            "schema": {
+              "$ref": "#/definitions/Route"
+            }
+          }
+        }
+      },
+      "put": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Sets the notification policy tree.",
+        "operationId": "RoutePutPolicyTree",
+        "parameters": [
+          {
+            "description": "The new notification routing tree to use",
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/Route"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Ack",
+            "schema": {
+              "$ref": "#/definitions/Ack"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      }
+    },
+    "/v1/provisioning/templates": {
+      "get": {
+        "tags": ["provisioning"],
+        "summary": "Get all message templates.",
+        "operationId": "RouteGetTemplates",
+        "responses": {
+          "200": {
+            "description": "MessageTemplates",
+            "schema": {
+              "$ref": "#/definitions/MessageTemplates"
+            }
+          },
+          "404": {
+            "description": " Not found."
+          }
+        }
+      }
+    },
+    "/v1/provisioning/templates/{name}": {
+      "get": {
+        "tags": ["provisioning"],
+        "summary": "Get a message template.",
+        "operationId": "RouteGetTemplate",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "Template Name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "MessageTemplate",
+            "schema": {
+              "$ref": "#/definitions/MessageTemplate"
+            }
+          },
+          "404": {
+            "description": " Not found."
+          }
+        }
+      },
+      "put": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Updates an existing template.",
+        "operationId": "RoutePutTemplate",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "Template Name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/MessageTemplateContent"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "MessageTemplate",
+            "schema": {
+              "$ref": "#/definitions/MessageTemplate"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["provisioning"],
+        "summary": "Delete a template.",
+        "operationId": "RouteDeleteTemplate",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "Template Name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": " The template was deleted successfully."
           }
         }
       }
@@ -8539,6 +9354,167 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
     },
+    "AlertRule": {
+      "type": "object",
+      "required": [
+        "orgID",
+        "folderUID",
+        "ruleGroup",
+        "title",
+        "condition",
+        "data",
+        "noDataState",
+        "execErrState",
+        "for"
+      ],
+      "properties": {
+        "annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Annotations",
+          "example": {
+            "runbook_url": "https://supercoolrunbook.com/page/13"
+          }
+        },
+        "condition": {
+          "type": "string",
+          "x-go-name": "Condition",
+          "example": "A"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AlertQuery"
+          },
+          "x-go-name": "Data",
+          "example": [
+            {
+              "datasourceUid": "-100",
+              "model": {
+                "conditions": [
+                  {
+                    "evaluator": {
+                      "params": [0, 0],
+                      "type": "gt"
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "query": {
+                      "params": null
+                    },
+                    "reducer": {
+                      "params": null,
+                      "type": "avg"
+                    },
+                    "type": "query"
+                  }
+                ],
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "expression": "1 == 1",
+                "hide": false,
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "refId": "A",
+                "type": "math"
+              },
+              "queryType": "",
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              }
+            }
+          ]
+        },
+        "execErrState": {
+          "description": "\nAlerting AlertingErrState\nError ErrorErrState\nOK OkErrState",
+          "type": "string",
+          "enum": ["Alerting", "Error", "OK"],
+          "x-go-enum-desc": "Alerting AlertingErrState\nError ErrorErrState\nOK OkErrState",
+          "x-go-name": "ExecErrState"
+        },
+        "folderUID": {
+          "type": "string",
+          "x-go-name": "FolderUID",
+          "example": "project_x"
+        },
+        "for": {
+          "$ref": "#/definitions/Duration"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "ID"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Labels",
+          "example": {
+            "team": "sre-team-1"
+          }
+        },
+        "noDataState": {
+          "description": "\nAlerting Alerting\nNoData NoData\nOK OK",
+          "type": "string",
+          "enum": ["Alerting", "NoData", "OK"],
+          "x-go-enum-desc": "Alerting Alerting\nNoData NoData\nOK OK",
+          "x-go-name": "NoDataState"
+        },
+        "orgID": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "OrgID"
+        },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
+        },
+        "ruleGroup": {
+          "type": "string",
+          "maxLength": 190,
+          "minLength": 1,
+          "x-go-name": "RuleGroup",
+          "example": "eval_group_1"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 190,
+          "minLength": 1,
+          "x-go-name": "Title",
+          "example": "Always firing"
+        },
+        "uid": {
+          "type": "string",
+          "x-go-name": "UID"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "Updated",
+          "readOnly": true
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+    },
+    "AlertRuleGroup": {
+      "type": "object",
+      "properties": {
+        "interval": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Interval"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+    },
     "AlertStateInfoDTO": {
       "type": "object",
       "properties": {
@@ -8964,6 +9940,13 @@
         }
       }
     },
+    "ContactPoints": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/EmbeddedContactPoint"
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+    },
     "CreateAlertNotificationCommand": {
       "type": "object",
       "properties": {
@@ -9142,6 +10125,21 @@
       "properties": {
         "name": {
           "type": "string"
+        }
+      }
+    },
+    "CreateQueryInQueryHistoryCommand": {
+      "description": "CreateQueryInQueryHistoryCommand is the command for adding query history",
+      "type": "object",
+      "required": ["queries"],
+      "properties": {
+        "datasourceUid": {
+          "description": "UID of the data source for which are queries stored.",
+          "type": "string",
+          "example": "PE1C5CBDA0504A6A3"
+        },
+        "queries": {
+          "$ref": "#/definitions/Json"
         }
       }
     },
@@ -9425,6 +10423,9 @@
         "provisionedExternalId": {
           "type": "string"
         },
+        "publicDashboardUid": {
+          "type": "string"
+        },
         "slug": {
           "type": "string"
         },
@@ -9584,7 +10585,6 @@
       }
     },
     "DashboardVersionDTO": {
-      "description": "DashboardVersionDTO represents a dashboard version, without the dashboard\nmap.",
       "type": "object",
       "properties": {
         "created": {
@@ -9680,7 +10680,7 @@
       }
     },
     "DataResponse": {
-      "description": "A map of RefIDs (unique query identifers) to this type makes up the Responses property of a QueryDataResponse.\nThe Error property is used to allow for partial success responses from the containing QueryDataResponse.",
+      "description": "A map of RefIDs (unique query identifiers) to this type makes up the Responses property of a QueryDataResponse.\nThe Error property is used to allow for partial success responses from the containing QueryDataResponse.",
       "type": "object",
       "title": "DataResponse contains the results from a DataQuery.",
       "properties": {
@@ -9946,31 +10946,57 @@
     "EmbeddedContactPoint": {
       "description": "EmbeddedContactPoint is the contact point type that is used\nby grafanas embedded alertmanager implementation.",
       "type": "object",
+      "required": ["type", "settings"],
       "properties": {
         "disableResolveMessage": {
           "type": "boolean",
-          "x-go-name": "DisableResolveMessage"
+          "x-go-name": "DisableResolveMessage",
+          "example": false
         },
         "name": {
           "description": "Name is used as grouping key in the UI. Contact points with the\nsame name will be grouped in the UI.",
           "type": "string",
-          "x-go-name": "Name"
+          "x-go-name": "Name",
+          "example": "webhook_1"
         },
         "provenance": {
           "type": "string",
-          "x-go-name": "Provenance"
+          "x-go-name": "Provenance",
+          "readOnly": true
         },
         "settings": {
           "$ref": "#/definitions/Json"
         },
         "type": {
           "type": "string",
-          "x-go-name": "Type"
+          "enum": [
+            "alertmanager",
+            " dingding",
+            " discord",
+            " email",
+            " googlechat",
+            " kafka",
+            " line",
+            " opsgenie",
+            " pagerduty",
+            " pushover",
+            " sensugo",
+            " slack",
+            " teams",
+            " telegram",
+            " threema",
+            " victorops",
+            " webhook",
+            " wecom"
+          ],
+          "x-go-name": "Type",
+          "example": "webhook"
         },
         "uid": {
-          "description": "UID is the unique identifier of the contact point. This will be\nautomatically set be the Grafana.",
+          "description": "UID is the unique identifier of the contact point. The UID can be\nset by the user.",
           "type": "string",
-          "x-go-name": "UID"
+          "x-go-name": "UID",
+          "example": "my_external_reference"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -10348,7 +11374,7 @@
           "type": "string"
         },
         "pathSeparator": {
-          "description": "PathSeparator defines the separator pattern to decode a hiearchy. The default separator is '/'.",
+          "description": "PathSeparator defines the separator pattern to decode a hierarchy. The default separator is '/'.",
           "type": "string"
         },
         "preferredVisualisationType": {
@@ -10436,6 +11462,13 @@
             "$ref": "#/definitions/InhibitRule"
           },
           "x-go-name": "InhibitRules"
+        },
+        "muteTimeProvenances": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Provenance"
+          },
+          "x-go-name": "MuteTimeProvenances"
         },
         "mute_time_intervals": {
           "type": "array",
@@ -11510,14 +12543,16 @@
     "MessageTemplate": {
       "type": "object",
       "properties": {
-        "Name": {
-          "type": "string"
-        },
-        "Template": {
-          "type": "string"
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
         },
         "provenance": {
           "$ref": "#/definitions/Provenance"
+        },
+        "template": {
+          "type": "string",
+          "x-go-name": "Template"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -11525,8 +12560,9 @@
     "MessageTemplateContent": {
       "type": "object",
       "properties": {
-        "Template": {
-          "type": "string"
+        "template": {
+          "type": "string",
+          "x-go-name": "Template"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -11580,6 +12616,19 @@
           "description": "To End time in epoch timestamps in milliseconds or relative using Grafana time units.",
           "type": "string",
           "example": "now"
+        }
+      }
+    },
+    "MigrateQueriesToQueryHistoryCommand": {
+      "description": "MigrateQueriesToQueryHistoryCommand is the command used for migration of old queries into query history",
+      "type": "object",
+      "properties": {
+        "queries": {
+          "description": "Array of queries to store in query history.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/QueryToMigrate"
+          }
         }
       }
     },
@@ -12162,6 +13211,16 @@
         }
       }
     },
+    "PatchQueryCommentInQueryHistoryCommand": {
+      "description": "PatchQueryCommentInQueryHistoryCommand is the command for updating comment for query in query history",
+      "type": "object",
+      "properties": {
+        "comment": {
+          "description": "Updated comment",
+          "type": "string"
+        }
+      }
+    },
     "PauseAlertCommand": {
       "type": "object",
       "properties": {
@@ -12684,11 +13743,108 @@
         }
       }
     },
+    "QueryHistoryDTO": {
+      "type": "object",
+      "properties": {
+        "comment": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "createdBy": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "datasourceUid": {
+          "type": "string"
+        },
+        "queries": {
+          "$ref": "#/definitions/Json"
+        },
+        "starred": {
+          "type": "boolean"
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
+    },
+    "QueryHistoryDeleteQueryResponse": {
+      "description": "QueryHistoryDeleteQueryResponse is the response struct for deleting a query from query history",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "QueryHistoryMigrationResponse": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "starredCount": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "totalCount": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "QueryHistoryPreference": {
       "type": "object",
       "properties": {
         "homeTab": {
           "type": "string"
+        }
+      }
+    },
+    "QueryHistoryResponse": {
+      "description": "QueryHistoryResponse is a response struct for QueryHistoryDTO",
+      "type": "object",
+      "properties": {
+        "result": {
+          "$ref": "#/definitions/QueryHistoryDTO"
+        }
+      }
+    },
+    "QueryHistorySearchResponse": {
+      "type": "object",
+      "properties": {
+        "result": {
+          "$ref": "#/definitions/QueryHistorySearchResult"
+        }
+      }
+    },
+    "QueryHistorySearchResult": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "perPage": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "queryHistory": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/QueryHistoryDTO"
+          }
+        },
+        "totalCount": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -12773,6 +13929,27 @@
         },
         "writeable": {
           "description": "Writeable indicates that the datasource knows how to update this value",
+          "type": "boolean"
+        }
+      }
+    },
+    "QueryToMigrate": {
+      "type": "object",
+      "properties": {
+        "comment": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "datasourceUid": {
+          "type": "string"
+        },
+        "queries": {
+          "$ref": "#/definitions/Json"
+        },
+        "starred": {
           "type": "boolean"
         }
       }
@@ -14281,9 +15458,8 @@
       "type": "string"
     },
     "URL": {
-      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
       "type": "object",
-      "title": "A URL represents a parsed URL (technically, a URI reference).",
+      "title": "URL is a custom URL type that allows validation at configuration load time.",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -14316,7 +15492,7 @@
           "$ref": "#/definitions/Userinfo"
         }
       },
-      "x-go-package": "net/url"
+      "x-go-package": "github.com/prometheus/common/config"
     },
     "UpdateAlertNotificationCommand": {
       "type": "object",
@@ -14889,7 +16065,8 @@
       "properties": {
         "msg": {
           "type": "string",
-          "x-go-name": "Msg"
+          "x-go-name": "Msg",
+          "example": "error message"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -15216,7 +16393,6 @@
       "$ref": "#/definitions/Duration"
     },
     "gettableAlert": {
-      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": ["labels", "annotations", "endsAt", "fingerprint", "receivers", "startsAt", "status", "updatedAt"],
       "properties": {
@@ -15266,16 +16442,20 @@
           "format": "date-time",
           "x-go-name": "UpdatedAt"
         }
-      }
+      },
+      "x-go-name": "GettableAlert",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "gettableAlerts": {
-      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
-      }
+      },
+      "x-go-name": "GettableAlerts",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "gettableSilence": {
+      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": ["comment", "createdBy", "endsAt", "matchers", "startsAt", "id", "status", "updatedAt"],
       "properties": {
@@ -15318,17 +16498,14 @@
           "format": "date-time",
           "x-go-name": "UpdatedAt"
         }
-      },
-      "x-go-name": "GettableSilence",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+      }
     },
     "gettableSilences": {
+      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
-      },
-      "x-go-name": "GettableSilences",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+      }
     },
     "labelSet": {
       "description": "LabelSet label set",
@@ -15448,7 +16625,6 @@
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "postableSilence": {
-      "description": "PostableSilence postable silence",
       "type": "object",
       "required": ["comment", "createdBy", "endsAt", "matchers", "startsAt"],
       "properties": {
@@ -15482,10 +16658,11 @@
           "format": "date-time",
           "x-go-name": "StartsAt"
         }
-      }
+      },
+      "x-go-name": "PostableSilence",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "receiver": {
-      "description": "Receiver receiver",
       "type": "object",
       "required": ["name"],
       "properties": {
@@ -15494,7 +16671,9 @@
           "type": "string",
           "x-go-name": "Name"
         }
-      }
+      },
+      "x-go-name": "Receiver",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "silence": {
       "description": "Silence silence",
@@ -16130,6 +17309,30 @@
         "$ref": "#/definitions/Prefs"
       }
     },
+    "getQueryHistoryDeleteQueryResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/QueryHistoryDeleteQueryResponse"
+      }
+    },
+    "getQueryHistoryMigrationResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/QueryHistoryMigrationResponse"
+      }
+    },
+    "getQueryHistoryResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/QueryHistoryResponse"
+      }
+    },
+    "getQueryHistorySearchResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/QueryHistorySearchResponse"
+      }
+    },
     "getQuotaResponse": {
       "description": "",
       "schema": {
@@ -16575,6 +17778,10 @@
     {
       "description": "The identifier (ID) of a library element is an auto-incrementing numeric value that is unique per Grafana install.\nThe unique identifier (UID) of a library element uniquely identifies library elements between multiple Grafana installs. It’s automatically generated unless you specify it during library element creation. The UID provides consistent URLs for accessing library elements and when syncing library elements between multiple Grafana installs.\nThe maximum length of a UID is 40 characters.",
       "name": "library_elements"
+    },
+    {
+      "description": "The identifier (ID) of a query in query history is an auto-incrementing numeric value that is unique per Grafana install.\nThe unique identifier (UID) of a query history uniquely identifies queries in query history between multiple Grafana installs. It’s automatically generated. The UID provides consistent URLs for accessing queries in query history.",
+      "name": "query_history"
     },
     {
       "description": "The Admin Organizations HTTP API does not currently work with an API Token. API Tokens are currently only linked to an organization and an organization role. They cannot be given the permission of server admin, only users can be given that permission. So in order to use these API calls you will have to use Basic Auth and the Grafana user must have the Grafana Admin permission (The default admin user is called `admin` and has permission to use this API).",

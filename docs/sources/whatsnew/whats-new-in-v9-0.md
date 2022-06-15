@@ -15,7 +15,7 @@ title: What's new in Grafana v9.0
 weight: -33
 ---
 
-# What’s new in Grafana v9.0 ((beta))
+# What’s new in Grafana v9.0
 
 As tradition goes, GrafanaCon - our yearly community event for Grafana open source users, is also where we launch the latest software release of Grafana. Keeping up with tradition, we are excited to be announcing Grafana v9.0 - a release that elevates Grafana’s ease of use, discovery of data through new and improved visualizations and a default Grafana Alerting experience.
 
@@ -23,7 +23,7 @@ A big focus for Grafana is making observability and data visualization and analy
 
 The release also includes a brand-new powerful and fast heatmap visualization, a more accessible navigation menu, improvements to dashboard search, advanced security and authentication features, and more.
 
-We’ve summarized what’s new in the beta release here. If you’d like all the details you can check out the complete [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md).
+We’ve summarized what’s new in the release here. If you’d like all the details you can check out the complete [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md).
 
 ## Prometheus query builder
 
@@ -110,9 +110,9 @@ Refer to the [Dashboard previews topic](https://grafana.com/docs/grafana/next/da
 
 {{< figure src="/static/img/docs/dashboards/dashboard-previews.png" max-width="750px" caption="Dashboard previews" >}}
 
-## Panel title search
+## Panel title search (opt-in beta)
 
-In addition to searching dashboards by title, you can now search panels as well. If a panel’s title matches your search query, it will be displayed in the search results.
+Grafana 9 has a feature toggle `panelTitleSearch`. When enabled, it tells Grafana to use a new search engine. Instead of using SQL queries, the new search uses an in-memory full-text index. That provides a better search experience and additionally allows searching through panel titles.
 
 ## Expanding the navigation bar
 
@@ -215,6 +215,45 @@ In the InfluxDB data source, browser access mode was deprecated in grafana 8.0.0
 ### Transformations: Allow more complex regex expressions in rename by regex
 
 The rename by regex transformation has been improved to allow global patterns of the form `/<stringToReplace>/g`. Depending on the regex match used, this may cause some transformations to behave slightly differently. You can guarantee the same behavior as before by wrapping the match string in forward slashes (/), for example, (._) would become /(._)/. ([Github Issue #48179](https://github.com/grafana/grafana/pull/48179))
+
+### Clock Panel
+
+We have updated [clock panel](https://grafana.com/grafana/plugins/grafana-clock-panel/) to version `2.0.0` to make it Compatible with Grafana 9. The previous version `1.3.1` will cause the Grafana 9 to [crash](https://github.com/grafana/clock-panel/issues/106) when being used in a dashboard, we encourage you to update the panel before migrating to Grafana 9.
+
+### Plugins: Most relevant breaking changes
+
+- `getColorForTheme` was removed, use `theme.visualization.getColorByName` instead [PR #49519](https://github.com/grafana/grafana/pull/49519)
+- `TextDisplayOptions` was removed, use `VizTextDisplayOptions` instead [PR #49705](https://github.com/grafana/grafana/pull/49705)
+- We have changed the internals of `backendSrv.fetch()` to throw an error when the response is an incorrect JSON. Make sure to handle possible errors on the callsite where using `backendSrv.fetch()` (or any other `backendSrv` methods) [PR #47493](https://github.com/grafana/grafana/pull/47493)
+- We have removed the deprecated `getFormStyles` function from [grafana-ui](https://www.npmjs.com/package/@grafana/ui). Use `GrafanaTheme2` and the `useStyles2` hook instead [PR #49945](https://github.com/grafana/grafana/pull/49945)
+- We have removed the deprecated `/api/tsdb/query` metrics endpoint. Use `/api/ds/query` instead [PR #49916](https://github.com/grafana/grafana/pull/49916)
+
+You can find the complete list of breaking changes in the links below. Please check them out for more details and see if there is anything affecting your plugin
+
+- https://grafana.com/docs/grafana/next/release-notes/release-notes-9-0-0-beta1/
+- https://grafana.com/docs/grafana/next/release-notes/release-notes-9-0-0-beta2/
+- https://grafana.com/docs/grafana/next/release-notes/release-notes-9-0-0-beta3/
+- https://grafana.com/docs/grafana/next/release-notes/release-notes-9-0-0
+
+### Envelope encryption enabled by default
+
+Since v8.3 a new kind of encryption called "envelope encryption" was added, for those secrets stored in the Grafana
+database (data source credentials, alerting notification channel credentials, oauth tokens, etc), behind a feature
+toggle named `envelopeEncryption`.
+
+In v9.0, `envelopeEncryption` feature toggle has been replaced in favor of `disableEnvelopeEncryption` and envelope encryption is
+the encryption mechanism used by default.
+
+Therefore, any secret created or updated in Grafana v9.0 won't be decryptable by any previous Grafana version unless the
+feature toggle `envelopeEncryption` is enabled in the previous version (only available since v8.3).
+This needs to be considered in high availability setups, progressive rollouts or in case of need to roll back to a previous Grafana version for any reason.
+
+The recommendation here is to enable `envelopeEncryption` for older versions, or alternatively enable `disableEnvelopeEncryption`
+before upgrading to v9.0. However, the latter is probably going to be removed in one of the next releases, so we hugely
+encourage to move on with envelope encryption.
+
+Find [here]({{< relref "../setup-grafana/configure-security/configure-database-encryption/" >}}) more details and some
+possible workarounds in case you end up in an undesired situation.
 
 ## A note on Grafana Enterprise licensing
 

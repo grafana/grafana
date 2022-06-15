@@ -82,29 +82,28 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
         onDismiss={() => setParseModalOpen(false)}
       />
       <EditorHeader>
+        <InlineSelect
+          value={null}
+          placeholder="Query patterns"
+          allowCustomValue
+          onChange={({ value }) => {
+            // TODO: Bit convoluted as we don't have access to visualQuery model here. Maybe would make sense to
+            //  move it inside the editor?
+            const result = buildVisualQueryFromString(query.expr || '');
+            result.query.operations = value?.operations!;
+            onChange({
+              ...query,
+              expr: promQueryModeller.renderQuery(result.query),
+            });
+          }}
+          options={promQueryModeller.getQueryPatterns().map((x) => ({ label: x.name, value: x }))}
+        />
+
         {editorMode === QueryEditorMode.Builder && (
           <>
-            <InlineSelect
-              value={null}
-              placeholder="Query patterns"
-              allowCustomValue
-              onChange={({ value }) => {
-                // TODO: Bit convoluted as we don't have access to visualQuery model here. Maybe would make sense to
-                //  move it inside the editor?
-                const result = buildVisualQueryFromString(query.expr || '');
-                result.query.operations = value?.operations!;
-                onChange({
-                  ...query,
-                  expr: promQueryModeller.renderQuery(result.query),
-                });
-              }}
-              options={promQueryModeller.getQueryPatterns().map((x) => ({ label: x.name, value: x }))}
-            />
             <QueryHeaderSwitch label="Raw query" value={rawQuery} onChange={onQueryPreviewChange} />
+            <FeedbackLink feedbackUrl="https://github.com/grafana/grafana/discussions/47693" />
           </>
-        )}
-        {editorMode === QueryEditorMode.Builder && (
-          <FeedbackLink feedbackUrl="https://github.com/grafana/grafana/discussions/47693" />
         )}
         <FlexItem grow={1} />
         {app !== CoreApp.Explore && (
