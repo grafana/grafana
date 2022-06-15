@@ -99,6 +99,7 @@ func TestGetPublicDashboard(t *testing.T) {
 				require.NoError(t, err)
 			}
 			assert.Equal(t, test.dashResp, dashboard)
+			assert.NotNil(t, dashboard.CreatedBy)
 		})
 	}
 }
@@ -117,6 +118,7 @@ func TestSavePublicDashboard(t *testing.T) {
 		dto := &dashboards.SavePublicDashboardConfigDTO{
 			DashboardUid: dashboard.Uid,
 			OrgId:        dashboard.OrgId,
+			UserId:       7,
 			PublicDashboard: &models.PublicDashboard{
 				IsEnabled:    true,
 				DashboardUid: "NOTTHESAME",
@@ -129,6 +131,7 @@ func TestSavePublicDashboard(t *testing.T) {
 
 		assert.Equal(t, dashboard.Uid, pubdash.DashboardUid)
 		assert.Equal(t, dashboard.OrgId, pubdash.OrgId)
+		assert.Equal(t, dto.UserId, pubdash.CreatedBy)
 	})
 
 	t.Run("PLACEHOLDER - validate pubdash time variables", func(t *testing.T) {})

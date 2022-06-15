@@ -17,7 +17,7 @@ func addPublicDashboardMigration(mg *Migrator) {
 
 			//{Name: "access_token", Type: DB_NVarchar, Length: 32},
 
-			//{Name: "created_by", Type: DB_Int, Nullable: false},
+			{Name: "created_by", Type: DB_Int, Nullable: false},
 			//{Name: "created_at", Type: DB_DateTime, Nullable: false},
 
 			//{Name: "updated_by", Type: DB_Int, Nullable: false},

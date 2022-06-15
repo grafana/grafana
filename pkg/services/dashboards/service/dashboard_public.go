@@ -44,15 +44,29 @@ func (dr *DashboardServiceImpl) GetPublicDashboardConfig(ctx context.Context, or
 // SavePublicDashboardConfig is a helper method to persist the sharing config
 // to the database. It handles validations for sharing config and persistence
 func (dr *DashboardServiceImpl) SavePublicDashboardConfig(ctx context.Context, dto *dashboards.SavePublicDashboardConfigDTO) (*models.PublicDashboard, error) {
+
+	if len(dto.DashboardUid) == 0 {
+		return nil, models.ErrDashboardIdentifierNotSet
+	}
+
 	cmd := models.SavePublicDashboardConfigCommand{
 		DashboardUid:    dto.DashboardUid,
 		OrgId:           dto.OrgId,
 		PublicDashboard: *dto.PublicDashboard,
 	}
 
-	// Eventually we want this to propagate to array of public dashboards
 	cmd.PublicDashboard.OrgId = dto.OrgId
 	cmd.PublicDashboard.DashboardUid = dto.DashboardUid
+
+	// populate additional fields
+	if !cmd.PublicDashboard.IsPersisted() {
+		cmd.PublicDashboard.CreatedBy = dto.UserId
+		uid, err := dr.dashboardStore.GenerateNewPublicDashboardUid()
+		if err != nil {
+			return nil, err
+		}
+		cmd.PublicDashboard.Uid = uid
+	}
 
 	pubdash, err := dr.dashboardStore.SavePublicDashboardConfig(cmd)
 	if err != nil {

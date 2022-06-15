@@ -6,7 +6,7 @@ import (
 
 var (
 	ErrPublicDashboardFailedGenerateUniqueUid = DashboardErr{
-		Reason:     "Failed to generate unique dashboard id",
+		Reason:     "Failed to generate unique public dashboard id",
 		StatusCode: 500,
 	}
 	ErrPublicDashboardNotFound = DashboardErr{
@@ -31,10 +31,15 @@ type PublicDashboard struct {
 	OrgId        int64            `json:"-" xorm:"org_id"` // Don't ever marshal orgId to Json
 	TimeSettings *simplejson.Json `json:"timeSettings" xorm:"time_settings"`
 	IsEnabled    bool             `json:"isEnabled" xorm:"is_enabled"`
+	CreatedBy    int64            `json:"createdBy" xorm:"created_by"`
 }
 
 func (pd PublicDashboard) TableName() string {
 	return "dashboard_public"
+}
+
+func (pd PublicDashboard) IsPersisted() bool {
+	return pd.Uid == ""
 }
 
 type TimeSettings struct {

@@ -2,7 +2,6 @@ package database
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -53,21 +52,31 @@ func (d *DashboardStore) GetPublicDashboard(uid string) (*models.PublicDashboard
 }
 
 // generates a new unique uid to retrieve a public dashboard
-func generateNewPublicDashboardUid(sess *sqlstore.DBSession) (string, error) {
-	for i := 0; i < 3; i++ {
-		uid := util.GenerateShortUID()
+func (d *DashboardStore) GenerateNewPublicDashboardUid() (string, error) {
+	var uid string
 
-		exists, err := sess.Get(&models.PublicDashboard{Uid: uid})
-		if err != nil {
-			return "", err
+	err := d.sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		for i := 0; i < 3; i++ {
+			uid = util.GenerateShortUID()
+
+			exists, err := sess.Get(&models.PublicDashboard{Uid: uid})
+			if err != nil {
+				return err
+			}
+
+			if !exists {
+				return nil
+			}
 		}
 
-		if !exists {
-			return uid, nil
-		}
+		return models.ErrPublicDashboardFailedGenerateUniqueUid
+	})
+
+	if err != nil {
+		return "", err
 	}
 
-	return "", models.ErrPublicDashboardFailedGenerateUniqueUid
+	return uid, nil
 }
 
 // retrieves public dashboard configuration
@@ -96,24 +105,12 @@ func (d *DashboardStore) GetPublicDashboardConfig(orgId int64, dashboardUid stri
 
 // persists public dashboard configuration
 func (d *DashboardStore) SavePublicDashboardConfig(cmd models.SavePublicDashboardConfigCommand) (*models.PublicDashboard, error) {
-	if len(cmd.PublicDashboard.DashboardUid) == 0 {
-		return nil, models.ErrDashboardIdentifierNotSet
-	}
-
 	err := d.sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		// update dashboard_public
-		// if we have a uid, public dashboard config exists. delete it otherwise generate a uid
-		if cmd.PublicDashboard.Uid != "" {
+		// if public dashboard is persisted, delete it and recreate
+		if cmd.PublicDashboard.IsPersisted() {
 			if _, err := sess.Exec("DELETE FROM dashboard_public WHERE uid=?", cmd.PublicDashboard.Uid); err != nil {
 				return err
 			}
-		} else {
-			uid, err := generateNewPublicDashboardUid(sess)
-			if err != nil {
-				return fmt.Errorf("failed to generate UID for public dashboard: %w", err)
-			}
-
-			cmd.PublicDashboard.Uid = uid
 		}
 
 		_, err := sess.Insert(&cmd.PublicDashboard)
