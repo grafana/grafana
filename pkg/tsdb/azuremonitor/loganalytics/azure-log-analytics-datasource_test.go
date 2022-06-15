@@ -230,8 +230,7 @@ func Test_executeQueryErrorWithDifferentLogAnalyticsCreds(t *testing.T) {
 		Params:    url.Values{},
 		TimeRange: backend.TimeRange{},
 	}
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
+	tracer := tracing.InitializeTracerForTest()
 	res := ds.executeQuery(ctx, query, dsInfo, &http.Client{}, dsInfo.Services["Azure Log Analytics"].URL, tracer)
 	if res.Error == nil {
 		t.Fatal("expecting an error")

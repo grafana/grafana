@@ -166,6 +166,7 @@ trigger:
     - conf/**
     - go.sum
     - go.mod
+    - public/app/plugins/**/plugin.json
 type: docker
 volumes:
 - host:
@@ -912,7 +913,6 @@ steps:
     params:
     - SOURCE_BUILD_NUMBER=${DRONE_COMMIT}
     - SOURCE_COMMIT=${DRONE_COMMIT}
-    - OSS_PULL_REQUEST=${DRONE_PULL_REQUEST}
     repositories:
     - grafana/grafana-enterprise@main
     server: https://drone.grafana.net
@@ -4683,6 +4683,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: df6f9fbc1fe40e3ecad762194eeb466ded8aa92cc0ee13a77ea5142d9a3a4749
+hmac: 1327a42ff9a4cd493e256b2d795783077e344ae2f2374e7fb5b5543e534e8401
 
 ...

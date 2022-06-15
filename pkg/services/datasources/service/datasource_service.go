@@ -11,8 +11,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
-	"github.com/grafana/grafana-azure-sdk-go/azhttpclient"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -25,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/buffered/promclient"
 )
 
 type Service struct {
@@ -410,31 +407,6 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *models.DataSource) 
 		}
 	}
 
-	// TODO: #35857 Required for templating queries in Prometheus datasource when Azure authentication enabled
-	if ds.JsonData != nil && s.features.IsEnabled(featuremgmt.FlagPrometheusAzureAuth) {
-		credentials, err := azcredentials.FromDatasourceData(ds.JsonData.MustMap(), decryptedValues)
-		if err != nil {
-			err = fmt.Errorf("invalid Azure credentials: %s", err)
-			return nil, err
-		}
-
-		if credentials != nil {
-			var scopes []string
-
-			if scopes, err = promclient.GetOverriddenScopes(ds.JsonData.MustMap()); err != nil {
-				return nil, err
-			}
-
-			if scopes == nil {
-				if scopes, err = promclient.GetPrometheusScopes(s.cfg.Azure, credentials); err != nil {
-					return nil, err
-				}
-			}
-
-			azhttpclient.AddAzureAuthentication(opts, s.cfg.Azure, credentials, scopes)
-		}
-	}
-
 	if ds.JsonData != nil && ds.JsonData.Get("sigV4Auth").MustBool(false) && setting.SigV4AuthEnabled {
 		opts.SigV4 = &sdkhttpclient.SigV4Config{
 			Service:       awsServiceNamespace(ds.Type),
@@ -565,7 +537,7 @@ func awsServiceNamespace(dsType string) string {
 	switch dsType {
 	case models.DS_ES, models.DS_ES_OPEN_DISTRO, models.DS_ES_OPENSEARCH:
 		return "es"
-	case models.DS_PROMETHEUS:
+	case models.DS_PROMETHEUS, models.DS_ALERTMANAGER:
 		return "aps"
 	default:
 		panic(fmt.Sprintf("Unsupported datasource %q", dsType))

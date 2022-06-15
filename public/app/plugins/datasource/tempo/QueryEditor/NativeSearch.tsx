@@ -4,7 +4,7 @@ import React, { useCallback, useState, useEffect, useMemo } from 'react';
 import { Node } from 'slate';
 
 import { GrafanaTheme2, isValidGoDuration, SelectableValue } from '@grafana/data';
-import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import { FetchError, getTemplateSrv, isFetchError, TemplateSrv } from '@grafana/runtime';
 import {
   InlineFieldRow,
   InlineField,
@@ -53,7 +53,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
   const [hasSyntaxLoaded, setHasSyntaxLoaded] = useState(false);
   const [serviceOptions, setServiceOptions] = useState<Array<SelectableValue<string>>>();
   const [spanOptions, setSpanOptions] = useState<Array<SelectableValue<string>>>();
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<Error | FetchError | null>(null);
   const [inputErrors, setInputErrors] = useState<{ [key: string]: boolean }>({});
   const [isLoading, setIsLoading] = useState<{
     serviceName: boolean;
@@ -73,9 +73,9 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
         const filteredOptions = options.filter((item) => (item.value ? fuzzyMatch(item.value, query).found : false));
         return filteredOptions;
       } catch (error) {
-        if (error?.status === 404) {
+        if (isFetchError(error) && error?.status === 404) {
           setError(error);
-        } else {
+        } else if (error instanceof Error) {
           dispatch(notifyApp(createErrorNotification('Error', error)));
         }
         return [];
@@ -94,9 +94,9 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
         setSpanOptions(spans);
       } catch (error) {
         // Display message if Tempo is connected but search 404's
-        if (error?.status === 404) {
+        if (isFetchError(error) && error?.status === 404) {
           setError(error);
-        } else {
+        } else if (error instanceof Error) {
           dispatch(notifyApp(createErrorNotification('Error', error)));
         }
       }
@@ -110,7 +110,9 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
         await languageProvider.start();
         setHasSyntaxLoaded(true);
       } catch (error) {
-        dispatch(notifyApp(createErrorNotification('Error', error)));
+        if (error instanceof Error) {
+          dispatch(notifyApp(createErrorNotification('Error', error)));
+        }
       }
     };
     fetchTags();

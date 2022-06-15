@@ -17,7 +17,7 @@ import cx from 'classnames';
 import React from 'react';
 import IoLink from 'react-icons/lib/io/link';
 
-import { GrafanaTheme2, LinkModel } from '@grafana/data';
+import { dateTimeFormat, GrafanaTheme2, LinkModel, TimeZone } from '@grafana/data';
 import { DataLinkButton, TextArea, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
@@ -110,6 +110,7 @@ type SpanDetailProps = {
   logsToggle: (spanID: string) => void;
   processToggle: (spanID: string) => void;
   span: TraceSpan;
+  timeZone: TimeZone;
   tagsToggle: (spanID: string) => void;
   traceStartTime: number;
   warningsToggle: (spanID: string) => void;
@@ -153,6 +154,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     process,
     duration,
     relativeStartTime,
+    startTime,
     traceID,
     spanID,
     logs,
@@ -161,6 +163,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     references,
     stackTraces,
   } = span;
+  const { timeZone } = props;
   const overviewItems = [
     {
       key: 'svc',
@@ -175,7 +178,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     {
       key: 'start',
       label: 'Start Time:',
-      value: formatDuration(relativeStartTime),
+      value: formatDuration(relativeStartTime) + getAbsoluteTime(startTime, timeZone),
     },
     ...(span.childSpanCount > 0
       ? [
@@ -312,3 +315,10 @@ export default function SpanDetail(props: SpanDetailProps) {
     </div>
   );
 }
+
+export const getAbsoluteTime = (startTime: number, timeZone: TimeZone) => {
+  const dateStr = dateTimeFormat(startTime / 1000, { timeZone, defaultWithMS: true });
+  const match = dateStr.split(' ');
+  const absoluteTime = match[1] ? match[1] : dateStr;
+  return ` (${absoluteTime})`;
+};

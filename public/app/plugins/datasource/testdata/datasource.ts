@@ -222,7 +222,10 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
       });
       return of({ data, state: LoadingState.Done }).pipe(delay(100));
     } catch (ex) {
-      return of({ data: [], error: ex }).pipe(delay(100));
+      return of({
+        data: [],
+        error: ex instanceof Error ? ex : new Error('Unkown error'),
+      }).pipe(delay(100));
     }
   }
 

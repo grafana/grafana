@@ -15,7 +15,7 @@
 import { css } from '@emotion/css';
 import React, { RefObject } from 'react';
 
-import { GrafanaTheme2, LinkModel } from '@grafana/data';
+import { GrafanaTheme2, LinkModel, TimeZone } from '@grafana/data';
 import { stylesFactory, withTheme2 } from '@grafana/ui';
 
 import { Accessors } from '../ScrollManager';
@@ -78,6 +78,7 @@ type TProps = TExtractUiFindFromStateReturn & {
   updateNextViewRangeTime: (update: ViewRangeTimeUpdate) => void;
   updateViewRangeTime: TUpdateViewRangeTimeFunction;
   viewRange: ViewRange;
+  timeZone: TimeZone;
 
   setSpanNameColumnWidth: (width: number) => void;
   collapseAll: (spans: TraceSpan[]) => void;

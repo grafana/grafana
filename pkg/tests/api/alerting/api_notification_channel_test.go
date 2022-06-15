@@ -21,7 +21,6 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -33,8 +32,6 @@ import (
 
 func TestTestReceivers(t *testing.T) {
 	t.Run("assert no receivers returns 400 Bad Request", func(t *testing.T) {
-		_, err := tracing.InitializeTracerForTest()
-		require.NoError(t, err)
 		// Setup Grafana and its Database
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 			DisableLegacyAlerting: true,
@@ -69,8 +66,6 @@ func TestTestReceivers(t *testing.T) {
 	})
 
 	t.Run("assert working receiver returns OK", func(t *testing.T) {
-		_, err := tracing.InitializeTracerForTest()
-		require.NoError(t, err)
 		// Setup Grafana and its Database
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 			DisableLegacyAlerting: true,
@@ -153,8 +148,6 @@ func TestTestReceivers(t *testing.T) {
 	})
 
 	t.Run("assert invalid receiver returns 400 Bad Request", func(t *testing.T) {
-		_, err := tracing.InitializeTracerForTest()
-		require.NoError(t, err)
 		// Setup Grafana and its Database
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 			DisableLegacyAlerting: true,
@@ -232,8 +225,6 @@ func TestTestReceivers(t *testing.T) {
 	})
 
 	t.Run("assert timed out receiver returns 408 Request Timeout", func(t *testing.T) {
-		_, err := tracing.InitializeTracerForTest()
-		require.NoError(t, err)
 		// Setup Grafana and its Database
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 			DisableLegacyAlerting: true,
@@ -321,8 +312,6 @@ func TestTestReceivers(t *testing.T) {
 	})
 
 	t.Run("assert multiple different errors returns 207 Multi Status", func(t *testing.T) {
-		_, err := tracing.InitializeTracerForTest()
-		require.NoError(t, err)
 		// Setup Grafana and its Database
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 			DisableLegacyAlerting: true,
@@ -436,8 +425,6 @@ func TestTestReceivers(t *testing.T) {
 
 func TestTestReceiversAlertCustomization(t *testing.T) {
 	t.Run("assert custom annotations and labels are sent", func(t *testing.T) {
-		_, err := tracing.InitializeTracerForTest()
-		require.NoError(t, err)
 		// Setup Grafana and its Database
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 			DisableLegacyAlerting: true,
@@ -531,8 +518,6 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 	})
 
 	t.Run("assert custom annotations can replace default annotations", func(t *testing.T) {
-		_, err := tracing.InitializeTracerForTest()
-		require.NoError(t, err)
 		// Setup Grafana and its Database
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 			DisableLegacyAlerting: true,
@@ -621,8 +606,6 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 	})
 
 	t.Run("assert custom labels can replace default label", func(t *testing.T) {
-		_, err := tracing.InitializeTracerForTest()
-		require.NoError(t, err)
 		// Setup Grafana and its Database
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 			DisableLegacyAlerting: true,
@@ -711,9 +694,6 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 }
 
 func TestNotificationChannels(t *testing.T) {
-	_, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
-
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -775,7 +755,7 @@ func TestNotificationChannels(t *testing.T) {
 
 	{
 		// Create the namespace we'll save our alerts to.
-		err = createFolder(t, "default", grafanaListedAddr, "grafana", "password")
+		err := createFolder(t, "default", grafanaListedAddr, "grafana", "password")
 		require.NoError(t, err)
 		reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
 

@@ -390,10 +390,7 @@ type testContext struct {
 }
 
 func setup(wideFrames bool) *testContext {
-	tracer, err := tracing.InitializeTracerForTest()
-	if err != nil {
-		panic(err)
-	}
+	tracer := tracing.InitializeTracerForTest()
 	httpProvider := &fakeHttpClientProvider{
 		opts: sdkhttpclient.Options{
 			Timeouts: &sdkhttpclient.DefaultTimeoutOptions,
