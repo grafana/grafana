@@ -1,4 +1,4 @@
-package service
+package migration
 
 import (
 	"context"
@@ -12,18 +12,22 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type SecretMigrationService struct {
+const (
+	dataSourceSecretType = "datasource"
+)
+
+type DataSourceSecretMigrationService struct {
 	dataSourcesService datasources.DataSourceService
 	secretsStore       kvstore.SecretsKVStore
 	features           featuremgmt.FeatureToggles
 	log                log.Logger
 }
 
-func ProvideSecretMigrationService(
+func ProvideDataSourceMigrationService(
 	cfg *setting.Cfg, dataSourcesService datasources.DataSourceService,
 	secretsStore kvstore.SecretsKVStore, features featuremgmt.FeatureToggles,
-) datasources.SecretMigrationService {
-	return &SecretMigrationService{
+) kvstore.SecretMigrationService {
+	return &DataSourceSecretMigrationService{
 		dataSourcesService: dataSourcesService,
 		secretsStore:       secretsStore,
 		features:           features,
@@ -31,7 +35,7 @@ func ProvideSecretMigrationService(
 	}
 }
 
-func (s *SecretMigrationService) Run(ctx context.Context) error {
+func (s *DataSourceSecretMigrationService) Run(ctx context.Context) error {
 	query := &models.GetDataSourcesQuery{}
 	err := s.dataSourcesService.GetDataSources(ctx, query)
 	if err != nil {
@@ -52,7 +56,7 @@ func (s *SecretMigrationService) Run(ctx context.Context) error {
 				return err
 			}
 
-			err = s.secretsStore.Set(ctx, ds.OrgId, ds.Name, secretType, string(jsonData))
+			err = s.secretsStore.Set(ctx, ds.OrgId, ds.Name, dataSourceSecretType, string(jsonData))
 			if err != nil {
 				return err
 			}

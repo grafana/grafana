@@ -7,7 +7,6 @@ import (
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 )
 
 // DataSourceService interface for interacting with datasources.
@@ -66,9 +65,4 @@ type CacheService interface {
 
 	// GetDatasourceByUID gets a datasource identified by datasource unique identifier (UID).
 	GetDatasourceByUID(ctx context.Context, datasourceUID string, user *models.SignedInUser, skipCache bool) (*models.DataSource, error)
-}
-
-// SecretMigrationService is used to migrate legacy secrets to new unified secrets.
-type SecretMigrationService interface {
-	registry.BackgroundService
 }

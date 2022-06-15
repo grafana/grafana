@@ -86,6 +86,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secretsDatabase "github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsStore "github.com/grafana/grafana/pkg/services/secrets/kvstore"
+	secretsMigration "github.com/grafana/grafana/pkg/services/secrets/kvstore/migration"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	serviceaccountsmanager "github.com/grafana/grafana/pkg/services/serviceaccounts/manager"
@@ -272,7 +273,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(accesscontrol.DashboardPermissionsService), new(*ossaccesscontrol.DashboardPermissionsService)),
 	starimpl.ProvideService,
 	dashverimpl.ProvideService,
-	datasourceservice.ProvideSecretMigrationService,
+	secretsMigration.ProvideDataSourceMigrationService,
 )
 
 var wireSet = wire.NewSet(
