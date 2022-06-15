@@ -22,7 +22,6 @@ import NavBarItem, { Props } from './NavBarItem';
 
 const onClickMock = jest.fn();
 const defaults: Props = {
-  children: undefined,
   link: {
     text: 'Parent Node',
     onClick: onClickMock,
@@ -45,7 +44,7 @@ async function getTestContext(overrides: Partial<Props> = {}, subUrl = '') {
   const { rerender } = render(
     <TestProvider>
       <BrowserRouter>
-        <NavBarItem {...props}>{props.children}</NavBarItem>
+        <NavBarItem {...props} />
       </BrowserRouter>
     </TestProvider>
   );
@@ -57,6 +56,17 @@ async function getTestContext(overrides: Partial<Props> = {}, subUrl = '') {
 }
 
 describe('NavBarItem', () => {
+  beforeEach(() => {
+    // IntersectionObserver isn't available in test environment
+    const mockIntersectionObserver = jest.fn();
+    mockIntersectionObserver.mockReturnValue({
+      observe: () => null,
+      unobserve: () => null,
+      disconnect: () => null,
+    });
+    window.IntersectionObserver = mockIntersectionObserver;
+  });
+
   describe('when url property is not set', () => {
     it('then it renders the menu trigger as a button', async () => {
       await getTestContext();

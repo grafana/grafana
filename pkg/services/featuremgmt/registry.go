@@ -96,11 +96,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "newNavigation",
-			Description: "Try the next gen navigation model",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:            "showFeatureFlagsInUI",
 			Description:     "Show feature flags in the settings UI",
 			State:           FeatureStateAlpha,

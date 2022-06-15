@@ -92,13 +92,8 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 			Id:         "plugin-page-" + plugin.ID,
 			Url:        path.Join(hs.Cfg.AppSubURL, plugin.DefaultNavURL),
 			Img:        plugin.Info.Logos.Small,
+			Section:    dtos.NavSectionPlugin,
 			SortWeight: dtos.WeightPlugin,
-		}
-
-		if hs.Features.IsEnabled(featuremgmt.FlagNewNavigation) {
-			appLink.Section = dtos.NavSectionPlugin
-		} else {
-			appLink.Section = dtos.NavSectionCore
 		}
 
 		for _, include := range plugin.Includes {
@@ -187,25 +182,9 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 		})
 	}
 
-	if hasEditPerm && !hs.Features.IsEnabled(featuremgmt.FlagNewNavigation) {
-		children := hs.buildCreateNavLinks(c)
-		navTree = append(navTree, &dtos.NavLink{
-			Text:       "Create",
-			Id:         "create",
-			Icon:       "plus",
-			Url:        hs.Cfg.AppSubURL + "/dashboard/new",
-			Children:   children,
-			Section:    dtos.NavSectionCore,
-			SortWeight: dtos.WeightCreate,
-		})
-	}
-
 	dashboardChildLinks := hs.buildDashboardNavLinks(c, hasEditPerm)
 
-	dashboardsUrl := "/"
-	if hs.Features.IsEnabled(featuremgmt.FlagNewNavigation) {
-		dashboardsUrl = "/dashboards"
-	}
+	dashboardsUrl := "/dashboards"
 
 	navTree = append(navTree, &dtos.NavLink{
 		Text:       "Dashboards",
@@ -358,13 +337,9 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 			SubTitle:   "Organization: " + c.OrgName,
 			Icon:       "cog",
 			Url:        configNodes[0].Url,
+			Section:    dtos.NavSectionConfig,
 			SortWeight: dtos.WeightConfig,
 			Children:   configNodes,
-		}
-		if hs.Features.IsEnabled(featuremgmt.FlagNewNavigation) {
-			configNode.Section = dtos.NavSectionConfig
-		} else {
-			configNode.Section = dtos.NavSectionCore
 		}
 		navTree = append(navTree, configNode)
 	}
@@ -372,11 +347,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 	adminNavLinks := hs.buildAdminNavLinks(c)
 
 	if len(adminNavLinks) > 0 {
-		navSection := dtos.NavSectionCore
-		if hs.Features.IsEnabled(featuremgmt.FlagNewNavigation) {
-			navSection = dtos.NavSectionConfig
-		}
-		serverAdminNode := navlinks.GetServerAdminNode(adminNavLinks, navSection)
+		serverAdminNode := navlinks.GetServerAdminNode(adminNavLinks)
 		navTree = append(navTree, serverAdminNode)
 	}
 
@@ -466,14 +437,6 @@ func (hs *HTTPServer) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm b
 	}
 
 	dashboardChildNavs := []*dtos.NavLink{}
-	if !hs.Features.IsEnabled(featuremgmt.FlagNewNavigation) {
-		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
-			Text: "Home", Id: "home", Url: hs.Cfg.AppSubURL + "/", Icon: "home-alt", HideFromTabs: true,
-		})
-		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
-			Text: "Divider", Divider: true, Id: "divider", HideFromTabs: true,
-		})
-	}
 	dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
 		Text: "Browse", Id: "manage-dashboards", Url: hs.Cfg.AppSubURL + "/dashboards", Icon: "sitemap",
 	})
@@ -497,7 +460,7 @@ func (hs *HTTPServer) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm b
 		})
 	}
 
-	if hasEditPerm && hs.Features.IsEnabled(featuremgmt.FlagNewNavigation) {
+	if hasEditPerm {
 		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
 			Text: "Divider", Divider: true, Id: "divider", HideFromTabs: true,
 		})
@@ -582,8 +545,7 @@ func (hs *HTTPServer) buildAlertNavLinks(c *models.ReqContext) []*dtos.NavLink {
 		})
 	}
 
-	if hs.Features.IsEnabled(featuremgmt.FlagNewNavigation) &&
-		hasAccess(hs.editorInAnyFolder, ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleCreate), ac.EvalPermission(ac.ActionAlertingRuleExternalWrite))) {
+	if hasAccess(hs.editorInAnyFolder, ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleCreate), ac.EvalPermission(ac.ActionAlertingRuleExternalWrite))) {
 		alertChildNavs = append(alertChildNavs, &dtos.NavLink{
 			Text: "Divider", Divider: true, Id: "divider", HideFromTabs: true,
 		})

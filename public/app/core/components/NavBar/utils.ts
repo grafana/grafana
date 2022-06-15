@@ -117,8 +117,7 @@ export const getActiveItem = (
   pathname: string,
   currentBestMatch?: NavModelItem
 ): NavModelItem | undefined => {
-  const newNavigationEnabled = getConfig().featureToggles.newNavigation;
-  const dashboardLinkMatch = newNavigationEnabled ? '/dashboards' : '/';
+  const dashboardLinkMatch = '/dashboards';
 
   for (const link of navTree) {
     const linkPathname = stripQueryParams(link.url);
