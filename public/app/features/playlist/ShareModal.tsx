@@ -9,11 +9,11 @@ import { buildBaseUrl } from '../dashboard/components/ShareModal/utils';
 import { PlaylistMode } from './types';
 
 interface ShareModalProps {
-  playlistId: number;
+  playlistUid: string;
   onDismiss: () => void;
 }
 
-export const ShareModal = ({ playlistId, onDismiss }: ShareModalProps) => {
+export const ShareModal = ({ playlistUid, onDismiss }: ShareModalProps) => {
   const [mode, setMode] = useState<PlaylistMode>(false);
   const [autoFit, setAutofit] = useState(false);
 
@@ -35,7 +35,7 @@ export const ShareModal = ({ playlistId, onDismiss }: ShareModalProps) => {
     params.autofitpanels = true;
   }
 
-  const shareUrl = urlUtil.renderUrl(`${buildBaseUrl()}/play/${playlistId}`, params);
+  const shareUrl = urlUtil.renderUrl(`${buildBaseUrl()}/play/${playlistUid}`, params);
 
   return (
     <Modal isOpen={true} title="Share playlist" onDismiss={onDismiss}>
