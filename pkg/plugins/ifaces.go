@@ -26,6 +26,8 @@ type Manager interface {
 
 type CompatabilityOpts struct {
 	GrafanaVersion string
+	OS             string
+	Arch           string
 }
 
 type UpdateInfo struct {

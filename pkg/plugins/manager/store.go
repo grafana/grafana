@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	"github.com/Masterminds/semver"
@@ -80,8 +79,8 @@ func (m *PluginManager) Add(ctx context.Context, pluginID, version string, opts 
 
 	compatOpts := repository.CompatabilityOpts{
 		GrafanaVersion: opts.GrafanaVersion,
-		OS:             strings.ToLower(runtime.GOOS),
-		Arch:           runtime.GOARCH,
+		OS:             opts.OS,
+		Arch:           opts.Arch,
 	}
 
 	var pluginArchive *repository.PluginArchive
