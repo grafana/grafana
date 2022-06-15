@@ -149,6 +149,7 @@ func (f *FolderServiceImpl) CreateFolder(ctx context.Context, user *models.Signe
 		Dashboard: dashFolder,
 		OrgId:     orgID,
 		User:      user,
+		Overwrite: true,
 	}
 
 	saveDashboardCmd, err := f.dashboardService.BuildSaveDashboardCommand(ctx, dto, false, false)
