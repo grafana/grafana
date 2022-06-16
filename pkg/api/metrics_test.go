@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strings"
 	"testing"
@@ -93,12 +94,15 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	})
 
-	t.Run("Status code is 207 when data source response has an error and feature toggle is enabled", func(t *testing.T) {
+	t.Run("Status code is 207 and body contains status field when data source response has an error and feature toggle is enabled", func(t *testing.T) {
 		req := serverFeatureEnabled.NewPostRequest("/api/ds/query", strings.NewReader(queryDatasourceInput))
 		webtest.RequestWithSignedInUser(req, &models.SignedInUser{UserId: 1, OrgId: 1, OrgRole: models.ROLE_VIEWER})
 		resp, err := serverFeatureEnabled.SendJSON(req)
 		require.NoError(t, err)
-		require.NoError(t, resp.Body.Close())
+		b, err := ioutil.ReadAll(resp.Body)
+		require.NoError(t, err)
 		require.Equal(t, http.StatusMultiStatus, resp.StatusCode)
+		require.JSONEq(t, "{\"results\":{\"A\":{\"error\":\"query failed\",\"status\":400}}}", string(b))
+		require.NoError(t, resp.Body.Close())
 	})
 }
