@@ -172,7 +172,7 @@ export function getVariableRefresh(variable: VariableModel): VariableRefresh {
 export function getVariableTypes(): Array<{ label: string; value: VariableType }> {
   return variableAdapters
     .list()
-    .filter((v) => v.id !== 'system')
+    .filter((v) => v.id !== 'system' && v.id !== 'keyValue')
     .map(({ id, name }) => ({
       label: name,
       value: id,

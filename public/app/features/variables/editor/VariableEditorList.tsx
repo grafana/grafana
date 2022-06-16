@@ -40,13 +40,13 @@ export function VariableEditorList({
     const identifier = JSON.parse(result.draggableId);
     onChangeOrder(identifier, result.source.index, result.destination.index);
   };
-
+  const filteredVariables = variables.filter((v) => v.type !== 'keyValue');
   return (
     <div>
       <div>
-        {variables.length === 0 && <EmptyVariablesList onAdd={onAdd} />}
+        {filteredVariables.length === 0 && <EmptyVariablesList onAdd={onAdd} />}
 
-        {variables.length > 0 && (
+        {filteredVariables.length > 0 && (
           <div>
             <table
               className="filter-table filter-table--hover"
@@ -63,7 +63,7 @@ export function VariableEditorList({
                 <Droppable droppableId="variables-list" direction="vertical">
                   {(provided) => (
                     <tbody ref={provided.innerRef} {...provided.droppableProps}>
-                      {variables.map((variable, index) => (
+                      {filteredVariables.map((variable, index) => (
                         <VariableEditorListRow
                           index={index}
                           key={`${variable.name}-${index}`}
