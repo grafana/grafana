@@ -19,11 +19,15 @@ export interface SpanBarOptionsData extends DataSourceJsonData {
   spanBar?: SpanBarOptions;
 }
 
+export const NONE = 'None';
+export const DURATION = 'Duration';
+export const TAG = 'Tag';
+
 interface Props extends DataSourcePluginOptionsEditorProps<SpanBarOptionsData> {}
 
 export default function SpanBarSettings({ options, onOptionsChange }: Props) {
   const styles = useStyles(getStyles);
-  const selectOptions = ['None', 'Duration', 'Tag'].map(toOption);
+  const selectOptions = [NONE, DURATION, TAG].map(toOption);
 
   return (
     <div className={css({ width: '100%' })}>
@@ -52,7 +56,7 @@ export default function SpanBarSettings({ options, onOptionsChange }: Props) {
           />
         </InlineField>
       </InlineFieldRow>
-      {options.jsonData.spanBar?.type === 'Tag' && (
+      {options.jsonData.spanBar?.type === TAG && (
         <InlineFieldRow className={styles.row}>
           <InlineField label="Tag key" labelWidth={26} grow tooltip="Tag key (from which the value will be extracted)">
             <Input

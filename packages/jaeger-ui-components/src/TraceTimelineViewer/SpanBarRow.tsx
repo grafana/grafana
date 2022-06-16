@@ -22,6 +22,7 @@ import { GrafanaTheme2, TraceKeyValuePair } from '@grafana/data';
 import { stylesFactory, withTheme2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';
+import { DURATION, NONE, TAG } from '../settings/SpanBarSettings';
 import { SpanBarOptions, SpanLinkFunc, TNil } from '../types';
 import { SpanLinks } from '../types/links';
 import { TraceSpan } from '../types/trace';
@@ -554,11 +555,11 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
   getSpanBarLabel = (span: TraceSpan, spanBarOptions: SpanBarOptions | undefined, duration: string) => {
     const type = spanBarOptions?.type ?? '';
 
-    if (type === 'None') {
+    if (type === NONE) {
       return '';
-    } else if (type === '' || type === 'Duration') {
+    } else if (type === '' || type === DURATION) {
       return `(${duration})`;
-    } else if (type === 'Tag') {
+    } else if (type === TAG) {
       const tagKey = spanBarOptions?.tag ?? '';
       if (tagKey !== '' && span.tags) {
         const foundObj = span.tags.filter((tag: TraceKeyValuePair) => {
