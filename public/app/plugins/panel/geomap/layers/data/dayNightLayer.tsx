@@ -6,6 +6,7 @@ import {
   EventBus,
   DataHoverEvent,
   DataHoverClearEvent,
+  PluginState,
 } from '@grafana/data';
 import Map from 'ol/Map';
 import VectorLayer from 'ol/layer/Vector';
@@ -36,7 +37,7 @@ export interface DayNightConfig {
 const defaultConfig: DayNightConfig = {
   show: ShowTime.To,
   sun: false,
-  nightColor: 'rgb(0,0,0)'
+  nightColor: '#180f1c94'
 };
 
 export const DAY_NIGHT_LAYER_ID = 'dayNight';
@@ -55,8 +56,9 @@ export const defaultDayNightConfig: MapLayerOptions<DayNightConfig> = {
 export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
   id: DAY_NIGHT_LAYER_ID,
   name: 'Night / Day',
-  description: 'Show daylight regions',
+  description: 'Show day and night regions',
   isBaseMap: false,
+  state: PluginState.alpha,
 
   /**
    * Function that configures transformation and returns a transformer
@@ -162,41 +164,43 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
     // Crosshair sharing subscriptions
     const subscriptions = new Subscription();
 
-    subscriptions.add(
-      eventBus.subscribe(DataHoverEvent, (event) => {
-        console.log('EVENT', {...event.payload.point} );
-        const time = event.payload?.point?.time as number;
-        if (time) {
-          const lineTime = new Date(time);
-          const nightLinePoints = sourceLine.getCoordinates(lineTime.toString(), 'line');
-          nightLineLayer.getSource()?.clear();
-          const lineStringArray:Coordinate[][] = [];
-          for (let l = 0; l < nightLinePoints.length - 1; l++){
-            const x1:number = Object.values(nightLinePoints[l])[0];
-            const y1:number = Object.values(nightLinePoints[l])[1];
-            const x2:number = Object.values(nightLinePoints[l+1])[0];
-            const y2:number = Object.values(nightLinePoints[l+1])[1];
-            const lineString = [fromLonLat([x1, y1]),fromLonLat([x2, y2])];
-            lineStringArray.push(lineString);
+    if (false) {
+      subscriptions.add(
+        eventBus.subscribe(DataHoverEvent, (event) => {
+          console.log('EVENT', {...event.payload.point} );
+          const time = event.payload?.point?.time as number;
+          if (time) {
+            const lineTime = new Date(time);
+            const nightLinePoints = sourceLine.getCoordinates(lineTime.toString(), 'line');
+            nightLineLayer.getSource()?.clear();
+            const lineStringArray:Coordinate[][] = [];
+            for (let l = 0; l < nightLinePoints.length - 1; l++){
+              const x1:number = Object.values(nightLinePoints[l])[0];
+              const y1:number = Object.values(nightLinePoints[l])[1];
+              const x2:number = Object.values(nightLinePoints[l+1])[0];
+              const y2:number = Object.values(nightLinePoints[l+1])[1];
+              const lineString = [fromLonLat([x1, y1]),fromLonLat([x2, y2])];
+              lineStringArray.push(lineString);
+            }
+            nightLineLayer.getSource()?.addFeature(new Feature({
+                geometry: new MultiLineString(lineStringArray),
+              }))
+
+            let sunLinePos: number[] = [];
+            sunLinePos = sourceLineMethods.getSunPosition(lineTime);
+            sunLineFeature.getGeometry()?.setCoordinates(fromLonLat(sunLinePos));
+            sunLineFeature.setStyle([sunLineStyle, sunLineStyleDash]);
           }
-          nightLineLayer.getSource()?.addFeature(new Feature({
-              geometry: new MultiLineString(lineStringArray),
-            }))
+        })
+      );
 
-          let sunLinePos: number[] = [];
-          sunLinePos = sourceLineMethods.getSunPosition(lineTime);
-          sunLineFeature.getGeometry()?.setCoordinates(fromLonLat(sunLinePos));
-          sunLineFeature.setStyle([sunLineStyle, sunLineStyleDash]);
-        }
-      })
-    );
-
-    subscriptions.add(
-      eventBus.subscribe(DataHoverClearEvent, (event) => {
-        nightLineLayer.getSource()?.clear();
-        sunLineFeature.setStyle(new Style({}));
-      })
-    );
+      subscriptions.add(
+        eventBus.subscribe(DataHoverClearEvent, (event) => {
+          nightLineLayer.getSource()?.clear();
+          sunLineFeature.setStyle(new Style({}));
+        })
+      );
+    }
 
     return {
       init: () => layer,
