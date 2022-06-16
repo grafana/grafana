@@ -38,6 +38,7 @@ type Plugin struct {
 	BaseURL string
 
 	Renderer       pluginextensionv2.RendererPlugin
+	Sanitizer      pluginextensionv2.SanitizerClient
 	SecretsManager secretsmanagerplugin.SecretsManagerPlugin
 	client         backendplugin.Plugin
 	log            log.Logger
