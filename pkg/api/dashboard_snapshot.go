@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -270,11 +271,11 @@ func (hs *HTTPServer) DeleteDashboardSnapshot(c *models.ReqContext) response.Res
 	guardian := guardian.New(c.Req.Context(), dashboardID, c.OrgId, c.SignedInUser)
 	canEdit, err := guardian.CanEdit()
 	// check for permissions only if the dahboard is found
-	if err != nil && err != models.ErrDashboardNotFound {
+	if err != nil && !errors.Is(err, models.ErrDashboardNotFound) {
 		return response.Error(500, "Error while checking permissions for snapshot", err)
 	}
 
-	if !canEdit && query.Result.UserId != c.SignedInUser.UserId && err != models.ErrDashboardNotFound {
+	if !canEdit && query.Result.UserId != c.SignedInUser.UserId && !errors.Is(err, models.ErrDashboardNotFound) {
 		return response.Error(403, "Access denied to this snapshot", nil)
 	}
 
