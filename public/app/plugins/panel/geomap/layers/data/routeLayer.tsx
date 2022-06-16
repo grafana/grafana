@@ -114,7 +114,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
         }
       },
 
-      // Marker overlay options
+      // Route layer options
       registerOptionsUI: (builder) => {
         builder
           .addCustomEditor({
