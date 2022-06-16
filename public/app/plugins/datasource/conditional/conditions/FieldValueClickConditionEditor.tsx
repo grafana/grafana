@@ -1,14 +1,14 @@
 import { capitalize } from 'lodash';
 import React, { useState } from 'react';
 
-import { ConditionUIProps } from '@grafana/data';
+import { QueryConditionUIProps } from '@grafana/data';
 import { Field, HorizontalGroup, Input } from '@grafana/ui';
 
 export interface ValueClickConditionOptions {
   pattern: string;
   name: string;
 }
-export const FieldValueClickConditionEditor: React.FC<ConditionUIProps<ValueClickConditionOptions>> = ({
+export const FieldValueClickConditionEditor: React.FC<QueryConditionUIProps<ValueClickConditionOptions>> = ({
   onChange,
   options,
 }) => {

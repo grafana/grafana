@@ -14,7 +14,7 @@ import { notifyApp } from 'app/core/actions';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
-import { conditionsRegistry } from 'app/plugins/datasource/conditional/ConditionsRegistry';
+import { queryConditionsRegistry } from 'app/plugins/datasource/conditional/QueryConditionsRegistry';
 import { store } from 'app/store/store';
 
 import { createErrorNotification } from '../../../core/copy/appNotification';
@@ -155,7 +155,7 @@ export const initDashboardTemplating = (key: string, dashboard: DashboardModel):
  */
 export const initDynamicVariables = (rootStateKey: string, queryParams: UrlQueryMap): ThunkResult<void> => {
   return (dispatch, getState) => {
-    const conditionsDefs = conditionsRegistry.list();
+    const conditionsDefs = queryConditionsRegistry.list();
     const params = { ...queryParams };
     for (let i = 0; i < conditionsDefs.length; i++) {
       const variablePrefix = conditionsDefs[i].variablePrefix;

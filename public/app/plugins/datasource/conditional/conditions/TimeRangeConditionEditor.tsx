@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { ConditionUIProps, RawTimeRange, SelectableValue } from '@grafana/data';
+import { QueryConditionUIProps, RawTimeRange, SelectableValue } from '@grafana/data';
 import { Field, Select } from '@grafana/ui';
 import { quickOptions } from '@grafana/ui/src/components/DateTimePickers/options';
 
@@ -8,7 +8,7 @@ export interface TimeRangeConditionOptions {
   value: RawTimeRange;
 }
 
-export const TimeRangeConditionEditor: React.FC<ConditionUIProps<TimeRangeConditionOptions>> = ({
+export const TimeRangeConditionEditor: React.FC<QueryConditionUIProps<TimeRangeConditionOptions>> = ({
   onChange,
   options,
 }) => {

@@ -1,9 +1,9 @@
-import { ConditionInfo, QueryConditionID, QueryConditionType } from '@grafana/data';
+import { QueryConditionInfo, QueryConditionID, QueryConditionType } from '@grafana/data';
 import { quickOptions } from '@grafana/ui/src/components/DateTimePickers/options';
 
 import { TimeRangeConditionEditor, TimeRangeConditionOptions } from './TimeRangeConditionEditor';
 
-export const timeRangeCondition: ConditionInfo<TimeRangeConditionOptions> = {
+export const timeRangeCondition: QueryConditionInfo<TimeRangeConditionOptions> = {
   id: QueryConditionID.TimeRange,
   type: QueryConditionType.TimeRange,
   name: 'Time range',

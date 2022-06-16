@@ -26,7 +26,7 @@ import { store } from 'app/store/store';
 
 import { MixedDatasource } from '../mixed/MixedDataSource';
 
-import { conditionsRegistry } from './ConditionsRegistry';
+import { queryConditionsRegistry } from './QueryConditionsRegistry';
 
 export const CONDITIONAL_DATASOURCE_NAME = '-- Conditional --';
 
@@ -54,7 +54,7 @@ export class ConditionalDataSource extends MixedDatasource<ConditionalDataSource
 
       for (let j = 0; j < query.conditions?.length; j++) {
         const condition = query.conditions[j];
-        const conditionDef = conditionsRegistry.getIfExists(condition.id);
+        const conditionDef = queryConditionsRegistry.getIfExists(condition.id);
 
         if (!conditionDef) {
           throw new Error(`Unknown condition type: ${condition.id}`);
@@ -142,14 +142,14 @@ function findQueryWithHighestNumberOfConditions(q: ConditionalDataSourceQuery[])
 export function getConditionalDataLinksSupplier(targets: ConditionalDataSourceQuery[]) {
   const conditions = targets.map((target) =>
     target.conditions?.filter(
-      (condition) => conditionsRegistry.getIfExists(condition.id)?.type === QueryConditionType.Field
+      (condition) => queryConditionsRegistry.getIfExists(condition.id)?.type === QueryConditionType.Field
     )
   );
 
   return (field: Field, frame: DataFrame, allFrames: DataFrame[]) => {
     for (let i = 0; i < conditions.length; i++) {
       for (let j = 0; j < conditions[i]?.length; j++) {
-        const conditionDef = conditionsRegistry.getIfExists(conditions[i][j].id);
+        const conditionDef = queryConditionsRegistry.getIfExists(conditions[i][j].id);
         const regexFieldMatcher = fieldMatchers.get(FieldMatcherID.byRegexp);
         const fieldMatcher = regexFieldMatcher.get(conditions[i][j].options.pattern);
 

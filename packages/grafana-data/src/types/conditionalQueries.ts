@@ -8,7 +8,7 @@ export interface QueryConditionExecutionContext {
   variables: VariableModel[];
 }
 
-export interface ConditionInfo<TOptions = any> extends RegistryItemWithOptions<TOptions> {
+export interface QueryConditionInfo<TOptions = any> extends RegistryItemWithOptions<TOptions> {
   type: QueryConditionType;
   /**
    * Given condition configuration returns boolean representing condition being met or not
@@ -17,7 +17,7 @@ export interface ConditionInfo<TOptions = any> extends RegistryItemWithOptions<T
   /**
    * Component used to render the condition config
    */
-  editor: React.ComponentType<ConditionUIProps<TOptions>>;
+  editor: React.ComponentType<QueryConditionUIProps<TOptions>>;
   /**
    * Returns a string that will be used as a name of a dynamic variable created by this condition
    */
@@ -28,7 +28,7 @@ export interface ConditionInfo<TOptions = any> extends RegistryItemWithOptions<T
   variablePrefix?: string;
 }
 
-export interface ConditionUIProps<TOptions = any> {
+export interface QueryConditionUIProps<TOptions = any> {
   options: TOptions;
   onChange: (options: TOptions) => void;
 }

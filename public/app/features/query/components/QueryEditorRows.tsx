@@ -16,8 +16,8 @@ import {
   ConditionalDataSourceQuery,
   CONDITIONAL_DATASOURCE_NAME,
 } from 'app/plugins/datasource/conditional/ConditionalDataSource';
-import { conditionsRegistry } from 'app/plugins/datasource/conditional/ConditionsRegistry';
 import { QueryConditionsEditor } from 'app/plugins/datasource/conditional/QueryConditionsEditor';
+import { queryConditionsRegistry } from 'app/plugins/datasource/conditional/QueryConditionsRegistry';
 
 import { QueryEditorRow } from './QueryEditorRow';
 
@@ -137,7 +137,7 @@ export class QueryEditorRows extends PureComponent<Props> {
 
   onAddCondition = (queryIdx: number) => (conditionId: QueryConditionID) => {
     const { queries, onQueriesChange } = this.props;
-    const conditionDef = conditionsRegistry.getIfExists(conditionId);
+    const conditionDef = queryConditionsRegistry.getIfExists(conditionId);
 
     if (!conditionDef) {
       console.error(`Could not find condition definition for ${conditionId}`);

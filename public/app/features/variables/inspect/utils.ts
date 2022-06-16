@@ -3,7 +3,7 @@ import {
   ConditionalDataSourceQuery,
   CONDITIONAL_DATASOURCE_NAME,
 } from 'app/plugins/datasource/conditional/ConditionalDataSource';
-import { conditionsRegistry } from 'app/plugins/datasource/conditional/ConditionsRegistry';
+import { queryConditionsRegistry } from 'app/plugins/datasource/conditional/QueryConditionsRegistry';
 
 import { safeStringifyValue } from '../../../core/utils/explore';
 import { DashboardModel, PanelModel } from '../../dashboard/state';
@@ -335,7 +335,7 @@ export function getAffectedPanelIdsForVariable(variableId: string, panels: Panel
         for (let j = 0; j < target.conditions.length; j++) {
           const condition = target.conditions[j] as any;
 
-          const conditionDef = conditionsRegistry.getIfExists(target.conditions[j].id);
+          const conditionDef = queryConditionsRegistry.getIfExists(target.conditions[j].id);
 
           // detect if a condition is able to create a template variable
           // TODO: generalize this

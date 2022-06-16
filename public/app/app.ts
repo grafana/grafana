@@ -74,7 +74,10 @@ import { setVariableQueryRunner, VariableQueryRunner } from './features/variable
 import { createQueryVariableAdapter } from './features/variables/query/adapter';
 import { createSystemVariableAdapter } from './features/variables/system/adapter';
 import { createTextBoxVariableAdapter } from './features/variables/textbox/adapter';
-import { conditionsRegistry, getConditionItems } from './plugins/datasource/conditional/ConditionsRegistry';
+import {
+  queryConditionsRegistry,
+  getQueryConditionItems,
+} from './plugins/datasource/conditional/QueryConditionsRegistry';
 import { configureStore } from './store/configureStore';
 
 // add move to lodash for backward compatabilty with plugins
@@ -108,7 +111,7 @@ export class GrafanaApp {
       configureStore();
       initExtensions();
 
-      conditionsRegistry.setInit(getConditionItems);
+      queryConditionsRegistry.setInit(getQueryConditionItems);
       standardEditorsRegistry.setInit(getAllOptionEditors);
       standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
       standardTransformersRegistry.setInit(getStandardTransformers);

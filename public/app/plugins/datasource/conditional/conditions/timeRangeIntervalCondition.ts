@@ -1,4 +1,4 @@
-import { ConditionInfo, QueryConditionID, QueryConditionType, rangeUtil } from '@grafana/data';
+import { QueryConditionInfo, QueryConditionID, QueryConditionType, rangeUtil } from '@grafana/data';
 
 import {
   OPERATORS,
@@ -7,7 +7,7 @@ import {
   TimeRangeIntervalConditionOptions,
 } from './TimeRangeIntervalConditionEditor';
 
-export const timeRangeIntervalCondition: ConditionInfo<TimeRangeIntervalConditionOptions> = {
+export const timeRangeIntervalCondition: QueryConditionInfo<TimeRangeIntervalConditionOptions> = {
   id: QueryConditionID.TimeRangeInterval,
   type: QueryConditionType.TimeRange,
   name: 'Time range interval',

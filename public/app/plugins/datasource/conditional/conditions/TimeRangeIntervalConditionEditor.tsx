@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { ConditionUIProps, SelectableValue } from '@grafana/data';
+import { QueryConditionUIProps, SelectableValue } from '@grafana/data';
 import { Field, HorizontalGroup, Input, Select } from '@grafana/ui';
 
 export interface TimeRangeIntervalConditionOptions {
@@ -23,7 +23,7 @@ export const OPERATORS = [
   { id: OPERATOR_ID.GreaterThanEqual, label: '>=', evaluate: (value: number, compareTo: number) => value >= compareTo },
 ];
 
-export const TimeRangeIntervalConditionEditor: React.FC<ConditionUIProps<TimeRangeIntervalConditionOptions>> = ({
+export const TimeRangeIntervalConditionEditor: React.FC<QueryConditionUIProps<TimeRangeIntervalConditionOptions>> = ({
   onChange,
   options,
 }) => {

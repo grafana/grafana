@@ -1,13 +1,13 @@
 import { capitalize } from 'lodash';
 
-import { ConditionInfo, QueryConditionID, QueryConditionType } from '@grafana/data';
+import { QueryConditionInfo, QueryConditionID, QueryConditionType } from '@grafana/data';
 import { KeyValueVariableModel } from 'app/features/variables/types';
 
 import { FieldValueClickConditionEditor, ValueClickConditionOptions } from './FieldValueClickConditionEditor';
 
 const FIELD_VALUE_CLICK_VARIABLE_PREFIX = 'valueClick';
 
-export const fieldValueClickCondition: ConditionInfo<ValueClickConditionOptions> = {
+export const fieldValueClickCondition: QueryConditionInfo<ValueClickConditionOptions> = {
   id: QueryConditionID.ValueClick,
   type: QueryConditionType.Field,
   name: 'Field value click',

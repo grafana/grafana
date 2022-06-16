@@ -4,7 +4,7 @@ import React from 'react';
 import { QueryConditionID, GrafanaTheme2, QueryConditionConfig, SelectableValue } from '@grafana/data';
 import { Icon, Tooltip, useStyles2, ValuePicker } from '@grafana/ui';
 
-import { conditionsRegistry } from './ConditionsRegistry';
+import { queryConditionsRegistry } from './QueryConditionsRegistry';
 
 interface QueryConditionRowProps {
   condition: QueryConditionConfig;
@@ -14,7 +14,7 @@ interface QueryConditionRowProps {
 const QueryConditionRow: React.FC<QueryConditionRowProps> = ({ condition, onChange }) => {
   const styles = useStyles2(getStyles);
 
-  const conditionDef = conditionsRegistry.getIfExists(condition.id);
+  const conditionDef = queryConditionsRegistry.getIfExists(condition.id);
   if (!conditionDef) {
     console.error('No condition definition for ID ' + condition.id);
 
@@ -64,7 +64,7 @@ export const QueryConditionsEditor: React.FC<QueryConditionsEditorProps> = ({
         menuPlacement="auto"
         isFullWidth={true}
         size="md"
-        options={conditionsRegistry
+        options={queryConditionsRegistry
           .list()
           .filter((o) => !o.excludeFromPicker)
           .map<SelectableValue<QueryConditionID>>((i) => ({
