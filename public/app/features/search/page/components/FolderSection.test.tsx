@@ -1,16 +1,16 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { ArrayVector, DataFrame, DataFrameView, FieldType } from '@grafana/data';
 
-import { DashboardQueryResult, getGrafanaSearcher } from '../../service';
+import { DashboardQueryResult, getGrafanaSearcher, QueryResponse } from '../../service';
 import { DashboardSearchItemType } from '../../types';
 
 import { FolderSection } from './FolderSection';
 
 describe('FolderSection', () => {
-  const grafanaSearcher = getGrafanaSearcher();
+  let grafanaSearcherSpy: jest.SpyInstance;
   const mockOnTagSelected = jest.fn();
   const mockSelectionToggle = jest.fn();
   const mockSelection = jest.fn();
@@ -39,13 +39,15 @@ describe('FolderSection', () => {
       length: 0,
     };
 
+    const mockSearchResult: QueryResponse = {
+      isItemLoaded: jest.fn(),
+      loadMoreItems: jest.fn(),
+      totalRows: emptySearchData.length,
+      view: new DataFrameView<DashboardQueryResult>(emptySearchData),
+    };
+
     beforeAll(() => {
-      jest.spyOn(grafanaSearcher, 'search').mockResolvedValue({
-        isItemLoaded: jest.fn(),
-        loadMoreItems: jest.fn(),
-        totalRows: emptySearchData.length,
-        view: new DataFrameView<DashboardQueryResult>(emptySearchData),
-      });
+      grafanaSearcherSpy = jest.spyOn(getGrafanaSearcher(), 'search').mockResolvedValue(mockSearchResult);
     });
 
     it('shows the folder title as the header', async () => {
@@ -53,10 +55,32 @@ describe('FolderSection', () => {
       expect(await screen.findByRole('button', { name: mockSection.title })).toBeInTheDocument();
     });
 
-    it('shows a "No results found" message and does not show the folder title header when renderStandaloneBody is set', async () => {
-      render(<FolderSection renderStandaloneBody section={mockSection} onTagSelected={mockOnTagSelected} />);
-      expect(await screen.findByText('No results found')).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: mockSection.title })).not.toBeInTheDocument();
+    describe('when renderStandaloneBody is set', () => {
+      it('shows a "No results found" message and does not show the folder title header', async () => {
+        render(<FolderSection renderStandaloneBody section={mockSection} onTagSelected={mockOnTagSelected} />);
+        expect(await screen.findByText('No results found')).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: mockSection.title })).not.toBeInTheDocument();
+      });
+
+      it('renders a loading spinner whilst waiting for the results', async () => {
+        // mock the query promise so we can resolve manually
+        let promiseResolver: (arg0: QueryResponse) => void;
+        const promise = new Promise((resolve) => {
+          promiseResolver = resolve;
+        });
+        grafanaSearcherSpy.mockImplementationOnce(() => promise);
+
+        render(<FolderSection renderStandaloneBody section={mockSection} onTagSelected={mockOnTagSelected} />);
+        expect(await screen.findByTestId('loading-spinner')).toBeInTheDocument();
+
+        // resolve the promise
+        await act(async () => {
+          promiseResolver(mockSearchResult);
+        });
+
+        expect(screen.queryByTestId('loading-spinner')).not.toBeInTheDocument();
+        expect(await screen.findByText('No results found')).toBeInTheDocument();
+      });
     });
 
     it('shows a "No results found" message when expanding the folder', async () => {
@@ -81,13 +105,15 @@ describe('FolderSection', () => {
       length: 1,
     };
 
+    const mockSearchResult: QueryResponse = {
+      isItemLoaded: jest.fn(),
+      loadMoreItems: jest.fn(),
+      totalRows: searchData.length,
+      view: new DataFrameView<DashboardQueryResult>(searchData),
+    };
+
     beforeAll(() => {
-      jest.spyOn(grafanaSearcher, 'search').mockResolvedValue({
-        isItemLoaded: jest.fn(),
-        loadMoreItems: jest.fn(),
-        totalRows: searchData.length,
-        view: new DataFrameView<DashboardQueryResult>(searchData),
-      });
+      grafanaSearcherSpy = jest.spyOn(getGrafanaSearcher(), 'search').mockResolvedValue(mockSearchResult);
     });
 
     it('shows the folder title as the header', async () => {
@@ -95,10 +121,32 @@ describe('FolderSection', () => {
       expect(await screen.findByRole('button', { name: mockSection.title })).toBeInTheDocument();
     });
 
-    it('shows the folder children and does not render the folder title when renderStandaloneBody is set', async () => {
-      render(<FolderSection renderStandaloneBody section={mockSection} onTagSelected={mockOnTagSelected} />);
-      expect(await screen.findByText('My dashboard 1')).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: mockSection.title })).not.toBeInTheDocument();
+    describe('when renderStandaloneBody is set', () => {
+      it('shows the folder children and does not render the folder title', async () => {
+        render(<FolderSection renderStandaloneBody section={mockSection} onTagSelected={mockOnTagSelected} />);
+        expect(await screen.findByText('My dashboard 1')).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: mockSection.title })).not.toBeInTheDocument();
+      });
+
+      it('renders a loading spinner whilst waiting for the results', async () => {
+        // mock the query promise so we can resolve manually
+        let promiseResolver: (arg0: QueryResponse) => void;
+        const promise = new Promise((resolve) => {
+          promiseResolver = resolve;
+        });
+        grafanaSearcherSpy.mockImplementationOnce(() => promise);
+
+        render(<FolderSection renderStandaloneBody section={mockSection} onTagSelected={mockOnTagSelected} />);
+        expect(await screen.findByTestId('loading-spinner')).toBeInTheDocument();
+
+        // resolve the promise
+        await act(async () => {
+          promiseResolver(mockSearchResult);
+        });
+
+        expect(screen.queryByTestId('loading-spinner')).not.toBeInTheDocument();
+        expect(await screen.findByText('My dashboard 1')).toBeInTheDocument();
+      });
     });
 
     it('shows the folder contents when expanding the folder', async () => {
@@ -109,22 +157,56 @@ describe('FolderSection', () => {
       expect(await screen.findByText('My dashboard 1')).toBeInTheDocument();
     });
 
-    it('selects the folder and all children when the checkbox is clicked', async () => {
-      render(
-        <FolderSection
-          section={mockSection}
-          selection={mockSelection}
-          selectionToggle={mockSelectionToggle}
-          onTagSelected={mockOnTagSelected}
-        />
-      );
+    describe('when clicking the checkbox', () => {
+      it('does not expand the section', async () => {
+        render(
+          <FolderSection
+            section={mockSection}
+            selection={mockSelection}
+            selectionToggle={mockSelectionToggle}
+            onTagSelected={mockOnTagSelected}
+          />
+        );
 
-      await userEvent.click(await screen.findByRole('button', { name: mockSection.title }));
-      expect(getGrafanaSearcher().search).toHaveBeenCalled();
+        grafanaSearcherSpy.mockClear();
 
-      await userEvent.click(await screen.findByRole('checkbox', { name: 'Select folder' }));
-      expect(mockSelectionToggle).toHaveBeenCalledWith('folder', 'my-folder');
-      expect(mockSelectionToggle).toHaveBeenCalledWith('dashboard', 'my-dashboard-1');
+        await userEvent.click(await screen.findByRole('checkbox', { name: 'Select folder' }));
+        expect(getGrafanaSearcher().search).not.toHaveBeenCalled();
+        expect(screen.queryByText('My dashboard 1')).not.toBeInTheDocument();
+      });
+
+      it('selects only the folder if the folder is not expanded', async () => {
+        render(
+          <FolderSection
+            section={mockSection}
+            selection={mockSelection}
+            selectionToggle={mockSelectionToggle}
+            onTagSelected={mockOnTagSelected}
+          />
+        );
+
+        await userEvent.click(await screen.findByRole('checkbox', { name: 'Select folder' }));
+        expect(mockSelectionToggle).toHaveBeenCalledWith('folder', 'my-folder');
+        expect(mockSelectionToggle).not.toHaveBeenCalledWith('dashboard', 'my-dashboard-1');
+      });
+
+      it('selects the folder and all children when the folder is expanded', async () => {
+        render(
+          <FolderSection
+            section={mockSection}
+            selection={mockSelection}
+            selectionToggle={mockSelectionToggle}
+            onTagSelected={mockOnTagSelected}
+          />
+        );
+
+        await userEvent.click(await screen.findByRole('button', { name: mockSection.title }));
+        expect(getGrafanaSearcher().search).toHaveBeenCalled();
+
+        await userEvent.click(await screen.findByRole('checkbox', { name: 'Select folder' }));
+        expect(mockSelectionToggle).toHaveBeenCalledWith('folder', 'my-folder');
+        expect(mockSelectionToggle).toHaveBeenCalledWith('dashboard', 'my-dashboard-1');
+      });
     });
   });
 });

@@ -4,7 +4,7 @@ import { useLocalStorage } from 'react-use';
 import useAsync from 'react-use/lib/useAsync';
 
 import { GrafanaTheme } from '@grafana/data';
-import { Card, Checkbox, CollapsableSection, Icon, IconName, stylesFactory, useTheme } from '@grafana/ui';
+import { Card, Checkbox, CollapsableSection, Icon, IconName, Spinner, stylesFactory, useTheme } from '@grafana/ui';
 import { getSectionStorageKey } from 'app/features/search/utils';
 import { useUniqueId } from 'app/plugins/datasource/influxdb/components/useUniqueId';
 
@@ -147,7 +147,11 @@ export const FolderSection: FC<SectionHeaderProps> = ({
 
   // Skip the folder wrapper
   if (renderStandaloneBody) {
-    return <div className={styles.folderViewResults}>{renderResults()}</div>;
+    return (
+      <div className={styles.folderViewResults}>
+        {!results.value?.length && results.loading ? <Spinner className={styles.spinner} /> : renderResults()}
+      </div>
+    );
   }
 
   return (
