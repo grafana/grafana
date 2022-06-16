@@ -133,24 +133,27 @@ func populateDB(t *testing.T, sqlStore *SQLStore) {
 	err = sqlStore.AddAPIKey(context.Background(), addAPIKeyCmd)
 	require.NoError(t, err)
 
-	// TODO: make it possible for the duplicate user to bypass the sqlLite tests
-	// add additional user with duplicate email where DOMAIN is upper case
-	dupUserEmailcmd := models.CreateUserCommand{
-		Email:   "userduplicatetest1@TEST.com",
-		Name:    "user name 1",
-		Login:   "user_duplicate_TEST_1_login",
-		OrgName: "Org duplicate test 1",
-	}
-	_, err = sqlStore.CreateUser(context.Background(), dupUserEmailcmd)
-	require.NoError(t, err)
+	if sqlStore.GetDialect().DriverName() != "mysql" {
+		dupUserEmailcmd := models.CreateUserCommand{
+			Email:   "userduplicatetest1@TEST.com",
+			Name:    "user name 1",
+			Login:   "user_duplicate_TEST_1_login",
+			OrgName: "Org duplicate test 1",
+		}
+		_, err = sqlStore.CreateUser(context.Background(), dupUserEmailcmd)
+		require.NoError(t, err)
 
-	// add additional user with duplicate login where DOMAIN is upper case
-	dupUserLogincmd := models.CreateUserCommand{
-		Email:   "userduplicatetest1@test.com",
-		Name:    "user name 1",
-		Login:   "user_duplicate_test_1_login",
-		OrgName: "Org duplicate test 2", // need to be in two separate orgs
+		// add additional user with duplicate login where DOMAIN is upper case
+		dupUserLogincmd := models.CreateUserCommand{
+			Email:   "userduplicatetest1@test.com",
+			Name:    "user name 1",
+			Login:   "user_duplicate_test_1_login",
+			OrgName: "Org duplicate test 2", // need to be in two separate orgs
+		}
+		_, err = sqlStore.CreateUser(context.Background(), dupUserLogincmd)
+		require.NoError(t, err)
+	} else {
+		// "Skipping duplicate users test for mysql as it does make unique constraint case insensitive by default
 	}
-	_, err = sqlStore.CreateUser(context.Background(), dupUserLogincmd)
-	require.NoError(t, err)
+
 }
