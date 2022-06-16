@@ -173,7 +173,3 @@ export const supportedMetricNamespaces = [
   'Microsoft.Web/staticSites',
   'Wandisco.Fusion/migrators',
 ];
-
-export const supportedMetricNamespacesKusto = supportedMetricNamespaces
-  .map((v) => `"${v.toLocaleLowerCase()}"`)
-  .join(',');

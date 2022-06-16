@@ -102,7 +102,7 @@ describe('AzureMonitor resourcePickerData', () => {
     it('makes 1 call to ARG with the correct path and query arguments', async () => {
       const mockResponse = createMockARGResourceGroupsResponse();
       const { resourcePickerData, postResource } = createResourcePickerData([mockResponse]);
-      await resourcePickerData.getResourceGroupsBySubscriptionId('123');
+      await resourcePickerData.getResourceGroupsBySubscriptionId('123', 'logs');
 
       expect(postResource).toBeCalledTimes(1);
       const firstCall = postResource.mock.calls[0];
@@ -111,11 +111,12 @@ describe('AzureMonitor resourcePickerData', () => {
       expect(postBody.query).toContain("type == 'microsoft.resources/subscriptions/resourcegroups'");
       expect(postBody.query).toContain("where subscriptionId == '123'");
     });
+
     it('returns formatted resourceGroups', async () => {
       const mockResponse = createMockARGResourceGroupsResponse();
       const { resourcePickerData } = createResourcePickerData([mockResponse]);
 
-      const resourceGroups = await resourcePickerData.getResourceGroupsBySubscriptionId('123');
+      const resourceGroups = await resourcePickerData.getResourceGroupsBySubscriptionId('123', 'logs');
       expect(resourceGroups.length).toEqual(6);
       expect(resourceGroups[0]).toEqual({
         id: 'prod',
@@ -135,7 +136,7 @@ describe('AzureMonitor resourcePickerData', () => {
       const response2 = createMockARGResourceGroupsResponse();
       const { resourcePickerData, postResource } = createResourcePickerData([response1, response2]);
 
-      await resourcePickerData.getResourceGroupsBySubscriptionId('123');
+      await resourcePickerData.getResourceGroupsBySubscriptionId('123', 'logs');
 
       expect(postResource).toHaveBeenCalledTimes(2);
       const secondCall = postResource.mock.calls[1];
@@ -151,7 +152,7 @@ describe('AzureMonitor resourcePickerData', () => {
       const response2 = createMockARGResourceGroupsResponse();
       const { resourcePickerData } = createResourcePickerData([response1, response2]);
 
-      const resourceGroups = await resourcePickerData.getResourceGroupsBySubscriptionId('123');
+      const resourceGroups = await resourcePickerData.getResourceGroupsBySubscriptionId('123', 'logs');
 
       expect(resourceGroups.length).toEqual(12);
       expect(resourceGroups[0]).toEqual({
@@ -175,11 +176,22 @@ describe('AzureMonitor resourcePickerData', () => {
       };
       const { resourcePickerData } = createResourcePickerData([mockResponse]);
       try {
-        await resourcePickerData.getResourceGroupsBySubscriptionId('123');
+        await resourcePickerData.getResourceGroupsBySubscriptionId('123', 'logs');
         throw Error('expected getResourceGroupsBySubscriptionId to fail but it succeeded');
       } catch (err) {
         expect(err.message).toEqual('unable to fetch resource groups');
       }
+    });
+
+    it('filters by metric specific resources', async () => {
+      const mockResponse = createMockARGResourceGroupsResponse();
+      const { resourcePickerData, postResource } = createResourcePickerData([mockResponse]);
+      await resourcePickerData.getResourceGroupsBySubscriptionId('123', 'metrics');
+
+      expect(postResource).toBeCalledTimes(1);
+      const firstCall = postResource.mock.calls[0];
+      const [_, postBody] = firstCall;
+      expect(postBody.query).toContain('wandisco.fusion/migrators');
     });
   });
 
@@ -187,7 +199,7 @@ describe('AzureMonitor resourcePickerData', () => {
     it('makes 1 call to ARG with the correct path and query arguments', async () => {
       const mockResponse = createARGResourcesResponse();
       const { resourcePickerData, postResource } = createResourcePickerData([mockResponse]);
-      await resourcePickerData.getResourcesForResourceGroup('dev');
+      await resourcePickerData.getResourcesForResourceGroup('dev', 'logs');
 
       expect(postResource).toBeCalledTimes(1);
       const firstCall = postResource.mock.calls[0];
@@ -196,11 +208,12 @@ describe('AzureMonitor resourcePickerData', () => {
       expect(postBody.query).toContain('resources');
       expect(postBody.query).toContain('where id hasprefix "dev"');
     });
+
     it('returns formatted resources', async () => {
       const mockResponse = createARGResourcesResponse();
       const { resourcePickerData } = createResourcePickerData([mockResponse]);
 
-      const resources = await resourcePickerData.getResourcesForResourceGroup('dev');
+      const resources = await resourcePickerData.getResourcesForResourceGroup('dev', 'logs');
 
       expect(resources.length).toEqual(4);
       expect(resources[0]).toEqual({
@@ -229,11 +242,22 @@ describe('AzureMonitor resourcePickerData', () => {
       };
       const { resourcePickerData } = createResourcePickerData([mockResponse]);
       try {
-        await resourcePickerData.getResourcesForResourceGroup('dev');
+        await resourcePickerData.getResourcesForResourceGroup('dev', 'logs');
         throw Error('expected getResourcesForResourceGroup to fail but it succeeded');
       } catch (err) {
         expect(err.message).toEqual('unable to fetch resource details');
       }
+    });
+
+    it('should filter metrics resources', async () => {
+      const mockResponse = createARGResourcesResponse();
+      const { resourcePickerData, postResource } = createResourcePickerData([mockResponse]);
+      await resourcePickerData.getResourcesForResourceGroup('dev', 'metrics');
+
+      expect(postResource).toBeCalledTimes(1);
+      const firstCall = postResource.mock.calls[0];
+      const [_, postBody] = firstCall;
+      expect(postBody.query).toContain('wandisco.fusion/migrators');
     });
   });
 
