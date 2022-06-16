@@ -347,6 +347,7 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(
 
 // AddServiceAccountToTeam adds a service account to a team
 func (s *ServiceAccountsStoreImpl) AddServiceAccountToTeam(ctx context.Context, serviceAccountID int64, cmd *serviceaccounts.AddServiceAccountToTeamCommand) error {
+	// TODO: 2022-06 @eleijonmarck use the teamPermissionsService to assign a permission instead of models.VIEW permission
 	return s.sqlStore.AddTeamMember(serviceAccountID, cmd.OrgId, cmd.TeamId, false, models.PERMISSION_VIEW)
 }
 
