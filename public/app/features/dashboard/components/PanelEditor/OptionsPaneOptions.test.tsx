@@ -13,7 +13,7 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/editors/registry';
+import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
 
 import { DashboardModel, PanelModel } from '../../state';

@@ -16,6 +16,9 @@ import (
 )
 
 func TestIntegrationAccountDataAccess(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	t.Run("Testing Account DB Access", func(t *testing.T) {
 		sqlStore := InitTestDB(t)
 		testUser := &models.SignedInUser{

@@ -14,7 +14,6 @@ import { loadAndInitAngularIfEnabled } from './angular/loadAndInitAngularIfEnabl
 import { GrafanaApp } from './app';
 import { AppNotificationList } from './core/components/AppNotifications/AppNotificationList';
 import { NavBar } from './core/components/NavBar/NavBar';
-import { NavBarNext } from './core/components/NavBar/Next/NavBarNext';
 import { I18nProvider } from './core/localisation';
 import { GrafanaRoute } from './core/navigation/GrafanaRoute';
 import { RouteDescriptor } from './core/navigation/types';
@@ -87,8 +86,6 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
 
     navigationLogger('AppWrapper', false, 'rendering');
 
-    const newNavigationEnabled = Boolean(config.featureToggles.newNavigation);
-
     const commandPaletteActionSelected = (action: Action) => {
       reportInteraction('commandPalette_action_selected', {
         actionId: action.id,
@@ -98,7 +95,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
     const commandPaletteEnabled = () => !config.isPublicDashboardView && config.featureToggles.commandPalette;
 
     const renderNavBar = () => {
-      return !config.isPublicDashboardView && ready && <>{newNavigationEnabled ? <NavBarNext /> : <NavBar />}</>;
+      return !config.isPublicDashboardView && ready && <NavBar />;
     };
 
     const searchBarEnabled = () => !config.isPublicDashboardView;

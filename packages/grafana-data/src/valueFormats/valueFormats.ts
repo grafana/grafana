@@ -143,7 +143,7 @@ export function scaledUnits(factor: number, extArray: string[], offset = 0): Val
       return { text: size.toLocaleString() };
     }
 
-    const siIndex = Math.floor(logb(factor, Math.abs(size)));
+    const siIndex = size === 0 ? 0 : Math.floor(logb(factor, Math.abs(size)));
     const suffix = extArray[clamp(offset + siIndex, 0, extArray.length - 1)];
 
     return {

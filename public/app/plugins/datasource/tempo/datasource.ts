@@ -190,7 +190,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           )
         );
       } catch (error) {
-        return of({ error: { message: error.message }, data: [] });
+        return of({ error: { message: error instanceof Error ? error.message : 'Unknown error occurred' }, data: [] });
       }
     }
 

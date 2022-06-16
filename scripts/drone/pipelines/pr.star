@@ -103,14 +103,14 @@ def pr_test_backend():
         test_backend_integration_step(edition="oss"),
     ]
     return pipeline(
-        name='pr-test-backend', edition="oss", trigger=get_pr_trigger(include_paths=['pkg/**', 'packaging/**', '.drone.yml', 'conf/**', 'go.sum', 'go.mod']), services=[], steps=init_steps + test_steps,
+        name='pr-test-backend', edition="oss", trigger=get_pr_trigger(include_paths=['pkg/**', 'packaging/**', '.drone.yml', 'conf/**', 'go.sum', 'go.mod', 'public/app/plugins/**/plugin.json']), services=[], steps=init_steps + test_steps,
     )
 
 
 def pr_pipelines(edition):
     services = integration_test_services(edition)
     volumes = integration_test_services_volumes()
-    variants = ['linux-amd64', 'linux-amd64-musl', 'darwin-amd64', 'windows-amd64', 'armv6', ]
+    variants = ['linux-amd64', 'linux-amd64-musl', 'darwin-amd64', 'windows-amd64',]
     init_steps = [
         identify_runner_step(),
         download_grabpl_step(),

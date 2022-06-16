@@ -8,11 +8,13 @@ weight: 114
 
 # Grafana Alerting
 
-Grafana alerts allow you to learn about problems in your systems moments after they occur. Robust and actionable alerts help you identify and resolve issues quickly, minimizing disruption to your services. It centralizes alerting information in a single, searchable view that allows you to:
+Grafana Alerting allows you to learn about problems in your systems moments after they occur. Robust and actionable alerts help you identify and resolve issues quickly, minimizing disruption to your services. It centralizes alerting information in a single, searchable view that allows you to:
 
 - Create and manage Grafana alerts
 - Create and manage Grafana Mimir and Loki managed alerts
 - View alerting information from Prometheus and Alertmanager compatible data sources
+
+Watch this video to learn more about Grafana Alerting: {{< vimeo 720001629 >}}
 
 For new installations or existing installs without alerting configured, Grafana Alerting is enabled by default.
 

@@ -2,6 +2,7 @@
 //  pkg/services/featuremgmt/registry.go
 // Then run tests in:
 //  pkg/services/featuremgmt/toggles_gen_test.go
+// twice to generate and validate the feature flag files
 
 package featuremgmt
 
@@ -95,11 +96,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "newNavigation",
-			Description: "Try the next gen navigation model",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:            "showFeatureFlagsInUI",
 			Description:     "Show feature flags in the settings UI",
 			State:           FeatureStateAlpha,
@@ -114,6 +110,11 @@ var (
 		{
 			Name:        "lokiLive",
 			Description: "support websocket streaming for loki (early prototype)",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "lokiDataframeApi",
+			Description: "use experimental loki api for websocket streaming (early prototype)",
 			State:       FeatureStateAlpha,
 		},
 		{
@@ -198,11 +199,10 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:            "azureMonitorExperimentalUI",
-			Description:     "Use grafana-experimental UI in Azure Monitor",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-			FrontendOnly:    true,
+			Name:         "azureMonitorExperimentalUI",
+			Description:  "Use grafana-experimental UI in Azure Monitor",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
 		},
 		{
 			Name:         "traceToMetrics",
@@ -222,6 +222,12 @@ var (
 			RequiresRestart: true,
 		},
 		{
+			Name:         "autoMigrateGraphPanels",
+			Description:  "Replace the angular graph panel with timeseries",
+			State:        FeatureStateBeta,
+			FrontendOnly: true,
+		},
+		{
 			Name:        "prometheusWideSeries",
 			Description: "Enable wide series responses in the Prometheus datasource",
 			State:       FeatureStateAlpha,
@@ -237,6 +243,20 @@ var (
 			Description:  "Use grafana-experimental UI in Cloud Monitoring",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+		},
+		{
+			Name:        "logRequestsInstrumentedAsUnknown",
+			Description: "Logs the path for requests that are instrumented as unknown",
+		},
+		{
+			Name:        "dataConnectionsConsole",
+			Description: "Enables a new top-level page called Data Connections. This page is an experiment for better grouping of installing / configuring data sources and other plugins.",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "internationalization",
+			Description: "Enables work-in-progress internationalization",
+			State:       FeatureStateAlpha,
 		},
 	}
 )

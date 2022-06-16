@@ -21,6 +21,9 @@ import (
 )
 
 func TestIntegrationDashboardDataAccess(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	var sqlStore *sqlstore.SQLStore
 	var savedFolder, savedDash, savedDash2 *models.Dashboard
 	var dashboardStore *DashboardStore
@@ -476,6 +479,9 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 }
 
 func TestIntegrationDashboardDataAccessGivenPluginWithImportedDashboards(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	sqlStore := sqlstore.InitTestDB(t)
 	dashboardStore := ProvideDashboardStore(sqlStore)
 	pluginId := "test-app"
@@ -495,6 +501,9 @@ func TestIntegrationDashboardDataAccessGivenPluginWithImportedDashboards(t *test
 }
 
 func TestIntegrationDashboard_SortingOptions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	sqlStore := sqlstore.InitTestDB(t)
 	dashboardStore := ProvideDashboardStore(sqlStore)
 
@@ -541,6 +550,9 @@ func TestIntegrationDashboard_SortingOptions(t *testing.T) {
 }
 
 func TestIntegrationDashboard_Filter(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	sqlStore := sqlstore.InitTestDB(t)
 	dashboardStore := ProvideDashboardStore(sqlStore)
 	insertTestDashboard(t, dashboardStore, "Alfa", 1, 0, false)

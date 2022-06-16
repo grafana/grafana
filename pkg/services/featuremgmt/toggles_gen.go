@@ -71,10 +71,6 @@ const (
 	// Query InfluxDB InfluxQL without the proxy
 	FlagInfluxdbBackendMigration = "influxdbBackendMigration"
 
-	// FlagNewNavigation
-	// Try the next gen navigation model
-	FlagNewNavigation = "newNavigation"
-
 	// FlagShowFeatureFlagsInUI
 	// Show feature flags in the settings UI
 	FlagShowFeatureFlagsInUI = "showFeatureFlagsInUI"
@@ -86,6 +82,10 @@ const (
 	// FlagLokiLive
 	// support websocket streaming for loki (early prototype)
 	FlagLokiLive = "lokiLive"
+
+	// FlagLokiDataframeApi
+	// use experimental loki api for websocket streaming (early prototype)
+	FlagLokiDataframeApi = "lokiDataframeApi"
 
 	// FlagSwaggerUi
 	// Serves swagger UI
@@ -163,6 +163,10 @@ const (
 	// Validate dashboard JSON POSTed to api/dashboards/db
 	FlagValidateDashboardsOnSave = "validateDashboardsOnSave"
 
+	// FlagAutoMigrateGraphPanels
+	// Replace the angular graph panel with timeseries
+	FlagAutoMigrateGraphPanels = "autoMigrateGraphPanels"
+
 	// FlagPrometheusWideSeries
 	// Enable wide series responses in the Prometheus datasource
 	FlagPrometheusWideSeries = "prometheusWideSeries"
@@ -174,4 +178,16 @@ const (
 	// FlagCloudMonitoringExperimentalUI
 	// Use grafana-experimental UI in Cloud Monitoring
 	FlagCloudMonitoringExperimentalUI = "cloudMonitoringExperimentalUI"
+
+	// FlagLogRequestsInstrumentedAsUnknown
+	// Logs the path for requests that are instrumented as unknown
+	FlagLogRequestsInstrumentedAsUnknown = "logRequestsInstrumentedAsUnknown"
+
+	// FlagDataConnectionsConsole
+	// Enables a new top-level page called Data Connections. This page is an experiment for better grouping of installing / configuring data sources and other plugins.
+	FlagDataConnectionsConsole = "dataConnectionsConsole"
+
+	// FlagInternationalization
+	// Enables work-in-progress internationalization
+	FlagInternationalization = "internationalization"
 )

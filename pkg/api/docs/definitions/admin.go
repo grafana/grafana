@@ -45,7 +45,7 @@ import (
 // 500: internalServerError
 
 // swagger:parameters pauseAllAlerts
-type PauseAllAlertsParam struct {
+type PauseAllAlertsParams struct {
 	// in:body
 	// required:true
 	Body dtos.PauseAllAlertsCommand `json:"body"`
