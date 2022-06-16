@@ -1,7 +1,7 @@
 import { of } from 'rxjs';
 import { thunkTester } from 'test/core/thunk/thunkTester';
 
-import { BackendSrvRequest, FetchResponse } from '@grafana/runtime';
+import { BackendSrvRequest, FetchError, FetchResponse } from '@grafana/runtime';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { ThunkResult, ThunkDispatch } from 'app/types';
 
@@ -316,13 +316,17 @@ describe('testDataSource', () => {
 
     it('then testDataSourceFailed should be dispatched with response error message', async () => {
       const result = {
-        message: 'Error testing datasource',
+        message: 'Response error message',
       };
-      const dispatchedActions = await failDataSourceTest({
-        message: 'Error testing datasource',
+      const error: FetchError = {
+        config: {
+          url: '',
+        },
         data: { message: 'Response error message' },
+        status: 400,
         statusText: 'Bad Request',
-      });
+      };
+      const dispatchedActions = await failDataSourceTest(error);
       expect(dispatchedActions).toEqual([testDataSourceStarting(), testDataSourceFailed(result)]);
     });
 
@@ -330,10 +334,15 @@ describe('testDataSource', () => {
       const result = {
         message: 'Response error message',
       };
-      const dispatchedActions = await failDataSourceTest({
+      const error: FetchError = {
+        config: {
+          url: '',
+        },
         data: { message: 'Response error message' },
+        status: 400,
         statusText: 'Bad Request',
-      });
+      };
+      const dispatchedActions = await failDataSourceTest(error);
       expect(dispatchedActions).toEqual([testDataSourceStarting(), testDataSourceFailed(result)]);
     });
 
@@ -341,7 +350,15 @@ describe('testDataSource', () => {
       const result = {
         message: 'HTTP error Bad Request',
       };
-      const dispatchedActions = await failDataSourceTest({ data: {}, statusText: 'Bad Request' });
+      const error: FetchError = {
+        config: {
+          url: '',
+        },
+        data: {},
+        statusText: 'Bad Request',
+        status: 400,
+      };
+      const dispatchedActions = await failDataSourceTest(error);
       expect(dispatchedActions).toEqual([testDataSourceStarting(), testDataSourceFailed(result)]);
     });
   });

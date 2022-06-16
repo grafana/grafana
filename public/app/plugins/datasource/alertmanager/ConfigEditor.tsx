@@ -1,7 +1,9 @@
 import React from 'react';
 
+import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
 import { DataSourcePluginOptionsEditorProps, SelectableValue } from '@grafana/data';
 import { DataSourceHttpSettings, InlineFormLabel, Select } from '@grafana/ui';
+import { config } from 'app/core/config';
 
 import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from './types';
 
@@ -21,7 +23,9 @@ const IMPL_OPTIONS: SelectableValue[] = [
   },
 ];
 
-export const ConfigEditor: React.FC<Props> = ({ options, onOptionsChange }) => {
+export const ConfigEditor = (props: Props) => {
+  const { options, onOptionsChange } = props;
+
   return (
     <>
       <h3 className="page-heading">Alertmanager</h3>
@@ -51,6 +55,8 @@ export const ConfigEditor: React.FC<Props> = ({ options, onOptionsChange }) => {
         dataSourceConfig={options}
         showAccessOptions={true}
         onChange={onOptionsChange}
+        sigV4AuthToggleEnabled={config.sigV4AuthEnabled}
+        renderSigV4Editor={<SIGV4ConnectionConfig {...props}></SIGV4ConnectionConfig>}
       />
     </>
   );
