@@ -881,7 +881,7 @@ def postgres_integration_tests_step(edition, ver_mode):
         ]
     if edition == 'oss':
         deps.extend(['wire-install'])
-        cmds.extend(['go list ./pkg/... | xargs go test -run Integration -covermode=atomic -timeout=30m'])
+        cmds.extend(["go list './pkg/...'  | xargs go test -run Integration -covermode=atomic -timeout=30m"])
     else:
         deps.extend(['grabpl'])
         cmds.extend(['./bin/grabpl integration-tests --database postgres'])
@@ -910,7 +910,7 @@ def mysql_integration_tests_step(edition, ver_mode):
         ]
     if edition == 'oss':
         deps.extend(['wire-install'])
-        cmds.extend(['go list ./pkg/...  | xargs go test -run Integration -covermode=atomic -timeout=30m'])
+        cmds.extend(["go list './pkg/...'  | xargs go test -run Integration -covermode=atomic -timeout=30m"])
     else:
         deps.extend(['grabpl'])
         cmds.extend(['./bin/grabpl integration-tests --database mysql'])
