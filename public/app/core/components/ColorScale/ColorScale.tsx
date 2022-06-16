@@ -20,7 +20,6 @@ type HoverState = {
   value: number;
 };
 
-const LEFT_OFFSET = 3;
 const GRADIENT_STOPS = 10;
 
 export const ColorScale = ({ colorPalette, min, max, display, hoverValue, useStopsPercentage }: Props) => {
@@ -69,7 +68,7 @@ export const ColorScale = ({ colorPalette, min, max, display, hoverValue, useSto
             <span>{display(max)}</span>
           </div>
           {percent != null && (scaleHover.isShown || hoverValue !== undefined) && (
-            <span className={styles.hoverValue} style={{ left: `${percent - LEFT_OFFSET}%` }}>
+            <span className={styles.hoverValue} style={{ left: `${percent}%` }}>
               {display(hoverValue || scaleHover.value)}
             </span>
           )}
@@ -147,8 +146,10 @@ const getStyles = (theme: GrafanaTheme2, colors: string[]) => ({
   hoverValue: css`
     position: absolute;
     margin-top: -14px;
-    padding: 3px;
-    backdrop-filter: blur(6px);
+    padding: 3px 10px;
+    backdrop-filter: blur(4px);
+    //    background: ${theme.isDark ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.7)'};
+    transform: translateX(-50%);
   `,
   followerContainer: css`
     position: relative;
