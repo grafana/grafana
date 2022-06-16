@@ -40,7 +40,7 @@ func setupAMTest(t *testing.T) *Alertmanager {
 		DefaultInterval:  60 * time.Second,
 		SQLStore:         sqlStore,
 		Logger:           log.New("alertmanager-test"),
-		DashboardService: dashboards.NewFakeDashboardService(t),
+		DashboardService: dashboards.NewMockDashboardService(t),
 	}
 
 	kvStore := NewFakeKVStore(t)

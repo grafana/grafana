@@ -231,10 +231,10 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 					assert.Equal(t, 200, sc.resp.Code)
 				})
 
-				dashSvc := dashboards.NewFakeDashboardService(t)
-				dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
-					q := args.Get(1).(*models.GetDashboardQuery)
-					q.Result = &models.Dashboard{
+				dashSvc := dashboards.NewMockDashboardService(t)
+				dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
+					q := args.Get(1).(*dashboards.GetDashboardQuery)
+					q.Result = &dashboards.Dashboard{
 						Id:  q.Id,
 						Uid: q.Uid,
 					}
@@ -243,7 +243,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 					setUpACL()
 					sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 					assert.Equal(t, 200, sc.resp.Code)
-					dashSvc.AssertCalled(t, "GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery"))
+					dashSvc.AssertCalled(t, "GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery"))
 				})
 
 				putAnnotationScenario(t, "When calling PUT on", "/api/annotations/1", "/api/annotations/:annotationId", role, updateCmd, func(sc *scenarioContext) {
@@ -265,10 +265,10 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 						assert.Equal(t, 200, sc.resp.Code)
 					})
 
-				dashSvc = dashboards.NewFakeDashboardService(t)
-				dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
-					q := args.Get(1).(*models.GetDashboardQuery)
-					q.Result = &models.Dashboard{
+				dashSvc = dashboards.NewMockDashboardService(t)
+				dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
+					q := args.Get(1).(*dashboards.GetDashboardQuery)
+					q.Result = &dashboards.Dashboard{
 						Id:  1,
 						Uid: deleteWithDashboardUIDCmd.DashboardUID,
 					}
@@ -278,7 +278,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 						setUpACL()
 						sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 						assert.Equal(t, 200, sc.resp.Code)
-						dashSvc.AssertCalled(t, "GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery"))
+						dashSvc.AssertCalled(t, "GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery"))
 					})
 			})
 		})
@@ -1002,7 +1002,7 @@ func setUpACL() {
 	editorRole := models.ROLE_EDITOR
 	store := mockstore.NewSQLStoreMock()
 	store.ExpectedTeamsByUser = []*models.TeamDTO{}
-	dashSvc := &dashboards.FakeDashboardService{}
+	dashSvc := &dashboards.MockDashboardService{}
 	dashSvc.On("GetDashboardAclInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardAclInfoListQuery")).Run(func(args mock.Arguments) {
 		q := args.Get(1).(*models.GetDashboardAclInfoListQuery)
 		q.Result = []*models.DashboardAclInfoDTO{

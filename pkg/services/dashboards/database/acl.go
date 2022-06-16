@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -95,7 +96,7 @@ func (d *DashboardStore) GetDashboardAclInfoList(ctx context.Context, query *mod
 }
 
 // HasEditPermissionInFolders validates that an user have access to a certain folder
-func (d *DashboardStore) HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error {
+func (d *DashboardStore) HasEditPermissionInFolders(ctx context.Context, query *dashboards.HasEditPermissionInFoldersQuery) error {
 	return d.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		if query.SignedInUser.HasRole(models.ROLE_EDITOR) {
 			query.Result = true
@@ -123,7 +124,7 @@ func (d *DashboardStore) HasEditPermissionInFolders(ctx context.Context, query *
 	})
 }
 
-func (d *DashboardStore) HasAdminPermissionInFolders(ctx context.Context, query *models.HasAdminPermissionInFoldersQuery) error {
+func (d *DashboardStore) HasAdminPermissionInFolders(ctx context.Context, query *dashboards.HasAdminPermissionInFoldersQuery) error {
 	return d.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		if query.SignedInUser.HasRole(models.ROLE_ADMIN) {
 			query.Result = true

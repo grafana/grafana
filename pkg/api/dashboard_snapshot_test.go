@@ -72,7 +72,7 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 				hs := &HTTPServer{dashboardsnapshotsService: setUpSnapshotTest(t, 0, ts.URL)}
 				sc.handlerFunc = hs.DeleteDashboardSnapshot
 
-				dashSvc := dashboards.NewFakeDashboardService(t)
+				dashSvc := dashboards.NewMockDashboardService(t)
 				dashSvc.On("GetDashboardAclInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardAclInfoListQuery")).Return(nil).Maybe()
 
 				guardian.InitLegacyGuardian(sc.sqlStore, dashSvc)
@@ -110,7 +110,7 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 	})
 
 	t.Run("When user is editor and dashboard has default ACL", func(t *testing.T) {
-		dashSvc := &dashboards.FakeDashboardService{}
+		dashSvc := &dashboards.MockDashboardService{}
 		dashSvc.On("GetDashboardAclInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardAclInfoListQuery")).Run(func(args mock.Arguments) {
 			q := args.Get(1).(*models.GetDashboardAclInfoListQuery)
 			q.Result = []*models.DashboardAclInfoDTO{

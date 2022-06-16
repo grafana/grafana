@@ -10,7 +10,7 @@ import (
 )
 
 // Gets public dashboard via generated Uid
-func (dr *DashboardServiceImpl) GetPublicDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error) {
+func (dr *DashboardServiceImpl) GetPublicDashboard(ctx context.Context, dashboardUid string) (*dashboards.Dashboard, error) {
 	pdc, d, err := dr.dashboardStore.GetPublicDashboard(dashboardUid)
 
 	if err != nil {
@@ -18,11 +18,11 @@ func (dr *DashboardServiceImpl) GetPublicDashboard(ctx context.Context, dashboar
 	}
 
 	if pdc == nil || d == nil {
-		return nil, models.ErrPublicDashboardNotFound
+		return nil, dashboards.ErrPublicDashboardNotFound
 	}
 
 	if !d.IsPublic {
-		return nil, models.ErrPublicDashboardNotFound
+		return nil, dashboards.ErrPublicDashboardNotFound
 	}
 
 	// Replace dashboard time range with pubdash time range
@@ -40,7 +40,7 @@ func (dr *DashboardServiceImpl) GetPublicDashboard(ctx context.Context, dashboar
 }
 
 // GetPublicDashboardConfig is a helper method to retrieve the public dashboard configuration for a given dashboard from the database
-func (dr *DashboardServiceImpl) GetPublicDashboardConfig(ctx context.Context, orgId int64, dashboardUid string) (*models.PublicDashboardConfig, error) {
+func (dr *DashboardServiceImpl) GetPublicDashboardConfig(ctx context.Context, orgId int64, dashboardUid string) (*dashboards.PublicDashboardConfig, error) {
 	pdc, err := dr.dashboardStore.GetPublicDashboardConfig(orgId, dashboardUid)
 	if err != nil {
 		return nil, err
@@ -51,8 +51,8 @@ func (dr *DashboardServiceImpl) GetPublicDashboardConfig(ctx context.Context, or
 
 // SavePublicDashboardConfig is a helper method to persist the sharing config
 // to the database. It handles validations for sharing config and persistence
-func (dr *DashboardServiceImpl) SavePublicDashboardConfig(ctx context.Context, dto *dashboards.SavePublicDashboardConfigDTO) (*models.PublicDashboardConfig, error) {
-	cmd := models.SavePublicDashboardConfigCommand{
+func (dr *DashboardServiceImpl) SavePublicDashboardConfig(ctx context.Context, dto *dashboards.SavePublicDashboardConfigDTO) (*dashboards.PublicDashboardConfig, error) {
+	cmd := dashboards.SavePublicDashboardConfigCommand{
 		DashboardUid:          dto.DashboardUid,
 		OrgId:                 dto.OrgId,
 		PublicDashboardConfig: *dto.PublicDashboardConfig,
@@ -77,7 +77,7 @@ func (dr *DashboardServiceImpl) BuildPublicDashboardMetricRequest(ctx context.Co
 	}
 
 	if !dashboard.IsPublic {
-		return dtos.MetricRequest{}, models.ErrPublicDashboardNotFound
+		return dtos.MetricRequest{}, dashboards.ErrPublicDashboardNotFound
 	}
 
 	var timeSettings struct {
@@ -92,7 +92,7 @@ func (dr *DashboardServiceImpl) BuildPublicDashboardMetricRequest(ctx context.Co
 	queriesByPanel := models.GetQueriesFromDashboard(dashboard.Data)
 
 	if _, ok := queriesByPanel[panelId]; !ok {
-		return dtos.MetricRequest{}, models.ErrPublicDashboardPanelNotFound
+		return dtos.MetricRequest{}, dashboards.ErrPublicDashboardPanelNotFound
 	}
 
 	return dtos.MetricRequest{

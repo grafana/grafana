@@ -74,21 +74,21 @@ func TestBrowserScreenshotService(t *testing.T) {
 	c := gomock.NewController(t)
 	defer c.Finish()
 
-	d := dashboards.FakeDashboardService{}
+	d := dashboards.MockDashboardService{}
 	r := rendering.NewMockService(c)
 	s := NewBrowserScreenshotService(&d, r)
 
 	// a non-existent dashboard should return error
-	d.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Return(models.ErrDashboardNotFound).Once()
+	d.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(dashboards.ErrDashboardNotFound).Once()
 	ctx := context.Background()
 	opts := ScreenshotOptions{}
 	screenshot, err := s.Take(ctx, opts)
 	assert.EqualError(t, err, "Dashboard not found")
 	assert.Nil(t, screenshot)
 
-	d.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
-		q := args.Get(1).(*models.GetDashboardQuery)
-		q.Result = &models.Dashboard{Id: 1, Uid: "foo", Slug: "bar", OrgId: 2}
+	d.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
+		q := args.Get(1).(*dashboards.GetDashboardQuery)
+		q.Result = &dashboards.Dashboard{Id: 1, Uid: "foo", Slug: "bar", OrgId: 2}
 	}).Return(nil)
 
 	renderOpts := rendering.Opts{

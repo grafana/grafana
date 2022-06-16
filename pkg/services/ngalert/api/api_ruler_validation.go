@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -19,7 +19,7 @@ func validateRuleNode(
 	groupName string,
 	interval time.Duration,
 	orgId int64,
-	namespace *models.Folder,
+	namespace *dashboards.Folder,
 	conditionValidator func(ngmodels.Condition) error,
 	cfg *setting.UnifiedAlertingSettings) (*ngmodels.AlertRule, error) {
 	intervalSeconds := int64(interval.Seconds())
@@ -140,7 +140,7 @@ func validateRuleNode(
 func validateRuleGroup(
 	ruleGroupConfig *apimodels.PostableRuleGroupConfig,
 	orgId int64,
-	namespace *models.Folder,
+	namespace *dashboards.Folder,
 	conditionValidator func(ngmodels.Condition) error,
 	cfg *setting.UnifiedAlertingSettings) ([]*ngmodels.AlertRule, error) {
 	if ruleGroupConfig.Name == "" {

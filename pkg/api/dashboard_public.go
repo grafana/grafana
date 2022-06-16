@@ -23,7 +23,7 @@ func (hs *HTTPServer) GetPublicDashboard(c *models.ReqContext) response.Response
 
 	meta := dtos.DashboardMeta{
 		Slug:               dash.Slug,
-		Type:               models.DashTypeDB,
+		Type:               dashboards.DashTypeDB,
 		CanStar:            false,
 		CanSave:            false,
 		CanEdit:            false,
@@ -54,7 +54,7 @@ func (hs *HTTPServer) GetPublicDashboardConfig(c *models.ReqContext) response.Re
 
 // sets public dashboard configuration for dashboard
 func (hs *HTTPServer) SavePublicDashboardConfig(c *models.ReqContext) response.Response {
-	pdc := &models.PublicDashboardConfig{}
+	pdc := &dashboards.PublicDashboardConfig{}
 	if err := web.Bind(c.Req, pdc); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
@@ -100,7 +100,7 @@ func (hs *HTTPServer) QueryPublicDashboard(c *models.ReqContext) response.Respon
 
 // util to help us unpack a dashboard err or use default http code and message
 func handleDashboardErr(defaultCode int, defaultMsg string, err error) response.Response {
-	var dashboardErr models.DashboardErr
+	var dashboardErr dashboards.DashboardErr
 
 	if ok := errors.As(err, &dashboardErr); ok {
 		return response.Error(dashboardErr.StatusCode, dashboardErr.Error(), dashboardErr)

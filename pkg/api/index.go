@@ -399,7 +399,7 @@ func (hs *HTTPServer) buildStarredItemsNavLinks(c *models.ReqContext, prefs *pre
 		return nil, err
 	}
 
-	starredDashboards := []*models.Dashboard{}
+	starredDashboards := []*dashboards.Dashboard{}
 	starredDashboardsCounter := 0
 	for dashboardId := range starredDashboardResult.UserStars {
 		// Set a loose limit to the first 50 starred dashboards found
@@ -407,7 +407,7 @@ func (hs *HTTPServer) buildStarredItemsNavLinks(c *models.ReqContext, prefs *pre
 			break
 		}
 		starredDashboardsCounter++
-		query := &models.GetDashboardQuery{
+		query := &dashboards.GetDashboardQuery{
 			Id:    dashboardId,
 			OrgId: c.OrgId,
 		}
@@ -667,7 +667,7 @@ func (hs *HTTPServer) buildAdminNavLinks(c *models.ReqContext) []*dtos.NavLink {
 }
 
 func (hs *HTTPServer) editorInAnyFolder(c *models.ReqContext) bool {
-	hasEditPermissionInFoldersQuery := models.HasEditPermissionInFoldersQuery{SignedInUser: c.SignedInUser}
+	hasEditPermissionInFoldersQuery := dashboards.HasEditPermissionInFoldersQuery{SignedInUser: c.SignedInUser}
 	if err := hs.dashboardService.HasEditPermissionInFolders(c.Req.Context(), &hasEditPermissionInFoldersQuery); err != nil {
 		return false
 	}

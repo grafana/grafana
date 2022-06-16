@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -17,7 +18,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 	}
 	t.Run("Testing DB", func(t *testing.T) {
 		var sqlStore *sqlstore.SQLStore
-		var folder, dashInRoot, childDash *models.Dashboard
+		var folder, dashInRoot, childDash *dashboards.Dashboard
 		var currentUser models.User
 		var dashboardStore *DashboardStore
 
@@ -171,7 +172,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 		t.Run("Given two dashboard folders with one dashboard each and one dashboard in the root folder", func(t *testing.T) {
 			var sqlStore *sqlstore.SQLStore
-			var folder1, folder2, dashInRoot, childDash1, childDash2 *models.Dashboard
+			var folder1, folder2, dashInRoot, childDash1, childDash2 *dashboards.Dashboard
 			var currentUser models.User
 			var rootFolderId int64 = 0
 
@@ -277,7 +278,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 		t.Run("Given two dashboard folders", func(t *testing.T) {
 			var sqlStore *sqlstore.SQLStore
-			var folder1, folder2 *models.Dashboard
+			var folder1, folder2 *dashboards.Dashboard
 			var adminUser, editorUser, viewerUser models.User
 
 			setup3 := func() {
@@ -311,7 +312,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				})
 
 				t.Run("should have edit permission in folders", func(t *testing.T) {
-					query := &models.HasEditPermissionInFoldersQuery{
+					query := &dashboards.HasEditPermissionInFoldersQuery{
 						SignedInUser: &models.SignedInUser{UserId: adminUser.Id, OrgId: 1, OrgRole: models.ROLE_ADMIN},
 					}
 					err := dashboardStore.HasEditPermissionInFolders(context.Background(), query)
@@ -320,7 +321,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				})
 
 				t.Run("should have admin permission in folders", func(t *testing.T) {
-					query := &models.HasAdminPermissionInFoldersQuery{
+					query := &dashboards.HasAdminPermissionInFoldersQuery{
 						SignedInUser: &models.SignedInUser{UserId: adminUser.Id, OrgId: 1, OrgRole: models.ROLE_ADMIN},
 					}
 					err := dashboardStore.HasAdminPermissionInFolders(context.Background(), query)
@@ -359,7 +360,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				})
 
 				t.Run("should have edit permission in folders", func(t *testing.T) {
-					query := &models.HasEditPermissionInFoldersQuery{
+					query := &dashboards.HasEditPermissionInFoldersQuery{
 						SignedInUser: &models.SignedInUser{UserId: editorUser.Id, OrgId: 1, OrgRole: models.ROLE_EDITOR},
 					}
 					err := dashboardStore.HasEditPermissionInFolders(context.Background(), query)
@@ -368,7 +369,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				})
 
 				t.Run("should not have admin permission in folders", func(t *testing.T) {
-					query := &models.HasAdminPermissionInFoldersQuery{
+					query := &dashboards.HasAdminPermissionInFoldersQuery{
 						SignedInUser: &models.SignedInUser{UserId: adminUser.Id, OrgId: 1, OrgRole: models.ROLE_EDITOR},
 					}
 					err := dashboardStore.HasAdminPermissionInFolders(context.Background(), query)
@@ -407,7 +408,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				t.Run("should not have edit permission in folders", func(t *testing.T) {
 					setup3()
 
-					query := &models.HasEditPermissionInFoldersQuery{
+					query := &dashboards.HasEditPermissionInFoldersQuery{
 						SignedInUser: &models.SignedInUser{UserId: viewerUser.Id, OrgId: 1, OrgRole: models.ROLE_VIEWER},
 					}
 					err := dashboardStore.HasEditPermissionInFolders(context.Background(), query)
@@ -416,7 +417,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				})
 
 				t.Run("should not have admin permission in folders", func(t *testing.T) {
-					query := &models.HasAdminPermissionInFoldersQuery{
+					query := &dashboards.HasAdminPermissionInFoldersQuery{
 						SignedInUser: &models.SignedInUser{UserId: adminUser.Id, OrgId: 1, OrgRole: models.ROLE_VIEWER},
 					}
 					err := dashboardStore.HasAdminPermissionInFolders(context.Background(), query)
@@ -431,7 +432,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 					require.NoError(t, err)
 
 					t.Run("should have edit permission in folders", func(t *testing.T) {
-						query := &models.HasEditPermissionInFoldersQuery{
+						query := &dashboards.HasEditPermissionInFoldersQuery{
 							SignedInUser: &models.SignedInUser{UserId: viewerUser.Id, OrgId: 1, OrgRole: models.ROLE_VIEWER},
 						}
 						err := dashboardStore.HasEditPermissionInFolders(context.Background(), query)
@@ -447,7 +448,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 					require.NoError(t, err)
 
 					t.Run("should have edit permission in folders", func(t *testing.T) {
-						query := &models.HasEditPermissionInFoldersQuery{
+						query := &dashboards.HasEditPermissionInFoldersQuery{
 							SignedInUser: &models.SignedInUser{UserId: viewerUser.Id, OrgId: 1, OrgRole: models.ROLE_VIEWER},
 						}
 						err := dashboardStore.HasEditPermissionInFolders(context.Background(), query)
@@ -462,7 +463,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 			var orgId int64 = 1
 			title := "Very Unique Name"
 			var sqlStore *sqlstore.SQLStore
-			var folder1, folder2 *models.Dashboard
+			var folder1, folder2 *dashboards.Dashboard
 			sqlStore = sqlstore.InitTestDB(t)
 			dashboardStore := ProvideDashboardStore(sqlStore)
 			folder2 = insertTestDashboard(t, dashboardStore, "TEST", orgId, 0, true, "prod")
@@ -491,12 +492,12 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 			t.Run("should not find dashboard", func(t *testing.T) {
 				d, err := dashboardStore.GetFolderByUID(context.Background(), orgId, dash.Uid)
 				require.Nil(t, d)
-				require.ErrorIs(t, err, models.ErrFolderNotFound)
+				require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
 			})
 			t.Run("should search in organization", func(t *testing.T) {
 				d, err := dashboardStore.GetFolderByUID(context.Background(), orgId+1, folder.Uid)
 				require.Nil(t, d)
-				require.ErrorIs(t, err, models.ErrFolderNotFound)
+				require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
 			})
 		})
 
@@ -515,22 +516,22 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 			t.Run("should not find dashboard", func(t *testing.T) {
 				d, err := dashboardStore.GetFolderByID(context.Background(), orgId, dash.Id)
 				require.Nil(t, d)
-				require.ErrorIs(t, err, models.ErrFolderNotFound)
+				require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
 			})
 			t.Run("should search in organization", func(t *testing.T) {
 				d, err := dashboardStore.GetFolderByID(context.Background(), orgId+1, folder.Id)
 				require.Nil(t, d)
-				require.ErrorIs(t, err, models.ErrFolderNotFound)
+				require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
 			})
 		})
 	})
 }
 
 func moveDashboard(t *testing.T, dashboardStore *DashboardStore, orgId int64, dashboard *simplejson.Json,
-	newFolderId int64) *models.Dashboard {
+	newFolderId int64) *dashboards.Dashboard {
 	t.Helper()
 
-	cmd := models.SaveDashboardCommand{
+	cmd := dashboards.SaveDashboardCommand{
 		OrgId:     orgId,
 		FolderId:  newFolderId,
 		Dashboard: dashboard,

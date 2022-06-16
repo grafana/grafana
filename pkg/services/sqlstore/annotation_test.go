@@ -49,7 +49,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 
 		dashboardStore := dashboardstore.ProvideDashboardStore(sql)
 
-		testDashboard1 := models.SaveDashboardCommand{
+		testDashboard1 := dashboards.SaveDashboardCommand{
 			UserId: 1,
 			OrgId:  1,
 			Dashboard: simplejson.NewFromAny(map[string]interface{}{
@@ -59,7 +59,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		dashboard, err := dashboardStore.SaveDashboard(testDashboard1)
 		require.NoError(t, err)
 
-		testDashboard2 := models.SaveDashboardCommand{
+		testDashboard2 := dashboards.SaveDashboardCommand{
 			UserId: 1,
 			OrgId:  1,
 			Dashboard: simplejson.NewFromAny(map[string]interface{}{
@@ -390,7 +390,7 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 	repo := sqlstore.NewSQLAnnotationRepo(sql)
 	dashboardStore := dashboardstore.ProvideDashboardStore(sql)
 
-	testDashboard1 := models.SaveDashboardCommand{
+	testDashboard1 := dashboards.SaveDashboardCommand{
 		UserId: 1,
 		OrgId:  1,
 		Dashboard: simplejson.NewFromAny(map[string]interface{}{
@@ -401,7 +401,7 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 	require.NoError(t, err)
 	dash1UID := dashboard.Uid
 
-	testDashboard2 := models.SaveDashboardCommand{
+	testDashboard2 := dashboards.SaveDashboardCommand{
 		UserId: 1,
 		OrgId:  1,
 		Dashboard: simplejson.NewFromAny(map[string]interface{}{

@@ -685,7 +685,7 @@ func (sc *scenarioContext) verifyUpdateChildDashboardPermissionsWithOverrideShou
 func TestGuardianGetHiddenACL(t *testing.T) {
 	t.Run("Get hidden ACL tests", func(t *testing.T) {
 		store := mockstore.NewSQLStoreMock()
-		dashSvc := dashboards.NewFakeDashboardService(t)
+		dashSvc := dashboards.NewMockDashboardService(t)
 		dashSvc.On("GetDashboardAclInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardAclInfoListQuery")).Run(func(args mock.Arguments) {
 			q := args.Get(1).(*models.GetDashboardAclInfoListQuery)
 			q.Result = []*models.DashboardAclInfoDTO{
@@ -720,7 +720,7 @@ func TestGuardianGetHiddenACL(t *testing.T) {
 				Login:          "user1",
 				IsGrafanaAdmin: true,
 			}
-			g := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, &dashboards.FakeDashboardService{})
+			g := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, &dashboards.MockDashboardService{})
 
 			hiddenACL, err := g.GetHiddenACL(cfg)
 			require.NoError(t, err)
@@ -733,7 +733,7 @@ func TestGuardianGetHiddenACL(t *testing.T) {
 func TestGuardianGetAclWithoutDuplicates(t *testing.T) {
 	t.Run("Get hidden ACL tests", func(t *testing.T) {
 		store := mockstore.NewSQLStoreMock()
-		dashSvc := dashboards.NewFakeDashboardService(t)
+		dashSvc := dashboards.NewMockDashboardService(t)
 		dashSvc.On("GetDashboardAclInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardAclInfoListQuery")).Run(func(args mock.Arguments) {
 			q := args.Get(1).(*models.GetDashboardAclInfoListQuery)
 			q.Result = []*models.DashboardAclInfoDTO{

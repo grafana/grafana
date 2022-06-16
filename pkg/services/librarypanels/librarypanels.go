@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -28,10 +29,10 @@ func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, routeRegister
 
 // Service is a service for operating on library panels.
 type Service interface {
-	LoadLibraryPanelsForDashboard(c context.Context, dash *models.Dashboard) error
-	CleanLibraryPanelsForDashboard(dash *models.Dashboard) error
-	ConnectLibraryPanelsForDashboard(c context.Context, signedInUser *models.SignedInUser, dash *models.Dashboard) error
-	ImportLibraryPanelsForDashboard(c context.Context, signedInUser *models.SignedInUser, dash *models.Dashboard, folderID int64) error
+	LoadLibraryPanelsForDashboard(c context.Context, dash *dashboards.Dashboard) error
+	CleanLibraryPanelsForDashboard(dash *dashboards.Dashboard) error
+	ConnectLibraryPanelsForDashboard(c context.Context, signedInUser *models.SignedInUser, dash *dashboards.Dashboard) error
+	ImportLibraryPanelsForDashboard(c context.Context, signedInUser *models.SignedInUser, dash *dashboards.Dashboard, folderID int64) error
 }
 
 // LibraryPanelService is the service for the Panel Library feature.
@@ -45,7 +46,7 @@ type LibraryPanelService struct {
 
 // LoadLibraryPanelsForDashboard loops through all panels in dashboard JSON and replaces any library panel JSON
 // with JSON stored for library panel in db.
-func (lps *LibraryPanelService) LoadLibraryPanelsForDashboard(c context.Context, dash *models.Dashboard) error {
+func (lps *LibraryPanelService) LoadLibraryPanelsForDashboard(c context.Context, dash *dashboards.Dashboard) error {
 	elements, err := lps.LibraryElementService.GetElementsForDashboard(c, dash.Id)
 	if err != nil {
 		return err
@@ -154,7 +155,7 @@ func loadLibraryPanelsRecursively(elements map[string]libraryelements.LibraryEle
 
 // CleanLibraryPanelsForDashboard loops through all panels in dashboard JSON and cleans up any library panel JSON so that
 // only the necessary JSON properties remain when storing the dashboard JSON.
-func (lps *LibraryPanelService) CleanLibraryPanelsForDashboard(dash *models.Dashboard) error {
+func (lps *LibraryPanelService) CleanLibraryPanelsForDashboard(dash *dashboards.Dashboard) error {
 	return cleanLibraryPanelsRecursively(dash.Data)
 }
 
@@ -199,7 +200,7 @@ func cleanLibraryPanelsRecursively(parent *simplejson.Json) error {
 }
 
 // ConnectLibraryPanelsForDashboard loops through all panels in dashboard JSON and connects any library panels to the dashboard.
-func (lps *LibraryPanelService) ConnectLibraryPanelsForDashboard(c context.Context, signedInUser *models.SignedInUser, dash *models.Dashboard) error {
+func (lps *LibraryPanelService) ConnectLibraryPanelsForDashboard(c context.Context, signedInUser *models.SignedInUser, dash *dashboards.Dashboard) error {
 	panels := dash.Data.Get("panels").MustArray()
 	libraryPanels := make(map[string]string)
 	err := connectLibraryPanelsRecursively(c, panels, libraryPanels)
@@ -253,7 +254,7 @@ func connectLibraryPanelsRecursively(c context.Context, panels []interface{}, li
 }
 
 // ImportLibraryPanelsForDashboard loops through all panels in dashboard JSON and creates any missing library panels in the database.
-func (lps *LibraryPanelService) ImportLibraryPanelsForDashboard(c context.Context, signedInUser *models.SignedInUser, dash *models.Dashboard, folderID int64) error {
+func (lps *LibraryPanelService) ImportLibraryPanelsForDashboard(c context.Context, signedInUser *models.SignedInUser, dash *dashboards.Dashboard, folderID int64) error {
 	return importLibraryPanelsRecursively(c, lps.LibraryElementService, signedInUser, dash.Data, folderID)
 }
 

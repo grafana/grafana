@@ -99,7 +99,7 @@ func NewBrowserScreenshotService(ds dashboards.DashboardService, rs rendering.Se
 // timeout in ScreenshotOptions, however the timeout in ScreenshotOptions is
 // sent to the remote browser where it is used as a client timeout.
 func (s *BrowserScreenshotService) Take(ctx context.Context, opts ScreenshotOptions) (*Screenshot, error) {
-	q := models.GetDashboardQuery{Uid: opts.DashboardUID}
+	q := dashboards.GetDashboardQuery{Uid: opts.DashboardUID}
 	if err := s.ds.GetDashboard(ctx, &q); err != nil {
 		return nil, err
 	}

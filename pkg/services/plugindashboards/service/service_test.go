@@ -8,11 +8,12 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/plugindashboards"
 )
 
 func TestGetPluginDashboards(t *testing.T) {
@@ -38,10 +39,10 @@ func TestGetPluginDashboards(t *testing.T) {
 		},
 	}
 	dashboardPluginService := &dashboardPluginServiceMock{
-		pluginDashboards: map[string][]*models.Dashboard{
+		pluginDashboards: map[string][]*dashboards.Dashboard{
 			"test-app": {
-				models.NewDashboardFromJson(testDashboardOld),
-				models.NewDashboardFromJson(testDashboardDeleted),
+				dashboards.NewDashboardFromJson(testDashboardOld),
+				dashboards.NewDashboardFromJson(testDashboardDeleted),
 			},
 		},
 	}
@@ -203,19 +204,19 @@ func (m pluginDashboardStoreMock) GetPluginDashboardFileContents(ctx context.Con
 }
 
 type dashboardPluginServiceMock struct {
-	pluginDashboards map[string][]*models.Dashboard
-	args             []*models.GetDashboardsByPluginIdQuery
+	pluginDashboards map[string][]*dashboards.Dashboard
+	args             []*dashboards.GetDashboardsByPluginIdQuery
 }
 
-func (d *dashboardPluginServiceMock) GetDashboardsByPluginID(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error {
-	query.Result = []*models.Dashboard{}
+func (d *dashboardPluginServiceMock) GetDashboardsByPluginID(ctx context.Context, query *dashboards.GetDashboardsByPluginIdQuery) error {
+	query.Result = []*dashboards.Dashboard{}
 
 	if dashboards, exists := d.pluginDashboards[query.PluginId]; exists {
 		query.Result = dashboards
 	}
 
 	if d.args == nil {
-		d.args = []*models.GetDashboardsByPluginIdQuery{}
+		d.args = []*dashboards.GetDashboardsByPluginIdQuery{}
 	}
 
 	d.args = append(d.args, query)

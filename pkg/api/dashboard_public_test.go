@@ -10,29 +10,28 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/web/webtest"
-
-	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 )
 
 func TestAPIGetPublicDashboard(t *testing.T) {
 	t.Run("It should 404 if featureflag is not enabled", func(t *testing.T) {
 		sc := setupHTTPServerWithMockDb(t, false, false, featuremgmt.WithFeatures())
-		dashSvc := dashboards.NewFakeDashboardService(t)
+		dashSvc := dashboards.NewMockDashboardService(t)
 		dashSvc.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).
-			Return(&models.Dashboard{}, nil).Maybe()
+			Return(&dashboards.Dashboard{}, nil).Maybe()
 		sc.hs.dashboardService = dashSvc
 
 		setInitCtxSignedInViewer(sc.initCtx)
@@ -61,14 +60,14 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 		name                  string
 		uid                   string
 		expectedHttpResponse  int
-		publicDashboardResult *models.Dashboard
+		publicDashboardResult *dashboards.Dashboard
 		publicDashboardErr    error
 	}{
 		{
 			name:                 "It gets a public dashboard",
 			uid:                  pubdashUid,
 			expectedHttpResponse: http.StatusOK,
-			publicDashboardResult: &models.Dashboard{
+			publicDashboardResult: &dashboards.Dashboard{
 				Data: simplejson.NewFromAny(map[string]interface{}{
 					"Uid": dashboardUid,
 				}),
@@ -81,14 +80,14 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 			uid:                   pubdashUid,
 			expectedHttpResponse:  http.StatusNotFound,
 			publicDashboardResult: nil,
-			publicDashboardErr:    models.ErrPublicDashboardNotFound,
+			publicDashboardErr:    dashboards.ErrPublicDashboardNotFound,
 		},
 	}
 
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
 			sc := setupHTTPServerWithMockDb(t, false, false, featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards))
-			dashSvc := dashboards.NewFakeDashboardService(t)
+			dashSvc := dashboards.NewMockDashboardService(t)
 			dashSvc.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).
 				Return(test.publicDashboardResult, test.publicDashboardErr)
 			sc.hs.dashboardService = dashSvc
@@ -127,13 +126,13 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 }
 
 func TestAPIGetPublicDashboardConfig(t *testing.T) {
-	pdc := &models.PublicDashboardConfig{IsPublic: true}
+	pdc := &dashboards.PublicDashboardConfig{IsPublic: true}
 
 	testCases := []struct {
 		name                        string
 		dashboardUid                string
 		expectedHttpResponse        int
-		publicDashboardConfigResult *models.PublicDashboardConfig
+		publicDashboardConfigResult *dashboards.PublicDashboardConfig
 		publicDashboardConfigError  error
 	}{
 		{
@@ -148,7 +147,7 @@ func TestAPIGetPublicDashboardConfig(t *testing.T) {
 			dashboardUid:                "77777",
 			expectedHttpResponse:        http.StatusNotFound,
 			publicDashboardConfigResult: nil,
-			publicDashboardConfigError:  models.ErrDashboardNotFound,
+			publicDashboardConfigError:  dashboards.ErrDashboardNotFound,
 		},
 		{
 			name:                        "returns 500 when internal server error",
@@ -162,7 +161,7 @@ func TestAPIGetPublicDashboardConfig(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
 			sc := setupHTTPServerWithMockDb(t, false, false, featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards))
-			dashSvc := dashboards.NewFakeDashboardService(t)
+			dashSvc := dashboards.NewMockDashboardService(t)
 			dashSvc.On("GetPublicDashboardConfig", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
 				Return(test.publicDashboardConfigResult, test.publicDashboardConfigError)
 			sc.hs.dashboardService = dashSvc
@@ -179,7 +178,7 @@ func TestAPIGetPublicDashboardConfig(t *testing.T) {
 			assert.Equal(t, test.expectedHttpResponse, response.Code)
 
 			if response.Code == http.StatusOK {
-				var pdcResp models.PublicDashboardConfig
+				var pdcResp dashboards.PublicDashboardConfig
 				err := json.Unmarshal(response.Body.Bytes(), &pdcResp)
 				require.NoError(t, err)
 				assert.Equal(t, test.publicDashboardConfigResult, &pdcResp)
@@ -192,28 +191,28 @@ func TestApiSavePublicDashboardConfig(t *testing.T) {
 	testCases := []struct {
 		name                  string
 		dashboardUid          string
-		publicDashboardConfig *models.PublicDashboardConfig
+		publicDashboardConfig *dashboards.PublicDashboardConfig
 		expectedHttpResponse  int
 		saveDashboardError    error
 	}{
 		{
 			name:                  "returns 200 when update persists",
 			dashboardUid:          "1",
-			publicDashboardConfig: &models.PublicDashboardConfig{IsPublic: true},
+			publicDashboardConfig: &dashboards.PublicDashboardConfig{IsPublic: true},
 			expectedHttpResponse:  http.StatusOK,
 			saveDashboardError:    nil,
 		},
 		{
 			name:                  "returns 500 when not persisted",
 			expectedHttpResponse:  http.StatusInternalServerError,
-			publicDashboardConfig: &models.PublicDashboardConfig{},
+			publicDashboardConfig: &dashboards.PublicDashboardConfig{},
 			saveDashboardError:    errors.New("backend failed to save"),
 		},
 		{
 			name:                  "returns 404 when dashboard not found",
 			expectedHttpResponse:  http.StatusNotFound,
-			publicDashboardConfig: &models.PublicDashboardConfig{},
-			saveDashboardError:    models.ErrDashboardNotFound,
+			publicDashboardConfig: &dashboards.PublicDashboardConfig{},
+			saveDashboardError:    dashboards.ErrDashboardNotFound,
 		},
 	}
 
@@ -221,9 +220,9 @@ func TestApiSavePublicDashboardConfig(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			sc := setupHTTPServerWithMockDb(t, false, false, featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards))
 
-			dashSvc := dashboards.NewFakeDashboardService(t)
+			dashSvc := dashboards.NewMockDashboardService(t)
 			dashSvc.On("SavePublicDashboardConfig", mock.Anything, mock.AnythingOfType("*dashboards.SavePublicDashboardConfigDTO")).
-				Return(&models.PublicDashboardConfig{IsPublic: true}, test.saveDashboardError)
+				Return(&dashboards.PublicDashboardConfig{IsPublic: true}, test.saveDashboardError)
 			sc.hs.dashboardService = dashSvc
 
 			setInitCtxSignedInViewer(sc.initCtx)
@@ -287,14 +286,14 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 		&fakeOAuthTokenService{},
 	)
 
-	setup := func(enabled bool) (*webtest.Server, *dashboards.FakeDashboardService) {
-		fakeDashboardService := &dashboards.FakeDashboardService{}
+	setup := func(enabled bool) (*webtest.Server, *dashboards.MockDashboardService) {
+		MockDashboardService := &dashboards.MockDashboardService{}
 
 		return SetupAPITestServer(t, func(hs *HTTPServer) {
 			hs.queryDataService = qds
 			hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards, enabled)
-			hs.dashboardService = fakeDashboardService
-		}), fakeDashboardService
+			hs.dashboardService = MockDashboardService
+		}), MockDashboardService
 	}
 
 	t.Run("Status code is 404 when feature toggle is disabled", func(t *testing.T) {
@@ -324,9 +323,9 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 	})
 
 	t.Run("Returns query data when feature toggle is enabled", func(t *testing.T) {
-		server, fakeDashboardService := setup(true)
+		server, MockDashboardService := setup(true)
 
-		fakeDashboardService.On(
+		MockDashboardService.On(
 			"BuildPublicDashboardMetricRequest",
 			mock.Anything,
 			"abc123",
@@ -383,9 +382,9 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 	})
 
 	t.Run("Status code is 500 when the query fails", func(t *testing.T) {
-		server, fakeDashboardService := setup(true)
+		server, MockDashboardService := setup(true)
 
-		fakeDashboardService.On(
+		MockDashboardService.On(
 			"BuildPublicDashboardMetricRequest",
 			mock.Anything,
 			"abc123",
@@ -420,9 +419,9 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 	})
 
 	t.Run("Status code is 200 when a panel has queries from multiple datasources", func(t *testing.T) {
-		server, fakeDashboardService := setup(true)
+		server, MockDashboardService := setup(true)
 
-		fakeDashboardService.On(
+		MockDashboardService.On(
 			"BuildPublicDashboardMetricRequest",
 			mock.Anything,
 			"abc123",

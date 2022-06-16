@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 )
 
 // Job holds state about when the alert rule should be evaluated.
@@ -46,6 +47,6 @@ type EvalMatch struct {
 
 type DashAlertInfo struct {
 	User  *models.SignedInUser
-	Dash  *models.Dashboard
+	Dash  *dashboards.Dashboard
 	OrgID int64
 }

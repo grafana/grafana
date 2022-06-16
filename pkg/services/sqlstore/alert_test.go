@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 
 	"github.com/stretchr/testify/require"
 )
@@ -33,7 +34,7 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 	defer resetTimeNow()
 
 	var sqlStore *SQLStore
-	var testDash *models.Dashboard
+	var testDash *dashboards.Dashboard
 	var items []*models.Alert
 
 	setup := func(t *testing.T) {
@@ -246,7 +247,7 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 		require.Nil(t, err)
 
 		err = sqlStore.WithDbSession(context.Background(), func(sess *DBSession) error {
-			dash := models.Dashboard{Id: testDash.Id, OrgId: 1}
+			dash := dashboards.Dashboard{Id: testDash.Id, OrgId: 1}
 			_, err := sess.Delete(dash)
 			return err
 		})

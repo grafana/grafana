@@ -171,9 +171,9 @@ func createDashboards(t *testing.T, db *sqlstore.SQLStore, startID, endID int, o
 		}`))
 		require.NoError(t, err)
 
-		var dash *models.Dashboard
+		var dash *dashboards.Dashboard
 		err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-			dash = models.NewDashboardFromJson(dashboard)
+			dash = dashboards.NewDashboardFromJson(dashboard)
 			dash.OrgId = orgID
 			dash.Uid = util.GenerateShortUID()
 			dash.CreatedBy = 1

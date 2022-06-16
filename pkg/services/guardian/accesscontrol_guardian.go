@@ -43,7 +43,7 @@ type AccessControlDashboardGuardian struct {
 	ctx                         context.Context
 	log                         log.Logger
 	dashboardID                 int64
-	dashboard                   *models.Dashboard
+	dashboard                   *dashboards.Dashboard
 	user                        *models.SignedInUser
 	store                       sqlstore.Store
 	ac                          accesscontrol.AccessControl
@@ -254,7 +254,7 @@ func (a *AccessControlDashboardGuardian) GetHiddenACL(cfg *setting.Cfg) ([]*mode
 
 func (a *AccessControlDashboardGuardian) loadDashboard() error {
 	if a.dashboard == nil {
-		query := &models.GetDashboardQuery{Id: a.dashboardID, OrgId: a.user.OrgId}
+		query := &dashboards.GetDashboardQuery{Id: a.dashboardID, OrgId: a.user.OrgId}
 		if err := a.dashboardService.GetDashboard(a.ctx, query); err != nil {
 			return err
 		}
@@ -263,11 +263,11 @@ func (a *AccessControlDashboardGuardian) loadDashboard() error {
 	return nil
 }
 
-func (a *AccessControlDashboardGuardian) loadParentFolder(folderID int64) (*models.Dashboard, error) {
+func (a *AccessControlDashboardGuardian) loadParentFolder(folderID int64) (*dashboards.Dashboard, error) {
 	if folderID == 0 {
-		return &models.Dashboard{Uid: accesscontrol.GeneralFolderUID}, nil
+		return &dashboards.Dashboard{Uid: accesscontrol.GeneralFolderUID}, nil
 	}
-	folderQuery := &models.GetDashboardQuery{Id: folderID, OrgId: a.user.OrgId}
+	folderQuery := &dashboards.GetDashboardQuery{Id: folderID, OrgId: a.user.OrgId}
 	if err := a.dashboardService.GetDashboard(a.ctx, folderQuery); err != nil {
 		return nil, err
 	}

@@ -40,7 +40,7 @@ func orgRoleScenario(desc string, t *testing.T, role models.RoleType, fn scenari
 			OrgRole: role,
 		}
 		store := mockstore.NewSQLStoreMock()
-		guard := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, &dashboards.FakeDashboardService{})
+		guard := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, &dashboards.MockDashboardService{})
 
 		sc := &scenarioContext{
 			t:                t,
@@ -62,7 +62,7 @@ func apiKeyScenario(desc string, t *testing.T, role models.RoleType, fn scenario
 			ApiKeyId: 10,
 		}
 		store := mockstore.NewSQLStoreMock()
-		guard := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, &dashboards.FakeDashboardService{})
+		guard := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, &dashboards.MockDashboardService{})
 		sc := &scenarioContext{
 			t:                t,
 			orgRoleScenario:  desc,
@@ -88,7 +88,7 @@ func permissionScenario(desc string, dashboardID int64, sc *scenarioContext,
 		}
 		store.ExpectedTeamsByUser = teams
 
-		dashSvc := dashboards.NewFakeDashboardService(t)
+		dashSvc := dashboards.NewMockDashboardService(t)
 		dashSvc.On("GetDashboardAclInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardAclInfoListQuery")).Run(func(args mock.Arguments) {
 			q := args.Get(1).(*models.GetDashboardAclInfoListQuery)
 			q.Result = permissions

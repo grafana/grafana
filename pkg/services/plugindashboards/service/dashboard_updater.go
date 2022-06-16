@@ -141,7 +141,7 @@ func (du *DashboardUpdater) handlePluginStateChanged(ctx context.Context, event 
 
 		du.syncPluginDashboards(ctx, p, event.OrgId)
 	} else {
-		query := models.GetDashboardsByPluginIdQuery{PluginId: event.PluginId, OrgId: event.OrgId}
+		query := dashboards.GetDashboardsByPluginIdQuery{PluginId: event.PluginId, OrgId: event.OrgId}
 		if err := du.dashboardPluginService.GetDashboardsByPluginID(ctx, &query); err != nil {
 			return err
 		}

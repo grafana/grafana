@@ -6,6 +6,10 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -13,22 +17,19 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 func TestFoldersAPIEndpoint(t *testing.T) {
-	folderService := &dashboards.FakeFolderService{}
+	folderService := &dashboards.MockFolderService{}
 	defer folderService.AssertExpectations(t)
 
 	t.Run("Given a correct request for creating a folder", func(t *testing.T) {
-		cmd := models.CreateFolderCommand{
+		cmd := dashboards.CreateFolderCommand{
 			Uid:   "uid",
 			Title: "Folder",
 		}
 
-		folderResult := &models.Folder{Id: 1, Uid: "uid", Title: "Folder"}
+		folderResult := &dashboards.Folder{Id: 1, Uid: "uid", Title: "Folder"}
 		folderService.On("CreateFolder", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(folderResult, nil).Once()
 
 		createFolderScenario(t, "When calling POST on", "/api/folders", "/api/folders", folderService, cmd,
@@ -49,18 +50,18 @@ func TestFoldersAPIEndpoint(t *testing.T) {
 			Error              error
 			ExpectedStatusCode int
 		}{
-			{Error: models.ErrFolderWithSameUIDExists, ExpectedStatusCode: 409},
-			{Error: models.ErrFolderTitleEmpty, ExpectedStatusCode: 400},
-			{Error: models.ErrFolderSameNameExists, ExpectedStatusCode: 409},
-			{Error: models.ErrDashboardInvalidUid, ExpectedStatusCode: 400},
-			{Error: models.ErrDashboardUidTooLong, ExpectedStatusCode: 400},
-			{Error: models.ErrFolderAccessDenied, ExpectedStatusCode: 403},
-			{Error: models.ErrFolderNotFound, ExpectedStatusCode: 404},
-			{Error: models.ErrFolderVersionMismatch, ExpectedStatusCode: 412},
-			{Error: models.ErrFolderFailedGenerateUniqueUid, ExpectedStatusCode: 500},
+			{Error: dashboards.ErrFolderWithSameUIDExists, ExpectedStatusCode: 409},
+			{Error: dashboards.ErrFolderTitleEmpty, ExpectedStatusCode: 400},
+			{Error: dashboards.ErrFolderSameNameExists, ExpectedStatusCode: 409},
+			{Error: dashboards.ErrDashboardInvalidUid, ExpectedStatusCode: 400},
+			{Error: dashboards.ErrDashboardUidTooLong, ExpectedStatusCode: 400},
+			{Error: dashboards.ErrFolderAccessDenied, ExpectedStatusCode: 403},
+			{Error: dashboards.ErrFolderNotFound, ExpectedStatusCode: 404},
+			{Error: dashboards.ErrFolderVersionMismatch, ExpectedStatusCode: 412},
+			{Error: dashboards.ErrFolderFailedGenerateUniqueUid, ExpectedStatusCode: 500},
 		}
 
-		cmd := models.CreateFolderCommand{
+		cmd := dashboards.CreateFolderCommand{
 			Uid:   "uid",
 			Title: "Folder",
 		}
@@ -77,13 +78,13 @@ func TestFoldersAPIEndpoint(t *testing.T) {
 	})
 
 	t.Run("Given a correct request for updating a folder", func(t *testing.T) {
-		cmd := models.UpdateFolderCommand{
+		cmd := dashboards.UpdateFolderCommand{
 			Title: "Folder upd",
 		}
 
 		folderService.On("UpdateFolder", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-			cmd := args.Get(4).(*models.UpdateFolderCommand)
-			cmd.Result = &models.Folder{Id: 1, Uid: "uid", Title: "Folder upd"}
+			cmd := args.Get(4).(*dashboards.UpdateFolderCommand)
+			cmd.Result = &dashboards.Folder{Id: 1, Uid: "uid", Title: "Folder upd"}
 		}).Return(nil).Once()
 
 		updateFolderScenario(t, "When calling PUT on", "/api/folders/uid", "/api/folders/:uid", folderService, cmd,
@@ -104,18 +105,18 @@ func TestFoldersAPIEndpoint(t *testing.T) {
 			Error              error
 			ExpectedStatusCode int
 		}{
-			{Error: models.ErrFolderWithSameUIDExists, ExpectedStatusCode: 409},
-			{Error: models.ErrFolderTitleEmpty, ExpectedStatusCode: 400},
-			{Error: models.ErrFolderSameNameExists, ExpectedStatusCode: 409},
-			{Error: models.ErrDashboardInvalidUid, ExpectedStatusCode: 400},
-			{Error: models.ErrDashboardUidTooLong, ExpectedStatusCode: 400},
-			{Error: models.ErrFolderAccessDenied, ExpectedStatusCode: 403},
-			{Error: models.ErrFolderNotFound, ExpectedStatusCode: 404},
-			{Error: models.ErrFolderVersionMismatch, ExpectedStatusCode: 412},
-			{Error: models.ErrFolderFailedGenerateUniqueUid, ExpectedStatusCode: 500},
+			{Error: dashboards.ErrFolderWithSameUIDExists, ExpectedStatusCode: 409},
+			{Error: dashboards.ErrFolderTitleEmpty, ExpectedStatusCode: 400},
+			{Error: dashboards.ErrFolderSameNameExists, ExpectedStatusCode: 409},
+			{Error: dashboards.ErrDashboardInvalidUid, ExpectedStatusCode: 400},
+			{Error: dashboards.ErrDashboardUidTooLong, ExpectedStatusCode: 400},
+			{Error: dashboards.ErrFolderAccessDenied, ExpectedStatusCode: 403},
+			{Error: dashboards.ErrFolderNotFound, ExpectedStatusCode: 404},
+			{Error: dashboards.ErrFolderVersionMismatch, ExpectedStatusCode: 412},
+			{Error: dashboards.ErrFolderFailedGenerateUniqueUid, ExpectedStatusCode: 500},
 		}
 
-		cmd := models.UpdateFolderCommand{
+		cmd := dashboards.UpdateFolderCommand{
 			Title: "Folder upd",
 		}
 
@@ -135,7 +136,7 @@ func callCreateFolder(sc *scenarioContext) {
 }
 
 func createFolderScenario(t *testing.T, desc string, url string, routePattern string, folderService dashboards.FolderService,
-	cmd models.CreateFolderCommand, fn scenarioFunc) {
+	cmd dashboards.CreateFolderCommand, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		hs := HTTPServer{
 			Cfg:           setting.NewCfg(),
@@ -164,7 +165,7 @@ func callUpdateFolder(sc *scenarioContext) {
 }
 
 func updateFolderScenario(t *testing.T, desc string, url string, routePattern string, folderService dashboards.FolderService,
-	cmd models.UpdateFolderCommand, fn scenarioFunc) {
+	cmd dashboards.UpdateFolderCommand, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		hs := HTTPServer{
 			Cfg:           setting.NewCfg(),
@@ -187,46 +188,46 @@ func updateFolderScenario(t *testing.T, desc string, url string, routePattern st
 	})
 }
 
-type fakeFolderService struct {
+type MockFolderService struct {
 	dashboards.FolderService
 
-	GetFoldersResult     []*models.Folder
+	GetFoldersResult     []*dashboards.Folder
 	GetFoldersError      error
-	GetFolderByUIDResult *models.Folder
+	GetFolderByUIDResult *dashboards.Folder
 	GetFolderByUIDError  error
-	GetFolderByIDResult  *models.Folder
+	GetFolderByIDResult  *dashboards.Folder
 	GetFolderByIDError   error
-	CreateFolderResult   *models.Folder
+	CreateFolderResult   *dashboards.Folder
 	CreateFolderError    error
-	UpdateFolderResult   *models.Folder
+	UpdateFolderResult   *dashboards.Folder
 	UpdateFolderError    error
-	DeleteFolderResult   *models.Folder
+	DeleteFolderResult   *dashboards.Folder
 	DeleteFolderError    error
 	DeletedFolderUids    []string
 }
 
-func (s *fakeFolderService) GetFolders(ctx context.Context, user *models.SignedInUser, orgID int64, limit int64, page int64) ([]*models.Folder, error) {
+func (s *MockFolderService) GetFolders(ctx context.Context, user *models.SignedInUser, orgID int64, limit int64, page int64) ([]*dashboards.Folder, error) {
 	return s.GetFoldersResult, s.GetFoldersError
 }
 
-func (s *fakeFolderService) GetFolderByID(ctx context.Context, user *models.SignedInUser, id int64, orgID int64) (*models.Folder, error) {
+func (s *MockFolderService) GetFolderByID(ctx context.Context, user *models.SignedInUser, id int64, orgID int64) (*dashboards.Folder, error) {
 	return s.GetFolderByIDResult, s.GetFolderByIDError
 }
 
-func (s *fakeFolderService) GetFolderByUID(ctx context.Context, user *models.SignedInUser, orgID int64, uid string) (*models.Folder, error) {
+func (s *MockFolderService) GetFolderByUID(ctx context.Context, user *models.SignedInUser, orgID int64, uid string) (*dashboards.Folder, error) {
 	return s.GetFolderByUIDResult, s.GetFolderByUIDError
 }
 
-func (s *fakeFolderService) CreateFolder(ctx context.Context, user *models.SignedInUser, orgID int64, title, uid string) (*models.Folder, error) {
+func (s *MockFolderService) CreateFolder(ctx context.Context, user *models.SignedInUser, orgID int64, title, uid string) (*dashboards.Folder, error) {
 	return s.CreateFolderResult, s.CreateFolderError
 }
 
-func (s *fakeFolderService) UpdateFolder(ctx context.Context, user *models.SignedInUser, orgID int64, existingUid string, cmd *models.UpdateFolderCommand) error {
+func (s *MockFolderService) UpdateFolder(ctx context.Context, user *models.SignedInUser, orgID int64, existingUid string, cmd *dashboards.UpdateFolderCommand) error {
 	cmd.Result = s.UpdateFolderResult
 	return s.UpdateFolderError
 }
 
-func (s *fakeFolderService) DeleteFolder(ctx context.Context, user *models.SignedInUser, orgID int64, uid string, forceDeleteRules bool) (*models.Folder, error) {
+func (s *MockFolderService) DeleteFolder(ctx context.Context, user *models.SignedInUser, orgID int64, uid string, forceDeleteRules bool) (*dashboards.Folder, error) {
 	s.DeletedFolderUids = append(s.DeletedFolderUids, uid)
 	return s.DeleteFolderResult, s.DeleteFolderError
 }

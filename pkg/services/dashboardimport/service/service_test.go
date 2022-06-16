@@ -6,13 +6,14 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
-	"github.com/stretchr/testify/require"
 )
 
 func TestImportDashboardService(t *testing.T) {
@@ -23,9 +24,9 @@ func TestImportDashboardService(t *testing.T) {
 
 		var importDashboardArg *dashboards.SaveDashboardDTO
 		dashboardService := &dashboardServiceMock{
-			importDashboardFunc: func(ctx context.Context, dto *dashboards.SaveDashboardDTO) (*models.Dashboard, error) {
+			importDashboardFunc: func(ctx context.Context, dto *dashboards.SaveDashboardDTO) (*dashboards.Dashboard, error) {
 				importDashboardArg = dto
-				return &models.Dashboard{
+				return &dashboards.Dashboard{
 					Id:       4,
 					Uid:      dto.Dashboard.Uid,
 					Slug:     dto.Dashboard.Slug,
@@ -42,11 +43,11 @@ func TestImportDashboardService(t *testing.T) {
 		importLibraryPanelsForDashboard := false
 		connectLibraryPanelsForDashboardCalled := false
 		libraryPanelService := &libraryPanelServiceMock{
-			importLibraryPanelsForDashboardFunc: func(ctx context.Context, signedInUser *models.SignedInUser, dash *models.Dashboard, folderID int64) error {
+			importLibraryPanelsForDashboardFunc: func(ctx context.Context, signedInUser *models.SignedInUser, dash *dashboards.Dashboard, folderID int64) error {
 				importLibraryPanelsForDashboard = true
 				return nil
 			},
-			connectLibraryPanelsForDashboardFunc: func(ctx context.Context, signedInUser *models.SignedInUser, dash *models.Dashboard) error {
+			connectLibraryPanelsForDashboardFunc: func(ctx context.Context, signedInUser *models.SignedInUser, dash *dashboards.Dashboard) error {
 				connectLibraryPanelsForDashboardCalled = true
 				return nil
 			},
@@ -87,9 +88,9 @@ func TestImportDashboardService(t *testing.T) {
 	t.Run("When importing a non-plugin dashboard should save dashboard and sync library panels", func(t *testing.T) {
 		var importDashboardArg *dashboards.SaveDashboardDTO
 		dashboardService := &dashboardServiceMock{
-			importDashboardFunc: func(ctx context.Context, dto *dashboards.SaveDashboardDTO) (*models.Dashboard, error) {
+			importDashboardFunc: func(ctx context.Context, dto *dashboards.SaveDashboardDTO) (*dashboards.Dashboard, error) {
 				importDashboardArg = dto
-				return &models.Dashboard{
+				return &dashboards.Dashboard{
 					Id:       4,
 					Uid:      dto.Dashboard.Uid,
 					Slug:     dto.Dashboard.Slug,
@@ -153,7 +154,7 @@ func loadTestDashboard(ctx context.Context, req *plugindashboards.LoadPluginDash
 	}
 
 	return &plugindashboards.LoadPluginDashboardResponse{
-		Dashboard: models.NewDashboardFromJson(dashboardJSON),
+		Dashboard: dashboards.NewDashboardFromJson(dashboardJSON),
 	}, nil
 }
 
@@ -172,10 +173,10 @@ func (m *pluginDashboardServiceMock) LoadPluginDashboard(ctx context.Context, re
 
 type dashboardServiceMock struct {
 	dashboards.DashboardService
-	importDashboardFunc func(ctx context.Context, dto *dashboards.SaveDashboardDTO) (*models.Dashboard, error)
+	importDashboardFunc func(ctx context.Context, dto *dashboards.SaveDashboardDTO) (*dashboards.Dashboard, error)
 }
 
-func (s *dashboardServiceMock) ImportDashboard(ctx context.Context, dto *dashboards.SaveDashboardDTO) (*models.Dashboard, error) {
+func (s *dashboardServiceMock) ImportDashboard(ctx context.Context, dto *dashboards.SaveDashboardDTO) (*dashboards.Dashboard, error) {
 	if s.importDashboardFunc != nil {
 		return s.importDashboardFunc(ctx, dto)
 	}
@@ -185,11 +186,11 @@ func (s *dashboardServiceMock) ImportDashboard(ctx context.Context, dto *dashboa
 
 type libraryPanelServiceMock struct {
 	librarypanels.Service
-	connectLibraryPanelsForDashboardFunc func(ctx context.Context, signedInUser *models.SignedInUser, dash *models.Dashboard) error
-	importLibraryPanelsForDashboardFunc  func(ctx context.Context, signedInUser *models.SignedInUser, dash *models.Dashboard, folderID int64) error
+	connectLibraryPanelsForDashboardFunc func(ctx context.Context, signedInUser *models.SignedInUser, dash *dashboards.Dashboard) error
+	importLibraryPanelsForDashboardFunc  func(ctx context.Context, signedInUser *models.SignedInUser, dash *dashboards.Dashboard, folderID int64) error
 }
 
-func (s *libraryPanelServiceMock) ConnectLibraryPanelsForDashboard(ctx context.Context, signedInUser *models.SignedInUser, dash *models.Dashboard) error {
+func (s *libraryPanelServiceMock) ConnectLibraryPanelsForDashboard(ctx context.Context, signedInUser *models.SignedInUser, dash *dashboards.Dashboard) error {
 	if s.connectLibraryPanelsForDashboardFunc != nil {
 		return s.connectLibraryPanelsForDashboardFunc(ctx, signedInUser, dash)
 	}
@@ -197,7 +198,7 @@ func (s *libraryPanelServiceMock) ConnectLibraryPanelsForDashboard(ctx context.C
 	return nil
 }
 
-func (s *libraryPanelServiceMock) ImportLibraryPanelsForDashboard(ctx context.Context, signedInUser *models.SignedInUser, dash *models.Dashboard, folderID int64) error {
+func (s *libraryPanelServiceMock) ImportLibraryPanelsForDashboard(ctx context.Context, signedInUser *models.SignedInUser, dash *dashboards.Dashboard, folderID int64) error {
 	if s.importLibraryPanelsForDashboardFunc != nil {
 		return s.importLibraryPanelsForDashboardFunc(ctx, signedInUser, dash, folderID)
 	}

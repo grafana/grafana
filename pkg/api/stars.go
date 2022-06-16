@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -22,7 +23,7 @@ func (hs *HTTPServer) GetStars(c *models.ReqContext) response.Response {
 
 	uids := []string{}
 	for dashboardId := range iuserstars.UserStars {
-		query := &models.GetDashboardQuery{
+		query := &dashboards.GetDashboardQuery{
 			Id:    dashboardId,
 			OrgId: c.OrgId,
 		}

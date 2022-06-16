@@ -26,16 +26,16 @@ func NewPermissionChecker(sqlStore *sqlstore.SQLStore, features featuremgmt.Feat
 	return &PermissionChecker{sqlStore: sqlStore, features: features, accessControl: accessControl}
 }
 
-func (c *PermissionChecker) getDashboardByUid(ctx context.Context, orgID int64, uid string) (*models.Dashboard, error) {
-	query := models.GetDashboardQuery{Uid: uid, OrgId: orgID}
+func (c *PermissionChecker) getDashboardByUid(ctx context.Context, orgID int64, uid string) (*dashboards.Dashboard, error) {
+	query := dashboards.GetDashboardQuery{Uid: uid, OrgId: orgID}
 	if err := c.dashboardService.GetDashboard(ctx, &query); err != nil {
 		return nil, err
 	}
 	return query.Result, nil
 }
 
-func (c *PermissionChecker) getDashboardById(ctx context.Context, orgID int64, id int64) (*models.Dashboard, error) {
-	query := models.GetDashboardQuery{Id: id, OrgId: orgID}
+func (c *PermissionChecker) getDashboardById(ctx context.Context, orgID int64, id int64) (*dashboards.Dashboard, error) {
+	query := dashboards.GetDashboardQuery{Id: id, OrgId: orgID}
 	if err := c.dashboardService.GetDashboard(ctx, &query); err != nil {
 		return nil, err
 	}

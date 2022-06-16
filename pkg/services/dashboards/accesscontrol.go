@@ -4,7 +4,6 @@ import (
 	"context"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
@@ -96,7 +95,7 @@ func NewDashboardIDScopeResolver(db Store) (string, ac.ScopeAttributeResolver) {
 			return nil, err
 		}
 
-		dashboard, err := db.GetDashboard(ctx, &models.GetDashboardQuery{Id: id, OrgId: orgID})
+		dashboard, err := db.GetDashboard(ctx, &GetDashboardQuery{Id: id, OrgId: orgID})
 		if err != nil {
 			return nil, err
 		}
@@ -119,7 +118,7 @@ func NewDashboardUIDScopeResolver(db Store) (string, ac.ScopeAttributeResolver) 
 			return nil, err
 		}
 
-		dashboard, err := db.GetDashboard(ctx, &models.GetDashboardQuery{Uid: uid, OrgId: orgID})
+		dashboard, err := db.GetDashboard(ctx, &GetDashboardQuery{Uid: uid, OrgId: orgID})
 		if err != nil {
 			return nil, err
 		}
@@ -128,7 +127,7 @@ func NewDashboardUIDScopeResolver(db Store) (string, ac.ScopeAttributeResolver) 
 	})
 }
 
-func resolveDashboardScope(ctx context.Context, db Store, orgID int64, dashboard *models.Dashboard) ([]string, error) {
+func resolveDashboardScope(ctx context.Context, db Store, orgID int64, dashboard *Dashboard) ([]string, error) {
 	var folderUID string
 	if dashboard.FolderId == 0 {
 		folderUID = ac.GeneralFolderUID

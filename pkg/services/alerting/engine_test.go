@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	"github.com/grafana/grafana/pkg/setting"
 
@@ -82,7 +83,7 @@ func (a *AlertStoreMock) GetOrCreateAlertNotificationState(c context.Context, cm
 	return nil
 }
 
-func (a *AlertStoreMock) GetDashboardUIDById(_ context.Context, _ *models.GetDashboardRefByIdQuery) error {
+func (a *AlertStoreMock) GetDashboardUIDById(_ context.Context, _ *dashboards.GetDashboardRefByIdQuery) error {
 	return nil
 }
 

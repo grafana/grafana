@@ -404,7 +404,7 @@ func (hs *thumbService) getStatus(c *models.ReqContext, uid string, checkSave bo
 }
 
 func (hs *thumbService) getDashboardId(c *models.ReqContext, uid string) (int64, error) {
-	query := models.GetDashboardQuery{Uid: uid, OrgId: c.OrgId}
+	query := dashboards.GetDashboardQuery{Uid: uid, OrgId: c.OrgId}
 
 	if err := hs.dashboardService.GetDashboard(c.Req.Context(), &query); err != nil {
 		return 0, err

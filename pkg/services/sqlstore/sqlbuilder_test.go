@@ -7,10 +7,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 )
 
 func TestIntegrationSQLBuilder(t *testing.T) {
@@ -221,13 +223,13 @@ func createDummyTeam(t *testing.T, sqlStore *SQLStore) models.Team {
 	return team
 }
 
-func createDummyDashboard(t *testing.T, sqlStore *SQLStore, dashboardProps DashboardProps) *models.Dashboard {
+func createDummyDashboard(t *testing.T, sqlStore *SQLStore, dashboardProps DashboardProps) *dashboards.Dashboard {
 	t.Helper()
 
 	json, err := simplejson.NewJson([]byte(`{"schemaVersion":17,"title":"gdev dashboards","uid":"","version":1}`))
 	require.NoError(t, err)
 
-	saveDashboardCmd := models.SaveDashboardCommand{
+	saveDashboardCmd := dashboards.SaveDashboardCommand{
 		Dashboard:    json,
 		UserId:       0,
 		Overwrite:    false,

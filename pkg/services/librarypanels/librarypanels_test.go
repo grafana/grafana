@@ -58,7 +58,7 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 					},
 				},
 			}
-			dash := models.Dashboard{
+			dash := dashboards.Dashboard{
 				Title: "Testing LoadLibraryPanelsForDashboard",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
@@ -210,7 +210,7 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 					},
 				},
 			}
-			dash := models.Dashboard{
+			dash := dashboards.Dashboard{
 				Title: "Testing LoadLibraryPanelsForDashboard",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
@@ -365,7 +365,7 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 					},
 				},
 			}
-			dash := models.Dashboard{
+			dash := dashboards.Dashboard{
 				Title: "Testing LoadLibraryPanelsForDashboard",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
@@ -404,7 +404,7 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 					},
 				},
 			}
-			dash := models.Dashboard{
+			dash := dashboards.Dashboard{
 				Title: "Testing LoadLibraryPanelsForDashboard",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
@@ -479,7 +479,7 @@ func TestCleanLibraryPanelsForDashboard(t *testing.T) {
 					},
 				},
 			}
-			dash := models.Dashboard{
+			dash := dashboards.Dashboard{
 				Title: "Testing CleanLibraryPanelsForDashboard",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
@@ -604,7 +604,7 @@ func TestCleanLibraryPanelsForDashboard(t *testing.T) {
 					},
 				},
 			}
-			dash := models.Dashboard{
+			dash := dashboards.Dashboard{
 				Title: "Testing CleanLibraryPanelsForDashboard",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
@@ -710,7 +710,7 @@ func TestCleanLibraryPanelsForDashboard(t *testing.T) {
 					},
 				},
 			}
-			dash := models.Dashboard{
+			dash := dashboards.Dashboard{
 				Title: "Testing CleanLibraryPanelsForDashboard",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
@@ -752,7 +752,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 					},
 				},
 			}
-			dash := models.Dashboard{
+			dash := dashboards.Dashboard{
 				Title: "Testing ConnectLibraryPanelsForDashboard",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
@@ -850,7 +850,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 					},
 				},
 			}
-			dash := models.Dashboard{
+			dash := dashboards.Dashboard{
 				Title: "Testing ConnectLibraryPanelsForDashboard",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
@@ -896,7 +896,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 					},
 				},
 			}
-			dash := models.Dashboard{
+			dash := dashboards.Dashboard{
 				Title: "Testing ConnectLibraryPanelsForDashboard",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
@@ -952,7 +952,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 				},
 			}
 
-			dash := models.Dashboard{
+			dash := dashboards.Dashboard{
 				Title: "Testing ConnectLibraryPanelsForDashboard",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
@@ -1034,7 +1034,7 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 					missingModel,
 				},
 			}
-			dash := models.Dashboard{
+			dash := dashboards.Dashboard{
 				Title: "Testing ImportLibraryPanelsForDashboard",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
@@ -1083,7 +1083,7 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 					},
 				},
 			}
-			dash := models.Dashboard{
+			dash := dashboards.Dashboard{
 				Title: "Testing ImportLibraryPanelsForDashboard",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
@@ -1183,7 +1183,7 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 					outsideModel,
 				},
 			}
-			dash := models.Dashboard{
+			dash := dashboards.Dashboard{
 				Title: "Testing ImportLibraryPanelsForDashboard",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
@@ -1272,7 +1272,7 @@ type scenarioContext struct {
 	service        Service
 	elementService libraryelements.Service
 	user           *models.SignedInUser
-	folder         *models.Folder
+	folder         *dashboards.Folder
 	initialResult  libraryPanelResult
 	sqlStore       *sqlstore.SQLStore
 }
@@ -1356,7 +1356,7 @@ func getExpected(t *testing.T, res libraryelements.LibraryElementDTO, UID string
 	}
 }
 
-func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user *models.SignedInUser, dash *models.Dashboard, folderID int64) *models.Dashboard {
+func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user *models.SignedInUser, dash *dashboards.Dashboard, folderID int64) *dashboards.Dashboard {
 	dash.FolderId = folderID
 	dashItem := &dashboards.SaveDashboardDTO{
 		Dashboard: dash,
@@ -1382,7 +1382,7 @@ func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user *models.Sig
 }
 
 func createFolderWithACL(t *testing.T, sqlStore *sqlstore.SQLStore, title string, user *models.SignedInUser,
-	items []folderACLItem) *models.Folder {
+	items []folderACLItem) *dashboards.Folder {
 	t.Helper()
 
 	ac := acmock.New()
@@ -1430,7 +1430,7 @@ func updateFolderACL(t *testing.T, dashboardStore *database.DashboardStore, fold
 
 func scenarioWithLibraryPanel(t *testing.T, desc string, fn func(t *testing.T, sc scenarioContext)) {
 	store := mockstore.NewSQLStoreMock()
-	guardian.InitLegacyGuardian(store, &dashboards.FakeDashboardService{})
+	guardian.InitLegacyGuardian(store, &dashboards.MockDashboardService{})
 	t.Helper()
 
 	testScenario(t, desc, func(t *testing.T, sc scenarioContext) {

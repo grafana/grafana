@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/imguploader"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/validations"
@@ -175,7 +176,7 @@ func notificationServiceScenario(t *testing.T, name string, evalCtx *EvalContext
 			Factory:     newTestNotifier,
 		})
 
-		evalCtx.dashboardRef = &models.DashboardRef{Uid: "db-uid"}
+		evalCtx.dashboardRef = &dashboards.DashboardRef{Uid: "db-uid"}
 
 		store := evalCtx.Store.(*AlertStoreMock)
 

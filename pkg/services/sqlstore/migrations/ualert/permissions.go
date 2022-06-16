@@ -7,6 +7,7 @@ import (
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/util"
@@ -141,7 +142,7 @@ func (m *folderHelper) generateNewDashboardUid(orgId int64) (string, error) {
 	for i := 0; i < 3; i++ {
 		uid := util.GenerateShortUID()
 
-		exists, err := m.sess.Where("org_id=? AND uid=?", orgId, uid).Get(&models.Dashboard{})
+		exists, err := m.sess.Where("org_id=? AND uid=?", orgId, uid).Get(&dashboards.Dashboard{})
 		if err != nil {
 			return "", err
 		}
@@ -151,7 +152,7 @@ func (m *folderHelper) generateNewDashboardUid(orgId int64) (string, error) {
 		}
 	}
 
-	return "", models.ErrDashboardFailedGenerateUniqueUid
+	return "", dashboards.ErrDashboardFailedGenerateUniqueUid
 }
 
 // based on SQLStore.UpdateDashboardACL()
@@ -249,7 +250,7 @@ func (m *folderHelper) setACL(orgID int64, dashboardID int64, items []*dashboard
 	}
 
 	// Update dashboard HasAcl flag
-	dashboard := models.Dashboard{HasAcl: true}
+	dashboard := dashboards.Dashboard{HasAcl: true}
 	_, err := m.sess.Cols("has_acl").Where("id=?", dashboardID).Update(&dashboard)
 	return err
 }

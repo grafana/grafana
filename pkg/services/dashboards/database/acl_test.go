@@ -4,9 +4,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 func TestIntegrationDashboardAclDataAccess(t *testing.T) {
@@ -15,7 +17,7 @@ func TestIntegrationDashboardAclDataAccess(t *testing.T) {
 	}
 	var sqlStore *sqlstore.SQLStore
 	var currentUser models.User
-	var savedFolder, childDash *models.Dashboard
+	var savedFolder, childDash *dashboards.Dashboard
 	var dashboardStore *DashboardStore
 
 	setup := func(t *testing.T) {

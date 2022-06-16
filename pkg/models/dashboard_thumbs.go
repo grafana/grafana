@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"time"
+
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type ThumbnailKind string
@@ -31,6 +33,12 @@ const (
 	// ThumbnailStateLocked is a manually assigned state. Thumbnails in the "locked" state will not be refreshed by the crawler as long as they remain in the "locked" state.
 	ThumbnailStateLocked ThumbnailState = "locked"
 )
+
+var ErrDashboardThumbnailNotFound = DashboardThumbnailErr{
+	Reason:     "Dashboard thumbnail not found",
+	StatusCode: 404,
+	Status:     "not-found",
+}
 
 func (s ThumbnailState) IsValid() bool {
 	return s == ThumbnailStateDefault || s == ThumbnailStateStale || s == ThumbnailStateLocked
@@ -140,4 +148,33 @@ type SaveDashboardThumbnailCommand struct {
 type UpdateThumbnailStateCommand struct {
 	State ThumbnailState
 	DashboardThumbnailMeta
+}
+
+// DashboardErr represents a dashboard thumb error.
+type DashboardThumbnailErr struct {
+	StatusCode int
+	Status     string
+	Reason     string
+}
+
+// Equal returns whether equal to another DashboardErr.
+func (e DashboardThumbnailErr) Equal(o DashboardThumbnailErr) bool {
+	return o.StatusCode == e.StatusCode && o.Status == e.Status && o.Reason == e.Reason
+}
+
+// Error returns the error message.
+func (e DashboardThumbnailErr) Error() string {
+	if e.Reason != "" {
+		return e.Reason
+	}
+	return "Dashboard Error"
+}
+
+// Body returns the error's response body, if applicable.
+func (e DashboardThumbnailErr) Body() util.DynMap {
+	if e.Status == "" {
+		return nil
+	}
+
+	return util.DynMap{"status": e.Status, "message": e.Error()}
 }

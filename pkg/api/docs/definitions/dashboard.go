@@ -2,8 +2,8 @@ package definitions
 
 import (
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 )
 
 // swagger:route GET /dashboards/uid/{uid} dashboards getDashboardByUID
@@ -127,7 +127,7 @@ type UID struct {
 type PostDashboardParam struct {
 	// in:body
 	// required:true
-	Body models.SaveDashboardCommand
+	Body dashboards.SaveDashboardCommand
 }
 
 // swagger:parameters calcDashboardDiff
@@ -150,7 +150,7 @@ type CalcDashboardDiffOptions struct {
 type TrimDashboardParam struct {
 	// in:body
 	// required:true
-	Body models.TrimDashboardCommand
+	Body dashboards.TrimDashboardCommand
 }
 
 // swagger:parameters importDashboard
@@ -250,7 +250,7 @@ type GetHomeDashboardResponse struct {
 // swagger:response dashboardsTagsResponse
 type DashboardsTagsResponse struct {
 	// in: body
-	Body []*models.DashboardTagCloudItem `json:"body"`
+	Body []*dashboards.DashboardTagCloudItem `json:"body"`
 }
 
 // swagger:response importDashboardResponse

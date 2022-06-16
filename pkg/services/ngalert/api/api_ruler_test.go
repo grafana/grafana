@@ -17,6 +17,7 @@ import (
 	models2 "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acMock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -772,7 +773,7 @@ func withGroup(groupName string) func(rule *models.AlertRule) {
 	}
 }
 
-func withNamespace(namespace *models2.Folder) func(rule *models.AlertRule) {
+func withNamespace(namespace *dashboards.Folder) func(rule *models.AlertRule) {
 	return func(rule *models.AlertRule) {
 		rule.NamespaceUID = namespace.Uid
 	}

@@ -27,7 +27,7 @@ type EvalContext struct {
 	Rule           *Rule
 	Log            log.Logger
 
-	dashboardRef *models.DashboardRef
+	dashboardRef *dashboards.DashboardRef
 
 	ImagePublicURL  string
 	ImageOnDiskPath string
@@ -110,12 +110,12 @@ func (c *EvalContext) GetNotificationTitle() string {
 }
 
 // GetDashboardUID returns the dashboard uid for the alert rule.
-func (c *EvalContext) GetDashboardUID() (*models.DashboardRef, error) {
+func (c *EvalContext) GetDashboardUID() (*dashboards.DashboardRef, error) {
 	if c.dashboardRef != nil {
 		return c.dashboardRef, nil
 	}
 
-	uidQuery := &models.GetDashboardRefByIdQuery{Id: c.Rule.DashboardID}
+	uidQuery := &dashboards.GetDashboardRefByIdQuery{Id: c.Rule.DashboardID}
 	if err := c.dashboardService.GetDashboardUIDById(c.Ctx, uidQuery); err != nil {
 		return nil, err
 	}
@@ -136,7 +136,7 @@ func (c *EvalContext) GetRuleURL() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf(urlFormat, models.GetFullDashboardUrl(ref.Uid, ref.Slug), c.Rule.PanelID, c.Rule.OrgID), nil
+	return fmt.Sprintf(urlFormat, dashboards.GetFullDashboardUrl(ref.Uid, ref.Slug), c.Rule.PanelID, c.Rule.OrgID), nil
 }
 
 // GetNewState returns the new state from the alert rule evaluation.

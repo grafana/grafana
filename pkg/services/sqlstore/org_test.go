@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -413,11 +414,11 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 	})
 }
 
-//TODO: Use FakeDashboardStore when org has its own service
+//TODO: Use MockDashboardStore when org has its own service
 func insertTestDashboard(t *testing.T, sqlStore *SQLStore, title string, orgId int64,
-	folderId int64, isFolder bool, tags ...interface{}) *models.Dashboard {
+	folderId int64, isFolder bool, tags ...interface{}) *dashboards.Dashboard {
 	t.Helper()
-	cmd := models.SaveDashboardCommand{
+	cmd := dashboards.SaveDashboardCommand{
 		OrgId:    orgId,
 		FolderId: folderId,
 		IsFolder: isFolder,
@@ -428,7 +429,7 @@ func insertTestDashboard(t *testing.T, sqlStore *SQLStore, title string, orgId i
 		}),
 	}
 
-	var dash *models.Dashboard
+	var dash *dashboards.Dashboard
 	err := sqlStore.WithDbSession(context.Background(), func(sess *DBSession) error {
 		dash = cmd.GetDashboardModel()
 		dash.SetVersion(1)
@@ -460,7 +461,7 @@ func insertTestDashboard(t *testing.T, sqlStore *SQLStore, title string, orgId i
 		if affectedRows, err := sess.Insert(dashVersion); err != nil {
 			return err
 		} else if affectedRows == 0 {
-			return models.ErrDashboardNotFound
+			return dashboards.ErrDashboardNotFound
 		}
 
 		return nil
@@ -470,7 +471,7 @@ func insertTestDashboard(t *testing.T, sqlStore *SQLStore, title string, orgId i
 	return dash
 }
 
-//TODO: Use FakeDashboardStore when org has its own service
+//TODO: Use MockDashboardStore when org has its own service
 func updateDashboardAcl(t *testing.T, sqlStore *SQLStore, dashboardID int64, items ...*models.DashboardAcl) error {
 	t.Helper()
 
@@ -498,7 +499,7 @@ func updateDashboardAcl(t *testing.T, sqlStore *SQLStore, dashboardID int64, ite
 		}
 
 		// Update dashboard HasAcl flag
-		dashboard := models.Dashboard{HasAcl: true}
+		dashboard := dashboards.Dashboard{HasAcl: true}
 		_, err = sess.Cols("has_acl").Where("id=?", dashboardID).Update(&dashboard)
 		return err
 	})

@@ -11,16 +11,16 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/annotations"
-	"github.com/grafana/grafana/pkg/util"
-
-	models2 "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
-
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	models2 "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func NewFakeRuleStore(t *testing.T) *FakeRuleStore {
@@ -30,7 +30,7 @@ func NewFakeRuleStore(t *testing.T) *FakeRuleStore {
 		Hook: func(interface{}) error {
 			return nil
 		},
-		Folders: map[int64][]*models2.Folder{},
+		Folders: map[int64][]*dashboards.Folder{},
 	}
 }
 
@@ -42,7 +42,7 @@ type FakeRuleStore struct {
 	Rules       map[int64][]*models.AlertRule
 	Hook        func(cmd interface{}) error // use Hook if you need to intercept some query and return an error
 	RecordedOps []interface{}
-	Folders     map[int64][]*models2.Folder
+	Folders     map[int64][]*dashboards.Folder
 }
 
 type GenericRecordedQuery struct {
@@ -66,7 +66,7 @@ mainloop:
 		rgs = append(rgs, r)
 		f.Rules[r.OrgID] = rgs
 
-		var existing *models2.Folder
+		var existing *dashboards.Folder
 		folders := f.Folders[r.OrgID]
 		for _, folder := range folders {
 			if folder.Uid == r.NamespaceUID {
@@ -75,7 +75,7 @@ mainloop:
 			}
 		}
 		if existing == nil {
-			folders = append(folders, &models2.Folder{
+			folders = append(folders, &dashboards.Folder{
 				Id:    rand.Int63(),
 				Uid:   r.NamespaceUID,
 				Title: "TEST-FOLDER-" + util.GenerateShortUID(),
@@ -278,11 +278,11 @@ func (f *FakeRuleStore) GetRuleGroups(_ context.Context, q *models.ListRuleGroup
 	return nil
 }
 
-func (f *FakeRuleStore) GetUserVisibleNamespaces(_ context.Context, orgID int64, _ *models2.SignedInUser) (map[string]*models2.Folder, error) {
+func (f *FakeRuleStore) GetUserVisibleNamespaces(_ context.Context, orgID int64, _ *models2.SignedInUser) (map[string]*dashboards.Folder, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 
-	namespacesMap := map[string]*models2.Folder{}
+	namespacesMap := map[string]*dashboards.Folder{}
 
 	_, ok := f.Rules[orgID]
 	if !ok {
@@ -295,7 +295,7 @@ func (f *FakeRuleStore) GetUserVisibleNamespaces(_ context.Context, orgID int64,
 	return namespacesMap, nil
 }
 
-func (f *FakeRuleStore) GetNamespaceByTitle(_ context.Context, title string, orgID int64, _ *models2.SignedInUser, _ bool) (*models2.Folder, error) {
+func (f *FakeRuleStore) GetNamespaceByTitle(_ context.Context, title string, orgID int64, _ *models2.SignedInUser, _ bool) (*dashboards.Folder, error) {
 	folders := f.Folders[orgID]
 	for _, folder := range folders {
 		if folder.Title == title {

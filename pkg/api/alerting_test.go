@@ -50,7 +50,7 @@ func setUp(confs ...setUpConf) *HTTPServer {
 		}
 	}
 	store.ExpectedTeamsByUser = []*models.TeamDTO{}
-	dashSvc := &dashboards.FakeDashboardService{}
+	dashSvc := &dashboards.MockDashboardService{}
 	dashSvc.On("GetDashboardAclInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardAclInfoListQuery")).Run(func(args mock.Arguments) {
 		q := args.Get(1).(*models.GetDashboardAclInfoListQuery)
 		q.Result = aclMockResp

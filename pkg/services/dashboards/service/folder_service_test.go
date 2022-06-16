@@ -41,7 +41,7 @@ func TestIntegrationFolderService(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	t.Run("Folder service tests", func(t *testing.T) {
-		store := &dashboards.FakeDashboardStore{}
+		store := &dashboards.MockDashboardStore{}
 		cfg := setting.NewCfg()
 		features := featuremgmt.WithFeatures()
 		cfg.IsFeatureToggleEnabled = features.IsEnabled
@@ -66,7 +66,7 @@ func TestIntegrationFolderService(t *testing.T) {
 			folderId := rand.Int63()
 			folderUID := util.GenerateShortUID()
 
-			folder := models.NewFolder("Folder")
+			folder := dashboards.NewFolder("Folder")
 			folder.Id = folderId
 			folder.Uid = folderUID
 
@@ -75,43 +75,43 @@ func TestIntegrationFolderService(t *testing.T) {
 
 			t.Run("When get folder by id should return access denied error", func(t *testing.T) {
 				_, err := service.GetFolderByID(context.Background(), user, folderId, orgID)
-				require.Equal(t, err, models.ErrFolderAccessDenied)
+				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
 			})
 
 			t.Run("When get folder by id, with id = 0 should return default folder", func(t *testing.T) {
 				folder, err := service.GetFolderByID(context.Background(), user, 0, orgID)
 				require.NoError(t, err)
-				require.Equal(t, folder, &models.Folder{Id: 0, Title: "General"})
+				require.Equal(t, folder, &dashboards.Folder{Id: 0, Title: "General"})
 			})
 
 			t.Run("When get folder by uid should return access denied error", func(t *testing.T) {
 				_, err := service.GetFolderByUID(context.Background(), user, orgID, folderUID)
-				require.Equal(t, err, models.ErrFolderAccessDenied)
+				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
 			})
 
 			t.Run("When creating folder should return access denied error", func(t *testing.T) {
 				store.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything).Return(true, nil).Times(2)
 				_, err := service.CreateFolder(context.Background(), user, orgID, folder.Title, folderUID)
-				require.Equal(t, err, models.ErrFolderAccessDenied)
+				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
 			})
 
 			t.Run("When updating folder should return access denied error", func(t *testing.T) {
-				store.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
-					folder := args.Get(1).(*models.GetDashboardQuery)
-					folder.Result = models.NewDashboard("dashboard-test")
+				store.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
+					folder := args.Get(1).(*dashboards.GetDashboardQuery)
+					folder.Result = dashboards.NewDashboard("dashboard-test")
 					folder.Result.IsFolder = true
-				}).Return(&models.Dashboard{}, nil)
-				err := service.UpdateFolder(context.Background(), user, orgID, folderUID, &models.UpdateFolderCommand{
+				}).Return(&dashboards.Dashboard{}, nil)
+				err := service.UpdateFolder(context.Background(), user, orgID, folderUID, &dashboards.UpdateFolderCommand{
 					Uid:   folderUID,
 					Title: "Folder-TEST",
 				})
-				require.Equal(t, err, models.ErrFolderAccessDenied)
+				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
 			})
 
 			t.Run("When deleting folder by uid should return access denied error", func(t *testing.T) {
 				_, err := service.DeleteFolder(context.Background(), user, orgID, folderUID, false)
 				require.Error(t, err)
-				require.Equal(t, err, models.ErrFolderAccessDenied)
+				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
 			})
 
 			t.Cleanup(func() {
@@ -124,9 +124,9 @@ func TestIntegrationFolderService(t *testing.T) {
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
 
 			t.Run("When creating folder should not return access denied error", func(t *testing.T) {
-				dash := models.NewDashboardFolder("Test-Folder")
+				dash := dashboards.NewDashboardFolder("Test-Folder")
 				dash.Id = rand.Int63()
-				f := models.DashboardToFolder(dash)
+				f := dashboards.DashboardToFolder(dash)
 
 				store.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything).Return(true, nil)
 				store.On("SaveDashboard", mock.Anything).Return(dash, nil).Once()
@@ -138,24 +138,24 @@ func TestIntegrationFolderService(t *testing.T) {
 			})
 
 			t.Run("When creating folder should return error if uid is general", func(t *testing.T) {
-				dash := models.NewDashboardFolder("Test-Folder")
+				dash := dashboards.NewDashboardFolder("Test-Folder")
 				dash.Id = rand.Int63()
 
 				_, err := service.CreateFolder(context.Background(), user, orgID, dash.Title, "general")
-				require.ErrorIs(t, err, models.ErrFolderInvalidUID)
+				require.ErrorIs(t, err, dashboards.ErrFolderInvalidUID)
 			})
 
 			t.Run("When updating folder should not return access denied error", func(t *testing.T) {
-				dashboardFolder := models.NewDashboardFolder("Folder")
+				dashboardFolder := dashboards.NewDashboardFolder("Folder")
 				dashboardFolder.Id = rand.Int63()
 				dashboardFolder.Uid = util.GenerateShortUID()
-				f := models.DashboardToFolder(dashboardFolder)
+				f := dashboards.DashboardToFolder(dashboardFolder)
 
 				store.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything).Return(true, nil)
 				store.On("SaveDashboard", mock.Anything).Return(dashboardFolder, nil)
 				store.On("GetFolderByID", mock.Anything, orgID, dashboardFolder.Id).Return(f, nil)
 
-				req := &models.UpdateFolderCommand{
+				req := &dashboards.UpdateFolderCommand{
 					Uid:   dashboardFolder.Uid,
 					Title: "TEST-Folder",
 				}
@@ -166,14 +166,14 @@ func TestIntegrationFolderService(t *testing.T) {
 			})
 
 			t.Run("When deleting folder by uid should not return access denied error", func(t *testing.T) {
-				f := models.NewFolder(util.GenerateShortUID())
+				f := dashboards.NewFolder(util.GenerateShortUID())
 				f.Id = rand.Int63()
 				f.Uid = util.GenerateShortUID()
 				store.On("GetFolderByUID", mock.Anything, orgID, f.Uid).Return(f, nil)
 
-				var actualCmd *models.DeleteDashboardCommand
+				var actualCmd *dashboards.DeleteDashboardCommand
 				store.On("DeleteDashboard", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-					actualCmd = args.Get(1).(*models.DeleteDashboardCommand)
+					actualCmd = args.Get(1).(*dashboards.DeleteDashboardCommand)
 				}).Return(nil).Once()
 
 				expectedForceDeleteRules := rand.Int63()%2 == 0
@@ -195,7 +195,7 @@ func TestIntegrationFolderService(t *testing.T) {
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: true})
 
 			t.Run("When get folder by id should return folder", func(t *testing.T) {
-				expected := models.NewFolder(util.GenerateShortUID())
+				expected := dashboards.NewFolder(util.GenerateShortUID())
 				expected.Id = rand.Int63()
 
 				store.On("GetFolderByID", mock.Anything, orgID, expected.Id).Return(expected, nil)
@@ -206,7 +206,7 @@ func TestIntegrationFolderService(t *testing.T) {
 			})
 
 			t.Run("When get folder by uid should return folder", func(t *testing.T) {
-				expected := models.NewFolder(util.GenerateShortUID())
+				expected := dashboards.NewFolder(util.GenerateShortUID())
 				expected.Uid = util.GenerateShortUID()
 
 				store.On("GetFolderByUID", mock.Anything, orgID, expected.Uid).Return(expected, nil)
@@ -217,7 +217,7 @@ func TestIntegrationFolderService(t *testing.T) {
 			})
 
 			t.Run("When get folder by title should return folder", func(t *testing.T) {
-				expected := models.NewFolder("TEST-" + util.GenerateShortUID())
+				expected := dashboards.NewFolder("TEST-" + util.GenerateShortUID())
 
 				store.On("GetFolderByTitle", mock.Anything, orgID, expected.Title).Return(expected, nil)
 
@@ -236,14 +236,14 @@ func TestIntegrationFolderService(t *testing.T) {
 				ActualError   error
 				ExpectedError error
 			}{
-				{ActualError: models.ErrDashboardTitleEmpty, ExpectedError: models.ErrFolderTitleEmpty},
-				{ActualError: models.ErrDashboardUpdateAccessDenied, ExpectedError: models.ErrFolderAccessDenied},
-				{ActualError: models.ErrDashboardWithSameNameInFolderExists, ExpectedError: models.ErrFolderSameNameExists},
-				{ActualError: models.ErrDashboardWithSameUIDExists, ExpectedError: models.ErrFolderWithSameUIDExists},
-				{ActualError: models.ErrDashboardVersionMismatch, ExpectedError: models.ErrFolderVersionMismatch},
-				{ActualError: models.ErrDashboardNotFound, ExpectedError: models.ErrFolderNotFound},
-				{ActualError: models.ErrDashboardFailedGenerateUniqueUid, ExpectedError: models.ErrFolderFailedGenerateUniqueUid},
-				{ActualError: models.ErrDashboardInvalidUid, ExpectedError: models.ErrDashboardInvalidUid},
+				{ActualError: dashboards.ErrDashboardTitleEmpty, ExpectedError: dashboards.ErrFolderTitleEmpty},
+				{ActualError: dashboards.ErrDashboardUpdateAccessDenied, ExpectedError: dashboards.ErrFolderAccessDenied},
+				{ActualError: dashboards.ErrDashboardWithSameNameInFolderExists, ExpectedError: dashboards.ErrFolderSameNameExists},
+				{ActualError: dashboards.ErrDashboardWithSameUIDExists, ExpectedError: dashboards.ErrFolderWithSameUIDExists},
+				{ActualError: dashboards.ErrDashboardVersionMismatch, ExpectedError: dashboards.ErrFolderVersionMismatch},
+				{ActualError: dashboards.ErrDashboardNotFound, ExpectedError: dashboards.ErrFolderNotFound},
+				{ActualError: dashboards.ErrDashboardFailedGenerateUniqueUid, ExpectedError: dashboards.ErrFolderFailedGenerateUniqueUid},
+				{ActualError: dashboards.ErrDashboardInvalidUid, ExpectedError: dashboards.ErrDashboardInvalidUid},
 			}
 
 			for _, tc := range testCases {

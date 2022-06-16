@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -20,8 +21,6 @@ type SQLStoreMock struct {
 	ExpectedDatasource             *models.DataSource
 	ExpectedAlert                  *models.Alert
 	ExpectedPluginSetting          *models.PluginSetting
-	ExpectedDashboards             []*models.Dashboard
-	ExpectedDashboardAclInfoList   []*models.DashboardAclInfoDTO
 	ExpectedUserOrgList            []*models.UserOrgDTO
 	ExpectedOrgListResponse        OrgListResponse
 	ExpectedTeamsByUser            []*models.TeamDTO
@@ -34,7 +33,6 @@ type SQLStoreMock struct {
 	ExpectedDataSources            []*models.DataSource
 	ExpectedDataSourcesAccessStats []*models.DataSourceAccessStats
 	ExpectedNotifierUsageStats     []*models.NotifierUsageStats
-	ExpectedPersistedDashboards    models.HitList
 	ExpectedSignedInUser           *models.SignedInUser
 	ExpectedAPIKey                 *models.ApiKey
 	ExpectedUserStars              map[int64]bool
@@ -72,7 +70,7 @@ func (m *SQLStoreMock) GetSystemStats(ctx context.Context, query *models.GetSyst
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error {
+func (m *SQLStoreMock) HasEditPermissionInFolders(ctx context.Context, query *dashboards.HasEditPermissionInFoldersQuery) error {
 	return m.ExpectedError
 }
 
@@ -105,10 +103,6 @@ func (m *SQLStoreMock) UpdateOrgAddress(ctx context.Context, cmd *models.UpdateO
 }
 
 func (m *SQLStoreMock) DeleteOrg(ctx context.Context, cmd *models.DeleteOrgCommand) error {
-	return m.ExpectedError
-}
-
-func (m SQLStoreMock) DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *models.DeleteOrphanedProvisionedDashboardsCommand) error {
 	return m.ExpectedError
 }
 
@@ -320,11 +314,6 @@ func (m *SQLStoreMock) InTransaction(ctx context.Context, fn func(ctx context.Co
 	return m.ExpectedError
 }
 
-func (m SQLStoreMock) GetDashboardAclInfoList(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
-	query.Result = m.ExpectedDashboardAclInfoList
-	return m.ExpectedError
-}
-
 func (m *SQLStoreMock) CreatePlaylist(ctx context.Context, cmd *models.CreatePlaylistCommand) error {
 	return m.ExpectedError
 }
@@ -399,15 +388,6 @@ func (m *SQLStoreMock) RemoveOrgUser(ctx context.Context, cmd *models.RemoveOrgU
 	testData := m.ExpectedOrgListResponse[0]
 	m.ExpectedOrgListResponse = m.ExpectedOrgListResponse[1:]
 	return testData.Response
-}
-
-func (m *SQLStoreMock) GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) error {
-	return nil // TODO: Implement
-}
-
-func (m *SQLStoreMock) GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error {
-	query.Result = m.ExpectedDashboards
-	return m.ExpectedError
 }
 
 func (m SQLStoreMock) GetDataSource(ctx context.Context, query *models.GetDataSourceQuery) error {
@@ -566,10 +546,6 @@ func (m *SQLStoreMock) GetDBHealthQuery(ctx context.Context, query *models.GetDB
 
 func (m *SQLStoreMock) SearchOrgs(ctx context.Context, query *models.SearchOrgsQuery) error {
 	query.Result = m.ExpectedSearchOrgList
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) HasAdminPermissionInFolders(ctx context.Context, query *models.HasAdminPermissionInFoldersQuery) error {
 	return m.ExpectedError
 }
 

@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -346,7 +345,7 @@ func (st *Manager) annotateState(ctx context.Context, alertRule *ngModels.AlertR
 			return
 		}
 
-		query := &models.GetDashboardQuery{
+		query := &dashboards.GetDashboardQuery{
 			Uid:   dashUid,
 			OrgId: alertRule.OrgID,
 		}

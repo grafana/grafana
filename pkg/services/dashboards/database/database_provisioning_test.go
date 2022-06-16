@@ -5,12 +5,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
-
-	"github.com/stretchr/testify/require"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 func TestIntegrationDashboardProvisioningTest(t *testing.T) {
@@ -20,7 +19,7 @@ func TestIntegrationDashboardProvisioningTest(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
 	dashboardStore := ProvideDashboardStore(sqlStore)
 
-	folderCmd := models.SaveDashboardCommand{
+	folderCmd := dashboards.SaveDashboardCommand{
 		OrgId:    1,
 		FolderId: 0,
 		IsFolder: true,
@@ -33,7 +32,7 @@ func TestIntegrationDashboardProvisioningTest(t *testing.T) {
 	dash, err := dashboardStore.SaveDashboard(folderCmd)
 	require.Nil(t, err)
 
-	saveDashboardCmd := models.SaveDashboardCommand{
+	saveDashboardCmd := dashboards.SaveDashboardCommand{
 		OrgId:    1,
 		IsFolder: false,
 		FolderId: dash.Id,
@@ -46,7 +45,7 @@ func TestIntegrationDashboardProvisioningTest(t *testing.T) {
 	t.Run("Saving dashboards with provisioning meta data", func(t *testing.T) {
 		now := time.Now()
 
-		provisioning := &models.DashboardProvisioning{
+		provisioning := &dashboards.DashboardProvisioning{
 			Name:       "default",
 			ExternalId: "/var/grafana.json",
 			Updated:    now.Unix(),
@@ -59,7 +58,7 @@ func TestIntegrationDashboardProvisioningTest(t *testing.T) {
 		dashId := dash.Id
 
 		t.Run("Deleting orphaned provisioned dashboards", func(t *testing.T) {
-			saveCmd := models.SaveDashboardCommand{
+			saveCmd := dashboards.SaveDashboardCommand{
 				OrgId:    1,
 				IsFolder: false,
 				FolderId: dash.Id,
@@ -68,7 +67,7 @@ func TestIntegrationDashboardProvisioningTest(t *testing.T) {
 					"title": "another_dashboard",
 				}),
 			}
-			provisioning := &models.DashboardProvisioning{
+			provisioning := &dashboards.DashboardProvisioning{
 				Name:       "another_reader",
 				ExternalId: "/var/grafana.json",
 				Updated:    now.Unix(),
@@ -77,15 +76,15 @@ func TestIntegrationDashboardProvisioningTest(t *testing.T) {
 			anotherDash, err := dashboardStore.SaveProvisionedDashboard(saveCmd, provisioning)
 			require.Nil(t, err)
 
-			query := &models.GetDashboardsQuery{DashboardIds: []int64{anotherDash.Id}}
+			query := &dashboards.GetDashboardsQuery{DashboardIds: []int64{anotherDash.Id}}
 			err = dashboardStore.GetDashboards(context.Background(), query)
 			require.Nil(t, err)
 			require.NotNil(t, query.Result)
 
-			deleteCmd := &models.DeleteOrphanedProvisionedDashboardsCommand{ReaderNames: []string{"default"}}
+			deleteCmd := &dashboards.DeleteOrphanedProvisionedDashboardsCommand{ReaderNames: []string{"default"}}
 			require.Nil(t, dashboardStore.DeleteOrphanedProvisionedDashboards(context.Background(), deleteCmd))
 
-			query = &models.GetDashboardsQuery{DashboardIds: []int64{dash.Id, anotherDash.Id}}
+			query = &dashboards.GetDashboardsQuery{DashboardIds: []int64{dash.Id, anotherDash.Id}}
 			err = dashboardStore.GetDashboards(context.Background(), query)
 			require.Nil(t, err)
 
@@ -115,7 +114,7 @@ func TestIntegrationDashboardProvisioningTest(t *testing.T) {
 		})
 
 		t.Run("Deleting folder should delete provision meta data", func(t *testing.T) {
-			deleteCmd := &models.DeleteDashboardCommand{
+			deleteCmd := &dashboards.DeleteDashboardCommand{
 				Id:    dash.Id,
 				OrgId: 1,
 			}

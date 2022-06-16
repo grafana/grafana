@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
@@ -14,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsettings/service"
-	"github.com/stretchr/testify/require"
 )
 
 func TestDashboardUpdater(t *testing.T) {
@@ -445,7 +446,7 @@ func (s *dashboardServiceMock) DeleteDashboard(_ context.Context, dashboardId in
 	return nil
 }
 
-func (s *dashboardServiceMock) GetDashboardByPublicUid(ctx context.Context, dashboardPublicUid string) (*models.Dashboard, error) {
+func (s *dashboardServiceMock) GetDashboardByPublicUid(ctx context.Context, dashboardPublicUid string) (*dashboards.Dashboard, error) {
 	return nil, nil
 }
 
@@ -501,13 +502,13 @@ func scenario(t *testing.T, desc string, input scenarioInput, f func(ctx *scenar
 		pluginFunc: getPlugin,
 	}
 
-	pluginDashboards := map[string][]*models.Dashboard{}
+	pluginDashboards := map[string][]*dashboards.Dashboard{}
 	for _, pluginDashboard := range input.pluginDashboards {
 		if _, exists := pluginDashboards[pluginDashboard.PluginId]; !exists {
-			pluginDashboards[pluginDashboard.PluginId] = []*models.Dashboard{}
+			pluginDashboards[pluginDashboard.PluginId] = []*dashboards.Dashboard{}
 		}
 
-		pluginDashboards[pluginDashboard.PluginId] = append(pluginDashboards[pluginDashboard.PluginId], &models.Dashboard{
+		pluginDashboards[pluginDashboard.PluginId] = append(pluginDashboards[pluginDashboard.PluginId], &dashboards.Dashboard{
 			PluginId: pluginDashboard.PluginId,
 		})
 	}
@@ -541,7 +542,7 @@ func scenario(t *testing.T, desc string, input scenarioInput, f func(ctx *scenar
 		for _, d := range input.pluginDashboards {
 			if d.PluginId == req.PluginID && req.Reference == d.Reference {
 				return &plugindashboards.LoadPluginDashboardResponse{
-					Dashboard: &models.Dashboard{},
+					Dashboard: &dashboards.Dashboard{},
 				}, nil
 			}
 		}

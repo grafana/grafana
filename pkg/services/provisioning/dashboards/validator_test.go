@@ -5,11 +5,11 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 )
 
 const (
@@ -18,7 +18,7 @@ const (
 )
 
 func TestDuplicatesValidator(t *testing.T) {
-	fakeService := &dashboards.FakeDashboardProvisioning{}
+	fakeService := &dashboards.MockDashboardProvisioning{}
 	defer fakeService.AssertExpectations(t)
 
 	cfg := &config{
@@ -33,12 +33,12 @@ func TestDuplicatesValidator(t *testing.T) {
 	t.Run("Duplicates validator should collect info about duplicate UIDs and titles within folders", func(t *testing.T) {
 		const folderName = "duplicates-validator-folder"
 
-		fakeStore := &fakeDashboardStore{}
+		fakeStore := &MockDashboardStore{}
 		r, err := NewDashboardFileReader(cfg, logger, nil, fakeStore)
 		require.NoError(t, err)
-		fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything).Return(&models.Dashboard{}, nil).Times(6)
-		fakeService.On("GetProvisionedDashboardData", mock.Anything).Return([]*models.DashboardProvisioning{}, nil).Times(4)
-		fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&models.Dashboard{}, nil).Times(5)
+		fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Times(6)
+		fakeService.On("GetProvisionedDashboardData", mock.Anything).Return([]*dashboards.DashboardProvisioning{}, nil).Times(4)
+		fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Times(5)
 		folderID, err := r.getOrCreateFolderID(context.Background(), cfg, fakeService, folderName)
 		require.NoError(t, err)
 
@@ -89,7 +89,7 @@ func TestDuplicatesValidator(t *testing.T) {
 	t.Run("Duplicates validator should not collect info about duplicate UIDs and titles within folders for different orgs", func(t *testing.T) {
 		const folderName = "duplicates-validator-folder"
 
-		fakeStore := &fakeDashboardStore{}
+		fakeStore := &MockDashboardStore{}
 		r, err := NewDashboardFileReader(cfg, logger, nil, fakeStore)
 		require.NoError(t, err)
 		folderID, err := r.getOrCreateFolderID(context.Background(), cfg, fakeService, folderName)
@@ -150,10 +150,10 @@ func TestDuplicatesValidator(t *testing.T) {
 	})
 
 	t.Run("Duplicates validator should restrict write access only for readers with duplicates", func(t *testing.T) {
-		fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything).Return(&models.Dashboard{}, nil).Times(5)
-		fakeService.On("GetProvisionedDashboardData", mock.Anything).Return([]*models.DashboardProvisioning{}, nil).Times(3)
-		fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&models.Dashboard{}, nil).Times(5)
-		fakeStore := &fakeDashboardStore{}
+		fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Times(5)
+		fakeService.On("GetProvisionedDashboardData", mock.Anything).Return([]*dashboards.DashboardProvisioning{}, nil).Times(3)
+		fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Times(5)
+		fakeStore := &MockDashboardStore{}
 
 		cfg1 := &config{
 			Name: "first", Type: "file", OrgID: 1, Folder: "duplicates-validator-folder",

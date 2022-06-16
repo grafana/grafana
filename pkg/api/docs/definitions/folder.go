@@ -2,7 +2,7 @@ package definitions
 
 import (
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 )
 
 // swagger:route GET /folders folders getFolders
@@ -123,7 +123,7 @@ type FolderIDParam struct {
 type CreateFolderParam struct {
 	// in:body
 	// required:true
-	Body models.CreateFolderCommand `json:"body"`
+	Body dashboards.CreateFolderCommand `json:"body"`
 }
 
 // swagger:parameters updateFolder
@@ -134,7 +134,7 @@ type UpdateFolderParam struct {
 	//
 	// in:body
 	// required:true
-	Body models.UpdateFolderCommand `json:"body"`
+	Body dashboards.UpdateFolderCommand `json:"body"`
 }
 
 // swagger:parameters deleteFolder

@@ -579,16 +579,16 @@ func TestAccessControlDashboardGuardian_GetHiddenACL(t *testing.T) {
 	}
 }
 
-func setupAccessControlGuardianTest(t *testing.T, uid string, permissions []accesscontrol.Permission, dashboardSvc dashboards.DashboardService) (*AccessControlDashboardGuardian, *models.Dashboard) {
+func setupAccessControlGuardianTest(t *testing.T, uid string, permissions []accesscontrol.Permission, dashboardSvc dashboards.DashboardService) (*AccessControlDashboardGuardian, *dashboards.Dashboard) {
 	t.Helper()
 	store := sqlstore.InitTestDB(t)
 
-	toSave := models.NewDashboard(uid)
+	toSave := dashboards.NewDashboard(uid)
 	toSave.SetUid(uid)
 
 	// seed dashboard
 	dashStore := dashdb.ProvideDashboardStore(store)
-	dash, err := dashStore.SaveDashboard(models.SaveDashboardCommand{
+	dash, err := dashStore.SaveDashboard(dashboards.SaveDashboardCommand{
 		Dashboard: toSave.Data,
 		UserId:    1,
 		OrgId:     1,
@@ -600,22 +600,22 @@ func setupAccessControlGuardianTest(t *testing.T, uid string, permissions []acce
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
 
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
-		setting.NewCfg(), routing.NewRouteRegister(), store, ac, database.ProvideService(store), license, &dashboards.FakeDashboardStore{})
+		setting.NewCfg(), routing.NewRouteRegister(), store, ac, database.ProvideService(store), license, &dashboards.MockDashboardStore{})
 	require.NoError(t, err)
 	dashboardPermissions, err := ossaccesscontrol.ProvideDashboardPermissions(
-		setting.NewCfg(), routing.NewRouteRegister(), store, ac, database.ProvideService(store), license, &dashboards.FakeDashboardStore{})
+		setting.NewCfg(), routing.NewRouteRegister(), store, ac, database.ProvideService(store), license, &dashboards.MockDashboardStore{})
 	require.NoError(t, err)
 	if dashboardSvc == nil {
-		dashboardSvc = &dashboards.FakeDashboardService{}
+		dashboardSvc = &dashboards.MockDashboardService{}
 	}
 	return NewAccessControlDashboardGuardian(context.Background(), dash.Id, &models.SignedInUser{OrgId: 1}, store, ac, folderPermissions, dashboardPermissions, dashboardSvc), dash
 }
 
 func testDashSvc(t *testing.T) dashboards.DashboardService {
-	dashSvc := dashboards.NewFakeDashboardService(t)
-	dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
-		q := args.Get(1).(*models.GetDashboardQuery)
-		d := models.NewDashboard("mocked")
+	dashSvc := dashboards.NewMockDashboardService(t)
+	dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
+		q := args.Get(1).(*dashboards.GetDashboardQuery)
+		d := dashboards.NewDashboard("mocked")
 		d.Id = 1
 		d.Uid = "1"
 		q.Result = d

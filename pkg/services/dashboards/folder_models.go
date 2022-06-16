@@ -1,23 +1,14 @@
-package models
+package dashboards
 
 import (
-	"errors"
 	"strings"
 	"time"
+
+	"github.com/grafana/grafana/pkg/models"
 )
 
 // Typed errors
-var (
-	ErrFolderNotFound                = errors.New("folder not found")
-	ErrFolderVersionMismatch         = errors.New("the folder has been changed by someone else")
-	ErrFolderTitleEmpty              = errors.New("folder title cannot be empty")
-	ErrFolderWithSameUIDExists       = errors.New("a folder/dashboard with the same uid already exists")
-	ErrFolderInvalidUID              = errors.New("invalid uid for folder provided")
-	ErrFolderSameNameExists          = errors.New("a folder or dashboard in the general folder with the same name already exists")
-	ErrFolderFailedGenerateUniqueUid = errors.New("failed to generate unique folder ID")
-	ErrFolderAccessDenied            = errors.New("access denied to folder")
-	ErrFolderContainsAlertRules      = errors.New("folder contains alert rules")
-)
+var ()
 
 type Folder struct {
 	Id      int64
@@ -100,16 +91,12 @@ type UpdateFolderCommand struct {
 	Result *Folder `json:"-"`
 }
 
-//
-// QUERIES
-//
-
 type HasEditPermissionInFoldersQuery struct {
-	SignedInUser *SignedInUser
+	SignedInUser *models.SignedInUser
 	Result       bool
 }
 
 type HasAdminPermissionInFoldersQuery struct {
-	SignedInUser *SignedInUser
+	SignedInUser *models.SignedInUser
 	Result       bool
 }

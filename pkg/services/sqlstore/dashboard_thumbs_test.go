@@ -5,11 +5,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/stretchr/testify/require"
 )
 
 var theme = models.ThemeDark
@@ -20,7 +22,7 @@ func TestIntegrationSqlStorage(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	var sqlStore *SQLStore
-	var savedFolder *models.Dashboard
+	var savedFolder *dashboards.Dashboard
 
 	setup := func() {
 		sqlStore = InitTestDB(t)
@@ -261,21 +263,21 @@ func updateThumbnailState(t *testing.T, sqlStore *SQLStore, dashboardUID string,
 	require.NoError(t, err)
 }
 
-func updateTestDashboard(t *testing.T, sqlStore *SQLStore, dashboard *models.Dashboard, data map[string]interface{}) {
+func updateTestDashboard(t *testing.T, sqlStore *SQLStore, dashboard *dashboards.Dashboard, data map[string]interface{}) {
 	t.Helper()
 
 	data["id"] = dashboard.Id
 
 	parentVersion := dashboard.Version
 
-	cmd := models.SaveDashboardCommand{
+	cmd := dashboards.SaveDashboardCommand{
 		OrgId:     dashboard.OrgId,
 		Overwrite: true,
 		Dashboard: simplejson.NewFromAny(data),
 	}
-	var dash *models.Dashboard
+	var dash *dashboards.Dashboard
 	err := sqlStore.WithDbSession(context.Background(), func(sess *DBSession) error {
-		var existing models.Dashboard
+		var existing dashboards.Dashboard
 		dash = cmd.GetDashboardModel()
 		dashWithIdExists, err := sess.Where("id=? AND org_id=?", dash.Id, dash.OrgId).Get(&existing)
 		require.NoError(t, err)
@@ -313,7 +315,7 @@ func updateTestDashboard(t *testing.T, sqlStore *SQLStore, dashboard *models.Das
 		if affectedRows, err := sess.Insert(dashVersion); err != nil {
 			return err
 		} else if affectedRows == 0 {
-			return models.ErrDashboardNotFound
+			return dashboards.ErrDashboardNotFound
 		}
 
 		return nil

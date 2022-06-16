@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
@@ -42,7 +41,7 @@ func (s Service) ListPluginDashboards(ctx context.Context, req *plugindashboards
 	result := make([]*plugindashboards.PluginDashboard, 0)
 
 	// load current dashboards
-	query := models.GetDashboardsByPluginIdQuery{OrgId: req.OrgID, PluginId: req.PluginID}
+	query := dashboards.GetDashboardsByPluginIdQuery{OrgId: req.OrgID, PluginId: req.PluginID}
 	if err := s.dashboardPluginService.GetDashboardsByPluginID(ctx, &query); err != nil {
 		return nil, err
 	}
@@ -127,7 +126,7 @@ func (s Service) LoadPluginDashboard(ctx context.Context, req *plugindashboards.
 	}
 
 	return &plugindashboards.LoadPluginDashboardResponse{
-		Dashboard: models.NewDashboardFromJson(data),
+		Dashboard: dashboards.NewDashboardFromJson(data),
 	}, nil
 }
 

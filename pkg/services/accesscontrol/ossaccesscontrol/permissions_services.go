@@ -111,8 +111,8 @@ func ProvideDashboardPermissions(
 	ac accesscontrol.AccessControl, store resourcepermissions.Store,
 	license models.Licensing, dashboardStore dashboards.Store,
 ) (*DashboardPermissionsService, error) {
-	getDashboard := func(ctx context.Context, orgID int64, resourceID string) (*models.Dashboard, error) {
-		query := &models.GetDashboardQuery{Uid: resourceID, OrgId: orgID}
+	getDashboard := func(ctx context.Context, orgID int64, resourceID string) (*dashboards.Dashboard, error) {
+		query := &dashboards.GetDashboardQuery{Uid: resourceID, OrgId: orgID}
 		if _, err := dashboardStore.GetDashboard(ctx, query); err != nil {
 			return nil, err
 		}
@@ -140,7 +140,7 @@ func ProvideDashboardPermissions(
 				return nil, err
 			}
 			if dashboard.FolderId > 0 {
-				query := &models.GetDashboardQuery{Id: dashboard.FolderId, OrgId: orgID}
+				query := &dashboards.GetDashboardQuery{Id: dashboard.FolderId, OrgId: orgID}
 				if _, err := dashboardStore.GetDashboard(ctx, query); err != nil {
 					return nil, err
 				}
@@ -194,7 +194,7 @@ func ProvideFolderPermissions(
 		Resource:          "folders",
 		ResourceAttribute: "uid",
 		ResourceValidator: func(ctx context.Context, orgID int64, resourceID string) error {
-			query := &models.GetDashboardQuery{Uid: resourceID, OrgId: orgID}
+			query := &dashboards.GetDashboardQuery{Uid: resourceID, OrgId: orgID}
 			if _, err := dashboardStore.GetDashboard(ctx, query); err != nil {
 				return err
 			}

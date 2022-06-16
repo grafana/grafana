@@ -4,21 +4,21 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/dashboards/database"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/database"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 func TestGetPublicDashboard(t *testing.T) {
 	type storeResp struct {
-		pd  *models.PublicDashboard
-		d   *models.Dashboard
+		pd  *dashboards.PublicDashboard
+		d   *dashboards.Dashboard
 		err error
 	}
 
@@ -27,54 +27,54 @@ func TestGetPublicDashboard(t *testing.T) {
 		uid       string
 		storeResp *storeResp
 		errResp   error
-		dashResp  *models.Dashboard
+		dashResp  *dashboards.Dashboard
 	}{
 		{
 			name:      "returns a dashboard",
 			uid:       "abc123",
-			storeResp: &storeResp{pd: &models.PublicDashboard{}, d: &models.Dashboard{IsPublic: true}, err: nil},
+			storeResp: &storeResp{pd: &dashboards.PublicDashboard{}, d: &dashboards.Dashboard{IsPublic: true}, err: nil},
 			errResp:   nil,
-			dashResp:  &models.Dashboard{IsPublic: true},
+			dashResp:  &dashboards.Dashboard{IsPublic: true},
 		},
 		{
 			name: "puts pubdash time settings into dashboard",
 			uid:  "abc123",
 			storeResp: &storeResp{
-				pd: &models.PublicDashboard{TimeSettings: `{"from": "now-8", "to": "now"}`},
-				d: &models.Dashboard{
+				pd: &dashboards.PublicDashboard{TimeSettings: `{"from": "now-8", "to": "now"}`},
+				d: &dashboards.Dashboard{
 					IsPublic: true,
 					Data:     simplejson.NewFromAny(map[string]interface{}{"time": map[string]interface{}{"from": "abc", "to": "123"}}),
 				},
 				err: nil},
 			errResp:  nil,
-			dashResp: &models.Dashboard{IsPublic: true, Data: simplejson.NewFromAny(map[string]interface{}{"time": map[string]interface{}{"from": "now-8", "to": "now"}})},
+			dashResp: &dashboards.Dashboard{IsPublic: true, Data: simplejson.NewFromAny(map[string]interface{}{"time": map[string]interface{}{"from": "now-8", "to": "now"}})},
 		},
 		{
 			name:      "returns ErrPublicDashboardNotFound when isPublic is false",
 			uid:       "abc123",
-			storeResp: &storeResp{pd: &models.PublicDashboard{}, d: &models.Dashboard{IsPublic: false}, err: nil},
-			errResp:   models.ErrPublicDashboardNotFound,
+			storeResp: &storeResp{pd: &dashboards.PublicDashboard{}, d: &dashboards.Dashboard{IsPublic: false}, err: nil},
+			errResp:   dashboards.ErrPublicDashboardNotFound,
 			dashResp:  nil,
 		},
 		{
 			name:      "returns ErrPublicDashboardNotFound if PublicDashboard missing",
 			uid:       "abc123",
 			storeResp: &storeResp{pd: nil, d: nil, err: nil},
-			errResp:   models.ErrPublicDashboardNotFound,
+			errResp:   dashboards.ErrPublicDashboardNotFound,
 			dashResp:  nil,
 		},
 		{
 			name:      "returns ErrPublicDashboardNotFound if Dashboard missing",
 			uid:       "abc123",
 			storeResp: &storeResp{pd: nil, d: nil, err: nil},
-			errResp:   models.ErrPublicDashboardNotFound,
+			errResp:   dashboards.ErrPublicDashboardNotFound,
 			dashResp:  nil,
 		},
 	}
 
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
-			fakeStore := dashboards.FakeDashboardStore{}
+			fakeStore := dashboards.MockDashboardStore{}
 			service := &DashboardServiceImpl{
 				log:            log.New("test.logger"),
 				dashboardStore: &fakeStore,
@@ -107,9 +107,9 @@ func TestSavePublicDashboard(t *testing.T) {
 		dto := &dashboards.SavePublicDashboardConfigDTO{
 			DashboardUid: dashboard.Uid,
 			OrgId:        dashboard.OrgId,
-			PublicDashboardConfig: &models.PublicDashboardConfig{
+			PublicDashboardConfig: &dashboards.PublicDashboardConfig{
 				IsPublic: true,
-				PublicDashboard: models.PublicDashboard{
+				PublicDashboard: dashboards.PublicDashboard{
 					DashboardUid: "NOTTHESAME",
 					OrgId:        9999999,
 				},
@@ -136,9 +136,9 @@ func TestSavePublicDashboard(t *testing.T) {
 		//dto := &dashboards.SavePublicDashboardConfigDTO{
 		//DashboardUid: dashboard.Uid,
 		//OrgId:        dashboard.OrgId,
-		//PublicDashboardConfig: &models.PublicDashboardConfig{
+		//PublicDashboardConfig: &dashboards.PublicDashboardConfig{
 		//IsPublic: true,
-		//PublicDashboard: models.PublicDashboard{
+		//PublicDashboard: dashboards.PublicDashboard{
 		//DashboardUid: "NOTTHESAME",
 		//OrgId:        9999999,
 		//},
@@ -167,9 +167,9 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 	dto := &dashboards.SavePublicDashboardConfigDTO{
 		DashboardUid: dashboard.Uid,
 		OrgId:        dashboard.OrgId,
-		PublicDashboardConfig: &models.PublicDashboardConfig{
+		PublicDashboardConfig: &dashboards.PublicDashboardConfig{
 			IsPublic: true,
-			PublicDashboard: models.PublicDashboard{
+			PublicDashboard: dashboards.PublicDashboard{
 				DashboardUid: "NOTTHESAME",
 				OrgId:        9999999,
 				TimeSettings: `{"from": "FROM", "to": "TO"}`,
@@ -183,9 +183,9 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 	nonPublicDto := &dashboards.SavePublicDashboardConfigDTO{
 		DashboardUid: nonPublicDashboard.Uid,
 		OrgId:        nonPublicDashboard.OrgId,
-		PublicDashboardConfig: &models.PublicDashboardConfig{
+		PublicDashboardConfig: &dashboards.PublicDashboardConfig{
 			IsPublic: false,
-			PublicDashboard: models.PublicDashboard{
+			PublicDashboard: dashboards.PublicDashboard{
 				DashboardUid: "NOTTHESAME",
 				OrgId:        9999999,
 				TimeSettings: `{"from": "FROM", "to": "TO"}`,
@@ -252,9 +252,9 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 }
 
 func insertTestDashboard(t *testing.T, dashboardStore *database.DashboardStore, title string, orgId int64,
-	folderId int64, isFolder bool, tags ...interface{}) *models.Dashboard {
+	folderId int64, isFolder bool, tags ...interface{}) *dashboards.Dashboard {
 	t.Helper()
-	cmd := models.SaveDashboardCommand{
+	cmd := dashboards.SaveDashboardCommand{
 		OrgId:    orgId,
 		FolderId: folderId,
 		IsFolder: isFolder,

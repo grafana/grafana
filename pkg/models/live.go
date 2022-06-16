@@ -71,7 +71,7 @@ type DashboardActivityChannel interface {
 	// gitops workflow that knows if the value was saved to the local database or not
 	// in many cases all direct save requests will fail, but the request should be forwarded
 	// to any gitops observers
-	DashboardSaved(orgID int64, user *UserDisplayDTO, message string, dashboard *Dashboard, err error) error
+	DashboardSaved(orgID int64, user *UserDisplayDTO, message string, dashboard Dashboard, err error) error
 
 	// Called when a dashboard is deleted
 	DashboardDeleted(orgID int64, user *UserDisplayDTO, uid string) error
