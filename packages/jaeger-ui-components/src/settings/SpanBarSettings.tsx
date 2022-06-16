@@ -13,6 +13,7 @@ import { InlineField, InlineFieldRow, Input, Select, useStyles } from '@grafana/
 export interface SpanBarOptions {
   type?: string;
   tag?: string;
+  process?: string;
 }
 
 export interface SpanBarOptionsData extends DataSourceJsonData {
@@ -22,12 +23,13 @@ export interface SpanBarOptionsData extends DataSourceJsonData {
 export const NONE = 'None';
 export const DURATION = 'Duration';
 export const TAG = 'Tag';
+export const PROCESS = 'Process';
 
 interface Props extends DataSourcePluginOptionsEditorProps<SpanBarOptionsData> {}
 
 export default function SpanBarSettings({ options, onOptionsChange }: Props) {
   const styles = useStyles(getStyles);
-  const selectOptions = [NONE, DURATION, TAG].map(toOption);
+  const selectOptions = [NONE, DURATION, TAG, PROCESS].map(toOption);
 
   return (
     <div className={css({ width: '100%' })}>
@@ -69,6 +71,29 @@ export default function SpanBarSettings({ options, onOptionsChange }: Props) {
                 })
               }
               value={options.jsonData.spanBar?.tag || ''}
+              width={25}
+            />
+          </InlineField>
+        </InlineFieldRow>
+      )}
+      {options.jsonData.spanBar?.type === PROCESS && (
+        <InlineFieldRow className={styles.row}>
+          <InlineField
+            label="Process key"
+            labelWidth={26}
+            grow
+            tooltip="Process key (from which the value will be extracted)"
+          >
+            <Input
+              type="text"
+              placeholder=""
+              onChange={(v) =>
+                updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'spanBar', {
+                  ...options.jsonData.spanBar,
+                  process: v.currentTarget.value,
+                })
+              }
+              value={options.jsonData.spanBar?.process || ''}
               width={25}
             />
           </InlineField>
