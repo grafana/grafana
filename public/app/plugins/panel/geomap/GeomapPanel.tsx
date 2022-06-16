@@ -664,7 +664,7 @@ export class GeomapPanel extends Component<Props, State> {
     let { ttip, ttipOpen, topRight, legends } = this.state;
     const { options } = this.props;
     const showScale = options.controls.showScale;
-    if (!ttipOpen && options.tooltip.mode === TooltipMode.None) {
+    if (!ttipOpen && options.tooltip?.mode === TooltipMode.None) {
       ttip = undefined;
     }
 
