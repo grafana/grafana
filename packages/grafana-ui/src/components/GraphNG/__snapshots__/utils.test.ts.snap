@@ -77,13 +77,9 @@ Object {
         "pub": [Function],
       },
       "key": "__global_",
-      "match": Array [
-        [Function],
-        [Function],
-      ],
       "scales": Array [
         "x",
-        null,
+        "__fixed/na-na/na-na/auto/linear/na",
       ],
     },
   },

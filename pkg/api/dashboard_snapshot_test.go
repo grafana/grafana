@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
+	dashboardsnapshots "github.com/grafana/grafana/pkg/services/dashboardsnapshots/service"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 )
@@ -35,7 +35,8 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 	sqlmock := mockstore.NewSQLStoreMock()
 	dashSvc := &dashboards.FakeDashboardService{}
 	dashSvc.On("GetDashboardAclInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardAclInfoListQuery")).Return(nil)
-	hs := &HTTPServer{DashboardsnapshotsService: &dashboardsnapshots.Service{SQLStore: sqlmock}}
+	dashSnapSvc := dashboardsnapshots.ProvideService(sqlmock, nil)
+	hs := &HTTPServer{dashboardsnapshotsService: dashSnapSvc}
 
 	setUpSnapshotTest := func(t *testing.T) *models.DashboardSnapshot {
 		t.Helper()

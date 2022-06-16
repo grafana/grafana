@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -13,25 +14,28 @@ import (
 
 // gets public dashboard
 func (hs *HTTPServer) GetPublicDashboard(c *models.ReqContext) response.Response {
-	dash, err := hs.dashboardService.GetPublicDashboard(c.Req.Context(), web.Params(c.Req)[":uid"])
+	publicDashboardUid := web.Params(c.Req)[":uid"]
+
+	dash, err := hs.dashboardService.GetPublicDashboard(c.Req.Context(), publicDashboardUid)
 	if err != nil {
 		return handleDashboardErr(http.StatusInternalServerError, "Failed to get public dashboard", err)
 	}
 
 	meta := dtos.DashboardMeta{
-		Slug:      dash.Slug,
-		Type:      models.DashTypeDB,
-		CanStar:   false,
-		CanSave:   false,
-		CanEdit:   false,
-		CanAdmin:  false,
-		CanDelete: false,
-		Created:   dash.Created,
-		Updated:   dash.Updated,
-		Version:   dash.Version,
-		IsFolder:  false,
-		FolderId:  dash.FolderId,
-		IsPublic:  dash.IsPublic,
+		Slug:               dash.Slug,
+		Type:               models.DashTypeDB,
+		CanStar:            false,
+		CanSave:            false,
+		CanEdit:            false,
+		CanAdmin:           false,
+		CanDelete:          false,
+		Created:            dash.Created,
+		Updated:            dash.Updated,
+		Version:            dash.Version,
+		IsFolder:           false,
+		FolderId:           dash.FolderId,
+		IsPublic:           dash.IsPublic,
+		PublicDashboardUid: publicDashboardUid,
 	}
 
 	dto := dtos.DashboardFullWithMeta{Meta: meta, Dashboard: dash.Data}
@@ -67,6 +71,31 @@ func (hs *HTTPServer) SavePublicDashboardConfig(c *models.ReqContext) response.R
 	}
 
 	return response.JSON(http.StatusOK, pdc)
+}
+
+// QueryPublicDashboard returns all results for a given panel on a public dashboard
+// POST /api/public/dashboard/:uid/panels/:panelId/query
+func (hs *HTTPServer) QueryPublicDashboard(c *models.ReqContext) response.Response {
+	panelId, err := strconv.ParseInt(web.Params(c.Req)[":panelId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "invalid panel ID", err)
+	}
+
+	reqDTO, err := hs.dashboardService.BuildPublicDashboardMetricRequest(
+		c.Req.Context(),
+		web.Params(c.Req)[":uid"],
+		panelId,
+	)
+	if err != nil {
+		return handleDashboardErr(http.StatusInternalServerError, "Failed to get queries for public dashboard", err)
+	}
+
+	resp, err := hs.queryDataService.QueryDataMultipleSources(c.Req.Context(), nil, c.SkipCache, reqDTO, true)
+
+	if err != nil {
+		return hs.handleQueryMetricsError(err)
+	}
+	return hs.toJsonStreamingResponse(resp)
 }
 
 // util to help us unpack a dashboard err or use default http code and message
