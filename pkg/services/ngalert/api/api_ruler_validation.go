@@ -111,7 +111,6 @@ func validateRuleNode(
 	}
 
 	if ruleNode.ApiRuleNode != nil {
-		newAlertRule.For = time.Duration(ruleNode.ApiRuleNode.For)
 		newAlertRule.Annotations = ruleNode.ApiRuleNode.Annotations
 		newAlertRule.Labels = ruleNode.ApiRuleNode.Labels
 
@@ -131,7 +130,18 @@ func validateRuleNode(
 			newAlertRule.PanelID = &panelIDValue
 		}
 	}
-
+	
+	if ruleNode.ApiRuleNode == nil || ruleNode.ApiRuleNode.For == nil {
+		if newAlertRule.UID != "" {
+			// will be patched later with real value of the original rule
+			newAlertRule.For = -1
+		}
+	} else {
+		newAlertRule.For = time.Duration(*ruleNode.ApiRuleNode.For)
+		if newAlertRule.For < 0 {
+			return nil, fmt.Errorf("field `for` cannot be negative [%v]. 0 or any positive duration are allowed", *ruleNode.ApiRuleNode.For)
+		}
+	}
 	return &newAlertRule, nil
 }
 
