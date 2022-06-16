@@ -137,7 +137,7 @@ func TestStore_AddServiceAccountToTeam(t *testing.T) {
 			if c.expectedErr != nil {
 				require.ErrorIs(t, err, c.expectedErr)
 			}
-			teamQuery := models.GetTeamMembersQuery{OrgId: sa.OrgId, TeamId: team.Id}
+			teamQuery := models.GetTeamMembersQuery{OrgId: sa.OrgId, TeamId: team.Id, UserId: sa.Id}
 			err = db.GetTeamMembers(context.Background(), &teamQuery)
 			require.NoError(t, err)
 			require.Equal(t, len(teamQuery.Result), 1)
