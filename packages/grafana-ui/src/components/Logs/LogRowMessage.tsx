@@ -11,6 +11,7 @@ import { LogRowModel, findHighlightChunksInText, GrafanaTheme2 } from '@grafana/
 
 import { withTheme2 } from '../../themes/index';
 import { Themeable2 } from '../../types/theme';
+import { IconButton } from '../IconButton/IconButton';
 
 import { LogMessageAnsi } from './LogMessageAnsi';
 import { LogRowContext } from './LogRowContext';
@@ -35,6 +36,10 @@ interface Props extends Themeable2 {
   updateLimit?: () => void;
 }
 
+interface State {
+  mouseOver: boolean;
+}
+
 const getStyles = (theme: GrafanaTheme2) => {
   const outlineColor = tinycolor(theme.components.dashboard.background).setAlpha(0.7).toRgbString();
 
@@ -55,6 +60,24 @@ const getStyles = (theme: GrafanaTheme2) => {
     contextNewline: css`
       display: block;
       margin-left: 0px;
+    `,
+    contextButton: css`
+      display: flex;
+      flex-wrap: nowrap;
+      flex-direction: row;
+      align-content: flex-end;
+      justify-content: space-evenly;
+      align-items: center;
+      position: absolute;
+      right: -8px;
+      top: 0;
+      bottom: auto;
+      width: 80px;
+      height: 36px;
+      background: ${theme.colors.background.primary};
+      box-shadow: ${theme.shadows.z3};
+      padding: ${theme.spacing(0, 0, 0, 0.5)};
+      z-index: 100;
     `,
   };
 };
@@ -97,10 +120,19 @@ const restructureLog = memoizeOne((line: string, prettifyLogMessage: boolean): s
 });
 
 class UnThemedLogRowMessage extends PureComponent<Props> {
+  state: State = {
+    mouseOver: false,
+  };
+
   onContextToggle = (e: React.SyntheticEvent<HTMLElement>) => {
     e.stopPropagation();
     this.props.onToggleContext();
   };
+
+  hoverContextButton() {
+    const mouseOver = !this.state.mouseOver;
+    this.setState({ mouseOver });
+  }
 
   render() {
     const {
@@ -121,9 +153,14 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
     const { hasAnsi, raw } = row;
     const restructuredEntry = restructureLog(raw, prettifyLogMessage);
     const styles = getStyles(theme);
+    const { mouseOver } = this.state;
 
     return (
-      <td className={style.logsRowMessage}>
+      <td
+        className={style.logsRowMessage}
+        onMouseEnter={this.hoverContextButton.bind(this)}
+        onMouseLeave={this.hoverContextButton.bind(this)}
+      >
         <div
           className={cx({ [styles.positionRelative]: wrapLogMessage }, { [styles.horizontalScroll]: !wrapLogMessage })}
         >
@@ -147,10 +184,16 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
           </span>
           {showContextToggle?.(row) && (
             <span
-              onClick={this.onContextToggle}
-              className={cx('log-row-context', style.context, { [styles.contextNewline]: !wrapLogMessage })}
+              className={cx('log-row-context', style.context, styles.contextButton)}
+              onMouseEnter={this.hoverContextButton.bind(this)}
+              onMouseLeave={this.hoverContextButton.bind(this)}
             >
-              {contextIsOpen ? 'Hide' : 'Show'} context
+              <IconButton name="eye" title="Show context" onClick={this.onContextToggle} />
+              <IconButton
+                name="copy"
+                title="Copy context"
+                onClick={() => navigator.clipboard.writeText(JSON.stringify(context))}
+              />
             </span>
           )}
         </div>
