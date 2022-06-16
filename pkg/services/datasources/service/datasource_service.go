@@ -11,8 +11,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
-	"github.com/grafana/grafana-azure-sdk-go/azhttpclient"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -25,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/buffered/promclient"
 )
 
 type Service struct {
@@ -146,6 +143,12 @@ func (s *Service) GetDataSourcesByType(ctx context.Context, query *models.GetDat
 
 func (s *Service) AddDataSource(ctx context.Context, cmd *models.AddDataSourceCommand) error {
 	var err error
+	// this is here for backwards compatibility
+	cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
+	if err != nil {
+		return err
+	}
+
 	if err := s.SQLStore.AddDataSource(ctx, cmd); err != nil {
 		return err
 	}
@@ -287,11 +290,10 @@ func (s *Service) DecryptedValues(ctx context.Context, ds *models.DataSource) (m
 	}
 
 	if exist {
-		err := json.Unmarshal([]byte(secret), &decryptedValues)
-		if err != nil {
-			return nil, err
-		}
-	} else if len(ds.SecureJsonData) > 0 {
+		err = json.Unmarshal([]byte(secret), &decryptedValues)
+	}
+
+	if (!exist || err != nil) && len(ds.SecureJsonData) > 0 {
 		decryptedValues, err = s.MigrateSecrets(ctx, ds)
 		if err != nil {
 			return nil, err
@@ -302,9 +304,13 @@ func (s *Service) DecryptedValues(ctx context.Context, ds *models.DataSource) (m
 }
 
 func (s *Service) MigrateSecrets(ctx context.Context, ds *models.DataSource) (map[string]string, error) {
-	secureJsonData, err := s.SecretsService.DecryptJsonData(ctx, ds.SecureJsonData)
-	if err != nil {
-		return nil, err
+	secureJsonData := make(map[string]string)
+	for k, v := range ds.SecureJsonData {
+		decrypted, err := s.SecretsService.Decrypt(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		secureJsonData[k] = string(decrypted)
 	}
 
 	jsonData, err := json.Marshal(secureJsonData)
@@ -331,7 +337,7 @@ func (s *Service) DecryptedBasicAuthPassword(ctx context.Context, ds *models.Dat
 		return value, nil
 	}
 
-	return ds.BasicAuthPassword, err
+	return "", err
 }
 
 func (s *Service) DecryptedPassword(ctx context.Context, ds *models.DataSource) (string, error) {
@@ -340,7 +346,7 @@ func (s *Service) DecryptedPassword(ctx context.Context, ds *models.DataSource) 
 		return value, nil
 	}
 
-	return ds.Password, err
+	return "", err
 }
 
 func (s *Service) httpClientOptions(ctx context.Context, ds *models.DataSource) (*sdkhttpclient.Options, error) {
@@ -398,31 +404,6 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *models.DataSource) 
 		opts.BasicAuth = &sdkhttpclient.BasicAuthOptions{
 			User:     ds.User,
 			Password: password,
-		}
-	}
-
-	// TODO: #35857 Required for templating queries in Prometheus datasource when Azure authentication enabled
-	if ds.JsonData != nil && s.features.IsEnabled(featuremgmt.FlagPrometheusAzureAuth) {
-		credentials, err := azcredentials.FromDatasourceData(ds.JsonData.MustMap(), decryptedValues)
-		if err != nil {
-			err = fmt.Errorf("invalid Azure credentials: %s", err)
-			return nil, err
-		}
-
-		if credentials != nil {
-			var scopes []string
-
-			if scopes, err = promclient.GetOverriddenScopes(ds.JsonData.MustMap()); err != nil {
-				return nil, err
-			}
-
-			if scopes == nil {
-				if scopes, err = promclient.GetPrometheusScopes(s.cfg.Azure, credentials); err != nil {
-					return nil, err
-				}
-			}
-
-			azhttpclient.AddAzureAuthentication(opts, s.cfg.Azure, credentials, scopes)
 		}
 	}
 
@@ -556,7 +537,7 @@ func awsServiceNamespace(dsType string) string {
 	switch dsType {
 	case models.DS_ES, models.DS_ES_OPEN_DISTRO, models.DS_ES_OPENSEARCH:
 		return "es"
-	case models.DS_PROMETHEUS:
+	case models.DS_PROMETHEUS, models.DS_ALERTMANAGER:
 		return "aps"
 	default:
 		panic(fmt.Sprintf("Unsupported datasource %q", dsType))
@@ -577,6 +558,12 @@ func (s *Service) fillWithSecureJSONData(ctx context.Context, cmd *models.Update
 		if _, ok := cmd.SecureJsonData[k]; !ok {
 			cmd.SecureJsonData[k] = v
 		}
+	}
+
+	// this is here for backwards compatibility
+	cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
+	if err != nil {
+		return err
 	}
 
 	return nil

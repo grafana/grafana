@@ -51,7 +51,7 @@ func TestSuccessResponse(t *testing.T) {
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
 			responseFileName := filepath.Join("testdata", test.filepath+".json")
-			goldenFileName := filepath.Join("testdata", test.filepath+".golden.txt")
+			goldenFileName := test.filepath + ".golden"
 
 			bytes, err := os.ReadFile(responseFileName)
 			require.NoError(t, err)
@@ -63,9 +63,7 @@ func TestSuccessResponse(t *testing.T) {
 				Frames: frames,
 				Error:  err,
 			}
-
-			err = experimental.CheckGoldenDataResponse(goldenFileName, dr, true)
-			require.NoError(t, err)
+			experimental.CheckGoldenJSONResponse(t, "testdata", goldenFileName, dr, true)
 		})
 	}
 }

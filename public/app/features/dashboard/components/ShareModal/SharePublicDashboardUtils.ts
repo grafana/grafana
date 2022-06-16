@@ -1,21 +1,43 @@
 import { getBackendSrv } from '@grafana/runtime';
-import { DashboardModel } from 'app/features/dashboard/state';
+import { notifyApp } from 'app/core/actions';
+import { createSuccessNotification } from 'app/core/copy/appNotification';
+import { VariableModel } from 'app/features/variables/types';
+import { dispatch } from 'app/store/store';
+import { DashboardDataDTO, DashboardMeta } from 'app/types/dashboard';
 
 export interface PublicDashboardConfig {
   isPublic: boolean;
+  publicDashboard: {
+    uid: string;
+    dashboardUid: string;
+    timeSettings?: object;
+  };
+}
+export interface DashboardResponse {
+  dashboard: DashboardDataDTO;
+  meta: DashboardMeta;
 }
 
-export const dashboardCanBePublic = (dashboard: DashboardModel): boolean => {
-  return dashboard?.templating?.list.length === 0;
+export const dashboardHasTemplateVariables = (variables: VariableModel[]): boolean => {
+  return variables.length > 0;
 };
 
-export const getPublicDashboardConfig = async (dashboardUid: string) => {
+export const getPublicDashboardConfig = async (
+  dashboardUid: string,
+  setPublicDashboardConfig: React.Dispatch<React.SetStateAction<PublicDashboardConfig>>
+) => {
   const url = `/api/dashboards/uid/${dashboardUid}/public-config`;
-  return getBackendSrv().get(url);
+  const pdResp: PublicDashboardConfig = await getBackendSrv().get(url);
+  setPublicDashboardConfig(pdResp);
 };
 
-export const savePublicDashboardConfig = async (dashboardUid: string, conf: PublicDashboardConfig) => {
-  const payload = { isPublic: conf.isPublic };
+export const savePublicDashboardConfig = async (
+  dashboardUid: string,
+  publicDashboardConfig: PublicDashboardConfig,
+  setPublicDashboardConfig: Function
+) => {
   const url = `/api/dashboards/uid/${dashboardUid}/public-config`;
-  return getBackendSrv().post(url, payload);
+  const pdResp: PublicDashboardConfig = await getBackendSrv().post(url, publicDashboardConfig);
+  dispatch(notifyApp(createSuccessNotification('Dashboard sharing configuration saved')));
+  setPublicDashboardConfig(pdResp);
 };

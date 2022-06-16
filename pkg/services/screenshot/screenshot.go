@@ -322,12 +322,12 @@ func NewUploadingScreenshotService(r prometheus.Registerer, service ScreenshotSe
 		service:  service,
 		uploader: uploader,
 		uploadFailures: promauto.With(r).NewCounter(prometheus.CounterOpts{
-			Name:      "upload_failures",
+			Name:      "upload_failures_total",
 			Namespace: namespace,
 			Subsystem: subsystem,
 		}),
 		uploadSuccesses: promauto.With(r).NewCounter(prometheus.CounterOpts{
-			Name:      "upload_successes",
+			Name:      "upload_successes_total",
 			Namespace: namespace,
 			Subsystem: subsystem,
 		}),

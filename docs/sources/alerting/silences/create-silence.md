@@ -24,7 +24,7 @@ To add a silence:
 4. Click **New Silence** to open the Create silence page.
 5. In **Silence start and end**, select the start and end date to indicate when the silence should go into effect and expire.
 6. Optionally, in **Duration**, specify how long the silence is enforced. This automatically updates the end time in the **Silence start and end** field.
-7. In the **Name** and **Value** fields, enter one or more _Matching Labels_. Matchers determine which rules the silence will apply to. For more information, see [how label matching works]({{< relref "../fundamentals/annotation-label/labels-and-label-matchers.md" >}}).
+7. In the **Name** and **Value** fields, enter one or more _Matching Labels_. Matchers determine which rules the silence will apply to. For more information, see [how label matching works]({{< relref "../fundamentals/annotation-label/labels-and-label-matchers/" >}}).
 8. In **Comment**, add details about the silence.
 9. In **Creator**, enter the name of the silence owner or keep the default owner.
 10. Click **Create**.

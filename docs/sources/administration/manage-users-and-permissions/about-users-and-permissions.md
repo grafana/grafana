@@ -31,7 +31,7 @@ A server administrator can perform the following tasks:
 
 - Manage users and permissions
 - Create, edit, and delete organizations
-- View server-wide settings defined in the [Configuration]({{< relref "../configuration.md" >}}) file
+- View server-wide settings defined in the [Configuration]({{< relref "../../setup-grafana/configure-grafana/" >}}) file
 - View Grafana server statistics, including total users and active sessions
 - Upgrade the server to Grafana Enterprise.
 
@@ -57,7 +57,7 @@ Permissions assigned to a user within an organization control the extent to whic
 
 ### Organization roles
 
-Organization role-based permissions are global, which means that each permission level applies to all Grafana resources within an given organization. For example, an editor can see and update _all_ dashboards in an organization, unless those dashboards have been specifically restricted using [dashboard permissions]({{< relref "manage-dashboard-permissions/_index.md" >}}).
+Organization role-based permissions are global, which means that each permission level applies to all Grafana resources within an given organization. For example, an editor can see and update _all_ dashboards in an organization, unless those dashboards have been specifically restricted using [dashboard permissions]({{< relref "manage-dashboard-permissions/" >}}).
 
 Grafana uses the following roles to control user access:
 
@@ -97,9 +97,9 @@ You can specify the following permissions to dashboards and folders.
 - **Edit**: Can create and edit dashboards. Editors _cannot_ change folder or dashboard permissions, or add, edit, or delete folders.
 - **View**: Can only view dashboards and folders.
 
-For more information about assigning dashboard folder permissions, refer to [Grant dashboard folder permissions]({{< relref "manage-dashboard-permissions/_index.md#grant-dashboard-folder-permissions" >}}).
+For more information about assigning dashboard folder permissions, refer to [Grant dashboard folder permissions]({{< relref "manage-dashboard-permissions/#grant-dashboard-folder-permissions" >}}).
 
-For more information about assigning dashboard permissions, refer to [Grant dashboard permissions]({{< relref "manage-dashboard-permissions/_index.md#grant-dashboard-permissions" >}}).
+For more information about assigning dashboard permissions, refer to [Grant dashboard permissions]({{< relref "manage-dashboard-permissions/#grant-dashboard-permissions" >}}).
 
 ## Editors with administrator permissions
 
@@ -109,18 +109,18 @@ If you have access to the Grafana server, you can modify the default editor role
 
 This setting can be used to enable self-organizing teams to administer their own dashboards.
 
-For more information about assigning administrator permissions to editors, refer to [Grant editors administrator permissions]({{< relref "manage-server-users/grant-editor-admin-permissions.md" >}}).
+For more information about assigning administrator permissions to editors, refer to [Grant editors administrator permissions]({{< relref "manage-server-users/grant-editor-admin-permissions/" >}}).
 
 ## Viewers with dashboard preview and Explore permissions
 
 If you have access to the Grafana server, you can modify the default viewer role so that viewers can:
 
 - Edit and preview dashboards, but cannot save their changes or create new dashboards.
-- Access and use [Explore]({{< relref "../../explore/_index.md" >}}).
+- Access and use [Explore]({{< relref "../../explore/" >}}).
 
 Extending the viewer role is useful for public Grafana installations where you want anonymous users to be able to edit panels and queries, but not be able to save or create new dashboards.
 
-For more information about assigning dashboard preview permissions to viewers, refer to [Enable viewers to preview dashboards and use Explore]({{< relref "manage-dashboard-permissions/_index.md#enable-viewers-to-preview-dashboards-and-use-explore" >}}).
+For more information about assigning dashboard preview permissions to viewers, refer to [Enable viewers to preview dashboards and use Explore]({{< relref "manage-dashboard-permissions/#enable-viewers-to-preview-dashboards-and-use-explore" >}}).
 
 ## Teams and permissions
 
@@ -131,7 +131,7 @@ You can assign a team member one of the following permissions:
 - **Member**: Includes the user as a member of the team. Members do not have team administrator privileges.
 - **Admin**: Administrators have permission to manage various aspects of the team, including team membership, permissions, and settings.
 
-Because teams exist inside an organization, the organization administrator can manage all teams. When the `editors_can_admin` setting is enabled, editors can create teams and manage teams that they create. For more information about the `editors_can_admin` setting, refer to [Grant editors administrator permissions]({{< relref "manage-server-users/grant-editor-admin-permissions.md" >}}).
+Because teams exist inside an organization, the organization administrator can manage all teams. When the `editors_can_admin` setting is enabled, editors can create teams and manage teams that they create. For more information about the `editors_can_admin` setting, refer to [Grant editors administrator permissions]({{< relref "manage-server-users/grant-editor-admin-permissions/" >}}).
 
 ## Grafana Enterprise user permissions features
 
@@ -146,7 +146,7 @@ Grafana Enterprise provides the following permissions-related features:
 
 By default, a user can query any data source in an organization, even if the data source is not linked to the user's dashboards.
 
-Data source permissions enable you to restrict data source query permissions to specific **Users** and **Teams**. For more information about assigning data source permissions, refer to [Data source permissions]({{< relref "../../enterprise/datasource_permissions.md" >}}).
+Data source permissions enable you to restrict data source query permissions to specific **Users** and **Teams**. For more information about assigning data source permissions, refer to [Data source permissions]({{< relref "../../enterprise/datasource_permissions/" >}}).
 
 ### Role-based access control
 

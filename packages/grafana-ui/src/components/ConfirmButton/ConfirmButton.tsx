@@ -117,17 +117,19 @@ class UnThemedConfirmButton extends PureComponent<Props, State> {
 
     return (
       <span className={styles.buttonContainer}>
-        {typeof children === 'string' ? (
-          <span className={buttonClass}>
-            <Button size={size} fill="text" onClick={onClick} ref={this.mainButtonRef}>
+        <div className={cx(disabled && styles.disabled)}>
+          {typeof children === 'string' ? (
+            <span className={buttonClass}>
+              <Button size={size} fill="text" onClick={onClick} ref={this.mainButtonRef}>
+                {children}
+              </Button>
+            </span>
+          ) : (
+            <span className={buttonClass} onClick={onClick}>
               {children}
-            </Button>
-          </span>
-        ) : (
-          <span className={buttonClass} onClick={onClick}>
-            {children}
-          </span>
-        )}
+            </span>
+          )}
+        </div>
         <span className={confirmButtonClass}>
           <Button size={size} variant={confirmButtonVariant} onClick={this.onConfirm} ref={this.confirmButtonRef}>
             {confirmText}
@@ -154,7 +156,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       text-decoration: none;
       color: ${theme.colors.text};
       opacity: 0.65;
-      cursor: not-allowed;
       pointer-events: none;
     `,
     buttonShow: css`
@@ -187,6 +188,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       visibility: hidden;
       transition: opacity 0.12s ease-in, transform 0.14s ease-in, visibility 0s 0.12s;
       transform: translateX(100px);
+    `,
+    disabled: css`
+      cursor: not-allowed;
     `,
   };
 });

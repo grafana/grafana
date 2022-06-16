@@ -18,7 +18,7 @@ Grafana also writes an error message to the server log:
 WARN[05-26|12:00:00] Some plugin scanning errors were found   errors="plugin '<plugin id>' is unsigned, plugin '<plugin id>' has an invalid signature"
 ```
 
-If you are a plugin developer and want to know how to sign your plugin, refer to [Sign a plugin]({{< relref "../developers/plugins/sign-a-plugin.md" >}}).
+If you are a plugin developer and want to know how to sign your plugin, refer to [Sign a plugin]({{< relref "../developers/plugins/sign-a-plugin/" >}}).
 
 | Signature status   | Description                                                                     |
 | ------------------ | ------------------------------------------------------------------------------- |
@@ -42,7 +42,7 @@ All plugins is signed under a _signature level_. The signature level determines 
 
 > **Note:** Unsigned plugins are not supported in Grafana Cloud.
 
-We strongly recommend that you don't run unsigned plugins in your Grafana instance. If you're aware of the risks and you still want to load an unsigned plugin, refer to [Configuration]({{< relref "../administration/configuration.md#allow_loading_unsigned_plugins" >}}).
+We strongly recommend that you don't run unsigned plugins in your Grafana instance. If you're aware of the risks and you still want to load an unsigned plugin, refer to [Configuration]({{< relref "../setup-grafana/configure-grafana/#allow_loading_unsigned_plugins" >}}).
 
 If you've allowed loading of an unsigned plugin, then Grafana writes a warning message to the server log:
 

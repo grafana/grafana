@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package sqlstore
 
 import (
@@ -17,6 +14,9 @@ import (
 )
 
 func TestIntegrationAlertNotificationSQLAccess(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	var sqlStore *SQLStore
 	setup := func() { sqlStore = InitTestDB(t) }
 

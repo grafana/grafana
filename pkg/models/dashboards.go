@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gosimple/slug"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -203,10 +204,6 @@ type Dashboard struct {
 
 	Title string
 	Data  *simplejson.Json
-}
-
-type PublicDashboardConfig struct {
-	IsPublic bool `json:"isPublic"`
 }
 
 func (d *Dashboard) SetId(id int64) {
@@ -416,12 +413,6 @@ type DeleteOrphanedProvisionedDashboardsCommand struct {
 	ReaderNames []string
 }
 
-type SavePublicDashboardConfigCommand struct {
-	Uid                   string
-	OrgId                 int64
-	PublicDashboardConfig PublicDashboardConfig
-}
-
 //
 // QUERIES
 //
@@ -451,14 +442,6 @@ type GetDashboardsQuery struct {
 	Result        []*Dashboard
 }
 
-type GetDashboardPermissionsForUserQuery struct {
-	DashboardIds []int64
-	OrgId        int64
-	UserId       int64
-	OrgRole      RoleType
-	Result       []*DashboardPermissionForUser
-}
-
 type GetDashboardsByPluginIdQuery struct {
 	OrgId    int64
 	PluginId string
@@ -475,12 +458,6 @@ type GetDashboardsBySlugQuery struct {
 	Slug  string
 
 	Result []*Dashboard
-}
-
-type DashboardPermissionForUser struct {
-	DashboardId    int64          `json:"dashboardId"`
-	Permission     PermissionType `json:"permission"`
-	PermissionName string         `json:"permissionName"`
 }
 
 type DashboardRef struct {

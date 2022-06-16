@@ -17,23 +17,23 @@ import (
 )
 
 type LokiAPI struct {
-	client     *http.Client
-	url        string
-	log        log.Logger
-	oauthToken string
+	client  *http.Client
+	url     string
+	log     log.Logger
+	headers map[string]string
 }
 
-func newLokiAPI(client *http.Client, url string, log log.Logger, oauthToken string) *LokiAPI {
-	return &LokiAPI{client: client, url: url, log: log, oauthToken: oauthToken}
+func newLokiAPI(client *http.Client, url string, log log.Logger, headers map[string]string) *LokiAPI {
+	return &LokiAPI{client: client, url: url, log: log, headers: headers}
 }
 
-func addOauthHeader(req *http.Request, oauthToken string) {
-	if oauthToken != "" {
-		req.Header.Set("Authorization", oauthToken)
+func addHeaders(req *http.Request, headers map[string]string) {
+	for name, value := range headers {
+		req.Header.Set(name, value)
 	}
 }
 
-func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery, oauthToken string) (*http.Request, error) {
+func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery, headers map[string]string) (*http.Request, error) {
 	qs := url.Values{}
 	qs.Set("query", query.Expr)
 
@@ -86,7 +86,7 @@ func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery, oau
 		return nil, err
 	}
 
-	addOauthHeader(req, oauthToken)
+	addHeaders(req, headers)
 
 	if query.VolumeQuery {
 		req.Header.Set("X-Query-Tags", "Source=logvolhist")
@@ -139,7 +139,7 @@ func makeLokiError(body io.ReadCloser) error {
 }
 
 func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery) (data.Frames, error) {
-	req, err := makeDataRequest(ctx, api.url, query, api.oauthToken)
+	req, err := makeDataRequest(ctx, api.url, query, api.headers)
 	if err != nil {
 		return nil, err
 	}
@@ -169,7 +169,7 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery) (data.Frames
 	return res.Frames, nil
 }
 
-func makeRawRequest(ctx context.Context, lokiDsUrl string, resourceURL string, oauthToken string) (*http.Request, error) {
+func makeRawRequest(ctx context.Context, lokiDsUrl string, resourceURL string, headers map[string]string) (*http.Request, error) {
 	lokiUrl, err := url.Parse(lokiDsUrl)
 	if err != nil {
 		return nil, err
@@ -186,13 +186,13 @@ func makeRawRequest(ctx context.Context, lokiDsUrl string, resourceURL string, o
 		return nil, err
 	}
 
-	addOauthHeader(req, oauthToken)
+	addHeaders(req, headers)
 
 	return req, nil
 }
 
 func (api *LokiAPI) RawQuery(ctx context.Context, resourceURL string) ([]byte, error) {
-	req, err := makeRawRequest(ctx, api.url, resourceURL, api.oauthToken)
+	req, err := makeRawRequest(ctx, api.url, resourceURL, api.headers)
 	if err != nil {
 		return nil, err
 	}

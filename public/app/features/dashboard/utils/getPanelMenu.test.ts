@@ -3,7 +3,6 @@ import config from 'app/core/config';
 import * as actions from 'app/features/explore/state/main';
 import { setStore } from 'app/store/store';
 
-import { describe } from '../../../../test/lib/common';
 import { DashboardModel, PanelModel } from '../state';
 
 import { getPanelMenu } from './getPanelMenu';

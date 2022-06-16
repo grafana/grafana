@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/resourcegraph"
 	azTime "github.com/grafana/grafana/pkg/tsdb/azuremonitor/time"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 // AzureMonitorDatasource calls the Azure Monitor API - one of the four API's supported
@@ -231,7 +230,7 @@ func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo types
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		azlog.Debug("Failed to create request", "error", err)
-		return nil, errutil.Wrap("Failed to create request", err)
+		return nil, fmt.Errorf("%v: %w", "Failed to create request", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 

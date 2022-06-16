@@ -13,7 +13,7 @@ as info on deprecations, breaking changes and plugin development read the [relea
 
 ## Grafana 9
 
-- [What's new in 9.0]({{< relref "whats-new-in-v9-0" >}})
+- [What's new in 9.0]({{< relref "whats-new-in-v9-0/" >}})
 
 ## Grafana 8
 

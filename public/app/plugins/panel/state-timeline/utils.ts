@@ -21,6 +21,7 @@ import {
   Threshold,
   getFieldConfigWithMinMax,
   ThresholdsMode,
+  TimeRange,
 } from '@grafana/data';
 import { VizLegendOptions, AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/schema';
 import {
@@ -30,6 +31,8 @@ import {
   UPlotConfigPrepFn,
   VizLegendItem,
 } from '@grafana/ui';
+import { applyNullInsertThreshold } from '@grafana/ui/src/components/GraphNG/nullInsertThreshold';
+import { nullToValue } from '@grafana/ui/src/components/GraphNG/nullToValue';
 import { PlotTooltipInterpolator } from '@grafana/ui/src/components/uPlot/types';
 
 import { preparePlotData2, getStackingGroups } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
@@ -379,6 +382,7 @@ export function mergeThresholdValues(field: Field, theme: GrafanaTheme2): Field 
 export function prepareTimelineFields(
   series: DataFrame[] | undefined,
   mergeValues: boolean,
+  timeRange: TimeRange,
   theme: GrafanaTheme2
 ): { frames?: DataFrame[]; warn?: string } {
   if (!series?.length) {
@@ -386,11 +390,25 @@ export function prepareTimelineFields(
   }
   let hasTimeseries = false;
   const frames: DataFrame[] = [];
+
   for (let frame of series) {
     let isTimeseries = false;
     let changed = false;
+
+    let nulledFrame = applyNullInsertThreshold({
+      frame,
+      refFieldPseudoMin: timeRange.from.valueOf(),
+      refFieldPseudoMax: timeRange.to.valueOf(),
+    });
+
+    // Mark the field state as having a null threhold applied
+    frame.fields[0].state = {
+      ...frame.fields[0].state,
+      nullThresholdApplied: true,
+    };
+
     const fields: Field[] = [];
-    for (let field of frame.fields) {
+    for (let field of nullToValue(nulledFrame).fields) {
       switch (field.type) {
         case FieldType.time:
           isTimeseries = true;

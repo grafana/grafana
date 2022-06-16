@@ -24,7 +24,6 @@ export { ButtonCascader } from './ButtonCascader/ButtonCascader';
 
 export { LoadingPlaceholder, LoadingPlaceholderProps } from './LoadingPlaceholder/LoadingPlaceholder';
 export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
-export { ColorValueEditor, ColorValueEditorProps } from './OptionsUI/color';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';
 export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
 export { UnitPicker } from './UnitPicker/UnitPicker';
@@ -175,14 +174,6 @@ export { Drawer } from './Drawer/Drawer';
 export { Slider } from './Slider/Slider';
 export { RangeSlider } from './Slider/RangeSlider';
 
-// TODO: namespace!!
-export { StringValueEditor } from './OptionsUI/string';
-export { StringArrayEditor } from './OptionsUI/strings';
-export { NumberValueEditor } from './OptionsUI/number';
-export { SliderValueEditor } from './OptionsUI/slider';
-export { SelectValueEditor } from './OptionsUI/select';
-export { MultiSelectValueEditor } from './OptionsUI/multiSelect';
-
 // Next-gen forms
 export { Form } from './Forms/Form';
 export { sharedInputStyle } from './Forms/commonStyles';
@@ -190,7 +181,6 @@ export { InputControl } from './InputControl';
 export { Button, LinkButton, ButtonVariant, ToolbarButton, ButtonGroup, ToolbarButtonRow, ButtonProps } from './Button';
 export { ValuePicker } from './ValuePicker/ValuePicker';
 export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
-export { getFormStyles } from './Forms/getFormStyles';
 export { Link } from './Link/Link';
 
 export { Label } from './Forms/Label';
@@ -206,7 +196,6 @@ export { FieldArray } from './Forms/FieldArray';
 
 // Select
 export { default as resetSelectStyles } from './Select/resetSelectStyles';
-export { selectOptionInTest } from './Select/test-utils';
 export * from './Select/Select';
 export { DropdownIndicator } from './Select/DropdownIndicator';
 export { getSelectStyles } from './Select/getSelectStyles';
@@ -270,3 +259,4 @@ export { GraphNGLegendEvent } from './GraphNG/types';
 export * from './PanelChrome/types';
 export { EmotionPerfTest } from './ThemeDemos/EmotionPerfTest';
 export { Label as BrowserLabel } from './BrowserLabel/Label';
+export { PanelContainer } from './PanelContainer/PanelContainer';

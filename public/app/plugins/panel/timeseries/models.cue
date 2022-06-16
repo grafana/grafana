@@ -15,20 +15,23 @@
 package grafanaschema
 
 import (
-    ui "github.com/grafana/grafana/packages/grafana-schema/src/schema"
+	"github.com/grafana/thema"
+	ui "github.com/grafana/grafana/packages/grafana-schema/src/schema"
 )
 
-Panel: {
-    lineages: [
-        [
-            {
-                PanelOptions: {
-                    legend: ui.VizLegendOptions
-                    tooltip: ui.VizTooltipOptions
-                } @cuetsy(kind="interface")
-                PanelFieldConfig: ui.GraphFieldConfig & {} @cuetsy(kind="interface")
-            }
-        ]
-    ]
-    migrations: []
+Panel: thema.#Lineage & {
+	name: "timeseries"
+	seqs: [
+		{
+			schemas: [
+				{
+					PanelOptions: {
+						legend:  ui.VizLegendOptions
+						tooltip: ui.VizTooltipOptions
+					} @cuetsy(kind="interface")
+					PanelFieldConfig: ui.GraphFieldConfig & {} @cuetsy(kind="interface")
+				},
+			]
+		},
+	]
 }

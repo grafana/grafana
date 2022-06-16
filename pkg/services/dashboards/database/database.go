@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
@@ -190,47 +191,6 @@ func (d *DashboardStore) SaveDashboard(cmd models.SaveDashboardCommand) (*models
 		return saveDashboard(sess, &cmd)
 	})
 	return cmd.Result, err
-}
-
-// retrieves public dashboard configuration
-func (d *DashboardStore) GetPublicDashboardConfig(orgId int64, dashboardUid string) (*models.PublicDashboardConfig, error) {
-	var result []*models.Dashboard
-
-	err := d.sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		return sess.Where("org_id = ? AND uid= ?", orgId, dashboardUid).Find(&result)
-	})
-
-	if len(result) == 0 {
-		return nil, models.ErrDashboardNotFound
-	}
-
-	pdc := &models.PublicDashboardConfig{
-		IsPublic: result[0].IsPublic,
-	}
-
-	return pdc, err
-}
-
-// stores public dashboard configuration
-func (d *DashboardStore) SavePublicDashboardConfig(cmd models.SavePublicDashboardConfigCommand) (*models.PublicDashboardConfig, error) {
-	err := d.sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		affectedRowCount, err := sess.Table("dashboard").Where("org_id = ? AND uid = ?", cmd.OrgId, cmd.Uid).Update(map[string]interface{}{"is_public": cmd.PublicDashboardConfig.IsPublic})
-		if err != nil {
-			return err
-		}
-
-		if affectedRowCount == 0 {
-			return models.ErrDashboardNotFound
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &cmd.PublicDashboardConfig, nil
 }
 
 func (d *DashboardStore) UpdateDashboardACL(ctx context.Context, dashboardID int64, items []*models.DashboardAcl) error {
@@ -513,8 +473,8 @@ func saveDashboard(sess *sqlstore.DBSession, cmd *models.SaveDashboardCommand) e
 		return models.ErrDashboardNotFound
 	}
 
-	dashVersion := &models.DashboardVersion{
-		DashboardId:   dash.Id,
+	dashVersion := &dashver.DashboardVersion{
+		DashboardID:   dash.Id,
 		ParentVersion: parentVersion,
 		RestoredFrom:  cmd.RestoredFrom,
 		Version:       dash.Version,
@@ -873,8 +833,8 @@ func (d *DashboardStore) deleteAlertDefinition(dashboardId int64, sess *sqlstore
 	return nil
 }
 
-func (d *DashboardStore) GetDashboard(ctx context.Context, query *models.GetDashboardQuery) error {
-	return d.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+func (d *DashboardStore) GetDashboard(ctx context.Context, query *models.GetDashboardQuery) (*models.Dashboard, error) {
+	err := d.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		if query.Id == 0 && len(query.Slug) == 0 && len(query.Uid) == 0 {
 			return models.ErrDashboardIdentifierNotSet
 		}
@@ -893,6 +853,8 @@ func (d *DashboardStore) GetDashboard(ctx context.Context, query *models.GetDash
 		query.Result = &dashboard
 		return nil
 	})
+
+	return query.Result, err
 }
 
 func (d *DashboardStore) GetDashboardUIDById(ctx context.Context, query *models.GetDashboardRefByIdQuery) error {
@@ -964,8 +926,10 @@ func (d *DashboardStore) FindDashboards(ctx context.Context, query *models.FindP
 		filters = append(filters, searchstore.TagsFilter{Tags: query.Tags})
 	}
 
-	if len(query.DashboardIds) > 0 {
-		filters = append(filters, searchstore.DashboardFilter{IDs: query.DashboardIds})
+	if len(query.DashboardUIDs) > 0 {
+		filters = append(filters, searchstore.DashboardFilter{UIDs: query.DashboardUIDs})
+	} else if len(query.DashboardIds) > 0 {
+		filters = append(filters, searchstore.DashboardIDFilter{IDs: query.DashboardIds})
 	}
 
 	if query.IsStarred {
@@ -1008,4 +972,22 @@ func (d *DashboardStore) FindDashboards(ctx context.Context, query *models.FindP
 	}
 
 	return res, nil
+}
+
+func (d *DashboardStore) GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) error {
+	return d.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		sql := `SELECT
+					  COUNT(*) as count,
+						term
+					FROM dashboard
+					INNER JOIN dashboard_tag on dashboard_tag.dashboard_id = dashboard.id
+					WHERE dashboard.org_id=?
+					GROUP BY term
+					ORDER BY term`
+
+		query.Result = make([]*models.DashboardTagCloudItem, 0)
+		sess := dbSession.SQL(sql, query.OrgId)
+		err := sess.Find(&query.Result)
+		return err
+	})
 }

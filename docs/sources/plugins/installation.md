@@ -24,9 +24,9 @@ If you are logged in to Grafana Cloud when you add a plugin, log out and back in
 
 Follow the instructions on the Install tab. You can either install the plugin with a Grafana CLI command or by downloading and uncompress a .zip file into the Grafana plugins directory. We recommend using Grafana CLI in most instances. The .zip option is available if your Grafana server does not have access to the internet.
 
-For more information about Grafana CLI plugin commands, refer to [Plugin commands]({{< relref "../administration/cli.md#plugins-commands" >}}).
+For more information about Grafana CLI plugin commands, refer to [Plugin commands]({{< relref "../administration/cli/#plugins-commands" >}}).
 
-As of Grafana v8.0, a plugin catalog app was introduced in order to make managing plugins easier. For more information, refer to [Plugin catalog]({{< relref "catalog.md" >}}).
+As of Grafana v8.0, a plugin catalog app was introduced in order to make managing plugins easier. For more information, refer to [Plugin catalog]({{< relref "catalog/" >}}).
 
 ### Install a packaged plugin
 
@@ -36,4 +36,4 @@ After the user has downloaded the archive containing the plugin assets, they can
 unzip my-plugin-0.2.0.zip -d YOUR_PLUGIN_DIR/my-plugin
 ```
 
-The path to the plugin directory is defined in the configuration file. For more information, refer to [Configuration]({{< relref "../administration/configuration.md#plugins" >}}).
+The path to the plugin directory is defined in the configuration file. For more information, refer to [Configuration]({{< relref "../setup-grafana/configure-grafana/#plugins" >}}).

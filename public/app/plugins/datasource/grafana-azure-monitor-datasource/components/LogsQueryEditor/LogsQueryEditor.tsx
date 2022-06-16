@@ -44,6 +44,8 @@ const LogsQueryEditor: React.FC<LogsQueryEditorProps> = ({
               <ResourceField
                 query={query}
                 datasource={datasource}
+                inlineField={true}
+                labelWidth={10}
                 subscriptionId={subscriptionId}
                 variableOptionGroup={variableOptionGroup}
                 onQueryChange={onChange}

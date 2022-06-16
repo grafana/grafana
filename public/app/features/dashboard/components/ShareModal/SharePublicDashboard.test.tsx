@@ -1,10 +1,27 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 
+import { BackendSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 
 import { ShareModal } from './ShareModal';
+import { PublicDashboardConfig } from './SharePublicDashboardUtils';
+
+// Mock api request
+const publicDashboardconfigResp: PublicDashboardConfig = {
+  isPublic: true,
+  publicDashboard: { uid: '', dashboardUid: '' },
+};
+
+const backendSrv = {
+  get: () => publicDashboardconfigResp,
+} as unknown as BackendSrv;
+
+jest.mock('@grafana/runtime', () => ({
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  getBackendSrv: () => backendSrv,
+}));
 
 jest.mock('app/core/core', () => {
   return {

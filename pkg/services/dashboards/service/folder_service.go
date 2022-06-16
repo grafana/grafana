@@ -187,7 +187,7 @@ func (f *FolderServiceImpl) CreateFolder(ctx context.Context, user *models.Signe
 
 func (f *FolderServiceImpl) UpdateFolder(ctx context.Context, user *models.SignedInUser, orgID int64, existingUid string, cmd *models.UpdateFolderCommand) error {
 	query := models.GetDashboardQuery{OrgId: orgID, Uid: existingUid}
-	if err := f.dashboardStore.GetDashboard(ctx, &query); err != nil {
+	if _, err := f.dashboardStore.GetDashboard(ctx, &query); err != nil {
 		return toFolderError(err)
 	}
 

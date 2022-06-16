@@ -68,6 +68,11 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
       if (legendMeasure) {
         size = { width: width - legendMeasure.width, height };
       }
+
+      if (legend.props.width) {
+        legendStyle.width = legend.props.width;
+        size = { width: width - legend.props.width, height };
+      }
       break;
   }
 
@@ -115,6 +120,7 @@ export interface VizLayoutLegendProps {
   children: React.ReactNode;
   maxHeight?: string;
   maxWidth?: string;
+  width?: number;
 }
 
 /**

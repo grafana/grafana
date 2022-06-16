@@ -7,13 +7,14 @@ import (
 	"strings"
 	"time"
 
+	"xorm.io/xorm"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/util/errutil"
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // GetDataSource adds a datasource to the query model by querying by org_id as well as
@@ -144,32 +145,30 @@ func (ss *SQLStore) AddDataSource(ctx context.Context, cmd *models.AddDataSource
 		if cmd.Uid == "" {
 			uid, err := generateNewDatasourceUid(sess, cmd.OrgId)
 			if err != nil {
-				return errutil.Wrapf(err, "Failed to generate UID for datasource %q", cmd.Name)
+				return fmt.Errorf("failed to generate UID for datasource %q: %w", cmd.Name, err)
 			}
 			cmd.Uid = uid
 		}
 
 		ds := &models.DataSource{
-			OrgId:             cmd.OrgId,
-			Name:              cmd.Name,
-			Type:              cmd.Type,
-			Access:            cmd.Access,
-			Url:               cmd.Url,
-			User:              cmd.User,
-			Password:          cmd.Password,
-			Database:          cmd.Database,
-			IsDefault:         cmd.IsDefault,
-			BasicAuth:         cmd.BasicAuth,
-			BasicAuthUser:     cmd.BasicAuthUser,
-			BasicAuthPassword: cmd.BasicAuthPassword,
-			WithCredentials:   cmd.WithCredentials,
-			JsonData:          cmd.JsonData,
-			SecureJsonData:    cmd.EncryptedSecureJsonData,
-			Created:           time.Now(),
-			Updated:           time.Now(),
-			Version:           1,
-			ReadOnly:          cmd.ReadOnly,
-			Uid:               cmd.Uid,
+			OrgId:           cmd.OrgId,
+			Name:            cmd.Name,
+			Type:            cmd.Type,
+			Access:          cmd.Access,
+			Url:             cmd.Url,
+			User:            cmd.User,
+			Database:        cmd.Database,
+			IsDefault:       cmd.IsDefault,
+			BasicAuth:       cmd.BasicAuth,
+			BasicAuthUser:   cmd.BasicAuthUser,
+			WithCredentials: cmd.WithCredentials,
+			JsonData:        cmd.JsonData,
+			SecureJsonData:  cmd.EncryptedSecureJsonData,
+			Created:         time.Now(),
+			Updated:         time.Now(),
+			Version:         1,
+			ReadOnly:        cmd.ReadOnly,
+			Uid:             cmd.Uid,
 		}
 
 		if _, err := sess.Insert(ds); err != nil {
@@ -213,26 +212,24 @@ func (ss *SQLStore) UpdateDataSource(ctx context.Context, cmd *models.UpdateData
 		}
 
 		ds := &models.DataSource{
-			Id:                cmd.Id,
-			OrgId:             cmd.OrgId,
-			Name:              cmd.Name,
-			Type:              cmd.Type,
-			Access:            cmd.Access,
-			Url:               cmd.Url,
-			User:              cmd.User,
-			Password:          cmd.Password,
-			Database:          cmd.Database,
-			IsDefault:         cmd.IsDefault,
-			BasicAuth:         cmd.BasicAuth,
-			BasicAuthUser:     cmd.BasicAuthUser,
-			BasicAuthPassword: cmd.BasicAuthPassword,
-			WithCredentials:   cmd.WithCredentials,
-			JsonData:          cmd.JsonData,
-			SecureJsonData:    cmd.EncryptedSecureJsonData,
-			Updated:           time.Now(),
-			ReadOnly:          cmd.ReadOnly,
-			Version:           cmd.Version + 1,
-			Uid:               cmd.Uid,
+			Id:              cmd.Id,
+			OrgId:           cmd.OrgId,
+			Name:            cmd.Name,
+			Type:            cmd.Type,
+			Access:          cmd.Access,
+			Url:             cmd.Url,
+			User:            cmd.User,
+			Database:        cmd.Database,
+			IsDefault:       cmd.IsDefault,
+			BasicAuth:       cmd.BasicAuth,
+			BasicAuthUser:   cmd.BasicAuthUser,
+			WithCredentials: cmd.WithCredentials,
+			JsonData:        cmd.JsonData,
+			SecureJsonData:  cmd.EncryptedSecureJsonData,
+			Updated:         time.Now(),
+			ReadOnly:        cmd.ReadOnly,
+			Version:         cmd.Version + 1,
+			Uid:             cmd.Uid,
 		}
 
 		sess.UseBool("is_default")
@@ -287,3 +284,5 @@ func generateNewDatasourceUid(sess *DBSession, orgId int64) (string, error) {
 
 	return "", models.ErrDataSourceFailedGenerateUniqueUid
 }
+
+var generateNewUid func() string = util.GenerateShortUID

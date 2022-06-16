@@ -23,7 +23,7 @@ You can also use the output of one transformation as the input to another transf
 
 ## Transformation types
 
-Grafana provides a number of ways that you can transform data. For a complete list of transformations, refer to [Transformation functions]({{< relref "transformation-functions.md" >}}).
+Grafana provides a number of ways that you can transform data. For a complete list of transformations, refer to [Transformation functions]({{< relref "transformation-functions/" >}}).
 
 ## Order of transformations
 

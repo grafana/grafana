@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package tests
 
 import (
@@ -13,6 +10,9 @@ import (
 )
 
 func TestIntegrationLiveMessage(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	storage := SetupTestStorage(t)
 
 	getQuery := &models.GetLiveMessageQuery{

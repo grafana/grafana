@@ -203,7 +203,10 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
       }
 
       const ds = this.pseudoDatasource[query.queryType];
-      return ds?.applyTemplateVariables(query, scopedVars) ?? query;
+      return {
+        datasource: ds?.getRef(),
+        ...(ds?.applyTemplateVariables(query, scopedVars) ?? query),
+      };
     });
 
     return mapped;

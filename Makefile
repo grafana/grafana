@@ -7,7 +7,7 @@ WIRE_TAGS = "oss"
 -include local/Makefile
 include .bingo/Variables.mk
 
-.PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-full build-docker-full-ubuntu lint-go golangci-lint test-go test-js gen-ts test run run-frontend clean devenv devenv-down protobuf drone help
+.PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-full build-docker-full-ubuntu lint-go golangci-lint test-go test-js gen-ts test run run-frontend clean devenv devenv-down protobuf drone help gen-go gen-cue
 
 GO = go
 GO_FILES ?= ./pkg/...
@@ -43,6 +43,7 @@ $(SPEC_TARGET): $(API_DEFINITION_FILES) ## Generate API spec
 	-e SWAGGER_GENERATE_EXTENSION=false \
 	-v ${HOME}/go:/go \
 	-v $$(pwd):/grafana \
+	-v $$(pwd)/../grafana-enterprise:$$(pwd)/../grafana-enterprise \
 	-w $$(pwd)/pkg/api/docs quay.io/goswagger/swagger:$(SWAGGER_TAG) \
 	generate spec -m -o /grafana/public/api-spec.json \
 	-w /grafana/pkg/server \
@@ -50,7 +51,7 @@ $(SPEC_TARGET): $(API_DEFINITION_FILES) ## Generate API spec
 	-x "github.com/prometheus/alertmanager" \
 	-i /grafana/pkg/api/docs/tags.json
 
-swagger-api-spec: gen-go $(SPEC_TARGET) $(MERGED_SPEC_TARGET)
+swagger-api-spec: gen-go $(SPEC_TARGET) $(MERGED_SPEC_TARGET) validate-api-spec
 
 $(NGALERT_SPEC_TARGET):
 	+$(MAKE) -C pkg/services/ngalert/api/tooling api.json
@@ -62,12 +63,12 @@ ensure_go-swagger_mac:
 	@hash swagger &>/dev/null || (brew tap go-swagger/go-swagger && brew install go-swagger)
 
 --swagger-api-spec-mac: ensure_go-swagger_mac $(API_DEFINITION_FILES)  ## Generate API spec (for M1 Mac)
-	swagger generate spec -m -w pkg/server -o public/api-spec.json \
+	SWAGGER_GENERATE_EXTENSION=false swagger generate spec -m -w pkg/server -o public/api-spec.json \
 	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
 	-x "github.com/prometheus/alertmanager" \
 	-i pkg/api/docs/tags.json
 
-swagger-api-spec-mac: gen-go --swagger-api-spec-mac $(MERGED_SPEC_TARGET)
+swagger-api-spec-mac: gen-go --swagger-api-spec-mac $(MERGED_SPEC_TARGET) validate-api-spec-mac
 
 validate-api-spec: $(MERGED_SPEC_TARGET) ## Validate API spec
 	docker run --rm -it \
@@ -77,6 +78,9 @@ validate-api-spec: $(MERGED_SPEC_TARGET) ## Validate API spec
 	-v $$(pwd):/grafana \
 	-w $$(pwd)/pkg/api/docs quay.io/goswagger/swagger:$(SWAGGER_TAG) \
 	validate /grafana/$(<)
+
+validate-api-spec-mac: $(MERGED_SPEC_TARGET) ## Validate API spec
+	swagger validate $(<)
 
 clean-api-spec:
 	rm $(SPEC_TARGET) $(MERGED_SPEC_TARGET)
@@ -88,7 +92,7 @@ gen-cue: ## Do all CUE/Thema code generation
 	go generate ./pkg/framework/coremodel
 	go generate ./public/app/plugins
 
-gen-go: $(WIRE)
+gen-go: $(WIRE) gen-cue
 	@echo "generate go files"
 	$(WIRE) gen -tags $(WIRE_TAGS) ./pkg/server ./pkg/cmd/grafana-cli/runner
 

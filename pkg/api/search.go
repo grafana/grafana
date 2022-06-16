@@ -39,6 +39,8 @@ func (hs *HTTPServer) Search(c *models.ReqContext) response.Response {
 		}
 	}
 
+	dbUIDs := c.QueryStrings("dashboardUID")
+
 	folderIDs := make([]int64, 0)
 	for _, id := range c.QueryStrings("folderIds") {
 		folderID, err := strconv.ParseInt(id, 10, 64)
@@ -47,19 +49,24 @@ func (hs *HTTPServer) Search(c *models.ReqContext) response.Response {
 		}
 	}
 
+	if len(dbIDs) > 0 && len(dbUIDs) > 0 {
+		return response.Error(400, "search supports UIDs or IDs, not both", nil)
+	}
+
 	searchQuery := search.Query{
-		Title:        query,
-		Tags:         tags,
-		SignedInUser: c.SignedInUser,
-		Limit:        limit,
-		Page:         page,
-		IsStarred:    starred == "true",
-		OrgId:        c.OrgId,
-		DashboardIds: dbIDs,
-		Type:         dashboardType,
-		FolderIds:    folderIDs,
-		Permission:   permission,
-		Sort:         sort,
+		Title:         query,
+		Tags:          tags,
+		SignedInUser:  c.SignedInUser,
+		Limit:         limit,
+		Page:          page,
+		IsStarred:     starred == "true",
+		OrgId:         c.OrgId,
+		DashboardIds:  dbIDs,
+		DashboardUIDs: dbUIDs,
+		Type:          dashboardType,
+		FolderIds:     folderIDs,
+		Permission:    permission,
+		Sort:          sort,
 	}
 
 	err := hs.SearchService.SearchHandler(c.Req.Context(), &searchQuery)

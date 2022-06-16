@@ -151,7 +151,7 @@ export const FolderSection: FC<SectionHeaderProps> = ({
 
   // Skip the folder wrapper
   if (renderStandaloneBody) {
-    return <div>{renderResults()}</div>;
+    return <div className={styles.folderViewResults}>{renderResults()}</div>;
   }
 
   return (
@@ -226,6 +226,9 @@ const getSectionHeaderStyles = stylesFactory((theme: GrafanaTheme, selected = fa
     `,
     icon: css`
       padding: 0 ${sm} 0 ${editable ? 0 : sm};
+    `,
+    folderViewResults: css`
+      overflow: auto;
     `,
     text: css`
       flex-grow: 1;

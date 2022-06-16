@@ -12,10 +12,10 @@ Panels allow you to show your data in visual form. Each panel needs at least one
 
 ## Before you begin
 
-- Ensure that you have the proper permissions. For more information about permissions, refer to [About users and permissions]({{< relref "../../administration/manage-users-and-permissions/about-users-and-permissions.md" >}}).
+- Ensure that you have the proper permissions. For more information about permissions, refer to [About users and permissions]({{< relref "../../administration/manage-users-and-permissions/about-users-and-permissions/" >}}).
 - Identify the dashboard to which you want to add the panel.
 - Understand the query language of the target data source.
-- Ensure that data source for which you are writing a query has been added. For more information about adding a data source, refer to [Add a data source]({{< relref "../../datasources/add-a-data-source.md" >}}) if you need instructions.
+- Ensure that data source for which you are writing a query has been added. For more information about adding a data source, refer to [Add a data source]({{< relref "../../datasources/add-a-data-source/" >}}) if you need instructions.
 
 **To add a panel to a dashboard**:
 
@@ -32,7 +32,7 @@ Panels allow you to show your data in visual form. Each panel needs at least one
 
 1. Write or construct a query in the query language of your data source.
 
-   For more information about data sources, refer to [Data sources]({{< relref "../../datasources/_index.md" >}}) for specific guidelines.
+   For more information about data sources, refer to [Data sources]({{< relref "../../datasources/" >}}) for specific guidelines.
 
 1. In the Visualization list, select a visualization type.
 
@@ -40,17 +40,17 @@ Panels allow you to show your data in visual form. Each panel needs at least one
 
    ![](/static/img/docs/panel-editor/select-visualization-8-0.png)
 
-   For more information about individual visualizations, refer to [Visualizations options]({{< relref "../../visualizations/_index.md" >}}).
+   For more information about individual visualizations, refer to [Visualizations options]({{< relref "../../visualizations/" >}}).
 
 1. Refer to the following documentation for ways you adjust panel settings.
 
    While not required, most visualizations need some adjustment before they properly display the information that you need.
 
-   - [Format data using value mapping]({{< relref "../format-data/about-value-mapping.md" >}})
-   - [Visualization-specific options]({{< relref "../../visualizations/_index.md" >}})
-   - [Override field values]({{< relref "../override-field-values/about-field-overrides.md" >}})
+   - [Format data using value mapping]({{< relref "../format-data/about-value-mapping/" >}})
+   - [Visualization-specific options]({{< relref "../../visualizations/" >}})
+   - [Override field values]({{< relref "../override-field-values/about-field-overrides/" >}})
    - [Configure thresholds]({{< relref "../configure-thresholds/" >}})
-   - [Apply color to series and fields]({{< relref "apply-color-to-series.md" >}})
+   - [Apply color to series and fields]({{< relref "apply-color-to-series/" >}})
 
 1. Add a note to describe the visualization (or describe your changes) and then click **Save** in the upper-right corner of the page.
 

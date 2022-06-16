@@ -19,7 +19,7 @@ By default, Grafana uses the timezone in your web browser. However, you can over
 
 ## Set server timezone
 
-Grafana server administrators can choose a default timezone for all users on the server by setting the [default_timezone]({{< relref "../configuration.md#default-timezone" >}}) option in the Grafana configuration file.
+Grafana server administrators can choose a default timezone for all users on the server by setting the [default_timezone]({{< relref "../../setup-grafana/configure-grafana/#default-timezone" >}}) option in the Grafana configuration file.
 
 ## Set organization timezone
 
