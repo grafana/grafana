@@ -7,14 +7,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
-	"github.com/stretchr/testify/require"
 )
 
 // Not for parallel tests.
@@ -92,7 +92,7 @@ func Test_maybeNewImage(t *testing.T) {
 		t.Run(test.description, func(t *testing.T) {
 			imageService := &CountingImageService{}
 			mgr := NewManager(log.NewNopLogger(), &metrics.State{}, nil,
-				&store.FakeRuleStore{}, &store.FakeInstanceStore{}, mockstore.NewSQLStoreMock(),
+				&store.FakeRuleStore{}, &store.FakeInstanceStore{},
 				&dashboards.FakeDashboardService{}, imageService)
 			err := mgr.maybeTakeScreenshot(context.Background(), &ngmodels.AlertRule{}, test.state, test.oldState)
 			require.NoError(t, err)

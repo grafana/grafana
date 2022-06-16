@@ -21,7 +21,6 @@ import (
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/screenshot"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 var ResendDelay = 30 * time.Second
@@ -42,13 +41,12 @@ type Manager struct {
 
 	ruleStore        store.RuleStore
 	instanceStore    store.InstanceStore
-	sqlStore         sqlstore.Store
 	dashboardService dashboards.DashboardService
 	imageService     image.ImageService
 }
 
 func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
-	ruleStore store.RuleStore, instanceStore store.InstanceStore, sqlStore sqlstore.Store,
+	ruleStore store.RuleStore, instanceStore store.InstanceStore,
 	dashboardService dashboards.DashboardService, imageService image.ImageService) *Manager {
 	manager := &Manager{
 		cache:            newCache(logger, metrics, externalURL),
@@ -58,7 +56,6 @@ func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
 		metrics:          metrics,
 		ruleStore:        ruleStore,
 		instanceStore:    instanceStore,
-		sqlStore:         sqlStore,
 		dashboardService: dashboardService,
 		imageService:     imageService,
 	}
