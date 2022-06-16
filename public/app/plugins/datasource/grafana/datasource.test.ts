@@ -34,7 +34,7 @@ describe('grafana data source', () => {
     });
 
     describe('with tags that have template variables', () => {
-      const options = setupAnnotationQueryOptions({ tags: ['tag1:$var'] });
+      const options = setupAnnotationQueryOptions({ tags: ['tag1:$var'] }, { id: 1, meta: { isPublic: false } });
 
       beforeEach(() => {
         return ds.getAnnotations(options);
@@ -46,7 +46,7 @@ describe('grafana data source', () => {
     });
 
     describe('with tags that have multi value template variables', () => {
-      const options = setupAnnotationQueryOptions({ tags: ['$var2'] });
+      const options = setupAnnotationQueryOptions({ tags: ['$var2'] }, { id: 1, meta: { isPublic: false } });
 
       beforeEach(() => {
         return ds.getAnnotations(options);
@@ -64,7 +64,7 @@ describe('grafana data source', () => {
           type: GrafanaAnnotationType.Dashboard,
           tags: ['tag1'],
         },
-        { id: 1 }
+        { id: 1, meta: { isPublic: false } }
       );
 
       beforeEach(() => {
@@ -78,7 +78,10 @@ describe('grafana data source', () => {
   });
 });
 
-function setupAnnotationQueryOptions(annotation: Partial<GrafanaAnnotationQuery>, dashboard?: { id: number }) {
+function setupAnnotationQueryOptions(
+  annotation: Partial<GrafanaAnnotationQuery>,
+  dashboard?: { id: number; meta: { isPublic: boolean } }
+) {
   return {
     annotation: {
       target: annotation,
