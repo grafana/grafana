@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -20,23 +19,20 @@ func ProvideService(
 	sqlStore sqlstore.Store,
 	quotaService *quota.QuotaService,
 	authInfoService login.AuthInfoService,
-	usageStatsService *usagestats.Service,
 ) *Implementation {
 	s := &Implementation{
-		SQLStore:          sqlStore,
-		QuotaService:      quotaService,
-		AuthInfoService:   authInfoService,
-		UsageStatsService: usageStatsService,
+		SQLStore:        sqlStore,
+		QuotaService:    quotaService,
+		AuthInfoService: authInfoService,
 	}
 	return s
 }
 
 type Implementation struct {
-	SQLStore          sqlstore.Store
-	AuthInfoService   login.AuthInfoService
-	QuotaService      *quota.QuotaService
-	TeamSync          login.TeamSyncFunc
-	UsageStatsService *usagestats.Service
+	SQLStore        sqlstore.Store
+	AuthInfoService login.AuthInfoService
+	QuotaService    *quota.QuotaService
+	TeamSync        login.TeamSyncFunc
 }
 
 // CreateUser creates inserts a new one.

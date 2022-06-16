@@ -13,7 +13,7 @@ import (
 const ExporterName = "grafana"
 
 type Stats struct {
-	UsersDuplicateEntries int `xorm:"users_duplicate_entries"`
+	DuplicateUserEntries int `xorm:"duplicate_user_entries"`
 }
 
 var LastUpdateTime time.Time
@@ -35,6 +35,7 @@ func (s *AuthInfoStore) makeMetric(name, help string) prometheus.GaugeFunc {
 			err := s.cacheMetrics(ctx)
 			ret, ok := cache.Load(name)
 			if !ok || err != nil {
+				s.logger.Info("Error loading metric", "name", name, "error", err)
 				return -1 // context timed out
 			}
 			return float64(ret.(int))
@@ -46,8 +47,7 @@ func (s *AuthInfoStore) InitMetrics() {
 	once.Do(func() {
 		prometheus.MustRegister(
 			//If you add a line here, you must also add it to CacheMetrics
-			s.makeMetric("user_duplicate_logins", "Gauge for number of user duplicate logins."),
-			s.makeMetric("user_duplicate_emails", "Gauge for number of user duplicate emails."),
+			s.makeMetric("duplicate_user_entries", "Gauge for number of user duplicate entries."),
 		)
 	})
 }
@@ -63,7 +63,7 @@ func (s *AuthInfoStore) cacheMetrics(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		cache.Store("duplicate_user_entries", stats.UsersDuplicateEntries)
+		cache.Store("duplicate_user_entries", stats.DuplicateUserEntries)
 	}
 
 	return nil
@@ -72,10 +72,8 @@ func (s *AuthInfoStore) cacheMetrics(ctx context.Context) error {
 func (s *AuthInfoStore) duplicateUserEntriesSQL(ctx context.Context) string {
 	userDialect := s.sqlStore.GetDialect().Quote("user")
 	sqlQuery := `SELECT
-		u.login,
-		u.email,
-		(SELECT login from ` + userDialect + `WHERE (LOWER(login) = LOWER(u.login)) AND (login != u.login)) as dup_login,
-		(SELECT email from ` + userDialect + `WHERE (LOWER(email) = LOWER(u.email)) AND (email != u.email)) as dup_email,
+		(SELECT login from ` + userDialect + ` WHERE (LOWER(login) = LOWER(u.login)) AND (login != u.login)) AS dup_login,
+		(SELECT email from ` + userDialect + ` WHERE (LOWER(email) = LOWER(u.email)) AND (email != u.email)) AS dup_email
 	FROM ` + userDialect + ` AS u
 	WHERE (dup_login IS NOT NULL OR dup_email IS NOT NULL)
 	`
@@ -88,7 +86,8 @@ func (s *AuthInfoStore) GetMetrics(ctx context.Context) (*Stats, error) {
 	sb := &sqlstore.SQLBuilder{}
 	err := s.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 
-		sb.Write(`(SELECT COUNT(*) FROM` + s.duplicateUserEntriesSQL(ctx) + `) AS duplicate_user_entries`)
+		sb.Write("SELECT ")
+		sb.Write(`(SELECT COUNT(*) FROM (` + s.duplicateUserEntriesSQL(ctx) + `)) AS duplicate_user_entries`)
 
 		if _, err := sess.SQL(sb.GetSQLString(), sb.GetParams()...).Get(&stats); err != nil {
 			return err
