@@ -54,11 +54,9 @@ describe('datasource', () => {
       { query: { ...validMetricsQuery, hide: false }, valid: true },
     ];
 
-    describe.each(testTable)('should use the right time zone offset', ({ query, valid }) => {
-      it('should filter out hidden queries unless id is provided', async () => {
-        const { datasource } = setupMockedDataSource();
-        expect(datasource.filterQuery(query)).toEqual(valid);
-      });
+    test.each(testTable)('should filter out hidden queries unless id is provided', ({ query, valid }) => {
+      const { datasource } = setupMockedDataSource();
+      expect(datasource.filterQuery(query)).toEqual(valid);
     });
 
     it('should interpolate variables in the query', async () => {
