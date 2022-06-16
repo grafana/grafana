@@ -9,19 +9,18 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 var _ FileStore = (*FileStoreManager)(nil)
 
 type FileStoreManager struct {
-	pluginRegistry registry.Service
+	pluginStore plugins.Store
 }
 
-func ProvideFileStoreManager(pluginRegistry registry.Service) *FileStoreManager {
+func ProvideFileStoreManager(pluginStore plugins.Store) *FileStoreManager {
 	return &FileStoreManager{
-		pluginRegistry: pluginRegistry,
+		pluginStore: pluginStore,
 	}
 }
 
@@ -40,7 +39,7 @@ func (m *FileStoreManager) ListPluginDashboardFiles(ctx context.Context, args *L
 		return nil, fmt.Errorf("args.PluginID cannot be empty")
 	}
 
-	plugin, exists := m.plugin(ctx, args.PluginID)
+	plugin, exists := m.pluginStore.Plugin(ctx, args.PluginID)
 	if !exists {
 		return nil, plugins.NotFoundError{PluginID: args.PluginID}
 	}
@@ -68,7 +67,7 @@ func (m *FileStoreManager) GetPluginDashboardFileContents(ctx context.Context, a
 		return nil, fmt.Errorf("args.FileReference cannot be empty")
 	}
 
-	plugin, exists := m.plugin(ctx, args.PluginID)
+	plugin, exists := m.pluginStore.Plugin(ctx, args.PluginID)
 	if !exists {
 		return nil, plugins.NotFoundError{PluginID: args.PluginID}
 	}
@@ -100,18 +99,4 @@ func (m *FileStoreManager) GetPluginDashboardFileContents(ctx context.Context, a
 	return &GetPluginDashboardFileContentsResult{
 		Content: file,
 	}, nil
-}
-
-// plugin finds a plugin with `pluginID` from the registry that is not decommissioned
-func (m *FileStoreManager) plugin(ctx context.Context, pluginID string) (*plugins.Plugin, bool) {
-	p, exists := m.pluginRegistry.Plugin(ctx, pluginID)
-	if !exists {
-		return nil, false
-	}
-
-	if p.IsDecommissioned() {
-		return nil, false
-	}
-
-	return p, true
 }
