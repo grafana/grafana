@@ -470,8 +470,9 @@ func (s *ServiceAccountsStoreImpl) RevertApiKey(ctx context.Context, keyId int64
 		}
 		return nil
 	})
+
 	if err != nil {
-		return fmt.Errorf("cannot revert token: %w", err)
+		return fmt.Errorf("cannot revert token to API key: %w", err)
 	}
 	return nil
 }

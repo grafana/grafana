@@ -1,6 +1,7 @@
 ---
 aliases:
   - /docs/grafana/latest/alerting/migrating-alerts/
+  - /docs/grafana/latest/alerting/unified-alerting/
 description: Upgrade Grafana alerts
 title: Upgrade to Grafana Alerting
 weight: 101

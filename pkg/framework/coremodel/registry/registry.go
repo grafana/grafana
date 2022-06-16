@@ -1,30 +1,32 @@
-package coremodel
+package registry
 
 import (
 	"errors"
 	"fmt"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/framework/coremodel"
 	"github.com/grafana/thema"
 )
 
 var (
-	// ErrModelAlreadyRegistered is returned when trying to register duplicate model to Registry.
+	// ErrModelAlreadyRegistered is returned when trying to register duplicate model to Generic.
 	ErrModelAlreadyRegistered = errors.New("error registering duplicate model")
 )
 
-// Registry is a registry of coremodel instances.
-type Registry struct {
+// Generic is a registry of coremodel instances. It is intended for use in cases where
+// generic operations limited to coremodel.Interface are being performed.
+type Generic struct {
 	lock     sync.RWMutex
-	models   []Interface
-	modelIdx map[string]Interface
+	models   []coremodel.Interface
+	modelIdx map[string]coremodel.Interface
 }
 
-// NewRegistry returns a new Registry with the provided coremodel instances.
-func NewRegistry(models ...Interface) (*Registry, error) {
-	r := &Registry{
-		models:   make([]Interface, 0, len(models)),
-		modelIdx: make(map[string]Interface, len(models)),
+// NewRegistry returns a new Generic with the provided coremodel instances.
+func NewRegistry(models ...coremodel.Interface) (*Generic, error) {
+	r := &Generic{
+		models:   make([]coremodel.Interface, 0, len(models)),
+		modelIdx: make(map[string]coremodel.Interface, len(models)),
 	}
 
 	if err := r.addModels(models); err != nil {
@@ -34,20 +36,20 @@ func NewRegistry(models ...Interface) (*Registry, error) {
 	return r, nil
 }
 
-// Register adds coremodels to the Registry.
-func (r *Registry) Register(models ...Interface) error {
+// Register adds coremodels to the Generic.
+func (r *Generic) Register(models ...coremodel.Interface) error {
 	return r.addModels(models)
 }
 
-// List returns all coremodels registered in this Registry.
-func (r *Registry) List() []Interface {
+// List returns all coremodels registered in this Generic.
+func (r *Generic) List() []coremodel.Interface {
 	r.lock.RLock()
 	defer r.lock.RUnlock()
 
 	return r.models
 }
 
-func (r *Registry) addModels(models []Interface) error {
+func (r *Generic) addModels(models []coremodel.Interface) error {
 	r.lock.Lock()
 	defer r.lock.Unlock()
 
@@ -75,13 +77,4 @@ func (r *Registry) addModels(models []Interface) error {
 	}
 
 	return nil
-}
-
-// Get retrieves a coremodel with the given string identifier. nil, false
-// is returned if no such coremodel exists.
-func (r *Registry) Get(name string) (cm Interface, has bool) {
-	r.lock.RLock()
-	cm, has = r.modelIdx[name]
-	r.lock.RUnlock()
-	return
 }
