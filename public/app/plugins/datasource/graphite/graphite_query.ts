@@ -79,8 +79,10 @@ export default class GraphiteQuery {
     try {
       this.parseTargetRecursive(astNode, null);
     } catch (err) {
-      console.error('error parsing target:', err.message);
-      this.error = err.message;
+      if (err instanceof Error) {
+        console.error('error parsing target:', err.message);
+        this.error = err.message;
+      }
       this.target.textEditor = true;
     }
 
