@@ -59,9 +59,7 @@ export function getFlexLayoutTest(): Scene {
       new SceneToolbarButton({
         icon: 'columns',
         onClick: () => {
-          scene.state.layout.setState({
-            direction: scene.state.layout.state.direction === 'row' ? 'column' : 'row',
-          });
+          (scene.state.layout as SceneFlexLayout).toggleDirection();
         },
       }),
     ],

@@ -11,6 +11,12 @@ interface SceneFlexLayoutState extends SceneObjectState, SceneLayoutState {
 
 export class SceneFlexLayout extends SceneObjectBase<SceneFlexLayoutState> {
   Component = FlexLayoutRenderer;
+
+  toggleDirection() {
+    this.setState({
+      direction: this.state.direction === 'row' ? 'column' : 'row',
+    });
+  }
 }
 
 function FlexLayoutRenderer({ model }: { model: SceneFlexLayout }) {
