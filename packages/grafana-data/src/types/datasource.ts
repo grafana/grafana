@@ -348,6 +348,7 @@ abstract class DataSourceApi<
 
   /*
    * Optionally, use this method to set default values for a query
+   * @alpha -- experimental
    */
   getDefaultQuery?(app: CoreApp): Partial<TQuery>;
 }
