@@ -14,7 +14,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"runtime"
 	"time"
 
 	"github.com/grafana/grafana/pkg/plugins/logger"
@@ -152,7 +151,7 @@ func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum string, comp
 }
 
 func (c *Client) sendReq(url *url.URL, compatOpts repository.CompatabilityOpts) ([]byte, error) {
-	req, err := c.createReq(url, compatOpts.GrafanaVersion)
+	req, err := c.createReq(url, compatOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -174,7 +173,7 @@ func (c *Client) sendReq(url *url.URL, compatOpts repository.CompatabilityOpts) 
 }
 
 func (c *Client) sendReqNoTimeout(url *url.URL, compatOpts repository.CompatabilityOpts) (io.ReadCloser, error) {
-	req, err := c.createReq(url, compatOpts.GrafanaVersion)
+	req, err := c.createReq(url, compatOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -186,16 +185,16 @@ func (c *Client) sendReqNoTimeout(url *url.URL, compatOpts repository.Compatabil
 	return c.handleResp(res, compatOpts)
 }
 
-func (c *Client) createReq(url *url.URL, grafanaVersion string) (*http.Request, error) {
+func (c *Client) createReq(url *url.URL, compatOpts repository.CompatabilityOpts) (*http.Request, error) {
 	req, err := http.NewRequest(http.MethodGet, url.String(), nil)
 	if err != nil {
 		return nil, err
 	}
 
-	req.Header.Set("grafana-version", grafanaVersion)
-	req.Header.Set("grafana-os", runtime.GOOS)
-	req.Header.Set("grafana-arch", runtime.GOARCH)
-	req.Header.Set("User-Agent", "grafana "+grafanaVersion)
+	req.Header.Set("grafana-version", compatOpts.GrafanaVersion)
+	req.Header.Set("grafana-os", compatOpts.OS)
+	req.Header.Set("grafana-arch", compatOpts.Arch)
+	req.Header.Set("User-Agent", "grafana "+compatOpts.GrafanaVersion)
 
 	return req, err
 }

@@ -50,15 +50,13 @@ func (cmd Command) installCommand(c utils.CommandLine) error {
 
 	pluginID := c.Args().First()
 	version := c.Args().Get(1)
-	return InstallPlugin(pluginID, version, c)
+	return InstallPlugin(context.Background(), pluginID, version, c)
 }
 
 // InstallPlugin downloads the plugin code as a zip file from the Grafana.com API
-// and then extracts the zip into the plugins directory.
-func InstallPlugin(pluginID, version string, c utils.CommandLine) error {
+// and then extracts the zip into the plugin's directory.
+func InstallPlugin(ctx context.Context, pluginID, version string, c utils.CommandLine) error {
 	skipTLSVerify := c.Bool("insecure")
-	pluginsPath := c.PluginDirectory()
-	pluginZipURL := c.PluginURL()
 
 	repo := service.New(skipTLSVerify, c.PluginRepoURL(), services.Logger)
 
@@ -68,7 +66,7 @@ func InstallPlugin(pluginID, version string, c utils.CommandLine) error {
 		Arch:           runtime.GOARCH,
 	}
 
-	ctx := context.Background()
+	pluginZipURL := c.PluginURL()
 	var archive *repository.PluginArchive
 	var err error
 	if pluginZipURL != "" {
@@ -84,6 +82,7 @@ func InstallPlugin(pluginID, version string, c utils.CommandLine) error {
 	}
 
 	pluginFs := filestore.New(services.Logger)
+	pluginsPath := c.PluginDirectory()
 	extractedArchive, err := pluginFs.Add(ctx, archive.File, pluginID, pluginsPath)
 	if err != nil {
 		return err

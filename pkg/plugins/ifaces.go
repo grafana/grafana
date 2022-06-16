@@ -18,7 +18,7 @@ type Store interface {
 }
 
 type Manager interface {
-	// Add adds a plugin from the repository to the store.
+	// Add adds a plugin to the store.
 	Add(ctx context.Context, pluginID, version string, opts CompatabilityOpts) error
 	// Remove removes a plugin from the store.
 	Remove(ctx context.Context, pluginID string) error
