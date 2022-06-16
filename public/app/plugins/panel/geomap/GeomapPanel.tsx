@@ -504,7 +504,7 @@ export class GeomapPanel extends Component<Props, State> {
     const handler = await item.create(map, options, config.theme2);
     const layer = handler.init();
     if (options.opacity != null) {
-      layer.setOpacity(1 - options.opacity);
+      layer.setOpacity(options.opacity);
     }
 
     if (!options.name) {
