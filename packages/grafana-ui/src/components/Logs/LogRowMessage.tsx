@@ -36,10 +36,6 @@ interface Props extends Themeable2 {
   updateLimit?: () => void;
 }
 
-interface State {
-  mouseOver: boolean;
-}
-
 const getStyles = (theme: GrafanaTheme2) => {
   const outlineColor = tinycolor(theme.components.dashboard.background).setAlpha(0.7).toRgbString();
 
@@ -120,19 +116,10 @@ const restructureLog = memoizeOne((line: string, prettifyLogMessage: boolean): s
 });
 
 class UnThemedLogRowMessage extends PureComponent<Props> {
-  state: State = {
-    mouseOver: false,
-  };
-
   onContextToggle = (e: React.SyntheticEvent<HTMLElement>) => {
     e.stopPropagation();
     this.props.onToggleContext();
   };
-
-  hoverContextButton() {
-    const mouseOver = !this.state.mouseOver;
-    this.setState({ mouseOver });
-  }
 
   render() {
     const {
@@ -153,14 +140,9 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
     const { hasAnsi, raw } = row;
     const restructuredEntry = restructureLog(raw, prettifyLogMessage);
     const styles = getStyles(theme);
-    const { mouseOver } = this.state;
 
     return (
-      <td
-        className={style.logsRowMessage}
-        onMouseEnter={this.hoverContextButton.bind(this)}
-        onMouseLeave={this.hoverContextButton.bind(this)}
-      >
+      <td className={style.logsRowMessage}>
         <div
           className={cx({ [styles.positionRelative]: wrapLogMessage }, { [styles.horizontalScroll]: !wrapLogMessage })}
         >
@@ -186,14 +168,12 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
             <span
               className={cx('log-row-context', style.context, styles.contextButton)}
               onClick={(e) => e.stopPropagation()}
-              onMouseEnter={this.hoverContextButton.bind(this)}
-              onMouseLeave={this.hoverContextButton.bind(this)}
             >
               <IconButton name="eye" title="Show context" onClick={this.onContextToggle} />
               <IconButton
                 name="copy"
                 title="Copy context"
-                onClick={() => navigator.clipboard.writeText(JSON.stringify(context))}
+                onClick={() => navigator.clipboard.writeText(JSON.stringify(restructuredEntry))}
               />
             </span>
           )}
