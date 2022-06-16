@@ -12,7 +12,7 @@ import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelect
 import { updateAlertManagerConfigAction } from '../../state/actions';
 import { makeAMLink } from '../../utils/misc';
 import { ensureDefine } from '../../utils/templates';
-import { ProvisioningAlert } from '../Provisioning';
+import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
 
 interface Values {
   name: string;
@@ -102,7 +102,7 @@ export const TemplateForm: FC<Props> = ({ existing, alertManagerSourceName, conf
           {error.message || (error as any)?.data?.message || String(error)}
         </Alert>
       )}
-      {provenance && <ProvisioningAlert type="template" />}
+      {provenance && <ProvisioningAlert resource={ProvisionedResource.Template} />}
       <FieldSet disabled={Boolean(provenance)}>
         <Field label="Template name" error={errors?.name?.message} invalid={!!errors.name?.message} required>
           <Input

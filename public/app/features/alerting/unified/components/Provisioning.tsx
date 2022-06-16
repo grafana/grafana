@@ -2,15 +2,23 @@ import React from 'react';
 
 import { Alert, Badge } from '@grafana/ui';
 
-interface ProvisioningAlertProps {
-  type: string;
+export enum ProvisionedResource {
+  ContactPoint = 'contact point',
+  Template = 'template',
+  MuteTiming = 'mute timing',
+  AlertRule = 'alert rule',
+  RootNotificationPolicy = 'root notification policy',
 }
 
-export const ProvisioningAlert = ({ type }: ProvisioningAlertProps) => {
+interface ProvisioningAlertProps {
+  resource: ProvisionedResource;
+}
+
+export const ProvisioningAlert = ({ resource }: ProvisioningAlertProps) => {
   return (
-    <Alert title={`This ${type} has been provisioned`} severity="info">
-      This {type} was added by config and cannot be modified using the UI. Please contact your server admin to update
-      this {type}.
+    <Alert title={`This ${resource} has been provisioned`} severity="info">
+      This {resource} has been provisioned and cannot be modified using the UI. Please contact your server admin to
+      update this {resource}.
     </Alert>
   );
 };

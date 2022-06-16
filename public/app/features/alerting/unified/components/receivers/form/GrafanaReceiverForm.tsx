@@ -23,7 +23,7 @@ import {
   grafanaReceiverToFormValues,
   updateConfigWithReceiver,
 } from '../../../utils/receiver-form';
-import { ProvisioningAlert } from '../../Provisioning';
+import { ProvisionedResource, ProvisioningAlert } from '../../Provisioning';
 
 import { GrafanaCommonChannelSettings } from './GrafanaCommonChannelSettings';
 import { ReceiverForm } from './ReceiverForm';
@@ -119,7 +119,7 @@ export const GrafanaReceiverForm: FC<Props> = ({ existing, alertManagerSourceNam
   if (grafanaNotifiers.result) {
     return (
       <>
-        {hasProvisionedItems && <ProvisioningAlert type={'contact point'} />}
+        {hasProvisionedItems && <ProvisioningAlert resource={ProvisionedResource.ContactPoint} />}
 
         <ReceiverForm<GrafanaChannelValues>
           readOnly={readOnly}

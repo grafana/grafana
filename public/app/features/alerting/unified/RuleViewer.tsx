@@ -19,7 +19,7 @@ import { AlertQuery } from '../../../types/unified-alerting-dto';
 
 import { AlertLabels } from './components/AlertLabels';
 import { DetailsField } from './components/DetailsField';
-import { ProvisioningAlert } from './components/Provisioning';
+import { ProvisionedResource, ProvisioningAlert } from './components/Provisioning';
 import { RuleViewerLayout, RuleViewerLayoutContent } from './components/rule-viewer/RuleViewerLayout';
 import { RuleViewerVisualization } from './components/rule-viewer/RuleViewerVisualization';
 import { RuleDetailsActionButtons } from './components/rules/RuleDetailsActionButtons';
@@ -147,7 +147,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
           </VerticalGroup>
         </Alert>
       )}
-      {isProvisioned && <ProvisioningAlert type="alert rule" />}
+      {isProvisioned && <ProvisioningAlert resource={ProvisionedResource.AlertRule} />}
       <RuleViewerLayoutContent>
         <div>
           <h4>
