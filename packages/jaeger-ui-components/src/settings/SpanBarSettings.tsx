@@ -33,16 +33,14 @@ export default function SpanBarSettings({ options, onOptionsChange }: Props) {
 
   return (
     <div className={css({ width: '100%' })}>
-      <h3 className="page-heading">Span bar row identifier</h3>
+      <h3 className="page-heading">Span bar info</h3>
 
-      <div className={styles.infoText}>
-        Enter a tag key (from which the value will be extracted) and added to the span bar row.
-      </div>
+      <div className={styles.infoText}>Span bar info lets you add additional info to your span bar row.</div>
 
       <InlineFieldRow className={styles.row}>
-        <InlineField label="Identifier" labelWidth={26} grow>
+        <InlineField label="Info" labelWidth={26} grow>
           <Select
-            inputId="identifier"
+            inputId="info"
             options={selectOptions}
             value={options.jsonData.spanBar?.type || ''}
             onChange={(v) => {
@@ -53,14 +51,14 @@ export default function SpanBarSettings({ options, onOptionsChange }: Props) {
             }}
             placeholder="Duration"
             isClearable
-            aria-label={'select-identifier-name'}
+            aria-label={'select-info-name'}
             width={25}
           />
         </InlineField>
       </InlineFieldRow>
       {options.jsonData.spanBar?.type === TAG && (
         <InlineFieldRow className={styles.row}>
-          <InlineField label="Tag key" labelWidth={26} grow tooltip="Tag key (from which the value will be extracted)">
+          <InlineField label="Tag key" labelWidth={26} grow tooltip="Tag key which will be used to get tag value">
             <Input
               type="text"
               placeholder=""
@@ -82,7 +80,7 @@ export default function SpanBarSettings({ options, onOptionsChange }: Props) {
             label="Process key"
             labelWidth={26}
             grow
-            tooltip="Process key (from which the value will be extracted)"
+            tooltip="Process key which will be used to get process value"
           >
             <Input
               type="text"
