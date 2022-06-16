@@ -6,6 +6,6 @@ import (
 )
 
 func New() bus.Bus {
-	tracer, _ := tracing.InitializeTracerForTest()
+	tracer := tracing.InitializeTracerForTest()
 	return bus.ProvideBus(tracer)
 }
