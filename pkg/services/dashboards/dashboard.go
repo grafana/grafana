@@ -65,17 +65,18 @@ type Store interface {
 	GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error)
 	GetProvisionedDataByDashboardID(dashboardID int64) (*models.DashboardProvisioning, error)
 	GetProvisionedDataByDashboardUID(orgID int64, dashboardUID string) (*models.DashboardProvisioning, error)
-	GetPublicDashboardConfig(orgId int64, dashboardUid string) (*models.PublicDashboard, error)
-	GetPublicDashboard(uid string) (*models.PublicDashboard, *models.Dashboard, error)
-	GenerateNewPublicDashboardUid() (string, error)
+	GetPublicDashboardConfig(ctx context.Context, orgId int64, dashboardUid string) (*models.PublicDashboard, error)
+	GetPublicDashboard(ctx context.Context, uid string) (*models.PublicDashboard, *models.Dashboard, error)
+	GenerateNewPublicDashboardUid(ctx context.Context) (string, error)
 	HasAdminPermissionInFolders(ctx context.Context, query *models.HasAdminPermissionInFoldersQuery) error
 	HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error
 	// SaveAlerts saves dashboard alerts.
 	SaveAlerts(ctx context.Context, dashID int64, alerts []*models.Alert) error
 	SaveDashboard(cmd models.SaveDashboardCommand) (*models.Dashboard, error)
 	SaveProvisionedDashboard(cmd models.SaveDashboardCommand, provisioning *models.DashboardProvisioning) (*models.Dashboard, error)
-	SavePublicDashboardConfig(cmd models.SavePublicDashboardConfigCommand) (*models.PublicDashboard, error)
+	SavePublicDashboardConfig(ctx context.Context, cmd models.SavePublicDashboardConfigCommand) (*models.PublicDashboard, error)
 	UnprovisionDashboard(ctx context.Context, id int64) error
+	UpdatePublicDashboardConfig(ctx context.Context, cmd models.SavePublicDashboardConfigCommand) (*models.PublicDashboard, error)
 	UpdateDashboardACL(ctx context.Context, uid int64, items []*models.DashboardAcl) error
 	// ValidateDashboardBeforeSave validates a dashboard before save.
 	ValidateDashboardBeforeSave(dashboard *models.Dashboard, overwrite bool) (bool, error)

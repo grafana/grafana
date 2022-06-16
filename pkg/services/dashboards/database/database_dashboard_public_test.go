@@ -1,6 +1,7 @@
 package database
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -33,7 +34,7 @@ func TestIntegrationGetPublicDashboard(t *testing.T) {
 
 	t.Run("returns PublicDashboard and Dashboard", func(t *testing.T) {
 		setup()
-		pubdash, err := dashboardStore.SavePublicDashboardConfig(models.SavePublicDashboardConfigCommand{
+		pubdash, err := dashboardStore.SavePublicDashboardConfig(context.Background(), models.SavePublicDashboardConfigCommand{
 			PublicDashboard: models.PublicDashboard{
 				IsEnabled:    true,
 				Uid:          "abc1234",
@@ -46,7 +47,7 @@ func TestIntegrationGetPublicDashboard(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		pd, d, err := dashboardStore.GetPublicDashboard("abc1234")
+		pd, d, err := dashboardStore.GetPublicDashboard(context.Background(), "abc1234")
 		require.NoError(t, err)
 
 		assert.Equal(t, pd, pubdash)
@@ -55,19 +56,19 @@ func TestIntegrationGetPublicDashboard(t *testing.T) {
 
 	t.Run("returns ErrPublicDashboardNotFound with empty uid", func(t *testing.T) {
 		setup()
-		_, _, err := dashboardStore.GetPublicDashboard("")
+		_, _, err := dashboardStore.GetPublicDashboard(context.Background(), "")
 		require.Error(t, models.ErrPublicDashboardIdentifierNotSet, err)
 	})
 
 	t.Run("returns ErrPublicDashboardNotFound when PublicDashboard not found", func(t *testing.T) {
 		setup()
-		_, _, err := dashboardStore.GetPublicDashboard("zzzzzz")
+		_, _, err := dashboardStore.GetPublicDashboard(context.Background(), "zzzzzz")
 		require.Error(t, models.ErrPublicDashboardNotFound, err)
 	})
 
 	t.Run("returns ErrDashboardNotFound when Dashboard not found", func(t *testing.T) {
 		setup()
-		_, err := dashboardStore.SavePublicDashboardConfig(models.SavePublicDashboardConfigCommand{
+		_, err := dashboardStore.SavePublicDashboardConfig(context.Background(), models.SavePublicDashboardConfigCommand{
 			DashboardUid: savedDashboard.Uid,
 			OrgId:        savedDashboard.OrgId,
 			PublicDashboard: models.PublicDashboard{
@@ -80,7 +81,7 @@ func TestIntegrationGetPublicDashboard(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		_, _, err = dashboardStore.GetPublicDashboard("abc1234")
+		_, _, err = dashboardStore.GetPublicDashboard(context.Background(), "abc1234")
 		require.Error(t, models.ErrDashboardNotFound, err)
 	})
 }
@@ -99,21 +100,21 @@ func TestIntegrationGetPublicDashboardConfig(t *testing.T) {
 
 	t.Run("returns isPublic and set dashboardUid and orgId", func(t *testing.T) {
 		setup()
-		pubdash, err := dashboardStore.GetPublicDashboardConfig(savedDashboard.OrgId, savedDashboard.Uid)
+		pubdash, err := dashboardStore.GetPublicDashboardConfig(context.Background(), savedDashboard.OrgId, savedDashboard.Uid)
 		require.NoError(t, err)
 		assert.Equal(t, &models.PublicDashboard{IsEnabled: false, DashboardUid: savedDashboard.Uid, OrgId: savedDashboard.OrgId}, pubdash)
 	})
 
 	t.Run("returns dashboard errDashboardIdentifierNotSet", func(t *testing.T) {
 		setup()
-		_, err := dashboardStore.GetPublicDashboardConfig(savedDashboard.OrgId, "")
+		_, err := dashboardStore.GetPublicDashboardConfig(context.Background(), savedDashboard.OrgId, "")
 		require.Error(t, models.ErrDashboardIdentifierNotSet, err)
 	})
 
 	t.Run("returns isPublic along with public dashboard when exists", func(t *testing.T) {
 		setup()
 		// insert test public dashboard
-		resp, err := dashboardStore.SavePublicDashboardConfig(models.SavePublicDashboardConfigCommand{
+		resp, err := dashboardStore.SavePublicDashboardConfig(context.Background(), models.SavePublicDashboardConfigCommand{
 			DashboardUid: savedDashboard.Uid,
 			OrgId:        savedDashboard.OrgId,
 			PublicDashboard: models.PublicDashboard{
@@ -128,7 +129,7 @@ func TestIntegrationGetPublicDashboardConfig(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		pubdash, err := dashboardStore.GetPublicDashboardConfig(savedDashboard.OrgId, savedDashboard.Uid)
+		pubdash, err := dashboardStore.GetPublicDashboardConfig(context.Background(), savedDashboard.OrgId, savedDashboard.Uid)
 		require.NoError(t, err)
 
 		assert.True(t, assert.ObjectsAreEqualValues(resp, pubdash))
@@ -152,7 +153,7 @@ func TestIntegrationSavePublicDashboardConfig(t *testing.T) {
 
 	t.Run("saves new public dashboard", func(t *testing.T) {
 		setup()
-		resp, err := dashboardStore.SavePublicDashboardConfig(models.SavePublicDashboardConfigCommand{
+		resp, err := dashboardStore.SavePublicDashboardConfig(context.Background(), models.SavePublicDashboardConfigCommand{
 			DashboardUid: savedDashboard.Uid,
 			OrgId:        savedDashboard.OrgId,
 			PublicDashboard: models.PublicDashboard{
@@ -167,7 +168,7 @@ func TestIntegrationSavePublicDashboardConfig(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		pubdash, err := dashboardStore.GetPublicDashboardConfig(savedDashboard.OrgId, savedDashboard.Uid)
+		pubdash, err := dashboardStore.GetPublicDashboardConfig(context.Background(), savedDashboard.OrgId, savedDashboard.Uid)
 		require.NoError(t, err)
 
 		//verify saved response and queried response are the same
@@ -177,11 +178,10 @@ func TestIntegrationSavePublicDashboardConfig(t *testing.T) {
 		assert.True(t, util.IsValidShortUID(pubdash.Uid))
 
 		// verify we didn't update all dashboards
-		pubdash2, err := dashboardStore.GetPublicDashboardConfig(savedDashboard2.OrgId, savedDashboard2.Uid)
+		pubdash2, err := dashboardStore.GetPublicDashboardConfig(context.Background(), savedDashboard2.OrgId, savedDashboard2.Uid)
 		require.NoError(t, err)
 		assert.False(t, pubdash2.IsEnabled)
 	})
-
 }
 
 func TestIntegrationnUpdatePublicDashboard(t *testing.T) {
@@ -200,7 +200,7 @@ func TestIntegrationnUpdatePublicDashboard(t *testing.T) {
 
 		pdUid := "asdf1234"
 
-		pdSaved, err := dashboardStore.SavePublicDashboardConfig(models.SavePublicDashboardConfigCommand{
+		pdSaved, err := dashboardStore.SavePublicDashboardConfig(context.Background(), models.SavePublicDashboardConfigCommand{
 			DashboardUid: savedDashboard.Uid,
 			OrgId:        savedDashboard.OrgId,
 			PublicDashboard: models.PublicDashboard{
@@ -215,7 +215,7 @@ func TestIntegrationnUpdatePublicDashboard(t *testing.T) {
 		require.NoError(t, err)
 
 		// update initial record
-		pdUpdated, err := dashboardStore.UpdatePublicDashboardConfig(models.SavePublicDashboardConfigCommand{
+		pdUpdated, err := dashboardStore.UpdatePublicDashboardConfig(context.Background(), models.SavePublicDashboardConfigCommand{
 			DashboardUid: savedDashboard.Uid,
 			OrgId:        savedDashboard.OrgId,
 			PublicDashboard: models.PublicDashboard{
@@ -230,8 +230,17 @@ func TestIntegrationnUpdatePublicDashboard(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		pdRetrieved, err := dashboardStore.GetPublicDashboardConfig(savedDashboard.OrgId, savedDashboard.Uid)
+		pdRetrieved, err := dashboardStore.GetPublicDashboardConfig(context.Background(), savedDashboard.OrgId, savedDashboard.Uid)
 		require.NoError(t, err)
+
+		// Some of these tests are potentially testing Xorm, however, they've been
+		// left in for future developers to derive intent.
+
+		// OrgId/dashboardUid haven't changed
+		assert.Equal(t, pdSaved.OrgId, pdRetrieved.OrgId)
+		assert.Equal(t, pdSaved.DashboardUid, pdRetrieved.DashboardUid)
+		assert.Equal(t, pdSaved.CreatedBy, pdRetrieved.CreatedBy)
+		assert.Equal(t, pdSaved.CreatedAt, pdRetrieved.CreatedAt)
 
 		// created hasn't changed
 		assert.Equal(t, pdSaved.CreatedBy, pdRetrieved.CreatedBy)
@@ -243,6 +252,5 @@ func TestIntegrationnUpdatePublicDashboard(t *testing.T) {
 		// Updated has been set
 		assert.Equal(t, pdUpdated.UpdatedBy, pdRetrieved.UpdatedBy)
 		assert.Equal(t, pdUpdated.UpdatedAt, pdRetrieved.UpdatedAt)
-
 	})
 }

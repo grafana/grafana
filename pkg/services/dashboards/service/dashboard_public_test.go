@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -15,7 +16,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var TimeSettings, _ = simplejson.NewJson([]byte(`{"from": "now-12", "to": "now"}`))
+var timeSettings, _ = simplejson.NewJson([]byte(`{"from": "now-12", "to": "now"}`))
+var defaultPubdashTimeSettings, _ = simplejson.NewJson([]byte(`{}`))
 var dashboardData = simplejson.NewFromAny(map[string]interface{}{"time": map[string]interface{}{"from": "now-8", "to": "now"}})
 var mergedDashboardData = simplejson.NewFromAny(map[string]interface{}{"time": map[string]interface{}{"from": "now-12", "to": "now"}})
 
@@ -48,7 +50,7 @@ func TestGetPublicDashboard(t *testing.T) {
 			name: "puts pubdash time settings into dashboard",
 			uid:  "abc123",
 			storeResp: &storeResp{
-				pd:  &models.PublicDashboard{IsEnabled: true, TimeSettings: TimeSettings},
+				pd:  &models.PublicDashboard{IsEnabled: true, TimeSettings: timeSettings},
 				d:   &models.Dashboard{Data: dashboardData},
 				err: nil,
 			},
@@ -89,7 +91,8 @@ func TestGetPublicDashboard(t *testing.T) {
 				log:            log.New("test.logger"),
 				dashboardStore: &fakeStore,
 			}
-			fakeStore.On("GetPublicDashboard", mock.Anything).
+
+			fakeStore.On("GetPublicDashboard", mock.Anything, mock.Anything).
 				Return(test.storeResp.pd, test.storeResp.d, test.storeResp.err)
 
 			dashboard, err := service.GetPublicDashboard(context.Background(), test.uid)
@@ -109,7 +112,47 @@ func TestGetPublicDashboard(t *testing.T) {
 }
 
 func TestSavePublicDashboard(t *testing.T) {
-	t.Run("gets PublicDashboard.orgId and PublicDashboard.DashboardUid set from SavePublicDashboardDTO", func(t *testing.T) {
+	t.Run("Saving public dashboard", func(t *testing.T) {
+		sqlStore := sqlstore.InitTestDB(t)
+		dashboardStore := database.ProvideDashboardStore(sqlStore)
+		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
+
+		service := &DashboardServiceImpl{
+			log:            log.New("test.logger"),
+			dashboardStore: dashboardStore,
+		}
+
+		dto := &dashboards.SavePublicDashboardConfigDTO{
+			DashboardUid: dashboard.Uid,
+			OrgId:        dashboard.OrgId,
+			UserId:       7,
+			PublicDashboard: &models.PublicDashboard{
+				IsEnabled:    true,
+				DashboardUid: "NOTTHESAME",
+				OrgId:        9999999,
+				TimeSettings: timeSettings,
+			},
+		}
+
+		_, err := service.SavePublicDashboardConfig(context.Background(), dto)
+		require.NoError(t, err)
+
+		pubdash, err := service.GetPublicDashboardConfig(context.Background(), dashboard.OrgId, dashboard.Uid)
+		require.NoError(t, err)
+
+		// DashboardUid/OrgId/CreatedBy set by the command, not parameters
+		assert.Equal(t, dashboard.Uid, pubdash.DashboardUid)
+		assert.Equal(t, dashboard.OrgId, pubdash.OrgId)
+		assert.Equal(t, dto.UserId, pubdash.CreatedBy)
+		// IsEnabled set by parameters
+		assert.Equal(t, dto.PublicDashboard.IsEnabled, pubdash.IsEnabled)
+		// CreatedAt set to non-zero time
+		assert.NotEqual(t, &time.Time{}, pubdash.CreatedAt)
+		// Time settings set by db
+		assert.Equal(t, timeSettings, pubdash.TimeSettings)
+	})
+
+	t.Run("Validate pubdash has default time setting value", func(t *testing.T) {
 		sqlStore := sqlstore.InitTestDB(t)
 		dashboardStore := database.ProvideDashboardStore(sqlStore)
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
@@ -130,42 +173,77 @@ func TestSavePublicDashboard(t *testing.T) {
 			},
 		}
 
-		pubdash, err := service.SavePublicDashboardConfig(context.Background(), dto)
+		_, err := service.SavePublicDashboardConfig(context.Background(), dto)
 		require.NoError(t, err)
 
-		assert.Equal(t, dashboard.Uid, pubdash.DashboardUid)
-		assert.Equal(t, dashboard.OrgId, pubdash.OrgId)
-		assert.Equal(t, dto.UserId, pubdash.CreatedBy)
+		pubdash, err := service.GetPublicDashboardConfig(context.Background(), dashboard.OrgId, dashboard.Uid)
+		require.NoError(t, err)
+		assert.Equal(t, defaultPubdashTimeSettings, pubdash.TimeSettings)
 	})
 
-	t.Run("PLACEHOLDER - validate pubdash time variables", func(t *testing.T) {})
-	t.Run("PLACEHOLDER - dashboard with template variables cannot be saved", func(t *testing.T) {
-		//sqlStore := sqlstore.InitTestDB(t)
-		//dashboardStore := database.ProvideDashboardStore(sqlStore)
-		//dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
+	t.Run("PLACEHOLDER - dashboard with template variables cannot be saved", func(t *testing.T) {})
+}
 
-		//service := &DashboardServiceImpl{
-		//log:            log.New("test.logger"),
-		//dashboardStore: dashboardStore,
-		//}
+func TestUpdatePublicDashboard(t *testing.T) {
+	t.Run("Updating public dashboard", func(t *testing.T) {
+		sqlStore := sqlstore.InitTestDB(t)
+		dashboardStore := database.ProvideDashboardStore(sqlStore)
+		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
 
-		//dto := &dashboards.SavePublicDashboardDTO{
-		//DashboardUid: dashboard.Uid,
-		//OrgId:        dashboard.OrgId,
-		//PublicDashboard: &models.PublicDashboard{
-		//IsEnabled: true,
-		//PublicDashboard: models.PublicDashboard{
-		//DashboardUid: "NOTTHESAME",
-		//OrgId:        9999999,
-		//},
-		//},
-		//}
+		service := &DashboardServiceImpl{
+			log:            log.New("test.logger"),
+			dashboardStore: dashboardStore,
+		}
 
-		//pdc, err := service.SavePublicDashboard(context.Background(), dto)
-		//require.NoError(t, err)
+		dto := &dashboards.SavePublicDashboardConfigDTO{
+			DashboardUid: dashboard.Uid,
+			OrgId:        dashboard.OrgId,
+			UserId:       7,
+			PublicDashboard: &models.PublicDashboard{
+				IsEnabled:    true,
+				TimeSettings: timeSettings,
+			},
+		}
 
-		//assert.Equal(t, dashboard.Uid, pdc.PublicDashboard.DashboardUid)
-		//assert.Equal(t, dashboard.OrgId, pdc.PublicDashboard.OrgId)
+		_, err := service.SavePublicDashboardConfig(context.Background(), dto)
+		require.NoError(t, err)
+
+		savedPubdash, err := service.GetPublicDashboardConfig(context.Background(), dashboard.OrgId, dashboard.Uid)
+		require.NoError(t, err)
+
+		dto = &dashboards.SavePublicDashboardConfigDTO{
+			DashboardUid: dashboard.Uid,
+			OrgId:        dashboard.OrgId,
+			UserId:       8,
+			PublicDashboard: &models.PublicDashboard{
+				Uid:          savedPubdash.Uid,
+				OrgId:        9,
+				DashboardUid: "abc1234",
+				CreatedBy:    9,
+				CreatedAt:    time.Time{},
+
+				IsEnabled:    true,
+				TimeSettings: timeSettings,
+			},
+		}
+
+		_, err = service.updatePublicDashboardConfig(context.Background(), dto)
+		require.NoError(t, err)
+
+		updatedPubdash, err := service.GetPublicDashboardConfig(context.Background(), dashboard.OrgId, dashboard.Uid)
+		require.NoError(t, err)
+
+		// don't get updated
+		assert.Equal(t, savedPubdash.DashboardUid, updatedPubdash.DashboardUid)
+		assert.Equal(t, savedPubdash.OrgId, updatedPubdash.OrgId)
+		assert.Equal(t, savedPubdash.CreatedAt, updatedPubdash.CreatedAt)
+		assert.Equal(t, savedPubdash.CreatedBy, updatedPubdash.CreatedBy)
+
+		// gets updated
+		assert.Equal(t, dto.PublicDashboard.IsEnabled, updatedPubdash.IsEnabled)
+		assert.Equal(t, dto.PublicDashboard.TimeSettings, updatedPubdash.TimeSettings)
+		assert.Equal(t, dto.UserId, updatedPubdash.UpdatedBy)
+		assert.NotEqual(t, &time.Time{}, updatedPubdash.UpdatedAt)
 	})
 }
 
@@ -187,7 +265,7 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 			IsEnabled:    true,
 			DashboardUid: "NOTTHESAME",
 			OrgId:        9999999,
-			TimeSettings: TimeSettings,
+			TimeSettings: timeSettings,
 		},
 	}
 
@@ -201,7 +279,7 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 			IsEnabled:    false,
 			DashboardUid: "NOTTHESAME",
 			OrgId:        9999999,
-			TimeSettings: TimeSettings,
+			TimeSettings: defaultPubdashTimeSettings,
 		},
 	}
 
@@ -216,8 +294,8 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		require.Equal(t, TimeSettings.Get("from").MustString(), reqDTO.From)
-		require.Equal(t, TimeSettings.Get("to").MustString(), reqDTO.To)
+		require.Equal(t, timeSettings.Get("from").MustString(), reqDTO.From)
+		require.Equal(t, timeSettings.Get("to").MustString(), reqDTO.To)
 		require.Len(t, reqDTO.Queries, 2)
 		require.Equal(
 			t,

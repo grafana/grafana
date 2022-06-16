@@ -67,20 +67,20 @@ func (_m *FakeDashboardStore) FindDashboards(ctx context.Context, query *models.
 	return r0, r1
 }
 
-// GenerateNewPublicDashboardUid provides a mock function with given fields:
-func (_m *FakeDashboardStore) GenerateNewPublicDashboardUid() (string, error) {
-	ret := _m.Called()
+// GenerateNewPublicDashboardUid provides a mock function with given fields: ctx
+func (_m *FakeDashboardStore) GenerateNewPublicDashboardUid(ctx context.Context) (string, error) {
+	ret := _m.Called(ctx)
 
 	var r0 string
-	if rf, ok := ret.Get(0).(func() string); ok {
-		r0 = rf()
+	if rf, ok := ret.Get(0).(func(context.Context) string); ok {
+		r0 = rf(ctx)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -319,13 +319,13 @@ func (_m *FakeDashboardStore) GetProvisionedDataByDashboardUID(orgID int64, dash
 	return r0, r1
 }
 
-// GetPublicDashboard provides a mock function with given fields: uid
-func (_m *FakeDashboardStore) GetPublicDashboard(uid string) (*models.PublicDashboard, *models.Dashboard, error) {
-	ret := _m.Called(uid)
+// GetPublicDashboard provides a mock function with given fields: ctx, uid
+func (_m *FakeDashboardStore) GetPublicDashboard(ctx context.Context, uid string) (*models.PublicDashboard, *models.Dashboard, error) {
+	ret := _m.Called(ctx, uid)
 
 	var r0 *models.PublicDashboard
-	if rf, ok := ret.Get(0).(func(string) *models.PublicDashboard); ok {
-		r0 = rf(uid)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *models.PublicDashboard); ok {
+		r0 = rf(ctx, uid)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*models.PublicDashboard)
@@ -333,8 +333,8 @@ func (_m *FakeDashboardStore) GetPublicDashboard(uid string) (*models.PublicDash
 	}
 
 	var r1 *models.Dashboard
-	if rf, ok := ret.Get(1).(func(string) *models.Dashboard); ok {
-		r1 = rf(uid)
+	if rf, ok := ret.Get(1).(func(context.Context, string) *models.Dashboard); ok {
+		r1 = rf(ctx, uid)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(*models.Dashboard)
@@ -342,8 +342,8 @@ func (_m *FakeDashboardStore) GetPublicDashboard(uid string) (*models.PublicDash
 	}
 
 	var r2 error
-	if rf, ok := ret.Get(2).(func(string) error); ok {
-		r2 = rf(uid)
+	if rf, ok := ret.Get(2).(func(context.Context, string) error); ok {
+		r2 = rf(ctx, uid)
 	} else {
 		r2 = ret.Error(2)
 	}
@@ -351,13 +351,13 @@ func (_m *FakeDashboardStore) GetPublicDashboard(uid string) (*models.PublicDash
 	return r0, r1, r2
 }
 
-// GetPublicDashboardConfig provides a mock function with given fields: orgId, dashboardUid
-func (_m *FakeDashboardStore) GetPublicDashboardConfig(orgId int64, dashboardUid string) (*models.PublicDashboard, error) {
-	ret := _m.Called(orgId, dashboardUid)
+// GetPublicDashboardConfig provides a mock function with given fields: ctx, orgId, dashboardUid
+func (_m *FakeDashboardStore) GetPublicDashboardConfig(ctx context.Context, orgId int64, dashboardUid string) (*models.PublicDashboard, error) {
+	ret := _m.Called(ctx, orgId, dashboardUid)
 
 	var r0 *models.PublicDashboard
-	if rf, ok := ret.Get(0).(func(int64, string) *models.PublicDashboard); ok {
-		r0 = rf(orgId, dashboardUid)
+	if rf, ok := ret.Get(0).(func(context.Context, int64, string) *models.PublicDashboard); ok {
+		r0 = rf(ctx, orgId, dashboardUid)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*models.PublicDashboard)
@@ -365,8 +365,8 @@ func (_m *FakeDashboardStore) GetPublicDashboardConfig(orgId int64, dashboardUid
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(int64, string) error); ok {
-		r1 = rf(orgId, dashboardUid)
+	if rf, ok := ret.Get(1).(func(context.Context, int64, string) error); ok {
+		r1 = rf(ctx, orgId, dashboardUid)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -462,13 +462,13 @@ func (_m *FakeDashboardStore) SaveProvisionedDashboard(cmd models.SaveDashboardC
 	return r0, r1
 }
 
-// SavePublicDashboardConfig provides a mock function with given fields: cmd
-func (_m *FakeDashboardStore) SavePublicDashboardConfig(cmd models.SavePublicDashboardConfigCommand) (*models.PublicDashboard, error) {
-	ret := _m.Called(cmd)
+// SavePublicDashboardConfig provides a mock function with given fields: ctx, cmd
+func (_m *FakeDashboardStore) SavePublicDashboardConfig(ctx context.Context, cmd models.SavePublicDashboardConfigCommand) (*models.PublicDashboard, error) {
+	ret := _m.Called(ctx, cmd)
 
 	var r0 *models.PublicDashboard
-	if rf, ok := ret.Get(0).(func(models.SavePublicDashboardConfigCommand) *models.PublicDashboard); ok {
-		r0 = rf(cmd)
+	if rf, ok := ret.Get(0).(func(context.Context, models.SavePublicDashboardConfigCommand) *models.PublicDashboard); ok {
+		r0 = rf(ctx, cmd)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*models.PublicDashboard)
@@ -476,8 +476,8 @@ func (_m *FakeDashboardStore) SavePublicDashboardConfig(cmd models.SavePublicDas
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(models.SavePublicDashboardConfigCommand) error); ok {
-		r1 = rf(cmd)
+	if rf, ok := ret.Get(1).(func(context.Context, models.SavePublicDashboardConfigCommand) error); ok {
+		r1 = rf(ctx, cmd)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -511,6 +511,29 @@ func (_m *FakeDashboardStore) UpdateDashboardACL(ctx context.Context, uid int64,
 	}
 
 	return r0
+}
+
+// UpdatePublicDashboardConfig provides a mock function with given fields: ctx, cmd
+func (_m *FakeDashboardStore) UpdatePublicDashboardConfig(ctx context.Context, cmd models.SavePublicDashboardConfigCommand) (*models.PublicDashboard, error) {
+	ret := _m.Called(ctx, cmd)
+
+	var r0 *models.PublicDashboard
+	if rf, ok := ret.Get(0).(func(context.Context, models.SavePublicDashboardConfigCommand) *models.PublicDashboard); ok {
+		r0 = rf(ctx, cmd)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*models.PublicDashboard)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, models.SavePublicDashboardConfigCommand) error); ok {
+		r1 = rf(ctx, cmd)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // ValidateDashboardBeforeSave provides a mock function with given fields: dashboard, overwrite

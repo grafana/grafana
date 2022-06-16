@@ -45,10 +45,6 @@ func (pd PublicDashboard) TableName() string {
 	return "dashboard_public"
 }
 
-func (pd PublicDashboard) IsPersisted() bool {
-	return pd.Uid == ""
-}
-
 type TimeSettings struct {
 	From string `json:"from"`
 	To   string `json:"to"`
