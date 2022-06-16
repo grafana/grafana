@@ -2012,7 +2012,7 @@ describe('DashboardModel', () => {
             ],
           },
         ],
-        schemaVersion: 35,
+        schemaVersion: 30,
       });
     });
 
