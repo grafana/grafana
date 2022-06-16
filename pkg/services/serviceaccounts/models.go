@@ -23,6 +23,10 @@ type ServiceAccount struct {
 	Id int64
 }
 
+type CreateServiceAccountForm struct {
+	Name string `json:"name" binding:"Required"`
+}
+
 type UpdateServiceAccountForm struct {
 	Name       *string          `json:"name"`
 	Role       *models.RoleType `json:"role"`
