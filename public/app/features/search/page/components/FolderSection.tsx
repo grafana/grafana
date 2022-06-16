@@ -4,7 +4,7 @@ import { useLocalStorage } from 'react-use';
 import useAsync from 'react-use/lib/useAsync';
 
 import { GrafanaTheme } from '@grafana/data';
-import { Card, Checkbox, CollapsableSection, Icon, IconName, Spinner, stylesFactory, useTheme } from '@grafana/ui';
+import { Card, Checkbox, CollapsableSection, Icon, IconName, stylesFactory, useTheme } from '@grafana/ui';
 import { getSectionStorageKey } from 'app/features/search/utils';
 import { useUniqueId } from 'app/plugins/datasource/influxdb/components/useUniqueId';
 
@@ -47,7 +47,7 @@ export const FolderSection: FC<SectionHeaderProps> = ({
 
   const results = useAsync(async () => {
     if (!sectionExpanded && !renderStandaloneBody) {
-      return Promise.resolve([] as DashboardSectionItem[]);
+      return Promise.resolve([]);
     }
     let folderUid: string | undefined = section.uid;
     let folderTitle: string | undefined = section.title;
@@ -66,21 +66,18 @@ export const FolderSection: FC<SectionHeaderProps> = ({
     }
 
     const raw = await getGrafanaSearcher().search({ ...query, tags });
-    const v = raw.view.map(
-      (item) =>
-        ({
-          uid: item.uid,
-          title: item.name,
-          url: item.url,
-          uri: item.url,
-          type: item.kind === 'folder' ? DashboardSearchItemType.DashFolder : DashboardSearchItemType.DashDB,
-          id: 666, // do not use me!
-          isStarred: false,
-          tags: item.tags ?? [],
-          folderUid,
-          folderTitle,
-        } as DashboardSectionItem)
-    );
+    const v = raw.view.map<DashboardSectionItem>((item) => ({
+      uid: item.uid,
+      title: item.name,
+      url: item.url,
+      uri: item.url,
+      type: item.kind === 'folder' ? DashboardSearchItemType.DashFolder : DashboardSearchItemType.DashDB,
+      id: 666, // do not use me!
+      isStarred: false,
+      tags: item.tags ?? [],
+      folderUid,
+      folderTitle,
+    }));
     return v;
   }, [sectionExpanded, section, tags]);
 
