@@ -187,7 +187,7 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 				l.log.Warn("Declare plugin roles failed",
 					"pluginID", p.ID,
 					"warning", "Make sure the role declaration is correct.",
-					"path", p.PluginDir+"plugin.json",
+					"path", p.PluginDir+"/plugin.json",
 					"error", errDeclareRoles)
 			}
 		}
