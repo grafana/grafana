@@ -61,7 +61,7 @@ export default function SpanBarSettings({ options, onOptionsChange }: Props) {
           <InlineField label="Tag key" labelWidth={26} grow tooltip="Tag key which will be used to get tag value">
             <Input
               type="text"
-              placeholder=""
+              placeholder="Enter tag key"
               onChange={(v) =>
                 updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'spanBar', {
                   ...options.jsonData.spanBar,
@@ -84,7 +84,7 @@ export default function SpanBarSettings({ options, onOptionsChange }: Props) {
           >
             <Input
               type="text"
-              placeholder=""
+              placeholder="Enter process key"
               onChange={(v) =>
                 updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'spanBar', {
                   ...options.jsonData.spanBar,
