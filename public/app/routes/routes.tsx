@@ -8,6 +8,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import UserAdminPage from 'app/features/admin/UserAdminPage';
 import LdapPage from 'app/features/admin/ldap/LdapPage';
 import { getAlertingRoutes } from 'app/features/alerting/routes';
+import { getRoutes as getDataConnectionsRoutes } from 'app/features/data-connections/routes';
 import { getLiveRoutes } from 'app/features/live/pages/routes';
 import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
 import { getProfileRoutes } from 'app/features/profile/routes';
@@ -370,7 +371,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/playlists/play/:id',
+      path: '/playlists/play/:uid',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "PlaylistStartPage"*/ 'app/features/playlist/PlaylistStartPage')
       ),
@@ -382,7 +383,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/playlists/edit/:id',
+      path: '/playlists/edit/:uid',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "PlaylistEditPage"*/ 'app/features/playlist/PlaylistEditPage')
       ),
@@ -440,6 +441,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     ...getProfileRoutes(),
     ...extraRoutes,
     ...getPublicDashboardRoutes(),
+    ...getDataConnectionsRoutes(),
     {
       path: '/*',
       component: ErrorPage,

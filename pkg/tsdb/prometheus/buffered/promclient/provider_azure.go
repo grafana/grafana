@@ -37,12 +37,12 @@ func (p *Provider) configureAzureAuthentication(opts *sdkhttpclient.Options) err
 	if credentials != nil {
 		var scopes []string
 
-		if scopes, err = GetOverriddenScopes(p.jsonData); err != nil {
+		if scopes, err = getOverriddenScopes(p.jsonData); err != nil {
 			return err
 		}
 
 		if scopes == nil {
-			if scopes, err = GetPrometheusScopes(p.cfg.Azure, credentials); err != nil {
+			if scopes, err = getPrometheusScopes(p.cfg.Azure, credentials); err != nil {
 				return err
 			}
 		}
@@ -53,7 +53,7 @@ func (p *Provider) configureAzureAuthentication(opts *sdkhttpclient.Options) err
 	return nil
 }
 
-func GetOverriddenScopes(jsonData map[string]interface{}) ([]string, error) {
+func getOverriddenScopes(jsonData map[string]interface{}) ([]string, error) {
 	resourceIdStr, err := maputil.GetStringOptional(jsonData, "azureEndpointResourceId")
 	if err != nil {
 		err = fmt.Errorf("overridden resource ID (audience) invalid")
@@ -73,7 +73,7 @@ func GetOverriddenScopes(jsonData map[string]interface{}) ([]string, error) {
 	return scopes, nil
 }
 
-func GetPrometheusScopes(settings *azsettings.AzureSettings, credentials azcredentials.AzureCredentials) ([]string, error) {
+func getPrometheusScopes(settings *azsettings.AzureSettings, credentials azcredentials.AzureCredentials) ([]string, error) {
 	// Extract cloud from credentials
 	azureCloud, err := getAzureCloudFromCredentials(settings, credentials)
 	if err != nil {

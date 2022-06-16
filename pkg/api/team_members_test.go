@@ -202,7 +202,7 @@ func TestGetTeamMembersAPIEndpoint_RBAC(t *testing.T) {
 	setInitCtxSignedInViewer(sc.initCtx)
 	t.Run("Access control allows getting a team members with the right permissions", func(t *testing.T) {
 		setAccessControlPermissions(sc.acmock,
-			[]*ac.Permission{
+			[]ac.Permission{
 				{Action: ac.ActionTeamsPermissionsRead, Scope: ac.Scope("teams", "id", "1")},
 				{Action: ac.ActionOrgUsersRead, Scope: ac.ScopeUsersAll},
 			},
@@ -220,7 +220,7 @@ func TestGetTeamMembersAPIEndpoint_RBAC(t *testing.T) {
 	setInitCtxSignedInOrgAdmin(sc.initCtx)
 	t.Run("Access control filters team members based on user permissions", func(t *testing.T) {
 		setAccessControlPermissions(sc.acmock,
-			[]*ac.Permission{
+			[]ac.Permission{
 				{Action: ac.ActionTeamsPermissionsRead, Scope: ac.Scope("teams", "id", "1")},
 				{Action: ac.ActionOrgUsersRead, Scope: ac.Scope("users", "id", "2")},
 				{Action: ac.ActionOrgUsersRead, Scope: ac.Scope("users", "id", "3")},
@@ -238,7 +238,7 @@ func TestGetTeamMembersAPIEndpoint_RBAC(t *testing.T) {
 	setInitCtxSignedInViewer(sc.initCtx)
 	t.Run("Access control prevents getting a team member with incorrect scope", func(t *testing.T) {
 		setAccessControlPermissions(sc.acmock,
-			[]*ac.Permission{{Action: ac.ActionTeamsPermissionsRead, Scope: ac.Scope("teams", "id", "2")}},
+			[]ac.Permission{{Action: ac.ActionTeamsPermissionsRead, Scope: ac.Scope("teams", "id", "2")}},
 			testOrgId)
 		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(teamMemberGetRoute, "1"), nil, t)
 		require.Equal(t, http.StatusForbidden, response.Code)
@@ -256,7 +256,7 @@ func TestAddTeamMembersAPIEndpoint_RBAC(t *testing.T) {
 	newUserId := createUser(sc.db, testOrgId, t)
 	input := strings.NewReader(fmt.Sprintf(createTeamMemberCmd, newUserId))
 	t.Run("Access control allows adding a team member with the right permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*ac.Permission{{Action: ac.ActionTeamsPermissionsWrite, Scope: "teams:id:1"}}, 1)
+		setAccessControlPermissions(sc.acmock, []ac.Permission{{Action: ac.ActionTeamsPermissionsWrite, Scope: "teams:id:1"}}, 1)
 		response := callAPI(sc.server, http.MethodPost, fmt.Sprintf(teamMemberAddRoute, "1"), input, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 	})
@@ -265,14 +265,14 @@ func TestAddTeamMembersAPIEndpoint_RBAC(t *testing.T) {
 	newUserId = createUser(sc.db, testOrgId, t)
 	input = strings.NewReader(fmt.Sprintf(teamCmd, newUserId))
 	t.Run("Access control prevents from adding a team member with the wrong permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*ac.Permission{{Action: ac.ActionTeamsPermissionsRead, Scope: "teams:id:1"}}, 1)
+		setAccessControlPermissions(sc.acmock, []ac.Permission{{Action: ac.ActionTeamsPermissionsRead, Scope: "teams:id:1"}}, 1)
 		response := callAPI(sc.server, http.MethodPost, fmt.Sprintf(teamMemberAddRoute, "1"), input, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 
 	setInitCtxSignedInViewer(sc.initCtx)
 	t.Run("Access control prevents adding a team member with incorrect scope", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*ac.Permission{{Action: ac.ActionTeamsPermissionsWrite, Scope: "teams:id:2"}}, 1)
+		setAccessControlPermissions(sc.acmock, []ac.Permission{{Action: ac.ActionTeamsPermissionsWrite, Scope: "teams:id:2"}}, 1)
 		response := callAPI(sc.server, http.MethodPost, fmt.Sprintf(teamMemberAddRoute, "1"), input, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
@@ -335,7 +335,7 @@ func TestUpdateTeamMembersAPIEndpoint_RBAC(t *testing.T) {
 	setInitCtxSignedInViewer(sc.initCtx)
 	input := strings.NewReader(fmt.Sprintf(updateTeamMemberCmd, models.PERMISSION_ADMIN))
 	t.Run("Access control allows updating a team member with the right permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*ac.Permission{{Action: ac.ActionTeamsPermissionsWrite, Scope: "teams:id:1"}}, 1)
+		setAccessControlPermissions(sc.acmock, []ac.Permission{{Action: ac.ActionTeamsPermissionsWrite, Scope: "teams:id:1"}}, 1)
 		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(teamMemberUpdateRoute, "1", "2"), input, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 	})
@@ -343,14 +343,14 @@ func TestUpdateTeamMembersAPIEndpoint_RBAC(t *testing.T) {
 	setInitCtxSignedInOrgAdmin(sc.initCtx)
 	input = strings.NewReader(fmt.Sprintf(updateTeamMemberCmd, models.PERMISSION_ADMIN))
 	t.Run("Access control prevents updating a team member with the wrong permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*ac.Permission{{Action: ac.ActionTeamsPermissionsRead, Scope: "teams:id:1"}}, 1)
+		setAccessControlPermissions(sc.acmock, []ac.Permission{{Action: ac.ActionTeamsPermissionsRead, Scope: "teams:id:1"}}, 1)
 		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(teamMemberUpdateRoute, "1", "2"), input, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 
 	setInitCtxSignedInViewer(sc.initCtx)
 	t.Run("Access control prevents updating a team member with incorrect scope", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*ac.Permission{{Action: ac.ActionTeamsPermissionsWrite, Scope: "teams:id:2"}}, 1)
+		setAccessControlPermissions(sc.acmock, []ac.Permission{{Action: ac.ActionTeamsPermissionsWrite, Scope: "teams:id:2"}}, 1)
 		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(teamMemberUpdateRoute, "1", "2"), input, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
@@ -408,21 +408,21 @@ func TestDeleteTeamMembersAPIEndpoint_RBAC(t *testing.T) {
 
 	setInitCtxSignedInViewer(sc.initCtx)
 	t.Run("Access control allows removing a team member with the right permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*ac.Permission{{Action: ac.ActionTeamsPermissionsWrite, Scope: "teams:id:1"}}, 1)
+		setAccessControlPermissions(sc.acmock, []ac.Permission{{Action: ac.ActionTeamsPermissionsWrite, Scope: "teams:id:1"}}, 1)
 		response := callAPI(sc.server, http.MethodDelete, fmt.Sprintf(teamMemberDeleteRoute, "1", "2"), nil, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 	})
 
 	setInitCtxSignedInOrgAdmin(sc.initCtx)
 	t.Run("Access control prevents removing a team member with the wrong permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*ac.Permission{{Action: ac.ActionTeamsPermissionsRead, Scope: "teams:id:1"}}, 1)
+		setAccessControlPermissions(sc.acmock, []ac.Permission{{Action: ac.ActionTeamsPermissionsRead, Scope: "teams:id:1"}}, 1)
 		response := callAPI(sc.server, http.MethodDelete, fmt.Sprintf(teamMemberDeleteRoute, "1", "3"), nil, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 
 	setInitCtxSignedInViewer(sc.initCtx)
 	t.Run("Access control prevents removing a team member with incorrect scope", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*ac.Permission{{Action: ac.ActionTeamsPermissionsWrite, Scope: "teams:id:2"}}, 1)
+		setAccessControlPermissions(sc.acmock, []ac.Permission{{Action: ac.ActionTeamsPermissionsWrite, Scope: "teams:id:2"}}, 1)
 		response := callAPI(sc.server, http.MethodDelete, fmt.Sprintf(teamMemberDeleteRoute, "1", "3"), nil, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})

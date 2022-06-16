@@ -4,7 +4,7 @@ import { DataFrameType, Field, FieldType, formattedValueToString, getFieldDispla
 import { LinkButton, VerticalGroup } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { readHeatmapScanlinesCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
-import { HeatmapBucketLayout } from 'app/features/transformers/calculateHeatmap/models.gen';
+import { HeatmapCellLayout } from 'app/features/transformers/calculateHeatmap/models.gen';
 
 import { DataHoverView } from '../geomap/components/DataHoverView';
 
@@ -53,8 +53,8 @@ const HeatmapHoverCell = ({ data, hover, showHistogram }: Props) => {
 
   const yValueIdx = index % data.yBucketCount! ?? 0;
 
-  const yMinIdx = data.yLayout === HeatmapBucketLayout.le ? yValueIdx - 1 : yValueIdx;
-  const yMaxIdx = data.yLayout === HeatmapBucketLayout.le ? yValueIdx : yValueIdx + 1;
+  const yMinIdx = data.yLayout === HeatmapCellLayout.le ? yValueIdx - 1 : yValueIdx;
+  const yMaxIdx = data.yLayout === HeatmapCellLayout.le ? yValueIdx : yValueIdx + 1;
 
   const yBucketMin = yDispSrc?.[yMinIdx];
   const yBucketMax = yDispSrc?.[yMaxIdx];
@@ -164,7 +164,7 @@ const HeatmapHoverCell = ({ data, hover, showHistogram }: Props) => {
 
   const renderYBuckets = () => {
     switch (data.yLayout) {
-      case HeatmapBucketLayout.unknown:
+      case HeatmapCellLayout.unknown:
         return <div>{yDisp(yBucketMin)}</div>;
     }
     return (

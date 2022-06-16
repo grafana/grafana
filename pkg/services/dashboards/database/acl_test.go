@@ -10,6 +10,9 @@ import (
 )
 
 func TestIntegrationDashboardAclDataAccess(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	var sqlStore *sqlstore.SQLStore
 	var currentUser models.User
 	var savedFolder, childDash *models.Dashboard

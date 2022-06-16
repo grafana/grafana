@@ -23,6 +23,9 @@ var orgID = int64(1)
 var user = &models.SignedInUser{UserId: 1}
 
 func TestIntegrationProvideFolderService(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	t.Run("should register scope resolvers", func(t *testing.T) {
 		cfg := setting.NewCfg()
 		ac := acmock.New()
@@ -34,6 +37,9 @@ func TestIntegrationProvideFolderService(t *testing.T) {
 }
 
 func TestIntegrationFolderService(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	t.Run("Folder service tests", func(t *testing.T) {
 		store := &dashboards.FakeDashboardStore{}
 		cfg := setting.NewCfg()
