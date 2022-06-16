@@ -194,109 +194,107 @@ describe('datasource', () => {
     });
   });
 
-  describe('filterQuery', () => {
+  describe('filterMetricsQuery', () => {
     const datasource = setupMockedDataSource().datasource;
-    describe('CloudWatchMetricsQuery', () => {
-      let baseQuery: CloudWatchMetricsQuery;
+    let baseQuery: CloudWatchMetricsQuery;
+    beforeEach(() => {
+      baseQuery = {
+        id: '',
+        region: 'us-east-2',
+        namespace: '',
+        period: '',
+        alias: '',
+        metricName: '',
+        dimensions: {},
+        matchExact: true,
+        statistic: '',
+        expression: '',
+        refId: '',
+      };
+    });
+
+    it('should error if invalid mode', async () => {
+      expect(() => datasource.filterMetricQuery(baseQuery)).toThrowError('invalid metric editor mode');
+    });
+
+    describe('metric search queries', () => {
       beforeEach(() => {
         baseQuery = {
-          id: '',
-          region: 'us-east-2',
-          namespace: '',
-          period: '',
-          alias: '',
-          metricName: '',
-          dimensions: {},
-          matchExact: true,
-          statistic: '',
-          expression: '',
-          refId: '',
+          ...baseQuery,
+          namespace: 'AWS/EC2',
+          metricName: 'CPUUtilization',
+          statistic: 'Average',
+          metricQueryType: MetricQueryType.Search,
+          metricEditorMode: MetricEditorMode.Builder,
         };
       });
 
-      it('should error if invalid mode', async () => {
-        expect(() => datasource.filterMetricQuery(baseQuery)).toThrowError('invalid metric editor mode');
+      it('should not allow builder queries that dont have namespace, metric or statistic', async () => {
+        expect(datasource.filterMetricQuery({ ...baseQuery, statistic: undefined })).toBeFalsy();
+        expect(datasource.filterMetricQuery({ ...baseQuery, metricName: undefined })).toBeFalsy();
+        expect(datasource.filterMetricQuery({ ...baseQuery, namespace: '' })).toBeFalsy();
       });
 
-      describe('metric search queries', () => {
-        beforeEach(() => {
-          baseQuery = {
-            ...baseQuery,
-            namespace: 'AWS/EC2',
-            metricName: 'CPUUtilization',
-            statistic: 'Average',
-            metricQueryType: MetricQueryType.Search,
-            metricEditorMode: MetricEditorMode.Builder,
-          };
-        });
-
-        it('should not allow builder queries that dont have namespace, metric or statistic', async () => {
-          expect(datasource.filterMetricQuery({ ...baseQuery, statistic: undefined })).toBeFalsy();
-          expect(datasource.filterMetricQuery({ ...baseQuery, metricName: undefined })).toBeFalsy();
-          expect(datasource.filterMetricQuery({ ...baseQuery, namespace: '' })).toBeFalsy();
-        });
-
-        it('should allow builder queries that have namespace, metric or statistic', async () => {
-          expect(datasource.filterMetricQuery(baseQuery)).toBeTruthy();
-        });
-
-        it('should not allow code queries that dont have an expression', async () => {
-          expect(
-            datasource.filterMetricQuery({
-              ...baseQuery,
-              expression: undefined,
-              metricEditorMode: MetricEditorMode.Code,
-            })
-          ).toBeFalsy();
-        });
-
-        it('should allow code queries that have an expression', async () => {
-          expect(
-            datasource.filterMetricQuery({ ...baseQuery, expression: 'x * 2', metricEditorMode: MetricEditorMode.Code })
-          ).toBeTruthy();
-        });
+      it('should allow builder queries that have namespace, metric or statistic', async () => {
+        expect(datasource.filterMetricQuery(baseQuery)).toBeTruthy();
       });
 
-      describe('metric search expression queries', () => {
-        beforeEach(() => {
-          baseQuery = {
+      it('should not allow code queries that dont have an expression', async () => {
+        expect(
+          datasource.filterMetricQuery({
             ...baseQuery,
-            metricQueryType: MetricQueryType.Search,
+            expression: undefined,
             metricEditorMode: MetricEditorMode.Code,
-          };
-        });
-
-        it('should not allow queries that dont have an expression', async () => {
-          const valid = datasource.filterMetricQuery(baseQuery);
-          expect(valid).toBeFalsy();
-        });
-
-        it('should allow queries that have an expression', async () => {
-          baseQuery.expression = 'SUM([a,x])';
-          const valid = datasource.filterMetricQuery(baseQuery);
-          expect(valid).toBeTruthy();
-        });
+          })
+        ).toBeFalsy();
       });
 
-      describe('metric query queries', () => {
-        beforeEach(() => {
-          baseQuery = {
-            ...baseQuery,
-            metricQueryType: MetricQueryType.Query,
-            metricEditorMode: MetricEditorMode.Code,
-          };
-        });
+      it('should allow code queries that have an expression', async () => {
+        expect(
+          datasource.filterMetricQuery({ ...baseQuery, expression: 'x * 2', metricEditorMode: MetricEditorMode.Code })
+        ).toBeTruthy();
+      });
+    });
 
-        it('should not allow queries that dont have a sql expresssion', async () => {
-          const valid = datasource.filterMetricQuery(baseQuery);
-          expect(valid).toBeFalsy();
-        });
+    describe('metric search expression queries', () => {
+      beforeEach(() => {
+        baseQuery = {
+          ...baseQuery,
+          metricQueryType: MetricQueryType.Search,
+          metricEditorMode: MetricEditorMode.Code,
+        };
+      });
 
-        it('should allow queries that have a sql expresssion', async () => {
-          baseQuery.sqlExpression = 'select SUM(CPUUtilization) from "AWS/EC2"';
-          const valid = datasource.filterMetricQuery(baseQuery);
-          expect(valid).toBeTruthy();
-        });
+      it('should not allow queries that dont have an expression', async () => {
+        const valid = datasource.filterMetricQuery(baseQuery);
+        expect(valid).toBeFalsy();
+      });
+
+      it('should allow queries that have an expression', async () => {
+        baseQuery.expression = 'SUM([a,x])';
+        const valid = datasource.filterMetricQuery(baseQuery);
+        expect(valid).toBeTruthy();
+      });
+    });
+
+    describe('metric query queries', () => {
+      beforeEach(() => {
+        baseQuery = {
+          ...baseQuery,
+          metricQueryType: MetricQueryType.Query,
+          metricEditorMode: MetricEditorMode.Code,
+        };
+      });
+
+      it('should not allow queries that dont have a sql expresssion', async () => {
+        const valid = datasource.filterMetricQuery(baseQuery);
+        expect(valid).toBeFalsy();
+      });
+
+      it('should allow queries that have a sql expresssion', async () => {
+        baseQuery.sqlExpression = 'select SUM(CPUUtilization) from "AWS/EC2"';
+        const valid = datasource.filterMetricQuery(baseQuery);
+        expect(valid).toBeTruthy();
       });
     });
   });
