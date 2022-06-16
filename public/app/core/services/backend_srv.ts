@@ -17,6 +17,7 @@ import { AppEvents, DataQueryErrorType } from '@grafana/data';
 import { BackendSrv as BackendService, BackendSrvRequest, FetchError, FetchResponse } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
+import { loadUrlToken } from 'app/core/utils/urlToken';
 import { DashboardSearchHit } from 'app/features/search/types';
 import { TokenRevokedModal } from 'app/features/users/TokenRevokedModal';
 import { DashboardDTO, FolderDTO } from 'app/types';
@@ -86,14 +87,6 @@ export class BackendSrv implements BackendService {
     const id = uuidv4();
     const fetchQueue = this.fetchQueue;
 
-    const token = new URLSearchParams(window.location.search).get('auth_token');
-    if (token !== null && token !== '') {
-      if (!options.params) {
-        options.params = {};
-      }
-      options.params['auth_token'] = token;
-    }
-
     return new Observable((observer) => {
       // Subscription is an object that is returned whenever you subscribe to an Observable.
       // You can also use it as a container of many subscriptions and when it is unsubscribed all subscriptions within are also unsubscribed.
@@ -130,6 +123,14 @@ export class BackendSrv implements BackendService {
     }
 
     options = this.parseRequestOptions(options);
+
+    const token = loadUrlToken();
+    if (token !== null && token !== '') {
+      if (!options.headers) {
+        options.headers = {};
+      }
+      options.headers['Authorization'] = `Bearer ${token}`;
+    }
 
     const fromFetchStream = this.getFromFetchStream<T>(options);
     const failureStream = fromFetchStream.pipe(this.toFailureStream<T>(options));
