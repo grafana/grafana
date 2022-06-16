@@ -74,10 +74,9 @@ export class ConditionalDataSource extends MixedDatasource<ConditionalDataSource
     }
   }
 
-  query(request: DataQueryRequest<DataQuery>): Observable<DataQueryResponse> {
+  query(request: DataQueryRequest<ConditionalDataSourceQuery>): Observable<DataQueryResponse> {
     const queryScores: Array<number | null> = [];
-
-    const context = {
+    const context: QueryConditionExecutionContext = {
       timeRange: request.range,
       variables: getTemplateSrv().getVariables(),
     };

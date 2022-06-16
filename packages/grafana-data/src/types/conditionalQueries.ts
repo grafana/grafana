@@ -8,7 +8,7 @@ export interface QueryConditionExecutionContext {
   variables: VariableModel[];
 }
 
-export interface ConditionInfo<TOptions = any> extends RegistryItemWithOptions {
+export interface ConditionInfo<TOptions = any> extends RegistryItemWithOptions<TOptions> {
   type: QueryConditionType;
   /**
    * Given condition configuration returns boolean representing condition being met or not
@@ -36,6 +36,7 @@ export interface ConditionUIProps<TOptions = any> {
 export enum QueryConditionID {
   ValueClick = 'value-click',
   TimeRange = 'time-range',
+  TimeRangeInterval = 'time-range-interval',
 }
 
 export enum QueryConditionType {

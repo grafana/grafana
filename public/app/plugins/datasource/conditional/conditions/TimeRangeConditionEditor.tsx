@@ -1,11 +1,11 @@
 import React from 'react';
 
-import { ConditionUIProps, DateTime, SelectableValue } from '@grafana/data';
+import { ConditionUIProps, RawTimeRange, SelectableValue } from '@grafana/data';
 import { Field, Select } from '@grafana/ui';
 import { quickOptions } from '@grafana/ui/src/components/DateTimePickers/options';
 
 export interface TimeRangeConditionOptions {
-  value: { from: DateTime; to: DateTime };
+  value: RawTimeRange;
 }
 
 export const TimeRangeConditionEditor: React.FC<ConditionUIProps<TimeRangeConditionOptions>> = ({

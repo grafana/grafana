@@ -12,7 +12,7 @@ export const fieldValueClickCondition: ConditionInfo<ValueClickConditionOptions>
   type: QueryConditionType.Field,
   name: 'Field value click',
   description: 'When a value is clicked',
-  defaultOptions: {},
+  defaultOptions: {} as ValueClickConditionOptions,
   variablePrefix: FIELD_VALUE_CLICK_VARIABLE_PREFIX,
   execute: (options, context) => {
     const drilldownTplVars = context.variables.filter(
