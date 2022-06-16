@@ -2710,7 +2710,8 @@ steps:
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - ./bin/grabpl integration-tests --database postgres
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+    -timeout=30m {}'
   depends_on:
   - init-enterprise
   environment:
@@ -2726,7 +2727,8 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - ./bin/grabpl integration-tests --database mysql
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+    -timeout=30m {}'
   depends_on:
   - init-enterprise
   environment:
@@ -4471,7 +4473,8 @@ steps:
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - ./bin/grabpl integration-tests --database postgres
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+    -timeout=30m {}'
   depends_on:
   - init-enterprise
   environment:
@@ -4487,7 +4490,8 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - ./bin/grabpl integration-tests --database mysql
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+    -timeout=30m {}'
   depends_on:
   - init-enterprise
   environment:
@@ -4747,6 +4751,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: e0b93430bf690b093bde6979dda9eb9cb2846c7d5a71feae8c2ea81072aecf19
+hmac: c21ab148fc83eebccd96443dd62fcd8e6a22e9c6e6895d31165788fc190c0b63
 
 ...
