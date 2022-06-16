@@ -139,7 +139,9 @@ func (ps *ProvisioningServiceImpl) Run(ctx context.Context) error {
 		ps.log.Error("Failed to provision dashboard", "error", err)
 		return err
 	}
-	ps.searchService.TriggerReIndex()
+	if ps.dashboardProvisioner.HasDashboardSources() {
+		ps.searchService.TriggerReIndex()
+	}
 
 	for {
 		// Wait for unlock. This is tied to new dashboardProvisioner to be instantiated before we start polling.
