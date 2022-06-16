@@ -50,7 +50,7 @@ export const defaultRouteConfig: MapLayerOptions<RouteConfig> = {
 export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
   id: ROUTE_LAYER_ID,
   name: 'Route',
-  description: 'use route to render data point as a route',
+  description: 'Render data points as a route',
   isBaseMap: false,
   showLocation: true,
   state: PluginState.alpha,
