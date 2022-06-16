@@ -263,18 +263,18 @@ func pluginFilesRequiringVerification(plugin *plugins.Plugin) ([]string, error) 
 				return err
 			}
 
-			// skip symlink directories
-			if symlink.IsDir() {
-				return nil
-			}
-
 			// verify that symlinked file is within plugin directory
 			p, err := filepath.Rel(plugin.PluginDir, symlinkPath)
 			if err != nil {
 				return err
 			}
-			if strings.HasPrefix(p, ".."+string(filepath.Separator)) {
+			if p == ".." || strings.HasPrefix(p, ".."+string(filepath.Separator)) {
 				return fmt.Errorf("file '%s' not inside of plugin directory", p)
+			}
+
+			// skip adding symlinked directories
+			if symlink.IsDir() {
+				return nil
 			}
 		}
 
