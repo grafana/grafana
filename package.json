@@ -262,7 +262,7 @@
     "@jaegertracing/jaeger-ui-components": "workspace:*",
     "@kusto/monaco-kusto": "5.1.3",
     "@lezer/common": "0.15.12",
-    "@lezer/lr": "0.15.8",
+    "@lezer/lr": "1.0.0",
     "@lingui/core": "3.13.3",
     "@lingui/react": "3.13.3",
     "@opentelemetry/api": "1.1.0",
