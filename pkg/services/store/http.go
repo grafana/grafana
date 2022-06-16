@@ -37,18 +37,12 @@ func ProvideHTTPService(store StorageService, quotaService *quota.QuotaService) 
 func UploadErrorToStatusCode(err error) int {
 	switch {
 	case errors.Is(err, ErrUploadFeatureDisabled):
+		return 404
+
+	case errors.Is(err, ErrUnsupportedStorage):
 		return 400
 
-	case errors.Is(err, ErrUnsupportedFolder):
-		return 400
-
-	case errors.Is(err, ErrFileTooBig):
-		return 400
-
-	case errors.Is(err, ErrInvalidPath):
-		return 400
-
-	case errors.Is(err, ErrInvalidFileType):
+	case errors.Is(err, ErrValidationFailed):
 		return 400
 
 	case errors.Is(err, ErrFileAlreadyExists):
@@ -115,9 +109,10 @@ func (s *httpStorage) Upload(c *models.ReqContext) response.Response {
 
 	mimeType := http.DetectContentType(data)
 
-	err = s.store.Upload(c.Req.Context(), c.SignedInUser, UploadRequest{
+	err = s.store.Upload(c.Req.Context(), c.SignedInUser, &UploadRequest{
 		Contents:              data,
 		MimeType:              mimeType,
+		EntityType:            EntityTypeImage,
 		Path:                  path,
 		OverwriteExistingFile: true,
 	})

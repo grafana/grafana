@@ -61,10 +61,11 @@ func TestUpload(t *testing.T) {
 	cfg := &setting.Cfg{AppURL: "http://localhost:3000/", DataPath: path}
 	s := ProvideService(sqlstore.InitTestDB(t), features, cfg)
 	request := UploadRequest{
-		Contents: make([]byte, 0),
-		Path:     "upload/myFile.jpg",
-		MimeType: "image/jpeg",
+		EntityType: EntityTypeImage,
+		Contents:   make([]byte, 0),
+		Path:       "upload/myFile.jpg",
+		MimeType:   "image/jpg",
 	}
-	err = s.Upload(context.Background(), dummyUser, request)
+	err = s.Upload(context.Background(), dummyUser, &request)
 	require.NoError(t, err)
 }
