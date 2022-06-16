@@ -23,7 +23,7 @@ interface Props extends DataSourcePluginOptionsEditorProps<SpanBarOptionsData> {
 
 export default function SpanBarSettings({ options, onOptionsChange }: Props) {
   const styles = useStyles(getStyles);
-  const selectOptions = ['Duration', 'Tag'].map(toOption);
+  const selectOptions = ['None', 'Duration', 'Tag'].map(toOption);
 
   return (
     <div className={css({ width: '100%' })}>

@@ -552,11 +552,12 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
   }
 
   getSpanBarLabel = (span: TraceSpan, spanBarOptions: SpanBarOptions | undefined, duration: string) => {
-    let spanBarLabel = '';
     const type = spanBarOptions?.type ?? '';
 
-    if (!type || type === '' || type === 'Duration') {
-      spanBarLabel = `(${duration})`;
+    if (type === 'None') {
+      return '';
+    } else if (type === '' || type === 'Duration') {
+      return `(${duration})`;
     } else if (type === 'Tag') {
       const tagKey = spanBarOptions?.tag ?? '';
       if (tagKey !== '' && span.tags) {
@@ -565,12 +566,12 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
         });
 
         if (foundObj && foundObj.length > 0) {
-          spanBarLabel = `(${foundObj[0].value.toString()})`;
+          return `(${foundObj[0].value.toString()})`;
         }
       }
     }
 
-    return spanBarLabel;
+    return '';
   };
 }
 
