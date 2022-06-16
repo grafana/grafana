@@ -62,9 +62,9 @@ describe('FolderPicker', () => {
     expect(await screen.findByTestId(selectors.components.FolderPicker.containerV2)).toBeInTheDocument();
 
     await userEvent.type(screen.getByLabelText('Select a folder'), newFolder.title);
-    await screen.findByText('Hit enter to add');
+    const enter = await screen.findByText('Hit enter to add');
 
-    await userEvent.click(screen.getByText('Hit enter to add'));
+    await userEvent.click(enter);
     await waitFor(() => {
       expect(create).toHaveBeenCalledWith({ title: newFolder.title });
     });
