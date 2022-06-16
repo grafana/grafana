@@ -176,7 +176,7 @@ Directory where Grafana automatically scans and looks for plugins. For informati
 
 ### provisioning
 
-Folder that contains [provisioning]({{< relref "../../administration/server-administration/provisioning/" >}}) config files that Grafana will apply on startup. Dashboards will be reloaded when the json files changes.
+Folder that contains [provisioning]({{< relref "../../administration/provisioning/" >}}) config files that Grafana will apply on startup. Dashboards will be reloaded when the json files changes.
 
 <hr />
 

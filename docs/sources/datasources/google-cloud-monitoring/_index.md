@@ -301,7 +301,7 @@ Example Result: `monitoring.googleapis.com/uptime_check/http_status has this val
 
 ## Configure the data source with provisioning
 
-You can provision CloudWatch data source by modifying Grafana's configuration files. To learn more about provisioning and all the settings you can set, see the [provisioning documentation]({{< relref "../../administration/server-administration/provisioning/#data-sources" >}})
+You can provision CloudWatch data source by modifying Grafana's configuration files. To learn more about provisioning and all the settings you can set, see the [provisioning documentation]({{< relref "../../administration/provisioning/#data-sources" >}})
 
 Here is a provisioning example using the JWT (Service Account key file) authentication type.
 

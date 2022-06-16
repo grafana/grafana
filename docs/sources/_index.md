@@ -67,7 +67,7 @@ title: Grafana documentation
         <h4>Intro to time series</h4>
         <p>Learn about time series data.</p>
     </a>
-    <a href="{{< relref "administration/server-administration/provisioning/" >}}" class="nav-cards__item nav-cards__item--guide">
+    <a href="{{< relref "administration/provisioning/" >}}" class="nav-cards__item nav-cards__item--guide">
         <h4>Provisioning</h4>
         <p>Learn how to automate your Grafana configuration.</p>
     </a>
