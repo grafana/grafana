@@ -169,13 +169,13 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery) (data.Frames
 	return res.Frames, nil
 }
 
-func makeRawRequest(ctx context.Context, lokiDsUrl string, resourceURL string, headers map[string]string) (*http.Request, error) {
+func makeRawRequest(ctx context.Context, lokiDsUrl string, resourcePath string, headers map[string]string) (*http.Request, error) {
 	lokiUrl, err := url.Parse(lokiDsUrl)
 	if err != nil {
 		return nil, err
 	}
 
-	url, err := lokiUrl.Parse(resourceURL)
+	url, err := lokiUrl.Parse(resourcePath)
 	if err != nil {
 		return nil, err
 	}
@@ -191,8 +191,8 @@ func makeRawRequest(ctx context.Context, lokiDsUrl string, resourceURL string, h
 	return req, nil
 }
 
-func (api *LokiAPI) RawQuery(ctx context.Context, resourceURL string) ([]byte, error) {
-	req, err := makeRawRequest(ctx, api.url, resourceURL, api.headers)
+func (api *LokiAPI) RawQuery(ctx context.Context, resourcePath string) ([]byte, error) {
+	req, err := makeRawRequest(ctx, api.url, resourcePath, api.headers)
 	if err != nil {
 		return nil, err
 	}
