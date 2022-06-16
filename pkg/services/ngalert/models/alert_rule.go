@@ -111,7 +111,7 @@ type AlertRule struct {
 	Data            []AlertQuery
 	Updated         time.Time
 	IntervalSeconds int64
-	Version         int64
+	Version         int64   `xorm:"version"` // this tag makes xorm add optimistic lock (see https://xorm.io/docs/chapter-06/1.lock/)
 	UID             string  `xorm:"uid"`
 	NamespaceUID    string  `xorm:"namespace_uid"`
 	DashboardUID    *string `xorm:"dashboard_uid"`

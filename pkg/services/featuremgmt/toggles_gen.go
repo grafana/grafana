@@ -71,10 +71,6 @@ const (
 	// Query InfluxDB InfluxQL without the proxy
 	FlagInfluxdbBackendMigration = "influxdbBackendMigration"
 
-	// FlagNewNavigation
-	// Try the next gen navigation model
-	FlagNewNavigation = "newNavigation"
-
 	// FlagShowFeatureFlagsInUI
 	// Show feature flags in the settings UI
 	FlagShowFeatureFlagsInUI = "showFeatureFlagsInUI"

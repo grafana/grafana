@@ -42,7 +42,7 @@ import { getStandardTransformers } from 'app/features/transformers/standardTrans
 import getDefaultMonacoLanguages from '../lib/monaco-languages';
 
 import { AppWrapper } from './AppWrapper';
-import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/components/editors/registry';
+import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/components/OptionsUI/registry';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
 import { ModalManager } from './core/services/ModalManager';
 import { backendSrv } from './core/services/backend_srv';

@@ -553,7 +553,9 @@ export class DashboardModel implements TimeModel {
   }
 
   cleanUpRowRepeats(rowPanels: PanelModel[]) {
-    const panelsToRemove = rowPanels.filter((p) => !p.repeat && p.repeatPanelId);
+    const panelIds = rowPanels.map((row) => row.id);
+    // Remove repeated panels whose parent is in this row as these will be recreated later in processRowRepeats
+    const panelsToRemove = rowPanels.filter((p) => !p.repeat && p.repeatPanelId && panelIds.includes(p.repeatPanelId));
 
     pull(rowPanels, ...panelsToRemove);
     pull(this.panels, ...panelsToRemove);

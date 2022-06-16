@@ -8,6 +8,7 @@ import {
   Portal,
   ScaleDistribution,
   UPlotChart,
+  usePanelContext,
   useStyles2,
   useTheme2,
   VizLayout,
@@ -34,11 +35,13 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   height,
   options,
   fieldConfig,
+  eventBus,
   onChangeTimeRange,
   replaceVariables,
 }) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
+  const { sync } = usePanelContext();
 
   // ugh
   let timeRangeRef = useRef<TimeRange>(timeRange);
@@ -113,6 +116,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     return prepConfig({
       dataRef,
       theme,
+      eventBus,
       onhover: onhover,
       onclick: options.tooltip.show ? onclick : null,
       onzoom: (evt) => {
@@ -124,6 +128,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
       isToolTipOpen,
       timeZone,
       getTimeRange: () => timeRangeRef.current,
+      sync,
       palette,
       cellGap: options.cellGap,
       hideLE: options.filterValues?.le,

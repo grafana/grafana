@@ -23,6 +23,10 @@ type ServiceAccount struct {
 	Id int64
 }
 
+type CreateServiceAccountForm struct {
+	Name string `json:"name" binding:"Required"`
+}
+
 type UpdateServiceAccountForm struct {
 	Name       *string          `json:"name"`
 	Role       *models.RoleType `json:"role"`
@@ -72,6 +76,10 @@ type ServiceAccountProfileDTO struct {
 }
 
 type ServiceAccountFilter string // used for filtering
+
+type APIKeysMigrationStatus struct {
+	Migrated bool `json:"migrated"`
+}
 
 const (
 	FilterOnlyExpiredTokens ServiceAccountFilter = "expiredTokens"

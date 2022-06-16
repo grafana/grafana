@@ -159,6 +159,7 @@ export function TraceView(props: Props) {
             updateNextViewRangeTime={updateNextViewRangeTime}
             updateViewRangeTime={updateViewRangeTime}
             viewRange={viewRange}
+            timeZone={timeZone}
             setSpanNameColumnWidth={setSpanNameColumnWidth}
             collapseAll={collapseAll}
             collapseOne={collapseOne}

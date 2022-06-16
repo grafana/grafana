@@ -166,6 +166,7 @@ trigger:
     - conf/**
     - go.sum
     - go.mod
+    - public/app/plugins/**/plugin.json
 type: docker
 volumes:
 - host:
@@ -233,7 +234,7 @@ steps:
       from_secret: drone_token
 - commands:
   - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
-    --variants linux-amd64,linux-amd64-musl,darwin-amd64,windows-amd64,armv6
+    --variants linux-amd64,linux-amd64-musl,darwin-amd64,windows-amd64
   depends_on:
   - gen-version
   - wire-install
@@ -267,7 +268,7 @@ steps:
   name: build-plugins
 - commands:
   - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --jobs 8 --edition oss
-    --build-id ${DRONE_BUILD_NUMBER} --variants linux-amd64,linux-amd64-musl,darwin-amd64,windows-amd64,armv6
+    --build-id ${DRONE_BUILD_NUMBER} --variants linux-amd64,linux-amd64-musl,darwin-amd64,windows-amd64
   depends_on:
   - build-plugins
   - build-backend
@@ -4682,6 +4683,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 5f90961f151491580770a354e6f60ceddf35557f1094ec0ee94369fe52285697
+hmac: a3bda50a9e18232abceea55b0449c46945cc4f320ddb4524e110128297823369
 
 ...

@@ -304,7 +304,13 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.gridPos.h = newPos.h;
   }
 
-  runAllPanelQueries(dashboardId: number, dashboardTimezone: string, timeData: TimeOverrideResult, width: number) {
+  runAllPanelQueries(
+    dashboardId: number,
+    dashboardTimezone: string,
+    timeData: TimeOverrideResult,
+    width: number,
+    publicDashboardUid?: string
+  ) {
     let targets = this.targets;
 
     this.getQueryRunner().run({
@@ -312,6 +318,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       queries: targets,
       panelId: this.id,
       dashboardId: dashboardId,
+      publicDashboardUid,
       timezone: dashboardTimezone,
       timeRange: timeData.timeRange,
       timeInfo: timeData.timeInfo,
