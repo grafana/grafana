@@ -204,13 +204,30 @@ describe('nullInsertThreshold Transformer', () => {
       ],
     });
 
-    // Max is 2 as opposed to the above 13 otherwise
+    // Max is 2.5 as opposed to the above 13 otherwise
     // we get 12 nulls instead of the additional 1
     const result2 = applyNullInsertThreshold({ frame: df2, refFieldName: null, refFieldPseudoMax: 2.5 });
 
     expect(result2.fields[0].values.toArray()).toStrictEqual([1, 2]);
     expect(result2.fields[1].values.toArray()).toStrictEqual([1, null]);
     expect(result2.fields[2].values.toArray()).toStrictEqual(['a', null]);
+  });
+
+  test('should not insert trailing null at end +interval when timeRange.to.valueOf() equals threshold', () => {
+    const df = new MutableDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'Time', type: FieldType.time, config: { interval: 1 }, values: [1] },
+        { name: 'One', type: FieldType.number, values: [1] },
+        { name: 'Two', type: FieldType.string, values: ['a'] },
+      ],
+    });
+
+    const result = applyNullInsertThreshold({ frame: df, refFieldName: null, refFieldPseudoMax: 2 });
+
+    expect(result.fields[0].values.toArray()).toStrictEqual([1]);
+    expect(result.fields[1].values.toArray()).toStrictEqual([1]);
+    expect(result.fields[2].values.toArray()).toStrictEqual(['a']);
   });
 
   // TODO: make this work
