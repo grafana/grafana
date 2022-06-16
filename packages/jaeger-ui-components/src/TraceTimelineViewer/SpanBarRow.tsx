@@ -560,25 +560,25 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
     } else if (type === '' || type === DURATION) {
       return `(${duration})`;
     } else if (type === TAG) {
-      const tagKey = spanBarOptions?.tag ?? '';
+      const tagKey = spanBarOptions?.tag?.trim() ?? '';
       if (tagKey !== '' && span.tags) {
-        const foundObj = span.tags.filter((tag: TraceKeyValuePair) => {
+        const tag = span.tags.filter((tag: TraceKeyValuePair) => {
           return tag.key === tagKey;
         });
 
-        if (foundObj && foundObj.length > 0) {
-          return `(${foundObj[0].value.toString()})`;
+        if (tag && tag.length > 0) {
+          return `(${tag[0].value})`;
         }
       }
     } else if (type === PROCESS) {
-      const processKey = spanBarOptions?.process ?? '';
+      const processKey = spanBarOptions?.process?.trim() ?? '';
       if (processKey !== '' && span.process?.tags) {
-        const foundObj = span.process?.tags.filter((process: TraceKeyValuePair) => {
+        const process = span.process?.tags.filter((process: TraceKeyValuePair) => {
           return process.key === processKey;
         });
 
-        if (foundObj && foundObj.length > 0) {
-          return `(${foundObj[0].value.toString()})`;
+        if (process && process.length > 0) {
+          return `(${process[0].value})`;
         }
       }
     }
