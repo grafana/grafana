@@ -275,14 +275,14 @@ func createRule(t *testing.T, client apiClient, folder string) {
 
 	interval, err := model.ParseDuration("1m")
 	require.NoError(t, err)
-
+	doubleInterval := 2 * interval
 	rules := apimodels.PostableRuleGroupConfig{
 		Name:     "arulegroup",
 		Interval: interval,
 		Rules: []apimodels.PostableExtendedRuleNode{
 			{
 				ApiRuleNode: &apimodels.ApiRuleNode{
-					For:         2 * interval,
+					For:         &doubleInterval,
 					Labels:      map[string]string{"label1": "val1"},
 					Annotations: map[string]string{"annotation1": "val1"},
 				},
@@ -417,7 +417,7 @@ func TestRulerRulesFilterByDashboard(t *testing.T) {
 			Rules: []apimodels.PostableExtendedRuleNode{
 				{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For:    interval,
+						For:    &interval,
 						Labels: map[string]string{},
 						Annotations: map[string]string{
 							"__dashboardUid__": dashboardUID,
@@ -825,7 +825,7 @@ func newTestingRuleConfig(t *testing.T) apimodels.PostableRuleGroupConfig {
 
 	firstRule := apimodels.PostableExtendedRuleNode{
 		ApiRuleNode: &apimodels.ApiRuleNode{
-			For:         interval,
+			For:         &interval,
 			Labels:      map[string]string{"label1": "val1"},
 			Annotations: map[string]string{"annotation1": "val1"},
 		},
@@ -852,7 +852,7 @@ func newTestingRuleConfig(t *testing.T) apimodels.PostableRuleGroupConfig {
 	}
 	secondRule := apimodels.PostableExtendedRuleNode{
 		ApiRuleNode: &apimodels.ApiRuleNode{
-			For:         interval,
+			For:         &interval,
 			Labels:      map[string]string{"label1": "val1"},
 			Annotations: map[string]string{"annotation1": "val1"},
 		},

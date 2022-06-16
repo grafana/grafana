@@ -625,7 +625,7 @@ func TestRulerAccess(t *testing.T) {
 				Rules: []apimodels.PostableExtendedRuleNode{
 					{
 						ApiRuleNode: &apimodels.ApiRuleNode{
-							For:         interval,
+							For:         &interval,
 							Labels:      map[string]string{"label1": "val1"},
 							Annotations: map[string]string{"annotation1": "val1"},
 						},
@@ -868,7 +868,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 				rulegroup: "arulegroup",
 				rule: apimodels.PostableExtendedRuleNode{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For:         interval,
+						For:         &interval,
 						Labels:      map[string]string{"label1": "val1"},
 						Annotations: map[string]string{"annotation1": "val1"},
 					},
@@ -884,7 +884,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 				rulegroup: "arulegroup",
 				rule: apimodels.PostableExtendedRuleNode{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For:         interval,
+						For:         &interval,
 						Labels:      map[string]string{"label1": "val1"},
 						Annotations: map[string]string{"annotation1": "val1"},
 					},
@@ -914,7 +914,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 				rulegroup: "arulegroup",
 				rule: apimodels.PostableExtendedRuleNode{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For:         interval,
+						For:         &interval,
 						Labels:      map[string]string{"label1": "val1"},
 						Annotations: map[string]string{"annotation1": "val1"},
 					},
@@ -944,7 +944,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 				rulegroup: getLongString(t, ngstore.AlertRuleMaxTitleLength+1),
 				rule: apimodels.PostableExtendedRuleNode{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For:         interval,
+						For:         &interval,
 						Labels:      map[string]string{"label1": "val1"},
 						Annotations: map[string]string{"annotation1": "val1"},
 					},
@@ -975,7 +975,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 				interval:  invalidInterval,
 				rule: apimodels.PostableExtendedRuleNode{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For:         interval,
+						For:         &interval,
 						Labels:      map[string]string{"label1": "val1"},
 						Annotations: map[string]string{"annotation1": "val1"},
 					},
@@ -1005,7 +1005,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 				rulegroup: "arulegroup",
 				rule: apimodels.PostableExtendedRuleNode{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For:         interval,
+						For:         &interval,
 						Labels:      map[string]string{"label1": "val1"},
 						Annotations: map[string]string{"annotation1": "val1"},
 					},
@@ -1035,7 +1035,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 				rulegroup: "arulegroup",
 				rule: apimodels.PostableExtendedRuleNode{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For:         interval,
+						For:         &interval,
 						Labels:      map[string]string{"label1": "val1"},
 						Annotations: map[string]string{"annotation1": "val1"},
 					},
@@ -1093,7 +1093,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 			Rules: []apimodels.PostableExtendedRuleNode{
 				{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For:         interval,
+						For:         &interval,
 						Labels:      map[string]string{"label1": "val1"},
 						Annotations: map[string]string{"annotation1": "val1"},
 					},
@@ -1272,7 +1272,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 			Rules: []apimodels.PostableExtendedRuleNode{
 				{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For: interval,
+						For: &interval,
 						Labels: map[string]string{
 							"label1": "val42",
 							"foo":    "bar",
@@ -1345,7 +1345,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 			Rules: []apimodels.PostableExtendedRuleNode{
 				{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For: interval,
+						For: &interval,
 						Labels: map[string]string{
 							"label1": "val42",
 							"foo":    "bar",
@@ -1379,7 +1379,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 				},
 				{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For: interval,
+						For: &interval,
 						Labels: map[string]string{
 							"label1": "val42",
 							"foo":    "bar",
@@ -1451,7 +1451,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 			Rules: []apimodels.PostableExtendedRuleNode{
 				{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For: forValue,
+						For: &forValue,
 						Labels: map[string]string{
 							// delete foo label
 							"label1": "val1", // update label value
@@ -1578,7 +1578,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 			Rules: []apimodels.PostableExtendedRuleNode{
 				{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For: forValue,
+						For: &forValue,
 					},
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 						UID:       ruleUID, // Including the UID in the payload makes the endpoint update the existing rule.
