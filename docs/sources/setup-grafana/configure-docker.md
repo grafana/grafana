@@ -9,7 +9,7 @@ keywords:
   - documentation
   - docker
 title: Configure Docker image
-weight: 700
+weight: 1800
 ---
 
 # Configure a Grafana Docker image
