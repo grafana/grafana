@@ -24,6 +24,9 @@ import { routeNames } from '../utils/common';
 
 const RESOURCE_GRAPH_URL = '/providers/Microsoft.ResourceGraph/resources?api-version=2021-03-01';
 
+const logsSupportedResourceTypesKusto = logsResourceTypes.map((v) => `"${v}"`).join(',');
+const supportedMetricNamespacesKusto = supportedMetricNamespaces.map((v) => `"${v.toLocaleLowerCase()}"`).join(',');
+
 export type ResourcePickerQueryType = 'logs' | 'metrics';
 
 export default class ResourcePickerData extends DataSourceWithBackend<AzureMonitorQuery, AzureDataSourceJsonData> {
@@ -321,8 +324,6 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
   }
 
   private filterByType = (t: ResourcePickerQueryType) => {
-    const logsSupportedResourceTypesKusto = logsResourceTypes.map((v) => `"${v}"`).join(',');
-    const supportedMetricNamespacesKusto = supportedMetricNamespaces.map((v) => `"${v.toLocaleLowerCase()}"`).join(',');
     return t === 'logs'
       ? `| where type in (${logsSupportedResourceTypesKusto})`
       : `| where type in (${supportedMetricNamespacesKusto})`;
