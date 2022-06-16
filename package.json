@@ -219,7 +219,7 @@
     "postcss-loader": "7.0.0",
     "postcss-reporter": "7.0.5",
     "postcss-scss": "4.0.4",
-    "prettier": "2.6.2",
+    "prettier": "2.7.1",
     "raw-loader": "4.0.2",
     "react-refresh": "0.13.0",
     "react-select-event": "5.5.0",
