@@ -4,7 +4,7 @@ import { useLocalStorage } from 'react-use';
 import useAsync from 'react-use/lib/useAsync';
 
 import { GrafanaTheme } from '@grafana/data';
-import { Card, Checkbox, CollapsableSection, Icon, Spinner, stylesFactory, useTheme } from '@grafana/ui';
+import { Card, Checkbox, CollapsableSection, Icon, IconName, Spinner, stylesFactory, useTheme } from '@grafana/ui';
 import { getSectionStorageKey } from 'app/features/search/utils';
 import { useUniqueId } from 'app/plugins/datasource/influxdb/components/useUniqueId';
 
@@ -19,7 +19,7 @@ export interface DashboardSection {
   title: string;
   selected?: boolean; // not used ?  keyboard
   url?: string;
-  icon?: string;
+  icon?: IconName;
   itemsUIDs?: string[]; // for pseudo folders
 }
 
@@ -118,11 +118,9 @@ export const FolderSection: FC<SectionHeaderProps> = ({
   }
 
   const renderResults = () => {
-    if (!results.value?.length) {
-      if (results.loading) {
-        return <Spinner className={styles.spinner} />;
-      }
-
+    if (!results.value) {
+      return null;
+    } else if (results.value.length === 0) {
       return (
         <Card>
           <Card.Heading>No results found</Card.Heading>
@@ -172,7 +170,7 @@ export const FolderSection: FC<SectionHeaderProps> = ({
           )}
 
           <div className={styles.icon}>
-            <Icon name={icon as any} />
+            <Icon name={icon} />
           </div>
 
           <div className={styles.text}>
