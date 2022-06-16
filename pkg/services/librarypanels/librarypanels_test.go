@@ -11,7 +11,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/bus"
+	busmock "github.com/grafana/grafana/pkg/bus/mock"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/alerting"
@@ -1393,7 +1396,7 @@ func createFolderWithACL(t *testing.T, sqlStore *sqlstore.SQLStore, title string
 	dashboardPermissions := acmock.NewMockedPermissionsService()
 	dashboardStore := database.ProvideDashboardStore(sqlStore)
 	d := dashboardservice.ProvideDashboardService(cfg, dashboardStore, nil, features, folderPermissions, dashboardPermissions, ac)
-	s := dashboardservice.ProvideFolderService(cfg, d, dashboardStore, nil, features, folderPermissions, ac)
+	s := dashboardservice.ProvideFolderService(cfg, d, dashboardStore, nil, features, folderPermissions, ac, busmock.New())
 
 	t.Logf("Creating folder with title and UID %q", title)
 	folder, err := s.CreateFolder(context.Background(), user, user.OrgId, title, title)
@@ -1494,10 +1497,12 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			cfg, dashboardStore, &alerting.DashAlertExtractorService{},
 			features, folderPermissions, dashboardPermissions, ac,
 		)
+		tracer, err := tracing.InitializeTracerForTest()
+		require.NoError(t, err)
 
 		folderService := dashboardservice.ProvideFolderService(
 			cfg, dashboardService, dashboardStore, nil,
-			features, folderPermissions, ac,
+			features, folderPermissions, ac, bus.ProvideBus(tracer),
 		)
 
 		elementService := libraryelements.ProvideService(cfg, sqlStore, routing.NewRouteRegister(), folderService)
@@ -1526,7 +1531,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			Login: userInDbName,
 		}
 
-		_, err := sqlStore.CreateUser(context.Background(), cmd)
+		_, err = sqlStore.CreateUser(context.Background(), cmd)
 		require.NoError(t, err)
 
 		sc := scenarioContext{
