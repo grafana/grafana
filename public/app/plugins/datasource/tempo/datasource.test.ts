@@ -372,7 +372,7 @@ describe('Tempo apm table', () => {
     expect(response.data[0].fields[1].config.decimals).toBe(2);
     expect(response.data[0].fields[1].config.links[0].title).toBe('Rate');
     expect(response.data[0].fields[1].config.links[0].internal.query.expr).toBe(
-      'topk(5, sum(rate(traces_spanmetrics_calls_total{span_name="${__data.fields[0]}"}[$__rate_interval])) by (span_name))'
+      'sum(rate(traces_spanmetrics_calls_total{span_name="${__data.fields[0]}"}[$__rate_interval]))'
     );
     expect(response.data[0].fields[1].config.links[0].internal.query.range).toBe(true);
     expect(response.data[0].fields[1].config.links[0].internal.query.exemplar).toBe(true);
@@ -392,7 +392,7 @@ describe('Tempo apm table', () => {
     expect(response.data[0].fields[3].config.decimals).toBe(2);
     expect(response.data[0].fields[3].config.links[0].title).toBe('Error Rate');
     expect(response.data[0].fields[3].config.links[0].internal.query.expr).toBe(
-      'topk(5, sum(rate(traces_spanmetrics_calls_total{span_status="STATUS_CODE_ERROR",span_name="${__data.fields[0]}"}[$__rate_interval])) by (span_name))'
+      'sum(rate(traces_spanmetrics_calls_total{span_status="STATUS_CODE_ERROR",span_name="${__data.fields[0]}"}[$__rate_interval]))'
     );
     expect(response.data[0].fields[3].config.links[0].internal.query.range).toBe(true);
     expect(response.data[0].fields[3].config.links[0].internal.query.exemplar).toBe(true);
@@ -479,7 +479,7 @@ describe('Tempo apm table', () => {
 
   it('should build link expr correctly', () => {
     let builtQuery = buildLinkExpr('topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name))');
-    expect(builtQuery).toBe('topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__rate_interval])) by (span_name))');
+    expect(builtQuery).toBe('sum(rate(traces_spanmetrics_calls_total{}[$__rate_interval]))');
   });
 
   it('should get rate aligned values correctly', () => {
