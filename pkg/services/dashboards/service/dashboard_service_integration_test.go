@@ -12,7 +12,6 @@ import (
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	dashbboardservice "github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -797,7 +796,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 type permissionScenarioContext struct {
 	dashboardGuardianMock    *guardian.FakeDashboardGuardian
 	sqlStore                 *sqlstore.SQLStore
-	dashboardStore           dashbboardservice.Store
+	dashboardStore           dashboards.Store
 	savedFolder              *dashboards.Dashboard
 	savedDashInFolder        *dashboards.Dashboard
 	otherSavedFolder         *dashboards.Dashboard
@@ -914,7 +913,7 @@ func saveTestDashboard(t *testing.T, title string, orgID, folderID int64, sqlSto
 		}),
 	}
 
-	dto := dashbboardservice.SaveDashboardDTO{
+	dto := dashboards.SaveDashboardDTO{
 		OrgId:     orgID,
 		Dashboard: cmd.GetDashboardModel(),
 		User: &models.SignedInUser{
@@ -951,7 +950,7 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore *sqlstore.
 		}),
 	}
 
-	dto := dashbboardservice.SaveDashboardDTO{
+	dto := dashboards.SaveDashboardDTO{
 		OrgId:     orgID,
 		Dashboard: cmd.GetDashboardModel(),
 		User: &models.SignedInUser{
@@ -976,10 +975,10 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore *sqlstore.
 	return res
 }
 
-func toSaveDashboardDto(cmd dashboards.SaveDashboardCommand) dashbboardservice.SaveDashboardDTO {
+func toSaveDashboardDto(cmd dashboards.SaveDashboardCommand) dashboards.SaveDashboardDTO {
 	dash := (&cmd).GetDashboardModel()
 
-	return dashbboardservice.SaveDashboardDTO{
+	return dashboards.SaveDashboardDTO{
 		Dashboard: dash,
 		Message:   cmd.Message,
 		OrgId:     cmd.OrgId,
