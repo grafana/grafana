@@ -185,6 +185,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
           {showContextToggle?.(row) && (
             <span
               className={cx('log-row-context', style.context, styles.contextButton)}
+              onClick={(e) => e.stopPropagation()}
               onMouseEnter={this.hoverContextButton.bind(this)}
               onMouseLeave={this.hoverContextButton.bind(this)}
             >
