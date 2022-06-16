@@ -71,14 +71,14 @@ describe('FolderSection', () => {
         grafanaSearcherSpy.mockImplementationOnce(() => promise);
 
         render(<FolderSection renderStandaloneBody section={mockSection} onTagSelected={mockOnTagSelected} />);
-        expect(await screen.findByTestId('loading-spinner')).toBeInTheDocument();
+        expect(await screen.findByTestId('Spinner')).toBeInTheDocument();
 
         // resolve the promise
         await act(async () => {
           promiseResolver(mockSearchResult);
         });
 
-        expect(screen.queryByTestId('loading-spinner')).not.toBeInTheDocument();
+        expect(screen.queryByTestId('Spinner')).not.toBeInTheDocument();
         expect(await screen.findByText('No results found')).toBeInTheDocument();
       });
     });
@@ -137,14 +137,14 @@ describe('FolderSection', () => {
         grafanaSearcherSpy.mockImplementationOnce(() => promise);
 
         render(<FolderSection renderStandaloneBody section={mockSection} onTagSelected={mockOnTagSelected} />);
-        expect(await screen.findByTestId('loading-spinner')).toBeInTheDocument();
+        expect(await screen.findByTestId('Spinner')).toBeInTheDocument();
 
         // resolve the promise
         await act(async () => {
           promiseResolver(mockSearchResult);
         });
 
-        expect(screen.queryByTestId('loading-spinner')).not.toBeInTheDocument();
+        expect(screen.queryByTestId('Spinner')).not.toBeInTheDocument();
         expect(await screen.findByText('My dashboard 1')).toBeInTheDocument();
       });
     });
