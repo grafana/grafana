@@ -256,11 +256,11 @@ func (api *ServiceAccountsAPI) HideApiKeysTab(ctx *models.ReqContext) response.R
 
 // POST /api/serviceaccounts/migrate
 func (api *ServiceAccountsAPI) MigrateApiKeysToServiceAccounts(ctx *models.ReqContext) response.Response {
-	if err := api.store.MigrateApiKeysToServiceAccounts(ctx.Req.Context(), ctx.OrgId); err == nil {
-		return response.Success("API keys migrated to service accounts")
-	} else {
+	if err := api.store.MigrateApiKeysToServiceAccounts(ctx.Req.Context(), ctx.OrgId); err != nil {
 		return response.Error(http.StatusInternalServerError, "Internal server error", err)
 	}
+
+	return response.Success("API keys migrated to service accounts")
 }
 
 // POST /api/serviceaccounts/migrate/:keyId
@@ -269,11 +269,12 @@ func (api *ServiceAccountsAPI) ConvertToServiceAccount(ctx *models.ReqContext) r
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Key ID is invalid", err)
 	}
-	if err := api.store.MigrateApiKey(ctx.Req.Context(), ctx.OrgId, keyId); err == nil {
-		return response.Success("Service accounts converted")
-	} else {
+
+	if err := api.store.MigrateApiKey(ctx.Req.Context(), ctx.OrgId, keyId); err != nil {
 		return response.Error(http.StatusInternalServerError, "Error converting API key", err)
 	}
+
+	return response.Success("Service accounts migrated")
 }
 
 // POST /api/serviceaccounts/revert/:keyId
@@ -282,10 +283,11 @@ func (api *ServiceAccountsAPI) RevertApiKey(ctx *models.ReqContext) response.Res
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Key ID is invalid", err)
 	}
+
 	if err := api.store.RevertApiKey(ctx.Req.Context(), keyId); err != nil {
-		return response.Error(http.StatusInternalServerError, "Error reverting API key", err)
+		return response.Error(http.StatusInternalServerError, "Error reverting to API key", err)
 	}
-	return response.Success("API key reverted")
+	return response.Success("Reverted service account to API key")
 }
 
 func (api *ServiceAccountsAPI) getAccessControlMetadata(c *models.ReqContext, saIDs map[string]bool) map[string]accesscontrol.Metadata {

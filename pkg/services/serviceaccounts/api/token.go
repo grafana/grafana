@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	failedToDeleteMsg = "Failed to delete API key"
+	failedToDeleteMsg = "Failed to delete service account token"
 	ServiceID         = "sa"
 )
 
@@ -45,38 +45,39 @@ func (api *ServiceAccountsAPI) ListTokens(ctx *models.ReqContext) response.Respo
 		return response.Error(http.StatusBadRequest, "Service Account ID is invalid", err)
 	}
 
-	if saTokens, err := api.store.ListTokens(ctx.Req.Context(), ctx.OrgId, saID); err == nil {
-		result := make([]*TokenDTO, len(saTokens))
-		for i, t := range saTokens {
-			var expiration *time.Time = nil
-			var secondsUntilExpiration float64 = 0
+	saTokens, err := api.store.ListTokens(ctx.Req.Context(), ctx.OrgId, saID)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Internal server error", err)
+	}
 
-			isExpired := hasExpired(t.Expires)
-			if t.Expires != nil {
-				v := time.Unix(*t.Expires, 0)
-				expiration = &v
-				if !isExpired && (*expiration).Before(time.Now().Add(sevenDaysAhead)) {
-					secondsUntilExpiration = time.Until(*expiration).Seconds()
-				}
-			}
+	result := make([]*TokenDTO, len(saTokens))
+	for i, t := range saTokens {
+		var expiration *time.Time = nil
+		var secondsUntilExpiration float64 = 0
 
-			result[i] = &TokenDTO{
-				Id:                     t.Id,
-				Name:                   t.Name,
-				Created:                &t.Created,
-				Expiration:             expiration,
-				SecondsUntilExpiration: &secondsUntilExpiration,
-				HasExpired:             isExpired,
+		isExpired := hasExpired(t.Expires)
+		if t.Expires != nil {
+			v := time.Unix(*t.Expires, 0)
+			expiration = &v
+			if !isExpired && (*expiration).Before(time.Now().Add(sevenDaysAhead)) {
+				secondsUntilExpiration = time.Until(*expiration).Seconds()
 			}
 		}
 
-		return response.JSON(http.StatusOK, result)
-	} else {
-		return response.Error(http.StatusInternalServerError, "Internal server error", err)
+		result[i] = &TokenDTO{
+			Id:                     t.Id,
+			Name:                   t.Name,
+			Created:                &t.Created,
+			Expiration:             expiration,
+			SecondsUntilExpiration: &secondsUntilExpiration,
+			HasExpired:             isExpired,
+		}
 	}
+
+	return response.JSON(http.StatusOK, result)
 }
 
-// CreateNewToken adds an API key to a service account
+// CreateNewToken adds a token to a service account
 // POST /api/serviceaccounts/:serviceAccountId/tokens
 func (api *ServiceAccountsAPI) CreateToken(c *models.ReqContext) response.Response {
 	saID, err := strconv.ParseInt(web.Params(c.Req)[":serviceAccountId"], 10, 64)
@@ -113,7 +114,7 @@ func (api *ServiceAccountsAPI) CreateToken(c *models.ReqContext) response.Respon
 
 	newKeyInfo, err := apikeygenprefix.New(ServiceID)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Generating API key failed", err)
+		return response.Error(http.StatusInternalServerError, "Generating service account token failed", err)
 	}
 
 	cmd.Key = newKeyInfo.HashedKey
@@ -125,7 +126,7 @@ func (api *ServiceAccountsAPI) CreateToken(c *models.ReqContext) response.Respon
 		if errors.Is(err, models.ErrDuplicateApiKey) {
 			return response.Error(http.StatusConflict, err.Error(), nil)
 		}
-		return response.Error(http.StatusInternalServerError, "Failed to add API Key", err)
+		return response.Error(http.StatusInternalServerError, "Failed to add service account token", err)
 	}
 
 	result := &dtos.NewApiKeyResult{
@@ -171,5 +172,5 @@ func (api *ServiceAccountsAPI) DeleteToken(c *models.ReqContext) response.Respon
 		return response.Error(status, failedToDeleteMsg, err)
 	}
 
-	return response.Success("API key deleted")
+	return response.Success("Service account token deleted")
 }
