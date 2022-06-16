@@ -21,7 +21,6 @@ import {
   TemplateSrv,
 } from '@grafana/runtime';
 import { toTestingStatus } from '@grafana/runtime/src/utils/queryResponse';
-import MySQLQueryModel from 'app/plugins/datasource/mysql/MySqlQueryModel';
 
 import { getSearchFilterScopedVar } from '../../../../features/variables/utils';
 import {
@@ -102,7 +101,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
   }
 
   applyTemplateVariables(target: SQLQuery, scopedVars: ScopedVars): Record<string, any> {
-    const queryModel = new MySQLQueryModel(target, this.templateSrv, scopedVars);
+    const queryModel = this.getQueryModel(target, this.templateSrv, scopedVars);
     return {
       refId: target.refId,
       datasource: this.getRef(),
@@ -224,7 +223,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     if (target.rawQuery) {
       rawSql = target.rawSql;
     } else {
-      const query = new MySQLQueryModel(target);
+      const query = this.getQueryModel(target);
       rawSql = query.buildQuery();
     }
 
