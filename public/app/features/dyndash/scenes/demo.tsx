@@ -20,12 +20,12 @@ export function getFlexLayoutTest(): Scene {
         }),
         new SceneFlexLayout({
           key: 'B',
-          size: { hSizing: 'fixed', width: 450 },
+          size: { width: 450 },
           direction: 'column',
           children: [
             new VizPanel({
               pluginId: 'timeseries',
-              size: { vSizing: 'fixed', height: 300 },
+              size: { height: 300 },
               title: 'Fixed height',
             }),
             new VizPanel({
@@ -103,7 +103,7 @@ export function getScenePanelRepeaterTest(): Scene {
                 },
               }),
               new VizPanel({
-                size: { hSizing: 'fixed', width: 300 },
+                size: { width: 300 },
                 pluginId: 'stat',
                 fieldConfig: { defaults: { displayName: 'Last' }, overrides: [] },
                 options: {

@@ -42,8 +42,6 @@ function FlexLayoutChildComponent({
 }
 
 function getItemStyles(direction: FlexLayoutDirection, sizing: SceneObjectSize = {}) {
-  const { vSizing = 'fill', hSizing = 'fill' } = sizing;
-
   const style: CSSProperties = {
     display: 'flex',
     flexDirection: direction,
@@ -52,28 +50,28 @@ function getItemStyles(direction: FlexLayoutDirection, sizing: SceneObjectSize =
   };
 
   if (direction === 'column') {
-    if (vSizing === 'fill') {
-      style.flexGrow = 1;
-    } else {
+    if (sizing.height) {
       style.height = sizing.height;
+    } else {
+      style.flexGrow = 1;
     }
 
-    if (hSizing === 'fill') {
-      style.alignSelf = 'stretch';
-    } else {
+    if (sizing.width) {
       style.width = sizing.width;
+    } else {
+      style.alignSelf = 'stretch';
     }
   } else {
-    if (vSizing === 'fill') {
-      style.alignSelf = 'stretch';
-    } else {
+    if (sizing.height) {
       style.height = sizing.height;
+    } else {
+      style.alignSelf = 'stretch';
     }
 
-    if (hSizing === 'fill') {
-      style.flexGrow = 1;
-    } else {
+    if (sizing.width) {
       style.width = sizing.width;
+    } else {
+      style.flexGrow = 1;
     }
   }
 

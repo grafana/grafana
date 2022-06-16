@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 
 import { TimeRange } from '@grafana/data';
 import { RefreshPicker, ToolbarButtonRow } from '@grafana/ui';

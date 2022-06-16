@@ -14,8 +14,6 @@ export interface SceneObjectSize {
   height?: number | string;
   x?: number;
   y?: number;
-  hSizing?: 'fill' | 'fixed';
-  vSizing?: 'fill' | 'fixed';
   minWidth?: number | string;
   minHeight?: number | string;
 }
@@ -40,7 +38,7 @@ export interface SceneObject<TState extends SceneObjectState = SceneObjectState>
   isMounted?: boolean;
 
   /** SceneObject parent */
-  parent?: SceneObject<any>;
+  parent?: SceneObject;
 
   /** Utility hook that wraps useObservable. Used by React components to subscribes to state changes */
   useState(): TState;
