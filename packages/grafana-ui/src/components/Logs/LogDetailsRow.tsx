@@ -31,6 +31,7 @@ interface State {
   showFieldsStats: boolean;
   fieldCount: number;
   fieldStats: LogLabelStatsModel[] | null;
+  mouseOver: boolean;
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -52,18 +53,23 @@ const getStyles = (theme: GrafanaTheme2) => {
     showingField: css`
       color: ${theme.colors.primary.text};
     `,
+    hoverValueCopy: css`
+      padding: ${theme.spacing(0, 0, 0, 1.9)};
+      position: absolute;
+      bottom: auto;
+    `,
     wrapLine: css`
       label: wrapLine;
       white-space: pre-wrap;
     `,
   };
 };
-
 class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   state: State = {
     showFieldsStats: false,
     fieldCount: 0,
     fieldStats: null,
+    mouseOver: false,
   };
 
   showField = () => {
@@ -112,6 +118,11 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     });
   }
 
+  hoverValueCopy() {
+    const mouseOver = !this.state.mouseOver;
+    this.setState({ mouseOver });
+  }
+
   render() {
     const {
       theme,
@@ -126,7 +137,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
       onClickFilterLabel,
       onClickFilterOutLabel,
     } = this.props;
-    const { showFieldsStats, fieldStats, fieldCount } = this.state;
+    const { showFieldsStats, fieldStats, fieldCount, mouseOver } = this.state;
     const styles = getStyles(theme);
     const style = getLogRowStyles(theme);
 
@@ -166,8 +177,23 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
 
         {/* Key - value columns */}
         <td className={style.logDetailsLabel}>{parsedKey}</td>
-        <td className={cx(styles.wordBreakAll, wrapLogMessage && styles.wrapLine)}>
+        <td
+          className={cx(styles.wordBreakAll, wrapLogMessage && styles.wrapLine)}
+          onMouseEnter={this.hoverValueCopy.bind(this)}
+          onMouseLeave={this.hoverValueCopy.bind(this)}
+        >
           {parsedValue}
+          {mouseOver && (
+            <span className={styles.hoverValueCopy}>
+              <IconButton
+                name="copy"
+                title="Copy this value to clipboard"
+                onClick={() => {
+                  navigator.clipboard.writeText(parsedValue);
+                }}
+              />
+            </span>
+          )}
           {links?.map((link) => (
             <span key={link.title}>
               &nbsp;
