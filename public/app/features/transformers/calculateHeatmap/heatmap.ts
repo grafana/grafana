@@ -14,7 +14,7 @@ import {
 } from '@grafana/data';
 import { ScaleDistribution } from '@grafana/schema';
 
-import { HeatmapBucketLayout, HeatmapCalculationMode, HeatmapCalculationOptions } from './models.gen';
+import { HeatmapCellLayout, HeatmapCalculationMode, HeatmapCalculationOptions } from './models.gen';
 import { niceLinearIncrs, niceTimeIncrs } from './utils';
 
 export interface HeatmapTransformerOptions extends HeatmapCalculationOptions {
@@ -61,15 +61,15 @@ export function readHeatmapScanlinesCustomMeta(frame?: DataFrame): HeatmapScanli
   return (frame?.meta?.custom ?? {}) as HeatmapScanlinesCustomMeta;
 }
 
-export interface BucketsOptions {
+export interface RowsHeatmapOptions {
   frame: DataFrame;
   value?: string; // the field value name
-  layout?: HeatmapBucketLayout;
+  layout?: HeatmapCellLayout;
 }
 
 /** Given existing buckets, create a values style frame */
 // Assumes frames have already been sorted ASC and de-accumulated.
-export function bucketsToScanlines(opts: BucketsOptions): DataFrame {
+export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
   // TODO: handle null-filling w/ fields[0].config.interval?
   const xField = opts.frame.fields[0];
   const xValues = xField.values.toArray();
@@ -106,13 +106,13 @@ export function bucketsToScanlines(opts: BucketsOptions): DataFrame {
   // this name determines whether cells are drawn above, below, or centered on the values
   let ordinalFieldName = yFields[0].labels?.le != null ? 'yMax' : 'y';
   switch (opts.layout) {
-    case HeatmapBucketLayout.le:
+    case HeatmapCellLayout.le:
       ordinalFieldName = 'yMax';
       break;
-    case HeatmapBucketLayout.ge:
+    case HeatmapCellLayout.ge:
       ordinalFieldName = 'yMin';
       break;
-    case HeatmapBucketLayout.unknown:
+    case HeatmapCellLayout.unknown:
       ordinalFieldName = 'y';
       break;
   }
@@ -128,7 +128,7 @@ export function bucketsToScanlines(opts: BucketsOptions): DataFrame {
     length: xs.length,
     refId: opts.frame.refId,
     meta: {
-      type: DataFrameType.HeatmapScanlines,
+      type: DataFrameType.HeatmapCells,
       custom,
     },
     fields: [
@@ -261,7 +261,7 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
     length: heat2d.x.length,
     name: getFieldDisplayName(yField),
     meta: {
-      type: DataFrameType.HeatmapScanlines,
+      type: DataFrameType.HeatmapCells,
     },
     fields: [
       {

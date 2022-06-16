@@ -14,11 +14,6 @@ type Store interface {
 	GetDataSourceAccessStats(ctx context.Context, query *models.GetDataSourceAccessStatsQuery) error
 	GetDialect() migrator.Dialect
 	GetSystemStats(ctx context.Context, query *models.GetSystemStatsQuery) error
-	DeleteExpiredSnapshots(ctx context.Context, cmd *models.DeleteExpiredSnapshotsCommand) error
-	CreateDashboardSnapshot(ctx context.Context, cmd *models.CreateDashboardSnapshotCommand) error
-	DeleteDashboardSnapshot(ctx context.Context, cmd *models.DeleteDashboardSnapshotCommand) error
-	GetDashboardSnapshot(ctx context.Context, query *models.GetDashboardSnapshotQuery) error
-	SearchDashboardSnapshots(ctx context.Context, query *models.GetDashboardSnapshotsQuery) error
 	GetOrgByName(name string) (*models.Org, error)
 	CreateOrg(ctx context.Context, cmd *models.CreateOrgCommand) error
 	CreateOrgWithMember(name string, userID int64) (models.Org, error)
@@ -77,10 +72,10 @@ type Store interface {
 	InTransaction(ctx context.Context, fn func(ctx context.Context) error) error
 	CreatePlaylist(ctx context.Context, cmd *models.CreatePlaylistCommand) error
 	UpdatePlaylist(ctx context.Context, cmd *models.UpdatePlaylistCommand) error
-	GetPlaylist(ctx context.Context, query *models.GetPlaylistByIdQuery) error
+	GetPlaylist(ctx context.Context, query *models.GetPlaylistByUidQuery) error
 	DeletePlaylist(ctx context.Context, cmd *models.DeletePlaylistCommand) error
 	SearchPlaylists(ctx context.Context, query *models.GetPlaylistsQuery) error
-	GetPlaylistItem(ctx context.Context, query *models.GetPlaylistItemsByIdQuery) error
+	GetPlaylistItem(ctx context.Context, query *models.GetPlaylistItemsByUidQuery) error
 	GetAlertById(ctx context.Context, query *models.GetAlertByIdQuery) error
 	GetAllAlertQueryHandler(ctx context.Context, query *models.GetAllAlertsQuery) error
 	HandleAlertsQuery(ctx context.Context, query *models.GetAlertsQuery) error
@@ -118,7 +113,7 @@ type Store interface {
 	SetAlertNotificationStateToPendingCommand(ctx context.Context, cmd *models.SetAlertNotificationStateToPendingCommand) error
 	GetOrCreateAlertNotificationState(ctx context.Context, cmd *models.GetOrCreateNotificationStateQuery) error
 	GetAPIKeys(ctx context.Context, query *models.GetApiKeysQuery) error
-	GetAllOrgsAPIKeys(ctx context.Context) []*models.ApiKey
+	GetAllAPIKeys(ctx context.Context, orgID int64) []*models.ApiKey
 	DeleteApiKey(ctx context.Context, cmd *models.DeleteApiKeyCommand) error
 	AddAPIKey(ctx context.Context, cmd *models.AddApiKeyCommand) error
 	GetApiKeyById(ctx context.Context, query *models.GetApiKeyByIdQuery) error
