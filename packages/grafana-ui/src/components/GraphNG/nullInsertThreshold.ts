@@ -114,9 +114,8 @@ function nullInsertThreshold(
   const len = refValues.length;
   const refValuesNew: number[] = [];
 
-  // Continiuously add the threshold to the minimum value
-  // While this is less than "prevValue" which is the lowest
-  // time value in the sequence add in time frames
+  // Continiuously subtract the threshold from the first data
+  // point filling in insert values accordingly
   if (refFieldPseudoMin != null && refFieldPseudoMin < refValues[0]) {
     // this will be 0 or 1 threshold increment left of visible range
     let prevSlot = incrRoundDn(refFieldPseudoMin, threshold);
