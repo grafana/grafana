@@ -19,6 +19,6 @@ function errorCodeToTooltip(error?: PluginErrorCode): string | undefined {
     case PluginErrorCode.missingSignature:
       return 'Plugin disabled due to missing plugin signature';
     default:
-      return `Plugin disabled due to unkown error${error ? ': ' + error : ''}`;
+      return `Plugin disabled due to unknown error${error ? ': ' + error : ''}`;
   }
 }
