@@ -412,7 +412,7 @@ describe('Tempo apm table', () => {
     expect(response.data[0].fields[5].config.unit).toBe('s');
     expect(response.data[0].fields[5].config.links[0].title).toBe('Duration');
     expect(response.data[0].fields[5].config.links[0].internal.query.expr).toBe(
-      'histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{span_status="STATUS_CODE_ERROR",span_name="${__data.fields[0]}"}[$__rate_interval])) by (le))'
+      'histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{span_name="${__data.fields[0]}"}[$__rate_interval])) by (le))'
     );
     expect(response.data[0].fields[5].config.links[0].internal.query.range).toBe(true);
     expect(response.data[0].fields[5].config.links[0].internal.query.exemplar).toBe(true);
@@ -640,11 +640,11 @@ const errorRateMetric = new MutableDataFrame({
 
 const durationMetric = new MutableDataFrame({
   refId:
-    'histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{span_status="STATUS_CODE_ERROR",span_name=~"HTTP GET - root"}[$__range])) by (le))',
+    'histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{span_name=~"HTTP GET - root"}[$__range])) by (le))',
   fields: [
     { name: 'Time', values: [1653725618609] },
     {
-      name: 'Value #histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{span_status="STATUS_CODE_ERROR",span_name=~"HTTP GET - root"}[$__range])) by (le))',
+      name: 'Value #histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{span_name=~"HTTP GET - root"}[$__range])) by (le))',
       values: [0.12003505696757232],
     },
   ],
