@@ -61,15 +61,7 @@ export const LogGroupSelector: React.FC<LogGroupSelectorProps> = ({
         });
         return logGroups.map(toOption);
       } catch (err) {
-        let errMessage = 'unknown error';
-        if (typeof err !== 'string') {
-          try {
-            errMessage = JSON.stringify(err);
-          } catch (e) {}
-        } else {
-          errMessage = err;
-        }
-        dispatch(notifyApp(createErrorNotification(errMessage)));
+        dispatch(notifyApp(createErrorNotification(typeof err === 'string' ? err : JSON.stringify(err))));
         return [];
       }
     },
@@ -115,12 +107,7 @@ export const LogGroupSelector: React.FC<LogGroupSelectorProps> = ({
         .then((logGroups) => {
           const newSelectedLogGroups = intersection(
             selectedLogGroups,
-            logGroups.reduce((acc, { value }) => {
-              if (value) {
-                return [...acc, value];
-              }
-              return acc;
-            }, [] as string[])
+            logGroups.map((l) => l.value || '')
           );
           onChange(newSelectedLogGroups);
           setAvailableLogGroups(logGroups);
