@@ -74,6 +74,8 @@ func (hs *HTTPServer) toJsonStreamingResponse(qdr *backend.QueryDataResponse) re
 					qr.Status = http.StatusBadGateway
 				case backend.Timeout:
 					qr.Status = http.StatusGatewayTimeout
+				default:
+					qr.Status = http.StatusBadRequest
 				}
 			}
 		}
