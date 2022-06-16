@@ -170,9 +170,9 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     return this.getResponseParser().transformMetricFindResponse(response);
   }
 
-  async runSql(query: string) {
+  async runSql<T = any>(query: string) {
     const frame = await this.runQuery({ rawSql: query, format: QueryFormat.Table }, {});
-    return new DataFrameView(frame);
+    return new DataFrameView<T>(frame);
   }
 
   private runQuery(request: Partial<SQLQuery>, options?: any): Promise<DataFrame> {

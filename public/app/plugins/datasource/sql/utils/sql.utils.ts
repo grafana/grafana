@@ -9,7 +9,7 @@ import {
 } from '../expressions';
 import { SQLQuery, SQLExpression } from '../types';
 
-export function toRawSql({ sql, dataset, table }: SQLQuery): string {
+export function defaultToRawSql({ sql, dataset, table }: SQLQuery): string {
   let rawQuery = '';
 
   // Return early with empty string if there is no sql column

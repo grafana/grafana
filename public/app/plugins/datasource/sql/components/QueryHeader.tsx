@@ -7,7 +7,7 @@ import { Button, InlineField, InlineSwitch, RadioButtonGroup, Select, Tooltip } 
 
 import { QueryWithDefaults } from '../defaults';
 import { SQLQuery, QueryFormat, QueryRowFilter, QUERY_FORMAT_OPTIONS, DB } from '../types';
-import { toRawSql } from '../utils/sql.utils';
+import { defaultToRawSql } from '../utils/sql.utils';
 
 import { ConfirmModal } from './ConfirmModal';
 import { DatasetSelector } from './DatasetSelector';
@@ -41,6 +41,7 @@ export function QueryHeader({
   const { editorMode } = query;
   const [_, copyToClipboard] = useCopyToClipboard();
   const [showConfirm, setShowConfirm] = useState(false);
+  const toRawSql = db.toRawSql || defaultToRawSql;
 
   const onEditorModeChange = useCallback(
     (newEditorMode: EditorMode) => {

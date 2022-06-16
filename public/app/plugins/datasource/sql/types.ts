@@ -126,6 +126,7 @@ export interface DB {
   dispose: (dsID?: string) => void;
   lookup: (path?: string) => Promise<Array<{ name: string; completion: string }>>;
   getSqlCompletionProvider: () => LanguageCompletionProvider;
+  toRawSql?: (query: SQLQuery) => string;
 }
 
 export interface QueryEditorProps {

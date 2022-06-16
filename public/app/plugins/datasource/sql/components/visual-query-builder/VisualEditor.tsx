@@ -35,25 +35,25 @@ export const VisualEditor: React.FC<VisualEditorProps> = ({
     <>
       <EditorRows>
         <EditorRow>
-          <SQLSelectRow fields={state.value || []} query={query} onQueryChange={onChange} />
+          <SQLSelectRow fields={state.value || []} query={query} onQueryChange={onChange} db={db} />
         </EditorRow>
         {queryRowFilter.filter && (
           <EditorRow>
             <EditorField label="Filter by column value" optional>
-              <SQLWhereRow fields={state.value || []} query={query} onQueryChange={onChange} />
+              <SQLWhereRow fields={state.value || []} query={query} onQueryChange={onChange} db={db} />
             </EditorField>
           </EditorRow>
         )}
         {queryRowFilter.group && (
           <EditorRow>
             <EditorField label="Group by column">
-              <SQLGroupByRow fields={state.value || []} query={query} onQueryChange={onChange} />
+              <SQLGroupByRow fields={state.value || []} query={query} onQueryChange={onChange} db={db} />
             </EditorField>
           </EditorRow>
         )}
         {queryRowFilter.order && (
           <EditorRow>
-            <SQLOrderByRow fields={state.value || []} query={query} onQueryChange={onChange} />
+            <SQLOrderByRow fields={state.value || []} query={query} onQueryChange={onChange} db={db} />
           </EditorRow>
         )}
         {queryRowFilter.preview && query.rawSql && (
