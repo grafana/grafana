@@ -85,7 +85,7 @@ export const SliderValueEditor: React.FC<FieldConfigEditorProps<number, SliderFi
           included={included}
         />
         {/* Uses text input so that the number spinners are not shown */}
-        <NumberInput value={sliderValue} onChange={onSliderInputChange} max={settings?.max} min={settings?.min} />
+        <NumberInput value={sliderValue} onChange={onSliderInputChange} max={max} min={min} step={step} />
       </label>
     </div>
   );
