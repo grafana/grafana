@@ -237,8 +237,7 @@ func ValidateFixedRole(role RoleDTO) error {
 	return nil
 }
 
-// ValidateFixedRole errors when a plugin role does not match expected pattern
-// or doesn't have permissions matching the expected pattern.
+// ValidatePluginPermissions errors when a permission does not match expected pattern for plugins
 func ValidatePluginPermissions(pluginID string, permissions []Permission) error {
 	for i := range permissions {
 		if !strings.HasPrefix(permissions[i].Action, AppPluginRolePrefix) &&
