@@ -193,6 +193,31 @@ func (ac *OSSAccessControlService) DeclareFixedRoles(registrations ...accesscont
 	return nil
 }
 
+// DeclarePluginRoles allow the caller to declare, to the service, plugin roles and their assignments
+// to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
+func (ac *OSSAccessControlService) DeclarePluginRoles(pluginID string, registrations ...accesscontrol.RoleRegistration) error {
+	// If accesscontrol is disabled no need to register roles
+	if ac.IsDisabled() {
+		return nil
+	}
+
+	for _, r := range registrations {
+		err := accesscontrol.ValidatePluginRole(pluginID, r.Role)
+		if err != nil {
+			return err
+		}
+
+		err = accesscontrol.ValidateBuiltInRoles(r.Grants)
+		if err != nil {
+			return err
+		}
+
+		ac.registrations.Append(r)
+	}
+
+	return nil
+}
+
 // RegisterScopeAttributeResolver allows the caller to register scope resolvers for a
 // specific scope prefix (ex: datasources:name:)
 func (ac *OSSAccessControlService) RegisterScopeAttributeResolver(scopePrefix string, resolver accesscontrol.ScopeAttributeResolver) {

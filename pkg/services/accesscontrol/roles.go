@@ -232,9 +232,36 @@ func ConcatPermissions(permissions ...[]Permission) []Permission {
 // ValidateFixedRole errors when a fixed role does not match expected pattern
 func ValidateFixedRole(role RoleDTO) error {
 	if !strings.HasPrefix(role.Name, FixedRolePrefix) {
-		return ErrFixedRolePrefixMissing
+		return &ErrorRolePrefixMissing{Role: role.Name, Prefixes: []string{FixedRolePrefix}}
 	}
 	return nil
+}
+
+// ValidateFixedRole errors when a plugin role does not match expected pattern
+// or doesn't have permissions matching the expected pattern.
+func ValidatePluginPermissions(pluginID string, permissions []Permission) error {
+	for i := range permissions {
+		if !strings.HasPrefix(permissions[i].Action, AppPluginRolePrefix) &&
+			!strings.HasPrefix(permissions[i].Action, pluginID+":") &&
+			!strings.HasPrefix(permissions[i].Action, pluginID+".") {
+			return &ErrorActionPrefixMissing{Action: permissions[i].Action, Prefixes: []string{AppPluginRolePrefix, pluginID + ":"}}
+		}
+
+	}
+
+	return nil
+}
+
+// ValidatePluginRole errors when a plugin role does not match expected pattern
+// or doesn't have permissions matching the expected pattern.
+func ValidatePluginRole(pluginID string, role RoleDTO) error {
+	if !strings.HasPrefix(role.Name, AppPluginRolePrefix+pluginID+":") {
+		return &ErrorRolePrefixMissing{Role: role.Name, Prefixes: []string{AppPluginRolePrefix + pluginID + ":"}}
+	}
+
+	// TODO should we validate the group?
+
+	return ValidatePluginPermissions(pluginID, role.Permissions)
 }
 
 // ValidateBuiltInRoles errors when a built-in role does not match expected pattern

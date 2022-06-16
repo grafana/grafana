@@ -220,7 +220,7 @@ func TestOSSAccessControlService_DeclareFixedRoles(t *testing.T) {
 				},
 			},
 			wantErr: true,
-			err:     accesscontrol.ErrFixedRolePrefixMissing,
+			err:     &accesscontrol.ErrorInvalidRole{},
 		},
 		{
 			name: "should fail registration invalid builtin role assignment",

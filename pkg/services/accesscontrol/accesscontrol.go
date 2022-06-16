@@ -30,6 +30,10 @@ type AccessControl interface {
 	// assignments to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
 	DeclareFixedRoles(...RoleRegistration) error
 
+	// DeclarePluginRoles allows the caller to declare, to the service, plugins roles and their
+	// assignments to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
+	DeclarePluginRoles(pluginID string, registrations ...RoleRegistration) error
+
 	// RegisterScopeAttributeResolver allows the caller to register a scope resolver for a
 	// specific scope prefix (ex: datasources:name:)
 	RegisterScopeAttributeResolver(scopePrefix string, resolver ScopeAttributeResolver)

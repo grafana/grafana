@@ -13,8 +13,8 @@ import (
 // RoleRegistration stores a role and its assignments to built-in roles
 // (Viewer, Editor, Admin, Grafana Admin)
 type RoleRegistration struct {
-	Role   RoleDTO
-	Grants []string
+	Role   RoleDTO  `json:"role"`
+	Grants []string `json:"grants"`
 }
 
 // Role is the model for Role in RBAC.
@@ -269,12 +269,13 @@ type SetResourcePermissionCommand struct {
 }
 
 const (
-	GlobalOrgID        = 0
-	FixedRolePrefix    = "fixed:"
-	ManagedRolePrefix  = "managed:"
-	BasicRolePrefix    = "basic:"
-	BasicRoleUIDPrefix = "basic_"
-	RoleGrafanaAdmin   = "Grafana Admin"
+	GlobalOrgID         = 0
+	FixedRolePrefix     = "fixed:"
+	ManagedRolePrefix   = "managed:"
+	BasicRolePrefix     = "basic:"
+	AppPluginRolePrefix = "plugin.app:"
+	BasicRoleUIDPrefix  = "basic_"
+	RoleGrafanaAdmin    = "Grafana Admin"
 
 	GeneralFolderUID = "general"
 
