@@ -474,8 +474,9 @@ steps:
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'GRAFANA_TEST_DB=postgres go test -run
-    Integration -covermode=atomic -timeout=30m {}'
+  - go list -f '{{.Dir}}' './pkg/...' | xargs -I {} sh -c 'grep --include \*_test.go
+    -q "^func TestIntegration" {}/* &&  go test -run Integration -covermode=atomic
+    -timeout=30m {}'
   depends_on:
   - wire-install
   environment:
@@ -491,8 +492,9 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'GRAFANA_TEST_DB=mysql go test -run Integration
-    -covermode=atomic -timeout=30m {}'
+  - go list -f '{{.Dir}}' './pkg/...' | xargs -I {} sh -c 'grep --include \*_test.go
+    -q "^func TestIntegration" {}/* &&  go test -run Integration -covermode=atomic
+    -timeout=30m {}'
   depends_on:
   - wire-install
   environment:
@@ -1317,8 +1319,9 @@ steps:
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'GRAFANA_TEST_DB=postgres go test -run
-    Integration -covermode=atomic -timeout=30m {}'
+  - go list -f '{{.Dir}}' './pkg/...' | xargs -I {} sh -c 'grep --include \*_test.go
+    -q "^func TestIntegration" {}/* &&  go test -run Integration -covermode=atomic
+    -timeout=30m {}'
   depends_on:
   - wire-install
   environment:
@@ -1334,8 +1337,9 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'GRAFANA_TEST_DB=mysql go test -run Integration
-    -covermode=atomic -timeout=30m {}'
+  - go list -f '{{.Dir}}' './pkg/...' | xargs -I {} sh -c 'grep --include \*_test.go
+    -q "^func TestIntegration" {}/* &&  go test -run Integration -covermode=atomic
+    -timeout=30m {}'
   depends_on:
   - wire-install
   environment:
@@ -2010,8 +2014,9 @@ steps:
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'GRAFANA_TEST_DB=postgres go test -run
-    Integration -covermode=atomic -timeout=30m {}'
+  - go list -f '{{.Dir}}' './pkg/...' | xargs -I {} sh -c 'grep --include \*_test.go
+    -q "^func TestIntegration" {}/* &&  go test -run Integration -covermode=atomic
+    -timeout=30m {}'
   depends_on:
   - wire-install
   environment:
@@ -2027,8 +2032,9 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'GRAFANA_TEST_DB=mysql go test -run Integration
-    -covermode=atomic -timeout=30m {}'
+  - go list -f '{{.Dir}}' './pkg/...' | xargs -I {} sh -c 'grep --include \*_test.go
+    -q "^func TestIntegration" {}/* &&  go test -run Integration -covermode=atomic
+    -timeout=30m {}'
   depends_on:
   - wire-install
   environment:
@@ -3802,8 +3808,9 @@ steps:
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'GRAFANA_TEST_DB=postgres go test -run
-    Integration -covermode=atomic -timeout=30m {}'
+  - go list -f '{{.Dir}}' './pkg/...' | xargs -I {} sh -c 'grep --include \*_test.go
+    -q "^func TestIntegration" {}/* &&  go test -run Integration -covermode=atomic
+    -timeout=30m {}'
   depends_on:
   - wire-install
   environment:
@@ -3819,8 +3826,9 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'GRAFANA_TEST_DB=mysql go test -run Integration
-    -covermode=atomic -timeout=30m {}'
+  - go list -f '{{.Dir}}' './pkg/...' | xargs -I {} sh -c 'grep --include \*_test.go
+    -q "^func TestIntegration" {}/* &&  go test -run Integration -covermode=atomic
+    -timeout=30m {}'
   depends_on:
   - wire-install
   environment:
@@ -4747,6 +4755,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: c04b73f9b2de1ea37bd72c752dfe0f1f9c8bd34881d0212adc67d75c837e421d
+hmac: 756e8ead8cbf3419bb67ab4507a2f3b3923d2a6cc55fecf0eebb6b6b2ce0a7c0
 
 ...

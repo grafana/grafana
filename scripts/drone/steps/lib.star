@@ -881,7 +881,7 @@ def postgres_integration_tests_step(edition, ver_mode):
         ]
     if edition == 'oss':
         deps.extend(['wire-install'])
-        cmds.extend([ "go list './pkg/...' | xargs -I {} sh -c 'GRAFANA_TEST_DB=postgres go test -run Integration -covermode=atomic -timeout=30m {}'"])
+        cmds.extend([ "go list -f '{{.Dir}}' './pkg/...' | xargs -I {} sh -c 'grep --include \\*_test.go -q \"^func TestIntegration\" {}/* &&  go test -run Integration -covermode=atomic -timeout=30m {}'"])
     else:
         deps.extend(['grabpl'])
         cmds.extend(['./bin/grabpl integration-tests --database postgres'])
@@ -910,7 +910,7 @@ def mysql_integration_tests_step(edition, ver_mode):
         ]
     if edition == 'oss':
         deps.extend(['wire-install'])
-        cmds.extend([ "go list './pkg/...' | xargs -I {} sh -c 'GRAFANA_TEST_DB=mysql go test -run Integration -covermode=atomic -timeout=30m {}'"])
+        cmds.extend([ "go list -f '{{.Dir}}' './pkg/...' | xargs -I {} sh -c 'grep --include \\*_test.go -q \"^func TestIntegration\" {}/* &&  go test -run Integration -covermode=atomic -timeout=30m {}'"])
     else:
         deps.extend(['grabpl'])
         cmds.extend(['./bin/grabpl integration-tests --database mysql'])
