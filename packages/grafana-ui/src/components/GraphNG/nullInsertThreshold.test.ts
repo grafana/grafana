@@ -111,12 +111,14 @@ describe('nullInsertThreshold Transformer', () => {
     const result = applyNullInsertThreshold({
       frame: df,
       refFieldName: null,
-      refFieldPseudoMin: 1,
+      refFieldPseudoMin: -0.5,
       refFieldPseudoMax: 13,
     });
 
-    expect(result.fields[0].values.toArray()).toStrictEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
+    expect(result.fields[0].values.toArray()).toStrictEqual([-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
     expect(result.fields[1].values.toArray()).toStrictEqual([
+      null,
+      null,
       null,
       null,
       null,
@@ -132,6 +134,8 @@ describe('nullInsertThreshold Transformer', () => {
       8,
     ]);
     expect(result.fields[2].values.toArray()).toStrictEqual([
+      null,
+      null,
       null,
       null,
       null,

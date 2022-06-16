@@ -1,4 +1,4 @@
-import { ArrayVector, DataFrame, FieldType } from '@grafana/data';
+import { ArrayVector, DataFrame, FieldType, incrRoundDn } from '@grafana/data';
 
 type InsertMode = (prev: number, next: number, threshold: number) => number;
 
@@ -76,10 +76,21 @@ export function applyNullInsertThreshold(opts: NullInsertOptions): DataFrame {
     return {
       ...frame,
       length: filledFieldValues[0].length,
-      fields: frame.fields.map((field, i) => ({
-        ...field,
-        values: new ArrayVector(filledFieldValues[i]),
-      })),
+      fields: frame.fields.map((field, i) => {
+        let f = {
+          ...field,
+          values: new ArrayVector(filledFieldValues[i]),
+        };
+
+        if (i === 0) {
+          f.state = {
+            ...field.state,
+            nullThresholdApplied: true,
+          };
+        }
+
+        return f;
+      }),
     };
   }
 
@@ -101,24 +112,26 @@ function nullInsertThreshold(
   thorough: boolean
 ) {
   const len = refValues.length;
-  let prevValue: number = refValues[0];
   const refValuesNew: number[] = [];
 
   // Continiuously add the threshold to the minimum value
   // While this is less than "prevValue" which is the lowest
   // time value in the sequence add in time frames
-  if (refFieldPseudoMin != null) {
-    let minValue = refFieldPseudoMin - threshold;
+  if (refFieldPseudoMin != null && refFieldPseudoMin < refValues[0]) {
+    // this will be 0 or 1 threshold increment left of visible range
+    let prevSlot = incrRoundDn(refFieldPseudoMin, threshold);
 
-    while (minValue < prevValue - threshold) {
-      let nextValue = minValue + threshold;
-      refValuesNew.push(getInsertValue(minValue, nextValue, threshold));
-      minValue = nextValue;
+    while (prevSlot < refValues[0]) {
+      // (prevSlot - threshold) is used to simulate the previous 'real' data point, as getInsertValue expects
+      refValuesNew.push(getInsertValue(prevSlot - threshold, prevSlot, threshold));
+      prevSlot += threshold;
     }
   }
 
   // Insert initial value
-  refValuesNew.push(prevValue);
+  refValuesNew.push(refValues[0]);
+
+  let prevValue: number = refValues[0];
 
   // Fill nulls when a value is greater than
   // the threshold value
@@ -141,8 +154,8 @@ function nullInsertThreshold(
   }
 
   // At the end of the sequence
-  if (refFieldPseudoMax != null) {
-    while (prevValue + threshold <= refFieldPseudoMax) {
+  if (refFieldPseudoMax != null && refFieldPseudoMax > prevValue) {
+    while (prevValue + threshold < refFieldPseudoMax) {
       refValuesNew.push(getInsertValue(prevValue, refFieldPseudoMax, threshold));
       prevValue += threshold;
     }
