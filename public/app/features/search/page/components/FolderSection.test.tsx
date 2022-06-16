@@ -168,10 +168,7 @@ describe('FolderSection', () => {
           />
         );
 
-        grafanaSearcherSpy.mockClear();
-
         await userEvent.click(await screen.findByRole('checkbox', { name: 'Select folder' }));
-        expect(getGrafanaSearcher().search).not.toHaveBeenCalled();
         expect(screen.queryByText('My dashboard 1')).not.toBeInTheDocument();
       });
 

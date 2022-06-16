@@ -1,7 +1,6 @@
 import { css, cx } from '@emotion/css';
 import React, { FC } from 'react';
-import { useLocalStorage } from 'react-use';
-import useAsync from 'react-use/lib/useAsync';
+import { useLocalStorage, useAsync } from 'react-use';
 
 import { GrafanaTheme } from '@grafana/data';
 import { Card, Checkbox, CollapsableSection, Icon, IconName, Spinner, stylesFactory, useTheme } from '@grafana/ui';
