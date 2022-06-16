@@ -58,15 +58,25 @@ interface RegistrySelectInfo {
 
 function getLayersSelection(items: Array<MapLayerRegistryItem<any>>, current?: string): RegistrySelectInfo {
   const res: RegistrySelectInfo = { options: [], current: [] };
+  const alpha: Array<SelectableValue<string>> = [];
   for (const layer of items) {
-    if (layer.state === PluginState.alpha && !hasAlphaPanels) {
-      continue;
+    const opt: SelectableValue<string> = { label: layer.name, value: layer.id, description: layer.description };
+    if (layer.state === PluginState.alpha) {
+      if (!hasAlphaPanels) {
+        continue;
+      }
+      opt.label = `${layer.name} (Alpha)`;
+      opt.icon = 'bolt';
+      alpha.push(opt);
+    } else {
+      res.options.push(opt);
     }
-    const opt = { label: layer.name, value: layer.id, description: layer.description };
-    res.options.push(opt);
     if (layer.id === current) {
       res.current.push(opt);
     }
+  }
+  for (const p of alpha) {
+    res.options.push(p);
   }
   return res;
 }
