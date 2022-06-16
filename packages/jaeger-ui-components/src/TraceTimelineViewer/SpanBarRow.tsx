@@ -385,8 +385,10 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
       operationName,
       process: { serviceName },
     } = span;
+    const label = '';
+    formatDuration(duration);
 
-    let label = ''; //formatDuration(duration);
+    let spanBarLabel = '';
     const tagSetting = spanBarOptions?.tag ?? '';
     if (tagSetting !== '' && span.tags) {
       const foundObj = span.tags.filter((tag: TraceKeyValuePair) => {
@@ -394,7 +396,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
       });
 
       if (foundObj && foundObj.length > 0) {
-        label = `(${foundObj[0].value.toString()})`;
+        spanBarLabel = `(${foundObj[0].value.toString()})`;
       }
     }
 
@@ -492,7 +494,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
                 )}
               </span>
               <small className={styles.endpointName}>{rpc ? rpc.operationName : operationName}</small>
-              <small className={styles.endpointName}> {label}</small>
+              <small className={styles.endpointName}> {spanBarLabel}</small>
             </a>
             {createSpanLink &&
               (() => {

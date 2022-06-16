@@ -5,11 +5,13 @@ import {
   DataSourceJsonData,
   DataSourcePluginOptionsEditorProps,
   GrafanaTheme,
+  toOption,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
-import { InlineField, InlineFieldRow, Input, useStyles } from '@grafana/ui';
+import { InlineField, InlineFieldRow, Input, Select, useStyles } from '@grafana/ui';
 
 export interface SpanBarOptions {
+  type?: string;
   tag?: string;
 }
 
@@ -21,6 +23,7 @@ interface Props extends DataSourcePluginOptionsEditorProps<SpanBarOptionsData> {
 
 export default function SpanBarSettings({ options, onOptionsChange }: Props) {
   const styles = useStyles(getStyles);
+  const selectOptions = ['Duration', 'Tag'].map(toOption);
 
   return (
     <div className={css({ width: '100%' })}>
@@ -31,21 +34,42 @@ export default function SpanBarSettings({ options, onOptionsChange }: Props) {
       </div>
 
       <InlineFieldRow className={styles.row}>
-        <InlineField label="Tag key" labelWidth={26} grow tooltip="Tag key (from which the value will be extracted)">
-          <Input
-            type="text"
-            placeholder=""
-            width={40}
-            onChange={(v) =>
+        <InlineField label="Identifier" labelWidth={26} grow>
+          <Select
+            inputId="identifier"
+            options={selectOptions}
+            value={options.jsonData.spanBar?.type || ''}
+            onChange={(v) => {
               updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'spanBar', {
                 ...options.jsonData.spanBar,
-                tag: v.currentTarget.value,
-              })
-            }
-            value={options.jsonData.spanBar?.tag || ''}
+                type: v?.value ?? '',
+              });
+            }}
+            placeholder="Duration"
+            isClearable
+            aria-label={'select-identifier-name'}
+            width={25}
           />
         </InlineField>
       </InlineFieldRow>
+      {options.jsonData.spanBar?.type === 'Tag' && (
+        <InlineFieldRow className={styles.row}>
+          <InlineField label="Tag key" labelWidth={26} grow tooltip="Tag key (from which the value will be extracted)">
+            <Input
+              type="text"
+              placeholder=""
+              onChange={(v) =>
+                updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'spanBar', {
+                  ...options.jsonData.spanBar,
+                  tag: v.currentTarget.value,
+                })
+              }
+              value={options.jsonData.spanBar?.tag || ''}
+              width={25}
+            />
+          </InlineField>
+        </InlineFieldRow>
+      )}
     </div>
   );
 }
