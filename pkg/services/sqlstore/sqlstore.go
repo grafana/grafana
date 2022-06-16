@@ -542,10 +542,7 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 		engine.DatabaseTZ = time.UTC
 		engine.TZLocation = time.UTC
 
-		tracer, err := tracing.InitializeTracerForTest()
-		if err != nil {
-			return nil, err
-		}
+		tracer := tracing.InitializeTracerForTest()
 		bus := bus.ProvideBus(tracer)
 		testSQLStore, err = newSQLStore(cfg, localcache.New(5*time.Minute, 10*time.Minute), engine, migration, bus, tracer, opts...)
 		if err != nil {
