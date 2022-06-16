@@ -58,8 +58,8 @@ With [enhanced LDAP integration]({{< relref "../setup-grafana/configure-security
 
 Grafana Enterprise adds the following features:
 
-- [Role-based access control]({{< relref "access-control/" >}}) to control access with role-based permissions.
-- [Data source permissions]({{< relref "datasource_permissions/" >}}) to restrict query access to specific teams and users.
+- [Role-based access control]({{< relref "../administration/roles-and-permissions/access-control/" >}}) to control access with role-based permissions.
+- [Data source permissions]({{< relref "../administration/data-source-management/" >}}) to restrict query access to specific teams and users.
 - [Data source query caching]({{< relref "query-caching/" >}}) to temporarily store query results in Grafana to reduce data source load and rate limiting.
 - [Reporting]({{< relref "reporting/" >}}) to generate a PDF report from any dashboard and set up a schedule to have it emailed to whoever you choose.
 - [Export dashboard as PDF]({{< relref "export-pdf/" >}})
