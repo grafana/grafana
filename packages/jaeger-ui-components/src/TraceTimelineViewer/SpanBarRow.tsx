@@ -385,20 +385,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
       operationName,
       process: { serviceName },
     } = span;
-    const label = '';
-    formatDuration(duration);
-
-    let spanBarLabel = '';
-    const tagSetting = spanBarOptions?.tag ?? '';
-    if (tagSetting !== '' && span.tags) {
-      const foundObj = span.tags.filter((tag: TraceKeyValuePair) => {
-        return tag.key === tagSetting;
-      });
-
-      if (foundObj && foundObj.length > 0) {
-        spanBarLabel = `(${foundObj[0].value.toString()})`;
-      }
-    }
+    const label = formatDuration(duration);
 
     const viewBounds = getViewedBounds(span.startTime, span.startTime + span.duration);
     const viewStart = viewBounds.start;
@@ -494,7 +481,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
                 )}
               </span>
               <small className={styles.endpointName}>{rpc ? rpc.operationName : operationName}</small>
-              <small className={styles.endpointName}> {spanBarLabel}</small>
+              <small className={styles.endpointName}> {this.getSpanBarLabel(span, spanBarOptions, label)}</small>
             </a>
             {createSpanLink &&
               (() => {
@@ -563,6 +550,28 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
       </TimelineRow>
     );
   }
+
+  getSpanBarLabel = (span: TraceSpan, spanBarOptions: SpanBarOptions | undefined, duration: string) => {
+    let spanBarLabel = '';
+    const type = spanBarOptions?.type ?? '';
+
+    if (!type || type === '' || type === 'Duration') {
+      spanBarLabel = `(${duration})`;
+    } else if (type === 'Tag') {
+      const tagKey = spanBarOptions?.tag ?? '';
+      if (tagKey !== '' && span.tags) {
+        const foundObj = span.tags.filter((tag: TraceKeyValuePair) => {
+          return tag.key === tagKey;
+        });
+
+        if (foundObj && foundObj.length > 0) {
+          spanBarLabel = `(${foundObj[0].value.toString()})`;
+        }
+      }
+    }
+
+    return spanBarLabel;
+  };
 }
 
 export default withTheme2(UnthemedSpanBarRow);
