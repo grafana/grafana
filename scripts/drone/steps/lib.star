@@ -870,7 +870,21 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, trigger=None):
 
 def postgres_integration_tests_step(edition, ver_mode):
     deps = []
-    deps.extend(['grabpl'])
+    cmds = [
+            'apt-get update',
+            'apt-get install -yq postgresql-client',
+            'dockerize -wait tcp://postgres:5432 -timeout 120s',
+            'psql -p 5432 -h postgres -U grafanatest -d grafanatest -f ' +
+            'devenv/docker/blocks/postgres_tests/setup.sql',
+            # Make sure that we don't use cached results for another database
+            'go clean -testcache',
+        ]
+    if edition == 'oss':
+        deps.extend(['wire-install'])
+        cmds.extend([ "go list './pkg/...' | xargs -I {} sh -c 'GRAFANA_TEST_DB=postgres go test -v -run Integration -covermode=atomic -timeout=30m {}'"])
+    else:
+        deps.extend(['grabpl'])
+        cmds.extend(['./bin/grabpl integration-tests --database postgres'])
     return {
         'name': 'postgres-integration-tests',
         'image': build_image,
@@ -880,23 +894,26 @@ def postgres_integration_tests_step(edition, ver_mode):
             'GRAFANA_TEST_DB': 'postgres',
             'POSTGRES_HOST': 'postgres',
         },
-        'commands': [
-            'apt-get update',
-            'apt-get install -yq postgresql-client',
-            'dockerize -wait tcp://postgres:5432 -timeout 120s',
-            'psql -p 5432 -h postgres -U grafanatest -d grafanatest -f ' +
-            'devenv/docker/blocks/postgres_tests/setup.sql',
-            # Make sure that we don't use cached results for another database
-            'go clean -testcache',
-            'make gen-go',
-            "GRAFANA_TEST_DB=postgres go list './pkg/...' | xargs go test -run Integration -covermode=atomic -timeout=30m",
-        ],
+        'commands': cmds,
     }
 
 
 def mysql_integration_tests_step(edition, ver_mode):
     deps = []
-    deps.extend(['grabpl'])
+    cmds = [
+            'apt-get update',
+            'apt-get install -yq default-mysql-client',
+            'dockerize -wait tcp://mysql:3306 -timeout 120s',
+            'cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass',
+            # Make sure that we don't use cached results for another database
+            'go clean -testcache',
+        ]
+    if edition == 'oss':
+        deps.extend(['wire-install'])
+        cmds.extend([ "go list './pkg/...' | xargs -I {} sh -c 'GRAFANA_TEST_DB=mysql go test -v -run Integration -covermode=atomic -timeout=30m {}'"])
+    else:
+        deps.extend(['grabpl'])
+        cmds.extend(['./bin/grabpl integration-tests --database mysql'])
     return {
         'name': 'mysql-integration-tests',
         'image': build_image,
@@ -905,16 +922,7 @@ def mysql_integration_tests_step(edition, ver_mode):
             'GRAFANA_TEST_DB': 'mysql',
             'MYSQL_HOST': 'mysql',
         },
-        'commands': [
-            'apt-get update',
-            'apt-get install -yq default-mysql-client',
-            'dockerize -wait tcp://mysql:3306 -timeout 120s',
-            'cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass',
-            # Make sure that we don't use cached results for another database
-            'go clean -testcache',
-            'make gen-go',
-            "GRAFANA_TEST_DB=mysql go list './pkg/...' | xargs go test -run Integration -covermode=atomic -timeout=30m",
-        ],
+        'commands': cmds,
     }
 
 

@@ -455,16 +455,29 @@ steps:
   image: alpine:3.15
   name: identify-runner
 - commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  image: grafana/build-container:1.5.5
+  name: verify-gen-cue
+- commands:
+  - make gen-go
+  depends_on:
+  - verify-gen-cue
+  image: grafana/build-container:1.5.5
+  name: wire-install
+- commands:
   - apt-get update
   - apt-get install -yq postgresql-client
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - make gen-go
-  - GRAFANA_TEST_DB=postgres go list './pkg/...' | xargs go test -run Integration
-    -covermode=atomic -timeout=30m
+  - go list './pkg/...' | xargs -I {} sh -c 'GRAFANA_TEST_DB=postgres go test -v -run
+    Integration -covermode=atomic -timeout=30m {}'
   depends_on:
-  - grabpl
+  - wire-install
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -478,11 +491,10 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - make gen-go
-  - GRAFANA_TEST_DB=mysql go list './pkg/...' | xargs go test -run Integration -covermode=atomic
-    -timeout=30m
+  - go list './pkg/...' | xargs -I {} sh -c 'GRAFANA_TEST_DB=mysql go test -v -run
+    Integration -covermode=atomic -timeout=30m {}'
   depends_on:
-  - grabpl
+  - wire-install
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
@@ -1286,16 +1298,29 @@ steps:
   image: alpine:3.15
   name: identify-runner
 - commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  image: grafana/build-container:1.5.5
+  name: verify-gen-cue
+- commands:
+  - make gen-go
+  depends_on:
+  - verify-gen-cue
+  image: grafana/build-container:1.5.5
+  name: wire-install
+- commands:
   - apt-get update
   - apt-get install -yq postgresql-client
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - make gen-go
-  - GRAFANA_TEST_DB=postgres go list './pkg/...' | xargs go test -run Integration
-    -covermode=atomic -timeout=30m
+  - go list './pkg/...' | xargs -I {} sh -c 'GRAFANA_TEST_DB=postgres go test -v -run
+    Integration -covermode=atomic -timeout=30m {}'
   depends_on:
-  - grabpl
+  - wire-install
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -1309,11 +1334,10 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - make gen-go
-  - GRAFANA_TEST_DB=mysql go list './pkg/...' | xargs go test -run Integration -covermode=atomic
-    -timeout=30m
+  - go list './pkg/...' | xargs -I {} sh -c 'GRAFANA_TEST_DB=mysql go test -v -run
+    Integration -covermode=atomic -timeout=30m {}'
   depends_on:
-  - grabpl
+  - wire-install
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
@@ -1967,16 +1991,29 @@ steps:
   image: alpine:3.15
   name: identify-runner
 - commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  image: grafana/build-container:1.5.5
+  name: verify-gen-cue
+- commands:
+  - make gen-go
+  depends_on:
+  - verify-gen-cue
+  image: grafana/build-container:1.5.5
+  name: wire-install
+- commands:
   - apt-get update
   - apt-get install -yq postgresql-client
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - make gen-go
-  - GRAFANA_TEST_DB=postgres go list './pkg/...' | xargs go test -run Integration
-    -covermode=atomic -timeout=30m
+  - go list './pkg/...' | xargs -I {} sh -c 'GRAFANA_TEST_DB=postgres go test -v -run
+    Integration -covermode=atomic -timeout=30m {}'
   depends_on:
-  - grabpl
+  - wire-install
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -1990,11 +2027,10 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - make gen-go
-  - GRAFANA_TEST_DB=mysql go list './pkg/...' | xargs go test -run Integration -covermode=atomic
-    -timeout=30m
+  - go list './pkg/...' | xargs -I {} sh -c 'GRAFANA_TEST_DB=mysql go test -v -run
+    Integration -covermode=atomic -timeout=30m {}'
   depends_on:
-  - grabpl
+  - wire-install
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
@@ -2674,9 +2710,7 @@ steps:
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - make gen-go
-  - GRAFANA_TEST_DB=postgres go list './pkg/...' | xargs go test -run Integration
-    -covermode=atomic -timeout=30m
+  - ./bin/grabpl integration-tests --database postgres
   depends_on:
   - init-enterprise
   environment:
@@ -2692,9 +2726,7 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - make gen-go
-  - GRAFANA_TEST_DB=mysql go list './pkg/...' | xargs go test -run Integration -covermode=atomic
-    -timeout=30m
+  - ./bin/grabpl integration-tests --database mysql
   depends_on:
   - init-enterprise
   environment:
@@ -3751,16 +3783,29 @@ steps:
   image: alpine:3.15
   name: identify-runner
 - commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  image: grafana/build-container:1.5.5
+  name: verify-gen-cue
+- commands:
+  - make gen-go
+  depends_on:
+  - verify-gen-cue
+  image: grafana/build-container:1.5.5
+  name: wire-install
+- commands:
   - apt-get update
   - apt-get install -yq postgresql-client
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - make gen-go
-  - GRAFANA_TEST_DB=postgres go list './pkg/...' | xargs go test -run Integration
-    -covermode=atomic -timeout=30m
+  - go list './pkg/...' | xargs -I {} sh -c 'GRAFANA_TEST_DB=postgres go test -v -run
+    Integration -covermode=atomic -timeout=30m {}'
   depends_on:
-  - grabpl
+  - wire-install
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -3774,11 +3819,10 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - make gen-go
-  - GRAFANA_TEST_DB=mysql go list './pkg/...' | xargs go test -run Integration -covermode=atomic
-    -timeout=30m
+  - go list './pkg/...' | xargs -I {} sh -c 'GRAFANA_TEST_DB=mysql go test -v -run
+    Integration -covermode=atomic -timeout=30m {}'
   depends_on:
-  - grabpl
+  - wire-install
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
@@ -4427,9 +4471,7 @@ steps:
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - make gen-go
-  - GRAFANA_TEST_DB=postgres go list './pkg/...' | xargs go test -run Integration
-    -covermode=atomic -timeout=30m
+  - ./bin/grabpl integration-tests --database postgres
   depends_on:
   - init-enterprise
   environment:
@@ -4445,9 +4487,7 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - make gen-go
-  - GRAFANA_TEST_DB=mysql go list './pkg/...' | xargs go test -run Integration -covermode=atomic
-    -timeout=30m
+  - ./bin/grabpl integration-tests --database mysql
   depends_on:
   - init-enterprise
   environment:
@@ -4707,6 +4747,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: e32151598a8a68247796a6a182e1f0ab76b6a3490a846bde8f81a33f05be3d02
+hmac: d6e342232782be872fd9ada6b9169c1af325415a9869ba4b9d42e2c7f1ba43a8
 
 ...
