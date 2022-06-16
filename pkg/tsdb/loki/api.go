@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"path"
 	"strconv"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -68,12 +69,12 @@ func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery, hea
 			//     precise, as Loki does not support step with float number
 			//     and time-specifier, like "1.5s"
 			qs.Set("step", fmt.Sprintf("%dms", query.Step.Milliseconds()))
-			lokiUrl.Path = "/loki/api/v1/query_range"
+			lokiUrl.Path = path.Join(lokiUrl.Path, "/loki/api/v1/query_range")
 		}
 	case QueryTypeInstant:
 		{
 			qs.Set("time", strconv.FormatInt(query.End.UnixNano(), 10))
-			lokiUrl.Path = "/loki/api/v1/query"
+			lokiUrl.Path = path.Join(lokiUrl.Path, "/loki/api/v1/query")
 		}
 	default:
 		return nil, fmt.Errorf("invalid QueryType: %v", query.QueryType)
@@ -175,12 +176,16 @@ func makeRawRequest(ctx context.Context, lokiDsUrl string, resourcePath string, 
 		return nil, err
 	}
 
-	url, err := lokiUrl.Parse(resourcePath)
+	resourceUrl, err := url.Parse(resourcePath)
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "GET", url.String(), nil)
+	// we take the path and the query-string only
+	lokiUrl.RawQuery = resourceUrl.RawQuery
+	lokiUrl.Path = path.Join(lokiUrl.Path, resourceUrl.Path)
+
+	req, err := http.NewRequestWithContext(ctx, "GET", lokiUrl.String(), nil)
 
 	if err != nil {
 		return nil, err
