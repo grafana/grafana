@@ -2520,24 +2520,6 @@ func TestEval(t *testing.T) {
 	}
 }
 
-// createFolder creates a folder for storing our alerts under. Grafana uses folders as a replacement for alert namespaces to match its permission model.
-// We use the dashboard command using IsFolder = true to tell it's a folder, it takes the dashboard as the name of the folder.
-func createFolder(t *testing.T, folderUID, grafanaListedAddr, login, password string) error {
-	t.Helper()
-
-	payload := fmt.Sprintf(`{"uid": "%s","title": "%s"}`, folderUID, folderUID)
-	u := fmt.Sprintf("http://%s:%s@%s/api/folders", login, password, grafanaListedAddr)
-	r := strings.NewReader(payload)
-	// nolint:gosec
-	resp, err := http.Post(u, "application/json", r)
-	t.Cleanup(func() {
-		require.NoError(t, resp.Body.Close())
-	})
-	require.NoError(t, err)
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
-	return err
-}
-
 // rulesNamespaceWithoutVariableValues takes a apimodels.NamespaceConfigResponse JSON-based input and makes the dynamic fields static e.g. uid, dates, etc.
 // it returns a map of the modified rule UIDs with the namespace,rule_group as a key
 func rulesNamespaceWithoutVariableValues(t *testing.T, b []byte) (string, map[string][]string) {
