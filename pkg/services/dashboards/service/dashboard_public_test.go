@@ -56,7 +56,7 @@ func TestGetPublicDashboard(t *testing.T) {
 			dashResp: &models.Dashboard{Data: mergedDashboardData},
 		},
 		{
-			name: "returns ErrPublicDashboardNotFound when isPublic is false",
+			name: "returns ErrPublicDashboardNotFound when isEnabled is false",
 			uid:  "abc123",
 			storeResp: &storeResp{
 				pd:  &models.PublicDashboard{IsEnabled: false},
@@ -98,8 +98,12 @@ func TestGetPublicDashboard(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 			}
+
 			assert.Equal(t, test.dashResp, dashboard)
-			assert.NotNil(t, dashboard.CreatedBy)
+
+			if test.dashResp != nil {
+				assert.NotNil(t, dashboard.CreatedBy)
+			}
 		})
 	}
 }

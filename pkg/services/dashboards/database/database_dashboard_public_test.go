@@ -2,6 +2,7 @@ package database
 
 import (
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
@@ -12,7 +13,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var TimeSettings, _ = simplejson.NewJson([]byte(`{"from": "now-12", "to": "now"}`))
+// This is what the db sets empty time settings to
+var DefaultTimeSettings, _ = simplejson.NewJson([]byte(`{}`))
+
+// Default time to pass in with seconds rounded
+var DefaultTime = time.Now().UTC().Round(time.Second)
 
 // GetPublicDashboard
 func TestIntegrationGetPublicDashboard(t *testing.T) {
@@ -29,20 +34,21 @@ func TestIntegrationGetPublicDashboard(t *testing.T) {
 	t.Run("returns PublicDashboard and Dashboard", func(t *testing.T) {
 		setup()
 		pubdash, err := dashboardStore.SavePublicDashboardConfig(models.SavePublicDashboardConfigCommand{
-			DashboardUid: savedDashboard.Uid,
-			OrgId:        savedDashboard.OrgId,
 			PublicDashboard: models.PublicDashboard{
 				IsEnabled:    true,
 				Uid:          "abc1234",
 				DashboardUid: savedDashboard.Uid,
 				OrgId:        savedDashboard.OrgId,
-				TimeSettings: TimeSettings,
+				TimeSettings: DefaultTimeSettings,
+				CreatedAt:    DefaultTime,
+				CreatedBy:    7,
 			},
 		})
 		require.NoError(t, err)
 
 		pd, d, err := dashboardStore.GetPublicDashboard("abc1234")
 		require.NoError(t, err)
+
 		assert.Equal(t, pd, pubdash)
 		assert.Equal(t, d.Uid, pubdash.DashboardUid)
 	})
@@ -69,7 +75,8 @@ func TestIntegrationGetPublicDashboard(t *testing.T) {
 				Uid:          "abc1234",
 				DashboardUid: "nevergonnafindme",
 				OrgId:        savedDashboard.OrgId,
-				TimeSettings: TimeSettings,
+				CreatedAt:    DefaultTime,
+				CreatedBy:    7,
 			},
 		})
 		require.NoError(t, err)
@@ -114,14 +121,18 @@ func TestIntegrationGetPublicDashboardConfig(t *testing.T) {
 				Uid:          "pubdash-uid",
 				DashboardUid: savedDashboard.Uid,
 				OrgId:        savedDashboard.OrgId,
-				TimeSettings: simplejson.NewFromAny(map[string]interface{}{"from": "now-8", "to": "now"}),
+				TimeSettings: DefaultTimeSettings,
+				CreatedAt:    DefaultTime,
+				CreatedBy:    7,
 			},
 		})
 		require.NoError(t, err)
 
 		pubdash, err := dashboardStore.GetPublicDashboardConfig(savedDashboard.OrgId, savedDashboard.Uid)
 		require.NoError(t, err)
-		assert.Equal(t, resp, pubdash)
+
+		assert.True(t, assert.ObjectsAreEqualValues(resp, pubdash))
+		assert.True(t, assert.ObjectsAreEqual(resp, pubdash))
 	})
 }
 
@@ -149,7 +160,9 @@ func TestIntegrationSavePublicDashboardConfig(t *testing.T) {
 				Uid:          "pubdash-uid",
 				DashboardUid: savedDashboard.Uid,
 				OrgId:        savedDashboard.OrgId,
-				TimeSettings: TimeSettings,
+				TimeSettings: DefaultTimeSettings,
+				CreatedAt:    DefaultTime,
+				CreatedBy:    7,
 			},
 		})
 		require.NoError(t, err)
@@ -169,54 +182,67 @@ func TestIntegrationSavePublicDashboardConfig(t *testing.T) {
 		assert.False(t, pubdash2.IsEnabled)
 	})
 
-	t.Run("returns ErrDashboardIdentifierNotSet", func(t *testing.T) {
+}
+
+func TestIntegrationnUpdatePublicDashboard(t *testing.T) {
+	var sqlStore *sqlstore.SQLStore
+	var dashboardStore *DashboardStore
+	var savedDashboard *models.Dashboard
+
+	setup := func() {
+		sqlStore = sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagPublicDashboards}})
+		dashboardStore = ProvideDashboardStore(sqlStore)
+		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
+	}
+
+	t.Run("updates an existing dashboard", func(t *testing.T) {
 		setup()
-		_, err := dashboardStore.SavePublicDashboardConfig(models.SavePublicDashboardConfigCommand{
+
+		pdUid := "asdf1234"
+
+		pdSaved, err := dashboardStore.SavePublicDashboardConfig(models.SavePublicDashboardConfigCommand{
 			DashboardUid: savedDashboard.Uid,
 			OrgId:        savedDashboard.OrgId,
 			PublicDashboard: models.PublicDashboard{
-				IsEnabled:    true,
-				DashboardUid: "",
-				OrgId:        savedDashboard.OrgId,
-			},
-		})
-		require.Error(t, models.ErrDashboardIdentifierNotSet, err)
-	})
-
-	t.Run("overwrites existing public dashboard", func(t *testing.T) {
-		setup()
-
-		pdUid := util.GenerateShortUID()
-
-		// insert initial record
-		_, err := dashboardStore.SavePublicDashboardConfig(models.SavePublicDashboardConfigCommand{
-			DashboardUid: savedDashboard.Uid,
-			OrgId:        savedDashboard.OrgId,
-			PublicDashboard: models.PublicDashboard{
-				IsEnabled:    true,
 				Uid:          pdUid,
 				DashboardUid: savedDashboard.Uid,
 				OrgId:        savedDashboard.OrgId,
+				IsEnabled:    true,
+				CreatedAt:    DefaultTime,
+				CreatedBy:    7,
 			},
 		})
 		require.NoError(t, err)
 
 		// update initial record
-		resp, err := dashboardStore.SavePublicDashboardConfig(models.SavePublicDashboardConfigCommand{
+		pdUpdated, err := dashboardStore.UpdatePublicDashboardConfig(models.SavePublicDashboardConfigCommand{
 			DashboardUid: savedDashboard.Uid,
 			OrgId:        savedDashboard.OrgId,
 			PublicDashboard: models.PublicDashboard{
-				IsEnabled:    false,
 				Uid:          pdUid,
 				DashboardUid: savedDashboard.Uid,
 				OrgId:        savedDashboard.OrgId,
+				IsEnabled:    false,
 				TimeSettings: simplejson.NewFromAny(map[string]interface{}{"from": "now-8", "to": "now"}),
+				UpdatedAt:    time.Now().UTC().Round(time.Second),
+				UpdatedBy:    8,
 			},
 		})
 		require.NoError(t, err)
 
-		pubdash, err := dashboardStore.GetPublicDashboardConfig(savedDashboard.OrgId, savedDashboard.Uid)
+		pdRetrieved, err := dashboardStore.GetPublicDashboardConfig(savedDashboard.OrgId, savedDashboard.Uid)
 		require.NoError(t, err)
-		assert.Equal(t, resp, pubdash)
+
+		// created hasn't changed
+		assert.Equal(t, pdSaved.CreatedBy, pdRetrieved.CreatedBy)
+		assert.Equal(t, pdSaved.CreatedAt, pdRetrieved.CreatedAt)
+
+		// Enabled has changed
+		assert.Equal(t, pdUpdated.IsEnabled, pdRetrieved.IsEnabled)
+
+		// Updated has been set
+		assert.Equal(t, pdUpdated.UpdatedBy, pdRetrieved.UpdatedBy)
+		assert.Equal(t, pdUpdated.UpdatedAt, pdRetrieved.UpdatedAt)
+
 	})
 }

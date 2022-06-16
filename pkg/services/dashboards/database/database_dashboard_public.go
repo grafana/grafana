@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -106,7 +107,7 @@ func (d *DashboardStore) GetPublicDashboardConfig(orgId int64, dashboardUid stri
 // persists public dashboard configuration
 func (d *DashboardStore) SavePublicDashboardConfig(cmd models.SavePublicDashboardConfigCommand) (*models.PublicDashboard, error) {
 	err := d.sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		_, err := sess.Insert(&cmd.PublicDashboard)
+		_, err := sess.UseBool("is_enabled").Insert(&cmd.PublicDashboard)
 		if err != nil {
 			return err
 		}
@@ -123,8 +124,9 @@ func (d *DashboardStore) SavePublicDashboardConfig(cmd models.SavePublicDashboar
 
 // updates existing public dashboard configuration
 func (d *DashboardStore) UpdatePublicDashboardConfig(cmd models.SavePublicDashboardConfigCommand) (*models.PublicDashboard, error) {
+	fmt.Printf("%#v", cmd.PublicDashboard)
 	err := d.sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		_, err := sess.Update(&cmd.PublicDashboard)
+		_, err := sess.UseBool("is_enabled").Update(&cmd.PublicDashboard)
 		if err != nil {
 			return err
 		}
@@ -132,8 +134,11 @@ func (d *DashboardStore) UpdatePublicDashboardConfig(cmd models.SavePublicDashbo
 		return nil
 	})
 
+	fmt.Printf("%#v", cmd.PublicDashboard)
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Printf("%#v", cmd.PublicDashboard)
 	return &cmd.PublicDashboard, nil
 }
