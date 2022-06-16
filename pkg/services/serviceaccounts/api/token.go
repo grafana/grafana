@@ -48,7 +48,6 @@ func (api *ServiceAccountsAPI) ListTokens(ctx *models.ReqContext) response.Respo
 	saTokens, err := api.store.ListTokens(ctx.Req.Context(), ctx.OrgId, saID)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Internal server error", err)
-
 	}
 
 	result := make([]*TokenDTO, len(saTokens))
