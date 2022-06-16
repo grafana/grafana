@@ -27,18 +27,21 @@ func init() {
 	remotecache.Register(&RenderUser{})
 }
 
+var _ Service = (*RenderingService)(nil)
+
 const ServiceName = "RenderingService"
 
 type RenderingService struct {
-	log             log.Logger
-	pluginInfo      *plugins.Plugin
-	renderAction    renderFunc
-	renderCSVAction renderCSVFunc
-	domain          string
-	inProgressCount int32
-	version         string
-	versionMutex    sync.RWMutex
-	capabilities    []Capability
+	log               log.Logger
+	pluginInfo        *plugins.Plugin
+	renderAction      renderFunc
+	renderCSVAction   renderCSVFunc
+	sanitizeSVGAction sanitizeFunc
+	domain            string
+	inProgressCount   int32
+	version           string
+	versionMutex      sync.RWMutex
+	capabilities      []Capability
 
 	perRequestRenderKeyProvider renderKeyProvider
 	Cfg                         *setting.Cfg
@@ -120,6 +123,7 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 		})
 		rs.renderAction = rs.renderViaHTTP
 		rs.renderCSVAction = rs.renderCSVViaHTTP
+		rs.sanitizeSVGAction = rs.sanitizeViaHTTP
 
 		refreshTicker := time.NewTicker(remoteVersionRefreshInterval)
 
@@ -146,6 +150,7 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 		rs.version = rs.pluginInfo.Info.Version
 		rs.renderAction = rs.renderViaPlugin
 		rs.renderCSVAction = rs.renderCSVViaPlugin
+		rs.sanitizeSVGAction = rs.sanitizeSVGViaPlugin
 		<-ctx.Done()
 
 		// On Windows, Chromium is generating a debug.log file that breaks signature check on next restart
@@ -291,6 +296,14 @@ func (rs *RenderingService) RenderCSV(ctx context.Context, opts CSVOpts, session
 	saveMetrics(elapsedTime, err, RenderCSV)
 
 	return result, err
+}
+
+func (rs *RenderingService) SanitizeSVG(ctx context.Context, req *SanitizeSVGRequest) (*SanitizeSVGResponse, error) {
+	if !rs.IsAvailable() {
+		return nil, ErrRenderUnavailable
+	}
+
+	return rs.sanitizeSVGAction(ctx, req)
 }
 
 func (rs *RenderingService) renderCSV(ctx context.Context, opts CSVOpts, renderKeyProvider renderKeyProvider) (*RenderCSVResult, error) {
