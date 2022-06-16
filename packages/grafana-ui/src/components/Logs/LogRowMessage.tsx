@@ -12,6 +12,7 @@ import { LogRowModel, findHighlightChunksInText, GrafanaTheme2 } from '@grafana/
 import { withTheme2 } from '../../themes/index';
 import { Themeable2 } from '../../types/theme';
 import { IconButton } from '../IconButton/IconButton';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 import { LogMessageAnsi } from './LogMessageAnsi';
 import { LogRowContext } from './LogRowContext';
@@ -169,12 +170,16 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
               className={cx('log-row-context', style.context, styles.contextButton)}
               onClick={(e) => e.stopPropagation()}
             >
-              <IconButton name="eye" title="Show context" onClick={this.onContextToggle} />
-              <IconButton
-                name="copy"
-                title="Copy context"
-                onClick={() => navigator.clipboard.writeText(JSON.stringify(restructuredEntry))}
-              />
+              <Tooltip placement="top" content={'Show context'}>
+                <IconButton name="eye" title="Show context" onClick={this.onContextToggle} />
+              </Tooltip>
+              <Tooltip placement="top" content={'copy'}>
+                <IconButton
+                  name="copy"
+                  title="Copy context"
+                  onClick={() => navigator.clipboard.writeText(JSON.stringify(restructuredEntry))}
+                />
+              </Tooltip>
             </span>
           )}
         </div>
