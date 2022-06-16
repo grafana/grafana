@@ -53,18 +53,22 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext) response.Response {
 }
 
 func (hs *HTTPServer) toJsonStreamingResponse(qdr *backend.QueryDataResponse) response.Response {
-	statusWhenError := http.StatusBadRequest
-	if hs.Features.IsEnabled(featuremgmt.FlagDatasourceQueryMultiStatus) {
-		statusWhenError = http.StatusMultiStatus
+	if !hs.Features.IsEnabled(featuremgmt.FlagDatasourceQueryMultiStatus) {
+		statusCode := http.StatusOK
+		for _, res := range qdr.Responses {
+			if res.Error != nil {
+				statusCode = http.StatusBadRequest
+			}
+		}
+		return response.JSONStreaming(statusCode, qdr)
 	}
 
 	statusCode := http.StatusOK
-
 	res := map[string]queryResponse{}
 	for refID, resp := range qdr.Responses {
 		qr := queryResponse{Frames: resp.Frames, Error: resp.Error, Status: http.StatusOK}
 		if resp.Error != nil {
-			statusCode = statusWhenError
+			statusCode = http.StatusMultiStatus
 			qr.Status = http.StatusBadRequest
 			if resp.ErrorDetails != nil {
 				switch resp.ErrorDetails.Status {
@@ -81,6 +85,5 @@ func (hs *HTTPServer) toJsonStreamingResponse(qdr *backend.QueryDataResponse) re
 		}
 		res[refID] = qr
 	}
-
 	return response.JSONStreaming(statusCode, &metricsResponse{Results: res})
 }
