@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { AbsoluteTimeRange, FieldConfigSource, PanelData } from '@grafana/data';
 
 /**

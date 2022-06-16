@@ -94,24 +94,31 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 	s.glog.Debug("Making a non-Flux type query")
 
-	// NOTE: the following path is currently only called from alerting queries
-	// In dashboards, the request runs through proxy and are managed in the frontend
+	var allRawQueries string
+	var queries []Query
 
-	query, err := s.getQuery(dsInfo, req)
-	if err != nil {
-		return &backend.QueryDataResponse{}, err
-	}
+	for _, reqQuery := range req.Queries {
+		query, err := s.queryParser.Parse(reqQuery)
+		if err != nil {
+			return &backend.QueryDataResponse{}, err
+		}
 
-	rawQuery, err := query.Build(req)
-	if err != nil {
-		return &backend.QueryDataResponse{}, err
+		rawQuery, err := query.Build(req)
+		if err != nil {
+			return &backend.QueryDataResponse{}, err
+		}
+
+		allRawQueries = allRawQueries + rawQuery + ";"
+		query.RefID = reqQuery.RefID
+		query.RawQuery = rawQuery
+		queries = append(queries, *query)
 	}
 
 	if setting.Env == setting.Dev {
-		s.glog.Debug("Influxdb query", "raw query", rawQuery)
+		s.glog.Debug("Influxdb query", "raw query", allRawQueries)
 	}
 
-	request, err := s.createRequest(ctx, dsInfo, rawQuery)
+	request, err := s.createRequest(ctx, dsInfo, allRawQueries)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
@@ -129,23 +136,9 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return &backend.QueryDataResponse{}, fmt.Errorf("InfluxDB returned error status: %s", res.Status)
 	}
 
-	resp := s.responseParser.Parse(res.Body, query)
+	resp := s.responseParser.Parse(res.Body, queries)
 
 	return resp, nil
-}
-
-func (s *Service) getQuery(dsInfo *models.DatasourceInfo, query *backend.QueryDataRequest) (*Query, error) {
-	queryCount := len(query.Queries)
-
-	// The model supports multiple queries, but right now this is only used from
-	// alerting so we only needed to support batch executing 1 query at a time.
-	if queryCount != 1 {
-		return nil, fmt.Errorf("query request should contain exactly 1 query, it contains: %d", queryCount)
-	}
-
-	q := query.Queries[0]
-
-	return s.queryParser.Parse(q)
 }
 
 func (s *Service) createRequest(ctx context.Context, dsInfo *models.DatasourceInfo, query string) (*http.Request, error) {

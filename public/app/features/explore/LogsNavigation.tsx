@@ -1,8 +1,11 @@
-import React, { memo, useState, useEffect, useRef } from 'react';
-import { isEqual } from 'lodash';
 import { css } from '@emotion/css';
+import { isEqual } from 'lodash';
+import React, { memo, useState, useEffect, useRef } from 'react';
+
 import { LogsSortOrder, AbsoluteTimeRange, TimeZone, DataQuery, GrafanaTheme2 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { Button, Icon, Spinner, useTheme2 } from '@grafana/ui';
+
 import { LogsNavigationPages } from './LogsNavigationPages';
 
 type Props = {
@@ -81,8 +84,8 @@ function LogsNavigation({
   }, [visibleRange, absoluteRange, logsSortOrder, queries, clearCache, addResultsToCache]);
 
   useEffect(() => {
-    return () => clearCache();
-    // We can't enforce the eslint rule here because we only want to run when component unmounts.
+    clearCache();
+    // We can't enforce the eslint rule here because we only want to run when component is mounted.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -105,6 +108,9 @@ function LogsNavigation({
       variant="secondary"
       onClick={() => {
         //If we are not on the last page, use next page's range
+        reportInteraction('grafana_explore_logs_pagination_clicked', {
+          pageType: 'olderLogsButton',
+        });
         if (!onLastPage) {
           const indexChange = oldestLogsFirst ? -1 : 1;
           changeTime({
@@ -131,6 +137,9 @@ function LogsNavigation({
       className={styles.navButton}
       variant="secondary"
       onClick={() => {
+        reportInteraction('grafana_explore_logs_pagination_clicked', {
+          pageType: 'newerLogsButton',
+        });
         //If we are not on the first page, use previous page's range
         if (!onFirstPage) {
           const indexChange = oldestLogsFirst ? 1 : -1;

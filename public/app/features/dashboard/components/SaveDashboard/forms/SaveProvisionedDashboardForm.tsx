@@ -1,13 +1,17 @@
-import React, { useCallback, useState } from 'react';
 import { css } from '@emotion/css';
 import { saveAs } from 'file-saver';
-import { Button, ClipboardButton, Modal, stylesFactory, TextArea, useTheme } from '@grafana/ui';
+import React, { useCallback, useState } from 'react';
+
+import { GrafanaTheme } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
+import { Button, ClipboardButton, HorizontalGroup, stylesFactory, TextArea, useTheme } from '@grafana/ui';
+import { useAppNotification } from 'app/core/copy/appNotification';
+
 import { SaveDashboardFormProps } from '../types';
-import { AppEvents, GrafanaTheme } from '@grafana/data';
-import appEvents from '../../../../../core/app_events';
 
 export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({ dashboard, onCancel }) => {
   const theme = useTheme();
+  const notifyApp = useAppNotification();
   const [dashboardJSON, setDashboardJson] = useState(() => {
     const clone = dashboard.getSaveModelClone();
     delete clone.id;
@@ -22,13 +26,13 @@ export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({
   }, [dashboard.title, dashboardJSON]);
 
   const onCopyToClipboardSuccess = useCallback(() => {
-    appEvents.emit(AppEvents.alertSuccess, ['Dashboard JSON copied to clipboard']);
-  }, []);
+    notifyApp.success('Dashboard JSON copied to clipboard');
+  }, [notifyApp]);
 
   const styles = getStyles(theme);
   return (
     <>
-      <div>
+      <Stack direction="column" gap={2}>
         <div>
           This dashboard cannot be saved from the Grafana UI because it has been provisioned from another source. Copy
           the JSON or save it to a file below, then you can update your dashboard in the provisioning source.
@@ -56,16 +60,18 @@ export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({
           }}
           className={styles.json}
         />
-        <Modal.ButtonRow>
+        <HorizontalGroup>
           <Button variant="secondary" onClick={onCancel} fill="outline">
             Cancel
           </Button>
           <ClipboardButton getText={() => dashboardJSON} onClipboardCopy={onCopyToClipboardSuccess}>
             Copy JSON to clipboard
           </ClipboardButton>
-          <Button onClick={saveToFile}>Save JSON to file</Button>
-        </Modal.ButtonRow>
-      </div>
+          <Button type="submit" onClick={saveToFile}>
+            Save JSON to file
+          </Button>
+        </HorizontalGroup>
+      </Stack>
     </>
   );
 };

@@ -1,6 +1,8 @@
+import { cloneDeep } from 'lodash';
+
 import { FieldConfigSource, PanelModel, PanelTypeChangedHandler, Threshold, ThresholdsMode } from '@grafana/data';
 import { ResourceDimensionMode } from 'app/features/dimensions';
-import { cloneDeep } from 'lodash';
+
 import { MarkersConfig } from './layers/data/markersLayer';
 import { getMarkerAsPath } from './style/markers';
 import { defaultStyleConfig } from './style/types';

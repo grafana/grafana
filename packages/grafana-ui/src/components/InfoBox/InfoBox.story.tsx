@@ -1,10 +1,12 @@
+import { Story } from '@storybook/react';
 import React from 'react';
+
 import { FeatureState } from '@grafana/data';
 import { InfoBox, FeatureInfoBox, VerticalGroup } from '@grafana/ui';
-import mdx from './InfoBox.mdx';
-import { Story } from '@storybook/react';
+
 import { FeatureInfoBoxProps } from './FeatureInfoBox';
 import { InfoBoxProps } from './InfoBox';
+import mdx from './InfoBox.mdx';
 
 export default {
   title: 'Layout/InfoBox',

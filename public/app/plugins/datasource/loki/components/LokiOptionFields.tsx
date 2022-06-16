@@ -1,11 +1,13 @@
 // Libraries
-import React, { memo } from 'react';
 import { css, cx } from '@emotion/css';
 import { map } from 'lodash';
+import React, { memo } from 'react';
 
 // Types
-import { InlineFormLabel, RadioButtonGroup, InlineField, Input, Select } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { InlineFormLabel, RadioButtonGroup, InlineField, Input, Select } from '@grafana/ui';
+
 import { LokiQuery, LokiQueryType } from '../types';
 
 export interface LokiOptionFieldsProps {
@@ -17,26 +19,29 @@ export interface LokiOptionFieldsProps {
   runOnBlur?: boolean;
 }
 
-const queryTypeOptions: Array<SelectableValue<LokiQueryType>> = [
+export const queryTypeOptions: Array<SelectableValue<LokiQueryType>> = [
   { value: LokiQueryType.Range, label: 'Range', description: 'Run query over a range of time.' },
   {
     value: LokiQueryType.Instant,
     label: 'Instant',
     description: 'Run query against a single point in time. For this query, the "To" time is used.',
   },
-  // {
-  //   value: LokiQueryType.Stream,
-  //   label: 'Stream',
-  //   description: 'Run a query and keep sending results on an interval',
-  // },
 ];
+
+if (config.featureToggles.lokiLive) {
+  queryTypeOptions.push({
+    value: LokiQueryType.Stream,
+    label: 'Stream',
+    description: 'Run a query and keep sending results on an interval',
+  });
+}
 
 export const DEFAULT_RESOLUTION: SelectableValue<number> = {
   value: 1,
   label: '1/1',
 };
 
-const RESOLUTION_OPTIONS: Array<SelectableValue<number>> = [DEFAULT_RESOLUTION].concat(
+export const RESOLUTION_OPTIONS: Array<SelectableValue<number>> = [DEFAULT_RESOLUTION].concat(
   map([2, 3, 4, 5, 10], (value: number) => ({
     value,
     label: '1/' + value,
@@ -56,20 +61,6 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
   function onQueryTypeChange(queryType: LokiQueryType) {
     const { instant, range, ...rest } = query;
     onChange({ ...rest, queryType });
-  }
-
-  function preprocessMaxLines(value: string): number {
-    if (value.length === 0) {
-      // empty input - falls back to dataSource.maxLines limit
-      return NaN;
-    } else if (value.length > 0 && (isNaN(+value) || +value < 0)) {
-      // input with at least 1 character and that is either incorrect (value in the input field is not a number) or negative
-      // falls back to the limit of 0 lines
-      return 0;
-    } else {
-      // default case - correct input
-      return +value;
-    }
   }
 
   function onMaxLinesChange(e: React.SyntheticEvent<HTMLInputElement>) {
@@ -154,7 +145,6 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
             options={RESOLUTION_OPTIONS}
             value={resolution}
             aria-label="Select resolution"
-            menuShouldPortal
           />
         </InlineField>
       </div>
@@ -163,3 +153,17 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
 }
 
 export default memo(LokiOptionFields);
+
+export function preprocessMaxLines(value: string): number {
+  if (value.length === 0) {
+    // empty input - falls back to dataSource.maxLines limit
+    return NaN;
+  } else if (value.length > 0 && (isNaN(+value) || +value < 0)) {
+    // input with at least 1 character and that is either incorrect (value in the input field is not a number) or negative
+    // falls back to the limit of 0 lines
+    return 0;
+  } else {
+    // default case - correct input
+    return +value;
+  }
+}

@@ -1,8 +1,10 @@
-+++
-title = "About value mapping"
-weight = 10
-aliases = ["/docs/sources/panels/format-data/about-value-mapping/"]
-+++
+---
+aliases:
+  - /docs/grafana/latest/panels/format-data/about-value-mapping/
+  - /docs/sources/panels/format-data/about-value-mapping/
+title: About value mapping
+weight: 10
+---
 
 # About value mapping
 

@@ -7,11 +7,13 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/bus"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
+	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
 	"github.com/grafana/grafana/pkg/setting"
@@ -37,21 +39,22 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features *featuremgmt.
 	}
 
 	sqlStore := sqlstore.InitTestDB(t)
+	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 
 	hs := &HTTPServer{
 		Cfg:      cfg,
 		Features: features,
-		Bus:      bus.GetBus(),
 		License:  &licensing.OSSLicensingService{Cfg: cfg},
 		RenderService: &rendering.RenderingService{
 			Cfg:                   cfg,
 			RendererPluginManager: &fakeRendererManager{},
 		},
-		SQLStore:         sqlStore,
-		SettingsProvider: setting.ProvideProvider(cfg),
-		pluginStore:      &fakePluginStore{},
-		updateChecker:    &updatechecker.Service{},
-		AccessControl:    accesscontrolmock.New().WithDisabled(),
+		SQLStore:             sqlStore,
+		SettingsProvider:     setting.ProvideProvider(cfg),
+		pluginStore:          &fakePluginStore{},
+		grafanaUpdateChecker: &updatechecker.GrafanaService{},
+		AccessControl:        accesscontrolmock.New().WithDisabled(),
+		PluginSettings:       pluginSettings.ProvideService(sqlStore, secretsService),
 	}
 
 	m := web.New()

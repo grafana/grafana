@@ -1,14 +1,15 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 
-import appEvents from 'app/core/app_events';
-import { AngularModalProxy } from '../components/modals/AngularModalProxy';
-import { provideTheme } from '../utils/ConfigProvider';
-import { ShowConfirmModalEvent, ShowConfirmModalPayload, ShowModalReactEvent } from '../../types/events';
-import { ConfirmModal, ConfirmModalProps } from '@grafana/ui';
 import { textUtil } from '@grafana/data';
 import { CopyPanelEvent } from '@grafana/runtime';
+import { ConfirmModal, ConfirmModalProps } from '@grafana/ui';
+import appEvents from 'app/core/app_events';
 import { copyPanel } from 'app/features/dashboard/utils/panel';
+
+import { ShowConfirmModalEvent, ShowConfirmModalPayload, ShowModalReactEvent } from '../../types/events';
+import { AngularModalProxy } from '../components/modals/AngularModalProxy';
+import { provideTheme } from '../utils/ConfigProvider';
 
 export class ModalManager {
   reactModalRoot = document.body;

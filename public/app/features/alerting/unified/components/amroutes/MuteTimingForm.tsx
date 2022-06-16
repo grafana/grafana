@@ -1,24 +1,28 @@
-import React, { useMemo } from 'react';
-import { AlertingPageWrapper } from '../AlertingPageWrapper';
-import { Alert, Field, FieldSet, Input, Button, LinkButton, useStyles2 } from '@grafana/ui';
-import { FormProvider, useForm } from 'react-hook-form';
-import { GrafanaTheme2 } from '@grafana/data';
-import { useDispatch } from 'react-redux';
 import { css } from '@emotion/css';
+import React, { useMemo } from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
+import { useDispatch } from 'react-redux';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { Alert, Field, FieldSet, Input, Button, LinkButton, useStyles2 } from '@grafana/ui';
 import {
   AlertmanagerConfig,
   AlertManagerCortexConfig,
   MuteTimeInterval,
 } from 'app/plugins/datasource/alertmanager/types';
-import { AlertManagerPicker } from '../AlertManagerPicker';
+
 import { useAlertManagerSourceName } from '../../hooks/useAlertManagerSourceName';
-import { updateAlertManagerConfigAction } from '../../state/actions';
+import { useAlertManagersByPermission } from '../../hooks/useAlertManagerSources';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
-import { initialAsyncRequestState } from '../../utils/redux';
+import { updateAlertManagerConfigAction } from '../../state/actions';
 import { MuteTimingFields } from '../../types/mute-timing-form';
-import { createMuteTiming, defaultTimeInterval } from '../../utils/mute-timings';
-import { makeAMLink } from '../../utils/misc';
 import { renameMuteTimings } from '../../utils/alertmanager';
+import { makeAMLink } from '../../utils/misc';
+import { createMuteTiming, defaultTimeInterval } from '../../utils/mute-timings';
+import { initialAsyncRequestState } from '../../utils/redux';
+import { AlertManagerPicker } from '../AlertManagerPicker';
+import { AlertingPageWrapper } from '../AlertingPageWrapper';
+
 import { MuteTimingTimeInterval } from './MuteTimingTimeInterval';
 
 interface Props {
@@ -54,7 +58,8 @@ const useDefaultValues = (muteTiming?: MuteTimeInterval): MuteTimingFields => {
 
 const MuteTimingForm = ({ muteTiming, showError }: Props) => {
   const dispatch = useDispatch();
-  const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName();
+  const alertManagers = useAlertManagersByPermission('notification');
+  const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName(alertManagers);
   const styles = useStyles2(getStyles);
 
   const defaultAmCortexConfig = { alertmanager_config: {}, template_files: {} };
@@ -98,7 +103,12 @@ const MuteTimingForm = ({ muteTiming, showError }: Props) => {
 
   return (
     <AlertingPageWrapper pageId="am-routes">
-      <AlertManagerPicker current={alertManagerSourceName} onChange={setAlertManagerSourceName} disabled />
+      <AlertManagerPicker
+        current={alertManagerSourceName}
+        onChange={setAlertManagerSourceName}
+        disabled
+        dataSources={alertManagers}
+      />
       {result && !loading && (
         <FormProvider {...formApi}>
           <form onSubmit={formApi.handleSubmit(onSubmit)} data-testid="mute-timing-form">

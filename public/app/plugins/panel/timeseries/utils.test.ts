@@ -1,4 +1,5 @@
 import { createTheme, FieldType, MutableDataFrame, toDataFrame } from '@grafana/data';
+
 import { prepareGraphableFields } from './utils';
 
 describe('prepare timeseries graph', () => {

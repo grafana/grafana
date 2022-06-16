@@ -1,15 +1,17 @@
-import React from 'react';
-import { GrafanaTheme2, GraphSeriesValue } from '@grafana/data';
 import { css, cx } from '@emotion/css';
-import { SeriesIcon } from '../VizLegend/SeriesIcon';
+import React from 'react';
+
+import { GrafanaTheme2, GraphSeriesValue } from '@grafana/data';
+
 import { useStyles2 } from '../../themes';
+import { SeriesIcon } from '../VizLegend/SeriesIcon';
 
 /**
  * @public
  */
 export interface SeriesTableRowProps {
   color?: string;
-  label?: string;
+  label?: React.ReactNode;
   value?: string | GraphSeriesValue;
   isActive?: boolean;
 }

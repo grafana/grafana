@@ -1,9 +1,12 @@
-import React, { ChangeEvent, useState } from 'react';
 import { css } from '@emotion/css';
+import React, { ChangeEvent, useState } from 'react';
+
 import { Input, Field, Icon } from '@grafana/ui';
+
+import { useTheme } from '../../themes';
 import { getAvailableIcons, IconName } from '../../types';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { useTheme } from '../../themes';
+
 import mdx from './Icon.mdx';
 
 export default {

@@ -1,12 +1,14 @@
-import React, { PureComponent } from 'react';
+import { css } from '@emotion/css';
+import React, { CSSProperties, PureComponent } from 'react';
+
 import { GrafanaTheme } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { stylesFactory } from '@grafana/ui';
-import { css } from '@emotion/css';
 
 export interface OverlayProps {
   topRight?: React.ReactNode[];
   bottomLeft?: React.ReactNode[];
+  blStyle?: CSSProperties;
 }
 
 export class GeomapOverlay extends PureComponent<OverlayProps> {
@@ -21,7 +23,11 @@ export class GeomapOverlay extends PureComponent<OverlayProps> {
     return (
       <div className={this.style.overlay}>
         {Boolean(topRight?.length) && <div className={this.style.TR}>{topRight}</div>}
-        {Boolean(bottomLeft?.length) && <div className={this.style.BL}>{bottomLeft}</div>}
+        {Boolean(bottomLeft?.length) && (
+          <div className={this.style.BL} style={this.props.blStyle}>
+            {bottomLeft}
+          </div>
+        )}
       </div>
     );
   }

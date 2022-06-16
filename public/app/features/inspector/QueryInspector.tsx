@@ -1,16 +1,18 @@
-import React, { PureComponent } from 'react';
-import { Button, ClipboardButton, JSONFormatter, LoadingPlaceholder } from '@grafana/ui';
-import { selectors } from '@grafana/e2e-selectors';
-import { AppEvents, DataFrame } from '@grafana/data';
-
-import appEvents from 'app/core/app_events';
-import { PanelModel } from 'app/features/dashboard/state';
-import { getPanelInspectorStyles } from './styles';
-import { supportsDataQuery } from 'app/features/dashboard/components/PanelEditor/utils';
-import { config, RefreshEvent } from '@grafana/runtime';
 import { css } from '@emotion/css';
+import React, { PureComponent } from 'react';
 import { Subscription } from 'rxjs';
+
+import { AppEvents, DataFrame } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { Stack } from '@grafana/experimental';
+import { config, RefreshEvent } from '@grafana/runtime';
+import { Button, ClipboardButton, JSONFormatter, LoadingPlaceholder } from '@grafana/ui';
+import appEvents from 'app/core/app_events';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { supportsDataQuery } from 'app/features/dashboard/components/PanelEditor/utils';
+import { PanelModel } from 'app/features/dashboard/state';
+
+import { getPanelInspectorStyles } from './styles';
 
 interface DsQuery {
   isLoading: boolean;
@@ -236,14 +238,14 @@ export class QueryInspector extends PureComponent<Props, State> {
       <div>
         {executedQueries.map((info) => {
           return (
-            <div key={info.refId}>
+            <Stack key={info.refId} gap={1} direction="column">
               <div>
                 <span className={styles.refId}>{info.refId}:</span>
                 {info.frames > 1 && <span>{info.frames} frames, </span>}
                 <span>{info.rows} rows</span>
               </div>
               <pre>{info.query}</pre>
-            </div>
+            </Stack>
           );
         })}
       </div>
@@ -263,7 +265,7 @@ export class QueryInspector extends PureComponent<Props, State> {
     }
 
     return (
-      <>
+      <div className={styles.wrap}>
         <div aria-label={selectors.components.PanelInspector.Query.content}>
           <h3 className="section-heading">Query inspector</h3>
           <p className="small muted">
@@ -305,7 +307,7 @@ export class QueryInspector extends PureComponent<Props, State> {
           )}
           <div className="flex-grow-1" />
         </div>
-        <div className={styles.contentQueryInspector}>
+        <div className={styles.content}>
           {isLoading && <LoadingPlaceholder text="Loading query inspector..." />}
           {!isLoading && haveData && (
             <JSONFormatter json={response} open={openNodes} onDidRender={this.setFormattedJson} />
@@ -314,7 +316,7 @@ export class QueryInspector extends PureComponent<Props, State> {
             <p className="muted">No request and response collected yet. Hit refresh button</p>
           )}
         </div>
-      </>
+      </div>
     );
   }
 }

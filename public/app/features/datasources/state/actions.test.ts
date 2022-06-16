@@ -1,3 +1,14 @@
+import { of } from 'rxjs';
+import { thunkTester } from 'test/core/thunk/thunkTester';
+
+import { BackendSrvRequest, FetchError, FetchResponse } from '@grafana/runtime';
+import { getBackendSrv } from 'app/core/services/backend_srv';
+import { ThunkResult, ThunkDispatch } from 'app/types';
+
+import { getMockPlugin, getMockPlugins } from '../../plugins/__mocks__/pluginMocks';
+import { GenericDataSourcePlugin } from '../settings/PluginSettings';
+import { initDataSourceSettings } from '../state/actions';
+
 import {
   findNewName,
   nameExits,
@@ -6,8 +17,6 @@ import {
   TestDataSourceDependencies,
   getDataSourceUsingUidOrId,
 } from './actions';
-import { getMockPlugin, getMockPlugins } from '../../plugins/__mocks__/pluginMocks';
-import { thunkTester } from 'test/core/thunk/thunkTester';
 import {
   initDataSourceSettingsSucceeded,
   initDataSourceSettingsFailed,
@@ -15,16 +24,10 @@ import {
   testDataSourceSucceeded,
   testDataSourceFailed,
 } from './reducers';
-import { initDataSourceSettings } from '../state/actions';
-import { ThunkResult, ThunkDispatch } from 'app/types';
-import { GenericDataSourcePlugin } from '../settings/PluginSettings';
-import { getBackendSrv } from 'app/core/services/backend_srv';
-import { BackendSrvRequest, FetchResponse } from '@grafana/runtime';
-import { of } from 'rxjs';
 
 jest.mock('app/core/services/backend_srv');
 jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
   getBackendSrv: jest.fn(),
 }));
 
@@ -313,13 +316,17 @@ describe('testDataSource', () => {
 
     it('then testDataSourceFailed should be dispatched with response error message', async () => {
       const result = {
-        message: 'Error testing datasource',
+        message: 'Response error message',
       };
-      const dispatchedActions = await failDataSourceTest({
-        message: 'Error testing datasource',
+      const error: FetchError = {
+        config: {
+          url: '',
+        },
         data: { message: 'Response error message' },
+        status: 400,
         statusText: 'Bad Request',
-      });
+      };
+      const dispatchedActions = await failDataSourceTest(error);
       expect(dispatchedActions).toEqual([testDataSourceStarting(), testDataSourceFailed(result)]);
     });
 
@@ -327,10 +334,15 @@ describe('testDataSource', () => {
       const result = {
         message: 'Response error message',
       };
-      const dispatchedActions = await failDataSourceTest({
+      const error: FetchError = {
+        config: {
+          url: '',
+        },
         data: { message: 'Response error message' },
+        status: 400,
         statusText: 'Bad Request',
-      });
+      };
+      const dispatchedActions = await failDataSourceTest(error);
       expect(dispatchedActions).toEqual([testDataSourceStarting(), testDataSourceFailed(result)]);
     });
 
@@ -338,7 +350,15 @@ describe('testDataSource', () => {
       const result = {
         message: 'HTTP error Bad Request',
       };
-      const dispatchedActions = await failDataSourceTest({ data: {}, statusText: 'Bad Request' });
+      const error: FetchError = {
+        config: {
+          url: '',
+        },
+        data: {},
+        statusText: 'Bad Request',
+        status: 400,
+      };
+      const dispatchedActions = await failDataSourceTest(error);
       expect(dispatchedActions).toEqual([testDataSourceStarting(), testDataSourceFailed(result)]);
     });
   });

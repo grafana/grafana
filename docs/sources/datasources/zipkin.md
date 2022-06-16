@@ -1,15 +1,20 @@
-+++
-title = "Zipkin"
-description = "Guide for using Zipkin in Grafana"
-keywords = ["grafana", "zipkin", "guide", "tracing"]
-aliases = ["/docs/grafana/latest/datasources/zipkin"]
-weight = 1600
-+++
+---
+aliases:
+  - /docs/grafana/latest/datasources/zipkin/
+description: Guide for using Zipkin in Grafana
+keywords:
+  - grafana
+  - zipkin
+  - guide
+  - tracing
+title: Zipkin
+weight: 1600
+---
 
 # Zipkin data source
 
 Grafana ships with built-in support for Zipkin, an open source, distributed tracing system.
-Just add it as a data source and you are ready to query your traces in [Explore]({{< relref "../explore" >}}).
+Just add it as a data source and you are ready to query your traces in [Explore]({{< relref "../explore/" >}}).
 
 ## Adding the data source
 
@@ -28,16 +33,31 @@ To access Zipkin settings, click the **Configuration** (gear) icon, then click *
 
 > **Note:** This feature is available in Grafana 7.4+.
 
-This is a configuration for the [trace to logs feature]({{< relref "../explore/trace-integration" >}}). Select target data source (at this moment limited to Loki data sources) and select which tags will be used in the logs query.
+This is a configuration for the [trace to logs feature]({{< relref "../explore/trace-integration/" >}}). Select target data source (at this moment limited to Loki or Splunk \[logs\] data sources) and select which tags will be used in the logs query.
 
 - **Data source -** Target data source.
-- **Tags -** The tags that will be used in the Loki query. Default is `'cluster', 'hostname', 'namespace', 'pod'`.
-- **Span start time shift -** Shift in the start time for the Loki query based on the span start time. In order to extend to the past, you need to use a negative value. Use time interval units like 5s, 1m, 3h. The default is 0.
-- **Span end time shift -** Shift in the end time for the Loki query based on the span end time. Time units can be used here, for example, 5s, 1m, 3h. The default is 0.
-- **Filter by Trace ID -** Toggle to append the trace ID to the Loki query.
-- **Filter by Span ID -** Toggle to append the span ID to the Loki query.
+- **Tags -** The tags that will be used in the logs query. Default is `'cluster', 'hostname', 'namespace', 'pod'`.
+- **Map tag names -** When enabled, allows configuring how Zipkin tag names map to logs label names. For example, map `service.name` to `service`.
+- **Span start time shift -** Shift in the start time for the logs query based on the span start time. In order to extend to the past, you need to use a negative value. Use time interval units like 5s, 1m, 3h. The default is 0.
+- **Span end time shift -** Shift in the end time for the logs query based on the span end time. Time units can be used here, for example, 5s, 1m, 3h. The default is 0.
+- **Filter by Trace ID -** Toggle to append the trace ID to the logs query.
+- **Filter by Span ID -** Toggle to append the span ID to the logs query.
 
 ![Trace to logs settings](/static/img/docs/explore/trace-to-logs-settings-8-2.png 'Screenshot of the trace to logs settings')
+
+### Trace to metrics
+
+> **Note:** This feature is behind the `traceToMetrics` feature toggle.
+
+To configure trace to metrics, select the target Prometheus data source and create any desired linked queries.
+
+-- **Data source -** Target data source.
+-- **Tags -** You can use tags in the linked queries. The key is the span attribute name. The optional value is the corresponding metric label name (for example, map `k8s.pod` to `pod`). You may interpolate these tags into your queries using the `$__tags` keyword.
+
+Each linked query consists of:
+
+-- **Link Label -** (Optional) Descriptive label for the linked query.
+-- **Query -** Query that runs when navigating from a trace to the metrics data source. Interpolate tags using the `$__tags` keyword. For example, when you configure the query `requests_total{$__tags}`with the tags `k8s.pod=pod` and `cluster`, it results in `requests_total{pod="nginx-554b9", cluster="us-east-1"}`.
 
 ### Node Graph
 
@@ -47,7 +67,7 @@ This is a configuration for the beta Node Graph visualization. The Node Graph is
 
 ## Query traces
 
-Querying and displaying traces from Zipkin is available via [Explore]({{< relref "../explore" >}}).
+Querying and displaying traces from Zipkin is available via [Explore]({{< relref "../explore/" >}}).
 
 {{< figure src="/static/img/docs/v70/zipkin-query-editor.png" class="docs-image--no-shadow" caption="Screenshot of the Zipkin query editor" >}}
 
@@ -97,4 +117,4 @@ Here is an example JSON:
 
 ## Linking Trace ID from logs
 
-You can link to Zipkin trace from logs in Loki by configuring a derived field with internal link. See [Loki documentation]({{< relref "loki#derived-fields" >}}) for details.
+You can link to Zipkin trace from logs in Loki or Splunk by configuring a derived field with internal link. See [Loki documentation]({{< relref "loki/#derived-fields" >}}) for details.

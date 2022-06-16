@@ -1,11 +1,13 @@
-import React, { useEffect } from 'react';
-import { Button, ConfirmModal, Modal, stylesFactory, useTheme } from '@grafana/ui';
-import { GrafanaTheme } from '@grafana/data';
 import { css } from '@emotion/css';
+import React, { useEffect } from 'react';
+
+import { GrafanaTheme } from '@grafana/data';
+import { Button, ConfirmModal, Modal, stylesFactory, useTheme } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state';
-import { useDashboardSave } from './useDashboardSave';
-import { SaveDashboardModalProps } from './types';
+
 import { SaveDashboardAsButton } from './SaveDashboardButton';
+import { SaveDashboardModalProps } from './types';
+import { useDashboardSave } from './useDashboardSave';
 
 interface SaveDashboardErrorProxyProps {
   /** original dashboard */

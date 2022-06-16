@@ -1,3 +1,5 @@
+import { getCenterPointWGS84 } from 'app/features/transformers/spatial/utils';
+
 import { getGazetteer } from './gazetteer';
 
 let backendResults: any = { hello: 'world' };
@@ -42,7 +44,7 @@ const geojsonObject = {
 };
 
 jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
   getBackendSrv: () => ({
     get: jest.fn().mockResolvedValue(backendResults),
   }),
@@ -57,7 +59,7 @@ describe('Placename lookup from geojson format', () => {
     backendResults = geojsonObject;
     const gaz = await getGazetteer('local');
     expect(gaz.error).toBeUndefined();
-    expect(gaz.find('A')?.point()?.getCoordinates()).toMatchInlineSnapshot(`
+    expect(getCenterPointWGS84(gaz.find('A')?.geometry())).toMatchInlineSnapshot(`
       Array [
         0,
         0,
@@ -68,7 +70,7 @@ describe('Placename lookup from geojson format', () => {
     backendResults = geojsonObject;
     const gaz = await getGazetteer('airports');
     expect(gaz.error).toBeUndefined();
-    expect(gaz.find('B')?.point()?.getCoordinates()).toMatchInlineSnapshot(`
+    expect(getCenterPointWGS84(gaz.find('B')?.geometry())).toMatchInlineSnapshot(`
       Array [
         1,
         1,
@@ -80,7 +82,7 @@ describe('Placename lookup from geojson format', () => {
     backendResults = geojsonObject;
     const gaz = await getGazetteer('airports');
     expect(gaz.error).toBeUndefined();
-    expect(gaz.find('C')?.point()?.getCoordinates()).toMatchInlineSnapshot(`
+    expect(getCenterPointWGS84(gaz.find('C')?.geometry())).toMatchInlineSnapshot(`
       Array [
         2,
         2,

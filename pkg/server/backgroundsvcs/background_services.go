@@ -6,35 +6,42 @@ import (
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	uss "github.com/grafana/grafana/pkg/infra/usagestats/service"
+	"github.com/grafana/grafana/pkg/infra/usagestats/statscollector"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/manager"
-	"github.com/grafana/grafana/pkg/plugins/plugindashboards"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
+	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/live/pushhttp"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/notifications"
-	"github.com/grafana/grafana/pkg/services/pluginsettings"
+	plugindashboardsservice "github.com/grafana/grafana/pkg/services/plugindashboards/service"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/services/searchV2"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/services/store"
+	"github.com/grafana/grafana/pkg/services/thumbs"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
 )
 
 func ProvideBackgroundServiceRegistry(
-	httpServer *api.HTTPServer, ng *ngalert.AlertNG, cleanup *cleanup.CleanUpService,
-	live *live.GrafanaLive, pushGateway *pushhttp.Gateway, notifications *notifications.NotificationService,
-	rendering *rendering.RenderingService, tokenService models.UserTokenBackgroundService,
-	provisioning *provisioning.ProvisioningServiceImpl, alerting *alerting.AlertEngine, pm *manager.PluginManager,
-	metrics *metrics.InternalMetricsService, usageStats *uss.UsageStats, updateChecker *updatechecker.Service,
-	tracing tracing.Tracer, remoteCache *remotecache.RemoteCache, secretsService *secretsManager.SecretsService,
+	httpServer *api.HTTPServer, ng *ngalert.AlertNG, cleanup *cleanup.CleanUpService, live *live.GrafanaLive,
+	pushGateway *pushhttp.Gateway, notifications *notifications.NotificationService, pm *manager.PluginManager,
+	rendering *rendering.RenderingService, tokenService models.UserTokenBackgroundService, tracing tracing.Tracer,
+	provisioning *provisioning.ProvisioningServiceImpl, alerting *alerting.AlertEngine, usageStats *uss.UsageStats,
+	statsCollector *statscollector.Service, grafanaUpdateChecker *updatechecker.GrafanaService,
+	pluginsUpdateChecker *updatechecker.PluginsService, metrics *metrics.InternalMetricsService,
+	secretsService *secretsManager.SecretsService, remoteCache *remotecache.RemoteCache,
+	thumbnailsService thumbs.Service, StorageService store.StorageService, searchService searchV2.SearchService, entityEventsService store.EntityEventsService,
 	// Need to make sure these are initialized, is there a better place to put them?
-	_ *plugindashboards.Service, _ *dashboardsnapshots.Service, _ *pluginsettings.Service,
-	_ *alerting.AlertNotificationService, _ serviceaccounts.Service,
+	_ dashboardsnapshots.Service, _ *alerting.AlertNotificationService,
+	_ serviceaccounts.Service, _ *guardian.Provider,
+	_ *plugindashboardsservice.DashboardUpdater,
 ) *BackgroundServiceRegistry {
 	return NewBackgroundServiceRegistry(
 		httpServer,
@@ -48,12 +55,19 @@ func ProvideBackgroundServiceRegistry(
 		provisioning,
 		alerting,
 		pm,
-		updateChecker,
+		grafanaUpdateChecker,
+		pluginsUpdateChecker,
 		metrics,
 		usageStats,
+		statsCollector,
 		tracing,
 		remoteCache,
-		secretsService)
+		secretsService,
+		StorageService,
+		thumbnailsService,
+		searchService,
+		entityEventsService,
+	)
 }
 
 // BackgroundServiceRegistry provides background services.

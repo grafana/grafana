@@ -45,6 +45,11 @@ func AddExpander(name string, priority int64, e Expander) {
 
 var regex = regexp.MustCompile(`\$(|__\w+){([^}]+)}`)
 
+// Slightly hacky function to avoid code duplication. If this is eventually called in multiple places, consider refactoring or potentially adding more general helper functions to this package
+func GetExpanderRegex() *regexp.Regexp {
+	return regex
+}
+
 func expandConfig(file *ini.File) error {
 	sort.Slice(expanders, func(i, j int) bool {
 		return expanders[i].priority < expanders[j].priority

@@ -1,11 +1,12 @@
+import { css } from '@emotion/css';
 import React from 'react';
+
 import { SelectableValue } from '@grafana/data';
 import { Field, FieldSet, Select, Switch } from '@grafana/ui';
-import { css } from '@emotion/css';
-
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
-import { GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQuery } from '../types';
 import { getAnnotationTags } from 'app/features/annotations/api';
+
+import { GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQuery } from '../types';
 
 const matchTooltipContent = 'Enabling this returns annotations that match any of the tags specified below';
 
@@ -71,7 +72,6 @@ export default function AnnotationQueryEditor({ query, onChange }: Props) {
     <FieldSet className={styles.container}>
       <Field label="Filter by">
         <Select
-          menuShouldPortal
           inputId="grafana-annotations__filter-by"
           options={annotationTypes}
           value={type}
@@ -80,7 +80,6 @@ export default function AnnotationQueryEditor({ query, onChange }: Props) {
       </Field>
       <Field label="Max limit">
         <Select
-          menuShouldPortal
           inputId="grafana-annotations__limit"
           width={16}
           options={limitOptions}
@@ -88,7 +87,7 @@ export default function AnnotationQueryEditor({ query, onChange }: Props) {
           onChange={onMaxLimitChange}
         />
       </Field>
-      {type === GrafanaAnnotationType.Tags && tags && (
+      {type === GrafanaAnnotationType.Tags && (
         <>
           <Field label="Match any" description={matchTooltipContent}>
             <Switch id="grafana-annotations__match-any" value={matchAny} onChange={onMatchAnyChange} />
@@ -100,7 +99,7 @@ export default function AnnotationQueryEditor({ query, onChange }: Props) {
               inputId="grafana-annotations__tags"
               onChange={onTagsChange}
               tagOptions={getAnnotationTags}
-              tags={tags}
+              tags={tags ?? []}
             />
           </Field>
         </>

@@ -1,5 +1,6 @@
-import React from 'react';
 import { shallow } from 'enzyme';
+import React from 'react';
+
 import PageActionBar, { Props } from './PageActionBar';
 
 const setup = (propOverrides?: object) => {

@@ -1,9 +1,9 @@
 package models
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -14,6 +14,7 @@ var (
 	ErrOrgUserAlreadyAdded = errors.New("user is already added to organization")
 )
 
+// swagger:enum RoleType
 type RoleType string
 
 const (
@@ -49,18 +50,25 @@ func (r RoleType) Children() []RoleType {
 	}
 }
 
-func (r *RoleType) UnmarshalJSON(data []byte) error {
-	var str string
-	err := json.Unmarshal(data, &str)
-	if err != nil {
-		return err
+func (r RoleType) Parents() []RoleType {
+	switch r {
+	case ROLE_EDITOR:
+		return []RoleType{ROLE_ADMIN}
+	case ROLE_VIEWER:
+		return []RoleType{ROLE_EDITOR, ROLE_ADMIN}
+	default:
+		return nil
 	}
+}
+
+func (r *RoleType) UnmarshalText(data []byte) error {
+	// make sure "viewer" and "Viewer" are both correct
+	str := strings.Title(string(data))
 
 	*r = RoleType(str)
-
 	if !r.IsValid() {
 		if (*r) != "" {
-			return fmt.Errorf("JSON validation error: invalid role value: %s", *r)
+			return fmt.Errorf("invalid role value: %s", *r)
 		}
 
 		*r = ROLE_VIEWER
@@ -107,22 +115,22 @@ type UpdateOrgUserCommand struct {
 // QUERIES
 
 type GetOrgUsersQuery struct {
-	UserID           int64
-	OrgId            int64
-	Query            string
-	Limit            int
-	IsServiceAccount bool
+	UserID int64
+	OrgId  int64
+	Query  string
+	Limit  int
+	// Flag used to allow oss edition to query users without access control
+	DontEnforceAccessControl bool
 
 	User   *SignedInUser
 	Result []*OrgUserDTO
 }
 
 type SearchOrgUsersQuery struct {
-	OrgID            int64
-	Query            string
-	Page             int
-	Limit            int
-	IsServiceAccount bool
+	OrgID int64
+	Query string
+	Page  int
+	Limit int
 
 	User   *SignedInUser
 	Result SearchOrgUsersQueryResult
@@ -147,6 +155,8 @@ type OrgUserDTO struct {
 	Login         string          `json:"login"`
 	Role          string          `json:"role"`
 	LastSeenAt    time.Time       `json:"lastSeenAt"`
+	Updated       time.Time       `json:"-"`
+	Created       time.Time       `json:"-"`
 	LastSeenAtAge string          `json:"lastSeenAtAge"`
 	AccessControl map[string]bool `json:"accessControl,omitempty"`
 }

@@ -7,18 +7,18 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
-	"go.opentelemetry.io/otel/trace"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
+	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/services/searchV2"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	"github.com/grafana/grafana/pkg/tsdb/cloudmonitoring"
@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/grafana/grafana/pkg/tsdb/tempo"
 	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -51,7 +52,7 @@ func TestPluginManager_int_init(t *testing.T) {
 	bundledPluginsPath, err := filepath.Abs("../../../plugins-bundled/internal")
 	require.NoError(t, err)
 
-	features := featuremgmt.WithToggles()
+	features := featuremgmt.WithFeatures()
 	cfg := &setting.Cfg{
 		Raw:                    ini.Empty(),
 		Env:                    setting.Prod,
@@ -73,34 +74,36 @@ func TestPluginManager_int_init(t *testing.T) {
 
 	hcp := httpclient.NewProvider()
 	am := azuremonitor.ProvideService(cfg, hcp, tracer)
-	cw := cloudwatch.ProvideService(cfg, hcp)
+	cw := cloudwatch.ProvideService(cfg, hcp, features)
 	cm := cloudmonitoring.ProvideService(hcp, tracer)
 	es := elasticsearch.ProvideService(hcp)
 	grap := graphite.ProvideService(hcp, tracer)
 	idb := influxdb.ProvideService(hcp)
-	lk := loki.ProvideService(hcp, tracer)
+	lk := loki.ProvideService(hcp, features, tracer)
 	otsdb := opentsdb.ProvideService(hcp)
-	pr := prometheus.ProvideService(hcp, tracer)
+	pr := prometheus.ProvideService(hcp, cfg, features, tracer)
 	tmpo := tempo.ProvideService(hcp)
 	td := testdatasource.ProvideService(cfg, features)
 	pg := postgres.ProvideService(cfg)
 	my := mysql.ProvideService(cfg, hcp)
 	ms := mssql.ProvideService(cfg)
-	graf := grafanads.ProvideService(cfg)
+	sv2 := searchV2.ProvideService(cfg, sqlstore.InitTestDB(t), nil, nil)
+	graf := grafanads.ProvideService(cfg, sv2, nil)
 
 	coreRegistry := coreplugin.ProvideCoreRegistry(am, cw, cm, es, grap, idb, lk, otsdb, pr, tmpo, td, pg, my, ms, graf)
 
 	pmCfg := plugins.FromGrafanaCfg(cfg)
-	pm, err := ProvideService(cfg, nil, loader.New(pmCfg, license,
-		&signature.UnsignedPluginAuthorizer{Cfg: pmCfg}, provider.ProvideService(coreRegistry)), nil)
+	pm, err := ProvideService(cfg, registry.NewInMemory(), loader.New(pmCfg, license, signature.NewUnsignedAuthorizer(pmCfg),
+		provider.ProvideService(coreRegistry)))
 	require.NoError(t, err)
 
-	verifyCorePluginCatalogue(t, pm)
-	verifyBundledPlugins(t, pm)
-	verifyPluginStaticRoutes(t, pm)
+	ctx := context.Background()
+	verifyCorePluginCatalogue(t, ctx, pm)
+	verifyBundledPlugins(t, ctx, pm)
+	verifyPluginStaticRoutes(t, ctx, pm)
 }
 
-func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
+func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, pm *PluginManager) {
 	t.Helper()
 
 	expPanels := map[string]struct{}{
@@ -117,6 +120,7 @@ func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
 		"gettingstarted": {},
 		"graph":          {},
 		"heatmap":        {},
+		"heatmap-new":    {},
 		"histogram":      {},
 		"icon":           {},
 		"live":           {},
@@ -124,8 +128,8 @@ func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
 		"candlestick":    {},
 		"news":           {},
 		"nodeGraph":      {},
+		"traces":         {},
 		"piechart":       {},
-		"pluginlist":     {},
 		"stat":           {},
 		"state-timeline": {},
 		"status-history": {},
@@ -165,44 +169,44 @@ func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
 		"test-app": {},
 	}
 
-	panels := pm.Plugins(context.Background(), plugins.Panel)
+	panels := pm.Plugins(ctx, plugins.Panel)
 	assert.Equal(t, len(expPanels), len(panels))
 	for _, p := range panels {
-		p, exists := pm.Plugin(context.Background(), p.ID)
+		p, exists := pm.Plugin(ctx, p.ID)
 		require.NotEqual(t, plugins.PluginDTO{}, p)
 		assert.True(t, exists)
 		assert.Contains(t, expPanels, p.ID)
-		assert.Contains(t, pm.registeredPlugins(), p.ID)
+		assert.Contains(t, pm.registeredPlugins(ctx), p.ID)
 	}
 
-	dataSources := pm.Plugins(context.Background(), plugins.DataSource)
+	dataSources := pm.Plugins(ctx, plugins.DataSource)
 	assert.Equal(t, len(expDataSources), len(dataSources))
 	for _, ds := range dataSources {
-		p, exists := pm.Plugin(context.Background(), ds.ID)
+		p, exists := pm.Plugin(ctx, ds.ID)
 		require.NotEqual(t, plugins.PluginDTO{}, p)
 		assert.True(t, exists)
 		assert.Contains(t, expDataSources, ds.ID)
-		assert.Contains(t, pm.registeredPlugins(), ds.ID)
+		assert.Contains(t, pm.registeredPlugins(ctx), ds.ID)
 	}
 
-	apps := pm.Plugins(context.Background(), plugins.App)
+	apps := pm.Plugins(ctx, plugins.App)
 	assert.Equal(t, len(expApps), len(apps))
 	for _, app := range apps {
-		p, exists := pm.Plugin(context.Background(), app.ID)
+		p, exists := pm.Plugin(ctx, app.ID)
 		require.NotEqual(t, plugins.PluginDTO{}, p)
 		assert.True(t, exists)
 		assert.Contains(t, expApps, app.ID)
-		assert.Contains(t, pm.registeredPlugins(), app.ID)
+		assert.Contains(t, pm.registeredPlugins(ctx), app.ID)
 	}
 
-	assert.Equal(t, len(expPanels)+len(expDataSources)+len(expApps), len(pm.Plugins(context.Background())))
+	assert.Equal(t, len(expPanels)+len(expDataSources)+len(expApps), len(pm.Plugins(ctx)))
 }
 
-func verifyBundledPlugins(t *testing.T, pm *PluginManager) {
+func verifyBundledPlugins(t *testing.T, ctx context.Context, pm *PluginManager) {
 	t.Helper()
 
 	dsPlugins := make(map[string]struct{})
-	for _, p := range pm.Plugins(context.Background(), plugins.DataSource) {
+	for _, p := range pm.Plugins(ctx, plugins.DataSource) {
 		dsPlugins[p.ID] = struct{}{}
 	}
 
@@ -211,7 +215,7 @@ func verifyBundledPlugins(t *testing.T, pm *PluginManager) {
 		pluginRoutes[r.PluginID] = r
 	}
 
-	inputPlugin, exists := pm.Plugin(context.Background(), "input")
+	inputPlugin, exists := pm.Plugin(ctx, "input")
 	require.NotEqual(t, plugins.PluginDTO{}, inputPlugin)
 	assert.True(t, exists)
 	assert.NotNil(t, dsPlugins["input"])
@@ -222,7 +226,7 @@ func verifyBundledPlugins(t *testing.T, pm *PluginManager) {
 	}
 }
 
-func verifyPluginStaticRoutes(t *testing.T, pm *PluginManager) {
+func verifyPluginStaticRoutes(t *testing.T, ctx context.Context, pm *PluginManager) {
 	routes := make(map[string]*plugins.StaticRoute)
 	for _, route := range pm.Routes() {
 		routes[route.PluginID] = route
@@ -230,11 +234,11 @@ func verifyPluginStaticRoutes(t *testing.T, pm *PluginManager) {
 
 	assert.Len(t, routes, 2)
 
-	inputPlugin, _ := pm.Plugin(context.Background(), "input")
+	inputPlugin, _ := pm.Plugin(ctx, "input")
 	assert.NotNil(t, routes["input"])
 	assert.Equal(t, routes["input"].Directory, inputPlugin.PluginDir)
 
-	testAppPlugin, _ := pm.Plugin(context.Background(), "test-app")
+	testAppPlugin, _ := pm.Plugin(ctx, "test-app")
 	assert.Contains(t, routes, "test-app")
 	assert.Equal(t, routes["test-app"].Directory, testAppPlugin.PluginDir)
 }

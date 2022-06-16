@@ -21,7 +21,7 @@ func TestLineNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		_, err := NewLINENotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+		_, err := NewLINENotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 		require.Error(t, err)
 	})
 	t.Run("settings should trigger incident", func(t *testing.T) {
@@ -36,7 +36,7 @@ func TestLineNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		not, err := NewLINENotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+		not, err := NewLINENotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 		lineNotifier := not.(*LineNotifier)
 
 		require.Nil(t, err)

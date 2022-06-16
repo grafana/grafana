@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -20,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func ValidateOrgAlert(c *models.ReqContext) {
+func (hs *HTTPServer) ValidateOrgAlert(c *models.ReqContext) {
 	id, err := strconv.ParseInt(web.Params(c.Req)[":alertId"], 10, 64)
 	if err != nil {
 		c.JsonApiErr(http.StatusBadRequest, "alertId is invalid", nil)
@@ -28,7 +27,7 @@ func ValidateOrgAlert(c *models.ReqContext) {
 	}
 	query := models.GetAlertByIdQuery{Id: id}
 
-	if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
+	if err := hs.SQLStore.GetAlertById(c.Req.Context(), &query); err != nil {
 		c.JsonApiErr(404, "Alert not found", nil)
 		return
 	}
@@ -39,7 +38,7 @@ func ValidateOrgAlert(c *models.ReqContext) {
 	}
 }
 
-func GetAlertStatesForDashboard(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetAlertStatesForDashboard(c *models.ReqContext) response.Response {
 	dashboardID := c.QueryInt64("dashboardId")
 
 	if dashboardID == 0 {
@@ -51,15 +50,15 @@ func GetAlertStatesForDashboard(c *models.ReqContext) response.Response {
 		DashboardId: c.QueryInt64("dashboardId"),
 	}
 
-	if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
+	if err := hs.SQLStore.GetAlertStatesForDashboard(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "Failed to fetch alert states", err)
 	}
 
-	return response.JSON(200, query.Result)
+	return response.JSON(http.StatusOK, query.Result)
 }
 
 // GET /api/alerts
-func GetAlerts(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetAlerts(c *models.ReqContext) response.Response {
 	dashboardQuery := c.Query("dashboardQuery")
 	dashboardTags := c.QueryStrings("dashboardTag")
 	stringDashboardIDs := c.QueryStrings("dashboardId")
@@ -89,25 +88,25 @@ func GetAlerts(c *models.ReqContext) response.Response {
 			Limit:        1000,
 			OrgId:        c.OrgId,
 			DashboardIds: dashboardIDs,
-			Type:         string(search.DashHitDB),
+			Type:         string(models.DashHitDB),
 			FolderIds:    folderIDs,
 			Permission:   models.PERMISSION_VIEW,
 		}
 
-		err := bus.Dispatch(c.Req.Context(), &searchQuery)
+		err := hs.SearchService.SearchHandler(c.Req.Context(), &searchQuery)
 		if err != nil {
 			return response.Error(500, "List alerts failed", err)
 		}
 
 		for _, d := range searchQuery.Result {
-			if d.Type == search.DashHitDB && d.ID > 0 {
+			if d.Type == models.DashHitDB && d.ID > 0 {
 				dashboardIDs = append(dashboardIDs, d.ID)
 			}
 		}
 
 		// if we didn't find any dashboards, return empty result
 		if len(dashboardIDs) == 0 {
-			return response.JSON(200, []*models.AlertListItemDTO{})
+			return response.JSON(http.StatusOK, []*models.AlertListItemDTO{})
 		}
 	}
 
@@ -125,7 +124,7 @@ func GetAlerts(c *models.ReqContext) response.Response {
 		query.State = states
 	}
 
-	if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
+	if err := hs.SQLStore.HandleAlertsQuery(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "List alerts failed", err)
 	}
 
@@ -133,7 +132,7 @@ func GetAlerts(c *models.ReqContext) response.Response {
 		alert.Url = models.GetDashboardUrl(alert.DashboardUid, alert.DashboardSlug)
 	}
 
-	return response.JSON(200, query.Result)
+	return response.JSON(http.StatusOK, query.Result)
 }
 
 // POST /api/alerts/test
@@ -177,37 +176,37 @@ func (hs *HTTPServer) AlertTest(c *models.ReqContext) response.Response {
 
 	dtoRes.TimeMs = fmt.Sprintf("%1.3fms", res.GetDurationMs())
 
-	return response.JSON(200, dtoRes)
+	return response.JSON(http.StatusOK, dtoRes)
 }
 
 // GET /api/alerts/:id
-func GetAlert(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetAlert(c *models.ReqContext) response.Response {
 	id, err := strconv.ParseInt(web.Params(c.Req)[":alertId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "alertId is invalid", err)
 	}
 	query := models.GetAlertByIdQuery{Id: id}
 
-	if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
+	if err := hs.SQLStore.GetAlertById(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "List alerts failed", err)
 	}
 
-	return response.JSON(200, &query.Result)
+	return response.JSON(http.StatusOK, &query.Result)
 }
 
-func GetAlertNotifiers(ngalertEnabled bool) func(*models.ReqContext) response.Response {
+func (hs *HTTPServer) GetAlertNotifiers(ngalertEnabled bool) func(*models.ReqContext) response.Response {
 	return func(_ *models.ReqContext) response.Response {
 		if ngalertEnabled {
-			return response.JSON(200, notifier.GetAvailableNotifiers())
+			return response.JSON(http.StatusOK, notifier.GetAvailableNotifiers())
 		}
 		// TODO(codesome): This wont be required in 8.0 since ngalert
 		// will be enabled by default with no disabling. This is to be removed later.
-		return response.JSON(200, alerting.GetNotifiers())
+		return response.JSON(http.StatusOK, alerting.GetNotifiers())
 	}
 }
 
-func GetAlertNotificationLookup(c *models.ReqContext) response.Response {
-	alertNotifications, err := getAlertNotificationsInternal(c)
+func (hs *HTTPServer) GetAlertNotificationLookup(c *models.ReqContext) response.Response {
+	alertNotifications, err := hs.getAlertNotificationsInternal(c)
 	if err != nil {
 		return response.Error(500, "Failed to get alert notifications", err)
 	}
@@ -218,11 +217,11 @@ func GetAlertNotificationLookup(c *models.ReqContext) response.Response {
 		result = append(result, dtos.NewAlertNotificationLookup(notification))
 	}
 
-	return response.JSON(200, result)
+	return response.JSON(http.StatusOK, result)
 }
 
-func GetAlertNotifications(c *models.ReqContext) response.Response {
-	alertNotifications, err := getAlertNotificationsInternal(c)
+func (hs *HTTPServer) GetAlertNotifications(c *models.ReqContext) response.Response {
+	alertNotifications, err := hs.getAlertNotificationsInternal(c)
 	if err != nil {
 		return response.Error(500, "Failed to get alert notifications", err)
 	}
@@ -233,20 +232,20 @@ func GetAlertNotifications(c *models.ReqContext) response.Response {
 		result = append(result, dtos.NewAlertNotification(notification))
 	}
 
-	return response.JSON(200, result)
+	return response.JSON(http.StatusOK, result)
 }
 
-func getAlertNotificationsInternal(c *models.ReqContext) ([]*models.AlertNotification, error) {
+func (hs *HTTPServer) getAlertNotificationsInternal(c *models.ReqContext) ([]*models.AlertNotification, error) {
 	query := &models.GetAllAlertNotificationsQuery{OrgId: c.OrgId}
 
-	if err := bus.Dispatch(c.Req.Context(), query); err != nil {
+	if err := hs.AlertNotificationService.GetAllAlertNotifications(c.Req.Context(), query); err != nil {
 		return nil, err
 	}
 
 	return query.Result, nil
 }
 
-func GetAlertNotificationByID(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetAlertNotificationByID(c *models.ReqContext) response.Response {
 	notificationId, err := strconv.ParseInt(web.Params(c.Req)[":notificationId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "notificationId is invalid", err)
@@ -260,7 +259,7 @@ func GetAlertNotificationByID(c *models.ReqContext) response.Response {
 		return response.Error(404, "Alert notification not found", nil)
 	}
 
-	if err := bus.Dispatch(c.Req.Context(), query); err != nil {
+	if err := hs.AlertNotificationService.GetAlertNotifications(c.Req.Context(), query); err != nil {
 		return response.Error(500, "Failed to get alert notifications", err)
 	}
 
@@ -268,10 +267,10 @@ func GetAlertNotificationByID(c *models.ReqContext) response.Response {
 		return response.Error(404, "Alert notification not found", nil)
 	}
 
-	return response.JSON(200, dtos.NewAlertNotification(query.Result))
+	return response.JSON(http.StatusOK, dtos.NewAlertNotification(query.Result))
 }
 
-func GetAlertNotificationByUID(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetAlertNotificationByUID(c *models.ReqContext) response.Response {
 	query := &models.GetAlertNotificationsWithUidQuery{
 		OrgId: c.OrgId,
 		Uid:   web.Params(c.Req)[":uid"],
@@ -281,7 +280,7 @@ func GetAlertNotificationByUID(c *models.ReqContext) response.Response {
 		return response.Error(404, "Alert notification not found", nil)
 	}
 
-	if err := bus.Dispatch(c.Req.Context(), query); err != nil {
+	if err := hs.AlertNotificationService.GetAlertNotificationsWithUid(c.Req.Context(), query); err != nil {
 		return response.Error(500, "Failed to get alert notifications", err)
 	}
 
@@ -289,17 +288,17 @@ func GetAlertNotificationByUID(c *models.ReqContext) response.Response {
 		return response.Error(404, "Alert notification not found", nil)
 	}
 
-	return response.JSON(200, dtos.NewAlertNotification(query.Result))
+	return response.JSON(http.StatusOK, dtos.NewAlertNotification(query.Result))
 }
 
-func CreateAlertNotification(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) CreateAlertNotification(c *models.ReqContext) response.Response {
 	cmd := models.CreateAlertNotificationCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	cmd.OrgId = c.OrgId
 
-	if err := bus.Dispatch(c.Req.Context(), &cmd); err != nil {
+	if err := hs.AlertNotificationService.CreateAlertNotificationCommand(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, models.ErrAlertNotificationWithSameNameExists) || errors.Is(err, models.ErrAlertNotificationWithSameUIDExists) {
 			return response.Error(409, "Failed to create alert notification", err)
 		}
@@ -310,7 +309,7 @@ func CreateAlertNotification(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to create alert notification", err)
 	}
 
-	return response.JSON(200, dtos.NewAlertNotification(cmd.Result))
+	return response.JSON(http.StatusOK, dtos.NewAlertNotification(cmd.Result))
 }
 
 func (hs *HTTPServer) UpdateAlertNotification(c *models.ReqContext) response.Response {
@@ -325,7 +324,7 @@ func (hs *HTTPServer) UpdateAlertNotification(c *models.ReqContext) response.Res
 		return response.Error(500, "Failed to update alert notification", err)
 	}
 
-	if err := bus.Dispatch(c.Req.Context(), &cmd); err != nil {
+	if err := hs.AlertNotificationService.UpdateAlertNotification(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, models.ErrAlertNotificationNotFound) {
 			return response.Error(404, err.Error(), err)
 		}
@@ -341,11 +340,11 @@ func (hs *HTTPServer) UpdateAlertNotification(c *models.ReqContext) response.Res
 		Id:    cmd.Id,
 	}
 
-	if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
+	if err := hs.AlertNotificationService.GetAlertNotifications(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "Failed to get alert notification", err)
 	}
 
-	return response.JSON(200, dtos.NewAlertNotification(query.Result))
+	return response.JSON(http.StatusOK, dtos.NewAlertNotification(query.Result))
 }
 
 func (hs *HTTPServer) UpdateAlertNotificationByUID(c *models.ReqContext) response.Response {
@@ -361,7 +360,7 @@ func (hs *HTTPServer) UpdateAlertNotificationByUID(c *models.ReqContext) respons
 		return response.Error(500, "Failed to update alert notification", err)
 	}
 
-	if err := bus.Dispatch(c.Req.Context(), &cmd); err != nil {
+	if err := hs.AlertNotificationService.UpdateAlertNotificationWithUid(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, models.ErrAlertNotificationNotFound) {
 			return response.Error(404, err.Error(), nil)
 		}
@@ -373,11 +372,11 @@ func (hs *HTTPServer) UpdateAlertNotificationByUID(c *models.ReqContext) respons
 		Uid:   cmd.Uid,
 	}
 
-	if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
+	if err := hs.AlertNotificationService.GetAlertNotificationsWithUid(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "Failed to get alert notification", err)
 	}
 
-	return response.JSON(200, dtos.NewAlertNotification(query.Result))
+	return response.JSON(http.StatusOK, dtos.NewAlertNotification(query.Result))
 }
 
 func (hs *HTTPServer) fillWithSecureSettingsData(ctx context.Context, cmd *models.UpdateAlertNotificationCommand) error {
@@ -390,7 +389,7 @@ func (hs *HTTPServer) fillWithSecureSettingsData(ctx context.Context, cmd *model
 		Id:    cmd.Id,
 	}
 
-	if err := bus.Dispatch(ctx, query); err != nil {
+	if err := hs.AlertNotificationService.GetAlertNotifications(ctx, query); err != nil {
 		return err
 	}
 
@@ -418,7 +417,7 @@ func (hs *HTTPServer) fillWithSecureSettingsDataByUID(ctx context.Context, cmd *
 		Uid:   cmd.Uid,
 	}
 
-	if err := bus.Dispatch(ctx, query); err != nil {
+	if err := hs.AlertNotificationService.GetAlertNotificationsWithUid(ctx, query); err != nil {
 		return err
 	}
 
@@ -436,7 +435,7 @@ func (hs *HTTPServer) fillWithSecureSettingsDataByUID(ctx context.Context, cmd *
 	return nil
 }
 
-func DeleteAlertNotification(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) DeleteAlertNotification(c *models.ReqContext) response.Response {
 	notificationId, err := strconv.ParseInt(web.Params(c.Req)[":notificationId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "notificationId is invalid", err)
@@ -447,7 +446,7 @@ func DeleteAlertNotification(c *models.ReqContext) response.Response {
 		Id:    notificationId,
 	}
 
-	if err := bus.Dispatch(c.Req.Context(), &cmd); err != nil {
+	if err := hs.AlertNotificationService.DeleteAlertNotification(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, models.ErrAlertNotificationNotFound) {
 			return response.Error(404, err.Error(), nil)
 		}
@@ -457,27 +456,27 @@ func DeleteAlertNotification(c *models.ReqContext) response.Response {
 	return response.Success("Notification deleted")
 }
 
-func DeleteAlertNotificationByUID(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) DeleteAlertNotificationByUID(c *models.ReqContext) response.Response {
 	cmd := models.DeleteAlertNotificationWithUidCommand{
 		OrgId: c.OrgId,
 		Uid:   web.Params(c.Req)[":uid"],
 	}
 
-	if err := bus.Dispatch(c.Req.Context(), &cmd); err != nil {
+	if err := hs.AlertNotificationService.DeleteAlertNotificationWithUid(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, models.ErrAlertNotificationNotFound) {
 			return response.Error(404, err.Error(), nil)
 		}
 		return response.Error(500, "Failed to delete alert notification", err)
 	}
 
-	return response.JSON(200, util.DynMap{
+	return response.JSON(http.StatusOK, util.DynMap{
 		"message": "Notification deleted",
 		"id":      cmd.DeletedAlertNotificationId,
 	})
 }
 
 // POST /api/alert-notifications/test
-func NotificationTest(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) NotificationTest(c *models.ReqContext) response.Response {
 	dto := dtos.NotificationTestCommand{}
 	if err := web.Bind(c.Req, &dto); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -491,7 +490,7 @@ func NotificationTest(c *models.ReqContext) response.Response {
 		SecureSettings: dto.SecureSettings,
 	}
 
-	if err := bus.Dispatch(c.Req.Context(), cmd); err != nil {
+	if err := hs.AlertNotificationService.HandleNotificationTestCommand(c.Req.Context(), cmd); err != nil {
 		if errors.Is(err, models.ErrSmtpNotEnabled) {
 			return response.Error(412, err.Error(), err)
 		}
@@ -507,7 +506,7 @@ func NotificationTest(c *models.ReqContext) response.Response {
 }
 
 // POST /api/alerts/:alertId/pause
-func PauseAlert(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) PauseAlert(c *models.ReqContext) response.Response {
 	dto := dtos.PauseAlertCommand{}
 	if err := web.Bind(c.Req, &dto); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -520,7 +519,7 @@ func PauseAlert(c *models.ReqContext) response.Response {
 	result["alertId"] = alertID
 
 	query := models.GetAlertByIdQuery{Id: alertID}
-	if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
+	if err := hs.SQLStore.GetAlertById(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "Get Alert failed", err)
 	}
 
@@ -537,11 +536,11 @@ func PauseAlert(c *models.ReqContext) response.Response {
 	if query.Result.State != models.AlertStatePaused && !dto.Paused {
 		result["state"] = "un-paused"
 		result["message"] = "Alert is already un-paused"
-		return response.JSON(200, result)
+		return response.JSON(http.StatusOK, result)
 	} else if query.Result.State == models.AlertStatePaused && dto.Paused {
 		result["state"] = models.AlertStatePaused
 		result["message"] = "Alert is already paused"
-		return response.JSON(200, result)
+		return response.JSON(http.StatusOK, result)
 	}
 
 	cmd := models.PauseAlertCommand{
@@ -550,11 +549,11 @@ func PauseAlert(c *models.ReqContext) response.Response {
 		Paused:   dto.Paused,
 	}
 
-	if err := bus.Dispatch(c.Req.Context(), &cmd); err != nil {
+	if err := hs.SQLStore.PauseAlert(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "", err)
 	}
 
-	var resp models.AlertStateType = models.AlertStateUnknown
+	resp := models.AlertStateUnknown
 	pausedState := "un-paused"
 	if cmd.Paused {
 		resp = models.AlertStatePaused
@@ -563,11 +562,11 @@ func PauseAlert(c *models.ReqContext) response.Response {
 
 	result["state"] = resp
 	result["message"] = "Alert " + pausedState
-	return response.JSON(200, result)
+	return response.JSON(http.StatusOK, result)
 }
 
 // POST /api/admin/pause-all-alerts
-func PauseAllAlerts(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) PauseAllAlerts(c *models.ReqContext) response.Response {
 	dto := dtos.PauseAllAlertsCommand{}
 	if err := web.Bind(c.Req, &dto); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -576,11 +575,11 @@ func PauseAllAlerts(c *models.ReqContext) response.Response {
 		Paused: dto.Paused,
 	}
 
-	if err := bus.Dispatch(c.Req.Context(), &updateCmd); err != nil {
+	if err := hs.SQLStore.PauseAllAlerts(c.Req.Context(), &updateCmd); err != nil {
 		return response.Error(500, "Failed to pause alerts", err)
 	}
 
-	var resp models.AlertStateType = models.AlertStatePending
+	resp := models.AlertStatePending
 	pausedState := "un paused"
 	if updateCmd.Paused {
 		resp = models.AlertStatePaused
@@ -593,5 +592,5 @@ func PauseAllAlerts(c *models.ReqContext) response.Response {
 		"alertsAffected": updateCmd.ResultCount,
 	}
 
-	return response.JSON(200, result)
+	return response.JSON(http.StatusOK, result)
 }

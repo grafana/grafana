@@ -1,7 +1,10 @@
 import { Location } from 'history';
+
 import { NavModelItem } from '@grafana/data';
 import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
+
 import { getConfig, updateConfig } from '../../config';
+
 import { enrichConfigItems, getActiveItem, getForcedLoginUrl, isMatchOrChildMatch, isSearchActive } from './utils';
 
 jest.mock('../../app_events', () => ({

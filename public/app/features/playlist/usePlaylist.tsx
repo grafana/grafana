@@ -1,23 +1,24 @@
 import { useEffect, useState } from 'react';
-import { Playlist } from './types';
-import { getPlaylist } from './api';
 
-export function usePlaylist(playlistId?: number) {
-  const [playlist, setPlaylist] = useState<Playlist>({ items: [], interval: '5m', name: '' });
+import { getPlaylist } from './api';
+import { Playlist } from './types';
+
+export function usePlaylist(playlistUid?: string) {
+  const [playlist, setPlaylist] = useState<Playlist>({ items: [], interval: '5m', name: '', uid: '' });
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     const initPlaylist = async () => {
-      if (!playlistId) {
+      if (!playlistUid) {
         setLoading(false);
         return;
       }
-      const list = await getPlaylist(playlistId);
+      const list = await getPlaylist(playlistUid);
       setPlaylist(list);
       setLoading(false);
     };
     initPlaylist();
-  }, [playlistId]);
+  }, [playlistUid]);
 
   return { playlist, loading };
 }

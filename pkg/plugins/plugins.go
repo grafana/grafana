@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 )
 
 type Plugin struct {
@@ -32,17 +33,14 @@ type Plugin struct {
 	SignedFiles    PluginFiles
 	SignatureError *SignatureError
 
-	// GCOM update checker fields
-	GrafanaComVersion   string
-	GrafanaComHasUpdate bool
-
 	// SystemJS fields
 	Module  string
 	BaseURL string
 
-	Renderer pluginextensionv2.RendererPlugin
-	client   backendplugin.Plugin
-	log      log.Logger
+	Renderer       pluginextensionv2.RendererPlugin
+	SecretsManager secretsmanagerplugin.SecretsManagerPlugin
+	client         backendplugin.Plugin
+	log            log.Logger
 }
 
 type PluginDTO struct {
@@ -63,10 +61,6 @@ type PluginDTO struct {
 	SignedFiles    PluginFiles
 	SignatureError *SignatureError
 
-	// GCOM update checker fields
-	GrafanaComVersion   string
-	GrafanaComHasUpdate bool
-
 	// SystemJS fields
 	Module  string
 	BaseURL string
@@ -80,7 +74,7 @@ func (p PluginDTO) SupportsStreaming() bool {
 }
 
 func (p PluginDTO) IsApp() bool {
-	return p.Type == "app"
+	return p.Type == App
 }
 
 func (p PluginDTO) IsCorePlugin() bool {
@@ -140,7 +134,7 @@ type JSONData struct {
 	Streaming    bool            `json:"streaming"`
 	SDK          bool            `json:"sdk,omitempty"`
 
-	// Backend (Datasource + Renderer)
+	// Backend (Datasource + Renderer + SecretsManager)
 	Executable string `json:"executable,omitempty"`
 }
 
@@ -271,12 +265,12 @@ func (p *Plugin) CheckHealth(ctx context.Context, req *backend.CheckHealthReques
 	return pluginClient.CheckHealth(ctx, req)
 }
 
-func (p *Plugin) CollectMetrics(ctx context.Context) (*backend.CollectMetricsResult, error) {
+func (p *Plugin) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
 	pluginClient, ok := p.Client()
 	if !ok {
 		return nil, backendplugin.ErrPluginUnavailable
 	}
-	return pluginClient.CollectMetrics(ctx)
+	return pluginClient.CollectMetrics(ctx, req)
 }
 
 func (p *Plugin) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
@@ -326,22 +320,20 @@ func (p *Plugin) ToDTO() PluginDTO {
 	c, _ := p.Client()
 
 	return PluginDTO{
-		JSONData:            p.JSONData,
-		PluginDir:           p.PluginDir,
-		Class:               p.Class,
-		IncludedInAppID:     p.IncludedInAppID,
-		DefaultNavURL:       p.DefaultNavURL,
-		Pinned:              p.Pinned,
-		Signature:           p.Signature,
-		SignatureType:       p.SignatureType,
-		SignatureOrg:        p.SignatureOrg,
-		SignedFiles:         p.SignedFiles,
-		SignatureError:      p.SignatureError,
-		GrafanaComVersion:   p.GrafanaComVersion,
-		GrafanaComHasUpdate: p.GrafanaComHasUpdate,
-		Module:              p.Module,
-		BaseURL:             p.BaseURL,
-		StreamHandler:       c,
+		JSONData:        p.JSONData,
+		PluginDir:       p.PluginDir,
+		Class:           p.Class,
+		IncludedInAppID: p.IncludedInAppID,
+		DefaultNavURL:   p.DefaultNavURL,
+		Pinned:          p.Pinned,
+		Signature:       p.Signature,
+		SignatureType:   p.SignatureType,
+		SignatureOrg:    p.SignatureOrg,
+		SignedFiles:     p.SignedFiles,
+		SignatureError:  p.SignatureError,
+		Module:          p.Module,
+		BaseURL:         p.BaseURL,
+		StreamHandler:   c,
 	}
 }
 
@@ -355,6 +347,10 @@ func (p *Plugin) StaticRoute() *StaticRoute {
 
 func (p *Plugin) IsRenderer() bool {
 	return p.Type == "renderer"
+}
+
+func (p *Plugin) IsSecretsManager() bool {
+	return p.Type == "secretsmanager"
 }
 
 func (p *Plugin) IsDataSource() bool {
@@ -394,20 +390,22 @@ var PluginTypes = []Type{
 	Panel,
 	App,
 	Renderer,
+	SecretsManager,
 }
 
 type Type string
 
 const (
-	DataSource Type = "datasource"
-	Panel      Type = "panel"
-	App        Type = "app"
-	Renderer   Type = "renderer"
+	DataSource     Type = "datasource"
+	Panel          Type = "panel"
+	App            Type = "app"
+	Renderer       Type = "renderer"
+	SecretsManager Type = "secretsmanager"
 )
 
 func (pt Type) IsValid() bool {
 	switch pt {
-	case DataSource, Panel, App, Renderer:
+	case DataSource, Panel, App, Renderer, SecretsManager:
 		return true
 	}
 	return false

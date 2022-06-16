@@ -1,15 +1,20 @@
-+++
-title = "Settings updates at runtime"
-description = "Settings updates at runtime"
-keywords = ["grafana", "runtime", "settings"]
-weight = 500
-+++
+---
+aliases:
+  - /docs/grafana/latest/enterprise/settings-updates/
+description: Settings updates at runtime
+keywords:
+  - grafana
+  - runtime
+  - settings
+title: Settings updates at runtime
+weight: 500
+---
 
 # Settings updates at runtime
 
-> **Note:** Available in Grafana Enterprise v8.0+.
+> **Note:** Available in Grafana Enterprise version 8.0 and later.
 
-Settings updates at runtime allows you to update Grafana settings with no need to restart the Grafana server.
+By updating settings at runtime, you can update Grafana settings without needing to restart the Grafana server.
 
 Updates that happen at runtime are stored in the database and override
 [settings from the other sources](https://grafana.com/docs/grafana/latest/administration/configuration/)
@@ -22,7 +27,7 @@ Currently, **it only supports updates on the `auth.saml` section.**
 
 ## Update settings via the API
 
-You can update settings through the [Admin API]({{< relref "../http_api/admin.md#update-settings" >}}).
+You can update settings through the [Admin API]({{< relref "../developers/http_api/admin/#update-settings" >}}).
 
 When you submit a settings update via API, Grafana verifies if the given settings updates are allowed and valid. If they are, then Grafana stores the settings in the database and reloads
 Grafana services with no need to restart the instance.
@@ -85,7 +90,7 @@ settings updates. If there are updates, it reloads the Grafana services affected
 The background job synchronizes settings between instances in high availability set-ups. So, after you perform some changes through the
 HTTP API, then the other instances are synchronized through the database and the background job.
 
-## Control access with fine-grained access control
+## Control access with role-based access control
 
-If you have [Fine-grained access Control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, you can control who can read or update settings.
-Refer to the [Admin API]({{< relref "../http_api/admin.md#update-settings" >}}) for more information.
+If you have [role-based access control]({{< relref "access-control/" >}}) enabled, you can control who can read or update settings.
+Refer to the [Admin API]({{< relref "../developers/http_api/admin/#update-settings" >}}) for more information.

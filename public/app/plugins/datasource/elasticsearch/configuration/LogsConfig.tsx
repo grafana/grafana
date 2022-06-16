@@ -1,5 +1,7 @@
 import React from 'react';
+
 import { Input, InlineField, FieldSet } from '@grafana/ui';
+
 import { ElasticsearchOptions } from '../types';
 
 type Props = {
@@ -8,14 +10,13 @@ type Props = {
 };
 export const LogsConfig = (props: Props) => {
   const { value, onChange } = props;
-  const changeHandler = (key: keyof ElasticsearchOptions) => (
-    event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    onChange({
-      ...value,
-      [key]: event.currentTarget.value,
-    });
-  };
+  const changeHandler =
+    (key: keyof ElasticsearchOptions) => (event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>) => {
+      onChange({
+        ...value,
+        [key]: event.currentTarget.value,
+      });
+    };
 
   return (
     <FieldSet label="Logs">

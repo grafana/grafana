@@ -1,21 +1,23 @@
-import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
-
-import { AnnoListPanel, Props } from './AnnoListPanel';
-import { AnnotationEvent, FieldConfigSource, getDefaultTimeRange, LoadingState } from '@grafana/data';
-import { AnnoOptions } from './types';
-import { backendSrv } from '../../../core/services/backend_srv';
 import userEvent from '@testing-library/user-event';
-import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
-import { setDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
+import React from 'react';
+
+import { AnnotationEvent, FieldConfigSource, getDefaultTimeRange, LoadingState } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
+import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
+import { backendSrv } from '../../../core/services/backend_srv';
+import { setDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
+
+import { AnnoListPanel, Props } from './AnnoListPanel';
+import { PanelOptions } from './models.gen';
+
 jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
   getBackendSrv: () => backendSrv,
 }));
 
-const defaultOptions: AnnoOptions = {
+const defaultOptions: PanelOptions = {
   limit: 10,
   navigateAfter: '10m',
   navigateBefore: '10m',
@@ -45,7 +47,7 @@ const defaultResult: any = {
 async function setupTestContext({
   options = defaultOptions,
   results = [defaultResult],
-}: { options?: AnnoOptions; results?: AnnotationEvent[] } = {}) {
+}: { options?: PanelOptions; results?: AnnotationEvent[] } = {}) {
   jest.clearAllMocks();
 
   const getMock = jest.spyOn(backendSrv, 'get');
@@ -68,7 +70,7 @@ async function setupTestContext({
       removeAllListeners: jest.fn(),
       newScopedBus: jest.fn(),
     },
-    fieldConfig: ({} as unknown) as FieldConfigSource,
+    fieldConfig: {} as unknown as FieldConfigSource,
     height: 400,
     id: 1,
     onChangeTimeRange: jest.fn(),
@@ -200,7 +202,7 @@ describe('AnnoListPanel', () => {
 
         getMock.mockClear();
         expect(screen.getByText(/result text/i)).toBeInTheDocument();
-        userEvent.click(screen.getByText(/result text/i));
+        await userEvent.click(screen.getByText(/result text/i));
         await waitFor(() => expect(getMock).toHaveBeenCalledTimes(1));
 
         expect(getMock).toHaveBeenCalledWith('/api/search', { dashboardIds: 14 });
@@ -215,7 +217,7 @@ describe('AnnoListPanel', () => {
 
         getMock.mockClear();
         expect(screen.getByText('Result tag B')).toBeInTheDocument();
-        userEvent.click(screen.getByText('Result tag B'));
+        await userEvent.click(screen.getByText('Result tag B'));
 
         expect(getMock).toHaveBeenCalledTimes(1);
         expect(getMock).toHaveBeenCalledWith(
@@ -239,7 +241,7 @@ describe('AnnoListPanel', () => {
 
         getMock.mockClear();
         expect(screen.getByRole('img')).toBeInTheDocument();
-        userEvent.click(screen.getByRole('img'));
+        await userEvent.click(screen.getByRole('img'));
 
         expect(getMock).toHaveBeenCalledTimes(1);
         expect(getMock).toHaveBeenCalledWith(
@@ -265,9 +267,6 @@ describe('AnnoListPanel', () => {
 
         getMock.mockClear();
         expect(screen.getByRole('img')).toBeInTheDocument();
-        userEvent.hover(screen.getByRole('img'));
-
-        expect(screen.getByText(/result email/i)).toBeInTheDocument();
       });
     });
   });

@@ -12,7 +12,7 @@ const (
 	AllOrganizations = -1
 )
 
-func ProvideService(sqlStore *sqlstore.SQLStore) KVStore {
+func ProvideService(sqlStore sqlstore.Store) KVStore {
 	return &kvStoreSQL{
 		sqlStore: sqlStore,
 		log:      log.New("infra.kvstore.sql"),

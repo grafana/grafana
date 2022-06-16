@@ -25,9 +25,10 @@ func (s *Service) CanAdmin(ctx context.Context, orgId int64, teamId int64, user 
 	}
 
 	cmd := models.GetTeamMembersQuery{
-		OrgId:  orgId,
-		TeamId: teamId,
-		UserId: user.UserId,
+		OrgId:        orgId,
+		TeamId:       teamId,
+		UserId:       user.UserId,
+		SignedInUser: user,
 	}
 
 	results, err := s.store.GetTeamMembers(ctx, cmd)

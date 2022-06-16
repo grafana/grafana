@@ -1,17 +1,18 @@
 'use strict';
 Object.defineProperty(exports, '__esModule', { value: true });
+var fs = require('fs');
+var path = require('path');
 var tslib_1 = require('tslib');
+
 var getPluginId_1 = require('../../config/utils/getPluginId');
 var pluginValidation_1 = require('../../config/utils/pluginValidation');
 var env_1 = require('../../plugins/env');
-var path = require('path');
-var fs = require('fs');
 // @ts-ignore
 // import execa = require('execa');
 var githubClient_1 = tslib_1.__importDefault(require('./githubClient'));
 var resolveContentType = function (extension) {
   if (extension.startsWith('.')) {
-    extension = extension.substr(1);
+    extension = extension.slice(1);
   }
   switch (extension) {
     case 'zip':

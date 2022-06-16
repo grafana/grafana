@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package sqlstore
 
 import (
@@ -28,7 +25,10 @@ func resetTimeNow() {
 	timeNow = time.Now
 }
 
-func TestAlertingDataAccess(t *testing.T) {
+func TestIntegrationAlertingDataAccess(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	mockTimeNow()
 	defer resetTimeNow()
 
@@ -245,9 +245,10 @@ func TestAlertingDataAccess(t *testing.T) {
 		err := sqlStore.SaveAlerts(context.Background(), testDash.Id, items)
 		require.Nil(t, err)
 
-		err = DeleteDashboard(context.Background(), &models.DeleteDashboardCommand{
-			OrgId: 1,
-			Id:    testDash.Id,
+		err = sqlStore.WithDbSession(context.Background(), func(sess *DBSession) error {
+			dash := models.Dashboard{Id: testDash.Id, OrgId: 1}
+			_, err := sess.Delete(dash)
+			return err
 		})
 		require.Nil(t, err)
 
@@ -261,7 +262,10 @@ func TestAlertingDataAccess(t *testing.T) {
 	})
 }
 
-func TestPausingAlerts(t *testing.T) {
+func TestIntegrationPausingAlerts(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	mockTimeNow()
 	defer resetTimeNow()
 

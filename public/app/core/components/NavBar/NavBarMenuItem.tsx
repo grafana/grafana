@@ -1,7 +1,8 @@
+import { css } from '@emotion/css';
 import React from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, IconName, Link, useTheme2 } from '@grafana/ui';
-import { css } from '@emotion/css';
 
 export interface Props {
   icon?: IconName;
@@ -10,7 +11,7 @@ export interface Props {
   onClick?: () => void;
   styleOverrides?: string;
   target?: HTMLAnchorElement['target'];
-  text: string;
+  text: React.ReactNode;
   url?: string;
   adjustHeightForBorder?: boolean;
   isMobile?: boolean;
@@ -60,29 +61,48 @@ export function NavBarMenuItem({
         </a>
       );
   }
+
   if (isMobile) {
     return isDivider ? (
       <li data-testid="dropdown-child-divider" className={styles.divider} tabIndex={-1} aria-disabled />
     ) : (
-      <li>{element}</li>
+      <li className={styles.listItem}>{element}</li>
     );
   }
 
   return isDivider ? (
     <div data-testid="dropdown-child-divider" className={styles.divider} tabIndex={-1} aria-disabled />
   ) : (
-    <>{element}</>
+    <div style={{ position: 'relative' }}>{element}</div>
   );
 }
 
 NavBarMenuItem.displayName = 'NavBarMenuItem';
 
 const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], styleOverrides: Props['styleOverrides']) => ({
+  visible: css`
+    color: ${theme.colors.text.primary} !important;
+    opacity: 100% !important;
+  `,
   divider: css`
     border-bottom: 1px solid ${theme.colors.border.weak};
     height: 1px;
     margin: ${theme.spacing(1)} 0;
     overflow: hidden;
+  `,
+  listItem: css`
+    position: relative;
+    display: flex;
+    align-items: center;
+
+    &:hover,
+    &:focus-within {
+      color: ${theme.colors.text.primary};
+
+      > *:first-child::after {
+        background-color: ${theme.colors.action.hover};
+      }
+    }
   `,
   element: css`
     align-items: center;
@@ -93,22 +113,19 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], styleOverr
     font-size: inherit;
     height: 100%;
     padding: 5px 12px 5px 10px;
-    position: relative;
     text-align: left;
     white-space: nowrap;
-    width: 100%;
-
-    &:hover,
-    &:focus-visible {
-      background-color: ${theme.colors.action.hover};
-      color: ${theme.colors.text.primary};
-    }
 
     &:focus-visible {
+      outline: none;
       box-shadow: none;
-      outline: 2px solid ${theme.colors.primary.main};
-      outline-offset: -2px;
-      transition: none;
+
+      &::after {
+        box-shadow: none;
+        outline: 2px solid ${theme.colors.primary.main};
+        outline-offset: -2px;
+        transition: none;
+      }
     }
 
     &::before {
@@ -121,6 +138,15 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], styleOverr
       width: 4px;
       border-radius: 2px;
       background-image: ${theme.colors.gradients.brandVertical};
+    }
+
+    &::after {
+      position: absolute;
+      content: '';
+      left: 0;
+      top: 0;
+      bottom: 0;
+      right: 0;
     }
 
     ${styleOverrides};

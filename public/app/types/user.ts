@@ -1,5 +1,6 @@
-import { OrgRole } from '.';
 import { SelectableValue, WithAccessControlMetadata } from '@grafana/data';
+
+import { OrgRole } from '.';
 export interface OrgUser extends WithAccessControlMetadata {
   avatarUrl: string;
   email: string;
@@ -64,7 +65,6 @@ export interface Invitee {
 
 export interface UsersState {
   users: OrgUser[];
-  invitees: Invitee[];
   searchQuery: string;
   searchPage: number;
   canInvite: boolean;

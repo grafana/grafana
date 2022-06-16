@@ -1,10 +1,9 @@
 import { DataQuery } from '@grafana/data';
+
 import { GrafanaTemplateVariableQuery } from './templateVariables';
 
 export enum AzureQueryType {
   AzureMonitor = 'Azure Monitor',
-  ApplicationInsights = 'Application Insights',
-  InsightsAnalytics = 'Insights Analytics',
   LogAnalytics = 'Azure Log Analytics',
   AzureResourceGraph = 'Azure Resource Graph',
   GrafanaTemplateVariableFn = 'Grafana Template Variable Function',
@@ -26,18 +25,13 @@ export interface AzureMonitorQuery extends DataQuery {
   azureLogAnalytics?: AzureLogsQuery;
   azureResourceGraph?: AzureResourceGraphQuery;
   grafanaTemplateVariableFn?: GrafanaTemplateVariableQuery;
-
-  /** @deprecated App Insights/Insights Analytics deprecated in v8 */
-  appInsights?: ApplicationInsightsQuery;
-
-  /** @deprecated App Insights/Insights Analytics deprecated in v8 */
-  insightsAnalytics?: InsightsAnalyticsQuery;
 }
 
 /**
  * Azure Monitor Metrics sub-query properties
  */
 export interface AzureMetricQuery {
+  resourceUri?: string;
   resourceGroup?: string;
 
   /** Resource type */
@@ -51,12 +45,10 @@ export interface AzureMetricQuery {
   dimensionFilters?: AzureMetricDimension[];
   alias?: string;
   top?: string;
+  allowedTimeGrainsMs?: number[];
 
   /** @deprecated */
   timeGrainUnit?: string;
-
-  /** @deprecated Remove this once angular is removed */
-  allowedTimeGrainsMs?: number[];
 
   /** @deprecated This property was migrated to dimensionFilters and should only be accessed in the migration */
   dimension?: string;
@@ -84,39 +76,12 @@ export interface AzureResourceGraphQuery {
   resultFormat?: string;
 }
 
-/**
- * Azure Monitor App Insights sub-query properties
- * @deprecated App Insights deprecated in v8 in favor of Metrics queries
- */
-export interface ApplicationInsightsQuery {
-  metricName?: string;
-  timeGrain?: string;
-  timeGrainCount?: string;
-  timeGrainType?: string;
-  timeGrainUnit?: string;
-  aggregation?: string;
-  dimension?: string[]; // Was string before 7.1
-  dimensionFilter?: string;
-  alias?: string;
-
-  /** @deprecated Migrated to Insights Analytics query  */
-  rawQuery?: string;
-}
-
-/**
- * Azure Monitor Insights Analytics sub-query properties
- * @deprecated Insights Analytics deprecated in v8 in favor of Logs queries
- */
-export interface InsightsAnalyticsQuery {
-  query?: string;
-  resultFormat?: string;
-
-  /** @deprecated Migrate field to query  */
-  rawQueryString?: string;
-}
-
 export interface AzureMetricDimension {
   dimension: string;
   operator: string;
+  filters?: string[];
+  /**
+   * @deprecated filter is deprecated in favour of filters to support multiselect
+   */
   filter?: string;
 }

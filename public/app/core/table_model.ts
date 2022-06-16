@@ -1,4 +1,5 @@
 import { findIndex } from 'lodash';
+
 import { Column, TableData, QueryResultMeta } from '@grafana/data';
 
 /**
@@ -41,7 +42,8 @@ export default class TableModel implements TableData {
   }
 
   sort(options: { col: number; desc: boolean }) {
-    if (options.col === null || this.columns.length <= options.col) {
+    // Since 8.3.0 col property can be also undefined, https://github.com/grafana/grafana/issues/44127
+    if (options.col === null || options.col === undefined || this.columns.length <= options.col) {
       return;
     }
 

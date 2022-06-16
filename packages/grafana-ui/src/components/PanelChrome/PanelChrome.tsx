@@ -1,7 +1,9 @@
-import React, { CSSProperties, ReactNode } from 'react';
 import { css } from '@emotion/css';
-import { useStyles2, useTheme2 } from '../../themes';
+import React, { CSSProperties, ReactNode } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
+
+import { useStyles2, useTheme2 } from '../../themes';
 
 /**
  * @internal
@@ -77,7 +79,7 @@ const getContentStyle = (
   headerHeight: number,
   height: number
 ) => {
-  const chromePadding = padding === 'md' ? theme.components.panel.padding : 0;
+  const chromePadding = (padding === 'md' ? theme.components.panel.padding : 0) * theme.spacing.gridSize;
   const panelBorder = 1 * 2;
   const innerWidth = width - chromePadding * 2 - panelBorder;
   const innerHeight = height - headerHeight - chromePadding * 2 - panelBorder;

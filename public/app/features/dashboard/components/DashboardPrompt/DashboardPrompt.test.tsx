@@ -1,6 +1,7 @@
+import { setContextSrv } from '../../../../core/services/context_srv';
 import { DashboardModel } from '../../state/DashboardModel';
 import { PanelModel } from '../../state/PanelModel';
-import { setContextSrv } from '../../../../core/services/context_srv';
+
 import { hasChanges, ignoreChanges } from './DashboardPrompt';
 
 function getDefaultDashboardModel(): DashboardModel {
@@ -93,7 +94,7 @@ describe('DashboardPrompt', () => {
     describe('when called without current dashboard', () => {
       it('then it should return true', () => {
         const { original } = getTestContext();
-        expect(ignoreChanges((null as unknown) as DashboardModel, original)).toBe(true);
+        expect(ignoreChanges(null as unknown as DashboardModel, original)).toBe(true);
       });
     });
 

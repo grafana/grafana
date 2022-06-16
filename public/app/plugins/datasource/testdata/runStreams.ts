@@ -12,11 +12,11 @@ import {
   DataFrameSchema,
   DataFrameData,
 } from '@grafana/data';
-
-import { TestDataQuery, StreamingQuery } from './types';
-import { getRandomLine } from './LogIpsum';
 import { liveTimer } from 'app/features/dashboard/dashgrid/liveTimer';
 import { StreamingDataFrame } from 'app/features/live/data/StreamingDataFrame';
+
+import { getRandomLine } from './LogIpsum';
+import { TestDataQuery, StreamingQuery } from './types';
 
 export const defaultStreamQuery: StreamingQuery = {
   type: 'signal',
@@ -51,10 +51,9 @@ export function runSignalStream(
 
     const schema: DataFrameSchema = {
       refId: target.refId,
-      name: target.alias || 'Signal ' + target.refId,
       fields: [
         { name: 'time', type: FieldType.time },
-        { name: 'value', type: FieldType.number },
+        { name: target.alias ?? 'value', type: FieldType.number },
       ],
     };
 

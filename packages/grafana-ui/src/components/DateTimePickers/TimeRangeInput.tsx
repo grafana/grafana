@@ -1,15 +1,18 @@
-import React, { FC, FormEvent, MouseEvent, useState } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { FC, FormEvent, MouseEvent, useState } from 'react';
+
 import { dateMath, dateTime, getDefaultTimeRange, GrafanaTheme2, TimeRange, TimeZone } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+
+import { stylesFactory } from '../../themes';
 import { useTheme2 } from '../../themes/ThemeContext';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 import { Icon } from '../Icon/Icon';
 import { getInputStyles } from '../Input/Input';
+
 import { TimePickerButtonLabel } from './TimeRangePicker';
 import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
 import { quickOptions } from './options';
-import { selectors } from '@grafana/e2e-selectors';
-import { stylesFactory } from '../../themes';
 
 const isValidTimeRange = (range: any) => {
   return dateMath.isValid(range.from) && dateMath.isValid(range.to);

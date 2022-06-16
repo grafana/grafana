@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from 'react';
-import cx from 'classnames';
-import IoAndroidOpen from 'react-icons/lib/io/android-open';
 import { css } from '@emotion/css';
+import cx from 'classnames';
+import React from 'react';
+import IoAndroidOpen from 'react-icons/lib/io/android-open';
+
 import { useStyles2 } from '@grafana/ui';
 
 export const getStyles = () => {

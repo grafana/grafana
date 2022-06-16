@@ -1,14 +1,16 @@
 // Libraries
-import React, { PureComponent } from 'react';
-import { debounce } from 'lodash';
-import { PanelProps, renderTextPanelMarkdown, textUtil } from '@grafana/data';
-// Utils
-import config from 'app/core/config';
-// Types
-import { PanelOptions, TextMode } from './models.gen';
-import { CustomScrollbar, stylesFactory } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
 import DangerouslySetHtmlContent from 'dangerously-set-html-content';
+import { debounce } from 'lodash';
+import React, { PureComponent } from 'react';
+
+import { PanelProps, renderTextPanelMarkdown, textUtil } from '@grafana/data';
+// Utils
+import { CustomScrollbar, stylesFactory } from '@grafana/ui';
+import config from 'app/core/config';
+
+// Types
+import { PanelOptions, TextMode } from './models.gen';
 
 interface Props extends PanelProps<PanelOptions> {}
 
@@ -44,9 +46,11 @@ export class TextPanel extends PureComponent<Props, State> {
 
   prepareMarkdown(content: string): string {
     // Sanitize is disabled here as we handle that after variable interpolation
-    return renderTextPanelMarkdown(this.interpolateAndSanitizeString(content), {
-      noSanitize: config.disableSanitizeHtml,
-    });
+    return this.interpolateAndSanitizeString(
+      renderTextPanelMarkdown(content, {
+        noSanitize: config.disableSanitizeHtml,
+      })
+    );
   }
 
   interpolateAndSanitizeString(content: string): string {

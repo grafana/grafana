@@ -1,12 +1,14 @@
-import { DataFrame, Field } from '@grafana/data';
 import { Feature } from 'ol';
 import { Geometry, LineString, Point } from 'ol/geom';
 import VectorSource from 'ol/source/Vector';
+
+import { DataFrame, Field } from '@grafana/data';
+
 import { getGeometryField, LocationFieldMatchers } from './location';
 
 export interface FrameVectorSourceOptions {}
 
-export class FrameVectorSource extends VectorSource<Geometry> {
+export class FrameVectorSource<T extends Geometry = Geometry> extends VectorSource<T> {
   constructor(private location: LocationFieldMatchers) {
     super({});
   }
@@ -24,7 +26,7 @@ export class FrameVectorSource extends VectorSource<Geometry> {
         new Feature({
           frame,
           rowIndex: i,
-          geometry: info.field.values.get(i),
+          geometry: info.field.values.get(i) as T,
         })
       );
     }
@@ -42,12 +44,12 @@ export class FrameVectorSource extends VectorSource<Geometry> {
     }
 
     const field = info.field as Field<Point>;
-    const geometry = new LineString(field.values.toArray().map((p) => p.getCoordinates()));
+    const geometry = new LineString(field.values.toArray().map((p) => p.getCoordinates())) as Geometry;
     this.addFeatureInternal(
       new Feature({
         frame,
         rowIndex: 0,
-        geometry,
+        geometry: geometry as T,
       })
     );
 

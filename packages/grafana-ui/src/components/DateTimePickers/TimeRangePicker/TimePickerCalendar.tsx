@@ -1,13 +1,17 @@
-import React, { FormEvent, memo } from 'react';
 import { css } from '@emotion/css';
-import { DateTime, GrafanaTheme2, TimeZone } from '@grafana/data';
-import { useTheme2 } from '../../../themes';
-import { Header } from './CalendarHeader';
-import { selectors } from '@grafana/e2e-selectors';
+import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { OverlayContainer, useOverlay } from '@react-aria/overlays';
+import React, { FormEvent, memo } from 'react';
+
+import { DateTime, GrafanaTheme2, TimeZone } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+
+import { useTheme2 } from '../../../themes';
+
 import { Body } from './CalendarBody';
 import { Footer } from './CalendarFooter';
+import { Header } from './CalendarHeader';
 
 export const getStyles = (theme: GrafanaTheme2, isReversed = false) => {
   return {
@@ -36,7 +40,6 @@ export const getStyles = (theme: GrafanaTheme2, isReversed = false) => {
     modal: css`
       position: fixed;
       top: 20%;
-      left: 25%;
       width: 100%;
       z-index: ${theme.zIndex.modal};
     `,
@@ -77,6 +80,12 @@ function TimePickerCalendar(props: TimePickerCalendarProps) {
   const styles = getStyles(theme, props.isReversed);
   const { isOpen, isFullscreen, onClose } = props;
   const ref = React.createRef<HTMLElement>();
+  const { dialogProps } = useDialog(
+    {
+      'aria-label': selectors.components.TimePicker.calendar.label,
+    },
+    ref
+  );
   const { overlayProps } = useOverlay(
     {
       isDismissable: true,
@@ -93,13 +102,7 @@ function TimePickerCalendar(props: TimePickerCalendarProps) {
   if (isFullscreen) {
     return (
       <FocusScope contain restoreFocus autoFocus>
-        <section
-          className={styles.container}
-          onClick={stopPropagation}
-          aria-label={selectors.components.TimePicker.calendar.label}
-          ref={ref}
-          {...overlayProps}
-        >
+        <section className={styles.container} onClick={stopPropagation} ref={ref} {...overlayProps} {...dialogProps}>
           <Header {...props} />
           <Body {...props} />
         </section>
@@ -110,7 +113,7 @@ function TimePickerCalendar(props: TimePickerCalendarProps) {
   return (
     <OverlayContainer>
       <FocusScope contain autoFocus restoreFocus>
-        <section className={styles.modal} onClick={stopPropagation} ref={ref} {...overlayProps}>
+        <section className={styles.modal} onClick={stopPropagation} ref={ref} {...overlayProps} {...dialogProps}>
           <div className={styles.content} aria-label={selectors.components.TimePicker.calendar.label}>
             <Header {...props} />
             <Body {...props} />

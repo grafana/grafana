@@ -1,8 +1,12 @@
-import React, { forwardRef, HTMLAttributes } from 'react';
 import { cx, css } from '@emotion/css';
+import React, { forwardRef, HTMLAttributes } from 'react';
+
 import { GrafanaTheme } from '@grafana/data';
+
 import { useTheme } from '../../themes';
+import { IconName } from '../../types/icon';
 import { getTagColor, getTagColorsFromName } from '../../utils';
+import { Icon } from '../Icon/Icon';
 
 /**
  * @public
@@ -12,12 +16,13 @@ export type OnTagClick = (name: string, event: React.MouseEvent<HTMLElement>) =>
 export interface Props extends Omit<HTMLAttributes<HTMLElement>, 'onClick'> {
   /** Name of the tag to display */
   name: string;
+  icon?: IconName;
   /** Use constant color from TAG_COLORS. Using index instead of color directly so we can match other styling. */
   colorIndex?: number;
   onClick?: OnTagClick;
 }
 
-export const Tag = forwardRef<HTMLElement, Props>(({ name, onClick, className, colorIndex, ...rest }, ref) => {
+export const Tag = forwardRef<HTMLElement, Props>(({ name, onClick, icon, className, colorIndex, ...rest }, ref) => {
   const theme = useTheme();
   const styles = getTagStyles(theme, name, colorIndex);
 
@@ -32,10 +37,12 @@ export const Tag = forwardRef<HTMLElement, Props>(({ name, onClick, className, c
 
   return onClick ? (
     <button {...rest} className={classes} onClick={onTagClick} ref={ref as React.ForwardedRef<HTMLButtonElement>}>
+      {icon && <Icon name={icon} />}
       {name}
     </button>
   ) : (
     <span {...rest} className={classes} ref={ref}>
+      {icon && <Icon name={icon} />}
       {name}
     </span>
   );

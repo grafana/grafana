@@ -58,20 +58,6 @@ Object {
       "values": [Function],
     },
   ],
-  "bands": Array [
-    Object {
-      "series": Array [
-        2,
-        1,
-      ],
-    },
-    Object {
-      "series": Array [
-        4,
-        3,
-      ],
-    },
-  ],
   "cursor": Object {
     "dataIdx": [Function],
     "drag": Object {
@@ -91,13 +77,9 @@ Object {
         "pub": [Function],
       },
       "key": "__global_",
-      "match": Array [
-        [Function],
-        [Function],
-      ],
       "scales": Array [
         "x",
-        null,
+        "__fixed/na-na/na-na/auto/linear/na",
       ],
     },
   },

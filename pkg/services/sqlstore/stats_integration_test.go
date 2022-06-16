@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package sqlstore
 
 import (
@@ -12,9 +9,12 @@ import (
 )
 
 func TestIntegration_GetAdminStats(t *testing.T) {
-	InitTestDB(t)
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	sqlStore := InitTestDB(t)
 
 	query := models.GetAdminStatsQuery{}
-	err := GetAdminStats(context.Background(), &query)
+	err := sqlStore.GetAdminStats(context.Background(), &query)
 	require.NoError(t, err)
 }

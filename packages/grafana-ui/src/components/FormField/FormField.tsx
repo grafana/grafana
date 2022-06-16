@@ -1,7 +1,8 @@
-import React, { InputHTMLAttributes, FunctionComponent } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { InputHTMLAttributes, FunctionComponent } from 'react';
+
 import { InlineFormLabel } from '../FormLabel/FormLabel';
-import { PopoverContent } from '../Tooltip/Tooltip';
+import { PopoverContent } from '../Tooltip';
 
 export interface Props extends InputHTMLAttributes<HTMLInputElement> {
   label: string;

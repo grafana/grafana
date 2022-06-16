@@ -1,13 +1,13 @@
-import type { Monaco, monacoTypes } from '@grafana/ui';
-import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import { uniq } from 'lodash';
+
+import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import type { Monaco, monacoTypes } from '@grafana/ui';
+
 import { CloudWatchDatasource } from '../../datasource';
-import { linkedTokenBuilder } from './linkedTokenBuilder';
-import { getSuggestionKinds } from './suggestionKind';
-import { getStatementPosition } from './statementPosition';
-import { TRIGGER_SUGGEST } from './commands';
-import { TokenType, SuggestionKind, CompletionItemPriority, StatementPosition } from './types';
-import { LinkedToken } from './LinkedToken';
+import { CompletionItemProvider } from '../../monarch/CompletionItemProvider';
+import { LinkedToken } from '../../monarch/LinkedToken';
+import { TRIGGER_SUGGEST } from '../../monarch/commands';
+import { SuggestionKind, CompletionItemPriority, StatementPosition } from '../../monarch/types';
 import {
   BY,
   FROM,
@@ -23,46 +23,30 @@ import {
   LOGICAL_OPERATORS,
   STATISTICS,
 } from '../language';
+
+import { getStatementPosition } from './statementPosition';
+import { getSuggestionKinds } from './suggestionKind';
 import { getMetricNameToken, getNamespaceToken } from './tokenUtils';
+import { SQLTokenTypes } from './types';
 
 type CompletionItem = monacoTypes.languages.CompletionItem;
 
-export class CompletionItemProvider {
+export class SQLCompletionItemProvider extends CompletionItemProvider {
   region: string;
-  templateVariables: string[];
 
-  constructor(private datasource: CloudWatchDatasource, private templateSrv: TemplateSrv = getTemplateSrv()) {
-    this.templateVariables = this.datasource.getVariables();
+  constructor(datasource: CloudWatchDatasource, templateSrv: TemplateSrv = getTemplateSrv()) {
+    super(datasource, templateSrv);
     this.region = datasource.getActualRegion();
+    this.getStatementPosition = getStatementPosition;
+    this.getSuggestionKinds = getSuggestionKinds;
+    this.tokenTypes = SQLTokenTypes;
   }
 
   setRegion(region: string) {
     this.region = region;
   }
 
-  getCompletionProvider(monaco: Monaco) {
-    return {
-      triggerCharacters: [' ', '$', ',', '(', "'"],
-      provideCompletionItems: async (model: monacoTypes.editor.ITextModel, position: monacoTypes.IPosition) => {
-        const currentToken = linkedTokenBuilder(monaco, model, position);
-        const statementPosition = getStatementPosition(currentToken);
-        const suggestionKinds = getSuggestionKinds(statementPosition);
-        const suggestions = await this.getSuggestions(
-          monaco,
-          currentToken,
-          suggestionKinds,
-          statementPosition,
-          position
-        );
-
-        return {
-          suggestions,
-        };
-      },
-    };
-  }
-
-  private async getSuggestions(
+  async getSuggestions(
     monaco: Monaco,
     currentToken: LinkedToken | null,
     suggestionKinds: SuggestionKind[],
@@ -182,14 +166,14 @@ export class CompletionItemProvider {
               let dimensionFilter = {};
               let labelKeyTokens;
               if (statementPosition === StatementPosition.SchemaFuncExtraArgument) {
-                labelKeyTokens = namespaceToken?.getNextUntil(TokenType.Parenthesis, [
-                  TokenType.Delimiter,
-                  TokenType.Whitespace,
+                labelKeyTokens = namespaceToken?.getNextUntil(this.tokenTypes.Parenthesis, [
+                  this.tokenTypes.Delimiter,
+                  this.tokenTypes.Whitespace,
                 ]);
               } else if (statementPosition === StatementPosition.AfterGroupByKeywords) {
-                labelKeyTokens = currentToken?.getPreviousUntil(TokenType.Keyword, [
-                  TokenType.Delimiter,
-                  TokenType.Whitespace,
+                labelKeyTokens = currentToken?.getPreviousUntil(this.tokenTypes.Keyword, [
+                  this.tokenTypes.Delimiter,
+                  this.tokenTypes.Whitespace,
                 ]);
               }
               dimensionFilter = (labelKeyTokens || []).reduce((acc, curr) => {

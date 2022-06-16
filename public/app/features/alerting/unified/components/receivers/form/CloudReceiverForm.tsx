@@ -1,17 +1,19 @@
-import { Alert } from '@grafana/ui';
-import { AlertManagerCortexConfig, Receiver } from 'app/plugins/datasource/alertmanager/types';
 import React, { FC, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
+
+import { Alert } from '@grafana/ui';
+import { AlertManagerCortexConfig, Receiver } from 'app/plugins/datasource/alertmanager/types';
+
 import { updateAlertManagerConfigAction } from '../../../state/actions';
 import { CloudChannelValues, ReceiverFormValues, CloudChannelMap } from '../../../types/receiver-form';
 import { cloudNotifierTypes } from '../../../utils/cloud-alertmanager-notifier-types';
 import { isVanillaPrometheusAlertManagerDataSource } from '../../../utils/datasource';
-import { makeAMLink } from '../../../utils/misc';
 import {
   cloudReceiverToFormValues,
   formValuesToCloudReceiver,
   updateConfigWithReceiver,
 } from '../../../utils/receiver-form';
+
 import { CloudCommonChannelSettings } from './CloudCommonChannelSettings';
 import { ReceiverForm } from './ReceiverForm';
 
@@ -50,7 +52,7 @@ export const CloudReceiverForm: FC<Props> = ({ existing, alertManagerSourceName,
         oldConfig: config,
         alertManagerSourceName,
         successMessage: existing ? 'Contact point updated.' : 'Contact point created.',
-        redirectPath: makeAMLink('/alerting/notifications', alertManagerSourceName),
+        redirectPath: '/alerting/notifications',
       })
     );
   };
@@ -64,7 +66,7 @@ export const CloudReceiverForm: FC<Props> = ({ existing, alertManagerSourceName,
     <>
       {!isVanillaAM && (
         <Alert title="Info" severity="info">
-          Note that empty string values will be replaced with global defaults were appropriate.
+          Note that empty string values will be replaced with global defaults where appropriate.
         </Alert>
       )}
       <ReceiverForm<CloudChannelValues>

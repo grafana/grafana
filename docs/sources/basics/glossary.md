@@ -1,10 +1,17 @@
-+++
-title = "Glossary"
-description = "Grafana glossary"
-keywords = ["grafana", "intro", "glossary", "dictionary"]
-aliases = ["/docs/grafana/latest/guides/glossary", "/docs/grafana/latest/getting-started/glossary"]
-weight = 800
-+++
+---
+aliases:
+  - /docs/grafana/latest/basics/glossary/
+  - /docs/grafana/latest/getting-started/glossary/
+  - /docs/grafana/latest/guides/glossary/
+description: Grafana glossary
+keywords:
+  - grafana
+  - intro
+  - glossary
+  - dictionary
+title: Glossary
+weight: 800
+---
 
 # Glossary
 

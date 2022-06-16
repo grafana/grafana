@@ -1,7 +1,10 @@
+import React, { useCallback, useEffect, useRef } from 'react';
+
 import { CodeEditor, Monaco, MonacoEditor } from '@grafana/ui';
 import { Deferred } from 'app/core/utils/deferred';
-import React, { useCallback, useEffect, useRef } from 'react';
+
 import { AzureQueryEditorFieldProps } from '../../types';
+
 import { setKustoQuery } from './setQueryValue';
 
 interface MonacoPromise {
@@ -12,9 +15,7 @@ interface MonacoPromise {
 interface MonacoLanguages {
   kusto: {
     getKustoWorker: () => Promise<
-      (
-        url: any
-      ) => Promise<{
+      (url: any) => Promise<{
         setSchema: (schema: any, clusterUrl: string, name: string) => void;
       }>
     >;
@@ -43,7 +44,7 @@ const QueryField: React.FC<AzureQueryEditorFieldProps> = ({ query, datasource, o
 
     // the kusto schema call might fail, but its okay for that to happen silently
     Promise.all(promises).then(([schema, { monaco, editor }]) => {
-      const languages = (monaco.languages as unknown) as MonacoLanguages;
+      const languages = monaco.languages as unknown as MonacoLanguages;
 
       languages.kusto
         .getKustoWorker()

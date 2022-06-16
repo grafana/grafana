@@ -1,20 +1,19 @@
-import { GraphCtrl } from '../module';
+import $ from 'jquery';
+
+import { dateTime, EventBusSrv } from '@grafana/data';
 import { MetricsPanelCtrl } from 'app/angular/panel/metrics_panel_ctrl';
 import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
 import config from 'app/core/config';
-
 import TimeSeries from 'app/core/time_series2';
-import $ from 'jquery';
-import { graphDirective, GraphElement } from '../graph';
-import { dateTime, EventBusSrv } from '@grafana/data';
+
 import { DashboardModel } from '../../../../features/dashboard/state';
+import { graphDirective, GraphElement } from '../graph';
+import { GraphCtrl } from '../module';
 
 jest.mock('../event_manager', () => ({
-  EventManager: () => {
-    return {
-      on: () => {},
-      addFlotEvents: () => {},
-    };
+  EventManager: class EventManagerMock {
+    on() {}
+    addFlotEvents() {}
   },
 }));
 
@@ -46,8 +45,8 @@ describe('grafanaGraph', () => {
       user: {
         lightTheme: false,
       },
-    };
-    GraphCtrl.prototype = {
+    } as any;
+    Object.assign(GraphCtrl.prototype, {
       ...MetricsPanelCtrl.prototype,
       ...PanelCtrl.prototype,
       ...GraphCtrl.prototype,
@@ -96,7 +95,7 @@ describe('grafanaGraph', () => {
       annotationsSrv: {
         getAnnotations: () => Promise.resolve({}),
       },
-    } as any;
+    }) as any;
 
     ctx.data = [];
     ctx.data.push(
@@ -1298,6 +1297,7 @@ describe('grafanaGraph', () => {
     describe('when called and user can edit the dashboard', () => {
       it('then the correct menu items should be returned', () => {
         const element = getGraphElement({ canEdit: true, canMakeEditable: false });
+        jest.spyOn(element.dashboard, 'canAddAnnotations').mockReturnValue(true);
 
         const result = element.getContextMenuItemsSupplier({ x: 1, y: 1 })();
 
@@ -1312,6 +1312,7 @@ describe('grafanaGraph', () => {
     describe('when called and user can make the dashboard editable', () => {
       it('then the correct menu items should be returned', () => {
         const element = getGraphElement({ canEdit: false, canMakeEditable: true });
+        jest.spyOn(element.dashboard, 'canAddAnnotations').mockReturnValue(true);
 
         const result = element.getContextMenuItemsSupplier({ x: 1, y: 1 })();
 

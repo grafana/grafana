@@ -103,6 +103,12 @@ func TestReducer(t *testing.T) {
 			expectedNumber: valBasedNumber(ptr.Float64(2)),
 		},
 		{
+			name:           "count_non_null with mixed null/real values",
+			reducer:        classicReducer("count_non_null"),
+			inputSeries:    valBasedSeries(nil, nil, ptr.Float64(3), ptr.Float64(4)),
+			expectedNumber: valBasedNumber(ptr.Float64(2)),
+		},
+		{
 			name:           "count_non_null with no values",
 			reducer:        classicReducer("count_non_null"),
 			inputSeries:    valBasedSeries(nil, nil),
@@ -402,10 +408,7 @@ func TestPercentDiffAbsReducer(t *testing.T) {
 func valBasedSeries(vals ...*float64) mathexp.Series {
 	newSeries := mathexp.NewSeries("", nil, len(vals))
 	for idx, f := range vals {
-		err := newSeries.SetPoint(idx, time.Unix(int64(idx), 0), f)
-		if err != nil {
-			panic(err)
-		}
+		newSeries.SetPoint(idx, time.Unix(int64(idx), 0), f)
 	}
 	return newSeries
 }
@@ -413,10 +416,7 @@ func valBasedSeries(vals ...*float64) mathexp.Series {
 func valBasedSeriesWithLabels(l data.Labels, vals ...*float64) mathexp.Series {
 	newSeries := mathexp.NewSeries("", l, len(vals))
 	for idx, f := range vals {
-		err := newSeries.SetPoint(idx, time.Unix(int64(idx), 0), f)
-		if err != nil {
-			panic(err)
-		}
+		newSeries.SetPoint(idx, time.Unix(int64(idx), 0), f)
 	}
 	return newSeries
 }

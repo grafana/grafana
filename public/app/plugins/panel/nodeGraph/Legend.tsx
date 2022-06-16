@@ -1,11 +1,13 @@
-import React, { useCallback } from 'react';
-import { NodeDatum } from './types';
-import { Field, FieldColorModeId, getColorForTheme, GrafanaTheme } from '@grafana/data';
-import { identity } from 'lodash';
-import { Config } from './layout';
 import { css } from '@emotion/css';
+import { identity } from 'lodash';
+import React, { useCallback } from 'react';
+
+import { Field, FieldColorModeId, GrafanaTheme } from '@grafana/data';
 import { LegendDisplayMode } from '@grafana/schema';
 import { Icon, useStyles, useTheme, VizLegend, VizLegendItem, VizLegendListItem } from '@grafana/ui';
+
+import { Config } from './layout';
+import { NodeDatum } from './types';
 
 function getStyles() {
   return {
@@ -95,14 +97,14 @@ function getColorLegendItems(nodes: NodeDatum[], theme: GrafanaTheme): Array<Viz
       data: { field: f },
     };
     if (f.config.color?.mode === FieldColorModeId.Fixed && f.config.color?.fixedColor) {
-      item.color = getColorForTheme(f.config.color?.fixedColor || '', theme);
+      item.color = theme.visualization.getColorByName(f.config.color?.fixedColor || '');
     } else if (f.config.color?.mode) {
       item.gradient = f.config.color?.mode;
     }
 
     if (!(item.color || item.gradient)) {
       // Defaults to gray color
-      item.color = getColorForTheme('', theme);
+      item.color = theme.visualization.getColorByName('');
     }
 
     return item;

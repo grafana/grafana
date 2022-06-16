@@ -14,9 +14,7 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 )
 
 func TestWeComNotifier(t *testing.T) {
@@ -47,7 +45,7 @@ func TestWeComNotifier(t *testing.T) {
 			},
 			expMsg: map[string]interface{}{
 				"markdown": map[string]interface{}{
-					"content": "# [FIRING:1]  (val1)\n**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n\n",
+					"content": "# [FIRING:1]  (val1)\n**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n\n",
 				},
 				"msgtype": "markdown",
 			},
@@ -81,7 +79,7 @@ func TestWeComNotifier(t *testing.T) {
 		}, {
 			name:         "Error in initing",
 			settings:     `{}`,
-			expInitError: `failed to validate receiver "wecom_testing" of type "wecom": could not find webhook URL in settings`,
+			expInitError: `could not find webhook URL in settings`,
 		},
 	}
 
@@ -96,23 +94,19 @@ func TestWeComNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
+			webhookSender := mockNotificationService()
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 			decryptFn := secretsService.GetDecryptedValue
-			pn, err := NewWeComNotifier(m, tmpl, decryptFn)
+			cfg, err := NewWeComConfig(m, decryptFn)
 			if c.expInitError != "" {
 				require.Equal(t, c.expInitError, err.Error())
 				return
 			}
 			require.NoError(t, err)
 
-			body := ""
-			bus.AddHandler("test", func(ctx context.Context, webhook *models.SendWebhookSync) error {
-				body = webhook.Body
-				return nil
-			})
-
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
+			pn := NewWeComNotifier(cfg, webhookSender, tmpl)
 			ok, err := pn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.False(t, ok)
@@ -126,7 +120,7 @@ func TestWeComNotifier(t *testing.T) {
 			expBody, err := json.Marshal(c.expMsg)
 			require.NoError(t, err)
 
-			require.JSONEq(t, string(expBody), body)
+			require.JSONEq(t, string(expBody), webhookSender.Webhook.Body)
 		})
 	}
 }

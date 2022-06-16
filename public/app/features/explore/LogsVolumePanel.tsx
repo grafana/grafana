@@ -1,8 +1,10 @@
-import { AbsoluteTimeRange, DataQueryResponse, LoadingState, SplitOpen, TimeZone } from '@grafana/data';
-import { Alert, Button, Collapse, InlineField, TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
-import { ExploreGraph } from './ExploreGraph';
-import React from 'react';
 import { css } from '@emotion/css';
+import React, { useState } from 'react';
+
+import { AbsoluteTimeRange, DataQueryError, DataQueryResponse, LoadingState, SplitOpen, TimeZone } from '@grafana/data';
+import { Alert, Button, Collapse, InlineField, TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
+
+import { ExploreGraph } from './ExploreGraph';
 
 type Props = {
   logsVolumeData?: DataQueryResponse;
@@ -12,10 +14,49 @@ type Props = {
   width: number;
   onUpdateTimeRange: (timeRange: AbsoluteTimeRange) => void;
   onLoadLogsVolume: () => void;
+  onHiddenSeriesChanged: (hiddenSeries: string[]) => void;
 };
 
+const SHORT_ERROR_MESSAGE_LIMIT = 100;
+
+function ErrorAlert(props: { error: DataQueryError }) {
+  const [isOpen, setIsOpen] = useState(false);
+  // generic get-error-message-logic, taken from
+  // /public/app/features/explore/ErrorContainer.tsx
+  const message = props.error.message || props.error.data?.message || '';
+
+  const showButton = !isOpen && message.length > SHORT_ERROR_MESSAGE_LIMIT;
+
+  return (
+    <Alert title="Failed to load log volume for this query" severity="warning">
+      {showButton ? (
+        <Button
+          variant="secondary"
+          size="xs"
+          onClick={() => {
+            setIsOpen(true);
+          }}
+        >
+          Show details
+        </Button>
+      ) : (
+        message
+      )}
+    </Alert>
+  );
+}
+
 export function LogsVolumePanel(props: Props) {
-  const { width, logsVolumeData, absoluteRange, timeZone, splitOpen, onUpdateTimeRange, onLoadLogsVolume } = props;
+  const {
+    width,
+    logsVolumeData,
+    absoluteRange,
+    timeZone,
+    splitOpen,
+    onUpdateTimeRange,
+    onLoadLogsVolume,
+    onHiddenSeriesChanged,
+  } = props;
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
@@ -26,11 +67,7 @@ export function LogsVolumePanel(props: Props) {
   if (!logsVolumeData) {
     return null;
   } else if (logsVolumeData?.error) {
-    return (
-      <Alert title="Failed to load log volume for this query" severity="warning">
-        Please check console logs for more details.
-      </Alert>
-    );
+    return <ErrorAlert error={logsVolumeData?.error} />;
   } else if (logsVolumeData?.state === LoadingState.Loading) {
     LogsVolumePanelContent = <span>Log volume is loading...</span>;
   } else if (logsVolumeData?.data) {
@@ -47,6 +84,7 @@ export function LogsVolumePanel(props: Props) {
           timeZone={timeZone}
           splitOpenFn={splitOpen}
           tooltipDisplayMode={TooltipDisplayMode.Multi}
+          onHiddenSeriesChanged={onHiddenSeriesChanged}
         />
       );
     } else {
@@ -66,7 +104,7 @@ export function LogsVolumePanel(props: Props) {
   }
 
   return (
-    <Collapse label="Log volume" isOpen={true} loading={logsVolumeData?.state === LoadingState.Loading}>
+    <Collapse label="" isOpen={true} loading={logsVolumeData?.state === LoadingState.Loading}>
       <div style={{ height }} className={styles.contentContainer}>
         {LogsVolumePanelContent}
       </div>

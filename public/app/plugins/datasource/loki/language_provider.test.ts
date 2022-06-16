@@ -1,11 +1,11 @@
 import Plain from 'slate-plain-serializer';
 
-import LanguageProvider, { LokiHistoryItem } from './language_provider';
+import { AbstractLabelOperator } from '@grafana/data';
 import { TypeaheadInput } from '@grafana/ui';
 
+import { LokiDatasource } from './datasource';
+import LanguageProvider, { LokiHistoryItem } from './language_provider';
 import { makeMockLokiDatasource } from './mocks';
-import LokiDatasource from './datasource';
-import { AbstractLabelOperator } from '@grafana/data';
 import { LokiQueryType } from './types';
 
 jest.mock('app/store/store', () => ({
@@ -95,10 +95,31 @@ describe('Language completion provider', () => {
       const fetchSeries = languageProvider.fetchSeries;
       const requestSpy = jest.spyOn(languageProvider, 'request');
       fetchSeries('{job="grafana"}');
-      expect(requestSpy).toHaveBeenCalledWith('/loki/api/v1/series', {
+      expect(requestSpy).toHaveBeenCalledWith('series', {
         end: 1560163909000,
         'match[]': '{job="grafana"}',
         start: 1560153109000,
+      });
+    });
+  });
+
+  describe('fetchSeriesLabels', () => {
+    it('should interpolate variable in series', () => {
+      const datasource: LokiDatasource = {
+        metadataRequest: () => ({ data: { data: [] as any[] } }),
+        getTimeRangeParams: () => ({ start: 0, end: 1 }),
+        interpolateString: (string: string) => string.replace(/\$/, 'interpolated-'),
+      } as any as LokiDatasource;
+
+      const languageProvider = new LanguageProvider(datasource);
+      const fetchSeriesLabels = languageProvider.fetchSeriesLabels;
+      const requestSpy = jest.spyOn(languageProvider, 'request').mockResolvedValue([]);
+      fetchSeriesLabels('$stream');
+      expect(requestSpy).toHaveBeenCalled();
+      expect(requestSpy).toHaveBeenCalledWith('series', {
+        end: 1,
+        'match[]': 'interpolated-stream',
+        start: 0,
       });
     });
   });
@@ -227,6 +248,15 @@ describe('Language completion provider', () => {
       expect(requestSpy).toHaveBeenCalledTimes(1);
       expect(nextLabelValues).toEqual(['label1_val1', 'label1_val2']);
     });
+
+    it('should encode special characters', async () => {
+      const datasource = makeMockLokiDatasource({ '`\\"testkey': ['label1_val1', 'label1_val2'], label2: [] });
+      const provider = await getLanguageProvider(datasource);
+      const requestSpy = jest.spyOn(provider, 'request');
+      await provider.fetchLabelValues('`\\"testkey');
+
+      expect(requestSpy).toHaveBeenCalledWith('label/%60%5C%22testkey/values', expect.any(Object));
+    });
   });
 });
 
@@ -238,7 +268,7 @@ describe('Request URL', () => {
 
     const instance = new LanguageProvider(datasourceWithLabels);
     instance.fetchLabels();
-    const expectedUrl = '/loki/api/v1/label';
+    const expectedUrl = 'labels';
     expect(datasourceSpy).toHaveBeenCalledWith(expectedUrl, rangeParams);
   });
 });

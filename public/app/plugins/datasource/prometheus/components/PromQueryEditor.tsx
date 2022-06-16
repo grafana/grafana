@@ -2,24 +2,25 @@ import { map } from 'lodash';
 import React, { PureComponent } from 'react';
 
 // Types
-import { InlineFormLabel, LegacyForms, Select } from '@grafana/ui';
 import { CoreApp, SelectableValue } from '@grafana/data';
+import { InlineFormLabel, LegacyForms, Select } from '@grafana/ui';
+
 import { PromQuery } from '../types';
 
-import PromQueryField from './PromQueryField';
-import PromLink from './PromLink';
 import { PromExemplarField } from './PromExemplarField';
+import PromLink from './PromLink';
+import PromQueryField from './PromQueryField';
 import { PromQueryEditorProps } from './types';
 
 const { Switch } = LegacyForms;
 
-const FORMAT_OPTIONS: Array<SelectableValue<string>> = [
+export const FORMAT_OPTIONS: Array<SelectableValue<string>> = [
   { label: 'Time series', value: 'time_series' },
   { label: 'Table', value: 'table' },
   { label: 'Heatmap', value: 'heatmap' },
 ];
 
-const INTERVAL_FACTOR_OPTIONS: Array<SelectableValue<number>> = map([1, 2, 3, 4, 5, 10], (value: number) => ({
+export const INTERVAL_FACTOR_OPTIONS: Array<SelectableValue<number>> = map([1, 2, 3, 4, 5, 10], (value: number) => ({
   value,
   label: '1/' + value,
 }));
@@ -173,7 +174,6 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
               <div className="gf-form-label">Resolution</div>
               <Select
                 aria-label="Select resolution"
-                menuShouldPortal
                 isSearchable={false}
                 options={INTERVAL_FACTOR_OPTIONS}
                 onChange={this.onIntervalFactorChange}
@@ -184,7 +184,6 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
             <div className="gf-form">
               <div className="gf-form-label width-7">Format</div>
               <Select
-                menuShouldPortal
                 className="select-container"
                 width={16}
                 isSearchable={false}

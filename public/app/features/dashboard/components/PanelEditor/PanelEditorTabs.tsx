@@ -1,16 +1,19 @@
-import React, { FC, useEffect } from 'react';
 import { css } from '@emotion/css';
-import { IconName, Tab, TabContent, TabsBar, useForceUpdate, useStyles2 } from '@grafana/ui';
-import { TransformationsEditor } from '../TransformationsEditor/TransformationsEditor';
-import { DashboardModel, PanelModel } from '../../state';
-import { PanelEditorTab, PanelEditorTabId } from './types';
+import React, { FC, useEffect } from 'react';
 import { Subscription } from 'rxjs';
-import { PanelQueriesChangedEvent, PanelTransformationsChangedEvent } from 'app/types/events';
-import { PanelEditorQueries } from './PanelEditorQueries';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { IconName, Tab, TabContent, TabsBar, useForceUpdate, useStyles2 } from '@grafana/ui';
 import AlertTabIndex from 'app/features/alerting/AlertTabIndex';
 import { PanelAlertTab } from 'app/features/alerting/unified/PanelAlertTab';
+import { PanelQueriesChangedEvent, PanelTransformationsChangedEvent } from 'app/types/events';
+
+import { DashboardModel, PanelModel } from '../../state';
+import { TransformationsEditor } from '../TransformationsEditor/TransformationsEditor';
+
+import { PanelEditorQueries } from './PanelEditorQueries';
+import { PanelEditorTab, PanelEditorTabId } from './types';
 
 interface PanelEditorTabsProps {
   panel: PanelModel;
@@ -28,7 +31,7 @@ export const PanelEditorTabs: FC<PanelEditorTabsProps> = React.memo(({ panel, da
     eventSubs.add(panel.events.subscribe(PanelQueriesChangedEvent, forceUpdate));
     eventSubs.add(panel.events.subscribe(PanelTransformationsChangedEvent, forceUpdate));
     return () => eventSubs.unsubscribe();
-  }, [panel, forceUpdate]);
+  }, [panel, dashboard, forceUpdate]);
 
   const activeTab = tabs.find((item) => item.active)!;
 
@@ -41,7 +44,7 @@ export const PanelEditorTabs: FC<PanelEditorTabsProps> = React.memo(({ panel, da
       <TabsBar className={styles.tabBar} hideBorder>
         {tabs.map((tab) => {
           if (tab.id === PanelEditorTabId.Alert) {
-            renderAlertTab(tab, panel, dashboard, onChangeTab);
+            return renderAlertTab(tab, panel, dashboard, onChangeTab);
           }
           return (
             <Tab
@@ -86,9 +89,13 @@ function renderAlertTab(
   dashboard: DashboardModel,
   onChangeTab: (tab: PanelEditorTab) => void
 ) {
-  if (!config.alertingEnabled || !config.unifiedAlertingEnabled) {
+  const alertingDisabled = !config.alertingEnabled && !config.unifiedAlertingEnabled;
+
+  if (alertingDisabled) {
     return null;
-  } else if (config.unifiedAlertingEnabled) {
+  }
+
+  if (config.unifiedAlertingEnabled) {
     return (
       <PanelAlertTab
         key={tab.id}
@@ -100,7 +107,9 @@ function renderAlertTab(
         dashboard={dashboard}
       />
     );
-  } else if (config.alertingEnabled) {
+  }
+
+  if (config.alertingEnabled) {
     return (
       <Tab
         key={tab.id}

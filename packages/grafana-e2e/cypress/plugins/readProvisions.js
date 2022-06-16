@@ -1,9 +1,9 @@
 'use strict';
-const { parse: parseYml } = require('yaml');
 const {
   promises: { readFile },
 } = require('fs');
 const { resolve: resolvePath } = require('path');
+const { parse: parseYml } = require('yaml');
 
 const readProvision = (filePath) => readFile(filePath, 'utf8').then((contents) => parseYml(contents));
 

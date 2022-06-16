@@ -1,14 +1,15 @@
 import React from 'react';
-import { loadComponentHandler } from './SafeDynamicImport';
+
 import { ErrorLoadingChunk } from './ErrorLoadingChunk';
 import { LoadingChunkPlaceHolder } from './LoadingChunkPlaceHolder';
+import { loadComponentHandler } from './SafeDynamicImport';
 
 describe('loadComponentHandler', () => {
   describe('when there is no error and pastDelay is false', () => {
     it('then it should return null', () => {
       const error: Error | null = null;
       const pastDelay = false;
-      const element = loadComponentHandler({ error: (error as unknown) as Error, pastDelay });
+      const element = loadComponentHandler({ error: error as unknown as Error, pastDelay });
 
       expect(element).toBe(null);
     });
@@ -28,7 +29,7 @@ describe('loadComponentHandler', () => {
     it('then it should return LoadingChunkPlaceHolder', () => {
       const error: Error | null = null;
       const pastDelay = true;
-      const element = loadComponentHandler({ error: (error as unknown) as Error, pastDelay });
+      const element = loadComponentHandler({ error: error as unknown as Error, pastDelay });
 
       expect(element).toEqual(<LoadingChunkPlaceHolder />);
     });

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gosimple/slug"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -18,6 +19,16 @@ const RootFolderName = "General"
 var (
 	ErrDashboardNotFound = DashboardErr{
 		Reason:     "Dashboard not found",
+		StatusCode: 404,
+		Status:     "not-found",
+	}
+	ErrDashboardCorrupt = DashboardErr{
+		Reason:     "Dashboard data is missing or corrupt",
+		StatusCode: 500,
+		Status:     "not-found",
+	}
+	ErrDashboardPanelNotFound = DashboardErr{
+		Reason:     "Dashboard panel not found",
 		StatusCode: 404,
 		Status:     "not-found",
 	}
@@ -46,6 +57,7 @@ var (
 	ErrDashboardTitleEmpty = DashboardErr{
 		Reason:     "Dashboard title cannot be empty",
 		StatusCode: 400,
+		Status:     "empty-name",
 	}
 	ErrDashboardFolderCannotHaveParent = DashboardErr{
 		Reason:     "A Dashboard Folder cannot be added to another folder",
@@ -70,6 +82,7 @@ var (
 	ErrDashboardWithSameNameAsFolder = DashboardErr{
 		Reason:     "Dashboard name cannot be the same as folder",
 		StatusCode: 400,
+		Status:     "name-match",
 	}
 	ErrDashboardFolderNameExists = DashboardErr{
 		Reason:     "A folder with that name already exists",
@@ -103,8 +116,25 @@ var (
 		Reason:     "Unique identifier needed to be able to get a dashboard",
 		StatusCode: 400,
 	}
+	ErrDashboardIdentifierInvalid = DashboardErr{
+		Reason:     "Dashboard ID not a number",
+		StatusCode: 400,
+	}
+	ErrDashboardPanelIdentifierInvalid = DashboardErr{
+		Reason:     "Dashboard panel ID not a number",
+		StatusCode: 400,
+	}
+	ErrDashboardOrPanelIdentifierNotSet = DashboardErr{
+		Reason:     "Unique identifier needed to be able to get a dashboard panel",
+		StatusCode: 400,
+	}
 	ErrProvisionedDashboardNotFound = DashboardErr{
 		Reason:     "Dashboard is not provisioned",
+		StatusCode: 404,
+		Status:     "not-found",
+	}
+	ErrDashboardThumbnailNotFound = DashboardErr{
+		Reason:     "Dashboard thumbnail not found",
 		StatusCode: 404,
 		Status:     "not-found",
 	}
@@ -170,6 +200,7 @@ type Dashboard struct {
 	FolderId  int64
 	IsFolder  bool
 	HasAcl    bool
+	IsPublic  bool
 
 	Title string
 	Data  *simplejson.Json
@@ -317,6 +348,11 @@ func GetDashboardUrl(uid string, slug string) string {
 	return fmt.Sprintf("%s/d/%s/%s", setting.AppSubUrl, uid, slug)
 }
 
+// GetKioskModeDashboardUrl returns the HTML url for a dashboard in kiosk mode.
+func GetKioskModeDashboardUrl(uid string, slug string, theme Theme) string {
+	return fmt.Sprintf("%s?kiosk&theme=%s", GetDashboardUrl(uid, slug), string(theme))
+}
+
 // GetFullDashboardUrl returns the full URL for a dashboard.
 func GetFullDashboardUrl(uid string, slug string) string {
 	return fmt.Sprintf("%sd/%s/%s", setting.AppUrl, uid, slug)
@@ -349,13 +385,13 @@ type SaveDashboardCommand struct {
 
 	UpdatedAt time.Time
 
-	Result *Dashboard
+	Result *Dashboard `json:"-"`
 }
 
 type TrimDashboardCommand struct {
 	Dashboard *simplejson.Json `json:"dashboard" binding:"Required"`
 	Meta      *simplejson.Json `json:"meta"`
-	Result    *Dashboard
+	Result    *Dashboard       `json:"-"`
 }
 
 type DashboardProvisioning struct {
@@ -401,16 +437,9 @@ type GetDashboardTagsQuery struct {
 }
 
 type GetDashboardsQuery struct {
-	DashboardIds []int64
-	Result       []*Dashboard
-}
-
-type GetDashboardPermissionsForUserQuery struct {
-	DashboardIds []int64
-	OrgId        int64
-	UserId       int64
-	OrgRole      RoleType
-	Result       []*DashboardPermissionForUser
+	DashboardIds  []int64
+	DashboardUIds []string
+	Result        []*Dashboard
 }
 
 type GetDashboardsByPluginIdQuery struct {
@@ -431,12 +460,6 @@ type GetDashboardsBySlugQuery struct {
 	Result []*Dashboard
 }
 
-type DashboardPermissionForUser struct {
-	DashboardId    int64          `json:"dashboardId"`
-	Permission     PermissionType `json:"permission"`
-	PermissionName string         `json:"permissionName"`
-}
-
 type DashboardRef struct {
 	Uid  string
 	Slug string
@@ -445,8 +468,4 @@ type DashboardRef struct {
 type GetDashboardRefByIdQuery struct {
 	Id     int64
 	Result *DashboardRef
-}
-
-type UnprovisionDashboardCommand struct {
-	Id int64
 }

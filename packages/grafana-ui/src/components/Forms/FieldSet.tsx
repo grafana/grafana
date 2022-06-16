@@ -1,7 +1,10 @@
-import React, { FC, HTMLProps } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { FC, HTMLProps } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
+
 import { stylesFactory, useTheme2 } from '../../themes';
+
 import { Legend } from './Legend';
 
 export interface Props extends Omit<HTMLProps<HTMLFieldSetElement>, 'label'> {

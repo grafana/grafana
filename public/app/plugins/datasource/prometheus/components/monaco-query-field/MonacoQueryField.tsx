@@ -1,13 +1,15 @@
-import React, { useRef, useEffect } from 'react';
-import { useTheme2, ReactMonacoEditor, Monaco, monacoTypes } from '@grafana/ui';
-import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
-import { useLatest } from 'react-use';
 import { promLanguageDefinition } from 'monaco-promql';
+import React, { useRef, useEffect } from 'react';
+import { useLatest } from 'react-use';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider';
+import { useTheme2, ReactMonacoEditor, Monaco, monacoTypes } from '@grafana/ui';
+
 import { Props } from './MonacoQueryFieldProps';
 import { getOverrideServices } from './getOverrideServices';
+import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider';
 
 const options: monacoTypes.editor.IStandaloneEditorConstructionOptions = {
   codeLens: false,
@@ -149,7 +151,7 @@ const MonacoQueryField = (props: Props) => {
           const completionProvider = getCompletionProvider(monaco, dataProvider);
 
           // completion-providers in monaco are not registered directly to editor-instances,
-          // they are registerd to languages. this makes it hard for us to have
+          // they are registered to languages. this makes it hard for us to have
           // separate completion-providers for every query-field-instance
           // (but we need that, because they might connect to different datasources).
           // the trick we do is, we wrap the callback in a "proxy",
@@ -197,6 +199,13 @@ const MonacoQueryField = (props: Props) => {
           editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.Enter, () => {
             onRunQueryRef.current(editor.getValue());
           });
+
+          /* Something in this configuration of monaco doesn't bubble up [mod]+K, which the 
+          command palette uses. Pass the event out of monaco manually
+          */
+          editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyK, function () {
+            global.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }));
+          });
         }}
       />
     </div>
@@ -206,6 +215,6 @@ const MonacoQueryField = (props: Props) => {
 // we will lazy-load this module using React.lazy,
 // and that only supports default-exports,
 // so we have to default-export this, even if
-// it is agains the style-guidelines.
+// it is against the style-guidelines.
 
 export default MonacoQueryField;

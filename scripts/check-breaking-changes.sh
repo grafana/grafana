@@ -12,7 +12,7 @@ while IFS=" " read -r -a package; do
     PACKAGE_PATH=$(basename "$package")
 
     # Calculate current and previous package paths / names
-    PREV="./main/packages/$PACKAGE_PATH/dist/"
+    PREV="./base/packages/$PACKAGE_PATH/dist/"
     CURRENT="./pr/packages/$PACKAGE_PATH/dist/"
 
     # Temporarily skipping these packages as they don't have any exposed static typing

@@ -1,9 +1,11 @@
-import React from 'react';
-import { InlineList } from '../List/InlineList';
 import { css } from '@emotion/css';
-import { DisplayValue, formattedValueToString } from '@grafana/data';
 import { capitalize } from 'lodash';
+import React from 'react';
+
+import { DisplayValue, formattedValueToString } from '@grafana/data';
+
 import { useStyles } from '../../themes/ThemeContext';
+import { InlineList } from '../List/InlineList';
 
 /**
  * @internal

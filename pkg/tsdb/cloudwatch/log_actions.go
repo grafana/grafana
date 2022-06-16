@@ -14,11 +14,13 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"golang.org/x/sync/errgroup"
 )
 
-var LimitExceededException = "LimitExceededException"
+const (
+	LimitExceededException = "LimitExceededException"
+	defaultLimit           = 10
+)
 
 type AWSError struct {
 	Code    string
@@ -95,7 +97,7 @@ func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, model *simple
 	defaultRegion := dsInfo.region
 
 	region := model.Get("region").MustString(defaultRegion)
-	logsClient, err := e.getCWLogsClient(region, pluginCtx)
+	logsClient, err := e.getCWLogsClient(pluginCtx, region)
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +119,7 @@ func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, model *simple
 		data, err = e.handleGetLogEvents(ctx, logsClient, model)
 	}
 	if err != nil {
-		return nil, errutil.Wrapf(err, "failed to execute log action with subtype: %s", subType)
+		return nil, fmt.Errorf("failed to execute log action with subtype: %s: %w", subType, err)
 	}
 
 	return data, nil
@@ -126,7 +128,7 @@ func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, model *simple
 func (e *cloudWatchExecutor) handleGetLogEvents(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
 	parameters *simplejson.Json) (*data.Frame, error) {
 	queryRequest := &cloudwatchlogs.GetLogEventsInput{
-		Limit:         aws.Int64(parameters.Get("limit").MustInt64(10)),
+		Limit:         aws.Int64(parameters.Get("limit").MustInt64(defaultLimit)),
 		StartFromHead: aws.Bool(parameters.Get("startFromHead").MustBool(false)),
 	}
 

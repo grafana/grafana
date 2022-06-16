@@ -1,11 +1,13 @@
-import React, { FC, useEffect, useState } from 'react';
-import { useTheme, VizLegend } from '@grafana/ui';
 import { Story, Meta } from '@storybook/react';
-import {} from './VizLegendListItem';
-import { DisplayValue, getColorForTheme, GrafanaTheme } from '@grafana/data';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { VizLegendItem } from './types';
+import React, { FC, useEffect, useState } from 'react';
+
+import { DisplayValue, GrafanaTheme } from '@grafana/data';
 import { LegendDisplayMode, LegendPlacement } from '@grafana/schema';
+import { useTheme, VizLegend } from '@grafana/ui';
+
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+
+import { VizLegendItem } from './types';
 
 export default {
   title: 'Visualizations/VizLegend',
@@ -152,7 +154,7 @@ function generateLegendItems(
 ): VizLegendItem[] {
   const alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('');
   const colors = ['green', 'blue', 'red', 'purple', 'orange', 'dark-green', 'yellow', 'light-blue'].map((c) =>
-    getColorForTheme(c, theme)
+    theme.visualization.getColorByName(c)
   );
 
   return [...new Array(numberOfSeries)].map((item, i) => {

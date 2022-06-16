@@ -1,4 +1,6 @@
 import { lastValueFrom, of, throwError } from 'rxjs';
+import { createFetchResponse } from 'test/helpers/createFetchResponse';
+
 import {
   DataQueryRequest,
   DataSourceInstanceSettings,
@@ -7,9 +9,8 @@ import {
   PluginType,
   ScopedVars,
 } from '@grafana/data';
-
 import { backendSrv } from 'app/core/services/backend_srv';
-import { createFetchResponse } from 'test/helpers/createFetchResponse';
+
 import { ALL_OPERATIONS_KEY } from './components/SearchForm';
 import { JaegerDatasource, JaegerJsonData } from './datasource';
 import mockJson from './mockJsonResponse.json';
@@ -156,6 +157,32 @@ describe('JaegerDatasource', () => {
     );
     expect(mock).toBeCalledWith({
       url: `${defaultSettings.url}/api/traces?service=jaeger-query&tags=%7B%22error%22%3A%22true%22%7D&start=1531468681000&end=1531489712000&lookback=custom`,
+    });
+  });
+
+  it('should resolve templates in traceID', async () => {
+    const mock = setupFetchMock({ data: [testResponse] });
+    const ds = new JaegerDatasource(defaultSettings, timeSrvStub);
+
+    await lastValueFrom(
+      ds.query({
+        ...defaultQuery,
+        scopedVars: {
+          $traceid: {
+            text: 'traceid',
+            value: '5311b0dd0ca8df3463df93c99cb805a6',
+          },
+        },
+        targets: [
+          {
+            query: '$traceid',
+            refId: '1',
+          },
+        ],
+      })
+    );
+    expect(mock).toBeCalledWith({
+      url: `${defaultSettings.url}/api/traces/5311b0dd0ca8df3463df93c99cb805a6`,
     });
   });
 

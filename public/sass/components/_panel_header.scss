@@ -161,14 +161,6 @@ $panel-header-no-title-zindex: 1;
 }
 
 .panel-info-content {
-  a {
-    color: $gray-6;
-
-    &:hover {
-      color: darken($white, 10%);
-    }
-  }
-
   code {
     white-space: normal;
     word-wrap: break-word;

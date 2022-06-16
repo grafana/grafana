@@ -1,17 +1,20 @@
-import { Alert, Rule } from 'app/types/unified-alerting';
+import { css, cx } from '@emotion/css';
 import React, { useMemo, useState } from 'react';
-import { isAlertingRule } from '../../utils/rules';
-import { DetailsField } from '../DetailsField';
-import { AlertInstancesTable } from './AlertInstancesTable';
-import { SortOrder } from 'app/plugins/panel/alertlist/types';
-import { GrafanaAlertState } from 'app/types/unified-alerting-dto';
+
 import { GrafanaTheme } from '@grafana/data';
 import { useStyles } from '@grafana/ui';
-import { css, cx } from '@emotion/css';
-import { labelsMatchMatchers, parseMatchers } from 'app/features/alerting/unified/utils/alertmanager';
-import { sortAlerts } from 'app/features/alerting/unified/utils/misc';
 import { MatcherFilter } from 'app/features/alerting/unified/components/alert-groups/MatcherFilter';
 import { AlertInstanceStateFilter } from 'app/features/alerting/unified/components/rules/AlertInstanceStateFilter';
+import { labelsMatchMatchers, parseMatchers } from 'app/features/alerting/unified/utils/alertmanager';
+import { sortAlerts } from 'app/features/alerting/unified/utils/misc';
+import { SortOrder } from 'app/plugins/panel/alertlist/types';
+import { Alert, Rule } from 'app/types/unified-alerting';
+import { GrafanaAlertState, mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
+
+import { isAlertingRule } from '../../utils/rules';
+import { DetailsField } from '../DetailsField';
+
+import { AlertInstancesTable } from './AlertInstancesTable';
 
 type Props = {
   promRule?: Rule;
@@ -48,7 +51,7 @@ export function RuleDetailsMatchingInstances(props: Props): JSX.Element | null {
           <MatcherFilter
             className={styles.rowChild}
             key={queryStringKey}
-            queryString={queryString}
+            defaultQueryString={queryString}
             onFilterChange={(value) => setQueryString(value)}
           />
           <AlertInstanceStateFilter
@@ -76,7 +79,7 @@ function filterAlerts(
   }
   if (alertInstanceState) {
     filteredAlerts = filteredAlerts.filter((alert) => {
-      return alert.state === alertInstanceState;
+      return mapStateWithReasonToBaseState(alert.state) === alertInstanceState;
     });
   }
 

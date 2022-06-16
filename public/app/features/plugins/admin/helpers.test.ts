@@ -1,7 +1,7 @@
-import { RemotePlugin, LocalPlugin } from './types';
-import { getLocalPluginMock, getRemotePluginMock, getCatalogPluginMock } from './__mocks__';
 import { PluginSignatureStatus, PluginSignatureType, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
+
+import { getLocalPluginMock, getRemotePluginMock, getCatalogPluginMock } from './__mocks__';
 import {
   mapToCatalogPlugin,
   mapRemoteToCatalog,
@@ -13,6 +13,7 @@ import {
   isLocalPluginVisible,
   isRemotePluginVisible,
 } from './helpers';
+import { RemotePlugin, LocalPlugin } from './types';
 
 describe('Plugins/Helpers', () => {
   let remotePlugin: RemotePlugin;

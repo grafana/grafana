@@ -1,7 +1,8 @@
-import { AppEvents, UrlQueryValue } from '@grafana/data';
+import { AppEvents } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import appEvents from '../app_events';
+
 import { KioskMode } from '../../types';
+import appEvents from '../app_events';
 
 export function toggleKioskMode() {
   let kiosk = locationService.getSearchObject().kiosk;
@@ -22,8 +23,10 @@ export function toggleKioskMode() {
   locationService.partial({ kiosk });
 }
 
-export function getKioskMode(queryParam?: UrlQueryValue): KioskMode {
-  switch (queryParam) {
+export function getKioskMode(): KioskMode {
+  const kiosk = locationService.getSearchObject().kiosk;
+
+  switch (kiosk) {
     case 'tv':
       return KioskMode.TV;
     //  legacy support

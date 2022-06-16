@@ -1,7 +1,9 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { DataLinksContextMenu } from './DataLinksContextMenu';
+import React from 'react';
+
 import { selectors } from '@grafana/e2e-selectors';
+
+import { DataLinksContextMenu } from './DataLinksContextMenu';
 
 const fakeAriaLabel = 'fake aria label';
 describe('DataLinksContextMenu', () => {

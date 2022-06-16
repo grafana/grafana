@@ -1,13 +1,15 @@
 import React from 'react';
+
 import {
   FieldConfigEditorBuilder,
-  FieldOverrideEditorProps,
   FieldType,
   identityOverrideProcessor,
   SelectableValue,
+  StandardEditorProps,
 } from '@grafana/data';
-import { graphFieldOptions, Select, HorizontalGroup, RadioButtonGroup } from '../../index';
 import { AxisConfig, AxisPlacement, ScaleDistribution, ScaleDistributionConfig } from '@grafana/schema';
+
+import { graphFieldOptions, Select, HorizontalGroup, RadioButtonGroup } from '../../index';
 
 /**
  * @alpha
@@ -37,8 +39,8 @@ export function addAxisConfig(
         placeholder: 'Optional text',
       },
       showIf: (c) => c.axisPlacement !== AxisPlacement.Hidden,
-      // no matter what the field type is
-      shouldApply: () => true,
+      // Do not apply default settings to time and string fields which are used as x-axis fields in Time series and Bar chart panels
+      shouldApply: (f) => f.type !== FieldType.time && f.type !== FieldType.string,
     })
     .addNumberInput({
       path: 'axisWidth',
@@ -87,8 +89,8 @@ export function addAxisConfig(
       path: 'scaleDistribution',
       name: 'Scale',
       category,
-      editor: ScaleDistributionEditor,
-      override: ScaleDistributionEditor,
+      editor: ScaleDistributionEditor as any,
+      override: ScaleDistributionEditor as any,
       defaultValue: { type: ScaleDistribution.Linear },
       shouldApply: (f) => f.type === FieldType.number,
       process: identityOverrideProcessor,
@@ -119,19 +121,16 @@ const LOG_DISTRIBUTION_OPTIONS: Array<SelectableValue<number>> = [
 ];
 
 /**
- * @alpha
+ * @internal
  */
-const ScaleDistributionEditor: React.FC<FieldOverrideEditorProps<ScaleDistributionConfig, any>> = ({
-  value,
-  onChange,
-}) => {
+export const ScaleDistributionEditor = ({ value, onChange }: StandardEditorProps<ScaleDistributionConfig>) => {
+  const type = value?.type ?? ScaleDistribution.Linear;
   return (
     <HorizontalGroup>
       <RadioButtonGroup
-        value={value.type || ScaleDistribution.Linear}
+        value={type}
         options={DISTRIBUTION_OPTIONS}
         onChange={(v) => {
-          console.log(v, value);
           onChange({
             ...value,
             type: v!,
@@ -139,11 +138,8 @@ const ScaleDistributionEditor: React.FC<FieldOverrideEditorProps<ScaleDistributi
           });
         }}
       />
-      {value.type === ScaleDistribution.Log && (
+      {type === ScaleDistribution.Log && (
         <Select
-          menuShouldPortal
-          allowCustomValue={false}
-          autoFocus
           options={LOG_DISTRIBUTION_OPTIONS}
           value={value.log || 2}
           prefix={'base'}

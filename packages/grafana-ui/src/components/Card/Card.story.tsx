@@ -1,12 +1,14 @@
-import React from 'react';
 import { Story } from '@storybook/react';
+import React from 'react';
+
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { Card, Props } from './Card';
-import mdx from './Card.mdx';
 import { Button } from '../Button';
 import { IconButton } from '../IconButton/IconButton';
-import { TagList } from '../Tags/TagList';
 import { VerticalGroup } from '../Layout/Layout';
+import { TagList } from '../Tags/TagList';
+
+import { Card, Props } from './Card';
+import mdx from './Card.mdx';
 
 const logo = 'https://grafana.com/static/assets/img/apple-touch-icon.png';
 
@@ -151,6 +153,30 @@ export const Full: Story<Props> = ({ disabled }) => {
         <IconButton key="star" name="star" tooltip="Tooltip content" />
         <IconButton key="delete" name="trash-alt" tooltip="Delete this data source" />
       </Card.SecondaryActions>
+    </Card>
+  );
+};
+
+export const Selected: Story<Props> = () => {
+  return (
+    <Card isSelected>
+      <Card.Heading>Spaces</Card.Heading>
+      <Card.Description>Spaces are the superior form of indenting code.</Card.Description>
+      <Card.Figure>
+        <img src={logo} alt="Grafana Logo" width="40" height="40" />
+      </Card.Figure>
+    </Card>
+  );
+};
+
+export const NotSelected: Story<Props> = () => {
+  return (
+    <Card isSelected={false}>
+      <Card.Heading>Tabs</Card.Heading>
+      <Card.Description>Tabs are the preferred way of indentation.</Card.Description>
+      <Card.Figure>
+        <img src={logo} alt="Grafana Logo" width="40" height="40" />
+      </Card.Figure>
     </Card>
   );
 };

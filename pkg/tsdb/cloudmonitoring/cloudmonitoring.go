@@ -58,13 +58,13 @@ var (
 )
 
 const (
-	gceAuthentication         string = "gce"
-	jwtAuthentication         string = "jwt"
-	metricQueryType           string = "metrics"
-	sloQueryType              string = "slo"
-	mqlEditorMode             string = "mql"
-	crossSeriesReducerDefault string = "REDUCE_NONE"
-	perSeriesAlignerDefault   string = "ALIGN_MEAN"
+	gceAuthentication         = "gce"
+	jwtAuthentication         = "jwt"
+	metricQueryType           = "metrics"
+	sloQueryType              = "slo"
+	mqlEditorMode             = "mql"
+	crossSeriesReducerDefault = "REDUCE_NONE"
+	perSeriesAlignerDefault   = "ALIGN_MEAN"
 )
 
 func ProvideService(httpClientProvider httpclient.Provider, tracer tracing.Tracer) *Service {
@@ -72,6 +72,8 @@ func ProvideService(httpClientProvider httpclient.Provider, tracer tracing.Trace
 		tracer:             tracer,
 		httpClientProvider: httpClientProvider,
 		im:                 datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
+
+		gceDefaultProjectGetter: utils.GCEDefaultProject,
 	}
 
 	s.resourceHandler = httpadapter.New(s.newResourceMux())
@@ -91,7 +93,10 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 
 	defaultProject, err := s.getDefaultProject(ctx, *dsInfo)
 	if err != nil {
-		return nil, err
+		return &backend.CheckHealthResult{
+			Status:  backend.HealthStatusError,
+			Message: err.Error(),
+		}, nil
 	}
 
 	url := fmt.Sprintf("%v/v3/projects/%v/metricDescriptors", dsInfo.services[cloudMonitor].url, defaultProject)
@@ -128,6 +133,9 @@ type Service struct {
 	tracer             tracing.Tracer
 
 	resourceHandler backend.CallResourceHandler
+
+	// mocked in tests
+	gceDefaultProjectGetter func(ctx context.Context) (string, error)
 }
 
 type QueryModel struct {
@@ -330,6 +338,7 @@ func (s *Service) buildQueryExecutors(req *backend.QueryDataRequest) ([]cloudMon
 					IntervalMS:  query.Interval.Milliseconds(),
 					AliasBy:     q.MetricQuery.AliasBy,
 					timeRange:   req.Queries[0].TimeRange,
+					GraphPeriod: q.MetricQuery.GraphPeriod,
 				}
 			} else {
 				cmtsf.AliasBy = q.MetricQuery.AliasBy
@@ -612,7 +621,7 @@ func (s *Service) createRequest(ctx context.Context, dsInfo *datasourceInfo, pro
 
 func (s *Service) getDefaultProject(ctx context.Context, dsInfo datasourceInfo) (string, error) {
 	if dsInfo.authenticationType == gceAuthentication {
-		return utils.GCEDefaultProject(ctx)
+		return s.gceDefaultProjectGetter(ctx)
 	}
 	return dsInfo.defaultProject, nil
 }

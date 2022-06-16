@@ -1,4 +1,6 @@
 import $ from 'jquery';
+
+import { CurrentUserDTO } from '@grafana/data';
 import {
   EchoBackend,
   EchoEventType,
@@ -7,12 +9,13 @@ import {
   isPageviewEvent,
   PageviewEchoEvent,
 } from '@grafana/runtime';
-import { User } from '../sentry/types';
+
+import { getUserIdentifier } from '../../utils';
 
 export interface RudderstackBackendOptions {
   writeKey: string;
   dataPlaneUrl: string;
-  user?: User;
+  user?: CurrentUserDTO;
   sdkUrl?: string;
   configUrl?: string;
 }
@@ -57,7 +60,9 @@ export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, Rudder
     (rds as any).load(options.writeKey, options.dataPlaneUrl, { configUrl: options.configUrl });
 
     if (options.user) {
-      (rds as any).identify(options.user.email, {
+      const identifier = getUserIdentifier(options.user);
+
+      (rds as any).identify(identifier, {
         email: options.user.email,
         orgId: options.user.orgId,
       });

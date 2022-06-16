@@ -74,8 +74,9 @@ LIMIT 1
   }
 
   buildSchemaConstraint() {
+    // quote_ident protects hyphenated schemes
     const query = `
-table_schema IN (
+quote_ident(table_schema) IN (
   SELECT
     CASE WHEN trim(s[i]) = '"$user"' THEN user ELSE trim(s[i]) END
   FROM

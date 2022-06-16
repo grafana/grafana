@@ -1,29 +1,23 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { UserPicker } from 'app/core/components/Select/UserPicker';
-import { TeamPicker } from 'app/core/components/Select/TeamPicker';
+
 import { Button, Form, HorizontalGroup, Select } from '@grafana/ui';
-import { OrgRole } from 'app/types/acl';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
+import { TeamPicker } from 'app/core/components/Select/TeamPicker';
+import { UserPicker } from 'app/core/components/Select/UserPicker';
+import { OrgRole } from 'app/types/acl';
+
 import { Assignments, PermissionTarget, SetPermission } from './types';
 
 export interface Props {
   title?: string;
   permissions: string[];
   assignments: Assignments;
-  canListUsers: boolean;
   onCancel: () => void;
   onAdd: (state: SetPermission) => void;
 }
 
-export const AddPermission = ({
-  title = 'Add Permission For',
-  permissions,
-  assignments,
-  canListUsers,
-  onAdd,
-  onCancel,
-}: Props) => {
-  const [target, setPermissionTarget] = useState<PermissionTarget>(PermissionTarget.User);
+export const AddPermission = ({ title = 'Add Permission For', permissions, assignments, onAdd, onCancel }: Props) => {
+  const [target, setPermissionTarget] = useState<PermissionTarget>(PermissionTarget.None);
   const [teamId, setTeamId] = useState(0);
   const [userId, setUserId] = useState(0);
   const [builtInRole, setBuiltinRole] = useState('');
@@ -31,8 +25,8 @@ export const AddPermission = ({
 
   const targetOptions = useMemo(() => {
     const options = [];
-    if (assignments.users && canListUsers) {
-      options.push({ value: PermissionTarget.User, label: 'User', isDisabled: false });
+    if (assignments.users) {
+      options.push({ value: PermissionTarget.User, label: 'User' });
     }
     if (assignments.teams) {
       options.push({ value: PermissionTarget.Team, label: 'Team' });
@@ -41,7 +35,7 @@ export const AddPermission = ({
       options.push({ value: PermissionTarget.BuiltInRole, label: 'Role' });
     }
     return options;
-  }, [assignments, canListUsers]);
+  }, [assignments]);
 
   useEffect(() => {
     if (permissions.length > 0) {
@@ -58,6 +52,7 @@ export const AddPermission = ({
     <div className="cta-form" aria-label="Permissions slider">
       <CloseButton onClick={onCancel} />
       <h5>{title}</h5>
+
       <Form
         name="addPermission"
         maxWidth="none"
@@ -70,7 +65,7 @@ export const AddPermission = ({
               value={target}
               options={targetOptions}
               onChange={(v) => setPermissionTarget(v.value!)}
-              menuShouldPortal
+              disabled={targetOptions.length === 0}
             />
 
             {target === PermissionTarget.User && (
@@ -84,7 +79,6 @@ export const AddPermission = ({
             {target === PermissionTarget.BuiltInRole && (
               <Select
                 aria-label={'Built-in role picker'}
-                menuShouldPortal
                 options={Object.values(OrgRole).map((r) => ({ value: r, label: r }))}
                 onChange={(r) => setBuiltinRole(r.value || '')}
                 width={40}
@@ -94,7 +88,6 @@ export const AddPermission = ({
             <Select
               aria-label="Permission Level"
               width={25}
-              menuShouldPortal
               value={permissions.find((p) => p === permission)}
               options={permissions.map((p) => ({ label: p, value: p }))}
               onChange={(v) => setPermission(v.value || '')}

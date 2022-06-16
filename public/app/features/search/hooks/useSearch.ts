@@ -1,7 +1,9 @@
 import { useCallback, useEffect } from 'react';
 import { useDebounce } from 'react-use';
-import { SearchSrv } from 'app/core/services/search_srv';
+
 import { backendSrv } from 'app/core/services/backend_srv';
+import { SearchSrv } from 'app/core/services/search_srv';
+
 import { FETCH_RESULTS, FETCH_ITEMS, TOGGLE_SECTION, SEARCH_START, FETCH_ITEMS_START } from '../reducers/actionTypes';
 import { DashboardSection, UseSearch } from '../types';
 import { hasId, getParsedQuery } from '../utils';

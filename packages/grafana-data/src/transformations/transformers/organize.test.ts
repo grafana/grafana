@@ -6,8 +6,10 @@ import {
   toDataFrame,
   transformDataFrame,
 } from '@grafana/data';
-import { organizeFieldsTransformer, OrganizeFieldsTransformerOptions } from './organize';
+
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
+
+import { organizeFieldsTransformer, OrganizeFieldsTransformerOptions } from './organize';
 
 describe('OrganizeFields Transformer', () => {
   beforeAll(() => {
@@ -52,6 +54,7 @@ describe('OrganizeFields Transformer', () => {
             name: 'temperature',
             state: {
               displayName: 'temperature',
+              multipleFrames: false,
             },
             type: FieldType.number,
             values: new ArrayVector([10.3, 10.4, 10.5, 10.6]),
@@ -64,6 +67,7 @@ describe('OrganizeFields Transformer', () => {
             name: 'humidity',
             state: {
               displayName: 'renamed_humidity',
+              multipleFrames: false,
             },
             type: FieldType.number,
             values: new ArrayVector([10000.3, 10000.4, 10000.5, 10000.6]),
@@ -113,6 +117,7 @@ describe('OrganizeFields Transformer', () => {
             name: 'time',
             state: {
               displayName: 'renamed_time',
+              multipleFrames: false,
             },
             type: FieldType.time,
             values: new ArrayVector([3000, 4000, 5000, 6000]),
@@ -123,6 +128,7 @@ describe('OrganizeFields Transformer', () => {
             name: 'pressure',
             state: {
               displayName: 'pressure',
+              multipleFrames: false,
             },
             type: FieldType.number,
             values: new ArrayVector([10.3, 10.4, 10.5, 10.6]),

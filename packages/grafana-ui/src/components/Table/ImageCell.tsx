@@ -1,5 +1,7 @@
 import React, { FC } from 'react';
+
 import { getCellLinks } from '../../utils';
+
 import { TableCellProps } from './types';
 
 export const ImageCell: FC<TableCellProps> = (props) => {

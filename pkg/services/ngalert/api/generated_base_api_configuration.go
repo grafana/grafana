@@ -4,7 +4,6 @@
  *
  *Do not manually edit these files, please find ngalert/api/swagger-codegen/ for commands on how to generate them.
  */
-
 package api
 
 import (
@@ -26,25 +25,15 @@ type ConfigurationApiForkingService interface {
 	RoutePostNGalertConfig(*models.ReqContext) response.Response
 }
 
-type ConfigurationApiService interface {
-	RouteDeleteNGalertConfig(*models.ReqContext) response.Response
-	RouteGetAlertmanagers(*models.ReqContext) response.Response
-	RouteGetNGalertConfig(*models.ReqContext) response.Response
-	RoutePostNGalertConfig(*models.ReqContext, apimodels.PostableNGalertConfig) response.Response
-}
-
 func (f *ForkedConfigurationApi) RouteDeleteNGalertConfig(ctx *models.ReqContext) response.Response {
 	return f.forkRouteDeleteNGalertConfig(ctx)
 }
-
 func (f *ForkedConfigurationApi) RouteGetAlertmanagers(ctx *models.ReqContext) response.Response {
 	return f.forkRouteGetAlertmanagers(ctx)
 }
-
 func (f *ForkedConfigurationApi) RouteGetNGalertConfig(ctx *models.ReqContext) response.Response {
 	return f.forkRouteGetNGalertConfig(ctx)
 }
-
 func (f *ForkedConfigurationApi) RoutePostNGalertConfig(ctx *models.ReqContext) response.Response {
 	conf := apimodels.PostableNGalertConfig{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
@@ -57,6 +46,7 @@ func (api *API) RegisterConfigurationApiEndpoints(srv ConfigurationApiForkingSer
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Delete(
 			toMacaronPath("/api/v1/ngalert/admin_config"),
+			api.authorize(http.MethodDelete, "/api/v1/ngalert/admin_config"),
 			metrics.Instrument(
 				http.MethodDelete,
 				"/api/v1/ngalert/admin_config",
@@ -66,6 +56,7 @@ func (api *API) RegisterConfigurationApiEndpoints(srv ConfigurationApiForkingSer
 		)
 		group.Get(
 			toMacaronPath("/api/v1/ngalert/alertmanagers"),
+			api.authorize(http.MethodGet, "/api/v1/ngalert/alertmanagers"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/ngalert/alertmanagers",
@@ -75,6 +66,7 @@ func (api *API) RegisterConfigurationApiEndpoints(srv ConfigurationApiForkingSer
 		)
 		group.Get(
 			toMacaronPath("/api/v1/ngalert/admin_config"),
+			api.authorize(http.MethodGet, "/api/v1/ngalert/admin_config"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/ngalert/admin_config",
@@ -84,6 +76,7 @@ func (api *API) RegisterConfigurationApiEndpoints(srv ConfigurationApiForkingSer
 		)
 		group.Post(
 			toMacaronPath("/api/v1/ngalert/admin_config"),
+			api.authorize(http.MethodPost, "/api/v1/ngalert/admin_config"),
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/v1/ngalert/admin_config",

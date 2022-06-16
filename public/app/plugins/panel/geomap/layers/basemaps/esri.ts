@@ -1,5 +1,7 @@
-import { MapLayerRegistryItem, MapLayerOptions, GrafanaTheme2, RegistryItem, Registry } from '@grafana/data';
 import Map from 'ol/Map';
+
+import { MapLayerRegistryItem, MapLayerOptions, GrafanaTheme2, RegistryItem, Registry } from '@grafana/data';
+
 import { xyzTiles, defaultXYZConfig, XYZConfig } from './generic';
 
 interface PublicServiceItem extends RegistryItem {
@@ -55,6 +57,7 @@ export interface ESRIXYZConfig extends XYZConfig {
 export const esriXYZTiles: MapLayerRegistryItem<ESRIXYZConfig> = {
   id: 'esri-xyz',
   name: 'ArcGIS MapServer',
+  description: 'Add layer from an ESRI ArcGIS MapServer',
   isBaseMap: true,
 
   create: async (map: Map, options: MapLayerOptions<ESRIXYZConfig>, theme: GrafanaTheme2) => {

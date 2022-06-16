@@ -1,29 +1,31 @@
 /**
  * UserPermission is a map storing permissions in a form of
  * {
- *   action: { scope: scope }
+ *   action: true;
  * }
  */
-export type UserPermission = {
-  [key: string]: { [key: string]: string };
-};
+export type UserPermission = Record<string, boolean>;
 
 // Permission actions
 export enum AccessControlAction {
   UsersRead = 'users:read',
   UsersWrite = 'users:write',
-  UsersTeamRead = 'users.teams:read',
-  UsersAuthTokenList = 'users.authtoken:list',
-  UsersAuthTokenUpdate = 'users.authtoken:update',
-  UsersPasswordUpdate = 'users.password:update',
+  UsersAuthTokenList = 'users.authtoken:read',
+  UsersAuthTokenUpdate = 'users.authtoken:write',
+  UsersPasswordUpdate = 'users.password:write',
   UsersDelete = 'users:delete',
   UsersCreate = 'users:create',
   UsersEnable = 'users:enable',
   UsersDisable = 'users:disable',
-  UsersPermissionsUpdate = 'users.permissions:update',
+  UsersPermissionsUpdate = 'users.permissions:write',
   UsersLogout = 'users:logout',
-  UsersQuotasList = 'users.quotas:list',
-  UsersQuotasUpdate = 'users.quotas:update',
+  UsersQuotasList = 'users.quotas:read',
+  UsersQuotasUpdate = 'users.quotas:write',
+
+  ServiceAccountsRead = 'serviceaccounts:read',
+  ServiceAccountsCreate = 'serviceaccounts:create',
+  ServiceAccountsWrite = 'serviceaccounts:write',
+  ServiceAccountsDelete = 'serviceaccounts:delete',
 
   OrgsRead = 'orgs:read',
   OrgsPreferencesRead = 'orgs.preferences:read',
@@ -34,7 +36,7 @@ export enum AccessControlAction {
   OrgUsersRead = 'org.users:read',
   OrgUsersAdd = 'org.users:add',
   OrgUsersRemove = 'org.users:remove',
-  OrgUsersRoleUpdate = 'org.users.role:update',
+  OrgUsersWrite = 'org.users:write',
 
   LDAPUsersRead = 'ldap.user:read',
   LDAPUsersSync = 'ldap.user:sync',
@@ -50,10 +52,63 @@ export enum AccessControlAction {
   ActionServerStatsRead = 'server.stats:read',
 
   ActionTeamsCreate = 'teams:create',
+  ActionTeamsDelete = 'teams:delete',
+  ActionTeamsRead = 'teams:read',
+  ActionTeamsWrite = 'teams:write',
+  ActionTeamsPermissionsRead = 'teams.permissions:read',
+  ActionTeamsPermissionsWrite = 'teams.permissions:write',
 
-  ActionRolesList = 'roles:list',
+  ActionRolesList = 'roles:read',
   ActionBuiltinRolesList = 'roles.builtin:list',
-  ActionUserRolesList = 'users.roles:list',
+  ActionTeamsRolesList = 'teams.roles:read',
+  ActionTeamsRolesAdd = 'teams.roles:add',
+  ActionTeamsRolesRemove = 'teams.roles:remove',
+  ActionUserRolesList = 'users.roles:read',
+
+  DashboardsRead = 'dashboards:read',
+  DashboardsWrite = 'dashboards:write',
+  DashboardsDelete = 'dashboards:delete',
+  DashboardsCreate = 'dashboards:create',
+  DashboardsPermissionsRead = 'dashboards.permissions:read',
+  DashboardsPermissionsWrite = 'dashboards.permissions:write',
+
+  FoldersRead = 'folders:read',
+  FoldersWrite = 'folders:write',
+  FoldersDelete = 'folders:delete',
+  FoldersCreate = 'folders:create',
+  FoldersPermissionsRead = 'folders.permissions:read',
+  FoldersPermissionsWrite = 'folders.permissions:write',
+
+  // Alerting rules
+  AlertingRuleCreate = 'alert.rules:create',
+  AlertingRuleRead = 'alert.rules:read',
+  AlertingRuleUpdate = 'alert.rules:write',
+  AlertingRuleDelete = 'alert.rules:delete',
+
+  // Alerting instances (+silences)
+  AlertingInstanceCreate = 'alert.instances:create',
+  AlertingInstanceUpdate = 'alert.instances:write',
+  AlertingInstanceRead = 'alert.instances:read',
+
+  // Alerting Notification policies
+  AlertingNotificationsRead = 'alert.notifications:read',
+  AlertingNotificationsWrite = 'alert.notifications:write',
+
+  // External alerting rule actions.
+  AlertingRuleExternalWrite = 'alert.rules.external:write',
+  AlertingRuleExternalRead = 'alert.rules.external:read',
+
+  // External alerting instances actions.
+  AlertingInstancesExternalWrite = 'alert.instances.external:write',
+  AlertingInstancesExternalRead = 'alert.instances.external:read',
+
+  // External alerting notifications actions.
+  AlertingNotificationsExternalWrite = 'alert.notifications.external:write',
+  AlertingNotificationsExternalRead = 'alert.notifications.external:read',
+
+  ActionAPIKeysRead = 'apikeys:read',
+  ActionAPIKeysCreate = 'apikeys:create',
+  ActionAPIKeysDelete = 'apikeys:delete',
 }
 
 export interface Role {

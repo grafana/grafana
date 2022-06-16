@@ -16,8 +16,6 @@ func newTestMigration(t *testing.T) *migration {
 
 			Logger: log.New("test"),
 		},
-		migratedChannelsPerOrg:    make(map[int64]map[*notificationChannel]struct{}),
-		portedChannelGroupsPerOrg: make(map[int64]map[string]string),
-		seenChannelUIDs:           make(map[string]struct{}),
+		seenChannelUIDs: make(map[string]struct{}),
 	}
 }

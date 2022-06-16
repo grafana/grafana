@@ -1,10 +1,16 @@
-+++
-title = "Change home dashboard"
-description = "How to replace the default home dashboard"
-keywords = ["grafana", "configuration", "documentation", "home"]
-aliases = ["/docs/grafana/latest/administration/change-home-dashboard/"]
-weight = 300
-+++
+---
+aliases:
+  - /docs/grafana/latest/administration/change-home-dashboard/
+  - /docs/grafana/latest/administration/preferences/change-home-dashboard/
+description: How to replace the default home dashboard
+keywords:
+  - grafana
+  - configuration
+  - documentation
+  - home
+title: Change home dashboard
+weight: 300
+---
 
 # Change the default home dashboard
 
@@ -32,7 +38,7 @@ Users with the Grafana Server Admin flag on their account or access to the confi
 ### Use a JSON file as the home dashboard
 
 1. Save your JSON file somewhere that Grafana can access it. For example, in the Grafana `data` folder of Grafana.
-1. Update your configuration file to set the path to the JSON file. Refer to [default_home_dashboard_path]({{< relref "../configuration.md#default_home_dashboard_path">}}) for more information about modifying the Grafana configuration files.
+1. Update your configuration file to set the path to the JSON file. Refer to [default_home_dashboard_path]({{< relref "../../setup-grafana/configure-grafana/#default_home_dashboard_path" >}}) for more information about modifying the Grafana configuration files.
 
 ```ini
 [dashboards]

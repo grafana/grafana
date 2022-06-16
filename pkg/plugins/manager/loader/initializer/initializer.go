@@ -7,11 +7,11 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
+	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 )
 
 type Initializer struct {
@@ -47,21 +47,6 @@ func (i *Initializer) Initialize(ctx context.Context, p *plugins.Plugin) error {
 	return nil
 }
 
-func (i *Initializer) InitializeWithFactory(p *plugins.Plugin, factory backendplugin.PluginFactoryFunc) error {
-	if factory == nil {
-		return fmt.Errorf("could not initialize plugin %s", p.ID)
-	}
-
-	f, err := factory(p.ID, log.New("pluginID", p.ID), []string{})
-	if err != nil {
-		return err
-	}
-
-	p.RegisterClient(f)
-
-	return nil
-}
-
 func (i *Initializer) envVars(plugin *plugins.Plugin) []string {
 	hostEnv := []string{
 		fmt.Sprintf("GF_VERSION=%s", i.cfg.BuildVersion),
@@ -82,7 +67,7 @@ func (i *Initializer) envVars(plugin *plugins.Plugin) []string {
 	}
 
 	hostEnv = append(hostEnv, i.awsEnvVars()...)
-	hostEnv = append(hostEnv, i.azureEnvVars()...)
+	hostEnv = append(hostEnv, azsettings.WriteToEnvStr(i.cfg.Azure)...)
 	return getPluginSettings(plugin.ID, i.cfg).asEnvVar("GF_PLUGIN", hostEnv)
 }
 
@@ -93,21 +78,6 @@ func (i *Initializer) awsEnvVars() []string {
 	}
 	if len(i.cfg.AWSAllowedAuthProviders) > 0 {
 		variables = append(variables, awsds.AllowedAuthProvidersEnvVarKeyName+"="+strings.Join(i.cfg.AWSAllowedAuthProviders, ","))
-	}
-
-	return variables
-}
-
-func (i *Initializer) azureEnvVars() []string {
-	var variables []string
-	if i.cfg.Azure.Cloud != "" {
-		variables = append(variables, "AZURE_CLOUD="+i.cfg.Azure.Cloud)
-	}
-	if i.cfg.Azure.ManagedIdentityClientId != "" {
-		variables = append(variables, "AZURE_MANAGED_IDENTITY_CLIENT_ID="+i.cfg.Azure.ManagedIdentityClientId)
-	}
-	if i.cfg.Azure.ManagedIdentityEnabled {
-		variables = append(variables, "AZURE_MANAGED_IDENTITY_ENABLED=true")
 	}
 
 	return variables

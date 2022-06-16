@@ -1,9 +1,12 @@
 import React from 'react';
-import { SeriesTable } from '../../VizTooltip';
-import { GraphTooltipContentProps } from './types';
-import { getMultiSeriesGraphHoverInfo } from '../utils';
-import { FlotPosition } from '../types';
+
 import { getValueFromDimension } from '@grafana/data';
+
+import { SeriesTable } from '../../VizTooltip';
+import { FlotPosition } from '../types';
+import { getMultiSeriesGraphHoverInfo } from '../utils';
+
+import { GraphTooltipContentProps } from './types';
 
 export const MultiModeGraphTooltip: React.FC<
   GraphTooltipContentProps & {

@@ -1,12 +1,15 @@
 import React from 'react';
 import { HeaderGroup, Column } from 'react-table';
+
 import { DataFrame, Field } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { getTableStyles, TableStyles } from './styles';
+
 import { useStyles2 } from '../../themes';
-import { Filter } from './Filter';
-import { Icon } from '../Icon/Icon';
 import { getFieldTypeIcon } from '../../types';
+import { Icon } from '../Icon/Icon';
+
+import { Filter } from './Filter';
+import { getTableStyles, TableStyles } from './styles';
 
 export interface HeaderRowProps {
   headerGroups: HeaderGroup[];

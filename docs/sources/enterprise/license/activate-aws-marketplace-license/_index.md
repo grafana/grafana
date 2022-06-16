@@ -1,9 +1,16 @@
-+++
-title = "Activate a Grafana Enterprise license purchased through AWS Marketplace"
-description = "Activate Enterprise license purchased through AWS Marketplace"
-keywords = ["grafana", "aws", "marketplace", "enterprise", "license"]
-weight = 400
-+++
+---
+aliases:
+  - /docs/grafana/latest/enterprise/license/activate-aws-marketplace-license/
+description: Activate Enterprise license purchased through AWS Marketplace
+keywords:
+  - grafana
+  - aws
+  - marketplace
+  - enterprise
+  - license
+title: Activate a Grafana Enterprise license purchased through AWS Marketplace
+weight: 400
+---
 
 # Activate a Grafana Enterprise license purchased through AWS Marketplace
 

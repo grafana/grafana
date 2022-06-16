@@ -1,10 +1,12 @@
 import React, { PureComponent, ReactNode } from 'react';
-import { AdHocVariableFilter } from 'app/features/variables/types';
+
 import { DataSourceRef, SelectableValue } from '@grafana/data';
+import { AdHocVariableFilter } from 'app/features/variables/types';
+
 import { AdHocFilterBuilder } from './AdHocFilterBuilder';
-import { ConditionSegment } from './ConditionSegment';
 import { REMOVE_FILTER_KEY } from './AdHocFilterKey';
 import { AdHocFilterRenderer } from './AdHocFilterRenderer';
+import { ConditionSegment } from './ConditionSegment';
 
 interface Props {
   datasource: DataSourceRef | null;

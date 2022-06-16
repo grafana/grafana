@@ -64,7 +64,7 @@ func (cp *corePlugin) IsDecommissioned() bool {
 	return false
 }
 
-func (cp *corePlugin) CollectMetrics(ctx context.Context) (*backend.CollectMetricsResult, error) {
+func (cp *corePlugin) CollectMetrics(_ context.Context, _ *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
 	return nil, backendplugin.ErrMethodNotImplemented
 }
 

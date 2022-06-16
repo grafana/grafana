@@ -1,6 +1,7 @@
-import { ScopedVars, VariableModel } from '@grafana/data';
-import { variableRegex } from '../variables/utils';
+import { ScopedVars, TimeRange, VariableModel } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
+
+import { variableRegex } from '../variables/utils';
 
 /**
  * Mock for TemplateSrv where you can just supply map of key and values and it will do the interpolation based on that.
@@ -45,4 +46,16 @@ export class TemplateSrvMock implements TemplateSrv {
     }
     return match.slice(1).find((match) => match !== undefined);
   }
+
+  containsTemplate(target: string | undefined): boolean {
+    if (!target) {
+      return false;
+    }
+
+    this.regex.lastIndex = 0;
+    const match = this.regex.exec(target);
+    return match !== null;
+  }
+
+  updateTimeRange(timeRange: TimeRange) {}
 }

@@ -1,15 +1,16 @@
-import React, { ReactElement, useEffect, useRef } from 'react';
 import { css } from '@emotion/css';
-import { useTheme2 } from '@grafana/ui';
-import { GrafanaTheme2, NavMenuItemType, NavModelItem } from '@grafana/data';
-import { SpectrumMenuProps } from '@react-types/menu';
 import { useMenu } from '@react-aria/menu';
-import { useTreeState } from '@react-stately/tree';
 import { mergeProps } from '@react-aria/utils';
+import { useTreeState } from '@react-stately/tree';
+import { SpectrumMenuProps } from '@react-types/menu';
+import React, { ReactElement, useEffect, useRef } from 'react';
 
-import { getNavModelItemKey } from './utils';
-import { useNavBarItemMenuContext } from './context';
+import { GrafanaTheme2, NavMenuItemType, NavModelItem } from '@grafana/data';
+import { useTheme2 } from '@grafana/ui';
+
 import { NavBarItemMenuItem } from './NavBarItemMenuItem';
+import { useNavBarItemMenuContext } from './context';
+import { getNavModelItemKey } from './utils';
 
 export interface NavBarItemMenuProps extends SpectrumMenuProps<NavModelItem> {
   onNavigate: (item: NavModelItem) => void;
@@ -89,7 +90,6 @@ function getStyles(theme: GrafanaTheme2, reverseDirection?: boolean) {
       top: ${reverseDirection ? 'auto' : 0};
       transition: ${theme.transitions.create('opacity')};
       z-index: ${theme.zIndex.sidemenu};
-      list-style: none;
     `,
     subtitle: css`
       background-color: transparent;

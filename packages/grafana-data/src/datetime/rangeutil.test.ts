@@ -1,6 +1,8 @@
 import { TimeRange } from '../types/time';
-import { dateTime, rangeUtil } from './index';
+
 import { timeRangeToRelative } from './rangeutil';
+
+import { dateTime, rangeUtil } from './index';
 
 describe('Range Utils', () => {
   describe('relative time', () => {

@@ -12,7 +12,7 @@
   }
 
   &-menus {
-    font-size: 12px;
+    //font-size: 12px;
     overflow: hidden;
     background: $page-bg;
     border: $panel-border;
@@ -92,7 +92,7 @@
       position: relative;
 
       &:hover {
-        background: $typeahead-selected-bg;
+        background: $colors-action-hover;
       }
 
       &-disabled {
@@ -113,12 +113,11 @@
       }
 
       &-active {
-        color: $typeahead-selected-color;
-        background: $typeahead-selected-bg;
+        color: $text-color-strong;
+        background: $colors-action-selected;
 
         &:hover {
-          color: $typeahead-selected-color;
-          background: $typeahead-selected-bg;
+          background: $colors-action-hover;
         }
       }
 

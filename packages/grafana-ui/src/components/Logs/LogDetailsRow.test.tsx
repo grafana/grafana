@@ -1,5 +1,6 @@
-import React, { ComponentProps } from 'react';
 import { screen, render, fireEvent } from '@testing-library/react';
+import React, { ComponentProps } from 'react';
+
 import { LogDetailsRow } from './LogDetailsRow';
 
 type Props = ComponentProps<typeof LogDetailsRow>;
@@ -20,7 +21,13 @@ const setup = (propOverrides?: Partial<Props>) => {
 
   Object.assign(props, propOverrides);
 
-  return render(<LogDetailsRow {...props} />);
+  return render(
+    <table>
+      <tbody>
+        <LogDetailsRow {...props} />
+      </tbody>
+    </table>
+  );
 };
 
 describe('LogDetailsRow', () => {

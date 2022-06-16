@@ -1,17 +1,21 @@
 import React, { useEffect, useMemo } from 'react';
-import { toOption } from '@grafana/data';
-import { EditorField, EditorFieldGroup } from '@grafana/experimental';
-import { Select, Switch } from '@grafana/ui';
+
+import { SelectableValue, toOption } from '@grafana/data';
+import { EditorField, EditorFieldGroup, EditorSwitch } from '@grafana/experimental';
+import { Select } from '@grafana/ui';
+
 import { STATISTICS } from '../../cloudwatch-sql/language';
 import { CloudWatchDatasource } from '../../datasource';
 import { useDimensionKeys, useMetrics, useNamespaces } from '../../hooks';
 import { CloudWatchMetricsQuery } from '../../types';
 import { appendTemplateVariables } from '../../utils/utils';
+
 import {
   getMetricNameFromExpression,
   getNamespaceFromExpression,
   getSchemaLabelKeys as getSchemaLabels,
   isUsingWithSchema,
+  removeMetricName,
   setAggregation,
   setMetricName,
   setNamespace,
@@ -52,22 +56,37 @@ const SQLBuilderSelectRow: React.FC<SQLBuilderSelectRowProps> = ({ datasource, q
     [unusedDimensionKeys, schemaLabels]
   );
 
+  const onNamespaceChange = async (query: CloudWatchMetricsQuery) => {
+    const validatedQuery = await validateMetricName(query);
+    onQueryChange(validatedQuery);
+  };
+
+  const validateMetricName = async (query: CloudWatchMetricsQuery) => {
+    let { region, sql } = query;
+    await datasource.getMetrics(query.namespace, region).then((result: Array<SelectableValue<string>>) => {
+      if (!result.some((metric) => metric.value === metricName)) {
+        sql = removeMetricName(query).sql;
+      }
+    });
+    return { ...query, sql };
+  };
+
   return (
     <>
       <EditorFieldGroup>
         <EditorField label="Namespace" width={16}>
           <Select
+            aria-label="Namespace"
             value={namespace ? toOption(namespace) : null}
             inputId={`${query.refId}-cloudwatch-sql-namespace`}
             options={namespaceOptions}
             allowCustomValue
-            onChange={({ value }) => value && onQueryChange(setNamespace(query, value))}
-            menuShouldPortal
+            onChange={({ value }) => value && onNamespaceChange(setNamespace(query, value))}
           />
         </EditorField>
 
         <EditorField label="With schema">
-          <Switch
+          <EditorSwitch
             id={`${query.refId}-cloudwatch-sql-withSchema`}
             value={withSchemaEnabled}
             onChange={(ev) =>
@@ -77,17 +96,15 @@ const SQLBuilderSelectRow: React.FC<SQLBuilderSelectRowProps> = ({ datasource, q
         </EditorField>
 
         {withSchemaEnabled && (
-          <EditorField label="Schema labels">
+          <EditorField label="Schema labels" disabled={!namespace}>
             <Select
               id={`${query.refId}-cloudwatch-sql-schema-label-keys`}
               width="auto"
               isMulti={true}
-              disabled={!namespace}
               value={schemaLabels ? schemaLabels.map(toOption) : null}
               options={dimensionKeys}
               allowCustomValue
               onChange={(item) => item && onQueryChange(setSchemaLabels(query, item))}
-              menuShouldPortal
             />
           </EditorField>
         )}
@@ -101,7 +118,6 @@ const SQLBuilderSelectRow: React.FC<SQLBuilderSelectRowProps> = ({ datasource, q
             options={metricOptions}
             allowCustomValue
             onChange={({ value }) => value && onQueryChange(setMetricName(query, value))}
-            menuShouldPortal
           />
         </EditorField>
 
@@ -111,7 +127,6 @@ const SQLBuilderSelectRow: React.FC<SQLBuilderSelectRowProps> = ({ datasource, q
             value={aggregation ? toOption(aggregation) : null}
             options={appendTemplateVariables(datasource, AGGREGATIONS)}
             onChange={({ value }) => value && onQueryChange(setAggregation(query, value))}
-            menuShouldPortal
           />
         </EditorField>
       </EditorFieldGroup>

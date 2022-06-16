@@ -1,0 +1,16 @@
+{
+  "status": "success",
+  "data": {
+    "resultType": "matrix",
+    "result": [
+      {
+        "metric": {},
+        "values": [
+          [1643014450.417, "NaN"],
+          [1643014750.517, "nan"],
+          [1643014450.617, "nAn"]
+        ]
+      }
+    ]
+  }
+}

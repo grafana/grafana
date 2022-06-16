@@ -1,8 +1,10 @@
-+++
-title = "About expressions"
-weight = 10
-aliases = ["/docs/sources/panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions/"]
-+++
+---
+aliases:
+  - /docs/grafana/latest/panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions/
+  - /docs/sources/panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions/
+title: About expressions
+weight: 10
+---
 
 # About expressions
 
@@ -12,17 +14,15 @@ Server-side expressions allow you to manipulate data returned from queries with 
 
 ## Using expressions
 
-Expressions are primarily used by the new [Grafana 8 alerts]({{< relref "../../../alerting/unified-alerting/_index.md" >}}). The processing is done server-side, so expressions can operate without a browser session. However, expressions can also be used with backend data sources and visualization.
+Expressions are primarily used by [Grafana Alerting]({{< relref "../../../alerting/" >}}). The processing is done server-side, so expressions can operate without a browser session. However, expressions can also be used with backend data sources and visualization.
 
 > **Note:** Expressions do not work with legacy dashboard alerts.
-
-> **Note:** Expressions do not work with dashboard variables.
 
 Expressions are meant to augment data sources by enabling queries from different data sources to be combined or by providing operations unavailable in a data source.
 
 > **Note:** When possible, you should do data processing inside the data source. Copying data from storage to the Grafana server for processing is inefficient, so expressions are targeted at lightweight data processing.
 
-Expressions work with data source queries that return time series or number data. They also operate on [multiple-dimensional data]({{< relref "../../../basics/timeseries-dimensions.md" >}}). For example, a query that returns multiple series, where each series is identified by labels or tags.
+Expressions work with data source queries that return time series or number data. They also operate on [multiple-dimensional data]({{< relref "../../../basics/timeseries-dimensions/" >}}). For example, a query that returns multiple series, where each series is identified by labels or tags.
 
 An individual expression takes one or more queries or other expressions as input and adds data to the result. Each individual expression or query is represented by a variable that is a named identifier known as its RefID (e.g., the default letter `A` or `B`).
 
@@ -35,7 +35,7 @@ Expressions work with two types of data.
 - A collection of time series.
 - A collection of numbers, where each number is an item.
 
-Each collection is returned from a single data source query or expression and represented by the RefID. Each collection is a set, where each item in the set is uniquely identified by its dimensions which are stored as [labels]({{< relref "../../../basics/timeseries-dimensions.md#labels" >}}) or key-value pairs.
+Each collection is returned from a single data source query or expression and represented by the RefID. Each collection is a set, where each item in the set is uniquely identified by its dimensions which are stored as [labels]({{< relref "../../../basics/timeseries-dimensions/#labels" >}}) or key-value pairs.
 
 ## Data source queries
 
@@ -128,6 +128,18 @@ Log returns the natural logarithm of of its argument which can be a number or a 
 
 The inf, infn, nan, and null functions all return a single value of the name. They primarily exist for testing. Example: `null()`.
 
+##### round
+
+Round returns a rounded integer value. For example, `round(3.123)` or `round($A)`. (This function should probably take an argument so it can add precision to the rounded value).
+
+##### ceil
+
+Ceil rounds the number up to the nearest integer value. For example, `ceil(3.123)` returns 4.
+
+##### floor
+
+Floor rounds the number down to the nearest integer value. For example, `floor(3.123)` returns 3.
+
 ### Reduce
 
 Reduce takes one or more time series returned from a query or an expression and turns each series into a single number. The labels of the time series are kept as labels on each outputted reduced number.
@@ -136,10 +148,9 @@ Reduce takes one or more time series returned from a query or an expression and 
 
 - **Function -** The reduction function to use
 - **Input -** The variable (refID (such as `A`)) to resample
+- **Mode -** Allows control behavior of reduction function when a series contains non-numerical values (null, NaN, +\-Inf)
 
 #### Reduction Functions
-
-> **Note:** In the future we plan to add options to control empty, NaN, and null behavior for reduction functions.
 
 ##### Count
 
@@ -147,15 +158,33 @@ Count returns the number of points in each series.
 
 ##### Mean
 
-Mean returns the total of all values in each series divided by the number of points in that series. If any values in the series are null or nan, or if the series is empty, NaN is returned.
+Mean returns the total of all values in each series divided by the number of points in that series. In `strict` mode if any values in the series are null or nan, or if the series is empty, NaN is returned.
 
 ##### Min and Max
 
-Min and Max return the smallest or largest value in the series respectively. If any values in the series are null or nan, or if the series is empty, NaN is returned.
+Min and Max return the smallest or largest value in the series respectively. In `strict` mode if any values in the series are null or nan, or if the series is empty, NaN is returned.
 
 ##### Sum
 
-Sum returns the total of all values in the series. If series is of zero length, the sum will be 0. If there are any NaN or Null values in the series, NaN is returned.
+Sum returns the total of all values in the series. If series is of zero length, the sum will be 0. In `strict` mode if there are any NaN or Null values in the series, NaN is returned.
+
+#### Last
+
+Last returns the last number in the series. If the series has no values then returns NaN.
+
+#### Reduction Modes
+
+##### Strict
+
+In Strict mode the input series is processed as is. If any values in the series are non-numeric (null, NaN or +\-Inf), NaN is returned.
+
+##### Drop Non-Numeric
+
+In this mode all non-numeric values (null, NaN or +\-Inf) in the input series are filtered out before executing the reduction function.
+
+##### Replace Non-Numeric
+
+In this mode all non-numeric values are replaced by a pre-defined value.
 
 ### Resample
 

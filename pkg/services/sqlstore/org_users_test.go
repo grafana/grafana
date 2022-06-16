@@ -11,7 +11,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 type getOrgUsersTestCase struct {
@@ -61,8 +60,11 @@ func TestSQLStore_GetOrgUsers(t *testing.T) {
 		},
 	}
 
-	store := InitTestDB(t)
-	store.Cfg.IsFeatureToggleEnabled = featuremgmt.WithToggles("accesscontrol").IsEnabled
+	store := InitTestDB(t, InitTestDBOpt{})
+	store.Cfg.IsEnterprise = true
+	defer func() {
+		store.Cfg.IsEnterprise = false
+	}()
 	seedOrgUsers(t, store, 10)
 
 	for _, tt := range tests {
@@ -127,8 +129,7 @@ func TestSQLStore_SearchOrgUsers(t *testing.T) {
 		},
 	}
 
-	store := InitTestDB(t)
-	store.Cfg.IsFeatureToggleEnabled = featuremgmt.WithToggles("accesscontrol").IsEnabled
+	store := InitTestDB(t, InitTestDBOpt{})
 	seedOrgUsers(t, store, 10)
 
 	for _, tt := range tests {
@@ -144,6 +145,53 @@ func TestSQLStore_SearchOrgUsers(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestSQLStore_RemoveOrgUser(t *testing.T) {
+	store := InitTestDB(t)
+
+	// create org and admin
+	_, err := store.CreateUser(context.Background(), models.CreateUserCommand{
+		Login: "admin",
+		OrgId: 1,
+	})
+	require.NoError(t, err)
+
+	// create a user with no org
+	_, err = store.CreateUser(context.Background(), models.CreateUserCommand{
+		Login:        "user",
+		OrgId:        1,
+		SkipOrgSetup: true,
+	})
+	require.NoError(t, err)
+
+	// assign the user to the org
+	err = store.AddOrgUser(context.Background(), &models.AddOrgUserCommand{
+		Role:   "Viewer",
+		OrgId:  1,
+		UserId: 2,
+	})
+	require.NoError(t, err)
+
+	// assert the org has been assigned
+	user := &models.GetUserByIdQuery{Id: 2}
+	err = store.GetUserById(context.Background(), user)
+	require.NoError(t, err)
+	require.Equal(t, user.Result.OrgId, int64(1))
+
+	// remove the user org
+	err = store.RemoveOrgUser(context.Background(), &models.RemoveOrgUserCommand{
+		UserId:                   2,
+		OrgId:                    1,
+		ShouldDeleteOrphanedUser: false,
+	})
+	require.NoError(t, err)
+
+	// assert the org has been removed
+	user = &models.GetUserByIdQuery{Id: 2}
+	err = store.GetUserById(context.Background(), user)
+	require.NoError(t, err)
+	require.Equal(t, user.Result.OrgId, int64(0))
 }
 
 func seedOrgUsers(t *testing.T, store *SQLStore, numUsers int) {

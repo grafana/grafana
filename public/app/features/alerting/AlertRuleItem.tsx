@@ -1,7 +1,9 @@
 import React, { useCallback } from 'react';
 // @ts-ignore
 import Highlighter from 'react-highlight-words';
+
 import { Icon, IconName, Button, LinkButton, Card } from '@grafana/ui';
+
 import { AlertRule } from '../../types';
 
 export interface Props {
@@ -25,7 +27,7 @@ const AlertRuleItem = ({ rule, search, onTogglePause }: Props) => {
   );
 
   return (
-    <Card href={ruleUrl}>
+    <Card>
       <Card.Heading>{renderText(rule.name)}</Card.Heading>
       <Card.Figure>
         <Icon size="xl" name={rule.stateIcon as IconName} className={`alert-rule-item__icon ${rule.stateClass}`} />

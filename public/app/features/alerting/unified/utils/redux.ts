@@ -1,8 +1,7 @@
-import { isArray } from 'angular';
 import { AsyncThunk, createSlice, Draft, isAsyncThunkAction, PayloadAction, SerializedError } from '@reduxjs/toolkit';
-import { FetchError } from '@grafana/runtime';
-import { AppEvents } from '@grafana/data';
 
+import { AppEvents } from '@grafana/data';
+import { FetchError, isFetchError } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
 
 export interface AsyncRequestState<T> {
@@ -75,7 +74,7 @@ export function createAsyncSlice<T, ThunkArg = void, ThunkApiConfig = {}>(
     reducers: {},
     extraReducers: (builder) =>
       builder.addDefaultCase((state, action) =>
-        requestStateReducer(asyncThunk, state, (action as unknown) as AsyncRequestAction<T>)
+        requestStateReducer(asyncThunk, state, action as unknown as AsyncRequestAction<T>)
       ),
   });
 }
@@ -97,7 +96,7 @@ export function createAsyncMapSlice<T, ThunkArg = void, ThunkApiConfig = {}>(
     extraReducers: (builder) =>
       builder.addDefaultCase((state, action) => {
         if (isAsyncThunkAction(asyncThunk)(action)) {
-          const asyncAction = (action as unknown) as AsyncRequestAction<T>;
+          const asyncAction = action as unknown as AsyncRequestAction<T>;
           const entityId = getEntityId(asyncAction.meta.arg);
           return {
             ...state,
@@ -138,10 +137,6 @@ export function withAppEvents<T>(
     });
 }
 
-export function isFetchError(e: unknown): e is FetchError {
-  return typeof e === 'object' && e !== null && 'status' in e && 'data' in e;
-}
-
 export function messageFromError(e: Error | FetchError | SerializedError): string {
   if (isFetchError(e)) {
     if (e.data?.message) {
@@ -150,7 +145,7 @@ export function messageFromError(e: Error | FetchError | SerializedError): strin
         msg += `; ${e.data.error}`;
       }
       return msg;
-    } else if (isArray(e.data) && e.data.length && e.data[0]?.message) {
+    } else if (Array.isArray(e.data) && e.data.length && e.data[0]?.message) {
       return e.data
         .map((d) => d?.message)
         .filter((m) => !!m)
@@ -160,4 +155,20 @@ export function messageFromError(e: Error | FetchError | SerializedError): strin
     }
   }
   return (e as Error)?.message || String(e);
+}
+
+export function isAsyncRequestMapSliceFulfilled<T>(slice: AsyncRequestMapSlice<T>): boolean {
+  return Object.values(slice).every(isAsyncRequestStateFulfilled);
+}
+
+export function isAsyncRequestStateFulfilled<T>(state: AsyncRequestState<T>): boolean {
+  return state.dispatched && !state.loading && !state.error;
+}
+
+export function isAsyncRequestMapSlicePending<T>(slice: AsyncRequestMapSlice<T>): boolean {
+  return Object.values(slice).some(isAsyncRequestStatePending);
+}
+
+export function isAsyncRequestStatePending<T>(state: AsyncRequestState<T>): boolean {
+  return state.dispatched && state.loading;
 }

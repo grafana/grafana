@@ -3,9 +3,8 @@ package api
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestHTTPServer_MetricsBasicAuth(t *testing.T) {

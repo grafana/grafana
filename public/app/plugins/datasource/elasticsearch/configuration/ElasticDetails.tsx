@@ -1,8 +1,11 @@
 import React from 'react';
-import { FieldSet, InlineField, Input, Select, InlineSwitch } from '@grafana/ui';
-import { ElasticsearchOptions, Interval } from '../types';
-import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { gte, lt, valid } from 'semver';
+
+import { DataSourceSettings, SelectableValue } from '@grafana/data';
+import { FieldSet, InlineField, Input, Select, InlineSwitch } from '@grafana/ui';
+
+import { ElasticsearchOptions, Interval } from '../types';
+
 import { isTruthy } from './utils';
 
 const indexPatternTypes: Array<SelectableValue<'none' | Interval>> = [
@@ -15,12 +18,6 @@ const indexPatternTypes: Array<SelectableValue<'none' | Interval>> = [
 ];
 
 const esVersions: SelectableValue[] = [
-  { label: '2.x', value: '2.0.0' },
-  { label: '5.x', value: '5.0.0' },
-  { label: '5.6+', value: '5.6.0' },
-  { label: '6.0+', value: '6.0.0' },
-  { label: '7.0+', value: '7.0.0' },
-  { label: '7.7+', value: '7.7.0' },
   { label: '7.10+', value: '7.10.0' },
   {
     label: '8.0+',
@@ -65,7 +62,6 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
             options={indexPatternTypes}
             onChange={intervalHandler(value, onChange)}
             width={24}
-            menuShouldPortal
           />
         </InlineField>
 
@@ -100,7 +96,6 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
             }}
             value={currentVersion || customOption}
             width={24}
-            menuShouldPortal
           />
         </InlineField>
 
@@ -159,80 +154,75 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
 };
 
 // TODO: Use change handlers from @grafana/data
-const changeHandler = (
-  key: keyof DataSourceSettings<ElasticsearchOptions>,
-  value: Props['value'],
-  onChange: Props['onChange']
-) => (event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>) => {
-  onChange({
-    ...value,
-    [key]: event.currentTarget.value,
-  });
-};
+const changeHandler =
+  (key: keyof DataSourceSettings<ElasticsearchOptions>, value: Props['value'], onChange: Props['onChange']) =>
+  (event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>) => {
+    onChange({
+      ...value,
+      [key]: event.currentTarget.value,
+    });
+  };
 
 // TODO: Use change handlers from @grafana/data
-const jsonDataChangeHandler = (key: keyof ElasticsearchOptions, value: Props['value'], onChange: Props['onChange']) => (
-  event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>
-) => {
-  onChange({
-    ...value,
-    jsonData: {
-      ...value.jsonData,
-      [key]: event.currentTarget.value,
-    },
-  });
-};
+const jsonDataChangeHandler =
+  (key: keyof ElasticsearchOptions, value: Props['value'], onChange: Props['onChange']) =>
+  (event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>) => {
+    onChange({
+      ...value,
+      jsonData: {
+        ...value.jsonData,
+        [key]: event.currentTarget.value,
+      },
+    });
+  };
 
-const jsonDataSwitchChangeHandler = (
-  key: keyof ElasticsearchOptions,
-  value: Props['value'],
-  onChange: Props['onChange']
-) => (event: React.SyntheticEvent<HTMLInputElement>) => {
-  onChange({
-    ...value,
-    jsonData: {
-      ...value.jsonData,
-      [key]: event.currentTarget.checked,
-    },
-  });
-};
+const jsonDataSwitchChangeHandler =
+  (key: keyof ElasticsearchOptions, value: Props['value'], onChange: Props['onChange']) =>
+  (event: React.SyntheticEvent<HTMLInputElement>) => {
+    onChange({
+      ...value,
+      jsonData: {
+        ...value.jsonData,
+        [key]: event.currentTarget.checked,
+      },
+    });
+  };
 
-const intervalHandler = (value: Props['value'], onChange: Props['onChange']) => (
-  option: SelectableValue<Interval | 'none'>
-) => {
-  const { database } = value;
-  // If option value is undefined it will send its label instead so we have to convert made up value to undefined here.
-  const newInterval = option.value === 'none' ? undefined : option.value;
+const intervalHandler =
+  (value: Props['value'], onChange: Props['onChange']) => (option: SelectableValue<Interval | 'none'>) => {
+    const { database } = value;
+    // If option value is undefined it will send its label instead so we have to convert made up value to undefined here.
+    const newInterval = option.value === 'none' ? undefined : option.value;
 
-  if (!database || database.length === 0 || database.startsWith('[logstash-]')) {
-    let newDatabase = '';
+    if (!database || database.length === 0 || database.startsWith('[logstash-]')) {
+      let newDatabase = '';
 
-    if (newInterval !== undefined) {
-      const pattern = indexPatternTypes.find((pattern) => pattern.value === newInterval);
+      if (newInterval !== undefined) {
+        const pattern = indexPatternTypes.find((pattern) => pattern.value === newInterval);
 
-      if (pattern) {
-        newDatabase = pattern.example ?? '';
+        if (pattern) {
+          newDatabase = pattern.example ?? '';
+        }
       }
-    }
 
-    onChange({
-      ...value,
-      database: newDatabase,
-      jsonData: {
-        ...value.jsonData,
-        interval: newInterval,
-      },
-    });
-  } else {
-    onChange({
-      ...value,
-      jsonData: {
-        ...value.jsonData,
-        interval: newInterval,
-      },
-    });
-  }
-};
+      onChange({
+        ...value,
+        database: newDatabase,
+        jsonData: {
+          ...value.jsonData,
+          interval: newInterval,
+        },
+      });
+    } else {
+      onChange({
+        ...value,
+        jsonData: {
+          ...value.jsonData,
+          interval: newInterval,
+        },
+      });
+    }
+  };
 
 function getMaxConcurrenShardRequestOrDefault(maxConcurrentShardRequests: number | undefined, version: string): number {
   if (maxConcurrentShardRequests === 5 && lt(version, '7.0.0')) {

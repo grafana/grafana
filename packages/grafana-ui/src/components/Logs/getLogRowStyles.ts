@@ -1,5 +1,7 @@
 import { css } from '@emotion/css';
+
 import { GrafanaTheme2, LogLevel } from '@grafana/data';
+
 import { styleMixins, stylesFactory } from '../../themes';
 
 export const getLogRowStyles = stylesFactory((theme: GrafanaTheme2, logLevel?: LogLevel) => {
@@ -35,13 +37,8 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme2, logLevel?: L
       label: logs-row__match-highlight;
       background: inherit;
       padding: inherit;
-      color: ${theme.colors.warning.main};
-      background-color: rgba(${theme.colors.warning.main}, 0.1);
-    `,
-    logsRowMatchHighLightPreview: css`
-      label: logs-row__match-highlight--preview;
-      background-color: rgba(${theme.colors.warning.main}, 0.2);
-      border-bottom-style: dotted;
+      color: ${theme.components.textHighlight.text}
+      background-color: ${theme.components.textHighlight};
     `,
     logsRowsTable: css`
       label: logs-rows;

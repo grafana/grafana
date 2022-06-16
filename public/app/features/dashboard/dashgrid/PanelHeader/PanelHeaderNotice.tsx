@@ -1,4 +1,5 @@
 import React, { FC } from 'react';
+
 import { QueryResultMetaNotice } from '@grafana/data';
 import { Icon, Tooltip } from '@grafana/ui';
 

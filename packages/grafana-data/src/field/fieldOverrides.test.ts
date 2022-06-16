@@ -1,13 +1,6 @@
-import {
-  applyFieldOverrides,
-  applyRawFieldOverrides,
-  FieldOverrideEnv,
-  findNumericFieldMinMax,
-  getLinksSupplier,
-  setDynamicConfigValue,
-  setFieldConfigDefaults,
-} from './fieldOverrides';
 import { ArrayDataFrame, MutableDataFrame, toDataFrame } from '../dataframe';
+import { createTheme } from '../themes';
+import { FieldMatcherID } from '../transformations';
 import {
   DataFrame,
   Field,
@@ -22,12 +15,20 @@ import {
 } from '../types';
 import { locationUtil, Registry } from '../utils';
 import { mockStandardProperties } from '../utils/tests/mockStandardProperties';
-import { FieldMatcherID } from '../transformations';
-import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
-import { getFieldDisplayName } from './fieldState';
 import { ArrayVector } from '../vector';
+
+import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 import { getDisplayProcessor } from './displayProcessor';
-import { createTheme } from '../themes';
+import {
+  applyFieldOverrides,
+  applyRawFieldOverrides,
+  FieldOverrideEnv,
+  findNumericFieldMinMax,
+  getLinksSupplier,
+  setDynamicConfigValue,
+  setFieldConfigDefaults,
+} from './fieldOverrides';
+import { getFieldDisplayName } from './fieldState';
 
 const property1: any = {
   id: 'custom.property1', // Match field properties
@@ -257,7 +258,7 @@ describe('applyFieldOverrides', () => {
     const data = applyFieldOverrides({
       data: [f0], // the frame
       fieldConfig: src as FieldConfigSource, // defaults + overrides
-      replaceVariables: (undefined as any) as InterpolateFunction,
+      replaceVariables: undefined as any as InterpolateFunction,
       theme: createTheme(),
       fieldConfigRegistry: customFieldRegistry,
     })[0];
@@ -284,7 +285,7 @@ describe('applyFieldOverrides', () => {
     const data = applyFieldOverrides({
       data: [f0], // the frame
       fieldConfig: src as FieldConfigSource, // defaults + overrides
-      replaceVariables: (undefined as any) as InterpolateFunction,
+      replaceVariables: undefined as any as InterpolateFunction,
       theme: createTheme(),
     })[0];
     const valueColumn = data.fields[1];
@@ -321,7 +322,7 @@ describe('applyFieldOverrides', () => {
     const data = applyFieldOverrides({
       data: [f0], // the frame
       fieldConfig: src as FieldConfigSource, // defaults + overrides
-      replaceVariables: (undefined as any) as InterpolateFunction,
+      replaceVariables: undefined as any as InterpolateFunction,
       theme: createTheme(),
     })[0];
 
@@ -644,7 +645,7 @@ describe('getLinksSupplier', () => {
     expect(links[0]).toEqual(
       expect.objectContaining({
         title: 'testDS',
-        href: `/explore?left=${encodeURIComponent('{"datasource":"testDS","queries":["12345"]}')}`,
+        href: `/explore?left=${encodeURIComponent('{"datasource":"testDS","queries":["12345"],"panelsState":{}}')}`,
         onClick: undefined,
       })
     );
@@ -659,7 +660,7 @@ describe('applyRawFieldOverrides', () => {
       steps: [
         {
           color: 'green',
-          value: (null as unknown) as number,
+          value: null as unknown as number,
         },
         {
           color: 'red',

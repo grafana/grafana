@@ -12,16 +12,17 @@ var logger = log.New("accesscontrol.evaluator")
 
 type Evaluator interface {
 	// Evaluate permissions that are grouped by action
-	Evaluate(permissions map[string][]string) (bool, error)
+	Evaluate(permissions map[string][]string) bool
 	// MutateScopes executes a sequence of ScopeModifier functions on all embedded scopes of an evaluator and returns a new Evaluator
-	MutateScopes(context.Context, ...ScopeMutator) (Evaluator, error)
+	MutateScopes(ctx context.Context, mutate ScopeAttributeMutator) (Evaluator, error)
 	// String returns a string representation of permission required by the evaluator
-	String() string
+	fmt.Stringer
+	fmt.GoStringer
 }
 
 var _ Evaluator = new(permissionEvaluator)
 
-// EvalPermission returns an evaluator that will require all scopes in combination with action to match
+// EvalPermission returns an evaluator that will require at least one of passed scopes to match
 func EvalPermission(action string, scopes ...string) Evaluator {
 	return permissionEvaluator{Action: action, Scopes: scopes}
 }
@@ -31,40 +32,30 @@ type permissionEvaluator struct {
 	Scopes []string
 }
 
-func (p permissionEvaluator) Evaluate(permissions map[string][]string) (bool, error) {
+func (p permissionEvaluator) Evaluate(permissions map[string][]string) bool {
 	userScopes, ok := permissions[p.Action]
 	if !ok {
-		return false, nil
+		return false
 	}
 
 	if len(p.Scopes) == 0 {
-		return true, nil
+		return true
 	}
 
 	for _, target := range p.Scopes {
-		var err error
-		var matches bool
-
 		for _, scope := range userScopes {
-			matches, err = match(scope, target)
-			if err != nil {
-				return false, err
+			if match(scope, target) {
+				return true
 			}
-			if matches {
-				break
-			}
-		}
-		if !matches {
-			return false, nil
 		}
 	}
 
-	return true, nil
+	return false
 }
 
-func match(scope, target string) (bool, error) {
+func match(scope, target string) bool {
 	if scope == "" {
-		return false, nil
+		return false
 	}
 
 	if !ValidateScope(scope) {
@@ -73,7 +64,7 @@ func match(scope, target string) (bool, error) {
 			"scope", scope,
 			"reason", "scopes should not contain meta-characters like * or ?, except in the last position",
 		)
-		return false, nil
+		return false
 	}
 
 	prefix, last := scope[:len(scope)-1], scope[len(scope)-1]
@@ -81,34 +72,34 @@ func match(scope, target string) (bool, error) {
 	if last == '*' {
 		if strings.HasPrefix(target, prefix) {
 			logger.Debug("matched scope", "user scope", scope, "target scope", target)
-			return true, nil
+			return true
 		}
 	}
 
-	return scope == target, nil
+	return scope == target
 }
 
-func (p permissionEvaluator) MutateScopes(ctx context.Context, modifiers ...ScopeMutator) (Evaluator, error) {
-	var err error
+func (p permissionEvaluator) MutateScopes(ctx context.Context, mutate ScopeAttributeMutator) (Evaluator, error) {
 	if p.Scopes == nil {
 		return EvalPermission(p.Action), nil
 	}
 
 	scopes := make([]string, 0, len(p.Scopes))
 	for _, scope := range p.Scopes {
-		modified := scope
-		for _, modifier := range modifiers {
-			modified, err = modifier(ctx, modified)
-			if err != nil {
-				return nil, err
-			}
+		mutated, err := mutate(ctx, scope)
+		if err != nil {
+			return nil, err
 		}
-		scopes = append(scopes, modified)
+		scopes = append(scopes, mutated...)
 	}
 	return EvalPermission(p.Action, scopes...), nil
 }
 
 func (p permissionEvaluator) String() string {
+	return p.Action
+}
+
+func (p permissionEvaluator) GoString() string {
 	return fmt.Sprintf("action:%s scopes:%s", p.Action, strings.Join(p.Scopes, ", "))
 }
 
@@ -123,19 +114,19 @@ type allEvaluator struct {
 	allOf []Evaluator
 }
 
-func (a allEvaluator) Evaluate(permissions map[string][]string) (bool, error) {
+func (a allEvaluator) Evaluate(permissions map[string][]string) bool {
 	for _, e := range a.allOf {
-		if ok, err := e.Evaluate(permissions); !ok || err != nil {
-			return false, err
+		if !e.Evaluate(permissions) {
+			return false
 		}
 	}
-	return true, nil
+	return true
 }
 
-func (a allEvaluator) MutateScopes(ctx context.Context, modifiers ...ScopeMutator) (Evaluator, error) {
+func (a allEvaluator) MutateScopes(ctx context.Context, mutate ScopeAttributeMutator) (Evaluator, error) {
 	var modified []Evaluator
 	for _, e := range a.allOf {
-		i, err := e.MutateScopes(ctx, modifiers...)
+		i, err := e.MutateScopes(ctx, mutate)
 		if err != nil {
 			return nil, err
 		}
@@ -149,6 +140,16 @@ func (a allEvaluator) String() string {
 	for _, e := range a.allOf {
 		permissions = append(permissions, e.String())
 	}
+
+	return fmt.Sprintf("all of %s", strings.Join(permissions, ", "))
+}
+
+func (a allEvaluator) GoString() string {
+	permissions := make([]string, 0, len(a.allOf))
+	for _, e := range a.allOf {
+		permissions = append(permissions, e.GoString())
+	}
+
 	return fmt.Sprintf("all(%s)", strings.Join(permissions, " "))
 }
 
@@ -163,23 +164,19 @@ type anyEvaluator struct {
 	anyOf []Evaluator
 }
 
-func (a anyEvaluator) Evaluate(permissions map[string][]string) (bool, error) {
+func (a anyEvaluator) Evaluate(permissions map[string][]string) bool {
 	for _, e := range a.anyOf {
-		ok, err := e.Evaluate(permissions)
-		if err != nil {
-			return false, err
-		}
-		if ok {
-			return true, nil
+		if e.Evaluate(permissions) {
+			return true
 		}
 	}
-	return false, nil
+	return false
 }
 
-func (a anyEvaluator) MutateScopes(ctx context.Context, modifiers ...ScopeMutator) (Evaluator, error) {
+func (a anyEvaluator) MutateScopes(ctx context.Context, mutate ScopeAttributeMutator) (Evaluator, error) {
 	var modified []Evaluator
 	for _, e := range a.anyOf {
-		i, err := e.MutateScopes(ctx, modifiers...)
+		i, err := e.MutateScopes(ctx, mutate)
 		if err != nil {
 			return nil, err
 		}
@@ -193,5 +190,15 @@ func (a anyEvaluator) String() string {
 	for _, e := range a.anyOf {
 		permissions = append(permissions, e.String())
 	}
+
+	return fmt.Sprintf("any of %s", strings.Join(permissions, ", "))
+}
+
+func (a anyEvaluator) GoString() string {
+	permissions := make([]string, 0, len(a.anyOf))
+	for _, e := range a.anyOf {
+		permissions = append(permissions, e.String())
+	}
+
 	return fmt.Sprintf("any(%s)", strings.Join(permissions, " "))
 }

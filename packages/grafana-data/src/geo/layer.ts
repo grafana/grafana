@@ -1,10 +1,11 @@
-import { RegistryItemWithOptions } from '../utils/Registry';
-import { PanelData } from '../types';
-import { GrafanaTheme2 } from '../themes';
-import { PanelOptionsEditorBuilder } from '../utils';
-import { ReactNode } from 'react';
 import { PluggableMap } from 'ol';
 import BaseLayer from 'ol/layer/Base';
+import { ReactNode } from 'react';
+
+import { GrafanaTheme2 } from '../themes';
+import { MatcherConfig, PanelData } from '../types';
+import { PanelOptionsEditorBuilder } from '../utils';
+import { RegistryItemWithOptions } from '../utils/Registry';
 
 /**
  * @alpha
@@ -57,12 +58,15 @@ export interface MapLayerOptions<TConfig = any> {
   // Common method to define geometry fields
   location?: FrameGeometrySource;
 
+  // Defines which data query refId is associated with the layer
+  filterData?: MatcherConfig;
+
   // Common properties:
   // https://openlayers.org/en/latest/apidoc/module-ol_layer_Base-BaseLayer.html
   // Layer opacity (0-1)
   opacity?: number;
 
-  //Check tooltip
+  // Check tooltip (defaults to true)
   tooltip?: boolean;
 }
 
@@ -71,6 +75,9 @@ export interface MapLayerOptions<TConfig = any> {
  */
 export interface MapLayerHandler<TConfig = any> {
   init: () => BaseLayer;
+  /**
+   * The update function should only be implemented if the layer type makes use of query data
+   */
   update?: (data: PanelData) => void;
   legend?: ReactNode;
 
@@ -97,9 +104,9 @@ export interface MapLayerRegistryItem<TConfig = MapLayerOptions> extends Registr
   showLocation?: boolean;
 
   /**
-   * Show transparency controls in UI (for non-basemaps)
+   * Hide transparency controls in UI
    */
-  showOpacity?: boolean;
+  hideOpacity?: boolean;
 
   /**
    * Function that configures transformation and returns a transformer

@@ -1,6 +1,7 @@
-import { ArrayVector, DataFrame, Field, FieldType, getFieldTypeFromValue } from '@grafana/data';
 import GeoJSON from 'ol/format/GeoJSON';
 import { Geometry } from 'ol/geom';
+
+import { ArrayVector, DataFrame, Field, FieldType, getFieldTypeFromValue } from '@grafana/data';
 
 interface FieldInfo {
   values: any[];
@@ -11,7 +12,7 @@ interface FieldInfo {
 // http://geojson.xyz/
 
 export function frameFromGeoJSON(body: Document | Element | Object | string): DataFrame {
-  const data = new GeoJSON().readFeatures(body);
+  const data = new GeoJSON().readFeatures(body, { featureProjection: 'EPSG:3857' });
   const length = data.length;
 
   const geo: Geometry[] = new Array(length).fill(null);
@@ -47,7 +48,7 @@ export function frameFromGeoJSON(body: Document | Element | Object | string): Da
   };
   for (let i = 0; i < length; i++) {
     const feature = data[i];
-    geo[i] = feature.getGeometry();
+    geo[i] = feature.getGeometry()!;
 
     const id = feature.getId();
     if (id != null) {
@@ -58,7 +59,7 @@ export function frameFromGeoJSON(body: Document | Element | Object | string): Da
 
     for (const key of feature.getKeys()) {
       const val = feature.get(key);
-      if (key === 'geometry' && val === geo[i]) {
+      if (val === geo[i] || val == null) {
         continue;
       }
       const field = getField(key);

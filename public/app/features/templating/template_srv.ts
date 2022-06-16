@@ -1,13 +1,16 @@
 import { escape, isString, property } from 'lodash';
+
 import { deprecationWarning, ScopedVars, TimeRange } from '@grafana/data';
-import { getFilteredVariables, getVariables, getVariableWithName } from '../variables/state/selectors';
-import { variableRegex } from '../variables/utils';
-import { isAdHoc } from '../variables/guard';
-import { AdHocVariableFilter, AdHocVariableModel, VariableModel } from '../variables/types';
 import { getDataSourceSrv, setTemplateSrv, TemplateSrv as BaseTemplateSrv } from '@grafana/runtime';
-import { FormatOptions, formatRegistry, FormatRegistryID } from './formatRegistry';
+
 import { variableAdapters } from '../variables/adapters';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../variables/constants';
+import { isAdHoc } from '../variables/guard';
+import { getFilteredVariables, getVariables, getVariableWithName } from '../variables/state/selectors';
+import { AdHocVariableFilter, AdHocVariableModel, VariableModel } from '../variables/types';
+import { variableRegex } from '../variables/utils';
+
+import { FormatOptions, formatRegistry, FormatRegistryID } from './formatRegistry';
 
 interface FieldAccessorCache {
   [key: string]: (obj: any) => any;
@@ -103,7 +106,7 @@ export class TemplateSrv implements BaseTemplateSrv {
     for (const variable of this.getAdHocVariables()) {
       const variableUid = variable.datasource?.uid;
 
-      if (variableUid === ds.uid || (variable.datasource == null && ds?.isDefault)) {
+      if (variableUid === ds.uid) {
         filters = filters.concat(variable.filters);
       } else if (variableUid?.indexOf('$') === 0) {
         if (this.replace(variableUid) === datasourceName) {
@@ -189,10 +192,18 @@ export class TemplateSrv implements BaseTemplateSrv {
     return variableName;
   }
 
-  variableExists(expression: string): boolean {
-    const name = this.getVariableName(expression);
+  containsTemplate(target: string | undefined): boolean {
+    if (!target) {
+      return false;
+    }
+    const name = this.getVariableName(target);
     const variable = name && this.getVariableAtIndex(name);
     return variable !== null && variable !== undefined;
+  }
+
+  variableExists(expression: string): boolean {
+    deprecationWarning('template_srv.ts', 'variableExists', 'containsTemplate');
+    return this.containsTemplate(expression);
   }
 
   highlightVariablesAsHtml(str: string) {

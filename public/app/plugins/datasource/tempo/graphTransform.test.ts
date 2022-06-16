@@ -1,6 +1,7 @@
+import { ArrayVector, DataFrameView, dateTime, MutableDataFrame } from '@grafana/data';
+
 import { createGraphFrames, mapPromMetricsToServiceMap } from './graphTransform';
 import { bigResponse } from './testResponse';
-import { ArrayVector, DataFrameView, dateTime, MutableDataFrame } from '@grafana/data';
 
 describe('createGraphFrames', () => {
   it('transforms basic response into nodes and edges frame', async () => {
@@ -13,18 +14,18 @@ describe('createGraphFrames', () => {
     expect(view.get(0)).toMatchObject({
       id: '4322526419282105830',
       title: 'loki-all',
-      subTitle: 'store.validateQueryTimeRange',
-      mainStat: '0ms (0.02%)',
-      secondaryStat: '0ms (100%)',
+      subtitle: 'store.validateQueryTimeRange',
+      mainstat: '0ms (0.02%)',
+      secondarystat: '0ms (100%)',
       color: 0.00021968356127648162,
     });
 
     expect(view.get(29)).toMatchObject({
       id: '4450900759028499335',
       title: 'loki-all',
-      subTitle: 'HTTP GET - loki_api_v1_query_range',
-      mainStat: '18.21ms (100%)',
-      secondaryStat: '3.22ms (17.71%)',
+      subtitle: 'HTTP GET - loki_api_v1_query_range',
+      mainstat: '18.21ms (100%)',
+      secondarystat: '3.22ms (17.71%)',
       color: 0.17707117189595056,
     });
 
@@ -43,9 +44,9 @@ describe('createGraphFrames', () => {
     expect(view.get(0)).toMatchObject({
       id: '4322526419282105830',
       title: 'loki-all',
-      subTitle: 'store.validateQueryTimeRange',
-      mainStat: '14.98ms (100%)',
-      secondaryStat: '14.98ms (100%)',
+      subtitle: 'store.validateQueryTimeRange',
+      mainstat: '14.98ms (100%)',
+      secondarystat: '14.98ms (100%)',
       color: 1.000007560204647,
     });
   });
@@ -75,8 +76,8 @@ describe('mapPromMetricsToServiceMap', () => {
     expect(nodes.fields).toMatchObject([
       { name: 'id', values: new ArrayVector(['db', 'app', 'lb']) },
       { name: 'title', values: new ArrayVector(['db', 'app', 'lb']) },
-      { name: 'mainStat', values: new ArrayVector([1000, 2000, NaN]) },
-      { name: 'secondaryStat', values: new ArrayVector([0.17, 0.33, NaN]) },
+      { name: 'mainstat', values: new ArrayVector([1000, 2000, NaN]) },
+      { name: 'secondarystat', values: new ArrayVector([0.17, 0.33, NaN]) },
       { name: 'arc__success', values: new ArrayVector([0.8, 0.25, 1]) },
       { name: 'arc__failed', values: new ArrayVector([0.2, 0.75, 0]) },
     ]);
@@ -84,8 +85,33 @@ describe('mapPromMetricsToServiceMap', () => {
       { name: 'id', values: new ArrayVector(['app_db', 'lb_app']) },
       { name: 'source', values: new ArrayVector(['app', 'lb']) },
       { name: 'target', values: new ArrayVector(['db', 'app']) },
-      { name: 'mainStat', values: new ArrayVector([10, 20]) },
-      { name: 'secondaryStat', values: new ArrayVector([1000, 2000]) },
+      { name: 'mainstat', values: new ArrayVector([10, 20]) },
+      { name: 'secondarystat', values: new ArrayVector([1000, 2000]) },
+    ]);
+  });
+
+  it('handles invalid failed count', () => {
+    // If node.failed > node.total, the stat circle will render in the wrong position
+    // Fixed this by limiting the failed value to the total value
+    const range = {
+      from: dateTime('2000-01-01T00:00:00'),
+      to: dateTime('2000-01-01T00:01:00'),
+    };
+    const { nodes } = mapPromMetricsToServiceMap(
+      [{ data: [totalsPromMetric, secondsPromMetric, invalidFailedPromMetric] }],
+      {
+        ...range,
+        raw: range,
+      }
+    );
+
+    expect(nodes.fields).toMatchObject([
+      { name: 'id', values: new ArrayVector(['db', 'app', 'lb']) },
+      { name: 'title', values: new ArrayVector(['db', 'app', 'lb']) },
+      { name: 'mainstat', values: new ArrayVector([1000, 2000, NaN]) },
+      { name: 'secondarystat', values: new ArrayVector([0.17, 0.33, NaN]) },
+      { name: 'arc__success', values: new ArrayVector([0, 0, 1]) },
+      { name: 'arc__failed', values: new ArrayVector([1, 1, 0]) },
     ]);
   });
 });
@@ -150,5 +176,18 @@ const failedPromMetric = new MutableDataFrame({
     { name: 'server', values: ['db', 'app'] },
     { name: 'tempo_config', values: ['default', 'default'] },
     { name: 'Value #traces_service_graph_request_failed_total', values: [2, 15] },
+  ],
+});
+
+const invalidFailedPromMetric = new MutableDataFrame({
+  refId: 'traces_service_graph_request_failed_total',
+  fields: [
+    { name: 'Time', values: [1628169788000, 1628169788000] },
+    { name: 'client', values: ['app', 'lb'] },
+    { name: 'instance', values: ['127.0.0.1:12345', '127.0.0.1:12345'] },
+    { name: 'job', values: ['local_scrape', 'local_scrape'] },
+    { name: 'server', values: ['db', 'app'] },
+    { name: 'tempo_config', values: ['default', 'default'] },
+    { name: 'Value #traces_service_graph_request_failed_total', values: [20, 40] },
   ],
 });

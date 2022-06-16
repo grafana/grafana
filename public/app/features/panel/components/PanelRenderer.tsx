@@ -1,11 +1,13 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { useAsync } from 'react-use';
+
 import { applyFieldOverrides, FieldConfigSource, getTimeZone, PanelData, PanelPlugin } from '@grafana/data';
 import { PanelRendererProps } from '@grafana/runtime';
+import { ErrorBoundaryAlert, useTheme2 } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
-import { useAsync } from 'react-use';
+
 import { getPanelOptionsWithDefaults, OptionDefaults } from '../../dashboard/state/getPanelOptionsWithDefaults';
 import { importPanelPlugin } from '../../plugins/importPanelPlugin';
-import { ErrorBoundaryAlert, useTheme2 } from '@grafana/ui';
 
 const defaultFieldConfig = { defaults: {}, overrides: [] };
 

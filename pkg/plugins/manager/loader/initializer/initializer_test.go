@@ -35,7 +35,7 @@ func TestInitializer_Initialize(t *testing.T) {
 
 		i := &Initializer{
 			cfg: plugins.NewCfg(),
-			log: &fakeLogger{},
+			log: log.NewNopLogger(),
 			backendProvider: &fakeBackendProvider{
 				plugin: p,
 			},
@@ -65,7 +65,37 @@ func TestInitializer_Initialize(t *testing.T) {
 
 		i := &Initializer{
 			cfg: plugins.NewCfg(),
-			log: fakeLogger{},
+			log: log.NewNopLogger(),
+			backendProvider: &fakeBackendProvider{
+				plugin: p,
+			},
+		}
+
+		err := i.Initialize(context.Background(), p)
+		assert.NoError(t, err)
+
+		c, exists := p.Client()
+		assert.True(t, exists)
+		assert.NotNil(t, c)
+	})
+
+	t.Run("secretsmanager", func(t *testing.T) {
+		p := &plugins.Plugin{
+			JSONData: plugins.JSONData{
+				ID:   "test",
+				Type: plugins.SecretsManager,
+				Dependencies: plugins.Dependencies{
+					GrafanaVersion: ">=8.x",
+				},
+				Backend: true,
+			},
+			PluginDir: absCurPath,
+			Class:     plugins.External,
+		}
+
+		i := &Initializer{
+			cfg: plugins.NewCfg(),
+			log: log.NewNopLogger(),
 			backendProvider: &fakeBackendProvider{
 				plugin: p,
 			},
@@ -88,7 +118,7 @@ func TestInitializer_Initialize(t *testing.T) {
 
 		i := &Initializer{
 			cfg: &plugins.Cfg{},
-			log: fakeLogger{},
+			log: log.NewNopLogger(),
 			backendProvider: &fakeBackendProvider{
 				plugin: p,
 			},
@@ -96,49 +126,6 @@ func TestInitializer_Initialize(t *testing.T) {
 
 		err := i.Initialize(context.Background(), p)
 		assert.NoError(t, err)
-
-		c, exists := p.Client()
-		assert.False(t, exists)
-		assert.Nil(t, c)
-	})
-}
-
-func TestInitializer_InitializeWithFactory(t *testing.T) {
-	t.Run("happy path", func(t *testing.T) {
-		p := &plugins.Plugin{}
-		i := &Initializer{
-			cfg: &plugins.Cfg{},
-			log: fakeLogger{},
-		}
-
-		factoryInvoked := false
-
-		factory := backendplugin.PluginFactoryFunc(func(pluginID string, logger log.Logger, env []string) (backendplugin.Plugin, error) {
-			factoryInvoked = true
-			return testPlugin{}, nil
-		})
-
-		err := i.InitializeWithFactory(p, factory)
-		assert.NoError(t, err)
-
-		assert.True(t, factoryInvoked)
-		client, exists := p.Client()
-		assert.True(t, exists)
-		assert.NotNil(t, client.(testPlugin))
-	})
-
-	t.Run("invalid factory", func(t *testing.T) {
-		p := &plugins.Plugin{}
-		i := &Initializer{
-			cfg: &plugins.Cfg{},
-			log: fakeLogger{},
-			backendProvider: &fakeBackendProvider{
-				plugin: p,
-			},
-		}
-
-		err := i.InitializeWithFactory(p, nil)
-		assert.Errorf(t, err, "could not initialize plugin test-plugin")
 
 		c, exists := p.Client()
 		assert.False(t, exists)
@@ -169,7 +156,7 @@ func TestInitializer_envVars(t *testing.T) {
 				},
 			},
 			license: licensing,
-			log:     fakeLogger{},
+			log:     log.NewNopLogger(),
 			backendProvider: &fakeBackendProvider{
 				plugin: p,
 			},
@@ -186,10 +173,6 @@ func TestInitializer_envVars(t *testing.T) {
 }
 
 func TestInitializer_getAWSEnvironmentVariables(t *testing.T) {
-
-}
-
-func TestInitializer_getAzureEnvironmentVariables(t *testing.T) {
 
 }
 
@@ -252,22 +235,6 @@ func (*testLicensingService) EnabledFeatures() map[string]bool {
 
 func (*testLicensingService) FeatureEnabled(feature string) bool {
 	return false
-}
-
-type testPlugin struct {
-	backendplugin.Plugin
-}
-
-type fakeLogger struct {
-	log.MultiLoggers
-}
-
-func (f fakeLogger) New(_ ...interface{}) log.MultiLoggers {
-	return log.MultiLoggers{}
-}
-
-func (f fakeLogger) Warn(_ string, _ ...interface{}) {
-
 }
 
 type fakeBackendProvider struct {

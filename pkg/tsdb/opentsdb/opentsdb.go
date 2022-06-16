@@ -16,11 +16,11 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
-	"golang.org/x/net/context/ctxhttp"
 )
 
 type Service struct {
@@ -86,12 +86,12 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return nil, err
 	}
 
-	request, err := s.createRequest(dsInfo, tsdbQuery)
+	request, err := s.createRequest(ctx, dsInfo, tsdbQuery)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
 
-	res, err := ctxhttp.Do(ctx, dsInfo.HTTPClient, request)
+	res, err := dsInfo.HTTPClient.Do(request)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
@@ -104,7 +104,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	return result, nil
 }
 
-func (s *Service) createRequest(dsInfo *datasourceInfo, data OpenTsdbQuery) (*http.Request, error) {
+func (s *Service) createRequest(ctx context.Context, dsInfo *datasourceInfo, data OpenTsdbQuery) (*http.Request, error) {
 	u, err := url.Parse(dsInfo.URL)
 	if err != nil {
 		return nil, err
@@ -117,7 +117,7 @@ func (s *Service) createRequest(dsInfo *datasourceInfo, data OpenTsdbQuery) (*ht
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	req, err := http.NewRequest(http.MethodPost, u.String(), strings.NewReader(string(postData)))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), strings.NewReader(string(postData)))
 	if err != nil {
 		s.logger.Info("Failed to create request", "error", err)
 		return nil, fmt.Errorf("failed to create request: %w", err)

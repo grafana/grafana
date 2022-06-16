@@ -1,14 +1,15 @@
 import { lastValueFrom, of } from 'rxjs';
-import { DataSourceInstanceSettings, FieldType } from '@grafana/data';
-
-import { backendSrv } from 'app/core/services/backend_srv';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
+
+import { DataSourceInstanceSettings, FieldType } from '@grafana/data';
+import { backendSrv } from 'app/core/services/backend_srv';
+
 import { ZipkinDatasource } from './datasource';
 import mockJson from './mockJsonResponse.json';
 import { traceFrameFields, zipkinResponse } from './utils/testData';
 
 jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
   getBackendSrv: () => backendSrv,
 }));
 

@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { Input, Field, Button, ValuePicker, HorizontalGroup } from '@grafana/ui';
+
+import { DataSourceRef, LiveChannelScope, SelectableValue } from '@grafana/data';
 import { DataSourcePicker, getBackendSrv } from '@grafana/runtime';
-import { AppEvents, DataSourceRef, LiveChannelScope, SelectableValue } from '@grafana/data';
-import appEvents from 'app/core/app_events';
+import { Input, Field, Button, ValuePicker, HorizontalGroup } from '@grafana/ui';
+import { useAppNotification } from 'app/core/copy/appNotification';
+
 import { Rule } from './types';
 
 interface Props {
@@ -29,14 +31,15 @@ export function AddNewRule({ onRuleAdded }: Props) {
   const [pattern, setPattern] = useState<string>();
   const [patternPrefix, setPatternPrefix] = useState<string>('');
   const [datasource, setDatasource] = useState<DataSourceRef>();
+  const notifyApp = useAppNotification();
 
   const onSubmit = () => {
     if (!pattern) {
-      appEvents.emit(AppEvents.alertError, ['Enter path']);
+      notifyApp.error('Enter path');
       return;
     }
     if (patternType === 'ds' && !patternPrefix.length) {
-      appEvents.emit(AppEvents.alertError, ['Select datasource']);
+      notifyApp.error('Select datasource');
       return;
     }
 
@@ -61,7 +64,7 @@ export function AddNewRule({ onRuleAdded }: Props) {
         onRuleAdded(v.rule);
       })
       .catch((e) => {
-        appEvents.emit(AppEvents.alertError, ['Error adding rule', e]);
+        notifyApp.error('Error adding rule', e);
         e.isHandled = true;
       });
   };

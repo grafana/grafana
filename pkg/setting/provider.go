@@ -49,8 +49,6 @@ type Provider interface {
 	// RegisterReloadHandler registers a handler for validation and reload
 	// of configuration updates tied to a specific section
 	RegisterReloadHandler(section string, handler ReloadHandler)
-	// IsFeatureToggleEnabled checks if the feature's toggle is enabled
-	IsFeatureToggleEnabled(name string) bool
 }
 
 // Section is a settings section copy

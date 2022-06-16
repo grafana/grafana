@@ -10,32 +10,34 @@ exports[`Render should render component 1`] = `
   >
     <div
       className="gf-form max-width-30"
-      style={
-        Object {
-          "marginRight": "3px",
-        }
-      }
     >
-      <FormLabel
-        tooltip="The name is used when you select the data source in panels. The default data source is preselected in new panels."
+      <InlineField
+        grow={true}
+        label="Name"
+        tooltip="The name is used when you select the data source in panels. The default data source is
+              'preselected in new panels."
       >
-        Name
-      </FormLabel>
-      <Input
-        aria-label="Data source settings page name input field"
-        className="gf-form-input max-width-23"
-        onChange={[Function]}
-        placeholder="Name"
-        required={true}
-        type="text"
-        value="Graphite"
-      />
+        <Input
+          aria-label="Data source settings page name input field"
+          id="basic-settings-name"
+          onChange={[Function]}
+          placeholder="Name"
+          required={true}
+          type="text"
+          value="Graphite"
+        />
+      </InlineField>
     </div>
-    <Switch
-      checked={false}
+    <InlineField
       label="Default"
-      onChange={[Function]}
-    />
+      labelWidth={8}
+    >
+      <Switch
+        id="basic-settings-default"
+        onChange={[Function]}
+        value={false}
+      />
+    </InlineField>
   </div>
 </div>
 `;

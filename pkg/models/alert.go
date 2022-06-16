@@ -28,6 +28,7 @@ const (
 )
 
 const (
+	ExecutionErrorSetOk       ExecutionErrorOption = "ok"
 	ExecutionErrorSetAlerting ExecutionErrorOption = "alerting"
 	ExecutionErrorKeepState   ExecutionErrorOption = "keep_state"
 )
@@ -55,7 +56,7 @@ func (s NoDataOption) ToAlertState() AlertStateType {
 }
 
 func (s ExecutionErrorOption) IsValid() bool {
-	return s == ExecutionErrorSetAlerting || s == ExecutionErrorKeepState
+	return s == ExecutionErrorSetAlerting || s == ExecutionErrorKeepState || s == ExecutionErrorSetOk
 }
 
 func (s ExecutionErrorOption) ToAlertState() AlertStateType {

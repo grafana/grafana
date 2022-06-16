@@ -1,4 +1,7 @@
 import { css, cx } from '@emotion/css';
+import React, { useCallback, useRef, useState } from 'react';
+import { usePopper } from 'react-popper';
+
 import {
   DataFrame,
   DataFrameFieldIndex,
@@ -12,8 +15,6 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { FieldLinkList, Portal, UPlotConfigBuilder, useStyles } from '@grafana/ui';
-import React, { useCallback, useRef, useState } from 'react';
-import { usePopper } from 'react-popper';
 
 interface ExemplarMarkerProps {
   timeZone: TimeZone;

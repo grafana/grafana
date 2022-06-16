@@ -1,209 +1,174 @@
-// Libraries
-import { isEqual, omit } from 'lodash';
+import { omit } from 'lodash';
 
-// Services & Utils
-import { DataQuery, DataSourceApi, dateTimeFormat, urlUtil, ExploreUrlState } from '@grafana/data';
-import store from 'app/core/store';
-import { dispatch } from 'app/store/store';
-import { notifyApp } from 'app/core/actions';
-import { createErrorNotification, createWarningNotification } from 'app/core/copy/appNotification';
-
-// Types
-import { RichHistoryQuery } from 'app/types/explore';
+import { DataQuery, DataSourceApi, dateTimeFormat, ExploreUrlState, urlUtil } from '@grafana/data';
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
 import { getDataSourceSrv } from '@grafana/runtime';
+import { notifyApp } from 'app/core/actions';
+import {
+  createErrorNotification,
+  createSuccessNotification,
+  createWarningNotification,
+} from 'app/core/copy/appNotification';
+import { dispatch } from 'app/store/store';
+import { RichHistoryQuery } from 'app/types/explore';
 
-const RICH_HISTORY_KEY = 'grafana.explore.richHistory';
+import RichHistoryLocalStorage from '../history/RichHistoryLocalStorage';
+import RichHistoryRemoteStorage from '../history/RichHistoryRemoteStorage';
+import {
+  RichHistoryResults,
+  RichHistoryServiceError,
+  RichHistoryStorageWarning,
+  RichHistoryStorageWarningDetails,
+} from '../history/RichHistoryStorage';
+import { getRichHistoryStorage } from '../history/richHistoryStorageProvider';
 
-export const RICH_HISTORY_SETTING_KEYS = {
-  retentionPeriod: 'grafana.explore.richHistory.retentionPeriod',
-  starredTabAsFirstTab: 'grafana.explore.richHistory.starredTabAsFirstTab',
-  activeDatasourceOnly: 'grafana.explore.richHistory.activeDatasourceOnly',
-  datasourceFilters: 'grafana.explore.richHistory.datasourceFilters',
-};
+import { RichHistorySearchFilters, RichHistorySettings, SortOrder } from './richHistoryTypes';
 
-export enum SortOrder {
-  Descending = 'Descending',
-  Ascending = 'Ascending',
-  DatasourceAZ = 'Datasource A-Z',
-  DatasourceZA = 'Datasource Z-A',
-}
+export { RichHistorySearchFilters, RichHistorySettings, SortOrder };
 
 /*
  * Add queries to rich history. Save only queries within the retention period, or that are starred.
  * Side-effect: store history in local storage
  */
 
-export const MAX_HISTORY_ITEMS = 10000;
-
-export function addToRichHistory(
-  richHistory: RichHistoryQuery[],
-  datasourceId: string,
+export async function addToRichHistory(
+  datasourceUid: string,
   datasourceName: string | null,
   queries: DataQuery[],
   starred: boolean,
   comment: string | null,
-  sessionName: string,
   showQuotaExceededError: boolean,
   showLimitExceededWarning: boolean
-): { richHistory: RichHistoryQuery[]; localStorageFull?: boolean; limitExceeded?: boolean } {
-  const ts = Date.now();
+): Promise<{ richHistoryStorageFull?: boolean; limitExceeded?: boolean }> {
   /* Save only queries, that are not falsy (e.g. empty object, null, ...) */
   const newQueriesToSave: DataQuery[] = queries && queries.filter((query) => notEmptyQuery(query));
-  const retentionPeriod: number = store.getObject(RICH_HISTORY_SETTING_KEYS.retentionPeriod, 7);
-  const retentionPeriodLastTs = createRetentionPeriodBoundary(retentionPeriod, false);
-
-  /* Keep only queries, that are within the selected retention period or that are starred.
-   * If no queries, initialize with empty array
-   */
-  const queriesToKeep = richHistory.filter((q) => q.ts > retentionPeriodLastTs || q.starred === true) || [];
 
   if (newQueriesToSave.length > 0) {
-    /* Compare queries of a new query and last saved queries. If they are the same, (except selected properties,
-     * which can be different) don't save it in rich history.
-     */
-    const newQueriesToCompare = newQueriesToSave.map((q) => omit(q, ['key', 'refId']));
-    const lastQueriesToCompare =
-      queriesToKeep.length > 0 &&
-      queriesToKeep[0].queries.map((q) => {
-        return omit(q, ['key', 'refId']);
-      });
-
-    if (isEqual(newQueriesToCompare, lastQueriesToCompare)) {
-      return { richHistory };
-    }
-
-    // remove oldest non-starred items to give space for the recent query
+    let richHistoryStorageFull = false;
     let limitExceeded = false;
-    let current = queriesToKeep.length - 1;
-    while (current >= 0 && queriesToKeep.length >= MAX_HISTORY_ITEMS) {
-      if (!queriesToKeep[current].starred) {
-        queriesToKeep.splice(current, 1);
-        limitExceeded = true;
-      }
-      current--;
-    }
-
-    let updatedHistory: RichHistoryQuery[] = [
-      {
-        queries: newQueriesToSave,
-        ts,
-        datasourceId,
-        datasourceName: datasourceName ?? '',
-        starred,
-        comment: comment ?? '',
-        sessionName,
-      },
-      ...queriesToKeep,
-    ];
+    let warning: RichHistoryStorageWarningDetails | undefined;
 
     try {
-      showLimitExceededWarning &&
-        limitExceeded &&
-        dispatch(
-          notifyApp(
-            createWarningNotification(
-              `Query history reached the limit of ${MAX_HISTORY_ITEMS}. Old, not-starred items will be removed.`
-            )
-          )
-        );
-      store.setObject(RICH_HISTORY_KEY, updatedHistory);
-      return { richHistory: updatedHistory, limitExceeded, localStorageFull: false };
+      const result = await getRichHistoryStorage().addToRichHistory({
+        datasourceUid: datasourceUid,
+        datasourceName: datasourceName ?? '',
+        queries: newQueriesToSave,
+        starred,
+        comment: comment ?? '',
+      });
+      warning = result.warning;
     } catch (error) {
-      showQuotaExceededError &&
-        dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
-      return { richHistory: updatedHistory, limitExceeded, localStorageFull: error.name === 'QuotaExceededError' };
+      if (error instanceof Error) {
+        if (error.name === RichHistoryServiceError.StorageFull) {
+          richHistoryStorageFull = true;
+          showQuotaExceededError && dispatch(notifyApp(createErrorNotification(error.message)));
+        } else if (error.name !== RichHistoryServiceError.DuplicatedEntry) {
+          dispatch(notifyApp(createErrorNotification('Rich History update failed', error.message)));
+        }
+      }
+      // Saving failed. Do not add new entry.
+      return { richHistoryStorageFull, limitExceeded };
     }
+
+    // Limit exceeded but new entry was added. Notify that old entries have been removed.
+    if (warning && warning.type === RichHistoryStorageWarning.LimitExceeded) {
+      limitExceeded = true;
+      showLimitExceededWarning && dispatch(notifyApp(createWarningNotification(warning.message)));
+    }
+
+    return { richHistoryStorageFull, limitExceeded };
   }
 
-  return { richHistory };
+  // Nothing to change
+  return {};
 }
 
-export function getRichHistory(): RichHistoryQuery[] {
-  const richHistory: RichHistoryQuery[] = store.getObject(RICH_HISTORY_KEY, []);
-  const transformedRichHistory = migrateRichHistory(richHistory);
-  return transformedRichHistory;
+export async function getRichHistory(filters: RichHistorySearchFilters): Promise<RichHistoryResults> {
+  return await getRichHistoryStorage().getRichHistory(filters);
 }
 
-export function deleteAllFromRichHistory() {
-  return store.delete(RICH_HISTORY_KEY);
+export async function updateRichHistorySettings(settings: RichHistorySettings): Promise<void> {
+  await getRichHistoryStorage().updateSettings(settings);
 }
 
-export function updateStarredInRichHistory(richHistory: RichHistoryQuery[], ts: number) {
-  const updatedHistory = richHistory.map((query) => {
-    /* Timestamps are currently unique - we can use them to identify specific queries */
-    if (query.ts === ts) {
-      const isStarred = query.starred;
-      const updatedQuery = Object.assign({}, query, { starred: !isStarred });
-      return updatedQuery;
+export async function getRichHistorySettings(): Promise<RichHistorySettings> {
+  return await getRichHistoryStorage().getSettings();
+}
+
+export async function deleteAllFromRichHistory(): Promise<void> {
+  return getRichHistoryStorage().deleteAll();
+}
+
+export async function updateStarredInRichHistory(id: string, starred: boolean) {
+  try {
+    return await getRichHistoryStorage().updateStarred(id, starred);
+  } catch (error) {
+    if (error instanceof Error) {
+      dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
     }
-    return query;
-  });
+    return undefined;
+  }
+}
+
+export async function updateCommentInRichHistory(id: string, newComment: string | undefined) {
+  try {
+    return await getRichHistoryStorage().updateComment(id, newComment);
+  } catch (error) {
+    if (error instanceof Error) {
+      dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
+    }
+    return undefined;
+  }
+}
+
+export async function deleteQueryInRichHistory(id: string) {
+  try {
+    await getRichHistoryStorage().deleteRichHistory(id);
+    return id;
+  } catch (error) {
+    if (error instanceof Error) {
+      dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
+    }
+    return undefined;
+  }
+}
+
+export enum LocalStorageMigrationStatus {
+  Successful = 'successful',
+  Failed = 'failed',
+  NotNeeded = 'not-needed',
+}
+
+export interface LocalStorageMigrationResult {
+  status: LocalStorageMigrationStatus;
+  error?: Error;
+}
+
+export async function migrateQueryHistoryFromLocalStorage(): Promise<LocalStorageMigrationResult> {
+  const richHistoryLocalStorage = new RichHistoryLocalStorage();
+  const richHistoryRemoteStorage = new RichHistoryRemoteStorage();
 
   try {
-    store.setObject(RICH_HISTORY_KEY, updatedHistory);
-    return updatedHistory;
-  } catch (error) {
-    dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
-    return richHistory;
-  }
-}
-
-export function updateCommentInRichHistory(
-  richHistory: RichHistoryQuery[],
-  ts: number,
-  newComment: string | undefined
-) {
-  const updatedHistory = richHistory.map((query) => {
-    if (query.ts === ts) {
-      const updatedQuery = Object.assign({}, query, { comment: newComment });
-      return updatedQuery;
+    const { richHistory } = await richHistoryLocalStorage.getRichHistory({
+      datasourceFilters: [],
+      from: 0,
+      search: '',
+      sortOrder: SortOrder.Descending,
+      starred: false,
+      to: 14,
+    });
+    if (richHistory.length === 0) {
+      return { status: LocalStorageMigrationStatus.NotNeeded };
     }
-    return query;
-  });
-
-  try {
-    store.setObject(RICH_HISTORY_KEY, updatedHistory);
-    return updatedHistory;
+    await richHistoryRemoteStorage.migrate(richHistory);
+    dispatch(notifyApp(createSuccessNotification('Query history successfully migrated from local storage')));
+    return { status: LocalStorageMigrationStatus.Successful };
   } catch (error) {
-    dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
-    return richHistory;
+    const errorToThrow = error instanceof Error ? error : new Error('Uknown error occurred.');
+    dispatch(notifyApp(createWarningNotification(`Query history migration failed. ${errorToThrow.message}`)));
+    return { status: LocalStorageMigrationStatus.Failed, error: errorToThrow };
   }
 }
-
-export function deleteQueryInRichHistory(richHistory: RichHistoryQuery[], ts: number) {
-  const updatedHistory = richHistory.filter((query) => query.ts !== ts);
-  try {
-    store.setObject(RICH_HISTORY_KEY, updatedHistory);
-    return updatedHistory;
-  } catch (error) {
-    dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
-    return richHistory;
-  }
-}
-
-export const sortQueries = (array: RichHistoryQuery[], sortOrder: SortOrder) => {
-  let sortFunc;
-
-  if (sortOrder === SortOrder.Ascending) {
-    sortFunc = (a: RichHistoryQuery, b: RichHistoryQuery) => (a.ts < b.ts ? -1 : a.ts > b.ts ? 1 : 0);
-  }
-  if (sortOrder === SortOrder.Descending) {
-    sortFunc = (a: RichHistoryQuery, b: RichHistoryQuery) => (a.ts < b.ts ? 1 : a.ts > b.ts ? -1 : 0);
-  }
-
-  if (sortOrder === SortOrder.DatasourceZA) {
-    sortFunc = (a: RichHistoryQuery, b: RichHistoryQuery) =>
-      a.datasourceName < b.datasourceName ? -1 : a.datasourceName > b.datasourceName ? 1 : 0;
-  }
-
-  if (sortOrder === SortOrder.DatasourceAZ) {
-    sortFunc = (a: RichHistoryQuery, b: RichHistoryQuery) =>
-      a.datasourceName < b.datasourceName ? 1 : a.datasourceName > b.datasourceName ? -1 : 0;
-  }
-
-  return array.sort(sortFunc);
-};
 
 export const createUrlFromRichHistory = (query: RichHistoryQuery) => {
   const exploreState: ExploreUrlState = {
@@ -214,7 +179,7 @@ export const createUrlFromRichHistory = (query: RichHistoryQuery) => {
     context: 'explore',
   };
 
-  const serializedState = serializeStateToUrlParam(exploreState, true);
+  const serializedState = serializeStateToUrlParam(exploreState);
   const baseUrl = /.*(?=\/explore)/.exec(`${window.location.href}`)![0];
   const url = urlUtil.renderUrl(`${baseUrl}/explore`, { left: serializedState });
   return url;
@@ -243,18 +208,6 @@ export const mapNumbertoTimeInSlider = (num: number) => {
   return str;
 };
 
-export const createRetentionPeriodBoundary = (days: number, isLastTs: boolean) => {
-  const today = new Date();
-  const date = new Date(today.setDate(today.getDate() - days));
-  /*
-   * As a retention period boundaries, we consider:
-   * - The last timestamp equals to the 24:00 of the last day of retention
-   * - The first timestamp that equals to the 00:00 of the first day of retention
-   */
-  const boundary = isLastTs ? date.setHours(24, 0, 0, 0) : date.setHours(0, 0, 0, 0);
-  return boundary;
-};
-
 export function createDateStringFromTs(ts: number) {
   return dateTimeFormat(ts, {
     format: 'MMMM D',
@@ -275,7 +228,7 @@ export function createQueryHeading(query: RichHistoryQuery, sortOrder: SortOrder
   if (sortOrder === SortOrder.DatasourceAZ || sortOrder === SortOrder.DatasourceZA) {
     heading = query.datasourceName;
   } else {
-    heading = createDateStringFromTs(query.ts);
+    heading = createDateStringFromTs(query.createdAt);
   }
   return heading;
 }
@@ -306,31 +259,19 @@ export function mapQueriesToHeadings(query: RichHistoryQuery[], sortOrder: SortO
   return mappedQueriesToHeadings;
 }
 
-/* Create datasource list with images. If specific datasource retrieved from Rich history is not part of
- * exploreDatasources add generic datasource image and add property isRemoved = true.
+/*
+ * Create a list of all available data sources
  */
-export function createDatasourcesList(queriesDatasources: string[]) {
-  const datasources: Array<{ label: string; value: string; imgUrl: string; isRemoved: boolean }> = [];
-
-  queriesDatasources.forEach((dsName) => {
-    const dsSettings = getDataSourceSrv().getInstanceSettings(dsName);
-    if (dsSettings) {
-      datasources.push({
-        label: dsSettings.name,
-        value: dsSettings.name,
+export function createDatasourcesList() {
+  return getDataSourceSrv()
+    .getList()
+    .map((dsSettings) => {
+      return {
+        name: dsSettings.name,
+        uid: dsSettings.uid,
         imgUrl: dsSettings.meta.info.logos.small,
-        isRemoved: false,
-      });
-    } else {
-      datasources.push({
-        label: dsName,
-        value: dsName,
-        imgUrl: 'public/img/icn-datasource.svg',
-        isRemoved: true,
-      });
-    }
-  });
-  return datasources;
+      };
+    });
 }
 
 export function notEmptyQuery(query: DataQuery) {
@@ -345,82 +286,4 @@ export function notEmptyQuery(query: DataQuery) {
   }
 
   return false;
-}
-
-export function filterQueriesBySearchFilter(queries: RichHistoryQuery[], searchFilter: string) {
-  return queries.filter((query) => {
-    if (query.comment.includes(searchFilter)) {
-      return true;
-    }
-
-    const listOfMatchingQueries = query.queries.filter((query) =>
-      // Remove fields in which we don't want to be searching
-      Object.values(omit(query, ['datasource', 'key', 'refId', 'hide', 'queryType'])).some((value: any) =>
-        value?.toString().includes(searchFilter)
-      )
-    );
-
-    return listOfMatchingQueries.length > 0;
-  });
-}
-
-export function filterQueriesByDataSource(queries: RichHistoryQuery[], listOfDatasourceFilters: string[]) {
-  return listOfDatasourceFilters && listOfDatasourceFilters.length > 0
-    ? queries.filter((q) => listOfDatasourceFilters.includes(q.datasourceName))
-    : queries;
-}
-
-export function filterQueriesByTime(queries: RichHistoryQuery[], timeFilter: [number, number]) {
-  return queries.filter(
-    (q) =>
-      q.ts < createRetentionPeriodBoundary(timeFilter[0], true) &&
-      q.ts > createRetentionPeriodBoundary(timeFilter[1], false)
-  );
-}
-
-export function filterAndSortQueries(
-  queries: RichHistoryQuery[],
-  sortOrder: SortOrder,
-  listOfDatasourceFilters: string[],
-  searchFilter: string,
-  timeFilter?: [number, number]
-) {
-  const filteredQueriesByDs = filterQueriesByDataSource(queries, listOfDatasourceFilters);
-  const filteredQueriesByDsAndSearchFilter = filterQueriesBySearchFilter(filteredQueriesByDs, searchFilter);
-  const filteredQueriesToBeSorted = timeFilter
-    ? filterQueriesByTime(filteredQueriesByDsAndSearchFilter, timeFilter)
-    : filteredQueriesByDsAndSearchFilter;
-
-  return sortQueries(filteredQueriesToBeSorted, sortOrder);
-}
-
-function migrateRichHistory(richHistory: RichHistoryQuery[]) {
-  const transformedRichHistory = richHistory.map((query) => {
-    const transformedQueries: DataQuery[] = query.queries.map((q, index) => createDataQuery(query, q, index));
-    return { ...query, queries: transformedQueries };
-  });
-
-  return transformedRichHistory;
-}
-
-function createDataQuery(query: RichHistoryQuery, individualQuery: DataQuery | string, index: number) {
-  const letters = 'ABCDEFGHIJKLMNOPQRSTUVXYZ';
-  if (typeof individualQuery === 'object') {
-    // the current format
-    return individualQuery;
-  } else if (isParsable(individualQuery)) {
-    // ElasticSearch (maybe other datasoures too) before grafana7
-    return JSON.parse(individualQuery);
-  }
-  // prometehus (maybe other datasources too) before grafana7
-  return { expr: individualQuery, refId: letters[index] };
-}
-
-function isParsable(string: string) {
-  try {
-    JSON.parse(string);
-  } catch (e) {
-    return false;
-  }
-  return true;
 }

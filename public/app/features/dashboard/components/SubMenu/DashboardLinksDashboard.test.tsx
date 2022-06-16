@@ -1,7 +1,7 @@
-import { DashboardLink } from '../../state/DashboardModel';
 import { DashboardSearchHit, DashboardSearchItemType } from '../../../search/types';
+import { DashboardLink } from '../../state/DashboardModel';
+
 import { resolveLinks, searchForTags } from './DashboardLinksDashboard';
-import { describe, expect } from '../../../../../test/lib/common';
 
 describe('searchForTags', () => {
   const setupTestContext = () => {

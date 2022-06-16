@@ -12,11 +12,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/dashboardimport"
+	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/stretchr/testify/assert"
@@ -46,7 +45,7 @@ func TestDashboardQuota(t *testing.T) {
 		dashboardDataOne, err := simplejson.NewJson([]byte(`{"title":"just testing"}`))
 		require.NoError(t, err)
 		buf1 := &bytes.Buffer{}
-		err = json.NewEncoder(buf1).Encode(dtos.ImportDashboardCommand{
+		err = json.NewEncoder(buf1).Encode(dashboardimport.ImportDashboardRequest{
 			Dashboard: dashboardDataOne,
 		})
 		require.NoError(t, err)
@@ -61,7 +60,7 @@ func TestDashboardQuota(t *testing.T) {
 		})
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		dashboardDTO := &plugins.PluginDashboardInfoDTO{}
+		dashboardDTO := &plugindashboards.PluginDashboard{}
 		err = json.Unmarshal(b, dashboardDTO)
 		require.NoError(t, err)
 		require.EqualValues(t, 1, dashboardDTO.DashboardId)
@@ -71,7 +70,7 @@ func TestDashboardQuota(t *testing.T) {
 		dashboardDataOne, err := simplejson.NewJson([]byte(`{"title":"just testing"}`))
 		require.NoError(t, err)
 		buf1 := &bytes.Buffer{}
-		err = json.NewEncoder(buf1).Encode(dtos.ImportDashboardCommand{
+		err = json.NewEncoder(buf1).Encode(dashboardimport.ImportDashboardRequest{
 			Dashboard: dashboardDataOne,
 		})
 		require.NoError(t, err)
@@ -93,6 +92,10 @@ func TestDashboardQuota(t *testing.T) {
 
 func createUser(t *testing.T, store *sqlstore.SQLStore, cmd models.CreateUserCommand) int64 {
 	t.Helper()
+
+	store.Cfg.AutoAssignOrg = true
+	store.Cfg.AutoAssignOrgId = 1
+
 	u, err := store.CreateUser(context.Background(), cmd)
 	require.NoError(t, err)
 	return u.Id
@@ -147,7 +150,7 @@ providers:
 		})
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		dashboardList := &search.HitList{}
+		dashboardList := &models.HitList{}
 		err = json.Unmarshal(b, dashboardList)
 		require.NoError(t, err)
 		assert.Equal(t, 1, dashboardList.Len())

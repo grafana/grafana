@@ -1,11 +1,14 @@
-import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { cloneDeep } from 'lodash';
-import { getVariableTestContext } from '../state/helpers';
-import { toVariablePayload, VariablesState } from '../state/types';
-import { createCustomOptionsFromQuery, customVariableReducer } from './reducer';
-import { createCustomVariableAdapter } from './adapter';
-import { CustomVariableModel } from '../types';
+
+import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../constants';
+import { getVariableTestContext } from '../state/helpers';
+import { VariablesState } from '../state/types';
+import { CustomVariableModel } from '../types';
+import { toVariablePayload } from '../utils';
+
+import { createCustomVariableAdapter } from './adapter';
+import { createCustomOptionsFromQuery, customVariableReducer } from './reducer';
 
 describe('customVariableReducer', () => {
   const adapter = createCustomVariableAdapter();

@@ -1,103 +1,134 @@
 package accesscontrol
 
 import (
-	"context"
 	"errors"
-	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
 var sqlIDAcceptList = map[string]struct{}{
+	"id":               {},
 	"org_user.user_id": {},
+	"role.uid":         {},
+	"t.id":             {},
+	"team.id":          {},
+	"u.id":             {},
+	"\"user\".\"id\"":  {}, // For Postgres
+	"`user`.`id`":      {}, // For MySQL and SQLite
+	"dashboard.uid":    {},
 }
 
-type SQLDialect interface {
-	DriverName() string
+var (
+	denyQuery     = SQLFilter{" 1 = 0", nil}
+	allowAllQuery = SQLFilter{" 1 = 1", nil}
+)
+
+type SQLFilter struct {
+	Where string
+	Args  []interface{}
 }
 
 // Filter creates a where clause to restrict the view of a query based on a users permissions
-// Scopes for a certain action will be compared against prefix:id:sqlID where prefix is the scope prefix and sqlID
-// is the id to generate scope from e.g. user.id
-func Filter(ctx context.Context, dialect SQLDialect, sqlID, prefix, action string, user *models.SignedInUser) (string, []interface{}, error) {
+// Scopes that exists for all actions will be parsed and compared against the supplied sqlID
+// Prefix parameter is the prefix of the scope that we support (e.g. "users:id:")
+func Filter(user *models.SignedInUser, sqlID, prefix string, actions ...string) (SQLFilter, error) {
 	if _, ok := sqlIDAcceptList[sqlID]; !ok {
-		return "", nil, errors.New("sqlID is not in the accept list")
+		return denyQuery, errors.New("sqlID is not in the accept list")
+	}
+	if user == nil || user.Permissions == nil || user.Permissions[user.OrgId] == nil {
+		return denyQuery, errors.New("missing permissions")
 	}
 
-	if user.Permissions == nil || user.Permissions[user.OrgId] == nil {
-		return "", nil, errors.New("missing permissions")
+	wildcards := 0
+	result := make(map[interface{}]int)
+	for _, a := range actions {
+		ids, hasWildcard := ParseScopes(prefix, user.Permissions[user.OrgId][a])
+		if hasWildcard {
+			wildcards += 1
+			continue
+		}
+		if len(ids) == 0 {
+			return denyQuery, nil
+		}
+		for id := range ids {
+			result[id] += 1
+		}
 	}
 
-	scopes := user.Permissions[user.OrgId][action]
-	if len(scopes) == 0 {
-		return " 1 = 0", nil, nil
+	// return early if every action has wildcard scope
+	if wildcards == len(actions) {
+		return allowAllQuery, nil
 	}
 
-	var sql string
-	var args []interface{}
-
-	switch {
-	case strings.Contains(dialect.DriverName(), migrator.SQLite):
-		sql, args = sqliteQuery(scopes, sqlID, prefix)
-	case strings.Contains(dialect.DriverName(), migrator.MySQL):
-		sql, args = mysqlQuery(scopes, sqlID, prefix)
-	case strings.Contains(dialect.DriverName(), migrator.Postgres):
-		sql, args = postgresQuery(scopes, sqlID, prefix)
-	default:
-		return "", nil, fmt.Errorf("unknown database: %s", dialect.DriverName())
+	var ids []interface{}
+	for id, count := range result {
+		// if an id exist for every action include it in the filter
+		if count+wildcards == len(actions) {
+			ids = append(ids, id)
+		}
 	}
 
-	return sql, args, nil
+	if len(ids) == 0 {
+		return denyQuery, nil
+	}
+
+	query := strings.Builder{}
+	query.WriteRune(' ')
+	query.WriteString(sqlID)
+	query.WriteString(" IN ")
+	query.WriteString("(?")
+	query.WriteString(strings.Repeat(",?", len(ids)-1))
+	query.WriteRune(')')
+
+	return SQLFilter{query.String(), ids}, nil
 }
 
-func sqliteQuery(scopes []string, sqlID, prefix string) (string, []interface{}) {
-	args := []interface{}{prefix}
-	for _, s := range scopes {
-		args = append(args, s)
-	}
-	args = append(args, prefix, prefix, prefix)
+func ParseScopes(prefix string, scopes []string) (ids map[interface{}]struct{}, hasWildcard bool) {
+	ids = make(map[interface{}]struct{})
 
-	return fmt.Sprintf(`
-		? || ':id:' || %s IN (
-			WITH t(scope) AS (
-				VALUES (?)`+strings.Repeat(`, (?)`, len(scopes)-1)+`
-			)
-			SELECT IIF(t.scope = '*' OR t.scope = ? || ':*' OR t.scope = ? || ':id:*', ? || ':id:' || %s, t.scope) FROM t
-		)
-	`, sqlID, sqlID), args
+	rootPrefix, attributePrefix, ok := extractPrefixes(prefix)
+	if !ok {
+		return nil, false
+	}
+
+	parser := parseStringAttribute
+	if strings.HasSuffix(prefix, ":id:") {
+		parser = parseIntAttribute
+	}
+
+	allScope := rootPrefix + "*"
+	allAttributeScope := attributePrefix + "*"
+
+	for _, scope := range scopes {
+		if scope == "*" {
+			return nil, true
+		}
+
+		if strings.HasPrefix(scope, rootPrefix) {
+			if scope == allScope || scope == allAttributeScope {
+				return nil, true
+			}
+
+			if !strings.HasPrefix(scope, prefix) {
+				continue
+			}
+
+			if id, err := parser(scope); err == nil {
+				ids[id] = struct{}{}
+			}
+		}
+	}
+	return ids, false
 }
 
-func mysqlQuery(scopes []string, sqlID, prefix string) (string, []interface{}) {
-	args := []interface{}{prefix, prefix, prefix, prefix}
-	for _, s := range scopes {
-		args = append(args, s)
-	}
-
-	return fmt.Sprintf(`
-		CONCAT(?, ':id:', %s) IN (
-			SELECT IF(t.scope = '*' OR t.scope = CONCAT(?, ':*') OR t.scope = CONCAT(?, ':id:*'), CONCAT(?, ':id:', %s), t.scope) FROM
-			(SELECT ? AS scope`+strings.Repeat(" UNION ALL SELECT ?", len(scopes)-1)+`) AS t
-		)
-	`, sqlID, sqlID), args
+func parseIntAttribute(scope string) (interface{}, error) {
+	return strconv.ParseInt(scope[strings.LastIndex(scope, ":")+1:], 10, 64)
 }
 
-func postgresQuery(scopes []string, sqlID, prefix string) (string, []interface{}) {
-	args := []interface{}{prefix, prefix, prefix, prefix}
-	for _, s := range scopes {
-		args = append(args, s)
-	}
-
-	return fmt.Sprintf(`
-		CONCAT(?, ':id:', %s) IN (
-			SELECT
-				CASE WHEN p.scope = '*' OR p.scope = CONCAT(?, ':*') OR p.scope = CONCAT(?, ':id:*') THEN CONCAT(?, ':id:', %s)
-				ELSE p.scope
-	    		END
-			FROM (VALUES (?)`+strings.Repeat(", (?)", len(scopes)-1)+`) as p(scope)
-		)
-	`, sqlID, sqlID), args
+func parseStringAttribute(scope string) (interface{}, error) {
+	return scope[strings.LastIndex(scope, ":")+1:], nil
 }
 
 // SetAcceptListForTest allow us to mutate the list for blackbox testing

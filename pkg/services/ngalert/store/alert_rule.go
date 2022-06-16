@@ -4,19 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strconv"
 	"strings"
-	"time"
-
-	"github.com/grafana/grafana/pkg/services/guardian"
 
 	"github.com/grafana/grafana/pkg/models"
-
-	"github.com/grafana/grafana/pkg/services/dashboards"
-
+	"github.com/grafana/grafana/pkg/services/guardian"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -32,27 +27,33 @@ type UpdateRuleGroupCmd struct {
 	RuleGroupConfig apimodels.PostableRuleGroupConfig
 }
 
-type UpsertRule struct {
+type UpdateRule struct {
 	Existing *ngmodels.AlertRule
 	New      ngmodels.AlertRule
 }
 
-// Store is the interface for persisting alert rules and instances
+var (
+	ErrAlertRuleGroupNotFound = errors.New("rulegroup not found")
+	ErrOptimisticLock         = errors.New("version conflict while updating a record in the database with optimistic locking")
+)
+
+// RuleStore is the interface for persisting alert rules and instances
 type RuleStore interface {
-	DeleteAlertRuleByUID(orgID int64, ruleUID string) error
-	DeleteNamespaceAlertRules(orgID int64, namespaceUID string) ([]string, error)
-	DeleteRuleGroupAlertRules(orgID int64, namespaceUID string, ruleGroup string) ([]string, error)
-	DeleteAlertInstancesByRuleUID(orgID int64, ruleUID string) error
-	GetAlertRuleByUID(*ngmodels.GetAlertRuleByUIDQuery) error
-	GetAlertRulesForScheduling(query *ngmodels.ListAlertRulesQuery) error
-	GetOrgAlertRules(query *ngmodels.ListAlertRulesQuery) error
-	GetNamespaceAlertRules(query *ngmodels.ListNamespaceAlertRulesQuery) error
-	GetRuleGroupAlertRules(query *ngmodels.ListRuleGroupAlertRulesQuery) error
-	GetNamespaces(context.Context, int64, *models.SignedInUser) (map[string]*models.Folder, error)
+	DeleteAlertRulesByUID(ctx context.Context, orgID int64, ruleUID ...string) error
+	DeleteAlertInstancesByRuleUID(ctx context.Context, orgID int64, ruleUID string) error
+	GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAlertRuleByUIDQuery) error
+	GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmodels.GetAlertRulesGroupByRuleUIDQuery) error
+	GetAlertRulesForScheduling(ctx context.Context, query *ngmodels.GetAlertRulesForSchedulingQuery) error
+	ListAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) error
+	// GetRuleGroups returns the unique rule groups across all organizations.
+	GetRuleGroups(ctx context.Context, query *ngmodels.ListRuleGroupsQuery) error
+	GetRuleGroupInterval(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string) (int64, error)
+	GetUserVisibleNamespaces(context.Context, int64, *models.SignedInUser) (map[string]*models.Folder, error)
 	GetNamespaceByTitle(context.Context, string, int64, *models.SignedInUser, bool) (*models.Folder, error)
-	GetOrgRuleGroups(query *ngmodels.ListOrgRuleGroupsQuery) error
-	UpsertAlertRules([]UpsertRule) error
-	UpdateRuleGroup(UpdateRuleGroupCmd) error
+	// InsertAlertRules will insert all alert rules passed into the function
+	// and return the map of uuid to id.
+	InsertAlertRules(ctx context.Context, rule []ngmodels.AlertRule) (map[string]int64, error)
+	UpdateAlertRules(ctx context.Context, rule []UpdateRule) error
 }
 
 func getAlertRuleByUID(sess *sqlstore.DBSession, alertRuleUID string, orgID int64) (*ngmodels.AlertRule, error) {
@@ -68,101 +69,34 @@ func getAlertRuleByUID(sess *sqlstore.DBSession, alertRuleUID string, orgID int6
 	return &alertRule, nil
 }
 
-// DeleteAlertRuleByUID is a handler for deleting an alert rule.
-func (st DBstore) DeleteAlertRuleByUID(orgID int64, ruleUID string) error {
-	return st.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		_, err := sess.Exec("DELETE FROM alert_rule WHERE org_id = ? AND uid = ?", orgID, ruleUID)
+// DeleteAlertRulesByUID is a handler for deleting an alert rule.
+func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, ruleUID ...string) error {
+	logger := st.Logger.New("org_id", orgID, "rule_uids", ruleUID)
+	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		rows, err := sess.Table("alert_rule").Where("org_id = ?", orgID).In("uid", ruleUID).Delete(ngmodels.AlertRule{})
 		if err != nil {
 			return err
 		}
+		logger.Debug("deleted alert rules", "count", rows)
 
-		_, err = sess.Exec("DELETE FROM alert_rule_version WHERE rule_org_id = ? and rule_uid = ?", orgID, ruleUID)
-
+		rows, err = sess.Table("alert_rule_version").Where("rule_org_id = ?", orgID).In("rule_uid", ruleUID).Delete(ngmodels.AlertRule{})
 		if err != nil {
 			return err
 		}
+		logger.Debug("deleted alert rule versions", "count", rows)
 
-		_, err = sess.Exec("DELETE FROM alert_instance WHERE rule_org_id = ? AND rule_uid = ?", orgID, ruleUID)
+		rows, err = sess.Table("alert_instance").Where("rule_org_id = ?", orgID).In("rule_uid", ruleUID).Delete(ngmodels.AlertRule{})
 		if err != nil {
 			return err
 		}
+		logger.Debug("deleted alert instances", "count", rows)
 		return nil
 	})
 }
 
-// DeleteNamespaceAlertRules is a handler for deleting namespace alert rules. A list of deleted rule UIDs are returned.
-func (st DBstore) DeleteNamespaceAlertRules(orgID int64, namespaceUID string) ([]string, error) {
-	ruleUIDs := []string{}
-
-	err := st.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		if err := sess.SQL("SELECT uid FROM alert_rule WHERE org_id = ? and namespace_uid = ?", orgID, namespaceUID).Find(&ruleUIDs); err != nil {
-			return err
-		}
-
-		if _, err := sess.Exec("DELETE FROM alert_rule WHERE org_id = ? and namespace_uid = ?", orgID, namespaceUID); err != nil {
-			return err
-		}
-
-		if _, err := sess.Exec("DELETE FROM alert_rule WHERE org_id = ? and namespace_uid = ?", orgID, namespaceUID); err != nil {
-			return err
-		}
-
-		if _, err := sess.Exec("DELETE FROM alert_rule_version WHERE rule_org_id = ? and rule_namespace_uid = ?", orgID, namespaceUID); err != nil {
-			return err
-		}
-
-		if _, err := sess.Exec(`DELETE FROM alert_instance WHERE rule_org_id = ? AND rule_uid NOT IN (
-			SELECT uid FROM alert_rule where org_id = ?
-		)`, orgID, orgID); err != nil {
-			return err
-		}
-
-		return nil
-	})
-	return ruleUIDs, err
-}
-
-// DeleteRuleGroupAlertRules is a handler for deleting rule group alert rules. A list of deleted rule UIDs are returned.
-func (st DBstore) DeleteRuleGroupAlertRules(orgID int64, namespaceUID string, ruleGroup string) ([]string, error) {
-	ruleUIDs := []string{}
-
-	err := st.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		if err := sess.SQL("SELECT uid FROM alert_rule WHERE org_id = ? and namespace_uid = ? and rule_group = ?",
-			orgID, namespaceUID, ruleGroup).Find(&ruleUIDs); err != nil {
-			return err
-		}
-		exist, err := sess.Exist(&ngmodels.AlertRule{OrgID: orgID, NamespaceUID: namespaceUID, RuleGroup: ruleGroup})
-		if err != nil {
-			return err
-		}
-
-		if !exist {
-			return ngmodels.ErrRuleGroupNamespaceNotFound
-		}
-
-		if _, err := sess.Exec("DELETE FROM alert_rule WHERE org_id = ? and namespace_uid = ? and rule_group = ?", orgID, namespaceUID, ruleGroup); err != nil {
-			return err
-		}
-
-		if _, err := sess.Exec("DELETE FROM alert_rule_version WHERE rule_org_id = ? and rule_namespace_uid = ? and rule_group = ?", orgID, namespaceUID, ruleGroup); err != nil {
-			return err
-		}
-
-		if _, err := sess.Exec(`DELETE FROM alert_instance WHERE rule_org_id = ? AND rule_uid NOT IN (
-			SELECT uid FROM alert_rule where org_id = ?
-		)`, orgID, orgID); err != nil {
-			return err
-		}
-
-		return nil
-	})
-
-	return ruleUIDs, err
-}
-
-// DeleteAlertInstanceByRuleUID is a handler for deleting alert instances by alert rule UID when a rule has been updated
-func (st DBstore) DeleteAlertInstancesByRuleUID(orgID int64, ruleUID string) error {
-	return st.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+// DeleteAlertInstancesByRuleUID is a handler for deleting alert instances by alert rule UID when a rule has been updated
+func (st DBstore) DeleteAlertInstancesByRuleUID(ctx context.Context, orgID int64, ruleUID string) error {
+	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		_, err := sess.Exec("DELETE FROM alert_instance WHERE rule_org_id = ? AND rule_uid = ?", orgID, ruleUID)
 		if err != nil {
 			return err
@@ -173,8 +107,8 @@ func (st DBstore) DeleteAlertInstancesByRuleUID(orgID int64, ruleUID string) err
 
 // GetAlertRuleByUID is a handler for retrieving an alert rule from that database by its UID and organisation ID.
 // It returns ngmodels.ErrAlertRuleNotFound if no alert rule is found for the provided ID.
-func (st DBstore) GetAlertRuleByUID(query *ngmodels.GetAlertRuleByUIDQuery) error {
-	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+func (st DBstore) GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAlertRuleByUIDQuery) error {
+	return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		alertRule, err := getAlertRuleByUID(sess, query.UID, query.OrgID)
 		if err != nil {
 			return err
@@ -184,110 +118,119 @@ func (st DBstore) GetAlertRuleByUID(query *ngmodels.GetAlertRuleByUIDQuery) erro
 	})
 }
 
-// UpsertAlertRules is a handler for creating/updating alert rules.
-func (st DBstore) UpsertAlertRules(rules []UpsertRule) error {
-	return st.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+// GetAlertRulesGroupByRuleUID is a handler for retrieving a group of alert rules from that database by UID and organisation ID of one of rules that belong to that group.
+func (st DBstore) GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmodels.GetAlertRulesGroupByRuleUIDQuery) error {
+	return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		var result []*ngmodels.AlertRule
+		err := sess.Table("alert_rule").Alias("A").Join(
+			"INNER",
+			"alert_rule AS B", "A.org_id = B.org_id AND A.namespace_uid = B.namespace_uid AND A.rule_group = B.rule_group AND B.uid = ?", query.UID,
+		).Where("A.org_id = ?", query.OrgID).Select("A.*").Find(&result)
+		if err != nil {
+			return err
+		}
+		query.Result = result
+		return nil
+	})
+}
+
+// InsertAlertRules is a handler for creating/updating alert rules.
+func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRule) (map[string]int64, error) {
+	ids := make(map[string]int64, len(rules))
+	return ids, st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		newRules := make([]ngmodels.AlertRule, 0, len(rules))
 		ruleVersions := make([]ngmodels.AlertRuleVersion, 0, len(rules))
-		for _, r := range rules {
-			if r.Existing == nil && r.New.UID != "" {
-				// check by UID
-				existingAlertRule, err := getAlertRuleByUID(sess, r.New.UID, r.New.OrgID)
+		for i := range rules {
+			r := rules[i]
+			if r.UID == "" {
+				uid, err := GenerateNewAlertRuleUID(sess, r.OrgID, r.Title)
 				if err != nil {
-					if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
-						return fmt.Errorf("failed to get alert rule %s: %w", r.New.UID, err)
+					return fmt.Errorf("failed to generate UID for alert rule %q: %w", r.Title, err)
+				}
+				r.UID = uid
+			}
+			r.Version = 1
+			if err := st.validateAlertRule(r); err != nil {
+				return err
+			}
+			if err := (&r).PreSave(TimeNow); err != nil {
+				return err
+			}
+			newRules = append(newRules, r)
+			ruleVersions = append(ruleVersions, ngmodels.AlertRuleVersion{
+				RuleUID:          r.UID,
+				RuleOrgID:        r.OrgID,
+				RuleNamespaceUID: r.NamespaceUID,
+				RuleGroup:        r.RuleGroup,
+				ParentVersion:    0,
+				Version:          r.Version,
+				Created:          r.Updated,
+				Condition:        r.Condition,
+				Title:            r.Title,
+				Data:             r.Data,
+				IntervalSeconds:  r.IntervalSeconds,
+				NoDataState:      r.NoDataState,
+				ExecErrState:     r.ExecErrState,
+				For:              r.For,
+				Annotations:      r.Annotations,
+				Labels:           r.Labels,
+			})
+		}
+		if len(newRules) > 0 {
+			// we have to insert the rules one by one as otherwise we are
+			// not able to fetch the inserted id as it's not supported by xorm
+			for i := range newRules {
+				if _, err := sess.Insert(&newRules[i]); err != nil {
+					if st.SQLStore.Dialect.IsUniqueConstraintViolation(err) {
+						return ngmodels.ErrAlertRuleUniqueConstraintViolation
 					}
-					return err
+					return fmt.Errorf("failed to create new rules: %w", err)
 				}
-				r.Existing = existingAlertRule
+				ids[newRules[i].UID] = newRules[i].ID
 			}
+		}
 
+		if len(ruleVersions) > 0 {
+			if _, err := sess.Insert(&ruleVersions); err != nil {
+				return fmt.Errorf("failed to create new rule versions: %w", err)
+			}
+		}
+		return nil
+	})
+}
+
+// UpdateAlertRules is a handler for updating alert rules.
+func (st DBstore) UpdateAlertRules(ctx context.Context, rules []UpdateRule) error {
+	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		ruleVersions := make([]ngmodels.AlertRuleVersion, 0, len(rules))
+		for _, r := range rules {
 			var parentVersion int64
-			switch r.Existing {
-			case nil: // new rule
-				uid, err := GenerateNewAlertRuleUID(sess, r.New.OrgID, r.New.Title)
-				if err != nil {
-					return fmt.Errorf("failed to generate UID for alert rule %q: %w", r.New.Title, err)
-				}
-				r.New.UID = uid
-
-				if r.New.IntervalSeconds == 0 {
-					r.New.IntervalSeconds = int64(st.DefaultInterval.Seconds())
-				}
-
-				r.New.Version = 1
-
-				if r.New.NoDataState == "" {
-					// set default no data state
-					r.New.NoDataState = ngmodels.NoData
-				}
-
-				if r.New.ExecErrState == "" {
-					// set default error state
-					r.New.ExecErrState = ngmodels.AlertingErrState
-				}
-
-				if err := st.validateAlertRule(r.New); err != nil {
-					return err
-				}
-
-				if err := (&r.New).PreSave(TimeNow); err != nil {
-					return err
-				}
-
-				newRules = append(newRules, r.New)
-			default:
-				// explicitly set the existing properties if missing
-				// do not rely on xorm
-				if r.New.Title == "" {
-					r.New.Title = r.Existing.Title
-				}
-
-				if r.New.Condition == "" {
-					r.New.Condition = r.Existing.Condition
-				}
-
-				if len(r.New.Data) == 0 {
-					r.New.Data = r.Existing.Data
-				}
-
-				r.New.ID = r.Existing.ID
-				r.New.OrgID = r.Existing.OrgID
-				r.New.NamespaceUID = r.Existing.NamespaceUID
-				r.New.RuleGroup = r.Existing.RuleGroup
-				r.New.Version = r.Existing.Version + 1
-
-				if r.New.ExecErrState == "" {
-					r.New.ExecErrState = r.Existing.ExecErrState
-				}
-
-				if r.New.NoDataState == "" {
-					r.New.NoDataState = r.Existing.NoDataState
-				}
-
-				if err := st.validateAlertRule(r.New); err != nil {
-					return err
-				}
-
-				if err := (&r.New).PreSave(TimeNow); err != nil {
-					return err
-				}
-
-				// no way to update multiple rules at once
-				if _, err := sess.ID(r.Existing.ID).AllCols().Update(r.New); err != nil {
-					return fmt.Errorf("failed to update rule %s: %w", r.New.Title, err)
-				}
-
-				parentVersion = r.Existing.Version
+			r.New.ID = r.Existing.ID
+			r.New.Version = r.Existing.Version // xorm will take care of increasing it (see https://xorm.io/docs/chapter-06/1.lock/)
+			if err := st.validateAlertRule(r.New); err != nil {
+				return err
 			}
-
+			if err := (&r.New).PreSave(TimeNow); err != nil {
+				return err
+			}
+			// no way to update multiple rules at once
+			if updated, err := sess.ID(r.Existing.ID).AllCols().Update(r.New); err != nil || updated == 0 {
+				if err != nil {
+					if st.SQLStore.Dialect.IsUniqueConstraintViolation(err) {
+						return ngmodels.ErrAlertRuleUniqueConstraintViolation
+					}
+					return fmt.Errorf("failed to update rule [%s] %s: %w", r.New.UID, r.New.Title, err)
+				}
+				return fmt.Errorf("%w: alert rule UID %s version %d", ErrOptimisticLock, r.New.UID, r.New.Version)
+			}
+			parentVersion = r.Existing.Version
 			ruleVersions = append(ruleVersions, ngmodels.AlertRuleVersion{
 				RuleOrgID:        r.New.OrgID,
 				RuleUID:          r.New.UID,
 				RuleNamespaceUID: r.New.NamespaceUID,
 				RuleGroup:        r.New.RuleGroup,
 				ParentVersion:    parentVersion,
-				Version:          r.New.Version,
+				Version:          r.New.Version + 1,
 				Created:          r.New.Updated,
 				Condition:        r.New.Condition,
 				Title:            r.New.Title,
@@ -300,91 +243,49 @@ func (st DBstore) UpsertAlertRules(rules []UpsertRule) error {
 				Labels:           r.New.Labels,
 			})
 		}
-
-		if len(newRules) > 0 {
-			if _, err := sess.Insert(&newRules); err != nil {
-				return fmt.Errorf("failed to create new rules: %w", err)
-			}
-		}
-
 		if len(ruleVersions) > 0 {
 			if _, err := sess.Insert(&ruleVersions); err != nil {
 				return fmt.Errorf("failed to create new rule versions: %w", err)
 			}
 		}
-
 		return nil
 	})
 }
 
-// GetOrgAlertRules is a handler for retrieving alert rules of specific organisation.
-func (st DBstore) GetOrgAlertRules(query *ngmodels.ListAlertRulesQuery) error {
-	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		alertRules := make([]*ngmodels.AlertRule, 0)
-		q := "SELECT * FROM alert_rule WHERE org_id = ?"
-		params := []interface{}{query.OrgID}
+// ListAlertRules is a handler for retrieving alert rules of specific organisation.
+func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) error {
+	return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		q := sess.Table("alert_rule")
+
+		if query.OrgID >= 0 {
+			q = q.Where("org_id = ?", query.OrgID)
+		}
+
+		if query.DashboardUID != "" {
+			q = q.Where("dashboard_uid = ?", query.DashboardUID)
+			if query.PanelID != 0 {
+				q = q.Where("panel_id = ?", query.PanelID)
+			}
+		}
 
 		if len(query.NamespaceUIDs) > 0 {
-			placeholders := make([]string, 0, len(query.NamespaceUIDs))
-			for _, folderUID := range query.NamespaceUIDs {
-				params = append(params, folderUID)
-				placeholders = append(placeholders, "?")
+			args := make([]interface{}, 0, len(query.NamespaceUIDs))
+			in := make([]string, 0, len(query.NamespaceUIDs))
+			for _, namespaceUID := range query.NamespaceUIDs {
+				args = append(args, namespaceUID)
+				in = append(in, "?")
 			}
-			q = fmt.Sprintf("%s AND namespace_uid IN (%s)", q, strings.Join(placeholders, ","))
+			q = q.Where(fmt.Sprintf("namespace_uid IN (%s)", strings.Join(in, ",")), args...)
 		}
 
-		if query.DashboardUID != "" {
-			params = append(params, query.DashboardUID)
-			q = fmt.Sprintf("%s AND dashboard_uid = ?", q)
-			if query.PanelID != 0 {
-				params = append(params, query.PanelID)
-				q = fmt.Sprintf("%s AND panel_id = ?", q)
-			}
+		if query.RuleGroup != "" {
+			q = q.Where("rule_group = ?", query.RuleGroup)
 		}
 
-		q = fmt.Sprintf("%s ORDER BY id ASC", q)
-
-		if err := sess.SQL(q, params...).Find(&alertRules); err != nil {
-			return err
-		}
-
-		query.Result = alertRules
-		return nil
-	})
-}
-
-// GetNamespaceAlertRules is a handler for retrieving namespace alert rules of specific organisation.
-func (st DBstore) GetNamespaceAlertRules(query *ngmodels.ListNamespaceAlertRulesQuery) error {
-	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		alertRules := make([]*ngmodels.AlertRule, 0)
-		// TODO rewrite using group by namespace_uid, rule_group
-		q := "SELECT * FROM alert_rule WHERE org_id = ? and namespace_uid = ?"
-		if err := sess.SQL(q, query.OrgID, query.NamespaceUID).Find(&alertRules); err != nil {
-			return err
-		}
-
-		query.Result = alertRules
-		return nil
-	})
-}
-
-// GetRuleGroupAlertRules is a handler for retrieving rule group alert rules of specific organisation.
-func (st DBstore) GetRuleGroupAlertRules(query *ngmodels.ListRuleGroupAlertRulesQuery) error {
-	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		q := "SELECT * FROM alert_rule WHERE org_id = ? and namespace_uid = ? and rule_group = ?"
-		args := []interface{}{query.OrgID, query.NamespaceUID, query.RuleGroup}
-
-		if query.DashboardUID != "" {
-			q = fmt.Sprintf("%s and dashboard_uid = ?", q)
-			args = append(args, query.DashboardUID)
-			if query.PanelID != 0 {
-				q = fmt.Sprintf("%s and panel_id = ?", q)
-				args = append(args, query.PanelID)
-			}
-		}
+		q = q.OrderBy("id ASC")
 
 		alertRules := make([]*ngmodels.AlertRule, 0)
-		if err := sess.SQL(q, args...).Find(&alertRules); err != nil {
+		if err := q.Find(&alertRules); err != nil {
 			return err
 		}
 
@@ -393,24 +294,71 @@ func (st DBstore) GetRuleGroupAlertRules(query *ngmodels.ListRuleGroupAlertRules
 	})
 }
 
-// GetNamespaces returns the folders that are visible to the user
-func (st DBstore) GetNamespaces(ctx context.Context, orgID int64, user *models.SignedInUser) (map[string]*models.Folder, error) {
-	s := dashboards.NewFolderService(orgID, user, st.SQLStore)
+func (st DBstore) GetRuleGroups(ctx context.Context, query *ngmodels.ListRuleGroupsQuery) error {
+	return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		ruleGroups := make([]string, 0)
+		if err := sess.Table("alert_rule").Distinct("rule_group").Find(&ruleGroups); err != nil {
+			return err
+		}
+		query.Result = ruleGroups
+		return nil
+	})
+}
+
+func (st DBstore) GetRuleGroupInterval(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string) (int64, error) {
+	var interval int64 = 0
+	return interval, st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		ruleGroups := make([]ngmodels.AlertRule, 0)
+		err := sess.Find(
+			&ruleGroups,
+			ngmodels.AlertRule{OrgID: orgID, RuleGroup: ruleGroup, NamespaceUID: namespaceUID},
+		)
+		if len(ruleGroups) == 0 {
+			return ErrAlertRuleGroupNotFound
+		}
+		interval = ruleGroups[0].IntervalSeconds
+		return err
+	})
+}
+
+// GetUserVisibleNamespaces returns the folders that are visible to the user and have at least one alert in it
+func (st DBstore) GetUserVisibleNamespaces(ctx context.Context, orgID int64, user *models.SignedInUser) (map[string]*models.Folder, error) {
 	namespaceMap := make(map[string]*models.Folder)
+
+	searchQuery := models.FindPersistedDashboardsQuery{
+		OrgId:        orgID,
+		SignedInUser: user,
+		Type:         searchstore.TypeAlertFolder,
+		Limit:        -1,
+		Permission:   models.PERMISSION_VIEW,
+		Sort:         models.SortOption{},
+		Filters: []interface{}{
+			searchstore.FolderWithAlertsFilter{},
+		},
+	}
+
 	var page int64 = 1
 	for {
-		// if limit is negative; it fetches at most 1000
-		folders, err := s.GetFolders(ctx, -1, page)
+		query := searchQuery
+		query.Page = page
+		proj, err := st.DashboardService.FindDashboards(ctx, &query)
 		if err != nil {
 			return nil, err
 		}
 
-		if len(folders) == 0 {
+		if len(proj) == 0 {
 			break
 		}
 
-		for _, f := range folders {
-			namespaceMap[f.Uid] = f
+		for _, hit := range proj {
+			if !hit.IsFolder {
+				continue
+			}
+			namespaceMap[hit.UID] = &models.Folder{
+				Id:    hit.ID,
+				Uid:   hit.UID,
+				Title: hit.Title,
+			}
 		}
 		page += 1
 	}
@@ -419,17 +367,17 @@ func (st DBstore) GetNamespaces(ctx context.Context, orgID int64, user *models.S
 
 // GetNamespaceByTitle is a handler for retrieving a namespace by its title. Alerting rules follow a Grafana folder-like structure which we call namespaces.
 func (st DBstore) GetNamespaceByTitle(ctx context.Context, namespace string, orgID int64, user *models.SignedInUser, withCanSave bool) (*models.Folder, error) {
-	s := dashboards.NewFolderService(orgID, user, st.SQLStore)
-	folder, err := s.GetFolderByTitle(ctx, namespace)
+	folder, err := st.FolderService.GetFolderByTitle(ctx, user, orgID, namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	if withCanSave {
+	// if access control is disabled, check that the user is allowed to save in the folder.
+	if withCanSave && st.AccessControl.IsDisabled() {
 		g := guardian.New(ctx, folder.Id, orgID, user)
 		if canSave, err := g.CanSave(); err != nil || !canSave {
 			if err != nil {
-				st.Logger.Error("checking can save permission has failed", "userId", user.UserId, "username", user.Login, "namespace", namespace, "orgId", orgID, "error", err)
+				st.Logger.Error("checking can save permission has failed", "userId", user.UserId, "username", user.Login, "namespace", namespace, "orgId", orgID, "err", err)
 			}
 			return nil, ngmodels.ErrCannotEditNamespace
 		}
@@ -438,16 +386,19 @@ func (st DBstore) GetNamespaceByTitle(ctx context.Context, namespace string, org
 	return folder, nil
 }
 
-// GetAlertRulesForScheduling returns alert rule info (identifier, interval, version state)
-// that is useful for it's scheduling.
-func (st DBstore) GetAlertRulesForScheduling(query *ngmodels.ListAlertRulesQuery) error {
-	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		alerts := make([]*ngmodels.AlertRule, 0)
-		q := "SELECT uid, org_id, interval_seconds, version FROM alert_rule"
-		if len(query.ExcludeOrgs) > 0 {
-			q = fmt.Sprintf("%s WHERE org_id NOT IN (%s)", q, strings.Join(strings.Split(strings.Trim(fmt.Sprint(query.ExcludeOrgs), "[]"), " "), ","))
+// GetAlertRulesForScheduling returns a short version of all alert rules except those that belong to an excluded list of organizations
+func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodels.GetAlertRulesForSchedulingQuery) error {
+	return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		alerts := make([]*ngmodels.SchedulableAlertRule, 0)
+		q := sess.Table("alert_rule")
+		if len(query.ExcludeOrgIDs) > 0 {
+			excludeOrgs := make([]interface{}, 0, len(query.ExcludeOrgIDs))
+			for _, orgID := range query.ExcludeOrgIDs {
+				excludeOrgs = append(excludeOrgs, orgID)
+			}
+			q = q.NotIn("org_id", excludeOrgs...)
 		}
-		if err := sess.SQL(q).Find(&alerts); err != nil {
+		if err := q.Find(&alerts); err != nil {
 			return err
 		}
 		query.Result = alerts
@@ -485,8 +436,8 @@ func (st DBstore) validateAlertRule(alertRule ngmodels.AlertRule) error {
 		return fmt.Errorf("%w: title is empty", ngmodels.ErrAlertRuleFailedValidation)
 	}
 
-	if alertRule.IntervalSeconds%int64(st.BaseInterval.Seconds()) != 0 || alertRule.IntervalSeconds <= 0 {
-		return fmt.Errorf("%w: interval (%v) should be non-zero and divided exactly by scheduler interval: %v", ngmodels.ErrAlertRuleFailedValidation, time.Duration(alertRule.IntervalSeconds)*time.Second, st.BaseInterval)
+	if err := ngmodels.ValidateRuleGroupInterval(alertRule.IntervalSeconds, int64(st.BaseInterval.Seconds())); err != nil {
+		return err
 	}
 
 	// enfore max name length in SQLite
@@ -507,146 +458,13 @@ func (st DBstore) validateAlertRule(alertRule ngmodels.AlertRule) error {
 		return fmt.Errorf("%w: cannot have Panel ID without a Dashboard UID", ngmodels.ErrAlertRuleFailedValidation)
 	}
 
+	if _, err := ngmodels.ErrStateFromString(string(alertRule.ExecErrState)); err != nil {
+		return err
+	}
+
+	if _, err := ngmodels.NoDataStateFromString(string(alertRule.NoDataState)); err != nil {
+		return err
+	}
+
 	return nil
-}
-
-// UpdateRuleGroup creates new rules and updates and/or deletes existing rules
-func (st DBstore) UpdateRuleGroup(cmd UpdateRuleGroupCmd) error {
-	return st.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		ruleGroup := cmd.RuleGroupConfig.Name
-		q := &ngmodels.ListRuleGroupAlertRulesQuery{
-			OrgID:        cmd.OrgID,
-			NamespaceUID: cmd.NamespaceUID,
-			RuleGroup:    ruleGroup,
-		}
-		if err := st.GetRuleGroupAlertRules(q); err != nil {
-			return err
-		}
-		existingGroupRules := q.Result
-
-		existingGroupRulesUIDs := make(map[string]ngmodels.AlertRule, len(existingGroupRules))
-		for _, r := range existingGroupRules {
-			existingGroupRulesUIDs[r.UID] = *r
-		}
-
-		upsertRules := make([]UpsertRule, 0)
-		for _, r := range cmd.RuleGroupConfig.Rules {
-			if r.GrafanaManagedAlert == nil {
-				continue
-			}
-
-			newAlertRule := ngmodels.AlertRule{
-				OrgID:           cmd.OrgID,
-				Title:           r.GrafanaManagedAlert.Title,
-				Condition:       r.GrafanaManagedAlert.Condition,
-				Data:            r.GrafanaManagedAlert.Data,
-				UID:             r.GrafanaManagedAlert.UID,
-				IntervalSeconds: int64(time.Duration(cmd.RuleGroupConfig.Interval).Seconds()),
-				NamespaceUID:    cmd.NamespaceUID,
-				RuleGroup:       ruleGroup,
-				NoDataState:     ngmodels.NoDataState(r.GrafanaManagedAlert.NoDataState),
-				ExecErrState:    ngmodels.ExecutionErrorState(r.GrafanaManagedAlert.ExecErrState),
-			}
-
-			if r.ApiRuleNode != nil {
-				newAlertRule.For = time.Duration(r.ApiRuleNode.For)
-				newAlertRule.Annotations = r.ApiRuleNode.Annotations
-				newAlertRule.Labels = r.ApiRuleNode.Labels
-			}
-
-			if s := newAlertRule.Annotations[ngmodels.DashboardUIDAnnotation]; s != "" {
-				newAlertRule.DashboardUID = &s
-			}
-
-			if s := newAlertRule.Annotations[ngmodels.PanelIDAnnotation]; s != "" {
-				panelID, err := strconv.ParseInt(s, 10, 64)
-				if err != nil {
-					return fmt.Errorf("the %s annotation does not contain a valid Panel ID: %w", ngmodels.PanelIDAnnotation, err)
-				}
-				newAlertRule.PanelID = &panelID
-			}
-
-			upsertRule := UpsertRule{
-				New: newAlertRule,
-			}
-
-			if existingGroupRule, ok := existingGroupRulesUIDs[r.GrafanaManagedAlert.UID]; ok {
-				upsertRule.Existing = &existingGroupRule
-				// remove the rule from existingGroupRulesUIDs
-				delete(existingGroupRulesUIDs, r.GrafanaManagedAlert.UID)
-			}
-			upsertRules = append(upsertRules, upsertRule)
-		}
-
-		if err := st.UpsertAlertRules(upsertRules); err != nil {
-			if st.SQLStore.Dialect.IsUniqueConstraintViolation(err) {
-				return ngmodels.ErrAlertRuleUniqueConstraintViolation
-			}
-			return err
-		}
-
-		// delete instances for rules that will not be removed
-		for _, rule := range existingGroupRules {
-			if _, ok := existingGroupRulesUIDs[rule.UID]; !ok {
-				if err := st.DeleteAlertInstancesByRuleUID(cmd.OrgID, rule.UID); err != nil {
-					return err
-				}
-			}
-		}
-
-		// delete the remaining rules
-		for ruleUID := range existingGroupRulesUIDs {
-			if err := st.DeleteAlertRuleByUID(cmd.OrgID, ruleUID); err != nil {
-				return err
-			}
-		}
-		return nil
-	})
-}
-
-func (st DBstore) GetOrgRuleGroups(query *ngmodels.ListOrgRuleGroupsQuery) error {
-	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		var ruleGroups [][]string
-		q := `
-SELECT DISTINCT
-	rule_group,
-	namespace_uid,
-	(
-		SELECT title
-		FROM dashboard
-		WHERE
-			org_id = alert_rule.org_id AND
-			uid = alert_rule.namespace_uid
-	) AS namespace_title
-FROM alert_rule
-WHERE org_id = ?`
-		params := []interface{}{query.OrgID}
-
-		if len(query.NamespaceUIDs) > 0 {
-			placeholders := make([]string, 0, len(query.NamespaceUIDs))
-			for _, folderUID := range query.NamespaceUIDs {
-				params = append(params, folderUID)
-				placeholders = append(placeholders, "?")
-			}
-			q = fmt.Sprintf(" %s AND namespace_uid IN (%s)", q, strings.Join(placeholders, ","))
-		}
-
-		if query.DashboardUID != "" {
-			q = fmt.Sprintf("%s and dashboard_uid = ?", q)
-			params = append(params, query.DashboardUID)
-			if query.PanelID != 0 {
-				q = fmt.Sprintf("%s and panel_id = ?", q)
-				params = append(params, query.PanelID)
-			}
-		}
-
-		q = fmt.Sprintf(" %s ORDER BY namespace_title", q)
-
-		if err := sess.SQL(q, params...).Find(&ruleGroups); err != nil {
-			return err
-		}
-
-		query.Result = ruleGroups
-		return nil
-	})
 }

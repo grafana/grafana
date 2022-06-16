@@ -55,6 +55,8 @@ export interface DashboardViewEventPayload extends DashboardInfo {
  */
 export interface DataRequestEventPayload extends DataRequestInfo {
   eventName: MetaAnalyticsEventName.DataRequest;
+  totalQueries?: number;
+  cachedQueries?: number;
 }
 
 /**

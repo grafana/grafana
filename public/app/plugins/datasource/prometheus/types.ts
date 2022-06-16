@@ -1,5 +1,7 @@
 import { DataQuery, DataSourceJsonData, QueryResultMeta, ScopedVars } from '@grafana/data';
 
+import { QueryEditorMode } from './querybuilder/shared/types';
+
 export interface PromQuery extends DataQuery {
   expr: string;
   format?: string;
@@ -16,6 +18,8 @@ export interface PromQuery extends DataQuery {
   requestId?: string;
   showingGraph?: boolean;
   showingTable?: boolean;
+  /** Code, Builder or Explain */
+  editorMode?: QueryEditorMode;
 }
 
 export interface PromOptions extends DataSourceJsonData {
@@ -147,4 +151,15 @@ export interface PromLabelQueryResponse {
     data: string[];
   };
   cancelled?: boolean;
+}
+
+/**
+ * Auto = query.legendFormat == '__auto'
+ * Verbose = query.legendFormat == null/undefined/''
+ * Custom query.legendFormat.length > 0 && query.legendFormat !== '__auto'
+ */
+export enum LegendFormatMode {
+  Auto = '__auto',
+  Verbose = '__verbose',
+  Custom = '__custom',
 }

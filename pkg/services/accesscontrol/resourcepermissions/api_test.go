@@ -17,6 +17,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -24,7 +26,7 @@ import (
 type getDescriptionTestCase struct {
 	desc           string
 	options        Options
-	permissions    []*accesscontrol.Permission
+	permissions    []accesscontrol.Permission
 	expected       Description
 	expectedStatus int
 }
@@ -34,7 +36,8 @@ func TestApi_getDescription(t *testing.T) {
 		{
 			desc: "should return description",
 			options: Options{
-				Resource: "dashboards",
+				Resource:          "dashboards",
+				ResourceAttribute: "uid",
 				Assignments: Assignments{
 					Users:        true,
 					Teams:        true,
@@ -46,7 +49,7 @@ func TestApi_getDescription(t *testing.T) {
 					"Admin": {"dashboards:read", "dashboards:write", "dashboards:delete", "dashboards.permissions:read", "dashboards:permissions:write"},
 				},
 			},
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: "dashboards.permissions:read"},
 			},
 			expected: Description{
@@ -62,7 +65,8 @@ func TestApi_getDescription(t *testing.T) {
 		{
 			desc: "should only return user assignment",
 			options: Options{
-				Resource: "dashboards",
+				Resource:          "dashboards",
+				ResourceAttribute: "uid",
 				Assignments: Assignments{
 					Users:        true,
 					Teams:        false,
@@ -72,7 +76,7 @@ func TestApi_getDescription(t *testing.T) {
 					"View": {"dashboards:read"},
 				},
 			},
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: "dashboards.permissions:read"},
 			},
 			expected: Description{
@@ -88,7 +92,8 @@ func TestApi_getDescription(t *testing.T) {
 		{
 			desc: "should return 403 when missing read permission",
 			options: Options{
-				Resource: "dashboards",
+				Resource:          "dashboards",
+				ResourceAttribute: "uid",
 				Assignments: Assignments{
 					Users:        true,
 					Teams:        false,
@@ -98,7 +103,7 @@ func TestApi_getDescription(t *testing.T) {
 					"View": {"dashboards:read"},
 				},
 			},
-			permissions:    []*accesscontrol.Permission{},
+			permissions:    []accesscontrol.Permission{},
 			expected:       Description{},
 			expectedStatus: http.StatusForbidden,
 		},
@@ -127,22 +132,26 @@ func TestApi_getDescription(t *testing.T) {
 type getPermissionsTestCase struct {
 	desc           string
 	resourceID     string
-	permissions    []*accesscontrol.Permission
+	permissions    []accesscontrol.Permission
 	expectedStatus int
 }
 
 func TestApi_getPermissions(t *testing.T) {
 	tests := []getPermissionsTestCase{
 		{
-			desc:           "expect permissions for resource with id 1",
-			resourceID:     "1",
-			permissions:    []*accesscontrol.Permission{{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"}},
+			desc:       "expect permissions for resource with id 1",
+			resourceID: "1",
+			permissions: []accesscontrol.Permission{
+				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
+				{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
+				{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
+			},
 			expectedStatus: 200,
 		},
 		{
 			desc:           "expect http status 403 when missing permission",
 			resourceID:     "1",
-			permissions:    []*accesscontrol.Permission{},
+			permissions:    []accesscontrol.Permission{},
 			expectedStatus: 403,
 		},
 	}
@@ -150,37 +159,15 @@ func TestApi_getPermissions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			service, sql := setupTestEnvironment(t, tt.permissions, testOptions)
-			server := setupTestServer(t, &models.SignedInUser{OrgId: 1}, service)
+			server := setupTestServer(t, &models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}, service)
 
-			// seed team 1 with "Edit" permission on dashboard 1
-			team, err := sql.CreateTeam("test", "test@test.com", 1)
-			require.NoError(t, err)
-			_, err = service.SetTeamPermission(context.Background(), team.OrgId, team.Id, tt.resourceID, []string{"dashboards:read", "dashboards:write", "dashboards:delete"})
-			require.NoError(t, err)
-			// seed user 1 with "View" permission on dashboard 1
-			u, err := sql.CreateUser(context.Background(), models.CreateUserCommand{Login: "test", OrgId: 1})
-			require.NoError(t, err)
-			_, err = service.SetUserPermission(context.Background(), u.OrgId, u.Id, tt.resourceID, []string{"dashboards:read"})
-			require.NoError(t, err)
-
-			// seed built in role Admin with "View" permission on dashboard 1
-			_, err = service.SetBuiltInRolePermission(context.Background(), 1, "Admin", tt.resourceID, []string{"dashboards:read", "dashboards:write", "dashboards:delete"})
-			require.NoError(t, err)
+			seedPermissions(t, tt.resourceID, sql, service)
 
 			permissions, recorder := getPermission(t, server, testOptions.Resource, tt.resourceID)
 			assert.Equal(t, tt.expectedStatus, recorder.Code)
 
 			if tt.expectedStatus == http.StatusOK {
-				assert.Len(t, permissions, 3, "expected three assignments: user, team, builtin")
-				for _, p := range permissions {
-					if p.UserID != 0 {
-						assert.Equal(t, "View", p.Permission)
-					} else if p.TeamID != 0 {
-						assert.Equal(t, "Edit", p.Permission)
-					} else {
-						assert.Equal(t, "Edit", p.Permission)
-					}
-				}
+				checkSeededPermissions(t, permissions)
 			}
 		})
 	}
@@ -192,7 +179,7 @@ type setBuiltinPermissionTestCase struct {
 	builtInRole    string
 	expectedStatus int
 	permission     string
-	permissions    []*accesscontrol.Permission
+	permissions    []accesscontrol.Permission
 }
 
 func TestApi_setBuiltinRolePermission(t *testing.T) {
@@ -203,9 +190,11 @@ func TestApi_setBuiltinRolePermission(t *testing.T) {
 			builtInRole:    "Viewer",
 			expectedStatus: 200,
 			permission:     "Edit",
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
 				{Action: "dashboards.permissions:write", Scope: "dashboards:id:1"},
+				{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
+				{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
 			},
 		},
 		{
@@ -214,9 +203,11 @@ func TestApi_setBuiltinRolePermission(t *testing.T) {
 			builtInRole:    "Admin",
 			expectedStatus: 200,
 			permission:     "View",
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
 				{Action: "dashboards.permissions:write", Scope: "dashboards:id:1"},
+				{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
+				{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
 			},
 		},
 		{
@@ -225,7 +216,7 @@ func TestApi_setBuiltinRolePermission(t *testing.T) {
 			builtInRole:    "Invalid",
 			expectedStatus: http.StatusBadRequest,
 			permission:     "View",
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
 				{Action: "dashboards.permissions:write", Scope: "dashboards:id:1"},
 			},
@@ -236,7 +227,7 @@ func TestApi_setBuiltinRolePermission(t *testing.T) {
 			builtInRole:    "Invalid",
 			expectedStatus: http.StatusForbidden,
 			permission:     "View",
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
 			},
 		},
@@ -245,7 +236,7 @@ func TestApi_setBuiltinRolePermission(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			service, _ := setupTestEnvironment(t, tt.permissions, testOptions)
-			server := setupTestServer(t, &models.SignedInUser{OrgId: 1}, service)
+			server := setupTestServer(t, &models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}, service)
 
 			recorder := setPermission(t, server, testOptions.Resource, tt.resourceID, tt.permission, "builtInRoles", tt.builtInRole)
 			assert.Equal(t, tt.expectedStatus, recorder.Code)
@@ -266,7 +257,7 @@ type setTeamPermissionTestCase struct {
 	resourceID     string
 	expectedStatus int
 	permission     string
-	permissions    []*accesscontrol.Permission
+	permissions    []accesscontrol.Permission
 }
 
 func TestApi_setTeamPermission(t *testing.T) {
@@ -277,9 +268,11 @@ func TestApi_setTeamPermission(t *testing.T) {
 			resourceID:     "1",
 			expectedStatus: 200,
 			permission:     "Edit",
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
 				{Action: "dashboards.permissions:write", Scope: "dashboards:id:1"},
+				{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
+				{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
 			},
 		},
 		{
@@ -288,9 +281,11 @@ func TestApi_setTeamPermission(t *testing.T) {
 			resourceID:     "1",
 			expectedStatus: 200,
 			permission:     "View",
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
 				{Action: "dashboards.permissions:write", Scope: "dashboards:id:1"},
+				{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
+				{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
 			},
 		},
 		{
@@ -299,7 +294,7 @@ func TestApi_setTeamPermission(t *testing.T) {
 			resourceID:     "1",
 			expectedStatus: http.StatusBadRequest,
 			permission:     "View",
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
 				{Action: "dashboards.permissions:write", Scope: "dashboards:id:1"},
 			},
@@ -310,7 +305,7 @@ func TestApi_setTeamPermission(t *testing.T) {
 			resourceID:     "1",
 			expectedStatus: http.StatusForbidden,
 			permission:     "View",
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
 			},
 		},
@@ -319,7 +314,7 @@ func TestApi_setTeamPermission(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			service, sql := setupTestEnvironment(t, tt.permissions, testOptions)
-			server := setupTestServer(t, &models.SignedInUser{OrgId: 1}, service)
+			server := setupTestServer(t, &models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}, service)
 
 			// seed team
 			_, err := sql.CreateTeam("test", "test@test.com", 1)
@@ -345,7 +340,7 @@ type setUserPermissionTestCase struct {
 	resourceID     string
 	expectedStatus int
 	permission     string
-	permissions    []*accesscontrol.Permission
+	permissions    []accesscontrol.Permission
 }
 
 func TestApi_setUserPermission(t *testing.T) {
@@ -356,9 +351,11 @@ func TestApi_setUserPermission(t *testing.T) {
 			resourceID:     "1",
 			expectedStatus: 200,
 			permission:     "Edit",
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
 				{Action: "dashboards.permissions:write", Scope: "dashboards:id:1"},
+				{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
+				{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
 			},
 		},
 		{
@@ -367,9 +364,11 @@ func TestApi_setUserPermission(t *testing.T) {
 			resourceID:     "1",
 			expectedStatus: 200,
 			permission:     "View",
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
 				{Action: "dashboards.permissions:write", Scope: "dashboards:id:1"},
+				{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
+				{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
 			},
 		},
 		{
@@ -378,7 +377,7 @@ func TestApi_setUserPermission(t *testing.T) {
 			resourceID:     "1",
 			expectedStatus: http.StatusBadRequest,
 			permission:     "View",
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
 				{Action: "dashboards.permissions:write", Scope: "dashboards:id:1"},
 			},
@@ -389,7 +388,7 @@ func TestApi_setUserPermission(t *testing.T) {
 			resourceID:     "1",
 			expectedStatus: http.StatusForbidden,
 			permission:     "View",
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
 			},
 		},
@@ -398,7 +397,7 @@ func TestApi_setUserPermission(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			service, sql := setupTestEnvironment(t, tt.permissions, testOptions)
-			server := setupTestServer(t, &models.SignedInUser{OrgId: 1}, service)
+			server := setupTestServer(t, &models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}, service)
 
 			// seed user
 			_, err := sql.CreateUser(context.Background(), models.CreateUserCommand{Login: "test", OrgId: 1})
@@ -440,12 +439,13 @@ func contextProvider(tc *testContext) web.Handler {
 			SkipCache:    true,
 			Logger:       log.New("test"),
 		}
-		c.Map(reqCtx)
+		c.Req = c.Req.WithContext(ctxkey.Set(c.Req.Context(), reqCtx))
 	}
 }
 
 var testOptions = Options{
-	Resource: "dashboards",
+	Resource:          "dashboards",
+	ResourceAttribute: "id",
 	Assignments: Assignments{
 		Users:        true,
 		Teams:        true,
@@ -479,4 +479,34 @@ func setPermission(t *testing.T, server *web.Mux, resource, resourceID, permissi
 	server.ServeHTTP(recorder, req)
 
 	return recorder
+}
+
+func checkSeededPermissions(t *testing.T, permissions []resourcePermissionDTO) {
+	assert.Len(t, permissions, 3, "expected three assignments: user, team, builtin")
+	for _, p := range permissions {
+		if p.UserID != 0 {
+			assert.Equal(t, "View", p.Permission)
+		} else if p.TeamID != 0 {
+			assert.Equal(t, "Edit", p.Permission)
+		} else {
+			assert.Equal(t, "Edit", p.Permission)
+		}
+	}
+}
+
+func seedPermissions(t *testing.T, resourceID string, sql *sqlstore.SQLStore, service *Service) {
+	t.Helper()
+	// seed team 1 with "Edit" permission on dashboard 1
+	team, err := sql.CreateTeam("test", "test@test.com", 1)
+	require.NoError(t, err)
+	_, err = service.SetTeamPermission(context.Background(), team.OrgId, team.Id, resourceID, "Edit")
+	require.NoError(t, err)
+	// seed user 1 with "View" permission on dashboard 1
+	u, err := sql.CreateUser(context.Background(), models.CreateUserCommand{Login: "test", OrgId: 1})
+	require.NoError(t, err)
+	_, err = service.SetUserPermission(context.Background(), u.OrgId, accesscontrol.User{ID: u.Id}, resourceID, "View")
+	require.NoError(t, err)
+	// seed built in role Admin with "Edit" permission on dashboard 1
+	_, err = service.SetBuiltInRolePermission(context.Background(), 1, "Admin", resourceID, "Edit")
+	require.NoError(t, err)
 }

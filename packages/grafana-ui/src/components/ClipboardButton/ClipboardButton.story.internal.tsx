@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
 import { Story, Meta } from '@storybook/react';
+import React, { useState } from 'react';
+
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { ClipboardButton, Props } from './ClipboardButton';
 import { Input } from '../Forms/Legacy/Input/Input';
+
+import { ClipboardButton, Props } from './ClipboardButton';
 import mdx from './ClipboardButton.mdx';
 
 export default {

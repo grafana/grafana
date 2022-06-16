@@ -1,23 +1,25 @@
 import React, { ReactElement } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
+
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
-
-import { VariableModel } from '../types';
-import { VariableIdentifier } from '../state/types';
-import { UsagesToNetwork, VariableUsageTree } from '../inspect/utils';
-import { VariableEditorListRow } from './VariableEditorListRow';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
+
+import { UsagesToNetwork, VariableUsageTree } from '../inspect/utils';
+import { KeyedVariableIdentifier } from '../state/types';
+import { VariableModel } from '../types';
+
+import { VariableEditorListRow } from './VariableEditorListRow';
 
 export interface Props {
   variables: VariableModel[];
   usages: VariableUsageTree[];
   usagesNetwork: UsagesToNetwork[];
   onAdd: () => void;
-  onEdit: (identifier: VariableIdentifier) => void;
-  onChangeOrder: (identifier: VariableIdentifier, fromIndex: number, toIndex: number) => void;
-  onDuplicate: (identifier: VariableIdentifier) => void;
-  onDelete: (identifier: VariableIdentifier) => void;
+  onEdit: (identifier: KeyedVariableIdentifier) => void;
+  onChangeOrder: (identifier: KeyedVariableIdentifier, fromIndex: number, toIndex: number) => void;
+  onDuplicate: (identifier: KeyedVariableIdentifier) => void;
+  onDelete: (identifier: KeyedVariableIdentifier) => void;
 }
 
 export function VariableEditorList({

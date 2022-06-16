@@ -4,8 +4,8 @@
 /*
  * Escapes `"` characters from string
  */
-function escapeString(str: string): string {
-  return str.replace('"', '"');
+export function formatString(str: string): string {
+  return str.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 }
 
 /*
@@ -62,7 +62,7 @@ export function getValuePreview(object: object, value: string): string {
   }
 
   if (type === 'string') {
-    value = '"' + escapeString(value) + '"';
+    value = '"' + formatString(value) + '"';
   }
   if (type === 'function') {
     // Remove content of the function

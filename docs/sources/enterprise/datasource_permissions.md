@@ -1,15 +1,26 @@
-+++
-title = "Data source permissions"
-description = "Grafana Datasource Permissions Guide "
-keywords = ["grafana", "configuration", "documentation", "datasource", "permissions", "users", "teams", "enterprise"]
-weight = 500
-+++
+---
+aliases:
+  - /docs/grafana/latest/enterprise/datasource_permissions/
+  - /docs/sources/permissions/datasource_permissions/
+description: Grafana Datasource Permissions Guide
+keywords:
+  - grafana
+  - configuration
+  - documentation
+  - datasource
+  - permissions
+  - users
+  - teams
+  - enterprise
+title: Data source permissions
+weight: 500
+---
 
 # Data source permissions
 
 Data source permissions allow you to restrict access for users to query a data source. For each data source there is a permission page that allows you to enable permissions and restrict query permissions to specific **Users** and **Teams**.
 
-> Only available in Grafana Enterprise.
+> **Note:** Available in [Grafana Enterprise]({{< relref "../enterprise" >}}) and [Grafana Cloud Pro and Advanced]({{< ref "/docs/grafana-cloud" >}}).
 
 ## Enable data source permissions
 
@@ -18,7 +29,7 @@ Data source permissions allow you to restrict access for users to query a data s
 By default, data sources in an organization can be queried by any user in that organization. For example, a user with the `Viewer` role can issue any possible query to a data source, not just
 queries that exist on dashboards they have access to.
 
-When permissions are enabled for a data source in an organization, you restrict admin and query access for that data source to [admin users]({{< relref "../permissions/organization_roles/#admin-role" >}}) in that organization.
+When permissions are enabled for a data source in an organization, the user who created the datasource can edit the datasource and in addition, viewers can query the datasource.
 
 **Enable permissions for a data source:**
 

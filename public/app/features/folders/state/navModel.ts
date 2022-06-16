@@ -1,6 +1,6 @@
 import { NavModel, NavModelItem } from '@grafana/data';
-
-import { FolderDTO } from 'app/types';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction, FolderDTO } from 'app/types';
 
 export function buildNavModel(folder: FolderDTO): NavModelItem {
   const model = {
@@ -28,6 +28,16 @@ export function buildNavModel(folder: FolderDTO): NavModelItem {
     text: 'Panels',
     url: `${folder.url}/library-panels`,
   });
+
+  if (contextSrv.hasPermission(AccessControlAction.AlertingRuleRead)) {
+    model.children.push({
+      active: false,
+      icon: 'bell',
+      id: `folder-alerting-${folder.uid}`,
+      text: 'Alert rules',
+      url: `${folder.url}/alerting`,
+    });
+  }
 
   if (folder.canAdmin) {
     model.children.push({
@@ -61,6 +71,7 @@ export function getLoadingNav(tabIndex: number): NavModel {
     canSave: true,
     canEdit: true,
     canAdmin: true,
+    canDelete: true,
     version: 0,
   });
 

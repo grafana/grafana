@@ -14,6 +14,11 @@
 
 import { createSelector, createStructuredSelector } from 'reselect';
 
+import TreeNode from '../utils/TreeNode';
+import { formatMillisecondTime, formatSecondTime, ONE_SECOND } from '../utils/date';
+import { numberSortComparator } from '../utils/sort';
+
+import { getProcessServiceName } from './process';
 import {
   getSpanId,
   getSpanName,
@@ -22,10 +27,6 @@ import {
   getSpanDuration,
   getSpanProcessId,
 } from './span';
-import { getProcessServiceName } from './process';
-import { formatMillisecondTime, formatSecondTime, ONE_SECOND } from '../utils/date';
-import { numberSortComparator } from '../utils/sort';
-import TreeNode from '../utils/TreeNode';
 
 export const getTraceId = (trace) => trace.traceID;
 

@@ -11,9 +11,7 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -44,7 +42,135 @@ func TestDiscordNotifier(t *testing.T) {
 				},
 			},
 			expMsg: map[string]interface{}{
-				"content": "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
+				"content": "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
+				"embeds": []interface{}{map[string]interface{}{
+					"color": 1.4037554e+07,
+					"footer": map[string]interface{}{
+						"icon_url": "https://grafana.com/assets/img/fav32.png",
+						"text":     "Grafana v" + setting.BuildVersion,
+					},
+					"title": "[FIRING:1]  (val1)",
+					"url":   "http://localhost/alerting/list",
+					"type":  "rich",
+				}},
+				"username": "Grafana",
+			},
+			expMsgError: nil,
+		},
+		{
+			name: "Missing field in template",
+			settings: `{
+				"avatar_url": "https://grafana.com/assets/img/fav32.png",
+				"url": "http://localhost",
+				"message": "I'm a custom template {{ .NotAField }} bad template"
+			}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1"},
+					},
+				},
+			},
+			expMsg: map[string]interface{}{
+				"avatar_url": "https://grafana.com/assets/img/fav32.png",
+				"content":    "I'm a custom template ",
+				"embeds": []interface{}{map[string]interface{}{
+					"color": 1.4037554e+07,
+					"footer": map[string]interface{}{
+						"icon_url": "https://grafana.com/assets/img/fav32.png",
+						"text":     "Grafana v" + setting.BuildVersion,
+					},
+					"title": "[FIRING:1]  (val1)",
+					"url":   "http://localhost/alerting/list",
+					"type":  "rich",
+				}},
+				"username": "Grafana",
+			},
+			expMsgError: nil,
+		},
+		{
+			name: "Invalid message template",
+			settings: `{
+				"avatar_url": "https://grafana.com/assets/img/fav32.png",
+				"url": "http://localhost",
+				"message": "{{ template \"invalid.template\" }}"
+			}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1"},
+					},
+				},
+			},
+			expMsg: map[string]interface{}{
+				"avatar_url": "https://grafana.com/assets/img/fav32.png",
+				"content":    "",
+				"embeds": []interface{}{map[string]interface{}{
+					"color": 1.4037554e+07,
+					"footer": map[string]interface{}{
+						"icon_url": "https://grafana.com/assets/img/fav32.png",
+						"text":     "Grafana v" + setting.BuildVersion,
+					},
+					"title": "[FIRING:1]  (val1)",
+					"url":   "http://localhost/alerting/list",
+					"type":  "rich",
+				}},
+				"username": "Grafana",
+			},
+			expMsgError: nil,
+		},
+		{
+			name: "Invalid avatar URL template",
+			settings: `{
+				"avatar_url": "{{ invalid } }}",
+				"url": "http://localhost",
+				"message": "valid message"
+			}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1"},
+					},
+				},
+			},
+			expMsg: map[string]interface{}{
+				"avatar_url": "{{ invalid } }}",
+				"content":    "valid message",
+				"embeds": []interface{}{map[string]interface{}{
+					"color": 1.4037554e+07,
+					"footer": map[string]interface{}{
+						"icon_url": "https://grafana.com/assets/img/fav32.png",
+						"text":     "Grafana v" + setting.BuildVersion,
+					},
+					"title": "[FIRING:1]  (val1)",
+					"url":   "http://localhost/alerting/list",
+					"type":  "rich",
+				}},
+				"username": "Grafana",
+			},
+			expMsgError: nil,
+		},
+		{
+			name: "Invalid URL template",
+			settings: `{
+				"avatar_url": "https://grafana.com/assets/img/fav32.png",
+				"url": "http://localhost?q={{invalid }}}",
+				"message": "valid message"
+			}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1"},
+					},
+				},
+			},
+			expMsg: map[string]interface{}{
+				"avatar_url": "https://grafana.com/assets/img/fav32.png",
+				"content":    "valid message",
 				"embeds": []interface{}{map[string]interface{}{
 					"color": 1.4037554e+07,
 					"footer": map[string]interface{}{
@@ -99,7 +225,7 @@ func TestDiscordNotifier(t *testing.T) {
 		{
 			name:         "Error in initialization",
 			settings:     `{}`,
-			expInitError: `failed to validate receiver "discord_testing" of type "discord": could not find webhook url property in settings`,
+			expInitError: `could not find webhook url property in settings`,
 		},
 		{
 			name: "Default config with one alert, use default discord username",
@@ -116,7 +242,7 @@ func TestDiscordNotifier(t *testing.T) {
 				},
 			},
 			expMsg: map[string]interface{}{
-				"content": "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
+				"content": "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
 				"embeds": []interface{}{map[string]interface{}{
 					"color": 1.4037554e+07,
 					"footer": map[string]interface{}{
@@ -143,21 +269,18 @@ func TestDiscordNotifier(t *testing.T) {
 				Settings: settingsJson,
 			}
 
-			dn, err := NewDiscordNotifier(m, tmpl)
+			webhookSender := mockNotificationService()
+			cfg, err := NewDiscordConfig(m)
 			if c.expInitError != "" {
 				require.Equal(t, c.expInitError, err.Error())
 				return
 			}
 			require.NoError(t, err)
-
-			body := ""
-			bus.AddHandler("test", func(ctx context.Context, webhook *models.SendWebhookSync) error {
-				body = webhook.Body
-				return nil
-			})
+			imageStore := &UnavailableImageStore{}
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
+			dn := NewDiscordNotifier(cfg, webhookSender, imageStore, tmpl)
 			ok, err := dn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.False(t, ok)
@@ -171,7 +294,7 @@ func TestDiscordNotifier(t *testing.T) {
 			expBody, err := json.Marshal(c.expMsg)
 			require.NoError(t, err)
 
-			require.JSONEq(t, string(expBody), body)
+			require.JSONEq(t, string(expBody), webhookSender.Webhook.Body)
 		})
 	}
 }

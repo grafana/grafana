@@ -1,5 +1,6 @@
-import { LogLevel, LogsModel, LogRowModel, LogsSortOrder } from '../types/logs';
 import { MutableDataFrame } from '../dataframe/MutableDataFrame';
+import { LogLevel, LogsModel, LogRowModel, LogsSortOrder } from '../types/logs';
+
 import {
   getLogLevel,
   calculateLogsLabelStats,
@@ -358,12 +359,12 @@ describe('sortLogsResult', () => {
 });
 
 describe('checkLogsError()', () => {
-  const log = ({
+  const log = {
     labels: {
       __error__: 'Error Message',
       foo: 'boo',
     },
-  } as any) as LogRowModel;
+  } as any as LogRowModel;
   test('should return correct error if error is present', () => {
     expect(checkLogsError(log)).toStrictEqual({ hasError: true, errorMessage: 'Error Message' });
   });

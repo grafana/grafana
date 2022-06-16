@@ -40,8 +40,8 @@ export class CopyPanelEvent extends BusEventWithPayload<PanelModel> {
 let singletonInstance: EventBus;
 
 /**
- * Used during startup by Grafana to set the LocationSrv so it is available
- * via the {@link getLocationSrv} to the rest of the application.
+ * Used during startup by Grafana to set the setAppEvents so it is available
+ * via the {@link setAppEvents} to the rest of the application.
  *
  * @internal
  */

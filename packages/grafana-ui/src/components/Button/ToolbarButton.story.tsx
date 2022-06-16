@@ -1,9 +1,12 @@
 import React from 'react';
+
 import { ToolbarButton, ButtonGroup, VerticalGroup, HorizontalGroup } from '@grafana/ui';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { ToolbarButtonRow } from './ToolbarButtonRow';
-import { ToolbarButtonVariant } from './ToolbarButton';
+
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+
+import { ToolbarButtonVariant } from './ToolbarButton';
+import { ToolbarButtonRow } from './ToolbarButtonRow';
 
 export default {
   title: 'Buttons/ToolbarButton',

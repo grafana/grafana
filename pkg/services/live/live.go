@@ -9,20 +9,11 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
-	jsoniter "github.com/json-iterator/go"
-
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/query"
-
-	"github.com/centrifugal/centrifuge"
-	"github.com/go-redis/redis/v8"
-	"github.com/gobwas/glob"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/live"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -33,7 +24,11 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/comments/commentmodel"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/live/database"
 	"github.com/grafana/grafana/pkg/services/live/features"
 	"github.com/grafana/grafana/pkg/services/live/livecontext"
@@ -44,11 +39,19 @@ import (
 	"github.com/grafana/grafana/pkg/services/live/pushws"
 	"github.com/grafana/grafana/pkg/services/live/runstream"
 	"github.com/grafana/grafana/pkg/services/live/survey"
+	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
+
+	"github.com/centrifugal/centrifuge"
+	"github.com/go-redis/redis/v8"
+	"github.com/gobwas/glob"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/live"
+	jsoniter "github.com/json-iterator/go"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -68,7 +71,8 @@ type CoreGrafanaScope struct {
 func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, routeRegister routing.RouteRegister,
 	pluginStore plugins.Store, cacheService *localcache.CacheService,
 	dataSourceCache datasources.CacheService, sqlStore *sqlstore.SQLStore, secretsService secrets.Service,
-	usageStatsService usagestats.Service, queryDataService *query.Service, toggles *featuremgmt.FeatureToggles) (*GrafanaLive, error) {
+	usageStatsService usagestats.Service, queryDataService *query.Service, toggles featuremgmt.FeatureToggles,
+	accessControl accesscontrol.AccessControl, dashboardService dashboards.DashboardService) (*GrafanaLive, error) {
 	g := &GrafanaLive{
 		Cfg:                   cfg,
 		Features:              toggles,
@@ -176,7 +180,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	}
 
 	g.ManagedStreamRunner = managedStreamRunner
-	if g.Features.IsLivePipelineEnabled() {
+	if g.Features.IsEnabled(featuremgmt.FlagLivePipeline) {
 		var builder pipeline.RuleBuilder
 		if os.Getenv("GF_LIVE_DEV_BUILDER") != "" {
 			builder = &pipeline.DevRuleBuilder{
@@ -206,7 +210,8 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		// This can be unreasonable to have in production scenario with many
 		// organizations.
 		orgQuery := &models.SearchOrgsQuery{}
-		err := sqlstore.SearchOrgs(context.Background(), orgQuery)
+
+		err := sqlStore.SearchOrgs(context.Background(), orgQuery)
 		if err != nil {
 			return nil, fmt.Errorf("can't get org list: %w", err)
 		}
@@ -223,20 +228,23 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		}
 	}
 
-	g.contextGetter = liveplugin.NewContextGetter(g.PluginContextProvider)
+	g.contextGetter = liveplugin.NewContextGetter(g.PluginContextProvider, g.DataSourceCache)
 	pipelinedChannelLocalPublisher := liveplugin.NewChannelLocalPublisher(node, g.Pipeline)
 	numLocalSubscribersGetter := liveplugin.NewNumLocalSubscribersGetter(node)
 	g.runStreamManager = runstream.NewManager(pipelinedChannelLocalPublisher, numLocalSubscribersGetter, g.contextGetter)
 
 	// Initialize the main features
 	dash := &features.DashboardHandler{
-		Publisher:   g.Publish,
-		ClientCount: g.ClientCount,
+		Publisher:        g.Publish,
+		ClientCount:      g.ClientCount,
+		Store:            sqlStore,
+		DashboardService: dashboardService,
 	}
 	g.storage = database.NewStorage(g.SQLStore, g.CacheService)
 	g.GrafanaScope.Dashboards = dash
 	g.GrafanaScope.Features["dashboard"] = dash
 	g.GrafanaScope.Features["broadcast"] = features.NewBroadcastRunner(g.storage)
+	g.GrafanaScope.Features["comment"] = features.NewCommentHandler(commentmodel.NewPermissionChecker(g.SQLStore, g.Features, accessControl, dashboardService))
 
 	g.surveyCaller = survey.NewCaller(managedStreamRunner, node)
 	err = g.surveyCaller.SetupHandlers()
@@ -393,7 +401,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 type GrafanaLive struct {
 	PluginContextProvider *plugincontext.Provider
 	Cfg                   *setting.Cfg
-	Features              *featuremgmt.FeatureToggles
+	Features              featuremgmt.FeatureToggles
 	RouteRegister         routing.RouteRegister
 	CacheService          *localcache.CacheService
 	DataSourceCache       datasources.CacheService
@@ -1035,14 +1043,14 @@ func (g *GrafanaLive) HandleListHTTP(c *models.ReqContext) response.Response {
 	info := streamChannelListResponse{
 		Channels: channels,
 	}
-	return response.JSONStreaming(200, info)
+	return response.JSONStreaming(http.StatusOK, info)
 }
 
 // HandleInfoHTTP special http response for
 func (g *GrafanaLive) HandleInfoHTTP(ctx *models.ReqContext) response.Response {
 	path := web.Params(ctx.Req)["*"]
 	if path == "grafana/dashboards/gitops" {
-		return response.JSON(200, util.DynMap{
+		return response.JSON(http.StatusOK, util.DynMap{
 			"active": g.GrafanaScope.Dashboards.HasGitOpsObserver(ctx.SignedInUser.OrgId),
 		})
 	}
@@ -1359,6 +1367,11 @@ func handleLog(msg centrifuge.LogEntry) {
 func (g *GrafanaLive) sampleLiveStats() {
 	numClients := g.node.Hub().NumClients()
 	numUsers := g.node.Hub().NumUsers()
+	numChannels := g.node.Hub().NumChannels()
+	var numNodes int
+	if info, err := g.node.Info(); err == nil {
+		numNodes = len(info.Nodes)
+	}
 
 	g.usageStats.sampleCount++
 	g.usageStats.numClientsSum += numClients
@@ -1368,16 +1381,16 @@ func (g *GrafanaLive) sampleLiveStats() {
 		g.usageStats.numClientsMax = numClients
 	}
 
-	if numClients < g.usageStats.numClientsMin {
-		g.usageStats.numClientsMin = numClients
-	}
-
 	if numUsers > g.usageStats.numUsersMax {
 		g.usageStats.numUsersMax = numUsers
 	}
 
-	if numUsers < g.usageStats.numUsersMin {
-		g.usageStats.numUsersMin = numUsers
+	if numNodes > g.usageStats.numNodesMax {
+		g.usageStats.numNodesMax = numNodes
+	}
+
+	if numChannels > g.usageStats.numChannelsMax {
+		g.usageStats.numChannelsMax = numChannels
 	}
 }
 
@@ -1385,38 +1398,65 @@ func (g *GrafanaLive) resetLiveStats() {
 	g.usageStats = usageStats{}
 }
 
+func getHistogramMetric(val int, bounds []int, metricPrefix string) string {
+	for _, bound := range bounds {
+		if val <= bound {
+			return metricPrefix + "le_" + strconv.Itoa(bound)
+		}
+	}
+	return metricPrefix + "le_inf"
+}
+
+func (g *GrafanaLive) collectLiveStats(_ context.Context) (map[string]interface{}, error) {
+	liveUsersAvg := 0
+	liveClientsAvg := 0
+
+	if g.usageStats.sampleCount > 0 {
+		liveUsersAvg = g.usageStats.numUsersSum / g.usageStats.sampleCount
+		liveClientsAvg = g.usageStats.numClientsSum / g.usageStats.sampleCount
+	}
+
+	var liveEnabled int
+	if g.Cfg.LiveMaxConnections != 0 {
+		liveEnabled = 1
+	}
+
+	var liveHAEnabled int
+	if g.Cfg.LiveHAEngine != "" {
+		liveHAEnabled = 1
+	}
+
+	metrics := map[string]interface{}{
+		"stats.live_enabled.count":      liveEnabled,
+		"stats.live_ha_enabled.count":   liveHAEnabled,
+		"stats.live_samples.count":      g.usageStats.sampleCount,
+		"stats.live_users_max.count":    g.usageStats.numUsersMax,
+		"stats.live_users_avg.count":    liveUsersAvg,
+		"stats.live_clients_max.count":  g.usageStats.numClientsMax,
+		"stats.live_clients_avg.count":  liveClientsAvg,
+		"stats.live_channels_max.count": g.usageStats.numChannelsMax,
+		"stats.live_nodes_max.count":    g.usageStats.numNodesMax,
+	}
+
+	metrics[getHistogramMetric(g.usageStats.numClientsMax, []int{0, 10, 100, 1000, 10000, 100000}, "stats.live_clients_")] = 1
+	metrics[getHistogramMetric(g.usageStats.numUsersMax, []int{0, 10, 100, 1000, 10000, 100000}, "stats.live_users_")] = 1
+	metrics[getHistogramMetric(g.usageStats.numChannelsMax, []int{0, 10, 100, 1000, 10000, 100000}, "stats.live_channels_")] = 1
+	metrics[getHistogramMetric(g.usageStats.numNodesMax, []int{1, 3, 9}, "stats.live_nodes_")] = 1
+
+	return metrics, nil
+}
+
 func (g *GrafanaLive) registerUsageMetrics() {
 	g.usageStatsService.RegisterSendReportCallback(g.resetLiveStats)
-
-	g.usageStatsService.RegisterMetricsFunc(func(context.Context) (map[string]interface{}, error) {
-		liveUsersAvg := 0
-		liveClientsAvg := 0
-
-		if g.usageStats.sampleCount > 0 {
-			liveUsersAvg = g.usageStats.numUsersSum / g.usageStats.sampleCount
-			liveClientsAvg = g.usageStats.numClientsSum / g.usageStats.sampleCount
-		}
-
-		metrics := map[string]interface{}{
-			"stats.live_samples.count":     g.usageStats.sampleCount,
-			"stats.live_users_max.count":   g.usageStats.numUsersMax,
-			"stats.live_users_min.count":   g.usageStats.numUsersMin,
-			"stats.live_users_avg.count":   liveUsersAvg,
-			"stats.live_clients_max.count": g.usageStats.numClientsMax,
-			"stats.live_clients_min.count": g.usageStats.numClientsMin,
-			"stats.live_clients_avg.count": liveClientsAvg,
-		}
-
-		return metrics, nil
-	})
+	g.usageStatsService.RegisterMetricsFunc(g.collectLiveStats)
 }
 
 type usageStats struct {
-	numClientsMax int
-	numClientsMin int
-	numClientsSum int
-	numUsersMax   int
-	numUsersMin   int
-	numUsersSum   int
-	sampleCount   int
+	numClientsMax  int
+	numClientsSum  int
+	numUsersMax    int
+	numUsersSum    int
+	sampleCount    int
+	numNodesMax    int
+	numChannelsMax int
 }

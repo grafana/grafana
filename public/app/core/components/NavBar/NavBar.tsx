@@ -1,19 +1,24 @@
-import React, { FC, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import { css, cx } from '@emotion/css';
 import { cloneDeep } from 'lodash';
+import React, { useState } from 'react';
+import { connect, ConnectedProps } from 'react-redux';
+import { useLocation } from 'react-router-dom';
+
 import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
-import { Icon, IconName, useTheme2 } from '@grafana/ui';
 import { locationService } from '@grafana/runtime';
+import { Icon, IconName, useTheme2 } from '@grafana/ui';
 import { Branding } from 'app/core/components/Branding/Branding';
 import config from 'app/core/config';
-import { KioskMode } from 'app/types';
-import { enrichConfigItems, getActiveItem, isMatchOrChildMatch, isSearchActive, SEARCH_ITEM_ID } from './utils';
+import { getKioskMode } from 'app/core/navigation/kiosk';
+import { KioskMode, StoreState } from 'app/types';
+
 import { OrgSwitcher } from '../OrgSwitcher';
+
 import NavBarItem from './NavBarItem';
-import { NavBarSection } from './NavBarSection';
-import { NavBarMenu } from './NavBarMenu';
 import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
+import { NavBarMenu } from './NavBarMenu';
+import { NavBarSection } from './NavBarSection';
+import { enrichConfigItems, getActiveItem, isMatchOrChildMatch, isSearchActive, SEARCH_ITEM_ID } from './utils';
 
 const homeUrl = config.appSubUrl || '/';
 
@@ -28,17 +33,26 @@ const searchItem: NavModelItem = {
   icon: 'search',
 };
 
-export const NavBar: FC = React.memo(() => {
+const mapStateToProps = (state: StoreState) => ({
+  navBarTree: state.navBarTree,
+});
+
+const mapDispatchToProps = {};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+export interface Props extends ConnectedProps<typeof connector> {}
+
+export const NavBarUnconnected = React.memo(({ navBarTree }: Props) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
   const location = useLocation();
-  const query = new URLSearchParams(location.search);
-  const kiosk = query.get('kiosk') as KioskMode;
+  const kiosk = getKioskMode();
   const [showSwitcherModal, setShowSwitcherModal] = useState(false);
   const toggleSwitcherModal = () => {
     setShowSwitcherModal(!showSwitcherModal);
   };
-  const navTree: NavModelItem[] = cloneDeep(config.bootData.navTree);
+  const navTree = cloneDeep(navBarTree);
   const topItems = navTree.filter((item) => item.section === NavSection.Core);
   const bottomItems = enrichConfigItems(
     navTree.filter((item) => item.section === NavSection.Config),
@@ -49,7 +63,7 @@ export const NavBar: FC = React.memo(() => {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  if (kiosk !== null) {
+  if (kiosk !== KioskMode.Off) {
     return null;
   }
 
@@ -109,7 +123,9 @@ export const NavBar: FC = React.memo(() => {
   );
 });
 
-NavBar.displayName = 'NavBar';
+NavBarUnconnected.displayName = 'NavBar';
+
+export const NavBar = connector(NavBarUnconnected);
 
 const getStyles = (theme: GrafanaTheme2) => ({
   search: css`

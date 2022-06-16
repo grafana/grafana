@@ -1,8 +1,11 @@
-import React from 'react';
 import { render } from '@testing-library/react';
-import { GrafanaRoute } from './GrafanaRoute';
+import React from 'react';
+
 import { setEchoSrv } from '@grafana/runtime';
+
 import { Echo } from '../services/echo/Echo';
+
+import { GrafanaRoute } from './GrafanaRoute';
 
 describe('GrafanaRoute', () => {
   beforeEach(() => {

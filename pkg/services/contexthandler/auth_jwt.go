@@ -3,7 +3,6 @@ package contexthandler
 import (
 	"errors"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/models"
 )
@@ -67,13 +66,13 @@ func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64)
 			SignupAllowed: h.Cfg.JWTAuthAutoSignUp,
 			ExternalUser:  extUser,
 		}
-		if err := bus.Dispatch(ctx.Req.Context(), upsert); err != nil {
+		if err := h.loginService.UpsertUser(ctx.Req.Context(), upsert); err != nil {
 			ctx.Logger.Error("Failed to upsert JWT user", "error", err)
 			return false
 		}
 	}
 
-	if err := bus.Dispatch(ctx.Req.Context(), &query); err != nil {
+	if err := h.SQLStore.GetSignedInUserWithCacheCtx(ctx.Req.Context(), &query); err != nil {
 		if errors.Is(err, models.ErrUserNotFound) {
 			ctx.Logger.Debug(
 				"Failed to find user using JWT claims",

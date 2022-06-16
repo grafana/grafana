@@ -1,6 +1,8 @@
 import React, { PropsWithChildren, useMemo } from 'react';
+
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+
 import { VariableSelectField } from '../editor/VariableSelectField';
 import { VariableRefresh } from '../types';
 
@@ -24,7 +26,7 @@ export function QueryVariableRefreshSelect({ onChange, refresh }: PropsWithChild
       options={REFRESH_OPTIONS}
       onChange={onChange}
       labelWidth={10}
-      ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRefreshSelect}
+      testId={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRefreshSelectV2}
       tooltip="When to update the values of this variable."
     />
   );

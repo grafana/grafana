@@ -1,53 +1,43 @@
-import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
-import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
-import React, { FC, useMemo } from 'react';
-import { Field, Select, useStyles2 } from '@grafana/ui';
-import { getAllDataSources } from '../utils/config';
 import { css } from '@emotion/css';
+import React, { FC, useMemo } from 'react';
+
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Field, Select, useStyles2 } from '@grafana/ui';
+
+import { AlertManagerDataSource, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 interface Props {
   onChange: (alertManagerSourceName: string) => void;
   current?: string;
   disabled?: boolean;
+  dataSources: AlertManagerDataSource[];
 }
 
-export const AlertManagerPicker: FC<Props> = ({ onChange, current, disabled = false }) => {
+function getAlertManagerLabel(alertManager: AlertManagerDataSource) {
+  return alertManager.name === GRAFANA_RULES_SOURCE_NAME ? 'Grafana' : alertManager.name.slice(0, 37);
+}
+
+export const AlertManagerPicker: FC<Props> = ({ onChange, current, dataSources, disabled = false }) => {
   const styles = useStyles2(getStyles);
 
   const options: Array<SelectableValue<string>> = useMemo(() => {
-    return [
-      {
-        label: 'Grafana',
-        value: GRAFANA_RULES_SOURCE_NAME,
-        imgUrl: 'public/img/grafana_icon.svg',
-        meta: {},
-      },
-      ...getAllDataSources()
-        .filter((ds) => ds.type === DataSourceType.Alertmanager)
-        .map((ds) => ({
-          label: ds.name.substr(0, 37),
-          value: ds.name,
-          imgUrl: ds.meta.info.logos.small,
-          meta: ds.meta,
-        })),
-    ];
-  }, []);
-
-  // no need to show the picker if there's only one option
-  if (options.length === 1) {
-    return null;
-  }
+    return dataSources.map((ds) => ({
+      label: getAlertManagerLabel(ds),
+      value: ds.name,
+      imgUrl: ds.imgUrl,
+      meta: ds.meta,
+    }));
+  }, [dataSources]);
 
   return (
     <Field
       className={styles.field}
       label={disabled ? 'Alertmanager' : 'Choose Alertmanager'}
-      disabled={disabled}
+      disabled={disabled || options.length === 1}
       data-testid="alertmanager-picker"
     >
       <Select
         aria-label={disabled ? 'Alertmanager' : 'Choose Alertmanager'}
-        menuShouldPortal
         width={29}
         className="ds-picker select-container"
         backspaceRemovesValue={false}

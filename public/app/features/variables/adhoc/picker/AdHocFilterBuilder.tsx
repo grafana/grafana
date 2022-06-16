@@ -1,6 +1,8 @@
 import React, { FC, useCallback, useState } from 'react';
-import { AdHocVariableFilter } from 'app/features/variables/types';
+
 import { DataSourceRef, SelectableValue } from '@grafana/data';
+import { AdHocVariableFilter } from 'app/features/variables/types';
+
 import { AdHocFilterKey, REMOVE_FILTER_KEY } from './AdHocFilterKey';
 import { AdHocFilterRenderer } from './AdHocFilterRenderer';
 
@@ -26,9 +28,10 @@ export const AdHocFilterBuilder: FC<Props> = ({ datasource, appendBefore, onComp
     [setKey]
   );
 
-  const onOperatorChanged = useCallback((item: SelectableValue<string>) => setOperator(item.value ?? ''), [
-    setOperator,
-  ]);
+  const onOperatorChanged = useCallback(
+    (item: SelectableValue<string>) => setOperator(item.value ?? ''),
+    [setOperator]
+  );
 
   const onValueChanged = useCallback(
     (item: SelectableValue<string>) => {

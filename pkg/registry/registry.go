@@ -29,6 +29,18 @@ type BackgroundService interface {
 	Run(ctx context.Context) error
 }
 
+// UsageStatsProvidersRegistry provides services sharing their usage stats
+type UsageStatsProvidersRegistry interface {
+	GetServices() []ProvidesUsageStats
+}
+
+// ProvidesUsageStats is an interface for services that share their usage stats
+type ProvidesUsageStats interface {
+	// GetUsageStats is called on a schedule by the UsageStatsService
+	// Any errors occurring during usage stats collection should be collected and logged within the provider.
+	GetUsageStats(ctx context.Context) map[string]interface{}
+}
+
 // DatabaseMigrator allows the caller to add migrations to
 // the migrator passed as argument
 type DatabaseMigrator interface {

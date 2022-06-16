@@ -1,7 +1,9 @@
-import React, { FC } from 'react';
-import { SelectableValue } from '@grafana/data';
-import { HorizontalGroup, InlineLabel, PopoverContent, Select, InlineField } from '@grafana/ui';
 import { css } from '@emotion/css';
+import React, { FC } from 'react';
+
+import { SelectableValue } from '@grafana/data';
+import { HorizontalGroup, InlineField, InlineLabel, PopoverContent, Select } from '@grafana/ui';
+
 import { INNER_LABEL_WIDTH, LABEL_WIDTH } from '../constants';
 
 interface VariableQueryFieldProps {
@@ -22,7 +24,6 @@ export const VariableQueryField: FC<VariableQueryFieldProps> = ({
   return (
     <InlineField label={label} labelWidth={20}>
       <Select
-        menuShouldPortal
         width={25}
         allowCustomValue={allowCustomValue}
         value={value}
@@ -41,6 +42,7 @@ export interface Props {
   noFillEnd?: boolean;
   labelWidth?: number;
   fillComponent?: React.ReactNode;
+  htmlFor?: string;
 }
 
 export const QueryEditorRow: FC<Props> = ({
@@ -50,12 +52,13 @@ export const QueryEditorRow: FC<Props> = ({
   fillComponent,
   noFillEnd = false,
   labelWidth = LABEL_WIDTH,
+  htmlFor,
   ...rest
 }) => {
   return (
     <div className="gf-form" {...rest}>
       {label && (
-        <InlineLabel width={labelWidth} tooltip={tooltip}>
+        <InlineLabel width={labelWidth} tooltip={tooltip} htmlFor={htmlFor}>
           {label}
         </InlineLabel>
       )}

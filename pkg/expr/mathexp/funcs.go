@@ -53,6 +53,21 @@ var builtins = map[string]parse.Func{
 		VariantReturn: true,
 		F:             isNumber,
 	},
+	"round": {
+		Args:          []parse.ReturnType{parse.TypeVariantSet},
+		VariantReturn: true,
+		F:             round,
+	},
+	"ceil": {
+		Args:          []parse.ReturnType{parse.TypeVariantSet},
+		VariantReturn: true,
+		F:             ceil,
+	},
+	"floor": {
+		Args:          []parse.ReturnType{parse.TypeVariantSet},
+		VariantReturn: true,
+		F:             floor,
+	},
 }
 
 // abs returns the absolute value for each result in NumberSet, SeriesSet, or Scalar
@@ -211,9 +226,7 @@ func perFloat(e *State, val Value, floatF func(x float64) float64) (Value, error
 			if f != nil {
 				nF = floatF(*f)
 			}
-			if err := newSeries.SetPoint(i, t, &nF); err != nil {
-				return newSeries, err
-			}
+			newSeries.SetPoint(i, t, &nF)
 		}
 		newVal = newSeries
 	default:
@@ -242,9 +255,7 @@ func perNullableFloat(e *State, val Value, floatF func(x *float64) *float64) (Va
 		newSeries := NewSeries(e.RefID, resSeries.GetLabels(), resSeries.Len())
 		for i := 0; i < resSeries.Len(); i++ {
 			t, f := resSeries.GetPoint(i)
-			if err := newSeries.SetPoint(i, t, floatF(f)); err != nil {
-				return newSeries, err
-			}
+			newSeries.SetPoint(i, t, floatF(f))
 		}
 		newVal = newSeries
 	default:
@@ -252,4 +263,43 @@ func perNullableFloat(e *State, val Value, floatF func(x *float64) *float64) (Va
 	}
 
 	return newVal, nil
+}
+
+// round returns the rounded value for each result in NumberSet, SeriesSet, or Scalar
+func round(e *State, varSet Results) (Results, error) {
+	newRes := Results{}
+	for _, res := range varSet.Values {
+		newVal, err := perFloat(e, res, math.Round)
+		if err != nil {
+			return newRes, err
+		}
+		newRes.Values = append(newRes.Values, newVal)
+	}
+	return newRes, nil
+}
+
+// ceil returns the rounded up value for each result in NumberSet, SeriesSet, or Scalar
+func ceil(e *State, varSet Results) (Results, error) {
+	newRes := Results{}
+	for _, res := range varSet.Values {
+		newVal, err := perFloat(e, res, math.Ceil)
+		if err != nil {
+			return newRes, err
+		}
+		newRes.Values = append(newRes.Values, newVal)
+	}
+	return newRes, nil
+}
+
+// floor returns the rounded down value for each result in NumberSet, SeriesSet, or Scalar
+func floor(e *State, varSet Results) (Results, error) {
+	newRes := Results{}
+	for _, res := range varSet.Values {
+		newVal, err := perFloat(e, res, math.Floor)
+		if err != nil {
+			return newRes, err
+		}
+		newRes.Values = append(newRes.Values, newVal)
+	}
+	return newRes, nil
 }

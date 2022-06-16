@@ -27,7 +27,7 @@ func TestSlackNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		_, err = NewSlackNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+		_, err = NewSlackNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 		assert.EqualError(t, err, "alert validation error: recipient must be specified when using the Slack chat API")
 	})
 
@@ -45,7 +45,7 @@ func TestSlackNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		not, err := NewSlackNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+		not, err := NewSlackNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 		require.NoError(t, err)
 		slackNotifier := not.(*SlackNotifier)
 		assert.Equal(t, "ops", slackNotifier.Name)
@@ -83,7 +83,7 @@ func TestSlackNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		not, err := NewSlackNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+		not, err := NewSlackNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 		require.NoError(t, err)
 		slackNotifier := not.(*SlackNotifier)
 		assert.Equal(t, "ops", slackNotifier.Name)
@@ -131,7 +131,7 @@ func TestSlackNotifier(t *testing.T) {
 			SecureSettings: securedSettingsJSON,
 		}
 
-		not, err := NewSlackNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+		not, err := NewSlackNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 		require.NoError(t, err)
 		slackNotifier := not.(*SlackNotifier)
 		assert.Equal(t, "ops", slackNotifier.Name)
@@ -162,7 +162,7 @@ func TestSlackNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		not, err := NewSlackNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+		not, err := NewSlackNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 		require.NoError(t, err)
 		slackNotifier := not.(*SlackNotifier)
 		assert.Equal(t, "1ABCDE", slackNotifier.recipient)
@@ -253,7 +253,7 @@ func TestSendSlackRequest(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := NewSlackNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+			not, err := NewSlackNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 			require.NoError(t, err)
 			slackNotifier := not.(*SlackNotifier)
 

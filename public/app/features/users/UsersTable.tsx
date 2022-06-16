@@ -1,11 +1,13 @@
 import React, { FC, useEffect, useState } from 'react';
-import { AccessControlAction, OrgUser, Role } from 'app/types';
-import { OrgRolePicker } from '../admin/OrgRolePicker';
-import { Button, ConfirmModal } from '@grafana/ui';
+
 import { OrgRole } from '@grafana/data';
-import { contextSrv } from 'app/core/core';
-import { fetchBuiltinRoles, fetchRoleOptions } from 'app/core/components/RolePicker/api';
+import { Button, ConfirmModal } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
+import { fetchBuiltinRoles, fetchRoleOptions } from 'app/core/components/RolePicker/api';
+import { contextSrv } from 'app/core/core';
+import { AccessControlAction, OrgUser, Role } from 'app/types';
+
+import { OrgRolePicker } from '../admin/OrgRolePicker';
 
 export interface Props {
   users: OrgUser[];
@@ -26,27 +28,23 @@ const UsersTable: FC<Props> = (props) => {
         if (contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
           let options = await fetchRoleOptions(orgId);
           setRoleOptions(options);
-        } else {
-          setRoleOptions([]);
         }
 
-        if (contextSrv.hasPermission(AccessControlAction.ActionBuiltinRolesList)) {
+        if (
+          contextSrv.accessControlBuiltInRoleAssignmentEnabled() &&
+          contextSrv.hasPermission(AccessControlAction.ActionBuiltinRolesList)
+        ) {
           const builtInRoles = await fetchBuiltinRoles(orgId);
           setBuiltinRoles(builtInRoles);
-        } else {
-          setBuiltinRoles({});
         }
       } catch (e) {
         console.error('Error loading options');
       }
     }
-    if (contextSrv.accessControlEnabled()) {
+    if (contextSrv.licensedAccessControlEnabled()) {
       fetchOptions();
     }
   }, [orgId]);
-
-  const getRoleOptions = async () => roleOptions;
-  const getBuiltinRoles = async () => builtinRoles;
 
   return (
     <>
@@ -88,21 +86,21 @@ const UsersTable: FC<Props> = (props) => {
                 <td className="width-1">{user.lastSeenAtAge}</td>
 
                 <td className="width-8">
-                  {contextSrv.accessControlEnabled() ? (
+                  {contextSrv.licensedAccessControlEnabled() ? (
                     <UserRolePicker
                       userId={user.userId}
                       orgId={orgId}
                       builtInRole={user.role}
                       onBuiltinRoleChange={(newRole) => onRoleChange(newRole, user)}
-                      getRoleOptions={getRoleOptions}
-                      getBuiltinRoles={getBuiltinRoles}
-                      disabled={!contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersRoleUpdate, user)}
+                      roleOptions={roleOptions}
+                      builtInRoles={builtinRoles}
+                      disabled={!contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersWrite, user)}
                     />
                   ) : (
                     <OrgRolePicker
                       aria-label="Role"
                       value={user.role}
-                      disabled={!contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersRoleUpdate, user)}
+                      disabled={!contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersWrite, user)}
                       onChange={(newRole) => onRoleChange(newRole, user)}
                     />
                   )}

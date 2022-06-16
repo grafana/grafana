@@ -1,9 +1,7 @@
 import { cloneDeep, upperFirst } from 'lodash';
-import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
-import AppInsightsDatasource from './app_insights/app_insights_datasource';
-import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analytics_datasource';
-import ResourcePickerData from './resourcePicker/resourcePickerData';
-import { AzureDataSourceJsonData, AzureMonitorQuery, AzureQueryType, DatasourceValidationResult } from './types';
+import { forkJoin, Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
+
 import {
   DataFrame,
   DataQueryRequest,
@@ -13,15 +11,17 @@ import {
   LoadingState,
   ScopedVars,
 } from '@grafana/data';
-import { forkJoin, Observable, of } from 'rxjs';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
-import InsightsAnalyticsDatasource from './insights_analytics/insights_analytics_datasource';
-import { datasourceMigrations } from './utils/migrateQuery';
-import { map } from 'rxjs/operators';
+
+import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analytics_datasource';
+import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
 import AzureResourceGraphDatasource from './azure_resource_graph/azure_resource_graph_datasource';
-import { getAzureCloud } from './credentials';
+import ResourcePickerData from './resourcePicker/resourcePickerData';
+import { AzureDataSourceJsonData, AzureMonitorQuery, AzureQueryType, DatasourceValidationResult } from './types';
 import migrateAnnotation from './utils/migrateAnnotation';
+import { datasourceMigrations } from './utils/migrateQuery';
 import { VariableSupport } from './variables';
+
 export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDataSourceJsonData> {
   annotations = {
     prepareAnnotation: migrateAnnotation,
@@ -31,18 +31,9 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
   azureLogAnalyticsDatasource: AzureLogAnalyticsDatasource;
   resourcePickerData: ResourcePickerData;
   azureResourceGraphDatasource: AzureResourceGraphDatasource;
-  /** @deprecated */
-  appInsightsDatasource?: AppInsightsDatasource;
-  /** @deprecated */
-  insightsAnalyticsDatasource?: InsightsAnalyticsDatasource;
 
   pseudoDatasource: {
-    [key in AzureQueryType]?:
-      | AzureMonitorDatasource
-      | AzureLogAnalyticsDatasource
-      | AzureResourceGraphDatasource
-      | AppInsightsDatasource
-      | InsightsAnalyticsDatasource;
+    [key in AzureQueryType]?: AzureMonitorDatasource | AzureLogAnalyticsDatasource | AzureResourceGraphDatasource;
   } = {};
 
   declare optionsKey: Record<AzureQueryType, string>;
@@ -62,15 +53,6 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
       [AzureQueryType.LogAnalytics]: this.azureLogAnalyticsDatasource,
       [AzureQueryType.AzureResourceGraph]: this.azureResourceGraphDatasource,
     };
-
-    const cloud = getAzureCloud(instanceSettings);
-    if (cloud === 'azuremonitor' || cloud === 'chinaazuremonitor') {
-      // AppInsights and InsightAnalytics are only supported for Public and Azure China clouds
-      this.appInsightsDatasource = new AppInsightsDatasource(instanceSettings);
-      this.insightsAnalyticsDatasource = new InsightsAnalyticsDatasource(instanceSettings);
-      this.pseudoDatasource[AzureQueryType.ApplicationInsights] = this.appInsightsDatasource;
-      this.pseudoDatasource[AzureQueryType.InsightsAnalytics] = this.insightsAnalyticsDatasource;
-    }
 
     this.variables = new VariableSupport(this);
   }
@@ -140,7 +122,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
   }
 
   targetContainsTemplate(query: AzureMonitorQuery) {
-    if (query.subscription && this.templateSrv.variableExists(query.subscription)) {
+    if (query.subscription && this.templateSrv.containsTemplate(query.subscription)) {
       return true;
     }
 
@@ -153,7 +135,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
       subQuery = JSON.stringify([query.azureResourceGraph, query.subscriptions]);
     }
 
-    return !!subQuery && this.templateSrv.variableExists(subQuery);
+    return !!subQuery && this.templateSrv.containsTemplate(subQuery);
   }
 
   async annotationQuery(options: any) {
@@ -165,10 +147,6 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
 
     promises.push(this.azureMonitorDatasource.testDatasource());
     promises.push(this.azureLogAnalyticsDatasource.testDatasource());
-
-    if (this.appInsightsDatasource?.isConfigured()) {
-      promises.push(this.appInsightsDatasource.testDatasource());
-    }
 
     return await Promise.all(promises).then((results) => {
       let status: 'success' | 'error' = 'success';
@@ -209,62 +187,6 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     );
   }
 
-  getMetricNames(
-    subscriptionId: string,
-    resourceGroup: string,
-    metricDefinition: string,
-    resourceName: string,
-    metricNamespace: string
-  ) {
-    return this.azureMonitorDatasource.getMetricNames(
-      this.replaceTemplateVariable(subscriptionId),
-      this.replaceTemplateVariable(resourceGroup),
-      this.replaceTemplateVariable(metricDefinition),
-      this.replaceTemplateVariable(resourceName),
-      this.replaceTemplateVariable(metricNamespace)
-    );
-  }
-
-  getMetricNamespaces(subscriptionId: string, resourceGroup: string, metricDefinition: string, resourceName: string) {
-    return this.azureMonitorDatasource.getMetricNamespaces(
-      this.replaceTemplateVariable(subscriptionId),
-      this.replaceTemplateVariable(resourceGroup),
-      this.replaceTemplateVariable(metricDefinition),
-      this.replaceTemplateVariable(resourceName)
-    );
-  }
-
-  getMetricMetadata(
-    subscriptionId: string,
-    resourceGroup: string,
-    metricDefinition: string,
-    resourceName: string,
-    metricNamespace: string,
-    metricName: string
-  ) {
-    return this.azureMonitorDatasource.getMetricMetadata(
-      this.replaceTemplateVariable(subscriptionId),
-      this.replaceTemplateVariable(resourceGroup),
-      this.replaceTemplateVariable(metricDefinition),
-      this.replaceTemplateVariable(resourceName),
-      this.replaceTemplateVariable(metricNamespace),
-      this.replaceTemplateVariable(metricName)
-    );
-  }
-
-  /* Application Insights API method */
-  getAppInsightsMetricNames() {
-    return this.appInsightsDatasource?.getMetricNames();
-  }
-
-  getAppInsightsMetricMetadata(metricName: string) {
-    return this.appInsightsDatasource?.getMetricMetadata(metricName);
-  }
-
-  getAppInsightsColumns(refId: string | number) {
-    return this.appInsightsDatasource?.logAnalyticsColumns[refId];
-  }
-
   /*Azure Log Analytics */
   getAzureLogAnalyticsWorkspaces(subscriptionId: string) {
     return this.azureLogAnalyticsDatasource.getWorkspaces(subscriptionId);
@@ -281,7 +203,10 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
       }
 
       const ds = this.pseudoDatasource[query.queryType];
-      return ds?.applyTemplateVariables(query, scopedVars) ?? query;
+      return {
+        datasource: ds?.getRef(),
+        ...(ds?.applyTemplateVariables(query, scopedVars) ?? query),
+      };
     });
 
     return mapped;
@@ -313,12 +238,6 @@ function hasQueryForType(query: AzureMonitorQuery): boolean {
 
     case AzureQueryType.GrafanaTemplateVariableFn:
       return !!query.grafanaTemplateVariableFn;
-
-    case AzureQueryType.ApplicationInsights:
-      return !!query.appInsights;
-
-    case AzureQueryType.InsightsAnalytics:
-      return !!query.insightsAnalytics;
 
     default:
       return false;

@@ -1,12 +1,13 @@
-import { SynchronousDataTransformerInfo } from '../../types';
 import { map } from 'rxjs/operators';
 
-import { DataTransformerID } from './ids';
-import { DataFrame, Field, FieldConfig, FieldType } from '../../types/dataFrame';
-import { ArrayVector } from '../../vector/ArrayVector';
-import { AlignedData, join } from './joinDataFrames';
 import { getDisplayProcessor } from '../../field';
 import { createTheme, GrafanaTheme2 } from '../../themes';
+import { SynchronousDataTransformerInfo } from '../../types';
+import { DataFrame, Field, FieldConfig, FieldType } from '../../types/dataFrame';
+import { ArrayVector } from '../../vector/ArrayVector';
+
+import { DataTransformerID } from './ids';
+import { AlignedData, join } from './joinDataFrames';
 
 /**
  * @internal
@@ -152,14 +153,16 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
   let bucketOffset = options?.bucketOffset ?? 0;
 
   // if bucket size is auto, try to calc from all numeric fields
-  if (!bucketSize) {
+  if (!bucketSize || bucketSize < 0) {
     let allValues: number[] = [];
 
     // TODO: include field configs!
     for (const frame of frames) {
       for (const field of frame.fields) {
         if (field.type === FieldType.number) {
-          allValues = allValues.concat(field.values.toArray());
+          allValues = allValues.concat(
+            field.values.toArray().map((val: number) => Number(val.toFixed(field.config.decimals ?? 0)))
+          );
         }
       }
     }
@@ -217,7 +220,7 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
             unit: undefined,
           },
         });
-        if (!config && field.config.unit) {
+        if (!config && Object.keys(field.config).length) {
           config = field.config;
         }
       }
@@ -285,15 +288,24 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
   };
 }
 
-// function incrRound(num: number, incr: number) {
-//   return Math.round(num / incr) * incr;
-// }
+/**
+ * @internal
+ */
+export function incrRound(num: number, incr: number) {
+  return Math.round(num / incr) * incr;
+}
 
-// function incrRoundUp(num: number, incr: number) {
-//   return Math.ceil(num / incr) * incr;
-// }
+/**
+ * @internal
+ */
+export function incrRoundUp(num: number, incr: number) {
+  return Math.ceil(num / incr) * incr;
+}
 
-function incrRoundDn(num: number, incr: number) {
+/**
+ * @internal
+ */
+export function incrRoundDn(num: number, incr: number) {
   return Math.floor(num / incr) * incr;
 }
 

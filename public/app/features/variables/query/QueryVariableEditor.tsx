@@ -1,30 +1,45 @@
+import { css } from '@emotion/css';
 import React, { FormEvent, PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { css } from '@emotion/css';
-import { InlineField, InlineFieldRow, VerticalGroup } from '@grafana/ui';
+
+import { DataSourceInstanceSettings, getDataSourceRef, LoadingState, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { DataSourcePicker, getTemplateSrv } from '@grafana/runtime';
-import { DataSourceInstanceSettings, getDataSourceRef, LoadingState, SelectableValue } from '@grafana/data';
+import { InlineField, InlineFieldRow, VerticalGroup } from '@grafana/ui';
 
-import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
-import { QueryVariableModel, VariableRefresh, VariableSort, VariableWithMultiSupport } from '../types';
-import { QueryVariableEditorState } from './reducer';
-import { changeQueryVariableDataSource, changeQueryVariableQuery, initQueryVariableEditor } from './actions';
-import { VariableEditorState } from '../editor/reducer';
-import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
 import { StoreState } from '../../../types';
-import { toVariableIdentifier } from '../state/types';
-import { changeVariableMultiValue } from '../state/actions';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
-import { isLegacyQueryEditor, isQueryEditor } from '../guard';
+import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
 import { VariableSectionHeader } from '../editor/VariableSectionHeader';
 import { VariableTextField } from '../editor/VariableTextField';
+import { initialVariableEditorState } from '../editor/reducer';
+import { getQueryVariableEditorState } from '../editor/selectors';
+import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
+import { isLegacyQueryEditor, isQueryEditor } from '../guard';
+import { changeVariableMultiValue } from '../state/actions';
+import { getVariablesState } from '../state/selectors';
+import { QueryVariableModel, VariableRefresh, VariableSort, VariableWithMultiSupport } from '../types';
+import { toKeyedVariableIdentifier } from '../utils';
+
 import { QueryVariableRefreshSelect } from './QueryVariableRefreshSelect';
 import { QueryVariableSortSelect } from './QueryVariableSortSelect';
+import { changeQueryVariableDataSource, changeQueryVariableQuery, initQueryVariableEditor } from './actions';
 
-const mapStateToProps = (state: StoreState) => ({
-  editor: state.templating.editor as VariableEditorState<QueryVariableEditorState>,
-});
+const mapStateToProps = (state: StoreState, ownProps: OwnProps) => {
+  const { rootStateKey } = ownProps.variable;
+  if (!rootStateKey) {
+    console.error('QueryVariableEditor: variable has no rootStateKey');
+    return {
+      extended: getQueryVariableEditorState(initialVariableEditorState),
+    };
+  }
+
+  const { editor } = getVariablesState(rootStateKey, state);
+
+  return {
+    extended: getQueryVariableEditorState(editor),
+  };
+};
 
 const mapDispatchToProps = {
   initQueryVariableEditor,
@@ -53,13 +68,13 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
   };
 
   async componentDidMount() {
-    await this.props.initQueryVariableEditor(toVariableIdentifier(this.props.variable));
+    await this.props.initQueryVariableEditor(toKeyedVariableIdentifier(this.props.variable));
   }
 
   componentDidUpdate(prevProps: Readonly<Props>): void {
     if (prevProps.variable.datasource !== this.props.variable.datasource) {
       this.props.changeQueryVariableDataSource(
-        toVariableIdentifier(this.props.variable),
+        toKeyedVariableIdentifier(this.props.variable),
         this.props.variable.datasource
       );
     }
@@ -74,7 +89,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
 
   onLegacyQueryChange = async (query: any, definition: string) => {
     if (this.props.variable.query !== query) {
-      this.props.changeQueryVariableQuery(toVariableIdentifier(this.props.variable), query, definition);
+      this.props.changeQueryVariableQuery(toKeyedVariableIdentifier(this.props.variable), query, definition);
     }
   };
 
@@ -86,7 +101,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
         definition = query.query;
       }
 
-      this.props.changeQueryVariableQuery(toVariableIdentifier(this.props.variable), query, definition);
+      this.props.changeQueryVariableQuery(toKeyedVariableIdentifier(this.props.variable), query, definition);
     }
   };
 
@@ -114,14 +129,15 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
   };
 
   renderQueryEditor = () => {
-    const { editor, variable } = this.props;
-    if (!editor.extended || !editor.extended.dataSource || !editor.extended.VariableQueryEditor) {
+    const { extended, variable } = this.props;
+
+    if (!extended || !extended.dataSource || !extended.VariableQueryEditor) {
       return null;
     }
 
     const query = variable.query;
-    const datasource = editor.extended.dataSource;
-    const VariableQueryEditor = editor.extended.VariableQueryEditor;
+    const datasource = extended.dataSource;
+    const VariableQueryEditor = extended.VariableQueryEditor;
 
     if (isLegacyQueryEditor(VariableQueryEditor, datasource)) {
       return (
@@ -185,6 +201,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
               onChange={this.onRegExChange}
               onBlur={this.onRegExBlur}
               labelWidth={20}
+              interactive={true}
               tooltip={
                 <div>
                   Optional, if you want to extract part of a series name or metric node segment. Named capture groups
@@ -199,7 +216,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
                   ).
                 </div>
               }
-              ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInput}
+              testId={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInputV2}
               grow
             />
             <QueryVariableSortSelect onChange={this.onSortChange} sort={this.props.variable.sort} />

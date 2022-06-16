@@ -1,12 +1,15 @@
-import { DataFrame, DataLink, GrafanaTheme2, VariableSuggestion } from '@grafana/data';
-import React, { useState } from 'react';
 import { css } from '@emotion/css';
-import { Button } from '../../Button/Button';
 import { cloneDeep } from 'lodash';
-import { Modal } from '../../Modal/Modal';
+import React, { useState } from 'react';
+
+import { DataFrame, DataLink, GrafanaTheme2, VariableSuggestion } from '@grafana/data';
+
 import { stylesFactory, useTheme2 } from '../../../themes';
-import { DataLinksListItem } from './DataLinksListItem';
+import { Button } from '../../Button/Button';
+import { Modal } from '../../Modal/Modal';
+
 import { DataLinkEditorModalContent } from './DataLinkEditorModalContent';
+import { DataLinksListItem } from './DataLinksListItem';
 
 interface DataLinksInlineEditorProps {
   links?: DataLink[];

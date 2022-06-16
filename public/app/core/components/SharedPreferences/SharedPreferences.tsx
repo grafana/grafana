@@ -1,6 +1,9 @@
-import React, { PureComponent } from 'react';
 import { css } from '@emotion/css';
+import { t, Trans } from '@lingui/macro';
+import React, { PureComponent } from 'react';
 
+import { SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import {
   Button,
   Field,
@@ -15,26 +18,20 @@ import {
   Tooltip,
   WeekStartPicker,
 } from '@grafana/ui';
-import { SelectableValue } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
-
-import { DashboardSearchHit, DashboardSearchItemType } from 'app/features/search/types';
-import { backendSrv } from 'app/core/services/backend_srv';
 import { PreferencesService } from 'app/core/services/PreferencesService';
-import { t, Trans } from '@lingui/macro';
+import { backendSrv } from 'app/core/services/backend_srv';
+import { DashboardSearchHit, DashboardSearchItemType } from 'app/features/search/types';
+
+import { UserPreferencesDTO } from '../../../types';
 
 export interface Props {
   resourceUri: string;
   disabled?: boolean;
 }
 
-export interface State {
-  homeDashboardId: number;
-  theme: string;
-  timezone: string;
-  weekStart: string;
+export type State = UserPreferencesDTO & {
   dashboards: DashboardSearchHit[];
-}
+};
 
 const themes: SelectableValue[] = [
   { value: '', label: t({ id: 'shared-preferences.theme.default-label', message: 'Default' }) },
@@ -55,6 +52,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
       timezone: '',
       weekStart: '',
       dashboards: [],
+      queryHistory: { homeTab: '' },
     };
   }
 
@@ -91,12 +89,13 @@ export class SharedPreferences extends PureComponent<Props, State> {
       timezone: prefs.timezone,
       weekStart: prefs.weekStart,
       dashboards: [defaultDashboardHit, ...dashboards],
+      queryHistory: prefs.queryHistory,
     });
   }
 
   onSubmitForm = async () => {
-    const { homeDashboardId, theme, timezone, weekStart } = this.state;
-    await this.service.update({ homeDashboardId, theme, timezone, weekStart });
+    const { homeDashboardId, theme, timezone, weekStart, queryHistory } = this.state;
+    await this.service.update({ homeDashboardId, theme, timezone, weekStart, queryHistory });
     window.location.reload();
   };
 
@@ -169,7 +168,6 @@ export class SharedPreferences extends PureComponent<Props, State> {
                 data-testid="User preferences home dashboard drop down"
               >
                 <Select
-                  menuShouldPortal
                   value={dashboards.find((dashboard) => dashboard.id === homeDashboardId)}
                   getOptionValue={(i) => i.id}
                   getOptionLabel={this.getFullDashName}
@@ -209,7 +207,11 @@ export class SharedPreferences extends PureComponent<Props, State> {
               </Field>
 
               <div className="gf-form-button-row">
-                <Button variant="primary" data-testid={selectors.components.UserProfile.preferencesSaveButton}>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  data-testid={selectors.components.UserProfile.preferencesSaveButton}
+                >
                   <Trans id="common.save">Save</Trans>
                 </Button>
               </div>

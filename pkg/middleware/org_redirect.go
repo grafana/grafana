@@ -6,16 +6,16 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 // OrgRedirect changes org and redirects users if the
 // querystring `orgId` doesn't match the active org.
-func OrgRedirect(cfg *setting.Cfg) web.Handler {
+func OrgRedirect(cfg *setting.Cfg, store sqlstore.Store) web.Handler {
 	return func(res http.ResponseWriter, req *http.Request, c *web.Context) {
 		orgIdValue := req.URL.Query().Get("orgId")
 		orgId, err := strconv.ParseInt(orgIdValue, 10, 64)
@@ -34,7 +34,7 @@ func OrgRedirect(cfg *setting.Cfg) web.Handler {
 		}
 
 		cmd := models.SetUsingOrgCommand{UserId: ctx.UserId, OrgId: orgId}
-		if err := bus.Dispatch(ctx.Req.Context(), &cmd); err != nil {
+		if err := store.SetUsingOrg(ctx.Req.Context(), &cmd); err != nil {
 			if ctx.IsApiRequest() {
 				ctx.JsonApiErr(404, "Not found", nil)
 			} else {

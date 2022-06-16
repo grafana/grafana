@@ -1,6 +1,7 @@
 package expr
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -8,7 +9,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/prometheus/client_golang/prometheus"
-	"golang.org/x/net/context"
 )
 
 var (
@@ -126,9 +126,9 @@ func hiddenRefIDs(queries []Query) (map[string]struct{}, error) {
 	return hidden, nil
 }
 
-func (s *Service) decryptSecureJsonDataFn(ctx context.Context) func(map[string][]byte) map[string]string {
-	return func(m map[string][]byte) map[string]string {
-		decryptedJsonData, err := s.secretsService.DecryptJsonData(ctx, m)
+func (s *Service) decryptSecureJsonDataFn(ctx context.Context) func(ds *models.DataSource) map[string]string {
+	return func(ds *models.DataSource) map[string]string {
+		decryptedJsonData, err := s.dataSourceService.DecryptedValues(ctx, ds)
 		if err != nil {
 			logger.Error("Failed to decrypt secure json data", "error", err)
 		}

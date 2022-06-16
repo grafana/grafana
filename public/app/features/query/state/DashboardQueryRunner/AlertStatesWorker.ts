@@ -1,7 +1,9 @@
-import { DashboardQueryRunnerOptions, DashboardQueryRunnerWorker, DashboardQueryRunnerWorkerResult } from './types';
 import { from, Observable } from 'rxjs';
-import { getBackendSrv } from '@grafana/runtime';
 import { catchError, map } from 'rxjs/operators';
+
+import { getBackendSrv } from '@grafana/runtime';
+
+import { DashboardQueryRunnerOptions, DashboardQueryRunnerWorker, DashboardQueryRunnerWorkerResult } from './types';
 import { emptyResult, handleDashboardQueryRunnerWorkerError } from './utils';
 
 export class AlertStatesWorker implements DashboardQueryRunnerWorker {

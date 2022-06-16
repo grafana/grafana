@@ -7,7 +7,6 @@ awsconfig
 /.awcache
 /dist
 /public/build
-public/dist/tsconfig.tsbuildinfo
 /public/views/index.html
 /public/views/error.html
 /emails/dist
@@ -17,6 +16,7 @@ public/dist/tsconfig.tsbuildinfo
 vendor/
 /docs/menu.yaml
 /requests
+tsconfig.tsbuildinfo
 
 # Yarn
 .yarn/*
@@ -39,6 +39,7 @@ vendor/
 
 # Enterprise devenv
 /devenv/docker/blocks/grafana-enterprise
+/devenv/docker/blocks/saml-enterprise
 
 /tmp
 tools/phantomjs/phantomjs
@@ -98,6 +99,7 @@ debug.test
 /packaging/**/*.deb
 /packaging/**/*.tar.gz
 /packaging/**/*.tar.gz.sha256
+pkg/cmd/grafana-server/__debug_bin
 
 # Ignore OSX indexing
 .DS_Store
@@ -157,10 +159,10 @@ compilation-stats.json
 # auto generated Go files
 *_gen.go
 !pkg/services/featuremgmt/toggles_gen.go
+!pkg/coremodel/**/*_gen.go
 
 # Auto-generated localisation files
 public/locales/_build/
 public/locales/**/*.js
 
 deployment_tools_config.json
-

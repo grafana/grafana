@@ -1,12 +1,13 @@
-import React, { ReactElement, useRef, useState } from 'react';
 import { css } from '@emotion/css';
-import { useTheme2 } from '@grafana/ui';
-import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { useMenuItem } from '@react-aria/menu';
 import { useFocus, useKeyboard } from '@react-aria/interactions';
-import { TreeState } from '@react-stately/tree';
+import { useMenuItem } from '@react-aria/menu';
 import { mergeProps } from '@react-aria/utils';
+import { TreeState } from '@react-stately/tree';
 import { Node } from '@react-types/shared';
+import React, { ReactElement, useRef, useState } from 'react';
+
+import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { useTheme2 } from '@grafana/ui';
 
 import { useNavBarItemMenuContext } from './context';
 
@@ -56,9 +57,11 @@ export function NavBarItemMenuItem({ item, state, onNavigate }: NavBarItemMenuIt
   });
 
   return (
-    <li {...mergeProps(menuItemProps, focusProps, keyboardProps)} ref={ref} className={styles.menuItem}>
-      {rendered}
-    </li>
+    <>
+      <li {...mergeProps(menuItemProps, focusProps, keyboardProps)} ref={ref} className={styles.menuItem}>
+        {rendered}
+      </li>
+    </>
   );
 }
 
@@ -82,6 +85,12 @@ function getStyles(theme: GrafanaTheme2, isFocused: boolean, isSection: boolean)
         outline-offset: -2px;
         transition: none;
       }
+    `,
+    upgradeBoxContainer: css`
+      padding: ${theme.spacing(1)};
+    `,
+    upgradeBox: css`
+      width: 300px;
     `,
   };
 }

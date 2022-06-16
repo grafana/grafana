@@ -1,13 +1,14 @@
-import React, { MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
-import { AsyncSelect, Button, Modal, useStyles2 } from '@grafana/ui';
+import { debounce } from 'lodash';
+import React, { MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
+
 import { GrafanaTheme2, SelectableValue, urlUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
+import { AsyncSelect, Button, Modal, useStyles2 } from '@grafana/ui';
 
-import { LibraryElementDTO } from '../../types';
 import { DashboardSearchHit } from '../../../search/types';
 import { getConnectedDashboards, getLibraryPanelConnectedDashboards } from '../../state/api';
-import { debounce } from 'lodash';
+import { LibraryElementDTO } from '../../types';
 
 export interface OpenLibraryPanelModalProps {
   onDismiss: () => void;
@@ -30,9 +31,10 @@ export function OpenLibraryPanelModal({ libraryPanel, onDismiss }: OpenLibraryPa
     (searchString: string) => loadOptionsAsync(libraryPanel.uid, searchString, setLoading),
     [libraryPanel.uid]
   );
-  const debouncedLoadOptions = useMemo(() => debounce(loadOptions, 300, { leading: true, trailing: true }), [
-    loadOptions,
-  ]);
+  const debouncedLoadOptions = useMemo(
+    () => debounce(loadOptions, 300, { leading: true, trailing: true }),
+    [loadOptions]
+  );
   const onViewPanel = (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     locationService.push(urlUtil.renderUrl(`/d/${option?.value?.uid}`, {}));
@@ -54,7 +56,6 @@ export function OpenLibraryPanelModal({ libraryPanel, onDismiss }: OpenLibraryPa
               .Please choose which dashboard to view the panel in:
             </p>
             <AsyncSelect
-              menuShouldPortal
               isClearable
               isLoading={loading}
               defaultOptions={true}

@@ -1,7 +1,10 @@
-import { QueryRunners, variableDummyRefId } from './queryRunners';
-import { getDefaultTimeRange, VariableSupportType } from '@grafana/data';
-import { VariableRefresh } from '../types';
 import { of } from 'rxjs';
+
+import { getDefaultTimeRange, VariableSupportType } from '@grafana/data';
+
+import { VariableRefresh } from '../types';
+
+import { QueryRunners, variableDummyRefId } from './queryRunners';
 
 describe('QueryRunners', () => {
   describe('when using a legacy data source', () => {

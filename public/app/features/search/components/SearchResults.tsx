@@ -1,15 +1,17 @@
+import { css, cx } from '@emotion/css';
 import React, { FC, memo } from 'react';
-import { css } from '@emotion/css';
-import classNames from 'classnames';
-import { FixedSizeList, FixedSizeGrid } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
+import { FixedSizeList, FixedSizeGrid } from 'react-window';
+
 import { GrafanaTheme } from '@grafana/data';
-import { Spinner, stylesFactory, useTheme } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
-import { DashboardSection, OnToggleChecked, SearchLayout } from '../types';
+import { Spinner, stylesFactory, useTheme } from '@grafana/ui';
+
 import { SEARCH_ITEM_HEIGHT, SEARCH_ITEM_MARGIN } from '../constants';
-import { SearchItem } from './SearchItem';
+import { DashboardSection, OnToggleChecked, SearchLayout } from '../types';
+
 import { SearchCard } from './SearchCard';
+import { SearchItem } from './SearchItem';
 import { SectionHeader } from './SectionHeader';
 
 export interface Props {
@@ -31,28 +33,24 @@ export const SearchResults: FC<Props> = memo(
     const styles = getSectionStyles(theme);
     const itemProps = { editable, onToggleChecked, onTagSelected };
     const renderFolders = () => {
+      const Wrapper = showPreviews ? SearchCard : SearchItem;
       return (
         <div className={styles.wrapper}>
           {results.map((section) => {
             return (
               <div data-testid={sectionLabel} className={styles.section} key={section.id || section.title}>
                 {section.title && (
-                  <SectionHeader onSectionClick={onToggleSection} {...{ onToggleChecked, editable, section }} />
+                  <SectionHeader onSectionClick={onToggleSection} {...{ onToggleChecked, editable, section }}>
+                    <div
+                      data-testid={showPreviews ? cardsLabel : itemsLabel}
+                      className={cx(styles.sectionItems, { [styles.gridContainer]: showPreviews })}
+                    >
+                      {section.items.map((item) => (
+                        <Wrapper {...itemProps} key={item.uid} item={item} />
+                      ))}
+                    </div>
+                  </SectionHeader>
                 )}
-                {section.expanded &&
-                  (showPreviews ? (
-                    <div data-testid={cardsLabel} className={classNames(styles.sectionItems, styles.gridContainer)}>
-                      {section.items.map((item) => (
-                        <SearchCard {...itemProps} key={item.uid} item={item} />
-                      ))}
-                    </div>
-                  ) : (
-                    <div data-testid={itemsLabel} className={styles.sectionItems}>
-                      {section.items.map((item) => (
-                        <SearchItem key={item.id} {...itemProps} item={item} />
-                      ))}
-                    </div>
-                  ))}
               </div>
             );
           })}

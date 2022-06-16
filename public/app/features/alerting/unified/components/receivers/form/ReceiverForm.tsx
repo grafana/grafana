@@ -1,19 +1,22 @@
 import { css } from '@emotion/css';
-import { GrafanaTheme2, AppEvents } from '@grafana/data';
+import React, { useCallback } from 'react';
+import { useForm, FormProvider, FieldErrors, Validate } from 'react-hook-form';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, Field, Input, LinkButton, useStyles2 } from '@grafana/ui';
+import { useAppNotification } from 'app/core/copy/appNotification';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import { NotifierDTO } from 'app/types';
-import React, { useCallback } from 'react';
-import { useForm, FormProvider, FieldErrors, Validate } from 'react-hook-form';
+
 import { useControlledFieldArray } from '../../../hooks/useControlledFieldArray';
 import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
 import { ChannelValues, CommonSettingsComponentType, ReceiverFormValues } from '../../../types/receiver-form';
+import { isVanillaPrometheusAlertManagerDataSource } from '../../../utils/datasource';
 import { makeAMLink } from '../../../utils/misc';
+
 import { ChannelSubForm } from './ChannelSubForm';
 import { DeletedSubForm } from './fields/DeletedSubform';
-import { appEvents } from 'app/core/core';
-import { isVanillaPrometheusAlertManagerDataSource } from '../../../utils/datasource';
 
 interface Props<R extends ChannelValues> {
   config: AlertManagerCortexConfig;
@@ -38,6 +41,7 @@ export function ReceiverForm<R extends ChannelValues>({
   takenReceiverNames,
   commonSettingsComponent,
 }: Props<R>): JSX.Element {
+  const notifyApp = useAppNotification();
   const styles = useStyles2(getStyles);
   const readOnly = isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName);
   const defaultValues = initialValues || {
@@ -84,7 +88,7 @@ export function ReceiverForm<R extends ChannelValues>({
   };
 
   const onInvalid = () => {
-    appEvents.emit(AppEvents.alertError, ['There are errors in the form. Please correct them and try again!']);
+    notifyApp.error('There are errors in the form. Please correct them and try again!');
   };
 
   return (

@@ -24,7 +24,7 @@ func TestThreemaNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			_, err := NewThreemaNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+			_, err := NewThreemaNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 			require.Error(t, err)
 		})
 
@@ -43,7 +43,7 @@ func TestThreemaNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := NewThreemaNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+			not, err := NewThreemaNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 			require.Nil(t, err)
 			threemaNotifier := not.(*ThreemaNotifier)
 
@@ -70,7 +70,7 @@ func TestThreemaNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := NewThreemaNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+			not, err := NewThreemaNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 			require.Nil(t, not)
 			var valErr alerting.ValidationError
 			require.True(t, errors.As(err, &valErr))
@@ -92,7 +92,7 @@ func TestThreemaNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := NewThreemaNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+			not, err := NewThreemaNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 			require.Nil(t, not)
 			var valErr alerting.ValidationError
 			require.True(t, errors.As(err, &valErr))
@@ -114,7 +114,7 @@ func TestThreemaNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := NewThreemaNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+			not, err := NewThreemaNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 			require.Nil(t, not)
 			var valErr alerting.ValidationError
 			require.True(t, errors.As(err, &valErr))

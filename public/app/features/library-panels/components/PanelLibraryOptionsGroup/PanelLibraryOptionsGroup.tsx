@@ -1,17 +1,18 @@
+import { css } from '@emotion/css';
 import React, { FC, useCallback, useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { css } from '@emotion/css';
+
 import { GrafanaTheme2, PanelPluginMeta } from '@grafana/data';
 import { Button, useStyles2, VerticalGroup } from '@grafana/ui';
-
-import { PanelModel } from 'app/features/dashboard/state';
-import { AddLibraryPanelModal } from '../AddLibraryPanelModal/AddLibraryPanelModal';
-import { LibraryPanelsView } from '../LibraryPanelsView/LibraryPanelsView';
-import { LibraryElementDTO } from '../../types';
-import { changeToLibraryPanel } from 'app/features/panel/state/actions';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { ChangeLibraryPanelModal } from '../ChangeLibraryPanelModal/ChangeLibraryPanelModal';
+import { PanelModel } from 'app/features/dashboard/state';
+import { changeToLibraryPanel } from 'app/features/panel/state/actions';
+
 import { PanelTypeFilter } from '../../../../core/components/PanelTypeFilter/PanelTypeFilter';
+import { LibraryElementDTO } from '../../types';
+import { AddLibraryPanelModal } from '../AddLibraryPanelModal/AddLibraryPanelModal';
+import { ChangeLibraryPanelModal } from '../ChangeLibraryPanelModal/ChangeLibraryPanelModal';
+import { LibraryPanelsView } from '../LibraryPanelsView/LibraryPanelsView';
 
 interface Props {
   panel: PanelModel;

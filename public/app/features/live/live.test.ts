@@ -1,11 +1,16 @@
-import { GrafanaLiveService } from './live';
-import { StreamingDataQueryResponse } from './centrifuge/service';
+import mockConsole, { RestoreConsole } from 'jest-mock-console';
 import { Subject } from 'rxjs';
+
 import { DataQueryResponse, FieldType, LiveChannelScope } from '@grafana/data';
+
+import { StreamingDataQueryResponse } from './centrifuge/service';
 import { StreamingDataFrame } from './data/StreamingDataFrame';
 import { StreamingResponseDataType } from './data/utils';
+import { GrafanaLiveService } from './live';
 
 describe('GrafanaLiveService', () => {
+  let restoreConsole: RestoreConsole | undefined;
+
   const deps = {
     backendSrv: {},
     centrifugeSrv: {
@@ -25,6 +30,11 @@ describe('GrafanaLiveService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    restoreConsole = mockConsole();
+  });
+
+  afterEach(() => {
+    restoreConsole?.();
   });
 
   it('should map response from Centrifuge Service to a streaming data frame', async () => {

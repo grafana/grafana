@@ -1,11 +1,14 @@
+<!-- The template body needs to be wrapped in div to prevent Premailer from adding </tr></td> tags which breaks the HTML structure -->
+<div>
+
 [[Subject .Subject "[[.Title]]"]]
 
 [[ define "alert" ]]
-<tr>
-  <td colspan="2" class="value">
-    <span class="value-heading">Value:</span> <span class="value-value">[[ .ValueString ]]</span>
-  </td>
-</tr>
+  <tr>
+    <td colspan="2" class="value">
+      <span class="value-heading">Value:</span> <span class="value-value">[[ .ValueString ]]</span>
+    </td>
+  </tr>
   [[ if gt (len .Annotations.SortedPairs) 0 ]]
       <tr>
         <td colspan="2" class="annotations">
@@ -187,62 +190,63 @@
   <tr>
     <td class="twelve">
       <table>
-      [[ if gt (len .Alerts.Firing) 0 ]]
-        <tr>
-          <td colspan="2" class="section-heading">
-            Firing: [[ .Alerts.Firing | len ]] alert[[ if gt (len .Alerts.Firing) 1 ]]s[[ end ]][[ if gt (len .GroupLabels.SortedPairs) 1 ]] for
-            [[ range .GroupLabels.SortedPairs ]]
-            [[ .Name ]]=[[ .Value ]]
-            [[ end ]][[ end ]]
-          </td>
-        </tr>
-        [[ range .Alerts.Firing ]]
+          [[ if gt (len .Alerts.Firing) 0 ]]
+            <tr>
+              <td colspan="2" class="section-heading">
+                Firing: [[ .Alerts.Firing | len ]] alert[[ if gt (len .Alerts.Firing) 1 ]]s[[ end ]][[ if gt (len .GroupLabels.SortedPairs) 1 ]] for
+                [[ range .GroupLabels.SortedPairs ]]
+                [[ .Name ]]=[[ .Value ]]
+                [[ end ]][[ end ]]
+              </td>
+            </tr>
+            [[ range .Alerts.Firing ]]
+              <tr>
+                <td
+                  class="status-tag status-firing"
+                  width="68"
+                >
+                  Firing
+                </td>
+                <td class="alert-label">
+                  [[ .Labels.alertname ]]
+                </td>
+              </tr>
+              [[ template "alert" . ]]
+            [[ end ]]
+          [[ end ]]
+          [[ if gt (len .Alerts.Resolved) 0 ]]
+            <tr>
+              <td colspan="2" class="section-heading">
+                Resolved: [[ .Alerts.Resolved | len ]] alert[[ if gt (len .Alerts.Resolved) 1 ]]s[[ end ]][[ if gt (len .GroupLabels.SortedPairs) 1 ]] for
+                [[ range .GroupLabels.SortedPairs ]]
+                  [[ .Name ]]=[[ .Value ]]
+                [[ end ]][[ end ]]
+              </td>
+            </tr>
+            [[ range .Alerts.Resolved ]]
+              <tr>
+                <td
+                  class="status-tag status-resolved"
+                  width="68"
+                >
+                  Resolved
+                </td>
+                <td class="alert-label">
+                  [[ .Labels.alertname ]]
+                </td>
+              </tr>
+              [[ template "alert" . ]]
+            [[ end ]]
+          [[ end ]]
           <tr>
-            <td
-              class="status-tag status-firing"
-              width="68"
-            >
-              Firing
-            </td>
-            <td class="alert-label">
-              [[ .Labels.alertname ]]
+            <td colspan="2">
+              <a href="[[ .AlertPageUrl ]]" class="button">Go to alerts page</a>
             </td>
           </tr>
-          [[ template "alert" . ]]
-        [[ end ]]
-      [[ end ]]
-      [[ if gt (len .Alerts.Resolved) 0 ]]
-        <tr>
-          <td colspan="2" class="section-heading">
-            Resolved: [[ .Alerts.Resolved | len ]] alert[[ if gt (len .Alerts.Resolved) 1 ]]s[[ end ]][[ if gt (len .GroupLabels.SortedPairs) 1 ]] for
-            [[ range .GroupLabels.SortedPairs ]]
-            [[ .Name ]]=[[ .Value ]]
-            [[ end ]][[ end ]]
-          </td>
-        </tr>
-        [[ range .Alerts.Resolved ]]
-          <tr>
-            <td
-              class="status-tag status-resolved"
-              width="68"
-            >
-              Resolved
-            </td>
-            <td class="alert-label">
-              [[ .Labels.alertname ]]
-            </td>
-          </tr>
-          [[ template "alert" . ]]
-        [[ end ]]
-      [[ end ]]
-      <tr>
-        <td colspan="2">
-          <a href="[[ .AlertPageUrl ]]" class="button">Go to alerts page</a>
-        </td>
-      </tr>
-      </table>
       </table>
     </td>
   </tr>
 </table>
 [[ end ]]
+
+</div>

@@ -1,25 +1,27 @@
-import React, { memo, MouseEvent, MutableRefObject, useCallback, useMemo, useState } from 'react';
-import cx from 'classnames';
-import useMeasure from 'react-use/lib/useMeasure';
-import { Icon, Spinner, useStyles2, useTheme2 } from '@grafana/ui';
-import { usePanning } from './usePanning';
-import { EdgeDatum, NodeDatum, NodesMarker } from './types';
-import { Node } from './Node';
-import { Edge } from './Edge';
-import { ViewControls } from './ViewControls';
-import { DataFrame, GrafanaTheme2, LinkModel } from '@grafana/data';
-import { useZoom } from './useZoom';
-import { Config, defaultConfig, useLayout } from './layout';
-import { EdgeArrowMarker } from './EdgeArrowMarker';
 import { css } from '@emotion/css';
-import { useCategorizeFrames } from './useCategorizeFrames';
+import cx from 'classnames';
+import React, { memo, MouseEvent, MutableRefObject, useCallback, useMemo, useState } from 'react';
+import useMeasure from 'react-use/lib/useMeasure';
+
+import { DataFrame, GrafanaTheme2, LinkModel } from '@grafana/data';
+import { Icon, Spinner, useStyles2, useTheme2 } from '@grafana/ui';
+
+import { Edge } from './Edge';
+import { EdgeArrowMarker } from './EdgeArrowMarker';
 import { EdgeLabel } from './EdgeLabel';
-import { useContextMenu } from './useContextMenu';
-import { processNodes, Bounds } from './utils';
-import { Marker } from './Marker';
 import { Legend } from './Legend';
-import { useHighlight } from './useHighlight';
+import { Marker } from './Marker';
+import { Node } from './Node';
+import { ViewControls } from './ViewControls';
+import { Config, defaultConfig, useLayout } from './layout';
+import { EdgeDatum, NodeDatum, NodesMarker } from './types';
+import { useCategorizeFrames } from './useCategorizeFrames';
+import { useContextMenu } from './useContextMenu';
 import { useFocusPositionOnLayout } from './useFocusPositionOnLayout';
+import { useHighlight } from './useHighlight';
+import { usePanning } from './usePanning';
+import { useZoom } from './useZoom';
+import { processNodes, Bounds } from './utils';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
@@ -129,11 +131,10 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
 
   // TODO we should be able to allow multiple dataframes for both edges and nodes, could be issue with node ids which in
   //  that case should be unique or figure a way to link edges and nodes dataframes together.
-  const processed = useMemo(() => processNodes(firstNodesDataFrame, firstEdgesDataFrame, theme), [
-    firstEdgesDataFrame,
-    firstNodesDataFrame,
-    theme,
-  ]);
+  const processed = useMemo(
+    () => processNodes(firstNodesDataFrame, firstEdgesDataFrame, theme),
+    [firstEdgesDataFrame, firstNodesDataFrame, theme]
+  );
 
   // This is used for navigation from grid to graph view. This node will be centered and briefly highlighted.
   const [focusedNodeId, setFocusedNodeId] = useState<string>();
@@ -189,7 +190,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
         </div>
       ) : null}
 
-      {dataFrames.length ? (
+      {dataFrames.length && processed.nodes.length ? (
         <svg
           ref={panRef}
           viewBox={`${-(width / 2)} ${-(height / 2)} ${width} ${height}`}

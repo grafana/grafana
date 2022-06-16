@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -83,13 +85,13 @@ func TestRenderErrorImage(t *testing.T) {
 	})
 
 	t.Run("Timeout error returns timeout error image", func(t *testing.T) {
-		result, err := rs.RenderErrorImage(ThemeLight, ErrTimeout)
+		result, err := rs.RenderErrorImage(models.ThemeLight, ErrTimeout)
 		require.NoError(t, err)
 		assert.Equal(t, result.FilePath, path+"/public/img/rendering_timeout_light.png")
 	})
 
 	t.Run("Generic error returns error image", func(t *testing.T) {
-		result, err := rs.RenderErrorImage(ThemeLight, errors.New("an error"))
+		result, err := rs.RenderErrorImage(models.ThemeLight, errors.New("an error"))
 		require.NoError(t, err)
 		assert.Equal(t, result.FilePath, path+"/public/img/rendering_error_light.png")
 	})
@@ -99,6 +101,22 @@ func TestRenderErrorImage(t *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, result)
 	})
+}
+
+type unavailableRendererManager struct{}
+
+func (m unavailableRendererManager) Renderer() *plugins.Plugin { return nil }
+
+func TestRenderUnavailableError(t *testing.T) {
+	rs := RenderingService{
+		Cfg:                   &setting.Cfg{},
+		log:                   log.New("test"),
+		RendererPluginManager: unavailableRendererManager{},
+	}
+	opts := Opts{ErrorOpts: ErrorOpts{ErrorRenderUnavailable: true}}
+	result, err := rs.Render(context.Background(), opts, nil)
+	assert.Equal(t, ErrRenderUnavailable, err)
+	assert.Nil(t, result)
 }
 
 func TestRenderLimitImage(t *testing.T) {
@@ -115,17 +133,17 @@ func TestRenderLimitImage(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		theme    Theme
+		theme    models.Theme
 		expected string
 	}{
 		{
 			name:     "Light theme returns light image",
-			theme:    ThemeLight,
+			theme:    models.ThemeLight,
 			expected: path + "/public/img/rendering_limit_light.png",
 		},
 		{
 			name:     "Dark theme returns dark image",
-			theme:    ThemeDark,
+			theme:    models.ThemeDark,
 			expected: path + "/public/img/rendering_limit_dark.png",
 		},
 		{
@@ -138,11 +156,27 @@ func TestRenderLimitImage(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			opts := Opts{Theme: tc.theme, ConcurrentLimit: 1}
-			result, err := rs.Render(context.Background(), opts)
+			result, err := rs.Render(context.Background(), opts, nil)
 			assert.NoError(t, err)
 			assert.Equal(t, tc.expected, result.FilePath)
 		})
 	}
+}
+
+func TestRenderLimitImageError(t *testing.T) {
+	rs := RenderingService{
+		Cfg:             &setting.Cfg{},
+		inProgressCount: 2,
+		log:             log.New("test"),
+	}
+	opts := Opts{
+		ErrorOpts:       ErrorOpts{ErrorConcurrentLimitReached: true},
+		ConcurrentLimit: 1,
+		Theme:           models.ThemeDark,
+	}
+	result, err := rs.Render(context.Background(), opts, nil)
+	assert.Equal(t, ErrConcurrentLimitReached, err)
+	assert.Nil(t, result)
 }
 
 func TestRenderingServiceGetRemotePluginVersion(t *testing.T) {

@@ -1,6 +1,8 @@
 package plugins
 
 import (
+	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -19,12 +21,9 @@ type Cfg struct {
 	AWSAssumeRoleEnabled    bool
 
 	// Azure Cloud settings
-	Azure setting.AzureSettings
-
-	CheckForUpdates bool
+	Azure *azsettings.AzureSettings
 
 	BuildVersion string // TODO Remove
-	AppSubURL    string // TODO Remove
 }
 
 func NewCfg() *Cfg {
@@ -48,10 +47,7 @@ func FromGrafanaCfg(grafanaCfg *setting.Cfg) *Cfg {
 	// Azure
 	cfg.Azure = grafanaCfg.Azure
 
-	cfg.CheckForUpdates = grafanaCfg.CheckForUpdates
-
 	cfg.BuildVersion = grafanaCfg.BuildVersion
-	cfg.AppSubURL = grafanaCfg.AppSubURL
 
 	return cfg
 }

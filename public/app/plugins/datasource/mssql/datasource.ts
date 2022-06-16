@@ -1,14 +1,14 @@
 import { map as _map } from 'lodash';
 import { lastValueFrom, of } from 'rxjs';
 import { catchError, map, mapTo } from 'rxjs/operators';
+
+import { AnnotationEvent, DataSourceInstanceSettings, MetricFindValue, ScopedVars, TimeRange } from '@grafana/data';
 import { BackendDataSourceResponse, DataSourceWithBackend, FetchResponse, getBackendSrv } from '@grafana/runtime';
-import { AnnotationEvent, DataSourceInstanceSettings, MetricFindValue, ScopedVars } from '@grafana/data';
+import { toTestingStatus } from '@grafana/runtime/src/utils/queryResponse';
+import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
 import ResponseParser from './response_parser';
-import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { MssqlOptions, MssqlQuery, MssqlQueryForInterpolation } from './types';
-import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { toTestingStatus } from '@grafana/runtime/src/utils/queryResponse';
 
 export class MssqlDatasource extends DataSourceWithBackend<MssqlQuery, MssqlOptions> {
   id: any;
@@ -18,8 +18,7 @@ export class MssqlDatasource extends DataSourceWithBackend<MssqlQuery, MssqlOpti
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<MssqlOptions>,
-    private readonly templateSrv: TemplateSrv = getTemplateSrv(),
-    private readonly timeSrv: TimeSrv = getTimeSrv()
+    private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
     this.name = instanceSettings.name;
@@ -123,7 +122,7 @@ export class MssqlDatasource extends DataSourceWithBackend<MssqlQuery, MssqlOpti
       refId = optionalOptions.variable.name;
     }
 
-    const range = this.timeSrv.timeRange();
+    const range = optionalOptions?.range as TimeRange;
 
     const interpolatedQuery = {
       refId: refId,
@@ -138,8 +137,8 @@ export class MssqlDatasource extends DataSourceWithBackend<MssqlQuery, MssqlOpti
           url: '/api/ds/query',
           method: 'POST',
           data: {
-            from: range.from.valueOf().toString(),
-            to: range.to.valueOf().toString(),
+            from: range?.from?.valueOf()?.toString(),
+            to: range?.to?.valueOf()?.toString(),
             queries: [interpolatedQuery],
           },
           requestId: refId,
@@ -187,6 +186,6 @@ export class MssqlDatasource extends DataSourceWithBackend<MssqlQuery, MssqlOpti
 
   targetContainsTemplate(query: MssqlQuery): boolean {
     const rawSql = query.rawSql.replace('$__', '');
-    return this.templateSrv.variableExists(rawSql);
+    return this.templateSrv.containsTemplate(rawSql);
   }
 }

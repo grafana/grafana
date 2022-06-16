@@ -1,5 +1,7 @@
 import { merge } from 'lodash';
+
 import {
+  BootData,
   BuildInfo,
   createTheme,
   DataSourceInstanceSettings,
@@ -9,6 +11,7 @@ import {
   GrafanaTheme2,
   LicenseInfo,
   MapLayerOptions,
+  OAuthSettings,
   PanelPluginMeta,
   PreloadPlugin,
   systemDateFormats,
@@ -21,38 +24,46 @@ export interface AzureSettings {
 }
 
 export class GrafanaBootConfig implements GrafanaConfig {
+  isPublicDashboardView: boolean;
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
   panels: { [key: string]: PanelPluginMeta } = {};
   minRefreshInterval = '';
   appUrl = '';
   appSubUrl = '';
   windowTitlePrefix = '';
-  buildInfo: BuildInfo = {} as BuildInfo;
+  buildInfo: BuildInfo;
   newPanelTitle = '';
-  bootData: any;
+  bootData: BootData;
   externalUserMngLinkUrl = '';
   externalUserMngLinkName = '';
   externalUserMngInfo = '';
   allowOrgCreate = false;
+  feedbackLinksEnabled = true;
   disableLoginForm = false;
   defaultDatasource = ''; // UID
   alertingEnabled = false;
   alertingErrorOrTimeout = '';
   alertingNoDataOrNullValues = '';
   alertingMinInterval = 1;
+  angularSupportEnabled = false;
   authProxyEnabled = false;
   exploreEnabled = false;
+  queryHistoryEnabled = false;
+  helpEnabled = false;
+  profileEnabled = false;
   ldapEnabled = false;
   sigV4AuthEnabled = false;
   samlEnabled = false;
   samlName = '';
   autoAssignOrg = true;
   verifyEmailEnabled = false;
-  oauth: any;
+  oauth: OAuthSettings = {};
+  rbacEnabled = true;
+  rbacBuiltInRoleAssignmentEnabled = false;
   disableUserSignUp = false;
-  loginHint: any;
-  passwordHint: any;
-  loginError: any;
+  loginHint = '';
+  passwordHint = '';
+  loginError = undefined;
   navTree: any;
   viewersCanEdit = false;
   editorsCanAdmin = false;
@@ -64,6 +75,13 @@ export class GrafanaBootConfig implements GrafanaConfig {
   featureToggles: FeatureToggles = {};
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;
+  dashboardPreviews: {
+    systemRequirements: {
+      met: boolean;
+      requiredImageRendererPluginVersion: string;
+    };
+    thumbnailsExist: boolean;
+  } = { systemRequirements: { met: false, requiredImageRendererPluginVersion: '' }, thumbnailsExist: false };
   rendererVersion = '';
   http2Enabled = false;
   dateFormats?: SystemDateFormatSettings;
@@ -93,16 +111,21 @@ export class GrafanaBootConfig implements GrafanaConfig {
   applicationInsightsConnectionString?: string;
   applicationInsightsEndpointUrl?: string;
   recordedQueries = {
-    enabled: false,
+    enabled: true,
   };
   featureHighlights = {
     enabled: false,
+  };
+  reporting = {
+    enabled: true,
   };
 
   constructor(options: GrafanaBootConfig) {
     const mode = options.bootData.user.lightTheme ? 'light' : 'dark';
     this.theme2 = createTheme({ colors: { mode } });
     this.theme = this.theme2.v1;
+    this.bootData = options.bootData;
+    this.isPublicDashboardView = options.bootData.settings.isPublicDashboardView;
 
     const defaults = {
       datasources: {},
@@ -114,7 +137,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
       appUrl: '',
       appSubUrl: '',
       buildInfo: {
-        version: 'v1.0',
+        version: '1.0',
         commit: '1',
         env: 'production',
       },
@@ -125,10 +148,32 @@ export class GrafanaBootConfig implements GrafanaConfig {
 
     merge(this, defaults, options);
 
+    this.buildInfo = options.buildInfo || defaults.buildInfo;
+
     if (this.dateFormats) {
       systemDateFormats.update(this.dateFormats);
     }
+
+    overrideFeatureTogglesFromUrl(this);
   }
+}
+
+function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
+  if (window.location.href.indexOf('__feature') === -1) {
+    return;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  params.forEach((value, key) => {
+    if (key.startsWith('__feature.')) {
+      const featureName = key.substring(10);
+      const toggleState = value === 'true';
+      if (toggleState !== config.featureToggles[key]) {
+        config.featureToggles[featureName] = toggleState;
+        console.log(`Setting feature toggle ${featureName} = ${toggleState}`);
+      }
+    }
+  });
 }
 
 const bootData = (window as any).grafanaBootData || {

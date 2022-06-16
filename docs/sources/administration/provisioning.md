@@ -1,10 +1,14 @@
-+++
-title = "Provisioning"
-description = ""
-keywords = ["grafana", "provisioning"]
-aliases = ["/docs/grafana/latest/installation/provisioning"]
-weight = 800
-+++
+---
+aliases:
+  - /docs/grafana/latest/administration/provisioning/
+  - /docs/grafana/latest/installation/provisioning/
+description: ''
+keywords:
+  - grafana
+  - provisioning
+title: Provisioning
+weight: 800
+---
 
 # Provisioning Grafana
 
@@ -12,7 +16,7 @@ In previous versions of Grafana, you could only use the API for provisioning dat
 
 ## Config File
 
-Check out the [configuration]({{< relref "configuration.md" >}}) page for more information on what you can configure in `grafana.ini`
+Check out the [configuration]({{< relref "../setup-grafana/configure-grafana/" >}}) page for more information on what you can configure in `grafana.ini`
 
 ### Config File Locations
 
@@ -94,8 +98,6 @@ datasources:
     uid: my_unique_uid
     # <string> url
     url: http://localhost:8080
-    # <string> Deprecated, use secureJsonData.password
-    password:
     # <string> database user, if used
     user:
     # <string> database name, if used
@@ -104,8 +106,6 @@ datasources:
     basicAuth:
     # <string> basic auth username
     basicAuthUser:
-    # <string> Deprecated, use secureJsonData.basicAuthPassword
-    basicAuthPassword:
     # <bool> enable/disable with credentials headers
     withCredentials:
     # <bool> mark as default datasource. Max one per org
@@ -147,8 +147,8 @@ Since not all datasources have the same configuration settings we only have the 
 | -------------------------- | ------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | tlsAuth                    | boolean | _HTTP\*_, MySQL                                                  | Enable TLS authentication using client cert configured in secure json data                                                                                                                                                                                                                                          |
 | tlsAuthWithCACert          | boolean | _HTTP\*_, MySQL, PostgreSQL                                      | Enable TLS authentication using CA cert                                                                                                                                                                                                                                                                             |
-| tlsSkipVerify              | boolean | _HTTP\*_, MySQL, PostgreSQL                                      | Controls whether a client verifies the server's certificate chain and host name.                                                                                                                                                                                                                                    |
-| serverName                 | string  | _HTTP\*_                                                         | Optional. Controls the server name used for certificate common name/subject alternative name verification. Defaults to using the data source URL.                                                                                                                                                                   |
+| tlsSkipVerify              | boolean | _HTTP\*_, MySQL, PostgreSQL, MSSQL                               | Controls whether a client verifies the server's certificate chain and host name.                                                                                                                                                                                                                                    |
+| serverName                 | string  | _HTTP\*_, MSSQL                                                  | Optional. Controls the server name used for certificate common name/subject alternative name verification. Defaults to using the data source URL.                                                                                                                                                                   |
 | timeout                    | string  | _HTTP\*_                                                         | Request timeout in seconds. Overrides dataproxy.timeout option                                                                                                                                                                                                                                                      |
 | graphiteVersion            | string  | Graphite                                                         | Graphite version                                                                                                                                                                                                                                                                                                    |
 | timeInterval               | string  | Prometheus, Elasticsearch, InfluxDB, MySQL, PostgreSQL and MSSQL | Lowest interval/step value that should be used for this data source.                                                                                                                                                                                                                                                |
@@ -179,7 +179,7 @@ Since not all datasources have the same configuration settings we only have the 
 | tsdbResolution             | string  | OpenTSDB                                                         | Resolution                                                                                                                                                                                                                                                                                                          |
 | sslmode                    | string  | PostgreSQL                                                       | SSLmode. 'disable', 'require', 'verify-ca' or 'verify-full'                                                                                                                                                                                                                                                         |
 | tlsConfigurationMethod     | string  | PostgreSQL                                                       | SSL Certificate configuration, either by 'file-path' or 'file-content'                                                                                                                                                                                                                                              |
-| sslRootCertFile            | string  | PostgreSQL                                                       | SSL server root certificate file, must be readable by the Grafana user                                                                                                                                                                                                                                              |
+| sslRootCertFile            | string  | PostgreSQL, MSSQL                                                | SSL server root certificate file, must be readable by the Grafana user                                                                                                                                                                                                                                              |
 | sslCertFile                | string  | PostgreSQL                                                       | SSL client certificate file, must be readable by the Grafana user                                                                                                                                                                                                                                                   |
 | sslKeyFile                 | string  | PostgreSQL                                                       | SSL client key file, must be readable by _only_ the Grafana user                                                                                                                                                                                                                                                    |
 | encrypt                    | string  | MSSQL                                                            | Connection SSL encryption handling. 'disable', 'false' or 'true'                                                                                                                                                                                                                                                    |
@@ -194,7 +194,7 @@ Since not all datasources have the same configuration settings we only have the 
 
 `{"authType":"keys","defaultRegion":"us-west-2","timeField":"@timestamp"}`
 
-Secure json data is a map of settings that will be encrypted with [secret key]({{< relref "configuration.md#secret-key" >}}) from the Grafana config. The purpose of this is only to hide content from the users of the application. This should be used for storing TLS Cert and password that Grafana will append to the request on the server side. All of these settings are optional.
+Secure json data is a map of settings that will be encrypted with [secret key]({{< relref "../setup-grafana/configure-grafana/#secret-key" >}}) from the Grafana config. The purpose of this is only to hide content from the users of the application. This should be used for storing TLS Cert and password that Grafana will append to the request on the server side. All of these settings are optional.
 
 > **Note:** Datasources tagged with _HTTP\*_ below denotes any data source which communicates using the HTTP protocol, e.g. all core data source plugins except MySQL, PostgreSQL and MSSQL.
 
@@ -233,7 +233,7 @@ datasources:
 
 > This feature is available from v7.1
 
-You can manage plugins in Grafana by adding one or more YAML config files in the [`provisioning/plugins`]({{< relref "configuration.md#provisioning" >}}) directory. Each config file can contain a list of `apps` that will be updated during start up. Grafana updates each app to match the configuration file.
+You can manage plugins in Grafana by adding one or more YAML config files in the [`provisioning/plugins`]({{< relref "../setup-grafana/configure-grafana/#provisioning" >}}) directory. Each config file can contain a list of `apps` that will be updated during start up. Grafana updates each app to match the configuration file.
 
 ### Example plugin configuration file
 
@@ -261,7 +261,7 @@ apps:
 
 ## Dashboards
 
-You can manage dashboards in Grafana by adding one or more YAML config files in the [`provisioning/dashboards`]({{< relref "configuration.md" >}}) directory. Each config file can contain a list of `dashboards providers` that load dashboards into Grafana from the local filesystem.
+You can manage dashboards in Grafana by adding one or more YAML config files in the [`provisioning/dashboards`]({{< relref "../setup-grafana/configure-grafana/" >}}) directory. Each config file can contain a list of `dashboards providers` that load dashboards into Grafana from the local filesystem.
 
 The dashboard provider config file looks somewhat like this:
 
@@ -316,7 +316,7 @@ Note: The JSON definition in the input field when using `Copy JSON to Clipboard`
 
 ### Reusable Dashboard URLs
 
-If the dashboard in the JSON file contains an [UID]({{< relref "../dashboards/json-model.md" >}}), Grafana forces insert/update on that UID. This allows you to migrate dashboards between Grafana instances and provisioning Grafana from configuration without breaking the URLs given because the new dashboard URL uses the UID as identifier.
+If the dashboard in the JSON file contains an [UID]({{< relref "../dashboards/json-model/" >}}), Grafana forces insert/update on that UID. This allows you to migrate dashboards between Grafana instances and provisioning Grafana from configuration without breaking the URLs given because the new dashboard URL uses the UID as identifier.
 When Grafana starts, it updates/inserts all dashboards available in the configured folders. If you modify the file, then the dashboard is also updated.
 By default, Grafana deletes dashboards in the database if the file is removed. You can disable this behavior using the `disableDeletion` setting.
 
@@ -601,4 +601,4 @@ The following sections detail the supported settings and secure settings for eac
 
 Grafana Enterprise supports provisioning for the following resources:
 
-- [Access Control Provisioning]({{< relref "../enterprise/access-control/provisioning.md" >}})
+- [Role-based access control provisioning]({{< relref "../enterprise/access-control/rbac-provisioning/" >}})

@@ -1,26 +1,29 @@
 import { map } from 'lodash';
-import LogAnalyticsQuerystringBuilder from '../log_analytics/querystring_builder';
-import ResponseParser, { transformMetadataToKustoSchema } from './response_parser';
-import {
-  AzureMonitorQuery,
-  AzureDataSourceJsonData,
-  AzureLogsVariable,
-  AzureQueryType,
-  DatasourceValidationResult,
-} from '../types';
+import { from, Observable } from 'rxjs';
+import { mergeMap } from 'rxjs/operators';
+
 import {
   DataQueryRequest,
   DataQueryResponse,
-  ScopedVars,
   DataSourceInstanceSettings,
   DataSourceRef,
+  ScopedVars,
 } from '@grafana/data';
-import { getTemplateSrv, DataSourceWithBackend } from '@grafana/runtime';
-import { Observable, from } from 'rxjs';
-import { mergeMap } from 'rxjs/operators';
-import { getAuthType, getAzureCloud, getAzurePortalUrl } from '../credentials';
+import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
+
 import { isGUIDish } from '../components/ResourcePicker/utils';
+import { getAuthType, getAzureCloud, getAzurePortalUrl } from '../credentials';
+import LogAnalyticsQuerystringBuilder from '../log_analytics/querystring_builder';
+import {
+  AzureDataSourceJsonData,
+  AzureLogsVariable,
+  AzureMonitorQuery,
+  AzureQueryType,
+  DatasourceValidationResult,
+} from '../types';
 import { interpolateVariable, routeNames } from '../utils/common';
+
+import ResponseParser, { transformMetadataToKustoSchema } from './response_parser';
 
 interface AdhocQuery {
   datasource: DataSourceRef;
@@ -60,7 +63,11 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   }
 
   filterQuery(item: AzureMonitorQuery): boolean {
-    return item.hide !== true && !!item.azureLogAnalytics?.query && !!item.azureLogAnalytics.resource;
+    return (
+      item.hide !== true &&
+      !!item.azureLogAnalytics?.query &&
+      (!!item.azureLogAnalytics.resource || !!item.azureLogAnalytics.workspace)
+    );
   }
 
   async getSubscriptions(): Promise<Array<{ text: string; value: string }>> {
@@ -104,8 +111,10 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   }
 
   async getKustoSchema(resourceUri: string) {
-    const metadata = await this.getMetadata(resourceUri);
-    return transformMetadataToKustoSchema(metadata, resourceUri);
+    const templateSrv = getTemplateSrv();
+    const interpolatedUri = templateSrv.replace(resourceUri, {}, interpolateVariable);
+    const metadata = await this.getMetadata(interpolatedUri);
+    return transformMetadataToKustoSchema(metadata, interpolatedUri, templateSrv.getVariables());
   }
 
   applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): AzureMonitorQuery {
@@ -125,7 +134,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     const query = templateSrv.replace(item.query, scopedVars, interpolateVariable);
 
     return {
-      refId: target.refId,
+      ...target,
       queryType: AzureQueryType.LogAnalytics,
 
       azureLogAnalytics: {

@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package postgres
 
 import (
@@ -25,7 +22,10 @@ import (
 )
 
 // Test generateConnectionString.
-func TestGenerateConnectionString(t *testing.T) {
+func TestIntegrationGenerateConnectionString(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	cfg := setting.NewCfg()
 	cfg.DataPath = t.TempDir()
 
@@ -68,6 +68,24 @@ func TestGenerateConnectionString(t *testing.T) {
 			expConnStr:  "user='user' password='password' host='host' dbname='database' port=1234 sslmode='verify-full'",
 		},
 		{
+			desc:        "Ipv6 host",
+			host:        "[::1]",
+			user:        "user",
+			password:    "password",
+			database:    "database",
+			tlsSettings: tlsSettings{Mode: "verify-full"},
+			expConnStr:  "user='user' password='password' host='::1' dbname='database' sslmode='verify-full'",
+		},
+		{
+			desc:        "Ipv6/port host",
+			host:        "[::1]:1234",
+			user:        "user",
+			password:    "password",
+			database:    "database",
+			tlsSettings: tlsSettings{Mode: "verify-full"},
+			expConnStr:  "user='user' password='password' host='::1' dbname='database' port=1234 sslmode='verify-full'",
+		},
+		{
 			desc:        "Invalid port",
 			host:        "host:invalid",
 			user:        "user",
@@ -83,6 +101,15 @@ func TestGenerateConnectionString(t *testing.T) {
 			database:    "database",
 			tlsSettings: tlsSettings{Mode: "verify-full"},
 			expConnStr:  `user='user' password='p\'\\assword' host='host' dbname='database' sslmode='verify-full'`,
+		},
+		{
+			desc:        "User/DB with single quote and backslash",
+			host:        "host",
+			user:        `u'\ser`,
+			password:    `password`,
+			database:    `d'\atabase`,
+			tlsSettings: tlsSettings{Mode: "verify-full"},
+			expConnStr:  `user='u\'\\ser' password='password' host='host' dbname='d\'\\atabase' sslmode='verify-full'`,
 		},
 		{
 			desc:        "Custom TLS mode disabled",
@@ -145,7 +172,10 @@ func TestGenerateConnectionString(t *testing.T) {
 // There is also a datasource and dashboard provisioned by devenv scripts that you can
 // use to verify that the generated data are visualized as expected, see
 // devenv/README.md for setup instructions.
-func TestPostgres(t *testing.T) {
+func TestIntegrationPostgres(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	// change to true to run the PostgreSQL tests
 	const runPostgresTests = false
 

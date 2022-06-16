@@ -1,11 +1,13 @@
 import { ComponentType } from 'react';
-import { RegistryItem, Registry } from '../utils/Registry';
+
 import {
   NumberFieldConfigSettings,
   SliderFieldConfigSettings,
   SelectFieldConfigSettings,
   StringFieldConfigSettings,
 } from '../field';
+import { RegistryItem, Registry } from '../utils/Registry';
+
 import { OptionEditorConfig } from './options';
 
 /**
@@ -79,7 +81,8 @@ export abstract class OptionsUIRegistryBuilder<
   TOptions,
   TEditorProps,
   T extends OptionsEditorItem<TOptions, any, TEditorProps, any>
-> implements OptionsUIRegistryBuilderAPI<TOptions, TEditorProps, T> {
+> implements OptionsUIRegistryBuilderAPI<TOptions, TEditorProps, T>
+{
   private properties: T[] = [];
 
   addCustomEditor<TSettings, TValue>(config: T & OptionsEditorItem<TOptions, TSettings, TEditorProps, TValue>): this {

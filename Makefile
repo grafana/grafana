@@ -7,11 +7,15 @@ WIRE_TAGS = "oss"
 -include local/Makefile
 include .bingo/Variables.mk
 
-.PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-full lint-go golangci-lint test-go test-js gen-ts test run run-frontend clean devenv devenv-down protobuf drone help
+.PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-full build-docker-full-ubuntu lint-go golangci-lint test-go test-js gen-ts test run run-frontend clean devenv devenv-down protobuf drone help
 
 GO = go
 GO_FILES ?= ./pkg/...
 SH_FILES ?= $(shell find ./scripts -name *.sh)
+API_DEFINITION_FILES = $(shell find ./pkg/api/docs/definitions -name '*.go' -print)
+SWAGGER_TAG ?= latest
+GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
+GO_BUILD_FLAGS += $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS))
 
 all: deps build
 
@@ -28,23 +32,81 @@ node_modules: package.json yarn.lock ## Install node modules.
 	@echo "install frontend dependencies"
 	YARN_ENABLE_PROGRESS_BARS=false yarn install --immutable
 
+##@ Swagger
+SPEC_TARGET = public/api-spec.json
+MERGED_SPEC_TARGET := public/api-merged.json
+NGALERT_SPEC_TARGET = pkg/services/ngalert/api/tooling/api.json
+
+$(SPEC_TARGET): $(API_DEFINITION_FILES) ## Generate API spec
+	docker run --rm -it \
+	-e GOPATH=${HOME}/go:/go \
+	-e SWAGGER_GENERATE_EXTENSION=false \
+	-v ${HOME}/go:/go \
+	-v $$(pwd):/grafana \
+	-v $$(pwd)/../grafana-enterprise:$$(pwd)/../grafana-enterprise \
+	-w $$(pwd)/pkg/api/docs quay.io/goswagger/swagger:$(SWAGGER_TAG) \
+	generate spec -m -o /grafana/public/api-spec.json \
+	-w /grafana/pkg/server \
+	-x "grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
+	-x "github.com/prometheus/alertmanager" \
+	-i /grafana/pkg/api/docs/tags.json
+
+swagger-api-spec: gen-go $(SPEC_TARGET) $(MERGED_SPEC_TARGET) validate-api-spec
+
+$(NGALERT_SPEC_TARGET):
+	+$(MAKE) -C pkg/services/ngalert/api/tooling api.json
+
+$(MERGED_SPEC_TARGET): $(SPEC_TARGET) $(NGALERT_SPEC_TARGET) ## Merge generated and ngalert API specs
+	go run pkg/api/docs/merge/merge_specs.go -o=public/api-merged.json $(<) pkg/services/ngalert/api/tooling/api.json
+
+ensure_go-swagger_mac:
+	@hash swagger &>/dev/null || (brew tap go-swagger/go-swagger && brew install go-swagger)
+
+--swagger-api-spec-mac: ensure_go-swagger_mac $(API_DEFINITION_FILES)  ## Generate API spec (for M1 Mac)
+	SWAGGER_GENERATE_EXTENSION=false swagger generate spec -m -w pkg/server -o public/api-spec.json \
+	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
+	-x "github.com/prometheus/alertmanager" \
+	-i pkg/api/docs/tags.json
+
+swagger-api-spec-mac: gen-go --swagger-api-spec-mac $(MERGED_SPEC_TARGET) validate-api-spec-mac
+
+validate-api-spec: $(MERGED_SPEC_TARGET) ## Validate API spec
+	docker run --rm -it \
+	-e GOPATH=${HOME}/go:/go \
+	-e SWAGGER_GENERATE_EXTENSION=false \
+	-v ${HOME}/go:/go \
+	-v $$(pwd):/grafana \
+	-w $$(pwd)/pkg/api/docs quay.io/goswagger/swagger:$(SWAGGER_TAG) \
+	validate /grafana/$(<)
+
+validate-api-spec-mac: $(MERGED_SPEC_TARGET) ## Validate API spec
+	swagger validate $(<)
+
+clean-api-spec:
+	rm $(SPEC_TARGET) $(MERGED_SPEC_TARGET)
+
 ##@ Building
+
+gen-cue: ## Do all CUE/Thema code generation
+	@echo "generate code from .cue files"
+	go generate ./pkg/framework/coremodel
+	go generate ./public/app/plugins
 
 gen-go: $(WIRE)
 	@echo "generate go files"
 	$(WIRE) gen -tags $(WIRE_TAGS) ./pkg/server ./pkg/cmd/grafana-cli/runner
 
-build-go: gen-go ## Build all Go binaries.
+build-go: $(MERGED_SPEC_TARGET) gen-go ## Build all Go binaries.
 	@echo "build go files"
-	$(GO) run build.go build
+	$(GO) run build.go $(GO_BUILD_FLAGS) build
 
 build-server: ## Build Grafana server.
 	@echo "build server"
-	$(GO) run build.go build-server
+	$(GO) run build.go $(GO_BUILD_FLAGS) build-server
 
 build-cli: ## Build Grafana CLI application.
 	@echo "build grafana-cli"
-	$(GO) run build.go build-cli
+	$(GO) run build.go $(GO_BUILD_FLAGS) build-cli
 
 build-js: ## Build frontend assets.
 	@echo "build frontend"
@@ -98,6 +160,11 @@ shellcheck: $(SH_FILES) ## Run checks for shell scripts.
 build-docker-full: ## Build Docker image for development.
 	@echo "build docker container"
 	docker build --tag grafana/grafana:dev .
+
+build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
+	@echo "build docker container"
+	docker build --tag grafana/grafana:dev-ubuntu -f ./Dockerfile.ubuntu .
+
 
 ##@ Services
 

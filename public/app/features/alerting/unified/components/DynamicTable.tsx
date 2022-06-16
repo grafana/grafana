@@ -1,5 +1,6 @@
-import React, { ReactNode, useState } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { ReactNode, useState } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { IconButton, useStyles2 } from '@grafana/ui';
 
@@ -91,7 +92,7 @@ export const DynamicTable = <T extends object>({
       {items.map((item, index) => {
         const isItemExpanded = isExpanded ? isExpanded(item) : expandedIds.includes(item.id);
         return (
-          <div className={styles.row} key={item.id} data-testid={testIdGenerator?.(item, index) ?? 'row'}>
+          <div className={styles.row} key={`${item.id}-${index}`} data-testid={testIdGenerator?.(item, index) ?? 'row'}>
             {renderPrefixCell && renderPrefixCell(item, index, items)}
             {isExpandable && (
               <div className={cx(styles.cell, styles.expandCell)}>
@@ -196,7 +197,6 @@ const getStyles = <T extends unknown>(
     `,
     bodyCell: css`
       overflow: hidden;
-      word-break: break-all;
       ${theme.breakpoints.down('sm')} {
         grid-column-end: right;
         grid-column-start: right;

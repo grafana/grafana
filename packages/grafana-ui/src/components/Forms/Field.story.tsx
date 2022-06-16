@@ -1,7 +1,9 @@
-import React, { useState, useCallback } from 'react';
 import { Story } from '@storybook/react';
-import { Field, FieldProps } from './Field';
+import React, { useState, useCallback } from 'react';
+
 import { Input, Switch } from '..';
+
+import { Field, FieldProps } from './Field';
 import mdx from './Field.mdx';
 
 export default {

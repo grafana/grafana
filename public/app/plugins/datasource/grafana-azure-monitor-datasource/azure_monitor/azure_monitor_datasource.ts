@@ -1,7 +1,8 @@
+import { filter, find, startsWith } from 'lodash';
+
 import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
-import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
+import { DataSourceWithBackend, getTemplateSrv, isFetchError } from '@grafana/runtime';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { filter, startsWith } from 'lodash';
 
 import { resourceTypeDisplayNames } from '../azureMetadata';
 import { getAuthType, getAzureCloud, getAzurePortalUrl } from '../credentials';
@@ -9,17 +10,28 @@ import TimegrainConverter from '../time_grain_converter';
 import {
   AzureDataSourceJsonData,
   AzureMonitorMetricDefinitionsResponse,
+  AzureMonitorMetricNamespacesResponse,
+  AzureMonitorMetricNamesResponse,
+  AzureMonitorMetricsMetadataResponse,
   AzureMonitorQuery,
   AzureMonitorResourceGroupsResponse,
   AzureQueryType,
   DatasourceValidationResult,
+  GetMetricNamespacesQuery,
+  GetMetricNamesQuery,
+  GetMetricMetadataQuery,
 } from '../types';
 import { routeNames } from '../utils/common';
+
 import ResponseParser from './response_parser';
 import SupportedNamespaces from './supported_namespaces';
 import UrlBuilder from './url_builder';
 
 const defaultDropdownValue = 'select';
+
+function hasValue(item?: string) {
+  return !!(item && item !== defaultDropdownValue);
+}
 
 export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureMonitorQuery, AzureDataSourceJsonData> {
   apiVersion = '2018-01-01';
@@ -40,7 +52,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     this.defaultSubscriptionId = instanceSettings.jsonData.subscriptionId;
 
     const cloud = getAzureCloud(instanceSettings);
-    this.resourcePath = `${routeNames.azureMonitor}/subscriptions`;
+    this.resourcePath = routeNames.azureMonitor;
     this.supportedMetricNamespaces = new SupportedNamespaces(cloud).get();
     this.azurePortalUrl = getAzurePortalUrl(cloud);
   }
@@ -51,19 +63,17 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   }
 
   filterQuery(item: AzureMonitorQuery): boolean {
+    const hasResourceUri = !!item?.azureMonitor?.resourceUri;
+    const hasLegacyQuery =
+      hasValue(item?.azureMonitor?.resourceGroup) &&
+      hasValue(item?.azureMonitor?.resourceName) &&
+      hasValue(item?.azureMonitor?.metricDefinition);
+
     return !!(
       item.hide !== true &&
-      item.azureMonitor &&
-      item.azureMonitor.resourceGroup &&
-      item.azureMonitor.resourceGroup !== defaultDropdownValue &&
-      item.azureMonitor.resourceName &&
-      item.azureMonitor.resourceName !== defaultDropdownValue &&
-      item.azureMonitor.metricDefinition &&
-      item.azureMonitor.metricDefinition !== defaultDropdownValue &&
-      item.azureMonitor.metricName &&
-      item.azureMonitor.metricName !== defaultDropdownValue &&
-      item.azureMonitor.aggregation &&
-      item.azureMonitor.aggregation !== defaultDropdownValue
+      (hasResourceUri || hasLegacyQuery) &&
+      hasValue(item?.azureMonitor?.metricName) &&
+      hasValue(item?.azureMonitor?.aggregation)
     );
   }
 
@@ -82,6 +92,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
 
     const templateSrv = getTemplateSrv();
 
+    const resourceUri = templateSrv.replace(item.resourceUri, scopedVars);
     const subscriptionId = templateSrv.replace(target.subscription || this.defaultSubscriptionId, scopedVars);
     const resourceGroup = templateSrv.replace(item.resourceGroup, scopedVars);
     const resourceName = templateSrv.replace(item.resourceName, scopedVars);
@@ -94,19 +105,20 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     const dimensionFilters = (item.dimensionFilters ?? [])
       .filter((f) => f.dimension && f.dimension !== 'None')
       .map((f) => {
-        const filter = templateSrv.replace(f.filter ?? '', scopedVars);
+        const filters = f.filters?.map((filter) => templateSrv.replace(filter ?? '', scopedVars));
         return {
           dimension: templateSrv.replace(f.dimension, scopedVars),
           operator: f.operator || 'eq',
-          filter: filter || '*', // send * when empty
+          filters: filters || [],
         };
       });
 
     return {
-      refId: target.refId,
+      ...target,
       subscription: subscriptionId,
       queryType: AzureQueryType.AzureMonitor,
       azureMonitor: {
+        resourceUri,
         resourceGroup,
         resourceName,
         metricDefinition,
@@ -128,14 +140,14 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       return [];
     }
 
-    return this.getResource(`${this.resourcePath}?api-version=2019-03-01`).then((result: any) => {
+    return this.getResource(`${this.resourcePath}/subscriptions?api-version=2019-03-01`).then((result: any) => {
       return ResponseParser.parseSubscriptions(result);
     });
   }
 
   getResourceGroups(subscriptionId: string) {
     return this.getResource(
-      `${this.resourcePath}/${subscriptionId}/resourceGroups?api-version=${this.listByResourceGroupApiVersion}`
+      `${this.resourcePath}/subscriptions/${subscriptionId}/resourceGroups?api-version=${this.listByResourceGroupApiVersion}`
     ).then((result: AzureMonitorResourceGroupsResponse) => {
       return ResponseParser.parseResponseValues(result, 'name', 'name');
     });
@@ -143,7 +155,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
 
   getMetricDefinitions(subscriptionId: string, resourceGroup: string) {
     return this.getResource(
-      `${this.resourcePath}/${subscriptionId}/resourceGroups/${resourceGroup}/resources?api-version=${this.listByResourceGroupApiVersion}`
+      `${this.resourcePath}/subscriptions/${subscriptionId}/resourceGroups/${resourceGroup}/resources?api-version=${this.listByResourceGroupApiVersion}`
     )
       .then((result: AzureMonitorMetricDefinitionsResponse) => {
         return ResponseParser.parseResponseValues(result, 'type', 'type');
@@ -195,9 +207,12 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   }
 
   getResourceNames(subscriptionId: string, resourceGroup: string, metricDefinition: string, skipToken?: string) {
+    const validMetricDefinition = startsWith(metricDefinition, 'Microsoft.Storage/storageAccounts/')
+      ? 'Microsoft.Storage/storageAccounts'
+      : metricDefinition;
     let url =
-      `${this.resourcePath}/${subscriptionId}/resourceGroups/${resourceGroup}/resources?` +
-      `$filter=resourceType eq '${metricDefinition}'&` +
+      `${this.resourcePath}/subscriptions/${subscriptionId}/resourceGroups/${resourceGroup}/resources?` +
+      `$filter=resourceType eq '${validMetricDefinition}'&` +
       `api-version=${this.listByResourceGroupApiVersion}`;
     if (skipToken) {
       url += `&$skiptoken=${skipToken}`;
@@ -229,62 +244,54 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     });
   }
 
-  getMetricNamespaces(subscriptionId: string, resourceGroup: string, metricDefinition: string, resourceName: string) {
+  getMetricNamespaces(query: GetMetricNamespacesQuery) {
     const url = UrlBuilder.buildAzureMonitorGetMetricNamespacesUrl(
       this.resourcePath,
-      subscriptionId,
-      resourceGroup,
-      metricDefinition,
-      resourceName,
-      this.apiPreviewVersion
+      this.apiPreviewVersion,
+      this.replaceTemplateVariables(query)
     );
-
-    return this.getResource(url).then((result: any) => {
-      return ResponseParser.parseResponseValues(result, 'name', 'properties.metricNamespaceName');
-    });
+    return this.getResource(url)
+      .then((result: AzureMonitorMetricNamespacesResponse) => {
+        return ResponseParser.parseResponseValues(result, 'name', 'properties.metricNamespaceName');
+      })
+      .then((result) => {
+        if (url.includes('Microsoft.Storage/storageAccounts')) {
+          const storageNamespaces = [
+            'Microsoft.Storage/storageAccounts',
+            'Microsoft.Storage/storageAccounts/blobServices',
+            'Microsoft.Storage/storageAccounts/fileServices',
+            'Microsoft.Storage/storageAccounts/tableServices',
+            'Microsoft.Storage/storageAccounts/queueServices',
+          ];
+          for (const namespace of storageNamespaces) {
+            if (!find(result, ['value', namespace.toLowerCase()])) {
+              result.push({ value: namespace, text: namespace });
+            }
+          }
+        }
+        return result;
+      });
   }
 
-  getMetricNames(
-    subscriptionId: string,
-    resourceGroup: string,
-    metricDefinition: string,
-    resourceName: string,
-    metricNamespace: string
-  ) {
+  getMetricNames(query: GetMetricNamesQuery) {
     const url = UrlBuilder.buildAzureMonitorGetMetricNamesUrl(
       this.resourcePath,
-      subscriptionId,
-      resourceGroup,
-      metricDefinition,
-      resourceName,
-      metricNamespace,
-      this.apiVersion
+      this.apiVersion,
+      this.replaceTemplateVariables(query)
     );
-
-    return this.getResource(url).then((result: any) => {
+    return this.getResource(url).then((result: AzureMonitorMetricNamesResponse) => {
       return ResponseParser.parseResponseValues(result, 'name.localizedValue', 'name.value');
     });
   }
 
-  getMetricMetadata(
-    subscriptionId: string,
-    resourceGroup: string,
-    metricDefinition: string,
-    resourceName: string,
-    metricNamespace: string,
-    metricName: string
-  ) {
+  getMetricMetadata(query: GetMetricMetadataQuery) {
+    const { metricName } = query;
     const url = UrlBuilder.buildAzureMonitorGetMetricNamesUrl(
       this.resourcePath,
-      subscriptionId,
-      resourceGroup,
-      metricDefinition,
-      resourceName,
-      metricNamespace,
-      this.apiVersion
+      this.apiVersion,
+      this.replaceTemplateVariables(query)
     );
-
-    return this.getResource(url).then((result: any) => {
+    return this.getResource(url).then((result: AzureMonitorMetricsMetadataResponse) => {
       return ResponseParser.parseMetadata(result, metricName);
     });
   }
@@ -296,7 +303,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     }
 
     try {
-      const url = `${this.resourcePath}?api-version=2019-03-01`;
+      const url = `${this.resourcePath}/subscriptions?api-version=2019-03-01`;
 
       return await this.getResource(url).then<DatasourceValidationResult>((response: any) => {
         return {
@@ -307,14 +314,18 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       });
     } catch (e) {
       let message = 'Azure Monitor: ';
-      message += e.statusText ? e.statusText + ': ' : '';
+      if (isFetchError(e)) {
+        message += e.statusText ? e.statusText + ': ' : '';
 
-      if (e.data && e.data.error && e.data.error.code) {
-        message += e.data.error.code + '. ' + e.data.error.message;
-      } else if (e.data && e.data.error) {
-        message += e.data.error;
-      } else if (e.data) {
-        message += e.data;
+        if (e.data && e.data.error && e.data.error.code) {
+          message += e.data.error.code + '. ' + e.data.error.message;
+        } else if (e.data && e.data.error) {
+          message += e.data.error;
+        } else if (e.data) {
+          message += e.data;
+        } else {
+          message += 'Cannot connect to Azure Monitor REST API.';
+        }
       } else {
         message += 'Cannot connect to Azure Monitor REST API.';
       }
@@ -349,5 +360,17 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
 
   private isValidConfigField(field?: string): boolean {
     return typeof field === 'string' && field.length > 0;
+  }
+
+  private replaceTemplateVariables<T extends { [K in keyof T]: string }>(query: T) {
+    const templateSrv = getTemplateSrv();
+
+    const workingQuery: { [K in keyof T]: string } = { ...query };
+    const keys = Object.keys(query) as Array<keyof T>;
+    keys.forEach((key) => {
+      workingQuery[key] = templateSrv.replace(workingQuery[key]);
+    });
+
+    return workingQuery;
   }
 }

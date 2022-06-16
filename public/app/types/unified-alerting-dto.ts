@@ -19,9 +19,63 @@ export enum GrafanaAlertState {
   Error = 'Error',
 }
 
+type GrafanaAlertStateReason = ` (${string})` | '';
+
+export type GrafanaAlertStateWithReason = `${GrafanaAlertState}${GrafanaAlertStateReason}`;
+
+/** We need this to disambiguate the union PromAlertingRuleState | GrafanaAlertStateWithReason
+ */
+export function isAlertStateWithReason(
+  state: PromAlertingRuleState | GrafanaAlertStateWithReason
+): state is GrafanaAlertStateWithReason {
+  return (
+    state !== null &&
+    typeof state !== 'undefined' &&
+    !Object.values(PromAlertingRuleState).includes(state as PromAlertingRuleState)
+  );
+}
+
+export function mapStateWithReasonToBaseState(
+  state: GrafanaAlertStateWithReason | PromAlertingRuleState
+): GrafanaAlertState | PromAlertingRuleState {
+  if (isAlertStateWithReason(state)) {
+    const fields = state.split(' ');
+    return fields[0] as GrafanaAlertState;
+  } else {
+    return state;
+  }
+}
+
 export enum PromRuleType {
   Alerting = 'alerting',
   Recording = 'recording',
+}
+export enum PromApplication {
+  Lotex = 'Lotex',
+  Mimir = 'Mimir',
+  Prometheus = 'Prometheus',
+}
+
+export interface PromBuildInfoResponse {
+  data: {
+    application?: string;
+    version: string;
+    revision: string;
+    features?: {
+      ruler_config_api?: 'true' | 'false';
+      alertmanager_config_api?: 'true' | 'false';
+      query_sharding?: 'true' | 'false';
+      federated_rules?: 'true' | 'false';
+    };
+  };
+  status: 'success';
+}
+
+export interface PromApiFeatures {
+  application?: PromApplication;
+  features: {
+    rulerApiEnabled: boolean;
+  };
 }
 
 interface PromRuleDTOBase {
@@ -37,7 +91,7 @@ export interface PromAlertingRuleDTO extends PromRuleDTOBase {
   alerts: Array<{
     labels: Labels;
     annotations: Annotations;
-    state: Exclude<PromAlertingRuleState | GrafanaAlertState, PromAlertingRuleState.Inactive>;
+    state: Exclude<PromAlertingRuleState | GrafanaAlertStateWithReason, PromAlertingRuleState.Inactive>;
     activeAt: string;
     value: string;
   }>;
@@ -151,6 +205,7 @@ export type PostableRuleDTO = RulerAlertingRuleDTO | RulerRecordingRuleDTO | Pos
 export type RulerRuleGroupDTO<R = RulerRuleDTO> = {
   name: string;
   interval?: string;
+  source_tenants?: string[];
   rules: R[];
 };
 

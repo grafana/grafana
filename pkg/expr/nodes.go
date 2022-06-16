@@ -8,12 +8,12 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
-	"github.com/grafana/grafana/pkg/util/errutil"
 
 	"gonum.org/v1/gonum/graph/simple"
 )
@@ -199,7 +199,7 @@ func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, req *Reques
 func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (mathexp.Results, error) {
 	dsInstanceSettings, err := adapters.ModelToInstanceSettings(dn.datasource, s.decryptSecureJsonDataFn(ctx))
 	if err != nil {
-		return mathexp.Results{}, errutil.Wrap("failed to convert datasource instance settings", err)
+		return mathexp.Results{}, fmt.Errorf("%v: %w", "failed to convert datasource instance settings", err)
 	}
 	pc := backend.PluginContext{
 		OrgID:                      dn.orgID,
@@ -236,6 +236,15 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (m
 			return mathexp.Results{}, QueryError{RefID: refID, Err: qr.Error}
 		}
 
+		dataSource := dn.datasource.Type
+		if isAllFrameVectors(dataSource, qr.Frames) {
+			vals, err = framesToNumbers(qr.Frames)
+			if err != nil {
+				return mathexp.Results{}, fmt.Errorf("failed to read frames as numbers: %w", err)
+			}
+			return mathexp.Results{Values: vals}, nil
+		}
+
 		if len(qr.Frames) == 1 {
 			frame := qr.Frames[0]
 			if frame.TimeSeriesSchema().Type == data.TimeSeriesTypeNot && isNumberTable(frame) {
@@ -256,6 +265,13 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (m
 
 		for _, frame := range qr.Frames {
 			logger.Debug("expression datasource query (seriesSet)", "query", refID)
+			// Check for TimeSeriesTypeNot in InfluxDB queries. A data frame of this type will cause
+			// the WideToMany() function to error out, which results in unhealthy alerts.
+			// This check should be removed once inconsistencies in data source responses are solved.
+			if frame.TimeSeriesSchema().Type == data.TimeSeriesTypeNot && dataSource == models.DS_INFLUXDB {
+				logger.Warn("ignoring InfluxDB data frame due to missing numeric fields", "frame", frame)
+				continue
+			}
 			series, err := WideToMany(frame)
 			if err != nil {
 				return mathexp.Results{}, err
@@ -268,6 +284,51 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (m
 	return mathexp.Results{
 		Values: vals,
 	}, nil
+}
+
+func isAllFrameVectors(datasourceType string, frames data.Frames) bool {
+	if datasourceType != "prometheus" {
+		return false
+	}
+	allVector := false
+	for i, frame := range frames {
+		if frame.Meta != nil && frame.Meta.Custom != nil {
+			if sMap, ok := frame.Meta.Custom.(map[string]string); ok {
+				if sMap != nil {
+					if sMap["resultType"] == "vector" {
+						if i != 0 && !allVector {
+							break
+						}
+						allVector = true
+					}
+				}
+			}
+		}
+	}
+	return allVector
+}
+
+func framesToNumbers(frames data.Frames) ([]mathexp.Value, error) {
+	vals := make([]mathexp.Value, 0, len(frames))
+	for _, frame := range frames {
+		if frame == nil {
+			continue
+		}
+		if len(frame.Fields) == 2 && frame.Fields[0].Len() == 1 {
+			// Can there be zero Len Field results that are being skipped?
+			valueField := frame.Fields[1]
+			if valueField.Type().Numeric() { // should be []float64
+				val, err := valueField.FloatAt(0) // FloatAt should not err if numeric
+				if err != nil {
+					return nil, fmt.Errorf("failed to read value of frame [%v] (RefID %v) of type [%v] as float: %w", frame.Name, frame.RefID, valueField.Type(), err)
+				}
+				n := mathexp.NewNumber(frame.Name, valueField.Labels)
+				n.SetValue(&val)
+				vals = append(vals, n)
+			}
+		}
+	}
+	return vals, nil
 }
 
 func isNumberTable(frame *data.Frame) bool {
@@ -320,7 +381,11 @@ func extractNumberSet(frame *data.Frame) ([]mathexp.Number, error) {
 		}
 
 		n := mathexp.NewNumber("", labels)
+
+		// The new value fields' configs gets pointed to the one in the original frame
+		n.Frame.Fields[0].Config = frame.Fields[numericField].Config
 		n.SetValue(&val)
+
 		numbers[rowIdx] = n
 	}
 	return numbers, nil
@@ -350,6 +415,10 @@ func WideToMany(frame *data.Frame) ([]mathexp.Series, error) {
 		f := data.NewFrameOfFieldTypes(frame.Name, l, frame.Fields[tsSchema.TimeIndex].Type(), frame.Fields[valIdx].Type())
 		f.Fields[0].Name = frame.Fields[tsSchema.TimeIndex].Name
 		f.Fields[1].Name = frame.Fields[valIdx].Name
+
+		// The new value fields' configs gets pointed to the one in the original frame
+		f.Fields[1].Config = frame.Fields[valIdx].Config
+
 		if frame.Fields[valIdx].Labels != nil {
 			f.Fields[1].Labels = frame.Fields[valIdx].Labels.Copy()
 		}
