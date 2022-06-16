@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
 import { Global } from '@emotion/react';
 import SliderComponent from 'rc-slider';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import { FieldConfigEditorProps, SliderFieldConfigSettings } from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
@@ -28,6 +28,13 @@ export const SliderValueEditor: React.FC<FieldConfigEditorProps<number, SliderFi
   const styles = getStyles(theme, isHorizontal, Boolean(marks));
   const SliderWithTooltip = SliderComponent;
   const [sliderValue, setSliderValue] = useState<number>(value ?? min);
+
+  // Check for a difference between prop value and internal state
+  useEffect(() => {
+    if (value != null && value !== sliderValue) {
+      setSliderValue(value);
+    }
+  }, [value, sliderValue]);
 
   const onSliderChange = useCallback(
     (v: number) => {
@@ -62,7 +69,7 @@ export const SliderValueEditor: React.FC<FieldConfigEditorProps<number, SliderFi
   return (
     <div className={cx(styles.container, styles.slider)}>
       {/** Slider tooltip's parent component is body and therefore we need Global component to do css overrides for it. */}
-      <Global styles={styles.tooltip} />
+      <Global styles={styles.slider} />
       <label className={cx(styles.sliderInput, ...sliderInputClassNames)}>
         <SliderWithTooltip
           min={min}
