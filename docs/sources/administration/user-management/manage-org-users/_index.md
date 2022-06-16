@@ -56,7 +56,7 @@ Update user permissions when you want to enhance or restrict a user's access to 
 1. Select the role that you want to assign.
 1. Click **Update**.
 
-> **Note:** If you have [server administrator]({{< relref "../../roles-and-permissions/#grafana-server-administrators" >}}) permissions, you can also [change a user's organization permissions]({{< relref "../../server-administration/server-user-management/change-user-org-permissions/" >}}) in the Server Admin section.
+> **Note:** If you have [server administrator]({{< relref "../../roles-and-permissions/#grafana-server-administrators" >}}) permissions, you can also [change a user's organization permissions]({{< relref "../server-user-management/change-user-org-permissions/" >}}) in the Server Admin section.
 
 ## Invite a user to join an organization
 
@@ -65,7 +65,7 @@ When you invite users to join an organization, you assign the **Admin**, **Edito
 - If you know that the user already has access Grafana and you know their user name, then you issue an invitation by entering their user name.
 - If the user is new to Grafana, then use their email address to issue an invitation. The system automatically creates the user account on first sign in.
 
-> **Note:** If you have [server administrator]({{< relref "../../roles-and-permissions/#grafana-server-administrators" >}}) permissions, you can also manually [add a user to an organization]({{< relref "../../server-administration/server-user-management/add-remove-user-to-org/" >}}).
+> **Note:** If you have [server administrator]({{< relref "../../roles-and-permissions/#grafana-server-administrators" >}}) permissions, you can also manually [add a user to an organization]({{< relref "../server-user-management/add-remove-user-to-org/" >}}).
 
 ### Before you begin
 
@@ -143,4 +143,4 @@ This action does not remove the user account from the Grafana server.
 
 1. Click the red **X** to remove the user from the organization.
 
-> **Note:** If you have [server administrator]({{< relref "../../roles-and-permissions/#grafana-server-administrators" >}}) permissions, you can also [remove a user from an organization]({{< relref "../../server-administration/server-user-management/add-remove-user-to-org/#remove-a-user-from-an-organization" >}}) on the Users page of the Server Admin section.
+> **Note:** If you have [server administrator]({{< relref "../../roles-and-permissions/#grafana-server-administrators" >}}) permissions, you can also [remove a user from an organization]({{< relref "../server-user-management/add-remove-user-to-org/#remove-a-user-from-an-organization" >}}) on the Users page of the Server Admin section.

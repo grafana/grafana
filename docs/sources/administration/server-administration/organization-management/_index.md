@@ -82,7 +82,7 @@ Create an organization when you want to isolate dashboards and other resources f
 
    For more information about preferences, refer to [Preferences]({{< relref "../../organization-preferences/" >}}).
 
-For more information about adding users to an organization, refer to [Add a user to an organization]({{< relref "../server-user-management/add-remove-user-to-org/" >}}).
+For more information about adding users to an organization, refer to [Add a user to an organization]({{< relref "../../user-management/server-user-management/add-remove-user-to-org/" >}}).
 
 ## Delete an organization
 

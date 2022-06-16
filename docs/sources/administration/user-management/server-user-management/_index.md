@@ -20,9 +20,9 @@ If you have [server administrator]({{< relref "../../roles-and-permissions/#graf
 
 {{< section >}}
 
-If you have [organization administrator]({{< relref "../../roles-and-permissions/#organization-roles" >}}) permissions and _not_ [server administrator]({{< relref "../../roles-and-permissions/#grafana-server-administrators" >}}) permissions, refer to [Manage users in a organization]({{< relref "../../user-management/manage-org-users/" >}}).
+If you have [organization administrator]({{< relref "../../roles-and-permissions/#organization-roles" >}}) permissions and _not_ [server administrator]({{< relref "../../roles-and-permissions/#grafana-server-administrators" >}}) permissions, refer to [Manage users in a organization]({{< relref "../manage-org-users/" >}}).
 
-For more information about users and permissions, refer to [About users and permissions]({{< relref "../../roles-and-permissions/" >}}).
+For more information about users and permissions, refer to [About users and permissions]({{< relref "../../roles-and-permissions/" >}}). For more information about managing users in general, see [User management]({{< relref "../" >}}).
 
 ## View a list of users
 
