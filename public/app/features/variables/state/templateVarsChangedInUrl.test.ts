@@ -1,3 +1,5 @@
+import { EventBusExtended } from '@grafana/data';
+
 import { DashboardState, StoreState } from '../../../types';
 import { DashboardModel } from '../../dashboard/state';
 import { initialState } from '../../dashboard/state/reducers';
@@ -53,33 +55,38 @@ async function getTestContext(urlQueryMap: ExtendedUrlQueryMap = {}, variable: V
   const getState = () => state as unknown as StoreState;
 
   const dispatch = jest.fn();
-  const thunk = templateVarsChangedInUrl(key, urlQueryMap);
+  const eventsMock = { publish: jest.fn() } as unknown as EventBusExtended;
+  const thunk = templateVarsChangedInUrl(key, urlQueryMap, eventsMock);
 
   await thunk(dispatch, getState, undefined);
 
-  return { setValueFromUrlMock, templateVariableValueUpdatedMock, startRefreshMock, variable };
+  return { setValueFromUrlMock, templateVariableValueUpdatedMock, startRefreshMock, variable, eventsMock };
 }
 
 describe('templateVarsChangedInUrl', () => {
   describe('when called with no variables in url query map', () => {
     it('then no value should change and dashboard should not be refreshed', async () => {
-      const { setValueFromUrlMock, templateVariableValueUpdatedMock, startRefreshMock } = await getTestContext();
+      const { setValueFromUrlMock, templateVariableValueUpdatedMock, startRefreshMock, eventsMock } =
+        await getTestContext();
 
       expect(setValueFromUrlMock).not.toHaveBeenCalled();
       expect(templateVariableValueUpdatedMock).not.toHaveBeenCalled();
       expect(startRefreshMock).not.toHaveBeenCalled();
+      expect(eventsMock.publish).not.toHaveBeenCalled();
     });
   });
 
   describe('when called with no variables in url query map matching variables in state', () => {
     it('then no value should change and dashboard should not be refreshed', async () => {
-      const { setValueFromUrlMock, templateVariableValueUpdatedMock, startRefreshMock } = await getTestContext({
-        'var-query': { value: 'A' },
-      });
+      const { setValueFromUrlMock, templateVariableValueUpdatedMock, startRefreshMock, eventsMock } =
+        await getTestContext({
+          'var-query': { value: 'A' },
+        });
 
       expect(setValueFromUrlMock).not.toHaveBeenCalled();
       expect(templateVariableValueUpdatedMock).not.toHaveBeenCalled();
       expect(startRefreshMock).not.toHaveBeenCalled();
+      expect(eventsMock.publish).not.toHaveBeenCalled();
     });
   });
 
@@ -98,7 +105,7 @@ describe('templateVarsChangedInUrl', () => {
 
     describe('and the values in url query map are the not the same as current in state', () => {
       it('then the value should change to the value in url query map and dashboard should be refreshed', async () => {
-        const { setValueFromUrlMock, templateVariableValueUpdatedMock, startRefreshMock, variable } =
+        const { setValueFromUrlMock, templateVariableValueUpdatedMock, startRefreshMock, variable, eventsMock } =
           await getTestContext({
             'var-variable': { value: 'B' },
           });
