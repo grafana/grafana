@@ -155,7 +155,6 @@ func TestSavePublicDashboard(t *testing.T) {
 		// access_token is valid uuid
 		_, err = uuid.FromString(pubdash.AccessToken)
 		require.NoError(t, err)
-		assert.True(t, false)
 	})
 
 	t.Run("Validate pubdash has default time setting value", func(t *testing.T) {
@@ -217,6 +216,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 		savedPubdash, err := service.GetPublicDashboardConfig(context.Background(), dashboard.OrgId, dashboard.Uid)
 		require.NoError(t, err)
 
+		// attempt to overwrite settings
 		dto = &dashboards.SavePublicDashboardConfigDTO{
 			DashboardUid: dashboard.Uid,
 			OrgId:        dashboard.OrgId,
@@ -230,6 +230,8 @@ func TestUpdatePublicDashboard(t *testing.T) {
 
 				IsEnabled:    true,
 				TimeSettings: timeSettings,
+
+				AccessToken: "NOTAREALUUID",
 			},
 		}
 
@@ -244,6 +246,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 		assert.Equal(t, savedPubdash.OrgId, updatedPubdash.OrgId)
 		assert.Equal(t, savedPubdash.CreatedAt, updatedPubdash.CreatedAt)
 		assert.Equal(t, savedPubdash.CreatedBy, updatedPubdash.CreatedBy)
+		assert.Equal(t, savedPubdash.AccessToken, updatedPubdash.AccessToken)
 
 		// gets updated
 		assert.Equal(t, dto.PublicDashboard.IsEnabled, updatedPubdash.IsEnabled)

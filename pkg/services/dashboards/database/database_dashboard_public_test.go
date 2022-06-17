@@ -164,6 +164,7 @@ func TestIntegrationSavePublicDashboardConfig(t *testing.T) {
 				TimeSettings: DefaultTimeSettings,
 				CreatedAt:    DefaultTime,
 				CreatedBy:    7,
+				AccessToken:  "NOTAREALUUID",
 			},
 		})
 		require.NoError(t, err)
@@ -181,6 +182,7 @@ func TestIntegrationSavePublicDashboardConfig(t *testing.T) {
 		pubdash2, err := dashboardStore.GetPublicDashboardConfig(context.Background(), savedDashboard2.OrgId, savedDashboard2.Uid)
 		require.NoError(t, err)
 		assert.False(t, pubdash2.IsEnabled)
+		assert.True(t, false)
 	})
 }
 
@@ -210,6 +212,7 @@ func TestIntegrationnUpdatePublicDashboard(t *testing.T) {
 				IsEnabled:    true,
 				CreatedAt:    DefaultTime,
 				CreatedBy:    7,
+				AccessToken:  "NOTAREALUUID",
 			},
 		})
 		require.NoError(t, err)
