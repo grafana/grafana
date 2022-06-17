@@ -24,11 +24,6 @@ type Manager interface {
 	Remove(ctx context.Context, pluginID string) error
 }
 
-type ManagerExecutor interface {
-	// Execute uses the Manager to execute some workload
-	Execute(ctx context.Context, pluginManager Manager) error
-}
-
 type UpdateInfo struct {
 	PluginZipURL string
 }

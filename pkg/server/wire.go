@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
+	"github.com/grafana/grafana/pkg/plugins/executor"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
@@ -149,6 +150,8 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(plugins.StaticRouteResolver), new(*manager.PluginManager)),
 	wire.Bind(new(plugins.RendererManager), new(*manager.PluginManager)),
 	wire.Bind(new(plugins.SecretsPluginManager), new(*manager.PluginManager)),
+	executor.ProvideExecuteRunner,
+	wire.Bind(new(executor.Service), new(*executor.ExecuteRunner)),
 	coreplugin.ProvideCoreRegistry,
 	loader.ProvideService,
 	wire.Bind(new(loader.Service), new(*loader.Loader)),

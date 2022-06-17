@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
-	"github.com/grafana/grafana/pkg/plugins/manager"
+	pluginsJobProvider "github.com/grafana/grafana/pkg/plugins/executor/jobs/provider"
 	pluginRegistry "github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/registry"
@@ -92,8 +92,8 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(secretsStore.UseRemoteSecretsPluginCheck), new(*secretsStore.OSSRemoteSecretsPluginCheck)),
 	pluginRegistry.ProvideService,
 	wire.Bind(new(pluginRegistry.Service), new(*pluginRegistry.InMemory)),
-	manager.ProvideNoopExecutor,
-	wire.Bind(new(plugins.ManagerExecutor), new(*manager.NoopExecutor)),
+	pluginsJobProvider.New,
+	wire.Bind(new(pluginsJobProvider.Service), new(*pluginsJobProvider.OSSJobs)),
 )
 
 var wireExtsSet = wire.NewSet(
