@@ -138,7 +138,7 @@ You can assign a team member one of the following permissions:
 
 Because teams exist inside an organization, the organization administrator can manage all teams. When the `editors_can_admin` setting is enabled, editors can create teams and manage teams that they create. For more information about the `editors_can_admin` setting, refer to [Grant editors administrator permissions]({{< relref "../user-management/server-user-management/grant-editor-admin-permissions/" >}}).
 
-For more information, see [Team management]({{< relref "../team-management/" >}}).
+For details on managing teams, see [Team management]({{< relref "../team-management/" >}}).
 
 ## Grafana Enterprise user permissions features
 
