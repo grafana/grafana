@@ -61,7 +61,7 @@ function sortSeriesByLabel(s1: { label: string }, s2: { label: string }) {
     label1 = parseHistogramLabel(s1.label);
     label2 = parseHistogramLabel(s2.label);
   } catch (err) {
-    console.error(err.message || err);
+    console.error(err instanceof Error ? err.message : err);
     return 0;
   }
 

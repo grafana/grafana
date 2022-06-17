@@ -501,7 +501,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 	}
 
 	type args struct {
-		permissions []*accesscontrol.Permission
+		permissions []accesscontrol.Permission
 		url         string
 		body        io.Reader
 		method      string
@@ -515,7 +515,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl getting annotations with correct permissions is allowed",
 			args: args{
-				permissions: []*accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsRead, Scope: accesscontrol.ScopeAnnotationsAll}},
+				permissions: []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsRead, Scope: accesscontrol.ScopeAnnotationsAll}},
 				url:         "/api/annotations",
 				method:      http.MethodGet,
 			},
@@ -524,7 +524,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl getting annotations without permissions is forbidden",
 			args: args{
-				permissions: []*accesscontrol.Permission{},
+				permissions: []accesscontrol.Permission{},
 				url:         "/api/annotations",
 				method:      http.MethodGet,
 			},
@@ -533,7 +533,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl getting annotation by ID with correct permissions is allowed",
 			args: args{
-				permissions: []*accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsRead, Scope: accesscontrol.ScopeAnnotationsAll}},
+				permissions: []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsRead, Scope: accesscontrol.ScopeAnnotationsAll}},
 				url:         "/api/annotations/1",
 				method:      http.MethodGet,
 			},
@@ -542,7 +542,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl getting annotation by ID without permissions is forbidden",
 			args: args{
-				permissions: []*accesscontrol.Permission{},
+				permissions: []accesscontrol.Permission{},
 				url:         "/api/annotations",
 				method:      http.MethodGet,
 			},
@@ -551,7 +551,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl getting tags for annotations with correct permissions is allowed",
 			args: args{
-				permissions: []*accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsRead}},
+				permissions: []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsRead}},
 				url:         "/api/annotations/tags",
 				method:      http.MethodGet,
 			},
@@ -560,7 +560,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl getting tags for annotations without correct permissions is forbidden",
 			args: args{
-				permissions: []*accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsWrite}},
+				permissions: []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsWrite}},
 				url:         "/api/annotations/tags",
 				method:      http.MethodGet,
 			},
@@ -569,7 +569,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl update dashboard annotation with permissions is allowed",
 			args: args{
-				permissions: []*accesscontrol.Permission{{
+				permissions: []accesscontrol.Permission{{
 					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsTypeDashboard,
 				}},
 				url:    "/api/annotations/1",
@@ -581,7 +581,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl update dashboard annotation without permissions is forbidden",
 			args: args{
-				permissions: []*accesscontrol.Permission{},
+				permissions: []accesscontrol.Permission{},
 				url:         "/api/annotations/1",
 				method:      http.MethodPut,
 				body:        mockRequestBody(updateCmd),
@@ -591,7 +591,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl update organization annotation with permissions is allowed",
 			args: args{
-				permissions: []*accesscontrol.Permission{{
+				permissions: []accesscontrol.Permission{{
 					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsAll,
 				}},
 				url:    "/api/annotations/2",
@@ -603,7 +603,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl update organization annotation without permissions is forbidden",
 			args: args{
-				permissions: []*accesscontrol.Permission{{
+				permissions: []accesscontrol.Permission{{
 					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsTypeDashboard,
 				}},
 				url:    "/api/annotations/2",
@@ -615,7 +615,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl patch dashboard annotation with permissions is allowed",
 			args: args{
-				permissions: []*accesscontrol.Permission{{
+				permissions: []accesscontrol.Permission{{
 					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsTypeDashboard,
 				}},
 				url:    "/api/annotations/1",
@@ -627,7 +627,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl patch dashboard annotation without permissions is forbidden",
 			args: args{
-				permissions: []*accesscontrol.Permission{},
+				permissions: []accesscontrol.Permission{},
 				url:         "/api/annotations/1",
 				method:      http.MethodPatch,
 				body:        mockRequestBody(patchCmd),
@@ -637,7 +637,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl patch organization annotation with permissions is allowed",
 			args: args{
-				permissions: []*accesscontrol.Permission{{
+				permissions: []accesscontrol.Permission{{
 					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsAll,
 				}},
 				url:    "/api/annotations/2",
@@ -649,7 +649,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl patch organization annotation without permissions is forbidden",
 			args: args{
-				permissions: []*accesscontrol.Permission{{
+				permissions: []accesscontrol.Permission{{
 					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsTypeDashboard,
 				}},
 				url:    "/api/annotations/2",
@@ -661,7 +661,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl create dashboard annotation with permissions is allowed",
 			args: args{
-				permissions: []*accesscontrol.Permission{{
+				permissions: []accesscontrol.Permission{{
 					Action: accesscontrol.ActionAnnotationsCreate, Scope: accesscontrol.ScopeAnnotationsTypeDashboard,
 				}},
 				url:    "/api/annotations",
@@ -673,7 +673,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl create dashboard annotation without permissions is forbidden",
 			args: args{
-				permissions: []*accesscontrol.Permission{},
+				permissions: []accesscontrol.Permission{},
 				url:         "/api/annotations",
 				method:      http.MethodPost,
 				body:        mockRequestBody(postDashboardCmd),
@@ -683,7 +683,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl create dashboard annotation with incorrect permissions is forbidden",
 			args: args{
-				permissions: []*accesscontrol.Permission{{
+				permissions: []accesscontrol.Permission{{
 					Action: accesscontrol.ActionAnnotationsCreate, Scope: accesscontrol.ScopeAnnotationsTypeOrganization,
 				}},
 				url:    "/api/annotations",
@@ -695,7 +695,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl create organization annotation with permissions is allowed",
 			args: args{
-				permissions: []*accesscontrol.Permission{{
+				permissions: []accesscontrol.Permission{{
 					Action: accesscontrol.ActionAnnotationsCreate, Scope: accesscontrol.ScopeAnnotationsAll,
 				}},
 				url:    "/api/annotations",
@@ -707,7 +707,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl create organization annotation without permissions is forbidden",
 			args: args{
-				permissions: []*accesscontrol.Permission{{
+				permissions: []accesscontrol.Permission{{
 					Action: accesscontrol.ActionAnnotationsCreate, Scope: accesscontrol.ScopeAnnotationsTypeDashboard,
 				}},
 				url:    "/api/annotations",
@@ -719,7 +719,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl delete dashboard annotation with permissions is allowed",
 			args: args{
-				permissions: []*accesscontrol.Permission{{
+				permissions: []accesscontrol.Permission{{
 					Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeDashboard,
 				}},
 				url:    "/api/annotations/1",
@@ -730,7 +730,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl delete dashboard annotation without permissions is forbidden",
 			args: args{
-				permissions: []*accesscontrol.Permission{},
+				permissions: []accesscontrol.Permission{},
 				url:         "/api/annotations/1",
 				method:      http.MethodDelete,
 			},
@@ -739,7 +739,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl delete organization annotation with permissions is allowed",
 			args: args{
-				permissions: []*accesscontrol.Permission{{
+				permissions: []accesscontrol.Permission{{
 					Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsAll,
 				}},
 				url:    "/api/annotations/2",
@@ -750,7 +750,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl delete organization annotation without permissions is forbidden",
 			args: args{
-				permissions: []*accesscontrol.Permission{{
+				permissions: []accesscontrol.Permission{{
 					Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeDashboard,
 				}},
 				url:    "/api/annotations/2",
@@ -761,7 +761,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl create graphite annotation with permissions is allowed",
 			args: args{
-				permissions: []*accesscontrol.Permission{{
+				permissions: []accesscontrol.Permission{{
 					Action: accesscontrol.ActionAnnotationsCreate, Scope: accesscontrol.ScopeAnnotationsAll,
 				}},
 				url:    "/api/annotations/graphite",
@@ -773,7 +773,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl create organization annotation without permissions is forbidden",
 			args: args{
-				permissions: []*accesscontrol.Permission{{
+				permissions: []accesscontrol.Permission{{
 					Action: accesscontrol.ActionAnnotationsCreate, Scope: accesscontrol.ScopeAnnotationsTypeDashboard,
 				}},
 				url:    "/api/annotations/graphite",
@@ -865,7 +865,7 @@ func TestAPI_MassDeleteAnnotations_AccessControl(t *testing.T) {
 	require.NoError(t, err)
 
 	type args struct {
-		permissions []*accesscontrol.Permission
+		permissions []accesscontrol.Permission
 		url         string
 		body        io.Reader
 		method      string
@@ -879,7 +879,7 @@ func TestAPI_MassDeleteAnnotations_AccessControl(t *testing.T) {
 		{
 			name: "Mass delete dashboard annotations without dashboardId is not allowed",
 			args: args{
-				permissions: []*accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeOrganization}},
+				permissions: []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeOrganization}},
 				url:         "/api/annotations/mass-delete",
 				method:      http.MethodPost,
 				body: mockRequestBody(dtos.MassDeleteAnnotationsCmd{
@@ -892,7 +892,7 @@ func TestAPI_MassDeleteAnnotations_AccessControl(t *testing.T) {
 		{
 			name: "Mass delete dashboard annotations without panelId is not allowed",
 			args: args{
-				permissions: []*accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeOrganization}},
+				permissions: []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeOrganization}},
 				url:         "/api/annotations/mass-delete",
 				method:      http.MethodPost,
 				body: mockRequestBody(dtos.MassDeleteAnnotationsCmd{
@@ -905,7 +905,7 @@ func TestAPI_MassDeleteAnnotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl mass delete dashboard annotations with correct dashboardId and panelId as input is allowed",
 			args: args{
-				permissions: []*accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeDashboard}},
+				permissions: []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeDashboard}},
 				url:         "/api/annotations/mass-delete",
 				method:      http.MethodPost,
 				body: mockRequestBody(dtos.MassDeleteAnnotationsCmd{
@@ -918,7 +918,7 @@ func TestAPI_MassDeleteAnnotations_AccessControl(t *testing.T) {
 		{
 			name: "Mass delete organization annotations without input to delete all organization annotations is allowed",
 			args: args{
-				permissions: []*accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeOrganization}},
+				permissions: []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeOrganization}},
 				url:         "/api/annotations/mass-delete",
 				method:      http.MethodPost,
 				body: mockRequestBody(dtos.MassDeleteAnnotationsCmd{
@@ -931,7 +931,7 @@ func TestAPI_MassDeleteAnnotations_AccessControl(t *testing.T) {
 		{
 			name: "Mass delete organization annotations without permissions is forbidden",
 			args: args{
-				permissions: []*accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeDashboard}},
+				permissions: []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeDashboard}},
 				url:         "/api/annotations/mass-delete",
 				method:      http.MethodPost,
 				body: mockRequestBody(dtos.MassDeleteAnnotationsCmd{
@@ -944,7 +944,7 @@ func TestAPI_MassDeleteAnnotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl mass delete dashboard annotations with correct annotationId as input is allowed",
 			args: args{
-				permissions: []*accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeDashboard}},
+				permissions: []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeDashboard}},
 				url:         "/api/annotations/mass-delete",
 				method:      http.MethodPost,
 				body: mockRequestBody(dtos.MassDeleteAnnotationsCmd{
@@ -956,7 +956,7 @@ func TestAPI_MassDeleteAnnotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl mass delete annotation without access to dashboard annotations is forbidden",
 			args: args{
-				permissions: []*accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeOrganization}},
+				permissions: []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeOrganization}},
 				url:         "/api/annotations/mass-delete",
 				method:      http.MethodPost,
 				body: mockRequestBody(dtos.MassDeleteAnnotationsCmd{
@@ -968,7 +968,7 @@ func TestAPI_MassDeleteAnnotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl mass delete annotation without access to organization annotations is forbidden",
 			args: args{
-				permissions: []*accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeDashboard}},
+				permissions: []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeDashboard}},
 				url:         "/api/annotations/mass-delete",
 				method:      http.MethodPost,
 				body: mockRequestBody(dtos.MassDeleteAnnotationsCmd{

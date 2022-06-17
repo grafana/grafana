@@ -129,10 +129,7 @@ func runQuery(response []byte, query PrometheusQuery) (*backend.QueryDataRespons
 		return nil, err
 	}
 
-	tracer, err := tracing.InitializeTracerForTest()
-	if err != nil {
-		return nil, err
-	}
+	tracer := tracing.InitializeTracerForTest()
 
 	s := Buffered{
 		intervalCalculator: intervalv2.NewCalculator(),

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -41,7 +42,8 @@ type RulerSrv struct {
 }
 
 var (
-	errQuotaReached = errors.New("quota has been exceeded")
+	errQuotaReached        = errors.New("quota has been exceeded")
+	errProvisionedResource = errors.New("request affects resources created via provisioning API")
 )
 
 // RouteDeleteAlertRules deletes all alert rules user is authorized to access in the namespace (request parameter :Namespace)
@@ -155,6 +157,7 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *models.ReqContext) response.Respons
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "rules deleted"})
 }
 
+// RouteGetNamespaceRulesConfig returns all rules in a specific folder that user has access to
 func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *models.ReqContext) response.Response {
 	namespaceTitle := web.Params(c.Req)[":Namespace"]
 	namespace, err := srv.store.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, false)
@@ -171,7 +174,6 @@ func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *models.ReqContext) response.
 	}
 
 	result := apimodels.NamespaceConfigResponse{}
-	ruleGroupConfigs := make(map[string]apimodels.GettableRuleGroupConfig)
 
 	hasAccess := func(evaluator accesscontrol.Evaluator) bool {
 		return accesscontrol.HasAccess(srv.ac, c)(accesscontrol.ReqViewer, evaluator)
@@ -182,33 +184,23 @@ func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *models.ReqContext) response.
 		return ErrResp(http.StatusInternalServerError, err, "failed to get provenance for rule group")
 	}
 
+	ruleGroups := make(map[string][]*ngmodels.AlertRule)
 	for _, r := range q.Result {
-		if !authorizeDatasourceAccessForRule(r, hasAccess) {
-			continue
-		}
-		ruleGroupConfig, ok := ruleGroupConfigs[r.RuleGroup]
-		if !ok {
-			ruleGroupInterval := model.Duration(time.Duration(r.IntervalSeconds) * time.Second)
-			ruleGroupConfigs[r.RuleGroup] = apimodels.GettableRuleGroupConfig{
-				Name:     r.RuleGroup,
-				Interval: ruleGroupInterval,
-				Rules: []apimodels.GettableExtendedRuleNode{
-					toGettableExtendedRuleNode(*r, namespace.Id, provenanceRecords),
-				},
-			}
-		} else {
-			ruleGroupConfig.Rules = append(ruleGroupConfig.Rules, toGettableExtendedRuleNode(*r, namespace.Id, provenanceRecords))
-			ruleGroupConfigs[r.RuleGroup] = ruleGroupConfig
-		}
+		ruleGroups[r.RuleGroup] = append(ruleGroups[r.RuleGroup], r)
 	}
 
-	for _, ruleGroupConfig := range ruleGroupConfigs {
-		result[namespaceTitle] = append(result[namespaceTitle], ruleGroupConfig)
+	for groupName, rules := range ruleGroups {
+		if !authorizeAccessToRuleGroup(rules, hasAccess) {
+			continue
+		}
+		result[namespaceTitle] = append(result[namespaceTitle], toGettableRuleGroupConfig(groupName, rules, namespace.Id, provenanceRecords))
 	}
 
 	return response.JSON(http.StatusAccepted, result)
 }
 
+// RouteGetRulesGroupConfig returns rules that belong to a specific group in a specific namespace (folder).
+// If user does not have access to at least one of the rule in the group, returns status 401 Unauthorized
 func (srv RulerSrv) RouteGetRulesGroupConfig(c *models.ReqContext) response.Response {
 	namespaceTitle := web.Params(c.Req)[":Namespace"]
 	namespace, err := srv.store.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, false)
@@ -235,20 +227,17 @@ func (srv RulerSrv) RouteGetRulesGroupConfig(c *models.ReqContext) response.Resp
 		return ErrResp(http.StatusInternalServerError, err, "failed to get group alert rules")
 	}
 
-	groupRules := make([]*ngmodels.AlertRule, 0, len(q.Result))
-	for _, r := range q.Result {
-		if !authorizeDatasourceAccessForRule(r, hasAccess) {
-			return ErrResp(http.StatusUnauthorized, fmt.Errorf("%w to access the group because it does not have access to one or many data sources one or many rules in the group use", ErrAuthorization), "")
-		}
-		groupRules = append(groupRules, r)
+	if !authorizeAccessToRuleGroup(q.Result, hasAccess) {
+		return ErrResp(http.StatusUnauthorized, fmt.Errorf("%w to access the group because it does not have access to one or many data sources one or many rules in the group use", ErrAuthorization), "")
 	}
 
 	result := apimodels.RuleGroupConfigResponse{
-		GettableRuleGroupConfig: toGettableRuleGroupConfig(ruleGroup, groupRules, namespace.Id, provenanceRecords),
+		GettableRuleGroupConfig: toGettableRuleGroupConfig(ruleGroup, q.Result, namespace.Id, provenanceRecords),
 	}
 	return response.JSON(http.StatusAccepted, result)
 }
 
+// RouteGetRulesConfig returns all alert rules that are available to the current user
 func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response {
 	namespaceMap, err := srv.store.GetUserVisibleNamespaces(c.Req.Context(), c.OrgId, c.SignedInUser)
 	if err != nil {
@@ -341,7 +330,6 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 
 // updateAlertRulesInGroup calculates changes (rules to add,update,delete), verifies that the user is authorized to do the calculated changes and updates database.
 // All operations are performed in a single transaction
-// nolint: gocyclo
 func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, groupKey ngmodels.AlertRuleGroupKey, rules []*ngmodels.AlertRule) response.Response {
 	var finalChanges *changes
 	hasAccess := accesscontrol.HasAccess(srv.ac, c)
@@ -368,45 +356,11 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, groupKey ngmod
 			}
 		}
 
-		provenances, err := srv.provenanceStore.GetProvenances(c.Req.Context(), c.OrgId, (&ngmodels.AlertRule{}).ResourceType())
-		if err != nil {
+		if err := verifyProvisionedRulesNotAffected(c.Req.Context(), srv.provenanceStore, c.OrgId, groupChanges); err != nil {
 			return err
 		}
 
-		// New rules don't need to be checked for provenance, just copy the whole slice.
-		finalChanges = &changes{}
-		finalChanges.New = groupChanges.New
-		for _, rule := range groupChanges.Update {
-			if provenance, exists := provenances[rule.Existing.UID]; (exists && provenance == ngmodels.ProvenanceNone) || !exists {
-				finalChanges.Update = append(finalChanges.Update, rule)
-			}
-		}
-		for _, rule := range groupChanges.Delete {
-			if provenance, exists := provenances[rule.UID]; (exists && provenance == ngmodels.ProvenanceNone) || !exists {
-				finalChanges.Delete = append(finalChanges.Delete, rule)
-			}
-		}
-
-		if finalChanges.isEmpty() {
-			logger.Info("no changes detected that have 'none' provenance in the request. Do nothing",
-				"provenance_invalid_add", len(groupChanges.New),
-				"provenance_invalid_update", len(groupChanges.Update),
-				"provenance_invalid_delete", len(groupChanges.Delete))
-			return nil
-		}
-
-		if len(groupChanges.Delete) > len(finalChanges.Delete) {
-			logger.Info("provenance is not 'none' for one or many rules in the group that should be deleted. those rules will be skipped",
-				"expected", len(groupChanges.Delete),
-				"allowed", len(groupChanges.Delete))
-		}
-
-		if len(groupChanges.Update) > len(finalChanges.Update) {
-			logger.Info("provenance is not 'none' for one or many rules in the group that should be updated. those rules will be skipped",
-				"expected", len(groupChanges.Update),
-				"allowed", len(groupChanges.Update))
-		}
-
+		finalChanges = groupChanges
 		logger.Debug("updating database with the authorized changes", "add", len(finalChanges.New), "update", len(finalChanges.New), "delete", len(finalChanges.Delete))
 
 		if len(finalChanges.Update) > 0 || len(finalChanges.New) > 0 {
@@ -461,12 +415,14 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, groupKey ngmod
 	if err != nil {
 		if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
 			return ErrResp(http.StatusNotFound, err, "failed to update rule group")
-		} else if errors.Is(err, ngmodels.ErrAlertRuleFailedValidation) {
+		} else if errors.Is(err, ngmodels.ErrAlertRuleFailedValidation) || errors.Is(err, errProvisionedResource) {
 			return ErrResp(http.StatusBadRequest, err, "failed to update rule group")
 		} else if errors.Is(err, errQuotaReached) {
 			return ErrResp(http.StatusForbidden, err, "")
 		} else if errors.Is(err, ErrAuthorization) {
 			return ErrResp(http.StatusUnauthorized, err, "")
+		} else if errors.Is(err, store.ErrOptimisticLock) {
+			return ErrResp(http.StatusConflict, err, "")
 		}
 		return ErrResp(http.StatusInternalServerError, err, "failed to update rule group")
 	}
@@ -557,7 +513,9 @@ type ruleUpdate struct {
 }
 
 type changes struct {
-	GroupKey       ngmodels.AlertRuleGroupKey
+	GroupKey ngmodels.AlertRuleGroupKey
+	// AffectedGroups contains all rules of all groups that are affected by these changes.
+	// For example, during moving a rule from one group to another this map will contain all rules from two groups
 	AffectedGroups map[ngmodels.AlertRuleGroupKey][]*ngmodels.AlertRule
 	New            []*ngmodels.AlertRule
 	Update         []ruleUpdate
@@ -566,6 +524,32 @@ type changes struct {
 
 func (c *changes) isEmpty() bool {
 	return len(c.Update)+len(c.New)+len(c.Delete) == 0
+}
+
+// verifyProvisionedRulesNotAffected check that neither of provisioned alerts are affected by changes.
+// Returns errProvisionedResource if there is at least one rule in groups affected by changes that was provisioned.
+func verifyProvisionedRulesNotAffected(ctx context.Context, provenanceStore provisioning.ProvisioningStore, orgID int64, ch *changes) error {
+	provenances, err := provenanceStore.GetProvenances(ctx, orgID, (&ngmodels.AlertRule{}).ResourceType())
+	if err != nil {
+		return err
+	}
+	errorMsg := strings.Builder{}
+	for group, alertRules := range ch.AffectedGroups {
+		for _, rule := range alertRules {
+			if provenance, exists := provenances[rule.UID]; (exists && provenance == ngmodels.ProvenanceNone) || !exists {
+				continue
+			}
+			if errorMsg.Len() > 0 {
+				errorMsg.WriteRune(',')
+			}
+			errorMsg.WriteString(group.String())
+			break
+		}
+	}
+	if errorMsg.Len() == 0 {
+		return nil
+	}
+	return fmt.Errorf("%w: alert rule group [%s]", errProvisionedResource, errorMsg.String())
 }
 
 // calculateChanges calculates the difference between rules in the group in the database and the submitted rules. If a submitted rule has UID it tries to find it in the database (in other groups).

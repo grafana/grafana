@@ -87,6 +87,14 @@ const (
 	// This isn't a hard-coded secret token, hence the nolint.
 	//nolint:gosec
 	ScreenshotTokenAnnotation = "__alertScreenshotToken__"
+
+	// GrafanaReservedLabelPrefix contains the prefix for Grafana reserved labels. These differ from "__<label>__" labels
+	// in that they are not meant for internal-use only and will be passed-through to AMs and available to users in the same
+	// way as manually configured labels.
+	GrafanaReservedLabelPrefix = "grafana_"
+
+	// FolderTitleLabel is the label that will contain the title of an alert's folder/namespace.
+	FolderTitleLabel = GrafanaReservedLabelPrefix + "folder"
 )
 
 var (
@@ -111,7 +119,7 @@ type AlertRule struct {
 	Data            []AlertQuery
 	Updated         time.Time
 	IntervalSeconds int64
-	Version         int64
+	Version         int64   `xorm:"version"` // this tag makes xorm add optimistic lock (see https://xorm.io/docs/chapter-06/1.lock/)
 	UID             string  `xorm:"uid"`
 	NamespaceUID    string  `xorm:"namespace_uid"`
 	DashboardUID    *string `xorm:"dashboard_uid"`
