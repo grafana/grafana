@@ -706,9 +706,12 @@ export const templateVarsChangedInUrl =
         }
       }
 
-      getAllAffectedPanelIdsForVariableChange(variable.id, variables, dashboard?.panels ?? []).forEach((id) =>
-        panelIds.add(id)
-      );
+      // for adhoc variables we don't know which panels that will be impacted
+      if (!isAdHoc(variable)) {
+        getAllAffectedPanelIdsForVariableChange(variable.id, variables, dashboard?.panels ?? []).forEach((id) =>
+          panelIds.add(id)
+        );
+      }
 
       const promise = variableAdapters.get(variable.type).setValueFromUrl(variable, value);
       update.push(promise);
@@ -719,7 +722,7 @@ export const templateVarsChangedInUrl =
 
       events.publish(
         new VariablesChangedInUrl({
-          refreshAll: false,
+          refreshAll: panelIds.size === 0,
           panelIds: Array.from(panelIds),
         })
       );
