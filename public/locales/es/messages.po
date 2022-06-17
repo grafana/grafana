@@ -94,6 +94,10 @@ msgstr ""
 msgid "nav.datasources"
 msgstr ""
 
+#: public/app/core/components/NavBar/NavBarItem.tsx
+msgid "nav.empty-starred"
+msgstr ""
+
 #: public/app/core/components/NavBar/navBarItem-translations.ts
 msgid "nav.explore"
 msgstr ""

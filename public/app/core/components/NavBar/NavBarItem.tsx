@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { Trans } from '@lingui/macro';
 import { useLingui } from '@lingui/react';
 import { Item } from '@react-stately/collections';
 import React from 'react';
@@ -73,7 +74,11 @@ const NavBarItem = ({ isActive = false, className, reverseMenuDirection = false,
           disabledKeys={['divider', 'subtitle']}
           aria-label={section.text}
           onNavigate={onNavigate}
-          emptyMessage={link.id === 'starred' ? 'Your starred dashboards will appear here.' : undefined}
+          emptyMessage={
+            link.id === 'starred' ? (
+              <Trans id="nav.empty-starred">Your starred dashboards will appear here.</Trans>
+            ) : undefined
+          }
         >
           {(item: NavModelItem) => {
             const translationKey = item.id && menuItemTranslations[item.id];

@@ -17,7 +17,7 @@ export interface NavBarItemMenuProps extends SpectrumMenuProps<NavModelItem> {
   onNavigate: (item: NavModelItem) => void;
   adjustHeightForBorder: boolean;
   reverseMenuDirection?: boolean;
-  emptyMessage?: string;
+  emptyMessage?: React.ReactNode;
 }
 
 export function NavBarItemMenu(props: NavBarItemMenuProps): ReactElement | null {
