@@ -138,9 +138,9 @@ test-js: ## Run tests for frontend.
 test: test-go test-js ## Run all tests.
 
 ##@ Linting
-golangci-lint:
+golangci-lint: $(GOLANGCI_LINT)
 	@echo "lint via golangci-lint"
-	@$(GOLANGCI_LINT) run \
+	$(GOLANGCI_LINT) run \
 		--config ./conf/.golangci.toml \
 		$(GO_FILES)
 
