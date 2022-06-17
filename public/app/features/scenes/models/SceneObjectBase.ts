@@ -79,6 +79,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState> implement
     }
 
     this.subs.unsubscribe();
+    this.subs = new Subscription();
   }
 
   /**
