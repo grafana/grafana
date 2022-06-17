@@ -879,11 +879,8 @@ def postgres_integration_tests_step(edition, ver_mode):
             'devenv/docker/blocks/postgres_tests/setup.sql',
             # Make sure that we don't use cached results for another database
             'go clean -testcache',
+            "go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=30m {}'",
         ]
-    if edition == 'oss':
-        cmds.extend(["go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=30m {}'"])
-    else:
-        cmds.extend(['./bin/grabpl integration-tests --database postgres'])
     return {
         'name': 'postgres-integration-tests',
         'image': build_image,
@@ -898,7 +895,6 @@ def postgres_integration_tests_step(edition, ver_mode):
 
 
 def mysql_integration_tests_step(edition, ver_mode):
-    deps = []
     cmds = [
             'apt-get update',
             'apt-get install -yq default-mysql-client',
@@ -906,11 +902,8 @@ def mysql_integration_tests_step(edition, ver_mode):
             'cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass',
             # Make sure that we don't use cached results for another database
             'go clean -testcache',
+            "go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=30m {}'",
         ]
-    if edition == 'oss':
-        cmds.extend(["go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=30m {}'"])
-    else:
-        cmds.extend(['./bin/grabpl integration-tests --database mysql'])
     return {
         'name': 'mysql-integration-tests',
         'image': build_image,
