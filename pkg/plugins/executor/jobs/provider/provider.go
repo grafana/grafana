@@ -7,10 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/executor/jobs/noop"
 )
 
-type Service interface {
-	ProvideJobs(ctx context.Context) []executor.Job
-}
-
 type OSSJobs struct{}
 
 func New() *OSSJobs {

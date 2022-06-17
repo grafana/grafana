@@ -75,15 +75,6 @@ func (m *PluginManager) Init() error {
 	return nil
 }
 
-//
-//func (m *PluginManager) Execute(ctx context.Context) error {
-//	go func() {
-//		if err := m.executor.Execute(ctx, m); err != nil {
-//			m.log.Error("Plugin manager executor failure", "err", err)
-//		}
-//	}()
-//}
-
 func (m *PluginManager) Run(ctx context.Context) error {
 	<-ctx.Done()
 	m.shutdown(ctx)

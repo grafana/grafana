@@ -10,26 +10,24 @@ import (
 var _ Service = (*ExecuteRunner)(nil)
 
 type ExecuteRunner struct {
-	tick tick
-	job  Job
+	executorProvider JobProvider
 
 	log log.Logger
 }
 
-type tick struct {
+type runnerTick struct {
 	ticker    *time.Ticker
 	executing bool
 }
 
-func ProvideExecuteRunner(job Job) *ExecuteRunner {
-	return New(job, job.ExecInterval())
+func ProvideExecuteRunner(executorProvider JobProvider) *ExecuteRunner {
+	return New(executorProvider)
 }
 
-func New(job Job, tickInterval time.Duration) *ExecuteRunner {
+func New(executorProvider JobProvider) *ExecuteRunner {
 	return &ExecuteRunner{
-		job:  job,
-		tick: tick{ticker: time.NewTicker(tickInterval)},
-		log:  log.New("plugin.job.executor"),
+		executorProvider: executorProvider,
+		log:              log.New("plugin.job.executor"),
 	}
 }
 
@@ -44,23 +42,35 @@ func (r *ExecuteRunner) Run(ctx context.Context) error {
 }
 
 func (r *ExecuteRunner) Execute(ctx context.Context) error {
+	for _, job := range r.executorProvider.ProvideJobs(ctx) {
+		err := r.exec(ctx, job)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (r *ExecuteRunner) exec(ctx context.Context, job Job) error {
+	ctxWithTimeout, cancelFn := context.WithTimeout(ctx, job.ExecTimeout())
+	defer cancelFn()
+
+	tick := runnerTick{ticker: time.NewTicker(job.ExecInterval())}
 	for {
 		select {
-		case <-r.tick.ticker.C:
-			if r.tick.executing {
+		case <-tick.ticker.C:
+			if tick.executing {
 				r.log.Debug("Executor is still executing a previous tick. Skipping this execution...")
 				continue
 			}
-			r.tick.executing = true
+			tick.executing = true
 			r.log.Debug("Executor is executing")
-			ctxWithTimeout, cancelFn := context.WithTimeout(ctx, r.job.ExecTimeout())
-			defer cancelFn()
-			if err := r.job.Exec(ctxWithTimeout); err != nil {
+			if err := job.Exec(ctxWithTimeout); err != nil {
 				r.log.Error("error during execution", "err", err)
 			}
-			r.tick.executing = false
+			tick.executing = false
 		case <-ctx.Done():
-			r.tick.ticker.Stop()
+			tick.ticker.Stop()
 			return nil
 		}
 	}

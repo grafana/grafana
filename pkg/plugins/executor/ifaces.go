@@ -16,3 +16,7 @@ type Job interface {
 	ExecTimeout() time.Duration
 	Exec(ctx context.Context) error
 }
+
+type JobProvider interface {
+	ProvideJobs(ctx context.Context) []Job
+}
