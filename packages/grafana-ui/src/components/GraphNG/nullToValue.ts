@@ -5,12 +5,12 @@ export function nullToValue(frame: DataFrame) {
     ...frame,
     fields: frame.fields.map((field, i) => {
       const noValue = +field.config?.noValue!;
-      const values = field.values.toArray();
-      const transformedVals = [];
+      const values = field.values.toArray().slice();
+      const transformedVals: any[] = [];
 
       if (!Number.isNaN(noValue)) {
         for (let i = 0; i < values.length; i++) {
-          transformedVals.push(values[i] === null ? noValue : values[i]);
+          transformedVals[i] = values[i] === null ? noValue : values[i];
         }
 
         return {
