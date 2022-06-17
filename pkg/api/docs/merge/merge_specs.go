@@ -17,9 +17,8 @@ import (
 	"github.com/go-openapi/jsonreference"
 	"github.com/go-openapi/loads"
 	"github.com/go-openapi/spec"
-	"github.com/grafana/grafana/pkg/coremodel/dashboard"
 	"github.com/grafana/grafana/pkg/cuectx"
-	"github.com/grafana/thema"
+	"github.com/grafana/grafana/pkg/framework/coremodel/registry"
 	"github.com/grafana/thema/encoding/openapi"
 )
 
@@ -178,9 +177,8 @@ func mergeSpecs(output string, sources ...string) error {
 // and it returns it as spec.Schema
 func getDashboardDefinitions() (spec.Definitions, error) {
 	lib := cuectx.ProvideThemaLibrary()
-	lin, _ := dashboard.Lineage(lib)
-	// Grab the 0.0 version. Or whichever one you want
-	sch := thema.SchemaP(lin, thema.SV(0, 0))
+	reg, _ := registry.ProvideStatic()
+	sch := reg.Dashboard().CurrentSchema()
 
 	f, _ := openapi.GenerateSchema(sch, nil)
 
