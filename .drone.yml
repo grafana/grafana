@@ -100,6 +100,7 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
   image: grafana/build-container:1.5.5
   name: verify-gen-cue
 - commands:
@@ -205,6 +206,7 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
   image: grafana/build-container:1.5.5
   name: verify-gen-cue
 - commands:
@@ -460,6 +462,7 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
   image: grafana/build-container:1.5.5
   name: verify-gen-cue
 - commands:
@@ -788,6 +791,7 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
   image: grafana/build-container:1.5.5
   name: verify-gen-cue
 - commands:
@@ -882,6 +886,7 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
   image: grafana/build-container:1.5.5
   name: verify-gen-cue
 - commands:
@@ -1303,6 +1308,7 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
   image: grafana/build-container:1.5.5
   name: verify-gen-cue
 - commands:
@@ -1567,6 +1573,7 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
   image: grafana/build-container:1.5.5
   name: verify-gen-cue
 - commands:
@@ -1864,6 +1871,7 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
   image: grafana/build-container:1.5.5
   name: verify-gen-cue
 - commands:
@@ -1996,6 +2004,7 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
   image: grafana/build-container:1.5.5
   name: verify-gen-cue
 - commands:
@@ -2710,6 +2719,8 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
+  depends_on:
+  - init-enterprise
   image: grafana/build-container:1.5.5
   name: verify-gen-cue
 - commands:
@@ -2724,10 +2735,9 @@ steps:
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=30m {}'
+  - ./bin/grabpl integration-tests --database postgres
   depends_on:
-  - init-enterprise
+  - wire-install
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -2741,10 +2751,9 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=30m {}'
+  - ./bin/grabpl integration-tests --database mysql
   depends_on:
-  - init-enterprise
+  - wire-install
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
@@ -2754,7 +2763,7 @@ steps:
   - dockerize -wait tcp://redis:6379/0 -timeout 120s
   - ./bin/grabpl integration-tests
   depends_on:
-  - init-enterprise
+  - wire-install
   environment:
     REDIS_URL: redis://redis:6379/0
   image: grafana/build-container:1.5.5
@@ -2763,7 +2772,7 @@ steps:
   - dockerize -wait tcp://memcached:11211 -timeout 120s
   - ./bin/grabpl integration-tests
   depends_on:
-  - init-enterprise
+  - wire-install
   environment:
     MEMCACHED_HOSTS: memcached:11211
   image: grafana/build-container:1.5.5
@@ -3411,6 +3420,7 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
   image: grafana/build-container:1.5.5
   name: verify-gen-cue
 - commands:
@@ -3678,6 +3688,7 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
   image: grafana/build-container:1.5.5
   name: verify-gen-cue
 - commands:
@@ -3804,6 +3815,7 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
   image: grafana/build-container:1.5.5
   name: verify-gen-cue
 - commands:
@@ -4487,6 +4499,8 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
+  depends_on:
+  - init-enterprise
   image: grafana/build-container:1.5.5
   name: verify-gen-cue
 - commands:
@@ -4501,10 +4515,9 @@ steps:
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=30m {}'
+  - ./bin/grabpl integration-tests --database postgres
   depends_on:
-  - init-enterprise
+  - wire-install
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -4518,10 +4531,9 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
-    -timeout=30m {}'
+  - ./bin/grabpl integration-tests --database mysql
   depends_on:
-  - init-enterprise
+  - wire-install
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
@@ -4531,7 +4543,7 @@ steps:
   - dockerize -wait tcp://redis:6379/0 -timeout 120s
   - ./bin/grabpl integration-tests
   depends_on:
-  - init-enterprise
+  - wire-install
   environment:
     REDIS_URL: redis://redis:6379/0
   image: grafana/build-container:1.5.5
@@ -4540,7 +4552,7 @@ steps:
   - dockerize -wait tcp://memcached:11211 -timeout 120s
   - ./bin/grabpl integration-tests
   depends_on:
-  - init-enterprise
+  - wire-install
   environment:
     MEMCACHED_HOSTS: memcached:11211
   image: grafana/build-container:1.5.5
@@ -4779,6 +4791,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 6fda0984bf108d3b9ba3ea2ec16a68ed5e81a0c66b4910605759714817808eeb
+hmac: c22383a21a14c2da68967cb483aa8c7c70ed47c4832c2d45403a80aad57f0e0a
 
 ...

@@ -871,7 +871,6 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, trigger=None):
 
 
 def postgres_integration_tests_step(edition, ver_mode):
-    deps = []
     cmds = [
             'apt-get update',
             'apt-get install -yq postgresql-client',
@@ -881,12 +880,14 @@ def postgres_integration_tests_step(edition, ver_mode):
             # Make sure that we don't use cached results for another database
             'go clean -testcache',
         ]
-    deps.extend(['wire-install'])
-    cmds.extend(["go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=30m {}'"])
+    if edition == 'oss':
+        cmds.extend(["go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=30m {}'"])
+    else:
+        cmds.extend(['./bin/grabpl integration-tests --database postgres'])
     return {
         'name': 'postgres-integration-tests',
         'image': build_image,
-        'depends_on': deps,
+        'depends_on': ['wire-install'],
         'environment': {
             'PGPASSWORD': 'grafanatest',
             'GRAFANA_TEST_DB': 'postgres',
@@ -906,12 +907,14 @@ def mysql_integration_tests_step(edition, ver_mode):
             # Make sure that we don't use cached results for another database
             'go clean -testcache',
         ]
-    deps.extend(['wire-install'])
-    cmds.extend(["go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=30m {}'"])
+    if edition == 'oss':
+        cmds.extend(["go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=30m {}'"])
+    else:
+        cmds.extend(['./bin/grabpl integration-tests --database mysql'])
     return {
         'name': 'mysql-integration-tests',
         'image': build_image,
-        'depends_on': deps,
+        'depends_on': ['wire-install'],
         'environment': {
             'GRAFANA_TEST_DB': 'mysql',
             'MYSQL_HOST': 'mysql',
@@ -921,12 +924,10 @@ def mysql_integration_tests_step(edition, ver_mode):
 
 
 def redis_integration_tests_step():
-    deps = []
-    deps.extend(['grabpl'])
     return {
         'name': 'redis-integration-tests',
         'image': build_image,
-        'depends_on': deps,
+        'depends_on': ['wire-install'],
         'environment': {
             'REDIS_URL': 'redis://redis:6379/0',
         },
@@ -938,12 +939,10 @@ def redis_integration_tests_step():
 
 
 def memcached_integration_tests_step():
-    deps = []
-    deps.extend(['grabpl'])
     return {
         'name': 'memcached-integration-tests',
         'image': build_image,
-        'depends_on': deps,
+        'depends_on': ['wire-install'],
         'environment': {
             'MEMCACHED_HOSTS': 'memcached:11211',
         },
@@ -1168,10 +1167,14 @@ def get_windows_steps(edition, ver_mode):
 
     return steps
 
-def verify_gen_cue_step():
+def verify_gen_cue_step(edition):
+    deps = []
+    if edition == "enterprise":
+        deps.extend(['init-enterprise'])
     return {
         'name': 'verify-gen-cue',
         'image': build_image,
+        'depends_on': deps,
         'commands': [
             '# It is required that code generated from Thema/CUE be committed and in sync with its inputs.',
             '# The following command will fail if running code generators produces any diff in output.',

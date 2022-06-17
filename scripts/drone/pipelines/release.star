@@ -158,7 +158,7 @@ def get_steps(edition, ver_mode):
         identify_runner_step(),
         download_grabpl_step(),
         gen_version_step(ver_mode),
-        verify_gen_cue_step(),
+        verify_gen_cue_step(edition),
         wire_install_step(),
         yarn_install_step(),
     ]
@@ -275,7 +275,7 @@ def get_oss_pipelines(trigger, ver_mode):
             ),
             pipeline(
                 name='{}-oss-integration-tests'.format(ver_mode), edition=edition, trigger=trigger, services=services,
-                steps=[download_grabpl_step(), identify_runner_step(), verify_gen_cue_step(), wire_install_step(), ] + integration_test_steps,
+                steps=[download_grabpl_step(), identify_runner_step(), verify_gen_cue_step(edition), wire_install_step(), ] + integration_test_steps,
                 volumes=volumes,
             )
         ])
@@ -307,12 +307,9 @@ def get_enterprise_pipelines(trigger, ver_mode):
         clone_enterprise_step(ver_mode),
         init_enterprise_step(ver_mode)
     ]
-    for step in [wire_install_step(), yarn_install_step(), gen_version_step(ver_mode), verify_gen_cue_step()]:
+    for step in [wire_install_step(), yarn_install_step(), gen_version_step(ver_mode), verify_gen_cue_step(edition)]:
         step.update(deps_on_clone_enterprise_step)
         init_steps.extend([step])
-
-    for step in integration_test_steps:
-        step.update(deps_on_clone_enterprise_step)
 
     windows_pipeline = pipeline(
         name='{}-enterprise-windows'.format(ver_mode), edition=edition, trigger=trigger,
@@ -337,7 +334,7 @@ def get_enterprise_pipelines(trigger, ver_mode):
             ),
             pipeline(
                 name='{}-enterprise-integration-tests'.format(ver_mode), edition=edition, trigger=trigger, services=services,
-                steps=[download_grabpl_step(), identify_runner_step(), clone_enterprise_step(ver_mode), init_enterprise_step(ver_mode), verify_gen_cue_step(), wire_install_step(),] + integration_test_steps,
+                steps=[download_grabpl_step(), identify_runner_step(), clone_enterprise_step(ver_mode), init_enterprise_step(ver_mode), verify_gen_cue_step(edition), wire_install_step()] + integration_test_steps,
                 volumes=volumes,
             ),
         ])
