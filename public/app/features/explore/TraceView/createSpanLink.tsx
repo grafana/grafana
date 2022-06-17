@@ -339,7 +339,6 @@ function getTimeRangeFromSpan(
   const from = dateTime(adjustedStartTime);
   const spanEndMs = (span.startTime + span.duration) / 1000;
   let adjustedEndTime = Math.floor(spanEndMs + timeShift.endMs);
-  // isSplunkDS = true;
 
   // Splunk requires a time interval of >= 1s, rather than >=1ms like Loki timerange in below elseif block
   if (isSplunkDS && adjustedEndTime - adjustedStartTime < 1000) {
