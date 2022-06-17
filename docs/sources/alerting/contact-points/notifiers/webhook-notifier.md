@@ -16,7 +16,7 @@ weight: 105
 
 ### Webhook
 
-This topic helps you configure the Webhook notifier. It also discusses that [WeCom]({{< relref "./webhook-notifier/#wecom" >}}) contact points need a Webhook URL.
+This topic helps you configure the Webhook notifier. It also discusses that [WeCom]({{< relref "webhook-notifier/#wecom" >}}) contact points need a Webhook URL.
 
 Example JSON body:
 

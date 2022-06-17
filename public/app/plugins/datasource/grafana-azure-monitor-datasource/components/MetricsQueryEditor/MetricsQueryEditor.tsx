@@ -59,6 +59,7 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
                 selectableEntryTypes={[ResourceRowType.Resource]}
                 setResource={setResource}
                 resourceUri={query.azureMonitor?.resourceUri}
+                queryType={'metrics'}
               />
               <MetricNamespaceField
                 metricNamespaces={metricNamespaces}
@@ -146,6 +147,7 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
             selectableEntryTypes={[ResourceRowType.Resource]}
             setResource={setResource}
             resourceUri={query.azureMonitor?.resourceUri}
+            queryType="metrics"
           />
         </InlineFieldRow>
 
