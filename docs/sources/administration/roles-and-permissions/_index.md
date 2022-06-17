@@ -117,11 +117,11 @@ For more information about assigning administrator permissions to editors, refer
 If you have access to the Grafana server, you can modify the default viewer role so that viewers can:
 
 - Edit and preview dashboards, but cannot save their changes or create new dashboards.
-- Access and use [Explore]({{< relref "/explore/" >}}).
+- Access and use [Explore]({{< ref "/explore" >}}).
 
 Extending the viewer role is useful for public Grafana installations where you want anonymous users to be able to edit panels and queries, but not be able to save or create new dashboards.
 
-For more information about assigning dashboard preview permissions to viewers, refer to [Enable viewers to preview dashboards and use Explore]({{< relref "../user-management/manage-dashboard-permissions/#enable-viewers-to-preview-dashboards-and-use-explore" >}}).
+For more information about assigning dashboard preview permissions to viewers, refer to [Enable viewers to preview dashboards and use Explore]({{< relref "../user-management/manage-dashboard-permissions/#enable-viewers-to-edit-but-not-save-dashboards-and-use-explore" >}}).
 
 ## Teams and permissions
 
