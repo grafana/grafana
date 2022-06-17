@@ -40,12 +40,6 @@ export function prepareGraphableFields(
       refFieldPseudoMax: timeRange?.to.valueOf(),
     });
 
-    // Mark the field state as having a null threhold applied
-    frame.fields[0].state = {
-      ...frame.fields[0].state,
-      nullThresholdApplied: true,
-    };
-
     for (const field of nullToValue(nulledFrame).fields) {
       switch (field.type) {
         case FieldType.time:
