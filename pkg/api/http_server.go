@@ -165,6 +165,7 @@ type HTTPServer struct {
 	CoremodelRegistry            *registry.Generic
 	CoremodelStaticRegistry      *registry.Static
 	kvStore                      kvstore.KVStore
+	secretsMigrator              secrets.Migrator
 }
 
 type ServerOptions struct {
@@ -199,7 +200,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	teamsPermissionsService accesscontrol.TeamPermissionsService, folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
 	starService star.Service, csrfService csrf.Service, coremodelRegistry *registry.Generic, coremodelStaticRegistry *registry.Static,
-	kvStore kvstore.KVStore,
+	kvStore kvstore.KVStore, secretsMigrator secrets.Migrator,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -283,6 +284,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		CoremodelRegistry:            coremodelRegistry,
 		CoremodelStaticRegistry:      coremodelStaticRegistry,
 		kvStore:                      kvStore,
+		secretsMigrator:              secretsMigrator,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
