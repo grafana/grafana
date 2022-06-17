@@ -1,17 +1,25 @@
 import { I18n, i18n } from '@lingui/core';
 import { I18nProvider as LinguiI18nProvider } from '@lingui/react';
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
+
+import config from 'app/core/config';
 
 import { messages } from '../../locales/en/messages';
 
 let i18nInstance: I18n;
 
-export function getI18n(locale = 'en') {
+export async function getI18n(locale = 'en') {
   if (i18nInstance) {
     return i18nInstance;
   }
-
-  i18n.load(locale, messages);
+  // Dynamically load the messages for the user's locale
+  const imp =
+    config.featureToggles.internationalization &&
+    (await import(`../../locales/${locale}/messages`).catch((err) => {
+      // TODO: Properly return an error if we can't find the messages for a locale
+      return err;
+    }));
+  i18n.load(locale, imp?.messages || messages);
 
   // Browser support for Intl.PluralRules is good and covers what we support in .browserlistrc,
   // but because this could potentially be in a the critical path of loading the frontend lets
@@ -38,7 +46,29 @@ interface I18nProviderProps {
   children: React.ReactNode;
 }
 export function I18nProvider({ children }: I18nProviderProps) {
-  const [i18nRef] = useState(() => getI18n());
+  useEffect(() => {
+    let loc;
+    if (config.featureToggles.internationalization) {
+      // TODO: Use locale preference instead of weekStart
+      switch (config.bootData.user.weekStart) {
+        case 'saturday':
+          loc = 'es';
+          break;
+        case 'sunday':
+          loc = 'fr';
+          break;
+        default:
+          loc = 'en';
+          break;
+      }
+    }
 
-  return <LinguiI18nProvider i18n={i18nRef}>{children}</LinguiI18nProvider>;
+    getI18n(loc);
+  }, []);
+
+  return (
+    <LinguiI18nProvider i18n={i18n} forceRenderOnLocaleChange={false}>
+      {children}
+    </LinguiI18nProvider>
+  );
 }
