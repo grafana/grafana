@@ -1,9 +1,9 @@
-import { cx } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { Global } from '@emotion/react';
 import SliderComponent from 'rc-slider';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { FieldConfigEditorProps, SliderFieldConfigSettings } from '@grafana/data';
+import { FieldConfigEditorProps, GrafanaTheme2, SliderFieldConfigSettings } from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
 
 import { getStyles } from '../../../../../packages/grafana-ui/src/components/Slider/styles';
@@ -15,6 +15,7 @@ export const SliderValueEditor: React.FC<FieldConfigEditorProps<number, SliderFi
   onChange,
   item,
 }) => {
+  const inputRef = React.useRef<HTMLSpanElement>(null);
   const { settings } = item;
   const min = settings?.min || 0;
   const max = settings?.max || 100;
@@ -22,12 +23,15 @@ export const SliderValueEditor: React.FC<FieldConfigEditorProps<number, SliderFi
   const marks = settings?.marks;
   const included = settings?.included;
   const ariaLabelForHandle = settings?.ariaLabelForHandle;
+  const inputWidthDefault = 75;
 
   const isHorizontal = true;
   const theme = useTheme2();
   const styles = getStyles(theme, isHorizontal, Boolean(marks));
   const SliderWithTooltip = SliderComponent;
   const [sliderValue, setSliderValue] = useState<number>(value ?? min);
+  const [inputWidth, setInputWidth] = useState<number>(inputWidthDefault);
+  const stylesSlider = getStylesSlider(theme, inputWidth);
 
   // Check for a difference between prop value and internal state
   useEffect(() => {
@@ -35,6 +39,23 @@ export const SliderValueEditor: React.FC<FieldConfigEditorProps<number, SliderFi
       setSliderValue(value);
     }
   }, [value, sliderValue]);
+
+  // Using input font and expected maximum number of digits, set input width
+  useEffect(() => {
+    const inputElement = getComputedStyle(inputRef.current!);
+    const fontWeight = inputElement.getPropertyValue('font-weight') || 'normal';
+    const fontSize = inputElement.getPropertyValue('font-size') || '16px';
+    const fontFamily = inputElement.getPropertyValue('font-family') || 'Arial';
+    const marginDigits = 4; // extra digits to account for things like negative, exponential, and controls
+    const inputPadding = 8; // TODO: base this on input styling
+    const maxDigits =
+      Math.max((max + (step || 0)).toString().length, (max - (step || 0)).toString().length) + marginDigits;
+    const refString = '0'.repeat(maxDigits); // use "0" as widest numerical character
+    const calculatedTextWidth = getTextWidth(refString, `${fontWeight} ${fontSize} ${fontFamily}`);
+    if (calculatedTextWidth) {
+      setInputWidth(calculatedTextWidth + inputPadding * 2);
+    }
+  }, [max, step]);
 
   const onSliderChange = useCallback(
     (v: number) => {
@@ -85,8 +106,36 @@ export const SliderValueEditor: React.FC<FieldConfigEditorProps<number, SliderFi
           included={included}
         />
         {/* Uses text input so that the number spinners are not shown */}
-        <NumberInput value={sliderValue} onChange={onSliderInputChange} max={max} min={min} step={step} />
+        <span className={stylesSlider.numberInputWrapper} ref={inputRef}>
+          <NumberInput value={sliderValue} onChange={onSliderInputChange} max={max} min={min} step={step} />
+        </span>
       </label>
     </div>
   );
+};
+
+// Calculate width of string with given font
+function getTextWidth(text: string, font: string): number | null {
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d');
+  if (context) {
+    context.font = font;
+    const metrics = context.measureText(text);
+    return metrics.width;
+  }
+  return null;
+}
+
+const getStylesSlider = (theme: GrafanaTheme2, width: number) => {
+  return {
+    numberInputWrapper: css`
+      margin-left: 10px;
+      max-width: ${width}px;
+      min-width: ${width}px;
+      width: 100%;
+    `,
+    numberInputHidden: css`
+      display: none;
+    `,
+  };
 };
