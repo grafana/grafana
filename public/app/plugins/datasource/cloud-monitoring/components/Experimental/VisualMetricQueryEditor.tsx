@@ -8,6 +8,7 @@ import { LabelFilter, Metrics } from '../index';
 
 import { Alignment } from './Alignment';
 import { GroupBy } from './GroupBy';
+import { Preprocessor } from './Preprocessor';
 
 export interface Props {
   refId: string;
@@ -48,6 +49,7 @@ function Editor({
             onChange={(filters: string[]) => onChange({ ...query, filters })}
             variableOptionGroup={variableOptionGroup}
           />
+          <Preprocessor metricDescriptor={metric} query={query} onChange={onChange} />
           <GroupBy
             refId={refId}
             labels={Object.keys(labels)}
