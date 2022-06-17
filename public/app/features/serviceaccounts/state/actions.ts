@@ -3,9 +3,11 @@ import { debounce } from 'lodash';
 import { getBackendSrv } from '@grafana/runtime';
 import { fetchBuiltinRoles, fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { contextSrv } from 'app/core/services/context_srv';
+import store from 'app/core/store';
 import { AccessControlAction, ServiceAccountDTO, ServiceAccountStateFilter, ThunkResult } from 'app/types';
 
 import { ServiceAccountToken } from '../components/CreateTokenModal';
+import { API_KEYS_MIGRATION_INFO_STORAGE_KEY } from '../constants';
 
 import {
   acOptionsLoaded,
@@ -17,6 +19,7 @@ import {
   serviceAccountsFetchEnd,
   apiKeysMigrationStatusLoaded,
   stateFilterChanged,
+  showApiKeysMigrationInfoLoaded,
 } from './reducers';
 
 const BASE_URL = `/api/serviceaccounts`;
@@ -138,5 +141,19 @@ export function changePage(page: number): ThunkResult<void> {
   return async (dispatch) => {
     dispatch(pageChanged(page));
     dispatch(fetchServiceAccounts());
+  };
+}
+
+export function getApiKeysMigrationInfo(): ThunkResult<void> {
+  return async (dispatch) => {
+    const showApiKeysMigrationInfo = store.getBool(API_KEYS_MIGRATION_INFO_STORAGE_KEY, false);
+    dispatch(showApiKeysMigrationInfoLoaded(showApiKeysMigrationInfo));
+  };
+}
+
+export function closeApiKeysMigrationInfo(): ThunkResult<void> {
+  return async (dispatch) => {
+    store.set(API_KEYS_MIGRATION_INFO_STORAGE_KEY, false);
+    dispatch(getApiKeysMigrationInfo());
   };
 }

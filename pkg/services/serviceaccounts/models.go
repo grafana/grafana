@@ -19,6 +19,10 @@ const (
 	ActionDelete = "serviceaccounts:delete"
 )
 
+type CreateServiceAccountForm struct {
+	Name string `json:"name" binding:"Required"`
+}
+
 type UpdateServiceAccountForm struct {
 	Name       *string          `json:"name"`
 	Role       *models.RoleType `json:"role"`

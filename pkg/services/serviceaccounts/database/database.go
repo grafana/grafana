@@ -44,7 +44,7 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, org
 	newuser, err := s.sqlStore.CreateUser(ctx, cmd)
 	if err != nil {
 		if errors.Is(err, models.ErrUserAlreadyExists) {
-			return nil, &ErrSAInvalidName{}
+			return nil, ErrServiceAccountAlreadyExists
 		}
 		return nil, fmt.Errorf("failed to create service account: %w", err)
 	}
@@ -445,16 +445,15 @@ func (s *ServiceAccountsStoreImpl) RevertApiKey(ctx context.Context, keyId int64
 	key := query.Result
 
 	if key.ServiceAccountId == nil {
-		// TODO: better error message
-		return fmt.Errorf("API key is not linked to service account")
+		return fmt.Errorf("API key is not service account token")
 	}
 
 	tokens, err := s.ListTokens(ctx, key.OrgId, *key.ServiceAccountId)
 	if err != nil {
-		return fmt.Errorf("cannot revert API key: %w", err)
+		return fmt.Errorf("cannot revert token: %w", err)
 	}
 	if len(tokens) > 1 {
-		return fmt.Errorf("cannot revert API key: service account contains more than one token")
+		return fmt.Errorf("cannot revert token: service account contains more than one token")
 	}
 
 	err = s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
@@ -477,8 +476,9 @@ func (s *ServiceAccountsStoreImpl) RevertApiKey(ctx context.Context, keyId int64
 		}
 		return nil
 	})
+
 	if err != nil {
-		return fmt.Errorf("cannot revert API key: %w", err)
+		return fmt.Errorf("cannot revert token to API key: %w", err)
 	}
 	return nil
 }
