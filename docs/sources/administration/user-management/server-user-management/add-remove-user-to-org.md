@@ -19,9 +19,9 @@ You are required to specify an Admin role for each organization. The first user 
 
 ### Before you begin
 
-- [Create an organization]({{< relref "../../organization-management/" >}})
-- [Add a user]({{< relref "../#add-a-user" >}}) to Grafana
-- Ensure you have Grafana server administrator privileges
+- [Create an organization]({{< relref "../../organization-management/#create-an-organization" >}})
+- [Add a user]({{< relref "./#add-a-user" >}}) to Grafana
+- Ensure you have [Grafana server administrator privileges]({{< relref "./assign-remove-server-admin-privileges" >}})
 
 **To add a user to an organization**:
 
