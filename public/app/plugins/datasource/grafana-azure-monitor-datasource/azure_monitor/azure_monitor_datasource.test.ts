@@ -358,11 +358,11 @@ describe('AzureMonitorDatasource', () => {
           .getMetricDefinitions('mock-subscription-id', 'nodesapp')
           .then((results: Array<{ text: string; value: string }>) => {
             expect(results.length).toEqual(7);
-            expect(results[0].text).toEqual('Network interface');
+            expect(results[0].text).toEqual('Network interfaces');
             expect(results[0].value).toEqual('Microsoft.Network/networkInterfaces');
-            expect(results[1].text).toEqual('Virtual machine');
+            expect(results[1].text).toEqual('Virtual machines');
             expect(results[1].value).toEqual('Microsoft.Compute/virtualMachines');
-            expect(results[2].text).toEqual('Storage account');
+            expect(results[2].text).toEqual('Storage accounts');
             expect(results[2].value).toEqual('Microsoft.Storage/storageAccounts');
             expect(results[3].text).toEqual('Microsoft.Storage/storageAccounts/blobServices');
             expect(results[3].value).toEqual('Microsoft.Storage/storageAccounts/blobServices');
