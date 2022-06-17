@@ -40,6 +40,11 @@ func TestIntegrationKVStore(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+
+	// Do not merge this, I'm just testing to see if integration tests
+	// fail properly.
+	t.FailNow()
+
 	kv := createTestableKVStore(t)
 
 	ctx := context.Background()
