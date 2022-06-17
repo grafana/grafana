@@ -27,8 +27,7 @@ func TestSensuGoNotifier(t *testing.T) {
 	require.NoError(t, err)
 	tmpl.ExternalURL = externalURL
 
-	images, deleteFunc := newFakeImageStore(t)
-	defer deleteFunc()
+	images := newFakeImageStore()
 
 	cases := []struct {
 		name         string
