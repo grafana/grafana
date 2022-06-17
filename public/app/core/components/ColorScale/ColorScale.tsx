@@ -146,9 +146,10 @@ const getStyles = (theme: GrafanaTheme2, colors: string[]) => ({
   hoverValue: css`
     position: absolute;
     margin-top: -14px;
-    padding: 3px 10px;
-    backdrop-filter: blur(4px);
+    padding: 3px 15px;
+    //backdrop-filter: blur(4px);
     //    background: ${theme.isDark ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.7)'};
+    background: ${theme.colors.background.primary};
     transform: translateX(-50%);
   `,
   followerContainer: css`
