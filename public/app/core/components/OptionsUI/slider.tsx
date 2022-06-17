@@ -15,7 +15,10 @@ export const SliderValueEditor: React.FC<FieldConfigEditorProps<number, SliderFi
   onChange,
   item,
 }) => {
+  // Input reference
   const inputRef = useRef<HTMLSpanElement>(null);
+
+  // Settings
   const { settings } = item;
   const min = settings?.min || 0;
   const max = settings?.max || 100;
@@ -23,15 +26,14 @@ export const SliderValueEditor: React.FC<FieldConfigEditorProps<number, SliderFi
   const marks = settings?.marks;
   const included = settings?.included;
   const ariaLabelForHandle = settings?.ariaLabelForHandle;
-  const inputWidthDefault = 75;
 
+  // Core slider specific parameters and state
+  const inputWidthDefault = 75;
   const isHorizontal = true;
   const theme = useTheme2();
-  const styles = getStyles(theme, isHorizontal, Boolean(marks));
   const SliderWithTooltip = SliderComponent;
   const [sliderValue, setSliderValue] = useState<number>(value ?? min);
   const [inputWidth, setInputWidth] = useState<number>(inputWidthDefault);
-  const stylesSlider = getStylesSlider(theme, inputWidth);
 
   // Check for a difference between prop value and internal state
   useEffect(() => {
@@ -46,11 +48,12 @@ export const SliderValueEditor: React.FC<FieldConfigEditorProps<number, SliderFi
     const fontWeight = inputElement.getPropertyValue('font-weight') || 'normal';
     const fontSize = inputElement.getPropertyValue('font-size') || '16px';
     const fontFamily = inputElement.getPropertyValue('font-family') || 'Arial';
+    const wideNumericalCharacter = '0';
     const marginDigits = 4; // extra digits to account for things like negative, exponential, and controls
     const inputPadding = 8; // TODO: base this on input styling
     const maxDigits =
       Math.max((max + (step || 0)).toString().length, (max - (step || 0)).toString().length) + marginDigits;
-    const refString = '0'.repeat(maxDigits); // use "0" as widest numerical character
+    const refString = wideNumericalCharacter.repeat(maxDigits);
     const calculatedTextWidth = getTextWidth(refString, `${fontWeight} ${fontSize} ${fontFamily}`);
     if (calculatedTextWidth) {
       setInputWidth(calculatedTextWidth + inputPadding * 2);
@@ -85,6 +88,9 @@ export const SliderValueEditor: React.FC<FieldConfigEditorProps<number, SliderFi
     [onChange]
   );
 
+  // Styles
+  const styles = getStyles(theme, isHorizontal, Boolean(marks));
+  const stylesSlider = getStylesSlider(theme, inputWidth);
   const sliderInputClassNames = !isHorizontal ? [styles.sliderInputVertical] : [];
 
   return (
@@ -105,7 +111,6 @@ export const SliderValueEditor: React.FC<FieldConfigEditorProps<number, SliderFi
           marks={marks}
           included={included}
         />
-        {/* Uses text input so that the number spinners are not shown */}
         <span className={stylesSlider.numberInputWrapper} ref={inputRef}>
           <NumberInput value={sliderValue} onChange={onSliderInputChange} max={max} min={min} step={step} />
         </span>
@@ -133,9 +138,6 @@ const getStylesSlider = (theme: GrafanaTheme2, width: number) => {
       max-width: ${width}px;
       min-width: ${width}px;
       width: 100%;
-    `,
-    numberInputHidden: css`
-      display: none;
     `,
   };
 };
