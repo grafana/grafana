@@ -76,7 +76,7 @@ const NavBarItem = ({ isActive = false, className, reverseMenuDirection = false,
           onNavigate={onNavigate}
           emptyMessage={
             link.id === 'starred' ? (
-              <Trans id="nav.empty-starred">Your starred dashboards will appear here.</Trans>
+              <Trans id="nav.empty-starred">Your starred dashboards will appear here</Trans>
             ) : undefined
           }
         >

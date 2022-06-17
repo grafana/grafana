@@ -96,7 +96,7 @@ msgstr "Data sources"
 
 #: public/app/core/components/NavBar/NavBarItem.tsx
 msgid "nav.empty-starred"
-msgstr "Your starred dashboards will appear here."
+msgstr "Your starred dashboards will appear here"
 
 #: public/app/core/components/NavBar/navBarItem-translations.ts
 msgid "nav.explore"
