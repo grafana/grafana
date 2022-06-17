@@ -27,7 +27,7 @@ more than 5 minutes. Like in Prometheus, we can add a summary annotation to show
 Instance {{ $labels.instance }} has been down for more than 5 minutes
 ```
 
-For alerts where we also want to know the value of the condition at the time the alert fired we can use both the
+For alerts where we also want to know the value of the condition at the time the alert fired, we can use both the
 `$labels` and the `$value` variable to add even more informative summaries:
 
 ```
@@ -79,7 +79,7 @@ We can also show the labels of `B`, however since this alert rule has just one q
 
 Should query `A` return no data then the reduce expression `B` will also return no data. This means that
 `{{ $values.B }}` will be nil. To ensure that annotations and labels can still be templated even when a query returns
-no data we can use an if statement to check for `$values.B`:
+no data, we can use an if statement to check for `$values.B`:
 
 ```
 {{ if $values.B }}{{ $labels.instance }} has a 95th percentile request latency above 1s: {{ $values.B }}){{ end }}
