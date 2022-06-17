@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
+import { useObservable } from 'react-use';
 import { Observer, ReplaySubject, Subscription } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
-import { AbsoluteTimeRange, toUtc, useObservable } from '@grafana/data';
+import { AbsoluteTimeRange, toUtc } from '@grafana/data';
 
 import {
   SceneComponentProps,

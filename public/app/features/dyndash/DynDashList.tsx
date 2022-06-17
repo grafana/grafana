@@ -6,7 +6,6 @@ import { Card } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 
 // Types
-// import { useObservable } from '@grafana/data';
 import { getScenes } from './scenes';
 
 export interface Props {}
