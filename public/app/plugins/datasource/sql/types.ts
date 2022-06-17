@@ -10,7 +10,7 @@ import {
   TimeRange,
   toOption as toOptionFromData,
 } from '@grafana/data';
-import { EditorMode, LanguageCompletionProvider } from '@grafana/experimental';
+import { CompletionItemKind, EditorMode, LanguageCompletionProvider } from '@grafana/experimental';
 import { BackendDataSourceResponse } from '@grafana/runtime';
 
 import { QueryWithDefaults } from './defaults';
@@ -156,4 +156,10 @@ export interface SqlQueryModel {
 export interface ResponseParser {
   transformAnnotationResponse: (options: any, data: BackendDataSourceResponse) => Promise<AnnotationEvent[]>;
   transformMetricFindResponse: (frame: DataFrame) => MetricFindValue[];
+}
+
+export interface MetaDefinition {
+  name: string;
+  completion?: string;
+  kind: CompletionItemKind;
 }

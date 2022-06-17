@@ -1,4 +1,3 @@
-import { map as _map } from 'lodash';
 import { lastValueFrom, of } from 'rxjs';
 import { catchError, map, mapTo } from 'rxjs/operators';
 
@@ -71,10 +70,12 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
       return value;
     }
 
-    const quotedValues = _map(value, (v: any) => {
-      return this.getQueryModel().quoteLiteral(v);
-    });
-    return quotedValues.join(',');
+    if (Array.isArray(value)) {
+      const quotedValues = value.map((v) => this.getQueryModel().quoteLiteral(v));
+      return quotedValues.join(',');
+    }
+
+    return value;
   };
 
   interpolateVariablesInQueries(

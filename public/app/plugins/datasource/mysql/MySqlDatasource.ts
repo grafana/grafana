@@ -1,7 +1,7 @@
 import { map as _map } from 'lodash';
 
 import { DataSourceInstanceSettings, ScopedVars, TimeRange } from '@grafana/data';
-import { LanguageCompletionProvider } from '@grafana/experimental';
+import { CompletionItemKind, LanguageCompletionProvider } from '@grafana/experimental';
 import { TemplateSrv } from '@grafana/runtime';
 import MySQLQueryModel from 'app/plugins/datasource/mysql/MySqlQueryModel';
 
@@ -70,18 +70,21 @@ export class MySqlDatasource extends SqlDatasource {
     path = path?.trim();
     if (!path && defaultDB) {
       const tables = await this.fetchTables(defaultDB);
-      return tables.map((t) => ({ name: t, completion: t }));
+      return tables.map((t) => ({ name: t, completion: t, kind: CompletionItemKind.Class }));
     } else if (!path) {
       const datasets = await this.fetchDatasets();
-      return datasets.map((d) => ({ name: d, completion: `${d}.` }));
+      return datasets.map((d) => ({ name: d, completion: `${d}.`, kind: CompletionItemKind.Module }));
     } else {
       const parts = path.split('.').filter((s: string) => s);
       if (parts.length > 2) {
         return [];
       }
-      if (parts.length === 1) {
+      if (parts.length === 1 && !defaultDB) {
         const tables = await this.fetchTables(parts[0]);
-        return tables.map((t) => ({ name: t, completion: t }));
+        return tables.map((t) => ({ name: t, completion: t, kind: CompletionItemKind.Class }));
+      } else if (parts.length === 1 && defaultDB) {
+        const fields = await this.fetchFields({ dataset: defaultDB, table: parts[0] } as SQLQuery);
+        return fields.map((t) => ({ name: t.value, completion: t.value, kind: CompletionItemKind.Field }));
       } else {
         return [];
       }
