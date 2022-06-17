@@ -273,12 +273,13 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	metricsLog := "Successfully connected to Azure Monitor endpoint."
 	logAnalyticsLog := "Successfully connected to Azure Log Analytics endpoint."
 	graphLog := "Successfully connected to Azure Resource Graph endpoint."
+	var azError types.AzureError
 
 	metricsRes, err := checkAzureMonitorMetricsHealth(dsInfo)
 	if err != nil || metricsRes.StatusCode != 200 {
 		status = backend.HealthStatusError
 		if err != nil {
-			if _, ok := err.(types.AzureError); ok {
+			if ok := errors.As(err, &azError); ok {
 				metricsLog = fmt.Sprintf("Error connecting to Azure Monitor endpoint: %s", err.Error())
 			} else {
 				return nil, err
@@ -299,7 +300,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 			if err.Error() == "no default workspace found" {
 				status = backend.HealthStatusUnknown
 				logAnalyticsLog = "No Log Analytics workspaces found."
-			} else if _, ok := err.(types.AzureError); ok {
+			} else if ok := errors.As(err, &azError); ok {
 				logAnalyticsLog = fmt.Sprintf("Error connecting to Azure Log Analytics endpoint:: %s", err.Error())
 			} else {
 				return nil, err
@@ -317,7 +318,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	if err != nil || resourceGraphRes.StatusCode != 200 {
 		status = backend.HealthStatusError
 		if err != nil {
-			if _, ok := err.(types.AzureError); ok {
+			if ok := errors.As(err, &azError); ok {
 				graphLog = fmt.Sprintf("Error connecting to Azure Resource Graph endpoint: %s", err.Error())
 			} else {
 				return nil, err
@@ -360,7 +361,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 		Status:  status,
 		Message: "One or more health checks failed. See details below.",
 		JSONDetails: []byte(
-			fmt.Sprintf(`{"verboseMessage": %s }`, strconv.Quote(fmt.Sprintf("1. %s\n2. %s\n3.%s", metricsLog, logAnalyticsLog, graphLog))),
+			fmt.Sprintf(`{"verboseMessage": %s }`, strconv.Quote(fmt.Sprintf("1. %s\n2. %s\n3. %s", metricsLog, logAnalyticsLog, graphLog))),
 		),
 	}, nil
 }

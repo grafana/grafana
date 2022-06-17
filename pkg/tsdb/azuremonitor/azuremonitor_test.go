@@ -270,7 +270,7 @@ func TestCheckHealth(t *testing.T) {
 			errorExpected: false,
 			expectedResult: &backend.CheckHealthResult{
 				Status:  backend.HealthStatusOk,
-				Message: "1. Successfully connected to Azure Monitor endpoint.\n2. Successfully connected to Azure Log Analytics endpoint.\n3. Successfully connected to Azure Resource Graph endpoint.",
+				Message: "Successfully connected to all Azure Monitor endpoints.",
 			},
 			customServices: map[string]types.DatasourceService{
 				azureMonitor: {
@@ -291,7 +291,9 @@ func TestCheckHealth(t *testing.T) {
 			errorExpected: false,
 			expectedResult: &backend.CheckHealthResult{
 				Status:  backend.HealthStatusError,
-				Message: "1. Error connecting to Azure Monitor endpoint: not found\n2. Successfully connected to Azure Log Analytics endpoint.\n3. Successfully connected to Azure Resource Graph endpoint.",
+				Message: "One or more health checks failed. See details below.",
+				JSONDetails: []byte(
+					`{"verboseMessage": "1. Error connecting to Azure Monitor endpoint: not found\n2. Successfully connected to Azure Log Analytics endpoint.\n3. Successfully connected to Azure Resource Graph endpoint." }`),
 			},
 			customServices: map[string]types.DatasourceService{
 				azureMonitor: {
@@ -312,7 +314,9 @@ func TestCheckHealth(t *testing.T) {
 			errorExpected: false,
 			expectedResult: &backend.CheckHealthResult{
 				Status:  backend.HealthStatusError,
-				Message: "1. Successfully connected to Azure Monitor endpoint.\n2. Error connecting to Azure Log Analytics endpoint: not found\n3. Successfully connected to Azure Resource Graph endpoint.",
+				Message: "One or more health checks failed. See details below.",
+				JSONDetails: []byte(
+					`{"verboseMessage": "1. Successfully connected to Azure Monitor endpoint.\n2. Error connecting to Azure Log Analytics endpoint: not found\n3. Successfully connected to Azure Resource Graph endpoint." }`),
 			},
 			customServices: map[string]types.DatasourceService{
 				azureMonitor: {
@@ -333,7 +337,9 @@ func TestCheckHealth(t *testing.T) {
 			errorExpected: false,
 			expectedResult: &backend.CheckHealthResult{
 				Status:  backend.HealthStatusError,
-				Message: "1. Successfully connected to Azure Monitor endpoint.\n2. Successfully connected to Azure Log Analytics endpoint.\n3. Error connecting to Azure Resource Graph endpoint: not found",
+				Message: "One or more health checks failed. See details below.",
+				JSONDetails: []byte(
+					`{"verboseMessage": "1. Successfully connected to Azure Monitor endpoint.\n2. Successfully connected to Azure Log Analytics endpoint.\n3. Error connecting to Azure Resource Graph endpoint: not found" }`),
 			},
 			customServices: map[string]types.DatasourceService{
 				azureMonitor: {
@@ -354,7 +360,9 @@ func TestCheckHealth(t *testing.T) {
 			errorExpected: false,
 			expectedResult: &backend.CheckHealthResult{
 				Status:  backend.HealthStatusUnknown,
-				Message: "1. Successfully connected to Azure Monitor endpoint.\n2. No Log Analytics workspaces found.\n3. Successfully connected to Azure Resource Graph endpoint.",
+				Message: "One or more health checks failed. See details below.",
+				JSONDetails: []byte(
+					`{"verboseMessage": "1. Successfully connected to Azure Monitor endpoint.\n2. No Log Analytics workspaces found.\n3. Successfully connected to Azure Resource Graph endpoint." }`),
 			},
 			customServices: map[string]types.DatasourceService{
 				azureMonitor: {
