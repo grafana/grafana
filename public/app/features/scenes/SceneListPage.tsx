@@ -10,7 +10,7 @@ import { getScenes } from './scenes';
 
 export interface Props {}
 
-export const DynDashList: FC<Props> = ({}) => {
+export const SceneListPage: FC<Props> = ({}) => {
   const scenes = getScenes();
 
   return (
@@ -18,7 +18,7 @@ export const DynDashList: FC<Props> = ({}) => {
       <Page.Contents>
         <Stack direction="column">
           {scenes.map((scene) => (
-            <Card href={`/dyndash/${scene.state.title}`} key={scene.state.title}>
+            <Card href={`/scenes/${scene.state.title}`} key={scene.state.title}>
               <Card.Heading>{scene.state.title}</Card.Heading>
             </Card>
           ))}
@@ -28,4 +28,4 @@ export const DynDashList: FC<Props> = ({}) => {
   );
 };
 
-export default DynDashList;
+export default SceneListPage;

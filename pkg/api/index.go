@@ -463,6 +463,15 @@ func (hs *HTTPServer) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm b
 		})
 	}
 
+	if hs.Features.IsEnabled(featuremgmt.FlagScenes) {
+		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
+			Text: "Scenes",
+			Id:   "scenes",
+			Url:  hs.Cfg.AppSubURL + "/scenes",
+			Icon: "apps",
+		})
+	}
+
 	if hasEditPerm {
 		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
 			Text: "Divider", Divider: true, Id: "divider", HideFromTabs: true,

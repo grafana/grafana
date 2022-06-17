@@ -444,17 +444,17 @@ export function getAppRoutes(): RouteDescriptor[] {
 }
 
 export function getDynamicDashboardRoutes(cfg = config): RouteDescriptor[] {
-  if (!cfg.featureToggles.dyndash) {
+  if (!cfg.featureToggles.scenes) {
     return [];
   }
   return [
     {
-      path: '/dyndash',
-      component: SafeDynamicImport(() => import(/* webpackChunkName: "DynDash"*/ 'app/features/dyndash/DynDashList')),
+      path: '/scenes',
+      component: SafeDynamicImport(() => import(/* webpackChunkName: "scenes"*/ 'app/features/scenes/SceneListPage')),
     },
     {
-      path: '/dyndash/:name',
-      component: SafeDynamicImport(() => import(/* webpackChunkName: "DynDash"*/ 'app/features/dyndash/DynDashPage')),
+      path: '/scenes/:name',
+      component: SafeDynamicImport(() => import(/* webpackChunkName: "scenes"*/ 'app/features/scenes/ScenePage')),
     },
   ];
 }

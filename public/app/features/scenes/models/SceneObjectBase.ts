@@ -3,8 +3,6 @@ import { useObservable } from 'react-use';
 import { Observer, ReplaySubject, Subscription } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
-import { AbsoluteTimeRange, toUtc } from '@grafana/data';
-
 import {
   SceneComponentProps,
   SceneTimeRangeState,
@@ -138,20 +136,6 @@ export abstract class SceneObjectBase<TState extends SceneObjectState> implement
 
     throw new Error('No data found in scene tree');
   }
-
-  onSetTimeRange = (timeRange: AbsoluteTimeRange) => {
-    const sceneTimeRange = this.getTimeRange();
-    sceneTimeRange.setState({
-      timeRange: {
-        raw: {
-          from: toUtc(timeRange.from),
-          to: toUtc(timeRange.to),
-        },
-        from: toUtc(timeRange.from),
-        to: toUtc(timeRange.to),
-      },
-    });
-  };
 
   /**
    * Will create new SceneItem with shalled cloned state, but all states items of type SceneItem are deep cloned

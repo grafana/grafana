@@ -7,7 +7,7 @@ import { getScenes } from './scenes';
 
 export interface Props extends GrafanaRouteComponentProps<{ name: string }> {}
 
-export const DynDashPage: FC<Props> = (props) => {
+export const ScenePage: FC<Props> = (props) => {
   const scene = getScenes().find((x) => x.state.title === props.match.params.name);
 
   if (!scene) {
@@ -21,4 +21,4 @@ export const DynDashPage: FC<Props> = (props) => {
   );
 };
 
-export default DynDashPage;
+export default ScenePage;

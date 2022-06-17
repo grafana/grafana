@@ -1,7 +1,7 @@
 import React from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { FieldConfigSource } from '@grafana/data';
+import { AbsoluteTimeRange, FieldConfigSource, toUtc } from '@grafana/data';
 import { PanelRenderer } from '@grafana/runtime';
 import { PanelChrome } from '@grafana/ui';
 
@@ -17,6 +17,20 @@ export interface VizPanelState extends SceneObjectState {
 
 export class VizPanel extends SceneObjectBase<VizPanelState> {
   Component = ScenePanelRenderer;
+
+  onSetTimeRange = (timeRange: AbsoluteTimeRange) => {
+    const sceneTimeRange = this.getTimeRange();
+    sceneTimeRange.setState({
+      timeRange: {
+        raw: {
+          from: toUtc(timeRange.from),
+          to: toUtc(timeRange.to),
+        },
+        from: toUtc(timeRange.from),
+        to: toUtc(timeRange.to),
+      },
+    });
+  };
 }
 
 const ScenePanelRenderer = React.memo<SceneComponentProps<VizPanel>>(({ model }) => {

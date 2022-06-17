@@ -239,8 +239,8 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:         "dynamicDashboards",
-			Description:  "Experimental framework to build interactive dashbaords",
+			Name:         "scenes",
+			Description:  "Experimental framework to build interactive dashboards",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 		},
