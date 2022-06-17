@@ -695,6 +695,9 @@ func readStream(iter *jsoniter.Iterator) *backend.DataResponse {
 		for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
 			switch l1Field {
 			case "stream":
+				// we need to clear `labels`, because `iter.ReadVal`
+				// only appends to it
+				labels := data.Labels{}
 				iter.ReadVal(&labels)
 				labelJson, err = labelsToRawJson(labels)
 				if err != nil {
