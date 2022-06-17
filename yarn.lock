@@ -4304,26 +4304,26 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/agent-core@npm:^0.2.0":
-  version: 0.2.0
-  resolution: "@grafana/agent-core@npm:0.2.0"
+"@grafana/agent-core@npm:^0.3.0":
+  version: 0.3.0
+  resolution: "@grafana/agent-core@npm:0.3.0"
   dependencies:
     "@opentelemetry/api": ^1.1.0
     "@opentelemetry/api-metrics": ^0.29.1
     "@opentelemetry/otlp-transformer": ^0.29.1
     uuid: ^8.3.2
-  checksum: 1e8e813cbfed5d29fd41286453812ccf9c4d946d5bc69b02505802ab508c053201c22773dd496bc37e3d61603bf9473f0ea3d8c6b53c37bd89e2244f684e9a73
+  checksum: 664ded4d6bbe466cf6629fc0fb2c751b488662a12c25b620872939472ae51a7360237f3d669ca900ce5157c8575f312a64328ef03311b075b3a3937bc896d9e8
   languageName: node
   linkType: hard
 
-"@grafana/agent-web@npm:^0.2.0":
-  version: 0.2.0
-  resolution: "@grafana/agent-web@npm:0.2.0"
+"@grafana/agent-web@npm:^0.3.0":
+  version: 0.3.0
+  resolution: "@grafana/agent-web@npm:0.3.0"
   dependencies:
-    "@grafana/agent-core": ^0.2.0
+    "@grafana/agent-core": ^0.3.0
     ua-parser-js: ^1.0.2
     web-vitals: ^2.1.4
-  checksum: 2c3280c2bda2b6ecb657faeca54c185e185d4b05687dff32aedeeb6cfd746e39dab5e9f4c408c6ddc6313f864ebbebab5b874c1481de543c4684ee235827d685
+  checksum: 5abbb1e17afbb8fd2944a7ffd14a10c701fdd11a6c80c986b4039a8abe36dc1647513493acc7898fd373a20c05b02ce3c8cc6c18ad5e3f47980cd4dd50373e6e
   languageName: node
   linkType: hard
 
@@ -20737,8 +20737,8 @@ __metadata:
     "@emotion/css": 11.9.0
     "@emotion/eslint-plugin": 11.7.0
     "@emotion/react": 11.9.0
-    "@grafana/agent-core": ^0.2.0
-    "@grafana/agent-web": ^0.2.0
+    "@grafana/agent-core": ^0.3.0
+    "@grafana/agent-web": ^0.3.0
     "@grafana/api-documenter": 7.11.2
     "@grafana/aws-sdk": 0.0.36
     "@grafana/data": "workspace:*"
