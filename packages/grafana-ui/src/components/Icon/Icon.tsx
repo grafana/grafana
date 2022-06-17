@@ -20,14 +20,15 @@ export interface IconProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const getIconStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
+    // line-height: 0; is needed for correct icon alignment in Safari
     container: css`
       label: Icon;
       display: inline-block;
+      line-height: 0;
     `,
     icon: css`
       vertical-align: middle;
       display: inline-block;
-      margin-bottom: ${theme.spacing.xxs};
       fill: currentColor;
     `,
     orange: css`

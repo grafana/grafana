@@ -16,6 +16,7 @@ jest.mock('app/core/core', () => {
   return {
     contextSrv: {
       hasPermission: () => true,
+      hasAccess: () => true,
     },
     appEvents: {
       subscribe: () => {},

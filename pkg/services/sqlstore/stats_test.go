@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package sqlstore
 
 import (
@@ -13,7 +10,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestStatsDataAccess(t *testing.T) {
+func TestIntegrationStatsDataAccess(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	sqlStore := InitTestDB(t)
 	populateDB(t, sqlStore)
 

@@ -35,6 +35,14 @@ describe('variableQueryMigrations', () => {
           expect(query.dimensionFilters).toStrictEqual({});
         });
       });
+      describe('and filter value is an empty array', () => {
+        it('should leave an empty filter', () => {
+          const query = migrateVariableQuery(
+            'dimension_values(us-east-1,AWS/RDS,CPUUtilization,DBInstanceIdentifier, [])'
+          );
+          expect(query.dimensionFilters).toStrictEqual({});
+        });
+      });
       describe('and filter param is defined by user', () => {
         it('should use the user defined filter', () => {
           const query = migrateVariableQuery(
@@ -60,6 +68,10 @@ describe('variableQueryMigrations', () => {
       expect(query.resourceType).toBe('elasticloadbalancing:loadbalancer');
       expect(query.tags).toStrictEqual({ 'elasticbeanstalk:environment-name': ['myApp-dev', 'myApp-prod'] });
     });
+    it('should parse a empty array for tags', () => {
+      const query = migrateVariableQuery('resource_arns(eu-west-1,elasticloadbalancing:loadbalancer, [])');
+      expect(query.tags).toStrictEqual({});
+    });
   });
   describe('when ec2_instance_attribute query is used', () => {
     it('should parse the query', () => {
@@ -69,28 +81,62 @@ describe('variableQueryMigrations', () => {
       expect(query.attributeName).toBe('rds:db');
       expect(query.ec2Filters).toStrictEqual({ environment: ['$environment'] });
     });
+    it('should parse an empty array for filters', () => {
+      const query = migrateVariableQuery('ec2_instance_attribute(us-east-1,rds:db,[])');
+      expect(query.ec2Filters).toStrictEqual({});
+    });
   });
   describe('when OldVariableQuery is used', () => {
-    it('should parse the query', () => {
+    const baseOldQuery: OldVariableQuery = {
+      queryType: VariableQueryType.Regions,
+      namespace: '',
+      region: 'us-east-1',
+      metricName: '',
+      dimensionKey: '',
+      dimensionFilters: '',
+      ec2Filters: '',
+      instanceID: '',
+      attributeName: '',
+      resourceType: '',
+      tags: '',
+      refId: '',
+    };
+    it('should parse ec2 query', () => {
       const oldQuery: OldVariableQuery = {
+        ...baseOldQuery,
         queryType: VariableQueryType.EC2InstanceAttributes,
-        namespace: '',
-        region: 'us-east-1',
-        metricName: '',
-        dimensionKey: '',
         ec2Filters: '{"environment":["$environment"]}',
-        instanceID: '',
         attributeName: 'rds:db',
-        resourceType: 'elasticloadbalancing:loadbalancer',
-        tags: '{"elasticbeanstalk:environment-name":["myApp-dev","myApp-prod"]}',
-        refId: '',
       };
       const query = migrateVariableQuery(oldQuery);
       expect(query.region).toBe('us-east-1');
       expect(query.attributeName).toBe('rds:db');
       expect(query.ec2Filters).toStrictEqual({ environment: ['$environment'] });
+    });
+    it('should parse resource arn query', () => {
+      const oldQuery: OldVariableQuery = {
+        ...baseOldQuery,
+        queryType: VariableQueryType.ResourceArns,
+        resourceType: 'elasticloadbalancing:loadbalancer',
+        tags: '{"elasticbeanstalk:environment-name":["myApp-dev","myApp-prod"]}',
+      };
+      const query = migrateVariableQuery(oldQuery);
+      expect(query.region).toBe('us-east-1');
       expect(query.resourceType).toBe('elasticloadbalancing:loadbalancer');
       expect(query.tags).toStrictEqual({ 'elasticbeanstalk:environment-name': ['myApp-dev', 'myApp-prod'] });
+    });
+    it('should parse dimension values query', () => {
+      const oldQuery: OldVariableQuery = {
+        ...baseOldQuery,
+        queryType: VariableQueryType.DimensionValues,
+        metricName: 'foo',
+        dimensionKey: 'bar',
+        dimensionFilters: '{"InstanceId":"$instanceid"}',
+      };
+      const query = migrateVariableQuery(oldQuery);
+      expect(query.metricName).toBe('foo');
+      expect(query.dimensionKey).toBe('bar');
+      expect(query.dimensionFilters).toStrictEqual({ InstanceId: '$instanceid' });
     });
   });
 });

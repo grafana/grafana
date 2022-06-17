@@ -107,7 +107,6 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
                 value={this.state.type}
                 options={dashboardAclTargets}
                 onChange={this.onTypeChanged}
-                menuShouldPortal
               />
 
               {newItem.type === AclTarget.User ? (
@@ -127,7 +126,6 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
                 options={dashboardPermissionLevels}
                 onChange={this.onPermissionChanged}
                 width={25}
-                menuShouldPortal
               />
               <Button data-save-permission type="submit" disabled={!isValid}>
                 Save

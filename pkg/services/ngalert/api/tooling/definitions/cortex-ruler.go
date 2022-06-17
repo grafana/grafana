@@ -21,7 +21,7 @@ import (
 //       202: NamespaceConfigResponse
 //
 
-// swagger:route Get /api/ruler/{DatasourceID}/api/v1/rules ruler RouteGetRulesConfig
+// swagger:route Get /api/ruler/{DatasourceUID}/api/v1/rules ruler RouteGetRulesConfig
 //
 // List rule groups
 //
@@ -43,7 +43,7 @@ import (
 //       202: Ack
 //
 
-// swagger:route POST /api/ruler/{DatasourceID}/api/v1/rules/{Namespace} ruler RoutePostNameRulesConfig
+// swagger:route POST /api/ruler/{DatasourceUID}/api/v1/rules/{Namespace} ruler RoutePostNameRulesConfig
 //
 // Creates or updates a rule group
 //
@@ -64,7 +64,7 @@ import (
 //     Responses:
 //       202: NamespaceConfigResponse
 
-// swagger:route Get /api/ruler/{DatasourceID}/api/v1/rules/{Namespace} ruler RouteGetNamespaceRulesConfig
+// swagger:route Get /api/ruler/{DatasourceUID}/api/v1/rules/{Namespace} ruler RouteGetNamespaceRulesConfig
 //
 // Get rule groups by namespace
 //
@@ -81,7 +81,7 @@ import (
 //     Responses:
 //       202: Ack
 
-// swagger:route Delete /api/ruler/{DatasourceID}/api/v1/rules/{Namespace} ruler RouteDeleteNamespaceRulesConfig
+// swagger:route Delete /api/ruler/{DatasourceUID}/api/v1/rules/{Namespace} ruler RouteDeleteNamespaceRulesConfig
 //
 // Delete namespace
 //
@@ -98,7 +98,7 @@ import (
 //     Responses:
 //       202: RuleGroupConfigResponse
 
-// swagger:route Get /api/ruler/{DatasourceID}/api/v1/rules/{Namespace}/{Groupname} ruler RouteGetRulegGroupConfig
+// swagger:route Get /api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname} ruler RouteGetRulegGroupConfig
 //
 // Get rule group
 //
@@ -115,7 +115,7 @@ import (
 //     Responses:
 //       202: Ack
 
-// swagger:route Delete /api/ruler/{DatasourceID}/api/v1/rules/{Namespace}/{Groupname} ruler RouteDeleteRuleGroupConfig
+// swagger:route Delete /api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname} ruler RouteDeleteRuleGroupConfig
 //
 // Delete rule group
 //

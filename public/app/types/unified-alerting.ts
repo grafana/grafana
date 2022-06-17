@@ -10,15 +10,22 @@ import {
   Annotations,
   RulerRuleGroupDTO,
   GrafanaAlertState,
+  GrafanaAlertStateWithReason,
+  mapStateWithReasonToBaseState,
 } from './unified-alerting-dto';
 
 export type Alert = {
   activeAt: string;
   annotations: { [key: string]: string };
   labels: { [key: string]: string };
-  state: PromAlertingRuleState | GrafanaAlertState;
+  state: PromAlertingRuleState | GrafanaAlertStateWithReason;
   value: string;
 };
+
+export function hasAlertState(alert: Alert, state: PromAlertingRuleState | GrafanaAlertState): boolean {
+  return mapStateWithReasonToBaseState(alert.state as GrafanaAlertStateWithReason) === state;
+}
+
 interface RuleBase {
   health: string;
   name: string;

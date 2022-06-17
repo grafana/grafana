@@ -3,33 +3,42 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { NavModelItem } from '@grafana/data';
 import config from 'app/core/config';
 
-const defaultPins = ((config.bootData?.navTree as NavModelItem[]) ?? []).map((n) => n.id).join(',');
-const storedPins = (window.localStorage.getItem('pinnedNavItems') ?? defaultPins).split(',');
-
-export const initialState: NavModelItem[] = ((config.bootData?.navTree ?? []) as NavModelItem[]).map(
-  (n: NavModelItem) => ({
-    ...n,
-    hideFromNavbar: n.id === undefined || !storedPins.includes(n.id),
-  })
-);
+export const initialState: NavModelItem[] = config.bootData?.navTree ?? [];
 
 const navTreeSlice = createSlice({
   name: 'navBarTree',
   initialState,
   reducers: {
-    togglePin: (state, action: PayloadAction<{ id: string }>) => {
-      const navItemIndex = state.findIndex((navItem) => navItem.id === action.payload.id);
-      state[navItemIndex].hideFromNavbar = !state[navItemIndex].hideFromNavbar;
-      window.localStorage.setItem(
-        'pinnedNavItems',
-        state
-          .filter((n) => !n.hideFromNavbar)
-          .map((n) => n.id)
-          .join(',')
-      );
+    setStarred: (state, action: PayloadAction<{ id: string; title: string; url: string; isStarred: boolean }>) => {
+      const starredItems = state.find((navItem) => navItem.id === 'starred');
+      const { id, title, url, isStarred } = action.payload;
+      if (isStarred) {
+        const newStarredItem: NavModelItem = {
+          id,
+          text: title,
+          url,
+        };
+        starredItems?.children?.push(newStarredItem);
+        starredItems?.children?.sort((a, b) => a.text.localeCompare(b.text));
+      } else {
+        const index = starredItems?.children?.findIndex((item) => item.id === id) ?? -1;
+        if (index > -1) {
+          starredItems?.children?.splice(index, 1);
+        }
+      }
+    },
+    updateDashboardName: (state, action: PayloadAction<{ id: string; title: string; url: string }>) => {
+      const { id, title, url } = action.payload;
+      const starredItems = state.find((navItem) => navItem.id === 'starred');
+      const navItem = starredItems?.children?.find((navItem) => navItem.id === id);
+      if (navItem) {
+        navItem.text = title;
+        navItem.url = url;
+        starredItems?.children?.sort((a, b) => a.text.localeCompare(b.text));
+      }
     },
   },
 });
 
-export const { togglePin } = navTreeSlice.actions;
+export const { setStarred, updateDashboardName } = navTreeSlice.actions;
 export const navTreeReducer = navTreeSlice.reducer;

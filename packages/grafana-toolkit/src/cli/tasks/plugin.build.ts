@@ -1,4 +1,4 @@
-import { CLIEngine } from 'eslint';
+import { ESLint } from 'eslint';
 import execa from 'execa';
 import { constants as fsConstants, promises as fs } from 'fs';
 import globby from 'globby';
@@ -76,8 +76,6 @@ export const versions = async () => {
 // @ts-ignore
 const typecheckPlugin = () => useSpinner('Typechecking', () => execa('tsc', ['--noEmit']));
 
-const getTypescriptSources = () => globby(resolvePath(process.cwd(), 'src/**/*.+(ts|tsx)'));
-
 // @ts-ignore
 const getStylesSources = () => globby(resolvePath(process.cwd(), 'src/**/*.+(scss|css)'));
 
@@ -106,24 +104,34 @@ export const lintPlugin = ({ fix }: Fixable = {}) =>
       }
     );
 
-    const cli = new CLIEngine({
-      configFile,
+    const eslint = new ESLint({
+      extensions: ['.ts', '.tsx'],
+      overrideConfigFile: configFile,
       fix,
       useEslintrc: false,
     });
 
-    const report = cli.executeOnFiles(await getTypescriptSources());
+    const results = await eslint.lintFiles(resolvePath(process.cwd(), 'src'));
 
     if (fix) {
-      CLIEngine.outputFixes(report);
+      await ESLint.outputFixes(results);
     }
 
-    const { errorCount, results, warningCount } = report;
-    const formatter = cli.getFormatter();
+    const { errorCount, warningCount } = results.reduce<Record<string, number>>(
+      (acc, value) => {
+        acc.errorCount += value.errorCount;
+        acc.warningCount += value.warningCount;
+        return acc;
+      },
+      { errorCount: 0, warningCount: 0 }
+    );
+
+    const formatter = await eslint.loadFormatter('stylish');
+    const resultText = formatter.format(results);
 
     if (errorCount > 0 || warningCount > 0) {
       console.log('\n');
-      console.log(formatter(results));
+      console.log(resultText);
       console.log('\n');
     }
 

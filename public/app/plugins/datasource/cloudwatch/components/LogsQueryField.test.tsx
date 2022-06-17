@@ -1,8 +1,10 @@
 import { render, screen, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { shallow } from 'enzyme';
 import _, { DebouncedFunc } from 'lodash'; // eslint-disable-line lodash/import-scope
 import React from 'react';
 import { act } from 'react-dom/test-utils';
+import { openMenu, select } from 'react-select-event';
 
 import { SelectableValue } from '@grafana/data';
 
@@ -69,6 +71,7 @@ describe('CloudWatchLogsQueryField', () => {
                 return Promise.resolve(['log_group_2']);
               }
             },
+            getVariables: jest.fn().mockReturnValue([]),
           } as any
         }
         query={{} as any}
@@ -201,6 +204,7 @@ describe('CloudWatchLogsQueryField', () => {
                 .slice(0, Math.max(params.limit ?? 50, 50));
               return Promise.resolve(theLogGroups);
             },
+            getVariables: jest.fn().mockReturnValue([]),
           } as any
         }
         query={{} as any}
@@ -234,5 +238,34 @@ describe('CloudWatchLogsQueryField', () => {
         .map((logGroup) => logGroup.value)
         .concat(['WaterGroup', 'WaterGroup2', 'WaterGroup3', 'VelvetGroup', 'VelvetGroup2', 'VelvetGroup3'])
     );
+  });
+
+  it('should render template variables a selectable option', async () => {
+    const { datasource } = setupMockedDataSource();
+    const onChange = jest.fn();
+
+    render(
+      <CloudWatchLogsQueryField
+        history={[]}
+        absoluteRange={{ from: 1, to: 10 }}
+        exploreId={ExploreId.left}
+        datasource={datasource}
+        query={{} as any}
+        onRunQuery={() => {}}
+        onChange={onChange}
+      />
+    );
+
+    const logGroupSelector = await screen.findByLabelText('Log Groups');
+    expect(logGroupSelector).toBeInTheDocument();
+
+    await openMenu(logGroupSelector);
+    const templateVariableSelector = await screen.findByText('Template Variables');
+    expect(templateVariableSelector).toBeInTheDocument();
+
+    userEvent.click(templateVariableSelector);
+    await select(await screen.findByLabelText('Select option'), 'test');
+
+    expect(await screen.findByText('test')).toBeInTheDocument();
   });
 });

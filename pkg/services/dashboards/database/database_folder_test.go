@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package database
 
 import (
@@ -14,7 +11,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-func TestDashboardFolderDataAccess(t *testing.T) {
+func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	t.Run("Testing DB", func(t *testing.T) {
 		var sqlStore *sqlstore.SQLStore
 		var folder, dashInRoot, childDash *models.Dashboard
@@ -23,6 +23,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 
 		setup := func() {
 			sqlStore = sqlstore.InitTestDB(t)
+			sqlStore.Cfg.RBACEnabled = false
 			dashboardStore = ProvideDashboardStore(sqlStore)
 			folder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, true, "prod", "webapp")
 			dashInRoot = insertTestDashboard(t, dashboardStore, "test dash 67", 1, 0, false, "prod", "webapp")
@@ -41,7 +42,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						OrgId:        1,
 						DashboardIds: []int64{folder.Id, dashInRoot.Id},
 					}
-					err := sqlStore.SearchDashboards(context.Background(), query)
+					err := testSearchDashboards(dashboardStore, query)
 					require.NoError(t, err)
 					require.Equal(t, len(query.Result), 2)
 					require.Equal(t, query.Result[0].ID, folder.Id)
@@ -64,7 +65,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						SignedInUser: &models.SignedInUser{UserId: currentUser.Id, OrgId: 1, OrgRole: models.ROLE_VIEWER},
 						OrgId:        1, DashboardIds: []int64{folder.Id, dashInRoot.Id},
 					}
-					err := sqlStore.SearchDashboards(context.Background(), query)
+					err := testSearchDashboards(dashboardStore, query)
 					require.NoError(t, err)
 
 					require.Equal(t, len(query.Result), 1)
@@ -83,7 +84,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 							OrgId:        1,
 							DashboardIds: []int64{folder.Id, dashInRoot.Id},
 						}
-						err := sqlStore.SearchDashboards(context.Background(), query)
+						err := testSearchDashboards(dashboardStore, query)
 						require.NoError(t, err)
 						require.Equal(t, len(query.Result), 2)
 						require.Equal(t, query.Result[0].ID, folder.Id)
@@ -102,7 +103,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 							OrgId:        1,
 							DashboardIds: []int64{folder.Id, dashInRoot.Id},
 						}
-						err := sqlStore.SearchDashboards(context.Background(), query)
+						err := testSearchDashboards(dashboardStore, query)
 						require.NoError(t, err)
 						require.Equal(t, len(query.Result), 2)
 						require.Equal(t, query.Result[0].ID, folder.Id)
@@ -124,7 +125,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					query := &models.FindPersistedDashboardsQuery{
 						SignedInUser: &models.SignedInUser{UserId: currentUser.Id, OrgId: 1, OrgRole: models.ROLE_VIEWER}, OrgId: 1, DashboardIds: []int64{folder.Id, childDash.Id, dashInRoot.Id},
 					}
-					err := sqlStore.SearchDashboards(context.Background(), query)
+					err := testSearchDashboards(dashboardStore, query)
 					require.NoError(t, err)
 					require.Equal(t, len(query.Result), 1)
 					require.Equal(t, query.Result[0].ID, dashInRoot.Id)
@@ -138,7 +139,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 
 					t.Run("should be able to search for child dashboard but not folder", func(t *testing.T) {
 						query := &models.FindPersistedDashboardsQuery{SignedInUser: &models.SignedInUser{UserId: currentUser.Id, OrgId: 1, OrgRole: models.ROLE_VIEWER}, OrgId: 1, DashboardIds: []int64{folder.Id, childDash.Id, dashInRoot.Id}}
-						err := sqlStore.SearchDashboards(context.Background(), query)
+						err := testSearchDashboards(dashboardStore, query)
 						require.NoError(t, err)
 						require.Equal(t, len(query.Result), 2)
 						require.Equal(t, query.Result[0].ID, childDash.Id)
@@ -157,7 +158,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 							OrgId:        1,
 							DashboardIds: []int64{folder.Id, dashInRoot.Id, childDash.Id},
 						}
-						err := sqlStore.SearchDashboards(context.Background(), query)
+						err := testSearchDashboards(dashboardStore, query)
 						require.NoError(t, err)
 						require.Equal(t, len(query.Result), 3)
 						require.Equal(t, query.Result[0].ID, folder.Id)
@@ -196,7 +197,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						},
 						OrgId: 1,
 					}
-					err := sqlStore.SearchDashboards(context.Background(), query)
+					err := testSearchDashboards(dashboardStore, query)
 					require.NoError(t, err)
 					require.Equal(t, len(query.Result), 4)
 					require.Equal(t, query.Result[0].ID, folder1.Id)
@@ -222,7 +223,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 							OrgId:        1,
 							DashboardIds: []int64{folder1.Id, childDash1.Id, childDash2.Id, dashInRoot.Id},
 						}
-						err := sqlStore.SearchDashboards(context.Background(), query)
+						err := testSearchDashboards(dashboardStore, query)
 						require.NoError(t, err)
 						require.Equal(t, len(query.Result), 1)
 						require.Equal(t, query.Result[0].ID, dashInRoot.Id)
@@ -238,7 +239,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 							OrgId:        1,
 							DashboardIds: []int64{folder2.Id, childDash1.Id, childDash2.Id, dashInRoot.Id},
 						}
-						err := sqlStore.SearchDashboards(context.Background(), query)
+						err := testSearchDashboards(dashboardStore, query)
 						require.NoError(t, err)
 						require.Equal(t, len(query.Result), 4)
 						require.Equal(t, query.Result[0].ID, folder2.Id)
@@ -262,7 +263,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 							OrgId:        1,
 							DashboardIds: []int64{folder2.Id, childDash1.Id, childDash2.Id, dashInRoot.Id},
 						}
-						err = sqlStore.SearchDashboards(context.Background(), query)
+						err = testSearchDashboards(dashboardStore, query)
 						require.NoError(t, err)
 						require.Equal(t, len(query.Result), 4)
 						require.Equal(t, query.Result[0].ID, folder2.Id)
@@ -301,7 +302,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						Type:         "dash-folder",
 					}
 
-					err := sqlStore.SearchDashboards(context.Background(), &query)
+					err := testSearchDashboards(dashboardStore, &query)
 					require.NoError(t, err)
 
 					require.Equal(t, len(query.Result), 2)
@@ -309,29 +310,11 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					require.Equal(t, query.Result[1].ID, folder2.Id)
 				})
 
-				t.Run("should have write access to all folders and dashboards", func(t *testing.T) {
-					query := models.GetDashboardPermissionsForUserQuery{
-						DashboardIds: []int64{folder1.Id, folder2.Id},
-						OrgId:        1,
-						UserId:       adminUser.Id,
-						OrgRole:      models.ROLE_ADMIN,
-					}
-
-					err := sqlStore.GetDashboardPermissionsForUser(context.Background(), &query)
-					require.NoError(t, err)
-
-					require.Equal(t, len(query.Result), 2)
-					require.Equal(t, query.Result[0].DashboardId, folder1.Id)
-					require.Equal(t, query.Result[0].Permission, models.PERMISSION_ADMIN)
-					require.Equal(t, query.Result[1].DashboardId, folder2.Id)
-					require.Equal(t, query.Result[1].Permission, models.PERMISSION_ADMIN)
-				})
-
 				t.Run("should have edit permission in folders", func(t *testing.T) {
 					query := &models.HasEditPermissionInFoldersQuery{
 						SignedInUser: &models.SignedInUser{UserId: adminUser.Id, OrgId: 1, OrgRole: models.ROLE_ADMIN},
 					}
-					err := sqlStore.HasEditPermissionInFolders(context.Background(), query)
+					err := dashboardStore.HasEditPermissionInFolders(context.Background(), query)
 					require.NoError(t, err)
 					require.True(t, query.Result)
 				})
@@ -340,7 +323,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					query := &models.HasAdminPermissionInFoldersQuery{
 						SignedInUser: &models.SignedInUser{UserId: adminUser.Id, OrgId: 1, OrgRole: models.ROLE_ADMIN},
 					}
-					err := sqlStore.HasAdminPermissionInFolders(context.Background(), query)
+					err := dashboardStore.HasAdminPermissionInFolders(context.Background(), query)
 					require.NoError(t, err)
 					require.True(t, query.Result)
 				})
@@ -354,30 +337,12 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 				}
 
 				t.Run("Should have write access to all dashboard folders with default ACL", func(t *testing.T) {
-					err := sqlStore.SearchDashboards(context.Background(), &query)
+					err := testSearchDashboards(dashboardStore, &query)
 					require.NoError(t, err)
 
 					require.Equal(t, len(query.Result), 2)
 					require.Equal(t, query.Result[0].ID, folder1.Id)
 					require.Equal(t, query.Result[1].ID, folder2.Id)
-				})
-
-				t.Run("should have edit access to folders with default ACL", func(t *testing.T) {
-					query := models.GetDashboardPermissionsForUserQuery{
-						DashboardIds: []int64{folder1.Id, folder2.Id},
-						OrgId:        1,
-						UserId:       editorUser.Id,
-						OrgRole:      models.ROLE_EDITOR,
-					}
-
-					err := sqlStore.GetDashboardPermissionsForUser(context.Background(), &query)
-					require.NoError(t, err)
-
-					require.Equal(t, len(query.Result), 2)
-					require.Equal(t, query.Result[0].DashboardId, folder1.Id)
-					require.Equal(t, query.Result[0].Permission, models.PERMISSION_EDIT)
-					require.Equal(t, query.Result[1].DashboardId, folder2.Id)
-					require.Equal(t, query.Result[1].Permission, models.PERMISSION_EDIT)
 				})
 
 				t.Run("Should have write access to one dashboard folder if default role changed to view for one folder", func(t *testing.T) {
@@ -386,7 +351,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					})
 					require.NoError(t, err)
 
-					err = sqlStore.SearchDashboards(context.Background(), &query)
+					err = testSearchDashboards(dashboardStore, &query)
 					require.NoError(t, err)
 
 					require.Equal(t, len(query.Result), 1)
@@ -397,7 +362,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					query := &models.HasEditPermissionInFoldersQuery{
 						SignedInUser: &models.SignedInUser{UserId: editorUser.Id, OrgId: 1, OrgRole: models.ROLE_EDITOR},
 					}
-					err := sqlStore.HasEditPermissionInFolders(context.Background(), query)
+					err := dashboardStore.HasEditPermissionInFolders(context.Background(), query)
 					go require.NoError(t, err)
 					require.True(t, query.Result)
 				})
@@ -406,7 +371,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					query := &models.HasAdminPermissionInFoldersQuery{
 						SignedInUser: &models.SignedInUser{UserId: adminUser.Id, OrgId: 1, OrgRole: models.ROLE_EDITOR},
 					}
-					err := sqlStore.HasAdminPermissionInFolders(context.Background(), query)
+					err := dashboardStore.HasAdminPermissionInFolders(context.Background(), query)
 					require.NoError(t, err)
 					require.False(t, query.Result)
 				})
@@ -420,30 +385,10 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 				}
 
 				t.Run("Should have no write access to any dashboard folders with default ACL", func(t *testing.T) {
-					err := sqlStore.SearchDashboards(context.Background(), &query)
+					err := testSearchDashboards(dashboardStore, &query)
 					require.NoError(t, err)
 
 					require.Equal(t, len(query.Result), 0)
-				})
-
-				t.Run("should have view access to folders with default ACL", func(t *testing.T) {
-					setup3()
-
-					query := models.GetDashboardPermissionsForUserQuery{
-						DashboardIds: []int64{folder1.Id, folder2.Id},
-						OrgId:        1,
-						UserId:       viewerUser.Id,
-						OrgRole:      models.ROLE_VIEWER,
-					}
-
-					err := sqlStore.GetDashboardPermissionsForUser(context.Background(), &query)
-					require.NoError(t, err)
-
-					require.Equal(t, len(query.Result), 2)
-					require.Equal(t, query.Result[0].DashboardId, folder1.Id)
-					require.Equal(t, query.Result[0].Permission, models.PERMISSION_VIEW)
-					require.Equal(t, query.Result[1].DashboardId, folder2.Id)
-					require.Equal(t, query.Result[1].Permission, models.PERMISSION_VIEW)
 				})
 
 				t.Run("Should be able to get one dashboard folder if default role changed to edit for one folder", func(t *testing.T) {
@@ -452,7 +397,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					})
 					require.NoError(t, err)
 
-					err = sqlStore.SearchDashboards(context.Background(), &query)
+					err = testSearchDashboards(dashboardStore, &query)
 					require.NoError(t, err)
 
 					require.Equal(t, len(query.Result), 1)
@@ -465,7 +410,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					query := &models.HasEditPermissionInFoldersQuery{
 						SignedInUser: &models.SignedInUser{UserId: viewerUser.Id, OrgId: 1, OrgRole: models.ROLE_VIEWER},
 					}
-					err := sqlStore.HasEditPermissionInFolders(context.Background(), query)
+					err := dashboardStore.HasEditPermissionInFolders(context.Background(), query)
 					go require.NoError(t, err)
 					require.False(t, query.Result)
 				})
@@ -474,7 +419,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					query := &models.HasAdminPermissionInFoldersQuery{
 						SignedInUser: &models.SignedInUser{UserId: adminUser.Id, OrgId: 1, OrgRole: models.ROLE_VIEWER},
 					}
-					err := sqlStore.HasAdminPermissionInFolders(context.Background(), query)
+					err := dashboardStore.HasAdminPermissionInFolders(context.Background(), query)
 					require.NoError(t, err)
 					require.False(t, query.Result)
 				})
@@ -489,7 +434,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						query := &models.HasEditPermissionInFoldersQuery{
 							SignedInUser: &models.SignedInUser{UserId: viewerUser.Id, OrgId: 1, OrgRole: models.ROLE_VIEWER},
 						}
-						err := sqlStore.HasEditPermissionInFolders(context.Background(), query)
+						err := dashboardStore.HasEditPermissionInFolders(context.Background(), query)
 						go require.NoError(t, err)
 						require.True(t, query.Result)
 					})
@@ -505,7 +450,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						query := &models.HasEditPermissionInFoldersQuery{
 							SignedInUser: &models.SignedInUser{UserId: viewerUser.Id, OrgId: 1, OrgRole: models.ROLE_VIEWER},
 						}
-						err := sqlStore.HasEditPermissionInFolders(context.Background(), query)
+						err := dashboardStore.HasEditPermissionInFolders(context.Background(), query)
 						go require.NoError(t, err)
 						require.True(t, query.Result)
 					})

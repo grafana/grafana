@@ -38,6 +38,8 @@ export interface DashboardMeta {
   fromFile?: boolean;
   hasUnsavedFolderChange?: boolean;
   annotationsPermissions?: AnnotationsPermissions;
+  isPublic?: boolean;
+  publicDashboardUid?: string;
 }
 
 export interface AnnotationActions {
@@ -65,6 +67,7 @@ export enum DashboardRoutes {
   New = 'new-dashboard',
   Normal = 'normal-dashboard',
   Scripted = 'scripted-dashboard',
+  Public = 'public-dashboard',
 }
 
 export enum DashboardInitPhase {

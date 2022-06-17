@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strconv"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/web"
@@ -176,12 +175,12 @@ func (r *LotexRuler) RoutePostNameRulesConfig(ctx *models.ReqContext, conf apimo
 }
 
 func (r *LotexRuler) validateAndGetPrefix(ctx *models.ReqContext) (string, error) {
-	datasourceID, err := strconv.ParseInt(web.Params(ctx.Req)[":DatasourceID"], 10, 64)
-	if err != nil {
-		return "", fmt.Errorf("datasource ID is invalid")
+	datasourceUID := web.Params(ctx.Req)[":DatasourceUID"]
+	if datasourceUID == "" {
+		return "", fmt.Errorf("datasource UID is invalid")
 	}
 
-	ds, err := r.DataProxy.DataSourceCache.GetDatasource(ctx.Req.Context(), datasourceID, ctx.SignedInUser, ctx.SkipCache)
+	ds, err := r.DataProxy.DataSourceCache.GetDatasourceByUID(ctx.Req.Context(), datasourceUID, ctx.SignedInUser, ctx.SkipCache)
 	if err != nil {
 		return "", err
 	}

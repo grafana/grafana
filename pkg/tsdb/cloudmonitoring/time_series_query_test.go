@@ -101,4 +101,14 @@ func TestTimeSeriesQuery(t *testing.T) {
 		require.True(t, ok)
 		assert.Equal(t, "6724404429462225363", labels["resource.label.instance_id"])
 	})
+
+	t.Run("appends graph_period to the query", func(t *testing.T) {
+		query := &cloudMonitoringTimeSeriesQuery{}
+		assert.Equal(t, query.appendGraphPeriod(&backend.QueryDataRequest{Queries: []backend.DataQuery{{}}}), " | graph_period 10ms")
+	})
+
+	t.Run("skips graph_period if disabled", func(t *testing.T) {
+		query := &cloudMonitoringTimeSeriesQuery{GraphPeriod: "disabled"}
+		assert.Equal(t, query.appendGraphPeriod(&backend.QueryDataRequest{Queries: []backend.DataQuery{{}}}), "")
+	})
 }

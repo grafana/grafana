@@ -4,9 +4,9 @@ import { connect, ConnectedProps } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { Subscription } from 'rxjs';
 
-import { FieldConfigSource, GrafanaTheme } from '@grafana/data';
+import { FieldConfigSource, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { locationService } from '@grafana/runtime';
+import { isFetchError, locationService } from '@grafana/runtime';
 import {
   HorizontalGroup,
   InlineSwitch,
@@ -14,10 +14,11 @@ import {
   PageToolbar,
   RadioButtonGroup,
   stylesFactory,
+  Themeable2,
   ToolbarButton,
+  withTheme2,
 } from '@grafana/ui';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
-import config from 'app/core/config';
 import { appEvents } from 'app/core/core';
 import { SubMenuItems } from 'app/features/dashboard/components/SubMenu/SubMenuItems';
 import { SaveLibraryPanelModal } from 'app/features/library-panels/components/SaveLibraryPanelModal/SaveLibraryPanelModal';
@@ -84,7 +85,7 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-type Props = OwnProps & ConnectedProps<typeof connector>;
+type Props = OwnProps & ConnectedProps<typeof connector> & Themeable2;
 
 interface State {
   showSaveLibraryPanelModal?: boolean;
@@ -162,7 +163,9 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         await saveAndRefreshLibraryPanel(this.props.panel, this.props.dashboard.meta.folderId!);
         this.props.notifyApp(createPanelLibrarySuccessNotification('Library panel saved'));
       } catch (err) {
-        this.props.notifyApp(createPanelLibraryErrorNotification(`Error saving library panel: "${err.statusText}"`));
+        if (isFetchError(err)) {
+          this.props.notifyApp(createPanelLibraryErrorNotification(`Error saving library panel: "${err.statusText}"`));
+        }
       }
       return;
     }
@@ -216,7 +219,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   };
 
   renderPanel(styles: EditorStyles, isOnlyPanel: boolean) {
-    const { dashboard, panel, uiState, tableViewEnabled } = this.props;
+    const { dashboard, panel, uiState, tableViewEnabled, theme } = this.props;
 
     return (
       <div className={styles.mainPaneWrapper} key="panel">
@@ -230,7 +233,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
               // If no tabs limit height so panel does not extend to edge
               if (isOnlyPanel) {
-                height -= config.theme2.spacing.gridSize * 2;
+                height -= theme.spacing.gridSize * 2;
               }
 
               if (tableViewEnabled) {
@@ -431,8 +434,8 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   };
 
   render() {
-    const { dashboard, initDone, updatePanelEditorUIState, uiState } = this.props;
-    const styles = getStyles(config.theme, this.props);
+    const { dashboard, initDone, updatePanelEditorUIState, uiState, theme } = this.props;
+    const styles = getStyles(theme, this.props);
 
     if (!initDone) {
       return null;
@@ -466,14 +469,14 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 }
 
-export const PanelEditor = connector(PanelEditorUnconnected);
+export const PanelEditor = withTheme2(connector(PanelEditorUnconnected));
 
 /*
  * Styles
  */
-export const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
+export const getStyles = stylesFactory((theme: GrafanaTheme2, props: Props) => {
   const { uiState } = props;
-  const paneSpacing = theme.spacing.md;
+  const paneSpacing = theme.spacing(2);
 
   return {
     wrapper: css`
@@ -485,7 +488,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
       left: 0;
       right: 0;
       bottom: 0;
-      background: ${theme.colors.dashboardBg};
+      background: ${theme.colors.background.canvas};
       display: flex;
       flex-direction: column;
     `,
@@ -508,6 +511,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
       display: flex;
       flex-grow: 1;
       flex-wrap: wrap;
+      gap: ${theme.spacing(1, 2)};
     `,
     panelWrapper: css`
       flex: 1 1 0;
@@ -526,7 +530,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
       flex-wrap: wrap;
     `,
     toolbarLeft: css`
-      padding-left: ${theme.spacing.sm};
+      padding-left: ${theme.spacing(1)};
     `,
     centeringContainer: css`
       display: flex;

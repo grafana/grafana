@@ -39,7 +39,7 @@ export const FieldNamesMatcherEditor = memo<MatcherUIProps<ByNamesMatcherOptions
     return <Input value={displayNames} readOnly={true} disabled={true} prefix={prefix} />;
   }
 
-  return <MultiSelect menuShouldPortal value={options.names} options={selectOptions} onChange={onChange} />;
+  return <MultiSelect value={options.names} options={selectOptions} onChange={onChange} />;
 });
 FieldNamesMatcherEditor.displayName = 'FieldNameMatcherEditor';
 

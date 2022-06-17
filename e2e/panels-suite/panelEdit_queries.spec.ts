@@ -1,7 +1,5 @@
 import { e2e } from '@grafana/e2e';
 
-import { expect } from '../../public/test/lib/common';
-
 const flakyTimeout = 10000;
 
 e2e.scenario({

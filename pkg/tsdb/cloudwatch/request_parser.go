@@ -22,7 +22,7 @@ var validMetricDataID = regexp.MustCompile(`^[a-z][a-zA-Z0-9_]*$`)
 func (e *cloudWatchExecutor) parseQueries(queries []backend.DataQuery, startTime time.Time, endTime time.Time) (map[string][]*cloudWatchQuery, error) {
 	requestQueries := make(map[string][]*cloudWatchQuery)
 
-	migratedQueries, err := migrateLegacyQuery(queries, e.features.IsEnabled(featuremgmt.FlagCloudWatchDynamicLabels), startTime, endTime)
+	migratedQueries, err := migrateLegacyQuery(queries, e.features.IsEnabled(featuremgmt.FlagCloudWatchDynamicLabels))
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +54,7 @@ func (e *cloudWatchExecutor) parseQueries(queries []backend.DataQuery, startTime
 }
 
 // migrateLegacyQuery is also done in the frontend, so this should only ever be needed for alerting queries
-func migrateLegacyQuery(queries []backend.DataQuery, dynamicLabelsEnabled bool, startTime time.Time, endTime time.Time) ([]*backend.DataQuery, error) {
+func migrateLegacyQuery(queries []backend.DataQuery, dynamicLabelsEnabled bool) ([]*backend.DataQuery, error) {
 	migratedQueries := []*backend.DataQuery{}
 	for _, q := range queries {
 		query := q
@@ -198,8 +198,11 @@ func parseRequestQuery(model *simplejson.Json, refId string, startTime time.Time
 	expression := model.Get("expression").MustString("")
 	sqlExpression := model.Get("sqlExpression").MustString("")
 	alias := model.Get("alias").MustString()
+	label := model.Get("label").MustString()
 	returnData := !model.Get("hide").MustBool(false)
 	queryType := model.Get("type").MustString()
+	timezoneUTCOffset := model.Get("timezoneUTCOffset").MustString("")
+
 	if queryType == "" {
 		// If no type is provided we assume we are called by alerting service, which requires to return data!
 		// Note, this is sort of a hack, but the official Grafana interfaces do not carry the information
@@ -220,22 +223,24 @@ func parseRequestQuery(model *simplejson.Json, refId string, startTime time.Time
 	}
 
 	return &cloudWatchQuery{
-		RefId:            refId,
-		Region:           region,
-		Id:               id,
-		Namespace:        namespace,
-		MetricName:       metricName,
-		Statistic:        statistic,
-		Expression:       expression,
-		ReturnData:       returnData,
-		Dimensions:       dimensions,
-		Period:           period,
-		Alias:            alias,
-		MatchExact:       matchExact,
-		UsedExpression:   "",
-		MetricQueryType:  metricQueryType,
-		MetricEditorMode: metricEditorModeValue,
-		SqlExpression:    sqlExpression,
+		RefId:             refId,
+		Region:            region,
+		Id:                id,
+		Namespace:         namespace,
+		MetricName:        metricName,
+		Statistic:         statistic,
+		Expression:        expression,
+		ReturnData:        returnData,
+		Dimensions:        dimensions,
+		Period:            period,
+		Alias:             alias,
+		Label:             label,
+		MatchExact:        matchExact,
+		UsedExpression:    "",
+		MetricQueryType:   metricQueryType,
+		MetricEditorMode:  metricEditorModeValue,
+		SqlExpression:     sqlExpression,
+		TimezoneUTCOffset: timezoneUTCOffset,
 	}, nil
 }
 

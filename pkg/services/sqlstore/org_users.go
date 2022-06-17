@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -110,7 +109,11 @@ func (ss *SQLStore) GetOrgUsers(ctx context.Context, query *models.GetOrgUsersQu
 		whereConditions = append(whereConditions, fmt.Sprintf("%s.is_service_account = ?", ss.Dialect.Quote("user")))
 		whereParams = append(whereParams, ss.Dialect.BooleanStr(false))
 
-		if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) && query.User != nil {
+		if query.User == nil {
+			ss.log.Warn("Query user not set for filtering.")
+		}
+
+		if !query.DontEnforceAccessControl && !accesscontrol.IsDisabled(ss.Cfg) {
 			acFilter, err := accesscontrol.Filter(query.User, "org_user.user_id", "users:id:", accesscontrol.ActionOrgUsersRead)
 			if err != nil {
 				return err
@@ -175,7 +178,7 @@ func (ss *SQLStore) SearchOrgUsers(ctx context.Context, query *models.SearchOrgU
 
 		whereConditions = append(whereConditions, fmt.Sprintf("%s.is_service_account = %s", ss.Dialect.Quote("user"), ss.Dialect.BooleanStr(false)))
 
-		if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
+		if !accesscontrol.IsDisabled(ss.Cfg) {
 			acFilter, err := accesscontrol.Filter(query.User, "org_user.user_id", "users:id:", accesscontrol.ActionOrgUsersRead)
 			if err != nil {
 				return err

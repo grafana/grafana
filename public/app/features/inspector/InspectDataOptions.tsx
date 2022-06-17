@@ -106,7 +106,6 @@ export const InspectDataOptions: FC<Props> = ({
             {data!.length > 1 && (
               <Field label="Show data frame">
                 <Select
-                  menuShouldPortal
                   options={selectableOptions}
                   value={selectedDataFrame}
                   onChange={onDataFrameChange}

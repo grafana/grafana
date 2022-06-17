@@ -248,6 +248,15 @@ describe('Language completion provider', () => {
       expect(requestSpy).toHaveBeenCalledTimes(1);
       expect(nextLabelValues).toEqual(['label1_val1', 'label1_val2']);
     });
+
+    it('should encode special characters', async () => {
+      const datasource = makeMockLokiDatasource({ '`\\"testkey': ['label1_val1', 'label1_val2'], label2: [] });
+      const provider = await getLanguageProvider(datasource);
+      const requestSpy = jest.spyOn(provider, 'request');
+      await provider.fetchLabelValues('`\\"testkey');
+
+      expect(requestSpy).toHaveBeenCalledWith('label/%60%5C%22testkey/values', expect.any(Object));
+    });
   });
 });
 

@@ -1,16 +1,15 @@
-import { css } from '@emotion/css';
+import { cx } from '@emotion/css';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Icon, Modal, useStyles2 } from '@grafana/ui';
 
 import Datasource from '../../datasource';
 import { AzureQueryEditorFieldProps, AzureMonitorQuery, AzureResourceSummaryItem } from '../../types';
 import { Field } from '../Field';
 import ResourcePicker from '../ResourcePicker';
+import getStyles from '../ResourcePicker/styles';
 import { ResourceRowType } from '../ResourcePicker/types';
 import { parseResourceURI } from '../ResourcePicker/utils';
-import { Space } from '../Space';
 
 function parseResourceDetails(resourceURI: string) {
   const parsed = parseResourceURI(resourceURI);
@@ -30,6 +29,8 @@ interface ResourceFieldProps extends AzureQueryEditorFieldProps {
   setResource: (query: AzureMonitorQuery, resourceURI?: string) => AzureMonitorQuery;
   selectableEntryTypes: ResourceRowType[];
   resourceUri?: string;
+  inlineField?: boolean;
+  labelWidth?: number;
 }
 
 const ResourceField: React.FC<ResourceFieldProps> = ({
@@ -39,6 +40,8 @@ const ResourceField: React.FC<ResourceFieldProps> = ({
   setResource,
   selectableEntryTypes,
   resourceUri,
+  inlineField,
+  labelWidth,
 }) => {
   const styles = useStyles2(getStyles);
   const [pickerIsOpen, setPickerIsOpen] = useState(false);
@@ -78,9 +81,8 @@ const ResourceField: React.FC<ResourceFieldProps> = ({
           selectableEntryTypes={selectableEntryTypes}
         />
       </Modal>
-
-      <Field label="Resource">
-        <Button variant="secondary" onClick={handleOpenPicker} type="button">
+      <Field label="Resource" inlineField={inlineField} labelWidth={labelWidth}>
+        <Button className={styles.resourceFieldButton} variant="secondary" onClick={handleOpenPicker} type="button">
           <ResourceLabel resource={resourceUri} datasource={datasource} />
         </Button>
       </Field>
@@ -128,37 +130,27 @@ interface FormattedResourceProps {
 }
 
 const FormattedResource = ({ resource }: FormattedResourceProps) => {
+  const styles = useStyles2(getStyles);
+
+  if (resource.resourceName) {
+    return (
+      <span className={cx(styles.truncated, styles.resourceField)}>
+        <Icon name="cube" /> {resource.resourceName}
+      </span>
+    );
+  }
+  if (resource.resourceGroupName) {
+    return (
+      <span>
+        <Icon name="folder" /> {resource.resourceGroupName}
+      </span>
+    );
+  }
   return (
     <span>
       <Icon name="layer-group" /> {resource.subscriptionName}
-      {resource.resourceGroupName && (
-        <>
-          <Separator />
-          <Icon name="folder" /> {resource.resourceGroupName}
-        </>
-      )}
-      {resource.resourceName && (
-        <>
-          <Separator />
-          <Icon name="cube" /> {resource.resourceName}
-        </>
-      )}
     </span>
   );
 };
 
-const Separator = () => (
-  <>
-    <Space layout="inline" h={2} />
-    {'/'}
-    <Space layout="inline" h={2} />
-  </>
-);
-
 export default ResourceField;
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  modal: css({
-    width: theme.breakpoints.values.lg,
-  }),
-});

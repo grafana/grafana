@@ -8,7 +8,6 @@ import { AnnotationEvent, AnnotationQuery, AnnotationSupport } from './annotatio
 import { CoreApp } from './app';
 import { KeyValue, LoadingState, TableData, TimeSeries } from './data';
 import { DataFrame, DataFrameDTO } from './dataFrame';
-import { LogRowModel } from './logs';
 import { PanelData } from './panel';
 import { GrafanaPlugin, PluginMeta } from './plugin';
 import { DataQuery } from './query';
@@ -65,16 +64,19 @@ export class DataSourcePlugin<
     return this;
   }
 
+  /** @deprecated Use `setQueryEditor` instead. When using Explore `props.app` is equal to `CoreApp.Explore` */
   setExploreQueryField(ExploreQueryField: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>) {
     this.components.ExploreQueryField = ExploreQueryField;
     return this;
   }
 
+  /** @deprecated Use `setQueryEditor` instead. */
   setExploreMetricsQueryField(ExploreQueryField: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>) {
     this.components.ExploreMetricsQueryField = ExploreQueryField;
     return this;
   }
 
+  /** @deprecated Use `setQueryEditor` instead. */
   setExploreLogsQueryField(ExploreQueryField: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>) {
     this.components.ExploreLogsQueryField = ExploreQueryField;
     return this;
@@ -151,8 +153,11 @@ export interface DataSourcePluginComponents<
   AnnotationsQueryCtrl?: any;
   VariableQueryEditor?: any;
   QueryEditor?: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>;
+  /** @deprecated it will be removed in a future release and `QueryEditor` will be used instead. */
   ExploreQueryField?: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>;
+  /** @deprecated it will be removed in a future release and `QueryEditor` will be used instead. */
   ExploreMetricsQueryField?: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>;
+  /** @deprecated it will be removed in a future release and `QueryEditor` will be used instead. */
   ExploreLogsQueryField?: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>;
   QueryEditorHelp?: ComponentType<QueryEditorHelpProps<TQuery>>;
   ConfigEditor?: ComponentType<DataSourcePluginOptionsEditorProps<TOptions, TSecureOptions>>;
@@ -261,29 +266,6 @@ abstract class DataSourceApi<
   getQueryDisplayText?(query: TQuery): string;
 
   /**
-   * @deprecated getLogRowContext and showContextToggle in `DataSourceApi` is deprecated.
-   *
-   * DataSourceWithLogsContextSupport should be implemented instead (these methods have exactly
-   * the same signature in DataSourceWithLogsContextSupport).
-   * This method will be removed from DataSourceApi in the future. Some editors may still show
-   * a deprecation warning which can be ignored for time being.
-   */
-  getLogRowContext?: <TContextQueryOptions extends {}>(
-    row: LogRowModel,
-    options?: TContextQueryOptions
-  ) => Promise<DataQueryResponse>;
-
-  /**
-   * @deprecated getLogRowContext and showContextToggle in `DataSourceApi` is deprecated.
-   *
-   * DataSourceWithLogsContextSupport should be implemented instead (these methods have exactly
-   * the same signature in DataSourceWithLogsContextSupport).
-   * This method will be removed from DataSourceApi in the future. Some editors may still show
-   * a deprecation warning which can be ignored for time being.
-   */
-  showContextToggle?(row?: LogRowModel): boolean;
-
-  /**
    * Variable query action.
    */
   metricFindQuery?(query: any, options?: any): Promise<MetricFindValue[]>;
@@ -363,6 +345,12 @@ abstract class DataSourceApi<
     | StandardVariableSupport<DataSourceApi<TQuery, TOptions>>
     | CustomVariableSupport<DataSourceApi<TQuery, TOptions>>
     | DataSourceVariableSupport<DataSourceApi<TQuery, TOptions>>;
+
+  /*
+   * Optionally, use this method to set default values for a query
+   * @alpha -- experimental
+   */
+  getDefaultQuery?(app: CoreApp): Partial<TQuery>;
 }
 
 export interface MetadataInspectorProps<
@@ -495,6 +483,8 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   timeInfo?: string; // The query time description (blue text in the upper right)
   panelId?: number;
   dashboardId?: number;
+  // Temporary prop for public dashboards, to be replaced by publicAccessKey
+  publicDashboardUid?: string;
 
   // Request Timing
   startTime: number;
@@ -554,11 +544,9 @@ export interface DataSourceSettings<T extends DataSourceJsonData = DataSourceJso
   typeName: string;
   access: string;
   url: string;
-  password: string;
   user: string;
   database: string;
   basicAuth: boolean;
-  basicAuthPassword: string;
   basicAuthUser: string;
   isDefault: boolean;
   jsonData: T;

@@ -75,7 +75,7 @@ const RuleEditor: FC<RuleEditorProps> = ({ match }) => {
 
   const { canCreateGrafanaRules, canCreateCloudRules, canEditRules } = useRulesAccess();
 
-  if (!canCreateGrafanaRules && !canCreateCloudRules) {
+  if (!identifier && !canCreateGrafanaRules && !canCreateCloudRules) {
     return <AlertWarning title="Cannot create rules">Sorry! You are not allowed to create rules.</AlertWarning>;
   }
 

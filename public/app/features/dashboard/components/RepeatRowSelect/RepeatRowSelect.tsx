@@ -40,5 +40,5 @@ export const RepeatRowSelect: FC<Props> = ({ repeat, onChange, id }) => {
 
   const onSelectChange = useCallback((option: SelectableValue<string | null>) => onChange(option.value!), [onChange]);
 
-  return <Select inputId={id} menuShouldPortal value={repeat} onChange={onSelectChange} options={variableOptions} />;
+  return <Select inputId={id} value={repeat} onChange={onSelectChange} options={variableOptions} />;
 };

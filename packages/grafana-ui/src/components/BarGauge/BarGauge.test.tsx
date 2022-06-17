@@ -1,4 +1,4 @@
-import { shallow } from 'enzyme';
+import { render } from '@testing-library/react';
 import React from 'react';
 
 import {
@@ -61,17 +61,6 @@ function getProps(propOverrides?: Partial<Props>): Props {
   Object.assign(props, propOverrides);
   return props;
 }
-
-const setup = (propOverrides?: object) => {
-  const props = getProps(propOverrides);
-  const wrapper = shallow(<BarGauge {...props} />);
-  const instance = wrapper.instance() as BarGauge;
-
-  return {
-    instance,
-    wrapper,
-  };
-};
 
 function getValue(value: number, title?: string): DisplayValue {
   return { numeric: value, text: value.toString(), title: title };
@@ -315,8 +304,8 @@ describe('BarGauge', () => {
 
   describe('Render with basic options', () => {
     it('should render', () => {
-      const { wrapper } = setup();
-      expect(wrapper).toMatchSnapshot();
+      const props = getProps();
+      expect(() => render(<BarGauge {...props} />)).not.toThrow();
     });
   });
 

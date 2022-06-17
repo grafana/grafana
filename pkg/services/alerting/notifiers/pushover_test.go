@@ -74,7 +74,7 @@ func TestGenPushoverBody(t *testing.T) {
 			evalContext := alerting.NewEvalContext(context.Background(),
 				&alerting.Rule{
 					State: models.AlertStateAlerting,
-				}, &validations.OSSPluginRequestValidator{}, nil)
+				}, &validations.OSSPluginRequestValidator{}, nil, nil)
 			_, pushoverBody, err := notifier.genPushoverBody(evalContext, "", "")
 
 			require.Nil(t, err)
@@ -85,7 +85,7 @@ func TestGenPushoverBody(t *testing.T) {
 			evalContext := alerting.NewEvalContext(context.Background(),
 				&alerting.Rule{
 					State: models.AlertStateOK,
-				}, &validations.OSSPluginRequestValidator{}, nil)
+				}, &validations.OSSPluginRequestValidator{}, nil, nil)
 			_, pushoverBody, err := notifier.genPushoverBody(evalContext, "", "")
 
 			require.Nil(t, err)

@@ -38,7 +38,6 @@ export function VariableSelectField({
       <div data-testid={testId}>
         <Select
           inputId={inputId}
-          menuShouldPortal
           onChange={onChange}
           value={value}
           width={width ?? 25}

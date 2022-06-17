@@ -145,7 +145,6 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
             options={RESOLUTION_OPTIONS}
             value={resolution}
             aria-label="Select resolution"
-            menuShouldPortal
           />
         </InlineField>
       </div>

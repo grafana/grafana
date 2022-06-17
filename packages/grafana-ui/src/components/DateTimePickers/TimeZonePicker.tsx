@@ -60,6 +60,7 @@ export const TimeZonePicker: React.FC<Props> = (props) => {
       value={selected}
       placeholder="Type to search (country, city, abbreviation)"
       autoFocus={autoFocus}
+      menuShouldPortal={false}
       openMenuOnFocus={true}
       width={width}
       filterOption={filterBySearchIndex}

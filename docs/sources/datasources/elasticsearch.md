@@ -1,10 +1,15 @@
-+++
-title = "Elasticsearch"
-description = "Guide for using Elasticsearch in Grafana"
-keywords = ["grafana", "elasticsearch", "guide"]
-aliases = ["/docs/grafana/latest/features/datasources/elasticsearch"]
-weight = 325
-+++
+---
+aliases:
+  - /docs/grafana/latest/datasources/elasticsearch/
+  - /docs/grafana/latest/features/datasources/elasticsearch/
+description: Guide for using Elasticsearch in Grafana
+keywords:
+  - grafana
+  - elasticsearch
+  - guide
+title: Elasticsearch
+weight: 325
+---
 
 # Using Elasticsearch in Grafana
 
@@ -13,14 +18,8 @@ visualize logs or metrics stored in Elasticsearch. You can also annotate your gr
 
 Supported Elasticsearch versions:
 
-- v2.0+ (deprecated)
-- v5.0+ (deprecated)
-- v6.0+ (deprecated)
-- v7.0-v7.9+ (deprecated)
 - v7.10+
 - v8.0+ (experimental)
-
-> **Note:** Deprecated versions (v2.0+, v5.0+, v6.0+, and v7.0-v7.9+) will be removed in the next major release.
 
 ## Adding the data source
 
@@ -31,32 +30,12 @@ Supported Elasticsearch versions:
 
 > **Note:** If you're not seeing the `Data Sources` link in your side menu it means that your current user does not have the `Admin` role for the current organization.
 
-| Name      | Description                                                                                                                                                                                                                    |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `Name`    | The data source name. This is how you refer to the data source in panels and queries.                                                                                                                                          |
-| `Default` | Default data source means that it will be pre-selected for new panels.                                                                                                                                                         |
-| `Url`     | The HTTP protocol, IP, and port of your Elasticsearch server.                                                                                                                                                                  |
-| `Access`  | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser. **Note**: Browser (direct) access is deprecated and will be removed in a future release. |
-
-Access mode controls how requests to the data source will be handled. Server should be the preferred way if nothing else stated.
-
-### Server access mode (Default)
-
-All requests will be made from the browser to Grafana backend/server which in turn will forward the requests to the data source and by that circumvent possible Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the grafana backend/server if you select this access mode.
-
-### Browser (Direct) access
-
-> **Warning:** Browser (Direct) access is deprecated and will be removed in a future release.
-
-All requests will be made from the browser directly to the data source and may be subject to Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the browser if you select this access mode.
-
-If you select Browser access you must update your Elasticsearch configuration to allow other domains to access
-Elasticsearch from the browser. You do this by specifying these two options in your **elasticsearch.yml** config file.
-
-```bash
-http.cors.enabled: true
-http.cors.allow-origin: "*"
-```
+| Name      | Description                                                                       |
+| --------- | --------------------------------------------------------------------------------- |
+| `Name`    | Data source name. This is how you refer to the data source in panels and queries. |
+| `Default` | Data source is pre-selected for new panels.                                       |
+| `Url`     | The HTTP protocol, IP, and port of your Elasticsearch server.                     |
+| `Access`  | Do not use Access. Use "Server (default)" or the datasource won't function.       |
 
 ### Index settings
 
@@ -102,7 +81,7 @@ When `X-Pack enabled` is active and the configured Elasticsearch version is high
 ### Logs
 
 There are two parameters, `Message field name` and `Level field name`, that can optionally be configured from the data source settings page that determine
-which fields will be used for log messages and log levels when visualizing logs in [Explore]({{< relref "../explore" >}}).
+which fields will be used for log messages and log levels when visualizing logs in [Explore]({{< relref "../explore/" >}}).
 
 For example, if you're using a default setup of Filebeat for shipping logs to Elasticsearch the following configuration should work:
 
@@ -149,7 +128,7 @@ Instead of hard-coding things like server, application and sensor name in your m
 Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data
 being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../variables/_index.md" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../variables/" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Query variable
@@ -201,7 +180,7 @@ Example dashboard:
 
 ## Annotations
 
-[Annotations]({{< relref "../dashboards/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation
+[Annotations]({{< relref "../dashboards/annotations/" >}}) allow you to overlay rich event information on top of graphs. You add annotation
 queries via the Dashboard menu / Annotations view. Grafana can query any Elasticsearch index
 for annotation events.
 
@@ -215,7 +194,7 @@ for annotation events.
 
 ## Querying Logs
 
-Querying and displaying log data from Elasticsearch is available in [Explore]({{< relref "../explore" >}}), and in the [logs panel]({{< relref "../visualizations/logs-panel.md" >}}) in dashboards.
+Querying and displaying log data from Elasticsearch is available in [Explore]({{< relref "../explore/" >}}), and in the [logs panel]({{< relref "../visualizations/logs-panel/" >}}) in dashboards.
 Select the Elasticsearch data source, and then optionally enter a lucene query to display your logs.
 
 When switching from a Prometheus or Loki data source in Explore, your query is translated to an Elasticsearch log query with a correct Lucene filter.
@@ -283,8 +262,8 @@ For more details on AWS SigV4, refer to the [AWS documentation](https://docs.aws
 
 > **Note:** Only available in Grafana v7.3+.
 
-In order to sign requests to your Amazon Elasticsearch Service domain, SigV4 can be enabled in the Grafana [configuration]({{< relref "../administration/configuration.md#sigv4_auth_enabled" >}}).
+In order to sign requests to your Amazon Elasticsearch Service domain, SigV4 can be enabled in the Grafana [configuration]({{< relref "../setup-grafana/configure-grafana/#sigv4_auth_enabled" >}}).
 
-Once AWS SigV4 is enabled, it can be configured on the Elasticsearch data source configuration page. Refer to [Cloudwatch authentication]({{< relref "../datasources/aws-cloudwatch/aws-authentication.md" >}}) for more information about authentication options.
+Once AWS SigV4 is enabled, it can be configured on the Elasticsearch data source configuration page. Refer to [Cloudwatch authentication]({{< relref "aws-cloudwatch/aws-authentication/" >}}) for more information about authentication options.
 
 {{< figure src="/static/img/docs/v73/elasticsearch-sigv4-config-editor.png" max-width="500px" class="docs-image--no-shadow" caption="SigV4 configuration for AWS Elasticsearch Service" >}}

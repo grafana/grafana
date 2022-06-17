@@ -35,23 +35,6 @@ func toMacaronPath(path string) string {
 	}))
 }
 
-func backendType(ctx *models.ReqContext, cache datasources.CacheService) (apimodels.Backend, error) {
-	datasourceID := web.Params(ctx.Req)[":DatasourceID"]
-	if datasourceID, err := strconv.ParseInt(datasourceID, 10, 64); err == nil {
-		if ds, err := cache.GetDatasource(ctx.Req.Context(), datasourceID, ctx.SignedInUser, ctx.SkipCache); err == nil {
-			switch ds.Type {
-			case "loki", "prometheus":
-				return apimodels.LoTexRulerBackend, nil
-			case "alertmanager":
-				return apimodels.AlertmanagerBackend, nil
-			default:
-				return 0, fmt.Errorf("unexpected backend type (%v)", ds.Type)
-			}
-		}
-	}
-	return 0, fmt.Errorf("unexpected backend type (%v)", datasourceID)
-}
-
 func backendTypeByUID(ctx *models.ReqContext, cache datasources.CacheService) (apimodels.Backend, error) {
 	datasourceUID := web.Params(ctx.Req)[":DatasourceUID"]
 	if ds, err := cache.GetDatasourceByUID(ctx.Req.Context(), datasourceUID, ctx.SignedInUser, ctx.SkipCache); err == nil {

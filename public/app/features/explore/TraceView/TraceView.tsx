@@ -20,8 +20,10 @@ import { getTemplateSrv } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { Trace, TracePageHeader, TraceTimelineViewer, TTraceTimeline } from '@jaegertracing/jaeger-ui-components';
 import { TraceToLogsData } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
+import { TraceToMetricsData } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTimeZone } from 'app/features/profile/state/selectors';
+import { TempoQuery } from 'app/plugins/datasource/tempo/datasource';
 import { StoreState } from 'app/types';
 import { ExploreId } from 'app/types/explore';
 
@@ -98,12 +100,8 @@ export function TraceView(props: Props) {
     refId: props.dataFrames[0]?.refId,
     exploreId: props.exploreId!,
     datasource,
+    splitOpenFn: props.splitOpenFn!,
   });
-
-  const createLinkToExternalSpan = (traceId: string, spanId: string) => {
-    const link = createFocusSpanLink(traceId, spanId);
-    return link.href;
-  };
 
   const traceTimeline: TTraceTimeline = useMemo(
     () => ({
@@ -117,12 +115,20 @@ export function TraceView(props: Props) {
     [childrenHiddenIDs, detailStates, hoverIndentGuideIds, spanNameColumnWidth, props.traceProp?.traceID]
   );
 
-  const traceToLogsOptions = (getDatasourceSrv().getInstanceSettings(datasource?.name)?.jsonData as TraceToLogsData)
-    ?.tracesToLogs;
+  const instanceSettings = getDatasourceSrv().getInstanceSettings(datasource?.name);
+  const traceToLogsOptions = (instanceSettings?.jsonData as TraceToLogsData)?.tracesToLogs;
+  const traceToMetricsOptions = (instanceSettings?.jsonData as TraceToMetricsData)?.tracesToMetrics;
+
   const createSpanLink = useMemo(
     () =>
-      createSpanLinkFactory({ splitOpenFn: props.splitOpenFn!, traceToLogsOptions, dataFrame: props.dataFrames[0] }),
-    [props.splitOpenFn, traceToLogsOptions, props.dataFrames]
+      createSpanLinkFactory({
+        splitOpenFn: props.splitOpenFn!,
+        traceToLogsOptions,
+        traceToMetricsOptions,
+        dataFrame: props.dataFrames[0],
+        createFocusSpanLink,
+      }),
+    [props.splitOpenFn, traceToLogsOptions, traceToMetricsOptions, props.dataFrames, createFocusSpanLink]
   );
   const onSlimViewClicked = useCallback(() => setSlim(!slim), [slim]);
   const timeZone = useSelector((state: StoreState) => getTimeZone(state.user));
@@ -153,8 +159,7 @@ export function TraceView(props: Props) {
             updateNextViewRangeTime={updateNextViewRangeTime}
             updateViewRangeTime={updateViewRangeTime}
             viewRange={viewRange}
-            focusSpan={noop}
-            createLinkToExternalSpan={createLinkToExternalSpan}
+            timeZone={timeZone}
             setSpanNameColumnWidth={setSpanNameColumnWidth}
             collapseAll={collapseAll}
             collapseOne={collapseOne}
@@ -199,6 +204,7 @@ export function TraceView(props: Props) {
  */
 function useFocusSpanLink(options: {
   exploreId: ExploreId;
+  splitOpenFn: SplitOpen;
   refId?: string;
   datasource?: DataSourceApi;
 }): [string | undefined, (traceId: string, spanId: string) => LinkModel<Field>] {
@@ -225,7 +231,10 @@ function useFocusSpanLink(options: {
       internal: {
         datasourceUid: options.datasource?.uid!,
         datasourceName: options.datasource?.name!,
-        query: query,
+        query: {
+          ...query,
+          query: traceId,
+        },
         panelsState: {
           trace: {
             spanId,
@@ -234,13 +243,34 @@ function useFocusSpanLink(options: {
       },
     };
 
+    // Check if the link is to a different trace or not.
+    // If it's the same trace, only update panel state with setFocusedSpanId (no navigation).
+    // If it's a different trace, use splitOpenFn to open a new explore panel
+    const sameTrace = query?.queryType === 'traceId' && (query as TempoQuery).query === traceId;
+
     return mapInternalLinkToExplore({
       link,
       internalLink: link.internal!,
       scopedVars: {},
       range: {} as any,
       field: {} as Field,
-      onClickFn: () => setFocusedSpanId(focusedSpanId === spanId ? undefined : spanId),
+      onClickFn: sameTrace
+        ? () => setFocusedSpanId(focusedSpanId === spanId ? undefined : spanId)
+        : options.splitOpenFn
+        ? () =>
+            options.splitOpenFn({
+              datasourceUid: options.datasource?.uid!,
+              query: {
+                ...query!,
+                query: traceId,
+              },
+              panelsState: {
+                trace: {
+                  spanId,
+                },
+              },
+            })
+        : undefined,
       replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
     });
   };

@@ -46,6 +46,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       label: row;
       & > td {
         padding: 0rem 0.5rem;
+        height: 30px;
       }
       &:nth-child(2n) > td {
         background: ${autoColor(theme, '#f5f5f5')};

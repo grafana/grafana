@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import React, { useEffect } from 'react';
 
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
-import { stylesFactory, useTheme, Select, MultiSelect, FilterInput } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { stylesFactory, useTheme, Select, MultiSelect, FilterInput, Button } from '@grafana/ui';
 import {
   createDatasourcesList,
   SortOrder,
@@ -11,14 +12,17 @@ import {
 } from 'app/core/utils/richHistory';
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 
-import { sortOrderOptions } from './RichHistory';
+import { getSortOrderOptions } from './RichHistory';
 import RichHistoryCard from './RichHistoryCard';
 
 export interface Props {
   queries: RichHistoryQuery[];
-  activeDatasourceInstance?: string;
+  totalQueries: number;
+  loading: boolean;
+  activeDatasourceInstance: string;
   updateFilters: (filtersToUpdate: Partial<RichHistorySearchFilters>) => void;
   clearRichHistoryResults: () => void;
+  loadMoreRichHistory: () => void;
   richHistorySearchFilters?: RichHistorySearchFilters;
   richHistorySettings: RichHistorySettings;
   exploreId: ExploreId;
@@ -72,9 +76,12 @@ export function RichHistoryStarredTab(props: Props) {
   const {
     updateFilters,
     clearRichHistoryResults,
+    loadMoreRichHistory,
     activeDatasourceInstance,
     richHistorySettings,
     queries,
+    totalQueries,
+    loading,
     richHistorySearchFilters,
     exploreId,
   } = props;
@@ -86,9 +93,9 @@ export function RichHistoryStarredTab(props: Props) {
 
   useEffect(() => {
     const datasourceFilters =
-      richHistorySettings.activeDatasourceOnly && activeDatasourceInstance
-        ? [activeDatasourceInstance]
-        : richHistorySettings.lastUsedDatasourceFilters;
+      richHistorySettings.activeDatasourceOnly && richHistorySettings.lastUsedDatasourceFilters
+        ? richHistorySettings.lastUsedDatasourceFilters
+        : [activeDatasourceInstance];
     const filters: RichHistorySearchFilters = {
       search: '',
       sortOrder: SortOrder.Descending,
@@ -108,6 +115,8 @@ export function RichHistoryStarredTab(props: Props) {
     return <span>Loading...</span>;
   }
 
+  const sortOrderOptions = getSortOrderOptions();
+
   return (
     <div className={styles.container}>
       <div className={styles.containerContent}>
@@ -115,7 +124,6 @@ export function RichHistoryStarredTab(props: Props) {
           {!richHistorySettings.activeDatasourceOnly && (
             <MultiSelect
               className={styles.multiselect}
-              menuShouldPortal
               options={listOfDatasources.map((ds) => {
                 return { value: ds.name, label: ds.name };
               })}
@@ -136,7 +144,6 @@ export function RichHistoryStarredTab(props: Props) {
           </div>
           <div aria-label="Sort queries" className={styles.sort}>
             <Select
-              menuShouldPortal
               value={sortOrderOptions.filter((order) => order.value === richHistorySearchFilters.sortOrder)}
               options={sortOrderOptions}
               placeholder="Sort queries by"
@@ -144,19 +151,28 @@ export function RichHistoryStarredTab(props: Props) {
             />
           </div>
         </div>
-        {queries.map((q) => {
-          const idx = listOfDatasources.findIndex((d) => d.name === q.datasourceName);
-          return (
-            <RichHistoryCard
-              query={q}
-              key={q.id}
-              exploreId={exploreId}
-              dsImg={idx === -1 ? 'public/img/icn-datasource.svg' : listOfDatasources[idx].imgUrl}
-              isRemoved={idx === -1}
-            />
-          );
-        })}
-        <div className={styles.footer}>The history is local to your browser and is not shared with others.</div>
+        {loading && <span>Loading results...</span>}
+        {!loading &&
+          queries.map((q) => {
+            const idx = listOfDatasources.findIndex((d) => d.name === q.datasourceName);
+            return (
+              <RichHistoryCard
+                query={q}
+                key={q.id}
+                exploreId={exploreId}
+                dsImg={idx === -1 ? 'public/img/icn-datasource.svg' : listOfDatasources[idx].imgUrl}
+                isRemoved={idx === -1}
+              />
+            );
+          })}
+        {queries.length && queries.length !== totalQueries ? (
+          <div>
+            Showing {queries.length} of {totalQueries} <Button onClick={loadMoreRichHistory}>Load more</Button>
+          </div>
+        ) : null}
+        <div className={styles.footer}>
+          {!config.queryHistoryEnabled ? 'The history is local to your browser and is not shared with others.' : ''}
+        </div>
       </div>
     </div>
   );

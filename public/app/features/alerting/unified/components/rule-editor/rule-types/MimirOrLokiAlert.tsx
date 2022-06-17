@@ -21,7 +21,7 @@ const MimirFlavoredType: FC<Props> = ({ selected = false, disabled = false, onCl
             Expressions are not supported.
           </span>
         }
-        image="/public/img/alerting/mimir_logo.svg"
+        image="public/img/alerting/mimir_logo.svg"
         selected={selected}
         disabled={disabled}
         value={RuleFormType.cloudAlerting}

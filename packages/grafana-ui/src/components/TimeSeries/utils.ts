@@ -14,6 +14,7 @@ import {
   getFieldSeriesColor,
   getFieldDisplayName,
   getDisplayProcessor,
+  FieldColorModeId,
 } from '@grafana/data';
 import {
   AxisPlacement,
@@ -54,7 +55,14 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
 }) => {
   const builder = new UPlotConfigBuilder(timeZone);
 
-  builder.setPrepData((frames) => preparePlotData2(frames[0], builder.getStackingGroups()));
+  let alignedFrame: DataFrame;
+
+  builder.setPrepData((frames) => {
+    // cache alignedFrame
+    alignedFrame = frames[0];
+
+    return preparePlotData2(frames[0], builder.getStackingGroups());
+  });
 
   // X is the first field in the aligned frame
   const xField = frame.fields[0];
@@ -213,6 +221,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
         if (!show && gaps && gaps.length) {
           const [firstIdx, lastIdx] = series.idxs!;
           const xData = u.data[0];
+          const yData = u.data[seriesIdx];
           const firstPos = Math.round(u.valToPos(xData[firstIdx], 'x', true));
           const lastPos = Math.round(u.valToPos(xData[lastIdx], 'x', true));
 
@@ -226,7 +235,24 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
             let nextGap = gaps[i + 1];
 
             if (nextGap && thisGap[1] === nextGap[0]) {
-              filtered.push(u.posToIdx(thisGap[1], true));
+              // approx when data density is > 1pt/px, since gap start/end pixels are rounded
+              let approxIdx = u.posToIdx(thisGap[1], true);
+
+              if (yData[approxIdx] == null) {
+                // scan left/right alternating to find closest index with non-null value
+                for (let j = 1; j < 100; j++) {
+                  if (yData[approxIdx + j] != null) {
+                    approxIdx += j;
+                    break;
+                  }
+                  if (yData[approxIdx - j] != null) {
+                    approxIdx -= j;
+                    break;
+                  }
+                }
+              }
+
+              filtered.push(approxIdx);
             }
           }
 
@@ -278,6 +304,12 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       }
     }
 
+    let dynamicSeriesColor: ((seriesIdx: number) => string | undefined) | undefined = undefined;
+
+    if (colorMode.id === FieldColorModeId.Thresholds) {
+      dynamicSeriesColor = (seriesIdx) => getFieldSeriesColor(alignedFrame.fields[seriesIdx], theme).color;
+    }
+
     builder.addSeries({
       pathBuilder,
       pointsBuilder,
@@ -287,6 +319,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       colorMode,
       fillOpacity,
       theme,
+      dynamicSeriesColor,
       drawStyle: customConfig.drawStyle!,
       lineColor: customConfig.lineColor ?? seriesColor,
       lineWidth: customConfig.lineWidth,
@@ -432,10 +465,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
           return true;
         },
       },
-      // ??? setSeries: syncMode === DashboardCursorSync.Tooltip,
-      //TODO: remove any once https://github.com/leeoniya/uPlot/pull/611 got merged or the typing is fixed
-      scales: [xScaleKey, null as any],
-      match: [() => true, () => true],
+      scales: [xScaleKey, yScaleKey],
+      // match: [() => true, (a, b) => a === b],
     };
   }
 

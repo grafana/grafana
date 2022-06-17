@@ -6,11 +6,14 @@ import { setDataSourceSrv } from '@grafana/runtime';
 
 import {
   dimensionVariable,
+  expressionVariable,
   labelsVariable,
   limitVariable,
+  logGroupNamesVariable,
   metricVariable,
   namespaceVariable,
   setupMockedDataSource,
+  regionVariable,
 } from './__mocks__/CloudWatchDataSource';
 import {
   CloudWatchLogsQuery,
@@ -61,6 +64,32 @@ describe('datasource', () => {
       expect(fetchMock.mock.calls[0][0].data.queries[0]).toMatchObject({
         queryString: 'fields templatedField',
         logGroupNames: ['/some/templatedGroup'],
+        region: 'templatedRegion',
+      });
+    });
+
+    it('should interpolate multi-value template variable for log group names in the query', async () => {
+      const { datasource, fetchMock } = setupMockedDataSource({
+        variables: [expressionVariable, logGroupNamesVariable, regionVariable],
+        mockGetVariableName: false,
+      });
+      await lastValueFrom(
+        datasource
+          .query({
+            targets: [
+              {
+                queryMode: 'Logs',
+                region: '$region',
+                expression: 'fields $fields',
+                logGroupNames: ['$groups'],
+              },
+            ],
+          } as any)
+          .pipe(toArray())
+      );
+      expect(fetchMock.mock.calls[0][0].data.queries[0]).toMatchObject({
+        queryString: 'fields templatedField',
+        logGroupNames: ['templatedGroup-1', 'templatedGroup-2'],
         region: 'templatedRegion',
       });
     });
@@ -396,6 +425,74 @@ describe('datasource', () => {
           }),
         })
       );
+    });
+  });
+
+  describe('timezoneUTCOffset', () => {
+    const testQuery = {
+      id: '',
+      refId: 'a',
+      region: 'us-east-2',
+      namespace: '',
+      period: '',
+      label: '${MAX_TIME_RELATIVE}',
+      metricName: '',
+      dimensions: {},
+      matchExact: true,
+      statistic: '',
+      expression: '',
+      metricQueryType: MetricQueryType.Query,
+      metricEditorMode: MetricEditorMode.Code,
+      sqlExpression: 'SELECT SUM($metric) FROM "$namespace" GROUP BY ${labels:raw} LIMIT $limit',
+    };
+    const testTable = [
+      ['Europe/Stockholm', '+0200'],
+      ['America/New_York', '-0400'],
+      ['Asia/Tokyo', '+0900'],
+      ['UTC', '+0000'],
+    ];
+    describe.each(testTable)('should use the right time zone offset', (ianaTimezone, expectedOffset) => {
+      const { datasource, fetchMock } = setupMockedDataSource();
+      datasource.handleMetricQueries([testQuery], {
+        range: { from: dateTime(), to: dateTime() },
+        timezone: ianaTimezone,
+      } as any);
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            queries: expect.arrayContaining([
+              expect.objectContaining({
+                timezoneUTCOffset: expectedOffset,
+              }),
+            ]),
+          }),
+        })
+      );
+    });
+  });
+
+  describe('interpolateMetricsQueryVariables', () => {
+    it('interpolates dimensions correctly', () => {
+      const testQuery = {
+        id: 'a',
+        refId: 'a',
+        region: 'us-east-2',
+        namespace: '',
+        dimensions: { InstanceId: '$dimension' },
+      };
+      const ds = setupMockedDataSource({ variables: [dimensionVariable], mockGetVariableName: false });
+      const result = ds.datasource.interpolateMetricsQueryVariables(testQuery, {
+        dimension: { text: 'foo', value: 'foo' },
+      });
+      expect(result).toStrictEqual({
+        alias: '',
+        metricName: '',
+        namespace: '',
+        period: '',
+        sqlExpression: '',
+        dimensions: { InstanceId: ['foo'] },
+      });
     });
   });
 

@@ -34,15 +34,22 @@ export const AnnotationDetailsField: FC<Props> = ({ annotationKey, value }) => {
 
 const AnnotationValue: FC<Props> = ({ annotationKey, value }) => {
   const styles = useStyles(getStyles);
-  if (wellableAnnotationKeys.includes(annotationKey)) {
-    return <Well>{value}</Well>;
-  } else if (value && value.startsWith('http')) {
+
+  const needsWell = wellableAnnotationKeys.includes(annotationKey);
+  const needsLink = value && value.startsWith('http');
+
+  if (needsWell) {
+    return <Well className={styles.well}>{value}</Well>;
+  }
+
+  if (needsLink) {
     return (
       <a href={value} target="__blank" className={styles.link}>
         {value}
       </a>
     );
   }
+
   return <>{value}</>;
 };
 

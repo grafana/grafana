@@ -4,6 +4,9 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -13,6 +16,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/searchV2/extract"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/store"
+
+	"github.com/blugelabs/bluge"
 )
 
 type dashboardLoader interface {
@@ -25,17 +30,14 @@ type dashboardLoader interface {
 }
 
 type eventStore interface {
+	OnEvent(handler store.EventHandler)
 	GetLastEvent(ctx context.Context) (*store.EntityEvent, error)
 	GetAllEventsAfter(ctx context.Context, id int64) ([]*store.EntityEvent, error)
 }
 
-type dashboardIndex struct {
-	mu         sync.RWMutex
-	loader     dashboardLoader
-	dashboards map[int64][]dashboard // orgId -> []dashboards
-	eventStore eventStore
-	logger     log.Logger
-}
+// While we migrate away from internal IDs... this lets us lookup values in SQL
+// NOTE: folderId is unique across all orgs
+type folderUIDLookup = func(ctx context.Context, folderId int64) (string, error)
 
 type dashboard struct {
 	id       int64
@@ -48,12 +50,28 @@ type dashboard struct {
 	info     *extract.DashboardInfo
 }
 
-func newDashboardIndex(dashLoader dashboardLoader, evStore eventStore) *dashboardIndex {
+type dashboardIndex struct {
+	mu             sync.RWMutex
+	loader         dashboardLoader
+	perOrgReader   map[int64]*bluge.Reader // orgId -> bluge reader
+	perOrgWriter   map[int64]*bluge.Writer // orgId -> bluge writer
+	eventStore     eventStore
+	logger         log.Logger
+	buildSignals   chan int64
+	extender       DocumentExtender
+	folderIdLookup folderUIDLookup
+}
+
+func newDashboardIndex(dashLoader dashboardLoader, evStore eventStore, extender DocumentExtender, folderIDs folderUIDLookup) *dashboardIndex {
 	return &dashboardIndex{
-		loader:     dashLoader,
-		eventStore: evStore,
-		dashboards: map[int64][]dashboard{},
-		logger:     log.New("dashboardIndex"),
+		loader:         dashLoader,
+		eventStore:     evStore,
+		perOrgReader:   map[int64]*bluge.Reader{},
+		perOrgWriter:   map[int64]*bluge.Writer{},
+		logger:         log.New("dashboardIndex"),
+		buildSignals:   make(chan int64),
+		extender:       extender,
+		folderIdLookup: folderIDs,
 	}
 }
 
@@ -73,18 +91,27 @@ func (i *dashboardIndex) run(ctx context.Context) error {
 		lastEventID = lastEvent.Id
 	}
 
-	// Build on start for orgID 1 but keep lazy for others.
-	started := time.Now()
-	dashboards, err := i.getDashboards(ctx, 1)
+	err = i.buildInitialIndex(ctx)
 	if err != nil {
-		return fmt.Errorf("can't build dashboard search index for org ID 1: %w", err)
+		return fmt.Errorf("can't build initial dashboard search index: %w", err)
 	}
-	i.logger.Info("Indexing for main org finished", "mainOrgIndexElapsed", time.Since(started), "numDashboards", len(dashboards))
+
+	i.eventStore.OnEvent(i.applyEventOnIndex)
 
 	for {
 		select {
 		case <-partialUpdateTicker.C:
 			lastEventID = i.applyIndexUpdates(ctx, lastEventID)
+		case orgID := <-i.buildSignals:
+			i.mu.RLock()
+			_, ok := i.perOrgWriter[orgID]
+			if ok {
+				// Index for org already exists, do nothing.
+				i.mu.RUnlock()
+				continue
+			}
+			i.mu.RUnlock()
+			_, _ = i.buildOrgIndex(ctx, orgID)
 		case <-fullReIndexTicker.C:
 			started := time.Now()
 			i.reIndexFromScratch(ctx)
@@ -95,28 +122,166 @@ func (i *dashboardIndex) run(ctx context.Context) error {
 	}
 }
 
+func (i *dashboardIndex) buildInitialIndex(ctx context.Context) error {
+	memCtx, memCancel := context.WithCancel(ctx)
+	if os.Getenv("GF_SEARCH_DEBUG") != "" {
+		go i.debugMemStats(memCtx, 200*time.Millisecond)
+	}
+
+	// Build on start for orgID 1 but keep lazy for others.
+	started := time.Now()
+	numDashboards, err := i.buildOrgIndex(ctx, 1)
+	if err != nil {
+		memCancel()
+		return fmt.Errorf("can't build dashboard search index for org ID 1: %w", err)
+	}
+	i.logger.Info("Indexing for main org finished", "mainOrgIndexElapsed", time.Since(started), "numDashboards", numDashboards)
+	memCancel()
+
+	if os.Getenv("GF_SEARCH_DEBUG") != "" {
+		// May help to estimate size of index when introducing changes. Though it's not a direct
+		// match to a memory consumption, but at least make give some relative difference understanding.
+		// Moreover, changes in indexing can cause additional memory consumption upon initial index build
+		// which is not reflected here.
+		i.reportSizeOfIndexDiskBackup(1)
+	}
+	return nil
+}
+
+func (i *dashboardIndex) debugMemStats(ctx context.Context, frequency time.Duration) {
+	var maxHeapInuse uint64
+	var maxSys uint64
+
+	captureMemStats := func() {
+		var m runtime.MemStats
+		runtime.ReadMemStats(&m)
+		if m.HeapInuse > maxHeapInuse {
+			maxHeapInuse = m.HeapInuse
+		}
+		if m.Sys > maxSys {
+			maxSys = m.Sys
+		}
+	}
+
+	captureMemStats()
+
+	for {
+		select {
+		case <-ctx.Done():
+			i.logger.Warn("Memory stats during indexing", "maxHeapInUse", formatBytes(maxHeapInuse), "maxSys", formatBytes(maxSys))
+			return
+		case <-time.After(frequency):
+			captureMemStats()
+		}
+	}
+}
+
+func (i *dashboardIndex) reportSizeOfIndexDiskBackup(orgID int64) {
+	reader, _ := i.getOrgReader(orgID)
+
+	// create a temp directory to store the index
+	tmpDir, err := ioutil.TempDir("", "grafana.dashboard_index")
+	if err != nil {
+		i.logger.Error("can't create temp dir", "error", err)
+		return
+	}
+	defer func() {
+		err := os.RemoveAll(tmpDir)
+		if err != nil {
+			i.logger.Error("can't remove temp dir", "error", err, "tmpDir", tmpDir)
+			return
+		}
+	}()
+
+	cancel := make(chan struct{})
+	err = reader.Backup(tmpDir, cancel)
+	if err != nil {
+		i.logger.Error("can't create index disk backup", "error", err)
+		return
+	}
+
+	size, err := dirSize(tmpDir)
+	if err != nil {
+		i.logger.Error("can't calculate dir size", "error", err)
+		return
+	}
+
+	i.logger.Warn("Size of index disk backup", "size", formatBytes(uint64(size)))
+}
+
+func (i *dashboardIndex) buildOrgIndex(ctx context.Context, orgID int64) (int, error) {
+	started := time.Now()
+	ctx, cancel := context.WithTimeout(ctx, time.Minute)
+	defer cancel()
+
+	i.logger.Info("Start building org index", "orgId", orgID)
+	dashboards, err := i.loader.LoadDashboards(ctx, orgID, "")
+	if err != nil {
+		return 0, fmt.Errorf("error loading dashboards: %w", err)
+	}
+	orgSearchIndexLoadTime := time.Since(started)
+	i.logger.Info("Finish loading org dashboards", "elapsed", orgSearchIndexLoadTime, "orgId", orgID)
+
+	dashboardExtender := i.extender.GetDashboardExtender(orgID)
+	reader, writer, err := initIndex(dashboards, i.logger, dashboardExtender)
+	if err != nil {
+		return 0, fmt.Errorf("error initializing index: %w", err)
+	}
+	orgSearchIndexTotalTime := time.Since(started)
+	orgSearchIndexBuildTime := orgSearchIndexTotalTime - orgSearchIndexLoadTime
+
+	i.logger.Info("Re-indexed dashboards for organization",
+		"orgId", orgID,
+		"orgSearchIndexLoadTime", orgSearchIndexLoadTime,
+		"orgSearchIndexBuildTime", orgSearchIndexBuildTime,
+		"orgSearchIndexTotalTime", orgSearchIndexTotalTime,
+		"orgSearchDashboardCount", len(dashboards))
+
+	i.mu.Lock()
+	if oldReader, ok := i.perOrgReader[orgID]; ok {
+		_ = oldReader.Close()
+	}
+	if oldWriter, ok := i.perOrgWriter[orgID]; ok {
+		_ = oldWriter.Close()
+	}
+	i.perOrgReader[orgID] = reader
+	i.perOrgWriter[orgID] = writer
+	i.mu.Unlock()
+
+	if orgID == 1 {
+		go updateUsageStats(context.Background(), reader, i.logger)
+	}
+	return len(dashboards), nil
+}
+
+func (i *dashboardIndex) getOrgReader(orgID int64) (*bluge.Reader, bool) {
+	i.mu.RLock()
+	defer i.mu.RUnlock()
+	r, ok := i.perOrgReader[orgID]
+	return r, ok
+}
+
+func (i *dashboardIndex) getOrgWriter(orgID int64) (*bluge.Writer, bool) {
+	i.mu.RLock()
+	defer i.mu.RUnlock()
+	w, ok := i.perOrgWriter[orgID]
+	return w, ok
+}
+
 func (i *dashboardIndex) reIndexFromScratch(ctx context.Context) {
 	i.mu.RLock()
-	orgIDs := make([]int64, 0, len(i.dashboards))
-	for orgID := range i.dashboards {
+	orgIDs := make([]int64, 0, len(i.perOrgWriter))
+	for orgID := range i.perOrgWriter {
 		orgIDs = append(orgIDs, orgID)
 	}
 	i.mu.RUnlock()
 
 	for _, orgID := range orgIDs {
-		started := time.Now()
-		ctx, cancel := context.WithTimeout(ctx, time.Minute)
-		dashboards, err := i.loader.LoadDashboards(ctx, orgID, "")
+		_, err := i.buildOrgIndex(ctx, orgID)
 		if err != nil {
-			cancel()
 			i.logger.Error("Error re-indexing dashboards for organization", "orgId", orgID, "error", err)
 			continue
 		}
-		cancel()
-		i.logger.Info("Re-indexed dashboards for organization", "orgId", orgID, "orgReIndexElapsed", time.Since(started))
-		i.mu.Lock()
-		i.dashboards[orgID] = dashboards
-		i.mu.Unlock()
 	}
 }
 
@@ -131,7 +296,6 @@ func (i *dashboardIndex) applyIndexUpdates(ctx context.Context, lastEventID int6
 	}
 	started := time.Now()
 	for _, e := range events {
-		i.logger.Debug("processing event", "event", e)
 		err := i.applyEventOnIndex(ctx, e)
 		if err != nil {
 			i.logger.Error("can't apply event", "error", err)
@@ -144,33 +308,32 @@ func (i *dashboardIndex) applyIndexUpdates(ctx context.Context, lastEventID int6
 }
 
 func (i *dashboardIndex) applyEventOnIndex(ctx context.Context, e *store.EntityEvent) error {
+	i.logger.Debug("processing event", "event", e)
+
 	if !strings.HasPrefix(e.EntityId, "database/") {
 		i.logger.Warn("unknown storage", "entityId", e.EntityId)
 		return nil
 	}
-	parts := strings.Split(strings.TrimPrefix(e.EntityId, "database/"), "/")
+	// database/org/entityType/path*
+	parts := strings.SplitN(strings.TrimPrefix(e.EntityId, "database/"), "/", 3)
 	if len(parts) != 3 {
 		i.logger.Error("can't parse entityId", "entityId", e.EntityId)
 		return nil
 	}
 	orgIDStr := parts[0]
-	kind := parts[1]
-	dashboardUID := parts[2]
-	if kind != "dashboard" {
-		i.logger.Error("unknown kind in entityId", "entityId", e.EntityId)
-		return nil
-	}
-	orgID, err := strconv.Atoi(orgIDStr)
+	orgID, err := strconv.ParseInt(orgIDStr, 10, 64)
 	if err != nil {
 		i.logger.Error("can't extract org ID", "entityId", e.EntityId)
 		return nil
 	}
-	return i.applyDashboardEvent(ctx, int64(orgID), dashboardUID, e.EventType)
+	kind := store.EntityType(parts[1])
+	uid := parts[2]
+	return i.applyEvent(ctx, orgID, kind, uid, e.EventType)
 }
 
-func (i *dashboardIndex) applyDashboardEvent(ctx context.Context, orgID int64, dashboardUID string, _ store.EntityEventType) error {
+func (i *dashboardIndex) applyEvent(ctx context.Context, orgID int64, kind store.EntityType, uid string, _ store.EntityEventType) error {
 	i.mu.Lock()
-	_, ok := i.dashboards[orgID]
+	_, ok := i.perOrgWriter[orgID]
 	if !ok {
 		// Skip event for org not yet indexed.
 		i.mu.Unlock()
@@ -178,7 +341,8 @@ func (i *dashboardIndex) applyDashboardEvent(ctx context.Context, orgID int64, d
 	}
 	i.mu.Unlock()
 
-	dbDashboards, err := i.loader.LoadDashboards(ctx, orgID, dashboardUID)
+	// Both dashboard and folder share same DB table.
+	dbDashboards, err := i.loader.LoadDashboards(ctx, orgID, uid)
 	if err != nil {
 		return err
 	}
@@ -186,64 +350,162 @@ func (i *dashboardIndex) applyDashboardEvent(ctx context.Context, orgID int64, d
 	i.mu.Lock()
 	defer i.mu.Unlock()
 
-	dashboards, ok := i.dashboards[orgID]
+	writer, ok := i.perOrgWriter[orgID]
+	if !ok {
+		// Skip event for org not yet fully indexed.
+		return nil
+	}
+	// TODO: should we release index lock while performing removeDashboard/updateDashboard?
+	reader, ok := i.perOrgReader[orgID]
 	if !ok {
 		// Skip event for org not yet fully indexed.
 		return nil
 	}
 
+	var newReader *bluge.Reader
+
 	// In the future we can rely on operation types to reduce work here.
 	if len(dbDashboards) == 0 {
-		// Delete.
-		i.dashboards[orgID] = removeDashboard(dashboards, dashboardUID)
+		switch kind {
+		case store.EntityTypeDashboard:
+			newReader, err = i.removeDashboard(ctx, writer, reader, uid)
+		case store.EntityTypeFolder:
+			newReader, err = i.removeFolder(ctx, writer, reader, uid)
+		default:
+			return nil
+		}
 	} else {
-		updated := false
-		for i, d := range dashboards {
-			if d.uid == dashboardUID {
-				// Update.
-				dashboards[i] = dbDashboards[0]
-				updated = true
-				break
-			}
-		}
-		if !updated {
-			// Create.
-			dashboards = append(dashboards, dbDashboards...)
-		}
-		i.dashboards[orgID] = dashboards
+		newReader, err = i.updateDashboard(ctx, orgID, writer, reader, dbDashboards[0])
 	}
+	if err != nil {
+		return err
+	}
+	_ = reader.Close()
+	i.perOrgReader[orgID] = newReader
 	return nil
 }
 
-func removeDashboard(dashboards []dashboard, dashboardUID string) []dashboard {
-	k := 0
-	for _, d := range dashboards {
-		if d.uid != dashboardUID {
-			dashboards[k] = d
-			k++
-		}
+func (i *dashboardIndex) removeDashboard(_ context.Context, writer *bluge.Writer, reader *bluge.Reader, dashboardUID string) (*bluge.Reader, error) {
+	dashboardLocation, ok, err := getDashboardLocation(reader, dashboardUID)
+	if err != nil {
+		return nil, err
 	}
-	return dashboards[:k]
+	if !ok {
+		// No dashboard, nothing to remove.
+		return reader, nil
+	}
+
+	// Find all panel docs to remove with dashboard.
+	panelLocation := dashboardUID
+	if dashboardLocation != "" {
+		panelLocation = dashboardLocation + "/" + dashboardUID
+	}
+	panelIDs, err := getDocsIDsByLocationPrefix(reader, panelLocation)
+	if err != nil {
+		return nil, err
+	}
+
+	batch := bluge.NewBatch()
+	batch.Delete(bluge.NewDocument(dashboardUID).ID())
+	for _, panelID := range panelIDs {
+		batch.Delete(bluge.NewDocument(panelID).ID())
+	}
+
+	err = writer.Batch(batch)
+	if err != nil {
+		return nil, err
+	}
+
+	return writer.Reader()
 }
 
-func (i *dashboardIndex) getDashboards(ctx context.Context, orgId int64) ([]dashboard, error) {
-	var dashboards []dashboard
+func (i *dashboardIndex) removeFolder(_ context.Context, writer *bluge.Writer, reader *bluge.Reader, folderUID string) (*bluge.Reader, error) {
+	ids, err := getDocsIDsByLocationPrefix(reader, folderUID)
+	if err != nil {
+		return nil, err
+	}
+	batch := bluge.NewBatch()
+	batch.Delete(bluge.NewDocument(folderUID).ID())
+	for _, id := range ids {
+		batch.Delete(bluge.NewDocument(id).ID())
+	}
+	err = writer.Batch(batch)
+	if err != nil {
+		return nil, err
+	}
+	return writer.Reader()
+}
 
-	i.mu.Lock()
-	defer i.mu.Unlock()
+func stringInSlice(str string, slice []string) bool {
+	for _, s := range slice {
+		if s == str {
+			return true
+		}
+	}
+	return false
+}
 
-	if cachedDashboards, ok := i.dashboards[orgId]; ok {
-		dashboards = cachedDashboards
+func (i *dashboardIndex) updateDashboard(ctx context.Context, orgID int64, writer *bluge.Writer, reader *bluge.Reader, dash dashboard) (*bluge.Reader, error) {
+	batch := bluge.NewBatch()
+
+	extendDoc := i.extender.GetDashboardExtender(orgID, dash.uid)
+
+	var doc *bluge.Document
+	if dash.isFolder {
+		doc = getFolderDashboardDoc(dash)
+		if err := extendDoc(dash.uid, doc); err != nil {
+			return nil, err
+		}
 	} else {
-		// Load and parse all dashboards for given orgId.
-		var err error
-		dashboards, err = i.loader.LoadDashboards(ctx, orgId, "")
+		var folderUID string
+		if dash.folderID == 0 {
+			folderUID = "general"
+		} else {
+			var err error
+			folderUID, err = i.folderIdLookup(ctx, dash.folderID)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		location := folderUID
+		doc = getNonFolderDashboardDoc(dash, location)
+		if err := extendDoc(dash.uid, doc); err != nil {
+			return nil, err
+		}
+
+		var actualPanelIDs []string
+
+		if location != "" {
+			location += "/"
+		}
+		location += dash.uid
+		panelDocs := getDashboardPanelDocs(dash, location)
+		for _, panelDoc := range panelDocs {
+			actualPanelIDs = append(actualPanelIDs, string(panelDoc.ID().Term()))
+			batch.Update(panelDoc.ID(), panelDoc)
+		}
+
+		indexedPanelIDs, err := getDashboardPanelIDs(reader, location)
 		if err != nil {
 			return nil, err
 		}
-		i.dashboards[orgId] = dashboards
+
+		for _, panelID := range indexedPanelIDs {
+			if !stringInSlice(panelID, actualPanelIDs) {
+				batch.Delete(bluge.NewDocument(panelID).ID())
+			}
+		}
 	}
-	return dashboards, nil
+
+	batch.Update(doc.ID(), doc)
+
+	err := writer.Batch(batch)
+	if err != nil {
+		return nil, err
+	}
+
+	return writer.Reader()
 }
 
 type sqlDashboardLoader struct {
@@ -305,6 +567,7 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 
 			sess.Cols("id", "uid", "is_folder", "folder_id", "data", "slug", "created", "updated")
 
+			sess.OrderBy("id ASC")
 			sess.Limit(limit)
 
 			return sess.Find(&rows)
@@ -339,6 +602,23 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 	}
 
 	return dashboards, err
+}
+
+func newFolderIDLookup(sql *sqlstore.SQLStore) folderUIDLookup {
+	return func(ctx context.Context, folderID int64) (string, error) {
+		uid := ""
+		err := sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			res, err := sess.Query("SELECT uid FROM dashboard WHERE id=?", folderID)
+			if err != nil {
+				return err
+			}
+			if len(res) > 0 {
+				uid = string(res[0]["uid"])
+			}
+			return nil
+		})
+		return uid, err
+	}
 }
 
 type dashboardQueryResult struct {

@@ -38,7 +38,6 @@ export const OpenTsdbDetails = (props: Props) => {
         </InlineFormLabel>
         <Select
           inputId={`select-version-${idSuffix}`}
-          menuShouldPortal
           options={tsdbVersions}
           value={tsdbVersions.find((version) => version.value === value.jsonData.tsdbVersion) ?? tsdbVersions[0]}
           onChange={onSelectChangeHandler('tsdbVersion', value, onChange)}
@@ -50,7 +49,6 @@ export const OpenTsdbDetails = (props: Props) => {
         </InlineFormLabel>
         <Select
           inputId={`select-resolution-${idSuffix}`}
-          menuShouldPortal
           options={tsdbResolutions}
           value={
             tsdbResolutions.find((resolution) => resolution.value === value.jsonData.tsdbResolution) ??

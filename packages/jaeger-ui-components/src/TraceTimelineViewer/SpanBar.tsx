@@ -18,6 +18,7 @@ import { groupBy as _groupBy } from 'lodash';
 import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';
@@ -150,7 +151,7 @@ function SpanBar({
       onMouseLeave={setShortLabel}
       onMouseOver={setLongLabel}
       aria-hidden
-      data-test-id="SpanBar--wrapper"
+      data-testid={selectors.components.TraceViewer.spanBar}
     >
       <div
         aria-label={label}
@@ -161,7 +162,7 @@ function SpanBar({
           width: toPercent(viewEnd - viewStart),
         }}
       >
-        <div className={cx(styles.label, labelClassName)} data-test-id="SpanBar--label">
+        <div className={cx(styles.label, labelClassName)} data-testid="SpanBar--label">
           {label}
         </div>
       </div>
@@ -173,7 +174,7 @@ function SpanBar({
               <AccordianLogs interactive={false} isOpen logs={logGroups[positionKey]} timestamp={traceStartTime} />
             }
           >
-            <div className={styles.logMarker} style={{ left: positionKey }} />
+            <div data-testid="SpanBar--logMarker" className={styles.logMarker} style={{ left: positionKey }} />
           </Popover>
         ))}
       </div>

@@ -33,18 +33,12 @@ export const AccessControlFolderPermissions = ({ uid, getFolderByUid, navModel }
     getFolderByUid(uid);
   }, [getFolderByUid, uid]);
 
-  const canListUsers = contextSrv.hasPermission(AccessControlAction.OrgUsersRead);
   const canSetPermissions = contextSrv.hasPermission(AccessControlAction.FoldersPermissionsWrite);
 
   return (
     <Page navModel={navModel}>
       <Page.Contents>
-        <Permissions
-          resource="folders"
-          resourceId={uid}
-          canListUsers={canListUsers}
-          canSetPermissions={canSetPermissions}
-        />
+        <Permissions resource="folders" resourceId={uid} canSetPermissions={canSetPermissions} />
       </Page.Contents>
     </Page>
   );

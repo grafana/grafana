@@ -14,6 +14,7 @@ type Props = {
   width: number;
   onUpdateTimeRange: (timeRange: AbsoluteTimeRange) => void;
   onLoadLogsVolume: () => void;
+  onHiddenSeriesChanged: (hiddenSeries: string[]) => void;
 };
 
 const SHORT_ERROR_MESSAGE_LIMIT = 100;
@@ -46,7 +47,16 @@ function ErrorAlert(props: { error: DataQueryError }) {
 }
 
 export function LogsVolumePanel(props: Props) {
-  const { width, logsVolumeData, absoluteRange, timeZone, splitOpen, onUpdateTimeRange, onLoadLogsVolume } = props;
+  const {
+    width,
+    logsVolumeData,
+    absoluteRange,
+    timeZone,
+    splitOpen,
+    onUpdateTimeRange,
+    onLoadLogsVolume,
+    onHiddenSeriesChanged,
+  } = props;
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
@@ -74,6 +84,7 @@ export function LogsVolumePanel(props: Props) {
           timeZone={timeZone}
           splitOpenFn={splitOpen}
           tooltipDisplayMode={TooltipDisplayMode.Multi}
+          onHiddenSeriesChanged={onHiddenSeriesChanged}
         />
       );
     } else {
@@ -93,7 +104,7 @@ export function LogsVolumePanel(props: Props) {
   }
 
   return (
-    <Collapse label="Log volume" isOpen={true} loading={logsVolumeData?.state === LoadingState.Loading}>
+    <Collapse label="" isOpen={true} loading={logsVolumeData?.state === LoadingState.Loading}>
       <div style={{ height }} className={styles.contentContainer}>
         {LogsVolumePanelContent}
       </div>

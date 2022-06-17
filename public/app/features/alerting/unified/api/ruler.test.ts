@@ -1,13 +1,13 @@
 import { RulerDataSourceConfig } from 'app/types/unified-alerting';
 
-import { getDatasourceAPIId } from '../utils/datasource';
+import { getDatasourceAPIUid } from '../utils/datasource';
 
 import { rulerUrlBuilder } from './ruler';
 
 jest.mock('../utils/datasource');
 
 const mocks = {
-  getDatasourceAPIId: jest.mocked(getDatasourceAPIId),
+  getDatasourceAPIUId: jest.mocked(getDatasourceAPIUid),
 };
 
 describe('rulerUrlBuilder', () => {
@@ -18,7 +18,7 @@ describe('rulerUrlBuilder', () => {
       apiVersion: 'legacy',
     };
 
-    mocks.getDatasourceAPIId.mockReturnValue('ds-uid');
+    mocks.getDatasourceAPIUId.mockReturnValue('ds-uid');
 
     // Act
     const builder = rulerUrlBuilder(config);
@@ -45,7 +45,7 @@ describe('rulerUrlBuilder', () => {
       apiVersion: 'config',
     };
 
-    mocks.getDatasourceAPIId.mockReturnValue('ds-uid');
+    mocks.getDatasourceAPIUId.mockReturnValue('ds-uid');
 
     // Act
     const builder = rulerUrlBuilder(config);
@@ -72,7 +72,7 @@ describe('rulerUrlBuilder', () => {
       apiVersion: 'config',
     };
 
-    mocks.getDatasourceAPIId.mockReturnValue('ds-uid');
+    mocks.getDatasourceAPIUId.mockReturnValue('ds-uid');
 
     // Act
     const builder = rulerUrlBuilder(config);
@@ -94,7 +94,7 @@ describe('rulerUrlBuilder', () => {
       apiVersion: 'config',
     };
 
-    mocks.getDatasourceAPIId.mockReturnValue('ds-uid');
+    mocks.getDatasourceAPIUId.mockReturnValue('ds-uid');
 
     // Act
     const builder = rulerUrlBuilder(config);

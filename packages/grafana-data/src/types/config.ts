@@ -133,6 +133,7 @@ export interface BootData {
  * @internal
  */
 export interface GrafanaConfig {
+  isPublicDashboardView: boolean;
   datasources: { [str: string]: DataSourceInstanceSettings };
   panels: { [key: string]: PanelPluginMeta };
   minRefreshInterval: string;
@@ -162,6 +163,8 @@ export interface GrafanaConfig {
   autoAssignOrg: boolean;
   verifyEmailEnabled: boolean;
   oauth: OAuthSettings;
+  rbacEnabled: boolean;
+  rbacBuiltInRoleAssignmentEnabled: boolean;
   disableUserSignUp: boolean;
   loginHint: string;
   passwordHint: string;

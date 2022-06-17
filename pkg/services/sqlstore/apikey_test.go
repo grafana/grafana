@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package sqlstore
 
 import (
@@ -9,14 +6,17 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/stretchr/testify/assert"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-func TestApiKeyDataAccess(t *testing.T) {
+func TestIntegrationApiKeyDataAccess(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	mockTimeNow()
 	defer resetTimeNow()
 
@@ -34,6 +34,13 @@ func TestApiKeyDataAccess(t *testing.T) {
 
 				assert.Nil(t, err)
 				assert.NotNil(t, query.Result)
+			})
+
+			t.Run("Should be able to get key by hash", func(t *testing.T) {
+				key, err := ss.GetAPIKeyByHash(context.Background(), cmd.Key)
+
+				assert.Nil(t, err)
+				assert.NotNil(t, key)
 			})
 		})
 
@@ -99,7 +106,13 @@ func TestApiKeyDataAccess(t *testing.T) {
 			// advance mocked getTime by 1s
 			timeNow()
 
-			query := models.GetApiKeysQuery{OrgId: 1, IncludeExpired: false}
+			testUser := &models.SignedInUser{
+				OrgId: 1,
+				Permissions: map[int64]map[string][]string{
+					1: {accesscontrol.ActionAPIKeyRead: []string{accesscontrol.ScopeAPIKeysAll}},
+				},
+			}
+			query := models.GetApiKeysQuery{OrgId: 1, IncludeExpired: false, User: testUser}
 			err = ss.GetAPIKeys(context.Background(), &query)
 			assert.Nil(t, err)
 
@@ -109,7 +122,7 @@ func TestApiKeyDataAccess(t *testing.T) {
 				}
 			}
 
-			query = models.GetApiKeysQuery{OrgId: 1, IncludeExpired: true}
+			query = models.GetApiKeysQuery{OrgId: 1, IncludeExpired: true, User: testUser}
 			err = ss.GetAPIKeys(context.Background(), &query)
 			assert.Nil(t, err)
 
@@ -124,7 +137,10 @@ func TestApiKeyDataAccess(t *testing.T) {
 	})
 }
 
-func TestApiKeyErrors(t *testing.T) {
+func TestIntegrationApiKeyErrors(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	mockTimeNow()
 	defer resetTimeNow()
 
@@ -160,7 +176,10 @@ type getApiKeysTestCase struct {
 	expectedNumKeys int
 }
 
-func TestSQLStore_GetAPIKeys(t *testing.T) {
+func TestIntegrationSQLStore_GetAPIKeys(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	tests := []getApiKeysTestCase{
 		{
 			desc: "expect all keys for wildcard scope",
@@ -187,7 +206,7 @@ func TestSQLStore_GetAPIKeys(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			store := InitTestDB(t, InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagAccesscontrol}})
+			store := InitTestDB(t, InitTestDBOpt{})
 			seedApiKeys(t, store, 10)
 
 			query := &models.GetApiKeysQuery{OrgId: 1, User: tt.user}

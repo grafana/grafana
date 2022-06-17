@@ -1,7 +1,10 @@
+import { get, set } from 'lodash';
+
 import { toUtc } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import createMockQuery from '../__mocks__/query';
+import { createTemplateVariables } from '../__mocks__/utils';
 import { singleVariable } from '../__mocks__/variables';
 import AzureMonitorDatasource from '../datasource';
 import { AzureMonitorQuery, AzureQueryType, DatasourceValidationResult } from '../types';
@@ -367,6 +370,40 @@ describe('AzureLogAnalyticsDatasource', () => {
       };
 
       expect(laDatasource.filterQuery(query)).toBeFalsy();
+    });
+  });
+
+  describe('When performing interpolateVariablesInQueries for azure_log_analytics', () => {
+    beforeEach(() => {
+      templateSrv.init([]);
+    });
+
+    it('should return a query unchanged if no template variables are provided', () => {
+      const query = createMockQuery();
+      query.queryType = AzureQueryType.LogAnalytics;
+      const templatedQuery = ctx.ds.interpolateVariablesInQueries([query], {});
+      expect(templatedQuery[0]).toEqual(query);
+    });
+
+    it('should return a query with any template variables replaced', () => {
+      const templateableProps = ['resource', 'workspace', 'query'];
+      const templateVariables = createTemplateVariables(templateableProps);
+      templateSrv.init(Array.from(templateVariables.values()).map((item) => item.templateVariable));
+      const query = createMockQuery();
+      const azureLogAnalytics: { [index: string]: any } = {};
+      for (const [path, templateVariable] of templateVariables.entries()) {
+        set(azureLogAnalytics, path, `$${templateVariable.variableName}`);
+      }
+      query.queryType = AzureQueryType.LogAnalytics;
+      query.azureLogAnalytics = {
+        ...query.azureLogAnalytics,
+        ...azureLogAnalytics,
+      };
+      const templatedQuery = ctx.ds.interpolateVariablesInQueries([query], {});
+      expect(templatedQuery[0]).toHaveProperty('datasource');
+      for (const [path, templateVariable] of templateVariables.entries()) {
+        expect(get(templatedQuery[0].azureLogAnalytics, path)).toEqual(templateVariable.templateVariable.current.value);
+      }
     });
   });
 });

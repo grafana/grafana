@@ -37,7 +37,6 @@ export const GrafanaLiveEditor = ({ onChange, query }: EditorProps) => {
     <InlineFieldRow>
       <InlineField label="Channel" labelWidth={14}>
         <Select
-          menuShouldPortal
           width={32}
           onChange={onChannelChange}
           placeholder="Select channel"

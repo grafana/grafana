@@ -29,9 +29,9 @@ load(
     'redis_integration_tests_step',
     'memcached_integration_tests_step',
     'benchmark_ldap_step',
-    'validate_scuemata_step',
-    'ensure_cuetsified_step',
+    'verify_gen_cue_step',
     'test_a11y_frontend_step',
+    'enterprise_downstream_step',
 )
 
 load(
@@ -82,7 +82,7 @@ def pr_test_frontend():
         test_frontend_step(),
     ]
     return pipeline(
-        name='pr-test-frontend', edition="oss", trigger=trigger, services=[], steps=init_steps + test_steps,
+        name='pr-test-frontend', edition="oss", trigger=get_pr_trigger(exclude_paths=['pkg/**', 'packaging/**', 'go.sum', 'go.mod']), services=[], steps=init_steps + test_steps,
     )
 
 
@@ -91,6 +91,7 @@ def pr_test_backend():
         identify_runner_step(),
         download_grabpl_step(),
         gen_version_step(ver_mode),
+        verify_gen_cue_step(),
         wire_install_step(),
     ]
     test_steps = [
@@ -102,28 +103,28 @@ def pr_test_backend():
         test_backend_integration_step(edition="oss"),
     ]
     return pipeline(
-        name='pr-test-backend', edition="oss", trigger=trigger, services=[], steps=init_steps + test_steps,
+        name='pr-test-backend', edition="oss", trigger=get_pr_trigger(include_paths=['pkg/**', 'packaging/**', '.drone.yml', 'conf/**', 'go.sum', 'go.mod', 'public/app/plugins/**/plugin.json']), services=[], steps=init_steps + test_steps,
     )
 
 
 def pr_pipelines(edition):
     services = integration_test_services(edition)
     volumes = integration_test_services_volumes()
-    variants = ['linux-amd64', 'linux-amd64-musl', 'darwin-amd64', 'windows-amd64', 'armv6', ]
+    variants = ['linux-amd64', 'linux-amd64-musl', 'darwin-amd64', 'windows-amd64',]
     init_steps = [
         identify_runner_step(),
         download_grabpl_step(),
         gen_version_step(ver_mode),
+        verify_gen_cue_step(),
         wire_install_step(),
         yarn_install_step(),
     ]
     build_steps = [
+        enterprise_downstream_step(edition=edition, ver_mode=ver_mode),
         build_backend_step(edition=edition, ver_mode=ver_mode, variants=variants),
         build_frontend_step(edition=edition, ver_mode=ver_mode),
         build_frontend_package_step(edition=edition, ver_mode=ver_mode),
         build_plugins_step(edition=edition),
-        validate_scuemata_step(),
-        ensure_cuetsified_step(),
     ]
     integration_test_steps = [
         postgres_integration_tests_step(edition=edition, ver_mode=ver_mode),
@@ -152,7 +153,28 @@ def pr_pipelines(edition):
             name='pr-build-e2e', edition=edition, trigger=trigger, services=[], steps=init_steps + build_steps,
         ), pipeline(
             name='pr-integration-tests', edition=edition, trigger=trigger, services=services,
-            steps=[download_grabpl_step(), identify_runner_step(), ] + integration_test_steps,
+            steps=[download_grabpl_step(), identify_runner_step(), verify_gen_cue_step(), wire_install_step(), ] + integration_test_steps,
             volumes=volumes,
         ), docs_pipelines(edition, ver_mode, trigger_docs())
     ]
+
+
+def get_pr_trigger(include_paths=None, exclude_paths=None):
+    paths_ex = ['docs/**', '*.md']
+    paths_in = []
+    if include_paths:
+        for path in include_paths:
+            paths_in.extend([path])
+    if exclude_paths:
+        for path in exclude_paths:
+            paths_ex.extend([path])
+    return {
+        'event': [
+            'pull_request',
+        ],
+        'paths': {
+            'exclude': paths_ex,
+            'include': paths_in,
+        },
+    }
+

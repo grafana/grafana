@@ -130,6 +130,7 @@ const sharedReducerSlice = createSlice({
       instanceState.current = current;
       instanceState.options = instanceState.options.map((option) => {
         option.value = ensureStringValues(option.value);
+        option.text = ensureStringValues(option.text);
         let selected = false;
         if (Array.isArray(current.value)) {
           for (let index = 0; index < current.value.length; index++) {

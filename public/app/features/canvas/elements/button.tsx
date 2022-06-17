@@ -27,7 +27,11 @@ class ButtonDisplay extends PureComponent<CanvasElementProps<ButtonConfig, Butto
       }
     };
 
-    return <Button onClick={onClick}>{data?.text}</Button>;
+    return (
+      <Button type="submit" onClick={onClick}>
+        {data?.text}
+      </Button>
+    );
   }
 }
 

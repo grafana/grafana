@@ -212,7 +212,6 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
       <div>
         {isSearching ? (
           <Select
-            menuShouldPortal
             allowCustomValue={allowCustomValue}
             placeholder={placeholder}
             autoFocus={!focusCascade}

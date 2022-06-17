@@ -14,6 +14,7 @@ import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 import { KioskMode } from 'app/types';
 
+import { setStarred } from '../../../../core/reducers/navBarTree';
 import { getDashboardSrv } from '../../services/DashboardSrv';
 import { DashboardModel } from '../../state';
 
@@ -21,6 +22,7 @@ import { DashNavButton } from './DashNavButton';
 import { DashNavTimeControls } from './DashNavTimeControls';
 
 const mapDispatchToProps = {
+  setStarred,
   updateTimeZoneForSession,
 };
 
@@ -60,9 +62,10 @@ export const DashNav = React.memo<Props>((props) => {
 
   const onStarDashboard = () => {
     const dashboardSrv = getDashboardSrv();
-    const { dashboard } = props;
+    const { dashboard, setStarred } = props;
 
     dashboardSrv.starDashboard(dashboard.id, dashboard.meta.isStarred).then((newState: any) => {
+      setStarred({ id: dashboard.uid, title: dashboard.title, url: dashboard.meta.url ?? '', isStarred: newState });
       dashboard.meta.isStarred = newState;
       forceUpdate();
     });

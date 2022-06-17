@@ -14,17 +14,20 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func setupTestEnv(t testing.TB) *OSSAccessControlService {
 	t.Helper()
+	cfg := setting.NewCfg()
+	cfg.RBACEnabled = true
 
 	ac := &OSSAccessControlService{
-		features:       featuremgmt.WithFeatures(featuremgmt.FlagAccesscontrol),
+		cfg:            cfg,
 		log:            log.New("accesscontrol"),
 		registrations:  accesscontrol.RegistrationList{},
 		scopeResolvers: accesscontrol.NewScopeResolvers(),
-		provider:       database.ProvideService(sqlstore.InitTestDB(t)),
+		store:          database.ProvideService(sqlstore.InitTestDB(t)),
 		roles:          accesscontrol.BuildBasicRoleDefinitions(),
 	}
 	require.NoError(t, ac.RegisterFixedRoles(context.Background()))
@@ -32,10 +35,10 @@ func setupTestEnv(t testing.TB) *OSSAccessControlService {
 }
 
 // extractRawPermissionsHelper extracts action and scope fields only from a permission slice
-func extractRawPermissionsHelper(perms []*accesscontrol.Permission) []*accesscontrol.Permission {
-	res := make([]*accesscontrol.Permission, len(perms))
+func extractRawPermissionsHelper(perms []accesscontrol.Permission) []accesscontrol.Permission {
+	res := make([]accesscontrol.Permission, len(perms))
 	for i, p := range perms {
-		res[i] = &accesscontrol.Permission{Action: p.Action, Scope: p.Scope}
+		res[i] = accesscontrol.Permission{Action: p.Action, Scope: p.Scope}
 	}
 	return res
 }
@@ -133,8 +136,13 @@ func TestUsageMetrics(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			if tt.enabled {
+				cfg.RBACEnabled = true
+			}
 			s, errInitAc := ProvideService(
-				featuremgmt.WithFeatures("accesscontrol", tt.enabled),
+				featuremgmt.WithFeatures(),
+				cfg,
 				database.ProvideService(sqlstore.InitTestDB(t)),
 				routing.NewRouteRegister(),
 			)
@@ -413,8 +421,8 @@ func TestOSSAccessControlService_GetUserPermissions(t *testing.T) {
 
 			rawUserPerms := extractRawPermissionsHelper(userPerms)
 
-			assert.Contains(t, rawUserPerms, &tt.wantPerm, "Expected resolution of raw permission")
-			assert.NotContains(t, rawUserPerms, &tt.rawPerm, "Expected raw permission to have been resolved")
+			assert.Contains(t, rawUserPerms, tt.wantPerm, "Expected resolution of raw permission")
+			assert.NotContains(t, rawUserPerms, tt.rawPerm, "Expected raw permission to have been resolved")
 		})
 	}
 }

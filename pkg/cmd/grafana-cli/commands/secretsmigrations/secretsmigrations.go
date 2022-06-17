@@ -1,6 +1,7 @@
 package secretsmigrations
 
 import (
+	"encoding/base64"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -14,6 +15,7 @@ type simpleSecret struct {
 type b64Secret struct {
 	simpleSecret
 	hasUpdatedColumn bool
+	encoding         *base64.Encoding
 }
 
 type jsonSecret struct {

@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"math/rand"
 	"net/url"
-	"runtime"
 	"sync"
 	"testing"
 	"time"
@@ -22,7 +21,9 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
@@ -440,10 +441,22 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 				// duration metric has 0 values because of mocked clock that do not advance
 				expectedMetric := fmt.Sprintf(
 					`# HELP grafana_alerting_rule_evaluation_duration_seconds The duration for a rule to execute.
-        	            	# TYPE grafana_alerting_rule_evaluation_duration_seconds summary
-        	            	grafana_alerting_rule_evaluation_duration_seconds{org="%[1]d",quantile="0.5"} 0
-        	            	grafana_alerting_rule_evaluation_duration_seconds{org="%[1]d",quantile="0.9"} 0
-        	            	grafana_alerting_rule_evaluation_duration_seconds{org="%[1]d",quantile="0.99"} 0
+        	            	# TYPE grafana_alerting_rule_evaluation_duration_seconds histogram
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.005"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.01"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.025"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.05"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.1"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.25"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.5"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="1"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="2.5"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="5"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="10"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="25"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="50"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="100"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="+Inf"} 1
         	            	grafana_alerting_rule_evaluation_duration_seconds_sum{org="%[1]d"} 0
         	            	grafana_alerting_rule_evaluation_duration_seconds_count{org="%[1]d"} 1
 							# HELP grafana_alerting_rule_evaluation_failures_total The total number of rule evaluation failures.
@@ -817,112 +830,6 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 	})
 }
 
-func TestSchedule_alertRuleInfo(t *testing.T) {
-	t.Run("when rule evaluation is not stopped", func(t *testing.T) {
-		t.Run("Update should send to updateCh", func(t *testing.T) {
-			r := newAlertRuleInfo(context.Background())
-			resultCh := make(chan bool)
-			go func() {
-				resultCh <- r.update()
-			}()
-			select {
-			case <-r.updateCh:
-				require.True(t, <-resultCh)
-			case <-time.After(5 * time.Second):
-				t.Fatal("No message was received on update channel")
-			}
-		})
-		t.Run("eval should send to evalCh", func(t *testing.T) {
-			r := newAlertRuleInfo(context.Background())
-			expected := time.Now()
-			resultCh := make(chan bool)
-			version := rand.Int63()
-			go func() {
-				resultCh <- r.eval(expected, version)
-			}()
-			select {
-			case ctx := <-r.evalCh:
-				require.Equal(t, version, ctx.version)
-				require.Equal(t, expected, ctx.scheduledAt)
-				require.True(t, <-resultCh)
-			case <-time.After(5 * time.Second):
-				t.Fatal("No message was received on eval channel")
-			}
-		})
-		t.Run("eval should exit when context is cancelled", func(t *testing.T) {
-			r := newAlertRuleInfo(context.Background())
-			resultCh := make(chan bool)
-			go func() {
-				resultCh <- r.eval(time.Now(), rand.Int63())
-			}()
-			runtime.Gosched()
-			r.stop()
-			select {
-			case result := <-resultCh:
-				require.False(t, result)
-			case <-time.After(5 * time.Second):
-				t.Fatal("No message was received on eval channel")
-			}
-		})
-	})
-	t.Run("when rule evaluation is stopped", func(t *testing.T) {
-		t.Run("Update should do nothing", func(t *testing.T) {
-			r := newAlertRuleInfo(context.Background())
-			r.stop()
-			require.False(t, r.update())
-		})
-		t.Run("eval should do nothing", func(t *testing.T) {
-			r := newAlertRuleInfo(context.Background())
-			r.stop()
-			require.False(t, r.eval(time.Now(), rand.Int63()))
-		})
-		t.Run("stop should do nothing", func(t *testing.T) {
-			r := newAlertRuleInfo(context.Background())
-			r.stop()
-			r.stop()
-		})
-	})
-	t.Run("should be thread-safe", func(t *testing.T) {
-		r := newAlertRuleInfo(context.Background())
-		wg := sync.WaitGroup{}
-		go func() {
-			for {
-				select {
-				case <-r.evalCh:
-					time.Sleep(time.Microsecond)
-				case <-r.updateCh:
-					time.Sleep(time.Microsecond)
-				case <-r.ctx.Done():
-					return
-				}
-			}
-		}()
-
-		for i := 0; i < 10; i++ {
-			wg.Add(1)
-			go func() {
-				for i := 0; i < 20; i++ {
-					max := 3
-					if i <= 10 {
-						max = 2
-					}
-					switch rand.Intn(max) + 1 {
-					case 1:
-						r.update()
-					case 2:
-						r.eval(time.Now(), rand.Int63())
-					case 3:
-						r.stop()
-					}
-				}
-				wg.Done()
-			}()
-		}
-
-		wg.Wait()
-	})
-}
-
 func TestSchedule_UpdateAlertRule(t *testing.T) {
 	t.Run("when rule exists", func(t *testing.T) {
 		t.Run("it should call Update", func(t *testing.T) {
@@ -964,7 +871,9 @@ func TestSchedule_DeleteAlertRule(t *testing.T) {
 			info, _ := sch.registry.getOrCreateInfo(context.Background(), key)
 			sch.DeleteAlertRule(key)
 			require.False(t, info.update())
-			require.False(t, info.eval(time.Now(), 1))
+			success, dropped := info.eval(time.Now(), 1)
+			require.False(t, success)
+			require.Nilf(t, dropped, "expected no dropped evaluations but got one")
 			require.False(t, sch.registry.exists(key))
 		})
 		t.Run("should remove controller from registry", func(t *testing.T) {
@@ -974,7 +883,9 @@ func TestSchedule_DeleteAlertRule(t *testing.T) {
 			info.stop()
 			sch.DeleteAlertRule(key)
 			require.False(t, info.update())
-			require.False(t, info.eval(time.Now(), 1))
+			success, dropped := info.eval(time.Now(), 1)
+			require.False(t, success)
+			require.Nilf(t, dropped, "expected no dropped evaluations but got one")
 			require.False(t, sch.registry.exists(key))
 		})
 	})
@@ -1032,7 +943,7 @@ func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, ac
 		Metrics:                 m.GetSchedulerMetrics(),
 		AdminConfigPollInterval: 10 * time.Minute, // do not poll in unit tests.
 	}
-	st := state.NewManager(schedCfg.Logger, m.GetStateMetrics(), nil, rs, is, mockstore.NewSQLStoreMock())
+	st := state.NewManager(schedCfg.Logger, m.GetStateMetrics(), nil, rs, is, mockstore.NewSQLStoreMock(), &dashboards.FakeDashboardService{}, &image.NoopImageService{})
 	appUrl := &url.URL{
 		Scheme: "http",
 		Host:   "localhost",

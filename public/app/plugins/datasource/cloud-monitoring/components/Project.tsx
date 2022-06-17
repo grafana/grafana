@@ -37,7 +37,6 @@ export function Project({ refId, projectName, datasource, onChange, templateVari
   return (
     <QueryEditorRow label="Project" htmlFor={`${refId}-project`}>
       <Select
-        menuShouldPortal
         width={SELECT_WIDTH}
         allowCustomValue
         formatCreateLabel={(v) => `Use project: ${v}`}

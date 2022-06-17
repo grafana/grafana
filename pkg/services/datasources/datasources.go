@@ -40,15 +40,15 @@ type DataSourceService interface {
 	DecryptedValues(ctx context.Context, ds *models.DataSource) (map[string]string, error)
 
 	// DecryptedValue decrypts the encrypted datasource secureJSONData identified by key
-	// and returns the decryped value.
+	// and returns the decrypted value.
 	DecryptedValue(ctx context.Context, ds *models.DataSource, key string) (string, bool, error)
 
 	// DecryptedBasicAuthPassword decrypts the encrypted datasource basic authentication
-	// password and returns the decryped value.
+	// password and returns the decrypted value.
 	DecryptedBasicAuthPassword(ctx context.Context, ds *models.DataSource) (string, error)
 
 	// DecryptedPassword decrypts the encrypted datasource password and returns the
-	// decryped value.
+	// decrypted value.
 	DecryptedPassword(ctx context.Context, ds *models.DataSource) (string, error)
 }
 

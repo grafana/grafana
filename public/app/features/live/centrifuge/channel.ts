@@ -90,7 +90,7 @@ export class CentrifugeLiveChannel<T = any> {
       },
       error: (ctx: SubscribeErrorContext) => {
         this.currentStatus.timestamp = Date.now();
-        this.currentStatus.error = ctx.error;
+        this.currentStatus.error = ctx.message;
         this.sendStatus();
       },
       subscribe: (ctx: SubscribeSuccessContext) => {

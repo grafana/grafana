@@ -7,10 +7,12 @@ import { timeIntervalToString } from '../utils/alertmanager';
 import { initialAsyncRequestState } from '../utils/redux';
 
 import { useAlertManagerSourceName } from './useAlertManagerSourceName';
+import { useAlertManagersByPermission } from './useAlertManagerSources';
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 
 export function useMuteTimingOptions(): Array<SelectableValue<string>> {
-  const [alertManagerSourceName] = useAlertManagerSourceName();
+  const alertManagers = useAlertManagersByPermission('notification');
+  const [alertManagerSourceName] = useAlertManagerSourceName(alertManagers);
   const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
 
   return useMemo(() => {

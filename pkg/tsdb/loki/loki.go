@@ -16,13 +16,15 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"go.opentelemetry.io/otel/attribute"
 )
 
 type Service struct {
-	im     instancemgmt.InstanceManager
-	plog   log.Logger
-	tracer tracing.Tracer
+	im       instancemgmt.InstanceManager
+	features featuremgmt.FeatureToggles
+	plog     log.Logger
+	tracer   tracing.Tracer
 }
 
 var (
@@ -31,11 +33,12 @@ var (
 	_ backend.CallResourceHandler = (*Service)(nil)
 )
 
-func ProvideService(httpClientProvider httpclient.Provider, tracer tracing.Tracer) *Service {
+func ProvideService(httpClientProvider httpclient.Provider, features featuremgmt.FeatureToggles, tracer tracing.Tracer) *Service {
 	return &Service{
-		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
-		plog:   log.New("tsdb.loki"),
-		tracer: tracer,
+		im:       datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
+		features: features,
+		plog:     log.New("tsdb.loki"),
+		tracer:   tracer,
 	}
 }
 
@@ -91,7 +94,46 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 	}
 }
 
+// in the CallResource API, request-headers are in a map where the value is an array-of-strings,
+// so we need a helper function that can extract a single string-value from an array-of-strings.
+// i only deal with two cases:
+// - zero-length array
+// - first-item of the array
+// i do not handle the case where there are multiple items in the array, i do not know
+// if that can even happen ever, for the headers that we are interested in.
+func arrayHeaderFirstValue(values []string) string {
+	if len(values) == 0 {
+		return ""
+	}
+
+	// NOTE: we assume there never is a second item in the http-header-values-array
+	return values[0]
+}
+
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	dsInfo, err := s.getDSInfo(req.PluginContext)
+	if err != nil {
+		return err
+	}
+
+	return callResource(ctx, req, sender, dsInfo, s.plog)
+}
+
+func getAuthHeadersForCallResource(headers map[string][]string) map[string]string {
+	data := make(map[string]string)
+
+	if auth := arrayHeaderFirstValue(headers["Authorization"]); auth != "" {
+		data["Authorization"] = auth
+	}
+
+	if cookie := arrayHeaderFirstValue(headers["Cookie"]); cookie != "" {
+		data["Cookie"] = cookie
+	}
+
+	return data
+}
+
+func callResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender, dsInfo *datasourceInfo, plog log.Logger) error {
 	url := req.URL
 
 	// a very basic is-this-url-valid check
@@ -105,12 +147,7 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	}
 	lokiURL := fmt.Sprintf("/loki/api/v1/%s", url)
 
-	dsInfo, err := s.getDSInfo(req.PluginContext)
-	if err != nil {
-		return err
-	}
-
-	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, s.plog)
+	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, plog, getAuthHeadersForCallResource(req.Headers))
 	bytes, err := api.RawQuery(ctx, lokiURL)
 
 	if err != nil {
@@ -127,14 +164,33 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	result := backend.NewQueryDataResponse()
-
 	dsInfo, err := s.getDSInfo(req.PluginContext)
 	if err != nil {
+		result := backend.NewQueryDataResponse()
 		return result, err
 	}
 
-	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, s.plog)
+	return queryData(ctx, req, dsInfo, s.plog, s.tracer)
+}
+
+func getAuthHeadersForQueryData(headers map[string]string) map[string]string {
+	data := make(map[string]string)
+
+	if auth := headers["Authorization"]; auth != "" {
+		data["Authorization"] = auth
+	}
+
+	if cookie := headers["Cookie"]; cookie != "" {
+		data["Cookie"] = cookie
+	}
+
+	return data
+}
+
+func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo, plog log.Logger, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
+	result := backend.NewQueryDataResponse()
+
+	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, plog, getAuthHeadersForQueryData(req.Headers))
 
 	queries, err := parseQuery(req)
 	if err != nil {
@@ -142,8 +198,8 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 
 	for _, query := range queries {
-		s.plog.Debug("Sending query", "start", query.Start, "end", query.End, "step", query.Step, "query", query.Expr)
-		_, span := s.tracer.Start(ctx, "alerting.loki")
+		plog.Debug("Sending query", "start", query.Start, "end", query.End, "step", query.Step, "query", query.Expr)
+		_, span := tracer.Start(ctx, "alerting.loki")
 		span.SetAttributes("expr", query.Expr, attribute.Key("expr").String(query.Expr))
 		span.SetAttributes("start_unixnano", query.Start, attribute.Key("start_unixnano").Int64(query.Start.UnixNano()))
 		span.SetAttributes("stop_unixnano", query.End, attribute.Key("stop_unixnano").Int64(query.End.UnixNano()))
@@ -166,12 +222,21 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 // we extracted this part of the functionality to make it easy to unit-test it
 func runQuery(ctx context.Context, api *LokiAPI, query *lokiQuery) (data.Frames, error) {
-	value, err := api.DataQuery(ctx, *query)
+	frames, err := api.DataQuery(ctx, *query)
 	if err != nil {
 		return data.Frames{}, err
 	}
 
-	return parseResponse(value, query)
+	for _, frame := range frames {
+		if err = adjustFrame(frame, query); err != nil {
+			return data.Frames{}, err
+		}
+		if err != nil {
+			return data.Frames{}, err
+		}
+	}
+
+	return frames, nil
 }
 
 func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*datasourceInfo, error) {

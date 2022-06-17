@@ -4,10 +4,11 @@ import React from 'react';
 import { Provider } from 'react-redux';
 import { byTestId, byText } from 'testing-library-selector';
 
+import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 
-import { mockCombinedRule, mockDataSource } from '../../mocks';
+import { disableRBAC, mockCombinedRule, mockDataSource } from '../../mocks';
 
 import { RulesGroup } from './RulesGroup';
 
@@ -16,7 +17,9 @@ jest.mock('../../hooks/useHasRuler', () => ({
   useHasRuler: () => hasRulerMock,
 }));
 
-beforeEach(() => hasRulerMock.mockReset());
+beforeEach(() => {
+  hasRulerMock.mockReset();
+});
 
 const ui = {
   editGroupButton: byTestId('edit-group'),
@@ -61,6 +64,10 @@ describe('Rules group tests', () => {
   });
 
   describe('When the datasource is not grafana', () => {
+    beforeEach(() => {
+      contextSrv.isEditor = true;
+    });
+
     const group: CombinedRuleGroup = {
       name: 'TestGroup',
       rules: [mockCombinedRule()],
@@ -71,6 +78,8 @@ describe('Rules group tests', () => {
       rulesSource: mockDataSource(),
       groups: [group],
     };
+
+    disableRBAC();
 
     it('When ruler enabled should display delete and edit group buttons', () => {
       // Arrange

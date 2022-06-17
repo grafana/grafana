@@ -55,7 +55,7 @@ export const PanelTypeFilter = ({ onChange: propsOnChange, maxMenuHeight }: Prop
         <Button
           size="xs"
           icon="trash-alt"
-          variant="link"
+          fill="text"
           className={styles.clear}
           onClick={() => onChange([])}
           aria-label="Clear types"
@@ -63,7 +63,7 @@ export const PanelTypeFilter = ({ onChange: propsOnChange, maxMenuHeight }: Prop
           Clear types
         </Button>
       )}
-      <MultiSelect menuShouldPortal {...selectOptions} prefix={<Icon name="filter" />} aria-label="Panel Type filter" />
+      <MultiSelect {...selectOptions} prefix={<Icon name="filter" />} aria-label="Panel Type filter" />
     </div>
   );
 };

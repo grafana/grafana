@@ -1,4 +1,5 @@
 import { render, waitFor, fireEvent, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -8,8 +9,21 @@ import { FileUpload } from './FileUpload';
 describe('FileUpload', () => {
   it('should render upload button with default text and no file name', () => {
     render(<FileUpload onFileUpload={() => {}} />);
-    expect(screen.getByText('Upload file')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Upload file' })).toBeInTheDocument();
     expect(screen.queryByLabelText('File name')).toBeNull();
+  });
+
+  it('clicking the button should trigger the input', async () => {
+    const mockInputOnClick = jest.fn();
+    const { getByTestId } = render(<FileUpload onFileUpload={() => {}} />);
+    const button = screen.getByRole('button', { name: 'Upload file' });
+    const input = getByTestId(selectors.components.FileUpload.inputField);
+
+    // attach a click listener to the input
+    input.onclick = mockInputOnClick;
+
+    await userEvent.click(button);
+    expect(mockInputOnClick).toHaveBeenCalled();
   });
 
   it('should display uploaded file name', async () => {

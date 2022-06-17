@@ -126,7 +126,6 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
           render={({ field: { onChange, ref, ...field } }) => (
             <Select
               disabled={readOnly}
-              menuShouldPortal
               {...field}
               options={option.selectOptions ?? undefined}
               invalid={invalid}

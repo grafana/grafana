@@ -133,6 +133,10 @@ const (
 	Error
 )
 
+func (s State) IsValid() bool {
+	return s <= Error
+}
+
 func (s State) String() string {
 	return [...]string{"Normal", "Alerting", "Pending", "NoData", "Error"}[s]
 }

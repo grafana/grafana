@@ -44,7 +44,7 @@ type MultiOrgAlertmanager struct {
 	peer         ClusterPeer
 	settleCancel context.CancelFunc
 
-	configStore store.AlertingStore
+	configStore AlertingStore
 	orgStore    store.OrgStore
 	kvStore     kvstore.KVStore
 
@@ -54,7 +54,7 @@ type MultiOrgAlertmanager struct {
 	ns      notifications.Service
 }
 
-func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore store.AlertingStore, orgStore store.OrgStore,
+func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore AlertingStore, orgStore store.OrgStore,
 	kvStore kvstore.KVStore, provStore provisioning.ProvisioningStore, decryptFn channels.GetDecryptedValueFn,
 	m *metrics.MultiOrgAlertmanager, ns notifications.Service, l log.Logger, s secrets.Service,
 ) (*MultiOrgAlertmanager, error) {

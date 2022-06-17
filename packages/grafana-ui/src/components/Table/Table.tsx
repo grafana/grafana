@@ -183,6 +183,7 @@ export const Table: FC<Props> = memo((props: Props) => {
       disableResizing: !resizable,
       stateReducer: stateReducer,
       initialState: getInitialState(initialSortBy, memoizedColumns),
+      autoResetFilters: false,
       sortTypes: {
         number: sortNumber, // the builtin number type on react-table does not handle NaN values
         'alphanumeric-insensitive': sortCaseInsensitive, // should be replace with the builtin string when react-table is upgraded, see https://github.com/tannerlinsley/react-table/pull/3235
@@ -282,7 +283,7 @@ export const Table: FC<Props> = memo((props: Props) => {
     <div {...getTableProps()} className={tableStyles.table} aria-label={ariaLabel} role="table">
       <CustomScrollbar hideVerticalTrack={true}>
         <div className={tableStyles.tableContentWrapper(totalColumnsWidth)}>
-          {!noHeader && <HeaderRow data={data} headerGroups={headerGroups} showTypeIcons={showTypeIcons} />}
+          {!noHeader && <HeaderRow headerGroups={headerGroups} showTypeIcons={showTypeIcons} />}
           {itemCount > 0 ? (
             <FixedSizeList
               height={listHeight}

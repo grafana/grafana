@@ -119,10 +119,10 @@ export const coerceESVersion = (version: string | number): string => {
   }
 };
 
-export const isDeprecatedVersion = (version: string): boolean => {
+export const isSupportedVersion = (version: string): boolean => {
   if (gte(version, '7.10.0')) {
-    return false;
+    return true;
   }
 
-  return true;
+  return false;
 };

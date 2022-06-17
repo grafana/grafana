@@ -3,10 +3,10 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
+import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { byLabelText, byPlaceholderText, byRole, byTestId, byText } from 'testing-library-selector';
 
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
-import { selectOptionInTest } from '@grafana/ui';
 import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
 import { contextSrv } from 'app/core/services/context_srv';
 import store from 'app/core/store';
@@ -137,9 +137,7 @@ describe('Receivers', () => {
     mocks.contextSrv.hasPermission.mockImplementation((action) => {
       const permissions = [
         AccessControlAction.AlertingNotificationsRead,
-        AccessControlAction.AlertingNotificationsCreate,
-        AccessControlAction.AlertingNotificationsUpdate,
-        AccessControlAction.AlertingNotificationsDelete,
+        AccessControlAction.AlertingNotificationsWrite,
         AccessControlAction.AlertingNotificationsExternalRead,
         AccessControlAction.AlertingNotificationsExternalWrite,
       ];

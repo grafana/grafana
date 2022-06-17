@@ -11,7 +11,7 @@ import { configureStore } from 'app/store/configureStore';
 
 import MuteTimings from './MuteTimings';
 import { fetchAlertManagerConfig, updateAlertManagerConfig } from './api/alertmanager';
-import { mockDataSource, MockDataSourceSrv } from './mocks';
+import { disableRBAC, mockDataSource, MockDataSourceSrv } from './mocks';
 import { DataSourceType } from './utils/datasource';
 
 jest.mock('./api/alertmanager');
@@ -113,6 +113,7 @@ describe('Mute timings', () => {
   });
 
   it('creates a new mute timing', async () => {
+    disableRBAC();
     await renderMuteTimings();
 
     await waitFor(() => expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalled());

@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -102,6 +103,6 @@ func contextProvider(tc *testContext) web.Handler {
 			SkipCache:    true,
 			Logger:       log.New("test"),
 		}
-		c.Map(reqCtx)
+		c.Req = c.Req.WithContext(ctxkey.Set(c.Req.Context(), reqCtx))
 	}
 }

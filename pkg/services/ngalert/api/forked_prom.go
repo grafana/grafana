@@ -25,7 +25,7 @@ func NewForkedProm(datasourceCache datasources.CacheService, proxy *LotexProm, g
 }
 
 func (f *ForkedPrometheusApi) forkRouteGetAlertStatuses(ctx *models.ReqContext) response.Response {
-	t, err := backendType(ctx, f.DatasourceCache)
+	t, err := backendTypeByUID(ctx, f.DatasourceCache)
 	if err != nil {
 		return ErrResp(400, err, "")
 	}
@@ -39,7 +39,7 @@ func (f *ForkedPrometheusApi) forkRouteGetAlertStatuses(ctx *models.ReqContext) 
 }
 
 func (f *ForkedPrometheusApi) forkRouteGetRuleStatuses(ctx *models.ReqContext) response.Response {
-	t, err := backendType(ctx, f.DatasourceCache)
+	t, err := backendTypeByUID(ctx, f.DatasourceCache)
 	if err != nil {
 		return ErrResp(400, err, "")
 	}

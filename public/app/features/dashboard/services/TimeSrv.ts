@@ -169,14 +169,9 @@ export class TimeSrv {
       }
     }
 
-    let paramsJSON: Record<string, string> = {};
-    params.forEach(function (value, key) {
-      paramsJSON[key] = value;
-    });
-
     // but if refresh explicitly set then use that
     this.refresh = getRefreshFromUrl({
-      params: paramsJSON,
+      urlRefresh: params.get('refresh'),
       currentRefresh: this.refresh,
       refreshIntervals: Array.isArray(this.timeModel?.timepicker?.refresh_intervals)
         ? this.timeModel?.timepicker?.refresh_intervals
@@ -203,7 +198,7 @@ export class TimeSrv {
       if (from !== urlRange.from || to !== urlRange.to) {
         // issue update
         this.initTimeFromUrl();
-        this.setTime(this.time, true);
+        this.setTime(this.time, false);
       }
     } else if (this.timeHasChangedSinceLoad()) {
       this.setTime(this.timeAtLoad, true);

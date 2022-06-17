@@ -31,7 +31,6 @@ export default class DisabledPermissionListItem extends Component<Props, any> {
               onChange={() => {}}
               disabled={true}
               value={currentPermissionLevel}
-              menuShouldPortal
             />
           </div>
         </td>

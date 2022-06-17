@@ -3,12 +3,14 @@ import { useObservable } from 'react-use';
 import { Subject } from 'rxjs';
 
 import { SelectableValue, StandardEditorProps } from '@grafana/data';
-import { Field, InlineField, InlineFieldRow, Select, VerticalGroup } from '@grafana/ui';
+import { Field, HorizontalGroup, InlineField, InlineFieldRow, Select, VerticalGroup } from '@grafana/ui';
+import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 import { HorizontalConstraint, Placement, VerticalConstraint } from 'app/features/canvas';
-import { NumberInput } from 'app/features/dimensions/editors/NumberInput';
 
 import { PanelOptions } from '../models.gen';
 
+import { ConstraintSelectionBox } from './ConstraintSelectionBox';
+import { QuickPositioning } from './QuickPositioning';
 import { CanvasEditorOptions } from './elementEditor';
 
 const places: Array<keyof Placement> = ['top', 'left', 'bottom', 'right', 'width', 'height'];
@@ -46,36 +48,63 @@ export const PlacementEditor: FC<StandardEditorProps<any, CanvasEditorOptions, P
   const { options } = element;
   const { placement, constraint: layout } = options;
 
-  const onHorizontalConstraintChange = (h: SelectableValue<HorizontalConstraint>) => {
-    element.options.constraint!.horizontal = h.value;
-    element.setPlacementFromConstraint();
-    settings.scene.revId++;
-    settings.scene.save(true);
+  const reselectElementAfterChange = () => {
+    setTimeout(() => {
+      settings.scene.select({ targets: [element.div!] });
+    });
   };
 
-  const onVerticalConstraintChange = (v: SelectableValue<VerticalConstraint>) => {
-    element.options.constraint!.vertical = v.value;
+  const onHorizontalConstraintSelect = (h: SelectableValue<HorizontalConstraint>) => {
+    onHorizontalConstraintChange(h.value!);
+  };
+
+  const onHorizontalConstraintChange = (h: HorizontalConstraint) => {
+    element.options.constraint!.horizontal = h;
     element.setPlacementFromConstraint();
     settings.scene.revId++;
     settings.scene.save(true);
+    reselectElementAfterChange();
+  };
+
+  const onVerticalConstraintSelect = (v: SelectableValue<VerticalConstraint>) => {
+    onVerticalConstraintChange(v.value!);
+  };
+
+  const onVerticalConstraintChange = (v: VerticalConstraint) => {
+    element.options.constraint!.vertical = v;
+    element.setPlacementFromConstraint();
+    settings.scene.revId++;
+    settings.scene.save(true);
+    reselectElementAfterChange();
   };
 
   const onPositionChange = (value: number | undefined, placement: keyof Placement) => {
     element.options.placement![placement] = value ?? element.options.placement![placement];
     element.applyLayoutStylesToDiv();
-    settings.scene.clearCurrentSelection();
+    settings.scene.clearCurrentSelection(true);
+    reselectElementAfterChange();
   };
+
+  const constraint = element.tempConstraint ?? layout ?? {};
 
   return (
     <div>
-      <VerticalGroup>
-        <Select options={verticalOptions} onChange={onVerticalConstraintChange} value={layout?.vertical} />
-        <Select
-          options={horizontalOptions}
-          onChange={onHorizontalConstraintChange}
-          value={options.constraint?.horizontal}
-        />
-      </VerticalGroup>
+      <QuickPositioning onPositionChange={onPositionChange} settings={settings} element={element} />
+      <br />
+      <Field label="Constraints">
+        <HorizontalGroup>
+          <ConstraintSelectionBox
+            onVerticalConstraintChange={onVerticalConstraintChange}
+            onHorizontalConstraintChange={onHorizontalConstraintChange}
+            currentConstraints={constraint}
+          />
+          <VerticalGroup>
+            <Select options={verticalOptions} onChange={onVerticalConstraintSelect} value={constraint.vertical} />
+            <Select options={horizontalOptions} onChange={onHorizontalConstraintSelect} value={constraint.horizontal} />
+          </VerticalGroup>
+        </HorizontalGroup>
+      </Field>
+
       <br />
 
       <Field label="Position">

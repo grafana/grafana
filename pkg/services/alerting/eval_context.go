@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -37,11 +38,13 @@ type EvalContext struct {
 
 	Ctx context.Context
 
-	Store AlertStore
+	Store            AlertStore
+	dashboardService dashboards.DashboardService
 }
 
 // NewEvalContext is the EvalContext constructor.
-func NewEvalContext(alertCtx context.Context, rule *Rule, requestValidator models.PluginRequestValidator, sqlStore AlertStore) *EvalContext {
+func NewEvalContext(alertCtx context.Context, rule *Rule, requestValidator models.PluginRequestValidator,
+	sqlStore AlertStore, dashboardService dashboards.DashboardService) *EvalContext {
 	return &EvalContext{
 		Ctx:              alertCtx,
 		StartTime:        time.Now(),
@@ -53,6 +56,7 @@ func NewEvalContext(alertCtx context.Context, rule *Rule, requestValidator model
 		PrevAlertState:   rule.State,
 		RequestValidator: requestValidator,
 		Store:            sqlStore,
+		dashboardService: dashboardService,
 	}
 }
 
@@ -112,7 +116,7 @@ func (c *EvalContext) GetDashboardUID() (*models.DashboardRef, error) {
 	}
 
 	uidQuery := &models.GetDashboardRefByIdQuery{Id: c.Rule.DashboardID}
-	if err := c.Store.GetDashboardUIDById(c.Ctx, uidQuery); err != nil {
+	if err := c.dashboardService.GetDashboardUIDById(c.Ctx, uidQuery); err != nil {
 		return nil, err
 	}
 

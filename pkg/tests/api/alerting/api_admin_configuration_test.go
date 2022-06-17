@@ -12,7 +12,6 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -22,8 +21,6 @@ import (
 
 func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 	const disableOrgID int64 = 3
-	_, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting:          true,
 		EnableUnifiedAlerting:          true,
@@ -152,8 +149,8 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 
 	// Now, let's set an alert that should fire as quickly as possible.
 	{
-		// create the namespace we'll save our alerts to
-		_, err := createFolder(t, s, 0, "default")
+		// Create the namespace we'll save our alerts to
+		err := createFolder(t, "default", grafanaListedAddr, "grafana", "password")
 		require.NoError(t, err)
 		interval, err := model.ParseDuration("10s")
 		require.NoError(t, err)

@@ -1,7 +1,6 @@
 import { keys as _keys } from 'lodash';
 
 import { getDashboardModel } from '../../../../test/helpers/getDashboardModel';
-import { expect } from '../../../../test/lib/common';
 import { variableAdapters } from '../../variables/adapters';
 import { createAdHocVariableAdapter } from '../../variables/adhoc/adapter';
 import { createCustomVariableAdapter } from '../../variables/custom/adapter';
@@ -368,9 +367,18 @@ describe('DashboardModel', () => {
       dashboard.toggleRow(dashboard.panels[1]);
     });
 
+    it('should not impact hasUnsavedChanges', () => {
+      expect(dashboard.hasUnsavedChanges()).toBe(false);
+    });
+
+    it('should impact hasUnsavedChanges if panels have changes when row is collapsed', () => {
+      dashboard.panels[0].setProperty('title', 'new title');
+      expect(dashboard.hasUnsavedChanges()).toBe(true);
+    });
+
     it('should remove panels and put them inside collapsed row', () => {
       expect(dashboard.panels.length).toBe(3);
-      expect(dashboard.panels[1].panels.length).toBe(2);
+      expect(dashboard.panels[1].panels?.length).toBe(2);
     });
 
     describe('and when removing row and its panels', () => {

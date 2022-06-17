@@ -136,12 +136,7 @@ export const ThemeDemo = () => {
               <Input placeholder="Placeholder" value="Disabled value" />
             </Field>
             <Field label="Select">
-              <Select
-                menuShouldPortal
-                options={selectOptions}
-                value={selectValue}
-                onChange={(v) => setSelectValue(v?.value!)}
-              />
+              <Select options={selectOptions} value={selectValue} onChange={(v) => setSelectValue(v?.value!)} />
             </Field>
             <Field label="Radio label">
               <RadioButtonGroup options={radioOptions} value={radioValue} onChange={setRadioValue} />

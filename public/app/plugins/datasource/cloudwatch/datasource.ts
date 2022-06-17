@@ -12,6 +12,7 @@ import {
   DataSourceInstanceSettings,
   DataSourceWithLogsContextSupport,
   dateMath,
+  dateTimeFormat,
   FieldType,
   LoadingState,
   LogRowModel,
@@ -22,14 +23,13 @@ import {
 import { DataSourceWithBackend, FetchError, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import { notifyApp } from 'app/core/actions';
+import { config } from 'app/core/config';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { VariableWithMultiSupport } from 'app/features/variables/types';
 import { store } from 'app/store/store';
 import { AppNotificationTimeout } from 'app/types';
-
-import config from '../../../core/config';
 
 import { CloudWatchAnnotationSupport } from './annotationSupport';
 import { SQLCompletionItemProvider } from './cloudwatch-sql/completion/CompletionItemProvider';
@@ -233,6 +233,7 @@ export class CloudWatchDatasource
               options,
               this.timeSrv.timeRange(),
               this.replace.bind(this),
+              this.getVariableValue.bind(this),
               this.getActualRegion.bind(this),
               this.tracingDataSourceUid
             );
@@ -290,11 +291,17 @@ export class CloudWatchDatasource
     metricQueries: CloudWatchMetricsQuery[],
     options: DataQueryRequest<CloudWatchQuery>
   ): Observable<DataQueryResponse> => {
+    const timezoneUTCOffset = dateTimeFormat(Date.now(), {
+      timeZone: options.timezone,
+      format: 'Z',
+    }).replace(':', '');
+
     const validMetricsQueries = metricQueries.filter(this.filterQuery).map((q: CloudWatchMetricsQuery): MetricQuery => {
       const migratedQuery = migrateMetricQuery(q);
       const migratedAndIterpolatedQuery = this.replaceMetricQueryVars(migratedQuery, options);
 
       return {
+        timezoneUTCOffset,
         intervalMs: options.intervalMs,
         maxDataPoints: options.maxDataPoints,
         ...migratedAndIterpolatedQuery,
@@ -642,9 +649,12 @@ export class CloudWatchDatasource
         for (const fieldName of fieldsToReplace) {
           if (query.hasOwnProperty(fieldName)) {
             if (Array.isArray(anyQuery[fieldName])) {
-              anyQuery[fieldName] = anyQuery[fieldName].map((val: string) =>
-                this.replace(val, options.scopedVars, true, fieldName)
-              );
+              anyQuery[fieldName] = anyQuery[fieldName].flatMap((val: string) => {
+                if (fieldName === 'logGroupNames') {
+                  return this.getVariableValue(val, options.scopedVars || {});
+                }
+                return this.replace(val, options.scopedVars, true, fieldName);
+              });
             } else {
               anyQuery[fieldName] = this.replace(anyQuery[fieldName], options.scopedVars, true, fieldName);
             }
@@ -952,13 +962,7 @@ export class CloudWatchDatasource
       namespace: this.replace(query.namespace, scopedVars),
       period: this.replace(query.period, scopedVars),
       sqlExpression: this.replace(query.sqlExpression, scopedVars),
-      dimensions: Object.entries(query.dimensions ?? {}).reduce((prev, [key, value]) => {
-        if (Array.isArray(value)) {
-          return { ...prev, [key]: value };
-        }
-
-        return { ...prev, [this.replace(key, scopedVars)]: this.replace(value, scopedVars) };
-      }, {}),
+      dimensions: this.convertDimensionFormat(query.dimensions ?? {}, scopedVars),
     };
   }
 }

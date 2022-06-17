@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -16,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
@@ -50,7 +52,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 			role := models.ROLE_VIEWER
 			t.Run("Should not be allowed to save an annotation", func(t *testing.T) {
 				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role,
-					cmd, store, func(sc *scenarioContext) {
+					cmd, store, nil, func(sc *scenarioContext) {
 						sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 						assert.Equal(t, 403, sc.resp.Code)
 					})
@@ -83,7 +85,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 			role := models.ROLE_EDITOR
 			t.Run("Should be able to save an annotation", func(t *testing.T) {
 				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role,
-					cmd, store, func(sc *scenarioContext) {
+					cmd, store, nil, func(sc *scenarioContext) {
 						sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 						assert.Equal(t, 200, sc.resp.Code)
 					})
@@ -154,7 +156,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 		t.Run("When user is an Org Viewer", func(t *testing.T) {
 			role := models.ROLE_VIEWER
 			t.Run("Should not be allowed to save an annotation", func(t *testing.T) {
-				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role, cmd, store, func(sc *scenarioContext) {
+				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role, cmd, store, nil, func(sc *scenarioContext) {
 					setUpACL()
 					sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 					assert.Equal(t, 403, sc.resp.Code)
@@ -187,7 +189,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 		t.Run("When user is an Org Editor", func(t *testing.T) {
 			role := models.ROLE_EDITOR
 			t.Run("Should be able to save an annotation", func(t *testing.T) {
-				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role, cmd, store, func(sc *scenarioContext) {
+				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role, cmd, store, nil, func(sc *scenarioContext) {
 					setUpACL()
 					sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 					assert.Equal(t, 200, sc.resp.Code)
@@ -220,23 +222,28 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 		t.Run("When user is an Admin", func(t *testing.T) {
 			role := models.ROLE_ADMIN
 
-			mock := mockstore.NewSQLStoreMock()
-			mock.ExpectedDashboard = &models.Dashboard{
-				Id:  1,
-				Uid: "home",
-			}
+			mockStore := mockstore.NewSQLStoreMock()
 
 			t.Run("Should be able to do anything", func(t *testing.T) {
-				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role, cmd, store, func(sc *scenarioContext) {
+				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role, cmd, store, nil, func(sc *scenarioContext) {
 					setUpACL()
 					sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 					assert.Equal(t, 200, sc.resp.Code)
 				})
 
-				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role, dashboardUIDCmd, mock, func(sc *scenarioContext) {
+				dashSvc := dashboards.NewFakeDashboardService(t)
+				dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
+					q := args.Get(1).(*models.GetDashboardQuery)
+					q.Result = &models.Dashboard{
+						Id:  q.Id,
+						Uid: q.Uid,
+					}
+				}).Return(nil)
+				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role, dashboardUIDCmd, mockStore, dashSvc, func(sc *scenarioContext) {
 					setUpACL()
 					sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 					assert.Equal(t, 200, sc.resp.Code)
+					dashSvc.AssertCalled(t, "GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery"))
 				})
 
 				putAnnotationScenario(t, "When calling PUT on", "/api/annotations/1", "/api/annotations/:annotationId", role, updateCmd, func(sc *scenarioContext) {
@@ -252,17 +259,26 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 				})
 
 				deleteAnnotationsScenario(t, "When calling POST on", "/api/annotations/mass-delete",
-					"/api/annotations/mass-delete", role, deleteCmd, store, func(sc *scenarioContext) {
+					"/api/annotations/mass-delete", role, deleteCmd, store, nil, func(sc *scenarioContext) {
 						setUpACL()
 						sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 						assert.Equal(t, 200, sc.resp.Code)
 					})
 
+				dashSvc = dashboards.NewFakeDashboardService(t)
+				dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
+					q := args.Get(1).(*models.GetDashboardQuery)
+					q.Result = &models.Dashboard{
+						Id:  1,
+						Uid: deleteWithDashboardUIDCmd.DashboardUID,
+					}
+				}).Return(nil)
 				deleteAnnotationsScenario(t, "When calling POST with dashboardUID on", "/api/annotations/mass-delete",
-					"/api/annotations/mass-delete", role, deleteWithDashboardUIDCmd, mock, func(sc *scenarioContext) {
+					"/api/annotations/mass-delete", role, deleteWithDashboardUIDCmd, mockStore, dashSvc, func(sc *scenarioContext) {
 						setUpACL()
 						sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 						assert.Equal(t, 200, sc.resp.Code)
+						dashSvc.AssertCalled(t, "GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery"))
 					})
 			})
 		})
@@ -323,10 +339,11 @@ func (repo *fakeAnnotationsRepo) LoadItems() {
 var fakeAnnoRepo *fakeAnnotationsRepo
 
 func postAnnotationScenario(t *testing.T, desc string, url string, routePattern string, role models.RoleType,
-	cmd dtos.PostAnnotationsCmd, store sqlstore.Store, fn scenarioFunc) {
+	cmd dtos.PostAnnotationsCmd, store sqlstore.Store, dashSvc dashboards.DashboardService, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		hs := setupSimpleHTTPServer(nil)
 		hs.SQLStore = store
+		hs.dashboardService = dashSvc
 
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
@@ -407,10 +424,11 @@ func patchAnnotationScenario(t *testing.T, desc string, url string, routePattern
 }
 
 func deleteAnnotationsScenario(t *testing.T, desc string, url string, routePattern string, role models.RoleType,
-	cmd dtos.MassDeleteAnnotationsCmd, store sqlstore.Store, fn scenarioFunc) {
+	cmd dtos.MassDeleteAnnotationsCmd, store sqlstore.Store, dashSvc dashboards.DashboardService, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		hs := setupSimpleHTTPServer(nil)
 		hs.SQLStore = store
+		hs.dashboardService = dashSvc
 
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
@@ -483,7 +501,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 	}
 
 	type args struct {
-		permissions []*accesscontrol.Permission
+		permissions []accesscontrol.Permission
 		url         string
 		body        io.Reader
 		method      string
@@ -497,7 +515,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl getting annotations with correct permissions is allowed",
 			args: args{
-				permissions: []*accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsRead, Scope: accesscontrol.ScopeAnnotationsAll}},
+				permissions: []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsRead, Scope: accesscontrol.ScopeAnnotationsAll}},
 				url:         "/api/annotations",
 				method:      http.MethodGet,
 			},
@@ -506,7 +524,25 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl getting annotations without permissions is forbidden",
 			args: args{
-				permissions: []*accesscontrol.Permission{},
+				permissions: []accesscontrol.Permission{},
+				url:         "/api/annotations",
+				method:      http.MethodGet,
+			},
+			want: http.StatusForbidden,
+		},
+		{
+			name: "AccessControl getting annotation by ID with correct permissions is allowed",
+			args: args{
+				permissions: []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsRead, Scope: accesscontrol.ScopeAnnotationsAll}},
+				url:         "/api/annotations/1",
+				method:      http.MethodGet,
+			},
+			want: http.StatusOK,
+		},
+		{
+			name: "AccessControl getting annotation by ID without permissions is forbidden",
+			args: args{
+				permissions: []accesscontrol.Permission{},
 				url:         "/api/annotations",
 				method:      http.MethodGet,
 			},
@@ -515,7 +551,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl getting tags for annotations with correct permissions is allowed",
 			args: args{
-				permissions: []*accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsRead}},
+				permissions: []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsRead}},
 				url:         "/api/annotations/tags",
 				method:      http.MethodGet,
 			},
@@ -524,7 +560,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl getting tags for annotations without correct permissions is forbidden",
 			args: args{
-				permissions: []*accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsWrite}},
+				permissions: []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsWrite}},
 				url:         "/api/annotations/tags",
 				method:      http.MethodGet,
 			},
@@ -533,7 +569,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl update dashboard annotation with permissions is allowed",
 			args: args{
-				permissions: []*accesscontrol.Permission{{
+				permissions: []accesscontrol.Permission{{
 					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsTypeDashboard,
 				}},
 				url:    "/api/annotations/1",
@@ -545,7 +581,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl update dashboard annotation without permissions is forbidden",
 			args: args{
-				permissions: []*accesscontrol.Permission{},
+				permissions: []accesscontrol.Permission{},
 				url:         "/api/annotations/1",
 				method:      http.MethodPut,
 				body:        mockRequestBody(updateCmd),
@@ -555,7 +591,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl update organization annotation with permissions is allowed",
 			args: args{
-				permissions: []*accesscontrol.Permission{{
+				permissions: []accesscontrol.Permission{{
 					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsAll,
 				}},
 				url:    "/api/annotations/2",
@@ -567,7 +603,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl update organization annotation without permissions is forbidden",
 			args: args{
-				permissions: []*accesscontrol.Permission{{
+				permissions: []accesscontrol.Permission{{
 					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsTypeDashboard,
 				}},
 				url:    "/api/annotations/2",
@@ -579,7 +615,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl patch dashboard annotation with permissions is allowed",
 			args: args{
-				permissions: []*accesscontrol.Permission{{
+				permissions: []accesscontrol.Permission{{
 					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsTypeDashboard,
 				}},
 				url:    "/api/annotations/1",
@@ -591,7 +627,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl patch dashboard annotation without permissions is forbidden",
 			args: args{
-				permissions: []*accesscontrol.Permission{},
+				permissions: []accesscontrol.Permission{},
 				url:         "/api/annotations/1",
 				method:      http.MethodPatch,
 				body:        mockRequestBody(patchCmd),
@@ -601,7 +637,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl patch organization annotation with permissions is allowed",
 			args: args{
-				permissions: []*accesscontrol.Permission{{
+				permissions: []accesscontrol.Permission{{
 					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsAll,
 				}},
 				url:    "/api/annotations/2",
@@ -613,7 +649,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl patch organization annotation without permissions is forbidden",
 			args: args{
-				permissions: []*accesscontrol.Permission{{
+				permissions: []accesscontrol.Permission{{
 					Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsTypeDashboard,
 				}},
 				url:    "/api/annotations/2",
@@ -625,7 +661,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl create dashboard annotation with permissions is allowed",
 			args: args{
-				permissions: []*accesscontrol.Permission{{
+				permissions: []accesscontrol.Permission{{
 					Action: accesscontrol.ActionAnnotationsCreate, Scope: accesscontrol.ScopeAnnotationsTypeDashboard,
 				}},
 				url:    "/api/annotations",
@@ -637,7 +673,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl create dashboard annotation without permissions is forbidden",
 			args: args{
-				permissions: []*accesscontrol.Permission{},
+				permissions: []accesscontrol.Permission{},
 				url:         "/api/annotations",
 				method:      http.MethodPost,
 				body:        mockRequestBody(postDashboardCmd),
@@ -647,7 +683,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl create dashboard annotation with incorrect permissions is forbidden",
 			args: args{
-				permissions: []*accesscontrol.Permission{{
+				permissions: []accesscontrol.Permission{{
 					Action: accesscontrol.ActionAnnotationsCreate, Scope: accesscontrol.ScopeAnnotationsTypeOrganization,
 				}},
 				url:    "/api/annotations",
@@ -659,7 +695,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl create organization annotation with permissions is allowed",
 			args: args{
-				permissions: []*accesscontrol.Permission{{
+				permissions: []accesscontrol.Permission{{
 					Action: accesscontrol.ActionAnnotationsCreate, Scope: accesscontrol.ScopeAnnotationsAll,
 				}},
 				url:    "/api/annotations",
@@ -671,7 +707,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl create organization annotation without permissions is forbidden",
 			args: args{
-				permissions: []*accesscontrol.Permission{{
+				permissions: []accesscontrol.Permission{{
 					Action: accesscontrol.ActionAnnotationsCreate, Scope: accesscontrol.ScopeAnnotationsTypeDashboard,
 				}},
 				url:    "/api/annotations",
@@ -683,7 +719,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl delete dashboard annotation with permissions is allowed",
 			args: args{
-				permissions: []*accesscontrol.Permission{{
+				permissions: []accesscontrol.Permission{{
 					Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeDashboard,
 				}},
 				url:    "/api/annotations/1",
@@ -694,7 +730,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl delete dashboard annotation without permissions is forbidden",
 			args: args{
-				permissions: []*accesscontrol.Permission{},
+				permissions: []accesscontrol.Permission{},
 				url:         "/api/annotations/1",
 				method:      http.MethodDelete,
 			},
@@ -703,7 +739,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl delete organization annotation with permissions is allowed",
 			args: args{
-				permissions: []*accesscontrol.Permission{{
+				permissions: []accesscontrol.Permission{{
 					Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsAll,
 				}},
 				url:    "/api/annotations/2",
@@ -714,7 +750,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl delete organization annotation without permissions is forbidden",
 			args: args{
-				permissions: []*accesscontrol.Permission{{
+				permissions: []accesscontrol.Permission{{
 					Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeDashboard,
 				}},
 				url:    "/api/annotations/2",
@@ -725,7 +761,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl create graphite annotation with permissions is allowed",
 			args: args{
-				permissions: []*accesscontrol.Permission{{
+				permissions: []accesscontrol.Permission{{
 					Action: accesscontrol.ActionAnnotationsCreate, Scope: accesscontrol.ScopeAnnotationsAll,
 				}},
 				url:    "/api/annotations/graphite",
@@ -737,7 +773,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl create organization annotation without permissions is forbidden",
 			args: args{
-				permissions: []*accesscontrol.Permission{{
+				permissions: []accesscontrol.Permission{{
 					Action: accesscontrol.ActionAnnotationsCreate, Scope: accesscontrol.ScopeAnnotationsTypeDashboard,
 				}},
 				url:    "/api/annotations/graphite",
@@ -829,7 +865,7 @@ func TestAPI_MassDeleteAnnotations_AccessControl(t *testing.T) {
 	require.NoError(t, err)
 
 	type args struct {
-		permissions []*accesscontrol.Permission
+		permissions []accesscontrol.Permission
 		url         string
 		body        io.Reader
 		method      string
@@ -843,7 +879,7 @@ func TestAPI_MassDeleteAnnotations_AccessControl(t *testing.T) {
 		{
 			name: "Mass delete dashboard annotations without dashboardId is not allowed",
 			args: args{
-				permissions: []*accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeOrganization}},
+				permissions: []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeOrganization}},
 				url:         "/api/annotations/mass-delete",
 				method:      http.MethodPost,
 				body: mockRequestBody(dtos.MassDeleteAnnotationsCmd{
@@ -856,7 +892,7 @@ func TestAPI_MassDeleteAnnotations_AccessControl(t *testing.T) {
 		{
 			name: "Mass delete dashboard annotations without panelId is not allowed",
 			args: args{
-				permissions: []*accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeOrganization}},
+				permissions: []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeOrganization}},
 				url:         "/api/annotations/mass-delete",
 				method:      http.MethodPost,
 				body: mockRequestBody(dtos.MassDeleteAnnotationsCmd{
@@ -869,7 +905,7 @@ func TestAPI_MassDeleteAnnotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl mass delete dashboard annotations with correct dashboardId and panelId as input is allowed",
 			args: args{
-				permissions: []*accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeDashboard}},
+				permissions: []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeDashboard}},
 				url:         "/api/annotations/mass-delete",
 				method:      http.MethodPost,
 				body: mockRequestBody(dtos.MassDeleteAnnotationsCmd{
@@ -882,7 +918,7 @@ func TestAPI_MassDeleteAnnotations_AccessControl(t *testing.T) {
 		{
 			name: "Mass delete organization annotations without input to delete all organization annotations is allowed",
 			args: args{
-				permissions: []*accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeOrganization}},
+				permissions: []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeOrganization}},
 				url:         "/api/annotations/mass-delete",
 				method:      http.MethodPost,
 				body: mockRequestBody(dtos.MassDeleteAnnotationsCmd{
@@ -895,7 +931,7 @@ func TestAPI_MassDeleteAnnotations_AccessControl(t *testing.T) {
 		{
 			name: "Mass delete organization annotations without permissions is forbidden",
 			args: args{
-				permissions: []*accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeDashboard}},
+				permissions: []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeDashboard}},
 				url:         "/api/annotations/mass-delete",
 				method:      http.MethodPost,
 				body: mockRequestBody(dtos.MassDeleteAnnotationsCmd{
@@ -908,7 +944,7 @@ func TestAPI_MassDeleteAnnotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl mass delete dashboard annotations with correct annotationId as input is allowed",
 			args: args{
-				permissions: []*accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeDashboard}},
+				permissions: []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeDashboard}},
 				url:         "/api/annotations/mass-delete",
 				method:      http.MethodPost,
 				body: mockRequestBody(dtos.MassDeleteAnnotationsCmd{
@@ -920,7 +956,7 @@ func TestAPI_MassDeleteAnnotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl mass delete annotation without access to dashboard annotations is forbidden",
 			args: args{
-				permissions: []*accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeOrganization}},
+				permissions: []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeOrganization}},
 				url:         "/api/annotations/mass-delete",
 				method:      http.MethodPost,
 				body: mockRequestBody(dtos.MassDeleteAnnotationsCmd{
@@ -932,7 +968,7 @@ func TestAPI_MassDeleteAnnotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl mass delete annotation without access to organization annotations is forbidden",
 			args: args{
-				permissions: []*accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeDashboard}},
+				permissions: []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeDashboard}},
 				url:         "/api/annotations/mass-delete",
 				method:      http.MethodPost,
 				body: mockRequestBody(dtos.MassDeleteAnnotationsCmd{
@@ -964,15 +1000,18 @@ func TestAPI_MassDeleteAnnotations_AccessControl(t *testing.T) {
 func setUpACL() {
 	viewerRole := models.ROLE_VIEWER
 	editorRole := models.ROLE_EDITOR
-
-	aclMockResp := []*models.DashboardAclInfoDTO{
-		{Role: &viewerRole, Permission: models.PERMISSION_VIEW},
-		{Role: &editorRole, Permission: models.PERMISSION_EDIT},
-	}
 	store := mockstore.NewSQLStoreMock()
-	store.ExpectedDashboardAclInfoList = aclMockResp
 	store.ExpectedTeamsByUser = []*models.TeamDTO{}
-	guardian.InitLegacyGuardian(store)
+	dashSvc := &dashboards.FakeDashboardService{}
+	dashSvc.On("GetDashboardAclInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardAclInfoListQuery")).Run(func(args mock.Arguments) {
+		q := args.Get(1).(*models.GetDashboardAclInfoListQuery)
+		q.Result = []*models.DashboardAclInfoDTO{
+			{Role: &viewerRole, Permission: models.PERMISSION_VIEW},
+			{Role: &editorRole, Permission: models.PERMISSION_EDIT},
+		}
+	}).Return(nil)
+
+	guardian.InitLegacyGuardian(store, dashSvc)
 }
 
 func setUpRBACGuardian(t *testing.T) {

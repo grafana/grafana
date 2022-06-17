@@ -32,7 +32,8 @@ type StorageGitConfig struct {
 }
 
 type StorageSQLConfig struct {
-	// no custom settings
+	// SQLStorage will prefix all paths with orgId for isolation between orgs
+	orgId int64
 }
 
 type StorageS3Config struct {

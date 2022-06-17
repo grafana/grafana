@@ -5,7 +5,7 @@ import { GrafanaTheme } from '@grafana/data';
 import { FilterInput, Spinner, stylesFactory, useTheme } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { contextSrv } from 'app/core/services/context_srv';
-import { FolderDTO } from 'app/types';
+import { FolderDTO, AccessControlAction } from 'app/types';
 
 import { useManageDashboards } from '../hooks/useManageDashboards';
 import { useSearchQuery } from '../hooks/useSearchQuery';
@@ -53,10 +53,10 @@ export const ManageDashboards: FC<Props> = memo(({ folder }) => {
     results,
     loading,
     initialLoading,
-    canSave,
     allChecked,
     hasEditPermissionInFolders,
     canMove,
+    canSave,
     canDelete,
     onToggleSection,
     onToggleChecked,
@@ -101,7 +101,14 @@ export const ManageDashboards: FC<Props> = memo(({ folder }) => {
         <div className="gf-form gf-form--grow m-r-2">
           <FilterInput value={query.query} onChange={onQueryChange} placeholder={'Search dashboards by name'} />
         </div>
-        <DashboardActions isEditor={isEditor} canEdit={hasEditPermissionInFolders || canSave} folderId={folderId} />
+        <DashboardActions
+          folderId={folderId}
+          canCreateFolders={contextSrv.hasAccess(AccessControlAction.FoldersCreate, isEditor)}
+          canCreateDashboards={contextSrv.hasAccess(
+            AccessControlAction.DashboardsCreate,
+            hasEditPermissionInFolders || !!canSave
+          )}
+        />
       </div>
 
       <div className={styles.results}>

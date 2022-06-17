@@ -38,7 +38,6 @@ export const GroupBy: FunctionComponent<Props> = ({
       htmlFor={`${refId}-group-by`}
     >
       <MultiSelect
-        menuShouldPortal
         inputId={`${refId}-group-by`}
         width={INPUT_WIDTH}
         placeholder="Choose label"

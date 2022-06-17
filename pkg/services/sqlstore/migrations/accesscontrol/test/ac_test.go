@@ -2,11 +2,13 @@ package test
 
 import (
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
 	"xorm.io/xorm"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
@@ -20,6 +22,16 @@ import (
 
 type rawPermission struct {
 	Action, Scope string
+}
+
+func (rp *rawPermission) toPermission(roleID int64, ts time.Time) accesscontrol.Permission {
+	return accesscontrol.Permission{
+		RoleID:  roleID,
+		Action:  rp.Action,
+		Scope:   rp.Scope,
+		Updated: ts,
+		Created: ts,
+	}
 }
 
 // Setup users
@@ -81,6 +93,37 @@ func convertToRawPermissions(permissions []accesscontrol.Permission) []rawPermis
 		raw[i] = rawPermission{Action: p.Action, Scope: p.Scope}
 	}
 	return raw
+}
+
+func getDBType() string {
+	dbType := migrator.SQLite
+
+	// environment variable present for test db?
+	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
+		dbType = db
+	}
+	return dbType
+}
+
+func getTestDB(t *testing.T, dbType string) sqlutil.TestDB {
+	switch dbType {
+	case "mysql":
+		return sqlutil.MySQLTestDB()
+	case "postgres":
+		return sqlutil.PostgresTestDB()
+	default:
+		f, err := os.CreateTemp(".", "grafana-test-db-")
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			err := os.Remove(f.Name())
+			require.NoError(t, err)
+		})
+
+		return sqlutil.TestDB{
+			DriverName: "sqlite3",
+			ConnStr:    f.Name(),
+		}
+	}
 }
 
 func TestMigrations(t *testing.T) {
@@ -201,7 +244,8 @@ func TestMigrations(t *testing.T) {
 
 func setupTestDB(t *testing.T) *xorm.Engine {
 	t.Helper()
-	testDB := sqlutil.SQLite3TestDB()
+	dbType := getDBType()
+	testDB := getTestDB(t, dbType)
 
 	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
 	require.NoError(t, err)
@@ -209,9 +253,7 @@ func setupTestDB(t *testing.T) *xorm.Engine {
 	err = migrator.NewDialect(x).CleanDB()
 	require.NoError(t, err)
 
-	mg := migrator.NewMigrator(x, &setting.Cfg{
-		IsFeatureToggleEnabled: func(key string) bool { return key == "accesscontrol" },
-	})
+	mg := migrator.NewMigrator(x, &setting.Cfg{Logger: log.New("acmigration.test")})
 	migrations := &migrations.OSSMigrations{}
 	migrations.AddMigration(mg)
 

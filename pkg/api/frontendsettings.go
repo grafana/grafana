@@ -105,6 +105,8 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"autoAssignOrg":                       setting.AutoAssignOrg,
 		"verifyEmailEnabled":                  setting.VerifyEmailEnabled,
 		"sigV4AuthEnabled":                    setting.SigV4AuthEnabled,
+		"rbacEnabled":                         hs.Cfg.RBACEnabled,
+		"rbacBuiltInRoleAssignmentEnabled":    hs.Cfg.RBACBuiltInRoleAssignmentEnabled,
 		"exploreEnabled":                      setting.ExploreEnabled,
 		"helpEnabled":                         setting.HelpEnabled,
 		"profileEnabled":                      setting.ProfileEnabled,

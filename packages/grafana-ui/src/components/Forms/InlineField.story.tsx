@@ -45,7 +45,6 @@ export const withSelect = () => {
   return (
     <InlineField label="Select option">
       <Select
-        menuShouldPortal
         width={16}
         onChange={action('item selected')}
         options={[
