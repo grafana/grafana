@@ -334,3 +334,8 @@ replace github.com/tidwall/match => github.com/tidwall/match v1.1.1
 replace github.com/hashicorp/go-hclog => github.com/hashicorp/go-hclog v0.16.1
 
 replace github.com/microcosm-cc/bluemonday => github.com/microcosm-cc/bluemonday v1.0.18
+
+// This is a patched v0.8.2 intended to fix session.Find (and others) silently ignoring SQLITE_BUSY errors. This could
+// happen, for example, during a read when the sqlite db is under heavy write load.
+// This patch cherry picks compatible fixes from upstream xorm PR#1998 and can be reverted on upgrade to xorm v1.2.0+.
+replace xorm.io/xorm => github.com/grafana/xorm v0.8.3-0.20220614223926-2fcda7565af6
