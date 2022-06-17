@@ -18,7 +18,7 @@ export class PanelQueryEditor extends PureComponent<Props> {
     return (
       <>
         {isCloudWatchMetricsQuery(query) && <MetricsQueryEditor {...this.props} query={query} />}
-        {isCloudWatchLogsQuery(query) && <LogsQueryEditor {...this.props} query={query} allowCustomValue />}
+        {isCloudWatchLogsQuery(query) && <LogsQueryEditor {...this.props} query={query} />}
       </>
     );
   }

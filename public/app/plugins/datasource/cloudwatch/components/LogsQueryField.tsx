@@ -24,7 +24,6 @@ export interface CloudWatchLogsQueryFieldProps
   onLabelsRefresh?: () => void;
   ExtraFieldElement?: ReactNode;
   exploreId: ExploreId;
-  allowCustomValue?: boolean;
   query: CloudWatchLogsQuery;
 }
 
@@ -112,7 +111,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
   };
 
   render() {
-    const { onRunQuery, onChange, ExtraFieldElement, data, query, datasource, allowCustomValue } = this.props;
+    const { onRunQuery, onChange, ExtraFieldElement, data, query, datasource } = this.props;
     const { region, refId, expression, logGroupNames } = query;
     const { hint } = this.state;
 
@@ -138,7 +137,6 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
                 region={region}
                 selectedLogGroups={logGroupNames ?? []}
                 datasource={datasource}
-                allowCustomValue={allowCustomValue}
                 onChange={function (logGroups: string[]): void {
                   onChange({ ...query, logGroupNames: logGroups });
                 }}

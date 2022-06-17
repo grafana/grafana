@@ -21,7 +21,6 @@ export interface LogGroupSelectorProps {
   onChange: (logGroups: string[]) => void;
 
   datasource?: CloudWatchDatasource;
-  allowCustomValue?: boolean;
   onRunQuery?: () => void;
   onOpenMenu?: () => Promise<void>;
   refId?: string;
@@ -34,7 +33,6 @@ export const LogGroupSelector: React.FC<LogGroupSelectorProps> = ({
   selectedLogGroups,
   onChange,
   datasource,
-  allowCustomValue,
   onRunQuery,
   onOpenMenu,
   refId,
@@ -69,11 +67,8 @@ export const LogGroupSelector: React.FC<LogGroupSelectorProps> = ({
   );
 
   const onLogGroupSearch = async (searchTerm: string, region: string, actionMeta: InputActionMeta) => {
-    if (actionMeta.action !== 'input-change') {
-      return Promise.resolve();
-    }
-    if (!datasource) {
-      return Promise.resolve();
+    if (actionMeta.action !== 'input-change' || !datasource) {
+      return;
     }
 
     // No need to fetch matching log groups if the search term isn't valid
@@ -84,7 +79,7 @@ export const LogGroupSelector: React.FC<LogGroupSelectorProps> = ({
       if (searchTerm !== '') {
         dispatch(notifyApp(createErrorNotification('Invalid Log Group name: ' + searchTerm)));
       }
-      return Promise.resolve();
+      return;
     }
 
     setLoadingLogGroups(true);
@@ -134,7 +129,7 @@ export const LogGroupSelector: React.FC<LogGroupSelectorProps> = ({
     <MultiSelect
       inputId="default-log-groups"
       aria-label="Log Groups"
-      allowCustomValue={allowCustomValue}
+      allowCustomValue
       options={datasource ? appendTemplateVariables(datasource, logGroupOptions) : logGroupOptions}
       value={selectedLogGroups}
       onChange={(v) => onChange(v.map(({ value }) => value!))}

@@ -107,15 +107,17 @@ describe('LogGroupSelector', () => {
     render(<LogGroupSelector {...props} />);
     const multiselect = await screen.findByLabelText('Log Groups');
 
-    // Adds the 3 water groups to the 10 loaded in initially
+    // Adds the 3 Water groups to the 10 loaded in initially
     await userEvent.type(multiselect, 'Water');
-    expect(screen.getAllByLabelText('Select option').length).toBe(3);
+    // The 3 Water groups + the create option
+    expect(screen.getAllByLabelText('Select option').length).toBe(4);
     await userEvent.clear(multiselect);
     expect(screen.getAllByLabelText('Select option').length).toBe(testLimit + 3);
 
     // Adds the three Velvet groups to the previous 13
     await userEvent.type(multiselect, 'Velv');
-    expect(screen.getAllByLabelText('Select option').length).toBe(3);
+    // The 3 Velvet groups + the create option
+    expect(screen.getAllByLabelText('Select option').length).toBe(4);
     await userEvent.clear(multiselect);
     expect(screen.getAllByLabelText('Select option').length).toBe(testLimit + 6);
   });
