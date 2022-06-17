@@ -5,7 +5,6 @@ import {
   FieldType,
   formattedValueToString,
   getDisplayProcessor,
-  getValueFormat,
   GrafanaTheme2,
   outerJoinDataFrames,
   PanelData,
@@ -111,7 +110,7 @@ const getSparseHeatmapData = (
   updateFieldDisplay(frame.fields[1], options.yAxis, theme);
 
   // cell value display
-  const disp = frame.fields[3].display ?? getValueFormat('short');
+  const disp = updateFieldDisplay(frame.fields[3], options.cellValues, theme);
 
   return {
     heatmap: frame,
