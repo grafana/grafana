@@ -44,10 +44,13 @@ func (s *AuthInfoStore) makeMetric(name, help string) prometheus.GaugeFunc {
 
 func (s *AuthInfoStore) InitMetrics() {
 	once.Do(func() {
-		prometheus.MustRegister(
+		err := prometheus.Register(
 			//If you add a line here, you must also add it to CacheMetrics
 			s.makeMetric("duplicate_user_entries", "Gauge for number of user duplicate entries."),
 		)
+		if err != nil {
+			s.logger.Error("Error registering login metrics", "error", err)
+		}
 	})
 }
 
