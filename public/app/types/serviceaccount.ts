@@ -67,6 +67,7 @@ export interface ServiceAccountsState {
   roleOptions: Role[];
   builtInRoles: Record<string, Role[]>;
   apiKeysMigrated: boolean;
+  showApiKeysMigrationInfo: boolean;
 
   // search / filtering
   query: string;
