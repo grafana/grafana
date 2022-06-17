@@ -11,7 +11,7 @@ weight: 5
 
 [Grafana open source software](https://grafana.com/oss/) enables you to query, visualize, alert on, and explore your metrics, logs, and traces wherever they are stored. Grafana OSS provides you with tools to turn your time-series database (TSDB) data into insightful graphs and visualizations.
 
-After you have [installed Grafana]({{< relref "../setup-grafana/installation/" >}}) and set up your first dashboard using instructions in [Getting started with Grafana]({{< relref "../getting-started/build-first-dashboard.md" >}}), you will have many options to choose from depending on your requirements. For example, if you want to view weather data and statistics about your smart home, then you can create a [playlist]({{< relref "../dashboards/playlist.md" >}}). If you are the administrator for an enterprise and are managing Grafana for multiple teams, then you can set up [provisioning]({{< relref "../administration/provisioning.md" >}}) and [authentication]({{< relref "../setup-grafana/configure-security/configure-authentication/" >}}).
+After you have [installed Grafana]({{< relref "../setup-grafana/installation/" >}}) and set up your first dashboard using instructions in [Getting started with Grafana]({{< relref "../getting-started/build-first-dashboard.md" >}}), you will have many options to choose from depending on your requirements. For example, if you want to view weather data and statistics about your smart home, then you can create a [playlist]({{< relref "../dashboards/playlist.md" >}}). If you are the administrator for an enterprise and are managing Grafana for multiple teams, then you can set up [provisioning]({{< relref "../administration/server-administration/provisioning.md" >}}) and [authentication]({{< relref "../setup-grafana/configure-security/configure-authentication/" >}}).
 
 The following sections provide an overview of Grafana features and links to product documentation to help you learn more. For more guidance and ideas, check out our [Grafana Community forums](https://community.grafana.com/).
 
@@ -39,7 +39,7 @@ Templating allows you to drill down into your data, say, from all data to North 
 
 ## Configure Grafana
 
-If you're a Grafana administrator, then you'll want to thoroughly familiarize yourself with [Grafana configuration options]({{< relref "../setup-grafana/configure-grafana/" >}}) and the [Grafana CLI]({{< relref "../administration/cli.md" >}}).
+If you're a Grafana administrator, then you'll want to thoroughly familiarize yourself with [Grafana configuration options]({{< relref "../setup-grafana/configure-grafana/" >}}) and the [Grafana CLI]({{< relref "../cli.md" >}}).
 
 Configuration covers both config files and environment variables. You can set up default ports, logging levels, email IP addresses, security, and more.
 
@@ -57,11 +57,11 @@ In Grafana Enterprise, you can also map users to teams: If your company has its 
 
 While it's easy to click, drag, and drop to create a single dashboard, power users in need of many dashboards will want to automate the setup with a script. You can script anything in Grafana.
 
-For example, if you're spinning up a new Kubernetes cluster, you can also spin up a Grafana automatically with a script that would have the right server, IP address, and data sources preset and locked in so users cannot change them. It's also a way of getting control over a lot of dashboards. Refer to [Provisioning]({{< relref "../administration/provisioning.md" >}}) for more information.
+For example, if you're spinning up a new Kubernetes cluster, you can also spin up a Grafana automatically with a script that would have the right server, IP address, and data sources preset and locked in so users cannot change them. It's also a way of getting control over a lot of dashboards. Refer to [Provisioning]({{< relref "../administration/server-administration/provisioning.md" >}}) for more information.
 
 ## Permissions
 
-When organizations have one Grafana and multiple teams, they often want the ability to both keep things separate and share dashboards. You can create a team of users and then set permissions on [folders and dashboards]({{< relref "../administration/manage-users-and-permissions/manage-dashboard-permissions/_index.md" >}}), and down to the [data source level]({{< relref "../enterprise/datasource_permissions.md" >}}) if you're using [Grafana Enterprise]({{< relref "../enterprise/_index.md" >}}).
+When organizations have one Grafana and multiple teams, they often want the ability to both keep things separate and share dashboards. You can create a team of users and then set permissions on [folders and dashboards]({{< relref "../administration/user-management/manage-dashboard-permissions/_index.md" >}}), and down to the [data source level]({{< relref "../administration/data-source-management/datasource-permissions.md" >}}) if you're using [Grafana Enterprise]({{< relref "../enterprise/_index.md" >}}).
 
 ## Other Grafana Labs OSS Projects
 
