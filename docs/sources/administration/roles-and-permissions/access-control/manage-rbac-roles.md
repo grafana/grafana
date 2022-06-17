@@ -87,7 +87,7 @@ Create a custom role when basic roles and fixed roles do not meet your permissio
 **Before you begin:**
 
 - [Plan your RBAC rollout strategy]({{< relref "./plan-rbac-rollout-strategy/" >}}).
-- Determine which permissions you want to add to the custom role. To see a list of actions and scope, refer to [RBAC permissions actions and scopes]({{< relref "./custom-role-actions-scopes/" >}}).
+- Determine which permissions you want to add to the custom role. To see a list of actions and scope, refer to [RBAC permissions, actions, and scopes]({{< relref "./custom-role-actions-scopes/" >}}).
 - [Enable role provisioning]({{< relref "./rbac-provisioning/" >}}).
 - Ensure that you have permissions to create a custom role.
   - By default, the Grafana Admin role has permission to create custom roles.
