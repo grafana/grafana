@@ -18,6 +18,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 
+	busmock "github.com/grafana/grafana/pkg/bus/mock"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
@@ -396,6 +397,21 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 				require.Len(t, queries, 1, "Expected exactly one request of %T but got %d", models.GetAlertRuleByUIDQuery{}, len(queries))
 				require.Equal(t, rule.UID, queries[0].UID)
 				require.Equal(t, rule.OrgID, queries[0].OrgID)
+			})
+			t.Run("it should get rule folder title from database and attach as label", func(t *testing.T) {
+				queries := make([]store.GenericRecordedQuery, 0)
+				for _, op := range ruleStore.RecordedOps {
+					switch q := op.(type) {
+					case store.GenericRecordedQuery:
+						queries = append(queries, q)
+					}
+				}
+				require.NotEmptyf(t, queries, "Expected a %T request to rule store but nothing was recorded", store.GenericRecordedQuery{})
+				require.Len(t, queries, 1, "Expected exactly one request of %T but got %d", store.GenericRecordedQuery{}, len(queries))
+				require.Equal(t, rule.NamespaceUID, queries[0].Params[1])
+				require.Equal(t, rule.OrgID, queries[0].Params[0])
+				require.NotEmptyf(t, rule.Labels[models.FolderTitleLabel], "Expected a non-empty title in label %s", models.FolderTitleLabel)
+				require.Equal(t, rule.Labels[models.FolderTitleLabel], ruleStore.Folders[rule.OrgID][0].Title)
 			})
 			t.Run("it should process evaluation results via state manager", func(t *testing.T) {
 				// TODO rewrite when we are able to mock/fake state manager
@@ -948,7 +964,7 @@ func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, ac
 		Scheme: "http",
 		Host:   "localhost",
 	}
-	return NewScheduler(schedCfg, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil), appUrl, st), mockedClock
+	return NewScheduler(schedCfg, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil), appUrl, st, busmock.New()), mockedClock
 }
 
 // createTestAlertRule creates a dummy alert definition to be used by the tests.
@@ -1020,7 +1036,7 @@ func CreateTestAlertRule(t *testing.T, dbstore *store.FakeRuleStore, intervalSec
 		ExecErrState:    models.AlertingErrState,
 		For:             forDuration,
 		Annotations:     map[string]string{"testAnnoKey": "testAnnoValue"},
-		Labels:          nil,
+		Labels:          make(map[string]string),
 	}
 
 	dbstore.PutRule(ctx, rule)
