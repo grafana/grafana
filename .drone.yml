@@ -474,9 +474,9 @@ steps:
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - go list -f '{{.Dir}}' './pkg/...' | xargs -I {} sh -c 'grep --include=\*_test.go
-    --exclude-dir=\* -q "^func TestIntegration" {}/* &&  go test -run Integration
-    -covermode=atomic -timeout=30m {}'
+  - go list -f '{{.Dir}}' './pkg/...' | xargs -I {} sh -c 'if grep --include=\*_test.go
+    --exclude-dir=\* -q "^func TestIntegration" {}/*; then  go test -run Integration
+    -covermode=atomic -timeout=30m {}; fi'
   depends_on:
   - wire-install
   environment:
@@ -492,9 +492,9 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - go list -f '{{.Dir}}' './pkg/...' | xargs -I {} sh -c 'grep --include=\*_test.go
-    --exclude-dir=\* -q "^func TestIntegration" {}/* &&  go test -run Integration
-    -covermode=atomic -timeout=30m {}'
+  - go list -f '{{.Dir}}' './pkg/...' | xargs -I {} sh -c 'if grep --include=\*_test.go
+    --exclude-dir=\* -q "^func TestIntegration" {}/*; then  go test -run Integration
+    -covermode=atomic -timeout=30m {}; fi'
   depends_on:
   - wire-install
   environment:
@@ -1319,9 +1319,9 @@ steps:
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - go list -f '{{.Dir}}' './pkg/...' | xargs -I {} sh -c 'grep --include=\*_test.go
-    --exclude-dir=\* -q "^func TestIntegration" {}/* &&  go test -run Integration
-    -covermode=atomic -timeout=30m {}'
+  - go list -f '{{.Dir}}' './pkg/...' | xargs -I {} sh -c 'if grep --include=\*_test.go
+    --exclude-dir=\* -q "^func TestIntegration" {}/*; then  go test -run Integration
+    -covermode=atomic -timeout=30m {}; fi'
   depends_on:
   - wire-install
   environment:
@@ -1337,9 +1337,9 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - go list -f '{{.Dir}}' './pkg/...' | xargs -I {} sh -c 'grep --include=\*_test.go
-    --exclude-dir=\* -q "^func TestIntegration" {}/* &&  go test -run Integration
-    -covermode=atomic -timeout=30m {}'
+  - go list -f '{{.Dir}}' './pkg/...' | xargs -I {} sh -c 'if grep --include=\*_test.go
+    --exclude-dir=\* -q "^func TestIntegration" {}/*; then  go test -run Integration
+    -covermode=atomic -timeout=30m {}; fi'
   depends_on:
   - wire-install
   environment:
@@ -2014,9 +2014,9 @@ steps:
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - go list -f '{{.Dir}}' './pkg/...' | xargs -I {} sh -c 'grep --include=\*_test.go
-    --exclude-dir=\* -q "^func TestIntegration" {}/* &&  go test -run Integration
-    -covermode=atomic -timeout=30m {}'
+  - go list -f '{{.Dir}}' './pkg/...' | xargs -I {} sh -c 'if grep --include=\*_test.go
+    --exclude-dir=\* -q "^func TestIntegration" {}/*; then  go test -run Integration
+    -covermode=atomic -timeout=30m {}; fi'
   depends_on:
   - wire-install
   environment:
@@ -2032,9 +2032,9 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - go list -f '{{.Dir}}' './pkg/...' | xargs -I {} sh -c 'grep --include=\*_test.go
-    --exclude-dir=\* -q "^func TestIntegration" {}/* &&  go test -run Integration
-    -covermode=atomic -timeout=30m {}'
+  - go list -f '{{.Dir}}' './pkg/...' | xargs -I {} sh -c 'if grep --include=\*_test.go
+    --exclude-dir=\* -q "^func TestIntegration" {}/*; then  go test -run Integration
+    -covermode=atomic -timeout=30m {}; fi'
   depends_on:
   - wire-install
   environment:
@@ -3808,9 +3808,9 @@ steps:
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - go list -f '{{.Dir}}' './pkg/...' | xargs -I {} sh -c 'grep --include=\*_test.go
-    --exclude-dir=\* -q "^func TestIntegration" {}/* &&  go test -run Integration
-    -covermode=atomic -timeout=30m {}'
+  - go list -f '{{.Dir}}' './pkg/...' | xargs -I {} sh -c 'if grep --include=\*_test.go
+    --exclude-dir=\* -q "^func TestIntegration" {}/*; then  go test -run Integration
+    -covermode=atomic -timeout=30m {}; fi'
   depends_on:
   - wire-install
   environment:
@@ -3826,9 +3826,9 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - go list -f '{{.Dir}}' './pkg/...' | xargs -I {} sh -c 'grep --include=\*_test.go
-    --exclude-dir=\* -q "^func TestIntegration" {}/* &&  go test -run Integration
-    -covermode=atomic -timeout=30m {}'
+  - go list -f '{{.Dir}}' './pkg/...' | xargs -I {} sh -c 'if grep --include=\*_test.go
+    --exclude-dir=\* -q "^func TestIntegration" {}/*; then  go test -run Integration
+    -covermode=atomic -timeout=30m {}; fi'
   depends_on:
   - wire-install
   environment:
@@ -4755,6 +4755,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 7156d9ee76cef5f8ff39867dddd96782cbb717ba61186f03b6da0939cea9ff6f
+hmac: 3635dbc233f265fd7f59a408815163e8736689dcd35fe71bf6c51a33146cda00
 
 ...

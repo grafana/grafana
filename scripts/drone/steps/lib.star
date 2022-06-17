@@ -881,7 +881,7 @@ def postgres_integration_tests_step(edition, ver_mode):
         ]
     if edition == 'oss':
         deps.extend(['wire-install'])
-        cmds.extend([ "go list -f '{{.Dir}}' './pkg/...' | xargs -I {} sh -c 'grep --include=\\*_test.go --exclude-dir=\\* -q \"^func TestIntegration\" {}/* &&  go test -run Integration -covermode=atomic -timeout=30m {}'"])
+        cmds.extend([ "go list -f '{{.Dir}}' './pkg/...' | xargs -I {} sh -c 'if grep --include=\\*_test.go --exclude-dir=\\* -q \"^func TestIntegration\" {}/*; then  go test -run Integration -covermode=atomic -timeout=30m {}; fi'"])
     else:
         deps.extend(['grabpl'])
         cmds.extend(['./bin/grabpl integration-tests --database postgres'])
@@ -910,7 +910,7 @@ def mysql_integration_tests_step(edition, ver_mode):
         ]
     if edition == 'oss':
         deps.extend(['wire-install'])
-        cmds.extend([ "go list -f '{{.Dir}}' './pkg/...' | xargs -I {} sh -c 'grep --include=\\*_test.go --exclude-dir=\\* -q \"^func TestIntegration\" {}/* &&  go test -run Integration -covermode=atomic -timeout=30m {}'"])
+        cmds.extend([ "go list -f '{{.Dir}}' './pkg/...' | xargs -I {} sh -c 'if grep --include=\\*_test.go --exclude-dir=\\* -q \"^func TestIntegration\" {}/*; then  go test -run Integration -covermode=atomic -timeout=30m {}; fi'"])
     else:
         deps.extend(['grabpl'])
         cmds.extend(['./bin/grabpl integration-tests --database mysql'])
