@@ -426,15 +426,7 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "NotificationsPage"*/ 'app/features/notifications/NotificationsPage')
       ),
     },
-    {
-      path: '/dyndash',
-      component: SafeDynamicImport(() => import(/* webpackChunkName: "DynDash"*/ 'app/features/dyndash/DynDashList')),
-    },
-    {
-      path: '/dyndash/:name',
-      component: SafeDynamicImport(() => import(/* webpackChunkName: "DynDash"*/ 'app/features/dyndash/DynDashPage')),
-    },
-
+    ...getDynamicDashboardRoutes(),
     ...getPluginCatalogRoutes(),
     ...getLiveRoutes(),
     ...getAlertingRoutes(),
@@ -448,5 +440,21 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     // TODO[Router]
     // ...playlistRoutes,
+  ];
+}
+
+export function getDynamicDashboardRoutes(cfg = config): RouteDescriptor[] {
+  if (!cfg.featureToggles.dyndash) {
+    return [];
+  }
+  return [
+    {
+      path: '/dyndash',
+      component: SafeDynamicImport(() => import(/* webpackChunkName: "DynDash"*/ 'app/features/dyndash/DynDashList')),
+    },
+    {
+      path: '/dyndash/:name',
+      component: SafeDynamicImport(() => import(/* webpackChunkName: "DynDash"*/ 'app/features/dyndash/DynDashPage')),
+    },
   ];
 }

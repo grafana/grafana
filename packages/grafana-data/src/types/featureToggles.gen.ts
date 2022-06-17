@@ -59,6 +59,7 @@ export interface FeatureToggles {
   autoMigrateGraphPanels?: boolean;
   prometheusWideSeries?: boolean;
   canvasPanelNesting?: boolean;
+  dynamicDashboards?: boolean;
   cloudMonitoringExperimentalUI?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
   dataConnectionsConsole?: boolean;

@@ -179,6 +179,10 @@ const (
 	// Allow elements nesting
 	FlagCanvasPanelNesting = "canvasPanelNesting"
 
+	// FlagDynamicDashboards
+	// Experimental framework to build interactive dashbaords
+	FlagDynamicDashboards = "dynamicDashboards"
+
 	// FlagCloudMonitoringExperimentalUI
 	// Use grafana-experimental UI in Cloud Monitoring
 	FlagCloudMonitoringExperimentalUI = "cloudMonitoringExperimentalUI"

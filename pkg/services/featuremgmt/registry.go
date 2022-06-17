@@ -244,6 +244,12 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:         "dynamicDashboards",
+			Description:  "Experimental framework to build interactive dashbaords",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
 			Name:         "cloudMonitoringExperimentalUI",
 			Description:  "Use grafana-experimental UI in Cloud Monitoring",
 			State:        FeatureStateAlpha,
