@@ -1,4 +1,4 @@
-import { shallow } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 
 import BasicSettings, { Props } from './BasicSettings';
@@ -11,13 +11,16 @@ const setup = () => {
     onNameChange: jest.fn(),
   };
 
-  return shallow(<BasicSettings {...props} />);
+  return render(<BasicSettings {...props} />);
 };
 
-describe('Render', () => {
-  it('should render component', () => {
-    const wrapper = setup();
+describe('Basic Settings', () => {
+  it('should render component', async () => {
+    setup();
 
-    expect(wrapper).toMatchSnapshot();
+    expect(screen.getByLabelText('Name')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Name')).toBeInTheDocument();
+    expect(screen.getByLabelText('Default')).toBeInTheDocument();
+    expect(screen.getByRole('checkbox')).toBeInTheDocument();
   });
 });
