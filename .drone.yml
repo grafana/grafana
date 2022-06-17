@@ -2705,6 +2705,20 @@ steps:
   image: grafana/build-container:1.5.5
   name: init-enterprise
 - commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  image: grafana/build-container:1.5.5
+  name: verify-gen-cue
+- commands:
+  - make gen-go
+  depends_on:
+  - verify-gen-cue
+  image: grafana/build-container:1.5.5
+  name: wire-install
+- commands:
   - apt-get update
   - apt-get install -yq postgresql-client
   - dockerize -wait tcp://postgres:5432 -timeout 120s
@@ -4468,6 +4482,20 @@ steps:
   image: grafana/build-container:1.5.5
   name: init-enterprise
 - commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  image: grafana/build-container:1.5.5
+  name: verify-gen-cue
+- commands:
+  - make gen-go
+  depends_on:
+  - verify-gen-cue
+  image: grafana/build-container:1.5.5
+  name: wire-install
+- commands:
   - apt-get update
   - apt-get install -yq postgresql-client
   - dockerize -wait tcp://postgres:5432 -timeout 120s
@@ -4751,6 +4779,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 0e9e1afcba787a8159db2db93e4fc111633fb415d63db38d7bc2c3036e5a5fef
+hmac: 6fda0984bf108d3b9ba3ea2ec16a68ed5e81a0c66b4910605759714817808eeb
 
 ...

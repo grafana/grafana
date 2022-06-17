@@ -337,7 +337,7 @@ def get_enterprise_pipelines(trigger, ver_mode):
             ),
             pipeline(
                 name='{}-enterprise-integration-tests'.format(ver_mode), edition=edition, trigger=trigger, services=services,
-                steps=[download_grabpl_step(), identify_runner_step(), clone_enterprise_step(ver_mode), init_enterprise_step(ver_mode),] + integration_test_steps,
+                steps=[download_grabpl_step(), identify_runner_step(), clone_enterprise_step(ver_mode), init_enterprise_step(ver_mode), verify_gen_cue_step(), wire_install_step(),] + integration_test_steps,
                 volumes=volumes,
             ),
         ])
