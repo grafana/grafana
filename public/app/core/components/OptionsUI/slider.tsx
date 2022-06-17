@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { Global } from '@emotion/react';
 import SliderComponent from 'rc-slider';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { FieldConfigEditorProps, GrafanaTheme2, SliderFieldConfigSettings } from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
@@ -15,7 +15,7 @@ export const SliderValueEditor: React.FC<FieldConfigEditorProps<number, SliderFi
   onChange,
   item,
 }) => {
-  const inputRef = React.useRef<HTMLSpanElement>(null);
+  const inputRef = useRef<HTMLSpanElement>(null);
   const { settings } = item;
   const min = settings?.min || 0;
   const max = settings?.max || 100;
