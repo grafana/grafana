@@ -213,3 +213,7 @@ type LogAnalyticsWorkspaceResponse struct {
 	PublicNetworkAccessForQuery     string                          `json:"publicNetworkAccessForQuery"`
 	RetentionInDays                 int                             `json:"retentionInDays"`
 }
+
+type AzureError interface {
+	Error() string
+}

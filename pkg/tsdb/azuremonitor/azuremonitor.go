@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
@@ -188,7 +189,7 @@ func checkAzureMonitorMetricsHealth(dsInfo types.DatasourceInfo) (*http.Response
 
 	res, err := dsInfo.Services["Azure Monitor"].HTTPClient.Do(request)
 	if err != nil {
-		return nil, err
+		return nil, types.AzureError(err)
 	}
 
 	return res, nil
@@ -202,7 +203,7 @@ func checkAzureLogAnalyticsHealth(dsInfo types.DatasourceInfo) (*http.Response, 
 	}
 	res, err := dsInfo.Services["Azure Monitor"].HTTPClient.Do(workspacesReq)
 	if err != nil {
-		return nil, err
+		return nil, types.AzureError(err)
 	}
 	var target struct {
 		Value []types.LogAnalyticsWorkspaceResponse
@@ -233,7 +234,7 @@ func checkAzureLogAnalyticsHealth(dsInfo types.DatasourceInfo) (*http.Response, 
 
 	res, err = dsInfo.Services["Azure Log Analytics"].HTTPClient.Do(workspaceReq)
 	if err != nil {
-		return nil, err
+		return nil, types.AzureError(err)
 	}
 
 	return res, nil
@@ -256,7 +257,7 @@ func checkAzureMonitorResourceGraphHealth(dsInfo types.DatasourceInfo) (*http.Re
 
 	res, err := dsInfo.Services["Azure Resource Graph"].HTTPClient.Do(request)
 	if err != nil {
-		return nil, err
+		return nil, types.AzureError(err)
 	}
 
 	return res, nil
@@ -277,7 +278,11 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	if err != nil || metricsRes.StatusCode != 200 {
 		status = backend.HealthStatusError
 		if err != nil {
-			return nil, err
+			if _, ok := err.(types.AzureError); ok {
+				metricsLog = fmt.Sprintf("Error connecting to Azure Monitor endpoint: %s", err.Error())
+			} else {
+				return nil, err
+			}
 		} else {
 			body, err := io.ReadAll(metricsRes.Body)
 			if err != nil {
@@ -294,6 +299,8 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 			if err.Error() == "no default workspace found" {
 				status = backend.HealthStatusUnknown
 				logAnalyticsLog = "No Log Analytics workspaces found."
+			} else if _, ok := err.(types.AzureError); ok {
+				logAnalyticsLog = fmt.Sprintf("Error connecting to Azure Log Analytics endpoint:: %s", err.Error())
 			} else {
 				return nil, err
 			}
@@ -310,7 +317,11 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	if err != nil || resourceGraphRes.StatusCode != 200 {
 		status = backend.HealthStatusError
 		if err != nil {
-			return nil, err
+			if _, ok := err.(types.AzureError); ok {
+				graphLog = fmt.Sprintf("Error connecting to Azure Resource Graph endpoint: %s", err.Error())
+			} else {
+				return nil, err
+			}
 		} else {
 			body, err := io.ReadAll(resourceGraphRes.Body)
 			if err != nil {
@@ -349,7 +360,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 		Status:  status,
 		Message: "One or more health checks failed. See details below.",
 		JSONDetails: []byte(
-			fmt.Sprintf(`{"verboseMessage": "1. %s\n2. %s\n3.%s" }`, metricsLog, logAnalyticsLog, graphLog),
+			fmt.Sprintf(`{"verboseMessage": %s }`, strconv.Quote(fmt.Sprintf("1. %s\n2. %s\n3.%s", metricsLog, logAnalyticsLog, graphLog))),
 		),
 	}, nil
 }
