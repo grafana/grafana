@@ -25,10 +25,10 @@ This topic explains why labels are a fundamental component of alerting.
 
 # Grafana reserved labels
 
-> **Note:** Labels prefixed with `g_` are reserved by Grafana for special use. If a manually configured label is added beginning with `g_` it may be overwritten in case of collision.
+> **Note:** Labels prefixed with `grafana_` are reserved by Grafana for special use. If a manually configured label is added beginning with `grafana_` it may be overwritten in case of collision.
 
 Grafana reserved labels can be used in the same way as manually configured labels. The current list of available reserved labels are:
 
-| Label    | Description                               |
-| -------- | ----------------------------------------- |
-| g_folder | Title of the folder containing the alert. |
+| Label          | Description                               |
+| -------------- | ----------------------------------------- |
+| grafana_folder | Title of the folder containing the alert. |
