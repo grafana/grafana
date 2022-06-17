@@ -1,4 +1,4 @@
-import { filter, find, startsWith } from 'lodash';
+import { find, startsWith } from 'lodash';
 
 import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
@@ -157,17 +157,16 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       .then((result: AzureMonitorMetricDefinitionsResponse) => {
         return ResponseParser.parseResponseValues(result, 'type', 'type');
       })
-      .then((result) => {
-        return filter(result, (t) => {
+      .then((result) =>
+        result.filter((t) => {
           for (let i = 0; i < supportedMetricNamespaces.length; i++) {
             if (t.value.toLowerCase() === supportedMetricNamespaces[i].toLowerCase()) {
               return true;
             }
           }
-
           return false;
-        });
-      })
+        })
+      )
       .then((result) => {
         let shouldHardcodeBlobStorage = false;
         for (let i = 0; i < result.length; i++) {
