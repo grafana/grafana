@@ -3,7 +3,7 @@ aliases:
   - /docs/grafana/latest/enterprise/license/activate-aws-marketplace-license/
   - /docs/grafana/latest/enterprise/activate-aws-marketplace-license/about-ge-license-through-aws/
   - /docs/grafana/latest/enterprise/license/activate-aws-marketplace-license/about-ge-license-through-aws/
-description: Activate Enterprise license purchased through AWS Marketplace
+description: Activate your Grafana Enterprise license purchased in AWS Marketplace to take advantage of Grafana Enterprise observability features
 keywords:
   - grafana
   - aws
