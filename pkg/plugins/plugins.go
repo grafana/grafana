@@ -99,6 +99,10 @@ func (p PluginDTO) IncludedInSignature(file string) bool {
 	return true
 }
 
+func (p PluginDTO) IsRBACReady() bool {
+	return len(p.Roles) > 0
+}
+
 // JSONData represents the plugin's plugin.json
 type JSONData struct {
 	// Common settings

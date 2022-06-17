@@ -76,6 +76,7 @@ func (hs *HTTPServer) getProfileNode(c *models.ReqContext) *dtos.NavLink {
 }
 
 func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error) {
+	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	enabledPlugins, err := hs.enabledPlugins(c.Req.Context(), c.OrgId)
 	if err != nil {
 		return nil, err
@@ -87,6 +88,14 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 			continue
 		}
 
+		if plugin.IsRBACReady() {
+			// TODO move action and scope
+			pluginIdScope := ac.Scope("plugin.app", "id", plugin.ID)
+			if !hasAccess(ac.ReqSignedIn, ac.EvalPermission("plugin.app:read", pluginIdScope)) {
+				hs.log.Debug("plugin is covered by RBAC user doesn't have access", "plugin", plugin.ID)
+				continue
+			}
+		}
 		appLink := &dtos.NavLink{
 			Text:       plugin.Name,
 			Id:         "plugin-page-" + plugin.ID,
