@@ -121,7 +121,6 @@ func TestApiUrlHandling(t *testing.T) {
 			_, err := api.RawQuery(context.Background(), "/loki/api/v1/labels?start=1&end=2")
 			require.NoError(t, err)
 			require.True(t, called)
-
 		})
 	}
 }
