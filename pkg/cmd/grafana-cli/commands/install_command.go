@@ -62,7 +62,7 @@ func InstallPlugin(ctx context.Context, pluginID, version string, c utils.Comman
 
 	compatOpts := repository.CompatabilityOpts{
 		GrafanaVersion: services.GrafanaVersion,
-		OS:             strings.ToLower(runtime.GOOS),
+		OS:             runtime.GOOS,
 		Arch:           runtime.GOARCH,
 	}
 

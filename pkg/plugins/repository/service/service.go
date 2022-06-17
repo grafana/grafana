@@ -32,7 +32,7 @@ func New(skipTLSVerify bool, repoURL string, logger logger.Logger) *Service {
 }
 
 func ProvideService() *Service {
-	return New(false, grafanaComAPIRoot, logger.NewLogger("plugin.repository", true))
+	return New(false, grafanaComAPIRoot, logger.NewLogger("plugin.repository"))
 }
 
 // GetPluginArchive fetches the requested plugin archive

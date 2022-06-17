@@ -197,8 +197,8 @@ func isSemVerExpr(version string) bool {
 	if version == "" {
 		return false
 	}
-
-	_, err := semver.NewConstraint(version)
-
-	return err == nil
+	if _, err := semver.NewConstraint(version); err == nil {
+		return true
+	}
+	return false
 }

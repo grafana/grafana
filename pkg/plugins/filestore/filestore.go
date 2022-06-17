@@ -72,7 +72,6 @@ func (s *Service) Remove(_ context.Context, pluginDir string) error {
 	}
 
 	s.log.Infof("Uninstalling plugin %v", pluginDir)
-
 	return os.RemoveAll(pluginDir)
 }
 
