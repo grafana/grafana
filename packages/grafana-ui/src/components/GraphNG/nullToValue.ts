@@ -3,14 +3,16 @@ import { ArrayVector, DataFrame } from '@grafana/data';
 export function nullToValue(frame: DataFrame) {
   return {
     ...frame,
-    fields: frame.fields.map((field, i) => {
+    fields: frame.fields.map((field) => {
       const noValue = +field.config?.noValue!;
-      const values = field.values.toArray().slice();
-      const transformedVals: any[] = [];
 
       if (!Number.isNaN(noValue)) {
-        for (let i = 0; i < values.length; i++) {
-          transformedVals[i] = values[i] === null ? noValue : values[i];
+        const transformedVals = field.values.toArray().slice();
+
+        for (let i = 0; i < transformedVals.length; i++) {
+          if (transformedVals[i] === null) {
+            transformedVals[i] = noValue;
+          }
         }
 
         return {
