@@ -433,7 +433,7 @@ export function prepConfig(opts: PrepConfigOpts) {
             return splits.map((v) =>
               v < 0
                 ? meta.yZeroDisplay ?? '' // Check prometheus style labels
-                : meta.yOrdinalDisplay[v]
+                : meta.yOrdinalDisplay[v] ?? ''
             );
           }
           return splits;
