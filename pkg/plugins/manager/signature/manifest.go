@@ -108,6 +108,14 @@ func Calculate(mlog log.Logger, plugin *plugins.Plugin) (plugins.Signature, erro
 		}, nil
 	}
 
+	pluginFiles, err := pluginFilesRequiringVerification(plugin)
+	if err != nil {
+		mlog.Warn("Could not collect plugin file information in directory", "pluginID", plugin.ID, "dir", plugin.PluginDir)
+		return plugins.Signature{
+			Status: plugins.SignatureInvalid,
+		}, err
+	}
+
 	manifestPath := filepath.Join(plugin.PluginDir, "MANIFEST.txt")
 
 	// nolint:gosec
@@ -183,14 +191,6 @@ func Calculate(mlog log.Logger, plugin *plugins.Plugin) (plugins.Signature, erro
 	}
 
 	if manifest.isV2() {
-		pluginFiles, err := pluginFilesRequiringVerification(plugin)
-		if err != nil {
-			mlog.Warn("Could not collect plugin file information in directory", "pluginID", plugin.ID, "dir", plugin.PluginDir)
-			return plugins.Signature{
-				Status: plugins.SignatureInvalid,
-			}, err
-		}
-
 		// Track files missing from the manifest
 		var unsignedFiles []string
 		for _, f := range pluginFiles {
