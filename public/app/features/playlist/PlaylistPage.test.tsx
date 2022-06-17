@@ -16,6 +16,12 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
+jest.mock('app/core/services/context_srv', () => ({
+  contextSrv: {
+    isEditor: true,
+  },
+}));
+
 function getTestContext(propOverrides?: object) {
   const props: PlaylistPageProps = {
     navModel: {
