@@ -220,7 +220,7 @@ def main_pipelines(edition):
         volumes=volumes,
     ), pipeline(
         name='main-integration-tests', edition=edition, trigger=trigger, services=services,
-        steps=[download_grabpl_step(), identify_runner_step(),] + integration_test_steps,
+        steps=[download_grabpl_step(), identify_runner_step(), verify_gen_cue_step(), wire_install_step(), ] + integration_test_steps,
         volumes=volumes,
     ), pipeline(
         name='main-windows', edition=edition, trigger=dict(trigger, repo=['grafana/grafana']),
