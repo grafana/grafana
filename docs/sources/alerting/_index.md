@@ -14,6 +14,8 @@ Grafana Alerting allows you to learn about problems in your systems moments afte
 - Create and manage Grafana Mimir and Loki managed alerts
 - View alerting information from Prometheus and Alertmanager compatible data sources
 
+Watch this video to learn more about Grafana Alerting: {{< vimeo 720001629 >}}
+
 For new installations or existing installs without alerting configured, Grafana Alerting is enabled by default.
 
 | Release     | Cloud         | Enterprise    | OSS           |
