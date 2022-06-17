@@ -284,7 +284,6 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 				return nil, err
 			}
 			metricsLog = fmt.Sprintf("Error connecting to Azure Monitor endpoint: %s", string(body))
-			backend.Logger.Error(string(body))
 		}
 	}
 
@@ -304,7 +303,6 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 				return nil, err
 			}
 			logAnalyticsLog = fmt.Sprintf("Error connecting to Azure Log Analytics endpoint: %s", string(body))
-			backend.Logger.Error(string(body))
 		}
 	}
 
@@ -319,7 +317,6 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 				return nil, err
 			}
 			graphLog = fmt.Sprintf("Error connecting to Azure Resource Graph endpoint: %s", string(body))
-			backend.Logger.Error(string(body))
 		}
 	}
 
@@ -341,8 +338,18 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 		}
 	}()
 
+	if status == backend.HealthStatusOk {
+		return &backend.CheckHealthResult{
+			Status:  status,
+			Message: "Successfully connected to all Azure Monitor endpoints.",
+		}, nil
+	}
+
 	return &backend.CheckHealthResult{
 		Status:  status,
-		Message: fmt.Sprintf("1. %s\n2. %s\n3. %s", metricsLog, logAnalyticsLog, graphLog),
+		Message: "One or more health checks failed. See details below.",
+		JSONDetails: []byte(
+			fmt.Sprintf(`{"verboseMessage": "1. %s\n2. %s\n3.%s" }`, metricsLog, logAnalyticsLog, graphLog),
+		),
 	}, nil
 }
