@@ -761,14 +761,14 @@ export class DashboardMigrator {
             }
 
             for (const target of panel.targets) {
-              if (target.datasource && panelDataSourceWasDefault) {
+              if (target.datasource == null || target.datasource.uid == null) {
+                target.datasource = { ...panel.datasource };
+              }
+
+              if (panelDataSourceWasDefault && target.datasource.uid !== '__expr__') {
                 // We can have situations when default ds changed and the panel level data source is different from the queries
                 // In this case we use the query level data source as source for truth
                 panel.datasource = target.datasource as DataSourceRef;
-              }
-
-              if (target.datasource === null) {
-                target.datasource = getDataSourceRef(defaultDs);
               }
             }
           }
