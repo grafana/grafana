@@ -38,4 +38,4 @@ You can use AWS Marketplace to make the following modifications to your Grafana 
 
    This action retrieves updated license information from AWS.
 
-> To learn more about licensing and active users, refer to [Understanding Grafana Enterprise licensing]({{< relref "../../../../enterprise/license/activate-aws-marketplace-license/license-restrictions/" >}}).
+> To learn more about licensing and active users, refer to [Understanding Grafana Enterprise licensing]({{< relref "../#license-restrictions" >}}).
