@@ -386,8 +386,6 @@ export function prepConfig(opts: PrepConfigOpts) {
 
   const dispY = yField.display ?? getValueFormat('short');
 
-  const fmtY = getValueFormat(yAxisConfig.unit ?? 'short');
-
   builder.addAxis({
     scaleKey: yScaleKey,
     show: yAxisConfig.axisPlacement !== AxisPlacement.Hidden,
@@ -429,9 +427,8 @@ export function prepConfig(opts: PrepConfigOpts) {
           const meta = readHeatmapRowsCustomMeta(dataRef.current?.heatmap);
           if (meta.yOrdinalDisplay) {
             return splits.map((v) =>
-              // Check prometheus style labels
-              v < 0 && meta.yMatchWithLabel === 'le'
-                ? formattedValueToString(fmtY(0, yAxisConfig.unit == null ? 1 : yAxisConfig.decimals))
+              v < 0
+                ? meta.yZeroDisplay ?? '' // Check prometheus style labels
                 : meta.yOrdinalDisplay[v]
             );
           }
