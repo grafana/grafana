@@ -85,7 +85,7 @@ func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUser
 			Company:          result.Company,
 			EmailVerified:    result.EmailVerified,
 			Theme:            result.Theme,
-			HelpFlags1:       user.HelpFlags1(result.HelpFlags1),
+			HelpFlags1:       result.HelpFlags1,
 			IsDisabled:       result.IsDisabled,
 			IsAdmin:          result.IsAdmin,
 			IsServiceAccount: result.IsServiceAccount,
