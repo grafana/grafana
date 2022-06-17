@@ -20,7 +20,6 @@ var LastUpdateTime time.Time
 var MetricCacheInterval time.Duration = 60 * time.Second
 var cache sync.Map
 var updateMutex sync.Mutex
-var once sync.Once
 
 func (s *AuthInfoStore) makeMetric(name, help string) prometheus.GaugeFunc {
 	return prometheus.NewGaugeFunc(
@@ -67,17 +66,6 @@ func (s *AuthInfoStore) cacheMetrics(ctx context.Context) error {
 	}
 
 	return nil
-}
-
-func (s *AuthInfoStore) duplicateUserEntriesSQL(ctx context.Context) string {
-	userDialect := s.sqlStore.GetDialect().Quote("user")
-	sqlQuery := `SELECT
-		(SELECT login from ` + userDialect + ` WHERE (LOWER(login) = LOWER(u.login)) AND (login != u.login)) AS dup_login,
-		(SELECT email from ` + userDialect + ` WHERE (LOWER(email) = LOWER(u.email)) AND (email != u.email)) AS dup_email
-	FROM ` + userDialect + ` AS u
-	WHERE (dup_login IS NOT NULL OR dup_email IS NOT NULL)
-	`
-	return sqlQuery
 }
 
 // Retrieve entity counts from the database, used for metrics and usage data
