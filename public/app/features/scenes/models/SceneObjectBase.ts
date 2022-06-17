@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useObservable } from 'react-use';
-import { Observer, ReplaySubject, Subscription } from 'rxjs';
+import { Observer, Subject, Subscription } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
@@ -13,7 +13,7 @@ import {
 } from './types';
 
 export abstract class SceneObjectBase<TState extends SceneObjectState> implements SceneObject<TState> {
-  subject = new ReplaySubject<TState>();
+  subject = new Subject<TState>();
   state: TState;
   parent?: SceneObjectBase<any>;
   subs = new Subscription();

@@ -43,6 +43,10 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
         },
       })
     );
+
+    if (!this.state.data) {
+      this.runQueries();
+    }
   }
 
   onUnmount() {

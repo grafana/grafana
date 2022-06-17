@@ -40,7 +40,7 @@ const ScenePanelRenderer = React.memo<SceneComponentProps<VizPanel>>(({ model })
   return (
     <AutoSizer>
       {({ width, height }) => {
-        if (width < 3 || height < 3 || !data) {
+        if (width < 3 || height < 3) {
           return null;
         }
 
