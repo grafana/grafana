@@ -38,10 +38,13 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 	if cmd.Email == "" {
 		cmd.Email = cmd.Login
 	}
-
-	usr, err := s.store.Get(ctx, cmd)
+	usr := &user.User{
+		Login: cmd.Login,
+		Email: cmd.Email,
+	}
+	usr, err = s.store.Get(ctx, usr)
 	if err != nil {
-		return nil, err
+		return usr, err
 	}
 
 	salt, err := util.GetRandomString(10)
@@ -63,7 +66,7 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 		usr.Password = encodedPassword
 	}
 
-	err = s.store.Create(ctx, usr)
+	_, err = s.store.Insert(ctx, usr)
 	if err != nil {
 		return nil, err
 	}
@@ -85,9 +88,9 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 				orgUser.Role = orguser.RoleType(setting.AutoAssignOrgRole)
 			}
 		}
-		err = s.orgUserService.Insert(ctx, &orgUser)
+		_, err = s.orgUserService.Insert(ctx, &orgUser)
 		if err != nil {
-			return nil, err
+			return usr, err
 		}
 	}
 

@@ -7,17 +7,20 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
 const MainOrgName = "Main Org."
 
 type store interface {
-	CreateIsh(context.Context, *org.Org) (int64, error)
 	Get(context.Context, int64) (*org.Org, error)
+	Insert(context.Context, *org.Org) (int64, error)
+	Update(context.Context, *org.Org) (int64, error)
 }
 
 type sqlStore struct {
-	db db.DB
+	db      db.DB
+	dialect migrator.Dialect
 }
 
 func (ss *sqlStore) Get(ctx context.Context, orgID int64) (*org.Org, error) {
@@ -38,16 +41,12 @@ func (ss *sqlStore) Get(ctx context.Context, orgID int64) (*org.Org, error) {
 	return &orga, nil
 }
 
-func (ss *sqlStore) CreateIsh(ctx context.Context, org *org.Org) (int64, error) {
-	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		if org.ID != 0 {
-			if _, err := sess.InsertId(&org); err != nil {
-				return err
-			}
-		} else {
-			if _, err := sess.InsertOne(&org); err != nil {
-				return err
-			}
+func (ss *sqlStore) Insert(ctx context.Context, org *org.Org) (int64, error) {
+	var orgID int64
+	var err error
+	err = ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		if orgID, err = sess.InsertOne(&org); err != nil {
+			return err
 		}
 		sess.PublishAfterCommit(&events.OrgCreated{
 			Timestamp: org.Created,
@@ -59,5 +58,32 @@ func (ss *sqlStore) CreateIsh(ctx context.Context, org *org.Org) (int64, error) 
 	if err != nil {
 		return 0, err
 	}
-	return org.ID, nil
+	return orgID, nil
+}
+
+func (ss *sqlStore) Update(ctx context.Context, org *org.Org) (int64, error) {
+	var orgID int64
+	var err error
+	err = ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		if err := ss.dialect.PreInsertId("org", sess.Session); err != nil {
+			return err
+		}
+		orgID, err = sess.InsertOne(&org)
+		if err != nil {
+			return err
+		}
+		if err := ss.dialect.PostInsertId("org", sess.Session); err != nil {
+			return err
+		}
+		sess.PublishAfterCommit(&events.OrgCreated{
+			Timestamp: org.Created,
+			Id:        org.ID,
+			Name:      org.Name,
+		})
+		return nil
+	})
+	if err != nil {
+		return 0, err
+	}
+	return orgID, nil
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -15,14 +16,17 @@ import (
 type Service struct {
 	store store
 	cfg   *setting.Cfg
+	log   log.Logger
 }
 
 func ProvideService(db db.DB, cfg *setting.Cfg) org.Service {
 	return &Service{
 		store: &sqlStore{
-			db: db,
+			db:      db,
+			dialect: db.GetDialect(),
 		},
 		cfg: cfg,
+		log: log.New("org service"),
 	}
 }
 
@@ -54,8 +58,8 @@ func (s *Service) GetIDForNewUser(ctx context.Context, cmd user.CreateUserComman
 			return orga.ID, nil
 		}
 		if setting.AutoAssignOrgId != 1 {
-			// sqlog.Error("Could not create user: organization ID does not exist", "orgID",
-			// 	setting.AutoAssignOrgId)
+			s.log.Error("Could not create user: organization ID does not exist", "orgID",
+				setting.AutoAssignOrgId)
 			return 0, fmt.Errorf("could not create user: organization ID %d does not exist",
 				setting.AutoAssignOrgId)
 		}
@@ -68,5 +72,9 @@ func (s *Service) GetIDForNewUser(ctx context.Context, cmd user.CreateUserComman
 	orga.Created = time.Now()
 	orga.Updated = time.Now()
 
-	return s.store.CreateIsh(ctx, &orga)
+	if orga.ID != 0 {
+		return s.store.Insert(ctx, &orga)
+	} else {
+		return s.store.Update(ctx, &orga)
+	}
 }

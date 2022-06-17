@@ -7,6 +7,5 @@ import (
 )
 
 type Service interface {
-	// Create(context.Context, *CreateOrgCommand) (*Org, error)
 	GetIDForNewUser(context.Context, user.CreateUserCommand) (int64, error)
 }

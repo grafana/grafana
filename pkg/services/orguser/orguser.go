@@ -5,5 +5,5 @@ import (
 )
 
 type Service interface {
-	Insert(context.Context, *OrgUser) error
+	Insert(context.Context, *OrgUser) (int64, error)
 }

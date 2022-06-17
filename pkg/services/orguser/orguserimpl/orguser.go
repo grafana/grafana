@@ -19,6 +19,6 @@ func ProvideService(db db.DB) orguser.Service {
 	}
 }
 
-func (s *Service) Insert(ctx context.Context, orguser *orguser.OrgUser) error {
+func (s *Service) Insert(ctx context.Context, orguser *orguser.OrgUser) (int64, error) {
 	return s.store.Insert(ctx, orguser)
 }

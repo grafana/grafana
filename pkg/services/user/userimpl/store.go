@@ -12,20 +12,21 @@ import (
 )
 
 type store interface {
-	Create(context.Context, *user.User) error
-	Get(context.Context, *user.CreateUserCommand) (*user.User, error)
+	Insert(context.Context, *user.User) (int64, error)
+	Get(context.Context, *user.User) (*user.User, error)
 }
 
 type sqlStore struct {
 	db db.DB
 }
 
-func (ss *sqlStore) Create(ctx context.Context, cmd *user.User) error {
-	// var usr *user.User
-	err := ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+func (ss *sqlStore) Insert(ctx context.Context, cmd *user.User) (int64, error) {
+	var userID int64
+	var err error
+	err = ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		sess.UseBool("is_admin")
 
-		if _, err := sess.Insert(cmd); err != nil {
+		if userID, err = sess.Insert(cmd); err != nil {
 			return err
 		}
 		sess.PublishAfterCommit(&events.UserCreated{
@@ -37,10 +38,13 @@ func (ss *sqlStore) Create(ctx context.Context, cmd *user.User) error {
 		})
 		return nil
 	})
-	return err
+	if err != nil {
+		return 0, err
+	}
+	return userID, nil
 }
 
-func (ss *sqlStore) Get(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
+func (ss *sqlStore) Get(ctx context.Context, cmd *user.User) (*user.User, error) {
 	var usr *user.User
 	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		exists, err := sess.Where("email=? OR login=?", cmd.Email, cmd.Login).Get(&user.User{})
