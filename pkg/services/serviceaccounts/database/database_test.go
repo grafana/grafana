@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -112,16 +113,31 @@ func TestStore_RetrieveServiceAccount(t *testing.T) {
 
 func TestStore_AddServiceAccountToTeam(t *testing.T) {
 	cases := []struct {
-		desc        string
-		sa          tests.TestUser
-		team        tests.TestTeam
-		expectedErr error
+		desc                        string
+		sa                          tests.TestUser
+		team                        tests.TestTeam
+		expectedNumberOfTeamMembers int
+		expectedErr                 error
 	}{
 		{
-			desc:        "should be able to add service account to team",
-			sa:          tests.TestUser{Login: "servicetest1@admin", IsServiceAccount: true},
-			team:        tests.TestTeam{Email: "teamtest1@admin", Name: "test-team"},
-			expectedErr: nil,
+			desc: "should be able to add service account to team",
+			sa: tests.TestUser{
+				Login:            "servicetest1@admin",
+				IsServiceAccount: true,
+				Permissions: []accesscontrol.Permission{
+					// {
+					// 	Action: accesscontrol.ActionTeamsPermissionsWrite,
+					// 	Scope:  accesscontrol.ScopeTeamsAll,
+					// },
+					{
+						Action: accesscontrol.ActionOrgUsersRead,
+						Scope:  accesscontrol.ScopeUsersAll,
+					},
+				},
+			},
+			team:                        tests.TestTeam{Email: "teamtest1@admin", Name: "test-team"},
+			expectedNumberOfTeamMembers: 1,
+			expectedErr:                 nil,
 		},
 	}
 	for _, c := range cases {
@@ -137,10 +153,21 @@ func TestStore_AddServiceAccountToTeam(t *testing.T) {
 			if c.expectedErr != nil {
 				require.ErrorIs(t, err, c.expectedErr)
 			}
-			teamQuery := models.GetTeamMembersQuery{OrgId: sa.OrgId, TeamId: team.Id, UserId: sa.Id}
+
+			signedInUser := &models.SignedInUser{
+				UserId: sa.Id,
+				OrgId:  sa.OrgId,
+				Permissions: map[int64]map[string][]string{
+					sa.OrgId: {
+						accesscontrol.ActionTeamsRead:    []string{accesscontrol.ScopeTeamsAll},
+						accesscontrol.ActionOrgUsersRead: []string{accesscontrol.ScopeUsersAll},
+					},
+				},
+			}
+			teamQuery := models.GetTeamMembersQuery{OrgId: sa.OrgId, TeamId: team.Id, SignedInUser: signedInUser}
 			err = db.GetTeamMembers(context.Background(), &teamQuery)
 			require.NoError(t, err)
-			require.Equal(t, len(teamQuery.Result), 1)
+			require.Equal(t, c.expectedNumberOfTeamMembers, len(teamQuery.Result))
 			require.Equal(t, teamQuery.Result[0].UserId, sa.Id)
 			require.Equal(t, teamQuery.Result[0].Permission, models.PERMISSION_VIEW)
 		})

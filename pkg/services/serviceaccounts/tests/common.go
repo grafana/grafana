@@ -17,6 +17,7 @@ type TestUser struct {
 	Role             string
 	Login            string
 	IsServiceAccount bool
+	Permissions      []accesscontrol.Permission
 }
 
 type TestTeam struct {
