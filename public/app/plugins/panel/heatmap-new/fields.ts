@@ -75,7 +75,16 @@ export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme
     }
   }
 
-  return getHeatmapData(rowsToCellsHeatmap({ ...options.rowsFrame, frame: rowsHeatmap }), exemplars, theme);
+  return getHeatmapData(
+    rowsToCellsHeatmap({
+      unit: options.yAxis?.unit,
+      decimals: options.yAxis?.decimals,
+      ...options.rowsFrame,
+      frame: rowsHeatmap,
+    }),
+    exemplars,
+    theme
+  );
 }
 
 const getSparseHeatmapData = (

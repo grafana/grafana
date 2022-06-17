@@ -11,6 +11,8 @@ import {
   DataFrameType,
   getFieldDisplayName,
   Field,
+  getValueFormat,
+  formattedValueToString,
 } from '@grafana/data';
 import { ScaleDistribution } from '@grafana/schema';
 
@@ -64,6 +66,8 @@ export function readHeatmapScanlinesCustomMeta(frame?: DataFrame): HeatmapScanli
 export interface RowsHeatmapOptions {
   frame: DataFrame;
   value?: string; // the field value name
+  unit?: string;
+  decimals?: number;
   layout?: HeatmapCellLayout;
 }
 
@@ -124,6 +128,15 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
   if (custom.yMatchWithLabel) {
     custom.yOrdinalLabel = yFields.map((f) => f.labels?.[custom.yMatchWithLabel!] ?? '');
   }
+
+  // Format the labels as a value
+  if (opts.unit?.length) {
+    const fmt = getValueFormat(opts.unit);
+    custom.yOrdinalDisplay = custom.yOrdinalDisplay.map(
+      (f) => `${f}! ${formattedValueToString(fmt(10, opts.decimals))}`
+    );
+  }
+
   return {
     length: xs.length,
     refId: opts.frame.refId,
