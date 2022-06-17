@@ -39,7 +39,7 @@ type fakePluginRequestValidator struct {
 	err error
 }
 
-func (rv *fakePluginRequestValidator) Validate(dsURL string, req *http.Request) error {
+func (rv *fakePluginRequestValidator) Validate(_ string, _ *http.Request) error {
 	return rv.err
 }
 
@@ -58,24 +58,9 @@ func (ts *fakeOAuthTokenService) IsOAuthPassThruEnabled(*models.DataSource) bool
 
 // `/ds/query` endpoint test
 func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
-	qds := query.ProvideService(
-		nil,
-		nil,
-		nil,
-		&fakePluginRequestValidator{},
-		&fakeDatasources.FakeDataSourceService{},
-		&fakePluginClient{
-			QueryDataHandlerFunc: func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-				resp := backend.Responses{
-					"A": backend.DataResponse{
-						Error: fmt.Errorf("query failed"),
-					},
-				}
-				return &backend.QueryDataResponse{Responses: resp}, nil
-			},
-		},
-		&fakeOAuthTokenService{},
-	)
+	qds := mockQueryResponse(backend.Responses{
+		"A": backend.DataResponse{Error: fmt.Errorf("query failed")},
+	})
 	serverFeatureEnabled := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.queryDataService = qds
 		hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagDatasourceQueryMultiStatus, true)
@@ -105,4 +90,57 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 		require.JSONEq(t, "{\"results\":{\"A\":{\"error\":\"query failed\",\"status\":400}}}", string(b))
 		require.NoError(t, resp.Body.Close())
 	})
+
+	t.Run("Response body contains relevant status field when plugin query returns error details status", func(t *testing.T) {
+		tcs := []struct {
+			errStatus      backend.ErrorStatus
+			expectedStatus int
+		}{
+			{errStatus: backend.Timeout, expectedStatus: 504},
+			{errStatus: backend.Unauthorized, expectedStatus: 401},
+			{errStatus: backend.ConnectionError, expectedStatus: 502},
+			{errStatus: backend.Undefined, expectedStatus: 500},
+			{errStatus: 12345, expectedStatus: 400},
+		}
+
+		for _, tc := range tcs {
+			server := SetupAPITestServer(t, func(hs *HTTPServer) {
+				hs.queryDataService = mockQueryResponse(backend.Responses{
+					"A": backend.DataResponse{
+						Error: fmt.Errorf("query failed"),
+						ErrorDetails: &backend.ErrorDetails{
+							Status: tc.errStatus,
+						},
+					},
+				})
+				hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagDatasourceQueryMultiStatus, true)
+			})
+
+			req := server.NewPostRequest("/api/ds/query", strings.NewReader(queryDatasourceInput))
+			webtest.RequestWithSignedInUser(req, &models.SignedInUser{UserId: 1, OrgId: 1, OrgRole: models.ROLE_VIEWER})
+			resp, err := server.SendJSON(req)
+			require.NoError(t, err)
+			b, err := ioutil.ReadAll(resp.Body)
+			require.NoError(t, err)
+			require.Equal(t, http.StatusMultiStatus, resp.StatusCode)
+			require.JSONEq(t, fmt.Sprintf("{\"results\":{\"A\":{\"error\":\"query failed\",\"status\":%d}}}", tc.expectedStatus), string(b))
+			require.NoError(t, resp.Body.Close())
+		}
+	})
+}
+
+func mockQueryResponse(resp backend.Responses) *query.Service {
+	return query.ProvideService(
+		nil,
+		nil,
+		nil,
+		&fakePluginRequestValidator{},
+		&fakeDatasources.FakeDataSourceService{},
+		&fakePluginClient{
+			QueryDataHandlerFunc: func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+				return &backend.QueryDataResponse{Responses: resp}, nil
+			},
+		},
+		&fakeOAuthTokenService{},
+	)
 }

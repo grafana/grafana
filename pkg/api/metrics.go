@@ -72,6 +72,8 @@ func (hs *HTTPServer) toJsonStreamingResponse(qdr *backend.QueryDataResponse) re
 			qr.Status = http.StatusBadRequest
 			if resp.ErrorDetails != nil {
 				switch resp.ErrorDetails.Status {
+				case backend.Unauthorized:
+					qr.Status = http.StatusUnauthorized
 				case backend.Undefined:
 					qr.Status = http.StatusInternalServerError
 				case backend.ConnectionError:
