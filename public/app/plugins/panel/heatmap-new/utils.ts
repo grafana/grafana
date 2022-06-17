@@ -256,7 +256,8 @@ export function prepConfig(opts: PrepConfigOpts) {
     theme: theme,
   });
 
-  const yFieldConfig = dataRef.current?.heatmap?.fields[1]?.config?.custom as PanelFieldConfig | undefined;
+  const yField = dataRef.current?.heatmap?.fields[1]!;
+  const yFieldConfig = yField.config?.custom as PanelFieldConfig | undefined;
   const yScale = yFieldConfig?.scaleDistribution ?? { type: ScaleDistribution.Linear };
   const yAxisReverse = Boolean(yAxisConfig.reverse);
   const shouldUseLogScale = yScale.type !== ScaleDistribution.Linear || heatmapType === DataFrameType.HeatmapSparse;
@@ -383,7 +384,9 @@ export function prepConfig(opts: PrepConfigOpts) {
           },
   });
 
-  const disp = dataRef.current?.heatmap?.fields[1].display ?? getValueFormat('short');
+  const dispY = yField.display ?? getValueFormat('short');
+
+  const fmtY = getValueFormat(yAxisConfig.unit ?? 'short');
 
   builder.addAxis({
     scaleKey: yScaleKey,
@@ -392,7 +395,7 @@ export function prepConfig(opts: PrepConfigOpts) {
     size: yAxisConfig.axisWidth || null,
     label: yAxisConfig.axisLabel,
     theme: theme,
-    formatValue: (v: any) => formattedValueToString(disp(v)),
+    formatValue: (v: any) => formattedValueToString(dispY(v)),
     splits: isOrdianalY
       ? (self: uPlot) => {
           const meta = readHeatmapRowsCustomMeta(dataRef.current?.heatmap);
@@ -427,7 +430,9 @@ export function prepConfig(opts: PrepConfigOpts) {
           if (meta.yOrdinalDisplay) {
             return splits.map((v) =>
               // Check prometheus style labels
-              v < 0 && meta.yMatchWithLabel === 'le' ? '0.0' : meta.yOrdinalDisplay[v]
+              v < 0 && meta.yMatchWithLabel === 'le'
+                ? formattedValueToString(fmtY(0, yAxisConfig.unit == null ? 1 : yAxisConfig.decimals))
+                : meta.yOrdinalDisplay[v]
             );
           }
           return splits;
