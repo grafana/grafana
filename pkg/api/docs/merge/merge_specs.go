@@ -183,6 +183,9 @@ func getDashboardDefinitions() (spec.Definitions, error) {
 	f, _ := openapi.GenerateSchema(sch, nil)
 
 	v3, err := json.Marshal(lib.Context().BuildFile(f))
+	if err != nil {
+		return spec.Definitions{}, fmt.Errorf("failed to marshal the OpenAPI v3 dashboard definition, %w", err)
+	}
 
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData(v3)
