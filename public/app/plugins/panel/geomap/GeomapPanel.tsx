@@ -39,7 +39,7 @@ import { GeomapHoverPayload, GeomapLayerHover } from './event';
 import { getGlobalStyles } from './globalStyles';
 import { defaultMarkersConfig, MARKERS_LAYER_ID } from './layers/data/markersLayer';
 import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry } from './layers/registry';
-import { ControlsOptions, GeomapPanelOptions, MapLayerState, MapViewConfig } from './types';
+import { ControlsOptions, GeomapPanelOptions, MapLayerState, MapViewConfig, TooltipMode } from './types';
 import { centerPointRegistry, MapCenterID } from './view';
 
 // Allows multiple panels to share the same view instance
@@ -341,6 +341,7 @@ export class GeomapPanel extends Component<Props, State> {
     if (this.pointerMoveListener(evt)) {
       evt.preventDefault();
       evt.stopPropagation();
+      this.mapDiv!.style.cursor = 'auto';
       this.setState({ ttipOpen: true });
     }
   };
@@ -419,7 +420,9 @@ export class GeomapPanel extends Component<Props, State> {
       });
     }
 
-    return layers.length ? true : false;
+    const found = layers.length ? true : false;
+    this.mapDiv!.style.cursor = found ? 'pointer' : 'auto';
+    return found;
   };
 
   private updateLayer = async (uid: string, newOptions: MapLayerOptions): Promise<boolean> => {
@@ -658,8 +661,12 @@ export class GeomapPanel extends Component<Props, State> {
   }
 
   render() {
-    const { ttip, ttipOpen, topRight, legends } = this.state;
-    const showScale = this.props.options.controls.showScale;
+    let { ttip, ttipOpen, topRight, legends } = this.state;
+    const { options } = this.props;
+    const showScale = options.controls.showScale;
+    if (!ttipOpen && options.tooltip?.mode === TooltipMode.None) {
+      ttip = undefined;
+    }
 
     return (
       <>

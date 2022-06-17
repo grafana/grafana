@@ -249,6 +249,16 @@ func TestStore_MigrateAllApiKeys(t *testing.T) {
 			expectedServiceAccouts: 0,
 			expectedErr:            nil,
 		},
+		{
+			desc: "expired api keys should be migrated",
+			keys: []tests.TestApiKey{
+				{Name: "test1", Role: models.ROLE_EDITOR, Key: "secret1", OrgId: 1},
+				{Name: "test2", Role: models.ROLE_EDITOR, Key: "secret2", OrgId: 1, IsExpired: true},
+			},
+			orgId:                  1,
+			expectedServiceAccouts: 2,
+			expectedErr:            nil,
+		},
 	}
 
 	for _, c := range cases {

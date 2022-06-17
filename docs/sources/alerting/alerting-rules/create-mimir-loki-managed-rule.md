@@ -28,6 +28,8 @@ Grafana allows you to create alerting rules for an external Grafana Mimir or Lok
 
   - **Grafana Mimir** - use the [legacy `/api/prom` prefix](https://grafana.com/docs/mimir/latest/operators-guide/reference-http-api/#path-prefixes), not `/prometheus`. The Prometheus data source supports both Grafana Mimir and Prometheus, and Grafana expects that both the [Query API](https://grafana.com/docs/mimir/latest/operators-guide/reference-http-api/#querier--query-frontend) and [Ruler API](https://grafana.com/docs/mimir/latest/operators-guide/reference-http-api/#ruler) are under the same URL. You cannot provide a separate URL for the Ruler API.
 
+Watch this video to learn more about how to create a Mimir managed alert rule: {{< vimeo 720001865 >}}
+
 > **Note:** If you do not want to manage alerting rules for a particular Loki or Prometheus data source, go to its settings and clear the **Manage alerts via Alerting UI** checkbox.
 
 ## Add a Grafana Mimir or Loki managed alerting rule

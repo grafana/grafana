@@ -25,10 +25,11 @@ type TestTeam struct {
 	Email string
 }
 type TestApiKey struct {
-	Name  string
-	Role  models.RoleType
-	OrgId int64
-	Key   string
+	Name      string
+	Role      models.RoleType
+	OrgId     int64
+	Key       string
+	IsExpired bool
 }
 
 func SetupUserServiceAccount(t *testing.T, sqlStore *sqlstore.SQLStore, testUser TestUser) *models.User {
@@ -66,6 +67,19 @@ func SetupApiKey(t *testing.T, sqlStore *sqlstore.SQLStore, testKey TestApiKey) 
 	}
 	err := sqlStore.AddAPIKey(context.Background(), addKeyCmd)
 	require.NoError(t, err)
+
+	if testKey.IsExpired {
+		err := sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			// Force setting expires to time before now to make key expired
+			var expires int64 = 1
+			key := models.ApiKey{Expires: &expires}
+			rowsAffected, err := sess.ID(addKeyCmd.Result.Id).Update(&key)
+			require.Equal(t, int64(1), rowsAffected)
+			return err
+		})
+		require.NoError(t, err)
+	}
+
 	return addKeyCmd.Result
 }
 
