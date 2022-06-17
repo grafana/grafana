@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"path"
 	"strconv"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -68,12 +69,12 @@ func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery, hea
 			//     precise, as Loki does not support step with float number
 			//     and time-specifier, like "1.5s"
 			qs.Set("step", fmt.Sprintf("%dms", query.Step.Milliseconds()))
-			lokiUrl.Path = "/loki/api/v1/query_range"
+			lokiUrl.Path = path.Join(lokiUrl.Path, "/loki/api/v1/query_range")
 		}
 	case QueryTypeInstant:
 		{
 			qs.Set("time", strconv.FormatInt(query.End.UnixNano(), 10))
-			lokiUrl.Path = "/loki/api/v1/query"
+			lokiUrl.Path = path.Join(lokiUrl.Path, "/loki/api/v1/query")
 		}
 	default:
 		return nil, fmt.Errorf("invalid QueryType: %v", query.QueryType)
@@ -169,18 +170,22 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery) (data.Frames
 	return res.Frames, nil
 }
 
-func makeRawRequest(ctx context.Context, lokiDsUrl string, resourceURL string, headers map[string]string) (*http.Request, error) {
+func makeRawRequest(ctx context.Context, lokiDsUrl string, resourcePath string, headers map[string]string) (*http.Request, error) {
 	lokiUrl, err := url.Parse(lokiDsUrl)
 	if err != nil {
 		return nil, err
 	}
 
-	url, err := lokiUrl.Parse(resourceURL)
+	resourceUrl, err := url.Parse(resourcePath)
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "GET", url.String(), nil)
+	// we take the path and the query-string only
+	lokiUrl.RawQuery = resourceUrl.RawQuery
+	lokiUrl.Path = path.Join(lokiUrl.Path, resourceUrl.Path)
+
+	req, err := http.NewRequestWithContext(ctx, "GET", lokiUrl.String(), nil)
 
 	if err != nil {
 		return nil, err
@@ -191,8 +196,8 @@ func makeRawRequest(ctx context.Context, lokiDsUrl string, resourceURL string, h
 	return req, nil
 }
 
-func (api *LokiAPI) RawQuery(ctx context.Context, resourceURL string) ([]byte, error) {
-	req, err := makeRawRequest(ctx, api.url, resourceURL, api.headers)
+func (api *LokiAPI) RawQuery(ctx context.Context, resourcePath string) ([]byte, error) {
+	req, err := makeRawRequest(ctx, api.url, resourcePath, api.headers)
 	if err != nil {
 		return nil, err
 	}
