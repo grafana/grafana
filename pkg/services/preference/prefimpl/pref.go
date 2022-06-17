@@ -51,7 +51,17 @@ func (s *Service) GetWithDefaults(ctx context.Context, query *pref.GetPreference
 			res.HomeDashboardID = p.HomeDashboardID
 		}
 		if p.JSONData != nil {
-			res.JSONData = p.JSONData
+			if p.JSONData.Locale != "" {
+				res.JSONData.Locale = p.JSONData.Locale
+			}
+
+			if len(p.JSONData.Navbar.SavedItems) > 0 {
+				res.JSONData.Navbar = p.JSONData.Navbar
+			}
+
+			if p.JSONData.QueryHistory.HomeTab != "" {
+				res.JSONData.QueryHistory.HomeTab = p.JSONData.QueryHistory.HomeTab
+			}
 		}
 	}
 
@@ -214,7 +224,9 @@ func (s *Service) GetDefaults() *pref.Preference {
 		Timezone:        s.cfg.DateFormats.DefaultTimezone,
 		WeekStart:       s.cfg.DateFormats.DefaultWeekStart,
 		HomeDashboardID: 0,
-		JSONData:        &pref.PreferenceJSONData{},
+		JSONData: &pref.PreferenceJSONData{
+			Locale: s.cfg.DefaultLocale,
+		},
 	}
 
 	return defaults

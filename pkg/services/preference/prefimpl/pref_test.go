@@ -30,6 +30,7 @@ func TestGetDefaults(t *testing.T) {
 		store: newFake(),
 		cfg:   setting.NewCfg(),
 	}
+	prefService.cfg.DefaultLocale = "en-US"
 	prefService.cfg.DefaultTheme = "light"
 	prefService.cfg.DateFormats.DefaultTimezone = "UTC"
 
@@ -39,7 +40,9 @@ func TestGetDefaults(t *testing.T) {
 			Theme:           "light",
 			Timezone:        "UTC",
 			HomeDashboardID: 0,
-			JSONData:        &pref.PreferenceJSONData{},
+			JSONData: &pref.PreferenceJSONData{
+				Locale: "en-US",
+			},
 		}
 		if diff := cmp.Diff(expected, preference); diff != "" {
 			t.Fatalf("Result mismatch (-want +got):\n%s", diff)
@@ -54,7 +57,9 @@ func TestGetDefaults(t *testing.T) {
 			Theme:           "light",
 			Timezone:        "UTC",
 			HomeDashboardID: 0,
-			JSONData:        &pref.PreferenceJSONData{},
+			JSONData: &pref.PreferenceJSONData{
+				Locale: "en-US",
+			},
 		}
 		if diff := cmp.Diff(expected, preference); diff != "" {
 			t.Fatalf("Result mismatch (-want +got):\n%s", diff)
@@ -67,6 +72,8 @@ func TestGetWithDefaults_withUserAndOrgPrefs(t *testing.T) {
 		store: newFake(),
 		cfg:   setting.NewCfg(),
 	}
+	prefService.cfg.DefaultLocale = "en-US"
+
 	insertPrefs(t, prefService.store,
 		pref.Preference{
 			OrgID:           1,
@@ -74,6 +81,9 @@ func TestGetWithDefaults_withUserAndOrgPrefs(t *testing.T) {
 			Theme:           "dark",
 			Timezone:        "UTC",
 			WeekStart:       "1",
+			JSONData: &pref.PreferenceJSONData{
+				Locale: "en-GB",
+			},
 		},
 		pref.Preference{
 			OrgID:           1,
@@ -82,6 +92,9 @@ func TestGetWithDefaults_withUserAndOrgPrefs(t *testing.T) {
 			Theme:           "light",
 			Timezone:        "browser",
 			WeekStart:       "2",
+			JSONData: &pref.PreferenceJSONData{
+				Locale: "en-AU",
+			},
 		},
 	)
 
@@ -94,7 +107,9 @@ func TestGetWithDefaults_withUserAndOrgPrefs(t *testing.T) {
 			Timezone:        "browser",
 			WeekStart:       "2",
 			HomeDashboardID: 4,
-			JSONData:        &pref.PreferenceJSONData{},
+			JSONData: &pref.PreferenceJSONData{
+				Locale: "en-AU",
+			},
 		}
 		if diff := cmp.Diff(expected, preference); diff != "" {
 			t.Fatalf("Result mismatch (-want +got):\n%s", diff)
@@ -111,7 +126,9 @@ func TestGetWithDefaults_withUserAndOrgPrefs(t *testing.T) {
 			Timezone:        "UTC",
 			WeekStart:       "1",
 			HomeDashboardID: 1,
-			JSONData:        &pref.PreferenceJSONData{},
+			JSONData: &pref.PreferenceJSONData{
+				Locale: "en-GB",
+			},
 		}
 		if diff := cmp.Diff(expected, preference); diff != "" {
 			t.Fatalf("Result mismatch (-want +got):\n%s", diff)
@@ -158,6 +175,10 @@ func TestGetDefaults_JSONData(t *testing.T) {
 	orgPreferencesJsonData := pref.PreferenceJSONData{
 		Navbar: orgNavbarPreferences,
 	}
+	orgPreferencesWithLocaleJsonData := pref.PreferenceJSONData{
+		Navbar: orgNavbarPreferences,
+		Locale: "en-GB",
+	}
 	team2PreferencesJsonData := pref.PreferenceJSONData{
 		Navbar: team2NavbarPreferences,
 	}
@@ -188,6 +209,36 @@ func TestGetDefaults_JSONData(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, &pref.Preference{
 			JSONData: &userPreferencesJsonData,
+		}, preference)
+	})
+
+	t.Run("user JSONData with missing locale does not override org preference", func(t *testing.T) {
+		prefService := &Service{
+			store: newFake(),
+			cfg:   setting.NewCfg(),
+		}
+
+		insertPrefs(t, prefService.store,
+			pref.Preference{
+				OrgID:    1,
+				JSONData: &orgPreferencesWithLocaleJsonData,
+			},
+			pref.Preference{
+				OrgID:    1,
+				UserID:   1,
+				JSONData: &userPreferencesJsonData,
+			},
+		)
+
+		query := &pref.GetPreferenceWithDefaultsQuery{OrgID: 1, UserID: 1}
+		preference, err := prefService.GetWithDefaults(context.Background(), query)
+		require.NoError(t, err)
+		require.Equal(t, &pref.Preference{
+			JSONData: &pref.PreferenceJSONData{
+				Locale:       "en-GB",
+				Navbar:       userNavbarPreferences,
+				QueryHistory: queryPreference,
+			},
 		}, preference)
 	})
 
