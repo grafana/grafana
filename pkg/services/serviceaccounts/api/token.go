@@ -11,6 +11,7 @@ import (
 	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -120,10 +121,10 @@ func (api *ServiceAccountsAPI) CreateToken(c *models.ReqContext) response.Respon
 	cmd.Key = newKeyInfo.HashedKey
 
 	if err := api.store.AddServiceAccountToken(c.Req.Context(), saID, &cmd); err != nil {
-		if errors.Is(err, models.ErrInvalidApiKeyExpiration) {
+		if errors.Is(err, database.ErrInvalidTokenExpiration) {
 			return response.Error(http.StatusBadRequest, err.Error(), nil)
 		}
-		if errors.Is(err, models.ErrDuplicateApiKey) {
+		if errors.Is(err, database.ErrDuplicateToken) {
 			return response.Error(http.StatusConflict, err.Error(), nil)
 		}
 		return response.Error(http.StatusInternalServerError, "Failed to add service account token", err)
