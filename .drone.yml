@@ -476,7 +476,7 @@ steps:
   - go clean -testcache
   - go list -f '{{.Dir}}' './pkg/...' | xargs -I {} sh -c 'if grep --include=\*_test.go
     --exclude-dir=\* -q "^func TestIntegration" {}/*; then  go test -run Integration
-    -covermode=atomic -timeout=30m {}; fi'
+    -covermode=atomic -timeout=30m {}; fi || exit -1'
   depends_on:
   - wire-install
   environment:
@@ -494,7 +494,7 @@ steps:
   - go clean -testcache
   - go list -f '{{.Dir}}' './pkg/...' | xargs -I {} sh -c 'if grep --include=\*_test.go
     --exclude-dir=\* -q "^func TestIntegration" {}/*; then  go test -run Integration
-    -covermode=atomic -timeout=30m {}; fi'
+    -covermode=atomic -timeout=30m {}; fi || exit -1
   depends_on:
   - wire-install
   environment:
@@ -1321,7 +1321,7 @@ steps:
   - go clean -testcache
   - go list -f '{{.Dir}}' './pkg/...' | xargs -I {} sh -c 'if grep --include=\*_test.go
     --exclude-dir=\* -q "^func TestIntegration" {}/*; then  go test -run Integration
-    -covermode=atomic -timeout=30m {}; fi'
+    -covermode=atomic -timeout=30m {}; fi || exit -1'
   depends_on:
   - wire-install
   environment:
@@ -1339,7 +1339,7 @@ steps:
   - go clean -testcache
   - go list -f '{{.Dir}}' './pkg/...' | xargs -I {} sh -c 'if grep --include=\*_test.go
     --exclude-dir=\* -q "^func TestIntegration" {}/*; then  go test -run Integration
-    -covermode=atomic -timeout=30m {}; fi'
+    -covermode=atomic -timeout=30m {}; fi || exit -1
   depends_on:
   - wire-install
   environment:
@@ -2016,7 +2016,7 @@ steps:
   - go clean -testcache
   - go list -f '{{.Dir}}' './pkg/...' | xargs -I {} sh -c 'if grep --include=\*_test.go
     --exclude-dir=\* -q "^func TestIntegration" {}/*; then  go test -run Integration
-    -covermode=atomic -timeout=30m {}; fi'
+    -covermode=atomic -timeout=30m {}; fi || exit -1'
   depends_on:
   - wire-install
   environment:
@@ -2034,7 +2034,7 @@ steps:
   - go clean -testcache
   - go list -f '{{.Dir}}' './pkg/...' | xargs -I {} sh -c 'if grep --include=\*_test.go
     --exclude-dir=\* -q "^func TestIntegration" {}/*; then  go test -run Integration
-    -covermode=atomic -timeout=30m {}; fi'
+    -covermode=atomic -timeout=30m {}; fi || exit -1
   depends_on:
   - wire-install
   environment:
@@ -3810,7 +3810,7 @@ steps:
   - go clean -testcache
   - go list -f '{{.Dir}}' './pkg/...' | xargs -I {} sh -c 'if grep --include=\*_test.go
     --exclude-dir=\* -q "^func TestIntegration" {}/*; then  go test -run Integration
-    -covermode=atomic -timeout=30m {}; fi'
+    -covermode=atomic -timeout=30m {}; fi || exit -1'
   depends_on:
   - wire-install
   environment:
@@ -3828,7 +3828,7 @@ steps:
   - go clean -testcache
   - go list -f '{{.Dir}}' './pkg/...' | xargs -I {} sh -c 'if grep --include=\*_test.go
     --exclude-dir=\* -q "^func TestIntegration" {}/*; then  go test -run Integration
-    -covermode=atomic -timeout=30m {}; fi'
+    -covermode=atomic -timeout=30m {}; fi || exit -1
   depends_on:
   - wire-install
   environment:
@@ -4755,6 +4755,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 3635dbc233f265fd7f59a408815163e8736689dcd35fe71bf6c51a33146cda00
+hmac: 9cd467654c107b182b9813c967df4a6bbf03fc10614aceac18eb306d73223285
 
 ...
