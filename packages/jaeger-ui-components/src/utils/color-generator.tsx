@@ -32,24 +32,34 @@ class ColorGenerator {
   colorsHex: string[];
   colorsRgb: Array<[number, number, number]>;
   cache: Map<string, number>;
-  currentIdx: number;
 
   constructor(colorsHex: string[]) {
     this.colorsHex = colorsHex;
     this.colorsRgb = colorsHex.map(strToRgb);
     this.cache = new Map();
-    this.currentIdx = 0;
   }
 
   _getColorIndex(key: string): number {
     let i = this.cache.get(key);
     if (i == null) {
+      const hash = this.hashCode(key.toLowerCase());
+      const hashIndex = Math.abs(hash % this.colorsHex.length);
       // colors[4] is red (which we want to disallow as a span color because it looks like an error)
-      i = this.currentIdx !== 4 ? this.currentIdx : this.currentIdx + 1;
+      i = hashIndex === 4 ? hashIndex + 1 : hashIndex;
       this.cache.set(key, i);
-      this.currentIdx = (i + 1) % this.colorsHex.length;
     }
     return i;
+  }
+
+  hashCode(key: string) {
+    var hash = 0,
+      i,
+      chr;
+    for (i = 0; i < key.length; i++) {
+      chr = key.charCodeAt(i);
+      hash = (hash << 5) - hash + chr;
+    }
+    return hash;
   }
 
   /**
@@ -74,7 +84,6 @@ class ColorGenerator {
 
   clear() {
     this.cache.clear();
-    this.currentIdx = 0;
   }
 }
 
