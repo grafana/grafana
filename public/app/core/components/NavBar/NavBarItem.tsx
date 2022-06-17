@@ -73,6 +73,7 @@ const NavBarItem = ({ isActive = false, className, reverseMenuDirection = false,
           disabledKeys={['divider', 'subtitle']}
           aria-label={section.text}
           onNavigate={onNavigate}
+          emptyMessage={link.id === 'starred' ? 'Your starred dashboards will appear here.' : undefined}
         >
           {(item: NavModelItem) => {
             const translationKey = item.id && menuItemTranslations[item.id];

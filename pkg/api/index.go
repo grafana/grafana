@@ -166,21 +166,19 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	navTree := []*dtos.NavLink{}
 
-	if hs.Features.IsEnabled(featuremgmt.FlagSavedItems) {
-		starredItemsLinks, err := hs.buildStarredItemsNavLinks(c, prefs)
-		if err != nil {
-			return nil, err
-		}
-
-		navTree = append(navTree, &dtos.NavLink{
-			Text:       "Starred",
-			Id:         "starred",
-			Icon:       "star",
-			SortWeight: dtos.WeightSavedItems,
-			Section:    dtos.NavSectionCore,
-			Children:   starredItemsLinks,
-		})
+	starredItemsLinks, err := hs.buildStarredItemsNavLinks(c, prefs)
+	if err != nil {
+		return nil, err
 	}
+
+	navTree = append(navTree, &dtos.NavLink{
+		Text:       "Starred",
+		Id:         "starred",
+		Icon:       "star",
+		SortWeight: dtos.WeightSavedItems,
+		Section:    dtos.NavSectionCore,
+		Children:   starredItemsLinks,
+	})
 
 	dashboardChildLinks := hs.buildDashboardNavLinks(c, hasEditPerm)
 

@@ -184,11 +184,6 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:        "savedItems",
-			Description: "Enable Saved Items in the navbar.",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:        "cloudWatchDynamicLabels",
 			Description: "Use dynamic labels instead of alias patterns in CloudWatch datasource",
 			State:       FeatureStateStable,

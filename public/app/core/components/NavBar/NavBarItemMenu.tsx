@@ -17,10 +17,11 @@ export interface NavBarItemMenuProps extends SpectrumMenuProps<NavModelItem> {
   onNavigate: (item: NavModelItem) => void;
   adjustHeightForBorder: boolean;
   reverseMenuDirection?: boolean;
+  emptyMessage?: string;
 }
 
 export function NavBarItemMenu(props: NavBarItemMenuProps): ReactElement | null {
-  const { reverseMenuDirection, adjustHeightForBorder, disabledKeys, onNavigate, ...rest } = props;
+  const { reverseMenuDirection, adjustHeightForBorder, disabledKeys, onNavigate, emptyMessage, ...rest } = props;
   const contextProps = useNavBarItemMenuContext();
   const completeProps = {
     ...mergeProps(contextProps, rest),
@@ -57,6 +58,14 @@ export function NavBarItemMenu(props: NavBarItemMenuProps): ReactElement | null 
   const itemComponents = items.map((item) => (
     <NavBarItemMenuItem key={getNavModelItemKey(item.value)} item={item} state={state} onNavigate={onNavigate} />
   ));
+
+  if (itemComponents.length === 0 && emptyMessage) {
+    itemComponents.push(
+      <div key="empty-message" className={styles.emptyMessage}>
+        {emptyMessage}
+      </div>
+    );
+  }
 
   const subTitleComponent = menuSubTitle && (
     <li key={menuSubTitle} className={styles.subtitle}>
@@ -104,6 +113,10 @@ function getStyles(theme: GrafanaTheme2, reverseDirection?: boolean) {
       padding: ${theme.spacing(1)} ${theme.spacing(2)} ${theme.spacing(1)};
       text-align: left;
       white-space: nowrap;
+    `,
+    emptyMessage: css`
+      font-style: italic;
+      padding: ${theme.spacing(0.5, 2)};
     `,
   };
 }
