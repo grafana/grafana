@@ -17,7 +17,7 @@ import {
 } from '@grafana/data';
 import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';
-import { readHeatmapScanlinesCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
+import { readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 import { HeatmapCellLayout } from 'app/features/transformers/calculateHeatmap/models.gen';
 
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
@@ -260,7 +260,7 @@ export function prepConfig(opts: PrepConfigOpts) {
   const yScale = yFieldConfig?.scaleDistribution ?? { type: ScaleDistribution.Linear };
   const yAxisReverse = Boolean(yAxisConfig.reverse);
   const shouldUseLogScale = yScale.type !== ScaleDistribution.Linear || heatmapType === DataFrameType.HeatmapSparse;
-  const isOrdianalY = readHeatmapScanlinesCustomMeta(dataRef.current?.heatmap).yOrdinalDisplay != null;
+  const isOrdianalY = readHeatmapRowsCustomMeta(dataRef.current?.heatmap).yOrdinalDisplay != null;
 
   // random to prevent syncing y in other heatmaps
   // TODO: try to match TimeSeries y keygen algo to sync with TimeSeries panels (when not isOrdianalY)
@@ -395,7 +395,7 @@ export function prepConfig(opts: PrepConfigOpts) {
     formatValue: (v: any) => formattedValueToString(disp(v)),
     splits: isOrdianalY
       ? (self: uPlot) => {
-          const meta = readHeatmapScanlinesCustomMeta(dataRef.current?.heatmap);
+          const meta = readHeatmapRowsCustomMeta(dataRef.current?.heatmap);
           if (!meta.yOrdinalDisplay) {
             return [0, 1]; //?
           }
@@ -423,7 +423,7 @@ export function prepConfig(opts: PrepConfigOpts) {
       : undefined,
     values: isOrdianalY
       ? (self: uPlot, splits) => {
-          const meta = readHeatmapScanlinesCustomMeta(dataRef.current?.heatmap);
+          const meta = readHeatmapRowsCustomMeta(dataRef.current?.heatmap);
           if (meta.yOrdinalDisplay) {
             return splits.map((v) =>
               // Check prometheus style labels

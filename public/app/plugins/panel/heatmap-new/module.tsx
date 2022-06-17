@@ -6,7 +6,7 @@ import { AxisPlacement, GraphFieldConfig, ScaleDistribution, ScaleDistributionCo
 import { addHideFrom, ScaleDistributionEditor } from '@grafana/ui/src/options/builder';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { addHeatmapCalculationOptions } from 'app/features/transformers/calculateHeatmap/editor/helper';
-import { readHeatmapScanlinesCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
+import { readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 import { HeatmapCellLayout } from 'app/features/transformers/calculateHeatmap/models.gen';
 
 import { HeatmapPanel } from './HeatmapPanel';
@@ -44,7 +44,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
 
     try {
       const v = prepareHeatmapData({ series: context.data } as PanelData, opts, config.theme2);
-      isOrdinalY = readHeatmapScanlinesCustomMeta(v.heatmap).yOrdinalDisplay != null;
+      isOrdinalY = readHeatmapRowsCustomMeta(v.heatmap).yOrdinalDisplay != null;
     } catch {}
 
     let category = ['Heatmap'];

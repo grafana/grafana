@@ -51,7 +51,7 @@ export function sortAscStrInf(aName?: string | null, bName?: string | null) {
   return parseNumeric(aName) - parseNumeric(bName);
 }
 
-export interface HeatmapScanlinesCustomMeta {
+export interface HeatmapRowsCustomMeta {
   /** This provides the lookup values */
   yOrdinalDisplay: string[];
   yOrdinalLabel?: string[];
@@ -59,8 +59,8 @@ export interface HeatmapScanlinesCustomMeta {
 }
 
 /** simple utility to get heatmap metadata from a frame */
-export function readHeatmapScanlinesCustomMeta(frame?: DataFrame): HeatmapScanlinesCustomMeta {
-  return (frame?.meta?.custom ?? {}) as HeatmapScanlinesCustomMeta;
+export function readHeatmapRowsCustomMeta(frame?: DataFrame): HeatmapRowsCustomMeta {
+  return (frame?.meta?.custom ?? {}) as HeatmapRowsCustomMeta;
 }
 
 export interface RowsHeatmapOptions {
@@ -121,7 +121,7 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
       break;
   }
 
-  const custom: HeatmapScanlinesCustomMeta = {
+  const custom: HeatmapRowsCustomMeta = {
     yOrdinalDisplay: yFields.map((f) => getFieldDisplayName(f, opts.frame)),
     yMatchWithLabel: Object.keys(yFields[0].labels ?? {})[0],
   };
