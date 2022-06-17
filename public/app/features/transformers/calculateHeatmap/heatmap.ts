@@ -207,6 +207,7 @@ export function prepBucketFrames(frames: DataFrame[]): DataFrame[] {
 
 export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCalculationOptions): DataFrame {
   //console.time('calculateHeatmapFromData');
+  console.log('calculateHeatmapFromData', options);
 
   let xs: number[] = [];
   let ys: number[] = [];
@@ -289,6 +290,7 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
         values: new ArrayVector(heat2d.y),
         config: {
           ...yField.config, // keep units from the original source
+          ...options.yAxisConfig,
           custom: {
             scaleDistribution,
           },
@@ -307,7 +309,7 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
 
   //console.timeEnd('calculateHeatmapFromData');
 
-  //console.log({ tiles: frame.length });
+  console.log({ y: options.yAxisConfig, got: { ...frame.fields[1].config } });
 
   return frame;
 }

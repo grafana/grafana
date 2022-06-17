@@ -44,7 +44,14 @@ export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme
 
   if (options.calculate) {
     // TODO, check for error etc
-    return getHeatmapData(calculateHeatmapFromData(frames, options.calculation ?? {}), exemplars, theme);
+    return getHeatmapData(
+      calculateHeatmapFromData(frames, {
+        ...options.calculation,
+        yAxisConfig: options.yAxis,
+      }),
+      exemplars,
+      theme
+    );
   }
 
   // Check for known heatmap types

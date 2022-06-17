@@ -103,6 +103,9 @@ export const defaultPanelOptions: PanelOptions = {
   yAxis: {
     axisPlacement: AxisPlacement.Left,
   },
+  cellValues: {
+
+  },
   showValue: VisibilityMode.Auto,
   tooltip: {
     show: true,

@@ -1,3 +1,4 @@
+import { FieldConfig } from '@grafana/data';
 import { ScaleDistributionConfig } from '@grafana/schema';
 
 export enum HeatmapCalculationMode {
@@ -21,4 +22,5 @@ export interface HeatmapCalculationBucketConfig {
 export interface HeatmapCalculationOptions {
   xBuckets?: HeatmapCalculationBucketConfig;
   yBuckets?: HeatmapCalculationBucketConfig;
+  yAxisConfig?: FieldConfig; 
 }
