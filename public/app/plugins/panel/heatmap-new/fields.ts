@@ -58,7 +58,7 @@ export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme
   for (const frame of frames) {
     switch (frame.meta?.type) {
       case DataFrameType.HeatmapSparse:
-        return getSparseHeatmapData(frame, exemplars, theme); // TODO! use yAxis settings
+        return getSparseHeatmapData(frame, exemplars, options, theme);
 
       case DataFrameType.HeatmapCells:
         return getHeatmapData(frame, exemplars, options, theme);
@@ -97,6 +97,7 @@ export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme
 const getSparseHeatmapData = (
   frame: DataFrame,
   exemplars: DataFrame | undefined,
+  options: PanelOptions,
   theme: GrafanaTheme2
 ): HeatmapData => {
   if (frame.meta?.type !== DataFrameType.HeatmapSparse) {
@@ -106,7 +107,12 @@ const getSparseHeatmapData = (
     };
   }
 
+  // y axis tick label display
+  updateFieldDisplay(frame.fields[1], options.yAxis, theme);
+
+  // cell value display
   const disp = frame.fields[3].display ?? getValueFormat('short');
+
   return {
     heatmap: frame,
     exemplars,
