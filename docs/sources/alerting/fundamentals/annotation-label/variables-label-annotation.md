@@ -38,7 +38,7 @@ One difference between Grafana and Prometheus is that Grafana uses `$value` to h
 of the condition at the time the alert fired. For example:
 
 ```
-[ var='B' labels={instance=http_server} value=10.01 ]
+[ var='B' labels={instance=http_server} value=10 ]
 ```
 
 ## Alert rules with two or more queries or expressions
