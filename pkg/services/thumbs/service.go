@@ -233,7 +233,7 @@ func (hs *thumbService) GetImage(c *models.ReqContext) {
 		return
 	}
 
-	currentEtag := res.Updated.String()
+	currentEtag := fmt.Sprintf("%d", res.Updated.Unix())
 	c.Resp.Header().Set("ETag", currentEtag)
 
 	previousEtag := c.Req.Header.Get("If-None-Match")
