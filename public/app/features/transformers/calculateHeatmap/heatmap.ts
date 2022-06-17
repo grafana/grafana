@@ -137,7 +137,9 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
   // TODO: this leaves the internally prepended '0.0' without this formatting treatment
   if (opts.unit?.length || opts.decimals != null) {
     const fmt = getValueFormat(opts.unit ?? 'short');
-    custom.yZeroDisplay = formattedValueToString(fmt(0, opts.decimals));
+    if (custom.yZeroDisplay) {
+       custom.yZeroDisplay = formattedValueToString(fmt(0, opts.decimals));
+    }
     custom.yOrdinalDisplay = custom.yOrdinalDisplay.map((name) => {
       let num = +name;
 
