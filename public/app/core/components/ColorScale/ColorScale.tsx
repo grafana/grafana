@@ -69,7 +69,7 @@ export const ColorScale = ({ colorPalette, min, max, display, hoverValue, useSto
           </div>
           {percent != null && (scaleHover.isShown || hoverValue !== undefined) && (
             <span className={styles.hoverValue} style={{ left: `${percent}%` }}>
-              {display(hoverValue || scaleHover.value)}
+              {display(hoverValue ?? scaleHover.value)}
             </span>
           )}
         </div>
