@@ -74,6 +74,10 @@ func Logger(cfg *setting.Cfg) web.Handler {
 	}
 }
 
+var sensitiveQueryStrings = [...]string{
+	"auth_token",
+}
+
 func sanitizeURL(ctx *models.ReqContext, s string) string {
 	if s == "" {
 		return s
@@ -84,5 +88,13 @@ func sanitizeURL(ctx *models.ReqContext, s string) string {
 		ctx.Logger.Warn("Received invalid referer in request headers, removed for log forgery prevention")
 		return ""
 	}
+
+	// strip out sensitive query strings
+	values := u.Query()
+	for _, query := range sensitiveQueryStrings {
+		values.Del(query)
+	}
+	u.RawQuery = values.Encode()
+
 	return u.String()
 }
