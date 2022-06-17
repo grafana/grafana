@@ -23,7 +23,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       padding: 0 2px;
       background-color: ${theme.colors.bg2};
       border-radius: ${theme.border.radius};
-      margin: 1.75px 4px 0 0;
+      margin: 1px 4px 0 0;
       text-overflow: ellipsis;
       white-space: nowrap;
       overflow: hidden;

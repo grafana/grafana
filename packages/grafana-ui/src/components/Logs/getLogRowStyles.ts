@@ -124,6 +124,11 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme2, logLevel?: L
       label: logs-row__labels;
       white-space: nowrap;
       max-width: 22em;
+
+      /* This is to make the labels vertical align */
+      > span {
+        margin-top: 0.75px;
+      }
     `,
     logsRowMessage: css`
       label: logs-row__message;
