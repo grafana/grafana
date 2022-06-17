@@ -87,10 +87,10 @@ function legacyCreateSpanLinkFactory(
   createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<Field>
 ) {
   let logsDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
-  const isSplunkDS = logsDataSourceSettings?.type === 'grafana-splunk-datasource';
   if (traceToLogsOptions?.datasourceUid) {
     logsDataSourceSettings = getDatasourceSrv().getInstanceSettings(traceToLogsOptions.datasourceUid);
   }
+  const isSplunkDS = logsDataSourceSettings?.type === 'grafana-splunk-datasource';
 
   let metricsDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
   if (traceToMetricsOptions?.datasourceUid) {
@@ -339,6 +339,7 @@ function getTimeRangeFromSpan(
   const from = dateTime(adjustedStartTime);
   const spanEndMs = (span.startTime + span.duration) / 1000;
   let adjustedEndTime = Math.floor(spanEndMs + timeShift.endMs);
+  // isSplunkDS = true;
 
   // Splunk requires a time interval of >= 1s, rather than >=1ms like Loki timerange in below elseif block
   if (isSplunkDS && adjustedEndTime - adjustedStartTime < 1000) {
