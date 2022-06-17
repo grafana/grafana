@@ -274,3 +274,8 @@ replace github.com/crewjam/saml => github.com/grafana/saml v0.0.0-20211007135653
 replace github.com/apache/thrift => github.com/apache/thrift v0.14.1
 
 replace github.com/hashicorp/consul => github.com/hashicorp/consul v1.10.2
+
+// This is a patched v0.8.2 intended to fix session.Find (and others) silently ignoring SQLITE_BUSY errors. This could
+// happen, for example, during a read when the sqlite db is under heavy write load.
+// This patch cherry picks compatible fixes from upstream xorm PR#1998 and can be reverted on upgrade to xorm v1.2.0+.
+replace xorm.io/xorm => github.com/grafana/xorm v0.8.3-0.20220614223926-2fcda7565af6
