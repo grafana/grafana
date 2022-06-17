@@ -18,13 +18,13 @@ type Implementation struct {
 	logger                log.Logger
 }
 
-func ProvideAuthInfoService(userProtectionService login.UserProtectionService, authInfoStore login.Store) *Implementation {
+func ProvideAuthInfoService(userProtectionService login.UserProtectionService, authInfoStore login.Store, usageStats usagestats.Service) *Implementation {
 	s := &Implementation{
 		UserProtectionService: userProtectionService,
 		authInfoStore:         authInfoStore,
 		logger:                log.New("login.authinfo"),
 	}
-
+	usageStats.RegisterMetricsFunc(authInfoStore.CollectLoginStats)
 	return s
 }
 
