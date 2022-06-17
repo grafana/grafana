@@ -138,7 +138,7 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
   if (opts.unit?.length || opts.decimals != null) {
     const fmt = getValueFormat(opts.unit ?? 'short');
     if (custom.yZeroDisplay) {
-       custom.yZeroDisplay = formattedValueToString(fmt(0, opts.decimals));
+      custom.yZeroDisplay = formattedValueToString(fmt(0, opts.decimals));
     }
     custom.yOrdinalDisplay = custom.yOrdinalDisplay.map((name) => {
       let num = +name;
