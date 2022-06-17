@@ -6,7 +6,7 @@ import (
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
 
-type clientGetter func(map[string]string) (apiv1.API, error)
+type clientGetter func() (apiv1.API, error)
 
 type PrometheusQuery struct {
 	Expr          string

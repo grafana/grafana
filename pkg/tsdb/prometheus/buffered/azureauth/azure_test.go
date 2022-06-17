@@ -1,4 +1,4 @@
-package promclient
+package azureauth
 
 import (
 	"testing"

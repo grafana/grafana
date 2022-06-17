@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"net/http"
 	"regexp"
 	"sort"
 	"strconv"
@@ -12,14 +13,13 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	sdkHTTPClient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/buffered/promclient"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/middleware"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/utils"
 	"github.com/grafana/grafana/pkg/util/maputil"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
@@ -57,17 +57,22 @@ var (
 type Buffered struct {
 	intervalCalculator intervalv2.Calculator
 	tracer             tracing.Tracer
-	getClient          clientGetter
+	client             apiv1.API
 	log                log.Logger
 	ID                 int64
 	URL                string
 	TimeInterval       string
 }
 
-func New(httpClientProvider httpclient.Provider, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer, settings backend.DataSourceInstanceSettings, plog log.Logger) (*Buffered, error) {
-	var jsonData map[string]interface{}
-	if err := json.Unmarshal(settings.JSONData, &jsonData); err != nil {
-		return nil, fmt.Errorf("error reading settings: %w", err)
+func New(roundTripper http.RoundTripper, tracer tracing.Tracer, settings backend.DataSourceInstanceSettings, plog log.Logger) (*Buffered, error) {
+	promClient, err := CreateClient(roundTripper, settings.URL)
+	if err != nil {
+		return nil, fmt.Errorf("error creating prom client: %v", err)
+	}
+
+	jsonData, err := utils.GetJsonData(settings)
+	if err != nil {
+		return nil, fmt.Errorf("error getting jsonData: %w", err)
 	}
 
 	timeInterval, err := maputil.GetStringOptional(jsonData, "timeInterval")
@@ -75,23 +80,32 @@ func New(httpClientProvider httpclient.Provider, cfg *setting.Cfg, features feat
 		return nil, err
 	}
 
-	p := promclient.NewProvider(settings, jsonData, httpClientProvider, cfg, features, plog)
-	pc, err := promclient.NewProviderCache(p)
-	if err != nil {
-		return nil, err
-	}
 	return &Buffered{
 		intervalCalculator: intervalv2.NewCalculator(),
 		tracer:             tracer,
 		log:                plog,
-		getClient:          pc.GetClient,
+		client:             promClient,
 		TimeInterval:       timeInterval,
 		ID:                 settings.ID,
 		URL:                settings.URL,
 	}, nil
 }
 
-func (b *Buffered) runQueries(ctx context.Context, client apiv1.API, queries []*PrometheusQuery) (*backend.QueryDataResponse, error) {
+func (b *Buffered) ExecuteTimeSeriesQuery(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	ctxWithHeaders := sdkHTTPClient.WithContextualMiddleware(ctx, middleware.ReqHeadersMiddleware(req.Headers))
+
+	queries, err := b.parseTimeSeriesQuery(req)
+	if err != nil {
+		result := backend.QueryDataResponse{
+			Responses: backend.Responses{},
+		}
+		return &result, err
+	}
+
+	return b.runQueries(ctxWithHeaders, queries)
+}
+
+func (b *Buffered) runQueries(ctx context.Context, queries []*PrometheusQuery) (*backend.QueryDataResponse, error) {
 	result := backend.QueryDataResponse{
 		Responses: backend.Responses{},
 	}
@@ -115,7 +129,7 @@ func (b *Buffered) runQueries(ctx context.Context, client apiv1.API, queries []*
 		}
 
 		if query.RangeQuery {
-			rangeResponse, _, err := client.QueryRange(ctx, query.Expr, timeRange)
+			rangeResponse, _, err := b.client.QueryRange(ctx, query.Expr, timeRange)
 			if err != nil {
 				b.log.Error("Range query failed", "query", query.Expr, "err", err)
 				result.Responses[query.RefId] = backend.DataResponse{Error: err}
@@ -125,7 +139,7 @@ func (b *Buffered) runQueries(ctx context.Context, client apiv1.API, queries []*
 		}
 
 		if query.InstantQuery {
-			instantResponse, _, err := client.Query(ctx, query.Expr, query.End)
+			instantResponse, _, err := b.client.Query(ctx, query.Expr, query.End)
 			if err != nil {
 				b.log.Error("Instant query failed", "query", query.Expr, "err", err)
 				result.Responses[query.RefId] = backend.DataResponse{Error: err}
@@ -137,7 +151,7 @@ func (b *Buffered) runQueries(ctx context.Context, client apiv1.API, queries []*
 		// This is a special case
 		// If exemplar query returns error, we want to only log it and continue with other results processing
 		if query.ExemplarQuery {
-			exemplarResponse, err := client.QueryExemplars(ctx, query.Expr, timeRange.Start, timeRange.End)
+			exemplarResponse, err := b.client.QueryExemplars(ctx, query.Expr, timeRange.Start, timeRange.End)
 			if err != nil {
 				b.log.Error("Exemplar query failed", "query", query.Expr, "err", err)
 			} else {
@@ -161,23 +175,6 @@ func (b *Buffered) runQueries(ctx context.Context, client apiv1.API, queries []*
 	}
 
 	return &result, nil
-}
-
-func (b *Buffered) ExecuteTimeSeriesQuery(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	client, err := b.getClient(req.Headers)
-	if err != nil {
-		return nil, err
-	}
-
-	queries, err := b.parseTimeSeriesQuery(req)
-	if err != nil {
-		result := backend.QueryDataResponse{
-			Responses: backend.Responses{},
-		}
-		return &result, err
-	}
-
-	return b.runQueries(ctx, client, queries)
 }
 
 func formatLegend(metric model.Metric, query *PrometheusQuery) string {
@@ -209,9 +206,9 @@ func formatLegend(metric model.Metric, query *PrometheusQuery) string {
 	return legend
 }
 
-func (b *Buffered) parseTimeSeriesQuery(queryContext *backend.QueryDataRequest) ([]*PrometheusQuery, error) {
+func (b *Buffered) parseTimeSeriesQuery(req *backend.QueryDataRequest) ([]*PrometheusQuery, error) {
 	qs := []*PrometheusQuery{}
-	for _, query := range queryContext.Queries {
+	for _, query := range req.Queries {
 		model := &QueryModel{}
 		err := json.Unmarshal(query.JSON, model)
 		if err != nil {
@@ -234,7 +231,7 @@ func (b *Buffered) parseTimeSeriesQuery(queryContext *backend.QueryDataRequest) 
 
 		// We never want to run exemplar query for alerting
 		exemplarQuery := model.ExemplarQuery
-		if queryContext.Headers["FromAlert"] == "true" {
+		if req.Headers["FromAlert"] == "true" {
 			exemplarQuery = false
 		}
 
