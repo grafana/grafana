@@ -502,18 +502,7 @@ def build_plugins_step(edition, sign=False):
 
 
 def test_backend_step(edition):
-    if edition == 'oss':
-        return {
-            'name': 'test-backend' + enterprise2_suffix(edition),
-            'image': build_image,
-            'depends_on': [
-                'wire-install',
-            ],
-            'commands': [
-                'go test -short -covermode=atomic -timeout=30m ./pkg/...',
-            ],
-        }
-    else:
+    if edition == 'enterprise2':
         return {
             'name': 'test-backend' + enterprise2_suffix(edition),
             'image': build_image,
@@ -524,20 +513,22 @@ def test_backend_step(edition):
                 './bin/grabpl test-backend --edition {}'.format(edition),
             ],
         }
-
-def test_backend_integration_step(edition):
-    if edition == 'oss':
+    else:
         return {
-            'name': 'test-backend-integration',
+            'name': 'test-backend' + enterprise2_suffix(edition),
             'image': build_image,
             'depends_on': [
                 'wire-install',
             ],
             'commands': [
-                'go test -run Integration -covermode=atomic -timeout=30m ./pkg/...',
+                'go test -short -covermode=atomic -timeout=30m ./pkg/...',
             ],
         }
-    else:
+
+
+
+def test_backend_integration_step(edition):
+    if edition == 'enterprise2':
         return {
             'name': 'test-backend-integration' + enterprise2_suffix(edition),
             'image': build_image,
@@ -546,6 +537,17 @@ def test_backend_integration_step(edition):
             ],
             'commands': [
                 './bin/grabpl integration-tests --edition {}'.format(edition),
+            ],
+        }
+    else:
+        return {
+            'name': 'test-backend-integration',
+            'image': build_image,
+            'depends_on': [
+                'wire-install',
+            ],
+            'commands': [
+                'go test -run Integration -covermode=atomic -timeout=30m ./pkg/...',
             ],
         }
 
