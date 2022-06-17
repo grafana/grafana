@@ -243,6 +243,12 @@ func (l Log) KeyVal() *KeyVal {
 	return kv
 }
 
+func (l Log) KeyValContext() *KeyVal {
+	kv := NewKeyVal()
+	MergeKeyValWithPrefix(kv, KeyValFromMap(l.Context), "context_")
+	return kv
+}
+
 // Measurement holds the data for user provided measurements
 type Measurement struct {
 	Values    map[string]float64 `json:"values,omitempty"`

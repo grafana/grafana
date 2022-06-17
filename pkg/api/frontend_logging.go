@@ -62,6 +62,12 @@ func GrafanaJavascriptAgentLogMessageHandler(store *frontendlogging.SourceMapSto
 		if event.Logs != nil && len(event.Logs) > 0 {
 			for _, logEntry := range event.Logs {
 				ctx = append(ctx, "original_timestamp", logEntry.Timestamp)
+				if logEntry.LogLevel != "" {
+					ctx = append(ctx, "original_log_level", logEntry.LogLevel)
+				}
+				for k, v := range frontendlogging.KeyValToInterfaceMap(logEntry.KeyValContext()) {
+					ctx = append(ctx, k, v)
+				}
 				grafanaJavascriptAgentLogger.Info(logEntry.Message, ctx...)
 			}
 		}
@@ -78,7 +84,7 @@ func GrafanaJavascriptAgentLogMessageHandler(store *frontendlogging.SourceMapSto
 		if event.Exceptions != nil && len(event.Exceptions) > 0 {
 			for _, exception := range event.Exceptions {
 				transformedException := frontendlogging.TransformException(&exception, store)
-				ctx = append(ctx, "exception", transformedException)
+				ctx = append(ctx, "exception", transformedException.String())
 				ctx = append(ctx, "original_timestamp", exception.Timestamp)
 				grafanaJavascriptAgentLogger.Info(exception.Message(), ctx...)
 			}
