@@ -38,14 +38,11 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
 
   declare optionsKey: Record<AzureQueryType, string>;
 
-  instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>;
-
   constructor(
     instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>,
     private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
-    this.instanceSettings = instanceSettings;
     this.azureMonitorDatasource = new AzureMonitorDatasource(instanceSettings);
     this.azureLogAnalyticsDatasource = new AzureLogAnalyticsDatasource(instanceSettings);
     this.azureResourceGraphDatasource = new AzureResourceGraphDatasource(instanceSettings);
