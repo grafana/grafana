@@ -12,13 +12,13 @@ import (
 	"reflect"
 	"strings"
 
-	"cuelang.org/go/cue/cuecontext"
 	"github.com/getkin/kin-openapi/openapi2conv"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-openapi/jsonreference"
 	"github.com/go-openapi/loads"
 	"github.com/go-openapi/spec"
 	"github.com/grafana/grafana/pkg/coremodel/dashboard"
+	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/encoding/openapi"
 )
@@ -177,7 +177,7 @@ func mergeSpecs(output string, sources ...string) error {
 // getDashboardDefinitions converts the dashboard OpenAPI v3 to OpenAPI v2
 // and it returns it as spec.Schema
 func getDashboardDefinitions() (spec.Definitions, error) {
-	lib := thema.NewLibrary(cuecontext.New())
+	lib := cuectx.ProvideThemaLibrary()
 	lin, _ := dashboard.Lineage(lib)
 	// Grab the 0.0 version. Or whichever one you want
 	sch := thema.SchemaP(lin, thema.SV(0, 0))
