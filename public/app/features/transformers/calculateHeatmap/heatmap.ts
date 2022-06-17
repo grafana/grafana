@@ -130,11 +130,19 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
   }
 
   // Format the labels as a value
-  if (opts.unit?.length) {
-    const fmt = getValueFormat(opts.unit);
-    custom.yOrdinalDisplay = custom.yOrdinalDisplay.map(
-      (f) => `${f}! ${formattedValueToString(fmt(10, opts.decimals))}`
-    );
+  // TODO: this leaves the internally prepended '0.0' without this formatting treatment
+  if (opts.unit?.length || opts.decimals != null) {
+    const fmt = getValueFormat(opts.unit ?? 'short');
+
+    custom.yOrdinalDisplay = custom.yOrdinalDisplay.map((name) => {
+      let num = +name;
+
+      if (!Number.isNaN(num)) {
+        return formattedValueToString(fmt(num, opts.decimals));
+      }
+
+      return name;
+    });
   }
 
   return {
