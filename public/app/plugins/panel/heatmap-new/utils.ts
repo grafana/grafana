@@ -425,18 +425,12 @@ export function prepConfig(opts: PrepConfigOpts) {
       ? (self: uPlot, splits) => {
           const meta = readHeatmapScanlinesCustomMeta(dataRef.current?.heatmap);
           if (meta.yOrdinalDisplay) {
-            return splits.map((v) => {
-              const txt = meta.yOrdinalDisplay[v];
-              if (!txt && v < 0) {
-                // Check prometheus style labels
-                if ('le' === meta.yMatchWithLabel) {
-                  return '0.0';
-                }
-              }
-              return txt;
-            });
+            return splits.map((v) =>
+              // Check prometheus style labels
+              v < 0 && meta.yMatchWithLabel === 'le' ? '0.0' : meta.yOrdinalDisplay[v]
+            );
           }
-          return splits.map((v) => `${v}`);
+          return splits;
         }
       : undefined,
   });
