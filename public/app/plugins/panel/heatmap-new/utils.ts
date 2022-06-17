@@ -257,6 +257,10 @@ export function prepConfig(opts: PrepConfigOpts) {
   });
 
   const yField = dataRef.current?.heatmap?.fields[1]!;
+  if (!yField) {
+    return builder; // early abort (avoids error)
+  }
+
   const yFieldConfig = yField.config?.custom as PanelFieldConfig | undefined;
   const yScale = yFieldConfig?.scaleDistribution ?? { type: ScaleDistribution.Linear };
   const yAxisReverse = Boolean(yAxisConfig.reverse);
