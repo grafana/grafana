@@ -32,6 +32,7 @@ func TestReadPromFrames(t *testing.T) {
 		"prom-exemplars",
 		"loki-streams-a",
 		"loki-streams-b",
+		"loki-streams-c",
 	}
 
 	for _, name := range files {
