@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gofrs/uuid"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -150,6 +151,11 @@ func TestSavePublicDashboard(t *testing.T) {
 		assert.NotEqual(t, &time.Time{}, pubdash.CreatedAt)
 		// Time settings set by db
 		assert.Equal(t, timeSettings, pubdash.TimeSettings)
+
+		// access_token is valid uuid
+		_, err = uuid.FromString(pubdash.AccessToken)
+		require.NoError(t, err)
+		assert.True(t, false)
 	})
 
 	t.Run("Validate pubdash has default time setting value", func(t *testing.T) {

@@ -2,8 +2,10 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"time"
 
+	"github.com/gofrs/uuid"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -57,7 +59,13 @@ func (dr *DashboardServiceImpl) SavePublicDashboardConfig(ctx context.Context, d
 }
 
 func (dr *DashboardServiceImpl) savePublicDashboardConfig(ctx context.Context, dto *dashboards.SavePublicDashboardConfigDTO) (*models.PublicDashboard, error) {
+	// generate a uid
 	uid, err := dr.dashboardStore.GenerateNewPublicDashboardUid(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	access_token, err := GenerateAccessToken()
 	if err != nil {
 		return nil, err
 	}
@@ -73,6 +81,7 @@ func (dr *DashboardServiceImpl) savePublicDashboardConfig(ctx context.Context, d
 			TimeSettings: dto.PublicDashboard.TimeSettings,
 			CreatedBy:    dto.UserId,
 			CreatedAt:    time.Now(),
+			AccessToken:  access_token,
 		},
 	}
 
@@ -118,4 +127,14 @@ func (dr *DashboardServiceImpl) BuildPublicDashboardMetricRequest(ctx context.Co
 		To:      ts.To,
 		Queries: queriesByPanel[panelId],
 	}, nil
+}
+
+// generates a uuid formatted without dashes to use as access token
+func GenerateAccessToken() (string, error) {
+	token, err := uuid.NewV4()
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%x", token), nil
 }
