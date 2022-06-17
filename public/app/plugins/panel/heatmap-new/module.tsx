@@ -76,19 +76,28 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
 
     category = ['Y Axis'];
 
-    builder.addRadio({
-      path: 'yAxis.axisPlacement',
-      name: 'Placement',
-      defaultValue: defaultPanelOptions.yAxis.axisPlacement ?? AxisPlacement.Left,
-      category,
-      settings: {
-        options: [
-          { label: 'Left', value: AxisPlacement.Left },
-          { label: 'Right', value: AxisPlacement.Right },
-          { label: 'Hidden', value: AxisPlacement.Hidden },
-        ],
-      },
-    });
+    builder
+      .addRadio({
+        path: 'yAxis.axisPlacement',
+        name: 'Placement',
+        defaultValue: defaultPanelOptions.yAxis.axisPlacement ?? AxisPlacement.Left,
+        category,
+        settings: {
+          options: [
+            { label: 'Left', value: AxisPlacement.Left },
+            { label: 'Right', value: AxisPlacement.Right },
+            { label: 'Hidden', value: AxisPlacement.Hidden },
+          ],
+        },
+      })
+      .addUnitPicker({
+        path: 'yAxis.unit',
+        name: 'UnitX',
+        category,
+        settings: {
+          isClearable: true,
+        },
+      });
 
     if (!isOrdinalY) {
       // if undefined, then show the min+max
