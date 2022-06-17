@@ -38,6 +38,8 @@ A server administrator can perform the following tasks:
 
 > **Note:** The server administrator role does not exist in Grafana Cloud.
 
+To assign or remove server administrator privileges, see [Server user management]({{< relref "../user-management/server-user-management/assign-remove-server-admin-privileges/" >}}).
+
 ## Organization users and permissions
 
 All Grafana users belong to at least one organization. An organization is an entity that exists within your instance of Grafana.
@@ -55,6 +57,8 @@ Permissions assigned to a user within an organization control the extent to whic
 - annotations
 - library panels
 - API keys
+
+For more information about managing organization users, see [User management]({{< relref "../user-management/manage-org-users/" >}}).
 
 ### Organization roles
 
@@ -134,11 +138,13 @@ You can assign a team member one of the following permissions:
 
 Because teams exist inside an organization, the organization administrator can manage all teams. When the `editors_can_admin` setting is enabled, editors can create teams and manage teams that they create. For more information about the `editors_can_admin` setting, refer to [Grant editors administrator permissions]({{< relref "../user-management/server-user-management/grant-editor-admin-permissions/" >}}).
 
+For more information, see [Team management]({{< relref "../team-management/" >}}).
+
 ## Grafana Enterprise user permissions features
 
 While Grafana OSS includes a robust set of permissions and settings that you can use to manage user access to server and organization resources, you might find that you require additional capabilities.
 
-Grafana Enterprise provides the following permissions-related features:
+[Grafana Enterprise]({{< relref "../../enterprise/">}}) provides the following permissions-related features:
 
 - Data source permissions
 - Role-based access control (RBAC)
