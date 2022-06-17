@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package service
 
 import (
@@ -26,25 +23,23 @@ var orgID = int64(1)
 var user = &models.SignedInUser{UserId: 1}
 
 func TestIntegrationProvideFolderService(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	t.Run("should register scope resolvers", func(t *testing.T) {
-		store := &dashboards.FakeDashboardStore{}
 		cfg := setting.NewCfg()
-		features := featuremgmt.WithFeatures()
-		cfg.IsFeatureToggleEnabled = features.IsEnabled
-		folderPermissions := acmock.NewMockedPermissionsService()
-		dashboardPermissions := acmock.NewMockedPermissionsService()
-		dashboardService := ProvideDashboardService(cfg, store, nil, features, folderPermissions, dashboardPermissions)
 		ac := acmock.New()
 
-		ProvideFolderService(
-			cfg, dashboardService, store, nil, features, folderPermissions, ac,
-		)
+		ProvideFolderService(cfg, nil, nil, nil, nil, nil, ac)
 
 		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 2)
 	})
 }
 
 func TestIntegrationFolderService(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	t.Run("Folder service tests", func(t *testing.T) {
 		store := &dashboards.FakeDashboardStore{}
 		cfg := setting.NewCfg()
@@ -52,7 +47,7 @@ func TestIntegrationFolderService(t *testing.T) {
 		cfg.IsFeatureToggleEnabled = features.IsEnabled
 		folderPermissions := acmock.NewMockedPermissionsService()
 		dashboardPermissions := acmock.NewMockedPermissionsService()
-		dashboardService := ProvideDashboardService(cfg, store, nil, features, folderPermissions, dashboardPermissions)
+		dashboardService := ProvideDashboardService(cfg, store, nil, features, folderPermissions, dashboardPermissions, acmock.New())
 
 		service := FolderServiceImpl{
 			cfg:              cfg,
@@ -105,7 +100,7 @@ func TestIntegrationFolderService(t *testing.T) {
 					folder := args.Get(1).(*models.GetDashboardQuery)
 					folder.Result = models.NewDashboard("dashboard-test")
 					folder.Result.IsFolder = true
-				}).Return(nil)
+				}).Return(&models.Dashboard{}, nil)
 				err := service.UpdateFolder(context.Background(), user, orgID, folderUID, &models.UpdateFolderCommand{
 					Uid:   folderUID,
 					Title: "Folder-TEST",

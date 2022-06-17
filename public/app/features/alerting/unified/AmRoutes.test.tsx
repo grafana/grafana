@@ -3,10 +3,10 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
+import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
 
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
-import { selectOptionInTest } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import {
   AlertManagerCortexConfig,
@@ -95,6 +95,9 @@ const ui = {
   groupWaitContainer: byTestId('am-group-wait'),
   groupIntervalContainer: byTestId('am-group-interval'),
   groupRepeatContainer: byTestId('am-repeat-interval'),
+
+  confirmDeleteModal: byRole('dialog'),
+  confirmDeleteButton: byLabelText('Confirm Modal Danger Button'),
 };
 
 describe('AmRoutes', () => {
@@ -153,6 +156,8 @@ describe('AmRoutes', () => {
       receiver: 'another-receiver',
     },
   ];
+
+  const emptyRoute: Route = {};
 
   const simpleRoute: Route = {
     receiver: 'simple-receiver',
@@ -463,6 +468,61 @@ describe('AmRoutes', () => {
       },
       template_files: {},
     });
+  });
+
+  it('Should be able to delete an empty route', async () => {
+    const routeConfig = {
+      continue: false,
+      receiver: 'default',
+      group_by: ['alertname'],
+      routes: [emptyRoute],
+      group_interval: '4m',
+      group_wait: '1m',
+      repeat_interval: '5h',
+      mute_time_intervals: [],
+    };
+
+    const defaultConfig: AlertManagerCortexConfig = {
+      alertmanager_config: {
+        receivers: [{ name: 'default' }, { name: 'critical' }],
+        route: routeConfig,
+        templates: [],
+      },
+      template_files: {},
+    };
+
+    mocks.api.fetchAlertManagerConfig.mockImplementation(() => {
+      return Promise.resolve(defaultConfig);
+    });
+
+    mocks.api.updateAlertManagerConfig.mockResolvedValue(Promise.resolve());
+
+    await renderAmRoutes(GRAFANA_RULES_SOURCE_NAME);
+    expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalled();
+
+    const deleteButtons = await ui.deleteRouteButton.findAll();
+    expect(deleteButtons).toHaveLength(1);
+
+    await userEvent.click(deleteButtons[0]);
+
+    const confirmDeleteButton = ui.confirmDeleteButton.get(ui.confirmDeleteModal.get());
+    expect(confirmDeleteButton).toBeInTheDocument();
+
+    await userEvent.click(confirmDeleteButton);
+
+    expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalledWith<[string, AlertManagerCortexConfig]>(
+      GRAFANA_RULES_SOURCE_NAME,
+      {
+        ...defaultConfig,
+        alertmanager_config: {
+          ...defaultConfig.alertmanager_config,
+          route: {
+            ...routeConfig,
+            routes: [],
+          },
+        },
+      }
+    );
   });
 
   it('Keeps matchers for non-grafana alertmanager sources', async () => {

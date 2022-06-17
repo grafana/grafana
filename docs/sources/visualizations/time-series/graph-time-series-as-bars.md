@@ -20,7 +20,7 @@ For more information about the time series visualization, refer to [Time series]
 
 ## Create the panel
 
-1. [Add a panel]({{< relref "../../panels/working-with-panels/add-panel.md" >}}).
+1. [Add a panel]({{< relref "../../panels/working-with-panels/add-panel/" >}}).
 1. Select the **Time series** visualization.
 1. In the Panel editor side pane, click **Graph styles** to expand it.
 1. In Style, click **Bars**.
@@ -85,7 +85,7 @@ Fill opacity set to 95:
 
 ### Gradient mode
 
-Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard color scheme field option. For more information, refer to [Apply color to series and fields]({{< relref "../../panels/working-with-panels/apply-color-to-series.md" >}}).
+Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard color scheme field option. For more information, refer to [Apply color to series and fields]({{< relref "../../panels/working-with-panels/apply-color-to-series/" >}}).
 
 Gradient appearance is influenced by the **Fill opacity** setting. In the screenshots below, **Fill opacity** is set to 50.
 
@@ -109,7 +109,7 @@ Gradient color is generated based on the hue of the line color.
 
 #### Scheme
 
-In this mode the whole bar will use a color gradient defined by your Color scheme. For more information, refer to [Apply color to series and fields]({{< relref "../../panels/working-with-panels/apply-color-to-series.md" >}}). There is more information on this option in [Graph and color scheme]({{< relref "graph-color-scheme.md" >}}).
+In this mode the whole bar will use a color gradient defined by your Color scheme. For more information, refer to [Apply color to series and fields]({{< relref "../../panels/working-with-panels/apply-color-to-series/" >}}). There is more information on this option in [Graph and color scheme]({{< relref "graph-color-scheme/" >}}).
 
 {{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_bars.png" max-width="1200px" caption="Gradient color scheme mode" >}}
 

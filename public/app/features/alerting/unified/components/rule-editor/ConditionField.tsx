@@ -9,7 +9,11 @@ import { ExpressionDatasourceUID } from 'app/features/expressions/ExpressionData
 
 import { RuleFormValues } from '../../types/rule-form';
 
-export const ConditionField: FC = () => {
+interface Props {
+  existing?: boolean;
+}
+
+export const ConditionField: FC<Props> = ({ existing = false }) => {
   const {
     watch,
     setValue,
@@ -37,10 +41,10 @@ export const ConditionField: FC = () => {
   // automatically use the last expression when new expressions have been added
   useEffect(() => {
     const lastExpression = last(expressions);
-    if (lastExpression) {
+    if (lastExpression && !existing) {
       setValue('condition', lastExpression.refId, { shouldValidate: true });
     }
-  }, [expressions, setValue]);
+  }, [expressions, setValue, existing]);
 
   // reset condition if option no longer exists or if it is unset, but there are options available
   useEffect(() => {

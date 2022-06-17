@@ -14,7 +14,7 @@ A query returns data that Grafana visualizes in dashboards. When you create a pa
 
 - [Add a data source](../../../datasources/add-a-data-source).
 - Ensure that you know the query language of the data source.
-- [Add a panel]({{< relref "../working-with-panels/add-panel.md" >}}).
+- [Add a panel]({{< relref "../working-with-panels/add-panel/" >}}).
 
 **To add a query**:
 
@@ -23,7 +23,7 @@ A query returns data that Grafana visualizes in dashboards. When you create a pa
 1. Click the **Data source** drop-down menu and select a data source.
 1. Click **Query options** to configure the maximum number of data points returned by the query and how frequently you want the query to request data from the data source.
 
-   For more information about query options, refer to [Query options]({{< relref "../query-options.md" >}}).
+   For more information about query options, refer to [Query options]({{< relref "../query-options/" >}}).
 
 1. Write the query.
 1. Click **Apply**.

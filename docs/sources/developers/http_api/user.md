@@ -140,9 +140,9 @@ Content-Type: application/json
 
 See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
 
-| Action     | Scope    |
-| ---------- | -------- |
-| users:read | users:\* |
+| Action     | Scope           |
+| ---------- | --------------- |
+| users:read | global.users:\* |
 
 **Example Request**:
 
@@ -241,9 +241,9 @@ Content-Type: application/json
 
 See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
 
-| Action      | Scope    |
-| ----------- | -------- |
-| users:write | users:\* |
+| Action      | Scope           |
+| ----------- | --------------- |
+| users:write | global.users:\* |
 
 **Example Request**:
 
@@ -280,9 +280,9 @@ Content-Type: application/json
 
 See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
 
-| Action     | Scope    |
-| ---------- | -------- |
-| users:read | users:\* |
+| Action     | Scope           |
+| ---------- | --------------- |
+| users:read | global.users:\* |
 
 **Example Request**:
 
@@ -318,9 +318,10 @@ Content-Type: application/json
 
 See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
 
-| Action           | Scope    |
-| ---------------- | -------- |
-| users.teams:read | users:\* |
+| Action     | Scope           |
+| ---------- | --------------- |
+| users:read | global.users:\* |
+| teams:read | teams:\*        |
 
 **Example Request**:
 

@@ -48,13 +48,13 @@ Learn more about query history in [Explore]({{< relref "../explore/" >}}).
 
 ### Azure OAuth
 
-Grafana v6.7 comes with a new OAuth integration for Microsoft Azure Active Directory. You can now assign users and groups to Grafana roles from the Azure Portal. Learn how to enable and configure it in [Azure AD OAuth2 authentication]({{< relref "../auth/azuread/" >}}).
+Grafana v6.7 comes with a new OAuth integration for Microsoft Azure Active Directory. You can now assign users and groups to Grafana roles from the Azure Portal. Learn how to enable and configure it in [Azure AD OAuth2 authentication]({{< relref "../setup-grafana/configure-security/configure-authentication/azuread/" >}}).
 
 ### Enforce minimum dashboard refresh interval
 
 Allowing a low dashboard refresh interval can cause severe load on data sources and Grafana. Grafana v6.7 allows you to restrict the dashboard refresh interval so it cannot be set lower than a given interval. This provides a way for administrators to control dashboard refresh behavior on a global level.
 
-Refer to min_refresh_interval in [Configuration]({{< relref "../administration/configuration/#min-refresh-interval" >}}) for more information and how to enable this feature.
+Refer to min_refresh_interval in [Configuration]({{< relref "../setup-grafana/configure-grafana/#min-refresh-interval" >}}) for more information and how to enable this feature.
 
 ### Stackdriver project selector
 
@@ -68,7 +68,7 @@ General features are included in the Grafana Enterprise edition software.
 
 ### White labeling customizes application title
 
-This release adds a new white labeling option to customize the application title. Learn how to configure it in [White labeling]({{< relref "../enterprise/white-labeling/" >}}).
+This release adds a new white labeling option to customize the application title. Learn how to configure it in [White labeling]({{< relref "../setup-grafana/enable-custom-branding/" >}}).
 
 ```
 [white_labeling]
@@ -102,4 +102,4 @@ You can now use either portrait or landscape mode in your reports. Portrait will
 ### Azure OAuth Team Sync support
 
 When setting up OAuth with Microsoft Azure AD, you can now sync Azure groups with Teams in Grafana.
-Learn more in [Team sync]({{< relref "../enterprise/team-sync/" >}}).
+Learn more in [Team sync]({{< relref "../setup-grafana/configure-security/configure-team-sync/" >}}).

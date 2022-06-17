@@ -44,7 +44,18 @@ function applySpanNullsThresholds(frame: DataFrame) {
 
 export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers, timeRange?: TimeRange | null) {
   // apply null insertions at interval
-  frames = frames.map((frame) => applyNullInsertThreshold(frame, null, timeRange?.to.valueOf()));
+  frames = frames.map((frame) => {
+    if (!frame.fields[0].state?.nullThresholdApplied) {
+      return applyNullInsertThreshold({
+        frame,
+        refFieldName: null,
+        refFieldPseudoMin: timeRange?.from.valueOf(),
+        refFieldPseudoMax: timeRange?.to.valueOf(),
+      });
+    } else {
+      return frame;
+    }
+  });
 
   let numBarSeries = 0;
 

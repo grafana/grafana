@@ -12,7 +12,7 @@ When you create a library panel, the panel on the source dashboard is converted 
 
 ## Before you begin
 
-- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).
+- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel/" >}}).
 
 **To create a library panel**:
 

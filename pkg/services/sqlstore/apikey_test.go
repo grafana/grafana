@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package sqlstore
 
 import (
@@ -17,6 +14,9 @@ import (
 )
 
 func TestIntegrationApiKeyDataAccess(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	mockTimeNow()
 	defer resetTimeNow()
 
@@ -138,6 +138,9 @@ func TestIntegrationApiKeyDataAccess(t *testing.T) {
 }
 
 func TestIntegrationApiKeyErrors(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	mockTimeNow()
 	defer resetTimeNow()
 
@@ -174,6 +177,9 @@ type getApiKeysTestCase struct {
 }
 
 func TestIntegrationSQLStore_GetAPIKeys(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	tests := []getApiKeysTestCase{
 		{
 			desc: "expect all keys for wildcard scope",

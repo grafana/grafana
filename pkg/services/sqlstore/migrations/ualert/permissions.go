@@ -7,6 +7,7 @@ import (
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/util"
 
@@ -118,8 +119,8 @@ func (m *folderHelper) createFolder(orgID int64, title string) (*dashboard, erro
 		return nil, err
 	}
 
-	dashVersion := &models.DashboardVersion{
-		DashboardId:   dash.Id,
+	dashVersion := &dashver.DashboardVersion{
+		DashboardID:   dash.Id,
 		ParentVersion: parentVersion,
 		RestoredFrom:  cmd.RestoredFrom,
 		Version:       dash.Version,

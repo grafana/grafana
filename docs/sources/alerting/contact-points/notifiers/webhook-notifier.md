@@ -1,6 +1,7 @@
 ---
 aliases:
   - /docs/grafana/latest/alerting/contact-points/message-templating/
+  - /docs/grafana/latest/alerting/contact-points/notifiers/webhook-notifier/
   - /docs/grafana/latest/alerting/message-templating/
   - /docs/grafana/latest/alerting/unified-alerting/message-templating/
 keywords:
@@ -15,7 +16,7 @@ weight: 105
 
 ### Webhook
 
-This topic helps you configure the Webhook notifier. It also discusses that [WeCom]({{< relref "./webhook-notifier/#wecom" >}}) contact points need a Webhook URL.
+This topic helps you configure the Webhook notifier. It also discusses that [WeCom]({{< relref "webhook-notifier/#wecom" >}}) contact points need a Webhook URL.
 
 Example JSON body:
 

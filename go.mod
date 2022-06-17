@@ -50,10 +50,10 @@ require (
 	github.com/google/wire v0.5.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/gosimple/slug v1.9.0
-	github.com/grafana/cuetsy v0.0.2
+	github.com/grafana/cuetsy v0.0.3
 	github.com/grafana/grafana-aws-sdk v0.10.3
 	github.com/grafana/grafana-azure-sdk-go v1.2.0
-	github.com/grafana/grafana-plugin-sdk-go v0.134.0
+	github.com/grafana/grafana-plugin-sdk-go v0.138.0
 	github.com/grafana/loki v1.6.2-0.20211015002020-7832783b1caa
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-hclog v1.0.0
@@ -64,7 +64,6 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0
 	github.com/json-iterator/go v1.1.12
 	github.com/jung-kurt/gofpdf v1.16.2
-	github.com/laher/mergefs v0.1.1
 	github.com/lib/pq v1.10.4
 	github.com/linkedin/goavro/v2 v2.10.0
 	github.com/m3db/prometheus_remote_client_golang v0.4.4
@@ -85,7 +84,7 @@ require (
 	github.com/prometheus/prometheus v1.8.2-0.20211011171444-354d8d2ecfac
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/russellhaering/goxmldsig v1.1.1
-	github.com/stretchr/testify v1.7.1
+	github.com/stretchr/testify v1.7.2
 	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf
 	github.com/ua-parser/uap-go v0.0.0-20211112212520-00c877edfe0f
 	github.com/uber/jaeger-client-go v2.29.1+incompatible
@@ -118,7 +117,7 @@ require (
 	gopkg.in/mail.v2 v2.3.1
 	gopkg.in/square/go-jose.v2 v2.5.1
 	gopkg.in/yaml.v2 v2.4.0
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
+	gopkg.in/yaml.v3 v3.0.1
 	xorm.io/builder v0.3.6
 	xorm.io/core v0.7.3
 	xorm.io/xorm v0.8.2
@@ -231,7 +230,7 @@ require (
 	go.uber.org/atomic v1.9.0
 	go.uber.org/goleak v1.1.12 // indirect
 	golang.org/x/sys v0.0.0-20220422013727-9388b58f7150 // indirect
-	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/text v0.3.7
 	golang.org/x/xerrors v0.0.0-20220411194840-2f41105eb62f // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20220421151946-72621c1f0bd3
@@ -249,7 +248,7 @@ require (
 	github.com/golang-migrate/migrate/v4 v4.7.0
 	github.com/grafana/dskit v0.0.0-20211011144203-3a88ec0b675f
 	github.com/grafana/thema v0.0.0-20220523183731-72aebd14e751
-	go.etcd.io/etcd v3.3.25+incompatible
+	go.etcd.io/etcd/api/v3 v3.5.4
 	go.opentelemetry.io/contrib/propagators/jaeger v1.6.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.6.3
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.6.3
@@ -338,3 +337,8 @@ replace github.com/tidwall/match => github.com/tidwall/match v1.1.1
 replace github.com/hashicorp/go-hclog => github.com/hashicorp/go-hclog v0.16.1
 
 replace github.com/microcosm-cc/bluemonday => github.com/microcosm-cc/bluemonday v1.0.18
+
+// This is a patched v0.8.2 intended to fix session.Find (and others) silently ignoring SQLITE_BUSY errors. This could
+// happen, for example, during a read when the sqlite db is under heavy write load.
+// This patch cherry picks compatible fixes from upstream xorm PR#1998 and can be reverted on upgrade to xorm v1.2.0+.
+replace xorm.io/xorm => github.com/grafana/xorm v0.8.3-0.20220614223926-2fcda7565af6

@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package store_test
 
 import (
@@ -41,6 +38,9 @@ func addToken(img *models.Image) *models.Image {
 }
 
 func TestIntegrationSaveAndGetImage(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	mockTimeNow()
 	ctx := context.Background()
 	_, dbstore := tests.SetupTestEnv(t, baseIntervalSeconds)
@@ -94,6 +94,9 @@ func TestIntegrationSaveAndGetImage(t *testing.T) {
 }
 
 func TestIntegrationGetImages(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	mockTimeNow()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -144,6 +147,9 @@ func TestIntegrationGetImages(t *testing.T) {
 }
 
 func TestIntegrationDeleteExpiredImages(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	mockTimeNow()
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancel()

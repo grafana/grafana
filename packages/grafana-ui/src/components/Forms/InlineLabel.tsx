@@ -17,12 +17,6 @@ export interface Props extends Omit<LabelProps, 'css' | 'description' | 'categor
   width?: number | 'auto';
   /** Make labels's background transparent */
   transparent?: boolean;
-  /** @deprecated */
-  /** This prop is deprecated and is not used anymore */
-  isFocused?: boolean;
-  /** @deprecated */
-  /** This prop is deprecated and is not used anymore */
-  isInvalid?: boolean;
   /** Make tooltip interactive */
   interactive?: boolean;
   /** @beta */

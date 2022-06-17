@@ -24,6 +24,7 @@ type EmailNotifier struct {
 	Addresses   []string
 	SingleEmail bool
 	Message     string
+	Subject     string
 	log         log.Logger
 	ns          notifications.EmailSender
 	images      ImageStore
@@ -35,6 +36,7 @@ type EmailConfig struct {
 	SingleEmail bool
 	Addresses   []string
 	Message     string
+	Subject     string
 }
 
 func EmailFactory(fc FactoryConfig) (NotificationChannel, error) {
@@ -59,6 +61,7 @@ func NewEmailConfig(config *NotificationChannelConfig) (*EmailConfig, error) {
 		NotificationChannelConfig: config,
 		SingleEmail:               config.Settings.Get("singleEmail").MustBool(false),
 		Message:                   config.Settings.Get("message").MustString(),
+		Subject:                   config.Settings.Get("subject").MustString(DefaultMessageTitleEmbed),
 		Addresses:                 addresses,
 	}, nil
 }
@@ -77,6 +80,7 @@ func NewEmailNotifier(config *EmailConfig, ns notifications.EmailSender, images 
 		Addresses:   config.Addresses,
 		SingleEmail: config.SingleEmail,
 		Message:     config.Message,
+		Subject:     config.Subject,
 		log:         log.New("alerting.notifier.email"),
 		ns:          ns,
 		images:      images,
@@ -85,12 +89,11 @@ func NewEmailNotifier(config *EmailConfig, ns notifications.EmailSender, images 
 }
 
 // Notify sends the alert notification.
-func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
+func (en *EmailNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bool, error) {
 	var tmplErr error
-	tmpl, data := TmplText(ctx, en.tmpl, as, en.log, &tmplErr)
+	tmpl, data := TmplText(ctx, en.tmpl, alerts, en.log, &tmplErr)
 
-	title := tmpl(DefaultMessageTitleEmbed)
-
+	subject := tmpl(en.Subject)
 	alertPageURL := en.tmpl.ExternalURL.String()
 	ruleURL := en.tmpl.ExternalURL.String()
 	u, err := url.Parse(en.tmpl.ExternalURL.String())
@@ -104,11 +107,31 @@ func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		en.log.Debug("failed to parse external URL", "url", en.tmpl.ExternalURL.String(), "err", err.Error())
 	}
 
+	// Extend alerts data with images, if available.
+	var embeddedFiles []string
+	_ = withStoredImages(ctx, en.log, en.images,
+		func(index int, image *ngmodels.Image) error {
+			if image != nil {
+				if len(image.URL) != 0 {
+					data.Alerts[index].ImageURL = image.URL
+				} else if len(image.Path) != 0 {
+					_, err := os.Stat(image.Path)
+					if err == nil {
+						data.Alerts[index].EmbeddedImage = path.Base(image.Path)
+						embeddedFiles = append(embeddedFiles, image.Path)
+					} else {
+						en.log.Warn("failed to get image file for email attachment", "file", image.Path, "err", err)
+					}
+				}
+			}
+			return nil
+		}, alerts...)
+
 	cmd := &models.SendEmailCommandSync{
 		SendEmailCommand: models.SendEmailCommand{
-			Subject: title,
+			Subject: subject,
 			Data: map[string]interface{}{
-				"Title":             title,
+				"Title":             subject,
 				"Message":           tmpl(en.Message),
 				"Status":            data.Status,
 				"Alerts":            data.Alerts,
@@ -119,33 +142,12 @@ func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 				"RuleUrl":           ruleURL,
 				"AlertPageUrl":      alertPageURL,
 			},
-			To:          en.Addresses,
-			SingleEmail: en.SingleEmail,
-			Template:    "ng_alert_notification",
+			EmbeddedFiles: embeddedFiles,
+			To:            en.Addresses,
+			SingleEmail:   en.SingleEmail,
+			Template:      "ng_alert_notification",
 		},
 	}
-
-	// TODO: modify the email sender code to support multiple file or image URL
-	// fields. We cannot use images from every alert yet.
-	_ = withStoredImage(ctx, en.log, en.images,
-		func(index int, image *ngmodels.Image) error {
-			if image == nil {
-				return nil
-			}
-
-			if len(image.URL) != 0 {
-				cmd.Data["ImageLink"] = image.URL
-			} else if len(image.Path) != 0 {
-				file, err := os.Stat(image.Path)
-				if err == nil {
-					cmd.EmbeddedFiles = []string{image.Path}
-					cmd.Data["EmbeddedImage"] = file.Name()
-				} else {
-					en.log.Warn("failed to access email notification image attachment data", "error", err)
-				}
-			}
-			return nil
-		}, 0, as...)
 
 	if tmplErr != nil {
 		en.log.Warn("failed to template email message", "err", tmplErr.Error())

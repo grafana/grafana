@@ -8,13 +8,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	dashboardsnapshots "github.com/grafana/grafana/pkg/services/dashboardsnapshots/service"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
@@ -29,11 +32,11 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 	jsonModel, err := simplejson.NewJson([]byte(`{"id":100}`))
 	require.NoError(t, err)
 
-	viewerRole := models.ROLE_VIEWER
-	editorRole := models.ROLE_EDITOR
 	sqlmock := mockstore.NewSQLStoreMock()
-	aclMockResp := []*models.DashboardAclInfoDTO{}
-	hs := &HTTPServer{DashboardsnapshotsService: &dashboardsnapshots.Service{SQLStore: sqlmock}}
+	dashSvc := &dashboards.FakeDashboardService{}
+	dashSvc.On("GetDashboardAclInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardAclInfoListQuery")).Return(nil)
+	dashSnapSvc := dashboardsnapshots.ProvideService(sqlmock, nil)
+	hs := &HTTPServer{dashboardsnapshotsService: dashSnapSvc}
 
 	setUpSnapshotTest := func(t *testing.T) *models.DashboardSnapshot {
 		t.Helper()
@@ -47,7 +50,6 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 			External:  true,
 		}
 		sqlmock.ExpectedDashboardSnapshot = mockSnapshotResult
-		sqlmock.ExpectedDashboardAclInfoList = aclMockResp
 		sqlmock.ExpectedTeamsByUser = []*models.TeamDTO{}
 
 		return mockSnapshotResult
@@ -63,7 +65,7 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 				})
 				mockSnapshotResult.ExternalDeleteUrl = ts.URL
 				sc.handlerFunc = hs.DeleteDashboardSnapshot
-				guardian.InitLegacyGuardian(sc.sqlStore)
+				guardian.InitLegacyGuardian(sc.sqlStore, dashSvc)
 				sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"key": "12345"}).exec()
 
 				assert.Equal(t, 403, sc.resp.Code)
@@ -100,15 +102,19 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 	})
 
 	t.Run("When user is editor and dashboard has default ACL", func(t *testing.T) {
-		aclMockResp = []*models.DashboardAclInfoDTO{
-			{Role: &viewerRole, Permission: models.PERMISSION_VIEW},
-			{Role: &editorRole, Permission: models.PERMISSION_EDIT},
-		}
+		dashSvc := &dashboards.FakeDashboardService{}
+		dashSvc.On("GetDashboardAclInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardAclInfoListQuery")).Run(func(args mock.Arguments) {
+			q := args.Get(1).(*models.GetDashboardAclInfoListQuery)
+			q.Result = []*models.DashboardAclInfoDTO{
+				{Role: &viewerRole, Permission: models.PERMISSION_VIEW},
+				{Role: &editorRole, Permission: models.PERMISSION_EDIT},
+			}
+		}).Return(nil)
 
 		loggedInUserScenarioWithRole(t, "Should be able to delete a snapshot when calling DELETE on", "DELETE",
 			"/api/snapshots/12345", "/api/snapshots/:key", models.ROLE_EDITOR, func(sc *scenarioContext) {
 				mockSnapshotResult := setUpSnapshotTest(t)
-
+				guardian.InitLegacyGuardian(sc.sqlStore, dashSvc)
 				var externalRequest *http.Request
 				ts := setupRemoteServer(func(rw http.ResponseWriter, req *http.Request) {
 					rw.WriteHeader(200)
@@ -130,11 +136,9 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 	})
 
 	t.Run("When user is editor and creator of the snapshot", func(t *testing.T) {
-		aclMockResp := []*models.DashboardAclInfoDTO{}
 		loggedInUserScenarioWithRole(t, "Should be able to delete a snapshot when calling DELETE on",
 			"DELETE", "/api/snapshots/12345", "/api/snapshots/:key", models.ROLE_EDITOR, func(sc *scenarioContext) {
 				mockSnapshotResult := setUpSnapshotTest(t)
-				sqlmock.ExpectedDashboardAclInfoList = aclMockResp
 				mockSnapshotResult.UserId = testUserID
 				mockSnapshotResult.External = false
 
@@ -151,7 +155,6 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 	})
 
 	t.Run("When deleting an external snapshot", func(t *testing.T) {
-		aclMockResp = []*models.DashboardAclInfoDTO{}
 		loggedInUserScenarioWithRole(t,
 			"Should gracefully delete local snapshot when remote snapshot has already been removed when calling DELETE on",
 			"DELETE", "/api/snapshots/12345", "/api/snapshots/:key", models.ROLE_EDITOR, func(sc *scenarioContext) {

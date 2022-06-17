@@ -449,7 +449,7 @@ export class HeatmapRenderer {
           return formattedValueToString(v);
         }
       } catch (err) {
-        console.error(err.message || err);
+        console.error(err instanceof Error ? err.message : err);
       }
       return value;
     };

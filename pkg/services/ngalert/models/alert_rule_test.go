@@ -362,6 +362,16 @@ func TestDiff(t *testing.T) {
 		}
 	})
 
+	t.Run("should not see difference between nil and empty Annotations", func(t *testing.T) {
+		rule1 := AlertRuleGen()()
+		rule1.Annotations = make(map[string]string)
+		rule2 := CopyRule(rule1)
+		rule2.Annotations = nil
+
+		diff := rule1.Diff(rule2)
+		require.Empty(t, diff)
+	})
+
 	t.Run("should detect changes in Annotations", func(t *testing.T) {
 		rule1 := AlertRuleGen()()
 		rule2 := CopyRule(rule1)
@@ -397,6 +407,16 @@ func TestDiff(t *testing.T) {
 		if t.Failed() {
 			t.Logf("rule1: %#v, rule2: %#v\ndiff: %v", rule1, rule2, diff)
 		}
+	})
+
+	t.Run("should not see difference between nil and empty Labels", func(t *testing.T) {
+		rule1 := AlertRuleGen()()
+		rule1.Annotations = make(map[string]string)
+		rule2 := CopyRule(rule1)
+		rule2.Annotations = nil
+
+		diff := rule1.Diff(rule2)
+		require.Empty(t, diff)
 	})
 
 	t.Run("should detect changes in Labels", func(t *testing.T) {

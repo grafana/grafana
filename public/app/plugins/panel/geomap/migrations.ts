@@ -6,7 +6,7 @@ import { ResourceDimensionMode } from 'app/features/dimensions';
 import { MarkersConfig } from './layers/data/markersLayer';
 import { getMarkerAsPath } from './style/markers';
 import { defaultStyleConfig } from './style/types';
-import { GeomapPanelOptions } from './types';
+import { GeomapPanelOptions, TooltipMode } from './types';
 import { MapCenterID } from './view';
 
 /**
@@ -47,6 +47,7 @@ export function worldmapToGeomapOptions(angular: any): { fieldConfig: FieldConfi
     layers: [
       // TODO? depends on current configs
     ],
+    tooltip: { mode: TooltipMode.Details },
   };
 
   let v = asNumber(angular.decimals);

@@ -39,8 +39,6 @@ load(
     'upload_packages_step',
     'store_packages_step',
     'upload_cdn_step',
-    'validate_scuemata_step',
-    'ensure_cuetsified_step',
     'verify_gen_cue_step',
     'publish_images_step',
     'trigger_oss'
@@ -160,6 +158,7 @@ def get_steps(edition, ver_mode):
         identify_runner_step(),
         download_grabpl_step(),
         gen_version_step(ver_mode),
+        verify_gen_cue_step(),
         wire_install_step(),
         yarn_install_step(),
     ]
@@ -182,16 +181,12 @@ def get_steps(edition, ver_mode):
         build_frontend_step(edition=edition, ver_mode=ver_mode),
         build_frontend_package_step(edition=edition, ver_mode=ver_mode),
         build_plugins_step(edition=edition, sign=True),
-        validate_scuemata_step(),
-        ensure_cuetsified_step(),
-        verify_gen_cue_step(),
     ]
 
     integration_test_steps = [
         postgres_integration_tests_step(edition=edition, ver_mode=ver_mode),
         mysql_integration_tests_step(edition=edition, ver_mode=ver_mode),
     ]
-
 
     if include_enterprise2:
         test_steps.extend([
@@ -258,7 +253,7 @@ def get_oss_pipelines(trigger, ver_mode):
     volumes = integration_test_services_volumes()
     init_steps, test_steps, build_steps, integration_test_steps, package_steps, windows_package_steps, publish_steps = get_steps(edition=edition, ver_mode=ver_mode)
     windows_pipeline = pipeline(
-        name='oss-windows-{}'.format(ver_mode), edition=edition, trigger=trigger,
+        name='{}-oss-windows'.format(ver_mode), edition=edition, trigger=trigger,
         steps=[identify_runner_step('windows')] + windows_package_steps,
         platform='windows', depends_on=[
             'oss-build{}-publish-{}'.format(get_e2e_suffix(), ver_mode),
@@ -266,7 +261,7 @@ def get_oss_pipelines(trigger, ver_mode):
     )
     pipelines = [
         pipeline(
-            name='oss-build{}-publish-{}'.format(get_e2e_suffix(), ver_mode), edition=edition, trigger=trigger, services=[],
+            name='{}-oss-build{}-publish'.format(ver_mode, get_e2e_suffix()), edition=edition, trigger=trigger, services=[],
             steps=init_steps + build_steps + package_steps + publish_steps,
             volumes=volumes,
         ),
@@ -274,21 +269,21 @@ def get_oss_pipelines(trigger, ver_mode):
     if not disable_tests:
         pipelines.extend([
             pipeline(
-                name='oss-test-{}'.format(ver_mode), edition=edition, trigger=trigger, services=[],
+                name='{}-oss-test'.format(ver_mode), edition=edition, trigger=trigger, services=[],
                 steps=init_steps + test_steps,
                 volumes=[],
             ),
             pipeline(
-                name='oss-integration-tests-{}'.format(ver_mode), edition=edition, trigger=trigger, services=services,
-                steps=[download_grabpl_step(), identify_runner_step(),] + integration_test_steps,
+                name='{}-oss-integration-tests'.format(ver_mode), edition=edition, trigger=trigger, services=services,
+                steps=[download_grabpl_step(), identify_runner_step(), verify_gen_cue_step(), wire_install_step(), ] + integration_test_steps,
                 volumes=volumes,
             )
         ])
         deps = {
             'depends_on': [
-                'oss-build{}-publish-{}'.format(get_e2e_suffix(), ver_mode),
-                'oss-test-{}'.format(ver_mode),
-                'oss-integration-tests-{}'.format(ver_mode)
+                '{}-oss-build{}-publish'.format(ver_mode, get_e2e_suffix()),
+                '{}-oss-test'.format(ver_mode),
+                '{}-oss-integration-tests'.format(ver_mode)
             ]
         }
         windows_pipeline.update(deps)
@@ -312,7 +307,7 @@ def get_enterprise_pipelines(trigger, ver_mode):
         clone_enterprise_step(ver_mode),
         init_enterprise_step(ver_mode)
     ]
-    for step in [wire_install_step(), yarn_install_step(), gen_version_step(ver_mode)]:
+    for step in [wire_install_step(), yarn_install_step(), gen_version_step(ver_mode), verify_gen_cue_step()]:
         step.update(deps_on_clone_enterprise_step)
         init_steps.extend([step])
 
@@ -320,7 +315,7 @@ def get_enterprise_pipelines(trigger, ver_mode):
         step.update(deps_on_clone_enterprise_step)
 
     windows_pipeline = pipeline(
-        name='enterprise-windows-{}'.format(ver_mode), edition=edition, trigger=trigger,
+        name='{}-enterprise-windows'.format(ver_mode), edition=edition, trigger=trigger,
         steps=[identify_runner_step('windows')] + windows_package_steps,
         platform='windows', depends_on=[
             'enterprise-build{}-publish-{}'.format(get_e2e_suffix(), ver_mode),
@@ -328,7 +323,7 @@ def get_enterprise_pipelines(trigger, ver_mode):
     )
     pipelines = [
         pipeline(
-            name='enterprise-build{}-publish-{}'.format(get_e2e_suffix(), ver_mode), edition=edition, trigger=trigger, services=[],
+            name='{}-enterprise-build{}-publish'.format(ver_mode, get_e2e_suffix()), edition=edition, trigger=trigger, services=[],
             steps=init_steps + build_steps + package_steps + publish_steps,
             volumes=volumes,
         ),
@@ -336,21 +331,21 @@ def get_enterprise_pipelines(trigger, ver_mode):
     if not disable_tests:
         pipelines.extend([
             pipeline(
-                name='enterprise-test-{}'.format(ver_mode), edition=edition, trigger=trigger, services=[],
+                name='{}-enterprise-test'.format(ver_mode), edition=edition, trigger=trigger, services=[],
                 steps=init_steps + test_steps,
                 volumes=[],
             ),
             pipeline(
-                name='enterprise-integration-tests-{}'.format(ver_mode), edition=edition, trigger=trigger, services=services,
+                name='{}-enterprise-integration-tests'.format(ver_mode), edition=edition, trigger=trigger, services=services,
                 steps=[download_grabpl_step(), identify_runner_step(), clone_enterprise_step(ver_mode), init_enterprise_step(ver_mode),] + integration_test_steps,
                 volumes=volumes,
             ),
         ])
         deps = {
             'depends_on': [
-                'enterprise-build{}-publish-{}'.format(get_e2e_suffix(), ver_mode),
-                'enterprise-test-{}'.format(ver_mode),
-                'enterprise-integration-tests-{}'.format(ver_mode)
+                '{}-enterprise-build{}-publish'.format(ver_mode, get_e2e_suffix()),
+                '{}-enterprise-test'.format(ver_mode),
+                '{}-enterprise-integration-tests'.format(ver_mode)
             ]
         }
         windows_pipeline.update(deps)

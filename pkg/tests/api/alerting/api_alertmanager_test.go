@@ -16,7 +16,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -32,9 +31,6 @@ type Response struct {
 }
 
 func TestAMConfigAccess(t *testing.T) {
-	_, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
-
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -320,7 +316,7 @@ func TestAMConfigAccess(t *testing.T) {
 	})
 
 	var silences apimodels.GettableSilences
-	err = json.Unmarshal(blob, &silences)
+	err := json.Unmarshal(blob, &silences)
 	require.NoError(t, err)
 	assert.Len(t, silences, 2)
 	silenceIDs := make([]string, 0, len(silences))
@@ -393,9 +389,6 @@ func TestAMConfigAccess(t *testing.T) {
 }
 
 func TestAlertAndGroupsQuery(t *testing.T) {
-	_, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
-
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -564,8 +557,6 @@ func TestAlertAndGroupsQuery(t *testing.T) {
 }
 
 func TestRulerAccess(t *testing.T) {
-	_, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
@@ -596,7 +587,7 @@ func TestRulerAccess(t *testing.T) {
 	})
 
 	// Create the namespace we'll save our alerts to.
-	err = createFolder(t, "default", grafanaListedAddr, "editor", "editor")
+	err := createFolder(t, "default", grafanaListedAddr, "editor", "editor")
 	reloadCachedPermissions(t, grafanaListedAddr, "editor", "editor")
 	require.NoError(t, err)
 
@@ -617,7 +608,7 @@ func TestRulerAccess(t *testing.T) {
 			desc:            "viewer request should fail",
 			url:             "http://viewer:viewer@%s/api/ruler/grafana/api/v1/rules/default",
 			expStatus:       http.StatusForbidden,
-			expectedMessage: `You'll need additional permissions to perform this action. Permissions needed: any of alert.rules:update, alert.rules:create, alert.rules:delete`,
+			expectedMessage: `You'll need additional permissions to perform this action. Permissions needed: any of alert.rules:write, alert.rules:create, alert.rules:delete`,
 		},
 		{
 			desc:            "editor request should succeed",
@@ -696,8 +687,6 @@ func TestRulerAccess(t *testing.T) {
 }
 
 func TestDeleteFolderWithRules(t *testing.T) {
-	_, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
@@ -723,7 +712,7 @@ func TestDeleteFolderWithRules(t *testing.T) {
 
 	// Create the namespace we'll save our alerts to.
 	namespaceUID := "default"
-	err = createFolder(t, namespaceUID, grafanaListedAddr, "editor", "editor")
+	err := createFolder(t, namespaceUID, grafanaListedAddr, "editor", "editor")
 	reloadCachedPermissions(t, grafanaListedAddr, "editor", "editor")
 	require.NoError(t, err)
 
@@ -859,8 +848,6 @@ func TestDeleteFolderWithRules(t *testing.T) {
 }
 
 func TestAlertRuleCRUD(t *testing.T) {
-	_, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
@@ -879,7 +866,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 	})
 
 	// Create the namespace we'll save our alerts to.
-	err = createFolder(t, "default", grafanaListedAddr, "grafana", "password")
+	err := createFolder(t, "default", grafanaListedAddr, "grafana", "password")
 	require.NoError(t, err)
 	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
 
@@ -2005,8 +1992,6 @@ func TestAlertmanagerStatus(t *testing.T) {
 }
 
 func TestQuota(t *testing.T) {
-	_, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
@@ -2026,7 +2011,7 @@ func TestQuota(t *testing.T) {
 	})
 
 	// Create the namespace we'll save our alerts to.
-	err = createFolder(t, "default", grafanaListedAddr, "grafana", "password")
+	err := createFolder(t, "default", grafanaListedAddr, "grafana", "password")
 	require.NoError(t, err)
 	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
 
@@ -2253,8 +2238,6 @@ func TestQuota(t *testing.T) {
 }
 
 func TestEval(t *testing.T) {
-	_, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
@@ -2273,7 +2256,7 @@ func TestEval(t *testing.T) {
 	})
 
 	// Create the namespace we'll save our alerts to.
-	err = createFolder(t, "default", grafanaListedAddr, "grafana", "password")
+	err := createFolder(t, "default", grafanaListedAddr, "grafana", "password")
 	require.NoError(t, err)
 
 	// test eval conditions
@@ -2742,6 +2725,9 @@ func rulesNamespaceWithoutVariableValues(t *testing.T, b []byte) (string, map[st
 
 func createUser(t *testing.T, store *sqlstore.SQLStore, cmd models.CreateUserCommand) int64 {
 	t.Helper()
+
+	store.Cfg.AutoAssignOrg = true
+	store.Cfg.AutoAssignOrgId = 1
 
 	u, err := store.CreateUser(context.Background(), cmd)
 	require.NoError(t, err)

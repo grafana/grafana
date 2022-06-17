@@ -98,7 +98,7 @@ const LabelsField: FC<Props> = ({ className }) => {
 const getStyles = (theme: GrafanaTheme) => {
   return {
     wrapper: css`
-      margin-top: ${theme.spacing.md};
+      margin-bottom: ${theme.spacing.xl};
     `,
     flexColumn: css`
       display: flex;
@@ -131,7 +131,7 @@ const getStyles = (theme: GrafanaTheme) => {
       margin-left: ${theme.spacing.xs};
     `,
     labelInput: css`
-      width: 183px;
+      width: 175px;
       margin-bottom: ${theme.spacing.sm};
       & + & {
         margin-left: ${theme.spacing.sm};
