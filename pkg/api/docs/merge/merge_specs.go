@@ -133,7 +133,7 @@ func mergeSpecs(output string, sources ...string) error {
 		for kk, props := range d.Properties {
 			// replace dashboard unstructured references to structured ones
 			if props.Ref.String() == "#/definitions/Json" {
-				if strings.Contains(k, "Dashboard") {
+				if strings.Contains(k, "Dashboard") && kk != "meta" {
 					newRef, err := jsonreference.New("#/definitions/dashboard")
 					if err != nil {
 						log.Printf("failed to update dashboard reference for definition: %s, property: %s, err: %v", k, kk, err)

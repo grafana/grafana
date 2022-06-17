@@ -15439,7 +15439,7 @@
           "$ref": "#/definitions/dashboard"
         },
         "meta": {
-          "$ref": "#/definitions/dashboard"
+          "$ref": "#/definitions/Json"
         }
       }
     },
@@ -15450,7 +15450,7 @@
           "$ref": "#/definitions/dashboard"
         },
         "meta": {
-          "$ref": "#/definitions/dashboard"
+          "$ref": "#/definitions/Json"
         }
       }
     },
@@ -16454,13 +16454,13 @@
                 "$ref": "#/definitions/dashboard.Panel"
               },
               {
+                "$ref": "#/definitions/dashboard.RowPanel"
+              },
+              {
                 "$ref": "#/definitions/dashboard.GraphPanel"
               },
               {
                 "$ref": "#/definitions/dashboard.HeatmapPanel"
-              },
-              {
-                "$ref": "#/definitions/dashboard.RowPanel"
               }
             ]
           }
@@ -16736,6 +16736,43 @@
         }
       }
     },
+    "dashboard.GridPos": {
+      "type": "object",
+      "required": ["h", "w", "x", "y"],
+      "properties": {
+        "h": {
+          "description": "Panel",
+          "type": "integer",
+          "default": 9,
+          "maximum": 4294967295,
+          "exclusiveMinimum": true
+        },
+        "static": {
+          "description": "true if fixed",
+          "type": "boolean"
+        },
+        "w": {
+          "description": "Panel",
+          "type": "integer",
+          "default": 12,
+          "maximum": 24,
+          "exclusiveMinimum": true
+        },
+        "x": {
+          "description": "Panel x",
+          "type": "integer",
+          "default": 0,
+          "maximum": 24,
+          "exclusiveMaximum": true
+        },
+        "y": {
+          "description": "Panel y",
+          "type": "integer",
+          "default": 0,
+          "maximum": 4294967295
+        }
+      }
+    },
     "dashboard.HeatmapPanel": {
       "type": "object",
       "required": ["type"],
@@ -16877,42 +16914,7 @@
           }
         },
         "gridPos": {
-          "description": "Grid position.",
-          "type": "object",
-          "required": ["h", "w", "x", "y"],
-          "properties": {
-            "h": {
-              "description": "Panel",
-              "type": "integer",
-              "default": 9,
-              "maximum": 4294967295,
-              "exclusiveMinimum": true
-            },
-            "static": {
-              "description": "true if fixed",
-              "type": "boolean"
-            },
-            "w": {
-              "description": "Panel",
-              "type": "integer",
-              "default": 12,
-              "maximum": 24,
-              "exclusiveMinimum": true
-            },
-            "x": {
-              "description": "Panel x",
-              "type": "integer",
-              "default": 0,
-              "maximum": 24,
-              "exclusiveMaximum": true
-            },
-            "y": {
-              "description": "Panel y",
-              "type": "integer",
-              "default": 0,
-              "maximum": 4294967295
-            }
-          }
+          "$ref": "#/definitions/dashboard.GridPos"
         },
         "id": {
           "description": "TODO docs",
@@ -16967,7 +16969,7 @@
           }
         },
         "thresholds": {
-          "description": "TODO docs",
+          "description": "TODO docs - seems to be an old field from old dashboard alerts?",
           "type": "array",
           "items": {}
         },
@@ -17037,41 +17039,7 @@
           }
         },
         "gridPos": {
-          "type": "object",
-          "required": ["h", "w", "x", "y"],
-          "properties": {
-            "h": {
-              "description": "Panel",
-              "type": "integer",
-              "default": 9,
-              "maximum": 4294967295,
-              "exclusiveMinimum": true
-            },
-            "static": {
-              "description": "true if fixed",
-              "type": "boolean"
-            },
-            "w": {
-              "description": "Panel",
-              "type": "integer",
-              "default": 12,
-              "maximum": 24,
-              "exclusiveMinimum": true
-            },
-            "x": {
-              "description": "Panel x",
-              "type": "integer",
-              "default": 0,
-              "maximum": 24,
-              "exclusiveMaximum": true
-            },
-            "y": {
-              "description": "Panel y",
-              "type": "integer",
-              "default": 0,
-              "maximum": 4294967295
-            }
-          }
+          "$ref": "#/definitions/dashboard.GridPos"
         },
         "id": {
           "type": "integer",
@@ -17211,42 +17179,7 @@
                     }
                   },
                   "gridPos": {
-                    "description": "Grid position.",
-                    "type": "object",
-                    "required": ["h", "w", "x", "y"],
-                    "properties": {
-                      "h": {
-                        "description": "Panel",
-                        "type": "integer",
-                        "default": 9,
-                        "maximum": 4294967295,
-                        "exclusiveMinimum": true
-                      },
-                      "static": {
-                        "description": "true if fixed",
-                        "type": "boolean"
-                      },
-                      "w": {
-                        "description": "Panel",
-                        "type": "integer",
-                        "default": 12,
-                        "maximum": 24,
-                        "exclusiveMinimum": true
-                      },
-                      "x": {
-                        "description": "Panel x",
-                        "type": "integer",
-                        "default": 0,
-                        "maximum": 24,
-                        "exclusiveMaximum": true
-                      },
-                      "y": {
-                        "description": "Panel y",
-                        "type": "integer",
-                        "default": 0,
-                        "maximum": 4294967295
-                      }
-                    }
+                    "$ref": "#/definitions/dashboard.GridPos"
                   },
                   "id": {
                     "description": "TODO docs",
@@ -17301,7 +17234,7 @@
                     }
                   },
                   "thresholds": {
-                    "description": "TODO docs",
+                    "description": "TODO docs - seems to be an old field from old dashboard alerts?",
                     "type": "array",
                     "items": {}
                   },
@@ -17543,6 +17476,7 @@
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "gettableSilence": {
+      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": ["comment", "createdBy", "endsAt", "matchers", "startsAt", "id", "status", "updatedAt"],
       "properties": {
@@ -17585,9 +17519,7 @@
           "format": "date-time",
           "x-go-name": "UpdatedAt"
         }
-      },
-      "x-go-name": "GettableSilence",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+      }
     },
     "gettableSilences": {
       "description": "GettableSilences gettable silences",
@@ -17714,7 +17646,6 @@
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "postableSilence": {
-      "description": "PostableSilence postable silence",
       "type": "object",
       "required": ["comment", "createdBy", "endsAt", "matchers", "startsAt"],
       "properties": {
@@ -17748,10 +17679,11 @@
           "format": "date-time",
           "x-go-name": "StartsAt"
         }
-      }
+      },
+      "x-go-name": "PostableSilence",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "receiver": {
-      "description": "Receiver receiver",
       "type": "object",
       "required": ["name"],
       "properties": {
@@ -17760,7 +17692,9 @@
           "type": "string",
           "x-go-name": "Name"
         }
-      }
+      },
+      "x-go-name": "Receiver",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "silence": {
       "description": "Silence silence",
