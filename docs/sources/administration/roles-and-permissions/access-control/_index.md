@@ -115,4 +115,4 @@ You can use either of the following methods to create, assign, and manage custom
 
 If you have created a folder with the name `General` or `general`, you cannot manage its permissions with RBAC.
 
-If you set [folder permissions]({{< relref "../../user-management/manage-dashboard-permissions/" >}}) for a folder named `General` or `general`, the system disregards the folder when RBAC is enabled.
+If you set [folder permissions]({{< relref "../../user-management/manage-dashboard-permissions/#grant-dashboard-folder-permissions" >}}) for a folder named `General` or `general`, the system disregards the folder when RBAC is enabled.
