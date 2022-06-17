@@ -36,7 +36,7 @@ export const FolderView = ({ selection, selectionToggle, onTagSelected, tags, hi
       if (ids.length) {
         const itemsUIDs = await getBackendSrv().get(`/api/dashboards/ids/${ids.slice(0, 30).join(',')}`);
         if (itemsUIDs.length) {
-          folders.push({ title: 'Recent', icon: 'clock', kind: 'query-recent', uid: '__recent', itemsUIDs });
+          folders.push({ title: 'Recent', icon: 'clock-nine', kind: 'query-recent', uid: '__recent', itemsUIDs });
         }
       }
     }

@@ -11,6 +11,15 @@ PATH_UP = ../../../../..
 
 GENERATED_GO_MATCHERS = ./go/*.go
 
+SED_INPLACE := -i
+
+ifneq ($(OS),Windows_NT)
+	UNAME := $(shell uname)
+	ifeq ($(UNAME),Darwin)
+		SED_INPLACE = -i ''
+	endif
+endif
+
 spec.json spec-stable.json: $(GO_PKG_FILES)
 	# this is slow because this image does not use the cache
 	# https://github.com/go-swagger/go-swagger/blob/v0.27.0/Dockerfile#L5
@@ -49,9 +58,9 @@ copy-files:
 	ls -1 go | xargs -n 1 -I {} mv go/{} ../generated_base_{}
 
 fix:
-	sed -i '' -e 's/apimodels\.\[\]PostableAlert/apimodels.PostableAlerts/' $(GENERATED_GO_MATCHERS)
-	sed -i '' -e 's/apimodels\.\[\]UpdateDashboardAclCommand/apimodels.Permissions/' $(GENERATED_GO_MATCHERS)
-	sed -i '' -e 's/apimodels\.\[\]PostableApiReceiver/apimodels.TestReceiversConfigParams/' $(GENERATED_GO_MATCHERS)
+	sed $(SED_INPLACE) -e 's/apimodels\.\[\]PostableAlert/apimodels.PostableAlerts/' $(GENERATED_GO_MATCHERS)
+	sed $(SED_INPLACE) -e 's/apimodels\.\[\]UpdateDashboardAclCommand/apimodels.Permissions/' $(GENERATED_GO_MATCHERS)
+	sed $(SED_INPLACE) -e 's/apimodels\.\[\]PostableApiReceiver/apimodels.TestReceiversConfigParams/' $(GENERATED_GO_MATCHERS)
 	goimports -w -v $(GENERATED_GO_MATCHERS)
 
 clean:

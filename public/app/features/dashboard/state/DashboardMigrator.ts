@@ -25,7 +25,7 @@ import {
 } from '@grafana/data';
 import { getDataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import { AxisPlacement, GraphFieldConfig } from '@grafana/ui';
-import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/editors/registry';
+import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 import { config } from 'app/core/config';
 import {
   DEFAULT_PANEL_SPAN,
@@ -761,14 +761,14 @@ export class DashboardMigrator {
             }
 
             for (const target of panel.targets) {
-              if (target.datasource && panelDataSourceWasDefault) {
+              if (target.datasource == null || target.datasource.uid == null) {
+                target.datasource = { ...panel.datasource };
+              }
+
+              if (panelDataSourceWasDefault && target.datasource.uid !== '__expr__') {
                 // We can have situations when default ds changed and the panel level data source is different from the queries
                 // In this case we use the query level data source as source for truth
                 panel.datasource = target.datasource as DataSourceRef;
-              }
-
-              if (target.datasource === null) {
-                target.datasource = getDataSourceRef(defaultDs);
               }
             }
           }
