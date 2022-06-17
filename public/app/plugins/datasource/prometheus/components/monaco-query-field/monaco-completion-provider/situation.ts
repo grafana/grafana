@@ -483,7 +483,7 @@ function resolveLabelKeysWithEquals(node: SyntaxNode, text: string, pos: number)
 // by default by lezer. problem is, `next()` will go upward too,
 // and we do not want to go higher than our node
 function getErrorNode(tree: Tree, pos: number): SyntaxNode | null {
-  const cur = tree.cursor(pos);
+  const cur = tree.cursorAt(pos);
   while (true) {
     if (cur.from === pos && cur.to === pos) {
       const { node } = cur;
@@ -524,7 +524,7 @@ LabelMatchers
   // so first we check if there is an error-node at the cursor-position
   const maybeErrorNode = getErrorNode(tree, pos);
 
-  const cur = maybeErrorNode != null ? maybeErrorNode.cursor : tree.cursor(pos);
+  const cur = maybeErrorNode != null ? maybeErrorNode.cursor() : tree.cursorAt(pos);
   const currentNode = cur.node;
 
   const names = [cur.name];

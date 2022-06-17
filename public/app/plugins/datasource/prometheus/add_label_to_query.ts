@@ -44,7 +44,7 @@ function getVectorSelectorPositions(query: string): VectorSelectorPosition[] {
   const tree = parser.parse(query);
   const positions: VectorSelectorPosition[] = [];
   tree.iterate({
-    enter: (type, from, to, get): false | void => {
+    enter: ({ to, from, type }): false | void => {
       if (type.name === 'VectorSelector') {
         const visQuery = buildVisualQueryFromString(query.substring(from, to));
         positions.push({ query: visQuery.query, from, to });
