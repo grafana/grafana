@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -55,18 +56,21 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 	})
 
 	DashboardUid := "dashboard-abcd1234"
-	pubdashUid := "pubdash-abcd1234"
+	token, err := uuid.NewV4()
+	require.NoError(t, err)
+	accessToken := fmt.Sprintf("%x", token)
+	fmt.Println(accessToken)
 
 	testCases := []struct {
 		Name                  string
-		uid                   string
+		AccessToken           string
 		ExpectedHttpResponse  int
 		publicDashboardResult *models.Dashboard
 		publicDashboardErr    error
 	}{
 		{
 			Name:                 "It gets a public dashboard",
-			uid:                  pubdashUid,
+			AccessToken:          accessToken,
 			ExpectedHttpResponse: http.StatusOK,
 			publicDashboardResult: &models.Dashboard{
 				Data: simplejson.NewFromAny(map[string]interface{}{
@@ -77,7 +81,7 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 		},
 		{
 			Name:                  "It should return 404 if isPublicDashboard is false",
-			uid:                   pubdashUid,
+			AccessToken:           accessToken,
 			ExpectedHttpResponse:  http.StatusNotFound,
 			publicDashboardResult: nil,
 			publicDashboardErr:    models.ErrPublicDashboardNotFound,
@@ -96,7 +100,7 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 			response := callAPI(
 				sc.server,
 				http.MethodGet,
-				fmt.Sprintf("/api/public/dashboards/%v", test.uid),
+				fmt.Sprintf("/api/public/dashboards/%s", test.AccessToken),
 				nil,
 				t,
 			)

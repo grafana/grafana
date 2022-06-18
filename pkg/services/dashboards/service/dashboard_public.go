@@ -12,8 +12,8 @@ import (
 )
 
 // Gets public dashboard via generated Uid
-func (dr *DashboardServiceImpl) GetPublicDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error) {
-	pubdash, d, err := dr.dashboardStore.GetPublicDashboard(ctx, dashboardUid)
+func (dr *DashboardServiceImpl) GetPublicDashboard(ctx context.Context, accessToken string) (*models.Dashboard, error) {
+	pubdash, d, err := dr.dashboardStore.GetPublicDashboard(ctx, accessToken)
 
 	if err != nil {
 		return nil, err
@@ -65,7 +65,7 @@ func (dr *DashboardServiceImpl) savePublicDashboardConfig(ctx context.Context, d
 		return nil, err
 	}
 
-	access_token, err := GenerateAccessToken()
+	accessToken, err := GenerateAccessToken()
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +81,7 @@ func (dr *DashboardServiceImpl) savePublicDashboardConfig(ctx context.Context, d
 			TimeSettings: dto.PublicDashboard.TimeSettings,
 			CreatedBy:    dto.UserId,
 			CreatedAt:    time.Now(),
-			AccessToken:  access_token,
+			AccessToken:  accessToken,
 		},
 	}
 
@@ -104,8 +104,8 @@ func (dr *DashboardServiceImpl) updatePublicDashboardConfig(ctx context.Context,
 	return dr.dashboardStore.UpdatePublicDashboardConfig(ctx, cmd)
 }
 
-func (dr *DashboardServiceImpl) BuildPublicDashboardMetricRequest(ctx context.Context, publicDashboardUid string, panelId int64) (dtos.MetricRequest, error) {
-	publicDashboard, dashboard, err := dr.dashboardStore.GetPublicDashboard(ctx, publicDashboardUid)
+func (dr *DashboardServiceImpl) BuildPublicDashboardMetricRequest(ctx context.Context, publicDashboardAccessToken string, panelId int64) (dtos.MetricRequest, error) {
+	publicDashboard, dashboard, err := dr.dashboardStore.GetPublicDashboard(ctx, publicDashboardAccessToken)
 	if err != nil {
 		return dtos.MetricRequest{}, err
 	}

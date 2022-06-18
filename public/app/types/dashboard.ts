@@ -39,7 +39,7 @@ export interface DashboardMeta {
   hasUnsavedFolderChange?: boolean;
   annotationsPermissions?: AnnotationsPermissions;
   isPublic?: boolean;
-  publicDashboardUid?: string;
+  publicDashboardAccessToken?: string;
 }
 
 export interface AnnotationActions {

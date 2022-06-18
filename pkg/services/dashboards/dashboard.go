@@ -10,7 +10,7 @@ import (
 //go:generate mockery --name DashboardService --structname FakeDashboardService --inpackage --filename dashboard_service_mock.go
 // DashboardService is a service for operating on dashboards.
 type DashboardService interface {
-	BuildPublicDashboardMetricRequest(ctx context.Context, publicDashboardUid string, panelId int64) (dtos.MetricRequest, error)
+	BuildPublicDashboardMetricRequest(ctx context.Context, accessToken string, panelId int64) (dtos.MetricRequest, error)
 	BuildSaveDashboardCommand(ctx context.Context, dto *SaveDashboardDTO, shouldValidateAlerts bool, validateProvisionedDashboard bool) (*models.SaveDashboardCommand, error)
 	DeleteDashboard(ctx context.Context, dashboardId int64, orgId int64) error
 	FindDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error)
@@ -19,7 +19,7 @@ type DashboardService interface {
 	GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error
 	GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) error
 	GetDashboardUIDById(ctx context.Context, query *models.GetDashboardRefByIdQuery) error
-	GetPublicDashboard(ctx context.Context, publicDashboardUid string) (*models.Dashboard, error)
+	GetPublicDashboard(ctx context.Context, accessToken string) (*models.Dashboard, error)
 	GetPublicDashboardConfig(ctx context.Context, orgId int64, dashboardUid string) (*models.PublicDashboard, error)
 	HasAdminPermissionInFolders(ctx context.Context, query *models.HasAdminPermissionInFoldersQuery) error
 	HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error
@@ -66,7 +66,7 @@ type Store interface {
 	GetProvisionedDataByDashboardID(dashboardID int64) (*models.DashboardProvisioning, error)
 	GetProvisionedDataByDashboardUID(orgID int64, dashboardUID string) (*models.DashboardProvisioning, error)
 	GetPublicDashboardConfig(ctx context.Context, orgId int64, dashboardUid string) (*models.PublicDashboard, error)
-	GetPublicDashboard(ctx context.Context, uid string) (*models.PublicDashboard, *models.Dashboard, error)
+	GetPublicDashboard(ctx context.Context, accessToken string) (*models.PublicDashboard, *models.Dashboard, error)
 	GenerateNewPublicDashboardUid(ctx context.Context) (string, error)
 	HasAdminPermissionInFolders(ctx context.Context, query *models.HasAdminPermissionInFoldersQuery) error
 	HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error
