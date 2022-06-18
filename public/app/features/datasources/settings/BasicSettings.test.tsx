@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
+
 import BasicSettings, { Props } from './BasicSettings';
 
 const setup = () => {
@@ -18,9 +20,7 @@ describe('Basic Settings', () => {
   it('should render component', () => {
     setup();
 
-    expect(screen.getByLabelText('Name')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Name')).toBeInTheDocument();
-    expect(screen.getByLabelText('Default')).toBeInTheDocument();
-    expect(screen.getByRole('checkbox')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: selectors.pages.DataSource.name })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'Default' })).toBeInTheDocument();
   });
 });
