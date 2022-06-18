@@ -252,7 +252,7 @@
     "@grafana/aws-sdk": "0.0.36",
     "@grafana/data": "workspace:*",
     "@grafana/e2e-selectors": "workspace:*",
-    "@grafana/experimental": "^0.0.2-canary.30",
+    "@grafana/experimental": "^0.0.2-canary.32",
     "@grafana/google-sdk": "0.0.3",
     "@grafana/lezer-logql": "^0.0.12",
     "@grafana/runtime": "workspace:*",
