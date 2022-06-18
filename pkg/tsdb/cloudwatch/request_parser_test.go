@@ -22,15 +22,15 @@ func TestRequestParser(t *testing.T) {
 			}
 			oldQuery.RefID = "A"
 			oldQuery.JSON = []byte(`{
-				"Region": "us-east-1",
-				"Namespace": "ec2",
-				"MetricName": "CPUUtilization",
-				"Dimensions": {
+				"region": "us-east-1",
+				"namespace": "ec2",
+				"metricName": "CPUUtilization",
+				"dimensions": {
 				  "InstanceId": ["test"]
 				},
-				"Statistics": ["Average", "Sum"],
-				"Period": "600",
-				"Hide": false
+				"statistics": ["Average", "Sum"],
+				"period": "600",
+				"hide": false
 			  }`)
 			migratedQueries, err := migrateLegacyQuery([]backend.DataQuery{*oldQuery}, false)
 			require.NoError(t, err)
@@ -40,8 +40,8 @@ func TestRequestParser(t *testing.T) {
 			assert.Equal(t, "A", migratedQuery.RefID)
 			model, err := simplejson.NewJson(migratedQuery.JSON)
 			require.NoError(t, err)
-			assert.Equal(t, "Average", model.Get("Statistic").MustString())
-			res, err := model.Get("Statistic").Array()
+			assert.Equal(t, "Average", model.Get("statistic").MustString())
+			res, err := model.Get("statistic").Array()
 			assert.Error(t, err)
 			assert.Nil(t, res)
 		})
@@ -398,17 +398,17 @@ func Test_migrateAliasToDynamicLabel_single_query_preserves_old_alias_and_create
 			migrateAliasToDynamicLabel(&query)
 
 			matchedJson := []byte(fmt.Sprintf(`{
-				"Alias":      "%s",
-				"Dimensions": {
+				"alias":      "%s",
+				"dimensions": {
 					"InstanceId": ["test"]
 				},			
-				"Hide":       false,
-				"Label":      "%s",
-				"MetricName": "CPUUtilization",
-				"Namespace":  "ec2",
-				"Period":     "600",
-				"Region":     "us-east-1",
-				"Statistic":  "Average"
+				"hide":       false,
+				"label":      "%s",
+				"metricName": "CPUUtilization",
+				"namespace":  "ec2",
+				"period":     "600",
+				"region":     "us-east-1",
+				"statistic":  "Average"
 			}`, tc.inputAlias, tc.expectedLabel))
 
 			result, err := json.Marshal(query)
@@ -442,19 +442,19 @@ func Test_Test_migrateLegacyQuery(t *testing.T) {
 		require.Equal(t, 1, len(migratedQueries))
 
 		assert.JSONEq(t, `{
-		"Alias":"{{period}} {{any_other_word}}",
-		"Label":"${PROP('Period')} ${PROP('Dim.any_other_word')}",
-		"Dimensions":{
+		"alias":"{{period}} {{any_other_word}}",
+		"label":"${PROP('Period')} ${PROP('Dim.any_other_word')}",
+		"dimensions":{
 		  "InstanceId":[
 			 "test"
 		  ]
 		},
-		"Hide":false,
-		"MetricName":"CPUUtilization",
-		"Namespace":"ec2",
-		"Period":"600",
-		"Region":"us-east-1",
-		"Statistic":"Average"
+		"hide":false,
+		"metricName":"CPUUtilization",
+		"namespace":"ec2",
+		"period":"600",
+		"region":"us-east-1",
+		"statistic":"Average"
 		}`,
 			string(migratedQueries[0].JSON))
 	})
@@ -500,37 +500,37 @@ func Test_Test_migrateLegacyQuery(t *testing.T) {
 
 		assert.JSONEq(t,
 			`{
-					   "Alias": "{{period}} {{any_other_word}}",
-					   "Label":"${PROP('Period')} ${PROP('Dim.any_other_word')}",
-					   "Dimensions":{
+					   "alias": "{{period}} {{any_other_word}}",
+					   "label":"${PROP('Period')} ${PROP('Dim.any_other_word')}",
+					   "dimensions":{
 						  "InstanceId":[
 							 "test"
 						  ]
 					   },
-					   "Hide":false,
-					   "MetricName":"CPUUtilization",
-					   "Namespace":"ec2",
-					   "Period":"600",
-					   "Region":"us-east-1",
-					   "Statistic":"Average"
+					   "hide":false,
+					   "metricName":"CPUUtilization",
+					   "namespace":"ec2",
+					   "period":"600",
+					   "region":"us-east-1",
+					   "statistic":"Average"
 					}`,
 			string(migratedQueries[0].JSON))
 
 		assert.JSONEq(t,
 			`{
-					   "Alias": "{{  label }}",
-					   "Label":"${LABEL}",
-					   "Dimensions":{
+					   "alias": "{{  label }}",
+					   "label":"${LABEL}",
+					   "dimensions":{
 						  "InstanceId":[
 							 "test"
 						  ]
 					   },
-					   "Hide":false,
-					   "MetricName":"CPUUtilization",
-					   "Namespace":"ec2",
-					   "Period":"600",
-					   "Region":"us-east-1",
-					   "Statistic":"Average"
+					   "hide":false,
+					   "metricName":"CPUUtilization",
+					   "namespace":"ec2",
+					   "period":"600",
+					   "region":"us-east-1",
+					   "statistic":"Average"
 					}`,
 			string(migratedQueries[1].JSON))
 	})
@@ -540,9 +540,9 @@ func Test_Test_migrateLegacyQuery(t *testing.T) {
 			labelJson                         string
 			dynamicLabelsFeatureToggleEnabled bool
 		}{
-			"when label already exists, feature toggle enabled":     {labelJson: `"Label":"some label",`, dynamicLabelsFeatureToggleEnabled: true},
+			"when label already exists, feature toggle enabled":     {labelJson: `"label":"some label",`, dynamicLabelsFeatureToggleEnabled: true},
 			"when label does not exist, feature toggle is disabled": {dynamicLabelsFeatureToggleEnabled: false},
-			"when label already exists, feature toggle is disabled": {labelJson: `"Label":"some label",`, dynamicLabelsFeatureToggleEnabled: false},
+			"when label already exists, feature toggle is disabled": {labelJson: `"label":"some label",`, dynamicLabelsFeatureToggleEnabled: false},
 		}
 
 		for name, tc := range testCases {
@@ -571,19 +571,19 @@ func Test_Test_migrateLegacyQuery(t *testing.T) {
 
 				assert.JSONEq(t,
 					fmt.Sprintf(`{
-					   "Alias":"{{period}} {{any_other_word}}",
+					   "alias":"{{period}} {{any_other_word}}",
 					   %s
-					   "Dimensions":{
+					   "dimensions":{
 						  "InstanceId":[
 							 "test"
 						  ]
 					   },
-					   "Hide":false,
-					   "MetricName":"CPUUtilization",
-					   "Namespace":"ec2",
-					   "Period":"600",
-					   "Region":"us-east-1",
-					   "Statistic":"Average"
+					   "hide":false,
+					   "metricName":"CPUUtilization",
+					   "namespace":"ec2",
+					   "period":"600",
+					   "region":"us-east-1",
+					   "statistic":"Average"
 					}`, tc.labelJson),
 					string(migratedQueries[0].JSON))
 			})

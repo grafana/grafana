@@ -19,28 +19,27 @@ import (
 var validMetricDataID = regexp.MustCompile(`^[a-z][a-zA-Z0-9_]*$`)
 
 type QueryJson struct {
-	Datasource        map[string]string      `json:",omitempty"`
-	Dimensions        map[string]interface{} `json:",omitempty"`
-	Expression        string                 `json:",omitempty"`
-	Id                string                 `json:",omitempty"`
-	IntervalMs        int                    `json:",omitempty"`
-	Label             *string                `json:",omitempty"`
-	MatchExact        *bool                  `json:",omitempty"`
-	MaxDataPoints     int                    `json:",omitempty"`
-	MetricEditorMode  *int                   `json:",omitempty"`
-	MetricName        string                 `json:",omitempty"`
-	MetricQueryType   metricQueryType        `json:",omitempty"`
-	Namespace         string                 `json:",omitempty"`
-	Period            string                 `json:",omitempty"`
-	RefId             string                 `json:",omitempty"`
-	Region            string                 `json:",omitempty"`
-	SqlExpression     string                 `json:",omitempty"`
-	Statistic         *string                `json:",omitempty"`
-	Statistics        []*string              `json:",omitempty"`
-	TimezoneUTCOffset string                 `json:",omitempty"`
-	QueryType         string                 `json:",omitempty"`
-	Hide              *bool                  `json:",omitempty"`
-	Alias             *string                `json:",omitempty"`
+	Datasource        map[string]string      `json:"datasource,omitempty"`
+	Dimensions        map[string]interface{} `json:"dimensions,omitempty"`
+	Expression        string                 `json:"expression,omitempty"`
+	Id                string                 `json:"id,omitempty"`
+	Label             *string                `json:"label,omitempty"`
+	MatchExact        *bool                  `json:"matchExact,omitempty"`
+	MaxDataPoints     int                    `json:"maxDataPoints,omitempty"`
+	MetricEditorMode  *int                   `json:"metricEditorMode,omitempty"`
+	MetricName        string                 `json:"metricName,omitempty"`
+	MetricQueryType   metricQueryType        `json:"metricQueryType,omitempty"`
+	Namespace         string                 `json:"namespace,omitempty"`
+	Period            string                 `json:"period,omitempty"`
+	RefId             string                 `json:"refId,omitempty"`
+	Region            string                 `json:"region,omitempty"`
+	SqlExpression     string                 `json:"sqlExpression,omitempty"`
+	Statistic         *string                `json:"statistic,omitempty"`
+	Statistics        []*string              `json:"statistics,omitempty"`
+	TimezoneUTCOffset string                 `json:"timezoneUTCOffset,omitempty"`
+	QueryType         string                 `json:"queryType,omitempty"`
+	Hide              *bool                  `json:"hide,omitempty"`
+	Alias             *string                `json:"alias,omitempty"`
 }
 
 // parseQueries parses the json queries and returns a map of cloudWatchQueries by region. The cloudWatchQuery has a 1 to 1 mapping to a query editor row
