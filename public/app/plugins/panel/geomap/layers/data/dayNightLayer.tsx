@@ -37,7 +37,7 @@ export interface DayNightConfig {
 const defaultConfig: DayNightConfig = {
   show: ShowTime.To,
   sun: false,
-  nightColor: '#180f1c94'
+  nightColor: '#a7a6ba4D'
 };
 
 export const DAY_NIGHT_LAYER_ID = 'dayNight';
@@ -72,8 +72,6 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
       ...defaultConfig,
       ...options?.config,
     };
-
-    console.log( "INIT (DayNight)", config );
 
     // DayNight source
     const source = new DayNight({ });
@@ -167,7 +165,6 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
     if (false) {
       subscriptions.add(
         eventBus.subscribe(DataHoverEvent, (event) => {
-          console.log('EVENT', {...event.payload.point} );
           const time = event.payload?.point?.time as number;
           if (time) {
             const lineTime = new Date(time);
@@ -242,7 +239,7 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
           path: 'config.nightColor',
           name: 'Night region color',
           description: 'Pick color of night region',
-          defaultValue: 'rgb(0,0,0)',
+          defaultValue: defaultConfig.nightColor,
           settings: [{enableNamedColors: false}],
         });
         builder.addBooleanSwitch({
