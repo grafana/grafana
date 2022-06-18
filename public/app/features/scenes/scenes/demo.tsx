@@ -1,6 +1,7 @@
 import { getDefaultTimeRange } from '@grafana/data';
 
 import { Scene } from '../models/Scene';
+import { SceneCanvasText } from '../models/SceneCanvasText';
 import { SceneFlexLayout } from '../models/SceneFlexLayout';
 import { ScenePanelRepeater } from '../models/ScenePanelRepeater';
 import { SceneQueryRunner } from '../models/SceneQueryRunner';
@@ -25,16 +26,22 @@ export function getFlexLayoutTest(): Scene {
           children: [
             new VizPanel({
               pluginId: 'timeseries',
-              size: { height: 300 },
+              title: 'Fill height',
+            }),
+            new VizPanel({
+              pluginId: 'timeseries',
+              title: 'Fill height',
+            }),
+            new SceneCanvasText({
+              text: 'Size to content',
+              fontSize: 20,
+              size: { ySizing: 'content' },
+              align: 'center',
+            }),
+            new VizPanel({
+              pluginId: 'timeseries',
               title: 'Fixed height',
-            }),
-            new VizPanel({
-              pluginId: 'timeseries',
-              title: 'Dynamic height',
-            }),
-            new VizPanel({
-              pluginId: 'timeseries',
-              title: 'Dynamic height',
+              size: { height: 300 },
             }),
           ],
         }),

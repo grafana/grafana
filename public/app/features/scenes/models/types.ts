@@ -12,6 +12,8 @@ export interface SceneObjectState {
 export interface SceneObjectSize {
   width?: number | string;
   height?: number | string;
+  xSizing?: 'fill' | 'content';
+  ySizing?: 'fill' | 'content';
   x?: number;
   y?: number;
   minWidth?: number | string;

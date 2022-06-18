@@ -23,7 +23,7 @@ function FlexLayoutRenderer({ model }: { model: SceneFlexLayout }) {
   const { direction = 'row', children } = model.useState();
 
   return (
-    <div style={{ flexGrow: 1, flexDirection: direction, display: 'flex', gap: '16px' }}>
+    <div style={{ flexGrow: 1, flexDirection: direction, display: 'flex', gap: '8px' }}>
       {children.map((item) => (
         <FlexLayoutChildComponent key={item.state.key} item={item} direction={direction} />
       ))}
@@ -48,6 +48,8 @@ function FlexLayoutChildComponent({
 }
 
 function getItemStyles(direction: FlexLayoutDirection, sizing: SceneObjectSize = {}) {
+  const { xSizing = 'fill', ySizing = 'fill' } = sizing;
+
   const style: CSSProperties = {
     display: 'flex',
     flexDirection: direction,
@@ -59,25 +61,25 @@ function getItemStyles(direction: FlexLayoutDirection, sizing: SceneObjectSize =
     if (sizing.height) {
       style.height = sizing.height;
     } else {
-      style.flexGrow = 1;
+      style.flexGrow = ySizing === 'fill' ? 1 : 0;
     }
 
     if (sizing.width) {
       style.width = sizing.width;
     } else {
-      style.alignSelf = 'stretch';
+      style.alignSelf = xSizing === 'fill' ? 'stretch' : 'normal';
     }
   } else {
     if (sizing.height) {
       style.height = sizing.height;
     } else {
-      style.alignSelf = 'stretch';
+      style.alignSelf = ySizing === 'fill' ? 'stretch' : 'normal';
     }
 
     if (sizing.width) {
       style.width = sizing.width;
     } else {
-      style.flexGrow = 1;
+      style.flexGrow = xSizing === 'fill' ? 1 : 0;
     }
   }
 
