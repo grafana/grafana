@@ -15,7 +15,7 @@ const setup = () => {
 };
 
 describe('Basic Settings', () => {
-  it('should render component', async () => {
+  it('should render component', () => {
     setup();
 
     expect(screen.getByLabelText('Name')).toBeInTheDocument();
