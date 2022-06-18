@@ -143,6 +143,14 @@
         A lower limit for the auto group by time interval. Recommended to be set to write frequency,
         for example <code>1m</code> if your data is written every minute.
       </info-popover>
+      <span class="gf-form-label width-9">Connection Timeout</span>
+      <input type="number" class="gf-form-input width-6 gf-form-input--has-help-icon"
+        ng-model="ctrl.current.jsonData.connectionTimeout"  placeholder="60"
+       ></input>
+      <info-popover mode="right-absolute">
+        Timeout for connection and command in mssql query , timeout error when this connectiontime > this number, 
+        If set to 0, command no timeout.
+      </info-popover>
     </div>
   </div>
 </div>
