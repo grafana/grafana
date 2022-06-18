@@ -16,7 +16,7 @@ export interface VizPanelState extends SceneObjectState {
 }
 
 export class VizPanel extends SceneObjectBase<VizPanelState> {
-  Component = ScenePanelRenderer;
+  EditableComponent = ScenePanelRenderer;
 
   onSetTimeRange = (timeRange: AbsoluteTimeRange) => {
     const sceneTimeRange = this.getTimeRange();

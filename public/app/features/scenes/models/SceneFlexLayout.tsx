@@ -10,7 +10,7 @@ interface SceneFlexLayoutState extends SceneObjectState, SceneLayoutState {
 }
 
 export class SceneFlexLayout extends SceneObjectBase<SceneFlexLayoutState> {
-  Component = FlexLayoutRenderer;
+  EditableComponent = FlexLayoutRenderer;
 
   toggleDirection() {
     this.setState({
@@ -19,13 +19,13 @@ export class SceneFlexLayout extends SceneObjectBase<SceneFlexLayoutState> {
   }
 }
 
-function FlexLayoutRenderer({ model }: { model: SceneFlexLayout }) {
+function FlexLayoutRenderer({ model, isEditing }: { model: SceneFlexLayout; isEditing?: boolean }) {
   const { direction = 'row', children } = model.useState();
 
   return (
     <div style={{ flexGrow: 1, flexDirection: direction, display: 'flex', gap: '8px' }}>
       {children.map((item) => (
-        <FlexLayoutChildComponent key={item.state.key} item={item} direction={direction} />
+        <FlexLayoutChildComponent key={item.state.key} item={item} direction={direction} isEditing={isEditing} />
       ))}
     </div>
   );
@@ -34,15 +34,17 @@ function FlexLayoutRenderer({ model }: { model: SceneFlexLayout }) {
 function FlexLayoutChildComponent({
   item,
   direction,
+  isEditing,
 }: {
   item: SceneObject<SceneObjectState>;
   direction: FlexLayoutDirection;
+  isEditing?: boolean;
 }) {
   const { size } = item.useMount().useState();
 
   return (
     <div style={getItemStyles(direction, size)}>
-      <item.Component model={item} />
+      <item.Component model={item} isEditing={isEditing} />
     </div>
   );
 }

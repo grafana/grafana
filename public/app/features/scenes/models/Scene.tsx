@@ -9,6 +9,7 @@ interface SceneState extends SceneObjectState {
   title: string;
   layout: SceneObject<any>;
   actions?: Array<SceneObject<any>>;
+  isEditing?: boolean;
 }
 
 export class Scene extends SceneObjectBase<SceneState> {
@@ -16,7 +17,7 @@ export class Scene extends SceneObjectBase<SceneState> {
 }
 
 const SceneRenderer = React.memo<SceneComponentProps<Scene>>(({ model }) => {
-  const { title, layout, $timeRange, actions = [] } = model.useMount().useState();
+  const { title, layout, $timeRange, actions = [], isEditing } = model.useMount().useState();
 
   console.log('render scene');
 
@@ -29,7 +30,7 @@ const SceneRenderer = React.memo<SceneComponentProps<Scene>>(({ model }) => {
         {$timeRange && <$timeRange.Component model={$timeRange} />}
       </PageToolbar>
       <div style={{ flexGrow: 1, display: 'flex', padding: '16px' }}>
-        <layout.Component model={layout} />
+        <layout.Component model={layout} isEditing={isEditing} />
       </div>
     </div>
   );

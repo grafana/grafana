@@ -1,3 +1,4 @@
+import React from 'react';
 import { Subscribable } from 'rxjs';
 
 import { PanelData, TimeRange } from '@grafana/data';
@@ -22,7 +23,10 @@ export interface SceneObjectSize {
 
 export interface SceneComponentProps<T> {
   model: T;
+  isEditing?: boolean;
 }
+
+export type SceneComponent<TModel> = React.FunctionComponent<SceneComponentProps<TModel>>;
 
 export interface SceneDataState extends SceneObjectState {
   data?: PanelData;

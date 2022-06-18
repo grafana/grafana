@@ -66,7 +66,8 @@ export function getFlexLayoutTest(): Scene {
       new SceneToolbarButton({
         icon: 'columns',
         onClick: () => {
-          (scene.state.layout as SceneFlexLayout).toggleDirection();
+          scene.setState({ isEditing: !scene.state.isEditing });
+          // (scene.state.layout as SceneFlexLayout).toggleDirection();
         },
       }),
     ],

@@ -10,7 +10,7 @@ export interface SceneCanvasTextState extends SceneObjectState {
 }
 
 export class SceneCanvasText extends SceneObjectBase<SceneCanvasTextState> {
-  Component = ({ model }: SceneComponentProps<SceneCanvasText>) => {
+  EditableComponent = ({ model }: SceneComponentProps<SceneCanvasText>) => {
     const { text, fontSize = 20, align = 'left' } = model.useState();
 
     const style: CSSProperties = {

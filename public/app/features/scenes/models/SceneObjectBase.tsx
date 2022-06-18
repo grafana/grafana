@@ -3,21 +3,24 @@ import { useObservable } from 'react-use';
 import { Observer, Subject, Subscription } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
+import { SceneComponentEditWrapper } from './SceneEditor';
 import {
-  SceneComponentProps,
   SceneTimeRangeState,
   SceneDataState,
   SceneObject,
   SceneLayoutState,
   SceneObjectState,
+  SceneComponent,
 } from './types';
 
-export abstract class SceneObjectBase<TState extends SceneObjectState> implements SceneObject<TState> {
+export abstract class SceneObjectBase<TState extends SceneObjectState = {}> implements SceneObject<TState> {
   subject = new Subject<TState>();
   state: TState;
   parent?: SceneObjectBase<any>;
   subs = new Subscription();
   isMounted?: boolean;
+  EditableComponent?: SceneComponent<this>;
+  Component: SceneComponent<this> = SceneComponentEditWrapper;
 
   constructor(state: TState) {
     if (!state.key) {
@@ -44,6 +47,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState> implement
     }
   }
 
+  /** This function implements the Subscribable<TState> interface */
   subscribe(observer: Partial<Observer<TState>>) {
     return this.subject.subscribe(observer);
   }
@@ -57,9 +61,9 @@ export abstract class SceneObjectBase<TState extends SceneObjectState> implement
     this.subject.next(this.state);
   }
 
-  Component(_: SceneComponentProps<SceneObject<TState>>): React.ReactElement | null {
-    return null;
-  }
+  // Component(_: SceneComponentProps<SceneObject<TState>>): React.ReactElement | null {
+  //   return null;
+  // }
 
   onMount() {
     this.isMounted = true;
