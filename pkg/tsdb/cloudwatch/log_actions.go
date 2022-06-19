@@ -22,6 +22,8 @@ const (
 	defaultLimit           = int64(10)
 )
 
+var logGroupDefaultLimit = int64(50)
+
 type AWSError struct {
 	Code    string
 	Message string
@@ -114,7 +116,6 @@ func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, model LogQuer
 	}
 
 	region := dsInfo.region
-
 	if model.Region != "" {
 		region = model.Region
 	}
@@ -149,7 +150,6 @@ func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, model LogQuer
 func (e *cloudWatchExecutor) handleGetLogEvents(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
 	parameters LogQueryJson) (*data.Frame, error) {
 	limit := defaultLimit
-
 	if parameters.Limit != nil && *parameters.Limit > 0 {
 		limit = *parameters.Limit
 	}
@@ -160,11 +160,8 @@ func (e *cloudWatchExecutor) handleGetLogEvents(ctx context.Context, logsClient 
 	}
 
 	queryRequest.SetLogGroupName(parameters.LogGroupName)
-
 	queryRequest.SetLogStreamName(parameters.LogStreamName)
-
 	queryRequest.SetStartTime(parameters.StartTime)
-
 	queryRequest.SetEndTime(parameters.EndTime)
 
 	logEvents, err := logsClient.GetLogEventsWithContext(ctx, queryRequest)
@@ -194,21 +191,20 @@ func (e *cloudWatchExecutor) handleGetLogEvents(ctx context.Context, logsClient 
 
 func (e *cloudWatchExecutor) handleDescribeLogGroups(ctx context.Context,
 	logsClient cloudwatchlogsiface.CloudWatchLogsAPI, parameters LogQueryJson) (*data.Frame, error) {
-	limit := int64(50)
 
 	if parameters.Limit != nil && *parameters.Limit != 0 {
-		limit = *parameters.Limit
+		logGroupDefaultLimit = *parameters.Limit
 	}
 
 	var response *cloudwatchlogs.DescribeLogGroupsOutput = nil
 	var err error
 	if len(parameters.LogGroupNamePrefix) == 0 {
 		response, err = logsClient.DescribeLogGroupsWithContext(ctx, &cloudwatchlogs.DescribeLogGroupsInput{
-			Limit: aws.Int64(limit),
+			Limit: aws.Int64(logGroupDefaultLimit),
 		})
 	} else {
 		response, err = logsClient.DescribeLogGroupsWithContext(ctx, &cloudwatchlogs.DescribeLogGroupsInput{
-			Limit:              aws.Int64(limit),
+			Limit:              aws.Int64(logGroupDefaultLimit),
 			LogGroupNamePrefix: aws.String(parameters.LogGroupNamePrefix),
 		})
 	}
@@ -278,7 +274,6 @@ func (e *cloudWatchExecutor) handleStartQuery(ctx context.Context, logsClient cl
 	dataFrame.RefID = refID
 
 	region := "default"
-
 	if model.Region != "" {
 		region = model.Region
 	}

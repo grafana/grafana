@@ -76,6 +76,7 @@ const (
 
 var plog = log.New("tsdb.cloudwatch")
 var aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
+var baseLimit = int64(1)
 
 func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, features featuremgmt.FeatureToggles) *CloudWatchService {
 	plog.Debug("initing")
@@ -202,10 +203,8 @@ func (e *cloudWatchExecutor) checkHealthLogs(ctx context.Context, pluginCtx back
 		return err
 	}
 
-	defaultLimit := int64(1)
-
 	parameters := &LogQueryJson{
-		Limit: &defaultLimit,
+		Limit: &baseLimit,
 	}
 
 	_, err = e.handleDescribeLogGroups(ctx, logsClient, *parameters)
@@ -308,7 +307,7 @@ func (e *cloudWatchExecutor) alertQuery(ctx context.Context, logsClient cloudwat
 		return nil, err
 	}
 
-	requestParams := &LogQueryJson{
+	requestParams := LogQueryJson{
 		Region:  model.Region,
 		QueryId: *startQueryOutput.QueryId,
 	}
@@ -318,7 +317,7 @@ func (e *cloudWatchExecutor) alertQuery(ctx context.Context, logsClient cloudwat
 
 	attemptCount := 1
 	for range ticker.C {
-		res, err := e.executeGetQueryResults(ctx, logsClient, *requestParams)
+		res, err := e.executeGetQueryResults(ctx, logsClient, requestParams)
 		if err != nil {
 			return nil, err
 		}
@@ -387,7 +386,6 @@ func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, req *back
 		model.QueryString = model.Expression
 
 		region := defaultRegion
-
 		if model.Region != "" {
 			region = model.Region
 		} else {
@@ -414,7 +412,6 @@ func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, req *back
 		}
 
 		var frames []*data.Frame
-
 		statsGroups := model.StatsGroups
 		if len(statsGroups) > 0 && len(dataframe.Fields) > 0 {
 			frames, err = groupResults(dataframe, statsGroups)
