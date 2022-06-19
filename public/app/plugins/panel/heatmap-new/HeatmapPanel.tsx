@@ -16,7 +16,7 @@ import {
 } from '@grafana/ui';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
-import { readHeatmapScanlinesCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
+import { readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 
 import { HeatmapHoverView } from './HeatmapHoverView';
 import { prepareHeatmapData } from './fields';
@@ -59,7 +59,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     let exemplarsXFacet: number[] = []; // "Time" field
     let exemplarsyFacet: number[] = [];
 
-    const meta = readHeatmapScanlinesCustomMeta(info.heatmap);
+    const meta = readHeatmapRowsCustomMeta(info.heatmap);
     if (info.exemplars?.length && meta.yMatchWithLabel) {
       exemplarsXFacet = info.exemplars?.fields[0].values.toArray();
 
