@@ -10,12 +10,13 @@ export interface SceneCanvasTextState extends SceneObjectState {
 }
 
 export class SceneCanvasText extends SceneObjectBase<SceneCanvasTextState> {
-  EditableComponent = ({ model }: SceneComponentProps<SceneCanvasText>) => {
+  static Component = ({ model }: SceneComponentProps<SceneCanvasText>) => {
     const { text, fontSize = 20, align = 'left' } = model.useState();
 
     const style: CSSProperties = {
       fontSize: fontSize,
       display: 'flex',
+      flexGrow: 1,
       alignItems: 'center',
       padding: 16,
       justifyContent: align,
