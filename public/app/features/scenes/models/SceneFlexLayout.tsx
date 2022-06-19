@@ -1,7 +1,7 @@
 import React, { CSSProperties } from 'react';
 
 import { SceneObjectBase } from './SceneObjectBase';
-import { SceneObject, SceneObjectSize, SceneObjectState, SceneLayoutState } from './types';
+import { SceneObject, SceneObjectSize, SceneObjectState, SceneLayoutState, SceneComponentProps } from './types';
 
 export type FlexLayoutDirection = 'column' | 'row';
 
@@ -10,7 +10,7 @@ interface SceneFlexLayoutState extends SceneObjectState, SceneLayoutState {
 }
 
 export class SceneFlexLayout extends SceneObjectBase<SceneFlexLayoutState> {
-  EditableComponent = FlexLayoutRenderer;
+  static Component = FlexLayoutRenderer;
 
   toggleDirection() {
     this.setState({
@@ -19,7 +19,7 @@ export class SceneFlexLayout extends SceneObjectBase<SceneFlexLayoutState> {
   }
 }
 
-function FlexLayoutRenderer({ model, isEditing }: { model: SceneFlexLayout; isEditing?: boolean }) {
+function FlexLayoutRenderer({ model, isEditing }: SceneComponentProps<SceneFlexLayout>) {
   const { direction = 'row', children } = model.useState();
 
   return (

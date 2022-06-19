@@ -19,8 +19,14 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
   parent?: SceneObjectBase<any>;
   subs = new Subscription();
   isMounted?: boolean;
-  EditableComponent?: SceneComponent<this>;
-  Component: SceneComponent<this> = SceneComponentEditWrapper;
+
+  /**
+   * Used in render functions when rendering a SceneObject.
+   * Wraps the component in an EditWrapper that handles edit mode
+   */
+  get Component(): SceneComponent<this> {
+    return SceneComponentEditWrapper;
+  }
 
   constructor(state: TState) {
     if (!state.key) {
@@ -60,10 +66,6 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
     this.setParent();
     this.subject.next(this.state);
   }
-
-  // Component(_: SceneComponentProps<SceneObject<TState>>): React.ReactElement | null {
-  //   return null;
-  // }
 
   onMount() {
     this.isMounted = true;

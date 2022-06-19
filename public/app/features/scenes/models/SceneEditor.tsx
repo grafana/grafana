@@ -4,17 +4,13 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import { SceneObjectBase } from './SceneObjectBase';
 import { SceneComponentProps } from './types';
 
-export function SceneComponentEditWrapper<TState>({ model, isEditing }: SceneComponentProps<SceneObjectBase<TState>>) {
+export function SceneComponentEditWrapper<T>({ model, isEditing }: SceneComponentProps<T>) {
   const styles = useStyles2(getStyles);
+  const Component = (model as any).constructor['Component'] ?? EmptyRenderer;
 
-  if (!model.EditableComponent) {
-    return null;
-  }
-
-  const inner = <model.EditableComponent model={model} isEditing={isEditing} />;
+  const inner = <Component model={model} isEditing={isEditing} />;
 
   if (isEditing) {
     return <div className={styles.wrapper}>{inner}</div>;
@@ -36,3 +32,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
+
+function EmptyRenderer<T>(props: SceneComponentProps<T>): React.ReactElement | null {
+  return null;
+}

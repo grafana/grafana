@@ -16,7 +16,7 @@ export interface VizPanelState extends SceneObjectState {
 }
 
 export class VizPanel extends SceneObjectBase<VizPanelState> {
-  EditableComponent = ScenePanelRenderer;
+  static Component = ScenePanelRenderer;
 
   onSetTimeRange = (timeRange: AbsoluteTimeRange) => {
     const sceneTimeRange = this.getTimeRange();
@@ -33,7 +33,7 @@ export class VizPanel extends SceneObjectBase<VizPanelState> {
   };
 }
 
-const ScenePanelRenderer = React.memo<SceneComponentProps<VizPanel>>(({ model }) => {
+function ScenePanelRenderer({ model }: SceneComponentProps<VizPanel>) {
   const { title, pluginId, options, fieldConfig } = model.useMount().useState();
   const { data } = model.getData().useState();
 
@@ -66,6 +66,6 @@ const ScenePanelRenderer = React.memo<SceneComponentProps<VizPanel>>(({ model })
       }}
     </AutoSizer>
   );
-});
+}
 
 ScenePanelRenderer.displayName = 'ScenePanelRenderer';

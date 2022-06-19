@@ -13,10 +13,10 @@ interface SceneState extends SceneObjectState {
 }
 
 export class Scene extends SceneObjectBase<SceneState> {
-  Component = SceneRenderer;
+  static Component = SceneRenderer;
 }
 
-const SceneRenderer = React.memo<SceneComponentProps<Scene>>(({ model }) => {
+function SceneRenderer({ model }: SceneComponentProps<Scene>) {
   const { title, layout, $timeRange, actions = [], isEditing } = model.useMount().useState();
 
   console.log('render scene');
@@ -34,6 +34,4 @@ const SceneRenderer = React.memo<SceneComponentProps<Scene>>(({ model }) => {
       </div>
     </div>
   );
-});
-
-SceneRenderer.displayName = 'SceneRenderer';
+}
