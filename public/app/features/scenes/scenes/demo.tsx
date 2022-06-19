@@ -2,6 +2,7 @@ import { getDefaultTimeRange } from '@grafana/data';
 
 import { Scene } from '../models/Scene';
 import { SceneCanvasText } from '../models/SceneCanvasText';
+import { SceneEditManager } from '../models/SceneEditManager';
 import { SceneFlexLayout } from '../models/SceneFlexLayout';
 import { ScenePanelRepeater } from '../models/ScenePanelRepeater';
 import { SceneQueryRunner } from '../models/SceneQueryRunner';
@@ -47,6 +48,7 @@ export function getFlexLayoutTest(): Scene {
         }),
       ],
     }),
+    $editor: new SceneEditManager({}),
     $timeRange: new SceneTimeRange({
       timeRange: getDefaultTimeRange(),
     }),

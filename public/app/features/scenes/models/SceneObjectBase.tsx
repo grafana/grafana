@@ -3,7 +3,7 @@ import { useObservable } from 'react-use';
 import { Observer, Subject, Subscription } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
-import { SceneComponentEditWrapper } from './SceneEditor';
+import { SceneComponentEditWrapper } from './SceneComponentEditWrapper';
 import {
   SceneTimeRangeState,
   SceneDataState,
@@ -11,6 +11,7 @@ import {
   SceneLayoutState,
   SceneObjectState,
   SceneComponent,
+  SceneEditingState,
 } from './types';
 
 export abstract class SceneObjectBase<TState extends SceneObjectState = {}> implements SceneObject<TState> {
@@ -139,6 +140,22 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
 
     if (this.parent) {
       return this.parent.getData();
+    }
+
+    throw new Error('No data found in scene tree');
+  }
+
+  /**
+   * Will walk up the scene object graph to the closest $editor scene object
+   */
+  getEditor(): SceneObject<SceneEditingState> {
+    const { $editor } = this.state;
+    if ($editor) {
+      return $editor;
+    }
+
+    if (this.parent) {
+      return this.parent.getEditor();
     }
 
     throw new Error('No data found in scene tree');
