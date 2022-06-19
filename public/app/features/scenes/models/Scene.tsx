@@ -36,7 +36,7 @@ function SceneRenderer({ model }: SceneComponentProps<Scene>) {
         )}
         {$timeRange && <$timeRange.Component model={$timeRange} />}
       </PageToolbar>
-      <div style={{ flexGrow: 1, display: 'flex', padding: '16px', gap: '8px', paddingTop: 0 }}>
+      <div style={{ flexGrow: 1, display: 'flex', padding: '16px', gap: '8px', paddingTop: 0, overflow: 'auto' }}>
         <layout.Component model={layout} isEditing={isEditing} />
         {$editor && <$editor.Component model={$editor} isEditing={isEditing} />}
       </div>

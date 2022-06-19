@@ -72,13 +72,13 @@ function getItemStyles(direction: FlexLayoutDirection, sizing: SceneObjectSize =
     if (sizing.width) {
       style.width = sizing.width;
     } else {
-      style.alignSelf = xSizing === 'fill' ? 'stretch' : 'normal';
+      style.alignSelf = xSizing === 'fill' ? 'stretch' : 'flex-start';
     }
   } else {
     if (sizing.height) {
       style.height = sizing.height;
     } else {
-      style.alignSelf = ySizing === 'fill' ? 'stretch' : 'normal';
+      style.alignSelf = ySizing === 'fill' ? 'stretch' : 'flex-start';
     }
 
     if (sizing.width) {

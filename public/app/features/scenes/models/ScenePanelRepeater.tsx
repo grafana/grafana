@@ -47,8 +47,8 @@ export class ScenePanelRepeater extends SceneObjectBase<RepeatOptions> {
     this.state.layout.setState({ children: newChildren });
   }
 
-  static Component = ({ model }: SceneComponentProps<ScenePanelRepeater>) => {
+  static Component = ({ model, isEditing }: SceneComponentProps<ScenePanelRepeater>) => {
     const { layout } = model.useMount().useState();
-    return <layout.Component model={layout} />;
+    return <layout.Component model={layout} isEditing={isEditing} />;
   };
 }
