@@ -3,7 +3,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { AbsoluteTimeRange, FieldConfigSource, toUtc } from '@grafana/data';
 import { PanelRenderer } from '@grafana/runtime';
-import { PanelChrome } from '@grafana/ui';
+import { Field, PanelChrome, Input } from '@grafana/ui';
 
 import { SceneObjectBase } from './SceneObjectBase';
 import { SceneComponentProps, SceneObjectState } from './types';
@@ -17,6 +17,7 @@ export interface VizPanelState extends SceneObjectState {
 
 export class VizPanel extends SceneObjectBase<VizPanelState> {
   static Component = ScenePanelRenderer;
+  static Editor = VizPanelEditor;
 
   onSetTimeRange = (timeRange: AbsoluteTimeRange) => {
     const sceneTimeRange = this.getTimeRange();
@@ -69,3 +70,13 @@ function ScenePanelRenderer({ model }: SceneComponentProps<VizPanel>) {
 }
 
 ScenePanelRenderer.displayName = 'ScenePanelRenderer';
+
+function VizPanelEditor({ model }: SceneComponentProps<VizPanel>) {
+  const { title } = model.useState();
+
+  return (
+    <Field label="Title">
+      <Input defaultValue={title} onBlur={(evt) => model.setState({ title: evt.currentTarget.value })} />
+    </Field>
+  );
+}
