@@ -8,9 +8,7 @@ export interface SceneObjectState {
   size?: SceneObjectSize;
   $timeRange?: SceneObject<SceneTimeRangeState>;
   $data?: SceneObject<SceneDataState>;
-  $editor?: SceneObject<SceneEditingState>;
-  $hoverFocus?: boolean;
-  $editFocus?: boolean;
+  $editor?: SceneEditor;
 }
 
 export interface SceneObjectSize {
@@ -79,9 +77,15 @@ export interface SceneLayoutState extends SceneObjectState {
 
 export type SceneLayout<T extends SceneLayoutState = SceneLayoutState> = SceneObject<T>;
 
-export interface SceneEditingState extends SceneObjectState {
+export interface SceneEditorState extends SceneObjectState {
   hoverObject?: SceneObjectRef;
   selectedObject?: SceneObjectRef;
+}
+
+export interface SceneEditor extends SceneObject<SceneEditorState> {
+  mouseEnter(model: SceneObject): void;
+  mouseLeave(model: SceneObject): void;
+  select(model: SceneObject): void;
 }
 
 export interface SceneObjectRef {

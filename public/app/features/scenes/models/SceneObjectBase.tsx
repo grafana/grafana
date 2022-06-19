@@ -11,7 +11,7 @@ import {
   SceneLayoutState,
   SceneObjectState,
   SceneComponent,
-  SceneEditingState,
+  SceneEditor,
 } from './types';
 
 export abstract class SceneObjectBase<TState extends SceneObjectState = {}> implements SceneObject<TState> {
@@ -148,7 +148,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
   /**
    * Will walk up the scene object graph to the closest $editor scene object
    */
-  getEditor(): SceneObject<SceneEditingState> {
+  getEditor(): SceneEditor {
     const { $editor } = this.state;
     if ($editor) {
       return $editor;
@@ -158,7 +158,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
       return this.parent.getEditor();
     }
 
-    throw new Error('No data found in scene tree');
+    throw new Error('No editor found in scene tree');
   }
 
   /**

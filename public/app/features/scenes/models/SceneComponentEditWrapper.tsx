@@ -30,15 +30,14 @@ export function SceneComponentEditingWrapper<T extends SceneObjectBase<any>>({
 }) {
   const styles = useStyles2(getStyles);
   const editor = model.getEditor();
-  const { hoverObject } = editor.useState();
+  const { hoverObject, selectedObject } = editor.useState();
 
-  const onMouseEnter = () => editor.setState({ hoverObject: { ref: model } });
-  const onMouseLeave = () => {
-    if (model.parent) {
-      editor.setState({ hoverObject: { ref: model.parent } });
-    } else {
-      editor.setState({ hoverObject: undefined });
-    }
+  const onMouseEnter = () => editor.mouseEnter(model);
+  const onMouseLeave = () => editor.mouseLeave(model);
+
+  const onClick = (evt: React.MouseEvent) => {
+    evt.stopPropagation();
+    editor.select(model);
   };
 
   const style: CSSProperties = {};
@@ -47,9 +46,12 @@ export function SceneComponentEditingWrapper<T extends SceneObjectBase<any>>({
   if (hoverObject?.ref === model) {
     className += ' ' + styles.hover;
   }
+  if (selectedObject?.ref === model) {
+    className += ' ' + styles.selected;
+  }
 
   return (
-    <div style={style} className={className} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+    <div style={style} className={className} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} onClick={onClick}>
       {children}
     </div>
   );
@@ -66,6 +68,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     hover: css({
       border: `1px solid ${theme.colors.primary.border}`,
+    }),
+    selected: css({
+      border: `1px solid ${theme.colors.error.border}`,
     }),
   };
 };
