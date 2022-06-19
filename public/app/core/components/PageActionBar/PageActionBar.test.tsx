@@ -1,4 +1,4 @@
-import { shallow } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 
 import PageActionBar, { Props } from './PageActionBar';
@@ -13,13 +13,14 @@ const setup = (propOverrides?: object) => {
 
   Object.assign(props, propOverrides);
 
-  return shallow(<PageActionBar {...props} />);
+  return render(<PageActionBar {...props} />);
 };
 
-describe('Render', () => {
+describe('Page action bar test', () => {
   it('should render component', () => {
-    const wrapper = setup();
+    setup();
 
-    expect(wrapper).toMatchSnapshot();
+    expect(screen.getByRole('link', { name: 'test' })).toBeInTheDocument();
+    expect(screen.getByRole('textbox')).toBeInTheDocument();
   });
 });
