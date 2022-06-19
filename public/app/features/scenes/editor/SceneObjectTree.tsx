@@ -58,7 +58,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexGrow: 0,
       cursor: 'pointer',
       flexDirection: 'column',
-      padding: '2px 8px',
+      padding: '2px 4px',
     }),
     header: css({
       display: 'flex',

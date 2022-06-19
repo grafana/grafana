@@ -19,9 +19,10 @@ export function getFlexLayoutTest(): Scene {
         new VizPanel({
           pluginId: 'timeseries',
           title: 'Dynamic height and width',
+          size: { minWidth: '70%' },
         }),
         new SceneFlexLayout({
-          size: { width: 450 },
+          // size: { width: 450 },
           direction: 'column',
           children: [
             new VizPanel({
