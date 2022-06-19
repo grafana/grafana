@@ -91,3 +91,7 @@ export interface SceneEditor extends SceneObject<SceneEditorState> {
 export interface SceneObjectRef {
   ref: SceneObject;
 }
+
+export function isSceneObject(obj: any): obj is SceneObject {
+  return obj.useState !== undefined;
+}

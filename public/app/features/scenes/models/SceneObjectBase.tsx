@@ -12,6 +12,7 @@ import {
   SceneObjectState,
   SceneComponent,
   SceneEditor,
+  SceneObjectList,
 } from './types';
 
 export abstract class SceneObjectBase<TState extends SceneObjectState = {}> implements SceneObject<TState> {
@@ -178,7 +179,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
     // Clone layout children
     const layout = this.state as any as SceneLayoutState;
     if (layout.children) {
-      const newChildren: SceneLayoutState['children'] = [];
+      const newChildren: SceneObjectList = [];
       for (const child of layout.children) {
         newChildren.push(child.clone());
       }
