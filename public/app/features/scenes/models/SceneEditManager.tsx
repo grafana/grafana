@@ -4,11 +4,8 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import { SceneObjectBase } from '../models/SceneObjectBase';
-import { SceneEditorState, SceneEditor, SceneObject, SceneComponentProps, SceneComponent } from '../models/types';
-
-import { SceneObjectEditor } from './SceneObjectEditor';
-import { SceneObjectTree } from './SceneObjectTree';
+import { SceneObjectBase } from './SceneObjectBase';
+import { SceneEditorState, SceneEditor, SceneObject, SceneComponentProps, SceneComponent } from './types';
 
 export class SceneEditManager extends SceneObjectBase<SceneEditorState> implements SceneEditor {
   static Component = SceneEditorRenderer;
@@ -35,7 +32,7 @@ export class SceneEditManager extends SceneObjectBase<SceneEditorState> implemen
 }
 
 function SceneEditorRenderer({ model, isEditing }: SceneComponentProps<SceneEditManager>) {
-  const { selectedObject } = model.useState();
+  // const { selectedObject } = model.useState();
   const styles = useStyles2(getStyles);
 
   if (!isEditing) {
@@ -44,10 +41,8 @@ function SceneEditorRenderer({ model, isEditing }: SceneComponentProps<SceneEdit
 
   return (
     <div className={styles.container}>
-      <div className={styles.tree}>
-        <SceneObjectTree node={model.parent!} selectedObject={selectedObject?.ref} />
-      </div>
-      {selectedObject && <SceneObjectEditor model={selectedObject.ref} />}
+      <div className={styles.heading}>Editor</div>
+      <div className={styles.tree}></div>
     </div>
   );
 }
@@ -63,8 +58,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       cursor: 'pointer',
       flexDirection: 'column',
     }),
-    tree: css({
-      padding: theme.spacing(0.25, 1),
+    heading: css({
+      padding: 8,
+      fontWeight: 500,
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
     }),
+    tree: css({}),
   };
 };

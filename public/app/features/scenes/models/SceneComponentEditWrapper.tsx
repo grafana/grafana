@@ -29,7 +29,7 @@ export function SceneComponentEditingWrapper<T extends SceneObjectBase<any>>({
   children: React.ReactNode;
 }) {
   const styles = useStyles2(getStyles);
-  const editor = model.getEditor();
+  const editor = model.getSceneEditor();
   const { hoverObject, selectedObject } = editor.useState();
 
   const onMouseEnter = () => editor.mouseEnter(model);
@@ -37,7 +37,7 @@ export function SceneComponentEditingWrapper<T extends SceneObjectBase<any>>({
 
   const onClick = (evt: React.MouseEvent) => {
     evt.stopPropagation();
-    editor.select(model);
+    editor.selectObject(model);
   };
 
   const style: CSSProperties = {};

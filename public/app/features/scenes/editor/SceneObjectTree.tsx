@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -31,12 +31,14 @@ export function SceneObjectTree({ node, selectedObject }: Props) {
   }
 
   const name = node.constructor.name;
+  const isSelected = selectedObject === node;
+  const onSelectNode = () => node.getSceneEditor().selectObject(node);
 
   return (
     <div className={styles.node}>
-      <div className={styles.header}>
-        <div className={styles.icon}>{children.length > 0 && <Icon name="arrow-down" size="sm" />}</div>
-        <div className={styles.name}>{name}</div>
+      <div className={styles.header} onClick={onSelectNode}>
+        <div className={styles.icon}>{children.length > 0 && <Icon name="angle-down" size="sm" />}</div>
+        <div className={cx(styles.name, isSelected && styles.selected)}>{name}</div>
       </div>
       {children.length > 0 && (
         <div className={styles.children}>
@@ -63,8 +65,12 @@ const getStyles = (theme: GrafanaTheme2) => {
       fontWeight: 500,
     }),
     name: css({}),
+    selected: css({
+      color: theme.colors.error.text,
+    }),
     icon: css({
       width: theme.spacing(3),
+      color: theme.colors.text.secondary,
     }),
     children: css({
       display: 'flex',

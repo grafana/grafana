@@ -1,5 +1,7 @@
 import React, { CSSProperties } from 'react';
 
+import { Field, RadioButtonGroup } from '@grafana/ui';
+
 import { SceneObjectBase } from './SceneObjectBase';
 import { SceneObject, SceneObjectSize, SceneObjectState, SceneLayoutState, SceneComponentProps } from './types';
 
@@ -11,6 +13,7 @@ interface SceneFlexLayoutState extends SceneObjectState, SceneLayoutState {
 
 export class SceneFlexLayout extends SceneObjectBase<SceneFlexLayoutState> {
   static Component = FlexLayoutRenderer;
+  static Editor = FlexLayoutEditor;
 
   toggleDirection() {
     this.setState({
@@ -86,4 +89,22 @@ function getItemStyles(direction: FlexLayoutDirection, sizing: SceneObjectSize =
   }
 
   return style;
+}
+
+function FlexLayoutEditor({ model }: SceneComponentProps<SceneFlexLayout>) {
+  const { direction = 'row' } = model.useState();
+  const options = [
+    { icon: 'arrow-right', value: 'row' },
+    { icon: 'arrow-down', value: 'column' },
+  ];
+
+  return (
+    <Field label="Direction">
+      <RadioButtonGroup
+        options={options}
+        value={direction}
+        onChange={(value) => model.setState({ direction: value as FlexLayoutDirection })}
+      />
+    </Field>
+  );
 }

@@ -30,6 +30,10 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
     return SceneComponentEditWrapper;
   }
 
+  get Editor(): SceneComponent<this> {
+    return ((this as any).constructor['Editor'] ?? (() => null)) as SceneComponent<this>;
+  }
+
   constructor(state: TState) {
     if (!state.key) {
       state.key = uuidv4();
@@ -149,14 +153,14 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
   /**
    * Will walk up the scene object graph to the closest $editor scene object
    */
-  getEditor(): SceneEditor {
+  getSceneEditor(): SceneEditor {
     const { $editor } = this.state;
     if ($editor) {
       return $editor;
     }
 
     if (this.parent) {
-      return this.parent.getEditor();
+      return this.parent.getSceneEditor();
     }
 
     throw new Error('No editor found in scene tree');

@@ -62,11 +62,17 @@ export interface SceneObject<TState extends SceneObjectState = SceneObjectState>
   /** Called when component unmounts. Unsubscribe to events */
   onUnmount(): void;
 
+  //** Get the scene editor */
+  getSceneEditor(): SceneEditor;
+
   /** Returns a deep clone this object and all it's children */
   clone(state?: Partial<TState>): this;
 
   /** A React component to use for rendering the object */
   Component(props: SceneComponentProps<SceneObject<TState>>): React.ReactElement | null;
+
+  /** To be replaced by declarative method */
+  Editor(props: SceneComponentProps<SceneObject<TState>>): React.ReactElement | null;
 }
 
 export type SceneObjectList<T = SceneObjectState> = Array<SceneObject<T>>;
@@ -85,7 +91,7 @@ export interface SceneEditorState extends SceneObjectState {
 export interface SceneEditor extends SceneObject<SceneEditorState> {
   mouseEnter(model: SceneObject): void;
   mouseLeave(model: SceneObject): void;
-  select(model: SceneObject): void;
+  selectObject(model: SceneObject): void;
 }
 
 export interface SceneObjectRef {
