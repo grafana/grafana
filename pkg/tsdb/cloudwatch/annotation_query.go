@@ -21,12 +21,6 @@ type annotationEvent struct {
 
 func (e *cloudWatchExecutor) executeAnnotationQuery(pluginCtx backend.PluginContext, model DataQueryJson, query backend.DataQuery) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
-
-	usePrefixMatch := model.PrefixMatching
-	region := model.Region
-	namespace := model.Namespace
-	metricName := model.MetricName
-	dimensions := model.Dimensions
 	statistic := ""
 
 	if model.Statistic != nil {
@@ -42,20 +36,20 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(pluginCtx backend.PluginCont
 		period = int64(p)
 	}
 
-	if period == 0 && !usePrefixMatch {
+	if period == 0 && !model.PrefixMatching {
 		period = 300
 	}
 
 	actionPrefix := model.ActionPrefix
 	alarmNamePrefix := model.AlarmNamePrefix
 
-	cli, err := e.getCWClient(pluginCtx, region)
+	cli, err := e.getCWClient(pluginCtx, model.Region)
 	if err != nil {
 		return nil, err
 	}
 
 	var alarmNames []*string
-	if usePrefixMatch {
+	if model.PrefixMatching {
 		params := &cloudwatch.DescribeAlarmsInput{
 			MaxRecords:      aws.Int64(100),
 			ActionPrefix:    aws.String(actionPrefix),
@@ -65,14 +59,14 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(pluginCtx backend.PluginCont
 		if err != nil {
 			return nil, fmt.Errorf("%v: %w", "failed to call cloudwatch:DescribeAlarms", err)
 		}
-		alarmNames = filterAlarms(resp, namespace, metricName, dimensions, statistic, period)
+		alarmNames = filterAlarms(resp, model.Namespace, model.MetricName, model.Dimensions, statistic, period)
 	} else {
-		if region == "" || namespace == "" || metricName == "" || statistic == "" {
+		if model.Region == "" || model.Namespace == "" || model.MetricName == "" || statistic == "" {
 			return result, errors.New("invalid annotations query")
 		}
 
 		var qd []*cloudwatch.Dimension
-		for k, v := range dimensions {
+		for k, v := range model.Dimensions {
 			if vv, ok := v.([]interface{}); ok {
 				for _, vvv := range vv {
 					if vvvv, ok := vvv.(string); ok {
@@ -85,8 +79,8 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(pluginCtx backend.PluginCont
 			}
 		}
 		params := &cloudwatch.DescribeAlarmsForMetricInput{
-			Namespace:  aws.String(namespace),
-			MetricName: aws.String(metricName),
+			Namespace:  aws.String(model.Namespace),
+			MetricName: aws.String(model.MetricName),
 			Dimensions: qd,
 			Statistic:  aws.String(statistic),
 			Period:     aws.Int64(period),
