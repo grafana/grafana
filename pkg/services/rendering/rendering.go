@@ -312,7 +312,16 @@ func (rs *RenderingService) SanitizeSVG(ctx context.Context, req *SanitizeSVGReq
 		return nil, fmt.Errorf("svg sanitization unsupported. required image renderer version: %s", capability.SemverConstraint)
 	}
 
-	return rs.sanitizeSVGAction(ctx, req)
+	start := time.Now()
+
+	action, err := rs.sanitizeSVGAction(ctx, req)
+	if err != nil {
+		defer rs.log.Info("svg sanitization error", "duration", time.Since(start), "filename", req.Filename)
+	} else {
+		defer rs.log.Info("svg sanitization success", "duration", time.Since(start), "filename", req.Filename)
+	}
+
+	return action, err
 }
 
 func (rs *RenderingService) renderCSV(ctx context.Context, opts CSVOpts, renderKeyProvider renderKeyProvider) (*RenderCSVResult, error) {
