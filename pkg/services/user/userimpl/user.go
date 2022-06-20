@@ -2,8 +2,10 @@ package userimpl
 
 import (
 	"context"
+	"errors"
 	"time"
 
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/orguser"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
@@ -43,8 +45,24 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 		Email: cmd.Email,
 	}
 	usr, err = s.store.Get(ctx, usr)
-	if err != nil {
+	if err != nil && !errors.Is(err, models.ErrUserNotFound) {
 		return usr, err
+	}
+
+	// create user
+	usr = &user.User{
+		Email:            cmd.Email,
+		Name:             cmd.Name,
+		Login:            cmd.Login,
+		Company:          cmd.Company,
+		IsAdmin:          cmd.IsAdmin,
+		IsDisabled:       cmd.IsDisabled,
+		OrgID:            cmd.OrgID,
+		EmailVerified:    cmd.EmailVerified,
+		Created:          time.Now(),
+		Updated:          time.Now(),
+		LastSeenAt:       time.Now().AddDate(-10, 0, 0),
+		IsServiceAccount: cmd.IsServiceAccount,
 	}
 
 	salt, err := util.GetRandomString(10)

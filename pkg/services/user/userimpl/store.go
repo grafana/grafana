@@ -2,7 +2,6 @@ package userimpl
 
 import (
 	"context"
-	"time"
 
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/models"
@@ -48,27 +47,11 @@ func (ss *sqlStore) Get(ctx context.Context, cmd *user.User) (*user.User, error)
 	var usr *user.User
 	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		exists, err := sess.Where("email=? OR login=?", cmd.Email, cmd.Login).Get(&user.User{})
+		if !exists {
+			return models.ErrUserNotFound
+		}
 		if err != nil {
 			return err
-		}
-		if exists {
-			return models.ErrUserAlreadyExists
-		}
-
-		// create user
-		usr = &user.User{
-			Email:            cmd.Email,
-			Name:             cmd.Name,
-			Login:            cmd.Login,
-			Company:          cmd.Company,
-			IsAdmin:          cmd.IsAdmin,
-			IsDisabled:       cmd.IsDisabled,
-			OrgID:            cmd.OrgID,
-			EmailVerified:    cmd.EmailVerified,
-			Created:          time.Now(),
-			Updated:          time.Now(),
-			LastSeenAt:       time.Now().AddDate(-10, 0, 0),
-			IsServiceAccount: cmd.IsServiceAccount,
 		}
 		return nil
 	})
