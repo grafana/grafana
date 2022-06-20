@@ -176,7 +176,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
           </div>
         </div>
         <div>
-          <RuleDetailsMatchingInstances promRule={rule.promRule} />
+          <RuleDetailsMatchingInstances rule={rule} />
         </div>
       </RuleViewerLayoutContent>
       {!isFederatedRule && data && Object.keys(data).length > 0 && (
