@@ -17,7 +17,7 @@ func TestGet_empty(t *testing.T) {
 	prefService := &Service{
 		store:    newFake(),
 		cfg:      setting.NewCfg(),
-		Features: featuremgmt.WithFeatures(),
+		features: featuremgmt.WithFeatures(),
 	}
 	preference, err := prefService.Get(context.Background(), &pref.GetPreferenceQuery{})
 	require.NoError(t, err)
@@ -31,7 +31,7 @@ func TestGetDefaults(t *testing.T) {
 	prefService := &Service{
 		store:    newFake(),
 		cfg:      setting.NewCfg(),
-		Features: featuremgmt.WithFeatures(),
+		features: featuremgmt.WithFeatures(),
 	}
 	prefService.cfg.DefaultLocale = "en-US"
 	prefService.cfg.DefaultTheme = "light"
@@ -70,7 +70,7 @@ func TestGetDefaultsWithI18nFeatureFlag(t *testing.T) {
 	prefService := &Service{
 		store:    newFake(),
 		cfg:      setting.NewCfg(),
-		Features: featuremgmt.WithFeatures(featuremgmt.FlagInternationalization),
+		features: featuremgmt.WithFeatures(featuremgmt.FlagInternationalization),
 	}
 	prefService.cfg.DefaultLocale = "en-US"
 	prefService.cfg.DefaultTheme = "light"
@@ -96,7 +96,7 @@ func TestGetWithDefaults_withUserAndOrgPrefs(t *testing.T) {
 	prefService := &Service{
 		store:    newFake(),
 		cfg:      setting.NewCfg(),
-		Features: featuremgmt.WithFeatures(),
+		features: featuremgmt.WithFeatures(),
 	}
 	prefService.cfg.DefaultLocale = "en-US"
 
@@ -216,7 +216,7 @@ func TestGetDefaults_JSONData(t *testing.T) {
 		prefService := &Service{
 			store:    newFake(),
 			cfg:      setting.NewCfg(),
-			Features: featuremgmt.WithFeatures(),
+			features: featuremgmt.WithFeatures(),
 		}
 
 		insertPrefs(t, prefService.store,
@@ -243,7 +243,7 @@ func TestGetDefaults_JSONData(t *testing.T) {
 		prefService := &Service{
 			store:    newFake(),
 			cfg:      setting.NewCfg(),
-			Features: featuremgmt.WithFeatures(),
+			features: featuremgmt.WithFeatures(),
 		}
 
 		insertPrefs(t, prefService.store,
@@ -274,7 +274,7 @@ func TestGetDefaults_JSONData(t *testing.T) {
 		prefService := &Service{
 			store:    newFake(),
 			cfg:      setting.NewCfg(),
-			Features: featuremgmt.WithFeatures(),
+			features: featuremgmt.WithFeatures(),
 		}
 
 		insertPrefs(t, prefService.store,
@@ -309,7 +309,7 @@ func TestGetWithDefaults_teams(t *testing.T) {
 	prefService := &Service{
 		store:    newFake(),
 		cfg:      setting.NewCfg(),
-		Features: featuremgmt.WithFeatures(),
+		features: featuremgmt.WithFeatures(),
 	}
 	insertPrefs(t, prefService.store,
 		pref.Preference{
@@ -356,7 +356,7 @@ func TestPatch_toCreate(t *testing.T) {
 	prefService := &Service{
 		store:    newFake(),
 		cfg:      setting.NewCfg(),
-		Features: featuremgmt.WithFeatures(),
+		features: featuremgmt.WithFeatures(),
 	}
 
 	themeValue := "light"
@@ -377,7 +377,7 @@ func TestSave(t *testing.T) {
 	prefService := &Service{
 		store:    newFake(),
 		cfg:      setting.NewCfg(),
-		Features: featuremgmt.WithFeatures(),
+		features: featuremgmt.WithFeatures(),
 	}
 
 	t.Run("insert", func(t *testing.T) {

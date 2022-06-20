@@ -14,7 +14,7 @@ import (
 type Service struct {
 	store    store
 	cfg      *setting.Cfg
-	Features *featuremgmt.FeatureManager
+	features *featuremgmt.FeatureManager
 }
 
 func ProvideService(db db.DB, cfg *setting.Cfg, features *featuremgmt.FeatureManager) pref.Service {
@@ -23,7 +23,7 @@ func ProvideService(db db.DB, cfg *setting.Cfg, features *featuremgmt.FeatureMan
 			db: db,
 		},
 		cfg:      cfg,
-		Features: features,
+		features: features,
 	}
 }
 
@@ -230,7 +230,7 @@ func (s *Service) GetDefaults() *pref.Preference {
 		JSONData:        &pref.PreferenceJSONData{},
 	}
 
-	if s.Features.IsEnabled(featuremgmt.FlagInternationalization) {
+	if s.features.IsEnabled(featuremgmt.FlagInternationalization) {
 		defaults.JSONData.Locale = s.cfg.DefaultLocale
 	}
 
