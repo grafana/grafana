@@ -8,6 +8,7 @@ import {
   Portal,
   ScaleDistribution,
   UPlotChart,
+  usePanelContext,
   useStyles2,
   useTheme2,
   VizLayout,
@@ -15,7 +16,7 @@ import {
 } from '@grafana/ui';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
-import { readHeatmapScanlinesCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
+import { readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 
 import { HeatmapHoverView } from './HeatmapHoverView';
 import { prepareHeatmapData } from './fields';
@@ -34,11 +35,13 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   height,
   options,
   fieldConfig,
+  eventBus,
   onChangeTimeRange,
   replaceVariables,
 }) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
+  const { sync } = usePanelContext();
 
   // ugh
   let timeRangeRef = useRef<TimeRange>(timeRange);
@@ -56,7 +59,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     let exemplarsXFacet: number[] = []; // "Time" field
     let exemplarsyFacet: number[] = [];
 
-    const meta = readHeatmapScanlinesCustomMeta(info.heatmap);
+    const meta = readHeatmapRowsCustomMeta(info.heatmap);
     if (info.exemplars?.length && meta.yMatchWithLabel) {
       exemplarsXFacet = info.exemplars?.fields[0].values.toArray();
 
@@ -113,6 +116,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     return prepConfig({
       dataRef,
       theme,
+      eventBus,
       onhover: onhover,
       onclick: options.tooltip.show ? onclick : null,
       onzoom: (evt) => {
@@ -124,6 +128,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
       isToolTipOpen,
       timeZone,
       getTimeRange: () => timeRangeRef.current,
+      sync,
       palette,
       cellGap: options.cellGap,
       hideLE: options.filterValues?.le,

@@ -280,6 +280,7 @@ export interface ExternalAlertmanagerConfig {
 
 export enum AlertManagerImplementation {
   cortex = 'cortex',
+  mimir = 'mimir',
   prometheus = 'prometheus',
 }
 

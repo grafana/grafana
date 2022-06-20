@@ -7,7 +7,7 @@ import createMockQuery from '../__mocks__/query';
 import { createTemplateVariables } from '../__mocks__/utils';
 import { singleVariable } from '../__mocks__/variables';
 import AzureMonitorDatasource from '../datasource';
-import { AzureMonitorQuery, AzureQueryType, DatasourceValidationResult } from '../types';
+import { AzureMonitorQuery, AzureQueryType } from '../types';
 
 import FakeSchemaData from './__mocks__/schema';
 import AzureLogAnalyticsDatasource from './azure_log_analytics_datasource';
@@ -40,45 +40,6 @@ describe('AzureLogAnalyticsDatasource', () => {
     };
 
     ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
-  });
-
-  describe('When performing testDatasource', () => {
-    beforeEach(() => {
-      ctx.instanceSettings.jsonData.azureAuthType = 'msi';
-    });
-
-    describe('and an error is returned', () => {
-      const error = {
-        data: {
-          error: {
-            code: 'InvalidApiVersionParameter',
-            message: `An error message.`,
-          },
-        },
-        status: 400,
-        statusText: 'Bad Request',
-      };
-
-      beforeEach(() => {
-        ctx.ds.azureLogAnalyticsDatasource.getResource = jest.fn().mockRejectedValue(error);
-      });
-
-      it('should return error status and a detailed error message', () => {
-        return ctx.ds.azureLogAnalyticsDatasource.testDatasource().then((result: DatasourceValidationResult) => {
-          expect(result.status).toEqual('error');
-          expect(result.message).toEqual(
-            'Azure Log Analytics requires access to Azure Monitor but had the following error: Bad Request: InvalidApiVersionParameter. An error message.'
-          );
-        });
-      });
-    });
-
-    it('should not include double slashes when getting the resource', async () => {
-      ctx.ds.azureLogAnalyticsDatasource.firstWorkspace = '/foo/bar';
-      ctx.ds.azureLogAnalyticsDatasource.getResource = jest.fn().mockResolvedValue(true);
-      await ctx.ds.azureLogAnalyticsDatasource.testDatasource();
-      expect(ctx.ds.azureLogAnalyticsDatasource.getResource).toHaveBeenCalledWith('loganalytics/v1/foo/bar/metadata');
-    });
   });
 
   describe('When performing getSchema', () => {
