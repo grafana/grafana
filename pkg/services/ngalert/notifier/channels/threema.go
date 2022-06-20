@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
@@ -29,6 +30,7 @@ type ThreemaNotifier struct {
 	RecipientID string
 	APISecret   string
 	log         log.Logger
+	images      ImageStore
 	ns          notifications.WebhookSender
 	tmpl        *template.Template
 }
@@ -48,7 +50,7 @@ func ThreemaFactory(fc FactoryConfig) (NotificationChannel, error) {
 			Cfg:    *fc.Config,
 		}
 	}
-	return NewThreemaNotifier(cfg, fc.NotificationService, fc.Template), nil
+	return NewThreemaNotifier(cfg, fc.ImageStore, fc.NotificationService, fc.Template), nil
 }
 
 func NewThreemaConfig(config *NotificationChannelConfig, decryptFunc GetDecryptedValueFn) (*ThreemaConfig, error) {
@@ -82,7 +84,7 @@ func NewThreemaConfig(config *NotificationChannelConfig, decryptFunc GetDecrypte
 }
 
 // NewThreemaNotifier is the constructor for the Threema notifier
-func NewThreemaNotifier(config *ThreemaConfig, ns notifications.WebhookSender, t *template.Template) *ThreemaNotifier {
+func NewThreemaNotifier(config *ThreemaConfig, images ImageStore, ns notifications.WebhookSender, t *template.Template) *ThreemaNotifier {
 	return &ThreemaNotifier{
 		Base: NewBase(&models.AlertNotification{
 			Uid:                   config.UID,
@@ -95,6 +97,7 @@ func NewThreemaNotifier(config *ThreemaConfig, ns notifications.WebhookSender, t
 		RecipientID: config.RecipientID,
 		APISecret:   config.APISecret,
 		log:         log.New("alerting.notifier.threema"),
+		images:      images,
 		ns:          ns,
 		tmpl:        t,
 	}
@@ -127,6 +130,16 @@ func (tn *ThreemaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		tmpl(`{{ template "default.message" . }}`),
 		path.Join(tn.tmpl.ExternalURL.String(), "/alerting/list"),
 	)
+
+	_ = withStoredImages(ctx, tn.log, tn.images,
+		func(index int, image *ngmodels.Image) error {
+			fmt.Println("here", index, image)
+			if image != nil && image.URL != "" {
+				message += fmt.Sprintf("*Image:* %s\n", image.URL)
+			}
+			return nil
+		}, as...)
+
 	data.Set("text", message)
 
 	if tmplErr != nil {
