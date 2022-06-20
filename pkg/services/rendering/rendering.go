@@ -95,6 +95,10 @@ func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, rm p
 				name:             ScalingDownImages,
 				semverConstraint: ">= 3.4.0",
 			},
+			{
+				name:             SvgSanitization,
+				semverConstraint: ">= 3.4.0", // TODO: change after new IR release
+			},
 		},
 		Cfg:                   cfg,
 		RemoteCacheService:    remoteCache,
@@ -299,8 +303,13 @@ func (rs *RenderingService) RenderCSV(ctx context.Context, opts CSVOpts, session
 }
 
 func (rs *RenderingService) SanitizeSVG(ctx context.Context, req *SanitizeSVGRequest) (*SanitizeSVGResponse, error) {
-	if !rs.IsAvailable() {
-		return nil, ErrRenderUnavailable
+	capability, err := rs.HasCapability(SvgSanitization)
+	if err != nil {
+		return nil, err
+	}
+
+	if !capability.IsSupported {
+		return nil, fmt.Errorf("svg sanitization unsupported. required image renderer version: %s", capability.SemverConstraint)
 	}
 
 	return rs.sanitizeSVGAction(ctx, req)
