@@ -198,6 +198,10 @@ func (s *Service) DeleteDataSource(ctx context.Context, cmd *models.DeleteDataSo
 	})
 }
 
+func (s *Service) DeleteDataSourceSecrets(ctx context.Context, cmd *models.DeleteDataSourceSecretsCommand) error {
+	return s.SQLStore.DeleteDataSourceSecrets(ctx, cmd)
+}
+
 func (s *Service) UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSourceCommand) error {
 	return s.SQLStore.InTransaction(ctx, func(ctx context.Context) error {
 		var err error
