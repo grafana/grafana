@@ -18,7 +18,7 @@ This section explains how to use Time series field options to visualize time ser
 
 ## Create the panel
 
-1. [Add a panel]({{< relref "../../panels/working-with-panels/add-panel.md" >}}). Select the [Time series]({{< relref "_index.md" >}}) visualization.
+1. [Add a panel]({{< relref "../../panels/working-with-panels/add-panel/" >}}). Select the [Time series]({{< relref "_index.md" >}}) visualization.
 1. In the Panel editor side pane, click **Graph styles** to expand it.
 1. In Style, click **Points**.
 

@@ -30,6 +30,14 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   const dispatch = useDispatch();
   const rulesDataSourceNames = useMemo(getAllRulesSourceNames, []);
 
+  // backwards compat for "Inactive" state filter
+  useEffect(() => {
+    if (props.options.stateFilter.inactive === true) {
+      props.options.stateFilter.normal = true; // enable the normal filter
+    }
+    props.options.stateFilter.inactive = undefined; // now disable inactive
+  }, [props.options.stateFilter]);
+
   useEffect(() => {
     dispatch(fetchAllPromRulesAction());
     const interval = setInterval(() => dispatch(fetchAllPromRulesAction()), RULE_LIST_POLL_INTERVAL_MS);
@@ -60,7 +68,7 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
     [props, promRulesRequests]
   );
 
-  const noAlertsMessage = rules.length ? '' : 'No alerts';
+  const noAlertsMessage = rules.length === 0 ? 'No alerts matching filters' : undefined;
 
   if (
     !contextSrv.hasPermission(AccessControlAction.AlertingRuleRead) &&
@@ -122,15 +130,15 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: PromRule
       name.toLocaleLowerCase().includes(replacedName.toLocaleLowerCase())
     );
   }
-  if (Object.values(options.stateFilter).some((value) => value)) {
-    filteredRules = filteredRules.filter((rule) => {
-      return (
-        (options.stateFilter.firing && rule.rule.state === PromAlertingRuleState.Firing) ||
-        (options.stateFilter.pending && rule.rule.state === PromAlertingRuleState.Pending) ||
-        (options.stateFilter.inactive && rule.rule.state === PromAlertingRuleState.Inactive)
-      );
-    });
-  }
+
+  filteredRules = filteredRules.filter((rule) => {
+    return (
+      (options.stateFilter.firing && rule.rule.state === PromAlertingRuleState.Firing) ||
+      (options.stateFilter.pending && rule.rule.state === PromAlertingRuleState.Pending) ||
+      (options.stateFilter.normal && rule.rule.state === PromAlertingRuleState.Inactive)
+    );
+  });
+
   if (options.alertInstanceLabelFilter) {
     const replacedLabelFilter = replaceVariables(options.alertInstanceLabelFilter);
     const matchers = parseMatchers(replacedLabelFilter);

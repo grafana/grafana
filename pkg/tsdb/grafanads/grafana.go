@@ -156,13 +156,17 @@ func (s *Service) doRandomWalk(query backend.DataQuery) backend.DataResponse {
 }
 
 func (s *Service) doSearchQuery(ctx context.Context, req *backend.QueryDataRequest, query backend.DataQuery) backend.DataResponse {
-	q := searchV2.DashboardQuery{}
-	err := json.Unmarshal(query.JSON, &q)
+	m := requestModel{}
+	err := json.Unmarshal(query.JSON, &m)
 	if err != nil {
 		return backend.DataResponse{
 			Error: err,
 		}
 	}
+	return *s.search.DoDashboardQuery(ctx, req.PluginContext.User, req.PluginContext.OrgID, m.Search)
+}
 
-	return *s.search.DoDashboardQuery(ctx, req.PluginContext.User, req.PluginContext.OrgID, q)
+type requestModel struct {
+	QueryType string                  `json:"queryType"`
+	Search    searchV2.DashboardQuery `json:"search,omitempty"`
 }

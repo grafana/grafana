@@ -25,11 +25,11 @@ Grafana includes built-in support for Azure Monitor, the Azure service to maximi
 - **Azure Monitor Logs** to collect log and performance data from your Azure account, and query using the powerful Kusto Language.
 - **Azure Resource Graph** to quickly query your Azure resources across subscriptions.
 
-This topic explains configuring, querying, and other options specific to the Azure Monitor data source. Refer to [Add a data source]({{< relref "../add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana.
+This topic explains configuring, querying, and other options specific to the Azure Monitor data source. Refer to [Add a data source]({{< relref "../add-a-data-source/" >}}) for instructions on how to add a data source to Grafana.
 
 ## Azure Monitor configuration
 
-To access Azure Monitor configuration, hover your mouse over the **Configuration** (gear) icon, click **Data Sources**, and then select the Azure Monitor data source. If you haven't already, you'll need to [add the Azure Monitor data source]({{< relref "../add-a-data-source.md" >}}).
+To access Azure Monitor configuration, hover your mouse over the **Configuration** (gear) icon, click **Data Sources**, and then select the Azure Monitor data source. If you haven't already, you'll need to [add the Azure Monitor data source]({{< relref "../add-a-data-source/" >}}).
 
 You must create an app registration and service principal in Azure AD to authenticate the data source. See the [Azure documentation](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal#get-tenant-and-app-id-values-for-signing-in) for configuration details. Alternatively, if you are hosting Grafana in Azure (e.g. App Service, or Azure Virtual Machines) you can configure the Azure Monitor data source to use Managed Identity to securely authenticate without entering credentials into Grafana. Refer to [Configuring using Managed Identity](#configuring-using-managed-identity) for more details.
 
@@ -280,9 +280,9 @@ If a request exceeds the [maximum allowed value of records](https://docs.microso
 
 See the following topics to learn more about the Azure Monitor data source:
 
-- [Azure Monitor template variables]({{< relref "template-variables.md" >}}) for more interactive, dynamic, and reusable dashboards.
-- [Provisioning Azure Monitor]({{< relref "provisioning.md" >}}) for configuring the Azure Monitor data source using YAML files
-- [Deprecating Application Insights]({{< relref "provisioning.md" >}}) and migrating to Metrics and Logs queries
+- [Azure Monitor template variables]({{< relref "template-variables/" >}}) for more interactive, dynamic, and reusable dashboards.
+- [Provisioning Azure Monitor]({{< relref "provisioning/" >}}) for configuring the Azure Monitor data source using YAML files
+- [Deprecating Application Insights]({{< relref "provisioning/" >}}) and migrating to Metrics and Logs queries
 
 ### Configuring using Managed Identity
 

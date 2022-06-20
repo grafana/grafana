@@ -88,7 +88,7 @@ func (kn *KafkaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		state = models.AlertStateOK
 	}
 
-	kn.log.Debug("Notifying Kafka", "alert_state", state)
+	kn.log.Debug("notifying Kafka", "alert_state", state)
 
 	var tmplErr error
 	tmpl, _ := TmplText(ctx, kn.tmpl, as, kn.log, &tmplErr)

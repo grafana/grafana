@@ -217,7 +217,15 @@ func (srv AlertmanagerSrv) RouteGetSilences(c *models.ReqContext) response.Respo
 }
 
 func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body apimodels.PostableUserConfig) response.Response {
-	err := srv.mam.ApplyAlertmanagerConfiguration(c.Req.Context(), c.OrgId, body)
+	currentConfig, err := srv.mam.GetAlertmanagerConfiguration(c.Req.Context(), c.OrgId)
+	// If a config is present and valid we proceed with the guard, otherwise we
+	// just bypass the guard which is okay as we are anyway in an invalid state.
+	if err == nil {
+		if err := srv.provenanceGuard(currentConfig, body); err != nil {
+			return ErrResp(http.StatusBadRequest, err, "")
+		}
+	}
+	err = srv.mam.ApplyAlertmanagerConfiguration(c.Req.Context(), c.OrgId, body)
 	if err == nil {
 		return response.JSON(http.StatusAccepted, util.DynMap{"message": "configuration created"})
 	}

@@ -20,7 +20,8 @@ type Service struct {
 func ProvideService(db db.DB) dashver.Service {
 	return &Service{
 		store: &sqlStore{
-			db: db,
+			db:      db,
+			dialect: db.GetDialect(),
 		},
 	}
 }
@@ -62,4 +63,12 @@ func (s *Service) DeleteExpired(ctx context.Context, cmd *dashver.DeleteExpiredV
 		}
 	}
 	return nil
+}
+
+// List all dashboard versions for the given dashboard ID.
+func (s *Service) List(ctx context.Context, query *dashver.ListDashboardVersionsQuery) ([]*dashver.DashboardVersionDTO, error) {
+	if query.Limit == 0 {
+		query.Limit = 1000
+	}
+	return s.store.List(ctx, query)
 }

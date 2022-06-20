@@ -940,7 +940,6 @@ func (g *GrafanaLive) handleDatasourceScope(ctx context.Context, user *models.Si
 
 // Publish sends the data to the channel without checking permissions etc.
 func (g *GrafanaLive) Publish(orgID int64, channel string, data []byte) error {
-	logger.Debug("publish into channel", "channel", channel, "orgId", orgID, "data", string(data))
 	_, err := g.node.Publish(orgchannel.PrependOrgID(orgID, channel), data)
 	return err
 }

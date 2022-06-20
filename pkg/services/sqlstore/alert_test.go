@@ -26,6 +26,9 @@ func resetTimeNow() {
 }
 
 func TestIntegrationAlertingDataAccess(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	mockTimeNow()
 	defer resetTimeNow()
 
@@ -260,6 +263,9 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 }
 
 func TestIntegrationPausingAlerts(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	mockTimeNow()
 	defer resetTimeNow()
 

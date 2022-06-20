@@ -14,24 +14,28 @@
 
 package grafanaschema
 
-Panel: {
-    lineages: [
-        [
-            {
-                PanelOptions: {
-                    onlyFromThisDashboard: bool | *false
-                    onlyInTimeRange: bool | *false
-                    tags: [...string]
-                    limit: uint32 | *10
-                    showUser: bool | *true
-                    showTime: bool | *true
-                    showTags: bool | *true
-                    navigateToPanel: bool | *true
-                    navigateBefore: string | *"10m"
-                    navigateAfter: string | *"10m"
-                } @cuetsy(kind="interface")
-            }
-        ]
-    ]
-    migrations: []
+import "github.com/grafana/thema"
+
+Panel: thema.#Lineage & {
+	name: "annolist"
+	seqs: [
+		{
+			schemas: [
+				{
+					PanelOptions: {
+						onlyFromThisDashboard: bool | *false
+						onlyInTimeRange:       bool | *false
+						tags: [...string]
+						limit:           uint32 | *10
+						showUser:        bool | *true
+						showTime:        bool | *true
+						showTags:        bool | *true
+						navigateToPanel: bool | *true
+						navigateBefore:  string | *"10m"
+						navigateAfter:   string | *"10m"
+					} @cuetsy(kind="interface")
+				},
+			]
+		},
+	]
 }

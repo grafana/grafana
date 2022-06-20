@@ -12,8 +12,8 @@ Grafana generates a CSV file that contains your data, including any transformati
 
 ## Before you begin
 
-- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).
-- [Add a query]({{< relref "add-a-query.md" >}}).
+- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel/" >}}).
+- [Add a query]({{< relref "add-a-query/" >}}).
 
 **To download raw query results**:
 

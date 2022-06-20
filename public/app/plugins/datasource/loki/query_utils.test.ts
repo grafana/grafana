@@ -97,4 +97,16 @@ describe('getNormalizedLokiQuery', () => {
   it('handles new<>old conflict (new wins), instant', () => {
     expectNormalized({ instant: true, range: false, queryType: LokiQueryType.Instant }, LokiQueryType.Instant);
   });
+
+  it('handles invalid new, range', () => {
+    expectNormalized({ queryType: 'invalid' }, LokiQueryType.Range);
+  });
+
+  it('handles invalid new, when old-range exists, use old', () => {
+    expectNormalized({ instant: false, range: true, queryType: 'invalid' }, LokiQueryType.Range);
+  });
+
+  it('handles invalid new, when old-instant exists, use old', () => {
+    expectNormalized({ instant: true, range: false, queryType: 'invalid' }, LokiQueryType.Instant);
+  });
 });

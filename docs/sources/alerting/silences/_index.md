@@ -18,12 +18,12 @@ Use silences to stop notifications from one or more alerting rules. Silences do 
 
 Silences do not prevent alert rules from being evaluated. They also do not stop alert instances from being shown in the user interface. Silences only prevent notifications from being created.
 
-You can configure Grafana managed silences as well as silences for an [external Alertmanager data source]({{< relref "../../datasources/alertmanager.md" >}}). For more information, see [Alertmanager]({{< relref "../fundamentals/alertmanager.md" >}}).
+You can configure Grafana managed silences as well as silences for an [external Alertmanager data source]({{< relref "../../datasources/alertmanager/" >}}). For more information, see [Alertmanager]({{< relref "../fundamentals/alertmanager/" >}}).
 
 See also:
 
-- [How label matching works]({{< relref "../fundamentals/annotation-label/labels-and-label-matchers.md" >}})
-- [Create a silence]({{< relref "./create-silence.md" >}})
-- [Create a URL to link to a silence form]({{< relref "./linking-to-silence-form.md" >}})
-- [Edit silences]({{< relref "./edit-silence.md" >}})
-- [Remove silences]({{< relref "./remove-silence.md" >}})
+- [How label matching works]({{< relref "../fundamentals/annotation-label/labels-and-label-matchers/" >}})
+- [Create a silence]({{< relref "create-silence/" >}})
+- [Create a URL to link to a silence form]({{< relref "linking-to-silence-form/" >}})
+- [Edit silences]({{< relref "edit-silence/" >}})
+- [Remove silences]({{< relref "remove-silence/" >}})

@@ -18,7 +18,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 type suggestData struct {
@@ -140,7 +139,7 @@ func (e *cloudWatchExecutor) handleGetMetrics(pluginCtx backend.PluginContext, p
 	} else {
 		var err error
 		if namespaceMetrics, err = e.getMetricsForCustomMetrics(region, namespace, pluginCtx); err != nil {
-			return nil, errutil.Wrap("unable to call AWS API", err)
+			return nil, fmt.Errorf("%v: %w", "unable to call AWS API", err)
 		}
 	}
 	sort.Strings(namespaceMetrics)
@@ -222,7 +221,7 @@ func (e *cloudWatchExecutor) handleGetDimensionKeys(pluginCtx backend.PluginCont
 				region, input)
 
 			if err != nil {
-				return nil, errutil.Wrap("unable to call AWS API", err)
+				return nil, fmt.Errorf("%v: %w", "unable to call AWS API", err)
 			}
 
 			dupCheck := make(map[string]bool)
@@ -250,7 +249,7 @@ func (e *cloudWatchExecutor) handleGetDimensionKeys(pluginCtx backend.PluginCont
 	} else {
 		var err error
 		if dimensionValues, err = e.getDimensionsForCustomMetrics(region, namespace, pluginCtx); err != nil {
-			return nil, errutil.Wrap("unable to call AWS API", err)
+			return nil, fmt.Errorf("%v: %w", "unable to call AWS API", err)
 		}
 	}
 	sort.Strings(dimensionValues)

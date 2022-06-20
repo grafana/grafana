@@ -8,6 +8,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -35,7 +36,8 @@ import (
 func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, routeRegister routing.RouteRegister,
 	sqlStore *sqlstore.SQLStore, kvStore kvstore.KVStore, expressionService *expr.Service, dataProxy *datasourceproxy.DataSourceProxyService,
 	quotaService *quota.QuotaService, secretsService secrets.Service, notificationService notifications.Service, m *metrics.NGAlert,
-	folderService dashboards.FolderService, ac accesscontrol.AccessControl, dashboardService dashboards.DashboardService, renderService rendering.Service) (*AlertNG, error) {
+	folderService dashboards.FolderService, ac accesscontrol.AccessControl, dashboardService dashboards.DashboardService, renderService rendering.Service,
+	bus bus.Bus) (*AlertNG, error) {
 	ng := &AlertNG{
 		Cfg:                 cfg,
 		DataSourceCache:     dataSourceCache,
@@ -53,6 +55,7 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 		accesscontrol:       ac,
 		dashboardService:    dashboardService,
 		renderService:       renderService,
+		bus:                 bus,
 	}
 
 	if ng.IsDisabled() {
@@ -90,6 +93,8 @@ type AlertNG struct {
 	// Alerting notification services
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
 	accesscontrol        accesscontrol.AccessControl
+
+	bus bus.Bus
 }
 
 func (ng *AlertNG) init() error {
@@ -142,12 +147,12 @@ func (ng *AlertNG) init() error {
 
 	appUrl, err := url.Parse(ng.Cfg.AppURL)
 	if err != nil {
-		ng.Log.Error("Failed to parse application URL. Continue without it.", "error", err)
+		ng.Log.Error("Failed to parse application URL. Continue without it.", "err", err)
 		appUrl = nil
 	}
 
 	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), appUrl, store, store, ng.SQLStore, ng.dashboardService, ng.imageService)
-	scheduler := schedule.NewScheduler(schedCfg, ng.ExpressionService, appUrl, stateManager)
+	scheduler := schedule.NewScheduler(schedCfg, ng.ExpressionService, appUrl, stateManager, ng.bus)
 
 	ng.stateManager = stateManager
 	ng.schedule = scheduler
@@ -157,6 +162,9 @@ func (ng *AlertNG) init() error {
 	contactPointService := provisioning.NewContactPointService(store, ng.SecretsService, store, store, ng.Log)
 	templateService := provisioning.NewTemplateService(store, store, store, ng.Log)
 	muteTimingService := provisioning.NewMuteTimingService(store, store, store, ng.Log)
+	alertRuleService := provisioning.NewAlertRuleService(store, store, store,
+		int64(ng.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
+		int64(ng.Cfg.UnifiedAlerting.BaseInterval.Seconds()), ng.Log)
 
 	api := api.API{
 		Cfg:                  ng.Cfg,
@@ -180,6 +188,7 @@ func (ng *AlertNG) init() error {
 		ContactPointService:  contactPointService,
 		Templates:            templateService,
 		MuteTimings:          muteTimingService,
+		AlertRules:           alertRuleService,
 	}
 	api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
 

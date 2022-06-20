@@ -1,9 +1,8 @@
 import { lastValueFrom } from 'rxjs';
 
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { PromApplication, PromApiFeatures, PromBuildInfoResponse } from 'app/types/unified-alerting-dto';
 
-import { isFetchError } from '../utils/alertmanager';
 import { RULER_NOT_SUPPORTED_MSG } from '../utils/constants';
 import { getDataSourceByName } from '../utils/datasource';
 

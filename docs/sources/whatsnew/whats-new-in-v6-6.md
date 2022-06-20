@@ -108,9 +108,9 @@ The time picker has gotten a major design update. Key changes:
 
 ## Cookie management modifications
 
-In order to align with a [change in Chrome 80](https://www.chromestatus.com/feature/5088147346030592), a breaking change has been introduced to Grafana's [`cookie_samesite` setting]({{< relref "../administration/configuration.md#cookie-samesite" >}}). Grafana now properly renders cookies with the `SameSite=None` attribute when this setting is `none`. The previous behavior of `none` was to omit the `SameSite` attribute from cookies. Grafana will use the previous behavior when `cookie_samesite` is set to `disabled`.
+In order to align with a [change in Chrome 80](https://www.chromestatus.com/feature/5088147346030592), a breaking change has been introduced to Grafana's [`cookie_samesite` setting]({{< relref "../setup-grafana/configure-grafana/#cookie-samesite" >}}). Grafana now properly renders cookies with the `SameSite=None` attribute when this setting is `none`. The previous behavior of `none` was to omit the `SameSite` attribute from cookies. Grafana will use the previous behavior when `cookie_samesite` is set to `disabled`.
 
-Read more about this in the [upgrade notes]({{< relref "../installation/upgrading/#important-changes-regarding-samesite-cookie-attribute" >}}).
+Read more about this in the [upgrade notes]({{< relref "../setup-grafana/upgrade-grafana/#important-changes-regarding-samesite-cookie-attribute" >}}).
 
 ## Explore/Logs Panel: Log message line wrapping options
 
@@ -165,7 +165,7 @@ Customize the login page, side menu bar, and footer links.
 
 ## Enterprise APT and YUM repositories
 
-Now you can install the enterprise edition from the APT and YUM repository. The following table shows the APT repository for each Grafana version (for instructions read the [installation notes]({{< relref "../installation/debian/#install-from-apt-repository" >}})) :
+Now you can install the enterprise edition from the APT and YUM repository. The following table shows the APT repository for each Grafana version (for instructions read the [installation notes]({{< relref "../setup-grafana/installation/debian/#install-from-apt-repository" >}})) :
 
 | Grafana Version           | Package            | Repository                                                |
 | ------------------------- | ------------------ | --------------------------------------------------------- |
@@ -174,7 +174,7 @@ Now you can install the enterprise edition from the APT and YUM repository. The 
 | Grafana Enterprise        | grafana-enterprise | `https://packages.grafana.com/enterprise/deb stable main` |
 | Grafana Enterprise (Beta) | grafana-enterprise | `https://packages.grafana.com/enterprise/deb beta main`   |
 
-The following table shows the YUM repositories for each Grafana version (for instructions read the [installation notes]({{< relref "../installation/rpm/#install-from-yum-repository" >}})) :
+The following table shows the YUM repositories for each Grafana version (for instructions read the [installation notes]({{< relref "../setup-grafana/installation/rpm/#install-from-yum-repository" >}})) :
 
 | Grafana Version           | Package            | Repository                                         |
 | ------------------------- | ------------------ | -------------------------------------------------- |
@@ -201,7 +201,7 @@ In case all queries in a GMD call are metric stat (not using math expressions), 
 
 ## Upgrading
 
-See [upgrade notes]({{< relref "../installation/upgrading/#upgrading-to-v6-6" >}}).
+See [upgrade notes]({{< relref "../setup-grafana/upgrade-grafana/#upgrading-to-v6-6" >}}).
 
 ## Changelog
 

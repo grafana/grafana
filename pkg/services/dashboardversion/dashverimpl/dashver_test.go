@@ -53,10 +53,24 @@ func TestDeleteExpiredVersions(t *testing.T) {
 	})
 }
 
+func TestListDashboardVersions(t *testing.T) {
+	dashboardVersionStore := newDashboardVersionStoreFake()
+	dashboardVersionService := Service{store: dashboardVersionStore}
+
+	t.Run("Get all versions for a given Dashboard ID", func(t *testing.T) {
+		query := dashver.ListDashboardVersionsQuery{}
+		dashboardVersionStore.ExpectedListVersions = []*dashver.DashboardVersionDTO{{}}
+		res, err := dashboardVersionService.List(context.Background(), &query)
+		require.Nil(t, err)
+		require.Equal(t, 1, len(res))
+	})
+}
+
 type FakeDashboardVersionStore struct {
 	ExpectedDashboardVersion *dashver.DashboardVersion
 	ExptectedDeletedVersions int64
 	ExpectedVersions         []interface{}
+	ExpectedListVersions     []*dashver.DashboardVersionDTO
 	ExpectedError            error
 }
 
@@ -74,4 +88,8 @@ func (f *FakeDashboardVersionStore) GetBatch(ctx context.Context, cmd *dashver.D
 
 func (f *FakeDashboardVersionStore) DeleteBatch(ctx context.Context, cmd *dashver.DeleteExpiredVersionsCommand, versionIdsToDelete []interface{}) (int64, error) {
 	return f.ExptectedDeletedVersions, f.ExpectedError
+}
+
+func (f *FakeDashboardVersionStore) List(ctx context.Context, query *dashver.ListDashboardVersionsQuery) ([]*dashver.DashboardVersionDTO, error) {
+	return f.ExpectedListVersions, f.ExpectedError
 }

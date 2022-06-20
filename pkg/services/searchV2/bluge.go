@@ -105,7 +105,10 @@ func initIndex(dashboards []dashboard, logger log.Logger, extendDoc ExtendDashbo
 		}
 
 		// Index each panel in dashboard.
-		location += "/" + dash.uid
+		if location != "" {
+			location += "/"
+		}
+		location += dash.uid
 		docs := getDashboardPanelDocs(dash, location)
 		for _, panelDoc := range docs {
 			batch.Insert(panelDoc)
@@ -117,14 +120,7 @@ func initIndex(dashboards []dashboard, logger log.Logger, extendDoc ExtendDashbo
 	if err := flushIfRequired(true); err != nil {
 		return nil, nil, err
 	}
-	logger.Info("Finish inserting docs into batch", "elapsed", time.Since(label))
-	label = time.Now()
-
-	err = writer.Batch(batch)
-	if err != nil {
-		return nil, nil, err
-	}
-	logger.Info("Finish writing batch", "elapsed", time.Since(label))
+	logger.Info("Finish inserting docs into index", "elapsed", time.Since(label))
 
 	reader, err := writer.Reader()
 	if err != nil {
@@ -186,14 +182,14 @@ func getDashboardPanelDocs(dash dashboard, location string) []*bluge.Document {
 	var docs []*bluge.Document
 	url := fmt.Sprintf("/d/%s/%s", dash.uid, dash.slug)
 	for _, panel := range dash.info.Panels {
-		uid := dash.uid + "#" + strconv.FormatInt(panel.ID, 10)
-		purl := url
-		if panel.Type != "row" {
-			purl = fmt.Sprintf("%s?viewPanel=%d", url, panel.ID)
+		if panel.Type == "row" {
+			continue // for now, we are excluding rows from the search index
 		}
 
+		uid := dash.uid + "#" + strconv.FormatInt(panel.ID, 10)
+		purl := fmt.Sprintf("%s?viewPanel=%d", url, panel.ID)
+
 		doc := newSearchDocument(uid, panel.Title, panel.Description, purl).
-			AddField(bluge.NewKeywordField(documentFieldDSUID, dash.uid).StoreValue()).
 			AddField(bluge.NewKeywordField(documentFieldPanelType, panel.Type).Aggregatable().StoreValue()).
 			AddField(bluge.NewKeywordField(documentFieldLocation, location).Aggregatable().StoreValue()).
 			AddField(bluge.NewKeywordField(documentFieldKind, string(entityKindPanel)).Aggregatable().StoreValue()) // likely want independent index for this
@@ -262,10 +258,10 @@ func newSearchDocument(uid string, name string, descr string, url string) *bluge
 	return doc
 }
 
-func getDashboardPanelIDs(reader *bluge.Reader, dashboardUID string) ([]string, error) {
+func getDashboardPanelIDs(reader *bluge.Reader, panelLocation string) ([]string, error) {
 	var panelIDs []string
 	fullQuery := bluge.NewBooleanQuery()
-	fullQuery.AddMust(bluge.NewTermQuery(dashboardUID).SetField(documentFieldDSUID))
+	fullQuery.AddMust(bluge.NewTermQuery(panelLocation).SetField(documentFieldLocation))
 	fullQuery.AddMust(bluge.NewTermQuery(string(entityKindPanel)).SetField(documentFieldKind))
 	req := bluge.NewAllMatches(fullQuery)
 	documentMatchIterator, err := reader.Search(context.Background(), req)
@@ -290,8 +286,74 @@ func getDashboardPanelIDs(reader *bluge.Reader, dashboardUID string) ([]string, 
 	return panelIDs, err
 }
 
+func getDocsIDsByLocationPrefix(reader *bluge.Reader, prefix string) ([]string, error) {
+	var ids []string
+	fullQuery := bluge.NewBooleanQuery()
+	fullQuery.AddMust(bluge.NewPrefixQuery(prefix).SetField(documentFieldLocation))
+	req := bluge.NewAllMatches(fullQuery)
+	documentMatchIterator, err := reader.Search(context.Background(), req)
+	if err != nil {
+		return nil, err
+	}
+	match, err := documentMatchIterator.Next()
+	for err == nil && match != nil {
+		// load the identifier for this match
+		err = match.VisitStoredFields(func(field string, value []byte) bool {
+			if field == documentFieldUID {
+				ids = append(ids, string(value))
+			}
+			return true
+		})
+		if err != nil {
+			return nil, err
+		}
+		// load the next document match
+		match, err = documentMatchIterator.Next()
+	}
+	return ids, err
+}
+
+func getDashboardLocation(reader *bluge.Reader, dashboardUID string) (string, bool, error) {
+	var dashboardLocation string
+	var found bool
+	fullQuery := bluge.NewBooleanQuery()
+	fullQuery.AddMust(bluge.NewTermQuery(dashboardUID).SetField(documentFieldUID))
+	fullQuery.AddMust(bluge.NewTermQuery(string(entityKindDashboard)).SetField(documentFieldKind))
+	req := bluge.NewAllMatches(fullQuery)
+	documentMatchIterator, err := reader.Search(context.Background(), req)
+	if err != nil {
+		return "", false, err
+	}
+	match, err := documentMatchIterator.Next()
+	for err == nil && match != nil {
+		// load the identifier for this match
+		err = match.VisitStoredFields(func(field string, value []byte) bool {
+			if field == documentFieldLocation {
+				dashboardLocation = string(value)
+				found = true
+				return false
+			}
+			return true
+		})
+		if err != nil {
+			return "", false, err
+		}
+		// load the next document match
+		match, err = documentMatchIterator.Next()
+	}
+	return dashboardLocation, found, err
+}
+
 //nolint: gocyclo
-func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader, filter ResourceFilter, q DashboardQuery, extender QueryExtender) *backend.DataResponse {
+func doSearchQuery(
+	ctx context.Context,
+	logger log.Logger,
+	reader *bluge.Reader,
+	filter ResourceFilter,
+	q DashboardQuery,
+	extender QueryExtender,
+	appSubUrl string,
+) *backend.DataResponse {
 	response := &backend.DataResponse{}
 	header := &customMeta{}
 
@@ -401,9 +463,6 @@ func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader,
 		return response
 	}
 
-	dvfieldNames := []string{"type"}
-	sctx := search.NewSearchContext(0, 0)
-
 	fScore := data.NewFieldFromFieldType(data.FieldTypeFloat64, 0)
 	fUID := data.NewFieldFromFieldType(data.FieldTypeString, 0)
 	fKind := data.NewFieldFromFieldType(data.FieldTypeString, 0)
@@ -448,11 +507,6 @@ func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader,
 	// iterate through the document matches
 	match, err := documentMatchIterator.Next()
 	for err == nil && match != nil {
-		err = match.LoadDocumentValues(sctx, dvfieldNames)
-		if err != nil {
-			continue
-		}
-
 		uid := ""
 		kind := ""
 		ptype := ""
@@ -473,7 +527,7 @@ func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader,
 			case documentFieldName:
 				name = string(value)
 			case documentFieldURL:
-				url = string(value)
+				url = appSubUrl + string(value)
 			case documentFieldLocation:
 				loc = string(value)
 			case documentFieldDSUID:

@@ -17,10 +17,10 @@ Start by figuring out how you're currently navigating between dashboards. If you
 
 The next step is to figure out which link type is right for your workflow. Even though all the link types in Grafana are used to create shortcuts to other dashboards or external websites, they work in different contexts.
 
-- If the link relates to most if not all of the panels in the dashboard, use [dashboard links]({{< relref "dashboard-links.md" >}}).
-- If you want to drill down into specific panels, use [panel links]({{< relref "panel-links.md" >}}).
+- If the link relates to most if not all of the panels in the dashboard, use [dashboard links]({{< relref "dashboard-links/" >}}).
+- If you want to drill down into specific panels, use [panel links]({{< relref "panel-links/" >}}).
 - If you want to link to an external site, you can use either a dashboard link or a panel link.
-- If you want to drill down into a specific series, or even a single measurement, use [data links]({{< relref "data-links.md" >}}).
+- If you want to drill down into a specific series, or even a single measurement, use [data links]({{< relref "data-links/" >}}).
 
 ## Controlling time range using the URL
 

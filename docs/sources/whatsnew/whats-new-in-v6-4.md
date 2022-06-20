@@ -125,7 +125,7 @@ You'll be able to see how a user authenticating with LDAP would be mapped and wh
 
 The feature is currently limited to Grafana Server Admins.
 
-For more information on how to use this new feature, follow the [guide]({{< relref "../auth/ldap.md#ldap-debug-view" >}}).
+For more information on how to use this new feature, follow the [guide]({{< relref "../setup-grafana/configure-security/configure-authentication/ldap/#ldap-debug-view" >}}).
 
 ## Grafana Enterprise
 

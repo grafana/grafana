@@ -1,5 +1,4 @@
 import { each, map } from 'lodash';
-import { expect } from 'test/lib/common';
 
 import { DataLinkBuiltInVars, MappingType } from '@grafana/data';
 import { setDataSourceSrv } from '@grafana/runtime';
@@ -1990,6 +1989,38 @@ describe('DashboardModel', () => {
     });
 
     it('should update target datasource props to refs', () => {
+      expect(model.panels[0].targets[0].datasource).toEqual({ type: 'prometheus', uid: 'prom2-uid' });
+    });
+  });
+
+  describe('when migrating default (null) datasource with panel with expressions queries', () => {
+    let model: DashboardModel;
+
+    beforeEach(() => {
+      model = new DashboardModel({
+        panels: [
+          {
+            id: 2,
+            targets: [
+              {
+                refId: 'A',
+              },
+              {
+                refId: 'B',
+                datasource: '__expr__',
+              },
+            ],
+          },
+        ],
+        schemaVersion: 30,
+      });
+    });
+
+    it('should update panel datasource props to default datasource', () => {
+      expect(model.panels[0].datasource).toEqual({ type: 'prometheus', uid: 'prom2-uid' });
+    });
+
+    it('should update target datasource props to default data source', () => {
       expect(model.panels[0].targets[0].datasource).toEqual({ type: 'prometheus', uid: 'prom2-uid' });
     });
   });
