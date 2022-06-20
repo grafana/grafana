@@ -13,6 +13,8 @@ import {
   Field,
   getValueFormat,
   formattedValueToString,
+  durationToMilliseconds,
+  parseDuration,
 } from '@grafana/data';
 import { ScaleDistribution } from '@grafana/schema';
 
@@ -294,11 +296,12 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
   const scaleDistribution = options.yBuckets?.scale ?? {
     type: ScaleDistribution.Linear,
   };
+
   const heat2d = heatmap(xs, ys, {
     xSorted: true,
     xTime: xField.type === FieldType.time,
     xMode: xBucketsCfg.mode,
-    xSize: xBucketsCfg.value ? +xBucketsCfg.value : undefined,
+    xSize: durationToMilliseconds(parseDuration(xBucketsCfg.value ?? '')),
     yMode: yBucketsCfg.mode,
     ySize: yBucketsCfg.value ? +yBucketsCfg.value : undefined,
     yLog: scaleDistribution?.type === ScaleDistribution.Log ? (scaleDistribution?.log as any) : undefined,
