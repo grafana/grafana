@@ -72,8 +72,6 @@ interface PrepConfigOpts {
   cellGap?: number | null; // in css pixels
   hideLE?: number;
   hideGE?: number;
-  valueMin?: number;
-  valueMax?: number;
   yAxisConfig: YAxisConfig;
   ySizeDivisor?: number;
   sync?: () => DashboardCursorSync;
@@ -94,8 +92,6 @@ export function prepConfig(opts: PrepConfigOpts) {
     cellGap,
     hideLE,
     hideGE,
-    valueMin,
-    valueMax,
     yAxisConfig,
     ySizeDivisor,
     sync,
