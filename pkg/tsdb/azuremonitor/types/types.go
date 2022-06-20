@@ -215,4 +215,4 @@ type LogAnalyticsWorkspaceResponse struct {
 	RetentionInDays                 int                             `json:"retentionInDays"`
 }
 
-var AzureHealthCheckError = errors.New("Health Check failed")
+var ErrorAzureHealthCheck = errors.New("health check failed")

@@ -189,7 +189,7 @@ func checkAzureMonitorMetricsHealth(dsInfo types.DatasourceInfo) (*http.Response
 
 	res, err := dsInfo.Services["Azure Monitor"].HTTPClient.Do(request)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", types.AzureHealthCheckError, err)
+		return nil, fmt.Errorf("%w: %v", types.ErrorAzureHealthCheck, err)
 	}
 
 	return res, nil
@@ -203,7 +203,7 @@ func checkAzureLogAnalyticsHealth(dsInfo types.DatasourceInfo) (*http.Response, 
 	}
 	res, err := dsInfo.Services["Azure Monitor"].HTTPClient.Do(workspacesReq)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", types.AzureHealthCheckError, err)
+		return nil, fmt.Errorf("%w: %v", types.ErrorAzureHealthCheck, err)
 	}
 	var target struct {
 		Value []types.LogAnalyticsWorkspaceResponse
@@ -234,7 +234,7 @@ func checkAzureLogAnalyticsHealth(dsInfo types.DatasourceInfo) (*http.Response, 
 
 	res, err = dsInfo.Services["Azure Log Analytics"].HTTPClient.Do(workspaceReq)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", types.AzureHealthCheckError, err)
+		return nil, fmt.Errorf("%w: %v", types.ErrorAzureHealthCheck, err)
 	}
 
 	return res, nil
@@ -257,7 +257,7 @@ func checkAzureMonitorResourceGraphHealth(dsInfo types.DatasourceInfo) (*http.Re
 
 	res, err := dsInfo.Services["Azure Resource Graph"].HTTPClient.Do(request)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", types.AzureHealthCheckError, err)
+		return nil, fmt.Errorf("%w: %v", types.ErrorAzureHealthCheck, err)
 	}
 
 	return res, nil
@@ -278,7 +278,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	if err != nil || metricsRes.StatusCode != 200 {
 		status = backend.HealthStatusError
 		if err != nil {
-			if ok := errors.Is(err, types.AzureHealthCheckError); ok {
+			if ok := errors.Is(err, types.ErrorAzureHealthCheck); ok {
 				metricsLog = fmt.Sprintf("Error connecting to Azure Monitor endpoint: %s", err.Error())
 			} else {
 				return nil, err
@@ -299,7 +299,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 			if err.Error() == "no default workspace found" {
 				status = backend.HealthStatusUnknown
 				logAnalyticsLog = "No Log Analytics workspaces found."
-			} else if ok := errors.Is(err, types.AzureHealthCheckError); ok {
+			} else if ok := errors.Is(err, types.ErrorAzureHealthCheck); ok {
 				logAnalyticsLog = fmt.Sprintf("Error connecting to Azure Log Analytics endpoint: %s", err.Error())
 			} else {
 				return nil, err
@@ -317,7 +317,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	if err != nil || resourceGraphRes.StatusCode != 200 {
 		status = backend.HealthStatusError
 		if err != nil {
-			if ok := errors.Is(err, types.AzureHealthCheckError); ok {
+			if ok := errors.Is(err, types.ErrorAzureHealthCheck); ok {
 				graphLog = fmt.Sprintf("Error connecting to Azure Resource Graph endpoint: %s", err.Error())
 			} else {
 				return nil, err
