@@ -728,7 +728,7 @@ const serviceGraphLinks = [
     title: 'Request rate',
     internal: {
       query: {
-        expr: 'rate(traces_service_graph_request_total{server="${__data.fields.id}"}[$__rate_interval])',
+        expr: 'sum by (client, server)(rate(traces_service_graph_request_total{server="${__data.fields.id}"}[$__rate_interval]))',
         instant: false,
         range: true,
         exemplar: true,
@@ -756,7 +756,7 @@ const serviceGraphLinks = [
     title: 'Failed request rate',
     internal: {
       query: {
-        expr: 'rate(traces_service_graph_request_failed_total{server="${__data.fields.id}"}[$__rate_interval])',
+        expr: 'sum by (client, server)(rate(traces_service_graph_request_failed_total{server="${__data.fields.id}"}[$__rate_interval]))',
         instant: false,
         range: true,
         exemplar: true,

@@ -438,7 +438,7 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
         links: [
           makePromLink(
             'Request rate',
-            `rate(${totalsMetric}{server="\${__data.fields.id}"}[$__rate_interval])`,
+            `sum by (client, server)(rate(${totalsMetric}{server="\${__data.fields.id}"}[$__rate_interval]))`,
             datasourceUid,
             false
           ),
@@ -450,7 +450,7 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
           ),
           makePromLink(
             'Failed request rate',
-            `rate(${failedMetric}{server="\${__data.fields.id}"}[$__rate_interval])`,
+            `sum by (client, server)(rate(${failedMetric}{server="\${__data.fields.id}"}[$__rate_interval]))`,
             datasourceUid,
             false
           ),
