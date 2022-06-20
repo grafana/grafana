@@ -142,91 +142,96 @@ func (s *Service) GetDataSourcesByType(ctx context.Context, query *models.GetDat
 }
 
 func (s *Service) AddDataSource(ctx context.Context, cmd *models.AddDataSourceCommand) error {
-	var err error
-	// this is here for backwards compatibility
-	cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
-	if err != nil {
-		return err
-	}
-
-	if err := s.SQLStore.AddDataSource(ctx, cmd); err != nil {
-		return err
-	}
-
-	secret, err := json.Marshal(cmd.SecureJsonData)
-	if err != nil {
-		return err
-	}
-
-	err = s.SecretsStore.Set(ctx, cmd.OrgId, cmd.Name, secretType, string(secret))
-	if err != nil {
-		return err
-	}
-
-	if !s.ac.IsDisabled() {
-		// This belongs in Data source permissions, and we probably want
-		// to do this with a hook in the store and rollback on fail.
-		// We can't use events, because there's no way to communicate
-		// failure, and we want "not being able to set default perms"
-		// to fail the creation.
-		permissions := []accesscontrol.SetResourcePermissionCommand{
-			{BuiltinRole: "Viewer", Permission: "Query"},
-			{BuiltinRole: "Editor", Permission: "Query"},
-		}
-		if cmd.UserId != 0 {
-			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{UserID: cmd.UserId, Permission: "Edit"})
-		}
-		if _, err := s.permissionsService.SetPermissions(ctx, cmd.OrgId, cmd.Result.Uid, permissions...); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (s *Service) DeleteDataSource(ctx context.Context, cmd *models.DeleteDataSourceCommand) error {
-	err := s.SQLStore.DeleteDataSource(ctx, cmd)
-	if err != nil {
-		return err
-	}
-	return s.SecretsStore.Del(ctx, cmd.OrgID, cmd.Name, secretType)
-}
-
-func (s *Service) UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSourceCommand) error {
-	var err error
-
-	query := &models.GetDataSourceQuery{
-		Id:    cmd.Id,
-		OrgId: cmd.OrgId,
-	}
-	err = s.SQLStore.GetDataSource(ctx, query)
-	if err != nil {
-		return err
-	}
-
-	err = s.fillWithSecureJSONData(ctx, cmd, query.Result)
-	if err != nil {
-		return err
-	}
-
-	err = s.SQLStore.UpdateDataSource(ctx, cmd)
-	if err != nil {
-		return err
-	}
-
-	if query.Result.Name != cmd.Name {
-		err = s.SecretsStore.Rename(ctx, cmd.OrgId, query.Result.Name, secretType, cmd.Name)
+	return s.SQLStore.InTransaction(ctx, func(ctx context.Context) error {
+		var err error
+		// this is here for backwards compatibility
+		cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
 		if err != nil {
 			return err
 		}
-	}
 
-	secret, err := json.Marshal(cmd.SecureJsonData)
-	if err != nil {
-		return err
-	}
+		secret, err := json.Marshal(cmd.SecureJsonData)
+		if err != nil {
+			return err
+		}
 
-	return s.SecretsStore.Set(ctx, cmd.OrgId, cmd.Name, secretType, string(secret))
+		cmd.UpdateSecretFn = func() error {
+			return s.SecretsStore.Set(ctx, cmd.OrgId, cmd.Name, secretType, string(secret))
+		}
+
+		if err := s.SQLStore.AddDataSource(ctx, cmd); err != nil {
+			return err
+		}
+
+		if !s.ac.IsDisabled() {
+			// This belongs in Data source permissions, and we probably want
+			// to do this with a hook in the store and rollback on fail.
+			// We can't use events, because there's no way to communicate
+			// failure, and we want "not being able to set default perms"
+			// to fail the creation.
+			permissions := []accesscontrol.SetResourcePermissionCommand{
+				{BuiltinRole: "Viewer", Permission: "Query"},
+				{BuiltinRole: "Editor", Permission: "Query"},
+			}
+			if cmd.UserId != 0 {
+				permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{UserID: cmd.UserId, Permission: "Edit"})
+			}
+			if _, err := s.permissionsService.SetPermissions(ctx, cmd.OrgId, cmd.Result.Uid, permissions...); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+}
+
+func (s *Service) DeleteDataSource(ctx context.Context, cmd *models.DeleteDataSourceCommand) error {
+	return s.SQLStore.InTransaction(ctx, func(ctx context.Context) error {
+		cmd.UpdateSecretFn = func() error {
+			return s.SecretsStore.Del(ctx, cmd.OrgID, cmd.Name, secretType)
+		}
+
+		return s.SQLStore.DeleteDataSource(ctx, cmd)
+	})
+}
+
+func (s *Service) UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSourceCommand) error {
+	return s.SQLStore.InTransaction(ctx, func(ctx context.Context) error {
+		var err error
+
+		query := &models.GetDataSourceQuery{
+			Id:    cmd.Id,
+			OrgId: cmd.OrgId,
+		}
+		err = s.SQLStore.GetDataSource(ctx, query)
+		if err != nil {
+			return err
+		}
+
+		err = s.fillWithSecureJSONData(ctx, cmd, query.Result)
+		if err != nil {
+			return err
+		}
+
+		secret, err := json.Marshal(cmd.SecureJsonData)
+		if err != nil {
+			return err
+		}
+
+		cmd.UpdateSecretFn = func() error {
+			var secretsErr error
+			if query.Result.Name != cmd.Name {
+				secretsErr = s.SecretsStore.Rename(ctx, cmd.OrgId, query.Result.Name, secretType, cmd.Name)
+			}
+			if secretsErr != nil {
+				return secretsErr
+			}
+
+			return s.SecretsStore.Set(ctx, cmd.OrgId, cmd.Name, secretType, string(secret))
+		}
+
+		return s.SQLStore.UpdateDataSource(ctx, cmd)
+	})
 }
 
 func (s *Service) GetDefaultDataSource(ctx context.Context, query *models.GetDefaultDataSourceQuery) error {
