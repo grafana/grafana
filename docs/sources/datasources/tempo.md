@@ -84,6 +84,17 @@ This is a configuration for the Loki search query type.
 
 -- **Data source -** The Loki instance in which you want to search traces. You must configure derived fields in the Loki instance.
 
+### Span bar label
+
+This is a configuration for the span bar label. The span bar label lets you add additional info to the span bar row.
+
+One of the following four options can be selected (the default is duration):
+
+- **None -** Do no show any additional info on the span bar row.
+- **Duration -** Show the span duration on the span bar row.
+- **Tag -** Show the span tag on the span bar row. Note: You will also need to specify the tag key which will be used to get the tag value. For example `span.kind`.
+- **Process -** Show the span process on the span bar row. Note: You will also need to specify the process key which will be used to get the process value. For example `host.name`.
+
 ## Query traces
 
 You can query and display traces from Tempo via [Explore]({{< relref "../explore/" >}}).

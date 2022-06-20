@@ -35,7 +35,7 @@ export default function SpanBarSettings({ options, onOptionsChange }: Props) {
     <div className={css({ width: '100%' })}>
       <h3 className="page-heading">Span bar label</h3>
 
-      <div className={styles.infoText}>Span bar label lets you add additional info to your span bar row.</div>
+      <div className={styles.infoText}>Span bar label lets you add additional info to the span bar row.</div>
 
       <InlineFieldRow className={styles.row}>
         <InlineField label="Label" labelWidth={26} grow>
@@ -58,7 +58,7 @@ export default function SpanBarSettings({ options, onOptionsChange }: Props) {
       </InlineFieldRow>
       {options.jsonData.spanBar?.type === TAG && (
         <InlineFieldRow className={styles.row}>
-          <InlineField label="Tag key" labelWidth={26} tooltip="Tag key which will be used to get tag value">
+          <InlineField label="Tag key" labelWidth={26} tooltip="Tag key which will be used to get the tag value">
             <Input
               type="text"
               placeholder="Enter tag key"
@@ -79,7 +79,7 @@ export default function SpanBarSettings({ options, onOptionsChange }: Props) {
           <InlineField
             label="Process key"
             labelWidth={26}
-            tooltip="Process key which will be used to get process value"
+            tooltip="Process key which will be used to get the process value"
           >
             <Input
               type="text"
