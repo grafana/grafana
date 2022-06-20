@@ -14,7 +14,7 @@ import { SortOrder } from 'app/plugins/panel/alertlist/types';
 import { Alert, CombinedRule } from 'app/types/unified-alerting';
 import { mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
 
-import { isGrafanaRulesSource } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from '../../utils/datasource';
 import { isAlertingRule } from '../../utils/rules';
 import { DetailsField } from '../DetailsField';
 
@@ -26,7 +26,7 @@ type Props = {
 
 export function RuleDetailsMatchingInstances(props: Props): JSX.Element | null {
   const {
-    rule: { promRule },
+    rule: { promRule, namespace },
   } = props;
 
   const [queryString, setQueryString] = useState<string>();
@@ -38,7 +38,7 @@ export function RuleDetailsMatchingInstances(props: Props): JSX.Element | null {
 
   const styles = useStyles(getStyles);
 
-  const stateFilterType = isGrafanaRulesSource(props.rule.namespace.rulesSource) ? 'grafana' : 'prometheus';
+  const stateFilterType = isGrafanaRulesSource(namespace.rulesSource) ? GRAFANA_RULES_SOURCE_NAME : 'prometheus';
 
   const alerts = useMemo(
     (): Alert[] =>
