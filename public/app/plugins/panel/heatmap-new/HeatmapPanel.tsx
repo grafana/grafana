@@ -152,18 +152,6 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     let countFieldIdx = !isSparseHeatmap ? 2 : 3;
     const countField = info.heatmap.fields[countFieldIdx];
 
-    // TODO -- better would be to get the range from the real color scale!
-    let { min, max } = options.color;
-    if (min == null || max == null) {
-      const calc = reduceField({ field: countField, reducers: [ReducerID.min, ReducerID.max] });
-      if (min == null) {
-        min = calc[ReducerID.min];
-      }
-      if (max == null) {
-        max = calc[ReducerID.max];
-      }
-    }
-
     let hoverValue: number | undefined = undefined;
     // seriesIdx: 1 is heatmap layer; 2 is exemplar layer
     if (hover && info.heatmap.fields && hover.seriesIdx === 1) {
@@ -173,7 +161,13 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     return (
       <VizLayout.Legend placement="bottom" maxHeight="20%">
         <div className={styles.colorScaleWrapper}>
-          <ColorScale hoverValue={hoverValue} colorPalette={palette} min={min!} max={max!} display={info.display} />
+          <ColorScale
+            hoverValue={hoverValue}
+            colorPalette={palette}
+            min={dataRef.current.minValue!}
+            max={dataRef.current.maxValue!}
+            display={info.display}
+          />
         </div>
       </VizLayout.Legend>
     );

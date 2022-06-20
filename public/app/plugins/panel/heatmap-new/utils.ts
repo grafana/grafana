@@ -490,10 +490,8 @@ export function prepConfig(opts: PrepConfigOpts) {
             return valuesToFills(
               u.data[seriesIdx][countFacetIdx] as unknown as number[],
               palette,
-              valueMin,
-              valueMax,
-              hideLE,
-              hideGE
+              dataRef.current?.minValue!,
+              dataRef.current?.maxValue!
             );
           },
           index: palette,
@@ -894,9 +892,8 @@ export function heatmapPathsSparse(opts: PathbuilderOpts) {
   };
 }
 
-export const valuesToFills = (
+export const boundedMinMax = (
   values: number[],
-  palette: string[],
   minValue?: number,
   maxValue?: number,
   hideLE = -Infinity,
@@ -922,6 +919,10 @@ export const valuesToFills = (
     }
   }
 
+  return [minValue, maxValue];
+};
+
+export const valuesToFills = (values: number[], palette: string[], minValue: number, maxValue: number) => {
   let range = maxValue - minValue;
 
   let paletteSize = palette.length;
