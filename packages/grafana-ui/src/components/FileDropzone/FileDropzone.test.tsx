@@ -27,13 +27,19 @@ describe('The FileDropzone component', () => {
     expect(screen.getByText('Upload file')).toBeInTheDocument();
   });
 
-  it('should show accepted file type when passed in the options as a string', () => {
-    render(<FileDropzone options={{ accept: { 'text/*': ['.json'] } }} />);
+  it('should show the accepted file type(s) when passed in as a string', () => {
+    render(<FileDropzone options={{ accept: '.json' }} />);
 
-    expect(screen.getByText('Accepted file types: .json')).toBeInTheDocument();
+    expect(screen.getByText('Accepted file type: .json')).toBeInTheDocument();
   });
 
-  it('should show accepted file types when passed in the options as a string array', () => {
+  it('should show the accepted file type(s) when passed in as a array of strings', () => {
+    render(<FileDropzone options={{ accept: ['.json', '.txt'] }} />);
+
+    expect(screen.getByText('Accepted file types: .json, .txt')).toBeInTheDocument();
+  });
+
+  it('should show the accepted file type(s) when passed in as an `Accept` object', () => {
     render(<FileDropzone options={{ accept: { 'text/*': ['.json', '.txt'] } }} />);
 
     expect(screen.getByText('Accepted file types: .json, .txt')).toBeInTheDocument();

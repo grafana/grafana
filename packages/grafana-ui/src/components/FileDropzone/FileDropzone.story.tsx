@@ -28,3 +28,7 @@ export const Basic: Story<FileDropzoneProps> = (args) => {
 export const WithCustomFileList: Story<FileDropzoneProps> = () => {
   return <FileDropzone fileListRenderer={(file) => <div>Custom rendered item {file.file.name}</div>} />;
 };
+
+export const OnlyAcceptingCertainFiles: Story<FileDropzoneProps> = (args) => {
+  return <FileDropzone {...args} options={{ accept: { 'application/json': ['.json'] } }} />;
+};
