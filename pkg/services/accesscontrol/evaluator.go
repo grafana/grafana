@@ -272,31 +272,25 @@ func (f *convertFromRaw) Evaluator(raw map[string]interface{}) (Evaluator, error
 		return nil, nil
 	}
 
-	// Case Permission
-	if _, ok := raw["action"]; ok {
+	rawHas := func(key string) bool { _, ok := raw[key]; return ok }
+	switch {
+	case rawHas("action"):
 		return f.PermissionEvaluator(raw)
-	}
-	// Case Any
-	anyItf, ok := raw["any"]
-	if ok {
-		anyOf, errParse := f.EvaluatorList(anyItf)
+	case rawHas("any"):
+		anyOf, errParse := f.EvaluatorList(raw["any"])
 		if errParse != nil {
 			return nil, errParse
 		}
 		return EvalAny(anyOf...), nil
-	}
-	// Case All
-	allItf, ok := raw["all"]
-	if ok {
-		allOf, errParse := f.EvaluatorList(allItf)
+	case rawHas("all"):
+		allOf, errParse := f.EvaluatorList(raw["all"])
 		if errParse != nil {
 			return nil, errParse
 		}
 		return EvalAll(allOf...), nil
+	default:
+		return nil, fmt.Errorf("expected 'any', 'all' or 'perm' evaluator")
 	}
-
-	// Default
-	return nil, fmt.Errorf("expected 'any', 'all' or 'perm' evaluator")
 }
 
 func (ev *EvaluatorDTO) UnmarshalJSON(data []byte) error {
