@@ -11,6 +11,8 @@ import {
   DataFrameType,
   getFieldDisplayName,
   Field,
+  getValueFormat,
+  formattedValueToString,
 } from '@grafana/data';
 import { ScaleDistribution } from '@grafana/schema';
 
@@ -49,21 +51,24 @@ export function sortAscStrInf(aName?: string | null, bName?: string | null) {
   return parseNumeric(aName) - parseNumeric(bName);
 }
 
-export interface HeatmapScanlinesCustomMeta {
+export interface HeatmapRowsCustomMeta {
   /** This provides the lookup values */
   yOrdinalDisplay: string[];
   yOrdinalLabel?: string[];
   yMatchWithLabel?: string;
+  yZeroDisplay?: string;
 }
 
 /** simple utility to get heatmap metadata from a frame */
-export function readHeatmapScanlinesCustomMeta(frame?: DataFrame): HeatmapScanlinesCustomMeta {
-  return (frame?.meta?.custom ?? {}) as HeatmapScanlinesCustomMeta;
+export function readHeatmapRowsCustomMeta(frame?: DataFrame): HeatmapRowsCustomMeta {
+  return (frame?.meta?.custom ?? {}) as HeatmapRowsCustomMeta;
 }
 
 export interface RowsHeatmapOptions {
   frame: DataFrame;
   value?: string; // the field value name
+  unit?: string;
+  decimals?: number;
   layout?: HeatmapCellLayout;
 }
 
@@ -117,13 +122,35 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
       break;
   }
 
-  const custom: HeatmapScanlinesCustomMeta = {
+  const custom: HeatmapRowsCustomMeta = {
     yOrdinalDisplay: yFields.map((f) => getFieldDisplayName(f, opts.frame)),
     yMatchWithLabel: Object.keys(yFields[0].labels ?? {})[0],
   };
   if (custom.yMatchWithLabel) {
     custom.yOrdinalLabel = yFields.map((f) => f.labels?.[custom.yMatchWithLabel!] ?? '');
+    if (custom.yMatchWithLabel === 'le') {
+      custom.yZeroDisplay = '0.0';
+    }
   }
+
+  // Format the labels as a value
+  // TODO: this leaves the internally prepended '0.0' without this formatting treatment
+  if (opts.unit?.length || opts.decimals != null) {
+    const fmt = getValueFormat(opts.unit ?? 'short');
+    if (custom.yZeroDisplay) {
+      custom.yZeroDisplay = formattedValueToString(fmt(0, opts.decimals));
+    }
+    custom.yOrdinalDisplay = custom.yOrdinalDisplay.map((name) => {
+      let num = +name;
+
+      if (!Number.isNaN(num)) {
+        return formattedValueToString(fmt(num, opts.decimals));
+      }
+
+      return name;
+    });
+  }
+
   return {
     length: xs.length,
     refId: opts.frame.refId,
@@ -293,9 +320,6 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
   };
 
   //console.timeEnd('calculateHeatmapFromData');
-
-  //console.log({ tiles: frame.length });
-
   return frame;
 }
 

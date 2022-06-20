@@ -24,7 +24,6 @@ import {
   DataQueryResponse,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { TooltipDisplayMode } from '@grafana/schema';
 import {
   RadioButtonGroup,
   LogRows,
@@ -40,7 +39,6 @@ import { dedupLogRows, filterLogLevels } from 'app/core/logs_model';
 import store from 'app/core/store';
 import { ExploreId } from 'app/types/explore';
 
-import { ExploreGraph } from './ExploreGraph';
 import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
 import { LogsVolumePanel } from './LogsVolumePanel';
@@ -330,30 +328,19 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
     return (
       <>
-        {logsSeries && logsSeries.length ? (
-          <>
-            <div className={styles.infoText}>
-              This datasource does not support full-range histograms. The graph is based on the logs seen in the
-              response.
-            </div>
-            <ExploreGraph
-              graphStyle="lines"
-              data={logsSeries}
-              height={150}
-              width={width}
-              tooltipDisplayMode={TooltipDisplayMode.Multi}
-              absoluteRange={visibleRange || absoluteRange}
-              timeZone={timeZone}
-              loadingState={loadingState}
-              onChangeTime={onChangeTime}
-              onHiddenSeriesChanged={this.onToggleLogLevel}
-            />
-          </>
-        ) : undefined}
         <LogsVolumePanel
           absoluteRange={absoluteRange}
           width={width}
           logsVolumeData={logsVolumeData}
+          logLinesBasedData={
+            logsSeries
+              ? {
+                  data: logsSeries,
+                  state: loadingState,
+                }
+              : undefined
+          }
+          logLinesBasedDataVisibleRange={visibleRange}
           onUpdateTimeRange={onChangeTime}
           timeZone={timeZone}
           splitOpen={splitOpen}
@@ -546,10 +533,6 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean) => {
       overflow-x: ${wrapLogMessage ? 'unset' : 'scroll'};
       overflow-y: visible;
       width: 100%;
-    `,
-    infoText: css`
-      font-size: ${theme.typography.size.sm};
-      color: ${theme.colors.text.secondary};
     `,
   };
 };

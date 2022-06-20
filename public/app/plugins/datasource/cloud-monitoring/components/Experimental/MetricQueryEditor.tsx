@@ -16,11 +16,12 @@ import {
   SLOQuery,
   ValueTypes,
 } from '../../types';
-import { Project, VisualMetricQueryEditor } from '../index';
+import { Project } from '../index';
 
-import { GraphPeriod } from './../GraphPeriod';
 import { MQLQueryEditor } from './../MQLQueryEditor';
 import { AliasBy } from './AliasBy';
+import { GraphPeriod } from './GraphPeriod';
+import { VisualMetricQueryEditor } from './VisualMetricQueryEditor';
 
 export interface Props {
   refId: string;

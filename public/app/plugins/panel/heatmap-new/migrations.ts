@@ -9,6 +9,15 @@ import {
 import { PanelOptions, defaultPanelOptions, HeatmapColorMode } from './models.gen';
 import { colorSchemes } from './palettes';
 
+/** Called when the version number changes */
+export const heatmapMigrationHandler = (panel: PanelModel): Partial<PanelOptions> => {
+  // Migrating from angular
+  if (Object.keys(panel.options).length === 0) {
+    return heatmapChangedHandler(panel, 'heatmap', { angular: panel }, panel.fieldConfig);
+  }
+  return panel.options;
+};
+
 /**
  * This is called when the panel changes from another panel
  */
@@ -20,6 +29,14 @@ export const heatmapChangedHandler: PanelTypeChangedHandler = (panel, prevPlugin
     });
     panel.fieldConfig = fieldConfig; // Mutates the incoming panel
     return options;
+  }
+  // alpha for 8.5+, then beta at 9.0.1
+  if (prevPluginId === 'heatmap-new') {
+    const { bucketFrame, ...options } = panel.options;
+    if (bucketFrame) {
+      return { ...options, rowsFrame: bucketFrame };
+    }
+    return panel.options;
   }
   return {};
 };
@@ -60,9 +77,6 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
         },
       };
     }
-
-    fieldConfig.defaults.unit = oldYAxis.format;
-    fieldConfig.defaults.decimals = oldYAxis.decimals;
   }
 
   const options: PanelOptions = {
@@ -77,9 +91,14 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
     yAxis: {
       axisPlacement: oldYAxis.show === false ? AxisPlacement.Hidden : AxisPlacement.Left,
       reverse: Boolean(angular.reverseYBuckets),
-      axisWidth: oldYAxis.width ? +oldYAxis.width : undefined,
+      axisWidth: asNumber(oldYAxis.width),
       min: oldYAxis.min,
       max: oldYAxis.max,
+      unit: oldYAxis.format,
+      decimals: oldYAxis.decimals,
+    },
+    cellValues: {
+      decimals: asNumber(angular.tooltipDecimals),
     },
     rowsFrame: {
       layout: getHeatmapCellLayout(angular.yBucketBound),
@@ -146,11 +165,3 @@ function asNumber(v: any, defaultValue?: number): number | undefined {
   const num = +v;
   return isNaN(num) ? defaultValue : num;
 }
-
-export const heatmapMigrationHandler = (panel: PanelModel): Partial<PanelOptions> => {
-  // Migrating from angular
-  if (!panel.pluginVersion && Object.keys(panel.options).length === 0) {
-    return heatmapChangedHandler(panel, 'heatmap', { angular: panel }, panel.fieldConfig);
-  }
-  return panel.options;
-};
