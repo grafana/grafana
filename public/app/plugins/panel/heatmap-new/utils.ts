@@ -487,7 +487,14 @@ export function prepConfig(opts: PrepConfigOpts) {
         fill: {
           values: (u, seriesIdx) => {
             let countFacetIdx = !isSparseHeatmap ? 2 : 3;
-            return valuesToFills(u.data[seriesIdx][countFacetIdx] as unknown as number[], palette, valueMin, valueMax);
+            return valuesToFills(
+              u.data[seriesIdx][countFacetIdx] as unknown as number[],
+              palette,
+              valueMin,
+              valueMax,
+              hideLE,
+              hideGE
+            );
           },
           index: palette,
         },
@@ -887,12 +894,21 @@ export function heatmapPathsSparse(opts: PathbuilderOpts) {
   };
 }
 
-export const valuesToFills = (values: number[], palette: string[], minValue?: number, maxValue?: number) => {
+export const valuesToFills = (
+  values: number[],
+  palette: string[],
+  minValue?: number,
+  maxValue?: number,
+  hideLE = -Infinity,
+  hideGE = Infinity
+) => {
   if (minValue == null) {
     minValue = Infinity;
 
     for (let i = 0; i < values.length; i++) {
-      minValue = Math.min(minValue, values[i]);
+      if (values[i] > hideLE && values[i] < hideGE) {
+        minValue = Math.min(minValue, values[i]);
+      }
     }
   }
 
@@ -900,7 +916,9 @@ export const valuesToFills = (values: number[], palette: string[], minValue?: nu
     maxValue = -Infinity;
 
     for (let i = 0; i < values.length; i++) {
-      maxValue = Math.max(maxValue, values[i]);
+      if (values[i] > hideLE && values[i] < hideGE) {
+        maxValue = Math.max(maxValue, values[i]);
+      }
     }
   }
 
