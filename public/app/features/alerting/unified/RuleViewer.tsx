@@ -97,7 +97,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
     );
   }
 
-  const rulesSource = getRulesSourceByName(identifier?.ruleSourceName);
+  const rulesSource = getRulesSourceByName(identifier.ruleSourceName);
 
   if (loading) {
     return (
