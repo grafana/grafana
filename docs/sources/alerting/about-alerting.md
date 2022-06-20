@@ -22,6 +22,8 @@ These three individual concepts are the minimum necessities to successfully crea
 
 We will also touch on various other concepts such as [silences]({{< relref "silences/" >}}) and [mute timings]({{< relref "notifications/mute-timings/" >}}) to more granularly manage alert notifications, [role-based access control]({{< relref "../enterprise/access-control/" >}}) to limit access and manage permissions and additional advanced topics such as [external alertmanagers]({{< relref "fundamentals/alertmanager/#add-a-new-external-alertmanager" >}}) and [high availability]({{< relref "high-availability/" >}}).
 
+Watch this video to learn more about creating alerts: {{< vimeo 720001934 >}}
+
 ## Overview
 
 {{< figure src="/static/img/docs/alerting/unified/about-alerting-flow-diagram.jpg" caption="Grafana Alerting overview" >}}
