@@ -110,7 +110,7 @@ def pr_test_backend():
 def pr_pipelines(edition):
     services = integration_test_services(edition)
     volumes = integration_test_services_volumes()
-    variants = ['linux-amd64', 'linux-amd64-musl', 'darwin-amd64', 'windows-amd64', 'armv6', ]
+    variants = ['linux-amd64', 'linux-amd64-musl', 'darwin-amd64', 'windows-amd64',]
     init_steps = [
         identify_runner_step(),
         download_grabpl_step(),
@@ -153,7 +153,7 @@ def pr_pipelines(edition):
             name='pr-build-e2e', edition=edition, trigger=trigger, services=[], steps=init_steps + build_steps,
         ), pipeline(
             name='pr-integration-tests', edition=edition, trigger=trigger, services=services,
-            steps=[download_grabpl_step(), identify_runner_step(), ] + integration_test_steps,
+            steps=[download_grabpl_step(), identify_runner_step(), verify_gen_cue_step(), wire_install_step(), ] + integration_test_steps,
             volumes=volumes,
         ), docs_pipelines(edition, ver_mode, trigger_docs())
     ]
