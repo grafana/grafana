@@ -100,6 +100,13 @@ export class GeomapPanel extends Component<Props, State> {
     this.panelContext = this.context as PanelContext;
   }
 
+  componentWillUnmount() {
+    this.subs.unsubscribe();
+    for (const lyr of this.layers) {
+      lyr.handler.dispose?.();
+    }
+  }
+
   shouldComponentUpdate(nextProps: Props) {
     if (!this.map) {
       return true; // not yet initialized

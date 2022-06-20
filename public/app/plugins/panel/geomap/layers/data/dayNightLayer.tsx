@@ -223,6 +223,10 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
 
       // Marker overlay options
       registerOptionsUI: (builder) => {
+        if(!options.config?.nightColor) {
+          options.config = { ...defaultConfig, ...options.config}
+        }
+
         builder
           .addRadio({
             path: 'config.show',
