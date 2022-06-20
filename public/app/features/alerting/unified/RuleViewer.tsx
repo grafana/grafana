@@ -19,6 +19,7 @@ import { AlertQuery } from '../../../types/unified-alerting-dto';
 
 import { AlertLabels } from './components/AlertLabels';
 import { DetailsField } from './components/DetailsField';
+import { ProvisionedResource, ProvisioningAlert } from './components/Provisioning';
 import { RuleViewerLayout, RuleViewerLayoutContent } from './components/rule-viewer/RuleViewerLayout';
 import { RuleViewerVisualization } from './components/rule-viewer/RuleViewerVisualization';
 import { RuleDetailsActionButtons } from './components/rules/RuleDetailsActionButtons';
@@ -35,7 +36,7 @@ import { AlertingQueryRunner } from './state/AlertingQueryRunner';
 import { getRulesSourceByName } from './utils/datasource';
 import { alertRuleToQueries } from './utils/query';
 import * as ruleId from './utils/rule-id';
-import { isFederatedRuleGroup } from './utils/rules';
+import { isFederatedRuleGroup, isGrafanaRulerRule } from './utils/rules';
 
 type RuleViewerProps = GrafanaRouteComponentProps<{ id?: string; sourceName?: string }>;
 
@@ -131,6 +132,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
 
   const annotations = Object.entries(rule.annotations).filter(([_, value]) => !!value.trim());
   const isFederatedRule = isFederatedRuleGroup(rule.group);
+  const isProvisioned = isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
 
   return (
     <RuleViewerLayout wrapInContent={false} title={pageTitle}>
@@ -146,6 +148,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
           </VerticalGroup>
         </Alert>
       )}
+      {isProvisioned && <ProvisioningAlert resource={ProvisionedResource.AlertRule} />}
       <RuleViewerLayoutContent>
         <div>
           <h4>
