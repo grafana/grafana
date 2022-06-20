@@ -146,7 +146,7 @@ export const errorRateMetric = {
 };
 export const durationMetric = {
   expr: 'histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{}[$__range])) by (le))',
-  params: ['span_status="STATUS_CODE_ERROR"'],
+  params: [],
 };
 
 export const serviceMapMetrics = [
