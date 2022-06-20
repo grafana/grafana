@@ -138,14 +138,10 @@ test-js: ## Run tests for frontend.
 test: test-go test-js ## Run all tests.
 
 ##@ Linting
-scripts/go/bin/golangci-lint: scripts/go/go.mod
-	@cd scripts/go; \
-	$(GO) build -o ./bin/golangci-lint github.com/golangci/golangci-lint/cmd/golangci-lint
-
-golangci-lint: scripts/go/bin/golangci-lint
+golangci-lint: $(GOLANGCI_LINT)
 	@echo "lint via golangci-lint"
-	@scripts/go/bin/golangci-lint run \
-		--config ./scripts/go/configs/.golangci.toml \
+	$(GOLANGCI_LINT) run \
+		--config ./conf/.golangci.toml \
 		$(GO_FILES)
 
 lint-go: golangci-lint ## Run all code checks for backend. You can use GO_FILES to specify exact files to check
