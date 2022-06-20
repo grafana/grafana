@@ -12,13 +12,44 @@ import (
 )
 
 // deleteFunc deletes the fake image.
+// nolint:unused
 type deleteFunc func()
 
-// newFakeImageStore creates a fake image on disk and returns an image
-// with a token, path and URL. The test should call deleteFunc to delete
-// the image from disk at the end of the test.
-func newFakeImageStore(t *testing.T) (ImageStore, deleteFunc) {
-	f, err := os.CreateTemp("", "ngalert-test-image-*.png")
+type fakeImageStore struct {
+	Images []*ngmodels.Image
+}
+
+// getImage returns an image with the same token.
+func (f *fakeImageStore) GetImage(_ context.Context, token string) (*ngmodels.Image, error) {
+	for _, img := range f.Images {
+		if img.Token == token {
+			return img, nil
+		}
+	}
+	return nil, ngmodels.ErrImageNotFound
+}
+
+// newFakeImageStore returns an image store with a test image.
+// The image has a token and a URL, but does not have a file on disk.
+func newFakeImageStore() ImageStore {
+	return &fakeImageStore{
+		Images: []*ngmodels.Image{
+			{
+				Token:     "test-image",
+				URL:       "https://www.example.com/test-image.jpg",
+				CreatedAt: time.Now().UTC(),
+			},
+		},
+	}
+}
+
+// newFakeImageStoreWithFile returns an image store with a test image.
+// The image has a token, path and a URL, where the path is 1x1 transparent
+// PNG on disk. The test should call deleteFunc to delete the image from disk
+// at the end of the test.
+// nolint:deadcode,unused
+func newFakeImageStoreWithFile(t *testing.T) (ImageStore, deleteFunc) {
+	f, err := os.CreateTemp("", "test-image-*.png")
 	if err != nil {
 		t.Fatalf("failed to create temp image: %s", err)
 	}
@@ -98,16 +129,3 @@ func (ns *notificationServiceMock) SendEmailCommandHandler(ctx context.Context, 
 }
 
 func mockNotificationService() *notificationServiceMock { return &notificationServiceMock{} }
-
-type fakeImageStore struct {
-	Images []*ngmodels.Image
-}
-
-func (f *fakeImageStore) GetImage(ctx context.Context, token string) (*ngmodels.Image, error) {
-	for _, img := range f.Images {
-		if img.Token == token {
-			return img, nil
-		}
-	}
-	return nil, ngmodels.ErrImageNotFound
-}
