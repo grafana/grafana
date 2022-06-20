@@ -5,22 +5,25 @@ import (
 	"errors"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Service struct {
-	store store
-	cfg   *setting.Cfg
+	store    store
+	cfg      *setting.Cfg
+	Features *featuremgmt.FeatureManager
 }
 
-func ProvideService(db db.DB, cfg *setting.Cfg) pref.Service {
+func ProvideService(db db.DB, cfg *setting.Cfg, features *featuremgmt.FeatureManager) pref.Service {
 	return &Service{
 		store: &sqlStore{
 			db: db,
 		},
-		cfg: cfg,
+		cfg:      cfg,
+		Features: features,
 	}
 }
 
@@ -224,9 +227,11 @@ func (s *Service) GetDefaults() *pref.Preference {
 		Timezone:        s.cfg.DateFormats.DefaultTimezone,
 		WeekStart:       s.cfg.DateFormats.DefaultWeekStart,
 		HomeDashboardID: 0,
-		JSONData: &pref.PreferenceJSONData{
-			Locale: s.cfg.DefaultLocale,
-		},
+		JSONData:        &pref.PreferenceJSONData{},
+	}
+
+	if s.Features.IsEnabled(featuremgmt.FlagInternationalization) {
+		defaults.JSONData.Locale = s.cfg.DefaultLocale
 	}
 
 	return defaults
