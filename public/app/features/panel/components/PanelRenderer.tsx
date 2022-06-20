@@ -32,7 +32,7 @@ export function PanelRenderer<P extends object = any, F extends object = any>(pr
 
   useEffect(() => {
     // If we already have a plugin and it's correct one do nothing
-    if (plugin && !pluginHasChanged(plugin, pluginId)) {
+    if (plugin && plugin.hasPluginId(pluginId)) {
       return;
     }
 
@@ -48,7 +48,7 @@ export function PanelRenderer<P extends object = any, F extends object = any>(pr
     return <div>Failed to load plugin: {error}</div>;
   }
 
-  if (!plugin || pluginHasChanged(plugin, pluginId)) {
+  if (!plugin || !plugin.hasPluginId(pluginId)) {
     return <div>Loading plugin panel...</div>;
   }
 
