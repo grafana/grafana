@@ -56,7 +56,7 @@ export interface HeatmapRowsCustomMeta {
   yOrdinalDisplay: string[];
   yOrdinalLabel?: string[];
   yMatchWithLabel?: string;
-  yZeroDisplay?: string;
+  yMinDisplay?: string;
 }
 
 /** simple utility to get heatmap metadata from a frame */
@@ -129,7 +129,7 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
   if (custom.yMatchWithLabel) {
     custom.yOrdinalLabel = yFields.map((f) => f.labels?.[custom.yMatchWithLabel!] ?? '');
     if (custom.yMatchWithLabel === 'le') {
-      custom.yZeroDisplay = '0.0';
+      custom.yMinDisplay = '0.0';
     }
   }
 
@@ -137,8 +137,8 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
   // TODO: this leaves the internally prepended '0.0' without this formatting treatment
   if (opts.unit?.length || opts.decimals != null) {
     const fmt = getValueFormat(opts.unit ?? 'short');
-    if (custom.yZeroDisplay) {
-      custom.yZeroDisplay = formattedValueToString(fmt(0, opts.decimals));
+    if (custom.yMinDisplay) {
+      custom.yMinDisplay = formattedValueToString(fmt(0, opts.decimals));
     }
     custom.yOrdinalDisplay = custom.yOrdinalDisplay.map((name) => {
       let num = +name;

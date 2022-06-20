@@ -432,7 +432,7 @@ export function prepConfig(opts: PrepConfigOpts) {
           if (meta.yOrdinalDisplay) {
             return splits.map((v) =>
               v < 0
-                ? meta.yZeroDisplay ?? '' // Check prometheus style labels
+                ? meta.yMinDisplay ?? '' // Check prometheus style labels
                 : meta.yOrdinalDisplay[v] ?? ''
             );
           }
