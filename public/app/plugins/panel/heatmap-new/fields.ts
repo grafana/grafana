@@ -1,17 +1,23 @@
 import {
   DataFrame,
   DataFrameType,
+  Field,
+  FieldType,
   formattedValueToString,
   getDisplayProcessor,
-  getValueFormat,
   GrafanaTheme2,
   outerJoinDataFrames,
   PanelData,
+  ValueFormatter,
 } from '@grafana/data';
-import { calculateHeatmapFromData, rowsToCellsHeatmap } from 'app/features/transformers/calculateHeatmap/heatmap';
+import {
+  calculateHeatmapFromData,
+  readHeatmapRowsCustomMeta,
+  rowsToCellsHeatmap,
+} from 'app/features/transformers/calculateHeatmap/heatmap';
 import { HeatmapCellLayout } from 'app/features/transformers/calculateHeatmap/models.gen';
 
-import { PanelOptions } from './models.gen';
+import { CellValues, PanelOptions } from './models.gen';
 
 export interface HeatmapData {
   heatmap?: DataFrame; // data we will render
@@ -43,8 +49,7 @@ export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme
   const exemplars = data.annotations?.find((f) => f.name === 'exemplar');
 
   if (options.calculate) {
-    // TODO, check for error etc
-    return getHeatmapData(calculateHeatmapFromData(frames, options.calculation ?? {}), exemplars, theme);
+    return getHeatmapData(calculateHeatmapFromData(frames, options.calculation ?? {}), exemplars, options, theme);
   }
 
   // Check for known heatmap types
@@ -52,10 +57,10 @@ export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme
   for (const frame of frames) {
     switch (frame.meta?.type) {
       case DataFrameType.HeatmapSparse:
-        return getSparseHeatmapData(frame, exemplars, theme);
+        return getSparseHeatmapData(frame, exemplars, options, theme);
 
       case DataFrameType.HeatmapCells:
-        return getHeatmapData(frame, exemplars, theme);
+        return getHeatmapData(frame, exemplars, options, theme);
 
       case DataFrameType.HeatmapRows:
         rowsHeatmap = frame; // the default format
@@ -75,12 +80,23 @@ export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme
     }
   }
 
-  return getHeatmapData(rowsToCellsHeatmap({ ...options.rowsFrame, frame: rowsHeatmap }), exemplars, theme);
+  return getHeatmapData(
+    rowsToCellsHeatmap({
+      unit: options.yAxis?.unit, // used to format the ordinal lookup values
+      decimals: options.yAxis?.decimals,
+      ...options.rowsFrame,
+      frame: rowsHeatmap,
+    }),
+    exemplars,
+    options,
+    theme
+  );
 }
 
 const getSparseHeatmapData = (
   frame: DataFrame,
   exemplars: DataFrame | undefined,
+  options: PanelOptions,
   theme: GrafanaTheme2
 ): HeatmapData => {
   if (frame.meta?.type !== DataFrameType.HeatmapSparse) {
@@ -90,7 +106,12 @@ const getSparseHeatmapData = (
     };
   }
 
-  const disp = frame.fields[3].display ?? getValueFormat('short');
+  // y axis tick label display
+  updateFieldDisplay(frame.fields[1], options.yAxis, theme);
+
+  // cell value display
+  const disp = updateFieldDisplay(frame.fields[3], options.cellValues, theme);
+
   return {
     heatmap: frame,
     exemplars,
@@ -98,7 +119,12 @@ const getSparseHeatmapData = (
   };
 };
 
-const getHeatmapData = (frame: DataFrame, exemplars: DataFrame | undefined, theme: GrafanaTheme2): HeatmapData => {
+const getHeatmapData = (
+  frame: DataFrame,
+  exemplars: DataFrame | undefined,
+  options: PanelOptions,
+  theme: GrafanaTheme2
+): HeatmapData => {
   if (frame.meta?.type !== DataFrameType.HeatmapCells) {
     return {
       warning: 'Expected heatmap scanlines format',
@@ -110,10 +136,53 @@ const getHeatmapData = (frame: DataFrame, exemplars: DataFrame | undefined, them
     return { heatmap: frame };
   }
 
-  // Y field values (display is used in the axis)
-  if (!frame.fields[1].display) {
-    frame.fields[1].display = getDisplayProcessor({ field: frame.fields[1], theme });
+  const meta = readHeatmapRowsCustomMeta(frame);
+  let xName: string | undefined = undefined;
+  let yName: string | undefined = undefined;
+  let valueField: Field | undefined = undefined;
+
+  // validate field display properties
+  for (const field of frame.fields) {
+    switch (field.name) {
+      case 'y':
+        yName = field.name;
+
+      case 'yMin':
+      case 'yMax': {
+        if (!yName) {
+          yName = field.name;
+        }
+        if (meta.yOrdinalDisplay == null) {
+          updateFieldDisplay(field, options.yAxis, theme);
+        }
+        break;
+      }
+
+      case 'x':
+      case 'xMin':
+      case 'xMax':
+        xName = field.name;
+        break;
+
+      default: {
+        if (field.type === FieldType.number && !valueField) {
+          valueField = field;
+        }
+      }
+    }
   }
+
+  if (!yName) {
+    return { warning: 'Missing Y field', heatmap: frame };
+  }
+  if (!yName) {
+    return { warning: 'Missing X field', heatmap: frame };
+  }
+  if (!valueField) {
+    return { warning: 'Missing value field', heatmap: frame };
+  }
+
+  const disp = updateFieldDisplay(valueField, options.cellValues, theme);
 
   // infer bucket sizes from data (for now)
   // the 'heatmap-scanlines' dense frame format looks like:
@@ -131,11 +200,6 @@ const getHeatmapData = (frame: DataFrame, exemplars: DataFrame | undefined, them
   let xBinQty = dlen / yBinQty;
   let yBinIncr = ys[1] - ys[0];
   let xBinIncr = xs[yBinQty] - xs[0];
-
-  // The "count" field
-  const disp = frame.fields[2].display ?? getValueFormat('short');
-  const xName = frame.fields[0].name;
-  const yName = frame.fields[1].name;
 
   const data: HeatmapData = {
     heatmap: frame,
@@ -156,3 +220,21 @@ const getHeatmapData = (frame: DataFrame, exemplars: DataFrame | undefined, them
 
   return data;
 };
+
+function updateFieldDisplay(field: Field, opts: CellValues | undefined, theme: GrafanaTheme2): ValueFormatter {
+  if (opts?.unit?.length || opts?.decimals != null) {
+    const { unit, decimals } = opts;
+    field.display = undefined;
+    field.config = { ...field.config };
+    if (unit?.length) {
+      field.config.unit = unit;
+    }
+    if (decimals != null) {
+      field.config.decimals = decimals;
+    }
+  }
+  if (!field.display) {
+    field.display = getDisplayProcessor({ field, theme });
+  }
+  return field.display;
+}
