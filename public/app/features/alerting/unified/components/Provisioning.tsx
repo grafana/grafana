@@ -16,8 +16,8 @@ interface ProvisioningAlertProps {
 
 export const ProvisioningAlert = ({ resource }: ProvisioningAlertProps) => {
   return (
-    <Alert title={`This ${resource} has been provisioned`} severity="info">
-      This {resource} has been provisioned and cannot be modified using the UI. Please contact your server admin to
+    <Alert title={`This ${resource} cannot be edited through the UI`} severity="info">
+      This {resource} has been provisioned, that means it was created by config. Please contact your server admin to
       update this {resource}.
     </Alert>
   );
