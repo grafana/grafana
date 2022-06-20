@@ -310,14 +310,16 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   }
 
   renderWarnings = (): JSX.Element | null => {
-    const allWarnings = this.props.data.series.reduce((acc: QueryResultMetaNotice[], serie) => {
-      if (!serie.meta?.notices) {
-        return acc;
-      }
+    const allWarnings = this.props.data.series
+      .filter((serie) => serie.refId === this.props.id)
+      .reduce((acc: QueryResultMetaNotice[], serie) => {
+        if (!serie.meta?.notices) {
+          return acc;
+        }
 
-      const warnings = filter(serie.meta.notices, { severity: 'warning' }) ?? [];
-      return acc.concat(warnings);
-    }, []);
+        const warnings = filter(serie.meta.notices, { severity: 'warning' }) ?? [];
+        return acc.concat(warnings);
+      }, []);
 
     const uniqueWarnings = uniqBy(allWarnings, 'text');
 
