@@ -18,10 +18,13 @@ import (
 
 var (
 	domPurifySvgConfig = map[string]interface{}{
+		// domPurifyConfig is passed directly to DOMPurify https://github.com/cure53/DOMPurify#can-i-configure-dompurify
 		"domPurifyConfig": map[string]interface{}{
 			"USE_PROFILES": map[string]bool{"svg": true, "svgFilters": true},
 			"ADD_TAGS":     []string{"use"},
 		},
+		// allowAllLinksInSvgUseTags will preserve all `use` tags.
+		// By default, we remove all non-self-referential `use` tags, i.e. those which `href` attribute does not start with `#`
 		"allowAllLinksInSvgUseTags": false,
 	}
 	domPurifyConfigType = "DOMPurify"
@@ -39,11 +42,8 @@ func createMultipartRequestBody(values []formFile) (bytes.Buffer, string, error)
 	w := multipart.NewWriter(&b)
 	for _, f := range values {
 		h := make(textproto.MIMEHeader)
-		h.Set("Content-Disposition",
-			fmt.Sprintf(`form-data; name="%s"; filename="%s"`,
-				f.key, f.fileName))
+		h.Set("Content-Disposition", fmt.Sprintf(`form-data; name="%s"; filename="%s"`, f.key, f.fileName))
 		h.Set("Content-Type", f.contentType)
-
 		formWriter, err := w.CreatePart(h)
 
 		if err != nil {
