@@ -17,7 +17,7 @@ import {
 } from '@grafana/data';
 import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';
-import { readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
+import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 import { HeatmapCellLayout } from 'app/features/transformers/calculateHeatmap/models.gen';
 
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
@@ -264,7 +264,8 @@ export function prepConfig(opts: PrepConfigOpts) {
   const yFieldConfig = yField.config?.custom as PanelFieldConfig | undefined;
   const yScale = yFieldConfig?.scaleDistribution ?? { type: ScaleDistribution.Linear };
   const yAxisReverse = Boolean(yAxisConfig.reverse);
-  const shouldUseLogScale = yScale.type !== ScaleDistribution.Linear || heatmapType === DataFrameType.HeatmapSparse;
+  const isSparseHeatmap = heatmapType === DataFrameType.HeatmapCells && !isHeatmapCellsDense(dataRef.current?.heatmap!);
+  const shouldUseLogScale = yScale.type !== ScaleDistribution.Linear || isSparseHeatmap;
   const isOrdianalY = readHeatmapRowsCustomMeta(dataRef.current?.heatmap).yOrdinalDisplay != null;
 
   // random to prevent syncing y in other heatmaps
@@ -282,7 +283,7 @@ export function prepConfig(opts: PrepConfigOpts) {
     log: yScale.log ?? 2,
     range:
       // sparse already accounts for le/ge by explicit yMin & yMax cell bounds, so no need to expand y range
-      heatmapType === DataFrameType.HeatmapSparse
+      isSparseHeatmap
         ? (u, dataMin, dataMax) => {
             let scaleMin: number | null, scaleMax: number | null;
 
@@ -441,7 +442,7 @@ export function prepConfig(opts: PrepConfigOpts) {
       : undefined,
   });
 
-  const pathBuilder = heatmapType === DataFrameType.HeatmapCells ? heatmapPathsDense : heatmapPathsSparse;
+  const pathBuilder = isSparseHeatmap ? heatmapPathsSparse : heatmapPathsDense;
 
   // heatmap layer
   builder.addSeries({
@@ -485,7 +486,7 @@ export function prepConfig(opts: PrepConfigOpts) {
       disp: {
         fill: {
           values: (u, seriesIdx) => {
-            let countFacetIdx = heatmapType === DataFrameType.HeatmapCells ? 2 : 3;
+            let countFacetIdx = !isSparseHeatmap ? 2 : 3;
             return valuesToFills(u.data[seriesIdx][countFacetIdx] as unknown as number[], palette, valueMin, valueMax);
           },
           index: palette,

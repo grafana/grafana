@@ -12,6 +12,7 @@ import {
 } from '@grafana/data';
 import {
   calculateHeatmapFromData,
+  isHeatmapCellsDense,
   readHeatmapRowsCustomMeta,
   rowsToCellsHeatmap,
 } from 'app/features/transformers/calculateHeatmap/heatmap';
@@ -49,18 +50,17 @@ export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme
   const exemplars = data.annotations?.find((f) => f.name === 'exemplar');
 
   if (options.calculate) {
-    return getHeatmapData(calculateHeatmapFromData(frames, options.calculation ?? {}), exemplars, options, theme);
+    return getDenseHeatmapData(calculateHeatmapFromData(frames, options.calculation ?? {}), exemplars, options, theme);
   }
 
   // Check for known heatmap types
   let rowsHeatmap: DataFrame | undefined = undefined;
   for (const frame of frames) {
     switch (frame.meta?.type) {
-      case DataFrameType.HeatmapSparse:
-        return getSparseHeatmapData(frame, exemplars, options, theme);
-
       case DataFrameType.HeatmapCells:
-        return getHeatmapData(frame, exemplars, options, theme);
+        return isHeatmapCellsDense(frame)
+          ? getDenseHeatmapData(frame, exemplars, options, theme)
+          : getSparseHeatmapData(frame, exemplars, options, theme);
 
       case DataFrameType.HeatmapRows:
         rowsHeatmap = frame; // the default format
@@ -80,7 +80,7 @@ export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme
     }
   }
 
-  return getHeatmapData(
+  return getDenseHeatmapData(
     rowsToCellsHeatmap({
       unit: options.yAxis?.unit, // used to format the ordinal lookup values
       decimals: options.yAxis?.decimals,
@@ -99,7 +99,7 @@ const getSparseHeatmapData = (
   options: PanelOptions,
   theme: GrafanaTheme2
 ): HeatmapData => {
-  if (frame.meta?.type !== DataFrameType.HeatmapSparse) {
+  if (frame.meta?.type !== DataFrameType.HeatmapCells || isHeatmapCellsDense(frame)) {
     return {
       warning: 'Expected sparse heatmap format',
       heatmap: frame,
@@ -119,7 +119,7 @@ const getSparseHeatmapData = (
   };
 };
 
-const getHeatmapData = (
+const getDenseHeatmapData = (
   frame: DataFrame,
   exemplars: DataFrame | undefined,
   options: PanelOptions,

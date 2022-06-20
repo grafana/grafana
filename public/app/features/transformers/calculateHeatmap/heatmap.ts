@@ -64,6 +64,26 @@ export function readHeatmapRowsCustomMeta(frame?: DataFrame): HeatmapRowsCustomM
   return (frame?.meta?.custom ?? {}) as HeatmapRowsCustomMeta;
 }
 
+export function isHeatmapCellsDense(frame: DataFrame) {
+  let foundY = false;
+
+  for (let field of frame.fields) {
+    // dense heatmap frames can only have one of these fields
+    switch (field.name) {
+      case 'y':
+      case 'yMin':
+      case 'yMax':
+        if (foundY) {
+          return false;
+        }
+
+        foundY = true;
+    }
+  }
+
+  return foundY;
+}
+
 export interface RowsHeatmapOptions {
   frame: DataFrame;
   value?: string; // the field value name

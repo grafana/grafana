@@ -16,7 +16,7 @@ import {
 } from '@grafana/ui';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
-import { readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
+import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 
 import { HeatmapHoverView } from './HeatmapHoverView';
 import { prepareHeatmapData } from './fields';
@@ -148,7 +148,8 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     }
 
     let heatmapType = dataRef.current?.heatmap?.meta?.type;
-    let countFieldIdx = heatmapType === DataFrameType.HeatmapCells ? 2 : 3;
+    let isSparseHeatmap = heatmapType === DataFrameType.HeatmapCells && !isHeatmapCellsDense(dataRef.current?.heatmap!);
+    let countFieldIdx = !isSparseHeatmap ? 2 : 3;
     const countField = info.heatmap.fields[countFieldIdx];
 
     // TODO -- better would be to get the range from the real color scale!
