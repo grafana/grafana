@@ -1,6 +1,7 @@
 package types
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -214,6 +215,4 @@ type LogAnalyticsWorkspaceResponse struct {
 	RetentionInDays                 int                             `json:"retentionInDays"`
 }
 
-type AzureError interface {
-	Error() string
-}
+var AzureHealthCheckError = errors.New("Health Check failed")

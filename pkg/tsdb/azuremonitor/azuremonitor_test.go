@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -168,10 +169,10 @@ func Test_newMux(t *testing.T) {
 	}
 }
 
-type RoundTripFunc func(req *http.Request) *http.Response
+type RoundTripFunc func(req *http.Request) (*http.Response, error)
 
 func (f RoundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
-	return f(req), nil
+	return f(req)
 }
 func NewTestClient(fn RoundTripFunc) *http.Client {
 	return &http.Client{
@@ -180,7 +181,7 @@ func NewTestClient(fn RoundTripFunc) *http.Client {
 }
 
 func TestCheckHealth(t *testing.T) {
-	logAnalyticsResponse := func(empty bool) *http.Response {
+	logAnalyticsResponse := func(empty bool) (*http.Response, error) {
 		if !empty {
 			body := struct {
 				Value []types.LogAnalyticsWorkspaceResponse
@@ -200,30 +201,30 @@ func TestCheckHealth(t *testing.T) {
 			}}
 			bodyMarshal, err := json.Marshal(body)
 			if err != nil {
-				t.Error(err)
+				return nil, err
 			}
 			return &http.Response{
 				StatusCode: 200,
 				Body:       ioutil.NopCloser(bytes.NewBuffer(bodyMarshal)),
 				Header:     make(http.Header),
-			}
+			}, nil
 		} else {
 			body := struct {
 				Value []types.LogAnalyticsWorkspaceResponse
 			}{Value: []types.LogAnalyticsWorkspaceResponse{}}
 			bodyMarshal, err := json.Marshal(body)
 			if err != nil {
-				t.Error(err)
+				return nil, err
 			}
 			return &http.Response{
 				StatusCode: 200,
 				Body:       ioutil.NopCloser(bytes.NewBuffer(bodyMarshal)),
 				Header:     make(http.Header),
-			}
+			}, nil
 		}
 	}
 	azureMonitorClient := func(logAnalyticsEmpty bool, fail bool) *http.Client {
-		return NewTestClient(func(req *http.Request) *http.Response {
+		return NewTestClient(func(req *http.Request) (*http.Response, error) {
 			if strings.Contains(req.URL.String(), "workspaces") {
 				return logAnalyticsResponse(logAnalyticsEmpty)
 			} else {
@@ -232,31 +233,36 @@ func TestCheckHealth(t *testing.T) {
 						StatusCode: 200,
 						Body:       ioutil.NopCloser(bytes.NewBufferString("OK")),
 						Header:     make(http.Header),
-					}
+					}, nil
 				} else {
 					return &http.Response{
 						StatusCode: 404,
 						Body:       ioutil.NopCloser(bytes.NewBufferString("not found")),
 						Header:     make(http.Header),
-					}
+					}, nil
 				}
 			}
 		})
 	}
-	okClient := NewTestClient(func(req *http.Request) *http.Response {
+	okClient := NewTestClient(func(req *http.Request) (*http.Response, error) {
 		return &http.Response{
 			StatusCode: 200,
 			Body:       ioutil.NopCloser(bytes.NewBufferString("OK")),
 			Header:     make(http.Header),
-		}
+		}, nil
 	})
-	failClient := NewTestClient(func(req *http.Request) *http.Response {
-		return &http.Response{
-			StatusCode: 404,
-			Body:       ioutil.NopCloser(bytes.NewBufferString("not found")),
-			Header:     make(http.Header),
-		}
-	})
+	failClient := func(azureHealthCheckError bool) *http.Client {
+		return NewTestClient(func(req *http.Request) (*http.Response, error) {
+			if azureHealthCheckError {
+				return nil, errors.New("not found")
+			}
+			return &http.Response{
+				StatusCode: 404,
+				Body:       ioutil.NopCloser(bytes.NewBufferString("not found")),
+				Header:     make(http.Header),
+			}, nil
+		})
+	}
 
 	cloud := "AzureCloud"
 	tests := []struct {
@@ -325,7 +331,7 @@ func TestCheckHealth(t *testing.T) {
 				},
 				azureLogAnalytics: {
 					URL:        routes[cloud]["Azure Log Analytics"].URL,
-					HTTPClient: failClient,
+					HTTPClient: failClient(false),
 				},
 				azureResourceGraph: {
 					URL:        routes[cloud]["Azure Resource Graph"].URL,
@@ -352,7 +358,7 @@ func TestCheckHealth(t *testing.T) {
 				},
 				azureResourceGraph: {
 					URL:        routes[cloud]["Azure Resource Graph"].URL,
-					HTTPClient: failClient,
+					HTTPClient: failClient(false),
 				}},
 		},
 		{
@@ -376,6 +382,29 @@ func TestCheckHealth(t *testing.T) {
 				azureResourceGraph: {
 					URL:        routes[cloud]["Azure Resource Graph"].URL,
 					HTTPClient: okClient,
+				}},
+		},
+		{
+			name:          "Successfully returns Azure health check errors",
+			errorExpected: false,
+			expectedResult: &backend.CheckHealthResult{
+				Status:  backend.HealthStatusError,
+				Message: "One or more health checks failed. See details below.",
+				JSONDetails: []byte(
+					`{"verboseMessage": "1. Error connecting to Azure Monitor endpoint: Health Check failed: Get \"https://management.azure.com/subscriptions?api-version=2018-01-01\": not found\n2. Error connecting to Azure Log Analytics endpoint: Health Check failed: Get \"https://management.azure.com/subscriptions//providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview\": not found\n3. Error connecting to Azure Resource Graph endpoint: Health Check failed: Post \"https://management.azure.com/providers/Microsoft.ResourceGraph/resources?api-version=2021-06-01-preview\": not found" }`),
+			},
+			customServices: map[string]types.DatasourceService{
+				azureMonitor: {
+					URL:        routes[cloud]["Azure Monitor"].URL,
+					HTTPClient: failClient(true),
+				},
+				azureLogAnalytics: {
+					URL:        routes[cloud]["Azure Log Analytics"].URL,
+					HTTPClient: failClient(true),
+				},
+				azureResourceGraph: {
+					URL:        routes[cloud]["Azure Resource Graph"].URL,
+					HTTPClient: failClient(true),
 				}},
 		},
 	}
