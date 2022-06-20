@@ -10,7 +10,7 @@ interface Props {
   className?: string;
   filterType: 'grafana' | 'prometheus';
   stateFilter?: InstanceStateFilter;
-  onStateFilterChange: (value: InstanceStateFilter | undefined) => void;
+  onStateFilterChange: (value?: InstanceStateFilter) => void;
 }
 
 const grafanaOptions = Object.values(GrafanaAlertState).map((value) => ({
