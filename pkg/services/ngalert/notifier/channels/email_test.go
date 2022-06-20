@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -268,7 +269,9 @@ func TestEmailNotifierIntegration(t *testing.T) {
 func createCoreEmailService(t *testing.T) *notifications.NotificationService {
 	t.Helper()
 
-	bus := bus.New()
+	tracer := tracing.InitializeTracerForTest()
+	bus := bus.ProvideBus(tracer)
+
 	cfg := setting.NewCfg()
 	cfg.StaticRootPath = "../../../../../public/"
 	cfg.BuildVersion = "4.0.0"

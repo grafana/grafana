@@ -126,10 +126,15 @@ export const getWeekdayIndex = (day: string) => {
   return moment.weekdays().findIndex((wd) => wd.toLowerCase() === day.toLowerCase());
 };
 
+export const getWeekdayIndexByEnglishName = (day: string) =>
+  ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].findIndex(
+    (wd) => wd.toLowerCase() === day.toLowerCase()
+  );
+
 export const setWeekStart = (weekStart?: string) => {
   const suffix = '-weekStart';
   const language = getLocale().replace(suffix, '');
-  const dow = weekStart ? getWeekdayIndex(weekStart) : -1;
+  const dow = weekStart ? getWeekdayIndexByEnglishName(weekStart) : -1;
   if (dow !== -1) {
     moment.locale(language + suffix, {
       parentLocale: language,

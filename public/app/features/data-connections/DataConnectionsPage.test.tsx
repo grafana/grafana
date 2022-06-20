@@ -8,7 +8,7 @@ import { configureStore } from 'app/store/configureStore';
 
 import DataConnectionsPage from './DataConnectionsPage';
 import navIndex from './__mocks__/store.navIndex.mock';
-import { ROUTE_BASE_ID } from './constants';
+import { ROUTE_BASE_ID, ROUTES } from './constants';
 
 const renderPage = (path = `/${ROUTE_BASE_ID}`): RenderResult => {
   // @ts-ignore
@@ -38,5 +38,13 @@ describe('Data Connections Page', () => {
     renderPage();
 
     expect(await screen.findByText('The list of data sources is under development.')).toBeVisible();
+  });
+
+  test('renders the correct tab even if accessing it with a "sub-url"', async () => {
+    renderPage(`${ROUTES.Plugins}/foo`);
+
+    // Check if it still renders the plugins tab
+    expect(await screen.findByText('The list of plugins is under development')).toBeVisible();
+    expect(screen.queryByText('The list of data sources is under development.')).not.toBeInTheDocument();
   });
 });
