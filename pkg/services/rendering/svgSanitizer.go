@@ -7,7 +7,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
+	"net/textproto"
 	"net/url"
 	"time"
 
@@ -16,10 +18,53 @@ import (
 
 var (
 	domPurifySvgConfig = map[string]interface{}{
-		"USE_PROFILES": map[string]bool{"svg": true, "svgFilters": true},
-		"ADD_TAGS":     []string{"use"},
+		"domPurifyConfig": map[string]interface{}{
+			"USE_PROFILES": map[string]bool{"svg": true, "svgFilters": true},
+			"ADD_TAGS":     []string{"use"},
+		},
+		"allowAllLinksInSvgUseTags": false,
 	}
+	domPurifyConfigType = "DOMPurify"
 )
+
+type formFile struct {
+	fileName    string
+	key         string
+	contentType string
+	content     io.Reader
+}
+
+func createMultipartRequestBody(values []formFile) (bytes.Buffer, string, error) {
+	var b bytes.Buffer
+	w := multipart.NewWriter(&b)
+	for _, f := range values {
+		h := make(textproto.MIMEHeader)
+		h.Set("Content-Disposition",
+			fmt.Sprintf(`form-data; name="%s"; filename="%s"`,
+				f.key, f.fileName))
+		h.Set("Content-Type", f.contentType)
+
+		formWriter, err := w.CreatePart(h)
+
+		if err != nil {
+			return bytes.Buffer{}, "", err
+		}
+
+		if _, err := io.Copy(formWriter, f.content); err != nil {
+			return bytes.Buffer{}, "", err
+		}
+
+		if x, ok := f.content.(io.Closer); ok {
+			_ = x.Close()
+		}
+	}
+
+	if err := w.Close(); err != nil {
+		return bytes.Buffer{}, "", err
+	}
+
+	return b, w.FormDataContentType(), nil
+}
 
 func (rs *RenderingService) sanitizeViaHTTP(ctx context.Context, req *SanitizeSVGRequest) (*SanitizeSVGResponse, error) {
 	sanitizerUrl, err := url.Parse(rs.Cfg.RendererUrl + "/sanitize")
@@ -27,12 +72,29 @@ func (rs *RenderingService) sanitizeViaHTTP(ctx context.Context, req *SanitizeSV
 		return nil, err
 	}
 
-	bodyMap := map[string]interface{}{
-		"content":         string(req.Content),
-		"domPurifyConfig": domPurifySvgConfig,
-		"contentType":     "image/svg+xml",
+	configJson, err := json.Marshal(map[string]interface{}{
+		"config":     domPurifySvgConfig,
+		"configType": domPurifyConfigType,
+	})
+	if err != nil {
+		rs.log.Error("Sanitizer - HTTP: failed to create the request config", "error", err, "filename", req.Filename)
+		return nil, fmt.Errorf("config creation fail: %s", err)
 	}
-	bodyJson, err := json.Marshal(bodyMap)
+
+	body, contentType, err := createMultipartRequestBody([]formFile{
+		{
+			fileName:    "config",
+			key:         "config",
+			contentType: "application/json",
+			content:     bytes.NewReader(configJson),
+		},
+		{
+			fileName:    req.Filename,
+			key:         "file",
+			contentType: "image/svg+xml",
+			content:     bytes.NewReader(req.Content),
+		},
+	})
 	if err != nil {
 		rs.log.Error("Sanitizer - HTTP: failed to create the request body", "error", err, "filename", req.Filename)
 		return nil, fmt.Errorf("body creation fail: %s", err)
@@ -40,14 +102,14 @@ func (rs *RenderingService) sanitizeViaHTTP(ctx context.Context, req *SanitizeSV
 
 	reqContext, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
-	httpReq, err := http.NewRequestWithContext(reqContext, "POST", sanitizerUrl.String(), bytes.NewReader(bodyJson))
+	httpReq, err := http.NewRequestWithContext(reqContext, "POST", sanitizerUrl.String(), &body)
 	if err != nil {
 		rs.log.Error("Sanitizer - HTTP: failed to create the HTTP request", "error", err, "filename", req.Filename)
 		return nil, err
 	}
 
 	httpReq.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", rs.Cfg.BuildVersion))
-	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("Content-Type", contentType)
 
 	rs.log.Debug("Sanitizer - HTTP: calling", "filename", req.Filename, "contentLength", len(req.Content), "url", sanitizerUrl)
 	// make request to renderer server
@@ -58,8 +120,12 @@ func (rs *RenderingService) sanitizeViaHTTP(ctx context.Context, req *SanitizeSV
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		rs.log.Error("Sanitizer - HTTP: failed to sanitize", "error", err)
-		return nil, fmt.Errorf("sanitizer - HTTP: failed to sanitize %s", err)
+		if body, err := io.ReadAll(resp.Body); body != nil {
+			rs.log.Error("Sanitizer - HTTP: failed to sanitize", "statusCode", resp.StatusCode, "error", err, "resp", string(body))
+		} else {
+			rs.log.Error("Sanitizer - HTTP: failed to sanitize", "statusCode", resp.StatusCode, "error", err)
+		}
+		return nil, fmt.Errorf("sanitizer - HTTP: failed to sanitize %s", req.Filename)
 	}
 
 	sanitized, err := io.ReadAll(resp.Body)
@@ -81,10 +147,10 @@ func (rs *RenderingService) sanitizeSVGViaPlugin(ctx context.Context, req *Sanit
 		return nil, errors.New(fmt.Sprintf("Sanitizer - plugin: failed to parse domPurifyConfig %s", err))
 	}
 	grpcReq := &pluginextensionv2.SanitizeRequest{
-		Filename:                  req.Filename,
-		Content:                   req.Content,
-		DomPurifyConfig:           domPurifyConfig,
-		AllowAllLinksInSvgUseTags: false,
+		Filename:   req.Filename,
+		Content:    req.Content,
+		ConfigType: domPurifyConfigType,
+		Config:     domPurifyConfig,
 	}
 	rs.log.Debug("Sanitizer - plugin: calling", "filename", req.Filename, "contentLength", len(req.Content))
 

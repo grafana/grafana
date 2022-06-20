@@ -6,8 +6,8 @@ option go_package = ".;pluginextensionv2";
 message SanitizeRequest {
   string filename = 1;
   bytes content = 2;
-  bytes domPurifyConfig = 3;
-  bool allowAllLinksInSvgUseTags = 4;
+  string configType = 3; // DOMPurify, ...
+  bytes config = 4;
 }
 
 message SanitizeResponse {

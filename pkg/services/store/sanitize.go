@@ -14,9 +14,18 @@ func (s *standardStorageService) sanitizeContents(ctx context.Context, user *mod
 	if req.EntityType == EntityTypeImage {
 		ext := filepath.Ext(req.Path)
 		if ext == ".svg" {
-			resp, err := sanitizer.SanitizeSVG(ctx, &rendering.SanitizeSVGRequest{})
+			resp, err := sanitizer.SanitizeSVG(ctx, &rendering.SanitizeSVGRequest{
+				Filename: storagePath,
+				Content:  req.Contents,
+			})
 			if err != nil {
-				return nil, err
+				if s.cfg.allowUnsanitizedSvgUpload {
+					grafanaStorageLogger.Debug("allowing unsanitized svg upload", "filename", req.Path, "sanitizationError", err)
+					return req.Contents, nil
+				} else {
+					grafanaStorageLogger.Debug("disallowing unsanitized svg upload", "filename", req.Path, "sanitizationError", err)
+					return nil, err
+				}
 			}
 
 			return resp.Sanitized, nil
