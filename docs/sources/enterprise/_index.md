@@ -26,7 +26,7 @@ To learn more about Grafana Enterprise, refer to [our product page](https://graf
 
 ## Enterprise features in Grafana Cloud
 
-Many Grafana Enterprise features are also available in [Grafana Cloud]({{< ref "/docs/grafana-cloud" >}}) Pro and Advanced accounts. For details, refer to [the Grafana Cloud features table](https://grafana.com/pricing/#featuresTable) and [Enterprise features available to Grafana Cloud Pro and Advanced accounts]({{< ref "/docs/grafana-cloud/reference/enterprise-features" >}}).
+Many Grafana Enterprise features are also available in [Grafana Cloud]({{< ref "/grafana-cloud" >}}) Pro and Advanced accounts. For details, refer to [the Grafana Cloud features table](https://grafana.com/pricing/#featuresTable) and [Enterprise features available to Grafana Cloud Pro and Advanced accounts]({{< ref "/grafana-cloud/reference/enterprise-features" >}}).
 
 ## Authentication
 
@@ -58,8 +58,8 @@ With [enhanced LDAP integration]({{< relref "../setup-grafana/configure-security
 
 Grafana Enterprise adds the following features:
 
-- [Role-based access control]({{< relref "access-control/" >}}) to control access with role-based permissions.
-- [Data source permissions]({{< relref "datasource_permissions/" >}}) to restrict query access to specific teams and users.
+- [Role-based access control]({{< relref "../administration/roles-and-permissions/access-control/" >}}) to control access with role-based permissions.
+- [Data source permissions]({{< relref "../administration/data-source-management/" >}}) to restrict query access to specific teams and users.
 - [Data source query caching]({{< relref "query-caching/" >}}) to temporarily store query results in Grafana to reduce data source load and rate limiting.
 - [Reporting]({{< relref "reporting/" >}}) to generate a PDF report from any dashboard and set up a schedule to have it emailed to whoever you choose.
 - [Export dashboard as PDF]({{< relref "export-pdf/" >}})

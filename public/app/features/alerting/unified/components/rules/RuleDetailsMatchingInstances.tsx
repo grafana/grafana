@@ -5,13 +5,17 @@ import React, { useMemo, useState } from 'react';
 import { GrafanaTheme } from '@grafana/data';
 import { LinkButton, useStyles } from '@grafana/ui';
 import { MatcherFilter } from 'app/features/alerting/unified/components/alert-groups/MatcherFilter';
-import { AlertInstanceStateFilter } from 'app/features/alerting/unified/components/rules/AlertInstanceStateFilter';
+import {
+  AlertInstanceStateFilter,
+  InstanceStateFilter,
+} from 'app/features/alerting/unified/components/rules/AlertInstanceStateFilter';
 import { labelsMatchMatchers, parseMatchers } from 'app/features/alerting/unified/utils/alertmanager';
 import { createViewLink, sortAlerts } from 'app/features/alerting/unified/utils/misc';
 import { SortOrder } from 'app/plugins/panel/alertlist/types';
 import { Alert, CombinedRule } from 'app/types/unified-alerting';
 import { GrafanaAlertState, mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
 
+import { GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from '../../utils/datasource';
 import { isAlertingRule } from '../../utils/rules';
 import { DetailsField } from '../DetailsField';
 
@@ -63,13 +67,15 @@ export function RuleDetailsMatchingInstances(props: Props): JSX.Element | null {
   } = props;
 
   const [queryString, setQueryString] = useState<string>();
-  const [alertState, setAlertState] = useState<GrafanaAlertState>();
+  const [alertState, setAlertState] = useState<InstanceStateFilter>();
 
   // This key is used to force a rerender on the inputs when the filters are cleared
   const [filterKey] = useState<number>(Math.floor(Math.random() * 100));
   const queryStringKey = `queryString-${filterKey}`;
 
   const styles = useStyles(getStyles);
+
+  const stateFilterType = isGrafanaRulesSource(namespace.rulesSource) ? GRAFANA_RULES_SOURCE_NAME : 'prometheus';
 
   const alerts = useMemo(
     (): Alert[] =>
@@ -117,6 +123,7 @@ export function RuleDetailsMatchingInstances(props: Props): JSX.Element | null {
           />
           <AlertInstanceStateFilter
             className={styles.rowChild}
+            filterType={stateFilterType}
             stateFilter={alertState}
             onStateFilterChange={setAlertState}
             itemPerStateStats={countAllByState}
@@ -131,7 +138,7 @@ export function RuleDetailsMatchingInstances(props: Props): JSX.Element | null {
 
 function filterAlerts(
   alertInstanceLabel: string | undefined,
-  alertInstanceState: GrafanaAlertState | undefined,
+  alertInstanceState: InstanceStateFilter | undefined,
   alerts: Alert[]
 ): Alert[] {
   let filteredAlerts = [...alerts];

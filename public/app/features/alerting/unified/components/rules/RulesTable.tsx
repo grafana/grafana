@@ -8,8 +8,10 @@ import { CombinedRule } from 'app/types/unified-alerting';
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { Annotation } from '../../utils/constants';
+import { isGrafanaRulerRule } from '../../utils/rules';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { DynamicTableWithGuidelines } from '../DynamicTableWithGuidelines';
+import { ProvisioningBadge } from '../Provisioning';
 import { RuleLocation } from '../RuleLocation';
 
 import { RuleDetails } from './RuleDetails';
@@ -127,6 +129,23 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean) {
         // eslint-disable-next-line react/display-name
         renderCell: ({ data: rule }) => rule.name,
         size: 5,
+      },
+      {
+        id: 'provisioned',
+        label: '',
+        // eslint-disable-next-line react/display-name
+        renderCell: ({ data: rule }) => {
+          const rulerRule = rule.rulerRule;
+          const isGrafanaManagedRule = isGrafanaRulerRule(rulerRule);
+
+          if (!isGrafanaManagedRule) {
+            return null;
+          }
+
+          const provenance = rulerRule.grafana_alert.provenance;
+          return provenance ? <ProvisioningBadge /> : null;
+        },
+        size: '100px',
       },
       {
         id: 'health',

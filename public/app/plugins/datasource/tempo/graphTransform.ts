@@ -146,7 +146,7 @@ export const errorRateMetric = {
 };
 export const durationMetric = {
   expr: 'histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{}[$__range])) by (le))',
-  params: ['span_status="STATUS_CODE_ERROR"'],
+  params: [],
 };
 
 export const serviceMapMetrics = [
@@ -207,8 +207,8 @@ function createServiceMapDataFrames() {
     { name: Fields.id },
     { name: Fields.source },
     { name: Fields.target },
-    { name: Fields.mainStat, config: { unit: 'r', displayName: 'Requests' } },
-    { name: Fields.secondaryStat, config: { unit: 'ms/r', displayName: 'Average response time' } },
+    { name: Fields.mainStat, config: { unit: 'ms/r', displayName: 'Average response time' } },
+    { name: Fields.secondaryStat, config: { unit: 'r/sec', displayName: 'Requests per second' } },
   ]);
 
   return [nodes, edges];
@@ -327,8 +327,8 @@ function convertToDataFrames(
       [Fields.id]: edgeId,
       [Fields.source]: edge.source,
       [Fields.target]: edge.target,
-      [Fields.mainStat]: edge.total, // Requests
-      [Fields.secondaryStat]: edge.total ? (edge.seconds! / edge.total) * 1000 : Number.NaN, // Average response time
+      [Fields.mainStat]: edge.total ? (edge.seconds! / edge.total) * 1000 : Number.NaN, // Average response time
+      [Fields.secondaryStat]: edge.total ? Math.round((edge.total / (rangeMs / 1000)) * 100) / 100 : Number.NaN, // Request per second (to 2 decimals)
     });
   }
 

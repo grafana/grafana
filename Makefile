@@ -7,7 +7,7 @@ WIRE_TAGS = "oss"
 -include local/Makefile
 include .bingo/Variables.mk
 
-.PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-full build-docker-full-ubuntu lint-go golangci-lint test-go test-js gen-ts test run run-frontend clean devenv devenv-down protobuf drone help
+.PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-full build-docker-full-ubuntu lint-go golangci-lint test-go test-js gen-ts test run run-frontend clean devenv devenv-down protobuf drone help gen-go gen-cue
 
 GO = go
 GO_FILES ?= ./pkg/...
@@ -92,7 +92,7 @@ gen-cue: ## Do all CUE/Thema code generation
 	go generate ./pkg/framework/coremodel
 	go generate ./public/app/plugins
 
-gen-go: $(WIRE)
+gen-go: $(WIRE) gen-cue
 	@echo "generate go files"
 	$(WIRE) gen -tags $(WIRE_TAGS) ./pkg/server ./pkg/cmd/grafana-cli/runner
 
@@ -138,14 +138,10 @@ test-js: ## Run tests for frontend.
 test: test-go test-js ## Run all tests.
 
 ##@ Linting
-scripts/go/bin/golangci-lint: scripts/go/go.mod
-	@cd scripts/go; \
-	$(GO) build -o ./bin/golangci-lint github.com/golangci/golangci-lint/cmd/golangci-lint
-
-golangci-lint: scripts/go/bin/golangci-lint
+golangci-lint: $(GOLANGCI_LINT)
 	@echo "lint via golangci-lint"
-	@scripts/go/bin/golangci-lint run \
-		--config ./scripts/go/configs/.golangci.toml \
+	$(GOLANGCI_LINT) run \
+		--config ./conf/.golangci.toml \
 		$(GO_FILES)
 
 lint-go: golangci-lint ## Run all code checks for backend. You can use GO_FILES to specify exact files to check
