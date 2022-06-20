@@ -118,6 +118,13 @@ func (ss *SQLStore) DeleteDataSource(ctx context.Context, cmd *models.DeleteData
 			}
 		}
 
+		if cmd.UpdateSecretFn != nil {
+			if err := cmd.UpdateSecretFn(); err != nil {
+				sqlog.Error("Failed to update datasource secrets -- rolling back update", "UID", cmd.UID, "name", cmd.Name, "orgId", cmd.OrgID)
+				return err
+			}
+		}
+
 		// Publish data source deletion event
 		sess.publishAfterCommit(&events.DataSourceDeleted{
 			Timestamp: time.Now(),
@@ -210,6 +217,13 @@ func (ss *SQLStore) AddDataSource(ctx context.Context, cmd *models.AddDataSource
 			return err
 		}
 
+		if cmd.UpdateSecretFn != nil {
+			if err := cmd.UpdateSecretFn(); err != nil {
+				sqlog.Error("Failed to update datasource secrets -- rolling back update", "name", cmd.Name, "type", cmd.Type, "orgId", cmd.OrgId)
+				return err
+			}
+		}
+
 		cmd.Result = ds
 
 		sess.publishAfterCommit(&events.DataSourceCreated{
@@ -291,6 +305,13 @@ func (ss *SQLStore) UpdateDataSource(ctx context.Context, cmd *models.UpdateData
 		}
 
 		err = updateIsDefaultFlag(ds, sess)
+
+		if cmd.UpdateSecretFn != nil {
+			if err := cmd.UpdateSecretFn(); err != nil {
+				sqlog.Error("Failed to update datasource secrets -- rolling back update", "UID", cmd.Uid, "name", cmd.Name, "type", cmd.Type, "orgId", cmd.OrgId)
+				return err
+			}
+		}
 
 		cmd.Result = ds
 		return err

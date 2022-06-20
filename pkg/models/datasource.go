@@ -81,6 +81,15 @@ func (ds DataSource) AllowedCookies() []string {
 	return []string{}
 }
 
+// Specific error type for grpc secrets management so that we can show more detailed plugin errors to users
+type ErrDatasourceSecretsPluginUserFriendly struct {
+	Err string
+}
+
+func (e ErrDatasourceSecretsPluginUserFriendly) Error() string {
+	return e.Err
+}
+
 // ----------------------
 // COMMANDS
 
@@ -104,6 +113,7 @@ type AddDataSourceCommand struct {
 	UserId                  int64             `json:"-"`
 	ReadOnly                bool              `json:"-"`
 	EncryptedSecureJsonData map[string][]byte `json:"-"`
+	UpdateSecretFn          UpdateSecretFn    `json:"-"`
 
 	Result *DataSource `json:"-"`
 }
@@ -129,6 +139,7 @@ type UpdateDataSourceCommand struct {
 	Id                      int64             `json:"-"`
 	ReadOnly                bool              `json:"-"`
 	EncryptedSecureJsonData map[string][]byte `json:"-"`
+	UpdateSecretFn          UpdateSecretFn    `json:"-"`
 
 	Result *DataSource `json:"-"`
 }
@@ -143,6 +154,8 @@ type DeleteDataSourceCommand struct {
 	OrgID int64
 
 	DeletedDatasourcesCount int64
+
+	UpdateSecretFn UpdateSecretFn
 }
 
 // DeleteDataSourceSecrets will delete the SecureJsonData on DataSource based on OrgID as well as the UID (preferred), ID, or Name.
@@ -156,6 +169,9 @@ type DeleteDataSourceSecretsCommand struct {
 
 	DeletedSecretsCount int64
 }
+
+// Function for updating secrets along with datasources, to ensure atomicity
+type UpdateSecretFn func() error
 
 // ---------------------
 // QUERIES
