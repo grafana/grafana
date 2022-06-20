@@ -137,9 +137,6 @@ exports[`no enzyme tests`] = {
     "public/app/features/folders/FolderSettingsPage.test.tsx:1109052730": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/org/OrgDetailsPage.test.tsx:3835042085": [
-      [0, 19, 13, "RegExp match", "2409514259"]
-    ],
     "public/app/plugins/datasource/cloudwatch/components/ConfigEditor.test.tsx:227258837": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
