@@ -273,7 +273,7 @@ const (
 	FixedRolePrefix     = "fixed:"
 	ManagedRolePrefix   = "managed:"
 	BasicRolePrefix     = "basic:"
-	AppPluginRolePrefix = "plugin.app:"
+	AppPluginRolePrefix = "plugins.app:"
 	BasicRoleUIDPrefix  = "basic_"
 	RoleGrafanaAdmin    = "Grafana Admin"
 

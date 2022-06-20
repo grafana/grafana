@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -82,12 +83,13 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/live/pipeline", reqGrafanaAdmin, hs.Index)
 	r.Get("/live/cloud", reqGrafanaAdmin, hs.Index)
 
+	pluginIDScope := plugins.AppScopeProvider.GetResourceScope(ac.Parameter(":id"))
 	r.Get("/plugins", reqSignedIn, hs.Index)
 	r.Get("/plugins/:id/", reqSignedIn, hs.Index)
 	r.Get("/plugins/:id/edit", reqSignedIn, hs.Index) // deprecated
 	r.Get("/plugins/:id/page/:page", reqSignedIn, hs.Index)
-	r.Get("/a/:id/*", reqSignedIn, hs.Index) // App Root Page
-	r.Get("/a/:id", reqSignedIn, hs.Index)
+	r.Get("/a/:id/*", authorize(reqSignedIn, ac.EvalPermission(plugins.AppReadAction, pluginIDScope)), hs.Index) // App Root Page
+	r.Get("/a/:id", authorize(reqSignedIn, ac.EvalPermission(plugins.AppReadAction, pluginIDScope)), hs.Index)
 
 	//pubdash
 	if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {

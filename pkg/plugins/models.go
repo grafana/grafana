@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
 const (
@@ -83,16 +84,17 @@ type Dependencies struct {
 }
 
 type Includes struct {
-	Name       string          `json:"name"`
-	Path       string          `json:"path"`
-	Type       string          `json:"type"`
-	Component  string          `json:"component"`
-	Role       models.RoleType `json:"role"`
-	AddToNav   bool            `json:"addToNav"`
-	DefaultNav bool            `json:"defaultNav"`
-	Slug       string          `json:"slug"`
-	Icon       string          `json:"icon"`
-	UID        string          `json:"uid"`
+	Name          string                     `json:"name"`
+	Path          string                     `json:"path"`
+	Type          string                     `json:"type"`
+	Component     string                     `json:"component"`
+	Role          models.RoleType            `json:"role"`
+	AccessControl accesscontrol.EvaluatorDTO `json:"accesscontrol,omitempty"`
+	AddToNav      bool                       `json:"addToNav"`
+	DefaultNav    bool                       `json:"defaultNav"`
+	Slug          string                     `json:"slug"`
+	Icon          string                     `json:"icon"`
+	UID           string                     `json:"uid"`
 
 	ID string `json:"-"`
 }
@@ -102,6 +104,10 @@ func (e Includes) DashboardURLPath() string {
 		return ""
 	}
 	return "/d/" + e.UID
+}
+
+func (e Includes) IsRBACReady() bool {
+	return e.AccessControl.Ev != nil
 }
 
 type Dependency struct {

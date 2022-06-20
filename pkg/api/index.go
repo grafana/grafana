@@ -89,9 +89,8 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 		}
 
 		if plugin.IsRBACReady() {
-			// TODO move action and scope
-			pluginIdScope := ac.Scope("plugin.app", "id", plugin.ID)
-			if !hasAccess(ac.ReqSignedIn, ac.EvalPermission("plugin.app:read", pluginIdScope)) {
+			pluginIDScope := plugins.AppScopeProvider.GetResourceScope(plugin.ID)
+			if !hasAccess(ac.ReqSignedIn, ac.EvalPermission(plugins.AppReadAction, pluginIDScope)) {
 				hs.log.Debug("plugin is covered by RBAC user doesn't have access", "plugin", plugin.ID)
 				continue
 			}
@@ -111,7 +110,14 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 		}
 
 		for _, include := range plugin.Includes {
-			if !c.HasUserRole(include.Role) {
+			// TODO simplify access control here
+			fallback := func(rc *models.ReqContext) bool { return c.HasUserRole(include.Role) }
+			if include.IsRBACReady() && !hasAccess(fallback, include.AccessControl.Ev) {
+				hs.log.Debug("plugin include is covered by RBAC, user doesn't have access",
+					"plugin", plugin.ID,
+					"include", include.Name)
+				continue
+			} else if !include.IsRBACReady() && !fallback(c) {
 				continue
 			}
 
