@@ -345,6 +345,7 @@ describe('given dashboard with repeated panels', () => {
     expect(element.model).toEqual({
       id: 17,
       datasource: { type: 'other2', uid: '$ds' },
+      targets: [{ refId: 'A', datasource: { type: 'other2', uid: '$ds' } }],
       type: 'graph',
     });
   });

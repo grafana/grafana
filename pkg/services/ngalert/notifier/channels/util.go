@@ -37,7 +37,12 @@ const (
 
 var (
 	// Provides current time. Can be overwritten in tests.
-	timeNow              = time.Now
+	timeNow = time.Now
+
+	// ErrImagesDone is used to stop iteration of subsequent images. It should be
+	// returned from forEachFunc when either the intended image has been found or
+	// the maximum number of images has been iterated.
+	ErrImagesDone        = errors.New("images done")
 	ErrImagesUnavailable = errors.New("alert screenshots are unavailable")
 )
 
@@ -53,6 +58,11 @@ func withStoredImages(ctx context.Context, l log.Logger, imageStore ImageStore, 
 	for i := range alerts {
 		err := withStoredImage(ctx, l, imageStore, forEachFunc, i, alerts...)
 		if err != nil {
+			// Stop iteration as forEachFunc has found the intended image or
+			// iterated the maximum number of images
+			if errors.Is(err, ErrImagesDone) {
+				return nil
+			}
 			return err
 		}
 	}
