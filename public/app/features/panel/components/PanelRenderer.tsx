@@ -137,7 +137,3 @@ function useFieldOverrides(
     };
   }, [fieldConfigRegistry, fieldConfig, data, series, timeZone, theme]);
 }
-
-function pluginHasChanged(plugin: PanelPlugin | undefined, pluginId: string) {
-  return plugin && plugin.meta.id !== pluginId;
-}
