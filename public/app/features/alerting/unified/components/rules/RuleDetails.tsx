@@ -21,7 +21,6 @@ interface Props {
 export const RuleDetails: FC<Props> = ({ rule }) => {
   const styles = useStyles2(getStyles);
   const {
-    promRule,
     namespace: { rulesSource },
   } = rule;
 
@@ -44,7 +43,7 @@ export const RuleDetails: FC<Props> = ({ rule }) => {
           <RuleDetailsDataSources rulesSource={rulesSource} rule={rule} />
         </div>
       </div>
-      <RuleDetailsMatchingInstances promRule={promRule} />
+      <RuleDetailsMatchingInstances rule={rule} />
     </div>
   );
 };
@@ -53,6 +52,7 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
     display: flex;
     flex-direction: row;
+
     ${theme.breakpoints.down('md')} {
       flex-direction: column;
     }
