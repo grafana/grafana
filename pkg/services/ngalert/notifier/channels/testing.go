@@ -30,10 +30,10 @@ func (f *fakeImageStore) GetImage(_ context.Context, token string) (*ngmodels.Im
 // Each image has a token and a URL, but does not have a file on disk.
 func newFakeImageStore(n int) ImageStore {
 	s := fakeImageStore{}
-	for i := 0; i < n; i++ {
+	for i := 1; i <= n; i++ {
 		s.Images = append(s.Images, &ngmodels.Image{
 			Token:     fmt.Sprintf("test-image-%d", i),
-			URL:       fmt.Sprintf("https://www.example.com/test-image-%d.jpg", 1),
+			URL:       fmt.Sprintf("https://www.example.com/test-image-%d.jpg", i),
 			CreatedAt: time.Now().UTC(),
 		})
 	}
@@ -60,7 +60,7 @@ func newFakeImageStoreWithFile(t *testing.T, n int) ImageStore {
 		}
 	})
 
-	for i := 0; i < n; i++ {
+	for i := 1; i <= n; i++ {
 		file, err := newTestImage()
 		if err != nil {
 			t.Fatalf("failed to create test image: %s", err)
