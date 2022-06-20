@@ -8,7 +8,6 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"net/url"
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -82,8 +81,6 @@ func New(
 		return nil, fmt.Errorf("error reading settings: %w", err)
 	}
 
-	p := client.NewProvider(settings, jsonData, httpClientProvider, cfg, features, plog)
-
 	customHeaders := make(map[string]string)
 	var jsonDataMap map[string]interface{}
 
@@ -114,7 +111,7 @@ func New(
 
 	return &Resource{
 		log:           plog,
-		provider:      p,
+		provider:      client.NewProvider(settings, jsonData, httpClientProvider, cfg, features, plog),
 		customHeaders: customHeaders,
 	}, nil
 }
@@ -133,12 +130,7 @@ func (r *Resource) Execute(ctx context.Context, req *backend.CallResourceRequest
 
 func (r *Resource) fetch(ctx context.Context, client *client.Client, req *backend.CallResourceRequest) (int, []byte, error) {
 	r.log.Debug("Sending resource query", "URL", req.URL)
-	u, err := url.Parse(req.URL)
-	if err != nil {
-		return 500, nil, err
-	}
-
-	resp, err := client.QueryResource(ctx, req.Method, u.Path, u.Query())
+	resp, err := client.QueryResource(ctx, req)
 	if err != nil {
 		statusCode := 500
 		if resp != nil {

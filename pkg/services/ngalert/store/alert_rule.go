@@ -50,6 +50,7 @@ type RuleStore interface {
 	GetRuleGroupInterval(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string) (int64, error)
 	GetUserVisibleNamespaces(context.Context, int64, *models.SignedInUser) (map[string]*models.Folder, error)
 	GetNamespaceByTitle(context.Context, string, int64, *models.SignedInUser, bool) (*models.Folder, error)
+	GetNamespaceByUID(context.Context, string, int64, *models.SignedInUser) (*models.Folder, error)
 	// InsertAlertRules will insert all alert rules passed into the function
 	// and return the map of uuid to id.
 	InsertAlertRules(ctx context.Context, rule []ngmodels.AlertRule) (map[string]int64, error)
@@ -381,6 +382,16 @@ func (st DBstore) GetNamespaceByTitle(ctx context.Context, namespace string, org
 			}
 			return nil, ngmodels.ErrCannotEditNamespace
 		}
+	}
+
+	return folder, nil
+}
+
+// GetNamespaceByUID is a handler for retrieving a namespace by its UID. Alerting rules follow a Grafana folder-like structure which we call namespaces.
+func (st DBstore) GetNamespaceByUID(ctx context.Context, uid string, orgID int64, user *models.SignedInUser) (*models.Folder, error) {
+	folder, err := st.FolderService.GetFolderByUID(ctx, user, orgID, uid)
+	if err != nil {
+		return nil, err
 	}
 
 	return folder, nil

@@ -438,7 +438,7 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
         links: [
           makePromLink(
             'Request rate',
-            `rate(${totalsMetric}{server="\${__data.fields.id}"}[$__rate_interval])`,
+            `sum by (client, server)(rate(${totalsMetric}{server="\${__data.fields.id}"}[$__rate_interval]))`,
             datasourceUid,
             false
           ),
@@ -450,7 +450,7 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
           ),
           makePromLink(
             'Failed request rate',
-            `rate(${failedMetric}{server="\${__data.fields.id}"}[$__rate_interval])`,
+            `sum by (client, server)(rate(${failedMetric}{server="\${__data.fields.id}"}[$__rate_interval]))`,
             datasourceUid,
             false
           ),
@@ -766,6 +766,8 @@ export function buildExpr(
 }
 
 export function buildLinkExpr(expr: string) {
+  // don't want top 5 or by span name in links
+  expr = expr.replace('topk(5, ', '').replace(' by (span_name))', '');
   return expr.replace('__range', '__rate_interval');
 }
 

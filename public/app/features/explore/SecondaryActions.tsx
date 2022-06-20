@@ -21,11 +21,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     containerMargin: css`
       margin-top: ${theme.spacing(2)};
     `,
-    exploreActiveButton: css`
-      box-shadow: ${theme.shadows.z1};
-      border: 1px solid ${theme.colors.warning.border};
-      color: ${theme.colors.warning.text};
-    `,
   };
 };
 export function SecondaryActions(props: Props) {
@@ -49,7 +44,7 @@ export function SecondaryActions(props: Props) {
           <Button
             variant="secondary"
             aria-label="Rich history button"
-            className={cx({ [styles.exploreActiveButton]: props.richHistoryButtonActive })}
+            className={cx({ ['explore-active-button']: props.richHistoryButtonActive })}
             onClick={props.onClickRichHistoryButton}
             icon="history"
           >
@@ -59,7 +54,7 @@ export function SecondaryActions(props: Props) {
         <Button
           variant="secondary"
           aria-label="Query inspector button"
-          className={cx({ [styles.exploreActiveButton]: props.queryInspectorButtonActive })}
+          className={cx({ ['explore-active-button']: props.queryInspectorButtonActive })}
           onClick={props.onClickQueryInspectorButton}
           icon="info-circle"
         >
