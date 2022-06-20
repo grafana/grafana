@@ -230,7 +230,7 @@ def lint_backend_step(edition):
         ],
         'commands': [
             # Don't use Make since it will re-download the linters
-            './bin/grabpl lint-backend --edition {}'.format(edition),
+            'make lint-go',
         ],
     }
 

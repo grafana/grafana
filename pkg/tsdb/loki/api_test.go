@@ -58,50 +58,76 @@ func TestApiUrlHandling(t *testing.T) {
 	`)
 
 	queryTestData := []struct {
-		name        string
-		dsUrl       string
-		queryPrefix string
-		metaUrl     string
+		name               string
+		dsUrl              string
+		rangeQueryPrefix   string
+		instantQueryPrefix string
+		metaUrl            string
 	}{
 		{
-			name:        "no path in datasource-config",
-			dsUrl:       "http://localhost:3100",
-			queryPrefix: "http://localhost:3100/loki/api/v1/query_range?",
-			metaUrl:     "http://localhost:3100/loki/api/v1/labels?start=1&end=2",
+			name:               "no path in datasource-config",
+			dsUrl:              "http://localhost:3100",
+			rangeQueryPrefix:   "http://localhost:3100/loki/api/v1/query_range?",
+			instantQueryPrefix: "http://localhost:3100/loki/api/v1/query?",
+			metaUrl:            "http://localhost:3100/loki/api/v1/labels?start=1&end=2",
 		},
 		{
-			name:        "just a slash path in datasource-config",
-			dsUrl:       "http://localhost:3100/",
-			queryPrefix: "http://localhost:3100/loki/api/v1/query_range?",
-			metaUrl:     "http://localhost:3100/loki/api/v1/labels?start=1&end=2",
+			name:               "just a slash path in datasource-config",
+			dsUrl:              "http://localhost:3100/",
+			rangeQueryPrefix:   "http://localhost:3100/loki/api/v1/query_range?",
+			instantQueryPrefix: "http://localhost:3100/loki/api/v1/query?",
+			metaUrl:            "http://localhost:3100/loki/api/v1/labels?start=1&end=2",
 		},
 		{
-			name:        "when path-without-end-slash in datasource-config",
-			dsUrl:       "http://localhost:3100/a/b/c",
-			queryPrefix: "http://localhost:3100/a/b/c/loki/api/v1/query_range?",
-			metaUrl:     "http://localhost:3100/a/b/c/loki/api/v1/labels?start=1&end=2",
+			name:               "when path-without-end-slash in datasource-config",
+			dsUrl:              "http://localhost:3100/a/b/c",
+			rangeQueryPrefix:   "http://localhost:3100/a/b/c/loki/api/v1/query_range?",
+			instantQueryPrefix: "http://localhost:3100/a/b/c/loki/api/v1/query?",
+			metaUrl:            "http://localhost:3100/a/b/c/loki/api/v1/labels?start=1&end=2",
 		},
 		{
-			name:        "path-with-end-slash in datasource-config",
-			dsUrl:       "http://localhost:3100/a/b/c/",
-			queryPrefix: "http://localhost:3100/a/b/c/loki/api/v1/query_range?",
-			metaUrl:     "http://localhost:3100/a/b/c/loki/api/v1/labels?start=1&end=2",
+			name:               "path-with-end-slash in datasource-config",
+			dsUrl:              "http://localhost:3100/a/b/c/",
+			rangeQueryPrefix:   "http://localhost:3100/a/b/c/loki/api/v1/query_range?",
+			instantQueryPrefix: "http://localhost:3100/a/b/c/loki/api/v1/query?",
+			metaUrl:            "http://localhost:3100/a/b/c/loki/api/v1/labels?start=1&end=2",
 		},
 	}
 
 	for _, test := range queryTestData {
-		t.Run("Loki should build the query URL correctly when "+test.name, func(t *testing.T) {
+		t.Run("Loki should build the range-query URL correctly when "+test.name, func(t *testing.T) {
 			called := false
 			api := makeMockedAPIWithUrl(test.dsUrl, 200, "application/json", response, func(req *http.Request) {
 				called = true
 				urlString := req.URL.String()
-				wantedPrefix := test.queryPrefix
+				wantedPrefix := test.rangeQueryPrefix
 				failMessage := fmt.Sprintf(`wanted prefix: [%s], got string [%s]`, wantedPrefix, urlString)
 				require.True(t, strings.HasPrefix(urlString, wantedPrefix), failMessage)
 			})
 
 			query := lokiQuery{
 				QueryType: QueryTypeRange,
+			}
+
+			_, err := api.DataQuery(context.Background(), query)
+			require.NoError(t, err)
+			require.True(t, called)
+		})
+	}
+
+	for _, test := range queryTestData {
+		t.Run("Loki should build the instant-query URL correctly when "+test.name, func(t *testing.T) {
+			called := false
+			api := makeMockedAPIWithUrl(test.dsUrl, 200, "application/json", response, func(req *http.Request) {
+				called = true
+				urlString := req.URL.String()
+				wantedPrefix := test.instantQueryPrefix
+				failMessage := fmt.Sprintf(`wanted prefix: [%s], got string [%s]`, wantedPrefix, urlString)
+				require.True(t, strings.HasPrefix(urlString, wantedPrefix), failMessage)
+			})
+
+			query := lokiQuery{
+				QueryType: QueryTypeInstant,
 			}
 
 			_, err := api.DataQuery(context.Background(), query)
