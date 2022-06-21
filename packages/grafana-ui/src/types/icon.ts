@@ -179,6 +179,7 @@ export const getAvailableIcons = () =>
     'vertical-align-center',
     'vertical-align-top',
     'wrap-text',
+    'rss',
     'x',
   ] as const;
 
