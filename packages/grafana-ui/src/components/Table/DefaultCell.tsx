@@ -28,14 +28,14 @@ export const DefaultCell: FC<TableCellProps> = (props) => {
   const showActions = (showFilters && cell.value !== undefined) || inspectEnabled;
   const cellStyle = getCellStyle(tableStyles, field, displayValue, inspectEnabled);
 
-  const hasLinks = getCellLinks(field, row)?.length;
+  const hasLinks = Boolean(getCellLinks(field, row)?.length);
 
   return (
     <div {...cellProps} className={cellStyle}>
       {!hasLinks && <div className={tableStyles.cellText}>{value}</div>}
 
       {hasLinks && (
-        <DataLinksContextMenu links={() => getCellLinks(field, row) || []} config={field.config}>
+        <DataLinksContextMenu links={() => getCellLinks(field, row) || []}>
           {(api) => {
             return (
               <div onClick={api.openMenu} className={cx(tableStyles.cellLink, api.targetClassName)}>

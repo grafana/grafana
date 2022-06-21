@@ -34,7 +34,7 @@ export function JSONViewCell(props: TableCellProps): JSX.Element {
       <div className={cx(tableStyles.cellText, txt)}>
         {!hasLinks && <div className={tableStyles.cellText}>{displayValue}</div>}
         {hasLinks && (
-          <DataLinksContextMenu links={() => getCellLinks(field, row) || []} config={field.config}>
+          <DataLinksContextMenu links={() => getCellLinks(field, row) || []}>
             {(api) => {
               return (
                 <div onClick={api.openMenu} className={api.targetClassName}>
