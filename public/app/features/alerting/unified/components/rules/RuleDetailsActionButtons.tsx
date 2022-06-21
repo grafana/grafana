@@ -2,7 +2,7 @@ import React, { FC, Fragment, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { css } from '@emotion/css';
-import { AppEvents, GrafanaTheme2, urlUtil } from '@grafana/data';
+import { AppEvents, GrafanaTheme2, textUtil, urlUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Button, ConfirmModal, ClipboardButton, HorizontalGroup, LinkButton, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -96,7 +96,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
         variant="primary"
         icon="book"
         target="__blank"
-        href={rule.annotations[Annotation.runbookURL]}
+        href={textUtil.sanitizeUrl(rule.annotations[Annotation.runbookURL])}
       >
         View runbook
       </LinkButton>
