@@ -1,9 +1,10 @@
-export interface AddAlertRuleTemplateModalProps {
+export interface EditAlertRuleTemplateModalProps {
+  yaml: string;
   isVisible: boolean;
   setVisible: (value: boolean) => void;
   getAlertRuleTemplates: () => void;
 }
 
-export interface AlertRuleTemplateRenderProps {
+export interface EditAlertRuleTemplateRenderProps {
   yaml: string;
 }

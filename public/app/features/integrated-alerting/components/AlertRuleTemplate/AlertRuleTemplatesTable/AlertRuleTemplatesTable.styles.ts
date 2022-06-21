@@ -36,6 +36,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme) => {
             th {
               position: sticky;
               top: 0;
+              z-index: 1;
             }
           }
         }

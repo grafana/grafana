@@ -1,9 +1,10 @@
 import { Modal, LoaderButton, TextareaInputField, validators, logger } from '@percona/platform-core';
-import { FormApi } from 'final-form';
+import { Form, FormApi } from 'final-form';
 import React, { FC, ChangeEvent, useCallback, useRef } from 'react';
-import { Form } from 'react-final-form';
 
+import { AppEvents } from '@grafana/data';
 import { Button, HorizontalGroup, Icon, useStyles } from '@grafana/ui';
+import { appEvents } from 'app/core/app_events';
 import { Messages } from 'app/features/integrated-alerting/IntegratedAlerting.messages';
 
 import { AlertRuleTemplateService } from '../AlertRuleTemplate.service';
@@ -11,7 +12,11 @@ import { AlertRuleTemplateService } from '../AlertRuleTemplate.service';
 import { getStyles } from './AddAlertRuleTemplateModal.styles';
 import { AddAlertRuleTemplateModalProps, AlertRuleTemplateRenderProps } from './AddAlertRuleTemplateModal.types';
 
-export const AddAlertRuleTemplateModal: FC<AddAlertRuleTemplateModalProps> = ({ isVisible, setVisible }) => {
+export const AddAlertRuleTemplateModal: FC<AddAlertRuleTemplateModalProps> = ({
+  isVisible,
+  setVisible,
+  getAlertRuleTemplates,
+}) => {
   const styles = useStyles(getStyles);
   const { required } = validators;
   const inputRef = useRef<HTMLInputElement>(null);
@@ -31,6 +36,8 @@ export const AddAlertRuleTemplateModal: FC<AddAlertRuleTemplateModalProps> = ({ 
     try {
       await AlertRuleTemplateService.upload(values);
       setVisible(false);
+      appEvents.emit(AppEvents.alertSuccess, [Messages.alertRuleTemplate.addSuccess]);
+      getAlertRuleTemplates();
     } catch (e) {
       logger.error(e);
     }
