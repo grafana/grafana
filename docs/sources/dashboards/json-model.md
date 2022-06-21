@@ -37,7 +37,6 @@ When a user creates a new dashboard, a new dashboard JSON object is initialized 
   "style": "dark",
   "timezone": "browser",
   "editable": true,
-  "hideControls": false,
   "graphTooltip": 1,
   "panels": [],
   "time": {

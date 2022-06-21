@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	busmock "github.com/grafana/grafana/pkg/bus/mock"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -164,7 +165,7 @@ func TestAlertingTicker(t *testing.T) {
 		Scheme: "http",
 		Host:   "localhost",
 	}
-	sched := schedule.NewScheduler(schedCfg, nil, appUrl, st)
+	sched := schedule.NewScheduler(schedCfg, nil, appUrl, st, busmock.New())
 
 	go func() {
 		err := sched.Run(ctx)
