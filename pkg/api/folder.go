@@ -25,14 +25,22 @@ func (hs *HTTPServer) GetFolders(c *models.ReqContext) response.Response {
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
+	uids := make(map[string]bool, len(folders))
 	result := make([]dtos.FolderSearchHit, 0)
-
 	for _, f := range folders {
+		uids[f.Uid] = true
 		result = append(result, dtos.FolderSearchHit{
 			Id:    f.Id,
 			Uid:   f.Uid,
 			Title: f.Title,
 		})
+	}
+
+	metadata := hs.getMultiAccessControlMetadata(c, c.OrgId, dashboards.ScopeFoldersPrefix, uids)
+	if len(metadata) > 0 {
+		for i := range result {
+			result[i].AccessControl = metadata[result[i].Uid]
+		}
 	}
 
 	return response.JSON(http.StatusOK, result)

@@ -25,7 +25,8 @@ type Folder struct {
 }
 
 type FolderSearchHit struct {
-	Id    int64  `json:"id"`
-	Uid   string `json:"uid"`
-	Title string `json:"title"`
+	Id            int64                  `json:"id"`
+	Uid           string                 `json:"uid"`
+	Title         string                 `json:"title"`
+	AccessControl accesscontrol.Metadata `json:"accessControl,omitempty"`
 }

@@ -136,14 +136,48 @@ func TestFoldersAPIEndpoint(t *testing.T) {
 
 func TestHTTPServer_FolderMetadata(t *testing.T) {
 	setUpRBACGuardian(t)
+	folderService := dashboards.NewFakeFolderService(t)
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
-		folderService := dashboards.NewFakeFolderService(t)
-		folderService.On("GetFolderByUID", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&models.Folder{Uid: "folderUid"}, nil)
 		hs.folderService = folderService
 		hs.AccessControl = acmock.New()
 	})
 
+	t.Run("Should attach access control metadata to multiple folders", func(t *testing.T) {
+		folderService.On("GetFolders", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]*models.Folder{
+			{Uid: "1"},
+			{Uid: "2"},
+			{Uid: "3"},
+		}, nil)
+
+		req := server.NewGetRequest("/api/folders?accesscontrol=true")
+		webtest.RequestWithSignedInUser(req, &models.SignedInUser{UserId: 1, OrgId: 1, Permissions: map[int64]map[string][]string{
+			1: accesscontrol.GroupScopesByAction([]accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
+				{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("2")},
+			}),
+		}})
+
+		res, err := server.Send(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+
+		body := []dtos.FolderSearchHit{}
+		require.NoError(t, json.NewDecoder(res.Body).Decode(&body))
+
+		for _, f := range body {
+			assert.True(t, f.AccessControl[dashboards.ActionFoldersRead])
+			if f.Uid == "2" {
+				assert.True(t, f.AccessControl[dashboards.ActionFoldersWrite])
+			} else {
+				assert.False(t, f.AccessControl[dashboards.ActionFoldersWrite])
+			}
+		}
+
+	})
+
 	t.Run("Should attach access control metadata to folder response", func(t *testing.T) {
+		folderService.On("GetFolderByUID", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&models.Folder{Uid: "folderUid"}, nil)
+
 		req := server.NewGetRequest("/api/folders/folderUid?accesscontrol=true")
 		webtest.RequestWithSignedInUser(req, &models.SignedInUser{UserId: 1, OrgId: 1, Permissions: map[int64]map[string][]string{
 			1: accesscontrol.GroupScopesByAction([]accesscontrol.Permission{
@@ -164,6 +198,8 @@ func TestHTTPServer_FolderMetadata(t *testing.T) {
 	})
 
 	t.Run("Should attach access control metadata to folder response", func(t *testing.T) {
+		folderService.On("GetFolderByUID", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&models.Folder{Uid: "folderUid"}, nil)
+
 		req := server.NewGetRequest("/api/folders/folderUid")
 		webtest.RequestWithSignedInUser(req, &models.SignedInUser{UserId: 1, OrgId: 1, Permissions: map[int64]map[string][]string{
 			1: accesscontrol.GroupScopesByAction([]accesscontrol.Permission{
