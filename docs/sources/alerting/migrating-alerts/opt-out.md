@@ -33,7 +33,7 @@ Installations that have been migrated to Grafana Alerting can [roll back]({{< re
 
 The `ngalert` toggle previously used to enable or disable Grafana Alerting is no longer available.
 
-## Disable alerting entirely
+## Disable alerting
 
 You can disable Grafana Alerting and legacy alerting in Grafana.
 
