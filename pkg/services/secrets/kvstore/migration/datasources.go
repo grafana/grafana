@@ -3,7 +3,6 @@ package migration
 import (
 	"context"
 	"encoding/json"
-	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -81,7 +80,6 @@ func (s *DataSourceSecretMigrationService) Run(ctx context.Context) error {
 				}
 			}
 
-			time.Sleep(time.Second)
 		}
 		s.log.Debug("data source secret migration complete")
 		return nil
