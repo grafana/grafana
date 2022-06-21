@@ -146,5 +146,4 @@ func TestIsItStale(t *testing.T) {
 			require.Equal(t, tc.expectedResult, isItStale(now, tc.lastEvaluation, intervalSeconds))
 		})
 	}
-
 }
