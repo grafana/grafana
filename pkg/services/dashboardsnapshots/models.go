@@ -1,9 +1,10 @@
-package models
+package dashboardsnapshots
 
 import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/models"
 )
 
 // DashboardSnapshot model
@@ -101,7 +102,7 @@ type GetDashboardSnapshotsQuery struct {
 	Name         string
 	Limit        int
 	OrgId        int64
-	SignedInUser *SignedInUser
+	SignedInUser *models.SignedInUser
 
 	Result DashboardSnapshotsList
 }
