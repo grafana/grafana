@@ -18,7 +18,7 @@ Grafana encrypts these secrets before they are written to the database, by using
 Since Grafana v9.0, it uses [envelope encryption](#envelope-encryption) by default, which adds a layer of indirection to the
 encryption process that represents an [**implicit breaking change**](#implicit-breaking-change) for older versions of Grafana.
 
-For further details about how to operate a Grafana instance with envelope encryption, see the [Operational work]({{< relref "./#operational-work" >}}) section below.
+For further details about how to operate a Grafana instance with envelope encryption, see the [Operational work]({{< relref "/#operational-work" >}}) section below.
 
 > **Note:** In Grafana Enterprise, you can also choose to [encrypt secrets in AES-GCM mode]({{< relref "#changing-your-encryption-mode-to-aes-gcm" >}}) instead of AES-CFB.
 

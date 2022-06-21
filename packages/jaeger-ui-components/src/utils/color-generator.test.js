@@ -30,20 +30,10 @@ it('gives different colors for each for each key', () => {
   expect(colorOne).not.toBe(colorTwo);
 });
 
-it('should clear cache', () => {
-  clear();
-  const colorOne = getColorByKey('serviceA', createTheme());
-  clear();
-  const colorTwo = getColorByKey('serviceB', createTheme());
-  expect(colorOne).toBe(colorTwo);
-});
-
 it('should not allow red', () => {
   clear();
-  getColorByKey('serviceA', createTheme());
-  getColorByKey('serviceB', createTheme());
-  getColorByKey('serviceC', createTheme());
-  getColorByKey('serviceD', createTheme());
-  const colorFive = getColorByKey('serviceE', createTheme());
-  expect(colorFive).not.toBe('#E24D42');
+  // when aPAKNMeFcF is hashed it's index is 4
+  // which is red, which we disallow because it looks like an error
+  const colorOne = getColorByKey('aPAKNMeFcF', createTheme());
+  expect(colorOne).not.toBe('#E24D42');
 });

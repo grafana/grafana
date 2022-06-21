@@ -15,7 +15,7 @@ weight: 1400
 
 You can generate and save PDF files from any of your dashboards.
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../enterprise" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../enterprise/" >}}).
 
 1. In the upper right corner of the dashboard that you want to export as PDF, click the **Share dashboard** icon.
 1. On the PDF tab, select the layout option for exported dashboard: **Portrait** or **Landscape**.

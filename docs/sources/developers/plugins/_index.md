@@ -8,7 +8,7 @@ weight: 200
 
 # Build a plugin
 
-For more information on the types of plugins you can build, refer to the [Plugin Overview]({{< relref "../../plugins/" >}}).
+For more information on the types of plugins you can build, refer to the [Plugin Overview]({{< relref "../../administration/plugin-management/" >}}).
 
 ## Get started
 

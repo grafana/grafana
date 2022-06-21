@@ -74,7 +74,7 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 		{
 			desc:      "not ok - duplicate name",
 			body:      map[string]interface{}{"name": "New SA"},
-			wantError: "service account name already in use",
+			wantError: "service account already exists",
 			acmock: tests.SetupMockAccesscontrol(
 				t,
 				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {

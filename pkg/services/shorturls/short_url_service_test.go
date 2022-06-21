@@ -5,9 +5,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/stretchr/testify/require"
 )
 
 func TestShortURLService(t *testing.T) {
@@ -79,7 +80,7 @@ func TestShortURLService(t *testing.T) {
 
 		shortURL, err := service.GetShortURLByUID(context.Background(), user, "testnotfounduid")
 		require.Error(t, err)
-		require.Equal(t, models.ErrShortURLNotFound, err)
+		require.True(t, models.ErrShortURLNotFound.Is(err))
 		require.Nil(t, shortURL)
 	})
 }
