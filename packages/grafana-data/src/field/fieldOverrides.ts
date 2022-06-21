@@ -354,24 +354,18 @@ export const getLinksSupplier =
     fieldScopedVars: ScopedVars,
     replaceVariables: InterpolateFunction,
     timeZone?: TimeZone,
-    getConditionalDataLinks?: (field: Field, frame: DataFrame) => ((evt: any, origin: any) => void) | undefined
+    getConditionalDataLinks?: (field: Field, frame: DataFrame) => LinkModel[] | undefined
   ) =>
   (config: ValueLinkConfig): Array<LinkModel<Field>> => {
     const links: Array<LinkModel<Field>> = [];
 
     if (getConditionalDataLinks) {
-      const conditionalDataLinksProvider = getConditionalDataLinks(field, frame);
+      const conditionalDataLinks = getConditionalDataLinks(field, frame);
 
-      if (conditionalDataLinksProvider) {
-        links.push({
-          href: '',
-          title: 'drilldown',
-          target: undefined,
-          onClick: (evt, origin) => {
-            conditionalDataLinksProvider(evt, origin);
-          },
-          origin: field,
-        });
+      if (conditionalDataLinks && conditionalDataLinks.length) {
+        for (let i = 0; i < conditionalDataLinks.length; i++) {
+          links.push(conditionalDataLinks[i]);
+        }
       }
     }
 

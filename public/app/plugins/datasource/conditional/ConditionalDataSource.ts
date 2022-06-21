@@ -1,28 +1,14 @@
 import { Observable } from 'rxjs';
 
 import {
-  DataFrame,
   DataQuery,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
-  Field,
-  FieldMatcherID,
-  fieldMatchers,
-  LoadingState,
   QueryConditionConfig,
   QueryConditionExecutionContext,
-  QueryConditionType,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
-import { VariableAdapter, variableAdapters } from 'app/features/variables/adapters';
-import { toKeyedAction } from 'app/features/variables/state/keyedVariablesReducer';
-import { getLastKey, getNewVariableIndex, getVariable } from 'app/features/variables/state/selectors';
-import { addVariable } from 'app/features/variables/state/sharedReducer';
-import { AddVariable, VariableIdentifier } from 'app/features/variables/state/types';
-import { KeyValueVariableModel, VariableHide } from 'app/features/variables/types';
-import { toKeyedVariableIdentifier, toStateKey, toVariablePayload } from 'app/features/variables/utils';
-import { store } from 'app/store/store';
 
 import { MixedDatasource } from '../mixed/MixedDataSource';
 
@@ -137,71 +123,4 @@ function findQueryWithHighestNumberOfConditions(q: ConditionalDataSourceQuery[])
     }
     return query.conditions?.length === maxNoConditions;
   });
-}
-
-export function getConditionalDataLinksSupplier(targets: ConditionalDataSourceQuery[]) {
-  const conditions = targets.map((target) =>
-    target.conditions?.filter(
-      (condition) => queryConditionsRegistry.getIfExists(condition.id)?.type === QueryConditionType.Field
-    )
-  );
-
-  return (field: Field, frame: DataFrame, allFrames: DataFrame[]) => {
-    for (let i = 0; i < conditions.length; i++) {
-      for (let j = 0; j < conditions[i]?.length; j++) {
-        const conditionDef = queryConditionsRegistry.getIfExists(conditions[i][j].id);
-        const regexFieldMatcher = fieldMatchers.get(FieldMatcherID.byRegexp);
-        const fieldMatcher = regexFieldMatcher.get(conditions[i][j].options.pattern);
-
-        if (fieldMatcher && fieldMatcher(field, frame, allFrames)) {
-          return async (evt: any, origin: any) => {
-            const state = store.getState();
-
-            const key = getLastKey(state);
-
-            const rootStateKey = toStateKey(key);
-            const id = conditionDef!.getVariableName(conditions[i][j].options);
-            const identifier: VariableIdentifier = { type: 'constant', id };
-            const global = false;
-            const index = getNewVariableIndex(rootStateKey, state);
-
-            const variable: KeyValueVariableModel = {
-              id,
-              rootStateKey,
-              index,
-              type: 'keyValue',
-              skipUrlSync: false,
-              global: true,
-              hide: VariableHide.dontHide,
-              key: id,
-              error: null,
-              state: LoadingState.Done,
-              description: '',
-              name: id,
-              query: '',
-              options: [{ selected: true, value: '', text: '' }],
-              current: { selected: true, value: '', text: '' },
-            };
-
-            store.dispatch(
-              toKeyedAction(
-                rootStateKey,
-                addVariable(toVariablePayload<AddVariable>(identifier, { global, model: variable, index }))
-              )
-            );
-
-            const existing = getVariable(
-              toKeyedVariableIdentifier(variable),
-              store.getState()
-            ) as KeyValueVariableModel;
-            const value = origin.field.values.get(origin.rowIndex);
-            const adapter = variableAdapters.get('keyValue') as VariableAdapter<KeyValueVariableModel>;
-            await adapter.setValue(existing, { selected: true, value, text: value ? value.toString() : '' }, true);
-          };
-        }
-      }
-    }
-
-    return undefined;
-  };
 }

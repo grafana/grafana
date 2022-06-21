@@ -33,8 +33,8 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import {
   ConditionalDataSourceQuery,
   CONDITIONAL_DATASOURCE_NAME,
-  getConditionalDataLinksSupplier,
 } from 'app/plugins/datasource/conditional/ConditionalDataSource';
+import { getConditionalDataLinksSupplier } from 'app/plugins/datasource/conditional/getConditionalDataLinksSupplier';
 
 import { isSharedDashboardQuery, runSharedRequest } from '../../../plugins/datasource/dashboard';
 import { PublicDashboardDataSource } from '../../dashboard/services/PublicDashboardDataSource';
