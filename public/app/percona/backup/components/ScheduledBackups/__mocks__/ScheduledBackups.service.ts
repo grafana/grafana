@@ -21,6 +21,8 @@ export const stubs: ScheduledBackup[] = [
     description: 'Description',
     type: BackupType.FULL,
     enabled: true,
+    retryInterval: '10s',
+    retryTimes: 1,
   },
   {
     id: 'backup_2',
@@ -38,6 +40,8 @@ export const stubs: ScheduledBackup[] = [
     description: 'Description',
     type: BackupType.FULL,
     enabled: true,
+    retryInterval: '0s',
+    retryTimes: 1,
   },
 ];
 

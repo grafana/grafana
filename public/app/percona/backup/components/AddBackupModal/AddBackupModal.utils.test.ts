@@ -1,4 +1,4 @@
-import { BackupType, DataModel } from 'app/percona/backup/Backup.types';
+import { BackupType, DataModel, RetryMode } from 'app/percona/backup/Backup.types';
 import { Databases } from 'app/percona/shared/core';
 
 import { stubs as backupStubs } from '../BackupInventory/__mocks__/BackupInventory.service';
@@ -17,6 +17,9 @@ describe('AddBackupModal::utils', () => {
         backupName: '',
         description: '',
         location: null as any,
+        retryMode: RetryMode.MANUAL,
+        retryTimes: 2,
+        retryInterval: 30,
         period: { value: 'year', label: 'Year' },
         month: [],
         day: [],
@@ -59,6 +62,8 @@ describe('AddBackupModal::utils', () => {
         dataModel: DataModel.PHYSICAL,
         description: '',
         type: BackupType.FULL,
+        retryInterval: '10s',
+        retryTimes: 1,
         enabled: true,
       };
 
@@ -69,6 +74,9 @@ describe('AddBackupModal::utils', () => {
         backupName: 'Backup 1',
         description: '',
         location: { label: 'Location 1', value: 'location_1' },
+        retryMode: RetryMode.AUTO,
+        retryTimes: 1,
+        retryInterval: 10,
         period: { value: 'day', label: 'Day' },
         month: [],
         day: [],

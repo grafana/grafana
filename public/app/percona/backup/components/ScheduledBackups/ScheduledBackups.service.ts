@@ -31,6 +31,8 @@ export const ScheduledBackupsService = {
         last_run,
         data_model,
         description,
+        retries,
+        retry_interval,
         enabled,
         retention = 0,
       }) => ({
@@ -48,6 +50,8 @@ export const ScheduledBackupsService = {
         dataModel: data_model,
         description,
         type: BackupType.FULL,
+        retryTimes: retries,
+        retryInterval: retry_interval,
         enabled: !!enabled,
       })
     );
@@ -58,6 +62,8 @@ export const ScheduledBackupsService = {
     cronExpression: string,
     name: string,
     description: string,
+    retryInterval: string,
+    retryTimes: number,
     retention: number,
     enabled: boolean
   ) {
@@ -67,6 +73,8 @@ export const ScheduledBackupsService = {
       cron_expression: cronExpression,
       name,
       description,
+      retry_interval: retryInterval,
+      retries: retryTimes,
       enabled: !!enabled,
       retention,
     });
@@ -83,6 +91,8 @@ export const ScheduledBackupsService = {
     cronExpression: string,
     name: string,
     description: string,
+    retryInterval: string,
+    retryTimes: number,
     retention: number
   ) {
     return api.post(`${BASE_URL}/ChangeScheduled`, {
@@ -91,6 +101,8 @@ export const ScheduledBackupsService = {
       cron_expression: cronExpression,
       name,
       description,
+      retry_interval: retryInterval,
+      retries: retryTimes,
       retention,
     });
   },

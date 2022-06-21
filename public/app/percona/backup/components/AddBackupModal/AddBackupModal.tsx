@@ -35,6 +35,7 @@ import { AddBackupModalService } from './AddBackupModal.service';
 import { getStyles } from './AddBackupModal.styles';
 import { AddBackupFormProps, AddBackupModalProps, SelectableService } from './AddBackupModal.types';
 import { toFormBackup, isCronFieldDisabled, PERIOD_OPTIONS } from './AddBackupModal.utils';
+import { RetryModeSelector } from './RetryModeSelector';
 
 export const AddBackupModal: FC<AddBackupModalProps> = ({
   backup,
@@ -51,6 +52,7 @@ export const AddBackupModal: FC<AddBackupModalProps> = ({
     onBackup({
       ...values,
       retention: parseInt(`${values.retention}`, 10),
+      retryTimes: parseInt(`${values.retryTimes}`, 10),
     });
 
   return (
@@ -114,6 +116,7 @@ export const AddBackupModal: FC<AddBackupModalProps> = ({
               label={Messages.dataModel}
               fullWidth
             />
+            {!scheduleMode && <RetryModeSelector retryMode={values.retryMode} />}
             <TextareaInputField name="description" label={Messages.description} />
             {scheduleMode && (
               <div className={styles.advancedGroup} data-qa="advanced-backup-fields">
@@ -218,6 +221,9 @@ export const AddBackupModal: FC<AddBackupModalProps> = ({
                       label={Messages.retention}
                       validators={[validators.required, customValidators.range(MIN_RETENTION, MAX_RETENTION)]}
                     />
+                  </div>
+                  <div className={styles.advancedRow}>
+                    <RetryModeSelector retryMode={values.retryMode} />
                   </div>
                   <div className={styles.advancedRow}>
                     <CheckboxField fieldClassName={styles.checkbox} name="active" label={Messages.enabled} />

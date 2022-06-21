@@ -7,10 +7,12 @@ import { Button, useStyles } from '@grafana/ui';
 import { Table } from 'app/percona/integrated-alerting/components/Table';
 import { DeleteModal } from 'app/percona/shared/components/Elements/DeleteModal';
 import { ExpandableCell } from 'app/percona/shared/components/Elements/ExpandableCell/ExpandableCell';
+import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { DATABASE_LABELS } from 'app/percona/shared/core';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
 
 import { Messages } from '../../Backup.messages';
+import { RetryMode } from '../../Backup.types';
 import { useRecurringCall } from '../../hooks/recurringCall.hook';
 import { AddBackupModal } from '../AddBackupModal';
 import { AddBackupFormProps } from '../AddBackupModal/AddBackupModal.types';
@@ -24,7 +26,6 @@ import {
   DATA_INTERVAL,
 } from './BackupInventory.constants';
 import { BackupInventoryService } from './BackupInventory.service';
-import { getStyles } from './BackupInventory.styles';
 import { Backup } from './BackupInventory.types';
 import { BackupInventoryActions } from './BackupInventoryActions';
 import { BackupInventoryDetails } from './BackupInventoryDetails';
@@ -161,13 +162,25 @@ export const BackupInventory: FC = () => {
     setBackupModalVisible(true);
   };
 
-  const handleBackup = async ({ service, location, backupName, description }: AddBackupFormProps) => {
+  const handleBackup = async ({
+    service,
+    location,
+    backupName,
+    description,
+    retryMode,
+    retryInterval,
+    retryTimes,
+  }: AddBackupFormProps) => {
+    const strRetryInterval = `${retryInterval}s`;
+    let resultRetryTimes = retryMode === RetryMode.MANUAL ? 0 : retryTimes;
     try {
       await BackupInventoryService.backup(
         service.value?.id || '',
         location.value || '',
         backupName,
         description,
+        strRetryInterval,
+        resultRetryTimes!,
         generateToken(BACKUP_CANCEL_TOKEN)
       );
       setBackupModalVisible(false);
