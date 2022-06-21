@@ -5,6 +5,7 @@ import { Field, LinkModel, LogLabelStatsModel, GrafanaTheme2 } from '@grafana/da
 
 import { withTheme2 } from '../../themes/index';
 import { Themeable2 } from '../../types/theme';
+import { ClipboardButton } from '../ClipboardButton/ClipboardButton';
 import { DataLinkButton } from '../DataLinks/DataLinkButton';
 import { IconButton } from '../IconButton/IconButton';
 
@@ -54,9 +55,14 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: ${theme.colors.primary.text};
     `,
     hoverValueCopy: css`
-      padding: ${theme.spacing(0, 0, 0, 1.9)};
+      margin: ${theme.spacing(0, 0, 0, 1.2)};
       position: absolute;
-      bottom: auto;
+      top: 0px;
+      /* justify-items: center; */
+      justify-content: center;
+      border-radius: 20px;
+      width: 26px;
+      height: 26px;
     `,
     wrapLine: css`
       label: wrapLine;
@@ -184,15 +190,24 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
         >
           {parsedValue}
           {mouseOver && (
-            <span className={styles.hoverValueCopy}>
-              <IconButton
-                name="copy"
-                title="Copy this value to clipboard"
-                onClick={() => {
-                  navigator.clipboard.writeText(parsedValue);
-                }}
-              />
-            </span>
+            <ClipboardButton
+              getText={() => parsedValue}
+              title="Copy value to clipboard"
+              fill="text"
+              variant="secondary"
+              icon="copy"
+              size="sm"
+              className={styles.hoverValueCopy}
+            />
+            // <span className={styles.hoverValueCopy}>
+            //   <IconButton
+            //     name="copy"
+            //     title="Copy this value to clipboard"
+            //     onClick={() => {
+            //       navigator.clipboard.writeText(parsedValue);
+            //     }}
+            //   />
+            // </span>
           )}
           {links?.map((link) => (
             <span key={link.title}>
