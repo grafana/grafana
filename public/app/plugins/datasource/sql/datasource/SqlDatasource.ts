@@ -226,12 +226,4 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
 
     return this.templateSrv.containsTemplate(rawSql);
   }
-
-  async fetchTables(dataset?: string): Promise<string[]> {
-    return [];
-  }
-
-  async fetchDatasets(): Promise<string[]> {
-    return [];
-  }
 }
