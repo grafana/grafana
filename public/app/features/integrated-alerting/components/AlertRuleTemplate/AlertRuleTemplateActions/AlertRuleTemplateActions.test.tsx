@@ -2,7 +2,6 @@ import { dataQa } from '@percona/platform-core';
 import { mount } from 'enzyme';
 import React from 'react';
 
-import { SourceDescription } from '../AlertRuleTemplatesTable/AlertRuleTemplatesTable.types';
 import { formattedTemplateStubs } from '../__mocks__/alertRuleTemplateStubs';
 
 import { AlertRuleTemplateActions } from './AlertRuleTemplateActions';
