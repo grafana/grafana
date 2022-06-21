@@ -55,7 +55,7 @@
     "blink-diff": "1.0.13",
     "chrome-remote-interface": "0.31.2",
     "commander": "8.3.0",
-    "cypress": "9.5.1",
+    "cypress": "10.2.0",
     "cypress-file-upload": "5.0.8",
     "devtools-protocol": "0.0.1005560",
     "execa": "5.1.1",
