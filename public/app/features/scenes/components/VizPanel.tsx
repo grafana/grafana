@@ -22,14 +22,12 @@ export class VizPanel extends SceneObjectBase<VizPanelState> {
   onSetTimeRange = (timeRange: AbsoluteTimeRange) => {
     const sceneTimeRange = this.getTimeRange();
     sceneTimeRange.setState({
-      timeRange: {
-        raw: {
-          from: toUtc(timeRange.from),
-          to: toUtc(timeRange.to),
-        },
+      raw: {
         from: toUtc(timeRange.from),
         to: toUtc(timeRange.to),
       },
+      from: toUtc(timeRange.from),
+      to: toUtc(timeRange.to),
     });
   };
 }

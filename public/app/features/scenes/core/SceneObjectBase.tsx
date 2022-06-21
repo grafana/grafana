@@ -49,12 +49,13 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
       if (propValue instanceof SceneObjectBase) {
         propValue.parent = this;
       }
-    }
 
-    const children = (this.state as any).children as Array<SceneObjectBase<any>>;
-    if (children) {
-      for (const child of children) {
-        child.parent = this;
+      if (Array.isArray(propValue)) {
+        for (const child of propValue) {
+          if (child instanceof SceneObjectBase) {
+            child.parent = this;
+          }
+        }
       }
     }
   }

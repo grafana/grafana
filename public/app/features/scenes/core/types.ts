@@ -33,9 +33,7 @@ export interface SceneDataState extends SceneObjectState {
   data?: PanelData;
 }
 
-export interface SceneTimeRangeState extends SceneObjectState {
-  timeRange: TimeRange;
-}
+export interface SceneTimeRangeState extends SceneObjectState, TimeRange {}
 
 export interface SceneObject<TState extends SceneObjectState = SceneObjectState> extends Subscribable<TState> {
   /** The current state */
@@ -92,6 +90,10 @@ export interface SceneEditor extends SceneObject<SceneEditorState> {
   mouseEnter(model: SceneObject): void;
   mouseLeave(model: SceneObject): void;
   selectObject(model: SceneObject): void;
+}
+
+export interface SceneTimeRange extends SceneObject<SceneTimeRangeState> {
+  onTimeRangeChange(timeRange: TimeRange): void;
 }
 
 export interface SceneObjectRef {

@@ -4,6 +4,7 @@ import { Scene } from '../components/Scene';
 import { SceneCanvasText } from '../components/SceneCanvasText';
 import { SceneFlexLayout } from '../components/SceneFlexLayout';
 import { ScenePanelRepeater } from '../components/ScenePanelRepeater';
+import { SceneTimePicker } from '../components/SceneTimePicker';
 import { SceneToolbarInput } from '../components/SceneToolbarButton';
 import { VizPanel } from '../components/VizPanel';
 import { SceneEditManager } from '../editor/SceneEditManager';
@@ -49,9 +50,7 @@ export function getFlexLayoutTest(): Scene {
       ],
     }),
     $editor: new SceneEditManager({}),
-    $timeRange: new SceneTimeRange({
-      timeRange: getDefaultTimeRange(),
-    }),
+    $timeRange: new SceneTimeRange(getDefaultTimeRange()),
     $data: new SceneQueryRunner({
       queries: [
         {
@@ -64,7 +63,7 @@ export function getFlexLayoutTest(): Scene {
         },
       ],
     }),
-    actions: [],
+    actions: [new SceneTimePicker({})],
   });
 
   return scene;
@@ -116,9 +115,7 @@ export function getScenePanelRepeaterTest(): Scene {
       }),
     }),
     $editor: new SceneEditManager({}),
-    $timeRange: new SceneTimeRange({
-      timeRange: getDefaultTimeRange(),
-    }),
+    $timeRange: new SceneTimeRange(getDefaultTimeRange()),
     $data: queryRunner,
     actions: [
       new SceneToolbarInput({
@@ -135,6 +132,7 @@ export function getScenePanelRepeaterTest(): Scene {
           queryRunner.runQueries();
         },
       }),
+      new SceneTimePicker({}),
     ],
   });
 

@@ -5,6 +5,7 @@ interface TestItemState extends SceneObjectState {
   name?: string;
   nested?: SceneObject<TestItemState>;
   children?: SceneObjectList;
+  actions?: SceneObjectList;
 }
 
 class TestItem extends SceneObjectBase<TestItemState> {}
@@ -41,11 +42,17 @@ describe('SceneItem', () => {
           name: 'layout child',
         }),
       ],
+      actions: [
+        new TestItem({
+          name: 'layout child',
+        }),
+      ],
     });
 
     expect(scene.parent).toBe(undefined);
     expect(scene.state.nested?.parent).toBe(scene);
     expect(scene.state.children![0].parent).toBe(scene);
+    expect(scene.state.actions![0].parent).toBe(scene);
   });
 
   it('Can clone with state change', () => {
