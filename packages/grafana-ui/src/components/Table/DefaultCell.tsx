@@ -1,9 +1,11 @@
-import React, { FC, ReactElement } from 'react';
+import React, { FC, ReactElement, useState } from 'react';
 import tinycolor from 'tinycolor2';
 
-import { DisplayValue, Field, formattedValueToString } from '@grafana/data';
+import { CartesianCoords2D, DisplayValue, Field, formattedValueToString } from '@grafana/data';
 
 import { getTextColorForBackground, getCellLinks } from '../../utils';
+import { ContextMenu } from '../ContextMenu/ContextMenu';
+import { MenuItem } from '../Menu/MenuItem';
 
 import { CellActions } from './CellActions';
 import { TableStyles } from './styles';
@@ -11,6 +13,8 @@ import { TableCellDisplayMode, TableCellProps, TableFieldOptions } from './types
 
 export const DefaultCell: FC<TableCellProps> = (props) => {
   const { field, cell, tableStyles, row, cellProps } = props;
+
+  const [clickPosition, setClickPostion] = useState<CartesianCoords2D | null>(null);
 
   const inspectEnabled = Boolean((field.config.custom as TableFieldOptions)?.inspect);
   const displayValue = field.display!(cell.value);
@@ -26,17 +30,57 @@ export const DefaultCell: FC<TableCellProps> = (props) => {
   const showActions = (showFilters && cell.value !== undefined) || inspectEnabled;
   const cellStyle = getCellStyle(tableStyles, field, displayValue, inspectEnabled);
 
-  const { link, onClick } = getCellLinks(field, row);
+  const cellLinks = getCellLinks(field, row);
+
+  const renderDataLinks = () => {
+    return cellLinks
+      ? cellLinks.map((l) => {
+          return (
+            <MenuItem key={`data-link/${l.title}`} url={l.href} label={l.title} target={l.target} onClick={l.onClick} />
+          );
+        })
+      : null;
+  };
 
   return (
     <div {...cellProps} className={cellStyle}>
-      {!link && <div className={tableStyles.cellText}>{value}</div>}
-      {link && (
-        <a href={link.href} onClick={onClick} target={link.target} title={link.title} className={tableStyles.cellLink}>
+      {!cellLinks || (cellLinks.length === 0 && <div className={tableStyles.cellText}>{value}</div>)}
+
+      {cellLinks && cellLinks.length === 1 && (
+        <a
+          href={cellLinks[0].href}
+          onClick={cellLinks[0].onClick}
+          target={cellLinks[0].target}
+          title={cellLinks[0].title}
+          className={tableStyles.cellLink}
+        >
           {value}
         </a>
       )}
+
+      {cellLinks && cellLinks.length > 1 && (
+        <a
+          onClick={(e) => {
+            setClickPostion({ x: e.clientX, y: e.clientY });
+          }}
+          className={tableStyles.cellLink}
+        >
+          {value}
+        </a>
+      )}
+
       {showActions && <CellActions {...props} previewMode="text" />}
+
+      {cellLinks && cellLinks.length > 1 && clickPosition && (
+        <ContextMenu
+          x={clickPosition.x}
+          y={clickPosition.y}
+          renderMenuItems={renderDataLinks}
+          onClose={() => {
+            setClickPostion(null);
+          }}
+        ></ContextMenu>
+      )}
     </div>
   );
 };
