@@ -1,5 +1,6 @@
 /* eslint-disable react/display-name */
 import { logger } from '@percona/platform-core';
+import { CancelToken } from 'axios';
 import React, { FC, useMemo, useState, useEffect, useCallback } from 'react';
 import { Column, Row } from 'react-table';
 
@@ -8,7 +9,7 @@ import { Table } from 'app/percona/integrated-alerting/components/Table';
 import { DeleteModal } from 'app/percona/shared/components/Elements/DeleteModal';
 import { ExpandableCell } from 'app/percona/shared/components/Elements/ExpandableCell/ExpandableCell';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
-import { DATABASE_LABELS } from 'app/percona/shared/core';
+import { Databases, DATABASE_LABELS } from 'app/percona/shared/core';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
 
 import { Messages } from '../../Backup.messages';
@@ -26,9 +27,11 @@ import {
   DATA_INTERVAL,
 } from './BackupInventory.constants';
 import { BackupInventoryService } from './BackupInventory.service';
+import { getStyles } from './BackupInventory.styles';
 import { Backup } from './BackupInventory.types';
 import { BackupInventoryActions } from './BackupInventoryActions';
 import { BackupInventoryDetails } from './BackupInventoryDetails';
+import { BackupLogsModal } from './BackupLogsModal/BackupLogsModal';
 import { RestoreBackupModal } from './RestoreBackupModal';
 
 export const BackupInventory: FC = () => {
@@ -38,11 +41,12 @@ export const BackupInventory: FC = () => {
   const [selectedBackup, setSelectedBackup] = useState<Backup | null>(null);
   const [backupModalVisible, setBackupModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [logsModalVisible, setLogsModalVisible] = useState(false);
   const [data, setData] = useState<Backup[]>([]);
   const [triggerTimeout] = useRecurringCall();
   const [generateToken] = useCancelToken();
   const columns = useMemo(
-    (): Column[] => [
+    (): Array<Column<Backup>> => [
       {
         Header: Messages.backupInventory.table.columns.name,
         accessor: 'name',
@@ -67,7 +71,13 @@ export const BackupInventory: FC = () => {
       {
         Header: Messages.backupInventory.table.columns.status,
         accessor: 'status',
-        Cell: ({ value }) => <Status status={value} />,
+        Cell: ({ value, row }) => (
+          <Status
+            showLogsAction={row.original.vendor === Databases.mongodb}
+            status={value}
+            onLogClick={() => onLogClick(row.original)}
+          />
+        ),
       },
       {
         Header: Messages.backupInventory.table.columns.actions,
@@ -76,7 +86,7 @@ export const BackupInventory: FC = () => {
           <BackupInventoryActions
             onRestore={onRestoreClick}
             onBackup={onBackupClick}
-            backup={row.original as Backup}
+            backup={row.original}
             onDelete={onDeleteClick}
           />
         ),
@@ -97,10 +107,20 @@ export const BackupInventory: FC = () => {
     setDeleteModalVisible(true);
   };
 
+  const onLogClick = (backup: Backup) => {
+    setSelectedBackup(backup);
+    setLogsModalVisible(true);
+  };
+
   const handleClose = () => {
     setSelectedBackup(null);
     setRestoreModalVisible(false);
     setBackupModalVisible(false);
+  };
+
+  const handleLogsClose = () => {
+    setSelectedBackup(null);
+    setLogsModalVisible(false);
   };
 
   const handleRestore = async (serviceId: string, artifactId: string) => {
@@ -145,6 +165,10 @@ export const BackupInventory: FC = () => {
     },
     [getData, selectedBackup]
   );
+
+  const getLogs = async (startingChunk: number, offset: number, token?: CancelToken) => {
+    return BackupInventoryService.getLogs(selectedBackup!.id, startingChunk, offset, token);
+  };
 
   const renderSelectedSubRow = React.useCallback(
     (row: Row<Backup>) => (
@@ -220,30 +244,39 @@ export const BackupInventory: FC = () => {
         autoResetExpanded={false}
         renderExpandedRow={renderSelectedSubRow}
       ></Table>
-      <RestoreBackupModal
-        backup={selectedBackup}
-        isVisible={restoreModalVisible}
-        onClose={handleClose}
-        onRestore={handleRestore}
-        noService={!selectedBackup?.serviceId || !selectedBackup?.serviceName}
-      />
-      <AddBackupModal
-        backup={selectedBackup}
-        isVisible={backupModalVisible}
-        onClose={handleClose}
-        onBackup={handleBackup}
-      />
-      <DeleteModal
-        title={Messages.backupInventory.deleteModalTitle}
-        message={Messages.backupInventory.getDeleteMessage(selectedBackup?.name || '')}
-        isVisible={deleteModalVisible}
-        setVisible={setDeleteModalVisible}
-        forceLabel={Messages.backupInventory.deleteFromStorage}
-        onDelete={handleDelete}
-        initialForceValue={true}
-        loading={deletePending}
-        showForce
-      />
+      {restoreModalVisible && (
+        <RestoreBackupModal
+          backup={selectedBackup}
+          isVisible
+          onClose={handleClose}
+          onRestore={handleRestore}
+          noService={!selectedBackup?.serviceId || !selectedBackup?.serviceName}
+        />
+      )}
+      {backupModalVisible && (
+        <AddBackupModal backup={selectedBackup} isVisible onClose={handleClose} onBackup={handleBackup} />
+      )}
+      {deleteModalVisible && (
+        <DeleteModal
+          title={Messages.backupInventory.deleteModalTitle}
+          message={Messages.backupInventory.getDeleteMessage(selectedBackup?.name || '')}
+          isVisible
+          setVisible={setDeleteModalVisible}
+          forceLabel={Messages.backupInventory.deleteFromStorage}
+          onDelete={handleDelete}
+          initialForceValue={true}
+          loading={deletePending}
+          showForce
+        />
+      )}
+      {logsModalVisible && (
+        <BackupLogsModal
+          title={Messages.backupInventory.getLogsTitle(selectedBackup?.name || '')}
+          isVisible
+          onClose={handleLogsClose}
+          getLogChunks={getLogs}
+        />
+      )}
     </>
   );
 };
