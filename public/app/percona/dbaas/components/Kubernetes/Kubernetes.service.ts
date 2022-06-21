@@ -4,6 +4,9 @@ import { apiManagement } from 'app/percona/shared/helpers/api';
 
 import {
   CheckOperatorUpdateAPI,
+  ComponentToUpdate,
+  InstallOperatorRequest,
+  InstallOperatorResponse,
   Kubernetes,
   KubernetesListAPI,
   NewKubernetesCluster,
@@ -32,6 +35,23 @@ export const KubernetesService = {
     return apiManagement.post<CheckOperatorUpdateAPI, any>(
       '/DBaaS/Components/CheckForOperatorUpdate',
       {},
+      false,
+      token
+    );
+  },
+  installOperator(
+    kubernetesClusterName: string,
+    operatorType: ComponentToUpdate,
+    version: string,
+    token?: CancelToken
+  ) {
+    return apiManagement.post<InstallOperatorResponse, InstallOperatorRequest>(
+      '/DBaaS/Components/InstallOperator',
+      {
+        kubernetes_cluster_name: kubernetesClusterName,
+        operator_type: operatorType,
+        version,
+      },
       false,
       token
     );

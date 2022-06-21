@@ -18,16 +18,15 @@ import {
   Kubernetes,
   KubernetesAPI,
   KubernetesListAPI,
-  DeleteKubernetesAction,
   NewKubernetesCluster,
-  AddKubernetesAction,
   CheckOperatorUpdateAPI,
   OperatorsList,
   Operator,
+  ManageKubernetes,
 } from './Kubernetes.types';
 import { KubernetesClusterStatus } from './KubernetesClusterStatus/KubernetesClusterStatus.types';
 
-export const useKubernetes = (): [Kubernetes[], DeleteKubernetesAction, AddKubernetesAction, boolean] => {
+export const useKubernetes = (): ManageKubernetes => {
   const [kubernetes, setKubernetes] = useState<Kubernetes[]>([]);
   const [loading, setLoading] = useState(false);
   const [generateToken] = useCancelToken();
@@ -89,7 +88,7 @@ export const useKubernetes = (): [Kubernetes[], DeleteKubernetesAction, AddKuber
     getKubernetes();
   }, [getKubernetes]);
 
-  return [kubernetes, deleteKubernetes, addKubernetes, loading];
+  return [kubernetes, deleteKubernetes, addKubernetes, getKubernetes, setLoading, loading];
 };
 
 const toModelList = (response: KubernetesListAPI, checkUpdateResponse: CheckOperatorUpdateAPI): Kubernetes[] =>

@@ -12,19 +12,29 @@ import { AddClusterButton } from '../AddClusterButton/AddClusterButton';
 
 import { clusterActionsRender } from './ColumnRenderers/ColumnRenderers';
 import { getStyles } from './Kubernetes.styles';
-import { NewKubernetesCluster, KubernetesProps, Kubernetes } from './Kubernetes.types';
+import { NewKubernetesCluster, KubernetesProps, Kubernetes, OperatorToUpdate } from './Kubernetes.types';
 import { KubernetesClusterStatus } from './KubernetesClusterStatus/KubernetesClusterStatus';
 import { ManageComponentsVersionsModal } from './ManageComponentsVersionsModal/ManageComponentsVersionsModal';
+import { UpdateOperatorModal } from './OperatorStatusItem/KubernetesOperatorStatus/UpdateOperatorModal/UpdateOperatorModal';
 import { OperatorStatusItem } from './OperatorStatusItem/OperatorStatusItem';
 import { ViewClusterConfigModal } from './ViewClusterConfigModal/ViewClusterConfigModal';
 
-export const KubernetesInventory: FC<KubernetesProps> = ({ kubernetes, deleteKubernetes, addKubernetes, loading }) => {
+export const KubernetesInventory: FC<KubernetesProps> = ({
+  kubernetes,
+  deleteKubernetes,
+  addKubernetes,
+  getKubernetes,
+  setLoading,
+  loading,
+}) => {
   const styles = useStyles(getStyles);
   const [selectedCluster, setSelectedCluster] = useState<Kubernetes | null>(null);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [viewConfigModalVisible, setViewConfigModalVisible] = useState(false);
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [manageComponentsModalVisible, setManageComponentsModalVisible] = useState(false);
+  const [operatorToUpdate, setOperatorToUpdate] = useState<OperatorToUpdate | null>(null);
+  const [updateOperatorModalVisible, setUpdateOperatorModalVisible] = useState(false);
   const { required } = validators;
 
   const deleteKubernetesCluster = useCallback(
@@ -50,8 +60,22 @@ export const KubernetesInventory: FC<KubernetesProps> = ({ kubernetes, deleteKub
       Header: Messages.kubernetes.table.operatorsColumn,
       accessor: (element: Kubernetes) => (
         <div>
-          <OperatorStatusItem databaseType={Databases.mysql} operator={element.operators.xtradb} />
-          <OperatorStatusItem databaseType={Databases.mongodb} operator={element.operators.psmdb} />
+          <OperatorStatusItem
+            databaseType={Databases.mysql}
+            operator={element.operators.xtradb}
+            kubernetes={element}
+            setSelectedCluster={setSelectedCluster}
+            setOperatorToUpdate={setOperatorToUpdate}
+            setUpdateOperatorModalVisible={setUpdateOperatorModalVisible}
+          />
+          <OperatorStatusItem
+            databaseType={Databases.mongodb}
+            operator={element.operators.psmdb}
+            kubernetes={element}
+            setSelectedCluster={setSelectedCluster}
+            setOperatorToUpdate={setOperatorToUpdate}
+            setUpdateOperatorModalVisible={setUpdateOperatorModalVisible}
+          />
         </div>
       ),
     },
@@ -169,6 +193,18 @@ export const KubernetesInventory: FC<KubernetesProps> = ({ kubernetes, deleteKub
           selectedKubernetes={selectedCluster}
           isVisible={manageComponentsModalVisible}
           setVisible={setManageComponentsModalVisible}
+        />
+      )}
+      {selectedCluster && operatorToUpdate && updateOperatorModalVisible && (
+        <UpdateOperatorModal
+          kubernetesClusterName={selectedCluster.kubernetesClusterName}
+          isVisible={updateOperatorModalVisible}
+          selectedOperator={operatorToUpdate}
+          setVisible={setUpdateOperatorModalVisible}
+          setLoading={setLoading}
+          setSelectedCluster={setSelectedCluster}
+          setOperatorToUpdate={setOperatorToUpdate}
+          onOperatorUpdated={getKubernetes}
         />
       )}
       <Table columns={columns} data={kubernetes} loading={loading} noData={<AddNewClusterButton />} />
