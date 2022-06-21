@@ -3,21 +3,36 @@ import { useObservable } from 'react-use';
 import { Observer, Subject, Subscription } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
+import { SceneComponentEditWrapper } from './SceneComponentEditWrapper';
 import {
-  SceneComponentProps,
   SceneTimeRangeState,
   SceneDataState,
   SceneObject,
   SceneLayoutState,
   SceneObjectState,
+  SceneComponent,
+  SceneEditor,
+  SceneObjectList,
 } from './types';
 
-export abstract class SceneObjectBase<TState extends SceneObjectState> implements SceneObject<TState> {
+export abstract class SceneObjectBase<TState extends SceneObjectState = {}> implements SceneObject<TState> {
   subject = new Subject<TState>();
   state: TState;
   parent?: SceneObjectBase<any>;
   subs = new Subscription();
   isMounted?: boolean;
+
+  /**
+   * Used in render functions when rendering a SceneObject.
+   * Wraps the component in an EditWrapper that handles edit mode
+   */
+  get Component(): SceneComponent<this> {
+    return SceneComponentEditWrapper;
+  }
+
+  get Editor(): SceneComponent<this> {
+    return ((this as any).constructor['Editor'] ?? (() => null)) as SceneComponent<this>;
+  }
 
   constructor(state: TState) {
     if (!state.key) {
@@ -44,6 +59,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState> implement
     }
   }
 
+  /** This function implements the Subscribable<TState> interface */
   subscribe(observer: Partial<Observer<TState>>) {
     return this.subject.subscribe(observer);
   }
@@ -55,10 +71,6 @@ export abstract class SceneObjectBase<TState extends SceneObjectState> implement
     };
     this.setParent();
     this.subject.next(this.state);
-  }
-
-  Component(_: SceneComponentProps<SceneObject<TState>>): React.ReactElement | null {
-    return null;
   }
 
   onMount() {
@@ -139,6 +151,22 @@ export abstract class SceneObjectBase<TState extends SceneObjectState> implement
   }
 
   /**
+   * Will walk up the scene object graph to the closest $editor scene object
+   */
+  getSceneEditor(): SceneEditor {
+    const { $editor } = this.state;
+    if ($editor) {
+      return $editor;
+    }
+
+    if (this.parent) {
+      return this.parent.getSceneEditor();
+    }
+
+    throw new Error('No editor found in scene tree');
+  }
+
+  /**
    * Will create new SceneItem with shalled cloned state, but all states items of type SceneItem are deep cloned
    */
   clone(withState?: Partial<TState>): this {
@@ -155,7 +183,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState> implement
     // Clone layout children
     const layout = this.state as any as SceneLayoutState;
     if (layout.children) {
-      const newChildren: SceneLayoutState['children'] = [];
+      const newChildren: SceneObjectList = [];
       for (const child of layout.children) {
         newChildren.push(child.clone());
       }

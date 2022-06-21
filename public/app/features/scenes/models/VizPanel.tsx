@@ -3,7 +3,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { AbsoluteTimeRange, FieldConfigSource, toUtc } from '@grafana/data';
 import { PanelRenderer } from '@grafana/runtime';
-import { PanelChrome } from '@grafana/ui';
+import { Field, PanelChrome, Input } from '@grafana/ui';
 
 import { SceneObjectBase } from './SceneObjectBase';
 import { SceneComponentProps, SceneObjectState } from './types';
@@ -16,7 +16,8 @@ export interface VizPanelState extends SceneObjectState {
 }
 
 export class VizPanel extends SceneObjectBase<VizPanelState> {
-  Component = ScenePanelRenderer;
+  static Component = ScenePanelRenderer;
+  static Editor = VizPanelEditor;
 
   onSetTimeRange = (timeRange: AbsoluteTimeRange) => {
     const sceneTimeRange = this.getTimeRange();
@@ -33,7 +34,7 @@ export class VizPanel extends SceneObjectBase<VizPanelState> {
   };
 }
 
-const ScenePanelRenderer = React.memo<SceneComponentProps<VizPanel>>(({ model }) => {
+function ScenePanelRenderer({ model }: SceneComponentProps<VizPanel>) {
   const { title, pluginId, options, fieldConfig } = model.useMount().useState();
   const { data } = model.getData().useState();
 
@@ -66,6 +67,16 @@ const ScenePanelRenderer = React.memo<SceneComponentProps<VizPanel>>(({ model })
       }}
     </AutoSizer>
   );
-});
+}
 
 ScenePanelRenderer.displayName = 'ScenePanelRenderer';
+
+function VizPanelEditor({ model }: SceneComponentProps<VizPanel>) {
+  const { title } = model.useState();
+
+  return (
+    <Field label="Title">
+      <Input defaultValue={title} onBlur={(evt) => model.setState({ title: evt.currentTarget.value })} />
+    </Field>
+  );
+}

@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { PageToolbar } from '@grafana/ui';
+import { PageToolbar, ToolbarButton } from '@grafana/ui';
 
 import { SceneObjectBase } from './SceneObjectBase';
 import { SceneComponentProps, SceneObjectState, SceneObject } from './types';
@@ -9,14 +9,15 @@ interface SceneState extends SceneObjectState {
   title: string;
   layout: SceneObject<any>;
   actions?: Array<SceneObject<any>>;
+  isEditing?: boolean;
 }
 
 export class Scene extends SceneObjectBase<SceneState> {
-  Component = SceneRenderer;
+  static Component = SceneRenderer;
 }
 
-const SceneRenderer = React.memo<SceneComponentProps<Scene>>(({ model }) => {
-  const { title, layout, $timeRange, actions = [] } = model.useMount().useState();
+function SceneRenderer({ model }: SceneComponentProps<Scene>) {
+  const { title, layout, $timeRange, actions = [], isEditing, $editor } = model.useMount().useState();
 
   console.log('render scene');
 
@@ -26,13 +27,19 @@ const SceneRenderer = React.memo<SceneComponentProps<Scene>>(({ model }) => {
         {actions.map((action) => (
           <action.Component key={action.state.key} model={action} />
         ))}
+        {$editor && (
+          <ToolbarButton
+            icon="cog"
+            variant={isEditing ? 'primary' : 'default'}
+            onClick={() => model.setState({ isEditing: !model.state.isEditing })}
+          />
+        )}
         {$timeRange && <$timeRange.Component model={$timeRange} />}
       </PageToolbar>
-      <div style={{ flexGrow: 1, display: 'flex', padding: '16px' }}>
-        <layout.Component model={layout} />
+      <div style={{ flexGrow: 1, display: 'flex', padding: '16px', gap: '8px', paddingTop: 0, overflow: 'auto' }}>
+        <layout.Component model={layout} isEditing={isEditing} />
+        {$editor && <$editor.Component model={$editor} isEditing={isEditing} />}
       </div>
     </div>
   );
-});
-
-SceneRenderer.displayName = 'SceneRenderer';
+}

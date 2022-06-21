@@ -1,7 +1,9 @@
 import React, { CSSProperties } from 'react';
 
+import { Field, RadioButtonGroup } from '@grafana/ui';
+
 import { SceneObjectBase } from './SceneObjectBase';
-import { SceneObject, SceneObjectSize, SceneObjectState, SceneLayoutState } from './types';
+import { SceneObject, SceneObjectSize, SceneObjectState, SceneLayoutState, SceneComponentProps } from './types';
 
 export type FlexLayoutDirection = 'column' | 'row';
 
@@ -10,7 +12,8 @@ interface SceneFlexLayoutState extends SceneObjectState, SceneLayoutState {
 }
 
 export class SceneFlexLayout extends SceneObjectBase<SceneFlexLayoutState> {
-  Component = FlexLayoutRenderer;
+  static Component = FlexLayoutRenderer;
+  static Editor = FlexLayoutEditor;
 
   toggleDirection() {
     this.setState({
@@ -19,13 +22,13 @@ export class SceneFlexLayout extends SceneObjectBase<SceneFlexLayoutState> {
   }
 }
 
-function FlexLayoutRenderer({ model }: { model: SceneFlexLayout }) {
+function FlexLayoutRenderer({ model, isEditing }: SceneComponentProps<SceneFlexLayout>) {
   const { direction = 'row', children } = model.useState();
 
   return (
     <div style={{ flexGrow: 1, flexDirection: direction, display: 'flex', gap: '8px' }}>
       {children.map((item) => (
-        <FlexLayoutChildComponent key={item.state.key} item={item} direction={direction} />
+        <FlexLayoutChildComponent key={item.state.key} item={item} direction={direction} isEditing={isEditing} />
       ))}
     </div>
   );
@@ -34,15 +37,17 @@ function FlexLayoutRenderer({ model }: { model: SceneFlexLayout }) {
 function FlexLayoutChildComponent({
   item,
   direction,
+  isEditing,
 }: {
   item: SceneObject<SceneObjectState>;
   direction: FlexLayoutDirection;
+  isEditing?: boolean;
 }) {
   const { size } = item.useMount().useState();
 
   return (
     <div style={getItemStyles(direction, size)}>
-      <item.Component model={item} />
+      <item.Component model={item} isEditing={isEditing} />
     </div>
   );
 }
@@ -67,13 +72,13 @@ function getItemStyles(direction: FlexLayoutDirection, sizing: SceneObjectSize =
     if (sizing.width) {
       style.width = sizing.width;
     } else {
-      style.alignSelf = xSizing === 'fill' ? 'stretch' : 'normal';
+      style.alignSelf = xSizing === 'fill' ? 'stretch' : 'flex-start';
     }
   } else {
     if (sizing.height) {
       style.height = sizing.height;
     } else {
-      style.alignSelf = ySizing === 'fill' ? 'stretch' : 'normal';
+      style.alignSelf = ySizing === 'fill' ? 'stretch' : 'flex-start';
     }
 
     if (sizing.width) {
@@ -84,4 +89,22 @@ function getItemStyles(direction: FlexLayoutDirection, sizing: SceneObjectSize =
   }
 
   return style;
+}
+
+function FlexLayoutEditor({ model }: SceneComponentProps<SceneFlexLayout>) {
+  const { direction = 'row' } = model.useState();
+  const options = [
+    { icon: 'arrow-right', value: 'row' },
+    { icon: 'arrow-down', value: 'column' },
+  ];
+
+  return (
+    <Field label="Direction">
+      <RadioButtonGroup
+        options={options}
+        value={direction}
+        onChange={(value) => model.setState({ direction: value as FlexLayoutDirection })}
+      />
+    </Field>
+  );
 }

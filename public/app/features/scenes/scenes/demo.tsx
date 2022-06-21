@@ -1,12 +1,13 @@
 import { getDefaultTimeRange } from '@grafana/data';
 
+import { SceneEditManager } from '../editor/SceneEditManager';
 import { Scene } from '../models/Scene';
 import { SceneCanvasText } from '../models/SceneCanvasText';
 import { SceneFlexLayout } from '../models/SceneFlexLayout';
 import { ScenePanelRepeater } from '../models/ScenePanelRepeater';
 import { SceneQueryRunner } from '../models/SceneQueryRunner';
 import { SceneTimeRange } from '../models/SceneTimeRange';
-import { SceneToolbarButton, SceneToolbarInput } from '../models/SceneToolbarButton';
+import { SceneToolbarInput } from '../models/SceneToolbarButton';
 import { VizPanel } from '../models/VizPanel';
 
 export function getFlexLayoutTest(): Scene {
@@ -18,10 +19,10 @@ export function getFlexLayoutTest(): Scene {
         new VizPanel({
           pluginId: 'timeseries',
           title: 'Dynamic height and width',
+          size: { minWidth: '70%' },
         }),
         new SceneFlexLayout({
-          key: 'B',
-          size: { width: 450 },
+          // size: { width: 450 },
           direction: 'column',
           children: [
             new VizPanel({
@@ -47,6 +48,7 @@ export function getFlexLayoutTest(): Scene {
         }),
       ],
     }),
+    $editor: new SceneEditManager({}),
     $timeRange: new SceneTimeRange({
       timeRange: getDefaultTimeRange(),
     }),
@@ -62,14 +64,7 @@ export function getFlexLayoutTest(): Scene {
         },
       ],
     }),
-    actions: [
-      new SceneToolbarButton({
-        icon: 'columns',
-        onClick: () => {
-          (scene.state.layout as SceneFlexLayout).toggleDirection();
-        },
-      }),
-    ],
+    actions: [],
   });
 
   return scene;
@@ -120,6 +115,7 @@ export function getScenePanelRepeaterTest(): Scene {
         ],
       }),
     }),
+    $editor: new SceneEditManager({}),
     $timeRange: new SceneTimeRange({
       timeRange: getDefaultTimeRange(),
     }),

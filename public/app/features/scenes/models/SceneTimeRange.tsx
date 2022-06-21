@@ -13,7 +13,7 @@ interface TimeRangeState extends SceneObjectState {
 }
 
 export class SceneTimeRange extends SceneObjectBase<TimeRangeState> {
-  Component = SceneTimeRangeRenderer;
+  static Component = SceneTimeRangeRenderer;
 
   onTimeRangeChange = (timeRange: TimeRange) => {
     this.setState({ timeRange });

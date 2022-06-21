@@ -1,5 +1,7 @@
 import React, { CSSProperties } from 'react';
 
+import { Field, Input } from '@grafana/ui';
+
 import { SceneObjectBase } from './SceneObjectBase';
 import { SceneComponentProps, SceneObjectState } from './types';
 
@@ -10,12 +12,14 @@ export interface SceneCanvasTextState extends SceneObjectState {
 }
 
 export class SceneCanvasText extends SceneObjectBase<SceneCanvasTextState> {
-  Component = ({ model }: SceneComponentProps<SceneCanvasText>) => {
+  static Editor = Editor;
+  static Component = ({ model }: SceneComponentProps<SceneCanvasText>) => {
     const { text, fontSize = 20, align = 'left' } = model.useState();
 
     const style: CSSProperties = {
       fontSize: fontSize,
       display: 'flex',
+      flexGrow: 1,
       alignItems: 'center',
       padding: 16,
       justifyContent: align,
@@ -23,4 +27,18 @@ export class SceneCanvasText extends SceneObjectBase<SceneCanvasTextState> {
 
     return <div style={style}>{text}</div>;
   };
+}
+
+function Editor({ model }: SceneComponentProps<SceneCanvasText>) {
+  const { fontSize } = model.useState();
+
+  return (
+    <Field label="Font size">
+      <Input
+        type="number"
+        defaultValue={fontSize}
+        onBlur={(evt) => model.setState({ fontSize: parseInt(evt.currentTarget.value, 10) })}
+      />
+    </Field>
+  );
 }

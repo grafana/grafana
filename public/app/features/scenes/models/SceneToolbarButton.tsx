@@ -11,7 +11,7 @@ export interface ToolbarButtonState extends SceneObjectState {
 }
 
 export class SceneToolbarButton extends SceneObjectBase<ToolbarButtonState> {
-  Component = ({ model }: SceneComponentProps<SceneToolbarButton>) => {
+  static Component = ({ model }: SceneComponentProps<SceneToolbarButton>) => {
     const state = model.useState();
 
     return <ToolbarButton onClick={state.onClick} icon={state.icon} />;
@@ -24,7 +24,7 @@ export interface SceneToolbarInputState extends SceneObjectState {
 }
 
 export class SceneToolbarInput extends SceneObjectBase<SceneToolbarInputState> {
-  Component = ({ model }: SceneComponentProps<SceneToolbarInput>) => {
+  static Component = ({ model }: SceneComponentProps<SceneToolbarInput>) => {
     const state = model.useState();
 
     return (
