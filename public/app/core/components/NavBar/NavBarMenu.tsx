@@ -228,29 +228,33 @@ function NavItem({
 }) {
   const styles = useStyles2(getNavItemStyles);
 
-  if (linkHasChildren(link)) {
+  if (linkHasChildren(link) || link.emptyMessage) {
     return (
       <CollapsibleNavItem onClose={onClose} link={link} isActive={isMatchOrChildMatch(link, activeItem)}>
         <ul className={styles.children}>
-          {link.children.map(
-            (childLink) =>
-              !childLink.divider && (
-                <NavBarMenuItem
-                  key={`${link.text}-${childLink.text}`}
-                  isActive={activeItem === childLink}
-                  isDivider={childLink.divider}
-                  icon={childLink.showIconInNavbar ? (childLink.icon as IconName) : undefined}
-                  onClick={() => {
-                    childLink.onClick?.();
-                    onClose();
-                  }}
-                  styleOverrides={styles.item}
-                  target={childLink.target}
-                  text={childLink.text}
-                  url={childLink.url}
-                  isMobile={true}
-                />
-              )
+          {linkHasChildren(link) ? (
+            link.children.map(
+              (childLink) =>
+                !childLink.divider && (
+                  <NavBarMenuItem
+                    key={`${link.text}-${childLink.text}`}
+                    isActive={activeItem === childLink}
+                    isDivider={childLink.divider}
+                    icon={childLink.showIconInNavbar ? (childLink.icon as IconName) : undefined}
+                    onClick={() => {
+                      childLink.onClick?.();
+                      onClose();
+                    }}
+                    styleOverrides={styles.item}
+                    target={childLink.target}
+                    text={childLink.text}
+                    url={childLink.url}
+                    isMobile={true}
+                  />
+                )
+            )
+          ) : (
+            <div className={styles.emptyMessage}>{link.emptyMessage}</div>
           )}
         </ul>
       </CollapsibleNavItem>
@@ -325,6 +329,11 @@ const getNavItemStyles = (theme: GrafanaTheme2) => ({
     fontSize: theme.typography.pxToRem(14),
     justifySelf: 'start',
     padding: theme.spacing(0.5, 4.25, 0.5, 0.5),
+  }),
+  emptyMessage: css({
+    color: theme.colors.text.secondary,
+    fontStyle: 'italic',
+    padding: theme.spacing(1, 1.5),
   }),
 });
 

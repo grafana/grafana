@@ -172,12 +172,13 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 	}
 
 	navTree = append(navTree, &dtos.NavLink{
-		Text:       "Starred",
-		Id:         "starred",
-		Icon:       "star",
-		SortWeight: dtos.WeightSavedItems,
-		Section:    dtos.NavSectionCore,
-		Children:   starredItemsLinks,
+		Text:         "Starred",
+		Id:           "starred",
+		Icon:         "star",
+		SortWeight:   dtos.WeightSavedItems,
+		Section:      dtos.NavSectionCore,
+		Children:     starredItemsLinks,
+		EmptyMessage: "Your starred dashboards will appear here",
 	})
 
 	dashboardChildLinks := hs.buildDashboardNavLinks(c, hasEditPerm)

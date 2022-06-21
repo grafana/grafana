@@ -74,6 +74,7 @@ type NavLink struct {
 	Children         []*NavLink `json:"children,omitempty"`
 	HighlightText    string     `json:"highlightText,omitempty"`
 	HighlightID      string     `json:"highlightId,omitempty"`
+	EmptyMessage     string     `json:"emptyMessage,omitempty"`
 }
 
 // NavIDCfg is the id for org configuration navigation node
