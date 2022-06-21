@@ -1,8 +1,8 @@
 import { LoadingState } from '@grafana/data';
 import { VariableHide } from 'app/features/variables/types';
 
-import { SceneObjectBase } from './SceneObjectBase';
-import { SceneObjectState } from './types';
+import { SceneObjectBase } from '../core/SceneObjectBase';
+import { SceneObjectState } from '../core/types';
 
 export interface SceneVariableContainerState extends SceneObjectState {}
 

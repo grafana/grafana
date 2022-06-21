@@ -7,9 +7,9 @@ import { ScenePanelRepeater } from '../components/ScenePanelRepeater';
 import { SceneTimePicker } from '../components/SceneTimePicker';
 import { SceneToolbarInput } from '../components/SceneToolbarButton';
 import { VizPanel } from '../components/VizPanel';
+import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneEditManager } from '../editor/SceneEditManager';
 import { SceneQueryRunner } from '../querying/SceneQueryRunner';
-import { SceneTimeRange } from '../querying/SceneTimeRange';
 
 export function getFlexLayoutTest(): Scene {
   const scene = new Scene({

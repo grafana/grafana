@@ -4,8 +4,8 @@ import { Scene } from '../components/Scene';
 import { SceneFlexLayout } from '../components/SceneFlexLayout';
 import { SceneTimePicker } from '../components/SceneTimePicker';
 import { VizPanel } from '../components/VizPanel';
+import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneQueryRunner } from '../querying/SceneQueryRunner';
-import { SceneTimeRange } from '../querying/SceneTimeRange';
 
 export function getNestedScene(): Scene {
   const scene = new Scene({

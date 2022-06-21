@@ -5,7 +5,6 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { SceneComponentEditWrapper } from './SceneComponentEditWrapper';
 import {
-  SceneTimeRangeState,
   SceneDataState,
   SceneObject,
   SceneLayoutState,
@@ -13,6 +12,7 @@ import {
   SceneComponent,
   SceneEditor,
   SceneObjectList,
+  SceneTimeRange,
 } from './types';
 
 export abstract class SceneObjectBase<TState extends SceneObjectState = {}> implements SceneObject<TState> {
@@ -122,7 +122,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
   /**
    * Will walk up the scene object graph to the closest $timeRange scene object
    */
-  getTimeRange(): SceneObject<SceneTimeRangeState> {
+  getTimeRange(): SceneTimeRange {
     const { $timeRange } = this.state;
     if ($timeRange) {
       return $timeRange;

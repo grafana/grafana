@@ -6,7 +6,7 @@ import { PanelData, TimeRange } from '@grafana/data';
 export interface SceneObjectState {
   key?: string;
   size?: SceneObjectSize;
-  $timeRange?: SceneObject<SceneTimeRangeState>;
+  $timeRange?: SceneTimeRange;
   $data?: SceneObject<SceneDataState>;
   $editor?: SceneEditor;
 }
@@ -32,8 +32,6 @@ export type SceneComponent<TModel> = React.FunctionComponent<SceneComponentProps
 export interface SceneDataState extends SceneObjectState {
   data?: PanelData;
 }
-
-export interface SceneTimeRangeState extends SceneObjectState, TimeRange {}
 
 export interface SceneObject<TState extends SceneObjectState = SceneObjectState> extends Subscribable<TState> {
   /** The current state */
@@ -92,8 +90,11 @@ export interface SceneEditor extends SceneObject<SceneEditorState> {
   selectObject(model: SceneObject): void;
 }
 
+export interface SceneTimeRangeState extends SceneObjectState, TimeRange {}
 export interface SceneTimeRange extends SceneObject<SceneTimeRangeState> {
   onTimeRangeChange(timeRange: TimeRange): void;
+  onIntervalChanged(interval: string): void;
+  onRefresh(): void;
 }
 
 export interface SceneObjectRef {
