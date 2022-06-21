@@ -337,12 +337,7 @@ export const fetchServerSaasHostAction = createAsyncThunk(
   (_, thunkAPI): Promise<void> =>
     withSerializedError(
       (async () => {
-        let host = 'https://portal.percona.com';
-        const { host: envHost = '' } = await api.get('/graph/percona-api/saas-host');
-
-        if (envHost.includes('dev')) {
-          host = 'https://platform-dev.percona.com';
-        }
+        const { host } = await api.get('/graph/percona-api/saas-host');
         thunkAPI.dispatch(setServerSaasHost(host));
       })()
     )
