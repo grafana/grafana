@@ -1,12 +1,18 @@
 package models
 
 import (
+	"time"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 var (
 	ErrPublicDashboardFailedGenerateUniqueUid = DashboardErr{
-		Reason:     "Failed to generate unique dashboard id",
+		Reason:     "Failed to generate unique public dashboard id",
+		StatusCode: 500,
+	}
+	ErrPublicDashboardFailedGenerateAccesstoken = DashboardErr{
+		Reason:     "Failed to public dashboard access token",
 		StatusCode: 500,
 	}
 	ErrPublicDashboardNotFound = DashboardErr{
@@ -31,6 +37,13 @@ type PublicDashboard struct {
 	OrgId        int64            `json:"-" xorm:"org_id"` // Don't ever marshal orgId to Json
 	TimeSettings *simplejson.Json `json:"timeSettings" xorm:"time_settings"`
 	IsEnabled    bool             `json:"isEnabled" xorm:"is_enabled"`
+	AccessToken  string           `json:"accessToken" xorm:"access_token"`
+
+	CreatedBy int64 `json:"createdBy" xorm:"created_by"`
+	UpdatedBy int64 `json:"updatedBy" xorm:"updated_by"`
+
+	CreatedAt time.Time `json:"createdAt" xorm:"created_at"`
+	UpdatedAt time.Time `json:"updatedAt" xorm:"updated_at"`
 }
 
 func (pd PublicDashboard) TableName() string {
