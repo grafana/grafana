@@ -1,15 +1,19 @@
-import React, { FC, useCallback } from 'react';
-import { Button, HorizontalGroup, useStyles } from '@grafana/ui';
 import { Modal, logger } from '@percona/platform-core';
+import React, { FC, useCallback } from 'react';
+
+import { Button, HorizontalGroup, useStyles } from '@grafana/ui';
 import { Messages } from 'app/percona/dbaas/DBaaS.messages';
 import { DATABASE_LABELS } from 'app/percona/shared/core';
-import { DeleteDBClusterModalProps } from './DeleteDBClusterModal.types';
-import { getStyles } from './DeleteDBClusterModal.styles';
+
 import { newDBClusterService } from '../DBCluster.utils';
+
+import { getStyles } from './DeleteDBClusterModal.styles';
+import { DeleteDBClusterModalProps } from './DeleteDBClusterModal.types';
 
 export const DeleteDBClusterModal: FC<DeleteDBClusterModalProps> = ({
   isVisible,
   setVisible,
+  setLoading,
   onClusterDeleted,
   selectedCluster,
 }) => {
@@ -23,15 +27,17 @@ export const DeleteDBClusterModal: FC<DeleteDBClusterModalProps> = ({
     }
 
     try {
+      setLoading(true);
+      setVisible(false);
       const dbClusterService = newDBClusterService(selectedCluster?.databaseType);
 
       await dbClusterService.deleteDBClusters(selectedCluster);
-      setVisible(false);
       onClusterDeleted();
     } catch (e) {
+      setLoading(false);
       logger.error(e);
     }
-  }, [selectedCluster, onClusterDeleted, setVisible]);
+  }, [selectedCluster, setVisible, setLoading, onClusterDeleted]);
 
   const ConfirmationMessage = () =>
     selectedCluster ? (
