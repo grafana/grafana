@@ -58,7 +58,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       margin: ${theme.spacing(0, 0, 0, 1.2)};
       position: absolute;
       top: 0px;
-      /* justify-items: center; */
       justify-content: center;
       border-radius: 20px;
       width: 26px;
