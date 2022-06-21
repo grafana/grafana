@@ -5,6 +5,7 @@ import { Form as FormFinal } from 'react-final-form';
 import { useStyles } from '@grafana/ui';
 import { DATABASE_LABELS } from 'app/percona/shared/core';
 
+import { MIN_NODES } from '../AddDBClusterModal/DBClusterAdvancedOptions/DBClusterAdvancedOptions.constants';
 import { DBCluster } from '../DBCluster.types';
 import { newDBClusterService } from '../DBCluster.utils';
 
@@ -51,9 +52,10 @@ export const EditDBClusterModal: FC<EditDBClusterModalProps> = ({
   const editModalTitle = `${selectedCluster?.clusterName} ( ${selectedCluster?.databaseType} )`;
 
   if (!initialValues.current) {
+    const isCluster = selectedCluster.clusterSize > 1;
     const clusterParameters: EditDBClusterRenderProps = {
-      topology: selectedCluster.clusterSize > 1 ? DBClusterTopology.cluster : DBClusterTopology.single,
-      nodes: selectedCluster.clusterSize,
+      topology: isCluster ? DBClusterTopology.cluster : DBClusterTopology.single,
+      nodes: isCluster ? selectedCluster.clusterSize : MIN_NODES,
       single: 1,
       databaseType: {
         value: selectedCluster.databaseType,
