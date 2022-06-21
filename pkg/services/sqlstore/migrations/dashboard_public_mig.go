@@ -22,6 +22,8 @@ func addPublicDashboardMigration(mg *Migrator) {
 
 			{Name: "created_at", Type: DB_DateTime, Nullable: false},
 			{Name: "updated_at", Type: DB_DateTime, Nullable: true},
+
+			{Name: "is_enabled", Type: DB_Bool, Nullable: false, Default: "0"},
 		},
 		Indices: []*Index{
 			{Cols: []string{"uid"}, Type: UniqueIndex},
@@ -29,21 +31,22 @@ func addPublicDashboardMigration(mg *Migrator) {
 			{Cols: []string{"access_token"}, Type: UniqueIndex},
 		},
 	}
+
+	// initial create table
 	mg.AddMigration("create dashboard public config v1", NewAddTableMigration(dashboardPublicCfgV1))
 
-	// table has no dependencies and was created with incorrect pkey type.
-	// drop then recreate with correct values
+	// recreate tabe - no dependencies and was created with incorrect pkey type
 	addDropAllIndicesMigrations(mg, "v1", dashboardPublicCfgV1)
 	mg.AddMigration("Drop old dashboard public config table", NewDropTableMigration("dashboard_public_config"))
-
-	// recreate table with proper primary key type
 	mg.AddMigration("recreate dashboard public config v1", NewAddTableMigration(dashboardPublicCfgV1))
 	addTableIndicesMigrations(mg, "v1", dashboardPublicCfgV1)
 
-	mg.AddMigration("Add isPublic to public dashboards", NewAddColumnMigration(dashboardPublicCfgV1, &Column{
-		Name: "is_enabled", Type: DB_Bool, Nullable: false, Default: "0",
-	}))
+	// Recreate table - schema finalized for public dashboards v1
+	addDropAllIndicesMigrations(mg, "v1", dashboardPublicCfgV1)
+	mg.AddMigration("Drop old dashboard public config table", NewDropTableMigration("dashboard_public_config"))
+	mg.AddMigration("recreate dashboard public config v1", NewAddTableMigration(dashboardPublicCfgV1))
+	addTableIndicesMigrations(mg, "v1", dashboardPublicCfgV1)
 
-	// rename table
+	// Rename table
 	addTableRenameMigration(mg, "dashboard_public_config", "dashboard_public", "v1")
 }
