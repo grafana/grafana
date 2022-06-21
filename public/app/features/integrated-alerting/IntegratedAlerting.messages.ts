@@ -10,6 +10,7 @@ export const Messages = {
     addSuccess: 'Alert rule template successfully added',
     addModal: {
       confirm: 'Add',
+      cancel: 'Cancel',
       title: 'Add Alert Rule Template',
       upload: 'Upload',
       fields: {

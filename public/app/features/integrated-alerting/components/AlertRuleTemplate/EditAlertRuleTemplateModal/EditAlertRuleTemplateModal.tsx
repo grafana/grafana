@@ -3,7 +3,7 @@ import React, { FC } from 'react';
 import { Form } from 'react-final-form';
 
 import { AppEvents } from '@grafana/data';
-import { HorizontalGroup, useStyles } from '@grafana/ui';
+import { Button, HorizontalGroup, useStyles } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 
 import { AlertRuleTemplateService } from '../AlertRuleTemplate.service';
@@ -55,6 +55,13 @@ export const EditAlertRuleTemplateModal: FC<EditAlertRuleTemplateModalProps> = (
                 >
                   {Messages.submitButton}
                 </LoaderButton>
+                <Button
+                  data-qa="alert-rule-template-cancel-button"
+                  variant="secondary"
+                  onClick={() => setVisible(false)}
+                >
+                  {Messages.cancelAction}
+                </Button>
               </HorizontalGroup>
             </>
           </form>
