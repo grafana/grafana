@@ -84,7 +84,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       })
       .addUnitPicker({
         path: 'yAxis.unit',
-        name: 'UnitX',
+        name: 'Unit',
         category,
         settings: {
           isClearable: true,
