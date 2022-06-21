@@ -14,8 +14,7 @@ func init() {
 	var punctuation = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
 	args := make([]string, 0, len(punctuation)*2)
 	for _, r := range punctuation {
-		args = append(args, string(r))
-		args = append(args, " ")
+		args = append(args, string(r), " ")
 	}
 	punctuationReplacer = strings.NewReplacer(args...)
 }
