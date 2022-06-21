@@ -2,6 +2,8 @@ package migration
 
 import (
 	"context"
+	"encoding/json"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -47,38 +49,40 @@ func (s *DataSourceSecretMigrationService) Run(ctx context.Context) error {
 		}
 
 		s.log.Debug("starting data source secret migration")
-		// for _, ds := range query.Result {
-		// 	hasMigration, _ := ds.JsonData.Get("secretMigrationComplete").Bool()
-		// 	if !hasMigration {
-		// 		secureJsonData, err := s.dataSourcesService.DecryptLegacySecrets(ctx, ds)
-		// 		if err != nil {
-		// 			return err
-		// 		}
+		for _, ds := range query.Result {
+			hasMigration, _ := ds.JsonData.Get("secretMigrationComplete").Bool()
+			if !hasMigration {
+				secureJsonData, err := s.dataSourcesService.DecryptLegacySecrets(ctx, ds)
+				if err != nil {
+					return err
+				}
 
-		// 		jsonData, err := json.Marshal(secureJsonData)
-		// 		if err != nil {
-		// 			return err
-		// 		}
+				jsonData, err := json.Marshal(secureJsonData)
+				if err != nil {
+					return err
+				}
 
-		// 		err = s.secretsStore.Set(ctx, ds.OrgId, ds.Name, dataSourceSecretType, string(jsonData))
-		// 		if err != nil {
-		// 			return err
-		// 		}
+				err = s.secretsStore.Set(ctx, ds.OrgId, ds.Name, dataSourceSecretType, string(jsonData))
+				if err != nil {
+					return err
+				}
 
-		// 		ds.JsonData.Set("secretMigrationComplete", true)
-		// 		err = s.dataSourcesService.UpdateDataSource(ctx, &models.UpdateDataSourceCommand{Id: ds.Id, OrgId: ds.OrgId, Uid: ds.Uid, JsonData: ds.JsonData})
-		// 		if err != nil {
-		// 			return err
-		// 		}
-		// 	}
+				ds.JsonData.Set("secretMigrationComplete", true)
+				err = s.dataSourcesService.UpdateDataSource(ctx, &models.UpdateDataSourceCommand{Id: ds.Id, OrgId: ds.OrgId, Uid: ds.Uid, JsonData: ds.JsonData})
+				if err != nil {
+					return err
+				}
+			}
 
-		// 	if s.features.IsEnabled(featuremgmt.FlagDisableSecretsCompatibility) && len(ds.SecureJsonData) > 0 {
-		// 		err := s.dataSourcesService.DeleteDataSourceSecrets(ctx, &models.DeleteDataSourceSecretsCommand{UID: ds.Uid, OrgID: ds.OrgId, ID: ds.Id})
-		// 		if err != nil {
-		// 			return err
-		// 		}
-		// 	}
-		// }
+			if s.features.IsEnabled(featuremgmt.FlagDisableSecretsCompatibility) && len(ds.SecureJsonData) > 0 {
+				err := s.dataSourcesService.DeleteDataSourceSecrets(ctx, &models.DeleteDataSourceSecretsCommand{UID: ds.Uid, OrgID: ds.OrgId, ID: ds.Id})
+				if err != nil {
+					return err
+				}
+			}
+
+			time.Sleep(time.Second)
+		}
 		s.log.Debug("data source secret migration complete")
 		return nil
 	})
