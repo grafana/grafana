@@ -58,20 +58,12 @@ func (hs *HTTPServer) TrimDashboard(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	var err error
 	dash := cmd.Dashboard
 	meta := cmd.Meta
 
-	trimedResult := *dash
-	if !hs.LoadSchemaService.IsDisabled() {
-		trimedResult, err = hs.LoadSchemaService.DashboardTrimDefaults(*dash)
-		if err != nil {
-			return response.Error(500, "Error while exporting with default values removed", err)
-		}
-	}
-
+	// TODO temporarily just return the input as a no-op while we convert to thema calls
 	dto := dtos.TrimDashboardFullWithMeta{
-		Dashboard: &trimedResult,
+		Dashboard: dash,
 		Meta:      meta,
 	}
 
@@ -311,22 +303,22 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext) response.Response {
 	}
 
 	if hs.Features.IsEnabled(featuremgmt.FlagValidateDashboardsOnSave) {
+		cm := hs.CoremodelStaticRegistry.Dashboard()
+
 		// Ideally, coremodel validation calls would be integrated into the web
 		// framework. But this does the job for now.
-		if cm, has := hs.CoremodelRegistry.Get("dashboard"); has {
-			schv, err := cmd.Dashboard.Get("schemaVersion").Int()
+		schv, err := cmd.Dashboard.Get("schemaVersion").Int()
 
-			// Only try to validate if the schemaVersion is at least the handoff version
-			// (the minimum schemaVersion against which the dashboard schema is known to
-			// work), or if schemaVersion is absent (which will happen once the Thema
-			// schema becomes canonical).
-			if err != nil || schv >= dashboard.HandoffSchemaVersion {
-				// Can't fail, web.Bind() already ensured it's valid JSON
-				b, _ := cmd.Dashboard.Bytes()
-				v, _ := cuectx.JSONtoCUE("dashboard.json", b)
-				if _, err := cm.CurrentSchema().Validate(v); err != nil {
-					return response.Error(http.StatusBadRequest, "invalid dashboard json", err)
-				}
+		// Only try to validate if the schemaVersion is at least the handoff version
+		// (the minimum schemaVersion against which the dashboard schema is known to
+		// work), or if schemaVersion is absent (which will happen once the Thema
+		// schema becomes canonical).
+		if err != nil || schv >= dashboard.HandoffSchemaVersion {
+			// Can't fail, web.Bind() already ensured it's valid JSON
+			b, _ := cmd.Dashboard.Bytes()
+			v, _ := cuectx.JSONtoCUE("dashboard.json", b)
+			if _, err := cm.CurrentSchema().Validate(v); err != nil {
+				return response.Error(http.StatusBadRequest, "invalid dashboard json", err)
 			}
 		}
 	}
@@ -642,9 +634,9 @@ func (hs *HTTPServer) GetDashboardVersion(c *models.ReqContext) response.Respons
 		creator = hs.getUserLogin(c.Req.Context(), res.CreatedBy)
 	}
 
-	dashVersionMeta := &models.DashboardVersionMeta{
-		Id:            res.ID,
-		DashboardId:   res.DashboardID,
+	dashVersionMeta := &dashver.DashboardVersionMeta{
+		ID:            res.ID,
+		DashboardID:   res.DashboardID,
 		DashboardUID:  dashUID,
 		Data:          res.Data,
 		ParentVersion: res.ParentVersion,
@@ -699,7 +691,7 @@ func (hs *HTTPServer) CalculateDashboardDiff(c *models.ReqContext) response.Resp
 
 	baseVersionRes, err := hs.dashboardVersionService.Get(c.Req.Context(), &baseVersionQuery)
 	if err != nil {
-		if errors.Is(err, models.ErrDashboardVersionNotFound) {
+		if errors.Is(err, dashver.ErrDashboardVersionNotFound) {
 			return response.Error(404, "Dashboard version not found", err)
 		}
 		return response.Error(500, "Unable to compute diff", err)
@@ -713,7 +705,7 @@ func (hs *HTTPServer) CalculateDashboardDiff(c *models.ReqContext) response.Resp
 
 	newVersionRes, err := hs.dashboardVersionService.Get(c.Req.Context(), &newVersionQuery)
 	if err != nil {
-		if errors.Is(err, models.ErrDashboardVersionNotFound) {
+		if errors.Is(err, dashver.ErrDashboardVersionNotFound) {
 			return response.Error(404, "Dashboard version not found", err)
 		}
 		return response.Error(500, "Unable to compute diff", err)
@@ -725,7 +717,7 @@ func (hs *HTTPServer) CalculateDashboardDiff(c *models.ReqContext) response.Resp
 	result, err := dashdiffs.CalculateDiff(c.Req.Context(), &options, baseData, newData)
 
 	if err != nil {
-		if errors.Is(err, models.ErrDashboardVersionNotFound) {
+		if errors.Is(err, dashver.ErrDashboardVersionNotFound) {
 			return response.Error(404, "Dashboard version not found", err)
 		}
 		return response.Error(500, "Unable to compute diff", err)

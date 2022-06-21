@@ -1,7 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
-
-import { selectOptionInTest } from '@grafana/ui';
+import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import { SearchLayout } from '../types';
 

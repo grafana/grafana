@@ -627,8 +627,8 @@ func (c *GettableUserConfig) GetGrafanaReceiverMap() map[string]*GettableGrafana
 }
 
 type GettableApiAlertingConfig struct {
-	Config `yaml:",inline"`
-
+	Config              `yaml:",inline"`
+	MuteTimeProvenances map[string]models.Provenance `yaml:"muteTimeProvenances,omitempty" json:"muteTimeProvenances,omitempty"`
 	// Override with our superset receiver type
 	Receivers []*GettableApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
 }
@@ -849,20 +849,6 @@ func checkTimeInterval(r *Route, timeIntervals map[string]struct{}) error {
 		}
 	}
 	return nil
-}
-
-// swagger:model
-type MuteTimeInterval struct {
-	config.MuteTimeInterval
-	Provenance models.Provenance `json:"provenance,omitempty"`
-}
-
-func (mt *MuteTimeInterval) ResourceType() string {
-	return "muteTimeInterval"
-}
-
-func (mt *MuteTimeInterval) ResourceID() string {
-	return mt.MuteTimeInterval.Name
 }
 
 type PostableApiAlertingConfig struct {

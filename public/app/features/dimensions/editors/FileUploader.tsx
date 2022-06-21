@@ -49,7 +49,7 @@ export const FileUploader = ({ mediaType, setFormData, setUpload, error }: Props
   };
 
   const acceptableFiles =
-    mediaType === 'icon' ? 'image/svg+xml' : 'image/jpeg,image/png,image/gif,image/png, image/webp';
+    mediaType === 'icon' ? { 'image/*': ['.svg', '.xml'] } : { 'image/*': ['.jpeg', '.png', '.gif', '.webp'] };
   return (
     <FileDropzone
       readAs="readAsBinaryString"

@@ -14,20 +14,22 @@
 
 package grafanaschema
 
-Panel: {
-    lineages: [
-        [
-            {
-                PanelOptions: {
-                    // anything for now
-                    ...
-                } @cuetsy(kind="interface")
-                PanelFieldConfig: {
-                    // anything for now
-                    ...
-                } @cuetsy(kind="interface")
-            }
-        ]
-    ]
-    migrations: []
+Panel: thema.#Lineage & {
+	name: "candlestick"
+	seqs: [
+		{
+			schemas: [
+				{
+					PanelOptions: {
+						// anything for now
+						...
+					} @cuetsy(kind="interface")
+					PanelFieldConfig: {
+						// anything for now
+						...
+					} @cuetsy(kind="interface")
+				},
+			]
+		},
+	]
 }

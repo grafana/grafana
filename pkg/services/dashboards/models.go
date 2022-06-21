@@ -16,9 +16,9 @@ type SaveDashboardDTO struct {
 }
 
 type SavePublicDashboardConfigDTO struct {
-	Uid                   string
+	DashboardUid          string
 	OrgId                 int64
-	PublicDashboardConfig models.PublicDashboardConfig
+	PublicDashboardConfig *models.PublicDashboardConfig
 }
 
 type DashboardSearchProjection struct {

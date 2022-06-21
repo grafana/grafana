@@ -15,33 +15,36 @@
 package grafanaschema
 
 import (
-    ui "github.com/grafana/grafana/packages/grafana-schema/src/schema"
+	"github.com/grafana/thema"
+	ui "github.com/grafana/grafana/packages/grafana-schema/src/schema"
 )
 
-Panel: {
-    lineages: [
-        [
-            {
-                PanelOptions: {
-                    ui.OptionsWithLegend
-                    ui.OptionsWithTooltip
-                    ui.OptionsWithTextFormatting
-                    orientation: ui.VizOrientation
-                    // TODO this default is a guess based on common devenv values
-                    stacking: ui.StackingMode | *"none"
-                    showValue: ui.VisibilityMode
-                    barWidth: number
-                    groupWidth: number
-                } @cuetsy(kind="interface")
-                PanelFieldConfig: {
-                    ui.AxisConfig
-                    ui.HideableFieldConfig
-                    lineWidth?: number
-                    fillOpacity?: number
-                    gradientMode?: ui.GraphGradientMode
-                } @cuetsy(kind="interface")
-            }
-        ]
-    ]
-    migrations: []
+Panel: thema.#Lineage & {
+	name: "barchart"
+	seqs: [
+		{
+			schemas: [
+				{
+					PanelOptions: {
+						ui.OptionsWithLegend
+						ui.OptionsWithTooltip
+						ui.OptionsWithTextFormatting
+						orientation: ui.VizOrientation
+						// TODO this default is a guess based on common devenv values
+						stacking:   ui.StackingMode | *"none"
+						showValue:  ui.VisibilityMode
+						barWidth:   number
+						groupWidth: number
+					} @cuetsy(kind="interface")
+					PanelFieldConfig: {
+						ui.AxisConfig
+						ui.HideableFieldConfig
+						lineWidth?:    number
+						fillOpacity?:  number
+						gradientMode?: ui.GraphGradientMode
+					} @cuetsy(kind="interface")
+				},
+			]
+		},
+	]
 }

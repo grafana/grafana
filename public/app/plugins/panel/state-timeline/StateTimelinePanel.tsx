@@ -29,8 +29,8 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
   const { sync } = usePanelContext();
 
   const { frames, warn } = useMemo(
-    () => prepareTimelineFields(data?.series, options.mergeValues ?? true, theme),
-    [data, options.mergeValues, theme]
+    () => prepareTimelineFields(data?.series, options.mergeValues ?? true, timeRange, theme),
+    [data, options.mergeValues, timeRange, theme]
   );
 
   const legendItems = useMemo(

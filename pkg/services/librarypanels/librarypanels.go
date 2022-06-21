@@ -82,7 +82,12 @@ func loadLibraryPanelsRecursively(elements map[string]libraryelements.LibraryEle
 		elementInDB, ok := elements[UID]
 		if !ok {
 			elem := parent.Get("panels").GetIndex(i)
-			elem.Set("gridPos", panelAsJSON.Get("gridPos").MustMap())
+			gridPos := panelAsJSON.Get("gridPos").MustMap()
+			if gridPos == nil {
+				elem.Del("gridPos")
+			} else {
+				elem.Set("gridPos", gridPos)
+			}
 			elem.Set("id", panelAsJSON.Get("id").MustInt64())
 			elem.Set("type", fmt.Sprintf("Library panel with UID: \"%s\"", UID))
 			elem.Set("libraryPanel", map[string]interface{}{
@@ -111,7 +116,12 @@ func loadLibraryPanelsRecursively(elements map[string]libraryelements.LibraryEle
 
 		// set dashboard specific props
 		elem := parent.Get("panels").GetIndex(i)
-		elem.Set("gridPos", panelAsJSON.Get("gridPos").MustMap())
+		gridPos := panelAsJSON.Get("gridPos").MustMap()
+		if gridPos == nil {
+			elem.Del("gridPos")
+		} else {
+			elem.Set("gridPos", gridPos)
+		}
 		elem.Set("id", panelAsJSON.Get("id").MustInt64())
 		elem.Set("libraryPanel", map[string]interface{}{
 			"uid":         elementInDB.UID,

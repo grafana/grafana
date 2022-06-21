@@ -5,22 +5,25 @@ import (
 	"errors"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Service struct {
-	store store
-	cfg   *setting.Cfg
+	store    store
+	cfg      *setting.Cfg
+	features *featuremgmt.FeatureManager
 }
 
-func ProvideService(db db.DB, cfg *setting.Cfg) pref.Service {
+func ProvideService(db db.DB, cfg *setting.Cfg, features *featuremgmt.FeatureManager) pref.Service {
 	return &Service{
 		store: &sqlStore{
 			db: db,
 		},
-		cfg: cfg,
+		cfg:      cfg,
+		features: features,
 	}
 }
 
@@ -51,7 +54,17 @@ func (s *Service) GetWithDefaults(ctx context.Context, query *pref.GetPreference
 			res.HomeDashboardID = p.HomeDashboardID
 		}
 		if p.JSONData != nil {
-			res.JSONData = p.JSONData
+			if p.JSONData.Locale != "" {
+				res.JSONData.Locale = p.JSONData.Locale
+			}
+
+			if len(p.JSONData.Navbar.SavedItems) > 0 {
+				res.JSONData.Navbar = p.JSONData.Navbar
+			}
+
+			if p.JSONData.QueryHistory.HomeTab != "" {
+				res.JSONData.QueryHistory.HomeTab = p.JSONData.QueryHistory.HomeTab
+			}
 		}
 	}
 
@@ -92,6 +105,9 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 				Theme:           cmd.Theme,
 				Created:         time.Now(),
 				Updated:         time.Now(),
+				JSONData: &pref.PreferenceJSONData{
+					Locale: cmd.Locale,
+				},
 			}
 			_, err = s.store.Insert(ctx, preference)
 			if err != nil {
@@ -106,8 +122,10 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 	preference.Theme = cmd.Theme
 	preference.Updated = time.Now()
 	preference.Version += 1
-	preference.JSONData = &pref.PreferenceJSONData{}
 	preference.HomeDashboardID = cmd.HomeDashboardID
+	preference.JSONData = &pref.PreferenceJSONData{
+		Locale: cmd.Locale,
+	}
 
 	if cmd.Navbar != nil {
 		preference.JSONData.Navbar = *cmd.Navbar
@@ -139,6 +157,13 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 		}
 	} else {
 		exists = true
+	}
+
+	if cmd.Locale != nil {
+		if preference.JSONData == nil {
+			preference.JSONData = &pref.PreferenceJSONData{}
+		}
+		preference.JSONData.Locale = *cmd.Locale
 	}
 
 	if cmd.Navbar != nil {
@@ -203,6 +228,10 @@ func (s *Service) GetDefaults() *pref.Preference {
 		WeekStart:       s.cfg.DateFormats.DefaultWeekStart,
 		HomeDashboardID: 0,
 		JSONData:        &pref.PreferenceJSONData{},
+	}
+
+	if s.features.IsEnabled(featuremgmt.FlagInternationalization) {
+		defaults.JSONData.Locale = s.cfg.DefaultLocale
 	}
 
 	return defaults

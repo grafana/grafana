@@ -308,19 +308,21 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// Data sources
 		apiRoute.Group("/datasources", func(datasourceRoute routing.RouteRegister) {
+			idScope := datasources.ScopeProvider.GetResourceScope(ac.Parameter(":id"))
+			uidScope := datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":uid"))
+			nameScope := datasources.ScopeProvider.GetResourceScopeName(ac.Parameter(":name"))
 			datasourceRoute.Get("/", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionRead)), routing.Wrap(hs.GetDataSources))
 			datasourceRoute.Post("/", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionCreate)), quota("data_source"), routing.Wrap(hs.AddDataSource))
-			datasourceRoute.Put("/:id", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":id")))), routing.Wrap(hs.UpdateDataSourceByID))
-			datasourceRoute.Put("/uid/:uid", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":uid")))), routing.Wrap(hs.UpdateDataSourceByUID))
-			datasourceRoute.Delete("/:id", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionDelete, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":id")))), routing.Wrap(hs.DeleteDataSourceById))
-			datasourceRoute.Delete("/uid/:uid", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionDelete, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":uid")))), routing.Wrap(hs.DeleteDataSourceByUID))
-			datasourceRoute.Delete("/name/:name", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionDelete, datasources.ScopeProvider.GetResourceScopeName(ac.Parameter(":name")))), routing.Wrap(hs.DeleteDataSourceByName))
-			datasourceRoute.Get("/:id", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionRead)), routing.Wrap(hs.GetDataSourceById))
-			datasourceRoute.Get("/uid/:uid", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionRead)), routing.Wrap(hs.GetDataSourceByUID))
-			datasourceRoute.Get("/name/:name", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionRead)), routing.Wrap(hs.GetDataSourceByName))
+			datasourceRoute.Put("/:id", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, idScope)), routing.Wrap(hs.UpdateDataSourceByID))
+			datasourceRoute.Put("/uid/:uid", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(hs.UpdateDataSourceByUID))
+			datasourceRoute.Delete("/:id", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionDelete, idScope)), routing.Wrap(hs.DeleteDataSourceById))
+			datasourceRoute.Delete("/uid/:uid", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionDelete, uidScope)), routing.Wrap(hs.DeleteDataSourceByUID))
+			datasourceRoute.Delete("/name/:name", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionDelete, nameScope)), routing.Wrap(hs.DeleteDataSourceByName))
+			datasourceRoute.Get("/:id", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionRead, idScope)), routing.Wrap(hs.GetDataSourceById))
+			datasourceRoute.Get("/uid/:uid", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionRead, uidScope)), routing.Wrap(hs.GetDataSourceByUID))
+			datasourceRoute.Get("/name/:name", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionRead, nameScope)), routing.Wrap(hs.GetDataSourceByName))
+			datasourceRoute.Get("/id/:name", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionIDRead, nameScope)), routing.Wrap(hs.GetDataSourceIdByName))
 		})
-
-		apiRoute.Get("/datasources/id/:name", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionIDRead, datasources.ScopeProvider.GetResourceScopeName(ac.Parameter(":name")))), routing.Wrap(hs.GetDataSourceIdByName))
 
 		apiRoute.Get("/plugins", routing.Wrap(hs.GetPluginList))
 		apiRoute.Get("/plugins/:pluginId/settings", routing.Wrap(hs.GetPluginSettingByID))
@@ -392,8 +394,8 @@ func (hs *HTTPServer) registerRoutes() {
 
 			dashboardRoute.Group("/uid/:uid", func(dashUidRoute routing.RouteRegister) {
 				if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
-					dashUidRoute.Get("/public-config", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.GetPublicDashboard))
-					dashUidRoute.Post("/public-config", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.SavePublicDashboard))
+					dashUidRoute.Get("/public-config", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.GetPublicDashboardConfig))
+					dashUidRoute.Post("/public-config", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.SavePublicDashboardConfig))
 				}
 
 				if hs.ThumbService != nil {
@@ -436,11 +438,11 @@ func (hs *HTTPServer) registerRoutes() {
 		// Playlist
 		apiRoute.Group("/playlists", func(playlistRoute routing.RouteRegister) {
 			playlistRoute.Get("/", routing.Wrap(hs.SearchPlaylists))
-			playlistRoute.Get("/:id", hs.ValidateOrgPlaylist, routing.Wrap(hs.GetPlaylist))
-			playlistRoute.Get("/:id/items", hs.ValidateOrgPlaylist, routing.Wrap(hs.GetPlaylistItems))
-			playlistRoute.Get("/:id/dashboards", hs.ValidateOrgPlaylist, routing.Wrap(hs.GetPlaylistDashboards))
-			playlistRoute.Delete("/:id", reqEditorRole, hs.ValidateOrgPlaylist, routing.Wrap(hs.DeletePlaylist))
-			playlistRoute.Put("/:id", reqEditorRole, hs.ValidateOrgPlaylist, routing.Wrap(hs.UpdatePlaylist))
+			playlistRoute.Get("/:uid", hs.ValidateOrgPlaylist, routing.Wrap(hs.GetPlaylist))
+			playlistRoute.Get("/:uid/items", hs.ValidateOrgPlaylist, routing.Wrap(hs.GetPlaylistItems))
+			playlistRoute.Get("/:uid/dashboards", hs.ValidateOrgPlaylist, routing.Wrap(hs.GetPlaylistDashboards))
+			playlistRoute.Delete("/:uid", reqEditorRole, hs.ValidateOrgPlaylist, routing.Wrap(hs.DeletePlaylist))
+			playlistRoute.Put("/:uid", reqEditorRole, hs.ValidateOrgPlaylist, routing.Wrap(hs.UpdatePlaylist))
 			playlistRoute.Post("/", reqEditorRole, routing.Wrap(hs.CreatePlaylist))
 		})
 
@@ -607,6 +609,12 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/api/snapshots/:key", routing.Wrap(hs.GetDashboardSnapshot))
 	r.Get("/api/snapshots-delete/:deleteKey", reqSnapshotPublicModeOrSignedIn, routing.Wrap(hs.DeleteDashboardSnapshotByDeleteKey))
 	r.Delete("/api/snapshots/:key", reqEditorRole, routing.Wrap(hs.DeleteDashboardSnapshot))
+
+	// Public API
+	if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
+		r.Get("/api/public/dashboards/:uid", routing.Wrap(hs.GetPublicDashboard))
+		r.Post("/api/public/dashboards/:uid/panels/:panelId/query", routing.Wrap(hs.QueryPublicDashboard))
+	}
 
 	// Frontend logs
 	sourceMapStore := frontendlogging.NewSourceMapStore(hs.Cfg, hs.pluginStaticRouteResolver, frontendlogging.ReadSourceMapFromFS)

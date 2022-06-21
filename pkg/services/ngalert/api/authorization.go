@@ -167,7 +167,7 @@ func (api *API) authorize(method, path string) web.Handler {
 	case http.MethodGet + "/api/alertmanager/{DatasourceUID}/config/api/v1/alerts":
 		eval = ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID")))
 	case http.MethodPost + "/api/alertmanager/{DatasourceUID}/config/api/v1/alerts":
-		eval = ac.EvalPermission(ac.ActionAlertingNotificationsExternalWrite, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":DatasourceID")))
+		eval = ac.EvalPermission(ac.ActionAlertingNotificationsExternalWrite, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID")))
 	case http.MethodPost + "/api/alertmanager/{DatasourceUID}/config/api/v1/receivers/test":
 		eval = ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID")))
 
@@ -179,29 +179,31 @@ func (api *API) authorize(method, path string) web.Handler {
 		return middleware.ReqOrgAdmin
 
 	// Grafana-only Provisioning Read Paths
-	case http.MethodGet + "/api/provisioning/policies",
-		http.MethodGet + "/api/provisioning/contact-points",
-		http.MethodGet + "/api/provisioning/templates",
-		http.MethodGet + "/api/provisioning/templates/{name}",
-		http.MethodGet + "/api/provisioning/mute-timings",
-		http.MethodGet + "/api/provisioning/mute-timings/{name}",
-		http.MethodGet + "/api/provisioning/alert-rules/{UID}":
-		return middleware.ReqSignedIn
+	case http.MethodGet + "/api/v1/provisioning/policies",
+		http.MethodGet + "/api/v1/provisioning/contact-points",
+		http.MethodGet + "/api/v1/provisioning/templates",
+		http.MethodGet + "/api/v1/provisioning/templates/{name}",
+		http.MethodGet + "/api/v1/provisioning/mute-timings",
+		http.MethodGet + "/api/v1/provisioning/mute-timings/{name}",
+		http.MethodGet + "/api/v1/provisioning/alert-rules/{UID}":
+		fallback = middleware.ReqOrgAdmin
+		eval = ac.EvalPermission(ac.ActionAlertingProvisioningRead) // organization scope
 
-	case http.MethodPut + "/api/provisioning/policies",
-		http.MethodPost + "/api/provisioning/contact-points",
-		http.MethodPut + "/api/provisioning/contact-points/{ID}",
-		http.MethodDelete + "/api/provisioning/contact-points/{ID}",
-		http.MethodPut + "/api/provisioning/templates/{name}",
-		http.MethodDelete + "/api/provisioning/templates/{name}",
-		http.MethodPost + "/api/provisioning/mute-timings",
-		http.MethodPut + "/api/provisioning/mute-timings/{name}",
-		http.MethodDelete + "/api/provisioning/mute-timings/{name}",
-		http.MethodPost + "/api/provisioning/alert-rules",
-		http.MethodPut + "/api/provisioning/alert-rules/{UID}",
-		http.MethodDelete + "/api/provisioning/alert-rules/{UID}",
-		http.MethodPut + "/api/provisioning/folder/{FolderUID}/rule-groups/{Group}":
-		return middleware.ReqEditorRole
+	case http.MethodPut + "/api/v1/provisioning/policies",
+		http.MethodPost + "/api/v1/provisioning/contact-points",
+		http.MethodPut + "/api/v1/provisioning/contact-points/{UID}",
+		http.MethodDelete + "/api/v1/provisioning/contact-points/{UID}",
+		http.MethodPut + "/api/v1/provisioning/templates/{name}",
+		http.MethodDelete + "/api/v1/provisioning/templates/{name}",
+		http.MethodPost + "/api/v1/provisioning/mute-timings",
+		http.MethodPut + "/api/v1/provisioning/mute-timings/{name}",
+		http.MethodDelete + "/api/v1/provisioning/mute-timings/{name}",
+		http.MethodPost + "/api/v1/provisioning/alert-rules",
+		http.MethodPut + "/api/v1/provisioning/alert-rules/{UID}",
+		http.MethodDelete + "/api/v1/provisioning/alert-rules/{UID}",
+		http.MethodPut + "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}":
+		fallback = middleware.ReqOrgAdmin
+		eval = ac.EvalPermission(ac.ActionAlertingProvisioningWrite) // organization scope
 	}
 
 	if eval != nil {

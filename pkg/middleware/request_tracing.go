@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -31,11 +32,30 @@ func ProvideRouteOperationName(name string) web.Handler {
 	}
 }
 
-// RouteOperationNameFromContext receives the route operation name from context, if set.
-func RouteOperationNameFromContext(ctx context.Context) (string, bool) {
-	if val := ctx.Value(routeOperationNameKey); val != nil {
+var unnamedHandlers = []struct {
+	pathPattern *regexp.Regexp
+	handler     string
+}{
+	{handler: "public-assets", pathPattern: regexp.MustCompile("^/favicon.ico")},
+	{handler: "public-assets", pathPattern: regexp.MustCompile("^/public/")},
+	{handler: "/metrics", pathPattern: regexp.MustCompile("^/metrics")},
+	{handler: "/healthz", pathPattern: regexp.MustCompile("^/healthz")},
+	{handler: "/robots.txt", pathPattern: regexp.MustCompile("^/robots.txt$")},
+	// bundle all pprof endpoints under the same handler name
+	{handler: "/debug/pprof-handlers", pathPattern: regexp.MustCompile("^/debug/pprof")},
+}
+
+// routeOperationName receives the route operation name from context, if set.
+func routeOperationName(req *http.Request) (string, bool) {
+	if val := req.Context().Value(routeOperationNameKey); val != nil {
 		op, ok := val.(string)
 		return op, ok
+	}
+
+	for _, hp := range unnamedHandlers {
+		if hp.pathPattern.Match([]byte(req.URL.Path)) {
+			return hp.handler, true
+		}
 	}
 
 	return "", false
@@ -44,7 +64,8 @@ func RouteOperationNameFromContext(ctx context.Context) (string, bool) {
 func RequestTracing(tracer tracing.Tracer) web.Handler {
 	return func(res http.ResponseWriter, req *http.Request, c *web.Context) {
 		if strings.HasPrefix(c.Req.URL.Path, "/public/") ||
-			c.Req.URL.Path == "robots.txt" {
+			c.Req.URL.Path == "/robots.txt" ||
+			c.Req.URL.Path == "/favicon.ico" {
 			c.Next()
 			return
 		}
@@ -59,7 +80,7 @@ func RequestTracing(tracer tracing.Tracer) web.Handler {
 
 		// Only call span.Finish when a route operation name have been set,
 		// meaning that not set the span would not be reported.
-		if routeOperation, exists := RouteOperationNameFromContext(c.Req.Context()); exists {
+		if routeOperation, exists := routeOperationName(c.Req); exists {
 			defer span.End()
 			span.SetName(fmt.Sprintf("HTTP %s %s", req.Method, routeOperation))
 		}
