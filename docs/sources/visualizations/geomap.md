@@ -116,7 +116,7 @@ The GeoJSON layer allows you to select and load a static GeoJSON file from the f
 
 ## Base layer
 
-The base layer loads in a blank world map from the tile server to the Grafana panel. Several base layer options are available each with specific configuration options to style the base map. Base layers can be added to the Data layer stack using layer controls in the Data layer panel option, or configured separately using the Base layer panel option. To avoid conflicts pick one configuration method. The default base layer is CartoDB base map. Custom default base layers can be defined in the `.ini` configuration file.
+The base layer loads in a blank world map from the tile server to the Grafana panel. Several base layer options are available each with specific configuration options to style the base map. Base layers can be added to the Data layer stack using layer controls in the Data layer panel option, or configured separately using the Base layer panel option. Adding multiple base layers to the Data layer stack allows you to overlay them, you can use the opacity controls to balance the overlay mix. The default base layer is CartoDB base map. Custom default base layers can be defined in the `.ini` configuration file.
 
 ![Base layer options](/static/img/docs/geomap-panel/geomap-baselayer-8-1-0.png)
 
