@@ -53,7 +53,6 @@ const setup = (propOverrides?: object) => {
     updateOrganization: jest.fn(),
   };
   Object.assign(props, propOverrides);
-  // console.log(props);
 
   render(<OrgDetailsPage {...props} />);
 };
