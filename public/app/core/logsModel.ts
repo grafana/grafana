@@ -605,7 +605,7 @@ export function aggregateRawLogsVolume(
   rawLogsVolume: DataFrame[],
   extractLevel: (dataFrame: DataFrame) => LogLevel
 ): DataFrame[] {
-  const logsVolumeByLevelMap: Record<string, DataFrame[]> = {};
+  const logsVolumeByLevelMap: Partial<Record<LogLevel, DataFrame[]>> = {};
 
   rawLogsVolume.forEach((dataFrame) => {
     const level = extractLevel(dataFrame);
