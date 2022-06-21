@@ -15,9 +15,22 @@ const fieldNamePickerSettings: StandardEditorsRegistryItem<string, FieldNamePick
 
 export const ArcOptionsEditor = ({ value, onChange, context }: ArcOptionsEditorProps) => {
   const styles = useStyles2(getStyles);
+
   const addArc = () => {
     const newArc = { field: '', color: '' };
     onChange(value ? [...value, newArc] : [newArc]);
+  };
+
+  const removeArc = (idx: number) => {
+    const copy = value?.slice();
+    copy.splice(idx, 1);
+    onChange(copy);
+  };
+
+  const updateField = <K extends keyof ArcOption>(idx: number, field: K, newValue: ArcOption[K]) => {
+    let arcs = value?.slice() ?? [];
+    arcs[idx][field] = newValue;
+    onChange(arcs);
   };
 
   return (
@@ -29,31 +42,17 @@ export const ArcOptionsEditor = ({ value, onChange, context }: ArcOptionsEditorP
               context={context}
               value={arc.field ?? ''}
               onChange={(val) => {
-                let arcs = value.slice() ?? [];
-                arcs[i].field = val;
-                onChange(arcs);
+                updateField(i, 'field', val);
               }}
               item={fieldNamePickerSettings}
             />
             <ColorPicker
               color={arc.color || '#808080'}
-              onChange={(color) => {
-                let arcs = value.slice() ?? [];
-                arcs[i].color = color;
-                onChange(arcs);
+              onChange={(val) => {
+                updateField(i, 'color', val);
               }}
             />
-            <Button
-              size="sm"
-              icon="minus"
-              variant="secondary"
-              onClick={() => {
-                const copy = value.slice();
-                copy.splice(i, 1);
-                onChange(copy);
-              }}
-              title="Remove arc"
-            />
+            <Button size="sm" icon="minus" variant="secondary" onClick={() => removeArc(i)} title="Remove arc" />
           </div>
         );
       })}

@@ -354,7 +354,6 @@ export function getNodeGraphDataFrames(frames: DataFrame[], options?: NodeGraphO
   if (options) {
     nodeGraphFrames = applyOptionsToFrames(nodeGraphFrames, options);
   }
-
   return nodeGraphFrames;
 }
 
@@ -363,35 +362,39 @@ export const applyOptionsToFrames = (frames: DataFrame[], options: NodeGraphOpti
     const fieldsCache = new FieldCache(frame);
 
     // Edges frame has source which can be used to identify nodes vs edges frames
-    if (fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.source)) {
+    if (fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.source.toLowerCase())) {
       if (options?.edges?.mainStatUnit) {
-        const field = frame.fields.find((field) => field.name === NodeGraphDataFrameFieldNames.mainStat);
+        const field = frame.fields.find((field) => field.name.toLowerCase() === NodeGraphDataFrameFieldNames.mainStat);
         if (field) {
           field.config = { ...field.config, unit: options.edges.mainStatUnit };
         }
       }
       if (options?.edges?.secondaryStatUnit) {
-        const field = frame.fields.find((field) => field.name === NodeGraphDataFrameFieldNames.secondaryStat);
+        const field = frame.fields.find(
+          (field) => field.name.toLowerCase() === NodeGraphDataFrameFieldNames.secondaryStat
+        );
         if (field) {
           field.config = { ...field.config, unit: options.edges.secondaryStatUnit };
         }
       }
     } else {
       if (options?.nodes?.mainStatUnit) {
-        const field = frame.fields.find((field) => field.name === NodeGraphDataFrameFieldNames.mainStat);
+        const field = frame.fields.find((field) => field.name.toLowerCase() === NodeGraphDataFrameFieldNames.mainStat);
         if (field) {
           field.config = { ...field.config, unit: options.nodes.mainStatUnit };
         }
       }
       if (options?.nodes?.secondaryStatUnit) {
-        const field = frame.fields.find((field) => field.name === NodeGraphDataFrameFieldNames.secondaryStat);
+        const field = frame.fields.find(
+          (field) => field.name.toLowerCase() === NodeGraphDataFrameFieldNames.secondaryStat
+        );
         if (field) {
           field.config = { ...field.config, unit: options.nodes.secondaryStatUnit };
         }
       }
       if (options?.nodes?.arcs?.length) {
         for (const arc of options.nodes.arcs) {
-          const field = frame.fields.find((field) => field.name === arc.field);
+          const field = frame.fields.find((field) => field.name.toLowerCase() === arc.field);
           if (field && arc.color) {
             field.config = { ...field.config, color: { fixedColor: arc.color, mode: FieldColorModeId.Fixed } };
           }
