@@ -323,6 +323,7 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, alrts []*types.A
 		func(index int, image *ngmodels.Image) error {
 			if image != nil {
 				req.Attachments[0].ImageURL = image.URL
+				return ErrImagesDone
 			}
 			return nil
 		},

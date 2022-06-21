@@ -116,7 +116,7 @@ export const FolderSection: FC<SectionHeaderProps> = ({
   const renderResults = () => {
     if (!results.value) {
       return null;
-    } else if (results.value.length === 0) {
+    } else if (results.value.length === 0 && !results.loading) {
       return (
         <Card>
           <Card.Heading>No results found</Card.Heading>

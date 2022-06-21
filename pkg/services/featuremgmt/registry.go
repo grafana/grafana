@@ -253,5 +253,10 @@ var (
 			Description: "Enables work-in-progress internationalization",
 			State:       FeatureStateAlpha,
 		},
+		{
+			Name:        "topnav",
+			Description: "New top nav and page layouts",
+			State:       FeatureStateAlpha,
+		},
 	}
 )
