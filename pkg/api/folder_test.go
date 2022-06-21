@@ -159,6 +159,7 @@ func TestHTTPServer_FolderMetadata(t *testing.T) {
 
 		res, err := server.Send(req)
 		require.NoError(t, err)
+		defer func() { require.NoError(t, res.Body.Close()) }()
 		assert.Equal(t, http.StatusOK, res.StatusCode)
 
 		body := []dtos.FolderSearchHit{}
@@ -172,7 +173,6 @@ func TestHTTPServer_FolderMetadata(t *testing.T) {
 				assert.False(t, f.AccessControl[dashboards.ActionFoldersWrite])
 			}
 		}
-
 	})
 
 	t.Run("Should attach access control metadata to folder response", func(t *testing.T) {
@@ -189,6 +189,7 @@ func TestHTTPServer_FolderMetadata(t *testing.T) {
 		res, err := server.Send(req)
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusOK, res.StatusCode)
+		defer func() { require.NoError(t, res.Body.Close()) }()
 
 		body := dtos.Folder{}
 		require.NoError(t, json.NewDecoder(res.Body).Decode(&body))
@@ -211,6 +212,7 @@ func TestHTTPServer_FolderMetadata(t *testing.T) {
 		res, err := server.Send(req)
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusOK, res.StatusCode)
+		defer func() { require.NoError(t, res.Body.Close()) }()
 
 		body := dtos.Folder{}
 		require.NoError(t, json.NewDecoder(res.Body).Decode(&body))
