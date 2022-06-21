@@ -151,7 +151,6 @@ func TestSavePublicDashboard(t *testing.T) {
 		assert.NotEqual(t, &time.Time{}, pubdash.CreatedAt)
 		// Time settings set by db
 		assert.Equal(t, timeSettings, pubdash.TimeSettings)
-
 		// accessToken is valid uuid
 		_, err = uuid.FromString(pubdash.AccessToken)
 		require.NoError(t, err)
@@ -230,8 +229,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 
 				IsEnabled:    true,
 				TimeSettings: timeSettings,
-
-				AccessToken: "NOTAREALUUID",
+				AccessToken:  "NOTAREALUUID",
 			},
 		}
 

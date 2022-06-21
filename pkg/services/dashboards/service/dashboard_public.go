@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 )
 
-// Gets public dashboard via generated Uid
+// Gets public dashboard via access token
 func (dr *DashboardServiceImpl) GetPublicDashboard(ctx context.Context, accessToken string) (*models.Dashboard, error) {
 	pubdash, d, err := dr.dashboardStore.GetPublicDashboard(ctx, accessToken)
 
@@ -59,7 +59,6 @@ func (dr *DashboardServiceImpl) SavePublicDashboardConfig(ctx context.Context, d
 }
 
 func (dr *DashboardServiceImpl) savePublicDashboardConfig(ctx context.Context, dto *dashboards.SavePublicDashboardConfigDTO) (*models.PublicDashboard, error) {
-	// generate a uid
 	uid, err := dr.dashboardStore.GenerateNewPublicDashboardUid(ctx)
 	if err != nil {
 		return nil, err
