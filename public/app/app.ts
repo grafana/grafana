@@ -80,8 +80,8 @@ import { configureStore } from './store/configureStore';
 _.move = arrayMove;
 
 // import symlinked extensions
-const extensionsIndex = (require as any).context('.', true, /extensions\/index.ts/);
-const extensionsExports = extensionsIndex.keys().map((key: any) => {
+const extensionsIndex = require.context('.', true, /extensions\/index.ts/);
+const extensionsExports = extensionsIndex.keys().map((key) => {
   return extensionsIndex(key);
 });
 
