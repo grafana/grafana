@@ -110,9 +110,9 @@ Refer to the [Dashboard previews topic](https://grafana.com/docs/grafana/next/da
 
 {{< figure src="/static/img/docs/dashboards/dashboard-previews.png" max-width="750px" caption="Dashboard previews" >}}
 
-## Panel title search
+## Panel title search (opt-in beta)
 
-In addition to searching dashboards by title, you can now search panels as well. If a panel’s title matches your search query, it will be displayed in the search results.
+Grafana 9 has a feature toggle `panelTitleSearch`. When enabled, it tells Grafana to use a new search engine. Instead of using SQL queries, the new search uses an in-memory full-text index. That provides a better search experience and additionally allows searching through panel titles.
 
 ## Expanding the navigation bar
 
