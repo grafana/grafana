@@ -1,5 +1,5 @@
 import { size } from 'lodash';
-import { Observable, from } from 'rxjs';
+import { Observable, from, isObservable } from 'rxjs';
 
 import {
   AbsoluteTimeRange,
@@ -693,7 +693,7 @@ export function queryLogsVolume<T extends DataQuery>(
     });
 
     const queryResponse = datasource.query(logsVolumeRequest);
-    const queryObservable = queryResponse instanceof Observable ? queryResponse : from(queryResponse);
+    const queryObservable = isObservable(queryResponse) ? queryResponse : from(queryResponse);
 
     const subscription = queryObservable.subscribe({
       complete: () => {
