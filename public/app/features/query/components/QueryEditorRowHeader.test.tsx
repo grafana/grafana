@@ -29,14 +29,6 @@ jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
   };
 });
 
-jest.mock('@grafana/runtime/src/services/templateSrv', () => {
-  return {
-    getTemplateSrv: () => ({
-      getVariables: () => [mockVariable],
-    }),
-  };
-});
-
 describe('QueryEditorRowHeader', () => {
   it('Can edit title', () => {
     const scenario = renderScenario({});
