@@ -210,7 +210,9 @@ export class OpenTsQueryCtrl extends QueryCtrl {
           errs.downsampleInterval = "You must supply a downsample interval (e.g. '1m' or '1h').";
         }
       } catch (err) {
-        errs.downsampleInterval = err.message;
+        if (err instanceof Error) {
+          errs.downsampleInterval = err.message;
+        }
       }
     }
 

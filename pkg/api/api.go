@@ -439,11 +439,11 @@ func (hs *HTTPServer) registerRoutes() {
 		// Playlist
 		apiRoute.Group("/playlists", func(playlistRoute routing.RouteRegister) {
 			playlistRoute.Get("/", routing.Wrap(hs.SearchPlaylists))
-			playlistRoute.Get("/:id", hs.ValidateOrgPlaylist, routing.Wrap(hs.GetPlaylist))
-			playlistRoute.Get("/:id/items", hs.ValidateOrgPlaylist, routing.Wrap(hs.GetPlaylistItems))
-			playlistRoute.Get("/:id/dashboards", hs.ValidateOrgPlaylist, routing.Wrap(hs.GetPlaylistDashboards))
-			playlistRoute.Delete("/:id", reqEditorRole, hs.ValidateOrgPlaylist, routing.Wrap(hs.DeletePlaylist))
-			playlistRoute.Put("/:id", reqEditorRole, hs.ValidateOrgPlaylist, routing.Wrap(hs.UpdatePlaylist))
+			playlistRoute.Get("/:uid", hs.ValidateOrgPlaylist, routing.Wrap(hs.GetPlaylist))
+			playlistRoute.Get("/:uid/items", hs.ValidateOrgPlaylist, routing.Wrap(hs.GetPlaylistItems))
+			playlistRoute.Get("/:uid/dashboards", hs.ValidateOrgPlaylist, routing.Wrap(hs.GetPlaylistDashboards))
+			playlistRoute.Delete("/:uid", reqEditorRole, hs.ValidateOrgPlaylist, routing.Wrap(hs.DeletePlaylist))
+			playlistRoute.Put("/:uid", reqEditorRole, hs.ValidateOrgPlaylist, routing.Wrap(hs.UpdatePlaylist))
 			playlistRoute.Post("/", reqEditorRole, routing.Wrap(hs.CreatePlaylist))
 		})
 
@@ -614,6 +614,7 @@ func (hs *HTTPServer) registerRoutes() {
 	// Public API
 	if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
 		r.Get("/api/public/dashboards/:uid", routing.Wrap(hs.GetPublicDashboard))
+		r.Post("/api/public/dashboards/:uid/panels/:panelId/query", routing.Wrap(hs.QueryPublicDashboard))
 	}
 
 	// Frontend logs

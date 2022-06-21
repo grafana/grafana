@@ -96,11 +96,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "newNavigation",
-			Description: "Try the next gen navigation model",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:            "showFeatureFlagsInUI",
 			Description:     "Show feature flags in the settings UI",
 			State:           FeatureStateAlpha,
@@ -115,6 +110,11 @@ var (
 		{
 			Name:        "lokiLive",
 			Description: "support websocket streaming for loki (early prototype)",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "lokiDataframeApi",
+			Description: "use experimental loki api for websocket streaming (early prototype)",
 			State:       FeatureStateAlpha,
 		},
 		{
@@ -222,6 +222,12 @@ var (
 			RequiresRestart: true,
 		},
 		{
+			Name:         "autoMigrateGraphPanels",
+			Description:  "Replace the angular graph panel with timeseries",
+			State:        FeatureStateBeta,
+			FrontendOnly: true,
+		},
+		{
 			Name:        "prometheusWideSeries",
 			Description: "Enable wide series responses in the Prometheus datasource",
 			State:       FeatureStateAlpha,
@@ -250,6 +256,11 @@ var (
 		{
 			Name:        "internationalization",
 			Description: "Enables work-in-progress internationalization",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "topnav",
+			Description: "New top nav and page layouts",
 			State:       FeatureStateAlpha,
 		},
 	}

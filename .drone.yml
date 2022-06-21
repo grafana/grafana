@@ -133,7 +133,7 @@ steps:
   image: grafana/build-container:1.5.5
   name: shellcheck
 - commands:
-  - ./bin/grabpl lint-backend --edition oss
+  - make lint-go
   depends_on:
   - wire-install
   environment:
@@ -166,6 +166,7 @@ trigger:
     - conf/**
     - go.sum
     - go.mod
+    - public/app/plugins/**/plugin.json
 type: docker
 volumes:
 - host:
@@ -233,7 +234,7 @@ steps:
       from_secret: drone_token
 - commands:
   - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
-    --variants linux-amd64,linux-amd64-musl,darwin-amd64,windows-amd64,armv6
+    --variants linux-amd64,linux-amd64-musl,darwin-amd64,windows-amd64
   depends_on:
   - gen-version
   - wire-install
@@ -267,7 +268,7 @@ steps:
   name: build-plugins
 - commands:
   - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --jobs 8 --edition oss
-    --build-id ${DRONE_BUILD_NUMBER} --variants linux-amd64,linux-amd64-musl,darwin-amd64,windows-amd64,armv6
+    --build-id ${DRONE_BUILD_NUMBER} --variants linux-amd64,linux-amd64-musl,darwin-amd64,windows-amd64
   depends_on:
   - build-plugins
   - build-backend
@@ -454,14 +455,29 @@ steps:
   image: alpine:3.15
   name: identify-runner
 - commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  image: grafana/build-container:1.5.5
+  name: verify-gen-cue
+- commands:
+  - make gen-go
+  depends_on:
+  - verify-gen-cue
+  image: grafana/build-container:1.5.5
+  name: wire-install
+- commands:
   - apt-get update
   - apt-get install -yq postgresql-client
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - ./bin/grabpl integration-tests --database postgres
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+    -timeout=30m {}'
   depends_on:
-  - grabpl
+  - wire-install
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -475,9 +491,10 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - ./bin/grabpl integration-tests --database mysql
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+    -timeout=30m {}'
   depends_on:
-  - grabpl
+  - wire-install
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
@@ -804,7 +821,7 @@ steps:
   image: grafana/build-container:1.5.5
   name: shellcheck
 - commands:
-  - ./bin/grabpl lint-backend --edition oss
+  - make lint-go
   depends_on:
   - wire-install
   environment:
@@ -912,7 +929,6 @@ steps:
     params:
     - SOURCE_BUILD_NUMBER=${DRONE_COMMIT}
     - SOURCE_COMMIT=${DRONE_COMMIT}
-    - OSS_PULL_REQUEST=${DRONE_PULL_REQUEST}
     repositories:
     - grafana/grafana-enterprise@main
     server: https://drone.grafana.net
@@ -1282,14 +1298,29 @@ steps:
   image: alpine:3.15
   name: identify-runner
 - commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  image: grafana/build-container:1.5.5
+  name: verify-gen-cue
+- commands:
+  - make gen-go
+  depends_on:
+  - verify-gen-cue
+  image: grafana/build-container:1.5.5
+  name: wire-install
+- commands:
   - apt-get update
   - apt-get install -yq postgresql-client
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - ./bin/grabpl integration-tests --database postgres
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+    -timeout=30m {}'
   depends_on:
-  - grabpl
+  - wire-install
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -1303,9 +1334,10 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - ./bin/grabpl integration-tests --database mysql
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+    -timeout=30m {}'
   depends_on:
-  - grabpl
+  - wire-install
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
@@ -1865,7 +1897,7 @@ steps:
   image: grafana/build-container:1.5.5
   name: codespell
 - commands:
-  - ./bin/grabpl lint-backend --edition oss
+  - make lint-go
   depends_on:
   - wire-install
   environment:
@@ -1959,14 +1991,29 @@ steps:
   image: alpine:3.15
   name: identify-runner
 - commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  image: grafana/build-container:1.5.5
+  name: verify-gen-cue
+- commands:
+  - make gen-go
+  depends_on:
+  - verify-gen-cue
+  image: grafana/build-container:1.5.5
+  name: wire-install
+- commands:
   - apt-get update
   - apt-get install -yq postgresql-client
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - ./bin/grabpl integration-tests --database postgres
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+    -timeout=30m {}'
   depends_on:
-  - grabpl
+  - wire-install
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -1980,9 +2027,10 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - ./bin/grabpl integration-tests --database mysql
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+    -timeout=30m {}'
   depends_on:
-  - grabpl
+  - wire-install
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
@@ -2508,7 +2556,7 @@ steps:
   image: grafana/build-container:1.5.5
   name: codespell
 - commands:
-  - ./bin/grabpl lint-backend --edition enterprise
+  - make lint-go
   depends_on:
   - wire-install
   environment:
@@ -2547,7 +2595,7 @@ steps:
   image: grafana/build-container:1.5.5
   name: test-frontend
 - commands:
-  - ./bin/grabpl lint-backend --edition enterprise2
+  - make lint-go
   depends_on:
   - wire-install
   environment:
@@ -3647,7 +3695,7 @@ steps:
   image: grafana/build-container:1.5.5
   name: codespell
 - commands:
-  - ./bin/grabpl lint-backend --edition oss
+  - make lint-go
   depends_on:
   - wire-install
   environment:
@@ -3735,14 +3783,29 @@ steps:
   image: alpine:3.15
   name: identify-runner
 - commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  image: grafana/build-container:1.5.5
+  name: verify-gen-cue
+- commands:
+  - make gen-go
+  depends_on:
+  - verify-gen-cue
+  image: grafana/build-container:1.5.5
+  name: wire-install
+- commands:
   - apt-get update
   - apt-get install -yq postgresql-client
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - ./bin/grabpl integration-tests --database postgres
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+    -timeout=30m {}'
   depends_on:
-  - grabpl
+  - wire-install
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -3756,9 +3819,10 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - ./bin/grabpl integration-tests --database mysql
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+    -timeout=30m {}'
   depends_on:
-  - grabpl
+  - wire-install
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
@@ -4262,7 +4326,7 @@ steps:
   image: grafana/build-container:1.5.5
   name: codespell
 - commands:
-  - ./bin/grabpl lint-backend --edition enterprise
+  - make lint-go
   depends_on:
   - wire-install
   environment:
@@ -4301,7 +4365,7 @@ steps:
   image: grafana/build-container:1.5.5
   name: test-frontend
 - commands:
-  - ./bin/grabpl lint-backend --edition enterprise2
+  - make lint-go
   depends_on:
   - wire-install
   environment:
@@ -4683,6 +4747,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: df6f9fbc1fe40e3ecad762194eeb466ded8aa92cc0ee13a77ea5142d9a3a4749
+hmac: 265ab48b1e75ec1bba68edbf65b12be69ee5b4de0b113c3df48c54bcc6872b3a
 
 ...

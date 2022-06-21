@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
-import { uniqueId } from 'lodash';
+import { uniqueId, isString } from 'lodash';
 import React, { ReactNode, useCallback, useState } from 'react';
-import { DropEvent, DropzoneOptions, FileRejection, useDropzone } from 'react-dropzone';
+import { DropEvent, DropzoneOptions, FileRejection, useDropzone, Accept } from 'react-dropzone';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -9,6 +9,11 @@ import { useTheme2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
 
 import { FileListItem } from './FileListItem';
+
+type BackwardsCompatibleDropzoneOptions = Omit<DropzoneOptions, 'accept'> & {
+  // For backward compatibility we are still allowing the old `string | string[]` format for adding accepted file types (format changed in v13.0.0)
+  accept?: string | string[] | Accept;
+};
 
 export interface FileDropzoneProps {
   /**
@@ -25,7 +30,7 @@ export interface FileDropzoneProps {
    *  maxFiles: 0,
    * }
    */
-  options?: DropzoneOptions;
+  options?: BackwardsCompatibleDropzoneOptions;
   /**
    * Use this to change the FileReader's read.
    */
@@ -145,6 +150,7 @@ export function FileDropzone({ options, children, readAs, onLoad, fileListRender
     ...options,
     useFsAccessApi: false,
     onDrop,
+    accept: transformAcceptToNewFormat(options?.accept),
   });
   const theme = useTheme2();
   const styles = getStyles(theme, isDragActive);
@@ -162,11 +168,39 @@ export function FileDropzone({ options, children, readAs, onLoad, fileListRender
         {children ?? <FileDropzoneDefaultChildren primaryText={getPrimaryText(files, options)} />}
       </div>
       {options?.accept && (
-        <small className={cx(styles.small, styles.acceptMargin)}>{getAcceptedFileTypeText(options)}</small>
+        <small className={cx(styles.small, styles.acceptMargin)}>{getAcceptedFileTypeText(options.accept)}</small>
       )}
       {fileList}
     </div>
   );
+}
+
+export function getMimeTypeByExtension(ext: string) {
+  if (['txt', 'json', 'csv', 'xls', 'yml'].some((e) => ext.match(e))) {
+    return 'text/plain';
+  }
+
+  return 'application/octet-stream';
+}
+
+export function transformAcceptToNewFormat(accept?: string | string[] | Accept): Accept | undefined {
+  if (isString(accept)) {
+    return {
+      [getMimeTypeByExtension(accept)]: [accept],
+    };
+  }
+
+  if (Array.isArray(accept)) {
+    return accept.reduce((prev: Record<string, string[]>, current) => {
+      const mime = getMimeTypeByExtension(current);
+
+      prev[mime] = prev[mime] ? [...prev[mime], current] : [current];
+
+      return prev;
+    }, {});
+  }
+
+  return accept;
 }
 
 export function FileDropzoneDefaultChildren({
@@ -184,19 +218,25 @@ export function FileDropzoneDefaultChildren({
     </div>
   );
 }
-function getPrimaryText(files: DropzoneFile[], options?: DropzoneOptions) {
+function getPrimaryText(files: DropzoneFile[], options?: BackwardsCompatibleDropzoneOptions) {
   if (options?.multiple === undefined || options?.multiple) {
     return 'Upload file';
   }
   return files.length ? 'Replace file' : 'Upload file';
 }
 
-function getAcceptedFileTypeText(options: DropzoneOptions) {
-  if (Array.isArray(options.accept)) {
-    return `Accepted file types: ${options.accept.join(', ')}`;
+function getAcceptedFileTypeText(accept: string | string[] | Accept) {
+  if (isString(accept)) {
+    return `Accepted file type: ${accept}`;
   }
 
-  return `Accepted file type: ${options.accept}`;
+  if (Array.isArray(accept)) {
+    return `Accepted file types: ${accept.join(', ')}`;
+  }
+
+  // react-dropzone has updated the type of the "accept" parameter since v13.0.0:
+  // https://github.com/react-dropzone/react-dropzone/blob/master/src/index.js#L95
+  return `Accepted file types: ${Object.values(accept).flat().join(', ')}`;
 }
 
 function mapToCustomFile(file: File): DropzoneFile {

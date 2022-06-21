@@ -1,22 +1,34 @@
-import React from 'react';
+import { capitalize } from 'lodash';
+import React, { useMemo } from 'react';
 
-import { RadioButtonGroup, Label } from '@grafana/ui';
-import { GrafanaAlertState } from 'app/types/unified-alerting-dto';
+import { Label, RadioButtonGroup } from '@grafana/ui';
+import { GrafanaAlertState, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
+
+export type InstanceStateFilter = GrafanaAlertState | PromAlertingRuleState.Pending | PromAlertingRuleState.Firing;
 
 interface Props {
   className?: string;
-  stateFilter?: GrafanaAlertState;
-  onStateFilterChange: (value: GrafanaAlertState | undefined) => void;
+  filterType: 'grafana' | 'prometheus';
+  stateFilter?: InstanceStateFilter;
+  onStateFilterChange: (value?: InstanceStateFilter) => void;
 }
 
-export const AlertInstanceStateFilter = ({ className, onStateFilterChange, stateFilter }: Props) => {
-  const stateOptions = Object.values(GrafanaAlertState).map((value) => ({
-    label: value,
-    value,
-  }));
+const grafanaOptions = Object.values(GrafanaAlertState).map((value) => ({
+  label: value,
+  value,
+}));
+
+const promOptionValues = [PromAlertingRuleState.Firing, PromAlertingRuleState.Pending] as const;
+const promOptions = promOptionValues.map((state) => ({
+  label: capitalize(state),
+  value: state,
+}));
+
+export const AlertInstanceStateFilter = ({ className, onStateFilterChange, stateFilter, filterType }: Props) => {
+  const stateOptions = useMemo(() => (filterType === 'grafana' ? grafanaOptions : promOptions), [filterType]);
 
   return (
-    <div className={className}>
+    <div className={className} data-testid="alert-instance-state-filter">
       <Label>State</Label>
       <RadioButtonGroup
         options={stateOptions}

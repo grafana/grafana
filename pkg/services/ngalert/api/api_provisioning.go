@@ -206,6 +206,7 @@ func (srv *ProvisioningSrv) RouteGetMuteTimings(c *models.ReqContext) response.R
 }
 
 func (srv *ProvisioningSrv) RoutePostMuteTiming(c *models.ReqContext, mt definitions.MuteTimeInterval) response.Response {
+	mt.Provenance = alerting_models.ProvenanceAPI
 	created, err := srv.muteTimings.CreateMuteTiming(c.Req.Context(), mt, c.OrgId)
 	if err != nil {
 		if errors.Is(err, provisioning.ErrValidation) {
@@ -219,6 +220,7 @@ func (srv *ProvisioningSrv) RoutePostMuteTiming(c *models.ReqContext, mt definit
 func (srv *ProvisioningSrv) RoutePutMuteTiming(c *models.ReqContext, mt definitions.MuteTimeInterval) response.Response {
 	name := pathParam(c, namePathParam)
 	mt.Name = name
+	mt.Provenance = alerting_models.ProvenanceAPI
 	updated, err := srv.muteTimings.UpdateMuteTiming(c.Req.Context(), mt, c.OrgId)
 	if err != nil {
 		if errors.Is(err, provisioning.ErrValidation) {
@@ -256,6 +258,9 @@ func (srv *ProvisioningSrv) RoutePostAlertRule(c *models.ReqContext, ar definiti
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
 	if err != nil {
+		if errors.Is(err, store.ErrOptimisticLock) {
+			return ErrResp(http.StatusConflict, err, "")
+		}
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 	ar.ID = createdAlertRule.ID
@@ -273,6 +278,9 @@ func (srv *ProvisioningSrv) RoutePutAlertRule(c *models.ReqContext, ar definitio
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
 	if err != nil {
+		if errors.Is(err, store.ErrOptimisticLock) {
+			return ErrResp(http.StatusConflict, err, "")
+		}
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 	ar.Updated = updatedAlertRule.Updated
@@ -293,6 +301,9 @@ func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *models.ReqContext, ag defi
 	folderUID := pathParam(c, folderUIDPathParam)
 	err := srv.alertRules.UpdateRuleGroup(c.Req.Context(), c.OrgId, folderUID, rulegroup, ag.Interval)
 	if err != nil {
+		if errors.Is(err, store.ErrOptimisticLock) {
+			return ErrResp(http.StatusConflict, err, "")
+		}
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 	return response.JSON(http.StatusOK, ag)
