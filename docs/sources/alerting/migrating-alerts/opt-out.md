@@ -10,7 +10,7 @@ weight: 102
 
 # Opt out of Grafana Alerting
 
-At any time, you can opt out of Grafana Alerting in favor of using legacy alerting or opt out of alerting in its entirety.
+You can opt out of Grafana Alerting at any time and switch to using legacy alerting. Alternatively, you can opt out of using alerting in its entirety.
 
 ## Staying on legacy alerting
 
