@@ -53,7 +53,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: theme.spacing(0, 2),
       alignItems: 'center',
       justifyContent: 'space-between',
-      border: `1px solid ${theme.colors.border.medium}`,
+      border: `1px solid ${theme.colors.border.weak}`,
     }),
     logo: css({
       display: 'flex',

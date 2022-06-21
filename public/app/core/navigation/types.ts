@@ -19,4 +19,5 @@ export interface RouteDescriptor {
   routeName?: string;
   noTopNav?: boolean;
   exact?: boolean;
+  navId?: string;
 }

@@ -74,7 +74,7 @@ export class GrafanaRoute extends React.Component<Props> {
     const routeElement = <RouteComponent {...props} queryParams={locationSearchToObject(props.location.search)} />;
 
     if (config.featureToggles.topnav && !props.route.noTopNav) {
-      return <TopBarPage>{routeElement}</TopBarPage>;
+      return <TopBarPage navId={props.route.navId}>{routeElement}</TopBarPage>;
     }
 
     return routeElement;

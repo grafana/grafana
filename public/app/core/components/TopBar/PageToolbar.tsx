@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { TopBarProps } from './TopBarUpdate';
@@ -10,14 +10,15 @@ import { TOP_BAR_LEVEL_HEIGHT } from './types';
 export interface Props extends TopBarProps {
   onToggleSearchBar(): void;
   searchBarHidden?: boolean;
+  pageNavItem: NavModelItem;
 }
 
-export function PageToolbar({ title, actions, onToggleSearchBar, searchBarHidden }: Props) {
+export function PageToolbar({ title, actions, onToggleSearchBar, searchBarHidden, pageNavItem }: Props) {
   const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.pageToolbar}>
-      <div>{title}</div>
+      <div>{pageNavItem.text}</div>
       <div className={styles.rightActions}>
         {actions}
         <ToolbarButton icon={searchBarHidden ? 'angle-down' : 'angle-up'} onClick={onToggleSearchBar} />

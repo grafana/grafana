@@ -1,27 +1,38 @@
 import { css, cx } from '@emotion/css';
 import React, { PropsWithChildren } from 'react';
+import { useSelector } from 'react-redux';
 import { useObservable, useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
+import { getNavModel } from 'app/core/selectors/navModel';
+import { StoreState } from 'app/types';
 
 import { PageToolbar } from './PageToolbar';
 import { topBarDefaultProps, topBarUpdates } from './TopBarUpdate';
 import { TopSearchBar } from './TopSearchBar';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
 
-export interface Props extends PropsWithChildren<{}> {}
+export interface Props extends PropsWithChildren<{}> {
+  navId?: string;
+}
 
-export function TopBarPage({ children }: Props) {
+export function TopBarPage({ children, navId }: Props) {
   const styles = useStyles2(getStyles);
   const [searchBarHidden, toggleSearchBar] = useToggle(false); // repace with local storage
   const props = useObservable(topBarUpdates, topBarDefaultProps);
+  const navModel = useSelector((state: StoreState) => getNavModel(state.navIndex, navId ?? 'home'));
 
   return (
     <div className={styles.viewport}>
       <div className={styles.topBar}>
         {!searchBarHidden && <TopSearchBar />}
-        <PageToolbar {...props} searchBarHidden={searchBarHidden} onToggleSearchBar={toggleSearchBar} />
+        <PageToolbar
+          {...props}
+          searchBarHidden={searchBarHidden}
+          onToggleSearchBar={toggleSearchBar}
+          pageNavItem={navModel.node}
+        />
       </div>
       <div className={cx(styles.content, searchBarHidden && styles.contentNoSearchBar)}>{children}</div>
     </div>

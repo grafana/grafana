@@ -33,6 +33,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/d/:uid/:slug?',
+      navId: 'dashboards',
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Normal,
       component: SafeDynamicImport(
@@ -90,6 +91,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/datasources',
+      navId: 'datasources',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DataSourcesListPage"*/ 'app/features/datasources/DataSourcesListPage')
       ),
