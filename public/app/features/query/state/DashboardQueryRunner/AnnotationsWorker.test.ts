@@ -86,6 +86,25 @@ describe('AnnotationsWorker', () => {
     });
   });
 
+  describe('when canWork is called with correct props for a public dashboard with logged view', () => {
+    it('then it should return true', () => {
+      const options = getDefaultOptions();
+      options.dashboard.meta.isPublic = true;
+
+      expect(worker.canWork(options)).toBe(true);
+    });
+  });
+
+  describe('when canWork is called with correct props for a public dashboard with public view', () => {
+    it('then it should return true', () => {
+      const options = getDefaultOptions();
+      options.dashboard.meta.isPublic = true;
+      options.dashboard.meta.publicDashboardUid = 'anyUid';
+
+      expect(worker.canWork(options)).toBe(false);
+    });
+  });
+
   describe('when canWork is called with incorrect props', () => {
     it('then it should return false', () => {
       const dashboard: any = { annotations: { list: [] } };
