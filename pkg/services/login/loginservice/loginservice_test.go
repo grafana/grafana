@@ -110,29 +110,6 @@ func Test_teamSync(t *testing.T) {
 	})
 }
 
-func Test_upsertUser_loginUserStats(t *testing.T) {
-	authInfoMock := &logintest.AuthInfoServiceFake{}
-
-	store := &mockstore.SQLStoreMock{
-		ExpectedUserOrgList:     createUserOrgDTO(),
-		ExpectedOrgListResponse: createResponseWithOneErrLastOrgAdminItem(),
-	}
-
-	login := Implementation{
-		QuotaService:    &quota.QuotaService{},
-		AuthInfoService: authInfoMock,
-		SQLStore:        store,
-	}
-
-	upsertCmd := &models.UpsertUserCommand{ExternalUser: &models.ExternalUserInfo{Email: "test_user@example.org"}}
-	err := login.UpsertUser(context.Background(), upsertCmd)
-	require.NoError(t, err)
-	upsertCmd2 := &models.UpsertUserCommand{ExternalUser: &models.ExternalUserInfo{Email: "test_user@EXAMPLE.org"}}
-	err = login.UpsertUser(context.Background(), upsertCmd2)
-	require.NoError(t, err)
-	// TODO: check usagestats for duplicate email users
-}
-
 func createSimpleUser() models.User {
 	user := models.User{
 		Id: 1,
