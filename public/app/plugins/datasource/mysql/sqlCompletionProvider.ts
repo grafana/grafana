@@ -10,6 +10,7 @@ import {
   TableDefinition,
   TokenType,
 } from '@grafana/experimental';
+import { PositionContext } from '@grafana/experimental/dist/sql-editor/types';
 
 import { AGGREGATE_FNS, OPERATORS } from '../sql/constants';
 import { DB, MetaDefinition, SQLQuery } from '../sql/types';
@@ -24,31 +25,6 @@ export const getSqlCompletionProvider: (args: CompletionProviderGetterArgs) => L
   ({ getColumns, getTables, fetchMeta }) =>
   () => ({
     triggerCharacters: ['.', ' ', '$', ',', '(', "'"],
-    // tables: {
-    //   resolve: async () => {
-    //     return await getTables.current();
-    //   },
-    //   parseName: (token: LinkedToken) => {
-    //     let processedToken = token;
-    //     let tablePath = processedToken.value;
-
-    //     while (processedToken.next) {
-    //       tablePath += processedToken.next.value;
-    //       processedToken = processedToken.next;
-    //     }
-
-    //     return tablePath;
-    //   },
-    // },
-
-    columns: {
-      resolve: async (t: string) => {
-        // TODO - seems like a limitation in experimental since we may need database and table to get columns
-        // use . as delimiter?
-        // const cols = await getColumns({ table: t } as SQLQuery);
-        return await getColumns.current({ table: t } as SQLQuery);
-      },
-    },
     supportedFunctions: () => AGGREGATE_FNS,
     supportedOperators: () => OPERATORS,
     customSuggestionKinds: customSuggestionKinds(getTables, getColumns, fetchMeta),
@@ -62,6 +38,13 @@ export enum CustomStatementPlacement {
 
 export enum CustomSuggestionKind {
   TablesWithinDataset = 'tablesWithinDataset',
+}
+
+const TRIGGER_SUGGEST = 'editor.action.triggerSuggest';
+
+enum Keyword {
+  Where = 'WHERE',
+  From = 'FROM',
 }
 
 export const customStatementPlacement: StatementPlacementProvider = () => [
@@ -94,46 +77,18 @@ export const customSuggestionKinds: (
       suggestionsResolver: async (ctx) => {
         const tablePath = ctx.currentToken ? getTablePath(ctx.currentToken) : '';
         const t = await getTables.current(tablePath);
-
-        return t.map((table) => ({
-          label: table.name,
-          insertText: table.completion ?? table.name,
-          command: { id: 'editor.action.triggerSuggest', title: '' },
-          kind: CompletionItemKind.Field,
-          sortText: CompletionItemPriority.High,
-          range: {
-            ...ctx.range,
-            startColumn: ctx.range.endColumn,
-            endColumn: ctx.range.endColumn,
-          },
-        }));
+        return t.map((table) => suggestion(table.name, table.completion ?? table.name, CompletionItemKind.Field, ctx));
       },
     },
     {
       id: `MYSQL${StatementPosition.WhereKeyword}`,
       applyTo: [StatementPosition.WhereKeyword],
       suggestionsResolver: async (ctx) => {
-        console.log('where ' + ctx.currentToken?.value);
-
-        // const tablePath = ctx.currentToken ? getTablePath(ctx.currentToken) : '';
         const path = ctx.currentToken?.value || '';
-        console.log(path);
         const t = await fetchMeta.current(path);
-        console.log(t);
         return t.map((meta) => {
           const completion = meta.kind === CompletionItemKind.Class ? `${meta.completion}.` : meta.completion;
-          return {
-            label: meta.name,
-            insertText: completion,
-            command: { id: 'editor.action.triggerSuggest', title: '' },
-            kind: meta.kind,
-            sortText: CompletionItemPriority.High,
-            range: {
-              ...ctx.range,
-              startColumn: ctx.range.endColumn,
-              endColumn: ctx.range.endColumn,
-            },
-          };
+          return suggestion(meta.name, completion!, meta.kind, ctx);
         });
       },
     },
@@ -141,30 +96,14 @@ export const customSuggestionKinds: (
       id: StatementPosition.WhereComparisonOperator,
       applyTo: [StatementPosition.WhereComparisonOperator],
       suggestionsResolver: async (ctx) => {
-        console.log('where oper' + ctx.currentToken?.value);
-
         if (!isAfterWhere(ctx.currentToken)) {
           return [];
         }
-        // const tablePath = ctx.currentToken ? getTablePath(ctx.currentToken) : '';
         const path = ctx.currentToken?.value || '';
-        console.log(path);
         const t = await fetchMeta.current(path);
-        console.log(t);
         const sugg = t.map((meta) => {
           const completion = meta.kind === CompletionItemKind.Class ? `${meta.completion}.` : meta.completion;
-          return {
-            label: meta.name,
-            insertText: completion,
-            command: { id: 'editor.action.triggerSuggest', title: '' },
-            kind: meta.kind,
-            sortText: CompletionItemPriority.High,
-            range: {
-              ...ctx.range,
-              startColumn: ctx.range.endColumn,
-              endColumn: ctx.range.endColumn,
-            },
-          };
+          return suggestion(meta.name, completion!, meta.kind, ctx);
         });
         return sugg;
       },
@@ -173,26 +112,11 @@ export const customSuggestionKinds: (
       id: 'metaAfterSelect',
       applyTo: [StatementPosition.AfterSelectKeyword],
       suggestionsResolver: async (ctx) => {
-        console.log('after select ' + ctx.currentToken?.value);
-        // const tablePath = ctx.currentToken ? getTablePath(ctx.currentToken) : '';
         const path = ctx.currentToken?.value || '';
-        console.log(path);
         const t = await fetchMeta.current(path);
-        console.log(t);
         return t.map((meta) => {
           const completion = meta.kind === CompletionItemKind.Class ? `${meta.completion}.` : meta.completion;
-          return {
-            label: meta.name,
-            insertText: completion,
-            command: { id: 'editor.action.triggerSuggest', title: '' },
-            kind: meta.kind,
-            sortText: CompletionItemPriority.High,
-            range: {
-              ...ctx.range,
-              startColumn: ctx.range.endColumn,
-              endColumn: ctx.range.endColumn,
-            },
-          };
+          return suggestion(meta.name, completion!, meta.kind, ctx);
         });
       },
     },
@@ -200,37 +124,13 @@ export const customSuggestionKinds: (
       id: 'metaAfterFrom',
       applyTo: [CustomStatementPlacement.AfterFrom],
       suggestionsResolver: async (ctx) => {
-        console.log('after from ' + ctx.currentToken?.value + ' ' + ctx.currentToken?.previous?.value);
         // TODO: why is this triggering when isAfterFrom is false
         if (!isAfterFrom(ctx.currentToken)) {
           return [];
         }
         const path = ctx.currentToken?.value || '';
-        console.log(path);
         const t = await fetchMeta.current(path);
-        console.log(t);
-        return t.map((meta) => {
-          return {
-            label: meta.name,
-            insertText: meta.completion,
-            command: { id: 'editor.action.triggerSuggest', title: '' },
-            kind: meta.kind,
-            sortText: CompletionItemPriority.High,
-            range: {
-              ...ctx.range,
-              startColumn: ctx.range.endColumn,
-              endColumn: ctx.range.endColumn,
-            },
-          };
-        });
-      },
-    },
-    {
-      id: `MYSQL${StatementPosition.WhereComparisonOperator}`,
-      applyTo: [StatementPosition.WhereComparisonOperator],
-      suggestionsResolver: async (ctx) => {
-        console.log('where oper 2' + ctx.currentToken?.value);
-        return [];
+        return t.map((meta) => suggestion(meta.name, meta.completion!, meta.kind, ctx));
       },
     },
   ];
@@ -247,39 +147,32 @@ export function getTablePath(token: LinkedToken) {
   return tablePath;
 }
 
+function suggestion(label: string, completion: string, kind: CompletionItemKind, ctx: PositionContext) {
+  return {
+    label,
+    insertText: completion,
+    command: { id: TRIGGER_SUGGEST, title: '' },
+    kind,
+    sortText: CompletionItemPriority.High,
+    range: {
+      ...ctx.range,
+      startColumn: ctx.range.endColumn,
+      endColumn: ctx.range.endColumn,
+    },
+  };
+}
+
 function isAfterFrom(token: LinkedToken | null) {
-  return isAfter(token, 'FROM');
+  return isAfter(token, Keyword.From);
 }
 
 function isAfterWhere(token: LinkedToken | null) {
-  return isAfter(token, 'WHERE');
+  return isAfter(token, Keyword.Where);
 }
 
 function isAfter(token: LinkedToken | null, keyword: string) {
   return token?.is(TokenType.Whitespace) && token?.previous?.is(TokenType.Keyword, keyword);
 }
-// TODO - not sure if we need this
-// function isTypingTableIn(token: LinkedToken | null, l?: boolean) {
-//   if (!token) {
-//     return false;
-//   }
-//   const tokens = token.getPreviousUntil(TokenType.Keyword, [], 'from');
-//   if (!tokens) {
-//     return false;
-//   }
-
-//   let path = '';
-//   for (let i = tokens.length - 1; i >= 0; i--) {
-//     path += tokens[i].value;
-//   }
-
-//   // TODO - remove - frin big query
-//   // if (path.startsWith('`')) {
-//   //   path = path.slice(1);
-//   // }
-
-//   return path.split('.').length === 2;
-// }
 
 export async function fetchColumns(db: DB, q: SQLQuery) {
   const cols = await db.fields(q);
