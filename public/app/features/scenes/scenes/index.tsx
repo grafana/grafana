@@ -1,4 +1,4 @@
-import { Scene } from '../models/Scene';
+import { Scene } from '../components/Scene';
 
 import { getFlexLayoutTest, getScenePanelRepeaterTest } from './demo';
 import { getNestedScene } from './nested';

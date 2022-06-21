@@ -4,8 +4,8 @@ import { TimeRange } from '@grafana/data';
 import { RefreshPicker, ToolbarButtonRow } from '@grafana/ui';
 import { TimePickerWithHistory } from 'app/core/components/TimePicker/TimePickerWithHistory';
 
-import { SceneObjectBase } from './SceneObjectBase';
-import { SceneObjectState } from './types';
+import { SceneObjectBase } from '../core/SceneObjectBase';
+import { SceneObjectState } from '../core/types';
 
 interface TimeRangeState extends SceneObjectState {
   timeRange: TimeRange;

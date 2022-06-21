@@ -4,7 +4,7 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
 
-import { SceneObject, SceneLayoutState, SceneObjectList, isSceneObject } from '../models/types';
+import { SceneObject, SceneLayoutState, SceneObjectList, isSceneObject } from '../core/types';
 
 export interface Props {
   node: SceneObject;

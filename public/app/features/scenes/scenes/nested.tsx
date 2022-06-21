@@ -1,10 +1,10 @@
 import { getDefaultTimeRange } from '@grafana/data';
 
-import { Scene } from '../models/Scene';
-import { SceneFlexLayout } from '../models/SceneFlexLayout';
-import { SceneQueryRunner } from '../models/SceneQueryRunner';
-import { SceneTimeRange } from '../models/SceneTimeRange';
-import { VizPanel } from '../models/VizPanel';
+import { Scene } from '../components/Scene';
+import { SceneFlexLayout } from '../components/SceneFlexLayout';
+import { VizPanel } from '../components/VizPanel';
+import { SceneQueryRunner } from '../querying/SceneQueryRunner';
+import { SceneTimeRange } from '../querying/SceneTimeRange';
 
 export function getNestedScene(): Scene {
   const scene = new Scene({

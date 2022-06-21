@@ -5,8 +5,8 @@ import { AbsoluteTimeRange, FieldConfigSource, toUtc } from '@grafana/data';
 import { PanelRenderer } from '@grafana/runtime';
 import { Field, PanelChrome, Input } from '@grafana/ui';
 
-import { SceneObjectBase } from './SceneObjectBase';
-import { SceneComponentProps, SceneObjectState } from './types';
+import { SceneObjectBase } from '../core/SceneObjectBase';
+import { SceneComponentProps, SceneObjectState } from '../core/types';
 
 export interface VizPanelState extends SceneObjectState {
   title?: string;

@@ -2,9 +2,9 @@ import React from 'react';
 
 import { LoadingState, PanelData } from '@grafana/data';
 
-import { SceneDataNode } from './SceneDataNode';
-import { SceneObjectBase } from './SceneObjectBase';
-import { SceneComponentProps, SceneObject, SceneObjectList, SceneObjectState, SceneLayoutState } from './types';
+import { SceneDataNode } from '../core/SceneDataNode';
+import { SceneObjectBase } from '../core/SceneObjectBase';
+import { SceneComponentProps, SceneObject, SceneObjectList, SceneObjectState, SceneLayoutState } from '../core/types';
 
 interface RepeatOptions extends SceneObjectState {
   layout: SceneObject<SceneLayoutState>;

@@ -2,8 +2,8 @@ import React, { CSSProperties } from 'react';
 
 import { Field, Input } from '@grafana/ui';
 
-import { SceneObjectBase } from './SceneObjectBase';
-import { SceneComponentProps, SceneObjectState } from './types';
+import { SceneObjectBase } from '../core/SceneObjectBase';
+import { SceneComponentProps, SceneObjectState } from '../core/types';
 
 export interface SceneCanvasTextState extends SceneObjectState {
   text: string;

@@ -2,8 +2,8 @@ import React from 'react';
 
 import { PageToolbar, ToolbarButton } from '@grafana/ui';
 
-import { SceneObjectBase } from './SceneObjectBase';
-import { SceneComponentProps, SceneObjectState, SceneObject } from './types';
+import { SceneObjectBase } from '../core/SceneObjectBase';
+import { SceneComponentProps, SceneObjectState, SceneObject } from '../core/types';
 
 interface SceneState extends SceneObjectState {
   title: string;

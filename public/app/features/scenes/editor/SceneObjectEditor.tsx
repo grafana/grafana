@@ -2,7 +2,7 @@ import React from 'react';
 
 import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 
-import { SceneObject } from '../models/types';
+import { SceneObject } from '../core/types';
 
 export interface Props {
   model: SceneObject;

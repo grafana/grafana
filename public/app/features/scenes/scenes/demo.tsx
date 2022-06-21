@@ -1,14 +1,14 @@
 import { getDefaultTimeRange } from '@grafana/data';
 
+import { Scene } from '../components/Scene';
+import { SceneCanvasText } from '../components/SceneCanvasText';
+import { SceneFlexLayout } from '../components/SceneFlexLayout';
+import { ScenePanelRepeater } from '../components/ScenePanelRepeater';
+import { SceneToolbarInput } from '../components/SceneToolbarButton';
+import { VizPanel } from '../components/VizPanel';
 import { SceneEditManager } from '../editor/SceneEditManager';
-import { Scene } from '../models/Scene';
-import { SceneCanvasText } from '../models/SceneCanvasText';
-import { SceneFlexLayout } from '../models/SceneFlexLayout';
-import { ScenePanelRepeater } from '../models/ScenePanelRepeater';
-import { SceneQueryRunner } from '../models/SceneQueryRunner';
-import { SceneTimeRange } from '../models/SceneTimeRange';
-import { SceneToolbarInput } from '../models/SceneToolbarButton';
-import { VizPanel } from '../models/VizPanel';
+import { SceneQueryRunner } from '../querying/SceneQueryRunner';
+import { SceneTimeRange } from '../querying/SceneTimeRange';
 
 export function getFlexLayoutTest(): Scene {
   const scene = new Scene({

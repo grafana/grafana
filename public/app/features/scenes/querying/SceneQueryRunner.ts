@@ -16,8 +16,8 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getNextRequestId } from 'app/features/query/state/PanelQueryRunner';
 import { runRequest } from 'app/features/query/state/runRequest';
 
-import { SceneObjectBase } from './SceneObjectBase';
-import { SceneObjectState } from './types';
+import { SceneObjectBase } from '../core/SceneObjectBase';
+import { SceneObjectState } from '../core/types';
 
 export interface QueryRunnerState extends SceneObjectState {
   data?: PanelData;
