@@ -18,18 +18,19 @@ import (
 )
 
 type ExtendedAlert struct {
-	Status       string      `json:"status"`
-	Labels       template.KV `json:"labels"`
-	Annotations  template.KV `json:"annotations"`
-	StartsAt     time.Time   `json:"startsAt"`
-	EndsAt       time.Time   `json:"endsAt"`
-	GeneratorURL string      `json:"generatorURL"`
-	Fingerprint  string      `json:"fingerprint"`
-	SilenceURL   string      `json:"silenceURL"`
-	DashboardURL string      `json:"dashboardURL"`
-	PanelURL     string      `json:"panelURL"`
-	ValueString  string      `json:"valueString"`
-	ImageURL     string      `json:"imageURL,omitempty"`
+	Status        string      `json:"status"`
+	Labels        template.KV `json:"labels"`
+	Annotations   template.KV `json:"annotations"`
+	StartsAt      time.Time   `json:"startsAt"`
+	EndsAt        time.Time   `json:"endsAt"`
+	GeneratorURL  string      `json:"generatorURL"`
+	Fingerprint   string      `json:"fingerprint"`
+	SilenceURL    string      `json:"silenceURL"`
+	DashboardURL  string      `json:"dashboardURL"`
+	PanelURL      string      `json:"panelURL"`
+	ValueString   string      `json:"valueString"`
+	ImageURL      string      `json:"imageURL,omitempty"`
+	EmbeddedImage string      `json:"embeddedImage,omitempty"`
 }
 
 type ExtendedAlerts []ExtendedAlert

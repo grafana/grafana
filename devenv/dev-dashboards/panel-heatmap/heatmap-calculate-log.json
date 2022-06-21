@@ -23,7 +23,7 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "graphTooltip": 0,
+  "graphTooltip": 1,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -172,7 +172,7 @@
           "color": "rgba(255,0,255,0.7)"
         },
         "filterValues": {
-          "min": 1e-9
+          "le": 1e-9
         },
         "legend": {
           "show": true
@@ -257,7 +257,7 @@
           "color": "rgba(255,0,255,0.7)"
         },
         "filterValues": {
-          "min": 1e-9
+          "le": 1e-9
         },
         "legend": {
           "show": true
@@ -333,7 +333,7 @@
           "color": "rgba(255,0,255,0.7)"
         },
         "filterValues": {
-          "min": 1e-9
+          "le": 1e-9
         },
         "legend": {
           "show": true
@@ -417,7 +417,7 @@
           "color": "rgba(255,0,255,0.7)"
         },
         "filterValues": {
-          "min": 1e-9
+          "le": 1e-9
         },
         "legend": {
           "show": true
@@ -502,7 +502,7 @@
           "color": "rgba(255,0,255,0.7)"
         },
         "filterValues": {
-          "min": 1e-9
+          "le": 1e-9
         },
         "legend": {
           "show": true
@@ -548,6 +548,6 @@
   "timezone": "",
   "title": "Heatmap calculate (log)",
   "uid": "ZXYQTA97ZZ",
-  "version": 4,
+  "version": 1,
   "weekStart": ""
 }

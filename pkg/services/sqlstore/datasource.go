@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 // GetDataSource adds a datasource to the query model by querying by org_id as well as
@@ -117,6 +116,13 @@ func (ss *SQLStore) DeleteDataSource(ctx context.Context, cmd *models.DeleteData
 			}
 		}
 
+		if cmd.UpdateSecretFn != nil {
+			if err := cmd.UpdateSecretFn(); err != nil {
+				sqlog.Error("Failed to update datasource secrets -- rolling back update", "UID", cmd.UID, "name", cmd.Name, "orgId", cmd.OrgID)
+				return err
+			}
+		}
+
 		// Publish data source deletion event
 		sess.publishAfterCommit(&events.DataSourceDeleted{
 			Timestamp: time.Now(),
@@ -146,7 +152,7 @@ func (ss *SQLStore) AddDataSource(ctx context.Context, cmd *models.AddDataSource
 		if cmd.Uid == "" {
 			uid, err := generateNewDatasourceUid(sess, cmd.OrgId)
 			if err != nil {
-				return errutil.Wrapf(err, "Failed to generate UID for datasource %q", cmd.Name)
+				return fmt.Errorf("failed to generate UID for datasource %q: %w", cmd.Name, err)
 			}
 			cmd.Uid = uid
 		}
@@ -180,6 +186,13 @@ func (ss *SQLStore) AddDataSource(ctx context.Context, cmd *models.AddDataSource
 		}
 		if err := updateIsDefaultFlag(ds, sess); err != nil {
 			return err
+		}
+
+		if cmd.UpdateSecretFn != nil {
+			if err := cmd.UpdateSecretFn(); err != nil {
+				sqlog.Error("Failed to update datasource secrets -- rolling back update", "name", cmd.Name, "type", cmd.Type, "orgId", cmd.OrgId)
+				return err
+			}
 		}
 
 		cmd.Result = ds
@@ -263,6 +276,13 @@ func (ss *SQLStore) UpdateDataSource(ctx context.Context, cmd *models.UpdateData
 		}
 
 		err = updateIsDefaultFlag(ds, sess)
+
+		if cmd.UpdateSecretFn != nil {
+			if err := cmd.UpdateSecretFn(); err != nil {
+				sqlog.Error("Failed to update datasource secrets -- rolling back update", "UID", cmd.Uid, "name", cmd.Name, "type", cmd.Type, "orgId", cmd.OrgId)
+				return err
+			}
+		}
 
 		cmd.Result = ds
 		return err

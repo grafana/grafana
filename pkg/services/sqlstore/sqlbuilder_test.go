@@ -14,6 +14,9 @@ import (
 )
 
 func TestIntegrationSQLBuilder(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	t.Run("WriteDashboardPermissionFilter", func(t *testing.T) {
 		t.Run("user ACL", func(t *testing.T) {
 			test(t,

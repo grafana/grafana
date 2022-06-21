@@ -166,7 +166,10 @@ func (e *gitExportJob) doFlatExport() {
 		// Process all folders (only one level deep!!!)
 		for _, row := range rows {
 			if row.IsFolder {
-				dash := extract.ReadDashboard(bytes.NewReader(row.Data), lookup)
+				dash, err := extract.ReadDashboard(bytes.NewReader(row.Data), lookup)
+				if err != nil {
+					return err
+				}
 
 				slug := cleanFileName(dash.Title)
 				fpath := path.Join(target, slug)
@@ -316,7 +319,10 @@ func (e *gitExportJob) doExportWithHistory() error {
 		// Process all folders (only one level deep!!!)
 		for _, row := range rows {
 			if row.IsFolder {
-				dash := extract.ReadDashboard(bytes.NewReader(row.Data), lookup)
+				dash, err := extract.ReadDashboard(bytes.NewReader(row.Data), lookup)
+				if err != nil {
+					return err
+				}
 
 				slug := cleanFileName(dash.Title)
 				fpath := path.Join(e.rootDir, slug)

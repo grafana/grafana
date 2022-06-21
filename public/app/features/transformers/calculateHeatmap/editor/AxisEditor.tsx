@@ -24,11 +24,6 @@ const logModeOptions: Array<SelectableValue<HeatmapCalculationMode>> = [
     value: HeatmapCalculationMode.Size,
     description: 'Split the buckets based on size',
   },
-  {
-    label: 'Count',
-    value: HeatmapCalculationMode.Count,
-    description: 'Split the buckets based on count',
-  },
 ];
 
 export const AxisEditor: React.FC<StandardEditorProps<HeatmapCalculationBucketConfig, any>> = ({

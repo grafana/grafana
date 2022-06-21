@@ -31,6 +31,7 @@ import {
   DataSourceWithBackend,
   BackendDataSourceResponse,
   toDataQueryResponse,
+  isFetchError,
 } from '@grafana/runtime';
 import { Badge, BadgeColor, Tooltip } from '@grafana/ui';
 import { safeStringifyValue } from 'app/core/utils/explore';
@@ -224,7 +225,7 @@ export class PrometheusDatasource
         );
       } catch (err) {
         // If status code of error is Method Not Allowed (405) and HTTP method is POST, retry with GET
-        if (this.httpMethod === 'POST' && (err.status === 405 || err.status === 400)) {
+        if (this.httpMethod === 'POST' && isFetchError(err) && (err.status === 405 || err.status === 400)) {
           console.warn(`Couldn't use configured POST HTTP method for this request. Trying to use GET method instead.`);
         } else {
           throw err;
@@ -837,7 +838,10 @@ export class PrometheusDatasource
       const seriesLabels: Array<Record<string, string[]>> = await Promise.all(
         options.series.map((series: string) => this.languageProvider.fetchSeriesLabels(series))
       );
-      const uniqueLabels = [...new Set(...seriesLabels.map((value) => Object.keys(value)))];
+      // Combines tags from all options.series provided
+      let tags: string[] = [];
+      seriesLabels.map((value) => (tags = tags.concat(Object.keys(value))));
+      const uniqueLabels = [...new Set(tags)];
       return uniqueLabels.map((value: any) => ({ text: value }));
     } else {
       // Get all tags

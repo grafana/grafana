@@ -1,18 +1,18 @@
 {
   "type": "panel",
-  "name": "Heatmap (preview)",
+  "name": "Heatmap (new)",
   "id": "heatmap-new",
-  "state": "alpha",
+  "state": "beta",
 
   "info": {
-    "description": "Next generation heatmap visualization",
+    "description": "This heatmap panel will replace the heatmap panel in 9.1",
     "author": {
       "name": "Grafana Labs",
       "url": "https://grafana.com"
     },
     "logos": {
-      "small": "img/heatmap.svg",
-      "large": "img/heatmap.svg"
+      "small": "img/icn-heatmap-panel.svg",
+      "large": "img/icn-heatmap-panel.svg"
     }
   }
 }

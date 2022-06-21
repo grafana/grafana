@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 type file struct {
@@ -480,7 +479,7 @@ func (s dbFileStorage) CreateFolder(ctx context.Context, path string) error {
 
 		if insertErr != nil {
 			if rollErr := sess.Rollback(); rollErr != nil {
-				return errutil.Wrapf(insertErr, "Rolling back transaction due to error failed: %s", rollErr)
+				return fmt.Errorf("rolling back transaction due to error failed: %s: %w", rollErr, insertErr)
 			}
 			return insertErr
 		}

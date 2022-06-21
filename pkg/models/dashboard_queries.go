@@ -27,3 +27,23 @@ func GetQueriesFromDashboard(dashboard *simplejson.Json) map[int64][]*simplejson
 
 	return result
 }
+
+func GroupQueriesByDataSource(queries []*simplejson.Json) (result [][]*simplejson.Json) {
+	byDataSource := make(map[string][]*simplejson.Json)
+
+	for _, query := range queries {
+		dataSourceUid, err := query.GetPath("datasource", "uid").String()
+
+		if err != nil {
+			continue
+		}
+
+		byDataSource[dataSourceUid] = append(byDataSource[dataSourceUid], query)
+	}
+
+	for _, queries := range byDataSource {
+		result = append(result, queries)
+	}
+
+	return
+}

@@ -702,7 +702,17 @@ export function queryLogsVolume<T extends DataQuery>(
         observer.complete();
       },
       next: (dataQueryResponse: DataQueryResponse) => {
-        rawLogsVolume = rawLogsVolume.concat(dataQueryResponse.data.map(toDataFrame));
+        const { error } = dataQueryResponse;
+        if (error !== undefined) {
+          observer.next({
+            state: LoadingState.Error,
+            error,
+            data: [],
+          });
+          observer.error(error);
+        } else {
+          rawLogsVolume = rawLogsVolume.concat(dataQueryResponse.data.map(toDataFrame));
+        }
       },
       error: (error) => {
         observer.next({

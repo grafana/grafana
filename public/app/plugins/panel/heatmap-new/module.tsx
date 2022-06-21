@@ -1,14 +1,16 @@
 import React from 'react';
 
-import { FieldConfigProperty, FieldType, identityOverrideProcessor, PanelPlugin } from '@grafana/data';
+import { FieldConfigProperty, FieldType, identityOverrideProcessor, PanelData, PanelPlugin } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { AxisPlacement, GraphFieldConfig, ScaleDistribution, ScaleDistributionConfig } from '@grafana/schema';
 import { addHideFrom, ScaleDistributionEditor } from '@grafana/ui/src/options/builder';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { addHeatmapCalculationOptions } from 'app/features/transformers/calculateHeatmap/editor/helper';
-import { HeatmapBucketLayout } from 'app/features/transformers/calculateHeatmap/models.gen';
+import { readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
+import { HeatmapCellLayout } from 'app/features/transformers/calculateHeatmap/models.gen';
 
 import { HeatmapPanel } from './HeatmapPanel';
+import { prepareHeatmapData } from './fields';
 import { heatmapChangedHandler, heatmapMigrationHandler } from './migrations';
 import { PanelOptions, defaultPanelOptions, HeatmapColorMode, HeatmapColorScale } from './models.gen';
 import { colorSchemes, quantizeScheme } from './palettes';
@@ -16,15 +18,7 @@ import { HeatmapSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPanel)
   .useFieldConfig({
-    // This keeps: unit, decimals, displayName
-    disableStandardOptions: [
-      FieldConfigProperty.Color,
-      FieldConfigProperty.Thresholds,
-      FieldConfigProperty.Min,
-      FieldConfigProperty.Max,
-      FieldConfigProperty.Mappings,
-      FieldConfigProperty.NoValue,
-    ],
+    disableStandardOptions: Object.values(FieldConfigProperty).filter((v) => v !== FieldConfigProperty.Links),
     useCustomConfig: (builder) => {
       builder.addCustomEditor<void, ScaleDistributionConfig>({
         id: 'scaleDistribution',
@@ -46,6 +40,13 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
   .setPanelOptions((builder, context) => {
     const opts = context.options ?? defaultPanelOptions;
 
+    let isOrdinalY = false;
+
+    try {
+      const v = prepareHeatmapData({ series: context.data } as PanelData, opts, config.theme2);
+      isOrdinalY = readHeatmapRowsCustomMeta(v.heatmap).yOrdinalDisplay != null;
+    } catch {}
+
     let category = ['Heatmap'];
 
     builder.addRadio({
@@ -63,33 +64,10 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
 
     if (opts.calculate) {
       addHeatmapCalculationOptions('calculation.', builder, opts.calculation, category);
-    } else {
-      builder.addTextInput({
-        path: 'bucket.name',
-        name: 'Cell value name',
-        defaultValue: defaultPanelOptions.bucket?.name,
-        settings: {
-          placeholder: 'Value',
-        },
-        category,
-      });
-      builder.addRadio({
-        path: 'bucket.layout',
-        name: 'Layout',
-        defaultValue: defaultPanelOptions.bucket?.layout ?? HeatmapBucketLayout.auto,
-        category,
-        settings: {
-          options: [
-            { label: 'Auto', value: HeatmapBucketLayout.auto },
-            { label: 'Middle', value: HeatmapBucketLayout.unknown },
-            { label: 'Lower (LE)', value: HeatmapBucketLayout.le },
-            { label: 'Upper (GE)', value: HeatmapBucketLayout.ge },
-          ],
-        },
-      });
     }
 
     category = ['Y Axis'];
+
     builder.addRadio({
       path: 'yAxis.axisPlacement',
       name: 'Placement',
@@ -103,6 +81,43 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
         ],
       },
     });
+
+    builder
+      .addUnitPicker({
+        category,
+        path: 'yAxis.unit',
+        name: 'Unit',
+        defaultValue: undefined,
+      })
+      .addNumberInput({
+        category,
+        path: 'yAxis.decimals',
+        name: 'Decimals',
+        settings: {
+          placeholder: 'Auto',
+        },
+      });
+
+    if (!isOrdinalY) {
+      // if undefined, then show the min+max
+      builder
+        .addNumberInput({
+          path: 'yAxis.min',
+          name: 'Min value',
+          settings: {
+            placeholder: 'Auto',
+          },
+          category,
+        })
+        .addTextInput({
+          path: 'yAxis.max',
+          name: 'Max value',
+          settings: {
+            placeholder: 'Auto',
+          },
+          category,
+        });
+    }
 
     builder
       .addNumberInput({
@@ -123,13 +138,30 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
           placeholder: 'Auto',
         },
         category,
-      })
-      .addBooleanSwitch({
-        path: 'yAxis.reverse',
-        name: 'Reverse',
-        defaultValue: defaultPanelOptions.yAxis.reverse === true,
-        category,
       });
+
+    if (!opts.calculate) {
+      builder.addRadio({
+        path: 'rowsFrame.layout',
+        name: 'Tick alignment',
+        defaultValue: defaultPanelOptions.rowsFrame?.layout ?? HeatmapCellLayout.auto,
+        category,
+        settings: {
+          options: [
+            { label: 'Auto', value: HeatmapCellLayout.auto },
+            { label: 'Top (LE)', value: HeatmapCellLayout.le },
+            { label: 'Middle', value: HeatmapCellLayout.unknown },
+            { label: 'Bottom (GE)', value: HeatmapCellLayout.ge },
+          ],
+        },
+      });
+    }
+    builder.addBooleanSwitch({
+      path: 'yAxis.reverse',
+      name: 'Reverse',
+      defaultValue: defaultPanelOptions.yAxis.reverse === true,
+      category,
+    });
 
     category = ['Colors'];
 
@@ -225,7 +257,55 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
         },
       });
 
-    category = ['Display'];
+    builder
+      .addNumberInput({
+        path: 'color.min',
+        name: 'Start color scale from value',
+        defaultValue: defaultPanelOptions.color.min,
+        settings: {
+          placeholder: 'Auto (min)',
+        },
+        category,
+      })
+      .addNumberInput({
+        path: 'color.max',
+        name: 'End color scale at value',
+        defaultValue: defaultPanelOptions.color.max,
+        settings: {
+          placeholder: 'Auto (max)',
+        },
+        category,
+      });
+
+    category = ['Cell display'];
+
+    if (!opts.calculate) {
+      builder.addTextInput({
+        path: 'rowsFrame.value',
+        name: 'Value name',
+        defaultValue: defaultPanelOptions.rowsFrame?.value,
+        settings: {
+          placeholder: 'Value',
+        },
+        category,
+      });
+    }
+
+    builder
+      .addUnitPicker({
+        category,
+        path: 'cellValues.unit',
+        name: 'Unit',
+        defaultValue: undefined,
+      })
+      .addNumberInput({
+        category,
+        path: 'cellValues.decimals',
+        name: 'Decimals',
+        settings: {
+          placeholder: 'Auto',
+        },
+      });
 
     builder
       // .addRadio({
@@ -241,12 +321,6 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       //     ],
       //   },
       // })
-      .addNumberInput({
-        path: 'filterValues.min',
-        name: 'Hide cell counts <=',
-        defaultValue: defaultPanelOptions.filterValues?.min,
-        category,
-      })
       .addSliderInput({
         name: 'Cell gap',
         path: 'cellGap',
@@ -256,6 +330,24 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
           min: 0,
           max: 25,
         },
+      })
+      .addNumberInput({
+        path: 'filterValues.le',
+        name: 'Hide cells with values <=',
+        defaultValue: defaultPanelOptions.filterValues?.le,
+        settings: {
+          placeholder: 'None',
+        },
+        category,
+      })
+      .addNumberInput({
+        path: 'filterValues.ge',
+        name: 'Hide cells with values >=',
+        defaultValue: defaultPanelOptions.filterValues?.ge,
+        settings: {
+          placeholder: 'None',
+        },
+        category,
       });
     // .addSliderInput({
     //   name: 'Cell radius',

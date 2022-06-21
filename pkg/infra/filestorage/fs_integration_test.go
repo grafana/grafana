@@ -170,6 +170,9 @@ func runTests(createCases func() []fsTestCase, t *testing.T) {
 }
 
 func TestIntegrationFsStorage(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	//skipTest := true
 	emptyContents := make([]byte, 0)
 	pngImage, _ := base64.StdEncoding.DecodeString(pngImageBase64)

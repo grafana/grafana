@@ -2,11 +2,11 @@ package database
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 // retrieves public dashboard configuration
@@ -136,7 +136,7 @@ func (d *DashboardStore) SavePublicDashboardConfig(cmd models.SavePublicDashboar
 		} else {
 			uid, err := generateNewPublicDashboardUid(sess)
 			if err != nil {
-				return errutil.Wrapf(err, "Failed to generate UID for public dashboard")
+				return fmt.Errorf("failed to generate UID for public dashboard: %w", err)
 			}
 			cmd.PublicDashboardConfig.PublicDashboard.Uid = uid
 		}
