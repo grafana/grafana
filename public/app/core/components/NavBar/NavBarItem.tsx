@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { Trans } from '@lingui/macro';
 import { useLingui } from '@lingui/react';
 import { Item } from '@react-stately/collections';
 import React from 'react';
