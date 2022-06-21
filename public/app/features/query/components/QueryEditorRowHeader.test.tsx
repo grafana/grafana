@@ -4,7 +4,6 @@ import { openMenu } from 'react-select-event';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-// import '@grafana/runtime/src/services/templateSrv';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 
