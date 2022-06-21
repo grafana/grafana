@@ -6,6 +6,7 @@ import { dispatch } from 'app/store/store';
 import { DashboardDataDTO, DashboardMeta } from 'app/types/dashboard';
 
 export interface PublicDashboard {
+  accessToken: string;
   isEnabled: boolean;
   uid: string;
   dashboardUid: string;
@@ -31,7 +32,7 @@ export const savePublicDashboardConfig = async (
   publicDashboardConfig: PublicDashboard,
   setPublicDashboard: React.Dispatch<React.SetStateAction<PublicDashboard>>
 ) => {
-  const url = `/api/dashboards/uid/${dashboardUid}/public-config`;
+  const url = `/api/dashboards/access/${dashboardUid}/public-config`;
   const pdResp: PublicDashboard = await getBackendSrv().post(url, publicDashboardConfig);
 
   // Never allow a user to send the orgId
@@ -52,5 +53,5 @@ export const publicDashboardPersisted = (publicDashboard: PublicDashboard): bool
 };
 
 export const generatePublicDashboardUrl = (publicDashboard: PublicDashboard): string => {
-  return `/public-dashboards/${publicDashboard.uid}`;
+  return `${window.location.origin}/public-dashboards/${publicDashboard.accessToken}`;
 };

@@ -18,6 +18,7 @@ type SaveDashboardDTO struct {
 type SavePublicDashboardConfigDTO struct {
 	DashboardUid    string
 	OrgId           int64
+	UserId          int64
 	PublicDashboard *models.PublicDashboard
 }
 

@@ -14,28 +14,28 @@ import (
 
 // gets public dashboard
 func (hs *HTTPServer) GetPublicDashboard(c *models.ReqContext) response.Response {
-	publicDashboardUid := web.Params(c.Req)[":uid"]
+	accessToken := web.Params(c.Req)[":accessToken"]
 
-	dash, err := hs.dashboardService.GetPublicDashboard(c.Req.Context(), publicDashboardUid)
+	dash, err := hs.dashboardService.GetPublicDashboard(c.Req.Context(), accessToken)
 	if err != nil {
 		return handleDashboardErr(http.StatusInternalServerError, "Failed to get public dashboard", err)
 	}
 
 	meta := dtos.DashboardMeta{
-		Slug:               dash.Slug,
-		Type:               models.DashTypeDB,
-		CanStar:            false,
-		CanSave:            false,
-		CanEdit:            false,
-		CanAdmin:           false,
-		CanDelete:          false,
-		Created:            dash.Created,
-		Updated:            dash.Updated,
-		Version:            dash.Version,
-		IsFolder:           false,
-		FolderId:           dash.FolderId,
-		IsEnabled:          true,
-		PublicDashboardUid: publicDashboardUid,
+		Slug:                       dash.Slug,
+		Type:                       models.DashTypeDB,
+		CanStar:                    false,
+		CanSave:                    false,
+		CanEdit:                    false,
+		CanAdmin:                   false,
+		CanDelete:                  false,
+		Created:                    dash.Created,
+		Updated:                    dash.Updated,
+		Version:                    dash.Version,
+		IsFolder:                   false,
+		FolderId:                   dash.FolderId,
+		IsEnabled:                  true,
+		PublicDashboardAccessToken: accessToken,
 	}
 
 	dto := dtos.DashboardFullWithMeta{Meta: meta, Dashboard: dash.Data}
@@ -65,6 +65,7 @@ func (hs *HTTPServer) SavePublicDashboardConfig(c *models.ReqContext) response.R
 	dto := dashboards.SavePublicDashboardConfigDTO{
 		OrgId:           c.OrgId,
 		DashboardUid:    web.Params(c.Req)[":uid"],
+		UserId:          c.UserId,
 		PublicDashboard: pubdash,
 	}
 
@@ -77,7 +78,7 @@ func (hs *HTTPServer) SavePublicDashboardConfig(c *models.ReqContext) response.R
 }
 
 // QueryPublicDashboard returns all results for a given panel on a public dashboard
-// POST /api/public/dashboard/:uid/panels/:panelId/query
+// POST /api/public/dashboard/:accessToken/panels/:panelId/query
 func (hs *HTTPServer) QueryPublicDashboard(c *models.ReqContext) response.Response {
 	panelId, err := strconv.ParseInt(web.Params(c.Req)[":panelId"], 10, 64)
 	if err != nil {
@@ -86,7 +87,7 @@ func (hs *HTTPServer) QueryPublicDashboard(c *models.ReqContext) response.Respon
 
 	reqDTO, err := hs.dashboardService.BuildPublicDashboardMetricRequest(
 		c.Req.Context(),
-		web.Params(c.Req)[":uid"],
+		web.Params(c.Req)[":accessToken"],
 		panelId,
 	)
 	if err != nil {
