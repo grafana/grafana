@@ -299,6 +299,9 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
         path: 'cellValues.unit',
         name: 'Unit',
         defaultValue: undefined,
+        settings: {
+          isClearable: true,
+        },
       })
       .addNumberInput({
         category,
