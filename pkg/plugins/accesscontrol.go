@@ -20,6 +20,11 @@ const (
 func FixedRoleFromPlugin(plugin *Plugin) []accesscontrol.RoleRegistration {
 	roles := map[string]accesscontrol.RoleRegistration{}
 
+	// TODO check include type ? (dashboard, page)
+	// TODO check path => slug path?
+	// TODO check role => default viewer
+	// TODO generate permissions for routes?
+
 	for _, include := range plugin.JSONData.Includes {
 		reg, ok := roles[string(include.Role)]
 		if !ok {
@@ -30,7 +35,7 @@ func FixedRoleFromPlugin(plugin *Plugin) []accesscontrol.RoleRegistration {
 
 		reg.Role.Permissions = append(reg.Role.Permissions, accesscontrol.Permission{
 			Action: ActionAppAccess,
-			Scope:  accesscontrol.Scope(plugin.ID, "path", include.Path),
+			Scope:  PluginAppScope(plugin.ID, include.Path),
 		})
 		roles[string(include.Role)] = reg
 	}
@@ -41,4 +46,8 @@ func FixedRoleFromPlugin(plugin *Plugin) []accesscontrol.RoleRegistration {
 	}
 
 	return registrations
+}
+
+func PluginAppScope(id, path string) string {
+	return accesscontrol.Scope(id, "path", path)
 }

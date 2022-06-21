@@ -76,6 +76,7 @@ func (hs *HTTPServer) getProfileNode(c *models.ReqContext) *dtos.NavLink {
 }
 
 func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error) {
+	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	enabledPlugins, err := hs.enabledPlugins(c.Req.Context(), c.OrgId)
 	if err != nil {
 		return nil, err
@@ -97,7 +98,8 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 		}
 
 		for _, include := range plugin.Includes {
-			if !c.HasUserRole(include.Role) {
+			if !hasAccess(func(rc *models.ReqContext) bool { return c.HasUserRole(include.Role) },
+				ac.EvalPermission(plugins.ActionAppAccess, plugins.PluginAppScope(plugin.ID, include.Path))) {
 				continue
 			}
 

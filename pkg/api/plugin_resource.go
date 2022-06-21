@@ -36,6 +36,8 @@ func (hs *HTTPServer) callPluginResource(c *models.ReqContext, pluginID string) 
 		return
 	}
 
+	// TODO AccessControl hack to ensure access on the plugin's backend
+
 	req, err := hs.pluginResourceRequest(c)
 	if err != nil {
 		c.JsonApiErr(http.StatusBadRequest, "Failed for create plugin resource request", err)

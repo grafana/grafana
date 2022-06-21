@@ -171,7 +171,8 @@ func ValidateScope(scope string) bool {
 			return false
 		}
 	}
-	return !strings.ContainsAny(prefix, "*?")
+
+	return !strings.ContainsAny(prefix, "*")
 }
 
 func addActionToMetadata(allMetadata map[string]Metadata, action, id string) map[string]Metadata {

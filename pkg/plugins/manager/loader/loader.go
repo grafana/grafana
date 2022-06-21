@@ -181,7 +181,9 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 			return nil, err
 		}
 		metrics.SetPluginBuildInformation(p.ID, string(p.Type), p.Info.Version, string(p.Signature))
-		l.ac.DeclareFixedRoles(plugins.FixedRoleFromPlugin(p)...)
+		if p.Type == plugins.App {
+			l.ac.DeclareFixedRoles(plugins.FixedRoleFromPlugin(p)...)
+		}
 	}
 
 	return verifiedPlugins, nil
