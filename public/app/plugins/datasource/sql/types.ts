@@ -117,13 +117,13 @@ export interface SQLSelectableValue extends SelectableValue {
   raqbFieldType?: RAQBFieldTypes;
 }
 export interface DB {
-  init: (datasourceId?: string) => Promise<boolean>;
+  init?: (datasourceId?: string) => Promise<boolean>;
   datasets: () => Promise<string[]>;
   tables: (dataset?: string) => Promise<string[]>;
   fields: (query: SQLQuery, order?: boolean) => Promise<SQLSelectableValue[]>;
   validateQuery: (query: SQLQuery, range?: TimeRange) => Promise<ValidationResults>;
   dsID: () => string;
-  dispose: (dsID?: string) => void;
+  dispose?: (dsID?: string) => void;
   lookup: (path?: string) => Promise<Array<{ name: string; completion: string }>>;
   getSqlCompletionProvider: () => LanguageCompletionProvider;
   toRawSql?: (query: SQLQuery) => string;

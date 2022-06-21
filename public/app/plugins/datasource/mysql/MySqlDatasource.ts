@@ -91,18 +91,16 @@ export class MySqlDatasource extends SqlDatasource {
     }
   }
 
-  getDB(dsID?: string): DB {
+  getDB(): DB {
     if (this.db !== undefined) {
       return this.db;
     }
     return {
-      init: () => Promise.resolve(true),
       datasets: () => this.fetchDatasets(),
       tables: (dataset?: string) => this.fetchTables(dataset),
       fields: (query: SQLQuery) => this.fetchFields(query),
       validateQuery: (query: SQLQuery, range?: TimeRange) => Promise.resolve({} as ValidationResults),
       dsID: () => this.id,
-      dispose: (dsID?: string) => {},
       lookup: (path?: string) => this.fetchMeta(path),
       getSqlCompletionProvider: () => this.getSqlCompletionProvider(this.db),
     };
