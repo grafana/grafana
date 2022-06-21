@@ -15,8 +15,6 @@ import { initialCustomVariableModelState } from '../../../../features/variables/
 import { SQLOptions, SQLQuery } from '../../sql/types';
 import { MySqlDatasource } from '../MySqlDatasource';
 
-// import { MySQLOptions, MySQLQuery } from './../types';
-
 describe('MySQLDatasource', () => {
   const setupTextContext = (response: any) => {
     jest.clearAllMocks();
