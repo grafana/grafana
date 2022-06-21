@@ -63,6 +63,7 @@ export const AnnotationEditorForm = React.forwardRef<HTMLDivElement, AnnotationE
         to: Math.round(annotation.timeEnd!),
       });
     };
+    const onFormatCreateLabel = (input: string) => `Use custom value: ${input}`;
 
     const form = (
       <div // Annotation editor
@@ -99,6 +100,7 @@ export const AnnotationEditorForm = React.forwardRef<HTMLDivElement, AnnotationE
                         return (
                           <TagFilter
                             allowCustomValue
+                            formatCreateLabel={onFormatCreateLabel}
                             placeholder="Add tags"
                             onChange={onChange}
                             tagOptions={getAnnotationTags}
