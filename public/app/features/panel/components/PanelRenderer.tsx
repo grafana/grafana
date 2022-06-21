@@ -1,5 +1,4 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { useAsync } from 'react-use';
 
 import { applyFieldOverrides, FieldConfigSource, getTimeZone, PanelData, PanelPlugin } from '@grafana/data';
 import { PanelRendererProps } from '@grafana/runtime';
@@ -7,7 +6,7 @@ import { ErrorBoundaryAlert, useTheme2 } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
 
 import { getPanelOptionsWithDefaults, OptionDefaults } from '../../dashboard/state/getPanelOptionsWithDefaults';
-import { importPanelPlugin } from '../../plugins/importPanelPlugin';
+import { importPanelPlugin, syncGetPanelPlugin } from '../../plugins/importPanelPlugin';
 
 const defaultFieldConfig = { defaults: {}, overrides: [] };
 
@@ -22,27 +21,38 @@ export function PanelRenderer<P extends object = any, F extends object = any>(pr
     title,
     onOptionsChange = () => {},
     onChangeTimeRange = () => {},
-    fieldConfig: externalFieldConfig = defaultFieldConfig,
+    onFieldConfigChange = () => {},
+    fieldConfig = defaultFieldConfig,
   } = props;
 
-  const [localFieldConfig, setFieldConfig] = useState(externalFieldConfig);
-  const { value: plugin, error, loading } = useAsync(() => importPanelPlugin(pluginId), [pluginId]);
-  const optionsWithDefaults = useOptionDefaults(plugin, options, localFieldConfig);
+  const [plugin, setPlugin] = useState(syncGetPanelPlugin(pluginId));
+  const [error, setError] = useState<string | undefined>();
+  const optionsWithDefaults = useOptionDefaults(plugin, options, fieldConfig);
   const dataWithOverrides = useFieldOverrides(plugin, optionsWithDefaults, data, timeZone);
 
   useEffect(() => {
-    setFieldConfig((lfc) => ({ ...lfc, ...externalFieldConfig }));
-  }, [externalFieldConfig]);
+    // If we already have a plugin and it's correct one do nothing
+    if (plugin && plugin.hasPluginId(pluginId)) {
+      return;
+    }
+
+    // Async load the plugin
+    importPanelPlugin(pluginId)
+      .then((result) => setPlugin(result))
+      .catch((err: Error) => {
+        setError(err.message);
+      });
+  }, [pluginId, plugin]);
 
   if (error) {
-    return <div>Failed to load plugin: {error.message}</div>;
+    return <div>Failed to load plugin: {error}</div>;
   }
 
-  if (pluginIsLoading(loading, plugin, pluginId)) {
+  if (!plugin || !plugin.hasPluginId(pluginId)) {
     return <div>Loading plugin panel...</div>;
   }
 
-  if (!plugin || !plugin.panel) {
+  if (!plugin.panel) {
     return <div>Seems like the plugin you are trying to load does not have a panel component.</div>;
   }
 
@@ -61,14 +71,14 @@ export function PanelRenderer<P extends object = any, F extends object = any>(pr
         timeRange={dataWithOverrides.timeRange}
         timeZone={timeZone}
         options={optionsWithDefaults!.options}
-        fieldConfig={localFieldConfig}
+        fieldConfig={fieldConfig}
         transparent={false}
         width={width}
         height={height}
         renderCounter={0}
         replaceVariables={(str: string) => str}
         onOptionsChange={onOptionsChange}
-        onFieldConfigChange={setFieldConfig}
+        onFieldConfigChange={onFieldConfigChange}
         onChangeTimeRange={onChangeTimeRange}
         eventBus={appEvents}
       />
@@ -126,8 +136,4 @@ function useFieldOverrides(
       structureRev: structureRev.current,
     };
   }, [fieldConfigRegistry, fieldConfig, data, series, timeZone, theme]);
-}
-
-function pluginIsLoading(loading: boolean, plugin: PanelPlugin<any, any> | undefined, pluginId: string) {
-  return loading || plugin?.meta.id !== pluginId;
 }

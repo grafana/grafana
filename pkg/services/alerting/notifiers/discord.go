@@ -34,7 +34,7 @@ func init() {
 			},
 			{
 				Label:        "Message Content",
-				Description:  "Mention a group using @ or a user using <@ID> when notifying in a channel",
+				Description:  "Mention a group using <@&ID> or a user using <@ID> when notifying in a channel",
 				Element:      alerting.ElementTypeInput,
 				InputType:    alerting.InputTypeText,
 				PropertyName: "content",

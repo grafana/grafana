@@ -18,9 +18,9 @@ import {
 } from '../../types';
 import { Project } from '../index';
 
-import { GraphPeriod } from './../GraphPeriod';
 import { MQLQueryEditor } from './../MQLQueryEditor';
 import { AliasBy } from './AliasBy';
+import { GraphPeriod } from './GraphPeriod';
 import { VisualMetricQueryEditor } from './VisualMetricQueryEditor';
 
 export interface Props {
