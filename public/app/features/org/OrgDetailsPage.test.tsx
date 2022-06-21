@@ -1,10 +1,10 @@
-import 'whatwg-fetch'; // fetch polyfill needed @grafana/runtime
 import { render } from '@testing-library/react';
 import React from 'react';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 
 import { NavModel } from '@grafana/data';
 
+import { backendSrv } from '../../core/services/backend_srv';
 import { Organization } from '../../types';
 
 import { OrgDetailsPage, Props } from './OrgDetailsPage';
@@ -32,6 +32,12 @@ jest.mock('@grafana/runtime', () => {
 });
 
 const setup = (propOverrides?: object) => {
+  jest.clearAllMocks();
+  // needed because SharedPreferences is rendered in the test
+  jest.spyOn(backendSrv, 'put');
+  jest.spyOn(backendSrv, 'get').mockResolvedValue({ timezone: 'UTC', homeDashboardId: 0, theme: 'dark' });
+  jest.spyOn(backendSrv, 'search').mockResolvedValue([]);
+
   const props: Props = {
     organization: {} as Organization,
     navModel: {
@@ -46,8 +52,8 @@ const setup = (propOverrides?: object) => {
     setOrganizationName: mockToolkitActionCreator(setOrganizationName),
     updateOrganization: jest.fn(),
   };
-
   Object.assign(props, propOverrides);
+  // console.log(props);
 
   render(<OrgDetailsPage {...props} />);
 };
