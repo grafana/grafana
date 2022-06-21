@@ -71,10 +71,13 @@ export const SearchResultsCards = React.memo(
           tags: item.tags ?? [],
         };
 
-        const finfo = meta.locationInfo[item.location];
-        if (finfo) {
-          v.folderUid = item.location;
-          v.folderTitle = finfo.name;
+        if (item.location) {
+          const first = item.location.split('/')[0];
+          const finfo = meta.locationInfo[first];
+          if (finfo) {
+            v.folderUid = item.location;
+            v.folderTitle = finfo.name;
+          }
         }
 
         if (selection && selectionToggle) {
