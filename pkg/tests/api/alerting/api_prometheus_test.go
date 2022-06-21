@@ -41,9 +41,10 @@ func TestPrometheusRules(t *testing.T) {
 		Login:          "grafana",
 	})
 
+	apiClient := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
+
 	// Create the namespace we'll save our alerts to.
-	err := createFolder(t, "default", grafanaListedAddr, "grafana", "password")
-	require.NoError(t, err)
+	apiClient.CreateFolder(t, "default", "default")
 	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
 
 	interval, err := model.ParseDuration("10s")
@@ -335,10 +336,10 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 		Login:          "grafana",
 	})
 
+	apiClient := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
 	// Create the namespace we'll save our alerts to.
 	dashboardUID := "default"
-	err := createFolder(t, dashboardUID, grafanaListedAddr, "grafana", "password")
-	require.NoError(t, err)
+	apiClient.CreateFolder(t, dashboardUID, dashboardUID)
 	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
 
 	interval, err := model.ParseDuration("10s")
@@ -630,24 +631,24 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 		Login:          "grafana",
 	})
 
+	apiClient := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
+
 	// access control permissions store
 	permissionsStore := acdb.ProvideService(store)
 
 	// Create the namespace we'll save our alerts to.
-	err := createFolder(t, "folder1", grafanaListedAddr, "grafana", "password")
-	require.NoError(t, err)
+	apiClient.CreateFolder(t, "folder1", "folder1")
 
 	// Create the namespace we'll save our alerts to.
-	err = createFolder(t, "folder2", grafanaListedAddr, "grafana", "password")
-	require.NoError(t, err)
+	apiClient.CreateFolder(t, "folder2", "folder2")
 
 	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
 
 	// Create rule under folder1
-	createRule(t, grafanaListedAddr, "folder1", "grafana", "password")
+	createRule(t, apiClient, "folder1")
 
 	// Create rule under folder2
-	createRule(t, grafanaListedAddr, "folder2", "grafana", "password")
+	createRule(t, apiClient, "folder2")
 
 	// Now, let's see how this looks like.
 	{
