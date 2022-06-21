@@ -1,4 +1,4 @@
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { Role } from 'app/types';
 
 export const fetchRoleOptions = async (orgId?: number, query?: string): Promise<Role[]> => {
@@ -33,7 +33,9 @@ export const fetchUserRoles = async (userId: number, orgId?: number): Promise<Ro
     }
     return roles;
   } catch (error) {
-    error.isHandled = true;
+    if (isFetchError(error)) {
+      error.isHandled = true;
+    }
     return [];
   }
 };
@@ -62,7 +64,9 @@ export const fetchTeamRoles = async (teamId: number, orgId?: number): Promise<Ro
     }
     return roles;
   } catch (error) {
-    error.isHandled = true;
+    if (isFetchError(error)) {
+      error.isHandled = true;
+    }
     return [];
   }
 };

@@ -1,5 +1,5 @@
 import { locationUtil, setWeekStart } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
+import { config, isFetchError, locationService } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -90,7 +90,7 @@ async function fetchDashboard(
     }
   } catch (err) {
     // Ignore cancelled errors
-    if (err.cancelled) {
+    if (isFetchError(err) && err.cancelled) {
       return null;
     }
 
@@ -184,7 +184,9 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
 
       keybindingSrv.setupDashboardBindings(dashboard);
     } catch (err) {
-      dispatch(notifyApp(createErrorNotification('Dashboard init failed', err)));
+      if (err instanceof Error) {
+        dispatch(notifyApp(createErrorNotification('Dashboard init failed', err)));
+      }
       console.error(err);
     }
 
