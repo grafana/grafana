@@ -152,7 +152,7 @@ export class GrafanaApp {
         }),
         document.getElementById('reactRoot')
       );
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Failed to start Grafana', error);
       window.__grafana_load_failed();
     }
