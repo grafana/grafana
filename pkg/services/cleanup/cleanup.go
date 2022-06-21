@@ -139,7 +139,7 @@ func (srv *CleanUpService) shouldCleanupTempFile(filemtime time.Time, now time.T
 }
 
 func (srv *CleanUpService) deleteExpiredSnapshots(ctx context.Context) {
-	cmd := models.DeleteExpiredSnapshotsCommand{}
+	cmd := dashboardsnapshots.DeleteExpiredSnapshotsCommand{}
 	if err := srv.dashboardSnapshotService.DeleteExpiredSnapshots(ctx, &cmd); err != nil {
 		srv.log.Error("Failed to delete expired snapshots", "error", err.Error())
 	} else {
