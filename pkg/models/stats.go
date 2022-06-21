@@ -7,7 +7,6 @@ type SystemStats struct {
 	ActiveUsers               int64
 	DailyActiveUsers          int64
 	MonthlyActiveUsers        int64
-	DuplicateUserEntries      int64 `xorm:"duplicate_user_entries"`
 	Orgs                      int64
 	Playlists                 int64
 	Alerts                    int64
