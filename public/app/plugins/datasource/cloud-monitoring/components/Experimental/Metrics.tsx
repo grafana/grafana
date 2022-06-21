@@ -19,32 +19,18 @@ export interface Props {
   children: (metricDescriptor?: MetricDescriptor) => JSX.Element;
 }
 
-interface State {
-  metricDescriptors: MetricDescriptor[];
-  metrics: any[];
-  services: any[];
-  service: string;
-  metric: string;
-  metricDescriptor?: MetricDescriptor;
-  projectName: string | null;
-}
-
 export function Metrics(props: Props) {
-  const [state, setState] = useState<State>({
-    metricDescriptors: [],
-    metrics: [],
-    services: [],
-    service: '',
-    metric: '',
-    projectName: null,
-  });
+  const [metricDescriptors, setMetricDescriptors] = useState<MetricDescriptor[]>([]);
+  const [metricDescriptor, setMetricDescriptor] = useState<MetricDescriptor>();
+  const [metrics, setMetrics] = useState<Array<SelectableValue<string>>>([]);
+  const [services, setServices] = useState<Array<SelectableValue<string>>>([]);
+  const [service, setService] = useState<string>('');
 
   const theme = useTheme2();
   const selectStyles = getSelectStyles(theme);
 
   const customStyle = useStyles2(getStyles);
 
-  const { services, service, metrics, metricDescriptors } = state;
   const { metricType, templateVariableOptions, projectName, datasource, onChange, children } = props;
   const { templateSrv } = datasource;
 
@@ -87,14 +73,11 @@ export function Metrics(props: Props) {
         const metrics = getMetricsList(metricDescriptors);
         const service = metrics.length > 0 ? metrics[0].service : '';
         const metricDescriptor = getSelectedMetricDescriptor(metricDescriptors, metricType);
-        setState((prevState) => ({
-          ...prevState,
-          metricDescriptors,
-          services,
-          metrics,
-          service: service,
-          metricDescriptor,
-        }));
+        setMetricDescriptors(metricDescriptors);
+        setServices(services);
+        setMetrics(metrics);
+        setService(service);
+        setMetricDescriptor(metricDescriptor);
       }
     };
     loadMetricDescriptors();
@@ -111,15 +94,18 @@ export function Metrics(props: Props) {
       }));
 
     if (metrics.length > 0 && !metrics.some((m) => m.value === templateSrv.replace(metricType))) {
-      onMetricTypeChange(metrics[0], { service, metrics });
+      onMetricTypeChange(metrics[0]);
+      setService(service);
+      setMetrics(metrics);
     } else {
-      setState({ ...state, service, metrics });
+      setService(service);
+      setMetrics(metrics);
     }
   };
 
-  const onMetricTypeChange = ({ value }: SelectableValue<string>, extra: any = {}) => {
-    const metricDescriptor = getSelectedMetricDescriptor(state.metricDescriptors, value!);
-    setState({ ...state, metricDescriptor, ...extra });
+  const onMetricTypeChange = ({ value }: SelectableValue<string>) => {
+    const metricDescriptor = getSelectedMetricDescriptor(metricDescriptors, value!);
+    setMetricDescriptor(metricDescriptor);
     onChange({ ...metricDescriptor, type: value! });
   };
 
@@ -171,7 +157,7 @@ export function Metrics(props: Props) {
         </EditorFieldGroup>
       </EditorRow>
 
-      {children(state.metricDescriptor)}
+      {children(metricDescriptor)}
     </>
   );
 }
