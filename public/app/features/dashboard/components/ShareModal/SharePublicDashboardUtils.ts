@@ -6,7 +6,7 @@ import { dispatch } from 'app/store/store';
 import { DashboardDataDTO, DashboardMeta } from 'app/types/dashboard';
 
 export interface PublicDashboard {
-  accessToken: string;
+  accessToken?: string;
   isEnabled: boolean;
   uid: string;
   dashboardUid: string;

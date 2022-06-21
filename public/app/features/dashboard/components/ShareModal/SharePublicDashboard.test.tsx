@@ -13,6 +13,7 @@ const publicDashboardconfigResp: PublicDashboard = {
   isEnabled: true,
   uid: '',
   dashboardUid: '',
+  accessToken: '',
 };
 
 const backendSrv = {

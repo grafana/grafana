@@ -586,14 +586,21 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	dashboard, _ := scenario.dashboardsStore.SaveDashboard(saveDashboardCmd)
 
 	// Create public dashboard
-	publicDashboard := models.PublicDashboard{IsEnabled: true, DashboardUid: dashboard.Uid, OrgId: dashboard.OrgId}
-	savePubDashboardCmd := models.SavePublicDashboardConfigCommand{DashboardUid: dashboard.Uid, OrgId: dashboard.OrgId, PublicDashboard: publicDashboard}
-	pubdash, _ := scenario.dashboardsStore.SavePublicDashboardConfig(savePubDashboardCmd)
+	savePubDashboardCmd := &dashboards.SavePublicDashboardConfigDTO{
+		DashboardUid: dashboard.Uid,
+		OrgId:        dashboard.OrgId,
+		PublicDashboard: &models.PublicDashboard{
+			IsEnabled: true,
+		},
+	}
+
+	pubdash, err := scenario.hs.dashboardService.SavePublicDashboardConfig(context.Background(), savePubDashboardCmd)
+	require.NoError(t, err)
 
 	response := callAPI(
 		scenario.server,
 		http.MethodPost,
-		fmt.Sprintf("/api/public/dashboards/%s/panels/1/query", pubdash.Uid),
+		fmt.Sprintf("/api/public/dashboards/%s/panels/1/query", pubdash.AccessToken),
 		strings.NewReader(`{}`),
 		t,
 	)
