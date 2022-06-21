@@ -1,9 +1,9 @@
 import React, { FC } from 'react';
 
 import { useStyles } from '@grafana/ui';
+import { formatDataModel } from 'app/percona/backup/Backup.utils';
 
-import { formatDataModel } from '../BackupInventory.utils';
-import { Status } from '../Status';
+import { Status } from '../../Status';
 
 import { Messages } from './BackupInventoryDetails.messages';
 import { getStyles } from './BackupInventoryDetails.styles';

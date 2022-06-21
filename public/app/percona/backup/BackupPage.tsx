@@ -9,20 +9,26 @@ import { Messages } from './Backup.messages';
 import { TabKeys } from './Backup.types';
 import { PAGE_MODEL } from './BackupPage.constants';
 import { BackupInventory } from './components/BackupInventory';
+import { RestoreHistory } from './components/RestoreHistory';
 import { StorageLocations } from './components/StorageLocations';
 
 const BackupPage: FC = () => {
   const tabs: ContentTab[] = useMemo(
     (): ContentTab[] => [
       {
-        key: TabKeys.locations,
-        label: Messages.tabs.locations,
-        component: <StorageLocations />,
-      },
-      {
         key: TabKeys.inventory,
         label: Messages.tabs.inventory,
         component: <BackupInventory />,
+      },
+      {
+        key: TabKeys.restore,
+        label: Messages.tabs.restore,
+        component: <RestoreHistory />,
+      },
+      {
+        key: TabKeys.locations,
+        label: Messages.tabs.locations,
+        component: <StorageLocations />,
       },
     ],
     []

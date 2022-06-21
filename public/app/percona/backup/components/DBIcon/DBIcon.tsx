@@ -5,7 +5,7 @@ import { Tooltip, useStyles } from '@grafana/ui';
 
 import { getStyles } from './DBIcon.styles';
 import { DBIconProps, DBIconMap } from './DBIcon.types';
-import { Edit, Delete, See, Restore, Backup } from './assets';
+import { Edit, Delete, See, Backup, Cancel, Restore } from './assets';
 
 const Icons: DBIconMap = {
   edit: Edit,
@@ -13,6 +13,7 @@ const Icons: DBIconMap = {
   see: See,
   restore: Restore,
   backup: Backup,
+  cancel: Cancel,
 };
 
 export const DBIcon: FC<DBIconProps> = ({ type, size, tooltipText, disabled, ...rest }) => {

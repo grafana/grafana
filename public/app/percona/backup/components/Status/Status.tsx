@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 
 import { useTheme } from '@grafana/ui';
 
-import { formatStatus } from '../BackupInventory.utils';
+import { formatStatus } from '../../Backup.utils';
 
 import { getStyles } from './Status.styles';
 import { StatusProps } from './Status.types';

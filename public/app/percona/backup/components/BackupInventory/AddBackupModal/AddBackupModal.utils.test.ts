@@ -1,4 +1,5 @@
-import { DataModel } from '../BackupInventory.types';
+import { DataModel } from 'app/percona/backup/Backup.types';
+
 import { stubs as backupStubs } from '../__mocks__/BackupInventory.service';
 
 import { AddBackupFormProps, RetryMode } from './AddBackupModal.types';

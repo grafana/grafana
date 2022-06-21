@@ -12,6 +12,11 @@ export const PAGE_TABS = [
     path: `backup/${TabKeys.inventory}`,
   },
   {
+    title: Messages.tabs.restore,
+    id: TabKeys.restore,
+    path: `backup/${TabKeys.restore}`,
+  },
+  {
     title: Messages.tabs.locations,
     id: TabKeys.locations,
     path: `backup/${TabKeys.locations}`,
