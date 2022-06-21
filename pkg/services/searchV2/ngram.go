@@ -8,8 +8,6 @@ import (
 	"github.com/blugelabs/bluge/analysis/tokenizer"
 )
 
-type punctuationCharFilter struct{}
-
 var punctuationReplacer *strings.Replacer
 
 func init() {
@@ -22,11 +20,13 @@ func init() {
 	punctuationReplacer = strings.NewReplacer(args...)
 }
 
-const ngramEdgeFilterMaxLength = 7
+type punctuationCharFilter struct{}
 
 func (t *punctuationCharFilter) Filter(input []byte) []byte {
 	return []byte(punctuationReplacer.Replace(string(input)))
 }
+
+const ngramEdgeFilterMaxLength = 7
 
 var ngramIndexAnalyzer = &analysis.Analyzer{
 	CharFilters: []analysis.CharFilter{&punctuationCharFilter{}},
