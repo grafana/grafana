@@ -691,12 +691,16 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		return nil, err
 	}
 
-	// Read locale from accept-language
-	acceptLang := c.Req.Header.Get("Accept-Language")
+	// Set locale to the preference, otherwise fall back to the accept language header.
+	// In practice, because the preference has configuration-backed default, the header
+	// shouldn't frequently be used
+	acceptLangHeader := c.Req.Header.Get("Accept-Language")
 	locale := "en-US"
 
-	if len(acceptLang) > 0 {
-		parts := strings.Split(acceptLang, ",")
+	if hs.Features.IsEnabled(featuremgmt.FlagInternationalization) && prefs.JSONData.Locale != "" {
+		locale = prefs.JSONData.Locale
+	} else if len(acceptLangHeader) > 0 {
+		parts := strings.Split(acceptLangHeader, ",")
 		locale = parts[0]
 	}
 
