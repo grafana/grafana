@@ -8,8 +8,8 @@ import (
 )
 
 func GetPerconaSaasHost(c *models.ReqContext) response.Response {
-	saasHost := ""
-	envHost, ok := os.LookupEnv("PERCONA_TEST_SAAS_HOST")
+	saasHost := "https://portal.percona.com"
+	envHost, ok := os.LookupEnv("PERCONA_PORTAL_URL")
 
 	if ok {
 		saasHost = envHost

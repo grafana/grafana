@@ -11,8 +11,9 @@ services:
       - 443:443
     environment:
       - PMM_DEBUG=1
-      - PERCONA_TEST_SAAS_HOST=check-dev.percona.com:443
-      - PERCONA_TEST_CHECKS_PUBLIC_KEY=RWTg+ZmCCjt7O8eWeAmTLAqW+1ozUbpRSKSwNTmO+exlS5KEIPYWuYdX
+      - PERCONA_PORTAL_URL=https://portal-dev.percona.com
+      - PERCONA_TEST_PLATFORM_ADDRESS=https://check-dev.percona.com:443
+      - PERCONA_TEST_PLATFORM_PUBLIC_KEY=RWTkF7Snv08FCboTne4djQfN5qbrLfAjb8SY3/wwEP+X5nUrkxCEvUDJ
 
   mysql:
     image: percona:5.7.30
