@@ -3,9 +3,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 export function usePagination<T>(items: T[], initialPage: number, itemsPerPage: number) {
   const [page, setPage] = useState(initialPage);
 
-  const numberOfPages = useMemo(() => Math.ceil(items.length / itemsPerPage), [items, itemsPerPage]);
+  const numberOfPages = Math.ceil(items.length / itemsPerPage);
+  const firstItemOnPageIndex = itemsPerPage * (page - 1);
 
-  const firstItemOnPageIndex = useMemo(() => itemsPerPage * (page - 1), [itemsPerPage, page]);
   const pageItems = useMemo(
     () => items.slice(firstItemOnPageIndex, firstItemOnPageIndex + itemsPerPage),
     [items, firstItemOnPageIndex, itemsPerPage]
