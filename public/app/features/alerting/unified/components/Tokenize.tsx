@@ -13,9 +13,18 @@ function Tokenize({ input, delimiter = ['{{', '}}'] }: TokenizerProps) {
   const styles = useStyles2(getStyles);
 
   const [open, close] = delimiter;
+  const normalizedIput = normalizeInput(input);
+
+  /**
+   * This RegExp uses 2 named capture groups, text that comes before the token and the token itself
+   *
+   *  <before> open  <token>  close
+   *  ───────── ── ─────────── ──
+   *  Some text {{ $labels.foo }}
+   */
   const regex = new RegExp(`(?<before>.*?)(${open}(?<token>.*?)${close}|$)`, 'gm');
 
-  const matches = Array.from(input.matchAll(regex));
+  const matches = Array.from(normalizedIput.matchAll(regex));
 
   const output: React.ReactNode[] = [];
 
@@ -23,12 +32,19 @@ function Tokenize({ input, delimiter = ['{{', '}}'] }: TokenizerProps) {
     const before = match.groups?.before;
     const token = match.groups?.token;
 
+    const firstMatch = index === 0;
+
     if (before) {
-      output.push(<span> </span>);
-      output.push(<span key={`${index}-before`}>{match.groups?.before.trim()}</span>);
+      if (!firstMatch) {
+        output.push(<span> </span>);
+      }
+      output.push(<span key={`${index}-before`}>{before.trim()}</span>);
     }
+
     if (token) {
-      output.push(<span> </span>);
+      if (before) {
+        output.push(<span> </span>);
+      }
       output.push(<Token key={`${index}-token`} name={token} />);
     }
   });
@@ -45,6 +61,10 @@ function Token({ name }: TokenProps) {
   const varName = name.trim();
 
   return <Badge icon="x" className={styles.token} text={varName} color={'blue'} />;
+}
+
+function normalizeInput(input: string) {
+  return input.replace(/\s+/g, ' ').trim();
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
