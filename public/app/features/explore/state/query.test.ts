@@ -1,5 +1,6 @@
 import { EMPTY, interval, Observable, of } from 'rxjs';
 import { thunkTester } from 'test/core/thunk/thunkTester';
+import { assertIsDefined } from 'test/helpers/asserts';
 
 import {
   ArrayVector,
@@ -57,7 +58,9 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 function setupQueryResponse(state: StoreState) {
-  (state.explore[ExploreId.left].datasourceInstance?.query as Mock).mockReturnValueOnce(
+  const leftDatasourceInstance = assertIsDefined(state.explore[ExploreId.left].datasourceInstance);
+
+  jest.mocked(leftDatasourceInstance.query).mockReturnValueOnce(
     of({
       error: { message: 'test error' },
       data: [
@@ -107,7 +110,8 @@ describe('runQueries', () => {
     const { dispatch, getState } = configureStore({
       ...(defaultInitialState as any),
     });
-    (getState().explore[ExploreId.left].datasourceInstance?.query as Mock).mockReturnValueOnce(EMPTY);
+    const leftDatasourceInstance = assertIsDefined(getState().explore[ExploreId.left].datasourceInstance);
+    jest.mocked(leftDatasourceInstance.query).mockReturnValueOnce(EMPTY);
     await dispatch(runQueries(ExploreId.left));
     await new Promise((resolve) => setTimeout(() => resolve(''), 500));
     expect(getState().explore[ExploreId.left].queryResponse.state).toBe(LoadingState.Done);
