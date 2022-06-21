@@ -60,14 +60,10 @@ export type SQLFilters = NameValue[];
 
 export interface SQLExpression {
   columns?: QueryEditorFunctionExpression[];
-  // TODO: seems database should be here
-  // TODO: seems like this should be here ( table )
-  // from?: string;
   whereJsonTree?: JsonTree;
   whereString?: string;
   filters?: SQLFilters;
   groupBy?: QueryEditorGroupByExpression[];
-  // TODO: Maybe change this to array in the future
   orderBy?: QueryEditorPropertyExpression;
   orderByDirection?: 'ASC' | 'DESC';
   limit?: number;

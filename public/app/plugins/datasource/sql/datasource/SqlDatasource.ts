@@ -147,11 +147,6 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
   }
 
   async metricFindQuery(query: string, optionalOptions: any): Promise<MetricFindValue[]> {
-    // let refId = 'tempvar';
-    // if (optionalOptions && optionalOptions.variable && optionalOptions.variable.name) {
-    //   refId = optionalOptions.variable.name;
-    // }
-
     const rawSql = this.templateSrv.replace(
       query,
       getSearchFilterScopedVar({ query, wildcardChar: '%', options: optionalOptions }),
@@ -159,7 +154,6 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     );
 
     const interpolatedQuery = {
-      // refId: refId,
       datasourceId: this.id,
       datasource: this.getRef(),
       rawSql,
