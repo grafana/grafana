@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -30,7 +29,7 @@ func ProvideService(db db.DB, cfg *setting.Cfg) org.Service {
 	}
 }
 
-func (s *Service) GetIDForNewUser(ctx context.Context, cmd user.CreateUserCommand) (int64, error) {
+func (s *Service) GetIDForNewUser(ctx context.Context, cmd org.GetOrgIDForNewUserCommand) (int64, error) {
 	var orga org.Org
 	if cmd.SkipOrgSetup {
 		return -1, nil
@@ -68,13 +67,12 @@ func (s *Service) GetIDForNewUser(ctx context.Context, cmd user.CreateUserComman
 	} else {
 		orga.Name = orgName
 	}
-
 	orga.Created = time.Now()
 	orga.Updated = time.Now()
 
 	if orga.ID != 0 {
-		return s.store.Insert(ctx, &orga)
+		return s.store.InsertWithNextAvailableOrgID(ctx, &orga)
 	} else {
-		return s.store.Update(ctx, &orga)
+		return s.store.Insert(ctx, &orga)
 	}
 }

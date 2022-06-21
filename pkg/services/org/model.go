@@ -33,3 +33,11 @@ type CreateOrgCommand struct {
 	// initial admin user for account
 	UserID int64 `json:"-"`
 }
+
+type GetOrgIDForNewUserCommand struct {
+	Email        string
+	Login        string
+	OrgID        int64
+	OrgName      string
+	SkipOrgSetup bool
+}

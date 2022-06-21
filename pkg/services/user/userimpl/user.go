@@ -31,7 +31,14 @@ func ProvideService(db db.DB, orgService org.Service, orgUserService orguser.Ser
 }
 
 func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
-	orgID, err := s.orgService.GetIDForNewUser(ctx, *cmd)
+	cmdOrg := org.GetOrgIDForNewUserCommand{
+		Email:        cmd.Email,
+		Login:        cmd.Login,
+		OrgID:        cmd.OrgID,
+		OrgName:      cmd.OrgName,
+		SkipOrgSetup: cmd.SkipOrgSetup,
+	}
+	orgID, err := s.orgService.GetIDForNewUser(ctx, cmdOrg)
 	cmd.OrgID = orgID
 	if err != nil {
 		return nil, err

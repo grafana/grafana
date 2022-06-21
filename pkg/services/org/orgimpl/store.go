@@ -15,7 +15,7 @@ const MainOrgName = "Main Org."
 type store interface {
 	Get(context.Context, int64) (*org.Org, error)
 	Insert(context.Context, *org.Org) (int64, error)
-	Update(context.Context, *org.Org) (int64, error)
+	InsertWithNextAvailableOrgID(context.Context, *org.Org) (int64, error)
 }
 
 type sqlStore struct {
@@ -45,7 +45,7 @@ func (ss *sqlStore) Insert(ctx context.Context, org *org.Org) (int64, error) {
 	var orgID int64
 	var err error
 	err = ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		if orgID, err = sess.InsertOne(&org); err != nil {
+		if orgID, err = sess.InsertOne(org); err != nil {
 			return err
 		}
 		sess.PublishAfterCommit(&events.OrgCreated{
@@ -61,14 +61,14 @@ func (ss *sqlStore) Insert(ctx context.Context, org *org.Org) (int64, error) {
 	return orgID, nil
 }
 
-func (ss *sqlStore) Update(ctx context.Context, org *org.Org) (int64, error) {
+func (ss *sqlStore) InsertWithNextAvailableOrgID(ctx context.Context, org *org.Org) (int64, error) {
 	var orgID int64
 	var err error
 	err = ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		if err := ss.dialect.PreInsertId("org", sess.Session); err != nil {
 			return err
 		}
-		orgID, err = sess.InsertOne(&org)
+		orgID, err = sess.InsertOne(org)
 		if err != nil {
 			return err
 		}
