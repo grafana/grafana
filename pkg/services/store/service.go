@@ -26,7 +26,7 @@ var ErrValidationFailed = errors.New("request validation failed")
 var ErrFileAlreadyExists = errors.New("file exists")
 
 const RootPublicStatic = "public-static"
-const RootUpload = "upload"
+const RootResources = "resources"
 
 const MAX_UPLOAD_SIZE = 1024 * 1024 // 1MB
 
@@ -72,9 +72,9 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 	initializeOrgStorages := func(orgId int64) []storageRuntime {
 		storages := make([]storageRuntime, 0)
 		if features.IsEnabled(featuremgmt.FlagStorageLocalUpload) {
-			config := &StorageSQLConfig{orgId: orgId}
-			storages = append(storages, newSQLStorage(RootUpload, "Local file upload", config, sql).setBuiltin(true))
+			storages = append(storages, newSQLStorage(RootResources, "Resources", &StorageSQLConfig{orgId: orgId}, sql).setBuiltin(true))
 		}
+
 		return storages
 	}
 
@@ -133,16 +133,16 @@ type UploadRequest struct {
 }
 
 func (s *standardStorageService) Upload(ctx context.Context, user *models.SignedInUser, req *UploadRequest) error {
-	upload, _ := s.tree.getRoot(getOrgId(user), RootUpload)
+	upload, _ := s.tree.getRoot(getOrgId(user), RootResources)
 	if upload == nil {
 		return ErrUploadFeatureDisabled
 	}
 
-	if !strings.HasPrefix(req.Path, RootUpload+"/") {
+	if !strings.HasPrefix(req.Path, RootResources+"/") {
 		return ErrUnsupportedStorage
 	}
 
-	storagePath := strings.TrimPrefix(req.Path, RootUpload)
+	storagePath := strings.TrimPrefix(req.Path, RootResources)
 	validationResult := s.validateUploadRequest(ctx, user, req, storagePath)
 	if !validationResult.ok {
 		grafanaStorageLogger.Warn("file upload validation failed", "filetype", req.MimeType, "path", req.Path, "reason", validationResult.reason)
@@ -178,7 +178,7 @@ func (s *standardStorageService) Upload(ctx context.Context, user *models.Signed
 }
 
 func (s *standardStorageService) Delete(ctx context.Context, user *models.SignedInUser, path string) error {
-	upload, _ := s.tree.getRoot(getOrgId(user), RootUpload)
+	upload, _ := s.tree.getRoot(getOrgId(user), RootResources)
 	if upload == nil {
 		return fmt.Errorf("upload feature is not enabled")
 	}

@@ -30,7 +30,7 @@ export default function StoragePage() {
   const styles = useStyles2(getStyles);
   const navModel = useNavModel('storage');
   const [searchQuery, setSearchQuery] = useState('');
-  const [path] = useState('upload'); // from URL?
+  const [path] = useState('resources'); // from URL?
   const [dropped, setDropped] = useState<boolean>(false);
   const [file, setFile] = useState<string>(''); // for preview but might not need
   const [formData, setFormData] = useState<FormData>(new FormData());
@@ -87,7 +87,7 @@ export default function StoragePage() {
             className={styles.button}
             variant={dropped ? 'primary' : 'secondary'}
             onClick={() => {
-              fetch('/api/storage/upload', {
+              fetch('/api/storage/resources', {
                 method: 'POST',
                 body: formData,
               })

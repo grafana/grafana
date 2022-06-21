@@ -92,7 +92,7 @@ func (s *httpStorage) Upload(c *models.ReqContext) response.Response {
 		return errFileTooBig
 	}
 
-	path := RootUpload + "/" + fileHeader.Filename
+	path := RootResources + "/" + fileHeader.Filename
 
 	mimeType := http.DetectContentType(data)
 
