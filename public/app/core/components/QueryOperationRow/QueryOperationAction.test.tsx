@@ -15,8 +15,6 @@ const setup = (propOverrides?: Partial<QueryOperationActionProps>) => {
     ...propOverrides,
   };
 
-  Object.assign(props);
-
   render(<QueryOperationAction {...props} />);
 };
 
