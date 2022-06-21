@@ -42,6 +42,13 @@ grafanaUI.DataSourcePlugin = grafanaData.DataSourcePlugin;
 grafanaUI.AppPlugin = grafanaData.AppPlugin;
 grafanaUI.DataSourceApi = grafanaData.DataSourceApi;
 
+// Patch in an old function to stop old plugins from crashing
+if (!(grafanaData as any).getColorForTheme) {
+  (grafanaData as any).getColorForTheme = (color: string, theme: grafanaData.GrafanaTheme) => {
+    return theme.visualization.getColorByName(color);
+  };
+}
+
 grafanaRuntime.SystemJS.registry.set('plugin-loader', grafanaRuntime.SystemJS.newModule({ locate: locateWithCache }));
 
 grafanaRuntime.SystemJS.config({
