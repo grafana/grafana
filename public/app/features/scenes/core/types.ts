@@ -85,9 +85,9 @@ export interface SceneEditorState extends SceneObjectState {
 }
 
 export interface SceneEditor extends SceneObject<SceneEditorState> {
-  mouseEnter(model: SceneObject): void;
-  mouseLeave(model: SceneObject): void;
-  selectObject(model: SceneObject): void;
+  onMouseEnterObject(model: SceneObject): void;
+  onMouseLeaveObject(model: SceneObject): void;
+  onSelectObject(model: SceneObject): void;
 }
 
 export interface SceneTimeRangeState extends SceneObjectState, TimeRange {}

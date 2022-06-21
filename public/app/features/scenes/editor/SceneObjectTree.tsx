@@ -32,7 +32,7 @@ export function SceneObjectTree({ node, selectedObject }: Props) {
 
   const name = node.constructor.name;
   const isSelected = selectedObject === node;
-  const onSelectNode = () => node.getSceneEditor().selectObject(node);
+  const onSelectNode = () => node.getSceneEditor().onSelectObject(node);
 
   return (
     <div className={styles.node}>

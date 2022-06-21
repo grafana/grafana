@@ -17,11 +17,11 @@ export class SceneEditManager extends SceneObjectBase<SceneEditorState> implemen
     return SceneEditorRenderer;
   }
 
-  mouseEnter(model: SceneObject) {
+  onMouseEnterObject(model: SceneObject) {
     this.setState({ hoverObject: { ref: model } });
   }
 
-  mouseLeave(model: SceneObject) {
+  onMouseLeaveObject(model: SceneObject) {
     if (model.parent) {
       this.setState({ hoverObject: { ref: model.parent } });
     } else {
@@ -29,7 +29,7 @@ export class SceneEditManager extends SceneObjectBase<SceneEditorState> implemen
     }
   }
 
-  selectObject(model: SceneObject) {
+  onSelectObject(model: SceneObject) {
     this.setState({ selectedObject: { ref: model } });
   }
 }

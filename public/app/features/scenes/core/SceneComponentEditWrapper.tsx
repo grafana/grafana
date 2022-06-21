@@ -32,12 +32,12 @@ export function SceneComponentEditingWrapper<T extends SceneObjectBase<any>>({
   const editor = model.getSceneEditor();
   const { hoverObject, selectedObject } = editor.useState();
 
-  const onMouseEnter = () => editor.mouseEnter(model);
-  const onMouseLeave = () => editor.mouseLeave(model);
+  const onMouseEnter = () => editor.onMouseEnterObject(model);
+  const onMouseLeave = () => editor.onMouseLeaveObject(model);
 
   const onClick = (evt: React.MouseEvent) => {
     evt.stopPropagation();
-    editor.selectObject(model);
+    editor.onSelectObject(model);
   };
 
   const style: CSSProperties = {};
