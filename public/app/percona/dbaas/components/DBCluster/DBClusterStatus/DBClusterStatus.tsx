@@ -1,14 +1,17 @@
 /* eslint-disable react/display-name */
-import React, { FC, useMemo, useEffect, useRef, useState } from 'react';
 import { cx } from 'emotion';
+import React, { FC, useMemo, useEffect, useRef, useState } from 'react';
+
 import { Icon, useStyles, Tooltip } from '@grafana/ui';
 import { Messages } from 'app/percona/dbaas/DBaaS.messages';
 import { ProgressBar } from 'app/percona/dbaas/components/ProgressBar/ProgressBar';
 import { ProgressBarStatus } from 'app/percona/dbaas/components/ProgressBar/ProgressBar.types';
-import { DBClusterStatusProps } from './DBClusterStatus.types';
-import { getStyles } from './DBClusterStatus.styles';
+
 import { DBClusterStatus as Status } from '../DBCluster.types';
+
 import { COMPLETE_PROGRESS_DELAY, STATUS_DATA_QA } from './DBClusterStatus.constants';
+import { getStyles } from './DBClusterStatus.styles';
+import { DBClusterStatusProps } from './DBClusterStatus.types';
 import { getProgressMessage, getShowProgressBarValue } from './DBClusterStatus.utils';
 
 export const DBClusterStatus: FC<DBClusterStatusProps> = ({ dbCluster, setSelectedCluster, setLogsModalVisible }) => {
@@ -57,10 +60,10 @@ export const DBClusterStatus: FC<DBClusterStatusProps> = ({ dbCluster, setSelect
           finishedSteps={finishedSteps || 0}
           totalSteps={totalSteps || 0}
           message={getProgressMessage(status, prevStatus.current)}
-          dataQa="cluster-progress-bar"
+          dataTestId="cluster-progress-bar"
         />
       ) : (
-        <span className={cx(styles.status, statusStyles)} data-qa={`cluster-status-${STATUS_DATA_QA[status]}`}>
+        <span className={cx(styles.status, statusStyles)} data-testid={`cluster-status-${STATUS_DATA_QA[status]}`}>
           {Messages.dbcluster.table.status[status]}
         </span>
       )}
@@ -70,7 +73,7 @@ export const DBClusterStatus: FC<DBClusterStatusProps> = ({ dbCluster, setSelect
             {Messages.dbcluster.table.status.logs}
           </a>
           <Tooltip content={<ErrorMessage />} placement="bottom">
-            <span className={cx(styles.statusIcon)} data-qa="cluster-status-error-message">
+            <span className={cx(styles.statusIcon)} data-testid="cluster-status-error-message">
               <Icon name="info-circle" />
             </span>
           </Tooltip>

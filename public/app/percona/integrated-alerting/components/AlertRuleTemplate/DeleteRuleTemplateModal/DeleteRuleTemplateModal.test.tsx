@@ -1,4 +1,4 @@
-import { dataQa } from '@percona/platform-core';
+import { dataTestId } from '@percona/platform-core';
 import { mount } from 'enzyme';
 import React from 'react';
 
@@ -20,8 +20,8 @@ describe('DeleteRuleTemplateModal', () => {
       />
     );
 
-    expect(wrapper.find(dataQa('confirm-delete-modal-button'))).toBeTruthy();
-    expect(wrapper.find(dataQa('cancel-delete-modal-button'))).toBeTruthy();
+    expect(wrapper.find(dataTestId('confirm-delete-modal-button'))).toBeTruthy();
+    expect(wrapper.find(dataTestId('cancel-delete-modal-button'))).toBeTruthy();
   });
 
   it('should not render modal when visible is set to false', () => {
@@ -34,7 +34,7 @@ describe('DeleteRuleTemplateModal', () => {
       />
     );
 
-    expect(wrapper.contains(dataQa('confirm-delete-modal-button'))).toBeFalsy();
+    expect(wrapper.contains(dataTestId('confirm-delete-modal-button'))).toBeFalsy();
   });
 
   it('should call setVisible on close', () => {
@@ -48,7 +48,7 @@ describe('DeleteRuleTemplateModal', () => {
       />
     );
 
-    wrapper.find(dataQa('modal-background')).simulate('click');
+    wrapper.find(dataTestId('modal-background')).simulate('click');
 
     expect(setVisible).toHaveBeenCalled();
   });

@@ -1,4 +1,4 @@
-import { CheckboxField, dataQa } from '@percona/platform-core';
+import { CheckboxField, dataTestId } from '@percona/platform-core';
 import { mount } from 'enzyme';
 import React from 'react';
 
@@ -8,10 +8,10 @@ xdescribe('DeleteModal', () => {
   it('should render modal', () => {
     const wrapper = mount(<DeleteModal setVisible={jest.fn()} onDelete={jest.fn()} isVisible />);
 
-    expect(wrapper.find(dataQa('confirm-delete-modal-button'))).toBeTruthy();
-    expect(wrapper.find(dataQa('cancel-delete-modal-button'))).toBeTruthy();
-    expect(wrapper.find(dataQa('confirm-delete-modal-button')).contains('i')).toBeFalsy();
-    expect(wrapper.find(dataQa('force-checkbox-field')).exists()).toBeFalsy();
+    expect(wrapper.find(dataTestId('confirm-delete-modal-button'))).toBeTruthy();
+    expect(wrapper.find(dataTestId('cancel-delete-modal-button'))).toBeTruthy();
+    expect(wrapper.find(dataTestId('confirm-delete-modal-button')).contains('i')).toBeFalsy();
+    expect(wrapper.find(dataTestId('force-checkbox-field')).exists()).toBeFalsy();
   });
 
   it('should render modal with custom message and title', () => {
@@ -26,21 +26,21 @@ xdescribe('DeleteModal', () => {
   it('should not render modal when visible is set to false', () => {
     const wrapper = mount(<DeleteModal setVisible={jest.fn()} onDelete={jest.fn()} isVisible={false} />);
 
-    expect(wrapper.contains(dataQa('confirm-delete-modal-button'))).toBeFalsy();
-    expect(wrapper.contains(dataQa('cancel-delete-modal-button'))).toBeFalsy();
+    expect(wrapper.contains(dataTestId('confirm-delete-modal-button'))).toBeFalsy();
+    expect(wrapper.contains(dataTestId('cancel-delete-modal-button'))).toBeFalsy();
   });
 
   it('should render spinner when loading', () => {
     const wrapper = mount(<DeleteModal setVisible={jest.fn()} onDelete={jest.fn()} isVisible loading />);
 
-    expect(wrapper.find(dataQa('confirm-delete-modal-button')).find('i')).toBeTruthy();
+    expect(wrapper.find(dataTestId('confirm-delete-modal-button')).find('i')).toBeTruthy();
   });
 
   it('should call setVisible on close', () => {
     const setVisible = jest.fn();
     const wrapper = mount(<DeleteModal setVisible={setVisible} onDelete={jest.fn()} isVisible />);
 
-    wrapper.find(dataQa('modal-background')).simulate('click');
+    wrapper.find(dataTestId('modal-background')).simulate('click');
 
     expect(setVisible).toHaveBeenCalled();
   });
@@ -49,7 +49,7 @@ xdescribe('DeleteModal', () => {
     const onDelete = jest.fn();
     const wrapper = mount(<DeleteModal setVisible={jest.fn()} onDelete={onDelete} isVisible />);
 
-    wrapper.find(dataQa('confirm-delete-modal-button')).find('button').simulate('submit');
+    wrapper.find(dataTestId('confirm-delete-modal-button')).find('button').simulate('submit');
 
     expect(onDelete).toHaveBeenCalled();
   });
@@ -58,7 +58,7 @@ xdescribe('DeleteModal', () => {
     const setVisible = jest.fn();
     const wrapper = mount(<DeleteModal setVisible={setVisible} onDelete={jest.fn()} isVisible />);
 
-    wrapper.find(dataQa('cancel-delete-modal-button')).find('button').simulate('click');
+    wrapper.find(dataTestId('cancel-delete-modal-button')).find('button').simulate('click');
 
     expect(setVisible).toHaveBeenCalledWith(false);
   });
@@ -75,7 +75,7 @@ xdescribe('DeleteModal', () => {
 
   it('should render the force checkbox', () => {
     const wrapper = mount(<DeleteModal setVisible={jest.fn()} onDelete={jest.fn()} isVisible showForce />);
-    expect(wrapper.find(dataQa('force-checkbox-input')).exists()).toBeTruthy();
+    expect(wrapper.find(dataTestId('force-checkbox-input')).exists()).toBeTruthy();
   });
 
   it('should show the checkbox label', () => {

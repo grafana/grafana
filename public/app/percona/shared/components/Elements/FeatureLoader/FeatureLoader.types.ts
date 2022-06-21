@@ -5,6 +5,6 @@ import { Settings } from 'app/percona/settings/Settings.types';
 export interface FeatureLoaderProps {
   featureName: string;
   featureFlag: keyof Settings;
-  messageDataQa?: string;
+  messagedataTestId?: string;
   onError?: (error: AxiosError) => void;
 }

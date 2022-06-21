@@ -1,4 +1,4 @@
-import { dataQa } from '@percona/platform-core';
+import { dataTestId } from '@percona/platform-core';
 import { mount } from 'enzyme';
 import React from 'react';
 import { Form } from 'react-final-form';
@@ -11,10 +11,10 @@ xdescribe('HAProxy connection details:: ', () => {
       <Form onSubmit={jest.fn()} render={() => <HAProxyConnectionDetails remoteInstanceCredentials={{}} />} />
     );
 
-    root.find(dataQa('username-text-input')).simulate('change', { target: { value: '    test    ' } });
-    root.find(dataQa('password-password-input')).simulate('change', { target: { value: '    test    ' } });
+    root.find(dataTestId('username-text-input')).simulate('change', { target: { value: '    test    ' } });
+    root.find(dataTestId('password-password-input')).simulate('change', { target: { value: '    test    ' } });
 
-    expect(root.find(dataQa('username-text-input')).props().value).toEqual('test');
-    expect(root.find(dataQa('password-password-input')).props().value).toEqual('test');
+    expect(root.find(dataTestId('username-text-input')).props().value).toEqual('test');
+    expect(root.find(dataTestId('password-password-input')).props().value).toEqual('test');
   });
 });

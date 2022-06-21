@@ -1,4 +1,4 @@
 export interface DescriptionBlockProps {
   description: string;
-  dataQa?: string;
+  dataTestId?: string;
 }

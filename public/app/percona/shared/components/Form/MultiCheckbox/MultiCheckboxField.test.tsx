@@ -1,4 +1,4 @@
-import { dataQa } from '@percona/platform-core';
+import { dataTestId } from '@percona/platform-core';
 import { mount } from 'enzyme';
 import React from 'react';
 import { Form } from 'react-final-form';
@@ -19,11 +19,11 @@ xdescribe('MultiCheckboxField', () => {
       <Form onSubmit={jest.fn()} render={() => <MultiCheckboxField name="test" initialOptions={optionsStub} />} />
     );
 
-    const optionsWrapper = wrapper.find(dataQa('test-options'));
+    const optionsWrapper = wrapper.find(dataTestId('test-options'));
 
     expect(optionsWrapper.children().length).toBe(optionsStub.length);
-    expect(optionsWrapper.find(dataQa('v1.0-option')).text().includes('1.0')).toBeTruthy();
-    expect(optionsWrapper.find(dataQa('v5.3.1-option')).text().includes('5.3.1')).toBeTruthy();
+    expect(optionsWrapper.find(dataTestId('v1.0-option')).text().includes('1.0')).toBeTruthy();
+    expect(optionsWrapper.find(dataTestId('v5.3.1-option')).text().includes('5.3.1')).toBeTruthy();
   });
   it('renders recommended option', () => {
     const wrapper = mount(
@@ -40,7 +40,7 @@ xdescribe('MultiCheckboxField', () => {
       />
     );
 
-    expect(wrapper.find(dataQa('v2.2-option')).text().includes('Recommended')).toBeTruthy();
+    expect(wrapper.find(dataTestId('v2.2-option')).text().includes('Recommended')).toBeTruthy();
   });
   it('submits correct values', () => {
     const onSubmit = jest.fn();

@@ -144,7 +144,7 @@ export const ManageComponentsVersionsModal: FC<ManageComponentsVersionsModalProp
               <form onSubmit={handleSubmit}>
                 <>
                   <Field
-                    dataQa="kubernetes-operator"
+                    dataTestId="kubernetes-operator"
                     name={ManageComponentVersionsFields.operator}
                     label={Messages.fields.operator}
                     options={operatorsOptions}
@@ -153,7 +153,7 @@ export const ManageComponentsVersionsModal: FC<ManageComponentsVersionsModalProp
                     onChange={onChangeOperator(values, form.change)}
                   />
                   <Field
-                    dataQa="kubernetes-component"
+                    dataTestId="kubernetes-component"
                     name={ManageComponentVersionsFields.component}
                     label={Messages.fields.component}
                     options={componentOptions}
@@ -171,7 +171,7 @@ export const ManageComponentsVersionsModal: FC<ManageComponentsVersionsModalProp
                     validators={[requiredVersions]}
                   />
                   <Field
-                    dataQa="kubernetes-default-version"
+                    dataTestId="kubernetes-default-version"
                     className={styles.defaultWrapper}
                     name={defaultFieldName}
                     label={Messages.fields.default}
@@ -185,7 +185,7 @@ export const ManageComponentsVersionsModal: FC<ManageComponentsVersionsModalProp
                       variant="secondary"
                       size="md"
                       onClick={() => setVisible(false)}
-                      data-qa="kubernetes-components-versions-cancel"
+                      data-testid="kubernetes-components-versions-cancel"
                     >
                       {Messages.cancel}
                     </Button>
@@ -194,7 +194,7 @@ export const ManageComponentsVersionsModal: FC<ManageComponentsVersionsModalProp
                       size="md"
                       disabled={!valid}
                       loading={submitting}
-                      data-qa="kubernetes-components-versions-save"
+                      data-testid="kubernetes-components-versions-save"
                     >
                       {Messages.save}
                     </LoaderButton>

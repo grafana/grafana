@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+
 import { ResourcesWithUnits } from '../DBCluster.types';
 
 export interface ResourcesBarProps {
@@ -7,6 +8,6 @@ export interface ResourcesBarProps {
   expected: ResourcesWithUnits | undefined;
   resourceLabel: string;
   icon?: ReactNode;
-  dataQa?: string;
+  dataTestId?: string;
   className?: string;
 }

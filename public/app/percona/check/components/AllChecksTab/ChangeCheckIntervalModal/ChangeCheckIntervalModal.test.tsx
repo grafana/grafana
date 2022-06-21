@@ -1,4 +1,4 @@
-import { dataQa } from '@percona/platform-core';
+import { dataTestId } from '@percona/platform-core';
 import { mount, ReactWrapper } from 'enzyme';
 import React from 'react';
 import { act } from 'react-dom/test-utils';
@@ -36,9 +36,9 @@ xdescribe('ChangeCheckIntervalModal', () => {
       wrapper = mount(<ChangeCheckIntervalModal check={TEST_CHECK} setVisible={jest.fn()} isVisible />);
     });
 
-    expect(wrapper!.find(dataQa('change-check-interval-modal')).exists()).toBeTruthy();
-    expect(wrapper!.find(dataQa('change-check-interval-form')).exists()).toBeTruthy();
-    expect(wrapper!.find(dataQa('change-check-interval-radio-group-wrapper')).exists()).toBeTruthy();
+    expect(wrapper!.find(dataTestId('change-check-interval-modal')).exists()).toBeTruthy();
+    expect(wrapper!.find(dataTestId('change-check-interval-form')).exists()).toBeTruthy();
+    expect(wrapper!.find(dataTestId('change-check-interval-radio-group-wrapper')).exists()).toBeTruthy();
   });
 
   it('does not render the modal when visible is set to false', () => {
@@ -48,7 +48,7 @@ xdescribe('ChangeCheckIntervalModal', () => {
       wrapper = mount(<ChangeCheckIntervalModal check={TEST_CHECK} setVisible={jest.fn()} isVisible={false} />);
     });
 
-    expect(wrapper!.find(dataQa('change-check-interval-form')).length).toBe(0);
+    expect(wrapper!.find(dataTestId('change-check-interval-form')).length).toBe(0);
   });
 
   it('renders the modal when visible is set to true', () => {
@@ -58,7 +58,7 @@ xdescribe('ChangeCheckIntervalModal', () => {
       wrapper = mount(<ChangeCheckIntervalModal check={TEST_CHECK} setVisible={jest.fn()} isVisible />);
     });
 
-    expect(wrapper!.find(dataQa('change-check-interval-form')).length).toBe(1);
+    expect(wrapper!.find(dataTestId('change-check-interval-form')).length).toBe(1);
   });
 
   it('should call setVisible on close', () => {
@@ -69,7 +69,7 @@ xdescribe('ChangeCheckIntervalModal', () => {
       wrapper = mount(<ChangeCheckIntervalModal check={TEST_CHECK} setVisible={setVisible} isVisible />);
     });
 
-    wrapper!.find(dataQa('modal-background')).simulate('click');
+    wrapper!.find(dataTestId('modal-background')).simulate('click');
 
     expect(setVisible).toHaveBeenCalledTimes(1);
   });

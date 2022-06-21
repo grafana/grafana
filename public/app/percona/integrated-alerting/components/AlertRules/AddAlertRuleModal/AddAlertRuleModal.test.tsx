@@ -1,4 +1,4 @@
-import { dataQa } from '@percona/platform-core';
+import { dataTestId } from '@percona/platform-core';
 import { ReactWrapper } from 'enzyme';
 import React from 'react';
 
@@ -73,26 +73,26 @@ xdescribe('AddAlertRuleModal', () => {
   it('should render modal', async () => {
     const wrapper = await getMount(<AddAlertRuleModal setVisible={jest.fn()} isVisible />);
 
-    expect(wrapper.find(dataQa('add-alert-rule-modal')).exists()).toBeTruthy();
-    expect(wrapper.find(dataQa('add-alert-rule-modal-form')).exists()).toBeTruthy();
-    expect(wrapper.find(dataQa('add-alert-rule-modal-add-button')).exists()).toBeTruthy();
+    expect(wrapper.find(dataTestId('add-alert-rule-modal')).exists()).toBeTruthy();
+    expect(wrapper.find(dataTestId('add-alert-rule-modal-form')).exists()).toBeTruthy();
+    expect(wrapper.find(dataTestId('add-alert-rule-modal-add-button')).exists()).toBeTruthy();
   });
 
   it('does not render the modal when visible is set to false', async () => {
     const wrapper = await getMount(<AddAlertRuleModal setVisible={jest.fn()} isVisible={false} />);
 
-    expect(wrapper.find(dataQa('add-alert-rule-modal-form')).length).toBe(0);
+    expect(wrapper.find(dataTestId('add-alert-rule-modal-form')).length).toBe(0);
   });
 
   it('renders the modal when visible is set to true', async () => {
     const wrapper = await getMount(<AddAlertRuleModal setVisible={jest.fn()} isVisible />);
 
-    expect(wrapper.find(dataQa('add-alert-rule-modal-form')).length).toBe(1);
+    expect(wrapper.find(dataTestId('add-alert-rule-modal-form')).length).toBe(1);
   });
 
   it('should have the submit button disabled by default when adding a new rule', async () => {
     const wrapper = await getMount(<AddAlertRuleModal setVisible={jest.fn()} isVisible />);
-    const button = wrapper.find(dataQa('add-alert-rule-modal-add-button')).find('button');
+    const button = wrapper.find(dataTestId('add-alert-rule-modal-add-button')).find('button');
 
     expect(button.props().disabled).toBe(true);
   });
@@ -102,13 +102,13 @@ xdescribe('AddAlertRuleModal', () => {
 
     wrapper.update();
 
-    const thresholdInput = wrapper.find(dataQa(`${templateParams[0].name}-number-input`));
+    const thresholdInput = wrapper.find(dataTestId(`${templateParams[0].name}-number-input`));
     thresholdInput.simulate('change', {
       target: {
         value: '2',
       },
     });
-    const button = wrapper.find(dataQa('add-alert-rule-modal-add-button')).find('button');
+    const button = wrapper.find(dataTestId('add-alert-rule-modal-add-button')).find('button');
 
     expect(button.props().disabled).toBe(false);
   });
@@ -117,8 +117,8 @@ xdescribe('AddAlertRuleModal', () => {
     const wrapper = await getMount(<AddAlertRuleModal setVisible={jest.fn()} isVisible alertRule={initialValues} />);
 
     wrapper.update();
-    const thresholdInput = wrapper.find(dataQa(`${templateParams[0].name}-number-input`));
-    const durationInput = wrapper.find(dataQa('duration-number-input'));
+    const thresholdInput = wrapper.find(dataTestId(`${templateParams[0].name}-number-input`));
+    const durationInput = wrapper.find(dataTestId('duration-number-input'));
 
     thresholdInput.simulate('change', {
       target: {
@@ -131,7 +131,7 @@ xdescribe('AddAlertRuleModal', () => {
         value: '-10',
       },
     });
-    const button = wrapper.find(dataQa('add-alert-rule-modal-add-button')).find('button');
+    const button = wrapper.find(dataTestId('add-alert-rule-modal-add-button')).find('button');
 
     expect(button.props().disabled).toBe(true);
   });
@@ -140,7 +140,7 @@ xdescribe('AddAlertRuleModal', () => {
     const wrapper = await getMount(<AddAlertRuleModal setVisible={jest.fn()} isVisible alertRule={initialValues} />);
     wrapper.update();
 
-    expect(wrapper.find(dataQa('template-select-input')).first().prop('disabled')).toBeTruthy();
+    expect(wrapper.find(dataTestId('template-select-input')).first().prop('disabled')).toBeTruthy();
   });
 
   it('should change params when switching templates', async () => {
@@ -148,17 +148,17 @@ xdescribe('AddAlertRuleModal', () => {
 
     wrapper.update();
 
-    expect(wrapper.find(dataQa('template-1-threshold-number-input')).exists()).toBeFalsy();
+    expect(wrapper.find(dataTestId('template-1-threshold-number-input')).exists()).toBeFalsy();
 
     selectTemplateOption(wrapper);
 
-    expect(wrapper.find(dataQa('template-1-threshold-number-input')).exists()).toBeTruthy();
+    expect(wrapper.find(dataTestId('template-1-threshold-number-input')).exists()).toBeTruthy();
 
     selectTemplateOption(wrapper, 3);
 
-    expect(wrapper.find(dataQa('template-1-threshold-number-input')).exists()).toBeFalsy();
-    expect(wrapper.find(dataQa('template-4-from-number-input')).exists()).toBeTruthy();
-    expect(wrapper.find(dataQa('template-4-to-number-input')).exists()).toBeTruthy();
+    expect(wrapper.find(dataTestId('template-1-threshold-number-input')).exists()).toBeFalsy();
+    expect(wrapper.find(dataTestId('template-4-from-number-input')).exists()).toBeTruthy();
+    expect(wrapper.find(dataTestId('template-4-to-number-input')).exists()).toBeTruthy();
   });
 
   it('should pre-fill severity and duration when switching templates', async () => {
@@ -166,13 +166,13 @@ xdescribe('AddAlertRuleModal', () => {
 
     wrapper.update();
 
-    expect(wrapper.find(dataQa('duration-number-input')).text()).toHaveLength(0);
-    expect(wrapper.find(dataQa('severity-select-input')).find(Select).text()).toBe('Choose');
+    expect(wrapper.find(dataTestId('duration-number-input')).text()).toHaveLength(0);
+    expect(wrapper.find(dataTestId('severity-select-input')).find(Select).text()).toBe('Choose');
 
     selectTemplateOption(wrapper);
 
-    expect(wrapper.find(dataQa('duration-number-input')).props().value).toBe(parseInt(templateStubs[0].for, 10));
-    expect(wrapper.find(dataQa('severity-select-input')).find(Select).text()).toBe(
+    expect(wrapper.find(dataTestId('duration-number-input')).props().value).toBe(parseInt(templateStubs[0].for, 10));
+    expect(wrapper.find(dataTestId('severity-select-input')).find(Select).text()).toBe(
       SEVERITY_OPTIONS.find((severity) => severity.value === templateStubs[0].severity)?.label
     );
   });
@@ -182,12 +182,12 @@ xdescribe('AddAlertRuleModal', () => {
 
     wrapper.update();
 
-    expect(wrapper.find(dataQa('template-expression')).exists()).toBeFalsy();
-    expect(wrapper.find(dataQa('template-alert')).exists()).toBeFalsy();
+    expect(wrapper.find(dataTestId('template-expression')).exists()).toBeFalsy();
+    expect(wrapper.find(dataTestId('template-alert')).exists()).toBeFalsy();
 
     selectTemplateOption(wrapper);
 
-    expect(wrapper.find(dataQa('template-expression')).find('pre').text()).toBe(templateStubs[0].expr);
-    expect(wrapper.find(dataQa('template-alert')).find('pre').text()).toBe(templateStubs[0].annotations?.summary);
+    expect(wrapper.find(dataTestId('template-expression')).find('pre').text()).toBe(templateStubs[0].expr);
+    expect(wrapper.find(dataTestId('template-alert')).find('pre').text()).toBe(templateStubs[0].annotations?.summary);
   });
 });

@@ -1,14 +1,17 @@
-import React, { FC, useEffect, useState } from 'react';
-import { useStyles } from '@grafana/ui';
 import { logger } from '@percona/platform-core';
+import React, { FC, useEffect, useState } from 'react';
+
+import { useStyles } from '@grafana/ui';
 import { Messages } from 'app/percona/dbaas/DBaaS.messages';
-import { DBClusterConnectionProps } from './DBClusterConnection.types';
+
 import { DBClusterConnection as ConnectionParams, DBClusterStatus, DBClusterConnectionAPI } from '../DBCluster.types';
+import { newDBClusterService } from '../DBCluster.utils';
+
 import { INITIAL_CONNECTION } from './DBClusterConnection.constants';
 import { getStyles } from './DBClusterConnection.styles';
-import { DBClusterConnectionPassword } from './DBClusterConnectionPassword/DBClusterConnectionPassword';
+import { DBClusterConnectionProps } from './DBClusterConnection.types';
 import { DBClusterConnectionItem } from './DBClusterConnectionItem/DBClusterConnectionItem';
-import { newDBClusterService } from '../DBCluster.utils';
+import { DBClusterConnectionPassword } from './DBClusterConnectionPassword/DBClusterConnectionPassword';
 
 export const DBClusterConnection: FC<DBClusterConnectionProps> = ({ dbCluster }) => {
   const styles = useStyles(getStyles);
@@ -46,22 +49,22 @@ export const DBClusterConnection: FC<DBClusterConnectionProps> = ({ dbCluster })
             <DBClusterConnectionItem
               label={Messages.dbcluster.table.connection.host}
               value={host}
-              dataQa="cluster-connection-host"
+              dataTestId="cluster-connection-host"
             />
             <DBClusterConnectionItem
               label={Messages.dbcluster.table.connection.port}
               value={port}
-              dataQa="cluster-connection-port"
+              dataTestId="cluster-connection-port"
             />
             <DBClusterConnectionItem
               label={Messages.dbcluster.table.connection.username}
               value={username}
-              dataQa="cluster-connection-username"
+              dataTestId="cluster-connection-username"
             />
             <DBClusterConnectionPassword
               label={Messages.dbcluster.table.connection.password}
               password={password}
-              dataQa="cluster-connection-password"
+              dataTestId="cluster-connection-password"
             />
           </>
         )}

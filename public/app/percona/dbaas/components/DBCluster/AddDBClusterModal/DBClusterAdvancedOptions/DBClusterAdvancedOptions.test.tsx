@@ -19,16 +19,16 @@ describe('DBClusterAdvancedOptions::', () => {
       <Form onSubmit={jest.fn()} render={(renderProps) => <DBClusterAdvancedOptions {...renderProps} />} />
     );
 
-    expect(root.find('[data-qa="topology-radio-state"]')).toBeTruthy();
-    expect(root.find('[data-qa="nodes-number-input"]')).toBeTruthy();
-    expect(root.find('[data-qa="resources-radio-button"]')).toBeTruthy();
-    expect(root.find('[data-qa="memory-number-input"]')).toBeTruthy();
-    expect(root.find('[data-qa="cpu-number-input"]')).toBeTruthy();
-    expect(root.find('[data-qa="disk-number-input"]')).toBeTruthy();
-    expect(root.find('[data-qa="dbcluster-resources-bar-memory"]')).toBeTruthy();
-    expect(root.find('[data-qa="dbcluster-resources-bar-cpu"]')).toBeTruthy();
-    expect(root.find('[data-qa="disk-number-input"]')).toBeTruthy();
-    expect(root.find('[data-qa="step-progress-submit-button"]')).toBeTruthy();
+    expect(root.find('[data-testid="topology-radio-state"]')).toBeTruthy();
+    expect(root.find('[data-testid="nodes-number-input"]')).toBeTruthy();
+    expect(root.find('[data-testid="resources-radio-button"]')).toBeTruthy();
+    expect(root.find('[data-testid="memory-number-input"]')).toBeTruthy();
+    expect(root.find('[data-testid="cpu-number-input"]')).toBeTruthy();
+    expect(root.find('[data-testid="disk-number-input"]')).toBeTruthy();
+    expect(root.find('[data-testid="dbcluster-resources-bar-memory"]')).toBeTruthy();
+    expect(root.find('[data-testid="dbcluster-resources-bar-cpu"]')).toBeTruthy();
+    expect(root.find('[data-testid="disk-number-input"]')).toBeTruthy();
+    expect(root.find('[data-testid="step-progress-submit-button"]')).toBeTruthy();
   });
   it('renders correctly with initial values', async () => {
     const root = await getMount(
@@ -41,8 +41,8 @@ describe('DBClusterAdvancedOptions::', () => {
         render={(renderProps: FormRenderProps) => <DBClusterAdvancedOptions {...renderProps} />}
       />
     );
-    const nodes = root.find('[data-qa="nodes-number-input"]');
-    const topology = root.find('[data-qa="topology-radio-state"]');
+    const nodes = root.find('[data-testid="nodes-number-input"]');
+    const topology = root.find('[data-testid="topology-radio-state"]');
 
     expect(nodes.prop('value')).toBe(3);
     expect(topology.prop('value')).toEqual(DBClusterTopology.cluster);
@@ -51,9 +51,11 @@ describe('DBClusterAdvancedOptions::', () => {
     const root = await getMount(
       <Form onSubmit={jest.fn()} render={(renderProps) => <DBClusterAdvancedOptions {...renderProps} />} />
     );
-    root.find('[data-qa="topology-radio-state"]').simulate('change', { target: { value: DBClusterTopology.single } });
+    root
+      .find('[data-testid="topology-radio-state"]')
+      .simulate('change', { target: { value: DBClusterTopology.single } });
 
-    expect(root.find('[data-qa="single-number-input"]')).toBeTruthy();
+    expect(root.find('[data-testid="single-number-input"]')).toBeTruthy();
   });
   it('should disable memory, cpu and disk when resources are not custom', async () => {
     const root = await getMount(
@@ -65,9 +67,9 @@ describe('DBClusterAdvancedOptions::', () => {
         render={(renderProps: FormRenderProps) => <DBClusterAdvancedOptions {...renderProps} />}
       />
     );
-    const memory = root.find('[data-qa="memory-number-input"]');
-    const cpu = root.find('[data-qa="cpu-number-input"]');
-    const disk = root.find('[data-qa="disk-number-input"]');
+    const memory = root.find('[data-testid="memory-number-input"]');
+    const cpu = root.find('[data-testid="cpu-number-input"]');
+    const disk = root.find('[data-testid="disk-number-input"]');
 
     expect(memory.prop('disabled')).toBeTruthy();
     expect(cpu.prop('disabled')).toBeTruthy();
@@ -83,11 +85,13 @@ describe('DBClusterAdvancedOptions::', () => {
         render={(renderProps: FormRenderProps) => <DBClusterAdvancedOptions {...renderProps} />}
       />
     );
-    root.find('[data-qa="resources-radio-state"]').simulate('change', { target: { value: DBClusterResources.custom } });
+    root
+      .find('[data-testid="resources-radio-state"]')
+      .simulate('change', { target: { value: DBClusterResources.custom } });
 
-    const memory = root.find('[data-qa="memory-number-input"]');
-    const cpu = root.find('[data-qa="cpu-number-input"]');
-    const disk = root.find('[data-qa="disk-number-input"]');
+    const memory = root.find('[data-testid="memory-number-input"]');
+    const cpu = root.find('[data-testid="cpu-number-input"]');
+    const disk = root.find('[data-testid="disk-number-input"]');
 
     expect(memory.prop('disabled')).toBeFalsy();
     expect(cpu.prop('disabled')).toBeFalsy();
@@ -106,7 +110,7 @@ describe('DBClusterAdvancedOptions::', () => {
         render={(renderProps: FormRenderProps) => <DBClusterAdvancedOptions {...renderProps} />}
       />
     );
-    const topology = root.find('[data-qa="topology-radio-button"]').at(1);
+    const topology = root.find('[data-testid="topology-radio-button"]').at(1);
 
     expect(topology.prop('disable')).toBeUndefined();
   });
@@ -123,7 +127,7 @@ describe('DBClusterAdvancedOptions::', () => {
         render={(renderProps: FormRenderProps) => <DBClusterAdvancedOptions {...renderProps} />}
       />
     );
-    const topology = root.find('[data-qa="topology-radio-button"]').at(1);
+    const topology = root.find('[data-testid="topology-radio-button"]').at(1);
 
     expect(topology.prop('disabled')).toBeFalsy();
   });

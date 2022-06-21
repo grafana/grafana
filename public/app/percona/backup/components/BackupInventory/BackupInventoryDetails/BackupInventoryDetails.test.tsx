@@ -1,4 +1,4 @@
-import { dataQa } from '@percona/platform-core';
+import { dataTestId } from '@percona/platform-core';
 import { shallow } from 'enzyme';
 import React from 'react';
 
@@ -11,7 +11,7 @@ describe('BackupInventoryDetails', () => {
     const wrapper = shallow(
       <BackupInventoryDetails name="backup" status={BackupStatus.BACKUP_STATUS_PAUSED} dataModel={DataModel.LOGICAL} />
     );
-    expect(wrapper.find(dataQa('backup-artifact-details-name')).exists()).toBeTruthy();
-    expect(wrapper.find(dataQa('backup-artifact-details-data-model')).exists()).toBeTruthy();
+    expect(wrapper.find(dataTestId('backup-artifact-details-name')).exists()).toBeTruthy();
+    expect(wrapper.find(dataTestId('backup-artifact-details-data-model')).exists()).toBeTruthy();
   });
 });

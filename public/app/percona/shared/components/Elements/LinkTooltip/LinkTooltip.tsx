@@ -9,12 +9,19 @@ export interface LinkTooltipProps {
   link?: string;
   linkText?: string;
   icon: IconName;
-  dataQa?: string;
+  dataTestId?: string;
   target?: string;
   className?: string;
 }
 
-export const LinkTooltip: FC<LinkTooltipProps> = ({ tooltipText, link, linkText, icon, dataQa, target = '_blank' }) => {
+export const LinkTooltip: FC<LinkTooltipProps> = ({
+  tooltipText,
+  link,
+  linkText,
+  icon,
+  dataTestId,
+  target = '_blank',
+}) => {
   const theme = useTheme();
   const styles = getStyles(theme);
 
@@ -30,7 +37,7 @@ export const LinkTooltip: FC<LinkTooltipProps> = ({ tooltipText, link, linkText,
           )}
         </div>
       }
-      data-qa={dataQa}
+      data-testid={dataTestId}
     >
       <div>
         <Icon name={icon} />

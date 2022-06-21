@@ -1,11 +1,10 @@
-import { dataQa } from '@percona/platform-core';
+import { dataTestId } from '@percona/platform-core';
 import React from 'react';
 
 import { getMount } from 'app/percona/shared/helpers/testUtils';
 
 import { Alerts } from './Alerts';
 import { AlertsService } from './Alerts.service';
-import { alertsStubs } from './__mocks__/alertsStubs';
 
 jest.mock('./Alerts.service');
 
@@ -19,15 +18,15 @@ describe('AlertsTable', () => {
 
     wrapper.update();
 
-    expect(wrapper.find(dataQa('table-thead')).find('tr')).toHaveLength(1);
-    expect(wrapper.find(dataQa('table-tbody')).find('tr')).toHaveLength(6);
-    expect(wrapper.find(dataQa('table-no-data'))).toHaveLength(0);
+    expect(wrapper.find(dataTestId('table-thead')).find('tr')).toHaveLength(1);
+    expect(wrapper.find(dataTestId('table-tbody')).find('tr')).toHaveLength(6);
+    expect(wrapper.find(dataTestId('table-no-data'))).toHaveLength(0);
   });
 
   it('should have table initially loading', async () => {
     const wrapper = await getMount(<Alerts />);
 
-    expect(wrapper.find(dataQa('table-loading')).exists()).toBeTruthy();
+    expect(wrapper.find(dataTestId('table-loading')).exists()).toBeTruthy();
   });
 
   it('should render correctly without data', async () => {
@@ -38,8 +37,8 @@ describe('AlertsTable', () => {
 
     wrapper.update();
 
-    expect(wrapper.find(dataQa('table-thead')).find('tr')).toHaveLength(0);
-    expect(wrapper.find(dataQa('table-tbody')).find('tr')).toHaveLength(0);
-    expect(wrapper.find(dataQa('table-no-data'))).toHaveLength(1);
+    expect(wrapper.find(dataTestId('table-thead')).find('tr')).toHaveLength(0);
+    expect(wrapper.find(dataTestId('table-tbody')).find('tr')).toHaveLength(0);
+    expect(wrapper.find(dataTestId('table-no-data'))).toHaveLength(1);
   });
 });

@@ -1,4 +1,4 @@
-import { dataQa } from '@percona/platform-core';
+import { dataTestId } from '@percona/platform-core';
 import { mount } from 'enzyme';
 import React from 'react';
 import { Form } from 'react-final-form';
@@ -11,16 +11,16 @@ xdescribe('SlackFields', () => {
   it('should render correct fields', () => {
     const wrapper = mount(<Form onSubmit={jest.fn()} render={() => <SlackFields />} />);
 
-    expect(wrapper.find(dataQa('channel-text-input')).length).toBe(1);
+    expect(wrapper.find(dataTestId('channel-text-input')).length).toBe(1);
   });
 
   it('should show error when channel has #', () => {
     const wrapper = mount(<Form onSubmit={jest.fn()} render={() => <SlackFields />} />);
 
-    expect(wrapper.find(dataQa('channel-field-error-message')).text()).toEqual('');
+    expect(wrapper.find(dataTestId('channel-field-error-message')).text()).toEqual('');
 
-    wrapper.find(dataQa('channel-text-input')).simulate('change', { target: { value: '#testchannel' } });
+    wrapper.find(dataTestId('channel-text-input')).simulate('change', { target: { value: '#testchannel' } });
 
-    expect(wrapper.find(dataQa('channel-field-error-message')).text()).toEqual(Messages.invalidChannelName);
+    expect(wrapper.find(dataTestId('channel-field-error-message')).text()).toEqual(Messages.invalidChannelName);
   });
 });

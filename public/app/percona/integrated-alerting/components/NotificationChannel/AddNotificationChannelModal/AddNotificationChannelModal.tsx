@@ -87,7 +87,7 @@ export const AddNotificationChannelModal: FC<AddNotificationChannelModalProps> =
               <TypeField values={values} />
               <HorizontalGroup justify="center" spacing="md">
                 <LoaderButton
-                  data-qa="notification-channel-add-button"
+                  data-testid="notification-channel-add-button"
                   size="md"
                   variant="primary"
                   disabled={!valid || pristine}
@@ -96,7 +96,7 @@ export const AddNotificationChannelModal: FC<AddNotificationChannelModalProps> =
                   {notificationChannel ? Messages.editAction : Messages.addAction}
                 </LoaderButton>
                 <Button
-                  data-qa="notification-channel-cancel-button"
+                  data-testid="notification-channel-cancel-button"
                   variant="secondary"
                   onClick={() => setVisible(false)}
                 >

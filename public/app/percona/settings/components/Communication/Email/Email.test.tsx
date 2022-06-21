@@ -1,4 +1,4 @@
-import { dataQa } from '@percona/platform-core';
+import { dataTestId } from '@percona/platform-core';
 import { mount } from 'enzyme';
 import React from 'react';
 
@@ -18,7 +18,7 @@ xdescribe('Email::', () => {
       />
     );
 
-    expect(root.find(dataQa('username-text-input')).prop('value')).toEqual('test');
+    expect(root.find(dataTestId('username-text-input')).prop('value')).toEqual('test');
   });
 
   it('Disables apply changes on initial values', () => {
@@ -50,8 +50,8 @@ xdescribe('Email::', () => {
       />
     );
 
-    expect(root.find(dataQa('username-text-input')).prop('disabled')).toBeTruthy();
-    expect(root.find(dataQa('password-password-input')).prop('disabled')).toBeTruthy();
+    expect(root.find(dataTestId('username-text-input')).prop('disabled')).toBeTruthy();
+    expect(root.find(dataTestId('password-password-input')).prop('disabled')).toBeTruthy();
   });
 
   it('Enabled username and password when NONE is not selected', () => {
@@ -68,7 +68,7 @@ xdescribe('Email::', () => {
       />
     );
 
-    expect(root.find(dataQa('username-text-input')).prop('disabled')).toBeFalsy();
-    expect(root.find(dataQa('password-password-input')).prop('disabled')).toBeFalsy();
+    expect(root.find(dataTestId('username-text-input')).prop('disabled')).toBeFalsy();
+    expect(root.find(dataTestId('password-password-input')).prop('disabled')).toBeFalsy();
   });
 });

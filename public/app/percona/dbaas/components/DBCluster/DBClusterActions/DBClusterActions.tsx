@@ -1,11 +1,14 @@
-import React, { FC, useCallback } from 'react';
 import { logger } from '@percona/platform-core';
+import React, { FC, useCallback } from 'react';
+
 import { Messages } from 'app/percona/dbaas/DBaaS.messages';
 import { MultipleActions } from 'app/percona/dbaas/components/MultipleActions/MultipleActions';
+
 import { DBCluster, DBClusterStatus } from '../DBCluster.types';
 import { isClusterChanging, newDBClusterService } from '../DBCluster.utils';
-import { DBClusterActionsProps } from './DBClusterActions.types';
+
 import { styles } from './DBClusterActions.styles';
+import { DBClusterActionsProps } from './DBClusterActions.types';
 
 export const DBClusterActions: FC<DBClusterActionsProps> = ({
   dbCluster,
@@ -77,12 +80,12 @@ export const DBClusterActions: FC<DBClusterActionsProps> = ({
         },
       },
     ],
-    [setSelectedCluster, setDeleteModalVisible, getDBClusters, setEditModalVisible]
+    [setSelectedCluster, setDeleteModalVisible, getDBClusters, setEditModalVisible, setLogsModalVisible]
   );
 
   return (
     <div className={styles.actionsColumn}>
-      <MultipleActions actions={getActions(dbCluster)} dataQa="dbcluster-actions" />
+      <MultipleActions actions={getActions(dbCluster)} dataTestId="dbcluster-actions" />
     </div>
   );
 };

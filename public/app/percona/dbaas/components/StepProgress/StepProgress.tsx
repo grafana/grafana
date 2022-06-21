@@ -1,8 +1,10 @@
+import { LoaderButton } from '@percona/platform-core';
+import { FormApi } from 'final-form';
 import React, { FC, ReactNode, useCallback, useState } from 'react';
 import { Form, FormRenderProps } from 'react-final-form';
-import { FormApi } from 'final-form';
+
 import { HorizontalGroup, useStyles } from '@grafana/ui';
-import { LoaderButton } from '@percona/platform-core';
+
 import { Step, StepStatus } from './Step/Step';
 import { getStyles } from './StepProgress.styles';
 
@@ -17,7 +19,7 @@ export interface StepProps {
   render: (props: FormRenderProps) => ReactNode;
   title?: string;
   fields: string[];
-  dataQa?: string;
+  dataTestId?: string;
 }
 
 const getStepStatus = (
@@ -58,8 +60,8 @@ export const StepProgress: FC<StepProgressProps> = ({ steps, initialValues, subm
       initialValues={initialValues}
       onSubmit={onSubmit}
       render={({ form, handleSubmit, valid, pristine, submitting, ...props }) => (
-        <form onSubmit={handleSubmit} className={styles.stepProgressWrapper} data-qa="step-progress">
-          {steps.map(({ render, title, fields, dataQa }, index) => (
+        <form onSubmit={handleSubmit} className={styles.stepProgressWrapper} data-testid="step-progress">
+          {steps.map(({ render, title, fields, dataTestId }, index) => (
             <Step
               key={index}
               title={title}
@@ -67,7 +69,7 @@ export const StepProgress: FC<StepProgressProps> = ({ steps, initialValues, subm
               onClick={onClick(index)}
               status={getStepStatus(form, fields, currentStep, index, stepsVisited)}
               isLast={index === steps.length - 1}
-              dataQa={dataQa}
+              dataTestId={dataTestId}
             >
               {render({
                 form,
@@ -81,7 +83,7 @@ export const StepProgress: FC<StepProgressProps> = ({ steps, initialValues, subm
           ))}
           <HorizontalGroup justify="center" spacing="md">
             <LoaderButton
-              data-qa="step-progress-submit-button"
+              data-testid="step-progress-submit-button"
               size="md"
               variant="primary"
               disabled={!valid || pristine || submitting}

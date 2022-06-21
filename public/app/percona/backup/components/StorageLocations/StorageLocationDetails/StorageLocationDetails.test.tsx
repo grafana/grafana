@@ -1,4 +1,4 @@
-import { dataQa } from '@percona/platform-core';
+import { dataTestId } from '@percona/platform-core';
 import { shallow } from 'enzyme';
 import React from 'react';
 
@@ -20,7 +20,7 @@ describe('StorageLocationDetails', () => {
   it('should have only a DescriptionBlock when not an S3 location', () => {
     const wrapper = shallow(<StorageLocationDetails location={location} />);
 
-    expect(wrapper.find(dataQa('storage-location-wrapper')).children()).toHaveLength(1);
+    expect(wrapper.find(dataTestId('storage-location-wrapper')).children()).toHaveLength(1);
     expect(wrapper.find(DescriptionBlock).prop('description')).toBe(location.description);
   });
 

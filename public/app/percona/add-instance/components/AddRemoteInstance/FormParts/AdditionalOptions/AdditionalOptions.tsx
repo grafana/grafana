@@ -12,8 +12,8 @@ import { AdditionalOptionsFormPartProps, PostgreSQLAdditionalOptionsProps } from
 
 import { tablestatOptions } from './AdditionalOptions.constants';
 import { TablestatOptionsInterface } from './AdditionalOptions.types';
-import { MysqlTLSCertificate } from './MysqlTLSCertificate';
 import { MongodbTLSCertificate } from './MongodbTLSCertificate';
+import { MysqlTLSCertificate } from './MysqlTLSCertificate';
 import { PostgreTLSCertificate } from './PostgreTLSCertificate';
 
 export const AdditionalOptionsFormPart: FC<AdditionalOptionsFormPartProps> = ({
@@ -42,7 +42,7 @@ export const PostgreSQLAdditionalOptions: FC<PostgreSQLAdditionalOptionsProps> =
   <>
     <RadioButtonGroupField
       name="tracking"
-      data-qa="tracking-options-radio-button-group"
+      data-testid="tracking-options-radio-button-group"
       options={isRDS || isAzure ? rdsTrackingOptions : trackingOptions}
       label={Messages.form.labels.trackingOptions}
     />
@@ -71,7 +71,7 @@ const MySQLOptions = ({ form }: { form: FormApi }) => {
     <>
       <RadioButtonGroupField
         name="tablestat-options"
-        data-qa="tablestat-options-radio-button-group"
+        data-testid="tablestat-options-radio-button-group"
         defaultValue={selectedValue}
         options={tablestatOptions}
         label={Messages.form.labels.additionalOptions.tablestatOptions}

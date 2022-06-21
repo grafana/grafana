@@ -1,4 +1,4 @@
-import { dataQa } from '@percona/platform-core';
+import { dataTestId } from '@percona/platform-core';
 import React from 'react';
 
 import { getMount, asyncAct } from 'app/percona/shared/helpers/testUtils';
@@ -52,7 +52,7 @@ describe('AlertActions', () => {
       <AlertsActions alert={formatAlert(alertsStubs.alerts[3])} getAlerts={fakeGetAlerts} />
     );
 
-    await asyncAct(() => wrapper.find(dataQa('silence-alert-button')).at(0).simulate('click'));
+    await asyncAct(() => wrapper.find(dataTestId('silence-alert-button')).at(0).simulate('click'));
     wrapper.update();
     expect(alertsServiceToggle).toBeCalledTimes(1);
     expect(alertsServiceToggle).toBeCalledWith({ alert_id: '4', silenced: 'FALSE' }, undefined);
@@ -62,7 +62,7 @@ describe('AlertActions', () => {
     const wrapper = await getMount(
       <AlertsActions alert={formatAlert(alertsStubs.alerts[1])} getAlerts={fakeGetAlerts} />
     );
-    await asyncAct(() => wrapper.find(dataQa('silence-alert-button')).at(0).simulate('click'));
+    await asyncAct(() => wrapper.find(dataTestId('silence-alert-button')).at(0).simulate('click'));
 
     wrapper.update();
 

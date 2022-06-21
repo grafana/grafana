@@ -1,4 +1,4 @@
-import { dataQa } from '@percona/platform-core';
+import { dataTestId } from '@percona/platform-core';
 import { mount } from 'enzyme';
 import React from 'react';
 
@@ -21,13 +21,13 @@ xdescribe('EditAlertRuleTemplateModal', () => {
         getAlertRuleTemplates={jest.fn()}
       />
     );
-    const addButton = wrapper.find(dataQa('alert-rule-template-edit-button')).find('button');
+    const addButton = wrapper.find(dataTestId('alert-rule-template-edit-button')).find('button');
 
     expect(wrapper.find('textarea')).toBeTruthy();
     expect(addButton).toBeTruthy();
     expect(addButton.prop('disabled')).toBeTruthy();
-    expect(wrapper.find(dataQa('alert-rule-template-cancel-button'))).toBeTruthy();
-    expect(wrapper.find(dataQa('alert-rule-name-warning'))).toBeTruthy();
+    expect(wrapper.find(dataTestId('alert-rule-template-cancel-button'))).toBeTruthy();
+    expect(wrapper.find(dataTestId('alert-rule-name-warning'))).toBeTruthy();
   });
 
   it('should not render modal when visible is set to false', () => {
@@ -58,7 +58,7 @@ xdescribe('EditAlertRuleTemplateModal', () => {
       />
     );
 
-    wrapper.find(dataQa('modal-background')).simulate('click');
+    wrapper.find(dataTestId('modal-background')).simulate('click');
 
     expect(setVisible).toHaveBeenCalled();
   });
@@ -74,7 +74,7 @@ xdescribe('EditAlertRuleTemplateModal', () => {
         getAlertRuleTemplates={jest.fn()}
       />
     );
-    const addButton = wrapper.find(dataQa('alert-rule-template-edit-button')).find('button');
+    const addButton = wrapper.find(dataTestId('alert-rule-template-edit-button')).find('button');
 
     expect(wrapper.find('textarea').text()).toEqual('test content');
     expect(addButton.prop('disabled')).toBeTruthy();

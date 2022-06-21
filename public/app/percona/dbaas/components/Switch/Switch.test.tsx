@@ -1,4 +1,4 @@
-import { dataQa, FormWrapper } from '@percona/platform-core';
+import { dataTestId, FormWrapper } from '@percona/platform-core';
 import { mount } from 'enzyme';
 import React from 'react';
 import { Field } from 'react-final-form';
@@ -41,7 +41,7 @@ describe('SwitchField::', () => {
       </FormWrapper>
     );
 
-    expect(wrapper.find(dataQa('test-field-label')).length).toBe(0);
+    expect(wrapper.find(dataTestId('test-field-label')).length).toBe(0);
   });
 
   it('should show a label if one is specified', () => {
@@ -51,8 +51,8 @@ describe('SwitchField::', () => {
       </FormWrapper>
     );
 
-    expect(wrapper.find(dataQa('test-field-label')).length).toBe(1);
-    expect(wrapper.find(dataQa('test-field-label')).text()).toBe('test label');
+    expect(wrapper.find(dataTestId('test-field-label')).length).toBe(1);
+    expect(wrapper.find(dataTestId('test-field-label')).text()).toBe('test label');
   });
 
   it('should change the state value when clicked', () => {
@@ -62,11 +62,11 @@ describe('SwitchField::', () => {
       </FormWrapper>
     );
 
-    expect(wrapper.find(dataQa('test-switch')).at(0).props()).toHaveProperty('value', false);
+    expect(wrapper.find(dataTestId('test-switch')).at(0).props()).toHaveProperty('value', false);
     wrapper.find('input').simulate('change', { target: { value: true } });
     wrapper.update();
 
-    expect(wrapper.find(dataQa('test-switch')).at(0).props()).toHaveProperty('value', true);
+    expect(wrapper.find(dataTestId('test-switch')).at(0).props()).toHaveProperty('value', true);
   });
 
   it('should disable switch when `disabled` is passed via props', () => {

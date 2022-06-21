@@ -119,7 +119,7 @@ export const AddAlertRuleModal: FC<AddAlertRuleModalProps> = ({ isVisible, setVi
       title={alertRule ? Messages.editRuleTitle : Messages.addRuleTitle}
       isVisible={isVisible}
       onClose={handleClose}
-      data-qa="add-alert-rule-modal"
+      data-testid="add-alert-rule-modal"
     >
       <Form
         initialValues={initialValues}
@@ -142,7 +142,7 @@ export const AddAlertRuleModal: FC<AddAlertRuleModalProps> = ({ isVisible, setVi
           },
         }}
         render={({ handleSubmit, valid, pristine, submitting, form }) => (
-          <form className={styles.form} onSubmit={handleSubmit} data-qa="add-alert-rule-modal-form">
+          <form className={styles.form} onSubmit={handleSubmit} data-testid="add-alert-rule-modal-form">
             <Field name="template" validate={required}>
               {({ input }) => (
                 <SelectField
@@ -156,7 +156,7 @@ export const AddAlertRuleModal: FC<AddAlertRuleModalProps> = ({ isVisible, setVi
                     form.mutators.changeDuration(name.value);
                     handleTemplateChange(name.value);
                   }}
-                  data-qa="template-select-input"
+                  data-testid="template-select-input"
                 />
               )}
             </Field>
@@ -174,7 +174,7 @@ export const AddAlertRuleModal: FC<AddAlertRuleModalProps> = ({ isVisible, setVi
                   label={Messages.severityField}
                   options={SEVERITY_OPTIONS}
                   {...input}
-                  data-qa="severity-select-input"
+                  data-testid="severity-select-input"
                 />
               )}
             </Field>
@@ -187,19 +187,19 @@ export const AddAlertRuleModal: FC<AddAlertRuleModalProps> = ({ isVisible, setVi
                   label={Messages.channelField}
                   options={channelsOptions}
                   {...input}
-                  data-qa="notificationChannels-multiselect-input"
+                  data-testid="notificationChannels-multiselect-input"
                 />
               )}
             </Field>
 
             {currentTemplate && (
               <>
-                <div data-qa="template-expression" className={styles.templateParsedField}>
+                <div data-testid="template-expression" className={styles.templateParsedField}>
                   <Label label={Messages.templateExpression} />
                   <pre>{currentTemplate.expr}</pre>
                 </div>
                 {currentTemplate.annotations?.summary && (
-                  <div data-qa="template-alert" className={styles.templateParsedField}>
+                  <div data-testid="template-alert" className={styles.templateParsedField}>
                     <Label label={Messages.ruleAlert} />
                     <pre>{currentTemplate.annotations?.summary}</pre>
                   </div>
@@ -210,8 +210,8 @@ export const AddAlertRuleModal: FC<AddAlertRuleModalProps> = ({ isVisible, setVi
             <Field name="enabled" type="checkbox" defaultValue={true}>
               {({ input }) => (
                 <>
-                  <Label label={Messages.activateSwitch} dataQa="enabled-toggle-label" />
-                  <Switch {...input} value={input.checked} data-qa="enabled-toggle-input" />
+                  <Label label={Messages.activateSwitch} dataTestId="enabled-toggle-label" />
+                  <Switch {...input} value={input.checked} data-testid="enabled-toggle-input" />
                 </>
               )}
             </Field>
@@ -219,7 +219,7 @@ export const AddAlertRuleModal: FC<AddAlertRuleModalProps> = ({ isVisible, setVi
             <div className={styles.actionsWrapper}>
               <HorizontalGroup justify="center" spacing="md">
                 <LoaderButton
-                  data-qa="add-alert-rule-modal-add-button"
+                  data-testid="add-alert-rule-modal-add-button"
                   size="md"
                   variant="primary"
                   disabled={!valid || pristine}
@@ -228,7 +228,7 @@ export const AddAlertRuleModal: FC<AddAlertRuleModalProps> = ({ isVisible, setVi
                   {alertRule ? Messages.update : Messages.create}
                 </LoaderButton>
                 <Button
-                  data-qa="add-alert-rule-modal-cancel-button"
+                  data-testid="add-alert-rule-modal-cancel-button"
                   variant="secondary"
                   onClick={() => setVisible(false)}
                 >

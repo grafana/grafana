@@ -1,4 +1,4 @@
-import { dataQa } from '@percona/platform-core';
+import { dataTestId } from '@percona/platform-core';
 import { shallow } from 'enzyme';
 import React from 'react';
 
@@ -14,10 +14,10 @@ describe('RestoreHistoryDetails', () => {
     const wrapper = shallow(
       <RestoreHistoryDetails name="restore one" finished={FINISHED_DATE} dataModel={DataModel.PHYSICAL} />
     );
-    expect(wrapper.find(dataQa('restore-details-wrapper')).exists()).toBeTruthy();
-    expect(wrapper.find(dataQa('restore-details-name')).exists()).toBeTruthy();
-    expect(wrapper.find(dataQa('restore-details-finished')).exists()).toBeTruthy();
-    expect(wrapper.find(dataQa('restore-details-data-model')).exists()).toBeTruthy();
+    expect(wrapper.find(dataTestId('restore-details-wrapper')).exists()).toBeTruthy();
+    expect(wrapper.find(dataTestId('restore-details-name')).exists()).toBeTruthy();
+    expect(wrapper.find(dataTestId('restore-details-finished')).exists()).toBeTruthy();
+    expect(wrapper.find(dataTestId('restore-details-data-model')).exists()).toBeTruthy();
     expect(wrapper.find(DetailedDate).exists()).toBeTruthy();
   });
 
@@ -25,6 +25,6 @@ describe('RestoreHistoryDetails', () => {
     const wrapper = shallow(
       <RestoreHistoryDetails name="restore one" finished={null} dataModel={DataModel.PHYSICAL} />
     );
-    expect(wrapper.find(dataQa('restore-details-finished')).exists()).toBeFalsy();
+    expect(wrapper.find(dataTestId('restore-details-finished')).exists()).toBeFalsy();
   });
 });

@@ -1,4 +1,4 @@
-import { dataQa } from '@percona/platform-core';
+import { dataTestId } from '@percona/platform-core';
 import { shallow } from 'enzyme';
 import React from 'react';
 
@@ -10,7 +10,7 @@ import { Messages } from './KeysBlock.messages';
 describe('KeysBlock', () => {
   it('should have access key next to label', () => {
     const wrapper = shallow(<KeysBlock accessKey="access" secretKey="secret" />);
-    expect(wrapper.find(dataQa('access-key')).text()).toBe(`${Messages.accessKey}access`);
+    expect(wrapper.find(dataTestId('access-key')).text()).toBe(`${Messages.accessKey}access`);
   });
 
   it('should have SecretToggler with secret passed', () => {

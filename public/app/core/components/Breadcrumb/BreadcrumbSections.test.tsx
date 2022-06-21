@@ -1,4 +1,4 @@
-import { dataQa } from '@percona/platform-core';
+import { dataTestId } from '@percona/platform-core';
 import React from 'react';
 import { useSelector } from 'react-redux';
 
@@ -62,8 +62,8 @@ describe('BreadcrumbSections', () => {
   it('renders breadcrumb sections with correct URLs', async () => {
     const wrapper = await getMount(<BreadcrumbSections pageModel={pageModel} currentLocation="root/child-one" />);
 
-    expect(wrapper.find(dataQa('breadcrumb-section'))).toHaveLength(2);
-    expect(wrapper.find(dataQa('breadcrumb-section')).at(0).text()).toEqual('Root / Child 1');
+    expect(wrapper.find(dataTestId('breadcrumb-section'))).toHaveLength(2);
+    expect(wrapper.find(dataTestId('breadcrumb-section')).at(0).text()).toEqual('Root / Child 1');
   });
 
   it('renders breadcrumb sections with noncorrect URLs', async () => {
@@ -75,8 +75,8 @@ describe('BreadcrumbSections', () => {
       <BreadcrumbSections pageModel={pageModel} currentLocation="root/child-two/leaf-one" />
     );
 
-    expect(wrapper.find(dataQa('breadcrumb-section'))).toHaveLength(3);
-    expect(wrapper.find(dataQa('breadcrumb-section')).at(0).text()).toEqual('Root / Child 2 / Leaf 1');
+    expect(wrapper.find(dataTestId('breadcrumb-section'))).toHaveLength(3);
+    expect(wrapper.find(dataTestId('breadcrumb-section')).at(0).text()).toEqual('Root / Child 2 / Leaf 1');
   });
 
   it('renders breadcrumb sections even with a broken pageModel', async () => {
@@ -88,7 +88,7 @@ describe('BreadcrumbSections', () => {
       <BreadcrumbSections pageModel={pageModel} currentLocation="root/wrong-one/leaf-two" />
     );
 
-    expect(wrapper.find(dataQa('breadcrumb-section'))).toHaveLength(1);
-    expect(wrapper.find(dataQa('breadcrumb-section')).at(0).text()).toEqual('Root');
+    expect(wrapper.find(dataTestId('breadcrumb-section'))).toHaveLength(1);
+    expect(wrapper.find(dataTestId('breadcrumb-section')).at(0).text()).toEqual('Root');
   });
 });

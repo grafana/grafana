@@ -1,13 +1,16 @@
-import React, { FC, useEffect, useState, useCallback } from 'react';
-import { Button, Icon, Spinner, useStyles } from '@grafana/ui';
 import { Modal, logger } from '@percona/platform-core';
-import { DBClusterLogsModalProps } from './DBClusterLogsModal.types';
+import React, { FC, useEffect, useState, useCallback } from 'react';
+
+import { Button, Icon, Spinner, useStyles } from '@grafana/ui';
+
 import { DBClusterService } from '../DBCluster.service';
-import { Messages } from './DBClusterLogsModal.messages';
-import { toggleLogs, transformLogs } from './DBClusterLogsModal.utils';
 import { DBClusterLogs } from '../DBCluster.types';
-import { PodLogs } from './PodLogs/PodLogs';
+
+import { Messages } from './DBClusterLogsModal.messages';
 import { getStyles } from './DBClusterLogsModal.styles';
+import { DBClusterLogsModalProps } from './DBClusterLogsModal.types';
+import { toggleLogs, transformLogs } from './DBClusterLogsModal.utils';
+import { PodLogs } from './PodLogs/PodLogs';
 
 export const DBClusterLogsModal: FC<DBClusterLogsModalProps> = ({ dbCluster, isVisible, setVisible }) => {
   const styles = useStyles(getStyles);
@@ -50,16 +53,16 @@ export const DBClusterLogsModal: FC<DBClusterLogsModalProps> = ({ dbCluster, isV
       <Modal title={Messages.title} isVisible={isVisible} onClose={() => setVisible(false)}>
         <div className={styles.modalWrapper}>
           {loading ? (
-            <div data-qa="dbcluster-logs-loading" className={styles.spinnerWrapper}>
+            <div data-testid="dbcluster-logs-loading" className={styles.spinnerWrapper}>
               <Spinner />
             </div>
           ) : (
             <>
               {!logs || logs.pods.length <= 0 ? (
-                <span data-qa="dbcluster-no-logs">{Messages.noLogs}</span>
+                <span data-testid="dbcluster-no-logs">{Messages.noLogs}</span>
               ) : (
                 <>
-                  <div data-qa="dbcluster-logs-actions" className={styles.header}>
+                  <div data-testid="dbcluster-logs-actions" className={styles.header}>
                     <span className={styles.podsLabel}>{Messages.pods}</span>
                     <Button variant="secondary" onClick={() => toggleCollapse()} className={styles.expandButton}>
                       {expanded ? Messages.collapse : Messages.expand}

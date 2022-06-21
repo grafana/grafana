@@ -1,8 +1,10 @@
 /* eslint-disable react/display-name */
+import { cx } from 'emotion';
 import React, { FC, useEffect } from 'react';
 import { useRowSelect, useTable } from 'react-table';
+
 import { Checkbox, Spinner, useTheme } from '@grafana/ui';
-import { cx } from 'emotion';
+
 import { getStyles } from './Table.styles';
 import { TableCheckboxProps, TableProps } from './Table.types';
 
@@ -44,12 +46,12 @@ export const Table: FC<TableProps> = ({
           {
             id: 'selection',
             Header: ({ getToggleAllRowsSelectedProps }: any) => (
-              <div data-qa="select-all">
+              <div data-testid="select-all">
                 <TableCheckbox className={styles.checkbox} {...getToggleAllRowsSelectedProps()} />
               </div>
             ),
             Cell: ({ row }: { row: any }) => (
-              <div data-qa="select-row">
+              <div data-testid="select-row">
                 <TableCheckbox className={styles.checkbox} {...row.getToggleRowSelectedProps()} />
               </div>
             ),
@@ -70,12 +72,12 @@ export const Table: FC<TableProps> = ({
     <div className={cx(styles.table, className)}>
       <div className={styles.tableWrap}>
         {loading ? (
-          <div data-qa="table-loading" className={styles.empty}>
+          <div data-testid="table-loading" className={styles.empty}>
             <Spinner />
           </div>
         ) : null}
         {!rows.length && !loading ? (
-          <div data-qa="table-no-data" className={styles.empty}>
+          <div data-testid="table-no-data" className={styles.empty}>
             {noData || <h1>No data</h1>}
           </div>
         ) : null}
@@ -83,7 +85,7 @@ export const Table: FC<TableProps> = ({
           <table {...getTableProps()}>
             <thead>
               {headerGroups.map((headerGroup, i) => (
-                <tr data-qa="table-header" {...headerGroup.getHeaderGroupProps()} key={i}>
+                <tr data-testid="table-header" {...headerGroup.getHeaderGroupProps()} key={i}>
                   {headerGroup.headers.map((column, index) => (
                     <th
                       {...column.getHeaderProps()}
@@ -101,7 +103,7 @@ export const Table: FC<TableProps> = ({
                 prepareRow(row);
 
                 return (
-                  <tr data-qa="table-row" {...row.getRowProps()} key={rowKey ? rowKey(row) : i}>
+                  <tr data-testid="table-row" {...row.getRowProps()} key={rowKey ? rowKey(row) : i}>
                     {row.cells.map((cell, index) => (
                       <td
                         {...cell.getCellProps()}

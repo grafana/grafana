@@ -29,10 +29,10 @@ export const SignIn: FC<LoginFormProps> = ({ changeMode, getSettings }) => {
   };
 
   const SignInForm: FC<FormRenderProps<LoginCredentials>> = ({ pristine, submitting, valid, handleSubmit }) => (
-    <form data-qa="sign-in-form" className={styles.form} onSubmit={handleSubmit} autoComplete="off">
+    <form data-testid="sign-in-form" className={styles.form} onSubmit={handleSubmit} autoComplete="off">
       <legend className={styles.legend}>{Messages.signIn}</legend>
       <TextInputField
-        data-qa="sign-in-email-input"
+        data-testid="sign-in-email-input"
         name="email"
         label={Messages.emailLabel}
         validators={[validators.required, validators.validateEmail]}
@@ -40,13 +40,13 @@ export const SignIn: FC<LoginFormProps> = ({ changeMode, getSettings }) => {
         parse={(value) => value.trim()}
       />
       <PasswordInputField
-        data-qa="sign-in-password-input"
+        data-testid="sign-in-password-input"
         name="password"
         label={Messages.passwordLabel}
         validators={[validators.required]}
       />
       <LinkButton
-        data-qa="sign-in-forgot-password-button"
+        data-testid="sign-in-forgot-password-button"
         type="button"
         size="md"
         variant="link"
@@ -58,7 +58,7 @@ export const SignIn: FC<LoginFormProps> = ({ changeMode, getSettings }) => {
         {Messages.forgotPassword}
       </LinkButton>
       <LoaderButton
-        data-qa="sign-in-submit-button"
+        data-testid="sign-in-submit-button"
         type="submit"
         size="md"
         variant="primary"
@@ -69,7 +69,7 @@ export const SignIn: FC<LoginFormProps> = ({ changeMode, getSettings }) => {
         {Messages.signIn}
       </LoaderButton>
       <LoaderButton
-        data-qa="sign-in-to-sign-up-button"
+        data-testid="sign-in-to-sign-up-button"
         type="button"
         size="md"
         variant="link"

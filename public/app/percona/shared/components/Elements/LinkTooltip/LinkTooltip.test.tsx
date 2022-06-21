@@ -7,7 +7,7 @@ const testProps = {
   tooltipText: 'Test text',
   link: 'Test link',
   linkText: 'Test link text',
-  dataQa: 'link-tooltip',
+  dataTestId: 'link-tooltip',
 };
 
 describe('LinkTooltip::', () => {

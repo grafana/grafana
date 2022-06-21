@@ -1,4 +1,4 @@
-import { dataQa, logger, LoaderButton } from '@percona/platform-core';
+import { LoaderButton, dataTestId, logger } from '@percona/platform-core';
 import React from 'react';
 
 import { CheckService } from 'app/percona/check/Check.service';
@@ -32,9 +32,9 @@ describe('FailedChecksTab::', () => {
   it('should render a spinner at startup, while loading', async () => {
     const wrapper = await getMount(<FailedChecksTab />);
 
-    expect(wrapper.find(dataQa('db-checks-failed-checks-spinner'))).toHaveLength(1);
+    expect(wrapper.find(dataTestId('db-checks-failed-checks-spinner'))).toHaveLength(1);
     wrapper.update();
-    expect(wrapper.find(dataQa('db-checks-failed-checks-spinner'))).toHaveLength(0);
+    expect(wrapper.find(dataTestId('db-checks-failed-checks-spinner'))).toHaveLength(0);
   });
 
   it('should log an error if the fetch alerts API call fails', async () => {

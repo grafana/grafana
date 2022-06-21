@@ -11,7 +11,7 @@ export const DetailedDate: FC<DetailedDateProps> = ({
   date,
   dayFormat = DAY_FORMAT,
   hourFormat = HOUR_FORMAT,
-  dataQa = 'detailed-date',
+  dataTestId = 'detailed-date',
   className,
 }) => {
   const styles = useStyles(getStyles);
@@ -20,7 +20,7 @@ export const DetailedDate: FC<DetailedDateProps> = ({
   const hourTime = momentObj.format(hourFormat);
 
   return (
-    <span data-qa={dataQa} className={className}>
+    <span data-testid={dataTestId} className={className}>
       <span>{dayTime}</span>
       <span className={styles.hourWrapper}>{hourTime}</span>
     </span>

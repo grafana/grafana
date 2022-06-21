@@ -1,4 +1,4 @@
-import { dataQa } from '@percona/platform-core';
+import { dataTestId } from '@percona/platform-core';
 import { mount } from 'enzyme';
 import React from 'react';
 
@@ -44,7 +44,7 @@ describe('AlertRulesActions', () => {
     };
 
     await asyncAct(() => {
-      wrapper.find(dataQa('copy-alert-rule-button')).at(0).simulate('click');
+      wrapper.find(dataTestId('copy-alert-rule-button')).at(0).simulate('click');
     });
 
     expect(alertRulesServiceCreate).toBeCalledTimes(1);
@@ -56,7 +56,7 @@ describe('AlertRulesActions', () => {
     const wrapper = mount(withContext(context, <AlertRulesActions alertRule={formattedRulesStubs[0]} />));
 
     await asyncAct(() => {
-      wrapper.find(dataQa('edit-alert-rule-button')).at(0).simulate('click');
+      wrapper.find(dataTestId('edit-alert-rule-button')).at(0).simulate('click');
     });
 
     expect(context.setSelectedAlertRule).toBeCalledTimes(1);
@@ -65,20 +65,20 @@ describe('AlertRulesActions', () => {
   it('calls the API to delete an alert rule', async () => {
     const wrapper = mount(withContext(mockContext(), <AlertRulesActions alertRule={formattedRulesStubs[1]} />));
 
-    expect(wrapper.find(dataQa('modal-wrapper'))).toHaveLength(0);
+    expect(wrapper.find(dataTestId('modal-wrapper'))).toHaveLength(0);
 
     await asyncAct(() => {
-      wrapper.find(dataQa('delete-alert-rule-button')).at(0).simulate('click');
+      wrapper.find(dataTestId('delete-alert-rule-button')).at(0).simulate('click');
     });
 
     wrapper.update();
 
-    expect(wrapper.find(dataQa('modal-wrapper'))).toHaveLength(1);
+    expect(wrapper.find(dataTestId('modal-wrapper'))).toHaveLength(1);
   });
 
   it('renders an enabled switch for an enabled alert rule', () => {
     const wrapper = mount(withContext(mockContext(), <AlertRulesActions alertRule={formattedRulesStubs[0]} />));
-    const toggle = wrapper.find(dataQa('toggle-alert-rule')).find('input');
+    const toggle = wrapper.find(dataTestId('toggle-alert-rule')).find('input');
 
     expect(toggle.prop('checked')).toBeTruthy();
   });
@@ -88,7 +88,7 @@ describe('AlertRulesActions', () => {
       withContext(mockContext(), <AlertRulesActions alertRule={{ ...formattedRulesStubs[0], disabled: true }} />)
     );
 
-    const toggle = wrapper.find(dataQa('toggle-alert-rule')).find('input');
+    const toggle = wrapper.find(dataTestId('toggle-alert-rule')).find('input');
 
     expect(toggle.prop('checked')).toBeFalsy();
   });
@@ -97,7 +97,7 @@ describe('AlertRulesActions', () => {
     const context = mockContext();
     const wrapper = mount(withContext(context, <AlertRulesActions alertRule={formattedRulesStubs[0]} />));
     await asyncAct(() => {
-      wrapper.find(dataQa('toggle-alert-rule')).find('input').simulate('click');
+      wrapper.find(dataTestId('toggle-alert-rule')).find('input').simulate('click');
     });
 
     expect(context.getAlertRules).toHaveBeenCalled();

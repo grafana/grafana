@@ -1,4 +1,4 @@
-import { dataQa } from '@percona/platform-core';
+import { dataTestId } from '@percona/platform-core';
 import React from 'react';
 
 import { SettingsService } from 'app/percona/settings/Settings.service';
@@ -65,6 +65,6 @@ describe('FeatureLoader', () => {
     const wrapper = await getMount(<FeatureLoader featureName="IA" featureFlag="alertingEnabled" onError={() => {}} />);
     wrapper.update();
 
-    expect(wrapper.find(dataQa('unauthorized')).text()).toBe(Messages.unauthorized);
+    expect(wrapper.find(dataTestId('unauthorized')).text()).toBe(Messages.unauthorized);
   });
 });

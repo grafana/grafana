@@ -1,4 +1,4 @@
-import { dataQa } from '@percona/platform-core';
+import { dataTestId } from '@percona/platform-core';
 import { mount } from 'enzyme';
 import React from 'react';
 
@@ -74,7 +74,7 @@ xdescribe('AddStorageLocationModal', () => {
       bucketName: 'bucket',
     };
     const wrapper = mount(<AddStorageLocationModal location={location} onClose={jest.fn()} onAdd={onAdd} isVisible />);
-    wrapper.find(dataQa('endpoint-text-input')).simulate('change', { target: { value: 's3://foo' } });
+    wrapper.find(dataTestId('endpoint-text-input')).simulate('change', { target: { value: 's3://foo' } });
     wrapper.find('form').simulate('submit');
 
     expect(onAdd).toHaveBeenCalled();
@@ -82,7 +82,7 @@ xdescribe('AddStorageLocationModal', () => {
 
   it('should show the "Add" button when no location passed', () => {
     const wrapper = mount(<AddStorageLocationModal location={null} onClose={jest.fn()} onAdd={jest.fn()} isVisible />);
-    expect(wrapper.find(dataQa('storage-location-add-button')).first().text()).toBe(Messages.addAction);
+    expect(wrapper.find(dataTestId('storage-location-add-button')).first().text()).toBe(Messages.addAction);
   });
 
   it('should show the "Edit" button when a location is passed', () => {
@@ -96,19 +96,19 @@ xdescribe('AddStorageLocationModal', () => {
     const wrapper = mount(
       <AddStorageLocationModal location={location} onClose={jest.fn()} onAdd={jest.fn()} isVisible />
     );
-    expect(wrapper.find(dataQa('storage-location-add-button')).first().text()).toBe(Messages.editAction);
+    expect(wrapper.find(dataTestId('storage-location-add-button')).first().text()).toBe(Messages.editAction);
   });
 
   it('should have the test button', () => {
     const wrapper = mount(<AddStorageLocationModal location={null} onClose={jest.fn()} onAdd={jest.fn()} isVisible />);
 
-    expect(wrapper.find(dataQa('storage-location-test-button')).exists()).toBeTruthy();
+    expect(wrapper.find(dataTestId('storage-location-test-button')).exists()).toBeTruthy();
   });
 
   it('should disable the test button if the form is invalid', () => {
     const wrapper = mount(<AddStorageLocationModal location={null} onClose={jest.fn()} onAdd={jest.fn()} isVisible />);
 
-    expect(wrapper.find(dataQa('storage-location-test-button')).last().props().disabled).toBe(true);
+    expect(wrapper.find(dataTestId('storage-location-test-button')).last().props().disabled).toBe(true);
   });
 
   it('should enable the test button if the form is valid', () => {
@@ -123,7 +123,7 @@ xdescribe('AddStorageLocationModal', () => {
       <AddStorageLocationModal location={location} onClose={jest.fn()} onAdd={jest.fn()} isVisible />
     );
 
-    expect(wrapper.find(dataQa('storage-location-test-button')).last().props().disabled).toBe(false);
+    expect(wrapper.find(dataTestId('storage-location-test-button')).last().props().disabled).toBe(false);
   });
 
   it('should disable the add button while waiting for test validation', () => {
@@ -144,6 +144,6 @@ xdescribe('AddStorageLocationModal', () => {
       />
     );
 
-    expect(wrapper.find(dataQa('storage-location-add-button')).last().props().disabled).toBe(true);
+    expect(wrapper.find(dataTestId('storage-location-add-button')).last().props().disabled).toBe(true);
   });
 });

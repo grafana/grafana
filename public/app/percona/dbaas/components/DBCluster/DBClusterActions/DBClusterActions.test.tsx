@@ -1,4 +1,4 @@
-import { dataQa } from '@percona/platform-core';
+import { dataTestId } from '@percona/platform-core';
 import { mount, shallow } from 'enzyme';
 import React from 'react';
 
@@ -65,7 +65,7 @@ describe('DBClusterActions::', () => {
 
     root.update();
 
-    const menu = root.find(dataQa('dropdown-menu-menu'));
+    const menu = root.find(dataTestId('dropdown-menu-menu'));
     const action = menu.find('span').at(0);
 
     action.simulate('click');
@@ -95,7 +95,7 @@ describe('DBClusterActions::', () => {
 
     root.update();
 
-    const menu = root.find(dataQa('dropdown-menu-menu'));
+    const menu = root.find(dataTestId('dropdown-menu-menu'));
     const action = menu.find('span').at(0);
 
     action.simulate('click');
@@ -125,7 +125,7 @@ describe('DBClusterActions::', () => {
 
     root.update();
 
-    const menu = root.find(dataQa('dropdown-menu-menu'));
+    const menu = root.find(dataTestId('dropdown-menu-menu'));
 
     await asyncAct(() => {
       const action = menu.find('span').at(1);

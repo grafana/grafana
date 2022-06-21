@@ -1,4 +1,4 @@
-import { dataQa } from '@percona/platform-core';
+import { dataTestId } from '@percona/platform-core';
 import { mount } from 'enzyme';
 import React from 'react';
 
@@ -33,7 +33,7 @@ describe('UpdateOperatorModal::', () => {
     );
     const message = 'PXC 1.7.0 to version 1.8.0 in test_cluster';
 
-    expect(root.find(dataQa('update-operator-message')).text()).toContain(message);
+    expect(root.find(dataTestId('update-operator-message')).text()).toContain(message);
   });
 
   it('should call onOperatorUpdated after installation', async () => {
@@ -52,7 +52,7 @@ describe('UpdateOperatorModal::', () => {
     );
 
     jest.useFakeTimers();
-    root.find(dataQa('confirm-update-operator-button')).find('button').simulate('click');
+    root.find(dataTestId('confirm-update-operator-button')).find('button').simulate('click');
     await jest.runOnlyPendingTimers();
 
     expect(onOperatorUpdated).toHaveBeenCalledTimes(1);
@@ -76,7 +76,7 @@ describe('UpdateOperatorModal::', () => {
     );
 
     jest.useFakeTimers();
-    root.find(dataQa('confirm-update-operator-button')).find('button').simulate('click');
+    root.find(dataTestId('confirm-update-operator-button')).find('button').simulate('click');
     await jest.runOnlyPendingTimers();
 
     expect(setVisible).toHaveBeenCalledWith(false);

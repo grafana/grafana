@@ -1,4 +1,4 @@
-import { dataQa } from '@percona/platform-core';
+import { dataTestId } from '@percona/platform-core';
 import { mount, ReactWrapper } from 'enzyme';
 import React from 'react';
 
@@ -11,13 +11,13 @@ jest.mock('app/core/app_events');
 
 xdescribe('AddDBClusterModal::', () => {
   const openStep = (root: ReactWrapper, step: string) => {
-    root.find(`[data-qa="${step}"]`).find('[data-qa="step-header"]').simulate('click');
+    root.find(`[data-testid="${step}"]`).find('[data-testid="step-header"]').simulate('click');
   };
 
   const isStepActive = (root: ReactWrapper, step: string) =>
     root
-      .find(`[data-qa="${step}"]`)
-      .find('[data-qa="step-content"]')
+      .find(`[data-testid="${step}"]`)
+      .find('[data-testid="step-content"]')
       .find('div')
       .at(1)
       .prop('className')
@@ -35,14 +35,14 @@ xdescribe('AddDBClusterModal::', () => {
     );
 
     expect(root.find('form')).toBeTruthy();
-    expect(root.find('[data-qa="name-text-input"]')).toBeTruthy();
-    expect(root.find('[data-qa="dbcluster-kubernetes-cluster-field"]')).toBeTruthy();
-    expect(root.find('[data-qa="dbcluster-database-type-field"]')).toBeTruthy();
-    expect(root.find('[data-qa="step-progress-submit-button"]')).toBeTruthy();
-    expect(root.find('[data-qa="dbcluster-basic-options-step"]')).toBeTruthy();
-    expect(root.find('[data-qa="dbcluster-advanced-options-step"]')).toBeTruthy();
-    expect(root.find('[data-qa="dbcluster-advanced-options-step"]')).toBeTruthy();
-    expect(root.find(dataQa('add-cluster-monitoring-warning'))).toBeTruthy();
+    expect(root.find('[data-testid="name-text-input"]')).toBeTruthy();
+    expect(root.find('[data-testid="dbcluster-kubernetes-cluster-field"]')).toBeTruthy();
+    expect(root.find('[data-testid="dbcluster-database-type-field"]')).toBeTruthy();
+    expect(root.find('[data-testid="step-progress-submit-button"]')).toBeTruthy();
+    expect(root.find('[data-testid="dbcluster-basic-options-step"]')).toBeTruthy();
+    expect(root.find('[data-testid="dbcluster-advanced-options-step"]')).toBeTruthy();
+    expect(root.find('[data-testid="dbcluster-advanced-options-step"]')).toBeTruthy();
+    expect(root.find(dataTestId('add-cluster-monitoring-warning'))).toBeTruthy();
   });
 
   it('should disable submit button when there is no values', () => {
@@ -57,7 +57,7 @@ xdescribe('AddDBClusterModal::', () => {
 
     openStep(root, 'dbcluster-advanced-options-step');
 
-    const button = root.find('[data-qa="step-progress-submit-button"]').find('button');
+    const button = root.find('[data-testid="step-progress-submit-button"]').find('button');
 
     expect(button.prop('disabled')).toBeTruthy();
   });

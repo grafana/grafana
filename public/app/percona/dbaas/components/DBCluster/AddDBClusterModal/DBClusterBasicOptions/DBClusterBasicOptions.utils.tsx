@@ -1,12 +1,15 @@
 import React, { FC } from 'react';
+
 import { SelectableValue } from '@grafana/data';
 import { Messages } from 'app/percona/dbaas/DBaaS.messages';
-import { DatabaseOperators, OPERATORS } from './DBClusterBasicOptions.constants';
-import { KubernetesOperatorStatus } from '../../../Kubernetes/OperatorStatusItem/KubernetesOperatorStatus/KubernetesOperatorStatus.types';
-import { OptionContent } from '../../OptionContent/OptionContent';
+
 import { Kubernetes } from '../../../Kubernetes/Kubernetes.types';
-import { KubernetesOptionProps } from './DBClusterBasicOptions.types';
+import { KubernetesOperatorStatus } from '../../../Kubernetes/OperatorStatusItem/KubernetesOperatorStatus/KubernetesOperatorStatus.types';
 import { DatabaseVersion } from '../../DBCluster.types';
+import { OptionContent } from '../../OptionContent/OptionContent';
+
+import { DatabaseOperators, OPERATORS } from './DBClusterBasicOptions.constants';
+import { KubernetesOptionProps } from './DBClusterBasicOptions.types';
 
 export const kubernetesClusterNameValidator = (value: string) => {
   const clusterNameRegexp = /^[a-z]([-a-z0-9]*[a-z0-9])?$/;
@@ -24,7 +27,7 @@ const KubernetesOption: FC<KubernetesOptionProps> = ({
     description={disabledOperators.length ? Messages.dbcluster.addModal.validationMessages.notInstalledOperator : ''}
     tags={availableOperators.map((databaseType) => DatabaseOperators[databaseType])}
     disabledTags={disabledOperators.map((databaseType) => DatabaseOperators[databaseType])}
-    dataQa="kubernetes-option"
+    dataTestId="kubernetes-option"
   />
 );
 

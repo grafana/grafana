@@ -1,4 +1,4 @@
-import { dataQa } from '@percona/platform-core';
+import { dataTestId } from '@percona/platform-core';
 import React from 'react';
 
 import { getMount } from 'app/percona/shared/helpers/testUtils';
@@ -26,11 +26,11 @@ xdescribe('AlertRuleTemplate', () => {
     const wrapper = await getMount(<AlertRuleTemplate />);
 
     expect(wrapper.find('textarea')).toBeTruthy();
-    expect(wrapper.contains(dataQa('modal-wrapper'))).toBeFalsy();
+    expect(wrapper.contains(dataTestId('modal-wrapper'))).toBeFalsy();
 
-    wrapper.find(dataQa('alert-rule-template-add-modal-button')).find('button').simulate('click');
+    wrapper.find(dataTestId('alert-rule-template-add-modal-button')).find('button').simulate('click');
 
-    expect(wrapper.find(dataQa('modal-wrapper'))).toBeTruthy();
+    expect(wrapper.find(dataTestId('modal-wrapper'))).toBeTruthy();
   });
 
   it('should render table content', async () => {
@@ -38,9 +38,9 @@ xdescribe('AlertRuleTemplate', () => {
 
     wrapper.update();
 
-    expect(wrapper.find(dataQa('table-thead')).find('tr')).toHaveLength(1);
-    expect(wrapper.find(dataQa('table-tbody')).find('tr')).toHaveLength(4);
-    expect(wrapper.find(dataQa('table-no-data'))).toHaveLength(0);
+    expect(wrapper.find(dataTestId('table-thead')).find('tr')).toHaveLength(1);
+    expect(wrapper.find(dataTestId('table-tbody')).find('tr')).toHaveLength(4);
+    expect(wrapper.find(dataTestId('table-no-data'))).toHaveLength(0);
   });
 
   it('should render correctly without data', async () => {
@@ -52,15 +52,15 @@ xdescribe('AlertRuleTemplate', () => {
 
     wrapper.update();
 
-    expect(wrapper.find(dataQa('table-thead')).find('tr')).toHaveLength(0);
-    expect(wrapper.find(dataQa('table-tbody')).find('tr')).toHaveLength(0);
-    expect(wrapper.find(dataQa('table-no-data'))).toHaveLength(1);
+    expect(wrapper.find(dataTestId('table-thead')).find('tr')).toHaveLength(0);
+    expect(wrapper.find(dataTestId('table-tbody')).find('tr')).toHaveLength(0);
+    expect(wrapper.find(dataTestId('table-no-data'))).toHaveLength(1);
   });
 
   it('should have table initially loading', async () => {
     const wrapper = await getMount(<AlertRuleTemplate />);
 
-    expect(wrapper.find(dataQa('table-loading'))).toHaveLength(1);
-    expect(wrapper.find(dataQa('table-no-data'))).toHaveLength(1);
+    expect(wrapper.find(dataTestId('table-loading'))).toHaveLength(1);
+    expect(wrapper.find(dataTestId('table-no-data'))).toHaveLength(1);
   });
 });

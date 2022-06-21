@@ -1,4 +1,4 @@
-import { dataQa } from '@percona/platform-core';
+import { dataTestId } from '@percona/platform-core';
 import React from 'react';
 
 import { SettingsService } from 'app/percona/settings/Settings.service';
@@ -43,6 +43,6 @@ describe('CheckPermissions::', () => {
 
     wrapper.update();
 
-    expect(wrapper.find(dataQa('unauthorized'))).not.toBeNull();
+    expect(wrapper.find(dataTestId('unauthorized'))).not.toBeNull();
   });
 });

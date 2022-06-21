@@ -1,4 +1,4 @@
-import { dataQa } from '@percona/platform-core';
+import { dataTestId } from '@percona/platform-core';
 import { mount } from 'enzyme';
 import React from 'react';
 
@@ -14,11 +14,11 @@ xdescribe('AddAlertRuleTemplateModal', () => {
     const wrapper = mount(
       <AddAlertRuleTemplateModal setVisible={jest.fn()} getAlertRuleTemplates={jest.fn()} isVisible />
     );
-    const addButton = wrapper.find(dataQa('alert-rule-template-add-button')).find('button');
+    const addButton = wrapper.find(dataTestId('alert-rule-template-add-button')).find('button');
 
     expect(wrapper.find('textarea')).toBeTruthy();
-    expect(wrapper.find(dataQa('alert-rule-template-upload-button')).find('button')).toBeTruthy();
-    expect(wrapper.find(dataQa('alert-rule-template-cancel-button')).find('button')).toBeTruthy();
+    expect(wrapper.find(dataTestId('alert-rule-template-upload-button')).find('button')).toBeTruthy();
+    expect(wrapper.find(dataTestId('alert-rule-template-cancel-button')).find('button')).toBeTruthy();
     expect(addButton).toBeTruthy();
     expect(addButton.prop('disabled')).toBeTruthy();
   });
@@ -37,7 +37,7 @@ xdescribe('AddAlertRuleTemplateModal', () => {
       <AddAlertRuleTemplateModal setVisible={setVisible} getAlertRuleTemplates={jest.fn()} isVisible />
     );
 
-    wrapper.find(dataQa('modal-background')).simulate('click');
+    wrapper.find(dataTestId('modal-background')).simulate('click');
 
     expect(setVisible).toHaveBeenCalled();
   });

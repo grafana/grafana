@@ -51,7 +51,7 @@ export const Slack: FC<SlackProps> = ({ updateSettings, settings }) => {
               className={settingsStyles.actionButton}
               type="submit"
               disabled={!valid || pristine || loading}
-              data-qa="slack-settings--submit-button"
+              data-testid="slack-settings--submit-button"
             >
               {loading && <Spinner />}
               {Messages.actionButton}

@@ -1,4 +1,4 @@
-import { dataQa, LoaderButton } from '@percona/platform-core';
+import { dataTestId, LoaderButton } from '@percona/platform-core';
 import { shallow } from 'enzyme';
 import React from 'react';
 
@@ -28,7 +28,7 @@ xdescribe('StorageLocations', () => {
     wrapper.update();
 
     expect(wrapper.find(RemoveStorageLocationModal).prop('isVisible')).toBe(false);
-    wrapper.find(dataQa('delete-storage-location-button')).last().simulate('click');
+    wrapper.find(dataTestId('delete-storage-location-button')).last().simulate('click');
     expect(wrapper.find(RemoveStorageLocationModal).prop('isVisible')).toBe(true);
   });
 
@@ -37,7 +37,7 @@ xdescribe('StorageLocations', () => {
     const wrapper = await getMount(<StorageLocations />);
 
     wrapper.update();
-    wrapper.find('tbody tr').first().find(dataQa('delete-storage-location-button')).last().simulate('click');
+    wrapper.find('tbody tr').first().find(dataTestId('delete-storage-location-button')).last().simulate('click');
 
     expect(wrapper.find(RemoveStorageLocationModal).prop('isVisible')).toBe(true);
     await asyncAct(() => wrapper.find(LoaderButton).simulate('submit'));
@@ -51,7 +51,7 @@ xdescribe('StorageLocations', () => {
     const wrapper = shallow(<StorageLocations />);
 
     expect(wrapper.find(AddStorageLocationModal).prop('isVisible')).toBeFalsy();
-    wrapper.find(dataQa('storage-location-add-modal-button')).simulate('click');
+    wrapper.find(dataTestId('storage-location-add-modal-button')).simulate('click');
     expect(wrapper.find(AddStorageLocationModal).prop('isVisible')).toBeTruthy();
   });
 });

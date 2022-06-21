@@ -91,7 +91,7 @@ export const AddStorageLocationModal: FC<AddStorageLocationModalProps> = ({
             <HorizontalGroup justify="center" spacing="md">
               <LoaderButton
                 className={styles.button}
-                data-qa="storage-location-add-button"
+                data-testid="storage-location-add-button"
                 size="md"
                 variant="primary"
                 disabled={!valid || pristine || waitingLocationValidation}
@@ -102,7 +102,7 @@ export const AddStorageLocationModal: FC<AddStorageLocationModalProps> = ({
               <LoaderButton
                 type="button"
                 className={cx(styles.button, styles.testButton)}
-                data-qa="storage-location-test-button"
+                data-testid="storage-location-test-button"
                 size="md"
                 loading={waitingLocationValidation}
                 disabled={!valid}
@@ -112,7 +112,7 @@ export const AddStorageLocationModal: FC<AddStorageLocationModalProps> = ({
               </LoaderButton>
               <Button
                 className={styles.button}
-                data-qa="storage-location-cancel-button"
+                data-testid="storage-location-cancel-button"
                 variant="secondary"
                 onClick={onClose}
               >

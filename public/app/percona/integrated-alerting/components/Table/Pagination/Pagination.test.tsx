@@ -1,4 +1,4 @@
-import { dataQa } from '@percona/platform-core';
+import { dataTestId } from '@percona/platform-core';
 import { mount, shallow } from 'enzyme';
 import React from 'react';
 
@@ -12,35 +12,35 @@ describe('Pagination', () => {
     const wrapper = shallow(
       <Pagination totalItems={0} pageCount={1} pageSizeOptions={[]} pageSize={3} nrRowsOnCurrentPage={0} />
     );
-    expect(wrapper.find(dataQa('page-button')).length).toBe(1);
-    expect(wrapper.find(dataQa('page-button')).prop('variant')).toBe('primary');
+    expect(wrapper.find(dataTestId('page-button')).length).toBe(1);
+    expect(wrapper.find(dataTestId('page-button')).prop('variant')).toBe('primary');
   });
 
   it('should disable left navigation buttons when in first page', () => {
     const wrapper = shallow(
       <Pagination totalItems={30} pageCount={10} pageSizeOptions={[]} pageSize={3} nrRowsOnCurrentPage={3} />
     );
-    expect(wrapper.find(dataQa('previous-page-button')).props().disabled).toBeTruthy();
-    expect(wrapper.find(dataQa('first-page-button')).props().disabled).toBeTruthy();
+    expect(wrapper.find(dataTestId('previous-page-button')).props().disabled).toBeTruthy();
+    expect(wrapper.find(dataTestId('first-page-button')).props().disabled).toBeTruthy();
   });
 
   it('should disable right navigation buttons when in last page', () => {
     const wrapper = shallow(
       <Pagination totalItems={10} pageCount={1} pageSizeOptions={[]} pageSize={10} nrRowsOnCurrentPage={10} />
     );
-    expect(wrapper.find(dataQa('next-page-button')).props().disabled).toBeTruthy();
-    expect(wrapper.find(dataQa('last-page-button')).props().disabled).toBeTruthy();
+    expect(wrapper.find(dataTestId('next-page-button')).props().disabled).toBeTruthy();
+    expect(wrapper.find(dataTestId('last-page-button')).props().disabled).toBeTruthy();
   });
 
   it('should enable all navigation buttons while active page is not first or last', () => {
     const wrapper = shallow(
       <Pagination totalItems={30} pageCount={3} pageSizeOptions={[]} pageSize={10} nrRowsOnCurrentPage={10} />
     );
-    wrapper.find(dataQa('next-page-button')).last().simulate('click');
-    expect(wrapper.find(dataQa('previous-page-button')).props().disabled).toBeFalsy();
-    expect(wrapper.find(dataQa('first-page-button')).props().disabled).toBeFalsy();
-    expect(wrapper.find(dataQa('next-page-button')).props().disabled).toBeFalsy();
-    expect(wrapper.find(dataQa('last-page-button')).props().disabled).toBeFalsy();
+    wrapper.find(dataTestId('next-page-button')).last().simulate('click');
+    expect(wrapper.find(dataTestId('previous-page-button')).props().disabled).toBeFalsy();
+    expect(wrapper.find(dataTestId('first-page-button')).props().disabled).toBeFalsy();
+    expect(wrapper.find(dataTestId('next-page-button')).props().disabled).toBeFalsy();
+    expect(wrapper.find(dataTestId('last-page-button')).props().disabled).toBeFalsy();
   });
 
   it('should show all pages when pagesPerView > totalPages', () => {
@@ -54,7 +54,7 @@ describe('Pagination', () => {
         nrRowsOnCurrentPage={3}
       />
     );
-    expect(wrapper.find(dataQa('page-button')).length).toBe(4);
+    expect(wrapper.find(dataTestId('page-button')).length).toBe(4);
   });
 
   it('should show "pagesPerView" pages if pageCount > pagesPerView', () => {
@@ -68,7 +68,7 @@ describe('Pagination', () => {
         nrRowsOnCurrentPage={10}
       />
     );
-    expect(wrapper.find(dataQa('page-button')).length).toBe(5);
+    expect(wrapper.find(dataTestId('page-button')).length).toBe(5);
   });
 
   it('should keep the selected page in the center, when pagesPerView is odd and while last page button is not visible', () => {
@@ -85,15 +85,15 @@ describe('Pagination', () => {
     // There's 7 pages, meaning two clicks will get us to page 3, in the very center
     // Two more clicks should bring 4 and 5 to the center as well
     for (let i = 0; i < 2; i++) {
-      wrapper.find(dataQa('next-page-button')).last().simulate('click');
+      wrapper.find(dataTestId('next-page-button')).last().simulate('click');
     }
-    expect(wrapper.find(dataQa('page-button')).at(2).text()).toBe('3');
-    expect(wrapper.find(dataQa('page-button')).at(2).prop('variant')).toBe('primary');
+    expect(wrapper.find(dataTestId('page-button')).at(2).text()).toBe('3');
+    expect(wrapper.find(dataTestId('page-button')).at(2).prop('variant')).toBe('primary');
     for (let i = 0; i < 2; i++) {
-      wrapper.find(dataQa('next-page-button')).last().simulate('click');
+      wrapper.find(dataTestId('next-page-button')).last().simulate('click');
     }
-    expect(wrapper.find(dataQa('page-button')).at(2).text()).toBe('5');
-    expect(wrapper.find(dataQa('page-button')).at(2).prop('variant')).toBe('primary');
+    expect(wrapper.find(dataTestId('page-button')).at(2).text()).toBe('5');
+    expect(wrapper.find(dataTestId('page-button')).at(2).prop('variant')).toBe('primary');
   });
 
   it('should keep the selected page in the center-left, when pagesPerView is even and while last page button is not visible', () => {
@@ -110,15 +110,15 @@ describe('Pagination', () => {
     // There's 8 pages, meaning two clicks will get us to page 3, in the center-left
     // Two more clicks should bring 4 and 5 to that same position
     for (let i = 0; i < 2; i++) {
-      wrapper.find(dataQa('next-page-button')).last().simulate('click');
+      wrapper.find(dataTestId('next-page-button')).last().simulate('click');
     }
-    expect(wrapper.find(dataQa('page-button')).at(2).text()).toBe('3');
-    expect(wrapper.find(dataQa('page-button')).at(2).prop('variant')).toBe('primary');
+    expect(wrapper.find(dataTestId('page-button')).at(2).text()).toBe('3');
+    expect(wrapper.find(dataTestId('page-button')).at(2).prop('variant')).toBe('primary');
     for (let i = 0; i < 2; i++) {
-      wrapper.find(dataQa('next-page-button')).last().simulate('click');
+      wrapper.find(dataTestId('next-page-button')).last().simulate('click');
     }
-    expect(wrapper.find(dataQa('page-button')).at(2).text()).toBe('5');
-    expect(wrapper.find(dataQa('page-button')).at(2).prop('variant')).toBe('primary');
+    expect(wrapper.find(dataTestId('page-button')).at(2).text()).toBe('5');
+    expect(wrapper.find(dataTestId('page-button')).at(2).prop('variant')).toBe('primary');
   });
 
   it('should keep moving from the center when last page button is already visible', () => {
@@ -136,10 +136,10 @@ describe('Pagination', () => {
     // After that, any click should move the active page button towards the end, instead of keeping in the center
     // That means that with 4 clicks, we should have page 5 selected on the right
     for (let i = 0; i < 4; i++) {
-      wrapper.find(dataQa('next-page-button')).last().simulate('click');
+      wrapper.find(dataTestId('next-page-button')).last().simulate('click');
     }
-    expect(wrapper.find(dataQa('page-button')).at(2).text()).toBe('5');
-    expect(wrapper.find(dataQa('page-button')).at(2).prop('variant')).toBe('primary');
+    expect(wrapper.find(dataTestId('page-button')).at(2).text()).toBe('5');
+    expect(wrapper.find(dataTestId('page-button')).at(2).prop('variant')).toBe('primary');
   });
 
   it('should correctly show the items interval being shown', () => {
@@ -153,11 +153,15 @@ describe('Pagination', () => {
         nrRowsOnCurrentPage={3}
       />
     );
-    expect(wrapper.find(dataQa('pagination-items-inverval')).text()).toBe(Messages.getItemsIntervalMessage(1, 3, 15));
+    expect(wrapper.find(dataTestId('pagination-items-inverval')).text()).toBe(
+      Messages.getItemsIntervalMessage(1, 3, 15)
+    );
     for (let i = 0; i < 2; i++) {
-      wrapper.find(dataQa('next-page-button')).last().simulate('click');
+      wrapper.find(dataTestId('next-page-button')).last().simulate('click');
     }
-    expect(wrapper.find(dataQa('pagination-items-inverval')).text()).toBe(Messages.getItemsIntervalMessage(7, 9, 15));
+    expect(wrapper.find(dataTestId('pagination-items-inverval')).text()).toBe(
+      Messages.getItemsIntervalMessage(7, 9, 15)
+    );
   });
 
   it('should show "showing 0 - 0 of 0 items" when empty', () => {
@@ -171,7 +175,9 @@ describe('Pagination', () => {
         nrRowsOnCurrentPage={0}
       />
     );
-    expect(wrapper.find(dataQa('pagination-items-inverval')).text()).toBe(Messages.getItemsIntervalMessage(0, 0, 0));
+    expect(wrapper.find(dataTestId('pagination-items-inverval')).text()).toBe(
+      Messages.getItemsIntervalMessage(0, 0, 0)
+    );
   });
 
   it('should trigger a page change', () => {
@@ -187,7 +193,7 @@ describe('Pagination', () => {
         onPageChange={cb}
       />
     );
-    wrapper.find(dataQa('next-page-button')).last().simulate('click');
+    wrapper.find(dataTestId('next-page-button')).last().simulate('click');
     expect(cb).toBeCalledWith(1);
   });
 
@@ -204,7 +210,7 @@ describe('Pagination', () => {
         onPageChange={cb}
       />
     );
-    wrapper.find(dataQa('previous-page-button')).last().simulate('click');
+    wrapper.find(dataTestId('previous-page-button')).last().simulate('click');
     expect(cb).not.toHaveBeenCalled();
   });
 
@@ -222,7 +228,7 @@ describe('Pagination', () => {
       />
     );
     for (let i = 0; i < 5; i++) {
-      wrapper.find(dataQa('next-page-button')).last().simulate('click');
+      wrapper.find(dataTestId('next-page-button')).last().simulate('click');
     }
     expect(cb).toHaveBeenCalledTimes(4);
   });
@@ -238,9 +244,9 @@ describe('Pagination', () => {
         nrRowsOnCurrentPage={3}
       />
     );
-    wrapper.find(dataQa('last-page-button')).simulate('click');
+    wrapper.find(dataTestId('last-page-button')).simulate('click');
 
-    const activePageButton = wrapper.find(dataQa('page-button')).last();
+    const activePageButton = wrapper.find(dataTestId('page-button')).last();
     expect(activePageButton.prop('variant')).toBe('primary');
     expect(activePageButton.text()).toBe('5');
   });
@@ -257,11 +263,11 @@ describe('Pagination', () => {
       />
     );
     for (let i = 0; i < 5; i++) {
-      wrapper.find(dataQa('next-page-button')).last().simulate('click');
+      wrapper.find(dataTestId('next-page-button')).last().simulate('click');
     }
-    wrapper.find(dataQa('first-page-button')).simulate('click');
+    wrapper.find(dataTestId('first-page-button')).simulate('click');
 
-    const activePageButton = wrapper.find(dataQa('page-button')).first();
+    const activePageButton = wrapper.find(dataTestId('page-button')).first();
     expect(activePageButton.prop('variant')).toBe('primary');
     expect(activePageButton.text()).toBe('1');
   });
@@ -291,7 +297,7 @@ describe('Pagination', () => {
       />
     );
     for (let i = 0; i < 5; i++) {
-      wrapper.find(dataQa('next-page-button')).last().simulate('click');
+      wrapper.find(dataTestId('next-page-button')).last().simulate('click');
     }
 
     const input = wrapper.find('input').first();
@@ -300,6 +306,6 @@ describe('Pagination', () => {
     const lastOption = wrapper.find({ 'aria-label': 'Select option' }).last();
     lastOption.simulate('click');
     expect(cb).toHaveBeenCalledWith(100);
-    expect(wrapper.find(dataQa('page-button')).first().prop('variant')).toBe('primary');
+    expect(wrapper.find(dataTestId('page-button')).first().prop('variant')).toBe('primary');
   });
 });

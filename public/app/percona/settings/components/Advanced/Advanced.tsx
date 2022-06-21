@@ -158,7 +158,7 @@ export const Advanced: FC<AdvancedProps> = ({
           <form onSubmit={handleSubmit}>
             <div className={styles.advancedRow}>
               <div className={styles.advancedCol}>
-                <div className={settingsStyles.labelWrapper} data-qa="advanced-label">
+                <div className={settingsStyles.labelWrapper} data-testid="advanced-label">
                   <span>{retentionLabel}</span>
                   <LinkTooltip
                     tooltipText={retentionTooltip}
@@ -185,7 +185,7 @@ export const Advanced: FC<AdvancedProps> = ({
               link={telemetryLink}
               className={cx({ [styles.switchDisabled]: values.stt || values.alerting })}
               disabled={values.stt || values.alerting}
-              dataQa="advanced-telemetry"
+              dataTestId="advanced-telemetry"
               component={SwitchRow}
             />
             <Field
@@ -195,7 +195,7 @@ export const Advanced: FC<AdvancedProps> = ({
               tooltip={updatesTooltip}
               tooltipLinkText={tooltipLinkText}
               link={updatesLink}
-              dataQa="advanced-updates"
+              dataTestId="advanced-updates"
               component={SwitchRow}
             />
             <Field
@@ -207,12 +207,12 @@ export const Advanced: FC<AdvancedProps> = ({
               link={sttLink}
               className={cx({ [styles.switchDisabled]: !values.telemetry })}
               disabled={!values.telemetry}
-              dataQa="advanced-stt"
+              dataTestId="advanced-stt"
               component={SwitchRow}
             />
             <div className={styles.advancedRow}>
               <div className={cx(styles.advancedCol, styles.advancedChildCol, styles.sttCheckIntervalsLabel)}>
-                <div className={settingsStyles.labelWrapper} data-qa="check-intervals-label">
+                <div className={settingsStyles.labelWrapper} data-testid="check-intervals-label">
                   <span>{sttCheckIntervalsLabel}</span>
                   <LinkTooltip tooltipText={sttCheckIntervalTooltip} icon="info-circle" />
                 </div>
@@ -221,7 +221,7 @@ export const Advanced: FC<AdvancedProps> = ({
             {STT_CHECK_INTERVALS.map(({ label, name }) => (
               <div key={name} className={styles.advancedRow}>
                 <div className={cx(styles.advancedCol, styles.advancedChildCol)}>
-                  <div className={settingsStyles.labelWrapper} data-qa={`check-interval-${name}-label`}>
+                  <div className={settingsStyles.labelWrapper} data-testid={`check-interval-${name}-label`}>
                     <span>{label}</span>
                   </div>
                 </div>
@@ -238,7 +238,7 @@ export const Advanced: FC<AdvancedProps> = ({
             ))}
             <div className={styles.advancedRow}>
               <div className={cx(styles.advancedCol, styles.publicAddressLabelWrapper)}>
-                <div className={settingsStyles.labelWrapper} data-qa="public-address-label">
+                <div className={settingsStyles.labelWrapper} data-testid="public-address-label">
                   <span>{publicAddressLabel}</span>
                   <LinkTooltip tooltipText={publicAddressTooltip} icon="info-circle" />
                 </div>
@@ -249,7 +249,7 @@ export const Advanced: FC<AdvancedProps> = ({
                   className={styles.publicAddressButton}
                   type="button"
                   variant="secondary"
-                  data-qa="public-address-button"
+                  data-testid="public-address-button"
                   onClick={() => change('publicAddress', window.location.hostname)}
                 >
                   <Icon name="link" />
@@ -275,7 +275,7 @@ export const Advanced: FC<AdvancedProps> = ({
                 tooltip={dbaasTooltip}
                 tooltipLinkText={tooltipLinkText}
                 link={dbaasLink}
-                dataQa="advanced-dbaas"
+                dataTestId="advanced-dbaas"
                 component={SwitchRow}
               />
               <Field
@@ -286,7 +286,7 @@ export const Advanced: FC<AdvancedProps> = ({
                 tooltipLinkText={tooltipLinkText}
                 link={backupLink}
                 className={cx({ [styles.switchDisabled]: !values.backup })}
-                dataQa="advanced-backup"
+                dataTestId="advanced-backup"
                 component={SwitchRow}
               />
               <Field
@@ -298,7 +298,7 @@ export const Advanced: FC<AdvancedProps> = ({
                 link={alertingLink}
                 className={cx({ [styles.switchDisabled]: !values.telemetry })}
                 disabled={!values.telemetry}
-                dataQa="advanced-alerting"
+                dataTestId="advanced-alerting"
                 component={SwitchRow}
               />
               <Field
@@ -308,7 +308,7 @@ export const Advanced: FC<AdvancedProps> = ({
                 tooltip={azureDiscoverTooltip}
                 tooltipLinkText={tooltipLinkText}
                 link={azureDiscoverLink}
-                dataQa="advanced-azure-discover"
+                dataTestId="advanced-azure-discover"
                 component={SwitchRow}
               />
             </fieldset>
@@ -316,7 +316,7 @@ export const Advanced: FC<AdvancedProps> = ({
               className={settingsStyles.actionButton}
               type="submit"
               disabled={!valid || pristine || loading}
-              data-qa="advanced-button"
+              data-testid="advanced-button"
             >
               {loading && <Spinner />}
               {action}
