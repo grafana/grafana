@@ -1,6 +1,8 @@
 import { SelectableValue } from '@grafana/data';
 import { Databases } from 'app/percona/shared/core';
+
 import { Kubernetes } from '../Kubernetes/Kubernetes.types';
+
 import { Operators } from './AddDBClusterModal/DBClusterBasicOptions/DBClusterBasicOptions.types';
 import { DBClusterService } from './DBCluster.service';
 
@@ -48,6 +50,10 @@ export type DBClusterServiceDatabasesMap = {
 
 export type OperatorDatabasesMap = {
   [key in Databases]: Operators;
+};
+
+export type DatabaseOperatorsMap = {
+  [key in Operators]: Databases;
 };
 
 export interface DBClusterConnection {
@@ -111,6 +117,7 @@ export enum CpuUnits {
 
 export interface DatabaseVersion extends SelectableValue {
   default: boolean;
+  disabled: boolean;
 }
 
 export interface DBClusterPayload {
@@ -182,33 +189,57 @@ interface ResourcesAPI {
   memory_bytes: number;
 }
 
-export interface DBClusterComponentsAPI {
-  versions: DBClusterVersionAPI[];
+export interface DBClusterComponents {
+  versions: DBClusterVersion[];
 }
 
-export interface DBClusterVersionAPI {
+export interface DBClusterVersion {
   product: string;
   operator: string;
-  matrix: DBClusterMatrixAPI;
+  matrix: DBClusterMatrix;
 }
 
-export interface DBClusterMatrixAPI {
-  mongod: DBClusterComponentAPI;
-  pxc: DBClusterComponentAPI;
-  pmm: DBClusterComponentAPI;
-  proxysql: DBClusterComponentAPI;
-  haproxy: DBClusterComponentAPI;
-  backup: DBClusterComponentAPI;
-  operator: DBClusterComponentAPI;
-  log_collector: DBClusterComponentAPI;
+export interface DBClusterMatrix {
+  mongod?: DBClusterComponent;
+  pxc?: DBClusterComponent;
+  pmm?: DBClusterComponent;
+  proxysql?: DBClusterComponent;
+  haproxy?: DBClusterComponent;
+  backup?: DBClusterComponent;
+  operator?: DBClusterComponent;
+  log_collector?: DBClusterComponent;
 }
 
-export interface DBClusterComponentAPI {
+export interface DBClusterComponent {
   [key: string]: {
     image_path: string;
     image_hash: string;
     status: string;
     critical: boolean;
-    default: boolean;
+    default?: boolean;
+    disabled?: boolean;
   };
+}
+
+export enum DBClusterComponentVersionStatus {
+  available = 'available',
+  recommended = 'recommended',
+}
+
+export interface DBClusterChangeComponentsAPI {
+  kubernetes_cluster_name: string;
+  pxc?: DBClusterChangeComponentAPI;
+  proxysql?: DBClusterChangeComponentAPI;
+  mongod?: DBClusterChangeComponentAPI;
+}
+
+export interface DBClusterChangeComponentAPI {
+  default_version?: string;
+  versions: DBClusterChangeComponentVersionAPI[];
+}
+
+export interface DBClusterChangeComponentVersionAPI {
+  version: string;
+  disable?: boolean;
+  enable?: boolean;
 }

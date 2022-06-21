@@ -1,17 +1,21 @@
 /* eslint-disable react/display-name */
-import React, { FC, useCallback, useState } from 'react';
-import { Button, HorizontalGroup, useStyles } from '@grafana/ui';
 import { TextInputField, TextareaInputField, validators, Modal, CheckboxField } from '@percona/platform-core';
-import { Table } from 'app/percona/shared/components/Elements/Table/Table';
-import { Messages } from 'app/percona/dbaas/DBaaS.messages';
+import React, { FC, useCallback, useState } from 'react';
 import { Form, FormRenderProps } from 'react-final-form';
+
+import { Button, HorizontalGroup, useStyles } from '@grafana/ui';
+import { Messages } from 'app/percona/dbaas/DBaaS.messages';
+import { Table } from 'app/percona/shared/components/Elements/Table/Table';
 import { Databases } from 'app/percona/shared/core';
+
+import { AddClusterButton } from '../AddClusterButton/AddClusterButton';
+
+import { clusterActionsRender } from './ColumnRenderers/ColumnRenderers';
 import { getStyles } from './Kubernetes.styles';
 import { NewKubernetesCluster, KubernetesProps, Kubernetes } from './Kubernetes.types';
-import { AddClusterButton } from '../AddClusterButton/AddClusterButton';
-import { OperatorStatusItem } from './OperatorStatusItem/OperatorStatusItem';
 import { KubernetesClusterStatus } from './KubernetesClusterStatus/KubernetesClusterStatus';
-import { clusterActionsRender } from './ColumnRenderers/ColumnRenderers';
+import { ManageComponentsVersionsModal } from './ManageComponentsVersionsModal/ManageComponentsVersionsModal';
+import { OperatorStatusItem } from './OperatorStatusItem/OperatorStatusItem';
 import { ViewClusterConfigModal } from './ViewClusterConfigModal/ViewClusterConfigModal';
 
 export const KubernetesInventory: FC<KubernetesProps> = ({ kubernetes, deleteKubernetes, addKubernetes, loading }) => {
@@ -20,6 +24,7 @@ export const KubernetesInventory: FC<KubernetesProps> = ({ kubernetes, deleteKub
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [viewConfigModalVisible, setViewConfigModalVisible] = useState(false);
   const [addModalVisible, setAddModalVisible] = useState(false);
+  const [manageComponentsModalVisible, setManageComponentsModalVisible] = useState(false);
   const { required } = validators;
 
   const deleteKubernetesCluster = useCallback(
@@ -57,6 +62,7 @@ export const KubernetesInventory: FC<KubernetesProps> = ({ kubernetes, deleteKub
           setSelectedCluster,
           setDeleteModalVisible,
           setViewConfigModalVisible,
+          setManageComponentsModalVisible,
         })(kubernetesCluster),
     },
   ];
@@ -158,6 +164,13 @@ export const KubernetesInventory: FC<KubernetesProps> = ({ kubernetes, deleteKub
           )}
         />
       </Modal>
+      {selectedCluster && manageComponentsModalVisible && (
+        <ManageComponentsVersionsModal
+          selectedKubernetes={selectedCluster}
+          isVisible={manageComponentsModalVisible}
+          setVisible={setManageComponentsModalVisible}
+        />
+      )}
       <Table columns={columns} data={kubernetes} loading={loading} noData={<AddNewClusterButton />} />
     </div>
   );

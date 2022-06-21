@@ -1,9 +1,12 @@
-import { useEffect, useCallback } from 'react';
-import { FormApi } from 'final-form';
 import { logger } from '@percona/platform-core';
+import { FormApi } from 'final-form';
+import { useEffect, useCallback } from 'react';
+
 import { SelectableValue } from '@grafana/data';
+
 import { isOptionEmpty, newDBClusterService } from '../../DBCluster.utils';
 import { AddDBClusterFields } from '../AddDBClusterModal.types';
+
 import { findDefaultDatabaseVersion } from './DBClusterBasicOptions.utils';
 
 export const useDatabaseVersions = (
@@ -19,7 +22,9 @@ export const useDatabaseVersions = (
 
       setLoadingDatabaseVersions(true);
 
-      const databaseVersions = await dbClusterService.getDatabaseVersions(kubernetesCluster.value);
+      const databaseVersions = await (
+        await dbClusterService.getDatabaseVersions(kubernetesCluster.value)
+      ).filter(({ disabled }) => !disabled);
 
       setDatabaseVersions(databaseVersions);
       form.change(AddDBClusterFields.databaseVersion, findDefaultDatabaseVersion(databaseVersions));

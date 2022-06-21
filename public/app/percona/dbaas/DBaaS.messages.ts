@@ -1,6 +1,6 @@
 import { DBClusterStatus } from './components/DBCluster/DBCluster.types';
-import { KubernetesOperatorStatus } from './components/Kubernetes/OperatorStatusItem/KubernetesOperatorStatus/KubernetesOperatorStatus.types';
 import { KubernetesClusterStatus } from './components/Kubernetes/KubernetesClusterStatus/KubernetesClusterStatus.types';
+import { KubernetesOperatorStatus } from './components/Kubernetes/OperatorStatusItem/KubernetesOperatorStatus/KubernetesOperatorStatus.types';
 
 export const Messages = {
   tabs: {
@@ -10,6 +10,7 @@ export const Messages = {
   kubernetes: {
     deleteAction: 'Unregister',
     showConfiguration: 'Show configuration',
+    manageComponents: 'Manage versions',
     addAction: 'Register new Kubernetes Cluster',
     deleteModal: {
       cancel: 'Cancel',

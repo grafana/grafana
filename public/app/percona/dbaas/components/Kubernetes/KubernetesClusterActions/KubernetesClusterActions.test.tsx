@@ -1,10 +1,13 @@
-import React from 'react';
-import { mount } from 'enzyme';
 import { dataQa } from '@percona/platform-core';
-import { MultipleActions } from 'app/percona/dbaas/components/MultipleActions/MultipleActions';
+import { mount } from 'enzyme';
+import React from 'react';
 import { act } from 'react-dom/test-utils';
-import { KubernetesClusterActions } from './KubernetesClusterActions';
+
+import { MultipleActions } from 'app/percona/dbaas/components/MultipleActions/MultipleActions';
+
 import { kubernetesStub } from '../__mocks__/kubernetesStubs';
+
+import { KubernetesClusterActions } from './KubernetesClusterActions';
 
 describe('KubernetesClusterActions::', () => {
   it('renders correctly', () => {
@@ -14,6 +17,7 @@ describe('KubernetesClusterActions::', () => {
         setSelectedCluster={jest.fn()}
         setDeleteModalVisible={jest.fn()}
         setViewConfigModalVisible={jest.fn()}
+        setManageComponentsModalVisible={jest.fn()}
         getDBClusters={jest.fn()}
       />
     );
@@ -30,6 +34,7 @@ describe('KubernetesClusterActions::', () => {
         setSelectedCluster={setSelectedCluster}
         setDeleteModalVisible={setDeleteModalVisible}
         setViewConfigModalVisible={jest.fn()}
+        setManageComponentsModalVisible={jest.fn()}
         getDBClusters={jest.fn()}
       />
     );
@@ -62,6 +67,7 @@ describe('KubernetesClusterActions::', () => {
         setSelectedCluster={setSelectedCluster}
         setDeleteModalVisible={setDeleteModalVisible}
         setViewConfigModalVisible={setViewConfigModalVisible}
+        setManageComponentsModalVisible={jest.fn()}
         getDBClusters={jest.fn()}
       />
     );

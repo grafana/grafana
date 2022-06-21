@@ -8,9 +8,20 @@ import { Field } from './Field';
 import { Messages } from './FieldAdapters.messages';
 import { getStyles } from './FieldAdapters.styles';
 
-export const SelectFieldAdapter = ({ input, className, options, label, meta, dataQa, noOptionsMessage, ...props }) => {
+export const SelectFieldAdapter = ({
+  input,
+  className,
+  options,
+  label,
+  meta,
+  dataQa,
+  showErrorOnBlur = true,
+  noOptionsMessage,
+  ...props
+}) => {
   const theme = useTheme();
   const styles = getStyles(theme);
+  const validationError = (!showErrorOnBlur || meta.touched) && meta.error;
 
   return (
     <Field label={label}>
@@ -20,11 +31,11 @@ export const SelectFieldAdapter = ({ input, className, options, label, meta, dat
           {...props}
           options={options}
           className={cx(styles.input, className)}
-          invalid={meta.touched && meta.error}
+          invalid={!!validationError}
           noOptionsMessage={noOptionsMessage}
         />
         <div data-qa="select-field-error-message" className={styles.errorMessage}>
-          {meta.touched && meta.error}
+          {validationError}
         </div>
       </div>
     </Field>

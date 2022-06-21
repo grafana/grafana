@@ -1,4 +1,4 @@
-interface Action {
+export interface Action {
   title: string;
   action: () => void;
   disabled?: boolean;
