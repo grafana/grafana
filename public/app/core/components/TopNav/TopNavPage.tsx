@@ -8,26 +8,29 @@ import { useStyles2 } from '@grafana/ui';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState } from 'app/types';
 
-import { PageToolbar } from './PageToolbar';
-import { topBarDefaultProps, topBarUpdates } from './TopBarUpdate';
+import { NavToolbar } from './NavToolbar';
+import { topNavDefaultProps, topNavUpdates } from './TopNavUpdate';
 import { TopSearchBar } from './TopSearchBar';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
 
 export interface Props extends PropsWithChildren<{}> {
+  /** This is nav tree id provided by route.
+   *  It's not enough for item navigation. For that pages will need provide an item nav model as well via TopNavUpdate
+   */
   navId?: string;
 }
 
-export function TopBarPage({ children, navId }: Props) {
+export function TopNavPage({ children, navId }: Props) {
   const styles = useStyles2(getStyles);
   const [searchBarHidden, toggleSearchBar] = useToggle(false); // repace with local storage
-  const props = useObservable(topBarUpdates, topBarDefaultProps);
+  const props = useObservable(topNavUpdates, topNavDefaultProps);
   const navModel = useSelector((state: StoreState) => getNavModel(state.navIndex, navId ?? 'home'));
 
   return (
     <div className={styles.viewport}>
-      <div className={styles.topBar}>
+      <div className={styles.topNav}>
         {!searchBarHidden && <TopSearchBar />}
-        <PageToolbar
+        <NavToolbar
           {...props}
           searchBarHidden={searchBarHidden}
           onToggleSearchBar={toggleSearchBar}
@@ -58,7 +61,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     contentNoSearchBar: css({
       paddingTop: TOP_BAR_LEVEL_HEIGHT + 16,
     }),
-    topBar: css({
+    topNav: css({
       display: 'flex',
       position: 'fixed',
       zIndex: theme.zIndex.navbarFixed,

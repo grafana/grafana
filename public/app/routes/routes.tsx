@@ -193,6 +193,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/org/users',
+      navId: 'users',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "UsersListPage" */ 'app/features/users/UsersListPage')
       ),
@@ -205,6 +206,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/org/apikeys',
+      navId: 'apikeys',
       roles: () => contextSrv.evaluatePermission(() => ['Admin'], [AccessControlAction.ActionAPIKeysRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "ApiKeysPage" */ 'app/features/api-keys/ApiKeysPage')
@@ -233,6 +235,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/org/teams',
+      navId: 'teams',
       roles: () =>
         contextSrv.evaluatePermission(
           () => (config.editorsCanAdmin ? ['Editor', 'Admin'] : ['Admin']),
