@@ -9,7 +9,7 @@ import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
 import { usePagination } from '../../hooks/usePagination';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
-import { getRulesDataSources, getRulesSourceName } from '../../utils/datasource';
+import { getRulesDataSources, getRulesSourceUid } from '../../utils/datasource';
 import { AlertRulePagination } from '../AlertRulePagination';
 
 import { RulesGroup } from './RulesGroup';
@@ -52,11 +52,10 @@ export const CloudRules: FC<Props> = ({ namespaces, expandAll }) => {
       </div>
 
       {pageItems.map(({ group, namespace }) => {
-        // const { groups, rulesSource } = namespace;
         return (
           <RulesGroup
             group={group}
-            key={`${getRulesSourceName(namespace.rulesSource)}-${name}-${group.name}`}
+            key={`${getRulesSourceUid(namespace.rulesSource)}-${namespace.name}-${group.name}`}
             namespace={namespace}
             expandAll={expandAll}
           />
