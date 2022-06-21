@@ -21,16 +21,10 @@ describe('Heatmap Migrations', () => {
     expect(panel).toMatchInlineSnapshot(`
       Object {
         "fieldConfig": Object {
-          "defaults": Object {
-            "decimals": 6,
-            "unit": "short",
-          },
+          "defaults": Object {},
           "overrides": Array [],
         },
         "options": Object {
-          "bucketFrame": Object {
-            "layout": "auto",
-          },
           "calculate": true,
           "calculation": Object {
             "xBuckets": Object {
@@ -48,6 +42,9 @@ describe('Heatmap Migrations', () => {
           },
           "cellGap": 2,
           "cellRadius": 10,
+          "cellValues": Object {
+            "decimals": undefined,
+          },
           "color": Object {
             "exponent": 0.5,
             "fill": "dark-orange",
@@ -67,6 +64,9 @@ describe('Heatmap Migrations', () => {
           "legend": Object {
             "show": true,
           },
+          "rowsFrame": Object {
+            "layout": "auto",
+          },
           "showValue": "never",
           "tooltip": Object {
             "show": true,
@@ -75,9 +75,11 @@ describe('Heatmap Migrations', () => {
           "yAxis": Object {
             "axisPlacement": "left",
             "axisWidth": 400,
+            "decimals": 6,
             "max": 22,
             "min": 7,
             "reverse": false,
+            "unit": "short",
           },
         },
       }
