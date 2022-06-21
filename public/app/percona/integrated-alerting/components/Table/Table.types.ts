@@ -24,6 +24,8 @@ export interface TableProps {
   pageSize?: number;
   pageIndex?: number;
   pagesPerView?: number;
+  autoResetPage?: boolean;
+  autoResetExpanded?: boolean;
   onPaginationChanged?: (pageSize: number, pageIndex: number) => void;
   children?: (rows: Row[], table: TableInstance) => React.ReactNode;
   renderExpandedRow?: (row: Row<any>) => JSX.Element;
@@ -53,4 +55,6 @@ export interface PaginatedTableInstance extends TableInstance {
 export interface PaginatedTableOptions extends TableOptions<object> {
   manualPagination?: boolean;
   pageCount?: number;
+  autoResetPage?: boolean;
+  autoResetExpanded?: boolean;
 }
