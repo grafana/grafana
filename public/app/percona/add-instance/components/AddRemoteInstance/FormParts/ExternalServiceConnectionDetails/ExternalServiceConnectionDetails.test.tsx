@@ -3,8 +3,6 @@ import { mount } from 'enzyme';
 import React from 'react';
 import { Form } from 'react-final-form';
 
-import { asyncAct } from 'app/percona/shared/helpers/testUtils';
-
 import { ExternalServiceConnectionDetails } from './ExternalServiceConnectionDetails';
 
 describe('Add remote instance:: ', () => {
@@ -21,11 +19,17 @@ describe('Add remote instance:: ', () => {
       />
     );
 
+    root.find(dataQa('metricsParameters-radio-state')).simulate('change', { target: { value: 'parsed' } });
+
+    root.update();
+
     root
       .find(dataQa('url-text-input'))
       .simulate('change', { target: { value: 'https://admin:admin@localhost/metrics' } });
 
-    await asyncAct(() => root.find('button#parseUrl').simulate('click'));
+    root.update();
+
+    root.find(dataQa('metricsParameters-radio-state')).simulate('change', { target: { value: 'manually' } });
 
     root.update();
 

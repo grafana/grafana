@@ -21,3 +21,13 @@ export interface PostgreSQLAdditionalOptionsProps {
   isRDS?: boolean;
   isAzure?: boolean;
 }
+
+export enum Schema {
+  HTTP = 'http',
+  HTTPS = 'https',
+}
+
+export enum MetricsParameters {
+  manually = 'manually',
+  parsed = 'parsed',
+}

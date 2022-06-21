@@ -12,7 +12,11 @@ export const validators = {
 
     return 'Port should be a number and between 0 and 65535';
   },
+  validateUrl: (value: string) => {
+    const urlRe = /(http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/;
 
+    return urlRe.test(value) ? undefined : 'Invalid URL string';
+  },
   range: (from: number, to: number) => (value: any) => {
     if (!value) {
       return undefined;
@@ -30,7 +34,8 @@ export const validators = {
   },
 
   validateEmail: (value: string) => {
-    const emailRe = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+    const emailRe =
+      /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
 
     return emailRe.test(value) ? undefined : 'Invalid email address';
   },
@@ -81,19 +86,21 @@ export const validators = {
 
   requiredTrue: (value: boolean) => (value === true ? undefined : 'Required field'),
 
-  compose: (...validators: Validator[]) => (value: any, values?: Record<string, any>): VResult => {
-    let result: string | undefined;
+  compose:
+    (...validators: Validator[]) =>
+    (value: any, values?: Record<string, any>): VResult => {
+      let result: string | undefined;
 
-    // eslint-disable-next-line no-restricted-syntax
-    for (const validator of validators) {
-      result = validator(value, values);
-      if (result !== undefined) {
-        break;
+      // eslint-disable-next-line no-restricted-syntax
+      for (const validator of validators) {
+        result = validator(value, values);
+        if (result !== undefined) {
+          break;
+        }
       }
-    }
 
-    return result;
-  },
+      return result;
+    },
 };
 
 export default validators;
