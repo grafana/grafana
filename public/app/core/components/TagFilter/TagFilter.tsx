@@ -40,7 +40,7 @@ const filterOption = (option: any, searchQuery: string) => {
 
 export const TagFilter: FC<Props> = ({
   allowCustomValue = false,
-  formatCreateLabel = (input: string) => `Use custom value: ${input}`,
+  formatCreateLabel,
   hideValues,
   inputId,
   isClearable,
