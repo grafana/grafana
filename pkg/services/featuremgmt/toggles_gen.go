@@ -190,4 +190,8 @@ const (
 	// FlagInternationalization
 	// Enables work-in-progress internationalization
 	FlagInternationalization = "internationalization"
+
+	// FlagTopnav
+	// New top nav and page layouts
+	FlagTopnav = "topnav"
 )

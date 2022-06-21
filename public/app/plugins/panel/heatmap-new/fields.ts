@@ -12,12 +12,14 @@ import {
 } from '@grafana/data';
 import {
   calculateHeatmapFromData,
+  isHeatmapCellsDense,
   readHeatmapRowsCustomMeta,
   rowsToCellsHeatmap,
 } from 'app/features/transformers/calculateHeatmap/heatmap';
 import { HeatmapCellLayout } from 'app/features/transformers/calculateHeatmap/models.gen';
 
 import { CellValues, PanelOptions } from './models.gen';
+import { boundedMinMax } from './utils';
 
 export interface HeatmapData {
   heatmap?: DataFrame; // data we will render
@@ -32,6 +34,10 @@ export interface HeatmapData {
 
   xLayout?: HeatmapCellLayout;
   yLayout?: HeatmapCellLayout;
+
+  // color scale range
+  minValue?: number;
+  maxValue?: number;
 
   // Print a heatmap cell value
   display?: (v: number) => string;
@@ -49,18 +55,17 @@ export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme
   const exemplars = data.annotations?.find((f) => f.name === 'exemplar');
 
   if (options.calculate) {
-    return getHeatmapData(calculateHeatmapFromData(frames, options.calculation ?? {}), exemplars, options, theme);
+    return getDenseHeatmapData(calculateHeatmapFromData(frames, options.calculation ?? {}), exemplars, options, theme);
   }
 
   // Check for known heatmap types
   let rowsHeatmap: DataFrame | undefined = undefined;
   for (const frame of frames) {
     switch (frame.meta?.type) {
-      case DataFrameType.HeatmapSparse:
-        return getSparseHeatmapData(frame, exemplars, options, theme);
-
       case DataFrameType.HeatmapCells:
-        return getHeatmapData(frame, exemplars, options, theme);
+        return isHeatmapCellsDense(frame)
+          ? getDenseHeatmapData(frame, exemplars, options, theme)
+          : getSparseHeatmapData(frame, exemplars, options, theme);
 
       case DataFrameType.HeatmapRows:
         rowsHeatmap = frame; // the default format
@@ -80,7 +85,7 @@ export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme
     }
   }
 
-  return getHeatmapData(
+  return getDenseHeatmapData(
     rowsToCellsHeatmap({
       unit: options.yAxis?.unit, // used to format the ordinal lookup values
       decimals: options.yAxis?.decimals,
@@ -99,7 +104,7 @@ const getSparseHeatmapData = (
   options: PanelOptions,
   theme: GrafanaTheme2
 ): HeatmapData => {
-  if (frame.meta?.type !== DataFrameType.HeatmapSparse) {
+  if (frame.meta?.type !== DataFrameType.HeatmapCells || isHeatmapCellsDense(frame)) {
     return {
       warning: 'Expected sparse heatmap format',
       heatmap: frame,
@@ -112,14 +117,24 @@ const getSparseHeatmapData = (
   // cell value display
   const disp = updateFieldDisplay(frame.fields[3], options.cellValues, theme);
 
+  let [minValue, maxValue] = boundedMinMax(
+    frame.fields[3].values.toArray(),
+    options.color.min,
+    options.color.max,
+    options.filterValues?.le,
+    options.filterValues?.ge
+  );
+
   return {
     heatmap: frame,
+    minValue,
+    maxValue,
     exemplars,
     display: (v) => formattedValueToString(disp(v)),
   };
 };
 
-const getHeatmapData = (
+const getDenseHeatmapData = (
   frame: DataFrame,
   exemplars: DataFrame | undefined,
   options: PanelOptions,
@@ -201,6 +216,14 @@ const getHeatmapData = (
   let yBinIncr = ys[1] - ys[0];
   let xBinIncr = xs[yBinQty] - xs[0];
 
+  let [minValue, maxValue] = boundedMinMax(
+    valueField.values.toArray(),
+    options.color.min,
+    options.color.max,
+    options.filterValues?.le,
+    options.filterValues?.ge
+  );
+
   const data: HeatmapData = {
     heatmap: frame,
     exemplars: exemplars?.length ? exemplars : undefined,
@@ -208,6 +231,9 @@ const getHeatmapData = (
     yBucketSize: yBinIncr,
     xBucketCount: xBinQty,
     yBucketCount: yBinQty,
+
+    minValue,
+    maxValue,
 
     // TODO: improve heuristic
     xLayout:

@@ -17,7 +17,7 @@ import {
 } from '@grafana/data';
 import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';
-import { readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
+import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 import { HeatmapCellLayout } from 'app/features/transformers/calculateHeatmap/models.gen';
 
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
@@ -72,8 +72,6 @@ interface PrepConfigOpts {
   cellGap?: number | null; // in css pixels
   hideLE?: number;
   hideGE?: number;
-  valueMin?: number;
-  valueMax?: number;
   yAxisConfig: YAxisConfig;
   ySizeDivisor?: number;
   sync?: () => DashboardCursorSync;
@@ -94,8 +92,6 @@ export function prepConfig(opts: PrepConfigOpts) {
     cellGap,
     hideLE,
     hideGE,
-    valueMin,
-    valueMax,
     yAxisConfig,
     ySizeDivisor,
     sync,
@@ -264,7 +260,8 @@ export function prepConfig(opts: PrepConfigOpts) {
   const yFieldConfig = yField.config?.custom as PanelFieldConfig | undefined;
   const yScale = yFieldConfig?.scaleDistribution ?? { type: ScaleDistribution.Linear };
   const yAxisReverse = Boolean(yAxisConfig.reverse);
-  const shouldUseLogScale = yScale.type !== ScaleDistribution.Linear || heatmapType === DataFrameType.HeatmapSparse;
+  const isSparseHeatmap = heatmapType === DataFrameType.HeatmapCells && !isHeatmapCellsDense(dataRef.current?.heatmap!);
+  const shouldUseLogScale = yScale.type !== ScaleDistribution.Linear || isSparseHeatmap;
   const isOrdianalY = readHeatmapRowsCustomMeta(dataRef.current?.heatmap).yOrdinalDisplay != null;
 
   // random to prevent syncing y in other heatmaps
@@ -282,7 +279,7 @@ export function prepConfig(opts: PrepConfigOpts) {
     log: yScale.log ?? 2,
     range:
       // sparse already accounts for le/ge by explicit yMin & yMax cell bounds, so no need to expand y range
-      heatmapType === DataFrameType.HeatmapSparse
+      isSparseHeatmap
         ? (u, dataMin, dataMax) => {
             let scaleMin: number | null, scaleMax: number | null;
 
@@ -432,7 +429,7 @@ export function prepConfig(opts: PrepConfigOpts) {
           if (meta.yOrdinalDisplay) {
             return splits.map((v) =>
               v < 0
-                ? meta.yZeroDisplay ?? '' // Check prometheus style labels
+                ? meta.yMinDisplay ?? '' // Check prometheus style labels
                 : meta.yOrdinalDisplay[v] ?? ''
             );
           }
@@ -441,7 +438,7 @@ export function prepConfig(opts: PrepConfigOpts) {
       : undefined,
   });
 
-  const pathBuilder = heatmapType === DataFrameType.HeatmapCells ? heatmapPathsDense : heatmapPathsSparse;
+  const pathBuilder = isSparseHeatmap ? heatmapPathsSparse : heatmapPathsDense;
 
   // heatmap layer
   builder.addSeries({
@@ -485,8 +482,13 @@ export function prepConfig(opts: PrepConfigOpts) {
       disp: {
         fill: {
           values: (u, seriesIdx) => {
-            let countFacetIdx = heatmapType === DataFrameType.HeatmapCells ? 2 : 3;
-            return valuesToFills(u.data[seriesIdx][countFacetIdx] as unknown as number[], palette, valueMin, valueMax);
+            let countFacetIdx = !isSparseHeatmap ? 2 : 3;
+            return valuesToFills(
+              u.data[seriesIdx][countFacetIdx] as unknown as number[],
+              palette,
+              dataRef.current?.minValue!,
+              dataRef.current?.maxValue!
+            );
           },
           index: palette,
         },
@@ -886,12 +888,20 @@ export function heatmapPathsSparse(opts: PathbuilderOpts) {
   };
 }
 
-export const valuesToFills = (values: number[], palette: string[], minValue?: number, maxValue?: number) => {
+export const boundedMinMax = (
+  values: number[],
+  minValue?: number,
+  maxValue?: number,
+  hideLE = -Infinity,
+  hideGE = Infinity
+) => {
   if (minValue == null) {
     minValue = Infinity;
 
     for (let i = 0; i < values.length; i++) {
-      minValue = Math.min(minValue, values[i]);
+      if (values[i] > hideLE && values[i] < hideGE) {
+        minValue = Math.min(minValue, values[i]);
+      }
     }
   }
 
@@ -899,10 +909,16 @@ export const valuesToFills = (values: number[], palette: string[], minValue?: nu
     maxValue = -Infinity;
 
     for (let i = 0; i < values.length; i++) {
-      maxValue = Math.max(maxValue, values[i]);
+      if (values[i] > hideLE && values[i] < hideGE) {
+        maxValue = Math.max(maxValue, values[i]);
+      }
     }
   }
 
+  return [minValue, maxValue];
+};
+
+export const valuesToFills = (values: number[], palette: string[], minValue: number, maxValue: number) => {
   let range = maxValue - minValue;
 
   let paletteSize = palette.length;
