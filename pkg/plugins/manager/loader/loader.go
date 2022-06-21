@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -39,17 +40,18 @@ type Loader struct {
 	pluginInitializer  initializer.Initializer
 	signatureValidator signature.Validator
 	log                log.Logger
+	ac                 accesscontrol.AccessControl
 
 	errs map[string]*plugins.SignatureError
 }
 
 func ProvideService(cfg *setting.Cfg, license models.Licensing, authorizer plugins.PluginLoaderAuthorizer,
-	backendProvider plugins.BackendFactoryProvider) (*Loader, error) {
-	return New(plugins.FromGrafanaCfg(cfg), license, authorizer, backendProvider), nil
+	backendProvider plugins.BackendFactoryProvider, ac accesscontrol.AccessControl) (*Loader, error) {
+	return New(plugins.FromGrafanaCfg(cfg), license, authorizer, backendProvider, ac), nil
 }
 
 func New(cfg *plugins.Cfg, license models.Licensing, authorizer plugins.PluginLoaderAuthorizer,
-	backendProvider plugins.BackendFactoryProvider) *Loader {
+	backendProvider plugins.BackendFactoryProvider, ac accesscontrol.AccessControl) *Loader {
 	return &Loader{
 		cfg:                cfg,
 		pluginFinder:       finder.New(),
@@ -57,6 +59,7 @@ func New(cfg *plugins.Cfg, license models.Licensing, authorizer plugins.PluginLo
 		signatureValidator: signature.NewValidator(authorizer),
 		errs:               make(map[string]*plugins.SignatureError),
 		log:                log.New("plugin.loader"),
+		ac:                 ac,
 	}
 }
 
@@ -178,6 +181,7 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 			return nil, err
 		}
 		metrics.SetPluginBuildInformation(p.ID, string(p.Type), p.Info.Version, string(p.Signature))
+		l.ac.DeclareFixedRoles(plugins.FixedRoleFromPlugin(p)...)
 	}
 
 	return verifiedPlugins, nil
