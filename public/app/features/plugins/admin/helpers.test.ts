@@ -156,7 +156,7 @@ describe('Plugins/Helpers', () => {
         hasUpdate: false,
         isCore: false,
         isDev: false,
-        isDisabled: false,
+        isDisabled: true,
         isEnterprise: false,
         isInstalled: true,
         isPublished: false,
