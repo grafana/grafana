@@ -1,7 +1,7 @@
 import { EmailNotificationChannel } from '../NotificationChannel.types';
 import { notificationChannelStubs } from '../__mocks__/notificationChannelStubs';
 
-import { TYPE_OPTIONS } from './AddNotificationChannel.constants';
+import { PAGER_DUTY_TYPE_OPTIONS, TYPE_OPTIONS } from './AddNotificationChannel.constants';
 import { getInitialValues } from './AddNotificationChannelModal.utils';
 
 describe('AddNotificationChannelModal.utils', () => {
@@ -19,6 +19,14 @@ describe('AddNotificationChannelModal.utils', () => {
   it('should return correct initial values without notification channel', () => {
     const initialValues = getInitialValues();
 
-    expect(initialValues).toEqual({ type: TYPE_OPTIONS[0] });
+    expect(initialValues).toEqual({
+      name: '',
+      type: TYPE_OPTIONS[0],
+      keyType: PAGER_DUTY_TYPE_OPTIONS[0].value,
+      routing: '',
+      service: '',
+      emails: '',
+      channel: '',
+    });
   });
 });

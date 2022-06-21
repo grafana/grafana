@@ -1,6 +1,6 @@
 import { Modal, LoaderButton, TextInputField, validators, logger } from '@percona/platform-core';
-import React, { FC, useContext, useCallback } from 'react';
-import { Form, Field } from 'react-final-form';
+import React, { FC, useContext } from 'react';
+import { withTypes, Field } from 'react-final-form';
 
 import { AppEvents } from '@grafana/data';
 import { HorizontalGroup, Select, Button, useStyles } from '@grafana/ui';
@@ -8,15 +8,39 @@ import { appEvents } from 'app/core/core';
 
 import { NotificationChannelProvider } from '../NotificationChannel.provider';
 import { NotificationChannelService } from '../NotificationChannel.service';
-import { NotificationChannelRenderProps } from '../NotificationChannel.types';
+import {
+  NotificationChannelRenderProps,
+  NotificationChannelType,
+  PagerDutyKeyType,
+} from '../NotificationChannel.types';
 
-import { TYPE_OPTIONS, TYPE_FIELDS_COMPONENT } from './AddNotificationChannel.constants';
+import { TYPE_OPTIONS } from './AddNotificationChannel.constants';
 import { Messages } from './AddNotificationChannelModal.messages';
 import { getStyles } from './AddNotificationChannelModal.styles';
 import { AddNotificationChannelModalProps } from './AddNotificationChannelModal.types';
 import { getInitialValues } from './AddNotificationChannelModal.utils';
+import { EmailFields } from './EmailFields/EmailFields';
+import { PagerDutyFields } from './PagerDutyFields/PagerDutyFields';
+import { SlackFields } from './SlackFields/SlackFields';
 
 const { required } = validators;
+// Our "values" typings won't be right without using this
+const { Form } = withTypes<NotificationChannelRenderProps>();
+
+const TypeField: FC<{ values: NotificationChannelRenderProps }> = ({ values }) => {
+  const { type } = values;
+
+  switch (type.value) {
+    case NotificationChannelType.email:
+      return <EmailFields />;
+    case NotificationChannelType.pagerDuty:
+      return <PagerDutyFields values={values} />;
+    case NotificationChannelType.slack:
+      return <SlackFields />;
+    default:
+      return null;
+  }
+};
 
 export const AddNotificationChannelModal: FC<AddNotificationChannelModalProps> = ({
   isVisible,
@@ -27,11 +51,19 @@ export const AddNotificationChannelModal: FC<AddNotificationChannelModalProps> =
   const initialValues = getInitialValues(notificationChannel);
   const { getNotificationChannels } = useContext(NotificationChannelProvider);
   const onSubmit = async (values: NotificationChannelRenderProps) => {
+    const submittedValues = { ...values };
+
+    if (submittedValues.keyType === PagerDutyKeyType.routing) {
+      submittedValues.service = '';
+    } else {
+      submittedValues.routing = '';
+    }
+
     try {
       if (notificationChannel) {
-        await NotificationChannelService.change(notificationChannel.channelId, values);
+        await NotificationChannelService.change(notificationChannel.channelId, submittedValues);
       } else {
-        await NotificationChannelService.add(values);
+        await NotificationChannelService.add(submittedValues);
       }
       setVisible(false);
       appEvents.emit(AppEvents.alertSuccess, [notificationChannel ? Messages.editSuccess : Messages.addSuccess]);
@@ -40,11 +72,6 @@ export const AddNotificationChannelModal: FC<AddNotificationChannelModalProps> =
       logger.error(e);
     }
   };
-  const renderTypeFields = useCallback((values: NotificationChannelRenderProps) => {
-    const TypeFields = TYPE_FIELDS_COMPONENT[values.type.value];
-
-    return <TypeFields values={values} />;
-  }, []);
 
   return (
     <Modal title={Messages.title} isVisible={isVisible} onClose={() => setVisible(false)}>
@@ -65,7 +92,7 @@ export const AddNotificationChannelModal: FC<AddNotificationChannelModalProps> =
                   </>
                 )}
               </Field>
-              {renderTypeFields(values)}
+              <TypeField values={values} />
               <HorizontalGroup justify="center" spacing="md">
                 <LoaderButton
                   data-qa="notification-channel-add-button"
