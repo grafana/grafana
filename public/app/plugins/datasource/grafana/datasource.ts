@@ -156,11 +156,6 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
   }
 
   async getAnnotations(options: AnnotationQueryRequest<GrafanaQuery>): Promise<DataQueryResponse> {
-    // If dashboard is public we should not return annotations
-    if (options.dashboard.meta.isPublic) {
-      return Promise.resolve({ data: [] });
-    }
-
     const templateSrv = getTemplateSrv();
     const annotation = options.annotation as unknown as AnnotationQuery<GrafanaAnnotationQuery>;
     const target = annotation.target!;
