@@ -13,8 +13,6 @@ const setup = (propOverrides?: Partial<Props>) => {
     ...propOverrides,
   };
 
-  Object.assign(props);
-
   return render(<DataLinks {...props} />);
 };
 
