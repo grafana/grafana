@@ -13,7 +13,7 @@ export { DeleteButton } from './ConfirmButton/DeleteButton';
 export { Tooltip } from './Tooltip/Tooltip';
 export { PopoverContent } from './Tooltip/types';
 export { PopoverController } from './Tooltip/PopoverController';
-export { Popover } from './Tooltip/Popover';
+export { Popover, PopoverProps } from './Tooltip/Popover';
 export { Portal, getPortalContainer, PortalContainer } from './Portal/Portal';
 export { CustomScrollbar, ScrollbarPosition } from './CustomScrollbar/CustomScrollbar';
 export { TabbedContainer, TabConfig } from './TabbedContainer/TabbedContainer';

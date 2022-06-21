@@ -23,7 +23,7 @@ const transitionStyles: { [key: string]: object } = {
 
 export type RenderPopperArrowFn = (props: { arrowProps: PopperArrowProps; placement: string }) => JSX.Element;
 
-interface Props extends React.HTMLAttributes<HTMLDivElement> {
+export interface PopoverProps extends React.HTMLAttributes<HTMLDivElement> {
   show: boolean;
   placement?: Placement;
   content: PopoverContent;
@@ -32,7 +32,7 @@ interface Props extends React.HTMLAttributes<HTMLDivElement> {
   renderArrow?: RenderPopperArrowFn;
 }
 
-class Popover extends PureComponent<Props> {
+class Popover extends PureComponent<PopoverProps> {
   render() {
     const {
       content,
