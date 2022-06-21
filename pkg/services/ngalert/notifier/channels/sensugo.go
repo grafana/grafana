@@ -147,6 +147,7 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 			// one image per request.
 			if image != nil && image.URL != "" && imageURL == "" {
 				imageURL = image.URL
+				return ErrImagesDone
 			}
 			return nil
 		}, as...)

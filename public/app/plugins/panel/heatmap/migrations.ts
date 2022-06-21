@@ -77,9 +77,6 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
         },
       };
     }
-
-    fieldConfig.defaults.unit = oldYAxis.format;
-    fieldConfig.defaults.decimals = oldYAxis.decimals;
   }
 
   const options: PanelOptions = {
@@ -94,9 +91,14 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
     yAxis: {
       axisPlacement: oldYAxis.show === false ? AxisPlacement.Hidden : AxisPlacement.Left,
       reverse: Boolean(angular.reverseYBuckets),
-      axisWidth: oldYAxis.width ? +oldYAxis.width : undefined,
+      axisWidth: asNumber(oldYAxis.width),
       min: oldYAxis.min,
       max: oldYAxis.max,
+      unit: oldYAxis.format,
+      decimals: oldYAxis.decimals,
+    },
+    cellValues: {
+      decimals: asNumber(angular.tooltipDecimals),
     },
     rowsFrame: {
       layout: getHeatmapCellLayout(angular.yBucketBound),

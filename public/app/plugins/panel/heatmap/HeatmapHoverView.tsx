@@ -1,9 +1,9 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import { DataFrameType, Field, FieldType, formattedValueToString, getFieldDisplayName, LinkModel } from '@grafana/data';
 import { LinkButton, VerticalGroup } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { readHeatmapScanlinesCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
+import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 import { HeatmapCellLayout } from 'app/features/transformers/calculateHeatmap/models.gen';
 
 import { DataHoverView } from '../geomap/components/DataHoverView';
@@ -47,7 +47,7 @@ const HeatmapHoverCell = ({ data, hover, showHistogram }: Props) => {
   const countVals = countField?.values.toArray();
 
   // labeled buckets
-  const meta = readHeatmapScanlinesCustomMeta(data.heatmap);
+  const meta = readHeatmapRowsCustomMeta(data.heatmap);
   const yDispSrc = meta.yOrdinalDisplay ?? yVals;
   const yDisp = yField?.display ? (v: any) => formattedValueToString(yField.display!(v)) : (v: any) => `${v}`;
 
@@ -154,7 +154,11 @@ const HeatmapHoverCell = ({ data, hover, showHistogram }: Props) => {
     [index]
   );
 
-  if (data.heatmap?.meta?.type === DataFrameType.HeatmapSparse) {
+  const [isSparse] = useState(
+    () => data.heatmap?.meta?.type === DataFrameType.HeatmapCells && !isHeatmapCellsDense(data.heatmap)
+  );
+
+  if (isSparse) {
     return (
       <div>
         <DataHoverView data={data.heatmap} rowIndex={index} />
