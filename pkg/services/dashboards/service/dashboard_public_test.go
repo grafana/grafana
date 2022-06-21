@@ -229,7 +229,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 
 				IsEnabled:    true,
 				TimeSettings: timeSettings,
-				AccessToken: "NOTAREALUUID",
+				AccessToken:  "NOTAREALUUID",
 			},
 		}
 
