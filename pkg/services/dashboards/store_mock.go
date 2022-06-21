@@ -319,13 +319,13 @@ func (_m *FakeDashboardStore) GetProvisionedDataByDashboardUID(orgID int64, dash
 	return r0, r1
 }
 
-// GetPublicDashboard provides a mock function with given fields: ctx, uid
-func (_m *FakeDashboardStore) GetPublicDashboard(ctx context.Context, uid string) (*models.PublicDashboard, *models.Dashboard, error) {
-	ret := _m.Called(ctx, uid)
+// GetPublicDashboard provides a mock function with given fields: ctx, accessToken
+func (_m *FakeDashboardStore) GetPublicDashboard(ctx context.Context, accessToken string) (*models.PublicDashboard, *models.Dashboard, error) {
+	ret := _m.Called(ctx, accessToken)
 
 	var r0 *models.PublicDashboard
 	if rf, ok := ret.Get(0).(func(context.Context, string) *models.PublicDashboard); ok {
-		r0 = rf(ctx, uid)
+		r0 = rf(ctx, accessToken)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*models.PublicDashboard)
@@ -334,7 +334,7 @@ func (_m *FakeDashboardStore) GetPublicDashboard(ctx context.Context, uid string
 
 	var r1 *models.Dashboard
 	if rf, ok := ret.Get(1).(func(context.Context, string) *models.Dashboard); ok {
-		r1 = rf(ctx, uid)
+		r1 = rf(ctx, accessToken)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(*models.Dashboard)
@@ -343,7 +343,7 @@ func (_m *FakeDashboardStore) GetPublicDashboard(ctx context.Context, uid string
 
 	var r2 error
 	if rf, ok := ret.Get(2).(func(context.Context, string) error); ok {
-		r2 = rf(ctx, uid)
+		r2 = rf(ctx, accessToken)
 	} else {
 		r2 = ret.Error(2)
 	}

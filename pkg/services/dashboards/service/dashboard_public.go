@@ -2,16 +2,18 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"time"
 
+	"github.com/gofrs/uuid"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 )
 
-// Gets public dashboard via generated Uid
-func (dr *DashboardServiceImpl) GetPublicDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error) {
-	pubdash, d, err := dr.dashboardStore.GetPublicDashboard(ctx, dashboardUid)
+// Gets public dashboard via access token
+func (dr *DashboardServiceImpl) GetPublicDashboard(ctx context.Context, accessToken string) (*models.Dashboard, error) {
+	pubdash, d, err := dr.dashboardStore.GetPublicDashboard(ctx, accessToken)
 
 	if err != nil {
 		return nil, err
@@ -50,14 +52,19 @@ func (dr *DashboardServiceImpl) SavePublicDashboardConfig(ctx context.Context, d
 	}
 
 	if dto.PublicDashboard.Uid == "" {
-		return dr.savePublicDashboardConfig(context.Background(), dto)
+		return dr.savePublicDashboardConfig(ctx, dto)
 	}
 
-	return dr.updatePublicDashboardConfig(context.Background(), dto)
+	return dr.updatePublicDashboardConfig(ctx, dto)
 }
 
 func (dr *DashboardServiceImpl) savePublicDashboardConfig(ctx context.Context, dto *dashboards.SavePublicDashboardConfigDTO) (*models.PublicDashboard, error) {
 	uid, err := dr.dashboardStore.GenerateNewPublicDashboardUid(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	accessToken, err := GenerateAccessToken()
 	if err != nil {
 		return nil, err
 	}
@@ -73,6 +80,7 @@ func (dr *DashboardServiceImpl) savePublicDashboardConfig(ctx context.Context, d
 			TimeSettings: dto.PublicDashboard.TimeSettings,
 			CreatedBy:    dto.UserId,
 			CreatedAt:    time.Now(),
+			AccessToken:  accessToken,
 		},
 	}
 
@@ -81,8 +89,6 @@ func (dr *DashboardServiceImpl) savePublicDashboardConfig(ctx context.Context, d
 
 func (dr *DashboardServiceImpl) updatePublicDashboardConfig(ctx context.Context, dto *dashboards.SavePublicDashboardConfigDTO) (*models.PublicDashboard, error) {
 	cmd := models.SavePublicDashboardConfigCommand{
-		DashboardUid: dto.DashboardUid,
-		OrgId:        dto.OrgId,
 		PublicDashboard: models.PublicDashboard{
 			Uid:          dto.PublicDashboard.Uid,
 			IsEnabled:    dto.PublicDashboard.IsEnabled,
@@ -95,8 +101,8 @@ func (dr *DashboardServiceImpl) updatePublicDashboardConfig(ctx context.Context,
 	return dr.dashboardStore.UpdatePublicDashboardConfig(ctx, cmd)
 }
 
-func (dr *DashboardServiceImpl) BuildPublicDashboardMetricRequest(ctx context.Context, publicDashboardUid string, panelId int64) (dtos.MetricRequest, error) {
-	publicDashboard, dashboard, err := dr.dashboardStore.GetPublicDashboard(ctx, publicDashboardUid)
+func (dr *DashboardServiceImpl) BuildPublicDashboardMetricRequest(ctx context.Context, publicDashboardAccessToken string, panelId int64) (dtos.MetricRequest, error) {
+	publicDashboard, dashboard, err := dr.dashboardStore.GetPublicDashboard(ctx, publicDashboardAccessToken)
 	if err != nil {
 		return dtos.MetricRequest{}, err
 	}
@@ -118,4 +124,14 @@ func (dr *DashboardServiceImpl) BuildPublicDashboardMetricRequest(ctx context.Co
 		To:      ts.To,
 		Queries: queriesByPanel[panelId],
 	}, nil
+}
+
+// generates a uuid formatted without dashes to use as access token
+func GenerateAccessToken() (string, error) {
+	token, err := uuid.NewV4()
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%x", token), nil
 }

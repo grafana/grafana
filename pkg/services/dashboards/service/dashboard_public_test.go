@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gofrs/uuid"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -29,63 +30,63 @@ func TestGetPublicDashboard(t *testing.T) {
 	}
 
 	testCases := []struct {
-		name      string
-		uid       string
-		storeResp *storeResp
-		errResp   error
-		dashResp  *models.Dashboard
+		Name        string
+		AccessToken string
+		StoreResp   *storeResp
+		ErrResp     error
+		DashResp    *models.Dashboard
 	}{
 		{
-			name: "returns a dashboard",
-			uid:  "abc123",
-			storeResp: &storeResp{
+			Name:        "returns a dashboard",
+			AccessToken: "abc123",
+			StoreResp: &storeResp{
 				pd:  &models.PublicDashboard{IsEnabled: true},
 				d:   &models.Dashboard{Uid: "mydashboard", Data: dashboardData},
 				err: nil,
 			},
-			errResp:  nil,
-			dashResp: &models.Dashboard{Uid: "mydashboard", Data: dashboardData},
+			ErrResp:  nil,
+			DashResp: &models.Dashboard{Uid: "mydashboard", Data: dashboardData},
 		},
 		{
-			name: "puts pubdash time settings into dashboard",
-			uid:  "abc123",
-			storeResp: &storeResp{
+			Name:        "puts pubdash time settings into dashboard",
+			AccessToken: "abc123",
+			StoreResp: &storeResp{
 				pd:  &models.PublicDashboard{IsEnabled: true, TimeSettings: timeSettings},
 				d:   &models.Dashboard{Data: dashboardData},
 				err: nil,
 			},
-			errResp:  nil,
-			dashResp: &models.Dashboard{Data: mergedDashboardData},
+			ErrResp:  nil,
+			DashResp: &models.Dashboard{Data: mergedDashboardData},
 		},
 		{
-			name: "returns ErrPublicDashboardNotFound when isEnabled is false",
-			uid:  "abc123",
-			storeResp: &storeResp{
+			Name:        "returns ErrPublicDashboardNotFound when isEnabled is false",
+			AccessToken: "abc123",
+			StoreResp: &storeResp{
 				pd:  &models.PublicDashboard{IsEnabled: false},
 				d:   &models.Dashboard{Uid: "mydashboard"},
 				err: nil,
 			},
-			errResp:  models.ErrPublicDashboardNotFound,
-			dashResp: nil,
+			ErrResp:  models.ErrPublicDashboardNotFound,
+			DashResp: nil,
 		},
 		{
-			name:      "returns ErrPublicDashboardNotFound if PublicDashboard missing",
-			uid:       "abc123",
-			storeResp: &storeResp{pd: nil, d: nil, err: nil},
-			errResp:   models.ErrPublicDashboardNotFound,
-			dashResp:  nil,
+			Name:        "returns ErrPublicDashboardNotFound if PublicDashboard missing",
+			AccessToken: "abc123",
+			StoreResp:   &storeResp{pd: nil, d: nil, err: nil},
+			ErrResp:     models.ErrPublicDashboardNotFound,
+			DashResp:    nil,
 		},
 		{
-			name:      "returns ErrPublicDashboardNotFound if Dashboard missing",
-			uid:       "abc123",
-			storeResp: &storeResp{pd: nil, d: nil, err: nil},
-			errResp:   models.ErrPublicDashboardNotFound,
-			dashResp:  nil,
+			Name:        "returns ErrPublicDashboardNotFound if Dashboard missing",
+			AccessToken: "abc123",
+			StoreResp:   &storeResp{pd: nil, d: nil, err: nil},
+			ErrResp:     models.ErrPublicDashboardNotFound,
+			DashResp:    nil,
 		},
 	}
 
 	for _, test := range testCases {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run(test.Name, func(t *testing.T) {
 			fakeStore := dashboards.FakeDashboardStore{}
 			service := &DashboardServiceImpl{
 				log:            log.New("test.logger"),
@@ -93,18 +94,18 @@ func TestGetPublicDashboard(t *testing.T) {
 			}
 
 			fakeStore.On("GetPublicDashboard", mock.Anything, mock.Anything).
-				Return(test.storeResp.pd, test.storeResp.d, test.storeResp.err)
+				Return(test.StoreResp.pd, test.StoreResp.d, test.StoreResp.err)
 
-			dashboard, err := service.GetPublicDashboard(context.Background(), test.uid)
-			if test.errResp != nil {
-				assert.Error(t, test.errResp, err)
+			dashboard, err := service.GetPublicDashboard(context.Background(), test.AccessToken)
+			if test.ErrResp != nil {
+				assert.Error(t, test.ErrResp, err)
 			} else {
 				require.NoError(t, err)
 			}
 
-			assert.Equal(t, test.dashResp, dashboard)
+			assert.Equal(t, test.DashResp, dashboard)
 
-			if test.dashResp != nil {
+			if test.DashResp != nil {
 				assert.NotNil(t, dashboard.CreatedBy)
 			}
 		})
@@ -150,6 +151,9 @@ func TestSavePublicDashboard(t *testing.T) {
 		assert.NotEqual(t, &time.Time{}, pubdash.CreatedAt)
 		// Time settings set by db
 		assert.Equal(t, timeSettings, pubdash.TimeSettings)
+		// accessToken is valid uuid
+		_, err = uuid.FromString(pubdash.AccessToken)
+		require.NoError(t, err)
 	})
 
 	t.Run("Validate pubdash has default time setting value", func(t *testing.T) {
@@ -211,6 +215,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 		savedPubdash, err := service.GetPublicDashboardConfig(context.Background(), dashboard.OrgId, dashboard.Uid)
 		require.NoError(t, err)
 
+		// attempt to overwrite settings
 		dto = &dashboards.SavePublicDashboardConfigDTO{
 			DashboardUid: dashboard.Uid,
 			OrgId:        dashboard.OrgId,
@@ -224,6 +229,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 
 				IsEnabled:    true,
 				TimeSettings: timeSettings,
+				AccessToken: "NOTAREALUUID",
 			},
 		}
 
@@ -238,6 +244,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 		assert.Equal(t, savedPubdash.OrgId, updatedPubdash.OrgId)
 		assert.Equal(t, savedPubdash.CreatedAt, updatedPubdash.CreatedAt)
 		assert.Equal(t, savedPubdash.CreatedBy, updatedPubdash.CreatedBy)
+		assert.Equal(t, savedPubdash.AccessToken, updatedPubdash.AccessToken)
 
 		// gets updated
 		assert.Equal(t, dto.PublicDashboard.IsEnabled, updatedPubdash.IsEnabled)
@@ -289,7 +296,7 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 	t.Run("extracts queries from provided dashboard", func(t *testing.T) {
 		reqDTO, err := service.BuildPublicDashboardMetricRequest(
 			context.Background(),
-			pubdash.Uid,
+			pubdash.AccessToken,
 			1,
 		)
 		require.NoError(t, err)
@@ -324,7 +331,7 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 	t.Run("returns an error when panel missing", func(t *testing.T) {
 		_, err := service.BuildPublicDashboardMetricRequest(
 			context.Background(),
-			pubdash.Uid,
+			pubdash.AccessToken,
 			49,
 		)
 

@@ -15,7 +15,7 @@ func addPublicDashboardMigration(mg *Migrator) {
 			{Name: "time_settings", Type: DB_Text, Nullable: false, Default: "'{}'"},
 			{Name: "template_variables", Type: DB_MediumText, Nullable: true},
 
-			//{Name: "access_token", Type: DB_NVarchar, Length: 32},
+			{Name: "access_token", Type: DB_NVarchar, Length: 16, Nullable: false},
 
 			{Name: "created_by", Type: DB_Int, Nullable: false},
 			{Name: "updated_by", Type: DB_Int, Nullable: true},
@@ -26,7 +26,7 @@ func addPublicDashboardMigration(mg *Migrator) {
 		Indices: []*Index{
 			{Cols: []string{"uid"}, Type: UniqueIndex},
 			{Cols: []string{"org_id", "dashboard_uid"}},
-			//{Cols: []string{"access_token"}, Type: UniqueIndex},
+			{Cols: []string{"access_token"}, Type: UniqueIndex},
 		},
 	}
 	mg.AddMigration("create dashboard public config v1", NewAddTableMigration(dashboardPublicCfgV1))

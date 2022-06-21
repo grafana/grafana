@@ -11,6 +11,10 @@ var (
 		Reason:     "Failed to generate unique public dashboard id",
 		StatusCode: 500,
 	}
+	ErrPublicDashboardFailedGenerateAccesstoken = DashboardErr{
+		Reason:     "Failed to public dashboard access token",
+		StatusCode: 500,
+	}
 	ErrPublicDashboardNotFound = DashboardErr{
 		Reason:     "Public dashboard not found",
 		StatusCode: 404,
@@ -33,6 +37,7 @@ type PublicDashboard struct {
 	OrgId        int64            `json:"-" xorm:"org_id"` // Don't ever marshal orgId to Json
 	TimeSettings *simplejson.Json `json:"timeSettings" xorm:"time_settings"`
 	IsEnabled    bool             `json:"isEnabled" xorm:"is_enabled"`
+	AccessToken  string           `json:"accessToken" xorm:"access_token"`
 
 	CreatedBy int64 `json:"createdBy" xorm:"created_by"`
 	UpdatedBy int64 `json:"updatedBy" xorm:"updated_by"`

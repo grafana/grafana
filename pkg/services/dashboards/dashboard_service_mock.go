@@ -18,20 +18,20 @@ type FakeDashboardService struct {
 	mock.Mock
 }
 
-// BuildPublicDashboardMetricRequest provides a mock function with given fields: ctx, publicDashboardUid, panelId
-func (_m *FakeDashboardService) BuildPublicDashboardMetricRequest(ctx context.Context, publicDashboardUid string, panelId int64) (dtos.MetricRequest, error) {
-	ret := _m.Called(ctx, publicDashboardUid, panelId)
+// BuildPublicDashboardMetricRequest provides a mock function with given fields: ctx, accessToken, panelId
+func (_m *FakeDashboardService) BuildPublicDashboardMetricRequest(ctx context.Context, accessToken string, panelId int64) (dtos.MetricRequest, error) {
+	ret := _m.Called(ctx, accessToken, panelId)
 
 	var r0 dtos.MetricRequest
 	if rf, ok := ret.Get(0).(func(context.Context, string, int64) dtos.MetricRequest); ok {
-		r0 = rf(ctx, publicDashboardUid, panelId)
+		r0 = rf(ctx, accessToken, panelId)
 	} else {
 		r0 = ret.Get(0).(dtos.MetricRequest)
 	}
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, string, int64) error); ok {
-		r1 = rf(ctx, publicDashboardUid, panelId)
+		r1 = rf(ctx, accessToken, panelId)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -169,13 +169,13 @@ func (_m *FakeDashboardService) GetDashboards(ctx context.Context, query *models
 	return r0
 }
 
-// GetPublicDashboard provides a mock function with given fields: ctx, publicDashboardUid
-func (_m *FakeDashboardService) GetPublicDashboard(ctx context.Context, publicDashboardUid string) (*models.Dashboard, error) {
-	ret := _m.Called(ctx, publicDashboardUid)
+// GetPublicDashboard provides a mock function with given fields: ctx, accessToken
+func (_m *FakeDashboardService) GetPublicDashboard(ctx context.Context, accessToken string) (*models.Dashboard, error) {
+	ret := _m.Called(ctx, accessToken)
 
 	var r0 *models.Dashboard
 	if rf, ok := ret.Get(0).(func(context.Context, string) *models.Dashboard); ok {
-		r0 = rf(ctx, publicDashboardUid)
+		r0 = rf(ctx, accessToken)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*models.Dashboard)
@@ -184,7 +184,7 @@ func (_m *FakeDashboardService) GetPublicDashboard(ctx context.Context, publicDa
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, publicDashboardUid)
+		r1 = rf(ctx, accessToken)
 	} else {
 		r1 = ret.Error(1)
 	}

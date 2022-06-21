@@ -25,6 +25,7 @@ export interface InitDashboardArgs {
   urlSlug?: string;
   urlType?: string;
   urlFolderId?: string | null;
+  accessToken?: string;
   routeName?: string;
   fixUrl: boolean;
 }
@@ -61,7 +62,7 @@ async function fetchDashboard(
         return dashDTO;
       }
       case DashboardRoutes.Public: {
-        return await dashboardLoaderSrv.loadDashboard('public', args.urlSlug, args.urlUid);
+        return await dashboardLoaderSrv.loadDashboard('public', args.urlSlug, args.accessToken);
       }
       case DashboardRoutes.Normal: {
         const dashDTO: DashboardDTO = await dashboardLoaderSrv.loadDashboard(args.urlType, args.urlSlug, args.urlUid);

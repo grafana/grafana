@@ -43,11 +43,12 @@ func TestIntegrationGetPublicDashboard(t *testing.T) {
 				TimeSettings: DefaultTimeSettings,
 				CreatedAt:    DefaultTime,
 				CreatedBy:    7,
+				AccessToken:  "NOTAREALUUID",
 			},
 		})
 		require.NoError(t, err)
 
-		pd, d, err := dashboardStore.GetPublicDashboard(context.Background(), "abc1234")
+		pd, d, err := dashboardStore.GetPublicDashboard(context.Background(), "NOTAREALUUID")
 		require.NoError(t, err)
 
 		assert.Equal(t, pd, pubdash)
@@ -164,6 +165,7 @@ func TestIntegrationSavePublicDashboardConfig(t *testing.T) {
 				TimeSettings: DefaultTimeSettings,
 				CreatedAt:    DefaultTime,
 				CreatedBy:    7,
+				AccessToken:  "NOTAREALUUID",
 			},
 		})
 		require.NoError(t, err)
@@ -184,7 +186,7 @@ func TestIntegrationSavePublicDashboardConfig(t *testing.T) {
 	})
 }
 
-func TestIntegrationnUpdatePublicDashboard(t *testing.T) {
+func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 	var sqlStore *sqlstore.SQLStore
 	var dashboardStore *DashboardStore
 	var savedDashboard *models.Dashboard
@@ -210,6 +212,7 @@ func TestIntegrationnUpdatePublicDashboard(t *testing.T) {
 				IsEnabled:    true,
 				CreatedAt:    DefaultTime,
 				CreatedBy:    7,
+				AccessToken:  "NOTAREALUUID",
 			},
 		})
 		require.NoError(t, err)
