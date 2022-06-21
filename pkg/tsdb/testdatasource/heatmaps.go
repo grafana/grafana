@@ -27,6 +27,9 @@ func getHeatmapData(query backend.DataQuery) backend.DataResponse {
 	switch q.Format {
 	// standard buckets format
 	case "":
+		q.Format = "heatmap-rows"
+		fallthrough
+	case "heatmap-rows":
 		fallthrough
 	case data.FrameTypeTimeSeriesWide:
 		fallthrough
@@ -46,9 +49,9 @@ func getHeatmapData(query backend.DataQuery) backend.DataResponse {
 				yMax = math.Max(yMax, v)
 				return v
 			})
-			if q.SetFrameType {
+			if !q.ExcludeFrameType {
 				frame.Meta = &data.FrameMeta{
-					Type: "heatmap-buckets",
+					Type: data.FrameType(q.Format),
 				}
 			}
 
@@ -148,12 +151,13 @@ func randomHeatmapData(query backend.DataQuery, fnBucketGen func(index int) floa
 
 	timeWalkerMs := query.TimeRange.From.UnixNano() / int64(time.Millisecond)
 	to := query.TimeRange.To.UnixNano() / int64(time.Millisecond)
+	r := rand.New(rand.NewSource(timeWalkerMs))
 
 	for j := int64(0); j < 100 && timeWalkerMs < to; j++ {
 		t := time.Unix(timeWalkerMs/int64(1e+3), (timeWalkerMs%int64(1e+3))*int64(1e+6))
 		vals := []interface{}{&t}
 		for n := 1; n < len(frame.Fields); n++ {
-			v := float64(rand.Int63n(100))
+			v := float64(r.Int63n(100))
 			vals = append(vals, &v)
 		}
 		frame.AppendRow(vals...)

@@ -7,10 +7,17 @@ import { EditorProps } from '../QueryEditor';
 import { HeatmapQuery } from '../types';
 
 const formats = [
-  { value: DataFrameType.TimeSeriesWide, label: DataFrameType.TimeSeriesWide + ' (buckets}' },
-  { value: DataFrameType.TimeSeriesMany, label: DataFrameType.TimeSeriesMany + ' (buckets}' },
-  { value: DataFrameType.HeatmapScanlines, label: DataFrameType.HeatmapScanlines },
-  { value: DataFrameType.HeatmapSparse, label: DataFrameType.HeatmapSparse },
+  { value: DataFrameType.HeatmapRows, label: 'Heatmap (rows)', description: 'Each field is a row in the timeseries' },
+  {
+    value: DataFrameType.HeatmapCells,
+    label: 'Heatmap (cells)',
+    description: 'Each row in the frame is a heatmap cell value',
+  },
+  {
+    value: DataFrameType.TimeSeriesMany,
+    label: 'Timeseries many',
+    description: 'Each heatmap row is sent as an independent frame.',
+  },
 ];
 
 const scales = [
@@ -38,7 +45,7 @@ export const HeatmapQueryEditor = ({ onChange, query }: EditorProps) => {
     onUpdate({ ...heatmap, exemplars: !Boolean(heatmap.exemplars) });
   };
   const onToggleFrameType = () => {
-    onUpdate({ ...heatmap, setFrameType: !Boolean(heatmap.setFrameType) });
+    onUpdate({ ...heatmap, excludeFrameType: !Boolean(heatmap.excludeFrameType) });
   };
   const onToggleNumericX = () => {
     onUpdate({ ...heatmap, numericX: !Boolean(heatmap.numericX) });
@@ -81,8 +88,8 @@ export const HeatmapQueryEditor = ({ onChange, query }: EditorProps) => {
         <InlineField labelWidth={14} label="Exemplars" tooltip="add an exemplars response">
           <InlineSwitch value={Boolean(heatmap.exemplars)} onChange={onToggleExemplars} />
         </InlineField>
-        <InlineField label="Set frame type" tooltip="include frameType in the response metadata">
-          <InlineSwitch value={Boolean(heatmap.setFrameType)} onChange={onToggleFrameType} />
+        <InlineField label="Exclude frame type" tooltip="include frameType in the response metadata">
+          <InlineSwitch value={Boolean(heatmap.excludeFrameType)} onChange={onToggleFrameType} />
         </InlineField>
         <InlineField label="Numeric X" tooltip="use a numeric value for X axis">
           <InlineSwitch value={Boolean(heatmap.numericX)} onChange={onToggleNumericX} />

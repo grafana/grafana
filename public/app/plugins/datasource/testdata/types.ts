@@ -48,7 +48,7 @@ export interface HeatmapQuery {
   scale?: 'linear' | 'log2' | 'alpha';
   nameAsLabel?: string;
   exemplars?: boolean;
-  setFrameType?: boolean;
+  excludeFrameType?: boolean;
   numericX?: boolean; // x does not need to be time
 }
 
