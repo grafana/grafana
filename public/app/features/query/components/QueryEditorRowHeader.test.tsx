@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { selectOptionInTest, getSelectParent } from 'test/helpers/selectOptionInTest';
 
@@ -83,14 +84,11 @@ describe('QueryEditorRowHeader', () => {
     expect(screen.queryByLabelText(selectors.components.DataSourcePicker.container)).toBeNull();
   });
 
-  it('should not show data source picker when no callback is passed', async () => {
-    renderScenario({ onChangeDataSource: undefined });
-    selectOptionInTest(screen.getByLabelText(selectors.components.DataSourcePicker.container), '${dsVariable}');
-    expect(getSelectParent(screen.getByLabelText(selectors.components.DataSourcePicker.container))).toIncludeText(
-      '${dsVariable}'
-    );
-
-    expect(screen.queryByLabelText(selectors.components.DataSourcePicker.container)).toBeNull();
+  it.only('should render variables in the data source picker', async () => {
+    renderScenario({ onChangeDataSource: () => {} });
+    const dsSelect = screen.getByLabelText(selectors.components.DataSourcePicker.container);
+    await userEvent.click(dsSelect);
+    expect(await screen.findByText('${dsVariable}')).toBeInTheDocument();
   });
 });
 
