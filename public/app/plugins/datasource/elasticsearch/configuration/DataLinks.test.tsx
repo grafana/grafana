@@ -1,4 +1,5 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { DataLinkConfig } from '../types';
@@ -9,9 +10,10 @@ const setup = (propOverrides?: Partial<Props>) => {
   const props: Props = {
     value: [],
     onChange: jest.fn(),
+    ...propOverrides,
   };
 
-  Object.assign(props, propOverrides);
+  Object.assign(props);
 
   return render(<DataLinks {...props} />);
 };
@@ -32,13 +34,13 @@ describe('DataLinks tests', () => {
     expect(await screen.findAllByRole('checkbox', { name: 'Internal link' })).toHaveLength(2);
   });
 
-  it('should call onChange to add a new field when the add button is clicked', () => {
+  it('should call onChange to add a new field when the add button is clicked', async () => {
     const onChangeMock = jest.fn();
     setup({ onChange: onChangeMock });
 
     expect(onChangeMock).not.toHaveBeenCalled();
     const addButton = screen.getByRole('button', { name: 'Add' });
-    fireEvent.click(addButton);
+    await userEvent.click(addButton);
 
     expect(onChangeMock).toHaveBeenCalled();
   });
@@ -49,7 +51,7 @@ describe('DataLinks tests', () => {
 
     expect(onChangeMock).not.toHaveBeenCalled();
     const removeButton = await screen.findAllByRole('button', { name: 'Remove field' });
-    fireEvent.click(removeButton[0]);
+    await userEvent.click(removeButton[0]);
 
     expect(onChangeMock).toHaveBeenCalled();
   });
