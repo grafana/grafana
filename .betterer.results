@@ -92,9 +92,6 @@ exports[`no enzyme tests`] = {
     "packages/jaeger-ui-components/src/TraceTimelineViewer/index.test.js:276996587": [
       [14, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/core/components/PageActionBar/PageActionBar.test.tsx:1251504193": [
-      [0, 19, 13, "RegExp match", "2409514259"]
-    ],
     "public/app/core/components/QueryOperationRow/QueryOperationAction.test.tsx:3032694716": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
@@ -116,19 +113,10 @@ exports[`no enzyme tests`] = {
     "public/app/features/dashboard/dashgrid/DashboardGrid.test.tsx:2723773538": [
       [0, 35, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/dashboard/dashgrid/PanelHeader/PanelHeaderCorner.test.tsx:2851646279": [
-      [0, 19, 13, "RegExp match", "2409514259"]
-    ],
     "public/app/features/datasources/DataSourceDashboards.test.tsx:1369048021": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
     "public/app/features/datasources/DataSourcesListPage.test.tsx:2960099202": [
-      [0, 19, 13, "RegExp match", "2409514259"]
-    ],
-    "public/app/features/datasources/settings/BasicSettings.test.tsx:625016324": [
-      [0, 19, 13, "RegExp match", "2409514259"]
-    ],
-    "public/app/features/datasources/settings/ButtonRow.test.tsx:1422996720": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
     "public/app/features/dimensions/editors/ThresholdsEditor/ThresholdsEditor.test.tsx:4164297658": [

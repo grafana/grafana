@@ -44,6 +44,7 @@
     "@react-aria/focus": "3.6.0",
     "@react-aria/menu": "3.5.0",
     "@react-aria/overlays": "3.9.0",
+    "@react-aria/utils": "3.13.0",
     "@react-stately/menu": "3.3.0",
     "@sentry/browser": "6.19.7",
     "ansicolor": "1.1.100",

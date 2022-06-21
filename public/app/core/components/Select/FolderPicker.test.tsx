@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 import selectEvent from 'react-select-event';
 
@@ -41,6 +42,37 @@ describe('FolderPicker', () => {
     expect(pickerOptions).toHaveLength(2);
     expect(pickerOptions[0]).toHaveTextContent('Dash 1');
     expect(pickerOptions[1]).toHaveTextContent('Dash 3');
+  });
+
+  it('should allow creating a new option', async () => {
+    const newFolder = { title: 'New Folder', id: 3 } as DashboardSearchHit;
+
+    jest
+      .spyOn(api, 'searchFolders')
+      .mockResolvedValue([
+        { title: 'Dash 1', id: 1 } as DashboardSearchHit,
+        { title: 'Dash 2', id: 2 } as DashboardSearchHit,
+      ]);
+
+    const onChangeFn = jest.fn();
+
+    const create = jest.spyOn(api, 'createFolder').mockResolvedValue(newFolder);
+
+    render(<FolderPicker onChange={onChangeFn} enableCreateNew={true} allowEmpty={true} />);
+    expect(await screen.findByTestId(selectors.components.FolderPicker.containerV2)).toBeInTheDocument();
+
+    await userEvent.type(screen.getByLabelText('Select a folder'), newFolder.title);
+    const enter = await screen.findByText('Hit enter to add');
+
+    await userEvent.click(enter);
+    await waitFor(() => {
+      expect(create).toHaveBeenCalledWith({ title: newFolder.title });
+    });
+
+    expect(onChangeFn).toHaveBeenCalledWith({ title: newFolder.title, id: newFolder.id });
+    await waitFor(() => {
+      expect(screen.getByText(newFolder.title)).toBeInTheDocument();
+    });
   });
 });
 
