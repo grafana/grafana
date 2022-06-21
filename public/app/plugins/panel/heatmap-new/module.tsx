@@ -1,14 +1,16 @@
 import React from 'react';
 
-import { FieldConfigProperty, FieldType, identityOverrideProcessor, PanelPlugin } from '@grafana/data';
+import { FieldConfigProperty, FieldType, identityOverrideProcessor, PanelData, PanelPlugin } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { AxisPlacement, GraphFieldConfig, ScaleDistribution, ScaleDistributionConfig } from '@grafana/schema';
 import { addHideFrom, ScaleDistributionEditor } from '@grafana/ui/src/options/builder';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { addHeatmapCalculationOptions } from 'app/features/transformers/calculateHeatmap/editor/helper';
+import { readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 import { HeatmapCellLayout } from 'app/features/transformers/calculateHeatmap/models.gen';
 
 import { HeatmapPanel } from './HeatmapPanel';
+import { prepareHeatmapData } from './fields';
 import { heatmapChangedHandler, heatmapMigrationHandler } from './migrations';
 import { PanelOptions, defaultPanelOptions, HeatmapColorMode, HeatmapColorScale } from './models.gen';
 import { colorSchemes, quantizeScheme } from './palettes';
@@ -16,15 +18,7 @@ import { HeatmapSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPanel)
   .useFieldConfig({
-    // This keeps: unit, decimals, displayName
-    disableStandardOptions: [
-      FieldConfigProperty.Color,
-      FieldConfigProperty.Thresholds,
-      FieldConfigProperty.Min,
-      FieldConfigProperty.Max,
-      FieldConfigProperty.Mappings,
-      FieldConfigProperty.NoValue,
-    ],
+    disableStandardOptions: Object.values(FieldConfigProperty).filter((v) => v !== FieldConfigProperty.Links),
     useCustomConfig: (builder) => {
       builder.addCustomEditor<void, ScaleDistributionConfig>({
         id: 'scaleDistribution',
@@ -45,6 +39,13 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
   .setMigrationHandler(heatmapMigrationHandler)
   .setPanelOptions((builder, context) => {
     const opts = context.options ?? defaultPanelOptions;
+
+    let isOrdinalY = false;
+
+    try {
+      const v = prepareHeatmapData({ series: context.data } as PanelData, opts, config.theme2);
+      isOrdinalY = readHeatmapRowsCustomMeta(v.heatmap).yOrdinalDisplay != null;
+    } catch {}
 
     let category = ['Heatmap'];
 
@@ -81,8 +82,24 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       },
     });
 
-    // TODO: support clamping the min/max range when there is a real axis
-    if (false && opts.calculate) {
+    builder
+      .addUnitPicker({
+        category,
+        path: 'yAxis.unit',
+        name: 'Unit',
+        defaultValue: undefined,
+      })
+      .addNumberInput({
+        category,
+        path: 'yAxis.decimals',
+        name: 'Decimals',
+        settings: {
+          placeholder: 'Auto',
+        },
+      });
+
+    if (!isOrdinalY) {
+      // if undefined, then show the min+max
       builder
         .addNumberInput({
           path: 'yAxis.min',
@@ -260,7 +277,35 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
         category,
       });
 
-    category = ['Display'];
+    category = ['Cell display'];
+
+    if (!opts.calculate) {
+      builder.addTextInput({
+        path: 'rowsFrame.value',
+        name: 'Value name',
+        defaultValue: defaultPanelOptions.rowsFrame?.value,
+        settings: {
+          placeholder: 'Value',
+        },
+        category,
+      });
+    }
+
+    builder
+      .addUnitPicker({
+        category,
+        path: 'cellValues.unit',
+        name: 'Unit',
+        defaultValue: undefined,
+      })
+      .addNumberInput({
+        category,
+        path: 'cellValues.decimals',
+        name: 'Decimals',
+        settings: {
+          placeholder: 'Auto',
+        },
+      });
 
     builder
       // .addRadio({
@@ -323,18 +368,6 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       defaultValue: defaultPanelOptions.tooltip.show,
       category,
     });
-
-    if (!opts.calculate) {
-      builder.addTextInput({
-        path: 'rowsFrame.value',
-        name: 'Cell value name',
-        defaultValue: defaultPanelOptions.rowsFrame?.value,
-        settings: {
-          placeholder: 'Value',
-        },
-        category,
-      });
-    }
 
     builder.addBooleanSwitch({
       path: 'tooltip.yHistogram',
