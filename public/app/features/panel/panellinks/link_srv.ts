@@ -300,6 +300,7 @@ export class LinkSrv implements LinkService {
       href: locationUtil.assureBaseUrl(href.replace(/\n/g, '')),
       title: link.title ?? '',
       target: link.targetBlank ? '_blank' : undefined,
+      tooltip: link.tooltip,
       origin,
     };
 

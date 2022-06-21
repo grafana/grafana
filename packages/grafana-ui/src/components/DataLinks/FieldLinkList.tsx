@@ -5,6 +5,7 @@ import { Field, GrafanaTheme, LinkModel } from '@grafana/data';
 
 import { useStyles } from '../../themes';
 import { Icon } from '../Icon/Icon';
+import { Tooltip } from '../Tooltip';
 
 import { DataLinkButton } from './DataLinkButton';
 
@@ -33,15 +34,37 @@ export function FieldLinkList({ links }: Props) {
       <div className={styles.wrapper}>
         <p className={styles.externalLinksHeading}>External links</p>
         {externalLinks.map((link, i) => (
-          <a key={i} href={link.href} target={link.target} className={styles.externalLink}>
-            <Icon name="external-link-alt" />
-            {link.title}
-          </a>
+          <MaybeTooltipWrapper tooltip={link.tooltip} key={i}>
+            <a href={link.href} target={link.target} className={styles.externalLink}>
+              <Icon name="external-link-alt" />
+              {link.title}
+            </a>
+          </MaybeTooltipWrapper>
         ))}
       </div>
     </>
   );
 }
+
+interface MaybeTooltipWrapperProp {
+  tooltip?: string;
+}
+
+/**
+ * @internal
+ */
+const MaybeTooltipWrapper: React.FC<MaybeTooltipWrapperProp> = (props) => {
+  const { tooltip, children } = props;
+  if (!tooltip) {
+    return <>{children}</>;
+  }
+
+  return (
+    <Tooltip content={tooltip}>
+      <div>{children}</div>
+    </Tooltip>
+  );
+};
 
 const getStyles = (theme: GrafanaTheme) => ({
   wrapper: css`

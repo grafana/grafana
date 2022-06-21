@@ -38,6 +38,9 @@ export interface DataLink<T extends DataQuery = any> {
   // more custom onClick behaviour if needed.
   // @internal and subject to change in future releases
   internal?: InternalDataLink<T>;
+
+  // Optional tooltip if we want to share extra information about the link
+  tooltip?: string;
 }
 
 /** @internal */
@@ -61,6 +64,7 @@ export interface LinkModel<T = any> {
 
   // When a click callback exists, this is passed the raw mouse|react event
   onClick?: (e: any, origin?: any) => void;
+  tooltip?: string;
 }
 
 /**
