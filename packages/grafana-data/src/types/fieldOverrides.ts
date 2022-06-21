@@ -5,6 +5,7 @@ import { GrafanaTheme2 } from '../themes';
 import { MatcherConfig, FieldConfig, Field, DataFrame, TimeZone } from '../types';
 
 import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
+import { LinkModel } from './dataLink';
 import { OptionEditorConfig } from './options';
 import { InterpolateFunction } from './panel';
 
@@ -119,11 +120,7 @@ export interface ApplyFieldOverrideOptions {
   replaceVariables: InterpolateFunction;
   theme: GrafanaTheme2;
   timeZone?: TimeZone;
-  getConditionalDataLinks?: (
-    field: Field,
-    frame: DataFrame,
-    allFrames: DataFrame[]
-  ) => ((evt: any, origin: any) => void) | undefined;
+  getConditionalDataLinks?: (field: Field, frame: DataFrame, allFrames: DataFrame[]) => LinkModel[] | undefined;
 }
 
 export enum FieldConfigProperty {
