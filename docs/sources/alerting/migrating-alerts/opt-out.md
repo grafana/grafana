@@ -14,7 +14,7 @@ You can opt out of Grafana Alerting at any time and switch to using legacy alert
 
 ## Staying on legacy alerting
 
-When upgrading to Grafana > 9.0, existing installations that use legacy alerting will automatically be upgraded to Grafana Alerting unless you have opted-out of Grafana Alerting before migration takes place. During the upgrade, legacy alerts are migrated to the new alerts type and no alerts or alerting data are lost. To keep using legacy alerting and disable Grafana Alerting:
+When upgrading to Grafana > 9.0, existing installations that use legacy alerting are automatically upgraded to Grafana Alerting unless you have opted-out of Grafana Alerting before migration takes place. During the upgrade, legacy alerts are migrated to the new alerts type and no alerts or alerting data are lost. To keep using legacy alerting and disable Grafana Alerting:
 
 1. Go to your custom configuration file ($WORKING_DIR/conf/custom.ini).
 2. Enter the following in your configuration:
