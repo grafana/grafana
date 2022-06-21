@@ -52,10 +52,10 @@ func (dr *DashboardServiceImpl) SavePublicDashboardConfig(ctx context.Context, d
 	}
 
 	if dto.PublicDashboard.Uid == "" {
-		return dr.savePublicDashboardConfig(context.Background(), dto)
+		return dr.savePublicDashboardConfig(ctx, dto)
 	}
 
-	return dr.updatePublicDashboardConfig(context.Background(), dto)
+	return dr.updatePublicDashboardConfig(ctx, dto)
 }
 
 func (dr *DashboardServiceImpl) savePublicDashboardConfig(ctx context.Context, dto *dashboards.SavePublicDashboardConfigDTO) (*models.PublicDashboard, error) {
@@ -90,8 +90,6 @@ func (dr *DashboardServiceImpl) savePublicDashboardConfig(ctx context.Context, d
 
 func (dr *DashboardServiceImpl) updatePublicDashboardConfig(ctx context.Context, dto *dashboards.SavePublicDashboardConfigDTO) (*models.PublicDashboard, error) {
 	cmd := models.SavePublicDashboardConfigCommand{
-		DashboardUid: dto.DashboardUid,
-		OrgId:        dto.OrgId,
 		PublicDashboard: models.PublicDashboard{
 			Uid:          dto.PublicDashboard.Uid,
 			IsEnabled:    dto.PublicDashboard.IsEnabled,

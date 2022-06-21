@@ -59,7 +59,6 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 	token, err := uuid.NewV4()
 	require.NoError(t, err)
 	accessToken := fmt.Sprintf("%x", token)
-	fmt.Println(accessToken)
 
 	testCases := []struct {
 		Name                  string

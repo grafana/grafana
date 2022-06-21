@@ -186,7 +186,7 @@ func TestIntegrationSavePublicDashboardConfig(t *testing.T) {
 	})
 }
 
-func TestIntegrationnUpdatePublicDashboard(t *testing.T) {
+func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 	var sqlStore *sqlstore.SQLStore
 	var dashboardStore *DashboardStore
 	var savedDashboard *models.Dashboard
