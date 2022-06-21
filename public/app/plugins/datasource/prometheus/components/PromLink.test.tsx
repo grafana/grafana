@@ -9,7 +9,7 @@ import { PromQuery } from '../types';
 import PromLink from './PromLink';
 
 jest.mock('@grafana/data', () => ({
-  ...(jest.requireActual('@grafana/data') as any),
+  ...jest.requireActual('@grafana/data'),
   rangeUtil: {
     intervalToSeconds: jest.fn(() => 15),
   },

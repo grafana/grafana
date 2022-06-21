@@ -79,4 +79,48 @@ describe('prepare timeseries graph', () => {
       ]
     `);
   });
+
+  it('will insert nulls given an interval value', () => {
+    const df = new MutableDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, config: { interval: 1 }, values: [1, 3, 6] },
+        { name: 'a', values: [1, 2, 3] },
+      ],
+    });
+    const frames = prepareGraphableFields([df], createTheme());
+
+    const field = frames![0].fields.find((f) => f.name === 'a');
+    expect(field!.values.toArray()).toMatchInlineSnapshot(`
+      Array [
+        1,
+        null,
+        2,
+        null,
+        null,
+        3,
+      ]
+    `);
+  });
+
+  it('will insert and convert nulls to a configure "no value" value', () => {
+    const df = new MutableDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, config: { interval: 1 }, values: [1, 3, 6] },
+        { name: 'a', config: { noValue: '20' }, values: [1, 2, 3] },
+      ],
+    });
+    const frames = prepareGraphableFields([df], createTheme());
+
+    const field = frames![0].fields.find((f) => f.name === 'a');
+    expect(field!.values.toArray()).toMatchInlineSnapshot(`
+      Array [
+        1,
+        20,
+        2,
+        20,
+        20,
+        3,
+      ]
+    `);
+  });
 });
