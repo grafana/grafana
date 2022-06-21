@@ -70,9 +70,5 @@ func (s *Service) GetIDForNewUser(ctx context.Context, cmd org.GetOrgIDForNewUse
 	orga.Created = time.Now()
 	orga.Updated = time.Now()
 
-	if orga.ID != 0 {
-		return s.store.InsertWithNextAvailableOrgID(ctx, &orga)
-	} else {
-		return s.store.Insert(ctx, &orga)
-	}
+	return s.store.Insert(ctx, &orga)
 }

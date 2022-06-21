@@ -65,7 +65,3 @@ func (f *FakeOrgStore) Get(ctx context.Context, orgID int64) (*org.Org, error) {
 func (f *FakeOrgStore) Insert(ctx context.Context, org *org.Org) (int64, error) {
 	return f.ExpectedOrgID, f.ExpectedError
 }
-
-func (f *FakeOrgStore) InsertWithNextAvailableOrgID(ctx context.Context, org *org.Org) (int64, error) {
-	return f.ExpectedOrgID, f.ExpectedError
-}

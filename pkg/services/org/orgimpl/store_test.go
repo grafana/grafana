@@ -28,7 +28,6 @@ func TestIntegrationOrgDataAccess(t *testing.T) {
 
 	t.Run("org inserted", func(t *testing.T) {
 		_, err := orgStore.Insert(context.Background(), &org.Org{
-			ID:      1,
 			Version: 1,
 			Name:    "test1",
 			Created: time.Now(),
@@ -38,7 +37,8 @@ func TestIntegrationOrgDataAccess(t *testing.T) {
 	})
 
 	t.Run("org inserted with next available org ID", func(t *testing.T) {
-		orgID, err := orgStore.InsertWithNextAvailableOrgID(context.Background(), &org.Org{
+		orgID, err := orgStore.Insert(context.Background(), &org.Org{
+			ID:      55,
 			Version: 1,
 			Name:    "test2",
 			Created: time.Now(),
