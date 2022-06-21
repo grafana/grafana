@@ -35,7 +35,7 @@ The `ngalert` toggle previously used to enable or disable Grafana Alerting is no
 
 ## Disable alerting
 
-You can disable Grafana Alerting and legacy alerting in Grafana.
+You can disable both Grafana Alerting and legacy alerting in Grafana.
 
 1. Go to your custom configuration file ($WORKING_DIR/conf/custom.ini).
 2. Enter the following in your configuration:
