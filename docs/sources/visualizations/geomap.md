@@ -181,4 +181,4 @@ default_baselayer_config = `{
 }`
 ```
 
-`enable_custom_baselayers` allows you too enable or disable custom open source base maps that are already implemented. The default is `true`.
+`enable_custom_baselayers` allows you to enable or disable custom open source base maps that are already implemented. The default is `true`.
