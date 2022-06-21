@@ -140,3 +140,5 @@ export const getInstanceData = (instanceType: InstanceTypes, credentials: any): 
 
   return extractCredentials(credentials);
 };
+
+export const remoteToken = (type: string) => `${type}Token`;

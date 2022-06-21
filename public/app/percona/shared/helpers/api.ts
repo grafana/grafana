@@ -1,4 +1,5 @@
 import axios, { CancelToken, AxiosInstance } from 'axios';
+
 import { AppEvents } from '@grafana/data';
 import { appEvents } from 'app/core/app_events';
 
@@ -60,3 +61,4 @@ export const apiQAN = new ApiRequest({ baseURL: '/v0/qan' });
 export const apiManagement = new ApiRequest({ baseURL: '/v1/management' });
 export const apiInventory = new ApiRequest({ baseURL: '/v1/inventory' });
 export const apiSettings = new ApiRequest({ baseURL: '/v1/Settings' });
+export const isApiCancelError = (e: any) => axios.isCancel(e);

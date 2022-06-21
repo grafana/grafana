@@ -1,13 +1,19 @@
-import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
-import { Button, ClipboardButton, HorizontalGroup, useTheme } from '@grafana/ui';
-import { AppEvents } from '@grafana/data';
-import { appEvents } from 'app/core/app_events';
 import { Modal, logger } from '@percona/platform-core';
+import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
+
+import { AppEvents } from '@grafana/data';
+import { Button, ClipboardButton, HorizontalGroup, useTheme } from '@grafana/ui';
+import { appEvents } from 'app/core/app_events';
 import { Overlay } from 'app/percona/shared/components/Elements/Overlay/Overlay';
-import { ViewKubernetesClusterModalProps } from './ViewClusterConfigModal.types';
-import { KubernetesService } from '../Kubernetes.service';
+import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
+import { isApiCancelError } from 'app/percona/shared/helpers/api';
+
 import { Messages } from '../../../DBaaS.messages';
+import { KubernetesService } from '../Kubernetes.service';
+
+import { GET_KUBERNETES_CONFIG_CANCEL_TOKEN } from './ViewClusterConfigModal.constants';
 import { getStyles } from './ViewClusterConfigModal.styles';
+import { ViewKubernetesClusterModalProps } from './ViewClusterConfigModal.types';
 
 export const ViewClusterConfigModal: FC<ViewKubernetesClusterModalProps> = ({
   isVisible,
@@ -19,6 +25,7 @@ export const ViewClusterConfigModal: FC<ViewKubernetesClusterModalProps> = ({
 
   const [kubeconfig, setKubeconfig] = useState('');
   const [loading, setLoading] = useState(false);
+  const [generateToken] = useCancelToken();
   const outputRef = useRef<HTMLPreElement>(null);
 
   const copyToClipboard = useCallback(() => {
@@ -37,18 +44,23 @@ export const ViewClusterConfigModal: FC<ViewKubernetesClusterModalProps> = ({
 
       setLoading(true);
       try {
-        const config = await KubernetesService.getKubernetesConfig(selectedCluster);
+        const config = await KubernetesService.getKubernetesConfig(
+          selectedCluster,
+          generateToken(GET_KUBERNETES_CONFIG_CANCEL_TOKEN)
+        );
 
         setKubeconfig(config.kube_auth.kubeconfig);
       } catch (e) {
+        if (isApiCancelError(e)) {
+          return;
+        }
         logger.error(e);
-      } finally {
-        setLoading(false);
       }
+      setLoading(false);
     };
 
     getClusters();
-  }, [selectedCluster, setVisible]);
+  }, [selectedCluster, setVisible, generateToken]);
 
   return (
     <Modal title="View cluster config" isVisible={isVisible} onClose={() => setVisible(false)}>

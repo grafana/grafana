@@ -1,3 +1,5 @@
+import { CancelToken } from 'axios';
+
 import { api } from 'app/percona/shared/helpers/api';
 
 import { Backup, BackupResponse } from './BackupInventory.types';
@@ -5,8 +7,8 @@ import { Backup, BackupResponse } from './BackupInventory.types';
 const BASE_URL = '/v1/management/backup';
 
 export const BackupInventoryService = {
-  async list(): Promise<Backup[]> {
-    const { artifacts = [] } = await api.post<BackupResponse, any>(`${BASE_URL}/Artifacts/List`, {});
+  async list(token?: CancelToken): Promise<Backup[]> {
+    const { artifacts = [] } = await api.post<BackupResponse, any>(`${BASE_URL}/Artifacts/List`, {}, false, token);
     return artifacts.map(
       ({
         artifact_id,
@@ -33,19 +35,29 @@ export const BackupInventoryService = {
       })
     );
   },
-  async restore(serviceId: string, locationId: string, artifactId: string) {
-    return api.post(`${BASE_URL}/Backups/RestoreBackup`, {
-      service_id: serviceId,
-      location_id: locationId,
-      artifact_id: artifactId,
-    });
+  async restore(serviceId: string, locationId: string, artifactId: string, token?: CancelToken) {
+    return api.post(
+      `${BASE_URL}/Backups/RestoreBackup`,
+      {
+        service_id: serviceId,
+        location_id: locationId,
+        artifact_id: artifactId,
+      },
+      false,
+      token
+    );
   },
-  async backup(serviceId: string, locationId: string, name: string, description: string) {
-    return api.post(`${BASE_URL}/Backups/StartBackup`, {
-      service_id: serviceId,
-      location_id: locationId,
-      name,
-      description,
-    });
+  async backup(serviceId: string, locationId: string, name: string, description: string, token?: CancelToken) {
+    return api.post(
+      `${BASE_URL}/Backups/StartBackup`,
+      {
+        service_id: serviceId,
+        location_id: locationId,
+        name,
+        description,
+      },
+      false,
+      token
+    );
   },
 };

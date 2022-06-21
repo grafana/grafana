@@ -1,9 +1,10 @@
-import { LoaderButton } from '@percona/platform-core';
+import { logger, LoaderButton } from '@percona/platform-core';
 import React, { FC, useState } from 'react';
 
 import { AlertsReloadContext } from 'app/percona/check/Check.context';
 import { CheckService } from 'app/percona/check/Check.service';
 import { Labels } from 'app/percona/check/types';
+import { isApiCancelError } from 'app/percona/shared/helpers/api';
 
 import { makeSilencePayload } from './SilenceAlertButton.utils';
 
@@ -23,10 +24,12 @@ export const SilenceAlertButton: FC<SilenceAlertButtonProps> = ({ labels }) => {
       await CheckService.silenceAlert(silencePayload);
       await alertsReloadContext.fetchAlerts();
     } catch (e) {
-      console.error(e);
-    } finally {
-      setRequestPending(false);
+      if (isApiCancelError(e)) {
+        return;
+      }
+      logger.error(e);
     }
+    setRequestPending(false);
   };
 
   return (

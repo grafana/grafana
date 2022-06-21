@@ -1,21 +1,23 @@
 import { logger } from '@percona/platform-core';
-import React, { FC, useEffect, useMemo, useState } from 'react';
+import React, { FC, useEffect, useMemo, useState, useCallback } from 'react';
 
 import { Spinner, useTheme } from '@grafana/ui';
 
 import { ContentTab, TabbedContent, TabOrientation } from '../shared/components/Elements/TabbedContent';
 import PageWrapper from '../shared/components/PageWrapper/PageWrapper';
+import { useCancelToken } from '../shared/components/hooks/cancelToken.hook';
 
-import { PAGE_MODEL } from './Settings.constants';
+import { GET_SETTINGS_CANCEL_TOKEN, SET_SETTINGS_CANCEL_TOKEN, PAGE_MODEL } from './Settings.constants';
 import { Messages } from './Settings.messages';
 import { LoadingCallback, SettingsService } from './Settings.service';
 import { getSettingsStyles } from './Settings.styles';
-import { Settings, TabKeys, SettingsAPIChangePayload } from './Settings.types';
+import { Settings, SettingsAPIChangePayload } from './Settings.types';
 import { Advanced, AlertManager, Diagnostics, MetricsResolution, PlatformLogin, SSHKey } from './components';
 import { Communication } from './components/Communication/Communication';
 
 export const SettingsPanel: FC = () => {
   const { path: basePath } = PAGE_MODEL;
+  const [generateToken] = useCancelToken();
 
   const theme = useTheme();
   const [loading, setLoading] = useState(true);
@@ -23,25 +25,40 @@ export const SettingsPanel: FC = () => {
   const { metrics, advanced, ssh, alertManager, perconaPlatform, communication } = Messages.tabs;
   const [settings, setSettings] = useState<Settings>();
 
-  const updateSettings = async (body: SettingsAPIChangePayload, callback: LoadingCallback, refresh?: boolean) => {
-    const response = await SettingsService.setSettings(body, callback);
-    const { email_alerting_settings: { password = '' } = {} } = body;
+  const updateSettings = useCallback(
+    async (body: SettingsAPIChangePayload, callback: LoadingCallback, refresh?: boolean) => {
+      const response = await SettingsService.setSettings(body, callback, generateToken(SET_SETTINGS_CANCEL_TOKEN));
+      const { email_alerting_settings: { password = '' } = {} } = body;
 
-    if (refresh) {
-      window.location.reload();
+      if (refresh) {
+        window.location.reload();
 
-      return;
+        return;
+      }
+
+      if (response) {
+        // password is not being returned by the API, hence this construction
+        const newSettings: Settings = {
+          ...response,
+          alertingSettings: { ...response.alertingSettings, email: { ...response.alertingSettings.email, password } },
+        };
+        setSettings(newSettings);
+      }
+    },
+    [generateToken]
+  );
+
+  const getSettings = useCallback(async () => {
+    try {
+      setLoading(true);
+      const settings = await SettingsService.getSettings(generateToken(GET_SETTINGS_CANCEL_TOKEN));
+      setSettings(settings);
+    } catch (e) {
+      logger.error(e);
+    } finally {
+      setLoading(false);
     }
-
-    if (response) {
-      // password is not being returned by the API, hence this construction
-      const newSettings: Settings = {
-        ...response,
-        alertingSettings: { ...response.alertingSettings, email: { ...response.alertingSettings.email, password } },
-      };
-      setSettings(newSettings);
-    }
-  };
+  }, [generateToken]);
 
   const tabs: ContentTab[] = useMemo(
     (): ContentTab[] =>
@@ -108,24 +125,12 @@ export const SettingsPanel: FC = () => {
             },
           ]
         : [],
-    [settings, advanced, alertManager, communication, metrics, perconaPlatform, ssh]
+    [settings, advanced, alertManager, communication, metrics, perconaPlatform, ssh, getSettings, updateSettings]
   );
-
-  const getSettings = async () => {
-    try {
-      setLoading(true);
-      const settings = await SettingsService.getSettings();
-      setSettings(settings);
-    } catch (e) {
-      logger.error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
     getSettings();
-  }, []);
+  }, [getSettings]);
 
   return (
     <PageWrapper pageModel={PAGE_MODEL}>

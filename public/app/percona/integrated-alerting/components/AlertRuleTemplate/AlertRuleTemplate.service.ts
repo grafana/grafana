@@ -1,3 +1,5 @@
+import { CancelToken } from 'axios';
+
 import { api } from 'app/percona/shared/helpers/api';
 
 import {
@@ -12,11 +14,11 @@ import {
 const BASE_URL = `/v1/management/ia/Templates`;
 
 export const AlertRuleTemplateService = {
-  async upload(payload: UploadAlertRuleTemplatePayload): Promise<void> {
-    return api.post(`${BASE_URL}/Create`, payload);
+  async upload(payload: UploadAlertRuleTemplatePayload, token?: CancelToken): Promise<void> {
+    return api.post(`${BASE_URL}/Create`, payload, false, token);
   },
-  async list(payload: AlertRuleTemplateGetPayload): Promise<TemplatesList> {
-    return api.post<TemplatesListAPI, any>(`${BASE_URL}/List`, { ...payload, reload: true }).then(
+  async list(payload: AlertRuleTemplateGetPayload, token?: CancelToken): Promise<TemplatesList> {
+    return api.post<TemplatesListAPI, any>(`${BASE_URL}/List`, { ...payload, reload: true }, false, token).then(
       ({ totals, templates = [] }): TemplatesList => ({
         totals,
         templates: templates.map((template) => ({
@@ -38,10 +40,10 @@ export const AlertRuleTemplateService = {
       })
     );
   },
-  async update(payload: UpdateAlertRuleTemplatePayload): Promise<void> {
-    return api.post(`${BASE_URL}/Update`, payload);
+  async update(payload: UpdateAlertRuleTemplatePayload, token?: CancelToken): Promise<void> {
+    return api.post(`${BASE_URL}/Update`, payload, false, token);
   },
-  async delete(payload: DeleteAlertRuleTemplatePayload): Promise<void> {
-    return api.post(`${BASE_URL}/Delete`, payload);
+  async delete(payload: DeleteAlertRuleTemplatePayload, token?: CancelToken): Promise<void> {
+    return api.post(`${BASE_URL}/Delete`, payload, false, token);
   },
 };

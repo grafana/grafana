@@ -1,4 +1,4 @@
-import { CheckboxField } from '@percona/platform-core';
+import { logger, CheckboxField } from '@percona/platform-core';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Form } from 'react-final-form';
 
@@ -9,10 +9,12 @@ import { AgentsList } from 'app/percona/inventory/Inventory.types';
 import { Table } from 'app/percona/shared/components/Elements/Table/Table';
 import { SelectedTableRows } from 'app/percona/shared/components/Elements/Table/Table.types';
 import { FormElement } from 'app/percona/shared/components/Form';
-import { filterFulfilled, processPromiseResults } from 'app/percona/shared/helpers/promises';
+import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
+import { isApiCancelError } from 'app/percona/shared/helpers/api';
+import { processPromiseResults } from 'app/percona/shared/helpers/promises';
 
 import { appEvents } from '../../../core/app_events';
-import { AGENTS_COLUMNS } from '../Inventory.constants';
+import { AGENTS_COLUMNS, GET_AGENTS_CANCEL_TOKEN } from '../Inventory.constants';
 import { InventoryService } from '../Inventory.service';
 
 import { styles } from './Tabs.styles';
@@ -27,19 +29,22 @@ export const Agents = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [data, setData] = useState<any[]>([]);
   const [selected, setSelectedRows] = useState([]);
+  const [generateToken] = useCancelToken();
 
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const result: AgentsList = await InventoryService.getAgents();
+      const result: AgentsList = await InventoryService.getAgents(generateToken(GET_AGENTS_CANCEL_TOKEN));
 
       setData(InventoryDataService.getAgentModel(result));
     } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
+      if (isApiCancelError(e)) {
+        return;
+      }
+      logger.error(e);
     }
-  }, []);
+    setLoading(false);
+  }, [generateToken]);
 
   useEffect(() => {
     loadData();
@@ -61,11 +66,13 @@ export const Agents = () => {
           `${successfullyDeleted} of ${agents.length} agents successfully deleted`,
         ]);
       } catch (e) {
-        console.error(e);
-      } finally {
-        setSelectedRows([]);
-        loadData();
+        if (isApiCancelError(e)) {
+          return;
+        }
+        logger.error(e);
       }
+      setSelectedRows([]);
+      loadData();
     },
     [loadData]
   );

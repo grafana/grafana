@@ -1,4 +1,4 @@
-import { LoaderButton } from '@percona/platform-core';
+import { LoaderButton, logger } from '@percona/platform-core';
 import { mount, shallow } from 'enzyme';
 import React from 'react';
 import { act } from 'react-dom/test-utils';
@@ -11,10 +11,20 @@ import { SilenceAlertButton } from 'app/percona/check/components';
 import { makeSilencePayload } from './SilenceAlertButton.utils';
 
 jest.mock('../../Check.service');
-
+jest.mock('app/percona/shared/components/hooks/cancelToken.hook');
 jest.mock('./SilenceAlertButton.utils', () => ({
   makeSilencePayload: jest.fn(() => 'testPayload'),
 }));
+jest.mock('@percona/platform-core', () => {
+  const originalModule = jest.requireActual('@percona/platform-core');
+  return {
+    ...originalModule,
+    logger: {
+      error: jest.fn(),
+    },
+  };
+});
+
 const mockedMakeSilencePayload = makeSilencePayload as jest.Mock;
 
 describe('SilenceAlertButton::', () => {
@@ -79,10 +89,6 @@ describe('SilenceAlertButton::', () => {
       },
     };
 
-    const originalConsoleError = console.error;
-
-    console.error = jest.fn();
-
     const spy = jest.spyOn(CheckService, 'silenceAlert');
 
     spy.mockImplementation(() => {
@@ -95,12 +101,10 @@ describe('SilenceAlertButton::', () => {
       root.simulate('click');
     });
 
-    expect(console.error).toBeCalledTimes(1);
-    expect(console.error).toBeCalledWith(Error('Test error'));
+    expect(logger.error).toBeCalledTimes(1);
+    expect(logger.error).toBeCalledWith(Error('Test error'));
 
     spy.mockClear();
-
-    console.error = originalConsoleError;
 
     root.unmount();
   });

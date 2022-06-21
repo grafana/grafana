@@ -4,10 +4,13 @@ import React, { FC, useState } from 'react';
 import { AppEvents } from '@grafana/data';
 import { Spinner, useStyles } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
+import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
+import { isApiCancelError } from 'app/percona/shared/helpers/api';
 
 import { AlertsService } from '../Alerts.service';
 import { AlertStatus } from '../Alerts.types';
 
+import { TOGGLE_ALERT_CANCEL_TOKEN } from './AlertsActions.constants';
 import { Messages } from './AlertsActions.messages';
 import { getStyles } from './AlertsActions.styles';
 import { AlertsActionsProps } from './AlertsActions.types';
@@ -16,6 +19,7 @@ import { Bell, BellBarred } from './icons';
 export const AlertsActions: FC<AlertsActionsProps> = ({ alert, getAlerts }) => {
   const styles = useStyles(getStyles);
   const [pendingRequest, setPendingRequest] = useState(false);
+  const [generateToken] = useCancelToken();
 
   const isSilenced = alert.status === AlertStatus.SILENCED;
   const ToggleIcon = isSilenced ? Bell : BellBarred;
@@ -24,17 +28,22 @@ export const AlertsActions: FC<AlertsActionsProps> = ({ alert, getAlerts }) => {
   const toggleAlert = async () => {
     setPendingRequest(true);
     try {
-      await AlertsService.toggle({
-        alert_id: alert.alertId,
-        silenced: isSilenced ? 'FALSE' : 'TRUE',
-      });
+      await AlertsService.toggle(
+        {
+          alert_id: alert.alertId,
+          silenced: isSilenced ? 'FALSE' : 'TRUE',
+        },
+        generateToken(TOGGLE_ALERT_CANCEL_TOKEN)
+      );
       appEvents.emit(AppEvents.alertSuccess, [isSilenced ? Messages.activateSuccess : Messages.silenceSuccess]);
       getAlerts();
     } catch (e) {
+      if (isApiCancelError(e)) {
+        return;
+      }
       logger.error(e);
-    } finally {
-      setPendingRequest(false);
     }
+    setPendingRequest(false);
   };
 
   return (

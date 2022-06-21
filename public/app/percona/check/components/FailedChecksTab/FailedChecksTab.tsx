@@ -1,4 +1,4 @@
-import { LoaderButton } from '@percona/platform-core';
+import { LoaderButton, logger } from '@percona/platform-core';
 import React, { FC, useEffect, useState, useCallback } from 'react';
 
 import { AppEvents } from '@grafana/data';
@@ -8,41 +8,49 @@ import { CheckService } from 'app/percona/check/Check.service';
 import { COLUMNS } from 'app/percona/check/CheckPanel.constants';
 import { Table } from 'app/percona/check/components';
 import { ActiveCheck } from 'app/percona/check/types';
+import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
+import { isApiCancelError } from 'app/percona/shared/helpers/api';
 
 import { appEvents } from '../../../../core/app_events';
 
+import { GET_ACTIVE_ALERTS_CANCEL_TOKEN } from './FailedChecksTab.constants';
 import { Messages } from './FailedChecksTab.messages';
 import { getStyles } from './FailedChecksTab.styles';
 import { loadShowSilencedValue, saveShowSilencedValue } from './FailedChecksTab.utils';
 import { FailedChecksTabProps } from './types';
 
 export const FailedChecksTab: FC<FailedChecksTabProps> = ({ hasNoAccess }) => {
-  const [fetchAlertsPending, setFetchAlertsPending] = useState(false);
+  const [fetchAlertsPending, setFetchAlertsPending] = useState(true);
   const [runChecksPending, setRunChecksPending] = useState(false);
   const [showSilenced, setShowSilenced] = useState(loadShowSilencedValue());
   const [dataSource, setDataSource] = useState<ActiveCheck[] | undefined>();
   const styles = useStyles(getStyles);
+  const [generateToken] = useCancelToken();
 
   const fetchAlerts = useCallback(async (): Promise<void> => {
     setFetchAlertsPending(true);
 
     try {
-      const dataSource = await CheckService.getActiveAlerts(showSilenced);
-
+      const dataSource = await CheckService.getActiveAlerts(
+        showSilenced,
+        generateToken(GET_ACTIVE_ALERTS_CANCEL_TOKEN)
+      );
       setDataSource(dataSource);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setFetchAlertsPending(false);
+    } catch (e) {
+      if (isApiCancelError(e)) {
+        return;
+      }
+      logger.error(e);
     }
-  }, [showSilenced]);
+    setFetchAlertsPending(false);
+  }, [generateToken, showSilenced]);
 
   const handleRunChecksClick = async () => {
     setRunChecksPending(true);
     try {
       await CheckService.runDbChecks();
     } catch (e) {
-      console.error(e);
+      logger.error(e);
     }
     // TODO (nicolalamacchia): remove this timeout when the API will become synchronous
     setTimeout(async () => {
