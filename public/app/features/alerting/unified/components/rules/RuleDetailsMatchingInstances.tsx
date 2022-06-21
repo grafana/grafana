@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { countBy, difference, lowerFirst } from 'lodash';
+import { countBy } from 'lodash';
 import React, { useMemo, useState } from 'react';
 
 import { GrafanaTheme } from '@grafana/data';
@@ -12,8 +12,8 @@ import {
 import { labelsMatchMatchers, parseMatchers } from 'app/features/alerting/unified/utils/alertmanager';
 import { createViewLink, sortAlerts } from 'app/features/alerting/unified/utils/misc';
 import { SortOrder } from 'app/plugins/panel/alertlist/types';
-import { Alert, CombinedRule } from 'app/types/unified-alerting';
-import { GrafanaAlertState, mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
+import { Alert, CombinedRule, PaginationProps } from 'app/types/unified-alerting';
+import { mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
 
 import { GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from '../../utils/datasource';
 import { isAlertingRule } from '../../utils/rules';
@@ -21,34 +21,25 @@ import { DetailsField } from '../DetailsField';
 
 import { AlertInstancesTable } from './AlertInstancesTable';
 
-type Props = {
+interface Props {
   rule: CombinedRule;
-  pagination?: { itemsPerPage: number };
+  pagination?: PaginationProps;
   itemsDisplayLimit?: number;
-};
+}
 
 interface ShowMoreStats {
   totalItemsCount: number;
   visibleItemsCount: number;
-  hiddenItemsCount: number;
-  hiddenCountByState: Record<string, number>;
 }
 
 function ShowMoreInstances(props: { ruleViewPageLink: string; stats: ShowMoreStats }) {
   const styles = useStyles(getStyles);
   const { ruleViewPageLink, stats } = props;
 
-  const hiddenInstancesStatus = Object.entries(stats.hiddenCountByState)
-    .map(([state, count]) => {
-      return `${count} ${lowerFirst(state)}`;
-    })
-    .join(', ');
-
   return (
     <div className={styles.footerRow}>
       <div>
-        Showing {stats.visibleItemsCount} out of {stats.totalItemsCount} instances, {hiddenInstancesStatus} hidden for
-        brevity
+        Showing {stats.visibleItemsCount} out of {stats.totalItemsCount} instances
       </div>
       {ruleViewPageLink && (
         <LinkButton href={ruleViewPageLink} size="sm" variant="secondary">
@@ -62,7 +53,7 @@ function ShowMoreInstances(props: { ruleViewPageLink: string; stats: ShowMoreSta
 export function RuleDetailsMatchingInstances(props: Props): JSX.Element | null {
   const {
     rule: { promRule, namespace },
-    itemsDisplayLimit,
+    itemsDisplayLimit = Number.POSITIVE_INFINITY,
     pagination,
   } = props;
 
@@ -89,20 +80,14 @@ export function RuleDetailsMatchingInstances(props: Props): JSX.Element | null {
     return null;
   }
 
-  const visibleInstancesLimit = 3;
-  const visibleInstances = itemsDisplayLimit ? alerts.slice(0, visibleInstancesLimit) : alerts;
-  const hiddenInstances = difference(alerts, visibleInstances);
+  const visibleInstances = alerts.slice(0, itemsDisplayLimit);
 
   const countAllByState = countBy(promRule.alerts, (alert) => mapStateWithReasonToBaseState(alert.state));
-  const hiddenByState = countBy(hiddenInstances, (instance) => mapStateWithReasonToBaseState(instance.state));
-
   const hiddenItemsCount = alerts.length - visibleInstances.length;
 
   const stats: ShowMoreStats = {
     totalItemsCount: alerts.length,
     visibleItemsCount: visibleInstances.length,
-    hiddenItemsCount: hiddenInstances.length,
-    hiddenCountByState: hiddenByState,
   };
 
   const ruleViewPageLink = createViewLink(namespace.rulesSource, props.rule, location.pathname + location.search);

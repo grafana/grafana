@@ -1,6 +1,6 @@
 import React, { FC, useMemo } from 'react';
 
-import { Alert } from 'app/types/unified-alerting';
+import { Alert, PaginationProps } from 'app/types/unified-alerting';
 
 import { alertInstanceKey } from '../../utils/rules';
 import { AlertLabels } from '../AlertLabels';
@@ -11,7 +11,7 @@ import { AlertStateTag } from './AlertStateTag';
 
 interface Props {
   instances: Alert[];
-  pagination?: { itemsPerPage: number };
+  pagination?: PaginationProps;
   footerRow?: JSX.Element;
 }
 
