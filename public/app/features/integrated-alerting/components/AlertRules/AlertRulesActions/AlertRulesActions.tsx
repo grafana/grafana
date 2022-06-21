@@ -1,8 +1,11 @@
 import React, { FC, useContext } from 'react';
 
-import { IconButton, useStyles } from '@grafana/ui';
+
 
 import { AlertRulesProvider } from '../AlertRules.provider';
+
+import { IconButton, useStyles } from '@grafana/ui';
+
 
 import { getStyles } from './AlertRulesActions.styles';
 import { AlertRulesActionsProps } from './AlertRulesActions.types';
