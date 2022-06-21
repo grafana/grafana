@@ -1,5 +1,5 @@
 import { lastValueFrom, of } from 'rxjs';
-import { catchError, map, mapTo } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 
 import {
   AnnotationEvent,
@@ -204,7 +204,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
           },
         })
         .pipe(
-          mapTo({ status: 'success', message: 'Database Connection OK' }),
+          map(() => ({ status: 'success', message: 'Database Connection OK' })),
           catchError((err) => {
             return of(toTestingStatus(err));
           })
