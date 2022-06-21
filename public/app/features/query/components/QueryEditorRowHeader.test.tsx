@@ -1,10 +1,12 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { openMenu } from 'react-select-event';
 import { selectOptionInTest, getSelectParent } from 'test/helpers/selectOptionInTest';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+// import '@grafana/runtime/src/services/templateSrv';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 
@@ -15,16 +17,16 @@ const mockDS = mockDataSource({
   type: DataSourceType.Alertmanager,
 });
 
-const mockVariable = {
-  name: 'dsVariable',
+const mockVariable = mockDataSource({
+  name: '${dsVariable}',
   type: 'datasource',
-};
+});
 
 jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
   return {
     getDataSourceSrv: () => ({
       get: () => Promise.resolve(mockDS),
-      getList: () => [mockDS],
+      getList: ({ variables }: { variables: boolean }) => (variables ? [mockDS, mockVariable] : [mockDS]),
       getInstanceSettings: () => mockDS,
     }),
   };
@@ -84,10 +86,11 @@ describe('QueryEditorRowHeader', () => {
     expect(screen.queryByLabelText(selectors.components.DataSourcePicker.container)).toBeNull();
   });
 
-  it.only('should render variables in the data source picker', async () => {
+  it('should render variables in the data source picker', async () => {
     renderScenario({ onChangeDataSource: () => {} });
-    const dsSelect = screen.getByLabelText(selectors.components.DataSourcePicker.container);
-    await userEvent.click(dsSelect);
+
+    const dsSelect = screen.getByLabelText(selectors.components.DataSourcePicker.inputV2);
+    openMenu(dsSelect);
     expect(await screen.findByText('${dsVariable}')).toBeInTheDocument();
   });
 });
