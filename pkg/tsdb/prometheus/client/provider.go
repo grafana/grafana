@@ -54,7 +54,7 @@ func (p *Provider) GetClient(headers map[string]string) (*Client, error) {
 	}
 
 	opts.Middlewares = p.middlewares()
-	opts.Headers = ReqHeaders(headers)
+	opts.Headers = reqHeaders(headers)
 
 	// Set SigV4 service namespace
 	if opts.SigV4 != nil {
@@ -83,7 +83,7 @@ func (p *Provider) middlewares() []sdkhttpclient.Middleware {
 	return middlewares
 }
 
-func ReqHeaders(headers map[string]string) map[string]string {
+func reqHeaders(headers map[string]string) map[string]string {
 	// copy to avoid changing the original map
 	h := make(map[string]string, len(headers))
 	for k, v := range headers {

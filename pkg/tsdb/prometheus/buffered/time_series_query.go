@@ -64,6 +64,8 @@ type Buffered struct {
 	TimeInterval       string
 }
 
+// New creates and object capable of executing and parsing a Prometheus queries. It's "buffered" because there is
+// another implementation capable of streaming parse the response.
 func New(roundTripper http.RoundTripper, tracer tracing.Tracer, settings backend.DataSourceInstanceSettings, plog log.Logger) (*Buffered, error) {
 	promClient, err := CreateClient(roundTripper, settings.URL)
 	if err != nil {
