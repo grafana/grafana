@@ -7,6 +7,7 @@ export enum SourceDescription {
 
 export interface Template {
   summary: string;
+  name: string;
   source: keyof typeof SourceDescription;
   created_at: string;
   yaml: string;

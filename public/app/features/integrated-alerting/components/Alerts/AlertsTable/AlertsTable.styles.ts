@@ -2,7 +2,9 @@ import { css } from 'emotion';
 
 import { GrafanaTheme } from '@grafana/data';
 
-export const getStyles = ({ colors }: GrafanaTheme) => {
+export const getStyles = (theme: GrafanaTheme) => {
+  const { colors } = theme;
+
   const borderColor = colors.border2;
   const backgroundColorBody = colors.bg1;
   const backgroundColorHeader = colors.bg2;
@@ -35,6 +37,7 @@ export const getStyles = ({ colors }: GrafanaTheme) => {
             th {
               position: sticky;
               top: 0;
+              z-index: 1;
             }
           }
         }
@@ -77,6 +80,20 @@ export const getStyles = ({ colors }: GrafanaTheme) => {
       justify-content: center;
       align-items: center;
       border: 1px solid ${backgroundColorBody};
+    `,
+    labelsWrapper: css`
+      padding: 5px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      margin: 0 -${cellPadding}px;
+    `,
+    label: css`
+      background-color: ${colors.bg3};
+      border-radius: 8px;
+      padding: 6px;
+      line-height: 1;
+      margin: 5px;
     `,
     disabledRow: css`
       & td {
