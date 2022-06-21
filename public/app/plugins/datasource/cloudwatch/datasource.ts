@@ -864,8 +864,7 @@ export class CloudWatchDatasource
     });
     if (variableName && valueVar) {
       if ((valueVar as unknown as VariableWithMultiSupport).multi) {
-        // rebuild the variable name to handle old migrated queries
-        const values = this.templateSrv.replace('$' + variableName, scopedVars, 'pipe').split('|');
+        const values = this.templateSrv.replace(value, scopedVars, 'pipe').split('|');
         return values;
       }
       return [this.templateSrv.replace(value, scopedVars)];
