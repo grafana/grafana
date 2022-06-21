@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
+import { selectOptionInTest, getSelectParent } from 'test/helpers/selectOptionInTest';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -13,12 +14,25 @@ const mockDS = mockDataSource({
   type: DataSourceType.Alertmanager,
 });
 
+const mockVariable = {
+  name: 'dsVariable',
+  type: 'datasource',
+};
+
 jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
   return {
     getDataSourceSrv: () => ({
       get: () => Promise.resolve(mockDS),
       getList: () => [mockDS],
       getInstanceSettings: () => mockDS,
+    }),
+  };
+});
+
+jest.mock('@grafana/runtime/src/services/templateSrv', () => {
+  return {
+    getTemplateSrv: () => ({
+      getVariables: () => [mockVariable],
     }),
   };
 });
@@ -65,6 +79,16 @@ describe('QueryEditorRowHeader', () => {
 
   it('should not show data source picker when no callback is passed', async () => {
     renderScenario({ onChangeDataSource: undefined });
+
+    expect(screen.queryByLabelText(selectors.components.DataSourcePicker.container)).toBeNull();
+  });
+
+  it('should not show data source picker when no callback is passed', async () => {
+    renderScenario({ onChangeDataSource: undefined });
+    selectOptionInTest(screen.getByLabelText(selectors.components.DataSourcePicker.container), '${dsVariable}');
+    expect(getSelectParent(screen.getByLabelText(selectors.components.DataSourcePicker.container))).toIncludeText(
+      '${dsVariable}'
+    );
 
     expect(screen.queryByLabelText(selectors.components.DataSourcePicker.container)).toBeNull();
   });
