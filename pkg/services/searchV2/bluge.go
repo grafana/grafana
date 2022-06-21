@@ -224,7 +224,7 @@ var ngramIndexAnalyzer = &analysis.Analyzer{
 	Tokenizer: tokenizer.NewWhitespaceTokenizer(),
 	TokenFilters: []analysis.TokenFilter{
 		token.NewLowerCaseFilter(),
-		token.NewEdgeNgramFilter(token.FRONT, 1, ngramEdgeFilterMaxLength),
+		token.NewNgramFilter(1, ngramEdgeFilterMaxLength),
 	},
 }
 

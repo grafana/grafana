@@ -511,3 +511,22 @@ func TestDashboardIndex_Panels(t *testing.T) {
 		)
 	})
 }
+
+var middleNgramDashboards = []dashboard{
+	{
+		id:  1,
+		uid: "1",
+		info: &extract.DashboardInfo{
+			Title: "heat-torkel",
+		},
+	},
+}
+
+func TestDashboardIndex_MiddleNgram(t *testing.T) {
+	t.Run("middle-ngram", func(t *testing.T) {
+		_, reader, _ := initTestIndexFromDashes(t, middleNgramDashboards)
+		checkSearchResponse(t, filepath.Base(t.Name()), reader, testAllowAllFilter,
+			DashboardQuery{Query: "tork"},
+		)
+	})
+}
