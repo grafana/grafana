@@ -1,7 +1,9 @@
+import { cx } from 'emotion';
 import React, { FC } from 'react';
 
-import { Tooltip } from '@grafana/ui';
+import { Tooltip, useStyles } from '@grafana/ui';
 
+import { getStyles } from './DBIcon.styles';
 import { DBIconProps, DBIconMap } from './DBIcon.types';
 import { Edit, Delete, See, Restore, Backup } from './assets';
 
@@ -13,18 +15,24 @@ const Icons: DBIconMap = {
   backup: Backup,
 };
 
-export const DBIcon: FC<DBIconProps> = ({ type, size, tooltipText, ...rest }) => {
+export const DBIcon: FC<DBIconProps> = ({ type, size, tooltipText, disabled, ...rest }) => {
+  const styles = useStyles(getStyles);
+
   if (!Icons[type]) {
     return null;
   }
   const Icon = Icons[type];
-  const IconEl = <Icon size={size} {...rest} />;
+  const IconEl = (
+    <span className={cx({ [styles.disabled]: disabled })}>
+      <Icon size={size} {...rest} />
+    </span>
+  );
 
   return tooltipText ? (
     <Tooltip placement="top" content={tooltipText}>
-      <span>{IconEl}</span>
+      {IconEl}
     </Tooltip>
   ) : (
-    IconEl
+    <>{IconEl}</>
   );
 };

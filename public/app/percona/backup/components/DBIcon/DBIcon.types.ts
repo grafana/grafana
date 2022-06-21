@@ -4,6 +4,7 @@ export interface DBIconProps extends React.HTMLAttributes<HTMLOrSVGElement> {
   type: DBIconType;
   size?: number;
   tooltipText?: string;
+  disabled?: boolean;
 }
 
 export interface IconProps {

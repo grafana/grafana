@@ -3,6 +3,7 @@ import React, { FC } from 'react';
 import { useStyles } from '@grafana/ui';
 
 import { DBIcon } from '../../DBIcon';
+import { Status } from '../BackupInventory.types';
 
 import { Messages } from './BackupInventoryActions.messages';
 import { getStyles } from './BackupInventoryActions.styles';
@@ -18,6 +19,7 @@ export const BackupInventoryActions: FC<BackupInventoryActionsProps> = ({ backup
       <DBIcon
         tooltipText={Messages.restoreBackup}
         type="restore"
+        disabled={backup.status !== Status.SUCCESS}
         data-qa="restore-backup-artifact-button"
         role="button"
         onClick={handeClick}
