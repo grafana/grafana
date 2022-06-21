@@ -1,4 +1,5 @@
 export const Messages = {
+  title: 'Integrated Alerting',
   tabs: {
     alerts: 'Alerts',
     alertRules: 'Alert Rules',

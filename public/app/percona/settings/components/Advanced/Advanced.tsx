@@ -4,8 +4,7 @@ import React, { FC, useState } from 'react';
 import { Field, withTypes } from 'react-final-form';
 
 import { Button, Spinner, useTheme, Icon } from '@grafana/ui';
-import { DATA_RETENTION_URL } from 'app/percona/settings/Settings.constants';
-import { Messages } from 'app/percona/settings/Settings.messages';
+import { Messages, DATA_RETENTION_URL } from 'app/percona/settings/Settings.messages';
 import { getSettingsStyles } from 'app/percona/settings/Settings.styles';
 import { LinkTooltip } from 'app/percona/shared/components/Elements/LinkTooltip/LinkTooltip';
 import validators from 'app/percona/shared/helpers/validators';

@@ -1,17 +1,13 @@
 import { cx } from 'emotion';
-import React, { FC } from 'react';
-import { useSelector } from 'react-redux';
+import React from 'react';
 
 import { useStyles } from '@grafana/ui';
-import { StoreState } from 'app/types';
 
 import { getStyles } from './Breadcrumb.styles';
 import { BreadcrumbProps } from './Breadcrumb.types';
 
-export const BreadcrumbSections: FC<BreadcrumbProps> = ({ pageModel }) => {
+export const BreadcrumbSections: FC<BreadcrumbProps> = ({ pageModel, currentLocation }) => {
   const styles = useStyles(getStyles);
-  const locationPath = useSelector((state: StoreState) => state.location.path);
-  const currentLocation = locationPath.slice(1);
   const { title, path: modelPath, children } = pageModel;
 
   const isCurrentPage = currentLocation === modelPath;
@@ -31,7 +27,7 @@ export const BreadcrumbSections: FC<BreadcrumbProps> = ({ pageModel }) => {
       {activeChild ? (
         <>
           {' / '}
-          <BreadcrumbSections pageModel={activeChild} />
+          <BreadcrumbSections pageModel={activeChild} currentLocation={currentLocation} />
         </>
       ) : null}
     </span>

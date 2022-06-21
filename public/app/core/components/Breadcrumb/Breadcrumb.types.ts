@@ -8,4 +8,5 @@ export interface PageModel {
 
 export interface BreadcrumbProps {
   pageModel: PageModel;
+  currentLocation: string;
 }
