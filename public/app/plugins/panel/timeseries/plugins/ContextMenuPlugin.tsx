@@ -1,5 +1,8 @@
-import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { css as cssCore, Global } from '@emotion/react';
+import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useClickAway } from 'react-use';
+
+import { CartesianCoords2D, DataFrame, getFieldDisplayName, InterpolateFunction, TimeZone } from '@grafana/data';
 import {
   ContextMenu,
   GraphContextMenuHeader,
@@ -10,8 +13,6 @@ import {
   MenuItem,
   UPlotConfigBuilder,
 } from '@grafana/ui';
-import { CartesianCoords2D, DataFrame, getFieldDisplayName, InterpolateFunction, TimeZone } from '@grafana/data';
-import { useClickAway } from 'react-use';
 import { pluginLog } from '@grafana/ui/src/components/uPlot/utils';
 
 type ContextMenuSelectionCoords = { viewport: CartesianCoords2D; plotCanvas: CartesianCoords2D };
@@ -136,7 +137,7 @@ export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({
             const seriesIdx = i + 1;
             const dataIdx = u.cursor.idx;
             pluginLog('ContextMenuPlugin', false, seriesIdx, dataIdx);
-            setPoint({ seriesIdx, dataIdx: dataIdx || null });
+            setPoint({ seriesIdx, dataIdx: dataIdx ?? null });
           });
         });
       }
@@ -239,7 +240,7 @@ export const ContextMenuView: React.FC<ContextMenuProps> = ({
     const { seriesIdx, dataIdx } = selection.point;
     const xFieldFmt = xField.display!;
 
-    if (seriesIdx && dataIdx) {
+    if (seriesIdx && dataIdx !== null) {
       const field = data.fields[seriesIdx];
 
       const displayValue = field.display!(field.values.get(dataIdx));

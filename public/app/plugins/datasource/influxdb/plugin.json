@@ -9,6 +9,7 @@
   "logs": true,
   "annotations": true,
   "alerting": true,
+  "backend": true,
 
   "queryOptions": {
     "minInterval": true

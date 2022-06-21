@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { selectOptionInTest } from './test-utils';
+import React, { useState } from 'react';
+
 import { SelectableValue } from '@grafana/data';
+
+import { selectOptionInTest } from '../../../../../public/test/helpers/selectOptionInTest';
+
 import { SelectBase } from './SelectBase';
 
 describe('SelectBase', () => {
@@ -19,12 +22,12 @@ describe('SelectBase', () => {
   ];
 
   it('renders without error', () => {
-    render(<SelectBase menuShouldPortal onChange={onChangeHandler} />);
+    render(<SelectBase onChange={onChangeHandler} />);
   });
 
-  it('renders empty options information', () => {
-    render(<SelectBase menuShouldPortal onChange={onChangeHandler} />);
-    userEvent.click(screen.getByText(/choose/i));
+  it('renders empty options information', async () => {
+    render(<SelectBase onChange={onChangeHandler} />);
+    await userEvent.click(screen.getByText(/choose/i));
     expect(screen.queryByText(/no options found/i)).toBeVisible();
   });
 
@@ -32,7 +35,7 @@ describe('SelectBase', () => {
     render(
       <>
         <label htmlFor="my-select">My select</label>
-        <SelectBase menuShouldPortal onChange={onChangeHandler} options={options} inputId="my-select" />
+        <SelectBase onChange={onChangeHandler} options={options} inputId="my-select" />
       </>
     );
 
@@ -47,21 +50,21 @@ describe('SelectBase', () => {
       return (
         <>
           <button onClick={() => setValue(null)}>clear value</button>
-          <SelectBase menuShouldPortal value={value} onChange={setValue} options={[option]} />
+          <SelectBase value={value} onChange={setValue} options={[option]} />
         </>
       );
     };
 
     render(<Test />);
     expect(screen.queryByText('Test label')).toBeInTheDocument();
-    userEvent.click(screen.getByText('clear value'));
+    await userEvent.click(screen.getByText('clear value'));
     expect(screen.queryByText('Test label')).not.toBeInTheDocument();
   });
 
   describe('when openMenuOnFocus prop', () => {
     describe('is provided', () => {
       it('opens on focus', () => {
-        render(<SelectBase menuShouldPortal onChange={onChangeHandler} openMenuOnFocus />);
+        render(<SelectBase onChange={onChangeHandler} openMenuOnFocus />);
         fireEvent.focus(screen.getByRole('combobox'));
         expect(screen.queryByText(/no options found/i)).toBeVisible();
       });
@@ -73,7 +76,7 @@ describe('SelectBase', () => {
         ${'ArrowUp'}
         ${' '}
       `('opens on arrow down/up or space', ({ key }) => {
-        render(<SelectBase menuShouldPortal onChange={onChangeHandler} />);
+        render(<SelectBase onChange={onChangeHandler} />);
         fireEvent.focus(screen.getByRole('combobox'));
         fireEvent.keyDown(screen.getByRole('combobox'), { key });
         expect(screen.queryByText(/no options found/i)).toBeVisible();
@@ -112,7 +115,6 @@ describe('SelectBase', () => {
       it('should only display maxVisibleValues options, and additional number of values should be displayed as indicator', () => {
         render(
           <SelectBase
-            menuShouldPortal
             onChange={onChangeHandler}
             isMulti={true}
             maxVisibleValues={3}
@@ -129,7 +131,6 @@ describe('SelectBase', () => {
         it('should show all selected options when menu is open', () => {
           render(
             <SelectBase
-              menuShouldPortal
               onChange={onChangeHandler}
               isMulti={true}
               maxVisibleValues={3}
@@ -149,7 +150,6 @@ describe('SelectBase', () => {
         it('should not show all selected options when menu is open', () => {
           render(
             <SelectBase
-              menuShouldPortal
               onChange={onChangeHandler}
               isMulti={true}
               maxVisibleValues={3}
@@ -170,7 +170,6 @@ describe('SelectBase', () => {
       it('should always show all selected options', () => {
         render(
           <SelectBase
-            menuShouldPortal
             onChange={onChangeHandler}
             isMulti={true}
             options={excessiveOptions}
@@ -186,9 +185,9 @@ describe('SelectBase', () => {
   });
 
   describe('options', () => {
-    it('renders menu with provided options', () => {
-      render(<SelectBase menuShouldPortal options={options} onChange={onChangeHandler} />);
-      userEvent.click(screen.getByText(/choose/i));
+    it('renders menu with provided options', async () => {
+      render(<SelectBase options={options} onChange={onChangeHandler} />);
+      await userEvent.click(screen.getByText(/choose/i));
       const menuOptions = screen.getAllByLabelText('Select option');
       expect(menuOptions).toHaveLength(2);
     });
@@ -196,7 +195,7 @@ describe('SelectBase', () => {
     it('call onChange handler when option is selected', async () => {
       const spy = jest.fn();
 
-      render(<SelectBase menuShouldPortal onChange={spy} options={options} aria-label="My select" />);
+      render(<SelectBase onChange={spy} options={options} aria-label="My select" />);
 
       const selectEl = screen.getByLabelText('My select');
       expect(selectEl).toBeInTheDocument();

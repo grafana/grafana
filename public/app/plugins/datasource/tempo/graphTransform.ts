@@ -8,6 +8,7 @@ import {
   NodeGraphDataFrameFieldNames as Fields,
   TimeRange,
 } from '@grafana/data';
+
 import { getNonOverlappingDuration, getStats, makeFrames, makeSpanMap } from '../../../core/utils/tracing';
 
 /**
@@ -133,14 +134,26 @@ function findTraceDuration(view: DataFrameView<Row>): number {
 export const secondsMetric = 'traces_service_graph_request_server_seconds_sum';
 export const totalsMetric = 'traces_service_graph_request_total';
 export const failedMetric = 'traces_service_graph_request_failed_total';
+export const histogramMetric = 'traces_service_graph_request_server_seconds_bucket';
+
+export const rateMetric = {
+  expr: 'topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name))',
+  params: [],
+};
+export const errorRateMetric = {
+  expr: 'topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name))',
+  params: ['span_status="STATUS_CODE_ERROR"'],
+};
+export const durationMetric = {
+  expr: 'histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{}[$__range])) by (le))',
+  params: [],
+};
 
 export const serviceMapMetrics = [
   secondsMetric,
   totalsMetric,
   failedMetric,
-  // We don't show histogram in node graph at the moment but we could later add that into a node context menu.
-  // 'traces_service_graph_request_seconds_bucket',
-  // 'traces_service_graph_request_seconds_count',
+  histogramMetric,
   // These are used for debugging the tempo collection so probably not useful for service map right now.
   // 'traces_service_graph_unpaired_spans_total',
   // 'traces_service_graph_untagged_spans_total',
@@ -194,8 +207,8 @@ function createServiceMapDataFrames() {
     { name: Fields.id },
     { name: Fields.source },
     { name: Fields.target },
-    { name: Fields.mainStat, config: { unit: 'r', displayName: 'Requests' } },
-    { name: Fields.secondaryStat, config: { unit: 'ms/r', displayName: 'Average response time' } },
+    { name: Fields.mainStat, config: { unit: 'ms/r', displayName: 'Average response time' } },
+    { name: Fields.secondaryStat, config: { unit: 'r/sec', displayName: 'Requests per second' } },
   ]);
 
   return [nodes, edges];
@@ -304,8 +317,8 @@ function convertToDataFrames(
       // any requests itself.
       [Fields.mainStat]: node.total ? (node.seconds! / node.total) * 1000 : Number.NaN, // Average response time
       [Fields.secondaryStat]: node.total ? Math.round((node.total / (rangeMs / 1000)) * 100) / 100 : Number.NaN, // Request per second (to 2 decimals)
-      [Fields.arc + 'success']: node.total ? (node.total - (node.failed || 0)) / node.total : 1,
-      [Fields.arc + 'failed']: node.total ? (node.failed || 0) / node.total : 0,
+      [Fields.arc + 'success']: node.total ? (node.total - Math.min(node.failed || 0, node.total)) / node.total : 1,
+      [Fields.arc + 'failed']: node.total ? Math.min(node.failed || 0, node.total) / node.total : 0,
     });
   }
   for (const edgeId of Object.keys(edgesMap)) {
@@ -314,8 +327,8 @@ function convertToDataFrames(
       [Fields.id]: edgeId,
       [Fields.source]: edge.source,
       [Fields.target]: edge.target,
-      [Fields.mainStat]: edge.total, // Requests
-      [Fields.secondaryStat]: edge.total ? (edge.seconds! / edge.total) * 1000 : Number.NaN, // Average response time
+      [Fields.mainStat]: edge.total ? (edge.seconds! / edge.total) * 1000 : Number.NaN, // Average response time
+      [Fields.secondaryStat]: edge.total ? Math.round((edge.total / (rangeMs / 1000)) * 100) / 100 : Number.NaN, // Request per second (to 2 decimals)
     });
   }
 

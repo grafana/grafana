@@ -20,8 +20,8 @@ func TestExecutor_createRequest(t *testing.T) {
 	}
 	query := "SELECT awesomeness FROM somewhere"
 	s := &Service{
-		QueryParser:    &InfluxdbQueryParser{},
-		ResponseParser: &ResponseParser{},
+		queryParser:    &InfluxdbQueryParser{},
+		responseParser: &ResponseParser{},
 		glog:           log.New("test"),
 	}
 

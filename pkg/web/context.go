@@ -17,41 +17,34 @@ package web
 import (
 	"encoding/json"
 	"html/template"
+	"net"
 	"net/http"
 	"net/url"
-	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 )
-
-// ContextInvoker is an inject.FastInvoker wrapper of func(ctx *Context).
-type ContextInvoker func(ctx *Context)
-
-// Invoke implements inject.FastInvoker which simplifies calls of `func(ctx *Context)` function.
-func (invoke ContextInvoker) Invoke(params []interface{}) ([]reflect.Value, error) {
-	invoke(params[0].(*Context))
-	return nil, nil
-}
 
 // Context represents the runtime context of current request of Macaron instance.
 // It is the integration of most frequently used middlewares and helper methods.
 type Context struct {
-	Injector
-	handlers []Handler
+	handlers []http.Handler
 	index    int
 
 	*Router
 	Req      *http.Request
 	Resp     ResponseWriter
 	template *template.Template
+	logger   log.Logger
 }
 
-func (ctx *Context) handler() Handler {
+func (ctx *Context) handler() http.Handler {
 	if ctx.index < len(ctx.handlers) {
 		return ctx.handlers[ctx.index]
 	}
 	if ctx.index == len(ctx.handlers) {
-		return func() {}
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	}
 	panic("invalid index for context handler")
 }
@@ -64,9 +57,8 @@ func (ctx *Context) Next() {
 
 func (ctx *Context) run() {
 	for ctx.index <= len(ctx.handlers) {
-		if _, err := ctx.Invoke(ctx.handler()); err != nil {
-			panic(err)
-		}
+		ctx.handler().ServeHTTP(ctx.Resp, ctx.Req)
+
 		ctx.index++
 		if ctx.Resp.Written() {
 			return
@@ -77,15 +69,29 @@ func (ctx *Context) run() {
 // RemoteAddr returns more real IP address.
 func (ctx *Context) RemoteAddr() string {
 	addr := ctx.Req.Header.Get("X-Real-IP")
+
 	if len(addr) == 0 {
-		addr = ctx.Req.Header.Get("X-Forwarded-For")
-		if addr == "" {
-			addr = ctx.Req.RemoteAddr
-			if i := strings.LastIndex(addr, ":"); i > -1 {
-				addr = addr[:i]
-			}
+		// X-Forwarded-For may contain multiple IP addresses, separated by
+		// commas.
+		addr = strings.TrimSpace(strings.Split(ctx.Req.Header.Get("X-Forwarded-For"), ",")[0])
+	}
+
+	// parse user inputs from headers to prevent log forgery
+	if len(addr) > 0 {
+		if parsedIP := net.ParseIP(addr); parsedIP == nil {
+			// if parsedIP is nil we clean addr and populate with RemoteAddr below
+			ctx.logger.Warn("Received invalid IP address in request headers, removed for log forgery prevention")
+			addr = ""
 		}
 	}
+
+	if len(addr) == 0 {
+		addr = ctx.Req.RemoteAddr
+		if i := strings.LastIndex(addr, ":"); i > -1 {
+			addr = addr[:i]
+		}
+	}
+
 	return addr
 }
 
@@ -176,13 +182,6 @@ func (ctx *Context) QueryInt(name string) int {
 // QueryInt64 returns query result in int64 type.
 func (ctx *Context) QueryInt64(name string) int64 {
 	n, _ := strconv.ParseInt(ctx.Query(name), 10, 64)
-	return n
-}
-
-// ParamsInt64 returns params result in int64 type.
-// e.g. ctx.ParamsInt64(":uid")
-func (ctx *Context) ParamsInt64(name string) int64 {
-	n, _ := strconv.ParseInt(Params(ctx.Req)[name], 10, 64)
 	return n
 }
 

@@ -22,8 +22,8 @@ if [ "$BASE_URL" != "" ]; then
     echo -e "BASE_URL set, skipping starting server"
 else
   # Start it in the background
-  ./e2e/start-server > e2e/server.log &
-  ./e2e/wait-for-grafana
+  ./scripts/grafana-server/start-server > scripts/grafana-server/server.log &
+  ./scripts/grafana-server/wait-for-grafana
 fi
 
 # Run accessibility command

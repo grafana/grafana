@@ -125,7 +125,7 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 	}
 
 	err := l.SQLStore.WithTransactionalDbSession(c, func(session *sqlstore.DBSession) error {
-		if err := l.requirePermissionsOnFolder(c, signedInUser, cmd.FolderID); err != nil {
+		if err := l.requireEditPermissionsOnFolder(c, signedInUser, cmd.FolderID); err != nil {
 			return err
 		}
 		if _, err := session.Insert(&element); err != nil {
@@ -176,7 +176,7 @@ func (l *LibraryElementService) deleteLibraryElement(c context.Context, signedIn
 		if err != nil {
 			return err
 		}
-		if err := l.requirePermissionsOnFolder(c, signedInUser, element.FolderID); err != nil {
+		if err := l.requireEditPermissionsOnFolder(c, signedInUser, element.FolderID); err != nil {
 			return err
 		}
 		var connectionIDs []struct {
@@ -245,6 +245,7 @@ func getLibraryElements(c context.Context, store *sqlstore.SQLStore, signedInUse
 			ID:          libraryElement.ID,
 			OrgID:       libraryElement.OrgID,
 			FolderID:    libraryElement.FolderID,
+			FolderUID:   libraryElement.FolderUID,
 			UID:         libraryElement.UID,
 			Name:        libraryElement.Name,
 			Kind:        libraryElement.Kind,
@@ -357,6 +358,7 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 				ID:          element.ID,
 				OrgID:       element.OrgID,
 				FolderID:    element.FolderID,
+				FolderUID:   element.FolderUID,
 				UID:         element.UID,
 				Name:        element.Name,
 				Kind:        element.Kind,
@@ -420,13 +422,13 @@ func (l *LibraryElementService) handleFolderIDPatches(ctx context.Context, eleme
 
 	// FolderID was provided in the PATCH request
 	if toFolderID != -1 && toFolderID != fromFolderID {
-		if err := l.requirePermissionsOnFolder(ctx, user, toFolderID); err != nil {
+		if err := l.requireEditPermissionsOnFolder(ctx, user, toFolderID); err != nil {
 			return err
 		}
 	}
 
 	// Always check permissions for the folder where library element resides
-	if err := l.requirePermissionsOnFolder(ctx, user, fromFolderID); err != nil {
+	if err := l.requireEditPermissionsOnFolder(ctx, user, fromFolderID); err != nil {
 		return err
 	}
 
@@ -436,7 +438,7 @@ func (l *LibraryElementService) handleFolderIDPatches(ctx context.Context, eleme
 }
 
 // patchLibraryElement updates a Library Element.
-func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInUser *models.SignedInUser, cmd patchLibraryElementCommand, uid string) (LibraryElementDTO, error) {
+func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInUser *models.SignedInUser, cmd PatchLibraryElementCommand, uid string) (LibraryElementDTO, error) {
 	var dto LibraryElementDTO
 	if err := l.requireSupportedElementKind(cmd.Kind); err != nil {
 		return LibraryElementDTO{}, err
@@ -530,7 +532,6 @@ func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInU
 				},
 			},
 		}
-
 		return nil
 	})
 
@@ -637,6 +638,10 @@ func (l *LibraryElementService) getElementsForDashboardID(c context.Context, das
 
 // connectElementsToDashboardID adds connections for all elements Library Elements in a Dashboard.
 func (l *LibraryElementService) connectElementsToDashboardID(c context.Context, signedInUser *models.SignedInUser, elementUIDs []string, dashboardID int64) error {
+	if err := l.requireEditPermissionsOnDashboard(c, signedInUser, dashboardID); err != nil {
+		return err
+	}
+
 	err := l.SQLStore.WithTransactionalDbSession(c, func(session *sqlstore.DBSession) error {
 		_, err := session.Exec("DELETE FROM "+models.LibraryElementConnectionTableName+" WHERE kind=1 AND connection_id=?", dashboardID)
 		if err != nil {
@@ -647,7 +652,7 @@ func (l *LibraryElementService) connectElementsToDashboardID(c context.Context, 
 			if err != nil {
 				return err
 			}
-			if err := l.requirePermissionsOnFolder(c, signedInUser, element.FolderID); err != nil {
+			if err := l.requireViewPermissionsOnFolder(c, signedInUser, element.FolderID); err != nil {
 				return err
 			}
 
@@ -703,7 +708,7 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Conte
 
 		folderID := folderUIDs[0].ID
 
-		if err := l.requirePermissionsOnFolder(c, signedInUser, folderID); err != nil {
+		if err := l.requireEditPermissionsOnFolder(c, signedInUser, folderID); err != nil {
 			return err
 		}
 		var connectionIDs []struct {

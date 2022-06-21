@@ -1,13 +1,19 @@
+import { of } from 'rxjs';
+
 import { dateTime } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
-import { TemplateSrvMock } from '../../../../features/templating/template_srv.mock';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 import { initialCustomVariableModelState } from 'app/features/variables/custom/reducer';
 import { CustomVariableModel } from 'app/features/variables/types';
-import { of } from 'rxjs';
-import { CloudWatchDatasource } from '../datasource';
-import { TemplateSrv } from 'app/features/templating/template_srv';
 
-export function setupMockedDataSource({ data = [], variables }: { data?: any; variables?: any } = {}) {
+import { TemplateSrvMock } from '../../../../features/templating/template_srv.mock';
+import { CloudWatchDatasource } from '../datasource';
+
+export function setupMockedDataSource({
+  data = [],
+  variables,
+  mockGetVariableName = true,
+}: { data?: any; variables?: any; mockGetVariableName?: boolean } = {}) {
   let templateService = new TemplateSrvMock({
     region: 'templatedRegion',
     fields: 'templatedField',
@@ -16,6 +22,10 @@ export function setupMockedDataSource({ data = [], variables }: { data?: any; va
   if (variables) {
     templateService = new TemplateSrv();
     templateService.init(variables);
+    templateService.getVariables = jest.fn().mockReturnValue(variables);
+    if (mockGetVariableName) {
+      templateService.getVariableName = (name: string) => name;
+    }
   }
 
   const datasource = new CloudWatchDatasource(
@@ -38,10 +48,14 @@ export function setupMockedDataSource({ data = [], variables }: { data?: any; va
       },
     } as any
   );
+  datasource.getVariables = () => ['test'];
+
+  datasource.getNamespaces = jest.fn().mockResolvedValue([]);
+  datasource.getRegions = jest.fn().mockResolvedValue([]);
   const fetchMock = jest.fn().mockReturnValue(of({ data }));
   setBackendSrv({ fetch: fetchMock } as any);
 
-  return { datasource, fetchMock };
+  return { datasource, fetchMock, templateService };
 }
 
 export const metricVariable: CustomVariableModel = {
@@ -117,5 +131,63 @@ export const aggregationvariable: CustomVariableModel = {
     { value: 'SUM', text: 'SUM', selected: false },
     { value: 'MIN', text: 'MIN', selected: false },
   ],
+  multi: false,
+};
+
+export const dimensionVariable: CustomVariableModel = {
+  ...initialCustomVariableModelState,
+  id: 'dimension',
+  name: 'dimension',
+  current: {
+    value: 'env',
+    text: 'env',
+    selected: true,
+  },
+  options: [
+    { value: 'env', text: 'env', selected: false },
+    { value: 'tag', text: 'tag', selected: false },
+  ],
+  multi: false,
+};
+
+export const logGroupNamesVariable: CustomVariableModel = {
+  ...initialCustomVariableModelState,
+  id: 'groups',
+  name: 'groups',
+  current: {
+    value: ['templatedGroup-1', 'templatedGroup-2'],
+    text: ['templatedGroup-1', 'templatedGroup-2'],
+    selected: true,
+  },
+  options: [
+    { value: 'templatedGroup-1', text: 'templatedGroup-1', selected: true },
+    { value: 'templatedGroup-2', text: 'templatedGroup-2', selected: true },
+  ],
+  multi: true,
+};
+
+export const regionVariable: CustomVariableModel = {
+  ...initialCustomVariableModelState,
+  id: 'region',
+  name: 'region',
+  current: {
+    value: 'templatedRegion',
+    text: 'templatedRegion',
+    selected: true,
+  },
+  options: [{ value: 'templatedRegion', text: 'templatedRegion', selected: true }],
+  multi: false,
+};
+
+export const expressionVariable: CustomVariableModel = {
+  ...initialCustomVariableModelState,
+  id: 'fields',
+  name: 'fields',
+  current: {
+    value: 'templatedField',
+    text: 'templatedField',
+    selected: true,
+  },
+  options: [{ value: 'templatedField', text: 'templatedField', selected: true }],
   multi: false,
 };

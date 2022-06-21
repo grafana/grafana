@@ -12,20 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { css } from '@emotion/css';
+import cx from 'classnames';
 import * as React from 'react';
 import IoIosArrowDown from 'react-icons/lib/io/ios-arrow-down';
 import IoIosArrowRight from 'react-icons/lib/io/ios-arrow-right';
-import { css } from '@emotion/css';
-import cx from 'classnames';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
+
+import { autoColor } from '../../Theme';
+import { TNil } from '../../types';
+import { TraceKeyValuePair, TraceLink } from '../../types/trace';
+import { uAlignIcon, uTxEllipsis } from '../../uberUtilityStyles';
 
 import * as markers from './AccordianKeyValues.markers';
 import KeyValuesTable from './KeyValuesTable';
-import { TNil } from '../../types';
-import { TraceKeyValuePair, TraceLink } from '../../types/trace';
-import { autoColor, createStyle, Theme, useTheme } from '../../Theme';
-import { uAlignIcon, uTxEllipsis } from '../../uberUtilityStyles';
 
-export const getStyles = createStyle((theme: Theme) => {
+export const getStyles = (theme: GrafanaTheme2) => {
   return {
     header: css`
       label: header;
@@ -80,7 +84,7 @@ export const getStyles = createStyle((theme: Theme) => {
       padding: 0 0.2em;
     `,
   };
-});
+};
 
 type AccordianKeyValuesProps = {
   className?: string | TNil;
@@ -96,7 +100,7 @@ type AccordianKeyValuesProps = {
 // export for tests
 export function KeyValuesSummary(props: { data?: TraceKeyValuePair[] }) {
   const { data } = props;
-  const styles = getStyles(useTheme());
+  const styles = useStyles2(getStyles);
 
   if (!Array.isArray(data) || !data.length) {
     return null;
@@ -123,7 +127,7 @@ KeyValuesSummary.defaultProps = {
 export default function AccordianKeyValues(props: AccordianKeyValuesProps) {
   const { className, data, highContrast, interactive, isOpen, label, linksGetter, onToggle } = props;
   const isEmpty = !Array.isArray(data) || !data.length;
-  const styles = getStyles(useTheme());
+  const styles = useStyles2(getStyles);
   const iconCls = cx(uAlignIcon, { [styles.emptyIcon]: isEmpty });
   let arrow: React.ReactNode | null = null;
   let headerProps: {} | null = null;

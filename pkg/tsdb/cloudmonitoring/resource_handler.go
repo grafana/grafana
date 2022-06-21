@@ -14,7 +14,6 @@ import (
 	"strings"
 
 	"github.com/andybalholm/brotli"
-	"github.com/grafana/grafana-google-sdk-go/pkg/utils"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 )
 
@@ -25,25 +24,32 @@ const resourceManagerPath = "/v1/projects"
 
 type processResponse func(body []byte) ([]json.RawMessage, string, error)
 
-func (s *Service) registerRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("/gceDefaultProject", getGCEDefaultProject)
-
-	mux.HandleFunc("/metricDescriptors/", s.resourceHandler(cloudMonitor, processMetricDescriptors))
-	mux.HandleFunc("/services/", s.resourceHandler(cloudMonitor, processServices))
-	mux.HandleFunc("/slo-services/", s.resourceHandler(cloudMonitor, processSLOs))
-	mux.HandleFunc("/projects", s.resourceHandler(resourceManager, processProjects))
+func (s *Service) newResourceMux() *http.ServeMux {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/gceDefaultProject", s.getGCEDefaultProject)
+	mux.HandleFunc("/metricDescriptors/", s.handleResourceReq(cloudMonitor, processMetricDescriptors))
+	mux.HandleFunc("/services/", s.handleResourceReq(cloudMonitor, processServices))
+	mux.HandleFunc("/slo-services/", s.handleResourceReq(cloudMonitor, processSLOs))
+	mux.HandleFunc("/projects", s.handleResourceReq(resourceManager, processProjects))
+	return mux
 }
 
-func getGCEDefaultProject(rw http.ResponseWriter, req *http.Request) {
-	project, err := utils.GCEDefaultProject(req.Context())
+func (s *Service) getGCEDefaultProject(rw http.ResponseWriter, req *http.Request) {
+	project, err := s.gceDefaultProjectGetter(req.Context())
 	if err != nil {
 		writeResponse(rw, http.StatusBadRequest, fmt.Sprintf("unexpected error %v", err))
 		return
 	}
-	writeResponse(rw, http.StatusOK, project)
+
+	encoded, err := json.Marshal(project)
+	if err != nil {
+		writeResponse(rw, http.StatusBadRequest, fmt.Sprintf("error retrieving default project %v", err))
+		return
+	}
+	writeResponseBytes(rw, http.StatusOK, encoded)
 }
 
-func (s *Service) resourceHandler(subDataSource string, responseFn processResponse) func(rw http.ResponseWriter, req *http.Request) {
+func (s *Service) handleResourceReq(subDataSource string, responseFn processResponse) func(rw http.ResponseWriter, req *http.Request) {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		client, code, err := s.setRequestVariables(req, subDataSource)
 		if err != nil {

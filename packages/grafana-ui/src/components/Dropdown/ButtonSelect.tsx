@@ -1,16 +1,18 @@
+import { css } from '@emotion/css';
+import { useButton } from '@react-aria/button';
+import { FocusScope } from '@react-aria/focus';
+import { useMenuTrigger } from '@react-aria/menu';
+import { useMenuTriggerState } from '@react-stately/menu';
 import React, { HTMLAttributes } from 'react';
-import { PopoverContent } from '../Tooltip/Tooltip';
+
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+
+import { useStyles2 } from '../../themes/ThemeContext';
 import { ToolbarButtonVariant, ToolbarButton, ButtonGroup } from '../Button';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
-import { css } from '@emotion/css';
-import { useStyles2 } from '../../themes/ThemeContext';
 import { Menu } from '../Menu/Menu';
 import { MenuItem } from '../Menu/MenuItem';
-import { FocusScope } from '@react-aria/focus';
-import { useMenuTriggerState } from '@react-stately/menu';
-import { useMenuTrigger } from '@react-aria/menu';
-import { useButton } from '@react-aria/button';
+import { PopoverContent } from '../Tooltip';
 
 export interface Props<T> extends HTMLAttributes<HTMLButtonElement> {
   className?: string;
@@ -57,7 +59,11 @@ const ButtonSelectComponent = <T,>(props: Props<T>) => {
         <div className={styles.menuWrapper}>
           <ClickOutsideWrapper onClick={state.close} parent={document} includeButtonPress={false}>
             <FocusScope contain autoFocus restoreFocus>
-              <Menu onClose={state.close} {...menuProps}>
+              {/*
+                tabIndex=-1 is needed here to support highlighting text within the menu when using FocusScope
+                see https://github.com/adobe/react-spectrum/issues/1604#issuecomment-781574668
+              */}
+              <Menu tabIndex={-1} onClose={state.close} {...menuProps}>
                 {options.map((item) => (
                   <MenuItem
                     key={`${item.value}`}

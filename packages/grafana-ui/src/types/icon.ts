@@ -1,10 +1,13 @@
 import { Field, FieldType } from '@grafana/data';
+
 import { ComponentSize } from './size';
-export type IconType = 'mono' | 'default';
+
+export type IconType = 'mono' | 'default' | 'solid';
 export type IconSize = ComponentSize | 'xl' | 'xxl' | 'xxxl';
 
 export const getAvailableIcons = () =>
   [
+    'anchor',
     'angle-double-down',
     'angle-double-right',
     'angle-double-up',
@@ -27,6 +30,7 @@ export const getAvailableIcons = () =>
     'bell-slash',
     'bolt',
     'book',
+    'bookmark',
     'book-open',
     'brackets-curly',
     'building',
@@ -50,6 +54,7 @@ export const getAvailableIcons = () =>
     'cog',
     'columns',
     'comment-alt',
+    'comment-alt-message',
     'comment-alt-share',
     'comments-alt',
     'compass',
@@ -66,6 +71,7 @@ export const getAvailableIcons = () =>
     'envelope',
     'exchange-alt',
     'exclamation-triangle',
+    'exclamation-circle',
     'external-link-alt',
     'eye',
     'eye-slash',
@@ -101,6 +107,9 @@ export const getAvailableIcons = () =>
     'heart-break',
     'history',
     'home-alt',
+    'horizontal-align-center',
+    'horizontal-align-left',
+    'horizontal-align-right',
     'hourglass',
     'import',
     'info',
@@ -114,6 +123,7 @@ export const getAvailableIcons = () =>
     'list-ui-alt',
     'list-ul',
     'lock',
+    'map-marker',
     'message',
     'minus',
     'minus-circle',
@@ -133,6 +143,7 @@ export const getAvailableIcons = () =>
     'presentation-play',
     'process',
     'question-circle',
+    'record-audio',
     'repeat',
     'rocket',
     'save',
@@ -164,6 +175,9 @@ export const getAvailableIcons = () =>
     'upload',
     'user',
     'users-alt',
+    'vertical-align-bottom',
+    'vertical-align-center',
+    'vertical-align-top',
     'wrap-text',
     'x',
   ] as const;
@@ -186,6 +200,8 @@ export function getFieldTypeIcon(field?: Field): IconName {
         return 'toggle-on';
       case FieldType.trace:
         return 'info-circle';
+      case FieldType.geo:
+        return 'map-marker';
       case FieldType.other:
         return 'brackets-curly';
     }

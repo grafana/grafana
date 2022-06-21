@@ -1,6 +1,7 @@
 package opentsdb
 
 import (
+	"context"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -10,9 +11,10 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 func TestOpenTsdbExecutor(t *testing.T) {
@@ -21,7 +23,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 	}
 
 	t.Run("create request", func(t *testing.T) {
-		req, err := service.createRequest(&datasourceInfo{}, OpenTsdbQuery{})
+		req, err := service.createRequest(context.Background(), &datasourceInfo{}, OpenTsdbQuery{})
 		require.NoError(t, err)
 
 		assert.Equal(t, "POST", req.Method)
@@ -47,6 +49,10 @@ func TestOpenTsdbExecutor(t *testing.T) {
 				"metric": "test",
 				"dps": {
 					"1405544146": 50.0
+				},
+				"tags" : {
+					"env": "prod",
+					"app": "grafana"
 				}
 			}
 		]`
@@ -55,7 +61,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 			data.NewField("time", nil, []time.Time{
 				time.Date(2014, 7, 16, 20, 55, 46, 0, time.UTC),
 			}),
-			data.NewField("value", nil, []float64{
+			data.NewField("value", map[string]string{"env": "prod", "app": "grafana"}, []float64{
 				50}),
 		)
 

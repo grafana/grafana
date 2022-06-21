@@ -1,15 +1,14 @@
-import { AlertmanagerGroup, AlertState } from 'app/plugins/datasource/alertmanager/types';
+import { css } from '@emotion/css';
 import React, { useState, useEffect } from 'react';
+
 import { GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
 import { useStyles2, LinkButton } from '@grafana/ui';
-import { css } from '@emotion/css';
-
 import { AlertLabels } from 'app/features/alerting/unified/components/AlertLabels';
-import { AlertGroupHeader } from 'app/features/alerting/unified/components/alert-groups/AlertGroupHeader';
 import { CollapseToggle } from 'app/features/alerting/unified/components/CollapseToggle';
+import { AlertGroupHeader } from 'app/features/alerting/unified/components/alert-groups/AlertGroupHeader';
 import { getNotificationsTextColors } from 'app/features/alerting/unified/styles/notifications';
-import { makeAMLink } from 'app/features/alerting/unified/utils/misc';
-import { getMatcherQueryParams } from 'app/features/alerting/unified/utils/matchers';
+import { makeAMLink, makeLabelBasedSilenceLink } from 'app/features/alerting/unified/utils/misc';
+import { AlertmanagerGroup, AlertState } from 'app/plugins/datasource/alertmanager/types';
 
 type Props = {
   alertManagerSourceName: string;
@@ -68,9 +67,7 @@ export const AlertGroup = ({ alertManagerSourceName, group, expandAll }: Props) 
                   )}
                   {alert.status.state === AlertState.Active && (
                     <LinkButton
-                      href={`${makeAMLink('/alerting/silence/new', alertManagerSourceName)}&${getMatcherQueryParams(
-                        alert.labels
-                      )}`}
+                      href={makeLabelBasedSilenceLink(alertManagerSourceName, alert.labels)}
                       className={styles.button}
                       icon={'bell-slash'}
                       size={'sm'}

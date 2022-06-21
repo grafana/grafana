@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"xorm.io/core"
 	"xorm.io/xorm"
 )
@@ -56,11 +55,13 @@ type JsonData struct {
 	Timescaledb         bool   `json:"timescaledb"`
 	Mode                string `json:"sslmode"`
 	ConfigurationMethod string `json:"tlsConfigurationMethod"`
+	TlsSkipVerify       bool   `json:"tlsSkipVerify"`
 	RootCertFile        string `json:"sslRootCertFile"`
 	CertFile            string `json:"sslCertFile"`
 	CertKeyFile         string `json:"sslKeyFile"`
 	Timezone            string `json:"timezone"`
 	Encrypt             string `json:"encrypt"`
+	Servername          string `json:"servername"`
 	TimeInterval        string `json:"timeInterval"`
 }
 
@@ -258,7 +259,7 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 	defer session.Close()
 	db := session.DB()
 
-	rows, err := db.Query(interpolatedQuery)
+	rows, err := db.QueryContext(queryContext, interpolatedQuery)
 	if err != nil {
 		errAppendDebug("db query error", e.transformQueryError(err), interpolatedQuery)
 		return
@@ -821,13 +822,13 @@ func convertNullableFloat32ToEpochMS(origin *data.Field, newField *data.Field) {
 func convertSQLTimeColumnsToEpochMS(frame *data.Frame, qm *dataQueryModel) error {
 	if qm.timeIndex != -1 {
 		if err := convertSQLTimeColumnToEpochMS(frame, qm.timeIndex); err != nil {
-			return errutil.Wrap("failed to convert time column", err)
+			return fmt.Errorf("%v: %w", "failed to convert time column", err)
 		}
 	}
 
 	if qm.timeEndIndex != -1 {
 		if err := convertSQLTimeColumnToEpochMS(frame, qm.timeEndIndex); err != nil {
-			return errutil.Wrap("failed to convert timeend column", err)
+			return fmt.Errorf("%v: %w", "failed to convert timeend column", err)
 		}
 	}
 

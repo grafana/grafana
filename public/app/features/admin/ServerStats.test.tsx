@@ -1,5 +1,6 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
+
 import { ServerStats } from './ServerStats';
 import { ServerStat } from './state/apis';
 
@@ -41,5 +42,8 @@ describe('ServerStats', () => {
     expect(screen.getByText('Playlists')).toBeInTheDocument();
     expect(screen.getByText('Snapshots')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Manage dashboards' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Manage data sources' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Alerts' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Manage users' })).toBeInTheDocument();
   });
 });

@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+
 import { FieldOverrideEditorProps, FieldType, getFieldDisplayName, SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
 
@@ -37,7 +38,6 @@ export const FillBellowToEditor: React.FC<FieldOverrideEditorProps<string, any>>
 
   return (
     <Select
-      menuShouldPortal
       options={names}
       value={current}
       onChange={(v) => {

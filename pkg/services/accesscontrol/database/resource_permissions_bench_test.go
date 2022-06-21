@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions/types"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -51,13 +52,15 @@ func benchmarkDSPermissions(b *testing.B, dsNum, usersNum int) {
 	}
 }
 
-func getDSPermissions(b *testing.B, store accesscontrol.ResourcePermissionsStore, dataSources []int64) {
+func getDSPermissions(b *testing.B, store *AccessControlStore, dataSources []int64) {
 	dsId := dataSources[0]
 
-	permissions, err := store.GetResourcesPermissions(context.Background(), accesscontrol.GlobalOrgID, accesscontrol.GetResourcesPermissionsQuery{
-		Actions:     []string{dsAction},
-		Resource:    dsResource,
-		ResourceIDs: []string{strconv.Itoa(int(dsId))},
+	permissions, err := store.GetResourcePermissions(context.Background(), accesscontrol.GlobalOrgID, types.GetResourcePermissionsQuery{
+		User:              &models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{1: {"org.users:read": {"users:*"}, "teams:read": {"teams:*"}}}},
+		Actions:           []string{dsAction},
+		Resource:          dsResource,
+		ResourceID:        strconv.Itoa(int(dsId)),
+		ResourceAttribute: "id",
 	})
 	require.NoError(b, err)
 	assert.GreaterOrEqual(b, len(permissions), 2)
@@ -93,12 +96,14 @@ func GenerateDatasourcePermissions(b *testing.B, db *sqlstore.SQLStore, ac *Acce
 			_, err := ac.SetUserResourcePermission(
 				context.Background(),
 				accesscontrol.GlobalOrgID,
-				userIds[i],
-				accesscontrol.SetResourcePermissionCommand{
-					Actions:    []string{dsAction},
-					Resource:   dsResource,
-					ResourceID: strconv.Itoa(int(dsID)),
+				accesscontrol.User{ID: userIds[i]},
+				types.SetResourcePermissionCommand{
+					Actions:           []string{dsAction},
+					Resource:          dsResource,
+					ResourceID:        strconv.Itoa(int(dsID)),
+					ResourceAttribute: "id",
 				},
+				nil,
 			)
 			require.NoError(b, err)
 		}
@@ -110,11 +115,13 @@ func GenerateDatasourcePermissions(b *testing.B, db *sqlstore.SQLStore, ac *Acce
 				context.Background(),
 				accesscontrol.GlobalOrgID,
 				teamIds[i],
-				accesscontrol.SetResourcePermissionCommand{
-					Actions:    []string{"datasources:query"},
-					Resource:   "datasources",
-					ResourceID: strconv.Itoa(int(dsID)),
+				types.SetResourcePermissionCommand{
+					Actions:           []string{"datasources:query"},
+					Resource:          "datasources",
+					ResourceID:        strconv.Itoa(int(dsID)),
+					ResourceAttribute: "id",
 				},
+				nil,
 			)
 			require.NoError(b, err)
 		}

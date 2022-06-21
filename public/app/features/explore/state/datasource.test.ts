@@ -1,6 +1,7 @@
-import { updateDatasourceInstanceAction, datasourceReducer } from './datasource';
-import { ExploreId, ExploreItemState } from 'app/types';
 import { DataQuery, DataSourceApi } from '@grafana/data';
+import { ExploreId, ExploreItemState } from 'app/types';
+
+import { updateDatasourceInstanceAction, datasourceReducer } from './datasource';
 import { createEmptyQueryResponse } from './utils';
 
 describe('Datasource reducer', () => {
@@ -17,11 +18,11 @@ describe('Datasource reducer', () => {
     } as DataSourceApi;
     const queries: DataQuery[] = [];
     const queryKeys: string[] = [];
-    const initialState: ExploreItemState = ({
+    const initialState: ExploreItemState = {
       datasourceInstance: null,
       queries,
       queryKeys,
-    } as unknown) as ExploreItemState;
+    } as unknown as ExploreItemState;
 
     const result = datasourceReducer(
       initialState,

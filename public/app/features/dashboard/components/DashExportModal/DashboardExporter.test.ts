@@ -1,13 +1,16 @@
 import { find } from 'lodash';
-import config from 'app/core/config';
-import { DashboardExporter, LibraryElementExport } from './DashboardExporter';
-import { DashboardModel } from '../../state/DashboardModel';
+
 import { DataSourceInstanceSettings, DataSourceRef, PanelPluginMeta } from '@grafana/data';
+import config from 'app/core/config';
+
+import { LibraryElementKind } from '../../../library-panels/types';
 import { variableAdapters } from '../../../variables/adapters';
 import { createConstantVariableAdapter } from '../../../variables/constant/adapter';
-import { createQueryVariableAdapter } from '../../../variables/query/adapter';
 import { createDataSourceVariableAdapter } from '../../../variables/datasource/adapter';
-import { LibraryElementKind } from '../../../library-panels/types';
+import { createQueryVariableAdapter } from '../../../variables/query/adapter';
+import { DashboardModel } from '../../state/DashboardModel';
+
+import { DashboardExporter, LibraryElementExport } from './DashboardExporter';
 
 jest.mock('app/core/store', () => {
   return {
@@ -17,7 +20,7 @@ jest.mock('app/core/store', () => {
 });
 
 jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
   getDataSourceSrv: () => {
     return {
       get: (v: any) => {
@@ -40,6 +43,59 @@ jest.mock('@grafana/runtime', () => ({
 variableAdapters.register(createQueryVariableAdapter());
 variableAdapters.register(createConstantVariableAdapter());
 variableAdapters.register(createDataSourceVariableAdapter());
+
+it('handles a default datasource in a template variable', async () => {
+  const dashboard: any = {
+    templating: {
+      list: [
+        {
+          current: {},
+          definition: 'test',
+          error: {},
+          hide: 0,
+          includeAll: false,
+          multi: false,
+          name: 'query0',
+          options: [],
+          query: {
+            query: 'test',
+            refId: 'StandardVariableQuery',
+          },
+          refresh: 1,
+          regex: '',
+          skipUrlSync: false,
+          sort: 0,
+          type: 'query',
+        },
+      ],
+    },
+  };
+  const dashboardModel = new DashboardModel(dashboard, {}, () => dashboard.templating.list);
+  const exporter = new DashboardExporter();
+  const exported: any = await exporter.makeExportable(dashboardModel);
+  expect(exported.templating.list[0].datasource.uid).toBe('${DS_GFDB}');
+});
+
+it('If a panel queries has no datasource prop ignore it', async () => {
+  const dashboard: any = {
+    panels: [
+      {
+        id: 1,
+        type: 'graph',
+        datasource: {
+          uid: 'other',
+          type: 'other',
+        },
+        targets: [{ refId: 'A', a: 'A' }],
+      },
+    ],
+  };
+  const dashboardModel = new DashboardModel(dashboard, {}, () => []);
+  const exporter = new DashboardExporter();
+  const exported: any = await exporter.makeExportable(dashboardModel);
+  expect(exported.panels[0].datasource).toEqual({ uid: '${DS_OTHER}', type: 'other' });
+  expect(exported.panels[0].targets[0].datasource).toEqual({ uid: '${DS_OTHER}', type: 'other' });
+});
 
 describe('given dashboard with repeated panels', () => {
   let dash: any, exported: any;
@@ -134,6 +190,10 @@ describe('given dashboard with repeated panels', () => {
             },
           ],
         },
+        {
+          id: 5,
+          targets: [{ scenarioId: 'random_walk', refId: 'A' }],
+        },
       ],
     };
 
@@ -170,6 +230,23 @@ describe('given dashboard with repeated panels', () => {
     expect(panel.datasource.uid).toBe('${DS_GFDB}');
   });
 
+  it('should explicitly specify default datasources', () => {
+    const panel = exported.panels[7];
+    expect(exported.__inputs.some((ds: Record<string, string>) => ds.name === 'DS_GFDB')).toBeTruthy();
+    expect(panel.datasource.uid).toBe('${DS_GFDB}');
+    expect(panel.targets[0].datasource).toEqual({ type: 'testdb', uid: '${DS_GFDB}' });
+  });
+
+  it('should not include default datasource in __inputs unnecessarily', async () => {
+    const testJson: any = {
+      panels: [{ id: 1, datasource: { uid: 'other', type: 'other' }, type: 'graph' }],
+    };
+    const testDash = new DashboardModel(testJson);
+    const exporter = new DashboardExporter();
+    const exportedJson: any = await exporter.makeExportable(testDash);
+    expect(exportedJson.__inputs.some((ds: Record<string, string>) => ds.name === 'DS_GFDB')).toBeFalsy();
+  });
+
   it('should replace datasource refs in collapsed row', () => {
     const panel = exported.panels[6].panels[0];
     expect(panel.datasource.uid).toBe('${DS_GFDB}');
@@ -183,7 +260,7 @@ describe('given dashboard with repeated panels', () => {
   });
 
   it('should replace datasource in annotation query', () => {
-    expect(exported.annotations.list[1].datasource).toBe('${DS_GFDB}');
+    expect(exported.annotations.list[1].datasource.uid).toBe('${DS_GFDB}');
   });
 
   it('should add datasource as input', () => {
@@ -268,6 +345,7 @@ describe('given dashboard with repeated panels', () => {
     expect(element.model).toEqual({
       id: 17,
       datasource: { type: 'other2', uid: '$ds' },
+      targets: [{ refId: 'A', datasource: { type: 'other2', uid: '$ds' } }],
       type: 'graph',
     });
   });
@@ -311,7 +389,7 @@ stubs['other2'] = {
   meta: { id: 'other2', info: { version: '1.2.1' }, name: 'OtherDB_2' },
 };
 
-stubs['-- Mixed --'] = {
+stubs['mixed'] = {
   name: 'mixed',
   meta: {
     id: 'mixed',
@@ -321,7 +399,7 @@ stubs['-- Mixed --'] = {
   },
 };
 
-stubs['-- Grafana --'] = {
+stubs['grafana'] = {
   name: '-- Grafana --',
   meta: {
     id: 'grafana',

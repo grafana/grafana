@@ -1,8 +1,10 @@
 import React from 'react';
+
 import { DataSourceSettings } from '@grafana/data';
 
-import { DataSourceHttpSettings } from './DataSourceHttpSettings';
 import { UseState } from '../../utils/storybook/UseState';
+
+import { DataSourceHttpSettings } from './DataSourceHttpSettings';
 import mdx from './DataSourceHttpSettings.mdx';
 
 const settingsMock: DataSourceSettings<any, any> = {
@@ -15,12 +17,10 @@ const settingsMock: DataSourceSettings<any, any> = {
   typeLogoUrl: '',
   access: 'direct',
   url: 'http://localhost:8086',
-  password: '',
   user: 'grafana',
   database: 'site',
   basicAuth: false,
   basicAuthUser: '',
-  basicAuthPassword: '',
   withCredentials: false,
   isDefault: false,
   jsonData: {

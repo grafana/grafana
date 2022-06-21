@@ -1,15 +1,20 @@
-import { map, cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash';
 import { of, throwError } from 'rxjs';
+
 import {
   CoreApp,
   DataQueryRequest,
   DataQueryResponseData,
   DataSourceInstanceSettings,
   dateTime,
+  Field,
   getFieldDisplayName,
   LoadingState,
   toDataFrame,
 } from '@grafana/data';
+import { QueryOptions } from 'app/types';
+
+import { VariableHide } from '../../../features/variables/types';
 
 import {
   alignRange,
@@ -19,9 +24,6 @@ import {
   prometheusSpecialRegexEscape,
 } from './datasource';
 import { PromOptions, PromQuery } from './types';
-import { VariableHide } from '../../../features/variables/types';
-import { describe } from '../../../../test/lib/common';
-import { QueryOptions } from 'app/types';
 
 const fetchMock = jest.fn().mockReturnValue(of(createDefaultPromResponse()));
 
@@ -54,15 +56,16 @@ beforeEach(() => {
 
 describe('PrometheusDatasource', () => {
   let ds: PrometheusDatasource;
-  const instanceSettings = ({
+  const instanceSettings = {
     url: 'proxied',
+    id: 1,
     directUrl: 'direct',
     user: 'test',
     password: 'mupp',
     jsonData: {
       customQueryParameters: '',
     } as any,
-  } as unknown) as DataSourceInstanceSettings<PromOptions>;
+  } as unknown as DataSourceInstanceSettings<PromOptions>;
 
   beforeEach(() => {
     ds = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
@@ -146,7 +149,7 @@ describe('PrometheusDatasource', () => {
       it('added to metadata request', () => {
         promDs.metadataRequest('/foo');
         expect(fetchMock.mock.calls.length).toBe(1);
-        expect(fetchMock.mock.calls[0][0].url).toBe('proxied/foo?customQuery=123');
+        expect(fetchMock.mock.calls[0][0].url).toBe('/api/datasources/1/resources/foo?customQuery=123');
       });
 
       it('adds params to timeseries query', () => {
@@ -181,13 +184,13 @@ describe('PrometheusDatasource', () => {
       it('added to metadata request with non-POST endpoint', () => {
         promDs.metadataRequest('/foo');
         expect(fetchMock.mock.calls.length).toBe(1);
-        expect(fetchMock.mock.calls[0][0].url).toBe('proxied/foo?customQuery=123');
+        expect(fetchMock.mock.calls[0][0].url).toBe('/api/datasources/1/resources/foo?customQuery=123');
       });
 
       it('added to metadata request with POST endpoint', () => {
         promDs.metadataRequest('/api/v1/labels');
         expect(fetchMock.mock.calls.length).toBe(1);
-        expect(fetchMock.mock.calls[0][0].url).toBe('proxied/api/v1/labels');
+        expect(fetchMock.mock.calls[0][0].url).toBe('/api/datasources/1/resources/api/v1/labels');
         expect(fetchMock.mock.calls[0][0].data.customQuery).toBe('123');
       });
 
@@ -247,7 +250,7 @@ describe('PrometheusDatasource', () => {
         },
       ]);
       const result = ds.createQuery(target as any, { interval: '15s' } as any, 0, 0);
-      expect(result).toMatchObject({ expr: 'metric{job="foo",k1="v1",k2!="v2"} - metric{k1="v1",k2!="v2"}' });
+      expect(result).toMatchObject({ expr: 'metric{job="foo", k1="v1", k2!="v2"} - metric{k1="v1", k2!="v2"}' });
     });
 
     it('should add escaping if needed to regex filter expressions', () => {
@@ -265,7 +268,7 @@ describe('PrometheusDatasource', () => {
       ]);
       const result = ds.createQuery(target as any, { interval: '15s' } as any, 0, 0);
       expect(result).toMatchObject({
-        expr: `metric{job="foo",k1=~"v.*",k2=~"v\\\\'.*"} - metric{k1=~"v.*",k2=~"v\\\\'.*"}`,
+        expr: `metric{job="foo", k1=~"v.*", k2=~"v\\\\'.*"} - metric{k1=~"v.*", k2=~"v\\\\'.*"}`,
       });
     });
   });
@@ -310,8 +313,8 @@ describe('PrometheusDatasource', () => {
       await expect(ds.query(query)).toEmitValuesWith((result) => {
         const results = result[0].data;
         expect(results[0].fields[1].values.toArray()).toEqual([10, 10]);
-        expect(results[1].fields[1].values.toArray()).toEqual([10, 0]);
-        expect(results[2].fields[1].values.toArray()).toEqual([5, 0]);
+        expect(results[0].fields[2].values.toArray()).toEqual([10, 0]);
+        expect(results[0].fields[3].values.toArray()).toEqual([5, 0]);
       });
     });
 
@@ -352,7 +355,7 @@ describe('PrometheusDatasource', () => {
 
       ds.performTimeSeriesQuery = jest.fn().mockReturnValue(of(responseMock));
       await expect(ds.query(query)).toEmitValuesWith((result) => {
-        const seriesLabels = map(result[0].data, 'name');
+        const seriesLabels = result[0].data[0].fields.slice(1).map((field: Field) => getFieldDisplayName(field));
         expect(seriesLabels).toEqual(expected);
       });
     });
@@ -428,7 +431,7 @@ describe('PrometheusDatasource', () => {
     });
   });
 
-  describe('Prometheus regular escaping', () => {
+  describe('Prometheus regular escaping', () => {
     it('should not escape non-string', () => {
       expect(prometheusRegularEscape(12)).toEqual(12);
     });
@@ -454,7 +457,7 @@ describe('PrometheusDatasource', () => {
     });
   });
 
-  describe('Prometheus regexes escaping', () => {
+  describe('Prometheus regexes escaping', () => {
     it('should not escape simple string', () => {
       expect(prometheusSpecialRegexEscape('cryptodepression')).toEqual('cryptodepression');
     });
@@ -637,7 +640,7 @@ describe('PrometheusDatasource', () => {
       };
 
       const result = ds.applyTemplateVariables(query, {});
-      expect(result).toMatchObject({ expr: 'test{job="bar",k1="v1",k2!="v2"}' });
+      expect(result).toMatchObject({ expr: 'test{job="bar", k1="v1", k2!="v2"}' });
     });
   });
 
@@ -681,13 +684,13 @@ const HOUR = 60 * MINUTE;
 const time = ({ hours = 0, seconds = 0, minutes = 0 }) => dateTime(hours * HOUR + minutes * MINUTE + seconds * SECOND);
 
 describe('PrometheusDatasource', () => {
-  const instanceSettings = ({
+  const instanceSettings = {
     url: 'proxied',
     directUrl: 'direct',
     user: 'test',
     password: 'mupp',
     jsonData: { httpMethod: 'GET' },
-  } as unknown) as DataSourceInstanceSettings<PromOptions>;
+  } as unknown as DataSourceInstanceSettings<PromOptions>;
 
   let ds: PrometheusDatasource;
   beforeEach(() => {
@@ -1060,6 +1063,31 @@ describe('PrometheusDatasource', () => {
       it('should handle single active value', async () => {
         const results = await runAnnotationQuery([[2 * 60000], [1]]);
         expect(results.map((result) => [result.time, result.timeEnd])).toEqual([[120000, 120000]]);
+      });
+    });
+    describe('with template variables', () => {
+      const originalReplaceMock = jest.fn((a: string, ...rest: any) => a);
+      afterAll(() => {
+        templateSrvStub.replace = originalReplaceMock;
+      });
+
+      it('should interpolate variables in query expr', () => {
+        const query = {
+          ...options,
+          annotation: {
+            ...options.annotation,
+            expr: '$variable',
+          },
+          range: {
+            from: time({ seconds: 1 }),
+            to: time({ seconds: 2 }),
+          },
+        };
+        const interpolated = 'interpolated_expr';
+        templateSrvStub.replace.mockReturnValue(interpolated);
+        ds.annotationQuery(query);
+        const req = fetchMock.mock.calls[0][0];
+        expect(req.data.queries[0].expr).toBe(interpolated);
       });
     });
   });
@@ -1684,11 +1712,11 @@ describe('PrometheusDatasource', () => {
       histogramMetrics: ['tns_request_duration_seconds_bucket'],
     } as any;
 
-    const request = ({
+    const request = {
       targets: [targetA, targetB],
       interval: '1s',
       panelId: '',
-    } as any) as DataQueryRequest<PromQuery>;
+    } as any as DataQueryRequest<PromQuery>;
 
     const Aexemplars = ds.shouldRunExemplarQuery(targetA, request);
     const BExpemplars = ds.shouldRunExemplarQuery(targetB, request);
@@ -1699,13 +1727,13 @@ describe('PrometheusDatasource', () => {
 });
 
 describe('PrometheusDatasource for POST', () => {
-  const instanceSettings = ({
+  const instanceSettings = {
     url: 'proxied',
     directUrl: 'direct',
     user: 'test',
     password: 'mupp',
     jsonData: { httpMethod: 'POST' },
-  } as unknown) as DataSourceInstanceSettings<PromOptions>;
+  } as unknown as DataSourceInstanceSettings<PromOptions>;
 
   let ds: PrometheusDatasource;
   beforeEach(() => {
@@ -1798,23 +1826,23 @@ function getPrepareTargetsContext({
   queryOptions?: Partial<QueryOptions>;
   languageProvider?: any;
 }) {
-  const instanceSettings = ({
+  const instanceSettings = {
     url: 'proxied',
     directUrl: 'direct',
     user: 'test',
     password: 'mupp',
     jsonData: { httpMethod: 'POST' },
-  } as unknown) as DataSourceInstanceSettings<PromOptions>;
+  } as unknown as DataSourceInstanceSettings<PromOptions>;
   const start = 0;
   const end = 1;
   const panelId = '2';
-  const options = ({
+  const options = {
     targets,
     interval: '1s',
     panelId,
     app,
     ...queryOptions,
-  } as any) as DataQueryRequest<PromQuery>;
+  } as any as DataQueryRequest<PromQuery>;
 
   const ds = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
   if (languageProvider) {
@@ -2127,7 +2155,7 @@ describe('modifyQuery', () => {
       it('then the correct label should be added', () => {
         const query: PromQuery = { refId: 'A', expr: 'go_goroutines' };
         const action = { key: 'cluster', value: 'us-cluster', type: 'ADD_FILTER' };
-        const instanceSettings = ({ jsonData: {} } as unknown) as DataSourceInstanceSettings<PromOptions>;
+        const instanceSettings = { jsonData: {} } as unknown as DataSourceInstanceSettings<PromOptions>;
         const ds = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
 
         const result = ds.modifyQuery(query, action);
@@ -2141,13 +2169,13 @@ describe('modifyQuery', () => {
       it('then the correct label should be added', () => {
         const query: PromQuery = { refId: 'A', expr: 'go_goroutines{cluster="us-cluster"}' };
         const action = { key: 'pod', value: 'pod-123', type: 'ADD_FILTER' };
-        const instanceSettings = ({ jsonData: {} } as unknown) as DataSourceInstanceSettings<PromOptions>;
+        const instanceSettings = { jsonData: {} } as unknown as DataSourceInstanceSettings<PromOptions>;
         const ds = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
 
         const result = ds.modifyQuery(query, action);
 
         expect(result.refId).toEqual('A');
-        expect(result.expr).toEqual('go_goroutines{cluster="us-cluster",pod="pod-123"}');
+        expect(result.expr).toEqual('go_goroutines{cluster="us-cluster", pod="pod-123"}');
       });
     });
   });
@@ -2157,7 +2185,7 @@ describe('modifyQuery', () => {
       it('then the correct label should be added', () => {
         const query: PromQuery = { refId: 'A', expr: 'go_goroutines' };
         const action = { key: 'cluster', value: 'us-cluster', type: 'ADD_FILTER_OUT' };
-        const instanceSettings = ({ jsonData: {} } as unknown) as DataSourceInstanceSettings<PromOptions>;
+        const instanceSettings = { jsonData: {} } as unknown as DataSourceInstanceSettings<PromOptions>;
         const ds = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
 
         const result = ds.modifyQuery(query, action);
@@ -2171,13 +2199,13 @@ describe('modifyQuery', () => {
       it('then the correct label should be added', () => {
         const query: PromQuery = { refId: 'A', expr: 'go_goroutines{cluster="us-cluster"}' };
         const action = { key: 'pod', value: 'pod-123', type: 'ADD_FILTER_OUT' };
-        const instanceSettings = ({ jsonData: {} } as unknown) as DataSourceInstanceSettings<PromOptions>;
+        const instanceSettings = { jsonData: {} } as unknown as DataSourceInstanceSettings<PromOptions>;
         const ds = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
 
         const result = ds.modifyQuery(query, action);
 
         expect(result.refId).toEqual('A');
-        expect(result.expr).toEqual('go_goroutines{cluster="us-cluster",pod!="pod-123"}');
+        expect(result.expr).toEqual('go_goroutines{cluster="us-cluster", pod!="pod-123"}');
       });
     });
   });

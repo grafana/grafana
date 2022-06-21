@@ -1,13 +1,15 @@
-import React, { HTMLProps } from 'react';
 import { css, cx } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data';
+import React, { HTMLProps } from 'react';
+
+import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { Icon } from '../Icon/Icon';
-import { IconName } from '../../types';
 import { stylesFactory, useTheme2 } from '../../themes';
-import { Counter } from './Counter';
 import { getFocusStyles } from '../../themes/mixins';
+import { IconName } from '../../types';
+import { Icon } from '../Icon/Icon';
+
+import { Counter } from './Counter';
 
 export interface TabProps extends HTMLProps<HTMLAnchorElement> {
   label: string;
@@ -18,10 +20,12 @@ export interface TabProps extends HTMLProps<HTMLAnchorElement> {
   onChangeTab?: (event?: React.MouseEvent<HTMLAnchorElement>) => void;
   /** A number rendered next to the text. Usually used to display the number of items in a tab's view. */
   counter?: number | null;
+  /** Extra content, displayed after the tab label and counter */
+  suffix?: NavModelItem['tabSuffix'];
 }
 
 export const Tab = React.forwardRef<HTMLAnchorElement, TabProps>(
-  ({ label, active, icon, onChangeTab, counter, className, href, ...otherProps }, ref) => {
+  ({ label, active, icon, onChangeTab, counter, suffix: Suffix, className, href, ...otherProps }, ref) => {
     const theme = useTheme2();
     const tabsStyles = getTabStyles(theme);
     const content = () => (
@@ -29,24 +33,27 @@ export const Tab = React.forwardRef<HTMLAnchorElement, TabProps>(
         {icon && <Icon name={icon} />}
         {label}
         {typeof counter === 'number' && <Counter value={counter} />}
+        {Suffix && <Suffix className={tabsStyles.suffix} />}
       </>
     );
 
     const linkClass = cx(tabsStyles.link, active ? tabsStyles.activeStyle : tabsStyles.notActive);
 
     return (
-      <li className={tabsStyles.item}>
+      <div className={tabsStyles.item}>
         <a
           href={href}
           className={linkClass}
           {...otherProps}
           onClick={onChangeTab}
           aria-label={otherProps['aria-label'] || selectors.components.Tab.title(label)}
+          role="tab"
+          aria-selected={active}
           ref={ref}
         >
           {content()}
         </a>
-      </li>
+      </div>
     );
   }
 );
@@ -113,6 +120,9 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme2) => {
         bottom: 0px;
         background-image: ${theme.colors.gradients.brandHorizontal} !important;
       }
+    `,
+    suffix: css`
+      margin-left: ${theme.spacing(1)};
     `,
   };
 });

@@ -43,6 +43,16 @@
       "method": "DELETE",
       "path": "/rules",
       "reqRole": "Editor"
+    },
+    {
+      "method": "DELETE",
+      "path": "/config/v1/rules",
+      "reqRole": "Editor"
+    },
+    {
+      "method": "POST",
+      "path": "/config/v1/rules",
+      "reqRole": "Editor"
     }
   ],
   "includes": [
@@ -65,6 +75,7 @@
   "metrics": true,
   "alerting": true,
   "annotations": true,
+  "backend": true,
   "queryOptions": {
     "minInterval": true
   },

@@ -1,7 +1,9 @@
 import React, { FC, useCallback } from 'react';
-import { Button, InlineField, InlineFieldRow, JSONFormatter, StringValueEditor } from '@grafana/ui';
+
 import { AppEvents, StandardEditorProps, StandardEditorsRegistryItem, StringFieldConfigSettings } from '@grafana/data';
 import { config, getBackendSrv } from '@grafana/runtime';
+import { Button, InlineField, InlineFieldRow, JSONFormatter } from '@grafana/ui';
+import { StringValueEditor } from 'app/core/components/OptionsUI/string';
 import { appEvents } from 'app/core/core';
 
 export interface APIEditorConfig {
@@ -66,7 +68,11 @@ export const APIEditor: FC<StandardEditorProps<APIEditorConfig, any, any>> = (pr
       const json = JSON.parse(data);
       return <JSONFormatter json={json} />;
     } catch (error) {
-      return `Invalid JSON provided: ${error.message}`;
+      if (error instanceof Error) {
+        return `Invalid JSON provided: ${error.message}`;
+      } else {
+        return 'Invalid JSON provided';
+      }
     }
   };
 

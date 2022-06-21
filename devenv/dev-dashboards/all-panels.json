@@ -161,7 +161,8 @@
           "rowHeight": 0.99,
           "showValue": "auto",
           "tooltip": {
-            "mode": "single"
+            "mode": "single",
+            "sort": "none"
           }
         },
         "targets": [
@@ -377,17 +378,6 @@
         "gridPos": {
           "h": 8,
           "w": 12,
-          "x": 0,
-          "y": 29
-        },
-        "id": 30,
-        "title": "Panel list",
-        "type": "pluginlist"
-      },
-      {
-        "gridPos": {
-          "h": 8,
-          "w": 12,
           "x": 12,
           "y": 29
         },
@@ -545,7 +535,8 @@
             "values": false
           },
           "tooltip": {
-            "mode": "single"
+            "mode": "single",
+            "sort": "none"
           }
         },
         "targets": [
@@ -792,7 +783,8 @@
             "placement": "bottom"
           },
           "tooltip": {
-            "mode": "single"
+            "mode": "single",
+            "sort": "none"
           }
         },
         "targets": [
@@ -861,7 +853,8 @@
           "stacking": "none",
           "text": {},
           "tooltip": {
-            "mode": "single"
+            "mode": "single",
+            "sort": "none"
           }
         },
         "targets": [
@@ -890,7 +883,7 @@
       }
     ],
     "refresh": "",
-    "schemaVersion": 30,
+    "schemaVersion": 33,
     "style": "dark",
     "tags": [
       "gdev",

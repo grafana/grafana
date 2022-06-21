@@ -1,22 +1,30 @@
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
-import { render, screen } from '@testing-library/react';
-import { Props, UnthemedDashboardPage } from './DashboardPage';
-import { Props as LazyLoaderProps } from '../dashgrid/LazyLoader';
 import { Router } from 'react-router-dom';
-import { locationService, setDataSourceSrv } from '@grafana/runtime';
-import { DashboardModel } from '../state';
-import { configureStore } from '../../../store/configureStore';
-import { mockToolkitActionCreator } from 'test/core/redux/mocks';
-import { DashboardInitPhase, DashboardRoutes } from 'app/types';
-import { notifyApp } from 'app/core/actions';
-import { selectors } from '@grafana/e2e-selectors';
-import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
-import { createTheme } from '@grafana/data';
+import { useEffectOnce } from 'react-use';
 import { AutoSizerProps } from 'react-virtualized-auto-sizer';
+import { mockToolkitActionCreator } from 'test/core/redux/mocks';
+
+import { createTheme } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { locationService, setDataSourceSrv } from '@grafana/runtime';
+import { notifyApp } from 'app/core/actions';
+import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
+import { DashboardInitPhase, DashboardRoutes } from 'app/types';
+
+import { configureStore } from '../../../store/configureStore';
+import { Props as LazyLoaderProps } from '../dashgrid/LazyLoader';
+import { setDashboardSrv } from '../services/DashboardSrv';
+import { DashboardModel } from '../state';
+
+import { Props, UnthemedDashboardPage } from './DashboardPage';
 
 jest.mock('app/features/dashboard/dashgrid/LazyLoader', () => {
-  const LazyLoader = ({ children }: Pick<LazyLoaderProps, 'children'>) => {
+  const LazyLoader = ({ children, onLoad }: Pick<LazyLoaderProps, 'children' | 'onLoad'>) => {
+    useEffectOnce(() => {
+      onLoad?.();
+    });
     return <>{typeof children === 'function' ? children({ isInView: true }) : children}</>;
   };
   return { LazyLoader };
@@ -51,6 +59,10 @@ jest.mock('react-virtualized-auto-sizer', () => {
   // So it does not trigger the query to be run by the PanelQueryRunner.
   return ({ children }: AutoSizerProps) => children({ height: 1, width: 1 });
 });
+
+// the mock below gets rid of this warning from recompose:
+// Warning: React.createFactory() is deprecated and will be removed in a future major release. Consider using JSX or use React.createElement() directly instead.
+jest.mock('@jaegertracing/jaeger-ui-components', () => ({}));
 
 interface ScenarioContext {
   dashboard?: DashboardModel | null;
@@ -98,7 +110,6 @@ function dashboardPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
             route: { routeName: DashboardRoutes.Normal } as any,
           }),
           initPhase: DashboardInitPhase.NotStarted,
-          isInitSlow: false,
           initError: null,
           initDashboard: jest.fn(),
           notifyApp: mockToolkitActionCreator(notifyApp),
@@ -164,18 +175,6 @@ describe('DashboardPage', () => {
         urlSlug: 'my-dash',
         urlUid: '11',
       });
-      expect(ctx.container).toBeEmptyDOMElement();
-    });
-  });
-
-  dashboardPageScenario('Given dashboard slow loading state', (ctx) => {
-    ctx.setup(() => {
-      ctx.mount();
-      ctx.rerender({ isInitSlow: true });
-    });
-
-    it('Should show spinner', () => {
-      expect(screen.getByText('Cancel loading dashboard')).toBeInTheDocument();
     });
   });
 
@@ -196,6 +195,15 @@ describe('DashboardPage', () => {
 
   dashboardPageScenario('When going into view mode', (ctx) => {
     ctx.setup(() => {
+      setDataSourceSrv({
+        get: jest.fn().mockResolvedValue({ getRef: jest.fn(), query: jest.fn().mockResolvedValue([]) }),
+        getInstanceSettings: jest.fn().mockReturnValue({ meta: {} }),
+        getList: jest.fn(),
+        reload: jest.fn(),
+      });
+      setDashboardSrv({
+        getCurrent: () => getTestDashboard(),
+      } as any);
       ctx.mount({
         dashboard: getTestDashboard(),
         queryParams: { viewPanel: '1' },
@@ -216,12 +224,6 @@ describe('DashboardPage', () => {
   });
 
   dashboardPageScenario('When going into edit mode', (ctx) => {
-    setDataSourceSrv({
-      get: jest.fn().mockResolvedValue({}),
-      getInstanceSettings: jest.fn().mockReturnValue({ meta: {} }),
-      getList: jest.fn(),
-    });
-
     ctx.setup(() => {
       ctx.mount({
         dashboard: getTestDashboard(),
@@ -287,11 +289,28 @@ describe('DashboardPage', () => {
 
   dashboardPageScenario('When in full kiosk mode', (ctx) => {
     ctx.setup(() => {
+      locationService.partial({ kiosk: true });
       ctx.mount({
-        queryParams: { kiosk: true },
+        queryParams: {},
         dashboard: getTestDashboard(),
       });
       ctx.rerender({ dashboard: ctx.dashboard });
+    });
+
+    it('should not render page toolbar and submenu', () => {
+      expect(screen.queryAllByTestId(selectors.pages.Dashboard.DashNav.navV2)).toHaveLength(0);
+      expect(screen.queryAllByLabelText(selectors.pages.Dashboard.SubMenu.submenu)).toHaveLength(0);
+    });
+  });
+
+  dashboardPageScenario('When dashboard is public', (ctx) => {
+    ctx.setup(() => {
+      locationService.partial({ kiosk: false });
+      ctx.mount({
+        queryParams: {},
+        dashboard: getTestDashboard(),
+      });
+      ctx.rerender({ dashboard: ctx.dashboard, isPublic: true });
     });
 
     it('should not render page toolbar and submenu', () => {

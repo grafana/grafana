@@ -1,22 +1,23 @@
 import React, { FC } from 'react';
 import { Cell } from 'react-table';
-import { Field } from '@grafana/data';
-import { TableFilterActionCallback } from './types';
+
 import { TableStyles } from './styles';
+import { GrafanaTableColumn, TableFilterActionCallback } from './types';
 
 export interface Props {
   cell: Cell;
-  field: Field;
   tableStyles: TableStyles;
   onCellFilterAdded?: TableFilterActionCallback;
   columnIndex: number;
   columnCount: number;
+  userProps?: object;
 }
 
-export const TableCell: FC<Props> = ({ cell, field, tableStyles, onCellFilterAdded, columnIndex, columnCount }) => {
+export const TableCell: FC<Props> = ({ cell, tableStyles, onCellFilterAdded, columnIndex, columnCount, userProps }) => {
   const cellProps = cell.getCellProps();
+  const field = (cell.column as any as GrafanaTableColumn).field;
 
-  if (!field.display) {
+  if (!field?.display) {
     return null;
   }
 
@@ -38,5 +39,6 @@ export const TableCell: FC<Props> = ({ cell, field, tableStyles, onCellFilterAdd
     onCellFilterAdded,
     cellProps,
     innerWidth,
+    userProps,
   }) as React.ReactElement;
 };

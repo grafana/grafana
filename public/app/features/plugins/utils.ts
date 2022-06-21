@@ -1,7 +1,8 @@
 import { GrafanaPlugin, PanelPluginMeta, PluginType } from '@grafana/data';
+
+import { importPanelPluginFromMeta } from './importPanelPlugin';
 import { getPluginSettings } from './pluginSettings';
 import { importAppPlugin, importDataSourcePlugin } from './plugin_loader';
-import { importPanelPluginFromMeta } from './importPanelPlugin';
 
 export async function loadPlugin(pluginId: string): Promise<GrafanaPlugin> {
   const info = await getPluginSettings(pluginId);
@@ -15,7 +16,7 @@ export async function loadPlugin(pluginId: string): Promise<GrafanaPlugin> {
   }
   if (info.type === PluginType.panel) {
     const panelPlugin = await importPanelPluginFromMeta(info as PanelPluginMeta);
-    result = (panelPlugin as unknown) as GrafanaPlugin;
+    result = panelPlugin as unknown as GrafanaPlugin;
   }
   if (info.type === PluginType.renderer) {
     result = { meta: info } as GrafanaPlugin;

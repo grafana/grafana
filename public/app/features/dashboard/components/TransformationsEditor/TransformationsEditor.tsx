@@ -1,4 +1,19 @@
+import { css } from '@emotion/css';
 import React, { ChangeEvent } from 'react';
+import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
+import { Unsubscribable } from 'rxjs';
+
+import {
+  DataFrame,
+  DataTransformerConfig,
+  DocsId,
+  GrafanaTheme2,
+  PanelData,
+  SelectableValue,
+  standardTransformersRegistry,
+  TransformerRegistryItem,
+} from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import {
   Alert,
   Button,
@@ -12,28 +27,16 @@ import {
   useStyles2,
   Card,
 } from '@grafana/ui';
-import {
-  DataFrame,
-  DataTransformerConfig,
-  DocsId,
-  GrafanaTheme2,
-  PanelData,
-  SelectableValue,
-  standardTransformersRegistry,
-  TransformerRegistryItem,
-} from '@grafana/data';
-import { css } from '@emotion/css';
-import { selectors } from '@grafana/e2e-selectors';
-import { Unsubscribable } from 'rxjs';
-import { PanelModel } from '../../state';
+import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
 import { getDocsLink } from 'app/core/utils/docsLinks';
-import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
+import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
+
+import { AppNotificationSeverity } from '../../../../types';
+import { PanelModel } from '../../state';
+import { PanelNotSupported } from '../PanelEditor/PanelNotSupported';
+
 import { TransformationOperationRows } from './TransformationOperationRows';
 import { TransformationsEditorTransformation } from './types';
-import { PanelNotSupported } from '../PanelEditor/PanelNotSupported';
-import { AppNotificationSeverity } from '../../../../types';
-import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
-import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 
 const LOCAL_STORAGE_KEY = 'dashboard.components.TransformationEditor.featureInfoBox.isDismissed';
 
@@ -230,7 +233,6 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
           {filtered.length} / {xforms.length} &nbsp;&nbsp;
           <IconButton
             name="times"
-            surface="header"
             onClick={() => {
               this.setState({ search: '' });
             }}
@@ -248,7 +250,6 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
       suffix = (
         <IconButton
           name="times"
-          surface="header"
           onClick={() => {
             this.setState({ showPicker: false });
           }}
@@ -375,10 +376,10 @@ function TransformationCard({ transform, onClick }: TransformationCardProps) {
   return (
     <Card
       className={styles.card}
-      heading={transform.name}
       aria-label={selectors.components.TransformTab.newTransform(transform.name)}
       onClick={onClick}
     >
+      <Card.Heading>{transform.name}</Card.Heading>
       <Card.Meta>{transform.description}</Card.Meta>
       {transform.state && (
         <Card.Tags>
@@ -393,10 +394,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     card: css`
       margin: 0;
-
-      > div {
-        padding: ${theme.spacing(1)};
-      }
+      padding: ${theme.spacing(1)};
     `,
   };
 };

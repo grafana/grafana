@@ -1,3 +1,6 @@
+import { merge, Observable, of } from 'rxjs';
+import { catchError, switchMap } from 'rxjs/operators';
+
 import {
   DataSourceApi,
   DataQueryRequest,
@@ -11,9 +14,10 @@ import {
   parseLiveChannelAddress,
   getDataSourceRef,
   DataSourceRef,
+  dataFrameToJSON,
 } from '@grafana/data';
-import { merge, Observable, of } from 'rxjs';
-import { catchError, switchMap } from 'rxjs/operators';
+
+import { config } from '../config';
 import {
   getBackendSrv,
   getDataSourceSrv,
@@ -21,6 +25,7 @@ import {
   StreamingFrameOptions,
   StreamingFrameAction,
 } from '../services';
+
 import { BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
 
 /**
@@ -29,6 +34,7 @@ import { BackendDataSourceResponse, toDataQueryResponse } from './queryResponse'
 export const ExpressionDatasourceRef = Object.freeze({
   type: '__expr__',
   uid: '__expr__',
+  name: 'Expression',
 });
 
 /**
@@ -42,7 +48,7 @@ export function isExpressionReference(ref?: DataSourceRef | string | null): bool
   return v === ExpressionDatasourceRef.type || v === '-100'; // -100 was a legacy accident that should be removed
 }
 
-class HealthCheckError extends Error {
+export class HealthCheckError extends Error {
   details: HealthCheckResultDetails;
 
   constructor(message: string, details: HealthCheckResultDetails) {
@@ -153,6 +159,13 @@ class DataSourceWithBackend<
       body.range = range;
       body.from = range.from.valueOf().toString();
       body.to = range.to.valueOf().toString();
+    }
+
+    if (config.featureToggles.queryOverLive) {
+      return getGrafanaLiveSrv().getQueryData({
+        request,
+        body,
+      });
     }
 
     return getBackendSrv()
@@ -271,7 +284,7 @@ export function toStreamingDataResponse<TQuery extends DataQuery = DataQuery>(
         live.getDataStream({
           addr,
           buffer: getter(req, frame),
-          frame,
+          frame: dataFrameToJSON(f),
         })
       );
     } else {

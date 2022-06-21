@@ -1,20 +1,25 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+
 import { SelectableValue } from '@grafana/data';
-import { Project, VisualMetricQueryEditor, AliasBy } from '.';
+
+import CloudMonitoringDatasource from '../datasource';
+import { getAlignmentPickerData } from '../functions';
 import {
-  MetricQuery,
-  MetricDescriptor,
-  EditorMode,
-  MetricKind,
-  PreprocessorType,
   AlignmentTypes,
   CustomMetaData,
-  ValueTypes,
+  EditorMode,
+  MetricDescriptor,
+  MetricKind,
+  MetricQuery,
+  PreprocessorType,
   SLOQuery,
+  ValueTypes,
 } from '../types';
-import { getAlignmentPickerData } from '../functions';
-import CloudMonitoringDatasource from '../datasource';
+
+import { GraphPeriod } from './GraphPeriod';
 import { MQLQueryEditor } from './MQLQueryEditor';
+
+import { AliasBy, Project, VisualMetricQueryEditor } from '.';
 
 export interface Props {
   refId: string;
@@ -61,15 +66,15 @@ function Editor({
   variableOptionGroup,
 }: React.PropsWithChildren<Props>) {
   const [state, setState] = useState<State>(defaultState);
-  const { projectName, metricType, groupBys, editorMode } = query;
+  const { projectName, metricType, groupBys, editorMode, crossSeriesReducer } = query;
 
   useEffect(() => {
     if (projectName && metricType) {
       datasource
-        .getLabels(metricType, refId, projectName, groupBys)
+        .getLabels(metricType, refId, projectName)
         .then((labels) => setState((prevState) => ({ ...prevState, labels })));
     }
-  }, [datasource, groupBys, metricType, projectName, refId]);
+  }, [datasource, groupBys, metricType, projectName, refId, crossSeriesReducer]);
 
   const onChange = useCallback(
     (metricQuery: MetricQuery | SLOQuery) => {
@@ -101,6 +106,7 @@ function Editor({
   return (
     <>
       <Project
+        refId={refId}
         templateVariableOptions={variableOptionGroup.options}
         projectName={projectName}
         datasource={datasource}
@@ -111,6 +117,7 @@ function Editor({
 
       {editorMode === EditorMode.Visual && (
         <VisualMetricQueryEditor
+          refId={refId}
           labels={state.labels}
           variableOptionGroup={variableOptionGroup}
           customMetaData={customMetaData}
@@ -122,14 +129,23 @@ function Editor({
       )}
 
       {editorMode === EditorMode.MQL && (
-        <MQLQueryEditor
-          onChange={(q: string) => onQueryChange({ ...query, query: q })}
-          onRunQuery={onRunQuery}
-          query={query.query}
-        ></MQLQueryEditor>
+        <>
+          <MQLQueryEditor
+            onChange={(q: string) => onQueryChange({ ...query, query: q })}
+            onRunQuery={onRunQuery}
+            query={query.query}
+          ></MQLQueryEditor>
+          <GraphPeriod
+            onChange={(graphPeriod: string) => onQueryChange({ ...query, graphPeriod })}
+            graphPeriod={query.graphPeriod}
+            refId={refId}
+            variableOptionGroup={variableOptionGroup}
+          />
+        </>
       )}
 
       <AliasBy
+        refId={refId}
         value={query.aliasBy}
         onChange={(aliasBy) => {
           onChange({ ...query, aliasBy });

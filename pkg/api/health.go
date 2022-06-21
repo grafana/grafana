@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 )
 
@@ -15,7 +14,7 @@ func (hs *HTTPServer) databaseHealthy(ctx context.Context) bool {
 		return cached.(bool)
 	}
 
-	healthy := bus.DispatchCtx(ctx, &models.GetDBHealthQuery{}) == nil
+	healthy := hs.SQLStore.GetDBHealthQuery(ctx, &models.GetDBHealthQuery{}) == nil
 
 	hs.CacheService.Set(cacheKey, healthy, time.Second*5)
 	return healthy

@@ -3,8 +3,9 @@ import React from 'react';
 
 // Types
 import { InlineFormLabel } from '@grafana/ui';
-import { LokiQueryField } from './LokiQueryField';
+
 import { LokiOptionFields } from './LokiOptionFields';
+import { LokiQueryField } from './LokiQueryField';
 import { LokiQueryEditorProps } from './types';
 
 export function LokiQueryEditor(props: LokiQueryEditorProps) {
@@ -51,7 +52,6 @@ export function LokiQueryEditor(props: LokiQueryEditorProps) {
       ExtraFieldElement={
         <>
           <LokiOptionFields
-            queryType={query.instant ? 'instant' : 'range'}
             lineLimitValue={query?.maxLines?.toString() || ''}
             resolution={query?.resolution || 1}
             query={query}

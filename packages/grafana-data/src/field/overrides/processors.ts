@@ -74,6 +74,8 @@ export const valueMappingsOverrideProcessor = (
 export interface SelectFieldConfigSettings<T> {
   allowCustomValue?: boolean;
 
+  isClearable?: boolean;
+
   /** The default options */
   options: Array<SelectableValue<T>>;
 

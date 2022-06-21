@@ -1,10 +1,14 @@
-import React, { FunctionComponent } from 'react';
-import { GrafanaTheme2, ThemeVizHue } from '@grafana/data';
-import { Property } from 'csstype';
-import { ColorSwatch, ColorSwatchVariant } from './ColorSwatch';
-import { upperFirst } from 'lodash';
-import { useStyles2 } from '../../themes/ThemeContext';
 import { css } from '@emotion/css';
+import { Property } from 'csstype';
+import { upperFirst } from 'lodash';
+import React, { FunctionComponent } from 'react';
+
+import { GrafanaTheme2, ThemeVizHue } from '@grafana/data';
+
+import { useStyles2 } from '../../themes/ThemeContext';
+import { reverseMap } from '../../utils/reverseMap';
+
+import { ColorSwatch, ColorSwatchVariant } from './ColorSwatch';
 
 interface NamedColorsGroupProps {
   hue: ThemeVizHue;
@@ -26,7 +30,7 @@ const NamedColorsGroup: FunctionComponent<NamedColorsGroupProps> = ({
     <div className={styles.colorRow}>
       <div className={styles.colorLabel}>{label}</div>
       <div {...otherProps} className={styles.swatchRow}>
-        {hue.shades.map((shade) => (
+        {reverseMap(hue.shades, (shade) => (
           <ColorSwatch
             key={shade.name}
             aria-label={shade.name}
@@ -65,7 +69,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       gap: ${theme.spacing(1)};
       align-items: center;
       justify-content: space-around;
-      flex-direction: row-reverse;
+      flex-direction: row;
     `,
   };
 };

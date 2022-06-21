@@ -1,14 +1,26 @@
-import React, { Component } from 'react';
-import { Select, Table } from '@grafana/ui';
-import { DataFrame, FieldMatcherID, getFrameDisplayName, PanelProps, SelectableValue } from '@grafana/data';
-import { PanelOptions } from './models.gen';
 import { css } from '@emotion/css';
-import { config } from 'app/core/config';
+import React, { Component } from 'react';
+
+import {
+  DataFrame,
+  FieldMatcherID,
+  getDataSourceRef,
+  getFrameDisplayName,
+  PanelProps,
+  SelectableValue,
+} from '@grafana/data';
+import { PanelDataErrorView } from '@grafana/runtime';
+import { Select, Table } from '@grafana/ui';
 import { FilterItem, TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
-import { dispatch } from '../../../store/store';
-import { applyFilterFromTable } from '../../../features/variables/adhoc/actions';
+import { config } from 'app/core/config';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+
 import { getDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
+import { applyFilterFromTable } from '../../../features/variables/adhoc/actions';
+import { dispatch } from '../../../store/store';
+
 import { getFooterCells } from './footer';
+import { PanelOptions } from './models.gen';
 
 interface Props extends PanelProps<PanelOptions> {}
 
@@ -68,13 +80,19 @@ export class TablePanel extends Component<Props> {
   onCellFilterAdded = (filter: FilterItem) => {
     const { key, value, operator } = filter;
     const panelModel = getDashboardSrv().getCurrent()?.getPanelById(this.props.id);
-    const datasource = panelModel?.datasource;
-
-    if (!datasource) {
+    if (!panelModel) {
       return;
     }
 
-    dispatch(applyFilterFromTable({ datasource, key, operator, value }));
+    // When the datasource is null/undefined (for a default datasource), we use getInstanceSettings
+    // to find the real datasource ref for the default datasource.
+    const datasourceInstance = getDatasourceSrv().getInstanceSettings(panelModel.datasource);
+    const datasourceRef = datasourceInstance && getDataSourceRef(datasourceInstance);
+    if (!datasourceRef) {
+      return;
+    }
+
+    dispatch(applyFilterFromTable({ datasource: datasourceRef, key, operator, value }));
   };
 
   renderTable(frame: DataFrame, width: number, height: number) {
@@ -94,6 +112,7 @@ export class TablePanel extends Component<Props> {
         onColumnResize={this.onColumnResize}
         onCellFilterAdded={this.onCellFilterAdded}
         footerValues={footerValues}
+        enablePagination={options.footer?.enablePagination}
       />
     );
   }
@@ -103,14 +122,14 @@ export class TablePanel extends Component<Props> {
   }
 
   render() {
-    const { data, height, width, options } = this.props;
+    const { data, height, width, options, fieldConfig, id } = this.props;
 
     const frames = data.series;
     const count = frames?.length;
     const hasFields = frames[0]?.fields.length;
 
     if (!count || !hasFields) {
-      return <div className={tableStyles.noData}>No data</div>;
+      return <PanelDataErrorView panelId={id} fieldConfig={fieldConfig} data={data} />;
     }
 
     if (count > 1) {
@@ -128,18 +147,13 @@ export class TablePanel extends Component<Props> {
         <div className={tableStyles.wrapper}>
           {this.renderTable(data.series[currentIndex], width, height - inputHeight - padding)}
           <div className={tableStyles.selectWrapper}>
-            <Select
-              menuShouldPortal
-              options={names}
-              value={names[currentIndex]}
-              onChange={this.onChangeTableSelection}
-            />
+            <Select options={names} value={names[currentIndex]} onChange={this.onChangeTableSelection} />
           </div>
         </div>
       );
     }
 
-    return this.renderTable(data.series[0], width, height - 12);
+    return this.renderTable(data.series[0], width, height);
   }
 }
 

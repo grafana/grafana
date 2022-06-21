@@ -1,12 +1,14 @@
-import { CentrifugeSrv, CentrifugeSrvDeps } from './service';
-import { RemoteCentrifugeService } from './service.worker';
 import './transferHandlers';
 
 import * as comlink from 'comlink';
 import { asyncScheduler, Observable, observeOn } from 'rxjs';
+
 import { LiveChannelAddress, LiveChannelEvent } from '@grafana/data';
-import { promiseWithRemoteObservableAsObservable } from './remoteObservable';
+
 import { createWorker } from './createCentrifugeServiceWorker';
+import { promiseWithRemoteObservableAsObservable } from './remoteObservable';
+import { CentrifugeSrv, CentrifugeSrvDeps } from './service';
+import { RemoteCentrifugeService } from './service.worker';
 
 export class CentrifugeServiceWorkerProxy implements CentrifugeSrv {
   private centrifugeWorker;
@@ -26,6 +28,14 @@ export class CentrifugeServiceWorkerProxy implements CentrifugeSrv {
       // consuming the message (ie. updating react component) into two to avoid blocking the event loop
       observeOn(asyncScheduler)
     );
+  };
+
+  /**
+   * Query over websocket
+   */
+  getQueryData: CentrifugeSrv['getQueryData'] = async (options) => {
+    const optionsAsPlainSerializableObject = JSON.parse(JSON.stringify(options));
+    return this.centrifugeWorker.getQueryData(optionsAsPlainSerializableObject);
   };
 
   getPresence: CentrifugeSrv['getPresence'] = (address) => {

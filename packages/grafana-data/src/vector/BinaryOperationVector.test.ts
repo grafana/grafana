@@ -1,7 +1,8 @@
+import { binaryOperators, BinaryOperationID } from '../utils/binaryOperators';
+
 import { ArrayVector } from './ArrayVector';
 import { BinaryOperationVector } from './BinaryOperationVector';
 import { ConstantVector } from './ConstantVector';
-import { binaryOperators, BinaryOperationID } from '../utils/binaryOperators';
 
 describe('ScaledVector', () => {
   it('should support multiply operations', () => {

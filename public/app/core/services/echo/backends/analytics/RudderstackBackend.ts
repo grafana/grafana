@@ -1,17 +1,27 @@
 import $ from 'jquery';
-import { EchoBackend, EchoEventType, isInteractionEvent, isPageviewEvent, PageviewEchoEvent } from '@grafana/runtime';
-import { User } from '../sentry/types';
+
+import { CurrentUserDTO } from '@grafana/data';
+import {
+  EchoBackend,
+  EchoEventType,
+  isExperimentViewEvent,
+  isInteractionEvent,
+  isPageviewEvent,
+  PageviewEchoEvent,
+} from '@grafana/runtime';
+
+import { getUserIdentifier } from '../../utils';
 
 export interface RudderstackBackendOptions {
   writeKey: string;
   dataPlaneUrl: string;
-  user?: User;
+  user?: CurrentUserDTO;
   sdkUrl?: string;
   configUrl?: string;
 }
 
 export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, RudderstackBackendOptions> {
-  supportedEvents = [EchoEventType.Pageview, EchoEventType.Interaction];
+  supportedEvents = [EchoEventType.Pageview, EchoEventType.Interaction, EchoEventType.ExperimentView];
 
   constructor(public options: RudderstackBackendOptions) {
     const url = options.sdkUrl || `https://cdn.rudderlabs.com/v1/rudder-analytics.min.js`;
@@ -50,7 +60,9 @@ export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, Rudder
     (rds as any).load(options.writeKey, options.dataPlaneUrl, { configUrl: options.configUrl });
 
     if (options.user) {
-      (rds as any).identify(options.user.email, {
+      const identifier = getUserIdentifier(options.user);
+
+      (rds as any).identify(identifier, {
         email: options.user.email,
         orgId: options.user.orgId,
       });
@@ -68,6 +80,14 @@ export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, Rudder
 
     if (isInteractionEvent(e)) {
       (window as any).rudderanalytics.track(e.payload.interactionName, e.payload.properties);
+    }
+
+    if (isExperimentViewEvent(e)) {
+      (window as any).rudderanalytics.track('experiment_viewed', {
+        experiment_id: e.payload.experimentId,
+        experiment_group: e.payload.experimentGroup,
+        experiment_variant: e.payload.experimentVariant,
+      });
     }
   };
 

@@ -1,6 +1,7 @@
 package accesscontrol
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -24,11 +25,11 @@ func TestPermission_Evaluate(t *testing.T) {
 			},
 		},
 		{
-			desc:      "should evaluate to true when allEvaluator required scopes matches",
+			desc:      "should evaluate to true when at least one scope matches",
 			expected:  true,
 			evaluator: EvalPermission("reports:read", "reports:1", "reports:2"),
 			permissions: map[string][]string{
-				"reports:read": {"reports:1", "reports:2"},
+				"reports:read": {"reports:2"},
 			},
 		},
 		{
@@ -40,19 +41,18 @@ func TestPermission_Evaluate(t *testing.T) {
 			},
 		},
 		{
-			desc:      "should evaluate to false when only one of required scopes exists",
+			desc:      "should evaluate to false when no scopes matches",
 			expected:  false,
 			evaluator: EvalPermission("reports:read", "reports:1", "reports:2"),
 			permissions: map[string][]string{
-				"reports:read": {"reports:1"},
+				"reports:read": {"reports:9", "reports:10"},
 			},
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			ok, err := test.evaluator.Evaluate(test.permissions)
-			assert.NoError(t, err)
+			ok := test.evaluator.Evaluate(test.permissions)
 			assert.Equal(t, test.expected, ok)
 		})
 	}
@@ -120,10 +120,9 @@ func TestPermission_Inject(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			injected, err := test.evaluator.Inject(test.params)
+			injected, err := test.evaluator.MutateScopes(context.TODO(), ScopeInjector(test.params))
 			assert.NoError(t, err)
-			ok, err := injected.Evaluate(test.permissions)
-			assert.NoError(t, err)
+			ok := injected.Evaluate(test.permissions)
 			assert.Equal(t, test.expected, ok)
 		})
 	}
@@ -171,8 +170,7 @@ func TestAll_Evaluate(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			ok, err := test.evaluator.Evaluate(test.permissions)
-			assert.NoError(t, err)
+			ok := test.evaluator.Evaluate(test.permissions)
 			assert.Equal(t, test.expected, ok)
 		})
 	}
@@ -233,9 +231,9 @@ func TestAll_Inject(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			injected, err := test.evaluator.Inject(test.params)
+			injected, err := test.evaluator.MutateScopes(context.TODO(), ScopeInjector(test.params))
 			assert.NoError(t, err)
-			ok, err := injected.Evaluate(test.permissions)
+			ok := injected.Evaluate(test.permissions)
 			assert.NoError(t, err)
 			assert.Equal(t, test.expected, ok)
 		})
@@ -274,7 +272,7 @@ func TestAny_Evaluate(t *testing.T) {
 				EvalPermission("report:write", Scope("reports", "10")),
 			),
 			permissions: map[string][]string{
-				"permissions:write": {"permissions:delegate"},
+				"permissions:write": {"permissions:type:delegate"},
 			},
 			expected: false,
 		},
@@ -282,8 +280,7 @@ func TestAny_Evaluate(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			ok, err := test.evaluator.Evaluate(test.permissions)
-			assert.NoError(t, err)
+			ok := test.evaluator.Evaluate(test.permissions)
 			assert.Equal(t, test.expected, ok)
 		})
 	}
@@ -344,9 +341,9 @@ func TestAny_Inject(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			injected, err := test.evaluator.Inject(test.params)
+			injected, err := test.evaluator.MutateScopes(context.TODO(), ScopeInjector(test.params))
 			assert.NoError(t, err)
-			ok, err := injected.Evaluate(test.permissions)
+			ok := injected.Evaluate(test.permissions)
 			assert.NoError(t, err)
 			assert.Equal(t, test.expected, ok)
 		})
@@ -408,8 +405,7 @@ func TestEval(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			ok, err := test.evaluator.Evaluate(test.permissions)
-			assert.NoError(t, err)
+			ok := test.evaluator.Evaluate(test.permissions)
 			assert.Equal(t, test.expected, ok)
 		})
 	}

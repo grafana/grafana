@@ -1,14 +1,17 @@
-import React, { forwardRef, ButtonHTMLAttributes } from 'react';
 import { cx, css } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data';
-import { styleMixins, useStyles2 } from '../../themes';
-import { IconName } from '../../types/icon';
-import { Tooltip } from '../Tooltip/Tooltip';
-import { Icon } from '../Icon/Icon';
-import { getPropertiesForVariant } from './Button';
 import { isString } from 'lodash';
+import React, { forwardRef, ButtonHTMLAttributes } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+
+import { styleMixins, useStyles2 } from '../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
+import { IconName } from '../../types/icon';
+import { Icon } from '../Icon/Icon';
+import { Tooltip } from '../Tooltip/Tooltip';
+
+import { getPropertiesForVariant } from './Button';
 
 export interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
   /** Icon name */
@@ -29,6 +32,8 @@ export interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ToolbarButtonVariant;
   /** Hide any children and only show icon */
   iconOnly?: boolean;
+  /** Show highlight dot */
+  isHighlighted?: boolean;
 }
 
 export type ToolbarButtonVariant = 'default' | 'primary' | 'destructive' | 'active';
@@ -48,6 +53,7 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, Props>(
       variant = 'default',
       iconOnly,
       'aria-label': ariaLabel,
+      isHighlighted,
       ...rest
     },
     ref
@@ -84,6 +90,7 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, Props>(
         {children && !iconOnly && <div className={contentStyles}>{children}</div>}
         {isOpen === false && <Icon name="angle-down" />}
         {isOpen === true && <Icon name="angle-up" />}
+        {isHighlighted && <div className={styles.highlight} />}
       </button>
     );
 
@@ -122,6 +129,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     button: css`
       label: toolbar-button;
+      position: relative;
       display: flex;
       align-items: center;
       height: ${theme.spacing(theme.components.height.md)};
@@ -208,6 +216,16 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     contentWithRightIcon: css`
       padding-right: ${theme.spacing(0.5)};
+    `,
+    highlight: css`
+      background-color: ${theme.colors.success.main};
+      border-radius: 50%;
+      width: 6px;
+      height: 6px;
+      position: absolute;
+      top: -3px;
+      right: -3px;
+      z-index: 1;
     `,
   };
 };

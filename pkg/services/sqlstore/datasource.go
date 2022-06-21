@@ -2,16 +2,19 @@ package sqlstore
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
+
+	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/util/errutil"
-	"xorm.io/xorm"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // GetDataSource adds a datasource to the query model by querying by org_id as well as
@@ -20,24 +23,28 @@ func (ss *SQLStore) GetDataSource(ctx context.Context, query *models.GetDataSour
 	metrics.MDBDataSourceQueryByID.Inc()
 
 	return ss.WithDbSession(ctx, func(sess *DBSession) error {
-		if query.OrgId == 0 || (query.Id == 0 && len(query.Name) == 0 && len(query.Uid) == 0) {
-			return models.ErrDataSourceIdentifierNotSet
-		}
-
-		datasource := &models.DataSource{Name: query.Name, OrgId: query.OrgId, Id: query.Id, Uid: query.Uid}
-		has, err := sess.Get(datasource)
-
-		if err != nil {
-			sqlog.Error("Failed getting data source", "err", err, "uid", query.Uid, "id", query.Id, "name", query.Name, "orgId", query.OrgId)
-			return err
-		} else if !has {
-			return models.ErrDataSourceNotFound
-		}
-
-		query.Result = datasource
-
-		return nil
+		return ss.getDataSource(ctx, query, sess)
 	})
+}
+
+func (ss *SQLStore) getDataSource(ctx context.Context, query *models.GetDataSourceQuery, sess *DBSession) error {
+	if query.OrgId == 0 || (query.Id == 0 && len(query.Name) == 0 && len(query.Uid) == 0) {
+		return models.ErrDataSourceIdentifierNotSet
+	}
+
+	datasource := &models.DataSource{Name: query.Name, OrgId: query.OrgId, Id: query.Id, Uid: query.Uid}
+	has, err := sess.Get(datasource)
+
+	if err != nil {
+		sqlog.Error("Failed getting data source", "err", err, "uid", query.Uid, "id", query.Id, "name", query.Name, "orgId", query.OrgId)
+		return err
+	} else if !has {
+		return models.ErrDataSourceNotFound
+	}
+
+	query.Result = datasource
+
+	return nil
 }
 
 func (ss *SQLStore) GetDataSources(ctx context.Context, query *models.GetDataSourcesQuery) error {
@@ -82,32 +89,41 @@ func (ss *SQLStore) GetDefaultDataSource(ctx context.Context, query *models.GetD
 }
 
 // DeleteDataSource removes a datasource by org_id as well as either uid (preferred), id, or name
-// and is added to the bus.
+// and is added to the bus. It also removes permissions related to the datasource.
 func (ss *SQLStore) DeleteDataSource(ctx context.Context, cmd *models.DeleteDataSourceCommand) error {
-	params := make([]interface{}, 0)
-
-	makeQuery := func(sql string, p ...interface{}) {
-		params = append(params, sql)
-		params = append(params, p...)
-	}
-
-	switch {
-	case cmd.OrgID == 0:
-		return models.ErrDataSourceIdentifierNotSet
-	case cmd.UID != "":
-		makeQuery("DELETE FROM data_source WHERE uid=? and org_id=?", cmd.UID, cmd.OrgID)
-	case cmd.ID != 0:
-		makeQuery("DELETE FROM data_source WHERE id=? and org_id=?", cmd.ID, cmd.OrgID)
-	case cmd.Name != "":
-		makeQuery("DELETE FROM data_source WHERE name=? and org_id=?", cmd.Name, cmd.OrgID)
-	default:
-		return models.ErrDataSourceIdentifierNotSet
-	}
-
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-		result, err := sess.Exec(params...)
-		cmd.DeletedDatasourcesCount, _ = result.RowsAffected()
+		dsQuery := &models.GetDataSourceQuery{Id: cmd.ID, Uid: cmd.UID, Name: cmd.Name, OrgId: cmd.OrgID}
+		errGettingDS := ss.getDataSource(ctx, dsQuery, sess)
 
+		if errGettingDS != nil && !errors.Is(errGettingDS, models.ErrDataSourceNotFound) {
+			return errGettingDS
+		}
+
+		ds := dsQuery.Result
+		if ds != nil {
+			// Delete the data source
+			result, err := sess.Exec("DELETE FROM data_source WHERE org_id=? AND id=?", ds.OrgId, ds.Id)
+			if err != nil {
+				return err
+			}
+
+			cmd.DeletedDatasourcesCount, _ = result.RowsAffected()
+
+			// Remove associated AccessControl permissions
+			if _, errDeletingPerms := sess.Exec("DELETE FROM permission WHERE scope=?",
+				ac.Scope("datasources", "id", fmt.Sprint(dsQuery.Result.Id))); errDeletingPerms != nil {
+				return errDeletingPerms
+			}
+		}
+
+		if cmd.UpdateSecretFn != nil {
+			if err := cmd.UpdateSecretFn(); err != nil {
+				sqlog.Error("Failed to update datasource secrets -- rolling back update", "UID", cmd.UID, "name", cmd.Name, "orgId", cmd.OrgID)
+				return err
+			}
+		}
+
+		// Publish data source deletion event
 		sess.publishAfterCommit(&events.DataSourceDeleted{
 			Timestamp: time.Now(),
 			Name:      cmd.Name,
@@ -116,7 +132,7 @@ func (ss *SQLStore) DeleteDataSource(ctx context.Context, cmd *models.DeleteData
 			OrgID:     cmd.OrgID,
 		})
 
-		return err
+		return nil
 	})
 }
 
@@ -136,32 +152,30 @@ func (ss *SQLStore) AddDataSource(ctx context.Context, cmd *models.AddDataSource
 		if cmd.Uid == "" {
 			uid, err := generateNewDatasourceUid(sess, cmd.OrgId)
 			if err != nil {
-				return errutil.Wrapf(err, "Failed to generate UID for datasource %q", cmd.Name)
+				return fmt.Errorf("failed to generate UID for datasource %q: %w", cmd.Name, err)
 			}
 			cmd.Uid = uid
 		}
 
 		ds := &models.DataSource{
-			OrgId:             cmd.OrgId,
-			Name:              cmd.Name,
-			Type:              cmd.Type,
-			Access:            cmd.Access,
-			Url:               cmd.Url,
-			User:              cmd.User,
-			Password:          cmd.Password,
-			Database:          cmd.Database,
-			IsDefault:         cmd.IsDefault,
-			BasicAuth:         cmd.BasicAuth,
-			BasicAuthUser:     cmd.BasicAuthUser,
-			BasicAuthPassword: cmd.BasicAuthPassword,
-			WithCredentials:   cmd.WithCredentials,
-			JsonData:          cmd.JsonData,
-			SecureJsonData:    cmd.EncryptedSecureJsonData,
-			Created:           time.Now(),
-			Updated:           time.Now(),
-			Version:           1,
-			ReadOnly:          cmd.ReadOnly,
-			Uid:               cmd.Uid,
+			OrgId:           cmd.OrgId,
+			Name:            cmd.Name,
+			Type:            cmd.Type,
+			Access:          cmd.Access,
+			Url:             cmd.Url,
+			User:            cmd.User,
+			Database:        cmd.Database,
+			IsDefault:       cmd.IsDefault,
+			BasicAuth:       cmd.BasicAuth,
+			BasicAuthUser:   cmd.BasicAuthUser,
+			WithCredentials: cmd.WithCredentials,
+			JsonData:        cmd.JsonData,
+			SecureJsonData:  cmd.EncryptedSecureJsonData,
+			Created:         time.Now(),
+			Updated:         time.Now(),
+			Version:         1,
+			ReadOnly:        cmd.ReadOnly,
+			Uid:             cmd.Uid,
 		}
 
 		if _, err := sess.Insert(ds); err != nil {
@@ -172,6 +186,13 @@ func (ss *SQLStore) AddDataSource(ctx context.Context, cmd *models.AddDataSource
 		}
 		if err := updateIsDefaultFlag(ds, sess); err != nil {
 			return err
+		}
+
+		if cmd.UpdateSecretFn != nil {
+			if err := cmd.UpdateSecretFn(); err != nil {
+				sqlog.Error("Failed to update datasource secrets -- rolling back update", "name", cmd.Name, "type", cmd.Type, "orgId", cmd.OrgId)
+				return err
+			}
 		}
 
 		cmd.Result = ds
@@ -205,26 +226,24 @@ func (ss *SQLStore) UpdateDataSource(ctx context.Context, cmd *models.UpdateData
 		}
 
 		ds := &models.DataSource{
-			Id:                cmd.Id,
-			OrgId:             cmd.OrgId,
-			Name:              cmd.Name,
-			Type:              cmd.Type,
-			Access:            cmd.Access,
-			Url:               cmd.Url,
-			User:              cmd.User,
-			Password:          cmd.Password,
-			Database:          cmd.Database,
-			IsDefault:         cmd.IsDefault,
-			BasicAuth:         cmd.BasicAuth,
-			BasicAuthUser:     cmd.BasicAuthUser,
-			BasicAuthPassword: cmd.BasicAuthPassword,
-			WithCredentials:   cmd.WithCredentials,
-			JsonData:          cmd.JsonData,
-			SecureJsonData:    cmd.EncryptedSecureJsonData,
-			Updated:           time.Now(),
-			ReadOnly:          cmd.ReadOnly,
-			Version:           cmd.Version + 1,
-			Uid:               cmd.Uid,
+			Id:              cmd.Id,
+			OrgId:           cmd.OrgId,
+			Name:            cmd.Name,
+			Type:            cmd.Type,
+			Access:          cmd.Access,
+			Url:             cmd.Url,
+			User:            cmd.User,
+			Database:        cmd.Database,
+			IsDefault:       cmd.IsDefault,
+			BasicAuth:       cmd.BasicAuth,
+			BasicAuthUser:   cmd.BasicAuthUser,
+			WithCredentials: cmd.WithCredentials,
+			JsonData:        cmd.JsonData,
+			SecureJsonData:  cmd.EncryptedSecureJsonData,
+			Updated:         time.Now(),
+			ReadOnly:        cmd.ReadOnly,
+			Version:         cmd.Version + 1,
+			Uid:             cmd.Uid,
 		}
 
 		sess.UseBool("is_default")
@@ -258,6 +277,13 @@ func (ss *SQLStore) UpdateDataSource(ctx context.Context, cmd *models.UpdateData
 
 		err = updateIsDefaultFlag(ds, sess)
 
+		if cmd.UpdateSecretFn != nil {
+			if err := cmd.UpdateSecretFn(); err != nil {
+				sqlog.Error("Failed to update datasource secrets -- rolling back update", "UID", cmd.Uid, "name", cmd.Name, "type", cmd.Type, "orgId", cmd.OrgId)
+				return err
+			}
+		}
+
 		cmd.Result = ds
 		return err
 	})
@@ -279,3 +305,5 @@ func generateNewDatasourceUid(sess *DBSession, orgId int64) (string, error) {
 
 	return "", models.ErrDataSourceFailedGenerateUniqueUid
 }
+
+var generateNewUid func() string = util.GenerateShortUID

@@ -1,10 +1,10 @@
-import { MapLayerRegistryItem, MapLayerOptions, PanelData, GrafanaTheme2, PluginState } from '@grafana/data';
+import { MapLayerRegistryItem, MapLayerOptions, PanelData, GrafanaTheme2, PluginState, EventBus } from '@grafana/data';
 import Map from 'ol/Map';
 import Feature from 'ol/Feature';
 import * as style from 'ol/style';
 import * as source from 'ol/source';
 import * as layer from 'ol/layer';
-import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
+import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';
 
 export interface LastPointConfig {
   icon?: string;
@@ -26,7 +26,7 @@ export const lastPointTracker: MapLayerRegistryItem<LastPointConfig> = {
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: async (map: Map, options: MapLayerOptions<LastPointConfig>, theme: GrafanaTheme2) => {
+  create: async (map: Map, options: MapLayerOptions<LastPointConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
     const point = new Feature({});
     const config = { ...defaultOptions, ...options.config };
 
@@ -52,16 +52,11 @@ export const lastPointTracker: MapLayerRegistryItem<LastPointConfig> = {
       update: (data: PanelData) => {
         const frame = data.series[0];
         if (frame && frame.length) {
-          const info = dataFrameToPoints(frame, matchers);
-          if (info.warning) {
-            console.log('WARN', info.warning);
+          const out = getGeometryField(frame, matchers);
+          if (!out.field) {
             return; // ???
           }
-
-          if (info.points?.length) {
-            const last = info.points[info.points.length - 1];
-            point.setGeometry(last);
-          }
+          point.setGeometry(out.field.values.get(frame.length - 1));
         }
       },
     };

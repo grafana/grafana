@@ -1,4 +1,5 @@
 import { PanelModel } from '@grafana/data';
+
 import { TextMode, PanelOptions } from './models.gen';
 
 export const textPanelMigrationHandler = (panel: PanelModel<PanelOptions>): Partial<PanelOptions> => {

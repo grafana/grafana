@@ -1,5 +1,6 @@
+import { render } from '@testing-library/react';
 import React from 'react';
-import { shallow } from 'enzyme';
+
 import {
   DisplayValue,
   VizOrientation,
@@ -10,6 +11,7 @@ import {
   getDisplayProcessor,
   createTheme,
 } from '@grafana/data';
+
 import {
   BarGauge,
   Props,
@@ -60,17 +62,6 @@ function getProps(propOverrides?: Partial<Props>): Props {
   return props;
 }
 
-const setup = (propOverrides?: object) => {
-  const props = getProps(propOverrides);
-  const wrapper = shallow(<BarGauge {...props} />);
-  const instance = wrapper.instance() as BarGauge;
-
-  return {
-    instance,
-    wrapper,
-  };
-};
-
 function getValue(value: number, title?: string): DisplayValue {
   return { numeric: value, text: value.toString(), title: title };
 }
@@ -87,7 +78,7 @@ describe('BarGauge', () => {
 
     it('does not show as lit if the value is null (somehow)', () => {
       const props = getProps();
-      expect(getCellColor(1, (null as unknown) as DisplayValue, props.display)).toEqual(
+      expect(getCellColor(1, null as unknown as DisplayValue, props.display)).toEqual(
         expect.objectContaining({
           isLit: false,
         })
@@ -167,6 +158,18 @@ describe('BarGauge', () => {
 
     it('-30 to 30 and value 30', () => {
       expect(getValuePercent(30, -30, 30)).toEqual(1);
+    });
+  });
+
+  describe('Vertical bar', () => {
+    it('should adjust empty region to always have same width as colored bar', () => {
+      const props = getProps({
+        width: 150,
+        value: getValue(100),
+        orientation: VizOrientation.Vertical,
+      });
+      const styles = getBasicAndGradientStyles(props);
+      expect(styles.emptyBar.width).toBe('150px');
     });
   });
 
@@ -273,6 +276,16 @@ describe('BarGauge', () => {
       const styles = getTitleStyles(props);
       expect(styles.title.width).toBe('37px');
     });
+
+    it('should adjust empty region to always have same height as colored bar', () => {
+      const props = getProps({
+        height: 150,
+        value: getValue(100),
+        orientation: VizOrientation.Horizontal,
+      });
+      const styles = getBasicAndGradientStyles(props);
+      expect(styles.emptyBar.height).toBe('150px');
+    });
   });
 
   describe('Gradient', () => {
@@ -291,8 +304,8 @@ describe('BarGauge', () => {
 
   describe('Render with basic options', () => {
     it('should render', () => {
-      const { wrapper } = setup();
-      expect(wrapper).toMatchSnapshot();
+      const props = getProps();
+      expect(() => render(<BarGauge {...props} />)).not.toThrow();
     });
   });
 

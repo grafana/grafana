@@ -1,15 +1,19 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import { css } from '@emotion/css';
 import { startCase, uniqBy } from 'lodash';
+import React, { useCallback, useEffect, useState } from 'react';
 
-import { Select } from '@grafana/ui';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
-import { SelectableValue } from '@grafana/data';
-import { QueryEditorRow, QueryEditorField } from '.';
-import CloudMonitoringDatasource from '../datasource';
+import { getSelectStyles, Select, useStyles2, useTheme2 } from '@grafana/ui';
+
 import { INNER_LABEL_WIDTH, LABEL_WIDTH, SELECT_WIDTH } from '../constants';
+import CloudMonitoringDatasource from '../datasource';
 import { MetricDescriptor } from '../types';
 
+import { QueryEditorField, QueryEditorRow } from '.';
+
 export interface Props {
+  refId: string;
   onChange: (metricDescriptor: MetricDescriptor) => void;
   templateSrv: TemplateSrv;
   templateVariableOptions: Array<SelectableValue<string>>;
@@ -39,6 +43,11 @@ export function Metrics(props: Props) {
     projectName: null,
   });
 
+  const theme = useTheme2();
+  const selectStyles = getSelectStyles(theme);
+
+  const customStyle = useStyles2(getStyles);
+
   const { services, service, metrics, metricDescriptors } = state;
   const { metricType, templateVariableOptions, projectName, templateSrv, datasource, onChange, children } = props;
 
@@ -55,13 +64,21 @@ export function Metrics(props: Props) {
       if (!selectedMetricDescriptor) {
         return [];
       }
+
       const metricsByService = metricDescriptors
         .filter((m) => m.service === selectedMetricDescriptor.service)
         .map((m) => ({
           service: m.service,
           value: m.type,
           label: m.displayName,
-          description: m.description,
+          component: function optionComponent() {
+            return (
+              <div>
+                <div className={customStyle}>{m.type}</div>
+                <div className={selectStyles.optionDescription}>{m.description}</div>
+              </div>
+            );
+          },
         }));
       return metricsByService;
     };
@@ -84,7 +101,7 @@ export function Metrics(props: Props) {
       }
     };
     loadMetricDescriptors();
-  }, [datasource, getSelectedMetricDescriptor, metricType, projectName]);
+  }, [datasource, getSelectedMetricDescriptor, metricType, projectName, customStyle, selectStyles.optionDescription]);
 
   const onServiceChange = ({ value: service }: any) => {
     const metrics = metricDescriptors
@@ -121,9 +138,8 @@ export function Metrics(props: Props) {
   return (
     <>
       <QueryEditorRow>
-        <QueryEditorField labelWidth={LABEL_WIDTH} label="Service">
+        <QueryEditorField labelWidth={LABEL_WIDTH} label="Service" htmlFor={`${props.refId}-service`}>
           <Select
-            menuShouldPortal
             width={SELECT_WIDTH}
             onChange={onServiceChange}
             value={[...services, ...templateVariableOptions].find((s) => s.value === service)}
@@ -135,11 +151,11 @@ export function Metrics(props: Props) {
               ...services,
             ]}
             placeholder="Select Services"
+            inputId={`${props.refId}-service`}
           ></Select>
         </QueryEditorField>
-        <QueryEditorField label="Metric name" labelWidth={INNER_LABEL_WIDTH}>
+        <QueryEditorField label="Metric name" labelWidth={INNER_LABEL_WIDTH} htmlFor={`${props.refId}-select-metric`}>
           <Select
-            menuShouldPortal
             width={SELECT_WIDTH}
             onChange={onMetricTypeChange}
             value={[...metrics, ...templateVariableOptions].find((s) => s.value === metricType)}
@@ -151,6 +167,7 @@ export function Metrics(props: Props) {
               ...metrics,
             ]}
             placeholder="Select Metric"
+            inputId={`${props.refId}-select-metric`}
           ></Select>
         </QueryEditorField>
       </QueryEditorRow>
@@ -159,3 +176,10 @@ export function Metrics(props: Props) {
     </>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => css`
+  label: grafana-select-option-description;
+  font-weight: normal;
+  font-style: italic;
+  color: ${theme.colors.text.secondary};
+`;

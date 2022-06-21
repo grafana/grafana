@@ -20,7 +20,8 @@
 				</a>
 			</label>
 			<div class="gf-form-select-wrapper max-width-15">
-				<select ng-model="ctrl.target.aggregator" class="gf-form-input"
+				<select aria-label="Metric aggregator"
+								ng-model="ctrl.target.aggregator" class="gf-form-input"
 								ng-options="agg for agg in ctrl.aggregators"
 								ng-change="ctrl.targetBlur()">
 		 	 </select>
@@ -62,9 +63,10 @@
 		<div class="gf-form">
 			<label class="gf-form-label query-keyword">Aggregator</label>
 			<div class="gf-form-select-wrapper">
-				<select ng-model="ctrl.target.downsampleAggregator" class="gf-form-input"
+				<select aria-label="Downsample aggregator"
+								ng-model="ctrl.target.downsampleAggregator" class="gf-form-input"
 								ng-options="agg for agg in ctrl.aggregators"
-				        ng-change="ctrl.targetBlur()">
+								ng-change="ctrl.targetBlur()">
 				</select>
 			</div>
 		</div>

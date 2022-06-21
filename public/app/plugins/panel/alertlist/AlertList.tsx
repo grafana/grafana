@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
-import { sortBy } from 'lodash';
-import { dateMath, dateTime, GrafanaTheme, PanelProps } from '@grafana/data';
-import { Card, CustomScrollbar, Icon, stylesFactory, useStyles } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
-import { getBackendSrv, getTemplateSrv } from '@grafana/runtime';
+import { sortBy } from 'lodash';
+import React, { useState } from 'react';
 import { useAsync } from 'react-use';
+
+import { dateMath, dateTime, GrafanaTheme, PanelProps } from '@grafana/data';
+import { getBackendSrv, getTemplateSrv } from '@grafana/runtime';
+import { Card, CustomScrollbar, Icon, stylesFactory, useStyles } from '@grafana/ui';
 import alertDef from 'app/features/alerting/state/alertDef';
-import { AlertRuleDTO, AnnotationItemDTO } from 'app/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { AlertRuleDTO, AnnotationItemDTO } from 'app/types';
+
 import { AlertListOptions, ShowOption, SortOrder } from './types';
 
 export function AlertList(props: PanelProps<AlertListOptions>) {
@@ -145,11 +147,8 @@ export function AlertList(props: PanelProps<AlertListOptions>) {
                 currentAlertState.value &&
                 currentAlertState.value!.map((alert) => (
                   <li className={styles.alertRuleItem} key={`alert-${alert.id}`}>
-                    <Card
-                      heading={alert.name}
-                      href={`${alert.url}?viewPanel=${alert.panelId}`}
-                      className={styles.cardContainer}
-                    >
+                    <Card href={`${alert.url}?viewPanel=${alert.panelId}`} className={styles.cardContainer}>
+                      <Card.Heading>{alert.name}</Card.Heading>
                       <Card.Figure className={cx(styles.alertRuleItemIcon, alert.stateModel.stateClass)}>
                         <Icon name={alert.stateModel.iconClass} size="xl" className={styles.alertIcon} />
                       </Card.Figure>
@@ -166,7 +165,8 @@ export function AlertList(props: PanelProps<AlertListOptions>) {
                 recentStateChanges.value &&
                 recentStateChanges.value.map((alert) => (
                   <li className={styles.alertRuleItem} key={`alert-${alert.id}`}>
-                    <Card heading={alert.alertName} className={styles.cardContainer}>
+                    <Card className={styles.cardContainer}>
+                      <Card.Heading>{alert.alertName}</Card.Heading>
                       <Card.Figure className={cx(styles.alertRuleItemIcon, alert.stateModel.stateClass)}>
                         <Icon name={alert.stateModel.iconClass} size="xl" />
                       </Card.Figure>

@@ -1,4 +1,8 @@
 import React, { FC, useEffect, useState } from 'react';
+
+import { selectors } from '@grafana/e2e-selectors';
+import { DataSourcePicker } from '@grafana/runtime';
+import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import {
   Button,
   Field,
@@ -10,10 +14,8 @@ import {
   InputControl,
   Legend,
 } from '@grafana/ui';
-import { DataSourcePicker } from '@grafana/runtime';
-import { selectors } from '@grafana/e2e-selectors';
-
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+
 import {
   DashboardInput,
   DashboardInputs,
@@ -22,6 +24,7 @@ import {
   LibraryPanelInputState,
 } from '../state/reducers';
 import { validateTitle, validateUid } from '../utils/validation';
+
 import { ImportDashboardLibraryPanelsList } from './ImportDashboardLibraryPanelsList';
 
 interface Props extends Pick<FormAPI<ImportDashboardDTO>, 'register' | 'errors' | 'control' | 'getValues' | 'watch'> {
@@ -107,6 +110,9 @@ export const ImportDashboardForm: FC<Props> = ({
       </Field>
       {inputs.dataSources &&
         inputs.dataSources.map((input: DataSourceInput, index: number) => {
+          if (input.pluginId === ExpressionDatasourceRef.type) {
+            return null;
+          }
           const dataSourceOption = `dataSources[${index}]`;
           const current = watchDataSources ?? [];
           return (
@@ -124,7 +130,7 @@ export const ImportDashboardForm: FC<Props> = ({
                     noDefault={true}
                     placeholder={input.info}
                     pluginId={input.pluginId}
-                    current={current[index]?.name}
+                    current={current[index]?.uid}
                   />
                 )}
                 control={control}

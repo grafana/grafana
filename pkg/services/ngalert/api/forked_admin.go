@@ -8,11 +8,11 @@ import (
 
 // ForkedConfigurationApi always forwards requests to grafana backend
 type ForkedConfigurationApi struct {
-	grafana ConfigurationApiService
+	grafana *AdminSrv
 }
 
 // NewForkedConfiguration creates a new ForkedConfigurationApi instance
-func NewForkedConfiguration(grafana ConfigurationApiService) *ForkedConfigurationApi {
+func NewForkedConfiguration(grafana *AdminSrv) *ForkedConfigurationApi {
 	return &ForkedConfigurationApi{
 		grafana: grafana,
 	}

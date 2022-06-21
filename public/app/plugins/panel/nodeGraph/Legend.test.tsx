@@ -1,6 +1,8 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
+
 import { FieldColorModeId } from '@grafana/data';
+
 import { Legend } from './Legend';
 import { NodeDatum } from './types';
 

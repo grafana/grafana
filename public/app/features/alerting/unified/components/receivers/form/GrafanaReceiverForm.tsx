@@ -1,3 +1,6 @@
+import React, { FC, useEffect, useMemo, useState } from 'react';
+import { useDispatch } from 'react-redux';
+
 import { LoadingPlaceholder } from '@grafana/ui';
 import {
   AlertManagerCortexConfig,
@@ -5,8 +8,7 @@ import {
   Receiver,
   TestReceiversAlert,
 } from 'app/plugins/datasource/alertmanager/types';
-import React, { FC, useEffect, useMemo, useState } from 'react';
-import { useDispatch } from 'react-redux';
+
 import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
 import {
   fetchGrafanaNotifiersAction,
@@ -14,13 +16,15 @@ import {
   updateAlertManagerConfigAction,
 } from '../../../state/actions';
 import { GrafanaChannelValues, ReceiverFormValues } from '../../../types/receiver-form';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, isVanillaPrometheusAlertManagerDataSource } from '../../../utils/datasource';
 import {
   formChannelValuesToGrafanaChannelConfig,
   formValuesToGrafanaReceiver,
   grafanaReceiverToFormValues,
   updateConfigWithReceiver,
 } from '../../../utils/receiver-form';
+import { ProvisionedResource, ProvisioningAlert } from '../../Provisioning';
+
 import { GrafanaCommonChannelSettings } from './GrafanaCommonChannelSettings';
 import { ReceiverForm } from './ReceiverForm';
 import { TestContactPointModal } from './TestContactPointModal';
@@ -105,10 +109,20 @@ export const GrafanaReceiverForm: FC<Props> = ({ existing, alertManagerSourceNam
     [config, existing]
   );
 
+  // if any receivers in the contact point have a "provenance", the entire contact point should be readOnly
+  const hasProvisionedItems = existing
+    ? (existing.grafana_managed_receiver_configs ?? []).some((item) => Boolean(item.provenance))
+    : false;
+
+  const readOnly = isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName) || hasProvisionedItems;
+
   if (grafanaNotifiers.result) {
     return (
       <>
+        {hasProvisionedItems && <ProvisioningAlert resource={ProvisionedResource.ContactPoint} />}
+
         <ReceiverForm<GrafanaChannelValues>
+          readOnly={readOnly}
           config={config}
           onSubmit={onSubmit}
           initialValues={existingValue}

@@ -11,9 +11,7 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 )
 
 func TestDingdingNotifier(t *testing.T) {
@@ -46,7 +44,7 @@ func TestDingdingNotifier(t *testing.T) {
 				"msgtype": "link",
 				"link": map[string]interface{}{
 					"messageUrl": "dingtalk://dingtalkclient/page/link?pc_slide=false&url=http%3A%2F%2Flocalhost%2Falerting%2Flist",
-					"text":       "**Firing**\n\nValue: 1234\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
+					"text":       "**Firing**\n\nValue: 1234\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
 					"title":      "[FIRING:1]  (val1)",
 				},
 			},
@@ -82,9 +80,67 @@ func TestDingdingNotifier(t *testing.T) {
 			},
 			expMsgError: nil,
 		}, {
+			name: "Missing field in template",
+			settings: `{
+				"url": "http://localhost",
+				"message": "I'm a custom template {{ .NotAField }} bad template",
+				"msgType": "actionCard"
+			}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1"},
+					},
+				}, {
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val2"},
+						Annotations: model.LabelSet{"ann1": "annv2"},
+					},
+				},
+			},
+			expMsg: map[string]interface{}{
+				"link": map[string]interface{}{
+					"messageUrl": "dingtalk://dingtalkclient/page/link?pc_slide=false&url=http%3A%2F%2Flocalhost%2Falerting%2Flist",
+					"text":       "I'm a custom template ",
+					"title":      "",
+				},
+				"msgtype": "link",
+			},
+			expMsgError: nil,
+		}, {
+			name: "Invalid template",
+			settings: `{
+				"url": "http://localhost",
+				"message": "I'm a custom template {{ {.NotAField }} bad template",
+				"msgType": "actionCard"
+			}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1"},
+					},
+				}, {
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val2"},
+						Annotations: model.LabelSet{"ann1": "annv2"},
+					},
+				},
+			},
+			expMsg: map[string]interface{}{
+				"link": map[string]interface{}{
+					"messageUrl": "dingtalk://dingtalkclient/page/link?pc_slide=false&url=http%3A%2F%2Flocalhost%2Falerting%2Flist",
+					"text":       "",
+					"title":      "",
+				},
+				"msgtype": "link",
+			},
+			expMsgError: nil,
+		}, {
 			name:         "Error in initing",
 			settings:     `{}`,
-			expInitError: `failed to validate receiver "dingding_testing" of type "dingding": could not find url property in settings`,
+			expInitError: `could not find url property in settings`,
 		},
 	}
 
@@ -99,21 +155,17 @@ func TestDingdingNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			pn, err := NewDingDingNotifier(m, tmpl)
+			webhookSender := mockNotificationService()
+			cfg, err := NewDingDingConfig(m)
 			if c.expInitError != "" {
 				require.Equal(t, c.expInitError, err.Error())
 				return
 			}
 			require.NoError(t, err)
 
-			body := ""
-			bus.AddHandlerCtx("test", func(ctx context.Context, webhook *models.SendWebhookSync) error {
-				body = webhook.Body
-				return nil
-			})
-
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
+			pn := NewDingDingNotifier(cfg, webhookSender, tmpl)
 			ok, err := pn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.False(t, ok)
@@ -124,10 +176,12 @@ func TestDingdingNotifier(t *testing.T) {
 			require.NoError(t, err)
 			require.True(t, ok)
 
+			require.NotEmpty(t, webhookSender.Webhook.Url)
+
 			expBody, err := json.Marshal(c.expMsg)
 			require.NoError(t, err)
 
-			require.JSONEq(t, string(expBody), body)
+			require.JSONEq(t, string(expBody), webhookSender.Webhook.Body)
 		})
 	}
 }

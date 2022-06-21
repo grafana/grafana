@@ -1,5 +1,17 @@
 import React from 'react';
 import uPlot, { AlignedData } from 'uplot';
+
+import {
+  DataFrame,
+  formattedValueToString,
+  getFieldColorModeForField,
+  getFieldSeriesColor,
+  GrafanaTheme2,
+} from '@grafana/data';
+import {
+  histogramBucketSizes,
+  histogramFrameBucketMaxFieldName,
+} from '@grafana/data/src/transformations/transformers/histogram';
 import {
   VizLegendOptions,
   LegendDisplayMode,
@@ -9,18 +21,15 @@ import {
   ScaleOrientation,
 } from '@grafana/schema';
 import {
-  DataFrame,
-  formattedValueToString,
-  getFieldColorModeForField,
-  getFieldSeriesColor,
-  GrafanaTheme2,
-} from '@grafana/data';
-import { Themeable2, UPlotConfigBuilder, UPlotChart, VizLayout, PlotLegend } from '@grafana/ui';
+  Themeable2,
+  UPlotConfigBuilder,
+  UPlotChart,
+  VizLayout,
+  PlotLegend,
+  measureText,
+  UPLOT_AXIS_FONT_SIZE,
+} from '@grafana/ui';
 
-import {
-  histogramBucketSizes,
-  histogramFrameBucketMaxFieldName,
-} from '@grafana/data/src/transformations/transformers/histogram';
 import { PanelOptions } from './models.gen';
 
 function incrRoundDn(num: number, incr: number) {
@@ -119,7 +128,20 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     placement: AxisPlacement.Bottom,
     incrs: histogramBucketSizes,
     splits: xSplits,
-    values: (u: uPlot, vals: any[]) => vals.map(xAxisFormatter),
+    values: (u: uPlot, splits: any[]) => {
+      const tickLabels = splits.map(xAxisFormatter);
+
+      const maxWidth = tickLabels.reduce(
+        (curMax, label) => Math.max(measureText(label, UPLOT_AXIS_FONT_SIZE).width, curMax),
+        0
+      );
+
+      const labelSpacing = 10;
+      const maxCount = u.bbox.width / ((maxWidth + labelSpacing) * devicePixelRatio);
+      const keepMod = Math.ceil(tickLabels.length / maxCount);
+
+      return tickLabels.map((label, i) => (i % keepMod === 0 ? label : null));
+    },
     //incrs: () => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((mult) => mult * bucketSize),
     //splits: config.xSplits,
     //values: config.xValues,

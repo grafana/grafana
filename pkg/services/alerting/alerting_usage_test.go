@@ -7,18 +7,18 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/stretchr/testify/require"
 )
 
 func TestAlertingUsageStats(t *testing.T) {
+	store := &AlertStoreMock{}
 	ae := &AlertEngine{
-		Bus: bus.New(),
+		sqlStore: store,
 	}
 
-	ae.Bus.AddHandlerCtx(func(ctx context.Context, query *models.GetAllAlertsQuery) error {
+	store.getAllAlerts = func(ctx context.Context, query *models.GetAllAlertsQuery) error {
 		var createFake = func(file string) *simplejson.Json {
 			// Ignore gosec warning G304 since it's a test
 			// nolint:gosec
@@ -37,9 +37,9 @@ func TestAlertingUsageStats(t *testing.T) {
 			{Id: 3, Settings: createFake("testdata/settings/empty.json")},
 		}
 		return nil
-	})
+	}
 
-	ae.Bus.AddHandlerCtx(func(ctx context.Context, query *models.GetDataSourceQuery) error {
+	store.getDataSource = func(ctx context.Context, query *models.GetDataSourceQuery) error {
 		ds := map[int64]*models.DataSource{
 			1: {Type: "influxdb"},
 			2: {Type: "graphite"},
@@ -54,7 +54,7 @@ func TestAlertingUsageStats(t *testing.T) {
 
 		query.Result = r
 		return nil
-	})
+	}
 
 	result, err := ae.QueryUsageStats(context.Background())
 	require.NoError(t, err, "getAlertingUsage should not return error")

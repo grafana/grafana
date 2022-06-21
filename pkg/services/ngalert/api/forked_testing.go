@@ -8,20 +8,24 @@ import (
 
 // ForkedTestingApi always forwards requests to grafana backend
 type ForkedTestingApi struct {
-	grafana TestingApiService
+	svc *TestingApiSrv
 }
 
 // NewForkedTestingApi creates a new ForkedTestingApi instance
-func NewForkedTestingApi(grafana TestingApiService) *ForkedTestingApi {
+func NewForkedTestingApi(svc *TestingApiSrv) *ForkedTestingApi {
 	return &ForkedTestingApi{
-		grafana: grafana,
+		svc: svc,
 	}
 }
 
 func (f *ForkedTestingApi) forkRouteTestRuleConfig(c *models.ReqContext, body apimodels.TestRulePayload) response.Response {
-	return f.grafana.RouteTestRuleConfig(c, body)
+	return f.svc.RouteTestRuleConfig(c, body)
+}
+
+func (f *ForkedTestingApi) forkRouteTestRuleGrafanaConfig(c *models.ReqContext, body apimodels.TestRulePayload) response.Response {
+	return f.svc.RouteTestGrafanaRuleConfig(c, body)
 }
 
 func (f *ForkedTestingApi) forkRouteEvalQueries(c *models.ReqContext, body apimodels.EvalQueriesPayload) response.Response {
-	return f.grafana.RouteEvalQueries(c, body)
+	return f.svc.RouteEvalQueries(c, body)
 }

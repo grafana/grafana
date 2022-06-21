@@ -1,18 +1,21 @@
 import React, { PureComponent } from 'react';
-import { Alert, DataSourceHttpSettings, InlineFormLabel, LegacyForms } from '@grafana/ui';
-const { Select, Switch } = LegacyForms;
+
 import {
   DataSourcePluginOptionsEditorProps,
   updateDatasourcePluginJsonDataOption,
   onUpdateDatasourceJsonDataOptionSelect,
   onUpdateDatasourceJsonDataOptionChecked,
 } from '@grafana/data';
-import { GraphiteOptions, GraphiteType } from '../types';
-import { DEFAULT_GRAPHITE_VERSION, GRAPHITE_VERSIONS } from '../versions';
-import { MappingsConfiguration } from './MappingsConfiguration';
-import { fromString, toString } from './parseLokiLabelMappings';
+import { Alert, DataSourceHttpSettings, InlineFormLabel, LegacyForms } from '@grafana/ui';
 import store from 'app/core/store';
 
+import { GraphiteOptions, GraphiteType } from '../types';
+import { DEFAULT_GRAPHITE_VERSION, GRAPHITE_VERSIONS } from '../versions';
+
+import { MappingsConfiguration } from './MappingsConfiguration';
+import { fromString, toString } from './parseLokiLabelMappings';
+
+const { Select, Switch } = LegacyForms;
 export const SHOW_MAPPINGS_HELP_KEY = 'grafana.datasources.graphite.config.showMappingsHelp';
 
 const graphiteVersions = GRAPHITE_VERSIONS.map((version) => ({ label: `${version}.x`, value: version }));
@@ -80,7 +83,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
                 Version
               </InlineFormLabel>
               <Select
-                menuShouldPortal
+                aria-label="Graphite version"
                 value={currentVersion}
                 options={graphiteVersions}
                 width={8}
@@ -92,7 +95,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
             <div className="gf-form">
               <InlineFormLabel tooltip={this.renderTypeHelp}>Type</InlineFormLabel>
               <Select
-                menuShouldPortal
+                aria-label="Graphite backend type"
                 options={graphiteTypes}
                 value={graphiteTypes.find((type) => type.value === options.jsonData.graphiteType)}
                 width={8}

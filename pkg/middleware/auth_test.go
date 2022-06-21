@@ -1,11 +1,9 @@
 package middleware
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
@@ -17,7 +15,6 @@ func TestMiddlewareAuth(t *testing.T) {
 
 	middlewareScenario(t, "ReqSignIn true and unauthenticated request", func(t *testing.T, sc *scenarioContext) {
 		sc.m.Get("/secure", reqSignIn, sc.defaultHandler)
-
 		sc.fakeReq("GET", "/secure").exec()
 
 		assert.Equal(t, 302, sc.resp.Code)
@@ -41,11 +38,7 @@ func TestMiddlewareAuth(t *testing.T) {
 
 		middlewareScenario(t, "ReqSignIn true and NoAnonynmous true", func(
 			t *testing.T, sc *scenarioContext) {
-			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetOrgByNameQuery) error {
-				query.Result = &models.Org{Id: orgID, Name: "test"}
-				return nil
-			})
-
+			sc.mockSQLStore.ExpectedOrg = &models.Org{Id: orgID, Name: "test"}
 			sc.m.Get("/api/secure", ReqSignedInNoAnonymous, sc.defaultHandler)
 			sc.fakeReq("GET", "/api/secure").exec()
 
@@ -54,11 +47,7 @@ func TestMiddlewareAuth(t *testing.T) {
 
 		middlewareScenario(t, "ReqSignIn true and request with forceLogin in query string", func(
 			t *testing.T, sc *scenarioContext) {
-			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetOrgByNameQuery) error {
-				query.Result = &models.Org{Id: orgID, Name: "test"}
-				return nil
-			})
-
+			sc.mockSQLStore.ExpectedOrg = &models.Org{Id: orgID, Name: "test"}
 			sc.m.Get("/secure", reqSignIn, sc.defaultHandler)
 
 			sc.fakeReq("GET", "/secure?forceLogin=true").exec()
@@ -71,7 +60,8 @@ func TestMiddlewareAuth(t *testing.T) {
 
 		middlewareScenario(t, "ReqSignIn true and request with same org provided in query string", func(
 			t *testing.T, sc *scenarioContext) {
-			org, err := sc.sqlStore.CreateOrgWithMember(sc.cfg.AnonymousOrgName, 1)
+			sc.mockSQLStore.ExpectedOrg = &models.Org{Id: 1, Name: sc.cfg.AnonymousOrgName}
+			org, err := sc.mockSQLStore.CreateOrgWithMember(sc.cfg.AnonymousOrgName, 1)
 			require.NoError(t, err)
 
 			sc.m.Get("/secure", reqSignIn, sc.defaultHandler)
@@ -83,11 +73,7 @@ func TestMiddlewareAuth(t *testing.T) {
 
 		middlewareScenario(t, "ReqSignIn true and request with different org provided in query string", func(
 			t *testing.T, sc *scenarioContext) {
-			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetOrgByNameQuery) error {
-				query.Result = &models.Org{Id: orgID, Name: "test"}
-				return nil
-			})
-
+			sc.mockSQLStore.ExpectedOrg = &models.Org{Id: 1, Name: sc.cfg.AnonymousOrgName}
 			sc.m.Get("/secure", reqSignIn, sc.defaultHandler)
 
 			sc.fakeReq("GET", "/secure?orgId=2").exec()

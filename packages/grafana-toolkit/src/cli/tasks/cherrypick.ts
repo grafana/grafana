@@ -1,5 +1,6 @@
-import { Task, TaskRunner } from './task';
 import GithubClient from '../utils/githubClient';
+
+import { Task, TaskRunner } from './task';
 
 interface CherryPickOptions {
   enterprise: boolean;

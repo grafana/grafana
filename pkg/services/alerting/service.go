@@ -2,41 +2,29 @@ package alerting
 
 import (
 	"context"
+	"fmt"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/encryption"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type AlertNotificationService struct {
-	Bus               bus.Bus
-	SQLStore          *sqlstore.SQLStore
-	EncryptionService encryption.Internal
+	SQLStore            *sqlstore.SQLStore
+	EncryptionService   encryption.Internal
+	NotificationService *notifications.NotificationService
 }
 
-func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, encryptionService encryption.Internal,
-) *AlertNotificationService {
+func ProvideService(store *sqlstore.SQLStore, encryptionService encryption.Internal,
+	notificationService *notifications.NotificationService) *AlertNotificationService {
 	s := &AlertNotificationService{
-		Bus:               bus,
-		SQLStore:          store,
-		EncryptionService: encryptionService,
+		SQLStore:            store,
+		EncryptionService:   encryptionService,
+		NotificationService: notificationService,
 	}
-
-	s.Bus.AddHandlerCtx(s.GetAlertNotifications)
-	s.Bus.AddHandlerCtx(s.CreateAlertNotificationCommand)
-	s.Bus.AddHandlerCtx(s.UpdateAlertNotification)
-	s.Bus.AddHandlerCtx(s.DeleteAlertNotification)
-	s.Bus.AddHandlerCtx(s.GetAllAlertNotifications)
-	s.Bus.AddHandlerCtx(s.GetOrCreateAlertNotificationState)
-	s.Bus.AddHandlerCtx(s.SetAlertNotificationStateToCompleteCommand)
-	s.Bus.AddHandlerCtx(s.SetAlertNotificationStateToPendingCommand)
-	s.Bus.AddHandlerCtx(s.GetAlertNotificationsWithUid)
-	s.Bus.AddHandlerCtx(s.UpdateAlertNotificationWithUid)
-	s.Bus.AddHandlerCtx(s.DeleteAlertNotificationWithUid)
-	s.Bus.AddHandlerCtx(s.GetAlertNotificationsWithUidToSend)
-	s.Bus.AddHandlerCtx(s.HandleNotificationTestCommand)
 
 	return s
 }
@@ -46,6 +34,10 @@ func (s *AlertNotificationService) GetAlertNotifications(ctx context.Context, qu
 }
 
 func (s *AlertNotificationService) CreateAlertNotificationCommand(ctx context.Context, cmd *models.CreateAlertNotificationCommand) error {
+	if util.IsShortUIDTooLong(cmd.Uid) {
+		return ValidationError{Reason: "Invalid UID: Must be 40 characters or less"}
+	}
+
 	var err error
 	cmd.EncryptedSecureSettings, err = s.EncryptionService.EncryptJsonData(ctx, cmd.SecureSettings, setting.SecretKey)
 	if err != nil {
@@ -66,6 +58,10 @@ func (s *AlertNotificationService) CreateAlertNotificationCommand(ctx context.Co
 }
 
 func (s *AlertNotificationService) UpdateAlertNotification(ctx context.Context, cmd *models.UpdateAlertNotificationCommand) error {
+	if util.IsShortUIDTooLong(cmd.Uid) {
+		return ValidationError{Reason: "Invalid UID: Must be 40 characters or less"}
+	}
+
 	var err error
 	cmd.EncryptedSecureSettings, err = s.EncryptionService.EncryptJsonData(ctx, cmd.SecureSettings, setting.SecretKey)
 	if err != nil {
@@ -74,6 +70,7 @@ func (s *AlertNotificationService) UpdateAlertNotification(ctx context.Context, 
 
 	model := models.AlertNotification{
 		Id:       cmd.Id,
+		OrgId:    cmd.OrgId,
 		Name:     cmd.Name,
 		Type:     cmd.Type,
 		Settings: cmd.Settings,
@@ -111,6 +108,10 @@ func (s *AlertNotificationService) GetAlertNotificationsWithUid(ctx context.Cont
 }
 
 func (s *AlertNotificationService) UpdateAlertNotificationWithUid(ctx context.Context, cmd *models.UpdateAlertNotificationWithUidCommand) error {
+	if util.IsShortUIDTooLong(cmd.Uid) || util.IsShortUIDTooLong(cmd.NewUid) {
+		return ValidationError{Reason: "Invalid UID: Must be 40 characters or less"}
+	}
+
 	return s.SQLStore.UpdateAlertNotificationWithUid(ctx, cmd)
 }
 
@@ -134,7 +135,11 @@ func (s *AlertNotificationService) createNotifier(ctx context.Context, model *mo
 			return nil, err
 		}
 
-		if query.Result != nil && query.Result.SecureSettings != nil {
+		if query.Result == nil {
+			return nil, fmt.Errorf("unable to find the alert notification")
+		}
+
+		if query.Result.SecureSettings != nil {
 			var err error
 			secureSettingsMap, err = s.EncryptionService.DecryptJsonData(ctx, query.Result.SecureSettings, setting.SecretKey)
 			if err != nil {
@@ -153,7 +158,7 @@ func (s *AlertNotificationService) createNotifier(ctx context.Context, model *mo
 		return nil, err
 	}
 
-	notifier, err := InitNotifier(model, s.EncryptionService.GetDecryptedValue)
+	notifier, err := InitNotifier(model, s.EncryptionService.GetDecryptedValue, s.NotificationService)
 	if err != nil {
 		logger.Error("Failed to create notifier", "error", err.Error())
 		return nil, err

@@ -1,16 +1,19 @@
-import React, { FC, useState, useEffect } from 'react';
-import Page from 'app/core/components/Page/Page';
-import { useSelector } from 'react-redux';
-import { StoreState, OrgUser, AccessControlAction } from 'app/types';
-import { getNavModel } from 'app/core/selectors/navModel';
-import UsersTable from '../users/UsersTable';
-import { useAsyncFn } from 'react-use';
-import { getBackendSrv } from '@grafana/runtime';
-import { UrlQueryValue } from '@grafana/data';
-import { Form, Field, Input, Button, Legend, Alert } from '@grafana/ui';
 import { css } from '@emotion/css';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import React, { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
+import { useAsyncFn } from 'react-use';
+
+import { UrlQueryValue } from '@grafana/data';
+import { getBackendSrv } from '@grafana/runtime';
+import { Form, Field, Input, Button, Legend, Alert } from '@grafana/ui';
+import Page from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { getNavModel } from 'app/core/selectors/navModel';
+import { accessControlQueryParam } from 'app/core/utils/accessControl';
+import { StoreState, OrgUser, AccessControlAction } from 'app/types';
+
+import UsersTable from '../users/UsersTable';
 
 interface OrgNameDTO {
   orgName: string;
@@ -22,7 +25,7 @@ const getOrg = async (orgId: UrlQueryValue) => {
 
 const getOrgUsers = async (orgId: UrlQueryValue) => {
   if (contextSrv.hasPermission(AccessControlAction.OrgUsersRead)) {
-    return await getBackendSrv().get(`/api/orgs/${orgId}/users`);
+    return await getBackendSrv().get(`/api/orgs/${orgId}/users`, accessControlQueryParam());
   }
   return [];
 };
@@ -37,7 +40,7 @@ const removeOrgUser = async (orgUser: OrgUser, orgId: UrlQueryValue) => {
 
 interface Props extends GrafanaRouteComponentProps<{ id: string }> {}
 
-export const AdminEditOrgPage: FC<Props> = ({ match }) => {
+export default function AdminEditOrgPage({ match }: Props) {
   const navIndex = useSelector((state: StoreState) => state.navIndex);
   const navModel = getNavModel(navIndex, 'global-orgs');
   const orgId = parseInt(match.params.id, 10);
@@ -82,7 +85,9 @@ export const AdminEditOrgPage: FC<Props> = ({ match }) => {
                   <Field label="Name" invalid={!!errors.orgName} error="Name is required" disabled={!canWriteOrg}>
                     <Input {...register('orgName', { required: true })} id="org-name-input" />
                   </Field>
-                  <Button disabled={!canWriteOrg}>Update</Button>
+                  <Button type="submit" disabled={!canWriteOrg}>
+                    Update
+                  </Button>
                 </>
               )}
             </Form>
@@ -123,6 +128,4 @@ export const AdminEditOrgPage: FC<Props> = ({ match }) => {
       </Page.Contents>
     </Page>
   );
-};
-
-export default AdminEditOrgPage;
+}

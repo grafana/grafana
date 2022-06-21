@@ -1,8 +1,9 @@
 import { isString } from 'lodash';
+
+import { SelectableValue } from '@grafana/data';
+
 import { ALIGNMENT_PERIODS, SELECTORS } from './constants';
 import CloudMonitoringDatasource from './datasource';
-import { CloudMonitoringVariableQuery, MetricDescriptor, MetricFindQueryTypes, MetricKind, ValueTypes } from './types';
-import { SelectableValue } from '@grafana/data';
 import {
   extractServicesFromMetricDescriptors,
   getAggregationOptionsByMetric,
@@ -10,6 +11,7 @@ import {
   getLabelKeys,
   getMetricTypesByService,
 } from './functions';
+import { CloudMonitoringVariableQuery, MetricDescriptor, MetricFindQueryTypes, MetricKind, ValueTypes } from './types';
 
 export default class CloudMonitoringMetricFindQuery {
   constructor(private datasource: CloudMonitoringDatasource) {}
@@ -100,7 +102,11 @@ export default class CloudMonitoringMetricFindQuery {
       return [];
     }
     const refId = 'handleLabelValuesQuery';
-    const labels = await this.datasource.getLabels(selectedMetricType, refId, projectName, [labelKey]);
+    // REDUCE_MEAN is needed so the groupBy is not ignored
+    const labels = await this.datasource.getLabels(selectedMetricType, refId, projectName, {
+      groupBys: [labelKey],
+      crossSeriesReducer: 'REDUCE_MEAN',
+    });
     const interpolatedKey = this.datasource.templateSrv.replace(labelKey);
     const values = labels.hasOwnProperty(interpolatedKey) ? labels[interpolatedKey] : [];
     return values.map(this.toFindQueryResult);

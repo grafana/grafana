@@ -33,7 +33,11 @@ export const Components = {
         seriesCount: 'TestData series count',
         spread: 'TestData spread',
         startValue: 'TestData start value',
+        drop: 'TestData drop values',
       },
+    },
+    DataSourceHttpSettings: {
+      urlInput: 'Datasource HTTP settings url',
     },
     Jaeger: {
       traceIDInput: 'Trace ID',
@@ -159,7 +163,11 @@ export const Components = {
   QueryTab: {
     content: 'Query editor tab content',
     queryInspectorButton: 'Query inspector button',
+    queryHistoryButton: 'Rich history button',
     addQuery: 'Query editor add query button',
+  },
+  QueryHistory: {
+    queryText: 'Query text',
   },
   QueryEditorRows: {
     rows: 'Query editor row',
@@ -167,6 +175,7 @@ export const Components = {
   QueryEditorRow: {
     actionButton: (title: string) => `${title} query operation action`,
     title: (refId: string) => `Query editor row title ${refId}`,
+    container: (refId: string) => `Query editor row ${refId}`,
   },
   AlertTab: {
     content: 'Alert editor tab content',
@@ -256,7 +265,7 @@ export const Components = {
     placeholder: 'Choose starting day of the week',
   },
   TraceViewer: {
-    spanBar: () => '[data-test-id="SpanBar--wrapper"]',
+    spanBar: 'data-testid SpanBar--wrapper',
   },
   QueryField: { container: 'Query field' },
   ValuePicker: {
@@ -274,9 +283,11 @@ export const Components = {
      */
     items: 'Search items',
     itemsV2: 'data-testid Search items',
+    cards: 'data-testid Search cards',
     collapseFolder: (sectionId: string) => `data-testid Collapse folder ${sectionId}`,
     expandFolder: (sectionId: string) => `data-testid Expand folder ${sectionId}`,
     dashboardItem: (item: string) => `${Components.Search.dashboardItems} ${item}`,
+    dashboardCard: (item: string) => `data-testid Search card ${item}`,
     dashboardItems: 'data-testid Dashboard search item',
   },
   DashboardLinks: {
@@ -316,5 +327,18 @@ export const Components = {
   },
   ColorSwatch: {
     name: `data-testid-colorswatch`,
+  },
+  DashboardRow: {
+    title: (title: string) => `data-testid dashboard-row-title-${title}`,
+  },
+  UserProfile: {
+    profileSaveButton: 'data-testid-user-profile-save',
+    preferencesSaveButton: 'data-testid-shared-prefs-save',
+    orgsTable: 'data-testid-user-orgs-table',
+    sessionsTable: 'data-testid-user-sessions-table',
+  },
+  FileUpload: {
+    inputField: 'data-testid-file-upload-input-field',
+    fileNameSpan: 'data-testid-file-upload-file-name',
   },
 };

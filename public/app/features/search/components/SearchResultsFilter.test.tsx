@@ -1,8 +1,10 @@
-import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { selectOptionInTest } from '@grafana/ui';
-import { Props, SearchResultsFilter } from './SearchResultsFilter';
+import React from 'react';
+import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
+
 import { SearchLayout } from '../types';
+
+import { Props, SearchResultsFilter } from './SearchResultsFilter';
 
 jest.mock('app/core/services/search_srv');
 
@@ -37,6 +39,7 @@ const setup = (propOverrides?: Partial<Props>) => {
     onLayoutChange: noop,
     query: searchQuery,
     onSortChange: noop,
+    setShowPreviews: noop,
     editable: true,
   };
 
@@ -82,6 +85,7 @@ describe('SearchResultsFilter', () => {
       query: { ...searchQuery, tag: [] },
     });
     const tagComponent = await screen.findByLabelText('Tag filter');
+    await tagComponent.focus();
     await selectOptionInTest(tagComponent, 'tag1');
 
     expect(mockFilterByTags).toHaveBeenCalledTimes(1);

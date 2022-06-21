@@ -1,16 +1,23 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { selectOptionInTest } from '@grafana/ui';
-
+import React from 'react';
+import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { byRole } from 'testing-library-selector';
-import { GeneralSettingsUnconnected as GeneralSettings, Props } from './GeneralSettings';
-import { DashboardModel } from '../../state';
+
 import { selectors } from '@grafana/e2e-selectors';
+import { setBackendSrv } from '@grafana/runtime';
+
+import { DashboardModel } from '../../state';
+
+import { GeneralSettingsUnconnected as GeneralSettings, Props } from './GeneralSettings';
+
+setBackendSrv({
+  get: jest.fn().mockResolvedValue([]),
+} as any);
 
 const setupTestContext = (options: Partial<Props>) => {
   const defaults: Props = {
-    dashboard: ({
+    dashboard: {
       title: 'test dashboard title',
       description: 'test dashboard description',
       timepicker: {
@@ -22,7 +29,7 @@ const setupTestContext = (options: Partial<Props>) => {
         folderTitle: 'test',
       },
       timezone: 'utc',
-    } as unknown) as DashboardModel,
+    } as unknown as DashboardModel,
     updateTimeZone: jest.fn(),
     updateWeekStart: jest.fn(),
   };
@@ -48,9 +55,9 @@ describe('General Settings', () => {
   describe('when timezone is changed', () => {
     it('should call update function', async () => {
       const { props } = setupTestContext({});
-      userEvent.click(screen.getByTestId(selectors.components.TimeZonePicker.containerV2));
+      await userEvent.click(screen.getByTestId(selectors.components.TimeZonePicker.containerV2));
       const timeZonePicker = screen.getByTestId(selectors.components.TimeZonePicker.containerV2);
-      userEvent.click(byRole('combobox').get(timeZonePicker));
+      await userEvent.click(byRole('combobox').get(timeZonePicker));
       await selectOptionInTest(timeZonePicker, 'Browser Time');
       expect(props.updateTimeZone).toHaveBeenCalledWith('browser');
       expect(props.dashboard.timezone).toBe('browser');

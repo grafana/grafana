@@ -17,11 +17,13 @@ packages/grafana-toolkit/
 packages/grafana-ui/
 packages/jaeger-ui-components/
 packaging/
+pkg/coremodel/
+pkg/framework/coremodel/
 grafana-mixin/
 cue/
 ```
 
-The following directories and their subdirectories are the original upstream licenses:
+The following directories and their subdirectories are licensed under their original upstream licenses:
 
 ```
 public/vendor/

@@ -1,3 +1,6 @@
+import { descending, deviation } from 'd3';
+import { partition, groupBy } from 'lodash';
+
 import {
   ArrayDataFrame,
   ArrayVector,
@@ -16,11 +19,12 @@ import {
   DataQueryResponse,
   DataQueryRequest,
   PreferredVisualisationType,
+  DataFrameType,
   CoreApp,
 } from '@grafana/data';
 import { FetchResponse, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
-import { partition, groupBy } from 'lodash';
-import { descending, deviation } from 'd3';
+
+import { renderLegendFormat } from './legend';
 import {
   ExemplarTraceIdDestination,
   isExemplarData,
@@ -33,10 +37,9 @@ import {
   PromValue,
   TransformOptions,
 } from './types';
-import { renderLegendFormat } from './legend';
 
-const POSITIVE_INFINITY_SAMPLE_VALUE = '+Inf';
-const NEGATIVE_INFINITY_SAMPLE_VALUE = '-Inf';
+// handles case-insensitive Inf, +Inf, -Inf (with optional "inity" suffix)
+const INFINITY_SAMPLE_REGEX = /^[+-]?inf(?:inity)?$/i;
 
 interface TimeAndValue {
   [TIME_SERIES_TIME_FIELD_NAME]: number;
@@ -44,8 +47,11 @@ interface TimeAndValue {
 }
 
 const isTableResult = (dataFrame: DataFrame, options: DataQueryRequest<PromQuery>): boolean => {
-  // We want to process instant results in Explore as table
-  if ((options.app === CoreApp.Explore && dataFrame.meta?.custom?.resultType) === 'vector') {
+  // We want to process vector and scalar results in Explore as table
+  if (
+    options.app === CoreApp.Explore &&
+    (dataFrame.meta?.custom?.resultType === 'vector' || dataFrame.meta?.custom?.resultType === 'scalar')
+  ) {
     return true;
   }
 
@@ -68,13 +74,8 @@ export function transformV2(
   const [tableFrames, framesWithoutTable] = partition<DataFrame>(response.data, (df) => isTableResult(df, request));
   const processedTableFrames = transformDFToTable(tableFrames);
 
-  const [heatmapResults, framesWithoutTableAndHeatmaps] = partition<DataFrame>(framesWithoutTable, (df) =>
-    isHeatmapResult(df, request)
-  );
-  const processedHeatmapFrames = transformToHistogramOverTime(heatmapResults.sort(sortSeriesByLabel));
-
-  const [exemplarFrames, framesWithoutTableHeatmapsAndExemplars] = partition<DataFrame>(
-    framesWithoutTableAndHeatmaps,
+  const [exemplarFrames, framesWithoutTableAndExemplars] = partition<DataFrame>(
+    framesWithoutTable,
     (df) => df.meta?.custom?.resultType === 'exemplar'
   );
 
@@ -95,6 +96,15 @@ export function transformV2(
 
     return { ...dataFrame, meta: { ...dataFrame.meta, dataTopic: DataTopic.Annotations } };
   });
+
+  const [heatmapResults, framesWithoutTableHeatmapsAndExemplars] = partition<DataFrame>(
+    framesWithoutTableAndExemplars,
+    (df) => isHeatmapResult(df, request)
+  );
+
+  const processedHeatmapFrames = mergeHeatmapFrames(
+    transformToHistogramOverTime(heatmapResults.sort(sortSeriesByLabel))
+  );
 
   // Everything else is processed as time_series result and graph preferredVisualisationType
   const otherFrames = framesWithoutTableHeatmapsAndExemplars.map((dataFrame) => {
@@ -122,10 +132,11 @@ export function transformDFToTable(dfs: DataFrame[]): DataFrame[] {
 
   // Group results by refId and process dataFrames with the same refId as 1 dataFrame
   const dataFramesByRefId = groupBy(dfs, 'refId');
+  const refIds = Object.keys(dataFramesByRefId);
 
-  const frames = Object.keys(dataFramesByRefId).map((refId) => {
+  const frames = refIds.map((refId) => {
     // Create timeField, valueField and labelFields
-    const valueText = getValueText(dfs.length, refId);
+    const valueText = getValueText(refIds.length, refId);
     const valueField = getValueField({ data: [], valueName: valueText });
     const timeField = getTimeField([]);
     const labelFields: MutableField[] = [];
@@ -268,9 +279,7 @@ export function transform(
 
   // When format is heatmap use the already created data frames and transform it more
   if (options.format === 'heatmap') {
-    dataFrame.sort(sortSeriesByLabel);
-    const seriesList = transformToHistogramOverTime(dataFrame);
-    return seriesList;
+    return mergeHeatmapFrames(transformToHistogramOverTime(dataFrame.sort(sortSeriesByLabel)));
   }
 
   // Return matrix or vector result as DataFrame[]
@@ -285,7 +294,7 @@ function getDataLinks(options: ExemplarTraceIdDestination): DataLink[] {
     const dsSettings = dataSourceSrv.getInstanceSettings(options.datasourceUid);
 
     dataLinks.push({
-      title: `Query with ${dsSettings?.name}`,
+      title: options.urlDisplayLabel || `Query with ${dsSettings?.name}`,
       url: '',
       internal: {
         query: { query: '${__value.raw}', queryType: 'traceId' },
@@ -297,7 +306,7 @@ function getDataLinks(options: ExemplarTraceIdDestination): DataLink[] {
 
   if (options.url) {
     dataLinks.push({
-      title: `Go to ${options.url}`,
+      title: options.urlDisplayLabel || `Go to ${options.url}`,
       url: options.url,
       targetBlank: true,
     });
@@ -529,6 +538,33 @@ export function getOriginalMetricName(labelData: { [key: string]: string }) {
   return `${metricName}{${labelPart}}`;
 }
 
+function mergeHeatmapFrames(frames: DataFrame[]): DataFrame[] {
+  if (frames.length === 0) {
+    return [];
+  }
+
+  const timeField = frames[0].fields.find((field) => field.type === FieldType.time)!;
+  const countFields = frames.map((frame) => {
+    let field = frame.fields.find((field) => field.type === FieldType.number)!;
+
+    return {
+      ...field,
+      name: field.config.displayNameFromDS!,
+    };
+  });
+
+  return [
+    {
+      ...frames[0],
+      meta: {
+        ...frames[0].meta,
+        type: DataFrameType.HeatmapRows,
+      },
+      fields: [timeField!, ...countFields],
+    },
+  ];
+}
+
 function transformToHistogramOverTime(seriesList: DataFrame[]) {
   /*      t1 = timestamp1, t2 = timestamp2 etc.
             t1  t2  t3          t1  t2  t3
@@ -575,13 +611,10 @@ function sortSeriesByLabel(s1: DataFrame, s2: DataFrame): number {
   return 0;
 }
 
-function parseSampleValue(value: string): number {
-  switch (value) {
-    case POSITIVE_INFINITY_SAMPLE_VALUE:
-      return Number.POSITIVE_INFINITY;
-    case NEGATIVE_INFINITY_SAMPLE_VALUE:
-      return Number.NEGATIVE_INFINITY;
-    default:
-      return parseFloat(value);
+/** @internal */
+export function parseSampleValue(value: string): number {
+  if (INFINITY_SAMPLE_REGEX.test(value)) {
+    return value[0] === '-' ? Number.NEGATIVE_INFINITY : Number.POSITIVE_INFINITY;
   }
+  return parseFloat(value);
 }

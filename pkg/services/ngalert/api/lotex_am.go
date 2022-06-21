@@ -25,6 +25,14 @@ var endpoints = map[string]map[string]string{
 		"alerts":   "/alertmanager/api/v2/alerts",
 		"config":   "/api/v1/alerts",
 	},
+	"mimir": {
+		"silences": "/alertmanager/api/v2/silences",
+		"silence":  "/alertmanager/api/v2/silence/%s",
+		"status":   "/alertmanager/api/v2/status",
+		"groups":   "/alertmanager/api/v2/alerts/groups",
+		"alerts":   "/alertmanager/api/v2/alerts",
+		"config":   "/api/v1/alerts",
+	},
 	"prometheus": {
 		"silences": "/api/v2/silences",
 		"silence":  "/api/v2/silence/%s",
@@ -59,7 +67,12 @@ func (am *LotexAM) withAMReq(
 	extractor func(*response.NormalResponse) (interface{}, error),
 	headers map[string]string,
 ) response.Response {
-	ds, err := am.DataProxy.DataSourceCache.GetDatasource(ctx.ParamsInt64(":Recipient"), ctx.SignedInUser, ctx.SkipCache)
+	datasourceUID := web.Params(ctx.Req)[":DatasourceUID"]
+	if datasourceUID == "" {
+		return response.Error(http.StatusBadRequest, "DatasourceUID is invalid", nil)
+	}
+
+	ds, err := am.DataProxy.DataSourceCache.GetDatasourceByUID(ctx.Req.Context(), datasourceUID, ctx.SignedInUser, ctx.SkipCache)
 	if err != nil {
 		if errors.Is(err, models.ErrDataSourceAccessDenied) {
 			return ErrResp(http.StatusForbidden, err, "Access denied to datasource")

@@ -9,6 +9,7 @@ export interface FolderDTO {
   canSave: boolean;
   canEdit: boolean;
   canAdmin: boolean;
+  canDelete: boolean;
 }
 
 export interface FolderState {
@@ -17,13 +18,16 @@ export interface FolderState {
   title: string;
   url: string;
   canSave: boolean;
+  canDelete: boolean;
   hasChanged: boolean;
   version: number;
   permissions: DashboardAcl[];
+  canViewFolderPermissions: boolean;
 }
 
 export interface FolderInfo {
   id?: number;
   title?: string;
   url?: string;
+  canViewFolderPermissions?: boolean;
 }

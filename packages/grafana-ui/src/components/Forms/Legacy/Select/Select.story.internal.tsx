@@ -1,9 +1,12 @@
-import React, { useState, useCallback } from 'react';
 import { action } from '@storybook/addon-actions';
 import { Meta, Story } from '@storybook/react';
-import { withCenteredStory } from '../../../../utils/storybook/withCenteredStory';
-import { UseState } from '../../../../utils/storybook/UseState';
+import React, { useState, useCallback } from 'react';
+
 import { SelectableValue } from '@grafana/data';
+
+import { UseState } from '../../../../utils/storybook/UseState';
+import { withCenteredStory } from '../../../../utils/storybook/withCenteredStory';
+
 import { Select, AsyncSelect as AsyncSelectComponent } from './Select';
 
 export default {
@@ -69,7 +72,6 @@ export const Basic: Story = (args) => {
       {(value, updateValue) => {
         return (
           <Select
-            menuShouldPortal
             {...args}
             onChange={(value: SelectableValue<string>) => {
               action('onChanged fired')(value);

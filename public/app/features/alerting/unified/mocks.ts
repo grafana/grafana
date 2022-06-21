@@ -6,19 +6,9 @@ import {
   DataSourceRef,
   ScopedVars,
 } from '@grafana/data';
-import {
-  GrafanaAlertStateDecision,
-  GrafanaRuleDefinition,
-  PromAlertingRuleState,
-  PromRuleType,
-  RulerAlertingRuleDTO,
-  RulerGrafanaRuleDTO,
-  RulerRuleGroupDTO,
-  RulerRulesConfigDTO,
-} from 'app/types/unified-alerting-dto';
-import { AlertingRule, Alert, RecordingRule, RuleGroup, RuleNamespace } from 'app/types/unified-alerting';
-import DatasourceSrv from 'app/features/plugins/datasource_srv';
-import { DataSourceSrv, GetDataSourceListFilters, config } from '@grafana/runtime';
+import { config, DataSourceSrv, GetDataSourceListFilters } from '@grafana/runtime';
+import { contextSrv } from 'app/core/services/context_srv';
+import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import {
   AlertmanagerAlert,
   AlertManagerCortexConfig,
@@ -29,6 +19,18 @@ import {
   Silence,
   SilenceState,
 } from 'app/plugins/datasource/alertmanager/types';
+import { AccessControlAction, FolderDTO } from 'app/types';
+import { Alert, AlertingRule, CombinedRule, RecordingRule, RuleGroup, RuleNamespace } from 'app/types/unified-alerting';
+import {
+  GrafanaAlertStateDecision,
+  GrafanaRuleDefinition,
+  PromAlertingRuleState,
+  PromRuleType,
+  RulerAlertingRuleDTO,
+  RulerGrafanaRuleDTO,
+  RulerRuleGroupDTO,
+  RulerRulesConfigDTO,
+} from 'app/types/unified-alerting-dto';
 
 let nextDataSourceId = 1;
 
@@ -45,7 +47,7 @@ export function mockDataSource<T extends DataSourceJsonData = DataSourceJsonData
     name: `Prometheus-${id}`,
     access: 'proxy',
     jsonData: {} as T,
-    meta: ({
+    meta: {
       info: {
         logos: {
           small: 'https://prometheus.io/assets/prometheus_logo_grey.svg',
@@ -53,7 +55,7 @@ export function mockDataSource<T extends DataSourceJsonData = DataSourceJsonData
         },
       },
       ...meta,
-    } as any) as DataSourcePluginMeta,
+    } as any as DataSourcePluginMeta,
     ...partial,
   };
 }
@@ -280,13 +282,15 @@ export class MockDataSourceSrv implements DataSourceSrv {
   getInstanceSettings(nameOrUid: string | null | undefined): DataSourceInstanceSettings | undefined {
     return (
       DatasourceSrv.prototype.getInstanceSettings.call(this, nameOrUid) ||
-      (({ meta: { info: { logos: {} } } } as unknown) as DataSourceInstanceSettings)
+      ({ meta: { info: { logos: {} } } } as unknown as DataSourceInstanceSettings)
     );
   }
 
   async loadDatasource(name: string): Promise<DataSourceApi<any, any>> {
     return DatasourceSrv.prototype.loadDatasource.call(this, name);
   }
+
+  reload() {}
 }
 
 export const mockGrafanaReceiver = (
@@ -427,4 +431,52 @@ export const someRulerRules: RulerRulesConfigDTO = {
     mockRulerRuleGroup({ name: 'group2', rules: [mockRulerAlertingRule({ alert: 'alert2' })] }),
   ],
   namespace2: [mockRulerRuleGroup({ name: 'group3', rules: [mockRulerAlertingRule({ alert: 'alert3' })] })],
+};
+
+export const mockCombinedRule = (partial?: Partial<CombinedRule>): CombinedRule => ({
+  name: 'mockRule',
+  query: 'expr',
+  group: {
+    name: 'mockCombinedRuleGroup',
+    rules: [],
+  },
+  namespace: {
+    name: 'mockCombinedNamespace',
+    groups: [{ name: 'mockCombinedRuleGroup', rules: [] }],
+    rulesSource: 'grafana',
+  },
+  labels: {},
+  annotations: {},
+  promRule: mockPromAlertingRule(),
+  rulerRule: mockRulerAlertingRule(),
+  ...partial,
+});
+
+export const mockFolder = (partial?: Partial<FolderDTO>): FolderDTO => {
+  return {
+    id: 1,
+    uid: 'gdev-1',
+    title: 'Gdev',
+    version: 1,
+    url: '',
+    canAdmin: true,
+    canDelete: true,
+    canEdit: true,
+    canSave: true,
+    ...partial,
+  };
+};
+
+export const enableRBAC = () => {
+  jest.spyOn(contextSrv, 'accessControlEnabled').mockReturnValue(true);
+};
+
+export const disableRBAC = () => {
+  jest.spyOn(contextSrv, 'accessControlEnabled').mockReturnValue(false);
+};
+
+export const grantUserPermissions = (permissions: AccessControlAction[]) => {
+  jest
+    .spyOn(contextSrv, 'hasPermission')
+    .mockImplementation((action) => permissions.includes(action as AccessControlAction));
 };

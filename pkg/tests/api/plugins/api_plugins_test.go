@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -42,8 +41,6 @@ func TestPlugins(t *testing.T) {
 	}
 
 	t.Run("Install", func(t *testing.T) {
-		store.Bus = bus.GetBus()
-
 		createUser(t, store, models.CreateUserCommand{Login: usernameNonAdmin, Password: defaultPassword, IsAdmin: false})
 		createUser(t, store, models.CreateUserCommand{Login: usernameAdmin, Password: defaultPassword, IsAdmin: true})
 
@@ -98,7 +95,11 @@ func TestPlugins(t *testing.T) {
 				if !same {
 					if updateSnapshotFlag {
 						t.Log("updating snapshot results")
-						updateRespSnapshot(t, tc.expRespPath, string(b))
+						var prettyJSON bytes.Buffer
+						if err := json.Indent(&prettyJSON, b, "", "  "); err != nil {
+							t.FailNow()
+						}
+						updateRespSnapshot(t, tc.expRespPath, prettyJSON.String())
 					}
 					t.FailNow()
 				}
@@ -109,6 +110,9 @@ func TestPlugins(t *testing.T) {
 
 func createUser(t *testing.T, store *sqlstore.SQLStore, cmd models.CreateUserCommand) {
 	t.Helper()
+
+	store.Cfg.AutoAssignOrg = true
+	store.Cfg.AutoAssignOrgId = 1
 
 	_, err := store.CreateUser(context.Background(), cmd)
 	require.NoError(t, err)

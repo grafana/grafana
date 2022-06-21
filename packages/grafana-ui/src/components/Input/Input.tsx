@@ -1,10 +1,12 @@
-import React, { HTMLProps, ReactNode } from 'react';
-import { GrafanaTheme2 } from '@grafana/data';
 import { css, cx } from '@emotion/css';
-import { getFocusStyle, sharedInputStyle } from '../Forms/commonStyles';
-import { stylesFactory, useTheme2 } from '../../themes';
-import { Spinner } from '../Spinner/Spinner';
+import React, { HTMLProps, ReactNode } from 'react';
 import useMeasure from 'react-use/lib/useMeasure';
+
+import { GrafanaTheme2 } from '@grafana/data';
+
+import { stylesFactory, useTheme2 } from '../../themes';
+import { getFocusStyle, sharedInputStyle } from '../Forms/commonStyles';
+import { Spinner } from '../Spinner/Spinner';
 
 export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'prefix' | 'size'> {
   /** Sets the width to a multiple of 8px. Should only be used with inline forms. Setting width of the container is preferred in other cases.*/
@@ -43,7 +45,7 @@ export const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
   const styles = getInputStyles({ theme, invalid: !!invalid, width });
 
   return (
-    <div className={cx(styles.wrapper, className)}>
+    <div className={cx(styles.wrapper, className)} data-testid={'input-wrapper'}>
       {!!addonBefore && <div className={styles.addon}>{addonBefore}</div>}
 
       <div className={styles.inputWrapper}>
@@ -58,8 +60,8 @@ export const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
           className={styles.input}
           {...restProps}
           style={{
-            paddingLeft: prefixRect ? prefixRect.width + 12 : undefined,
-            paddingRight: suffixRect && (suffix || loading) ? suffixRect.width + 12 : undefined,
+            paddingLeft: prefix ? prefixRect.width + 12 : undefined,
+            paddingRight: suffix || loading ? suffixRect.width + 12 : undefined,
           }}
         />
 

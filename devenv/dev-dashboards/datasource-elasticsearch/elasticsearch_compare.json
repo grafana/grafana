@@ -46,7 +46,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_one",
+          "datasource": {
+            "uid": "$version_one"
+          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
@@ -144,7 +146,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_two",
+          "datasource": {
+            "uid": "$version_two"
+          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
@@ -242,7 +246,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_one",
+          "datasource": {
+            "uid": "$version_one"
+          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
@@ -339,7 +345,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_two",
+          "datasource": {
+            "uid": "$version_two"
+          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
@@ -436,7 +444,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_one",
+          "datasource": {
+            "uid": "$version_one"
+          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
@@ -534,7 +544,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_two",
+          "datasource": {
+            "uid": "$version_two"
+          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
@@ -646,7 +658,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_one",
+          "datasource": {
+            "uid": "$version_one"
+          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
@@ -701,8 +715,7 @@
                   "field": "@value",
                   "id": "1",
                   "meta": {},
-                  "settings": {
-                  },
+                  "settings": {},
                   "type": "avg"
                 }
               ],
@@ -746,7 +759,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_two",
+          "datasource": {
+            "uid": "$version_two"
+          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
@@ -801,8 +816,7 @@
                   "field": "@value",
                   "id": "1",
                   "meta": {},
-                  "settings": {
-                  },
+                  "settings": {},
                   "type": "avg"
                 }
               ],
@@ -846,7 +860,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_one",
+          "datasource": {
+            "uid": "$version_one"
+          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
@@ -901,8 +917,7 @@
                   "field": "@value",
                   "id": "1",
                   "meta": {},
-                  "settings": {
-                  },
+                  "settings": {},
                   "type": "sum"
                 }
               ],
@@ -946,7 +961,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_two",
+          "datasource": {
+            "uid": "$version_two"
+          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
@@ -1001,8 +1018,7 @@
                   "field": "@value",
                   "id": "1",
                   "meta": {},
-                  "settings": {
-                  },
+                  "settings": {},
                   "type": "sum"
                 }
               ],
@@ -1046,7 +1062,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_one",
+          "datasource": {
+            "uid": "$version_one"
+          },
           "decimals": 3,
           "fill": 1,
           "fillGradient": 0,
@@ -1147,7 +1165,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_two",
+          "datasource": {
+            "uid": "$version_two"
+          },
           "decimals": 3,
           "fill": 1,
           "fillGradient": 0,
@@ -1248,7 +1268,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_one",
+          "datasource": {
+            "uid": "$version_one"
+          },
           "decimals": 3,
           "fill": 1,
           "fillGradient": 0,
@@ -1349,7 +1371,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_two",
+          "datasource": {
+            "uid": "$version_two"
+          },
           "decimals": 3,
           "fill": 1,
           "fillGradient": 0,
@@ -1450,7 +1474,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_one",
+          "datasource": {
+            "uid": "$version_one"
+          },
           "decimals": 3,
           "fill": 1,
           "fillGradient": 0,
@@ -1563,7 +1589,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_two",
+          "datasource": {
+            "uid": "$version_two"
+          },
           "decimals": 3,
           "fill": 1,
           "fillGradient": 0,
@@ -1676,7 +1704,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_one",
+          "datasource": {
+            "uid": "$version_one"
+          },
           "decimals": 3,
           "fill": 1,
           "fillGradient": 0,
@@ -1786,7 +1816,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_two",
+          "datasource": {
+            "uid": "$version_two"
+          },
           "decimals": 3,
           "fill": 1,
           "fillGradient": 0,
@@ -1896,7 +1928,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_one",
+          "datasource": {
+            "uid": "$version_one"
+          },
           "decimals": 3,
           "fill": 1,
           "fillGradient": 0,
@@ -1998,7 +2032,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_two",
+          "datasource": {
+            "uid": "$version_two"
+          },
           "decimals": 3,
           "fill": 1,
           "fillGradient": 0,
@@ -2114,7 +2150,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_one",
+          "datasource": {
+            "uid": "$version_one"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {},
@@ -2234,7 +2272,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_two",
+          "datasource": {
+            "uid": "$version_two"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {},
@@ -2354,7 +2394,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_one",
+          "datasource": {
+            "uid": "$version_one"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {},
@@ -2474,7 +2516,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_two",
+          "datasource": {
+            "uid": "$version_two"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {},
@@ -2594,7 +2638,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_one",
+          "datasource": {
+            "uid": "$version_one"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {},
@@ -2714,7 +2760,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_two",
+          "datasource": {
+            "uid": "$version_two"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {},
@@ -2834,7 +2882,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_one",
+          "datasource": {
+            "uid": "$version_one"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {},
@@ -2954,7 +3004,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_two",
+          "datasource": {
+            "uid": "$version_two"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {},
@@ -3074,7 +3126,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_one",
+          "datasource": {
+            "uid": "$version_one"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {},
@@ -3194,7 +3248,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_two",
+          "datasource": {
+            "uid": "$version_two"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {},
@@ -3314,7 +3370,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_one",
+          "datasource": {
+            "uid": "$version_one"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {},
@@ -3434,7 +3492,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_two",
+          "datasource": {
+            "uid": "$version_two"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {},
@@ -3568,7 +3628,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_one",
+          "datasource": {
+            "uid": "$version_one"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {}
@@ -3683,7 +3745,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_two",
+          "datasource": {
+            "uid": "$version_two"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {}
@@ -3798,7 +3862,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_one",
+          "datasource": {
+            "uid": "$version_one"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {}
@@ -3913,7 +3979,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_two",
+          "datasource": {
+            "uid": "$version_two"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {}
@@ -4028,7 +4096,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_one",
+          "datasource": {
+            "uid": "$version_one"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {}
@@ -4143,7 +4213,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_two",
+          "datasource": {
+            "uid": "$version_two"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {}
@@ -4258,7 +4330,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_one",
+          "datasource": {
+            "uid": "$version_one"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {}
@@ -4373,7 +4447,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_two",
+          "datasource": {
+            "uid": "$version_two"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {}
@@ -4488,7 +4564,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_one",
+          "datasource": {
+            "uid": "$version_one"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {}
@@ -4603,7 +4681,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_two",
+          "datasource": {
+            "uid": "$version_two"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {}
@@ -4718,7 +4798,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_one",
+          "datasource": {
+            "uid": "$version_one"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {}
@@ -4833,7 +4915,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_two",
+          "datasource": {
+            "uid": "$version_two"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {}
@@ -4962,7 +5046,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_one",
+          "datasource": {
+            "uid": "$version_one"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {},
@@ -5081,7 +5167,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_two",
+          "datasource": {
+            "uid": "$version_two"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {},
@@ -5200,7 +5288,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_one",
+          "datasource": {
+            "uid": "$version_one"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {},
@@ -5319,7 +5409,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_two",
+          "datasource": {
+            "uid": "$version_two"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {},
@@ -5438,7 +5530,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_one",
+          "datasource": {
+            "uid": "$version_one"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {},
@@ -5557,7 +5651,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_two",
+          "datasource": {
+            "uid": "$version_two"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {},
@@ -5676,7 +5772,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_one",
+          "datasource": {
+            "uid": "$version_one"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {},
@@ -5795,7 +5893,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_two",
+          "datasource": {
+            "uid": "$version_two"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {},
@@ -5914,7 +6014,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_one",
+          "datasource": {
+            "uid": "$version_one"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {},
@@ -6033,7 +6135,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_two",
+          "datasource": {
+            "uid": "$version_two"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {},
@@ -6152,7 +6256,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_one",
+          "datasource": {
+            "uid": "$version_one"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {},
@@ -6271,7 +6377,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_two",
+          "datasource": {
+            "uid": "$version_two"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {},
@@ -6404,7 +6512,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_one",
+          "datasource": {
+            "uid": "$version_one"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {}
@@ -6523,7 +6633,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_two",
+          "datasource": {
+            "uid": "$version_two"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {}
@@ -6642,7 +6754,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_one",
+          "datasource": {
+            "uid": "$version_one"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {}
@@ -6773,7 +6887,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_two",
+          "datasource": {
+            "uid": "$version_two"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {}
@@ -6918,7 +7034,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_one",
+          "datasource": {
+            "uid": "$version_one"
+          },
           "decimals": 3,
           "fieldConfig": {
             "defaults": {
@@ -7071,7 +7189,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$version_two",
+          "datasource": {
+            "uid": "$version_two"
+          },
           "decimals": 3,
           "fieldConfig": {
             "defaults": {
@@ -7238,7 +7358,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${version_one}",
+          "datasource": {
+            "uid": "${version_one}"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {}
@@ -7349,7 +7471,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${version_two}",
+          "datasource": {
+            "uid": "${version_two}"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {}
@@ -7460,7 +7584,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${version_one}",
+          "datasource": {
+            "uid": "${version_one}"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {}
@@ -7571,7 +7697,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${version_two}",
+          "datasource": {
+            "uid": "${version_two}"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {}
@@ -7682,7 +7810,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${version_one}",
+          "datasource": {
+            "uid": "${version_one}"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {}
@@ -7794,7 +7924,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${version_two}",
+          "datasource": {
+            "uid": "${version_two}"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {}
@@ -7906,7 +8038,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${version_one}",
+          "datasource": {
+            "uid": "${version_one}"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {}
@@ -8018,7 +8152,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${version_two}",
+          "datasource": {
+            "uid": "${version_two}"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {}
@@ -8144,7 +8280,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${version_one}",
+          "datasource": {
+            "uid": "${version_one}"
+          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
@@ -8260,7 +8398,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${version_two}",
+          "datasource": {
+            "uid": "${version_two}"
+          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
@@ -8376,7 +8516,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${version_one}",
+          "datasource": {
+            "uid": "${version_one}"
+          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
@@ -8492,7 +8634,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${version_two}",
+          "datasource": {
+            "uid": "${version_two}"
+          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
@@ -8608,7 +8752,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${version_one}",
+          "datasource": {
+            "uid": "${version_one}"
+          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
@@ -8724,7 +8870,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${version_two}",
+          "datasource": {
+            "uid": "${version_two}"
+          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
@@ -8840,7 +8988,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${version_one}",
+          "datasource": {
+            "uid": "${version_one}"
+          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
@@ -8956,7 +9106,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${version_two}",
+          "datasource": {
+            "uid": "${version_two}"
+          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
@@ -9072,7 +9224,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${version_one}",
+          "datasource": {
+            "uid": "${version_one}"
+          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
@@ -9188,7 +9342,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${version_two}",
+          "datasource": {
+            "uid": "${version_two}"
+          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
@@ -9304,7 +9460,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${version_one}",
+          "datasource": {
+            "uid": "${version_one}"
+          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
@@ -9420,7 +9578,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${version_two}",
+          "datasource": {
+            "uid": "${version_two}"
+          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
@@ -9536,7 +9696,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${version_one}",
+          "datasource": {
+            "uid": "${version_one}"
+          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
@@ -9652,7 +9814,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${version_two}",
+          "datasource": {
+            "uid": "${version_two}"
+          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
@@ -9768,7 +9932,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${version_one}",
+          "datasource": {
+            "uid": "${version_one}"
+          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
@@ -9884,7 +10050,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${version_two}",
+          "datasource": {
+            "uid": "${version_two}"
+          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
@@ -10014,7 +10182,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${version_one}",
+          "datasource": {
+            "uid": "${version_one}"
+          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
@@ -10125,7 +10295,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${version_two}",
+          "datasource": {
+            "uid": "${version_two}"
+          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
@@ -10236,7 +10408,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${version_one}",
+          "datasource": {
+            "uid": "${version_one}"
+          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
@@ -10347,7 +10521,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${version_two}",
+          "datasource": {
+            "uid": "${version_two}"
+          },
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
@@ -10471,7 +10647,9 @@
       "type": "row"
     },
     {
-      "datasource": "${version_one}",
+      "datasource": {
+        "uid": "${version_one}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -10535,7 +10713,8 @@
           "placement": "bottom"
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
@@ -10583,8 +10762,8 @@
               "field": "@value",
               "id": "1",
               "settings": {
-                "script": { 
-                  "inline": "_value * 1.5" 
+                "script": {
+                  "inline": "_value * 1.5"
                 }
               },
               "type": "avg"
@@ -10599,7 +10778,9 @@
       "type": "timeseries"
     },
     {
-      "datasource": "${version_two}",
+      "datasource": {
+        "uid": "${version_two}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -10663,7 +10844,8 @@
           "placement": "bottom"
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
@@ -10711,8 +10893,8 @@
               "field": "@value",
               "id": "1",
               "settings": {
-                "script": { 
-                  "inline": "_value * 1.5" 
+                "script": {
+                  "inline": "_value * 1.5"
                 }
               },
               "type": "avg"
@@ -10728,7 +10910,7 @@
     }
   ],
   "refresh": false,
-  "schemaVersion": 30,
+  "schemaVersion": 33,
   "style": "dark",
   "tags": [
     "elasticsearch",

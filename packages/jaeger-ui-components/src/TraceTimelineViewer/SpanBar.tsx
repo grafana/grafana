@@ -12,19 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import cx from 'classnames';
 import { css } from '@emotion/css';
+import cx from 'classnames';
 import { groupBy as _groupBy } from 'lodash';
-import React from 'react';
-import { compose, onlyUpdateForKeys, withProps, withState } from 'recompose';
-import { autoColor, createStyle, Theme } from '../Theme';
-import { TraceSpan } from '../types/trace';
+import React, { useState } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { useStyles2 } from '@grafana/ui';
+
+import { autoColor } from '../Theme';
+import { Popover } from '../common/Popover';
 import { TNil } from '../types';
-import { UIPopover } from '../uiElementsContext';
+import { TraceSpan } from '../types/trace';
+
 import AccordianLogs from './SpanDetail/AccordianLogs';
 import { ViewedBoundsFunctionType } from './utils';
 
-const getStyles = createStyle((theme: Theme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css`
       label: wrapper;
@@ -86,9 +91,9 @@ const getStyles = createStyle((theme: Theme) => {
       }
     `,
   };
-});
+};
 
-type TCommonProps = {
+type Props = {
   color: string;
   onClick?: (evt: React.MouseEvent<any>) => void;
   viewEnd: number;
@@ -105,48 +110,39 @@ type TCommonProps = {
   span: TraceSpan;
   className?: string;
   labelClassName?: string;
-  theme: Theme;
-};
-
-type TInnerProps = {
-  label: string;
-  setLongLabel: () => void;
-  setShortLabel: () => void;
-} & TCommonProps;
-
-type TOuterProps = {
   longLabel: string;
   shortLabel: string;
-} & TCommonProps;
+};
 
 function toPercent(value: number) {
   return `${(value * 100).toFixed(1)}%`;
 }
 
-function SpanBar(props: TInnerProps) {
-  const {
-    viewEnd,
-    viewStart,
-    getViewedBounds,
-    color,
-    label,
-    onClick,
-    setLongLabel,
-    setShortLabel,
-    rpc,
-    traceStartTime,
-    span,
-    theme,
-    className,
-    labelClassName,
-  } = props;
+function SpanBar({
+  viewEnd,
+  viewStart,
+  getViewedBounds,
+  color,
+  shortLabel,
+  longLabel,
+  onClick,
+  rpc,
+  traceStartTime,
+  span,
+  className,
+  labelClassName,
+}: Props) {
+  const [label, setLabel] = useState(shortLabel);
+  const setShortLabel = () => setLabel(shortLabel);
+  const setLongLabel = () => setLabel(longLabel);
+
   // group logs based on timestamps
   const logGroups = _groupBy(span.logs, (log) => {
     const posPercent = getViewedBounds(log.timestamp, log.timestamp).start;
     // round to the nearest 0.2%
     return toPercent(Math.round(posPercent * 500) / 500);
   });
-  const styles = getStyles(theme);
+  const styles = useStyles2(getStyles);
 
   return (
     <div
@@ -155,7 +151,7 @@ function SpanBar(props: TInnerProps) {
       onMouseLeave={setShortLabel}
       onMouseOver={setLongLabel}
       aria-hidden
-      data-test-id="SpanBar--wrapper"
+      data-testid={selectors.components.TraceViewer.spanBar}
     >
       <div
         aria-label={label}
@@ -166,21 +162,20 @@ function SpanBar(props: TInnerProps) {
           width: toPercent(viewEnd - viewStart),
         }}
       >
-        <div className={cx(styles.label, labelClassName)} data-test-id="SpanBar--label">
+        <div className={cx(styles.label, labelClassName)} data-testid="SpanBar--label">
           {label}
         </div>
       </div>
       <div>
         {Object.keys(logGroups).map((positionKey) => (
-          <UIPopover
+          <Popover
             key={positionKey}
-            placement="topLeft"
             content={
               <AccordianLogs interactive={false} isOpen logs={logGroups[positionKey]} timestamp={traceStartTime} />
             }
           >
-            <div className={styles.logMarker} style={{ left: positionKey }} />
-          </UIPopover>
+            <div data-testid="SpanBar--logMarker" className={styles.logMarker} style={{ left: positionKey }} />
+          </Popover>
         ))}
       </div>
       {rpc && (
@@ -197,21 +192,4 @@ function SpanBar(props: TInnerProps) {
   );
 }
 
-export default compose<TInnerProps, TOuterProps>(
-  withState('label', 'setLabel', (props: { shortLabel: string }) => props.shortLabel),
-  withProps(
-    ({
-      setLabel,
-      shortLabel,
-      longLabel,
-    }: {
-      setLabel: (label: string) => void;
-      shortLabel: string;
-      longLabel: string;
-    }) => ({
-      setLongLabel: () => setLabel(longLabel),
-      setShortLabel: () => setLabel(shortLabel),
-    })
-  ),
-  onlyUpdateForKeys(['label', 'rpc', 'viewStart', 'viewEnd'])
-)(SpanBar);
+export default React.memo(SpanBar);

@@ -9,14 +9,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/models"
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/models"
+	acdb "github.com/grafana/grafana/pkg/services/accesscontrol/database"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
 func TestAlertRulePermissions(t *testing.T) {
@@ -25,26 +26,28 @@ func TestAlertRulePermissions(t *testing.T) {
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
+		AppModeProduction:     true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-	// override bus to get the GetSignedInUserQuery handler
-	store.Bus = bus.GetBus()
+	permissionsStore := acdb.ProvideService(store)
 
 	// Create a user to make authenticated requests
-	createUser(t, store, models.CreateUserCommand{
+	userID := createUser(t, store, models.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),
 		Password:       "password",
 		Login:          "grafana",
 	})
 
 	// Create the namespace we'll save our alerts to.
-	_, err := createFolder(t, store, 0, "folder1")
+	err := createFolder(t, "folder1", grafanaListedAddr, "grafana", "password")
 	require.NoError(t, err)
 
-	_, err = createFolder(t, store, 0, "folder2")
+	err = createFolder(t, "folder2", grafanaListedAddr, "grafana", "password")
 	// Create the namespace we'll save our alerts to.
 	require.NoError(t, err)
+
+	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
 
 	// Create rule under folder1
 	createRule(t, grafanaListedAddr, "folder1", "grafana", "password")
@@ -174,7 +177,8 @@ func TestAlertRulePermissions(t *testing.T) {
 		assert.JSONEq(t, expectedGetNamespaceResponseBody, body)
 
 		// remove permissions from folder2
-		require.NoError(t, store.UpdateDashboardACL(2, nil))
+		removeFolderPermission(t, permissionsStore, 1, userID, models.ROLE_EDITOR, "folder2")
+		reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
 
 		// make sure that folder2 is not included in the response
 		// nolint:gosec
@@ -246,8 +250,9 @@ func TestAlertRulePermissions(t *testing.T) {
 		assert.JSONEq(t, expectedGetNamespaceResponseBody, body)
 	}
 
-	// Remove permissions from ALL folders.
-	require.NoError(t, store.UpdateDashboardACL(1, nil))
+	// Remove permissions from folder1.
+	removeFolderPermission(t, permissionsStore, 1, userID, models.ROLE_EDITOR, "folder1")
+	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
 	{
 		u := fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules", grafanaListedAddr)
 		// nolint:gosec
@@ -330,17 +335,10 @@ func TestAlertRuleConflictingTitle(t *testing.T) {
 		EnableQuota:           true,
 		DisableAnonymous:      true,
 		ViewersCanEdit:        true,
+		AppModeProduction:     true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-	// override bus to get the GetSignedInUserQuery handler
-	store.Bus = bus.GetBus()
-
-	// Create the namespace we'll save our alerts to.
-	_, err := createFolder(t, store, 0, "folder1")
-	require.NoError(t, err)
-	_, err = createFolder(t, store, 0, "folder2")
-	require.NoError(t, err)
 
 	// Create user
 	createUser(t, store, models.CreateUserCommand{
@@ -349,41 +347,15 @@ func TestAlertRuleConflictingTitle(t *testing.T) {
 		Login:          "admin",
 	})
 
-	interval, err := model.ParseDuration("1m")
+	// Create the namespace we'll save our alerts to.
+	err := createFolder(t, "folder1", grafanaListedAddr, "admin", "admin")
+	require.NoError(t, err)
+	// Create the namespace we'll save our alerts to.
+	err = createFolder(t, "folder2", grafanaListedAddr, "admin", "admin")
 	require.NoError(t, err)
 
-	rules := apimodels.PostableRuleGroupConfig{
-		Name: "arulegroup",
-		Rules: []apimodels.PostableExtendedRuleNode{
-			{
-				ApiRuleNode: &apimodels.ApiRuleNode{
-					For:         interval,
-					Labels:      map[string]string{"label1": "val1"},
-					Annotations: map[string]string{"annotation1": "val1"},
-				},
-				// this rule does not explicitly set no data and error states
-				// therefore it should get the default values
-				GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
-					Title:     "AlwaysFiring",
-					Condition: "A",
-					Data: []ngmodels.AlertQuery{
-						{
-							RefID: "A",
-							RelativeTimeRange: ngmodels.RelativeTimeRange{
-								From: ngmodels.Duration(time.Duration(5) * time.Hour),
-								To:   ngmodels.Duration(time.Duration(3) * time.Hour),
-							},
-							DatasourceUID: "-100",
-							Model: json.RawMessage(`{
-								"type": "math",
-								"expression": "2 + 3 > 1"
-								}`),
-						},
-					},
-				},
-			},
-		},
-	}
+	rules := newTestingRuleConfig(t)
+
 	buf := bytes.Buffer{}
 	enc := json.NewEncoder(&buf)
 	err = enc.Encode(&rules)
@@ -403,7 +375,22 @@ func TestAlertRuleConflictingTitle(t *testing.T) {
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 	require.JSONEq(t, `{"message":"rule group updated successfully"}`, string(b))
 
+	// fetch the created rules, so we can get the uid's and trigger
+	// and update by reusing the uid's
+	resp, err = http.Get(u + "/" + rules.Name)
+	require.NoError(t, err)
+
+	var createdRuleGroup apimodels.GettableRuleGroupConfig
+	data, err := ioutil.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	err = json.Unmarshal(data, &createdRuleGroup)
+	require.NoError(t, err)
+	require.Len(t, createdRuleGroup.Rules, 2)
+
 	t.Run("trying to create alert with same title under same folder should fail", func(t *testing.T) {
+		rules := newTestingRuleConfig(t)
+
 		buf := bytes.Buffer{}
 		enc := json.NewEncoder(&buf)
 		err = enc.Encode(&rules)
@@ -421,10 +408,42 @@ func TestAlertRuleConflictingTitle(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
-		require.JSONEq(t, `{"message": "API error","error":"failed to update rule group: a conflicting alert rule is found: rule title under the same organisation and folder should be unique"}`, string(b))
+
+		var res map[string]interface{}
+		require.NoError(t, json.Unmarshal(b, &res))
+		require.Equal(t, "failed to update rule group: failed to add rules: a conflicting alert rule is found: rule title under the same organisation and folder should be unique", res["message"])
+	})
+
+	t.Run("trying to update an alert to the title of an existing alert in the same folder should fail", func(t *testing.T) {
+		rules := newTestingRuleConfig(t)
+		rules.Rules[0].GrafanaManagedAlert.UID = createdRuleGroup.Rules[0].GrafanaManagedAlert.UID
+		rules.Rules[1].GrafanaManagedAlert.UID = createdRuleGroup.Rules[1].GrafanaManagedAlert.UID
+		rules.Rules[1].GrafanaManagedAlert.Title = "AlwaysFiring"
+		buf := bytes.Buffer{}
+		enc := json.NewEncoder(&buf)
+		err = enc.Encode(&rules)
+		require.NoError(t, err)
+
+		u := fmt.Sprintf("http://admin:admin@%s/api/ruler/grafana/api/v1/rules/folder1", grafanaListedAddr)
+		// nolint:gosec
+		resp, err := http.Post(u, "application/json", &buf)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+		b, err := ioutil.ReadAll(resp.Body)
+		require.NoError(t, err)
+
+		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+
+		var res map[string]interface{}
+		require.NoError(t, json.Unmarshal(b, &res))
+		require.Equal(t, "failed to update rule group: failed to update rules: a conflicting alert rule is found: rule title under the same organisation and folder should be unique", res["message"])
 	})
 
 	t.Run("trying to create alert with same title under another folder should succeed", func(t *testing.T) {
+		rules := newTestingRuleConfig(t)
 		buf := bytes.Buffer{}
 		enc := json.NewEncoder(&buf)
 		err = enc.Encode(&rules)
@@ -450,15 +469,10 @@ func TestRulerRulesFilterByDashboard(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{"ngalert"},
 		DisableAnonymous:     true,
+		AppModeProduction:    true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-	// override bus to get the GetSignedInUserQuery handler
-	store.Bus = bus.GetBus()
-
-	// Create the namespace under default organisation (orgID = 1) where we'll save our alerts to.
-	dashboardUID, err := createFolder(t, store, 0, "default")
-	require.NoError(t, err)
 
 	// Create a user to make authenticated requests
 	createUser(t, store, models.CreateUserCommand{
@@ -466,6 +480,12 @@ func TestRulerRulesFilterByDashboard(t *testing.T) {
 		Password:       "password",
 		Login:          "grafana",
 	})
+
+	dashboardUID := "default"
+	// Create the namespace under default organisation (orgID = 1) where we'll save our alerts to.
+	err := createFolder(t, "default", grafanaListedAddr, "grafana", "password")
+	require.NoError(t, err)
+	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
 
 	interval, err := model.ParseDuration("10s")
 	require.NoError(t, err)
@@ -772,7 +792,9 @@ func TestRulerRulesFilterByDashboard(t *testing.T) {
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, `{"message": "API error","error":"invalid panel_id: strconv.ParseInt: parsing \"invalid\": invalid syntax"}`, string(b))
+		var res map[string]interface{}
+		require.NoError(t, json.Unmarshal(b, &res))
+		require.Equal(t, `invalid panel_id: strconv.ParseInt: parsing "invalid": invalid syntax`, res["message"])
 	}
 
 	// Now, let's check a panel_id without dashboard_uid returns a 400 Bad Request response
@@ -788,6 +810,76 @@ func TestRulerRulesFilterByDashboard(t *testing.T) {
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, `{"message": "API error","error":"panel_id must be set with dashboard_uid"}`, string(b))
+		var res map[string]interface{}
+		require.NoError(t, json.Unmarshal(b, &res))
+		require.Equal(t, "panel_id must be set with dashboard_uid", res["message"])
+	}
+}
+
+func newTestingRuleConfig(t *testing.T) apimodels.PostableRuleGroupConfig {
+	interval, err := model.ParseDuration("1m")
+	require.NoError(t, err)
+
+	firstRule := apimodels.PostableExtendedRuleNode{
+		ApiRuleNode: &apimodels.ApiRuleNode{
+			For:         interval,
+			Labels:      map[string]string{"label1": "val1"},
+			Annotations: map[string]string{"annotation1": "val1"},
+		},
+		// this rule does not explicitly set no data and error states
+		// therefore it should get the default values
+		GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
+			Title:     "AlwaysFiring",
+			Condition: "A",
+			Data: []ngmodels.AlertQuery{
+				{
+					RefID: "A",
+					RelativeTimeRange: ngmodels.RelativeTimeRange{
+						From: ngmodels.Duration(time.Duration(5) * time.Hour),
+						To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+					},
+					DatasourceUID: "-100",
+					Model: json.RawMessage(`{
+						"type": "math",
+						"expression": "2 + 3 > 1"
+						}`),
+				},
+			},
+		},
+	}
+	secondRule := apimodels.PostableExtendedRuleNode{
+		ApiRuleNode: &apimodels.ApiRuleNode{
+			For:         interval,
+			Labels:      map[string]string{"label1": "val1"},
+			Annotations: map[string]string{"annotation1": "val1"},
+		},
+		// this rule does not explicitly set no data and error states
+		// therefore it should get the default values
+		GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
+			Title:     "AlwaysFiring2",
+			Condition: "A",
+			Data: []ngmodels.AlertQuery{
+				{
+					RefID: "A",
+					RelativeTimeRange: ngmodels.RelativeTimeRange{
+						From: ngmodels.Duration(time.Duration(5) * time.Hour),
+						To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+					},
+					DatasourceUID: "-100",
+					Model: json.RawMessage(`{
+						"type": "math",
+						"expression": "2 + 3 > 1"
+						}`),
+				},
+			},
+		},
+	}
+
+	return apimodels.PostableRuleGroupConfig{
+		Name: "arulegroup",
+		Rules: []apimodels.PostableExtendedRuleNode{
+			firstRule,
+			secondRule,
+		},
 	}
 }

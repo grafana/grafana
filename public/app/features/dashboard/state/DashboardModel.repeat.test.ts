@@ -1,7 +1,10 @@
 import { compact, flattenDeep, map, uniq } from 'lodash';
-import { DashboardModel } from '../state/DashboardModel';
-import { expect } from 'test/lib/common';
+
+import { DashboardPanelsChangedEvent } from 'app/types/events';
+
 import { getDashboardModel } from '../../../../test/helpers/getDashboardModel';
+import { DashboardModel } from '../state/DashboardModel';
+
 import { PanelModel } from './PanelModel';
 
 jest.mock('app/core/services/context_srv', () => ({}));
@@ -533,7 +536,7 @@ describe('given dashboard with row repeat', () => {
 });
 
 describe('given dashboard with row and panel repeat', () => {
-  let dashboard: any, dashboardJSON: any;
+  let dashboard: DashboardModel, dashboardJSON: any;
 
   beforeEach(() => {
     dashboardJSON = {
@@ -586,6 +589,14 @@ describe('given dashboard with row and panel repeat', () => {
     expect(panelTypes).toEqual(['row', 'graph', 'graph', 'row', 'graph', 'graph']);
   });
 
+  it('Row repeat should create new panel keys every repeat cycle', () => {
+    // This is the first repeated panel inside the second repeated row
+    // Since we create a new panel model every time (and new panel events bus) we need to create a new key here to trigger a re-mount & re-subscribe
+    const key1 = dashboard.panels[3].key;
+    dashboard.processRepeats();
+    expect(key1).not.toEqual(dashboard.panels[3].key);
+  });
+
   it('should clean up old repeated panels', () => {
     dashboardJSON.panels = [
       {
@@ -605,11 +616,16 @@ describe('given dashboard with row and panel repeat', () => {
       },
       { id: 12, type: 'graph', repeatPanelId: 2, repeatIteration: 101, gridPos: { x: 0, y: 3, h: 1, w: 6 } },
     ];
+
+    let panelChangedEvents: DashboardPanelsChangedEvent[] = [];
     dashboard = getDashboardModel(dashboardJSON);
+    dashboard.events.subscribe(DashboardPanelsChangedEvent, (evt) => panelChangedEvents.push(evt));
     dashboard.processRepeats();
 
     const panelTypes = map(dashboard.panels, 'type');
     expect(panelTypes).toEqual(['row', 'graph', 'graph', 'row', 'graph', 'graph']);
+    // Make sure only a single DashboardPanelsChangedEvent event is emitted when processing repeats
+    expect(panelChangedEvents.length).toBe(1);
   });
 
   it('should set scopedVars for each row', () => {

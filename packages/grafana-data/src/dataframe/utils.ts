@@ -1,4 +1,5 @@
 import { DataFrame, FieldType } from '../types/dataFrame';
+
 import { getTimeField } from './processDataFrame';
 
 export function isTimeSerie(frame: DataFrame) {

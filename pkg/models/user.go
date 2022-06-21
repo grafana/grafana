@@ -141,12 +141,13 @@ type GetUserProfileQuery struct {
 }
 
 type SearchUsersQuery struct {
-	OrgId      int64
-	Query      string
-	Page       int
-	Limit      int
-	AuthModule string
-	Filters    []Filter
+	SignedInUser *SignedInUser
+	OrgId        int64
+	Query        string
+	Page         int
+	Limit        int
+	AuthModule   string
+	Filters      []Filter
 
 	IsDisabled *bool
 
@@ -169,22 +170,25 @@ type GetUserOrgListQuery struct {
 // DTO & Projections
 
 type SignedInUser struct {
-	UserId         int64
-	OrgId          int64
-	OrgName        string
-	OrgRole        RoleType
-	Login          string
-	Name           string
-	Email          string
-	ApiKeyId       int64
-	OrgCount       int
-	IsGrafanaAdmin bool
-	IsAnonymous    bool
-	HelpFlags1     HelpFlags1
-	LastSeenAt     time.Time
-	Teams          []int64
+	UserId             int64
+	OrgId              int64
+	OrgName            string
+	OrgRole            RoleType
+	ExternalAuthModule string
+	ExternalAuthId     string
+	Login              string
+	Name               string
+	Email              string
+	ApiKeyId           int64
+	OrgCount           int
+	IsGrafanaAdmin     bool
+	IsAnonymous        bool
+	IsDisabled         bool
+	HelpFlags1         HelpFlags1
+	LastSeenAt         time.Time
+	Teams              []int64
 	// Permissions grouped by orgID and actions
-	Permissions map[int64]map[string][]string
+	Permissions map[int64]map[string][]string `json:"-"`
 }
 
 func (u *SignedInUser) ShouldUpdateLastSeenAt() bool {
@@ -226,19 +230,20 @@ func (u *SignedInUser) IsRealUser() bool {
 }
 
 type UserProfileDTO struct {
-	Id             int64     `json:"id"`
-	Email          string    `json:"email"`
-	Name           string    `json:"name"`
-	Login          string    `json:"login"`
-	Theme          string    `json:"theme"`
-	OrgId          int64     `json:"orgId"`
-	IsGrafanaAdmin bool      `json:"isGrafanaAdmin"`
-	IsDisabled     bool      `json:"isDisabled"`
-	IsExternal     bool      `json:"isExternal"`
-	AuthLabels     []string  `json:"authLabels"`
-	UpdatedAt      time.Time `json:"updatedAt"`
-	CreatedAt      time.Time `json:"createdAt"`
-	AvatarUrl      string    `json:"avatarUrl"`
+	Id             int64           `json:"id"`
+	Email          string          `json:"email"`
+	Name           string          `json:"name"`
+	Login          string          `json:"login"`
+	Theme          string          `json:"theme"`
+	OrgId          int64           `json:"orgId,omitempty"`
+	IsGrafanaAdmin bool            `json:"isGrafanaAdmin"`
+	IsDisabled     bool            `json:"isDisabled"`
+	IsExternal     bool            `json:"isExternal"`
+	AuthLabels     []string        `json:"authLabels"`
+	UpdatedAt      time.Time       `json:"updatedAt"`
+	CreatedAt      time.Time       `json:"createdAt"`
+	AvatarUrl      string          `json:"avatarUrl"`
+	AccessControl  map[string]bool `json:"accessControl,omitempty"`
 }
 
 type UserSearchHitDTO struct {

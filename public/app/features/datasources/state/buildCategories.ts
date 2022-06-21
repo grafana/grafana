@@ -1,6 +1,6 @@
 import { DataSourcePluginMeta, PluginType } from '@grafana/data';
+import { config, featureEnabled } from '@grafana/runtime';
 import { DataSourcePluginCategory } from 'app/types';
-import { config } from '../../../core/config';
 
 export function buildCategories(plugins: DataSourcePluginMeta[]): DataSourcePluginCategory[] {
   const categories: DataSourcePluginCategory[] = [
@@ -23,14 +23,12 @@ export function buildCategories(plugins: DataSourcePluginMeta[]): DataSourcePlug
     categoryIndex[category.id] = category;
   }
 
-  const { edition, hasValidLicense } = config.licenseInfo;
-
   for (const plugin of plugins) {
     const enterprisePlugin = enterprisePlugins.find((item) => item.id === plugin.id);
     // Force category for enterprise plugins
     if (plugin.enterprise || enterprisePlugin) {
       plugin.category = 'enterprise';
-      plugin.unlicensed = edition !== 'Open Source' && !hasValidLicense;
+      plugin.unlicensed = !featureEnabled('enterprise.plugins');
       plugin.info.links = enterprisePlugin?.info?.links || plugin.info.links;
     }
 
@@ -90,7 +88,7 @@ function sortPlugins(plugins: DataSourcePluginMeta[]) {
       return 1;
     }
 
-    return a.name > b.name ? -1 : 1;
+    return a.name > b.name ? 1 : -1;
   });
 }
 
@@ -191,6 +189,12 @@ function getEnterprisePhantomPlugins(): DataSourcePluginMeta[] {
       description: 'SignalFx integration and datasource',
       name: 'Splunk Infrastructure Monitoring',
       imgUrl: 'public/img/plugins/signalfx-logo.svg',
+    }),
+    getPhantomPlugin({
+      id: 'grafana-azuredevops-datasource',
+      description: 'Azure Devops datasource',
+      name: 'Azure Devops',
+      imgUrl: 'public/img/plugins/azure-devops.png',
     }),
   ];
 }

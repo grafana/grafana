@@ -1,23 +1,26 @@
-import { Alert } from '@grafana/ui';
-import { QueryEditorProps } from '@grafana/data';
+import { debounce } from 'lodash';
 import React, { useCallback, useMemo } from 'react';
+
+import { QueryEditorProps } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { Alert, CodeEditor } from '@grafana/ui';
+
 import AzureMonitorDatasource from '../../datasource';
 import {
+  AzureDataSourceJsonData,
+  AzureMonitorErrorish,
+  AzureMonitorOption,
   AzureMonitorQuery,
   AzureQueryType,
-  AzureMonitorOption,
-  AzureMonitorErrorish,
-  AzureDataSourceJsonData,
 } from '../../types';
-import MetricsQueryEditor from '../MetricsQueryEditor';
-import QueryTypeField from './QueryTypeField';
 import useLastError from '../../utils/useLastError';
-import LogsQueryEditor from '../LogsQueryEditor';
 import ArgQueryEditor from '../ArgQueryEditor';
-import ApplicationInsightsEditor from '../ApplicationInsightsEditor';
-import InsightsAnalyticsEditor from '../InsightsAnalyticsEditor';
+import LogsQueryEditor from '../LogsQueryEditor';
+import NewMetricsQueryEditor from '../MetricsQueryEditor/MetricsQueryEditor';
+import { QueryHeader } from '../QueryHeader';
 import { Space } from '../Space';
-import { debounce } from 'lodash';
+
+import QueryTypeField from './QueryTypeField';
 import usePreparedQuery from './usePreparedQuery';
 
 export type AzureMonitorQueryEditorProps = QueryEditorProps<
@@ -31,6 +34,7 @@ const QueryEditor: React.FC<AzureMonitorQueryEditorProps> = ({
   datasource,
   onChange,
   onRunQuery: baseOnRunQuery,
+  data,
 }) => {
   const [errorMessage, setError] = useLastError();
   const onRunQuery = useMemo(() => debounce(baseOnRunQuery, 500), [baseOnRunQuery]);
@@ -53,9 +57,13 @@ const QueryEditor: React.FC<AzureMonitorQueryEditorProps> = ({
 
   return (
     <div data-testid="azure-monitor-query-editor">
-      <QueryTypeField query={query} onQueryChange={onQueryChange} />
+      {config.featureToggles.azureMonitorExperimentalUI && <QueryHeader query={query} onQueryChange={onQueryChange} />}
+      {!config.featureToggles.azureMonitorExperimentalUI && (
+        <QueryTypeField query={query} onQueryChange={onQueryChange} />
+      )}
 
       <EditorForQueryType
+        data={data}
         subscriptionId={subscriptionId}
         query={query}
         datasource={datasource}
@@ -83,6 +91,7 @@ interface EditorForQueryTypeProps extends Omit<AzureMonitorQueryEditorProps, 'on
 }
 
 const EditorForQueryType: React.FC<EditorForQueryTypeProps> = ({
+  data,
   subscriptionId,
   query,
   datasource,
@@ -93,8 +102,8 @@ const EditorForQueryType: React.FC<EditorForQueryTypeProps> = ({
   switch (query.queryType) {
     case AzureQueryType.AzureMonitor:
       return (
-        <MetricsQueryEditor
-          subscriptionId={subscriptionId}
+        <NewMetricsQueryEditor
+          data={data}
           query={query}
           datasource={datasource}
           onChange={onChange}
@@ -115,12 +124,6 @@ const EditorForQueryType: React.FC<EditorForQueryTypeProps> = ({
         />
       );
 
-    case AzureQueryType.ApplicationInsights:
-      return <ApplicationInsightsEditor query={query} />;
-
-    case AzureQueryType.InsightsAnalytics:
-      return <InsightsAnalyticsEditor query={query} />;
-
     case AzureQueryType.AzureResourceGraph:
       return (
         <ArgQueryEditor
@@ -134,10 +137,26 @@ const EditorForQueryType: React.FC<EditorForQueryTypeProps> = ({
       );
 
     default:
-      return <Alert title="Unknown query type" />;
+      const type = query.queryType as unknown;
+      return (
+        <Alert title="Unknown query type">
+          {(type === 'Application Insights' || type === 'Insights Analytics') && (
+            <>
+              {type} was deprecated in Grafana 9. See the{' '}
+              <a
+                href="https://grafana.com/docs/grafana/latest/datasources/azuremonitor/deprecated-application-insights/"
+                target="_blank"
+                rel="noreferrer"
+              >
+                deprecation notice
+              </a>{' '}
+              to get more information about how to migrate your queries. This is the current query definition:
+              <CodeEditor height="200px" readOnly language="json" value={JSON.stringify(query, null, 4)} />
+            </>
+          )}
+        </Alert>
+      );
   }
-
-  return null;
 };
 
 export default QueryEditor;

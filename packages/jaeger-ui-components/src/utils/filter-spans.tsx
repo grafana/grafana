@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { TraceKeyValuePair, TraceSpan } from '../types/trace';
 import { TNil } from '../types';
+import { TraceKeyValuePair, TraceSpan } from '../types/trace';
 
 export default function filterSpans(textFilter: string, spans: TraceSpan[] | TNil) {
   if (!spans) {
-    return null;
+    return undefined;
   }
 
   // if a span field includes at least one filter in includeFilters, the span is a match
@@ -32,7 +32,7 @@ export default function filterSpans(textFilter: string, spans: TraceSpan[] | TNi
     .filter(Boolean)
     .forEach((w) => {
       if (w[0] === '-') {
-        excludeKeys.push(w.substr(1).toLowerCase());
+        excludeKeys.push(w.slice(1).toLowerCase());
       } else {
         includeFilters.push(w.toLowerCase());
       }

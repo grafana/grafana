@@ -1,61 +1,72 @@
-import React, { FormEvent, useCallback, useEffect, useState } from 'react';
-import { ClickOutsideWrapper } from '@grafana/ui';
-import { RolePickerMenu } from './RolePickerMenu';
-import { RolePickerInput } from './RolePickerInput';
+import React, { FormEvent, useCallback, useEffect, useState, useRef } from 'react';
+
+import { ClickOutsideWrapper, HorizontalGroup, Spinner } from '@grafana/ui';
 import { Role, OrgRole } from 'app/types';
 
+import { RolePickerInput } from './RolePickerInput';
+import { RolePickerMenu } from './RolePickerMenu';
+import { MENU_MAX_HEIGHT, ROLE_PICKER_WIDTH } from './constants';
+
 export interface Props {
-  builtInRole: OrgRole;
-  getRoles: () => Promise<Role[]>;
-  getRoleOptions: () => Promise<Role[]>;
-  getBuiltinRoles: () => Promise<Record<string, Role[]>>;
-  onRolesChange: (newRoles: string[]) => void;
-  onBuiltinRoleChange: (newRole: OrgRole) => void;
+  builtInRole?: OrgRole;
+  appliedRoles: Role[];
+  roleOptions: Role[];
+  builtInRoles?: Record<string, Role[]>;
+  isLoading?: boolean;
   disabled?: boolean;
   builtinRolesDisabled?: boolean;
+  showBuiltInRole?: boolean;
+  onRolesChange: (newRoles: Role[]) => void;
+  onBuiltinRoleChange?: (newRole: OrgRole) => void;
+  updateDisabled?: boolean;
 }
 
 export const RolePicker = ({
   builtInRole,
-  getRoles,
-  getRoleOptions,
-  getBuiltinRoles,
+  appliedRoles,
+  roleOptions,
+  disabled,
+  isLoading,
+  builtinRolesDisabled,
+  showBuiltInRole,
   onRolesChange,
   onBuiltinRoleChange,
-  disabled,
-  builtinRolesDisabled,
+  updateDisabled,
 }: Props): JSX.Element | null => {
   const [isOpen, setOpen] = useState(false);
-  const [roleOptions, setRoleOptions] = useState<Role[]>([]);
-  const [appliedRoles, setAppliedRoles] = useState<Role[]>([]);
-  const [selectedRoles, setSelectedRoles] = useState<Role[]>([]);
-  const [selectedBuiltInRole, setSelectedBuiltInRole] = useState<OrgRole>(builtInRole);
-  const [builtInRoles, setBuiltinRoles] = useState<Record<string, Role[]>>({});
+  const [selectedRoles, setSelectedRoles] = useState<Role[]>(appliedRoles);
+  const [selectedBuiltInRole, setSelectedBuiltInRole] = useState<OrgRole | undefined>(builtInRole);
   const [query, setQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+  const [offset, setOffset] = useState({ vertical: 0, horizontal: 0 });
+  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    async function fetchOptions() {
-      try {
-        let options = await getRoleOptions();
-        setRoleOptions(options.filter((option) => !option.name?.startsWith('managed:')));
+    setSelectedBuiltInRole(builtInRole);
+    setSelectedRoles(appliedRoles);
+  }, [appliedRoles, builtInRole]);
 
-        const builtInRoles = await getBuiltinRoles();
-        setBuiltinRoles(builtInRoles);
+  useEffect(() => {
+    const dimensions = ref?.current?.getBoundingClientRect();
+    if (!dimensions || !isOpen) {
+      return;
+    }
+    const { bottom, top, left, right } = dimensions;
+    const distance = window.innerHeight - bottom;
+    const offsetVertical = bottom - top + 10; // Add extra 10px to offset to account for border and outline
+    const offsetHorizontal = right - left;
+    let horizontal = -offsetHorizontal;
+    let vertical = -offsetVertical;
 
-        const userRoles = await getRoles();
-        setAppliedRoles(userRoles);
-        setSelectedRoles(userRoles);
-      } catch (e) {
-        // TODO handle error
-        console.error('Error loading options');
-      } finally {
-        setIsLoading(false);
-      }
+    if (distance < MENU_MAX_HEIGHT + 20) {
+      vertical = offsetVertical;
     }
 
-    fetchOptions();
-  }, [getRoles, getRoleOptions, getBuiltinRoles, builtInRole]);
+    if (window.innerWidth - right < ROLE_PICKER_WIDTH) {
+      horizontal = offsetHorizontal;
+    }
+
+    setOffset({ horizontal, vertical });
+  }, [isOpen, selectedRoles]);
 
   const onOpen = useCallback(
     (event: FormEvent<HTMLElement>) => {
@@ -94,8 +105,10 @@ export const RolePicker = ({
     setSelectedBuiltInRole(role);
   };
 
-  const onUpdate = (newBuiltInRole: OrgRole, newRoles: string[]) => {
-    onBuiltinRoleChange(newBuiltInRole);
+  const onUpdate = (newRoles: Role[], newBuiltInRole?: OrgRole) => {
+    if (onBuiltinRoleChange && newBuiltInRole) {
+      onBuiltinRoleChange(newBuiltInRole);
+    }
     onRolesChange(newRoles);
     setOpen(false);
     setQuery('');
@@ -109,11 +122,16 @@ export const RolePicker = ({
   };
 
   if (isLoading) {
-    return null;
+    return (
+      <HorizontalGroup justify="center">
+        <span>Loading...</span>
+        <Spinner size={16} />
+      </HorizontalGroup>
+    );
   }
 
   return (
-    <div data-testid="role-picker" style={{ position: 'relative' }}>
+    <div data-testid="role-picker" style={{ position: 'relative' }} ref={ref}>
       <ClickOutsideWrapper onClick={onClickOutside}>
         <RolePickerInput
           builtInRole={selectedBuiltInRole}
@@ -124,18 +142,21 @@ export const RolePicker = ({
           onClose={onClose}
           isFocused={isOpen}
           disabled={disabled}
+          showBuiltInRole={showBuiltInRole}
         />
         {isOpen && (
           <RolePickerMenu
             options={getOptions()}
             builtInRole={selectedBuiltInRole}
-            builtInRoles={builtInRoles}
             appliedRoles={appliedRoles}
             onBuiltInRoleSelect={onBuiltInRoleSelect}
             onSelect={onSelect}
             onUpdate={onUpdate}
             showGroups={query.length === 0 || query.trim() === ''}
             builtinRolesDisabled={builtinRolesDisabled}
+            showBuiltInRole={showBuiltInRole}
+            updateDisabled={updateDisabled || false}
+            offset={offset}
           />
         )}
       </ClickOutsideWrapper>

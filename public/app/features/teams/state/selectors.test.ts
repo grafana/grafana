@@ -1,21 +1,23 @@
-import { getTeam, getTeamMembers, getTeams, isSignedInUserTeamAdmin, Config } from './selectors';
-import { getMockTeam, getMockTeamMembers, getMultipleMockTeams } from '../__mocks__/teamMocks';
-import { Team, TeamGroup, TeamsState, TeamState, OrgRole } from '../../../types';
 import { User } from 'app/core/services/context_srv';
+
+import { Team, TeamGroup, TeamsState, TeamState, OrgRole } from '../../../types';
+import { getMockTeam, getMockTeamMembers, getMultipleMockTeams } from '../__mocks__/teamMocks';
+
+import { getTeam, getTeamMembers, getTeams, isSignedInUserTeamAdmin, Config } from './selectors';
 
 describe('Teams selectors', () => {
   describe('Get teams', () => {
     const mockTeams = getMultipleMockTeams(5);
 
     it('should return teams if no search query', () => {
-      const mockState: TeamsState = { teams: mockTeams, searchQuery: '', hasFetched: false };
+      const mockState: TeamsState = { teams: mockTeams, searchQuery: '', searchPage: 1, hasFetched: false };
 
       const teams = getTeams(mockState);
       expect(teams).toEqual(mockTeams);
     });
 
     it('Should filter teams if search query', () => {
-      const mockState: TeamsState = { teams: mockTeams, searchQuery: '5', hasFetched: false };
+      const mockState: TeamsState = { teams: mockTeams, searchQuery: '5', searchPage: 1, hasFetched: false };
 
       const teams = getTeams(mockState);
       expect(teams.length).toEqual(1);

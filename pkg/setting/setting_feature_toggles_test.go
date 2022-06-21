@@ -14,7 +14,6 @@ func TestFeatureToggles(t *testing.T) {
 		conf            map[string]string
 		err             error
 		expectedToggles map[string]bool
-		defaultToggles  map[string]bool
 	}{
 		{
 			name: "can parse feature toggles passed in the `enable` array",
@@ -58,18 +57,6 @@ func TestFeatureToggles(t *testing.T) {
 			expectedToggles: map[string]bool{},
 			err:             strconv.ErrSyntax,
 		},
-		{
-			name: "should override default feature toggles",
-			defaultToggles: map[string]bool{
-				"feature1": true,
-			},
-			conf: map[string]string{
-				"feature1": "false",
-			},
-			expectedToggles: map[string]bool{
-				"feature1": false,
-			},
-		},
 	}
 
 	for _, tc := range testCases {
@@ -81,12 +68,7 @@ func TestFeatureToggles(t *testing.T) {
 			require.ErrorIs(t, err, nil)
 		}
 
-		dt := map[string]bool{}
-		if len(tc.defaultToggles) > 0 {
-			dt = tc.defaultToggles
-		}
-
-		featureToggles, err := overrideDefaultWithConfiguration(f, dt)
+		featureToggles, err := ReadFeatureTogglesFromInitFile(toggles)
 		require.ErrorIs(t, err, tc.err)
 
 		if err == nil {

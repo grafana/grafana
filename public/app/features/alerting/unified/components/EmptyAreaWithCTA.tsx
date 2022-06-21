@@ -1,17 +1,21 @@
-import React, { ButtonHTMLAttributes, FC } from 'react';
 import { css } from '@emotion/css';
+import React, { ButtonHTMLAttributes, FC } from 'react';
+
 import { GrafanaTheme } from '@grafana/data';
-import { Button, ButtonVariant, IconName, useStyles } from '@grafana/ui';
+import { Button, ButtonVariant, IconName, LinkButton, useStyles } from '@grafana/ui';
+
 import { EmptyArea } from './EmptyArea';
 
 export interface EmptyAreaWithCTAProps {
   buttonLabel: string;
-  onButtonClick: ButtonHTMLAttributes<HTMLButtonElement>['onClick'];
+  href?: string;
+  onButtonClick?: ButtonHTMLAttributes<HTMLButtonElement>['onClick'];
   text: string;
 
   buttonIcon?: IconName;
   buttonSize?: 'xs' | 'sm' | 'md' | 'lg';
   buttonVariant?: ButtonVariant;
+  showButton?: boolean;
 }
 
 export const EmptyAreaWithCTA: FC<EmptyAreaWithCTAProps> = ({
@@ -21,23 +25,32 @@ export const EmptyAreaWithCTA: FC<EmptyAreaWithCTAProps> = ({
   buttonVariant = 'primary',
   onButtonClick,
   text,
+  href,
+  showButton = true,
 }) => {
   const styles = useStyles(getStyles);
+
+  const commonProps = {
+    className: styles.button,
+    icon: buttonIcon,
+    size: buttonSize,
+    variant: buttonVariant,
+  };
 
   return (
     <EmptyArea>
       <>
         <p className={styles.text}>{text}</p>
-        <Button
-          className={styles.button}
-          icon={buttonIcon}
-          onClick={onButtonClick}
-          size={buttonSize}
-          type="button"
-          variant={buttonVariant}
-        >
-          {buttonLabel}
-        </Button>
+        {showButton &&
+          (href ? (
+            <LinkButton href={href} type="button" {...commonProps}>
+              {buttonLabel}
+            </LinkButton>
+          ) : (
+            <Button onClick={onButtonClick} type="button" {...commonProps}>
+              {buttonLabel}
+            </Button>
+          ))}
       </>
     </EmptyArea>
   );

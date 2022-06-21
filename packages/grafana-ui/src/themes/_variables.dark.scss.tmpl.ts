@@ -1,6 +1,7 @@
 /* eslint-disable max-len */
 
 import { GrafanaTheme2 } from '@grafana/data';
+
 import { renderGeneratedFileBanner } from '../utils/generatedFileBanner';
 
 export const darkThemeVarsTemplate = (theme: GrafanaTheme2) =>
@@ -9,6 +10,9 @@ export const darkThemeVarsTemplate = (theme: GrafanaTheme2) =>
 // --------------------------------------------------
 
 $theme-name: dark;
+
+$colors-action-hover: ${theme.colors.action.hover};
+$colors-action-selected: ${theme.colors.action.selected};
 
 // New Colors
 // -------------------------
@@ -106,8 +110,8 @@ $text-shadow-faint: 1px 1px 4px rgb(45, 45, 45);
 $textShadow: none;
 
 // gradients
-$brand-gradient-horizontal: linear-gradient(to right, #f05a28 30%, #fbca0a 99%);
-$brand-gradient-vertical: linear-gradient(#f05a28 30%, #fbca0a 99%);
+$brand-gradient-horizontal: ${theme.colors.gradients.brandHorizontal};
+$brand-gradient-vertical: ${theme.colors.gradients.brandVertical};
 
 // Links
 // -------------------------

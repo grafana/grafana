@@ -1,13 +1,16 @@
-import React, { Component, createRef } from 'react';
-import { PopoverController } from '../Tooltip/PopoverController';
-import { Popover } from '../Tooltip/Popover';
-import { ColorPickerPopover, ColorPickerProps, ColorPickerChangeHandler } from './ColorPickerPopover';
-import { GrafanaTheme2 } from '@grafana/data';
-import { SeriesColorPickerPopover } from './SeriesColorPickerPopover';
-
 import { css } from '@emotion/css';
+import React, { Component, createRef } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+
 import { withTheme2, stylesFactory } from '../../themes';
+import { closePopover } from '../../utils/closePopover';
+import { Popover } from '../Tooltip/Popover';
+import { PopoverController } from '../Tooltip/PopoverController';
+
+import { ColorPickerPopover, ColorPickerProps } from './ColorPickerPopover';
 import { ColorSwatch } from './ColorSwatch';
+import { SeriesColorPickerPopover } from './SeriesColorPickerPopover';
 
 /**
  * If you need custom trigger for the color picker you can do that with a render prop pattern and supply a function
@@ -31,33 +34,12 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
     static displayName = displayName;
     pickerTriggerRef = createRef<any>();
 
-    onColorChange = (color: string) => {
-      const { onColorChange, onChange } = this.props;
-      const changeHandler = (onColorChange || onChange) as ColorPickerChangeHandler;
-
-      return changeHandler(color);
-    };
-
-    stopPropagation = (event: React.KeyboardEvent<HTMLDivElement>, hidePopper: () => void) => {
-      if (event.key === 'Tab' || event.altKey || event.ctrlKey || event.metaKey) {
-        return;
-      }
-
-      event.stopPropagation();
-
-      if (event.key === 'Escape') {
-        hidePopper();
-      }
-
-      return;
-    };
-
     render() {
-      const { theme, children } = this.props;
+      const { theme, children, onChange } = this.props;
       const styles = getStyles(theme);
       const popoverElement = React.createElement(popover, {
         ...{ ...this.props, children: null },
-        onChange: this.onColorChange,
+        onChange,
       });
 
       return (
@@ -72,7 +54,7 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
                     wrapperClassName={styles.colorPicker}
                     onMouseLeave={hidePopper}
                     onMouseEnter={showPopper}
-                    onKeyDown={(event) => this.stopPropagation(event, hidePopper)}
+                    onKeyDown={(event) => closePopover(event, hidePopper)}
                   />
                 )}
 

@@ -12,9 +12,14 @@ import {
   DataQuery,
   DataFrameJSON,
   dataFrameFromJSON,
+  QueryResultMetaNotice,
 } from '@grafana/data';
+
 import { FetchError, FetchResponse } from '../services';
+
 import { toDataQueryError } from './toDataQueryError';
+
+export const cachedResponseNotice: QueryResultMetaNotice = { severity: 'info', text: 'Cached response' };
 
 /**
  * Single response object from a backend data source. Properties are optional but response should contain at least
@@ -62,6 +67,7 @@ export function toDataQueryResponse(
   if ((res as FetchResponse).data?.results) {
     const results = (res as FetchResponse).data.results;
     const refIDs = queries?.length ? queries.map((q) => q.refId) : Object.keys(results);
+    const cachedResponse = isCachedResponse(res as FetchResponse);
     const data: DataResponse[] = [];
 
     for (const refId of refIDs) {
@@ -85,7 +91,10 @@ export function toDataQueryResponse(
       }
 
       if (dr.frames?.length) {
-        for (const js of dr.frames) {
+        for (let js of dr.frames) {
+          if (cachedResponse) {
+            js = addCacheNotice(js);
+          }
           const df = dataFrameFromJSON(js);
           if (!df.refId) {
             df.refId = dr.refId;
@@ -126,6 +135,29 @@ export function toDataQueryResponse(
   }
 
   return rsp;
+}
+
+function isCachedResponse(res: FetchResponse<BackendDataSourceResponse | undefined>): boolean {
+  const headers = res?.headers;
+  if (!headers || !headers.get) {
+    return false;
+  }
+  return headers.get('X-Cache') === 'HIT';
+}
+
+function addCacheNotice(frame: DataFrameJSON): DataFrameJSON {
+  return {
+    ...frame,
+    schema: {
+      ...frame.schema,
+      fields: [...(frame.schema?.fields ?? [])],
+      meta: {
+        ...frame.schema?.meta,
+        notices: [...(frame.schema?.meta?.notices ?? []), cachedResponseNotice],
+        isCachedResponse: true,
+      },
+    },
+  };
 }
 
 /**

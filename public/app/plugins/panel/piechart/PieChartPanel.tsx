@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { LegendDisplayMode } from '@grafana/schema';
+import { Subscription } from 'rxjs';
+
 import {
   DataHoverClearEvent,
   DataHoverEvent,
@@ -9,11 +10,8 @@ import {
   getFieldDisplayValues,
   PanelProps,
 } from '@grafana/data';
-
-import { PieChart } from './PieChart';
-
-import { PieChartLegendOptions, PieChartLegendValues, PieChartOptions } from './types';
-import { Subscription } from 'rxjs';
+import { PanelDataErrorView } from '@grafana/runtime';
+import { LegendDisplayMode } from '@grafana/schema';
 import {
   SeriesVisibilityChangeBehavior,
   usePanelContext,
@@ -22,6 +20,9 @@ import {
   VizLegend,
   VizLegendItem,
 } from '@grafana/ui';
+
+import { PieChart } from './PieChart';
+import { PieChartLegendOptions, PieChartLegendValues, PieChartOptions } from './types';
 import { filterDisplayItems, sumDisplayItemsReducer } from './utils';
 
 const defaultLegendOptions: PieChartLegendOptions = {
@@ -37,7 +38,7 @@ interface Props extends PanelProps<PieChartOptions> {}
  * @beta
  */
 export function PieChartPanel(props: Props) {
-  const { data, timeZone, fieldConfig, replaceVariables, width, height, options } = props;
+  const { data, timeZone, fieldConfig, replaceVariables, width, height, options, id } = props;
 
   const theme = useTheme2();
   const highlightedTitle = useSliceHighlightState();
@@ -51,11 +52,7 @@ export function PieChartPanel(props: Props) {
   });
 
   if (!hasFrames(fieldDisplayValues)) {
-    return (
-      <div className="panel-empty">
-        <p>No data</p>
-      </div>
-    );
+    return <PanelDataErrorView panelId={id} fieldConfig={fieldConfig} data={data} />;
   }
 
   return (
@@ -123,7 +120,7 @@ function getLegend(props: Props, displayValues: FieldDisplay[]) {
               text:
                 hidden || isNaN(fractionOfTotal)
                   ? props.fieldConfig.defaults.noValue ?? '-'
-                  : percentOfTotal.toFixed(0) + '%',
+                  : percentOfTotal.toFixed(value.field.decimals ?? 0) + '%',
               title: valuesToShow.length > 1 ? 'Percent' : '',
             });
           }

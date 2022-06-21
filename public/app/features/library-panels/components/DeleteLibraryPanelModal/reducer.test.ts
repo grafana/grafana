@@ -1,11 +1,13 @@
+import { LoadingState } from '@grafana/data';
+
 import { reducerTester } from '../../../../../test/core/redux/reducerTester';
+
 import {
   deleteLibraryPanelModalReducer,
   DeleteLibraryPanelModalState,
   initialDeleteLibraryPanelModalState,
   searchCompleted,
 } from './reducer';
-import { LoadingState } from '@grafana/data';
 
 describe('deleteLibraryPanelModalReducer', () => {
   describe('when created', () => {

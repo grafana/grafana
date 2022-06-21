@@ -1,11 +1,14 @@
-import React, { FC, useCallback } from 'react';
 import { css } from '@emotion/css';
+import React, { FC, useCallback } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Card, Icon, IconName, TagList, useStyles2 } from '@grafana/ui';
-import { GrafanaTheme2 } from '@grafana/data';
-import { DashboardSectionItem, OnToggleChecked } from '../types';
-import { SearchCheckbox } from './SearchCheckbox';
+
 import { SEARCH_ITEM_HEIGHT } from '../constants';
+import { DashboardSectionItem, OnToggleChecked } from '../types';
+
+import { SearchCheckbox } from './SearchCheckbox';
 
 export interface Props {
   item: DashboardSectionItem;
@@ -52,11 +55,11 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSe
   return (
     <Card
       data-testid={selectors.dashboardItem(item.title)}
-      heading={item.title}
       href={item.url}
       style={{ minHeight: SEARCH_ITEM_HEIGHT }}
       className={styles.container}
     >
+      <Card.Heading>{item.title}</Card.Heading>
       <Card.Figure align={'center'} className={styles.checkbox}>
         <SearchCheckbox
           aria-label="Select dashboard"
@@ -67,7 +70,7 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSe
       </Card.Figure>
       <Card.Meta separator={''}>
         <span className={styles.metaContainer}>
-          <Icon name={'folder'} />
+          <Icon name={'folder'} aria-hidden />
           {folderTitle}
         </span>
         {item.sortMetaName && (
@@ -78,7 +81,7 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSe
         )}
       </Card.Meta>
       <Card.Tags>
-        <TagList tags={item.tags} onClick={tagSelected} />
+        <TagList tags={item.tags} onClick={tagSelected} getAriaLabel={(tag) => `Filter by tag "${tag}"`} />
       </Card.Tags>
     </Card>
   );
@@ -88,10 +91,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css`
       margin-bottom: ${theme.spacing(0.75)};
-
-      a {
-        padding: ${theme.spacing(1)} ${theme.spacing(2)};
-      }
+      padding: ${theme.spacing(1)} ${theme.spacing(2)};
     `,
     metaContainer: css`
       display: flex;

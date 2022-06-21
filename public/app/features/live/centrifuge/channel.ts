@@ -1,3 +1,13 @@
+import Centrifuge, {
+  JoinLeaveContext,
+  PublicationContext,
+  SubscribeErrorContext,
+  SubscribeSuccessContext,
+  SubscriptionEvents,
+  UnsubscribeContext,
+} from 'centrifuge/dist/centrifuge';
+import { Subject, of, Observable } from 'rxjs';
+
 import {
   LiveChannelStatusEvent,
   LiveChannelEvent,
@@ -8,16 +18,6 @@ import {
   DataFrameJSON,
   isValidLiveChannelAddress,
 } from '@grafana/data';
-import Centrifuge, {
-  JoinLeaveContext,
-  PublicationContext,
-  SubscribeErrorContext,
-  SubscribeSuccessContext,
-  SubscriptionEvents,
-  UnsubscribeContext,
-} from 'centrifuge/dist/centrifuge';
-
-import { Subject, of, Observable } from 'rxjs';
 
 /**
  * Internal class that maps Centrifuge support to GrafanaLive
@@ -61,7 +61,7 @@ export class CentrifugeLiveChannel<T = any> {
     this.initalized = true;
 
     const events: SubscriptionEvents = {
-      // Called when a message is recieved from the socket
+      // Called when a message is received from the socket
       publish: (ctx: PublicationContext) => {
         try {
           if (ctx.data) {
@@ -90,7 +90,7 @@ export class CentrifugeLiveChannel<T = any> {
       },
       error: (ctx: SubscribeErrorContext) => {
         this.currentStatus.timestamp = Date.now();
-        this.currentStatus.error = ctx.error;
+        this.currentStatus.error = ctx.message;
         this.sendStatus();
       },
       subscribe: (ctx: SubscribeSuccessContext) => {

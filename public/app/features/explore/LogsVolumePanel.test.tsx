@@ -1,7 +1,9 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { LogsVolumePanel } from './LogsVolumePanel';
+import React from 'react';
+
 import { DataQueryResponse, LoadingState } from '@grafana/data';
+
+import { LogsVolumePanel } from './LogsVolumePanel';
 
 jest.mock('./ExploreGraph', () => {
   const ExploreGraph = () => <span>ExploreGraph</span>;
@@ -19,7 +21,10 @@ function renderPanel(logsVolumeData?: DataQueryResponse) {
       width={100}
       onUpdateTimeRange={() => {}}
       logsVolumeData={logsVolumeData}
+      logLinesBasedData={undefined}
+      logLinesBasedDataVisibleRange={undefined}
       onLoadLogsVolume={() => {}}
+      onHiddenSeriesChanged={() => null}
     />
   );
 }
@@ -40,10 +45,23 @@ describe('LogsVolumePanel', () => {
     expect(screen.getByText('ExploreGraph')).toBeInTheDocument();
   });
 
-  it('shows error message', () => {
+  it('shows short warning message', () => {
     renderPanel({ state: LoadingState.Error, error: { data: { message: 'Test error message' } }, data: [] });
     expect(screen.getByText('Failed to load log volume for this query')).toBeInTheDocument();
     expect(screen.getByText('Test error message')).toBeInTheDocument();
+  });
+
+  it('shows long warning message', () => {
+    // we make a long message
+    const messagePart = 'One two three four five six seven eight nine ten.';
+    const message = messagePart + ' ' + messagePart + ' ' + messagePart;
+
+    renderPanel({ state: LoadingState.Error, error: { data: { message } }, data: [] });
+    expect(screen.getByText('Failed to load log volume for this query')).toBeInTheDocument();
+    expect(screen.queryByText(message)).not.toBeInTheDocument();
+    const button = screen.getByText('Show details');
+    button.click();
+    expect(screen.getByText(message)).toBeInTheDocument();
   });
 
   it('does not show the panel when there is no volume data', () => {

@@ -182,6 +182,7 @@ func (s *SocialGithub) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 		Id    int    `json:"id"`
 		Login string `json:"login"`
 		Email string `json:"email"`
+		Name  string `json:"name"`
 	}
 
 	response, err := s.httpGet(client, s.apiUrl)
@@ -207,6 +208,9 @@ func (s *SocialGithub) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 		Id:     fmt.Sprintf("%d", data.Id),
 		Email:  data.Email,
 		Groups: teams,
+	}
+	if data.Name != "" {
+		userInfo.Name = data.Name
 	}
 
 	organizationsUrl := fmt.Sprintf(s.apiUrl + "/orgs")

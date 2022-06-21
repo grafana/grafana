@@ -1,4 +1,5 @@
 import { PanelModel } from '@grafana/data';
+
 import { barGaugePanelMigrationHandler } from './BarGaugeMigrations';
 
 describe('BarGauge Panel Migrations', () => {

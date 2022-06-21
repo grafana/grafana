@@ -4,13 +4,13 @@ import (
 	"context"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/login"
@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -86,14 +85,17 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 	urlParams := c.Req.URL.Query()
 	if _, disableAutoLogin := urlParams["disableAutoLogin"]; disableAutoLogin {
 		hs.log.Debug("Auto login manually disabled")
-		c.HTML(200, getViewIndex(), viewData)
+		c.HTML(http.StatusOK, getViewIndex(), viewData)
 		return
 	}
 
 	enabledOAuths := make(map[string]interface{})
 	providers := hs.SocialService.GetOAuthInfoProviders()
 	for key, oauth := range providers {
-		enabledOAuths[key] = map[string]string{"name": oauth.Name}
+		enabledOAuths[key] = map[string]string{
+			"name": oauth.Name,
+			"icon": oauth.Icon,
+		}
 	}
 
 	viewData.Settings["oauth"] = enabledOAuths
@@ -107,7 +109,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 		// to login again via OAuth and enter to a redirect loop
 		cookies.DeleteCookie(c.Resp, loginErrorCookieName, hs.CookieOptionsFromCfg)
 		viewData.Settings["loginError"] = loginError
-		c.HTML(200, getViewIndex(), viewData)
+		c.HTML(http.StatusOK, getViewIndex(), viewData)
 		return
 	}
 
@@ -142,7 +144,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 		return
 	}
 
-	c.HTML(200, getViewIndex(), viewData)
+	c.HTML(http.StatusOK, getViewIndex(), viewData)
 }
 
 func (hs *HTTPServer) tryOAuthAutoLogin(c *models.ReqContext) bool {
@@ -165,7 +167,7 @@ func (hs *HTTPServer) tryOAuthAutoLogin(c *models.ReqContext) bool {
 
 func (hs *HTTPServer) LoginAPIPing(c *models.ReqContext) response.Response {
 	if c.IsSignedIn || c.IsAnonymous {
-		return response.JSON(200, "Logged in")
+		return response.JSON(http.StatusOK, "Logged in")
 	}
 
 	return response.Error(401, "Unauthorized", nil)
@@ -207,7 +209,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
 		Cfg:        hs.Cfg,
 	}
 
-	err := bus.DispatchCtx(c.Req.Context(), authQuery)
+	err := hs.authenticator.AuthenticateUser(c.Req.Context(), authQuery)
 	authModule = authQuery.AuthModule
 	if err != nil {
 		resp = response.Error(401, "Invalid username or password", err)
@@ -274,7 +276,7 @@ func (hs *HTTPServer) loginUserWithUser(user *models.User, c *models.ReqContext)
 	ctx := context.WithValue(c.Req.Context(), models.RequestURIKey{}, c.Req.RequestURI)
 	userToken, err := hs.AuthTokenService.CreateToken(ctx, user, ip, c.Req.UserAgent())
 	if err != nil {
-		return errutil.Wrap("failed to create auth token", err)
+		return fmt.Errorf("%v: %w", "failed to create auth token", err)
 	}
 	c.UserToken = userToken
 
@@ -349,7 +351,7 @@ func (hs *HTTPServer) RedirectResponseWithError(ctx *models.ReqContext, err erro
 }
 
 func (hs *HTTPServer) samlEnabled() bool {
-	return hs.SettingsProvider.KeyValue("auth.saml", "enabled").MustBool(false) && hs.License.HasValidLicense()
+	return hs.SettingsProvider.KeyValue("auth.saml", "enabled").MustBool(false) && hs.License.FeatureEnabled("saml")
 }
 
 func (hs *HTTPServer) samlName() string {

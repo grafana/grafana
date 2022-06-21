@@ -1,8 +1,10 @@
-import React from 'react';
 import { Story } from '@storybook/react';
-import { PluginSignatureBadge } from '@grafana/ui';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+import React from 'react';
+
 import { PluginSignatureStatus } from '@grafana/data';
+import { PluginSignatureBadge } from '@grafana/ui';
+
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 export default {
   title: 'Data Display/PluginSignatureBadge',

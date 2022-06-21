@@ -48,10 +48,20 @@ export const getStyles = (theme: GrafanaTheme2) => ({
 
   dashlistLinkBody: css`
     flex-grow: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
   `,
 
   dashlistItem: css`
     position: relative;
     list-style: none;
+  `,
+
+  gridContainer: css`
+    display: grid;
+    gap: ${theme.spacing(1)};
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    list-style: none;
+    margin-bottom: ${theme.spacing(1)};
   `,
 });

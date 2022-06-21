@@ -1,6 +1,8 @@
 package migrations
 
-import . "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+import (
+	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+)
 
 func addApiKeyMigrations(mg *Migrator) {
 	apiKeyV1 := Table{
@@ -86,4 +88,7 @@ func addApiKeyMigrations(mg *Migrator) {
 	mg.AddMigration("Add service account foreign key", NewAddColumnMigration(apiKeyV2, &Column{
 		Name: "service_account_id", Type: DB_BigInt, Nullable: true,
 	}))
+
+	mg.AddMigration("set service account foreign key to nil if 0", NewRawSQLMigration(
+		"UPDATE api_key SET service_account_id = NULL WHERE service_account_id = 0;"))
 }

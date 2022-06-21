@@ -1,0 +1,17 @@
+{
+  "timeSeries": [
+    {
+      "metric": {
+        "type": "loadbalancing.googleapis.com\/https\/backend_latencies"
+      },
+      "resource": {
+        "type": "https_lb_rule",
+        "labels": {
+          "project_id": "grafana-prod"
+        }
+      },
+      "metricKind": "DELTA",
+      "valueType": "DISTRIBUTION"
+    }
+  ]
+}

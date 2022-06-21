@@ -15,9 +15,32 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
+const (
+	Prometheus = "prometheus"
+	Cortex     = "cortex"
+	Mimir      = "mimir"
+)
+
+const (
+	PrometheusDatasourceType = "prometheus"
+	LokiDatasourceType       = "loki"
+
+	mimirPrefix      = "/config/v1/rules"
+	prometheusPrefix = "/rules"
+	lokiPrefix       = "/api/prom/rules"
+
+	subtypeQuery = "subtype"
+)
+
 var dsTypeToRulerPrefix = map[string]string{
-	"prometheus": "/rules",
-	"loki":       "/api/prom/rules",
+	PrometheusDatasourceType: prometheusPrefix,
+	LokiDatasourceType:       lokiPrefix,
+}
+
+var subtypeToPrefix = map[string]string{
+	Prometheus: prometheusPrefix,
+	Cortex:     prometheusPrefix,
+	Mimir:      mimirPrefix,
 }
 
 type LotexRuler struct {
@@ -152,7 +175,12 @@ func (r *LotexRuler) RoutePostNameRulesConfig(ctx *models.ReqContext, conf apimo
 }
 
 func (r *LotexRuler) validateAndGetPrefix(ctx *models.ReqContext) (string, error) {
-	ds, err := r.DataProxy.DataSourceCache.GetDatasource(ctx.ParamsInt64(":Recipient"), ctx.SignedInUser, ctx.SkipCache)
+	datasourceUID := web.Params(ctx.Req)[":DatasourceUID"]
+	if datasourceUID == "" {
+		return "", fmt.Errorf("datasource UID is invalid")
+	}
+
+	ds, err := r.DataProxy.DataSourceCache.GetDatasourceByUID(ctx.Req.Context(), datasourceUID, ctx.SignedInUser, ctx.SkipCache)
 	if err != nil {
 		return "", err
 	}
@@ -165,7 +193,22 @@ func (r *LotexRuler) validateAndGetPrefix(ctx *models.ReqContext) (string, error
 	if !ok {
 		return "", fmt.Errorf("unexpected datasource type. expecting loki or prometheus")
 	}
-	return prefix, nil
+
+	// If the datasource is Loki, there's nothing else for us to do - it doesn't have subtypes.
+	if ds.Type == LokiDatasourceType {
+		return prefix, nil
+	}
+
+	// A Prometheus datasource, can have many subtypes: Cortex, Mimir and vanilla Prometheus.
+	// Based on these subtypes, we want to use a different proxying path.
+	subtype := ctx.Query(subtypeQuery)
+	subTypePrefix, ok := subtypeToPrefix[subtype]
+	if !ok {
+		r.log.Debug("unable to determine prometheus datasource subtype, using default prefix", "subtype", subtype)
+		return prefix, nil
+	}
+
+	return subTypePrefix, nil
 }
 
 func withPath(u url.URL, newPath string) *url.URL {

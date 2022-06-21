@@ -1,8 +1,8 @@
-import React, { PureComponent, createRef } from 'react';
 import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
 import memoizeOne from 'memoize-one';
-import { TooltipDisplayMode } from '@grafana/schema';
+import React, { PureComponent, createRef } from 'react';
+
 import {
   rangeUtil,
   RawTimeRange,
@@ -20,7 +20,10 @@ import {
   DataFrame,
   GrafanaTheme2,
   LoadingState,
+  SplitOpen,
+  DataQueryResponse,
 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import {
   RadioButtonGroup,
   LogRows,
@@ -31,22 +34,26 @@ import {
   withTheme2,
   Themeable2,
 } from '@grafana/ui';
-import store from 'app/core/store';
+import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import { dedupLogRows, filterLogLevels } from 'app/core/logs_model';
+import store from 'app/core/store';
+import { ExploreId } from 'app/types/explore';
+
 import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
-import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
-import { ExploreGraph } from './ExploreGraph';
+import { LogsVolumePanel } from './LogsVolumePanel';
 
 const SETTINGS_KEYS = {
   showLabels: 'grafana.explore.logs.showLabels',
   showTime: 'grafana.explore.logs.showTime',
   wrapLogMessage: 'grafana.explore.logs.wrapLogMessage',
   prettifyLogMessage: 'grafana.explore.logs.prettifyLogMessage',
+  logsSortOrder: 'grafana.explore.logs.sortOrder',
 };
 
 interface Props extends Themeable2 {
   width: number;
+  splitOpen: SplitOpen;
   logRows: LogRowModel[];
   logsMeta?: LogsMetaItem[];
   logsSeries?: DataFrame[];
@@ -59,6 +66,10 @@ interface Props extends Themeable2 {
   timeZone: TimeZone;
   scanning?: boolean;
   scanRange?: RawTimeRange;
+  exploreId: ExploreId;
+  datasourceType?: string;
+  logsVolumeData: DataQueryResponse | undefined;
+  loadLogsVolumeData: (exploreId: ExploreId) => void;
   showContextToggle?: (row?: LogRowModel) => boolean;
   onChangeTime: (range: AbsoluteTimeRange) => void;
   onClickFilterLabel?: (key: string, value: string) => void;
@@ -96,7 +107,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     prettifyLogMessage: store.getBool(SETTINGS_KEYS.prettifyLogMessage, false),
     dedupStrategy: LogsDedupStrategy.none,
     hiddenLogLevels: [],
-    logsSortOrder: null,
+    logsSortOrder: store.get(SETTINGS_KEYS.logsSortOrder) || LogsSortOrder.Descending,
     isFlipping: false,
     showDetectedFields: [],
     forceEscape: false,
@@ -117,10 +128,10 @@ class UnthemedLogs extends PureComponent<Props, State> {
     // we are using setTimeout here to make sure that disabled button is rendered before the rendering of reordered logs
     this.flipOrderTimer = window.setTimeout(() => {
       this.setState((prevState) => {
-        if (prevState.logsSortOrder === null || prevState.logsSortOrder === LogsSortOrder.Descending) {
-          return { logsSortOrder: LogsSortOrder.Ascending };
-        }
-        return { logsSortOrder: LogsSortOrder.Descending };
+        const newSortOrder =
+          prevState.logsSortOrder === LogsSortOrder.Descending ? LogsSortOrder.Ascending : LogsSortOrder.Descending;
+        store.set(SETTINGS_KEYS.logsSortOrder, newSortOrder);
+        return { logsSortOrder: newSortOrder };
       });
     }, 0);
     this.cancelFlippingTimer = window.setTimeout(() => this.setState({ isFlipping: false }), 1000);
@@ -133,6 +144,10 @@ class UnthemedLogs extends PureComponent<Props, State> {
   };
 
   onChangeDedup = (dedupStrategy: LogsDedupStrategy) => {
+    reportInteraction('grafana_explore_logs_deduplication_clicked', {
+      deduplicationType: dedupStrategy,
+      datasourceType: this.props.datasourceType,
+    });
     this.setState({ dedupStrategy });
   };
 
@@ -158,7 +173,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     }
   };
 
-  onChangewrapLogMessage = (event: React.ChangeEvent<HTMLInputElement>) => {
+  onChangeWrapLogMessage = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { target } = event;
     if (target) {
       const wrapLogMessage = target.checked;
@@ -244,15 +259,32 @@ class UnthemedLogs extends PureComponent<Props, State> {
     return filterLogLevels(logRows, new Set(hiddenLogLevels));
   });
 
+  createNavigationRange = memoizeOne((logRows: LogRowModel[]): { from: number; to: number } | undefined => {
+    if (!logRows || logRows.length === 0) {
+      return undefined;
+    }
+    const firstTimeStamp = logRows[0].timeEpochMs;
+    const lastTimeStamp = logRows[logRows.length - 1].timeEpochMs;
+
+    if (lastTimeStamp < firstTimeStamp) {
+      return { from: lastTimeStamp, to: firstTimeStamp };
+    }
+
+    return { from: firstTimeStamp, to: lastTimeStamp };
+  });
+
   scrollToTopLogs = () => this.topLogsRef.current?.scrollIntoView();
 
   render() {
     const {
       width,
+      splitOpen,
       logRows,
       logsMeta,
       logsSeries,
       visibleRange,
+      logsVolumeData,
+      loadLogsVolumeData,
       loading = false,
       loadingState,
       onClickFilterLabel,
@@ -268,6 +300,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
       logsQueries,
       clearCache,
       addResultsToCache,
+      exploreId,
     } = this.props;
 
     const {
@@ -289,51 +322,70 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
     const filteredLogs = this.filterRows(logRows, hiddenLogLevels);
     const { dedupedRows, dedupCount } = this.dedupRows(filteredLogs, dedupStrategy);
+    const navigationRange = this.createNavigationRange(logRows);
 
     const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
 
     return (
       <>
-        {logsSeries && logsSeries.length ? (
-          <>
-            <div className={styles.infoText}>
-              This datasource does not support full-range histograms. The graph is based on the logs seen in the
-              response.
-            </div>
-            <ExploreGraph
-              graphStyle="lines"
-              data={logsSeries}
-              height={150}
-              width={width}
-              tooltipDisplayMode={TooltipDisplayMode.Multi}
-              absoluteRange={visibleRange || absoluteRange}
-              timeZone={timeZone}
-              loadingState={loadingState}
-              onChangeTime={onChangeTime}
-              onHiddenSeriesChanged={this.onToggleLogLevel}
-            />
-          </>
-        ) : undefined}
+        <LogsVolumePanel
+          absoluteRange={absoluteRange}
+          width={width}
+          logsVolumeData={logsVolumeData}
+          logLinesBasedData={
+            logsSeries
+              ? {
+                  data: logsSeries,
+                  state: loadingState,
+                }
+              : undefined
+          }
+          logLinesBasedDataVisibleRange={visibleRange}
+          onUpdateTimeRange={onChangeTime}
+          timeZone={timeZone}
+          splitOpen={splitOpen}
+          onLoadLogsVolume={() => loadLogsVolumeData(exploreId)}
+          onHiddenSeriesChanged={this.onToggleLogLevel}
+        />
         <div className={styles.logOptions} ref={this.topLogsRef}>
           <InlineFieldRow>
-            <InlineField label="Time" transparent>
-              <InlineSwitch value={showTime} onChange={this.onChangeTime} transparent id="show-time" />
+            <InlineField label="Time" className={styles.horizontalInlineLabel} transparent>
+              <InlineSwitch
+                value={showTime}
+                onChange={this.onChangeTime}
+                className={styles.horizontalInlineSwitch}
+                transparent
+                id={`show-time_${exploreId}`}
+              />
             </InlineField>
-            <InlineField label="Unique labels" transparent>
-              <InlineSwitch value={showLabels} onChange={this.onChangeLabels} transparent id="unique-labels" />
+            <InlineField label="Unique labels" className={styles.horizontalInlineLabel} transparent>
+              <InlineSwitch
+                value={showLabels}
+                onChange={this.onChangeLabels}
+                className={styles.horizontalInlineSwitch}
+                transparent
+                id={`unique-labels_${exploreId}`}
+              />
             </InlineField>
-            <InlineField label="Wrap lines" transparent>
-              <InlineSwitch value={wrapLogMessage} onChange={this.onChangewrapLogMessage} transparent id="wrap-lines" />
+            <InlineField label="Wrap lines" className={styles.horizontalInlineLabel} transparent>
+              <InlineSwitch
+                value={wrapLogMessage}
+                onChange={this.onChangeWrapLogMessage}
+                className={styles.horizontalInlineSwitch}
+                transparent
+                id={`wrap-lines_${exploreId}`}
+              />
             </InlineField>
-            <InlineField label="Prettify JSON" transparent>
+            <InlineField label="Prettify JSON" className={styles.horizontalInlineLabel} transparent>
               <InlineSwitch
                 value={prettifyLogMessage}
                 onChange={this.onChangePrettifyLogMessage}
+                className={styles.horizontalInlineSwitch}
                 transparent
-                id="prettify"
+                id={`prettify_${exploreId}`}
               />
             </InlineField>
-            <InlineField label="Dedup" transparent>
+            <InlineField label="Dedup" className={styles.horizontalInlineLabel} transparent>
               <RadioButtonGroup
                 options={Object.values(LogsDedupStrategy).map((dedupType) => ({
                   label: capitalize(dedupType),
@@ -347,16 +399,26 @@ class UnthemedLogs extends PureComponent<Props, State> {
             </InlineField>
           </InlineFieldRow>
           <div>
-            <Button
-              variant="secondary"
-              disabled={isFlipping}
-              title={logsSortOrder === LogsSortOrder.Ascending ? 'Change to newest first' : 'Change to oldest first'}
-              aria-label="Flip results order"
-              className={styles.headerButton}
-              onClick={this.onChangeLogsSortOrder}
-            >
-              {isFlipping ? 'Flipping...' : 'Flip results order'}
-            </Button>
+            <InlineField label="Display results" className={styles.horizontalInlineLabel} transparent>
+              <RadioButtonGroup
+                disabled={isFlipping}
+                options={[
+                  {
+                    label: 'Newest first',
+                    value: LogsSortOrder.Descending,
+                    description: 'Show results newest to oldest',
+                  },
+                  {
+                    label: 'Oldest first',
+                    value: LogsSortOrder.Ascending,
+                    description: 'Show results oldest to newest',
+                  },
+                ]}
+                value={logsSortOrder}
+                onChange={this.onChangeLogsSortOrder}
+                className={styles.radioButtons}
+              />
+            </InlineField>
           </div>
         </div>
         <LogsMetaRow
@@ -371,7 +433,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
           clearDetectedFields={this.clearDetectedFields}
         />
         <div className={styles.logsSection}>
-          <div className={styles.logRows}>
+          <div className={styles.logRows} data-testid="logRows">
             <LogRows
               logRows={logRows}
               deduplicatedRows={dedupedRows}
@@ -396,7 +458,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
           </div>
           <LogsNavigation
             logsSortOrder={logsSortOrder}
-            visibleRange={visibleRange ?? absoluteRange}
+            visibleRange={navigationRange ?? absoluteRange}
             absoluteRange={absoluteRange}
             timeZone={timeZone}
             onChangeTime={onChangeTime}
@@ -415,7 +477,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
             </Button>
           </div>
         )}
-
         {scanning && (
           <div className={styles.noData}>
             <span>{scanText}</span>
@@ -452,8 +513,16 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean) => {
     headerButton: css`
       margin: ${theme.spacing(0.5, 0, 0, 1)};
     `,
+    horizontalInlineLabel: css`
+      > label {
+        margin-right: 0;
+      }
+    `,
+    horizontalInlineSwitch: css`
+      padding: 0 ${theme.spacing(1)} 0 0;
+    `,
     radioButtons: css`
-      margin: 0 ${theme.spacing(1)};
+      margin: 0;
     `,
     logsSection: css`
       display: flex;
@@ -464,10 +533,6 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean) => {
       overflow-x: ${wrapLogMessage ? 'unset' : 'scroll'};
       overflow-y: visible;
       width: 100%;
-    `,
-    infoText: css`
-      font-size: ${theme.typography.size.sm};
-      color: ${theme.colors.text.secondary};
     `,
   };
 };

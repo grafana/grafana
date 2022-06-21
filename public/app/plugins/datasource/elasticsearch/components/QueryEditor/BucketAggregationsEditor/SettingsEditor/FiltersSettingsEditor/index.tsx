@@ -1,13 +1,16 @@
-import { InlineField, Input, QueryField } from '@grafana/ui';
 import { css } from '@emotion/css';
+import { uniqueId } from 'lodash';
 import React, { useEffect, useRef } from 'react';
-import { AddRemove } from '../../../../AddRemove';
+
+import { InlineField, Input, QueryField } from '@grafana/ui';
+
 import { useDispatch, useStatelessReducer } from '../../../../../hooks/useStatelessReducer';
+import { AddRemove } from '../../../../AddRemove';
 import { Filters } from '../../aggregations';
 import { changeBucketAggregationSetting } from '../../state/actions';
+
 import { addFilter, changeFilter, removeFilter } from './state/actions';
 import { reducer as filtersReducer } from './state/reducer';
-import { uniqueId } from 'lodash';
 
 interface Props {
   bucketAgg: Filters;
@@ -47,12 +50,12 @@ export const FiltersSettingsEditor = ({ bucketAgg }: Props) => {
               display: flex;
             `}
           >
-            <div
-              className={css`
-                width: 250px;
-              `}
-            >
-              <InlineField label="Query" labelWidth={10}>
+            <InlineField label="Query" labelWidth={8}>
+              <div
+                className={css`
+                  width: 150px;
+                `}
+              >
                 <QueryField
                   placeholder="Lucene Query"
                   portalOrigin="elasticsearch"
@@ -60,10 +63,11 @@ export const FiltersSettingsEditor = ({ bucketAgg }: Props) => {
                   onChange={(query) => dispatch(changeFilter({ index, filter: { ...filter, query } }))}
                   query={filter.query}
                 />
-              </InlineField>
-            </div>
-            <InlineField label="Label" labelWidth={10}>
+              </div>
+            </InlineField>
+            <InlineField label="Label" labelWidth={8}>
               <Input
+                width={16}
                 id={`${baseId}-label-${index}`}
                 placeholder="Label"
                 onBlur={(e) => dispatch(changeFilter({ index, filter: { ...filter, label: e.target.value } }))}

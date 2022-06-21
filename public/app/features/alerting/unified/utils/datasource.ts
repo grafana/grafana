@@ -1,6 +1,10 @@
 import { DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
+import { contextSrv } from 'app/core/services/context_srv';
 import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
+import { AccessControlAction } from 'app/types';
 import { RulesSource } from 'app/types/unified-alerting';
+
+import { instancesPermissions, notificationsPermissions } from './access-control';
 import { getAllDataSources } from './config';
 
 export const GRAFANA_RULES_SOURCE_NAME = 'grafana';
@@ -12,18 +16,76 @@ export enum DataSourceType {
   Prometheus = 'prometheus',
 }
 
+export interface AlertManagerDataSource {
+  name: string;
+  imgUrl: string;
+  meta?: DataSourceInstanceSettings['meta'];
+}
+
 export const RulesDataSourceTypes: string[] = [DataSourceType.Loki, DataSourceType.Prometheus];
 
 export function getRulesDataSources() {
+  if (!contextSrv.hasPermission(AccessControlAction.AlertingRuleExternalRead)) {
+    return [];
+  }
+
   return getAllDataSources()
     .filter((ds) => RulesDataSourceTypes.includes(ds.type) && ds.jsonData.manageAlerts !== false)
     .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export function getRulesDataSource(rulesSourceName: string) {
+  return getRulesDataSources().find((x) => x.name === rulesSourceName);
 }
 
 export function getAlertManagerDataSources() {
   return getAllDataSources()
     .filter((ds) => ds.type === DataSourceType.Alertmanager)
     .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+const grafanaAlertManagerDataSource: AlertManagerDataSource = {
+  name: GRAFANA_RULES_SOURCE_NAME,
+  imgUrl: 'public/img/grafana_icon.svg',
+};
+
+// Used only as a fallback for Alert Group plugin
+export function getAllAlertManagerDataSources(): AlertManagerDataSource[] {
+  return [
+    grafanaAlertManagerDataSource,
+    ...getAlertManagerDataSources().map<AlertManagerDataSource>((ds) => ({
+      name: ds.name,
+      displayName: ds.name,
+      imgUrl: ds.meta.info.logos.small,
+      meta: ds.meta,
+    })),
+  ];
+}
+
+export function getAlertManagerDataSourcesByPermission(
+  permission: 'instance' | 'notification'
+): AlertManagerDataSource[] {
+  const availableDataSources: AlertManagerDataSource[] = [];
+  const permissions = {
+    instance: instancesPermissions.read,
+    notification: notificationsPermissions.read,
+  };
+
+  if (contextSrv.hasPermission(permissions[permission].grafana)) {
+    availableDataSources.push(grafanaAlertManagerDataSource);
+  }
+
+  if (contextSrv.hasPermission(permissions[permission].external)) {
+    const cloudSources = getAlertManagerDataSources().map<AlertManagerDataSource>((ds) => ({
+      name: ds.name,
+      displayName: ds.name,
+      imgUrl: ds.meta.info.logos.small,
+      meta: ds.meta,
+    }));
+    availableDataSources.push(...cloudSources);
+  }
+
+  return availableDataSources;
 }
 
 export function getLotexDataSourceByName(dataSourceName: string): DataSourceInstanceSettings {
@@ -38,11 +100,23 @@ export function getLotexDataSourceByName(dataSourceName: string): DataSourceInst
 }
 
 export function getAllRulesSourceNames(): string[] {
-  return [...getRulesDataSources().map((r) => r.name), GRAFANA_RULES_SOURCE_NAME];
+  const availableRulesSources: string[] = getRulesDataSources().map((r) => r.name);
+
+  if (contextSrv.hasPermission(AccessControlAction.AlertingRuleRead)) {
+    availableRulesSources.push(GRAFANA_RULES_SOURCE_NAME);
+  }
+
+  return availableRulesSources;
 }
 
 export function getAllRulesSources(): RulesSource[] {
-  return [...getRulesDataSources(), GRAFANA_RULES_SOURCE_NAME];
+  const availableRulesSources: RulesSource[] = getRulesDataSources();
+
+  if (contextSrv.hasPermission(AccessControlAction.AlertingRuleRead)) {
+    availableRulesSources.push(GRAFANA_RULES_SOURCE_NAME);
+  }
+
+  return availableRulesSources;
 }
 
 export function getRulesSourceName(rulesSource: RulesSource): string {
@@ -87,4 +161,15 @@ export function getDatasourceAPIId(dataSourceName: string) {
     throw new Error(`Datasource "${dataSourceName}" not found`);
   }
   return String(ds.id);
+}
+
+export function getDatasourceAPIUid(dataSourceName: string) {
+  if (dataSourceName === GRAFANA_RULES_SOURCE_NAME) {
+    return GRAFANA_RULES_SOURCE_NAME;
+  }
+  const ds = getDataSourceByName(dataSourceName);
+  if (!ds) {
+    throw new Error(`Datasource "${dataSourceName}" not found`);
+  }
+  return ds.uid;
 }

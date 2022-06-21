@@ -1,5 +1,8 @@
-import React from 'react';
 import { fireEvent, render, screen, within } from '@testing-library/react';
+import React from 'react';
+import { Provider } from 'react-redux';
+import configureMockStore from 'redux-mock-store';
+
 import {
   FieldConfigSource,
   FieldType,
@@ -9,18 +12,17 @@ import {
   standardFieldConfigEditorRegistry,
   toDataFrame,
 } from '@grafana/data';
-
 import { selectors } from '@grafana/e2e-selectors';
-import { OptionsPaneOptions } from './OptionsPaneOptions';
-import { DashboardModel, PanelModel } from '../../state';
-import { Provider } from 'react-redux';
-import configureMockStore from 'redux-mock-store';
+import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
-import { getStandardFieldConfigs, getStandardOptionEditors } from '@grafana/ui';
+
+import { DashboardModel, PanelModel } from '../../state';
+
+import { OptionsPaneOptions } from './OptionsPaneOptions';
 import { dataOverrideTooltipDescription, overrideRuleTooltipDescription } from './state/getOptionOverrides';
 
-standardEditorsRegistry.setInit(getStandardOptionEditors);
-standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
+standardEditorsRegistry.setInit(getAllOptionEditors);
+standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
 
 const mockStore = configureMockStore<any, any>();
 const OptionsPaneSelector = selectors.components.PanelEditor.OptionsPane;
@@ -126,6 +128,7 @@ describe('OptionsPaneOptions', () => {
 
     expect(screen.getByRole('heading', { name: /Panel options/ })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Standard options/ })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Value mappings/ })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Thresholds/ })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /TestPanel/ })).toBeInTheDocument();
   });

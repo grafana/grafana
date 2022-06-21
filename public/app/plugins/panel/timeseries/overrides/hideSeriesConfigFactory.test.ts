@@ -7,6 +7,7 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { GraphNGLegendEvent, SeriesVisibilityChangeMode } from '@grafana/ui';
+
 import { hideSeriesConfigFactory } from './hideSeriesConfigFactory';
 
 describe('hideSeriesConfigFactory', () => {

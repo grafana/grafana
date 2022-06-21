@@ -1,5 +1,7 @@
-import React, { PureComponent } from 'react';
+import { omit } from 'lodash';
+import React, { PureComponent, useState } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
+
 import {
   DataQuery,
   DataSourceInstanceSettings,
@@ -10,9 +12,13 @@ import {
   ThresholdsMode,
 } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { QueryWrapper } from './QueryWrapper';
-import { AlertQuery } from 'app/types/unified-alerting-dto';
+import { Button, Card, Icon } from '@grafana/ui';
+import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { isExpressionQuery } from 'app/features/expressions/guards';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
+
+import { EmptyQueryWrapper, QueryWrapper } from './QueryWrapper';
 import { queriesWithUpdatedReferences } from './util';
 
 interface Props {
@@ -100,30 +106,14 @@ export class QueryRows extends PureComponent<Props, State> {
   onChangeDataSource = (settings: DataSourceInstanceSettings, index: number) => {
     const { queries, onQueriesChange } = this.props;
 
-    onQueriesChange(
-      queries.map((item, itemIndex) => {
-        if (itemIndex !== index) {
-          return item;
-        }
+    const updatedQueries = queries.map((item, itemIndex) => {
+      if (itemIndex !== index) {
+        return item;
+      }
 
-        const previous = getDataSourceSrv().getInstanceSettings(item.datasourceUid);
-
-        if (previous?.type === settings.uid) {
-          return {
-            ...item,
-            datasourceUid: settings.uid,
-          };
-        }
-
-        const { refId, hide } = item.model;
-
-        return {
-          ...item,
-          datasourceUid: settings.uid,
-          model: { refId, hide },
-        };
-      })
-    );
+      return copyModel(item, settings.uid);
+    });
+    onQueriesChange(updatedQueries);
   };
 
   onChangeQuery = (query: DataQuery, index: number) => {
@@ -245,12 +235,28 @@ export class QueryRows extends PureComponent<Props, State> {
                   const dsSettings = this.getDataSourceSettings(query);
 
                   if (!dsSettings) {
-                    return null;
+                    return (
+                      <DatasourceNotFound
+                        key={`${query.refId}-${index}`}
+                        index={index}
+                        model={query.model}
+                        onUpdateDatasource={() => {
+                          const defaultDataSource = getDatasourceSrv().getInstanceSettings(null);
+                          if (defaultDataSource) {
+                            this.onChangeDataSource(defaultDataSource, index);
+                          }
+                        }}
+                        onRemoveQuery={() => {
+                          this.onRemoveQuery(query);
+                        }}
+                      />
+                    );
                   }
+
                   return (
                     <QueryWrapper
                       index={index}
-                      key={`${query.refId}-${index}`}
+                      key={query.refId}
                       dsSettings={dsSettings}
                       data={data}
                       query={query}
@@ -275,3 +281,74 @@ export class QueryRows extends PureComponent<Props, State> {
     );
   }
 }
+
+function copyModel(item: AlertQuery, uid: string): Omit<AlertQuery, 'datasource'> {
+  return {
+    ...item,
+    model: omit(item.model, 'datasource'),
+    datasourceUid: uid,
+  };
+}
+
+interface DatasourceNotFoundProps {
+  index: number;
+  model: AlertDataQuery;
+  onUpdateDatasource: () => void;
+  onRemoveQuery: () => void;
+}
+
+const DatasourceNotFound = ({ index, onUpdateDatasource, onRemoveQuery, model }: DatasourceNotFoundProps) => {
+  const refId = model.refId;
+
+  const [showDetails, setShowDetails] = useState<boolean>(false);
+
+  const toggleDetails = () => {
+    setShowDetails((show) => !show);
+  };
+
+  const handleUpdateDatasource = () => {
+    onUpdateDatasource();
+  };
+
+  return (
+    <EmptyQueryWrapper>
+      <QueryOperationRow title={refId} draggable index={index} id={refId} isOpen>
+        <Card>
+          <Card.Heading>This datasource has been removed</Card.Heading>
+          <Card.Description>
+            The datasource for this query was not found, it was either removed or is not installed correctly.
+          </Card.Description>
+          <Card.Figure>
+            <Icon name="question-circle" />
+          </Card.Figure>
+          <Card.Actions>
+            <Button key="update" variant="secondary" onClick={handleUpdateDatasource}>
+              Update datasource
+            </Button>
+            <Button key="remove" variant="destructive" onClick={onRemoveQuery}>
+              Remove query
+            </Button>
+          </Card.Actions>
+          <Card.SecondaryActions>
+            <Button
+              key="details"
+              onClick={toggleDetails}
+              icon={showDetails ? 'angle-up' : 'angle-down'}
+              fill="text"
+              size="sm"
+            >
+              Show details
+            </Button>
+          </Card.SecondaryActions>
+        </Card>
+        {showDetails && (
+          <div>
+            <pre>
+              <code>{JSON.stringify(model, null, 2)}</code>
+            </pre>
+          </div>
+        )}
+      </QueryOperationRow>
+    </EmptyQueryWrapper>
+  );
+};

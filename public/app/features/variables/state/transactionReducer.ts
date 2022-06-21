@@ -1,4 +1,7 @@
 import { AnyAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
+
+import { TransactionStatus } from '../types';
+
 import {
   addVariable,
   changeVariableOrder,
@@ -7,12 +10,6 @@ import {
   duplicateVariable,
   removeVariable,
 } from './sharedReducer';
-
-export enum TransactionStatus {
-  NotStarted = 'Not started',
-  Fetching = 'Fetching',
-  Completed = 'Completed',
-}
 
 export interface TransactionState {
   uid: string | undefined | null;
@@ -57,20 +54,17 @@ const transactionSlice = createSlice({
 });
 
 function actionAffectsDirtyState(action: AnyAction): boolean {
-  return [
-    removeVariable.type,
-    addVariable.type,
-    changeVariableProp.type,
-    changeVariableOrder.type,
-    duplicateVariable.type,
-    changeVariableType.type,
-  ].includes(action.type);
+  return (
+    removeVariable.match(action) ||
+    addVariable.match(action) ||
+    changeVariableProp.match(action) ||
+    changeVariableOrder.match(action) ||
+    duplicateVariable.match(action) ||
+    changeVariableType.match(action)
+  );
 }
 
-export const {
-  variablesInitTransaction,
-  variablesClearTransaction,
-  variablesCompleteTransaction,
-} = transactionSlice.actions;
+export const { variablesInitTransaction, variablesClearTransaction, variablesCompleteTransaction } =
+  transactionSlice.actions;
 
 export const transactionReducer = transactionSlice.reducer;

@@ -1,6 +1,8 @@
+import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import { ClassicCondition, ExpressionQuery } from 'app/features/expressions/types';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
-import { queriesWithUpdatedReferences, updateMathExpressionRefs } from './util';
+
+import { checkForPathSeparator, queriesWithUpdatedReferences, updateMathExpressionRefs } from './util';
 
 describe('rule-editor', () => {
   const dataSource: AlertQuery = {
@@ -23,10 +25,7 @@ describe('rule-editor', () => {
     model: {
       refId: 'B',
       type: 'classic_conditions',
-      datasource: {
-        uid: '-100',
-        type: 'grafana-expression',
-      },
+      datasource: ExpressionDatasourceRef,
       conditions: [
         {
           type: 'query',
@@ -56,10 +55,7 @@ describe('rule-editor', () => {
     model: {
       refId: 'B',
       type: 'math',
-      datasource: {
-        uid: '-100',
-        type: 'grafana-expression',
-      },
+      datasource: ExpressionDatasourceRef,
       conditions: [],
       expression: 'abs($A) + $A',
     },
@@ -72,10 +68,7 @@ describe('rule-editor', () => {
     model: {
       refId: 'B',
       type: 'reduce',
-      datasource: {
-        uid: '-100',
-        type: 'grafana-expression',
-      },
+      datasource: ExpressionDatasourceRef,
       conditions: [],
       reducer: 'mean',
       expression: 'A',
@@ -197,5 +190,19 @@ describe('rule-editor', () => {
     it('should not rewire refs with partial variable match', () => {
       expect(updateMathExpressionRefs('$A3 + $B', 'A', 'C')).toBe('$A3 + $B');
     });
+  });
+});
+
+describe('checkForPathSeparator', () => {
+  it('should not allow strings with /', () => {
+    expect(checkForPathSeparator('foo / bar')).not.toBe(true);
+    expect(typeof checkForPathSeparator('foo / bar')).toBe('string');
+  });
+  it('should not allow strings with \\', () => {
+    expect(checkForPathSeparator('foo \\ bar')).not.toBe(true);
+    expect(typeof checkForPathSeparator('foo \\ bar')).toBe('string');
+  });
+  it('should allow anything without / or \\', () => {
+    expect(checkForPathSeparator('foo bar')).toBe(true);
   });
 });

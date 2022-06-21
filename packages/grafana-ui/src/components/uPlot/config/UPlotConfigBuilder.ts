@@ -1,5 +1,6 @@
-import uPlot, { Cursor, Band, Hooks, Select, AlignedData, Padding, Series } from 'uplot';
 import { merge } from 'lodash';
+import uPlot, { Cursor, Band, Hooks, Select, AlignedData, Padding, Series } from 'uplot';
+
 import {
   DataFrame,
   DefaultTimeZone,
@@ -10,12 +11,14 @@ import {
   TimeRange,
   TimeZone,
 } from '@grafana/data';
+import { AxisPlacement } from '@grafana/schema';
+
 import { FacetedData, PlotConfig, PlotTooltipInterpolator } from '../types';
+import { getStackingBands, pluginLog, StackingGroup } from '../utils';
+
+import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
 import { ScaleProps, UPlotScaleBuilder } from './UPlotScaleBuilder';
 import { SeriesProps, UPlotSeriesBuilder } from './UPlotSeriesBuilder';
-import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
-import { AxisPlacement } from '@grafana/schema';
-import { pluginLog } from '../utils';
 import { getThresholdsDrawHook, UPlotThresholdOptions } from './UPlotThresholds';
 
 const cursorDefaults: Cursor = {
@@ -33,12 +36,14 @@ const cursorDefaults: Cursor = {
 };
 
 type PrepData = (frames: DataFrame[]) => AlignedData | FacetedData;
+type PreDataStacked = (frames: DataFrame[], stackingGroups: StackingGroup[]) => AlignedData | FacetedData;
 
 export class UPlotConfigBuilder {
   private series: UPlotSeriesBuilder[] = [];
   private axes: Record<string, UPlotAxisBuilder> = {};
   private scales: UPlotScaleBuilder[] = [];
   private bands: Band[] = [];
+  private stackingGroups: StackingGroup[] = [];
   private cursor: Cursor | undefined;
   private select: uPlot.Select | undefined;
   private hasLeftAxis = false;
@@ -143,6 +148,14 @@ export class UPlotConfigBuilder {
     this.bands.push(band);
   }
 
+  setStackingGroups(groups: StackingGroup[]) {
+    this.stackingGroups = groups;
+  }
+
+  getStackingGroups() {
+    return this.stackingGroups;
+  }
+
   setTooltipInterpolator(interpolator: PlotTooltipInterpolator) {
     this.tooltipInterpolator = interpolator;
   }
@@ -151,10 +164,10 @@ export class UPlotConfigBuilder {
     return this.tooltipInterpolator;
   }
 
-  setPrepData(prepData: PrepData) {
+  setPrepData(prepData: PreDataStacked) {
     this.prepData = (frames) => {
       this.frames = frames;
-      return prepData(frames);
+      return prepData(frames, this.getStackingGroups());
     };
   }
 
@@ -175,7 +188,7 @@ export class UPlotConfigBuilder {
       mode: this.mode,
       series: [
         this.mode === 2
-          ? ((null as unknown) as Series)
+          ? (null as unknown as Series)
           : {
               value: () => '',
             },
@@ -191,18 +204,20 @@ export class UPlotConfigBuilder {
 
     config.select = this.select;
 
-    const pointColorFn = (alphaHex = '') => (u: uPlot, seriesIdx: number) => {
-      /*@ts-ignore*/
-      let s = u.series[seriesIdx].points._stroke;
+    const pointColorFn =
+      (alphaHex = '') =>
+      (u: uPlot, seriesIdx: number) => {
+        /*@ts-ignore*/
+        let s = u.series[seriesIdx].points._stroke;
 
-      // interpolate for gradients/thresholds
-      if (typeof s !== 'string') {
-        let field = this.frames![0].fields[seriesIdx];
-        s = field.display!(field.values.get(u.cursor.idxs![seriesIdx]!)).color!;
-      }
+        // interpolate for gradients/thresholds
+        if (typeof s !== 'string') {
+          let field = this.frames![0].fields[seriesIdx];
+          s = field.display!(field.values.get(u.cursor.idxs![seriesIdx]!)).color!;
+        }
 
-      return s + alphaHex;
-    };
+        return s + alphaHex;
+      };
 
     config.cursor = merge(
       {},
@@ -218,6 +233,14 @@ export class UPlotConfigBuilder {
 
     config.tzDate = this.tzDate;
     config.padding = this.padding;
+
+    if (this.stackingGroups.length) {
+      this.stackingGroups.forEach((group) => {
+        getStackingBands(group).forEach((band) => {
+          this.addBand(band);
+        });
+      });
+    }
 
     if (this.bands.length) {
       config.bands = this.bands;

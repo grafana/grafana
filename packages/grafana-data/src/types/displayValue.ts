@@ -12,9 +12,13 @@ export interface DisplayValue extends FormattedValue {
    */
   percent?: number;
   /**
-   *  Color based on configs or Threshold
+   *  Color based on mappings or threshold
    */
   color?: string;
+  /**
+   *  Icon based on mappings or threshold
+   */
+  icon?: string;
   title?: string;
 
   /**

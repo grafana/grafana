@@ -12,12 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from 'react';
 import { shallow } from 'enzyme';
+import React from 'react';
 
-import SpanDetailRow from './SpanDetailRow';
+import { createTheme } from '@grafana/data';
+
 import SpanDetail from './SpanDetail';
 import DetailState from './SpanDetail/DetailState';
+import { UnthemedSpanDetailRow } from './SpanDetailRow';
 import SpanTreeOffset from './SpanTreeOffset';
 
 jest.mock('./SpanTreeOffset');
@@ -37,6 +39,7 @@ describe('<SpanDetailRow>', () => {
     span: { spanID, depth: 3 },
     tagsToggle: jest.fn(),
     traceStartTime: 1000,
+    theme: createTheme(),
   };
 
   let wrapper;
@@ -48,10 +51,7 @@ describe('<SpanDetailRow>', () => {
     props.logsToggle.mockReset();
     props.processToggle.mockReset();
     props.tagsToggle.mockReset();
-    wrapper = shallow(<SpanDetailRow {...props} />)
-      .dive()
-      .dive()
-      .dive();
+    wrapper = shallow(<UnthemedSpanDetailRow {...props} />);
   });
 
   it('renders without exploding', () => {

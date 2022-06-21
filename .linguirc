@@ -2,7 +2,8 @@
   "locales": [
     "en",
     "fr",
-    "es"
+    "es",
+    "pseudo-LOCALE"
   ],
   "catalogs": [
     {
@@ -11,14 +12,18 @@
         "public/app"
       ],
       "exclude": [
+        "**/*.d.ts",
+        "**/*.test.ts",
         "**/node_modules/**",
         "public/app/plugins"
       ]
     }
   ],
   "fallbackLocales": {
+    "pseudo-LOCALE": "en",
     "default": "en"
   },
+  "pseudoLocale": "pseudo-LOCALE",
   "sourceLocale": "en",
   "format": "po",
   "formatOptions": {

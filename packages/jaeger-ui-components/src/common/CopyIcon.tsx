@@ -12,15 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import * as React from 'react';
 import { css } from '@emotion/css';
 import cx from 'classnames';
 import copy from 'copy-to-clipboard';
+import React, { useState } from 'react';
 
-import { UITooltip, TooltipPlacement, UIButton } from '../uiElementsContext';
-import { createStyle } from '../Theme';
+import { Button, IconName, Tooltip, useStyles2 } from '@grafana/ui';
 
-const getStyles = createStyle(() => {
+const getStyles = () => {
   return {
     CopyIcon: css`
       background-color: transparent;
@@ -28,70 +27,39 @@ const getStyles = createStyle(() => {
       color: inherit;
       height: 100%;
       overflow: hidden;
-      padding: 0px;
       &:focus {
         background-color: rgba(255, 255, 255, 0.25);
         color: inherit;
       }
     `,
   };
-});
+};
 
 type PropsType = {
   className?: string;
   copyText: string;
-  icon?: string;
-  placement?: TooltipPlacement;
+  icon?: IconName;
   tooltipTitle: string;
 };
 
-type StateType = {
-  hasCopied: boolean;
-};
+export default function CopyIcon(props: PropsType) {
+  const styles = useStyles2(getStyles);
 
-export default class CopyIcon extends React.PureComponent<PropsType, StateType> {
-  static defaultProps: Partial<PropsType> = {
-    className: undefined,
-    icon: 'copy',
-    placement: 'left',
+  const [hasCopied, setHasCopied] = useState(false);
+
+  const handleClick = () => {
+    copy(props.copyText);
+    setHasCopied(true);
   };
 
-  state = {
-    hasCopied: false,
-  };
-
-  handleClick = () => {
-    this.setState({
-      hasCopied: true,
-    });
-    copy(this.props.copyText);
-  };
-
-  handleTooltipVisibilityChange = (visible: boolean) => {
-    if (!visible && this.state.hasCopied) {
-      this.setState({
-        hasCopied: false,
-      });
-    }
-  };
-
-  render() {
-    const styles = getStyles();
-    return (
-      <UITooltip
-        arrowPointAtCenter
-        mouseLeaveDelay={0.5}
-        onVisibleChange={this.handleTooltipVisibilityChange}
-        placement={this.props.placement}
-        title={this.state.hasCopied ? 'Copied' : this.props.tooltipTitle}
-      >
-        <UIButton
-          className={cx(styles.CopyIcon, this.props.className)}
-          htmlType="button"
-          icon={this.props.icon}
-          onClick={this.handleClick}
-        />
-      </UITooltip>
-    );
-  }
+  return (
+    <Tooltip content={hasCopied ? 'Copied' : props.tooltipTitle}>
+      <Button className={cx(styles.CopyIcon)} type="button" icon={props.icon} onClick={handleClick} />
+    </Tooltip>
+  );
 }
+
+CopyIcon.defaultProps = {
+  icon: 'copy',
+  className: undefined,
+};

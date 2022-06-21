@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
@@ -137,16 +137,15 @@ func (rh fakeIntervalTestReqHandler) HandleRequest(ctx context.Context, dsInfo *
 //nolint: staticcheck // legacydata.DataResponse deprecated
 func applyScenario(t *testing.T, timeRange string, dataSourceJsonData *simplejson.Json, queryModel string, verifier func(query legacydata.DataSubQuery)) {
 	t.Run("desc", func(t *testing.T) {
-		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDataSourceQuery) error {
-			query.Result = &models.DataSource{Id: 1, Type: "graphite", JsonData: dataSourceJsonData}
-			return nil
-		})
+		store := mockstore.NewSQLStoreMock()
+		store.ExpectedDatasource = &models.DataSource{Id: 1, Type: "graphite", JsonData: dataSourceJsonData}
 
 		ctx := &queryIntervalTestContext{}
 		ctx.result = &alerting.EvalContext{
 			Ctx:              context.Background(),
 			Rule:             &alerting.Rule{},
 			RequestValidator: &validations.OSSPluginRequestValidator{},
+			Store:            store,
 		}
 
 		jsonModel, err := simplejson.NewJson([]byte(`{
@@ -176,7 +175,6 @@ func applyScenario(t *testing.T, timeRange string, dataSourceJsonData *simplejso
 			},
 			verifier: verifier,
 		}
-
 		_, err = condition.Eval(ctx.result, reqHandler)
 
 		require.Nil(t, err)

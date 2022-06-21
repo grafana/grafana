@@ -1,7 +1,10 @@
 import { Location } from 'history';
+
 import { NavModelItem } from '@grafana/data';
 import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
-import { getConfig, updateConfig } from '../../config';
+
+import { updateConfig } from '../../config';
+
 import { enrichConfigItems, getActiveItem, getForcedLoginUrl, isMatchOrChildMatch, isSearchActive } from './utils';
 
 jest.mock('../../app_events', () => ({
@@ -223,57 +226,19 @@ describe('getActiveItem', () => {
     });
   });
 
-  describe('when the newNavigation feature toggle is disabled', () => {
-    beforeEach(() => {
-      updateConfig({
-        featureToggles: {
-          ...getConfig().featureToggles,
-          newNavigation: false,
-        },
-      });
-    });
-
-    it('returns the base route link if the pathname starts with /d/', () => {
-      const mockPathName = '/d/foo';
-      expect(getActiveItem(mockNavTree, mockPathName)).toEqual({
-        text: 'Base',
-        url: '/',
-      });
-    });
-
-    it('returns a more specific link if one exists', () => {
-      const mockPathName = '/d/moreSpecificDashboard';
-      expect(getActiveItem(mockNavTree, mockPathName)).toEqual({
-        text: 'More specific dashboard',
-        url: '/d/moreSpecificDashboard',
-      });
+  it('returns the dashboards route link if the pathname starts with /d/', () => {
+    const mockPathName = '/d/foo';
+    expect(getActiveItem(mockNavTree, mockPathName)).toEqual({
+      text: 'Dashboards',
+      url: '/dashboards',
     });
   });
 
-  describe('when the newNavigation feature toggle is enabled', () => {
-    beforeEach(() => {
-      updateConfig({
-        featureToggles: {
-          ...getConfig().featureToggles,
-          newNavigation: true,
-        },
-      });
-    });
-
-    it('returns the dashboards route link if the pathname starts with /d/', () => {
-      const mockPathName = '/d/foo';
-      expect(getActiveItem(mockNavTree, mockPathName)).toEqual({
-        text: 'Dashboards',
-        url: '/dashboards',
-      });
-    });
-
-    it('returns a more specific link if one exists', () => {
-      const mockPathName = '/d/moreSpecificDashboard';
-      expect(getActiveItem(mockNavTree, mockPathName)).toEqual({
-        text: 'More specific dashboard',
-        url: '/d/moreSpecificDashboard',
-      });
+  it('returns a more specific link if one exists', () => {
+    const mockPathName = '/d/moreSpecificDashboard';
+    expect(getActiveItem(mockNavTree, mockPathName)).toEqual({
+      text: 'More specific dashboard',
+      url: '/d/moreSpecificDashboard',
     });
   });
 });

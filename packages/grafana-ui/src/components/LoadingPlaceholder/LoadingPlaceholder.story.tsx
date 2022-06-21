@@ -1,6 +1,8 @@
 import React from 'react';
-import { LoadingPlaceholder } from './LoadingPlaceholder';
+
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+
+import { LoadingPlaceholder } from './LoadingPlaceholder';
 import mdx from './LoadingPlaceholder.mdx';
 
 export default {

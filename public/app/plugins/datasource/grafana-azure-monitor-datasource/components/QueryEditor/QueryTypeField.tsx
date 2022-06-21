@@ -1,8 +1,10 @@
-import React, { useCallback, useState } from 'react';
-import { Select } from '@grafana/ui';
-import { Field } from '../Field';
-import { AzureMonitorQuery, AzureQueryType } from '../../types';
+import React, { useCallback } from 'react';
+
 import { SelectableValue } from '@grafana/data';
+import { Select } from '@grafana/ui';
+
+import { AzureMonitorQuery, AzureQueryType } from '../../types';
+import { Field } from '../Field';
 
 interface QueryTypeFieldProps {
   query: AzureMonitorQuery;
@@ -10,24 +12,11 @@ interface QueryTypeFieldProps {
 }
 
 const QueryTypeField: React.FC<QueryTypeFieldProps> = ({ query, onQueryChange }) => {
-  // Use useState to capture the initial value on first mount. We're not interested in when it changes
-  // We only show App Insights and Insights Analytics if they were initially selected. Otherwise, hide them.
-  const [initialQueryType] = useState(query.queryType);
-  const showAppInsights =
-    initialQueryType === AzureQueryType.ApplicationInsights || initialQueryType === AzureQueryType.InsightsAnalytics;
-
-  const queryTypes = [
+  const queryTypes: Array<{ value: AzureQueryType; label: string }> = [
     { value: AzureQueryType.AzureMonitor, label: 'Metrics' },
     { value: AzureQueryType.LogAnalytics, label: 'Logs' },
     { value: AzureQueryType.AzureResourceGraph, label: 'Azure Resource Graph' },
   ];
-
-  if (showAppInsights) {
-    queryTypes.push(
-      { value: AzureQueryType.ApplicationInsights, label: 'Application Insights' },
-      { value: AzureQueryType.InsightsAnalytics, label: 'Insights Analytics' }
-    );
-  }
 
   const handleChange = useCallback(
     (change: SelectableValue<AzureQueryType>) => {
@@ -43,7 +32,6 @@ const QueryTypeField: React.FC<QueryTypeFieldProps> = ({ query, onQueryChange })
   return (
     <Field label="Service">
       <Select
-        menuShouldPortal
         inputId="azure-monitor-query-type-field"
         value={query.queryType}
         options={queryTypes}

@@ -1,13 +1,20 @@
-import { urlUtil, UrlQueryMap } from '@grafana/data';
+import { sortBy } from 'lodash';
+
+import { urlUtil, UrlQueryMap, Labels } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { alertInstanceKey } from 'app/features/alerting/unified/utils/rules';
+import { SortOrder } from 'app/plugins/panel/alertlist/types';
 import { Alert, CombinedRule, FilterState, RulesSource, SilenceFilterState } from 'app/types/unified-alerting';
+import {
+  GrafanaAlertState,
+  PromAlertingRuleState,
+  mapStateWithReasonToBaseState,
+} from 'app/types/unified-alerting-dto';
+
 import { ALERTMANAGER_NAME_QUERY_KEY } from './constants';
 import { getRulesSourceName } from './datasource';
+import { getMatcherQueryParams } from './matchers';
 import * as ruleId from './rule-id';
-import { SortOrder } from 'app/plugins/panel/alertlist/types';
-import { alertInstanceKey } from 'app/features/alerting/unified/utils/rules';
-import { sortBy } from 'lodash';
-import { GrafanaAlertState, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 export function createViewLink(ruleSource: RulesSource, rule: CombinedRule, returnTo: string): string {
   const sourceName = getRulesSourceName(ruleSource);
@@ -46,6 +53,13 @@ export const getFiltersFromUrlParams = (queryParams: UrlQueryMap): FilterState =
   return { queryString, alertState, dataSource, groupBy, ruleType };
 };
 
+export const getNotificationPoliciesFilters = (searchParams: URLSearchParams) => {
+  return {
+    queryString: searchParams.get('queryString') ?? undefined,
+    contactPoint: searchParams.get('contactPoint') ?? undefined,
+  };
+};
+
 export const getSilenceFiltersFromUrlParams = (queryParams: UrlQueryMap): SilenceFilterState => {
   const queryString = queryParams['queryString'] === undefined ? undefined : String(queryParams['queryString']);
   const silenceState = queryParams['silenceState'] === undefined ? undefined : String(queryParams['silenceState']);
@@ -57,17 +71,31 @@ export function recordToArray(record: Record<string, string>): Array<{ key: stri
   return Object.entries(record).map(([key, value]) => ({ key, value }));
 }
 
-export function makeAMLink(path: string, alertManagerName?: string): string {
-  return `${path}${alertManagerName ? `?${ALERTMANAGER_NAME_QUERY_KEY}=${encodeURIComponent(alertManagerName)}` : ''}`;
+export function makeAMLink(path: string, alertManagerName?: string, options?: Record<string, string>): string {
+  const search = new URLSearchParams(options);
+  if (alertManagerName) {
+    search.append(ALERTMANAGER_NAME_QUERY_KEY, alertManagerName);
+  }
+  return `${path}?${search.toString()}`;
 }
 
-export function makeSilenceLink(alertmanagerSourceName: string, rule: CombinedRule) {
-  return (
-    `${config.appSubUrl}/alerting/silence/new?alertmanager=${alertmanagerSourceName}` +
-    `&matchers=alertname=${rule.name},${Object.entries(rule.labels)
-      .map(([key, value]) => encodeURIComponent(`${key}=${value}`))
-      .join(',')}`
-  );
+export function makeRuleBasedSilenceLink(alertManagerSourceName: string, rule: CombinedRule) {
+  const labels: Labels = {
+    alertname: rule.name,
+    ...rule.labels,
+  };
+
+  return makeLabelBasedSilenceLink(alertManagerSourceName, labels);
+}
+
+export function makeLabelBasedSilenceLink(alertManagerSourceName: string, labels: Labels) {
+  const silenceUrlParams = new URLSearchParams();
+  silenceUrlParams.append('alertmanager', alertManagerSourceName);
+
+  const matcherParams = getMatcherQueryParams(labels);
+  matcherParams.forEach((value, key) => silenceUrlParams.append(key, value));
+
+  return `${config.appSubUrl}/alerting/silence/new?${silenceUrlParams.toString()}`;
 }
 
 // keep retrying fn if it's error passes shouldRetry(error) and timeout has not elapsed yet
@@ -102,7 +130,10 @@ const alertStateSortScore = {
 export function sortAlerts(sortOrder: SortOrder, alerts: Alert[]): Alert[] {
   // Make sure to handle tie-breaks because API returns alert instances in random order every time
   if (sortOrder === SortOrder.Importance) {
-    return sortBy(alerts, (alert) => [alertStateSortScore[alert.state], alertInstanceKey(alert).toLocaleLowerCase()]);
+    return sortBy(alerts, (alert) => [
+      alertStateSortScore[mapStateWithReasonToBaseState(alert.state)],
+      alertInstanceKey(alert).toLocaleLowerCase(),
+    ]);
   } else if (sortOrder === SortOrder.TimeAsc) {
     return sortBy(alerts, (alert) => [
       new Date(alert.activeAt) || new Date(),

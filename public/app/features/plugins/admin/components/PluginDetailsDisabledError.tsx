@@ -1,8 +1,10 @@
 import React, { ReactElement } from 'react';
+
 import { PluginErrorCode } from '@grafana/data';
-import { Alert } from '@grafana/ui';
-import { CatalogPlugin } from '../types';
 import { selectors } from '@grafana/e2e-selectors';
+import { Alert } from '@grafana/ui';
+
+import { CatalogPlugin } from '../types';
 
 type Props = {
   className?: string;

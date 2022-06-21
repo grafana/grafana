@@ -8,7 +8,6 @@ exports[`Render should disable access key id field 1`] = `
       Object {
         "access": "proxy",
         "basicAuth": false,
-        "basicAuthPassword": "",
         "basicAuthUser": "",
         "database": "",
         "id": 1,
@@ -24,7 +23,6 @@ exports[`Render should disable access key id field 1`] = `
         },
         "name": "CloudWatch",
         "orgId": 1,
-        "password": "",
         "readOnly": false,
         "secureJsonData": Object {
           "accessKey": "",
@@ -99,7 +97,6 @@ exports[`Render should render component 1`] = `
       Object {
         "access": "proxy",
         "basicAuth": false,
-        "basicAuthPassword": "",
         "basicAuthUser": "",
         "database": "",
         "id": 1,
@@ -115,7 +112,6 @@ exports[`Render should render component 1`] = `
         },
         "name": "CloudWatch",
         "orgId": 1,
-        "password": "",
         "readOnly": false,
         "secureJsonData": Object {
           "accessKey": "",
@@ -190,7 +186,6 @@ exports[`Render should show access key and secret access key fields 1`] = `
       Object {
         "access": "proxy",
         "basicAuth": false,
-        "basicAuthPassword": "",
         "basicAuthUser": "",
         "database": "",
         "id": 1,
@@ -206,7 +201,6 @@ exports[`Render should show access key and secret access key fields 1`] = `
         },
         "name": "CloudWatch",
         "orgId": 1,
-        "password": "",
         "readOnly": false,
         "secureJsonData": Object {
           "accessKey": "",
@@ -281,7 +275,6 @@ exports[`Render should show arn role field 1`] = `
       Object {
         "access": "proxy",
         "basicAuth": false,
-        "basicAuthPassword": "",
         "basicAuthUser": "",
         "database": "",
         "id": 1,
@@ -297,7 +290,6 @@ exports[`Render should show arn role field 1`] = `
         },
         "name": "CloudWatch",
         "orgId": 1,
-        "password": "",
         "readOnly": false,
         "secureJsonData": Object {
           "accessKey": "",
@@ -372,7 +364,6 @@ exports[`Render should show credentials profile name field 1`] = `
       Object {
         "access": "proxy",
         "basicAuth": false,
-        "basicAuthPassword": "",
         "basicAuthUser": "",
         "database": "",
         "id": 1,
@@ -388,7 +379,6 @@ exports[`Render should show credentials profile name field 1`] = `
         },
         "name": "CloudWatch",
         "orgId": 1,
-        "password": "",
         "readOnly": false,
         "secureJsonData": Object {
           "accessKey": "",

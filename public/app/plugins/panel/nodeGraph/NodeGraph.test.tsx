@@ -1,6 +1,7 @@
-import React from 'react';
 import { render, screen, fireEvent, waitFor, getByText } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
+
 import { NodeGraph } from './NodeGraph';
 import { makeEdgesDataFrame, makeNodesDataFrame } from './utils';
 
@@ -14,19 +15,26 @@ jest.mock('react-use/lib/useMeasure', () => {
 });
 
 describe('NodeGraph', () => {
-  it('doesnt fail without any data', async () => {
+  const origError = console.error;
+  const consoleErrorMock = jest.fn();
+  afterEach(() => (console.error = origError));
+  beforeEach(() => (console.error = consoleErrorMock));
+
+  it('shows no data message without any data', async () => {
     render(<NodeGraph dataFrames={[]} getLinks={() => []} />);
+
+    await screen.findByText('No data');
   });
 
   it('can zoom in and out', async () => {
-    render(<NodeGraph dataFrames={[]} getLinks={() => []} />);
+    render(<NodeGraph dataFrames={[makeNodesDataFrame(2), makeEdgesDataFrame([[0, 1]])]} getLinks={() => []} />);
     const zoomIn = await screen.findByTitle(/Zoom in/);
     const zoomOut = await screen.findByTitle(/Zoom out/);
 
     expect(getScale()).toBe(1);
-    userEvent.click(zoomIn);
+    await userEvent.click(zoomIn);
     expect(getScale()).toBe(1.5);
-    userEvent.click(zoomOut);
+    await userEvent.click(zoomOut);
     expect(getScale()).toBe(1);
   });
 
@@ -76,13 +84,11 @@ describe('NodeGraph', () => {
       />
     );
     const node = await screen.findByLabelText(/Node: service:0/);
-    // This shows warning because there is no position for the click. We cannot add any because we use pageX/Y in the
-    // context menu which is experimental (but supported) property and userEvents does not seem to support that
-    userEvent.click(node);
+    await userEvent.click(node);
     await screen.findByText(/Node traces/);
 
     const edge = await screen.findByLabelText(/Edge from/);
-    userEvent.click(edge);
+    await userEvent.click(edge);
     await screen.findByText(/Edge traces/);
   });
 
@@ -171,7 +177,7 @@ describe('NodeGraph', () => {
     expect(node).toBeInTheDocument();
 
     const marker = await screen.findByLabelText(/Hidden nodes marker: 3/);
-    userEvent.click(marker);
+    await userEvent.click(marker);
 
     expect(screen.queryByLabelText(/Node: service:0/)).not.toBeInTheDocument();
     expect(screen.getByLabelText(/Node: service:4/)).toBeInTheDocument();
@@ -196,7 +202,7 @@ describe('NodeGraph', () => {
     );
 
     const button = await screen.findByTitle(/Grid layout/);
-    userEvent.click(button);
+    await userEvent.click(button);
 
     await expectNodePositionCloseTo('service:0', { x: -60, y: -60 });
     await expectNodePositionCloseTo('service:1', { x: 60, y: -60 });

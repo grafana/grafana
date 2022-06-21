@@ -1,9 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { sortBy } from 'lodash';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Button } from '@grafana/ui';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
+import { getBackendSrv } from 'app/core/services/backend_srv';
+
 import { AddPermission } from './AddPermission';
 import { PermissionList } from './PermissionList';
 import { PermissionTarget, ResourcePermission, SetPermission, Description } from './types';
@@ -19,15 +20,26 @@ const INITIAL_DESCRIPTION: Description = {
   },
 };
 
-export type Props = {
-  resource: string;
-  resourceId: number;
+type ResourceId = string | number;
+type Type = 'users' | 'teams' | 'builtInRoles';
 
-  canListUsers: boolean;
+export type Props = {
+  title?: string;
+  buttonLabel?: string;
+  addPermissionTitle?: string;
+  resource: string;
+  resourceId: ResourceId;
   canSetPermissions: boolean;
 };
 
-export const Permissions = ({ resource, resourceId, canListUsers, canSetPermissions }: Props) => {
+export const Permissions = ({
+  title = 'Permissions',
+  buttonLabel = 'Add a permission',
+  resource,
+  resourceId,
+  canSetPermissions,
+  addPermissionTitle,
+}: Props) => {
   const [isAdding, setIsAdding] = useState(false);
   const [items, setItems] = useState<ResourcePermission[]>([]);
   const [desc, setDesc] = useState(INITIAL_DESCRIPTION);
@@ -114,11 +126,11 @@ export const Permissions = ({ resource, resourceId, canListUsers, canSetPermissi
   return (
     <div>
       <div className="page-action-bar">
-        <h3 className="page-sub-heading">Permissions</h3>
+        <h3 className="page-sub-heading">{title}</h3>
         <div className="page-action-bar__spacer" />
         {canSetPermissions && (
           <Button variant={'primary'} key="add-permission" onClick={() => setIsAdding(true)}>
-            Add a permission
+            {buttonLabel}
           </Button>
         )}
       </div>
@@ -126,36 +138,36 @@ export const Permissions = ({ resource, resourceId, canListUsers, canSetPermissi
       <div>
         <SlideDown in={isAdding}>
           <AddPermission
+            title={addPermissionTitle}
             onAdd={onAdd}
             permissions={desc.permissions}
             assignments={desc.assignments}
-            canListUsers={canListUsers}
             onCancel={() => setIsAdding(false)}
           />
         </SlideDown>
         <PermissionList
-          title="Roles"
+          title="Role"
           items={builtInRoles}
           permissionLevels={desc.permissions}
           onChange={onChange}
           onRemove={onRemove}
-          canRemove={canSetPermissions}
+          canSet={canSetPermissions}
         />
         <PermissionList
-          title="Users"
+          title="User"
           items={users}
           permissionLevels={desc.permissions}
           onChange={onChange}
           onRemove={onRemove}
-          canRemove={canSetPermissions}
+          canSet={canSetPermissions}
         />
         <PermissionList
-          title="Teams"
+          title="Team"
           items={teams}
           permissionLevels={desc.permissions}
           onChange={onChange}
           onRemove={onRemove}
-          canRemove={canSetPermissions}
+          canSet={canSetPermissions}
         />
       </div>
     </div>
@@ -171,23 +183,23 @@ const getDescription = async (resource: string): Promise<Description> => {
   }
 };
 
-const getPermissions = (resource: string, datasourceId: number): Promise<ResourcePermission[]> =>
-  getBackendSrv().get(`/api/access-control/${resource}/${datasourceId}`);
+const getPermissions = (resource: string, resourceId: ResourceId): Promise<ResourcePermission[]> =>
+  getBackendSrv().get(`/api/access-control/${resource}/${resourceId}`);
 
-const setUserPermission = (resource: string, resourceId: number, userId: number, permission: string) =>
+const setUserPermission = (resource: string, resourceId: ResourceId, userId: number, permission: string) =>
   setPermission(resource, resourceId, 'users', userId, permission);
 
-const setTeamPermission = (resource: string, resourceId: number, teamId: number, permission: string) =>
+const setTeamPermission = (resource: string, resourceId: ResourceId, teamId: number, permission: string) =>
   setPermission(resource, resourceId, 'teams', teamId, permission);
 
-const setBuiltInRolePermission = (resource: string, resourceId: number, builtInRole: string, permission: string) =>
+const setBuiltInRolePermission = (resource: string, resourceId: ResourceId, builtInRole: string, permission: string) =>
   setPermission(resource, resourceId, 'builtInRoles', builtInRole, permission);
 
 const setPermission = (
   resource: string,
-  resourceId: number,
-  type: 'users' | 'teams' | 'builtInRoles',
+  resourceId: ResourceId,
+  type: Type,
   typeId: number | string,
   permission: string
 ): Promise<void> =>
-  getBackendSrv().post(`/api/access-control/${resource}/${resourceId}/${type}/${typeId}/`, { permission });
+  getBackendSrv().post(`/api/access-control/${resource}/${resourceId}/${type}/${typeId}`, { permission });

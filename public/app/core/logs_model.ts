@@ -1,6 +1,5 @@
 import { size } from 'lodash';
-import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
-import { ansicolor, colors } from '@grafana/ui';
+import { Observable } from 'rxjs';
 
 import {
   AbsoluteTimeRange,
@@ -9,7 +8,6 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   DataSourceApi,
-  dateTime,
   dateTimeFormat,
   dateTimeFormatTimeAgo,
   FieldCache,
@@ -36,10 +34,12 @@ import {
   textUtil,
   TimeRange,
   toDataFrame,
+  toUtc,
 } from '@grafana/data';
-import { getThemeColor } from 'app/core/utils/colors';
 import { SIPrefix } from '@grafana/data/src/valueFormats/symbolFormatters';
-import { Observable, throwError, timeout } from 'rxjs';
+import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
+import { ansicolor, colors } from '@grafana/ui';
+import { getThemeColor } from 'app/core/utils/colors';
 
 export const LIMIT_LABEL = 'Line limit';
 export const COMMON_LABELS = 'Common labels';
@@ -303,9 +303,37 @@ interface LogFields {
 
   timeField: FieldWithIndex;
   stringField: FieldWithIndex;
+  labelsField?: FieldWithIndex;
   timeNanosecondField?: FieldWithIndex;
   logLevelField?: FieldWithIndex;
   idField?: FieldWithIndex;
+}
+
+function getAllLabels(fields: LogFields): Labels[] {
+  // there are two types of dataframes we handle:
+  // 1. labels are in a separate field (more efficient when labels change by every log-row)
+  // 2. labels are in in the string-field's `.labels` attribute
+
+  const { stringField, labelsField } = fields;
+
+  if (labelsField !== undefined) {
+    return labelsField.values.toArray();
+  } else {
+    return [stringField.labels ?? {}];
+  }
+}
+
+function getLabelsForFrameRow(fields: LogFields, index: number): Labels {
+  // there are two types of dataframes we handle.
+  // either labels-on-the-string-field, or labels-in-the-labels-field
+
+  const { stringField, labelsField } = fields;
+
+  if (labelsField !== undefined) {
+    return labelsField.values.get(index);
+  } else {
+    return stringField.labels ?? {};
+  }
 }
 
 /**
@@ -316,7 +344,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   if (logSeries.length === 0) {
     return undefined;
   }
-  const allLabels: Labels[] = [];
+  const allLabels: Labels[][] = [];
 
   // Find the fields we care about and collect all labels
   let allSeries: LogFields[] = [];
@@ -326,48 +354,49 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   const seriesWithFields = logSeries.filter((series) => series.fields.length);
 
   if (seriesWithFields.length) {
-    allSeries = seriesWithFields.map((series) => {
+    seriesWithFields.forEach((series) => {
       const fieldCache = new FieldCache(series);
       const stringField = fieldCache.getFirstFieldOfType(FieldType.string);
+      const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
+      // NOTE: this is experimental, please do not use in your code.
+      // we will get this custom-frame-type into the "real" frame-type list soon,
+      // but the name might change, so please do not use it until then.
+      const labelsField =
+        series.meta?.custom?.frameType === 'LabeledTimeValues' ? fieldCache.getFieldByName('labels') : undefined;
 
-      if (stringField?.labels) {
-        allLabels.push(stringField.labels);
+      if (stringField !== undefined && timeField !== undefined) {
+        const info = {
+          series,
+          timeField,
+          labelsField,
+          timeNanosecondField: fieldCache.getFieldByName('tsNs'),
+          stringField,
+          logLevelField: fieldCache.getFieldByName('level'),
+          idField: getIdField(fieldCache),
+        };
+
+        allSeries.push(info);
+
+        const labels = getAllLabels(info);
+        if (labels.length > 0) {
+          allLabels.push(labels);
+        }
       }
-
-      return {
-        series,
-        timeField: fieldCache.getFirstFieldOfType(FieldType.time),
-        timeNanosecondField: fieldCache.hasFieldWithNameAndType('tsNs', FieldType.time)
-          ? fieldCache.getFieldByName('tsNs')
-          : undefined,
-        stringField,
-        logLevelField: fieldCache.getFieldByName('level'),
-        idField: getIdField(fieldCache),
-      } as LogFields;
     });
   }
 
-  const commonLabels = allLabels.length > 0 ? findCommonLabels(allLabels) : {};
+  const flatAllLabels = allLabels.flat();
+  const commonLabels = flatAllLabels.length > 0 ? findCommonLabels(flatAllLabels) : {};
 
   const rows: LogRowModel[] = [];
   let hasUniqueLabels = false;
 
   for (const info of allSeries) {
     const { timeField, timeNanosecondField, stringField, logLevelField, idField, series } = info;
-    const labels = stringField.labels;
-    const uniqueLabels = findUniqueLabels(labels, commonLabels);
-    if (Object.keys(uniqueLabels).length > 0) {
-      hasUniqueLabels = true;
-    }
-
-    let seriesLogLevel: LogLevel | undefined = undefined;
-    if (labels && Object.keys(labels).indexOf('level') !== -1) {
-      seriesLogLevel = getLogLevelFromKey(labels['level']);
-    }
 
     for (let j = 0; j < series.length; j++) {
       const ts = timeField.values.get(j);
-      const time = dateTime(ts);
+      const time = toUtc(ts);
       const tsNs = timeNanosecondField ? timeNanosecondField.values.get(j) : undefined;
       const timeEpochNs = tsNs ? tsNs : time.valueOf() + '000000';
 
@@ -383,14 +412,20 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
       const searchWords = series.meta && series.meta.searchWords ? series.meta.searchWords : [];
       const entry = hasAnsi ? ansicolor.strip(message) : message;
 
+      const labels = getLabelsForFrameRow(info, j);
+      const uniqueLabels = findUniqueLabels(labels, commonLabels);
+      if (Object.keys(uniqueLabels).length > 0) {
+        hasUniqueLabels = true;
+      }
+
       let logLevel = LogLevel.unknown;
-      if (logLevelField && logLevelField.values.get(j)) {
-        logLevel = getLogLevelFromKey(logLevelField.values.get(j));
-      } else if (seriesLogLevel) {
-        logLevel = seriesLogLevel;
+      const logLevelKey = (logLevelField && logLevelField.values.get(j)) || (labels && labels['level']);
+      if (logLevelKey) {
+        logLevel = getLogLevelFromKey(logLevelKey);
       } else {
         logLevel = getLogLevel(entry);
       }
+
       rows.push({
         entryFieldIndex: stringField.index,
         rowIndex: j,
@@ -407,7 +442,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
         searchWords,
         entry,
         raw: message,
-        labels: stringField.labels || {},
+        labels: labels || {},
         uid: idField ? idField.values.get(j) : j.toString(),
       });
     }
@@ -617,10 +652,7 @@ function aggregateFields(dataFrames: DataFrame[], config: FieldConfig): DataFram
   return aggregatedDataFrame;
 }
 
-const LOGS_VOLUME_QUERY_DEFAULT_TIMEOUT = 60000;
-
 type LogsVolumeQueryOptions<T extends DataQuery> = {
-  timeout?: number;
   extractLevel: (dataFrame: DataFrame) => LogLevel;
   targets: T[];
   range: TimeRange;
@@ -651,43 +683,46 @@ export function queryLogsVolume<T extends DataQuery>(
       data: [],
     });
 
-    const subscription = (datasource.query(logsVolumeRequest) as Observable<DataQueryResponse>)
-      .pipe(
-        timeout({
-          each: options.timeout || LOGS_VOLUME_QUERY_DEFAULT_TIMEOUT,
-          with: () => throwError(new Error('Request timed-out. Please make your query more specific and try again.')),
-        })
-      )
-      .subscribe({
-        complete: () => {
-          const aggregatedLogsVolume = aggregateRawLogsVolume(rawLogsVolume, options.extractLevel);
-          if (aggregatedLogsVolume[0]) {
-            aggregatedLogsVolume[0].meta = {
-              custom: {
-                targets: options.targets,
-                absoluteRange: { from: options.range.from.valueOf(), to: options.range.to.valueOf() },
-              },
-            };
-          }
-          observer.next({
-            state: LoadingState.Done,
-            error: undefined,
-            data: aggregatedLogsVolume,
-          });
-          observer.complete();
-        },
-        next: (dataQueryResponse: DataQueryResponse) => {
-          rawLogsVolume = rawLogsVolume.concat(dataQueryResponse.data.map(toDataFrame));
-        },
-        error: (error) => {
+    const subscription = (datasource.query(logsVolumeRequest) as Observable<DataQueryResponse>).subscribe({
+      complete: () => {
+        const aggregatedLogsVolume = aggregateRawLogsVolume(rawLogsVolume, options.extractLevel);
+        if (aggregatedLogsVolume[0]) {
+          aggregatedLogsVolume[0].meta = {
+            custom: {
+              targets: options.targets,
+              absoluteRange: { from: options.range.from.valueOf(), to: options.range.to.valueOf() },
+            },
+          };
+        }
+        observer.next({
+          state: LoadingState.Done,
+          error: undefined,
+          data: aggregatedLogsVolume,
+        });
+        observer.complete();
+      },
+      next: (dataQueryResponse: DataQueryResponse) => {
+        const { error } = dataQueryResponse;
+        if (error !== undefined) {
           observer.next({
             state: LoadingState.Error,
-            error: error,
+            error,
             data: [],
           });
           observer.error(error);
-        },
-      });
+        } else {
+          rawLogsVolume = rawLogsVolume.concat(dataQueryResponse.data.map(toDataFrame));
+        }
+      },
+      error: (error) => {
+        observer.next({
+          state: LoadingState.Error,
+          error: error,
+          data: [],
+        });
+        observer.error(error);
+      },
+    });
     return () => {
       subscription?.unsubscribe();
     };

@@ -2,12 +2,11 @@ package secrets
 
 import (
 	"context"
+	"fmt"
+	"strings"
+	"time"
 
 	"xorm.io/xorm"
-)
-
-const (
-	EnvelopeEncryptionFeatureToggle = "envelopeEncryption"
 )
 
 // Service is an envelope encryption service in charge of encrypting/decrypting secrets.
@@ -26,19 +25,47 @@ type Service interface {
 	DecryptJsonData(ctx context.Context, sjd map[string][]byte) (map[string]string, error)
 
 	GetDecryptedValue(ctx context.Context, sjd map[string][]byte, key, fallback string) string
+
+	RotateDataKeys(ctx context.Context) error
+	ReEncryptDataKeys(ctx context.Context) error
 }
 
 // Store defines methods to interact with secrets storage
 type Store interface {
-	GetDataKey(ctx context.Context, name string) (*DataKey, error)
+	GetDataKey(ctx context.Context, id string) (*DataKey, error)
+	GetCurrentDataKey(ctx context.Context, label string) (*DataKey, error)
 	GetAllDataKeys(ctx context.Context) ([]*DataKey, error)
-	CreateDataKey(ctx context.Context, dataKey DataKey) error
-	CreateDataKeyWithDBSession(ctx context.Context, dataKey DataKey, sess *xorm.Session) error
-	DeleteDataKey(ctx context.Context, name string) error
+	CreateDataKey(ctx context.Context, dataKey *DataKey) error
+	CreateDataKeyWithDBSession(ctx context.Context, dataKey *DataKey, sess *xorm.Session) error
+	DisableDataKeys(ctx context.Context) error
+	DeleteDataKey(ctx context.Context, id string) error
+	ReEncryptDataKeys(ctx context.Context, providers map[ProviderID]Provider, currProvider ProviderID) error
 }
 
 // Provider is a key encryption key provider for envelope encryption
 type Provider interface {
 	Encrypt(ctx context.Context, blob []byte) ([]byte, error)
 	Decrypt(ctx context.Context, blob []byte) ([]byte, error)
+}
+
+type ProviderID string
+
+func (id ProviderID) Kind() (string, error) {
+	idStr := string(id)
+
+	parts := strings.SplitN(idStr, ".", 2)
+	if len(parts) != 2 {
+		return "", fmt.Errorf("malformatted provider identifier %s: expected format <provider>.<keyName>", idStr)
+	}
+
+	return parts[0], nil
+}
+
+func KeyLabel(scope string, providerID ProviderID) string {
+	return fmt.Sprintf("%s/%s@%s", time.Now().Format("2006-01-02"), scope, providerID)
+}
+
+// BackgroundProvider should be implemented for a provider that has a task that needs to be run in the background.
+type BackgroundProvider interface {
+	Run(ctx context.Context) error
 }

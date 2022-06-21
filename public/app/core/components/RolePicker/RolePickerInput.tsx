@@ -1,16 +1,21 @@
-import React, { FormEvent, HTMLProps, MutableRefObject, useEffect, useRef } from 'react';
 import { css, cx } from '@emotion/css';
-import { useStyles2, getInputStyles, sharedInputStyle, styleMixins, Tooltip, Icon } from '@grafana/ui';
+import React, { FormEvent, HTMLProps, useEffect, useRef } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
-import { ValueContainer } from './ValueContainer';
+import { useStyles2, getInputStyles, sharedInputStyle, styleMixins, Tooltip, Icon } from '@grafana/ui';
+
 import { Role } from '../../../types';
+
+import { ValueContainer } from './ValueContainer';
+import { ROLE_PICKER_WIDTH } from './constants';
 
 const stopPropagation = (event: React.MouseEvent<HTMLDivElement>) => event.stopPropagation();
 
 interface InputProps extends HTMLProps<HTMLInputElement> {
   appliedRoles: Role[];
-  builtInRole: string;
+  builtInRole?: string;
   query: string;
+  showBuiltInRole?: boolean;
   isFocused?: boolean;
   disabled?: boolean;
   onQueryChange: (query?: string) => void;
@@ -24,6 +29,7 @@ export const RolePickerInput = ({
   disabled,
   isFocused,
   query,
+  showBuiltInRole,
   onOpen,
   onClose,
   onQueryChange,
@@ -34,7 +40,7 @@ export const RolePickerInput = ({
 
   useEffect(() => {
     if (isFocused) {
-      (inputRef as MutableRefObject<HTMLInputElement>).current?.focus();
+      inputRef.current?.focus();
     }
   });
 
@@ -46,27 +52,13 @@ export const RolePickerInput = ({
   const numberOfRoles = appliedRoles.length;
 
   return !isFocused ? (
-    <div className={styles.selectedRoles} onMouseDown={onOpen}>
-      <ValueContainer>{builtInRole}</ValueContainer>
-      {!!numberOfRoles && (
-        <Tooltip
-          content={
-            <div className={styles.tooltip}>
-              {appliedRoles?.map((role) => (
-                <p key={role.uid}>{role.displayName}</p>
-              ))}
-            </div>
-          }
-        >
-          <div>
-            <ValueContainer>{`+${numberOfRoles} role${numberOfRoles > 1 ? 's' : ''}`}</ValueContainer>
-          </div>
-        </Tooltip>
-      )}
+    <div className={cx(styles.wrapper, styles.selectedRoles)} onMouseDown={onOpen}>
+      {showBuiltInRole && <ValueContainer>{builtInRole}</ValueContainer>}
+      <RolesLabel appliedRoles={appliedRoles} numberOfRoles={numberOfRoles} showBuiltInRole={showBuiltInRole} />
     </div>
   ) : (
     <div className={styles.wrapper}>
-      <ValueContainer>{builtInRole}</ValueContainer>
+      {showBuiltInRole && <ValueContainer>{builtInRole}</ValueContainer>}
       {appliedRoles.map((role) => (
         <ValueContainer key={role.uid}>{role.displayName}</ValueContainer>
       ))}
@@ -92,6 +84,38 @@ export const RolePickerInput = ({
 
 RolePickerInput.displayName = 'RolePickerInput';
 
+interface RolesLabelProps {
+  appliedRoles: Role[];
+  showBuiltInRole?: boolean;
+  numberOfRoles: number;
+}
+
+export const RolesLabel = ({ showBuiltInRole, numberOfRoles, appliedRoles }: RolesLabelProps): JSX.Element => {
+  const styles = useStyles2((theme) => getTooltipStyles(theme));
+
+  return (
+    <>
+      {!!numberOfRoles ? (
+        <Tooltip
+          content={
+            <div className={styles.tooltip}>
+              {appliedRoles?.map((role) => (
+                <p key={role.uid}>{role.displayName}</p>
+              ))}
+            </div>
+          }
+        >
+          <ValueContainer>{`${showBuiltInRole ? '+' : ''}${numberOfRoles} role${
+            numberOfRoles > 1 ? 's' : ''
+          }`}</ValueContainer>
+        </Tooltip>
+      ) : (
+        !showBuiltInRole && <ValueContainer>No roles assigned</ValueContainer>
+      )}
+    </>
+  );
+};
+
 const getRolePickerInputStyles = (
   theme: GrafanaTheme2,
   invalid: boolean,
@@ -111,7 +135,7 @@ const getRolePickerInputStyles = (
         `,
       disabled && styles.inputDisabled,
       css`
-        min-width: 520px;
+        width: ${ROLE_PICKER_WIDTH}px;
         min-height: 32px;
         height: auto;
         flex-direction: row;
@@ -154,3 +178,11 @@ const getRolePickerInputStyles = (
     `,
   };
 };
+
+const getTooltipStyles = (theme: GrafanaTheme2) => ({
+  tooltip: css`
+    p {
+      margin-bottom: ${theme.spacing(0.5)};
+    }
+  `,
+});

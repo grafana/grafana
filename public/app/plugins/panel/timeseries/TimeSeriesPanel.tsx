@@ -1,17 +1,20 @@
 import React, { useMemo } from 'react';
+
 import { Field, PanelProps } from '@grafana/data';
+import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode } from '@grafana/schema';
-import { usePanelContext, TimeSeries, TooltipPlugin, ZoomPlugin } from '@grafana/ui';
+import { usePanelContext, TimeSeries, TooltipPlugin, ZoomPlugin, KeyboardPlugin } from '@grafana/ui';
+import { config } from 'app/core/config';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
+
+import { AnnotationEditorPlugin } from './plugins/AnnotationEditorPlugin';
 import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
 import { ContextMenuPlugin } from './plugins/ContextMenuPlugin';
 import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
+import { OutsideRangePlugin } from './plugins/OutsideRangePlugin';
+import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
 import { TimeSeriesOptions } from './types';
 import { prepareGraphableFields } from './utils';
-import { AnnotationEditorPlugin } from './plugins/AnnotationEditorPlugin';
-import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
-import { config } from 'app/core/config';
-import { PanelDataErrorView } from '@grafana/runtime';
 
 interface TimeSeriesPanelProps extends PanelProps<TimeSeriesOptions> {}
 
@@ -33,10 +36,18 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
     return getFieldLinksForExplore({ field, rowIndex, splitOpenFn: onSplitOpen, range: timeRange });
   };
 
-  const frames = useMemo(() => prepareGraphableFields(data.series, config.theme2), [data]);
+  const frames = useMemo(() => prepareGraphableFields(data.series, config.theme2, timeRange), [data, timeRange]);
 
   if (!frames) {
-    return <PanelDataErrorView panelId={id} data={data} needsTimeField={true} needsNumberField={true} />;
+    return (
+      <PanelDataErrorView
+        panelId={id}
+        fieldConfig={fieldConfig}
+        data={data}
+        needsTimeField={true}
+        needsNumberField={true}
+      />
+    );
   }
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
@@ -54,12 +65,14 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
       {(config, alignedDataFrame) => {
         return (
           <>
+            <KeyboardPlugin config={config} />
             <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
             {options.tooltip.mode === TooltipDisplayMode.None || (
               <TooltipPlugin
                 data={alignedDataFrame}
                 config={config}
                 mode={options.tooltip.mode}
+                sortOrder={options.tooltip.sort}
                 sync={sync}
                 timeZone={timeZone}
               />
@@ -124,6 +137,8 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
                 onThresholdsChange={onThresholdsChange}
               />
             )}
+
+            <OutsideRangePlugin config={config} onChangeTimeRange={onChangeTimeRange} />
           </>
         );
       }}

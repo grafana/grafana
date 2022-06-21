@@ -5,4 +5,7 @@ export interface UserPreferencesDTO {
   weekStart: string;
   homeDashboardId: number;
   theme: string;
+  queryHistory: {
+    homeTab: '' | 'query' | 'starred';
+  };
 }

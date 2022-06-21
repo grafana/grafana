@@ -1,9 +1,12 @@
 import React from 'react';
 // @ts-ignore
 import Drop from 'tether-drop';
-import { GrafanaRouteComponentProps } from './types';
+
 import { locationSearchToObject, navigationLogger, reportPageview } from '@grafana/runtime';
+
 import { keybindingSrv } from '../services/keybindingSrv';
+
+import { GrafanaRouteComponentProps } from './types';
 
 export interface Props extends Omit<GrafanaRouteComponentProps, 'queryParams'> {}
 

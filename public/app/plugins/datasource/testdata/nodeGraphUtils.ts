@@ -6,6 +6,7 @@ import {
   MutableDataFrame,
   NodeGraphDataFrameFieldNames,
 } from '@grafana/data';
+
 import { nodes, edges } from './testData/serviceMapResponse';
 
 export function generateRandomNodes(count = 10) {

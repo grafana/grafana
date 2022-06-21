@@ -1,24 +1,9 @@
-// Libraries
+import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
-// Components
+import { Unsubscribable } from 'rxjs';
+
 import {
-  Button,
-  CustomScrollbar,
-  HorizontalGroup,
-  Icon,
-  InlineFormLabel,
-  Modal,
-  ScrollbarPosition,
-  stylesFactory,
-  Tooltip,
-} from '@grafana/ui';
-import { DataSourcePicker, getDataSourceSrv } from '@grafana/runtime';
-import { QueryEditorRows } from './QueryEditorRows';
-// Services
-import { backendSrv } from 'app/core/services/backend_srv';
-import config from 'app/core/config';
-// Types
-import {
+  CoreApp,
   DataQuery,
   DataSourceApi,
   DataSourceInstanceSettings,
@@ -26,18 +11,23 @@ import {
   LoadingState,
   PanelData,
 } from '@grafana/data';
-import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
-import { addQuery } from 'app/core/utils/query';
-import { Unsubscribable } from 'rxjs';
-import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { selectors } from '@grafana/e2e-selectors';
-import { PanelQueryRunner } from '../state/PanelQueryRunner';
-import { QueryGroupOptionsEditor } from './QueryGroupOptions';
+import { DataSourcePicker, getDataSourceSrv } from '@grafana/runtime';
+import { Button, CustomScrollbar, HorizontalGroup, InlineFormLabel, Modal, stylesFactory } from '@grafana/ui';
+import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
+import config from 'app/core/config';
+import { backendSrv } from 'app/core/services/backend_srv';
+import { addQuery } from 'app/core/utils/query';
+import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { DashboardQueryEditor, isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
-import { css } from '@emotion/css';
 import { QueryGroupOptions } from 'app/types';
-import { GroupActionComponents } from './QueryActionComponent';
+
+import { PanelQueryRunner } from '../state/PanelQueryRunner';
 import { updateQueries } from '../state/updateQueries';
+
+import { GroupActionComponents } from './QueryActionComponent';
+import { QueryEditorRows } from './QueryEditorRows';
+import { QueryGroupOptionsEditor } from './QueryGroupOptions';
 
 interface Props {
   queryRunner: PanelQueryRunner;
@@ -55,10 +45,10 @@ interface State {
   isLoadingHelp: boolean;
   isPickerOpen: boolean;
   isAddingMixed: boolean;
-  scrollTop: number;
   data: PanelData;
   isHelpOpen: boolean;
   defaultDataSource?: DataSourceApi;
+  scrollElement?: HTMLDivElement;
 }
 
 export class QueryGroup extends PureComponent<Props, State> {
@@ -72,7 +62,6 @@ export class QueryGroup extends PureComponent<Props, State> {
     isPickerOpen: false,
     isAddingMixed: false,
     isHelpOpen: false,
-    scrollTop: 0,
     queries: [],
     data: {
       state: LoadingState.NotStarted,
@@ -113,7 +102,11 @@ export class QueryGroup extends PureComponent<Props, State> {
 
   onChangeDataSource = async (newSettings: DataSourceInstanceSettings) => {
     const { dsSettings } = this.state;
-    const queries = updateQueries(newSettings, this.state.queries, dsSettings);
+    const currentDS = dsSettings ? await getDataSourceSrv().get(dsSettings.uid) : undefined;
+    const nextDS = await getDataSourceSrv().get(newSettings.uid);
+
+    // We need to pass in newSettings.uid as well here as that can be a variable expression and we want to store that in the query model not the current ds variable value
+    const queries = await updateQueries(nextDS, newSettings.uid, this.state.queries, currentDS);
 
     const dataSource = await this.dataSourceSrv.get(newSettings.name);
     this.onChange({
@@ -145,6 +138,7 @@ export class QueryGroup extends PureComponent<Props, State> {
     const ds = !dsSettings?.meta.mixed ? dsSettings : defaultDataSource;
 
     return {
+      ...this.state.dataSource?.getDefaultQuery?.(CoreApp.PanelEditor),
       datasource: { uid: ds?.uid, type: ds?.type },
     };
   }
@@ -162,7 +156,11 @@ export class QueryGroup extends PureComponent<Props, State> {
   };
 
   onScrollBottom = () => {
-    this.setState({ scrollTop: 1000 });
+    setTimeout(() => {
+      if (this.state.scrollElement) {
+        this.state.scrollElement.scrollTo({ top: 10000 });
+      }
+    }, 20);
   };
 
   onUpdateAndRun = (options: QueryGroupOptions) => {
@@ -250,7 +248,7 @@ export class QueryGroup extends PureComponent<Props, State> {
 
   onAddMixedQuery = (datasource: any) => {
     this.onAddQuery({ datasource: datasource.name });
-    this.setState({ isAddingMixed: false, scrollTop: this.state.scrollTop + 10000 });
+    this.setState({ isAddingMixed: false });
   };
 
   onMixedPickerBlur = () => {
@@ -261,10 +259,6 @@ export class QueryGroup extends PureComponent<Props, State> {
     const { dsSettings, queries } = this.state;
     this.onQueriesChange(addQuery(queries, query, { type: dsSettings?.type, uid: dsSettings?.uid }));
     this.onScrollBottom();
-  };
-
-  setScrollTop = ({ scrollTop }: ScrollbarPosition) => {
-    this.setState({ scrollTop: scrollTop });
   };
 
   onQueriesChange = (queries: DataQuery[]) => {
@@ -334,29 +328,30 @@ export class QueryGroup extends PureComponent<Props, State> {
           </Button>
         )}
         {config.expressionsEnabled && this.isExpressionsSupported(dsSettings) && (
-          <Tooltip content="Beta feature: queries could stop working in next version" placement="right">
-            <Button
-              icon="plus"
-              onClick={this.onAddExpressionClick}
-              variant="secondary"
-              className={styles.expressionButton}
-            >
-              <span>Expression&nbsp;</span>
-              <Icon name="exclamation-triangle" className="muted" size="sm" />
-            </Button>
-          </Tooltip>
+          <Button
+            icon="plus"
+            onClick={this.onAddExpressionClick}
+            variant="secondary"
+            className={styles.expressionButton}
+          >
+            <span>Expression&nbsp;</span>
+          </Button>
         )}
         {this.renderExtraActions()}
       </HorizontalGroup>
     );
   }
 
+  setScrollRef = (scrollElement: HTMLDivElement): void => {
+    this.setState({ scrollElement });
+  };
+
   render() {
-    const { scrollTop, isHelpOpen, dsSettings } = this.state;
+    const { isHelpOpen, dsSettings } = this.state;
     const styles = getStyles();
 
     return (
-      <CustomScrollbar autoHeightMin="100%" scrollTop={scrollTop} setScrollTop={this.setScrollTop}>
+      <CustomScrollbar autoHeightMin="100%" scrollRefCallback={this.setScrollRef}>
         <div className={styles.innerWrapper}>
           {this.renderTopSection(styles)}
           {dsSettings && (
@@ -383,7 +378,6 @@ const getStyles = stylesFactory(() => {
     innerWrapper: css`
       display: flex;
       flex-direction: column;
-      height: 100%;
       padding: ${theme.spacing.md};
     `,
     dataSourceRow: css`

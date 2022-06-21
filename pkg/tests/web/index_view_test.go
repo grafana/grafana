@@ -18,6 +18,7 @@ func TestIndexView(t *testing.T) {
 		grafDir, cfgPath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 			EnableCSP: true,
 		})
+
 		addr, _ := testinfra.StartGrafana(t, grafDir, cfgPath)
 
 		// nolint:bodyclose

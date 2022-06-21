@@ -1,4 +1,5 @@
 import { Observable, SubscriptionLike, Unsubscribable } from 'rxjs';
+
 import {
   AbsoluteTimeRange,
   DataFrame,
@@ -13,8 +14,9 @@ import {
   TimeRange,
   EventBusExtended,
   DataQueryResponse,
+  ExplorePanelsState,
 } from '@grafana/data';
-import { ExploreGraphStyle } from 'app/core/utils/explore';
+import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistoryTypes';
 
 export enum ExploreId {
   left = 'left',
@@ -42,22 +44,31 @@ export interface ExploreState {
    * Explore state of the right area in split view.
    */
   right?: ExploreItemState;
-  /**
-   * History of all queries
-   */
-  richHistory: RichHistoryQuery[];
 
   /**
-   * True if local storage quota was exceeded when a new item was added. This is to prevent showing
+   * Settings for rich history (note: filters are stored per each pane separately)
+   */
+  richHistorySettings?: RichHistorySettings;
+
+  /**
+   * True if local storage quota was exceeded when a rich history item was added. This is to prevent showing
    * multiple errors when local storage is full.
    */
-  localStorageFull: boolean;
+  richHistoryStorageFull: boolean;
 
   /**
    * True if a warning message of hitting the exceeded number of items has been shown already.
    */
   richHistoryLimitExceededWarningShown: boolean;
+
+  /**
+   * True if a warning message about failed rich history has been shown already in this session.
+   */
+  richHistoryMigrationFailed: boolean;
 }
+
+export const EXPLORE_GRAPH_STYLES = ['lines', 'bars', 'points', 'stacked_lines', 'stacked_bars'] as const;
+export type ExploreGraphStyle = typeof EXPLORE_GRAPH_STYLES[number];
 
 export interface ExploreItemState {
   /**
@@ -142,13 +153,7 @@ export interface ExploreItemState {
 
   querySubscription?: Unsubscribable;
 
-  queryResponse: PanelData;
-
-  /**
-   * Panel Id that is set if we come to explore from a penel. Used so we can get back to it and optionally modify the
-   * query of that panel.
-   */
-  originPanelId?: number | null;
+  queryResponse: ExplorePanelData;
 
   showLogs?: boolean;
   showMetrics?: boolean;
@@ -157,11 +162,18 @@ export interface ExploreItemState {
   showNodeGraph?: boolean;
 
   /**
+   * History of all queries
+   */
+  richHistory: RichHistoryQuery[];
+  richHistorySearchFilters?: RichHistorySearchFilters;
+  richHistoryTotal?: number;
+
+  /**
    * We are using caching to store query responses of queries run from logs navigation.
    * In logs navigation, we do pagination and we don't want our users to unnecessarily run the same queries that they've run just moments before.
    * We are currently caching last 5 query responses.
    */
-  cache: Array<{ key: string; value: PanelData }>;
+  cache: Array<{ key: string; value: ExplorePanelData }>;
 
   // properties below should be more generic if we add more providers
   // see also: DataSourceWithLogsVolumeSupport
@@ -171,6 +183,7 @@ export interface ExploreItemState {
 
   /* explore graph style */
   graphStyle: ExploreGraphStyle;
+  panelsState: ExplorePanelsState;
 }
 
 export interface ExploreUpdateState {
@@ -197,15 +210,14 @@ export interface QueryTransaction {
   scanning?: boolean;
 }
 
-export type RichHistoryQuery = {
-  ts: number;
+export type RichHistoryQuery<T extends DataQuery = DataQuery> = {
+  id: string;
+  createdAt: number;
+  datasourceUid: string;
   datasourceName: string;
-  datasourceId: string;
   starred: boolean;
   comment: string;
-  queries: DataQuery[];
-  sessionName: string;
-  timeRange?: string;
+  queries: T[];
 };
 
 export interface ExplorePanelData extends PanelData {

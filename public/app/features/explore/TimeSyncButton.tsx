@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { Tooltip, ToolbarButton } from '@grafana/ui';
 
 interface TimeSyncButtonProps {

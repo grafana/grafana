@@ -2,144 +2,27 @@ package api
 
 import (
 	"context"
-	"errors"
+	"net/http"
 	"strconv"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins EnabledPlugins) (map[string]plugins.DataSourceDTO, error) {
-	orgDataSources := make([]*models.DataSource, 0)
-
-	if c.OrgId != 0 {
-		query := models.GetDataSourcesQuery{OrgId: c.OrgId, DataSourceLimit: hs.Cfg.DataSourceLimit}
-		err := bus.DispatchCtx(c.Req.Context(), &query)
-
-		if err != nil {
-			return nil, err
-		}
-
-		dsFilterQuery := models.DatasourcesPermissionFilterQuery{
-			User:        c.SignedInUser,
-			Datasources: query.Result,
-		}
-
-		if err := bus.DispatchCtx(c.Req.Context(), &dsFilterQuery); err != nil {
-			if !errors.Is(err, bus.ErrHandlerNotFound) {
-				return nil, err
-			}
-
-			orgDataSources = query.Result
-		} else {
-			orgDataSources = dsFilterQuery.Result
-		}
+func (hs *HTTPServer) GetFrontendSettings(c *models.ReqContext) {
+	settings, err := hs.getFrontendSettingsMap(c)
+	if err != nil {
+		c.JsonApiErr(400, "Failed to get frontend settings", err)
+		return
 	}
 
-	dataSources := make(map[string]plugins.DataSourceDTO)
-
-	for _, ds := range orgDataSources {
-		url := ds.Url
-
-		if ds.Access == models.DS_ACCESS_PROXY {
-			url = "/api/datasources/proxy/" + strconv.FormatInt(ds.Id, 10)
-		}
-
-		dsDTO := plugins.DataSourceDTO{
-			ID:        ds.Id,
-			UID:       ds.Uid,
-			Type:      ds.Type,
-			Name:      ds.Name,
-			URL:       url,
-			IsDefault: ds.IsDefault,
-			Access:    string(ds.Access),
-		}
-
-		plugin, exists := enabledPlugins.Get(plugins.DataSource, ds.Type)
-		if !exists {
-			c.Logger.Error("Could not find plugin definition for data source", "datasource_type", ds.Type)
-			continue
-		}
-		dsDTO.Preload = plugin.Preload
-		dsDTO.Module = plugin.Module
-		dsDTO.PluginMeta = &plugins.PluginMetaDTO{
-			JSONData:  plugin.JSONData,
-			Signature: plugin.Signature,
-			Module:    plugin.Module,
-			BaseURL:   plugin.BaseURL,
-		}
-
-		if ds.JsonData == nil {
-			dsDTO.JSONData = make(map[string]interface{})
-		} else {
-			dsDTO.JSONData = ds.JsonData.MustMap()
-		}
-
-		if ds.Access == models.DS_ACCESS_DIRECT {
-			if ds.BasicAuth {
-				dsDTO.BasicAuth = util.GetBasicAuthHeader(
-					ds.BasicAuthUser,
-					hs.DataSourcesService.DecryptedBasicAuthPassword(ds),
-				)
-			}
-			if ds.WithCredentials {
-				dsDTO.WithCredentials = ds.WithCredentials
-			}
-
-			if ds.Type == models.DS_INFLUXDB_08 {
-				dsDTO.Username = ds.User
-				dsDTO.Password = hs.DataSourcesService.DecryptedPassword(ds)
-				dsDTO.URL = url + "/db/" + ds.Database
-			}
-
-			if ds.Type == models.DS_INFLUXDB {
-				dsDTO.Username = ds.User
-				dsDTO.Password = hs.DataSourcesService.DecryptedPassword(ds)
-				dsDTO.URL = url
-			}
-		}
-
-		if (ds.Type == models.DS_INFLUXDB) || (ds.Type == models.DS_ES) {
-			dsDTO.Database = ds.Database
-		}
-
-		if ds.Type == models.DS_PROMETHEUS {
-			// add unproxied server URL for link to Prometheus web UI
-			ds.JsonData.Set("directUrl", ds.Url)
-		}
-
-		dataSources[ds.Name] = dsDTO
-	}
-
-	// add data sources that are built in (meaning they are not added via data sources page, nor have any entry in
-	// the datasource table)
-	for _, ds := range hs.pluginStore.Plugins(c.Req.Context(), plugins.DataSource) {
-		if ds.BuiltIn {
-			dto := plugins.DataSourceDTO{
-				Type:     string(ds.Type),
-				Name:     ds.Name,
-				JSONData: make(map[string]interface{}),
-				PluginMeta: &plugins.PluginMetaDTO{
-					JSONData:  ds.JSONData,
-					Signature: ds.Signature,
-					Module:    ds.Module,
-					BaseURL:   ds.BaseURL,
-				},
-			}
-			if ds.Name == grafanads.DatasourceName {
-				dto.ID = grafanads.DatasourceID
-				dto.UID = grafanads.DatasourceUID
-			}
-			dataSources[ds.Name] = dto
-		}
-	}
-
-	return dataSources, nil
+	c.JSON(http.StatusOK, settings)
 }
 
 // getFrontendSettingsMap returns a json object with all the settings needed for front end initialisation.
@@ -222,12 +105,18 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"autoAssignOrg":                       setting.AutoAssignOrg,
 		"verifyEmailEnabled":                  setting.VerifyEmailEnabled,
 		"sigV4AuthEnabled":                    setting.SigV4AuthEnabled,
+		"rbacEnabled":                         hs.Cfg.RBACEnabled,
+		"rbacBuiltInRoleAssignmentEnabled":    hs.Cfg.RBACBuiltInRoleAssignmentEnabled,
 		"exploreEnabled":                      setting.ExploreEnabled,
+		"helpEnabled":                         setting.HelpEnabled,
+		"profileEnabled":                      setting.ProfileEnabled,
+		"queryHistoryEnabled":                 hs.Cfg.QueryHistoryEnabled,
 		"googleAnalyticsId":                   setting.GoogleAnalyticsId,
 		"rudderstackWriteKey":                 setting.RudderstackWriteKey,
 		"rudderstackDataPlaneUrl":             setting.RudderstackDataPlaneUrl,
 		"rudderstackSdkUrl":                   setting.RudderstackSdkUrl,
 		"rudderstackConfigUrl":                setting.RudderstackConfigUrl,
+		"feedbackLinksEnabled":                hs.Cfg.FeedbackLinksEnabled,
 		"applicationInsightsConnectionString": hs.Cfg.ApplicationInsightsConnectionString,
 		"applicationInsightsEndpointUrl":      hs.Cfg.ApplicationInsightsEndpointUrl,
 		"disableLoginForm":                    setting.DisableLoginForm,
@@ -238,6 +127,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"externalUserMngLinkUrl":              setting.ExternalUserMngLinkUrl,
 		"externalUserMngLinkName":             setting.ExternalUserMngLinkName,
 		"viewersCanEdit":                      setting.ViewersCanEdit,
+		"angularSupportEnabled":               hs.Cfg.AngularSupportEnabled,
 		"editorsCanAdmin":                     hs.Cfg.EditorsCanAdmin,
 		"disableSanitizeHtml":                 hs.Cfg.DisableSanitizeHtml,
 		"pluginsToPreload":                    pluginsToPreload,
@@ -247,20 +137,18 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"commit":        commit,
 			"buildstamp":    buildstamp,
 			"edition":       hs.License.Edition(),
-			"latestVersion": hs.updateChecker.LatestGrafanaVersion(),
-			"hasUpdate":     hs.updateChecker.GrafanaUpdateAvailable(),
+			"latestVersion": hs.grafanaUpdateChecker.LatestVersion(),
+			"hasUpdate":     hs.grafanaUpdateChecker.UpdateAvailable(),
 			"env":           setting.Env,
-			"isEnterprise":  hs.License.HasValidLicense(),
 		},
 		"licenseInfo": map[string]interface{}{
-			"hasLicense":      hs.License.HasLicense(),
-			"hasValidLicense": hs.License.HasValidLicense(),
 			"expiry":          hs.License.Expiry(),
 			"stateInfo":       hs.License.StateInfo(),
-			"licenseUrl":      hs.License.LicenseURL(hasAccess(accesscontrol.ReqGrafanaAdmin, accesscontrol.LicensingPageReaderAccess)),
+			"licenseUrl":      hs.License.LicenseURL(hasAccess(accesscontrol.ReqGrafanaAdmin, licensing.PageAccess)),
 			"edition":         hs.License.Edition(),
+			"enabledFeatures": hs.License.EnabledFeatures(),
 		},
-		"featureToggles":                   hs.Cfg.FeatureToggles,
+		"featureToggles":                   hs.Features.GetEnabled(c.Req.Context()),
 		"rendererAvailable":                hs.RenderService.IsAvailable(),
 		"rendererVersion":                  hs.RenderService.Version(),
 		"http2Enabled":                     hs.Cfg.Protocol == setting.HTTP2Scheme,
@@ -280,9 +168,16 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"enabled": hs.Cfg.SectionWithEnvOverrides("caching").Key("enabled").MustBool(true),
 		},
 		"recordedQueries": map[string]bool{
-			"enabled": hs.Cfg.SectionWithEnvOverrides("recorded_queries").Key("enabled").MustBool(false),
+			"enabled": hs.Cfg.SectionWithEnvOverrides("recorded_queries").Key("enabled").MustBool(true),
+		},
+		"reporting": map[string]bool{
+			"enabled": hs.Cfg.SectionWithEnvOverrides("reporting").Key("enabled").MustBool(true),
 		},
 		"unifiedAlertingEnabled": hs.Cfg.UnifiedAlerting.Enabled,
+	}
+
+	if hs.ThumbService != nil {
+		jsonObj["dashboardPreviews"] = hs.ThumbService.GetDashboardPreviewsSetupSettings(c)
 	}
 
 	if hs.Cfg.GeomapDefaultBaseLayerConfig != nil {
@@ -293,6 +188,141 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 	}
 
 	return jsonObj, nil
+}
+
+func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins EnabledPlugins) (map[string]plugins.DataSourceDTO, error) {
+	orgDataSources := make([]*models.DataSource, 0)
+
+	if c.OrgId != 0 {
+		query := models.GetDataSourcesQuery{OrgId: c.OrgId, DataSourceLimit: hs.Cfg.DataSourceLimit}
+		err := hs.SQLStore.GetDataSources(c.Req.Context(), &query)
+
+		if err != nil {
+			return nil, err
+		}
+
+		filtered, err := hs.filterDatasourcesByQueryPermission(c.Req.Context(), c.SignedInUser, query.Result)
+		if err != nil {
+			return nil, err
+		}
+
+		orgDataSources = filtered
+	}
+
+	dataSources := make(map[string]plugins.DataSourceDTO)
+
+	for _, ds := range orgDataSources {
+		url := ds.Url
+
+		if ds.Access == models.DS_ACCESS_PROXY {
+			url = "/api/datasources/proxy/" + strconv.FormatInt(ds.Id, 10)
+		}
+
+		dsDTO := plugins.DataSourceDTO{
+			ID:        ds.Id,
+			UID:       ds.Uid,
+			Type:      ds.Type,
+			Name:      ds.Name,
+			URL:       url,
+			IsDefault: ds.IsDefault,
+			Access:    string(ds.Access),
+		}
+
+		plugin, exists := enabledPlugins.Get(plugins.DataSource, ds.Type)
+		if !exists {
+			c.Logger.Error("Could not find plugin definition for data source", "datasource_type", ds.Type)
+			continue
+		}
+		dsDTO.Preload = plugin.Preload
+		dsDTO.Module = plugin.Module
+		dsDTO.PluginMeta = &plugins.PluginMetaDTO{
+			JSONData:  plugin.JSONData,
+			Signature: plugin.Signature,
+			Module:    plugin.Module,
+			BaseURL:   plugin.BaseURL,
+		}
+
+		if ds.JsonData == nil {
+			dsDTO.JSONData = make(map[string]interface{})
+		} else {
+			dsDTO.JSONData = ds.JsonData.MustMap()
+		}
+
+		if ds.Access == models.DS_ACCESS_DIRECT {
+			if ds.BasicAuth {
+				password, err := hs.DataSourcesService.DecryptedBasicAuthPassword(c.Req.Context(), ds)
+				if err != nil {
+					return nil, err
+				}
+
+				dsDTO.BasicAuth = util.GetBasicAuthHeader(
+					ds.BasicAuthUser,
+					password,
+				)
+			}
+			if ds.WithCredentials {
+				dsDTO.WithCredentials = ds.WithCredentials
+			}
+
+			if ds.Type == models.DS_INFLUXDB_08 {
+				password, err := hs.DataSourcesService.DecryptedPassword(c.Req.Context(), ds)
+				if err != nil {
+					return nil, err
+				}
+
+				dsDTO.Username = ds.User
+				dsDTO.Password = password
+				dsDTO.URL = url + "/db/" + ds.Database
+			}
+
+			if ds.Type == models.DS_INFLUXDB {
+				password, err := hs.DataSourcesService.DecryptedPassword(c.Req.Context(), ds)
+				if err != nil {
+					return nil, err
+				}
+
+				dsDTO.Username = ds.User
+				dsDTO.Password = password
+				dsDTO.URL = url
+			}
+		}
+
+		if (ds.Type == models.DS_INFLUXDB) || (ds.Type == models.DS_ES) {
+			dsDTO.Database = ds.Database
+		}
+
+		if ds.Type == models.DS_PROMETHEUS {
+			// add unproxied server URL for link to Prometheus web UI
+			ds.JsonData.Set("directUrl", ds.Url)
+		}
+
+		dataSources[ds.Name] = dsDTO
+	}
+
+	// add data sources that are built in (meaning they are not added via data sources page, nor have any entry in
+	// the datasource table)
+	for _, ds := range hs.pluginStore.Plugins(c.Req.Context(), plugins.DataSource) {
+		if ds.BuiltIn {
+			dto := plugins.DataSourceDTO{
+				Type:     string(ds.Type),
+				Name:     ds.Name,
+				JSONData: make(map[string]interface{}),
+				PluginMeta: &plugins.PluginMetaDTO{
+					JSONData:  ds.JSONData,
+					Signature: ds.Signature,
+					Module:    ds.Module,
+					BaseURL:   ds.BaseURL,
+				},
+			}
+			if ds.Name == grafanads.DatasourceName {
+				dto.ID = grafanads.DatasourceID
+				dto.UID = grafanads.DatasourceUID
+			}
+			dataSources[ds.Name] = dto
+		}
+	}
+
+	return dataSources, nil
 }
 
 func getPanelSort(id string) int {
@@ -334,16 +364,6 @@ func getPanelSort(id string) int {
 		sort = 17
 	}
 	return sort
-}
-
-func (hs *HTTPServer) GetFrontendSettings(c *models.ReqContext) {
-	settings, err := hs.getFrontendSettingsMap(c)
-	if err != nil {
-		c.JsonApiErr(400, "Failed to get frontend settings", err)
-		return
-	}
-
-	c.JSON(200, settings)
 }
 
 // EnabledPlugins represents a mapping from plugin types (panel, data source, etc.) to plugin IDs to plugins
@@ -394,15 +414,15 @@ func (hs *HTTPServer) enabledPlugins(ctx context.Context, orgID int64) (EnabledP
 	return ep, nil
 }
 
-func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[string]*models.PluginSettingInfoDTO, error) {
-	pluginSettings := make(map[string]*models.PluginSettingInfoDTO)
+func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[string]*pluginsettings.DTO, error) {
+	pluginSettings := make(map[string]*pluginsettings.DTO)
 
 	// fill settings from database
-	if pss, err := hs.SQLStore.GetPluginSettings(ctx, orgID); err != nil {
+	if pss, err := hs.PluginSettings.GetPluginSettings(ctx, &pluginsettings.GetArgs{OrgID: orgID}); err != nil {
 		return nil, err
 	} else {
 		for _, ps := range pss {
-			pluginSettings[ps.PluginId] = ps
+			pluginSettings[ps.PluginID] = ps
 		}
 	}
 
@@ -414,9 +434,9 @@ func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[stri
 		}
 
 		// add new setting which is enabled depending on if AutoEnabled: true
-		pluginSetting := &models.PluginSettingInfoDTO{
-			PluginId: plugin.ID,
-			OrgId:    orgID,
+		pluginSetting := &pluginsettings.DTO{
+			PluginID: plugin.ID,
+			OrgID:    orgID,
 			Enabled:  plugin.AutoEnabled,
 			Pinned:   plugin.AutoEnabled,
 		}
@@ -432,9 +452,9 @@ func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[stri
 		}
 
 		// add new setting which is enabled by default
-		pluginSetting := &models.PluginSettingInfoDTO{
-			PluginId: plugin.ID,
-			OrgId:    orgID,
+		pluginSetting := &pluginsettings.DTO{
+			PluginID: plugin.ID,
+			OrgID:    orgID,
 			Enabled:  true,
 		}
 

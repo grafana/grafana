@@ -1,10 +1,12 @@
 package searchusers
 
 import (
+	"net/http"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 type Service interface {
@@ -13,12 +15,12 @@ type Service interface {
 }
 
 type OSSService struct {
-	bus              bus.Bus
+	sqlStore         sqlstore.Store
 	searchUserFilter models.SearchUserFilter
 }
 
-func ProvideUsersService(bus bus.Bus, searchUserFilter models.SearchUserFilter) *OSSService {
-	return &OSSService{bus: bus, searchUserFilter: searchUserFilter}
+func ProvideUsersService(sqlStore sqlstore.Store, searchUserFilter models.SearchUserFilter) *OSSService {
+	return &OSSService{sqlStore: sqlStore, searchUserFilter: searchUserFilter}
 }
 
 func (s *OSSService) SearchUsers(c *models.ReqContext) response.Response {
@@ -27,7 +29,7 @@ func (s *OSSService) SearchUsers(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to fetch users", err)
 	}
 
-	return response.JSON(200, query.Result.Users)
+	return response.JSON(http.StatusOK, query.Result.Users)
 }
 
 func (s *OSSService) SearchUsersWithPaging(c *models.ReqContext) response.Response {
@@ -36,7 +38,7 @@ func (s *OSSService) SearchUsersWithPaging(c *models.ReqContext) response.Respon
 		return response.Error(500, "Failed to fetch users", err)
 	}
 
-	return response.JSON(200, query.Result)
+	return response.JSON(http.StatusOK, query.Result)
 }
 
 func (s *OSSService) SearchUser(c *models.ReqContext) (*models.SearchUsersQuery, error) {
@@ -59,8 +61,15 @@ func (s *OSSService) SearchUser(c *models.ReqContext) (*models.SearchUsersQuery,
 		}
 	}
 
-	query := &models.SearchUsersQuery{Query: searchQuery, Filters: filters, Page: page, Limit: perPage}
-	if err := s.bus.DispatchCtx(c.Req.Context(), query); err != nil {
+	query := &models.SearchUsersQuery{
+		// added SignedInUser to the query, as to only list the users that the user has permission to read
+		SignedInUser: c.SignedInUser,
+		Query:        searchQuery,
+		Filters:      filters,
+		Page:         page,
+		Limit:        perPage,
+	}
+	if err := s.sqlStore.SearchUsers(c.Req.Context(), query); err != nil {
 		return nil, err
 	}
 
@@ -96,6 +105,8 @@ func GetAuthProviderLabel(authModule string) string {
 		return "SAML"
 	case "ldap", "":
 		return "LDAP"
+	case "jwt":
+		return "JWT"
 	default:
 		return "OAuth"
 	}

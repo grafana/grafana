@@ -1,8 +1,10 @@
-import React, { FC, useEffect, useState } from 'react';
 import { cx, css, keyframes } from '@emotion/css';
-import { useStyles2, styleMixins } from '@grafana/ui';
-import { Branding } from '../Branding/Branding';
+import React, { FC, useEffect, useState } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2, styleMixins } from '@grafana/ui';
+
+import { Branding } from '../Branding/Branding';
 import { Footer } from '../Footer/Footer';
 
 interface InnerBoxProps {
@@ -53,7 +55,7 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
 
   return {
     container: css({
-      minHeight: '100vh',
+      minHeight: '100%',
       backgroundPosition: 'center',
       backgroundRepeat: 'no-repeat',
       backgroundColor: bgColor,

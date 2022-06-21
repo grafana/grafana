@@ -1,4 +1,5 @@
 import React, { FormEvent, PropsWithChildren, ReactElement } from 'react';
+
 import { InlineField, Input, PopoverContent } from '@grafana/ui';
 
 interface VariableTextFieldProps {
@@ -6,13 +7,14 @@ interface VariableTextFieldProps {
   name: string;
   placeholder: string;
   onChange: (event: FormEvent<HTMLInputElement>) => void;
-  ariaLabel?: string;
+  testId?: string;
   tooltip?: PopoverContent;
   required?: boolean;
   width?: number;
   labelWidth?: number;
   grow?: boolean;
   onBlur?: (event: FormEvent<HTMLInputElement>) => void;
+  interactive?: boolean;
 }
 
 export function VariableTextField({
@@ -20,16 +22,17 @@ export function VariableTextField({
   name,
   placeholder,
   onChange,
-  ariaLabel,
+  testId,
   width,
   labelWidth,
   required,
   onBlur,
   tooltip,
   grow,
+  interactive,
 }: PropsWithChildren<VariableTextFieldProps>): ReactElement {
   return (
-    <InlineField label={name} labelWidth={labelWidth ?? 12} tooltip={tooltip} grow={grow}>
+    <InlineField interactive={interactive} label={name} labelWidth={labelWidth ?? 12} tooltip={tooltip} grow={grow}>
       <Input
         type="text"
         id={name}
@@ -39,7 +42,7 @@ export function VariableTextField({
         onChange={onChange}
         onBlur={onBlur}
         width={grow ? undefined : width ?? 25}
-        aria-label={ariaLabel}
+        data-testid={testId}
         required={required}
       />
     </InlineField>

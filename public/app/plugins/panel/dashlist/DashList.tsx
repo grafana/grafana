@@ -1,17 +1,21 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { take } from 'lodash';
 import { css, cx } from '@emotion/css';
+import { take } from 'lodash';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useDispatch } from 'react-redux';
 
 import { GrafanaTheme2, InterpolateFunction, PanelProps } from '@grafana/data';
 import { CustomScrollbar, stylesFactory, useStyles2 } from '@grafana/ui';
 import { Icon, IconProps } from '@grafana/ui/src/components/Icon/Icon';
 import { getFocusStyles } from '@grafana/ui/src/themes/mixins';
+import { setStarred } from 'app/core/reducers/navBarTree';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import impressionSrv from 'app/core/services/impression_srv';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { SearchCard } from 'app/features/search/components/SearchCard';
 import { DashboardSearchHit } from 'app/features/search/types';
+
+import { PanelLayout, PanelOptions } from './models.gen';
 import { getStyles } from './styles';
-import { PanelOptions } from './models.gen';
 
 type Dashboard = DashboardSearchHit & { isSearchResult?: boolean; isRecent?: boolean };
 
@@ -80,6 +84,7 @@ async function fetchDashboards(options: PanelOptions, replaceVars: InterpolateFu
 
 export function DashList(props: PanelProps<PanelOptions>) {
   const [dashboards, setDashboards] = useState(new Map<number, Dashboard>());
+  const dispatch = useDispatch();
   useEffect(() => {
     fetchDashboards(props.options, props.replaceVariables).then((dashes) => {
       setDashboards(dashes);
@@ -87,6 +92,7 @@ export function DashList(props: PanelProps<PanelOptions>) {
   }, [props.options, props.replaceVariables, props.renderCounter]);
 
   const toggleDashboardStar = async (e: React.SyntheticEvent, dash: Dashboard) => {
+    const { uid, title, url } = dash;
     e.preventDefault();
     e.stopPropagation();
 
@@ -94,6 +100,7 @@ export function DashList(props: PanelProps<PanelOptions>) {
     const updatedDashboards = new Map(dashboards);
     updatedDashboards.set(dash.id, { ...dash, isStarred });
     setDashboards(updatedDashboards);
+    dispatch(setStarred({ id: uid ?? '', title, url, isStarred }));
   };
 
   const [starredDashboards, recentDashboards, searchedDashboards] = useMemo(() => {
@@ -105,7 +112,7 @@ export function DashList(props: PanelProps<PanelOptions>) {
     ];
   }, [dashboards]);
 
-  const { showStarred, showRecentlyViewed, showHeadings, showSearch } = props.options;
+  const { showStarred, showRecentlyViewed, showHeadings, showSearch, layout } = props.options;
 
   const dashboardGroups: DashboardGroup[] = [
     {
@@ -152,6 +159,16 @@ export function DashList(props: PanelProps<PanelOptions>) {
     </ul>
   );
 
+  const renderPreviews = (dashboards: Dashboard[]) => (
+    <ul className={css.gridContainer}>
+      {dashboards.map((dash) => (
+        <li key={dash.uid}>
+          <SearchCard item={dash} />
+        </li>
+      ))}
+    </ul>
+  );
+
   return (
     <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
       {dashboardGroups.map(
@@ -159,7 +176,7 @@ export function DashList(props: PanelProps<PanelOptions>) {
           show && (
             <div className={css.dashlistSection} key={`dash-group-${i}`}>
               {showHeadings && <h6 className={css.dashlistSectionHeader}>{header}</h6>}
-              {renderList(dashboards)}
+              {layout === PanelLayout.Previews ? renderPreviews(dashboards) : renderList(dashboards)}
             </div>
           )
       )}
@@ -215,7 +232,7 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
       display: 'flex',
       alignSelf: 'center',
       cursor: 'pointer',
-      zIndex: 100,
+      zIndex: 1,
     }),
     checkBox: css({
       appearance: 'none',

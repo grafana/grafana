@@ -1,11 +1,14 @@
-import React, { HTMLProps, useRef, useState } from 'react';
 import { cx, css } from '@emotion/css';
+import React, { HTMLProps, useRef, useState } from 'react';
 import useClickAway from 'react-use/lib/useClickAway';
-import { measureText } from '../../utils/measureText';
-import { useExpandableLabel, SegmentProps } from '.';
-import { getSegmentStyles } from './styles';
-import { InlineLabel } from '../Forms/InlineLabel';
+
 import { useStyles } from '../../themes';
+import { measureText } from '../../utils/measureText';
+import { InlineLabel } from '../Forms/InlineLabel';
+
+import { getSegmentStyles } from './styles';
+
+import { useExpandableLabel, SegmentProps } from '.';
 
 export interface SegmentInputProps<T> extends SegmentProps<T>, Omit<HTMLProps<HTMLInputElement>, 'value' | 'onChange'> {
   value: string | number;

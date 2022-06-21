@@ -1,6 +1,7 @@
+import React, { FC, useEffect, useMemo, useState } from 'react';
+
 import { SelectableValue } from '@grafana/data';
 import { Input, Select } from '@grafana/ui';
-import React, { FC, useEffect, useMemo, useState } from 'react';
 
 interface Props {
   onChange: (value: string) => void;
@@ -37,10 +38,10 @@ export const SelectWithAdd: FC<Props> = ({
     }
   }, [custom]);
 
-  const _options = useMemo((): Array<SelectableValue<string>> => [...options, { value: '__add__', label: addLabel }], [
-    options,
-    addLabel,
-  ]);
+  const _options = useMemo(
+    (): Array<SelectableValue<string>> => [...options, { value: '__add__', label: addLabel }],
+    [options, addLabel]
+  );
 
   if (isCustom) {
     return (
@@ -58,7 +59,6 @@ export const SelectWithAdd: FC<Props> = ({
   } else {
     return (
       <Select
-        menuShouldPortal
         aria-label={ariaLabel}
         width={width}
         options={_options}

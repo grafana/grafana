@@ -1,7 +1,7 @@
 import { each, indexOf, isArray, isString, map as _map } from 'lodash';
 import { lastValueFrom, Observable, of, OperatorFunction, pipe, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-import { getBackendSrv } from '@grafana/runtime';
+
 import {
   DataFrame,
   DataQueryRequest,
@@ -18,10 +18,15 @@ import {
   TimeRange,
   toDataFrame,
 } from '@grafana/data';
-
+import { getBackendSrv } from '@grafana/runtime';
 import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
-import gfunc, { FuncDefs, FuncInstance } from './gfunc';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+import { getRollupNotice, getRuntimeConsolidationNotice } from 'app/plugins/datasource/graphite/meta';
+
+import { getSearchFilterScopedVar } from '../../../features/variables/utils';
+
+import gfunc, { FuncDefs, FuncInstance } from './gfunc';
+import GraphiteQueryModel from './graphite_query';
 // Types
 import {
   GraphiteLokiMapping,
@@ -32,11 +37,8 @@ import {
   GraphiteType,
   MetricTankRequestMeta,
 } from './types';
-import { getRollupNotice, getRuntimeConsolidationNotice } from 'app/plugins/datasource/graphite/meta';
-import { getSearchFilterScopedVar } from '../../../features/variables/utils';
-import { DEFAULT_GRAPHITE_VERSION } from './versions';
 import { reduceError } from './utils';
-import { default as GraphiteQueryModel } from './graphite_query';
+import { DEFAULT_GRAPHITE_VERSION } from './versions';
 
 const GRAPHITE_TAG_COMPARATORS = {
   '=': AbstractLabelOperator.Equal,
@@ -58,7 +60,8 @@ function convertGlobToRegEx(text: string): string {
 
 export class GraphiteDatasource
   extends DataSourceApi<GraphiteQuery, GraphiteOptions, GraphiteQueryImportConfiguration>
-  implements DataSourceWithQueryExportSupport<GraphiteQuery> {
+  implements DataSourceWithQueryExportSupport<GraphiteQuery>
+{
   basicAuth: string;
   url: string;
   name: string;
@@ -327,12 +330,12 @@ export class GraphiteDatasource
     // Graphite metric as annotation
     if (options.annotation.target) {
       const target = this.templateSrv.replace(options.annotation.target, {}, 'glob');
-      const graphiteQuery = ({
+      const graphiteQuery = {
         range: options.range,
         targets: [{ target: target }],
         format: 'json',
         maxDataPoints: 100,
-      } as unknown) as DataQueryRequest<GraphiteQuery>;
+      } as unknown as DataQueryRequest<GraphiteQuery>;
 
       return lastValueFrom(
         this.query(graphiteQuery).pipe(
@@ -416,7 +419,7 @@ export class GraphiteDatasource
   }
 
   targetContainsTemplate(target: GraphiteQuery) {
-    return this.templateSrv.variableExists(target.target ?? '');
+    return this.templateSrv.containsTemplate(target.target ?? '');
   }
 
   translateTime(date: any, roundUp: any, timezone: any) {
@@ -748,26 +751,21 @@ export class GraphiteDatasource
     const httpOptions = {
       method: 'GET',
       url: '/functions',
+      // add responseType because if this is not defined,
+      // backend_srv defaults to json
+      responseType: 'text',
     };
 
     return lastValueFrom(
       this.doGraphiteRequest(httpOptions).pipe(
         map((results: any) => {
-          if (results.status !== 200 || typeof results.data !== 'object') {
-            if (typeof results.data === 'string') {
-              // Fix for a Graphite bug: https://github.com/graphite-project/graphite-web/issues/2609
-              // There is a fix for it https://github.com/graphite-project/graphite-web/pull/2612 but
-              // it was merged to master in July 2020 but it has never been released (the last Graphite
-              // release was 1.1.7 - March 2020). The bug was introduced in Graphite 1.1.7, in versions
-              // 1.1.0 - 1.1.6 /functions endpoint returns a valid JSON
-              const fixedData = JSON.parse(results.data.replace(/"default": ?Infinity/g, '"default": 1e9999'));
-              this.funcDefs = gfunc.parseFuncDefs(fixedData);
-            } else {
-              this.funcDefs = gfunc.getFuncDefs(this.graphiteVersion);
-            }
-          } else {
-            this.funcDefs = gfunc.parseFuncDefs(results.data);
-          }
+          // Fix for a Graphite bug: https://github.com/graphite-project/graphite-web/issues/2609
+          // There is a fix for it https://github.com/graphite-project/graphite-web/pull/2612 but
+          // it was merged to master in July 2020 but it has never been released (the last Graphite
+          // release was 1.1.7 - March 2020). The bug was introduced in Graphite 1.1.7, in versions
+          // 1.1.0 - 1.1.6 /functions endpoint returns a valid JSON
+          const fixedData = JSON.parse(results.data.replace(/"default": ?Infinity/g, '"default": 1e9999'));
+          this.funcDefs = gfunc.parseFuncDefs(fixedData);
           return this.funcDefs;
         }),
         catchError((error: any) => {
@@ -780,7 +778,7 @@ export class GraphiteDatasource
   }
 
   testDatasource() {
-    const query = ({
+    const query = {
       panelId: 3,
       rangeRaw: { from: 'now-1h', to: 'now' },
       range: {
@@ -788,7 +786,7 @@ export class GraphiteDatasource
       },
       targets: [{ target: 'constantLine(100)' }],
       maxDataPoints: 300,
-    } as unknown) as DataQueryRequest<GraphiteQuery>;
+    } as unknown as DataQueryRequest<GraphiteQuery>;
 
     return lastValueFrom(this.query(query)).then(() => ({ status: 'success', message: 'Data source is working' }));
   }

@@ -2,6 +2,8 @@
 
 Grafana uses a _bus_ to pass messages between different parts of the application. All communication over the bus happens synchronously.
 
+> **Deprecated:** The bus has officially been deprecated, however, we're still using the command/query objects paradigms.
+
 There are three types of messages: _events_, _commands_, and _queries_.
 
 ## Events
@@ -109,7 +111,7 @@ ctx := req.Request.Context()
 query := &models.FindDashboardQuery{
     ID: "foo",
 }
-if err := bus.DispatchCtx(ctx, query); err != nil {
+if err := bus.Dispatch(ctx, query); err != nil {
     return err
 }
 // The query now contains a result.

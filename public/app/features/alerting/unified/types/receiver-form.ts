@@ -1,6 +1,8 @@
+import React from 'react';
+
 import { GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanager/types';
 import { CloudNotifierType, NotifierType } from 'app/types';
-import React from 'react';
+
 import { ControlledField } from '../hooks/useControlledFieldArray';
 
 export interface ChannelValues {
@@ -23,6 +25,7 @@ export interface CloudChannelValues extends ChannelValues {
 
 export interface GrafanaChannelValues extends ChannelValues {
   type: NotifierType;
+  provenance?: string;
   disableResolveMessage: boolean;
 }
 

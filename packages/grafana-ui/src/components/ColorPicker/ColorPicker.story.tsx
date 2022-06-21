@@ -1,12 +1,15 @@
-import React from 'react';
-import { Meta, Story } from '@storybook/react';
-import { SeriesColorPicker, ColorPicker } from '@grafana/ui';
 import { action } from '@storybook/addon-actions';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+import { Meta, Story } from '@storybook/react';
+import React from 'react';
+
+import { SeriesColorPicker, ColorPicker } from '@grafana/ui';
+
 import { UseState } from '../../utils/storybook/UseState';
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
-import { ColorPickerProps } from './ColorPickerPopover';
+
 import mdx from './ColorPicker.mdx';
+import { ColorPickerProps } from './ColorPickerPopover';
 
 export default {
   title: 'Pickers and Editors/ColorPicker',

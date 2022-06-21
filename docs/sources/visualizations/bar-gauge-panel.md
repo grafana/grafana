@@ -1,10 +1,16 @@
-+++
-title = "Bar gauge"
-description = "Bar gauge panel options"
-keywords = ["grafana", "bar", "bar gauge"]
-aliases = ["/docs/grafana/latest/features/panels/bar_gauge/", "/docs/grafana/latest/panels/visualizations/bar-gauge-panel/"]
-weight = 200
-+++
+---
+aliases:
+  - /docs/grafana/latest/features/panels/bar_gauge/
+  - /docs/grafana/latest/panels/visualizations/bar-gauge-panel/
+  - /docs/grafana/latest/visualizations/bar-gauge-panel/
+description: Bar gauge panel options
+keywords:
+  - grafana
+  - bar
+  - bar gauge
+title: Bar gauge
+weight: 200
+---
 
 # Bar gauge
 
@@ -26,7 +32,7 @@ Choose how Grafana displays your data.
 
 Show a calculated value based on all rows.
 
-- **Calculation -** Select a reducer function that Grafana will use to reduce many fields to a single value. For a list of available calculations, refer to [List of calculations]({{< relref "../panels/calculations-list.md" >}}).
+- **Calculation -** Select a reducer function that Grafana will use to reduce many fields to a single value. For a list of available calculations, refer to [Calculation types]({{< relref "../panels/calculation-types/" >}}).
 - **Fields -** Select the fields display in the panel.
 
 #### All values
@@ -59,3 +65,15 @@ Choose a display mode.
 ### Show unfilled area
 
 Select this if you want to render the unfilled region of the bars as dark gray. Not applicable to Retro LCD display mode.
+
+### Min width
+
+Limit the minimum width of the bar column in the vertical direction.
+
+Automatically show x-axis scrollbar when there is a large amount of data.
+
+### Min height
+
+Limit the minimum height of the bar row in the horizontal direction.
+
+Automatically show y-axis scrollbar when there is a large amount of data.

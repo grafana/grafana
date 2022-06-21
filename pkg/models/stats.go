@@ -18,6 +18,7 @@ type SystemStats struct {
 	Folders                   int64
 	ProvisionedDashboards     int64
 	AuthTokens                int64
+	APIKeys                   int64 `xorm:"api_keys"`
 	DashboardVersions         int64
 	Annotations               int64
 	AlertRules                int64
@@ -38,6 +39,8 @@ type SystemStats struct {
 	DailyActiveEditors        int64
 	DailyActiveViewers        int64
 	DailyActiveSessions       int64
+	DataKeys                  int64
+	ActiveDataKeys            int64
 }
 
 type DataSourceStats struct {

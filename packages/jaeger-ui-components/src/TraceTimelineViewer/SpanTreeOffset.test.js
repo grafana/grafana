@@ -17,9 +17,11 @@ import React from 'react';
 import IoChevronRight from 'react-icons/lib/io/chevron-right';
 import IoIosArrowDown from 'react-icons/lib/io/ios-arrow-down';
 
-import SpanTreeOffset, { getStyles } from './SpanTreeOffset';
+import { createTheme } from '@grafana/data';
+
 import spanAncestorIdsSpy from '../utils/span-ancestor-ids';
-import { defaultTheme } from '../Theme';
+
+import SpanTreeOffset, { getStyles } from './SpanTreeOffset';
 
 jest.mock('../utils/span-ancestor-ids');
 
@@ -45,7 +47,6 @@ describe('SpanTreeOffset', () => {
     };
     wrapper = shallow(<SpanTreeOffset {...props} />)
       .dive()
-      .dive()
       .dive();
   });
 
@@ -54,15 +55,14 @@ describe('SpanTreeOffset', () => {
       spanAncestorIdsSpy.mockReturnValue([]);
       wrapper = shallow(<SpanTreeOffset {...props} />)
         .dive()
-        .dive()
         .dive();
-      const indentGuides = wrapper.find('[data-test-id="SpanTreeOffset--indentGuide"]');
+      const indentGuides = wrapper.find('[data-testid="SpanTreeOffset--indentGuide"]');
       expect(indentGuides.length).toBe(1);
       expect(indentGuides.prop('data-ancestor-id')).toBe(specialRootID);
     });
 
     it('renders one .SpanTreeOffset--indentGuide per ancestor span, plus one for entire trace', () => {
-      const indentGuides = wrapper.find('[data-test-id="SpanTreeOffset--indentGuide"]');
+      const indentGuides = wrapper.find('[data-testid="SpanTreeOffset--indentGuide"]');
       expect(indentGuides.length).toBe(3);
       expect(indentGuides.at(0).prop('data-ancestor-id')).toBe(specialRootID);
       expect(indentGuides.at(1).prop('data-ancestor-id')).toBe(rootSpanID);
@@ -73,9 +73,8 @@ describe('SpanTreeOffset', () => {
       props.hoverIndentGuideIds = new Set([parentSpanID]);
       wrapper = shallow(<SpanTreeOffset {...props} />)
         .dive()
-        .dive()
         .dive();
-      const styles = getStyles(defaultTheme);
+      const styles = getStyles(createTheme());
       const activeIndentGuide = wrapper.find(`.${styles.indentGuideActive}`);
       expect(activeIndentGuide.length).toBe(1);
       expect(activeIndentGuide.prop('data-ancestor-id')).toBe(parentSpanID);
@@ -141,13 +140,13 @@ describe('SpanTreeOffset', () => {
     });
 
     it('calls props.addHoverIndentGuideId on mouse enter', () => {
-      wrapper.find('[data-test-id="icon-wrapper"]').simulate('mouseenter', {});
+      wrapper.find('[data-testid="icon-wrapper"]').simulate('mouseenter', {});
       expect(props.addHoverIndentGuideId).toHaveBeenCalledTimes(1);
       expect(props.addHoverIndentGuideId).toHaveBeenCalledWith(ownSpanID);
     });
 
     it('calls props.removeHoverIndentGuideId on mouse leave', () => {
-      wrapper.find('[data-test-id="icon-wrapper"]').simulate('mouseleave', {});
+      wrapper.find('[data-testid="icon-wrapper"]').simulate('mouseleave', {});
       expect(props.removeHoverIndentGuideId).toHaveBeenCalledTimes(1);
       expect(props.removeHoverIndentGuideId).toHaveBeenCalledWith(ownSpanID);
     });

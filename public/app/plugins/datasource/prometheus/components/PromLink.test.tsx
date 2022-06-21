@@ -1,8 +1,11 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
+
 import { PanelData } from '@grafana/data';
-import { PromQuery } from '../types';
+
 import { PrometheusDatasource } from '../datasource';
+import { PromQuery } from '../types';
+
 import PromLink from './PromLink';
 
 jest.mock('@grafana/data', () => ({
@@ -41,7 +44,7 @@ const getDataSource = (datasourceOverrides?: Partial<PrometheusDatasource>) => {
     getRateIntervalScopedVariable: jest.fn(() => ({ __rate_interval: { text: '60s', value: '60s' } })),
   };
 
-  return (Object.assign(datasource, datasourceOverrides) as unknown) as PrometheusDatasource;
+  return Object.assign(datasource, datasourceOverrides) as unknown as PrometheusDatasource;
 };
 
 const getDataSourceWithCustomQueryParameters = (datasourceOverrides?: Partial<PrometheusDatasource>) => {
@@ -53,7 +56,7 @@ const getDataSourceWithCustomQueryParameters = (datasourceOverrides?: Partial<Pr
     customQueryParameters: new URLSearchParams('g0.foo=1'),
   };
 
-  return (Object.assign(datasource, datasourceOverrides) as unknown) as PrometheusDatasource;
+  return Object.assign(datasource, datasourceOverrides) as unknown as PrometheusDatasource;
 };
 
 describe('PromLink', () => {

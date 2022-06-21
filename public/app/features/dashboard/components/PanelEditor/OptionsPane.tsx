@@ -1,15 +1,17 @@
-import React from 'react';
-import { GrafanaTheme } from '@grafana/data';
-import { useStyles } from '@grafana/ui';
 import { css } from '@emotion/css';
-import { selectors } from '@grafana/e2e-selectors';
-import { VisualizationButton } from './VisualizationButton';
-import { OptionsPaneOptions } from './OptionsPaneOptions';
+import React from 'react';
 import { useSelector } from 'react-redux';
+
+import { GrafanaTheme } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { useStyles } from '@grafana/ui';
 import { StoreState } from 'app/types';
+
+import { OptionsPaneOptions } from './OptionsPaneOptions';
+import { VisualizationButton } from './VisualizationButton';
 import { VisualizationSelectPane } from './VisualizationSelectPane';
-import { usePanelLatestData } from './usePanelLatestData';
 import { OptionPaneRenderProps } from './types';
+import { usePanelLatestData } from './usePanelLatestData';
 
 export const OptionsPane: React.FC<OptionPaneRenderProps> = ({
   plugin,

@@ -1,12 +1,14 @@
-import { SelectableValue } from '@grafana/data';
 import React from 'react';
 import { ActionMeta as SelectActionMeta, GroupBase, OptionsOrGroups } from 'react-select';
+
+import { SelectableValue } from '@grafana/data';
 
 export type SelectValue<T> = T | SelectableValue<T> | T[] | Array<SelectableValue<T>>;
 export type ActionMeta = SelectActionMeta<{}>;
 export type InputActionMeta = {
   action: 'set-value' | 'input-change' | 'input-blur' | 'menu-close';
 };
+export type LoadOptionsCallback<T> = (options: Array<SelectableValue<T>>) => void;
 
 export interface SelectCommonProps<T> {
   /** Aria label applied to the input field */
@@ -23,6 +25,7 @@ export interface SelectCommonProps<T> {
   defaultValue?: any;
   disabled?: boolean;
   filterOption?: (option: SelectableValue<T>, searchQuery: string) => boolean;
+  formatOptionLabel?: (item: SelectableValue<T>, formatOptionMeta: FormatOptionLabelMeta<T>) => React.ReactNode;
   /** Function for formatting the text that is displayed when creating a new value*/
   formatCreateLabel?: (input: string) => string;
   getOptionLabel?: (item: SelectableValue<T>) => React.ReactNode;
@@ -46,9 +49,7 @@ export interface SelectCommonProps<T> {
   menuPlacement?: 'auto' | 'bottom' | 'top';
   menuPosition?: 'fixed' | 'absolute';
   /**
-   * @deprecated
-   * Setting to true will portal the menu to `document.body`.
-   * This property will soon be removed and portalling will be the default behavior.
+   * Setting to false will prevent the menu from portalling to the body.
    */
   menuShouldPortal?: boolean;
   /** The message to display when no options could be found */
@@ -61,6 +62,7 @@ export interface SelectCommonProps<T> {
   onInputChange?: (value: string, actionMeta: InputActionMeta) => void;
   onKeyDown?: (event: React.KeyboardEvent) => void;
   onOpenMenu?: () => void;
+  onFocus?: () => void;
   openMenuOnFocus?: boolean;
   options?: Array<SelectableValue<T>>;
   placeholder?: string;
@@ -79,13 +81,17 @@ export interface SelectCommonProps<T> {
     value: SelectableValue<T> | null,
     options: OptionsOrGroups<unknown, GroupBase<unknown>>
   ) => boolean;
+  /** Message to display isLoading=true*/
+  loadingMessage?: string;
 }
 
 export interface SelectAsyncProps<T> {
   /** When specified as boolean the loadOptions will execute when component is mounted */
   defaultOptions?: boolean | Array<SelectableValue<T>>;
+
   /** Asynchronously load select options */
-  loadOptions?: (query: string) => Promise<Array<SelectableValue<T>>>;
+  loadOptions?: (query: string, cb?: LoadOptionsCallback<T>) => Promise<Array<SelectableValue<T>>> | void;
+
   /** If cacheOptions is true, then the loaded data will be cached. The cache will remain until cacheOptions changes value. */
   cacheOptions?: boolean;
   /** Message to display when options are loading */
@@ -125,3 +131,5 @@ export interface SelectableOptGroup<T = any> {
 export type SelectOptions<T = any> =
   | SelectableValue<T>
   | Array<SelectableValue<T> | SelectableOptGroup<T> | Array<SelectableOptGroup<T>>>;
+
+export type FormatOptionLabelMeta<T> = { context: string; inputValue: string; selectValue: Array<SelectableValue<T>> };

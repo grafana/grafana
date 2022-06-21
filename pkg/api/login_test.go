@@ -13,10 +13,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login"
@@ -29,8 +31,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func fakeSetIndexViewData(t *testing.T) {
@@ -64,22 +64,6 @@ func getBody(resp *httptest.ResponseRecorder) (string, error) {
 		return "", err
 	}
 	return string(responseData), nil
-}
-
-type FakeLogger struct {
-	log.Logger
-}
-
-func (fl *FakeLogger) Debug(testMessage string, ctx ...interface{}) {
-}
-
-func (fl *FakeLogger) Info(testMessage string, ctx ...interface{}) {
-}
-
-func (fl *FakeLogger) Warn(testMessage string, ctx ...interface{}) {
-}
-
-func (fl *FakeLogger) Error(testMessage string, ctx ...interface{}) {
 }
 
 type redirectCase struct {
@@ -155,7 +139,6 @@ func TestLoginErrorCookieAPIEndpoint(t *testing.T) {
 
 func TestLoginViewRedirect(t *testing.T) {
 	fakeSetIndexViewData(t)
-
 	fakeViewIndex(t)
 	sc := setupScenarioContext(t, "/login")
 	cfg := setting.NewCfg()
@@ -334,7 +317,7 @@ func TestLoginPostRedirect(t *testing.T) {
 	fakeViewIndex(t)
 	sc := setupScenarioContext(t, "/login")
 	hs := &HTTPServer{
-		log:              &FakeLogger{},
+		log:              log.NewNopLogger(),
 		Cfg:              setting.NewCfg(),
 		HooksService:     &hooks.HooksService{},
 		License:          &licensing.OSSLicensingService{},
@@ -348,13 +331,12 @@ func TestLoginPostRedirect(t *testing.T) {
 		return hs.LoginPost(c)
 	})
 
-	bus.AddHandlerCtx("grafana-auth", func(ctx context.Context, query *models.LoginUserQuery) error {
-		query.User = &models.User{
-			Id:    42,
-			Email: "",
-		}
-		return nil
-	})
+	user := &models.User{
+		Id:    42,
+		Email: "",
+	}
+
+	hs.authenticator = &fakeAuthenticator{user, "", nil}
 
 	redirectCases := []redirectCase{
 		{
@@ -441,6 +423,7 @@ func TestLoginPostRedirect(t *testing.T) {
 	for _, c := range redirectCases {
 		hs.Cfg.AppURL = c.appURL
 		hs.Cfg.AppSubURL = c.appSubURL
+
 		t.Run(c.desc, func(t *testing.T) {
 			expCookiePath := "/"
 			if len(hs.Cfg.AppSubURL) > 0 {
@@ -685,12 +668,7 @@ func TestLoginPostRunLokingHook(t *testing.T) {
 
 	for _, c := range testCases {
 		t.Run(c.desc, func(t *testing.T) {
-			bus.AddHandlerCtx("grafana-auth", func(ctx context.Context, query *models.LoginUserQuery) error {
-				query.User = c.authUser
-				query.AuthModule = c.authModule
-				return c.authErr
-			})
-
+			hs.authenticator = &fakeAuthenticator{c.authUser, c.authModule, c.authErr}
 			sc.m.Post(sc.url, sc.defaultHandler)
 			sc.fakeReqNoAssertions("POST", sc.url).exec()
 
@@ -735,4 +713,16 @@ func (m *mockSocialService) GetOAuthHttpClient(name string) (*http.Client, error
 
 func (m *mockSocialService) GetConnector(string) (social.SocialConnector, error) {
 	return m.socialConnector, m.err
+}
+
+type fakeAuthenticator struct {
+	ExpectedUser       *models.User
+	ExpectedAuthModule string
+	ExpectedError      error
+}
+
+func (fa *fakeAuthenticator) AuthenticateUser(c context.Context, query *models.LoginUserQuery) error {
+	query.User = fa.ExpectedUser
+	query.AuthModule = fa.ExpectedAuthModule
+	return fa.ExpectedError
 }

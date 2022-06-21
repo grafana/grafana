@@ -1,15 +1,23 @@
-import { Dispatch } from 'react';
 import { renderHook } from '@testing-library/react-hooks';
+import { Dispatch } from 'react';
 
-import * as useSearch from './useSearch';
-import { DashboardQuery, DashboardSearchItemType, DashboardSection, SearchAction } from '../types';
-import { ManageDashboardsState } from '../reducers/manageDashboards';
-import { useManageDashboards } from './useManageDashboards';
+import { setEchoSrv } from '@grafana/runtime/src';
+import { Echo } from 'app/core/services/echo/Echo';
+
 import { GENERAL_FOLDER_ID } from '../constants';
+import { ManageDashboardsState } from '../reducers/manageDashboards';
+import { DashboardQuery, DashboardSearchItemType, DashboardSection, SearchAction } from '../types';
+
+import { useManageDashboards } from './useManageDashboards';
+import * as useSearch from './useSearch';
 
 describe('useManageDashboards', () => {
   const useSearchMock = jest.spyOn(useSearch, 'useSearch');
   const toggle = async (section: DashboardSection) => section;
+
+  beforeAll(() => {
+    setEchoSrv(new Echo());
+  });
 
   function setupTestContext({ results = [] }: { results?: DashboardSection[] } = {}) {
     jest.clearAllMocks();
@@ -21,9 +29,9 @@ describe('useManageDashboards', () => {
       initialLoading: false,
       allChecked: false,
     };
-    const dispatch: Dispatch<SearchAction> = (null as unknown) as Dispatch<SearchAction>;
+    const dispatch: Dispatch<SearchAction> = null as unknown as Dispatch<SearchAction>;
     useSearchMock.mockReturnValue({ state, dispatch, onToggleSection: toggle });
-    const dashboardQuery: DashboardQuery = ({} as unknown) as DashboardQuery;
+    const dashboardQuery: DashboardQuery = {} as unknown as DashboardQuery;
 
     const { result } = renderHook(() => useManageDashboards(dashboardQuery, {}));
 

@@ -31,7 +31,7 @@ func (v templateCaptureValue) String() string {
 	return strconv.FormatFloat(v.Value, 'f', -1, 64)
 }
 
-func expandTemplate(name, text string, labels map[string]string, alertInstance eval.Result, externalURL *url.URL) (result string, resultErr error) {
+func expandTemplate(ctx context.Context, name, text string, labels map[string]string, alertInstance eval.Result, externalURL *url.URL) (result string, resultErr error) {
 	name = "__alert_" + name
 	text = "{{- $labels := .Labels -}}{{- $values := .Values -}}{{- $value := .Value -}}" + text
 	data := struct {
@@ -45,7 +45,7 @@ func expandTemplate(name, text string, labels map[string]string, alertInstance e
 	}
 
 	expander := template.NewTemplateExpander(
-		context.TODO(), // This context is only used with the `query()` function - which we don't support yet.
+		ctx, // This context is only used with the `query()` function - which we don't support yet.
 		text,
 		name,
 		data,

@@ -9,9 +9,10 @@ var ErrDataKeyNotFound = errors.New("data key not found")
 
 type DataKey struct {
 	Active        bool
-	Name          string
+	Id            string `xorm:"name"` // renaming the col in the db itself would break backward compatibility with 8.5.x
+	Label         string
 	Scope         string
-	Provider      string
+	Provider      ProviderID
 	EncryptedData []byte
 	Created       time.Time
 	Updated       time.Time

@@ -1,5 +1,6 @@
-import { sharedSingleStatMigrationHandler, sharedSingleStatPanelChangedHandler } from './SingleStatBaseOptions';
 import { PanelModel } from '@grafana/data';
+
+import { sharedSingleStatMigrationHandler, sharedSingleStatPanelChangedHandler } from './SingleStatBaseOptions';
 
 describe('sharedSingleStatMigrationHandler', () => {
   it('from old valueOptions model without pluginVersion', () => {
@@ -231,7 +232,7 @@ describe('sharedSingleStatMigrationHandler', () => {
   });
 
   it('auto set min/max for percent units before 8.0', () => {
-    const panel = ({
+    const panel = {
       options: {
         fieldOptions: {
           defaults: {
@@ -241,7 +242,7 @@ describe('sharedSingleStatMigrationHandler', () => {
       },
       title: 'Usage',
       type: 'bargauge',
-    } as unknown) as PanelModel;
+    } as unknown as PanelModel;
     sharedSingleStatMigrationHandler(panel as any);
     expect(panel.fieldConfig.defaults.unit).toBe('percentunit');
     expect(panel.fieldConfig.defaults.min).toBe(0);

@@ -1,16 +1,19 @@
 const applyFieldOverridesMock = jest.fn(); // needs to be first in this file
 
 import { Subject } from 'rxjs';
+
 // Importing this way to be able to spy on grafana/data
 import * as grafanaData from '@grafana/data';
-import { DashboardModel } from '../../dashboard/state/index';
 import { setDataSourceSrv, setEchoSrv } from '@grafana/runtime';
+
 import { Echo } from '../../../core/services/echo/Echo';
-import { emptyResult } from './DashboardQueryRunner/utils';
+import { DashboardModel } from '../../dashboard/state/index';
+
 import {
   createDashboardQueryRunner,
   setDashboardQueryRunnerFactory,
 } from './DashboardQueryRunner/DashboardQueryRunner';
+import { emptyResult } from './DashboardQueryRunner/utils';
 import { PanelQueryRunner } from './PanelQueryRunner';
 
 jest.mock('@grafana/data', () => ({
@@ -277,7 +280,7 @@ describe('PanelQueryRunner', () => {
     {
       getFieldOverrideOptions: () => undefined,
       // @ts-ignore
-      getTransformations: () => [({} as unknown) as grafanaData.DataTransformerConfig],
+      getTransformations: () => [{} as unknown as grafanaData.DataTransformerConfig],
       getDataSupport: () => ({ annotations: false, alertStates: false }),
     }
   );
@@ -320,7 +323,7 @@ describe('PanelQueryRunner', () => {
         theme: grafanaData.createTheme(),
       }),
       // @ts-ignore
-      getTransformations: () => [({} as unknown) as grafanaData.DataTransformerConfig],
+      getTransformations: () => [{} as unknown as grafanaData.DataTransformerConfig],
       getDataSupport: () => ({ annotations: false, alertStates: false }),
     }
   );

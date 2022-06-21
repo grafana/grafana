@@ -3,16 +3,21 @@ import {
   FieldColorModeId,
   FieldConfigProperty,
   FieldType,
+  getFieldDisplayName,
   PanelPlugin,
   VizOrientation,
 } from '@grafana/data';
-import { BarChartPanel } from './BarChartPanel';
+import { config } from '@grafana/runtime';
 import { StackingMode, VisibilityMode } from '@grafana/schema';
 import { graphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
-import { BarChartFieldConfig, BarChartOptions, defaultBarChartFieldConfig } from 'app/plugins/panel/barchart/types';
-import { BarChartSuggestionsSupplier } from './suggestions';
 
-export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarChartPanel)
+import { BarChartPanel } from './BarChartPanel';
+import { TickSpacingEditor } from './TickSpacingEditor';
+import { BarChartFieldConfig, PanelOptions, defaultBarChartFieldConfig, defaultPanelOptions } from './models.gen';
+import { BarChartSuggestionsSupplier } from './suggestions';
+import { prepareBarChartDisplayValues } from './utils';
+
+export const plugin = new PanelPlugin<PanelOptions, BarChartFieldConfig>(BarChartPanel)
   .useFieldConfig({
     standardOptions: {
       [FieldConfigProperty.Color]: {
@@ -62,8 +67,23 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
       commonOptionsBuilder.addHideFrom(builder);
     },
   })
-  .setPanelOptions((builder) => {
+  .setPanelOptions((builder, context) => {
+    const disp = prepareBarChartDisplayValues(context.data, config.theme2, context.options ?? ({} as any));
+    let xaxisPlaceholder = 'First string or time field';
+    const viz = disp.viz ? disp.viz[0] : undefined;
+    if (viz?.fields?.length) {
+      const first = viz.fields[0];
+      xaxisPlaceholder += ` (${getFieldDisplayName(first, viz)})`;
+    }
+
     builder
+      .addFieldNamePicker({
+        path: 'xField',
+        name: 'X Axis',
+        settings: {
+          placeholderText: xaxisPlaceholder,
+        },
+      })
       .addRadio({
         path: 'orientation',
         name: 'Orientation',
@@ -74,12 +94,12 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
             { value: VizOrientation.Vertical, label: 'Vertical' },
           ],
         },
-        defaultValue: VizOrientation.Auto,
+        defaultValue: defaultPanelOptions.orientation,
       })
       .addSliderInput({
         path: 'xTickLabelRotation',
         name: 'Rotate bar labels',
-        defaultValue: 0,
+        defaultValue: defaultPanelOptions.xTickLabelRotation,
         settings: {
           min: -90,
           max: 90,
@@ -96,9 +116,16 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
         name: 'Bar label max length',
         description: 'Bar labels will be truncated to the length provided',
         settings: {
-          placeholder: 'Auto',
+          placeholder: 'None',
           min: 0,
         },
+      })
+      .addCustomEditor({
+        id: 'xTickLabelSpacing',
+        path: 'xTickLabelSpacing',
+        name: 'Bar labels minimum spacing',
+        defaultValue: defaultPanelOptions.xTickLabelSpacing,
+        editor: TickSpacingEditor,
       })
       .addRadio({
         path: 'showValue',
@@ -110,7 +137,7 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
             { value: VisibilityMode.Never, label: 'Never' },
           ],
         },
-        defaultValue: VisibilityMode.Auto,
+        defaultValue: defaultPanelOptions.showValue,
       })
       .addRadio({
         path: 'stacking',
@@ -118,12 +145,12 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
         settings: {
           options: graphFieldOptions.stacking,
         },
-        defaultValue: StackingMode.None,
+        defaultValue: defaultPanelOptions.stacking,
       })
       .addSliderInput({
         path: 'groupWidth',
         name: 'Group width',
-        defaultValue: 0.7,
+        defaultValue: defaultPanelOptions.groupWidth,
         settings: {
           min: 0,
           max: 1,
@@ -139,13 +166,29 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
       .addSliderInput({
         path: 'barWidth',
         name: 'Bar width',
-        defaultValue: 0.97,
+        defaultValue: defaultPanelOptions.barWidth,
         settings: {
           min: 0,
           max: 1,
           step: 0.01,
         },
+      })
+      .addSliderInput({
+        path: 'barRadius',
+        name: 'Bar radius',
+        defaultValue: defaultPanelOptions.barRadius,
+        settings: {
+          min: 0,
+          max: 0.5,
+          step: 0.05,
+        },
       });
+
+    builder.addFieldNamePicker({
+      path: 'colorByField',
+      name: 'Color by field',
+      description: 'Use the color value for a sibling field to color each bar value.',
+    });
 
     commonOptionsBuilder.addTooltipOptions(builder);
     commonOptionsBuilder.addLegendOptions(builder);

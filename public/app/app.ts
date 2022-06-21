@@ -7,12 +7,12 @@ import './polyfills/old-mediaquerylist'; // Safari < 14 does not have mql.addEve
 import 'file-saver';
 import 'jquery';
 
-// eslint-disable-next-line lodash/import-scope
-import _ from 'lodash';
-import ReactDOM from 'react-dom';
+import 'app/features/all';
+
+import _ from 'lodash'; // eslint-disable-line lodash/import-scope
 import React from 'react';
-import config from 'app/core/config';
-// @ts-ignore ignoring this for now, otherwise we would have to extend _ interface with move
+import ReactDOM from 'react-dom';
+
 import {
   locationUtil,
   monacoLanguageRegistry,
@@ -23,8 +23,6 @@ import {
   standardFieldConfigEditorRegistry,
   standardTransformersRegistry,
 } from '@grafana/data';
-import { arrayMove } from 'app/core/utils/arrayMove';
-import { preloadPlugins } from './features/plugins/pluginPreloader';
 import {
   locationService,
   registerEchoBackend,
@@ -34,37 +32,48 @@ import {
   setLocationSrv,
   setQueryRunnerFactory,
 } from '@grafana/runtime';
+import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
+import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
+import { getScrollbarWidth } from '@grafana/ui';
+import config from 'app/core/config';
+import { arrayMove } from 'app/core/utils/arrayMove';
+import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
+
+import getDefaultMonacoLanguages from '../lib/monaco-languages';
+
+import { AppWrapper } from './AppWrapper';
+import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/components/OptionsUI/registry';
+import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
+import { ModalManager } from './core/services/ModalManager';
+import { backendSrv } from './core/services/backend_srv';
+import { contextSrv } from './core/services/context_srv';
 import { Echo } from './core/services/echo/Echo';
 import { reportPerformance } from './core/services/echo/EchoSrv';
 import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
-import 'app/features/all';
-import { getScrollbarWidth, getStandardFieldConfigs } from '@grafana/ui';
-import { getDefaultVariableAdapters, variableAdapters } from './features/variables/adapters';
-import { initDevFeatures } from './dev';
-import { getStandardTransformers } from 'app/core/utils/standardTransformers';
-import { SentryEchoBackend } from './core/services/echo/backends/sentry/SentryBackend';
-import { setVariableQueryRunner, VariableQueryRunner } from './features/variables/query/VariableQueryRunner';
-import { configureStore } from './store/configureStore';
-import { AppWrapper } from './AppWrapper';
-import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
-import { PanelRenderer } from './features/panel/components/PanelRenderer';
-import { QueryRunner } from './features/query/state/QueryRunner';
-import { getTimeSrv } from './features/dashboard/services/TimeSrv';
-import { getVariablesUrlParams } from './features/variables/getAllVariableValuesForUrl';
-import getDefaultMonacoLanguages from '../lib/monaco-languages';
-import { contextSrv } from './core/services/context_srv';
-import { GAEchoBackend } from './core/services/echo/backends/analytics/GABackend';
 import { ApplicationInsightsBackend } from './core/services/echo/backends/analytics/ApplicationInsightsBackend';
+import { GAEchoBackend } from './core/services/echo/backends/analytics/GABackend';
 import { RudderstackBackend } from './core/services/echo/backends/analytics/RudderstackBackend';
-import { getAllOptionEditors } from './core/components/editors/registry';
-import { backendSrv } from './core/services/backend_srv';
-import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
+import { SentryEchoBackend } from './core/services/echo/backends/sentry/SentryBackend';
+import { initDevFeatures } from './dev';
+import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
-import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
+import { PanelRenderer } from './features/panel/components/PanelRenderer';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
-import { AngularApp } from './angular';
-import { ModalManager } from './core/services/ModalManager';
+import { preloadPlugins } from './features/plugins/pluginPreloader';
+import { QueryRunner } from './features/query/state/QueryRunner';
 import { initWindowRuntime } from './features/runtime/init';
+import { variableAdapters } from './features/variables/adapters';
+import { createAdHocVariableAdapter } from './features/variables/adhoc/adapter';
+import { createConstantVariableAdapter } from './features/variables/constant/adapter';
+import { createCustomVariableAdapter } from './features/variables/custom/adapter';
+import { createDataSourceVariableAdapter } from './features/variables/datasource/adapter';
+import { getVariablesUrlParams } from './features/variables/getAllVariableValuesForUrl';
+import { createIntervalVariableAdapter } from './features/variables/interval/adapter';
+import { setVariableQueryRunner, VariableQueryRunner } from './features/variables/query/VariableQueryRunner';
+import { createQueryVariableAdapter } from './features/variables/query/adapter';
+import { createSystemVariableAdapter } from './features/variables/system/adapter';
+import { createTextBoxVariableAdapter } from './features/variables/textbox/adapter';
+import { configureStore } from './store/configureStore';
 
 // add move to lodash for backward compatabilty with plugins
 // @ts-ignore
@@ -81,12 +90,6 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 export class GrafanaApp {
-  angularApp: AngularApp;
-
-  constructor() {
-    this.angularApp = new AngularApp();
-  }
-
   async init() {
     try {
       setBackendSrv(backendSrv);
@@ -104,9 +107,18 @@ export class GrafanaApp {
       initExtensions();
 
       standardEditorsRegistry.setInit(getAllOptionEditors);
-      standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
+      standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
       standardTransformersRegistry.setInit(getStandardTransformers);
-      variableAdapters.setInit(getDefaultVariableAdapters);
+      variableAdapters.setInit(() => [
+        createQueryVariableAdapter(),
+        createCustomVariableAdapter(),
+        createTextBoxVariableAdapter(),
+        createConstantVariableAdapter(),
+        createDataSourceVariableAdapter(),
+        createIntervalVariableAdapter(),
+        createAdHocVariableAdapter(),
+        createSystemVariableAdapter(),
+      ]);
       monacoLanguageRegistry.setInit(getDefaultMonacoLanguages);
 
       setQueryRunnerFactory(() => new QueryRunner());
@@ -130,9 +142,6 @@ export class GrafanaApp {
       // init modal manager
       const modalManager = new ModalManager();
       modalManager.init();
-
-      // Init angular
-      this.angularApp.init();
 
       // Preload selected app plugins
       await preloadPlugins(config.pluginsToPreload);

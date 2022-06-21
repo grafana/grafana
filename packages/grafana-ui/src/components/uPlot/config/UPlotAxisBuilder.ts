@@ -1,8 +1,11 @@
-import { dateTimeFormat, GrafanaTheme2, isBooleanUnit, systemDateFormats, TimeZone } from '@grafana/data';
 import uPlot, { Axis } from 'uplot';
-import { PlotConfigBuilder } from '../types';
-import { measureText } from '../../../utils/measureText';
+
+import { dateTimeFormat, GrafanaTheme2, isBooleanUnit, systemDateFormats, TimeZone } from '@grafana/data';
 import { AxisPlacement } from '@grafana/schema';
+
+import { measureText } from '../../../utils/measureText';
+import { PlotConfigBuilder } from '../types';
+
 import { optMinMax } from './UPlotScaleBuilder';
 
 export interface AxisProps {
@@ -185,7 +188,13 @@ const timeUnitSize = {
 };
 
 /** Format time axis ticks */
-function formatTime(self: uPlot, splits: number[], axisIdx: number, foundSpace: number, foundIncr: number): string[] {
+export function formatTime(
+  self: uPlot,
+  splits: number[],
+  axisIdx: number,
+  foundSpace: number,
+  foundIncr: number
+): string[] {
   const timeZone = (self.axes[axisIdx] as any).timeZone;
   const scale = self.scales.x;
   const range = (scale?.max ?? 0) - (scale?.min ?? 0);

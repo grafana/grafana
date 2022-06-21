@@ -22,11 +22,11 @@ func (out *ManagedStreamFrameOutput) Type() string {
 	return FrameOutputTypeManagedStream
 }
 
-func (out *ManagedStreamFrameOutput) OutputFrame(_ context.Context, vars Vars, frame *data.Frame) ([]*ChannelFrame, error) {
+func (out *ManagedStreamFrameOutput) OutputFrame(ctx context.Context, vars Vars, frame *data.Frame) ([]*ChannelFrame, error) {
 	stream, err := out.managedStream.GetOrCreateStream(vars.OrgID, vars.Scope, vars.Namespace)
 	if err != nil {
 		logger.Error("Error getting stream", "error", err)
 		return nil, err
 	}
-	return nil, stream.Push(vars.Path, frame)
+	return nil, stream.Push(ctx, vars.Path, frame)
 }

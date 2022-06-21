@@ -1,11 +1,12 @@
 import React, { PureComponent } from 'react';
-import { Button } from '@grafana/ui';
 
+import { Button } from '@grafana/ui';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
 import { TextDimensionConfig } from 'app/features/dimensions/types';
-import { CanvasElementItem, CanvasElementProps } from '../element';
 import { APIEditor, APIEditorConfig, callApi } from 'app/plugins/panel/canvas/editor/APIEditor';
+
+import { CanvasElementItem, CanvasElementProps } from '../element';
 
 interface ButtonData {
   text?: string;
@@ -26,7 +27,11 @@ class ButtonDisplay extends PureComponent<CanvasElementProps<ButtonConfig, Butto
       }
     };
 
-    return <Button onClick={onClick}>{data?.text}</Button>;
+    return (
+      <Button type="submit" onClick={onClick}>
+        {data?.text}
+      </Button>
+    );
   }
 }
 
