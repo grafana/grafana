@@ -13,7 +13,7 @@ type punctuationCharFilter struct{}
 var punctuationReplacer *strings.Replacer
 
 func init() {
-	var punctuation = "!\"#$%&\\'()*+,-./:;<=>?@[\\\\]^_`{|}~"
+	var punctuation = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
 	args := make([]string, 0, len(punctuation)*2)
 	for _, r := range punctuation {
 		args = append(args, string(r))
