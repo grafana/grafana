@@ -1,6 +1,6 @@
 /* eslint-disable react/jsx-no-undef */
 import { css } from '@emotion/css';
-import React, { useEffect, useMemo, useRef, useCallback } from 'react';
+import React, { useEffect, useMemo, useRef, useCallback, useState } from 'react';
 import { useTable, Column, TableOptions, Cell, useAbsoluteLayout } from 'react-table';
 import { FixedSizeList } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
@@ -50,7 +50,7 @@ export const SearchResultsTable = React.memo(
     const styles = useStyles2(getStyles);
     const tableStyles = useStyles2(getTableStyles);
     const infiniteLoaderRef = useRef<InfiniteLoader>(null);
-    const listRef = useRef<FixedSizeList>(null);
+    const [listEl, setListEl] = useState<FixedSizeList | null>(null);
     const highlightIndex = useSearchKeyboardNavigation(keyboardEvents, 0, response);
 
     const memoizedData = useMemo(() => {
@@ -69,10 +69,10 @@ export const SearchResultsTable = React.memo(
       if (infiniteLoaderRef.current) {
         infiniteLoaderRef.current.resetloadMoreItemsCache();
       }
-      if (listRef.current) {
-        listRef.current.scrollTo(0);
+      if (listEl) {
+        listEl.scrollTo(0);
       }
-    }, [memoizedData]);
+    }, [memoizedData, listEl]);
 
     // React-table column definitions
     const memoizedColumns = useMemo(() => {
@@ -161,9 +161,12 @@ export const SearchResultsTable = React.memo(
             itemCount={rows.length}
             loadMoreItems={response.loadMoreItems}
           >
-            {({ onItemsRendered }) => (
+            {({ onItemsRendered, ref }) => (
               <FixedSizeList
-                ref={listRef}
+                ref={(innerRef) => {
+                  ref(innerRef);
+                  setListEl(innerRef);
+                }}
                 onItemsRendered={onItemsRendered}
                 height={height - HEADER_HEIGHT}
                 itemCount={rows.length}
