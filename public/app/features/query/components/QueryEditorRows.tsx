@@ -154,6 +154,17 @@ export class QueryEditorRows extends PureComponent<Props> {
     onQueriesChange(nextQueries);
   };
 
+  onRemoveCondition = (queryIdx: number) => (idx: number) => {
+    const { queries, onQueriesChange } = this.props;
+
+    const q = queries[queryIdx] as ConditionalDataSourceQuery;
+    q.conditions.splice(idx, 1);
+    const nextQueries = [...queries];
+    nextQueries[queryIdx] = q;
+
+    onQueriesChange(nextQueries);
+  };
+
   onQueryConditionChange = (queryIdx: number) => (conditionIdx: number, options: any) => {
     const { queries, onQueriesChange } = this.props;
 
@@ -172,6 +183,7 @@ export class QueryEditorRows extends PureComponent<Props> {
         conditions={q.conditions}
         onChange={this.onQueryConditionChange(queryIdx)}
         onAddCondition={this.onAddCondition(queryIdx)}
+        onRemoveCondition={this.onRemoveCondition(queryIdx)}
       />
     );
   }

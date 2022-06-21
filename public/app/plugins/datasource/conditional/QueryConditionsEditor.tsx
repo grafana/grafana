@@ -2,16 +2,17 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { QueryConditionID, GrafanaTheme2, QueryConditionConfig, SelectableValue } from '@grafana/data';
-import { Icon, Tooltip, useStyles2, ValuePicker } from '@grafana/ui';
+import { Icon, IconButton, Tooltip, useStyles2, ValuePicker } from '@grafana/ui';
 
 import { queryConditionsRegistry } from './QueryConditionsRegistry';
 
 interface QueryConditionRowProps {
   condition: QueryConditionConfig;
   onChange: (options: any) => void;
+  onRemove: () => void;
 }
 
-const QueryConditionRow: React.FC<QueryConditionRowProps> = ({ condition, onChange }) => {
+const QueryConditionRow: React.FC<QueryConditionRowProps> = ({ condition, onChange, onRemove }) => {
   const styles = useStyles2(getStyles);
 
   const conditionDef = queryConditionsRegistry.getIfExists(condition.id);
@@ -26,12 +27,17 @@ const QueryConditionRow: React.FC<QueryConditionRowProps> = ({ condition, onChan
   return (
     <div className={styles.conditionWrapper}>
       <div className={styles.header}>
-        <span className={styles.name}>Condition: {conditionDef.name}</span>
-        {conditionDef.description && (
-          <Tooltip content={conditionDef.description}>
-            <Icon name="info-circle" />
-          </Tooltip>
-        )}
+        <div>
+          <span className={styles.name}>Condition: {conditionDef.name}</span>
+          {conditionDef.description && (
+            <Tooltip content={conditionDef.description}>
+              <Icon name="info-circle" />
+            </Tooltip>
+          )}
+        </div>
+        <Tooltip content="Remove condition">
+          <IconButton name="times" size="xs" onClick={onRemove} />
+        </Tooltip>
       </div>
       <div className={styles.conditionEditor}>
         <EditorComponent onChange={onChange} options={condition.options} />
@@ -44,18 +50,25 @@ interface QueryConditionsEditorProps {
   conditions?: QueryConditionConfig[];
   onChange: (i: number, options: any) => void;
   onAddCondition: (conditionId: QueryConditionID) => void;
+  onRemoveCondition: (idx: number) => void;
 }
 
 export const QueryConditionsEditor: React.FC<QueryConditionsEditorProps> = ({
   conditions,
   onChange,
   onAddCondition,
+  onRemoveCondition,
 }) => {
   const styles = useStyles2(getStyles);
   return (
     <div className={styles.wrapper}>
       {conditions?.map((c, i) => (
-        <QueryConditionRow key={`${c.id}-${i}`} condition={c} onChange={(options: any) => onChange(i, options)} />
+        <QueryConditionRow
+          key={`${c.id}-${JSON.stringify(c.options)}-${i}`}
+          condition={c}
+          onChange={(options: any) => onChange(i, options)}
+          onRemove={() => onRemoveCondition(i)}
+        />
       ))}
       <ValuePicker
         icon="plus"
@@ -89,6 +102,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       font-size: ${theme.typography.body.fontSize};
       display: flex;
       align-items: center;
+      justify-content: space-between;
     `,
     name: css`
       margin-right: ${theme.spacing(1)};
