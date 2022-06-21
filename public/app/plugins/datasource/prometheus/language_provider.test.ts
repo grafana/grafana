@@ -8,8 +8,6 @@ import { PrometheusDatasource } from './datasource';
 import LanguageProvider from './language_provider';
 import { PromQuery } from './types';
 
-import Mock = jest.Mock;
-
 describe('Language completion provider', () => {
   const datasource: PrometheusDatasource = {
     metadataRequest: () => ({ data: { data: [] as any[] } }),

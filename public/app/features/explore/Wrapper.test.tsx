@@ -10,8 +10,6 @@ import { makeLogsQueryResponse, makeMetricsQueryResponse } from './spec/helper/q
 import { setupExplore, tearDown, waitForExplore } from './spec/helper/setup';
 import { splitOpen } from './state/main';
 
-type Mock = jest.Mock;
-
 jest.mock('app/core/core', () => {
   return {
     contextSrv: {

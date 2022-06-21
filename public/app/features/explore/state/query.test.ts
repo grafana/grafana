@@ -38,8 +38,6 @@ import {
 } from './query';
 import { makeExplorePaneState } from './utils';
 
-import Mock = jest.Mock;
-
 const { testRange, defaultInitialState } = createDefaultInitialState();
 
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({
