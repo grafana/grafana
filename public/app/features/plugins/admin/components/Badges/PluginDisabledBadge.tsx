@@ -22,6 +22,6 @@ function errorCodeToTooltip(error?: PluginErrorCode): string | undefined {
     case undefined:
       return 'Plugin disabled';
     default:
-      return `Plugin disabled due to unknown error${error ? ': ' + error : ''}`;
+      return `Plugin disabled due to unknown error${error ? `: ${error}` : ''}`;
   }
 }
