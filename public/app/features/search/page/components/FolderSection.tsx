@@ -3,7 +3,7 @@ import React, { FC } from 'react';
 import { useAsync, useLocalStorage } from 'react-use';
 
 import { GrafanaTheme } from '@grafana/data';
-import { Card, Checkbox, CollapsableSection, Icon, Spinner, stylesFactory, useTheme } from '@grafana/ui';
+import { Card, Checkbox, CollapsableSection, Icon, IconName, Spinner, stylesFactory, useTheme } from '@grafana/ui';
 import { getSectionStorageKey } from 'app/features/search/utils';
 import { useUniqueId } from 'app/plugins/datasource/influxdb/components/useUniqueId';
 
@@ -18,7 +18,7 @@ export interface DashboardSection {
   title: string;
   selected?: boolean; // not used ?  keyboard
   url?: string;
-  icon?: string;
+  icon?: IconName;
   itemsUIDs?: string[]; // for pseudo folders
 }
 
@@ -46,7 +46,7 @@ export const FolderSection: FC<SectionHeaderProps> = ({
 
   const results = useAsync(async () => {
     if (!sectionExpanded && !renderStandaloneBody) {
-      return Promise.resolve([] as DashboardSectionItem[]);
+      return Promise.resolve([]);
     }
     let folderUid: string | undefined = section.uid;
     let folderTitle: string | undefined = section.title;
@@ -65,21 +65,18 @@ export const FolderSection: FC<SectionHeaderProps> = ({
     }
 
     const raw = await getGrafanaSearcher().search({ ...query, tags });
-    const v = raw.view.map(
-      (item) =>
-        ({
-          uid: item.uid,
-          title: item.name,
-          url: item.url,
-          uri: item.url,
-          type: item.kind === 'folder' ? DashboardSearchItemType.DashFolder : DashboardSearchItemType.DashDB,
-          id: 666, // do not use me!
-          isStarred: false,
-          tags: item.tags ?? [],
-          folderUid,
-          folderTitle,
-        } as DashboardSectionItem)
-    );
+    const v = raw.view.map<DashboardSectionItem>((item) => ({
+      uid: item.uid,
+      title: item.name,
+      url: item.url,
+      uri: item.url,
+      type: item.kind === 'folder' ? DashboardSearchItemType.DashFolder : DashboardSearchItemType.DashDB,
+      id: 666, // do not use me!
+      isStarred: false,
+      tags: item.tags ?? [],
+      folderUid,
+      folderTitle,
+    }));
     return v;
   }, [sectionExpanded, section, tags]);
 
@@ -117,11 +114,9 @@ export const FolderSection: FC<SectionHeaderProps> = ({
   }
 
   const renderResults = () => {
-    if (!results.value?.length) {
-      if (results.loading) {
-        return <Spinner className={styles.spinner} />;
-      }
-
+    if (!results.value) {
+      return null;
+    } else if (results.value.length === 0) {
       return (
         <Card>
           <Card.Heading>No results found</Card.Heading>
@@ -151,7 +146,11 @@ export const FolderSection: FC<SectionHeaderProps> = ({
 
   // Skip the folder wrapper
   if (renderStandaloneBody) {
-    return <div className={styles.folderViewResults}>{renderResults()}</div>;
+    return (
+      <div className={styles.folderViewResults}>
+        {!results.value?.length && results.loading ? <Spinner className={styles.spinner} /> : renderResults()}
+      </div>
+    );
   }
 
   return (
@@ -171,7 +170,7 @@ export const FolderSection: FC<SectionHeaderProps> = ({
           )}
 
           <div className={styles.icon}>
-            <Icon name={icon as any} />
+            <Icon name={icon} />
           </div>
 
           <div className={styles.text}>

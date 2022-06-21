@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	dashsnapdb "github.com/grafana/grafana/pkg/services/dashboardsnapshots/database"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
@@ -36,7 +36,7 @@ func TestDashboardSnapshotsService(t *testing.T) {
 	t.Run("create dashboard snapshot should encrypt the dashboard", func(t *testing.T) {
 		ctx := context.Background()
 
-		cmd := models.CreateDashboardSnapshotCommand{
+		cmd := dashboardsnapshots.CreateDashboardSnapshotCommand{
 			Key:       dashboardKey,
 			DeleteKey: dashboardKey,
 			Dashboard: dashboard,
@@ -54,7 +54,7 @@ func TestDashboardSnapshotsService(t *testing.T) {
 	t.Run("get dashboard snapshot should return the dashboard decrypted", func(t *testing.T) {
 		ctx := context.Background()
 
-		query := models.GetDashboardSnapshotQuery{
+		query := dashboardsnapshots.GetDashboardSnapshotQuery{
 			Key:       dashboardKey,
 			DeleteKey: dashboardKey,
 		}

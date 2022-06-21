@@ -367,6 +367,15 @@ describe('DashboardModel', () => {
       dashboard.toggleRow(dashboard.panels[1]);
     });
 
+    it('should not impact hasUnsavedChanges', () => {
+      expect(dashboard.hasUnsavedChanges()).toBe(false);
+    });
+
+    it('should impact hasUnsavedChanges if panels have changes when row is collapsed', () => {
+      dashboard.panels[0].setProperty('title', 'new title');
+      expect(dashboard.hasUnsavedChanges()).toBe(true);
+    });
+
     it('should remove panels and put them inside collapsed row', () => {
       expect(dashboard.panels.length).toBe(3);
       expect(dashboard.panels[1].panels?.length).toBe(2);
