@@ -21,14 +21,13 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 		query := models.GetSystemStatsQuery{}
 		err := sqlStore.GetSystemStats(context.Background(), &query)
 		require.NoError(t, err)
-		assert.Equal(t, int64(5), query.Result.Users)
+		assert.Equal(t, int64(3), query.Result.Users)
 		assert.Equal(t, int64(0), query.Result.Editors)
 		assert.Equal(t, int64(0), query.Result.Viewers)
 		assert.Equal(t, int64(3), query.Result.Admins)
 		assert.Equal(t, int64(0), query.Result.LibraryPanels)
 		assert.Equal(t, int64(0), query.Result.LibraryVariables)
 		assert.Equal(t, int64(1), query.Result.APIKeys)
-		assert.Equal(t, int64(2), query.Result.DuplicateUserEntries)
 	})
 
 	t.Run("Get system user count stats should not results in error", func(t *testing.T) {
@@ -132,28 +131,4 @@ func populateDB(t *testing.T, sqlStore *SQLStore) {
 	addAPIKeyCmd := &models.AddApiKeyCommand{OrgId: org.Id, Name: "Test key 1", Key: "secret-key", Role: models.ROLE_VIEWER}
 	err = sqlStore.AddAPIKey(context.Background(), addAPIKeyCmd)
 	require.NoError(t, err)
-
-	if sqlStore.GetDialect().DriverName() != "mysql" {
-		dupUserEmailcmd := models.CreateUserCommand{
-			Email:   "userduplicatetest1@TEST.com",
-			Name:    "user name 1",
-			Login:   "user_duplicate_TEST_1_login",
-			OrgName: "Org duplicate test 1",
-		}
-		_, err = sqlStore.CreateUser(context.Background(), dupUserEmailcmd)
-		require.NoError(t, err)
-
-		// add additional user with duplicate login where DOMAIN is upper case
-		dupUserLogincmd := models.CreateUserCommand{
-			Email:   "userduplicatetest1@test.com",
-			Name:    "user name 1",
-			Login:   "user_duplicate_test_1_login",
-			OrgName: "Org duplicate test 2", // need to be in two separate orgs
-		}
-		_, err = sqlStore.CreateUser(context.Background(), dupUserLogincmd)
-		require.NoError(t, err)
-	} else {
-		// "Skipping duplicate users test for mysql as it does make unique constraint case insensitive by default
-	}
-
 }

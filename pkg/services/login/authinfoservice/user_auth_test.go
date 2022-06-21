@@ -348,5 +348,36 @@ func TestUserAuth(t *testing.T) {
 			require.NotNil(t, err)
 			require.Nil(t, user)
 		})
+
+		t.Run("calculate metrics on duplicate userstats", func(t *testing.T) {
+			if sqlStore.GetDialect().DriverName() != "mysql" {
+				dupUserEmailcmd := models.CreateUserCommand{
+					Email:   "userduplicatetest1@TEST.com",
+					Name:    "user name 1",
+					Login:   "user_duplicate_TEST_1_login",
+					OrgName: "Org duplicate test 1",
+				}
+				_, err := sqlStore.CreateUser(context.Background(), dupUserEmailcmd)
+				require.NoError(t, err)
+
+				// add additional user with duplicate login where DOMAIN is upper case
+				dupUserLogincmd := models.CreateUserCommand{
+					Email:   "userduplicatetest1@test.com",
+					Name:    "user name 1",
+					Login:   "user_duplicate_test_1_login",
+					OrgName: "Org duplicate test 2", // need to be in two separate orgs
+				}
+				_, err = sqlStore.CreateUser(context.Background(), dupUserLogincmd)
+				require.NoError(t, err)
+
+				// require metrics and statistics to be 2
+				m, err := srv.authInfoStore.CollectLoginStats(context.Background())
+				require.NoError(t, err)
+				fmt.Printf("m %+v\n", m)
+				require.Equal(t, 2, m["stats.users.duplicate_user_entries"])
+			} else {
+				// "Skipping duplicate users test for mysql as it does make unique constraint case insensitive by default
+			}
+		})
 	})
 }
