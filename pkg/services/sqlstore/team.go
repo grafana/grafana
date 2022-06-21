@@ -547,7 +547,7 @@ func (ss *SQLStore) getTeamMembers(ctx context.Context, query *models.GetTeamMem
 		)
 
 		// explicitly check for serviceaccounts
-		sess.Where(fmt.Sprintf("%s.is_service_account=?", ss.Dialect.Quote("user")), ss.Dialect.BooleanStr(false))
+		sess.Where(fmt.Sprintf("%s.is_service_account=?", ss.Dialect.Quote("user")), ss.Dialect.BooleanStr(query.IsServiceAccount))
 
 		if acUserFilter != nil {
 			sess.Where(acUserFilter.Where, acUserFilter.Args...)

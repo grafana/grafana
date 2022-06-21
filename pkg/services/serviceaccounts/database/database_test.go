@@ -125,10 +125,10 @@ func TestStore_AddServiceAccountToTeam(t *testing.T) {
 				Login:            "servicetest1@admin",
 				IsServiceAccount: true,
 				Permissions: []accesscontrol.Permission{
-					// {
-					// 	Action: accesscontrol.ActionTeamsPermissionsWrite,
-					// 	Scope:  accesscontrol.ScopeTeamsAll,
-					// },
+					{
+						Action: accesscontrol.ActionTeamsPermissionsWrite,
+						Scope:  accesscontrol.ScopeTeamsAll,
+					},
 					{
 						Action: accesscontrol.ActionOrgUsersRead,
 						Scope:  accesscontrol.ScopeUsersAll,
@@ -137,7 +137,6 @@ func TestStore_AddServiceAccountToTeam(t *testing.T) {
 			},
 			team:                        tests.TestTeam{Email: "teamtest1@admin", Name: "test-team"},
 			expectedNumberOfTeamMembers: 1,
-			expectedErr:                 nil,
 		},
 	}
 	for _, c := range cases {
@@ -145,14 +144,10 @@ func TestStore_AddServiceAccountToTeam(t *testing.T) {
 			db, store := setupTestDatabase(t)
 			sa := tests.SetupUserServiceAccount(t, db, c.sa)
 			team, err := db.CreateTeam(c.team.Name, c.team.Email, sa.OrgId)
-			if err != nil {
-				require.NoError(t, err)
-			}
+			require.NoError(t, err)
 			cmd := &serviceaccounts.AddServiceAccountToTeamCommand{OrgId: sa.OrgId, TeamId: team.Id}
 			err = store.AddServiceAccountToTeam(context.Background(), sa.Id, cmd)
-			if c.expectedErr != nil {
-				require.ErrorIs(t, err, c.expectedErr)
-			}
+			require.NoError(t, err)
 
 			signedInUser := &models.SignedInUser{
 				UserId: sa.Id,
@@ -161,15 +156,24 @@ func TestStore_AddServiceAccountToTeam(t *testing.T) {
 					sa.OrgId: {
 						accesscontrol.ActionTeamsRead:    []string{accesscontrol.ScopeTeamsAll},
 						accesscontrol.ActionOrgUsersRead: []string{accesscontrol.ScopeUsersAll},
+						serviceaccounts.ActionRead:       []string{serviceaccounts.ScopeAll},
 					},
 				},
 			}
-			teamQuery := models.GetTeamMembersQuery{OrgId: sa.OrgId, TeamId: team.Id, SignedInUser: signedInUser}
+			teamQuery := models.GetTeamMembersQuery{
+				UserId:           sa.Id,
+				OrgId:            sa.OrgId,
+				TeamId:           team.Id,
+				SignedInUser:     signedInUser,
+				IsServiceAccount: true,
+			}
 			err = db.GetTeamMembers(context.Background(), &teamQuery)
 			require.NoError(t, err)
 			require.Equal(t, c.expectedNumberOfTeamMembers, len(teamQuery.Result))
-			require.Equal(t, teamQuery.Result[0].UserId, sa.Id)
-			require.Equal(t, teamQuery.Result[0].Permission, models.PERMISSION_VIEW)
+			// expecting the service account to be added to the team
+			require.Equal(t, sa.Id, teamQuery.Result[0].UserId)
+			// expecting the VIEW permission for now
+			require.Equal(t, models.PERMISSION_VIEW, teamQuery.Result[0].Permission)
 		})
 	}
 }
