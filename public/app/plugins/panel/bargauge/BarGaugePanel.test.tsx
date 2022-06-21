@@ -1,5 +1,6 @@
-import React from 'react';
 import { mount, ReactWrapper } from 'enzyme';
+import React from 'react';
+
 import {
   dateMath,
   dateTime,
@@ -11,11 +12,11 @@ import {
   toDataFrame,
   VizOrientation,
 } from '@grafana/data';
-import { BarGaugeDisplayMode } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
+import { BarGaugeDisplayMode } from '@grafana/ui';
 
 import { BarGaugePanel } from './BarGaugePanel';
-import { BarGaugeOptions } from './types';
+import { PanelOptions } from './models.gen';
 
 const valueSelector = selectors.components.Panels.Visualization.BarGauge.valueV2;
 
@@ -63,10 +64,10 @@ function createTimeRange(): TimeRange {
   };
 }
 
-function createBarGaugePanelWithData(data: PanelData): ReactWrapper<PanelProps<BarGaugeOptions>> {
+function createBarGaugePanelWithData(data: PanelData): ReactWrapper<PanelProps<PanelOptions>> {
   const timeRange = createTimeRange();
 
-  const options: BarGaugeOptions = {
+  const options: PanelOptions = {
     displayMode: BarGaugeDisplayMode.Lcd,
     reduceOptions: {
       calcs: ['mean'],

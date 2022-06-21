@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -24,6 +25,7 @@ func (s *QueryHistoryService) registerAPIEndpoints() {
 	})
 }
 
+// createHandler handles POST /api/query-history
 func (s *QueryHistoryService) createHandler(c *models.ReqContext) response.Response {
 	cmd := CreateQueryInQueryHistoryCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
@@ -38,7 +40,10 @@ func (s *QueryHistoryService) createHandler(c *models.ReqContext) response.Respo
 	return response.JSON(http.StatusOK, QueryHistoryResponse{Result: query})
 }
 
+// searchHandler handles GET /api/query-history
 func (s *QueryHistoryService) searchHandler(c *models.ReqContext) response.Response {
+	timeRange := legacydata.NewDataTimeRange(c.Query("from"), c.Query("to"))
+
 	query := SearchInQueryHistoryQuery{
 		DatasourceUIDs: c.QueryStrings("datasourceUid"),
 		SearchString:   c.Query("searchString"),
@@ -46,6 +51,8 @@ func (s *QueryHistoryService) searchHandler(c *models.ReqContext) response.Respo
 		Sort:           c.Query("sort"),
 		Page:           c.QueryInt("page"),
 		Limit:          c.QueryInt("limit"),
+		From:           timeRange.GetFromAsSecondsEpoch(),
+		To:             timeRange.GetToAsSecondsEpoch(),
 	}
 
 	result, err := s.SearchInQueryHistory(c.Req.Context(), c.SignedInUser, query)
@@ -56,6 +63,7 @@ func (s *QueryHistoryService) searchHandler(c *models.ReqContext) response.Respo
 	return response.JSON(http.StatusOK, QueryHistorySearchResponse{Result: result})
 }
 
+// deleteHandler handles DELETE /api/query-history/:uid
 func (s *QueryHistoryService) deleteHandler(c *models.ReqContext) response.Response {
 	queryUID := web.Params(c.Req)[":uid"]
 	if len(queryUID) > 0 && !util.IsValidShortUID(queryUID) {
@@ -67,12 +75,13 @@ func (s *QueryHistoryService) deleteHandler(c *models.ReqContext) response.Respo
 		return response.Error(http.StatusInternalServerError, "Failed to delete query from query history", err)
 	}
 
-	return response.JSON(http.StatusOK, DeleteQueryFromQueryHistoryResponse{
+	return response.JSON(http.StatusOK, QueryHistoryDeleteQueryResponse{
 		Message: "Query deleted",
 		ID:      id,
 	})
 }
 
+// patchCommentHandler handles PATCH /api/query-history/:uid
 func (s *QueryHistoryService) patchCommentHandler(c *models.ReqContext) response.Response {
 	queryUID := web.Params(c.Req)[":uid"]
 	if len(queryUID) > 0 && !util.IsValidShortUID(queryUID) {
@@ -92,6 +101,7 @@ func (s *QueryHistoryService) patchCommentHandler(c *models.ReqContext) response
 	return response.JSON(http.StatusOK, QueryHistoryResponse{Result: query})
 }
 
+// starHandler handles POST /api/query-history/star/:uid
 func (s *QueryHistoryService) starHandler(c *models.ReqContext) response.Response {
 	queryUID := web.Params(c.Req)[":uid"]
 	if len(queryUID) > 0 && !util.IsValidShortUID(queryUID) {
@@ -106,6 +116,7 @@ func (s *QueryHistoryService) starHandler(c *models.ReqContext) response.Respons
 	return response.JSON(http.StatusOK, QueryHistoryResponse{Result: query})
 }
 
+// starHandler handles DELETE /api/query-history/star/:uid
 func (s *QueryHistoryService) unstarHandler(c *models.ReqContext) response.Response {
 	queryUID := web.Params(c.Req)[":uid"]
 	if len(queryUID) > 0 && !util.IsValidShortUID(queryUID) {
@@ -120,6 +131,7 @@ func (s *QueryHistoryService) unstarHandler(c *models.ReqContext) response.Respo
 	return response.JSON(http.StatusOK, QueryHistoryResponse{Result: query})
 }
 
+// starHandler handles POST /api/query-history/migrate
 func (s *QueryHistoryService) migrateHandler(c *models.ReqContext) response.Response {
 	cmd := MigrateQueriesToQueryHistoryCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {

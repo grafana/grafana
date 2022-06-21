@@ -183,17 +183,75 @@ import (
 // 500: internalServerError
 
 // swagger:parameters setPassword
-type SetPasswordParam struct {
+type SetPasswordParams struct {
 	// in:body
 	// required:true
 	Body dtos.AdminUpdateUserPasswordForm `json:"body"`
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
 }
 
-// swagger:parameters revokeAuthToken revokeSignedINAuthTokenCmd
-type RevokeAuthTokenParam struct {
+// swagger:parameters deleteUser
+type DeleteUserParams struct {
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
+}
+
+// swagger:parameters enableUser
+type EnableUserParams struct {
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
+}
+
+// swagger:parameters disableUser
+type DisableUserParams struct {
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
+}
+
+// swagger:parameters getUserQuota
+type GetUserQuotaParams struct {
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
+}
+
+// swagger:parameters updateUserQuota
+type UpdateUserQuotaParams struct {
+	// in:path
+	// required:true
+	QuotaTarget string `json:"quota_target"`
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
+}
+
+// swagger:parameters getAuthTokens
+type GetAuthTokensParams struct {
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
+}
+
+// swagger:parameters logoutUser
+type LogoutUserParams struct {
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
+}
+
+// swagger:parameters revokeAuthToken
+type RevokeAuthTokenParams struct {
 	// in:body
 	// required:true
 	Body models.RevokeAuthTokenCmd `json:"body"`
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
 }
 
 // swagger:parameters createUser
@@ -201,13 +259,6 @@ type CreateUserParam struct {
 	// in:body
 	// required:true
 	Body dtos.AdminCreateUserForm `json:"body"`
-}
-
-// swagger:parameters updateUserQuota updateOrgQuota
-type TargeQuotaParam struct {
-	// in:path
-	// required:true
-	QuotaTarget string `json:"quota_target"`
 }
 
 // swagger:parameters updateUserQuota
@@ -218,10 +269,13 @@ type UpdateUserQuotaParam struct {
 }
 
 // swagger:parameters setPermissions
-type SetPermissionsParam struct {
+type SetPermissionsParams struct {
 	// in:body
 	// required:true
 	Body dtos.AdminUpdateUserPermissionsForm `json:"body"`
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
 }
 
 // swagger:response createUserResponse

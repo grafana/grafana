@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/server/backgroundsvcs"
+	"github.com/grafana/grafana/pkg/server/usagestatssvcs"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acdb "github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
@@ -30,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
+	secretsStore "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/thumbs"
 	"github.com/grafana/grafana/pkg/services/validations"
@@ -73,15 +75,19 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(plugins.BackendFactoryProvider), new(*provider.Service)),
 	acdb.ProvideService,
 	wire.Bind(new(resourcepermissions.Store), new(*acdb.AccessControlStore)),
-	wire.Bind(new(accesscontrol.PermissionsProvider), new(*acdb.AccessControlStore)),
+	wire.Bind(new(accesscontrol.PermissionsStore), new(*acdb.AccessControlStore)),
 	osskmsproviders.ProvideService,
 	wire.Bind(new(kmsproviders.Service), new(osskmsproviders.Service)),
 	ldap.ProvideGroupsService,
 	wire.Bind(new(ldap.Groups), new(*ldap.OSSGroups)),
 	permissions.ProvideDatasourcePermissionsService,
 	wire.Bind(new(permissions.DatasourcePermissionsService), new(*permissions.OSSDatasourcePermissionsService)),
-	ossaccesscontrol.ProvidePermissionsServices,
-	wire.Bind(new(accesscontrol.PermissionsServices), new(*ossaccesscontrol.PermissionsServices)),
+	usagestatssvcs.ProvideUsageStatsProvidersRegistry,
+	wire.Bind(new(registry.UsageStatsProvidersRegistry), new(*usagestatssvcs.UsageStatsProvidersRegistry)),
+	ossaccesscontrol.ProvideDatasourcePermissionsService,
+	wire.Bind(new(accesscontrol.DatasourcePermissionsService), new(*ossaccesscontrol.DatasourcePermissionsService)),
+	secretsStore.ProvideRemotePluginCheck,
+	wire.Bind(new(secretsStore.UseRemoteSecretsPluginCheck), new(*secretsStore.OSSRemoteSecretsPluginCheck)),
 )
 
 var wireExtsSet = wire.NewSet(

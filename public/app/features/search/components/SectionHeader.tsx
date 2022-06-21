@@ -1,13 +1,15 @@
-import React, { FC, useCallback } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { FC, useCallback } from 'react';
 import { useLocalStorage } from 'react-use';
+
 import { GrafanaTheme } from '@grafana/data';
 import { CollapsableSection, Icon, stylesFactory, useTheme } from '@grafana/ui';
+import { useUniqueId } from 'app/plugins/datasource/influxdb/components/useUniqueId';
 
 import { DashboardSection, OnToggleChecked } from '../types';
-import { SearchCheckbox } from './SearchCheckbox';
 import { getSectionIcon, getSectionStorageKey } from '../utils';
-import { useUniqueId } from 'app/plugins/datasource/influxdb/components/useUniqueId';
+
+import { SearchCheckbox } from './SearchCheckbox';
 
 interface SectionHeaderProps {
   editable?: boolean;

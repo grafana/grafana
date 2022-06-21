@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 type TeamStore interface {
@@ -176,129 +175,133 @@ func isTeamNameTaken(orgId int64, name string, existingId int64, sess *DBSession
 }
 
 func (ss *SQLStore) SearchTeams(ctx context.Context, query *models.SearchTeamsQuery) error {
-	query.Result = models.SearchTeamQueryResult{
-		Teams: make([]*models.TeamDTO, 0),
-	}
-	queryWithWildcards := "%" + query.Query + "%"
+	return ss.WithDbSession(ctx, func(sess *DBSession) error {
+		query.Result = models.SearchTeamQueryResult{
+			Teams: make([]*models.TeamDTO, 0),
+		}
+		queryWithWildcards := "%" + query.Query + "%"
 
-	var sql bytes.Buffer
-	params := make([]interface{}, 0)
+		var sql bytes.Buffer
+		params := make([]interface{}, 0)
 
-	filteredUsers := getFilteredUsers(query.SignedInUser, query.HiddenUsers)
-	for _, user := range filteredUsers {
-		params = append(params, user)
-	}
+		filteredUsers := getFilteredUsers(query.SignedInUser, query.HiddenUsers)
+		for _, user := range filteredUsers {
+			params = append(params, user)
+		}
 
-	if query.UserIdFilter == models.FilterIgnoreUser {
-		sql.WriteString(getTeamSelectSQLBase(filteredUsers))
-	} else {
-		sql.WriteString(getTeamSelectWithPermissionsSQLBase(filteredUsers))
-		params = append(params, query.UserIdFilter)
-	}
+		if query.UserIdFilter == models.FilterIgnoreUser {
+			sql.WriteString(getTeamSelectSQLBase(filteredUsers))
+		} else {
+			sql.WriteString(getTeamSelectWithPermissionsSQLBase(filteredUsers))
+			params = append(params, query.UserIdFilter)
+		}
 
-	sql.WriteString(` WHERE team.org_id = ?`)
-	params = append(params, query.OrgId)
+		sql.WriteString(` WHERE team.org_id = ?`)
+		params = append(params, query.OrgId)
 
-	if query.Query != "" {
-		sql.WriteString(` and team.name ` + dialect.LikeStr() + ` ?`)
-		params = append(params, queryWithWildcards)
-	}
+		if query.Query != "" {
+			sql.WriteString(` and team.name ` + ss.Dialect.LikeStr() + ` ?`)
+			params = append(params, queryWithWildcards)
+		}
 
-	if query.Name != "" {
-		sql.WriteString(` and team.name = ?`)
-		params = append(params, query.Name)
-	}
+		if query.Name != "" {
+			sql.WriteString(` and team.name = ?`)
+			params = append(params, query.Name)
+		}
 
-	var (
-		acFilter ac.SQLFilter
-		err      error
-	)
-	if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
-		acFilter, err = ac.Filter(query.SignedInUser, "team.id", "teams:id:", ac.ActionTeamsRead)
-		if err != nil {
+		var (
+			acFilter ac.SQLFilter
+			err      error
+		)
+		if !ac.IsDisabled(ss.Cfg) {
+			acFilter, err = ac.Filter(query.SignedInUser, "team.id", "teams:id:", ac.ActionTeamsRead)
+			if err != nil {
+				return err
+			}
+			sql.WriteString(` and` + acFilter.Where)
+			params = append(params, acFilter.Args...)
+		}
+
+		sql.WriteString(` order by team.name asc`)
+
+		if query.Limit != 0 {
+			offset := query.Limit * (query.Page - 1)
+			sql.WriteString(ss.Dialect.LimitOffset(int64(query.Limit), int64(offset)))
+		}
+
+		if err := sess.SQL(sql.String(), params...).Find(&query.Result.Teams); err != nil {
 			return err
 		}
-		sql.WriteString(` and` + acFilter.Where)
-		params = append(params, acFilter.Args...)
-	}
 
-	sql.WriteString(` order by team.name asc`)
+		team := models.Team{}
+		countSess := sess.Table("team")
+		countSess.Where("team.org_id=?", query.OrgId)
 
-	if query.Limit != 0 {
-		offset := query.Limit * (query.Page - 1)
-		sql.WriteString(dialect.LimitOffset(int64(query.Limit), int64(offset)))
-	}
+		if query.Query != "" {
+			countSess.Where(`name `+dialect.LikeStr()+` ?`, queryWithWildcards)
+		}
 
-	if err := x.SQL(sql.String(), params...).Find(&query.Result.Teams); err != nil {
-		return err
-	}
+		if query.Name != "" {
+			countSess.Where("name=?", query.Name)
+		}
 
-	team := models.Team{}
-	countSess := x.Table("team")
-	countSess.Where("team.org_id=?", query.OrgId)
-
-	if query.Query != "" {
-		countSess.Where(`name `+dialect.LikeStr()+` ?`, queryWithWildcards)
-	}
-
-	if query.Name != "" {
-		countSess.Where("name=?", query.Name)
-	}
-
-	// If we're not retrieving all results, then only search for teams that this user has access to
-	if query.UserIdFilter != models.FilterIgnoreUser {
-		countSess.
-			Where(`
+		// If we're not retrieving all results, then only search for teams that this user has access to
+		if query.UserIdFilter != models.FilterIgnoreUser {
+			countSess.
+				Where(`
 			team.id IN (
 				SELECT
 				team_id
 				FROM team_member
 				WHERE team_member.user_id = ?
 			)`, query.UserIdFilter)
-	}
+		}
 
-	// Only count teams user can see
-	if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
-		countSess.Where(acFilter.Where, acFilter.Args...)
-	}
+		// Only count teams user can see
+		if !ac.IsDisabled(ss.Cfg) {
+			countSess.Where(acFilter.Where, acFilter.Args...)
+		}
 
-	count, err := countSess.Count(&team)
-	query.Result.TotalCount = count
+		count, err := countSess.Count(&team)
+		query.Result.TotalCount = count
 
-	return err
+		return err
+	})
 }
 
 func (ss *SQLStore) GetTeamById(ctx context.Context, query *models.GetTeamByIdQuery) error {
-	var sql bytes.Buffer
-	params := make([]interface{}, 0)
+	return ss.WithDbSession(ctx, func(sess *DBSession) error {
+		var sql bytes.Buffer
+		params := make([]interface{}, 0)
 
-	filteredUsers := getFilteredUsers(query.SignedInUser, query.HiddenUsers)
-	sql.WriteString(getTeamSelectSQLBase(filteredUsers))
-	for _, user := range filteredUsers {
-		params = append(params, user)
-	}
+		filteredUsers := getFilteredUsers(query.SignedInUser, query.HiddenUsers)
+		sql.WriteString(getTeamSelectSQLBase(filteredUsers))
+		for _, user := range filteredUsers {
+			params = append(params, user)
+		}
 
-	if query.UserIdFilter != models.FilterIgnoreUser {
-		sql.WriteString(` INNER JOIN team_member ON team.id = team_member.team_id AND team_member.user_id = ?`)
-		params = append(params, query.UserIdFilter)
-	}
+		if query.UserIdFilter != models.FilterIgnoreUser {
+			sql.WriteString(` INNER JOIN team_member ON team.id = team_member.team_id AND team_member.user_id = ?`)
+			params = append(params, query.UserIdFilter)
+		}
 
-	sql.WriteString(` WHERE team.org_id = ? and team.id = ?`)
-	params = append(params, query.OrgId, query.Id)
+		sql.WriteString(` WHERE team.org_id = ? and team.id = ?`)
+		params = append(params, query.OrgId, query.Id)
 
-	var team models.TeamDTO
-	exists, err := x.SQL(sql.String(), params...).Get(&team)
+		var team models.TeamDTO
+		exists, err := sess.SQL(sql.String(), params...).Get(&team)
 
-	if err != nil {
-		return err
-	}
+		if err != nil {
+			return err
+		}
 
-	if !exists {
-		return models.ErrTeamNotFound
-	}
+		if !exists {
+			return models.ErrTeamNotFound
+		}
 
-	query.Result = &team
-	return nil
+		query.Result = &team
+		return nil
+	})
 }
 
 // GetTeamsByUser is used by the Guardian when checking a users' permissions
@@ -307,12 +310,23 @@ func (ss *SQLStore) GetTeamsByUser(ctx context.Context, query *models.GetTeamsBy
 		query.Result = make([]*models.TeamDTO, 0)
 
 		var sql bytes.Buffer
+		var params []interface{}
+		params = append(params, query.OrgId, query.UserId)
 
 		sql.WriteString(getTeamSelectSQLBase([]string{}))
 		sql.WriteString(` INNER JOIN team_member on team.id = team_member.team_id`)
 		sql.WriteString(` WHERE team.org_id = ? and team_member.user_id = ?`)
 
-		err := sess.SQL(sql.String(), query.OrgId, query.UserId).Find(&query.Result)
+		if !ac.IsDisabled(ss.Cfg) {
+			acFilter, err := ac.Filter(query.SignedInUser, "team.id", "teams:id:", ac.ActionTeamsRead)
+			if err != nil {
+				return err
+			}
+			sql.WriteString(` and` + acFilter.Where)
+			params = append(params, acFilter.Args...)
+		}
+
+		err := sess.SQL(sql.String(), params...).Find(&query.Result)
 		return err
 	})
 }
@@ -347,7 +361,7 @@ func getTeamMember(sess *DBSession, orgId int64, teamId int64, userId int64) (mo
 
 // UpdateTeamMember updates a team member
 func (ss *SQLStore) UpdateTeamMember(ctx context.Context, cmd *models.UpdateTeamMemberCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		return updateTeamMember(sess, cmd.OrgId, cmd.TeamId, cmd.UserId, cmd.Permission)
 	})
 }
@@ -433,7 +447,7 @@ func updateTeamMember(sess *DBSession, orgID, teamID, userID int64, permission m
 
 // RemoveTeamMember removes a member from a team
 func (ss *SQLStore) RemoveTeamMember(ctx context.Context, cmd *models.RemoveTeamMemberCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		return removeTeamMember(sess, cmd)
 	})
 }
@@ -512,8 +526,8 @@ func (ss *SQLStore) GetTeamMembers(ctx context.Context, query *models.GetTeamMem
 	// With accesscontrol we filter out users based on the SignedInUser's permissions
 	// Note we assume that checking SignedInUser is allowed to see team members for this team has already been performed
 	// If the signed in user is not set no member will be returned
-	if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
-		sqlID := fmt.Sprintf("%s.%s", x.Dialect().Quote("user"), x.Dialect().Quote("id"))
+	if !ac.IsDisabled(ss.Cfg) {
+		sqlID := fmt.Sprintf("%s.%s", ss.engine.Dialect().Quote("user"), ss.engine.Dialect().Quote("id"))
 		*acFilter, err = ac.Filter(query.SignedInUser, sqlID, "users:id:", ac.ActionOrgUsersRead)
 		if err != nil {
 			return err
@@ -525,67 +539,74 @@ func (ss *SQLStore) GetTeamMembers(ctx context.Context, query *models.GetTeamMem
 
 // getTeamMembers return a list of members for the specified team
 func (ss *SQLStore) getTeamMembers(ctx context.Context, query *models.GetTeamMembersQuery, acUserFilter *ac.SQLFilter) error {
-	query.Result = make([]*models.TeamMemberDTO, 0)
-	sess := x.Table("team_member")
-	sess.Join("INNER", x.Dialect().Quote("user"),
-		fmt.Sprintf("team_member.user_id=%s.%s", x.Dialect().Quote("user"), x.Dialect().Quote("id")),
-	)
+	return ss.WithDbSession(ctx, func(dbSess *DBSession) error {
+		query.Result = make([]*models.TeamMemberDTO, 0)
+		sess := dbSess.Table("team_member")
+		sess.Join("INNER", ss.Dialect.Quote("user"),
+			fmt.Sprintf("team_member.user_id=%s.%s", ss.Dialect.Quote("user"), ss.Dialect.Quote("id")),
+		)
 
-	if acUserFilter != nil {
-		sess.Where(acUserFilter.Where, acUserFilter.Args...)
-	}
+		// explicitly check for serviceaccounts
+		sess.Where(fmt.Sprintf("%s.is_service_account=?", ss.Dialect.Quote("user")), ss.Dialect.BooleanStr(false))
 
-	// Join with only most recent auth module
-	authJoinCondition := `(
+		if acUserFilter != nil {
+			sess.Where(acUserFilter.Where, acUserFilter.Args...)
+		}
+
+		// Join with only most recent auth module
+		authJoinCondition := `(
 		SELECT id from user_auth
 			WHERE user_auth.user_id = team_member.user_id
 			ORDER BY user_auth.created DESC `
-	authJoinCondition = "user_auth.id=" + authJoinCondition + dialect.Limit(1) + ")"
-	sess.Join("LEFT", "user_auth", authJoinCondition)
+		authJoinCondition = "user_auth.id=" + authJoinCondition + ss.Dialect.Limit(1) + ")"
+		sess.Join("LEFT", "user_auth", authJoinCondition)
 
-	if query.OrgId != 0 {
-		sess.Where("team_member.org_id=?", query.OrgId)
-	}
-	if query.TeamId != 0 {
-		sess.Where("team_member.team_id=?", query.TeamId)
-	}
-	if query.UserId != 0 {
-		sess.Where("team_member.user_id=?", query.UserId)
-	}
-	if query.External {
-		sess.Where("team_member.external=?", dialect.BooleanStr(true))
-	}
-	sess.Cols(
-		"team_member.org_id",
-		"team_member.team_id",
-		"team_member.user_id",
-		"user.email",
-		"user.name",
-		"user.login",
-		"team_member.external",
-		"team_member.permission",
-		"user_auth.auth_module",
-	)
-	sess.Asc("user.login", "user.email")
+		if query.OrgId != 0 {
+			sess.Where("team_member.org_id=?", query.OrgId)
+		}
+		if query.TeamId != 0 {
+			sess.Where("team_member.team_id=?", query.TeamId)
+		}
+		if query.UserId != 0 {
+			sess.Where("team_member.user_id=?", query.UserId)
+		}
+		if query.External {
+			sess.Where("team_member.external=?", ss.Dialect.BooleanStr(true))
+		}
+		sess.Cols(
+			"team_member.org_id",
+			"team_member.team_id",
+			"team_member.user_id",
+			"user.email",
+			"user.name",
+			"user.login",
+			"team_member.external",
+			"team_member.permission",
+			"user_auth.auth_module",
+		)
+		sess.Asc("user.login", "user.email")
 
-	err := sess.Find(&query.Result)
-	return err
+		err := sess.Find(&query.Result)
+		return err
+	})
 }
 
-func IsAdminOfTeams(ctx context.Context, query *models.IsAdminOfTeamsQuery) error {
-	builder := &SQLBuilder{}
-	builder.Write("SELECT COUNT(team.id) AS count FROM team INNER JOIN team_member ON team_member.team_id = team.id WHERE team.org_id = ? AND team_member.user_id = ? AND team_member.permission = ?", query.SignedInUser.OrgId, query.SignedInUser.UserId, models.PERMISSION_ADMIN)
+func (ss *SQLStore) IsAdminOfTeams(ctx context.Context, query *models.IsAdminOfTeamsQuery) error {
+	return ss.WithDbSession(ctx, func(sess *DBSession) error {
+		builder := &SQLBuilder{}
+		builder.Write("SELECT COUNT(team.id) AS count FROM team INNER JOIN team_member ON team_member.team_id = team.id WHERE team.org_id = ? AND team_member.user_id = ? AND team_member.permission = ?", query.SignedInUser.OrgId, query.SignedInUser.UserId, models.PERMISSION_ADMIN)
 
-	type teamCount struct {
-		Count int64
-	}
+		type teamCount struct {
+			Count int64
+		}
 
-	resp := make([]*teamCount, 0)
-	if err := x.SQL(builder.GetSQLString(), builder.params...).Find(&resp); err != nil {
-		return err
-	}
+		resp := make([]*teamCount, 0)
+		if err := sess.SQL(builder.GetSQLString(), builder.params...).Find(&resp); err != nil {
+			return err
+		}
 
-	query.Result = len(resp) > 0 && resp[0].Count > 0
+		query.Result = len(resp) > 0 && resp[0].Count > 0
 
-	return nil
+		return nil
+	})
 }

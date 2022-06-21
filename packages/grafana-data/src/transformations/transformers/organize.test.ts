@@ -6,8 +6,10 @@ import {
   toDataFrame,
   transformDataFrame,
 } from '@grafana/data';
-import { organizeFieldsTransformer, OrganizeFieldsTransformerOptions } from './organize';
+
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
+
+import { organizeFieldsTransformer, OrganizeFieldsTransformerOptions } from './organize';
 
 describe('OrganizeFields Transformer', () => {
   beforeAll(() => {

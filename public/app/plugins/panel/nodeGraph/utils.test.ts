@@ -1,4 +1,5 @@
 import { ArrayVector, createTheme, DataFrame, FieldType, MutableDataFrame } from '@grafana/data';
+
 import {
   getEdgeFields,
   getNodeFields,

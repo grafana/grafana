@@ -1,7 +1,8 @@
-import React, { FC } from 'react';
-import { render, screen } from '@testing-library/react';
-import { ErrorBoundary } from './ErrorBoundary';
 import { captureException } from '@sentry/browser';
+import { render, screen } from '@testing-library/react';
+import React, { FC } from 'react';
+
+import { ErrorBoundary } from './ErrorBoundary';
 
 jest.mock('@sentry/browser');
 

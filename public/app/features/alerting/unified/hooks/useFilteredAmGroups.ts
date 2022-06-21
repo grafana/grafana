@@ -1,6 +1,8 @@
+import { useMemo } from 'react';
+
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
-import { useMemo } from 'react';
+
 import { labelsMatchMatchers, parseMatchers } from '../utils/alertmanager';
 import { getFiltersFromUrlParams } from '../utils/misc';
 

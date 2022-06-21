@@ -1,3 +1,7 @@
+import mockConsole, { RestoreConsole } from 'jest-mock-console';
+import { mapValues } from 'lodash';
+import { Observable, Subject, Subscription, Unsubscribable } from 'rxjs';
+
 import {
   DataFrameJSON,
   dataFrameToJSON,
@@ -11,13 +15,12 @@ import {
   LiveChannelScope,
   LoadingState,
 } from '@grafana/data';
-import { Observable, Subject, Subscription, Unsubscribable } from 'rxjs';
-import { DataStreamHandlerDeps, LiveDataStream } from './LiveDataStream';
-import { mapValues } from 'lodash';
 import { StreamingFrameAction } from '@grafana/runtime';
-import { isStreamingResponseData, StreamingResponseData, StreamingResponseDataType } from '../data/utils';
+
 import { StreamingDataFrame } from '../data/StreamingDataFrame';
-import mockConsole, { RestoreConsole } from 'jest-mock-console';
+import { isStreamingResponseData, StreamingResponseData, StreamingResponseDataType } from '../data/utils';
+
+import { DataStreamHandlerDeps, LiveDataStream } from './LiveDataStream';
 
 type SubjectsInsteadOfObservables<T> = {
   [key in keyof T]: T[key] extends Observable<infer U> ? Subject<U> : T[key];

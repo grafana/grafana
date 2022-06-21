@@ -1,5 +1,6 @@
-import React, { PureComponent } from 'react';
 import { uniqueId } from 'lodash';
+import React, { PureComponent } from 'react';
+
 import {
   DataSourcePluginOptionsEditorProps,
   SelectableValue,
@@ -11,6 +12,7 @@ import {
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { Alert, DataSourceHttpSettings, InfoBox, InlineField, InlineFormLabel, LegacyForms, Select } from '@grafana/ui';
+
 const { Input, SecretFormField } = LegacyForms;
 import { InfluxOptions, InfluxSecureJsonData, InfluxVersion } from '../types';
 
@@ -234,7 +236,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
             </InlineFormLabel>
             <Select
               inputId={`${htmlPrefix}-http-method`}
-              menuShouldPortal
               className="width-10"
               value={httpModes.find((httpMode) => httpMode.value === options.jsonData.httpMode)}
               options={httpModes}
@@ -278,7 +279,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
             <div className="gf-form">
               <Select
                 aria-label="Query language"
-                menuShouldPortal
                 className="width-30"
                 value={options.jsonData.version === InfluxVersion.Flux ? versions[1] : versions[0]}
                 options={versions}

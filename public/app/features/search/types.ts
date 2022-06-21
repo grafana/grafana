@@ -1,6 +1,8 @@
 import { Dispatch } from 'react';
 import { Action } from 'redux';
-import { SelectableValue } from '@grafana/data';
+
+import { SelectableValue, WithAccessControlMetadata } from '@grafana/data';
+
 import { FolderInfo } from '../../types';
 
 export enum DashboardSearchItemType {
@@ -38,6 +40,7 @@ export interface DashboardSectionItem {
   tags: string[];
   title: string;
   type: DashboardSearchItemType;
+  icon?: string; // used for grid view
   uid?: string;
   uri: string;
   url: string;
@@ -45,7 +48,7 @@ export interface DashboardSectionItem {
   sortMetaName?: string;
 }
 
-export interface DashboardSearchHit extends DashboardSectionItem, DashboardSection {}
+export interface DashboardSearchHit extends DashboardSectionItem, DashboardSection, WithAccessControlMetadata {}
 
 export interface DashboardTag {
   term: string;
@@ -95,6 +98,7 @@ export type OnMoveItems = (selectedDashboards: DashboardSectionItem[], folder: F
 export enum SearchLayout {
   List = 'list',
   Folders = 'folders',
+  Grid = 'grid', // preview
 }
 
 export interface SearchQueryParams {
@@ -105,3 +109,6 @@ export interface SearchQueryParams {
   layout?: SearchLayout | null;
   folder?: string | null;
 }
+
+// new Search Types
+export type OnMoveOrDeleleSelectedItems = () => void;

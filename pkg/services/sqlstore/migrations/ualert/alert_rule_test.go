@@ -25,6 +25,11 @@ func TestMigrateAlertRuleQueries(t *testing.T) {
 			input:    simplejson.NewFromAny(map[string]interface{}{"target": "ahalfquery"}),
 			expected: `{"target":"ahalfquery"}`,
 		},
+		{
+			name:     "when query was hidden, it removes the flag",
+			input:    simplejson.NewFromAny(map[string]interface{}{"hide": true}),
+			expected: `{}`,
+		},
 	}
 
 	for _, tt := range tc {

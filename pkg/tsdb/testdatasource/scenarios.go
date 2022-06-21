@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 const (
@@ -30,7 +29,7 @@ const (
 	predictablePulseQuery             queryType = "predictable_pulse"
 	predictableCSVWaveQuery           queryType = "predictable_csv_wave"
 	streamingClientQuery              queryType = "streaming_client"
-	flightPath                        queryType = "flight_path"
+	simulation                        queryType = "simulation"
 	usaQueryKey                       queryType = "usa"
 	liveQuery                         queryType = "live"
 	grafanaAPIQuery                   queryType = "grafana_api"
@@ -135,9 +134,9 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 	})
 
 	s.registerScenario(&Scenario{
-		ID:      string(flightPath),
-		Name:    "Flight path",
-		handler: s.handleFlightPathScenario,
+		ID:      string(simulation),
+		Name:    "Simulation",
+		handler: s.sims.QueryData,
 	})
 
 	s.registerScenario(&Scenario{
@@ -787,7 +786,7 @@ func predictableCSVWave(query backend.DataQuery, model *simplejson.Json) ([]*dat
 			default:
 				f, err := strconv.ParseFloat(rawValue, 64)
 				if err != nil {
-					return nil, errutil.Wrapf(err, "failed to parse value '%v' into nullable float", rawValue)
+					return nil, fmt.Errorf("failed to parse value '%v' into nullable float: %w", rawValue, err)
 				}
 				val = &f
 			}

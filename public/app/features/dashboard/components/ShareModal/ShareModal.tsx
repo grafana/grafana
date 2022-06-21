@@ -1,14 +1,18 @@
 import React from 'react';
+
 import { Modal, ModalTabsHeader, TabContent } from '@grafana/ui';
+import { config } from 'app/core/config';
+import { contextSrv } from 'app/core/core';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { isPanelModelLibraryPanel } from 'app/features/library-panels/guard';
-import { ShareLink } from './ShareLink';
-import { ShareSnapshot } from './ShareSnapshot';
-import { ShareExport } from './ShareExport';
+
 import { ShareEmbed } from './ShareEmbed';
-import { ShareModalTabModel } from './types';
-import { contextSrv } from 'app/core/core';
+import { ShareExport } from './ShareExport';
 import { ShareLibraryPanel } from './ShareLibraryPanel';
+import { ShareLink } from './ShareLink';
+import { SharePublicDashboard } from './SharePublicDashboard';
+import { ShareSnapshot } from './ShareSnapshot';
+import { ShareModalTabModel } from './types';
 
 const customDashboardTabs: ShareModalTabModel[] = [];
 const customPanelTabs: ShareModalTabModel[] = [];
@@ -48,6 +52,10 @@ function getTabs(props: Props) {
   } else {
     tabs.push({ label: 'Export', value: 'export', component: ShareExport });
     tabs.push(...customDashboardTabs);
+  }
+
+  if (Boolean(config.featureToggles['publicDashboards'])) {
+    tabs.push({ label: 'Public Dashboard', value: 'share', component: SharePublicDashboard });
   }
 
   return tabs;

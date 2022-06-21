@@ -13,10 +13,18 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/middleware/csrf"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/framework/coremodel/registry"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
@@ -28,17 +36,18 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	acmiddleware "github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/comments"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
+	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
 	"github.com/grafana/grafana/pkg/services/encryption"
+	"github.com/grafana/grafana/pkg/services/export"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/ldap"
@@ -51,27 +60,25 @@ import (
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsettings/service"
+	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/queryhistory"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
-	"github.com/grafana/grafana/pkg/services/schemaloader"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/teamguardian"
 	"github.com/grafana/grafana/pkg/services/thumbs"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type HTTPServer struct {
@@ -81,6 +88,7 @@ type HTTPServer struct {
 	httpSrv          *http.Server
 	middlewares      []web.Handler
 	namedMiddlewares []routing.RegisterNamedMiddleware
+	bus              bus.Bus
 
 	PluginContextProvider        *plugincontext.Provider
 	RouteRegister                routing.RouteRegister
@@ -102,6 +110,7 @@ type HTTPServer struct {
 	PluginRequestValidator       models.PluginRequestValidator
 	pluginClient                 plugins.Client
 	pluginStore                  plugins.Store
+	pluginManager                plugins.Manager
 	pluginDashboardService       plugindashboards.Service
 	pluginStaticRouteResolver    plugins.StaticRouteResolver
 	pluginErrorResolver          plugins.ErrorResolver
@@ -111,11 +120,11 @@ type HTTPServer struct {
 	Live                         *live.GrafanaLive
 	LivePushGateway              *pushhttp.Gateway
 	ThumbService                 thumbs.Service
+	ExportService                export.ExportService
 	StorageService               store.HTTPStorageService
 	ContextHandler               *contexthandler.ContextHandler
 	SQLStore                     sqlstore.Store
 	AlertEngine                  *alerting.AlertEngine
-	LoadSchemaService            *schemaloader.SchemaLoaderService
 	AlertNG                      *ngalert.AlertNG
 	LibraryPanelService          librarypanels.Service
 	LibraryElementService        libraryelements.Service
@@ -135,8 +144,7 @@ type HTTPServer struct {
 	serviceAccountsService       serviceaccounts.Service
 	authInfoService              login.AuthInfoService
 	authenticator                loginpkg.Authenticator
-	teamPermissionsService       accesscontrol.PermissionsService
-	permissionServices           accesscontrol.PermissionsServices
+	teamPermissionsService       accesscontrol.TeamPermissionsService
 	NotificationService          *notifications.NotificationService
 	dashboardService             dashboards.DashboardService
 	dashboardProvisioningService dashboards.DashboardProvisioningService
@@ -144,21 +152,31 @@ type HTTPServer struct {
 	DatasourcePermissionsService permissions.DatasourcePermissionsService
 	commentsService              *comments.Service
 	AlertNotificationService     *alerting.AlertNotificationService
-	DashboardsnapshotsService    *dashboardsnapshots.Service
+	dashboardsnapshotsService    dashboardsnapshots.Service
 	PluginSettings               *pluginSettings.Service
 	AvatarCacheServer            *avatar.AvatarCacheServer
+	preferenceService            pref.Service
+	Csrf                         csrf.Service
+	entityEventsService          store.EntityEventsService
+	folderPermissionsService     accesscontrol.FolderPermissionsService
+	dashboardPermissionsService  accesscontrol.DashboardPermissionsService
+	dashboardVersionService      dashver.Service
+	starService                  star.Service
+	CoremodelRegistry            *registry.Generic
+	CoremodelStaticRegistry      *registry.Static
+	kvStore                      kvstore.KVStore
 }
 
 type ServerOptions struct {
 	Listener net.Listener
 }
 
-func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routing.RouteRegister,
+func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routing.RouteRegister, bus bus.Bus,
 	renderService rendering.Service, licensing models.Licensing, hooksService *hooks.HooksService,
 	cacheService *localcache.CacheService, sqlStore *sqlstore.SQLStore, alertEngine *alerting.AlertEngine,
 	pluginRequestValidator models.PluginRequestValidator, pluginStaticRouteResolver plugins.StaticRouteResolver,
 	pluginDashboardService plugindashboards.Service, pluginStore plugins.Store, pluginClient plugins.Client,
-	pluginErrorResolver plugins.ErrorResolver, settingsProvider setting.Provider,
+	pluginErrorResolver plugins.ErrorResolver, pluginManager plugins.Manager, settingsProvider setting.Provider,
 	dataSourceCache datasources.CacheService, userTokenService models.UserTokenService,
 	cleanUpService *cleanup.CleanUpService, shortURLService shorturls.Service, queryHistoryService queryhistory.Service,
 	thumbService thumbs.Service, remoteCache *remotecache.RemoteCache, provisioningService provisioning.ProvisioningService,
@@ -166,19 +184,22 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	dataSourceProxy *datasourceproxy.DataSourceProxyService, searchService *search.SearchService,
 	live *live.GrafanaLive, livePushGateway *pushhttp.Gateway, plugCtxProvider *plugincontext.Provider,
 	contextHandler *contexthandler.ContextHandler, features *featuremgmt.FeatureManager,
-	schemaService *schemaloader.SchemaLoaderService, alertNG *ngalert.AlertNG,
-	libraryPanelService librarypanels.Service, libraryElementService libraryelements.Service,
-	quotaService *quota.QuotaService, socialService social.Service, tracer tracing.Tracer,
+	alertNG *ngalert.AlertNG, libraryPanelService librarypanels.Service, libraryElementService libraryelements.Service,
+	quotaService *quota.QuotaService, socialService social.Service, tracer tracing.Tracer, exportService export.ExportService,
 	encryptionService encryption.Internal, grafanaUpdateChecker *updatechecker.GrafanaService,
 	pluginsUpdateChecker *updatechecker.PluginsService, searchUsersService searchusers.Service,
 	dataSourcesService datasources.DataSourceService, secretsService secrets.Service, queryDataService *query.Service,
 	ldapGroups ldap.Groups, teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service,
-	authInfoService login.AuthInfoService, permissionsServices accesscontrol.PermissionsServices, storageService store.HTTPStorageService,
+	authInfoService login.AuthInfoService, storageService store.HTTPStorageService,
 	notificationService *notifications.NotificationService, dashboardService dashboards.DashboardService,
 	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService dashboards.FolderService,
 	datasourcePermissionsService permissions.DatasourcePermissionsService, alertNotificationService *alerting.AlertNotificationService,
-	dashboardsnapshotsService *dashboardsnapshots.Service, commentsService *comments.Service, pluginSettings *pluginSettings.Service,
-	avatarCacheServer *avatar.AvatarCacheServer,
+	dashboardsnapshotsService dashboardsnapshots.Service, commentsService *comments.Service, pluginSettings *pluginSettings.Service,
+	avatarCacheServer *avatar.AvatarCacheServer, preferenceService pref.Service, entityEventsService store.EntityEventsService,
+	teamsPermissionsService accesscontrol.TeamPermissionsService, folderPermissionsService accesscontrol.FolderPermissionsService,
+	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
+	starService star.Service, csrfService csrf.Service, coremodelRegistry *registry.Generic, coremodelStaticRegistry *registry.Static,
+	kvStore kvstore.KVStore,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -186,6 +207,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	hs := &HTTPServer{
 		Cfg:                          cfg,
 		RouteRegister:                routeRegister,
+		bus:                          bus,
 		RenderService:                renderService,
 		License:                      licensing,
 		HooksService:                 hooksService,
@@ -193,6 +215,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		SQLStore:                     sqlStore,
 		AlertEngine:                  alertEngine,
 		PluginRequestValidator:       pluginRequestValidator,
+		pluginManager:                pluginManager,
 		pluginClient:                 pluginClient,
 		pluginStore:                  pluginStore,
 		pluginStaticRouteResolver:    pluginStaticRouteResolver,
@@ -215,11 +238,11 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		AccessControl:                accessControl,
 		DataProxy:                    dataSourceProxy,
 		SearchService:                searchService,
+		ExportService:                exportService,
 		Live:                         live,
 		LivePushGateway:              livePushGateway,
 		PluginContextProvider:        plugCtxProvider,
 		ContextHandler:               contextHandler,
-		LoadSchemaService:            schemaService,
 		AlertNG:                      alertNG,
 		LibraryPanelService:          libraryPanelService,
 		LibraryElementService:        libraryElementService,
@@ -245,12 +268,21 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		folderService:                folderService,
 		DatasourcePermissionsService: datasourcePermissionsService,
 		commentsService:              commentsService,
-		teamPermissionsService:       permissionsServices.GetTeamService(),
+		teamPermissionsService:       teamsPermissionsService,
 		AlertNotificationService:     alertNotificationService,
-		DashboardsnapshotsService:    dashboardsnapshotsService,
+		dashboardsnapshotsService:    dashboardsnapshotsService,
 		PluginSettings:               pluginSettings,
-		permissionServices:           permissionsServices,
 		AvatarCacheServer:            avatarCacheServer,
+		preferenceService:            preferenceService,
+		Csrf:                         csrfService,
+		entityEventsService:          entityEventsService,
+		folderPermissionsService:     folderPermissionsService,
+		dashboardPermissionsService:  dashboardPermissionsService,
+		dashboardVersionService:      dashboardVersionService,
+		starService:                  starService,
+		CoremodelRegistry:            coremodelRegistry,
+		CoremodelStaticRegistry:      coremodelStaticRegistry,
+		kvStore:                      kvStore,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
@@ -258,7 +290,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	hs.registerRoutes()
 
 	// Register access control scope resolver for annotations
-	hs.AccessControl.RegisterAttributeScopeResolver(AnnotationTypeScopeResolver())
+	hs.AccessControl.RegisterScopeAttributeResolver(AnnotationTypeScopeResolver())
 
 	if err := hs.declareFixedRoles(); err != nil {
 		return nil, err
@@ -354,19 +386,19 @@ func (hs *HTTPServer) getListener() (net.Listener, error) {
 	case setting.HTTPScheme, setting.HTTPSScheme, setting.HTTP2Scheme:
 		listener, err := net.Listen("tcp", hs.httpSrv.Addr)
 		if err != nil {
-			return nil, errutil.Wrapf(err, "failed to open listener on address %s", hs.httpSrv.Addr)
+			return nil, fmt.Errorf("failed to open listener on address %s: %w", hs.httpSrv.Addr, err)
 		}
 		return listener, nil
 	case setting.SocketScheme:
 		listener, err := net.ListenUnix("unix", &net.UnixAddr{Name: hs.Cfg.SocketPath, Net: "unix"})
 		if err != nil {
-			return nil, errutil.Wrapf(err, "failed to open listener for socket %s", hs.Cfg.SocketPath)
+			return nil, fmt.Errorf("failed to open listener for socket %s: %w", hs.Cfg.SocketPath, err)
 		}
 
 		// Make socket writable by group
 		// nolint:gosec
 		if err := os.Chmod(hs.Cfg.SocketPath, 0660); err != nil {
-			return nil, errutil.Wrapf(err, "failed to change socket permissions")
+			return nil, fmt.Errorf("failed to change socket permissions: %w", err)
 		}
 
 		return listener, nil
@@ -478,7 +510,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	}
 
 	m.Use(middleware.Recovery(hs.Cfg))
-	m.UseMiddleware(middleware.CSRF(hs.Cfg.LoginCookieName, hs.log))
+	m.UseMiddleware(hs.Csrf.Middleware(hs.log))
 
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "build", "public/build")
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "", "public", "/public/views/swagger.html")
@@ -505,7 +537,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 
 	m.Use(hs.ContextHandler.Middleware)
 	m.Use(middleware.OrgRedirect(hs.Cfg, hs.SQLStore))
-	m.Use(acmiddleware.LoadPermissionsMiddleware(hs.AccessControl))
+	m.Use(accesscontrol.LoadPermissionsMiddleware(hs.AccessControl))
 
 	// needs to be after context handler
 	if hs.Cfg.EnforceDomain {

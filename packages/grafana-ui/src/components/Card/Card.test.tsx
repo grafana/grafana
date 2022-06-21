@@ -1,8 +1,10 @@
-import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { Card } from './Card';
+import React from 'react';
+
 import { Button } from '../Button';
 import { IconButton } from '../IconButton/IconButton';
+
+import { Card } from './Card';
 
 describe('Card', () => {
   it('should execute callback when clicked', () => {

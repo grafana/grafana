@@ -61,8 +61,8 @@ func (p *teamPermissionMigrator) setRolePermissions(roleID int64, permissions []
 	return nil
 }
 
-// mapPermissionToFGAC translates the legacy membership (Member or Admin) into FGAC permissions
-func (p *teamPermissionMigrator) mapPermissionToFGAC(permission models.PermissionType, teamID int64) []accesscontrol.Permission {
+// mapPermissionToRBAC translates the legacy membership (Member or Admin) into RBAC permissions
+func (p *teamPermissionMigrator) mapPermissionToRBAC(permission models.PermissionType, teamID int64) []accesscontrol.Permission {
 	teamIDScope := accesscontrol.Scope("teams", "id", strconv.FormatInt(teamID, 10))
 	switch permission {
 	case 0:
@@ -222,7 +222,7 @@ func (p *teamPermissionMigrator) generateAssociatedPermissions(teamMemberships [
 		if !initialized {
 			userPermissions = map[int64][]accesscontrol.Permission{}
 		}
-		userPermissions[m.UserId] = append(userPermissions[m.UserId], p.mapPermissionToFGAC(m.Permission, m.TeamId)...)
+		userPermissions[m.UserId] = append(userPermissions[m.UserId], p.mapPermissionToRBAC(m.Permission, m.TeamId)...)
 		userPermissionsByOrg[m.OrgId] = userPermissions
 	}
 

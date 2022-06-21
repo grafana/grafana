@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 var validMetricDataID = regexp.MustCompile(`^[a-z][a-zA-Z0-9_]*$`)
@@ -20,7 +21,8 @@ var validMetricDataID = regexp.MustCompile(`^[a-z][a-zA-Z0-9_]*$`)
 // parseQueries parses the json queries and returns a map of cloudWatchQueries by region. The cloudWatchQuery has a 1 to 1 mapping to a query editor row
 func (e *cloudWatchExecutor) parseQueries(queries []backend.DataQuery, startTime time.Time, endTime time.Time) (map[string][]*cloudWatchQuery, error) {
 	requestQueries := make(map[string][]*cloudWatchQuery)
-	migratedQueries, err := migrateLegacyQuery(queries, startTime, endTime)
+
+	migratedQueries, err := migrateLegacyQuery(queries, e.features.IsEnabled(featuremgmt.FlagCloudWatchDynamicLabels))
 	if err != nil {
 		return nil, err
 	}
@@ -51,38 +53,81 @@ func (e *cloudWatchExecutor) parseQueries(queries []backend.DataQuery, startTime
 	return requestQueries, nil
 }
 
-// migrateLegacyQuery migrates queries that has a `statistics` field to use the `statistic` field instead.
-// This migration is also done in the frontend, so this should only ever be needed for alerting queries
-// In case the query used more than one stat, the first stat in the slice will be used in the statistic field
-// Read more here https://github.com/grafana/grafana/issues/30629
-func migrateLegacyQuery(queries []backend.DataQuery, startTime time.Time, endTime time.Time) ([]*backend.DataQuery, error) {
+// migrateLegacyQuery is also done in the frontend, so this should only ever be needed for alerting queries
+func migrateLegacyQuery(queries []backend.DataQuery, dynamicLabelsEnabled bool) ([]*backend.DataQuery, error) {
 	migratedQueries := []*backend.DataQuery{}
 	for _, q := range queries {
 		query := q
-		model, err := simplejson.NewJson(query.JSON)
+		queryJson, err := simplejson.NewJson(query.JSON)
 		if err != nil {
 			return nil, err
 		}
 
-		_, err = model.Get("statistic").String()
-		// If there's not a statistic property in the json, we know it's the legacy format and then it has to be migrated
+		if err := migrateStatisticsToStatistic(queryJson); err != nil {
+			return nil, err
+		}
+
+		_, labelExists := queryJson.CheckGet("label")
+		if !labelExists && dynamicLabelsEnabled {
+			migrateAliasToDynamicLabel(queryJson)
+		}
+
+		query.JSON, err = queryJson.MarshalJSON()
 		if err != nil {
-			stats, err := model.Get("statistics").StringArray()
-			if err != nil {
-				return nil, fmt.Errorf("query must have either statistic or statistics field")
-			}
-			model.Del("statistics")
-			model.Set("statistic", stats[0])
-			query.JSON, err = model.MarshalJSON()
-			if err != nil {
-				return nil, err
-			}
+			return nil, err
 		}
 
 		migratedQueries = append(migratedQueries, &query)
 	}
 
 	return migratedQueries, nil
+}
+
+// migrateStatisticsToStatistic migrates queries that has a `statistics` field to use the `statistic` field instead.
+// In case the query used more than one stat, the first stat in the slice will be used in the statistic field
+// Read more here https://github.com/grafana/grafana/issues/30629
+func migrateStatisticsToStatistic(queryJson *simplejson.Json) error {
+	_, err := queryJson.Get("statistic").String()
+	// If there's not a statistic property in the json, we know it's the legacy format and then it has to be migrated
+	if err != nil {
+		stats, err := queryJson.Get("statistics").StringArray()
+		if err != nil {
+			return fmt.Errorf("query must have either statistic or statistics field")
+		}
+		queryJson.Del("statistics")
+		queryJson.Set("statistic", stats[0])
+	}
+
+	return nil
+}
+
+var aliasPatterns = map[string]string{
+	"metric":    `${PROP('MetricName')}`,
+	"namespace": `${PROP('Namespace')}`,
+	"period":    `${PROP('Period')}`,
+	"region":    `${PROP('Region')}`,
+	"stat":      `${PROP('Stat')}`,
+	"label":     `${LABEL}`,
+}
+
+var legacyAliasRegexp = regexp.MustCompile(`{{\s*(.+?)\s*}}`)
+
+func migrateAliasToDynamicLabel(queryJson *simplejson.Json) {
+	fullAliasField := queryJson.Get("alias").MustString()
+	if fullAliasField != "" {
+		matches := legacyAliasRegexp.FindAllStringSubmatch(fullAliasField, -1)
+		for _, groups := range matches {
+			fullMatch := groups[0]
+			subgroup := groups[1]
+			if dynamicLabel, ok := aliasPatterns[subgroup]; ok {
+				fullAliasField = strings.ReplaceAll(fullAliasField, fullMatch, dynamicLabel)
+			} else {
+				fullAliasField = strings.ReplaceAll(fullAliasField, fullMatch, fmt.Sprintf(`${PROP('Dim.%s')}`, subgroup))
+			}
+		}
+	}
+
+	queryJson.Set("label", fullAliasField)
 }
 
 func parseRequestQuery(model *simplejson.Json, refId string, startTime time.Time, endTime time.Time) (*cloudWatchQuery, error) {
@@ -153,8 +198,11 @@ func parseRequestQuery(model *simplejson.Json, refId string, startTime time.Time
 	expression := model.Get("expression").MustString("")
 	sqlExpression := model.Get("sqlExpression").MustString("")
 	alias := model.Get("alias").MustString()
+	label := model.Get("label").MustString()
 	returnData := !model.Get("hide").MustBool(false)
 	queryType := model.Get("type").MustString()
+	timezoneUTCOffset := model.Get("timezoneUTCOffset").MustString("")
+
 	if queryType == "" {
 		// If no type is provided we assume we are called by alerting service, which requires to return data!
 		// Note, this is sort of a hack, but the official Grafana interfaces do not carry the information
@@ -175,22 +223,24 @@ func parseRequestQuery(model *simplejson.Json, refId string, startTime time.Time
 	}
 
 	return &cloudWatchQuery{
-		RefId:            refId,
-		Region:           region,
-		Id:               id,
-		Namespace:        namespace,
-		MetricName:       metricName,
-		Statistic:        statistic,
-		Expression:       expression,
-		ReturnData:       returnData,
-		Dimensions:       dimensions,
-		Period:           period,
-		Alias:            alias,
-		MatchExact:       matchExact,
-		UsedExpression:   "",
-		MetricQueryType:  metricQueryType,
-		MetricEditorMode: metricEditorModeValue,
-		SqlExpression:    sqlExpression,
+		RefId:             refId,
+		Region:            region,
+		Id:                id,
+		Namespace:         namespace,
+		MetricName:        metricName,
+		Statistic:         statistic,
+		Expression:        expression,
+		ReturnData:        returnData,
+		Dimensions:        dimensions,
+		Period:            period,
+		Alias:             alias,
+		Label:             label,
+		MatchExact:        matchExact,
+		UsedExpression:    "",
+		MetricQueryType:   metricQueryType,
+		MetricEditorMode:  metricEditorModeValue,
+		SqlExpression:     sqlExpression,
+		TimezoneUTCOffset: timezoneUTCOffset,
 	}, nil
 }
 

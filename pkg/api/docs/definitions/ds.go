@@ -14,6 +14,7 @@ import (
 //
 // Responses:
 // 200: queryDataResponse
+// 207: queryDataResponse
 // 401: unauthorisedError
 // 400: badRequestError
 // 403: forbiddenError

@@ -1,4 +1,15 @@
 import { DataSourceInstanceSettings, locationUtil } from '@grafana/data';
+import { getDataSourceSrv, locationService, getBackendSrv, isFetchError } from '@grafana/runtime';
+import { notifyApp } from 'app/core/actions';
+import { createErrorNotification } from 'app/core/copy/appNotification';
+import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
+import { DashboardDataDTO, DashboardDTO, FolderInfo, PermissionLevelString, ThunkResult } from 'app/types';
+
+import { LibraryElementExport } from '../../dashboard/components/DashExportModal/DashboardExporter';
+import { getLibraryPanel } from '../../library-panels/state/api';
+import { LibraryElementDTO, LibraryElementKind } from '../../library-panels/types';
+import { DashboardSearchHit } from '../../search/types';
+
 import {
   clearDashboard,
   fetchDashboard,
@@ -12,15 +23,6 @@ import {
   setJsonDashboard,
   setLibraryPanelInputs,
 } from './reducers';
-import { DashboardDataDTO, DashboardDTO, FolderInfo, PermissionLevelString, ThunkResult } from 'app/types';
-import { createErrorNotification } from 'app/core/copy/appNotification';
-import { notifyApp } from 'app/core/actions';
-import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
-import { getDataSourceSrv, locationService, getBackendSrv } from '@grafana/runtime';
-import { DashboardSearchHit } from '../../search/types';
-import { getLibraryPanel } from '../../library-panels/state/api';
-import { LibraryElementDTO, LibraryElementKind } from '../../library-panels/types';
-import { LibraryElementExport } from '../../dashboard/components/DashExportModal/DashboardExporter';
 
 export function fetchGcomDashboard(id: string): ThunkResult<void> {
   return async (dispatch) => {
@@ -32,7 +34,9 @@ export function fetchGcomDashboard(id: string): ThunkResult<void> {
       dispatch(processElements(dashboard.json));
     } catch (error) {
       dispatch(fetchFailed());
-      dispatch(notifyApp(createErrorNotification(error.data.message || error)));
+      if (isFetchError(error)) {
+        dispatch(notifyApp(createErrorNotification(error.data.message || error)));
+      }
     }
   };
 }
@@ -211,11 +215,13 @@ async function moveDashboard(uid: string, toFolder: FolderInfo) {
     await saveDashboard(options);
     return { succeeded: true };
   } catch (err) {
-    if (err.data?.status !== 'plugin-dashboard') {
-      return { succeeded: false };
-    }
+    if (isFetchError(err)) {
+      if (err.data?.status !== 'plugin-dashboard') {
+        return { succeeded: false };
+      }
 
-    err.isHandled = true;
+      err.isHandled = true;
+    }
     options.overwrite = true;
 
     try {
@@ -286,8 +292,17 @@ export function createFolder(payload: any) {
   return getBackendSrv().post('/api/folders', payload);
 }
 
-export function searchFolders(query: any, permission?: PermissionLevelString): Promise<DashboardSearchHit[]> {
-  return getBackendSrv().get('/api/search', { query, type: 'dash-folder', permission });
+export function searchFolders(
+  query: any,
+  permission?: PermissionLevelString,
+  withAccessControl = false
+): Promise<DashboardSearchHit[]> {
+  return getBackendSrv().get('/api/search', {
+    query,
+    type: 'dash-folder',
+    permission,
+    accesscontrol: withAccessControl,
+  });
 }
 
 export function getFolderById(id: number): Promise<{ id: number; title: string }> {

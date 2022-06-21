@@ -1,3 +1,5 @@
+import { sections, searchResults, checkedGeneralFolder, checkedOtherFolder, folderViewAllChecked } from './testData';
+import { SearchQueryParams } from './types';
 import {
   findSelected,
   getCheckedDashboardsUids,
@@ -7,8 +9,6 @@ import {
   mergeReducers,
   parseRouteParams,
 } from './utils';
-import { sections, searchResults, checkedGeneralFolder, checkedOtherFolder, folderViewAllChecked } from './testData';
-import { SearchQueryParams } from './types';
 
 describe('Search utils', () => {
   describe('getFlattenedSections', () => {

@@ -1,9 +1,10 @@
-import { selectors } from '@grafana/e2e-selectors';
-import { Button, Icon } from '@grafana/ui';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import React, { MouseEvent, PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { bindActionCreators } from 'redux';
+
+import { selectors } from '@grafana/e2e-selectors';
+import { Button, Icon } from '@grafana/ui';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 import { StoreState, ThunkDispatch } from '../../../types';
 import { VariablesDependenciesButton } from '../inspect/VariablesDependenciesButton';
@@ -13,9 +14,10 @@ import { getEditorVariables, getVariablesState } from '../state/selectors';
 import { changeVariableOrder, duplicateVariable, removeVariable } from '../state/sharedReducer';
 import { KeyedVariableIdentifier } from '../state/types';
 import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
-import { switchToEditMode, switchToListMode, switchToNewMode } from './actions';
+
 import { VariableEditorEditor } from './VariableEditorEditor';
 import { VariableEditorList } from './VariableEditorList';
+import { switchToEditMode, switchToListMode, switchToNewMode } from './actions';
 
 const mapStateToProps = (state: StoreState, ownProps: OwnProps) => {
   const { uid } = ownProps.dashboard;

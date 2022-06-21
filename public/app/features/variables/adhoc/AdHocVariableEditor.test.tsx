@@ -1,10 +1,10 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { selectOptionInTest } from '@grafana/ui';
-import { getSelectParent } from '@grafana/ui/src/components/Select/test-utils';
+import React from 'react';
+import { selectOptionInTest, getSelectParent } from 'test/helpers/selectOptionInTest';
+
+import { adHocBuilder } from '../shared/testing/builders';
 
 import { AdHocVariableEditorUnConnected as AdHocVariableEditor } from './AdHocVariableEditor';
-import { adHocBuilder } from '../shared/testing/builders';
 
 const props = {
   extended: {

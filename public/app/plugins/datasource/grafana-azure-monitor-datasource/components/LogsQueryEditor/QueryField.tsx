@@ -1,8 +1,10 @@
-import { CodeEditor, Monaco, MonacoEditor } from '@grafana/ui';
-import { Deferred } from 'app/core/utils/deferred';
 import React, { useCallback, useEffect, useRef } from 'react';
 
+import { CodeEditor, Monaco, MonacoEditor } from '@grafana/ui';
+import { Deferred } from 'app/core/utils/deferred';
+
 import { AzureQueryEditorFieldProps } from '../../types';
+
 import { setKustoQuery } from './setQueryValue';
 
 interface MonacoPromise {

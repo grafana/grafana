@@ -1,9 +1,12 @@
-import { serializeStateToUrlParam } from '@grafana/data';
-import { ExploreId, StoreState, ThunkDispatch } from 'app/types';
-import { refreshExplore } from './explorePane';
-import { setDataSourceSrv } from '@grafana/runtime';
-import { configureStore } from '../../../store/configureStore';
 import { of } from 'rxjs';
+
+import { serializeStateToUrlParam } from '@grafana/data';
+import { setDataSourceSrv } from '@grafana/runtime';
+import { ExploreId, StoreState, ThunkDispatch } from 'app/types';
+
+import { configureStore } from '../../../store/configureStore';
+
+import { refreshExplore } from './explorePane';
 import { createDefaultInitialState } from './helpers';
 
 jest.mock('../../dashboard/services/TimeSrv', () => ({

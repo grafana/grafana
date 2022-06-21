@@ -16,7 +16,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 type GrafanaComClient struct {
@@ -28,10 +27,10 @@ func (client *GrafanaComClient) GetPlugin(pluginId, repoUrl string) (models.Plug
 	body, err := sendRequestGetBytes(HttpClient, repoUrl, "repo", pluginId)
 	if err != nil {
 		if errors.Is(err, ErrNotFoundError) {
-			return models.Plugin{}, errutil.Wrap(
+			return models.Plugin{}, fmt.Errorf("%v: %w",
 				fmt.Sprintf("Failed to find requested plugin, check if the plugin_id (%s) is correct", pluginId), err)
 		}
-		return models.Plugin{}, errutil.Wrap("Failed to send request", err)
+		return models.Plugin{}, fmt.Errorf("%v: %w", "Failed to send request", err)
 	}
 
 	var data models.Plugin
@@ -52,11 +51,11 @@ func (client *GrafanaComClient) DownloadFile(pluginName string, tmpFile *os.File
 		// nolint:gosec
 		f, err := os.Open(url)
 		if err != nil {
-			return errutil.Wrap("Failed to read plugin archive", err)
+			return fmt.Errorf("%v: %w", "Failed to read plugin archive", err)
 		}
 		_, err = io.Copy(tmpFile, f)
 		if err != nil {
-			return errutil.Wrap("Failed to copy plugin archive", err)
+			return fmt.Errorf("%v: %w", "Failed to copy plugin archive", err)
 		}
 		return nil
 	}
@@ -93,7 +92,7 @@ func (client *GrafanaComClient) DownloadFile(pluginName string, tmpFile *os.File
 	// slow network. As this is CLI operation hanging is not a big of an issue as user can just abort.
 	bodyReader, err := sendRequest(HttpClientNoTimeout, url)
 	if err != nil {
-		return errutil.Wrap("Failed to send request", err)
+		return fmt.Errorf("%v: %w", "Failed to send request", err)
 	}
 	defer func() {
 		if err := bodyReader.Close(); err != nil {
@@ -104,7 +103,7 @@ func (client *GrafanaComClient) DownloadFile(pluginName string, tmpFile *os.File
 	w := bufio.NewWriter(tmpFile)
 	h := sha256.New()
 	if _, err = io.Copy(w, io.TeeReader(bodyReader, h)); err != nil {
-		return errutil.Wrap("failed to compute SHA256 checksum", err)
+		return fmt.Errorf("%v: %w", "failed to compute SHA256 checksum", err)
 	}
 	if err := w.Flush(); err != nil {
 		return fmt.Errorf("failed to write to %q: %w", tmpFile.Name(), err)
@@ -120,7 +119,7 @@ func (client *GrafanaComClient) ListAllPlugins(repoUrl string) (models.PluginRep
 
 	if err != nil {
 		logger.Info("Failed to send request", "error", err)
-		return models.PluginRepo{}, errutil.Wrap("Failed to send request", err)
+		return models.PluginRepo{}, fmt.Errorf("%v: %w", "Failed to send request", err)
 	}
 
 	var data models.PluginRepo

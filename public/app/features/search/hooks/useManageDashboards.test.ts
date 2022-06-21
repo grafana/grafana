@@ -1,13 +1,15 @@
-import { Dispatch } from 'react';
 import { renderHook } from '@testing-library/react-hooks';
+import { Dispatch } from 'react';
 
-import * as useSearch from './useSearch';
-import { DashboardQuery, DashboardSearchItemType, DashboardSection, SearchAction } from '../types';
-import { ManageDashboardsState } from '../reducers/manageDashboards';
-import { useManageDashboards } from './useManageDashboards';
-import { GENERAL_FOLDER_ID } from '../constants';
 import { setEchoSrv } from '@grafana/runtime/src';
 import { Echo } from 'app/core/services/echo/Echo';
+
+import { GENERAL_FOLDER_ID } from '../constants';
+import { ManageDashboardsState } from '../reducers/manageDashboards';
+import { DashboardQuery, DashboardSearchItemType, DashboardSection, SearchAction } from '../types';
+
+import { useManageDashboards } from './useManageDashboards';
+import * as useSearch from './useSearch';
 
 describe('useManageDashboards', () => {
   const useSearchMock = jest.spyOn(useSearch, 'useSearch');

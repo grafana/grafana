@@ -1,7 +1,8 @@
-import React from 'react';
-import { QueryOperationRow } from './QueryOperationRow';
 import { mount, shallow } from 'enzyme';
+import React from 'react';
 import { act } from 'react-dom/test-utils';
+
+import { QueryOperationRow } from './QueryOperationRow';
 
 describe('QueryOperationRow', () => {
   it('renders', () => {
@@ -59,7 +60,7 @@ describe('QueryOperationRow', () => {
   describe('headerElement rendering', () => {
     it('should render headerElement provided as element', () => {
       const title = <div aria-label="test title">Test</div>;
-      const wrapper = shallow(
+      const wrapper = mount(
         <QueryOperationRow headerElement={title} id="test-id" index={0}>
           <div>Test</div>
         </QueryOperationRow>
@@ -71,7 +72,7 @@ describe('QueryOperationRow', () => {
 
     it('should render headerElement provided as function', () => {
       const title = () => <div aria-label="test title">Test</div>;
-      const wrapper = shallow(
+      const wrapper = mount(
         <QueryOperationRow headerElement={title} id="test-id" index={0}>
           <div>Test</div>
         </QueryOperationRow>
@@ -100,7 +101,7 @@ describe('QueryOperationRow', () => {
   describe('actions rendering', () => {
     it('should render actions provided as element', () => {
       const actions = <div aria-label="test actions">Test</div>;
-      const wrapper = shallow(
+      const wrapper = mount(
         <QueryOperationRow actions={actions} id="test-id" index={0}>
           <div>Test</div>
         </QueryOperationRow>
@@ -111,7 +112,7 @@ describe('QueryOperationRow', () => {
     });
     it('should render actions provided as function', () => {
       const actions = () => <div aria-label="test actions">Test</div>;
-      const wrapper = shallow(
+      const wrapper = mount(
         <QueryOperationRow actions={actions} id="test-id" index={0}>
           <div>Test</div>
         </QueryOperationRow>

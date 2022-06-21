@@ -41,6 +41,7 @@ func getRequestTimeout(opt TimeoutOpts) time.Duration {
 type Opts struct {
 	TimeoutOpts
 	AuthOpts
+	ErrorOpts
 	Width             int
 	Height            int
 	Path              string
@@ -50,6 +51,15 @@ type Opts struct {
 	DeviceScaleFactor float64
 	Headers           map[string][]string
 	Theme             models.Theme
+}
+
+type ErrorOpts struct {
+	// ErrorConcurrentLimitReached returns an ErrConcurrentLimitReached
+	// error instead of a rendering limit exceeded image.
+	ErrorConcurrentLimitReached bool
+	// ErrorRenderUnavailable returns an ErrRunderUnavailable error
+	// instead of a rendering unavailable image.
+	ErrorRenderUnavailable bool
 }
 
 type CSVOpts struct {
@@ -94,6 +104,7 @@ type CapabilitySupportRequestResult struct {
 	SemverConstraint string
 }
 
+//go:generate mockgen -destination=mock.go -package=rendering github.com/grafana/grafana/pkg/services/rendering Service
 type Service interface {
 	IsAvailable() bool
 	Version() string

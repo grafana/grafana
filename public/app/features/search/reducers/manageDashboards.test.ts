@@ -1,7 +1,8 @@
-import { TOGGLE_ALL_CHECKED, TOGGLE_CHECKED, DELETE_ITEMS, MOVE_ITEMS } from './actionTypes';
-import { manageDashboardsReducer as reducer, manageDashboardsState as state } from './manageDashboards';
 import { sections } from '../testData';
 import { DashboardSection, UidsToDelete } from '../types';
+
+import { TOGGLE_ALL_CHECKED, TOGGLE_CHECKED, DELETE_ITEMS, MOVE_ITEMS } from './actionTypes';
+import { manageDashboardsReducer as reducer, manageDashboardsState as state } from './manageDashboards';
 
 // Remove Recent and Starred sections as they're not used in manage dashboards
 const results = sections.slice(2);

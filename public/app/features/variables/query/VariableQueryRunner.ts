@@ -1,5 +1,7 @@
 import { merge, Observable, of, Subject, throwError, Unsubscribable } from 'rxjs';
 import { catchError, filter, finalize, mergeMap, take, takeUntil } from 'rxjs/operators';
+import { v4 as uuidv4 } from 'uuid';
+
 import {
   CoreApp,
   DataQuery,
@@ -11,17 +13,17 @@ import {
   ScopedVars,
 } from '@grafana/data';
 
-import { KeyedVariableIdentifier } from '../state/types';
-import { getLastKey, getVariable } from '../state/selectors';
-import { QueryVariableModel, VariableRefresh } from '../types';
-import { StoreState, ThunkDispatch } from '../../../types';
 import { dispatch, getState } from '../../../store/store';
-import { getTemplatedRegex } from '../utils';
-import { v4 as uuidv4 } from 'uuid';
+import { StoreState, ThunkDispatch } from '../../../types';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
-import { QueryRunners } from './queryRunners';
 import { runRequest } from '../../query/state/runRequest';
+import { getLastKey, getVariable } from '../state/selectors';
+import { KeyedVariableIdentifier } from '../state/types';
+import { QueryVariableModel, VariableRefresh } from '../types';
+import { getTemplatedRegex } from '../utils';
+
 import { toMetricFindValues, updateOptionsState, validateVariableSelection } from './operators';
+import { QueryRunners } from './queryRunners';
 
 interface UpdateOptionsArgs {
   identifier: KeyedVariableIdentifier;

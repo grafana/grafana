@@ -1,8 +1,11 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
+
 import { PanelData } from '@grafana/data';
-import { PromQuery } from '../types';
+
 import { PrometheusDatasource } from '../datasource';
+import { PromQuery } from '../types';
+
 import PromLink from './PromLink';
 
 jest.mock('@grafana/data', () => ({

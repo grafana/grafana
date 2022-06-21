@@ -1,5 +1,5 @@
-import { LiveDataStreamOptions, StreamingFrameAction, StreamingFrameOptions } from '@grafana/runtime/src/services/live';
-import { toDataQueryError } from '@grafana/runtime/src/utils/toDataQueryError';
+import { map, Observable, ReplaySubject, Subject, Subscriber, Subscription } from 'rxjs';
+
 import {
   DataFrameJSON,
   DataQueryError,
@@ -11,10 +11,13 @@ import {
   LiveChannelId,
   LoadingState,
 } from '@grafana/data';
-import { map, Observable, ReplaySubject, Subject, Subscriber, Subscription } from 'rxjs';
-import { DataStreamSubscriptionKey, StreamingDataQueryResponse } from './service';
+import { LiveDataStreamOptions, StreamingFrameAction, StreamingFrameOptions } from '@grafana/runtime/src/services/live';
+import { toDataQueryError } from '@grafana/runtime/src/utils/toDataQueryError';
+
 import { getStreamingFrameOptions, StreamingDataFrame } from '../data/StreamingDataFrame';
 import { StreamingResponseDataType } from '../data/utils';
+
+import { DataStreamSubscriptionKey, StreamingDataQueryResponse } from './service';
 
 const bufferIfNot =
   (canEmitObservable: Observable<boolean>) =>

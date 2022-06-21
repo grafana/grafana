@@ -1,7 +1,7 @@
-import React, { PureComponent } from 'react';
 import classNames from 'classnames';
+import React, { PureComponent } from 'react';
 import { Subscription } from 'rxjs';
-import { locationService, RefreshEvent } from '@grafana/runtime';
+
 import {
   AbsoluteTimeRange,
   AnnotationChangeEvent,
@@ -19,26 +19,27 @@ import {
   toDataFrameDTO,
   toUtc,
 } from '@grafana/data';
-import { ErrorBoundary, PanelContext, PanelContextProvider, SeriesVisibilityChangeMode } from '@grafana/ui';
-import { VizLegendOptions } from '@grafana/schema';
 import { selectors } from '@grafana/e2e-selectors';
-
-import { PanelHeader } from './PanelHeader/PanelHeader';
-import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
-import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
-import { profiler } from 'app/core/profiler';
-import config from 'app/core/config';
-import { DashboardModel, PanelModel } from '../state';
+import { config, locationService, RefreshEvent } from '@grafana/runtime';
+import { VizLegendOptions } from '@grafana/schema';
+import { ErrorBoundary, PanelContext, PanelContextProvider, SeriesVisibilityChangeMode } from '@grafana/ui';
 import { PANEL_BORDER } from 'app/core/constants';
-import { loadSnapshotData } from '../utils/loadSnapshotData';
-import { RenderEvent } from 'app/types/events';
+import { profiler } from 'app/core/profiler';
+import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { changeSeriesColorConfigFactory } from 'app/plugins/panel/timeseries/overrides/colorSeriesConfigFactory';
-import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
+import { RenderEvent } from 'app/types/events';
+
+import { contextSrv } from '../../../core/services/context_srv';
+import { isSoloRoute } from '../../../routes/utils';
 import { deleteAnnotation, saveAnnotation, updateAnnotation } from '../../annotations/api';
 import { getDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
+import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
+import { DashboardModel, PanelModel } from '../state';
+import { loadSnapshotData } from '../utils/loadSnapshotData';
+
+import { PanelHeader } from './PanelHeader/PanelHeader';
+import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
 import { liveTimer } from './liveTimer';
-import { isSoloRoute } from '../../../routes/utils';
-import { contextSrv } from '../../../core/services/context_srv';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -337,7 +338,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   onRefresh = () => {
-    const { panel, isInView, width } = this.props;
+    const { dashboard, panel, isInView, width } = this.props;
 
     if (!isInView) {
       this.setState({ refreshWhenInView: true });
@@ -355,7 +356,13 @@ export class PanelChrome extends PureComponent<Props, State> {
       if (this.state.refreshWhenInView) {
         this.setState({ refreshWhenInView: false });
       }
-      panel.runAllPanelQueries(this.props.dashboard.id, this.props.dashboard.getTimezone(), timeData, width);
+      panel.runAllPanelQueries(
+        dashboard.id,
+        dashboard.getTimezone(),
+        timeData,
+        width,
+        dashboard.meta.publicDashboardUid
+      );
     } else {
       // The panel should render on refresh as well if it doesn't have a query, like clock panel
       this.setState({

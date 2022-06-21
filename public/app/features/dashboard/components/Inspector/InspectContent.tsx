@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
-import { DataSourceApi, formattedValueToString, getValueFormat, PanelData, PanelPlugin } from '@grafana/data';
+
+import { CoreApp, DataSourceApi, formattedValueToString, getValueFormat, PanelData, PanelPlugin } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
-import { InspectMetadataTab } from 'app/features/inspector/InspectMetadataTab';
-import { InspectJSONTab } from 'app/features/inspector/InspectJSONTab';
-import { QueryInspector } from 'app/features/inspector/QueryInspector';
-import { InspectStatsTab } from 'app/features/inspector/InspectStatsTab';
-import { InspectErrorTab } from 'app/features/inspector/InspectErrorTab';
 import { InspectDataTab } from 'app/features/inspector/InspectDataTab';
+import { InspectErrorTab } from 'app/features/inspector/InspectErrorTab';
+import { InspectJSONTab } from 'app/features/inspector/InspectJSONTab';
+import { InspectMetadataTab } from 'app/features/inspector/InspectMetadataTab';
+import { InspectStatsTab } from 'app/features/inspector/InspectStatsTab';
+import { QueryInspector } from 'app/features/inspector/QueryInspector';
 import { InspectTab } from 'app/features/inspector/types';
-import { DashboardModel, PanelModel } from '../../state';
+
 import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
+import { DashboardModel, PanelModel } from '../../state';
 
 interface Props {
   dashboard: DashboardModel;
@@ -88,6 +90,7 @@ export const InspectContent: React.FC<Props> = ({
           options={dataOptions}
           onOptionsChange={onDataOptionsChange}
           timeZone={dashboard.timezone}
+          app={CoreApp.Dashboard}
         />
       )}
       {data && activeTab === InspectTab.Meta && (

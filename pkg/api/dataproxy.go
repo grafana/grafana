@@ -7,5 +7,5 @@ func (hs *HTTPServer) ProxyDataSourceRequest(c *models.ReqContext) {
 }
 
 func (hs *HTTPServer) ProxyDataSourceRequestWithUID(c *models.ReqContext) {
-	hs.DataProxy.ProxyDatasourceRequestWithUID(c)
+	hs.DataProxy.ProxyDatasourceRequestWithUID(c, "")
 }

@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { Label } from './Label';
 import mdx from './Label.mdx';
 

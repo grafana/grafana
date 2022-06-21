@@ -1,5 +1,8 @@
-import React, { createRef } from 'react';
 import { css } from '@emotion/css';
+import React, { createRef } from 'react';
+import SVG from 'react-inlinesvg';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import {
   Button,
   InlineField,
@@ -11,13 +14,12 @@ import {
   useStyles2,
   useTheme2,
 } from '@grafana/ui';
-import { GrafanaTheme2 } from '@grafana/data';
-import SVG from 'react-inlinesvg';
-
-import { MediaType, ResourceFolderName, ResourcePickerSize } from '../types';
 import { closePopover } from '@grafana/ui/src/utils/closePopover';
-import { ResourcePickerPopover } from './ResourcePickerPopover';
+
 import { getPublicOrAbsoluteUrl } from '../resource';
+import { MediaType, ResourceFolderName, ResourcePickerSize } from '../types';
+
+import { ResourcePickerPopover } from './ResourcePickerPopover';
 
 interface Props {
   onChange: (value?: string) => void;

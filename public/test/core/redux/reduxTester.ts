@@ -1,5 +1,3 @@
-import { Dispatch, Middleware, MiddlewareAPI } from 'redux';
-import thunk, { ThunkMiddleware } from 'redux-thunk';
 import {
   AnyAction,
   configureStore,
@@ -9,10 +7,12 @@ import {
   CombinedState,
   PreloadedState,
 } from '@reduxjs/toolkit';
-
-import { StoreState } from '../../../app/types';
-import { setStore } from '../../../app/store/store';
 import { NoInfer } from '@reduxjs/toolkit/dist/tsHelpers';
+import { Dispatch, Middleware, MiddlewareAPI } from 'redux';
+import thunk, { ThunkMiddleware } from 'redux-thunk';
+
+import { setStore } from '../../../app/store/store';
+import { StoreState } from '../../../app/types';
 
 export interface ReduxTesterGiven<State> {
   givenRootReducer: (rootReducer: Reducer<State>) => ReduxTesterWhen<State>;

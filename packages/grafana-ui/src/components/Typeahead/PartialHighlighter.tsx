@@ -1,4 +1,5 @@
 import React, { createElement } from 'react';
+
 import { HighlightPart } from '../../types';
 
 interface Props {

@@ -154,7 +154,7 @@ func TestPluginUpdateChecker_checkForUpdates(t *testing.T) {
 			httpClient: &fakeHTTPClient{
 				fakeResp: jsonResp,
 			},
-			log: &fakeLogger{},
+			log: log.NewNopLogger(),
 		}
 
 		svc.checkForUpdates(context.Background())
@@ -215,11 +215,3 @@ func (pr fakePluginStore) Plugins(_ context.Context, _ ...plugins.Type) []plugin
 	}
 	return result
 }
-
-type fakeLogger struct {
-	log.Logger
-}
-
-func (l *fakeLogger) Debug(_ string, _ ...interface{}) {}
-
-func (l *fakeLogger) Warn(_ string, _ ...interface{}) {}

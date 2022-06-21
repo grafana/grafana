@@ -1,21 +1,27 @@
-import React, { FormEvent, useState } from 'react';
-import { Button, Field, Icon, Input, Label, RadioButtonGroup, Tooltip, useStyles } from '@grafana/ui';
-import { DataSourceInstanceSettings, GrafanaTheme, SelectableValue } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 import { debounce } from 'lodash';
+import React, { FormEvent, useState } from 'react';
 
-import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
-import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { getFiltersFromUrlParams } from '../../utils/misc';
-import { DataSourcePicker } from '@grafana/runtime';
-import { alertStateToReadable } from '../../utils/rules';
+import { DataSourceInstanceSettings, GrafanaTheme, SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
+import { DataSourcePicker } from '@grafana/runtime';
+import { Button, Field, Icon, Input, Label, RadioButtonGroup, Tooltip, useStyles } from '@grafana/ui';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
+
+import { getFiltersFromUrlParams } from '../../utils/misc';
+import { alertStateToReadable } from '../../utils/rules';
 
 const ViewOptions: SelectableValue[] = [
   {
+    icon: 'list-ul',
+    label: 'List',
+    value: 'list',
+  },
+  {
     icon: 'folder',
-    label: 'Groups',
-    value: 'group',
+    label: 'Grouped',
+    value: 'grouped',
   },
   {
     icon: 'heart-rate',
@@ -147,7 +153,7 @@ const RulesFilter = () => {
             <Label>View as</Label>
             <RadioButtonGroup
               options={ViewOptions}
-              value={String(queryParams['view'] || 'group')}
+              value={String(queryParams['view'] ?? ViewOptions[0].value)}
               onChange={handleViewChange}
             />
           </div>

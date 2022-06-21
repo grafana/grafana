@@ -1,8 +1,11 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { LokiQueryBuilderContainer } from './LokiQueryBuilderContainer';
-import { LokiDatasource } from '../../datasource';
+import React from 'react';
+
 import { addOperation } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationList.testUtils';
+
+import { LokiDatasource } from '../../datasource';
+
+import { LokiQueryBuilderContainer } from './LokiQueryBuilderContainer';
 
 describe('LokiQueryBuilderContainer', () => {
   it('translates query between string and model', async () => {
@@ -27,10 +30,11 @@ describe('LokiQueryBuilderContainer', () => {
       ),
       onChange: jest.fn(),
       onRunQuery: () => {},
+      showRawQuery: true,
     };
     render(<LokiQueryBuilderContainer {...props} />);
     expect(screen.getByText('testjob')).toBeInTheDocument();
-    addOperation('Range functions', 'Rate');
+    await addOperation('Range functions', 'Rate');
     expect(props.onChange).toBeCalledWith({
       expr: 'rate({job="testjob"} [$__interval])',
       refId: 'A',

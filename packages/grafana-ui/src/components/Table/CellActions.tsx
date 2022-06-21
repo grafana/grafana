@@ -1,8 +1,10 @@
 import React, { useCallback, useState } from 'react';
+
 import { IconSize } from '../../types/icon';
 import { IconButton } from '../IconButton/IconButton';
 import { HorizontalGroup } from '../Layout/Layout';
 import { TooltipPlacement } from '../Tooltip';
+
 import { TableCellInspectModal } from './TableCellInspectModal';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, TableCellProps, TableFieldOptions } from './types';
 import { getTextAlign } from './utils';

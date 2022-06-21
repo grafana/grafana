@@ -1,11 +1,11 @@
 const fs = require('fs');
 const path = require('path');
 
+const benchmarkPlugin = require('./benchmark');
 const compareScreenshots = require('./compareScreenshots');
 const extendConfig = require('./extendConfig');
 const readProvisions = require('./readProvisions');
 const typescriptPreprocessor = require('./typescriptPreprocessor');
-const benchmarkPlugin = require('./benchmark');
 
 module.exports = (on, config) => {
   if (config.env['BENCHMARK_PLUGIN_ENABLED'] === true) {

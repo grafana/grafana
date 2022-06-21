@@ -1,3 +1,5 @@
+import { Observable, from, mergeMap } from 'rxjs';
+
 import {
   DataQueryRequest,
   DataQueryResponse,
@@ -6,11 +8,11 @@ import {
   PluginType,
   ScopedVars,
 } from '@grafana/data';
-import { ExpressionQuery, ExpressionQueryType } from './types';
-import { ExpressionQueryEditor } from './ExpressionQueryEditor';
 import { DataSourceWithBackend, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
-import { Observable, from, mergeMap } from 'rxjs';
+
+import { ExpressionQueryEditor } from './ExpressionQueryEditor';
+import { ExpressionQuery, ExpressionQueryType } from './types';
 
 /**
  * This is a singleton instance that just pretends to be a DataSource
@@ -41,7 +43,7 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
         return query;
       }
 
-      return ds?.interpolateVariablesInQueries([query], {})[0] as ExpressionQuery;
+      return ds?.interpolateVariablesInQueries([query], request.scopedVars)[0] as ExpressionQuery;
     });
 
     let sub = from(Promise.all(targets));
@@ -67,7 +69,7 @@ export const ExpressionDatasourceUID = '-100';
 export const instanceSettings: DataSourceInstanceSettings = {
   id: -100,
   uid: ExpressionDatasourceUID,
-  name: ExpressionDatasourceRef.type,
+  name: ExpressionDatasourceRef.name,
   type: ExpressionDatasourceRef.type,
   access: 'proxy',
   meta: {

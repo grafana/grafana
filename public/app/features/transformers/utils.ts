@@ -1,5 +1,6 @@
-import { DataFrame, getFieldDisplayName } from '@grafana/data';
 import { useMemo } from 'react';
+
+import { DataFrame, getFieldDisplayName } from '@grafana/data';
 
 export function useAllFieldNamesFromDataFrames(input: DataFrame[]): string[] {
   return useMemo(() => {

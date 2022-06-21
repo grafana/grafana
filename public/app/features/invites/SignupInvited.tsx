@@ -1,10 +1,11 @@
 import React, { FC, useState } from 'react';
+import { useAsync } from 'react-use';
+
 import { getBackendSrv } from '@grafana/runtime';
 import { Button, Field, Form, Input } from '@grafana/ui';
-import { useAsync } from 'react-use';
 import Page from 'app/core/components/Page/Page';
-import { contextSrv } from 'app/core/core';
 import { getConfig } from 'app/core/config';
+import { contextSrv } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 interface FormModel {

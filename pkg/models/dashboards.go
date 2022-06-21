@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gosimple/slug"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -199,6 +200,7 @@ type Dashboard struct {
 	FolderId  int64
 	IsFolder  bool
 	HasAcl    bool
+	IsPublic  bool
 
 	Title string
 	Data  *simplejson.Json
@@ -435,16 +437,9 @@ type GetDashboardTagsQuery struct {
 }
 
 type GetDashboardsQuery struct {
-	DashboardIds []int64
-	Result       []*Dashboard
-}
-
-type GetDashboardPermissionsForUserQuery struct {
-	DashboardIds []int64
-	OrgId        int64
-	UserId       int64
-	OrgRole      RoleType
-	Result       []*DashboardPermissionForUser
+	DashboardIds  []int64
+	DashboardUIds []string
+	Result        []*Dashboard
 }
 
 type GetDashboardsByPluginIdQuery struct {
@@ -463,12 +458,6 @@ type GetDashboardsBySlugQuery struct {
 	Slug  string
 
 	Result []*Dashboard
-}
-
-type DashboardPermissionForUser struct {
-	DashboardId    int64          `json:"dashboardId"`
-	Permission     PermissionType `json:"permission"`
-	PermissionName string         `json:"permissionName"`
 }
 
 type DashboardRef struct {

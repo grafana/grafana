@@ -1,12 +1,14 @@
-import React, { FC, ReactNode, useCallback, useEffect, useState, useRef } from 'react';
 import { css, cx } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data';
-import { Counter, useStyles2 } from '@grafana/ui';
-import { PANEL_EDITOR_UI_STATE_STORAGE_KEY } from './state/reducers';
+import React, { FC, ReactNode, useCallback, useEffect, useState, useRef } from 'react';
 import { useLocalStorage } from 'react-use';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Counter, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { CollapseToggle } from 'app/features/alerting/unified/components/CollapseToggle';
+
+import { PANEL_EDITOR_UI_STATE_STORAGE_KEY } from './state/reducers';
 
 export interface OptionsPaneCategoryProps {
   id: string;

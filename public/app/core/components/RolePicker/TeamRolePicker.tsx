@@ -1,7 +1,10 @@
 import React, { FC, useEffect } from 'react';
 import { useAsyncFn } from 'react-use';
+
 import { Role } from 'app/types';
+
 import { RolePicker } from './RolePicker';
+// @ts-ignore
 import { fetchTeamRoles, updateTeamRoles } from './api';
 
 export interface Props {
@@ -27,7 +30,7 @@ export const TeamRolePicker: FC<Props> = ({ teamId, orgId, roleOptions, disabled
     getTeamRoles();
   }, [orgId, teamId, getTeamRoles]);
 
-  const onRolesChange = async (roles: string[]) => {
+  const onRolesChange = async (roles: Role[]) => {
     await updateTeamRoles(roles, teamId, orgId);
     await getTeamRoles();
   };

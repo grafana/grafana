@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -63,10 +64,10 @@ const (
 var plog = log.New("tsdb.cloudwatch")
 var aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 
-func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider) *CloudWatchService {
+func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, features featuremgmt.FeatureToggles) *CloudWatchService {
 	plog.Debug("initing")
 
-	executor := newExecutor(datasource.NewInstanceManager(NewInstanceSettings(httpClientProvider)), cfg, awsds.NewSessionCache())
+	executor := newExecutor(datasource.NewInstanceManager(NewInstanceSettings(httpClientProvider)), cfg, awsds.NewSessionCache(), features)
 
 	return &CloudWatchService{
 		Cfg:      cfg,
@@ -83,11 +84,12 @@ type SessionCache interface {
 	GetSession(c awsds.SessionConfig) (*session.Session, error)
 }
 
-func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, sessions SessionCache) *cloudWatchExecutor {
+func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, sessions SessionCache, features featuremgmt.FeatureToggles) *cloudWatchExecutor {
 	cwe := &cloudWatchExecutor{
 		im:       im,
 		cfg:      cfg,
 		sessions: sessions,
+		features: features,
 	}
 	cwe.resourceHandler = httpadapter.New(cwe.newResourceMux())
 	return cwe
@@ -161,6 +163,7 @@ type cloudWatchExecutor struct {
 	im       instancemgmt.InstanceManager
 	cfg      *setting.Cfg
 	sessions SessionCache
+	features featuremgmt.FeatureToggles
 
 	resourceHandler backend.CallResourceHandler
 }

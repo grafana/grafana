@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 )
 
@@ -99,12 +100,20 @@ func (ccc *ConditionsCmd) Execute(ctx context.Context, vars mathexp.Vars) (mathe
 		nilReducedCount := 0
 		firingCount := 0
 		for _, val := range querySeriesSet.Values {
-			series, ok := val.(mathexp.Series)
-			if !ok {
+			var reducedNum mathexp.Number
+			var name string
+			switch v := val.(type) {
+			case mathexp.Series:
+				reducedNum = c.Reducer.Reduce(v)
+				name = v.GetName()
+			case mathexp.Number:
+				reducedNum = v
+				if len(v.Frame.Fields) > 0 {
+					name = v.Frame.Fields[0].Name
+				}
+			default:
 				return newRes, fmt.Errorf("can only reduce type series, got type %v", val.Type())
 			}
-
-			reducedNum := c.Reducer.Reduce(series)
 
 			// TODO handle error / no data signals
 			thisCondNoDataFound := reducedNum.GetFloat64Value() == nil
@@ -118,7 +127,7 @@ func (ccc *ConditionsCmd) Execute(ctx context.Context, vars mathexp.Vars) (mathe
 			if evalRes {
 				match := EvalMatch{
 					Value:  reducedNum.GetFloat64Value(),
-					Metric: series.GetName(),
+					Metric: name,
 				}
 				if reducedNum.GetLabels() != nil {
 					match.Labels = reducedNum.GetLabels().Copy()

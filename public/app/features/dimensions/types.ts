@@ -126,6 +126,7 @@ export enum MediaType {
 export enum PickerTabType {
   Folder = 'folder',
   URL = 'url',
+  Upload = 'upload',
 }
 
 export enum ResourcePickerSize {

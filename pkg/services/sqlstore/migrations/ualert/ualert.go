@@ -10,15 +10,14 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/setting"
+	pb "github.com/prometheus/alertmanager/silence/silencepb"
+	"xorm.io/xorm"
 
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-
-	pb "github.com/prometheus/alertmanager/silence/silencepb"
-	"xorm.io/xorm"
 )
 
 const GENERAL_FOLDER = "General Alerting"
@@ -60,6 +59,7 @@ func AddDashAlertMigration(mg *migrator.Migrator) {
 	_, migrationRun := logs[migTitle]
 
 	switch {
+	// If unified alerting is enabled and the upgrade migration has not been run
 	case mg.Cfg.UnifiedAlerting.IsEnabled() && !migrationRun:
 		// Remove the migration entry that removes all unified alerting data. This is so when the feature
 		// flag is removed in future the "remove unified alerting data" migration will be run again.
@@ -70,12 +70,20 @@ func AddDashAlertMigration(mg *migrator.Migrator) {
 			mg.Logger.Error("alert migration error: could not clear alert migration for removing data", "error", err)
 		}
 		mg.AddMigration(migTitle, &migration{
-			seenChannelUIDs:           make(map[string]struct{}),
-			migratedChannelsPerOrg:    make(map[int64]map[*notificationChannel]struct{}),
-			portedChannelGroupsPerOrg: make(map[int64]map[string]string),
-			silences:                  make(map[int64][]*pb.MeshSilence),
+			seenChannelUIDs: make(map[string]struct{}),
+			silences:        make(map[int64][]*pb.MeshSilence),
 		})
+	// If unified alerting is disabled and upgrade migration has been run
 	case !mg.Cfg.UnifiedAlerting.IsEnabled() && migrationRun:
+		// If legacy alerting is also disabled, there is nothing to do
+		if setting.AlertingEnabled != nil && !*setting.AlertingEnabled {
+			return
+		}
+
+		// Safeguard to prevent data loss when migrating from UA to LA
+		if !mg.Cfg.ForceMigration {
+			panic("Grafana has already been migrated to Unified Alerting.\nAny alert rules created while using Unified Alerting will be deleted by rolling back.\n\nSet force_migration=true in your grafana.ini and restart Grafana to roll back and delete Unified Alerting configuration data.")
+		}
 		// Remove the migration entry that creates unified alerting data. This is so when the feature
 		// flag is enabled in the future the migration "move dashboard alerts to unified alerting" will be run again.
 		mg.AddMigration(fmt.Sprintf(clearMigrationEntryTitle, migTitle), &clearMigrationEntry{
@@ -214,18 +222,15 @@ type migration struct {
 	sess *xorm.Session
 	mg   *migrator.Migrator
 
-	seenChannelUIDs           map[string]struct{}
-	migratedChannelsPerOrg    map[int64]map[*notificationChannel]struct{}
-	silences                  map[int64][]*pb.MeshSilence
-	portedChannelGroupsPerOrg map[int64]map[string]string // Org -> Channel group key -> receiver name.
-	lastReceiverID            int                         // For the auto generated receivers.
+	seenChannelUIDs map[string]struct{}
+	silences        map[int64][]*pb.MeshSilence
 }
 
 func (m *migration) SQL(dialect migrator.Dialect) string {
 	return "code migration"
 }
 
-//nolint: gocyclo
+// nolint: gocyclo
 func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	m.sess = sess
 	m.mg = mg
@@ -248,20 +253,11 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		return err
 	}
 
-	// allChannels: channelUID -> channelConfig
-	allChannelsPerOrg, defaultChannelsPerOrg, err := m.getNotificationChannelMap()
-	if err != nil {
-		return err
-	}
-
-	amConfigPerOrg := make(amConfigsPerOrg, len(allChannelsPerOrg))
-	err = m.addDefaultChannels(amConfigPerOrg, allChannelsPerOrg, defaultChannelsPerOrg)
-	if err != nil {
-		return err
-	}
-
 	// cache for folders created for dashboards that have custom permissions
 	folderCache := make(map[string]*dashboard)
+
+	// Store of newly created rules to later create routes
+	rulesPerOrg := make(map[int64]map[string]dashAlert)
 
 	for _, da := range dashAlerts {
 		newCond, err := transConditions(*da.ParsedSettings, da.OrgId, dsIDMap)
@@ -287,6 +283,11 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 			}
 		}
 
+		folderHelper := folderHelper{
+			sess: sess,
+			mg:   mg,
+		}
+
 		var folder *dashboard
 		switch {
 		case dash.HasAcl:
@@ -295,21 +296,21 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 			if !ok {
 				mg.Logger.Info("create a new folder for alerts that belongs to dashboard because it has custom permissions", "org", dash.OrgId, "dashboard_uid", dash.Uid, "folder", folderName)
 				// create folder and assign the permissions of the dashboard (included default and inherited)
-				f, err = m.createFolder(dash.OrgId, folderName)
+				f, err = folderHelper.createFolder(dash.OrgId, folderName)
 				if err != nil {
 					return MigrationError{
 						Err:     fmt.Errorf("failed to create folder: %w", err),
 						AlertId: da.Id,
 					}
 				}
-				permissions, err := m.getACL(dash.OrgId, dash.Id)
+				permissions, err := folderHelper.getACL(dash.OrgId, dash.Id)
 				if err != nil {
 					return MigrationError{
 						Err:     fmt.Errorf("failed to get dashboard %d under organisation %d permissions: %w", dash.Id, dash.OrgId, err),
 						AlertId: da.Id,
 					}
 				}
-				err = m.setACL(f.OrgId, f.Id, permissions)
+				err = folderHelper.setACL(f.OrgId, f.Id, permissions)
 				if err != nil {
 					return MigrationError{
 						Err:     fmt.Errorf("failed to set folder %d under organisation %d permissions: %w", folder.Id, folder.OrgId, err),
@@ -321,7 +322,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 			folder = f
 		case dash.FolderId > 0:
 			// get folder if exists
-			f, err := m.getFolder(dash, da)
+			f, err := folderHelper.getFolder(dash, da)
 			if err != nil {
 				return MigrationError{
 					Err:     err,
@@ -333,7 +334,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 			f, ok := folderCache[GENERAL_FOLDER]
 			if !ok {
 				// get or create general folder
-				f, err = m.getOrCreateGeneralFolder(dash.OrgId)
+				f, err = folderHelper.getOrCreateGeneralFolder(dash.OrgId)
 				if err != nil {
 					return MigrationError{
 						Err:     fmt.Errorf("failed to get or create general folder under organisation %d: %w", dash.OrgId, err),
@@ -359,11 +360,15 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 			return err
 		}
 
-		if _, ok := amConfigPerOrg[rule.OrgID]; !ok {
-			m.mg.Logger.Info("no configuration found", "org", rule.OrgID)
+		if _, ok := rulesPerOrg[rule.OrgID]; !ok {
+			rulesPerOrg[rule.OrgID] = make(map[string]dashAlert)
+		}
+		if _, ok := rulesPerOrg[rule.OrgID][rule.UID]; !ok {
+			rulesPerOrg[rule.OrgID][rule.UID] = da
 		} else {
-			if err := m.updateReceiverAndRoute(allChannelsPerOrg, defaultChannelsPerOrg, da, rule, amConfigPerOrg[rule.OrgID]); err != nil {
-				return err
+			return MigrationError{
+				Err:     fmt.Errorf("duplicate generated rule UID"),
+				AlertId: da.Id,
 			}
 		}
 
@@ -393,36 +398,19 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		}
 	}
 
-	for orgID, amConfig := range amConfigPerOrg {
-		// Create a separate receiver for all the unmigrated channels.
-		err = m.addUnmigratedChannels(orgID, amConfig, allChannelsPerOrg[orgID], defaultChannelsPerOrg[orgID])
-		if err != nil {
-			return err
-		}
-
-		// No channels, hence don't require Alertmanager config - skip it.
-		if len(allChannelsPerOrg[orgID]) == 0 {
-			m.mg.Logger.Info("alert migration: no notification channel found, skipping Alertmanager config")
-			continue
-		}
-
-		// Encrypt the secure settings before we continue.
-		if err := amConfig.EncryptSecureSettings(); err != nil {
-			return err
-		}
-
-		// Validate the alertmanager configuration produced, this gives a chance to catch bad configuration at migration time.
-		// Validation between legacy and unified alerting can be different (e.g. due to bug fixes) so this would fail the migration in that case.
-		if err := m.validateAlertmanagerConfig(orgID, amConfig); err != nil {
-			return err
-		}
-
-		if err := m.writeAlertmanagerConfig(orgID, amConfig); err != nil {
-			return err
-		}
-
+	for orgID := range rulesPerOrg {
 		if err := m.writeSilencesFile(orgID); err != nil {
 			m.mg.Logger.Error("alert migration error: failed to write silence file", "err", err)
+		}
+	}
+
+	amConfigPerOrg, err := m.setupAlertmanagerConfigs(rulesPerOrg)
+	if err != nil {
+		return err
+	}
+	for orgID, amConfig := range amConfigPerOrg {
+		if err := m.writeAlertmanagerConfig(orgID, amConfig); err != nil {
+			return err
 		}
 	}
 
@@ -494,7 +482,7 @@ func (m *migration) validateAlertmanagerConfig(orgID int64, config *PostableUser
 			if !exists {
 				return fmt.Errorf("notifier %s is not supported", gr.Type)
 			}
-			factoryConfig, err := channels.NewFactoryConfig(cfg, nil, decryptFunc, nil)
+			factoryConfig, err := channels.NewFactoryConfig(cfg, nil, decryptFunc, nil, nil)
 			if err != nil {
 				return err
 			}
@@ -725,48 +713,6 @@ func (u *upgradeNgAlerting) SQL(migrator.Dialect) string {
 	return "code migration"
 }
 
-// CheckUnifiedAlertingEnabledByDefault determines the final status of unified alerting, if it is not enabled explicitly.
-// Checks table `alert` and if it is empty, then it changes UnifiedAlerting.Enabled to true. Otherwise, it sets the flag to false.
-// After this method is executed the status of alerting should be determined, i.e. both flags will not be nil.
-// Note: this is not a real migration but a step that other migrations depend on.
-// TODO Delete when unified alerting is enabled by default unconditionally (Grafana v9)
-func CheckUnifiedAlertingEnabledByDefault(migrator *migrator.Migrator) error {
-	// if [unified_alerting][enabled] is explicitly set, we've got nothing to do here.
-	if migrator.Cfg.UnifiedAlerting.Enabled != nil {
-		return nil
-	}
-	var ualertEnabled bool
-	// this duplicates the logic in setting.ReadUnifiedAlertingSettings, and is put here just for logical completeness.
-	if setting.AlertingEnabled != nil && !*setting.AlertingEnabled {
-		ualertEnabled = true
-		migrator.Cfg.UnifiedAlerting.Enabled = &ualertEnabled
-		migrator.Logger.Debug("Unified alerting is enabled because the legacy is disabled explicitly")
-		return nil
-	}
-
-	resp := &struct {
-		Count int64
-	}{}
-	exist, err := migrator.DBEngine.IsTableExist("alert")
-	if err != nil {
-		return fmt.Errorf("failed to verify if the 'alert' table exists: %w", err)
-	}
-	if exist {
-		if _, err := migrator.DBEngine.SQL("SELECT COUNT(1) as count FROM alert").Get(resp); err != nil {
-			return fmt.Errorf("failed to read 'alert' table: %w", err)
-		}
-	}
-	// if table does not exist then we treat it as absence of legacy alerting and therefore enable unified alerting.
-
-	ualertEnabled = resp.Count == 0
-	legacyEnabled := !ualertEnabled
-	migrator.Cfg.UnifiedAlerting.Enabled = &ualertEnabled
-	setting.AlertingEnabled = &legacyEnabled
-
-	migrator.Logger.Debug(fmt.Sprintf("Found %d legacy alerts in the database. Unified alerting enabled is %v", resp.Count, ualertEnabled))
-	return nil
-}
-
 // getAlertFolderNameFromDashboard generates a folder name for alerts that belong to a dashboard. Formats the string according to DASHBOARD_FOLDER format.
 // If the resulting string exceeds the migrations.MaxTitleLength, the dashboard title is stripped to be at the maximum length
 func getAlertFolderNameFromDashboard(dash *dashboard) string {
@@ -776,4 +722,59 @@ func getAlertFolderNameFromDashboard(dash *dashboard) string {
 		title = title[:maxLen]
 	}
 	return fmt.Sprintf(DASHBOARD_FOLDER, title, dash.Uid) // include UID to the name to avoid collision
+}
+
+// CreateDefaultFoldersForAlertingMigration creates a folder dedicated for alerting if no folders exist
+func CreateDefaultFoldersForAlertingMigration(mg *migrator.Migrator) {
+	if !mg.Cfg.UnifiedAlerting.IsEnabled() {
+		return
+	}
+	mg.AddMigration("create default alerting folders", &createDefaultFoldersForAlertingMigration{})
+}
+
+type createDefaultFoldersForAlertingMigration struct {
+	migrator.MigrationBase
+}
+
+func (c createDefaultFoldersForAlertingMigration) Exec(sess *xorm.Session, migrator *migrator.Migrator) error {
+	helper := folderHelper{
+		sess: sess,
+		mg:   migrator,
+	}
+
+	var rows []struct {
+		Id   int64
+		Name string
+	}
+
+	if err := sess.Table("org").Cols("id", "name").Find(&rows); err != nil {
+		return fmt.Errorf("failed to read the list of organizations: %w", err)
+	}
+
+	orgsWithFolders, err := helper.getOrgsIDThatHaveFolders()
+	if err != nil {
+		return fmt.Errorf("failed to list organizations that have at least one folder: %w", err)
+	}
+
+	for _, row := range rows {
+		// if there's at least one folder in the org or if alerting is disabled for that org, skip adding the default folder
+		if _, ok := orgsWithFolders[row.Id]; ok {
+			migrator.Logger.Debug("Skip adding default alerting folder because organization already has at least one folder", "org_id", row.Id)
+			continue
+		}
+		if _, ok := migrator.Cfg.UnifiedAlerting.DisabledOrgs[row.Id]; ok {
+			migrator.Logger.Debug("Skip adding default alerting folder because alerting is disabled for the organization ", "org_id", row.Id)
+			continue
+		}
+		folder, err := helper.createGeneralFolder(row.Id)
+		if err != nil {
+			return fmt.Errorf("failed to create the default alerting folder for organization %s (ID: %d): %w", row.Name, row.Id, err)
+		}
+		migrator.Logger.Info("created the default folder for alerting", "org_id", row.Id, "folder_name", folder.Title, "folder_uid", folder.Uid)
+	}
+	return nil
+}
+
+func (c createDefaultFoldersForAlertingMigration) SQL(migrator.Dialect) string {
+	return "code migration"
 }

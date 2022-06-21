@@ -1,13 +1,17 @@
-import React, { useCallback, useRef, useState } from 'react';
 import { css } from '@emotion/css';
+import React, { useCallback, useRef, useState } from 'react';
+import SVG from 'react-inlinesvg';
 import { usePopper } from 'react-popper';
+
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, Portal, TagList, useTheme2 } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
+import { Icon, Portal, TagList, useTheme2 } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
+
 import { DashboardSectionItem, OnToggleChecked } from '../types';
-import { SearchCheckbox } from './SearchCheckbox';
+
 import { SearchCardExpanded } from './SearchCardExpanded';
+import { SearchCheckbox } from './SearchCheckbox';
 
 const DELAY_BEFORE_EXPANDING = 500;
 
@@ -127,7 +131,11 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
           <img loading="lazy" className={styles.image} src={imageSrc} onError={() => setHasImage(false)} />
         ) : (
           <div className={styles.imagePlaceholder}>
-            <Icon name="apps" size="xl" />
+            {item.icon ? (
+              <SVG src={item.icon} width={36} height={36} title={item.title} />
+            ) : (
+              <Icon name="apps" size="xl" />
+            )}
           </div>
         )}
       </div>

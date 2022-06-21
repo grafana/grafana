@@ -1,7 +1,10 @@
-import { Stack } from '@grafana/experimental';
 import React from 'react';
+
+import { Stack } from '@grafana/experimental';
+
 import { LokiDatasource } from '../../datasource';
 import { LokiVisualQuery, LokiVisualQueryBinary } from '../types';
+
 import { NestedQuery } from './NestedQuery';
 
 export interface Props {

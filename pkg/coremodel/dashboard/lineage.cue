@@ -1,6 +1,10 @@
 package dashboard
 
-import "github.com/grafana/thema"
+import (
+	"strings"
+
+	"github.com/grafana/thema"
+)
 
 thema.#Lineage
 name: "dashboard"
@@ -18,25 +22,24 @@ seqs: [
 				// Description of dashboard.
 				description?: string
 
-				gnetId?: string
+				gnetId?: string @reviewme()
 				// Tags associated with dashboard.
-				tags?: [...string]
+				tags?: [...string] @reviewme()
 				// Theme of dashboard.
-				style: *"light" | "dark"
+				style: "light" | *"dark" @reviewme()
 				// Timezone of dashboard,
-				timezone?: *"browser" | "utc" | ""
+				timezone?: *"browser" | "utc" | "" @reviewme()
 				// Whether a dashboard is editable or not.
 				editable: bool | *true
-				// 0 for no shared crosshair or tooltip (default).
-				// 1 for shared crosshair.
-				// 2 for shared crosshair AND shared tooltip.
-				graphTooltip: uint8 & >=0 & <=2 | *0
+				graphTooltip: #DashboardCursorSync @reviewme()
 				// Time range for dashboard, e.g. last 6 hours, last 7 days, etc
 				time?: {
 					from: string | *"now-6h"
 					to:   string | *"now"
-				}
-				// Timepicker metadata.
+				} @reviewme()
+
+				// TODO docs
+				// TODO this appears to be spread all over in the frontend. Concepts will likely need tidying in tandem with schema changes
 				timepicker?: {
 					// Whether timepicker is collapsed or not.
 					collapse: bool | *false
@@ -46,45 +49,97 @@ seqs: [
 					hidden: bool | *false
 					// Selectable intervals for auto-refresh.
 					refresh_intervals: [...string] | *["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
-				}
-				// Templating.
-				templating?: list: [...{...}]
-				// Annotations.
-				annotations?: list: [...{
-					builtIn: uint8 | *0
+				} @reviewme()
+				// TODO docs
+				fiscalYearStartMonth?: uint8 & >0 & <13 @reviewme()
+				// TODO docs
+				liveNow?: bool @reviewme()
+				// TODO docs
+				weekStart?: string @reviewme()
+
+				// TODO docs
+				refresh?: string | false @reviewme()
+				// Version of the JSON schema, incremented each time a Grafana update brings
+				// changes to said schema.
+				// TODO this is the existing schema numbering system. It will be replaced by Thema's themaVersion
+				schemaVersion: uint16 | *36 @reviewme()
+				// Version of the dashboard, incremented each time the dashboard is updated.
+				version?: uint32 @reviewme()
+				panels?: [...(#Panel | #RowPanel | #GraphPanel | #HeatmapPanel)] @reviewme()
+				// TODO docs
+				templating?: list: [...#VariableModel] @reviewme()
+				// TODO docs
+				annotations?: list: [...#AnnotationQuery] @reviewme()
+				// TODO docs
+				links?: [...#DashboardLink] @reviewme()
+
+				///////////////////////////////////////
+				// Definitions (referenced above) are declared below
+
+				// TODO docs
+				// FROM: AnnotationQuery in grafana-data/src/types/annotations.ts
+				#AnnotationQuery: {
 					// Datasource to use for annotation.
 					datasource: {
 						type?: string
 						uid?:  string
-					}
+					} @reviewme()
+
 					// Whether annotation is enabled.
-					enable: bool | *true
-					// Whether to hide annotation.
-					hide?: bool | *false
-					// Annotation icon color.
-					iconColor?: string
+					enable: bool | *true @reviewme()
 					// Name of annotation.
-					name?: string
-					type:  string | *"dashboard"
+					name?: string @reviewme()
+					builtIn: uint8 | *0 @reviewme() // TODO should this be persisted at all?
+					// Whether to hide annotation.
+					hide?: bool | *false @reviewme()
+					// Annotation icon color.
+					iconColor?: string @reviewme()
+					type:  string | *"dashboard" @reviewme()
 					// Query for annotation data.
-					rawQuery?: string
-					showIn:    uint8 | *0
-				}]
-				// Auto-refresh interval.
-				refresh?: string | false
-				// Version of the JSON schema, incremented each time a Grafana update brings
-				// changes to said schema.
-				// FIXME this is the old schema numbering system, and will be replaced by Thema's themaVersion
-				schemaVersion: uint16 | *33
-				// Version of the dashboard, incremented each time the dashboard is updated.
-				version?: uint32
-				panels?: [...(#Panel | #GraphPanel | #HeatmapPanel | #RowPanel)]
+					rawQuery?: string @reviewme()
+					showIn:    uint8 | *0 @reviewme()
+					target?: #Target @reviewme() // TODO currently a generic in AnnotationQuery
+				} @cuetsy(kind="interface")
+
+				// FROM: packages/grafana-data/src/types/templateVars.ts
+				// TODO docs
+				// TODO what about what's in public/app/features/types.ts?
+				// TODO there appear to be a lot of different kinds of [template] vars here? if so need a disjunction
+				#VariableModel: {
+					type: #VariableType
+					name: string
+					label?: string
+					...
+				} @cuetsy(kind="interface") @reviewme()
+
+				// FROM public/app/features/dashboard/state/DashboardModels.ts - ish
+				// TODO docs
+				#DashboardLink: {
+					title: string @reviewme()
+					type: #DashboardLinkType @reviewme()
+					icon?: string @reviewme()
+					tooltip?: string @reviewme()
+					url?: string @reviewme()
+					tags: [...string] @reviewme()
+					asDropdown: bool | *false @reviewme()
+					targetBlank: bool | *false @reviewme()
+					includeVars: bool | *false @reviewme()
+					keepTime: bool | *false @reviewme()
+				} @cuetsy(kind="interface")
 
 				// TODO docs
-				#FieldColorModeId: "thresholds" | "palette-classic" | "palette-saturated" | "continuous-GrYlRd" | "fixed" @cuetsy(kind="enum")
+				#DashboardLinkType: "link" | "dashboards" @cuetsy(kind="type") @reviewme()
+
+				// FROM: packages/grafana-data/src/types/templateVars.ts
+				// TODO docs
+				// TODO this implies some wider pattern/discriminated union, probably?
+				#VariableType: "query" | "adhoc" | "constant" | "datasource" | "interval" | "textbox" | "custom" | "system" @cuetsy(kind="type") @reviewme()
 
 				// TODO docs
-				#FieldColorSeriesByMode: "min" | "max" | "last" @cuetsy(kind="type")
+				#FieldColorModeId: "thresholds" | "palette-classic" | "palette-saturated" | "continuous-GrYlRd" | "fixed" @cuetsy(kind="enum",memberNames="Thresholds|PaletteClassic|PaletteSaturated|ContinuousGrYlRd|Fixed") @reviewme()
+
+				// TODO docs
+				#FieldColorSeriesByMode: "min" | "max" | "last" @cuetsy(kind="type") @reviewme()
 
 				// TODO docs
 				#FieldColor: {
@@ -94,36 +149,54 @@ seqs: [
 					fixedColor?: string
 					// Some visualizations need to know how to assign a series color from by value color schemes
 					seriesBy?: #FieldColorSeriesByMode
-				} @cuetsy(kind="interface")
+				} @cuetsy(kind="interface") @reviewme()
+
+        #GridPos: {
+          // Panel
+          h: uint32 & >0 | *9 @reviewme()
+          // Panel
+          w: uint32 & >0 & <=24 | *12 @reviewme()
+          // Panel x
+          x: uint32 & >=0 & <24 | *0 @reviewme()
+          // Panel y
+          y: uint32 & >=0 | *0 @reviewme()
+          // true if fixed
+          static?: bool @reviewme()
+        } @cuetsy(kind="interface")
 
 				// TODO docs
 				#Threshold: {
 					// TODO docs
 					// FIXME the corresponding typescript field is required/non-optional, but nulls currently appear here when serializing -Infinity to JSON
-					value?: number
+					value?: number @reviewme()
 					// TODO docs
-					color: string
+					color: string @reviewme()
 					// TODO docs
 					// TODO are the values here enumerable into a disjunction?
 					// Some seem to be listed in typescript comment
-					state?: string
-				} @cuetsy(kind="interface")
+					state?: string @reviewme()
+				} @cuetsy(kind="interface") @reviewme()
 
-				#ThresholdsMode: "absolute" | "percentage" @cuetsy(kind="enum")
+				#ThresholdsMode: "absolute" | "percentage" @cuetsy(kind="enum") @reviewme()
 
 				#ThresholdsConfig: {
-					mode: #ThresholdsMode
+					mode: #ThresholdsMode @reviewme()
 
 					// Must be sorted by 'value', first value is always -Infinity
-					steps: [...#Threshold]
-				} @cuetsy(kind="interface")
+					steps: [...#Threshold] @reviewme()
+				} @cuetsy(kind="interface") @reviewme()
 
 				// TODO docs
 				// FIXME this is extremely underspecfied; wasn't obvious which typescript types corresponded to it
 				#Transformation: {
 					id: string
 					options: {...}
-				}
+				} @cuetsy(kind="interface") @reviewme()
+
+				// 0 for no shared crosshair or tooltip (default).
+				// 1 for shared crosshair.
+				// 2 for shared crosshair AND shared tooltip.
+				#DashboardCursorSync: *0 | 1 | 2 @cuetsy(kind="enum",memberNames="Off|Crosshair|Tooltip") @reviewme()
 
 				// Schema for panel targets is specified by datasource
 				// plugins. We use a placeholder definition, which the Go
@@ -132,136 +205,110 @@ seqs: [
 				// with types derived from plugins in the Instance variant.
 				// When working directly from CUE, importers can extend this
 				// type directly to achieve the same effect.
-				#Target: {...}
+				#Target: {...} @reviewme()
 
 				// Dashboard panels. Panels are canonically defined inline
 				// because they share a version timeline with the dashboard
 				// schema; they do not evolve independently.
 				#Panel: {
-					// The panel plugin type id.
-					type: !=""
+					// The panel plugin type id. May not be empty.
+					type: string & strings.MinRunes(1) @reviewme()
 
 					// TODO docs
-					id?: uint32
+					id?: uint32 @reviewme()
 
 					// FIXME this almost certainly has to be changed in favor of scuemata versions
-					pluginVersion?: string
+					pluginVersion?: string @reviewme()
 
 					// TODO docs
-					tags?: [...string]
-
-					// Internal - the exact major and minor versions of the panel plugin
-					// schema. Hidden and therefore not a part of the data model, but
-					// expected to be filled with panel plugin schema versions so that it's
-					// possible to figure out which schema version matched on a successful
-					// unification.
-					// _pv: { maj: int, min: int }
-					// The major and minor versions of the panel plugin for this schema.
-					// TODO 2-tuple list instead of struct?
-					// panelSchema?: { maj: number, min: number }
-					panelSchema?: [number, number]
+					tags?: [...string] @reviewme()
 
 					// TODO docs
-					targets?: [...#Target]
+					targets?: [...#Target] @reviewme()
 
 					// Panel title.
-					title?: string
+					title?: string @reviewme()
 					// Description.
-					description?: string
+					description?: string @reviewme()
 					// Whether to display the panel without a background.
-					transparent: bool | *false
+					transparent: bool | *false @reviewme()
 					// The datasource used in all targets.
 					datasource?: {
 						type?: string
 						uid?:  string
-					}
+					} @reviewme()
 					// Grid position.
-					gridPos?: {
-						// Panel
-						h: uint32 & >0 | *9
-						// Panel
-						w: uint32 & >0 & <=24 | *12
-						// Panel x
-						x: uint32 & >=0 & <24 | *0
-						// Panel y
-						y: uint32 & >=0 | *0
-						// true if fixed
-						static?: bool
-					}
+					gridPos?: #GridPos
 					// Panel links.
-					// FIXME this is temporarily specified as a closed list so
-					// that validation will pass when no links are present, but
-					// to force a failure as soon as it's checked against there
-					// being anything in the list so it can be fixed in
-					// accordance with that object
-					links?: []
+					// TODO fill this out - seems there are a couple variants?
+					links?: [...#DashboardLink] @reviewme()
 
 					// Name of template variable to repeat for.
-					repeat?: string
+					repeat?: string @reviewme()
 					// Direction to repeat in if 'repeat' is set.
 					// "h" for horizontal, "v" for vertical.
-					repeatDirection: *"h" | "v"
+					repeatDirection: *"h" | "v" @reviewme()
 
 					// TODO docs
-					maxDataPoints?: number
+					maxDataPoints?: number @reviewme()
+
+					// TODO docs - seems to be an old field from old dashboard alerts?
+					thresholds?: [...] @reviewme()
 
 					// TODO docs
-					thresholds?: [...]
+					timeRegions?: [...] @reviewme()
 
-					// TODO docs
-					timeRegions?: [...]
-
-					transformations: [...#Transformation]
-
-					// TODO docs
-					// TODO tighter constraint
-					interval?: string
+					transformations: [...#Transformation] @reviewme()
 
 					// TODO docs
 					// TODO tighter constraint
-					timeFrom?: string
+					interval?: string @reviewme()
 
 					// TODO docs
 					// TODO tighter constraint
-					timeShift?: string
+					timeFrom?: string @reviewme()
+
+					// TODO docs
+					// TODO tighter constraint
+					timeShift?: string @reviewme()
 
 					// options is specified by the PanelOptions field in panel
 					// plugin schemas.
-					options: {...}
+					options: {...} @reviewme()
 
 					fieldConfig: {
 						defaults: {
 							// The display value for this field.  This supports template variables blank is auto
-							displayName?: string
+							displayName?: string @reviewme()
 
 							// This can be used by data sources that return and explicit naming structure for values and labels
 							// When this property is configured, this value is used rather than the default naming strategy.
-							displayNameFromDS?: string
+							displayNameFromDS?: string @reviewme()
 
 							// Human readable field metadata
-							description?: string
+							description?: string @reviewme()
 
 							// An explict path to the field in the datasource.  When the frame meta includes a path,
 							// This will default to `${frame.meta.path}/${field.name}
 							//
 							// When defined, this value can be used as an identifier within the datasource scope, and
 							// may be used to update the results
-							path?: string
+							path?: string @reviewme()
 
 							// True if data source can write a value to the path.  Auth/authz are supported separately
-							writeable?: bool
+							writeable?: bool @reviewme()
 
 							// True if data source field supports ad-hoc filters
-							filterable?: bool
+							filterable?: bool @reviewme()
 
 							// Numeric Options
-							unit?: string
+							unit?: string @reviewme()
 
 							// Significant digits (for display)
-							decimals?: number
+							decimals?: number @reviewme()
 
-							min?: number
-							max?: number
+							min?: number @reviewme()
+							max?: number @reviewme()
 
 							// Convert input values into a display string
 							//
@@ -272,79 +319,68 @@ seqs: [
 							// unlikely we'll be able to translate cue to
 							// typescript generics in the general case, though
 							// this particular one *may* be able to work.
-							mappings?: [...{...}]
+							mappings?: [...{...}] @reviewme()
 
 							// Map numeric values to states
-							thresholds?: #ThresholdsConfig
+							thresholds?: #ThresholdsConfig @reviewme()
 
 							//   // Map values to a display color
-							color?: #FieldColor
+							color?: #FieldColor @reviewme()
 
 							//   // Used when reducing field values
 							//   nullValueMode?: NullValueMode
 
 							//   // The behavior when clicking on a result
-							links?: [...]
+							links?: [...] @reviewme()
 
 							// Alternative to empty string
-							noValue?: string
+							noValue?: string @reviewme()
 
 							// custom is specified by the PanelFieldConfig field
 							// in panel plugin schemas.
-							custom?: {...}
-						}
+							custom?: {...} @reviewme()
+						} @reviewme()
 						overrides: [...{
 							matcher: {
-								id:       string | *""
-								options?: _
+								id:       string | *"" @reviewme()
+								options?: _ @reviewme()
 							}
 							properties: [...{
-								id:     string | *""
-								value?: _
+								id:     string | *"" @reviewme()
+								value?: _ @reviewme()
 							}]
-						}]
+						}] @reviewme()
 					}
-				}
+				} @cuetsy(kind="interface") @reviewme()
 
 				// Row panel
 				#RowPanel: {
-					type:      "row"
-					collapsed: bool | *false
-					title?:    string
+					type:      "row" @reviewme()
+					collapsed: bool | *false @reviewme()
+					title?:    string @reviewme()
 
 					// Name of default datasource.
 					datasource?: {
-						type?: string
-						uid?:  string
-					}
+						type?: string @reviewme()
+						uid?:  string @reviewme()
+					} @reviewme()
 
-					gridPos?: {
-						// Panel
-						h: uint32 & >0 | *9
-						// Panel
-						w: uint32 & >0 & <=24 | *12
-						// Panel x
-						x: uint32 & >=0 & <24 | *0
-						// Panel y
-						y: uint32 & >=0 | *0
-						// true if fixed
-						static?: bool
-					}
-					id: uint32
-					panels: [...(#Panel | #GraphPanel | #HeatmapPanel)]
+					gridPos?: #GridPos
+					id: uint32 @reviewme()
+					panels: [...(#Panel | #GraphPanel | #HeatmapPanel)] @reviewme()
 					// Name of template variable to repeat for.
-					repeat?: string
-				}
+					repeat?: string @reviewme()
+				} @cuetsy(kind="interface") @reviewme()
 
 				// Support for legacy graph and heatmap panels.
 				#GraphPanel: {
-					type: "graph"
+					type: "graph" @reviewme()
 					...
-				}
+				} @reviewme()
 				#HeatmapPanel: {
-					type: "heatmap"
+					type: "heatmap" @reviewme()
 					...
-				}
+				} @reviewme()
 			},
 		]
 	},

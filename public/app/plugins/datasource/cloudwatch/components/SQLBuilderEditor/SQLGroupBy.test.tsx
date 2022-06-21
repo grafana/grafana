@@ -1,9 +1,11 @@
-import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
+import React from 'react';
 import selectEvent from 'react-select-event';
-import { CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType, SQLExpression } from '../../types';
+
 import { setupMockedDataSource } from '../../__mocks__/CloudWatchDataSource';
 import { createArray, createGroupBy } from '../../__mocks__/sqlUtils';
+import { CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType, SQLExpression } from '../../types';
+
 import SQLGroupBy from './SQLGroupBy';
 
 const { datasource } = setupMockedDataSource();

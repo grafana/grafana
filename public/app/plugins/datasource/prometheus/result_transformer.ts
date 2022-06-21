@@ -1,3 +1,6 @@
+import { descending, deviation } from 'd3';
+import { partition, groupBy } from 'lodash';
+
 import {
   ArrayDataFrame,
   ArrayVector,
@@ -16,12 +19,12 @@ import {
   DataQueryResponse,
   DataQueryRequest,
   PreferredVisualisationType,
-  CoreApp,
   DataFrameType,
+  CoreApp,
 } from '@grafana/data';
 import { FetchResponse, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
-import { partition, groupBy } from 'lodash';
-import { descending, deviation } from 'd3';
+
+import { renderLegendFormat } from './legend';
 import {
   ExemplarTraceIdDestination,
   isExemplarData,
@@ -34,10 +37,9 @@ import {
   PromValue,
   TransformOptions,
 } from './types';
-import { renderLegendFormat } from './legend';
 
-const POSITIVE_INFINITY_SAMPLE_VALUE = '+Inf';
-const NEGATIVE_INFINITY_SAMPLE_VALUE = '-Inf';
+// handles case-insensitive Inf, +Inf, -Inf (with optional "inity" suffix)
+const INFINITY_SAMPLE_REGEX = /^[+-]?inf(?:inity)?$/i;
 
 interface TimeAndValue {
   [TIME_SERIES_TIME_FIELD_NAME]: number;
@@ -556,7 +558,7 @@ function mergeHeatmapFrames(frames: DataFrame[]): DataFrame[] {
       ...frames[0],
       meta: {
         ...frames[0].meta,
-        type: DataFrameType.HeatmapBuckets,
+        type: DataFrameType.HeatmapRows,
       },
       fields: [timeField!, ...countFields],
     },
@@ -609,13 +611,10 @@ function sortSeriesByLabel(s1: DataFrame, s2: DataFrame): number {
   return 0;
 }
 
-function parseSampleValue(value: string): number {
-  switch (value) {
-    case POSITIVE_INFINITY_SAMPLE_VALUE:
-      return Number.POSITIVE_INFINITY;
-    case NEGATIVE_INFINITY_SAMPLE_VALUE:
-      return Number.NEGATIVE_INFINITY;
-    default:
-      return parseFloat(value);
+/** @internal */
+export function parseSampleValue(value: string): number {
+  if (INFINITY_SAMPLE_REGEX.test(value)) {
+    return value[0] === '-' ? Number.NEGATIVE_INFINITY : Number.POSITIVE_INFINITY;
   }
+  return parseFloat(value);
 }

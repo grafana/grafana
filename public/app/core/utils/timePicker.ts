@@ -30,9 +30,11 @@ export const getShiftedTimeRange = (direction: number, origRange: TimeRange): Ab
 export const getZoomedTimeRange = (range: TimeRange, factor: number): AbsoluteTimeRange => {
   const timespan = range.to.valueOf() - range.from.valueOf();
   const center = range.to.valueOf() - timespan / 2;
+  // If the timepsan is 0, zooming out would do nothing, so we force a zoom out to 30s
+  const newTimespan = timespan === 0 ? 30000 : timespan * factor;
 
-  const to = center + (timespan * factor) / 2;
-  const from = center - (timespan * factor) / 2;
+  const to = center + newTimespan / 2;
+  const from = center - newTimespan / 2;
 
   return { from, to };
 };

@@ -1,3 +1,5 @@
+import { isArray } from 'lodash';
+
 import {
   anyToNumber,
   DataFrame,
@@ -12,7 +14,6 @@ import {
   Field,
   FieldType,
 } from '@grafana/data';
-import { isArray } from 'lodash';
 
 export interface FieldToConfigMapping {
   fieldName: string;

@@ -1,25 +1,28 @@
-import { Matcher, render, waitFor } from '@testing-library/react';
-import { Provider } from 'react-redux';
-import { BackendSrv, locationService, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
-import { configureStore } from 'app/store/configureStore';
-import RuleEditor from './RuleEditor';
-import { Route, Router } from 'react-router-dom';
+import { Matcher, render, waitFor, screen } from '@testing-library/react';
+import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import React from 'react';
+import { Provider } from 'react-redux';
+import { Route, Router } from 'react-router-dom';
+import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
-import { selectOptionInTest } from '@grafana/ui';
-import { contextSrv } from 'app/core/services/context_srv';
-import { mockDataSource, MockDataSourceSrv } from './mocks';
-import userEvent from '@testing-library/user-event';
+
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { getAllDataSources } from './utils/config';
-import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
-import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
+import { BackendSrv, locationService, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
+import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardSearchHit } from 'app/features/search/types';
-import { getDefaultQueries } from './utils/rule-form';
-import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
-import { searchFolders } from '../../../../app/features/manage-dashboards/state/actions';
+import { configureStore } from 'app/store/configureStore';
 import { GrafanaAlertStateDecision, PromApplication } from 'app/types/unified-alerting-dto';
-import { fetchBuildInfo } from './api/buildInfo';
+
+import { searchFolders } from '../../../../app/features/manage-dashboards/state/actions';
+
+import RuleEditor from './RuleEditor';
+import { discoverFeatures } from './api/buildInfo';
+import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
+import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
+import { disableRBAC, mockDataSource, MockDataSourceSrv } from './mocks';
+import { getAllDataSources } from './utils/config';
+import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
+import { getDefaultQueries } from './utils/rule-form';
 
 jest.mock('./components/rule-editor/ExpressionEditor', () => ({
   // eslint-disable-next-line react/display-name
@@ -44,7 +47,7 @@ const mocks = {
   getAllDataSources: jest.mocked(getAllDataSources),
   searchFolders: jest.mocked(searchFolders),
   api: {
-    fetchBuildInfo: jest.mocked(fetchBuildInfo),
+    discoverFeatures: jest.mocked(discoverFeatures),
     fetchRulerRulesGroup: jest.mocked(fetchRulerRulesGroup),
     setRulerRuleGroup: jest.mocked(setRulerRuleGroup),
     fetchRulerRulesNamespace: jest.mocked(fetchRulerRulesNamespace),
@@ -95,7 +98,10 @@ describe('RuleEditor', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     contextSrv.isEditor = true;
+    contextSrv.hasEditPermissionInFolders = true;
   });
+
+  disableRBAC();
 
   it('can create a new cloud alert', async () => {
     const dataSources = {
@@ -133,8 +139,8 @@ describe('RuleEditor', () => {
     });
     mocks.searchFolders.mockResolvedValue([]);
 
-    mocks.api.fetchBuildInfo.mockResolvedValue({
-      application: PromApplication.Cortex,
+    mocks.api.discoverFeatures.mockResolvedValue({
+      application: PromApplication.Lotex,
       features: {
         rulerApiEnabled: true,
       },
@@ -142,32 +148,34 @@ describe('RuleEditor', () => {
 
     await renderRuleEditor();
     await waitFor(() => expect(mocks.searchFolders).toHaveBeenCalled());
+    await waitFor(() => expect(mocks.api.discoverFeatures).toHaveBeenCalled());
 
-    await waitFor(() => expect(mocks.api.fetchBuildInfo).toHaveBeenCalled());
-    userEvent.type(await ui.inputs.name.find(), 'my great new rule');
-    userEvent.click(await ui.buttons.lotexAlert.get());
+    await userEvent.click(await ui.buttons.lotexAlert.find());
+
     const dataSourceSelect = ui.inputs.dataSource.get();
-    userEvent.click(byRole('combobox').get(dataSourceSelect));
+    await userEvent.click(byRole('combobox').get(dataSourceSelect));
     await clickSelectOption(dataSourceSelect, 'Prom (default)');
     await waitFor(() => expect(mocks.api.fetchRulerRules).toHaveBeenCalled());
+
+    await userEvent.type(await ui.inputs.expr.find(), 'up == 1');
+
+    await userEvent.type(ui.inputs.name.get(), 'my great new rule');
     await clickSelectOption(ui.inputs.namespace.get(), 'namespace2');
     await clickSelectOption(ui.inputs.group.get(), 'group2');
 
-    userEvent.type(ui.inputs.expr.get(), 'up == 1');
-
-    userEvent.type(ui.inputs.annotationValue(0).get(), 'some summary');
-    userEvent.type(ui.inputs.annotationValue(1).get(), 'some description');
+    await userEvent.type(ui.inputs.annotationValue(0).get(), 'some summary');
+    await userEvent.type(ui.inputs.annotationValue(1).get(), 'some description');
 
     // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
-    userEvent.click(ui.buttons.addLabel.get(), undefined, { skipPointerEventsCheck: true });
+    await userEvent.click(ui.buttons.addLabel.get(), { pointerEventsCheck: PointerEventsCheckLevel.Never });
 
-    userEvent.type(ui.inputs.labelKey(0).get(), 'severity');
-    userEvent.type(ui.inputs.labelValue(0).get(), 'warn');
-    userEvent.type(ui.inputs.labelKey(1).get(), 'team');
-    userEvent.type(ui.inputs.labelValue(1).get(), 'the a-team');
+    await userEvent.type(ui.inputs.labelKey(0).get(), 'severity');
+    await userEvent.type(ui.inputs.labelValue(0).get(), 'warn');
+    await userEvent.type(ui.inputs.labelKey(1).get(), 'team');
+    await userEvent.type(ui.inputs.labelValue(1).get(), 'the a-team');
 
     // save and check what was sent to backend
-    userEvent.click(ui.buttons.save.get());
+    await userEvent.click(ui.buttons.save.get());
     await waitFor(() => expect(mocks.api.setRulerRuleGroup).toHaveBeenCalled());
     expect(mocks.api.setRulerRuleGroup).toHaveBeenCalledWith(
       { dataSourceName: 'Prom', apiVersion: 'legacy' },
@@ -232,7 +240,7 @@ describe('RuleEditor', () => {
       },
     ] as DashboardSearchHit[]);
 
-    mocks.api.fetchBuildInfo.mockResolvedValue({
+    mocks.api.discoverFeatures.mockResolvedValue({
       application: PromApplication.Prometheus,
       features: {
         rulerApiEnabled: false,
@@ -242,33 +250,36 @@ describe('RuleEditor', () => {
     // fill out the form
     await renderRuleEditor();
     await waitFor(() => expect(mocks.searchFolders).toHaveBeenCalled());
-    await waitFor(() => expect(mocks.api.fetchBuildInfo).toHaveBeenCalled());
+    await waitFor(() => expect(mocks.api.discoverFeatures).toHaveBeenCalled());
 
-    userEvent.type(await ui.inputs.name.find(), 'my great new rule');
+    await userEvent.type(await ui.inputs.name.find(), 'my great new rule');
 
     const folderInput = await ui.inputs.folder.find();
     await clickSelectOption(folderInput, 'Folder A');
 
-    userEvent.type(ui.inputs.annotationValue(0).get(), 'some summary');
-    userEvent.type(ui.inputs.annotationValue(1).get(), 'some description');
+    const groupInput = screen.getByRole('textbox', { name: /^Group/ });
+    await userEvent.type(groupInput, 'my group');
+
+    await userEvent.type(ui.inputs.annotationValue(0).get(), 'some summary');
+    await userEvent.type(ui.inputs.annotationValue(1).get(), 'some description');
 
     // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
-    userEvent.click(ui.buttons.addLabel.get(), undefined, { skipPointerEventsCheck: true });
+    await userEvent.click(ui.buttons.addLabel.get(), { pointerEventsCheck: PointerEventsCheckLevel.Never });
 
-    userEvent.type(ui.inputs.labelKey(0).get(), 'severity');
-    userEvent.type(ui.inputs.labelValue(0).get(), 'warn');
-    userEvent.type(ui.inputs.labelKey(1).get(), 'team');
-    userEvent.type(ui.inputs.labelValue(1).get(), 'the a-team');
+    await userEvent.type(ui.inputs.labelKey(0).get(), 'severity');
+    await userEvent.type(ui.inputs.labelValue(0).get(), 'warn');
+    await userEvent.type(ui.inputs.labelKey(1).get(), 'team');
+    await userEvent.type(ui.inputs.labelValue(1).get(), 'the a-team');
 
     // save and check what was sent to backend
-    userEvent.click(ui.buttons.save.get());
+    await userEvent.click(ui.buttons.save.get());
     await waitFor(() => expect(mocks.api.setRulerRuleGroup).toHaveBeenCalled());
     expect(mocks.api.setRulerRuleGroup).toHaveBeenCalledWith(
       { dataSourceName: GRAFANA_RULES_SOURCE_NAME, apiVersion: 'legacy' },
       'Folder A',
       {
         interval: '1m',
-        name: 'my great new rule',
+        name: 'my group',
         rules: [
           {
             annotations: { description: 'some description', summary: 'some summary' },
@@ -323,8 +334,8 @@ describe('RuleEditor', () => {
     });
     mocks.searchFolders.mockResolvedValue([]);
 
-    mocks.api.fetchBuildInfo.mockResolvedValue({
-      application: PromApplication.Cortex,
+    mocks.api.discoverFeatures.mockResolvedValue({
+      application: PromApplication.Lotex,
       features: {
         rulerApiEnabled: true,
       },
@@ -332,28 +343,28 @@ describe('RuleEditor', () => {
 
     await renderRuleEditor();
     await waitFor(() => expect(mocks.searchFolders).toHaveBeenCalled());
-    await waitFor(() => expect(mocks.api.fetchBuildInfo).toHaveBeenCalled());
-    userEvent.type(await ui.inputs.name.find(), 'my great new recording rule');
-    userEvent.click(await ui.buttons.lotexRecordingRule.get());
+    await waitFor(() => expect(mocks.api.discoverFeatures).toHaveBeenCalled());
+    await userEvent.type(await ui.inputs.name.find(), 'my great new recording rule');
+    await userEvent.click(await ui.buttons.lotexRecordingRule.get());
 
     const dataSourceSelect = ui.inputs.dataSource.get();
-    userEvent.click(byRole('combobox').get(dataSourceSelect));
+    await userEvent.click(byRole('combobox').get(dataSourceSelect));
 
     await clickSelectOption(dataSourceSelect, 'Prom (default)');
     await waitFor(() => expect(mocks.api.fetchRulerRules).toHaveBeenCalled());
     await clickSelectOption(ui.inputs.namespace.get(), 'namespace2');
     await clickSelectOption(ui.inputs.group.get(), 'group2');
 
-    userEvent.type(ui.inputs.expr.get(), 'up == 1');
+    await userEvent.type(await ui.inputs.expr.find(), 'up == 1');
 
     // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
-    userEvent.click(ui.buttons.addLabel.get(), undefined, { skipPointerEventsCheck: true });
+    await userEvent.click(ui.buttons.addLabel.get(), { pointerEventsCheck: PointerEventsCheckLevel.Never });
 
-    userEvent.type(ui.inputs.labelKey(1).get(), 'team');
-    userEvent.type(ui.inputs.labelValue(1).get(), 'the a-team');
+    await userEvent.type(ui.inputs.labelKey(1).get(), 'team');
+    await userEvent.type(ui.inputs.labelValue(1).get(), 'the a-team');
 
     // try to save, find out that recording rule name is invalid
-    userEvent.click(ui.buttons.save.get());
+    await userEvent.click(ui.buttons.save.get());
     await waitFor(() =>
       expect(
         byText(
@@ -364,11 +375,11 @@ describe('RuleEditor', () => {
     expect(mocks.api.setRulerRuleGroup).not.toBeCalled();
 
     // fix name and re-submit
-    userEvent.type(await ui.inputs.name.find(), '{selectall}{del}my:great:new:recording:rule');
-    userEvent.click(ui.buttons.save.get());
+    await userEvent.clear(await ui.inputs.name.find());
+    await userEvent.type(await ui.inputs.name.find(), 'my:great:new:recording:rule');
 
     // save and check what was sent to backend
-    userEvent.click(ui.buttons.save.get());
+    await userEvent.click(ui.buttons.save.get());
     await waitFor(() => expect(mocks.api.setRulerRuleGroup).toHaveBeenCalled());
     expect(mocks.api.setRulerRuleGroup).toHaveBeenCalledWith(
       { dataSourceName: 'Prom', apiVersion: 'legacy' },
@@ -443,7 +454,7 @@ describe('RuleEditor', () => {
 
     await renderRuleEditor(uid);
     await waitFor(() => expect(mocks.searchFolders).toHaveBeenCalled());
-    await waitFor(() => expect(mocks.api.fetchBuildInfo).toHaveBeenCalled());
+    await waitFor(() => expect(mocks.api.discoverFeatures).toHaveBeenCalled());
     await waitFor(() => expect(mocks.searchFolders).toHaveBeenCalled());
 
     // check that it's filled in
@@ -455,15 +466,15 @@ describe('RuleEditor', () => {
 
     // add an annotation
     await clickSelectOption(ui.inputs.annotationKey(2).get(), /Add new/);
-    userEvent.type(byRole('textbox').get(ui.inputs.annotationKey(2).get()), 'custom');
-    userEvent.type(ui.inputs.annotationValue(2).get(), 'value');
+    await userEvent.type(byRole('textbox').get(ui.inputs.annotationKey(2).get()), 'custom');
+    await userEvent.type(ui.inputs.annotationValue(2).get(), 'value');
 
     //add a label
-    userEvent.type(ui.inputs.labelKey(2).get(), 'custom');
-    userEvent.type(ui.inputs.labelValue(2).get(), 'value');
+    await userEvent.type(ui.inputs.labelKey(2).get(), 'custom');
+    await userEvent.type(ui.inputs.labelValue(2).get(), 'value');
 
     // save and check what was sent to backend
-    userEvent.click(ui.buttons.save.get());
+    await userEvent.click(ui.buttons.save.get());
     await waitFor(() => expect(mocks.api.setRulerRuleGroup).toHaveBeenCalled());
 
     expect(mocks.api.setRulerRuleGroup).toHaveBeenCalledWith(
@@ -545,10 +556,10 @@ describe('RuleEditor', () => {
       ),
     };
 
-    mocks.api.fetchBuildInfo.mockImplementation(async (dataSourceName) => {
+    mocks.api.discoverFeatures.mockImplementation(async (dataSourceName) => {
       if (dataSourceName === 'loki with ruler' || dataSourceName === 'cortex with ruler') {
         return {
-          application: PromApplication.Cortex,
+          application: PromApplication.Lotex,
           features: {
             rulerApiEnabled: true,
             alertManagerConfigApi: false,
@@ -559,7 +570,7 @@ describe('RuleEditor', () => {
       }
       if (dataSourceName === 'loki with local rule store') {
         return {
-          application: PromApplication.Cortex,
+          application: PromApplication.Lotex,
           features: {
             rulerApiEnabled: false,
             alertManagerConfigApi: false,
@@ -570,7 +581,7 @@ describe('RuleEditor', () => {
       }
       if (dataSourceName === 'cortex without ruler api') {
         return {
-          application: PromApplication.Cortex,
+          application: PromApplication.Lotex,
           features: {
             rulerApiEnabled: false,
             alertManagerConfigApi: false,
@@ -607,15 +618,15 @@ describe('RuleEditor', () => {
 
     // render rule editor, select mimir/loki managed alerts
     await renderRuleEditor();
-    await waitFor(() => expect(mocks.api.fetchBuildInfo).toHaveBeenCalled());
+    await waitFor(() => expect(mocks.api.discoverFeatures).toHaveBeenCalled());
     await waitFor(() => expect(mocks.searchFolders).toHaveBeenCalled());
 
     await ui.inputs.name.find();
-    userEvent.click(await ui.buttons.lotexAlert.get());
+    await userEvent.click(await ui.buttons.lotexAlert.get());
 
     // check that only rules sources that have ruler available are there
     const dataSourceSelect = ui.inputs.dataSource.get();
-    userEvent.click(byRole('combobox').get(dataSourceSelect));
+    await userEvent.click(byRole('combobox').get(dataSourceSelect));
     expect(await byText('loki with ruler').query()).toBeInTheDocument();
     expect(byText('cortex with ruler').query()).toBeInTheDocument();
     expect(byText('loki with local rule store').query()).not.toBeInTheDocument();
@@ -626,6 +637,6 @@ describe('RuleEditor', () => {
 });
 
 const clickSelectOption = async (selectElement: HTMLElement, optionText: Matcher): Promise<void> => {
-  userEvent.click(byRole('combobox').get(selectElement));
+  await userEvent.click(byRole('combobox').get(selectElement));
   await selectOptionInTest(selectElement, optionText as string);
 };

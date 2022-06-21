@@ -1,11 +1,15 @@
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { configureStore } from 'app/store/configureStore';
-import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { byTestId, byText } from 'testing-library-selector';
-import { mockCombinedRule, mockDataSource } from '../../mocks';
+
+import { contextSrv } from 'app/core/services/context_srv';
+import { configureStore } from 'app/store/configureStore';
+import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
+
+import { disableRBAC, mockCombinedRule, mockDataSource } from '../../mocks';
+
 import { RulesGroup } from './RulesGroup';
 
 const hasRulerMock = jest.fn<boolean, any>();
@@ -13,7 +17,9 @@ jest.mock('../../hooks/useHasRuler', () => ({
   useHasRuler: () => hasRulerMock,
 }));
 
-beforeEach(() => hasRulerMock.mockReset());
+beforeEach(() => {
+  hasRulerMock.mockReset();
+});
 
 const ui = {
   editGroupButton: byTestId('edit-group'),
@@ -58,6 +64,10 @@ describe('Rules group tests', () => {
   });
 
   describe('When the datasource is not grafana', () => {
+    beforeEach(() => {
+      contextSrv.isEditor = true;
+    });
+
     const group: CombinedRuleGroup = {
       name: 'TestGroup',
       rules: [mockCombinedRule()],
@@ -68,6 +78,8 @@ describe('Rules group tests', () => {
       rulesSource: mockDataSource(),
       groups: [group],
     };
+
+    disableRBAC();
 
     it('When ruler enabled should display delete and edit group buttons', () => {
       // Arrange
@@ -95,13 +107,13 @@ describe('Rules group tests', () => {
       expect(ui.editGroupButton.query()).not.toBeInTheDocument();
     });
 
-    it('Delete button click should display confirmation modal', () => {
+    it('Delete button click should display confirmation modal', async () => {
       // Arrange
       hasRulerMock.mockReturnValue(true);
 
       // Act
       renderRulesGroup(namespace, group);
-      userEvent.click(ui.deleteGroupButton.get());
+      await userEvent.click(ui.deleteGroupButton.get());
 
       // Assert
       expect(ui.confirmDeleteModal.header.get()).toBeInTheDocument();

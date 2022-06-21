@@ -1,13 +1,14 @@
 import { map as _map } from 'lodash';
 import { lastValueFrom, of } from 'rxjs';
 import { catchError, map, mapTo } from 'rxjs/operators';
-import { BackendDataSourceResponse, DataSourceWithBackend, FetchResponse, getBackendSrv } from '@grafana/runtime';
+
 import { AnnotationEvent, DataSourceInstanceSettings, MetricFindValue, ScopedVars, TimeRange } from '@grafana/data';
+import { BackendDataSourceResponse, DataSourceWithBackend, FetchResponse, getBackendSrv } from '@grafana/runtime';
+import { toTestingStatus } from '@grafana/runtime/src/utils/queryResponse';
+import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
 import ResponseParser from './response_parser';
-import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { MssqlOptions, MssqlQuery, MssqlQueryForInterpolation } from './types';
-import { toTestingStatus } from '@grafana/runtime/src/utils/queryResponse';
 
 export class MssqlDatasource extends DataSourceWithBackend<MssqlQuery, MssqlOptions> {
   id: any;

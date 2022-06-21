@@ -1,10 +1,14 @@
 import React, { useMemo } from 'react';
+
 import { PanelProps } from '@grafana/data';
 import { TooltipPlugin, useTheme2, ZoomPlugin } from '@grafana/ui';
-import { StatusPanelOptions } from './types';
+
 import { TimelineChart } from '../state-timeline/TimelineChart';
 import { TimelineMode } from '../state-timeline/types';
 import { prepareTimelineFields, prepareTimelineLegendItems } from '../state-timeline/utils';
+import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
+
+import { StatusPanelOptions } from './types';
 
 interface TimelinePanelProps extends PanelProps<StatusPanelOptions> {}
 
@@ -22,7 +26,10 @@ export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
 }) => {
   const theme = useTheme2();
 
-  const { frames, warn } = useMemo(() => prepareTimelineFields(data?.series, false, theme), [data, theme]);
+  const { frames, warn } = useMemo(
+    () => prepareTimelineFields(data?.series, false, timeRange, theme),
+    [data, timeRange, theme]
+  );
 
   const legendItems = useMemo(
     () => prepareTimelineLegendItems(frames, options.legend, theme),
@@ -68,6 +75,7 @@ export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
           <>
             <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
             <TooltipPlugin data={alignedFrame} config={config} mode={options.tooltip.mode} timeZone={timeZone} />
+            <OutsideRangePlugin config={config} onChangeTimeRange={onChangeTimeRange} />
           </>
         );
       }}

@@ -3,7 +3,6 @@ package util
 import (
 	"fmt"
 	"math"
-	"regexp"
 	"strings"
 	"time"
 	"unicode"
@@ -34,7 +33,7 @@ func SplitString(str string) []string {
 		return []string{}
 	}
 
-	return regexp.MustCompile("[, ]+").Split(str, -1)
+	return strings.Fields(strings.ReplaceAll(str, ",", " "))
 }
 
 // GetAgeString returns a string representing certain time from years to minutes.

@@ -14,8 +14,9 @@
 
 import * as React from 'react';
 
-import Positions from './Positions';
 import { TNil } from '../../types';
+
+import Positions from './Positions';
 
 type TWrapperProps = {
   style: React.CSSProperties;

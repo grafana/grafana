@@ -1,13 +1,15 @@
-import React, { useRef, useEffect } from 'react';
-import { useTheme2, ReactMonacoEditor, Monaco, monacoTypes } from '@grafana/ui';
-import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
-import { useLatest } from 'react-use';
 import { promLanguageDefinition } from 'monaco-promql';
+import React, { useRef, useEffect } from 'react';
+import { useLatest } from 'react-use';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider';
+import { useTheme2, ReactMonacoEditor, Monaco, monacoTypes } from '@grafana/ui';
+
 import { Props } from './MonacoQueryFieldProps';
 import { getOverrideServices } from './getOverrideServices';
+import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider';
 
 const options: monacoTypes.editor.IStandaloneEditorConstructionOptions = {
   codeLens: false,
@@ -196,6 +198,13 @@ const MonacoQueryField = (props: Props) => {
           // FIXME: maybe move this functionality into CodeEditor?
           editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.Enter, () => {
             onRunQueryRef.current(editor.getValue());
+          });
+
+          /* Something in this configuration of monaco doesn't bubble up [mod]+K, which the 
+          command palette uses. Pass the event out of monaco manually
+          */
+          editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyK, function () {
+            global.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }));
           });
         }}
       />

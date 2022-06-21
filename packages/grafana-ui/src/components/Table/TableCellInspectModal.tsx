@@ -1,5 +1,6 @@
 import { isString } from 'lodash';
 import React, { useEffect, useState } from 'react';
+
 import { ClipboardButton } from '../ClipboardButton/ClipboardButton';
 import { Icon } from '../Icon/Icon';
 import { Modal } from '../Modal/Modal';

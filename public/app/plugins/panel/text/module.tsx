@@ -1,9 +1,9 @@
 import { PanelPlugin } from '@grafana/data';
 
 import { TextPanel } from './TextPanel';
-import { textPanelMigrationHandler } from './textPanelMigrationHandler';
 import { TextPanelEditor } from './TextPanelEditor';
 import { defaultPanelOptions, PanelOptions, TextMode } from './models.gen';
+import { textPanelMigrationHandler } from './textPanelMigrationHandler';
 
 export const plugin = new PanelPlugin<PanelOptions>(TextPanel)
   .setPanelOptions((builder) => {

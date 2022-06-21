@@ -1,4 +1,8 @@
-﻿import {
+﻿import { reducerTester } from '../../../../test/core/redux/reducerTester';
+import { ApiKeysState } from '../../../types';
+import { getMultipleMockKeys } from '../__mocks__/apiKeysMock';
+
+import {
   apiKeysLoaded,
   apiKeysReducer,
   includeExpiredToggled,
@@ -6,9 +10,6 @@
   isFetching,
   setSearchQuery,
 } from './reducers';
-import { getMultipleMockKeys } from '../__mocks__/apiKeysMock';
-import { reducerTester } from '../../../../test/core/redux/reducerTester';
-import { ApiKeysState } from '../../../types';
 
 describe('API Keys reducer', () => {
   it('should set keys', () => {

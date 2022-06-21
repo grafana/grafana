@@ -5,17 +5,15 @@ package server
 
 import (
 	"github.com/google/wire"
-
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/coremodel/dashboard"
 	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/expr"
-	cmreg "github.com/grafana/grafana/pkg/framework/coremodel/staticregistry"
+	cmreg "github.com/grafana/grafana/pkg/framework/coremodel/registry"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -29,12 +27,16 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats/statscollector"
 	loginpkg "github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/middleware/csrf"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
+	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/cleanup"
@@ -45,11 +47,15 @@ import (
 	dashboardimportservice "github.com/grafana/grafana/pkg/services/dashboardimport/service"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardstore "github.com/grafana/grafana/pkg/services/dashboards/database"
-	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/manager"
+	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
+	dashsnapstore "github.com/grafana/grafana/pkg/services/dashboardsnapshots/database"
+	dashsnapsvc "github.com/grafana/grafana/pkg/services/dashboardsnapshots/service"
+	"github.com/grafana/grafana/pkg/services/dashboardversion/dashverimpl"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
+	"github.com/grafana/grafana/pkg/services/export"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/hooks"
@@ -74,11 +80,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/queryhistory"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
-	"github.com/grafana/grafana/pkg/services/schemaloader"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secretsDatabase "github.com/grafana/grafana/pkg/services/secrets/database"
+	secretsStore "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	serviceaccountsmanager "github.com/grafana/grafana/pkg/services/serviceaccounts/manager"
@@ -86,6 +92,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/star/starimpl"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/teamguardian"
 	teamguardianDatabase "github.com/grafana/grafana/pkg/services/teamguardian/database"
@@ -135,15 +142,19 @@ var wireBasicSet = wire.NewSet(
 	updatechecker.ProvidePluginsService,
 	uss.ProvideService,
 	wire.Bind(new(usagestats.Service), new(*uss.UsageStats)),
+	registry.ProvideService,
+	wire.Bind(new(registry.Service), new(*registry.InMemory)),
 	manager.ProvideService,
+	wire.Bind(new(plugins.Manager), new(*manager.PluginManager)),
 	wire.Bind(new(plugins.Client), new(*manager.PluginManager)),
 	wire.Bind(new(plugins.Store), new(*manager.PluginManager)),
 	wire.Bind(new(plugins.DashboardFileStore), new(*manager.PluginManager)),
 	wire.Bind(new(plugins.StaticRouteResolver), new(*manager.PluginManager)),
 	wire.Bind(new(plugins.RendererManager), new(*manager.PluginManager)),
+	wire.Bind(new(plugins.SecretsPluginManager), new(*manager.PluginManager)),
 	coreplugin.ProvideCoreRegistry,
 	loader.ProvideService,
-	wire.Bind(new(plugins.Loader), new(*loader.Loader)),
+	wire.Bind(new(loader.Service), new(*loader.Loader)),
 	wire.Bind(new(plugins.ErrorResolver), new(*loader.Loader)),
 	cloudwatch.ProvideService,
 	cloudmonitoring.ProvideService,
@@ -151,6 +162,7 @@ var wireBasicSet = wire.NewSet(
 	postgres.ProvideService,
 	mysql.ProvideService,
 	mssql.ProvideService,
+	store.ProvideEntityEventsService,
 	httpclientprovider.New,
 	wire.Bind(new(httpclient.Provider), new(*sdkhttpclient.Provider)),
 	serverlock.ProvideService,
@@ -174,13 +186,13 @@ var wireBasicSet = wire.NewSet(
 	searchV2.ProvideService,
 	store.ProvideService,
 	store.ProvideHTTPService,
+	export.ProvideService,
 	live.ProvideService,
 	pushhttp.ProvideService,
 	plugincontext.ProvideService,
 	contexthandler.ProvideService,
 	jwt.ProvideService,
 	wire.Bind(new(models.JWTService), new(*jwt.AuthService)),
-	schemaloader.ProvideService,
 	ngalert.ProvideService,
 	librarypanels.ProvideService,
 	wire.Bind(new(librarypanels.Service), new(*librarypanels.LibraryPanelService)),
@@ -207,7 +219,10 @@ var wireBasicSet = wire.NewSet(
 	secretsDatabase.ProvideSecretsStore,
 	wire.Bind(new(secrets.Store), new(*secretsDatabase.SecretsStoreImpl)),
 	grafanads.ProvideService,
-	dashboardsnapshots.ProvideService,
+	wire.Bind(new(dashboardsnapshots.Store), new(*dashsnapstore.DashboardSnapshotStore)),
+	dashsnapstore.ProvideStore,
+	wire.Bind(new(dashboardsnapshots.Service), new(*dashsnapsvc.ServiceImpl)),
+	dashsnapsvc.ProvideService,
 	datasourceservice.ProvideService,
 	wire.Bind(new(datasources.DataSourceService), new(*datasourceservice.Service)),
 	pluginSettings.ProvideService,
@@ -239,20 +254,29 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(alerting.DashAlertExtractor), new(*alerting.DashAlertExtractorService)),
 	comments.ProvideService,
 	guardian.ProvideService,
-	prefimpl.ProvideService,
+	secretsStore.ProvideService,
 	avatar.ProvideAvatarCacheServer,
 	authproxy.ProvideAuthProxy,
 	statscollector.ProvideService,
-	dashboard.ProvideCoremodel,
-	cmreg.ProvideRegistry,
+	cmreg.CoremodelSet,
 	cuectx.ProvideCUEContext,
 	cuectx.ProvideThemaLibrary,
+	csrf.ProvideCSRFFilter,
+	ossaccesscontrol.ProvideTeamPermissions,
+	wire.Bind(new(accesscontrol.TeamPermissionsService), new(*ossaccesscontrol.TeamPermissionsService)),
+	ossaccesscontrol.ProvideFolderPermissions,
+	wire.Bind(new(accesscontrol.FolderPermissionsService), new(*ossaccesscontrol.FolderPermissionsService)),
+	ossaccesscontrol.ProvideDashboardPermissions,
+	wire.Bind(new(accesscontrol.DashboardPermissionsService), new(*ossaccesscontrol.DashboardPermissionsService)),
+	starimpl.ProvideService,
+	dashverimpl.ProvideService,
 )
 
 var wireSet = wire.NewSet(
 	wireBasicSet,
 	sqlstore.ProvideService,
 	wire.Bind(new(alerting.AlertStore), new(*sqlstore.SQLStore)),
+	wire.Bind(new(sqlstore.TeamStore), new(*sqlstore.SQLStore)),
 	ngmetrics.ProvideService,
 	wire.Bind(new(notifications.TempUserStore), new(*sqlstore.SQLStore)),
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationService)),
@@ -260,6 +284,7 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationService)),
 	wire.Bind(new(sqlstore.Store), new(*sqlstore.SQLStore)),
 	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
+	prefimpl.ProvideService,
 )
 
 var wireTestSet = wire.NewSet(
@@ -268,6 +293,7 @@ var wireTestSet = wire.NewSet(
 	sqlstore.ProvideServiceForTests,
 	ngmetrics.ProvideServiceForTest,
 	wire.Bind(new(alerting.AlertStore), new(*sqlstore.SQLStore)),
+	wire.Bind(new(sqlstore.TeamStore), new(*sqlstore.SQLStore)),
 
 	notifications.MockNotificationService,
 	wire.Bind(new(notifications.TempUserStore), new(*mockstore.SQLStoreMock)),
@@ -276,6 +302,8 @@ var wireTestSet = wire.NewSet(
 	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationServiceMock)),
 	mockstore.NewSQLStoreMock,
 	wire.Bind(new(sqlstore.Store), new(*sqlstore.SQLStore)),
+	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
+	prefimpl.ProvideService,
 )
 
 func Initialize(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOptions) (*Server, error) {

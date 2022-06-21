@@ -25,76 +25,59 @@ func NewNotificationPolicyService(am AMConfigStore, prov ProvisioningStore, xact
 	}
 }
 
-// TODO: move to Swagger codegen
-type EmbeddedRoutingTree struct {
-	definitions.Route
-	Provenance models.Provenance
-}
-
 func (nps *NotificationPolicyService) GetAMConfigStore() AMConfigStore {
 	return nps.amStore
 }
 
-func (nps *NotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (EmbeddedRoutingTree, error) {
+func (nps *NotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
 	q := models.GetLatestAlertmanagerConfigurationQuery{
 		OrgID: orgID,
 	}
 	err := nps.amStore.GetLatestAlertmanagerConfiguration(ctx, &q)
 	if err != nil {
-		return EmbeddedRoutingTree{}, err
+		return definitions.Route{}, err
 	}
 
-	cfg, err := DeserializeAlertmanagerConfig([]byte(q.Result.AlertmanagerConfiguration))
+	cfg, err := deserializeAlertmanagerConfig([]byte(q.Result.AlertmanagerConfiguration))
 	if err != nil {
-		return EmbeddedRoutingTree{}, err
+		return definitions.Route{}, err
 	}
 
 	if cfg.AlertmanagerConfig.Config.Route == nil {
-		return EmbeddedRoutingTree{}, fmt.Errorf("no route present in current alertmanager config")
+		return definitions.Route{}, fmt.Errorf("no route present in current alertmanager config")
 	}
 
-	adapter := provenanceOrgAdapter{
-		inner: cfg.AlertmanagerConfig.Route,
-		orgID: orgID,
-	}
-	provenance, err := nps.provenanceStore.GetProvenance(ctx, adapter)
+	provenance, err := nps.provenanceStore.GetProvenance(ctx, cfg.AlertmanagerConfig.Route, orgID)
 	if err != nil {
-		return EmbeddedRoutingTree{}, err
+		return definitions.Route{}, err
 	}
 
-	result := EmbeddedRoutingTree{
-		Route:      *cfg.AlertmanagerConfig.Route,
-		Provenance: provenance,
-	}
+	result := *cfg.AlertmanagerConfig.Route
+	result.Provenance = provenance
 
 	return result, nil
 }
 
 func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance) error {
-	q := models.GetLatestAlertmanagerConfigurationQuery{
-		OrgID: orgID,
+	err := tree.Validate()
+	if err != nil {
+		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
-	err := nps.amStore.GetLatestAlertmanagerConfiguration(ctx, &q)
+	revision, err := getLastConfiguration(ctx, orgID, nps.amStore)
 	if err != nil {
 		return err
 	}
 
-	concurrencyToken := q.Result.ConfigurationHash
-	cfg, err := DeserializeAlertmanagerConfig([]byte(q.Result.AlertmanagerConfiguration))
-	if err != nil {
-		return err
-	}
+	revision.cfg.AlertmanagerConfig.Config.Route = &tree
 
-	cfg.AlertmanagerConfig.Config.Route = &tree
-
-	serialized, err := SerializeAlertmanagerConfig(*cfg)
+	serialized, err := serializeAlertmanagerConfig(*revision.cfg)
 	if err != nil {
 		return err
 	}
 	cmd := models.SaveAlertmanagerConfigurationCmd{
 		AlertmanagerConfiguration: string(serialized),
-		ConfigurationVersion:      q.Result.ConfigurationVersion,
-		FetchedConfigurationHash:  concurrencyToken,
+		ConfigurationVersion:      revision.version,
+		FetchedConfigurationHash:  revision.concurrencyToken,
 		Default:                   false,
 		OrgID:                     orgID,
 	}
@@ -103,11 +86,7 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 		if err != nil {
 			return err
 		}
-		adapter := provenanceOrgAdapter{
-			inner: &tree,
-			orgID: orgID,
-		}
-		err = nps.provenanceStore.SetProvenance(ctx, adapter, p)
+		err = nps.provenanceStore.SetProvenance(ctx, &tree, orgID, p)
 		if err != nil {
 			return err
 		}
@@ -118,21 +97,4 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 	}
 
 	return nil
-}
-
-type provenanceOrgAdapter struct {
-	inner models.ProvisionableInOrg
-	orgID int64
-}
-
-func (a provenanceOrgAdapter) ResourceType() string {
-	return a.inner.ResourceType()
-}
-
-func (a provenanceOrgAdapter) ResourceID() string {
-	return a.inner.ResourceID()
-}
-
-func (a provenanceOrgAdapter) ResourceOrgID() int64 {
-	return a.orgID
 }

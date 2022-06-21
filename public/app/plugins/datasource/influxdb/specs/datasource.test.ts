@@ -1,10 +1,11 @@
 import { lastValueFrom, of } from 'rxjs';
+import { TemplateSrvStub } from 'test/specs/helpers';
+
 import { FetchResponse } from '@grafana/runtime';
+import config from 'app/core/config';
+import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 
 import InfluxDatasource from '../datasource';
-import { TemplateSrvStub } from 'test/specs/helpers';
-import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
-import config from 'app/core/config';
 
 //@ts-ignore
 const templateSrv = new TemplateSrvStub();
@@ -115,7 +116,9 @@ describe('InfluxDataSource', () => {
       try {
         await lastValueFrom(ctx.ds.query(queryOptions));
       } catch (err) {
-        expect(err.message).toBe('InfluxDB Error: Query timeout');
+        if (err instanceof Error) {
+          expect(err.message).toBe('InfluxDB Error: Query timeout');
+        }
       }
     });
   });

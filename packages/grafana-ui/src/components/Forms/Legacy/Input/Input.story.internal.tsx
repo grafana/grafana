@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { zip, fromPairs } from 'lodash';
-
-import { withCenteredStory } from '../../../../utils/storybook/withCenteredStory';
-import { Input } from './Input';
 import { Meta, Story } from '@storybook/react';
+import { zip, fromPairs } from 'lodash';
+import React, { useState } from 'react';
+
 import { EventsWithValidation } from '../../../../utils';
+import { withCenteredStory } from '../../../../utils/storybook/withCenteredStory';
+
+import { Input } from './Input';
 
 export default {
   title: 'Forms/Legacy/Input',

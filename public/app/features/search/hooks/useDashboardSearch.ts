@@ -1,14 +1,17 @@
 import { KeyboardEvent, useReducer } from 'react';
+import { useDebounce } from 'react-use';
+
+import { locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { DashboardQuery, DashboardSearchItemType, DashboardSection } from '../types';
+
 import { MOVE_SELECTION_DOWN, MOVE_SELECTION_UP } from '../reducers/actionTypes';
 import { dashboardsSearchState, DashboardsSearchState, searchReducer } from '../reducers/dashboardSearch';
+import { DashboardQuery, DashboardSearchItemType, DashboardSection } from '../types';
 import { findSelected } from '../utils';
-import { useSearch } from './useSearch';
-import { locationUtil } from '@grafana/data';
-import { useShowDashboardPreviews } from './useShowDashboardPreviews';
+
 import { reportDashboardListViewed } from './useManageDashboards';
-import { useDebounce } from 'react-use';
+import { useSearch } from './useSearch';
+import { useShowDashboardPreviews } from './useShowDashboardPreviews';
 
 export const useDashboardSearch = (query: DashboardQuery, onCloseSearch: () => void) => {
   const reducer = useReducer(searchReducer, dashboardsSearchState);

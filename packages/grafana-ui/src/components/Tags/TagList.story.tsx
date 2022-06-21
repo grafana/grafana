@@ -1,7 +1,9 @@
-import React from 'react';
 import { action } from '@storybook/addon-actions';
-import { TagList } from './TagList';
+import React from 'react';
+
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+
+import { TagList } from './TagList';
 import mdx from './TagList.mdx';
 
 export default {

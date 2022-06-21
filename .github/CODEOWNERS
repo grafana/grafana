@@ -58,7 +58,9 @@ go.sum @grafana/backend-platform
 /pkg/services/live/ @grafana/grafana-edge-squad
 /pkg/services/searchV2/ @grafana/grafana-edge-squad
 /pkg/services/store/ @grafana/grafana-edge-squad
+/pkg/services/export/ @grafana/grafana-edge-squad
 /pkg/infra/filestore/ @grafana/grafana-edge-squad
+pkg/tsdb/testdatasource/sims/ @grafana/grafana-edge-squad
 
 # Alerting
 /pkg/services/ngalert @grafana/alerting-squad-backend
@@ -110,7 +112,7 @@ go.sum @grafana/backend-platform
 /public/app/features/explore/ @grafana/observability-experience-squad
 /public/app/features/plugins @grafana/plugins-platform-frontend
 /public/app/features/transformers/spatial @grafana/grafana-edge-squad
-/public/app/plugins/panel/alertlist @grafana/alerting-squad
+/public/app/plugins/panel/alertlist @grafana/alerting-squad-frontend
 /public/app/plugins/panel/barchart @grafana/grafana-bi-squad
 /public/app/plugins/panel/heatmap @grafana/grafana-bi-squad
 /public/app/plugins/panel/histogram @grafana/grafana-bi-squad
@@ -167,5 +169,15 @@ lerna.json @grafana/frontend-ops
 /grafana-mixin/ @grafana/hosted-grafana-team
 
 # Grafana authentication and authorization
-/pkg/services/accesscontrol @grafana/grafana-enterprise-operations-team
-/pkg/services/serviceaccounts @grafana/grafana-enterprise-operations-team
+/pkg/services/accesscontrol @grafana/grafana-authnz-team
+/pkg/services/auth @grafana/grafana-authnz-team
+/pkg/services/dashboards/accesscontrol.go @grafana/grafana-authnz-team
+/pkg/services/datasources/permissions @grafana/grafana-authnz-team
+/pkg/services/datasources/permissions/accesscontrol.go @grafana/grafana-authnz-team
+/pkg/services/guardian @grafana/grafana-authnz-team
+/pkg/services/ldap @grafana/grafana-authnz-team
+/pkg/services/login @grafana/grafana-authnz-team
+/pkg/services/multildap @grafana/grafana-authnz-team
+/pkg/services/oauthtoken @grafana/grafana-authnz-team
+/pkg/services/teamguardian @grafana/grafana-authnz-team
+/pkg/services/serviceaccounts @grafana/grafana-authnz-team

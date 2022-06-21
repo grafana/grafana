@@ -1,10 +1,12 @@
 import { css } from '@emotion/css';
+import React, { FC } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { LinkButton, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AlertmanagerAlert, AlertState } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
-import React, { FC } from 'react';
+
 import { getInstancesPermissions } from '../../utils/access-control';
 import { isGrafanaRulesSource } from '../../utils/datasource';
 import { makeAMLink, makeLabelBasedSilenceLink } from '../../utils/misc';
@@ -24,7 +26,7 @@ export const AlertDetails: FC<AmNotificationsAlertDetailsProps> = ({ alert, aler
   // For external alert manager the Generator URL redirects to an external service which we don't control
   const isGrafanaSource = isGrafanaRulesSource(alertManagerSourceName);
   const isSeeSourceButtonEnabled = isGrafanaSource
-    ? contextSrv.hasPermission(AccessControlAction.AlertingRuleUpdate)
+    ? contextSrv.hasPermission(AccessControlAction.AlertingRuleRead)
     : true;
 
   return (

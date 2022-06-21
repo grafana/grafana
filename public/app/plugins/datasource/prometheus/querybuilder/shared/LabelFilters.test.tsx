@@ -1,10 +1,12 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
+import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
+
+import { getLabelSelects } from '../testUtils';
+
 import { LabelFilters } from './LabelFilters';
 import { QueryBuilderLabelFilter } from './types';
-import { getLabelSelects } from '../testUtils';
-import { selectOptionInTest } from '../../../../../../../packages/grafana-ui';
 
 describe('LabelFilters', () => {
   it('renders empty input without labels', async () => {
@@ -31,7 +33,7 @@ describe('LabelFilters', () => {
 
   it('adds new label', async () => {
     const { onChange } = setup([{ label: 'foo', op: '=', value: 'bar' }]);
-    userEvent.click(getAddButton());
+    await userEvent.click(getAddButton());
     expect(screen.getAllByText(/Choose/)).toHaveLength(2);
     const { name, value } = getLabelSelects(1);
     await selectOptionInTest(name, 'baz');
@@ -44,7 +46,7 @@ describe('LabelFilters', () => {
 
   it('removes label', async () => {
     const { onChange } = setup([{ label: 'foo', op: '=', value: 'bar' }]);
-    userEvent.click(screen.getByLabelText(/remove/));
+    await userEvent.click(screen.getByLabelText(/remove/));
     expect(onChange).toBeCalledWith([]);
   });
 

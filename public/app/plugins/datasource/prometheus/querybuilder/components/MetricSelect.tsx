@@ -1,10 +1,13 @@
-import { Select, FormatOptionLabelMeta, useStyles2 } from '@grafana/ui';
+import { css } from '@emotion/css';
 import React, { useCallback, useState } from 'react';
-import { PromVisualQuery } from '../types';
+// @ts-ignore
+import Highlighter from 'react-highlight-words';
+
 import { SelectableValue, toOption, GrafanaTheme2 } from '@grafana/data';
 import { EditorField, EditorFieldGroup } from '@grafana/experimental';
-import { css } from '@emotion/css';
-import Highlighter from 'react-highlight-words';
+import { Select, FormatOptionLabelMeta, useStyles2 } from '@grafana/ui';
+
+import { PromVisualQuery } from '../types';
 
 // We are matching words split with space
 const splitSeparator = ' ';
@@ -27,6 +30,12 @@ export function MetricSelect({ query, onChange, onGetMetrics }: Props) {
     if (!label) {
       return false;
     }
+
+    // custom value is not a string label but a react node
+    if (!label.toLowerCase) {
+      return true;
+    }
+
     const searchWords = searchQuery.split(splitSeparator);
     return searchWords.reduce((acc, cur) => acc && label.toLowerCase().includes(cur.toLowerCase()), true);
   }, []);
@@ -86,7 +95,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     label: select__match-highlight;
     background: inherit;
     padding: inherit;
-    color: ${theme.colors.warning.main};
-    background-color: rgba(${theme.colors.warning.main}, 0.1);
+    color: ${theme.colors.warning.contrastText};
+    background-color: ${theme.colors.warning.main};
   `,
 });

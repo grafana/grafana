@@ -86,11 +86,12 @@ func TestReverseProxy(t *testing.T) {
 
 	t.Run("Error handling should convert status codes depending on what kind of error it is", func(t *testing.T) {
 		timedOutTransport := http.DefaultTransport.(*http.Transport)
-		timedOutTransport.ResponseHeaderTimeout = time.Nanosecond
+		timedOutTransport.ResponseHeaderTimeout = time.Millisecond
 
 		testCases := []struct {
 			desc               string
 			transport          http.RoundTripper
+			responseWaitTime   time.Duration
 			expectedStatusCode int
 		}{
 			{
@@ -101,6 +102,7 @@ func TestReverseProxy(t *testing.T) {
 			{
 				desc:               "Timed out request should return 504 Gateway timeout",
 				transport:          timedOutTransport,
+				responseWaitTime:   100 * time.Millisecond,
 				expectedStatusCode: http.StatusGatewayTimeout,
 			},
 			{
@@ -113,6 +115,10 @@ func TestReverseProxy(t *testing.T) {
 		for _, tc := range testCases {
 			t.Run(tc.desc, func(t *testing.T) {
 				upstream := newUpstreamServer(t, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+					if tc.responseWaitTime > 0 {
+						time.Sleep(tc.responseWaitTime)
+					}
+
 					w.WriteHeader(http.StatusOK)
 				}))
 				t.Cleanup(upstream.Close)

@@ -1,6 +1,8 @@
 import React from 'react';
+
 import { DataFrame, FALLBACK_COLOR, getDisplayProcessor, getFieldDisplayName, TimeZone } from '@grafana/data';
 import { SeriesTableRow, useTheme2 } from '@grafana/ui';
+
 import { findNextStateIndex, fmtDuration } from './utils';
 
 interface StateTimelineTooltipProps {

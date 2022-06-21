@@ -8,6 +8,7 @@ import {
   StackingMode,
 } from '@grafana/schema';
 import { SuggestionName } from 'app/types/suggestions';
+
 import { TimeSeriesOptions } from './types';
 
 export class TimeSeriesSuggestionsSupplier {

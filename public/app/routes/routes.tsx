@@ -1,19 +1,23 @@
 import React from 'react';
-import LdapPage from 'app/features/admin/ldap/LdapPage';
-import UserAdminPage from 'app/features/admin/UserAdminPage';
+import { Redirect } from 'react-router-dom';
+
+import ErrorPage from 'app/core/components/ErrorPage/ErrorPage';
 import { LoginPage } from 'app/core/components/Login/LoginPage';
 import config from 'app/core/config';
-import { AccessControlAction, DashboardRoutes } from 'app/types';
-import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
-import { RouteDescriptor } from '../core/navigation/types';
-import { Redirect } from 'react-router-dom';
-import ErrorPage from 'app/core/components/ErrorPage/ErrorPage';
-import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
 import { contextSrv } from 'app/core/services/context_srv';
-import { getLiveRoutes } from 'app/features/live/pages/routes';
+import UserAdminPage from 'app/features/admin/UserAdminPage';
+import LdapPage from 'app/features/admin/ldap/LdapPage';
 import { getAlertingRoutes } from 'app/features/alerting/routes';
+import { getRoutes as getDataConnectionsRoutes } from 'app/features/data-connections/routes';
+import { getLiveRoutes } from 'app/features/live/pages/routes';
+import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
 import { getProfileRoutes } from 'app/features/profile/routes';
 import { ServiceAccountPage } from 'app/features/serviceaccounts/ServiceAccountPage';
+import { AccessControlAction, DashboardRoutes } from 'app/types';
+
+import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
+import { RouteDescriptor } from '../core/navigation/types';
+import { getPublicDashboardRoutes } from '../features/dashboard/routes';
 
 export const extraRoutes: RouteDescriptor[] = [];
 
@@ -126,7 +130,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/dashboards/f/:uid/:slug/permissions',
       component:
-        config.featureToggles['accesscontrol'] && contextSrv.hasPermission(AccessControlAction.FoldersPermissionsRead)
+        config.rbacEnabled && contextSrv.hasPermission(AccessControlAction.FoldersPermissionsRead)
           ? SafeDynamicImport(
               () =>
                 import(/* webpackChunkName: "FolderPermissions"*/ 'app/features/folders/AccessControlFolderPermissions')
@@ -161,7 +165,11 @@ export function getAppRoutes(): RouteDescriptor[] {
           () => (config.viewersCanEdit ? [] : ['Editor', 'Admin']),
           [AccessControlAction.DataSourcesExplore]
         ),
-      component: SafeDynamicImport(() => import(/* webpackChunkName: "explore" */ 'app/features/explore/Wrapper')),
+      component: SafeDynamicImport(() =>
+        config.exploreEnabled
+          ? import(/* webpackChunkName: "explore" */ 'app/features/explore/Wrapper')
+          : import(/* webpackChunkName: "explore-feature-toggle-page" */ 'app/features/explore/FeatureTogglePage')
+      ),
     },
     {
       path: '/a/:pluginId/',
@@ -363,7 +371,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/playlists/play/:id',
+      path: '/playlists/play/:uid',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "PlaylistStartPage"*/ 'app/features/playlist/PlaylistStartPage')
       ),
@@ -375,15 +383,9 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/playlists/edit/:id',
+      path: '/playlists/edit/:uid',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "PlaylistEditPage"*/ 'app/features/playlist/PlaylistEditPage')
-      ),
-    },
-    {
-      path: '/search',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "SearchPage"*/ 'app/features/search/page/SearchPage')
       ),
     },
     {
@@ -418,11 +420,19 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "LibraryPanelsPage"*/ 'app/features/library-panels/LibraryPanelsPage')
       ),
     },
+    {
+      path: '/notifications',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "NotificationsPage"*/ 'app/features/notifications/NotificationsPage')
+      ),
+    },
     ...getPluginCatalogRoutes(),
     ...getLiveRoutes(),
     ...getAlertingRoutes(),
     ...getProfileRoutes(),
     ...extraRoutes,
+    ...getPublicDashboardRoutes(),
+    ...getDataConnectionsRoutes(),
     {
       path: '/*',
       component: ErrorPage,

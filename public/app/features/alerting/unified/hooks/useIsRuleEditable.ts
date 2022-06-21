@@ -1,7 +1,9 @@
 import { contextSrv } from 'app/core/services/context_srv';
 import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
+
 import { getRulesPermissions } from '../utils/access-control';
 import { isGrafanaRulerRule } from '../utils/rules';
+
 import { useFolder } from './useFolder';
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 
@@ -16,8 +18,6 @@ export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO):
   const folderUID = rule && isGrafanaRulerRule(rule) ? rule.grafana_alert.namespace_uid : undefined;
 
   const rulePermission = getRulesPermissions(rulesSourceName);
-  const hasEditPermission = contextSrv.hasAccess(rulePermission.update, contextSrv.isEditor);
-  const hasRemovePermission = contextSrv.hasAccess(rulePermission.delete, contextSrv.isEditor);
 
   const { folder, loading } = useFolder(folderUID);
 
@@ -25,25 +25,34 @@ export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO):
     return { isEditable: false, isRemovable: false, loading: false };
   }
 
-  // grafana rules can be edited if user can edit the folder they're in
+  // Grafana rules can be edited if user can edit the folder they're in
+  // When RBAC is disabled access to a folder is the only requirement for managing rules
+  // When RBAC is enabled the appropriate alerting permissions need to be met
   if (isGrafanaRulerRule(rule)) {
     if (!folderUID) {
       throw new Error(
         `Rule ${rule.grafana_alert.title} does not have a folder uid, cannot determine if it is editable.`
       );
     }
+
+    const canEditGrafanaRules = contextSrv.hasAccess(rulePermission.update, folder?.canSave ?? false);
+    const canRemoveGrafanaRules = contextSrv.hasAccess(rulePermission.delete, folder?.canSave ?? false);
+
     return {
-      isEditable: hasEditPermission && folder?.canSave,
-      isRemovable: hasRemovePermission && folder?.canSave,
+      isEditable: canEditGrafanaRules,
+      isRemovable: canRemoveGrafanaRules,
       loading,
     };
   }
 
   // prom rules are only editable by users with Editor role and only if rules source supports editing
   const isRulerAvailable = Boolean(dataSources[rulesSourceName]?.result?.rulerConfig);
+  const canEditCloudRules = contextSrv.hasAccess(rulePermission.update, contextSrv.isEditor);
+  const canRemoveCloudRules = contextSrv.hasAccess(rulePermission.delete, contextSrv.isEditor);
+
   return {
-    isEditable: hasEditPermission && isRulerAvailable,
-    isRemovable: hasRemovePermission && isRulerAvailable,
+    isEditable: canEditCloudRules && isRulerAvailable,
+    isRemovable: canRemoveCloudRules && isRulerAvailable,
     loading: dataSources[rulesSourceName]?.loading,
   };
 }

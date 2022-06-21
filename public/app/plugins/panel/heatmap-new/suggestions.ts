@@ -1,5 +1,6 @@
 import { VisualizationSuggestionsBuilder } from '@grafana/data';
 import { config } from '@grafana/runtime';
+
 import { prepareHeatmapData } from './fields';
 import { PanelOptions, defaultPanelOptions } from './models.gen';
 
@@ -17,7 +18,7 @@ export class HeatmapSuggestionsSupplier {
       return;
     }
 
-    const info = prepareHeatmapData(builder.data.series, defaultPanelOptions, config.theme2);
+    const info = prepareHeatmapData(builder.data, defaultPanelOptions, config.theme2);
     if (!info || info.warning) {
       return;
     }

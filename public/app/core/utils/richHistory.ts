@@ -1,31 +1,30 @@
-// Libraries
 import { omit } from 'lodash';
 
-// Services & Utils
 import { DataQuery, DataSourceApi, dateTimeFormat, ExploreUrlState, urlUtil } from '@grafana/data';
-import { dispatch } from 'app/store/store';
-import { notifyApp } from 'app/core/actions';
-import { createErrorNotification, createWarningNotification } from 'app/core/copy/appNotification';
-
-// Types
-import { RichHistoryQuery } from 'app/types/explore';
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { getRichHistoryStorage } from '../history/richHistoryStorageProvider';
+import { notifyApp } from 'app/core/actions';
 import {
+  createErrorNotification,
+  createSuccessNotification,
+  createWarningNotification,
+} from 'app/core/copy/appNotification';
+import { dispatch } from 'app/store/store';
+import { RichHistoryQuery } from 'app/types/explore';
+
+import RichHistoryLocalStorage from '../history/RichHistoryLocalStorage';
+import RichHistoryRemoteStorage from '../history/RichHistoryRemoteStorage';
+import {
+  RichHistoryResults,
   RichHistoryServiceError,
   RichHistoryStorageWarning,
   RichHistoryStorageWarningDetails,
 } from '../history/RichHistoryStorage';
-import {
-  filterQueriesByDataSource,
-  filterQueriesBySearchFilter,
-  filterQueriesByTime,
-  sortQueries,
-} from 'app/core/history/richHistoryLocalStorageUtils';
-import { RichHistorySettings, SortOrder } from './richHistoryTypes';
+import { getRichHistoryStorage } from '../history/richHistoryStorageProvider';
 
-export { SortOrder };
+import { RichHistorySearchFilters, RichHistorySettings, SortOrder } from './richHistoryTypes';
+
+export { RichHistorySearchFilters, RichHistorySettings, SortOrder };
 
 /*
  * Add queries to rich history. Save only queries within the retention period, or that are starred.
@@ -59,11 +58,13 @@ export async function addToRichHistory(
       });
       warning = result.warning;
     } catch (error) {
-      if (error.name === RichHistoryServiceError.StorageFull) {
-        richHistoryStorageFull = true;
-        showQuotaExceededError && dispatch(notifyApp(createErrorNotification(error.message)));
-      } else if (error.name !== RichHistoryServiceError.DuplicatedEntry) {
-        dispatch(notifyApp(createErrorNotification('Rich History update failed', error.message)));
+      if (error instanceof Error) {
+        if (error.name === RichHistoryServiceError.StorageFull) {
+          richHistoryStorageFull = true;
+          showQuotaExceededError && dispatch(notifyApp(createErrorNotification(error.message)));
+        } else if (error.name !== RichHistoryServiceError.DuplicatedEntry) {
+          dispatch(notifyApp(createErrorNotification('Rich History update failed', error.message)));
+        }
       }
       // Saving failed. Do not add new entry.
       return { richHistoryStorageFull, limitExceeded };
@@ -82,8 +83,8 @@ export async function addToRichHistory(
   return {};
 }
 
-export async function getRichHistory(): Promise<RichHistoryQuery[]> {
-  return await getRichHistoryStorage().getRichHistory();
+export async function getRichHistory(filters: RichHistorySearchFilters): Promise<RichHistoryResults> {
+  return await getRichHistoryStorage().getRichHistory(filters);
 }
 
 export async function updateRichHistorySettings(settings: RichHistorySettings): Promise<void> {
@@ -102,7 +103,9 @@ export async function updateStarredInRichHistory(id: string, starred: boolean) {
   try {
     return await getRichHistoryStorage().updateStarred(id, starred);
   } catch (error) {
-    dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
+    if (error instanceof Error) {
+      dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
+    }
     return undefined;
   }
 }
@@ -111,7 +114,9 @@ export async function updateCommentInRichHistory(id: string, newComment: string 
   try {
     return await getRichHistoryStorage().updateComment(id, newComment);
   } catch (error) {
-    dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
+    if (error instanceof Error) {
+      dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
+    }
     return undefined;
   }
 }
@@ -121,25 +126,48 @@ export async function deleteQueryInRichHistory(id: string) {
     await getRichHistoryStorage().deleteRichHistory(id);
     return id;
   } catch (error) {
-    dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
+    if (error instanceof Error) {
+      dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
+    }
     return undefined;
   }
 }
 
-export function filterAndSortQueries(
-  queries: RichHistoryQuery[],
-  sortOrder: SortOrder,
-  listOfDatasourceFilters: string[],
-  searchFilter: string,
-  timeFilter?: [number, number]
-) {
-  const filteredQueriesByDs = filterQueriesByDataSource(queries, listOfDatasourceFilters);
-  const filteredQueriesByDsAndSearchFilter = filterQueriesBySearchFilter(filteredQueriesByDs, searchFilter);
-  const filteredQueriesToBeSorted = timeFilter
-    ? filterQueriesByTime(filteredQueriesByDsAndSearchFilter, timeFilter)
-    : filteredQueriesByDsAndSearchFilter;
+export enum LocalStorageMigrationStatus {
+  Successful = 'successful',
+  Failed = 'failed',
+  NotNeeded = 'not-needed',
+}
 
-  return sortQueries(filteredQueriesToBeSorted, sortOrder);
+export interface LocalStorageMigrationResult {
+  status: LocalStorageMigrationStatus;
+  error?: Error;
+}
+
+export async function migrateQueryHistoryFromLocalStorage(): Promise<LocalStorageMigrationResult> {
+  const richHistoryLocalStorage = new RichHistoryLocalStorage();
+  const richHistoryRemoteStorage = new RichHistoryRemoteStorage();
+
+  try {
+    const { richHistory } = await richHistoryLocalStorage.getRichHistory({
+      datasourceFilters: [],
+      from: 0,
+      search: '',
+      sortOrder: SortOrder.Descending,
+      starred: false,
+      to: 14,
+    });
+    if (richHistory.length === 0) {
+      return { status: LocalStorageMigrationStatus.NotNeeded };
+    }
+    await richHistoryRemoteStorage.migrate(richHistory);
+    dispatch(notifyApp(createSuccessNotification('Query history successfully migrated from local storage')));
+    return { status: LocalStorageMigrationStatus.Successful };
+  } catch (error) {
+    const errorToThrow = error instanceof Error ? error : new Error('Uknown error occurred.');
+    dispatch(notifyApp(createWarningNotification(`Query history migration failed. ${errorToThrow.message}`)));
+    return { status: LocalStorageMigrationStatus.Failed, error: errorToThrow };
+  }
 }
 
 export const createUrlFromRichHistory = (query: RichHistoryQuery) => {
@@ -231,31 +259,19 @@ export function mapQueriesToHeadings(query: RichHistoryQuery[], sortOrder: SortO
   return mappedQueriesToHeadings;
 }
 
-/* Create datasource list with images. If specific datasource retrieved from Rich history is not part of
- * exploreDatasources add generic datasource image and add property isRemoved = true.
+/*
+ * Create a list of all available data sources
  */
-export function createDatasourcesList(queriesDatasources: string[]) {
-  const datasources: Array<{ label: string; value: string; imgUrl: string; isRemoved: boolean }> = [];
-
-  queriesDatasources.forEach((dsName) => {
-    const dsSettings = getDataSourceSrv().getInstanceSettings(dsName);
-    if (dsSettings) {
-      datasources.push({
-        label: dsSettings.name,
-        value: dsSettings.name,
+export function createDatasourcesList() {
+  return getDataSourceSrv()
+    .getList()
+    .map((dsSettings) => {
+      return {
+        name: dsSettings.name,
+        uid: dsSettings.uid,
         imgUrl: dsSettings.meta.info.logos.small,
-        isRemoved: false,
-      });
-    } else {
-      datasources.push({
-        label: dsName,
-        value: dsName,
-        imgUrl: 'public/img/icn-datasource.svg',
-        isRemoved: true,
-      });
-    }
-  });
-  return datasources;
+      };
+    });
 }
 
 export function notEmptyQuery(query: DataQuery) {

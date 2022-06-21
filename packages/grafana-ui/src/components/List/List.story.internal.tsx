@@ -1,9 +1,10 @@
-import React from 'react';
-import { Story, Meta } from '@storybook/react';
-import { List } from './List';
 import { css, cx } from '@emotion/css';
+import { Story, Meta } from '@storybook/react';
+import React from 'react';
 import tinycolor from 'tinycolor2';
+
 import { InlineList } from './InlineList';
+import { List } from './List';
 
 export default {
   title: 'Layout/List',

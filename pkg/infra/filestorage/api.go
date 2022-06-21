@@ -3,6 +3,8 @@ package filestorage
 import (
 	"context"
 	"errors"
+	"fmt"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
@@ -12,12 +14,56 @@ var (
 	ErrRelativePath          = errors.New("path cant be relative")
 	ErrNonCanonicalPath      = errors.New("path must be canonical")
 	ErrPathTooLong           = errors.New("path is too long")
-	ErrPathInvalid           = errors.New("path is invalid")
+	ErrInvalidCharacters     = errors.New("path contains unsupported characters")
 	ErrPathEndsWithDelimiter = errors.New("path can not end with delimiter")
+	ErrPathPartTooLong       = errors.New("path part is too long")
+	ErrEmptyPathPart         = errors.New("path can not have empty parts")
 	Delimiter                = "/"
 	DirectoryMimeType        = "directory"
 	multipleDelimiters       = regexp.MustCompile(`/+`)
+	pathRegex                = regexp.MustCompile(`(^/$)|(^(/[A-Za-z\d!\-_.*'() ]+)+$)`)
+	maxPathLength            = 1024
+	maxPathPartLength        = 256
 )
+
+func ValidatePath(path string) error {
+	if !filepath.IsAbs(path) {
+		return ErrRelativePath
+	}
+
+	if path == Delimiter {
+		return nil
+	}
+
+	if strings.HasSuffix(path, Delimiter) {
+		return ErrPathEndsWithDelimiter
+	}
+
+	if filepath.Clean(path) != path {
+		return ErrNonCanonicalPath
+	}
+
+	if len(path) > maxPathLength {
+		return ErrPathTooLong
+	}
+
+	for _, part := range strings.Split(strings.TrimPrefix(path, Delimiter), Delimiter) {
+		if strings.TrimSpace(part) == "" {
+			return ErrEmptyPathPart
+		}
+
+		if len(part) > maxPathPartLength {
+			return ErrPathPartTooLong
+		}
+	}
+
+	matches := pathRegex.MatchString(path)
+	if !matches {
+		return ErrInvalidCharacters
+	}
+
+	return nil
+}
 
 func Join(parts ...string) string {
 	joinedPath := Delimiter + strings.Join(parts, Delimiter)
@@ -51,20 +97,15 @@ type Paging struct {
 }
 
 type UpsertFileCommand struct {
-	Path     string
-	MimeType string
+	Path               string
+	MimeType           string
+	CacheControl       string
+	ContentDisposition string
 
 	// Contents of an existing file won't be modified if cmd.Contents is nil
 	Contents []byte
 	// Properties of an existing file won't be modified if cmd.Properties is nil
 	Properties map[string]string
-}
-
-type PathFilters struct {
-	allowedPrefixes    []string
-	disallowedPrefixes []string
-	allowedPaths       []string
-	disallowedPaths    []string
 }
 
 func toLower(list []string) []string {
@@ -78,67 +119,33 @@ func toLower(list []string) []string {
 	return lower
 }
 
-func allowAllPathFilters() *PathFilters {
-	return NewPathFilters(nil, nil, nil, nil)
-}
-
-//nolint:deadcode,unused
-func denyAllPathFilters() *PathFilters {
-	return NewPathFilters([]string{}, []string{}, nil, nil)
-}
-
-func NewPathFilters(allowedPrefixes []string, allowedPaths []string, disallowedPrefixes []string, disallowedPaths []string) *PathFilters {
-	return &PathFilters{
-		allowedPrefixes:    toLower(allowedPrefixes),
-		allowedPaths:       toLower(allowedPaths),
-		disallowedPaths:    toLower(disallowedPaths),
-		disallowedPrefixes: toLower(disallowedPrefixes),
-	}
-}
-
-func (f *PathFilters) isDenyAll() bool {
-	return f.allowedPaths != nil && f.allowedPrefixes != nil && (len(f.allowedPaths)+len(f.allowedPrefixes) == 0)
-}
-
-func (f *PathFilters) IsAllowed(path string) bool {
-	if f == nil {
-		return true
-	}
-
-	path = strings.ToLower(path)
-	for i := range f.disallowedPaths {
-		if f.disallowedPaths[i] == path {
-			return false
-		}
-	}
-
-	for i := range f.disallowedPrefixes {
-		if strings.HasPrefix(path, f.disallowedPrefixes[i]) {
-			return false
-		}
-	}
-
-	if f.allowedPrefixes == nil && f.allowedPaths == nil {
-		return true
-	}
-
-	for i := range f.allowedPaths {
-		if f.allowedPaths[i] == path {
-			return true
-		}
-	}
-	for i := range f.allowedPrefixes {
-		if strings.HasPrefix(path, f.allowedPrefixes[i]) {
-			return true
-		}
-	}
-	return false
-}
-
 type ListResponse struct {
 	Files    []*File
 	HasMore  bool
 	LastPath string
+}
+
+func (r *ListResponse) String() string {
+	if r == nil {
+		return "Nil ListResponse"
+	}
+
+	if r.Files == nil {
+		return "ListResponse with Nil files slice"
+	}
+
+	if len(r.Files) == 0 {
+		return "Empty ListResponse"
+	}
+
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf("ListResponse with %d files\n", len(r.Files)))
+	for i := range r.Files {
+		sb.WriteString(fmt.Sprintf("  - %s, contentsLength: %d\n", r.Files[i].FullPath, len(r.Files[i].Contents)))
+	}
+
+	sb.WriteString(fmt.Sprintf("Last path: %s, has more: %t\n", r.LastPath, r.HasMore))
+	return sb.String()
 }
 
 type ListOptions struct {
@@ -146,7 +153,7 @@ type ListOptions struct {
 	WithFiles    bool
 	WithFolders  bool
 	WithContents bool
-	*PathFilters
+	Filter       PathFilter
 }
 
 type FileStorage interface {

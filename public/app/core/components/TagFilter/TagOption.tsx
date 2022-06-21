@@ -1,9 +1,10 @@
-import React, { FC } from 'react';
 import { css, cx } from '@emotion/css';
-import { useTheme, stylesFactory } from '@grafana/ui';
-import { GrafanaTheme } from '@grafana/data';
-
+import React, { FC } from 'react';
 import { OptionProps } from 'react-select';
+
+import { GrafanaTheme } from '@grafana/data';
+import { useTheme, stylesFactory } from '@grafana/ui';
+
 import { TagBadge } from './TagBadge';
 
 // https://github.com/JedWatson/react-select/issues/3038

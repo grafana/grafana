@@ -1,9 +1,11 @@
 import React, { FC } from 'react';
-import { Form, Field, Input, Button, HorizontalGroup, LinkButton, FormAPI } from '@grafana/ui';
+
 import { getBackendSrv } from '@grafana/runtime';
+import { Form, Field, Input, Button, HorizontalGroup, LinkButton, FormAPI } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+
 import { InnerBox, LoginLayout } from '../Login/LoginLayout';
 import { PasswordField } from '../PasswordField/PasswordField';
 

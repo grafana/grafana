@@ -1,7 +1,9 @@
 import React, { useCallback } from 'react';
 // @ts-ignore
 import Highlighter from 'react-highlight-words';
+
 import { Icon, IconName, Button, LinkButton, Card } from '@grafana/ui';
+
 import { AlertRule } from '../../types';
 
 export interface Props {

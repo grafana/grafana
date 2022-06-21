@@ -1,15 +1,17 @@
-import React from 'react';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { locationService, setEchoSrv } from '@grafana/runtime';
-import { selectOptionInTest } from '@grafana/ui';
-import { selectors } from '@grafana/e2e-selectors';
+import React from 'react';
+import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
-import * as SearchSrv from 'app/core/services/search_srv';
+import { selectors } from '@grafana/e2e-selectors';
+import { locationService, setEchoSrv } from '@grafana/runtime';
 import * as MockSearchSrv from 'app/core/services/__mocks__/search_srv';
-import { DashboardSearch, Props } from './DashboardSearch';
+import { Echo } from 'app/core/services/echo/Echo';
+import * as SearchSrv from 'app/core/services/search_srv';
+
 import { searchResults } from '../testData';
 import { SearchLayout } from '../types';
-import { Echo } from 'app/core/services/echo/Echo';
+
+import { DashboardSearchOLD as DashboardSearch, Props } from './DashboardSearch';
 
 jest.mock('app/core/services/search_srv');
 // Typecast the mock search so the mock import is correctly recognised by TS
@@ -17,7 +19,7 @@ jest.mock('app/core/services/search_srv');
 const { mockSearch } = SearchSrv as typeof MockSearchSrv;
 
 beforeEach(() => {
-  jest.useFakeTimers('modern');
+  jest.useFakeTimers();
   mockSearch.mockClear();
 });
 

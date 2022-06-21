@@ -1,9 +1,13 @@
-import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import classNames from 'classnames';
+import React, { useState } from 'react';
+import SVG from 'react-inlinesvg';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Spinner, TagList, useTheme2 } from '@grafana/ui';
+
 import { DashboardSectionItem } from '../types';
+
 import { getThumbnailURL } from './SearchCard';
 
 export interface Props {
@@ -35,7 +39,11 @@ export function SearchCardExpanded({ className, imageHeight, imageWidth, item, l
           />
         ) : (
           <div className={styles.imagePlaceholder}>
-            <Icon name="apps" size="xl" />
+            {item.icon ? (
+              <SVG src={item.icon} width={36} height={36} title={item.title} />
+            ) : (
+              <Icon name="apps" size="xl" />
+            )}
           </div>
         )}
       </div>

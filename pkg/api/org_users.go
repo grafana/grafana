@@ -89,10 +89,11 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *models.ReqContext) response.Re
 // GET /api/org/users/lookup
 func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) response.Response {
 	orgUsers, err := hs.getOrgUsersHelper(c, &models.GetOrgUsersQuery{
-		OrgId: c.OrgId,
-		Query: c.Query("query"),
-		Limit: c.QueryInt("limit"),
-		User:  c.SignedInUser,
+		OrgId:                    c.OrgId,
+		Query:                    c.Query("query"),
+		Limit:                    c.QueryInt("limit"),
+		User:                     c.SignedInUser,
+		DontEnforceAccessControl: !hs.License.FeatureEnabled("accesscontrol.enforcement"),
 	}, c.SignedInUser)
 
 	if err != nil {

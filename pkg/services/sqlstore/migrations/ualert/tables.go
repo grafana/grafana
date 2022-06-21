@@ -25,6 +25,8 @@ func AddTablesMigrations(mg *migrator.Migrator) {
 
 	// Create provisioning data table
 	AddProvisioningMigrations(mg)
+
+	AddAlertImageMigrations(mg)
 }
 
 // AddAlertDefinitionMigrations should not be modified.
@@ -153,6 +155,11 @@ func AlertInstanceMigration(mg *migrator.Migrator) {
 	mg.AddMigration("add index rule_org_id, current_state on alert_instance", migrator.NewAddIndexMigration(alertInstance, &migrator.Index{
 		Cols: []string{"rule_org_id", "current_state"}, Type: migrator.IndexType,
 	}))
+
+	mg.AddMigration("add current_reason column related to current_state",
+		migrator.NewAddColumnMigration(alertInstance, &migrator.Column{
+			Name: "current_reason", Type: migrator.DB_NVarchar, Length: 190, Nullable: true,
+		}))
 }
 
 func AddAlertRuleMigrations(mg *migrator.Migrator, defaultIntervalSeconds int64) {
@@ -352,4 +359,23 @@ func AddProvisioningMigrations(mg *migrator.Migrator) {
 
 	mg.AddMigration("create provenance_type table", migrator.NewAddTableMigration(provisioningTable))
 	mg.AddMigration("add index to uniquify (record_key, record_type, org_id) columns", migrator.NewAddIndexMigration(provisioningTable, provisioningTable.Indices[0]))
+}
+
+func AddAlertImageMigrations(mg *migrator.Migrator) {
+	imageTable := migrator.Table{
+		Name: "alert_image",
+		Columns: []*migrator.Column{
+			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "token", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "path", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "url", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "created_at", Type: migrator.DB_DateTime, Nullable: false},
+			{Name: "expires_at", Type: migrator.DB_DateTime, Nullable: false},
+		},
+		Indices: []*migrator.Index{
+			{Cols: []string{"token"}, Type: migrator.UniqueIndex},
+		},
+	}
+	mg.AddMigration("create alert_image table", migrator.NewAddTableMigration(imageTable))
+	mg.AddMigration("add unique index on token to alert_image table", migrator.NewAddIndexMigration(imageTable, imageTable.Indices[0]))
 }

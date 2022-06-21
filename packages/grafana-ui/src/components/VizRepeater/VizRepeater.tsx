@@ -1,5 +1,7 @@
 import React, { PureComponent, CSSProperties } from 'react';
+
 import { VizOrientation } from '@grafana/data';
+
 import { calculateGridDimensions } from '../../utils/squares';
 
 interface Props<V, D> {

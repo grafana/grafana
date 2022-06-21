@@ -1,4 +1,5 @@
 import { Event, Severity } from '@sentry/browser';
+import { Response } from '@sentry/types';
 import {
   logger,
   makePromiseBuffer,
@@ -7,7 +8,7 @@ import {
   supportsReferrerPolicy,
   SyncPromise,
 } from '@sentry/utils';
-import { Response } from '@sentry/types';
+
 import { BaseTransport } from '../types';
 
 export interface CustomEndpointTransportOptions {

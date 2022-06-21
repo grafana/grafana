@@ -1,12 +1,14 @@
-import React, { FC } from 'react';
-import RcTimePicker from 'rc-time-picker';
 import { css, cx } from '@emotion/css';
+import RcTimePicker from 'rc-time-picker';
+import React, { FC } from 'react';
+
 import { dateTime, DateTime, dateTimeAsMoment, GrafanaTheme } from '@grafana/data';
+
 import { Icon, useStyles } from '../../index';
 import { stylesFactory } from '../../themes';
+import { focusCss } from '../../themes/mixins';
 import { inputSizes } from '../Forms/commonStyles';
 import { FormInputSize } from '../Forms/types';
-import { focusCss } from '../../themes/mixins';
 
 export interface Props {
   onChange: (value: DateTime) => void;

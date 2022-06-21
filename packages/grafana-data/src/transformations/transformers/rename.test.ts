@@ -6,8 +6,10 @@ import {
   toDataFrame,
   transformDataFrame,
 } from '@grafana/data';
-import { renameFieldsTransformer, RenameFieldsTransformerOptions } from './rename';
+
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
+
+import { renameFieldsTransformer, RenameFieldsTransformerOptions } from './rename';
 
 describe('Rename Transformer', () => {
   beforeAll(() => {

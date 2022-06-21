@@ -1,16 +1,21 @@
+import { css, cx } from '@emotion/css';
+import React, { FC, useMemo } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
-import React, { FC, useMemo } from 'react';
-import { css, cx } from '@emotion/css';
-import { RuleDetails } from './RuleDetails';
-import { isCloudRulesSource } from '../../utils/datasource';
-import { useHasRuler } from '../../hooks/useHasRuler';
 import { CombinedRule } from 'app/types/unified-alerting';
+
+import { useHasRuler } from '../../hooks/useHasRuler';
 import { Annotation } from '../../utils/constants';
-import { RuleState } from './RuleState';
-import { RuleHealth } from './RuleHealth';
+import { isGrafanaRulerRule } from '../../utils/rules';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { DynamicTableWithGuidelines } from '../DynamicTableWithGuidelines';
+import { ProvisioningBadge } from '../Provisioning';
+import { RuleLocation } from '../RuleLocation';
+
+import { RuleDetails } from './RuleDetails';
+import { RuleHealth } from './RuleHealth';
+import { RuleState } from './RuleState';
 
 type RuleTableColumnProps = DynamicTableColumnProps<CombinedRule>;
 type RuleTableItemProps = DynamicTableItemProps<CombinedRule>;
@@ -114,6 +119,23 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean) {
         size: 5,
       },
       {
+        id: 'provisioned',
+        label: '',
+        // eslint-disable-next-line react/display-name
+        renderCell: ({ data: rule }) => {
+          const rulerRule = rule.rulerRule;
+          const isGrafanaManagedRule = isGrafanaRulerRule(rulerRule);
+
+          if (!isGrafanaManagedRule) {
+            return null;
+          }
+
+          const provenance = rulerRule.grafana_alert.provenance;
+          return provenance ? <ProvisioningBadge /> : null;
+        },
+        size: '100px',
+      },
+      {
         id: 'health',
         label: 'Health',
         // eslint-disable-next-line react/display-name
@@ -137,8 +159,15 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean) {
         // eslint-disable-next-line react/display-name
         renderCell: ({ data: rule }) => {
           const { namespace, group } = rule;
-          const { rulesSource } = namespace;
-          return isCloudRulesSource(rulesSource) ? `${namespace.name} > ${group.name}` : namespace.name;
+          // ungrouped rules are rules that are in the "default" group name
+          const isUngrouped = group.name === 'default';
+          const groupName = isUngrouped ? (
+            <RuleLocation namespace={namespace.name} />
+          ) : (
+            <RuleLocation namespace={namespace.name} group={group.name} />
+          );
+
+          return groupName;
         },
         size: 5,
       });

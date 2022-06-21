@@ -25,7 +25,7 @@ func NewForkedAM(datasourceCache datasources.CacheService, proxy *LotexAM, grafa
 }
 
 func (f *ForkedAlertmanagerApi) getService(ctx *models.ReqContext) (*LotexAM, error) {
-	t, err := backendType(ctx, f.DatasourceCache)
+	t, err := backendTypeByUID(ctx, f.DatasourceCache)
 	if err != nil {
 		return nil, err
 	}
@@ -125,7 +125,7 @@ func (f *ForkedAlertmanagerApi) forkRoutePostAlertingConfig(ctx *models.ReqConte
 		return ErrResp(400, err, "")
 	}
 
-	b, err := backendType(ctx, f.DatasourceCache)
+	b, err := backendTypeByUID(ctx, f.DatasourceCache)
 	if err != nil {
 		return ErrResp(400, err, "")
 	}

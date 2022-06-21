@@ -1,18 +1,46 @@
-import React, { FunctionComponent, useMemo } from 'react';
-import { InlineFormLabel, Input } from '@grafana/ui';
+import React, { FunctionComponent, FormEvent, useMemo, useState } from 'react';
+
 import { config } from '@grafana/runtime';
+import { InlineField, InlineFieldRow, InlineSwitch, Input } from '@grafana/ui';
+import { HttpSettingsBaseProps } from '@grafana/ui/src/components/DataSourceSettings/types';
+
 import { KnownAzureClouds, AzureCredentials } from './AzureCredentials';
 import { getCredentials, updateCredentials } from './AzureCredentialsConfig';
 import { AzureCredentialsForm } from './AzureCredentialsForm';
-import { HttpSettingsBaseProps } from '@grafana/ui/src/components/DataSourceSettings/types';
 
 export const AzureAuthSettings: FunctionComponent<HttpSettingsBaseProps> = (props: HttpSettingsBaseProps) => {
   const { dataSourceConfig, onChange } = props;
+
+  const [overrideAudienceAllowed] = useState<boolean>(
+    config.featureToggles.prometheusAzureOverrideAudience || !!dataSourceConfig.jsonData.azureEndpointResourceId
+  );
+  const [overrideAudienceChecked, setOverrideAudienceChecked] = useState<boolean>(
+    !!dataSourceConfig.jsonData.azureEndpointResourceId
+  );
 
   const credentials = useMemo(() => getCredentials(dataSourceConfig), [dataSourceConfig]);
 
   const onCredentialsChange = (credentials: AzureCredentials): void => {
     onChange(updateCredentials(dataSourceConfig, credentials));
+  };
+
+  const onOverrideAudienceChange = (ev: FormEvent<HTMLInputElement>): void => {
+    setOverrideAudienceChecked(ev.currentTarget.checked);
+    if (!ev.currentTarget.checked) {
+      onChange({
+        ...dataSourceConfig,
+        jsonData: { ...dataSourceConfig.jsonData, azureEndpointResourceId: undefined },
+      });
+    }
+  };
+
+  const onResourceIdChange = (ev: FormEvent<HTMLInputElement>): void => {
+    if (overrideAudienceChecked) {
+      onChange({
+        ...dataSourceConfig,
+        jsonData: { ...dataSourceConfig.jsonData, azureEndpointResourceId: ev.currentTarget.value },
+      });
+    }
   };
 
   return (
@@ -24,26 +52,29 @@ export const AzureAuthSettings: FunctionComponent<HttpSettingsBaseProps> = (prop
         azureCloudOptions={KnownAzureClouds}
         onCredentialsChange={onCredentialsChange}
       />
-      <h6>Azure Configuration</h6>
-      <div className="gf-form-group">
-        <div className="gf-form-inline">
-          <div className="gf-form">
-            <InlineFormLabel className="width-12">AAD resource ID</InlineFormLabel>
-            <div className="width-15">
-              <Input
-                className="width-30"
-                value={dataSourceConfig.jsonData.azureEndpointResourceId || ''}
-                onChange={(event) =>
-                  onChange({
-                    ...dataSourceConfig,
-                    jsonData: { ...dataSourceConfig.jsonData, azureEndpointResourceId: event.currentTarget.value },
-                  })
-                }
-              />
-            </div>
+      {overrideAudienceAllowed && (
+        <>
+          <h6>Azure Configuration</h6>
+          <div className="gf-form-group">
+            <InlineFieldRow>
+              <InlineField labelWidth={26} label="Override AAD audience">
+                <InlineSwitch value={overrideAudienceChecked} onChange={onOverrideAudienceChange} />
+              </InlineField>
+            </InlineFieldRow>
+            {overrideAudienceChecked && (
+              <InlineFieldRow>
+                <InlineField labelWidth={26} label="Resource ID">
+                  <Input
+                    className="width-30"
+                    value={dataSourceConfig.jsonData.azureEndpointResourceId || ''}
+                    onChange={onResourceIdChange}
+                  />
+                </InlineField>
+              </InlineFieldRow>
+            )}
           </div>
-        </div>
-      </div>
+        </>
+      )}
     </>
   );
 };

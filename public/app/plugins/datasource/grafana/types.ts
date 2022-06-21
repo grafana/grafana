@@ -1,5 +1,6 @@
 import { DataQuery } from '@grafana/data';
 import { LiveDataFilter } from '@grafana/runtime';
+import { SearchQuery } from 'app/features/search/service';
 
 //----------------------------------------------
 // Query
@@ -22,7 +23,7 @@ export interface GrafanaQuery extends DataQuery {
   filter?: LiveDataFilter;
   buffer?: number;
   path?: string; // for list and read
-  query?: string; // for query endpoint
+  search?: SearchQuery;
 }
 
 export const defaultQuery: GrafanaQuery = {

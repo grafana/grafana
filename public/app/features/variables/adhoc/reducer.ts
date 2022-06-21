@@ -1,8 +1,9 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { AdHocVariableFilter, AdHocVariableModel, initialVariableModelState } from 'app/features/variables/types';
-import { initialVariablesState, VariablePayload, VariablesState } from '../state/types';
+
 import { getInstanceState } from '../state/selectors';
+import { initialVariablesState, VariablePayload, VariablesState } from '../state/types';
 
 export interface AdHocVariabelFilterUpdate {
   index: number;

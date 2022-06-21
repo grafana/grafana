@@ -1,3 +1,27 @@
+import { EMPTY, interval, Observable, of } from 'rxjs';
+import { thunkTester } from 'test/core/thunk/thunkTester';
+import { assertIsDefined } from 'test/helpers/asserts';
+
+import {
+  ArrayVector,
+  DataFrame,
+  DataQuery,
+  DataQueryResponse,
+  DataSourceApi,
+  DataSourceJsonData,
+  DataSourceWithLogsVolumeSupport,
+  LoadingState,
+  MutableDataFrame,
+  PanelData,
+  RawTimeRange,
+} from '@grafana/data';
+import { ExploreId, ExploreItemState, StoreState, ThunkDispatch } from 'app/types';
+
+import { reducerTester } from '../../../../test/core/redux/reducerTester';
+import { configureStore } from '../../../store/configureStore';
+import { setTimeSrv } from '../../dashboard/services/TimeSrv';
+
+import { createDefaultInitialState } from './helpers';
 import {
   addQueryRowAction,
   addResultsToCache,
@@ -12,28 +36,7 @@ import {
   scanStopAction,
   storeLogsVolumeDataProviderAction,
 } from './query';
-import { ExploreId, ExploreItemState, StoreState, ThunkDispatch } from 'app/types';
-import { EMPTY, interval, Observable, of } from 'rxjs';
-import {
-  ArrayVector,
-  DataFrame,
-  DataQuery,
-  DataQueryResponse,
-  DataSourceApi,
-  DataSourceJsonData,
-  DataSourceWithLogsVolumeSupport,
-  LoadingState,
-  MutableDataFrame,
-  PanelData,
-  RawTimeRange,
-} from '@grafana/data';
-import { thunkTester } from 'test/core/thunk/thunkTester';
 import { makeExplorePaneState } from './utils';
-import { reducerTester } from '../../../../test/core/redux/reducerTester';
-import { configureStore } from '../../../store/configureStore';
-import { setTimeSrv } from '../../dashboard/services/TimeSrv';
-import Mock = jest.Mock;
-import { createDefaultInitialState } from './helpers';
 
 const { testRange, defaultInitialState } = createDefaultInitialState();
 
@@ -53,7 +56,9 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 function setupQueryResponse(state: StoreState) {
-  (state.explore[ExploreId.left].datasourceInstance?.query as Mock).mockReturnValueOnce(
+  const leftDatasourceInstance = assertIsDefined(state.explore[ExploreId.left].datasourceInstance);
+
+  jest.mocked(leftDatasourceInstance.query).mockReturnValueOnce(
     of({
       error: { message: 'test error' },
       data: [
@@ -103,7 +108,8 @@ describe('runQueries', () => {
     const { dispatch, getState } = configureStore({
       ...(defaultInitialState as any),
     });
-    (getState().explore[ExploreId.left].datasourceInstance?.query as Mock).mockReturnValueOnce(EMPTY);
+    const leftDatasourceInstance = assertIsDefined(getState().explore[ExploreId.left].datasourceInstance);
+    jest.mocked(leftDatasourceInstance.query).mockReturnValueOnce(EMPTY);
     await dispatch(runQueries(ExploreId.left));
     await new Promise((resolve) => setTimeout(() => resolve(''), 500));
     expect(getState().explore[ExploreId.left].queryResponse.state).toBe(LoadingState.Done);

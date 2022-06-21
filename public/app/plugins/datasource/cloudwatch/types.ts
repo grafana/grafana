@@ -1,9 +1,5 @@
+import { AwsAuthDataSourceJsonData, AwsAuthDataSourceSecureJsonData } from '@grafana/aws-sdk';
 import { DataQuery, DataSourceRef, SelectableValue } from '@grafana/data';
-import { AwsAuthDataSourceSecureJsonData, AwsAuthDataSourceJsonData } from '@grafana/aws-sdk';
-
-export interface Dimensions {
-  [key: string]: string | string[];
-}
 
 import {
   QueryEditorArrayExpression,
@@ -11,7 +7,15 @@ import {
   QueryEditorPropertyExpression,
 } from './expressions';
 
-export type CloudWatchQueryMode = 'Metrics' | 'Logs';
+export interface Dimensions {
+  [key: string]: string | string[];
+}
+
+export interface MultiFilters {
+  [key: string]: string[];
+}
+
+export type CloudWatchQueryMode = 'Metrics' | 'Logs' | 'Annotations';
 
 export enum MetricQueryType {
   'Search',
@@ -35,34 +39,36 @@ export interface SQLExpression {
   limit?: number;
 }
 
-export interface CloudWatchMetricsQuery extends DataQuery {
+export interface CloudWatchMetricsQuery extends MetricStat, DataQuery {
   queryMode?: 'Metrics';
   metricQueryType?: MetricQueryType;
   metricEditorMode?: MetricEditorMode;
 
   //common props
   id: string;
-  region: string;
-  namespace: string;
-  period?: string;
-  alias?: string;
 
-  //Basic editor builder props
-  metricName?: string;
-  dimensions?: Dimensions;
-  matchExact?: boolean;
-  statistic?: string;
-  /**
-   * @deprecated use statistic
-   */
-  statistics?: string[];
+  alias?: string;
+  label?: string;
 
   // Math expression query
   expression?: string;
 
   sqlExpression?: string;
-
   sql?: SQLExpression;
+}
+
+export interface MetricStat {
+  region: string;
+  namespace: string;
+  metricName?: string;
+  dimensions?: Dimensions;
+  matchExact?: boolean;
+  period?: string;
+  statistic?: string;
+  /**
+   * @deprecated use statistic
+   */
+  statistics?: string[];
 }
 
 export interface CloudWatchMathExpressionQuery extends DataQuery {
@@ -88,7 +94,6 @@ export enum CloudWatchLogsQueryStatus {
 
 export interface CloudWatchLogsQuery extends DataQuery {
   queryMode: 'Logs';
-
   id: string;
   region: string;
   expression?: string;
@@ -96,21 +101,14 @@ export interface CloudWatchLogsQuery extends DataQuery {
   statsGroups?: string[];
 }
 
-export type CloudWatchQuery = CloudWatchMetricsQuery | CloudWatchLogsQuery;
+export type CloudWatchQuery = CloudWatchMetricsQuery | CloudWatchLogsQuery | CloudWatchAnnotationQuery;
 
-export const isCloudWatchLogsQuery = (cloudwatchQuery: CloudWatchQuery): cloudwatchQuery is CloudWatchLogsQuery =>
-  (cloudwatchQuery as CloudWatchLogsQuery).queryMode === 'Logs';
-
-interface AnnotationProperties {
-  enable: boolean;
-  name: string;
-  iconColor: string;
-  prefixMatching: boolean;
-  actionPrefix: string;
-  alarmNamePrefix: string;
+export interface CloudWatchAnnotationQuery extends MetricStat, DataQuery {
+  queryMode: 'Annotations';
+  prefixMatching?: boolean;
+  actionPrefix?: string;
+  alarmNamePrefix?: string;
 }
-
-export type CloudWatchAnnotationQuery = CloudWatchMetricsQuery & AnnotationProperties;
 
 export type SelectableStrings = Array<SelectableValue<string>>;
 
@@ -362,7 +360,7 @@ export interface MetricRequest {
 
 export interface MetricQuery {
   [key: string]: any;
-  datasource: DataSourceRef;
+  datasource?: DataSourceRef;
   refId?: string;
   maxDataPoints?: number;
   intervalMs?: number;
@@ -378,9 +376,10 @@ export enum VariableQueryType {
   EC2InstanceAttributes = 'ec2InstanceAttributes',
   ResourceArns = 'resourceARNs',
   Statistics = 'statistics',
+  LogGroups = 'logGroups',
 }
 
-export interface VariableQuery extends DataQuery {
+export interface OldVariableQuery extends DataQuery {
   queryType: VariableQueryType;
   namespace: string;
   region: string;
@@ -392,4 +391,49 @@ export interface VariableQuery extends DataQuery {
   attributeName: string;
   resourceType: string;
   tags: string;
+}
+
+export interface VariableQuery extends DataQuery {
+  queryType: VariableQueryType;
+  namespace: string;
+  region: string;
+  metricName: string;
+  dimensionKey: string;
+  dimensionFilters?: Dimensions;
+  ec2Filters?: MultiFilters;
+  instanceID: string;
+  attributeName: string;
+  resourceType: string;
+  tags?: MultiFilters;
+  logGroupPrefix?: string;
+}
+
+export interface LegacyAnnotationQuery extends MetricStat, DataQuery {
+  actionPrefix: string;
+  alarmNamePrefix: string;
+  alias: string;
+  builtIn: number;
+  datasource: any;
+  dimensions: Dimensions;
+  enable: boolean;
+  expression: string;
+  hide: boolean;
+  iconColor: string;
+  id: string;
+  matchExact: boolean;
+  metricName: string;
+  name: string;
+  namespace: string;
+  period: string;
+  prefixMatching: boolean;
+  region: string;
+  statistic: string;
+  statistics: string[];
+  target: {
+    limit: number;
+    matchAny: boolean;
+    tags: any[];
+    type: string;
+  };
+  type: string;
 }

@@ -1,4 +1,7 @@
 import React from 'react';
+
+import { locationUtil } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import {
   HorizontalGroup,
   Button,
@@ -10,10 +13,9 @@ import {
   Field,
   InputControl,
 } from '@grafana/ui';
-import { locationService } from '@grafana/runtime';
-import { locationUtil } from '@grafana/data';
 import { getConfig } from 'app/core/config';
 import { OrgRole, useDispatch } from 'app/types';
+
 import { addInvitee } from '../invites/state/actions';
 
 const roles = [

@@ -1,9 +1,12 @@
-import React, { forwardRef, memo } from 'react';
 import { css, cx } from '@emotion/css';
-import { OnTagClick, Tag } from './Tag';
-import { useTheme2 } from '../../themes';
+import React, { forwardRef, memo } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
+
+import { useTheme2 } from '../../themes';
 import { IconName } from '../../types/icon';
+
+import { OnTagClick, Tag } from './Tag';
 
 export interface Props {
   displayMax?: number;

@@ -91,7 +91,7 @@ func transformRows(rows []Row, query Query) data.Frames {
 				var floatArray []*float64
 				var stringArray []string
 				var boolArray []bool
-				valType := typeof(row.Values[0][colIndex])
+				valType := typeof(row.Values, colIndex)
 				name := formatFrameName(row, column, query)
 
 				for _, valuePair := range row.Values {
@@ -108,6 +108,8 @@ func transformRows(rows []Row, query Query) data.Frames {
 						} else if valType == "bool" {
 							value := valuePair[colIndex].(bool)
 							boolArray = append(boolArray, value)
+						} else if valType == "null" {
+							floatArray = append(floatArray, nil)
 						}
 					}
 				}
@@ -123,6 +125,10 @@ func transformRows(rows []Row, query Query) data.Frames {
 					frames = append(frames, newDataFrame(name, query.RawQuery, timeField, valueField))
 				} else if valType == "bool" {
 					valueField := data.NewField("value", row.Tags, boolArray)
+					valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
+					frames = append(frames, newDataFrame(name, query.RawQuery, timeField, valueField))
+				} else if valType == "null" {
+					valueField := data.NewField("value", row.Tags, floatArray)
 					valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
 					frames = append(frames, newDataFrame(name, query.RawQuery, timeField, valueField))
 				}
@@ -213,8 +219,13 @@ func parseTimestamp(value interface{}) (time.Time, error) {
 	return t, nil
 }
 
-func typeof(v interface{}) string {
-	return fmt.Sprintf("%T", v)
+func typeof(values [][]interface{}, colIndex int) string {
+	for _, value := range values {
+		if value != nil && value[colIndex] != nil {
+			return fmt.Sprintf("%T", value[colIndex])
+		}
+	}
+	return "null"
 }
 
 func parseNumber(value interface{}) *float64 {

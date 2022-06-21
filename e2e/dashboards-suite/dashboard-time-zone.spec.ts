@@ -1,4 +1,3 @@
-import { e2e } from '@grafana/e2e';
 import {
   addDays,
   addHours,
@@ -9,6 +8,8 @@ import {
   parseISO,
   toDate,
 } from 'date-fns';
+
+import { e2e } from '@grafana/e2e';
 
 e2e.scenario({
   describeName: 'Dashboard time zone support',

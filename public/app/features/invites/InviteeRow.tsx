@@ -1,8 +1,10 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { Invitee } from 'app/types';
-import { revokeInvite } from './state/actions';
+
 import { Button, ClipboardButton } from '@grafana/ui';
+import { Invitee } from 'app/types';
+
+import { revokeInvite } from './state/actions';
 
 const mapDispatchToProps = {
   revokeInvite,
@@ -30,7 +32,13 @@ class InviteeRow extends PureComponent<Props> {
           &nbsp;
         </td>
         <td>
-          <Button variant="destructive" size="sm" icon="times" onClick={() => revokeInvite(invitee.code)} />
+          <Button
+            variant="destructive"
+            size="sm"
+            icon="times"
+            onClick={() => revokeInvite(invitee.code)}
+            aria-label="Revoke Invite"
+          />
         </td>
       </tr>
     );

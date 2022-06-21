@@ -1,9 +1,9 @@
-import React, { PureComponent } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { PureComponent } from 'react';
 import tinycolor from 'tinycolor2';
 
-import { LogMessageAnsi, getLogRowStyles, Icon, Button, Themeable2, withTheme2 } from '@grafana/ui';
 import { LogRowModel, TimeZone, dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
+import { LogMessageAnsi, getLogRowStyles, Icon, Button, Themeable2, withTheme2 } from '@grafana/ui';
 
 import { ElapsedTime } from './ElapsedTime';
 
@@ -135,7 +135,8 @@ class LiveLogs extends PureComponent<Props, State> {
                 this.liveEndDiv = element;
                 // This is triggered on every update so on every new row. It keeps the view scrolled at the bottom by
                 // default.
-                if (this.liveEndDiv && !isPaused) {
+                // As scrollTo is not implemented in JSDOM it needs to be part of the condition
+                if (this.liveEndDiv && this.scrollContainerRef.current?.scrollTo && !isPaused) {
                   this.scrollContainerRef.current?.scrollTo(0, this.scrollContainerRef.current.scrollHeight);
                 }
               }}

@@ -1,8 +1,10 @@
 import React, { FC, useState } from 'react';
+
 import { SelectableValue, urlUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { PlaylistDTO, PlaylistMode } from './types';
 import { Button, Checkbox, Field, FieldSet, Modal, RadioButtonGroup } from '@grafana/ui';
+
+import { PlaylistDTO, PlaylistMode } from './types';
 
 export interface StartModalProps {
   playlist: PlaylistDTO;
@@ -27,7 +29,7 @@ export const StartModal: FC<StartModalProps> = ({ playlist, onDismiss }) => {
     if (autoFit) {
       params.autofitpanels = true;
     }
-    locationService.push(urlUtil.renderUrl(`/playlists/play/${playlist.id}`, params));
+    locationService.push(urlUtil.renderUrl(`/playlists/play/${playlist.uid}`, params));
   };
 
   return (

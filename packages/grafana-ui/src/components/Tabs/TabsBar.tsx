@@ -1,7 +1,9 @@
-import React, { ReactNode } from 'react';
-import { stylesFactory, useTheme2 } from '../../themes';
-import { GrafanaTheme2 } from '@grafana/data';
 import { css, cx } from '@emotion/css';
+import React, { ReactNode } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+
+import { stylesFactory, useTheme2 } from '../../themes';
 
 export interface Props {
   /** Children should be a single <Tab /> or an array of <Tab /> */
@@ -21,7 +23,7 @@ const getTabsBarStyles = stylesFactory((theme: GrafanaTheme2, hideBorder = false
     tabs: css`
       position: relative;
       display: flex;
-      height: 41px;
+      height: ${theme.components.menuTabs.height}px;
     `,
   };
 });

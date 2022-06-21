@@ -1,3 +1,11 @@
+import { FormField } from './FormField/FormField';
+import { Input, LegacyInputStatus } from './Forms/Legacy/Input/Input';
+import { IndicatorsContainer } from './Forms/Legacy/Select/IndicatorsContainer';
+import { NoOptionsMessage } from './Forms/Legacy/Select/NoOptionsMessage';
+import { AsyncSelect, Select } from './Forms/Legacy/Select/Select';
+import { Switch } from './Forms/Legacy/Switch/Switch';
+import { SecretFormField } from './SecretFormField/SecretFormField';
+
 export { Icon } from './Icon/Icon';
 export { IconButton, IconButtonVariant } from './IconButton/IconButton';
 export { ConfirmButton } from './ConfirmButton/ConfirmButton';
@@ -16,7 +24,6 @@ export { ButtonCascader } from './ButtonCascader/ButtonCascader';
 
 export { LoadingPlaceholder, LoadingPlaceholderProps } from './LoadingPlaceholder/LoadingPlaceholder';
 export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
-export { ColorValueEditor, ColorValueEditorProps } from './OptionsUI/color';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';
 export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
 export { UnitPicker } from './UnitPicker/UnitPicker';
@@ -42,7 +49,6 @@ export { FilterPill } from './FilterPill/FilterPill';
 export { ConfirmModal, ConfirmModalProps } from './ConfirmModal/ConfirmModal';
 export { QueryField } from './QueryField/QueryField';
 
-// Code editor
 export { CodeEditor } from './Monaco/CodeEditor';
 
 export { ReactMonacoEditorLazy as ReactMonacoEditor } from './Monaco/ReactMonacoEditorLazy';
@@ -168,14 +174,6 @@ export { Drawer } from './Drawer/Drawer';
 export { Slider } from './Slider/Slider';
 export { RangeSlider } from './Slider/RangeSlider';
 
-// TODO: namespace!!
-export { StringValueEditor } from './OptionsUI/string';
-export { StringArrayEditor } from './OptionsUI/strings';
-export { NumberValueEditor } from './OptionsUI/number';
-export { SliderValueEditor } from './OptionsUI/slider';
-export { SelectValueEditor } from './OptionsUI/select';
-export { MultiSelectValueEditor } from './OptionsUI/multiSelect';
-
 // Next-gen forms
 export { Form } from './Forms/Form';
 export { sharedInputStyle } from './Forms/commonStyles';
@@ -183,7 +181,6 @@ export { InputControl } from './InputControl';
 export { Button, LinkButton, ButtonVariant, ToolbarButton, ButtonGroup, ToolbarButtonRow, ButtonProps } from './Button';
 export { ValuePicker } from './ValuePicker/ValuePicker';
 export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
-export { getFormStyles } from './Forms/getFormStyles';
 export { Link } from './Link/Link';
 
 export { Label } from './Forms/Label';
@@ -199,7 +196,6 @@ export { FieldArray } from './Forms/FieldArray';
 
 // Select
 export { default as resetSelectStyles } from './Select/resetSelectStyles';
-export { selectOptionInTest } from './Select/test-utils';
 export * from './Select/Select';
 export { DropdownIndicator } from './Select/DropdownIndicator';
 export { getSelectStyles } from './Select/getSelectStyles';
@@ -208,8 +204,10 @@ export * from './Select/types';
 export { HorizontalGroup, VerticalGroup, Container } from './Layout/Layout';
 export { Badge, BadgeColor, BadgeProps } from './Badge/Badge';
 export { RadioButtonGroup } from './Forms/RadioButtonGroup/RadioButtonGroup';
+export { RadioButtonList } from './Forms/RadioButtonList/RadioButtonList';
 
 export { Input, getInputStyles } from './Input/Input';
+export { AutoSizeInput } from './Input/AutoSizeInput';
 export { FilterInput } from './FilterInput/FilterInput';
 export { FormInputSize } from './Forms/types';
 
@@ -229,18 +227,6 @@ export { PluginSignatureBadge, PluginSignatureBadgeProps } from './PluginSignatu
 
 // Export this until we've figured out a good approach to inline form styles.
 export { InlineFormLabel } from './FormLabel/FormLabel';
-
-// Select
-import { AsyncSelect, Select } from './Forms/Legacy/Select/Select';
-import { IndicatorsContainer } from './Forms/Legacy/Select/IndicatorsContainer';
-import { NoOptionsMessage } from './Forms/Legacy/Select/NoOptionsMessage';
-
-//Input
-import { Input, LegacyInputStatus } from './Forms/Legacy/Input/Input';
-import { FormField } from './FormField/FormField';
-import { SecretFormField } from './SecretFormField/SecretFormField';
-
-import { Switch } from './Forms/Legacy/Switch/Switch';
 
 const LegacyForms = {
   SecretFormField,
@@ -273,3 +259,4 @@ export { GraphNGLegendEvent } from './GraphNG/types';
 export * from './PanelChrome/types';
 export { EmotionPerfTest } from './ThemeDemos/EmotionPerfTest';
 export { Label as BrowserLabel } from './BrowserLabel/Label';
+export { PanelContainer } from './PanelContainer/PanelContainer';

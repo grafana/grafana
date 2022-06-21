@@ -1,15 +1,17 @@
-import React, { ReactElement, useEffect, useRef } from 'react';
 import { css } from '@emotion/css';
-import { useTheme2 } from '@grafana/ui';
-import { GrafanaTheme2, NavMenuItemType, NavModelItem } from '@grafana/data';
-import { SpectrumMenuProps } from '@react-types/menu';
 import { useMenu } from '@react-aria/menu';
-import { useTreeState } from '@react-stately/tree';
 import { mergeProps } from '@react-aria/utils';
+import { useTreeState } from '@react-stately/tree';
+import { SpectrumMenuProps } from '@react-types/menu';
+import React, { ReactElement, useEffect, useRef } from 'react';
 
-import { getNavModelItemKey } from './utils';
-import { useNavBarItemMenuContext } from './context';
+import { GrafanaTheme2, NavMenuItemType, NavModelItem } from '@grafana/data';
+import { useTheme2 } from '@grafana/ui';
+
 import { NavBarItemMenuItem } from './NavBarItemMenuItem';
+import { NavBarScrollContainer } from './NavBarScrollContainer';
+import { useNavBarItemMenuContext } from './context';
+import { getNavModelItemKey } from './utils';
 
 export interface NavBarItemMenuProps extends SpectrumMenuProps<NavModelItem> {
   onNavigate: (item: NavModelItem) => void;
@@ -50,9 +52,7 @@ export function NavBarItemMenu(props: NavBarItemMenuProps): ReactElement | null 
 
   const menuSubTitle = section.value.subTitle;
 
-  const sectionComponent = (
-    <NavBarItemMenuItem key={section.key} item={section} state={state} onNavigate={onNavigate} />
-  );
+  const headerComponent = <NavBarItemMenuItem key={section.key} item={section} state={state} onNavigate={onNavigate} />;
 
   const itemComponents = items.map((item) => (
     <NavBarItemMenuItem key={getNavModelItemKey(item.value)} item={item} state={state} onNavigate={onNavigate} />
@@ -64,7 +64,14 @@ export function NavBarItemMenu(props: NavBarItemMenuProps): ReactElement | null 
     </li>
   );
 
-  const menu = [sectionComponent, itemComponents, subTitleComponent];
+  const contents = [itemComponents, subTitleComponent];
+  const contentComponent = (
+    <NavBarScrollContainer key="scrollContainer">
+      {reverseMenuDirection ? contents.reverse() : contents}
+    </NavBarScrollContainer>
+  );
+
+  const menu = [headerComponent, contentComponent];
 
   return (
     <ul className={styles.menu} ref={ref} {...mergeProps(menuProps, contextMenuProps)} tabIndex={menuHasFocus ? 0 : -1}>
@@ -78,15 +85,13 @@ function getStyles(theme: GrafanaTheme2, reverseDirection?: boolean) {
     menu: css`
       background-color: ${theme.colors.background.primary};
       border: 1px solid ${theme.components.panel.borderColor};
-      bottom: ${reverseDirection ? 0 : 'auto'};
       box-shadow: ${theme.shadows.z3};
       display: flex;
       flex-direction: column;
-      left: 100%;
       list-style: none;
+      max-height: 400px;
+      max-width: 300px;
       min-width: 140px;
-      position: absolute;
-      top: ${reverseDirection ? 'auto' : 0};
       transition: ${theme.transitions.create('opacity')};
       z-index: ${theme.zIndex.sidemenu};
     `,

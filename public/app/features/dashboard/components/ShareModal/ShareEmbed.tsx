@@ -1,9 +1,11 @@
 import React, { FormEvent, PureComponent } from 'react';
-import { ClipboardButton, Field, Modal, RadioButtonGroup, Switch, TextArea } from '@grafana/ui';
+
 import { AppEvents, SelectableValue } from '@grafana/data';
+import { ClipboardButton, Field, Modal, RadioButtonGroup, Switch, TextArea } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
-import { buildIframeHtml } from './utils';
+
 import { ShareModalTabProps } from './types';
+import { buildIframeHtml } from './utils';
 
 const themeOptions: Array<SelectableValue<string>> = [
   { label: 'Current', value: 'current' },

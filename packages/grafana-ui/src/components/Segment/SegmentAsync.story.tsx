@@ -1,6 +1,7 @@
+import { action } from '@storybook/addon-actions';
 import React, { useState } from 'react';
 import { AsyncState } from 'react-use/lib/useAsync';
-import { action } from '@storybook/addon-actions';
+
 import { SelectableValue } from '@grafana/data';
 import { SegmentAsync, Icon, SegmentSection } from '@grafana/ui';
 

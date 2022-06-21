@@ -1,4 +1,5 @@
 import { SyntaxNode, TreeCursor } from '@lezer/common';
+
 import { QueryBuilderOperation } from './types';
 
 // This is used for error type for some reason

@@ -2,24 +2,24 @@ package ossaccesscontrol
 
 import (
 	"context"
-	"errors"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/api"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-func ProvideService(features featuremgmt.FeatureToggles, usageStats usagestats.Service,
-	provider accesscontrol.PermissionsProvider, routeRegister routing.RouteRegister) (*OSSAccessControlService, error) {
+func ProvideService(
+	features featuremgmt.FeatureToggles, cfg *setting.Cfg,
+	store accesscontrol.PermissionsStore, routeRegister routing.RouteRegister,
+) (*OSSAccessControlService, error) {
 	var errDeclareRoles error
-	s := ProvideOSSAccessControl(features, provider)
-	s.registerUsageMetrics(usageStats)
+	s := ProvideOSSAccessControl(cfg, store)
 	if !s.IsDisabled() {
 		api := api.AccessControlAPI{
 			RouteRegister: routeRegister,
@@ -33,14 +33,13 @@ func ProvideService(features featuremgmt.FeatureToggles, usageStats usagestats.S
 	return s, errDeclareRoles
 }
 
-// ProvideOSSAccessControl creates an oss implementation of access control without usage stats registration
-func ProvideOSSAccessControl(features featuremgmt.FeatureToggles, provider accesscontrol.PermissionsProvider) *OSSAccessControlService {
+func ProvideOSSAccessControl(cfg *setting.Cfg, store accesscontrol.PermissionsStore) *OSSAccessControlService {
 	s := &OSSAccessControlService{
-		features:      features,
-		provider:      provider,
-		log:           log.New("accesscontrol"),
-		scopeResolver: accesscontrol.NewScopeResolver(),
-		roles:         accesscontrol.BuildMacroRoleDefinitions(),
+		cfg:            cfg,
+		store:          store,
+		log:            log.New("accesscontrol"),
+		scopeResolvers: accesscontrol.NewScopeResolvers(),
+		roles:          accesscontrol.BuildBasicRoleDefinitions(),
 	}
 
 	return s
@@ -48,27 +47,25 @@ func ProvideOSSAccessControl(features featuremgmt.FeatureToggles, provider acces
 
 // OSSAccessControlService is the service implementing role based access control.
 type OSSAccessControlService struct {
-	log           log.Logger
-	features      featuremgmt.FeatureToggles
-	scopeResolver accesscontrol.ScopeResolver
-	provider      accesscontrol.PermissionsProvider
-	registrations accesscontrol.RegistrationList
-	roles         map[string]*accesscontrol.RoleDTO
+	log            log.Logger
+	cfg            *setting.Cfg
+	scopeResolvers accesscontrol.ScopeResolvers
+	store          accesscontrol.PermissionsStore
+	registrations  accesscontrol.RegistrationList
+	roles          map[string]*accesscontrol.RoleDTO
 }
 
 func (ac *OSSAccessControlService) IsDisabled() bool {
-	if ac.features == nil {
+	if ac.cfg == nil {
 		return true
 	}
-	return !ac.features.IsEnabled(featuremgmt.FlagAccesscontrol)
+	return !ac.cfg.RBACEnabled
 }
 
-func (ac *OSSAccessControlService) registerUsageMetrics(usageStats usagestats.Service) {
-	usageStats.RegisterMetricsFunc(func(context.Context) (map[string]interface{}, error) {
-		return map[string]interface{}{
-			"stats.oss.accesscontrol.enabled.count": ac.getUsageMetrics(),
-		}, nil
-	})
+func (ac *OSSAccessControlService) GetUsageStats(_ context.Context) map[string]interface{} {
+	return map[string]interface{}{
+		"stats.oss.accesscontrol.enabled.count": ac.getUsageMetrics(),
+	}
 }
 
 func (ac *OSSAccessControlService) getUsageMetrics() interface{} {
@@ -97,30 +94,25 @@ func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.Si
 		user.Permissions[user.OrgId] = accesscontrol.GroupScopesByAction(permissions)
 	}
 
-	attributeMutator := ac.scopeResolver.GetResolveAttributeScopeMutator(user.OrgId)
+	attributeMutator := ac.scopeResolvers.GetScopeAttributeMutator(user.OrgId)
 	resolvedEvaluator, err := evaluator.MutateScopes(ctx, attributeMutator)
 	if err != nil {
 		return false, err
 	}
-	return resolvedEvaluator.Evaluate(user.Permissions[user.OrgId])
-}
-
-// GetUserRoles returns user permissions based on built-in roles
-func (ac *OSSAccessControlService) GetUserRoles(ctx context.Context, user *models.SignedInUser) ([]*accesscontrol.RoleDTO, error) {
-	return nil, errors.New("unsupported function") //OSS users will continue to use builtin roles via GetUserPermissions
+	return resolvedEvaluator.Evaluate(user.Permissions[user.OrgId]), nil
 }
 
 // GetUserPermissions returns user permissions based on built-in roles
-func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
+func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
 	defer timer.ObserveDuration()
 
 	permissions := ac.getFixedPermissions(ctx, user)
 
-	dbPermissions, err := ac.provider.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
+	dbPermissions, err := ac.store.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
 		OrgID:   user.OrgId,
 		UserID:  user.UserId,
-		Roles:   ac.GetUserBuiltInRoles(user),
+		Roles:   accesscontrol.GetOrgRoles(ac.cfg, user),
 		Actions: append(TeamAdminActions, append(DashboardAdminActions, FolderAdminActions...)...),
 	})
 	if err != nil {
@@ -128,49 +120,28 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 	}
 
 	permissions = append(permissions, dbPermissions...)
-	resolved := make([]*accesscontrol.Permission, 0, len(permissions))
-	keywordMutator := ac.scopeResolver.GetResolveKeywordScopeMutator(user)
-	for _, p := range permissions {
+	keywordMutator := ac.scopeResolvers.GetScopeKeywordMutator(user)
+	for i := range permissions {
 		// if the permission has a keyword in its scope it will be resolved
-		p.Scope, err = keywordMutator(ctx, p.Scope)
+		permissions[i].Scope, err = keywordMutator(ctx, permissions[i].Scope)
 		if err != nil {
 			return nil, err
 		}
-		resolved = append(resolved, p)
 	}
 
-	return resolved, nil
+	return permissions, nil
 }
 
-func (ac *OSSAccessControlService) getFixedPermissions(ctx context.Context, user *models.SignedInUser) []*accesscontrol.Permission {
-	permissions := make([]*accesscontrol.Permission, 0)
+func (ac *OSSAccessControlService) getFixedPermissions(ctx context.Context, user *models.SignedInUser) []accesscontrol.Permission {
+	permissions := make([]accesscontrol.Permission, 0)
 
-	for _, builtin := range ac.GetUserBuiltInRoles(user) {
-		if macroRole, ok := ac.roles[builtin]; ok {
-			for i := range macroRole.Permissions {
-				permissions = append(permissions, &macroRole.Permissions[i])
-			}
+	for _, builtin := range accesscontrol.GetOrgRoles(ac.cfg, user) {
+		if basicRole, ok := ac.roles[builtin]; ok {
+			permissions = append(permissions, basicRole.Permissions...)
 		}
 	}
 
 	return permissions
-}
-
-func (ac *OSSAccessControlService) GetUserBuiltInRoles(user *models.SignedInUser) []string {
-	builtInRoles := []string{string(user.OrgRole)}
-
-	// With built-in role simplifying, inheritance is performed upon role registration.
-	if !ac.features.IsEnabled(featuremgmt.FlagAccesscontrolBuiltins) {
-		for _, br := range user.OrgRole.Children() {
-			builtInRoles = append(builtInRoles, string(br))
-		}
-	}
-
-	if user.IsGrafanaAdmin {
-		builtInRoles = append(builtInRoles, accesscontrol.RoleGrafanaAdmin)
-	}
-
-	return builtInRoles
 }
 
 // RegisterFixedRoles registers all declared roles in RAM
@@ -189,8 +160,8 @@ func (ac *OSSAccessControlService) RegisterFixedRoles(ctx context.Context) error
 // RegisterFixedRole saves a fixed role and assigns it to built-in roles
 func (ac *OSSAccessControlService) registerFixedRole(role accesscontrol.RoleDTO, builtInRoles []string) {
 	for br := range accesscontrol.BuiltInRolesWithParents(builtInRoles) {
-		if macroRole, ok := ac.roles[br]; ok {
-			macroRole.Permissions = append(macroRole.Permissions, role.Permissions...)
+		if basicRole, ok := ac.roles[br]; ok {
+			basicRole.Permissions = append(basicRole.Permissions, role.Permissions...)
 		} else {
 			ac.log.Error("Unknown builtin role", "builtInRole", br)
 		}
@@ -222,8 +193,8 @@ func (ac *OSSAccessControlService) DeclareFixedRoles(registrations ...accesscont
 	return nil
 }
 
-// RegisterAttributeScopeResolver allows the caller to register scope resolvers for a
+// RegisterScopeAttributeResolver allows the caller to register scope resolvers for a
 // specific scope prefix (ex: datasources:name:)
-func (ac *OSSAccessControlService) RegisterAttributeScopeResolver(scopePrefix string, resolver accesscontrol.AttributeScopeResolveFunc) {
-	ac.scopeResolver.AddAttributeResolver(scopePrefix, resolver)
+func (ac *OSSAccessControlService) RegisterScopeAttributeResolver(scopePrefix string, resolver accesscontrol.ScopeAttributeResolver) {
+	ac.scopeResolvers.AddScopeAttributeResolver(scopePrefix, resolver)
 }

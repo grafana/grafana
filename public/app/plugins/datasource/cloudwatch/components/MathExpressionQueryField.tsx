@@ -1,10 +1,12 @@
-import React, { useCallback, useRef } from 'react';
-import { CodeEditor, Monaco } from '@grafana/ui';
-import language from '../metric-math/definition';
-import { registerLanguage } from '../monarch/register';
 import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
-import { TRIGGER_SUGGEST } from '../monarch/commands';
+import React, { useCallback, useRef } from 'react';
+
+import { CodeEditor, Monaco } from '@grafana/ui';
+
 import { CloudWatchDatasource } from '../datasource';
+import language from '../metric-math/definition';
+import { TRIGGER_SUGGEST } from '../monarch/commands';
+import { registerLanguage } from '../monarch/register';
 
 export interface Props {
   onChange: (query: string) => void;
@@ -35,7 +37,7 @@ export function MathExpressionQueryField({
       const updateElementHeight = () => {
         const containerDiv = containerRef.current;
         if (containerDiv !== null && editor.getContentHeight() < 200) {
-          const pixelHeight = editor.getContentHeight();
+          const pixelHeight = Math.max(32, editor.getContentHeight());
           containerDiv.style.height = `${pixelHeight}px`;
           containerDiv.style.width = '100%';
           const pixelWidth = containerDiv.clientWidth;
@@ -66,6 +68,9 @@ export function MathExpressionQueryField({
           },
           suggestFontSize: 12,
           wordWrap: 'on',
+          padding: {
+            top: 6,
+          },
         }}
         language={language.id}
         value={query}

@@ -2,13 +2,15 @@ import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
+import { isFetchError } from '@grafana/runtime';
+import { notifyApp } from 'app/core/actions';
 import { PanelModel } from 'app/features/dashboard/state';
+
 import {
   createPanelLibraryErrorNotification,
   createPanelLibrarySuccessNotification,
   saveAndRefreshLibraryPanel,
 } from '../utils';
-import { notifyApp } from 'app/core/actions';
 
 export const usePanelSave = () => {
   const dispatch = useDispatch();
@@ -16,8 +18,11 @@ export const usePanelSave = () => {
     try {
       return await saveAndRefreshLibraryPanel(panel, folderId);
     } catch (err) {
-      err.isHandled = true;
-      throw new Error(err.data.message);
+      if (isFetchError(err)) {
+        err.isHandled = true;
+        throw new Error(err.data.message);
+      }
+      throw err;
     }
   }, []);
 

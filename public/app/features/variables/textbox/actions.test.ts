@@ -1,15 +1,17 @@
-import { variableAdapters } from '../adapters';
-import { createTextBoxVariableAdapter } from './adapter';
-import { reduxTester } from '../../../../test/core/redux/reduxTester';
-import { setTextBoxVariableOptionsFromUrl, updateTextBoxVariableOptions } from './actions';
-import { getRootReducer, RootReducerType } from '../state/helpers';
-import { VariableOption } from '../types';
-import { createTextBoxOptions } from './reducer';
-import { addVariable, changeVariableProp, setCurrentVariableValue } from '../state/sharedReducer';
-import { textboxBuilder } from '../shared/testing/builders';
 import { locationService } from '@grafana/runtime';
+
+import { reduxTester } from '../../../../test/core/redux/reduxTester';
+import { variableAdapters } from '../adapters';
+import { textboxBuilder } from '../shared/testing/builders';
+import { getRootReducer, RootReducerType } from '../state/helpers';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
+import { addVariable, changeVariableProp, setCurrentVariableValue } from '../state/sharedReducer';
+import { VariableOption } from '../types';
 import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
+
+import { setTextBoxVariableOptionsFromUrl, updateTextBoxVariableOptions } from './actions';
+import { createTextBoxVariableAdapter } from './adapter';
+import { createTextBoxOptions } from './reducer';
 
 jest.mock('@grafana/runtime', () => {
   const original = jest.requireActual('@grafana/runtime');

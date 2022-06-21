@@ -1,6 +1,7 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
+
 import { NavBarMenuItem } from './NavBarMenuItem';
 
 describe('NavBarMenuItem', () => {

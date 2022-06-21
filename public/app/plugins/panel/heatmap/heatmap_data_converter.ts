@@ -1,5 +1,7 @@
 import { concat, forEach, isEmpty, isEqual, isNumber, sortBy } from 'lodash';
+
 import { TimeSeries } from 'app/core/core';
+
 import { Bucket, HeatmapCard, HeatmapCardStats, YBucket, XBucket } from './types';
 
 const VALUE_INDEX = 0;
@@ -59,7 +61,7 @@ function sortSeriesByLabel(s1: { label: string }, s2: { label: string }) {
     label1 = parseHistogramLabel(s1.label);
     label2 = parseHistogramLabel(s2.label);
   } catch (err) {
-    console.error(err.message || err);
+    console.error(err instanceof Error ? err.message : err);
     return 0;
   }
 

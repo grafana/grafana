@@ -1,14 +1,16 @@
 import { css } from '@emotion/css';
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { TemplateSrv } from '@grafana/runtime';
-import { getSelectStyles, Select, useStyles2, useTheme2 } from '@grafana/ui';
 import { startCase, uniqBy } from 'lodash';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { QueryEditorField, QueryEditorRow } from '.';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { TemplateSrv } from '@grafana/runtime';
+import { getSelectStyles, Select, useStyles2, useTheme2 } from '@grafana/ui';
+
 import { INNER_LABEL_WIDTH, LABEL_WIDTH, SELECT_WIDTH } from '../constants';
 import CloudMonitoringDatasource from '../datasource';
 import { MetricDescriptor } from '../types';
+
+import { QueryEditorField, QueryEditorRow } from '.';
 
 export interface Props {
   refId: string;
@@ -138,7 +140,6 @@ export function Metrics(props: Props) {
       <QueryEditorRow>
         <QueryEditorField labelWidth={LABEL_WIDTH} label="Service" htmlFor={`${props.refId}-service`}>
           <Select
-            menuShouldPortal
             width={SELECT_WIDTH}
             onChange={onServiceChange}
             value={[...services, ...templateVariableOptions].find((s) => s.value === service)}
@@ -155,7 +156,6 @@ export function Metrics(props: Props) {
         </QueryEditorField>
         <QueryEditorField label="Metric name" labelWidth={INNER_LABEL_WIDTH} htmlFor={`${props.refId}-select-metric`}>
           <Select
-            menuShouldPortal
             width={SELECT_WIDTH}
             onChange={onMetricTypeChange}
             value={[...metrics, ...templateVariableOptions].find((s) => s.value === metricType)}

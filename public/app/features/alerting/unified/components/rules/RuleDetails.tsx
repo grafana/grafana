@@ -1,10 +1,13 @@
 import { css } from '@emotion/css';
+import React, { FC } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { CombinedRule } from 'app/types/unified-alerting';
-import React, { FC } from 'react';
+
 import { AlertLabels } from '../AlertLabels';
 import { DetailsField } from '../DetailsField';
+
 import { RuleDetailsActionButtons } from './RuleDetailsActionButtons';
 import { RuleDetailsAnnotations } from './RuleDetailsAnnotations';
 import { RuleDetailsDataSources } from './RuleDetailsDataSources';
@@ -18,7 +21,6 @@ interface Props {
 export const RuleDetails: FC<Props> = ({ rule }) => {
   const styles = useStyles2(getStyles);
   const {
-    promRule,
     namespace: { rulesSource },
   } = rule;
 
@@ -41,7 +43,7 @@ export const RuleDetails: FC<Props> = ({ rule }) => {
           <RuleDetailsDataSources rulesSource={rulesSource} rule={rule} />
         </div>
       </div>
-      <RuleDetailsMatchingInstances promRule={promRule} />
+      <RuleDetailsMatchingInstances rule={rule} />
     </div>
   );
 };
@@ -50,6 +52,7 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
     display: flex;
     flex-direction: row;
+
     ${theme.breakpoints.down('md')} {
       flex-direction: column;
     }

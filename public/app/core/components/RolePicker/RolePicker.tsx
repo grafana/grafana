@@ -1,8 +1,11 @@
-import React, { FormEvent, useCallback, useEffect, useState } from 'react';
+import React, { FormEvent, useCallback, useEffect, useState, useRef } from 'react';
+
 import { ClickOutsideWrapper, HorizontalGroup, Spinner } from '@grafana/ui';
-import { RolePickerMenu } from './RolePickerMenu';
-import { RolePickerInput } from './RolePickerInput';
 import { Role, OrgRole } from 'app/types';
+
+import { RolePickerInput } from './RolePickerInput';
+import { RolePickerMenu } from './RolePickerMenu';
+import { MENU_MAX_HEIGHT, ROLE_PICKER_WIDTH } from './constants';
 
 export interface Props {
   builtInRole?: OrgRole;
@@ -13,30 +16,57 @@ export interface Props {
   disabled?: boolean;
   builtinRolesDisabled?: boolean;
   showBuiltInRole?: boolean;
-  onRolesChange: (newRoles: string[]) => void;
+  onRolesChange: (newRoles: Role[]) => void;
   onBuiltinRoleChange?: (newRole: OrgRole) => void;
+  updateDisabled?: boolean;
 }
 
 export const RolePicker = ({
   builtInRole,
   appliedRoles,
   roleOptions,
-  builtInRoles,
   disabled,
   isLoading,
   builtinRolesDisabled,
   showBuiltInRole,
   onRolesChange,
   onBuiltinRoleChange,
+  updateDisabled,
 }: Props): JSX.Element | null => {
   const [isOpen, setOpen] = useState(false);
   const [selectedRoles, setSelectedRoles] = useState<Role[]>(appliedRoles);
   const [selectedBuiltInRole, setSelectedBuiltInRole] = useState<OrgRole | undefined>(builtInRole);
   const [query, setQuery] = useState('');
+  const [offset, setOffset] = useState({ vertical: 0, horizontal: 0 });
+  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    setSelectedBuiltInRole(builtInRole);
     setSelectedRoles(appliedRoles);
-  }, [appliedRoles]);
+  }, [appliedRoles, builtInRole]);
+
+  useEffect(() => {
+    const dimensions = ref?.current?.getBoundingClientRect();
+    if (!dimensions || !isOpen) {
+      return;
+    }
+    const { bottom, top, left, right } = dimensions;
+    const distance = window.innerHeight - bottom;
+    const offsetVertical = bottom - top + 10; // Add extra 10px to offset to account for border and outline
+    const offsetHorizontal = right - left;
+    let horizontal = -offsetHorizontal;
+    let vertical = -offsetVertical;
+
+    if (distance < MENU_MAX_HEIGHT + 20) {
+      vertical = offsetVertical;
+    }
+
+    if (window.innerWidth - right < ROLE_PICKER_WIDTH) {
+      horizontal = offsetHorizontal;
+    }
+
+    setOffset({ horizontal, vertical });
+  }, [isOpen, selectedRoles]);
 
   const onOpen = useCallback(
     (event: FormEvent<HTMLElement>) => {
@@ -75,7 +105,7 @@ export const RolePicker = ({
     setSelectedBuiltInRole(role);
   };
 
-  const onUpdate = (newRoles: string[], newBuiltInRole?: OrgRole) => {
+  const onUpdate = (newRoles: Role[], newBuiltInRole?: OrgRole) => {
     if (onBuiltinRoleChange && newBuiltInRole) {
       onBuiltinRoleChange(newBuiltInRole);
     }
@@ -101,7 +131,7 @@ export const RolePicker = ({
   }
 
   return (
-    <div data-testid="role-picker" style={{ position: 'relative' }}>
+    <div data-testid="role-picker" style={{ position: 'relative' }} ref={ref}>
       <ClickOutsideWrapper onClick={onClickOutside}>
         <RolePickerInput
           builtInRole={selectedBuiltInRole}
@@ -118,7 +148,6 @@ export const RolePicker = ({
           <RolePickerMenu
             options={getOptions()}
             builtInRole={selectedBuiltInRole}
-            builtInRoles={builtInRoles}
             appliedRoles={appliedRoles}
             onBuiltInRoleSelect={onBuiltInRoleSelect}
             onSelect={onSelect}
@@ -126,6 +155,8 @@ export const RolePicker = ({
             showGroups={query.length === 0 || query.trim() === ''}
             builtinRolesDisabled={builtinRolesDisabled}
             showBuiltInRole={showBuiltInRole}
+            updateDisabled={updateDisabled || false}
+            offset={offset}
           />
         )}
       </ClickOutsideWrapper>

@@ -1,23 +1,19 @@
-// Libraries
 import { chain, difference } from 'lodash';
 import LRU from 'lru-cache';
+import Prism, { Grammar } from 'prismjs';
 
-// Services & Utils
+import { dateTime, AbsoluteTimeRange, LanguageProvider, HistoryItem, AbstractQuery } from '@grafana/data';
+import { CompletionItem, TypeaheadInput, TypeaheadOutput, CompletionItemGroup } from '@grafana/ui';
 import {
   extractLabelMatchers,
   parseSelector,
   processLabels,
   toPromLikeExpr,
 } from 'app/plugins/datasource/prometheus/language_utils';
-import syntax, { FUNCTIONS, PIPE_PARSERS, PIPE_OPERATORS } from './syntax';
-
-// Types
-import { LokiQuery, LokiQueryType } from './types';
-import { dateTime, AbsoluteTimeRange, LanguageProvider, HistoryItem, AbstractQuery } from '@grafana/data';
 
 import { LokiDatasource } from './datasource';
-import { CompletionItem, TypeaheadInput, TypeaheadOutput, CompletionItemGroup } from '@grafana/ui';
-import Prism, { Grammar } from 'prismjs';
+import syntax, { FUNCTIONS, PIPE_PARSERS, PIPE_OPERATORS } from './syntax';
+import { LokiQuery, LokiQueryType } from './types';
 
 const DEFAULT_KEYS = ['job', 'namespace'];
 const EMPTY_SELECTOR = '{}';
@@ -368,7 +364,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
    * Fetches all label keys
    */
   async fetchLabels(): Promise<string[]> {
-    const url = '/loki/api/v1/label';
+    const url = 'labels';
     const timeRange = this.datasource.getTimeRangeParams();
     this.labelFetchTs = Date.now().valueOf();
 
@@ -397,7 +393,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
    */
   fetchSeriesLabels = async (match: string): Promise<Record<string, string[]>> => {
     const interpolatedMatch = this.datasource.interpolateString(match);
-    const url = '/loki/api/v1/series';
+    const url = 'series';
     const { start, end } = this.datasource.getTimeRangeParams();
 
     const cacheKey = this.generateCacheKey(url, start, end, interpolatedMatch);
@@ -419,7 +415,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
    * @param match
    */
   fetchSeries = async (match: string): Promise<Array<Record<string, string>>> => {
-    const url = '/loki/api/v1/series';
+    const url = 'series';
     const { start, end } = this.datasource.getTimeRangeParams();
     const params = { 'match[]': match, start, end };
     return await this.request(url, params);
@@ -443,8 +439,9 @@ export default class LokiLanguageProvider extends LanguageProvider {
   }
 
   async fetchLabelValues(key: string): Promise<string[]> {
-    const interpolatedKey = this.datasource.interpolateString(key);
-    const url = `/loki/api/v1/label/${interpolatedKey}/values`;
+    const interpolatedKey = encodeURIComponent(this.datasource.interpolateString(key));
+
+    const url = `label/${interpolatedKey}/values`;
     const rangeParams = this.datasource.getTimeRangeParams();
     const { start, end } = rangeParams;
 

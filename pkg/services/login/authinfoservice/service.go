@@ -158,14 +158,20 @@ func (s *Implementation) LookupAndUpdate(ctx context.Context, query *models.GetU
 		authInfo = ai
 	}
 
-	if authInfo == nil && query.AuthModule != "" {
-		cmd := &models.SetAuthInfoCommand{
-			UserId:     user.Id,
-			AuthModule: query.AuthModule,
-			AuthId:     query.AuthId,
-		}
-		if err := s.authInfoStore.SetAuthInfo(ctx, cmd); err != nil {
-			return nil, err
+	if query.AuthModule != "" {
+		if authInfo == nil {
+			cmd := &models.SetAuthInfoCommand{
+				UserId:     user.Id,
+				AuthModule: query.AuthModule,
+				AuthId:     query.AuthId,
+			}
+			if err := s.authInfoStore.SetAuthInfo(ctx, cmd); err != nil {
+				return nil, err
+			}
+		} else {
+			if err := s.authInfoStore.UpdateAuthInfoDate(ctx, authInfo); err != nil {
+				return nil, err
+			}
 		}
 	}
 

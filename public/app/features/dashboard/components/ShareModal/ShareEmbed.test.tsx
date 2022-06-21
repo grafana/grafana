@@ -1,8 +1,11 @@
-import React from 'react';
-import { ShareEmbed } from './ShareEmbed';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
+
 import config from 'app/core/config';
+
 import { DashboardModel, PanelModel } from '../../state';
+
+import { ShareEmbed } from './ShareEmbed';
 
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({
   getTimeSrv: () => ({

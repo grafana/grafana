@@ -1,4 +1,6 @@
 import React from 'react';
+import uPlot from 'uplot';
+
 import {
   ArrayVector,
   DataFrame,
@@ -19,7 +21,9 @@ import {
   Threshold,
   getFieldConfigWithMinMax,
   ThresholdsMode,
+  TimeRange,
 } from '@grafana/data';
+import { VizLegendOptions, AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/schema';
 import {
   FIXED_UNIT,
   SeriesVisibilityChangeMode,
@@ -27,12 +31,14 @@ import {
   UPlotConfigPrepFn,
   VizLegendItem,
 } from '@grafana/ui';
-import { getConfig, TimelineCoreOptions } from './timeline';
-import { VizLegendOptions, AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/schema';
-import { TimelineFieldConfig, TimelineOptions } from './types';
+import { applyNullInsertThreshold } from '@grafana/ui/src/components/GraphNG/nullInsertThreshold';
+import { nullToValue } from '@grafana/ui/src/components/GraphNG/nullToValue';
 import { PlotTooltipInterpolator } from '@grafana/ui/src/components/uPlot/types';
+
 import { preparePlotData2, getStackingGroups } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
-import uPlot from 'uplot';
+
+import { getConfig, TimelineCoreOptions } from './timeline';
+import { TimelineFieldConfig, TimelineOptions } from './types';
 
 const defaultConfig: TimelineFieldConfig = {
   lineWidth: 0,
@@ -376,6 +382,7 @@ export function mergeThresholdValues(field: Field, theme: GrafanaTheme2): Field 
 export function prepareTimelineFields(
   series: DataFrame[] | undefined,
   mergeValues: boolean,
+  timeRange: TimeRange,
   theme: GrafanaTheme2
 ): { frames?: DataFrame[]; warn?: string } {
   if (!series?.length) {
@@ -383,11 +390,23 @@ export function prepareTimelineFields(
   }
   let hasTimeseries = false;
   const frames: DataFrame[] = [];
+
   for (let frame of series) {
     let isTimeseries = false;
     let changed = false;
+
+    let nulledFrame = applyNullInsertThreshold({
+      frame,
+      refFieldPseudoMin: timeRange.from.valueOf(),
+      refFieldPseudoMax: timeRange.to.valueOf(),
+    });
+
+    if (nulledFrame !== frame) {
+      changed = true;
+    }
+
     const fields: Field[] = [];
-    for (let field of frame.fields) {
+    for (let field of nullToValue(nulledFrame).fields) {
       switch (field.type) {
         case FieldType.time:
           isTimeseries = true;

@@ -1,6 +1,5 @@
 import { size } from 'lodash';
-import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
-import { ansicolor, colors } from '@grafana/ui';
+import { Observable } from 'rxjs';
 
 import {
   AbsoluteTimeRange,
@@ -37,9 +36,10 @@ import {
   toDataFrame,
   toUtc,
 } from '@grafana/data';
-import { getThemeColor } from 'app/core/utils/colors';
 import { SIPrefix } from '@grafana/data/src/valueFormats/symbolFormatters';
-import { Observable } from 'rxjs';
+import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
+import { ansicolor, colors } from '@grafana/ui';
+import { getThemeColor } from 'app/core/utils/colors';
 
 export const LIMIT_LABEL = 'Line limit';
 export const COMMON_LABELS = 'Common labels';
@@ -316,11 +316,11 @@ function getAllLabels(fields: LogFields): Labels[] {
 
   const { stringField, labelsField } = fields;
 
-  const fieldLabels = stringField.labels !== undefined ? [stringField.labels] : [];
-
-  const labelsFieldLabels: Labels[] = labelsField !== undefined ? labelsField.values.toArray() : [];
-
-  return [...fieldLabels, ...labelsFieldLabels];
+  if (labelsField !== undefined) {
+    return labelsField.values.toArray();
+  } else {
+    return [stringField.labels ?? {}];
+  }
 }
 
 function getLabelsForFrameRow(fields: LogFields, index: number): Labels {
@@ -329,10 +329,11 @@ function getLabelsForFrameRow(fields: LogFields, index: number): Labels {
 
   const { stringField, labelsField } = fields;
 
-  return {
-    ...stringField.labels,
-    ...labelsField?.values.get(index),
-  };
+  if (labelsField !== undefined) {
+    return labelsField.values.get(index);
+  } else {
+    return stringField.labels ?? {};
+  }
 }
 
 /**
@@ -357,16 +358,18 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
       const fieldCache = new FieldCache(series);
       const stringField = fieldCache.getFirstFieldOfType(FieldType.string);
       const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
-      const labelsField = fieldCache.getFieldByName('labels');
+      // NOTE: this is experimental, please do not use in your code.
+      // we will get this custom-frame-type into the "real" frame-type list soon,
+      // but the name might change, so please do not use it until then.
+      const labelsField =
+        series.meta?.custom?.frameType === 'LabeledTimeValues' ? fieldCache.getFieldByName('labels') : undefined;
 
       if (stringField !== undefined && timeField !== undefined) {
         const info = {
           series,
           timeField,
           labelsField,
-          timeNanosecondField: fieldCache.hasFieldWithNameAndType('tsNs', FieldType.time)
-            ? fieldCache.getFieldByName('tsNs')
-            : undefined,
+          timeNanosecondField: fieldCache.getFieldByName('tsNs'),
           stringField,
           logLevelField: fieldCache.getFieldByName('level'),
           idField: getIdField(fieldCache),
@@ -699,7 +702,17 @@ export function queryLogsVolume<T extends DataQuery>(
         observer.complete();
       },
       next: (dataQueryResponse: DataQueryResponse) => {
-        rawLogsVolume = rawLogsVolume.concat(dataQueryResponse.data.map(toDataFrame));
+        const { error } = dataQueryResponse;
+        if (error !== undefined) {
+          observer.next({
+            state: LoadingState.Error,
+            error,
+            data: [],
+          });
+          observer.error(error);
+        } else {
+          rawLogsVolume = rawLogsVolume.concat(dataQueryResponse.data.map(toDataFrame));
+        }
       },
       error: (error) => {
         observer.next({

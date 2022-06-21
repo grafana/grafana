@@ -1,7 +1,9 @@
+import { CoreApp, DataFrame, DataQueryRequest, DataSourceApi, dateTime, LoadingState, PanelData } from '@grafana/data';
 import { MetaAnalyticsEventName, reportMetaAnalytics } from '@grafana/runtime';
-import { CoreApp, DataQueryRequest, DataSourceApi, dateTime, LoadingState, PanelData } from '@grafana/data';
+
+import { DashboardModel } from '../../dashboard/state';
+
 import { emitDataRequestEvent } from './queryAnalytics';
-import { DashboardModel } from '../../dashboard/state/DashboardModel';
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -40,7 +42,39 @@ jest.mock('@grafana/data', () => ({
   },
 }));
 
-function getTestData(requestApp: string): PanelData {
+const partiallyCachedSeries = [
+  {
+    refId: 'A',
+    meta: {
+      isCachedResponse: true,
+    },
+    fields: [],
+    length: 0,
+  },
+  {
+    refId: 'B',
+    fields: [],
+    length: 0,
+  },
+];
+
+const multipleDataframesWithSameRefId = [
+  {
+    refId: 'A',
+    meta: {
+      isCachedResponse: true,
+    },
+    fields: [],
+    length: 0,
+  },
+  {
+    refId: 'A',
+    fields: [],
+    length: 0,
+  },
+];
+
+function getTestData(requestApp: string, series: DataFrame[] = []): PanelData {
   const now = dateTime();
   return {
     request: {
@@ -50,7 +84,7 @@ function getTestData(requestApp: string): PanelData {
       startTime: now.unix(),
       endTime: now.add(1, 's').unix(),
     } as DataQueryRequest,
-    series: [],
+    series,
     state: LoadingState.Done,
     timeRange: {
       from: dateTime(),
@@ -61,10 +95,9 @@ function getTestData(requestApp: string): PanelData {
 }
 
 describe('emitDataRequestEvent - from a dashboard panel', () => {
-  const data = getTestData(CoreApp.Dashboard);
-  const fn = emitDataRequestEvent(datasource);
   it('Should report meta analytics', () => {
-    fn(data);
+    const data = getTestData(CoreApp.Dashboard);
+    emitDataRequestEvent(datasource)(data);
 
     expect(reportMetaAnalytics).toBeCalledTimes(1);
     expect(reportMetaAnalytics).toBeCalledWith(
@@ -79,19 +112,71 @@ describe('emitDataRequestEvent - from a dashboard panel', () => {
         folderName: 'Test Folder',
         dataSize: 0,
         duration: 1,
+        totalQueries: 0,
+        cachedQueries: 0,
+      })
+    );
+  });
+
+  it('Should report meta analytics with counts for cached and total queries', () => {
+    const data = getTestData(CoreApp.Dashboard, partiallyCachedSeries);
+    emitDataRequestEvent(datasource)(data);
+
+    expect(reportMetaAnalytics).toBeCalledTimes(1);
+    expect(reportMetaAnalytics).toBeCalledWith(
+      expect.objectContaining({
+        eventName: MetaAnalyticsEventName.DataRequest,
+        datasourceName: datasource.name,
+        datasourceId: datasource.id,
+        panelId: 2,
+        dashboardId: 1,
+        dashboardName: 'Test Dashboard',
+        dashboardUid: 'test',
+        folderName: 'Test Folder',
+        dataSize: 2,
+        duration: 1,
+        totalQueries: 2,
+        cachedQueries: 1,
+      })
+    );
+  });
+
+  it('Should report meta analytics with counts for cached and total queries when same refId spread across multiple DataFrames', () => {
+    const data = getTestData(CoreApp.Dashboard, multipleDataframesWithSameRefId);
+    emitDataRequestEvent(datasource)(data);
+
+    expect(reportMetaAnalytics).toBeCalledTimes(1);
+    expect(reportMetaAnalytics).toBeCalledWith(
+      expect.objectContaining({
+        eventName: MetaAnalyticsEventName.DataRequest,
+        datasourceName: datasource.name,
+        datasourceId: datasource.id,
+        panelId: 2,
+        dashboardId: 1,
+        dashboardName: 'Test Dashboard',
+        dashboardUid: 'test',
+        folderName: 'Test Folder',
+        dataSize: 2,
+        duration: 1,
+        totalQueries: 1,
+        cachedQueries: 1,
       })
     );
   });
 
   it('Should not report meta analytics twice if the request receives multiple responses', () => {
+    const data = getTestData(CoreApp.Dashboard);
+    const fn = emitDataRequestEvent(datasource);
     fn(data);
-    expect(reportMetaAnalytics).not.toBeCalled();
+    fn(data);
+    expect(reportMetaAnalytics).toBeCalledTimes(1);
   });
 
   it('Should not report meta analytics in edit mode', () => {
     mockGetUrlSearchParams.mockImplementationOnce(() => {
       return { editPanel: 2 };
     });
+    const data = getTestData(CoreApp.Dashboard);
     emitDataRequestEvent(datasource)(data);
     expect(reportMetaAnalytics).not.toBeCalled();
   });

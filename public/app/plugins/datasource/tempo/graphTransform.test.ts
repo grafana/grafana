@@ -1,6 +1,7 @@
+import { ArrayVector, DataFrameView, dateTime, MutableDataFrame } from '@grafana/data';
+
 import { createGraphFrames, mapPromMetricsToServiceMap } from './graphTransform';
 import { bigResponse } from './testResponse';
-import { ArrayVector, DataFrameView, dateTime, MutableDataFrame } from '@grafana/data';
 
 describe('createGraphFrames', () => {
   it('transforms basic response into nodes and edges frame', async () => {
@@ -84,8 +85,8 @@ describe('mapPromMetricsToServiceMap', () => {
       { name: 'id', values: new ArrayVector(['app_db', 'lb_app']) },
       { name: 'source', values: new ArrayVector(['app', 'lb']) },
       { name: 'target', values: new ArrayVector(['db', 'app']) },
-      { name: 'mainstat', values: new ArrayVector([10, 20]) },
-      { name: 'secondarystat', values: new ArrayVector([1000, 2000]) },
+      { name: 'mainstat', values: new ArrayVector([1000, 2000]) },
+      { name: 'secondarystat', values: new ArrayVector([0.17, 0.33]) },
     ]);
   });
 

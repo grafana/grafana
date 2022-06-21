@@ -27,7 +27,7 @@ const (
 
 // stateToPostableAlert converts a state to a model that is accepted by Alertmanager. Annotations and Labels are copied from the state.
 // - if state has at least one result, a new label '__value_string__' is added to the label set
-// - the alert's GeneratorURL is constructed to point to the alert edit page
+// - the alert's GeneratorURL is constructed to point to the alert detail view
 // - if evaluation state is either NoData or Error, the resulting set of labels is changed:
 //   - original alert name (label: model.AlertNameLabel) is backed up to OriginalAlertName
 //   - label model.AlertNameLabel is overwritten to either NoDataAlertName or ErrorAlertName
@@ -39,10 +39,14 @@ func stateToPostableAlert(alertState *state.State, appURL *url.URL) *models.Post
 		nA["__value_string__"] = alertState.LastEvaluationString
 	}
 
+	if alertState.Image != nil {
+		nA[ngModels.ScreenshotTokenAnnotation] = alertState.Image.Token
+	}
+
 	var urlStr string
 	if uid := nL[ngModels.RuleUIDLabel]; len(uid) > 0 && appURL != nil {
 		u := *appURL
-		u.Path = path.Join(u.Path, fmt.Sprintf("/alerting/%s/edit", uid))
+		u.Path = path.Join(u.Path, fmt.Sprintf("/alerting/grafana/%s/view", uid))
 		urlStr = u.String()
 	} else if appURL != nil {
 		urlStr = appURL.String()

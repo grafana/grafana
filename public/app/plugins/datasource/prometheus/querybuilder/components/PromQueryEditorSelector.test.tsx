@@ -1,13 +1,15 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { PromQueryEditorSelector } from './PromQueryEditorSelector';
-import { PrometheusDatasource } from '../../datasource';
-import { QueryEditorMode } from '../shared/types';
-import { EmptyLanguageProviderMock } from '../../language_provider.mock';
-import PromQlLanguageProvider from '../../language_provider';
 import { cloneDeep, defaultsDeep } from 'lodash';
+import React from 'react';
+
+import { PrometheusDatasource } from '../../datasource';
+import PromQlLanguageProvider from '../../language_provider';
+import { EmptyLanguageProviderMock } from '../../language_provider.mock';
 import { PromQuery } from '../../types';
+import { QueryEditorMode } from '../shared/types';
+
+import { PromQueryEditorSelector } from './PromQueryEditorSelector';
 
 // We need to mock this because it seems jest has problem importing monaco in tests
 jest.mock('../../components/monaco-query-field/MonacoQueryFieldWrapper', () => {
@@ -15,6 +17,25 @@ jest.mock('../../components/monaco-query-field/MonacoQueryFieldWrapper', () => {
     MonacoQueryFieldWrapper: () => {
       return 'MonacoQueryFieldWrapper';
     },
+  };
+});
+
+jest.mock('app/core/store', () => {
+  return {
+    get() {
+      return undefined;
+    },
+    set() {},
+    getObject(key: string, defaultValue: any) {
+      return defaultValue;
+    },
+  };
+});
+
+jest.mock('@grafana/runtime', () => {
+  return {
+    ...jest.requireActual('@grafana/runtime'),
+    reportInteraction: jest.fn(),
   };
 });
 
@@ -51,19 +72,6 @@ describe('PromQueryEditorSelector', () => {
     expectCodeEditor();
   });
 
-  it('shows code if new query', async () => {
-    render(
-      <PromQueryEditorSelector
-        {...defaultProps}
-        query={{
-          refId: 'A',
-          expr: '',
-        }}
-      />
-    );
-    expectCodeEditor();
-  });
-
   it('shows code editor when code mode is set', async () => {
     renderWithMode(QueryEditorMode.Code);
     expectCodeEditor();
@@ -81,7 +89,7 @@ describe('PromQueryEditorSelector', () => {
 
   it('changes to builder mode', async () => {
     const { onChange } = renderWithMode(QueryEditorMode.Code);
-    switchToMode(QueryEditorMode.Builder);
+    await switchToMode(QueryEditorMode.Builder);
     expect(onChange).toBeCalledWith({
       refId: 'A',
       expr: defaultQuery.expr,
@@ -91,23 +99,14 @@ describe('PromQueryEditorSelector', () => {
   });
 
   it('Can enable raw query', async () => {
-    const { onChange } = renderWithMode(QueryEditorMode.Builder);
-    expect(screen.queryByLabelText('selector')).not.toBeInTheDocument();
-
+    renderWithMode(QueryEditorMode.Builder);
+    expect(screen.queryByLabelText('selector')).toBeInTheDocument();
     screen.getByLabelText('Raw query').click();
-
-    expect(onChange).toBeCalledWith({
-      refId: 'A',
-      expr: defaultQuery.expr,
-      range: true,
-      editorMode: QueryEditorMode.Builder,
-      rawQuery: true,
-    });
+    expect(screen.queryByLabelText('selector')).not.toBeInTheDocument();
   });
 
-  it('Should show raw query', async () => {
+  it('Should show raw query by default', async () => {
     renderWithProps({
-      rawQuery: true,
       editorMode: QueryEditorMode.Builder,
       expr: 'my_metric',
     });
@@ -116,7 +115,7 @@ describe('PromQueryEditorSelector', () => {
 
   it('changes to code mode', async () => {
     const { onChange } = renderWithMode(QueryEditorMode.Builder);
-    switchToMode(QueryEditorMode.Code);
+    await switchToMode(QueryEditorMode.Code);
     expect(onChange).toBeCalledWith({
       refId: 'A',
       expr: defaultQuery.expr,
@@ -127,7 +126,7 @@ describe('PromQueryEditorSelector', () => {
 
   it('changes to explain mode', async () => {
     const { onChange } = renderWithMode(QueryEditorMode.Code);
-    switchToMode(QueryEditorMode.Explain);
+    await switchToMode(QueryEditorMode.Explain);
     expect(onChange).toBeCalledWith({
       refId: 'A',
       expr: defaultQuery.expr,
@@ -142,7 +141,7 @@ describe('PromQueryEditorSelector', () => {
       expr: 'rate(test_metric{instance="host.docker.internal:3000"}[$__interval])',
       editorMode: QueryEditorMode.Code,
     });
-    switchToMode(QueryEditorMode.Builder);
+    await switchToMode(QueryEditorMode.Builder);
     rerender(
       <PromQueryEditorSelector
         {...defaultProps}
@@ -187,7 +186,7 @@ function expectExplain() {
   expect(screen.getByText(/Fetch all series/)).toBeInTheDocument();
 }
 
-function switchToMode(mode: QueryEditorMode) {
+async function switchToMode(mode: QueryEditorMode) {
   const label = {
     [QueryEditorMode.Code]: /Code/,
     [QueryEditorMode.Explain]: /Explain/,
@@ -195,5 +194,5 @@ function switchToMode(mode: QueryEditorMode) {
   }[mode];
 
   const switchEl = screen.getByLabelText(label);
-  userEvent.click(switchEl);
+  await userEvent.click(switchEl);
 }

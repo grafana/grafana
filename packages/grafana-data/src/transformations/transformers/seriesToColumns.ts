@@ -1,10 +1,11 @@
 import { map } from 'rxjs/operators';
 
 import { DataFrame, SynchronousDataTransformerInfo, FieldMatcher } from '../../types';
-import { DataTransformerID } from './ids';
-import { outerJoinDataFrames } from './joinDataFrames';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
+
+import { DataTransformerID } from './ids';
+import { outerJoinDataFrames } from './joinDataFrames';
 
 export interface SeriesToColumnsOptions {
   byField?: string; // empty will pick the field automatically

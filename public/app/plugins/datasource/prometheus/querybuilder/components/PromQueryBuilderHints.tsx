@@ -1,11 +1,13 @@
+import { css } from '@emotion/css';
 import React, { useState, useEffect } from 'react';
-import { PromVisualQuery } from '../types';
+
+import { GrafanaTheme2, PanelData, QueryHint } from '@grafana/data';
+import { Button, Tooltip, useStyles2 } from '@grafana/ui';
+
 import { PrometheusDatasource } from '../../datasource';
 import { promQueryModeller } from '../PromQueryModeller';
-import { GrafanaTheme2, PanelData, QueryHint } from '@grafana/data';
 import { buildVisualQueryFromString } from '../parsing';
-import { Button, Tooltip, useStyles2 } from '@grafana/ui';
-import { css } from '@emotion/css';
+import { PromVisualQuery } from '../types';
 
 export interface Props {
   query: PromVisualQuery;

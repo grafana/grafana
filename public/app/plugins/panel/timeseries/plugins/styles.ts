@@ -1,5 +1,6 @@
-import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 
 export const getCommonAnnotationStyles = (theme: GrafanaTheme2) => {

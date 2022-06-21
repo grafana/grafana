@@ -1,4 +1,5 @@
 import { PanelModel, FieldConfigSource } from '@grafana/data';
+
 import { heatmapChangedHandler } from './migrations';
 
 describe('Heatmap Migrations', () => {
@@ -24,39 +25,62 @@ describe('Heatmap Migrations', () => {
           "overrides": Array [],
         },
         "options": Object {
-          "cellGap": 2,
-          "cellSize": 10,
-          "color": Object {
-            "exponent": 0.5,
-            "fill": "dark-orange",
-            "mode": "scheme",
-            "scale": "exponential",
-            "scheme": "Oranges",
-            "steps": 256,
-          },
-          "heatmap": Object {
-            "xAxis": Object {
+          "calculate": true,
+          "calculation": Object {
+            "xBuckets": Object {
               "mode": "count",
               "value": "100",
             },
-            "yAxis": Object {
+            "yBuckets": Object {
               "mode": "count",
-              "value": "20",
+              "scale": Object {
+                "log": 2,
+                "type": "log",
+              },
+              "value": "3",
             },
           },
+          "cellGap": 2,
+          "cellRadius": 10,
+          "cellValues": Object {
+            "decimals": undefined,
+          },
+          "color": Object {
+            "exponent": 0.5,
+            "fill": "dark-orange",
+            "max": 100,
+            "min": 5,
+            "mode": "scheme",
+            "scale": "exponential",
+            "scheme": "BuGn",
+            "steps": 128,
+          },
+          "exemplars": Object {
+            "color": "rgba(255,0,255,0.7)",
+          },
+          "filterValues": Object {
+            "le": 1e-9,
+          },
           "legend": Object {
-            "calcs": Array [],
-            "displayMode": "list",
-            "placement": "bottom",
+            "show": true,
+          },
+          "rowsFrame": Object {
+            "layout": "auto",
           },
           "showValue": "never",
-          "source": "calculate",
           "tooltip": Object {
             "show": true,
             "yHistogram": true,
           },
-          "yAxisLabels": "auto",
-          "yAxisReverse": false,
+          "yAxis": Object {
+            "axisPlacement": "left",
+            "axisWidth": 400,
+            "decimals": 6,
+            "max": 22,
+            "min": 7,
+            "reverse": false,
+            "unit": "short",
+          },
         },
       }
     `);
@@ -101,8 +125,8 @@ const oldHeatmap = {
     colorScale: 'sqrt',
     exponent: 0.5,
     colorScheme: 'interpolateBuGn',
-    min: null,
-    max: null,
+    min: 5,
+    max: 100,
   },
   legend: {
     show: true,
@@ -116,11 +140,12 @@ const oldHeatmap = {
   yAxis: {
     show: true,
     format: 'short',
-    decimals: null,
-    logBase: 1,
-    splitFactor: null,
-    min: null,
-    max: null,
+    decimals: 6,
+    logBase: 2,
+    splitFactor: 3,
+    min: 7,
+    max: 22,
+    width: '400',
   },
   xBucketSize: null,
   xBucketNumber: 100,

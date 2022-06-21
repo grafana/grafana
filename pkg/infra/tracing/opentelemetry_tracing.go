@@ -6,16 +6,30 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/log/level"
 	"github.com/grafana/grafana/pkg/setting"
+	"go.etcd.io/etcd/api/v3/version"
+	jaegerpropagator "go.opentelemetry.io/contrib/propagators/jaeger"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/exporters/jaeger"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	trace "go.opentelemetry.io/otel/trace"
+)
+
+const (
+	jaegerExporter string = "jaeger"
+	otlpExporter   string = "otlp"
+	noopExporter   string = "noop"
+
+	jaegerPropagator string = "jaeger"
+	w3cPropagator    string = "w3c"
 )
 
 type Tracer interface {
@@ -34,14 +48,21 @@ type Span interface {
 }
 
 type Opentelemetry struct {
-	enabled bool
-	address string
-	log     log.Logger
+	enabled     string
+	address     string
+	propagation string
+	log         log.Logger
 
-	tracerProvider *tracesdk.TracerProvider
+	tracerProvider tracerProvider
 	tracer         trace.Tracer
 
 	Cfg *setting.Cfg
+}
+
+type tracerProvider interface {
+	trace.TracerProvider
+
+	Shutdown(ctx context.Context) error
 }
 
 type OpentelemetrySpan struct {
@@ -53,21 +74,48 @@ type EventValue struct {
 	Num int64
 }
 
+type otelErrHandler func(err error)
+
+func (o otelErrHandler) Handle(err error) {
+	o(err)
+}
+
+type noopTracerProvider struct {
+	trace.TracerProvider
+}
+
+func (noopTracerProvider) Shutdown(ctx context.Context) error {
+	return nil
+}
+
 func (ots *Opentelemetry) parseSettingsOpentelemetry() error {
 	section, err := ots.Cfg.Raw.GetSection("tracing.opentelemetry.jaeger")
+	if err != nil {
+		return err
+	}
+	ots.enabled = noopExporter
+
+	ots.address = section.Key("address").MustString("")
+	if ots.address != "" {
+		ots.enabled = jaegerExporter
+		return nil
+	}
+	ots.propagation = section.Key("propagation").MustString("")
+
+	section, err = ots.Cfg.Raw.GetSection("tracing.opentelemetry.otlp")
 	if err != nil {
 		return err
 	}
 
 	ots.address = section.Key("address").MustString("")
 	if ots.address != "" {
-		ots.enabled = true
+		ots.enabled = otlpExporter
 	}
-
+	ots.propagation = section.Key("propagation").MustString("")
 	return nil
 }
 
-func (ots *Opentelemetry) initTracerProvider() (*tracesdk.TracerProvider, error) {
+func (ots *Opentelemetry) initJaegerTracerProvider() (*tracesdk.TracerProvider, error) {
 	// Create the Jaeger exporter
 	exp, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(ots.address)))
 	if err != nil {
@@ -86,18 +134,76 @@ func (ots *Opentelemetry) initTracerProvider() (*tracesdk.TracerProvider, error)
 	return tp, nil
 }
 
-func (ots *Opentelemetry) initOpentelemetryTracer() error {
-	tp, err := ots.initTracerProvider()
+func (ots *Opentelemetry) initOTLPTracerProvider() (*tracesdk.TracerProvider, error) {
+	client := otlptracegrpc.NewClient(otlptracegrpc.WithEndpoint(ots.address), otlptracegrpc.WithInsecure())
+	exp, err := otlptrace.New(context.Background(), client)
 	if err != nil {
-		return err
+		return nil, err
 	}
+
+	res, err := resource.New(
+		context.Background(),
+		resource.WithAttributes(
+			semconv.ServiceNameKey.String("grafana"),
+			semconv.ServiceVersionKey.String(version.Version),
+		),
+		resource.WithProcessRuntimeDescription(),
+		resource.WithTelemetrySDK(),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	tp := tracesdk.NewTracerProvider(
+		tracesdk.WithBatcher(exp),
+		tracesdk.WithSampler(tracesdk.ParentBased(
+			tracesdk.AlwaysSample(),
+		)),
+		tracesdk.WithResource(res),
+	)
+	return tp, nil
+}
+
+func (ots *Opentelemetry) initNoopTracerProvider() (tracerProvider, error) {
+	return &noopTracerProvider{TracerProvider: trace.NewNoopTracerProvider()}, nil
+}
+
+func (ots *Opentelemetry) initOpentelemetryTracer() error {
+	var tp tracerProvider
+	var err error
+	switch ots.enabled {
+	case jaegerExporter:
+		tp, err = ots.initJaegerTracerProvider()
+		if err != nil {
+			return err
+		}
+	case otlpExporter:
+		tp, err = ots.initOTLPTracerProvider()
+		if err != nil {
+			return err
+		}
+	default:
+		tp, err = ots.initNoopTracerProvider()
+		if err != nil {
+			return err
+		}
+	}
+
 	// Register our TracerProvider as the global so any imported
 	// instrumentation in the future will default to using it
 	// only if tracing is enabled
-	if ots.enabled {
+	if ots.enabled != "" {
 		otel.SetTracerProvider(tp)
 	}
 
+	switch ots.propagation {
+	case w3cPropagator:
+		otel.SetTextMapPropagator(propagation.TraceContext{})
+	case jaegerPropagator:
+		otel.SetTextMapPropagator(jaegerpropagator.Jaeger{})
+	default:
+		otel.SetTextMapPropagator(propagation.TraceContext{})
+	}
 	ots.tracerProvider = tp
 	ots.tracer = otel.GetTracerProvider().Tracer("component-main")
 
@@ -105,6 +211,12 @@ func (ots *Opentelemetry) initOpentelemetryTracer() error {
 }
 
 func (ots *Opentelemetry) Run(ctx context.Context) error {
+	otel.SetErrorHandler(otelErrHandler(func(err error) {
+		err = level.Error(ots.log).Log("msg", "OpenTelemetry handler returned an error", "err", err)
+		if err != nil {
+			ots.log.Error("OpenTelemetry log returning error", err)
+		}
+	}))
 	<-ctx.Done()
 
 	ots.log.Info("Closing tracing")

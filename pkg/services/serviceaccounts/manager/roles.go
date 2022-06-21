@@ -31,11 +31,7 @@ func RegisterRoles(ac accesscontrol.AccessControl) error {
 			DisplayName: "Service accounts writer",
 			Description: "Create, delete, read, or query service accounts.",
 			Group:       "Service accounts",
-			Permissions: []accesscontrol.Permission{
-				{
-					Action: serviceaccounts.ActionRead,
-					Scope:  serviceaccounts.ScopeAll,
-				},
+			Permissions: accesscontrol.ConcatPermissions(saReader.Role.Permissions, []accesscontrol.Permission{
 				{
 					Action: serviceaccounts.ActionWrite,
 					Scope:  serviceaccounts.ScopeAll,
@@ -47,7 +43,7 @@ func RegisterRoles(ac accesscontrol.AccessControl) error {
 					Action: serviceaccounts.ActionDelete,
 					Scope:  serviceaccounts.ScopeAll,
 				},
-			},
+			}),
 		},
 		Grants: []string{string(models.ROLE_ADMIN)},
 	}

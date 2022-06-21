@@ -1,14 +1,16 @@
 import { css } from '@emotion/css';
+import React, { FC } from 'react';
+
 import { GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
 import { Icon, IconName, useStyles2 } from '@grafana/ui';
 import alertDef from 'app/features/alerting/state/alertDef';
-import { alertStateToState, getFirstActiveAt } from 'app/features/alerting/unified/utils/rules';
+import { alertStateToReadable, alertStateToState, getFirstActiveAt } from 'app/features/alerting/unified/utils/rules';
 import { PromRuleWithLocation } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
-import React, { FC } from 'react';
+
 import { AlertInstances } from '../AlertInstances';
-import { UnifiedAlertListOptions } from '../types';
 import { getStyles } from '../UnifiedAlertList';
+import { UnifiedAlertListOptions } from '../types';
 
 type UngroupedModeProps = {
   rules: PromRuleWithLocation[];
@@ -32,7 +34,7 @@ const UngroupedModeView: FC<UngroupedModeProps> = ({ rules, options }) => {
               <div className={stateStyle.icon}>
                 <Icon
                   name={alertDef.getStateDisplayModel(rule.state).iconClass as IconName}
-                  className={stateStyle[alertStateToState[rule.state]]}
+                  className={stateStyle[alertStateToState(rule.state)]}
                   size={'lg'}
                 />
               </div>
@@ -42,7 +44,9 @@ const UngroupedModeView: FC<UngroupedModeProps> = ({ rules, options }) => {
                     {rule.name}
                   </div>
                   <div className={styles.alertDuration}>
-                    <span className={stateStyle[alertStateToState[rule.state]]}>{rule.state.toUpperCase()}</span>{' '}
+                    <span className={stateStyle[alertStateToState(rule.state)]}>
+                      {alertStateToReadable(rule.state)}
+                    </span>{' '}
                     {firstActiveAt && rule.state !== PromAlertingRuleState.Inactive && (
                       <>
                         for{' '}

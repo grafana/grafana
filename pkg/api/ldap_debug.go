@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -240,7 +241,7 @@ func (hs *HTTPServer) GetUserFromLDAP(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "Failed to obtain the LDAP configuration", err)
 	}
 
-	ldap := newLDAP(ldapConfig.Servers)
+	multiLDAP := newLDAP(ldapConfig.Servers)
 
 	username := web.Params(c.Req)[":username"]
 
@@ -248,9 +249,8 @@ func (hs *HTTPServer) GetUserFromLDAP(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "Validation error. You must specify an username", nil)
 	}
 
-	user, serverConfig, err := ldap.User(username)
-
-	if user == nil {
+	user, serverConfig, err := multiLDAP.User(username)
+	if user == nil || err != nil {
 		return response.Error(http.StatusNotFound, "No user was found in the LDAP server(s) with that username", err)
 	}
 
@@ -267,45 +267,32 @@ func (hs *HTTPServer) GetUserFromLDAP(c *models.ReqContext) response.Response {
 		IsDisabled:     user.IsDisabled,
 	}
 
-	orgRoles := []LDAPRoleDTO{}
-
-	// Need to iterate based on the config groups as only the first match for an org is used
-	// We are showing all matches as that should help in understanding why one match wins out
-	// over another.
-	for _, configGroup := range serverConfig.Groups {
-		for _, userGroup := range user.Groups {
-			if configGroup.GroupDN == userGroup {
-				r := &LDAPRoleDTO{GroupDN: configGroup.GroupDN, OrgId: configGroup.OrgId, OrgRole: configGroup.OrgRole}
-				orgRoles = append(orgRoles, *r)
-				break
-			}
-		}
-		//}
-	}
-
-	// Then, we find what we did not match by inspecting the list of groups returned from
-	// LDAP against what we have already matched above.
+	unmappedUserGroups := map[string]struct{}{}
 	for _, userGroup := range user.Groups {
-		var matched bool
+		unmappedUserGroups[strings.ToLower(userGroup)] = struct{}{}
+	}
 
-		for _, orgRole := range orgRoles {
-			if orgRole.GroupDN == userGroup { // we already matched it
-				matched = true
-				break
-			}
+	orgRolesMap := map[int64]models.RoleType{}
+	for _, group := range serverConfig.Groups {
+		// only use the first match for each org
+		if orgRolesMap[group.OrgId] != "" {
+			continue
 		}
 
-		if !matched {
-			r := &LDAPRoleDTO{GroupDN: userGroup}
-			orgRoles = append(orgRoles, *r)
+		if ldap.IsMemberOf(user.Groups, group.GroupDN) {
+			orgRolesMap[group.OrgId] = group.OrgRole
+			u.OrgRoles = append(u.OrgRoles, LDAPRoleDTO{GroupDN: group.GroupDN,
+				OrgId: group.OrgId, OrgRole: group.OrgRole})
+			delete(unmappedUserGroups, strings.ToLower(group.GroupDN))
 		}
 	}
 
-	u.OrgRoles = orgRoles
+	for userGroup := range unmappedUserGroups {
+		u.OrgRoles = append(u.OrgRoles, LDAPRoleDTO{GroupDN: userGroup})
+	}
 
 	ldapLogger.Debug("mapping org roles", "orgsRoles", u.OrgRoles)
-	err = u.FetchOrgs(c.Req.Context(), hs.SQLStore)
-	if err != nil {
+	if err := u.FetchOrgs(c.Req.Context(), hs.SQLStore); err != nil {
 		return response.Error(http.StatusBadRequest, "An organization was not found - Please verify your LDAP configuration", err)
 	}
 

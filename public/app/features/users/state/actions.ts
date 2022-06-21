@@ -1,8 +1,10 @@
-import { ThunkResult } from '../../../types';
 import { getBackendSrv } from '@grafana/runtime';
-import { OrgUser } from 'app/types';
-import { usersLoaded } from './reducers';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
+import { OrgUser } from 'app/types';
+
+import { ThunkResult } from '../../../types';
+
+import { usersLoaded } from './reducers';
 
 export function loadUsers(): ThunkResult<void> {
   return async (dispatch) => {

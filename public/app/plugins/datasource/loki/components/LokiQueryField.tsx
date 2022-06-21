@@ -1,4 +1,9 @@
+import { LanguageMap, languages as prismLanguages } from 'prismjs';
 import React, { ReactNode } from 'react';
+import { Plugin, Node } from 'slate';
+
+import { QueryEditorProps } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import {
   SlatePrism,
   TypeaheadOutput,
@@ -9,15 +14,14 @@ import {
   DOMUtil,
   Icon,
 } from '@grafana/ui';
-import { Plugin, Node } from 'slate';
-import { LokiLabelBrowser } from './LokiLabelBrowser';
-import { QueryEditorProps } from '@grafana/data';
-import { LokiQuery, LokiOptions } from '../types';
-import { LanguageMap, languages as prismLanguages } from 'prismjs';
-import LokiLanguageProvider from '../language_provider';
-import { shouldRefreshLabels } from '../language_utils';
-import { LokiDatasource } from '../datasource';
 import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
+
+import { LokiDatasource } from '../datasource';
+import LokiLanguageProvider from '../language_provider';
+import { escapeLabelValueInSelector, shouldRefreshLabels } from '../language_utils';
+import { LokiQuery, LokiOptions } from '../types';
+
+import { LokiLabelBrowser } from './LokiLabelBrowser';
 
 const LAST_USED_LABELS_KEY = 'grafana.datasources.loki.browser.labels';
 
@@ -44,17 +48,26 @@ function willApplySuggestion(suggestion: string, { typeaheadContext, typeaheadTe
 
     case 'context-label-values': {
       // Always add quotes and remove existing ones instead
+      let suggestionModified = '';
+
       if (!typeaheadText.match(/^(!?=~?"|")/)) {
-        suggestion = `"${suggestion}`;
+        suggestionModified = '"';
       }
+
+      suggestionModified += escapeLabelValueInSelector(suggestion, typeaheadText);
+
       if (DOMUtil.getNextCharacter() !== '"') {
-        suggestion = `${suggestion}"`;
+        suggestionModified += '"';
       }
+
+      suggestion = suggestionModified;
+
       break;
     }
 
     default:
   }
+
   return suggestion;
 }
 
@@ -133,6 +146,16 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
   };
 
   onClickChooserButton = () => {
+    if (!this.state.labelBrowserVisible) {
+      reportInteraction('grafana_loki_log_browser_opened', {
+        app: this.props.app,
+      });
+    } else {
+      reportInteraction('grafana_loki_log_browser_closed', {
+        app: this.props.app,
+        closeType: 'logBrowserButton',
+      });
+    }
     this.setState((state) => ({ labelBrowserVisible: !state.labelBrowserVisible }));
   };
 
@@ -158,6 +181,7 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
     const {
       ExtraFieldElement,
       query,
+      app,
       datasource,
       placeholder = 'Enter a Loki query (run with Shift+Enter)',
     } = this.props;
@@ -209,6 +233,7 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
                     lastUsedLabels={lastUsedLabels || []}
                     storeLastUsedLabels={onLastUsedLabelsSave}
                     deleteLastUsedLabels={onLastUsedLabelsDelete}
+                    app={app}
                   />
                 </div>
               )}

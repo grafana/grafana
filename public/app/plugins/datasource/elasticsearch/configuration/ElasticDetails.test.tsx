@@ -1,8 +1,9 @@
+import { render, screen } from '@testing-library/react';
 import React from 'react';
+import selectEvent from 'react-select-event';
+
 import { ElasticDetails } from './ElasticDetails';
 import { createDefaultConfigOptions } from './mocks';
-import { render, screen } from '@testing-library/react';
-import selectEvent from 'react-select-event';
 
 describe('ElasticDetails', () => {
   describe('Max concurrent Shard Requests', () => {
@@ -50,18 +51,7 @@ describe('ElasticDetails', () => {
   });
 
   describe('version change', () => {
-    const testCases = [
-      { version: '5.x', expectedMaxConcurrentShardRequests: 256 },
-      { version: '5.x', maxConcurrentShardRequests: 50, expectedMaxConcurrentShardRequests: 50 },
-      { version: '5.6+', expectedMaxConcurrentShardRequests: 256 },
-      { version: '5.6+', maxConcurrentShardRequests: 256, expectedMaxConcurrentShardRequests: 256 },
-      { version: '5.6+', maxConcurrentShardRequests: 5, expectedMaxConcurrentShardRequests: 256 },
-      { version: '5.6+', maxConcurrentShardRequests: 200, expectedMaxConcurrentShardRequests: 200 },
-      { version: '7.0+', expectedMaxConcurrentShardRequests: 5 },
-      { version: '7.0+', maxConcurrentShardRequests: 256, expectedMaxConcurrentShardRequests: 5 },
-      { version: '7.0+', maxConcurrentShardRequests: 5, expectedMaxConcurrentShardRequests: 5 },
-      { version: '7.0+', maxConcurrentShardRequests: 6, expectedMaxConcurrentShardRequests: 6 },
-    ];
+    const testCases = [{ version: '7.10+', maxConcurrentShardRequests: 6, expectedMaxConcurrentShardRequests: 6 }];
 
     testCases.forEach((tc) => {
       const onChangeMock = jest.fn();
@@ -71,7 +61,7 @@ describe('ElasticDetails', () => {
             onChange={onChangeMock}
             value={createDefaultConfigOptions({
               maxConcurrentShardRequests: tc.maxConcurrentShardRequests,
-              esVersion: '2.0.0',
+              esVersion: '7.0.0',
             })}
           />
         );

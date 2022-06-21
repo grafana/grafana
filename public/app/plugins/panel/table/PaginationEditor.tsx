@@ -1,6 +1,7 @@
+import React from 'react';
+
 import { StandardEditorProps } from '@grafana/data';
 import { Switch } from '@grafana/ui';
-import React from 'react';
 
 export function PaginationEditor({ onChange, value, context }: StandardEditorProps<boolean>) {
   const changeValue = (event: React.FormEvent<HTMLInputElement> | undefined) => {

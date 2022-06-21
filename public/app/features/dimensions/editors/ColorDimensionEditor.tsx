@@ -1,12 +1,14 @@
+import { css } from '@emotion/css';
 import React, { FC, useCallback } from 'react';
+
 import { GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
-import { ColorDimensionConfig } from '../types';
 import { Select, ColorPicker, useStyles2 } from '@grafana/ui';
+
 import {
   useFieldDisplayNames,
   useSelectOptions,
 } from '../../../../../packages/grafana-ui/src/components/MatchersUI/utils';
-import { css } from '@emotion/css';
+import { ColorDimensionConfig } from '../types';
 
 const fixedColorOption: SelectableValue<string> = {
   label: 'Fixed color',
@@ -59,7 +61,6 @@ export const ColorDimensionEditor: FC<StandardEditorProps<ColorDimensionConfig, 
     <>
       <div className={styles.container}>
         <Select
-          menuShouldPortal
           value={selectedOption}
           options={selectOptions}
           onChange={onSelectChange}

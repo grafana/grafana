@@ -1,58 +1,47 @@
+import { GetMetricNamespacesQuery, GetMetricNamesQuery } from '../types';
+
 export default class UrlBuilder {
-  static buildAzureMonitorGetMetricNamespacesUrl(
-    baseUrl: string,
+  static buildResourceUri(
     subscriptionId: string,
     resourceGroup: string,
     metricDefinition: string,
-    resourceName: string,
-    apiVersion: string
+    resourceName: string
   ) {
     const metricDefinitionArray = metricDefinition.split('/');
     const resourceNameArray = resourceName.split('/');
     const provider = metricDefinitionArray.shift();
-    const urlArray = [baseUrl, 'subscriptions', subscriptionId, 'resourceGroups', resourceGroup, 'providers', provider];
+    const urlArray = ['/subscriptions', subscriptionId, 'resourceGroups', resourceGroup, 'providers', provider];
     for (const i in metricDefinitionArray) {
       urlArray.push(metricDefinitionArray[i]);
       urlArray.push(resourceNameArray[i]);
     }
-    const urlPrefix = urlArray.join('/');
-    return `${urlPrefix}/providers/microsoft.insights/metricNamespaces?api-version=${apiVersion}`;
+    return urlArray.join('/');
   }
 
-  static buildAzureMonitorGetMetricNamesUrl(
-    baseUrl: string,
-    subscriptionId: string,
-    resourceGroup: string,
-    metricDefinition: string,
-    resourceName: string,
-    metricNamespace: string,
-    apiVersion: string
-  ) {
-    const metricDefinitionArray = metricDefinition.split('/');
-    const resourceNameArray = resourceName.split('/');
-    const provider = metricDefinitionArray.shift();
-    const urlArray = [baseUrl, 'subscriptions', subscriptionId, 'resourceGroups', resourceGroup, 'providers', provider];
-    for (const i in metricDefinitionArray) {
-      urlArray.push(metricDefinitionArray[i]);
-      urlArray.push(resourceNameArray[i]);
+  static buildAzureMonitorGetMetricNamespacesUrl(baseUrl: string, apiVersion: string, query: GetMetricNamespacesQuery) {
+    let resourceUri: string;
+
+    if ('resourceUri' in query) {
+      resourceUri = query.resourceUri;
+    } else {
+      const { subscription, resourceGroup, metricDefinition, resourceName } = query;
+      resourceUri = UrlBuilder.buildResourceUri(subscription, resourceGroup, metricDefinition, resourceName);
     }
-    const urlPrefix = urlArray.join('/');
-    return (
-      `${urlPrefix}/providers/microsoft.insights/metricdefinitions?api-version=${apiVersion}` +
-      `&metricnamespace=${encodeURIComponent(metricNamespace)}`
-    );
-  }
 
-  static newBuildAzureMonitorGetMetricNamespacesUrl(baseUrl: string, resourceUri: string, apiVersion: string) {
     return `${baseUrl}${resourceUri}/providers/microsoft.insights/metricNamespaces?api-version=${apiVersion}`;
   }
 
-  static newBuildAzureMonitorGetMetricNamesUrl(
-    baseUrl: string,
-    resourceUri: string,
-    metricNamespace: string,
-    apiVersion: string
-  ) {
+  static buildAzureMonitorGetMetricNamesUrl(baseUrl: string, apiVersion: string, query: GetMetricNamesQuery) {
+    let resourceUri: string;
+    const { metricNamespace } = query;
+
+    if ('resourceUri' in query) {
+      resourceUri = query.resourceUri;
+    } else {
+      const { subscription, resourceGroup, metricDefinition, resourceName } = query;
+      resourceUri = UrlBuilder.buildResourceUri(subscription, resourceGroup, metricDefinition, resourceName);
+    }
+
     return (
       `${baseUrl}${resourceUri}/providers/microsoft.insights/metricdefinitions?api-version=${apiVersion}` +
       `&metricnamespace=${encodeURIComponent(metricNamespace)}`

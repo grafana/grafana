@@ -1,5 +1,7 @@
 import { combineReducers } from 'redux';
+
 import { createAsyncMapSlice, createAsyncSlice } from '../utils/redux';
+
 import {
   createOrUpdateSilenceAction,
   deleteAlertManagerConfigAction,

@@ -1,15 +1,18 @@
 import { render } from '@testing-library/react';
-import { contextSrv } from 'app/core/services/context_srv';
-import { configureStore } from 'app/store/configureStore';
-import { AccessControlAction } from 'app/types';
-import { CombinedRule } from 'app/types/unified-alerting';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { byRole } from 'testing-library-selector';
-import { mockCombinedRule, mockDataSource, mockPromAlertingRule, mockRulerAlertingRule } from '../../mocks';
-import { RuleDetails } from './RuleDetails';
+
+import { contextSrv } from 'app/core/services/context_srv';
+import { configureStore } from 'app/store/configureStore';
+import { AccessControlAction } from 'app/types';
+import { CombinedRule } from 'app/types/unified-alerting';
+
 import { useIsRuleEditable } from '../../hooks/useIsRuleEditable';
+import { mockCombinedRule, mockDataSource, mockPromAlertingRule, mockRulerAlertingRule } from '../../mocks';
+
+import { RuleDetails } from './RuleDetails';
 
 jest.mock('../../hooks/useIsRuleEditable');
 
@@ -27,7 +30,7 @@ const ui = {
 
 jest.spyOn(contextSrv, 'accessControlEnabled').mockReturnValue(true);
 
-describe('RuleDetails FGAC', () => {
+describe('RuleDetails RBAC', () => {
   describe('Grafana rules action buttons', () => {
     const grafanaRule = getGrafanaRule({ name: 'Grafana' });
     it('Should not render Edit button for users without the update permission', () => {

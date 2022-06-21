@@ -1,7 +1,9 @@
-import React, { useState, ChangeEvent } from 'react';
 import { Story, Meta } from '@storybook/react';
-import { SecretInput, Props } from './SecretInput';
+import React, { useState, ChangeEvent } from 'react';
+
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+
+import { SecretInput, Props } from './SecretInput';
 
 export default {
   title: 'Forms/SecretInput',
