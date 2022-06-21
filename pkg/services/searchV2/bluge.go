@@ -9,9 +9,6 @@ import (
 	"time"
 
 	"github.com/blugelabs/bluge"
-	"github.com/blugelabs/bluge/analysis"
-	"github.com/blugelabs/bluge/analysis/token"
-	"github.com/blugelabs/bluge/analysis/tokenizer"
 	"github.com/blugelabs/bluge/search"
 	"github.com/blugelabs/bluge/search/aggregations"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -216,23 +213,6 @@ func getDashboardPanelDocs(dash dashboard, location string) []*bluge.Document {
 		docs = append(docs, doc)
 	}
 	return docs
-}
-
-const ngramEdgeFilterMaxLength = 7
-
-var ngramIndexAnalyzer = &analysis.Analyzer{
-	Tokenizer: tokenizer.NewWhitespaceTokenizer(),
-	TokenFilters: []analysis.TokenFilter{
-		token.NewLowerCaseFilter(),
-		token.NewNgramFilter(1, ngramEdgeFilterMaxLength),
-	},
-}
-
-var ngramQueryAnalyzer = &analysis.Analyzer{
-	Tokenizer: tokenizer.NewWhitespaceTokenizer(),
-	TokenFilters: []analysis.TokenFilter{
-		token.NewLowerCaseFilter(),
-	},
 }
 
 // Names need to be indexed a few ways to support key features

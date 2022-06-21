@@ -512,7 +512,7 @@ func TestDashboardIndex_Panels(t *testing.T) {
 	})
 }
 
-var middleNgramDashboards = []dashboard{
+var punctuationSplitNgramDashboards = []dashboard{
 	{
 		id:  1,
 		uid: "1",
@@ -522,9 +522,28 @@ var middleNgramDashboards = []dashboard{
 	},
 }
 
-func TestDashboardIndex_MiddleNgram(t *testing.T) {
-	t.Run("middle-ngram", func(t *testing.T) {
-		_, reader, _ := initTestIndexFromDashes(t, middleNgramDashboards)
+func TestDashboardIndex_PunctuationNgram(t *testing.T) {
+	t.Run("ngram-punctuation-split", func(t *testing.T) {
+		_, reader, _ := initTestIndexFromDashes(t, punctuationSplitNgramDashboards)
+		checkSearchResponse(t, filepath.Base(t.Name()), reader, testAllowAllFilter,
+			DashboardQuery{Query: "tork"},
+		)
+	})
+}
+
+var camelCaseNgramDashboards = []dashboard{
+	{
+		id:  1,
+		uid: "1",
+		info: &extract.DashboardInfo{
+			Title: "heatTorkel",
+		},
+	},
+}
+
+func TestDashboardIndex_CamelCaseNgram(t *testing.T) {
+	t.Run("ngram-camel-case-split", func(t *testing.T) {
+		_, reader, _ := initTestIndexFromDashes(t, camelCaseNgramDashboards)
 		checkSearchResponse(t, filepath.Base(t.Name()), reader, testAllowAllFilter,
 			DashboardQuery{Query: "tork"},
 		)
