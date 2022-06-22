@@ -14,7 +14,7 @@ const backendSrv = {
 } as unknown as BackendSrv;
 
 jest.mock('../services', () => ({
-  ...(jest.requireActual('../services') as any),
+  ...jest.requireActual('../services'),
   getBackendSrv: () => backendSrv,
   getDataSourceSrv: () => {
     return {

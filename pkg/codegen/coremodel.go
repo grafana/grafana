@@ -227,8 +227,10 @@ func (ls *ExtractedLineage) GenerateTypescriptCoremodel(path string) (WriteDiffe
 	}
 
 	// TODO until cuetsy can toposort its outputs, put the top/parent type at the bottom of the file.
-	parts.Nodes = append(parts.Nodes, top.T, top.D)
-	// parts.Nodes = append([]ts.Decl{top.T, top.D}, parts.Nodes...)
+	parts.Nodes = append(parts.Nodes, top.T)
+	if top.D != nil {
+		parts.Nodes = append(parts.Nodes, top.D)
+	}
 
 	var strb strings.Builder
 	var str string
