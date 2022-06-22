@@ -713,21 +713,18 @@ func TestRouteGetRulesGroupConfig(t *testing.T) {
 			expectedRules := models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withGroupKey(groupKey)))
 			ruleStore.PutRule(context.Background(), expectedRules...)
 
+			request := createRequestContext(orgID, "", map[string]string{
+				":Namespace": folder.Title,
+				":Groupname": groupKey.RuleGroup,
+			})
+
 			t.Run("and return 401 if user does not have access one of rules", func(t *testing.T) {
-				request := createRequestContext(orgID, "", map[string]string{
-					":Namespace": folder.Title,
-					":Groupname": groupKey.RuleGroup,
-				})
 				ac := acMock.New().WithPermissions(createPermissionsForRules(expectedRules[1:]))
 				response := createService(ac, ruleStore, nil).RouteGetRulesGroupConfig(request)
 				require.Equal(t, http.StatusUnauthorized, response.Status())
 			})
 
 			t.Run("and return rules if user has access to all of them", func(t *testing.T) {
-				request := createRequestContext(orgID, "", map[string]string{
-					":Namespace": folder.Title,
-					":Groupname": groupKey.RuleGroup,
-				})
 				ac := acMock.New().WithPermissions(createPermissionsForRules(expectedRules))
 				response := createService(ac, ruleStore, nil).RouteGetRulesGroupConfig(request)
 
