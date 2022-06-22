@@ -1,5 +1,5 @@
+import { cx } from '@emotion/css';
 import { compose } from '@percona/platform-core/dist/shared/validators';
-import { cx } from 'emotion';
 import React, { FC, useMemo } from 'react';
 import { Field } from 'react-final-form';
 

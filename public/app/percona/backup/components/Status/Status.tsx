@@ -1,4 +1,4 @@
-import { cx } from 'emotion';
+import { cx } from '@emotion/css';
 import React, { FC, useMemo } from 'react';
 
 import { useTheme } from '@grafana/ui';

@@ -1,3 +1,4 @@
+import { cx } from '@emotion/css';
 import {
   Modal,
   TextInputField,
@@ -6,7 +7,6 @@ import {
   validators,
   LoaderButton,
 } from '@percona/platform-core';
-import { cx } from 'emotion';
 import React, { FC } from 'react';
 import { withTypes } from 'react-final-form';
 

@@ -1,5 +1,5 @@
+import { cx } from '@emotion/css';
 import { logger } from '@percona/platform-core';
-import { cx } from 'emotion';
 import React, { FC, useEffect, useState } from 'react';
 
 import { Spinner, useTheme, useStyles } from '@grafana/ui';

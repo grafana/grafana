@@ -1,4 +1,4 @@
-import { cx } from 'emotion';
+import { cx } from '@emotion/css';
 import React, { FC } from 'react';
 
 import { Tooltip, useStyles } from '@grafana/ui';

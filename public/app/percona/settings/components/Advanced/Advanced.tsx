@@ -1,5 +1,5 @@
+import { cx } from '@emotion/css';
 import { TextInputField, NumberInputField } from '@percona/platform-core';
-import { cx } from 'emotion';
 import { FormApi } from 'final-form';
 import React, { FC, useState } from 'react';
 import { Field, withTypes } from 'react-final-form';

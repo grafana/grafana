@@ -1,5 +1,5 @@
-import { LoaderButton, NumberInputField, RadioButtonGroupField, logger } from '@percona/platform-core';
-import { cx } from 'emotion';
+import { cx } from '@emotion/css';
+import { logger, NumberInputField, RadioButtonGroupField, LoaderButton } from '@percona/platform-core';
 import React, { FC, useCallback, useState, useMemo, useEffect, useRef } from 'react';
 
 import { HorizontalGroup, Icon, useStyles } from '@grafana/ui';

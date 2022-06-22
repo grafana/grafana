@@ -1,6 +1,6 @@
+import { cx } from '@emotion/css';
 import { TextInputField } from '@percona/platform-core';
-import { cx } from 'emotion';
-import React, { FC, useState, useMemo } from 'react';
+import React, { FC, useMemo, useState } from 'react';
 
 import { Icon, useStyles } from '@grafana/ui';
 

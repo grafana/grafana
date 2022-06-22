@@ -1,4 +1,4 @@
-import { cx } from 'emotion';
+import { cx } from '@emotion/css';
 import React, { FC } from 'react';
 
 import { Spinner } from '@grafana/ui';

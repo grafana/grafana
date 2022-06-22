@@ -1,5 +1,5 @@
 /* eslint-disable react/display-name */
-import { cx } from 'emotion';
+import { cx } from '@emotion/css';
 import React, { FC, useEffect } from 'react';
 import { useRowSelect, useTable } from 'react-table';
 

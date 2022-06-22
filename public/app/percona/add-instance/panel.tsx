@@ -1,11 +1,11 @@
 /* eslint-disable react/display-name */
-import { cx } from 'emotion';
+import { cx } from '@emotion/css';
 import React, { useMemo, useState } from 'react';
 
 import { Button, useStyles } from '@grafana/ui';
 
-import { Databases } from '../../percona/shared/core';
 import PageWrapper from '../shared/components/PageWrapper/PageWrapper';
+import { Databases } from '../shared/core';
 
 import { AddInstance } from './components/AddInstance/AddInstance';
 import AddRemoteInstance from './components/AddRemoteInstance/AddRemoteInstance';
