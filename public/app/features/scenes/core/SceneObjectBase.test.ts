@@ -10,7 +10,7 @@ interface TestItemState extends SceneObjectState {
 
 class TestItem extends SceneObjectBase<TestItemState> {}
 
-describe('SceneItem', () => {
+describe('SceneObject', () => {
   it('Can clone', () => {
     const scene = new TestItem({
       nested: new TestItem({

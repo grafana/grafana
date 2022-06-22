@@ -3,12 +3,15 @@ import { Subscribable } from 'rxjs';
 
 import { PanelData, TimeRange } from '@grafana/data';
 
+import { SceneVariableSet } from '../variables/types';
+
 export interface SceneObjectState {
   key?: string;
   size?: SceneObjectSize;
   $timeRange?: SceneTimeRange;
   $data?: SceneObject<SceneDataState>;
   $editor?: SceneEditor;
+  $variables?: SceneVariableSet;
 }
 
 export interface SceneObjectSize {

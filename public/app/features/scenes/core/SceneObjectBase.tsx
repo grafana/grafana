@@ -22,18 +22,6 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
   subs = new Subscription();
   isMounted?: boolean;
 
-  /**
-   * Used in render functions when rendering a SceneObject.
-   * Wraps the component in an EditWrapper that handles edit mode
-   */
-  get Component(): SceneComponent<this> {
-    return SceneComponentEditWrapper;
-  }
-
-  get Editor(): SceneComponent<this> {
-    return ((this as any).constructor['Editor'] ?? (() => null)) as SceneComponent<this>;
-  }
-
   constructor(state: TState) {
     if (!state.key) {
       state.key = uuidv4();
@@ -42,6 +30,21 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
     this.state = state;
     this.subject.next(state);
     this.setParent();
+  }
+
+  /**
+   * Used in render functions when rendering a SceneObject.
+   * Wraps the component in an EditWrapper that handles edit mode
+   */
+  get Component(): SceneComponent<this> {
+    return SceneComponentEditWrapper;
+  }
+
+  /**
+   * Temporary solution, should be replaced by declarative options
+   */
+  get Editor(): SceneComponent<this> {
+    return ((this as any).constructor['Editor'] ?? (() => null)) as SceneComponent<this>;
   }
 
   private setParent() {
