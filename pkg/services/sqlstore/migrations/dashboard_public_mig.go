@@ -41,12 +41,12 @@ func addPublicDashboardMigration(mg *Migrator) {
 	mg.AddMigration("recreate dashboard public config v1", NewAddTableMigration(dashboardPublicCfgV1))
 	addTableIndicesMigrations(mg, "v1", dashboardPublicCfgV1)
 
-	// Recreate table - schema finalized for public dashboards v1
+	// recreate table - schema finalized for public dashboards v1
 	addDropAllIndicesMigrations(mg, "v2", dashboardPublicCfgV1)
 	mg.AddMigration("Drop public config table", NewDropTableMigration("dashboard_public_config"))
 	mg.AddMigration("Recreate dashboard public config v2", NewAddTableMigration(dashboardPublicCfgV1))
 	addTableIndicesMigrations(mg, "v2", dashboardPublicCfgV1)
 
-	// Rename table
+	// rename table
 	addTableRenameMigration(mg, "dashboard_public_config", "dashboard_public", "v2")
 }
