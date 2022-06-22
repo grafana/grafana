@@ -76,7 +76,7 @@ func TestCalculateChanges(t *testing.T) {
 			require.Equal(t, db, toDelete)
 		}
 		require.Contains(t, changes.AffectedGroups, groupKey)
-		require.Equal(t, inDatabase, changes.AffectedGroups[groupKey])
+		require.Equal(t, models.RulesGroup(inDatabase), changes.AffectedGroups[groupKey])
 	})
 
 	t.Run("should detect alerts that needs to be updated", func(t *testing.T) {
@@ -103,7 +103,7 @@ func TestCalculateChanges(t *testing.T) {
 		require.Empty(t, changes.New)
 
 		require.Contains(t, changes.AffectedGroups, groupKey)
-		require.Equal(t, inDatabase, changes.AffectedGroups[groupKey])
+		require.Equal(t, models.RulesGroup(inDatabase), changes.AffectedGroups[groupKey])
 	})
 
 	t.Run("should include only if there are changes ignoring specific fields", func(t *testing.T) {
@@ -867,7 +867,7 @@ func TestRouteGetRulesGroupConfig(t *testing.T) {
 func TestVerifyProvisionedRulesNotAffected(t *testing.T) {
 	orgID := rand.Int63()
 	group := models.GenerateGroupKey(orgID)
-	affectedGroups := make(map[models.AlertRuleGroupKey][]*models.AlertRule)
+	affectedGroups := make(map[models.AlertRuleGroupKey]models.RulesGroup)
 	var allRules []*models.AlertRule
 	{
 		rules := models.GenerateAlertRules(rand.Intn(3)+1, models.AlertRuleGen(withGroupKey(group)))
@@ -950,7 +950,7 @@ func TestCalculateAutomaticChanges(t *testing.T) {
 		// simulate adding new rules, updating a few existing and delete some from the same rule
 		ch := &changes{
 			GroupKey: group,
-			AffectedGroups: map[models.AlertRuleGroupKey][]*models.AlertRule{
+			AffectedGroups: map[models.AlertRuleGroupKey]models.RulesGroup{
 				group: copies,
 			},
 			New:    models.GenerateAlertRules(2, models.AlertRuleGen(withGroupKey(group))),
@@ -962,7 +962,7 @@ func TestCalculateAutomaticChanges(t *testing.T) {
 
 		require.NotEqual(t, ch, result)
 		require.Equal(t, ch.GroupKey, result.GroupKey)
-		require.Equal(t, map[models.AlertRuleGroupKey][]*models.AlertRule{
+		require.Equal(t, map[models.AlertRuleGroupKey]models.RulesGroup{
 			group: rules,
 		}, result.AffectedGroups)
 		require.Equal(t, ch.New, result.New)
@@ -1005,7 +1005,7 @@ func TestCalculateAutomaticChanges(t *testing.T) {
 		// simulate moving a rule from one group to another.
 		ch := &changes{
 			GroupKey: group,
-			AffectedGroups: map[models.AlertRuleGroupKey][]*models.AlertRule{
+			AffectedGroups: map[models.AlertRuleGroupKey]models.RulesGroup{
 				group:  rules,
 				group2: shuffled,
 			},

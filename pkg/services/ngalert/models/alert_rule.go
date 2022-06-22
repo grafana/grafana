@@ -303,7 +303,7 @@ type ListAlertRulesQuery struct {
 	DashboardUID string
 	PanelID      int64
 
-	Result []*AlertRule
+	Result RulesGroup
 }
 
 type GetAlertRulesForSchedulingQuery struct {
