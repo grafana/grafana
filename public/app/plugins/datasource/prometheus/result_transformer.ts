@@ -301,7 +301,7 @@ function getDataLinks(options: ExemplarTraceIdDestination): DataLink[] {
         datasourceUid: options.datasourceUid,
         datasourceName: dsSettings?.name ?? 'Data source not found',
       },
-      ...(!!dsSettings ? {} : { tooltip: 'Data source not found or configured incorrectly' }),
+      ...(dsSettings ? {} : { error: 'Data source not found or configured incorrectly' }),
     });
   }
 

@@ -4,8 +4,8 @@ import React from 'react';
 import { Field, GrafanaTheme, LinkModel } from '@grafana/data';
 
 import { useStyles } from '../../themes';
+import { Badge } from '../Badge/Badge';
 import { Icon } from '../Icon/Icon';
-import { Tooltip } from '../Tooltip';
 
 import { DataLinkButton } from './DataLinkButton';
 
@@ -20,7 +20,11 @@ export function FieldLinkList({ links }: Props) {
   const styles = useStyles(getStyles);
 
   if (links.length === 1) {
-    return <DataLinkButton link={links[0]} />;
+    return (
+      <MaybeErrorBadge link={links[0]}>
+        <DataLinkButton link={links[0]} />
+      </MaybeErrorBadge>
+    );
   }
 
   const externalLinks = links.filter((link) => link.target === '_blank');
@@ -29,40 +33,40 @@ export function FieldLinkList({ links }: Props) {
   return (
     <>
       {internalLinks.map((link, i) => {
-        return <DataLinkButton key={i} link={link} />;
+        return (
+          <MaybeErrorBadge link={link} key={i}>
+            <DataLinkButton link={link} />
+          </MaybeErrorBadge>
+        );
       })}
       <div className={styles.wrapper}>
         <p className={styles.externalLinksHeading}>External links</p>
         {externalLinks.map((link, i) => (
-          <MaybeTooltipWrapper tooltip={link.tooltip} key={i}>
+          <MaybeErrorBadge link={link} key={i}>
             <a href={link.href} target={link.target} className={styles.externalLink}>
               <Icon name="external-link-alt" />
               {link.title}
             </a>
-          </MaybeTooltipWrapper>
+          </MaybeErrorBadge>
         ))}
       </div>
     </>
   );
 }
 
-interface MaybeTooltipWrapperProp {
-  tooltip?: string;
-}
+type MaybeErrorBadgeProps = {
+  link: LinkModel<Field>;
+};
 
 /**
  * @internal
  */
-const MaybeTooltipWrapper: React.FC<MaybeTooltipWrapperProp> = (props) => {
-  const { tooltip, children } = props;
-  if (!tooltip) {
-    return <>{children}</>;
-  }
-
-  return (
-    <Tooltip content={tooltip}>
-      <div>{children}</div>
-    </Tooltip>
+const MaybeErrorBadge: React.FC<MaybeErrorBadgeProps> = (props) => {
+  const { link, children } = props;
+  return link.origin.config.links && link.origin.config.links[0].error ? (
+    <Badge text={link.title} tooltip={link.error} color="red" icon="external-link-alt" />
+  ) : (
+    <>{children}</>
   );
 };
 
@@ -70,6 +74,7 @@ const getStyles = (theme: GrafanaTheme) => ({
   wrapper: css`
     flex-basis: 150px;
     width: 100px;
+    border: solid 2px red;
     margin-top: ${theme.spacing.sm};
   `,
   externalLinksHeading: css`
