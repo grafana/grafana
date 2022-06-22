@@ -3,14 +3,14 @@ import pluralize from 'pluralize';
 import React, { FC, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { LoadingPlaceholder, Pagination, useStyles2 } from '@grafana/ui';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
 import { usePagination } from '../../hooks/usePagination';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
+import { getPaginationStyles } from '../../styles/pagination';
 import { getRulesDataSources, getRulesSourceUid } from '../../utils/datasource';
-import { AlertRulePagination } from '../AlertRulePagination';
 
 import { RulesGroup } from './RulesGroup';
 import { useCombinedGroupNamespace } from './useCombinedGroupNamespace';
@@ -22,6 +22,7 @@ interface Props {
 
 export const CloudRules: FC<Props> = ({ namespaces, expandAll }) => {
   const styles = useStyles2(getStyles);
+
   const rules = useUnifiedAlertingSelector((state) => state.promRules);
   const rulesDataSources = useMemo(getRulesDataSources, []);
   const groupsWithNamespaces = useCombinedGroupNamespace(namespaces);
@@ -63,7 +64,8 @@ export const CloudRules: FC<Props> = ({ namespaces, expandAll }) => {
       })}
       {namespaces?.length === 0 && !!rulesDataSources.length && <p>No rules found.</p>}
       {!rulesDataSources.length && <p>There are no Prometheus or Loki data sources configured.</p>}
-      <AlertRulePagination
+      <Pagination
+        className={styles.pagination}
         currentPage={page}
         numberOfPages={numberOfPages}
         onNavigate={onPageChange}
@@ -84,4 +86,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
     margin-bottom: ${theme.spacing(4)};
   `,
+  pagination: getPaginationStyles(theme),
 });

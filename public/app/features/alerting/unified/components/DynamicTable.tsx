@@ -2,11 +2,10 @@ import { css, cx } from '@emotion/css';
 import React, { ReactNode, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { IconButton, useStyles2 } from '@grafana/ui';
+import { IconButton, Pagination, useStyles2 } from '@grafana/ui';
 
 import { usePagination } from '../hooks/usePagination';
-
-import { AlertRulePagination } from './AlertRulePagination';
+import { getPaginationStyles } from '../styles/pagination';
 
 interface DynamicTablePagination {
   itemsPerPage: number;
@@ -72,6 +71,8 @@ export const DynamicTable = <T extends object>({
   renderPrefixHeader,
   footerRow,
 }: DynamicTableProps<T>) => {
+  const defaultPaginationStyles = useStyles2(getPaginationStyles);
+
   if ((onCollapse || onExpand || isExpanded) && !(onCollapse && onExpand && isExpanded)) {
     throw new Error('either all of onCollapse, onExpand, isExpanded must be provided, or none');
   }
@@ -146,8 +147,8 @@ export const DynamicTable = <T extends object>({
         {footerRow && <div className={cx(styles.row, styles.footerRow)}>{footerRow}</div>}
       </div>
       {pagination && (
-        <AlertRulePagination
-          className={paginationStyles}
+        <Pagination
+          className={cx(defaultPaginationStyles, paginationStyles)}
           currentPage={page}
           numberOfPages={numberOfPages}
           onNavigate={onPageChange}
