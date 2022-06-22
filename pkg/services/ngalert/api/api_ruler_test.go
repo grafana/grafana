@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -75,7 +76,7 @@ func TestCalculateChanges(t *testing.T) {
 			require.Equal(t, db, toDelete)
 		}
 		require.Contains(t, changes.AffectedGroups, groupKey)
-		require.Equal(t, inDatabase, changes.AffectedGroups[groupKey])
+		require.Equal(t, models.RulesGroup(inDatabase), changes.AffectedGroups[groupKey])
 	})
 
 	t.Run("should detect alerts that needs to be updated", func(t *testing.T) {
@@ -102,7 +103,7 @@ func TestCalculateChanges(t *testing.T) {
 		require.Empty(t, changes.New)
 
 		require.Contains(t, changes.AffectedGroups, groupKey)
-		require.Equal(t, inDatabase, changes.AffectedGroups[groupKey])
+		require.Equal(t, models.RulesGroup(inDatabase), changes.AffectedGroups[groupKey])
 	})
 
 	t.Run("should include only if there are changes ignoring specific fields", func(t *testing.T) {
@@ -658,6 +659,49 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 		}
 		require.True(t, found)
 	})
+	t.Run("should enforce order of rules in the group", func(t *testing.T) {
+		orgID := rand.Int63()
+		folder := randFolder()
+		ruleStore := store.NewFakeRuleStore(t)
+		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
+		groupKey := models.GenerateGroupKey(orgID)
+		groupKey.NamespaceUID = folder.Uid
+
+		expectedRules := models.GenerateAlertRules(rand.Intn(5)+5, models.AlertRuleGen(withGroupKey(groupKey), models.WithUniqueGroupIndex()))
+		ruleStore.PutRule(context.Background(), expectedRules...)
+		ac := acMock.New().WithDisabled()
+
+		response := createService(ac, ruleStore, nil).RouteGetNamespaceRulesConfig(createRequestContext(orgID, models2.ROLE_VIEWER, map[string]string{
+			":Namespace": folder.Title,
+		}))
+
+		require.Equal(t, http.StatusAccepted, response.Status())
+		result := &apimodels.NamespaceConfigResponse{}
+		require.NoError(t, json.Unmarshal(response.Body(), result))
+		require.NotNil(t, result)
+
+		models.RulesGroup(expectedRules).SortByGroupIndex()
+
+		require.Contains(t, *result, folder.Title)
+		groups := (*result)[folder.Title]
+		require.Len(t, groups, 1)
+		group := groups[0]
+		require.Equal(t, groupKey.RuleGroup, group.Name)
+		for i, actual := range groups[0].Rules {
+			expected := expectedRules[i]
+			if actual.GrafanaManagedAlert.UID != expected.UID {
+				var actualUIDs []string
+				var expectedUIDs []string
+				for _, rule := range group.Rules {
+					actualUIDs = append(actualUIDs, rule.GrafanaManagedAlert.UID)
+				}
+				for _, rule := range expectedRules {
+					expectedUIDs = append(expectedUIDs, rule.UID)
+				}
+				require.Fail(t, fmt.Sprintf("rules are not sorted by group index. Expected: %v. Actual: %v", expectedUIDs, actualUIDs))
+			}
+		}
+	})
 }
 
 func TestRouteGetRulesConfig(t *testing.T) {
@@ -698,6 +742,48 @@ func TestRouteGetRulesConfig(t *testing.T) {
 			})
 		})
 	})
+
+	t.Run("should return rules in group sorted by group index", func(t *testing.T) {
+		orgID := rand.Int63()
+		folder := randFolder()
+		ruleStore := store.NewFakeRuleStore(t)
+		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
+		groupKey := models.GenerateGroupKey(orgID)
+		groupKey.NamespaceUID = folder.Uid
+
+		expectedRules := models.GenerateAlertRules(rand.Intn(5)+5, models.AlertRuleGen(withGroupKey(groupKey), models.WithUniqueGroupIndex()))
+		ruleStore.PutRule(context.Background(), expectedRules...)
+		ac := acMock.New().WithDisabled()
+
+		response := createService(ac, ruleStore, nil).RouteGetRulesConfig(createRequestContext(orgID, models2.ROLE_VIEWER, nil))
+
+		require.Equal(t, http.StatusOK, response.Status())
+		result := &apimodels.NamespaceConfigResponse{}
+		require.NoError(t, json.Unmarshal(response.Body(), result))
+		require.NotNil(t, result)
+
+		models.RulesGroup(expectedRules).SortByGroupIndex()
+
+		require.Contains(t, *result, folder.Title)
+		groups := (*result)[folder.Title]
+		require.Len(t, groups, 1)
+		group := groups[0]
+		require.Equal(t, groupKey.RuleGroup, group.Name)
+		for i, actual := range groups[0].Rules {
+			expected := expectedRules[i]
+			if actual.GrafanaManagedAlert.UID != expected.UID {
+				var actualUIDs []string
+				var expectedUIDs []string
+				for _, rule := range group.Rules {
+					actualUIDs = append(actualUIDs, rule.GrafanaManagedAlert.UID)
+				}
+				for _, rule := range expectedRules {
+					expectedUIDs = append(expectedUIDs, rule.UID)
+				}
+				require.Fail(t, fmt.Sprintf("rules are not sorted by group index. Expected: %v. Actual: %v", expectedUIDs, actualUIDs))
+			}
+		}
+	})
 }
 
 func TestRouteGetRulesGroupConfig(t *testing.T) {
@@ -736,12 +822,52 @@ func TestRouteGetRulesGroupConfig(t *testing.T) {
 			})
 		})
 	})
+
+	t.Run("should return rules in group sorted by group index", func(t *testing.T) {
+		orgID := rand.Int63()
+		folder := randFolder()
+		ruleStore := store.NewFakeRuleStore(t)
+		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
+		groupKey := models.GenerateGroupKey(orgID)
+		groupKey.NamespaceUID = folder.Uid
+
+		expectedRules := models.GenerateAlertRules(rand.Intn(5)+5, models.AlertRuleGen(withGroupKey(groupKey), models.WithUniqueGroupIndex()))
+		ruleStore.PutRule(context.Background(), expectedRules...)
+		ac := acMock.New().WithDisabled()
+
+		response := createService(ac, ruleStore, nil).RouteGetRulesGroupConfig(createRequestContext(orgID, models2.ROLE_VIEWER, map[string]string{
+			":Namespace": folder.Title,
+			":Groupname": groupKey.RuleGroup,
+		}))
+
+		require.Equal(t, http.StatusAccepted, response.Status())
+		result := &apimodels.RuleGroupConfigResponse{}
+		require.NoError(t, json.Unmarshal(response.Body(), result))
+		require.NotNil(t, result)
+
+		models.RulesGroup(expectedRules).SortByGroupIndex()
+
+		for i, actual := range result.Rules {
+			expected := expectedRules[i]
+			if actual.GrafanaManagedAlert.UID != expected.UID {
+				var actualUIDs []string
+				var expectedUIDs []string
+				for _, rule := range result.Rules {
+					actualUIDs = append(actualUIDs, rule.GrafanaManagedAlert.UID)
+				}
+				for _, rule := range expectedRules {
+					expectedUIDs = append(expectedUIDs, rule.UID)
+				}
+				require.Fail(t, fmt.Sprintf("rules are not sorted by group index. Expected: %v. Actual: %v", expectedUIDs, actualUIDs))
+			}
+		}
+	})
 }
 
 func TestVerifyProvisionedRulesNotAffected(t *testing.T) {
 	orgID := rand.Int63()
 	group := models.GenerateGroupKey(orgID)
-	affectedGroups := make(map[models.AlertRuleGroupKey][]*models.AlertRule)
+	affectedGroups := make(map[models.AlertRuleGroupKey]models.RulesGroup)
 	var allRules []*models.AlertRule
 	{
 		rules := models.GenerateAlertRules(rand.Intn(3)+1, models.AlertRuleGen(withGroupKey(group)))
@@ -796,6 +922,141 @@ func TestVerifyProvisionedRulesNotAffected(t *testing.T) {
 
 		result := verifyProvisionedRulesNotAffected(context.Background(), provenanceStore, orgID, ch)
 		require.NoError(t, result)
+	})
+}
+
+func TestCalculateAutomaticChanges(t *testing.T) {
+	orgID := rand.Int63()
+
+	t.Run("should mark all rules in affected groups", func(t *testing.T) {
+		group := models.GenerateGroupKey(orgID)
+		rules := models.GenerateAlertRules(10, models.AlertRuleGen(withGroupKey(group)))
+		// copy rules to make sure that the function does not modify the original rules
+		copies := make([]*models.AlertRule, 0, len(rules))
+		for _, rule := range rules {
+			copies = append(copies, models.CopyRule(rule))
+		}
+
+		var updates []ruleUpdate
+		for i := 0; i < 5; i++ {
+			ruleCopy := models.CopyRule(copies[i])
+			ruleCopy.Title += util.GenerateShortUID()
+			updates = append(updates, ruleUpdate{
+				Existing: copies[i],
+				New:      ruleCopy,
+			})
+		}
+
+		// simulate adding new rules, updating a few existing and delete some from the same rule
+		ch := &changes{
+			GroupKey: group,
+			AffectedGroups: map[models.AlertRuleGroupKey]models.RulesGroup{
+				group: copies,
+			},
+			New:    models.GenerateAlertRules(2, models.AlertRuleGen(withGroupKey(group))),
+			Update: updates,
+			Delete: rules[5:7],
+		}
+
+		result := calculateAutomaticChanges(ch)
+
+		require.NotEqual(t, ch, result)
+		require.Equal(t, ch.GroupKey, result.GroupKey)
+		require.Equal(t, map[models.AlertRuleGroupKey]models.RulesGroup{
+			group: rules,
+		}, result.AffectedGroups)
+		require.Equal(t, ch.New, result.New)
+		require.Equal(t, rules[5:7], result.Delete)
+		var expected []ruleUpdate
+		expected = append(expected, updates...)
+		// all rules that were not updated directly by user should be added to the
+		for _, rule := range rules[7:] {
+			expected = append(expected, ruleUpdate{
+				Existing: rule,
+				New:      rule,
+			})
+		}
+		require.Equal(t, expected, result.Update)
+	})
+
+	t.Run("should re-index rules in affected groups other than updated", func(t *testing.T) {
+		group := models.GenerateGroupKey(orgID)
+		rules := models.GenerateAlertRules(3, models.AlertRuleGen(withGroupKey(group), models.WithSequentialGroupIndex()))
+		group2 := models.GenerateGroupKey(orgID)
+		rules2 := models.GenerateAlertRules(4, models.AlertRuleGen(withGroupKey(group2), models.WithSequentialGroupIndex()))
+
+		movedIndex := rand.Intn(len(rules2) - 1)
+		movedRule := rules2[movedIndex]
+		copyRule := models.CopyRule(movedRule)
+		copyRule.RuleGroup = group.RuleGroup
+		copyRule.NamespaceUID = group.NamespaceUID
+		copyRule.RuleGroupIndex = len(rules)
+		update := ruleUpdate{
+			Existing: movedRule,
+			New:      copyRule,
+		}
+
+		shuffled := make([]*models.AlertRule, 0, len(rules2))
+		copy(shuffled, rules2)
+		rand.Shuffle(len(shuffled), func(i, j int) {
+			shuffled[i], shuffled[j] = shuffled[j], shuffled[i]
+		})
+
+		// simulate moving a rule from one group to another.
+		ch := &changes{
+			GroupKey: group,
+			AffectedGroups: map[models.AlertRuleGroupKey]models.RulesGroup{
+				group:  rules,
+				group2: shuffled,
+			},
+			Update: []ruleUpdate{
+				update,
+			},
+		}
+
+		result := calculateAutomaticChanges(ch)
+
+		require.NotEqual(t, ch, result)
+		require.Equal(t, ch.GroupKey, result.GroupKey)
+		require.Equal(t, ch.AffectedGroups, result.AffectedGroups)
+		require.Equal(t, ch.New, result.New)
+		require.Equal(t, ch.Delete, result.Delete)
+
+		require.Equal(t, ch.Update, result.Update[0:1])
+
+		require.Contains(t, result.Update, update)
+		for _, rule := range rules {
+			assert.Containsf(t, result.Update, ruleUpdate{
+				Existing: rule,
+				New:      rule,
+			}, "automatic changes expected to contain all rules of the updated group")
+		}
+
+		// calculate expected index of the rules in the source group after the move
+		expectedReindex := make(map[string]int, len(rules2)-1)
+		idx := 1
+		for _, rule := range rules2 {
+			if rule.UID == movedRule.UID {
+				continue
+			}
+			expectedReindex[rule.UID] = idx
+			idx++
+		}
+
+		for _, upd := range result.Update {
+			expectedIdx, ok := expectedReindex[upd.Existing.UID]
+			if !ok {
+				continue
+			}
+			diff := upd.Existing.Diff(upd.New)
+			if upd.Existing.RuleGroupIndex != expectedIdx {
+				require.Lenf(t, diff, 1, fmt.Sprintf("the rule in affected group should be re-indexed to %d but it still has index %d. Moved rule with index %d", expectedIdx, upd.Existing.RuleGroupIndex, movedIndex))
+				require.Equal(t, "RuleGroupIndex", diff[0].Path)
+				require.Equal(t, expectedIdx, upd.New.RuleGroupIndex)
+			} else {
+				require.Empty(t, diff)
+			}
+		}
 	})
 }
 

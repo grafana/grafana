@@ -502,7 +502,18 @@ def build_plugins_step(edition, sign=False):
 
 
 def test_backend_step(edition):
-    if edition == 'oss':
+    if edition == 'enterprise2':
+        return {
+            'name': 'test-backend' + enterprise2_suffix(edition),
+            'image': build_image,
+            'depends_on': [
+                'wire-install',
+            ],
+            'commands': [
+                'go test -tags=pro -covermode=atomic -timeout=30m ./pkg/...',
+            ],
+        }
+    else:
         return {
             'name': 'test-backend' + enterprise2_suffix(edition),
             'image': build_image,
@@ -513,41 +524,20 @@ def test_backend_step(edition):
                 'go test -short -covermode=atomic -timeout=30m ./pkg/...',
             ],
         }
-    else:
-        return {
-            'name': 'test-backend' + enterprise2_suffix(edition),
-            'image': build_image,
-            'depends_on': [
-                'wire-install',
-            ],
-            'commands': [
-                './bin/grabpl test-backend --edition {}'.format(edition),
-            ],
-        }
+
+
 
 def test_backend_integration_step(edition):
-    if edition == 'oss':
-        return {
-            'name': 'test-backend-integration',
-            'image': build_image,
-            'depends_on': [
-                'wire-install',
-            ],
-            'commands': [
-                'go test -run Integration -covermode=atomic -timeout=30m ./pkg/...',
-            ],
-        }
-    else:
-        return {
-            'name': 'test-backend-integration' + enterprise2_suffix(edition),
-            'image': build_image,
-            'depends_on': [
-                'wire-install',
-            ],
-            'commands': [
-                './bin/grabpl integration-tests --edition {}'.format(edition),
-            ],
-        }
+    return {
+        'name': 'test-backend-integration',
+        'image': build_image,
+        'depends_on': [
+            'wire-install',
+        ],
+        'commands': [
+            'go test -run Integration -covermode=atomic -timeout=30m ./pkg/...',
+        ],
+    }
 
 
 
@@ -869,7 +859,6 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, trigger=None):
 
 
 def postgres_integration_tests_step(edition, ver_mode):
-    deps = []
     cmds = [
             'apt-get update',
             'apt-get install -yq postgresql-client',
@@ -878,17 +867,12 @@ def postgres_integration_tests_step(edition, ver_mode):
             'devenv/docker/blocks/postgres_tests/setup.sql',
             # Make sure that we don't use cached results for another database
             'go clean -testcache',
+            "go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=30m {}'",
         ]
-    if edition == 'oss':
-        deps.extend(['wire-install'])
-        cmds.extend(["go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=30m {}'"])
-    else:
-        deps.extend(['grabpl'])
-        cmds.extend(['./bin/grabpl integration-tests --database postgres'])
     return {
         'name': 'postgres-integration-tests',
         'image': build_image,
-        'depends_on': deps,
+        'depends_on': ['wire-install'],
         'environment': {
             'PGPASSWORD': 'grafanatest',
             'GRAFANA_TEST_DB': 'postgres',
@@ -899,7 +883,6 @@ def postgres_integration_tests_step(edition, ver_mode):
 
 
 def mysql_integration_tests_step(edition, ver_mode):
-    deps = []
     cmds = [
             'apt-get update',
             'apt-get install -yq default-mysql-client',
@@ -907,17 +890,12 @@ def mysql_integration_tests_step(edition, ver_mode):
             'cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass',
             # Make sure that we don't use cached results for another database
             'go clean -testcache',
+            "go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=30m {}'",
         ]
-    if edition == 'oss':
-        deps.extend(['wire-install'])
-        cmds.extend(["go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=30m {}'"])
-    else:
-        deps.extend(['grabpl'])
-        cmds.extend(['./bin/grabpl integration-tests --database mysql'])
     return {
         'name': 'mysql-integration-tests',
         'image': build_image,
-        'depends_on': deps,
+        'depends_on': ['wire-install'],
         'environment': {
             'GRAFANA_TEST_DB': 'mysql',
             'MYSQL_HOST': 'mysql',
@@ -930,7 +908,7 @@ def redis_integration_tests_step():
     return {
         'name': 'redis-integration-tests',
         'image': build_image,
-        'depends_on': ['init-enterprise'],
+        'depends_on': ['wire-install'],
         'environment': {
             'REDIS_URL': 'redis://redis:6379/0',
         },
@@ -945,7 +923,7 @@ def memcached_integration_tests_step():
     return {
         'name': 'memcached-integration-tests',
         'image': build_image,
-        'depends_on': ['init-enterprise'],
+        'depends_on': ['wire-install'],
         'environment': {
             'MEMCACHED_HOSTS': 'memcached:11211',
         },
@@ -1170,10 +1148,14 @@ def get_windows_steps(edition, ver_mode):
 
     return steps
 
-def verify_gen_cue_step():
+def verify_gen_cue_step(edition):
+    deps = []
+    if edition == "enterprise":
+        deps.extend(['init-enterprise'])
     return {
         'name': 'verify-gen-cue',
         'image': build_image,
+        'depends_on': deps,
         'commands': [
             '# It is required that code generated from Thema/CUE be committed and in sync with its inputs.',
             '# The following command will fail if running code generators produces any diff in output.',
