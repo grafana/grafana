@@ -387,6 +387,8 @@ function heatmap(xs: number[], ys: number[], opts?: HeatmapOpts) {
   let maxX = xSorted ? xs[len - 1] : -Infinity;
   let maxY = ySorted ? ys[len - 1] : -Infinity;
 
+  let yExp = opts?.yLog;
+
   for (let i = 0; i < len; i++) {
     if (!xSorted) {
       minX = Math.min(minX, xs[i]);
@@ -394,15 +396,11 @@ function heatmap(xs: number[], ys: number[], opts?: HeatmapOpts) {
     }
 
     if (!ySorted) {
-      minY = Math.min(minY, ys[i]);
-      maxY = Math.max(maxY, ys[i]);
+      if (!yExp || ys[i] > 0) {
+        minY = Math.min(minY, ys[i]);
+        maxY = Math.max(maxY, ys[i]);
+      }
     }
-  }
-
-  let yExp = opts?.yLog;
-
-  if (yExp && (minY <= 0 || maxY <= 0)) {
-    throw 'Log Y axes cannot have values <= 0';
   }
 
   //let scaleX = opts?.xLog === 10 ? Math.log10 : opts?.xLog === 2 ? Math.log2 : (v: number) => v;
@@ -466,6 +464,10 @@ function heatmap(xs: number[], ys: number[], opts?: HeatmapOpts) {
   let [xs2, ys2, counts] = initBins(xBinQty, yBinQty, minXBin, xBinIncr, minYBin, yBinIncr, yExp);
 
   for (let i = 0; i < len; i++) {
+    if (yExp && ys[i] <= 0) {
+      continue;
+    }
+
     const xi = (binX(xs[i]) - minXBin) / xBinIncr;
     const yi = (binY(ys[i]) - minYBin) / yBinIncr;
     const ci = xi * yBinQty + yi;
