@@ -1,6 +1,6 @@
 /* eslint-disable react/jsx-no-undef */
 import { css } from '@emotion/css';
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { FixedSizeList } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
 
@@ -28,7 +28,7 @@ export const SearchResultsCards = React.memo(
   }: SearchResultsProps) => {
     const styles = useStyles2(getStyles);
     const infiniteLoaderRef = useRef<InfiniteLoader>(null);
-    const listRef = useRef<FixedSizeList>(null);
+    const [listEl, setListEl] = useState<FixedSizeList | null>(null);
     const highlightIndex = useSearchKeyboardNavigation(keyboardEvents, 0, response);
 
     // Scroll to the top and clear loader cache when the query results change
@@ -36,10 +36,10 @@ export const SearchResultsCards = React.memo(
       if (infiniteLoaderRef.current) {
         infiniteLoaderRef.current.resetloadMoreItemsCache();
       }
-      if (listRef.current) {
-        listRef.current.scrollTo(0);
+      if (listEl) {
+        listEl.scrollTo(0);
       }
-    }, [response]);
+    }, [response, listEl]);
 
     const onToggleChecked = useCallback(
       (item: DashboardSectionItem) => {
@@ -88,7 +88,7 @@ export const SearchResultsCards = React.memo(
           };
         }
         return (
-          <div style={style} key={item.uid} className={className}>
+          <div style={style} key={item.uid} className={className} role="row">
             <SearchItem
               item={v}
               onTagSelected={onTagSelected}
@@ -110,16 +110,19 @@ export const SearchResultsCards = React.memo(
     }
 
     return (
-      <div aria-label="Search result cards" style={{ width }}>
+      <div aria-label="Search results list" style={{ width }} role="list">
         <InfiniteLoader
           ref={infiniteLoaderRef}
           isItemLoaded={response.isItemLoaded}
           itemCount={response.totalRows}
           loadMoreItems={response.loadMoreItems}
         >
-          {({ onItemsRendered }) => (
+          {({ onItemsRendered, ref }) => (
             <FixedSizeList
-              ref={listRef}
+              ref={(innerRef) => {
+                ref(innerRef);
+                setListEl(innerRef);
+              }}
               onItemsRendered={onItemsRendered}
               height={height}
               itemCount={response.totalRows}
