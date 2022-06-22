@@ -1,7 +1,7 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
 grabpl_version = 'v2.9.50'
-build_image = 'grafana/build-container:1.5.5'
+build_image = 'grafana/build-container:1.5.7'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
 alpine_image = 'alpine:3.15'
@@ -927,12 +927,10 @@ def mysql_integration_tests_step(edition, ver_mode):
 
 
 def redis_integration_tests_step():
-    deps = []
-    deps.extend(['grabpl'])
     return {
         'name': 'redis-integration-tests',
         'image': build_image,
-        'depends_on': deps,
+        'depends_on': ['init-enterprise'],
         'environment': {
             'REDIS_URL': 'redis://redis:6379/0',
         },
@@ -944,12 +942,10 @@ def redis_integration_tests_step():
 
 
 def memcached_integration_tests_step():
-    deps = []
-    deps.extend(['grabpl'])
     return {
         'name': 'memcached-integration-tests',
         'image': build_image,
-        'depends_on': deps,
+        'depends_on': ['init-enterprise'],
         'environment': {
             'MEMCACHED_HOSTS': 'memcached:11211',
         },

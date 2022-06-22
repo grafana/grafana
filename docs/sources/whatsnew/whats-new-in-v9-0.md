@@ -17,9 +17,9 @@ weight: -33
 
 # What’s new in Grafana v9.0
 
-As tradition goes, GrafanaCon - our yearly community event for Grafana open source users, is also where we launch the latest software release of Grafana. Keeping up with tradition, we are excited to be announcing Grafana v9.0 - a release that elevates Grafana’s ease of use, discovery of data through new and improved visualizations and a default Grafana Alerting experience.
+As tradition goes, GrafanaCon — our yearly community event for Grafana open source users — is also where we launch the latest software release of Grafana. Keeping up with tradition, we are excited to be announcing Grafana v9.0: a release that elevates Grafana’s ease of use, discovery of data through new and improved visualizations and a default Grafana Alerting experience.
 
-A big focus for Grafana is making observability and data visualization and analytics easier and more accessible for everyone. For popular data sources like Prometheus and Loki writing and understanding queries can be hard. This is why we are excited to announce that Grafana 9 comes with new visual query builders for both these data sources. These visual query builders will lower the barrier of entry and they help anyone to compose, understand and learn how the underlying query languages.
+A big focus for Grafana is making observability and data visualization and analytics easier and more accessible for everyone. For popular data sources like Prometheus and Loki, writing and understanding queries can be hard. This is why we are excited to announce that Grafana 9 comes with new visual query builders for both these data sources. These visual query builders will lower the barrier of entry and they help anyone to compose, understand and learn how the underlying query languages.
 
 The release also includes a brand-new powerful and fast heatmap visualization, a more accessible navigation menu, improvements to dashboard search, advanced security and authentication features, and more.
 
@@ -41,11 +41,11 @@ All functions, aggregations and binary operations are added via the + Operation 
 
 ### Range vector
 
-The query builder will automatically mange and add the range vector, it will be shown as a parameter to the operations that require a range (rate, delta, increase etc).
+The query builder will automatically mange and add the range selector. It will be shown as a parameter to the operations that require a range vector (rate, delta, increase, etc).
 
 ### Binary operations
 
-Simple binary operations like multiple or divide by scaler are represented via simple operation boxes like other functions but the builder also supports binary operations on nested query expressions.
+Simple binary operations like multiplication or division by a scalar are represented via simple operation boxes like other functions. The builder also supports binary operations on nested query expressions.
 
 ### Switch between code and builder
 
@@ -214,7 +214,7 @@ In the InfluxDB data source, browser access mode was deprecated in grafana 8.0.0
 
 ### Transformations: Allow more complex regex expressions in rename by regex
 
-The rename by regex transformation has been improved to allow global patterns of the form `/<stringToReplace>/g`. Depending on the regex match used, this may cause some transformations to behave slightly differently. You can guarantee the same behavior as before by wrapping the match string in forward slashes (/), for example, (._) would become /(._)/. ([Github Issue #48179](https://github.com/grafana/grafana/pull/48179))
+The rename by regex transformation has been improved to allow global patterns of the form `/<stringToReplace>/g`. Depending on the regex match used, this may cause some transformations to behave slightly differently. You can guarantee the same behavior as before by wrapping the match string in forward slashes (`/`), for example, `(.*)` would become `/(.*)/`. ([Github Issue #48179](https://github.com/grafana/grafana/pull/48179))
 
 ### Clock Panel
 
