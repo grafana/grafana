@@ -38,7 +38,6 @@ export interface DashboardMeta {
   fromFile?: boolean;
   hasUnsavedFolderChange?: boolean;
   annotationsPermissions?: AnnotationsPermissions;
-  isPublic?: boolean;
   publicDashboardAccessToken?: string;
 }
 
