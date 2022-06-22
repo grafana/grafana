@@ -83,6 +83,7 @@ func GrafanaJavascriptAgentLogMessageHandler(store *frontendlogging.SourceMapSto
 		}
 		if event.Exceptions != nil && len(event.Exceptions) > 0 {
 			for _, exception := range event.Exceptions {
+				exception := exception
 				transformedException := frontendlogging.TransformException(&exception, store)
 				ctx = append(ctx, "exception", transformedException.String())
 				ctx = append(ctx, "original_timestamp", exception.Timestamp)

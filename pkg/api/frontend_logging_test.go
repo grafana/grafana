@@ -387,9 +387,7 @@ func TestFrontendLoggingEndpointSentry(t *testing.T) {
 func TestFrontendLoggingEndpointGrafanaJavascriptAgent(t *testing.T) {
 	ts, err := time.Parse("2006-01-02T15:04:05.000Z", "2020-10-22T06:29:29.078Z")
 	require.NoError(t, err)
-
 	t.Run("FrontendLoggingEndpointGrafanaJavascriptAgent", func(t *testing.T) {
-
 		user := frontendlogging.User{
 			Email: "test@example.com",
 			ID:    "45",
