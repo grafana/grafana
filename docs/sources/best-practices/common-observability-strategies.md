@@ -1,10 +1,17 @@
-+++
-aliases = ["/docs/grafana/latest/best-practices/common-observability-strategies/", "/docs/grafana/latest/getting-started/strategies/"]
-description = "Common observability strategies"
-keywords = ["grafana", "intro", "guide", "concepts", "methods"]
-title = "Common observability strategies"
-weight = 300
-+++
+---
+aliases:
+  - /docs/grafana/latest/best-practices/common-observability-strategies/
+  - /docs/grafana/latest/getting-started/strategies/
+description: Common observability strategies
+keywords:
+  - grafana
+  - intro
+  - guide
+  - concepts
+  - methods
+title: Common observability strategies
+weight: 300
+---
 
 # Common observability strategies
 

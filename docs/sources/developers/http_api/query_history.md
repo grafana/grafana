@@ -1,9 +1,16 @@
-+++
-aliases = ["/docs/grafana/latest/developers/http_api/query_history/", "/docs/grafana/latest/http_api/query_history/"]
-description = "Grafana Query History HTTP API"
-keywords = ["grafana", "http", "documentation", "api", "queryHistory"]
-title = "Query History HTTP API "
-+++
+---
+aliases:
+  - /docs/grafana/latest/developers/http_api/query_history/
+  - /docs/grafana/latest/http_api/query_history/
+description: Grafana Query History HTTP API
+keywords:
+  - grafana
+  - http
+  - documentation
+  - api
+  - queryHistory
+title: 'Query History HTTP API '
+---
 
 # Query history API
 
@@ -75,7 +82,8 @@ Status codes:
 
 - **200** – OK
 - **400** - Errors (invalid JSON, missing or invalid fields)
-- **500** – Unable to add query to the database
+- **401** – Unauthorized
+- **500** – Internal error
 
 ## Query history search
 
@@ -137,7 +145,8 @@ Content-Type: application/json
 Status codes:
 
 - **200** – OK
-- **500** – Unable to add query to the database
+- **401** – Unauthorized
+- **500** – Internal error
 
 ## Delete query from Query history by UID
 
@@ -169,7 +178,8 @@ Content-Type: application/json
 Status codes:
 
 - **200** – OK
-- **500** – Unable to delete query from the database
+- **401** – Unauthorized
+- **500** – Internal error
 
 ## Update comment of query in Query history by UID
 
@@ -225,7 +235,8 @@ Status codes:
 
 - **200** – OK
 - **400** - Errors (invalid JSON, missing or invalid fields)
-- **500** – Unable to update comment of query in the database
+- **401** – Unauthorized
+- **500** – Internal error
 
 ## Star query in Query history
 
@@ -273,7 +284,8 @@ Content-Type: application/json
 Status codes:
 
 - **200** – OK
-- **500** – Unable to star query in the database
+- **401** – Unauthorized
+- **500** – Internal error
 
 ## Unstar query in Query history
 
@@ -321,4 +333,64 @@ Content-Type: application/json
 Status codes:
 
 - **200** – OK
-- **500** – Unable to unstar query in the database
+- **401** – Unauthorized
+- **500** – Internal error
+
+## Migrate queries to Query history
+
+`POST /api/query-history/migrate`
+
+Migrates multiple queries in to query history.
+
+**Example request:**
+
+```http
+POST /api/query-history HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+{
+  "queries": [
+    {
+      "datasourceUid": "PE1C5CBDA0504A6A3",
+      "queries": [
+        {
+          "refId": "A",
+          "key": "Q-87fed8e3-62ba-4eb2-8d2a-4129979bb4de-0",
+          "scenarioId": "csv_content",
+          "datasource": {
+              "type": "testdata",
+              "uid": "PD8C576611E62080A"
+          }
+        }
+      ],
+      "starred": false,
+      "createdAt": 1643630762,
+      "comment": "debugging"
+    }
+  ]
+}
+```
+
+JSON body schema:
+
+- **queries** – JSON of query history items.
+
+**Example response:**
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+{
+  "message": "Query history successfully migrated",
+  "totalCount": 105,
+  "starredCount": 10
+}
+```
+
+Status codes:
+
+- **200** – OK
+- **400** - Errors (invalid JSON, missing or invalid fields)
+- **401** – Unauthorized
+- **500** – Internal error

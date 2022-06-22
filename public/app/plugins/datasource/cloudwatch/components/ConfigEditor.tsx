@@ -116,7 +116,9 @@ function useTimoutValidation(value: string | undefined) {
           rangeUtil.describeInterval(value);
           setErr(undefined);
         } catch (e) {
-          setErr(e.toString());
+          if (e instanceof Error) {
+            setErr(e.toString());
+          }
         }
       } else {
         setErr(undefined);

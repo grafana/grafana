@@ -7,13 +7,16 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 
@@ -29,18 +32,23 @@ type ScheduleService interface {
 	// an error. The scheduler is terminated when this function returns.
 	Run(context.Context) error
 	// UpdateAlertRule notifies scheduler that a rule has been changed
-	UpdateAlertRule(key models.AlertRuleKey)
+	UpdateAlertRule(key ngmodels.AlertRuleKey)
+	// UpdateAlertRulesByNamespaceUID notifies scheduler that all rules in a namespace should be updated.
+	UpdateAlertRulesByNamespaceUID(ctx context.Context, orgID int64, uid string) error
 	// DeleteAlertRule notifies scheduler that a rule has been changed
-	DeleteAlertRule(key models.AlertRuleKey)
+	DeleteAlertRule(key ngmodels.AlertRuleKey)
 	// the following are used by tests only used for tests
-	evalApplied(models.AlertRuleKey, time.Time)
-	stopApplied(models.AlertRuleKey)
+	evalApplied(ngmodels.AlertRuleKey, time.Time)
+	stopApplied(ngmodels.AlertRuleKey)
 	overrideCfg(cfg SchedulerCfg)
+
+	folderUpdateHandler(ctx context.Context, evt *events.FolderUpdated) error
 }
 
 //go:generate mockery --name AlertsSender --structname FakeAlertsSender --inpackage --filename alerts_sender_mock.go --with-expecter
+// AlertsSender is an interface for a service that is responsible for sending notifications to the end-user
 type AlertsSender interface {
-	Send(key models.AlertRuleKey, alerts definitions.PostableAlerts) error
+	Send(key ngmodels.AlertRuleKey, alerts definitions.PostableAlerts) error
 }
 
 type schedule struct {
@@ -48,7 +56,7 @@ type schedule struct {
 	baseInterval time.Duration
 
 	// each alert rule gets its own channel and routine
-	registry alertRuleRegistry
+	registry alertRuleInfoRegistry
 
 	maxAttempts int64
 
@@ -59,12 +67,12 @@ type schedule struct {
 	// evalApplied is only used for tests: test code can set it to non-nil
 	// function, and then it'll be called from the event loop whenever the
 	// message from evalApplied is handled.
-	evalAppliedFunc func(models.AlertRuleKey, time.Time)
+	evalAppliedFunc func(ngmodels.AlertRuleKey, time.Time)
 
 	// stopApplied is only used for tests: test code can set it to non-nil
 	// function, and then it'll be called from the event loop whenever the
 	// message from stopApplied is handled.
-	stopAppliedFunc func(models.AlertRuleKey)
+	stopAppliedFunc func(ngmodels.AlertRuleKey)
 
 	log log.Logger
 
@@ -81,9 +89,18 @@ type schedule struct {
 
 	metrics *metrics.Scheduler
 
+	notifier        AlertsSender
 	disabledOrgs    map[int64]struct{}
 	minRuleInterval time.Duration
-	notifier        AlertsSender
+
+	// schedulableAlertRules contains the alert rules that are considered for
+	// evaluation in the current tick. The evaluation of an alert rule in the
+	// current tick depends on its evaluation interval and when it was
+	// last evaluated.
+	schedulableAlertRules schedulableAlertRulesRegistry
+
+	// bus is used to hook into events that should cause rule updates.
+	bus bus.Bus
 }
 
 // SchedulerCfg is the scheduler configuration.
@@ -91,9 +108,9 @@ type SchedulerCfg struct {
 	C               clock.Clock
 	BaseInterval    time.Duration
 	Logger          log.Logger
-	EvalAppliedFunc func(models.AlertRuleKey, time.Time)
+	EvalAppliedFunc func(ngmodels.AlertRuleKey, time.Time)
 	MaxAttempts     int64
-	StopAppliedFunc func(models.AlertRuleKey)
+	StopAppliedFunc func(ngmodels.AlertRuleKey)
 	Evaluator       eval.Evaluator
 	RuleStore       store.RuleStore
 	OrgStore        store.OrgStore
@@ -105,36 +122,43 @@ type SchedulerCfg struct {
 }
 
 // NewScheduler returns a new schedule.
-func NewScheduler(cfg SchedulerCfg, expressionService *expr.Service, appURL *url.URL, stateManager *state.Manager) *schedule {
+func NewScheduler(cfg SchedulerCfg, expressionService *expr.Service, appURL *url.URL, stateManager *state.Manager, bus bus.Bus) *schedule {
 	ticker := alerting.NewTicker(cfg.C, cfg.BaseInterval, cfg.Metrics.Ticker)
 
 	sch := schedule{
-		registry:          alertRuleRegistry{alertRuleInfo: make(map[models.AlertRuleKey]*alertRuleInfo)},
-		maxAttempts:       cfg.MaxAttempts,
-		clock:             cfg.C,
-		baseInterval:      cfg.BaseInterval,
-		log:               cfg.Logger,
-		ticker:            ticker,
-		evalAppliedFunc:   cfg.EvalAppliedFunc,
-		stopAppliedFunc:   cfg.StopAppliedFunc,
-		evaluator:         cfg.Evaluator,
-		ruleStore:         cfg.RuleStore,
-		instanceStore:     cfg.InstanceStore,
-		orgStore:          cfg.OrgStore,
-		expressionService: expressionService,
-		metrics:           cfg.Metrics,
-		appURL:            appURL,
-		stateManager:      stateManager,
-		disabledOrgs:      cfg.DisabledOrgs,
-		minRuleInterval:   cfg.MinRuleInterval,
-		notifier:          cfg.AlertSender,
+		registry:              alertRuleInfoRegistry{alertRuleInfo: make(map[ngmodels.AlertRuleKey]*alertRuleInfo)},
+		maxAttempts:           cfg.MaxAttempts,
+		clock:                 cfg.C,
+		baseInterval:          cfg.BaseInterval,
+		log:                   cfg.Logger,
+		ticker:                ticker,
+		evalAppliedFunc:       cfg.EvalAppliedFunc,
+		stopAppliedFunc:       cfg.StopAppliedFunc,
+		evaluator:             cfg.Evaluator,
+		ruleStore:             cfg.RuleStore,
+		instanceStore:         cfg.InstanceStore,
+		orgStore:              cfg.OrgStore,
+		expressionService:     expressionService,
+		metrics:               cfg.Metrics,
+		appURL:                appURL,
+		stateManager:          stateManager,
+		disabledOrgs:          cfg.DisabledOrgs,
+		minRuleInterval:       cfg.MinRuleInterval,
+		schedulableAlertRules: schedulableAlertRulesRegistry{rules: make(map[ngmodels.AlertRuleKey]*ngmodels.SchedulableAlertRule)},
+		bus:                   bus,
+		notifier:              cfg.AlertSender,
 	}
+
+	bus.AddEventListener(sch.folderUpdateHandler)
+
 	return &sch
 }
 
 func (sch *schedule) Run(ctx context.Context) error {
 	var wg sync.WaitGroup
 	wg.Add(1)
+
+	defer sch.ticker.Stop()
 
 	go func() {
 		defer wg.Done()
@@ -148,7 +172,7 @@ func (sch *schedule) Run(ctx context.Context) error {
 }
 
 // UpdateAlertRule looks for the active rule evaluation and commands it to update the rule
-func (sch *schedule) UpdateAlertRule(key models.AlertRuleKey) {
+func (sch *schedule) UpdateAlertRule(key ngmodels.AlertRuleKey) {
 	ruleInfo, err := sch.registry.get(key)
 	if err != nil {
 		return
@@ -156,15 +180,48 @@ func (sch *schedule) UpdateAlertRule(key models.AlertRuleKey) {
 	ruleInfo.update()
 }
 
+// UpdateAlertRulesByNamespaceUID looks for the active rule evaluation for every rule in the given namespace and commands it to update the rule.
+func (sch *schedule) UpdateAlertRulesByNamespaceUID(ctx context.Context, orgID int64, uid string) error {
+	q := ngmodels.ListAlertRulesQuery{
+		OrgID:         orgID,
+		NamespaceUIDs: []string{uid},
+	}
+	if err := sch.ruleStore.ListAlertRules(ctx, &q); err != nil {
+		return err
+	}
+
+	for _, r := range q.Result {
+		sch.UpdateAlertRule(ngmodels.AlertRuleKey{
+			OrgID: orgID,
+			UID:   r.UID,
+		})
+	}
+
+	return nil
+}
+
 // DeleteAlertRule stops evaluation of the rule, deletes it from active rules, and cleans up state cache.
-func (sch *schedule) DeleteAlertRule(key models.AlertRuleKey) {
+func (sch *schedule) DeleteAlertRule(key ngmodels.AlertRuleKey) {
+	// It can happen that the scheduler has deleted the alert rule before the
+	// Ruler API has called DeleteAlertRule. This can happen as requests to
+	// the Ruler API do not hold an exclusive lock over all scheduler operations.
+	if _, ok := sch.schedulableAlertRules.del(key); !ok {
+		sch.log.Info("alert rule cannot be removed from the scheduler as it is not scheduled", "uid", key.UID, "org_id", key.OrgID)
+	}
+
+	// Delete the rule routine
 	ruleInfo, ok := sch.registry.del(key)
 	if !ok {
-		sch.log.Info("unable to delete alert rule routine information by key", "uid", key.UID, "org_id", key.OrgID)
+		sch.log.Info("alert rule cannot be stopped as it is not running", "uid", key.UID, "org_id", key.OrgID)
 		return
 	}
 	// stop rule evaluation
 	ruleInfo.stop()
+
+	// Our best bet at this point is that we update the metrics with what we hope to schedule in the next tick.
+	alertRules := sch.schedulableAlertRules.all()
+	sch.metrics.SchedulableAlertRules.Set(float64(len(alertRules)))
+	sch.metrics.SchedulableAlertRulesHash.Set(float64(hashUIDs(alertRules)))
 }
 
 func (sch *schedule) schedulePeriodic(ctx context.Context) error {
@@ -185,7 +242,11 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 				disabledOrgs = append(disabledOrgs, disabledOrg)
 			}
 
-			alertRules := sch.getAlertRules(ctx, disabledOrgs)
+			if err := sch.updateSchedulableAlertRules(ctx, disabledOrgs); err != nil {
+				sch.log.Error("scheduler failed to update alert rules", "err", err)
+			}
+			alertRules := sch.schedulableAlertRules.all()
+
 			sch.log.Debug("alert rules fetched", "count", len(alertRules), "disabled_orgs", disabledOrgs)
 
 			// registeredDefinitions is a map used for finding deleted alert rules
@@ -194,8 +255,14 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 			// so, at the end, the remaining registered alert rules are the deleted ones
 			registeredDefinitions := sch.registry.keyMap()
 
+			// While these are the rules that we iterate over, at the moment there's no 100% guarantee that they'll be
+			// scheduled as rules could be removed before we get a chance to evaluate them.
+			sch.metrics.SchedulableAlertRules.Set(float64(len(alertRules)))
+			sch.metrics.SchedulableAlertRulesHash.Set(float64(hashUIDs(alertRules)))
+
 			type readyToRunItem struct {
-				key      models.AlertRuleKey
+				key      ngmodels.AlertRuleKey
+				ruleName string
 				ruleInfo *alertRuleInfo
 				version  int64
 			}
@@ -229,7 +296,7 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 
 				itemFrequency := item.IntervalSeconds / int64(sch.baseInterval.Seconds())
 				if item.IntervalSeconds != 0 && tickNum%itemFrequency == 0 {
-					readyToRun = append(readyToRun, readyToRunItem{key: key, ruleInfo: ruleInfo, version: itemVersion})
+					readyToRun = append(readyToRun, readyToRunItem{key: key, ruleName: item.Title, ruleInfo: ruleInfo, version: itemVersion})
 				}
 
 				// remove the alert rule from the registered alert rules
@@ -245,9 +312,15 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 				item := readyToRun[i]
 
 				time.AfterFunc(time.Duration(int64(i)*step), func() {
-					success := item.ruleInfo.eval(tick, item.version)
+					success, dropped := item.ruleInfo.eval(tick, item.version)
 					if !success {
-						sch.log.Debug("Scheduled evaluation was canceled because evaluation routine was stopped", "uid", item.key.UID, "org", item.key.OrgID, "time", tick)
+						sch.log.Debug("scheduled evaluation was canceled because evaluation routine was stopped", "uid", item.key.UID, "org", item.key.OrgID, "time", tick)
+						return
+					}
+					if dropped != nil {
+						sch.log.Warn("Alert rule evaluation is too slow - dropped tick", "uid", item.key.UID, "org", item.key.OrgID, "time", tick)
+						orgID := fmt.Sprint(item.key.OrgID)
+						sch.metrics.EvaluationMissed.WithLabelValues(orgID, item.ruleName).Inc()
 					}
 				})
 			}
@@ -276,7 +349,8 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 	}
 }
 
-func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRuleKey, evalCh <-chan *evaluation, updateCh <-chan struct{}) error {
+//nolint: gocyclo
+func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertRuleKey, evalCh <-chan *evaluation, updateCh <-chan struct{}) error {
 	logger := sch.log.New("uid", key.UID, "org", key.OrgID)
 	logger.Debug("alert rule routine started")
 
@@ -295,8 +369,8 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 		}
 	}
 
-	updateRule := func(ctx context.Context, oldRule *models.AlertRule) (*models.AlertRule, error) {
-		q := models.GetAlertRuleByUIDQuery{OrgID: key.OrgID, UID: key.UID}
+	updateRule := func(ctx context.Context, oldRule *ngmodels.AlertRule) (*ngmodels.AlertRule, error) {
+		q := ngmodels.GetAlertRuleByUIDQuery{OrgID: key.OrgID, UID: key.UID}
 		err := sch.ruleStore.GetAlertRuleByUID(ctx, &q)
 		if err != nil {
 			logger.Error("failed to fetch alert rule", "err", err)
@@ -305,14 +379,34 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 		if oldRule != nil && oldRule.Version < q.Result.Version {
 			clearState()
 		}
+
+		user := &models.SignedInUser{
+			UserId:  0,
+			OrgRole: models.ROLE_ADMIN,
+			OrgId:   key.OrgID,
+		}
+
+		folder, err := sch.ruleStore.GetNamespaceByUID(ctx, q.Result.NamespaceUID, q.Result.OrgID, user)
+		if err != nil {
+			logger.Error("failed to fetch alert rule namespace", "err", err)
+			return nil, err
+		}
+
+		if q.Result.Labels == nil {
+			q.Result.Labels = make(map[string]string)
+		} else if val, ok := q.Result.Labels[ngmodels.FolderTitleLabel]; ok {
+			logger.Warn("alert rule contains protected label, value will be overwritten", "label", ngmodels.FolderTitleLabel, "value", val)
+		}
+		q.Result.Labels[ngmodels.FolderTitleLabel] = folder.Title
+
 		return q.Result, nil
 	}
 
-	evaluate := func(ctx context.Context, r *models.AlertRule, attempt int64, e *evaluation) error {
+	evaluate := func(ctx context.Context, r *ngmodels.AlertRule, attempt int64, e *evaluation) error {
 		logger := logger.New("version", r.Version, "attempt", attempt, "now", e.scheduledAt)
 		start := sch.clock.Now()
 
-		condition := models.Condition{
+		condition := ngmodels.Condition{
 			Condition: r.Condition,
 			OrgID:     r.OrgID,
 			Data:      r.Data,
@@ -329,7 +423,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 		}
 		logger.Debug("alert rule evaluated", "results", results, "duration", dur)
 
-		processedStates := sch.stateManager.ProcessEvalResults(ctx, r, results)
+		processedStates := sch.stateManager.ProcessEvalResults(ctx, e.scheduledAt, r, results)
 		sch.saveAlertStates(ctx, processedStates)
 		alerts := FromAlertStateToPostableAlerts(processedStates, sch.stateManager, sch.appURL)
 		err = sch.notifier.Send(key, alerts)
@@ -352,7 +446,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 	}
 
 	evalRunning := false
-	var currentRule *models.AlertRule
+	var currentRule *ngmodels.AlertRule
 	defer sch.stopApplied(key)
 	for {
 		select {
@@ -369,12 +463,12 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 				return nil
 			})
 			if err != nil {
-				logger.Error("updating rule failed after all retries", "error", err)
+				logger.Error("updating rule failed after all retries", "err", err)
 			}
 		// evalCh - used by the scheduler to signal that evaluation is needed.
 		case ctx, ok := <-evalCh:
 			if !ok {
-				logger.Debug("Evaluation channel has been closed. Exiting")
+				logger.Debug("evaluation channel has been closed. Exiting")
 				return nil
 			}
 			if evalRunning {
@@ -415,11 +509,11 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 func (sch *schedule) saveAlertStates(ctx context.Context, states []*state.State) {
 	sch.log.Debug("saving alert states", "count", len(states))
 	for _, s := range states {
-		cmd := models.SaveAlertInstanceCommand{
+		cmd := ngmodels.SaveAlertInstanceCommand{
 			RuleOrgID:         s.OrgID,
 			RuleUID:           s.AlertRuleUID,
-			Labels:            models.InstanceLabels(s.Labels),
-			State:             models.InstanceStateType(s.State.String()),
+			Labels:            ngmodels.InstanceLabels(s.Labels),
+			State:             ngmodels.InstanceStateType(s.State.String()),
 			StateReason:       s.StateReason,
 			LastEvalTime:      s.LastEvaluationTime,
 			CurrentStateSince: s.StartsAt,
@@ -432,17 +526,23 @@ func (sch *schedule) saveAlertStates(ctx context.Context, states []*state.State)
 	}
 }
 
+// folderUpdateHandler listens for folder update events and updates all rules in the given folder.
+func (sch *schedule) folderUpdateHandler(ctx context.Context, evt *events.FolderUpdated) error {
+	return sch.UpdateAlertRulesByNamespaceUID(ctx, evt.OrgID, evt.UID)
+}
+
 // overrideCfg is only used on tests.
 func (sch *schedule) overrideCfg(cfg SchedulerCfg) {
 	sch.clock = cfg.C
 	sch.baseInterval = cfg.BaseInterval
+	sch.ticker.Stop()
 	sch.ticker = alerting.NewTicker(cfg.C, cfg.BaseInterval, cfg.Metrics.Ticker)
 	sch.evalAppliedFunc = cfg.EvalAppliedFunc
 	sch.stopAppliedFunc = cfg.StopAppliedFunc
 }
 
 // evalApplied is only used on tests.
-func (sch *schedule) evalApplied(alertDefKey models.AlertRuleKey, now time.Time) {
+func (sch *schedule) evalApplied(alertDefKey ngmodels.AlertRuleKey, now time.Time) {
 	if sch.evalAppliedFunc == nil {
 		return
 	}
@@ -451,7 +551,7 @@ func (sch *schedule) evalApplied(alertDefKey models.AlertRuleKey, now time.Time)
 }
 
 // stopApplied is only used on tests.
-func (sch *schedule) stopApplied(alertDefKey models.AlertRuleKey) {
+func (sch *schedule) stopApplied(alertDefKey ngmodels.AlertRuleKey) {
 	if sch.stopAppliedFunc == nil {
 		return
 	}

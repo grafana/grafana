@@ -8,6 +8,8 @@ import (
 	"path"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
+	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/queryhistory"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -20,25 +22,30 @@ import (
 )
 
 func ProvideService(cfg *setting.Cfg, serverLockService *serverlock.ServerLockService,
-	shortURLService shorturls.Service, store sqlstore.Store, queryHistoryService queryhistory.Service) *CleanUpService {
+	shortURLService shorturls.Service, store sqlstore.Store, queryHistoryService queryhistory.Service,
+	dashboardVersionService dashver.Service, dashSnapSvc dashboardsnapshots.Service) *CleanUpService {
 	s := &CleanUpService{
-		Cfg:                 cfg,
-		ServerLockService:   serverLockService,
-		ShortURLService:     shortURLService,
-		QueryHistoryService: queryHistoryService,
-		store:               store,
-		log:                 log.New("cleanup"),
+		Cfg:                      cfg,
+		ServerLockService:        serverLockService,
+		ShortURLService:          shortURLService,
+		QueryHistoryService:      queryHistoryService,
+		store:                    store,
+		log:                      log.New("cleanup"),
+		dashboardVersionService:  dashboardVersionService,
+		dashboardSnapshotService: dashSnapSvc,
 	}
 	return s
 }
 
 type CleanUpService struct {
-	log                 log.Logger
-	store               sqlstore.Store
-	Cfg                 *setting.Cfg
-	ServerLockService   *serverlock.ServerLockService
-	ShortURLService     shorturls.Service
-	QueryHistoryService queryhistory.Service
+	log                      log.Logger
+	store                    sqlstore.Store
+	Cfg                      *setting.Cfg
+	ServerLockService        *serverlock.ServerLockService
+	ShortURLService          shorturls.Service
+	QueryHistoryService      queryhistory.Service
+	dashboardVersionService  dashver.Service
+	dashboardSnapshotService dashboardsnapshots.Service
 }
 
 func (srv *CleanUpService) Run(ctx context.Context) error {
@@ -132,8 +139,8 @@ func (srv *CleanUpService) shouldCleanupTempFile(filemtime time.Time, now time.T
 }
 
 func (srv *CleanUpService) deleteExpiredSnapshots(ctx context.Context) {
-	cmd := models.DeleteExpiredSnapshotsCommand{}
-	if err := srv.store.DeleteExpiredSnapshots(ctx, &cmd); err != nil {
+	cmd := dashboardsnapshots.DeleteExpiredSnapshotsCommand{}
+	if err := srv.dashboardSnapshotService.DeleteExpiredSnapshots(ctx, &cmd); err != nil {
 		srv.log.Error("Failed to delete expired snapshots", "error", err.Error())
 	} else {
 		srv.log.Debug("Deleted expired snapshots", "rows affected", cmd.DeletedRows)
@@ -141,8 +148,8 @@ func (srv *CleanUpService) deleteExpiredSnapshots(ctx context.Context) {
 }
 
 func (srv *CleanUpService) deleteExpiredDashboardVersions(ctx context.Context) {
-	cmd := models.DeleteExpiredVersionsCommand{}
-	if err := srv.store.DeleteExpiredVersions(ctx, &cmd); err != nil {
+	cmd := dashver.DeleteExpiredVersionsCommand{}
+	if err := srv.dashboardVersionService.DeleteExpired(ctx, &cmd); err != nil {
 		srv.log.Error("Failed to delete expired dashboard versions", "error", err.Error())
 	} else {
 		srv.log.Debug("Deleted old/expired dashboard versions", "rows affected", cmd.DeletedRows)

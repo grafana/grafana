@@ -20,7 +20,7 @@ export const MappingsConfiguration = (props: Props): JSX.Element => {
       <h3 className="page-heading">Label mappings</h3>
       {!props.showHelp && (
         <p>
-          <Button variant="link" onClick={props.onRestoreHelp}>
+          <Button fill="text" onClick={props.onRestoreHelp}>
             Learn how label mappings work
           </Button>
         </p>

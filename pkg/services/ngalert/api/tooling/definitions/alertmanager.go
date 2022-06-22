@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/go-openapi/strfmt"
@@ -626,8 +627,8 @@ func (c *GettableUserConfig) GetGrafanaReceiverMap() map[string]*GettableGrafana
 }
 
 type GettableApiAlertingConfig struct {
-	Config `yaml:",inline"`
-
+	Config              `yaml:",inline"`
+	MuteTimeProvenances map[string]models.Provenance `yaml:"muteTimeProvenances,omitempty" json:"muteTimeProvenances,omitempty"`
 	// Override with our superset receiver type
 	Receivers []*GettableApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
 }
@@ -727,7 +728,7 @@ func (r *Route) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return r.validateChild()
 }
 
-// Return an alertmanager route from a Grafana route. The ObjectMatchers are converted to Matchers.
+// AsAMRoute returns an Alertmanager route from a Grafana route. The ObjectMatchers are converted to Matchers.
 func (r *Route) AsAMRoute() *config.Route {
 	amRoute := &config.Route{
 		Receiver:          r.Receiver,
@@ -753,7 +754,7 @@ func (r *Route) AsAMRoute() *config.Route {
 	return amRoute
 }
 
-// Return a Grafana route from an alertmanager route. The Matchers are converted to ObjectMatchers.
+// AsGrafanaRoute returns a Grafana route from an Alertmanager route. The Matchers are converted to ObjectMatchers.
 func AsGrafanaRoute(r *config.Route) *Route {
 	gRoute := &Route{
 		Receiver:          r.Receiver,
@@ -1212,6 +1213,22 @@ func (m *ObjectMatchers) UnmarshalYAML(unmarshal func(interface{}) error) error 
 			return fmt.Errorf("unsupported match type %q in matcher", rawMatcher[1])
 		}
 
+		// When Prometheus serializes a matcher, the value gets wrapped in quotes:
+		// https://github.com/prometheus/alertmanager/blob/main/pkg/labels/matcher.go#L77
+		// Remove these quotes so that we are matching against the right value.
+		//
+		// This is a stop-gap solution which will be superceded by https://github.com/grafana/grafana/issues/50040.
+		//
+		// The ngalert migration converts matchers into the Prom-style, quotes included.
+		// The UI then stores the quotes into ObjectMatchers without removing them.
+		// This approach allows these extra quotes to be stored in the database, and fixes them at read time.
+		// This works because the database stores matchers as JSON text.
+		//
+		// There is a subtle bug here, where users might intentionally add quotes to matchers. This method can remove such quotes.
+		// Since ObjectMatchers will be deprecated entirely, this bug will go away naturally with time.
+		rawMatcher[2] = strings.TrimPrefix(rawMatcher[2], "\"")
+		rawMatcher[2] = strings.TrimSuffix(rawMatcher[2], "\"")
+
 		matcher, err := labels.NewMatcher(matchType, rawMatcher[0], rawMatcher[2])
 		if err != nil {
 			return err
@@ -1242,6 +1259,9 @@ func (m *ObjectMatchers) UnmarshalJSON(data []byte) error {
 		default:
 			return fmt.Errorf("unsupported match type %q in matcher", rawMatcher[1])
 		}
+
+		rawMatcher[2] = strings.TrimPrefix(rawMatcher[2], "\"")
+		rawMatcher[2] = strings.TrimSuffix(rawMatcher[2], "\"")
 
 		matcher, err := labels.NewMatcher(matchType, rawMatcher[0], rawMatcher[2])
 		if err != nil {

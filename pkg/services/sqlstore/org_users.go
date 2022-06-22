@@ -112,7 +112,8 @@ func (ss *SQLStore) GetOrgUsers(ctx context.Context, query *models.GetOrgUsersQu
 		if query.User == nil {
 			ss.log.Warn("Query user not set for filtering.")
 		}
-		if ss.Cfg.IsEnterprise && !accesscontrol.IsDisabled(ss.Cfg) {
+
+		if !query.DontEnforceAccessControl && !accesscontrol.IsDisabled(ss.Cfg) {
 			acFilter, err := accesscontrol.Filter(query.User, "org_user.user_id", "users:id:", accesscontrol.ActionOrgUsersRead)
 			if err != nil {
 				return err

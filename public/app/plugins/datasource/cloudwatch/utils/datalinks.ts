@@ -16,10 +16,12 @@ export async function addDataLinksToLogsResponse(
   request: DataQueryRequest<CloudWatchQuery>,
   range: TimeRange,
   replaceFn: ReplaceFn,
+  getVariableValueFn: (value: string, scopedVars: ScopedVars) => string[],
   getRegion: (region: string) => string,
   tracingDatasourceUid?: string
 ): Promise<void> {
   const replace = (target: string, fieldName?: string) => replaceFn(target, request.scopedVars, true, fieldName);
+  const getVariableValue = (target: string) => getVariableValueFn(target, request.scopedVars);
 
   for (const dataFrame of response.data as DataFrame[]) {
     const curTarget = request.targets.find((target) => target.refId === dataFrame.refId) as CloudWatchLogsQuery;
@@ -35,7 +37,7 @@ export async function addDataLinksToLogsResponse(
       } else {
         // Right now we add generic link to open the query in xray console to every field so it shows in the logs row
         // details. Unfortunately this also creates link for all values inside table which look weird.
-        field.config.links = [createAwsConsoleLink(curTarget, range, interpolatedRegion, replace)];
+        field.config.links = [createAwsConsoleLink(curTarget, range, interpolatedRegion, replace, getVariableValue)];
       }
     }
   }
@@ -65,10 +67,11 @@ function createAwsConsoleLink(
   target: CloudWatchLogsQuery,
   range: TimeRange,
   region: string,
-  replace: (target: string, fieldName?: string) => string
+  replace: (target: string, fieldName?: string) => string,
+  getVariableValue: (value: string) => string[]
 ) {
   const interpolatedExpression = target.expression ? replace(target.expression) : '';
-  const interpolatedGroups = target.logGroupNames?.map((logGroup: string) => replace(logGroup, 'log groups')) ?? [];
+  const interpolatedGroups = target.logGroupNames?.flatMap(getVariableValue) ?? [];
 
   const urlProps: AwsUrl = {
     end: range.to.toISOString(),

@@ -48,7 +48,7 @@ func benchmarkFilter(b *testing.B, numDs, numPermissions int) {
 	}
 }
 
-func setupFilterBenchmark(b *testing.B, numDs, numPermissions int) (*sqlstore.SQLStore, []*accesscontrol.Permission) {
+func setupFilterBenchmark(b *testing.B, numDs, numPermissions int) (*sqlstore.SQLStore, []accesscontrol.Permission) {
 	b.Helper()
 	store := sqlstore.InitTestDB(b)
 
@@ -64,9 +64,9 @@ func setupFilterBenchmark(b *testing.B, numDs, numPermissions int) (*sqlstore.SQ
 		numPermissions = numDs
 	}
 
-	permissions := make([]*accesscontrol.Permission, 0, numPermissions)
+	permissions := make([]accesscontrol.Permission, 0, numPermissions)
 	for i := 1; i <= numPermissions; i++ {
-		permissions = append(permissions, &accesscontrol.Permission{
+		permissions = append(permissions, accesscontrol.Permission{
 			Action: "datasources:read",
 			Scope:  accesscontrol.Scope("datasources", "id", strconv.Itoa(i)),
 		})

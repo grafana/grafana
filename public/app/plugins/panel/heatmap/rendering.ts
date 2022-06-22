@@ -5,7 +5,6 @@ import { find, isEmpty, isNaN, isNil, isString, map, max, min, toNumber } from '
 import {
   dateTimeFormat,
   formattedValueToString,
-  getColorForTheme,
   getValueFormat,
   LegacyGraphHoverClearEvent,
   LegacyGraphHoverEvent,
@@ -450,7 +449,7 @@ export class HeatmapRenderer {
           return formattedValueToString(v);
         }
       } catch (err) {
-        console.error(err.message || err);
+        console.error(err instanceof Error ? err.message : err);
       }
       return value;
     };
@@ -660,7 +659,7 @@ export class HeatmapRenderer {
 
   getCardColor(d: { count: any }) {
     if (this.panel.color.mode === 'opacity') {
-      return getColorForTheme(this.panel.color.cardColor, config.theme);
+      return config.theme.visualization.getColorByName(this.panel.color.cardColor);
     } else {
       return this.colorScale(d.count);
     }

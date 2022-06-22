@@ -3,7 +3,6 @@ package definitions
 import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
 // swagger:route GET /datasources datasources getDatasources
@@ -334,31 +333,7 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:route POST /tsdb/query datasources queryDatasource
-//
-// Query metrics.
-//
-// Please refer to [updated API](#/ds/queryMetricsWithExpressions) instead
-//
-// Queries a data source having backend implementation.
-//
-// Most of Grafana’s builtin data sources have backend implementation.
-//
-// If you are running Grafana Enterprise and have Fine-grained access control enabled
-// you need to have a permission with action: `datasources:query`.
-//
-// Deprecated: true
-//
-// Responses:
-// 200: queryDatasourceResponse
-// 401: unauthorisedError
-// 400: badRequestError
-// 403: forbiddenError
-// 404: notFoundError
-// 500: internalServerError
-
-// swagger:parameters updateDatasourceByID deleteDatasourceByID getDatasourceByID datasourceProxyGETcalls datasourceProxyPOSTcalls datasourceProxyDELETEcalls
-// swagger:parameters enablePermissions disablePermissions getPermissions deletePermissions
+// swagger:parameters updateDatasourceByID datasourceProxyDELETEcalls
 // swagger:parameters checkDatasourceHealthByID fetchDatasourceResourcesByID
 type DatasourceID struct {
 	// in:path
@@ -366,7 +341,31 @@ type DatasourceID struct {
 	DatasourceID string `json:"id"`
 }
 
-// swagger:parameters updateDatasourceByUID deleteDatasourceByUID getDatasourceByUID datasourceProxyGETByUIDcalls datasourceProxyPOSTByUIDcalls datasourceProxyDELETEByUIDcalls
+// swagger:parameters deleteDatasourceByID
+type DeleteDatasourceByIDParams struct {
+	// in:path
+	// required:true
+	DatasourceID string `json:"id"`
+}
+
+// swagger:parameters getDatasourceByID
+type GetDatasourceByIDParams struct {
+	// in:path
+	// required:true
+	DatasourceID string `json:"id"`
+}
+
+// swagger:parameters datasourceProxyGETcalls
+type DatasourceProxyGETcallsParams struct {
+	// in:path
+	// required:true
+	DatasourceProxyRoute string `json:"datasource_proxy_route"`
+	// in:path
+	// required:true
+	DatasourceID string `json:"id"`
+}
+
+// swagger:parameters datasourceProxyDELETEByUIDcalls
 // swagger:parameters checkDatasourceHealth fetchDatasourceResources
 type DatasourceUID struct {
 	// in:path
@@ -374,15 +373,53 @@ type DatasourceUID struct {
 	DatasourceUID string `json:"uid"`
 }
 
-// swagger:parameters getDatasourceByName deleteDatasourceByName getDatasourceIdByName
-type DatasourceName struct {
+// swagger:parameters deleteDatasourceByUID
+type DeleteDatasourceByUIDParams struct {
+	// in:path
+	// required:true
+	DatasourceUID string `json:"uid"`
+}
+
+// swagger:parameters getDatasourceByUID
+type GetDatasourceByUIDParams struct {
+	// in:path
+	// required:true
+	DatasourceUID string `json:"uid"`
+}
+
+// swagger:parameters datasourceProxyGETByUIDcalls
+type DatasourceProxyGETByUIDcallsParams struct {
+	// in:path
+	// required:true
+	DatasourceProxyRoute string `json:"datasource_proxy_route"`
+	// in:path
+	// required:true
+	DatasourceUID string `json:"uid"`
+}
+
+// swagger:parameters getDatasourceByName
+type GetDatasourceByNameParams struct {
 	// in:path
 	// required:true
 	DatasourceName string `json:"name"`
 }
 
-// swagger:parameters datasourceProxyGETcalls datasourceProxyPOSTcalls datasourceProxyDELETEcalls datasourceProxyGETByUIDcalls
-// swagger:parameters datasourceProxyPOSTByUIDcalls datasourceProxyDELETEByUIDcalls
+// swagger:parameters deleteDatasourceByName
+type DeleteDatasourceByNameParams struct {
+	// in:path
+	// required:true
+	DatasourceName string `json:"name"`
+}
+
+// swagger:parameters getDatasourceIdByName
+type GetDatasourceIdByNameParams struct {
+	// in:path
+	// required:true
+	DatasourceName string `json:"name"`
+}
+
+// swagger:parameters datasourceProxyDELETEcalls
+// swagger:parameters datasourceProxyDELETEByUIDcalls
 // swagger:parameters fetchDatasourceResources fetchDatasourceResourcesByID
 type DatasourceProxyRouteParam struct {
 	// in:path
@@ -391,31 +428,56 @@ type DatasourceProxyRouteParam struct {
 }
 
 // swagger:parameters datasourceProxyPOSTcalls
-type DatasourceProxyParam struct {
+type DatasourceProxyPOSTcallsParams struct {
 	// in:body
 	// required:true
 	DatasourceProxyParam interface{}
+	// in:path
+	// required:true
+	DatasourceProxyRoute string `json:"datasource_proxy_route"`
+	// in:path
+	// required:true
+	DatasourceID string `json:"id"`
+}
+
+// swagger:parameters datasourceProxyPOSTByUIDcalls
+type DatasourceProxyPOSTByUIDcallsParams struct {
+	// in:body
+	// required:true
+	DatasourceProxyParam interface{}
+	// in:path
+	// required:true
+	DatasourceProxyRoute string `json:"datasource_proxy_route"`
+	// in:path
+	// required:true
+	DatasourceUID string `json:"uid"`
 }
 
 // swagger:parameters addDatasource
-type AddDatasourceParam struct {
+type AddDatasourceParams struct {
 	// in:body
 	// required:true
 	Body models.AddDataSourceCommand
 }
 
-// swagger:parameters updateDatasourceByID updateDatasourceByUID
-type UpdateDatasource struct {
+// swagger:parameters updateDatasourceByID
+type UpdateDatasourceParams struct {
 	// in:body
 	// required:true
 	Body models.UpdateDataSourceCommand
+	// in:path
+	// required:true
+	DatasourceID string `json:"id"`
 }
 
-// swagger:parameters queryDatasource
-type QueryDatasource struct {
+// swagger:parameters updateDatasourceByUID
+type UpdateDatasourceByUIDParams struct {
 	// in:body
 	// required:true
-	Body dtos.MetricRequest
+	Body models.UpdateDataSourceCommand
+	// in:path
+	// required:true
+	DatasourceUID string `json:"uid"`
 }
 
 // swagger:response getDatasourcesResponse
@@ -485,12 +547,4 @@ type DeleteDatasourceByNameResponse struct {
 		// example: Dashboard My Dashboard deleted
 		Message string `json:"message"`
 	} `json:"body"`
-}
-
-// swagger:response queryDatasourceResponse
-type QueryDatasourceResponse struct {
-	// The response message
-	// in: body
-	//nolint: staticcheck // plugins.DataResponse deprecated
-	Body legacydata.DataResponse `json:"body"`
 }

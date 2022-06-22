@@ -1,9 +1,13 @@
-+++
-aliases = ["/docs/grafana/latest/getting-started/getting-started-sql/", "/docs/grafana/latest/guides/getting_started/", "/docs/grafana/latest/guides/gettingstarted/"]
-description = "Learn how to build your first MS SQL Server dashboard in Grafana."
-title = "Get started with Grafana and MS SQL Server"
-weight = 500
-+++
+---
+aliases:
+  - /docs/grafana/latest/getting-started/get-started-grafana-ms-sql-server/
+  - /docs/grafana/latest/getting-started/getting-started-sql/
+  - /docs/grafana/latest/guides/getting_started/
+  - /docs/grafana/latest/guides/gettingstarted/
+description: Learn how to build your first MS SQL Server dashboard in Grafana.
+title: Get started with Grafana and MS SQL Server
+weight: 500
+---
 
 # Get started with Grafana and MS SQL Server
 
@@ -54,6 +58,6 @@ Optionally, play around this dashboard and customize it to:
 
 Now that you have gained some idea of using the pre-packaged MS SQL data source and some test data, the next step is to setup your own instance of MS SQL Server database and data your development or sandbox area. In the previous steps, if you followed along the path of deploying your own instance of MS SQL Server, you are already on your way.
 
-To fetch data from your own instance of MS SQL Server, add the data source using instructions in Step 4 of this topic. In Grafana [Explore]({{< relref "../explore/_index.md" >}}) build queries to experiment with the metrics you want to monitor.
+To fetch data from your own instance of MS SQL Server, add the data source using instructions in Step 4 of this topic. In Grafana [Explore]({{< relref "../explore/" >}}) build queries to experiment with the metrics you want to monitor.
 
-Once you have a curated list of queries, create [dashboards]({{< relref "../dashboards/_index.md" >}}) to render metrics from the SQL Server database. For troubleshooting, user permissions, known issues, and query examples, refer to [Using Microsoft SQL Server in Grafana]({{< relref "../datasources/mssql.md" >}}).
+Once you have a curated list of queries, create [dashboards]({{< relref "../dashboards/" >}}) to render metrics from the SQL Server database. For troubleshooting, user permissions, known issues, and query examples, refer to [Using Microsoft SQL Server in Grafana]({{< relref "../datasources/mssql/" >}}).

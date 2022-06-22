@@ -49,6 +49,8 @@ export interface CodeEditorProps {
    * Language agnostic suggestion completions -- typically for template variables
    */
   getSuggestions?: CodeEditorSuggestionProvider;
+
+  containerStyles?: string;
 }
 
 /**

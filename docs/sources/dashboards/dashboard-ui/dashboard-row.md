@@ -1,8 +1,10 @@
-+++
-aliases = ["/docs/grafana/latest/dashboards/dashboard-ui/dashboard-row/", "/docs/grafana/latest/features/dashboard/dashboards/"]
-title = "Dashboard rows"
-weight = 80
-+++
+---
+aliases:
+  - /docs/grafana/latest/dashboards/dashboard-ui/dashboard-row/
+  - /docs/grafana/latest/features/dashboard/dashboards/
+title: Dashboard rows
+weight: 80
+---
 
 # Dashboard rows
 
@@ -14,7 +16,7 @@ Grafana uses a base unit abstraction so that dashboards and panels look great on
 
 ## Create or remove rows
 
-Use the [repeating rows]({{< relref "../../variables/_index.md#repeating-rows" >}}) functionality to dynamically create or remove entire rows, which can be filled with panels, based on the template variables selected.
+Use the [repeating rows]({{< relref "../../variables/#repeating-rows" >}}) functionality to dynamically create or remove entire rows, which can be filled with panels, based on the template variables selected.
 
 ## Collapse rows
 

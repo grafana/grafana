@@ -72,7 +72,6 @@ export function restore(version: any, restoredFrom?: any): any {
         editable: true,
         gnetId: null,
         graphTooltip: 0,
-        hideControls: false,
         id: 1,
         links: [],
         restoredFrom: restoredFrom,

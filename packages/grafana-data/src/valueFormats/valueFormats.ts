@@ -1,3 +1,5 @@
+import { clamp } from 'lodash';
+
 import { TimeZone } from '../types';
 import { DecimalCount } from '../types/displayValue';
 
@@ -129,31 +131,25 @@ export function booleanValueFormatter(t: string, f: string): ValueFormatter {
   };
 }
 
-// Formatter which scales the unit string geometrically according to the given
-// numeric factor. Repeatedly scales the value down by the factor until it is
-// less than the factor in magnitude, or the end of the array is reached.
-export function scaledUnits(factor: number, extArray: string[]): ValueFormatter {
-  return (size: number, decimals?: DecimalCount, scaledDecimals?: DecimalCount) => {
+const logb = (b: number, x: number) => Math.log10(x) / Math.log10(b);
+
+export function scaledUnits(factor: number, extArray: string[], offset = 0): ValueFormatter {
+  return (size: number, decimals?: DecimalCount) => {
     if (size === null) {
       return { text: '' };
     }
+
     if (size === Number.NEGATIVE_INFINITY || size === Number.POSITIVE_INFINITY || isNaN(size)) {
       return { text: size.toLocaleString() };
     }
 
-    let steps = 0;
-    const limit = extArray.length;
+    const siIndex = size === 0 ? 0 : Math.floor(logb(factor, Math.abs(size)));
+    const suffix = extArray[clamp(offset + siIndex, 0, extArray.length - 1)];
 
-    while (Math.abs(size) >= factor) {
-      steps++;
-      size /= factor;
-
-      if (steps >= limit) {
-        return { text: 'NA' };
-      }
-    }
-
-    return { text: toFixed(size, decimals), suffix: extArray[steps] };
+    return {
+      text: toFixed(size / factor ** clamp(siIndex, -offset, extArray.length - offset - 1), decimals),
+      suffix,
+    };
   };
 }
 

@@ -1,8 +1,11 @@
-+++
-aliases = ["/docs/grafana/latest/panels/query-options/", "/docs/grafana/latest/panels/reference-query-options/", "/docs/sources/panels/reference-query-options/"]
-title = "Query options"
-weight = 900
-+++
+---
+aliases:
+  - /docs/grafana/latest/panels/query-options/
+  - /docs/grafana/latest/panels/reference-query-options/
+  - /docs/sources/panels/reference-query-options/
+title: Query options
+weight: 900
+---
 
 # Reference: Query options
 
@@ -28,13 +31,13 @@ Panel data source query options:
 
   This automatic interval is calculated based on the width of the graph. If the user zooms out a lot then the interval becomes greater, resulting in a more coarse grained aggregation whereas if the user zooms in then the interval decreases resulting in a more fine grained aggregation.
 
-  For more information, refer to [Global variables]({{< relref "../variables/variable-types/global-variables.md" >}}).
+  For more information, refer to [Global variables]({{< relref "../variables/variable-types/global-variables/" >}}).
 
 - **Relative time -** You can override the relative time range for individual panels, causing them to be different than what is selected in the dashboard time picker in the top right corner of the dashboard. This allows you to show metrics from different time periods or days on the same dashboard.
 
 - **Time shift -** The time shift function is another way to override the time range for individual panels. It only works with relative time ranges and allows you to adjust the time range.
 
-  For example, you could shift the time range for the panel to be two hours earlier than the dashboard time picker. For more information, refer to [Time range controls]({{< relref "../dashboards/time-range-controls.md" >}}).
+  For example, you could shift the time range for the panel to be two hours earlier than the dashboard time picker. For more information, refer to [Time range controls]({{< relref "../dashboards/time-range-controls/" >}}).
 
 - **Cache timeout -** (This field is only visible if available in your data source.) If your time series store has a query cache, then this option can override the default cache timeout. Specified as a numeric value in seconds.
 

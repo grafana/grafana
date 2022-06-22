@@ -1,8 +1,10 @@
-+++
-aliases = ["/docs/grafana/latest/panels/format-data/map-a-value/", "/docs/sources/panels/format-data/map-a-value/"]
-title = "Map a value"
-weight = 20
-+++
+---
+aliases:
+  - /docs/grafana/latest/panels/format-data/map-a-value/
+  - /docs/sources/panels/format-data/map-a-value/
+title: Map a value
+weight: 20
+---
 
 # Map a value
 
@@ -10,7 +12,7 @@ Map a value when you want to format a single value.
 
 ## Before you begin
 
-- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).
+- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel/" >}}).
 
 **To map a value**:
 

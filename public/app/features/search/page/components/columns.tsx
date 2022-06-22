@@ -3,15 +3,15 @@ import { isNumber } from 'lodash';
 import React from 'react';
 import SVG from 'react-inlinesvg';
 
-import { Field } from '@grafana/data';
+import { Field, getFieldDisplayName } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Checkbox, Icon, IconButton, IconName, TagList } from '@grafana/ui';
+import { PluginIconName } from 'app/features/plugins/admin/types';
 
 import { QueryResponse, SearchResultMeta } from '../../service';
 import { SelectionChecker, SelectionToggle } from '../selection';
 
 import { TableColumn } from './SearchResultsTable';
-import { getSortFieldDisplayName } from './sorting';
 
 const TYPE_COLUMN_WIDTH = 250;
 const DATASOURCE_COLUMN_WIDTH = 200;
@@ -78,7 +78,7 @@ export const generateColumns = (
         const selected = selection(kind, uid);
         const hasUID = uid != null; // Panels don't have UID! Likely should not be shown on pages with manage options
         return (
-          <div {...p.cellProps} className={p.cellStyle}>
+          <div {...p.cellProps}>
             <div className={styles.checkbox}>
               <Checkbox
                 disabled={!hasUID}
@@ -100,7 +100,7 @@ export const generateColumns = (
   width = Math.max(availableWidth * 0.2, 300);
   columns.push({
     Cell: (p) => {
-      let classNames = cx(p.cellStyle, styles.cellWrapper);
+      let classNames = cx(styles.nameCellStyle);
       let name = access.name.values.get(p.row.index);
       if (!name?.length) {
         name = 'Missing title'; // normal for panels
@@ -114,7 +114,9 @@ export const generateColumns = (
     },
     id: `column-name`,
     field: access.name!,
-    Header: 'Name',
+    Header: () => {
+      return <div className={styles.headerNameStyle}>Name</div>;
+    },
     width,
   });
   availableWidth -= width;
@@ -122,6 +124,35 @@ export const generateColumns = (
   width = TYPE_COLUMN_WIDTH;
   columns.push(makeTypeColumn(access.kind, access.panel_type, width, styles));
   availableWidth -= width;
+
+  const meta = response.view.dataFrame.meta?.custom as SearchResultMeta;
+  if (meta?.locationInfo && availableWidth > 0) {
+    width = Math.max(availableWidth / 1.75, 300);
+    availableWidth -= width;
+    columns.push({
+      Cell: (p) => {
+        const parts = (access.location?.values.get(p.row.index) ?? '').split('/');
+        return (
+          <div {...p.cellProps} className={cx(styles.locationCellStyle)}>
+            {parts.map((p) => {
+              const info = meta.locationInfo[p];
+              return info ? (
+                <a key={p} href={info.url} className={styles.locationItem}>
+                  <Icon name={getIconForKind(info.kind)} /> {info.name}
+                </a>
+              ) : (
+                <span key={p}>{p}</span>
+              );
+            })}
+          </div>
+        );
+      },
+      id: `column-location`,
+      field: access.location ?? access.url,
+      Header: 'Location',
+      width,
+    });
+  }
 
   // Show datasources if we have any
   if (access.ds_uid && onDatasourceChange) {
@@ -139,40 +170,13 @@ export const generateColumns = (
     availableWidth -= width;
   }
 
-  width = Math.max(availableWidth / 2.5, 200);
-  columns.push(makeTagsColumn(access.tags, width, styles.tagList, onTagSelected));
-  availableWidth -= width;
-
-  const meta = response.view.dataFrame.meta?.custom as SearchResultMeta;
-  if (meta?.locationInfo && availableWidth > 0) {
-    columns.push({
-      Cell: (p) => {
-        const parts = (access.location?.values.get(p.row.index) ?? '').split('/');
-        return (
-          <div {...p.cellProps} className={cx(p.cellStyle, styles.locationCellStyle)}>
-            {parts.map((p) => {
-              const info = meta.locationInfo[p];
-              return info ? (
-                <a key={p} href={info.url} className={styles.locationItem}>
-                  <Icon name={getIconForKind(info.kind)} /> {info.name}
-                </a>
-              ) : (
-                <span key={p}>{p}</span>
-              );
-            })}
-          </div>
-        );
-      },
-      id: `column-location`,
-      field: access.location ?? access.url,
-      Header: 'Location',
-      width: availableWidth,
-    });
+  if (availableWidth > 0) {
+    columns.push(makeTagsColumn(access.tags, availableWidth, styles.tagList, onTagSelected));
   }
 
   if (sortField) {
     columns.push({
-      Header: () => <div className={styles.sortedHeader}>{getSortFieldDisplayName(sortField.name)}</div>,
+      Header: () => <div className={styles.sortedHeader}>{getFieldDisplayName(sortField)}</div>,
       Cell: (p) => {
         let value = sortField.values.get(p.row.index);
         try {
@@ -182,7 +186,7 @@ export const generateColumns = (
         } catch {}
         return (
           <div {...p.cellProps} className={styles.sortedItems}>
-            {value}
+            {`${value}`}
           </div>
         );
       },
@@ -224,7 +228,7 @@ function makeDataSourceColumn(
         return null;
       }
       return (
-        <div {...p.cellProps} className={cx(p.cellStyle, datasourceItemClass)}>
+        <div {...p.cellProps} className={cx(datasourceItemClass)}>
           {dslist.map((v, i) => {
             const settings = srv.getInstanceSettings(v);
             const icon = settings?.meta?.info?.logos?.small;
@@ -284,16 +288,12 @@ function makeTypeColumn(
             break;
 
           case 'panel':
-            icon = 'public/img/icons/unicons/graph-bar.svg';
+            icon = `public/img/icons/unicons/${PluginIconName.panel}.svg`;
             const type = typeField.values.get(i);
             if (type) {
               txt = type;
               const info = config.panels[txt];
               if (info?.name) {
-                const v = info.info?.logos.small;
-                if (v && v.endsWith('.svg')) {
-                  icon = v;
-                }
                 txt = info.name;
               } else {
                 switch (type) {
@@ -303,7 +303,6 @@ function makeTypeColumn(
                     break;
                   case 'singlestat': // auto-migration
                     txt = 'Singlestat';
-                    icon = `public/app/plugins/panel/stat/img/icn-singlestat-panel.svg`;
                     break;
                   default:
                     icon = `public/img/icons/unicons/question.svg`; // plugin not found
@@ -334,7 +333,7 @@ function makeTagsColumn(
     Cell: (p) => {
       const tags = field.values.get(p.row.index);
       return tags ? (
-        <div {...p.cellProps} className={p.cellStyle}>
+        <div {...p.cellProps}>
           <TagList className={tagListClass} tags={tags} onClick={onTagSelected} />
         </div>
       ) : null;

@@ -3,8 +3,10 @@ package promclient
 import (
 	"testing"
 
+	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
@@ -12,7 +14,9 @@ import (
 )
 
 func TestConfigureAzureAuthentication(t *testing.T) {
-	cfg := &setting.Cfg{}
+	cfg := &setting.Cfg{
+		Azure: &azsettings.AzureSettings{},
+	}
 	settings := backend.DataSourceInstanceSettings{}
 
 	t.Run("given feature flag enabled", func(t *testing.T) {
@@ -24,7 +28,6 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 				"azureCredentials": map[string]interface{}{
 					"authType": "msi",
 				},
-				"azureEndpointResourceId": "https://api.example.com/abd5c4ce-ca73-41e9-9cb2-bed39aa2adb5",
 			}
 
 			var p = NewProvider(settings, jsonData, nil, cfg, features, nil)

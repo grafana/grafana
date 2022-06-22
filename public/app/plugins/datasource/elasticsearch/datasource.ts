@@ -31,6 +31,7 @@ import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContext
 import { queryLogsVolume } from 'app/core/logs_model';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
+import { ElasticsearchAnnotationsQueryEditor } from './components/QueryEditor/AnnotationQueryEditor';
 import {
   BucketAggregation,
   isBucketAggregationWithField,
@@ -117,6 +118,9 @@ export class ElasticDatasource
     this.logLevelField = settingsData.logLevelField || '';
     this.dataLinks = settingsData.dataLinks || [];
     this.includeFrozen = settingsData.includeFrozen ?? false;
+    this.annotations = {
+      QueryEditor: ElasticsearchAnnotationsQueryEditor,
+    };
 
     if (this.logMessageField === '') {
       this.logMessageField = undefined;

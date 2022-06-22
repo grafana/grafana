@@ -1,15 +1,23 @@
-+++
-aliases = ["/docs/grafana/latest/developers/http_api/licensing/", "/docs/grafana/latest/http_api/licensing/"]
-description = "Enterprise Licensing HTTP API"
-keywords = ["grafana", "http", "documentation", "api", "licensing", "enterprise"]
-title = "Licensing HTTP API "
-+++
+---
+aliases:
+  - /docs/grafana/latest/developers/http_api/licensing/
+  - /docs/grafana/latest/http_api/licensing/
+description: Enterprise Licensing HTTP API
+keywords:
+  - grafana
+  - http
+  - documentation
+  - api
+  - licensing
+  - enterprise
+title: 'Licensing HTTP API '
+---
 
 # Enterprise License API
 
-Licensing is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../../enterprise" >}}).
+Licensing is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../../enterprise/" >}}).
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../enterprise/access-control/custom-role-actions-scopes" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../enterprise/access-control/custom-role-actions-scopes/" >}}) for more information.
 
 ## Check license availability
 
@@ -63,9 +71,9 @@ Manually ask license issuer for a new token.
 
 See note in the [introduction]({{< ref "#enterprise-license-api" >}}) for an explanation.
 
-| Action           | Scope |
-| ---------------- | ----- |
-| licensing:update | n/a   |
+| Action          | Scope |
+| --------------- | ----- |
+| licensing:write | n/a   |
 
 ### Examples
 

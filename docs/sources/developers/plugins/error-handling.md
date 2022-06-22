@@ -1,7 +1,8 @@
-+++
-aliases = ["/docs/grafana/latest/developers/plugins/error-handling/"]
-title = "Error handling"
-+++
+---
+aliases:
+  - /docs/grafana/latest/developers/plugins/error-handling/
+title: Error handling
+---
 
 # Error handling
 

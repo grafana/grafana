@@ -1,8 +1,10 @@
-+++
-aliases = ["/docs/grafana/latest/panels/working-with-panels/view-json-model/", "/docs/sources/panels/working-with-panels/view-json-model/"]
-title = "View a panel JSON model"
-weight = 100
-+++
+---
+aliases:
+  - /docs/grafana/latest/panels/working-with-panels/view-json-model/
+  - /docs/sources/panels/working-with-panels/view-json-model/
+title: View a panel JSON model
+weight: 100
+---
 
 # View a panel JSON model
 
@@ -10,7 +12,7 @@ Explore and export panel, panel data, and data frame JSON models.
 
 ## Before you begin:
 
-- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).
+- [Add a panel to a dashboard]({{< relref "add-panel/" >}}).
 
 **To view a panel JSON model**:
 

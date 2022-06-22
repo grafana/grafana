@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package database
 
 import (
@@ -21,10 +18,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/star/starimpl"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestIntegrationDashboardDataAccess(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	var sqlStore *sqlstore.SQLStore
 	var savedFolder, savedDash, savedDash2 *models.Dashboard
 	var dashboardStore *DashboardStore
@@ -65,7 +64,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 			OrgId: 1,
 		}
 
-		err := dashboardStore.GetDashboard(context.Background(), &query)
+		_, err := dashboardStore.GetDashboard(context.Background(), &query)
 		require.NoError(t, err)
 
 		require.Equal(t, query.Result.Title, "test dash 23")
@@ -82,7 +81,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 			OrgId: 1,
 		}
 
-		err := dashboardStore.GetDashboard(context.Background(), &query)
+		_, err := dashboardStore.GetDashboard(context.Background(), &query)
 		require.NoError(t, err)
 
 		require.Equal(t, query.Result.Title, "test dash 23")
@@ -99,7 +98,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 			OrgId: 1,
 		}
 
-		err := dashboardStore.GetDashboard(context.Background(), &query)
+		_, err := dashboardStore.GetDashboard(context.Background(), &query)
 		require.NoError(t, err)
 
 		require.Equal(t, query.Result.Title, "test dash 23")
@@ -123,7 +122,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 			OrgId: 1,
 		}
 
-		err := dashboardStore.GetDashboard(context.Background(), &query)
+		_, err := dashboardStore.GetDashboard(context.Background(), &query)
 		require.Equal(t, err, models.ErrDashboardIdentifierNotSet)
 	})
 
@@ -205,7 +204,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 			OrgId: 1,
 		}
 
-		err = dashboardStore.GetDashboard(context.Background(), &query)
+		_, err = dashboardStore.GetDashboard(context.Background(), &query)
 		require.NoError(t, err)
 		require.Equal(t, query.Result.FolderId, int64(0))
 		require.Equal(t, query.Result.CreatedBy, savedDash.CreatedBy)
@@ -246,7 +245,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, len(res), 0)
 
-		sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 			var existingRuleID int64
 			exists, err := sess.Table("alert_rule").Where("namespace_uid = (SELECT uid FROM dashboard WHERE id = ?)", savedFolder.Id).Cols("id").Get(&existingRuleID)
 			require.NoError(t, err)
@@ -259,6 +258,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 
 			return nil
 		})
+		require.NoError(t, err)
 	})
 
 	t.Run("Should return error if no dashboard is found for update when dashboard id is greater than zero", func(t *testing.T) {
@@ -294,7 +294,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		setup()
 		query := models.GetDashboardTagsQuery{OrgId: 1}
 
-		err := sqlStore.GetDashboardTags(context.Background(), &query)
+		err := dashboardStore.GetDashboardTags(context.Background(), &query)
 		require.NoError(t, err)
 
 		require.Equal(t, len(query.Result), 2)
@@ -479,6 +479,9 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 }
 
 func TestIntegrationDashboardDataAccessGivenPluginWithImportedDashboards(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	sqlStore := sqlstore.InitTestDB(t)
 	dashboardStore := ProvideDashboardStore(sqlStore)
 	pluginId := "test-app"
@@ -498,6 +501,9 @@ func TestIntegrationDashboardDataAccessGivenPluginWithImportedDashboards(t *test
 }
 
 func TestIntegrationDashboard_SortingOptions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	sqlStore := sqlstore.InitTestDB(t)
 	dashboardStore := ProvideDashboardStore(sqlStore)
 
@@ -541,10 +547,12 @@ func TestIntegrationDashboard_SortingOptions(t *testing.T) {
 	require.Len(t, results, 2)
 	assert.Equal(t, dashB.Id, results[0].ID)
 	assert.Equal(t, dashA.Id, results[1].ID)
-
 }
 
 func TestIntegrationDashboard_Filter(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	sqlStore := sqlstore.InitTestDB(t)
 	dashboardStore := ProvideDashboardStore(sqlStore)
 	insertTestDashboard(t, dashboardStore, "Alfa", 1, 0, false)
@@ -583,11 +591,10 @@ func TestIntegrationDashboard_Filter(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, results, 1)
 	assert.Equal(t, dashB.Id, results[0].ID)
-
 }
 
 func insertTestRule(t *testing.T, sqlStore *sqlstore.SQLStore, foderOrgID int64, folderUID string) {
-	sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err := sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		type alertQuery struct {
 			RefID         string
 			DatasourceUID string
@@ -656,13 +663,14 @@ func insertTestRule(t *testing.T, sqlStore *sqlstore.SQLStore, foderOrgID int64,
 		require.NoError(t, err)
 		return err
 	})
+	require.NoError(t, err)
 }
 
 func CreateUser(t *testing.T, sqlStore *sqlstore.SQLStore, name string, role string, isAdmin bool) models.User {
 	t.Helper()
-	setting.AutoAssignOrg = true
-	setting.AutoAssignOrgId = 1
-	setting.AutoAssignOrgRole = role
+	sqlStore.Cfg.AutoAssignOrg = true
+	sqlStore.Cfg.AutoAssignOrgId = 1
+	sqlStore.Cfg.AutoAssignOrgRole = role
 	currentUserCmd := models.CreateUserCommand{Login: name, Email: name + "@test.com", Name: "a " + name, IsAdmin: isAdmin}
 	currentUser, err := sqlStore.CreateUser(context.Background(), currentUserCmd)
 	require.NoError(t, err)

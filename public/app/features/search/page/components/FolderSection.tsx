@@ -3,9 +3,7 @@ import React, { FC } from 'react';
 import { useAsync, useLocalStorage } from 'react-use';
 
 import { GrafanaTheme } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
-import { Card, Checkbox, CollapsableSection, Icon, Spinner, stylesFactory, useTheme } from '@grafana/ui';
-import impressionSrv from 'app/core/services/impression_srv';
+import { Card, Checkbox, CollapsableSection, Icon, IconName, Spinner, stylesFactory, useTheme } from '@grafana/ui';
 import { getSectionStorageKey } from 'app/features/search/utils';
 import { useUniqueId } from 'app/plugins/datasource/influxdb/components/useUniqueId';
 
@@ -20,7 +18,7 @@ export interface DashboardSection {
   title: string;
   selected?: boolean; // not used ?  keyboard
   url?: string;
-  icon?: string;
+  icon?: IconName;
   itemsUIDs?: string[]; // for pseudo folders
 }
 
@@ -48,7 +46,7 @@ export const FolderSection: FC<SectionHeaderProps> = ({
 
   const results = useAsync(async () => {
     if (!sectionExpanded && !renderStandaloneBody) {
-      return Promise.resolve([] as DashboardSectionItem[]);
+      return Promise.resolve([]);
     }
     let folderUid: string | undefined = section.uid;
     let folderTitle: string | undefined = section.title;
@@ -58,39 +56,27 @@ export const FolderSection: FC<SectionHeaderProps> = ({
       location: section.uid,
       sort: 'name_sort',
     };
-    if (section.title === 'Starred') {
+    if (section.itemsUIDs) {
       query = {
         uid: section.itemsUIDs, // array of UIDs
       };
       folderUid = undefined;
       folderTitle = undefined;
-    } else if (section.title === 'Recent') {
-      const ids = impressionSrv.getDashboardOpened();
-      const uids = await getBackendSrv().get(`/api/dashboards/ids/${ids.slice(0, 30).join(',')}`);
-      if (uids?.length) {
-        query = {
-          uid: uids,
-        };
-      }
-      folderUid = undefined;
-      folderTitle = undefined;
     }
+
     const raw = await getGrafanaSearcher().search({ ...query, tags });
-    const v = raw.view.map(
-      (item) =>
-        ({
-          uid: item.uid,
-          title: item.name,
-          url: item.url,
-          uri: item.url,
-          type: item.kind === 'folder' ? DashboardSearchItemType.DashFolder : DashboardSearchItemType.DashDB,
-          id: 666, // do not use me!
-          isStarred: false,
-          tags: item.tags ?? [],
-          folderUid,
-          folderTitle,
-        } as DashboardSectionItem)
-    );
+    const v = raw.view.map<DashboardSectionItem>((item) => ({
+      uid: item.uid,
+      title: item.name,
+      url: item.url,
+      uri: item.url,
+      type: item.kind === 'folder' ? DashboardSearchItemType.DashFolder : DashboardSearchItemType.DashDB,
+      id: 666, // do not use me!
+      isStarred: false,
+      tags: item.tags ?? [],
+      folderUid,
+      folderTitle,
+    }));
     return v;
   }, [sectionExpanded, section, tags]);
 
@@ -128,11 +114,9 @@ export const FolderSection: FC<SectionHeaderProps> = ({
   }
 
   const renderResults = () => {
-    if (!results.value?.length) {
-      if (results.loading) {
-        return <Spinner className={styles.spinner} />;
-      }
-
+    if (!results.value) {
+      return null;
+    } else if (results.value.length === 0 && !results.loading) {
       return (
         <Card>
           <Card.Heading>No results found</Card.Heading>
@@ -162,7 +146,11 @@ export const FolderSection: FC<SectionHeaderProps> = ({
 
   // Skip the folder wrapper
   if (renderStandaloneBody) {
-    return <div>{renderResults()}</div>;
+    return (
+      <div className={styles.folderViewResults}>
+        {!results.value?.length && results.loading ? <Spinner className={styles.spinner} /> : renderResults()}
+      </div>
+    );
   }
 
   return (
@@ -182,7 +170,7 @@ export const FolderSection: FC<SectionHeaderProps> = ({
           )}
 
           <div className={styles.icon}>
-            <Icon name={icon as any} />
+            <Icon name={icon} />
           </div>
 
           <div className={styles.text}>
@@ -237,6 +225,9 @@ const getSectionHeaderStyles = stylesFactory((theme: GrafanaTheme, selected = fa
     `,
     icon: css`
       padding: 0 ${sm} 0 ${editable ? 0 : sm};
+    `,
+    folderViewResults: css`
+      overflow: auto;
     `,
     text: css`
       flex-grow: 1;

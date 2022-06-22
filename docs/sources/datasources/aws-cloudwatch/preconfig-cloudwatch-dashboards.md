@@ -1,10 +1,18 @@
-+++
-aliases = ["/docs/grafana/latest/datasources/aws-cloudwatch/preconfig-cloudwatch-dashboards/", "/docs/grafana/latest/datasources/cloudwatch/"]
-description = "Guide for using AWS CloudWatch in Grafana"
-keywords = ["grafana", "stackdriver", "google", "guide", "cloud", "monitoring"]
-title = "Curated CloudWatch dashboards"
-weight = 15
-+++
+---
+aliases:
+  - /docs/grafana/latest/datasources/aws-cloudwatch/preconfig-cloudwatch-dashboards/
+  - /docs/grafana/latest/datasources/cloudwatch/
+description: Guide for using AWS CloudWatch in Grafana
+keywords:
+  - grafana
+  - stackdriver
+  - google
+  - guide
+  - cloud
+  - monitoring
+title: Curated CloudWatch dashboards
+weight: 15
+---
 
 # Curated CloudWatch dashboards
 

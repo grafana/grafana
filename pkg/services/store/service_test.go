@@ -3,18 +3,16 @@ package store
 import (
 	"bytes"
 	"context"
-	"mime/multipart"
 	"os"
-	"path"
 	"path/filepath"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -45,8 +43,7 @@ func TestListFiles(t *testing.T) {
 	frame, err := store.List(context.Background(), dummyUser, "public/testdata")
 	require.NoError(t, err)
 
-	err = experimental.CheckGoldenFrame(path.Join("testdata", "public_testdata.golden.txt"), frame, true)
-	require.NoError(t, err)
+	experimental.CheckGoldenJSONFrame(t, "testdata", "public_testdata.golden", frame, true)
 
 	file, err := store.Read(context.Background(), dummyUser, "public/testdata/js_libraries.csv")
 	require.NoError(t, err)
@@ -54,8 +51,7 @@ func TestListFiles(t *testing.T) {
 
 	frame, err = testdatasource.LoadCsvContent(bytes.NewReader(file.Contents), file.Name)
 	require.NoError(t, err)
-	err = experimental.CheckGoldenFrame(path.Join("testdata", "public_testdata_js_libraries.golden.txt"), frame, true)
-	require.NoError(t, err)
+	experimental.CheckGoldenJSONFrame(t, "testdata", "public_testdata_js_libraries.golden", frame, true)
 }
 
 func TestUpload(t *testing.T) {
@@ -63,12 +59,13 @@ func TestUpload(t *testing.T) {
 	path, err := os.Getwd()
 	require.NoError(t, err)
 	cfg := &setting.Cfg{AppURL: "http://localhost:3000/", DataPath: path}
-	s := ProvideService(nil, features, cfg)
-	testForm := &multipart.Form{
-		Value: map[string][]string{},
-		File:  map[string][]*multipart.FileHeader{},
+	s := ProvideService(sqlstore.InitTestDB(t), features, cfg)
+	request := UploadRequest{
+		EntityType: EntityTypeImage,
+		Contents:   make([]byte, 0),
+		Path:       "upload/myFile.jpg",
+		MimeType:   "image/jpg",
 	}
-	res, err := s.Upload(context.Background(), dummyUser, testForm)
+	err = s.Upload(context.Background(), dummyUser, &request)
 	require.NoError(t, err)
-	assert.Equal(t, res.path, "upload")
 }

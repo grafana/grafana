@@ -8,7 +8,7 @@ import { closePopover } from '../../utils/closePopover';
 import { Popover } from '../Tooltip/Popover';
 import { PopoverController } from '../Tooltip/PopoverController';
 
-import { ColorPickerPopover, ColorPickerProps, ColorPickerChangeHandler } from './ColorPickerPopover';
+import { ColorPickerPopover, ColorPickerProps } from './ColorPickerPopover';
 import { ColorSwatch } from './ColorSwatch';
 import { SeriesColorPickerPopover } from './SeriesColorPickerPopover';
 
@@ -34,19 +34,12 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
     static displayName = displayName;
     pickerTriggerRef = createRef<any>();
 
-    onColorChange = (color: string) => {
-      const { onColorChange, onChange } = this.props;
-      const changeHandler = (onColorChange || onChange) as ColorPickerChangeHandler;
-
-      return changeHandler(color);
-    };
-
     render() {
-      const { theme, children } = this.props;
+      const { theme, children, onChange } = this.props;
       const styles = getStyles(theme);
       const popoverElement = React.createElement(popover, {
         ...{ ...this.props, children: null },
-        onChange: this.onColorChange,
+        onChange,
       });
 
       return (

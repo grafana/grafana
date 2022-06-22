@@ -3,8 +3,6 @@ import React from 'react';
 
 import { LegacyForms } from '@grafana/ui';
 
-import { expect } from '../../../../test/lib/common';
-
 import { MetricSelect } from './MetricSelect';
 
 const { Select } = LegacyForms;

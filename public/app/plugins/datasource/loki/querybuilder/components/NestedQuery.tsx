@@ -3,8 +3,7 @@ import React from 'react';
 
 import { GrafanaTheme2, toOption } from '@grafana/data';
 import { EditorRows, FlexItem } from '@grafana/experimental';
-import { IconButton, Select, useStyles2 } from '@grafana/ui';
-import { AutoSizeInput } from 'app/plugins/datasource/prometheus/querybuilder/shared/AutoSizeInput';
+import { AutoSizeInput, IconButton, Select, useStyles2 } from '@grafana/ui';
 
 import { LokiDatasource } from '../../datasource';
 import { binaryScalarDefs } from '../binaryScalarOperations';
