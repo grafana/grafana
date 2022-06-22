@@ -145,7 +145,7 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *models.ReqContext) response.Respons
 		return ErrResp(http.StatusInternalServerError, err, "failed to delete rule group")
 	}
 
-	logger.Debug("rules have been deleted from the store. updating alertmanagerProvider")
+	logger.Debug("rules have been deleted from the store. updating scheduler")
 
 	for _, uid := range deletableRules {
 		srv.scheduleService.DeleteAlertRule(ngmodels.AlertRuleKey{

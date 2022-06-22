@@ -158,7 +158,6 @@ func TestAlertingTicker(t *testing.T) {
 		InstanceStore: dbstore,
 		Logger:        log.New("ngalert schedule test"),
 		Metrics:       testMetrics.GetSchedulerMetrics(),
-		// AdminConfigPollInterval: 10 * time.Minute, // do not poll in unit tests.
 		DisabledOrgs: map[int64]struct{}{
 			disabledOrgID: {},
 		},
