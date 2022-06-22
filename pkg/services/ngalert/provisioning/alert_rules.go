@@ -69,7 +69,7 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule model
 	if err != nil {
 		return models.AlertRule{}, err
 	}
-	if !isProvisioned {
+	if !isProvisioned && provenance != models.ProvenanceNone {
 		return models.AlertRule{}, ErrAlertRuleGroupNotProvisoned
 	}
 	interval, err := service.ruleStore.GetRuleGroupInterval(ctx, rule.OrgID, rule.NamespaceUID, rule.RuleGroup)
@@ -141,7 +141,7 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, rule model
 	if err != nil {
 		return models.AlertRule{}, err
 	}
-	if !isProvisioned {
+	if !isProvisioned && provenance != models.ProvenanceNone {
 		return models.AlertRule{}, ErrAlertRuleGroupNotProvisoned
 	}
 	storedRule, storedProvenance, err := service.GetAlertRule(ctx, rule.OrgID, rule.UID)
