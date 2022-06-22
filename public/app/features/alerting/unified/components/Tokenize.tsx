@@ -2,7 +2,9 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Badge, useStyles2 } from '@grafana/ui';
+import { Badge, Icon, IconName, useStyles2 } from '@grafana/ui';
+
+import { HoverCard } from './HoverCard';
 
 interface TokenizerProps {
   input: string;
@@ -30,7 +32,7 @@ function Tokenize({ input, delimiter = ['{{', '}}'] }: TokenizerProps) {
 
   matches.forEach((match, index) => {
     const before = match.groups?.before;
-    const token = match.groups?.token;
+    const token = match.groups?.token?.trim();
 
     const firstMatch = index === 0;
 
@@ -45,22 +47,89 @@ function Tokenize({ input, delimiter = ['{{', '}}'] }: TokenizerProps) {
       if (before) {
         output.push(<span> </span>);
       }
-      output.push(<Token key={`${index}-token`} name={token} />);
+
+      const type = tokenType(token);
+      const description = type === TokenType.Variable ? token : '';
+      const tokenContent = `${open} ${token} ${close}`;
+
+      output.push(<Token key={`${index}-token`} content={tokenContent} type={type} description={description} />);
     }
   });
 
   return <span className={styles.wrapper}>{output}</span>;
 }
 
-interface TokenProps {
-  name: string;
+function tokenType(input: string) {
+  let tokenType;
+  if (isVariable(input)) {
+    tokenType = TokenType.Variable;
+  } else if (isKeyword(input)) {
+    tokenType = TokenType.Keyword;
+  } else {
+    tokenType = TokenType.Function;
+  }
+
+  return tokenType;
 }
 
-function Token({ name }: TokenProps) {
-  const styles = useStyles2(getStyles);
-  const varName = name.trim();
+function isVariable(input: string) {
+  return input.startsWith('$') || input.startsWith('.');
+}
 
-  return <Badge icon="x" className={styles.token} text={varName} color={'blue'} />;
+function isKeyword(input: string) {
+  return input === 'end' || input.startsWith('range');
+}
+
+enum TokenType {
+  Variable = 'variable',
+  Function = 'function',
+  Keyword = 'keyword',
+}
+
+const TokenTypeIcon: Record<TokenType, IconName> = {
+  [TokenType.Variable]: 'x',
+  // @ts-ignore: sigma has not been added to the typeings
+  [TokenType.Function]: 'sigma',
+  [TokenType.Keyword]: 'brackets-curly',
+};
+
+interface TokenProps {
+  content: string;
+  type?: TokenType;
+  icon?: IconName;
+  description?: string;
+}
+
+function Token({ content, icon, description, type }: TokenProps) {
+  const styles = useStyles2(getStyles);
+  const varName = content.trim();
+
+  const iconFromType = icon ?? (type && TokenTypeIcon[type]);
+  const showCard = iconFromType && type;
+
+  return (
+    <HoverCard
+      placement="top-start"
+      disabled={!showCard}
+      content={
+        <div className={styles.hoverTokenItem}>
+          <Badge
+            text={
+              <>
+                {iconFromType ? <Icon name={iconFromType} /> : null} {type}
+              </>
+            }
+            color={'blue'}
+          />{' '}
+          {description && <code>{description}</code>}
+        </div>
+      }
+    >
+      <span>
+        <Badge className={styles.token} text={varName} color={'blue'} />
+      </span>
+    </HoverCard>
+  );
 }
 
 function normalizeInput(input: string) {
@@ -73,7 +142,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     align-items: center;
     white-space: pre;
   `,
-  token: css``,
+  token: css`
+    cursor: pointer;
+  `,
   popover: css`
     border-radius: ${theme.shape.borderRadius()};
     box-shadow: ${theme.shadows.z3};
@@ -81,6 +152,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border: 1px solid ${theme.colors.border.medium};
 
     padding: ${theme.spacing(1)};
+  `,
+  hoverTokenItem: css`
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: ${theme.spacing(1)};
   `,
 });
 
