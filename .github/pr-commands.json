@@ -38,8 +38,7 @@
         "go.mod",
         "go.sum",
         "contribute/style-guides/backend.md",
-        "contribute/architecture/backend/**/*",
-        "scripts/go/**/*"
+        "contribute/architecture/backend/**/*"
     ],
     "action": "updateLabel",
     "addLabel": "area/backend"

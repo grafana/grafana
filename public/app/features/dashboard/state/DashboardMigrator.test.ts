@@ -1992,6 +1992,38 @@ describe('DashboardModel', () => {
       expect(model.panels[0].targets[0].datasource).toEqual({ type: 'prometheus', uid: 'prom2-uid' });
     });
   });
+
+  describe('when migrating default (null) datasource with panel with expressions queries', () => {
+    let model: DashboardModel;
+
+    beforeEach(() => {
+      model = new DashboardModel({
+        panels: [
+          {
+            id: 2,
+            targets: [
+              {
+                refId: 'A',
+              },
+              {
+                refId: 'B',
+                datasource: '__expr__',
+              },
+            ],
+          },
+        ],
+        schemaVersion: 30,
+      });
+    });
+
+    it('should update panel datasource props to default datasource', () => {
+      expect(model.panels[0].datasource).toEqual({ type: 'prometheus', uid: 'prom2-uid' });
+    });
+
+    it('should update target datasource props to default data source', () => {
+      expect(model.panels[0].targets[0].datasource).toEqual({ type: 'prometheus', uid: 'prom2-uid' });
+    });
+  });
 });
 
 function createRow(options: any, panelDescriptions: any[]) {

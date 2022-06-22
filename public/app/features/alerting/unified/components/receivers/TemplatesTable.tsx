@@ -12,6 +12,7 @@ import { getNotificationsPermissions } from '../../utils/access-control';
 import { makeAMLink } from '../../utils/misc';
 import { CollapseToggle } from '../CollapseToggle';
 import { DetailsField } from '../DetailsField';
+import { ProvisioningBadge } from '../Provisioning';
 import { ActionIcon } from '../rules/ActionIcon';
 
 import { ReceiversSection } from './ReceiversSection';
@@ -27,7 +28,15 @@ export const TemplatesTable: FC<Props> = ({ config, alertManagerName }) => {
   const tableStyles = useStyles2(getAlertTableStyles);
   const permissions = getNotificationsPermissions(alertManagerName);
 
-  const templateRows = useMemo(() => Object.entries(config.template_files), [config]);
+  const templateRows = useMemo(() => {
+    const templates = Object.entries(config.template_files);
+
+    return templates.map(([name, template]) => ({
+      name,
+      template,
+      provenance: (config.template_file_provenances ?? {})[name],
+    }));
+  }, [config]);
   const [templateToDelete, setTemplateToDelete] = useState<string>();
 
   const deleteTemplate = () => {
@@ -66,7 +75,7 @@ export const TemplatesTable: FC<Props> = ({ config, alertManagerName }) => {
               <td colSpan={3}>No templates defined.</td>
             </tr>
           )}
-          {templateRows.map(([name, content], idx) => {
+          {templateRows.map(({ name, template, provenance }, idx) => {
             const isExpanded = !!expandedTemplates[name];
             return (
               <Fragment key={name}>
@@ -77,35 +86,49 @@ export const TemplatesTable: FC<Props> = ({ config, alertManagerName }) => {
                       onToggle={() => setExpandedTemplates({ ...expandedTemplates, [name]: !isExpanded })}
                     />
                   </td>
-                  <td>{name}</td>
-                  <Authorize actions={[permissions.update, permissions.delete]}>
-                    <td className={tableStyles.actionsCell}>
-                      <Authorize actions={[permissions.update]}>
-                        <ActionIcon
-                          to={makeAMLink(
-                            `/alerting/notifications/templates/${encodeURIComponent(name)}/edit`,
-                            alertManagerName
-                          )}
-                          tooltip="edit template"
-                          icon="pen"
-                        />
+                  <td>
+                    {name} {provenance && <ProvisioningBadge />}
+                  </td>
+                  <td className={tableStyles.actionsCell}>
+                    {provenance && (
+                      <ActionIcon
+                        to={makeAMLink(
+                          `/alerting/notifications/templates/${encodeURIComponent(name)}/edit`,
+                          alertManagerName
+                        )}
+                        tooltip="view template"
+                        icon="file-alt"
+                      />
+                    )}
+                    {!provenance && (
+                      <Authorize actions={[permissions.update, permissions.delete]}>
+                        <Authorize actions={[permissions.update]}>
+                          <ActionIcon
+                            to={makeAMLink(
+                              `/alerting/notifications/templates/${encodeURIComponent(name)}/edit`,
+                              alertManagerName
+                            )}
+                            tooltip="edit template"
+                            icon="pen"
+                          />
+                        </Authorize>
+                        <Authorize actions={[permissions.delete]}>
+                          <ActionIcon
+                            onClick={() => setTemplateToDelete(name)}
+                            tooltip="delete template"
+                            icon="trash-alt"
+                          />
+                        </Authorize>
                       </Authorize>
-                      <Authorize actions={[permissions.delete]}>
-                        <ActionIcon
-                          onClick={() => setTemplateToDelete(name)}
-                          tooltip="delete template"
-                          icon="trash-alt"
-                        />
-                      </Authorize>
-                    </td>
-                  </Authorize>
+                    )}
+                  </td>
                 </tr>
                 {isExpanded && (
                   <tr className={idx % 2 === 0 ? tableStyles.evenRow : undefined}>
                     <td></td>
                     <td colSpan={2}>
                       <DetailsField label="Description" horizontal={true}>
-                        <pre>{content}</pre>
+                        <pre>{template}</pre>
                       </DetailsField>
                     </td>
                   </tr>

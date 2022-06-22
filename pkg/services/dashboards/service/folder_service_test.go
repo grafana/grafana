@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	busmock "github.com/grafana/grafana/pkg/bus/mock"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -30,7 +31,7 @@ func TestIntegrationProvideFolderService(t *testing.T) {
 		cfg := setting.NewCfg()
 		ac := acmock.New()
 
-		ProvideFolderService(cfg, nil, nil, nil, nil, nil, ac)
+		ProvideFolderService(cfg, nil, nil, nil, nil, nil, ac, busmock.New())
 
 		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 2)
 	})
@@ -57,6 +58,7 @@ func TestIntegrationFolderService(t *testing.T) {
 			searchService:    nil,
 			features:         features,
 			permissions:      folderPermissions,
+			bus:              busmock.New(),
 		}
 
 		t.Run("Given user has no permissions", func(t *testing.T) {

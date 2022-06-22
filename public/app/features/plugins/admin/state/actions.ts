@@ -1,7 +1,7 @@
 import { createAction, createAsyncThunk, Update } from '@reduxjs/toolkit';
 
 import { PanelPlugin } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 import { StoreState, ThunkResult } from 'app/types';
 
@@ -39,7 +39,9 @@ export const fetchRemotePlugins = createAsyncThunk<RemotePlugin[], void, { rejec
     try {
       return await getRemotePlugins();
     } catch (error) {
-      error.isHandled = true;
+      if (isFetchError(error)) {
+        error.isHandled = true;
+      }
       return thunkApi.rejectWithValue([]);
     }
   }

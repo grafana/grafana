@@ -14,7 +14,6 @@ import { loadAndInitAngularIfEnabled } from './angular/loadAndInitAngularIfEnabl
 import { GrafanaApp } from './app';
 import { AppNotificationList } from './core/components/AppNotifications/AppNotificationList';
 import { NavBar } from './core/components/NavBar/NavBar';
-import { NavBarNext } from './core/components/NavBar/Next/NavBarNext';
 import { I18nProvider } from './core/localisation';
 import { GrafanaRoute } from './core/navigation/GrafanaRoute';
 import { RouteDescriptor } from './core/navigation/types';
@@ -82,26 +81,32 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
     return <Switch>{getAppRoutes().map((r) => this.renderRoute(r))}</Switch>;
   }
 
+  renderNavBar() {
+    if (config.isPublicDashboardView || !this.state.ready || config.featureToggles.topnav) {
+      return null;
+    }
+
+    return <NavBar />;
+  }
+
+  commandPaletteEnabled() {
+    return config.featureToggles.commandPalette && !config.isPublicDashboardView;
+  }
+
+  searchBarEnabled() {
+    return !config.isPublicDashboardView;
+  }
+
   render() {
     const { ready } = this.state;
 
     navigationLogger('AppWrapper', false, 'rendering');
-
-    const newNavigationEnabled = Boolean(config.featureToggles.newNavigation);
 
     const commandPaletteActionSelected = (action: Action) => {
       reportInteraction('commandPalette_action_selected', {
         actionId: action.id,
       });
     };
-
-    const commandPaletteEnabled = () => !config.isPublicDashboardView && config.featureToggles.commandPalette;
-
-    const renderNavBar = () => {
-      return !config.isPublicDashboardView && ready && <>{newNavigationEnabled ? <NavBarNext /> : <NavBar />}</>;
-    };
-
-    const searchBarEnabled = () => !config.isPublicDashboardView;
 
     return (
       <Provider store={store}>
@@ -115,10 +120,10 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                 >
                   <ModalsProvider>
                     <GlobalStyles />
-                    {commandPaletteEnabled() && <CommandPalette />}
+                    {this.commandPaletteEnabled() && <CommandPalette />}
                     <div className="grafana-app">
                       <Router history={locationService.getHistory()}>
-                        {renderNavBar()}
+                        {this.renderNavBar()}
                         <main className="main-view">
                           {pageBanners.map((Banner, index) => (
                             <Banner key={index.toString()} />
@@ -126,7 +131,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
 
                           <AngularRoot />
                           <AppNotificationList />
-                          {searchBarEnabled() && <SearchWrapper />}
+                          {this.searchBarEnabled() && <SearchWrapper />}
                           {ready && this.renderRoutes()}
                           {bodyRenderHooks.map((Hook, index) => (
                             <Hook key={index.toString()} />
