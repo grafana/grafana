@@ -39,7 +39,7 @@ export function PluginUsage({ plugin }: Props) {
     return (
       <div className={styles.wrap}>
         <div className={styles.info}>
-          Plugin is used <b>{found.totalRows}</b> times
+          {plugin.name} is used <b>{found.totalRows}</b> times
           {Boolean(found.facets?.length) && (
             <span>
               , in <b>{found.facets![0].length}</b> dashboards
