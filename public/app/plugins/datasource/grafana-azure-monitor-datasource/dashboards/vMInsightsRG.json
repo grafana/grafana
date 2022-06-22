@@ -2654,6 +2654,7 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Azure VM Monitoring - VM Insights by Resource Group",
+  "title": "Azure / Insights / Virtual Machines by Resource Group",
+  "uid": "AzVmInsightsByRG",
   "version": 9
 }

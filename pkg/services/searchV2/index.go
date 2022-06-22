@@ -67,6 +67,7 @@ type dashboardIndex struct {
 	buildSignals   chan buildSignal
 	extender       DocumentExtender
 	folderIdLookup folderUIDLookup
+	syncCh         chan chan struct{}
 }
 
 func newDashboardIndex(dashLoader dashboardLoader, evStore eventStore, extender DocumentExtender, folderIDs folderUIDLookup) *dashboardIndex {
@@ -79,15 +80,33 @@ func newDashboardIndex(dashLoader dashboardLoader, evStore eventStore, extender 
 		buildSignals:   make(chan buildSignal),
 		extender:       extender,
 		folderIdLookup: folderIDs,
+		syncCh:         make(chan chan struct{}),
+	}
+}
+
+func (i *dashboardIndex) sync(ctx context.Context) error {
+	doneCh := make(chan struct{}, 1)
+	select {
+	case i.syncCh <- doneCh:
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+	select {
+	case <-doneCh:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
 	}
 }
 
 func (i *dashboardIndex) run(ctx context.Context, orgIDs []int64) error {
-	fullReIndexTicker := time.NewTicker(5 * time.Minute)
-	defer fullReIndexTicker.Stop()
+	reIndexInterval := 5 * time.Minute
+	fullReIndexTimer := time.NewTimer(reIndexInterval)
+	defer fullReIndexTimer.Stop()
 
-	partialUpdateTicker := time.NewTicker(5 * time.Second)
-	defer partialUpdateTicker.Stop()
+	partialUpdateInterval := 5 * time.Second
+	partialUpdateTimer := time.NewTimer(partialUpdateInterval)
+	defer partialUpdateTimer.Stop()
 
 	var lastEventID int64
 	lastEvent, err := i.eventStore.GetLastEvent(ctx)
@@ -103,12 +122,17 @@ func (i *dashboardIndex) run(ctx context.Context, orgIDs []int64) error {
 		return err
 	}
 
-	i.eventStore.OnEvent(i.applyEventOnIndex)
+	// Channel to handle signals about asynchronous full re-indexing completion.
+	reIndexDoneCh := make(chan int64, 1)
 
 	for {
 		select {
-		case <-partialUpdateTicker.C:
+		case doneCh := <-i.syncCh:
 			lastEventID = i.applyIndexUpdates(ctx, lastEventID)
+			close(doneCh)
+		case <-partialUpdateTimer.C:
+			lastEventID = i.applyIndexUpdates(ctx, lastEventID)
+			partialUpdateTimer.Reset(partialUpdateInterval)
 		case signal := <-i.buildSignals:
 			i.mu.RLock()
 			_, ok := i.perOrgWriter[signal.orgID]
@@ -119,12 +143,38 @@ func (i *dashboardIndex) run(ctx context.Context, orgIDs []int64) error {
 				continue
 			}
 			i.mu.RUnlock()
-			_, err = i.buildOrgIndex(ctx, signal.orgID)
-			signal.done <- err
-		case <-fullReIndexTicker.C:
-			started := time.Now()
-			i.reIndexFromScratch(ctx)
-			i.logger.Info("Full re-indexing finished", "fullReIndexElapsed", time.Since(started))
+			lastIndexedEventID := lastEventID
+			// Prevent full re-indexing while we are building index for new org.
+			// Full re-indexing will be later re-started in `case lastIndexedEventID := <-reIndexDoneCh`
+			// branch.
+			fullReIndexTimer.Stop()
+			go func() {
+				_, err = i.buildOrgIndex(ctx, signal.orgID)
+				signal.done <- err
+				reIndexDoneCh <- lastIndexedEventID
+			}()
+		case <-fullReIndexTimer.C:
+			lastIndexedEventID := lastEventID
+			go func() {
+				// Do full re-index asynchronously to avoid blocking index synchronization
+				// on read for a long time.
+				started := time.Now()
+				i.logger.Info("Start re-indexing")
+				i.reIndexFromScratch(ctx)
+				i.logger.Info("Full re-indexing finished", "fullReIndexElapsed", time.Since(started))
+				reIndexDoneCh <- lastIndexedEventID
+			}()
+		case lastIndexedEventID := <-reIndexDoneCh:
+			// Asynchronous re-indexing is finished. Set lastEventID to the value which
+			// was actual at the re-indexing start – so that we could re-apply all the
+			// events happened during async index build process and make sure it's consistent.
+			if lastEventID != lastIndexedEventID {
+				i.logger.Info("Re-apply event ID to last indexed", "currentEventID", lastEventID, "lastIndexedEventID", lastIndexedEventID)
+				lastEventID = lastIndexedEventID
+				// Apply events immediately.
+				partialUpdateTimer.Reset(0)
+			}
+			fullReIndexTimer.Reset(reIndexInterval)
 		case <-ctx.Done():
 			return ctx.Err()
 		}
