@@ -207,6 +207,8 @@ func (service *AlertRuleService) isProvisionedGroup(ctx context.Context, rule mo
 	if prov != models.ProvenanceNone {
 		return true, nil
 	}
+	// we can use GetRuleGroupInterval to see if the group exists as otherwise it
+	// return ErrAlertRuleGroupNotFound
 	_, err = service.ruleStore.GetRuleGroupInterval(ctx, rule.OrgID, rule.NamespaceUID, rule.RuleGroup)
 	if err != nil {
 		if err == store.ErrAlertRuleGroupNotFound {
