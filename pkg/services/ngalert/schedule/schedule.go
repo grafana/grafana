@@ -349,7 +349,6 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 	}
 }
 
-//nolint: gocyclo
 func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertRuleKey, evalCh <-chan *evaluation, updateCh <-chan struct{}) error {
 	logger := sch.log.New("uid", key.UID, "org", key.OrgID)
 	logger.Debug("alert rule routine started")
