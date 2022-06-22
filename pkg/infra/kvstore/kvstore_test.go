@@ -3,6 +3,7 @@ package kvstore
 import (
 	"context"
 	"fmt"
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -127,22 +128,6 @@ func TestIntegrationKVStore(t *testing.T) {
 		assert.Equal(t, tc.Value(), value)
 	})
 
-	t.Run("Get all values per org", func(t *testing.T) {
-		for _, tc := range testCases {
-			items, err := kv.Items(ctx, tc.OrgId, tc.Namespace)
-			require.NoError(t, err)
-			require.Equal(t, *items[0].Key, tc.Key)
-			require.Equal(t, items[0].Value, tc.Value())
-		}
-	})
-
-	t.Run("Get all values for all orgs", func(t *testing.T) {
-		items, err := kv.Items(ctx, AllOrganizations, "testing1")
-		require.NoError(t, err)
-		require.Equal(t, items[0].Value, testCases[0].Value())
-		require.Equal(t, items[1].Value, testCases[2].Value())
-	})
-
 	t.Run("use namespaced client", func(t *testing.T) {
 		tc := testCases[0]
 
@@ -256,5 +241,55 @@ func TestIntegrationKVStore(t *testing.T) {
 		keys, err = kv.Keys(ctx, AllOrganizations, "not_existing_namespace", "not_existing_key")
 		require.NoError(t, err, "querying a not existing namespace and key should not throw an error")
 		require.Len(t, keys, 0, "querying a not existing namespace and key should return an empty slice")
+	})
+}
+
+func TestGetItems(t *testing.T) {
+	kv := createTestableKVStore(t)
+
+	ctx := context.Background()
+
+	testCases := []*TestCase{
+		{
+			OrgId:     1,
+			Namespace: "testing1",
+			Key:       "key1",
+		},
+		{
+			OrgId:     2,
+			Namespace: "testing1",
+			Key:       "key1",
+		},
+		{
+			OrgId:     3,
+			Namespace: "testing1",
+			Key:       "key2",
+		},
+	}
+
+	for _, tc := range testCases {
+		err := kv.Set(ctx, tc.OrgId, tc.Namespace, tc.Key, tc.Value())
+		require.NoError(t, err)
+	}
+
+	t.Run("Get all values per org", func(t *testing.T) {
+		for _, tc := range testCases {
+			items, err := kv.Items(ctx, tc.OrgId, tc.Namespace)
+			require.NoError(t, err)
+			require.Equal(t, *items[0].Key, tc.Key)
+			require.Equal(t, items[0].Value, tc.Value())
+		}
+	})
+
+	t.Run("Get all values for all orgs", func(t *testing.T) {
+		items, err := kv.Items(ctx, AllOrganizations, "testing1")
+		sort.Slice(items, func(i, j int) bool {
+			return *items[i].OrgId < *items[j].OrgId
+		})
+		require.NoError(t, err)
+		for i, it := range items {
+			require.Equal(t, *it.Key, testCases[i].Key)
+			require.Equal(t, it.Value, testCases[i].Value())
+		}
 	})
 }
