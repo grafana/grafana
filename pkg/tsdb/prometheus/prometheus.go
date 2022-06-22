@@ -44,9 +44,12 @@ func newInstanceSettings(httpClientProvider httpclient.Provider, cfg *setting.Cf
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		// Create a http roundTripper. Probably should be used for both buffered and streaming/querydata instance.
 		opts, err := buffered.CreateTransportOptions(settings, cfg, features, plog)
+		if err != nil {
+			return nil, fmt.Errorf("error creating transport options: %v", err)
+		}
 		roundTripper, err := httpClientProvider.GetTransport(*opts)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create http client: %v", err)
+			return nil, fmt.Errorf("error creating http client: %v", err)
 		}
 
 		b, err := buffered.New(roundTripper, tracer, settings, plog)

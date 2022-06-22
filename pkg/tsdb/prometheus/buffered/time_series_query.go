@@ -118,9 +118,9 @@ func (b *Buffered) runQueries(ctx context.Context, queries []*PrometheusQuery) (
 		b.log.Debug("Sending query", "start", query.Start, "end", query.End, "step", query.Step, "query", query.Expr)
 
 		ctx, endSpan := utils.StartTrace(ctx, b.tracer, "datasource.prometheus", []utils.Attribute{
-			{"expr", query.Expr, attribute.Key("expr").String(query.Expr)},
-			{"start_unixnano", query.Start, attribute.Key("start_unixnano").Int64(query.Start.UnixNano())},
-			{"stop_unixnano", query.End, attribute.Key("stop_unixnano").Int64(query.End.UnixNano())},
+			{Key: "expr", Value: query.Expr, Kv: attribute.Key("expr").String(query.Expr)},
+			{Key: "start_unixnano", Value: query.Start, Kv: attribute.Key("start_unixnano").Int64(query.Start.UnixNano())},
+			{Key: "stop_unixnano", Value: query.End, Kv: attribute.Key("stop_unixnano").Int64(query.End.UnixNano())},
 		})
 		defer endSpan()
 
