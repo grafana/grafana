@@ -46,6 +46,16 @@ func NewResponseWriter(method string, rw http.ResponseWriter) ResponseWriter {
 	return &responseWriter{method, rw, 0, 0, nil}
 }
 
+// Rw returns a ResponseWriter. If the argument already satisfies the interface,
+// it is returned as is, otherwise it is wrapped using NewResponseWriter
+func Rw(rw http.ResponseWriter, req *http.Request) ResponseWriter {
+	if mrw, ok := rw.(ResponseWriter); ok {
+		return mrw
+	}
+
+	return NewResponseWriter(req.Method, rw)
+}
+
 type responseWriter struct {
 	method string
 	http.ResponseWriter

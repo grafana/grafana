@@ -74,7 +74,8 @@ func validateAndWrapHandlers(handlers []Handler) []http.Handler {
 // Macaron represents the top level web application.
 // Injector methods can be invoked to map services on a global level.
 type Macaron struct {
-	handlers []http.Handler
+	// handlers    []http.Handler
+	mws []Middleware
 
 	urlPrefix string // For suburl support.
 	*Router
@@ -119,6 +120,8 @@ func SetURLParams(r *http.Request, vars map[string]string) *http.Request {
 	return r.WithContext(context.WithValue(r.Context(), paramsKey{}, vars))
 }
 
+type Middleware func(next http.Handler) http.Handler
+
 // UseMiddleware is a traditional approach to writing middleware in Go.
 // A middleware is a function that has a reference to the next handler in the chain
 // and returns the actual middleware handler, that may do its job and optionally
@@ -127,35 +130,58 @@ func SetURLParams(r *http.Request, vars map[string]string) *http.Request {
 // to use the new ResponseWriter and http.Request here. The caller may only call
 // `next.ServeHTTP(rw, req)` to pass a modified response writer and/or a request to the
 // further middlewares in the chain.
-func (m *Macaron) UseMiddleware(middleware func(http.Handler) http.Handler) {
-	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		c := FromContext(req.Context())
-		c.Req = req
-		if mrw, ok := rw.(*responseWriter); ok {
-			c.Resp = mrw
-		} else {
-			c.Resp = NewResponseWriter(req.Method, rw)
-		}
-		c.Next()
-	})
-	m.handlers = append(m.handlers, middleware(next))
+func (m *Macaron) UseMiddleware(mw Middleware) {
+	m.mws = append(m.mws, mw)
+
+	// next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+	// 	c := FromContext(req.Context())
+	// 	c.Req = req
+	// 	if mrw, ok := rw.(*responseWriter); ok {
+	// 		c.Resp = mrw
+	// 	} else {
+	// 		c.Resp = NewResponseWriter(req.Method, rw)
+	// 	}
+	// 	c.Next()
+	// })
+	// m.handlers = append(m.handlers, middleware(next))
 }
 
 // Use adds a middleware Handler to the stack,
 // and panics if the handler is not a callable func.
 // Middleware Handlers are invoked in the order that they are added.
-func (m *Macaron) Use(handler Handler) {
+func (m *Macaron) Use(h Handler) {
+	m.mws = append(m.mws, mwFromHandler(h))
+}
+
+func mwFromHandler(handler Handler) Middleware {
 	h := validateAndWrapHandler(handler)
-	m.handlers = append(m.handlers, h)
+
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			mrw, ok := w.(*responseWriter)
+			if !ok {
+				mrw = NewResponseWriter(r.Method, w).(*responseWriter)
+			}
+
+			h.ServeHTTP(mrw, r)
+			if mrw.Written() {
+				return
+			}
+
+			ctx := r.Context().Value(macaronContextKey{}).(*Context)
+			next.ServeHTTP(ctx.Resp, ctx.Req)
+		})
+	}
 }
 
 func (m *Macaron) createContext(rw http.ResponseWriter, req *http.Request) *Context {
 	c := &Context{
-		handlers: m.handlers,
-		index:    0,
-		Router:   m.Router,
-		Resp:     NewResponseWriter(req.Method, rw),
-		logger:   log.New("macaron.context"),
+		// handlers: m.handlers,
+		mws: m.mws,
+		// index:  0,
+		Router: m.Router,
+		Resp:   NewResponseWriter(req.Method, rw),
+		logger: log.New("macaron.context"),
 	}
 
 	c.Req = req.WithContext(context.WithValue(req.Context(), macaronContextKey{}, c))
