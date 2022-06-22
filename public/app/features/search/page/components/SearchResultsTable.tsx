@@ -112,6 +112,7 @@ export const SearchResultsTable = React.memo(
         return (
           <div {...row.getRowProps({ style })} className={className}>
             {row.cells.map((cell: Cell, index: number) => {
+              console.log(`cell${index}`, cell);
               return (
                 <TableCell
                   key={index}
@@ -134,7 +135,7 @@ export const SearchResultsTable = React.memo(
     }
 
     return (
-      <div {...getTableProps()} aria-label="Search result table" role="table">
+      <div {...getTableProps()} aria-label="Search results table" role="table">
         <div>
           {headerGroups.map((headerGroup) => {
             const { key, ...headerGroupProps } = headerGroup.getHeaderGroupProps();
