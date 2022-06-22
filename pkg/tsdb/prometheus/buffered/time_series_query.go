@@ -94,6 +94,8 @@ func New(roundTripper http.RoundTripper, tracer tracing.Tracer, settings backend
 }
 
 func (b *Buffered) ExecuteTimeSeriesQuery(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	// Add headers from the request to context so they are added later on by a context middleware. This is because
+	// prom client does not allow us to do this directly.
 	ctxWithHeaders := sdkHTTPClient.WithContextualMiddleware(ctx, middleware.ReqHeadersMiddleware(req.Headers))
 
 	queries, err := b.parseTimeSeriesQuery(req)
@@ -101,7 +103,7 @@ func (b *Buffered) ExecuteTimeSeriesQuery(ctx context.Context, req *backend.Quer
 		result := backend.QueryDataResponse{
 			Responses: backend.Responses{},
 		}
-		return &result, err
+		return &result, fmt.Errorf("error parsing time series query: %v", err)
 	}
 
 	return b.runQueries(ctxWithHeaders, queries)
@@ -115,11 +117,12 @@ func (b *Buffered) runQueries(ctx context.Context, queries []*PrometheusQuery) (
 	for _, query := range queries {
 		b.log.Debug("Sending query", "start", query.Start, "end", query.End, "step", query.Step, "query", query.Expr)
 
-		ctx, span := b.tracer.Start(ctx, "datasource.prometheus")
-		span.SetAttributes("expr", query.Expr, attribute.Key("expr").String(query.Expr))
-		span.SetAttributes("start_unixnano", query.Start, attribute.Key("start_unixnano").Int64(query.Start.UnixNano()))
-		span.SetAttributes("stop_unixnano", query.End, attribute.Key("stop_unixnano").Int64(query.End.UnixNano()))
-		defer span.End()
+		ctx, endSpan := utils.StartTrace(ctx, b.tracer, "datasource.prometheus", []utils.Attribute{
+			{"expr", query.Expr, attribute.Key("expr").String(query.Expr)},
+			{"start_unixnano", query.Start, attribute.Key("start_unixnano").Int64(query.Start.UnixNano())},
+			{"stop_unixnano", query.End, attribute.Key("stop_unixnano").Int64(query.End.UnixNano())},
+		})
+		defer endSpan()
 
 		response := make(map[TimeSeriesQueryType]interface{})
 
@@ -214,12 +217,12 @@ func (b *Buffered) parseTimeSeriesQuery(req *backend.QueryDataRequest) ([]*Prome
 		model := &QueryModel{}
 		err := json.Unmarshal(query.JSON, model)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error unmarshaling query model: %v", err)
 		}
 		//Final interval value
 		interval, err := calculatePrometheusInterval(model, b.TimeInterval, query, b.intervalCalculator)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error calculating interval: %v", err)
 		}
 
 		// Interpolate variables in expr
