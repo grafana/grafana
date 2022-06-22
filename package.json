@@ -89,10 +89,6 @@
     "@babel/preset-env": "7.18.2",
     "@babel/preset-react": "7.17.12",
     "@babel/preset-typescript": "7.17.12",
-    "@betterer/betterer": "5.3.0",
-    "@betterer/cli": "5.3.0",
-    "@betterer/eslint": "5.3.0",
-    "@betterer/regexp": "5.3.0",
     "@emotion/eslint-plugin": "11.7.0",
     "@grafana/api-documenter": "7.11.2",
     "@grafana/e2e": "workspace:*",
@@ -249,6 +245,10 @@
     "webpack-merge": "5.8.0"
   },
   "dependencies": {
+    "@betterer/betterer": "5.3.5",
+    "@betterer/cli": "5.3.5",
+    "@betterer/eslint": "5.3.5",
+    "@betterer/regexp": "5.3.5",
     "@emotion/css": "11.9.0",
     "@emotion/react": "11.9.0",
     "@grafana/aws-sdk": "0.0.36",
