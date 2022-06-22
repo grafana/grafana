@@ -1,23 +1,23 @@
 import { SceneObjectBase } from './SceneObjectBase';
 import { SceneObject, SceneObjectList, SceneObjectState } from './types';
 
-interface TestItemState extends SceneObjectState {
+interface TestSceneState extends SceneObjectState {
   name?: string;
-  nested?: SceneObject<TestItemState>;
+  nested?: SceneObject<TestSceneState>;
   children?: SceneObjectList;
   actions?: SceneObjectList;
 }
 
-class TestItem extends SceneObjectBase<TestItemState> {}
+class TestScene extends SceneObjectBase<TestSceneState> {}
 
 describe('SceneObject', () => {
   it('Can clone', () => {
-    const scene = new TestItem({
-      nested: new TestItem({
+    const scene = new TestScene({
+      nested: new TestScene({
         name: 'nested',
       }),
       children: [
-        new TestItem({
+        new TestScene({
           name: 'layout child',
         }),
       ],
@@ -33,17 +33,17 @@ describe('SceneObject', () => {
   });
 
   it('SceneObject should have parent when added to container', () => {
-    const scene = new TestItem({
-      nested: new TestItem({
+    const scene = new TestScene({
+      nested: new TestScene({
         name: 'nested',
       }),
       children: [
-        new TestItem({
+        new TestScene({
           name: 'layout child',
         }),
       ],
       actions: [
-        new TestItem({
+        new TestScene({
           name: 'layout child',
         }),
       ],
@@ -56,8 +56,8 @@ describe('SceneObject', () => {
   });
 
   it('Can clone with state change', () => {
-    const scene = new TestItem({
-      nested: new TestItem({
+    const scene = new TestScene({
+      nested: new TestScene({
         name: 'nested',
       }),
     });
