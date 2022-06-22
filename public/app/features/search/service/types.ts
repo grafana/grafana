@@ -1,4 +1,4 @@
-import { DataFrameView, SelectableValue } from '@grafana/data';
+import { DataFrame, DataFrameView, SelectableValue } from '@grafana/data';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 
 export interface FacetField {
@@ -56,6 +56,9 @@ export interface QueryResponse {
 
   /** Checks if a row in the view needs to be added */
   isItemLoaded: (index: number) => boolean;
+
+  /** Optionally facet frames */
+  facets?: DataFrame[];
 
   /** the total query results size */
   totalRows: number;

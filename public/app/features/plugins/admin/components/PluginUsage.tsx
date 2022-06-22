@@ -21,6 +21,11 @@ export function PluginUsage({ plugin }: Props) {
       query: '*',
       panel_type: plugin.id,
       kind: ['panel'],
+      facet: [
+        {
+          field: 'location',
+        },
+      ],
     } as SearchQuery;
   }, [plugin]);
 
@@ -28,14 +33,24 @@ export function PluginUsage({ plugin }: Props) {
     return getGrafanaSearcher().search(searchQuery);
   }, [searchQuery]);
 
-  if (results.value?.totalRows) {
+  console.log(results);
+  const found = results.value;
+  if (found?.totalRows) {
     return (
       <div className={styles.wrap}>
+        <div className={styles.info}>
+          Plugin is used <b>{found.totalRows}</b> times
+          {Boolean(found.facets?.length) && (
+            <span>
+              , in <b>{found.facets![0].length}</b> dashboards
+            </span>
+          )}
+        </div>
         <AutoSizer>
           {({ width, height }) => {
             return (
               <SearchResultsTable
-                response={results.value!}
+                response={found}
                 width={width}
                 height={height}
                 clearSelection={() => {}}
@@ -61,6 +76,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
     wrap: css`
       width: 100%;
       height: 100%;
+    `,
+    info: css`
+      padding-bottom: 30px;
     `,
   };
 };
