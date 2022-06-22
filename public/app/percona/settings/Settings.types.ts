@@ -122,20 +122,20 @@ export type SettingsAPIChangePayload =
   | SSHPayload;
 
 export interface Settings {
+  sttEnabled: boolean;
+  dbaasEnabled: boolean;
+  backupEnabled: boolean;
+  alertingEnabled: boolean;
   updatesDisabled: boolean;
   telemetryEnabled: boolean;
-  backupEnabled: boolean;
   metricsResolutions: MetricsResolutions;
   dataRetention: string;
   sshKey: string;
   awsPartitions: string[];
   alertManagerUrl: string;
   alertManagerRules: string;
-  sttEnabled: boolean;
   azureDiscoverEnabled?: boolean;
   platformEmail?: string;
-  dbaasEnabled?: boolean;
-  alertingEnabled?: boolean;
   publicAddress?: string;
   alertingSettings: AlertingSettings;
   sttCheckIntervals: SttCheckIntervalsSettings;

@@ -1,11 +1,7 @@
-import { AxiosError } from 'axios';
-
-import { Settings } from 'app/percona/settings/Settings.types';
+import { StoreState } from 'app/types';
 
 export interface FeatureLoaderProps {
   featureName: string;
-  featureFlag: keyof Settings;
+  featureSelector: (state: StoreState) => boolean;
   messagedataTestId?: string;
-  onError?: (error: AxiosError) => void;
-  onSettingsLoaded?: (settings: Settings) => void;
 }

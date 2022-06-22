@@ -6,6 +6,7 @@ import { Router, Route, Redirect, Switch } from 'react-router-dom';
 import { config, locationService, navigationLogger, reportInteraction } from '@grafana/runtime';
 import { ErrorBoundaryAlert, GlobalStyles, ModalRoot, ModalsProvider, PortalContainer } from '@grafana/ui';
 import { SearchWrapper } from 'app/features/search';
+import { PerconaBootstrapper } from 'app/percona/shared/components/PerconaBootstrapper';
 import { getAppRoutes } from 'app/routes/routes';
 import { store } from 'app/store/store';
 
@@ -111,6 +112,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                     <div className="grafana-app">
                       <Router history={locationService.getHistory()}>
                         {ready && <>{newNavigationEnabled ? <NavBarNext /> : <NavBar />}</>}
+                        {ready && <PerconaBootstrapper />}
                         <main className="main-view">
                           {pageBanners.map((Banner, index) => (
                             <Banner key={index.toString()} />

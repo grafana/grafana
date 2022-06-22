@@ -14,12 +14,7 @@ export interface AdvancedProps {
   azureDiscoverEnabled?: boolean;
   publicAddress?: string;
   sttCheckIntervals: SttCheckIntervalsSettings;
-  updateSettings: (
-    body: AdvancedChangePayload,
-    callback: LoadingCallback,
-    refresh?: boolean,
-    onError?: () => void
-  ) => void;
+  updateSettings: (body: AdvancedChangePayload, callback: LoadingCallback, onError?: () => void) => void;
 }
 
 export interface AdvancedFormProps {

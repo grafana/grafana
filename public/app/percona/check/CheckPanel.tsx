@@ -1,6 +1,7 @@
-import React, { FC, useMemo } from 'react';
+import React, { FC, useMemo, useCallback } from 'react';
 
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { StoreState } from 'app/types';
 
 import { FeatureLoader } from '../shared/components/Elements/FeatureLoader';
 import { ContentTab, TabbedContent } from '../shared/components/Elements/TabbedContent';
@@ -30,6 +31,8 @@ export const CheckPanel: FC<GrafanaRouteComponentProps<{ tab: string }>> = ({ ma
     []
   );
 
+  const featureSelector = useCallback((state: StoreState) => !!state.perconaSettings.sttEnabled, []);
+
   return (
     <PageWrapper pageModel={PAGE_MODEL} dataTestId="db-check-panel">
       <TabbedContent
@@ -42,7 +45,7 @@ export const CheckPanel: FC<GrafanaRouteComponentProps<{ tab: string }>> = ({ ma
           <FeatureLoader
             messagedataTestId="db-check-panel-settings-link"
             featureName={Messages.stt}
-            featureFlag="sttEnabled"
+            featureSelector={featureSelector}
           >
             <Content />
           </FeatureLoader>

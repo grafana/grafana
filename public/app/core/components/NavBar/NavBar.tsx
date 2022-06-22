@@ -1,8 +1,7 @@
 import { css, cx } from '@emotion/css';
-import { logger } from '@percona/platform-core';
 import { cloneDeep } from 'lodash';
-import React, { useState, useEffect } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
+import React, { useState } from 'react';
+import { useSelector, connect, ConnectedProps } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
@@ -11,7 +10,7 @@ import { Icon, IconName, useTheme2 } from '@grafana/ui';
 import { Branding } from 'app/core/components/Branding/Branding';
 import config from 'app/core/config';
 import { getKioskMode } from 'app/core/navigation/kiosk';
-import { SettingsService } from 'app/percona/settings/Settings.service';
+import { getPerconaSettings } from 'app/percona/shared/core/selectors';
 import { isPmmAdmin } from 'app/percona/shared/helpers/permissions';
 import { KioskMode, StoreState } from 'app/types';
 
@@ -58,12 +57,13 @@ export const NavBarUnconnected = React.memo(({ navBarTree }: Props) => {
   const styles = getStyles(theme);
   const location = useLocation();
   const kiosk = getKioskMode();
+  const { sttEnabled, alertingEnabled, dbaasEnabled, backupEnabled } = useSelector(getPerconaSettings);
   const [showSwitcherModal, setShowSwitcherModal] = useState(false);
   const toggleSwitcherModal = () => {
     setShowSwitcherModal(!showSwitcherModal);
   };
   const navTree: NavModelItem[] = cloneDeep(navBarTree);
-  const [topItems, setTopItems] = useState(navTree.filter((item) => item.section === NavSection.Core));
+  const topItems = navTree.filter((item) => item.section === NavSection.Core);
   const bottomItems = enrichConfigItems(
     navTree.filter((item) => item.section === NavSection.Config),
     location,
@@ -73,53 +73,38 @@ export const NavBarUnconnected = React.memo(({ navBarTree }: Props) => {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  useEffect(() => {
-    const updateMenu = async () => {
-      try {
-        const settings = await SettingsService.getSettings(undefined, true);
-        const newItems: NavModelItem[] = [...topItems];
-
-        if (settings.alertingEnabled) {
-          buildIntegratedAlertingMenuItem(newItems);
-        }
-
-        if (settings.sttEnabled) {
-          newItems.push({
-            id: 'databsase-checks',
-            icon: 'percona-database-checks',
-            text: 'Security Checks',
-            url: `${config.appSubUrl}/pmm-database-checks`,
-          });
-        }
-
-        if (settings.dbaasEnabled) {
-          newItems.push({
-            id: 'dbaas',
-            text: 'DBaaS',
-            icon: 'database',
-            url: `${config.appSubUrl}/dbaas`,
-          });
-        }
-
-        if (settings.backupEnabled) {
-          newItems.push({
-            id: 'backup',
-            icon: 'history',
-            text: 'Backup',
-            url: `${config.appSubUrl}/backup`,
-          });
-        }
-
-        setTopItems(newItems);
-      } catch (e) {
-        logger.error(e);
-      }
-    };
-    if (isPmmAdmin(config.bootData.user)) {
-      updateMenu();
+  if (isPmmAdmin(config.bootData.user)) {
+    if (alertingEnabled) {
+      buildIntegratedAlertingMenuItem(topItems);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+
+    if (sttEnabled) {
+      topItems.push({
+        id: 'databsase-checks',
+        icon: 'percona-database-checks',
+        text: 'Security Checks',
+        url: `${config.appSubUrl}/pmm-database-checks`,
+      });
+    }
+
+    if (dbaasEnabled) {
+      topItems.push({
+        id: 'dbaas',
+        text: 'DBaaS',
+        icon: 'database',
+        url: `${config.appSubUrl}/dbaas`,
+      });
+    }
+
+    if (backupEnabled) {
+      topItems.push({
+        id: 'backup',
+        icon: 'history',
+        text: 'Backup',
+        url: `${config.appSubUrl}/backup`,
+      });
+    }
+  }
 
   if (kiosk !== KioskMode.Off) {
     return null;

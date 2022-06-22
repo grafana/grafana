@@ -1,9 +1,9 @@
-import React, { FC, useMemo, useState } from 'react';
+import React, { FC, useCallback, useMemo } from 'react';
 
 import { useStyles } from '@grafana/ui';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { StoreState } from 'app/types';
 
-import { Settings } from '../settings/Settings.types';
 import { FeatureLoader } from '../shared/components/Elements/FeatureLoader';
 import { TabbedContent, ContentTab } from '../shared/components/Elements/TabbedContent';
 import { TechnicalPreview } from '../shared/components/Elements/TechnicalPreview/TechnicalPreview';
@@ -20,13 +20,10 @@ import { KubernetesInventory } from './components/Kubernetes/KubernetesInventory
 
 export const DBaaS: FC<GrafanaRouteComponentProps<{ tab: string }>> = ({ match }) => {
   const styles = useStyles(getStyles);
-  const [settings, setSettings] = useState<Settings | null>(null);
   const { path: basePath } = PAGE_MODEL;
   const tab = match.params.tab;
 
-  const [kubernetes, deleteKubernetes, addKubernetes, getKubernetes, setLoading, kubernetesLoading] = useKubernetes({
-    settings,
-  });
+  const [kubernetes, deleteKubernetes, addKubernetes, getKubernetes, setLoading, kubernetesLoading] = useKubernetes();
   const tabs: ContentTab[] = useMemo(
     (): ContentTab[] => [
       {
@@ -55,6 +52,8 @@ export const DBaaS: FC<GrafanaRouteComponentProps<{ tab: string }>> = ({ match }
     [kubernetes, kubernetesLoading]
   );
 
+  const featureSelector = useCallback((state: StoreState) => !!state.perconaSettings.dbaasEnabled, []);
+
   return (
     <PageWrapper pageModel={PAGE_MODEL}>
       <TechnicalPreview />
@@ -64,7 +63,7 @@ export const DBaaS: FC<GrafanaRouteComponentProps<{ tab: string }>> = ({ match }
           tabs={tabs}
           basePath={basePath}
           renderTab={({ Content }) => (
-            <FeatureLoader featureName={Messages.dbaas} featureFlag="dbaasEnabled" onSettingsLoaded={setSettings}>
+            <FeatureLoader featureName={Messages.dbaas} featureSelector={featureSelector}>
               <Content />
             </FeatureLoader>
           )}

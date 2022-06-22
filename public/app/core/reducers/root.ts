@@ -19,6 +19,7 @@ import serviceAccountsReducer from 'app/features/serviceaccounts/state/reducers'
 import teamsReducers from 'app/features/teams/state/reducers';
 import usersReducers from 'app/features/users/state/reducers';
 import templatingReducers from 'app/features/variables/state/keyedVariablesReducer';
+import perconaReducers from 'app/percona/shared/core/reducers';
 
 import { CleanUp, cleanUpAction } from '../actions/cleanUp';
 
@@ -44,7 +45,9 @@ const rootReducers = {
   plugins: pluginsReducer,
 };
 
-const addedReducers = {};
+const addedReducers = {
+  ...perconaReducers,
+};
 
 export const addReducer = (newReducers: any) => {
   Object.assign(addedReducers, newReducers);

@@ -1,26 +1,28 @@
 import { LoaderButton, logger } from '@percona/platform-core';
 import React, { FC, useState } from 'react';
+import { useDispatch } from 'react-redux';
 
 import { AppEvents } from '@grafana/data';
 import { useStyles } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
+import { setSettings } from 'app/percona/shared/core/reducers';
 
 import { PlatformService } from '../Platform.service';
-import { ConnectedProps } from '../types';
 
 import { Messages } from './Connected.messages';
 import { getStyles } from './Connected.styles';
 
-export const Connected: FC<ConnectedProps> = ({ getSettings }) => {
+export const Connected: FC = () => {
   const styles = useStyles(getStyles);
+  const dispatch = useDispatch();
   const [disconnecting, setDisconnecting] = useState(false);
 
   const handleDisconnect = async () => {
     setDisconnecting(true);
     try {
       await PlatformService.disconnect();
-      getSettings();
       appEvents.emit(AppEvents.alertSuccess, [Messages.disconnectSucceeded]);
+      dispatch(setSettings({ isConnectedToPortal: false }));
     } catch (e) {
       logger.error(e);
     } finally {
