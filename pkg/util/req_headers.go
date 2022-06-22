@@ -11,6 +11,8 @@ const (
 	headerValue = "httpHeaderValue"
 )
 
+// CustomHeaders return all the custom headers defined on the json data objects of the datasource. We store the
+// name unencrypted and value encrypted.
 func CustomHeaders(jsonData *simplejson.Json, decryptedJsonData map[string]string) map[string]string {
 	if jsonData == nil {
 		return nil
