@@ -80,6 +80,41 @@ describe('PieChartPanel', () => {
       });
     });
 
+    describe('when series override to hide tooltip', () => {
+      const hideTooltipConfig = {
+        custom: {
+          hideFrom: {
+            legend: false,
+            viz: false,
+            tooltip: true,
+          },
+        },
+      };
+
+      const seriesWithFirefoxOverride = [
+        toDataFrame({
+          fields: [
+            { name: 'Chrome', config: defaultConfig, type: FieldType.number, values: [600] },
+            { name: 'Firefox', config: hideTooltipConfig, type: FieldType.number, values: [190] },
+            { name: 'Safari', config: defaultConfig, type: FieldType.number, values: [210] },
+          ],
+        }),
+      ];
+
+      it('should filter out the Firefox series with value 190 from the multi tooltip', async () => {
+        setup({ data: { series: seriesWithFirefoxOverride } });
+
+        await userEvent.hover(screen.getAllByLabelText('Pie Chart Slice')[0]);
+        expect(screen.queryByText(/600/i)).toBeInTheDocument();
+        expect(screen.queryByText(/190/i)).not.toBeInTheDocument();
+        expect(screen.queryByText(/210/i)).toBeInTheDocument();
+
+        expect(screen.queryByText(/Firefox/i)).toBeInTheDocument();
+        const slices = screen.queryAllByLabelText('Pie Chart Slice');
+        expect(slices.length).toBe(3);
+      });
+    });
+
     describe('when series override to hide legend', () => {
       const hideLegendConfig = {
         custom: {
