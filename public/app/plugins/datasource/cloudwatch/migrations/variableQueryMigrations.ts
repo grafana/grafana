@@ -41,7 +41,7 @@ export function migrateVariableQuery(rawQuery: string | VariableQuery | OldVaria
       try {
         newQuery.dimensionFilters = JSON.parse(tempFilters);
       } catch {
-        throw new Error(`unable to migrate poorly formed filters: ${tempFilters}`);
+        throw new Error(`unable to migrate poorly formed filters: ${rawQuery.dimensionFilters}`);
       }
     }
     if (rawQuery.ec2Filters !== '' && rawQuery.ec2Filters !== '[]') {
@@ -117,7 +117,7 @@ export function migrateVariableQuery(rawQuery: string | VariableQuery | OldVaria
       try {
         newQuery.dimensionFilters = JSON.parse(tempFilters);
       } catch {
-        throw new Error(`unable to migrate poorly formed filters: ${tempFilters}`);
+        throw new Error(`unable to migrate poorly formed filters: ${dimensionValuesQuery[6]}`);
       }
     }
     return newQuery;
