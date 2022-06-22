@@ -22,8 +22,8 @@ describe('dashboardHasTemplateVariables', () => {
 
 describe('generatePublicDashboardUrl', () => {
   it('has the right uid', () => {
-    let pubdash = { uid: 'abcd1234' } as PublicDashboard;
-    expect(generatePublicDashboardUrl(pubdash)).toEqual('/public-dashboards/abcd1234');
+    let pubdash = { accessToken: 'abcd1234' } as PublicDashboard;
+    expect(generatePublicDashboardUrl(pubdash)).toEqual(`${window.location.origin}/public-dashboards/abcd1234`);
   });
 });
 
