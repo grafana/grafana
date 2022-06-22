@@ -369,6 +369,53 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.NoError(t, err)
 				require.EqualValues(t, getTeamQuery.Result.MemberCount, 2)
 			})
+
+			t.Run("Should be able to add service accounts to teams", func(t *testing.T) {
+				sqlStore = InitTestDB(t)
+				setup()
+
+				signedInUser := &models.SignedInUser{
+					Login: "loginuser0",
+					OrgId: testOrgID,
+					Permissions: map[int64]map[string][]string{
+						testOrgID: {
+							ac.ActionTeamsRead:    []string{ac.ScopeTeamsAll},
+							ac.ActionOrgUsersRead: []string{ac.ScopeUsersAll},
+						},
+					},
+				}
+
+				userCmd = models.CreateUserCommand{
+					Email:            fmt.Sprint("sa", 1, "@test.com"),
+					Name:             fmt.Sprint("sa", 1),
+					Login:            fmt.Sprint("login-sa", 1),
+					IsServiceAccount: true,
+				}
+				serviceAccount, err := sqlStore.CreateUser(context.Background(), userCmd)
+				require.NoError(t, err)
+
+				teamId := team1.Id
+				err = sqlStore.AddTeamMember(userIds[0], testOrgID, teamId, false, 0)
+				require.NoError(t, err)
+				err = sqlStore.AddTeamMember(userIds[1], testOrgID, teamId, false, 0)
+				require.NoError(t, err)
+				err = sqlStore.AddTeamMember(userIds[2], testOrgID, teamId, false, 0)
+				require.NoError(t, err)
+				err = sqlStore.AddTeamMember(serviceAccount.Id, testOrgID, teamId, false, 0)
+				require.NoError(t, err)
+
+				searchQuery := &models.SearchTeamsQuery{OrgId: testOrgID, Page: 1, Limit: 10, SignedInUser: signedInUser}
+				err = sqlStore.SearchTeams(context.Background(), searchQuery)
+				require.NoError(t, err)
+				require.Equal(t, 2, len(searchQuery.Result.Teams))
+				team1 := searchQuery.Result.Teams[0]
+				require.EqualValues(t, team1.MemberCount, 4)
+
+				getTeamQuery := &models.GetTeamByIdQuery{OrgId: testOrgID, Id: teamId, SignedInUser: signedInUser}
+				err = sqlStore.GetTeamById(context.Background(), getTeamQuery)
+				require.NoError(t, err)
+				require.EqualValues(t, getTeamQuery.Result.MemberCount, 4)
+			})
 		})
 	})
 }
