@@ -6,3 +6,7 @@
   - @ryantxu
 - UX/UI:
   - @davkal
+- Docs:
+  - @chrichri2547
+  - @brendamuir
+  - @gguillotte-grafana
