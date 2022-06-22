@@ -143,15 +143,19 @@ export class FolderPicker extends PureComponent<Props, State> {
 
   createNewFolder = async (folderName: string) => {
     const newFolder = await createFolder({ title: folderName });
-    let folder = { value: -1, label: 'Not created' };
+    let folder: SelectableValue<number> = { value: -1, label: 'Not created' };
+
     if (newFolder.id > -1) {
       appEvents.emit(AppEvents.alertSuccess, ['Folder Created', 'OK']);
       folder = { value: newFolder.id, label: newFolder.title };
+
       this.setState(
         {
           folder: newFolder,
         },
-        () => this.props.onChange({ id: newFolder.value!, title: newFolder.label! })
+        () => {
+          this.onFolderChange(folder, { action: 'create-option', option: folder });
+        }
       );
     } else {
       appEvents.emit(AppEvents.alertError, ['Folder could not be created']);
