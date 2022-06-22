@@ -879,12 +879,8 @@ def postgres_integration_tests_step(edition, ver_mode):
             # Make sure that we don't use cached results for another database
             'go clean -testcache',
         ]
-    if edition == 'oss':
-        deps.extend(['wire-install'])
-        cmds.extend(["go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=30m {}'"])
-    else:
-        deps.extend(['grabpl'])
-        cmds.extend(['./bin/grabpl integration-tests --database postgres'])
+    deps.extend(['wire-install'])
+    cmds.extend(["go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=30m {}'"])
     return {
         'name': 'postgres-integration-tests',
         'image': build_image,
@@ -908,12 +904,8 @@ def mysql_integration_tests_step(edition, ver_mode):
             # Make sure that we don't use cached results for another database
             'go clean -testcache',
         ]
-    if edition == 'oss':
-        deps.extend(['wire-install'])
-        cmds.extend(["go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=30m {}'"])
-    else:
-        deps.extend(['grabpl'])
-        cmds.extend(['./bin/grabpl integration-tests --database mysql'])
+    deps.extend(['wire-install'])
+    cmds.extend(["go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=30m {}'"])
     return {
         'name': 'mysql-integration-tests',
         'image': build_image,
