@@ -143,6 +143,12 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 		return rsp
 	}
 
+	err = s.dashboardIndex.sync(ctx)
+	if err != nil {
+		rsp.Error = err
+		return rsp
+	}
+
 	reader, ok := s.dashboardIndex.getOrgReader(orgID)
 	if !ok {
 		go func() {
