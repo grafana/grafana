@@ -364,6 +364,7 @@ func TestUserAuth(t *testing.T) {
 				require.Nil(t, err)
 			}
 
+			// "Skipping duplicate users test for mysql as it does make unique constraint case insensitive by default
 			if sqlStore.GetDialect().DriverName() != "mysql" {
 				dupUserEmailcmd := models.CreateUserCommand{
 					Email: "USERDUPLICATETEST1@TEST.COM",
@@ -386,8 +387,6 @@ func TestUserAuth(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, 2, m["stats.users.duplicate_user_entries"])
 				require.Equal(t, 1, m["stats.users.has_duplicate_user_entries"])
-			} else {
-				// "Skipping duplicate users test for mysql as it does make unique constraint case insensitive by default
 			}
 		})
 	})
