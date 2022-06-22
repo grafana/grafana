@@ -87,9 +87,10 @@ func getBody(t *testing.T, body io.ReadCloser) string {
 
 func alertRuleGen() func() apimodels.PostableExtendedRuleNode {
 	return func() apimodels.PostableExtendedRuleNode {
+		forDuration := model.Duration(10 * time.Second)
 		return apimodels.PostableExtendedRuleNode{
 			ApiRuleNode: &apimodels.ApiRuleNode{
-				For:         model.Duration(10 * time.Second),
+				For:         &forDuration,
 				Labels:      map[string]string{"label1": "val1"},
 				Annotations: map[string]string{"annotation1": "val1"},
 			},
