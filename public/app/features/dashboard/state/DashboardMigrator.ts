@@ -76,7 +76,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades: PanelSchemeUpgradeHandler[] = [];
-    this.dashboard.schemaVersion = 36;
+    this.dashboard.schemaVersion = 37;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -775,6 +775,10 @@ export class DashboardMigrator {
           return panel;
         });
       }
+    }
+
+    if (oldVersion < 37) {
+      delete (this.dashboard as any).iteration;
     }
 
     if (panelUpgrades.length === 0) {
