@@ -15,6 +15,7 @@ import {
 } from '@grafana/ui';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
+import { DEFAULT_PER_PAGE_PAGINATION } from '../../../core/constants';
 import { AlertQuery } from '../../../types/unified-alerting-dto';
 
 import { AlertLabels } from './components/AlertLabels';
@@ -179,7 +180,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
           </div>
         </div>
         <div>
-          <RuleDetailsMatchingInstances rule={rule} />
+          <RuleDetailsMatchingInstances rule={rule} pagination={{ itemsPerPage: DEFAULT_PER_PAGE_PAGINATION }} />
         </div>
       </RuleViewerLayoutContent>
       {!isFederatedRule && data && Object.keys(data).length > 0 && (
