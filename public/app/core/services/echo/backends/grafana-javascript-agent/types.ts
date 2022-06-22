@@ -9,4 +9,5 @@ export type GrafanaJavascriptAgentEchoEvent = EchoEvent<EchoEventType.GrafanaJav
 
 export interface User extends Pick<CurrentUserDTO, 'email'> {
   id: string;
+  orgId?: number;
 }

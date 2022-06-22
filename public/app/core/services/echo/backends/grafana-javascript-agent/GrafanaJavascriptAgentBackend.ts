@@ -35,7 +35,7 @@ export class GrafanaJavascriptAgentBackend
     this.transports = [];
 
     if (options.customEndpoint) {
-      this.transports.push(new FetchTransport({ url: options.customEndpoint }));
+      this.transports.push(new FetchTransport({ url: options.customEndpoint, apiKey: options.apiKey }));
     }
 
     if (options.errorInstrumentalizationEnabled) {
@@ -50,6 +50,8 @@ export class GrafanaJavascriptAgentBackend
 
     // initialize GrafanaJavascriptAgent so it can set up it's hooks and start collecting errors
     const grafanaJavaScriptAgentOptions: BrowserConfig = {
+      globalObjectKey: options.globalObjectKey || 'grafanaAgent',
+      preventGlobalExposure: options.preventGlobalExposure || false,
       app: {
         version: options.buildInfo.version,
         environment: options.buildInfo.env,
@@ -63,11 +65,15 @@ export class GrafanaJavascriptAgentBackend
       this.agentInstance.api.setUser({
         email: options.user.email,
         id: options.user.id,
+        attributes: {
+          orgId: String(options.user.orgId) || '',
+        },
       });
     }
   }
 
   addEvent = (e: EchoEvent) => {
+    //console.log("Calling addEvent");
     this.transports.forEach((t) => t.send(e.payload));
   };
 
