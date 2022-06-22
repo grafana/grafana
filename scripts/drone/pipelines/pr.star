@@ -155,7 +155,8 @@ def pr_pipelines(edition):
             name='pr-integration-tests', edition=edition, trigger=trigger, services=services,
             steps=[download_grabpl_step(), identify_runner_step(), ] + integration_test_steps,
             volumes=volumes,
-        ), docs_pipelines(edition, ver_mode, trigger_docs())
+        ),
+        docs_pipelines(edition=edition, ver_mode=ver_mode, trigger=trigger),
     ]
 
 

@@ -14,8 +14,11 @@ def docs_pipelines(edition, ver_mode, trigger):
         identify_runner_step(),
     ]
 
+
+    pipeline["name"] = '{}-docs'.format(ver_mode)
     pipeline["steps"] = steps + pipeline["steps"]
     pipeline["trigger"] = trigger_docs()
+
     return pipeline
 
 def trigger_docs():

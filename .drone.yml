@@ -505,7 +505,7 @@ volumes:
     medium: memory
 ---
 kind: pipeline
-name: build_documentation_website
+name: pr-docs
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
@@ -634,7 +634,7 @@ volumes:
   name: docker_socket
 ---
 kind: pipeline
-name: build_documentation_website
+name: main-docs
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
@@ -4766,6 +4766,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 8cc91c46b575ee7acf4bd720dc1f826400b321006b4150dda0fae09359b80645
+hmac: 7f72aea19ebdfbb0322b7c9e12e8382c0bf1de1812631bdf2c3a2f045c81f3d1
 
 ...
