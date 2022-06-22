@@ -151,6 +151,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"featureToggles":                   hs.Features.GetEnabled(c.Req.Context()),
 		"rendererAvailable":                hs.RenderService.IsAvailable(),
 		"rendererVersion":                  hs.RenderService.Version(),
+		"secretsManagerPluginEnabled":      hs.remoteSecretsCheck.ShouldUseRemoteSecretsPlugin(),
 		"http2Enabled":                     hs.Cfg.Protocol == setting.HTTP2Scheme,
 		"sentry":                           hs.Cfg.Sentry,
 		"pluginCatalogURL":                 hs.Cfg.PluginCatalogURL,
@@ -456,11 +457,6 @@ func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[stri
 			PluginID: plugin.ID,
 			OrgID:    orgID,
 			Enabled:  true,
-		}
-		// The Secrets Manager plugin is unique in that it can be installed but not Enabled if certain conditions aren't met
-		// Override property if this is an installed, but inactive secretsmanager plugin
-		if plugin.IsSecretsManager() && !hs.remoteSecretsCheck.ShouldUseRemoteSecretsPlugin() {
-			pluginSetting.Enabled = false
 		}
 
 		// if plugin is included in an app, check app settings

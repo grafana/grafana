@@ -188,4 +188,5 @@ export interface GrafanaConfig {
   unifiedAlertingEnabled: boolean;
   angularSupportEnabled: boolean;
   feedbackLinksEnabled: boolean;
+  secretsManagerPluginEnabled: boolean;
 }
