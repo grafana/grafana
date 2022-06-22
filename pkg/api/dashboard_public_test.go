@@ -116,7 +116,6 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 				require.NoError(t, err)
 
 				assert.Equal(t, DashboardUid, dashResp.Dashboard.Get("Uid").MustString())
-				assert.Equal(t, true, dashResp.Meta.IsEnabled)
 				assert.Equal(t, false, dashResp.Meta.CanEdit)
 				assert.Equal(t, false, dashResp.Meta.CanDelete)
 				assert.Equal(t, false, dashResp.Meta.CanSave)

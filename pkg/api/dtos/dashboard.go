@@ -33,7 +33,6 @@ type DashboardMeta struct {
 	Provisioned                bool                  `json:"provisioned"`
 	ProvisionedExternalId      string                `json:"provisionedExternalId"`
 	AnnotationsPermissions     *AnnotationPermission `json:"annotationsPermissions"`
-	IsEnabled                  bool                  `json:"isEnabled"`
 	PublicDashboardAccessToken string                `json:"publicDashboardAccessToken"`
 }
 type AnnotationPermission struct {

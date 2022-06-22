@@ -139,7 +139,6 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 		Url:                    dash.GetUrl(),
 		FolderTitle:            "General",
 		AnnotationsPermissions: annotationPermissions,
-		IsEnabled:              false,
 	}
 
 	// lookup folder title

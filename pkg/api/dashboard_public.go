@@ -37,7 +37,6 @@ func (hs *HTTPServer) GetPublicDashboard(c *models.ReqContext) response.Response
 		Version:                    dash.Version,
 		IsFolder:                   false,
 		FolderId:                   dash.FolderId,
-		IsEnabled:                  true,
 		PublicDashboardAccessToken: accessToken,
 	}
 
