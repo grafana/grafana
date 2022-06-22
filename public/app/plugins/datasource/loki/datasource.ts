@@ -44,13 +44,13 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 import { serializeParams } from '../../../core/utils/fetch';
 import { renderLegendFormat } from '../prometheus/legend';
 
-import { addLabelToQuery } from './add_label_to_query';
+import { addLabelToQuery } from './addLabelToQuery';
 import { transformBackendResult } from './backendResultTransformer';
 import { LokiAnnotationsQueryEditor } from './components/AnnotationsQueryEditor';
 import LanguageProvider from './language_provider';
 import { escapeLabelValueInSelector } from './language_utils';
 import { LiveStreams, LokiLiveTarget } from './live_streams';
-import { addParsedLabelToQuery, getNormalizedLokiQuery, queryHasPipeParser } from './query_utils';
+import { getNormalizedLokiQuery } from './query_utils';
 import { sortDataFrameByTime } from './sortDataFrame';
 import { doLokiChannelStream } from './streaming';
 import syntax from './syntax';
@@ -652,12 +652,7 @@ export class LokiDatasource
   ) {
     let escapedValue = escapeLabelValueInSelector(value.toString(), operator);
 
-    if (queryHasPipeParser(queryExpr) && !isMetricsQuery(queryExpr) && !notParsedLabelOverride) {
-      // If query has parser, we treat all labels as parsed and use | key="value" syntax
-      return addParsedLabelToQuery(queryExpr, key, escapedValue, operator);
-    } else {
-      return addLabelToQuery(queryExpr, key, escapedValue, operator, true);
-    }
+    return addLabelToQuery(queryExpr, key, escapedValue, operator);
   }
 
   // Used when running queries through backend

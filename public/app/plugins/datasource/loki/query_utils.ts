@@ -64,16 +64,6 @@ export function getHighlighterExpressionsFromQuery(input: string): string[] {
   return results;
 }
 
-export function queryHasPipeParser(expr: string): boolean {
-  const parsers = PIPE_PARSERS.map((parser) => `${parser.label}`).join('|');
-  const regexp = new RegExp(`\\\|\\\s?(${parsers})`);
-  return regexp.test(expr);
-}
-
-export function addParsedLabelToQuery(expr: string, key: string, value: string | number, operator: string) {
-  return expr + ` | ${key}${operator}"${value.toString()}"`;
-}
-
 // we are migrating from `.instant` and `.range` to `.queryType`
 // this function returns a new query object that:
 // - has `.queryType`
