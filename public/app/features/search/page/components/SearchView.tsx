@@ -25,7 +25,7 @@ import { SearchResultsCards } from './SearchResultsCards';
 import { SearchResultsGrid } from './SearchResultsGrid';
 import { SearchResultsTable, SearchResultsProps } from './SearchResultsTable';
 
-type SearchViewProps = {
+export type SearchViewProps = {
   queryText: string; // odd that it is not from query.query
   showManage: boolean;
   folderDTO?: FolderDTO;
