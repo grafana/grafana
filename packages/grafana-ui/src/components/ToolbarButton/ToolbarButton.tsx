@@ -8,10 +8,9 @@ import { selectors } from '@grafana/e2e-selectors';
 import { styleMixins, useStyles2 } from '../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 import { IconName } from '../../types/icon';
+import { getPropertiesForVariant } from '../Button';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
-
-import { getPropertiesForVariant } from './Button';
 
 type CommonProps = {
   /** Icon name */

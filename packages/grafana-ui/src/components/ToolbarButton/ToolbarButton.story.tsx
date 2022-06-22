@@ -1,19 +1,25 @@
-import { Story } from '@storybook/react';
+import { Meta, Story } from '@storybook/react';
 import React from 'react';
 
-import { ToolbarButton, ButtonGroup } from '@grafana/ui';
-
-import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+import { ButtonGroup } from '../Button';
 
-import { ToolbarButtonProps } from './ToolbarButton';
+import { ToolbarButton, ToolbarButtonProps } from './ToolbarButton';
+import mdx from './ToolbarButton.mdx';
 import { ToolbarButtonRow } from './ToolbarButtonRow';
 
 export default {
   title: 'Buttons/ToolbarButton',
   component: ToolbarButton,
   decorators: [withCenteredStory],
-  parameters: {},
+  parameters: {
+    docs: {
+      page: mdx,
+    },
+    controls: {
+      exclude: ['imgSrc', 'imgAlt', 'iconOnly', 'narrow'],
+    },
+  },
   args: {
     variant: 'default',
     fullWidth: false,
@@ -41,7 +47,7 @@ export default {
       },
     },
   },
-};
+} as Meta;
 
 interface StoryProps extends Partial<ToolbarButtonProps> {
   toolbarButtonText: string;
@@ -83,17 +89,15 @@ export const BasicWithIcon: Story<StoryProps> = (args) => {
 
 export const List: Story<ToolbarButtonProps> = (args) => {
   return (
-    <DashboardStoryCanvas>
-      <ToolbarButtonRow>
-        <ToolbarButton variant={args.variant} iconOnly={false} isOpen={false}>
-          Last 6 hours
-        </ToolbarButton>
-        <ButtonGroup>
-          <ToolbarButton icon="search-minus" variant={args.variant} />
-          <ToolbarButton icon="search-plus" variant={args.variant} />
-        </ButtonGroup>
-        <ToolbarButton icon="sync" isOpen={false} variant={args.variant} />
-      </ToolbarButtonRow>
-    </DashboardStoryCanvas>
+    <ToolbarButtonRow>
+      <ToolbarButton variant={args.variant} iconOnly={false} isOpen={false}>
+        Last 6 hours
+      </ToolbarButton>
+      <ButtonGroup>
+        <ToolbarButton icon="search-minus" variant={args.variant} />
+        <ToolbarButton icon="search-plus" variant={args.variant} />
+      </ButtonGroup>
+      <ToolbarButton icon="sync" isOpen={false} variant={args.variant} />
+    </ToolbarButtonRow>
   );
 };
