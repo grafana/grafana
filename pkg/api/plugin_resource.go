@@ -13,7 +13,9 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins/adapters"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -73,6 +75,17 @@ func (hs *HTTPServer) callPluginResourceWithDataSource(c *models.ReqContext, plu
 	if err != nil {
 		c.JsonApiErr(http.StatusBadRequest, "Failed for create plugin resource request", err)
 		return
+	}
+
+	instanceSettings, err := adapters.ModelToInstanceSettings(ds, func(ds *models.DataSource) map[string]string {
+		decryptedJsonData, err := hs.DataSourcesService.DecryptedValues(c.Req.Context(), ds)
+		if err != nil {
+			hs.log.Error("Failed to decrypt secure json data", "error", err)
+		}
+		return decryptedJsonData
+	})
+	for k, v := range util.CustomHeaders(ds.JsonData, instanceSettings.DecryptedSecureJSONData) {
+		req.Header[k] = []string{v}
 	}
 
 	if hs.DataProxy.OAuthTokenService.IsOAuthPassThruEnabled(ds) {

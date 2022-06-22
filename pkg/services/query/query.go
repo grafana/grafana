@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -184,7 +185,7 @@ func (s *Service) handleQueryData(ctx context.Context, user *models.SignedInUser
 		}
 	}
 
-	for k, v := range customHeaders(ds.JsonData, instanceSettings.DecryptedSecureJSONData) {
+	for k, v := range util.CustomHeaders(ds.JsonData, instanceSettings.DecryptedSecureJSONData) {
 		req.Headers[k] = v
 	}
 
