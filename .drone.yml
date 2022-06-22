@@ -2603,17 +2603,11 @@ steps:
   image: grafana/build-container:1.5.7
   name: lint-backend-enterprise2
 - commands:
-  - ./bin/grabpl test-backend --edition enterprise2
+  - go test -tags=pro -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.5.7
   name: test-backend-enterprise2
-- commands:
-  - ./bin/grabpl integration-tests --edition enterprise2
-  depends_on:
-  - wire-install
-  image: grafana/build-container:1.5.7
-  name: test-backend-integration-enterprise2
 trigger:
   event:
     exclude:
@@ -4375,17 +4369,11 @@ steps:
   image: grafana/build-container:1.5.7
   name: lint-backend-enterprise2
 - commands:
-  - ./bin/grabpl test-backend --edition enterprise2
+  - go test -tags=pro -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.5.7
   name: test-backend-enterprise2
-- commands:
-  - ./bin/grabpl integration-tests --edition enterprise2
-  depends_on:
-  - wire-install
-  image: grafana/build-container:1.5.7
-  name: test-backend-integration-enterprise2
 trigger:
   ref:
   - refs/heads/v[0-9]*
@@ -4751,6 +4739,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 1d21ee674c8f393b96b3bb64a0e5b26683e44b39557bed0ebc2d2307034db35b
+hmac: f1f074cf8f45becdeb258e95136d16ff8e7ff24e199fe368328e4741d8f3305e
 
 ...

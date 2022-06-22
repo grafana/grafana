@@ -510,7 +510,7 @@ def test_backend_step(edition):
                 'wire-install',
             ],
             'commands': [
-                './bin/grabpl test-backend --edition {}'.format(edition),
+                'go test -tags=pro -covermode=atomic -timeout=30m ./pkg/...',
             ],
         }
     else:
@@ -528,28 +528,16 @@ def test_backend_step(edition):
 
 
 def test_backend_integration_step(edition):
-    if edition == 'enterprise2':
-        return {
-            'name': 'test-backend-integration' + enterprise2_suffix(edition),
-            'image': build_image,
-            'depends_on': [
-                'wire-install',
-            ],
-            'commands': [
-                './bin/grabpl integration-tests --edition {}'.format(edition),
-            ],
-        }
-    else:
-        return {
-            'name': 'test-backend-integration',
-            'image': build_image,
-            'depends_on': [
-                'wire-install',
-            ],
-            'commands': [
-                'go test -run Integration -covermode=atomic -timeout=30m ./pkg/...',
-            ],
-        }
+    return {
+        'name': 'test-backend-integration',
+        'image': build_image,
+        'depends_on': [
+            'wire-install',
+        ],
+        'commands': [
+            'go test -run Integration -covermode=atomic -timeout=30m ./pkg/...',
+        ],
+    }
 
 
 

@@ -192,7 +192,6 @@ def get_steps(edition, ver_mode):
         test_steps.extend([
             lint_backend_step(edition=edition2),
             test_backend_step(edition=edition2),
-            test_backend_integration_step(edition=edition2),
         ])
         build_steps.extend([
             build_backend_step(edition=edition2, ver_mode=ver_mode, variants=['linux-amd64']),
