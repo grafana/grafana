@@ -243,7 +243,10 @@ const legacyRunner = [
  */
 export function shouldUseMappingUI(datasource: DataSourceApi): boolean {
   const { type } = datasource;
-  return legacyRunner.includes(type) || type === 'grafana'; // uses new runner
+  return !(
+    type === 'datasource' || //  ODD behavior for "-- Grafana --" datasource
+    legacyRunner.includes(type)
+  );
 }
 
 /**
