@@ -193,7 +193,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 	// token.TokenType was defaulting to "bearer", which is out of spec, so we explicitly set to "Bearer"
 	token.TokenType = "Bearer"
 
-	oauthLogger.Debug("OAuthLogin Got token", "token", token)
+	oauthLogger.Debug("OAuthLogin: got token", "token", fmt.Sprintf("%v", token))
 
 	// set up oauth2 client
 	client := connect.Client(oauthCtx, token)
@@ -214,7 +214,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 		return
 	}
 
-	oauthLogger.Debug("OAuthLogin got user info", "userInfo", userInfo)
+	oauthLogger.Debug("OAuthLogin got user info", "userInfo", fmt.Sprintf("%v", userInfo))
 
 	// validate that we got at least an email address
 	if userInfo.Email == "" {
