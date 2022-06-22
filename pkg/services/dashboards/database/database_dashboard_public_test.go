@@ -202,7 +202,7 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 
 		pdUid := "asdf1234"
 
-		pdSaved, err := dashboardStore.SavePublicDashboardConfig(context.Background(), models.SavePublicDashboardConfigCommand{
+		_, err := dashboardStore.SavePublicDashboardConfig(context.Background(), models.SavePublicDashboardConfigCommand{
 			DashboardUid: savedDashboard.Uid,
 			OrgId:        savedDashboard.OrgId,
 			PublicDashboard: models.PublicDashboard{
@@ -217,43 +217,30 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		// update initial record
-		pdUpdated, err := dashboardStore.UpdatePublicDashboardConfig(context.Background(), models.SavePublicDashboardConfigCommand{
+		updatedPublicDashboard := models.PublicDashboard{
+			Uid:          pdUid,
 			DashboardUid: savedDashboard.Uid,
 			OrgId:        savedDashboard.OrgId,
-			PublicDashboard: models.PublicDashboard{
-				Uid:          pdUid,
-				DashboardUid: savedDashboard.Uid,
-				OrgId:        savedDashboard.OrgId,
-				IsEnabled:    false,
-				TimeSettings: simplejson.NewFromAny(map[string]interface{}{"from": "now-8", "to": "now"}),
-				UpdatedAt:    time.Now().UTC().Round(time.Second),
-				UpdatedBy:    8,
-			},
+			IsEnabled:    false,
+			TimeSettings: simplejson.NewFromAny(map[string]interface{}{"from": "now-8", "to": "now"}),
+			UpdatedAt:    time.Now().UTC().Round(time.Second),
+			UpdatedBy:    8,
+		}
+		// update initial record
+		err = dashboardStore.UpdatePublicDashboardConfig(context.Background(), models.SavePublicDashboardConfigCommand{
+			DashboardUid:    savedDashboard.Uid,
+			OrgId:           savedDashboard.OrgId,
+			PublicDashboard: updatedPublicDashboard,
 		})
 		require.NoError(t, err)
 
 		pdRetrieved, err := dashboardStore.GetPublicDashboardConfig(context.Background(), savedDashboard.OrgId, savedDashboard.Uid)
 		require.NoError(t, err)
 
-		// Some of these tests are potentially testing Xorm, however, they've been
-		// left in for future developers to derive intent.
+		assert.Equal(t, updatedPublicDashboard.UpdatedAt, pdRetrieved.UpdatedAt)
+		// make sure we're correctly updated IsEnabled because we have to call
+		// UseBool with xorm
+		assert.Equal(t, updatedPublicDashboard.IsEnabled, pdRetrieved.IsEnabled)
 
-		// OrgId/dashboardUid haven't changed
-		assert.Equal(t, pdSaved.OrgId, pdRetrieved.OrgId)
-		assert.Equal(t, pdSaved.DashboardUid, pdRetrieved.DashboardUid)
-		assert.Equal(t, pdSaved.CreatedBy, pdRetrieved.CreatedBy)
-		assert.Equal(t, pdSaved.CreatedAt, pdRetrieved.CreatedAt)
-
-		// created hasn't changed
-		assert.Equal(t, pdSaved.CreatedBy, pdRetrieved.CreatedBy)
-		assert.Equal(t, pdSaved.CreatedAt, pdRetrieved.CreatedAt)
-
-		// Enabled has changed
-		assert.Equal(t, pdUpdated.IsEnabled, pdRetrieved.IsEnabled)
-
-		// Updated has been set
-		assert.Equal(t, pdUpdated.UpdatedBy, pdRetrieved.UpdatedBy)
-		assert.Equal(t, pdUpdated.UpdatedAt, pdRetrieved.UpdatedAt)
 	})
 }

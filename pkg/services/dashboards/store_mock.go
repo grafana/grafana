@@ -514,26 +514,17 @@ func (_m *FakeDashboardStore) UpdateDashboardACL(ctx context.Context, uid int64,
 }
 
 // UpdatePublicDashboardConfig provides a mock function with given fields: ctx, cmd
-func (_m *FakeDashboardStore) UpdatePublicDashboardConfig(ctx context.Context, cmd models.SavePublicDashboardConfigCommand) (*models.PublicDashboard, error) {
+func (_m *FakeDashboardStore) UpdatePublicDashboardConfig(ctx context.Context, cmd models.SavePublicDashboardConfigCommand) error {
 	ret := _m.Called(ctx, cmd)
 
-	var r0 *models.PublicDashboard
-	if rf, ok := ret.Get(0).(func(context.Context, models.SavePublicDashboardConfigCommand) *models.PublicDashboard); ok {
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, models.SavePublicDashboardConfigCommand) error); ok {
 		r0 = rf(ctx, cmd)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.PublicDashboard)
-		}
+		r0 = ret.Error(0)
 	}
 
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, models.SavePublicDashboardConfigCommand) error); ok {
-		r1 = rf(ctx, cmd)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // ValidateDashboardBeforeSave provides a mock function with given fields: dashboard, overwrite

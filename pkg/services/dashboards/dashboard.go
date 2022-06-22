@@ -76,7 +76,7 @@ type Store interface {
 	SaveProvisionedDashboard(cmd models.SaveDashboardCommand, provisioning *models.DashboardProvisioning) (*models.Dashboard, error)
 	SavePublicDashboardConfig(ctx context.Context, cmd models.SavePublicDashboardConfigCommand) (*models.PublicDashboard, error)
 	UnprovisionDashboard(ctx context.Context, id int64) error
-	UpdatePublicDashboardConfig(ctx context.Context, cmd models.SavePublicDashboardConfigCommand) (*models.PublicDashboard, error)
+	UpdatePublicDashboardConfig(ctx context.Context, cmd models.SavePublicDashboardConfigCommand) error
 	UpdateDashboardACL(ctx context.Context, uid int64, items []*models.DashboardAcl) error
 	// ValidateDashboardBeforeSave validates a dashboard before save.
 	ValidateDashboardBeforeSave(dashboard *models.Dashboard, overwrite bool) (bool, error)

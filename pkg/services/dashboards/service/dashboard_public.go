@@ -108,7 +108,17 @@ func (dr *DashboardServiceImpl) updatePublicDashboardConfig(ctx context.Context,
 		},
 	}
 
-	return dr.dashboardStore.UpdatePublicDashboardConfig(ctx, cmd)
+	err := dr.dashboardStore.UpdatePublicDashboardConfig(ctx, cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	publicDashboard, err := dr.dashboardStore.GetPublicDashboardConfig(ctx, dto.OrgId, dto.DashboardUid)
+	if err != nil {
+		return nil, err
+	}
+
+	return publicDashboard, nil
 }
 
 // BuildPublicDashboardMetricRequest merges public dashboard parameters with
