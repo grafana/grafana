@@ -4,18 +4,18 @@ import React, { FC, useEffect, useCallback, useState, useMemo } from 'react';
 import { Cell, Column, Row } from 'react-table';
 
 import { useStyles2 } from '@grafana/ui';
+import Page from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { CheckService } from 'app/percona/check/Check.service';
 import { Severity } from 'app/percona/integrated-alerting/components/Severity';
 import { Table } from 'app/percona/integrated-alerting/components/Table';
 import { useStoredTablePageSize } from 'app/percona/integrated-alerting/components/Table/Pagination';
 import { ExpandableCell } from 'app/percona/shared/components/Elements/ExpandableCell';
 import { SilenceBell } from 'app/percona/shared/components/Elements/SilenceBell';
-import PageWrapper from 'app/percona/shared/components/PageWrapper/PageWrapper';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
+import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
 
-import { PAGE_MODEL } from '../../CheckPanel.constants';
+import { CheckService } from '../../Check.service';
 import { ServiceFailedCheck } from '../../types';
 import { formatServiceId } from '../FailedChecksTab/FailedChecksTab.utils';
 
@@ -34,6 +34,7 @@ export const ServiceChecks: FC<GrafanaRouteComponentProps<{ service: string }>> 
   const [serviceName, setServiceName] = useState('');
   const [generateToken] = useCancelToken();
   const styles = useStyles2(getStyles);
+  const navModel = usePerconaNavModel('failed-checks');
 
   const fetchChecks = useCallback(async () => {
     try {
@@ -95,7 +96,7 @@ export const ServiceChecks: FC<GrafanaRouteComponentProps<{ service: string }>> 
         width: '105px',
         Cell: ({ value }) =>
           value ? (
-            <a target="_blank" rel="noreferrer" href={value} className={styles.link}>
+            <a data-testid="read-more-link" target="_blank" rel="noreferrer" href={value} className={styles.link}>
               {Messages.readMore}
             </a>
           ) : null,
@@ -150,23 +151,25 @@ export const ServiceChecks: FC<GrafanaRouteComponentProps<{ service: string }>> 
   }, [fetchChecks]);
 
   return (
-    <PageWrapper pageModel={PAGE_MODEL} dataTestId="db-service-checks">
-      <h3>{Messages.pageTitle(serviceName)}</h3>
-      <Table
-        showPagination
-        data={data}
-        columns={columns}
-        totalItems={totalItems}
-        totalPages={totalPages}
-        pageSize={pageSize}
-        pageIndex={pageIndex}
-        onPaginationChanged={onPaginationChanged}
-        renderExpandedRow={renderSelectedSubRow}
-        getCellProps={getCellProps}
-        pendingRequest={pending}
-        emptyMessage={Messages.noChecks}
-      />
-    </PageWrapper>
+    <Page navModel={navModel}>
+      <Page.Contents dataTestId="db-service-checks">
+        <h3 data-testid="page-service">{Messages.pageTitle(serviceName)}</h3>
+        <Table
+          showPagination
+          data={data}
+          columns={columns}
+          totalItems={totalItems}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          pageIndex={pageIndex}
+          onPaginationChanged={onPaginationChanged}
+          renderExpandedRow={renderSelectedSubRow}
+          getCellProps={getCellProps}
+          pendingRequest={pending}
+          emptyMessage={Messages.noChecks}
+        />
+      </Page.Contents>
+    </Page>
   );
 };
 

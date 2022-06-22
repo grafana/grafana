@@ -4,8 +4,13 @@ import React, { FC, useCallback, useEffect, useState } from 'react';
 import { Cell, Column, Row } from 'react-table';
 
 import { Button, useStyles } from '@grafana/ui';
+import Page from 'app/core/components/Page/Page';
 import { ExpandableCell } from 'app/percona/shared/components/Elements/ExpandableCell';
+import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
+import { TechnicalPreview } from 'app/percona/shared/components/Elements/TechnicalPreview/TechnicalPreview';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
+import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
+import { getPerconaSettingFlag } from 'app/percona/shared/core/selectors';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
 
 import { Messages } from '../../IntegratedAlerting.messages';
@@ -39,6 +44,7 @@ export const AlertRules: FC = () => {
   const styles = useStyles(getStyles);
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [pendingRequest, setPendingRequest] = useState(true);
+  const navModel = usePerconaNavModel('integrated-alerting-rules');
   const [selectedAlertRule, setSelectedAlertRule] = useState<AlertRule | null>();
   const [data, setData] = useState<AlertRule[]>([]);
   const [pageSize, setPageSize] = useStoredTablePageSize(ALERT_RULES_TABLE_ID);
@@ -157,39 +163,55 @@ export const AlertRules: FC = () => {
     [styles.disabledRow]
   );
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const featureSelector = useCallback(getPerconaSettingFlag('alertingEnabled'), []);
+
   useEffect(() => {
     getAlertRules();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pageSize, pageIndex]);
 
   return (
-    <AlertRulesProvider.Provider value={{ getAlertRules, setAddModalVisible, setSelectedAlertRule }}>
-      <div className={styles.actionsWrapper}>
-        <Button
-          size="md"
-          icon="plus-square"
-          variant="link"
-          onClick={handleAddButton}
-          data-testid="alert-rule-template-add-modal-button"
-        >
-          {Messages.alertRuleTemplate.addAction}
-        </Button>
-      </div>
-      <AddAlertRuleModal isVisible={addModalVisible} setVisible={setAddModalVisible} alertRule={selectedAlertRule} />
-      <Table
-        showPagination
-        totalItems={totalItems}
-        totalPages={totalPages}
-        pageSize={pageSize as number}
-        pageIndex={pageIndex}
-        onPaginationChanged={onPaginationChanged}
-        renderExpandedRow={renderSelectedSubRow}
-        data={data}
-        columns={columns}
-        pendingRequest={pendingRequest}
-        emptyMessage={noData}
-        getCellProps={getCellProps}
-      />
-    </AlertRulesProvider.Provider>
+    <Page navModel={navModel}>
+      <Page.Contents>
+        <TechnicalPreview />
+        <FeatureLoader featureName={Messages.integratedAlerting} featureSelector={featureSelector}>
+          <AlertRulesProvider.Provider value={{ getAlertRules, setAddModalVisible, setSelectedAlertRule }}>
+            <div className={styles.actionsWrapper}>
+              <Button
+                size="md"
+                icon="plus-square"
+                variant="link"
+                onClick={handleAddButton}
+                data-testid="alert-rule-template-add-modal-button"
+              >
+                {Messages.alertRuleTemplate.addAction}
+              </Button>
+            </div>
+            <AddAlertRuleModal
+              isVisible={addModalVisible}
+              setVisible={setAddModalVisible}
+              alertRule={selectedAlertRule}
+            />
+            <Table
+              showPagination
+              totalItems={totalItems}
+              totalPages={totalPages}
+              pageSize={pageSize as number}
+              pageIndex={pageIndex}
+              onPaginationChanged={onPaginationChanged}
+              renderExpandedRow={renderSelectedSubRow}
+              data={data}
+              columns={columns}
+              pendingRequest={pendingRequest}
+              emptyMessage={noData}
+              getCellProps={getCellProps}
+            />
+          </AlertRulesProvider.Provider>
+        </FeatureLoader>
+      </Page.Contents>
+    </Page>
   );
 };
+
+export default AlertRules;

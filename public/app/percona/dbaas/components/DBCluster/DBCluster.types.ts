@@ -1,8 +1,6 @@
 import { SelectableValue } from '@grafana/data';
 import { Databases } from 'app/percona/shared/core';
 
-import { Kubernetes } from '../Kubernetes/Kubernetes.types';
-
 import { Operators } from './AddDBClusterModal/DBClusterBasicOptions/DBClusterBasicOptions.types';
 import { DBClusterService } from './DBCluster.service';
 
@@ -14,10 +12,6 @@ export type ManageDBClusters = [DBCluster[], GetDBClustersAction, SetDBClustersL
 export enum DBClusterType {
   pxc = 'DB_CLUSTER_TYPE_PXC',
   psmdb = 'DB_CLUSTER_TYPE_PSMDB',
-}
-
-export interface DBClusterProps {
-  kubernetes: Kubernetes[];
 }
 
 export interface DBCluster {

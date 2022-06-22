@@ -1,5 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
+import { Provider } from 'react-redux';
+
+import { configureStore } from 'app/store/configureStore';
+import { StoreState } from 'app/types';
 
 import { MetricsResolution } from './MetricsResolution';
 import { defaultResolutions } from './MetricsResolution.constants';
@@ -7,7 +11,21 @@ import { removeUnits } from './MetricsResolution.utils';
 
 describe('MetricsResolution::', () => {
   it('Renders correctly with props for standard resolution', () => {
-    render(<MetricsResolution metricsResolutions={defaultResolutions[1]} updateSettings={() => {}} />);
+    render(
+      <Provider
+        store={configureStore({
+          percona: {
+            user: { isAuthorized: true },
+            settings: {
+              loading: false,
+              result: { isConnectedToPortal: true, metricsResolutions: defaultResolutions[1] },
+            },
+          },
+        } as StoreState)}
+      >
+        <MetricsResolution />
+      </Provider>
+    );
 
     const standardRes = removeUnits(defaultResolutions[1]);
 
@@ -17,7 +35,21 @@ describe('MetricsResolution::', () => {
   });
 
   it('Renders correctly with props for rare resolution', () => {
-    render(<MetricsResolution metricsResolutions={defaultResolutions[0]} updateSettings={() => {}} />);
+    render(
+      <Provider
+        store={configureStore({
+          percona: {
+            user: { isAuthorized: true },
+            settings: {
+              loading: false,
+              result: { isConnectedToPortal: true, metricsResolutions: defaultResolutions[0] },
+            },
+          },
+        } as StoreState)}
+      >
+        <MetricsResolution />
+      </Provider>
+    );
 
     const standardRes = removeUnits(defaultResolutions[0]);
 
@@ -27,7 +59,21 @@ describe('MetricsResolution::', () => {
   });
 
   it('Renders correctly with props for frequent resolution', () => {
-    render(<MetricsResolution metricsResolutions={defaultResolutions[2]} updateSettings={() => {}} />);
+    render(
+      <Provider
+        store={configureStore({
+          percona: {
+            user: { isAuthorized: true },
+            settings: {
+              loading: false,
+              result: { isConnectedToPortal: true, metricsResolutions: defaultResolutions[2] },
+            },
+          },
+        } as StoreState)}
+      >
+        <MetricsResolution />
+      </Provider>
+    );
 
     const standardRes = removeUnits(defaultResolutions[2]);
 
@@ -36,16 +82,22 @@ describe('MetricsResolution::', () => {
     expect(screen.getByTestId('hr-number-input')).toHaveValue(+standardRes.hr);
   });
 
-  it('Renders correctly with props for custom resolution', () => {
-    render(<MetricsResolution metricsResolutions={{ lr: '400s', mr: '100s', hr: '50s' }} updateSettings={() => {}} />);
-
-    expect(screen.getByTestId('lr-number-input')).toHaveValue(400);
-    expect(screen.getByTestId('mr-number-input')).toHaveValue(100);
-    expect(screen.getByTestId('hr-number-input')).toHaveValue(50);
-  });
-
   it('Changes input values when changing resolution', () => {
-    render(<MetricsResolution metricsResolutions={defaultResolutions[0]} updateSettings={() => {}} />);
+    render(
+      <Provider
+        store={configureStore({
+          percona: {
+            user: { isAuthorized: true },
+            settings: {
+              loading: false,
+              result: { isConnectedToPortal: true, metricsResolutions: defaultResolutions[0] },
+            },
+          },
+        } as StoreState)}
+      >
+        <MetricsResolution />
+      </Provider>
+    );
     const radio = screen.getAllByTestId('resolutions-radio-button')[2];
 
     fireEvent.click(radio);
@@ -58,22 +110,23 @@ describe('MetricsResolution::', () => {
   });
 
   it('Disables apply changes on initial values', () => {
-    render(<MetricsResolution metricsResolutions={defaultResolutions[0]} updateSettings={() => {}} />);
+    render(
+      <Provider
+        store={configureStore({
+          percona: {
+            user: { isAuthorized: true },
+            settings: {
+              loading: false,
+              result: { isConnectedToPortal: true, metricsResolutions: defaultResolutions[0] },
+            },
+          },
+        } as StoreState)}
+      >
+        <MetricsResolution />
+      </Provider>
+    );
     const button = screen.getByTestId('metrics-resolution-button');
 
     expect(button).toBeDisabled();
-  });
-
-  it('Calls apply changes', () => {
-    const updateSettings = jest.fn();
-    render(<MetricsResolution metricsResolutions={defaultResolutions[0]} updateSettings={updateSettings} />);
-
-    const input = screen.getByTestId('lr-number-input');
-    fireEvent.change(input, { target: { value: '70' } });
-
-    const form = screen.getByTestId('metrics-resolution-form');
-    fireEvent.submit(form);
-
-    expect(updateSettings).toHaveBeenCalled();
   });
 });

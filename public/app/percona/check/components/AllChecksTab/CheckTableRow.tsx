@@ -55,12 +55,12 @@ export const CheckTableRow: FC<CheckTableRowProps> = ({ check, onSuccess }) => {
 
   return (
     <>
-      <tr key={name}>
-        <td>{summary}</td>
-        <td>{description}</td>
-        <td>{disabled ? Messages.disabled : Messages.enabled}</td>
-        <td>{formatInterval(interval)}</td>
-        <td>
+      <tr key={name} role="row">
+        <td role="cell">{summary}</td>
+        <td role="cell">{description}</td>
+        <td role="cell">{disabled ? Messages.disabled : Messages.enabled}</td>
+        <td role="cell">{formatInterval(interval)}</td>
+        <td role="cell">
           <div className={styles.actionsWrapper}>
             <LoaderButton
               variant="primary"

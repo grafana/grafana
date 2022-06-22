@@ -5,8 +5,8 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { AppEvents } from '@grafana/data';
 import { useStyles } from '@grafana/ui';
-import { appEvents } from 'app/core/app_events';
-import { setSettings, fetchServerInfoAction } from 'app/percona/shared/core/reducers';
+import appEvents from 'app/core/app_events';
+import { fetchServerInfoAction, fetchSettingsAction } from 'app/percona/shared/core/reducers';
 import { getPerconaServer } from 'app/percona/shared/core/selectors';
 import validators from 'app/percona/shared/helpers/validators';
 
@@ -42,7 +42,7 @@ export const Connect: FC = () => {
         appEvents.emit(AppEvents.alertSuccess, [Messages.connectSucceeded]);
         setConnecting(false);
         dispatch(fetchServerInfoAction());
-        dispatch(setSettings({ isConnectedToPortal: true }));
+        dispatch(fetchSettingsAction());
       }, CONNECT_DELAY);
     } catch (e) {
       logger.error(e);

@@ -8,8 +8,9 @@ import { EmptyBlock } from '../EmptyBlock';
 import { Messages } from './PlatformConnectedLoader.messages';
 
 export const PlatformConnectedLoader: FC = ({ children }) => {
-  const { isConnectedToPortal } = useSelector(getPerconaSettings);
   const { isPlatformUser, isAuthorized } = useSelector(getPerconaUser);
+  const { result } = useSelector(getPerconaSettings);
+  const { isConnectedToPortal } = result!;
 
   if (isPlatformUser) {
     return <>{children}</>;

@@ -1,18 +1,21 @@
 /* eslint-disable react/display-name */
 import { cx } from '@emotion/css';
 import React, { useMemo, useState } from 'react';
+import { useSelector } from 'react-redux';
 
 import { Button, useStyles } from '@grafana/ui';
+import Page from 'app/core/components/Page/Page';
+import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
+import { getPerconaSettings } from 'app/percona/shared/core/selectors';
 
-import PageWrapper from '../shared/components/PageWrapper/PageWrapper';
-import { Databases } from '../shared/core';
+import { Databases } from '../../percona/shared/core';
+import { FeatureLoader } from '../shared/components/Elements/FeatureLoader';
 
 import { AddInstance } from './components/AddInstance/AddInstance';
 import AddRemoteInstance from './components/AddRemoteInstance/AddRemoteInstance';
 import { Messages } from './components/AddRemoteInstance/AddRemoteInstance.messages';
 import AzureDiscovery from './components/AzureDiscovery/Discovery';
 import Discovery from './components/Discovery/Discovery';
-import { PAGE_MODEL } from './panel.constants';
 import { getStyles } from './panel.styles';
 import { InstanceTypesExtra, InstanceAvailable, AvailableTypes } from './panel.types';
 
@@ -29,10 +32,13 @@ const availableInstanceTypes: AvailableTypes[] = [
 
 const AddInstancePanel = () => {
   const styles = useStyles(getStyles);
+  const { result: settings } = useSelector(getPerconaSettings);
+  const { azureDiscoverEnabled } = settings!;
   const instanceType = '';
   const [selectedInstance, selectInstance] = useState<InstanceAvailable>({
     type: availableInstanceTypes.includes(instanceType as AvailableTypes) ? instanceType : '',
   });
+  const navModel = usePerconaNavModel('add-instance');
 
   const InstanceForm = useMemo(
     () => () =>
@@ -61,11 +67,19 @@ const AddInstancePanel = () => {
   );
 
   return (
-    <PageWrapper pageModel={PAGE_MODEL}>
-      <div className={cx(styles.content)}>
-        {!selectedInstance.type ? <AddInstance onSelectInstanceType={selectInstance} /> : <InstanceForm />}
-      </div>
-    </PageWrapper>
+    <Page navModel={navModel}>
+      <Page.Contents>
+        <FeatureLoader>
+          <div className={cx(styles.content)}>
+            {!selectedInstance.type ? (
+              <AddInstance showAzure={!!azureDiscoverEnabled} onSelectInstanceType={selectInstance} />
+            ) : (
+              <InstanceForm />
+            )}
+          </div>
+        </FeatureLoader>
+      </Page.Contents>
+    </Page>
   );
 };
 

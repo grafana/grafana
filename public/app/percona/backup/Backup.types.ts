@@ -1,10 +1,3 @@
-export enum TabKeys {
-  inventory = 'inventory',
-  scheduled = 'scheduled',
-  locations = 'locations',
-  restore = 'restore',
-}
-
 export enum DataModel {
   DATA_MODEL_INVALID = 'DATA_MODEL_INVALID',
   PHYSICAL = 'PHYSICAL',

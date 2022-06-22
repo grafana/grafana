@@ -426,75 +426,216 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/integrated-alerting',
+      // eslint-disable-next-line react/display-name
+      component: () => <Redirect to="/integrated-alerting/alerts" />,
+    },
+    {
+      path: '/integrated-alerting/alerts',
       component: SafeDynamicImport(
         () =>
           import(
-            /* webpackChunkName: "IntegratedAlertingPage" */ 'app/percona/integrated-alerting/IntegratedAlertingPage'
+            /* webpackChunkName: "IntegratedAlertingAlerts" */ 'app/percona/integrated-alerting/components/Alerts/Alerts'
           )
       ),
     },
     {
-      path: '/integrated-alerting/:tab',
+      path: '/integrated-alerting/alert-rule-templates',
       component: SafeDynamicImport(
         () =>
           import(
-            /* webpackChunkName: "IntegratedAlertingPage" */ 'app/percona/integrated-alerting/IntegratedAlertingPage'
+            /* webpackChunkName: "IntegratedAlertingTemplates" */ 'app/percona/integrated-alerting/components/AlertRuleTemplate/AlertRuleTemplate'
+          )
+      ),
+    },
+    {
+      path: '/integrated-alerting/notification-channels',
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "IntegratedAlertingChannels" */ 'app/percona/integrated-alerting/components/NotificationChannel/NotificationChannel'
+          )
+      ),
+    },
+    {
+      path: '/integrated-alerting/alert-rules',
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "IntegratedAlertingRules" */ 'app/percona/integrated-alerting/components/AlertRules/AlertRules'
           )
       ),
     },
     {
       path: '/dbaas',
-      component: SafeDynamicImport(() => import(/* webpackChunkName: "DbaasPage" */ 'app/percona/dbaas/DBaaS')),
+      // eslint-disable-next-line react/display-name
+      component: () => <Redirect to="/dbaas/kubernetes" />,
     },
     {
-      path: '/dbaas/:tab',
-      component: SafeDynamicImport(() => import(/* webpackChunkName: "DbaasPage" */ 'app/percona/dbaas/DBaaS')),
+      path: '/dbaas/kubernetes',
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "DbaaSKubernetesPage" */ 'app/percona/dbaas/components/Kubernetes/KubernetesInventory'
+          )
+      ),
+    },
+    {
+      path: '/dbaas/dbclusters',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "DbaaSClustersPage" */ 'app/percona/dbaas/components/DBCluster/DBCluster')
+      ),
     },
     {
       path: '/backup',
-      component: SafeDynamicImport(() => import(/* webpackChunkName: "BackupPage" */ 'app/percona/backup/BackupPage')),
+      // eslint-disable-next-line react/display-name
+      component: () => <Redirect to="/backup/inventory" />,
     },
     {
-      path: '/backup/:tab',
-      component: SafeDynamicImport(() => import(/* webpackChunkName: "BackupPage" */ 'app/percona/backup/BackupPage')),
+      path: '/backup/inventory',
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "BackupInventoryPage" */ 'app/percona/backup/components/BackupInventory/BackupInventory'
+          )
+      ),
+    },
+    {
+      path: '/backup/restore',
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "BackupRestorePage" */ 'app/percona/backup/components/RestoreHistory/RestoreHistory'
+          )
+      ),
+    },
+    {
+      path: '/backup/scheduled',
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "BackupScheduledPage" */ 'app/percona/backup/components/ScheduledBackups/ScheduledBackups'
+          )
+      ),
+    },
+    {
+      path: '/backup/locations',
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "BackupLocationsPage" */ 'app/percona/backup/components/StorageLocations/StorageLocations'
+          )
+      ),
     },
     {
       path: '/pmm-database-checks',
-      component: SafeDynamicImport(() => import(/* webpackChunkName: "ChecksPage" */ 'app/percona/check/CheckPanel')),
+      // eslint-disable-next-line react/display-name
+      component: () => <Redirect to="/pmm-database-checks/failed-checks" />,
     },
     {
-      path: '/pmm-database-checks/:tab',
-      component: SafeDynamicImport(() => import(/* webpackChunkName: "ChecksPage" */ 'app/percona/check/CheckPanel')),
-    },
-    {
-      path: '/pmm-database-checks/service-checks/:service',
+      path: '/pmm-database-checks/failed-checks',
       component: SafeDynamicImport(
         () =>
-          import(/* webpackChunkName: "ServiceChecksPage" */ 'app/percona/check/components/ServiceChecks/ServiceChecks')
+          import(
+            /* webpackChunkName: "FailedChecksPage" */ 'app/percona/check/components/FailedChecksTab/FailedChecksTab'
+          )
+      ),
+    },
+    {
+      path: '/pmm-database-checks/failed-checks/:service',
+      component: SafeDynamicImport(
+        () =>
+          import(/* webpackChunkName: "FailedChecksPage" */ 'app/percona/check/components/ServiceChecks/ServiceChecks')
+      ),
+    },
+    {
+      path: '/pmm-database-checks/all-checks',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "AllChecksPage" */ 'app/percona/check/components/AllChecksTab/AllChecksTab')
       ),
     },
     {
       path: '/settings',
+      // eslint-disable-next-line react/display-name
+      component: () => <Redirect to="/settings/metrics-resolution" />,
+    },
+    {
+      path: '/settings/metrics-resolution',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "SettingsPage" */ 'app/percona/settings/Settings')
+        () =>
+          import(
+            /* webpackChunkName: "MetricsResolutionsSettingsPage" */ 'app/percona/settings/components/MetricsResolution/MetricsResolution'
+          )
       ),
     },
     {
-      path: '/settings/:tab',
+      path: '/settings/advanced-settings',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "SettingsPage" */ 'app/percona/settings/Settings')
+        () => import(/* webpackChunkName: "AdvancedSettingsPage" */ 'app/percona/settings/components/Advanced/Advanced')
+      ),
+    },
+    {
+      path: '/settings/ssh-key',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "SSHKeySettingsPage" */ 'app/percona/settings/components/SSHKey/SSHKey')
+      ),
+    },
+    {
+      path: '/settings/am-integration',
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "AMIntegrationSettingsPage" */ 'app/percona/settings/components/AlertManager/AlertManager'
+          )
+      ),
+    },
+    {
+      path: '/settings/percona-platform',
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "PerconaPlatformSettingsPage" */ 'app/percona/settings/components/Platform/Platform'
+          )
+      ),
+    },
+    {
+      path: '/settings/communication',
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "CommunicationSettingsPage" */ 'app/percona/settings/components/Communication/Communication'
+          )
+      ),
+    },
+    {
+      path: '/settings/metrics-resolution',
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "MetricsResolutionsPage" */ 'app/percona/settings/components/MetricsResolution/MetricsResolution'
+          )
       ),
     },
     {
       path: '/inventory',
+      // eslint-disable-next-line react/display-name
+      component: () => <Redirect to="/inventory/services" />,
+    },
+    {
+      path: '/inventory/services',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "InventoryPage" */ 'app/percona/inventory/Inventory')
+        () => import(/* webpackChunkName: "InventoryServicesPage" */ 'app/percona/inventory/Tabs/Services')
       ),
     },
     {
-      path: '/inventory/:tab',
+      path: '/inventory/agents',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "InventoryPage" */ 'app/percona/inventory/Inventory')
+        () => import(/* webpackChunkName: "InventoryAgentsPage" */ 'app/percona/inventory/Tabs/Agents')
+      ),
+    },
+    {
+      path: '/inventory/nodes',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "InventoryNodesPage" */ 'app/percona/inventory/Tabs/Nodes')
       ),
     },
     {

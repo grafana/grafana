@@ -19,9 +19,16 @@ jest.mock('@percona/platform-core', () => {
 });
 
 describe('PermissionLoader', () => {
-  it('should render success if feature is enabled', async () => {
+  it('should render success if feature is enabled after loading', async () => {
     render(
-      <Provider store={configureStore()}>
+      <Provider
+        store={configureStore({
+          percona: {
+            user: { isAuthorized: true },
+            settings: { loading: false, result: { isConnectedToPortal: true, alertingEnabled: true } },
+          },
+        } as StoreState)}
+      >
         <PermissionLoader
           featureSelector={() => true}
           renderError={() => null}
@@ -34,7 +41,7 @@ describe('PermissionLoader', () => {
 
   it('should show loading if feature disabled and while getting settings', async () => {
     const { container } = render(
-      <Provider store={configureStore({ perconaSettings: { isLoading: true } } as StoreState)}>
+      <Provider store={configureStore({ percona: { settings: { loading: true } } } as StoreState)}>
         <PermissionLoader
           featureSelector={() => false}
           renderError={() => null}
@@ -49,8 +56,10 @@ describe('PermissionLoader', () => {
     render(
       <Provider
         store={configureStore({
-          perconaSettings: { isLoading: false },
-          perconaUser: { isAuthorized: true },
+          percona: {
+            settings: { loading: false },
+            user: { isAuthorized: true },
+          },
         } as StoreState)}
       >
         <PermissionLoader
@@ -61,19 +70,5 @@ describe('PermissionLoader', () => {
       </Provider>
     );
     expect(screen.getByTestId('dummy-child')).toBeInTheDocument();
-  });
-
-  it('should show unauthorized message if feature disabled', async () => {
-    render(
-      <Provider
-        store={configureStore({
-          perconaSettings: { isLoading: false },
-          perconaUser: { isAuthorized: false },
-        } as StoreState)}
-      >
-        <PermissionLoader featureSelector={() => false} renderError={() => null} renderSuccess={() => null} />
-      </Provider>
-    );
-    expect(screen.getByTestId('unauthorized')).toBeInTheDocument();
   });
 });

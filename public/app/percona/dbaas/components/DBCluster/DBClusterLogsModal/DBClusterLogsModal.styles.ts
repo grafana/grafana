@@ -29,7 +29,6 @@ export const getStyles = ({ spacing, typography }: GrafanaTheme) => ({
   `,
   modal: css`
     div[data-testid='modal-body'] {
-      left: 10%;
       max-width: unset;
       width: 80%;
     }

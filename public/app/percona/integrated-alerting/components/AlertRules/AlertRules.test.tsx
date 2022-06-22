@@ -1,5 +1,9 @@
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { fireEvent, render, screen, waitForElementToBeRemoved } from '@testing-library/react';
 import React from 'react';
+import { Provider } from 'react-redux';
+
+import { configureStore } from 'app/store/configureStore';
+import { StoreState } from 'app/types';
 
 import { AlertRuleTemplateService } from '../AlertRuleTemplate/AlertRuleTemplate.service';
 import { templateStubs } from '../AlertRuleTemplate/__mocks__/alertRuleTemplateStubs';
@@ -46,38 +50,62 @@ describe('AlertRules', () => {
     expect(alertRuleTemplateServiceList).toBeCalledTimes(0);
     expect(notificationChannelsServiceList).toBeCalledTimes(0);
 
-    await waitFor(() => render(<AlertRules />));
+    render(
+      <Provider
+        store={configureStore({
+          percona: {
+            user: { isAuthorized: true },
+            settings: { loading: false, result: { isConnectedToPortal: true, alertingEnabled: true } },
+          },
+        } as StoreState)}
+      >
+        <AlertRules />
+      </Provider>
+    );
 
+    await waitForElementToBeRemoved(() => screen.getByTestId('table-loading'));
     expect(alertRuleTemplateServiceList).toBeCalledTimes(1);
     expect(notificationChannelsServiceList).toBeCalledTimes(1);
   });
 
   it('should toggle selected alert rule details', async () => {
-    await waitFor(() => render(<AlertRules />));
+    render(
+      <Provider
+        store={configureStore({
+          percona: {
+            user: { isAuthorized: true },
+            settings: { loading: false, result: { isConnectedToPortal: true, alertingEnabled: true } },
+          },
+        } as StoreState)}
+      >
+        <AlertRules />
+      </Provider>
+    );
 
-    const showDetails = screen.getAllByTestId('show-details')[0];
-    await waitFor(() => fireEvent.click(showDetails));
-
-    expect(screen.getByTestId('alert-rules-details')).toBeInTheDocument();
-
-    const hideDetails = screen.getByTestId('hide-details');
-    await waitFor(() => fireEvent.click(hideDetails));
-
+    await waitForElementToBeRemoved(() => screen.getByTestId('table-loading'));
+    fireEvent.click(screen.getAllByTestId('show-details')[0]);
+    expect(screen.getAllByTestId('alert-rules-details')).toHaveLength(1);
+    fireEvent.click(screen.getAllByTestId('hide-details')[0]);
     expect(screen.queryByTestId('alert-rules-details')).not.toBeInTheDocument();
   });
 
-  it('should have table initially loading', async () => {
-    render(<AlertRules />);
-
-    expect(screen.getByTestId('table-loading')).toBeInTheDocument();
-    expect(screen.getByTestId('table-no-data')).toBeInTheDocument();
-  });
-
   it('should render table content', async () => {
-    await waitFor(() => render(<AlertRules />));
+    render(
+      <Provider
+        store={configureStore({
+          percona: {
+            user: { isAuthorized: true },
+            settings: { loading: false, result: { isConnectedToPortal: true, alertingEnabled: true } },
+          },
+        } as StoreState)}
+      >
+        <AlertRules />
+      </Provider>
+    );
 
-    expect(screen.getByTestId('table-thead').querySelectorAll('tr')).toHaveLength(1);
-    expect(screen.getByTestId('table-tbody').querySelectorAll('tr')).toHaveLength(6);
+    await waitForElementToBeRemoved(() => screen.getByTestId('table-loading'));
+
+    expect(screen.getAllByRole('row')).toHaveLength(1 + 6);
     expect(screen.queryByTestId('table-no-data')).not.toBeInTheDocument();
   });
   it('should render correctly without data', async () => {
@@ -85,8 +113,22 @@ describe('AlertRules', () => {
       .spyOn(AlertRulesService, 'list')
       .mockReturnValueOnce(Promise.resolve({ rules: [], totals: { total_items: 0, total_pages: 0 } }));
 
-    await waitFor(() => render(<AlertRules />));
+    render(
+      <Provider
+        store={configureStore({
+          percona: {
+            user: { isAuthorized: true },
+            settings: { loading: false, result: { isConnectedToPortal: true, alertingEnabled: true } },
+          },
+        } as StoreState)}
+      >
+        <AlertRules />
+      </Provider>
+    );
 
+    await waitForElementToBeRemoved(() => screen.getByTestId('table-loading'));
+
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
     expect(screen.getByTestId('table-no-data')).toBeInTheDocument();
   });
 });

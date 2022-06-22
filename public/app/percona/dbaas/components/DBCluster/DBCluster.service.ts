@@ -1,3 +1,5 @@
+import { CancelToken } from 'axios';
+
 import { Databases } from 'app/percona/shared/core';
 import { apiManagement } from 'app/percona/shared/helpers/api';
 
@@ -49,8 +51,8 @@ export abstract class DBClusterService {
 
   abstract toModel(dbCluster: DBClusterPayload, kubernetesClusterName: string, databaseType: Databases): DBCluster;
 
-  static async getDBClusters(kubernetes: Kubernetes): Promise<DBClusterListResponse> {
-    return apiManagement.post<any, Kubernetes>('/DBaaS/DBClusters/List', kubernetes, true);
+  static async getDBClusters(kubernetes: Kubernetes, token?: CancelToken): Promise<DBClusterListResponse> {
+    return apiManagement.post<any, Kubernetes>('/DBaaS/DBClusters/List', kubernetes, true, token);
   }
 
   static async getLogs({ kubernetesClusterName, clusterName }: DBCluster): Promise<DBClusterLogsAPI> {

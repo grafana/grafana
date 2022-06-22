@@ -201,10 +201,6 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 	}
 
 	dashboardChildLinks := hs.buildDashboardNavLinks(c, hasEditPerm)
-	inventoryChildNavs := []*dtos.NavLink{
-		{Text: "Inventory list", Id: "inventory", Url: setting.AppSubUrl + "/inventory", Icon: "percona-inventory", HideFromTabs: true},
-		{Text: "Add instance", Id: "add-instance", Url: setting.AppSubUrl + "/add-instance", Icon: "percona-add", HideFromTabs: true},
-	}
 
 	nodeSummaryChildNavs := []*dtos.NavLink{
 		{Text: "CPU Utilization", Id: "cpu-utilization", Url: setting.AppSubUrl + "/d/node-cpu/cpu-utilization-details", Icon: "percona-cpu", HideFromTabs: true},

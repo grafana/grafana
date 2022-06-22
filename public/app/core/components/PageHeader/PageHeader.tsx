@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { FC } from 'react';
 
 import { NavModel, NavModelItem, NavModelBreadcrumb, GrafanaTheme2 } from '@grafana/data';
@@ -9,6 +9,8 @@ import { ProBadge } from '../Upgrade/ProBadge';
 
 export interface Props {
   model: NavModel;
+  vertical?: boolean;
+  tabsDataTestId?: string;
 }
 
 const SelectNav = ({ children, customCss }: { children: NavModelItem[]; customCss: string }) => {
@@ -47,15 +49,26 @@ const SelectNav = ({ children, customCss }: { children: NavModelItem[]; customCs
   );
 };
 
-const Navigation = ({ children }: { children: NavModelItem[] }) => {
+const Navigation = ({
+  children,
+  vertical = false,
+  dataTestId = '',
+}: {
+  children: NavModelItem[];
+  vertical?: boolean;
+  dataTestId?: string;
+  tabsdataTestId?: string;
+}) => {
+  const styles = useStyles2(getStyles);
+
   if (!children || children.length === 0) {
     return null;
   }
 
   return (
-    <nav>
+    <nav className={cx({ [styles.verticalNav]: !!vertical })}>
       <SelectNav customCss="page-header__select-nav">{children}</SelectNav>
-      <TabsBar className="page-header__tabs" hideBorder={true}>
+      <TabsBar className="page-header__tabs" hideBorder={true} vertical={vertical} dataTestId={dataTestId}>
         {children.map((child, index) => {
           return (
             !child.hideFromTabs && (
@@ -75,7 +88,7 @@ const Navigation = ({ children }: { children: NavModelItem[] }) => {
   );
 };
 
-export const PageHeader: FC<Props> = ({ model }) => {
+export const PageHeader: FC<Props> = ({ model, vertical = false, tabsDataTestId = '' }) => {
   const styles = useStyles2(getStyles);
 
   if (!model) {
@@ -89,7 +102,11 @@ export const PageHeader: FC<Props> = ({ model }) => {
       <div className="page-container">
         <div className="page-header">
           {renderHeaderTitle(main)}
-          {children && children.length && <Navigation>{children}</Navigation>}
+          {children && children.length && (
+            <Navigation vertical={vertical} dataTestId={tabsDataTestId}>
+              {children}
+            </Navigation>
+          )}
         </div>
       </div>
     </div>
@@ -139,23 +156,43 @@ function renderTitle(title: string, breadcrumbs: NavModelBreadcrumb[], highlight
   for (const bc of breadcrumbs) {
     if (bc.url) {
       breadcrumbsResult.push(
-        <a className="page-header__link" key={breadcrumbsResult.length} href={bc.url}>
+        <a data-testid="breadcrumb-section" className="page-header__link" key={breadcrumbsResult.length} href={bc.url}>
           {bc.title}
         </a>
       );
     } else {
-      breadcrumbsResult.push(<span key={breadcrumbsResult.length}> / {bc.title}</span>);
+      breadcrumbsResult.push(
+        <span data-testid="breadcrumb-section" key={breadcrumbsResult.length}>
+          {' '}
+          / {bc.title}
+        </span>
+      );
     }
   }
-  breadcrumbsResult.push(<span key={breadcrumbs.length + 1}> / {title}</span>);
+  breadcrumbsResult.push(
+    <span data-testid="breadcrumb-section" key={breadcrumbs.length + 1}>
+      {' '}
+      / {title}
+    </span>
+  );
 
   return <h1 className="page-header__title">{breadcrumbsResult}</h1>;
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  headerCanvas: css`
-    background: ${theme.colors.background.canvas};
-  `,
-});
+const getStyles = (theme: GrafanaTheme2) => {
+  const maxWidthBreakpoint =
+    theme.breakpoints.values.xxl + theme.spacing.gridSize * 2 + theme.components.sidemenu.width;
+  return {
+    headerCanvas: css`
+      background: ${theme.colors.background.canvas};
+    `,
+    verticalNav: css`
+      width: 20%;
+      @media (min-width: ${maxWidthBreakpoint}px) {
+        width: 12%;
+      }
+    `,
+  };
+};
 
 export default PageHeader;

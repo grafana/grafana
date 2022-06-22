@@ -6,11 +6,8 @@ import { KubernetesClusterStatus } from './components/Kubernetes/KubernetesClust
 import { KubernetesOperatorStatus } from './components/Kubernetes/OperatorStatusItem/KubernetesOperatorStatus/KubernetesOperatorStatus.types';
 
 export const Messages = {
-  tabs: {
-    dbcluster: 'DB Cluster',
-    kubernetes: 'Kubernetes Cluster',
-  },
   kubernetes: {
+    noClusters: 'No clusters found',
     deleteAction: 'Unregister',
     showConfiguration: 'Show configuration',
     manageComponents: 'Manage versions',

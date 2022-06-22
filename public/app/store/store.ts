@@ -1,7 +1,8 @@
+import { useDispatch } from 'react-redux';
 import { Store } from 'redux';
 
 import { initialKeyedVariablesState } from 'app/features/variables/state/keyedVariablesReducer';
-import { StoreState } from 'app/types';
+import { AppDispatch, StoreState } from 'app/types';
 
 export let store: Store<StoreState>;
 
@@ -24,3 +25,5 @@ export function dispatch(action: any) {
 
   return store.dispatch(action);
 }
+
+export const useAppDispatch = () => useDispatch<AppDispatch>();

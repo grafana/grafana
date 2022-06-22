@@ -1,17 +1,17 @@
 import { css, cx } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import React, { useState } from 'react';
-import { useSelector, connect, ConnectedProps } from 'react-redux';
+import { useSelector, connect, ConnectedProps, useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { Icon, IconName, useTheme2 } from '@grafana/ui';
+import { updateNavIndex } from 'app/core/actions';
 import { Branding } from 'app/core/components/Branding/Branding';
 import config from 'app/core/config';
 import { getKioskMode } from 'app/core/navigation/kiosk';
 import { getPerconaSettings, getPerconaUser } from 'app/percona/shared/core/selectors';
-import { isPmmAdmin } from 'app/percona/shared/helpers/permissions';
 import { KioskMode, StoreState } from 'app/types';
 
 import { OrgSwitcher } from '../OrgSwitcher';
@@ -21,7 +21,19 @@ import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
 import { NavBarMenu } from './NavBarMenu';
 import { NavBarSection } from './NavBarSection';
 import {
+  PMM_STT_PAGE,
+  PMM_BACKUP_PAGE,
+  PMM_DBAAS_PAGE,
+  PMM_ALERTING_PAGE,
+  PMM_INVENTORY_PAGE,
+  PMM_TICKETS_PAGE,
+  PMM_ENTITLEMENTS_PAGE,
+  getPmmSettingsPage,
+  PMM_ADD_INSTANCE_PAGE,
+} from './constants';
+import {
   buildIntegratedAlertingMenuItem,
+  buildInventoryAndSettings,
   enrichConfigItems,
   getActiveItem,
   isMatchOrChildMatch,
@@ -56,9 +68,11 @@ export const NavBarUnconnected = React.memo(({ navBarTree }: Props) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
   const location = useLocation();
+  const dispatch = useDispatch();
   const kiosk = getKioskMode();
-  const { sttEnabled, alertingEnabled, dbaasEnabled, backupEnabled } = useSelector(getPerconaSettings);
-  const { isPlatformUser } = useSelector(getPerconaUser);
+  const { result } = useSelector(getPerconaSettings);
+  const { sttEnabled, alertingEnabled, dbaasEnabled, backupEnabled } = result!;
+  const { isPlatformUser, isAuthorized } = useSelector(getPerconaUser);
   const [showSwitcherModal, setShowSwitcherModal] = useState(false);
   const toggleSwitcherModal = () => {
     setShowSwitcherModal(!showSwitcherModal);
@@ -74,52 +88,39 @@ export const NavBarUnconnected = React.memo(({ navBarTree }: Props) => {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  if (isPmmAdmin(config.bootData.user)) {
+  dispatch(updateNavIndex(getPmmSettingsPage(alertingEnabled)));
+  dispatch(updateNavIndex(PMM_ALERTING_PAGE));
+  dispatch(updateNavIndex(PMM_STT_PAGE));
+  dispatch(updateNavIndex(PMM_DBAAS_PAGE));
+  dispatch(updateNavIndex(PMM_BACKUP_PAGE));
+  dispatch(updateNavIndex(PMM_INVENTORY_PAGE));
+  dispatch(updateNavIndex(PMM_ADD_INSTANCE_PAGE));
+  dispatch(updateNavIndex(PMM_TICKETS_PAGE));
+  dispatch(updateNavIndex(PMM_ENTITLEMENTS_PAGE));
+
+  if (isPlatformUser) {
+    topItems.push(PMM_ENTITLEMENTS_PAGE);
+    topItems.push(PMM_TICKETS_PAGE);
+  }
+
+  if (isAuthorized) {
+    buildInventoryAndSettings(topItems);
+
     if (alertingEnabled) {
       buildIntegratedAlertingMenuItem(topItems);
     }
 
     if (sttEnabled) {
-      topItems.push({
-        id: 'database-checks',
-        icon: 'percona-database-checks',
-        text: 'Advisor Checks',
-        url: `${config.appSubUrl}/pmm-database-checks`,
-      });
+      topItems.push(PMM_STT_PAGE);
     }
 
     if (dbaasEnabled) {
-      topItems.push({
-        id: 'dbaas',
-        text: 'DBaaS',
-        icon: 'database',
-        url: `${config.appSubUrl}/dbaas`,
-      });
+      topItems.push(PMM_DBAAS_PAGE);
     }
 
     if (backupEnabled) {
-      topItems.push({
-        id: 'backup',
-        icon: 'history',
-        text: 'Backup',
-        url: `${config.appSubUrl}/backup`,
-      });
+      topItems.push(PMM_BACKUP_PAGE);
     }
-  }
-
-  if (isPlatformUser) {
-    topItems.push({
-      id: 'entitlements',
-      icon: 'cloud',
-      text: 'Entitlements',
-      url: `${config.appSubUrl}/entitlements`,
-    });
-    topItems.push({
-      id: 'tickets',
-      icon: 'ticket',
-      text: 'Support Tickets',
-      url: `${config.appSubUrl}/tickets`,
-    });
   }
 
   if (kiosk !== KioskMode.Off) {

@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { AppEvents } from '@grafana/data';
 import { useStyles } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
-import { setSettings } from 'app/percona/shared/core/reducers';
+import { fetchSettingsAction } from 'app/percona/shared/core/reducers';
 import { getPerconaServer } from 'app/percona/shared/core/selectors';
 
 import { Messages as PlatformMessages } from '../Platform.messages';
@@ -26,7 +26,7 @@ export const Connected: FC = () => {
     try {
       await PlatformService.disconnect();
       appEvents.emit(AppEvents.alertSuccess, [Messages.disconnectSucceeded]);
-      dispatch(setSettings({ isConnectedToPortal: false }));
+      dispatch(fetchSettingsAction());
     } catch (e) {
       logger.error(e);
     } finally {

@@ -2,11 +2,10 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-export const getStyles = ({ isLight, v1: { palette, colors, spacing } }: GrafanaTheme2) => {
+export const getStyles = ({ v1: { isLight, palette, colors, spacing } }: GrafanaTheme2) => {
   const backgroundColor = isLight ? 'rgb(247, 247, 249)' : 'rgb(22, 23, 25)';
   const borderColor = isLight ? palette.gray85 : palette.dark7;
   const cellPadding = '12px 8px';
-
   return {
     wrapper: css`
       background-color: transparent;
@@ -14,7 +13,6 @@ export const getStyles = ({ isLight, v1: { palette, colors, spacing } }: Grafana
       flex-direction: row;
       justify-content: center;
       overflow-y: scroll;
-      height: 100%;
     `,
     nameColumn: css`
       width: 250px;
@@ -27,6 +25,12 @@ export const getStyles = ({ isLight, v1: { palette, colors, spacing } }: Grafana
     `,
     intervalColumn: css`
       width: 150px;
+    `,
+    spinner: css`
+      display: flex;
+      height: 10em;
+      align-items: center;
+      justify-content: center;
     `,
     tableWrapper: css`
       background-color: ${backgroundColor};
@@ -80,7 +84,7 @@ export const getStyles = ({ isLight, v1: { palette, colors, spacing } }: Grafana
       display: flex;
       flex: 1;
       justify-content: flex-end;
-      padding: ${spacing.sm};
+      padding-bottom: ${spacing.sm};
       align-items: center;
     `,
   };

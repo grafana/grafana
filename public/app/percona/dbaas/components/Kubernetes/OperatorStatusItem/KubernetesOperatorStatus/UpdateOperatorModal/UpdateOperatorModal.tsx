@@ -1,10 +1,10 @@
 import { Modal, logger } from '@percona/platform-core';
 import React, { FC, useCallback } from 'react';
+import { useDispatch } from 'react-redux';
 
 import { Button, HorizontalGroup, useStyles } from '@grafana/ui';
 import { Messages } from 'app/percona/dbaas/DBaaS.messages';
-
-import { KubernetesService } from '../../../Kubernetes.service';
+import { instalKuberneteslOperatorAction } from 'app/percona/shared/core/reducers';
 
 import { getStyles } from './UpdateOperatorModal.styles';
 import { UpdateOperatorModalProps } from './UpdateOperatorModal.types';
@@ -16,12 +16,11 @@ export const UpdateOperatorModal: FC<UpdateOperatorModalProps> = ({
   selectedOperator,
   isVisible,
   setVisible,
-  setLoading,
   setSelectedCluster,
   setOperatorToUpdate,
-  onOperatorUpdated,
 }) => {
   const styles = useStyles(getStyles);
+  const dispatch = useDispatch();
   const { operatorType, operatorTypeLabel, version, availableVersion } = selectedOperator;
 
   const onClose = useCallback(() => {
@@ -32,13 +31,15 @@ export const UpdateOperatorModal: FC<UpdateOperatorModalProps> = ({
 
   const updateOperator = useCallback(async () => {
     try {
-      setLoading(true);
       onClose();
-
-      await KubernetesService.installOperator(kubernetesClusterName, operatorType, availableVersion as string);
-      onOperatorUpdated();
+      dispatch(
+        instalKuberneteslOperatorAction({
+          kubernetesClusterName,
+          operatorType,
+          availableVersion: availableVersion || '',
+        })
+      );
     } catch (e) {
-      setLoading(false);
       logger.error(e);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

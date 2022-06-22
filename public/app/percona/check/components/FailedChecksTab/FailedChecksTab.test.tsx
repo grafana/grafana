@@ -1,8 +1,11 @@
 import { logger } from '@percona/platform-core';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitForElementToBeRemoved } from '@testing-library/react';
 import React from 'react';
+import { Provider } from 'react-redux';
 
 import { CheckService } from 'app/percona/check/Check.service';
+import { configureStore } from 'app/store/configureStore';
+import { StoreState } from 'app/types';
 
 import { FailedChecksTab } from './FailedChecksTab';
 
@@ -22,15 +25,21 @@ describe('FailedChecksTab::', () => {
   afterEach(() => getAlertsSpy.mockClear());
 
   it('should fetch active alerts at startup', async () => {
-    await waitFor(() => render(<FailedChecksTab />));
+    render(
+      <Provider
+        store={configureStore({
+          percona: {
+            user: { isAuthorized: true, isPlatformUser: false },
+            settings: { result: { sttEnabled: true, isConnectedToPortal: false } },
+          },
+        } as StoreState)}
+      >
+        <FailedChecksTab />
+      </Provider>
+    );
 
+    await waitForElementToBeRemoved(() => screen.getByTestId('table-loading'));
     expect(CheckService.getAllFailedChecks).toHaveBeenCalledTimes(1);
-  });
-
-  it('should render a spinner at startup, while loading', async () => {
-    render(<FailedChecksTab />);
-
-    expect(screen.queryByTestId('db-checks-failed-checks-spinner')).toBeInTheDocument();
   });
 
   it('should log an error if the fetch alerts API call fails', async () => {
@@ -39,18 +48,39 @@ describe('FailedChecksTab::', () => {
     });
     const loggerSpy = jest.spyOn(logger, 'error');
 
-    await waitFor(() => render(<FailedChecksTab />));
+    render(
+      <Provider
+        store={configureStore({
+          percona: {
+            user: { isAuthorized: true, isPlatformUser: false },
+            settings: { result: { sttEnabled: true, isConnectedToPortal: false } },
+          },
+        } as StoreState)}
+      >
+        <FailedChecksTab />
+      </Provider>
+    );
 
     expect(loggerSpy).toBeCalledTimes(1);
-
     loggerSpy.mockClear();
   });
 
   it('should render a table after having fetched the alerts', async () => {
-    await render(<FailedChecksTab />);
+    render(
+      <Provider
+        store={configureStore({
+          percona: {
+            user: { isAuthorized: true, isPlatformUser: false },
+            settings: { result: { sttEnabled: true, isConnectedToPortal: false } },
+          },
+        } as StoreState)}
+      >
+        <FailedChecksTab />
+      </Provider>
+    );
 
+    await waitForElementToBeRemoved(() => screen.getByTestId('table-loading'));
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
-
     expect(screen.queryByTestId('table-no-data')).toBeInTheDocument();
   });
 });

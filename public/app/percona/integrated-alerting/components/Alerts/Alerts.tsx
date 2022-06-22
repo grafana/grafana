@@ -6,10 +6,15 @@ import { Cell, Column, Row } from 'react-table';
 
 import { AppEvents } from '@grafana/data';
 import { Button, useStyles2 } from '@grafana/ui';
-import { appEvents } from 'app/core/core';
+import appEvents from 'app/core/app_events';
+import Page from 'app/core/components/Page/Page';
 import { ExpandableCell } from 'app/percona/shared/components/Elements/ExpandableCell';
+import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
 import { SilenceBell } from 'app/percona/shared/components/Elements/SilenceBell';
+import { TechnicalPreview } from 'app/percona/shared/components/Elements/TechnicalPreview/TechnicalPreview';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
+import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
+import { getPerconaSettingFlag } from 'app/percona/shared/core/selectors';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
 
 import { Messages } from '../../IntegratedAlerting.messages';
@@ -44,6 +49,7 @@ const {
 export const Alerts: FC = () => {
   const style = useStyles2(getStyles);
   const [pendingRequest, setPendingRequest] = useState(true);
+  const navModel = usePerconaNavModel('integrated-alerting-alerts');
   const [data, setData] = useState<Alert[]>([]);
   const [pageSize, setPageSize] = useStoredTablePageSize(ALERT_RULE_TEMPLATES_TABLE_ID);
   const [pageIndex, setPageindex] = useState(0);
@@ -182,47 +188,57 @@ export const Alerts: FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const featureSelector = useCallback(getPerconaSettingFlag('alertingEnabled'), []);
+
   useEffect(() => {
     getAlerts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
-    <>
-      <div className={style.generalActionsWrapper}>
-        <Button
-          size="md"
-          icon="bell-slash"
-          variant="link"
-          onClick={() => handleSilenceAll('TRUE')}
-          data-testid="alert-rule-template-add-modal-button"
-        >
-          {Messages.alerts.silenceAllAction}
-        </Button>
-        <Button
-          size="md"
-          icon="bell"
-          variant="link"
-          onClick={() => handleSilenceAll('FALSE')}
-          data-testid="alert-rule-template-add-modal-button"
-        >
-          {Messages.alerts.unsilenceAllAction}
-        </Button>
-      </div>
-      <Table
-        showPagination
-        totalItems={totalItems}
-        totalPages={totalPages}
-        pageSize={pageSize}
-        pageIndex={pageIndex}
-        onPaginationChanged={handlePaginationChanged}
-        data={data}
-        columns={columns}
-        pendingRequest={pendingRequest}
-        emptyMessage={noData}
-        getCellProps={getCellProps}
-        renderExpandedRow={renderSelectedSubRow}
-      />
-    </>
+    <Page navModel={navModel}>
+      <Page.Contents>
+        <TechnicalPreview />
+        <FeatureLoader featureName={Messages.integratedAlerting} featureSelector={featureSelector}>
+          <div className={style.actionsWrapper}>
+            <Button
+              size="md"
+              icon="bell-slash"
+              variant="link"
+              onClick={() => handleSilenceAll('TRUE')}
+              data-testid="alert-rule-template-add-modal-button"
+            >
+              {Messages.alerts.silenceAllAction}
+            </Button>
+            <Button
+              size="md"
+              icon="bell"
+              variant="link"
+              onClick={() => handleSilenceAll('FALSE')}
+              data-testid="alert-rule-template-add-modal-button"
+            >
+              {Messages.alerts.unsilenceAllAction}
+            </Button>
+          </div>
+          <Table
+            showPagination
+            totalItems={totalItems}
+            totalPages={totalPages}
+            pageSize={pageSize}
+            pageIndex={pageIndex}
+            onPaginationChanged={handlePaginationChanged}
+            data={data}
+            columns={columns}
+            pendingRequest={pendingRequest}
+            emptyMessage={noData}
+            getCellProps={getCellProps}
+            renderExpandedRow={renderSelectedSubRow}
+          />
+        </FeatureLoader>
+      </Page.Contents>
+    </Page>
   );
 };
+
+export default Alerts;

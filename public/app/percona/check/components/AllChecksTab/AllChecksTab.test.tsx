@@ -1,9 +1,12 @@
 import { logger } from '@percona/platform-core';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
+import { Provider } from 'react-redux';
 
 import { CheckService } from 'app/percona/check/Check.service';
 import { Interval } from 'app/percona/check/types';
+import { configureStore } from 'app/store/configureStore';
+import { StoreState } from 'app/types';
 
 import { AllChecksTab } from './AllChecksTab';
 import { Messages } from './AllChecksTab.messages';
@@ -22,27 +25,40 @@ describe('AllChecksTab::', () => {
   beforeEach(() => jest.clearAllMocks());
   it('should fetch checks at startup', async () => {
     const spy = jest.spyOn(CheckService, 'getAllChecks');
-    render(<AllChecksTab />);
+    render(
+      <Provider
+        store={configureStore({
+          percona: {
+            user: { isAuthorized: true, isPlatformUser: false },
+            settings: { result: { sttEnabled: true, isConnectedToPortal: false } },
+          },
+        } as StoreState)}
+      >
+        <AllChecksTab />
+      </Provider>
+    );
+
+    await screen.findByTestId('db-checks-all-checks-wrapper');
 
     expect(spy).toBeCalledTimes(1);
   });
 
   it('should render a spinner at startup, while loading', async () => {
-    jest.spyOn(CheckService, 'getAllChecks').mockImplementation(() =>
-      Promise.resolve([
-        {
-          summary: 'Test',
-          name: 'test enabled',
-          description: 'test enabled description',
-          interval: 'STANDARD',
-          disabled: false,
-        },
-      ])
+    render(
+      <Provider
+        store={configureStore({
+          percona: {
+            user: { isAuthorized: true, isPlatformUser: false },
+            settings: { result: { sttEnabled: true, isConnectedToPortal: false } },
+          },
+        } as StoreState)}
+      >
+        <AllChecksTab />
+      </Provider>
     );
-    const component = render(<AllChecksTab />);
-    expect(screen.queryByTestId('spinner-wrapper')).toBeInTheDocument();
-    await waitFor(() => component);
-    expect(screen.queryByTestId('spinner-wrapper')).not.toBeInTheDocument();
+
+    await screen.findByTestId('db-checks-all-checks-spinner');
+    expect(screen.getByTestId('db-checks-all-checks-spinner')).toBeInTheDocument();
   });
 
   it('should log an error if the API call fails', async () => {
@@ -51,8 +67,20 @@ describe('AllChecksTab::', () => {
     });
     const loggerSpy = jest.spyOn(logger, 'error').mockImplementationOnce(() => null);
 
-    await waitFor(() => render(<AllChecksTab />));
+    render(
+      <Provider
+        store={configureStore({
+          percona: {
+            user: { isAuthorized: true, isPlatformUser: false },
+            settings: { result: { sttEnabled: true, isConnectedToPortal: false } },
+          },
+        } as StoreState)}
+      >
+        <AllChecksTab />
+      </Provider>
+    );
 
+    await screen.findByTestId('db-checks-all-checks-wrapper');
     expect(loggerSpy).toBeCalledTimes(1);
   });
 
@@ -76,24 +104,36 @@ describe('AllChecksTab::', () => {
       ])
     );
 
-    await waitFor(() => render(<AllChecksTab />));
+    render(
+      <Provider
+        store={configureStore({
+          percona: {
+            user: { isAuthorized: true, isPlatformUser: false },
+            settings: { result: { sttEnabled: true, isConnectedToPortal: false } },
+          },
+        } as StoreState)}
+      >
+        <AllChecksTab />
+      </Provider>
+    );
 
-    const tbody = screen.getByTestId('db-checks-all-checks-tbody');
+    await screen.findByTestId('db-checks-all-checks-wrapper');
+    const cells = screen.getAllByRole('cell');
 
-    expect(screen.getByTestId('db-checks-all-checks-table')).toBeInTheDocument();
-    expect(screen.getByTestId('db-checks-all-checks-thead')).toBeInTheDocument();
-    expect(screen.getByTestId('db-checks-all-checks-tbody')).toBeInTheDocument();
-    expect(tbody.querySelectorAll('tr > td')).toHaveLength(10);
-    expect(tbody.querySelectorAll('tr > td')[0]).toHaveTextContent('Test');
-    expect(tbody.querySelectorAll('tr > td')[1]).toHaveTextContent('test enabled description');
-    expect(tbody.querySelectorAll('tr > td')[2]).toHaveTextContent(Messages.enabled);
-    expect(tbody.querySelectorAll('tr > td')[3]).toHaveTextContent(Interval.STANDARD);
-    expect(tbody.querySelectorAll('tr > td')[4]).toHaveTextContent(Messages.disable);
-    expect(tbody.querySelectorAll('tr > td')[5]).toHaveTextContent('Test disabled');
-    expect(tbody.querySelectorAll('tr > td')[6]).toHaveTextContent('test disabled description');
-    expect(tbody.querySelectorAll('tr > td')[7]).toHaveTextContent(Messages.disabled);
-    expect(tbody.querySelectorAll('tr > td')[8]).toHaveTextContent(Interval.RARE);
-    expect(tbody.querySelectorAll('tr > td')[9]).toHaveTextContent(Messages.enable);
+    expect(screen.getAllByTestId('db-checks-all-checks-table')).toHaveLength(1);
+    expect(screen.getAllByTestId('db-checks-all-checks-thead')).toHaveLength(1);
+    expect(screen.getAllByTestId('db-checks-all-checks-tbody')).toHaveLength(1);
+    expect(cells).toHaveLength(10);
+    expect(cells[0]).toHaveTextContent('Test');
+    expect(cells[1]).toHaveTextContent('test enabled description');
+    expect(cells[2]).toHaveTextContent(Messages.enabled);
+    expect(cells[3]).toHaveTextContent(Interval.STANDARD);
+    expect(cells[4]).toHaveTextContent(Messages.disable);
+    expect(cells[5]).toHaveTextContent('Test disabled');
+    expect(cells[6]).toHaveTextContent('test disabled description');
+    expect(cells[7]).toHaveTextContent(Messages.disabled);
+    expect(cells[8]).toHaveTextContent(Interval.RARE);
+    expect(cells[9]).toHaveTextContent(Messages.enable);
   });
 
   it('should log an error if the run checks API call fails', async () => {
@@ -102,7 +142,18 @@ describe('AllChecksTab::', () => {
     });
     const loggerSpy = jest.spyOn(logger, 'error');
 
-    render(<AllChecksTab />);
+    render(
+      <Provider
+        store={configureStore({
+          percona: {
+            user: { isAuthorized: true, isPlatformUser: false },
+            settings: { result: { sttEnabled: true, isConnectedToPortal: false } },
+          },
+        } as StoreState)}
+      >
+        <AllChecksTab />
+      </Provider>
+    );
 
     await screen.findByTestId('db-check-panel-actions');
 
@@ -121,7 +172,18 @@ describe('AllChecksTab::', () => {
 
   it('should call the API to run checks when the "run checks" button gets clicked', async () => {
     const runChecksSpy = jest.spyOn(CheckService, 'runDbChecks');
-    await render(<AllChecksTab />);
+    render(
+      <Provider
+        store={configureStore({
+          percona: {
+            user: { isAuthorized: true, isPlatformUser: false },
+            settings: { result: { sttEnabled: true, isConnectedToPortal: false } },
+          },
+        } as StoreState)}
+      >
+        <AllChecksTab />
+      </Provider>
+    );
 
     await screen.findByTestId('db-check-panel-actions');
 

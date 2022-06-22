@@ -1,24 +1,49 @@
 import { cx } from '@emotion/css';
-import React, { FC, useMemo, useState } from 'react';
+import React, { FC, useCallback, useMemo, useState } from 'react';
+import { useSelector } from 'react-redux';
 
-import { Tab, TabContent, TabsBar, useTheme } from '@grafana/ui';
+import { Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+import Page from 'app/core/components/Page/Page';
 import { getSettingsStyles } from 'app/percona/settings/Settings.styles';
+import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
+import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
+import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
+import { updateSettingsAction } from 'app/percona/shared/core/reducers';
+import { getPerconaSettings } from 'app/percona/shared/core/selectors';
+import { useAppDispatch } from 'app/store/store';
 
-import { EmailPayload } from '../../Settings.types';
+import { SET_SETTINGS_CANCEL_TOKEN } from '../../Settings.constants';
+import { EmailPayload, SettingsAPIChangePayload } from '../../Settings.types';
+import { WithDiagnostics } from '../WithDiagnostics/WithDiagnostics';
 
 import { Messages } from './Communication.messages';
 import { CommunicationService } from './Communication.service';
-import { CommunicationProps } from './Communication.types';
 import { Email } from './Email/Email';
 import { Slack } from './Slack/Slack';
 
-export const Communication: FC<CommunicationProps> = ({ alertingSettings, updateSettings }) => {
-  const theme = useTheme();
-  const settingsStyles = getSettingsStyles(theme);
+export const Communication: FC = () => {
+  const settingsStyles = useStyles2(getSettingsStyles);
   const [activeTab, setActiveTab] = useState(Messages.tabs.email.key);
+  const dispatch = useAppDispatch();
+  const [generateToken] = useCancelToken();
+  const navModel = usePerconaNavModel('settings-communication');
+  const { result: settings } = useSelector(getPerconaSettings);
+  const { alertingSettings } = settings!;
 
   const testEmailSetting = async (settings: EmailPayload, email: string): Promise<void> =>
     CommunicationService.testEmailSettings(settings, email);
+
+  const updateSettings = useCallback(
+    async (body: Partial<SettingsAPIChangePayload>) => {
+      await dispatch(
+        updateSettingsAction({
+          body,
+          token: generateToken(SET_SETTINGS_CANCEL_TOKEN),
+        })
+      );
+    },
+    [dispatch, generateToken]
+  );
 
   const tabs = useMemo(
     () => [
@@ -42,17 +67,34 @@ export const Communication: FC<CommunicationProps> = ({ alertingSettings, update
         component: <Slack key="slack" updateSettings={updateSettings} settings={alertingSettings.slack} />,
       },
     ],
-    [alertingSettings, activeTab, updateSettings]
+    [activeTab, updateSettings, alertingSettings.email, alertingSettings.slack]
   );
 
   return (
-    <div className={cx(settingsStyles.wrapper)}>
-      <TabsBar>
-        {tabs.map((tab, index) => (
-          <Tab key={index} label={tab.label} active={tab.key === activeTab} onChangeTab={() => setActiveTab(tab.key)} />
-        ))}
-      </TabsBar>
-      <TabContent>{tabs.map((tab) => tab.key === activeTab && tab.component)}</TabContent>
-    </div>
+    <Page navModel={navModel} vertical tabsDataTestId="settings-tabs">
+      <Page.Contents dataTestId="settings-tab-content" className={settingsStyles.pageContent}>
+        <FeatureLoader>
+          <WithDiagnostics>
+            <div className={cx(settingsStyles.wrapper)}>
+              <TabsBar>
+                {tabs.map((tab, index) => (
+                  <Tab
+                    key={index}
+                    label={tab.label}
+                    active={tab.key === activeTab}
+                    onChangeTab={() => setActiveTab(tab.key)}
+                  />
+                ))}
+              </TabsBar>
+              <TabContent className={settingsStyles.tabs}>
+                {tabs.map((tab) => tab.key === activeTab && tab.component)}
+              </TabContent>
+            </div>
+          </WithDiagnostics>
+        </FeatureLoader>
+      </Page.Contents>
+    </Page>
   );
 };
+
+export default Communication;

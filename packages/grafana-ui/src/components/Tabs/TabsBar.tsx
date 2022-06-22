@@ -11,9 +11,11 @@ export interface Props {
   className?: string;
   /** For hiding the bottom border (on PageHeader for example) */
   hideBorder?: boolean;
+  vertical?: boolean;
+  dataTestId?: string;
 }
 
-const getTabsBarStyles = stylesFactory((theme: GrafanaTheme2, hideBorder = false) => {
+const getTabsBarStyles = stylesFactory((theme: GrafanaTheme2, hideBorder = false, vertical = false) => {
   return {
     tabsWrapper:
       !hideBorder &&
@@ -24,21 +26,24 @@ const getTabsBarStyles = stylesFactory((theme: GrafanaTheme2, hideBorder = false
       position: relative;
       display: flex;
       height: ${theme.components.menuTabs.height}px;
+      flex-direction: ${!!vertical ? 'column' : 'row'};
     `,
   };
 });
 
-export const TabsBar = React.forwardRef<HTMLDivElement, Props>(({ children, className, hideBorder }, ref) => {
-  const theme = useTheme2();
-  const tabsStyles = getTabsBarStyles(theme, hideBorder);
+export const TabsBar = React.forwardRef<HTMLDivElement, Props>(
+  ({ children, className, hideBorder, vertical = false, dataTestId = '' }, ref) => {
+    const theme = useTheme2();
+    const tabsStyles = getTabsBarStyles(theme, hideBorder, vertical);
 
-  return (
-    <div className={cx(tabsStyles.tabsWrapper, className)} ref={ref}>
-      <div className={tabsStyles.tabs} role="tablist">
-        {children}
+    return (
+      <div className={cx(tabsStyles.tabsWrapper, className)} ref={ref}>
+        <div data-testid={dataTestId} className={tabsStyles.tabs} role="tablist">
+          {children}
+        </div>
       </div>
-    </div>
-  );
-});
+    );
+  }
+);
 
 TabsBar.displayName = 'TabsBar';

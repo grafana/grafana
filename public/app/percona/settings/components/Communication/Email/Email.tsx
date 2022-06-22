@@ -12,7 +12,7 @@ import { createPortal } from 'react-dom';
 import { withTypes } from 'react-final-form';
 
 import { AppEvents } from '@grafana/data';
-import { Button, Spinner, useTheme } from '@grafana/ui';
+import { Button, Spinner, useStyles2 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { EmailAuthType } from 'app/percona/settings/Settings.types';
 import { LinkTooltip } from 'app/percona/shared/components/Elements/LinkTooltip/LinkTooltip';
@@ -21,16 +21,17 @@ import { getSettingsStyles } from '../../../Settings.styles';
 import { Messages } from '../Communication.messages';
 
 import { emailOptions } from './Email.constants';
+import { getStyles } from './Email.styles';
 import { EmailProps, FormEmailSettings } from './Email.types';
 import { cleanupFormValues, getInitialValues } from './Email.utils';
 import { TestEmailSettings } from './TestEmailSettings/TestEmailSettings';
 
 export const Email: FC<EmailProps> = ({ updateSettings, settings, testSettings }) => {
-  const theme = useTheme();
   const testRef = useRef<HTMLDivElement | null>(null);
   const applyRef = useRef<HTMLDivElement | null>(null);
   const testEmailRef = useRef(settings.test_email);
-  const settingsStyles = getSettingsStyles(theme);
+  const settingsStyles = useStyles2(getSettingsStyles);
+  const styles = useStyles2(getStyles);
   const [loading, setLoading] = useState(false);
 
   const applyChanges = async (values: FormEmailSettings) => {
@@ -65,7 +66,7 @@ export const Email: FC<EmailProps> = ({ updateSettings, settings, testSettings }
         onSubmit={applyChanges}
         initialValues={initialValues}
         render={({ handleSubmit, valid, pristine, values, form }) => (
-          <form className={settingsStyles.emailForm} onSubmit={handleSubmit}>
+          <form className={styles.emailForm} onSubmit={handleSubmit}>
             <div className={settingsStyles.labelWrapper}>
               <span>{Messages.fields.smarthost.label}</span>
               <LinkTooltip
@@ -112,7 +113,7 @@ export const Email: FC<EmailProps> = ({ updateSettings, settings, testSettings }
               inputProps={{
                 onInput: () => resetUsernameAndPasswordState(form),
               }}
-              className={settingsStyles.authRadioGroup}
+              className={styles.authRadioGroup}
               options={emailOptions}
               name="authType"
               fullWidth

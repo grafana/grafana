@@ -4,15 +4,16 @@ import { useSelector } from 'react-redux';
 import { Cell, Column, Row } from 'react-table';
 
 import { useStyles2 } from '@grafana/ui';
+import Page from 'app/core/components/Page/Page';
+import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
 
 import { Table } from '../integrated-alerting/components/Table';
 import { PlatformConnectedLoader } from '../shared/components/Elements/PlatformConnectedLoader';
-import PageWrapper from '../shared/components/PageWrapper/PageWrapper';
 import { useCancelToken } from '../shared/components/hooks/cancelToken.hook';
 import { getPerconaUser } from '../shared/core/selectors';
 import { isApiCancelError } from '../shared/helpers/api';
 
-import { LIST_TICKETS_CANCEL_TOKEN, PAGE_MODEL } from './Tickets.constants';
+import { LIST_TICKETS_CANCEL_TOKEN } from './Tickets.constants';
 import { Messages } from './Tickets.messages';
 import { TicketsService } from './Tickets.service';
 import { getStyles } from './Tickets.styles';
@@ -24,6 +25,7 @@ export const TicketsPage: FC = () => {
   const { isPlatformUser } = useSelector(getPerconaUser);
   const [generateToken] = useCancelToken();
   const styles = useStyles2(getStyles);
+  const navModel = usePerconaNavModel('tickets');
 
   const columns = useMemo(
     (): Array<Column<Ticket>> => [
@@ -93,9 +95,9 @@ export const TicketsPage: FC = () => {
   });
 
   return (
-    <PageWrapper pageModel={PAGE_MODEL} dataTestId="page-wrapper-tickets">
-      <PlatformConnectedLoader>
-        <div className={styles.pageWrapper}>
+    <Page navModel={navModel}>
+      <Page.Contents dataTestId="page-wrapper-tickets">
+        <PlatformConnectedLoader>
           <Table
             data={data}
             columns={columns}
@@ -105,9 +107,9 @@ export const TicketsPage: FC = () => {
             getRowProps={getRowProps}
             getCellProps={getCellProps}
           ></Table>
-        </div>
-      </PlatformConnectedLoader>
-    </PageWrapper>
+        </PlatformConnectedLoader>
+      </Page.Contents>
+    </Page>
   );
 };
 

@@ -7,11 +7,16 @@ import { Cell, Column, Row } from 'react-table';
 import { AppEvents } from '@grafana/data';
 import { Button, useStyles } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
+import Page from 'app/core/components/Page/Page';
 import { Table } from 'app/percona/integrated-alerting/components/Table';
 import { DeleteModal } from 'app/percona/shared/components/Elements/DeleteModal';
 import { ExpandableCell } from 'app/percona/shared/components/Elements/ExpandableCell';
+import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
+import { TechnicalPreview } from 'app/percona/shared/components/Elements/TechnicalPreview/TechnicalPreview';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
+import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
 import { DATABASE_LABELS } from 'app/percona/shared/core';
+import { getPerconaSettingFlag } from 'app/percona/shared/core/selectors';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
 import { getCronStringFromValues } from 'app/percona/shared/helpers/cron/cron';
 
@@ -37,6 +42,7 @@ export const ScheduledBackups: FC = () => {
   const [selectedBackup, setSelectedBackup] = useState<ScheduledBackup | null>(null);
   const [backupModalVisible, setBackupModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const navModel = usePerconaNavModel('scheduled-backups');
   const [generateToken] = useCancelToken();
   const styles = useStyles(getStyles);
 
@@ -288,48 +294,58 @@ export const ScheduledBackups: FC = () => {
     [styles.disabledRow]
   );
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const featureSelector = useCallback(getPerconaSettingFlag('backupEnabled'), []);
+
   useEffect(() => {
     getData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
-    <>
-      <div className={styles.addWrapper}>
-        <Button
-          size="md"
-          icon="plus-square"
-          variant="link"
-          data-testid="scheduled-backup-add-modal-button"
-          onClick={onAddClick}
-        >
-          {Messages.add}
-        </Button>
-      </div>
-      <Table
-        columns={columns}
-        data={data}
-        totalItems={data.length}
-        emptyMessage={Messages.scheduledBackups.table.noData}
-        pendingRequest={pending}
-        renderExpandedRow={renderSelectedSubRow}
-        getCellProps={getCellProps}
-      />
-      <AddBackupModal
-        scheduleMode
-        backup={selectedBackup}
-        isVisible={backupModalVisible}
-        onClose={handleClose}
-        onBackup={handleBackup}
-      />
-      <DeleteModal
-        title={Messages.scheduledBackups.deleteModalTitle}
-        isVisible={deleteModalVisible}
-        setVisible={setDeleteModalVisible}
-        onDelete={handleDelete}
-        loading={deletePending}
-        message={Messages.scheduledBackups.getDeleteMessage(selectedBackup?.name!)}
-      />
-    </>
+    <Page navModel={navModel}>
+      <Page.Contents>
+        <TechnicalPreview />
+        <FeatureLoader featureName={Messages.backupManagement} featureSelector={featureSelector}>
+          <div className={styles.addWrapper}>
+            <Button
+              size="md"
+              icon="plus-square"
+              variant="link"
+              data-testid="scheduled-backup-add-modal-button"
+              onClick={onAddClick}
+            >
+              {Messages.add}
+            </Button>
+          </div>
+          <Table
+            columns={columns}
+            data={data}
+            totalItems={data.length}
+            emptyMessage={Messages.scheduledBackups.table.noData}
+            pendingRequest={pending}
+            renderExpandedRow={renderSelectedSubRow}
+            getCellProps={getCellProps}
+          />
+          <AddBackupModal
+            scheduleMode
+            backup={selectedBackup}
+            isVisible={backupModalVisible}
+            onClose={handleClose}
+            onBackup={handleBackup}
+          />
+          <DeleteModal
+            title={Messages.scheduledBackups.deleteModalTitle}
+            isVisible={deleteModalVisible}
+            setVisible={setDeleteModalVisible}
+            onDelete={handleDelete}
+            loading={deletePending}
+            message={Messages.scheduledBackups.getDeleteMessage(selectedBackup?.name!)}
+          />
+        </FeatureLoader>
+      </Page.Contents>
+    </Page>
   );
 };
+
+export default ScheduledBackups;

@@ -1,45 +1,56 @@
-import { render } from '@testing-library/react';
+import { render, screen, waitForElementToBeRemoved } from '@testing-library/react';
 import React from 'react';
-import { useSelector } from 'react-redux';
+import { Provider } from 'react-redux';
 
+import { configureStore } from 'app/store/configureStore';
+import { StoreState } from 'app/types';
+
+import { KubernetesClusterStatus } from './KubernetesClusterStatus/KubernetesClusterStatus.types';
 import { KubernetesInventory } from './KubernetesInventory';
-import {
-  kubernetesStub,
-  addActionStub,
-  deleteActionStub,
-  getActionStub,
-  setLoadingActionStub,
-} from './__mocks__/kubernetesStubs';
+import { KubernetesOperatorStatus } from './OperatorStatusItem/KubernetesOperatorStatus/KubernetesOperatorStatus.types';
 
 jest.mock('app/core/app_events');
-jest.mock('./Kubernetes.hooks');
-jest.mock('react-redux', () => {
-  const original = jest.requireActual('react-redux');
-  return {
-    ...original,
-    useSelector: jest.fn(),
-  };
-});
+jest.mock('app/percona/dbaas/components/Kubernetes/Kubernetes.service');
 
 describe('KubernetesInventory::', () => {
-  beforeEach(() => {
-    (useSelector as jest.Mock).mockImplementation((callback) => {
-      return callback({ perconaUser: { isAuthorized: true }, perconaSettings: { isLoading: false } });
-    });
-  });
-
-  it('renders table correctly', () => {
-    const { container } = render(
-      <KubernetesInventory
-        kubernetes={kubernetesStub}
-        addKubernetes={addActionStub}
-        deleteKubernetes={deleteActionStub}
-        getKubernetes={getActionStub}
-        setLoading={setLoadingActionStub}
-        loading={false}
-      />
+  it('renders table correctly', async () => {
+    render(
+      <Provider
+        store={configureStore({
+          percona: {
+            user: { isAuthorized: true },
+            settings: { loading: false, result: { isConnectedToPortal: true, dbaasEnabled: true } },
+            kubernetes: {
+              loading: false,
+              result: [
+                {
+                  kubernetesClusterName: 'cluster1',
+                  status: KubernetesClusterStatus.ok,
+                  operators: {
+                    psmdb: { status: KubernetesOperatorStatus.ok, version: '1', availableVersion: '1' },
+                    pxc: { status: KubernetesOperatorStatus.ok, version: '1', availableVersion: '1' },
+                  },
+                },
+                {
+                  kubernetesClusterName: 'cluster2',
+                  status: KubernetesClusterStatus.ok,
+                  operators: {
+                    psmdb: { status: KubernetesOperatorStatus.ok, version: '1', availableVersion: '1' },
+                    pxc: { status: KubernetesOperatorStatus.ok, version: '1', availableVersion: '1' },
+                  },
+                },
+              ],
+            },
+            addKubernetes: { loading: false },
+            deleteKubernetes: { loading: false },
+          },
+        } as StoreState)}
+      >
+        <KubernetesInventory />
+      </Provider>
     );
-    const rows = container.querySelectorAll('tr');
-    expect(rows).toHaveLength(kubernetesStub.length + 1);
+
+    await waitForElementToBeRemoved(() => screen.getByTestId('table-loading'));
+    expect(screen.getAllByTestId('table-row')).toHaveLength(2);
   });
 });

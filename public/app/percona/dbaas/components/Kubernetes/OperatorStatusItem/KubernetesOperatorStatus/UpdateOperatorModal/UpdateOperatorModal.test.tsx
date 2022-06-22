@@ -1,12 +1,16 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
+import { Provider } from 'react-redux';
+
+import { configureStore } from 'app/store/configureStore';
+import { StoreState } from 'app/types';
 
 import { ComponentToUpdate } from '../../../Kubernetes.types';
 import { KubernetesOperatorStatus } from '../KubernetesOperatorStatus.types';
 
 import { UpdateOperatorModal } from './UpdateOperatorModal';
 
-jest.mock('../../../Kubernetes.service');
+jest.mock('app/percona/dbaas/components/Kubernetes/Kubernetes.service');
 
 describe('UpdateOperatorModal::', () => {
   const operator = {
@@ -19,66 +23,55 @@ describe('UpdateOperatorModal::', () => {
 
   it('should render message with new operator version', () => {
     render(
-      <UpdateOperatorModal
-        kubernetesClusterName="test_cluster"
-        isVisible
-        selectedOperator={operator}
-        setVisible={jest.fn()}
-        setLoading={jest.fn()}
-        setSelectedCluster={jest.fn()}
-        setOperatorToUpdate={jest.fn()}
-        onOperatorUpdated={jest.fn()}
-      />
+      <Provider
+        store={configureStore({
+          percona: {
+            user: { isAuthorized: true },
+            settings: { loading: false, result: { isConnectedToPortal: true, dbaasEnabled: true } },
+          },
+        } as StoreState)}
+      >
+        <UpdateOperatorModal
+          kubernetesClusterName="test_cluster"
+          isVisible
+          selectedOperator={operator}
+          setVisible={jest.fn()}
+          setSelectedCluster={jest.fn()}
+          setOperatorToUpdate={jest.fn()}
+        />
+      </Provider>
     );
     const message = 'PXC 1.7.0 to version 1.8.0 in test_cluster';
 
     expect(screen.getByTestId('update-operator-message')).toHaveTextContent(message);
   });
 
-  it('should call onOperatorUpdated after installation', async () => {
-    const onOperatorUpdated = jest.fn();
-    render(
-      <UpdateOperatorModal
-        kubernetesClusterName="test_cluster"
-        isVisible
-        selectedOperator={operator}
-        setVisible={jest.fn()}
-        setLoading={jest.fn()}
-        setSelectedCluster={jest.fn()}
-        setOperatorToUpdate={jest.fn()}
-        onOperatorUpdated={onOperatorUpdated}
-      />
-    );
-
-    jest.useFakeTimers();
-    const btn = screen.getByTestId('confirm-update-operator-button');
-    fireEvent.click(btn);
-    await jest.runOnlyPendingTimers();
-
-    expect(onOperatorUpdated).toHaveBeenCalledTimes(1);
-  });
-
   it('should clear selected clsuter and operator on close', async () => {
     const setVisible = jest.fn();
     const setSelectedCluster = jest.fn();
     const setOperatorToUpdate = jest.fn();
+
     render(
-      <UpdateOperatorModal
-        kubernetesClusterName="test_cluster"
-        isVisible
-        selectedOperator={operator}
-        setVisible={setVisible}
-        setLoading={jest.fn()}
-        setSelectedCluster={setSelectedCluster}
-        setOperatorToUpdate={setOperatorToUpdate}
-        onOperatorUpdated={jest.fn()}
-      />
+      <Provider
+        store={configureStore({
+          percona: {
+            user: { isAuthorized: true },
+            settings: { loading: false, result: { isConnectedToPortal: true, dbaasEnabled: true } },
+          },
+        } as StoreState)}
+      >
+        <UpdateOperatorModal
+          kubernetesClusterName="test_cluster"
+          isVisible
+          selectedOperator={operator}
+          setVisible={setVisible}
+          setSelectedCluster={setSelectedCluster}
+          setOperatorToUpdate={setOperatorToUpdate}
+        />
+      </Provider>
     );
 
-    jest.useFakeTimers();
-    const btn = screen.getByTestId('confirm-update-operator-button');
-    fireEvent.click(btn);
-    await jest.runOnlyPendingTimers();
+    fireEvent.click(screen.getByTestId('confirm-update-operator-button'));
 
     expect(setVisible).toHaveBeenCalledWith(false);
     expect(setSelectedCluster).toHaveBeenCalledWith(null);
