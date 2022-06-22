@@ -233,7 +233,9 @@ func TestUpdatePublicDashboard(t *testing.T) {
 			},
 		}
 
-		_, err = service.updatePublicDashboardConfig(context.Background(), dto)
+		// Since the dto.PublicDashboard has a uid, this will call
+		// service.updatePublicDashboardConfig
+		_, err = service.SavePublicDashboardConfig(context.Background(), dto)
 		require.NoError(t, err)
 
 		updatedPubdash, err := service.GetPublicDashboardConfig(context.Background(), dashboard.OrgId, dashboard.Uid)
@@ -252,6 +254,64 @@ func TestUpdatePublicDashboard(t *testing.T) {
 		assert.Equal(t, dto.UserId, updatedPubdash.UpdatedBy)
 		assert.NotEqual(t, &time.Time{}, updatedPubdash.UpdatedAt)
 	})
+
+	t.Run("Updating set empty time settings", func(t *testing.T) {
+		sqlStore := sqlstore.InitTestDB(t)
+		dashboardStore := database.ProvideDashboardStore(sqlStore)
+		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
+
+		service := &DashboardServiceImpl{
+			log:            log.New("test.logger"),
+			dashboardStore: dashboardStore,
+		}
+
+		dto := &dashboards.SavePublicDashboardConfigDTO{
+			DashboardUid: dashboard.Uid,
+			OrgId:        dashboard.OrgId,
+			UserId:       7,
+			PublicDashboard: &models.PublicDashboard{
+				IsEnabled:    true,
+				TimeSettings: timeSettings,
+			},
+		}
+
+		// Since the dto.PublicDashboard has a uid, this will call
+		// service.updatePublicDashboardConfig
+		_, err := service.SavePublicDashboardConfig(context.Background(), dto)
+		require.NoError(t, err)
+
+		savedPubdash, err := service.GetPublicDashboardConfig(context.Background(), dashboard.OrgId, dashboard.Uid)
+		require.NoError(t, err)
+
+		// attempt to overwrite settings
+		dto = &dashboards.SavePublicDashboardConfigDTO{
+			DashboardUid: dashboard.Uid,
+			OrgId:        dashboard.OrgId,
+			UserId:       8,
+			PublicDashboard: &models.PublicDashboard{
+				Uid:          savedPubdash.Uid,
+				OrgId:        9,
+				DashboardUid: "abc1234",
+				CreatedBy:    9,
+				CreatedAt:    time.Time{},
+
+				IsEnabled:   true,
+				AccessToken: "NOTAREALUUID",
+			},
+		}
+
+		updatedPubdash, err := service.SavePublicDashboardConfig(context.Background(), dto)
+		require.NoError(t, err)
+
+		updatedPubdash, err = service.GetPublicDashboardConfig(context.Background(), dashboard.OrgId, dashboard.Uid)
+		require.NoError(t, err)
+
+		timeSettings, err := simplejson.NewJson([]byte("{}"))
+		require.NoError(t, err)
+
+		assert.Equal(t, timeSettings, updatedPubdash.TimeSettings)
+	})
+
 }
 
 func TestBuildPublicDashboardMetricRequest(t *testing.T) {

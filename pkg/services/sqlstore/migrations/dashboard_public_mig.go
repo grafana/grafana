@@ -12,7 +12,7 @@ func addPublicDashboardMigration(mg *Migrator) {
 			{Name: "dashboard_uid", Type: DB_NVarchar, Length: 40, Nullable: false},
 			{Name: "org_id", Type: DB_BigInt, Nullable: false},
 
-			{Name: "time_settings", Type: DB_Text, Nullable: false, Default: "'{}'"},
+			{Name: "time_settings", Type: DB_Text, Nullable: true},
 			{Name: "template_variables", Type: DB_MediumText, Nullable: true},
 
 			{Name: "access_token", Type: DB_NVarchar, Length: 32, Nullable: false},

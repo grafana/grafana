@@ -7,6 +7,7 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 )
@@ -49,6 +50,15 @@ func (dr *DashboardServiceImpl) GetPublicDashboardConfig(ctx context.Context, or
 func (dr *DashboardServiceImpl) SavePublicDashboardConfig(ctx context.Context, dto *dashboards.SavePublicDashboardConfigDTO) (*models.PublicDashboard, error) {
 	if len(dto.DashboardUid) == 0 {
 		return nil, models.ErrDashboardIdentifierNotSet
+	}
+
+	// set default value for time settings
+	if dto.PublicDashboard.TimeSettings == nil {
+		json, err := simplejson.NewJson([]byte("{}"))
+		if err != nil {
+			return nil, err
+		}
+		dto.PublicDashboard.TimeSettings = json
 	}
 
 	if dto.PublicDashboard.Uid == "" {
