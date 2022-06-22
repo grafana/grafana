@@ -107,7 +107,7 @@ func createAllCombinationsOfPermissions(permissions map[string][]string) []map[s
 	return permissionCombinations
 }
 
-func getDatasourceScopesForRules(rules []*models.AlertRule) []string {
+func getDatasourceScopesForRules(rules models.RulesGroup) []string {
 	scopesMap := map[string]struct{}{}
 	var result []string
 	for _, rule := range rules {
@@ -123,8 +123,8 @@ func getDatasourceScopesForRules(rules []*models.AlertRule) []string {
 	return result
 }
 
-func mapUpdates(updates []ruleUpdate, mapFunc func(ruleUpdate) *models.AlertRule) []*models.AlertRule {
-	result := make([]*models.AlertRule, 0, len(updates))
+func mapUpdates(updates []ruleUpdate, mapFunc func(ruleUpdate) *models.AlertRule) models.RulesGroup {
+	result := make(models.RulesGroup, 0, len(updates))
 	for _, update := range updates {
 		result = append(result, mapFunc(update))
 	}
@@ -172,7 +172,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				rules2 := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(withGroupKey(groupKey)))
 				return &changes{
 					GroupKey: groupKey,
-					AffectedGroups: map[models.AlertRuleGroupKey][]*models.AlertRule{
+					AffectedGroups: map[models.AlertRuleGroupKey]models.RulesGroup{
 						groupKey: append(rules, rules2...),
 					},
 					New:    nil,
@@ -208,7 +208,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 
 				return &changes{
 					GroupKey: groupKey,
-					AffectedGroups: map[models.AlertRuleGroupKey][]*models.AlertRule{
+					AffectedGroups: map[models.AlertRuleGroupKey]models.RulesGroup{
 						groupKey: append(rules, rules1...),
 					},
 					New:    nil,
@@ -252,7 +252,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 
 				return &changes{
 					GroupKey: targetGroupKey,
-					AffectedGroups: map[models.AlertRuleGroupKey][]*models.AlertRule{
+					AffectedGroups: map[models.AlertRuleGroupKey]models.RulesGroup{
 						groupKey: append(rules, rules1...),
 					},
 					New:    nil,
@@ -317,7 +317,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 
 				return &changes{
 					GroupKey: targetGroupKey,
-					AffectedGroups: map[models.AlertRuleGroupKey][]*models.AlertRule{
+					AffectedGroups: map[models.AlertRuleGroupKey]models.RulesGroup{
 						groupKey:       sourceGroup,
 						targetGroupKey: targetGroup,
 					},
