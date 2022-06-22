@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"math/rand"
 	"testing"
+	"time"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -12,8 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
-	"github.com/stretchr/testify/require"
 )
 
 // Not for parallel tests.
@@ -91,7 +92,7 @@ func Test_maybeNewImage(t *testing.T) {
 		t.Run(test.description, func(t *testing.T) {
 			imageService := &CountingImageService{}
 			mgr := NewManager(log.NewNopLogger(), &metrics.State{}, nil,
-				&store.FakeRuleStore{}, &store.FakeInstanceStore{}, mockstore.NewSQLStoreMock(),
+				&store.FakeRuleStore{}, &store.FakeInstanceStore{},
 				&dashboards.FakeDashboardService{}, imageService)
 			err := mgr.maybeTakeScreenshot(context.Background(), &ngmodels.AlertRule{}, test.state, test.oldState)
 			require.NoError(t, err)
@@ -101,6 +102,48 @@ func Test_maybeNewImage(t *testing.T) {
 				require.Equal(t, 1, imageService.Called)
 				require.NotNil(t, test.state.Image)
 			}
+		})
+	}
+}
+
+func TestIsItStale(t *testing.T) {
+	now := time.Now()
+	intervalSeconds := rand.Int63n(10) + 5
+
+	testCases := []struct {
+		name           string
+		lastEvaluation time.Time
+		expectedResult bool
+	}{
+		{
+			name:           "false if last evaluation is now",
+			lastEvaluation: now,
+			expectedResult: false,
+		},
+		{
+			name:           "false if last evaluation is 1 interval before now",
+			lastEvaluation: now.Add(-time.Duration(intervalSeconds)),
+			expectedResult: false,
+		},
+		{
+			name:           "false if last evaluation is little less than 2 interval before now",
+			lastEvaluation: now.Add(-time.Duration(intervalSeconds) * time.Second * 2).Add(100 * time.Millisecond),
+			expectedResult: false,
+		},
+		{
+			name:           "true if last evaluation is 2 intervals from now",
+			lastEvaluation: now.Add(-time.Duration(intervalSeconds) * time.Second * 2),
+			expectedResult: true,
+		},
+		{
+			name:           "true if last evaluation is 3 intervals from now",
+			lastEvaluation: now.Add(-time.Duration(intervalSeconds) * time.Second * 3),
+			expectedResult: true,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			require.Equal(t, tc.expectedResult, isItStale(now, tc.lastEvaluation, intervalSeconds))
 		})
 	}
 }

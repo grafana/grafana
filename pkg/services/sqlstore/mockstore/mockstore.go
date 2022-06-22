@@ -21,12 +21,9 @@ type SQLStoreMock struct {
 	ExpectedAlert                  *models.Alert
 	ExpectedPluginSetting          *models.PluginSetting
 	ExpectedDashboards             []*models.Dashboard
-	ExpectedDashboardVersion       *models.DashboardVersion
-	ExpectedDashboardVersions      []*models.DashboardVersion
 	ExpectedDashboardAclInfoList   []*models.DashboardAclInfoDTO
 	ExpectedUserOrgList            []*models.UserOrgDTO
 	ExpectedOrgListResponse        OrgListResponse
-	ExpectedDashboardSnapshot      *models.DashboardSnapshot
 	ExpectedTeamsByUser            []*models.TeamDTO
 	ExpectedSearchOrgList          []*models.OrgDTO
 	ExpectedSearchUsers            models.SearchUserQueryResult
@@ -75,28 +72,7 @@ func (m *SQLStoreMock) GetSystemStats(ctx context.Context, query *models.GetSyst
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) DeleteExpiredSnapshots(ctx context.Context, cmd *models.DeleteExpiredSnapshotsCommand) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) CreateDashboardSnapshot(ctx context.Context, cmd *models.CreateDashboardSnapshotCommand) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) DeleteDashboardSnapshot(ctx context.Context, cmd *models.DeleteDashboardSnapshotCommand) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetDashboardSnapshot(ctx context.Context, query *models.GetDashboardSnapshotQuery) error {
-	query.Result = m.ExpectedDashboardSnapshot
-	return m.ExpectedError
-}
-
 func (m *SQLStoreMock) HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) SearchDashboardSnapshots(ctx context.Context, query *models.GetDashboardSnapshotsQuery) error {
 	return m.ExpectedError
 }
 
@@ -357,7 +333,7 @@ func (m *SQLStoreMock) UpdatePlaylist(ctx context.Context, cmd *models.UpdatePla
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) GetPlaylist(ctx context.Context, query *models.GetPlaylistByIdQuery) error {
+func (m *SQLStoreMock) GetPlaylist(ctx context.Context, query *models.GetPlaylistByUidQuery) error {
 	return m.ExpectedError
 }
 
@@ -369,7 +345,7 @@ func (m *SQLStoreMock) SearchPlaylists(ctx context.Context, query *models.GetPla
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) GetPlaylistItem(ctx context.Context, query *models.GetPlaylistItemsByIdQuery) error {
+func (m *SQLStoreMock) GetPlaylistItem(ctx context.Context, query *models.GetPlaylistItemsByUidQuery) error {
 	return m.ExpectedError
 }
 
@@ -539,7 +515,7 @@ func (m *SQLStoreMock) GetAPIKeys(ctx context.Context, query *models.GetApiKeysQ
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) GetAllOrgsAPIKeys(ctx context.Context) []*models.ApiKey {
+func (m *SQLStoreMock) GetAllAPIKeys(ctx context.Context, orgID int64) []*models.ApiKey {
 	return nil
 }
 

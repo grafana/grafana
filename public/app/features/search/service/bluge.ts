@@ -21,13 +21,15 @@ export class BlugeSearcher implements GrafanaSearcher {
   async tags(query: SearchQuery): Promise<TermCount[]> {
     const ds = (await getDataSourceSrv().get('-- Grafana --')) as GrafanaDatasource;
     const target = {
-      ...query,
-      refId: 'A',
+      refId: 'TagsQuery',
       queryType: GrafanaQueryType.Search,
-      query: query.query ?? '*',
-      sort: undefined, // no need to sort the initial query results (not used)
-      facet: [{ field: 'tag' }],
-      limit: 1, // 0 would be better, but is ignored by the backend
+      search: {
+        ...query,
+        query: query.query ?? '*',
+        sort: undefined, // no need to sort the initial query results (not used)
+        facet: [{ field: 'tag' }],
+        limit: 1, // 0 would be better, but is ignored by the backend
+      },
     };
 
     const data = (
@@ -70,11 +72,13 @@ async function doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
   query = await replaceCurrentFolderQuery(query);
   const ds = (await getDataSourceSrv().get('-- Grafana --')) as GrafanaDatasource;
   const target = {
-    ...query,
-    refId: 'A',
+    refId: 'Search',
     queryType: GrafanaQueryType.Search,
-    query: query.query ?? '*',
-    limit: firstPageSize,
+    search: {
+      ...query,
+      query: query.query ?? '*',
+      limit: firstPageSize,
+    },
   };
   const rsp = await lastValueFrom(
     ds.query({

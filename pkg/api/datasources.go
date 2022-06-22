@@ -24,6 +24,7 @@ import (
 )
 
 var datasourcesLogger = log.New("datasources")
+var secretsPluginError models.ErrDatasourceSecretsPluginUserFriendly
 
 func (hs *HTTPServer) GetDataSources(c *models.ReqContext) response.Response {
 	query := models.GetDataSourcesQuery{OrgId: c.OrgId, DataSourceLimit: hs.Cfg.DataSourceLimit}
@@ -92,12 +93,7 @@ func (hs *HTTPServer) GetDataSourceById(c *models.ReqContext) response.Response 
 		return response.Error(500, "Failed to query datasources", err)
 	}
 
-	filtered, err := hs.filterDatasourcesByQueryPermission(c.Req.Context(), c.SignedInUser, []*models.DataSource{query.Result})
-	if err != nil || len(filtered) != 1 {
-		return response.Error(404, "Data source not found", err)
-	}
-
-	dto := hs.convertModelToDtos(c.Req.Context(), filtered[0])
+	dto := hs.convertModelToDtos(c.Req.Context(), query.Result)
 
 	// Add accesscontrol metadata
 	dto.AccessControl = hs.getAccessControlMetadata(c, c.OrgId, datasources.ScopePrefix, dto.UID)
@@ -132,6 +128,9 @@ func (hs *HTTPServer) DeleteDataSourceById(c *models.ReqContext) response.Respon
 
 	err = hs.DataSourcesService.DeleteDataSource(c.Req.Context(), cmd)
 	if err != nil {
+		if errors.As(err, &secretsPluginError) {
+			return response.Error(500, "Failed to delete datasource: "+err.Error(), err)
+		}
 		return response.Error(500, "Failed to delete datasource", err)
 	}
 
@@ -151,12 +150,7 @@ func (hs *HTTPServer) GetDataSourceByUID(c *models.ReqContext) response.Response
 		return response.Error(http.StatusInternalServerError, "Failed to query datasource", err)
 	}
 
-	filtered, err := hs.filterDatasourcesByQueryPermission(c.Req.Context(), c.SignedInUser, []*models.DataSource{ds})
-	if err != nil || len(filtered) != 1 {
-		return response.Error(404, "Data source not found", err)
-	}
-
-	dto := hs.convertModelToDtos(c.Req.Context(), filtered[0])
+	dto := hs.convertModelToDtos(c.Req.Context(), ds)
 
 	// Add accesscontrol metadata
 	dto.AccessControl = hs.getAccessControlMetadata(c, c.OrgId, datasources.ScopePrefix, dto.UID)
@@ -188,6 +182,9 @@ func (hs *HTTPServer) DeleteDataSourceByUID(c *models.ReqContext) response.Respo
 
 	err = hs.DataSourcesService.DeleteDataSource(c.Req.Context(), cmd)
 	if err != nil {
+		if errors.As(err, &secretsPluginError) {
+			return response.Error(500, "Failed to delete datasource: "+err.Error(), err)
+		}
 		return response.Error(500, "Failed to delete datasource", err)
 	}
 
@@ -222,6 +219,9 @@ func (hs *HTTPServer) DeleteDataSourceByName(c *models.ReqContext) response.Resp
 	cmd := &models.DeleteDataSourceCommand{Name: name, OrgID: c.OrgId}
 	err := hs.DataSourcesService.DeleteDataSource(c.Req.Context(), cmd)
 	if err != nil {
+		if errors.As(err, &secretsPluginError) {
+			return response.Error(500, "Failed to delete datasource: "+err.Error(), err)
+		}
 		return response.Error(500, "Failed to delete datasource", err)
 	}
 
@@ -260,6 +260,10 @@ func (hs *HTTPServer) AddDataSource(c *models.ReqContext) response.Response {
 	if err := hs.DataSourcesService.AddDataSource(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, models.ErrDataSourceNameExists) || errors.Is(err, models.ErrDataSourceUidExists) {
 			return response.Error(409, err.Error(), err)
+		}
+
+		if errors.As(err, &secretsPluginError) {
+			return response.Error(500, "Failed to add datasource: "+err.Error(), err)
 		}
 
 		return response.Error(500, "Failed to add datasource", err)
@@ -333,6 +337,10 @@ func (hs *HTTPServer) updateDataSourceByID(c *models.ReqContext, ds *models.Data
 		if errors.Is(err, models.ErrDataSourceUpdatingOldVersion) {
 			return response.Error(409, "Datasource has already been updated by someone else. Please reload and try again", err)
 		}
+
+		if errors.As(err, &secretsPluginError) {
+			return response.Error(500, "Failed to update datasource: "+err.Error(), err)
+		}
 		return response.Error(500, "Failed to update datasource", err)
 	}
 
@@ -397,12 +405,7 @@ func (hs *HTTPServer) GetDataSourceByName(c *models.ReqContext) response.Respons
 		return response.Error(500, "Failed to query datasources", err)
 	}
 
-	filtered, err := hs.filterDatasourcesByQueryPermission(c.Req.Context(), c.SignedInUser, []*models.DataSource{query.Result})
-	if err != nil || len(filtered) != 1 {
-		return response.Error(404, "Data source not found", err)
-	}
-
-	dto := hs.convertModelToDtos(c.Req.Context(), filtered[0])
+	dto := hs.convertModelToDtos(c.Req.Context(), query.Result)
 	return response.JSON(http.StatusOK, &dto)
 }
 

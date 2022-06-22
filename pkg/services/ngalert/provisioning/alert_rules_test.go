@@ -39,7 +39,7 @@ func TestAlertRuleService(t *testing.T) {
 		require.Equal(t, int64(60), rule.IntervalSeconds)
 
 		var interval int64 = 120
-		err = ruleService.UpdateAlertGroup(context.Background(), orgID, rule.NamespaceUID, rule.RuleGroup, 120)
+		err = ruleService.UpdateRuleGroup(context.Background(), orgID, rule.NamespaceUID, rule.RuleGroup, 120)
 		require.NoError(t, err)
 
 		rule, _, err = ruleService.GetAlertRule(context.Background(), orgID, rule.UID)
@@ -54,7 +54,7 @@ func TestAlertRuleService(t *testing.T) {
 		require.NoError(t, err)
 
 		var interval int64 = 120
-		err = ruleService.UpdateAlertGroup(context.Background(), orgID, rule.NamespaceUID, rule.RuleGroup, 120)
+		err = ruleService.UpdateRuleGroup(context.Background(), orgID, rule.NamespaceUID, rule.RuleGroup, 120)
 		require.NoError(t, err)
 
 		rule = dummyRule("test#4-1", orgID)
@@ -62,6 +62,34 @@ func TestAlertRuleService(t *testing.T) {
 		rule, err = ruleService.CreateAlertRule(context.Background(), rule, models.ProvenanceNone)
 		require.NoError(t, err)
 		require.Equal(t, interval, rule.IntervalSeconds)
+	})
+	t.Run("updating a rule group should bump the version number", func(t *testing.T) {
+		const (
+			orgID              = 123
+			namespaceUID       = "abc"
+			ruleUID            = "some_rule_uid"
+			ruleGroup          = "abc"
+			newInterval  int64 = 120
+		)
+		rule := dummyRule("my_rule", orgID)
+		rule.UID = ruleUID
+		rule.RuleGroup = ruleGroup
+		rule.NamespaceUID = namespaceUID
+		_, err := ruleService.CreateAlertRule(context.Background(), rule, models.ProvenanceNone)
+		require.NoError(t, err)
+
+		rule, _, err = ruleService.GetAlertRule(context.Background(), orgID, ruleUID)
+		require.NoError(t, err)
+		require.Equal(t, int64(1), rule.Version)
+		require.Equal(t, int64(60), rule.IntervalSeconds)
+
+		err = ruleService.UpdateRuleGroup(context.Background(), orgID, namespaceUID, ruleGroup, newInterval)
+		require.NoError(t, err)
+
+		rule, _, err = ruleService.GetAlertRule(context.Background(), orgID, ruleUID)
+		require.NoError(t, err)
+		require.Equal(t, int64(2), rule.Version)
+		require.Equal(t, newInterval, rule.IntervalSeconds)
 	})
 	t.Run("alert rule provenace should be correctly checked", func(t *testing.T) {
 		tests := []struct {
@@ -133,11 +161,12 @@ func createAlertRuleService(t *testing.T) AlertRuleService {
 		BaseInterval: time.Second * 10,
 	}
 	return AlertRuleService{
-		ruleStore:       store,
-		provenanceStore: store,
-		xact:            sqlStore,
-		log:             log.New("testing"),
-		defaultInterval: 60,
+		ruleStore:              store,
+		provenanceStore:        store,
+		xact:                   sqlStore,
+		log:                    log.New("testing"),
+		baseIntervalSeconds:    10,
+		defaultIntervalSeconds: 60,
 	}
 }
 
@@ -150,8 +179,9 @@ func dummyRule(title string, orgID int64) models.AlertRule {
 		IntervalSeconds: 60,
 		Data: []models.AlertQuery{
 			{
-				RefID: "A",
-				Model: json.RawMessage("{}"),
+				RefID:         "A",
+				Model:         json.RawMessage("{}"),
+				DatasourceUID: "-100",
 				RelativeTimeRange: models.RelativeTimeRange{
 					From: models.Duration(60),
 					To:   models.Duration(0),

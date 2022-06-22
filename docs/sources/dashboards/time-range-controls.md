@@ -40,9 +40,9 @@ Here are some examples:
 | This Year              | `now/Y`     | `now/Y`     |
 | Previous fiscal year   | `now-1y/fy` | `now-1y/fy` |
 
-### Note about Grafana alerting
+### Note about Grafana Alerting
 
-For Grafana alerting, we do not support the following syntaxes at this time.
+For Grafana Alerting, we do not support the following syntaxes at this time.
 
 - now+n for future timestamps.
 - now-1n/n for "start of n until end of n" since this is an absolute timestamp.

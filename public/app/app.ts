@@ -42,7 +42,7 @@ import { getStandardTransformers } from 'app/features/transformers/standardTrans
 import getDefaultMonacoLanguages from '../lib/monaco-languages';
 
 import { AppWrapper } from './AppWrapper';
-import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/components/editors/registry';
+import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/components/OptionsUI/registry';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
 import { ModalManager } from './core/services/ModalManager';
 import { backendSrv } from './core/services/backend_srv';
@@ -152,7 +152,7 @@ export class GrafanaApp {
         }),
         document.getElementById('reactRoot')
       );
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to start Grafana', error);
       window.__grafana_load_failed();
     }
@@ -204,22 +204,22 @@ function initEchoSrv() {
     );
   }
 
-  if ((config as any).googleAnalyticsId) {
+  if (config.googleAnalyticsId) {
     registerEchoBackend(
       new GAEchoBackend({
-        googleAnalyticsId: (config as any).googleAnalyticsId,
+        googleAnalyticsId: config.googleAnalyticsId,
       })
     );
   }
 
-  if ((config as any).rudderstackWriteKey && (config as any).rudderstackDataPlaneUrl) {
+  if (config.rudderstackWriteKey && config.rudderstackDataPlaneUrl) {
     registerEchoBackend(
       new RudderstackBackend({
-        writeKey: (config as any).rudderstackWriteKey,
-        dataPlaneUrl: (config as any).rudderstackDataPlaneUrl,
+        writeKey: config.rudderstackWriteKey,
+        dataPlaneUrl: config.rudderstackDataPlaneUrl,
         user: config.bootData.user,
-        sdkUrl: (config as any).rudderstackSdkUrl,
-        configUrl: (config as any).rudderstackConfigUrl,
+        sdkUrl: config.rudderstackSdkUrl,
+        configUrl: config.rudderstackConfigUrl,
       })
     );
   }

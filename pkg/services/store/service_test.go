@@ -3,7 +3,6 @@ package store
 import (
 	"bytes"
 	"context"
-	"mime/multipart"
 	"os"
 	"path/filepath"
 	"testing"
@@ -11,9 +10,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -60,12 +59,13 @@ func TestUpload(t *testing.T) {
 	path, err := os.Getwd()
 	require.NoError(t, err)
 	cfg := &setting.Cfg{AppURL: "http://localhost:3000/", DataPath: path}
-	s := ProvideService(nil, features, cfg)
-	testForm := &multipart.Form{
-		Value: map[string][]string{},
-		File:  map[string][]*multipart.FileHeader{},
+	s := ProvideService(sqlstore.InitTestDB(t), features, cfg)
+	request := UploadRequest{
+		EntityType: EntityTypeImage,
+		Contents:   make([]byte, 0),
+		Path:       "upload/myFile.jpg",
+		MimeType:   "image/jpg",
 	}
-	res, err := s.Upload(context.Background(), dummyUser, testForm)
+	err = s.Upload(context.Background(), dummyUser, &request)
 	require.NoError(t, err)
-	assert.Equal(t, res.path, "upload")
 }
