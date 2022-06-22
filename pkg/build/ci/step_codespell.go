@@ -32,7 +32,7 @@ func codespell(ctx context.Context, opts pipeline.ActionOpts) error {
 		exec.RunOpts{
 			Stdout: opts.Stdout,
 			Stderr: opts.Stderr,
-			Name:   "codepsell",
+			Name:   "codespell",
 			Args:   []string{"-I", path, "docs/"},
 		},
 	)

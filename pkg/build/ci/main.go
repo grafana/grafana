@@ -9,11 +9,14 @@ const (
 )
 
 func BuildDocumentation(sc *scribe.Scribe) {
-	sc.Run(StepDownloadGrabplToBin().WithName("download grabpl"))
+	sc.Run(
+		StepDownloadGrabplToBin().WithName("download grabpl"),
+		StepYarnInstall().WithName("yarn install"),
+	)
 
 	sc.Parallel(
 		StepCodespell().WithName("codespell"),
-		StepLintDocumentation().WithName("lint docs"),
+		YarnStep(StepLintDocumentation()).WithName("lint docs"),
 	)
 
 	sc.Run(
