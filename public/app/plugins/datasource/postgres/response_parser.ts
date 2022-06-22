@@ -1,6 +1,7 @@
+import { uniqBy } from 'lodash';
+
 import { AnnotationEvent, DataFrame, MetricFindValue } from '@grafana/data';
 import { BackendDataSourceResponse, FetchResponse, toDataQueryResponse } from '@grafana/runtime';
-import { uniqBy } from 'lodash';
 
 export default class ResponseParser {
   transformMetricFindResponse(raw: FetchResponse<BackendDataSourceResponse>): MetricFindValue[] {
