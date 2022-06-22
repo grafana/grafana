@@ -17,11 +17,13 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/query"
@@ -259,7 +261,7 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 	qds := query.ProvideService(
 		nil,
 		&fakeDatasources.FakeCacheService{
-			DataSources: []*models.DataSource{
+			DataSources: []*datasources.DataSource{
 				{Uid: "mysqlds"},
 				{Uid: "promds"},
 				{Uid: "promds2"},
@@ -547,12 +549,12 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	)
 	scenario.hs.queryDataService = qds
 
-	_ = db.AddDataSource(context.Background(), &models.AddDataSourceCommand{
+	_ = db.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 		Uid:      "ds1",
 		OrgId:    1,
 		Name:     "laban",
-		Type:     models.DS_MYSQL,
-		Access:   models.DS_ACCESS_DIRECT,
+		Type:     datasources.DS_MYSQL,
+		Access:   datasources.DS_ACCESS_DIRECT,
 		Url:      "http://test",
 		Database: "site",
 		ReadOnly: true,
