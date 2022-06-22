@@ -20,6 +20,7 @@ import {
 import { defaultBucketAgg, defaultMetricAgg, findMetricById, highlightTags } from './query_def';
 import { ElasticsearchQuery, TermsQuery } from './types';
 import { convertOrderByToMetricId, getScriptValue } from './utils';
+import { populateLogzioQuery } from './query_populator.logzio'; // LOGZ.IO GRAFANA CHANGE :: DEV-18135 populate query with logzio extensions
 
 export class ElasticQueryBuilder {
   timeField: string;
@@ -417,7 +418,7 @@ export class ElasticQueryBuilder {
       nestedAggs.aggs[metric.id] = aggField;
     }
 
-    return query;
+    return populateLogzioQuery(query); // LOGZ.IO GRAFANA CHANGE :: DEV-18135 populate query with logzio extensions
   }
 
   private buildScript(script: string) {

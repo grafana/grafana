@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
+	"time" // LOGZ.IO GRAFANA CHANGE :: DEV-17927 - import time
 
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -57,7 +58,8 @@ func createTestEvalContext(cmd *NotificationTestCommand) *EvalContext {
 		ID:          rand.Int63(),
 	}
 
-	ctx := NewEvalContext(context.Background(), testRule, fakeRequestValidator{}, nil)
+	// LOGZ.IO GRAFANA CHANGE :: DEV-17927 - Add time.now()
+	ctx := NewEvalContext(context.Background(), testRule, time.Now(), fakeRequestValidator{}, nil)
 	if cmd.Settings.Get("uploadImage").MustBool(true) {
 		ctx.ImagePublicURL = "https://grafana.com/assets/img/blog/mixed_styles.png"
 	}

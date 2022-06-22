@@ -201,6 +201,7 @@ type Cfg struct {
 	HTTPAddr         string
 	HTTPPort         string
 	AppURL           string
+	ParsedAppURL     *url.URL // LOGZ.IO GRAFANA CHANGE :: DEV-31554 - Set APP url to logzio grafana for alert notification URLs
 	AppSubURL        string
 	ServeFromSubPath bool
 	StaticRootPath   string
@@ -1461,7 +1462,16 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 	}
 	ServeFromSubPath = server.Key("serve_from_sub_path").MustBool(false)
 
-	cfg.AppURL = AppUrl
+	// LOGZ.IO GRAFANA CHANGE :: DEV-31554 - Set APP url to logzio grafana for alert notification URLs
+	parsedUrl, err := url.Parse(AppUrl)
+	additionalPath := valueAsString(server, "root_url_additional_path", "")
+	if err != nil {
+		return err
+	}
+	parsedUrl.Path += additionalPath
+	cfg.AppURL = AppUrl + additionalPath
+	cfg.ParsedAppURL = parsedUrl
+	// LOGZ.IO GRAFANA CHANGE :: end
 	cfg.AppSubURL = AppSubUrl
 	cfg.ServeFromSubPath = ServeFromSubPath
 	cfg.Protocol = HTTPScheme

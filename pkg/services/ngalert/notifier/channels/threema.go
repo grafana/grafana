@@ -124,7 +124,7 @@ func (tn *ThreemaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		stateEmoji,
 		tmpl(DefaultMessageTitleEmbed),
 		tmpl(`{{ template "default.message" . }}`),
-		path.Join(tn.tmpl.ExternalURL.String(), "/alerting/list"),
+		ToLogzioAppPath(path.Join(tn.tmpl.ExternalURL.String(), "/alerting/list")), // LOGZ.IO GRAFANA CHANGE :: DEV-31554 - Set APP url to logzio grafana for alert notification URLs
 	)
 	data.Set("text", message)
 

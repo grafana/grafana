@@ -179,6 +179,28 @@ func (mg *Migrator) run() (err error) {
 	return mg.DBEngine.Sync2()
 }
 
+// LOGZ.IO GRAFANA CHANGE :: DEV-30275 - Add a method to run a single migration without storing state in DB
+
+func (mg *Migrator) RunMigration(m Migration) error {
+	sql := m.SQL(mg.Dialect)
+
+	err := mg.InTransaction(func(sess *xorm.Session) error {
+		err := mg.exec(m, sess)
+		if err != nil {
+			mg.Logger.Error("Exec failed", "error", err, "sql", sql)
+			return err
+		}
+		return err
+	})
+	if err != nil {
+		return errutil.Wrap(fmt.Sprintf("migration failed (id = %s)", m.Id()), err)
+	}
+
+	return nil
+}
+
+// LOGZ.IO GRAFANA CHANGE :: end
+
 func (mg *Migrator) exec(m Migration, sess *xorm.Session) error {
 	mg.Logger.Info("Executing migration", "id", m.Id())
 

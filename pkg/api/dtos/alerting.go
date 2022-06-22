@@ -135,3 +135,63 @@ type PauseAlertCommand struct {
 type PauseAllAlertsCommand struct {
 	Paused bool `json:"paused"`
 }
+
+// LOGZ.IO GRAFANA CHANGE :: DEV-17927 - Check alerts dto
+type EvaluateAlertRequestCommand struct {
+	EvalTime      time.Time `json:"evalTime"`
+	DataSourceUrl string    `json:"dataSourceUrl"`
+	Alert         struct {
+		ID             int64                 `json:"id"`
+		Version        int64                 `json:"version"`
+		DashboardID    int64                 `json:"dashboardId"`
+		PanelID        int64                 `json:"panelId"`
+		OrgID          int64                 `json:"orgId"`
+		Name           string                `json:"name"`
+		Message        string                `json:"message"`
+		State          models.AlertStateType `json:"state"`
+		Settings       *simplejson.Json      `json:"settings"`
+		Frequency      int64                 `json:"frequency"`
+		Handler        int64                 `json:"handler"`
+		Severity       string                `json:"severity"`
+		Silenced       bool                  `json:"silenced"`
+		ExecutionError string                `json:"executionError"`
+		EvalData       *simplejson.Json      `json:"evalData"`
+		NewStateDate   time.Time             `json:"newStateDate"`
+		StateChanges   int64                 `json:"stateChanges"`
+		Created        time.Time             `json:"created"`
+		Updated        time.Time             `json:"updated"`
+		For            time.Duration         `json:"for"`
+	} `json:"alert"`
+	CustomDataSources []struct {
+		Id      int64 `json:"id"`
+		OrgId   int64 `json:"orgId"`
+		Version int   `json:"version"`
+
+		Name              string            `json:"name"`
+		Type              string            `json:"type"`
+		Access            string            `json:"access"`
+		Url               string            `json:"url"`
+		Password          string            `json:"password"`
+		User              string            `json:"user"`
+		Database          string            `json:"database"`
+		BasicAuth         bool              `json:"basicAuth"`
+		BasicAuthUser     string            `json:"basicAuthUser"`
+		BasicAuthPassword string            `json:"basicAuthPassword"`
+		WithCredentials   bool              `json:"withCredentials"`
+		IsDefault         bool              `json:"isDefault"`
+		JsonData          *simplejson.Json  `json:"jsonData"`
+		SecureJsonData    map[string][]byte `json:"secureJsonData"`
+		ReadOnly          bool              `json:"readOnly"`
+		Uid               string            `json:"uid"`
+
+		Created time.Time `json:"created"`
+		Updated time.Time `json:"updated"`
+	} `json:"customDataSources"`
+}
+
+type EvaluateAlertByIdCommand struct {
+	EvalTime time.Time `json:"evalTime"`
+	AlertId  int64     `json:"alertId"`
+}
+
+// LOGZ.IO GRAFANA CHANGE :: end

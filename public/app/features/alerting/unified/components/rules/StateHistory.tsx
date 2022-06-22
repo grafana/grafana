@@ -25,10 +25,11 @@ type StateHistoryRow = DynamicTableItemProps<StateHistoryRowItem>;
 
 interface RuleStateHistoryProps {
   alertId: string;
+  oldAlertId: string; // LOGZ.IO GRAFANA CHANGE :: DEV-31760 - Retrieve annotations for migrated unified alerts
 }
 
-const StateHistory: FC<RuleStateHistoryProps> = ({ alertId }) => {
-  const { loading, error, result = [] } = useManagedAlertStateHistory(alertId);
+const StateHistory: FC<RuleStateHistoryProps> = ({ alertId, oldAlertId }) => { // LOGZ.IO GRAFANA CHANGE :: DEV-31760 - Retrieve annotations for migrated unified alerts
+  const { loading, error, result = [] } = useManagedAlertStateHistory(alertId, oldAlertId); // LOGZ.IO GRAFANA CHANGE :: DEV-31760 - Retrieve annotations for migrated unified alerts
 
   if (loading && !error) {
     return <LoadingPlaceholder text={'Loading history...'} />;

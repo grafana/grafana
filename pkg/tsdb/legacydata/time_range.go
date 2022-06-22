@@ -13,6 +13,17 @@ type DataTimeRange struct {
 	Now  time.Time
 }
 
+// LOGZ.IO GRAFANA CHANGE :: DEV-17927 - Add now to time range.
+func CustomNewTimeRange(from, to string, now time.Time) DataTimeRange {
+	return DataTimeRange{
+		From: from,
+		To:   to,
+		Now:  now,
+	}
+}
+
+// LOGZ.IO GRAFANA CHANGE :: end
+
 func NewDataTimeRange(from, to string) DataTimeRange {
 	return DataTimeRange{
 		From: from,

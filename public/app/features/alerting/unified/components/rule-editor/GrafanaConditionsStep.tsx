@@ -62,17 +62,17 @@ export const GrafanaConditionsStep: FC = () => {
       <ConditionField />
       <Field
         label="Evaluate"
-        description="Evaluation interval applies to every rule within a group. It can overwrite the interval of an existing alert rule."
+        description="Evaluation interval defines how often the alert will be evaluated to see if it fires" // LOGZ.IO Changes
       >
         <div className={styles.flexRow}>
           <InlineLabel
             htmlFor={evaluateEveryId}
             width={16}
-            tooltip="How often the alert will be evaluated to see if it fires"
+            // tooltip="How often the alert will be evaluated to see if it fires" // LOGZ.IO Changes
           >
             Evaluate every
           </InlineLabel>
-          <Input id={evaluateEveryId} width={8} {...register('evaluateEvery', evaluateEveryValidationOptions)} />
+          <Input readOnly={true /* // LOGZ.IO Changes*/} id={evaluateEveryId} width={8} {...register('evaluateEvery', evaluateEveryValidationOptions)} />
           <InlineLabel
             htmlFor={evaluateForId}
             width={7}

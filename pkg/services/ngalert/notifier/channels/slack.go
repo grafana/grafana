@@ -16,7 +16,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -273,20 +272,21 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Aler
 	var tmplErr error
 	tmpl, _ := TmplText(ctx, sn.tmpl, as, sn.log, &tmplErr)
 
-	ruleURL := joinUrlPath(sn.tmpl.ExternalURL.String(), "/alerting/list", sn.log)
+	ruleURL := ToLogzioAppPath(joinUrlPath(sn.tmpl.ExternalURL.String(), "/alerting/list", sn.log)) // LOGZ.IO GRAFANA CHANGE :: DEV-31554 - Set APP url to logzio grafana for alert notification URLs
 
+	//LOGZ.IO GRAFANA CHANGE :: DEV-31356: Change grafana default username, footer URL,text to logzio ones
 	req := &slackMessage{
 		Channel:   tmpl(sn.Recipient),
-		Username:  tmpl(sn.Username),
+		Username:  LogzioAlertNotificationUsername,
 		IconEmoji: tmpl(sn.IconEmoji),
-		IconURL:   tmpl(sn.IconURL),
+		IconURL:   LogzioIconUrl,
 		Attachments: []attachment{
 			{
 				Color:      getAlertStatusColor(alerts.Status()),
 				Title:      tmpl(sn.Title),
 				Fallback:   tmpl(sn.Title),
-				Footer:     "Grafana v" + setting.BuildVersion,
-				FooterIcon: FooterIconURL,
+				Footer:     LogzioFooterText,
+				FooterIcon: LogzioIconUrl,
 				Ts:         time.Now().Unix(),
 				TitleLink:  ruleURL,
 				Text:       tmpl(sn.Text),
@@ -294,6 +294,7 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Aler
 			},
 		},
 	}
+	//LOGZ.IO GRAFANA CHANGE :: end
 	if tmplErr != nil {
 		sn.log.Warn("failed to template Slack message", "err", tmplErr.Error())
 	}

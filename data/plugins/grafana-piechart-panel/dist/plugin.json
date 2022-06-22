@@ -1,0 +1,70 @@
+{
+  "type": "panel",
+  "name": "Pie Chart",
+  "id": "grafana-piechart-panel",
+  "info": {
+    "description": "Pie chart panel for grafana",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "http://grafana.com"
+    },
+    "keywords": [
+      "piechart",
+      "panel"
+    ],
+    "logos": {
+      "small": "img/piechart_logo_small.svg",
+      "large": "img/piechart_logo_large.svg"
+    },
+    "links": [
+      {
+        "name": "Project site",
+        "url": "https://github.com/grafana/piechart-panel"
+      },
+      {
+        "name": "Blog Post",
+        "url": "https://blog.raintank.io/friends-dont-let-friends-abuse-pie-charts/"
+      },
+      {
+        "name": "MIT License",
+        "url": "https://github.com/grafana/piechart-panel/blob/master/LICENSE"
+      }
+    ],
+    "screenshots": [
+      {
+        "name": "Donut!",
+        "path": "img/piechart-donut.png"
+      },
+      {
+        "name": "Legend on the graph",
+        "path": "img/piechart-legend-on-graph.png"
+      },
+      {
+        "name": "Legend to the right",
+        "path": "img/piechart-legend-rhs.png"
+      },
+      {
+        "name": "Legend underneath",
+        "path": "img/piechart-legend-under.png"
+      },
+      {
+        "name": "Piechart options",
+        "path": "img/piechart-options.png"
+      }
+    ],
+    "version": "1.5.0",
+    "updated": "2020-05-15",
+    "build": {
+      "time": 1589585452459,
+      "repo": "git@github.com:grafana/piechart-panel.git",
+      "branch": "v1.5.x",
+      "hash": "cc9a10765bb9be75c4e5404b71c4581d683cbfeb",
+      "pr": 232,
+      "number": 209
+    }
+  },
+  "dependencies": {
+    "grafanaVersion": "6.x.x",
+    "plugins": []
+  }
+}

@@ -4,6 +4,7 @@ import React, { FC, useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime'; // LOGZ.IO CHANGES
 import { Badge, ConfirmModal, HorizontalGroup, Icon, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import kbn from 'app/core/utils/kbn';
@@ -70,7 +71,8 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll }
     );
   } else if (rulesSource === GRAFANA_RULES_SOURCE_NAME) {
     if (folderUID) {
-      const baseUrl = `/dashboards/f/${folderUID}/${kbn.slugifyForUrl(namespace.name)}`;
+      const { appSubUrl } = config; // LOGZ.IO CHANGES
+      const baseUrl = `${appSubUrl}/dashboards/f/${folderUID}/${kbn.slugifyForUrl(namespace.name)}`; // LOGZ.IO CHANGES
       if (folder?.canSave) {
         actionIcons.push(
           <ActionIcon

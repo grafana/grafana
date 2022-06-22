@@ -1,14 +1,14 @@
 import { css, cx } from '@emotion/css';
-import { isEqual } from 'lodash';
-import React, { memo, useCallback } from 'react';
-import { usePrevious } from 'react-use';
+// import { isEqual } from 'lodash'; // LOGZ.IO GRAFANA CHANGE :: Disable exemplars
+import React, { memo /* useCallback // LOGZ.IO GRAFANA CHANGE :: Disable exemplars*/ } from 'react';
+// import { usePrevious } from 'react-use'; // LOGZ.IO GRAFANA CHANGE :: Disable exemplars
 
 import { InlineFormLabel, RadioButtonGroup } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../datasource';
 import { PromQuery } from '../types';
 
-import { PromExemplarField } from './PromExemplarField';
+// import { PromExemplarField } from './PromExemplarField'; // LOGZ.IO GRAFANA CHANGE :: Disable exemplars
 
 export interface PromExploreExtraFieldProps {
   query: PromQuery;
@@ -18,18 +18,19 @@ export interface PromExploreExtraFieldProps {
 }
 
 export const PromExploreExtraField: React.FC<PromExploreExtraFieldProps> = memo(
-  ({ query, datasource, onChange, onRunQuery }) => {
+  ({ query, /*datasource, // LOGZ.IO GRAFANA CHANGE :: Disable exemplars,*/ onChange, onRunQuery }) => {
     const rangeOptions = getQueryTypeOptions(true);
-    const prevQuery = usePrevious(query);
+    // const prevQuery = usePrevious(query);  // LOGZ.IO GRAFANA CHANGE :: Disable exemplars
 
-    const onExemplarChange = useCallback(
-      (exemplar: boolean) => {
-        if (!isEqual(query, prevQuery) || exemplar !== query.exemplar) {
-          onChange({ ...query, exemplar });
-        }
-      },
-      [prevQuery, query, onChange]
-    );
+    // LOGZ.IO GRAFANA CHANGE :: Disable exemplars
+    // const onExemplarChange = useCallback(
+    //   (exemplar: boolean) => {
+    //     if (!isEqual(query, prevQuery) || exemplar !== query.exemplar) {
+    //       onChange({ ...query, exemplar });
+    //     }
+    //   },
+    //   [prevQuery, query, onChange]
+    // );
 
     function onChangeQueryStep(interval: string) {
       onChange({ ...query, interval });
@@ -99,7 +100,7 @@ export const PromExploreExtraField: React.FC<PromExploreExtraFieldProps> = memo(
           />
         </div>
 
-        <PromExemplarField onChange={onExemplarChange} datasource={datasource} query={query} />
+        {/* <PromExemplarField onChange={onExemplarChange} datasource={datasource} query={query} />  // LOGZ.IO GRAFANA CHANGE :: Disable exemplars*/}
       </div>
     );
   }

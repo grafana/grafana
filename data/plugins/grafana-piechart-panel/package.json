@@ -1,0 +1,31 @@
+{
+  "name": "piechart-panel",
+  "version": "1.5.0",
+  "description": "Pie chart panel for Grafana",
+  "scripts": {
+    "build": "grafana-toolkit plugin:build",
+    "test": "grafana-toolkit plugin:test",
+    "dev": "grafana-toolkit plugin:dev",
+    "watch": "grafana-toolkit plugin:dev --watch"
+  },
+  "repository": "github:grafana/piechart-panel.git",
+  "author": "Grafana Labs",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "angular": "^1.7.9",
+    "flot": "^4.1.1",
+    "jquery": "^3.4.1",
+    "jquery.flot": "^0.8.3",
+    "lodash": "^4.17.15"
+  },
+  "devDependencies": {
+    "@grafana/data": "next",
+    "@grafana/toolkit": "next",
+    "@grafana/ui": "next",
+    "@types/angular": "^1.6.57",
+    "@types/flot": "^0.0.31",
+    "@types/grafana": "github:CorpGlory/types-grafana",
+    "@types/lodash": "4.14.149"
+  }
+}

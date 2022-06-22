@@ -133,6 +133,12 @@ func addAnnotationMig(mg *Migrator) {
 	mg.AddMigration("Add index for updated in annotation table", NewAddIndexMigration(table, &Index{
 		Cols: []string{"org_id", "updated"}, Type: IndexType,
 	}))
+	// LOGZ.IO GRAFANA CHANGE :: DEV-26550 - adding index for 'dashboard_id'
+	// this will speed up deletion of dashboards
+	mg.AddMigration("Add index for dashboard_id in annotation table", NewAddIndexMigration(table, &Index{
+		Cols: []string{"dashboard_id"}, Type: IndexType,
+	}))
+	// LOGZ.IO GRAFANA CHANGE :: DEV-26550 - end
 
 	//
 	// Convert epoch saved as seconds to milliseconds

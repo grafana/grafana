@@ -5,6 +5,10 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/benbjohnson/clock"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -13,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
@@ -75,9 +78,12 @@ type API struct {
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
 	StateManager         *state.Manager
 	SecretsService       secrets.Service
-	AccessControl        accesscontrol.AccessControl
-	Policies             *provisioning.NotificationPolicyService
-	ContactPointService  *provisioning.ContactPointService
+	// LOGZ.IO GRAFANA CHANGE :: DEV-30705,DEV-30713 - Migration endpoints by org ID
+	SQLStore *sqlstore.SQLStore
+	// LOGZ.IO GRAFANA CHANGE :: end
+	AccessControl       accesscontrol.AccessControl
+	Policies            *provisioning.NotificationPolicyService
+	ContactPointService *provisioning.ContactPointService
 }
 
 // RegisterAPIEndpoints registers API handlers
@@ -130,6 +136,21 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			scheduler: api.Schedule,
 		},
 	), m)
+	// LOGZ.IO GRAFANA CHANGE :: DEV-30169,DEV-30170,DEV-30275: add logzio alerting endpoints
+	api.RegisterLogzioAlertingApiEndpoints(NewLogzioAlertingApi(
+		NewLogzioAlertingService(proxy,
+			api.Cfg,
+			eval.NewEvaluator(api.Cfg, logger, api.DatasourceCache, api.SecretsService),
+			clock.New(),
+			api.ExpressionService,
+			api.StateManager,
+			api.MultiOrgAlertmanager,
+			api.InstanceStore,
+			logger,
+			api.SQLStore,
+		),
+	), m)
+	// LOGZ.IO GRAFANA CHANGE :: end
 
 	if api.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAlertProvisioning) {
 		api.RegisterProvisioningApiEndpoints(NewForkedProvisioningApi(&ProvisioningSrv{

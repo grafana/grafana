@@ -37,7 +37,7 @@ export class KeybindingSrv {
       this.bind(['?', 'h'], this.showHelpModal);
       this.bind('g h', this.goToHome);
       this.bind('g a', this.openAlerting);
-      this.bind('g p', this.goToProfile);
+      // this.bind('g p', this.goToProfile); // LOGZ.IO GRAFANA CHANGE :: DEV-20681 Block profile shortcut
       this.bind('s o', this.openSearch);
       this.bind('t a', this.makeAbsoluteTime);
       this.bind('f', this.openSearch);
@@ -91,9 +91,10 @@ export class KeybindingSrv {
     locationService.push('/');
   }
 
-  private goToProfile() {
-    locationService.push('/profile');
-  }
+  // LOGZ.IO GRAFANA CHANGE :: DEV-20681 Block profile shortcut
+  // private goToProfile() {
+  //   locationService.push('/profile');
+  // }
 
   private makeAbsoluteTime() {
     appEvents.publish(new AbsoluteTimeEvent());

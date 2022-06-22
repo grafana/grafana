@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/url"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -335,11 +334,7 @@ func (am *Alertmanager) templateFromPaths(paths ...string) (*template.Template, 
 	if err != nil {
 		return nil, err
 	}
-	externalURL, err := url.Parse(am.Settings.AppURL)
-	if err != nil {
-		return nil, err
-	}
-	tmpl.ExternalURL = externalURL
+	tmpl.ExternalURL = am.Settings.ParsedAppURL // LOGZ.IO GRAFANA CHANGE :: DEV-31554 - Set APP url to logzio grafana for alert notification URLs
 	return tmpl, nil
 }
 

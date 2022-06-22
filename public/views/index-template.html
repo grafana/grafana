@@ -177,7 +177,7 @@
     <div class="preloader">
       <div class="preloader__enter">
         <div class="preloader__bounce">
-          <div class="preloader__logo"></div>
+          <div class="preloader__logo" style="display: none;"></div>
         </div>
       </div>
       <div class="preloader__text">Loading Grafana</div>
@@ -263,6 +263,20 @@
         }
       }
 
+        // LOGZ.IO GRAFANA CHANGE :: DEV-19549 Use browser's origin to avoid CORS
+        !(function() {
+          var datasources = window.grafanaBootData.settings.datasources
+          Object.keys(datasources).forEach(function(datasourceName) {
+            var datasource = datasources[datasourceName]
+            if(!!datasource.url) {
+              try {
+                datasource.url = window.location.origin + (new URL(datasource.url)).pathname;
+              } catch (_) {}
+            }
+          });
+        })();
+        // LOGZ.IO GRAFANA CHANGE :: DEV-19549 End
+
       // In case the js files fails to load the code below will show an info message.
       window.onload = function() {
         if (window.__grafana_app_bundle_loaded) {
@@ -314,7 +328,31 @@
       })(window, document, 'script', 'dataLayer', '[[.GoogleTagManagerId]]');
     </script>
     <!-- End Google Tag Manager -->
-    [[end]] <% for (index in htmlWebpackPlugin.files.js) { %> <% if (htmlWebpackPlugin.files.jsIntegrity) { %>
+    [[end]]
+    <script nonce="[[.Nonce]]">
+      // LOGZ.IO GRAFANA CHANGE :: don't show grafana without our wrapping frame
+      if (window.self === window.parent) {
+        var pathname = window.location.pathname.replace('/grafana-app', '');
+        window.location.href =
+          window.location.protocol +
+          '//' +
+          window.location.host +
+          '/#/dashboard/grafana' +
+          pathname +
+          window.location.search;
+        throw new Error('Using grafana not as an iframe, going back to Logzio Web App.');
+      }
+
+      // Set logzio presets on the window
+      window.logzio = window.frameElement.logzioPresets;
+
+      if (window.parent && window.parent.__logzio__) window.parent.__logzio__.services.overrideFetch(window);
+
+      if (!window.logzio) {
+        window.logzio = { productLoadedFlag: true };
+      }
+    </script>
+    <% for (index in htmlWebpackPlugin.files.js) { %> <% if (htmlWebpackPlugin.files.jsIntegrity) { %>
     <script
       nonce="[[.Nonce]]"
       src="[[.ContentDeliveryURL]]<%= htmlWebpackPlugin.files.js[index] %>"

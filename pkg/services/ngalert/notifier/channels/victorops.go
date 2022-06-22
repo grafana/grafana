@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
@@ -113,9 +112,9 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 	bodyJSON.Set("entity_display_name", tmpl(DefaultMessageTitleEmbed))
 	bodyJSON.Set("timestamp", time.Now().Unix())
 	bodyJSON.Set("state_message", tmpl(`{{ template "default.message" . }}`))
-	bodyJSON.Set("monitoring_tool", "Grafana v"+setting.BuildVersion)
+	bodyJSON.Set("monitoring_tool", LogzioFooterText) //LOGZ.IO GRAFANA CHANGE :: DEV-31356: Change grafana default username, footer URL,text to logzio ones
 
-	ruleURL := joinUrlPath(vn.tmpl.ExternalURL.String(), "/alerting/list", vn.log)
+	ruleURL := ToLogzioAppPath(joinUrlPath(vn.tmpl.ExternalURL.String(), "/alerting/list", vn.log)) // LOGZ.IO GRAFANA CHANGE :: DEV-31554 - Set APP url to logzio grafana for alert notification URLs
 	bodyJSON.Set("alert_url", ruleURL)
 
 	if tmplErr != nil {

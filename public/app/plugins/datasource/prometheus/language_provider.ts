@@ -17,7 +17,7 @@ import { PrometheusDatasource } from './datasource';
 import {
   addLimitInfo,
   extractLabelMatchers,
-  fixSummariesMetadata,
+  // fixSummariesMetadata, // LOGZ.IO GRAFANA CHANGE :: DEV-24838: Remove fixSummariesMetadata
   parseSelector,
   processHistogramMetrics,
   processLabels,
@@ -145,7 +145,8 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   };
 
   async loadMetricsMetadata() {
-    this.metricsMetadata = fixSummariesMetadata(await this.request('/api/v1/metadata', {}));
+    // this.metricsMetadata = fixSummariesMetadata(await this.request('/api/v1/metadata', {}));
+    this.metricsMetadata = await Promise.resolve({});
   }
 
   getLabelKeys(): string[] {

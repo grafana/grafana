@@ -67,11 +67,11 @@ export function UserProfileEditPage({
     <Page navModel={navModel}>
       <Page.Contents isLoading={!user}>
         <VerticalGroup spacing="md">
-          <UserProfileEditForm updateProfile={updateUserProfile} isSavingUser={isUpdating} user={user} />
+          {false && <UserProfileEditForm updateProfile={updateUserProfile} isSavingUser={isUpdating} user={user} /> /* // LOGZ.IO CHANGES */}
           <SharedPreferences resourceUri="user" />
-          <UserTeams isLoading={teamsAreLoading} teams={teams} />
-          <UserOrganizations isLoading={orgsAreLoading} setUserOrg={changeUserOrg} orgs={orgs} user={user} />
-          <UserSessions isLoading={sessionsAreLoading} revokeUserSession={revokeUserSession} sessions={sessions} />
+          {false && <UserTeams isLoading={teamsAreLoading} teams={teams} />}
+          {false && <UserOrganizations isLoading={orgsAreLoading} setUserOrg={changeUserOrg} orgs={orgs} user={user} /* // LOGZ.IO CHANGES *//>}
+          {false &&  <UserSessions isLoading={sessionsAreLoading} revokeUserSession={revokeUserSession} sessions={sessions} /* // LOGZ.IO CHANGES *//>}
         </VerticalGroup>
       </Page.Contents>
     </Page>

@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 
-import { AppEvents, SelectableValue } from '@grafana/data';
+import { AppEvents, SelectableValue, logzioServices } from '@grafana/data'; // LOGZ.IO GRAFANA CHANGE :: DEV-20896 Add logzioServices
 import { getBackendSrv } from '@grafana/runtime';
 import { Button, ClipboardButton, Field, Icon, Input, LinkButton, Modal, Select, Spinner } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
@@ -73,9 +73,10 @@ export class ShareSnapshot extends PureComponent<Props, State> {
       timestamp: new Date(),
     };
 
-    if (!external) {
-      this.dashboard.snapshot.originalUrl = window.location.href;
-    }
+    // LOGZ.IO GRAFANA CHANGE :: DEV-20896 Remove original url from snapshot
+    // if (!external) {
+    //   this.dashboard.snapshot.originalUrl = window.location.href;
+    // }
 
     this.setState({ isLoading: true });
     this.dashboard.startRefresh();
@@ -99,11 +100,19 @@ export class ShareSnapshot extends PureComponent<Props, State> {
 
     try {
       const results: { deleteUrl: any; url: any } = await getBackendSrv().post(snapshotApiUrl, cmdData);
+
+      // LOGZ.IO GRAFANA CHANGE :: DEV-20896 Change snapshot url to logzio
+      const logzioUrl = await logzioServices.shareUrlService.getLogzioGrafanaUrl({
+        productUrl: window.location.origin,
+        hash: '/dashboard/grafana-snapshot',
+      });
+
       this.setState({
         deleteUrl: results.deleteUrl,
-        snapshotUrl: results.url,
+        snapshotUrl: logzioUrl + results.url,
         step: 2,
       });
+      // LOGZ.IO GRAFANA CHANGE :: END
     } finally {
       this.setState({ isLoading: false });
     }

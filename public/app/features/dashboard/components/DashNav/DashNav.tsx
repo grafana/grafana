@@ -236,7 +236,7 @@ export const DashNav = React.memo<Props>((props) => {
       );
     }
 
-    if (snapshotUrl) {
+    if (snapshotUrl && 1 !== 1) { // LOGZ.IO GRAFANA CHANGE :: DEV-20896 Remove unnecessary use of original url
       buttons.push(
         <ToolbarButton
           tooltip="Open original dashboard"

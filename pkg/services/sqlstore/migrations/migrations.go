@@ -55,7 +55,9 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 		os.Exit(1)
 	}
 	ualert.AddTablesMigrations(mg)
-	ualert.AddDashAlertMigration(mg)
+	// LOGZ.IO GRAFANA CHANGE :: DEV-30275 - Disable migrations for all alerts
+	//ualert.AddDashAlertMigration(mg)
+	// LOGZ.IO GRAFANA CHANGE :: end
 	addLibraryElementsMigrations(mg)
 	if mg.Cfg != nil && mg.Cfg.IsFeatureToggleEnabled != nil {
 		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagLiveConfig) {
@@ -65,11 +67,14 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 			addDashboardThumbsMigrations(mg)
 		}
 	}
-
-	ualert.RerunDashAlertMigration(mg)
+	// LOGZ.IO GRAFANA CHANGE :: DEV-30275 - Disable migrations for all alerts
+	//ualert.RerunDashAlertMigration(mg)
+	// LOGZ.IO GRAFANA CHANGE :: end
 	addSecretsMigration(mg)
 	addKVStoreMigrations(mg)
-	ualert.AddDashboardUIDPanelIDMigration(mg)
+	// LOGZ.IO GRAFANA CHANGE :: DEV-30275 - Disable migrations for all alerts
+	//ualert.AddDashboardUIDPanelIDMigration(mg)
+	// LOGZ.IO GRAFANA CHANGE :: end
 	accesscontrol.AddMigration(mg)
 	addQueryHistoryMigrations(mg)
 

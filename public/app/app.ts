@@ -22,6 +22,7 @@ import {
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
   standardTransformersRegistry,
+  productLoaded, // LOGZ.IO GRAFANA CHANGE :: DEV-20247 Use logzio provider
 } from '@grafana/data';
 import {
   locationService,
@@ -145,6 +146,12 @@ export class GrafanaApp {
 
       // Preload selected app plugins
       await preloadPlugins(config.pluginsToPreload);
+
+      // LOGZ.IO GRAFANA CHANGE :: Let app know that grafana loaded successfully
+      if (productLoaded.resolve) {
+        productLoaded.resolve();
+      }
+      // LOGZ.IO GRAFANA CHANGE :: end
 
       ReactDOM.render(
         React.createElement(AppWrapper, {

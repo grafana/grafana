@@ -2,6 +2,7 @@ package schedule
 
 import (
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 	"net/url"
 	"path"
 	"time"
@@ -64,7 +65,7 @@ func stateToPostableAlert(alertState *state.State, appURL *url.URL) *models.Post
 		EndsAt:      strfmt.DateTime(alertState.EndsAt),
 		Alert: models.Alert{
 			Labels:       models.LabelSet(nL),
-			GeneratorURL: strfmt.URI(urlStr),
+			GeneratorURL: strfmt.URI(channels.ToLogzioAppPath(urlStr)), // LOGZ.IO GRAFANA CHANGE :: DEV-31554 - Set APP url to logzio grafana for alert notification URLs
 		},
 	}
 }

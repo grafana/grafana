@@ -45,7 +45,7 @@ export let getVersionLinks = (): FooterLink[] => {
     return links;
   }
 
-  links.push({ text: `v${buildInfo.version} (${buildInfo.commit})` });
+  links.push({ text: `v${buildInfo.version}` }); // LOGZ.IO GRAFANA CHANGE :: DEV-23468 Hide grafana commit id
 
   if (buildInfo.hasUpdate) {
     links.push({
@@ -69,7 +69,8 @@ export function setVersionLinkFn(fn: typeof getFooterLinks) {
 }
 
 export const Footer: FC = React.memo(() => {
-  const links = getFooterLinks().concat(getVersionLinks());
+  // LOGZ.IO GRAFANA CHANGE :: DEV-27175 Remove grafana footer links in configuration page
+  const links = getVersionLinks();
 
   return (
     <footer className="footer">

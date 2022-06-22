@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type DiscordNotifier struct {
@@ -102,8 +101,8 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	}
 
 	footer := map[string]interface{}{
-		"text":     "Grafana v" + setting.BuildVersion,
-		"icon_url": "https://grafana.com/assets/img/fav32.png",
+		"text":     LogzioFooterText,
+		"icon_url": LogzioIconUrl,
 	}
 
 	embed := simplejson.New()
@@ -115,7 +114,7 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	embed.Set("color", color)
 
 	ruleURL := joinUrlPath(d.tmpl.ExternalURL.String(), "/alerting/list", d.log)
-	embed.Set("url", ruleURL)
+	embed.Set("url", ToLogzioAppPath(ruleURL)) // LOGZ.IO GRAFANA CHANGE :: DEV-31554 - Set APP url to logzio grafana for alert notification URLs
 
 	bodyJSON.Set("embeds", []interface{}{embed})
 

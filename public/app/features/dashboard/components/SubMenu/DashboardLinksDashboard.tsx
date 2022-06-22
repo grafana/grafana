@@ -59,7 +59,8 @@ export const DashboardLinksDashboard: React.FC<Props> = (props) => {
                     <a
                       role="menuitem"
                       href={resolvedLink.url}
-                      target={link.targetBlank ? '_blank' : undefined}
+                      // LOGZ.IO GRAFANA CHANGE :: link open on same tab to open on top frame
+                      target={link.targetBlank ? '_blank' : '_top'}
                       rel="noreferrer"
                       data-testid={selectors.components.DashboardLinks.link}
                       aria-label={`${resolvedLink.title} dashboard`}
@@ -88,7 +89,8 @@ export const DashboardLinksDashboard: React.FC<Props> = (props) => {
               <a
                 className="gf-form-label gf-form-label--dashlink"
                 href={resolvedLink.url}
-                target={link.targetBlank ? '_blank' : undefined}
+                // LOGZ.IO GRAFANA CHANGE :: link open on same tab to open on top frame
+                target={link.targetBlank ? '_blank' : '_top'}
                 rel="noreferrer"
                 data-testid={selectors.components.DashboardLinks.link}
                 aria-label={`${resolvedLink.title} dashboard`}

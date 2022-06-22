@@ -58,7 +58,13 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *models.ReqContext, body a
 		now = timeNow()
 	}
 
-	evalResults, err := srv.evaluator.ConditionEval(&evalCond, now, srv.ExpressionService)
+	// LOGZ.IO GRAFANA CHANGE :: Pass context to datasources
+	logzioEvalContext := &ngmodels.LogzioAlertRuleEvalContext{
+		LogzioHeaders:     c.Req.Header,
+		DsOverrideByDsUid: map[string]ngmodels.EvaluationDatasourceOverride{},
+	}
+	evalResults, err := srv.evaluator.ConditionEval(&evalCond, now, srv.ExpressionService, logzioEvalContext)
+	// LOGZ.IO GRAFANA CHANGE :: end
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "Failed to evaluate conditions")
 	}
@@ -127,7 +133,7 @@ func (srv TestingApiSrv) RouteEvalQueries(c *models.ReqContext, cmd apimodels.Ev
 		return ErrResp(http.StatusBadRequest, err, "invalid queries or expressions")
 	}
 
-	evalResults, err := srv.evaluator.QueriesAndExpressionsEval(c.SignedInUser.OrgId, cmd.Data, now, srv.ExpressionService)
+	evalResults, err := srv.evaluator.QueriesAndExpressionsEval(c.SignedInUser.OrgId, cmd.Data, now, srv.ExpressionService, c.Req.Header) // LOGZ.IO GRAFANA CHANGE :: Upgrade to 8.4.0
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "Failed to evaluate queries and expressions")
 	}

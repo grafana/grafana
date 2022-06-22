@@ -252,6 +252,7 @@ require (
 
 require (
 	cloud.google.com/go/kms v1.1.0
+	github.com/unrolled/secure v1.0.8
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v0.13.2
 	github.com/Azure/azure-sdk-for-go/sdk/keyvault/azkeys v0.4.0
 	github.com/Azure/go-autorest/autorest/adal v0.9.17

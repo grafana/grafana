@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React, { FC, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
@@ -40,6 +40,47 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
     setValue,
     getValues,
   } = useFormContext<RuleFormValues & { location?: string }>();
+
+  // LOGZ.IO CHANGE :: Start
+  const [folders, setFolders] = useState<string[]>([]);
+  const [newName, setNewName] = useState<string | null>(null);
+  const folder = watch('folder');
+  const group = watch('group');
+
+  if(group !== '' && newName !== null) {
+    if(folders.find((f: string) => f === group) === undefined) {
+      setNewName(null);
+    }
+  }
+
+  if(folder?.title && folders[0] !== folder?.title) {
+    setFolders([folder?.title, ...folders]);
+  }
+
+  const onFolderChange = (d: {id: number, title: string}) => {
+    let grp = group;
+
+    if(group !== '') {
+      if(group === d.title) {
+        grp = group;
+      }
+      else {
+        if(folders.find((f: string) => f === group) === undefined) {
+          grp = group;
+        }
+        else{
+          grp = d.title;
+        }
+      }
+    }
+    else {
+      grp = d.title;
+    }
+    setNewName(grp);
+    setValue('group', grp);
+    setValue('folder', d);
+  }
+  // LOGZ.IO CHANGE :: Start
 
   const ruleFormType = watch('type');
   const dataSourceName = watch('dataSourceName');
@@ -151,7 +192,7 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
           >
             <InputControl
               render={({ field: { ref, ...field } }) => (
-                <RuleFolderPicker inputId="folder" {...field} enableCreateNew={true} enableReset={true} />
+                <RuleFolderPicker inputId="folder" {...field} enableCreateNew={true} enableReset={true} onChange={onFolderChange /* // LOGZ.IO CHANGE */}/>
               )}
               name="folder"
               rules={{
@@ -165,13 +206,14 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
           <Field
             label="Group"
             data-testid="group-picker"
-            description="Rules within the same group are evaluated after the same time interval."
+            description="Allows to group alerts inside the folder. Group name is displayed when using group view" // LOGZ.IO Changes
             className={styles.formInput}
             error={errors.group?.message}
             invalid={!!errors.group?.message}
           >
             <Input
               id="group"
+              value={newName ? newName : group} // LOGZ.IO CHANGE :: END
               {...register('group', {
                 required: { value: true, message: 'Must enter a group name' },
               })}

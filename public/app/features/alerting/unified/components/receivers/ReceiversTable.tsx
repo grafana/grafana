@@ -64,6 +64,17 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
             return type;
           }
         ),
+        // LOGZ.IO GRAFANA CHANGE :: start
+        logzioSettings: (() => {
+          if (
+            receiver.grafana_managed_receiver_configs !== undefined &&
+            receiver.grafana_managed_receiver_configs.length !== 0
+          ) {
+            return receiver.grafana_managed_receiver_configs[0].settings.logzio_is_system_wide === true;
+          }
+          return false;
+        })(),
+        // LOGZ.IO GRAFANA CHANGE :: end
       })) ?? [],
     [config, grafanaNotifiers.result]
   );
@@ -106,7 +117,9 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
               <td>{receiver.types.join(', ')}</td>
               <Authorize actions={[permissions.update, permissions.delete]}>
                 <td className={tableStyles.actionsCell}>
-                  {!isVanillaAM && (
+                  {
+                    // prettier-ignore
+                    !isVanillaAM && !receiver.logzioSettings && ( // LOGZ.IO GRAFANA CHANGE
                     <>
                       <Authorize actions={[permissions.update]}>
                         <ActionIcon

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
@@ -85,8 +86,9 @@ const (
 	NamespaceUIDLabel = "__alert_rule_namespace_uid__"
 
 	// Annotations are actually a set of labels, so technically this is the label name of an annotation.
-	DashboardUIDAnnotation = "__dashboardUid__"
-	PanelIDAnnotation      = "__panelId__"
+	DashboardUIDAnnotation       = "__dashboardUid__"
+	PanelIDAnnotation            = "__panelId__"
+	AlertRuleStateAnnotationType = "unified_alert_rule" // LOGZ.IO GRAFANA CHANGE :: DEV-31760 - Retrieve annotations for migrated unified alerts
 )
 
 // AlertRule is the model for alert rules in unified alerting.
@@ -288,6 +290,19 @@ func (c Condition) IsValid() bool {
 	// TODO search for refIDs in QueriesAndExpressions
 	return len(c.Data) != 0
 }
+
+// LOGZ.IO GRAFANA CHANGE :: DEV-31493 Override datasource URL and pass custom headers to alert rule evaluator
+type LogzioAlertRuleEvalContext struct {
+	LogzioHeaders     http.Header
+	DsOverrideByDsUid map[string]EvaluationDatasourceOverride `json:"dsOverride"`
+}
+
+type EvaluationDatasourceOverride struct {
+	DsUid       string `json:"dsUid"`
+	UrlOverride string `json:"urlOverride"`
+}
+
+// LOGZ.IO GRAFANA CHANGE :: end
 
 // PatchPartialAlertRule patches `ruleToPatch` by `existingRule` following the rule that if a field of `ruleToPatch` is empty or has the default value, it is populated by the value of the corresponding field from `existingRule`.
 // There are several exceptions:

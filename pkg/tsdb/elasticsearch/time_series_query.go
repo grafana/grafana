@@ -120,6 +120,12 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 			continue
 		}
 
+		// LOGZ.IO GRAFANA CHANGE :: DEV-19067 - rate function support
+		if m.Type == rateType {
+			b.LogzioExtraParams().RateAggName(m.ID)
+		}
+		// LOGZ.IO GRAFANA CHANGE :: DEV-19067 - end
+
 		if isPipelineAgg(m.Type) {
 			if isPipelineAggWithMultipleBucketPaths(m.Type) {
 				if len(m.PipelineVariables) > 0 {
@@ -246,7 +252,19 @@ func (bucketAgg BucketAgg) generateSettingsForDSL() map[string]interface{} {
 func addDateHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, timeFrom, timeTo int64) es.AggBuilder {
 	aggBuilder.DateHistogram(bucketAgg.ID, bucketAgg.Field, func(a *es.DateHistogramAgg, b es.AggBuilder) {
 		a.Interval = bucketAgg.Settings.Get("interval").MustString("auto")
-		a.MinDocCount = bucketAgg.Settings.Get("min_doc_count").MustInt(0)
+		// LOGZ.IO GRAFANA CHANGE :: Support also string type for min_doc_count
+		minDocCountJson := bucketAgg.Settings.Get("min_doc_count")
+		if minDocCount, err := minDocCountJson.Int(); err == nil {
+			a.MinDocCount = minDocCount
+		} else {
+			minDocCountString := minDocCountJson.MustString("0")
+			if minDocCount, err := strconv.Atoi(minDocCountString); err == nil {
+				a.MinDocCount = minDocCount
+			} else {
+				a.MinDocCount = 0
+			}
+		}
+		// LOGZ.IO GRAFANA CHANGE :: END
 		a.ExtendedBounds = &es.ExtendedBounds{Min: timeFrom, Max: timeTo}
 		a.Format = bucketAgg.Settings.Get("format").MustString(es.DateFormatEpochMS)
 

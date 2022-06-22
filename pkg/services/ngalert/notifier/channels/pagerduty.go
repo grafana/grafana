@@ -165,12 +165,12 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 
 	msg := &pagerDutyMessage{
 		Client:      "Grafana",
-		ClientURL:   pn.tmpl.ExternalURL.String(),
+		ClientURL:   ToLogzioAppPath(pn.tmpl.ExternalURL.String()), // LOGZ.IO GRAFANA CHANGE :: DEV-31554 - Set APP url to logzio grafana for alert notification URLs
 		RoutingKey:  pn.Key,
 		EventAction: eventType,
 		DedupKey:    key.Hash(),
 		Links: []pagerDutyLink{{
-			HRef: pn.tmpl.ExternalURL.String(),
+			HRef: ToLogzioAppPath(pn.tmpl.ExternalURL.String()), // LOGZ.IO GRAFANA CHANGE :: DEV-31554 - Set APP url to logzio grafana for alert notification URLs
 			Text: "External URL",
 		}},
 		Description: tmpl(DefaultMessageTitleEmbed), // TODO: this can be configurable template.

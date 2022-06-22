@@ -406,20 +406,22 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					Description:  "Set the username for the bot's message",
 					PropertyName: "username",
 				},
-				{
-					Label:        "Icon emoji",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
-					Description:  "Provide an emoji to use as the icon for the bot's message. Overrides the icon URL.",
-					PropertyName: "icon_emoji",
-				},
-				{
-					Label:        "Icon URL",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
-					Description:  "Provide a URL to an image to use as the icon for the bot's message",
-					PropertyName: "icon_url",
-				},
+				//LOGZ.IO GRAFANA CHANGE :: DEV-31356: Remove possibility to edit username and icon/imoji URL in slack Grafana contact point config
+				//{
+				//	Label:        "Icon emoji",
+				//	Element:      alerting.ElementTypeInput,
+				//	InputType:    alerting.InputTypeText,
+				//	Description:  "Provide an emoji to use as the icon for the bot's message. Overrides the icon URL.",
+				//	PropertyName: "icon_emoji",
+				//},
+				//{
+				//	Label:        "Icon URL",
+				//	Element:      alerting.ElementTypeInput,
+				//	InputType:    alerting.InputTypeText,
+				//	Description:  "Provide a URL to an image to use as the icon for the bot's message",
+				//	PropertyName: "icon_url",
+				//},
+				//LOGZ.IO GRAFANA CHANGE :: end
 				{
 					Label:        "Mention Users",
 					Element:      alerting.ElementTypeInput,

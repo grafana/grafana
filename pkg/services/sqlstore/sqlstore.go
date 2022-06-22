@@ -123,6 +123,13 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, engine
 	return ss, nil
 }
 
+// LOGZ.IO GRAFANA CHANGE :: DEV-30705 - Add REST endpoint to run migrations
+func (ss *SQLStore) BuildMigrator() *migrator.Migrator {
+	return migrator.NewMigrator(ss.engine, ss.Cfg)
+}
+
+// LOGZ.IO GRAFANA CHANGE :: end
+
 // Migrate performs database migrations.
 // Has to be done in a second phase (after initialization), since other services can register migrations during
 // the initialization phase.

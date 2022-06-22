@@ -72,6 +72,7 @@ type UnifiedAlertingSettings struct {
 	DefaultConfiguration           string
 	Enabled                        *bool // determines whether unified alerting is enabled. If it is nil then user did not define it and therefore its value will be determined during migration. Services should not use it directly.
 	DisabledOrgs                   map[int64]struct{}
+	AlertManagerEnabled            bool // LOGZ.IO GRAFANA CHANGE :: DEV-30762 - disable creation of alert managers by config
 	// BaseInterval interval of time the scheduler updates the rules and evaluates rules.
 	// Only for internal use and not user configuration.
 	BaseInterval time.Duration
@@ -239,6 +240,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	}
 	uaCfg.MinInterval = uaMinInterval
 
+	uaCfg.AlertManagerEnabled = ua.Key("alert_manager_enabled").MustBool(true) // LOGZ.IO GRAFANA CHANGE
 	uaCfg.DefaultRuleEvaluationInterval = DefaultRuleEvaluationInterval
 	if uaMinInterval > uaCfg.DefaultRuleEvaluationInterval {
 		uaCfg.DefaultRuleEvaluationInterval = uaMinInterval

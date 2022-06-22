@@ -35,7 +35,10 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
   const { namespace, group, rulerRule } = rule;
   const [ruleToDelete, setRuleToDelete] = useState<CombinedRule>();
   const alertId = isGrafanaRulerRule(rule.rulerRule) ? rule.rulerRule.grafana_alert.id ?? '' : '';
-  const { StateHistoryModal, showStateHistoryModal } = useStateHistoryModal(alertId);
+  // LOGZ.IO GRAFANA CHANGE :: DEV-31760 - Retrieve annotations for migrated unified alerts
+  const oldAlertId = rule.annotations[Annotation.alertId] ?? '';
+  const { StateHistoryModal, showStateHistoryModal } = useStateHistoryModal(alertId, oldAlertId);
+  // LOGZ.IO GRAFANA CHANGE :: end
 
   const alertmanagerSourceName = isGrafanaRulesSource(rulesSource)
     ? rulesSource

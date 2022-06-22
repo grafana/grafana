@@ -38,6 +38,7 @@ export const AlertManagerPicker: FC<Props> = ({ onChange, current, disabled = fa
   return (
     <Field
       className={styles.field}
+      style={{display: 'none'}} // LOGZ.IO Change :: Disable AM Selector
       label={disabled ? 'Alertmanager' : 'Choose Alertmanager'}
       disabled={disabled || options.length === 1}
       data-testid="alertmanager-picker"

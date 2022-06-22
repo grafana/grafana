@@ -9,7 +9,7 @@ import { contextSrv } from 'app/core/core';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { AccessControlAction, Organization, StoreState } from 'app/types';
 
-import OrgProfile from './OrgProfile';
+// import OrgProfile from './OrgProfile'; // LOGZ.IO GRAFANA CHANGE :: DEV-20609 Enable change home dashboard
 import { loadOrganization, updateOrganization } from './state/actions';
 import { setOrganizationName } from './state/reducers';
 
@@ -34,7 +34,7 @@ export class OrgDetailsPage extends PureComponent<Props> {
   render() {
     const { navModel, organization } = this.props;
     const isLoading = Object.keys(organization).length === 0;
-    const canReadOrg = contextSrv.hasPermission(AccessControlAction.OrgsRead);
+    // const canReadOrg = contextSrv.hasPermission(AccessControlAction.OrgsRead); // LOGZ.IO GRAFANA CHANGE
     const canReadPreferences = contextSrv.hasPermission(AccessControlAction.OrgsPreferencesRead);
     const canWritePreferences = contextSrv.hasPermission(AccessControlAction.OrgsPreferencesWrite);
 
@@ -43,7 +43,9 @@ export class OrgDetailsPage extends PureComponent<Props> {
         <Page.Contents isLoading={isLoading}>
           {!isLoading && (
             <VerticalGroup spacing="lg">
-              {canReadOrg && <OrgProfile onSubmit={this.onUpdateOrganization} orgName={organization.name} />}
+              {/*LOGZ.IO GRAFANA CHANGE :: DEV-20609 Enable change home dashboard*/}
+              {/*canReadOrg && <OrgProfile onSubmit={this.onUpdateOrganization} orgName={organization.name} />*/}
+              {/*LOGZ.IO GRAFANA CHANGE :: end*/}
               {canReadPreferences && <SharedPreferences resourceUri="org" disabled={!canWritePreferences} />}
             </VerticalGroup>
           )}

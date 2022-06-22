@@ -31,13 +31,14 @@ type SearchDebugInfo struct {
 
 // SearchRequest represents a search request
 type SearchRequest struct {
-	Index       string
-	Interval    intervalv2.Interval
-	Size        int
-	Sort        map[string]interface{}
-	Query       *Query
-	Aggs        AggArray
-	CustomProps map[string]interface{}
+	Index             string
+	Interval          intervalv2.Interval
+	Size              int
+	Sort              map[string]interface{}
+	Query             *Query
+	Aggs              AggArray
+	CustomProps       map[string]interface{}
+	LogzioExtraParams *LogzioExtraParams // LOGZ.IO GRAFANA CHANGE :: DEV-19067 - rate function support
 }
 
 // MarshalJSON returns the JSON encoding of the request.
@@ -58,6 +59,12 @@ func (r *SearchRequest) MarshalJSON() ([]byte, error) {
 	if len(r.Aggs) > 0 {
 		root["aggs"] = r.Aggs
 	}
+
+	// LOGZ.IO GRAFANA CHANGE :: DEV-19067 - rate function support
+	if r.LogzioExtraParams != nil {
+		root["logzio"] = r.LogzioExtraParams
+	}
+	// LOGZ.IO GRAFANA CHANGE :: DEV-19067 - end
 
 	return json.Marshal(root)
 }

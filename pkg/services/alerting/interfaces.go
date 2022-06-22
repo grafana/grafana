@@ -59,6 +59,7 @@ type ConditionResult struct {
 }
 
 // Condition is responsible for evaluating an alert condition.
+// LOGZ.IO GRAFANA CHANGE :: DEV-17927 - Add time param.
 type Condition interface {
-	Eval(result *EvalContext, requestHandler legacydata.RequestHandler) (*ConditionResult, error)
+	Eval(result *EvalContext, time time.Time, requestHandler legacydata.RequestHandler) (*ConditionResult, error)
 }

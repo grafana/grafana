@@ -6,7 +6,7 @@ import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 import { isCloudRulesSource, isGrafanaRulesSource } from '../../utils/datasource';
 import { Authorize } from '../Authorize';
 
-import { CloudRules } from './CloudRules';
+// import { CloudRules } from './CloudRules'; // LOGZ.IO Changes
 import { GrafanaRules } from './GrafanaRules';
 
 interface Props {
@@ -15,7 +15,7 @@ interface Props {
 }
 
 export const RuleListGroupView: FC<Props> = ({ namespaces, expandAll }) => {
-  const [grafanaNamespaces, cloudNamespaces] = useMemo(() => {
+  const [grafanaNamespaces /*, cloudNamespaces LOGZ.IO Change */] = useMemo(() => {
     const sorted = namespaces
       .map((namespace) => ({
         ...namespace,
@@ -33,9 +33,10 @@ export const RuleListGroupView: FC<Props> = ({ namespaces, expandAll }) => {
       <Authorize actions={[AccessControlAction.AlertingRuleRead]}>
         <GrafanaRules namespaces={grafanaNamespaces} expandAll={expandAll} />
       </Authorize>
-      <Authorize actions={[AccessControlAction.AlertingRuleExternalRead]}>
+      {// LOGZ.IO Changes
+      /* <Authorize actions={[AccessControlAction.AlertingRuleExternalRead]}>
         <CloudRules namespaces={cloudNamespaces} expandAll={expandAll} />
-      </Authorize>
+      </Authorize> */}
     </>
   );
 };

@@ -63,11 +63,12 @@ func (m *migration) slurpDashAlerts() ([]dashAlert, error) {
 // dashAlertSettings is a type for the JSON that is in the settings field of
 // the alert table.
 type dashAlertSettings struct {
-	NoDataState         string               `json:"noDataState"`
-	ExecutionErrorState string               `json:"executionErrorState"`
-	Conditions          []dashAlertCondition `json:"conditions"`
-	AlertRuleTags       map[string]string    `json:"alertRuleTags"`
-	Notifications       []dashAlertNot       `json:"notifications"`
+	NoDataState         string                       `json:"noDataState"`
+	ExecutionErrorState string                       `json:"executionErrorState"`
+	Conditions          []dashAlertCondition         `json:"conditions"`
+	AlertRuleTags       map[string]string            `json:"alertRuleTags"`
+	Notifications       []dashAlertNot               `json:"notifications"`
+	EmailNotifications  []dashAlertEmailNotification `json:"emailNotifications"` // LOGZ.IO GRAFANA CHANGE :: DEV-30705 - Support email notification when migrating alerts
 }
 
 // dashAlertNot is the object that represents the Notifications array in
@@ -76,6 +77,13 @@ type dashAlertNot struct {
 	UID string `json:"uid,omitempty"`
 	ID  int64  `json:"id,omitempty"`
 }
+
+// LOGZ.IO GRAFANA CHANGE :: DEV-30705 - Support email notification when migrating alerts
+type dashAlertEmailNotification struct {
+	Address string `json:"address"`
+}
+
+// LOGZ.IO GRAFANA CHANGE :: end
 
 // dashAlertingConditionJSON is like classic.ClassicConditionJSON except that it
 // includes the model property with the query.

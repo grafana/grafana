@@ -48,7 +48,8 @@ export interface InternalDataLink<T extends DataQuery = any> {
   panelsState?: ExplorePanelsState;
 }
 
-export type LinkTarget = '_blank' | '_self' | undefined;
+// LOGZ.IO GRAFANA CHANGE :: Add top type
+export type LinkTarget = '_blank' | '_self' | '_top' | undefined;
 
 /**
  * Processed Link Model. The values are ready to use

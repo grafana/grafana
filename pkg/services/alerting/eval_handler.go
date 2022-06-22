@@ -34,7 +34,7 @@ func (e *DefaultEvalHandler) Eval(context *EvalContext) {
 
 	for i := 0; i < len(context.Rule.Conditions); i++ {
 		condition := context.Rule.Conditions[i]
-		cr, err := condition.Eval(context, e.requestHandler)
+		cr, err := condition.Eval(context, context.StartTime, e.requestHandler) // LOGZ.IO GRAFANA CHANGE :: DEV-17927 - Add start time
 		if err != nil {
 			context.Error = err
 		}

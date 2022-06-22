@@ -1,0 +1,67 @@
+version: 2.1
+
+parameters:
+  ssh-fingerprint:
+    type: string
+    default: ${GITHUB_SSH_FINGERPRINT}
+
+aliases:
+  # Workflow filters
+  - &filter-only-master
+    branches:
+      only: master
+  - &filter-only-release
+    branches:
+      only: /^v[1-9]*[0-9]+\.[1-9]*[0-9]+\.x$/
+
+workflows:
+  plugin_workflow:
+    jobs:
+      - build
+
+executors:
+  default_exec: # declares a reusable executor
+    docker:
+      - image: srclosson/grafana-plugin-ci-alpine:latest
+  e2e_exec:
+    docker:
+      - image: srclosson/grafana-plugin-ci-e2e:latest
+
+jobs:
+  build:
+    executor: default_exec
+    steps:
+      - checkout
+      - restore_cache:
+          name: restore node_modules
+          keys:
+          - build-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "yarn.lock" }}
+      - run:
+          name: Install dependencies
+          command: |
+            mkdir ci
+            [ -f ~/project/node_modules/.bin/grafana-toolkit ] || yarn install --frozen-lockfile
+      - save_cache:
+          name: save node_modules
+          paths:
+            - ~/project/node_modules
+          key: build-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "yarn.lock" }}
+      - run:
+          name: Build and test frontend
+          command: ./node_modules/.bin/grafana-toolkit plugin:ci-build
+      - run:
+          name: Move results to ci folder
+          command: ./node_modules/.bin/grafana-toolkit plugin:ci-build --finish
+      - run:
+          name: Package distribution
+          command: |
+            ./node_modules/.bin/grafana-toolkit plugin:ci-package
+      - persist_to_workspace:
+          root: .
+          paths:
+          - ci/jobs/package
+          - ci/packages
+          - ci/dist
+          - ci/grafana-test-env
+      - store_artifacts:
+          path: ci

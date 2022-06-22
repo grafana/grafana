@@ -447,7 +447,7 @@ export const getLinksSupplier =
       const info: LinkModel<Field> = {
         href,
         title: replaceVariables(link.title || '', variables),
-        target: link.targetBlank ? '_blank' : undefined,
+        target: link.targetBlank ? '_blank' : '_top', // LOGZ.IO GRAFANA CHANGE :: link open on same tab to open on top frame
         origin: field,
       };
       return info;

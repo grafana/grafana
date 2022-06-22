@@ -104,9 +104,11 @@ func (ng *AlertNG) init() error {
 		return err
 	}
 
-	// Let's make sure we're able to complete an initial sync of Alertmanagers before we start the alerting components.
-	if err := ng.MultiOrgAlertmanager.LoadAndSyncAlertmanagersForOrgs(context.Background()); err != nil {
-		return err
+	if ng.Cfg.UnifiedAlerting.AlertManagerEnabled { // LOGZ.IO CHANGE
+		// Let's make sure we're able to complete an initial sync of Alertmanagers before we start the alerting components.
+		if err := ng.MultiOrgAlertmanager.LoadAndSyncAlertmanagersForOrgs(context.Background()); err != nil {
+			return err
+		}
 	}
 
 	schedCfg := schedule.SchedulerCfg{
@@ -131,6 +133,7 @@ func (ng *AlertNG) init() error {
 		ng.Log.Error("Failed to parse application URL. Continue without it.", "error", err)
 		appUrl = nil
 	}
+	appUrl = ng.Cfg.ParsedAppURL // LOGZ.IO GRAFANA CHANGE :: DEV-31554 - Set APP url to logzio grafana for alert notification URLs
 	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), appUrl, store, store, ng.SQLStore)
 	scheduler := schedule.NewScheduler(schedCfg, ng.ExpressionService, appUrl, stateManager)
 
@@ -157,6 +160,7 @@ func (ng *AlertNG) init() error {
 		AdminConfigStore:     store,
 		MultiOrgAlertmanager: ng.MultiOrgAlertmanager,
 		StateManager:         ng.stateManager,
+		SQLStore:             ng.SQLStore, // LOGZ.IO GRAFANA CHANGE :: DEV-30705,DEV-30713 - Migration endpoints by org ID
 		AccessControl:        ng.accesscontrol,
 		Policies:             policyService,
 		ContactPointService:  contactPointService,
@@ -178,9 +182,13 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 			return ng.schedule.Run(subCtx)
 		})
 	}
-	children.Go(func() error {
-		return ng.MultiOrgAlertmanager.Run(subCtx)
-	})
+	if ng.Cfg.UnifiedAlerting.AlertManagerEnabled {
+		children.Go(func() error {
+			return ng.MultiOrgAlertmanager.Run(subCtx)
+		})
+	} else {
+		ng.Log.Debug("Alert manager is disabled")
+	}
 	return children.Wait()
 }
 

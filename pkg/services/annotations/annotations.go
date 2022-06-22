@@ -37,6 +37,7 @@ type ItemQuery struct {
 	AnnotationId int64    `json:"annotationId"`
 	Tags         []string `json:"tags"`
 	Type         string   `json:"type"`
+	TypeNot      string   `json:"typeNot"` // LOGZ.IO GRAFANA CHANGE :: DEV-31760 - Add filter to ignore specific type in annotation search
 	MatchAny     bool     `json:"matchAny"`
 	SignedInUser *models.SignedInUser
 

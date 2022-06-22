@@ -76,7 +76,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                       {fields.map((field, index) => {
                         const localPath = `object_matchers[${index}]`;
                         return (
-                          <HorizontalGroup key={field.id} align="flex-start">
+                          <HorizontalGroup height="inherit" /** LOGZ.IO CHANGE */ key={field.id} align="flex-start">
                             <Field
                               label="Label"
                               invalid={!!errors.object_matchers?.[index]?.name}

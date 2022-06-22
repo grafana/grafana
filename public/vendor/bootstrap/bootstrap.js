@@ -1068,6 +1068,8 @@
     this.highlighter = this.options.highlighter || this.highlighter
     this.updater = this.options.updater || this.updater
     this.source = this.options.source
+    // LOGZ.IO GRAFANA CHANGE :: use showNestedMetrics if received from options
+    this.showNestedMetrics = this.options.showNestedMetrics
     this.$menu = $(this.options.menu)
     this.shown = false
     this.listen()
@@ -1172,14 +1174,57 @@
       });
     }
 
+    // LOGZ.IO GRAFANA CHANGE :: Function for handling nested fields
+    // Building nested html list from the mapping strings array
+  , arrayToNestedDropdown: function (items) {
+      // Converting array to object without duplicates and path as the value
+      // For instance ["system.cpu.usage", "system.cpu.maxUsage"] =>
+      // { system: { cpu: { usage: "system.cpu.usage", maxUsage: "system.cpu.maxUsage"}}
+      const toObject = function (o, property) {
+        return _.setWith(o, property, property, Object);
+      };
+
+      // Recursively building html nested list from the object
+      const toHtml = function(i, item) {
+        if (typeof i === 'string') {
+          return '<li data-value="' + i + '"> <a href="#">' + item + ' </a> </li>';
+        }
+
+        const li = '<li class="dropdown-submenu"> <a href="#">' + item + '</a> <ul class="dropdown-menu"> ' +
+          _(i).map(toHtml).join(' ') +
+          ' </ul> </li>';
+
+        return li;
+      };
+
+      return _.chain(items)
+        .sortBy()
+        .reduce(toObject, {})
+        .map(toHtml)
+        .join(' ')
+        .value();
+    }
+
   , render: function (items) {
       var that = this
 
-      items = $(items).map(function (i, item) {
-        i = $(that.options.item).attr('data-value', item)
-        i.find('a').html(that.highlighter(item))
-        return i[0]
-      })
+      // LOGZ.IO GRAFANA CHANGE :: If showNestedMetrics is true then we build the html list
+      // If showNestedMetrics is true AND the input is not empty
+      // AND there are more than 20 items, we use the arrayToNestedDropdown function
+      if (this.showNestedMetrics && !this.query && (items.length >= 20)) {
+        items = this.arrayToNestedDropdown(items)
+        this.$menu.css("overflow-y", "unset")
+        this.$menu.css("max-height", "fit-content")
+      } else {
+        // Otherwise (if showNestedMetrics is false or the filter input is not empty), use the original method
+        items = $(items).map(function (i, item) {
+          i = $(that.options.item).attr('data-value', item)
+          i.find('a').html(that.highlighter(item))
+          return i[0]
+        })
+        this.$menu.css("overflow-y", "")
+        this.$menu.css("max-height", "")
+      }
 
       // CHANGE (rashidpc) Do not select first element by default
       // items.first().addClass('active')

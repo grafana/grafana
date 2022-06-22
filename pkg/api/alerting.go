@@ -145,7 +145,8 @@ func (hs *HTTPServer) AlertTest(c *models.ReqContext) response.Response {
 		return response.Error(400, "The dashboard needs to be saved at least once before you can test an alert rule", nil)
 	}
 
-	res, err := hs.AlertEngine.AlertTest(c.OrgId, dto.Dashboard, dto.PanelId, c.SignedInUser)
+	// LOGZ.IO GRAFANA CHANGE :: DEV-17927 - add LogzIoHeaders
+	res, err := hs.AlertEngine.AlertTest(c.OrgId, dto.Dashboard, dto.PanelId, c.SignedInUser, &models.LogzIoHeaders{RequestHeaders: c.Req.Header})
 	if err != nil {
 		var validationErr alerting.ValidationError
 		if errors.As(err, &validationErr) {
@@ -197,7 +198,27 @@ func (hs *HTTPServer) GetAlert(c *models.ReqContext) response.Response {
 func (hs *HTTPServer) GetAlertNotifiers(ngalertEnabled bool) func(*models.ReqContext) response.Response {
 	return func(_ *models.ReqContext) response.Response {
 		if ngalertEnabled {
-			return response.JSON(200, notifier.GetAvailableNotifiers())
+			// LOGZ.IO Change start
+			availableNotifier := notifier.GetAvailableNotifiers()
+			allowedNotifiers := []alerting.NotifierPlugin{}
+			isAllowedNotifier := func(t string) bool {
+				allowedTypes := []string{"slack", "email", "opsgenie", "victorops", "teams", "webhook", "pagerduty"}
+				isAllowedNotifier := false
+				for _, allowedType := range allowedTypes {
+					if allowedType == t {
+						return true
+					}
+				}
+				return isAllowedNotifier
+			}
+
+			for _, n := range availableNotifier {
+				if isAllowedNotifier(n.Type) {
+					allowedNotifiers = append(allowedNotifiers, *n)
+				}
+			}
+			return response.JSON(200, allowedNotifiers)
+			// LOGZ.IO Change end
 		}
 		// TODO(codesome): This wont be required in 8.0 since ngalert
 		// will be enabled by default with no disabling. This is to be removed later.

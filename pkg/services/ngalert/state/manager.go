@@ -256,6 +256,7 @@ func (st *Manager) annotateState(ctx context.Context, alertRule *ngModels.AlertR
 		PrevState: previousState.String(),
 		NewState:  state.String(),
 		Text:      annotationText,
+		Type:      ngModels.AlertRuleStateAnnotationType, // LOGZ.IO GRAFANA CHANGE :: DEV-31760 - Save annotations with a specific type for unified alerts
 		Epoch:     evaluatedAt.UnixNano() / int64(time.Millisecond),
 	}
 

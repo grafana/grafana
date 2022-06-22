@@ -66,7 +66,7 @@ func TestMiddleWareSecurityHeaders(t *testing.T) {
 		assert.Equal(t, "max-age=64000; preload", sc.resp.Header().Get("Strict-Transport-Security"))
 		sc.cfg.StrictTransportSecuritySubDomains = true
 		sc.fakeReq("GET", "/api/").exec()
-		assert.Equal(t, "max-age=64000; preload; includeSubDomains", sc.resp.Header().Get("Strict-Transport-Security"))
+		assert.Equal(t, "max-age=64000; includeSubDomains; preload", sc.resp.Header().Get("Strict-Transport-Security")) // LOGZ.IO GRAFANA CHANGE :: DEV-20823 Change string order
 	}, func(cfg *setting.Cfg) {
 		cfg.StrictTransportSecurity = true
 		cfg.StrictTransportSecurityMaxAge = 64000
@@ -124,7 +124,7 @@ func TestMiddlewareContext(t *testing.T) {
 	middlewareScenario(t, "middleware should add X-Frame-Options header with deny for request when not allowing embedding", func(
 		t *testing.T, sc *scenarioContext) {
 		sc.fakeReq("GET", "/api/search").exec()
-		assert.Equal(t, "deny", sc.resp.Header().Get("X-Frame-Options"))
+		assert.Equal(t, "DENY", sc.resp.Header().Get("X-Frame-Options")) // LOGZ.IO GRAFANA CHANGE :: DEV-20823 Change deny to capital
 	})
 
 	middlewareScenario(t, "middleware should not add X-Frame-Options header for request when allowing embedding", func(

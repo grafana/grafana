@@ -4,9 +4,9 @@ import { Modal } from '@grafana/ui';
 
 import { StateHistory } from '../components/rules/StateHistory';
 
-function useStateHistoryModal(alertId: string) {
+function useStateHistoryModal(alertId: string, oldAlertId: string) { // LOGZ.IO GRAFANA CHANGE :: DEV-31760 - Retrieve annotations for migrated unified alerts
   const [showModal, setShowModal] = useState<boolean>(false);
-
+  // LOGZ.IO GRAFANA CHANGE :: DEV-31760 - Retrieve annotations for migrated unified alerts
   const StateHistoryModal = useMemo(
     () => (
       <Modal
@@ -16,12 +16,12 @@ function useStateHistoryModal(alertId: string) {
         closeOnEscape={true}
         title="State history"
       >
-        <StateHistory alertId={alertId} />
+        <StateHistory alertId={alertId} oldAlertId={oldAlertId} />
       </Modal>
     ),
-    [alertId, showModal]
+    [alertId, oldAlertId, showModal]
   );
-
+  // LOGZ.IO GRAFANA CHANGE :: end
   return {
     StateHistoryModal,
     showStateHistoryModal: () => setShowModal(true),

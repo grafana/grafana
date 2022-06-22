@@ -4,8 +4,11 @@
   "id": "news",
 
   "skipDataQuery": true,
+  "LOGZ.IO CHANGE 1": true,
+  "hideFromList": true,
 
-  "state": "beta",
+  "LOGZ.IO CHANGE 2": true,
+  "state": "deprecated",
 
   "info": {
     "description": "RSS feed reader",

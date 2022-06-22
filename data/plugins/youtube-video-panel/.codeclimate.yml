@@ -1,0 +1,8 @@
+exclude_patterns:
+- "dist"
+- "**/node_modules/"
+- "**/*.d.ts"
+- "src/libs/"
+- "src/images/"
+- "src/img/"
+- "src/screenshots/"

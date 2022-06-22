@@ -41,6 +41,8 @@ interface MetricConfiguration<T extends MetricAggregationType> {
   hasSettings: boolean;
   hasMeta: boolean;
   defaults: Omit<Extract<MetricAggregation, { type: T }>, 'id' | 'type'>;
+  // LOGZ.IO GRAFANA CHANGE
+  minVersion?: number;
 }
 
 type BucketConfiguration<T extends BucketAggregationType> = {

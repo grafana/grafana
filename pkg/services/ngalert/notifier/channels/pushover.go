@@ -158,7 +158,7 @@ func (pn *PushoverNotifier) SendResolved() bool {
 func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Alert) (map[string]string, bytes.Buffer, error) {
 	var b bytes.Buffer
 
-	ruleURL := joinUrlPath(pn.tmpl.ExternalURL.String(), "/alerting/list", pn.log)
+	ruleURL := ToLogzioAppPath(joinUrlPath(pn.tmpl.ExternalURL.String(), "/alerting/list", pn.log)) // LOGZ.IO GRAFANA CHANGE :: DEV-31554 - Set APP url to logzio grafana for alert notification URLs
 
 	alerts := types.Alerts(as...)
 

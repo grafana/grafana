@@ -151,7 +151,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
         <div className={styles.contentOuter}>
           <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true}>
             <div className={styles.contentInner}>
-              <AlertTypeStep editingExistingRule={!!existing} />
+              <AlertTypeStep editingExistingRule={true /* // LOGZ.IO CHANGES */} />
               {showStep2 && (
                 <>
                   <QueryStep />

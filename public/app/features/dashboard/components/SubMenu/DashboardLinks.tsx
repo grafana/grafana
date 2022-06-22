@@ -41,10 +41,11 @@ export const DashboardLinks: FC<Props> = ({ dashboard, links }) => {
         }
 
         const linkElement = (
+          // LOGZ.IO GRAFANA CHANGE :: link open on same tab to open on top frame
           <a
             className="gf-form-label gf-form-label--dashlink"
             href={sanitizeUrl(linkInfo.href)}
-            target={link.targetBlank ? '_blank' : undefined}
+            target={link.targetBlank ? '_blank' : '_top'}
             rel="noreferrer"
             data-testid={selectors.components.DashboardLinks.link}
           >

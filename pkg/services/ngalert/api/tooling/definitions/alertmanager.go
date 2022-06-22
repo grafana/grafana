@@ -17,7 +17,9 @@ import (
 	"github.com/prometheus/common/model"
 	"gopkg.in/yaml.v3"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/util"
@@ -459,6 +461,69 @@ type PostableUserConfig struct {
 	AlertmanagerConfig PostableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
 	amSimple           map[string]interface{}    `yaml:"-" json:"-"`
 }
+
+// LOGZ.IO GRAFANA CHANGE :: DEV-30169, DEV-30170: add api models for alert evaluation and alert processing requests/responses
+type AlertEvaluationRequest struct {
+	AlertRule   ApiAlertRule                          `json:"alertRule"`
+	EvalTime    time.Time                             `json:"evalTime"`
+	DsOverrides []models.EvaluationDatasourceOverride `json:"dsOverrides"`
+}
+
+type AlertProcessRequest struct {
+	AlertRule         ApiAlertRule    `json:"alertRule"`
+	EvaluationResults []ApiEvalResult `json:"evaluationResults"`
+}
+
+type ApiAlertRule struct {
+	ID              int64                      `json:"id"`
+	OrgID           int64                      `json:"orgId"`
+	Title           string                     `json:"title"`
+	Condition       string                     `json:"condition"`
+	Data            []models.AlertQuery        `json:"data"`
+	Updated         time.Time                  `json:"updated"`
+	IntervalSeconds int64                      `json:"intervalSeconds"`
+	Version         int64                      `json:"version"`
+	UID             string                     `json:"uid"`
+	NamespaceUID    string                     `json:"namespaceUid"`
+	DashboardUID    *string                    `json:"dashboardUid"`
+	PanelID         *int64                     `json:"panelId"`
+	RuleGroup       string                     `json:"ruleGroup"`
+	NoDataState     models.NoDataState         `json:"noDataState"`
+	ExecErrState    models.ExecutionErrorState `json:"execErrState"`
+	For             time.Duration              `json:"for"`
+	Annotations     map[string]string          `json:"annotations"`
+	Labels          map[string]string          `json:"labels"`
+}
+
+type ApiEvalResult struct {
+	Instance           data.Labels                      `json:"instance"`
+	State              eval.State                       `json:"state"`
+	StateName          string                           `json:"stateName"`
+	Error              *ApiEvalError                    `json:"error"`
+	EvaluatedAt        time.Time                        `json:"evaluatedAt"`
+	EvaluationDuration time.Duration                    `json:"evaluationDuration"`
+	EvaluationString   string                           `json:"evaluationString"`
+	Values             map[string]ApiNumberValueCapture `json:"values"`
+}
+
+type ApiNumberValueCapture struct {
+	Var    string      `json:"var"`
+	Labels data.Labels `json:"labels"`
+	Value  *float64    `json:"value"`
+	IsNan  bool        `json:"isNan"`
+}
+
+type ApiEvalError struct {
+	Type     string            `json:"type"`
+	Message  string            `json:"message"`
+	Metadata map[string]string `json:"metadata"`
+}
+
+type EvalResultResponse struct {
+	Results []ApiEvalResult `json:"results"`
+}
+
+// LOGZ.IO GRAFANA CHANGE :: end
 
 func (c *PostableUserConfig) UnmarshalJSON(b []byte) error {
 	type plain PostableUserConfig

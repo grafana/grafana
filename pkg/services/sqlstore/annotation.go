@@ -132,6 +132,7 @@ func (r *SQLAnnotationRepo) Find(ctx context.Context, query *annotations.ItemQue
 	params := make([]interface{}, 0)
 	items := make([]*annotations.ItemDTO, 0)
 	err := r.sql.WithDbSession(ctx, func(sess *DBSession) error {
+		// LOGZ.IO GRAFANA CHANGE :: DEV-19056 - usr.login to usr.name as login field
 		sql.WriteString(`
 			SELECT
 				annotation.id,
@@ -148,7 +149,7 @@ func (r *SQLAnnotationRepo) Find(ctx context.Context, query *annotations.ItemQue
 				annotation.created,
 				annotation.updated,
 				usr.email,
-				usr.login,
+				usr.name as login,
 				alert.name as alert_name
 			FROM annotation
 			LEFT OUTER JOIN ` + dialect.Quote("user") + ` as usr on usr.id = annotation.user_id
@@ -191,11 +192,21 @@ func (r *SQLAnnotationRepo) Find(ctx context.Context, query *annotations.ItemQue
 			params = append(params, query.To, query.From)
 		}
 
+		// LOGZ.IO GRAFANA CHANGE :: DEV-31760 - Retrieve annotations for migrated unified alerts
 		if query.Type == "alert" {
 			sql.WriteString(` AND a.alert_id > 0`)
 		} else if query.Type == "annotation" {
 			sql.WriteString(` AND a.alert_id = 0`)
+		} else if query.Type == "unified_alert_rule" {
+			sql.WriteString(` AND a.type = ?`)
+			params = append(params, query.Type)
 		}
+
+		if query.TypeNot != "" {
+			sql.WriteString(` AND a.type != ?`)
+			params = append(params, query.TypeNot)
+		}
+		// LOGZ.IO GRAFANA CHANGE :: end
 
 		if len(query.Tags) > 0 {
 			keyValueFilters := []string{}

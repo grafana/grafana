@@ -84,7 +84,7 @@ func (ln *LineNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, e
 	body := fmt.Sprintf(
 		"%s\n%s\n\n%s",
 		tmpl(DefaultMessageTitleEmbed),
-		ruleURL,
+		ToLogzioAppPath(ruleURL), // LOGZ.IO GRAFANA CHANGE :: DEV-31554 - Set APP url to logzio grafana for alert notification URLs
 		tmpl(`{{ template "default.message" . }}`),
 	)
 	if tmplErr != nil {

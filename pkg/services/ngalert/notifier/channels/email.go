@@ -111,9 +111,9 @@ func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 				"GroupLabels":       data.GroupLabels,
 				"CommonLabels":      data.CommonLabels,
 				"CommonAnnotations": data.CommonAnnotations,
-				"ExternalURL":       data.ExternalURL,
-				"RuleUrl":           ruleURL,
-				"AlertPageUrl":      alertPageURL,
+				"ExternalURL":       ToLogzioAppPath(data.ExternalURL), // LOGZ.IO GRAFANA CHANGE :: DEV-31554 - Set APP url to logzio grafana for alert notification URLs
+				"RuleUrl":           ToLogzioAppPath(ruleURL),          // LOGZ.IO GRAFANA CHANGE :: DEV-31554 - Set APP url to logzio grafana for alert notification URLs
+				"AlertPageUrl":      ToLogzioAppPath(alertPageURL),     // LOGZ.IO GRAFANA CHANGE :: DEV-31554 - Set APP url to logzio grafana for alert notification URLs
 			},
 			To:          en.Addresses,
 			SingleEmail: en.SingleEmail,

@@ -9,14 +9,15 @@ import (
 
 // SearchRequestBuilder represents a builder which can build a search request
 type SearchRequestBuilder struct {
-	version      *semver.Version
-	interval     intervalv2.Interval
-	index        string
-	size         int
-	sort         map[string]interface{}
-	queryBuilder *QueryBuilder
-	aggBuilders  []AggBuilder
-	customProps  map[string]interface{}
+	version                 *semver.Version
+	interval                intervalv2.Interval
+	index                   string
+	size                    int
+	sort                    map[string]interface{}
+	queryBuilder            *QueryBuilder
+	aggBuilders             []AggBuilder
+	customProps             map[string]interface{}
+	logzioExtraParamBuilder *LogzioExtraParamsBuilder // LOGZ.IO GRAFANA CHANGE :: DEV-19067 - rate function support
 }
 
 // NewSearchRequestBuilder create a new search request builder
@@ -60,6 +61,16 @@ func (b *SearchRequestBuilder) Build() (*SearchRequest, error) {
 			sr.Aggs = append(sr.Aggs, aggArray...)
 		}
 	}
+
+	// LOGZ.IO GRAFANA CHANGE :: DEV-19067 - rate function support
+	if b.logzioExtraParamBuilder != nil && b.logzioExtraParamBuilder.rate != nil && len(b.logzioExtraParamBuilder.rate.AggNames) > 0 {
+		p, err := b.logzioExtraParamBuilder.Build()
+		if err != nil {
+			return nil, err
+		}
+		sr.LogzioExtraParams = &p
+	}
+	// LOGZ.IO GRAFANA CHANGE :: DEV-19067 - end
 
 	return &sr, nil
 }

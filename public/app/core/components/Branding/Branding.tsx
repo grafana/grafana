@@ -43,7 +43,7 @@ const LoginBackground: FC<BrandComponentProps> = ({ className, children }) => {
 };
 
 const MenuLogo: FC<BrandComponentProps> = ({ className }) => {
-  return <img className={className} src="public/img/grafana_icon.svg" alt="Grafana" />;
+  return <img style={{display: 'none'}} className={className} src="public/img/grafana_icon.svg" alt="Grafana" />;
 };
 
 const LoginBoxBackground = () => {

@@ -31,11 +31,12 @@ type DataSubQuery struct {
 
 // DataQuery contains all information about a data query request.  New work should use the plugin SDK.
 type DataQuery struct {
-	TimeRange *DataTimeRange
-	Queries   []DataSubQuery
-	Headers   map[string]string
-	Debug     bool
-	User      *models.SignedInUser
+	TimeRange     *DataTimeRange
+	Queries       []DataSubQuery
+	Headers       map[string]string
+	Debug         bool
+	User          *models.SignedInUser
+	LogzIoHeaders *models.LogzIoHeaders // LOGZ.IO GRAFANA CHANGE :: (ALERTS) DEV-16492 Support external alert evaluation
 }
 
 type DataTable struct {

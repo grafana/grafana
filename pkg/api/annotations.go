@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"net/http"
 	"strconv"
 	"strings"
@@ -32,6 +33,12 @@ func (hs *HTTPServer) GetAnnotations(c *models.ReqContext) response.Response {
 		MatchAny:     c.QueryBool("matchAny"),
 		SignedInUser: c.SignedInUser,
 	}
+
+	// LOGZ.IO GRAFANA CHANGE :: DEV-31760 - Retrieve annotations for migrated unified alerts
+	if query.Type == "alert" {
+		query.TypeNot = ngmodels.AlertRuleStateAnnotationType
+	}
+	// LOGZ.IO GRAFANA CHANGE :: end
 
 	repo := annotations.GetRepository()
 

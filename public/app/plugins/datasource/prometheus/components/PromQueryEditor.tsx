@@ -8,7 +8,7 @@ import { InlineFormLabel, LegacyForms, Select } from '@grafana/ui';
 import { PromQuery } from '../types';
 
 import { PromExemplarField } from './PromExemplarField';
-import PromLink from './PromLink';
+// import PromLink from './PromLink'; // LOGZ.IO GRAFANA CHANGE :: DEV-23102 Remove the link to prometheus
 import PromQueryField from './PromQueryField';
 import { PromQueryEditorProps } from './types';
 
@@ -196,15 +196,17 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
               />
               <Switch label="Instant" checked={instant} onChange={this.onInstantChange} />
 
-              <InlineFormLabel width={10} tooltip="Link to Graph in Prometheus">
-                <PromLink
-                  datasource={datasource}
-                  query={this.query} // Use modified query
-                  panelData={data}
-                />
-              </InlineFormLabel>
+              {/* LOGZ.IO GRAFANA CHANGE :: DEV-23102 Remove the link to prometheus */}
+              {/*<InlineFormLabel width={10} tooltip="Link to Graph in Prometheus">*/}
+              {/*  <PromLink*/}
+              {/*    datasource={datasource}*/}
+              {/*    query={this.query} // Use modified query*/}
+              {/*    panelData={data}*/}
+              {/*  />*/}
+              {/*</InlineFormLabel>*/}
+              {/* LOGZ.IO GRAFANA CHANGE :: End */}
             </div>
-            {showExemplarField && (
+            {showExemplarField && false /** LOGZ.IO GRAFANA CHANGE :: Disable exemplars */ && (
               <PromExemplarField
                 onChange={this.onExemplarChange}
                 datasource={datasource}

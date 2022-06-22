@@ -196,7 +196,8 @@ func (e *AlertEngine) processJob(attemptID int, attemptChan chan int, cancelChan
 	alertCtx, cancelFn := context.WithTimeout(context.Background(), setting.AlertingEvaluationTimeout)
 	cancelChan <- cancelFn
 	alertCtx, span := e.tracer.Start(alertCtx, "alert execution")
-	evalContext := NewEvalContext(alertCtx, job.Rule, e.RequestValidator, e.sqlStore)
+	// LOGZ.IO GRAFANA CHANGE :: DEV-19409 - Add eval time as Now
+	evalContext := NewEvalContext(alertCtx, job.Rule, time.Now(), e.RequestValidator, e.sqlStore)
 	evalContext.Ctx = alertCtx
 
 	go func() {

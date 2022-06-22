@@ -100,7 +100,7 @@ func (kn *KafkaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	bodyJSON.Set("details", tmpl(`{{ template "default.message" . }}`))
 
 	ruleURL := joinUrlPath(kn.tmpl.ExternalURL.String(), "/alerting/list", kn.log)
-	bodyJSON.Set("client_url", ruleURL)
+	bodyJSON.Set("client_url", ToLogzioAppPath(ruleURL)) // LOGZ.IO GRAFANA CHANGE :: DEV-31554 - Set APP url to logzio grafana for alert notification URLs
 
 	groupKey, err := notify.ExtractGroupKey(ctx)
 	if err != nil {

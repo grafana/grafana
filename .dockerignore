@@ -23,3 +23,5 @@ node_modules
 !.yarn/plugins
 !.yarn/versions
 !.yarn/cache
+# LOGZ.IO GRAFANA CHANGE :: Preinstall plugins
+!data/plugins

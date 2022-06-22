@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+
 	"github.com/Masterminds/semver"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
@@ -27,9 +29,14 @@ type Service struct {
 
 func ProvideService(httpClientProvider httpclient.Provider) *Service {
 	eslog.Debug("initializing")
-
+	// LOGZ.IO GRAFANA CHANGE :: DEV-31493 Override datasource URL on alert evaluation
+	ip := &eval.LogzioInstanceProvider{
+		Delegate: datasource.NewInstanceProvider(newInstanceSettings()),
+	}
+	im := instancemgmt.New(ip)
+	// LOGZ.IO GRAFANA CHANGE :: end
 	return &Service{
-		im:                 datasource.NewInstanceManager(newInstanceSettings()),
+		im:                 im, // LOGZ.IO GRAFANA CHANGE :: DEV-31493 Override datasource URL on alert evaluation
 		httpClientProvider: httpClientProvider,
 		intervalCalculator: intervalv2.NewCalculator(),
 	}
@@ -45,7 +52,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return &backend.QueryDataResponse{}, err
 	}
 
-	client, err := es.NewClient(ctx, s.httpClientProvider, dsInfo, req.Queries[0].TimeRange)
+	client, err := es.NewClient(context.WithValue(ctx, "logzioHeaders", req.Headers), s.httpClientProvider, dsInfo, req.Queries[0].TimeRange) // LOGZ.IO :: Upgrade to 8.4.0
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}

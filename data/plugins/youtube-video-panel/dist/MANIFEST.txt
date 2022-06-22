@@ -1,0 +1,41 @@
+
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+{
+  "manifestVersion": "2.0.0",
+  "signatureType": "private",
+  "signedByOrg": "themike",
+  "signedByOrgName": "themike",
+  "rootUrls": [
+    "https://*.logz.io/",
+    "http://*.logz.io:8080/",
+    "http://grafana-services:9990/",
+    "http://grafana-service:9990/grafana-app/"
+  ],
+  "plugin": "youtube-video-panel",
+  "version": "%VERSION%",
+  "time": 1655824801328,
+  "keyId": "7e4d0c6a708866e7",
+  "files": {
+    "LICENSE": "b40930bbcf80744c86c46a12bc9da056641d722716c378f5659b9e555ef833e1",
+    "CHANGELOG.md": "f039df40cb9e6dffcd8eb814227ba03e47f686d447bfb45e5eae8bdf83fa9465",
+    "module.js.LICENSE.txt": "6fca9fb5ddbe9c73d84667146676a9fef623ecbd6529d700b20950e5a48853ba",
+    "module.js.map": "220f06e6005ab6355f620c53d7aee43c57f5c7c5b9ff3866c6fa7d3f9b1b7f64",
+    "plugin.json": "2f04e3aaa92c2c41aed7bc2d789a0d46d806a056d165170223e39e8774a1df10",
+    "README.md": "5ba9f6f81524312f230a70aa9e0745398dbca48307968635730f8ced78c70367",
+    "img/logo.svg": "1defc6f7e585c67657bcfd8fddc599ee7dfa82f8674413f49fa274c2cd453ec6",
+    "module.js": "f927e1f1f6b086aa1db4b09906631457b90fdb8d3363971563deb2da20d9c640"
+  }
+}
+-----BEGIN PGP SIGNATURE-----
+Version: OpenPGP.js v4.10.10
+Comment: https://openpgpjs.org
+
+wrkEARMKAAYFAmKx4aEAIQkQfk0ManCIZucWIQTzOyW2kQdOhGNlcPN+TQxq
+cIhm59SSAgkBx/bI7tkbaJUq8PBdYSuibfXpVJUmoM8bhRNVB47mywkxvSgg
+t7Zkv4enDEthCjtiuAdJXnSCIi0/aKOH6jSfX2wCCQE/skS7cjnbTOoylb61
+/OZVGPOLUkNHPnht4mc75eFQqV7VwvA1QGxLoZGVindw+UEKxKfEnp3t95sq
+ZvU+bWRrTg==
+=/0nV
+-----END PGP SIGNATURE-----

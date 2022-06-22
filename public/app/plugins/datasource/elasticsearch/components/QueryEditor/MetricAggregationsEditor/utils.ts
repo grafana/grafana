@@ -260,8 +260,8 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   rate: {
     label: 'Rate',
-    xpack: true,
-    versionRange: '>=7.10.0',
+    // xpack: true,              // LOGZ.IO CHANGE
+    // versionRange: '>=7.10.0', // LOGZ.IO CHANGE
     requiresField: true,
     isPipelineAgg: false,
     supportsMissing: false,

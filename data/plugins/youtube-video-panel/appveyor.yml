@@ -1,0 +1,26 @@
+# Test against the latest version of this Node.js version
+environment:
+  nodejs_version: "12"
+
+# Local NPM Modules
+cache:
+  - node_modules
+
+# Install scripts. (runs after repo cloning)
+install:
+  # Get the latest stable version of Node.js or io.js
+  - ps: Install-Product node $env:nodejs_version
+  # install modules
+  - npm install -g yarn --quiet
+  - yarn install --pure-lockfile
+
+# Post-install test scripts.
+test_script:
+  # Output useful info for debugging.
+  - node --version
+  - npm --version
+
+# Run the build
+build_script:
+  - yarn dev   # This will also run prettier!
+  - yarn build # make sure both scripts work

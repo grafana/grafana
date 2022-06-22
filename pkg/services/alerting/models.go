@@ -2,6 +2,7 @@ package alerting
 
 import (
 	"sync"
+	"time" // LOGZ.IO GRAFANA CHANGE :: DEV-17927 - Add import time()
 
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/models"
@@ -15,6 +16,9 @@ type Job struct {
 	running     bool
 	Rule        *Rule
 	runningLock sync.Mutex // Lock for running property which is used in the Scheduler and AlertEngine execution
+	EvalTime    time.Time // LOGZ.IO GRAFANA CHANGE :: DEV-17927 - add time and result.
+
+	Result *EvalContext // LOGZ.IO GRAFANA CHANGE :: DEV-17927 - add time and result.
 }
 
 // GetRunning returns true if the job is running. A lock is taken and released on the Job to ensure atomicity.

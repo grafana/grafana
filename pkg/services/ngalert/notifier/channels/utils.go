@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/prometheus/alertmanager/notify"
@@ -25,6 +26,13 @@ const (
 	FooterIconURL      = "https://grafana.com/assets/img/fav32.png"
 	ColorAlertFiring   = "#D63232"
 	ColorAlertResolved = "#36a64f"
+	//LOGZ.IO GRAFANA CHANGE :: DEV-31356: Change grafana default username, footer URL,text to logzio ones
+	LogzioAlertNotificationUsername = "Logz.io Metrics Alerts"
+	LogzioIconUrl                   = "https://s3.amazonaws.com/logzio-static-content-cdn/logzio-logo.png"
+	LogzioFooterText                = "logz.io"
+	EncodedHashSymbol               = "%23"
+	EncodedSpaceSymbol              = "%20"
+	//LOGZ.IO GRAFANA CHANGE :: end
 )
 
 var (
@@ -148,6 +156,19 @@ func joinUrlPath(base, additionalPath string, logger log.Logger) string {
 
 	return u.String()
 }
+
+// LOGZ.IO GRAFANA CHANGE :: DEV-31554 - Set APP url to logzio grafana for alert notification URLs
+func ToLogzioAppPath(path string) string {
+	// because the app path contains # symbol which is encoded by default we need to replace encoded symbol back to original
+	return strings.Replace(path, EncodedHashSymbol, "#", 1)
+}
+
+// Golang encode function encodes space as + instead of %20 so we need to replace
+func ReplaceEncodedSpace(path string) string {
+	return strings.Replace(path, "+", EncodedSpaceSymbol, -1)
+}
+
+// LOGZ.IO GRAFANA CHANGE :: DEV-31554 - Set APP url to logzio grafana for alert notification URLs
 
 // GetBoundary is used for overriding the behaviour for tests
 // and set a boundary for multipart body. DO NOT set this outside tests.

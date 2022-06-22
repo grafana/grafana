@@ -1,0 +1,36 @@
+
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+{
+  "plugin": "grafana-piechart-panel",
+  "version": "1.5.0",
+  "files": {
+    "LICENSE": "b46400c1ab5630edeb4e43b240a027d203375ebe5a9efb7de88c604c5c5cace0",
+    "README.md": "f20927deab10fa9485ad13a47199dff25d2224551186d1d2e4304ea23ef382fa",
+    "dark.js": "1e1732392f8c733433d5078f62c181732b2e9cf801915a7cac1db1b29777d22e",
+    "dark.js.map": "9f9a08e0c7c69f92a7bab8690faadc8ec2f65379834362cdb45fb8d6679a7336",
+    "editor.html": "aa4a490a2a93c1c6fdcbfc2cf7351afd1af213205ce74ab1f3f4f08bac9db24c",
+    "light.js": "eb1808113eafd870881e57b3a28f4229a3710981670b0dc7409742a01b041259",
+    "light.js.map": "80ee11ec21f071cf8988b3b049e8159cbcdb6153b5ca9a5523fe7dbf96083323",
+    "module.html": "10d8f62fdc7359e904e04b34400d8770098d4973e7796b54f007e6a8fa284a3b",
+    "module.js": "2338213b7535bb9c32b5d03d382fcc3a1d0996d88f8313ab4e702912b50d0e83",
+    "module.js.LICENSE.txt": "30f143a8e05630b1ab2ff90e572b97708701d7fc5f8e8fd2e44bbe9787723aea",
+    "module.js.map": "504880a11e3b80783b5b6f26b33a13aefe0d6249ff67be0addd4f2b08e58b7bf",
+    "plugin.json": "074bd24f4b6d46b7e15c056b162be5dfa922ea6df1b9d36d60c2351364d6aaa3",
+    "styles/dark.css": "e0c2663c2c7dabf97ffaebc740a3b5f7fb69aefaaf89351d9fa8762f77ec5cf6",
+    "styles/light.css": "6430d7d73d05e50adedf3d0ec9fa6f26970ca362f24be63b3b8f506405f8a921"
+  },
+  "time": 1589585452581,
+  "keyId": "7e4d0c6a708866e7"
+}
+-----BEGIN PGP SIGNATURE-----
+Version: OpenPGP.js v4.10.1
+Comment: https://openpgpjs.org
+
+wqAEARMKAAYFAl6/JiwACgkQfk0ManCIZufdjAII5R6xFNsH03uvscY9CHoX
+B4jC39m9LIcBy7sJLdD5uVKNBBCfVJmEbmk0fxsec2UG4+QppfXRCXyhn75N
+pbZGkQUCCMVmF0lAS3h0YNtEkr/iX3jMKsLaRIQj9bqBIz8BEKXBf+owPYt7
+waCLA7VxKh7zMH2G1mPH4tB8DQLk9UDpUBMq
+=vB++
+-----END PGP SIGNATURE-----

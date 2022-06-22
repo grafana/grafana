@@ -50,7 +50,8 @@ func init() {
 				PropertyName: "token",
 				Secure:       true,
 			},
-			{
+			//LOGZ.IO GRAFANA CHANGE :: DEV-31356: Remove possibility to edit username and icon/imoji URL in slack Grafana contact point config
+			/*{
 				Label:        "Username",
 				Element:      alerting.ElementTypeInput,
 				InputType:    alerting.InputTypeText,
@@ -70,7 +71,8 @@ func init() {
 				InputType:    alerting.InputTypeText,
 				Description:  "Provide a URL to an image to use as the icon for the bot's message",
 				PropertyName: "icon_url",
-			},
+			},*/
+			//LOGZ.IO GRAFANA CHANGE :: end
 			{
 				Label:        "Mention Users",
 				Element:      alerting.ElementTypeInput,

@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"path"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -16,6 +17,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
+
+//Number of minutes to be shown on panel that contains an alert before the time an alert is triggered.
+//For example, if alert goes to Alerting at 13:00, timeframe starts at 12:55
+const alertPanelWindowBeforeTriggerInMinutes = 5 //LOGZ.IO GRAFANA CHANGE :: DEV-32382
 
 type ExtendedAlert struct {
 	Status       string      `json:"status"`
@@ -79,11 +84,13 @@ func extendAlert(alert template.Alert, externalURL string, logger log.Logger) *E
 	dashboardUid := alert.Annotations[ngmodels.DashboardUIDAnnotation]
 	if len(dashboardUid) > 0 {
 		u.Path = path.Join(externalPath, "/d/", dashboardUid)
-		extended.DashboardURL = u.String()
+		u.RawQuery = appendAlertPanelTimeframeToQueryString(u.RawQuery, alert) //LOGZ.IO GRAFANA CHANGE :: DEV-32382 - Append timeframe for panel/dashboard URL
+		extended.DashboardURL = ToLogzioAppPath(u.String())                    //LOGZ.IO GRAFANA CHANGE :: DEV-31356: Change grafana default username, footer URL,text to logzio ones
 		panelId := alert.Annotations[ngmodels.PanelIDAnnotation]
 		if len(panelId) > 0 {
 			u.RawQuery = "viewPanel=" + panelId
-			extended.PanelURL = u.String()
+			u.RawQuery = appendAlertPanelTimeframeToQueryString(u.RawQuery, alert) //LOGZ.IO GRAFANA CHANGE :: DEV-32382 - Append timeframe for panel/dashboard URL
+			extended.PanelURL = ToLogzioAppPath(u.String())                        //LOGZ.IO GRAFANA CHANGE :: DEV-31356: Change grafana default username, footer URL,text to logzio ones
 		}
 	}
 
@@ -107,8 +114,8 @@ func extendAlert(alert template.Alert, externalURL string, logger log.Logger) *E
 	}
 
 	u.RawQuery = query.Encode()
-
-	extended.SilenceURL = u.String()
+	u.RawQuery = ReplaceEncodedSpace(u.RawQuery)      //LOGZ.IO GRAFANA CHANGE :: Replace space encoded as + in silence URL
+	extended.SilenceURL = ToLogzioAppPath(u.String()) //LOGZ.IO GRAFANA CHANGE :: DEV-31356: Change grafana default username, footer URL,text to logzio ones
 
 	return extended
 }
@@ -129,7 +136,7 @@ func ExtendData(data *template.Data, logger log.Logger) *ExtendedData {
 		CommonLabels:      removePrivateItems(data.CommonLabels),
 		CommonAnnotations: removePrivateItems(data.CommonAnnotations),
 
-		ExternalURL: data.ExternalURL,
+		ExternalURL: ToLogzioAppPath(data.ExternalURL), //LOGZ.IO GRAFANA CHANGE :: DEV-31356: Change grafana default username, footer URL,text to logzio ones
 	}
 	return extended
 }
@@ -168,3 +175,33 @@ func (as ExtendedAlerts) Resolved() []ExtendedAlert {
 	}
 	return res
 }
+
+//LOGZ.IO GRAFANA CHANGE :: DEV-32382 - Append timeframe for panel/dashboard URL
+func appendAlertPanelTimeframeToQueryString(queryString string, alert template.Alert) string {
+	builder := strings.Builder{}
+
+	builder.WriteString(queryString)
+	if len(queryString) > 0 {
+		builder.WriteString("&")
+	}
+
+	startTime := alert.StartsAt.UnixMilli() - time.Minute.Milliseconds()*alertPanelWindowBeforeTriggerInMinutes
+	builder.WriteString("from=")
+	builder.WriteString(strconv.FormatInt(startTime, 10))
+
+	var endTime int64
+	// If alert is not yet resolved - end time will be set to past date
+	if alert.EndsAt.After(alert.StartsAt) {
+		endTime = alert.EndsAt.UnixMilli()
+	} else {
+		endTime = alert.StartsAt.UnixMilli()
+	}
+
+	builder.WriteString("&")
+	builder.WriteString("to=")
+	builder.WriteString(strconv.FormatInt(endTime, 10))
+
+	return builder.String()
+}
+
+//LOGZ.IO GRAFANA CHANGE :: end

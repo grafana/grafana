@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"sync"
 	"time"
@@ -555,7 +556,13 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 			OrgID:     r.OrgID,
 			Data:      r.Data,
 		}
-		results, err := sch.evaluator.ConditionEval(&condition, e.scheduledAt, sch.expressionService)
+		// LOGZ.IO GRAFANA CHANGE :: Pass context to datasources
+		logzioEvalContext := &models.LogzioAlertRuleEvalContext{
+			LogzioHeaders:     http.Header{},
+			DsOverrideByDsUid: map[string]models.EvaluationDatasourceOverride{},
+		}
+		results, err := sch.evaluator.ConditionEval(&condition, start, sch.expressionService, logzioEvalContext)
+		// LOGZ.IO GRAFANA CHANGE :: end
 		dur := sch.clock.Now().Sub(start)
 		evalTotal.Inc()
 		evalDuration.Observe(dur.Seconds())

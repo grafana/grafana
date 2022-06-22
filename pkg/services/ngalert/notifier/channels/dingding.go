@@ -81,7 +81,8 @@ type DingDingNotifier struct {
 func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	dd.log.Info("Sending dingding")
 
-	ruleURL := joinUrlPath(dd.tmpl.ExternalURL.String(), "/alerting/list", dd.log)
+	// LOGZ.IO GRAFANA CHANGE :: DEV-31554 - Set APP url to logzio grafana for alert notification URLs
+	ruleURL := ToLogzioAppPath(joinUrlPath(dd.tmpl.ExternalURL.String(), "/alerting/list", dd.log))
 
 	q := url.Values{
 		"pc_slide": {"false"},

@@ -40,10 +40,11 @@ type EvalContext struct {
 }
 
 // NewEvalContext is the EvalContext constructor.
-func NewEvalContext(alertCtx context.Context, rule *Rule, requestValidator models.PluginRequestValidator, sqlStore AlertStore) *EvalContext {
+// LOGZ.IO GRAFANA CHANGE :: DEV-17927 - Add evaltime param
+func NewEvalContext(alertCtx context.Context, rule *Rule, evalTime time.Time, requestValidator models.PluginRequestValidator, sqlStore AlertStore) *EvalContext {
 	return &EvalContext{
 		Ctx:              alertCtx,
-		StartTime:        time.Now(),
+		StartTime:        evalTime, // LOGZ.IO GRAFANA CHANGE :: DEV-17927 - Change now to evalTime
 		Rule:             rule,
 		Logs:             make([]*ResultLogEntry, 0),
 		EvalMatches:      make([]*EvalMatch, 0),
@@ -140,8 +141,8 @@ func (c *EvalContext) GetNewState() models.AlertStateType {
 		return ns
 	}
 
-	since := time.Since(c.Rule.LastStateChange)
-	if c.PrevAlertState == models.AlertStatePending && since > c.Rule.For {
+	since := c.StartTime.Sub(c.Rule.LastStateChange)                         // LOGZ.IO GRAFANA CHANGE :: DEV-17927 - change time to StartTime
+	if c.PrevAlertState == models.AlertStatePending && since >= c.Rule.For { // LOGZ.IO GRAFANA CHANGE :: DEV-18900 - fix For check to be inclusive
 		return models.AlertStateAlerting
 	}
 

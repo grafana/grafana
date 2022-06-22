@@ -54,6 +54,9 @@ type Rule struct {
 	Conditions          []Condition
 	Notifications       []string
 	AlertRuleTags       []*models.Tag
+	LogzIoHeaders       *models.LogzIoHeaders // LOGZ.IO GRAFANA CHANGE :: DEV-17927 - add LogzIoHeaders
+	DataSourceUrl       string                // LOGZ.IO GRAFANA CHANGE :: DEV-19069 - add DataSourceUrl
+	CustomDataSources   []*models.DataSource  // LOGZ.IO GRAFANA CHANGE :: DEV-21780 - support prometheus alerts
 
 	StateChanges int64
 }
