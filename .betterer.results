@@ -29,9 +29,6 @@ exports[`no enzyme tests`] = {
     "packages/grafana-ui/src/slate-plugins/suggestions.test.tsx:3654981205": [
       [0, 18, 13, "RegExp match", "2409514259"]
     ],
-    "packages/jaeger-ui-components/src/TracePageHeader/SpanGraph/CanvasSpanGraph.test.js:1974748555": [
-      [14, 19, 13, "RegExp match", "2409514259"]
-    ],
     "packages/jaeger-ui-components/src/TracePageHeader/SpanGraph/GraphTicks.test.js:940336852": [
       [14, 19, 13, "RegExp match", "2409514259"]
     ],
@@ -52,9 +49,6 @@ exports[`no enzyme tests`] = {
     ],
     "packages/jaeger-ui-components/src/TraceTimelineViewer/ListView/index.test.js:1734982398": [
       [14, 26, 13, "RegExp match", "2409514259"]
-    ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanDetail/AccordianKeyValues.test.js:2408389970": [
-      [14, 19, 13, "RegExp match", "2409514259"]
     ],
     "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanDetail/AccordianLogs.test.js:3960703835": [
       [14, 19, 13, "RegExp match", "2409514259"]

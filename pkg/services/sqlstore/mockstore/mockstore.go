@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
 type OrgListResponse []struct {
@@ -70,6 +71,10 @@ func (m *SQLStoreMock) GetDataSourceAccessStats(ctx context.Context, query *mode
 func (m *SQLStoreMock) GetSystemStats(ctx context.Context, query *models.GetSystemStatsQuery) error {
 	query.Result = m.ExpectedSystemStats
 	return m.ExpectedError
+}
+
+func (m *SQLStoreMock) GetDialect() migrator.Dialect {
+	return nil
 }
 
 func (m *SQLStoreMock) HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error {

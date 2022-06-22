@@ -191,7 +191,7 @@ func (srv PrometheusSrv) toRuleGroup(groupName string, folder *models.Folder, ru
 		Name: groupName,
 		File: folder.Title, // file is what Prometheus uses for provisioning, we replace it with namespace.
 	}
-
+	ngmodels.RulesGroup(rules).SortByGroupIndex()
 	for _, rule := range rules {
 		alertingRule := apimodels.AlertingRule{
 			State:       "inactive",
