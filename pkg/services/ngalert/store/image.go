@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gofrs/uuid"
+	"github.com/google/uuid"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -59,7 +59,7 @@ func (st DBstore) SaveImage(ctx context.Context, img *models.Image) error {
 		// rows? See issue https://github.com/grafana/grafana/issues/49366
 		img.ExpiresAt = TimeNow().Add(1 * time.Minute).UTC()
 		if img.ID == 0 { // xorm will fill this field on Insert.
-			token, err := uuid.NewV4()
+			token, err := uuid.NewRandom()
 			if err != nil {
 				return fmt.Errorf("failed to create token: %w", err)
 			}
