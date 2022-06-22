@@ -23,6 +23,7 @@ var b64 = base64.RawStdEncoding
 // Get an item from the store
 func (kv *secretsKVStoreSQL) Get(ctx context.Context, orgId int64, namespace string, typ string) (string, bool, error) {
 	if cache := kv.decryptionCache.recent(orgId, namespace, typ); cache != nil {
+		kv.log.Debug("got secret value from short-lived cache", "orgId", orgId, "type", typ, "namespace", namespace)
 		return cache.value, true, nil
 	}
 
@@ -45,7 +46,6 @@ func (kv *secretsKVStoreSQL) Get(ctx context.Context, orgId int64, namespace str
 			return nil
 		}
 		isFound = true
-		kv.log.Debug("got secret value", "orgId", orgId, "type", typ, "namespace", namespace)
 		return nil
 	})
 
@@ -54,6 +54,7 @@ func (kv *secretsKVStoreSQL) Get(ctx context.Context, orgId int64, namespace str
 		defer kv.decryptionCache.Unlock()
 
 		if cache := kv.decryptionCache.get(orgId, namespace, typ); cache != nil && item.Updated.Equal(cache.updated) {
+			kv.log.Debug("got secret value from cache", "orgId", orgId, "type", typ, "namespace", namespace)
 			return cache.value, isFound, err
 		}
 
@@ -72,6 +73,7 @@ func (kv *secretsKVStoreSQL) Get(ctx context.Context, orgId int64, namespace str
 		kv.decryptionCache.set(orgId, namespace, typ, string(decryptedValue), item.Updated)
 	}
 
+	kv.log.Debug("got secret value", "orgId", orgId, "type", typ, "namespace", namespace)
 	return string(decryptedValue), isFound, err
 }
 
