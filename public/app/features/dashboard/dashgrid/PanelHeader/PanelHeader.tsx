@@ -1,4 +1,5 @@
 import React, { FC } from 'react';
+import { useLocation } from 'react-router-dom';
 import { css, cx } from '@emotion/css';
 import { DataLink, GrafanaTheme2, PanelData } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
@@ -31,8 +32,9 @@ export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, dat
   const title = panel.getDisplayTitle();
   const className = cx('panel-header', !(isViewing || isEditing) ? 'grid-drag-handle' : '');
   const styles = useStyles2(panelStyles);
-  const urlParams = new URLSearchParams(window.location.search);
-  const disablePanelTitle = urlParams.get('disablePanelTitle');
+  const location = useLocation();
+  const query = new URLSearchParams(location.search);
+  const disablePanelTitle = query.get('disablePanelTitle') === 'true';
 
   return (
     <>
