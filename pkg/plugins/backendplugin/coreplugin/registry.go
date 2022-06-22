@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	sdklog "github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
@@ -41,6 +43,12 @@ const (
 	Grafana         = "grafana"
 )
 
+func init() {
+	// Non-optimal global solution to replace plugin SDK default loggers for core plugins.
+	sdklog.DefaultLogger = &logWrapper{logger: log.New("plugin.coreplugin")}
+	backend.Logger = sdklog.DefaultLogger
+}
+
 type Registry struct {
 	store map[string]backendplugin.PluginFactoryFunc
 }
@@ -55,6 +63,7 @@ func ProvideCoreRegistry(am *azuremonitor.Service, cw *cloudwatch.CloudWatchServ
 	es *elasticsearch.Service, grap *graphite.Service, idb *influxdb.Service, lk *loki.Service, otsdb *opentsdb.Service,
 	pr *prometheus.Service, t *tempo.Service, td *testdatasource.Service, pg *postgres.Service, my *mysql.Service,
 	ms *mssql.Service, graf *grafanads.Service) *Registry {
+
 	return NewRegistry(map[string]backendplugin.PluginFactoryFunc{
 		CloudWatch:      asBackendPlugin(cw.Executor),
 		CloudMonitoring: asBackendPlugin(cm),
@@ -109,4 +118,28 @@ func asBackendPlugin(svc interface{}) backendplugin.PluginFactoryFunc {
 	}
 
 	return nil
+}
+
+type logWrapper struct {
+	logger log.Logger
+}
+
+func (l *logWrapper) Debug(msg string, args ...interface{}) {
+	l.logger.Debug(msg, args...)
+}
+
+func (l *logWrapper) Info(msg string, args ...interface{}) {
+	l.logger.Info(msg, args...)
+}
+
+func (l *logWrapper) Warn(msg string, args ...interface{}) {
+	l.logger.Warn(msg, args...)
+}
+
+func (l *logWrapper) Error(msg string, args ...interface{}) {
+	l.logger.Error(msg, args...)
+}
+
+func (l *logWrapper) Level() sdklog.Level {
+	return sdklog.NoLevel
 }
