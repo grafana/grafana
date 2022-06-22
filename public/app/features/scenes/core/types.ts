@@ -1,7 +1,7 @@
 import React from 'react';
 import { Subscribable } from 'rxjs';
 
-import { EventBus, PanelData, TimeRange } from '@grafana/data';
+import { EventBus, PanelData, TimeRange, UrlQueryMap } from '@grafana/data';
 
 import { SceneVariableSet } from '../variables/types';
 
@@ -113,7 +113,8 @@ export function isSceneObject(obj: any): obj is SceneObject {
 
 /** These functions are still just temporary until this get's refined */
 export interface SceneObjectWithUrlSync extends SceneObject {
-  getUrlState(): any;
+  getUrlState(): UrlQueryMap;
+  updateFromUrl(values: UrlQueryMap): void;
 }
 
 export function isSceneObjectWithUrlSync(obj: any): obj is SceneObjectWithUrlSync {

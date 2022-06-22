@@ -1,9 +1,9 @@
-import { TimeRange } from '@grafana/data';
+import { TimeRange, UrlQueryMap } from '@grafana/data';
 
 import { SceneObjectBase } from './SceneObjectBase';
-import { SceneTimeRangeState } from './types';
+import { SceneObjectWithUrlSync, SceneTimeRangeState } from './types';
 
-export class SceneTimeRange extends SceneObjectBase<SceneTimeRangeState> {
+export class SceneTimeRange extends SceneObjectBase<SceneTimeRangeState> implements SceneObjectWithUrlSync {
   onTimeRangeChange = (timeRange: TimeRange) => {
     this.setState(timeRange);
   };
@@ -15,11 +15,15 @@ export class SceneTimeRange extends SceneObjectBase<SceneTimeRangeState> {
 
   onIntervalChanged = (_: string) => {};
 
-  /** Temporary solution */
+  /** These url sync functions are only placeholders for something more sophisticated  */
   getUrlState() {
     return {
       from: this.state.raw.from,
       to: this.state.raw.to,
-    };
+    } as any;
+  }
+
+  updateFromUrl(values: UrlQueryMap) {
+    // TODO
   }
 }
