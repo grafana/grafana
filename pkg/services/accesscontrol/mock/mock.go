@@ -89,18 +89,25 @@ func (m *Mock) Evaluate(ctx context.Context, user *models.SignedInUser, evaluato
 		return m.EvaluateFunc(ctx, user, evaluator)
 	}
 
-	if user.Permissions == nil {
-		user.Permissions = map[int64]map[string][]string{}
+	var permissions map[string][]string
+	if user.Permissions != nil && user.Permissions[user.OrgId] != nil {
+		permissions = user.Permissions[user.OrgId]
 	}
 
-	permissions, err := m.GetUserPermissions(ctx, user, accesscontrol.Options{ReloadCache: true})
+	if permissions == nil {
+		userPermissions, err := m.GetUserPermissions(ctx, user, accesscontrol.Options{ReloadCache: true})
+		if err != nil {
+			return false, err
+		}
+		permissions = accesscontrol.GroupScopesByAction(userPermissions)
+	}
 
 	attributeMutator := m.scopeResolvers.GetScopeAttributeMutator(user.OrgId)
 	resolvedEvaluator, err := evaluator.MutateScopes(ctx, attributeMutator)
 	if err != nil {
 		return false, err
 	}
-	return resolvedEvaluator.Evaluate(accesscontrol.GroupScopesByAction(permissions)), nil
+	return resolvedEvaluator.Evaluate(permissions), nil
 }
 
 // GetUserPermissions returns user permissions.
