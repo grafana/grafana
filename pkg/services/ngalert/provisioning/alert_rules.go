@@ -12,6 +12,10 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+var (
+	ErrAlertRuleGroupNotProvisoned = errors.New("can not provison a rule into a group with not provisoned rules")
+)
+
 type AlertRuleService struct {
 	defaultIntervalSeconds int64
 	baseIntervalSeconds    int64
@@ -59,6 +63,14 @@ func (service *AlertRuleService) GetAlertRule(ctx context.Context, orgID int64, 
 func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule models.AlertRule, provenance models.Provenance) (models.AlertRule, error) {
 	if rule.UID == "" {
 		rule.UID = util.GenerateShortUID()
+	}
+	// check if we try to provsion a non-provisonied rule group
+	isProvisioned, err := service.isProvisionedGroup(ctx, rule)
+	if err != nil {
+		return models.AlertRule{}, err
+	}
+	if !isProvisioned {
+		return models.AlertRule{}, ErrAlertRuleGroupNotProvisoned
 	}
 	interval, err := service.ruleStore.GetRuleGroupInterval(ctx, rule.OrgID, rule.NamespaceUID, rule.RuleGroup)
 	// if the alert group does not exists we just use the default interval
@@ -124,6 +136,14 @@ func (service *AlertRuleService) UpdateRuleGroup(ctx context.Context, orgID int6
 // interval that is set in the rule struct and fetch the current group interval
 // from database.
 func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, rule models.AlertRule, provenance models.Provenance) (models.AlertRule, error) {
+	// check if we try to provsion a non-provisonied rule group
+	isProvisioned, err := service.isProvisionedGroup(ctx, rule)
+	if err != nil {
+		return models.AlertRule{}, err
+	}
+	if !isProvisioned {
+		return models.AlertRule{}, ErrAlertRuleGroupNotProvisoned
+	}
 	storedRule, storedProvenance, err := service.GetAlertRule(ctx, rule.OrgID, rule.UID)
 	if err != nil {
 		return models.AlertRule{}, err
@@ -176,4 +196,23 @@ func (service *AlertRuleService) DeleteAlertRule(ctx context.Context, orgID int6
 		}
 		return service.provenanceStore.DeleteProvenance(ctx, rule, rule.OrgID)
 	})
+}
+
+// isProvisnedGroup return true if the group does not exists or is provisoned
+func (service *AlertRuleService) isProvisionedGroup(ctx context.Context, rule models.AlertRule) (bool, error) {
+	prov, err := service.provenanceStore.GetProvenance(ctx, &rule, rule.OrgID)
+	if err != nil {
+		return false, err
+	}
+	if prov != models.ProvenanceNone {
+		return true, nil
+	}
+	_, err = service.ruleStore.GetRuleGroupInterval(ctx, rule.OrgID, rule.NamespaceUID, rule.RuleGroup)
+	if err != nil {
+		if err == store.ErrAlertRuleGroupNotFound {
+			return true, err
+		}
+		return false, err
+	}
+	return false, nil
 }

@@ -233,11 +233,11 @@ func (alertRule *AlertRule) PreSave(timeNow func() time.Time) error {
 }
 
 func (alertRule *AlertRule) ResourceType() string {
-	return "alertRule"
+	return "alertRuleGroup"
 }
 
 func (alertRule *AlertRule) ResourceID() string {
-	return alertRule.UID
+	return fmt.Sprintf("%s-%s", alertRule.NamespaceUID, alertRule.RuleGroup)
 }
 
 func (alertRule *AlertRule) ResourceOrgID() int64 {
