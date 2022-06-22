@@ -11,6 +11,22 @@ func addPublicDashboardMigration(mg *Migrator) {
 			{Name: "uid", Type: DB_NVarchar, Length: 40, IsPrimaryKey: true},
 			{Name: "dashboard_uid", Type: DB_NVarchar, Length: 40, Nullable: false},
 			{Name: "org_id", Type: DB_BigInt, Nullable: false},
+			{Name: "time_settings", Type: DB_Text, Nullable: false},
+			{Name: "refresh_rate", Type: DB_Int, Nullable: false, Default: "30"},
+			{Name: "template_variables", Type: DB_MediumText, Nullable: true},
+		},
+		Indices: []*Index{
+			{Cols: []string{"uid"}, Type: UniqueIndex},
+			{Cols: []string{"org_id", "dashboard_uid"}},
+		},
+	}
+
+	var dashboardPublicCfgV2 = Table{
+		Name: "dashboard_public_config",
+		Columns: []*Column{
+			{Name: "uid", Type: DB_NVarchar, Length: 40, IsPrimaryKey: true},
+			{Name: "dashboard_uid", Type: DB_NVarchar, Length: 40, Nullable: false},
+			{Name: "org_id", Type: DB_BigInt, Nullable: false},
 
 			{Name: "time_settings", Type: DB_Text, Nullable: true},
 			{Name: "template_variables", Type: DB_MediumText, Nullable: true},
@@ -44,8 +60,8 @@ func addPublicDashboardMigration(mg *Migrator) {
 	// recreate table - schema finalized for public dashboards v1
 	addDropAllIndicesMigrations(mg, "v2", dashboardPublicCfgV1)
 	mg.AddMigration("Drop public config table", NewDropTableMigration("dashboard_public_config"))
-	mg.AddMigration("Recreate dashboard public config v2", NewAddTableMigration(dashboardPublicCfgV1))
-	addTableIndicesMigrations(mg, "v2", dashboardPublicCfgV1)
+	mg.AddMigration("Recreate dashboard public config v2", NewAddTableMigration(dashboardPublicCfgV2))
+	addTableIndicesMigrations(mg, "v2", dashboardPublicCfgV2)
 
 	// rename table
 	addTableRenameMigration(mg, "dashboard_public_config", "dashboard_public", "v2")
