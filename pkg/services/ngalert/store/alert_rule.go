@@ -410,7 +410,7 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 			}
 			q = q.NotIn("org_id", excludeOrgs...)
 		}
-		q = q.Asc("namespace_uid", "rule_group", "rule_group_idx")
+		q = q.Asc("namespace_uid", "rule_group", "rule_group_idx", "id")
 		if err := q.Find(&alerts); err != nil {
 			return err
 		}
