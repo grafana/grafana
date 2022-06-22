@@ -19,9 +19,8 @@ import (
 )
 
 type Resource struct {
-	provider      *client.Provider
-	log           log.Logger
-	customHeaders map[string]string
+	provider *client.Provider
+	log      log.Logger
 }
 
 // Hop-by-hop headers. These are removed when sent to the backend.
@@ -55,12 +54,6 @@ func delStopHeaders(header http.Header) {
 	}
 }
 
-func addHeaders(header http.Header, toAdd map[string]string) {
-	for k, v := range toAdd {
-		header.Add(k, v)
-	}
-}
-
 func normalizeReqHeaders(headers map[string][]string) map[string]string {
 	h := make(map[string]string, len(headers))
 	for k, v := range headers {
@@ -81,7 +74,6 @@ func New(
 		return nil, fmt.Errorf("error reading settings: %w", err)
 	}
 
-	customHeaders := make(map[string]string)
 	var jsonDataMap map[string]interface{}
 
 	err := json.Unmarshal(settings.JSONData, &jsonDataMap)
@@ -89,37 +81,15 @@ func New(
 		return nil, err
 	}
 
-	index := 1
-	for {
-		headerNameSuffix := fmt.Sprintf("httpHeaderName%d", index)
-		headerValueSuffix := fmt.Sprintf("httpHeaderValue%d", index)
-
-		key := jsonDataMap[headerNameSuffix]
-		if key == nil {
-			// No (more) header values are available
-			break
-		}
-
-		if val, ok := settings.DecryptedSecureJSONData[headerValueSuffix]; ok {
-			switch k := key.(type) {
-			case string:
-				customHeaders[k] = val
-			}
-		}
-		index++
-	}
-
 	return &Resource{
-		log:           plog,
-		provider:      client.NewProvider(settings, jsonData, httpClientProvider, cfg, features, plog),
-		customHeaders: customHeaders,
+		log:      plog,
+		provider: client.NewProvider(settings, jsonData, httpClientProvider, cfg, features, plog),
 	}, nil
 }
 
 func (r *Resource) Execute(ctx context.Context, req *backend.CallResourceRequest) (int, []byte, error) {
 	delHopHeaders(req.Headers)
 	delStopHeaders(req.Headers)
-	addHeaders(req.Headers, r.customHeaders)
 	client, err := r.provider.GetClient(normalizeReqHeaders(req.Headers))
 	if err != nil {
 		return 500, nil, err
