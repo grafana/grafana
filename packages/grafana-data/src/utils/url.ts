@@ -206,5 +206,8 @@ export function serializeStateToUrlParam(urlState: ExploreUrlState, compact?: bo
   if (compact !== undefined) {
     console.warn('`compact` parameter is deprecated and will be removed in a future release');
   }
-  return JSON.stringify(urlState);
+
+  return encodeURIComponent(JSON.stringify(urlState)).replace(/[!'()*]/g, function (c) {
+    return '%' + c.charCodeAt(0).toString(16).toUpperCase();
+  });
 }
