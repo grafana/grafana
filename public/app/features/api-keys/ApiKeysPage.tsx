@@ -141,10 +141,6 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
     }
   };
 
-  //@TODO Remove this, it's only for dev testing
-  produceErrorr = () => {
-    throw new Error('This is a test error');
-  };
   onHideApiKeys = async () => {
     await this.props.hideApiKeys();
     window.location.reload();
@@ -188,7 +184,6 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
                   {config.featureToggles.serviceAccounts && apiKeysMigrated && (
                     <APIKeysMigratedCard onHideApiKeys={this.onHideApiKeys} />
                   )}
-                  <button onClick={this.produceErrorr}>ExceptioN!</button>
                   {showCTA ? (
                     <EmptyListCTA
                       title="You haven't added any API keys yet."
