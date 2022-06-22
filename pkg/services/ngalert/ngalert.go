@@ -139,7 +139,7 @@ func (ng *AlertNG) init() error {
 
 	clk := clock.New()
 
-	alertsRouter := sender.NewAlertDispatcher(ng.MultiOrgAlertmanager, store, clk, appUrl, ng.Cfg.UnifiedAlerting.DisabledOrgs, ng.Cfg.UnifiedAlerting.AdminConfigPollInterval)
+	alertsRouter := sender.NewAlertsRouter(ng.MultiOrgAlertmanager, store, clk, appUrl, ng.Cfg.UnifiedAlerting.DisabledOrgs, ng.Cfg.UnifiedAlerting.AdminConfigPollInterval)
 
 	if err := alertsRouter.SyncAndApplyConfigFromDatabase(); err != nil {
 		return fmt.Errorf("failed to initialize alerting because alert alertsRouter fails to warm up: %w", err)

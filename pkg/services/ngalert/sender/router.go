@@ -40,7 +40,7 @@ type AlertsRouter struct {
 	adminConfigPollInterval time.Duration
 }
 
-func NewAlertDispatcher(multiOrgNotifier *notifier.MultiOrgAlertmanager, store store.AdminConfigurationStore, clk clock.Clock, appURL *url.URL, disabledOrgs map[int64]struct{}, configPollInterval time.Duration) *AlertsRouter {
+func NewAlertsRouter(multiOrgNotifier *notifier.MultiOrgAlertmanager, store store.AdminConfigurationStore, clk clock.Clock, appURL *url.URL, disabledOrgs map[int64]struct{}, configPollInterval time.Duration) *AlertsRouter {
 	d := &AlertsRouter{
 		AdminConfigMtx:   sync.RWMutex{},
 		logger:           log.New("ngalert-notifications-dispatcher"),
