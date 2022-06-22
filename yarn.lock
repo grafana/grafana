@@ -11406,6 +11406,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/webpack-env@npm:^1.17.0":
+  version: 1.17.0
+  resolution: "@types/webpack-env@npm:1.17.0"
+  checksum: 9ad4d208c4429c9427191d1f4c92e4c43e530384c17a6bc298acb89003fc47fcde1d8372e50acefa3061e9100e57fd9d616e96def875afd06c0c2afe508f298e
+  languageName: node
+  linkType: hard
+
 "@types/webpack-sources@npm:*":
   version: 3.2.0
   resolution: "@types/webpack-sources@npm:3.2.0"
@@ -20828,6 +20835,7 @@ __metadata:
     "@types/testing-library__react-hooks": ^3.2.0
     "@types/tinycolor2": 1.4.3
     "@types/uuid": 8.3.4
+    "@types/webpack-env": ^1.17.0
     "@typescript-eslint/eslint-plugin": 5.28.0
     "@typescript-eslint/parser": 5.28.0
     "@visx/event": 2.6.0
