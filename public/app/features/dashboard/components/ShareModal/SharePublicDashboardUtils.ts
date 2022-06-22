@@ -32,7 +32,7 @@ export const savePublicDashboardConfig = async (
   publicDashboardConfig: PublicDashboard,
   setPublicDashboard: React.Dispatch<React.SetStateAction<PublicDashboard>>
 ) => {
-  const url = `/api/dashboards/access/${dashboardUid}/public-config`;
+  const url = `/api/dashboards/uid/${dashboardUid}/public-config`;
   const pdResp: PublicDashboard = await getBackendSrv().post(url, publicDashboardConfig);
 
   // Never allow a user to send the orgId
