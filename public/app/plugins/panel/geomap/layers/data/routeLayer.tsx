@@ -5,6 +5,7 @@ import {
   GrafanaTheme2,
   FrameGeometrySourceMode,
   PluginState,
+  EventBus,
 } from '@grafana/data';
 import Map from 'ol/Map';
 import { FeatureLike } from 'ol/Feature';
@@ -59,7 +60,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: async (map: Map, options: MapLayerOptions<RouteConfig>, theme: GrafanaTheme2) => {
+  create: async (map: Map, options: MapLayerOptions<RouteConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
     // Assert default values
     const config = {
       ...defaultOptions,
