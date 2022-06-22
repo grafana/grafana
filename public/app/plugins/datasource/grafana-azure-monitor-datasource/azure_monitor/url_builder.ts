@@ -19,6 +19,12 @@ export default class UrlBuilder {
     } else {
       urlArray.push(resourceNameArray[0]);
     }
+    if (
+      (metricDefinition.startsWith('Microsoft.Storage/storageAccounts/') || resourceNameArray.at(-1) === 'default') &&
+      urlArray.at(-1) !== 'default'
+    ) {
+      urlArray.push('default');
+    }
     return urlArray.join('/');
   }
 
