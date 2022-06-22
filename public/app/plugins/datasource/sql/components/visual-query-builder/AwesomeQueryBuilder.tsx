@@ -1,5 +1,6 @@
+import { isString } from 'lodash';
 import React from 'react';
-import { BasicConfig, Config, JsonItem, Settings, Utils, Widgets } from 'react-awesome-query-builder';
+import { BasicConfig, Config, JsonItem, Settings, Utils, ValueSource, Widgets } from 'react-awesome-query-builder';
 
 import { dateTime, toOption } from '@grafana/data';
 import { Button, DateTimePicker, Input, Select } from '@grafana/ui';
@@ -67,8 +68,6 @@ export const widgets: Widgets = {
   },
 };
 
-const { is_empty, is_not_empty, proximity, ...supportedOperators } = BasicConfig.operators;
-
 export const settings: Settings = {
   ...BasicConfig.settings,
   canRegroup: false,
@@ -135,11 +134,85 @@ export const settings: Settings = {
   },
 };
 
+// add IN / NOT IN operators to text to support multi-value variables
+const customOperators = getCustomOperators(BasicConfig);
+const textWidget = BasicConfig.types.text.widgets.text;
+const opers = [...(textWidget.operators || []), 'select_any_in', 'select_not_any_in'];
+const customTextWidget = {
+  ...textWidget,
+  operators: opers,
+};
+
+const customTypes = {
+  ...BasicConfig.types,
+  text: {
+    ...BasicConfig.types.text,
+    widgets: {
+      ...BasicConfig.types.text.widgets,
+      text: customTextWidget,
+    },
+  },
+};
+
 export const raqbConfig: Config = {
   ...BasicConfig,
   widgets,
   settings,
-  operators: supportedOperators as typeof BasicConfig.operators,
+  operators: customOperators as typeof BasicConfig.operators,
+  types: customTypes,
 };
 
 export type { Config };
+
+function getCustomOperators(config: BasicConfig) {
+  const { ...supportedOperators } = config.operators;
+  const noop = () => '';
+  // IN operator expects array, override IN formatter for multi-value variables
+  const sqlFormatInOp = supportedOperators.select_any_in.sqlFormatOp || noop;
+  const customSqlInFormatter = (
+    field: string,
+    op: string,
+    value: any,
+    valueSrc: ValueSource,
+    valueType: string,
+    opDef: any,
+    operatorOptions: any,
+    fieldDef: any
+  ) => {
+    return sqlFormatInOp(field, op, splitIfString(value), valueSrc, valueType, opDef, operatorOptions, fieldDef);
+  };
+  // NOT IN operator expects array, override NOT IN formatter for multi-value variables
+  const sqlFormatNotInOp = supportedOperators.select_not_any_in.sqlFormatOp || noop;
+  const customSqlNotInFormatter = (
+    field: string,
+    op: string,
+    value: any,
+    valueSrc: ValueSource,
+    valueType: string,
+    opDef: any,
+    operatorOptions: any,
+    fieldDef: any
+  ) => {
+    return sqlFormatNotInOp(field, op, splitIfString(value), valueSrc, valueType, opDef, operatorOptions, fieldDef);
+  };
+
+  const customOperators = {
+    ...supportedOperators,
+    select_any_in: {
+      ...supportedOperators.select_any_in,
+      sqlFormatOp: customSqlInFormatter,
+    },
+    select_not_any_in: {
+      ...supportedOperators.select_not_any_in,
+      sqlFormatOp: customSqlNotInFormatter,
+    },
+  };
+  return customOperators;
+}
+
+function splitIfString(value: any) {
+  if (isString(value)) {
+    return value.split(',');
+  }
+  return value;
+}

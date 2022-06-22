@@ -103,12 +103,17 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
 
   applyTemplateVariables(target: SQLQuery, scopedVars: ScopedVars): Record<string, any> {
     const queryModel = this.getQueryModel(target, this.templateSrv, scopedVars);
+    const rawSql = this.clean(queryModel.interpolate());
     return {
       refId: target.refId,
       datasource: this.getRef(),
-      rawSql: queryModel.interpolate(),
+      rawSql,
       format: target.format,
     };
+  }
+
+  clean(value: string) {
+    return value.replace(/''/g, "'");
   }
 
   async annotationQuery(options: any): Promise<AnnotationEvent[]> {
