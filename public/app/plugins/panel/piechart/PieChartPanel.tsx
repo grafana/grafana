@@ -93,8 +93,14 @@ function getLegend(props: Props, displayValues: FieldDisplay[]) {
         return b.display.numeric - a.display.numeric;
       }
     })
-    .map<VizLegendItem>((value, idx) => {
+    .map<VizLegendItem | undefined>((value, idx) => {
       const hidden = value.field.custom.hideFrom.viz;
+      const hideFromLegend = value.field.custom?.hideFrom?.legend;
+
+      if (hideFromLegend) {
+        return undefined;
+      }
+
       const display = value.display;
       return {
         label: display.title ?? '',
@@ -128,7 +134,8 @@ function getLegend(props: Props, displayValues: FieldDisplay[]) {
           return displayValues;
         },
       };
-    });
+    })
+    .filter((i) => i !== undefined) as VizLegendItem[];
 
   return (
     <VizLegend
