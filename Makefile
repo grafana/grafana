@@ -115,12 +115,8 @@ build-js: ## Build frontend assets.
 
 build: build-go build-js ## Build backend and frontend.
 
-scripts/go/bin/bra: scripts/go/go.mod
-	@cd scripts/go; \
-	$(GO) build -o ./bin/bra github.com/unknwon/bra
-
-run: scripts/go/bin/bra ## Build and run web server on filesystem changes.
-	@scripts/go/bin/bra run
+run: $(BRA) ## Build and run web server on filesystem changes.
+	$(BRA) run
 
 run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild
 	yarn start
@@ -138,14 +134,10 @@ test-js: ## Run tests for frontend.
 test: test-go test-js ## Run all tests.
 
 ##@ Linting
-scripts/go/bin/golangci-lint: scripts/go/go.mod
-	@cd scripts/go; \
-	$(GO) build -o ./bin/golangci-lint github.com/golangci/golangci-lint/cmd/golangci-lint
-
-golangci-lint: scripts/go/bin/golangci-lint
+golangci-lint: $(GOLANGCI_LINT)
 	@echo "lint via golangci-lint"
-	@scripts/go/bin/golangci-lint run \
-		--config ./scripts/go/configs/.golangci.toml \
+	$(GOLANGCI_LINT) run \
+		--config ./conf/.golangci.toml \
 		$(GO_FILES)
 
 lint-go: golangci-lint ## Run all code checks for backend. You can use GO_FILES to specify exact files to check

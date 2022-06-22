@@ -220,9 +220,6 @@ def get_steps(edition, ver_mode):
     if build_storybook:
         build_steps.append(build_storybook)
 
-    if include_enterprise2:
-      integration_test_steps.extend([redis_integration_tests_step(), memcached_integration_tests_step()])
-
     if should_upload:
         publish_steps.append(upload_cdn_step(edition=edition, ver_mode=ver_mode, trigger=trigger_oss))
         publish_steps.append(upload_packages_step(edition=edition, ver_mode=ver_mode, trigger=trigger_oss))
@@ -275,7 +272,7 @@ def get_oss_pipelines(trigger, ver_mode):
             ),
             pipeline(
                 name='{}-oss-integration-tests'.format(ver_mode), edition=edition, trigger=trigger, services=services,
-                steps=[download_grabpl_step(), identify_runner_step(),] + integration_test_steps,
+                steps=[download_grabpl_step(), identify_runner_step(), verify_gen_cue_step(), wire_install_step(), ] + integration_test_steps,
                 volumes=volumes,
             )
         ])
@@ -337,7 +334,7 @@ def get_enterprise_pipelines(trigger, ver_mode):
             ),
             pipeline(
                 name='{}-enterprise-integration-tests'.format(ver_mode), edition=edition, trigger=trigger, services=services,
-                steps=[download_grabpl_step(), identify_runner_step(), clone_enterprise_step(ver_mode), init_enterprise_step(ver_mode),] + integration_test_steps,
+                steps=[download_grabpl_step(), identify_runner_step(), clone_enterprise_step(ver_mode), init_enterprise_step(ver_mode),] + integration_test_steps + [redis_integration_tests_step(), memcached_integration_tests_step()],
                 volumes=volumes,
             ),
         ])

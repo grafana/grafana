@@ -24,7 +24,6 @@ type SQLStoreMock struct {
 	ExpectedDashboardAclInfoList   []*models.DashboardAclInfoDTO
 	ExpectedUserOrgList            []*models.UserOrgDTO
 	ExpectedOrgListResponse        OrgListResponse
-	ExpectedDashboardSnapshot      *models.DashboardSnapshot
 	ExpectedTeamsByUser            []*models.TeamDTO
 	ExpectedSearchOrgList          []*models.OrgDTO
 	ExpectedSearchUsers            models.SearchUserQueryResult
@@ -73,28 +72,7 @@ func (m *SQLStoreMock) GetSystemStats(ctx context.Context, query *models.GetSyst
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) DeleteExpiredSnapshots(ctx context.Context, cmd *models.DeleteExpiredSnapshotsCommand) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) CreateDashboardSnapshot(ctx context.Context, cmd *models.CreateDashboardSnapshotCommand) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) DeleteDashboardSnapshot(ctx context.Context, cmd *models.DeleteDashboardSnapshotCommand) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetDashboardSnapshot(ctx context.Context, query *models.GetDashboardSnapshotQuery) error {
-	query.Result = m.ExpectedDashboardSnapshot
-	return m.ExpectedError
-}
-
 func (m *SQLStoreMock) HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) SearchDashboardSnapshots(ctx context.Context, query *models.GetDashboardSnapshotsQuery) error {
 	return m.ExpectedError
 }
 
