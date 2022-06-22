@@ -198,7 +198,7 @@ func (service *AlertRuleService) DeleteAlertRule(ctx context.Context, orgID int6
 	})
 }
 
-// isProvisnedGroup return true if the group does not exists or is provisioned
+// isProvisionedGroup return true if the group does not exists or is provisioned
 func (service *AlertRuleService) isProvisionedGroup(ctx context.Context, rule models.AlertRule) (bool, error) {
 	prov, err := service.provenanceStore.GetProvenance(ctx, &rule, rule.OrgID)
 	if err != nil {
@@ -207,8 +207,8 @@ func (service *AlertRuleService) isProvisionedGroup(ctx context.Context, rule mo
 	if prov != models.ProvenanceNone {
 		return true, nil
 	}
-	// we can use GetRuleGroupInterval to see if the group exists as otherwise it
-	// return ErrAlertRuleGroupNotFound
+	// we can use GetRuleGroupInterval to see if the group exists as it
+	// returns ErrAlertRuleGroupNotFound if the group was not found
 	_, err = service.ruleStore.GetRuleGroupInterval(ctx, rule.OrgID, rule.NamespaceUID, rule.RuleGroup)
 	if err != nil {
 		if err == store.ErrAlertRuleGroupNotFound {
