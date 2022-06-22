@@ -46,11 +46,13 @@ describe('TracePageHeader test', () => {
     expect(screen.getByRole('banner')).toBeInTheDocument();
   });
 
-  it('should render an empty <div> if a trace is not present', async () => {
+  it('should render nothing if a trace is not present', () => {
     setup({ trace: null });
 
-    expect(await screen.findAllByRole(/[<div \/>]/)).toHaveLength(1);
-    expect(screen.queryAllByRole('banner')).toHaveLength(0);
+    expect(screen.queryByRole('banner')).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { traceName: getTraceName(trace.spans) })).not.toBeInTheDocument();
+    expect(screen.queryAllByRole('listitem')).toHaveLength(0);
+    expect(screen.queryByText(/Reset Selection/)).not.toBeInTheDocument();
   });
 
   it('should render the trace title', () => {
@@ -73,10 +75,10 @@ describe('TracePageHeader test', () => {
     expect(headerItems[4].textContent.match(/Total Spans:\d\d?\d?\d?/)).toBeTruthy();
   });
 
-  it('should render a <SpanGraph>', async () => {
+  it('should render a <SpanGraph>', () => {
     setup();
 
-    expect(await screen.findByText(/Reset Selection/)).toBeInTheDocument();
+    expect(screen.getByText(/Reset Selection/)).toBeInTheDocument();
   });
 
   describe('observes the visibility toggles for various UX elements', () => {
@@ -90,8 +92,40 @@ describe('TracePageHeader test', () => {
       const { rerender } = setup({ hideSummary: false });
       expect(screen.queryAllByRole('listitem')).toHaveLength(5);
 
-      rerender(<TracePageHeader hideSummary={false} />);
+      rerender(<TracePageHeader hideSummary={false} trace={null} />);
       expect(screen.queryAllByRole('listitem')).toHaveLength(0);
+
+      rerender(
+        <TracePageHeader
+          trace={trace}
+          hideSummary={true}
+          hideMap={false}
+          showArchiveButton={false}
+          showShortcutsHelp={false}
+          showStandaloneLink={false}
+          showViewOptions={false}
+          textFilter=""
+          viewRange={{ time: { current: [10, 20] } }}
+          updateTextFilter={() => {}}
+        />
+      );
+      expect(screen.queryAllByRole('listitem')).toHaveLength(0);
+
+      rerender(
+        <TracePageHeader
+          trace={trace}
+          hideSummary={false}
+          hideMap={false}
+          showArchiveButton={false}
+          showShortcutsHelp={false}
+          showStandaloneLink={false}
+          showViewOptions={false}
+          textFilter=""
+          viewRange={{ time: { current: [10, 20] } }}
+          updateTextFilter={() => {}}
+        />
+      );
+      expect(screen.queryAllByRole('listitem')).toHaveLength(5);
     });
   });
 });
