@@ -1,6 +1,5 @@
 import { escapeRegExp } from 'lodash';
 
-import { PIPE_PARSERS } from './syntax';
 import { LokiQuery, LokiQueryType } from './types';
 
 export function formatQuery(selector: string | undefined): string {
