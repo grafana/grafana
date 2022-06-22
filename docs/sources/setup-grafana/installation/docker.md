@@ -255,7 +255,7 @@ Refer to the [Getting Started]({{< relref "../../getting-started/build-first-das
 
 ## Configure Docker image
 
-Refer to [Configure a Grafana Docker image]({{< relref "../../administration/configure-docker/" >}}) page for details on options for customizing your environment, logging, database, and so on.
+Refer to [Configure a Grafana Docker image]({{< relref "../configure-docker/" >}}) page for details on options for customizing your environment, logging, database, and so on.
 
 ## Configure Grafana
 
