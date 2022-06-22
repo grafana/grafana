@@ -725,7 +725,7 @@ func (sch *schedule) saveAlertStates(ctx context.Context, states []*state.State)
 	sch.log.Debug("saving alert states", "count", len(states))
 	for _, s := range states {
 		if s.StateReason == ngmodels.StateReasonMissingSeries {
-			continue
+			continue // Do not save such state because it is stale and was removed from the cache.
 		}
 		cmd := ngmodels.SaveAlertInstanceCommand{
 			RuleOrgID:         s.OrgID,
