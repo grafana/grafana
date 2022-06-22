@@ -106,7 +106,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     return {
       refId: target.refId,
       datasource: this.getRef(),
-      rawSql: queryModel.render(this.interpolateVariable as any),
+      rawSql: queryModel.interpolate(),
       format: target.format,
     };
   }
@@ -213,17 +213,6 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
   }
 
   targetContainsTemplate(target: any) {
-    let rawSql = '';
-
-    if (target.rawQuery) {
-      rawSql = target.rawSql;
-    } else {
-      const query = this.getQueryModel(target);
-      rawSql = query.buildQuery();
-    }
-
-    rawSql = rawSql.replace('$__', '');
-
-    return this.templateSrv.containsTemplate(rawSql);
+    return this.templateSrv.containsTemplate(target.rawSql);
   }
 }

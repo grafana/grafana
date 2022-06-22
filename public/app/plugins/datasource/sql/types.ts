@@ -49,6 +49,7 @@ export interface SQLQuery extends DataQuery {
   table?: string;
   sql?: SQLExpression;
   editorMode?: EditorMode;
+  rawQuery?: boolean;
 }
 
 export interface NameValue {
@@ -144,8 +145,7 @@ export interface ValidationResults {
 }
 
 export interface SqlQueryModel {
-  buildQuery: () => string;
-  render: (v: any) => string;
+  interpolate: () => string;
   quoteLiteral: (v: string) => string;
 }
 
