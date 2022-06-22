@@ -1,7 +1,7 @@
 import React from 'react';
 import { Subscribable } from 'rxjs';
 
-import { PanelData, TimeRange } from '@grafana/data';
+import { EventBus, PanelData, TimeRange } from '@grafana/data';
 
 import { SceneVariableSet } from '../variables/types';
 
@@ -46,6 +46,9 @@ export interface SceneObject<TState extends SceneObjectState = SceneObjectState>
   /** SceneObject parent */
   parent?: SceneObject;
 
+  /** For only only used by from root to broadcast events */
+  events: EventBus;
+
   /** Utility hook that wraps useObservable. Used by React components to subscribes to state changes */
   useState(): TState;
 
@@ -61,7 +64,7 @@ export interface SceneObject<TState extends SceneObjectState = SceneObjectState>
   /** Called when component unmounts. Unsubscribe to events */
   onUnmount(): void;
 
-  //** Get the scene editor */
+  /** Get the scene editor */
   getSceneEditor(): SceneEditor;
 
   /** Returns a deep clone this object and all it's children */
@@ -106,4 +109,13 @@ export interface SceneObjectRef {
 
 export function isSceneObject(obj: any): obj is SceneObject {
   return obj.useState !== undefined;
+}
+
+/** These functions are still just temporary until this get's refined */
+export interface SceneObjectWithUrlSync extends SceneObject {
+  getUrlState(): any;
+}
+
+export function isSceneObjectWithUrlSync(obj: any): obj is SceneObjectWithUrlSync {
+  return obj.getUrlState !== undefined;
 }

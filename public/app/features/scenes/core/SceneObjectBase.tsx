@@ -3,7 +3,10 @@ import { useObservable } from 'react-use';
 import { Observer, Subject, Subscription } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
+import { EventBusSrv } from '@grafana/data';
+
 import { SceneComponentEditWrapper } from './SceneComponentEditWrapper';
+import { SceneObjectStateChangedEvent } from './events';
 import {
   SceneDataState,
   SceneObject,
@@ -21,6 +24,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
   parent?: SceneObjectBase<any>;
   subs = new Subscription();
   isMounted?: boolean;
+  events = new EventBusSrv();
 
   constructor(state: TState) {
     if (!state.key) {
@@ -68,13 +72,28 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
     return this.subject.subscribe(observer);
   }
 
-  setState(state: Partial<TState>) {
+  setState(update: Partial<TState>) {
+    const prevState = this.state;
     this.state = {
       ...this.state,
-      ...state,
+      ...update,
     };
     this.setParent();
     this.subject.next(this.state);
+
+    // broadcast state change. This is event is subscribed to by UrlSyncManager and UndoManager
+    this.getRoot().events.publish(
+      new SceneObjectStateChangedEvent({
+        prevState,
+        newState: this.state,
+        partialUpdate: update,
+        changedObject: this,
+      })
+    );
+  }
+
+  private getRoot(): SceneObject {
+    return !this.parent ? this : this.parent.getRoot();
   }
 
   onMount() {

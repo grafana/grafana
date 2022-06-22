@@ -4,6 +4,7 @@ import { PageToolbar, ToolbarButton } from '@grafana/ui';
 
 import { SceneObjectBase } from '../core/SceneObjectBase';
 import { SceneComponentProps, SceneObjectState, SceneObject } from '../core/types';
+import { UrlSyncManager } from '../services/UrlSyncManager';
 
 interface SceneState extends SceneObjectState {
   title: string;
@@ -14,6 +15,17 @@ interface SceneState extends SceneObjectState {
 
 export class Scene extends SceneObjectBase<SceneState> {
   static Component = SceneRenderer;
+  urlSyncManager?: UrlSyncManager;
+
+  onMount() {
+    super.onMount();
+    this.urlSyncManager = new UrlSyncManager(this);
+  }
+
+  onUnmount() {
+    super.onUnmount();
+    this.urlSyncManager!.cleanUp();
+  }
 }
 
 function SceneRenderer({ model }: SceneComponentProps<Scene>) {

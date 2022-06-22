@@ -14,4 +14,12 @@ export class SceneTimeRange extends SceneObjectBase<SceneTimeRangeState> {
   };
 
   onIntervalChanged = (_: string) => {};
+
+  /** Temporary solution */
+  getUrlState() {
+    return {
+      from: this.state.raw.from,
+      to: this.state.raw.to,
+    };
+  }
 }
