@@ -75,7 +75,6 @@ func TestAddMigrationInfo(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-
 			var settings dashAlertSettings
 			require.NoError(t, json.Unmarshal([]byte(tc.tagsJSON), &settings))
 
