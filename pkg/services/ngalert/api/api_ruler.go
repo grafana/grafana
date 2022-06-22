@@ -184,7 +184,7 @@ func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *models.ReqContext) response.
 		return ErrResp(http.StatusInternalServerError, err, "failed to get provenance for rule group")
 	}
 
-	ruleGroups := make(map[string][]*ngmodels.AlertRule)
+	ruleGroups := make(map[string]ngmodels.RulesGroup)
 	for _, r := range q.Result {
 		ruleGroups[r.RuleGroup] = append(ruleGroups[r.RuleGroup], r)
 	}
@@ -284,7 +284,7 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 		return ErrResp(http.StatusInternalServerError, err, "failed to get alert rules")
 	}
 
-	configs := make(map[ngmodels.AlertRuleGroupKey][]*ngmodels.AlertRule)
+	configs := make(map[ngmodels.AlertRuleGroupKey]ngmodels.RulesGroup)
 	for _, r := range q.Result {
 		groupKey := r.GetGroupKey()
 		group := configs[groupKey]
@@ -360,7 +360,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, groupKey ngmod
 			return err
 		}
 
-		finalChanges = groupChanges
+		finalChanges = calculateAutomaticChanges(groupChanges)
 		logger.Debug("updating database with the authorized changes", "add", len(finalChanges.New), "update", len(finalChanges.New), "delete", len(finalChanges.Delete))
 
 		if len(finalChanges.Update) > 0 || len(finalChanges.New) > 0 {
@@ -448,7 +448,8 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, groupKey ngmod
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "rule group updated successfully"})
 }
 
-func toGettableRuleGroupConfig(groupName string, rules []*ngmodels.AlertRule, namespaceID int64, provenanceRecords map[string]ngmodels.Provenance) apimodels.GettableRuleGroupConfig {
+func toGettableRuleGroupConfig(groupName string, rules ngmodels.RulesGroup, namespaceID int64, provenanceRecords map[string]ngmodels.Provenance) apimodels.GettableRuleGroupConfig {
+	rules.SortByGroupIndex()
 	ruleNodes := make([]apimodels.GettableExtendedRuleNode, 0, len(rules))
 	var interval time.Duration
 	if len(rules) > 0 {
@@ -516,7 +517,7 @@ type changes struct {
 	GroupKey ngmodels.AlertRuleGroupKey
 	// AffectedGroups contains all rules of all groups that are affected by these changes.
 	// For example, during moving a rule from one group to another this map will contain all rules from two groups
-	AffectedGroups map[ngmodels.AlertRuleGroupKey][]*ngmodels.AlertRule
+	AffectedGroups map[ngmodels.AlertRuleGroupKey]ngmodels.RulesGroup
 	New            []*ngmodels.AlertRule
 	Update         []ruleUpdate
 	Delete         []*ngmodels.AlertRule
@@ -555,7 +556,7 @@ func verifyProvisionedRulesNotAffected(ctx context.Context, provenanceStore prov
 // calculateChanges calculates the difference between rules in the group in the database and the submitted rules. If a submitted rule has UID it tries to find it in the database (in other groups).
 // returns a list of rules that need to be added, updated and deleted. Deleted considered rules in the database that belong to the group but do not exist in the list of submitted rules.
 func calculateChanges(ctx context.Context, ruleStore store.RuleStore, groupKey ngmodels.AlertRuleGroupKey, submittedRules []*ngmodels.AlertRule) (*changes, error) {
-	affectedGroups := make(map[ngmodels.AlertRuleGroupKey][]*ngmodels.AlertRule)
+	affectedGroups := make(map[ngmodels.AlertRuleGroupKey]ngmodels.RulesGroup)
 	q := &ngmodels.ListAlertRulesQuery{
 		OrgID:         groupKey.OrgID,
 		NamespaceUIDs: []string{groupKey.NamespaceUID},
@@ -634,6 +635,51 @@ func calculateChanges(ctx context.Context, ruleStore store.RuleStore, groupKey n
 		Delete:         toDelete,
 		Update:         toUpdate,
 	}, nil
+}
+
+// calculateAutomaticChanges scans all affected groups and creates either a noop update that will increment the version of each rule as well as re-index other groups.
+// this is needed to make sure that there are no any concurrent changes made to all affected groups.
+// Returns a copy of changes enriched with either noop or group index changes for all rules in
+func calculateAutomaticChanges(ch *changes) *changes {
+	updatingRules := make(map[ngmodels.AlertRuleKey]struct{}, len(ch.Delete)+len(ch.Update))
+	for _, update := range ch.Update {
+		updatingRules[update.Existing.GetKey()] = struct{}{}
+	}
+	for _, del := range ch.Delete {
+		updatingRules[del.GetKey()] = struct{}{}
+	}
+	var toUpdate []ruleUpdate
+	for groupKey, rules := range ch.AffectedGroups {
+		if groupKey != ch.GroupKey {
+			rules.SortByGroupIndex()
+		}
+		idx := 1
+		for _, rule := range rules {
+			if _, ok := updatingRules[rule.GetKey()]; ok { // exclude rules that are going to be either updated or deleted
+				continue
+			}
+			upd := ruleUpdate{
+				Existing: rule,
+				New:      rule,
+			}
+			if groupKey != ch.GroupKey {
+				if rule.RuleGroupIndex != idx {
+					upd.New = ngmodels.CopyRule(rule)
+					upd.New.RuleGroupIndex = idx
+					upd.Diff = rule.Diff(upd.New, alertRuleFieldsToIgnoreInDiff...)
+				}
+				idx++
+			}
+			toUpdate = append(toUpdate, upd)
+		}
+	}
+	return &changes{
+		GroupKey:       ch.GroupKey,
+		AffectedGroups: ch.AffectedGroups,
+		New:            ch.New,
+		Update:         append(ch.Update, toUpdate...),
+		Delete:         ch.Delete,
+	}
 }
 
 // alertRuleFieldsToIgnoreInDiff contains fields that the AlertRule.Diff should ignore
