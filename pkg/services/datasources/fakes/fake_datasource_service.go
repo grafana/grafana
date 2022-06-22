@@ -94,6 +94,24 @@ func (s *FakeDataSourceService) UpdateDataSource(ctx context.Context, cmd *datas
 	return datasources.ErrDataSourceNotFound
 }
 
+func (s *FakeDataSourceService) CreateCorrelation(ctx context.Context, cmd *datasources.CreateCorrelationCommand) error {
+	for _, datasource := range s.DataSources {
+		if cmd.SourceUID != "" && cmd.SourceUID == datasource.Uid {
+			newCorrelation := datasources.Correlation{
+				Target:      cmd.TargetUID,
+				Label:       cmd.Label,
+				Description: cmd.Description,
+			}
+
+			datasource.Correlations = append(datasource.Correlations, newCorrelation)
+
+			cmd.Result = newCorrelation
+			return nil
+		}
+	}
+	return datasources.ErrDataSourceNotFound
+}
+
 func (s *FakeDataSourceService) GetDefaultDataSource(ctx context.Context, query *datasources.GetDefaultDataSourceQuery) error {
 	return nil
 }

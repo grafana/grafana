@@ -4039,6 +4039,52 @@
         }
       }
     },
+    "/datasources/{uid}/correlations": {
+      "post": {
+        "tags": ["correlations"],
+        "summary": "Creates a correlation.",
+        "operationId": "createCorrelation",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreateCorrelationCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/createCorrelationResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "409": {
+            "$ref": "#/responses/conflictError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/ds/query": {
       "post": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:query`.",
@@ -9865,6 +9911,20 @@
         "$ref": "#/definitions/EmbeddedContactPoint"
       }
     },
+    "Correlation": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "target": {
+          "type": "string"
+        }
+      }
+    },
     "CreateAlertNotificationCommand": {
       "type": "object",
       "properties": {
@@ -9896,6 +9956,21 @@
           "type": "string"
         },
         "uid": {
+          "type": "string"
+        }
+      }
+    },
+    "CreateCorrelationCommand": {
+      "description": "CreateCorrelationCommand adds a correlation",
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "targetUid": {
           "type": "string"
         }
       }
@@ -16273,6 +16348,23 @@
           "message": {
             "description": "Message Message of the created annotation.",
             "type": "string"
+          }
+        }
+      }
+    },
+    "createCorrelationResponse": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "required": ["correlation", "message"],
+        "properties": {
+          "correlation": {
+            "$ref": "#/definitions/Correlation"
+          },
+          "message": {
+            "description": "Message Message of the created correlation.",
+            "type": "string",
+            "example": "Correlation created"
           }
         }
       }

@@ -333,6 +333,19 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 
+// swagger:route POST /datasources/{uid}/correlations correlations createCorrelation
+//
+// Creates a correlation.
+//
+// Responses:
+// 200: createCorrelationResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 409: conflictError
+// 500: internalServerError
+
 // swagger:parameters updateDatasourceByID datasourceProxyDELETEcalls
 // swagger:parameters checkDatasourceHealthByID fetchDatasourceResourcesByID
 type DatasourceID struct {
@@ -366,7 +379,7 @@ type DatasourceProxyGETcallsParams struct {
 }
 
 // swagger:parameters datasourceProxyDELETEByUIDcalls
-// swagger:parameters checkDatasourceHealth fetchDatasourceResources
+// swagger:parameters checkDatasourceHealth fetchDatasourceResources createCorrelation
 type DatasourceUID struct {
 	// in:path
 	// required:true
@@ -480,6 +493,13 @@ type UpdateDatasourceByUIDParams struct {
 	DatasourceUID string `json:"uid"`
 }
 
+// swagger:parameters createCorrelation
+type CreateCorrelationParams struct {
+	// in:body
+	// required:true
+	Body datasources.CreateCorrelationCommand
+}
+
 // swagger:response getDatasourcesResponse
 type GetDatasourcesResponse struct {
 	// The response message
@@ -545,6 +565,21 @@ type DeleteDatasourceByNameResponse struct {
 		// Message Message of the deleted dashboard.
 		// required: true
 		// example: Dashboard My Dashboard deleted
+		Message string `json:"message"`
+	} `json:"body"`
+}
+
+// swagger:response createCorrelationResponse
+type CreateCorrelationResponse struct {
+	// in: body
+	Body struct {
+		// Correlation properties
+		// required: true
+		Correlation datasources.Correlation `json:"correlation"`
+
+		// Message Message of the created correlation.
+		// required: true
+		// example: Correlation created
 		Message string `json:"message"`
 	} `json:"body"`
 }

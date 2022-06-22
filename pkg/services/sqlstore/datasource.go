@@ -289,6 +289,28 @@ func (ss *SQLStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 	})
 }
 
+func (ss *SQLStore) UpdateCorrelations(ctx context.Context, cmd *datasources.UpdateCorrelationsCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+		ds := &datasources.DataSource{
+			Correlations: cmd.Correlations,
+			Updated:      time.Now(),
+		}
+
+		// TODO: should we also check for version here instead (like UpdateDatasource)?
+		affected, err := sess.Where("uid=? and org_id=?", cmd.SourceUID, cmd.OrgId).Omit("json_data").Update(ds)
+		if err != nil {
+			return err
+		}
+
+		if affected == 0 {
+			return datasources.ErrDataSourceUpdatingOldVersion
+		}
+
+		cmd.Result = cmd.Correlations
+		return err
+	})
+}
+
 func generateNewDatasourceUid(sess *DBSession, orgId int64) (string, error) {
 	for i := 0; i < 3; i++ {
 		uid := generateNewUid()

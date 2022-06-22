@@ -317,6 +317,11 @@ func (hs *HTTPServer) registerRoutes() {
 			datasourceRoute.Get("/uid/:uid", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionRead, uidScope)), routing.Wrap(hs.GetDataSourceByUID))
 			datasourceRoute.Get("/name/:name", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionRead, nameScope)), routing.Wrap(hs.GetDataSourceByName))
 			datasourceRoute.Get("/id/:name", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionIDRead, nameScope)), routing.Wrap(hs.GetDataSourceIdByName))
+
+			// Correlations
+			datasourceRoute.Group("/:uid/correlations", func(correlationsRoute routing.RouteRegister) {
+				correlationsRoute.Post("/", authorize(reqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(hs.CreateCorrelation))
+			})
 		})
 
 		apiRoute.Get("/plugins", routing.Wrap(hs.GetPluginList))

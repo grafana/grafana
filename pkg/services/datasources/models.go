@@ -30,6 +30,12 @@ const (
 
 type DsAccess string
 
+type Correlation struct {
+	Target      string `json:"target"`
+	Label       string `json:"label,omitempty"`
+	Description string `json:"description,omitempty"`
+}
+
 type DataSource struct {
 	Id      int64 `json:"id"`
 	OrgId   int64 `json:"orgId"`
@@ -49,6 +55,7 @@ type DataSource struct {
 	BasicAuthPassword string            `json:"-"`
 	WithCredentials   bool              `json:"withCredentials"`
 	IsDefault         bool              `json:"isDefault"`
+	Correlations      []Correlation     `json:"correlations"`
 	JsonData          *simplejson.Json  `json:"jsonData"`
 	SecureJsonData    map[string][]byte `json:"secureJsonData"`
 	ReadOnly          bool              `json:"readOnly"`
@@ -145,6 +152,28 @@ type DeleteDataSourceCommand struct {
 	DeletedDatasourcesCount int64
 
 	UpdateSecretFn UpdateSecretFn
+}
+
+// Correlations are uniquely identified by a SourceUid+TargetUid pair.
+
+// CreateCorrelationCommand adds a correlation
+type CreateCorrelationCommand struct {
+	TargetUID   string `json:"targetUid" binding:"Required"`
+	Label       string `json:"label"`
+	Description string `json:"description"`
+
+	SourceUID string      `json:"-"`
+	OrgID     int64       `json:"-"`
+	Result    Correlation `json:"-"`
+}
+
+// UpdateCorrelationsCommand updates a correlation
+type UpdateCorrelationsCommand struct {
+	SourceUID    string
+	TargetUID    string
+	Correlations []Correlation
+	OrgId        int64
+	Result       []Correlation
 }
 
 // Function for updating secrets along with datasources, to ensure atomicity

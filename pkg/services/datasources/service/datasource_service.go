@@ -237,6 +237,66 @@ func (s *Service) GetDefaultDataSource(ctx context.Context, query *datasources.G
 	return s.SQLStore.GetDefaultDataSource(ctx, query)
 }
 
+// As correlations gets added in the data_source table as JSON, there's no way to delete an entry
+// from the correlations column when the target datasource gets deleted from grafana (or changes orgId).
+// We therefore need to either:
+// 	1) do a full table scan whenever we delete a datasource and delete correlations having the deleted DS as a target
+// 	2) setup a cleanup job that cleans the correlation column from stale data
+// 	3) do nothing and handle it in the FE
+func (s *Service) CreateCorrelation(ctx context.Context, cmd *datasources.CreateCorrelationCommand) error {
+	return s.SQLStore.InTransaction(ctx, func(ctx context.Context) error {
+		var err error
+
+		// TODO: the following is far from efficient, but should be enough to get a POC running
+		query := &datasources.GetDataSourceQuery{
+			OrgId: cmd.OrgID,
+			Uid:   cmd.SourceUID,
+		}
+
+		if err = s.SQLStore.GetDataSource(ctx, query); err != nil {
+			// Source datasource does not exist
+			return err
+		}
+
+		ds := query.Result
+		if ds.ReadOnly {
+			return datasources.ErrDatasourceIsReadOnly
+		}
+
+		if err = s.SQLStore.GetDataSource(ctx, &datasources.GetDataSourceQuery{
+			OrgId: cmd.OrgID,
+			Uid:   cmd.TargetUID,
+		}); err != nil {
+			// target datasource does not exist
+			return err
+		}
+
+		for _, correlation := range ds.Correlations {
+			if correlation.Target == cmd.TargetUID {
+				return datasources.ErrCorrelationExists
+			}
+		}
+
+		newCorrelation := datasources.Correlation{
+			Target:      cmd.TargetUID,
+			Label:       cmd.Label,
+			Description: cmd.Description,
+		}
+
+		ds.Correlations = append(ds.Correlations, newCorrelation)
+
+		if err = s.SQLStore.UpdateCorrelations(ctx, &datasources.UpdateCorrelationsCommand{
+			SourceUID:    ds.Uid,
+			OrgId:        cmd.OrgID,
+			Correlations: ds.Correlations,
+		}); err == nil {
+			cmd.Result = newCorrelation
+		}
+
+		return err
+	})
+}
+
 func (s *Service) GetHTTPClient(ctx context.Context, ds *datasources.DataSource, provider httpclient.Provider) (*http.Client, error) {
 	transport, err := s.GetHTTPTransport(ctx, ds, provider)
 	if err != nil {
