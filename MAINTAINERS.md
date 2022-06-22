@@ -7,6 +7,6 @@
 - UX/UI:
   - @davkal
 - Docs:
-  - @chrichri2547
+  - @chri2547
   - @brendamuir
   - @gguillotte-grafana
