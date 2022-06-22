@@ -130,6 +130,7 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args models
 	return user, nil
 }
 
+//  deprecated method, use only for tests
 func (ss *SQLStore) CreateUser(ctx context.Context, cmd models.CreateUserCommand) (*models.User, error) {
 	var user models.User
 	createErr := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) (err error) {
