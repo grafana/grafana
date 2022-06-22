@@ -23,8 +23,8 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "graphTooltip": 0,
-  "id": 1329,
+  "graphTooltip": 1,
+  "id": 1330,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -114,6 +114,21 @@
         "show": true
       },
       "reverseYBuckets": false,
+      "targets": [
+        {
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "max": 70,
+          "min": 10,
+          "noise": 2,
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "spread": 15,
+          "startValue": 10
+        }
+      ],
       "title": "Calculated with legend and decimals",
       "tooltip": {
         "show": true,
@@ -255,8 +270,8 @@
       },
       "dataFormat": "timeseries",
       "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
+        "type": "datasource",
+        "uid": "-- Dashboard --"
       },
       "gridPos": {
         "h": 11,
@@ -275,14 +290,11 @@
       "targets": [
         {
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "datasource",
+            "uid": "-- Dashboard --"
           },
-          "max": 55,
-          "min": 15,
-          "refId": "A",
-          "scenarioId": "random_walk",
-          "spread": 5
+          "panelId": 2,
+          "refId": "A"
         }
       ],
       "title": "Min/max clamped (20-50)",
@@ -364,7 +376,11 @@
   ],
   "schemaVersion": 36,
   "style": "dark",
-  "tags": ["gdev", "panel-tests", "graph-ng"],
+  "tags": [
+    "gdev",
+    "panel-tests",
+    "graph-ng"
+  ],
   "templating": {
     "list": []
   },
