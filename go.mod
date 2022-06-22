@@ -51,7 +51,7 @@ require (
 	github.com/gorilla/websocket v1.4.2
 	github.com/gosimple/slug v1.9.0
 	github.com/grafana/cuetsy v0.0.3
-	github.com/grafana/grafana-aws-sdk v0.10.3
+	github.com/grafana/grafana-aws-sdk v0.10.6
 	github.com/grafana/grafana-azure-sdk-go v1.2.0
 	github.com/grafana/grafana-plugin-sdk-go v0.138.0
 	github.com/grafana/loki v1.6.2-0.20211015002020-7832783b1caa
@@ -344,5 +344,3 @@ replace github.com/microcosm-cc/bluemonday => github.com/microcosm-cc/bluemonday
 // happen, for example, during a read when the sqlite db is under heavy write load.
 // This patch cherry picks compatible fixes from upstream xorm PR#1998 and can be reverted on upgrade to xorm v1.2.0+.
 replace xorm.io/xorm => github.com/grafana/xorm v0.8.3-0.20220614223926-2fcda7565af6
-
-replace github.com/grafana/grafana-aws-sdk => github.com/grafana/grafana-aws-sdk v0.10.6-0.20220622091046-33035151379c
