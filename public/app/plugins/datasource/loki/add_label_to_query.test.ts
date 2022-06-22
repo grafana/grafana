@@ -144,5 +144,11 @@ describe('addLabelToQuery()', () => {
         '{foo="bar"} | logfmt | bar=`baz` | line_format "{{.status}}"'
       );
     });
+
+    it('should not add adhoc filter to line_format expressions', () => {
+      expect(addLabelToQuery('{foo="bar"} | logfmt | line_format "{{status}}"', 'bar', 'baz')).toBe(
+        '{foo="bar"} | logfmt | bar=`baz` | line_format "{{status}}"'
+      );
+    });
   });
 });
