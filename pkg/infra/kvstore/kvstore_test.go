@@ -3,7 +3,6 @@ package kvstore
 import (
 	"context"
 	"fmt"
-	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -261,7 +260,7 @@ func TestGetItems(t *testing.T) {
 			Key:       "key1",
 		},
 		{
-			OrgId:     3,
+			OrgId:     2,
 			Namespace: "testing1",
 			Key:       "key2",
 		},
@@ -274,22 +273,17 @@ func TestGetItems(t *testing.T) {
 
 	t.Run("Get all values per org", func(t *testing.T) {
 		for _, tc := range testCases {
-			items, err := kv.Items(ctx, tc.OrgId, tc.Namespace)
+			items, err := kv.GetAll(ctx, tc.OrgId, tc.Namespace)
 			require.NoError(t, err)
-			require.Equal(t, *items[0].Key, tc.Key)
-			require.Equal(t, items[0].Value, tc.Value())
+			require.Equal(t, items[tc.OrgId][tc.Key], tc.Value())
 		}
 	})
 
 	t.Run("Get all values for all orgs", func(t *testing.T) {
-		items, err := kv.Items(ctx, AllOrganizations, "testing1")
-		sort.Slice(items, func(i, j int) bool {
-			return *items[i].OrgId < *items[j].OrgId
-		})
+		items, err := kv.GetAll(ctx, AllOrganizations, "testing1")
 		require.NoError(t, err)
-		for i, it := range items {
-			require.Equal(t, *it.Key, testCases[i].Key)
-			require.Equal(t, it.Value, testCases[i].Value())
+		for _, tc := range testCases {
+			require.Equal(t, items[tc.OrgId][tc.Key], tc.Value())
 		}
 	})
 }

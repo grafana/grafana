@@ -25,7 +25,7 @@ type KVStore interface {
 	Set(ctx context.Context, orgId int64, namespace string, key string, value string) error
 	Del(ctx context.Context, orgId int64, namespace string, key string) error
 	Keys(ctx context.Context, orgId int64, namespace string, keyPrefix string) ([]Key, error)
-	Items(ctx context.Context, orgId int64, namespace string) ([]Item, error)
+	GetAll(ctx context.Context, orgId int64, namespace string) (map[int64]map[string]string, error)
 }
 
 // WithNamespace returns a kvstore wrapper with fixed orgId and namespace.
@@ -60,6 +60,6 @@ func (kv *NamespacedKVStore) Keys(ctx context.Context, keyPrefix string) ([]Key,
 	return kv.kvStore.Keys(ctx, kv.orgId, kv.namespace, keyPrefix)
 }
 
-func (kv *NamespacedKVStore) Items(ctx context.Context) ([]Item, error) {
-	return kv.kvStore.Items(ctx, kv.orgId, kv.namespace)
+func (kv *NamespacedKVStore) GetAll(ctx context.Context) (map[int64]map[string]string, error) {
+	return kv.kvStore.GetAll(ctx, kv.orgId, kv.namespace)
 }
