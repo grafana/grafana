@@ -11,9 +11,13 @@ export default class UrlBuilder {
     const resourceNameArray = resourceName.split('/');
     const provider = metricDefinitionArray.shift();
     const urlArray = ['/subscriptions', subscriptionId, 'resourceGroups', resourceGroup, 'providers', provider];
-    for (const i in metricDefinitionArray) {
-      urlArray.push(metricDefinitionArray[i]);
-      urlArray.push(resourceNameArray[i]);
+    if (metricDefinitionArray.length > 0) {
+      for (const i in metricDefinitionArray) {
+        urlArray.push(metricDefinitionArray[i]);
+        urlArray.push(resourceNameArray[i]);
+      }
+    } else {
+      urlArray.push(resourceNameArray[0]);
     }
     return urlArray.join('/');
   }
