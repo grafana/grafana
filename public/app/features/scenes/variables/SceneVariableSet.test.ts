@@ -18,6 +18,10 @@ describe('SceneObject with variables', () => {
             name: 'test',
             current: { value: 'hello' },
           }),
+          new TextBoxSceneVariable({
+            name: 'atRootOnly',
+            current: { value: 'RootValue' },
+          }),
         ],
       }),
       nested: new TestScene({
@@ -34,5 +38,6 @@ describe('SceneObject with variables', () => {
 
     expect(sceneTemplateInterpolator('${test}', scene)).toBe('hello');
     expect(sceneTemplateInterpolator('${test}', scene.state.nested!)).toBe('nestedValue');
+    expect(sceneTemplateInterpolator('${atRootOnly}', scene.state.nested!)).toBe('RootValue');
   });
 });
