@@ -112,7 +112,6 @@ export const SearchResultsTable = React.memo(
         return (
           <div {...row.getRowProps({ style })} className={className}>
             {row.cells.map((cell: Cell, index: number) => {
-              console.log(`cell${index}`, cell);
               return (
                 <TableCell
                   key={index}
@@ -197,27 +196,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       justify-content: center;
       height: 100%;
     `,
-    table: css`
-      width: 100%;
-    `,
-    cellIcon: css`
-      display: flex;
-      align-items: center;
-    `,
-    nameCellStyle: css`
-      border-right: none;
-      padding: ${theme.spacing(1)} ${theme.spacing(1)} ${theme.spacing(1)} ${theme.spacing(2)};
-      overflow: hidden;
-      text-overflow: ellipsis;
-      user-select: text;
-      white-space: nowrap;
-      &:hover {
-        box-shadow: none;
-      }
-    `,
-    headerNameStyle: css`
-      padding-left: ${theme.spacing(1)};
-    `,
     headerCell: css`
       padding: ${theme.spacing(1)};
     `,
@@ -241,68 +219,6 @@ const getStyles = (theme: GrafanaTheme2) => {
         overflow: hidden;
         text-overflow: ellipsis;
       }
-    `,
-    typeIcon: css`
-      margin-left: 5px;
-      margin-right: 9.5px;
-      vertical-align: middle;
-      display: inline-block;
-      margin-bottom: ${theme.v1.spacing.xxs};
-      fill: ${theme.colors.text.secondary};
-    `,
-    datasourceItem: css`
-      span {
-        &:hover {
-          color: ${theme.colors.text.link};
-        }
-      }
-    `,
-    missingTitleText: css`
-      color: ${theme.colors.text.disabled};
-      font-style: italic;
-    `,
-    invalidDatasourceItem: css`
-      color: ${theme.colors.error.main};
-      text-decoration: line-through;
-    `,
-    typeText: css`
-      color: ${theme.colors.text.secondary};
-      padding-top: ${theme.spacing(1)};
-    `,
-    locationItem: css`
-      color: ${theme.colors.text.secondary};
-      margin-right: 12px;
-    `,
-    sortedHeader: css`
-      text-align: right;
-      padding-right: ${theme.spacing(2)};
-    `,
-    sortedItems: css`
-      text-align: right;
-      padding: ${theme.spacing(1)} ${theme.spacing(3)} ${theme.spacing(1)} ${theme.spacing(1)};
-    `,
-    locationCellStyle: css`
-      padding-top: ${theme.spacing(1)};
-      padding-right: ${theme.spacing(1)};
-    `,
-    checkboxHeader: css`
-      margin-left: 2px;
-    `,
-    checkbox: css`
-      margin-left: 10px;
-      margin-right: 10px;
-      margin-top: 5px;
-    `,
-    infoWrap: css`
-      color: ${theme.colors.text.secondary};
-      span {
-        margin-right: 10px;
-      }
-    `,
-    tagList: css`
-      padding-top: ${theme.spacing(0.5)};
-      justify-content: flex-start;
-      flex-wrap: nowrap;
     `,
   };
 };
