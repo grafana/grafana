@@ -94,6 +94,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   grafanaJavascriptAgent = {
     enabled: false,
     customEndpoint: '',
+    apiKey: '',
     errorInstrumentalizationEnabled: true,
     consoleInstrumentalizationEnabled: false,
     webVitalsInstrumentalizationEnabled: false,

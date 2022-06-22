@@ -8,6 +8,7 @@ type GrafanaJavascriptAgent struct {
 	ErrorInstrumentalizationEnabled     bool   `json:"errorInstrumentalizationEnabled"`
 	ConsoleInstrumentalizationEnabled   bool   `json:"consoleInstrumentalizationEnabled"`
 	WebVitalsInstrumentalizationEnabled bool   `json:"webVitalsInstrumentalizationEnabled"`
+	ApiKey                              string `json:"apiKey"`
 }
 
 func (cfg *Cfg) readGrafanaJavascriptAgentConfig() {
@@ -22,6 +23,7 @@ func (cfg *Cfg) readGrafanaJavascriptAgentConfig() {
 			ErrorInstrumentalizationEnabled:     raw.Key("instrumentations_errors_enabled").MustBool(true),
 			ConsoleInstrumentalizationEnabled:   raw.Key("instrumentations_console_enabled").MustBool(true),
 			WebVitalsInstrumentalizationEnabled: raw.Key("instrumentations_webvitals_enabled").MustBool(true),
+			ApiKey:                              raw.Key("api_key").String(),
 		}
 	}
 }
