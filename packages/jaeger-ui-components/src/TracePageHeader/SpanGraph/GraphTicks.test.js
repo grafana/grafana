@@ -28,16 +28,16 @@ const setup = (propOverrides) => {
     ...propOverrides,
   };
 
-  return render(<GraphTicks {...defaultProps} />);
+  return render(
+    <svg>
+      <GraphTicks {...defaultProps} />
+    </svg>
+  );
 };
 
 describe('GraphTicks tests', () => {
   it('creates a <g> for ticks', () => {
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
     setup();
-
-    // Expect ----->  Warning: The tag <line> is unrecognized in this browser. If you meant to render a React component, start its name with an uppercase letter.
-    expect(consoleSpy).toHaveBeenCalledTimes(2);
 
     expect(screen.getByTestId('ticks')).toBeInTheDocument();
   });
