@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
 type Store interface {
@@ -11,6 +12,7 @@ type Store interface {
 	GetAlertNotifiersUsageStats(ctx context.Context, query *models.GetAlertNotifierUsageStatsQuery) error
 	GetDataSourceStats(ctx context.Context, query *models.GetDataSourceStatsQuery) error
 	GetDataSourceAccessStats(ctx context.Context, query *models.GetDataSourceAccessStatsQuery) error
+	GetDialect() migrator.Dialect
 	GetSystemStats(ctx context.Context, query *models.GetSystemStatsQuery) error
 	GetOrgByName(name string) (*models.Org, error)
 	CreateOrg(ctx context.Context, cmd *models.CreateOrgCommand) error
@@ -111,7 +113,7 @@ type Store interface {
 	SetAlertNotificationStateToPendingCommand(ctx context.Context, cmd *models.SetAlertNotificationStateToPendingCommand) error
 	GetOrCreateAlertNotificationState(ctx context.Context, cmd *models.GetOrCreateNotificationStateQuery) error
 	GetAPIKeys(ctx context.Context, query *models.GetApiKeysQuery) error
-	GetAllOrgsAPIKeys(ctx context.Context) []*models.ApiKey
+	GetAllAPIKeys(ctx context.Context, orgID int64) []*models.ApiKey
 	DeleteApiKey(ctx context.Context, cmd *models.DeleteApiKeyCommand) error
 	AddAPIKey(ctx context.Context, cmd *models.AddApiKeyCommand) error
 	GetApiKeyById(ctx context.Context, query *models.GetApiKeyByIdQuery) error

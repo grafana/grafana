@@ -429,7 +429,7 @@ func readMatrixOrVectorWide(iter *jsoniter.Iterator, resultType string) *backend
 			histogram.yMin.Labels = valueField.Labels
 			frame := data.NewFrame(valueField.Name, histogram.time, histogram.yMin, histogram.yMax, histogram.count, histogram.yLayout)
 			frame.Meta = &data.FrameMeta{
-				Type: "heatmap-cells-sparse",
+				Type: "heatmap-cells",
 			}
 			if frame.Name == data.TimeSeriesValueFieldName {
 				frame.Name = "" // only set the name if useful
@@ -535,7 +535,7 @@ func readMatrixOrVectorMulti(iter *jsoniter.Iterator, resultType string) *backen
 			histogram.yMin.Labels = valueField.Labels
 			frame := data.NewFrame(valueField.Name, histogram.time, histogram.yMin, histogram.yMax, histogram.count, histogram.yLayout)
 			frame.Meta = &data.FrameMeta{
-				Type: "heatmap-cells-sparse",
+				Type: "heatmap-cells",
 			}
 			if frame.Name == data.TimeSeriesValueFieldName {
 				frame.Name = "" // only set the name if useful
@@ -695,6 +695,9 @@ func readStream(iter *jsoniter.Iterator) *backend.DataResponse {
 		for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
 			switch l1Field {
 			case "stream":
+				// we need to clear `labels`, because `iter.ReadVal`
+				// only appends to it
+				labels := data.Labels{}
 				iter.ReadVal(&labels)
 				labelJson, err = labelsToRawJson(labels)
 				if err != nil {

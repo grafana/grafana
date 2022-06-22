@@ -4,7 +4,10 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"time"
 
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -23,12 +26,15 @@ type FolderServiceImpl struct {
 	searchService    *search.SearchService
 	features         featuremgmt.FeatureToggles
 	permissions      accesscontrol.FolderPermissionsService
+
+	// bus is currently used to publish events that cause scheduler to update rules.
+	bus bus.Bus
 }
 
 func ProvideFolderService(
 	cfg *setting.Cfg, dashboardService dashboards.DashboardService, dashboardStore dashboards.Store,
 	searchService *search.SearchService, features featuremgmt.FeatureToggles, folderPermissionsService accesscontrol.FolderPermissionsService,
-	ac accesscontrol.AccessControl,
+	ac accesscontrol.AccessControl, bus bus.Bus,
 ) *FolderServiceImpl {
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(dashboardStore))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(dashboardStore))
@@ -41,6 +47,7 @@ func ProvideFolderService(
 		searchService:    searchService,
 		features:         features,
 		permissions:      folderPermissionsService,
+		bus:              bus,
 	}
 }
 
@@ -222,6 +229,17 @@ func (f *FolderServiceImpl) UpdateFolder(ctx context.Context, user *models.Signe
 		return err
 	}
 	cmd.Result = folder
+
+	if err := f.bus.Publish(ctx, &events.FolderUpdated{
+		Timestamp: time.Now(),
+		Title:     folder.Title,
+		ID:        dash.Id,
+		UID:       dash.Uid,
+		OrgID:     orgID,
+	}); err != nil {
+		f.log.Error("failed to publish FolderUpdated event", "folder", folder.Title, "user", user.UserId, "error", err)
+	}
+
 	return nil
 }
 

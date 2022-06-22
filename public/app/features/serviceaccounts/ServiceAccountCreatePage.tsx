@@ -85,7 +85,9 @@ export const ServiceAccountCreatePageUnconnected = ({ navModel }: Props): JSX.El
           tokens: response.tokens,
         };
         await updateServiceAccount(response.id, data);
-        await updateUserRoles(pendingRoles, newAccount.id, newAccount.orgId);
+        if (contextSrv.licensedAccessControlEnabled()) {
+          await updateUserRoles(pendingRoles, newAccount.id, newAccount.orgId);
+        }
       } catch (e) {
         console.error(e);
       }

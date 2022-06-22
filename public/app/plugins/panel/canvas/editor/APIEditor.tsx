@@ -68,7 +68,11 @@ export const APIEditor: FC<StandardEditorProps<APIEditorConfig, any, any>> = (pr
       const json = JSON.parse(data);
       return <JSONFormatter json={json} />;
     } catch (error) {
-      return `Invalid JSON provided: ${error.message}`;
+      if (error instanceof Error) {
+        return `Invalid JSON provided: ${error.message}`;
+      } else {
+        return 'Invalid JSON provided';
+      }
     }
   };
 

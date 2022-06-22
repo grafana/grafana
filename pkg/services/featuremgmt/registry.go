@@ -96,11 +96,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "newNavigation",
-			Description: "Try the next gen navigation model",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:            "showFeatureFlagsInUI",
 			Description:     "Show feature flags in the settings UI",
 			State:           FeatureStateAlpha,
@@ -261,6 +256,16 @@ var (
 		{
 			Name:        "internationalization",
 			Description: "Enables work-in-progress internationalization",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "topnav",
+			Description: "New top nav and page layouts",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "customBranding",
+			Description: "Replaces whitelabeling with the new custom branding feature",
 			State:       FeatureStateAlpha,
 		},
 	}

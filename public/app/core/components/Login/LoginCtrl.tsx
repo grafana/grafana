@@ -61,7 +61,19 @@ export class LoginCtrl extends PureComponent<Props, State> {
       oldPassword: 'admin',
     };
 
-    if (!this.props.resetCode) {
+    if (this.props.resetCode) {
+      const resetModel = {
+        code: this.props.resetCode,
+        newPassword: password,
+        confirmPassword: password,
+      };
+
+      getBackendSrv()
+        .post('/api/user/password/reset', resetModel)
+        .then(() => {
+          this.toGrafana();
+        });
+    } else {
       getBackendSrv()
         .put('/api/user/password', pw)
         .then(() => {
@@ -69,18 +81,6 @@ export class LoginCtrl extends PureComponent<Props, State> {
         })
         .catch((err: any) => console.error(err));
     }
-
-    const resetModel = {
-      code: this.props.resetCode,
-      newPassword: password,
-      confirmPassword: password,
-    };
-
-    getBackendSrv()
-      .post('/api/user/password/reset', resetModel)
-      .then(() => {
-        this.toGrafana();
-      });
   };
 
   login = (formModel: FormModel) => {

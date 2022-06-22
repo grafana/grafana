@@ -9,7 +9,7 @@ weight: 100
 
 # Configure Grafana Enterprise
 
-This page describes Grafana Enterprise-specific configuration options that you can specify in a `.ini` configuration file or using environment variables. Refer to [Configuration]({{< relref "./" >}}) for more information about available configuration options.
+This page describes Grafana Enterprise-specific configuration options that you can specify in a `.ini` configuration file or using environment variables. Refer to [Configuration]({{< relref "/" >}}) for more information about available configuration options.
 
 ## [enterprise]
 
@@ -40,7 +40,7 @@ automatically. Defaults to `true`.
 
 > **Note:** Available in Grafana Enterprise version 8.3 and later.
 
-When set to `aws`, Grafana will validate its license status with Amazon Web Services (AWS) instead of with Grafana Labs. Only use this setting if you purchased an Enterprise license from AWS Marketplace. Defaults to empty, which means that by default Grafana Enterprise will validate using a license issued by Grafana Labs. For details about licenses issued by AWS, refer to [Activate a Grafana Enterprise license purchased through AWS Marketplace]({{< relref "../../enterprise/license/activate-aws-marketplace-license/" >}}).
+When set to `aws`, Grafana will validate its license status with Amazon Web Services (AWS) instead of with Grafana Labs. Only use this setting if you purchased an Enterprise license from AWS Marketplace. Defaults to empty, which means that by default Grafana Enterprise will validate using a license issued by Grafana Labs. For details about licenses issued by AWS, refer to [Activate a Grafana Enterprise license purchased through AWS Marketplace]({{< relref "../../administration/enterprise-licensing/activate-aws-marketplace-license/" >}}).
 
 ## [white_labeling]
 
