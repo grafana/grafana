@@ -100,6 +100,13 @@ export class GeomapPanel extends Component<Props, State> {
     this.panelContext = this.context as PanelContext;
   }
 
+  componentWillUnmount() {
+    this.subs.unsubscribe();
+    for (const lyr of this.layers) {
+      lyr.handler.dispose?.();
+    }
+  }
+
   shouldComponentUpdate(nextProps: Props) {
     if (!this.map) {
       return true; // not yet initialized
@@ -404,7 +411,7 @@ export class GeomapPanel extends Component<Props, State> {
       {
         layerFilter: (l) => {
           const hoverLayerState = (l as any).__state as MapLayerState;
-          return hoverLayerState.options.tooltip !== false;
+          return hoverLayerState?.options?.tooltip !== false;
         },
       }
     );
@@ -467,6 +474,7 @@ export class GeomapPanel extends Component<Props, State> {
     const layers = this.layers.slice(0);
     try {
       const info = await this.initLayer(this.map, newOptions, current.isBasemap);
+      layers[layerIndex]?.handler.dispose?.();
       layers[layerIndex] = info;
       group.setAt(layerIndex, info.layer);
 
@@ -504,7 +512,7 @@ export class GeomapPanel extends Component<Props, State> {
       return Promise.reject('unknown layer: ' + options.type);
     }
 
-    const handler = await item.create(map, options, config.theme2);
+    const handler = await item.create(map, options, this.props.eventBus, config.theme2);
     const layer = handler.init();
     if (options.opacity != null) {
       layer.setOpacity(1 - options.opacity);

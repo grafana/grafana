@@ -34,7 +34,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -959,7 +958,7 @@ func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, ac
 		Metrics:                 m.GetSchedulerMetrics(),
 		AdminConfigPollInterval: 10 * time.Minute, // do not poll in unit tests.
 	}
-	st := state.NewManager(schedCfg.Logger, m.GetStateMetrics(), nil, rs, is, mockstore.NewSQLStoreMock(), &dashboards.FakeDashboardService{}, &image.NoopImageService{})
+	st := state.NewManager(schedCfg.Logger, m.GetStateMetrics(), nil, rs, is, &dashboards.FakeDashboardService{}, &image.NoopImageService{})
 	appUrl := &url.URL{
 		Scheme: "http",
 		Host:   "localhost",

@@ -115,12 +115,8 @@ build-js: ## Build frontend assets.
 
 build: build-go build-js ## Build backend and frontend.
 
-scripts/go/bin/bra: scripts/go/go.mod
-	@cd scripts/go; \
-	$(GO) build -o ./bin/bra github.com/unknwon/bra
-
-run: scripts/go/bin/bra ## Build and run web server on filesystem changes.
-	@scripts/go/bin/bra run
+run: $(BRA) ## Build and run web server on filesystem changes.
+	$(BRA) run
 
 run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild
 	yarn start

@@ -13,6 +13,8 @@ import {
   Field,
   getValueFormat,
   formattedValueToString,
+  durationToMilliseconds,
+  parseDuration,
 } from '@grafana/data';
 import { ScaleDistribution } from '@grafana/schema';
 
@@ -56,12 +58,32 @@ export interface HeatmapRowsCustomMeta {
   yOrdinalDisplay: string[];
   yOrdinalLabel?: string[];
   yMatchWithLabel?: string;
-  yZeroDisplay?: string;
+  yMinDisplay?: string;
 }
 
 /** simple utility to get heatmap metadata from a frame */
 export function readHeatmapRowsCustomMeta(frame?: DataFrame): HeatmapRowsCustomMeta {
   return (frame?.meta?.custom ?? {}) as HeatmapRowsCustomMeta;
+}
+
+export function isHeatmapCellsDense(frame: DataFrame) {
+  let foundY = false;
+
+  for (let field of frame.fields) {
+    // dense heatmap frames can only have one of these fields
+    switch (field.name) {
+      case 'y':
+      case 'yMin':
+      case 'yMax':
+        if (foundY) {
+          return false;
+        }
+
+        foundY = true;
+    }
+  }
+
+  return foundY;
 }
 
 export interface RowsHeatmapOptions {
@@ -129,7 +151,7 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
   if (custom.yMatchWithLabel) {
     custom.yOrdinalLabel = yFields.map((f) => f.labels?.[custom.yMatchWithLabel!] ?? '');
     if (custom.yMatchWithLabel === 'le') {
-      custom.yZeroDisplay = '0.0';
+      custom.yMinDisplay = '0.0';
     }
   }
 
@@ -137,8 +159,8 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
   // TODO: this leaves the internally prepended '0.0' without this formatting treatment
   if (opts.unit?.length || opts.decimals != null) {
     const fmt = getValueFormat(opts.unit ?? 'short');
-    if (custom.yZeroDisplay) {
-      custom.yZeroDisplay = formattedValueToString(fmt(0, opts.decimals));
+    if (custom.yMinDisplay) {
+      custom.yMinDisplay = formattedValueToString(fmt(0, opts.decimals));
     }
     custom.yOrdinalDisplay = custom.yOrdinalDisplay.map((name) => {
       let num = +name;
@@ -274,11 +296,12 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
   const scaleDistribution = options.yBuckets?.scale ?? {
     type: ScaleDistribution.Linear,
   };
+
   const heat2d = heatmap(xs, ys, {
     xSorted: true,
     xTime: xField.type === FieldType.time,
     xMode: xBucketsCfg.mode,
-    xSize: xBucketsCfg.value ? +xBucketsCfg.value : undefined,
+    xSize: durationToMilliseconds(parseDuration(xBucketsCfg.value ?? '')),
     yMode: yBucketsCfg.mode,
     ySize: yBucketsCfg.value ? +yBucketsCfg.value : undefined,
     yLog: scaleDistribution?.type === ScaleDistribution.Log ? (scaleDistribution?.log as any) : undefined,
