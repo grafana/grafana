@@ -12,75 +12,86 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { shallow, mount } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import LabeledList from '../common/LabeledList';
 import traceGenerator from '../demo/trace-generators';
 import { getTraceName } from '../model/trace-viewer';
 import transformTraceData from '../model/transform-trace-data';
 
-import SpanGraph from './SpanGraph';
-import TracePageHeader, { HEADER_ITEMS } from './TracePageHeader';
+import TracePageHeader from './TracePageHeader';
 
-describe('<TracePageHeader>', () => {
-  const trace = transformTraceData(traceGenerator.trace({}));
+const trace = transformTraceData(traceGenerator.trace({}));
+const setup = (propOverrides) => {
   const defaultProps = {
     trace,
+    hideMap: false,
     showArchiveButton: false,
     showShortcutsHelp: false,
     showStandaloneLink: false,
     showViewOptions: false,
     textFilter: '',
+    viewRange: { time: { current: [10, 20] } },
     updateTextFilter: () => {},
+    ...propOverrides,
   };
 
-  let wrapper;
+  return render(<TracePageHeader {...defaultProps} />);
+};
 
-  beforeEach(() => {
-    wrapper = shallow(<TracePageHeader {...defaultProps} />);
+describe('TracePageHeader test', () => {
+  it('renders a header ', () => {
+    setup();
+
+    expect(screen.getByRole('banner')).toBeInTheDocument();
   });
 
-  it('renders a <header />', () => {
-    expect(wrapper.find('header').length).toBe(1);
-  });
+  it('renders an empty <div> if a trace is not present', async () => {
+    setup({ trace: null });
 
-  it('renders an empty <div> if a trace is not present', () => {
-    wrapper = mount(<TracePageHeader {...defaultProps} trace={null} />);
-    expect(wrapper.children().length).toBe(0);
+    expect(await screen.findAllByRole(/[<div \/>]/)).toHaveLength(1);
+    expect(screen.queryAllByRole('banner')).toHaveLength(0);
   });
 
   it('renders the trace title', () => {
-    expect(wrapper.find({ traceName: getTraceName(trace.spans) })).toBeTruthy();
+    setup();
+
+    expect(screen.getByRole('heading', { traceName: getTraceName(trace.spans) })).toBeInTheDocument();
   });
 
   it('renders the header items', () => {
-    wrapper.find('.horizontal .item').forEach((item, i) => {
-      expect(item.contains(HEADER_ITEMS[i].title)).toBeTruthy();
-      expect(item.contains(HEADER_ITEMS[i].renderer(defaultProps.trace))).toBeTruthy();
-    });
+    setup();
+
+    const headerItems = screen.queryAllByRole('listitem');
+
+    expect(headerItems).toHaveLength(5);
+    //                                                        Year-month-day hour-minute-second
+    expect(headerItems[0].textContent.match(/Trace Start:\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}\.\d{3}/g)).toBeTruthy();
+    expect(headerItems[1].textContent.match(/Duration:[\d|\.][\.|\d|s][\.|\d|s]?[\d]?/)).toBeTruthy();
+    expect(headerItems[2].textContent.match(/Services:\d\d?/g)).toBeTruthy();
+    expect(headerItems[3].textContent.match(/Depth:\d\d?/)).toBeTruthy();
+    expect(headerItems[4].textContent.match(/Total Spans:\d\d?\d?\d?/)).toBeTruthy();
   });
 
-  it('renders start time in header with millisecond precision', () => {
-    const startTimeMs = wrapper.find(LabeledList).props().items[0].value.props.children[1].props.children;
-    expect(startTimeMs).toMatch(/:\d\d\.\d\d\d/g);
-  });
+  it('renders a <SpanGraph>', async () => {
+    setup();
 
-  it('renders a <SpanGraph>', () => {
-    expect(wrapper.find(SpanGraph).length).toBe(1);
+    expect(await screen.findByText(/Reset Selection/)).toBeInTheDocument();
   });
 
   describe('observes the visibility toggles for various UX elements', () => {
     it('hides the minimap when hideMap === true', () => {
-      expect(wrapper.find(SpanGraph).length).toBe(1);
-      wrapper.setProps({ hideMap: true });
-      expect(wrapper.find(SpanGraph).length).toBe(0);
+      setup({ hideMap: true });
+
+      expect(screen.queryByText(/Reset Selection/)).not.toBeInTheDocument();
     });
 
     it('hides the summary when hideSummary === true', () => {
-      expect(wrapper.find(LabeledList).length).toBe(1);
-      wrapper.setProps({ hideSummary: true });
-      expect(wrapper.find(LabeledList).length).toBe(0);
+      const { rerender } = setup({ hideSummary: false });
+      expect(screen.queryAllByRole('listitem')).toHaveLength(5);
+
+      rerender(<TracePageHeader hideSummary={false} />);
+      expect(screen.queryAllByRole('listitem')).toHaveLength(0);
     });
   });
 });
