@@ -949,7 +949,7 @@ func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, ac
 		C:                       mockedClock,
 		BaseInterval:            time.Second,
 		MaxAttempts:             1,
-		Evaluator:               eval.NewEvaluator(&setting.Cfg{ExpressionsEnabled: true}, logger, nil, secretsService),
+		Evaluator:               eval.NewEvaluator(&setting.Cfg{ExpressionsEnabled: true}, logger, nil),
 		RuleStore:               rs,
 		InstanceStore:           is,
 		AdminConfigStore:        acs,
