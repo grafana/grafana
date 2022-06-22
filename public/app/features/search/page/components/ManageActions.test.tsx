@@ -33,7 +33,7 @@ describe('ManageActions', () => {
     mockItemsSelected.set('dashboard', mockDashboardsUIDsSelected);
 
     //Mock store redux for old MoveDashboards state action
-    const mockStore = configureMockStore<any, any>();
+    const mockStore = configureMockStore();
     const store = mockStore({ dashboard: { panels: [] } });
 
     const onChange = jest.fn();
@@ -77,7 +77,7 @@ describe('ManageActions', () => {
       mockItemsSelected.set('dashboard', mockDashboardsUIDsSelected);
 
       //Mock store
-      const mockStore = configureMockStore<any, any>();
+      const mockStore = configureMockStore();
       const store = mockStore({ dashboard: { panels: [] } });
 
       const onChange = jest.fn();
@@ -102,7 +102,7 @@ describe('ManageActions', () => {
     mockItemsSelected.set('folder', mockFolderUIDSelected);
 
     //Mock store
-    const mockStore = configureMockStore<any, any>();
+    const mockStore = configureMockStore();
     const store = mockStore({ dashboard: { panels: [] } });
 
     const onChange = jest.fn();

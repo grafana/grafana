@@ -3,6 +3,7 @@ package searchV2
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -59,7 +60,16 @@ func (s *StandardSearchService) IsDisabled() bool {
 }
 
 func (s *StandardSearchService) Run(ctx context.Context) error {
-	return s.dashboardIndex.run(ctx)
+	orgQuery := &models.SearchOrgsQuery{}
+	err := s.sql.SearchOrgs(ctx, orgQuery)
+	if err != nil {
+		return fmt.Errorf("can't get org list: %w", err)
+	}
+	orgIDs := make([]int64, 0, len(orgQuery.Result))
+	for _, org := range orgQuery.Result {
+		orgIDs = append(orgIDs, org.Id)
+	}
+	return s.dashboardIndex.run(ctx, orgIDs)
 }
 
 func (s *StandardSearchService) RegisterDashboardIndexExtender(ext DashboardIndexExtender) {
@@ -143,12 +153,15 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 		return rsp
 	}
 
-	reader, ok := s.dashboardIndex.getOrgReader(orgID)
-	if !ok {
-		go func() {
-			s.dashboardIndex.buildSignals <- orgID
-		}()
-		rsp.Error = errors.New("search index is not ready, try again later")
+	reader, err := s.dashboardIndex.getOrCreateReader(ctx, orgID)
+	if err != nil {
+		rsp.Error = err
+		return rsp
+	}
+
+	err = s.dashboardIndex.sync(ctx)
+	if err != nil {
+		rsp.Error = err
 		return rsp
 	}
 

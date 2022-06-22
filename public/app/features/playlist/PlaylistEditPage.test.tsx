@@ -9,7 +9,7 @@ import { PlaylistEditPage } from './PlaylistEditPage';
 import { Playlist } from './types';
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as any),
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
 }));
 
