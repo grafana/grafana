@@ -11,14 +11,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/infra/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -37,19 +35,16 @@ type evaluatorImpl struct {
 	cfg             *setting.Cfg
 	log             log.Logger
 	dataSourceCache datasources.CacheService
-	secretsService  secrets.Service
 }
 
 func NewEvaluator(
 	cfg *setting.Cfg,
 	log log.Logger,
-	datasourceCache datasources.CacheService,
-	secretsService secrets.Service) Evaluator {
+	datasourceCache datasources.CacheService) Evaluator {
 	return &evaluatorImpl{
 		cfg:             cfg,
 		log:             log,
 		dataSourceCache: datasourceCache,
-		secretsService:  secretsService,
 	}
 }
 
@@ -151,7 +146,7 @@ type AlertExecCtx struct {
 }
 
 // GetExprRequest validates the condition, gets the datasource information and creates an expr.Request from it.
-func GetExprRequest(ctx AlertExecCtx, data []models.AlertQuery, now time.Time, dsCacheService datasources.CacheService, secretsService secrets.Service) (*expr.Request, error) {
+func GetExprRequest(ctx AlertExecCtx, data []models.AlertQuery, now time.Time, dsCacheService datasources.CacheService) (*expr.Request, error) {
 	req := &expr.Request{
 		OrgId: ctx.OrgID,
 		Headers: map[string]string{
@@ -195,19 +190,6 @@ func GetExprRequest(ctx AlertExecCtx, data []models.AlertQuery, now time.Time, d
 			datasources[q.DatasourceUID] = ds
 		}
 
-		// If the datasource has been configured with custom HTTP headers
-		// then we need to add these to the request
-		decryptedData, err := secretsService.DecryptJsonData(ctx.Ctx, ds.SecureJsonData)
-		if err != nil {
-			return nil, err
-		}
-		customHeaders := getCustomHeaders(ds.JsonData, decryptedData)
-		for k, v := range customHeaders {
-			if _, ok := req.Headers[k]; !ok {
-				req.Headers[k] = v
-			}
-		}
-
 		req.Queries = append(req.Queries, expr.Query{
 			TimeRange: expr.TimeRange{
 				From: q.RelativeTimeRange.ToTimeRange(now).From,
@@ -224,40 +206,14 @@ func GetExprRequest(ctx AlertExecCtx, data []models.AlertQuery, now time.Time, d
 	return req, nil
 }
 
-func getCustomHeaders(jsonData *simplejson.Json, decryptedValues map[string]string) map[string]string {
-	headers := make(map[string]string)
-	if jsonData == nil {
-		return headers
-	}
-
-	index := 1
-	for {
-		headerNameSuffix := fmt.Sprintf("httpHeaderName%d", index)
-		headerValueSuffix := fmt.Sprintf("httpHeaderValue%d", index)
-
-		key := jsonData.Get(headerNameSuffix).MustString()
-		if key == "" {
-			// No (more) header values are available
-			break
-		}
-
-		if val, ok := decryptedValues[headerValueSuffix]; ok {
-			headers[key] = val
-		}
-		index++
-	}
-
-	return headers
-}
-
 type NumberValueCapture struct {
 	Var    string // RefID
 	Labels data.Labels
 	Value  *float64
 }
 
-func executeCondition(ctx AlertExecCtx, c *models.Condition, now time.Time, exprService *expr.Service, dsCacheService datasources.CacheService, secretsService secrets.Service) ExecutionResults {
-	execResp, err := executeQueriesAndExpressions(ctx, c.Data, now, exprService, dsCacheService, secretsService)
+func executeCondition(ctx AlertExecCtx, c *models.Condition, now time.Time, exprService *expr.Service, dsCacheService datasources.CacheService) ExecutionResults {
+	execResp, err := executeQueriesAndExpressions(ctx, c.Data, now, exprService, dsCacheService)
 	if err != nil {
 		return ExecutionResults{Error: err}
 	}
@@ -340,7 +296,7 @@ func executeCondition(ctx AlertExecCtx, c *models.Condition, now time.Time, expr
 	return result
 }
 
-func executeQueriesAndExpressions(ctx AlertExecCtx, data []models.AlertQuery, now time.Time, exprService *expr.Service, dsCacheService datasources.CacheService, secretsService secrets.Service) (resp *backend.QueryDataResponse, err error) {
+func executeQueriesAndExpressions(ctx AlertExecCtx, data []models.AlertQuery, now time.Time, exprService *expr.Service, dsCacheService datasources.CacheService) (resp *backend.QueryDataResponse, err error) {
 	defer func() {
 		if e := recover(); e != nil {
 			ctx.Log.Error("alert rule panic", "error", e, "stack", string(debug.Stack()))
@@ -353,7 +309,7 @@ func executeQueriesAndExpressions(ctx AlertExecCtx, data []models.AlertQuery, no
 		}
 	}()
 
-	queryDataReq, err := GetExprRequest(ctx, data, now, dsCacheService, secretsService)
+	queryDataReq, err := GetExprRequest(ctx, data, now, dsCacheService)
 	if err != nil {
 		return nil, err
 	}
@@ -594,7 +550,7 @@ func (e *evaluatorImpl) ConditionEval(condition *models.Condition, now time.Time
 
 	alertExecCtx := AlertExecCtx{OrgID: condition.OrgID, Ctx: alertCtx, ExpressionsEnabled: e.cfg.ExpressionsEnabled, Log: e.log}
 
-	execResult := executeCondition(alertExecCtx, condition, now, expressionService, e.dataSourceCache, e.secretsService)
+	execResult := executeCondition(alertExecCtx, condition, now, expressionService, e.dataSourceCache)
 
 	evalResults := evaluateExecutionResult(execResult, now)
 	return evalResults, nil
@@ -607,7 +563,7 @@ func (e *evaluatorImpl) QueriesAndExpressionsEval(orgID int64, data []models.Ale
 
 	alertExecCtx := AlertExecCtx{OrgID: orgID, Ctx: alertCtx, ExpressionsEnabled: e.cfg.ExpressionsEnabled, Log: e.log}
 
-	execResult, err := executeQueriesAndExpressions(alertExecCtx, data, now, expressionService, e.dataSourceCache, e.secretsService)
+	execResult, err := executeQueriesAndExpressions(alertExecCtx, data, now, expressionService, e.dataSourceCache)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute conditions: %w", err)
 	}

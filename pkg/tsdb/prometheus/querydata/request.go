@@ -63,16 +63,11 @@ func New(
 	}
 
 	p := client.NewProvider(settings, jsonData, httpClientProvider, cfg, features, plog)
-	pc, err := client.NewProviderCache(p)
-	if err != nil {
-		return nil, err
-	}
-
 	return &QueryData{
 		intervalCalculator: intervalv2.NewCalculator(),
 		tracer:             tracer,
 		log:                plog,
-		getClient:          pc.GetClient,
+		getClient:          p.GetClient,
 		TimeInterval:       timeInterval,
 		ID:                 settings.ID,
 		URL:                settings.URL,

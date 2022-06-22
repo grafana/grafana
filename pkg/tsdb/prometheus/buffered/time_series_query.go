@@ -76,15 +76,11 @@ func New(httpClientProvider httpclient.Provider, cfg *setting.Cfg, features feat
 	}
 
 	p := promclient.NewProvider(settings, jsonData, httpClientProvider, cfg, features, plog)
-	pc, err := promclient.NewProviderCache(p)
-	if err != nil {
-		return nil, err
-	}
 	return &Buffered{
 		intervalCalculator: intervalv2.NewCalculator(),
 		tracer:             tracer,
 		log:                plog,
-		getClient:          pc.GetClient,
+		getClient:          p.GetClient,
 		TimeInterval:       timeInterval,
 		ID:                 settings.ID,
 		URL:                settings.URL,
