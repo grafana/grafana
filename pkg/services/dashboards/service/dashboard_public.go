@@ -3,12 +3,14 @@ package service
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/gofrs/uuid"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 // Gets public dashboard via access token
@@ -103,24 +105,46 @@ func (dr *DashboardServiceImpl) updatePublicDashboardConfig(ctx context.Context,
 
 // BuildPublicDashboardMetricRequest merges public dashboard parameters with
 // dashboard and returns a metrics request to be sent to query backend
-func (dr *DashboardServiceImpl) BuildPublicDashboardMetricRequest(ctx context.Context, dashboard *models.Dashboard, publicDashboard *models.PublicDashboard, panelId int64) (dtos.MetricRequest, error) {
+func (dr *DashboardServiceImpl) BuildPublicDashboardMetricRequest(ctx context.Context, accessToken string, panelId int64) (dtos.MetricRequest, *models.SignedInUser, error) {
+	var metricRequest dtos.MetricRequest
+	var anonymousUser *models.SignedInUser
+
+	publicDashboard, dashboard, err := dr.dashboardStore.GetPublicDashboard(ctx, accessToken)
+	if err != nil {
+		return metricRequest, anonymousUser, err
+	}
+	if publicDashboard == nil || dashboard == nil {
+		return metricRequest, anonymousUser, models.ErrPublicDashboardNotFound
+	}
 	if !publicDashboard.IsEnabled {
-		return dtos.MetricRequest{}, models.ErrPublicDashboardNotFound
+		return metricRequest, anonymousUser, models.ErrPublicDashboardNotFound
 	}
 
+	// get queries
 	queriesByPanel := models.GetQueriesFromDashboard(dashboard.Data)
-
 	if _, ok := queriesByPanel[panelId]; !ok {
-		return dtos.MetricRequest{}, models.ErrPublicDashboardPanelNotFound
+		return dtos.MetricRequest{}, anonymousUser, models.ErrPublicDashboardPanelNotFound
 	}
+	metricRequest.Queries = queriesByPanel[panelId]
 
+	// get time range
 	ts := publicDashboard.BuildTimeSettings(dashboard)
+	metricRequest.From = ts.From
+	metricRequest.To = ts.To
 
-	return dtos.MetricRequest{
-		From:    ts.From,
-		To:      ts.To,
-		Queries: queriesByPanel[panelId],
-	}, nil
+	// Build user with permissions on datasources
+	var uids []string
+	for _, query := range metricRequest.Queries {
+		uids = append(uids, query.Get("datasource").Get("uid").MustString())
+	}
+	anonymousUser = &models.SignedInUser{OrgId: dashboard.OrgId, Permissions: make(map[int64]map[string][]string)}
+	permissions := make(map[string][]string)
+	datasourceScope := fmt.Sprintf("datasources:uid:%s", strings.Join(uids, ","))
+	permissions[datasources.ActionQuery] = []string{datasourceScope}
+	permissions[datasources.ActionRead] = []string{datasourceScope}
+	anonymousUser.Permissions[dashboard.OrgId] = permissions
+
+	return metricRequest, anonymousUser, nil
 }
 
 // generates a uuid formatted without dashes to use as access token
