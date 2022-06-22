@@ -3,7 +3,6 @@ package kvstore
 import (
 	"context"
 	"encoding/base64"
-	"sync"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -19,20 +18,14 @@ type secretsKVStoreSQL struct {
 	decryptionCache decryptionCache
 }
 
-type decryptionCache struct {
-	cache map[int64]cachedDecrypted
-	sync.Mutex
-}
-
-type cachedDecrypted struct {
-	updated time.Time
-	value   string
-}
-
 var b64 = base64.RawStdEncoding
 
 // Get an item from the store
 func (kv *secretsKVStoreSQL) Get(ctx context.Context, orgId int64, namespace string, typ string) (string, bool, error) {
+	if cache := kv.decryptionCache.recent(orgId, namespace, typ); cache != nil {
+		return cache.value, true, nil
+	}
+
 	item := Item{
 		OrgId:     &orgId,
 		Namespace: &namespace,
@@ -60,7 +53,7 @@ func (kv *secretsKVStoreSQL) Get(ctx context.Context, orgId int64, namespace str
 		kv.decryptionCache.Lock()
 		defer kv.decryptionCache.Unlock()
 
-		if cache, present := kv.decryptionCache.cache[item.Id]; present && item.Updated.Equal(cache.updated) {
+		if cache := kv.decryptionCache.get(orgId, namespace, typ); cache != nil && item.Updated.Equal(cache.updated) {
 			return cache.value, isFound, err
 		}
 
@@ -76,10 +69,7 @@ func (kv *secretsKVStoreSQL) Get(ctx context.Context, orgId int64, namespace str
 			return string(decryptedValue), isFound, err
 		}
 
-		kv.decryptionCache.cache[item.Id] = cachedDecrypted{
-			updated: item.Updated,
-			value:   string(decryptedValue),
-		}
+		kv.decryptionCache.set(orgId, namespace, typ, string(decryptedValue), item.Updated)
 	}
 
 	return string(decryptedValue), isFound, err
@@ -120,10 +110,7 @@ func (kv *secretsKVStoreSQL) Set(ctx context.Context, orgId int64, namespace str
 			if err != nil {
 				kv.log.Debug("error updating secret value", "orgId", orgId, "type", typ, "namespace", namespace, "err", err)
 			} else {
-				kv.decryptionCache.cache[item.Id] = cachedDecrypted{
-					updated: item.Updated,
-					value:   value,
-				}
+				kv.decryptionCache.set(orgId, namespace, typ, value, item.Updated)
 				kv.log.Debug("secret value updated", "orgId", orgId, "type", typ, "namespace", namespace)
 			}
 			return err
@@ -162,7 +149,7 @@ func (kv *secretsKVStoreSQL) Del(ctx context.Context, orgId int64, namespace str
 			if err != nil {
 				kv.log.Debug("error deleting secret value", "orgId", orgId, "type", typ, "namespace", namespace, "err", err)
 			} else {
-				delete(kv.decryptionCache.cache, item.Id)
+				kv.decryptionCache.delete(orgId, namespace, typ)
 				kv.log.Debug("secret value deleted", "orgId", orgId, "type", typ, "namespace", namespace)
 			}
 			return err
@@ -211,6 +198,7 @@ func (kv *secretsKVStoreSQL) Rename(ctx context.Context, orgId int64, namespace 
 				kv.log.Debug("error updating secret namespace", "orgId", orgId, "type", typ, "namespace", namespace, "err", err)
 			} else {
 				kv.log.Debug("secret namespace updated", "orgId", orgId, "type", typ, "namespace", namespace)
+				kv.decryptionCache.rename(orgId, namespace, typ, *item.Namespace, item.Updated)
 			}
 			return err
 		}

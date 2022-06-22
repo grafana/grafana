@@ -17,12 +17,10 @@ func SetupTestService(t *testing.T) SecretsKVStore {
 	secretsService := manager.SetupTestService(t, store)
 
 	kv := &secretsKVStoreSQL{
-		sqlStore:       sqlStore,
-		log:            log.New("secrets.kvstore"),
-		secretsService: secretsService,
-		decryptionCache: decryptionCache{
-			cache: make(map[int64]cachedDecrypted),
-		},
+		sqlStore:        sqlStore,
+		log:             log.New("secrets.kvstore"),
+		secretsService:  secretsService,
+		decryptionCache: newDecryptionCache(),
 	}
 
 	return kv
