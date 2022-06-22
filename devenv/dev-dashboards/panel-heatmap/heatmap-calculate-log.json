@@ -201,7 +201,7 @@
         }
       ],
       "title": "log2",
-      "type": "heatmap"
+      "type": "heatmap-new"
     },
     {
       "datasource": {
@@ -286,7 +286,7 @@
         }
       ],
       "title": "log2 split 2",
-      "type": "heatmap"
+      "type": "heatmap-new"
     },
     {
       "datasource": {
@@ -362,7 +362,7 @@
         }
       ],
       "title": "linear",
-      "type": "heatmap"
+      "type": "heatmap-new"
     },
     {
       "datasource": {
@@ -446,7 +446,7 @@
         }
       ],
       "title": "log10",
-      "type": "heatmap"
+      "type": "heatmap-new"
     },
     {
       "datasource": {
@@ -531,7 +531,7 @@
         }
       ],
       "title": "log10 split 2",
-      "type": "heatmap"
+      "type": "heatmap-new"
     }
   ],
   "schemaVersion": 36,
