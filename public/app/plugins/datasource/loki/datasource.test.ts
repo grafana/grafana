@@ -452,7 +452,7 @@ describe('LokiDatasource', () => {
         });
       });
       describe('When textFormat is set', () => {
-        it('should fromat the text accordingly', async () => {
+        it('should format the text accordingly', async () => {
           const res = await getTestContext(testFrame, { textFormat: 'hello {{label2}}', stepInterval: '15s' });
 
           expect(res.length).toBe(1);
@@ -460,7 +460,7 @@ describe('LokiDatasource', () => {
         });
       });
       describe('When titleFormat is set', () => {
-        it('should fromat the title accordingly', async () => {
+        it('should format the title accordingly', async () => {
           const res = await getTestContext(testFrame, { titleFormat: 'Title {{label2}}', stepInterval: '15s' });
 
           expect(res.length).toBe(1);
