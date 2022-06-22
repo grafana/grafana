@@ -40,26 +40,26 @@ const setup = (propOverrides) => {
 };
 
 describe('TracePageHeader test', () => {
-  it('renders a header ', () => {
+  it('should render a header ', () => {
     setup();
 
     expect(screen.getByRole('banner')).toBeInTheDocument();
   });
 
-  it('renders an empty <div> if a trace is not present', async () => {
+  it('should render an empty <div> if a trace is not present', async () => {
     setup({ trace: null });
 
     expect(await screen.findAllByRole(/[<div \/>]/)).toHaveLength(1);
     expect(screen.queryAllByRole('banner')).toHaveLength(0);
   });
 
-  it('renders the trace title', () => {
+  it('should render the trace title', () => {
     setup();
 
     expect(screen.getByRole('heading', { traceName: getTraceName(trace.spans) })).toBeInTheDocument();
   });
 
-  it('renders the header items', () => {
+  it('should render the header items', () => {
     setup();
 
     const headerItems = screen.queryAllByRole('listitem');
@@ -73,7 +73,7 @@ describe('TracePageHeader test', () => {
     expect(headerItems[4].textContent.match(/Total Spans:\d\d?\d?\d?/)).toBeTruthy();
   });
 
-  it('renders a <SpanGraph>', async () => {
+  it('should render a <SpanGraph>', async () => {
     setup();
 
     expect(await screen.findByText(/Reset Selection/)).toBeInTheDocument();
