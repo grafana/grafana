@@ -300,10 +300,10 @@ func TestUpdatePublicDashboard(t *testing.T) {
 			},
 		}
 
-		updatedPubdash, err := service.SavePublicDashboardConfig(context.Background(), dto)
+		_, err = service.SavePublicDashboardConfig(context.Background(), dto)
 		require.NoError(t, err)
 
-		updatedPubdash, err = service.GetPublicDashboardConfig(context.Background(), dashboard.OrgId, dashboard.Uid)
+		updatedPubdash, err := service.GetPublicDashboardConfig(context.Background(), dashboard.OrgId, dashboard.Uid)
 		require.NoError(t, err)
 
 		timeSettings, err := simplejson.NewJson([]byte("{}"))
@@ -311,7 +311,6 @@ func TestUpdatePublicDashboard(t *testing.T) {
 
 		assert.Equal(t, timeSettings, updatedPubdash.TimeSettings)
 	})
-
 }
 
 func TestBuildPublicDashboardMetricRequest(t *testing.T) {

@@ -241,6 +241,5 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 		// make sure we're correctly updated IsEnabled because we have to call
 		// UseBool with xorm
 		assert.Equal(t, updatedPublicDashboard.IsEnabled, pdRetrieved.IsEnabled)
-
 	})
 }
