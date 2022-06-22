@@ -74,7 +74,6 @@ const getStyles = (theme: GrafanaTheme) => ({
   wrapper: css`
     flex-basis: 150px;
     width: 100px;
-    border: solid 2px red;
     margin-top: ${theme.spacing.sm};
   `,
   externalLinksHeading: css`
