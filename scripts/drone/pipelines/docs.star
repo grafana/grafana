@@ -1,6 +1,6 @@
 load(
     'scripts/drone/scribe/docs.star',
-    'build_documentation_pipeline',
+    'build_documentation_website_pipeline',
 )
 
 load(
@@ -9,7 +9,7 @@ load(
 )
 
 def docs_pipelines(edition, ver_mode, trigger):
-    pipeline = build_documentation_pipeline()
+    pipeline = build_documentation_website_pipeline()
     steps = [
         identify_runner_step(),
     ]

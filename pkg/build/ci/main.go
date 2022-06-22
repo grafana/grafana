@@ -31,6 +31,6 @@ func main() {
 	defer multi.Done()
 
 	multi.Parallel(
-		multi.New("build documentation", BuildDocumentation),
+		multi.New("build documentation website", BuildDocumentation),
 	)
 }

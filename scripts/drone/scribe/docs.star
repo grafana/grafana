@@ -1,8 +1,8 @@
-def build_documentation_pipeline():
+def build_documentation_website_pipeline():
   return {
     "kind": "pipeline",
     "type": "docker",
-    "name": "build_documentation",
+    "name": "build_documentation_website",
     "steps": [
       builtin_compile_pipeline_step(),
       download_grabpl_step(),
