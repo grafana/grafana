@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import { DataSourceSettings, NavModel } from '@grafana/data';
+import { DataSourceSettings } from '@grafana/data';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { PluginDashboard } from 'app/types';
 
