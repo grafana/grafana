@@ -151,7 +151,7 @@ func NewAlertRule(rule models.AlertRule, provenance models.Provenance) AlertRule
 //     - application/json
 //
 //     Responses:
-//       200: AlertRuleGroup
+//       200: AlertRuleGroupMetadata
 //       400: ValidationError
 
 // swagger:parameters RouteGetAlertRuleGroup RoutePutAlertRuleGroup
@@ -174,4 +174,11 @@ type AlertRuleGroupPayload struct {
 
 type AlertRuleGroupMetadata struct {
 	Interval int64 `json:"interval"`
+}
+
+type AlertRuleGroup struct {
+	Title     string             `json:"title"`
+	FolderUID string             `json:"folderUid"`
+	Interval  int64              `json:"interval"`
+	Rules     []models.AlertRule `json:"rules"`
 }
