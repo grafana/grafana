@@ -431,7 +431,7 @@ function calculateLastNotNull(field: Field, calcs: FieldCalcs, ignoreNulls: bool
 
 function calculateVariancePopulation(field: Field, calcs: FieldCalcs, ignoreNulls: boolean, nullAsZero: boolean): void {
   let squareSum = 0;
-  let runningMean = null;
+  let runningMean = 0;
   let runningNonNullCount = 0;
   const isNumberField = field.type === FieldType.number || FieldType.time;
   const data = field.values;
