@@ -596,14 +596,10 @@ steps:
     path: /var/scribe-state
 - commands:
   - /var/scribe/pipeline -step=8 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json
-    -log-level=debug -version=v0.9.16-dirty -arg=github_token=$secret_github_token
-    ./pkg/build/ci
+    -log-level=debug -version=v0.9.16-dirty ./pkg/build/ci
   depends_on:
   - codespell
   - lint_docs
-  environment:
-    secret_github_token:
-      from_secret: github_token
   image: grafana/build-container:1.5.3
   name: build_frontend_package
   volumes:
@@ -727,14 +723,10 @@ steps:
     path: /var/scribe-state
 - commands:
   - /var/scribe/pipeline -step=8 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json
-    -log-level=debug -version=v0.9.16-dirty -arg=github_token=$secret_github_token
-    ./pkg/build/ci
+    -log-level=debug -version=v0.9.16-dirty ./pkg/build/ci
   depends_on:
   - codespell
   - lint_docs
-  environment:
-    secret_github_token:
-      from_secret: github_token
   image: grafana/build-container:1.5.3
   name: build_frontend_package
   volumes:
@@ -4870,6 +4862,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: d529021cf02bc89dfe99f17d03ba340908565d9f91472fb7fa20f810de82cf08
+hmac: 3f5aa3025f4e94f07fee4fe3947ca0e6e68e45dc44bc3c740a4149d6e6d75c6c
 
 ...

@@ -151,17 +151,12 @@ def lint_docs_step():
 def build_frontend_package_step():
   return {
     "commands": [
-      "/var/scribe/pipeline -step=8 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json -log-level=debug -version=v0.9.16-dirty -arg=github_token=$secret_github_token ./pkg/build/ci",
+      "/var/scribe/pipeline -step=8 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json -log-level=debug -version=v0.9.16-dirty ./pkg/build/ci",
     ],
     "depends_on": [
       "codespell",
       "lint_docs",
     ],
-    "environment": {
-      "secret_github_token": {
-        "from_secret": "github_token",
-      },
-    },
     "image": "grafana/build-container:1.5.3",
     "name": "build_frontend_package",
     "volumes": [
