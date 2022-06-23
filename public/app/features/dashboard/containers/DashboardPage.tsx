@@ -37,6 +37,7 @@ export interface DashboardPageRouteParams {
   uid?: string;
   type?: string;
   slug?: string;
+  accessToken?: string;
 }
 
 export type DashboardPageRouteSearchParams = {
@@ -130,6 +131,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       urlFolderId: queryParams.folderId,
       routeName: this.props.route.routeName,
       fixUrl: !isPublic,
+      accessToken: match.params.accessToken,
     });
 
     // small delay to start live updates

@@ -484,7 +484,7 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   panelId?: number;
   dashboardId?: number;
   // Temporary prop for public dashboards, to be replaced by publicAccessKey
-  publicDashboardUid?: string;
+  publicDashboardAccessToken?: string;
 
   // Request Timing
   startTime: number;
