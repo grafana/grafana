@@ -1,7 +1,6 @@
 import { e2e } from '@grafana/e2e';
 
 const dataSourceName = 'LokiBuilder';
-const finalQuery = 'rate({job="unique", instance=~"instance1|instance2"} | logfmt | __error__=`` [$__interval])';
 const addDataSource = () => {
   e2e.flows.addDataSource({
     type: 'Loki',
@@ -37,6 +36,8 @@ describe('Loki query builder', () => {
       req.reply({ status: 'success', data: [{ source: 'data' }] });
     });
 
+    const finalQuery = 'rate({job="unique", instance=~"instance1|instance2"} | logfmt | __error__=`` [$__interval])';
+
     // Go to Explore and choose Loki data source
     e2e.pages.Explore.visit();
 
@@ -48,7 +49,7 @@ describe('Loki query builder', () => {
     e2e.components.QueryField.container().should('be.visible');
     e2e.components.QueryField.container().should('be.visible').type('{job="unique",instance=~"instance1|instance2",');
 
-    //Check autocomplete suggestion
+    // Check autocomplete suggestion
     cy.contains('source').should('be.visible');
 
     // Switch to query builder and check if query was parsed to visual query builder
