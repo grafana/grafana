@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { reportInteraction } from '@grafana/runtime/src';
 import { AppEvents } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime/src';
 import { Alert, Button, Checkbox, ClipboardButton, Field, FieldSet, Icon, Input, Switch } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
