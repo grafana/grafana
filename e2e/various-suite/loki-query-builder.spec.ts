@@ -29,18 +29,17 @@ describe('Loki query builder', () => {
 
   it('should be able to use all modes', () => {
     e2e().intercept(/labels?/, (req) => {
-      req.reply({ status: 'success', data: ['job', 'instance', 'source'] });
+      req.reply({ status: 'success', data: ['instance', 'job', 'source'] });
     });
 
     e2e().intercept(/series?/, (req) => {
       req.reply({ status: 'success', data: [{ instance: 'instance1' }] });
     });
 
-    const finalQuery = 'rate({instance="instance1"} | logfmt | __error__=`` [$__interval]';
+    const finalQuery = 'rate({instance=~"instance1|instance2"} | logfmt | __error__=`` [$__interval]';
 
     // Go to Explore and choose Loki data source
     e2e.pages.Explore.visit();
-
     e2e.components.DataSourcePicker.container().should('be.visible').click();
     e2e().contains(dataSourceName).scrollIntoView().should('be.visible').click();
 
@@ -52,18 +51,23 @@ describe('Loki query builder', () => {
     // Add operation
     e2e().contains('Operations').should('be.visible').click();
     e2e().contains('Range functions').should('be.visible').click();
-
     e2e().contains('Rate').should('be.visible').click();
 
-    // Check for error
+    // Check for expected error
     e2e().contains('You need to specify at least 1 label filter (stream selector)').should('be.visible');
 
-    // Add labels
-    e2e().get('#prometheus-dimensions-filter-item-key').should('be.visible').click().type('instance{enter}');
-    e2e().get('#prometheus-dimensions-filter-item-value').should('be.visible').click().type('instance1{enter}');
+    // Add labels to remove error
+    e2e.components.QueryBuilder.labelSelect().should('be.visible').click().type('instance{enter}');
+    e2e.components.QueryBuilder.matchOperatorSelect().should('be.visible').click().type('=~{enter}');
+    e2e.components.QueryBuilder.valueSelect()
+      .should('be.visible')
+      .click()
+      .type('instance1{enter}')
+      .type('instance2{enter}');
+    e2e().contains('You need to specify at least 1 label filter (stream selector)').should('not.be.visible');
     e2e().contains(finalQuery).should('be.visible');
 
-    // Switch to code editor and type query
+    // Switch to code editor and check if query was parsed
     for (const word of finalQuery.split(' ')) {
       e2e().contains(word).should('be.visible');
     }
