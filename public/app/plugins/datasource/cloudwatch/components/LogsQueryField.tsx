@@ -19,13 +19,13 @@ import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { dispatch } from 'app/store/store';
 import { ExploreId } from 'app/types';
-
 // Utils & Services
 // dom also includes Element polyfills
+
 import { CloudWatchDatasource } from '../datasource';
 import { CloudWatchLanguageProvider } from '../language_provider';
 import syntax from '../syntax';
-import { CloudWatchJsonData, CloudWatchQuery, CloudWatchLogsQuery } from '../types';
+import { CloudWatchJsonData, CloudWatchLogsQuery, CloudWatchQuery } from '../types';
 import { getStatsGroups } from '../utils/query/getStatsGroups';
 import { appendTemplateVariables } from '../utils/utils';
 
