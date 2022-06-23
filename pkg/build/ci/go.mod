@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
-	github.com/grafana/scribe v0.9.15
+	github.com/grafana/scribe v0.9.16
 )
 
 require (
@@ -40,8 +40,8 @@ require (
 	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
 	go.opencensus.io v0.23.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
-	golang.org/x/net v0.0.0-20220614195744-fb05da6f9022 // indirect
-	golang.org/x/sys v0.0.0-20220615213510-4f61da869c0c // indirect
+	golang.org/x/net v0.0.0-20220615171555-694bf12d69de // indirect
+	golang.org/x/sys v0.0.0-20220622161953-175b2fd9d664 // indirect
 )
 
 replace github.com/grafana/grafana => ../../../

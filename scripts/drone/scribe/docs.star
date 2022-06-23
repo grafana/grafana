@@ -47,7 +47,7 @@ def builtin_compile_pipeline_step():
       "GOARCH": "amd64",
       "CGO_ENABLED": "0",
     },
-    "image": "grafana/shipwright:go-v0.9.15",
+    "image": "grafana/shipwright:go-v0.9.16-dirty",
     "name": "builtin-compile-pipeline",
     "volumes": [
       {
@@ -60,12 +60,12 @@ def builtin_compile_pipeline_step():
 def download_grabpl_step():
   return {
     "commands": [
-      "/var/scribe/pipeline -step=1 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json -log-level=debug -version=v0.9.15 ./pkg/build/ci",
+      "/var/scribe/pipeline -step=1 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json -log-level=debug -version=v0.9.16-dirty ./pkg/build/ci",
     ],
     "depends_on": [
       "builtin-compile-pipeline",
     ],
-    "image": "grafana/shipwright:v0.9.15",
+    "image": "grafana/shipwright:v0.9.16-dirty",
     "name": "download_grabpl",
     "volumes": [
       {
@@ -82,7 +82,7 @@ def download_grabpl_step():
 def yarn_install_step():
   return {
     "commands": [
-      "/var/scribe/pipeline -step=2 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json -log-level=debug -version=v0.9.15 ./pkg/build/ci",
+      "/var/scribe/pipeline -step=2 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json -log-level=debug -version=v0.9.16-dirty ./pkg/build/ci",
     ],
     "depends_on": [
       "download_grabpl",
@@ -104,7 +104,7 @@ def yarn_install_step():
 def codespell_step():
   return {
     "commands": [
-      "/var/scribe/pipeline -step=5 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json -log-level=debug -version=v0.9.15 ./pkg/build/ci",
+      "/var/scribe/pipeline -step=5 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json -log-level=debug -version=v0.9.16-dirty ./pkg/build/ci",
     ],
     "depends_on": [
       "yarn_install",
@@ -126,7 +126,7 @@ def codespell_step():
 def lint_docs_step():
   return {
     "commands": [
-      "/var/scribe/pipeline -step=6 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json -log-level=debug -version=v0.9.15 ./pkg/build/ci",
+      "/var/scribe/pipeline -step=6 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json -log-level=debug -version=v0.9.16-dirty ./pkg/build/ci",
     ],
     "depends_on": [
       "yarn_install",
@@ -151,14 +151,16 @@ def lint_docs_step():
 def build_frontend_package_step():
   return {
     "commands": [
-      "/var/scribe/pipeline -step=8 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json -log-level=debug -version=v0.9.15 -arg=github_token=$secret_github_token ./pkg/build/ci",
+      "/var/scribe/pipeline -step=8 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json -log-level=debug -version=v0.9.16-dirty -arg=github_token=$secret_github_token ./pkg/build/ci",
     ],
     "depends_on": [
       "codespell",
       "lint_docs",
     ],
     "environment": {
-      "secret_github_token": "",
+      "secret_github_token": {
+        "from_secret": "github_token",
+      },
     },
     "image": "grafana/build-container:1.5.3",
     "name": "build_frontend_package",
@@ -177,7 +179,7 @@ def build_frontend_package_step():
 def build_frontend_documentation_step():
   return {
     "commands": [
-      "/var/scribe/pipeline -step=9 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json -log-level=debug -version=v0.9.15 ./pkg/build/ci",
+      "/var/scribe/pipeline -step=9 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json -log-level=debug -version=v0.9.16-dirty ./pkg/build/ci",
     ],
     "depends_on": [
       "build_frontend_package",
@@ -199,7 +201,7 @@ def build_frontend_documentation_step():
 def build_documentation_website_step():
   return {
     "commands": [
-      "/var/scribe/pipeline -step=10 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json -log-level=debug -version=v0.9.15 ./pkg/build/ci",
+      "/var/scribe/pipeline -step=10 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json -log-level=debug -version=v0.9.16-dirty ./pkg/build/ci",
     ],
     "depends_on": [
       "build_frontend_documentation",

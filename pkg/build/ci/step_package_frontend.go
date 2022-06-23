@@ -29,8 +29,8 @@ func StepPackageFrontend() pipeline.Step {
 		NewStep(packageFrontend).
 		WithImage(BuildImage).
 		WithArguments(
-			ArgumentGrabpl,
 			ArgumentGitHubToken,
+			ArgumentGrabpl,
 			pipeline.ArgumentSourceFS,
 			pipeline.ArgumentBuildID,
 			ArgumentGrabpl,

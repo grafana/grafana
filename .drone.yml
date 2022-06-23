@@ -540,17 +540,17 @@ steps:
     CGO_ENABLED: "0"
     GOARCH: amd64
     GOOS: linux
-  image: grafana/shipwright:go-v0.9.15
+  image: grafana/shipwright:go-v0.9.16-dirty
   name: builtin-compile-pipeline
   volumes:
   - name: scribe
     path: /var/scribe
 - commands:
   - /var/scribe/pipeline -step=1 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json
-    -log-level=debug -version=v0.9.15 ./pkg/build/ci
+    -log-level=debug -version=v0.9.16-dirty ./pkg/build/ci
   depends_on:
   - builtin-compile-pipeline
-  image: grafana/shipwright:v0.9.15
+  image: grafana/shipwright:v0.9.16-dirty
   name: download_grabpl
   volumes:
   - name: scribe
@@ -559,7 +559,7 @@ steps:
     path: /var/scribe-state
 - commands:
   - /var/scribe/pipeline -step=2 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json
-    -log-level=debug -version=v0.9.15 ./pkg/build/ci
+    -log-level=debug -version=v0.9.16-dirty ./pkg/build/ci
   depends_on:
   - download_grabpl
   image: grafana/build-container:1.5.3
@@ -571,7 +571,7 @@ steps:
     path: /var/scribe-state
 - commands:
   - /var/scribe/pipeline -step=5 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json
-    -log-level=debug -version=v0.9.15 ./pkg/build/ci
+    -log-level=debug -version=v0.9.16-dirty ./pkg/build/ci
   depends_on:
   - yarn_install
   image: grafana/build-container:1.5.3
@@ -583,7 +583,7 @@ steps:
     path: /var/scribe-state
 - commands:
   - /var/scribe/pipeline -step=6 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json
-    -log-level=debug -version=v0.9.15 ./pkg/build/ci
+    -log-level=debug -version=v0.9.16-dirty ./pkg/build/ci
   depends_on:
   - yarn_install
   image: grafana/build-container:1.5.3
@@ -596,12 +596,14 @@ steps:
     path: /var/scribe-state
 - commands:
   - /var/scribe/pipeline -step=8 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json
-    -log-level=debug -version=v0.9.15 -arg=github_token=$secret_github_token ./pkg/build/ci
+    -log-level=debug -version=v0.9.16-dirty -arg=github_token=$secret_github_token
+    ./pkg/build/ci
   depends_on:
   - codespell
   - lint_docs
   environment:
-    secret_github_token: ""
+    secret_github_token:
+      from_secret: github_token
   image: grafana/build-container:1.5.3
   name: build_frontend_package
   volumes:
@@ -611,7 +613,7 @@ steps:
     path: /var/scribe-state
 - commands:
   - /var/scribe/pipeline -step=9 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json
-    -log-level=debug -version=v0.9.15 ./pkg/build/ci
+    -log-level=debug -version=v0.9.16-dirty ./pkg/build/ci
   depends_on:
   - build_frontend_package
   image: grafana/build-container:1.5.3
@@ -623,7 +625,7 @@ steps:
     path: /var/scribe-state
 - commands:
   - /var/scribe/pipeline -step=10 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json
-    -log-level=debug -version=v0.9.15 ./pkg/build/ci
+    -log-level=debug -version=v0.9.16-dirty ./pkg/build/ci
   depends_on:
   - build_frontend_documentation
   image: grafana/docs-base:latest
@@ -669,17 +671,17 @@ steps:
     CGO_ENABLED: "0"
     GOARCH: amd64
     GOOS: linux
-  image: grafana/shipwright:go-v0.9.15
+  image: grafana/shipwright:go-v0.9.16-dirty
   name: builtin-compile-pipeline
   volumes:
   - name: scribe
     path: /var/scribe
 - commands:
   - /var/scribe/pipeline -step=1 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json
-    -log-level=debug -version=v0.9.15 ./pkg/build/ci
+    -log-level=debug -version=v0.9.16-dirty ./pkg/build/ci
   depends_on:
   - builtin-compile-pipeline
-  image: grafana/shipwright:v0.9.15
+  image: grafana/shipwright:v0.9.16-dirty
   name: download_grabpl
   volumes:
   - name: scribe
@@ -688,7 +690,7 @@ steps:
     path: /var/scribe-state
 - commands:
   - /var/scribe/pipeline -step=2 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json
-    -log-level=debug -version=v0.9.15 ./pkg/build/ci
+    -log-level=debug -version=v0.9.16-dirty ./pkg/build/ci
   depends_on:
   - download_grabpl
   image: grafana/build-container:1.5.3
@@ -700,7 +702,7 @@ steps:
     path: /var/scribe-state
 - commands:
   - /var/scribe/pipeline -step=5 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json
-    -log-level=debug -version=v0.9.15 ./pkg/build/ci
+    -log-level=debug -version=v0.9.16-dirty ./pkg/build/ci
   depends_on:
   - yarn_install
   image: grafana/build-container:1.5.3
@@ -712,7 +714,7 @@ steps:
     path: /var/scribe-state
 - commands:
   - /var/scribe/pipeline -step=6 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json
-    -log-level=debug -version=v0.9.15 ./pkg/build/ci
+    -log-level=debug -version=v0.9.16-dirty ./pkg/build/ci
   depends_on:
   - yarn_install
   image: grafana/build-container:1.5.3
@@ -725,12 +727,14 @@ steps:
     path: /var/scribe-state
 - commands:
   - /var/scribe/pipeline -step=8 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json
-    -log-level=debug -version=v0.9.15 -arg=github_token=$secret_github_token ./pkg/build/ci
+    -log-level=debug -version=v0.9.16-dirty -arg=github_token=$secret_github_token
+    ./pkg/build/ci
   depends_on:
   - codespell
   - lint_docs
   environment:
-    secret_github_token: ""
+    secret_github_token:
+      from_secret: github_token
   image: grafana/build-container:1.5.3
   name: build_frontend_package
   volumes:
@@ -740,7 +744,7 @@ steps:
     path: /var/scribe-state
 - commands:
   - /var/scribe/pipeline -step=9 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json
-    -log-level=debug -version=v0.9.15 ./pkg/build/ci
+    -log-level=debug -version=v0.9.16-dirty ./pkg/build/ci
   depends_on:
   - build_frontend_package
   image: grafana/build-container:1.5.3
@@ -752,7 +756,7 @@ steps:
     path: /var/scribe-state
 - commands:
   - /var/scribe/pipeline -step=10 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json
-    -log-level=debug -version=v0.9.15 ./pkg/build/ci
+    -log-level=debug -version=v0.9.16-dirty ./pkg/build/ci
   depends_on:
   - build_frontend_documentation
   image: grafana/docs-base:latest
@@ -4866,6 +4870,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 53b02819982a657c6f066b231bafc4f523fed6a863b543bbc841d7750d1f00be
+hmac: d529021cf02bc89dfe99f17d03ba340908565d9f91472fb7fa20f810de82cf08
 
 ...
