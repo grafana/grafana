@@ -88,7 +88,6 @@ exports[`Render should disable access key id field 1`] = `
       tooltip="Optionally, specify default log groups for CloudWatch Logs queries."
     >
       <LogGroupSelector
-        allowCustomValue={true}
         onChange={[Function]}
         onOpenMenu={[Function]}
         region="us-east-2"
@@ -187,7 +186,6 @@ exports[`Render should render component 1`] = `
       tooltip="Optionally, specify default log groups for CloudWatch Logs queries."
     >
       <LogGroupSelector
-        allowCustomValue={true}
         onChange={[Function]}
         onOpenMenu={[Function]}
         region="us-east-2"
@@ -291,7 +289,6 @@ exports[`Render should show access key and secret access key fields 1`] = `
       tooltip="Optionally, specify default log groups for CloudWatch Logs queries."
     >
       <LogGroupSelector
-        allowCustomValue={true}
         onChange={[Function]}
         onOpenMenu={[Function]}
         region="us-east-2"
@@ -395,7 +392,6 @@ exports[`Render should show arn role field 1`] = `
       tooltip="Optionally, specify default log groups for CloudWatch Logs queries."
     >
       <LogGroupSelector
-        allowCustomValue={true}
         onChange={[Function]}
         onOpenMenu={[Function]}
         region="us-east-2"
@@ -499,7 +495,6 @@ exports[`Render should show credentials profile name field 1`] = `
       tooltip="Optionally, specify default log groups for CloudWatch Logs queries."
     >
       <LogGroupSelector
-        allowCustomValue={true}
         onChange={[Function]}
         onOpenMenu={[Function]}
         region="us-east-2"
