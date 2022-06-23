@@ -268,6 +268,9 @@ export const Components = {
     spanBar: 'data-testid SpanBar--wrapper',
   },
   QueryField: { container: 'Query field' },
+  QueryBuilder: {
+    queryPatterns: 'Query patterns',
+  },
   ValuePicker: {
     button: (name: string) => `Value picker button ${name}`,
     select: (name: string) => `Value picker select ${name}`,
