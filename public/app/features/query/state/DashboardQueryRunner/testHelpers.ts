@@ -56,8 +56,7 @@ export function getDefaultOptions(): DashboardQueryRunnerOptions {
     },
     panels: [{ alert: {} } as any],
     meta: {
-      isPublic: false,
-      publicDashboardUid: '',
+      publicDashboardAccessToken: '',
     },
   };
   const range = getDefaultTimeRange();
