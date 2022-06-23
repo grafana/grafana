@@ -46,21 +46,22 @@ func ProvideService(grafanaCfg *setting.Cfg, pluginRegistry registry.Service, pl
 		{Class: plugins.Core, Paths: corePluginPaths(grafanaCfg)},
 		{Class: plugins.Bundled, Paths: []string{grafanaCfg.BundledPluginsPath}},
 		{Class: plugins.External, Paths: append([]string{grafanaCfg.PluginsPath}, pluginSettingPaths(grafanaCfg)...)},
-	}, pluginLoader)
+	}, pluginLoader, installer.New(false, grafanaCfg.BuildVersion, newInstallerLogger("plugin.installer", true)))
 	if err := pm.Init(); err != nil {
 		return nil, err
 	}
 	return pm, nil
 }
 
-func New(cfg *plugins.Cfg, pluginRegistry registry.Service, pluginSources []PluginSource, pluginLoader loader.Service) *PluginManager {
+func New(cfg *plugins.Cfg, pluginRegistry registry.Service, pluginSources []PluginSource, pluginLoader loader.Service,
+	pluginInstaller installer.Service) *PluginManager {
 	return &PluginManager{
 		cfg:             cfg,
 		pluginLoader:    pluginLoader,
 		pluginSources:   pluginSources,
 		pluginRegistry:  pluginRegistry,
 		log:             log.New("plugin.manager"),
-		pluginInstaller: installer.New(false, cfg.BuildVersion, newInstallerLogger("plugin.installer", true)),
+		pluginInstaller: pluginInstaller,
 	}
 }
 
