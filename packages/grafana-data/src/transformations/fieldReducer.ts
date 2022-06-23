@@ -282,8 +282,6 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
     previousDeltaUp: true,
   } as FieldCalcs;
 
-  let squareSum = 0;
-
   const data = field.values;
   calcs.count = data.length;
 
