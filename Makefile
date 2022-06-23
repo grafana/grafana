@@ -135,10 +135,6 @@ test-go-integration: ## Run integration tests for backend.
 	@echo "test backend integration tests"
 	$(GO) test -run Integration -covermode=atomic -timeout=30m ./pkg/...
 
-test-go-pro: ## Run enterprise2 pro tests for backend.
-	@echo "test backend enterprise2 pro tests"
-	$(GO) test -tags=pro -covermode=atomic -timeout=30m ./pkg/...
-
 test-js: ## Run tests for frontend.
 	@echo "test frontend"
 	yarn test
