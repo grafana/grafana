@@ -382,7 +382,7 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
   }
 
   if (calcs.nonNullCount > 0) {
-    calcs.mean = calcs.sum / calcs.nonNullCount;
+    calcs.mean = calcs.sum! / calcs.nonNullCount;
   }
 
   if (calcs.allIsNull) {
