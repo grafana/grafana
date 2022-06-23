@@ -4,6 +4,7 @@ import "github.com/grafana/scribe"
 
 const (
 	BuildImage       = "grafana/build-container:1.5.7"
+	YarnImage        = "node:18-alpine3.15"
 	PublishImage     = "grafana/grafana-ci-deploy:1.3.1"
 	DocsWebsiteImage = "grafana/docs-base:latest"
 )
