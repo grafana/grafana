@@ -56,13 +56,26 @@ describe('Stats Calculators', () => {
   it('should calculate basic stats', () => {
     const stats = reduceField({
       field: basicTable.fields[0],
-      reducers: ['first', 'last', 'mean', 'count'],
+      reducers: [
+        'first',
+        'last',
+        'mean',
+        'count',
+        'Variance (Population)',
+        'Variance (Sample)',
+        'Standard deviation (Population)',
+        'Standard deviation (Sample)',
+      ],
     });
 
     expect(stats.first).toEqual(10);
     expect(stats.last).toEqual(20);
     expect(stats.mean).toEqual(15);
     expect(stats.count).toEqual(2);
+    expect(stats.variancePopulation).toEqual(25);
+    expect(stats.varianceSample).toEqual(50);
+    expect(stats.stddevPopulation).toEqual(5);
+    expect(stats.stddevSample).toBeCloseTo(7.0710678, 5);
   });
 
   it('should support a single stat also', () => {
@@ -80,18 +93,11 @@ describe('Stats Calculators', () => {
   it('should get non standard stats', () => {
     const stats = reduceField({
       field: basicTable.fields[0],
-      reducers: [
-        ReducerID.distinctCount,
-        ReducerID.changeCount,
-        ReducerID.variancePopulation,
-        ReducerID.stddevPopulation,
-      ],
+      reducers: [ReducerID.distinctCount, ReducerID.changeCount],
     });
 
     expect(stats.distinctCount).toEqual(2);
     expect(stats.changeCount).toEqual(1);
-    expect(stats.variancePopulation).toEqual(25);
-    expect(stats.stddevPopulation).toEqual(5);
   });
 
   it('should calculate step', () => {
