@@ -154,13 +154,13 @@ func NewAlertRule(rule models.AlertRule, provenance models.Provenance) AlertRule
 //       200: AlertRuleGroup
 //       400: ValidationError
 
-// swagger:parameters RoutePutAlertRuleGroup
+// swagger:parameters RouteGetAlertRuleGroup RoutePutAlertRuleGroup
 type FolderUIDPathParam struct {
 	// in:path
 	FolderUID string `json:"FolderUID"`
 }
 
-// swagger:parameters RoutePutAlertRuleGroup
+// swagger:parameters RouteGetAlertRuleGroup RoutePutAlertRuleGroup
 type RuleGroupPathParam struct {
 	// in:path
 	Group string `json:"Group"`

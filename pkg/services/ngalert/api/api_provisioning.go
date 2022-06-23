@@ -284,7 +284,7 @@ func (srv *ProvisioningSrv) RouteDeleteAlertRule(c *models.ReqContext, UID strin
 	return response.JSON(http.StatusNoContent, "")
 }
 
-func (srv *ProvisioningSrv) RouteGetAlertRuleGroup(c *models.ReqContext) response.Response {
+func (srv *ProvisioningSrv) RouteGetAlertRuleGroup(c *models.ReqContext, folder string, group string) response.Response {
 	return nil
 }
 

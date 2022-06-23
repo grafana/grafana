@@ -3188,13 +3188,15 @@
    "type": "object"
   },
   "gettableAlerts": {
-   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
-   "type": "array"
+   "type": "array",
+   "x-go-name": "GettableAlerts",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "gettableSilence": {
+   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3240,9 +3242,7 @@
     "status",
     "updatedAt"
    ],
-   "type": "object",
-   "x-go-name": "GettableSilence",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "gettableSilences": {
    "description": "GettableSilences gettable silences",
@@ -3744,6 +3744,20 @@
   "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
    "get": {
     "operationId": "RouteGetAlertRuleGroup",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "FolderUID",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "in": "path",
+      "name": "Group",
+      "required": true,
+      "type": "string"
+     }
+    ],
     "responses": {
      "200": {
       "$ref": "#/responses/AlertRuleGroup"

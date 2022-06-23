@@ -63,7 +63,9 @@ func (f *ForkedProvisioningApi) RouteGetAlertRule(ctx *models.ReqContext) respon
 	return f.forkRouteGetAlertRule(ctx, uIDParam)
 }
 func (f *ForkedProvisioningApi) RouteGetAlertRuleGroup(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetAlertRuleGroup(ctx)
+	folderUIDParam := web.Params(ctx.Req)[":FolderUID"]
+	groupParam := web.Params(ctx.Req)[":Group"]
+	return f.forkRouteGetAlertRuleGroup(ctx, folderUIDParam, groupParam)
 }
 func (f *ForkedProvisioningApi) RouteGetContactpoints(ctx *models.ReqContext) response.Response {
 	return f.forkRouteGetContactpoints(ctx)

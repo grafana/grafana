@@ -95,8 +95,8 @@ func (f *ForkedProvisioningApi) forkRouteDeleteAlertRule(ctx *models.ReqContext,
 	return f.svc.RouteDeleteAlertRule(ctx, UID)
 }
 
-func (f *ForkedProvisioningApi) forkRouteGetAlertRuleGroup(ctx *models.ReqContext) response.Response {
-	return f.svc.RouteGetAlertRuleGroup(ctx)
+func (f *ForkedProvisioningApi) forkRouteGetAlertRuleGroup(ctx *models.ReqContext, folder, group string) response.Response {
+	return f.svc.RouteGetAlertRuleGroup(ctx, folder, group)
 }
 
 func (f *ForkedProvisioningApi) forkRoutePutAlertRuleGroup(ctx *models.ReqContext, ag apimodels.AlertRuleGroupMetadata, folder, group string) response.Response {
