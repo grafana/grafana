@@ -1,23 +1,33 @@
-import {css} from '@emotion/css';
-import {debounce, intersectionBy, unionBy} from 'lodash';
-import React, {ReactNode, useState, useEffect} from 'react';
-import {Editor} from 'slate';
+import { css } from '@emotion/css';
+import { debounce, intersectionBy, unionBy } from 'lodash';
+import { LanguageMap, languages as prismLanguages } from 'prismjs';
+import React, { ReactNode, useState, useEffect, useCallback } from 'react';
+import { Editor, Node, Plugin } from 'slate';
 
-import {AbsoluteTimeRange, QueryEditorProps, SelectableValue} from '@grafana/data';
-import {LegacyForms, MultiSelect, QueryField, TypeaheadInput, TypeaheadOutput} from '@grafana/ui';
-import {InputActionMeta} from '@grafana/ui/src/components/Select/types';
-import {notifyApp} from 'app/core/actions';
-import {createErrorNotification} from 'app/core/copy/appNotification';
-import {dispatch} from 'app/store/store';
-import {ExploreId} from 'app/types';
+import { AbsoluteTimeRange, QueryEditorProps, SelectableValue } from '@grafana/data';
+import {
+  BracesPlugin,
+  LegacyForms,
+  MultiSelect,
+  QueryField,
+  SlatePrism,
+  TypeaheadInput,
+  TypeaheadOutput,
+} from '@grafana/ui';
+import { InputActionMeta } from '@grafana/ui/src/components/Select/types';
+import { notifyApp } from 'app/core/actions';
+import { createErrorNotification } from 'app/core/copy/appNotification';
+import { dispatch } from 'app/store/store';
+import { ExploreId } from 'app/types';
 
 // Utils & Services
 // dom also includes Element polyfills
-import {CloudWatchDatasource} from '../datasource';
-import {CloudWatchLanguageProvider} from "../language_provider";
-import {CloudWatchJsonData, CloudWatchQuery, CloudWatchLogsQuery} from '../types';
-import {getStatsGroups} from '../utils/query/getStatsGroups';
-import {appendTemplateVariables} from '../utils/utils';
+import { CloudWatchDatasource } from '../datasource';
+import { CloudWatchLanguageProvider } from '../language_provider';
+import syntax from '../syntax';
+import { CloudWatchJsonData, CloudWatchQuery, CloudWatchLogsQuery } from '../types';
+import { getStatsGroups } from '../utils/query/getStatsGroups';
+import { appendTemplateVariables } from '../utils/utils';
 
 import QueryHeader from './QueryHeader';
 
@@ -30,6 +40,15 @@ export interface CloudWatchLogsQueryFieldProps
   allowCustomValue?: boolean;
 }
 
+const containerClass = css`
+  flex-grow: 1;
+  min-height: 35px;
+`;
+
+const rowGap = css`
+  gap: 3px;
+`;
+
 interface Hint {
   message: string;
   fix: Fix;
@@ -40,35 +59,8 @@ interface Fix {
   action: () => void;
 }
 
-const containerClass = css`
-  flex-grow: 1;
-  min-height: 35px;
-`;
-
-const rowGap = css`
-  gap: 3px;
-`;
-
-// plugins: Plugin[];
-//
-// constructor(props: CloudWatchLogsQueryFieldProps, context: React.Context<any>) {
-//   super(props, context);
-//
-//   this.plugins = [
-//     BracesPlugin(),
-//     SlatePrism(
-//       {
-//         onlyIn: (node: Node) => node.object === 'block' && node.type === 'code_block',
-//         getSyntax: (node: Node) => 'cloudwatch',
-//       },
-//       { ...(prismLanguages as LanguageMap), cloudwatch: syntax }
-//     ),
-//   ];
-// }
-//
-
 export const CloudWatchLogsQueryField = (props: CloudWatchLogsQueryFieldProps) => {
-  const {onRunQuery, onChange, ExtraFieldElement, query, data, datasource, allowCustomValue} = props;
+  const { onRunQuery, onChange, ExtraFieldElement, query, data, datasource, allowCustomValue } = props;
   const [selectedLogGroups, setSelectedLogGroups] = useState<Array<SelectableValue<string>>>(
     (props.query as CloudWatchLogsQuery).logGroupNames?.map((logGroup) => ({
       value: logGroup,
@@ -85,32 +77,45 @@ export const CloudWatchLogsQueryField = (props: CloudWatchLogsQueryFieldProps) =
 
   const MAX_LOG_GROUPS = 20;
 
-  const fetchLogGroupOptions = async (region: string, logGroupNamePrefix?: string) => {
-    try {
-      const logGroups: string[] = await props.datasource.describeLogGroups({
-        refId: props.query.refId,
-        region,
-        logGroupNamePrefix,
-      });
+  const [plugins] = useState<Plugin[]>([
+    BracesPlugin(),
+    SlatePrism(
+      {
+        onlyIn: (node: Node) => node.object === 'block' && node.type === 'code_block',
+        getSyntax: (node: Node) => 'cloudwatch',
+      },
+      { ...(prismLanguages as LanguageMap), cloudwatch: syntax }
+    ),
+  ]);
 
-      return logGroups.map((logGroup) => ({
-        value: logGroup,
-        label: logGroup,
-      }));
-    } catch (err) {
-      let errMessage = 'unknown error';
-      if (typeof err !== 'string') {
-        try {
-          errMessage = JSON.stringify(err);
-        } catch (e) {
+  const fetchLogGroupOptions = useCallback(
+    async (region: string, logGroupNamePrefix?: string) => {
+      try {
+        const logGroups: string[] = await props.datasource.describeLogGroups({
+          refId: props.query.refId,
+          region,
+          logGroupNamePrefix,
+        });
+
+        return logGroups.map((logGroup) => ({
+          value: logGroup,
+          label: logGroup,
+        }));
+      } catch (err) {
+        let errMessage = 'unknown error';
+        if (typeof err !== 'string') {
+          try {
+            errMessage = JSON.stringify(err);
+          } catch (e) {}
+        } else {
+          errMessage = err;
         }
-      } else {
-        errMessage = err;
+        dispatch(notifyApp(createErrorNotification(errMessage)));
+        return [];
       }
-      dispatch(notifyApp(createErrorNotification(errMessage)));
-      return [];
-    }
-  };
+    },
+    [props.datasource, props.query.refId]
+  );
 
   const onLogGroupSearch = (searchTerm: string, region: string, actionMeta: InputActionMeta) => {
     if (actionMeta.action !== 'input-change') {
@@ -129,7 +134,7 @@ export const CloudWatchLogsQueryField = (props: CloudWatchLogsQueryFieldProps) =
 
     return fetchLogGroupOptions(region, searchTerm)
       .then((matchingLogGroups) => {
-        setAvailableLogGroups(unionBy(availableLogGroups, matchingLogGroups, 'value'))
+        setAvailableLogGroups(unionBy(availableLogGroups, matchingLogGroups, 'value'));
       })
       .finally(() => {
         setLoadingLogGroups(false);
@@ -139,37 +144,37 @@ export const CloudWatchLogsQueryField = (props: CloudWatchLogsQueryFieldProps) =
   const onLogGroupSearchDebounced = debounce(onLogGroupSearch, 300);
 
   useEffect(() => {
-    const {query, onChange} = props;
+    const { query, onChange } = props;
 
-    setLoadingLogGroups(true)
+    setLoadingLogGroups(true);
 
     query.region &&
-    fetchLogGroupOptions(query.region).then((logGroups) => {
-      const resultSelectedLogGroups = selectedLogGroups;
-      if (onChange) {
-        const nextQuery = {
-          ...query,
-          logGroupNames: resultSelectedLogGroups.map((group) => group.value!),
-        };
+      fetchLogGroupOptions(query.region).then((logGroups) => {
+        const resultSelectedLogGroups = selectedLogGroups;
+        if (onChange) {
+          const nextQuery = {
+            ...query,
+            logGroupNames: resultSelectedLogGroups.map((group) => group.value!),
+          };
 
-        onChange(nextQuery);
-      }
+          onChange(nextQuery);
+        }
 
-      setLoadingLogGroups(false);
-      setAvailableLogGroups(logGroups);
-      setSelectedLogGroups(resultSelectedLogGroups);
-    });
-  });
+        setLoadingLogGroups(false);
+        setAvailableLogGroups(logGroups);
+        setSelectedLogGroups(resultSelectedLogGroups);
+      });
+  }, [props, fetchLogGroupOptions, selectedLogGroups]);
 
   const setCustomLogGroups = (v: string) => {
-    const customLogGroup: SelectableValue<string> = {value: v, label: v};
+    const customLogGroup: SelectableValue<string> = { value: v, label: v };
     const combinedSelectedLogGroups = [...selectedLogGroups, customLogGroup];
     setSelectedLogGroups(combinedSelectedLogGroups);
   };
 
   const onChangeQuery = (value: string) => {
     // Send text change to parent
-    const {query, onChange} = props;
+    const { query, onChange } = props;
 
     if (onChange) {
       const nextQuery = {
@@ -183,9 +188,9 @@ export const CloudWatchLogsQueryField = (props: CloudWatchLogsQueryFieldProps) =
   };
 
   const setSelectedLogGroupsFunc = (selectedLogGroups: Array<SelectableValue<string>>) => {
-    setSelectedLogGroups(selectedLogGroups)
+    setSelectedLogGroups(selectedLogGroups);
 
-    const {onChange, query} = props;
+    const { onChange, query } = props;
     onChange?.({
       ...(query as CloudWatchLogsQuery),
       logGroupNames: selectedLogGroups.map((logGroupName) => logGroupName.value!) ?? [],
@@ -193,18 +198,18 @@ export const CloudWatchLogsQueryField = (props: CloudWatchLogsQueryFieldProps) =
   };
 
   const onTypeahead = async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {
-    const {datasource, query} = props;
+    const { datasource, query } = props;
 
     if (!datasource.languageProvider) {
-      return {suggestions: []};
+      return { suggestions: [] };
     }
 
     const cloudwatchLanguageProvider = datasource.languageProvider as CloudWatchLanguageProvider;
-    const {history, absoluteRange} = props;
-    const {prefix, text, value, wrapperClasses, labelKey, editor} = typeahead;
+    const { history, absoluteRange } = props;
+    const { prefix, text, value, wrapperClasses, labelKey, editor } = typeahead;
 
     return await cloudwatchLanguageProvider.provideCompletionItems(
-      {text, value, prefix, wrapperClasses, labelKey, editor},
+      { text, value, prefix, wrapperClasses, labelKey, editor },
       {
         history,
         absoluteRange,
@@ -214,12 +219,11 @@ export const CloudWatchLogsQueryField = (props: CloudWatchLogsQueryFieldProps) =
     );
   };
 
-
   const onRegionChange = async (v: string) => {
     setLoadingLogGroups(true);
     const logGroups = await fetchLogGroupOptions(v);
     const resultingSelectedLogGroups = intersectionBy(selectedLogGroups, logGroups, 'value');
-    const {onChange, query} = props;
+    const { onChange, query } = props;
     if (onChange) {
       const nextQuery = {
         ...query,
@@ -229,7 +233,7 @@ export const CloudWatchLogsQueryField = (props: CloudWatchLogsQueryFieldProps) =
       onChange(nextQuery);
     }
     setAvailableLogGroups(logGroups);
-    setSelectedLogGroups(resultingSelectedLogGroups)
+    setSelectedLogGroups(resultingSelectedLogGroups);
     setLoadingLogGroups(false);
   };
 
@@ -237,12 +241,11 @@ export const CloudWatchLogsQueryField = (props: CloudWatchLogsQueryFieldProps) =
     const queryFieldDisabled = loadingLogGroups || selectedLogGroups.length === 0;
 
     if (queryFieldDisabled) {
-      setInvalidLogGroups(true)
+      setInvalidLogGroups(true);
     }
 
     next();
   };
-
 
   const onOpenLogGroupMenu = () => {
     setInvalidLogGroups(false);
@@ -328,4 +331,3 @@ export const CloudWatchLogsQueryField = (props: CloudWatchLogsQueryFieldProps) =
     </>
   );
 };
-
