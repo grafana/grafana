@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
-import { DataFrameType, GrafanaTheme2, PanelProps, reduceField, ReducerID, TimeRange } from '@grafana/data';
+import { DataFrameType, GrafanaTheme2, PanelProps, TimeRange } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { ScaleDistributionConfig } from '@grafana/schema';
 import {
@@ -16,7 +16,7 @@ import {
 } from '@grafana/ui';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
-import { readHeatmapScanlinesCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
+import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 
 import { HeatmapHoverView } from './HeatmapHoverView';
 import { prepareHeatmapData } from './fields';
@@ -59,7 +59,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     let exemplarsXFacet: number[] = []; // "Time" field
     let exemplarsyFacet: number[] = [];
 
-    const meta = readHeatmapScanlinesCustomMeta(info.heatmap);
+    const meta = readHeatmapRowsCustomMeta(info.heatmap);
     if (info.exemplars?.length && meta.yMatchWithLabel) {
       exemplarsXFacet = info.exemplars?.fields[0].values.toArray();
 
@@ -133,8 +133,6 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
       cellGap: options.cellGap,
       hideLE: options.filterValues?.le,
       hideGE: options.filterValues?.ge,
-      valueMin: options.color.min,
-      valueMax: options.color.max,
       exemplarColor: options.exemplars?.color ?? 'rgba(255,0,255,0.7)',
       yAxisConfig: options.yAxis,
       ySizeDivisor: scaleConfig?.type === ScaleDistribution.Log ? +(options.calculation?.yBuckets?.value || 1) : 1,
@@ -148,20 +146,9 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     }
 
     let heatmapType = dataRef.current?.heatmap?.meta?.type;
-    let countFieldIdx = heatmapType === DataFrameType.HeatmapCells ? 2 : 3;
+    let isSparseHeatmap = heatmapType === DataFrameType.HeatmapCells && !isHeatmapCellsDense(dataRef.current?.heatmap!);
+    let countFieldIdx = !isSparseHeatmap ? 2 : 3;
     const countField = info.heatmap.fields[countFieldIdx];
-
-    // TODO -- better would be to get the range from the real color scale!
-    let { min, max } = options.color;
-    if (min == null || max == null) {
-      const calc = reduceField({ field: countField, reducers: [ReducerID.min, ReducerID.max] });
-      if (min == null) {
-        min = calc[ReducerID.min];
-      }
-      if (max == null) {
-        max = calc[ReducerID.max];
-      }
-    }
 
     let hoverValue: number | undefined = undefined;
     // seriesIdx: 1 is heatmap layer; 2 is exemplar layer
@@ -172,7 +159,13 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     return (
       <VizLayout.Legend placement="bottom" maxHeight="20%">
         <div className={styles.colorScaleWrapper}>
-          <ColorScale hoverValue={hoverValue} colorPalette={palette} min={min!} max={max!} display={info.display} />
+          <ColorScale
+            hoverValue={hoverValue}
+            colorPalette={palette}
+            min={dataRef.current.minValue!}
+            max={dataRef.current.maxValue!}
+            display={info.display}
+          />
         </div>
       </VizLayout.Legend>
     );

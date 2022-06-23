@@ -298,10 +298,20 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   }
 
   updateGridPos(newPos: GridPos) {
+    if (
+      newPos.x === this.gridPos.x &&
+      newPos.y === this.gridPos.y &&
+      newPos.h === this.gridPos.h &&
+      newPos.w === this.gridPos.w
+    ) {
+      return;
+    }
+
     this.gridPos.x = newPos.x;
     this.gridPos.y = newPos.y;
     this.gridPos.w = newPos.w;
     this.gridPos.h = newPos.h;
+    this.configRev++;
   }
 
   runAllPanelQueries(
@@ -309,14 +319,14 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     dashboardTimezone: string,
     timeData: TimeOverrideResult,
     width: number,
-    publicDashboardUid?: string
+    publicDashboardAccessToken?: string
   ) {
     this.getQueryRunner().run({
       datasource: this.datasource,
       queries: this.targets,
       panelId: this.id,
       dashboardId: dashboardId,
-      publicDashboardUid,
+      publicDashboardAccessToken,
       timezone: dashboardTimezone,
       timeRange: timeData.timeRange,
       timeInfo: timeData.timeInfo,
