@@ -1,9 +1,10 @@
 // Libraries
 import { css, cx } from '@emotion/css';
 import React, { PureComponent } from 'react';
+import { lastValueFrom } from 'rxjs';
 
 import { PanelProps } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, HealthCheckResult } from '@grafana/runtime';
 import { Button, Spinner, stylesFactory } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -71,15 +72,15 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
 
     dashboard?.removePanel(panel!);
 
-    backendSrv
-      .request({
+    lastValueFrom(
+      backendSrv.fetch({
         method: 'PUT',
         url: '/api/user/helpflags/1',
         showSuccessAlert: false,
       })
-      .then((res: any) => {
-        contextSrv.user.helpFlags1 = res.helpFlags1;
-      });
+    ).then((res: any) => {
+      contextSrv.user.helpFlags1 = res.helpFlags1;
+    });
   };
 
   render() {
