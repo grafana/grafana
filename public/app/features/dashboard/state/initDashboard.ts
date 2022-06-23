@@ -24,7 +24,7 @@ export interface InitDashboardArgs {
   urlUid?: string;
   urlSlug?: string;
   urlType?: string;
-  urlFolderId?: string | null;
+  urlFolderId?: string;
   panelType?: string;
   accessToken?: string;
   routeName?: string;
@@ -214,7 +214,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
   };
 }
 
-export function getNewDashboardModelData(urlFolderId?: string | null, panelType?: string): any {
+export function getNewDashboardModelData(urlFolderId?: string, panelType?: string): any {
   const data = {
     meta: {
       canStar: false,

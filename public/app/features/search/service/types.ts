@@ -1,4 +1,4 @@
-import { DataFrame, DataFrameView, SelectableValue } from '@grafana/data';
+import { DataFrameView, SelectableValue } from '@grafana/data';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 
 export interface FacetField {

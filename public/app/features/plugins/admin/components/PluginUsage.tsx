@@ -5,7 +5,8 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { of } from 'rxjs';
 
 import { GrafanaTheme2, PluginMeta } from '@grafana/data';
-import { Spinner, useStyles2 } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { Alert, Spinner, useStyles2 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { SearchResultsTable } from 'app/features/search/page/components/SearchResultsTable';
 import { getGrafanaSearcher, SearchQuery } from 'app/features/search/service';
@@ -56,6 +57,14 @@ export function PluginUsage({ plugin }: Props) {
 
   if (results.loading) {
     return <Spinner />;
+  }
+
+  if (!config.featureToggles.panelTitleSearch) {
+    return (
+      <Alert title="Missing feature toggle: panelTitleSearch">
+        Plugin usage requires the new search index find usage across dashboards
+      </Alert>
+    );
   }
 
   return (
