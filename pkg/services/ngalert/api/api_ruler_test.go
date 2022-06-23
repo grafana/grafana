@@ -810,10 +810,7 @@ func TestRouteGetRulesGroupConfig(t *testing.T) {
 		ruleStore.PutRule(context.Background(), expectedRules...)
 		ac := acMock.New().WithDisabled()
 
-		response := createService(ac, ruleStore, nil).RouteGetRulesGroupConfig(createRequestContext(orgID, models2.ROLE_VIEWER, map[string]string{
-			":Namespace": folder.Title,
-			":Groupname": groupKey.RuleGroup,
-		}))
+		response := createService(ac, ruleStore, nil).RouteGetRulesGroupConfig(createRequestContext(orgID, models2.ROLE_VIEWER, nil), folder.Title, groupKey.RuleGroup)
 
 		require.Equal(t, http.StatusAccepted, response.Status())
 		result := &apimodels.RuleGroupConfigResponse{}
