@@ -263,5 +263,10 @@ var (
 			Description: "New top nav and page layouts",
 			State:       FeatureStateAlpha,
 		},
+		{
+			Name:        "customBranding",
+			Description: "Replaces whitelabeling with the new custom branding feature",
+			State:       FeatureStateAlpha,
+		},
 	}
 )
