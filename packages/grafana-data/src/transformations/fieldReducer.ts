@@ -12,8 +12,6 @@ export enum ReducerID {
   mean = 'mean',
   variancePopulation = 'variancePopulation',
   stddevPopulation = 'stddevPopulation',
-  varianceSample = 'varianceSample',
-  stddevSample = 'stddevSample',
   last = 'last',
   first = 'first',
   count = 'count',
@@ -33,7 +31,7 @@ export enum ReducerID {
 }
 
 // Internal function
-type FieldReducer = (field: Field, ignoreNulls: boolean, nullAsZero: boolean) => FieldCalcs;
+type FieldReducer = (field: Field, calcs: FieldCalcs, ignoreNulls: boolean, nullAsZero: boolean) => void;
 
 export interface FieldReducerInfo extends RegistryItem {
   // Internal details
@@ -94,33 +92,27 @@ export function reduceField(options: ReduceFieldOptions): FieldCalcs {
   const ignoreNulls = nullValueMode === NullValueMode.Ignore;
   const nullAsZero = nullValueMode === NullValueMode.AsZero;
 
+  let calcs = {} as FieldCalcs;
   // Avoid calculating all the standard stats if possible
   if (queue.length === 1 && queue[0].reduce) {
-    const values = queue[0].reduce(field, ignoreNulls, nullAsZero);
-    field.state.calcs = {
-      ...field.state.calcs,
-      ...values,
-    };
-    return values;
+    queue[0].reduce(field, calcs, ignoreNulls, nullAsZero);
+    field.state.calcs = calcs;
+    return calcs;
   }
-
   // For now everything can use the standard stats
   let values = doStandardCalcs(field, ignoreNulls, nullAsZero);
+  calcs = {
+    ...calcs,
+    ...values,
+  };
 
   for (const reducer of queue) {
     if (!values.hasOwnProperty(reducer.id) && reducer.reduce) {
-      values = {
-        ...values,
-        ...reducer.reduce(field, ignoreNulls, nullAsZero),
-      };
+      reducer.reduce(field, calcs, ignoreNulls, nullAsZero);
     }
   }
-
-  field.state.calcs = {
-    ...field.state.calcs,
-    ...values,
-  };
-  return values;
+  field.state.calcs = calcs;
+  return calcs;
 }
 
 // ------------------------------------------------------------------------------
@@ -158,27 +150,17 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
   { id: ReducerID.mean, name: 'Mean', description: 'Average Value', standard: true, aliasIds: ['avg'] },
   {
     id: ReducerID.variancePopulation,
-    name: 'Variance (Population)',
+    name: 'Variance (p)',
     description: 'Variance (based on population) of all values in a field',
-    standard: true,
+    standard: false,
+    reduce: calculateVariancePopulation,
   },
   {
     id: ReducerID.stddevPopulation,
-    name: 'Standard deviation (Population)',
+    name: 'Standard deviation (p)',
     description: 'Standard deviation (based on population) of all values in a field',
-    standard: true,
-  },
-  {
-    id: ReducerID.varianceSample,
-    name: 'Variance (Sample)',
-    description: 'Variance (based on sample) of all values in a field',
-    standard: true,
-  },
-  {
-    id: ReducerID.stddevSample,
-    name: 'Standard deviation (Sample)',
-    description: 'Standard deviation (based on sample) of all values in a field',
-    standard: true,
+    standard: false,
+    reduce: calculateStddevPopulation,
   },
   {
     id: ReducerID.sum,
@@ -264,16 +246,14 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     name: 'All values',
     description: 'Returns an array with all values',
     standard: false,
-    reduce: (field: Field) => ({ allValues: field.values.toArray() }),
+    reduce: calculateAllValues,
   },
   {
     id: ReducerID.uniqueValues,
     name: 'All unique values',
     description: 'Returns an array with all unique values',
     standard: false,
-    reduce: (field: Field) => ({
-      uniqueValues: [...new Set(field.values.toArray())],
-    }),
+    reduce: calculateUniqueValues,
   },
 ]);
 
@@ -284,10 +264,6 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
     min: Number.MAX_VALUE,
     logmin: Number.MAX_VALUE,
     mean: null,
-    variancePopulation: null,
-    stddevPopulation: null,
-    varianceSample: null,
-    stddevSample: null,
     last: null,
     first: null,
     lastNotNull: null,
@@ -377,10 +353,6 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
         if (currentValue < calcs.logmin && currentValue > 0) {
           calcs.logmin = currentValue;
         }
-
-        let _oldMean = calcs.mean;
-        calcs.mean += (currentValue - _oldMean) / calcs.nonNullCount;
-        squareSum += (currentValue - _oldMean) * (currentValue - calcs.mean);
       }
 
       if (currentValue !== 0) {
@@ -404,19 +376,7 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
   }
 
   if (calcs.nonNullCount > 0) {
-    calcs.variancePopulation = squareSum / calcs.nonNullCount;
-  }
-
-  if (calcs.nonNullCount > 0) {
-    calcs.stddevPopulation = Math.sqrt(calcs.variancePopulation);
-  }
-
-  if (calcs.nonNullCount > 0) {
-    calcs.varianceSample = squareSum / (calcs.nonNullCount - 1);
-  }
-
-  if (calcs.nonNullCount > 0) {
-    calcs.stddevSample = Math.sqrt(calcs.varianceSample);
+    calcs.mean = calcs.sum! / calcs.nonNullCount;
   }
 
   if (calcs.allIsNull) {
@@ -437,39 +397,70 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
   return calcs;
 }
 
-function calculateFirst(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
-  return { first: field.values.get(0) };
+function calculateFirst(field: Field, calcs: FieldCalcs, ignoreNulls: boolean, nullAsZero: boolean): void {
+  calcs.first = field.values.get(0);
 }
 
-function calculateFirstNotNull(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
+function calculateFirstNotNull(field: Field, calcs: FieldCalcs, ignoreNulls: boolean, nullAsZero: boolean): void {
   const data = field.values;
   for (let idx = 0; idx < data.length; idx++) {
     const v = data.get(idx);
     if (v != null && v !== undefined) {
-      return { firstNotNull: v };
+      calcs.firstNotNull = v;
+      return;
     }
   }
-  return { firstNotNull: null };
+  calcs.firstNotNull = null;
 }
 
-function calculateLast(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
+function calculateLast(field: Field, calcs: FieldCalcs, ignoreNulls: boolean, nullAsZero: boolean): void {
   const data = field.values;
-  return { last: data.get(data.length - 1) };
+  calcs.last = data.get(data.length - 1);
 }
 
-function calculateLastNotNull(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
+function calculateLastNotNull(field: Field, calcs: FieldCalcs, ignoreNulls: boolean, nullAsZero: boolean): void {
   const data = field.values;
   let idx = data.length - 1;
   while (idx >= 0) {
     const v = data.get(idx--);
     if (v != null && v !== undefined) {
-      return { lastNotNull: v };
+      calcs.lastNotNull = v;
+      return;
     }
   }
-  return { lastNotNull: null };
+  calcs.lastNotNull = null;
 }
 
-function calculateChangeCount(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
+function calculateVariancePopulation(field: Field, calcs: FieldCalcs, ignoreNulls: boolean, nullAsZero: boolean): void {
+  let squareSum = 0;
+  let runningMean = null;
+  let runningNonNullCount = 0;
+  const isNumberField = field.type === FieldType.number || FieldType.time;
+  const data = field.values;
+  for (let i = 0; i < data.length; i++) {
+    let currentValue = data.get(i);
+    if (currentValue != null) {
+      if (isNumberField) {
+        runningNonNullCount++;
+        let _oldMean = runningMean;
+        runningMean += (currentValue - _oldMean) / runningNonNullCount;
+        squareSum += (currentValue - _oldMean) * (currentValue - runningMean);
+      }
+    }
+  }
+  if (runningNonNullCount > 0) {
+    calcs.variancePopulation = squareSum / runningNonNullCount;
+  }
+}
+
+function calculateStddevPopulation(field: Field, calcs: FieldCalcs, ignoreNulls: boolean, nullAsZero: boolean): void {
+  if (!calcs.hasOwnProperty(ReducerID.variancePopulation)) {
+    calculateVariancePopulation(field, calcs, ignoreNulls, nullAsZero);
+  }
+  calcs.stddevPopulation = Math.sqrt(calcs.variancePopulation);
+}
+
+function calculateChangeCount(field: Field, calcs: FieldCalcs, ignoreNulls: boolean, nullAsZero: boolean): void {
   const data = field.values;
   let count = 0;
   let first = true;
@@ -491,10 +482,10 @@ function calculateChangeCount(field: Field, ignoreNulls: boolean, nullAsZero: bo
     last = currentValue;
   }
 
-  return { changeCount: count };
+  calcs.changeCount = count;
 }
 
-function calculateDistinctCount(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
+function calculateDistinctCount(field: Field, calcs: FieldCalcs, ignoreNulls: boolean, nullAsZero: boolean): void {
   const data = field.values;
   const distinct = new Set<any>();
   for (let i = 0; i < data.length; i++) {
@@ -509,5 +500,13 @@ function calculateDistinctCount(field: Field, ignoreNulls: boolean, nullAsZero: 
     }
     distinct.add(currentValue);
   }
-  return { distinctCount: distinct.size };
+  calcs.distinctCount = distinct.size;
+}
+
+function calculateAllValues(field: Field, calcs: FieldCalcs, ignoreNulls: boolean, nullAsZero: boolean): void {
+  calcs.allValues = field.values.toArray();
+}
+
+function calculateUniqueValues(field: Field, calcs: FieldCalcs, ignoreNulls: boolean, nullAsZero: boolean): void {
+  calcs.uniqueValues = [...new Set(field.values.toArray())];
 }
