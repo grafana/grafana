@@ -11,6 +11,9 @@ export default class UrlBuilder {
     const resourceNameArray = resourceName.split('/');
     const provider = metricDefinitionArray.shift();
     const urlArray = ['/subscriptions', subscriptionId, 'resourceGroups', resourceGroup, 'providers', provider];
+    if (metricDefinition.startsWith('Microsoft.Storage/storageAccounts/') && resourceNameArray.at(-1) !== 'default') {
+      resourceNameArray.push('default');
+    }
     if (metricDefinitionArray.length > 0) {
       for (const i in metricDefinitionArray) {
         urlArray.push(metricDefinitionArray[i]);
@@ -18,12 +21,6 @@ export default class UrlBuilder {
       }
     } else {
       urlArray.push(resourceNameArray[0]);
-    }
-    if (
-      (metricDefinition.startsWith('Microsoft.Storage/storageAccounts/') || resourceNameArray.at(-1) === 'default') &&
-      urlArray.at(-1) !== 'default'
-    ) {
-      urlArray.push('default');
     }
     return urlArray.join('/');
   }
