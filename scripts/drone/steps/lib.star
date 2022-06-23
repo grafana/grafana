@@ -8,6 +8,7 @@ alpine_image = 'alpine:3.15'
 curl_image = 'byrnedo/alpine-curl:0.1.8'
 windows_image = 'mcr.microsoft.com/windows:1809'
 wix_image = 'grafana/ci-wix:0.1.1'
+cypress_image = 'cypress/included:10.2.0'
 
 disable_tests = False
 trigger_oss = {
@@ -748,7 +749,7 @@ def e2e_tests_step(suite, edition, port=3001, tries=None):
         cmd += ' --tries {}'.format(tries)
     return {
         'name': 'end-to-end-tests-{}'.format(suite) + enterprise2_suffix(edition),
-        'image': 'cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97',
+        'image': cypress_image,
         'depends_on': [
             'grafana-server',
         ],

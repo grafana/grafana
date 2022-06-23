@@ -299,7 +299,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:10.2.0
   name: end-to-end-tests-dashboards-suite
 - commands:
   - apt-get install -y netcat
@@ -308,7 +308,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:10.2.0
   name: end-to-end-tests-smoke-tests-suite
 - commands:
   - apt-get install -y netcat
@@ -317,7 +317,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:10.2.0
   name: end-to-end-tests-panels-suite
 - commands:
   - apt-get install -y netcat
@@ -326,7 +326,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:10.2.0
   name: end-to-end-tests-various-suite
 - commands:
   - apt-get update
@@ -1012,7 +1012,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:10.2.0
   name: end-to-end-tests-dashboards-suite
 - commands:
   - apt-get install -y netcat
@@ -1021,7 +1021,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:10.2.0
   name: end-to-end-tests-smoke-tests-suite
 - commands:
   - apt-get install -y netcat
@@ -1030,7 +1030,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:10.2.0
   name: end-to-end-tests-panels-suite
 - commands:
   - apt-get install -y netcat
@@ -1039,7 +1039,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:10.2.0
   name: end-to-end-tests-various-suite
 - commands:
   - apt-get update
@@ -1692,7 +1692,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:10.2.0
   name: end-to-end-tests-dashboards-suite
 - commands:
   - apt-get install -y netcat
@@ -1701,7 +1701,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:10.2.0
   name: end-to-end-tests-smoke-tests-suite
 - commands:
   - apt-get install -y netcat
@@ -1710,7 +1710,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:10.2.0
   name: end-to-end-tests-panels-suite
 - commands:
   - apt-get install -y netcat
@@ -1719,7 +1719,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:10.2.0
   name: end-to-end-tests-various-suite
 - commands:
   - apt-get update
@@ -2317,7 +2317,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:10.2.0
   name: end-to-end-tests-dashboards-suite
 - commands:
   - apt-get install -y netcat
@@ -2326,7 +2326,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:10.2.0
   name: end-to-end-tests-smoke-tests-suite
 - commands:
   - apt-get install -y netcat
@@ -2335,7 +2335,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:10.2.0
   name: end-to-end-tests-panels-suite
 - commands:
   - apt-get install -y netcat
@@ -2344,7 +2344,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:10.2.0
   name: end-to-end-tests-various-suite
 - commands:
   - apt-get update
@@ -3535,7 +3535,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:10.2.0
   name: end-to-end-tests-dashboards-suite
 - commands:
   - apt-get install -y netcat
@@ -3544,7 +3544,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:10.2.0
   name: end-to-end-tests-smoke-tests-suite
 - commands:
   - apt-get install -y netcat
@@ -3553,7 +3553,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:10.2.0
   name: end-to-end-tests-panels-suite
 - commands:
   - apt-get install -y netcat
@@ -3562,7 +3562,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:10.2.0
   name: end-to-end-tests-various-suite
 - commands:
   - apt-get update
@@ -4107,7 +4107,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:10.2.0
   name: end-to-end-tests-dashboards-suite
 - commands:
   - apt-get install -y netcat
@@ -4116,7 +4116,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:10.2.0
   name: end-to-end-tests-smoke-tests-suite
 - commands:
   - apt-get install -y netcat
@@ -4125,7 +4125,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:10.2.0
   name: end-to-end-tests-panels-suite
 - commands:
   - apt-get install -y netcat
@@ -4134,7 +4134,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:10.2.0
   name: end-to-end-tests-various-suite
 - commands:
   - apt-get update
@@ -4783,6 +4783,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: c9b6fd34c919d871a153c3d82bfe8d62f126f1c672bd14636147cdeafe827c10
+hmac: 03e0959524d48ecf79e7185b3ebba7ba0551c05f0fbeef76845eadd00fb5e3ca
 
 ...
