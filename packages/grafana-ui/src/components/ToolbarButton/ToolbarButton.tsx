@@ -8,12 +8,11 @@ import { selectors } from '@grafana/e2e-selectors';
 import { styleMixins, useStyles2 } from '../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 import { IconName } from '../../types/icon';
+import { getPropertiesForVariant } from '../Button';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
 
-import { getPropertiesForVariant } from './Button';
-
-export interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
+type CommonProps = {
   /** Icon name */
   icon?: IconName | React.ReactNode;
   /** Tooltip */
@@ -34,11 +33,13 @@ export interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
   iconOnly?: boolean;
   /** Show highlight dot */
   isHighlighted?: boolean;
-}
+};
+
+export type ToolbarButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
 
 export type ToolbarButtonVariant = 'default' | 'primary' | 'destructive' | 'active';
 
-export const ToolbarButton = forwardRef<HTMLButtonElement, Props>(
+export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
   (
     {
       tooltip,

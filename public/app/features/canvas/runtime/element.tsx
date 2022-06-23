@@ -378,6 +378,20 @@ export class ElementState implements LayerElement {
   };
 
   applyDrag = (event: OnDrag) => {
+    const hasHorizontalCenterConstraint = this.options.constraint?.horizontal === HorizontalConstraint.Center;
+    const hasVerticalCenterConstraint = this.options.constraint?.vertical === VerticalConstraint.Center;
+    if (hasHorizontalCenterConstraint || hasVerticalCenterConstraint) {
+      const numberOfTargets = this.getScene()?.selecto?.getSelectedTargets().length ?? 0;
+      const isMultiSelection = numberOfTargets > 1;
+      if (!isMultiSelection) {
+        const elementContainer = this.div?.getBoundingClientRect();
+        const height = elementContainer?.height ?? 100;
+        const yOffset = hasVerticalCenterConstraint ? height / 4 : 0;
+        event.target.style.transform = `translate(${event.translate[0]}px, ${event.translate[1] - yOffset}px)`;
+        return;
+      }
+    }
+
     event.target.style.transform = event.transform;
   };
 
