@@ -101,9 +101,6 @@ exports[`no enzyme tests`] = {
     "public/app/plugins/datasource/cloudwatch/components/ConfigEditor.test.tsx:227258837": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/plugins/datasource/cloudwatch/components/LogsQueryField.test.tsx:1501504663": [
-      [2, 19, 13, "RegExp match", "2409514259"]
-    ],
     "public/app/plugins/datasource/elasticsearch/configuration/ConfigEditor.test.tsx:3481855642": [
       [0, 26, 13, "RegExp match", "2409514259"]
     ],
@@ -3886,27 +3883,16 @@ exports[`no type assertions`] = {
     "public/app/plugins/datasource/cloudwatch/components/ConfigEditor.tsx:1350761016": [
       [102, 22, 34, "Do not use any type assertions.", "1692406735"]
     ],
-    "public/app/plugins/datasource/cloudwatch/components/LogsQueryEditor.tsx:1998970825": [
-      [53, 33, 28, "Do not use any type assertions.", "1081347704"]
+    "public/app/plugins/datasource/cloudwatch/components/LogsQueryEditor.tsx:3592370976": [
+      [52, 33, 28, "Do not use any type assertions.", "1081347704"]
     ],
-    "public/app/plugins/datasource/cloudwatch/components/LogsQueryField.test.tsx:1501504663": [
-      [18, 70, 34, "Do not use any type assertions.", "1535357135"],
-      [30, 15, 9, "Do not use any type assertions.", "3692209159"],
-      [51, 10, 726, "Do not use any type assertions.", "1108484993"],
-      [76, 15, 9, "Do not use any type assertions.", "3692209159"],
-      [88, 11, 46, "Do not use any type assertions.", "4131145701"],
-      [185, 10, 806, "Do not use any type assertions.", "1219250420"],
-      [209, 15, 9, "Do not use any type assertions.", "3692209159"],
-      [224, 31, 69, "Do not use any type assertions.", "323157160"],
-      [232, 27, 69, "Do not use any type assertions.", "323157160"],
-      [252, 15, 9, "Do not use any type assertions.", "3692209159"]
+    "public/app/plugins/datasource/cloudwatch/components/LogsQueryField.test.tsx:4231019726": [
+      [12, 70, 34, "Do not use any type assertions.", "1535357135"],
+      [24, 15, 9, "Do not use any type assertions.", "3692209159"]
     ],
-    "public/app/plugins/datasource/cloudwatch/components/LogsQueryField.tsx:1141751632": [
-      [70, 7, 39, "Do not use any type assertions.", "1215991248"],
-      [92, 14, 29, "Do not use any type assertions.", "115491437"],
-      [207, 10, 28, "Do not use any type assertions.", "1081347704"],
-      [250, 39, 57, "Do not use any type assertions.", "1866145996"],
-      [343, 22, 28, "Do not use any type assertions.", "1081347704"]
+    "public/app/plugins/datasource/cloudwatch/components/LogsQueryField.tsx:719311531": [
+      [62, 14, 29, "Do not use any type assertions.", "115491437"],
+      [97, 39, 57, "Do not use any type assertions.", "1866145996"]
     ],
     "public/app/plugins/datasource/cloudwatch/components/MetricsQueryEditor/MetricsQueryEditor.test.tsx:2002367401": [
       [23, 27, 101, "Do not use any type assertions.", "1879489671"],
@@ -3919,9 +3905,9 @@ exports[`no type assertions`] = {
       [80, 20, 443, "Do not use any type assertions.", "2067842726"],
       [108, 20, 472, "Do not use any type assertions.", "4092163612"]
     ],
-    "public/app/plugins/datasource/cloudwatch/components/QueryHeader.tsx:869258856": [
-      [41, 15, 78, "Do not use any type assertions.", "2265747900"],
-      [52, 13, 63, "Do not use any type assertions.", "1673299780"]
+    "public/app/plugins/datasource/cloudwatch/components/QueryHeader.tsx:4263462895": [
+      [34, 15, 78, "Do not use any type assertions.", "2265747900"],
+      [42, 13, 63, "Do not use any type assertions.", "1673299780"]
     ],
     "public/app/plugins/datasource/cloudwatch/datasource.test.ts:3643150425": [
       [30, 42, 53, "Do not use any type assertions.", "1293523870"],
@@ -10693,20 +10679,13 @@ exports[`no explicit any`] = {
     "public/app/plugins/datasource/cloudwatch/__mocks__/monarch/Monaco.ts:1596319131": [
       [54, 19, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/cloudwatch/components/LogsQueryField.test.tsx:1501504663": [
-      [18, 39, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [18, 47, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [30, 21, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [66, 38, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [74, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [76, 21, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [207, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [209, 21, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [252, 21, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/plugins/datasource/cloudwatch/components/LogsQueryField.test.tsx:4231019726": [
+      [12, 39, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [12, 47, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [24, 21, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/cloudwatch/components/LogsQueryField.tsx:1141751632": [
-      [82, 75, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [265, 67, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/plugins/datasource/cloudwatch/components/LogsQueryField.tsx:719311531": [
+      [52, 75, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/plugins/datasource/cloudwatch/components/MetricsQueryEditor/Alias.tsx:4073366699": [
       [6, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
