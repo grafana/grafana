@@ -11,14 +11,17 @@ async function getDashboardNav(parentId: string): Promise<Action[]> {
     limit: 500,
   });
 
-  const goToDashboardActions: Action[] = data.view.map((item) => ({
-    parent: parentId,
-    id: `go/dashboard/${item.url}`,
-    name: `${item.name}`,
-    perform: () => {
-      locationService.push(locationUtil.stripBaseFromUrl(item.url));
-    },
-  }));
+  const goToDashboardActions: Action[] = data.view.map((item) => {
+    const { url, name } = item; // items are backed by DataFrameView, so must hold the url in a closure
+    return {
+      parent: parentId,
+      id: `go/dashboard/${url}`,
+      name: `${name}`,
+      perform: () => {
+        locationService.push(locationUtil.stripBaseFromUrl(url));
+      },
+    };
+  });
 
   return goToDashboardActions;
 }
