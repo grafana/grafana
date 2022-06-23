@@ -3479,7 +3479,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@betterer/betterer@npm:5.3.5, @betterer/betterer@npm:^5.3.5":
+"@betterer/betterer@npm:5.3.5":
   version: 5.3.5
   resolution: "@betterer/betterer@npm:5.3.5"
   dependencies:
@@ -3503,6 +3503,33 @@ __metadata:
     typescript:
       optional: true
   checksum: 677f49501754775b147780dcf6100a338ca2ef82fe8027e30f045389af9851bb516557cac098c2551022ffbd0e226220c45fecf760be2fa66d6fa80da692fbd6
+  languageName: node
+  linkType: hard
+
+"@betterer/betterer@npm:^5.3.5, @betterer/betterer@npm:^5.3.6":
+  version: 5.3.6
+  resolution: "@betterer/betterer@npm:5.3.6"
+  dependencies:
+    "@betterer/constraints": ^5.3.0
+    "@betterer/errors": ^5.3.0
+    "@betterer/logger": ^5.3.4
+    "@betterer/reporter": ^5.3.6
+    "@phenomnomnominal/debug": ^0.2.5
+    "@phenomnomnominal/worker-require": ^0.0.34
+    chokidar: ^3.3.1
+    djb2a: ^1.2.0
+    fast-memoize: ^2.5.2
+    lines-and-columns: ^2.0.3
+    minimatch: ^5.0.1
+    prettier: ^2.3.2
+    simple-git: ^3.6.0
+    ts-node: ^10.2.1
+    tslib: ^2.3.1
+    typescript: ">=2.7"
+  dependenciesMeta:
+    typescript:
+      optional: true
+  checksum: 95a81c99d37941cef5b45163619e4280de07d418a981785fd115e870b1147570bf99144d8624b836625dcaf9bc672889a28a08028e036fb85c75cfce0798c215
   languageName: node
   linkType: hard
 
@@ -3545,6 +3572,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@betterer/eslint@npm:5.3.5":
+  version: 5.3.5
+  resolution: "@betterer/eslint@npm:5.3.5"
+  dependencies:
+    "@betterer/betterer": ^5.3.5
+    "@betterer/errors": ^5.3.0
+    tslib: ^2.3.1
+  peerDependencies:
+    eslint: ">=7.0.0"
+  checksum: 5a225c43de7fd87542476b2432b990bdea4552d6264f0ad34ac6873f9643ec4e9f21261288e0d9d0927248a4470d6a4e786b4567c68a526d8833b8b9dc467e2f
+  languageName: node
+  linkType: hard
+
 "@betterer/logger@npm:^5.3.4":
   version: 5.3.4
   resolution: "@betterer/logger@npm:5.3.4"
@@ -3575,30 +3615,30 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@betterer/reporter@npm:^5.3.5":
-  version: 5.3.5
-  resolution: "@betterer/reporter@npm:5.3.5"
+"@betterer/reporter@npm:^5.3.5, @betterer/reporter@npm:^5.3.6":
+  version: 5.3.6
+  resolution: "@betterer/reporter@npm:5.3.6"
   dependencies:
-    "@betterer/betterer": ^5.3.5
+    "@betterer/betterer": ^5.3.6
     "@betterer/errors": ^5.3.0
     "@betterer/logger": ^5.3.4
     "@betterer/render": ^5.3.4
-    "@betterer/tasks": ^5.3.4
+    "@betterer/tasks": ^5.3.6
     tslib: ^2.3.1
-  checksum: 22541b675a6944506ee6a723ab98cd801f3da8dbcbb83713c8ebedb8b95764dafd89c5829e31d8679b9ca303bdf075889b5d1fffd8b97b040d7841bb852f8e35
+  checksum: 969d11a1a84e167a0dc15f7273e89cd61fe843f5df171ecfd2fe6e128f0b8af0e4f4bb7eda023172c52f3a62cf9afecaa96c2a75ff371a361a5f26dbb879e1b2
   languageName: node
   linkType: hard
 
-"@betterer/tasks@npm:^5.3.4":
-  version: 5.3.4
-  resolution: "@betterer/tasks@npm:5.3.4"
+"@betterer/tasks@npm:^5.3.4, @betterer/tasks@npm:^5.3.6":
+  version: 5.3.6
+  resolution: "@betterer/tasks@npm:5.3.6"
   dependencies:
     "@betterer/errors": ^5.3.0
     "@betterer/logger": ^5.3.4
     "@betterer/render": ^5.3.4
     chalk: ^4.1.2
     tslib: ^2.3.1
-  checksum: b47d6f9b91a30a560e92075c227a22e5cfa527c82f021f64bbf90bdba334347449ad2cfe45aeafe041c7036746d52532e744abbced0bfacba82d707ec6995fb7
+  checksum: 1cf1dcc92f6c16e1c7d0942ad0224b52ead2bd55238ce72a2320c4d83aec5f36c1acb316f558ceea75885d441ef32dc965c13ee2d780af95b5d874d6c3a9aa51
   languageName: node
   linkType: hard
 
@@ -3618,22 +3658,6 @@ __metadata:
   bin:
     watch: cli.js
   checksum: 88f395ca0af2f3c0665b8ce7bb29e83647ec5d141e8735712aeeee4117081555436712966b6957aa1c461f6f826a4d23b0034e379c443a10e919f81c8748bf29
-  languageName: node
-  linkType: hard
-
-"@cspotcode/source-map-consumer@npm:0.8.0":
-  version: 0.8.0
-  resolution: "@cspotcode/source-map-consumer@npm:0.8.0"
-  checksum: c0c16ca3d2f58898f1bd74c4f41a189dbcc202e642e60e489cbcc2e52419c4e89bdead02c886a12fb13ea37798ede9e562b2321df997ebc210ae9bd881561b4e
-  languageName: node
-  linkType: hard
-
-"@cspotcode/source-map-support@npm:0.7.0":
-  version: 0.7.0
-  resolution: "@cspotcode/source-map-support@npm:0.7.0"
-  dependencies:
-    "@cspotcode/source-map-consumer": 0.8.0
-  checksum: 9faddda7757cd778b5fd6812137b2cc265810043680d6399acc20441668fafcdc874053be9dccd0d9110087287bfad27eb3bf342f72bceca9aa9059f5d0c4be8
   languageName: node
   linkType: hard
 
@@ -20722,6 +20746,7 @@ __metadata:
     "@babel/preset-typescript": 7.17.12
     "@betterer/betterer": 5.3.5
     "@betterer/cli": 5.3.5
+    "@betterer/eslint": 5.3.5
     "@betterer/regexp": 5.3.5
     "@emotion/css": 11.9.0
     "@emotion/eslint-plugin": 11.7.0
@@ -29509,11 +29534,11 @@ __metadata:
   linkType: hard
 
 "prettier@npm:^2.3.2":
-  version: 2.5.1
-  resolution: "prettier@npm:2.5.1"
+  version: 2.7.1
+  resolution: "prettier@npm:2.7.1"
   bin:
     prettier: bin-prettier.js
-  checksum: 21b9408476ea1c544b0e45d51ceb94a84789ff92095abb710942d780c862d0daebdb29972d47f6b4d0f7ebbfb0ffbf56cc2cfa3e3e9d1cca54864af185b15b66
+  checksum: 55a4409182260866ab31284d929b3cb961e5fdb91fe0d2e099dac92eaecec890f36e524b4c19e6ceae839c99c6d7195817579cdffc8e2c80da0cb794463a748b
   languageName: node
   linkType: hard
 
@@ -35281,7 +35306,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ts-node@npm:10.8.1":
+"ts-node@npm:10.8.1, ts-node@npm:^10.2.1":
   version: 10.8.1
   resolution: "ts-node@npm:10.8.1"
   dependencies:
@@ -35316,43 +35341,6 @@ __metadata:
     ts-node-transpile-only: dist/bin-transpile.js
     ts-script: dist/bin-script-deprecated.js
   checksum: 7d1aa7aa3ae1c0459c4922ed0dbfbade442cfe0c25aebaf620cdf1774f112c8d7a9b14934cb6719274917f35b2c503ba87bcaf5e16a0d39ba0f68ce3e7728363
-  languageName: node
-  linkType: hard
-
-"ts-node@npm:^10.2.1":
-  version: 10.5.0
-  resolution: "ts-node@npm:10.5.0"
-  dependencies:
-    "@cspotcode/source-map-support": 0.7.0
-    "@tsconfig/node10": ^1.0.7
-    "@tsconfig/node12": ^1.0.7
-    "@tsconfig/node14": ^1.0.0
-    "@tsconfig/node16": ^1.0.2
-    acorn: ^8.4.1
-    acorn-walk: ^8.1.1
-    arg: ^4.1.0
-    create-require: ^1.1.0
-    diff: ^4.0.1
-    make-error: ^1.1.1
-    v8-compile-cache-lib: ^3.0.0
-    yn: 3.1.1
-  peerDependencies:
-    "@swc/core": ">=1.2.50"
-    "@swc/wasm": ">=1.2.50"
-    "@types/node": "*"
-    typescript: ">=2.7"
-  peerDependenciesMeta:
-    "@swc/core":
-      optional: true
-    "@swc/wasm":
-      optional: true
-  bin:
-    ts-node: dist/bin.js
-    ts-node-cwd: dist/bin-cwd.js
-    ts-node-script: dist/bin-script.js
-    ts-node-transpile-only: dist/bin-transpile.js
-    ts-script: dist/bin-script-deprecated.js
-  checksum: d51ac8a9b3582ce3705cef8d35f3372e40caa277dbd7c7baeb651961538f13d2f11f22402614348f78d9b10501bd1cb5f05ec4f2ec9a74bd0e288de769c32335
   languageName: node
   linkType: hard
 
@@ -35399,7 +35387,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tslib@npm:2.4.0, tslib@npm:^2.4.0":
+"tslib@npm:2.4.0, tslib@npm:^2.3.1, tslib@npm:^2.4.0":
   version: 2.4.0
   resolution: "tslib@npm:2.4.0"
   checksum: 8c4aa6a3c5a754bf76aefc38026134180c053b7bd2f81338cb5e5ebf96fefa0f417bff221592bf801077f5bf990562f6264fecbc42cd3309b33872cb6fc3b113
@@ -35413,7 +35401,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tslib@npm:^2, tslib@npm:^2.0.0, tslib@npm:^2.0.1, tslib@npm:^2.0.3, tslib@npm:^2.1.0, tslib@npm:^2.2.0, tslib@npm:^2.3.0, tslib@npm:^2.3.1":
+"tslib@npm:^2, tslib@npm:^2.0.0, tslib@npm:^2.0.1, tslib@npm:^2.0.3, tslib@npm:^2.1.0, tslib@npm:^2.2.0, tslib@npm:^2.3.0":
   version: 2.3.1
   resolution: "tslib@npm:2.3.1"
   checksum: de17a98d4614481f7fcb5cd53ffc1aaf8654313be0291e1bfaee4b4bb31a20494b7d218ff2e15017883e8ea9626599b3b0e0229c18383ba9dce89da2adf15cb9
@@ -35610,12 +35598,12 @@ __metadata:
   linkType: hard
 
 "typescript@npm:>=2.7":
-  version: 4.5.5
-  resolution: "typescript@npm:4.5.5"
+  version: 4.7.4
+  resolution: "typescript@npm:4.7.4"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 506f4c919dc8aeaafa92068c997f1d213b9df4d9756d0fae1a1e7ab66b585ab3498050e236113a1c9e57ee08c21ec6814ca7a7f61378c058d79af50a4b1f5a5e
+  checksum: 5750181b1cd7e6482c4195825547e70f944114fb47e58e4aa7553e62f11b3f3173766aef9c281783edfd881f7b8299cf35e3ca8caebe73d8464528c907a164df
   languageName: node
   linkType: hard
 
@@ -35650,12 +35638,12 @@ __metadata:
   linkType: hard
 
 "typescript@patch:typescript@>=2.7#~builtin<compat/typescript>":
-  version: 4.5.5
-  resolution: "typescript@patch:typescript@npm%3A4.5.5#~builtin<compat/typescript>::version=4.5.5&hash=7ad353"
+  version: 4.7.4
+  resolution: "typescript@patch:typescript@npm%3A4.7.4#~builtin<compat/typescript>::version=4.7.4&hash=7ad353"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 858c61fa63f7274ca4aaaffeced854d550bf416cff6e558c4884041b3311fb662f476f167cf5c9f8680c607239797e26a2ee0bcc6467fbc05bfcb218e1c6c671
+  checksum: 9096d8f6c16cb80ef3bf96fcbbd055bf1c4a43bd14f3b7be45a9fbe7ada46ec977f604d5feed3263b4f2aa7d4c7477ce5f9cd87de0d6feedec69a983f3a4f93e
   languageName: node
   linkType: hard
 
@@ -36225,13 +36213,6 @@ __metadata:
   bin:
     uuid: ./bin/uuid
   checksum: 58de2feed61c59060b40f8203c0e4ed7fd6f99d42534a499f1741218a1dd0c129f4aa1de797bcf822c8ea5da7e4137aa3673431a96dae729047f7aca7b27866f
-  languageName: node
-  linkType: hard
-
-"v8-compile-cache-lib@npm:^3.0.0":
-  version: 3.0.0
-  resolution: "v8-compile-cache-lib@npm:3.0.0"
-  checksum: 674e312bbca796584b61dc915f33c7e7dc4e06d196e0048cb772c8964493a1ec723f1dd014d9419fd55c24a6eae148f60769da23f622e05cd13268063fa1ed6b
   languageName: node
   linkType: hard
 
