@@ -77,14 +77,12 @@ function generateInternalHref<T extends DataQuery = any>(
   panelsState?: ExplorePanelsState
 ): string {
   return locationUtil.assureBaseUrl(
-    `/explore?left=${encodeURIComponent(
-      serializeStateToUrlParam({
-        range: range.raw,
-        datasource: datasourceName,
-        queries: [query],
-        panelsState: panelsState,
-      })
-    )}`
+    `/explore?left=${serializeStateToUrlParam({
+      range: range.raw,
+      datasource: datasourceName,
+      queries: [query],
+      panelsState: panelsState,
+    })}`
   );
 }
 
