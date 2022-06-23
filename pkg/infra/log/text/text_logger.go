@@ -6,7 +6,7 @@ import (
 	"io"
 	"reflect"
 
-	gokitlog "github.com/go-kit/log"
+	gokitlog "github.com/go-kit/kit/log"
 )
 
 type textLogger struct {
@@ -22,10 +22,9 @@ func NewTextLogger(w io.Writer) gokitlog.Logger {
 func (l textLogger) Log(keyvals ...interface{}) error {
 	for i, val := range keyvals {
 		switch val.(type) {
-		case nil, string, []byte, encoding.TextMarshaler, error, fmt.Stringer:
+		case nil, string, []byte, encoding.TextMarshaler, error, fmt.Stringer: // supported natively by gokit.
 		default:
-			rvalue := reflect.ValueOf(val)
-			switch rvalue.Kind() {
+			switch reflect.TypeOf(val).Kind() {
 			case reflect.Array, reflect.Chan, reflect.Func, reflect.Map, reflect.Slice, reflect.Struct:
 				keyvals[i] = fmt.Sprintf("%+v", val)
 			default:
