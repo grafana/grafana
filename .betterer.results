@@ -3083,7 +3083,7 @@ exports[`no type assertions`] = {
       [25, 30, 27, "Do not use any type assertions.", "3324295634"],
       [25, 30, 13, "Do not use any type assertions.", "2146830713"]
     ],
-    "public/app/features/query/state/DashboardQueryRunner/AnnotationsWorker.test.ts:4136590395": [
+    "public/app/features/query/state/DashboardQueryRunner/AnnotationsWorker.test.ts:674871004": [
       [25, 29, 9, "Do not use any type assertions.", "3692209159"]
     ],
     "public/app/features/query/state/DashboardQueryRunner/DashboardQueryRunner.test.ts:1052443115": [
@@ -3097,7 +3097,7 @@ exports[`no type assertions`] = {
       [16, 6, 59, "Do not use any type assertions.", "3685154675"],
       [16, 6, 49, "Do not use any type assertions.", "1184085652"]
     ],
-    "public/app/features/query/state/DashboardQueryRunner/testHelpers.ts:2779664026": [
+    "public/app/features/query/state/DashboardQueryRunner/testHelpers.ts:1555409841": [
       [56, 13, 20, "Do not use any type assertions.", "320652245"]
     ],
     "public/app/features/query/state/PanelQueryRunner.test.ts:2736652574": [
@@ -9965,11 +9965,11 @@ exports[`no explicit any`] = {
       [57, 24, 3, "Unexpected any. Specify a different type.", "193409811"],
       [67, 24, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/query/state/DashboardQueryRunner/AnnotationsWorker.test.ts:4136590395": [
+    "public/app/features/query/state/DashboardQueryRunner/AnnotationsWorker.test.ts:674871004": [
       [25, 35, 3, "Unexpected any. Specify a different type.", "193409811"],
       [30, 27, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [90, 23, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [99, 23, 3, "Unexpected any. Specify a different type.", "193409811"]
+      [99, 23, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [108, 23, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/query/state/DashboardQueryRunner/DashboardQueryRunner.test.ts:1052443115": [
       [21, 21, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -10000,7 +10000,7 @@ exports[`no explicit any`] = {
       [53, 23, 3, "Unexpected any. Specify a different type.", "193409811"],
       [73, 23, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/query/state/DashboardQueryRunner/testHelpers.ts:2779664026": [
+    "public/app/features/query/state/DashboardQueryRunner/testHelpers.ts:1555409841": [
       [7, 40, 3, "Unexpected any. Specify a different type.", "193409811"],
       [7, 57, 3, "Unexpected any. Specify a different type.", "193409811"],
       [14, 37, 3, "Unexpected any. Specify a different type.", "193409811"],
