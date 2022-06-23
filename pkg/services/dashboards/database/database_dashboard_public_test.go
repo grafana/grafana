@@ -266,6 +266,6 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 
 		// asserting not updated dashboard
 		assert.NotEqual(t, updatedPublicDashboard.UpdatedAt, pdNotUpdatedRetrieved.UpdatedAt)
-		assert.NotEqual(t, updatedPublicDashboard.UpdatedAt, pdNotUpdatedRetrieved.IsEnabled)
+		assert.NotEqual(t, updatedPublicDashboard.IsEnabled, pdNotUpdatedRetrieved.IsEnabled)
 	})
 }
