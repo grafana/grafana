@@ -64,7 +64,7 @@ describe('Loki query builder', () => {
       .click()
       .type('instance1{enter}')
       .type('instance2{enter}');
-    e2e().contains('You need to specify at least 1 label filter (stream selector)').should('not.be.visible');
+    e2e().contains('You need to specify at least 1 label filter (stream selector)').should('not.exist');
     e2e().contains(finalQuery).should('be.visible');
 
     // Switch to code editor and check if query was parsed
