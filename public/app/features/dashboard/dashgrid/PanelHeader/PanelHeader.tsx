@@ -59,7 +59,7 @@ export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, dat
                   />
                 ) : null}
                 <h2 className={styles.titleText}>{title}</h2>
-                {!dashboard.meta.isPublic && (
+                {!dashboard.meta.publicDashboardAccessToken && (
                   <div data-testid="panel-dropdown">
                     <Icon name="angle-down" className="panel-menu-toggle" />
                     <PanelHeaderMenuWrapper

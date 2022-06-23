@@ -8,7 +8,7 @@ export const createMockMetricDescriptor = (overrides?: Partial<MetricDescriptor>
     unit: 'unit',
     service: 'service',
     serviceShortName: 'srv',
-    displayName: 'displayName',
+    displayName: 'metricName',
     description: 'description',
     ...overrides,
   };

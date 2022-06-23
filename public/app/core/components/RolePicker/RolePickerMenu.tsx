@@ -118,14 +118,15 @@ export const RolePickerMenu = ({
     const group = optionGroups.find((g) => {
       return g.value === value;
     });
-    if (groupSelected(value)) {
+    if (groupSelected(value) || groupPartiallySelected(value)) {
       if (group) {
         setSelectedOptions(selectedOptions.filter((role) => !group.options.find((option) => role.uid === option.uid)));
       }
     } else {
       if (group) {
+        const groupOptions = group.options.filter((role) => role.delegatable);
         const restOptions = selectedOptions.filter((role) => !group.options.find((option) => role.uid === option.uid));
-        setSelectedOptions([...restOptions, ...group.options]);
+        setSelectedOptions([...restOptions, ...groupOptions]);
       }
     }
   };

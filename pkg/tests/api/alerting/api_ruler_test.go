@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"testing"
 	"time"
@@ -17,6 +18,7 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestAlertRulePermissions(t *testing.T) {
@@ -717,6 +719,104 @@ func TestRulerRulesFilterByDashboard(t *testing.T) {
 		require.NoError(t, json.Unmarshal(b, &res))
 		require.Equal(t, "panel_id must be set with dashboard_uid", res["message"])
 	}
+}
+
+func TestRuleGroupSequence(t *testing.T) {
+	// Setup Grafana and its Database
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		DisableAnonymous:      true,
+		AppModeProduction:     true,
+	})
+	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+
+	// Create a user to make authenticated requests
+	createUser(t, store, models.CreateUserCommand{
+		DefaultOrgRole: string(models.ROLE_EDITOR),
+		Password:       "password",
+		Login:          "grafana",
+	})
+
+	client := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
+	folder1Title := "folder1"
+	client.CreateFolder(t, util.GenerateShortUID(), folder1Title)
+
+	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
+
+	group1 := generateAlertRuleGroup(5, alertRuleGen())
+	group2 := generateAlertRuleGroup(5, alertRuleGen())
+
+	status, _ := client.PostRulesGroup(t, folder1Title, &group1)
+	require.Equal(t, http.StatusAccepted, status)
+	status, _ = client.PostRulesGroup(t, folder1Title, &group2)
+	require.Equal(t, http.StatusAccepted, status)
+
+	t.Run("should persist order of the rules in a group", func(t *testing.T) {
+		group1Get := client.GetRulesGroup(t, folder1Title, group1.Name)
+		assert.Equal(t, group1.Name, group1Get.Name)
+		assert.Equal(t, group1.Interval, group1Get.Interval)
+		assert.Len(t, group1Get.Rules, len(group1.Rules))
+		for i, getRule := range group1Get.Rules {
+			rule := group1.Rules[i]
+			assert.Equal(t, getRule.GrafanaManagedAlert.Title, rule.GrafanaManagedAlert.Title)
+			assert.NotEmpty(t, getRule.GrafanaManagedAlert.UID)
+		}
+
+		// now shuffle the rules
+		postableGroup1 := convertGettableRuleGroupToPostable(group1Get.GettableRuleGroupConfig)
+		rand.Shuffle(len(postableGroup1.Rules), func(i, j int) {
+			postableGroup1.Rules[i], postableGroup1.Rules[j] = postableGroup1.Rules[j], postableGroup1.Rules[i]
+		})
+		expectedUids := make([]string, 0, len(postableGroup1.Rules))
+		for _, rule := range postableGroup1.Rules {
+			expectedUids = append(expectedUids, rule.GrafanaManagedAlert.UID)
+		}
+		status, _ := client.PostRulesGroup(t, folder1Title, &postableGroup1)
+		require.Equal(t, http.StatusAccepted, status)
+
+		group1Get = client.GetRulesGroup(t, folder1Title, group1.Name)
+
+		require.Len(t, group1Get.Rules, len(postableGroup1.Rules))
+
+		actualUids := make([]string, 0, len(group1Get.Rules))
+		for _, getRule := range group1Get.Rules {
+			actualUids = append(actualUids, getRule.GrafanaManagedAlert.UID)
+		}
+		assert.Equal(t, expectedUids, actualUids)
+	})
+
+	t.Run("should be able to move a rule from another group in a specific position", func(t *testing.T) {
+		group1Get := client.GetRulesGroup(t, folder1Title, group1.Name)
+		group2Get := client.GetRulesGroup(t, folder1Title, group2.Name)
+
+		movedRule := convertGettableRuleToPostable(group2Get.Rules[3])
+		// now shuffle the rules
+		postableGroup1 := convertGettableRuleGroupToPostable(group1Get.GettableRuleGroupConfig)
+		postableGroup1.Rules = append(append(append([]apimodels.PostableExtendedRuleNode{}, postableGroup1.Rules[0:1]...), movedRule), postableGroup1.Rules[2:]...)
+		expectedUids := make([]string, 0, len(postableGroup1.Rules))
+		for _, rule := range postableGroup1.Rules {
+			expectedUids = append(expectedUids, rule.GrafanaManagedAlert.UID)
+		}
+		status, _ := client.PostRulesGroup(t, folder1Title, &postableGroup1)
+		require.Equal(t, http.StatusAccepted, status)
+
+		group1Get = client.GetRulesGroup(t, folder1Title, group1.Name)
+
+		require.Len(t, group1Get.Rules, len(postableGroup1.Rules))
+
+		actualUids := make([]string, 0, len(group1Get.Rules))
+		for _, getRule := range group1Get.Rules {
+			actualUids = append(actualUids, getRule.GrafanaManagedAlert.UID)
+		}
+		assert.Equal(t, expectedUids, actualUids)
+
+		group2Get = client.GetRulesGroup(t, folder1Title, group2.Name)
+		assert.Len(t, group2Get.Rules, len(group2.Rules)-1)
+		for _, rule := range group2Get.Rules {
+			require.NotEqual(t, movedRule.GrafanaManagedAlert.UID, rule.GrafanaManagedAlert.UID)
+		}
+	})
 }
 
 func newTestingRuleConfig(t *testing.T) apimodels.PostableRuleGroupConfig {
