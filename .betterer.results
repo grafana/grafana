@@ -3927,7 +3927,7 @@ exports[`no type assertions`] = {
       [41, 15, 78, "Do not use any type assertions.", "2265747900"],
       [52, 13, 63, "Do not use any type assertions.", "1673299780"]
     ],
-    "public/app/plugins/datasource/cloudwatch/datasource.test.ts:1906445626": [
+    "public/app/plugins/datasource/cloudwatch/datasource.test.ts:3643150425": [
       [30, 42, 53, "Do not use any type assertions.", "1293523870"],
       [30, 67, 16, "Do not use any type assertions.", "1416388343"],
       [40, 42, 65, "Do not use any type assertions.", "3968570046"],
@@ -3942,9 +3942,9 @@ exports[`no type assertions`] = {
       [369, 8, 43, "Do not use any type assertions.", "2822747014"],
       [415, 8, 54, "Do not use any type assertions.", "3062027045"],
       [456, 50, 101, "Do not use any type assertions.", "2285906034"],
-      [571, 19, 83, "Do not use any type assertions.", "55035528"]
+      [570, 19, 83, "Do not use any type assertions.", "55035528"]
     ],
-    "public/app/plugins/datasource/cloudwatch/datasource.ts:3692385179": [
+    "public/app/plugins/datasource/cloudwatch/datasource.ts:1299576841": [
       [218, 26, 85, "Do not use any type assertions.", "598275619"],
       [347, 23, 52, "Do not use any type assertions.", "3463806655"],
       [396, 43, 28, "Do not use any type assertions.", "426490724"],
@@ -10737,7 +10737,7 @@ exports[`no explicit any`] = {
     "public/app/plugins/datasource/cloudwatch/datasource.d.ts:561167771": [
       [0, 34, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/cloudwatch/datasource.test.ts:1906445626": [
+    "public/app/plugins/datasource/cloudwatch/datasource.test.ts:3643150425": [
       [30, 92, 3, "Unexpected any. Specify a different type.", "193409811"],
       [40, 104, 3, "Unexpected any. Specify a different type.", "193409811"],
       [74, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -10750,9 +10750,9 @@ exports[`no explicit any`] = {
       [369, 48, 3, "Unexpected any. Specify a different type.", "193409811"],
       [415, 59, 3, "Unexpected any. Specify a different type.", "193409811"],
       [459, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [577, 7, 3, "Unexpected any. Specify a different type.", "193409811"]
+      [576, 7, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/cloudwatch/datasource.ts:3692385179": [
+    "public/app/plugins/datasource/cloudwatch/datasource.ts:1299576841": [
       [93, 12, 3, "Unexpected any. Specify a different type.", "193409811"],
       [94, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
       [531, 53, 3, "Unexpected any. Specify a different type.", "193409811"],
