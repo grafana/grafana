@@ -10058,14 +10058,8 @@ exports[`no explicit any`] = {
     "public/app/features/search/components/SearchResults.tsx:4264592788": [
       [19, 35, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/search/page/components/FolderSection.tsx:2694034564": [
-      [139, 46, 3, "Unexpected any. Specify a different type.", "193409811"]
-    ],
     "public/app/features/search/page/components/MoveToFolderModal.tsx:739519709": [
       [31, 63, 3, "Unexpected any. Specify a different type.", "193409811"]
-    ],
-    "public/app/features/search/page/components/SearchResultsCards.tsx:4110686088": [
-      [94, 50, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/search/page/components/SearchResultsGrid.test.tsx:2090205358": [
       [40, 35, 3, "Unexpected any. Specify a different type.", "193409811"]
