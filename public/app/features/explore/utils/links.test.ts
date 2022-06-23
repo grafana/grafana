@@ -72,9 +72,10 @@ describe('getFieldLinksForExplore', () => {
     const links = getFieldLinksForExplore({ field, rowIndex: 0, splitOpenFn: splitfn, range });
 
     expect(links[0].href).toBe(
-      `/explore?left=${encodeURIComponent(
-        '{"range":{"from":"now-1h","to":"now"},"datasource":"test_ds","queries":[{"query":"query_1"}],"panelsState":{"trace":{"spanId":"abcdef"}}}'
-      )}`
+      '/explore?left=%257B%2522range%2522%253A%257B%2522from%2522%253A%2522now-1h%2522%252C%2522to%2522%253A%2522now' +
+        '%2522%257D%252C%2522datasource%2522%253A%2522test_ds%2522%252C%2522queries%2522%253A%255B%257B%2522query%2522' +
+        '%253A%2522query_1%2522%257D%255D%252C%2522panelsState%2522%253A%257B%2522trace%2522%253A%257B%2522spanId%2522' +
+        '%253A%2522abcdef%2522%257D%257D%257D'
     );
     expect(links[0].title).toBe('test_ds');
 
