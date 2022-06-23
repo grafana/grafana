@@ -548,14 +548,23 @@ func TestDiff(t *testing.T) {
 }
 
 func TestSortByGroupIndex(t *testing.T) {
+	ensureNotSorted := func(t *testing.T, rules []*AlertRule, less func(i, j int) bool) {
+		for i := 0; i < 5; i++ {
+			rand.Shuffle(len(rules), func(i, j int) {
+				rules[i], rules[j] = rules[j], rules[i]
+			})
+			if !sort.SliceIsSorted(rules, less) {
+				return
+			}
+		}
+		t.Fatalf("unable to ensure that alerts are not sorted")
+	}
+
 	t.Run("should sort rules by GroupIndex", func(t *testing.T) {
-		rules := GenerateAlertRules(rand.Intn(5)+5, AlertRuleGen(WithUniqueGroupIndex()))
-		rand.Shuffle(len(rules), func(i, j int) {
-			rules[i], rules[j] = rules[j], rules[i]
-		})
-		require.False(t, sort.SliceIsSorted(rules, func(i, j int) bool {
+		rules := GenerateAlertRules(rand.Intn(15)+5, AlertRuleGen(WithUniqueGroupIndex()))
+		ensureNotSorted(t, rules, func(i, j int) bool {
 			return rules[i].RuleGroupIndex < rules[j].RuleGroupIndex
-		}))
+		})
 		RulesGroup(rules).SortByGroupIndex()
 		require.True(t, sort.SliceIsSorted(rules, func(i, j int) bool {
 			return rules[i].RuleGroupIndex < rules[j].RuleGroupIndex
@@ -563,13 +572,10 @@ func TestSortByGroupIndex(t *testing.T) {
 	})
 
 	t.Run("should sort by ID if same GroupIndex", func(t *testing.T) {
-		rules := GenerateAlertRules(rand.Intn(5)+5, AlertRuleGen(WithUniqueID(), WithGroupIndex(rand.Int())))
-		rand.Shuffle(len(rules), func(i, j int) {
-			rules[i], rules[j] = rules[j], rules[i]
-		})
-		require.False(t, sort.SliceIsSorted(rules, func(i, j int) bool {
+		rules := GenerateAlertRules(rand.Intn(15)+5, AlertRuleGen(WithUniqueID(), WithGroupIndex(rand.Int())))
+		ensureNotSorted(t, rules, func(i, j int) bool {
 			return rules[i].ID < rules[j].ID
-		}))
+		})
 		RulesGroup(rules).SortByGroupIndex()
 		require.True(t, sort.SliceIsSorted(rules, func(i, j int) bool {
 			return rules[i].ID < rules[j].ID
