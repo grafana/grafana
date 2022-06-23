@@ -24,6 +24,7 @@ import {
   getGrafanaLiveSrv,
   StreamingFrameOptions,
   StreamingFrameAction,
+  BackendSrvRequest,
 } from '../services';
 
 import { BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
@@ -219,15 +220,18 @@ class DataSourceWithBackend<
   /**
    * Make a GET request to the datasource resource path
    */
-  async getResource(path: string, params?: any): Promise<any> {
-    return getBackendSrv().get(`/api/datasources/${this.id}/resources/${path}`, params);
+  async getResource(path: string, params?: any, options?: BackendSrvRequest): Promise<any> {
+    // Unfortunately we need to keep passing this in due using positional arguments in the get() method below.
+    const requestId = undefined;
+
+    return getBackendSrv().get(`/api/datasources/${this.id}/resources/${path}`, params, requestId, options);
   }
 
   /**
    * Send a POST request to the datasource resource path
    */
-  async postResource(path: string, body?: any): Promise<any> {
-    return getBackendSrv().post(`/api/datasources/${this.id}/resources/${path}`, { ...body });
+  async postResource(path: string, body?: any, options?: BackendSrvRequest): Promise<any> {
+    return getBackendSrv().post(`/api/datasources/${this.id}/resources/${path}`, { ...body }, options);
   }
 
   /**
