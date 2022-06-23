@@ -12,7 +12,7 @@ LEGACY_FORMS="$(grep -r -oP 'LegacyForms;' public/app | wc -l)"
 # This is also included in the betterer stats, but we maintain it to keep metric history
 ENZYME_TEST_COUNT="$(grep -l -R --include="*.test.*" "from 'enzyme'" public packages | wc -l)"
 
-STRICT_LINT_RESULTS="$(yarn run eslint --rule '@typescript-eslint/no-explicit-any: ["error"]' --format unix --ext .ts,.tsx ./public || true)"
+STRICT_LINT_RESULTS="$(yarn run eslint --rule '@typescript-eslint/no-explicit-any: ["error"]' --format unix --ext .ts,.tsx ./ || true)"
 STRICT_LINT_EXPLICIT_ANY="$(echo "${STRICT_LINT_RESULTS}" | grep -o "no-explicit-any" | wc -l)"
 
 TOTAL_BUNDLE="$(du -sk ./public/build | cut -f1)"

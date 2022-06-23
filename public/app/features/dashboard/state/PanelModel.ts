@@ -321,14 +321,14 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     dashboardTimezone: string,
     timeData: TimeOverrideResult,
     width: number,
-    publicDashboardUid?: string
+    publicDashboardAccessToken?: string
   ) {
     this.getQueryRunner().run({
       datasource: this.datasource,
       queries: this.targets,
       panelId: this.id,
       dashboardId: dashboardId,
-      publicDashboardUid,
+      publicDashboardAccessToken,
       timezone: dashboardTimezone,
       timeRange: timeData.timeRange,
       timeInfo: timeData.timeInfo,
