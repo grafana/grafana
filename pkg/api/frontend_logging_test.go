@@ -105,7 +105,7 @@ func logSentryEventScenario(t *testing.T, desc string, event frontendlogging.Fro
 func logGrafanaJavascriptAgentEventScenario(t *testing.T, desc string, event frontendlogging.FrontendGrafanaJavascriptAgentEvent, fn logScenarioFunc) {
 	t.Run(desc, func(t *testing.T) {
 		var logcontent = make(map[string]interface{})
-		logcontent["logger"] = "grafana_javascript_agent"
+		logcontent["logger"] = "frontend"
 		newfrontendLogger := log.Logger(log.LoggerFunc(func(keyvals ...interface{}) error {
 			for i := 0; i < len(keyvals); i += 2 {
 				logcontent[keyvals[i].(string)] = keyvals[i+1]
@@ -113,12 +113,12 @@ func logGrafanaJavascriptAgentEventScenario(t *testing.T, desc string, event fro
 			return nil
 		}))
 
-		origHandler := grafanaJavascriptAgentLogger.GetLogger()
-		grafanaJavascriptAgentLogger.Swap(level.NewFilter(newfrontendLogger, level.AllowInfo()))
+		origHandler := frontendLogger.GetLogger()
+		frontendLogger.Swap(level.NewFilter(newfrontendLogger, level.AllowInfo()))
 		sourceMapReads := []SourceMapReadRecord{}
 
 		t.Cleanup(func() {
-			grafanaJavascriptAgentLogger.Swap(origHandler)
+			frontendLogger.Swap(origHandler)
 		})
 
 		sc := setupScenarioContext(t, "/log-grafana-javascript-agent")
@@ -422,7 +422,7 @@ func TestFrontendLoggingEndpointGrafanaJavascriptAgent(t *testing.T) {
 		logGrafanaJavascriptAgentEventScenario(t, "Should log received error event", errorEvent,
 			func(sc *scenarioContext, logs map[string]interface{}, sourceMapReads []SourceMapReadRecord) {
 				assert.Equal(t, 200, sc.resp.Code)
-				assertContextContains(t, logs, "logger", "grafana_javascript_agent")
+				assertContextContains(t, logs, "logger", "frontend")
 				assertContextContains(t, logs, "page_url", errorEvent.Meta.Page.URL)
 				assertContextContains(t, logs, "user_email", errorEvent.Meta.User.Email)
 				assertContextContains(t, logs, "user_id", errorEvent.Meta.User.ID)
@@ -446,7 +446,7 @@ func TestFrontendLoggingEndpointGrafanaJavascriptAgent(t *testing.T) {
 			func(sc *scenarioContext, logs map[string]interface{}, sourceMapReads []SourceMapReadRecord) {
 				assert.Equal(t, 200, sc.resp.Code)
 				assert.Len(t, logs, 11)
-				assertContextContains(t, logs, "logger", "grafana_javascript_agent")
+				assertContextContains(t, logs, "logger", "frontend")
 				assertContextContains(t, logs, "msg", "This is a test log message")
 				assertContextContains(t, logs, "original_log_level", frontendlogging.LogLevel("info"))
 				assertContextContains(t, logs, "original_timestamp", ts)

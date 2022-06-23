@@ -12,7 +12,6 @@ import (
 )
 
 var frontendLogger = log.New("frontend")
-var grafanaJavascriptAgentLogger = log.New("grafana_javascript_agent")
 
 type frontendLogMessageHandler func(c *models.ReqContext) response.Response
 
@@ -68,7 +67,7 @@ func GrafanaJavascriptAgentLogMessageHandler(store *frontendlogging.SourceMapSto
 				for k, v := range frontendlogging.KeyValToInterfaceMap(logEntry.KeyValContext()) {
 					ctx = append(ctx, k, v)
 				}
-				grafanaJavascriptAgentLogger.Info(logEntry.Message, ctx...)
+				frontendLogger.Info(logEntry.Message, ctx...)
 			}
 		}
 
@@ -77,7 +76,7 @@ func GrafanaJavascriptAgentLogMessageHandler(store *frontendlogging.SourceMapSto
 				for measurementName, measurementValue := range measurementEntry.Values {
 					ctx = append(ctx, measurementName, measurementValue)
 					ctx = append(ctx, "kind", "measurement", "original_timestamp", measurementEntry.Timestamp)
-					grafanaJavascriptAgentLogger.Info("Measurement: "+measurementEntry.Type, ctx...)
+					frontendLogger.Info("Measurement: "+measurementEntry.Type, ctx...)
 				}
 			}
 		}
@@ -87,7 +86,7 @@ func GrafanaJavascriptAgentLogMessageHandler(store *frontendlogging.SourceMapSto
 				transformedException := frontendlogging.TransformException(&exception, store)
 				ctx = append(ctx, "kind", "exception", "type", transformedException.Type, "value", transformedException.Value, "stacktrace", transformedException.String())
 				ctx = append(ctx, "original_timestamp", exception.Timestamp)
-				grafanaJavascriptAgentLogger.Error(exception.Message(), ctx...)
+				frontendLogger.Error(exception.Message(), ctx...)
 			}
 		}
 		return response.Success("ok")
