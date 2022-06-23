@@ -87,7 +87,7 @@ def yarn_install_step():
     "depends_on": [
       "download_grabpl",
     ],
-    "image": "grafana/build-container:1.5.3",
+    "image": "node:18-alpine3.15",
     "name": "yarn_install",
     "volumes": [
       {
@@ -109,7 +109,7 @@ def codespell_step():
     "depends_on": [
       "yarn_install",
     ],
-    "image": "grafana/build-container:1.5.3",
+    "image": "grafana/build-container:1.5.7",
     "name": "codespell",
     "volumes": [
       {
@@ -131,7 +131,7 @@ def lint_docs_step():
     "depends_on": [
       "yarn_install",
     ],
-    "image": "grafana/build-container:1.5.3",
+    "image": "grafana/build-container:1.5.7",
     "name": "lint_docs",
     "volumes": [
       {
@@ -157,7 +157,7 @@ def build_frontend_package_step():
       "codespell",
       "lint_docs",
     ],
-    "image": "grafana/build-container:1.5.3",
+    "image": "grafana/build-container:1.5.7",
     "name": "build_frontend_package",
     "volumes": [
       {
@@ -179,7 +179,7 @@ def build_frontend_documentation_step():
     "depends_on": [
       "build_frontend_package",
     ],
-    "image": "grafana/build-container:1.5.3",
+    "image": "grafana/build-container:1.5.7",
     "name": "build_frontend_documentation",
     "volumes": [
       {
