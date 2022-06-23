@@ -4,7 +4,7 @@ import React, { PureComponent } from 'react';
 import { lastValueFrom } from 'rxjs';
 
 import { PanelProps } from '@grafana/data';
-import { config, HealthCheckResult } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { Button, Spinner, stylesFactory } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { backendSrv } from 'app/core/services/backend_srv';
