@@ -653,10 +653,6 @@ exports[`no type assertions`] = {
     "packages/grafana-ui/src/components/Button/Button.story.tsx:1595485627": [
       [11, 15, 116, "Do not use any type assertions.", "849131644"]
     ],
-    "packages/grafana-ui/src/components/Button/ToolbarButton.tsx:12347407": [
-      [69, 7, 13, "Do not use any type assertions.", "3497904325"],
-      [118, 23, 16, "Do not use any type assertions.", "1396449744"]
-    ],
     "packages/grafana-ui/src/components/ButtonCascader/ButtonCascader.story.tsx:2668731452": [
       [9, 15, 680, "Do not use any type assertions.", "3498768975"]
     ],
@@ -727,9 +723,9 @@ exports[`no type assertions`] = {
       [12, 15, 223, "Do not use any type assertions.", "3923006945"],
       [38, 30, 12, "Do not use any type assertions.", "4064292234"]
     ],
-    "packages/grafana-ui/src/components/Dropdown/ButtonSelect.tsx:1787105174": [
-      [69, 27, 36, "Do not use any type assertions.", "1500459182"],
-      [88, 28, 65, "Do not use any type assertions.", "2861770434"]
+    "packages/grafana-ui/src/components/Dropdown/ButtonSelect.tsx:449346422": [
+      [70, 27, 36, "Do not use any type assertions.", "1500459182"],
+      [89, 28, 65, "Do not use any type assertions.", "2861770434"]
     ],
     "packages/grafana-ui/src/components/ErrorBoundary/ErrorBoundary.test.tsx:2837089737": [
       [40, 30, 29, "Do not use any type assertions.", "3241525704"]
@@ -897,8 +893,8 @@ exports[`no type assertions`] = {
       [58, 18, 40, "Do not use any type assertions.", "3831086404"],
       [77, 18, 40, "Do not use any type assertions.", "3831086404"]
     ],
-    "packages/grafana-ui/src/components/RefreshPicker/RefreshPicker.tsx:3884900799": [
-      [87, 22, 26, "Do not use any type assertions.", "1691945126"]
+    "packages/grafana-ui/src/components/RefreshPicker/RefreshPicker.tsx:1791227487": [
+      [88, 22, 26, "Do not use any type assertions.", "1691945126"]
     ],
     "packages/grafana-ui/src/components/SecretFormField/SecretFormField.story.internal.tsx:2020978154": [
       [9, 15, 375, "Do not use any type assertions.", "1137633412"]
@@ -1047,6 +1043,13 @@ exports[`no type assertions`] = {
     ],
     "packages/grafana-ui/src/components/TimeSeries/utils.ts:3806893813": [
       [135, 19, 146, "Do not use any type assertions.", "3723122882"]
+    ],
+    "packages/grafana-ui/src/components/ToolbarButton/ToolbarButton.story.tsx:1133352709": [
+      [10, 15, 780, "Do not use any type assertions.", "3533394757"]
+    ],
+    "packages/grafana-ui/src/components/ToolbarButton/ToolbarButton.tsx:3161520285": [
+      [70, 7, 13, "Do not use any type assertions.", "3497904325"],
+      [119, 23, 16, "Do not use any type assertions.", "1396449744"]
     ],
     "packages/grafana-ui/src/components/Tooltip/Tooltip.tsx:3266011374": [
       [50, 38, 13, "Do not use any type assertions.", "1133047536"]
@@ -3177,7 +3180,7 @@ exports[`no type assertions`] = {
       [31, 21, 48, "Do not use any type assertions.", "646093117"],
       [64, 51, 15, "Do not use any type assertions.", "3135191849"]
     ],
-    "public/app/features/search/components/SearchCard.tsx:3237313553": [
+    "public/app/features/search/components/SearchCard.tsx:417509806": [
       [116, 37, 32, "Do not use any type assertions.", "1966145380"],
       [116, 37, 14, "Do not use any type assertions.", "930482894"]
     ],
@@ -6716,9 +6719,6 @@ exports[`no explicit any`] = {
     "packages/grafana-toolkit/src/plugins/types.ts:3491103080": [
       [50, 12, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "packages/grafana-ui/src/components/Button/ToolbarButton.tsx:12347407": [
-      [69, 17, 3, "Unexpected any. Specify a different type.", "193409811"]
-    ],
     "packages/grafana-ui/src/components/ButtonCascader/ButtonCascader.tsx:1538789902": [
       [53, 15, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
@@ -6947,9 +6947,9 @@ exports[`no explicit any`] = {
       [44, 67, 3, "Unexpected any. Specify a different type.", "193409811"],
       [75, 55, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "packages/grafana-ui/src/components/RefreshPicker/RefreshPicker.tsx:3884900799": [
-      [15, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [87, 45, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "packages/grafana-ui/src/components/RefreshPicker/RefreshPicker.tsx:1791227487": [
+      [16, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [88, 45, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "packages/grafana-ui/src/components/Segment/Segment.story.tsx:974932938": [
       [11, 25, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -7162,6 +7162,9 @@ exports[`no explicit any`] = {
     ],
     "packages/grafana-ui/src/components/TimeSeries/utils.ts:3806893813": [
       [33, 29, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "packages/grafana-ui/src/components/ToolbarButton/ToolbarButton.tsx:3161520285": [
+      [70, 17, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "packages/grafana-ui/src/components/Tooltip/PopoverController.tsx:4009959390": [
       [28, 23, 3, "Unexpected any. Specify a different type.", "193409811"]
@@ -10046,7 +10049,7 @@ exports[`no explicit any`] = {
     "public/app/features/search/components/MoveToFolderModal.tsx:3435881653": [
       [31, 93, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/search/components/SearchCard.tsx:3237313553": [
+    "public/app/features/search/components/SearchCard.tsx:417509806": [
       [20, 36, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/search/components/SearchItem.tsx:491011590": [
@@ -10060,6 +10063,9 @@ exports[`no explicit any`] = {
     ],
     "public/app/features/search/page/components/MoveToFolderModal.tsx:739519709": [
       [31, 63, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/features/search/page/components/SearchResultsGrid.test.tsx:2090205358": [
+      [40, 35, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/search/page/components/SearchResultsGrid.tsx:994645204": [
       [29, 28, 3, "Unexpected any. Specify a different type.", "193409811"]
