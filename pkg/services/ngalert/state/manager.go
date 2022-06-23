@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -35,6 +36,7 @@ type Manager struct {
 	log     log.Logger
 	metrics *metrics.State
 
+	clock       clock.Clock
 	cache       *cache
 	quit        chan struct{}
 	ResendDelay time.Duration
@@ -47,7 +49,7 @@ type Manager struct {
 
 func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
 	ruleStore store.RuleStore, instanceStore store.InstanceStore,
-	dashboardService dashboards.DashboardService, imageService image.ImageService) *Manager {
+	dashboardService dashboards.DashboardService, imageService image.ImageService, clock clock.Clock) *Manager {
 	manager := &Manager{
 		cache:            newCache(logger, metrics, externalURL),
 		quit:             make(chan struct{}),
@@ -58,6 +60,7 @@ func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
 		instanceStore:    instanceStore,
 		dashboardService: dashboardService,
 		imageService:     imageService,
+		clock:            clock,
 	}
 	go manager.recordMetrics()
 	return manager
@@ -272,14 +275,14 @@ func (st *Manager) recordMetrics() {
 	// TODO: parameterize?
 	// Setting to a reasonable default scrape interval for Prometheus.
 	dur := time.Duration(15) * time.Second
-	ticker := time.NewTicker(dur)
+	ticker := st.clock.Ticker(dur)
 	for {
 		select {
 		case <-ticker.C:
-			st.log.Debug("recording state cache metrics", "now", time.Now())
+			st.log.Debug("recording state cache metrics", "now", st.clock.Now())
 			st.cache.recordMetrics()
 		case <-st.quit:
-			st.log.Debug("stopping state cache metrics recording", "now", time.Now())
+			st.log.Debug("stopping state cache metrics recording", "now", st.clock.Now())
 			ticker.Stop()
 			return
 		}
