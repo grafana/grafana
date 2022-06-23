@@ -181,7 +181,7 @@ export const safeParseJson = (text?: string): any | undefined => {
   }
 
   try {
-    return JSON.parse(decodeURIComponent(text));
+    return JSON.parse(text);
   } catch (error) {
     console.error(error);
   }

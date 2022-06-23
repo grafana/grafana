@@ -100,7 +100,7 @@ const ensureQueriesMemoized = memoizeOne(ensureQueries);
 const getTimeRangeFromUrlMemoized = memoizeOne(getTimeRangeFromUrl);
 
 function mapStateToProps(state: StoreState, props: OwnProps) {
-  const urlState = parseUrlState(props.urlQuery);
+  const urlState = parseUrlState(decodeURIComponent(props.urlQuery));
   const timeZone = getTimeZone(state.user);
   const fiscalYearStartMonth = getFiscalYearStartMonth(state.user);
 
