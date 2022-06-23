@@ -9,11 +9,7 @@ export interface TopNavProps {
 }
 
 export const topNavUpdates = new Subject<TopNavProps>();
-export const topNavDefaultProps: TopNavProps = {
-  subNav: {
-    text: 'Home',
-  },
-};
+export const topNavDefaultProps: TopNavProps = {};
 
 /**
  * This needs to be moved to @grafana/ui or runtime.

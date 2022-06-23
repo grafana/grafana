@@ -47,12 +47,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
       paddingRight: theme.spacing(1),
     }),
-    breadcrumbs: css({
-      display: 'flex',
-      alignItems: 'center',
-      fontWeight: theme.typography.fontWeightMedium,
-      gap: theme.spacing(2),
-    }),
     leftActions: css({
       display: 'flex',
       alignItems: 'center',

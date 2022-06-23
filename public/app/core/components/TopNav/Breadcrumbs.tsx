@@ -72,10 +72,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: theme.colors.text.secondary,
       padding: theme.spacing(0, 0.5),
     }),
-    breadcrumbLink: css`
-      &:hover {
-        text-decoration: underline;
-      }
-    `,
+    breadcrumbLink: css({
+      color: theme.colors.text.primary,
+      '&:hover': {
+        textDecoration: 'underline',
+      },
+    }),
   };
 };
