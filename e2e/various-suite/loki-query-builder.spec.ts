@@ -54,8 +54,7 @@ describe('Loki query builder', () => {
 
     // Switch to query builder and check if query was parsed to visual query builder
     cy.contains('label', 'Builder').should('be.visible').click();
-    cy.contains('job').should('be.visible');
-    cy.contains('unique').should('be.visible');
+    cy.contains('Operations').should('be.visible');
     cy.contains('instance').should('be.visible');
     cy.contains('instance1').should('be.visible');
     cy.contains('instance2').should('be.visible');
