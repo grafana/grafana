@@ -851,21 +851,20 @@ export class CloudWatchDatasource
         return { ...result, [key]: null };
       }
 
-      const newValues = this.getVariableValue(value, scopedVars);
+      const newValues = this.expandVariableToArray(value, scopedVars);
       return { ...result, [key]: newValues };
     }, {});
   }
 
   // get the value for a given template variable
-  getVariableValue(value: string, scopedVars: ScopedVars): string[] {
+  expandVariableToArray(value: string, scopedVars: ScopedVars): string[] {
     const variableName = this.templateSrv.getVariableName(value);
     const valueVar = this.templateSrv.getVariables().find(({ name }) => {
       return name === variableName;
     });
     if (variableName && valueVar) {
       if ((valueVar as unknown as VariableWithMultiSupport).multi) {
-        const values = this.templateSrv.replace(value, scopedVars, 'pipe').split('|');
-        return values;
+        return this.templateSrv.replace(value, scopedVars, 'pipe').split('|');
       }
       return [this.templateSrv.replace(value, scopedVars)];
     }
@@ -880,7 +879,7 @@ export class CloudWatchDatasource
       }
       const initialVal: string[] = [];
       const newValues = values.reduce((result, value) => {
-        const vals = this.getVariableValue(value, {});
+        const vals = this.expandVariableToArray(value, {});
         return [...result, ...vals];
       }, initialVal);
       return { ...result, [key]: newValues };
