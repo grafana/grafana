@@ -12,6 +12,9 @@ import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery, Sear
 
 export class BlugeSearcher implements GrafanaSearcher {
   async search(query: SearchQuery): Promise<QueryResponse> {
+    if (query.facet?.length) {
+      throw 'facets not supported!';
+    }
     return doSearchQuery(query);
   }
 
@@ -114,21 +117,10 @@ async function doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
     }
   }
 
-  const facets: DataFrame[] | undefined = rsp.data.length > 1 ? [] : undefined;
-  if (facets) {
-    for (const f of rsp.data) {
-      const frame = f as DataFrame;
-      if (frame.name?.startsWith('Facet: ')) {
-        facets.push(frame);
-      }
-    }
-  }
-
   const view = new DataFrameView<DashboardQueryResult>(first);
   return {
     totalRows: meta.count ?? first.length,
     view,
-    facets,
     loadMoreItems: async (startIndex: number, stopIndex: number): Promise<void> => {
       console.log('LOAD NEXT PAGE', { startIndex, stopIndex, length: view.dataFrame.length });
       const from = view.dataFrame.length;

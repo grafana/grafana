@@ -6,6 +6,7 @@ import { of } from 'rxjs';
 
 import { GrafanaTheme2, PluginMeta } from '@grafana/data';
 import { Spinner, useStyles2 } from '@grafana/ui';
+import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { SearchResultsTable } from 'app/features/search/page/components/SearchResultsTable';
 import { getGrafanaSearcher, SearchQuery } from 'app/features/search/service';
 
@@ -21,11 +22,6 @@ export function PluginUsage({ plugin }: Props) {
       query: '*',
       panel_type: plugin.id,
       kind: ['panel'],
-      facet: [
-        {
-          field: 'location',
-        },
-      ],
     } as SearchQuery;
   }, [plugin]);
 
@@ -33,18 +29,12 @@ export function PluginUsage({ plugin }: Props) {
     return getGrafanaSearcher().search(searchQuery);
   }, [searchQuery]);
 
-  console.log(results);
   const found = results.value;
   if (found?.totalRows) {
     return (
       <div className={styles.wrap}>
         <div className={styles.info}>
-          {plugin.name} is used <b>{found.totalRows}</b> times
-          {Boolean(found.facets?.length) && (
-            <span>
-              , in <b>{found.facets![0].length}</b> dashboards
-            </span>
-          )}
+          {plugin.name} is used <b>{found.totalRows}</b> times.
         </div>
         <AutoSizer>
           {({ width, height }) => {
@@ -68,7 +58,14 @@ export function PluginUsage({ plugin }: Props) {
     return <Spinner />;
   }
 
-  return <div className="gf-form-group">Nothing found for {plugin.id}</div>;
+  return (
+    <EmptyListCTA
+      title={`${plugin.name} is not used in any dashboards yet`}
+      buttonIcon="plus"
+      buttonTitle="Create Dashboard"
+      buttonLink={`dashboard/new?panelType=${plugin.id}&editPanel=1`}
+    />
+  );
 }
 
 export const getStyles = (theme: GrafanaTheme2) => {

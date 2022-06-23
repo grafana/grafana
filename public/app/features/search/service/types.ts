@@ -57,9 +57,6 @@ export interface QueryResponse {
   /** Checks if a row in the view needs to be added */
   isItemLoaded: (index: number) => boolean;
 
-  /** Optionally facet frames */
-  facets?: DataFrame[];
-
   /** the total query results size */
   totalRows: number;
 }
