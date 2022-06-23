@@ -1,4 +1,5 @@
 ---
+# test comment
 aliases:
   - /docs/grafana/latest/
   - /docs/grafana/latest/guides/reference/admin/
