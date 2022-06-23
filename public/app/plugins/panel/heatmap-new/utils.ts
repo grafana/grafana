@@ -919,7 +919,7 @@ export const boundedMinMax = (
 };
 
 export const valuesToFills = (values: number[], palette: string[], minValue: number, maxValue: number) => {
-  let range = maxValue - minValue;
+  let range = Math.max(maxValue - minValue, 1);
 
   let paletteSize = palette.length;
 

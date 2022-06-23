@@ -17,6 +17,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/searchV2/extract"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
@@ -272,10 +273,39 @@ func (e *gitExportJob) doExportWithHistory() error {
 	if err != nil {
 		return err
 	}
-	w, _ := r.Worktree()
-
+	w, err := r.Worktree()
+	if err != nil {
+		return err
+	}
 	ctx := context.Background()
 
+	cmd := &models.SearchOrgsQuery{}
+	err = e.sql.SearchOrgs(ctx, cmd)
+	if err != nil {
+		return err
+	}
+
+	// Export each org
+	for _, org := range cmd.Result {
+		rootDir := path.Join(e.rootDir, fmt.Sprintf("org_%d", org.Id))
+		err = e.doOrgExportWithHistory(ctx, org.Id, rootDir, w)
+		if err != nil {
+			return err
+		}
+	}
+
+	// cleanup the folder
+	e.status.Target = "pruning..."
+	e.broadcaster(e.status)
+	r.Prune(git.PruneOptions{})
+
+	// TODO
+	// git gc --prune=now --aggressive
+
+	return nil
+}
+
+func (e *gitExportJob) doOrgExportWithHistory(ctx context.Context, orgID int64, baseDir string, w *git.Worktree) error {
 	// key will allow name or uid
 	lookup := func(ref *extract.DataSourceRef) *extract.DataSourceRef {
 		if ref == nil || ref.UID == "" {
@@ -291,9 +321,12 @@ func (e *gitExportJob) doExportWithHistory() error {
 	alias := make(map[string]string, 100)
 	ids := make(map[int64]string, 100)
 	folders := make(map[int64]string, 100)
-	users := readusers(ctx, e.orgID, e.sql)
+	users := readusers(ctx, orgID, e.sql)
 
-	err = e.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	rootDir := path.Join(baseDir, "root")
+	_ = os.MkdirAll(rootDir, 0750)
+
+	err := e.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		type dashDataQueryResult struct {
 			Id       int64
 			UID      string `xorm:"uid"`
@@ -308,7 +341,7 @@ func (e *gitExportJob) doExportWithHistory() error {
 		rows := make([]*dashDataQueryResult, 0)
 
 		sess.Table("dashboard").
-			Where("org_id = ?", e.orgID).
+			Where("org_id = ?", orgID).
 			Cols("id", "is_folder", "folder_id", "data", "slug", "created", "updated", "uid")
 
 		err := sess.Find(&rows)
@@ -325,7 +358,7 @@ func (e *gitExportJob) doExportWithHistory() error {
 				}
 
 				slug := cleanFileName(dash.Title)
-				fpath := path.Join(e.rootDir, slug)
+				fpath := path.Join(rootDir, slug)
 				err = os.MkdirAll(fpath, 0750)
 				if err != nil {
 					return err
@@ -379,7 +412,7 @@ func (e *gitExportJob) doExportWithHistory() error {
 		return err
 	}
 
-	err = os.WriteFile(path.Join(e.rootDir, "__alias.json"), clean, 0600)
+	err = os.WriteFile(path.Join(rootDir, "__alias.json"), clean, 0600)
 	if err != nil {
 		return err
 	}
@@ -389,7 +422,7 @@ func (e *gitExportJob) doExportWithHistory() error {
 		return err
 	}
 
-	err = os.WriteFile(path.Join(e.rootDir, "__ids.json"), clean, 0600)
+	err = os.WriteFile(path.Join(rootDir, "__ids.json"), clean, 0600)
 	if err != nil {
 		return err
 	}
@@ -441,7 +474,7 @@ func (e *gitExportJob) doExportWithHistory() error {
 			// ?? remove version, id, and UID?
 			clean = cleanDashboardJSON(row.Data)
 
-			dpath := filepath.Join(e.rootDir, fpath)
+			dpath := filepath.Join(rootDir, fpath)
 			_ = ioutil.WriteFile(dpath, clean, 0644)
 			_, _ = w.Add(fpath)
 
