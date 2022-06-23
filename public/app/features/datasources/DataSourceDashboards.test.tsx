@@ -3,7 +3,7 @@ import React from 'react';
 
 import { DataSourceSettings } from '@grafana/data';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
-import { getNavModel } from 'app/core/selectors/navModel';
+import { RouteDescriptor } from 'app/core/navigation/types';
 import { PluginDashboard } from 'app/types';
 
 import { DataSourceDashboards, Props } from './DataSourceDashboards';
@@ -11,7 +11,7 @@ import { DataSourceDashboards, Props } from './DataSourceDashboards';
 const setup = (propOverrides?: Partial<Props>) => {
   const props: Props = {
     ...getRouteComponentProps(),
-    navModel: getNavModel('nav-index', `datasource-dashboards-${'testuid'}`),
+    navModel: { main: { text: 'nav-text' }, node: { text: 'node-text' } },
     dashboards: [] as PluginDashboard[],
     dataSource: {} as DataSourceSettings,
     dataSourceId: 'x',
@@ -19,6 +19,7 @@ const setup = (propOverrides?: Partial<Props>) => {
     loadDataSource: jest.fn(),
     loadPluginDashboards: jest.fn(),
     removeDashboard: jest.fn(),
+    route: {} as RouteDescriptor,
     isLoading: false,
     ...propOverrides,
   };
@@ -33,6 +34,7 @@ describe('Render', () => {
   it('should render component', () => {
     setup();
 
+    expect(screen.getByRole('heading', { name: 'nav-text' })).toBeInTheDocument();
     expect(screen.getByRole('table')).toBeInTheDocument();
     expect(screen.getByRole('list')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Documentation' })).toBeInTheDocument();
