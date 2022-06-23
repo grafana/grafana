@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useLingui } from '@lingui/react';
 import { useMenu } from '@react-aria/menu';
 import { mergeProps } from '@react-aria/utils';
 import { useTreeState } from '@react-stately/tree';
@@ -11,17 +12,18 @@ import { useTheme2 } from '@grafana/ui';
 import { NavBarItemMenuItem } from './NavBarItemMenuItem';
 import { NavBarScrollContainer } from './NavBarScrollContainer';
 import { useNavBarItemMenuContext } from './context';
+import menuItemTranslations from './navBarItem-translations';
 import { getNavModelItemKey } from './utils';
 
 export interface NavBarItemMenuProps extends SpectrumMenuProps<NavModelItem> {
   onNavigate: (item: NavModelItem) => void;
   adjustHeightForBorder: boolean;
   reverseMenuDirection?: boolean;
-  emptyMessage?: React.ReactNode;
 }
 
 export function NavBarItemMenu(props: NavBarItemMenuProps): ReactElement | null {
-  const { reverseMenuDirection, adjustHeightForBorder, disabledKeys, onNavigate, emptyMessage, ...rest } = props;
+  const { reverseMenuDirection, adjustHeightForBorder, disabledKeys, onNavigate, ...rest } = props;
+  const { i18n } = useLingui();
   const contextProps = useNavBarItemMenuContext();
   const completeProps = {
     ...mergeProps(contextProps, rest),
@@ -59,10 +61,11 @@ export function NavBarItemMenu(props: NavBarItemMenuProps): ReactElement | null 
     <NavBarItemMenuItem key={getNavModelItemKey(item.value)} item={item} state={state} onNavigate={onNavigate} />
   ));
 
-  if (itemComponents.length === 0 && emptyMessage) {
+  if (itemComponents.length === 0 && section.value.emptyMessageId) {
+    const emptyMessageTranslated = i18n._(menuItemTranslations[section.value.emptyMessageId]);
     itemComponents.push(
       <div key="empty-message" className={styles.emptyMessage}>
-        {emptyMessage}
+        {emptyMessageTranslated}
       </div>
     );
   }

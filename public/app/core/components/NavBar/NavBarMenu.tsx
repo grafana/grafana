@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { useLingui } from '@lingui/react';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { OverlayContainer, useOverlay } from '@react-aria/overlays';
@@ -16,6 +17,7 @@ import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
 import { NavBarMenuItem } from './NavBarMenuItem';
 import { NavBarToggle } from './NavBarToggle';
 import { NavFeatureHighlight } from './NavFeatureHighlight';
+import menuItemTranslations from './navBarItem-translations';
 import { isMatchOrChildMatch } from './utils';
 
 const MENU_WIDTH = '350px';
@@ -35,6 +37,7 @@ export function NavBarMenu({ activeItem, isOpen, navItems, onClose, setMenuAnima
   const animStyles = getAnimStyles(theme, ANIMATION_DURATION);
   const ref = useRef(null);
   const { dialogProps } = useDialog({}, ref);
+
   const { overlayProps, underlayProps } = useOverlay(
     {
       isDismissable: true,
@@ -226,36 +229,42 @@ function NavItem({
   activeItem?: NavModelItem;
   onClose: () => void;
 }) {
+  const { i18n } = useLingui();
   const styles = useStyles2(getNavItemStyles);
 
-  if (linkHasChildren(link) || link.emptyMessage) {
+  if (linkHasChildren(link)) {
     return (
       <CollapsibleNavItem onClose={onClose} link={link} isActive={isMatchOrChildMatch(link, activeItem)}>
         <ul className={styles.children}>
-          {linkHasChildren(link) ? (
-            link.children.map(
-              (childLink) =>
-                !childLink.divider && (
-                  <NavBarMenuItem
-                    key={`${link.text}-${childLink.text}`}
-                    isActive={activeItem === childLink}
-                    isDivider={childLink.divider}
-                    icon={childLink.showIconInNavbar ? (childLink.icon as IconName) : undefined}
-                    onClick={() => {
-                      childLink.onClick?.();
-                      onClose();
-                    }}
-                    styleOverrides={styles.item}
-                    target={childLink.target}
-                    text={childLink.text}
-                    url={childLink.url}
-                    isMobile={true}
-                  />
-                )
-            )
-          ) : (
-            <div className={styles.emptyMessage}>{link.emptyMessage}</div>
+          {link.children.map(
+            (childLink) =>
+              !childLink.divider && (
+                <NavBarMenuItem
+                  key={`${link.text}-${childLink.text}`}
+                  isActive={activeItem === childLink}
+                  isDivider={childLink.divider}
+                  icon={childLink.showIconInNavbar ? (childLink.icon as IconName) : undefined}
+                  onClick={() => {
+                    childLink.onClick?.();
+                    onClose();
+                  }}
+                  styleOverrides={styles.item}
+                  target={childLink.target}
+                  text={childLink.text}
+                  url={childLink.url}
+                  isMobile={true}
+                />
+              )
           )}
+        </ul>
+      </CollapsibleNavItem>
+    );
+  } else if (link.emptyMessageId) {
+    const emptyMessageTranslated = i18n._(menuItemTranslations[link.emptyMessageId]);
+    return (
+      <CollapsibleNavItem onClose={onClose} link={link} isActive={isMatchOrChildMatch(link, activeItem)}>
+        <ul className={styles.children}>
+          <div className={styles.emptyMessage}>{emptyMessageTranslated}</div>
         </ul>
       </CollapsibleNavItem>
     );

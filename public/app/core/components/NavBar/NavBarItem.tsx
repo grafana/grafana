@@ -73,7 +73,6 @@ const NavBarItem = ({ isActive = false, className, reverseMenuDirection = false,
           disabledKeys={['divider', 'subtitle']}
           aria-label={section.text}
           onNavigate={onNavigate}
-          emptyMessage={link.emptyMessage}
         >
           {(item: NavModelItem) => {
             const translationKey = item.id && menuItemTranslations[item.id];
