@@ -154,6 +154,21 @@ func TestLogTableToFrame(t *testing.T) {
 				return frame
 			},
 		},
+		{
+			name:     "data and warning in real response",
+			testFile: "loganalytics/10-log-analytics-response-warning.json",
+			expectedFrame: func() *data.Frame {
+				frame := data.NewFrame("",
+					data.NewField("OperationName", nil, []*string{pointer.String("Create or Update Virtual Machine")}),
+					data.NewField("Level", nil, []*string{pointer.String("Informational")}),
+				)
+				frame.Meta = &data.FrameMeta{
+					Custom:  &LogAnalyticsMeta{ColumnTypes: []string{"string", "string"}},
+					Notices: []data.Notice{{Severity: data.NoticeSeverityWarning, Text: "There were some errors when processing your query. Something went wrong processing your query on the server. Not sure what happened."}},
+				}
+				return frame
+			},
+		},
 	}
 
 	for _, tt := range tests {
