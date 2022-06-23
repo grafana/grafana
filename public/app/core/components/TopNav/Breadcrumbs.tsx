@@ -38,7 +38,7 @@ export function Breadcrumbs({ sectionNav, subNav }: Props) {
   return (
     <ul className={styles.breadcrumbs}>
       {crumbs.map((breadcrumb, index) => (
-        <li className={styles.breadcrumb} key={breadcrumb.text}>
+        <li className={styles.breadcrumb} key={index}>
           {breadcrumb.href && (
             <a className={styles.breadcrumbLink} href={breadcrumb.href}>
               {breadcrumb.text}

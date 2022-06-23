@@ -276,6 +276,7 @@ export const DashNav = React.memo<Props>((props) => {
   const onGoBack = isFullscreen ? onClose : undefined;
 
   if (config.featureToggles.topnav) {
+    console.log('DashNav render');
     return (
       <TopNavUpdate
         subNav={{ text: title }}

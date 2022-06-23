@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import React, { PropsWithChildren } from 'react';
 import { useSelector } from 'react-redux';
 import { useObservable, useToggle } from 'react-use';
+import { createSelector } from 'reselect';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -24,7 +25,7 @@ export function TopNavPage({ children, navId }: Props) {
   const styles = useStyles2(getStyles);
   const [searchBarHidden, toggleSearchBar] = useToggle(false); // repace with local storage
   const props = useObservable(topNavUpdates, topNavDefaultProps);
-  const navModel = useSelector((state: StoreState) => getNavModel(state.navIndex, navId ?? 'home'));
+  const navModel = useSelector(createSelector(getNavIndex, (navIndex) => getNavModel(navIndex, navId ?? 'home')));
 
   return (
     <div className={styles.viewport}>
@@ -40,6 +41,10 @@ export function TopNavPage({ children, navId }: Props) {
       <div className={cx(styles.content, searchBarHidden && styles.contentNoSearchBar)}>{children}</div>
     </div>
   );
+}
+
+function getNavIndex(store: StoreState) {
+  return store.navIndex;
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
