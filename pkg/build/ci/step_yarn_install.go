@@ -17,7 +17,7 @@ func yarnInstall(ctx context.Context, opts pipeline.ActionOpts) error {
 	sourcePath := opts.State.MustGetDirectoryString(pipeline.ArgumentSourceFS)
 	return exec.RunCommandWithOpts(ctx, exec.RunOpts{
 		Name:   "yarn",
-		Args:   []string{"install"},
+		Args:   []string{"install", "--immutable"},
 		Path:   sourcePath,
 		Stdout: opts.Stdout,
 		Stderr: opts.Stderr,
