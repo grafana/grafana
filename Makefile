@@ -7,7 +7,7 @@ WIRE_TAGS = "oss"
 -include local/Makefile
 include .bingo/Variables.mk
 
-.PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-full build-docker-full-ubuntu lint-go golangci-lint test-go test-js gen-ts test run run-frontend clean devenv devenv-down protobuf drone help gen-go gen-cue
+.PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-full build-docker-full-ubuntu lint-go golangci-lint test-go test-js gen-ts test run run-frontend clean devenv devenv-down protobuf drone help gen-go gen-cue test-go-unit test-go-integration
 
 GO = go
 GO_FILES ?= ./pkg/...
@@ -123,14 +123,16 @@ run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild
 
 ##@ Testing
 
+.PHONY: test-go
 test-go: ## Run tests for backend.
-	@echo "test backend"
-	$(GO) test -v ./pkg/...
+	test-go-unit test-go-integration
 
+.PHONY: test-go-unit
 test-go-unit: ## Run unit tests for backend.
 	@echo "test backend unit tests"
 	$(GO) test -short -covermode=atomic -timeout=30m ./pkg/...
 
+.PHONY: test-go-integration
 test-go-integration: ## Run integration tests for backend.
 	@echo "test backend integration tests"
 	$(GO) test -run Integration -covermode=atomic -timeout=30m ./pkg/...
