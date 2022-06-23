@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"net/http"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -46,7 +48,27 @@ func (hs *HTTPServer) AddOrgInvite(c *models.ReqContext) response.Response {
 			return response.Error(500, "Failed to query db for existing user check", err)
 		}
 	} else {
+		// TODO test in a different org, I think it should work, but try passing the X-ORG arg
+		// TODO and frontend bit: https://github.com/grafana/grafana/pull/41943/files
+		// Evaluate permissions for inviting an existing user to the organization
+		userIDScope := ac.Scope("users", "id", strconv.Itoa(int(userQuery.Result.Id)))
+		hasAccess, err := hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, ac.EvalPermission(ac.ActionOrgUsersAdd, userIDScope))
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "Failed to evaluate permissions", err)
+		}
+		if !hasAccess {
+			return response.Error(http.StatusForbidden, "Permission denied", err)
+		}
 		return hs.inviteExistingUserToOrg(c, userQuery.Result, &inviteDto)
+	}
+
+	// Evaluate permissions for inviting a new user to Grafana
+	hasAccess, err := hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, ac.EvalPermission(ac.ActionUsersCreate))
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to evaluate permissions", err)
+	}
+	if !hasAccess {
+		return response.Error(http.StatusForbidden, "Permission denied", err)
 	}
 
 	if setting.DisableLoginForm {
@@ -59,7 +81,6 @@ func (hs *HTTPServer) AddOrgInvite(c *models.ReqContext) response.Response {
 	cmd.Name = inviteDto.Name
 	cmd.Status = models.TmpUserInvitePending
 	cmd.InvitedByUserId = c.UserId
-	var err error
 	cmd.Code, err = util.GetRandomString(30)
 	if err != nil {
 		return response.Error(500, "Could not generate random string", err)

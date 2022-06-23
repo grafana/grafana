@@ -443,6 +443,13 @@ var orgsCreateAccessEvaluator = ac.EvalAll(
 	ac.EvalPermission(ActionOrgsCreate),
 )
 
+// usersInviteEvaluator is used to protect
+// TODO description
+var usersInviteEvaluator = ac.EvalAny(
+	ac.EvalPermission(ac.ActionUsersCreate),
+	ac.EvalPermission(ac.ActionOrgUsersAdd),
+)
+
 // teamsAccessEvaluator is used to protect the "Configuration > Teams" page access
 // grants access to a user when they can either create teams or can read and update a team
 var teamsAccessEvaluator = ac.EvalAny(
