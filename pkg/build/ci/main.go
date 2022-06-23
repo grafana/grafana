@@ -3,7 +3,7 @@ package main
 import "github.com/grafana/scribe"
 
 const (
-	BuildImage       = "grafana/build-container:1.5.3"
+	BuildImage       = "grafana/build-container:1.5.7"
 	PublishImage     = "grafana/grafana-ci-deploy:1.3.1"
 	DocsWebsiteImage = "grafana/docs-base:latest"
 )
