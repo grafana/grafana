@@ -157,7 +157,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
               cleanText={cleanText}
               placeholder="Enter a CloudWatch Logs Insights query (run with Shift+Enter)"
               portalOrigin="cloudwatch"
-              disabled={logGroupNames?.length === 0}
+              disabled={!logGroupNames || logGroupNames.length === 0}
             />
           </div>
           {ExtraFieldElement}

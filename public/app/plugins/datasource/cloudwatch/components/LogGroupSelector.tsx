@@ -132,7 +132,7 @@ export const LogGroupSelector: React.FC<LogGroupSelectorProps> = ({
       allowCustomValue
       options={datasource ? appendTemplateVariables(datasource, logGroupOptions) : logGroupOptions}
       value={selectedLogGroups}
-      onChange={(v) => onChange(v.map(({ value }) => value!))}
+      onChange={(v) => onChange(v.filter(({ value }) => value).map(({ value }) => value))}
       onBlur={onRunQuery}
       closeMenuOnSelect={false}
       isClearable
