@@ -33,7 +33,7 @@ describe('Render', () => {
   it('should render component', () => {
     setup();
 
-    expect(screen.getByRole('table')).toHaveClass('filter-table');
+    expect(screen.getByRole('table')).toBeInTheDocument();
     expect(screen.getByRole('list')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Documentation' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Support' })).toBeInTheDocument();
