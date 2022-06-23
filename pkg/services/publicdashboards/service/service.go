@@ -1,0 +1,202 @@
+package service
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"github.com/gofrs/uuid"
+	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/publicdashboards"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/api"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/database"
+	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
+	"github.com/grafana/grafana/pkg/services/query"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
+)
+
+// Define the Service Implementation. We're generating mock implementation
+// automatically
+type PublicDashboardServiceImpl struct {
+	log   log.Logger
+	cfg   *setting.Cfg
+	store publicdashboards.Store
+}
+
+// Gives us compile time error if the service does not adhere to the contract of
+// the interface
+var _ publicdashboards.Service = (*PublicDashboardServiceImpl)(nil)
+
+// Factory for method used by wire to inject dependencies.
+// builds the service, and api, and configures routes
+func ProvideService(
+	cfg *setting.Cfg,
+	sqlStore *sqlstore.SQLStore,
+	rr routing.RouteRegister,
+	ac accesscontrol.AccessControl,
+	qs *query.Service,
+	features *featuremgmt.FeatureManager,
+) *PublicDashboardServiceImpl {
+	// build the service
+	s := &PublicDashboardServiceImpl{
+		log:   log.New("publicdashboards"),
+		cfg:   cfg,
+		store: database.ProvideStore(sqlStore),
+	}
+
+	// attach api if feature is enabled
+	if features.IsEnabled(featuremgmt.FlagPublicDashboards) {
+		api := api.NewPublicDashboardApi(s, rr, ac, qs, features)
+		api.RegisterAPIEndpoints()
+	}
+
+	return s
+}
+
+// Gets public dashboard via access token
+func (pd *PublicDashboardServiceImpl) GetPublicDashboard(ctx context.Context, accessToken string) (*models.Dashboard, error) {
+	pubdash, d, err := pd.store.GetPublicDashboard(ctx, accessToken)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if pubdash == nil || d == nil {
+		return nil, ErrPublicDashboardNotFound
+	}
+
+	if !pubdash.IsEnabled {
+		return nil, ErrPublicDashboardNotFound
+	}
+
+	ts := pubdash.BuildTimeSettings(d)
+	d.Data.SetPath([]string{"time", "from"}, ts.From)
+	d.Data.SetPath([]string{"time", "to"}, ts.To)
+
+	return d, nil
+}
+
+// GetPublicDashboardConfig is a helper method to retrieve the public dashboard configuration for a given dashboard from the database
+func (pd *PublicDashboardServiceImpl) GetPublicDashboardConfig(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error) {
+	pdc, err := pd.store.GetPublicDashboardConfig(ctx, orgId, dashboardUid)
+	if err != nil {
+		return nil, err
+	}
+
+	return pdc, nil
+}
+
+// SavePublicDashboardConfig is a helper method to persist the sharing config
+// to the database. It handles validations for sharing config and persistence
+func (pd *PublicDashboardServiceImpl) SavePublicDashboardConfig(ctx context.Context, dto *SavePublicDashboardConfigDTO) (*PublicDashboard, error) {
+	if len(dto.DashboardUid) == 0 {
+		return nil, models.ErrDashboardIdentifierNotSet
+	}
+
+	// set default value for time settings
+	if dto.PublicDashboard.TimeSettings == nil {
+		json, err := simplejson.NewJson([]byte("{}"))
+		if err != nil {
+			return nil, err
+		}
+		dto.PublicDashboard.TimeSettings = json
+	}
+
+	if dto.PublicDashboard.Uid == "" {
+		return pd.savePublicDashboardConfig(ctx, dto)
+	}
+
+	return pd.updatePublicDashboardConfig(ctx, dto)
+}
+
+func (pd *PublicDashboardServiceImpl) savePublicDashboardConfig(ctx context.Context, dto *SavePublicDashboardConfigDTO) (*PublicDashboard, error) {
+	uid, err := pd.store.GenerateNewPublicDashboardUid(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	accessToken, err := GenerateAccessToken()
+	if err != nil {
+		return nil, err
+	}
+
+	cmd := SavePublicDashboardConfigCommand{
+		DashboardUid: dto.DashboardUid,
+		OrgId:        dto.OrgId,
+		PublicDashboard: PublicDashboard{
+			Uid:          uid,
+			DashboardUid: dto.DashboardUid,
+			OrgId:        dto.OrgId,
+			IsEnabled:    dto.PublicDashboard.IsEnabled,
+			TimeSettings: dto.PublicDashboard.TimeSettings,
+			CreatedBy:    dto.UserId,
+			CreatedAt:    time.Now(),
+			AccessToken:  accessToken,
+		},
+	}
+
+	return pd.store.SavePublicDashboardConfig(ctx, cmd)
+}
+
+func (pd *PublicDashboardServiceImpl) updatePublicDashboardConfig(ctx context.Context, dto *SavePublicDashboardConfigDTO) (*PublicDashboard, error) {
+	cmd := SavePublicDashboardConfigCommand{
+		PublicDashboard: PublicDashboard{
+			Uid:          dto.PublicDashboard.Uid,
+			IsEnabled:    dto.PublicDashboard.IsEnabled,
+			TimeSettings: dto.PublicDashboard.TimeSettings,
+			UpdatedBy:    dto.UserId,
+			UpdatedAt:    time.Now(),
+		},
+	}
+
+	err := pd.store.UpdatePublicDashboardConfig(ctx, cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	publicDashboard, err := pd.store.GetPublicDashboardConfig(ctx, dto.OrgId, dto.DashboardUid)
+	if err != nil {
+		return nil, err
+	}
+
+	return publicDashboard, nil
+}
+
+// BuildPublicDashboardMetricRequest merges public dashboard parameters with
+// dashboard and returns a metrics request to be sent to query backend
+func (pd *PublicDashboardServiceImpl) BuildPublicDashboardMetricRequest(ctx context.Context, dashboard *models.Dashboard, publicDashboard *PublicDashboard, panelId int64) (dtos.MetricRequest, error) {
+	if !publicDashboard.IsEnabled {
+		return dtos.MetricRequest{}, ErrPublicDashboardNotFound
+	}
+
+	queriesByPanel := models.GetQueriesFromDashboard(dashboard.Data)
+
+	if _, ok := queriesByPanel[panelId]; !ok {
+		return dtos.MetricRequest{}, ErrPublicDashboardPanelNotFound
+	}
+
+	ts := publicDashboard.BuildTimeSettings(dashboard)
+
+	return dtos.MetricRequest{
+		From:    ts.From,
+		To:      ts.To,
+		Queries: queriesByPanel[panelId],
+	}, nil
+}
+
+// generates a uuid formatted without dashes to use as access token
+func GenerateAccessToken() (string, error) {
+	token, err := uuid.NewV4()
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%x", token), nil
+}

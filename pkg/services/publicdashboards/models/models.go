@@ -4,28 +4,44 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/models"
 )
 
+// PublicDashboardErr represents a dashboard error.
+type PublicDashboardErr struct {
+	StatusCode int
+	Status     string
+	Reason     string
+}
+
+// Error returns the error message.
+func (e PublicDashboardErr) Error() string {
+	if e.Reason != "" {
+		return e.Reason
+	}
+	return "Dashboard Error"
+}
+
 var (
-	ErrPublicDashboardFailedGenerateUniqueUid = DashboardErr{
+	ErrPublicDashboardFailedGenerateUniqueUid = PublicDashboardErr{
 		Reason:     "Failed to generate unique public dashboard id",
 		StatusCode: 500,
 	}
-	ErrPublicDashboardFailedGenerateAccesstoken = DashboardErr{
+	ErrPublicDashboardFailedGenerateAccesstoken = PublicDashboardErr{
 		Reason:     "Failed to public dashboard access token",
 		StatusCode: 500,
 	}
-	ErrPublicDashboardNotFound = DashboardErr{
+	ErrPublicDashboardNotFound = PublicDashboardErr{
 		Reason:     "Public dashboard not found",
 		StatusCode: 404,
 		Status:     "not-found",
 	}
-	ErrPublicDashboardPanelNotFound = DashboardErr{
+	ErrPublicDashboardPanelNotFound = PublicDashboardErr{
 		Reason:     "Panel not found in dashboard",
 		StatusCode: 404,
 		Status:     "not-found",
 	}
-	ErrPublicDashboardIdentifierNotSet = DashboardErr{
+	ErrPublicDashboardIdentifierNotSet = PublicDashboardErr{
 		Reason:     "No Uid for public dashboard specified",
 		StatusCode: 400,
 	}
@@ -57,7 +73,7 @@ type TimeSettings struct {
 
 // build time settings object from json on public dashboard. If empty, use
 // defaults on the dashboard
-func (pd PublicDashboard) BuildTimeSettings(dashboard *Dashboard) *TimeSettings {
+func (pd PublicDashboard) BuildTimeSettings(dashboard *models.Dashboard) *TimeSettings {
 	ts := &TimeSettings{
 		From: dashboard.Data.GetPath("time", "from").MustString(),
 		To:   dashboard.Data.GetPath("time", "to").MustString(),
@@ -76,6 +92,16 @@ func (pd PublicDashboard) BuildTimeSettings(dashboard *Dashboard) *TimeSettings 
 	}
 
 	return ts
+}
+
+//
+// DTO for transforming user input in the api
+//
+type SavePublicDashboardConfigDTO struct {
+	DashboardUid    string
+	OrgId           int64
+	UserId          int64
+	PublicDashboard *PublicDashboard
 }
 
 //

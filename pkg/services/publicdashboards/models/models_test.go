@@ -3,6 +3,7 @@ package models
 import (
 	"testing"
 
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/stretchr/testify/assert"
 )
@@ -15,13 +16,13 @@ func TestBuildTimeSettings(t *testing.T) {
 	var dashboardData = simplejson.NewFromAny(map[string]interface{}{"time": map[string]interface{}{"from": "now-8", "to": "now"}})
 	testCases := []struct {
 		name       string
-		dashboard  *Dashboard
+		dashboard  *models.Dashboard
 		pubdash    *PublicDashboard
 		timeResult *TimeSettings
 	}{
 		{
 			name:      "should use dashboard time if pubdash time empty",
-			dashboard: &Dashboard{Data: dashboardData},
+			dashboard: &models.Dashboard{Data: dashboardData},
 			pubdash:   &PublicDashboard{},
 			timeResult: &TimeSettings{
 				From: "now-8",
@@ -30,7 +31,7 @@ func TestBuildTimeSettings(t *testing.T) {
 		},
 		{
 			name:      "should use dashboard time if pubdash to/from empty",
-			dashboard: &Dashboard{Data: dashboardData},
+			dashboard: &models.Dashboard{Data: dashboardData},
 			pubdash:   &PublicDashboard{},
 			timeResult: &TimeSettings{
 				From: "now-8",
@@ -39,7 +40,7 @@ func TestBuildTimeSettings(t *testing.T) {
 		},
 		{
 			name:      "should use pubdash time",
-			dashboard: &Dashboard{Data: dashboardData},
+			dashboard: &models.Dashboard{Data: dashboardData},
 			pubdash:   &PublicDashboard{TimeSettings: simplejson.NewFromAny(map[string]interface{}{"from": "now-12", "to": "now"})},
 			timeResult: &TimeSettings{
 				From: "now-12",
