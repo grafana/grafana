@@ -1,4 +1,4 @@
-import { merge, Observable, of } from 'rxjs';
+import { lastValueFrom, merge, Observable, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 
 import {
@@ -220,32 +220,44 @@ class DataSourceWithBackend<
   /**
    * Make a GET request to the datasource resource path
    */
-  async getResource(path: string, params?: any, options?: BackendSrvRequest): Promise<any> {
-    // Unfortunately we need to keep passing this in due using positional arguments in the get() method below.
-    const requestId = undefined;
-
-    return getBackendSrv().get(`/api/datasources/${this.id}/resources/${path}`, params, requestId, options);
+  async getResource(path: string, params?: any, options?: Partial<BackendSrvRequest>): Promise<any> {
+    return lastValueFrom(
+      getBackendSrv().fetch<HealthCheckResult>({
+        ...options,
+        method: 'GET',
+        url: `/api/datasources/${this.id}/resources/${path}`,
+        params,
+      })
+    );
   }
 
   /**
    * Send a POST request to the datasource resource path
    */
-  async postResource(path: string, body?: any, options?: BackendSrvRequest): Promise<any> {
-    return getBackendSrv().post(`/api/datasources/${this.id}/resources/${path}`, { ...body }, options);
+  async postResource(path: string, data?: any, options?: Partial<BackendSrvRequest>): Promise<any> {
+    return lastValueFrom(
+      getBackendSrv().fetch<HealthCheckResult>({
+        ...options,
+        method: 'POST',
+        url: `/api/datasources/${this.id}/resources/${path}`,
+        data: { ...data },
+      })
+    );
   }
 
   /**
    * Run the datasource healthcheck
    */
   async callHealthCheck(): Promise<HealthCheckResult> {
-    return getBackendSrv()
-      .request({ method: 'GET', url: `/api/datasources/${this.id}/health`, showErrorAlert: false })
-      .then((v) => {
-        return v as HealthCheckResult;
+    return lastValueFrom(
+      getBackendSrv().fetch<HealthCheckResult>({
+        method: 'GET',
+        url: `/api/datasources/${this.id}/health`,
+        showErrorAlert: false,
       })
-      .catch((err) => {
-        return err.data as HealthCheckResult;
-      });
+    )
+      .then((v: unknown) => v as HealthCheckResult)
+      .catch((err) => err.data as HealthCheckResult);
   }
 
   /**
