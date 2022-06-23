@@ -1,6 +1,17 @@
+import { List } from 'immutable';
 import { isString } from 'lodash';
 import React from 'react';
-import { BasicConfig, Config, JsonItem, Settings, Utils, ValueSource, Widgets } from 'react-awesome-query-builder';
+import {
+  BasicConfig,
+  Config,
+  JsonItem,
+  Operator,
+  Settings,
+  SimpleField,
+  Utils,
+  ValueSource,
+  Widgets,
+} from 'react-awesome-query-builder';
 
 import { dateTime, toOption } from '@grafana/data';
 import { Button, DateTimePicker, Input, Select } from '@grafana/ui';
@@ -135,9 +146,13 @@ export const settings: Settings = {
 };
 
 // add IN / NOT IN operators to text to support multi-value variables
+const enum Op {
+  IN = 'select_any_in',
+  NOT_IN = 'select_not_any_in',
+}
 const customOperators = getCustomOperators(BasicConfig);
 const textWidget = BasicConfig.types.text.widgets.text;
-const opers = [...(textWidget.operators || []), 'select_any_in', 'select_not_any_in'];
+const opers = [...(textWidget.operators || []), Op.IN, Op.NOT_IN];
 const customTextWidget = {
   ...textWidget,
   operators: opers,
@@ -168,48 +183,50 @@ function getCustomOperators(config: BasicConfig) {
   const { ...supportedOperators } = config.operators;
   const noop = () => '';
   // IN operator expects array, override IN formatter for multi-value variables
-  const sqlFormatInOp = supportedOperators.select_any_in.sqlFormatOp || noop;
+  const sqlFormatInOp = supportedOperators[Op.IN].sqlFormatOp || noop;
   const customSqlInFormatter = (
     field: string,
     op: string,
-    value: any,
+    value: string | List<string>,
     valueSrc: ValueSource,
     valueType: string,
-    opDef: any,
-    operatorOptions: any,
-    fieldDef: any
+    opDef: Operator,
+    operatorOptions: object,
+    fieldDef: SimpleField
   ) => {
     return sqlFormatInOp(field, op, splitIfString(value), valueSrc, valueType, opDef, operatorOptions, fieldDef);
   };
   // NOT IN operator expects array, override NOT IN formatter for multi-value variables
-  const sqlFormatNotInOp = supportedOperators.select_not_any_in.sqlFormatOp || noop;
+  const sqlFormatNotInOp = supportedOperators[Op.NOT_IN].sqlFormatOp || noop;
   const customSqlNotInFormatter = (
     field: string,
     op: string,
-    value: any,
+    value: string | List<string>,
     valueSrc: ValueSource,
     valueType: string,
-    opDef: any,
-    operatorOptions: any,
-    fieldDef: any
+    opDef: Operator,
+    operatorOptions: object,
+    fieldDef: SimpleField
   ) => {
     return sqlFormatNotInOp(field, op, splitIfString(value), valueSrc, valueType, opDef, operatorOptions, fieldDef);
   };
 
   const customOperators = {
     ...supportedOperators,
-    select_any_in: {
-      ...supportedOperators.select_any_in,
+    [Op.IN]: {
+      ...supportedOperators[Op.IN],
       sqlFormatOp: customSqlInFormatter,
     },
-    select_not_any_in: {
-      ...supportedOperators.select_not_any_in,
+    [Op.NOT_IN]: {
+      ...supportedOperators[Op.NOT_IN],
       sqlFormatOp: customSqlNotInFormatter,
     },
   };
   return customOperators;
 }
 
+// value: string | List<string> but AQB uses a different version of Immutable
+// eslint-ignore
 function splitIfString(value: any) {
   if (isString(value)) {
     return value.split(',');
