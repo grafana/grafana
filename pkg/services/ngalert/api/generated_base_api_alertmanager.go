@@ -53,35 +53,44 @@ func (f *ForkedAlertmanagerApi) RouteCreateGrafanaSilence(ctx *models.ReqContext
 	return f.forkRouteCreateGrafanaSilence(ctx, conf)
 }
 func (f *ForkedAlertmanagerApi) RouteCreateSilence(ctx *models.ReqContext) response.Response {
+	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
 	conf := apimodels.PostableSilence{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.forkRouteCreateSilence(ctx, conf)
+	return f.forkRouteCreateSilence(ctx, conf, datasourceUIDParam)
 }
 func (f *ForkedAlertmanagerApi) RouteDeleteAlertingConfig(ctx *models.ReqContext) response.Response {
-	return f.forkRouteDeleteAlertingConfig(ctx)
+	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
+	return f.forkRouteDeleteAlertingConfig(ctx, datasourceUIDParam)
 }
 func (f *ForkedAlertmanagerApi) RouteDeleteGrafanaAlertingConfig(ctx *models.ReqContext) response.Response {
 	return f.forkRouteDeleteGrafanaAlertingConfig(ctx)
 }
 func (f *ForkedAlertmanagerApi) RouteDeleteGrafanaSilence(ctx *models.ReqContext) response.Response {
-	return f.forkRouteDeleteGrafanaSilence(ctx)
+	silenceIdParam := web.Params(ctx.Req)[":SilenceId"]
+	return f.forkRouteDeleteGrafanaSilence(ctx, silenceIdParam)
 }
 func (f *ForkedAlertmanagerApi) RouteDeleteSilence(ctx *models.ReqContext) response.Response {
-	return f.forkRouteDeleteSilence(ctx)
+	silenceIdParam := web.Params(ctx.Req)[":SilenceId"]
+	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
+	return f.forkRouteDeleteSilence(ctx, silenceIdParam, datasourceUIDParam)
 }
 func (f *ForkedAlertmanagerApi) RouteGetAMAlertGroups(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetAMAlertGroups(ctx)
+	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
+	return f.forkRouteGetAMAlertGroups(ctx, datasourceUIDParam)
 }
 func (f *ForkedAlertmanagerApi) RouteGetAMAlerts(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetAMAlerts(ctx)
+	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
+	return f.forkRouteGetAMAlerts(ctx, datasourceUIDParam)
 }
 func (f *ForkedAlertmanagerApi) RouteGetAMStatus(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetAMStatus(ctx)
+	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
+	return f.forkRouteGetAMStatus(ctx, datasourceUIDParam)
 }
 func (f *ForkedAlertmanagerApi) RouteGetAlertingConfig(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetAlertingConfig(ctx)
+	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
+	return f.forkRouteGetAlertingConfig(ctx, datasourceUIDParam)
 }
 func (f *ForkedAlertmanagerApi) RouteGetGrafanaAMAlertGroups(ctx *models.ReqContext) response.Response {
 	return f.forkRouteGetGrafanaAMAlertGroups(ctx)
@@ -96,30 +105,36 @@ func (f *ForkedAlertmanagerApi) RouteGetGrafanaAlertingConfig(ctx *models.ReqCon
 	return f.forkRouteGetGrafanaAlertingConfig(ctx)
 }
 func (f *ForkedAlertmanagerApi) RouteGetGrafanaSilence(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetGrafanaSilence(ctx)
+	silenceIdParam := web.Params(ctx.Req)[":SilenceId"]
+	return f.forkRouteGetGrafanaSilence(ctx, silenceIdParam)
 }
 func (f *ForkedAlertmanagerApi) RouteGetGrafanaSilences(ctx *models.ReqContext) response.Response {
 	return f.forkRouteGetGrafanaSilences(ctx)
 }
 func (f *ForkedAlertmanagerApi) RouteGetSilence(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetSilence(ctx)
+	silenceIdParam := web.Params(ctx.Req)[":SilenceId"]
+	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
+	return f.forkRouteGetSilence(ctx, silenceIdParam, datasourceUIDParam)
 }
 func (f *ForkedAlertmanagerApi) RouteGetSilences(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetSilences(ctx)
+	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
+	return f.forkRouteGetSilences(ctx, datasourceUIDParam)
 }
 func (f *ForkedAlertmanagerApi) RoutePostAMAlerts(ctx *models.ReqContext) response.Response {
+	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
 	conf := apimodels.PostableAlerts{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.forkRoutePostAMAlerts(ctx, conf)
+	return f.forkRoutePostAMAlerts(ctx, conf, datasourceUIDParam)
 }
 func (f *ForkedAlertmanagerApi) RoutePostAlertingConfig(ctx *models.ReqContext) response.Response {
+	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
 	conf := apimodels.PostableUserConfig{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.forkRoutePostAlertingConfig(ctx, conf)
+	return f.forkRoutePostAlertingConfig(ctx, conf, datasourceUIDParam)
 }
 func (f *ForkedAlertmanagerApi) RoutePostGrafanaAMAlerts(ctx *models.ReqContext) response.Response {
 	conf := apimodels.PostableAlerts{}
@@ -143,11 +158,12 @@ func (f *ForkedAlertmanagerApi) RoutePostTestGrafanaReceivers(ctx *models.ReqCon
 	return f.forkRoutePostTestGrafanaReceivers(ctx, conf)
 }
 func (f *ForkedAlertmanagerApi) RoutePostTestReceivers(ctx *models.ReqContext) response.Response {
+	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
 	conf := apimodels.TestReceiversConfigBodyParams{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.forkRoutePostTestReceivers(ctx, conf)
+	return f.forkRoutePostTestReceivers(ctx, conf, datasourceUIDParam)
 }
 
 func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiForkingService, m *metrics.API) {
