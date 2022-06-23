@@ -17,7 +17,7 @@ func packageFrontend(ctx context.Context, opts pipeline.ActionOpts) error {
 	return exec.RunCommandWithOpts(ctx, exec.RunOpts{
 		Path:   src,
 		Name:   grabpl.Name(),
-		Args:   []string{"build-frontend-packages", "--jobs", "8", "--edition", "oss", "--build-id", buildID, "--no-pull-enterprise"},
+		Args:   []string{"build-frontend-packages", "--jobs", "8", "--edition", "oss", "--build-id", buildID},
 		Stdout: opts.Stdout,
 		Stderr: opts.Stderr,
 	})
