@@ -17,7 +17,6 @@ export const topNavDefaultProps: TopNavProps = {};
  */
 export function TopNavUpdate(props: TopNavProps) {
   useEffect(() => {
-    console.log('topNavUpdate', props.subNav);
     topNavUpdates.next(props);
   });
   return null;
