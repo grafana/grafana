@@ -94,7 +94,7 @@ function getLegend(props: Props, displayValues: FieldDisplay[]) {
       }
     })
     .map<VizLegendItem | undefined>((value, idx) => {
-      const hidden = value.field.custom.hideFrom.viz;
+      const hideFromViz = value.field.custom.hideFrom.viz;
       const hideFromLegend = value.field.custom?.hideFrom?.legend;
 
       if (hideFromLegend) {
@@ -106,7 +106,7 @@ function getLegend(props: Props, displayValues: FieldDisplay[]) {
         label: display.title ?? '',
         color: display.color ?? FALLBACK_COLOR,
         yAxis: 1,
-        disabled: hidden,
+        disabled: hideFromViz,
         getItemKey: () => (display.title ?? '') + idx,
         getDisplayValues: () => {
           const valuesToShow = legendOptions.values ?? [];
@@ -117,14 +117,14 @@ function getLegend(props: Props, displayValues: FieldDisplay[]) {
           }
 
           if (valuesToShow.includes(PieChartLegendValues.Percent)) {
-            const fractionOfTotal = hidden ? 0 : display.numeric / total;
+            const fractionOfTotal = hideFromViz ? 0 : display.numeric / total;
             const percentOfTotal = fractionOfTotal * 100;
 
             displayValues.push({
               numeric: fractionOfTotal,
               percent: percentOfTotal,
               text:
-                hidden || isNaN(fractionOfTotal)
+                hideFromViz || isNaN(fractionOfTotal)
                   ? props.fieldConfig.defaults.noValue ?? '-'
                   : percentOfTotal.toFixed(value.field.decimals ?? 0) + '%',
               title: valuesToShow.length > 1 ? 'Percent' : '',
