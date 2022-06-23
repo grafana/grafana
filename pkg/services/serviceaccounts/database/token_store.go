@@ -35,7 +35,7 @@ func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, s
 		key := models.ApiKey{OrgId: cmd.OrgId, Name: cmd.Name}
 		exists, _ := sess.Get(&key)
 		if exists {
-			return &ErrDuplicateSAToken{cmd.Name}
+			return ErrDuplicateToken
 		}
 
 		updated := time.Now()
@@ -44,7 +44,7 @@ func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, s
 			v := updated.Add(time.Second * time.Duration(cmd.SecondsToLive)).Unix()
 			expires = &v
 		} else if cmd.SecondsToLive < 0 {
-			return &ErrInvalidExpirationSAToken{}
+			return ErrInvalidTokenExpiration
 		}
 
 		token := models.ApiKey{
@@ -74,13 +74,12 @@ func (s *ServiceAccountsStoreImpl) DeleteServiceAccountToken(ctx context.Context
 		if err != nil {
 			return err
 		}
-		n, err := result.RowsAffected()
-		if err != nil {
-			return err
-		} else if n == 0 {
-			return &ErrMissingSAToken{}
+		affected, err := result.RowsAffected()
+		if affected == 0 {
+			return ErrServiceAccountTokenNotFound
 		}
-		return nil
+
+		return err
 	})
 }
 
