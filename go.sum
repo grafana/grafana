@@ -403,6 +403,8 @@ github.com/aws/aws-sdk-go v1.40.11/go.mod h1:585smgzpB/KqRA+K3y/NL/oYRqQvpNJYvLm
 github.com/aws/aws-sdk-go v1.40.37/go.mod h1:585smgzpB/KqRA+K3y/NL/oYRqQvpNJYvLm+LY1U59Q=
 github.com/aws/aws-sdk-go v1.43.31 h1:yJZIr8nMV1hXjAvvOLUFqZRJcHV7udPQBfhJqawDzI0=
 github.com/aws/aws-sdk-go v1.43.31/go.mod h1:y4AeaBuwd2Lk+GepC1E9v0qOiTws0MIWAX4oIKwKHZo=
+github.com/aws/aws-sdk-go v1.44.9 h1:s3lsEFbc8i7ghQmcEpcdyvoO/WMwyCVa9pUq3Lq//Ok=
+github.com/aws/aws-sdk-go v1.44.9/go.mod h1:y4AeaBuwd2Lk+GepC1E9v0qOiTws0MIWAX4oIKwKHZo=
 github.com/aws/aws-sdk-go-v2 v0.18.0/go.mod h1:JWVYvqSMppoMJC0x5wdwiImzgXTI9FuZwxzkQq9wy+g=
 github.com/aws/aws-sdk-go-v2 v1.7.0/go.mod h1:tb9wi5s61kTDA5qCkcDbt3KRVV74GGslQkl/DRdX/P4=
 github.com/aws/aws-sdk-go-v2 v1.16.2 h1:fqlCk6Iy3bnCumtrLz9r3mJ/2gUT0pJ0wLFVIdWh+JA=
@@ -1321,6 +1323,8 @@ github.com/google/go-cmp v0.5.5/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/
 github.com/google/go-cmp v0.5.6/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/gNBxE=
 github.com/google/go-cmp v0.5.7 h1:81/ik6ipDQS2aGcBfIN5dHDB36BwrStyeAQquSYCV4o=
 github.com/google/go-cmp v0.5.7/go.mod h1:n+brtR0CgQNWTVd5ZUFpTBC8YFBDLK/h/bpaJ8/DtOE=
+github.com/google/go-cmp v0.5.8 h1:e6P7q2lk1O+qJJb4BtCQXlK8vWEO8V1ZeuEdJNOqZyg=
+github.com/google/go-cmp v0.5.8/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
 github.com/google/go-containerregistry v0.5.1/go.mod h1:Ct15B4yir3PLOP5jsy0GNeYVaIZs/MK/Jz5any1wFW0=
 github.com/google/go-github v17.0.0+incompatible/go.mod h1:zLgOLi98H3fifZn+44m+umXrS52loVEgC2AApnigrVQ=
 github.com/google/go-github/v32 v32.1.0/go.mod h1:rIEpZD9CTDQwDK9GDrtMTycQNA4JU3qBsCizh3q2WCI=
@@ -1445,6 +1449,8 @@ github.com/grafana/go-mssqldb v0.0.0-20210326084033-d0ce3c521036 h1:GplhUk6Xes5J
 github.com/grafana/go-mssqldb v0.0.0-20210326084033-d0ce3c521036/go.mod h1:xbL0rPBG9cCiLr28tMa8zpbdarY27NDyej4t/EjAShU=
 github.com/grafana/grafana-aws-sdk v0.10.3 h1:nqjK8NfrUyUcAtSjGxnt17ZKjeOMCi62MNKFNagjG6g=
 github.com/grafana/grafana-aws-sdk v0.10.3/go.mod h1:vFIOHEnY1u5nY0/tge1IHQjPuG6DRKr2ISf/HikUdjE=
+github.com/grafana/grafana-aws-sdk v0.10.7 h1:kXOuWCI+fV561/9sOU0DnzlFwqblfW36XptJLv78l8s=
+github.com/grafana/grafana-aws-sdk v0.10.7/go.mod h1:5Iw3xY7iXJfNaYHrRHMXa/kaB2lWoyntg71PPLGvSs8=
 github.com/grafana/grafana-azure-sdk-go v1.2.0 h1:f/7BjCHGIU0JYOsLIt4oJztDy0fOPBRHB5R0Xe9++ew=
 github.com/grafana/grafana-azure-sdk-go v1.2.0/go.mod h1:rgrnK9m6CgKlgx4rH3FFP/6dTdyRO6LYC2mVZov35yo=
 github.com/grafana/grafana-google-sdk-go v0.0.0-20211104130251-b190293eaf58 h1:2ud7NNM7LrGPO4x0NFR8qLq68CqI4SmB7I2yRN2w9oE=
@@ -1907,6 +1913,8 @@ github.com/m3db/prometheus_remote_client_golang v0.4.4/go.mod h1:wHfVbA3eAK6dQvK
 github.com/magefile/mage v1.11.0/go.mod h1:z5UZb/iS3GoOSn0JgWuiw7dxlurVYTu+/jHXqQg881A=
 github.com/magefile/mage v1.12.1 h1:oGdAbhIUd6iKamKlDGVtU6XGdy5SgNuCWn7gCTgHDtU=
 github.com/magefile/mage v1.12.1/go.mod h1:z5UZb/iS3GoOSn0JgWuiw7dxlurVYTu+/jHXqQg881A=
+github.com/magefile/mage v1.13.0 h1:XtLJl8bcCM7EFoO8FyH8XK3t7G5hQAeK+i4tq+veT9M=
+github.com/magefile/mage v1.13.0/go.mod h1:z5UZb/iS3GoOSn0JgWuiw7dxlurVYTu+/jHXqQg881A=
 github.com/magiconair/properties v1.8.0/go.mod h1:PppfXfuXeibc/6YijjN8zIbojt8czPbwD3XqdrwzmxQ=
 github.com/magiconair/properties v1.8.1/go.mod h1:PppfXfuXeibc/6YijjN8zIbojt8czPbwD3XqdrwzmxQ=
 github.com/magiconair/properties v1.8.5/go.mod h1:y3VJvCyxH9uVvJTWEGAELF3aiYNyPKd5NZ3oSwXrF60=
