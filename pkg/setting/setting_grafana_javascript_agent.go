@@ -17,7 +17,7 @@ func (cfg *Cfg) readGrafanaJavascriptAgentConfig() {
 	if provider == "grafana" {
 		cfg.GrafanaJavascriptAgent = GrafanaJavascriptAgent{
 			Enabled:                             raw.Key("enabled").MustBool(true),
-			CustomEndpoint:                      raw.Key("custom_endpoint").String(),
+			CustomEndpoint:                      raw.Key("custom_endpoint").MustString("/log-grafana-javascript-agent"),
 			EndpointRPS:                         raw.Key("log_endpoint_requests_per_second_limit").MustInt(),
 			EndpointBurst:                       raw.Key("log_endpoint_burst_limit").MustInt(),
 			ErrorInstrumentalizationEnabled:     raw.Key("instrumentations_errors_enabled").MustBool(true),
