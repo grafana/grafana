@@ -1,4 +1,4 @@
-import { shallow } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { DataSourceSettings, NavModel } from '@grafana/data';
@@ -7,10 +7,10 @@ import { PluginDashboard } from 'app/types';
 
 import { DataSourceDashboards, Props } from './DataSourceDashboards';
 
-const setup = (propOverrides?: object) => {
+const setup = (propOverrides?: Partial<Props>) => {
   const props: Props = {
     ...getRouteComponentProps(),
-    navModel: {} as NavModel,
+    navModel: { main: 'test', node: { text: 'test' } },
     dashboards: [] as PluginDashboard[],
     dataSource: {} as DataSourceSettings,
     dataSourceId: 'x',
@@ -19,17 +19,23 @@ const setup = (propOverrides?: object) => {
     loadPluginDashboards: jest.fn(),
     removeDashboard: jest.fn(),
     isLoading: false,
+    ...propOverrides,
   };
 
-  Object.assign(props, propOverrides);
-
-  return shallow(<DataSourceDashboards {...props} />);
+  return render(<DataSourceDashboards {...props} />);
 };
 
 describe('Render', () => {
+  it('should render without exploding', () => {
+    expect(() => setup()).not.toThrow();
+  });
   it('should render component', () => {
-    const wrapper = setup();
+    setup();
 
-    expect(wrapper).toMatchSnapshot();
+    expect(screen.getByRole('table')).toHaveClass('filter-table');
+    expect(screen.getByRole('list')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Documentation' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Support' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Community' })).toBeInTheDocument();
   });
 });
