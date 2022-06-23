@@ -1893,6 +1893,22 @@
       }
     },
     "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
+      "get": {
+        "tags": [
+          "provisioning",
+          "stable"
+        ],
+        "summary": "Get a rule group.",
+        "operationId": "RouteGetAlertRuleGroup",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/AlertRuleGroup"
+          },
+          "404": {
+            "description": " Not found."
+          }
+        }
+      },
       "put": {
         "consumes": [
           "application/json"
@@ -1920,16 +1936,13 @@
             "name": "Body",
             "in": "body",
             "schema": {
-              "$ref": "#/definitions/AlertRuleGroup"
+              "$ref": "#/definitions/AlertRuleGroupMetadata"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "AlertRuleGroup",
-            "schema": {
-              "$ref": "#/definitions/AlertRuleGroup"
-            }
+            "$ref": "#/responses/AlertRuleGroup"
           },
           "400": {
             "description": "ValidationError",
@@ -2629,7 +2642,7 @@
         }
       }
     },
-    "AlertRuleGroup": {
+    "AlertRuleGroupMetadata": {
       "type": "object",
       "properties": {
         "interval": {
@@ -2789,7 +2802,12 @@
       "type": "array",
       "items": {
         "$ref": "#/definitions/EmbeddedContactPoint"
+<<<<<<< HEAD
       }
+=======
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+>>>>>>> 01a9b04d19 (Generate shell for new route)
     },
     "DateTime": {
       "description": "DateTime is a time but it serializes to ISO8601 format with millis\nIt knows how to read 3 different variations of a RFC3339 date time.\nMost APIs we encounter want either millisecond or second precision times.\nThis just tries to make it worry-free.",
@@ -4950,7 +4968,12 @@
         "User": {
           "$ref": "#/definitions/Userinfo"
         }
+<<<<<<< HEAD
       }
+=======
+      },
+      "x-go-package": "github.com/prometheus/common/config"
+>>>>>>> 01a9b04d19 (Generate shell for new route)
     },
     "Userinfo": {
       "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
@@ -5143,11 +5166,12 @@
       "$ref": "#/definitions/alertGroup"
     },
     "alertGroups": {
-      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
       },
+      "x-go-name": "AlertGroups",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/alertGroups"
     },
     "alertStatus": {
@@ -5525,6 +5549,8 @@
           "type": "string"
         }
       },
+      "x-go-name": "Receiver",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/receiver"
     },
     "silence": {

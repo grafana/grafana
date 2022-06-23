@@ -308,7 +308,7 @@
    ],
    "type": "object"
   },
-  "AlertRuleGroup": {
+  "AlertRuleGroupMetadata": {
    "properties": {
     "interval": {
      "format": "int64",
@@ -470,6 +470,7 @@
    },
    "type": "array"
   },
+<<<<<<< HEAD
   "DashboardAclUpdateItem": {
    "properties": {
     "permission": {
@@ -494,6 +495,8 @@
    },
    "type": "object"
   },
+=======
+>>>>>>> 01a9b04d19 (Generate shell for new route)
   "DateTime": {
    "description": "DateTime is a time but it serializes to ISO8601 format with millis\nIt knows how to read 3 different variations of a RFC3339 date time.\nMost APIs we encounter want either millisecond or second precision times.\nThis just tries to make it worry-free.",
    "format": "date-time",
@@ -2738,6 +2741,7 @@
    "type": "object"
   },
   "URL": {
+   "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
    "properties": {
     "ForceQuery": {
      "type": "boolean"
@@ -2770,6 +2774,7 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
+<<<<<<< HEAD
    "title": "URL is a custom URL type that allows validation at configuration load time.",
    "type": "object"
   },
@@ -2823,6 +2828,11 @@
     }
    },
    "type": "object"
+=======
+   "title": "A URL represents a parsed URL (technically, a URI reference).",
+   "type": "object",
+   "x-go-package": "net/url"
+>>>>>>> 01a9b04d19 (Generate shell for new route)
   },
   "Userinfo": {
    "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
@@ -3178,13 +3188,13 @@
    "type": "object"
   },
   "gettableAlerts": {
+   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
    "type": "array"
   },
   "gettableSilence": {
-   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3230,7 +3240,9 @@
     "status",
     "updatedAt"
    ],
-   "type": "object"
+   "type": "object",
+   "x-go-name": "GettableSilence",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "gettableSilences": {
    "description": "GettableSilences gettable silences",
@@ -3730,6 +3742,21 @@
    }
   },
   "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
+   "get": {
+    "operationId": "RouteGetAlertRuleGroup",
+    "responses": {
+     "200": {
+      "$ref": "#/responses/AlertRuleGroup"
+     },
+     "404": {
+      "description": " Not found."
+     }
+    },
+    "summary": "Get a rule group.",
+    "tags": [
+     "provisioning"
+    ]
+   },
    "put": {
     "consumes": [
      "application/json"
@@ -3752,16 +3779,13 @@
       "in": "body",
       "name": "Body",
       "schema": {
-       "$ref": "#/definitions/AlertRuleGroup"
+       "$ref": "#/definitions/AlertRuleGroupMetadata"
       }
      }
     ],
     "responses": {
      "200": {
-      "description": "AlertRuleGroup",
-      "schema": {
-       "$ref": "#/definitions/AlertRuleGroup"
-      }
+      "$ref": "#/responses/AlertRuleGroup"
      },
      "400": {
       "description": "ValidationError",

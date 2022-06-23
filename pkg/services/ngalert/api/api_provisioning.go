@@ -284,7 +284,11 @@ func (srv *ProvisioningSrv) RouteDeleteAlertRule(c *models.ReqContext, UID strin
 	return response.JSON(http.StatusNoContent, "")
 }
 
-func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *models.ReqContext, ag definitions.AlertRuleGroup, folderUID string, group string) response.Response {
+func (srv *ProvisioningSrv) RouteGetAlertRuleGroup(c *models.ReqContext) response.Response {
+	return nil
+}
+
+func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *models.ReqContext, ag definitions.AlertRuleGroupMetadata, folderUID string, group string) response.Response {
 	err := srv.alertRules.UpdateRuleGroup(c.Req.Context(), c.OrgId, folderUID, group, ag.Interval)
 	if err != nil {
 		if errors.Is(err, store.ErrOptimisticLock) {

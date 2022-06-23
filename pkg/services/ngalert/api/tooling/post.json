@@ -308,7 +308,7 @@
    ],
    "type": "object"
   },
-  "AlertRuleGroup": {
+  "AlertRuleGroupMetadata": {
    "properties": {
     "interval": {
      "format": "int64",
@@ -468,7 +468,12 @@
    "items": {
     "$ref": "#/definitions/EmbeddedContactPoint"
    },
+<<<<<<< HEAD
    "type": "array"
+=======
+   "type": "array",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+>>>>>>> 01a9b04d19 (Generate shell for new route)
   },
   "DateTime": {
    "description": "DateTime is a time but it serializes to ISO8601 format with millis\nIt knows how to read 3 different variations of a RFC3339 date time.\nMost APIs we encounter want either millisecond or second precision times.\nThis just tries to make it worry-free.",
@@ -2625,7 +2630,12 @@
     }
    },
    "title": "URL is a custom URL type that allows validation at configuration load time.",
+<<<<<<< HEAD
    "type": "object"
+=======
+   "type": "object",
+   "x-go-package": "github.com/prometheus/common/config"
+>>>>>>> 01a9b04d19 (Generate shell for new route)
   },
   "Userinfo": {
    "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
@@ -2817,11 +2827,12 @@
    "type": "object"
   },
   "alertGroups": {
-   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
-   "type": "array"
+   "type": "array",
+   "x-go-name": "AlertGroups",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "alertStatus": {
    "description": "AlertStatus alert status",
@@ -3192,7 +3203,9 @@
    "required": [
     "name"
    ],
-   "type": "object"
+   "type": "object",
+   "x-go-name": "Receiver",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "silence": {
    "description": "Silence silence",
@@ -5157,6 +5170,21 @@
    }
   },
   "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
+   "get": {
+    "operationId": "RouteGetAlertRuleGroup",
+    "responses": {
+     "200": {
+      "$ref": "#/responses/AlertRuleGroup"
+     },
+     "404": {
+      "description": " Not found."
+     }
+    },
+    "summary": "Get a rule group.",
+    "tags": [
+     "provisioning"
+    ]
+   },
    "put": {
     "consumes": [
      "application/json"
@@ -5179,16 +5207,13 @@
       "in": "body",
       "name": "Body",
       "schema": {
-       "$ref": "#/definitions/AlertRuleGroup"
+       "$ref": "#/definitions/AlertRuleGroupMetadata"
       }
      }
     ],
     "responses": {
      "200": {
-      "description": "AlertRuleGroup",
-      "schema": {
-       "$ref": "#/definitions/AlertRuleGroup"
-      }
+      "$ref": "#/responses/AlertRuleGroup"
      },
      "400": {
       "description": "ValidationError",
