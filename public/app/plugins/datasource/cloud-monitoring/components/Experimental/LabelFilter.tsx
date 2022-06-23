@@ -24,9 +24,7 @@ const DEFAULT_OPERATOR = '=';
 const DEFAULT_CONDITION = 'AND';
 
 const filtersToStringArray = (filters: Filter[]) =>
-  filters
-    .flatMap(({ key, operator, value, condition }) => (key && value ? [key, operator, value, condition] : []))
-    .slice(0, -1);
+  filters.flatMap(({ key, operator, value, condition }) => [key, operator, value, condition]).slice(0, -1);
 
 const operators = ['=', '!=', '=~', '!=~'].map(toOption);
 
