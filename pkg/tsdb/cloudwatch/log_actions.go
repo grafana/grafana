@@ -31,23 +31,23 @@ type AWSError struct {
 }
 
 type LogQueryJson struct {
-	LogType            string   `json:"type,omitempty"`
-	SubType            string   `json:",omitempty"`
-	Limit              *int64   `json:",omitempty"`
-	Time               int64    `json:",omitempty"`
-	StartTime          int64    `json:",omitempty"`
-	EndTime            int64    `json:",omitempty"`
-	LogGroupName       string   `json:",omitempty"`
-	LogGroupNames      []string `json:",omitempty"`
-	LogGroupNamePrefix string   `json:",omitempty"`
-	LogStreamName      string   `json:",omitempty"`
-	StartFromHead      bool     `json:",omitempty"`
-	Region             string   `json:",omitempty"`
-	QueryString        string   `json:",omitempty"`
-	QueryId            string   `json:",omitempty"`
-	StatsGroups        []string `json:",omitempty"`
-	Subtype            string   `json:",omitempty"`
-	Expression         string   `json:",omitempty"`
+	LogType            string `json:"type"`
+	SubType            string
+	Limit              *int64
+	Time               int64
+	StartTime          int64
+	EndTime            int64
+	LogGroupName       string
+	LogGroupNames      []string
+	LogGroupNamePrefix string
+	LogStreamName      string
+	StartFromHead      bool
+	Region             string
+	QueryString        string
+	QueryId            string
+	StatsGroups        []string
+	Subtype            string
+	Expression         string
 }
 
 func (e *AWSError) Error() string {

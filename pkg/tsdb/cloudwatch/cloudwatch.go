@@ -49,17 +49,17 @@ type datasourceInfo struct {
 }
 
 type DataQueryJson struct {
-	QueryType       string                 `json:"type,omitempty"`
-	QueryMode       string                 `json:",omitempty"`
-	PrefixMatching  bool                   `json:",omitempty"`
-	Region          string                 `json:",omitempty"`
-	Namespace       string                 `json:",omitempty"`
-	MetricName      string                 `json:",omitempty"`
-	Dimensions      map[string]interface{} `json:",omitempty"`
-	Statistic       *string                `json:",omitempty"`
-	Period          string                 `json:",omitempty"`
-	ActionPrefix    string                 `json:",omitempty"`
-	AlarmNamePrefix string                 `json:",omitempty"`
+	QueryType       string `json:"type,omitempty"`
+	QueryMode       string
+	PrefixMatching  bool
+	Region          string
+	Namespace       string
+	MetricName      string
+	Dimensions      map[string]interface{}
+	Statistic       *string
+	Period          string
+	ActionPrefix    string
+	AlarmNamePrefix string
 }
 
 const (
@@ -203,11 +203,11 @@ func (e *cloudWatchExecutor) checkHealthLogs(ctx context.Context, pluginCtx back
 		return err
 	}
 
-	parameters := &LogQueryJson{
+	parameters := LogQueryJson{
 		Limit: &baseLimit,
 	}
 
-	_, err = e.handleDescribeLogGroups(ctx, logsClient, *parameters)
+	_, err = e.handleDescribeLogGroups(ctx, logsClient, parameters)
 	return err
 }
 
@@ -385,10 +385,8 @@ func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, req *back
 		model.Subtype = "StartQuery"
 		model.QueryString = model.Expression
 
-		region := defaultRegion
-		if model.Region != "" {
-			region = model.Region
-		} else {
+		region := model.Region
+		if model.Region != "" || region == defaultRegion {
 			dsInfo, err := e.getDSInfo(req.PluginContext)
 			if err != nil {
 				return nil, err

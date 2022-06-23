@@ -161,14 +161,32 @@ func migrateAliasToDynamicLabel(queryJson *QueryJson) {
 
 func parseRequestQuery(model QueryJson, refId string, startTime time.Time, endTime time.Time) (*cloudWatchQuery, error) {
 	plog.Debug("Parsing request query", "query", model)
+	cloudWatchQuery := cloudWatchQuery{
+		Alias:             "",
+		Label:             "",
+		MatchExact:        true,
+		Statistic:         "",
+		ReturnData:        false,
+		UsedExpression:    "",
+		RefId:             refId,
+		Id:                model.Id,
+		Region:            model.Region,
+		Namespace:         model.Namespace,
+		MetricName:        model.MetricName,
+		MetricQueryType:   model.MetricQueryType,
+		SqlExpression:     model.SqlExpression,
+		TimezoneUTCOffset: model.TimezoneUTCOffset,
+		Expression:        model.Expression,
+	}
 	reNumber := regexp.MustCompile(`^\d+$`)
 	dimensions, err := parseDimensions(model)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse dimensions: %v", err)
 	}
+	cloudWatchQuery.Dimensions = dimensions
+
 	p := model.Period
 	var period int
-
 	if strings.ToLower(p) == "auto" || p == "" {
 		deltaInSeconds := endTime.Sub(startTime).Seconds()
 		periods := getRetainedPeriods(time.Since(startTime))
@@ -194,8 +212,9 @@ func parseRequestQuery(model QueryJson, refId string, startTime time.Time, endTi
 			period = int(d.Seconds())
 		}
 	}
-	id := model.Id
-	if id == "" {
+	cloudWatchQuery.Period = period
+
+	if model.Id == "" {
 		// Why not just use refId if id is not specified in the frontend? When specifying an id in the editor,
 		// and alphabetical must be used. The id must be unique, so if an id like for example a, b or c would be used,
 		// it would likely collide with some ref id. That's why the `query` prefix is used.
@@ -204,54 +223,50 @@ func parseRequestQuery(model QueryJson, refId string, startTime time.Time, endTi
 			uuid := uuid.NewString()
 			suffix = strings.Replace(uuid, "-", "", -1)
 		}
-		id = fmt.Sprintf("query%s", suffix)
+		cloudWatchQuery.Id = fmt.Sprintf("query%s", suffix)
 	}
 
-	returnData := false
 	if model.Hide != nil {
-		returnData = !*model.Hide
+		cloudWatchQuery.ReturnData = !*model.Hide
 	}
 
 	if model.QueryType == "" {
 		// If no type is provided we assume we are called by alerting service, which requires to return data!
 		// Note, this is sort of a hack, but the official Grafana interfaces do not carry the information
 		// who (which service) called the TsdbQueryEndpoint.Query(...) function.
-		returnData = true
+		cloudWatchQuery.ReturnData = true
 	}
 
-	var metricEditorModeValue metricEditorMode
 	if model.MetricEditorMode == nil && len(model.Expression) > 0 {
 		// this should only ever happen if this is an alerting query that has not yet been migrated in the frontend
-		metricEditorModeValue = MetricEditorModeRaw
+		cloudWatchQuery.MetricEditorMode = MetricEditorModeRaw
 	} else {
 		if model.MetricEditorMode != nil {
-			metricEditorModeValue = metricEditorMode(*model.MetricEditorMode)
+			cloudWatchQuery.MetricEditorMode = metricEditorMode(*model.MetricEditorMode)
 		} else {
-			metricEditorModeValue = metricEditorMode(0)
+			cloudWatchQuery.MetricEditorMode = metricEditorMode(0)
 		}
 	}
 
-	statValue := ""
 	if model.Statistic != nil {
-		statValue = *model.Statistic
+		cloudWatchQuery.Statistic = *model.Statistic
 	}
 
-	matchExactValue := true
 	if model.MatchExact != nil {
-		matchExactValue = *model.MatchExact
+		cloudWatchQuery.MatchExact = *model.MatchExact
 	}
 
-	aliasValue := ""
 	if model.Alias != nil {
-		aliasValue = *model.Alias
+		cloudWatchQuery.Alias = *model.Alias
 	}
 
-	labelValue := ""
 	if model.Label != nil {
-		labelValue = *model.Label
+		cloudWatchQuery.Label = *model.Label
 	}
 
-	return &cloudWatchQuery{
+	return &cloudWatchQuery, nil
+
+	/* return &cloudWatchQuery{
 		RefId:             refId,
 		Region:            model.Region,
 		Id:                id,
@@ -270,7 +285,7 @@ func parseRequestQuery(model QueryJson, refId string, startTime time.Time, endTi
 		MetricEditorMode:  metricEditorModeValue,
 		SqlExpression:     model.SqlExpression,
 		TimezoneUTCOffset: model.TimezoneUTCOffset,
-	}, nil
+	}, nil */
 }
 
 func getRetainedPeriods(timeSince time.Duration) []int {

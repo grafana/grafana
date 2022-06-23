@@ -140,8 +140,8 @@ func TestRequestParser(t *testing.T) {
 
 		var query QueryJson
 		err := json.Unmarshal(fixtureJSON, &query)
-		query.Period = "900"
 		require.NoError(t, err)
+		query.Period = "900"
 
 		res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
 		require.NoError(t, err)
