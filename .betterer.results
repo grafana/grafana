@@ -29,9 +29,6 @@ exports[`no enzyme tests`] = {
     "packages/grafana-ui/src/slate-plugins/suggestions.test.tsx:3654981205": [
       [0, 18, 13, "RegExp match", "2409514259"]
     ],
-    "packages/jaeger-ui-components/src/TracePageHeader/SpanGraph/CanvasSpanGraph.test.js:1974748555": [
-      [14, 19, 13, "RegExp match", "2409514259"]
-    ],
     "packages/jaeger-ui-components/src/TracePageHeader/SpanGraph/GraphTicks.test.js:940336852": [
       [14, 19, 13, "RegExp match", "2409514259"]
     ],
@@ -47,17 +44,8 @@ exports[`no enzyme tests`] = {
     "packages/jaeger-ui-components/src/TracePageHeader/SpanGraph/index.test.js:186764954": [
       [14, 19, 13, "RegExp match", "2409514259"]
     ],
-    "packages/jaeger-ui-components/src/TracePageHeader/TracePageHeader.test.js:3242042907": [
-      [14, 26, 13, "RegExp match", "2409514259"]
-    ],
     "packages/jaeger-ui-components/src/TraceTimelineViewer/ListView/index.test.js:1734982398": [
       [14, 26, 13, "RegExp match", "2409514259"]
-    ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanDetail/AccordianKeyValues.test.js:2408389970": [
-      [14, 19, 13, "RegExp match", "2409514259"]
-    ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanDetail/AccordianLogs.test.js:3960703835": [
-      [14, 19, 13, "RegExp match", "2409514259"]
     ],
     "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanDetail/AccordianReferences.test.js:2025513694": [
       [14, 19, 13, "RegExp match", "2409514259"]
@@ -92,9 +80,6 @@ exports[`no enzyme tests`] = {
     "packages/jaeger-ui-components/src/TraceTimelineViewer/index.test.js:276996587": [
       [14, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/core/components/QueryOperationRow/QueryOperationAction.test.tsx:3032694716": [
-      [0, 19, 13, "RegExp match", "2409514259"]
-    ],
     "public/app/core/components/QueryOperationRow/QueryOperationRow.test.tsx:3743889097": [
       [0, 26, 13, "RegExp match", "2409514259"]
     ],
@@ -116,9 +101,6 @@ exports[`no enzyme tests`] = {
     "public/app/features/datasources/DataSourceDashboards.test.tsx:1369048021": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/datasources/DataSourcesListPage.test.tsx:2960099202": [
-      [0, 19, 13, "RegExp match", "2409514259"]
-    ],
     "public/app/features/dimensions/editors/ThresholdsEditor/ThresholdsEditor.test.tsx:4164297658": [
       [0, 17, 13, "RegExp match", "2409514259"]
     ],
@@ -136,9 +118,6 @@ exports[`no enzyme tests`] = {
     ],
     "public/app/plugins/datasource/elasticsearch/configuration/ConfigEditor.test.tsx:3481855642": [
       [0, 26, 13, "RegExp match", "2409514259"]
-    ],
-    "public/app/plugins/datasource/elasticsearch/configuration/DataLinks.test.tsx:248699332": [
-      [0, 17, 13, "RegExp match", "2409514259"]
     ],
     "public/app/plugins/datasource/influxdb/components/ConfigEditor.test.tsx:57753101": [
       [0, 19, 13, "RegExp match", "2409514259"]

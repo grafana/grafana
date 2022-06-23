@@ -14,15 +14,15 @@ const ui = {
   stateFilter: byTestId('alert-instance-state-filter'),
   stateButton: byRole('radio'),
   grafanaStateButton: {
-    normal: byLabelText('Normal'),
-    alerting: byLabelText('Alerting'),
-    pending: byLabelText('Pending'),
-    noData: byLabelText('NoData'),
-    error: byLabelText('Error'),
+    normal: byLabelText(/^Normal/),
+    alerting: byLabelText(/^Alerting/),
+    pending: byLabelText(/^Pending/),
+    noData: byLabelText(/^NoData/),
+    error: byLabelText(/^Error/),
   },
   cloudStateButton: {
-    firing: byLabelText('Firing'),
-    pending: byLabelText('Pending'),
+    firing: byLabelText(/^Firing/),
+    pending: byLabelText(/^Pending/),
   },
   instanceRow: byTestId('row'),
 };
