@@ -39,6 +39,11 @@ export interface YAxisConfig extends AxisConfig {
   max?: number;
 }
 
+export interface CellValues {
+  unit?: string;
+  decimals?: number;
+}
+
 export interface FilterValueRange {
   le?: number;
   ge?: number;
@@ -72,8 +77,10 @@ export interface PanelOptions {
 
   cellGap?: number; // was cardPadding
   cellRadius?: number; // was cardRadius (not used, but migrated from angular)
-
+  cellValues?: CellValues;
+  
   yAxis: YAxisConfig;
+  
   legend: HeatmapLegend;
 
   tooltip: HeatmapTooltip;
@@ -95,6 +102,9 @@ export const defaultPanelOptions: PanelOptions = {
   },
   yAxis: {
     axisPlacement: AxisPlacement.Left,
+  },
+  cellValues: {
+
   },
   showValue: VisibilityMode.Auto,
   tooltip: {

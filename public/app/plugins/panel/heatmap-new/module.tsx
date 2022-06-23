@@ -6,7 +6,7 @@ import { AxisPlacement, GraphFieldConfig, ScaleDistribution, ScaleDistributionCo
 import { addHideFrom, ScaleDistributionEditor } from '@grafana/ui/src/options/builder';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { addHeatmapCalculationOptions } from 'app/features/transformers/calculateHeatmap/editor/helper';
-import { readHeatmapScanlinesCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
+import { readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 import { HeatmapCellLayout } from 'app/features/transformers/calculateHeatmap/models.gen';
 
 import { HeatmapPanel } from './HeatmapPanel';
@@ -18,15 +18,7 @@ import { HeatmapSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPanel)
   .useFieldConfig({
-    // This keeps: unit, decimals, displayName
-    disableStandardOptions: [
-      FieldConfigProperty.Color,
-      FieldConfigProperty.Thresholds,
-      FieldConfigProperty.Min,
-      FieldConfigProperty.Max,
-      FieldConfigProperty.Mappings,
-      FieldConfigProperty.NoValue,
-    ],
+    disableStandardOptions: Object.values(FieldConfigProperty).filter((v) => v !== FieldConfigProperty.Links),
     useCustomConfig: (builder) => {
       builder.addCustomEditor<void, ScaleDistributionConfig>({
         id: 'scaleDistribution',
@@ -52,7 +44,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
 
     try {
       const v = prepareHeatmapData({ series: context.data } as PanelData, opts, config.theme2);
-      isOrdinalY = readHeatmapScanlinesCustomMeta(v.heatmap).yOrdinalDisplay != null;
+      isOrdinalY = readHeatmapRowsCustomMeta(v.heatmap).yOrdinalDisplay != null;
     } catch {}
 
     let category = ['Heatmap'];
@@ -76,19 +68,37 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
 
     category = ['Y Axis'];
 
-    builder.addRadio({
-      path: 'yAxis.axisPlacement',
-      name: 'Placement',
-      defaultValue: defaultPanelOptions.yAxis.axisPlacement ?? AxisPlacement.Left,
-      category,
-      settings: {
-        options: [
-          { label: 'Left', value: AxisPlacement.Left },
-          { label: 'Right', value: AxisPlacement.Right },
-          { label: 'Hidden', value: AxisPlacement.Hidden },
-        ],
-      },
-    });
+    builder
+      .addRadio({
+        path: 'yAxis.axisPlacement',
+        name: 'Placement',
+        defaultValue: defaultPanelOptions.yAxis.axisPlacement ?? AxisPlacement.Left,
+        category,
+        settings: {
+          options: [
+            { label: 'Left', value: AxisPlacement.Left },
+            { label: 'Right', value: AxisPlacement.Right },
+            { label: 'Hidden', value: AxisPlacement.Hidden },
+          ],
+        },
+      })
+      .addUnitPicker({
+        category,
+        path: 'yAxis.unit',
+        name: 'Unit',
+        defaultValue: undefined,
+        settings: {
+          isClearable: true,
+        },
+      })
+      .addNumberInput({
+        category,
+        path: 'yAxis.decimals',
+        name: 'Decimals',
+        settings: {
+          placeholder: 'Auto',
+        },
+      });
 
     if (!isOrdinalY) {
       // if undefined, then show the min+max
@@ -269,7 +279,38 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
         category,
       });
 
-    category = ['Display'];
+    category = ['Cell display'];
+
+    if (!opts.calculate) {
+      builder.addTextInput({
+        path: 'rowsFrame.value',
+        name: 'Value name',
+        defaultValue: defaultPanelOptions.rowsFrame?.value,
+        settings: {
+          placeholder: 'Value',
+        },
+        category,
+      });
+    }
+
+    builder
+      .addUnitPicker({
+        category,
+        path: 'cellValues.unit',
+        name: 'Unit',
+        defaultValue: undefined,
+        settings: {
+          isClearable: true,
+        },
+      })
+      .addNumberInput({
+        category,
+        path: 'cellValues.decimals',
+        name: 'Decimals',
+        settings: {
+          placeholder: 'Auto',
+        },
+      });
 
     builder
       // .addRadio({
@@ -332,18 +373,6 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       defaultValue: defaultPanelOptions.tooltip.show,
       category,
     });
-
-    if (!opts.calculate) {
-      builder.addTextInput({
-        path: 'rowsFrame.value',
-        name: 'Cell value name',
-        defaultValue: defaultPanelOptions.rowsFrame?.value,
-        settings: {
-          placeholder: 'Value',
-        },
-        category,
-      });
-    }
 
     builder.addBooleanSwitch({
       path: 'tooltip.yHistogram',
