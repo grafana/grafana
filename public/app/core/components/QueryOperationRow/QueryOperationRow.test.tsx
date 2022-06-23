@@ -1,4 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { QueryOperationRow, QueryOperationRowProps } from './QueryOperationRow';
@@ -26,7 +27,7 @@ describe('QueryOperationRow', () => {
   });
 
   describe('callbacks', () => {
-    it('should call onOpen when row is opened and onClose when row is collapsed', () => {
+    it('should call onOpen when row is opened and onClose when row is collapsed', async () => {
       const onOpenSpy = jest.fn();
       const onCloseSpy = jest.fn();
       setup({ isOpen: false, onOpen: onOpenSpy, onClose: onCloseSpy });
@@ -34,8 +35,8 @@ describe('QueryOperationRow', () => {
       const queryRow = screen.getByText(/^test-title$/);
       expect(queryRow).toBeInTheDocument();
 
-      fireEvent.click(queryRow);
-      fireEvent.click(queryRow);
+      await userEvent.click(queryRow);
+      await userEvent.click(queryRow);
 
       expect(onOpenSpy).toBeCalledTimes(1);
       expect(onCloseSpy).toBeCalledTimes(1);
