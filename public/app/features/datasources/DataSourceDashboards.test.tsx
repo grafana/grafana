@@ -3,6 +3,7 @@ import React from 'react';
 
 import { DataSourceSettings } from '@grafana/data';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
+import { getNavModel } from 'app/core/selectors/navModel';
 import { PluginDashboard } from 'app/types';
 
 import { DataSourceDashboards, Props } from './DataSourceDashboards';
@@ -10,7 +11,7 @@ import { DataSourceDashboards, Props } from './DataSourceDashboards';
 const setup = (propOverrides?: Partial<Props>) => {
   const props: Props = {
     ...getRouteComponentProps(),
-    navModel: { main: 'test', node: { text: 'test' } },
+    navModel: getNavModel('nav-index', `datasource-dashboards-${'testuid'}`),
     dashboards: [] as PluginDashboard[],
     dataSource: {} as DataSourceSettings,
     dataSourceId: 'x',
