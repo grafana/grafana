@@ -62,7 +62,7 @@ export function PluginUsage({ plugin }: Props) {
   if (!config.featureToggles.panelTitleSearch) {
     return (
       <Alert title="Missing feature toggle: panelTitleSearch">
-        Plugin usage requires the new search index find usage across dashboards
+        Plugin usage requires the new search index to find usage across dashboards
       </Alert>
     );
   }
