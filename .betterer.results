@@ -59,9 +59,6 @@ exports[`no enzyme tests`] = {
     "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanTreeOffset.test.js:174536706": [
       [14, 19, 13, "RegExp match", "2409514259"]
     ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/TimelineHeaderRow/TimelineCollapser.test.js:4018342820": [
-      [14, 19, 13, "RegExp match", "2409514259"]
-    ],
     "packages/jaeger-ui-components/src/TraceTimelineViewer/TimelineHeaderRow/TimelineColumnResizer.test.js:2286101708": [
       [15, 17, 13, "RegExp match", "2409514259"]
     ],
@@ -3083,7 +3080,7 @@ exports[`no type assertions`] = {
       [25, 30, 27, "Do not use any type assertions.", "3324295634"],
       [25, 30, 13, "Do not use any type assertions.", "2146830713"]
     ],
-    "public/app/features/query/state/DashboardQueryRunner/AnnotationsWorker.test.ts:4136590395": [
+    "public/app/features/query/state/DashboardQueryRunner/AnnotationsWorker.test.ts:674871004": [
       [25, 29, 9, "Do not use any type assertions.", "3692209159"]
     ],
     "public/app/features/query/state/DashboardQueryRunner/DashboardQueryRunner.test.ts:1052443115": [
@@ -3097,7 +3094,7 @@ exports[`no type assertions`] = {
       [16, 6, 59, "Do not use any type assertions.", "3685154675"],
       [16, 6, 49, "Do not use any type assertions.", "1184085652"]
     ],
-    "public/app/features/query/state/DashboardQueryRunner/testHelpers.ts:2779664026": [
+    "public/app/features/query/state/DashboardQueryRunner/testHelpers.ts:1555409841": [
       [56, 13, 20, "Do not use any type assertions.", "320652245"]
     ],
     "public/app/features/query/state/PanelQueryRunner.test.ts:2736652574": [
@@ -3197,14 +3194,14 @@ exports[`no type assertions`] = {
       [26, 25, 60, "Do not use any type assertions.", "1006626118"],
       [61, 21, 28, "Do not use any type assertions.", "1547636696"]
     ],
-    "public/app/features/search/page/components/FolderSection.tsx:2694034564": [
-      [139, 27, 22, "Do not use any type assertions.", "3217586069"]
-    ],
     "public/app/features/search/page/components/ManageActions.tsx:2913473343": [
       [47, 28, 26, "Do not use any type assertions.", "1971436753"]
     ],
     "public/app/features/search/page/components/MoveToFolderModal.tsx:739519709": [
       [66, 51, 15, "Do not use any type assertions.", "3135191849"]
+    ],
+    "public/app/features/search/page/components/SearchResultsCards.tsx:590892204": [
+      [45, 21, 56, "Do not use any type assertions.", "1375039711"]
     ],
     "public/app/features/search/page/components/SearchResultsGrid.tsx:994645204": [
       [30, 16, 28, "Do not use any type assertions.", "1941050010"]
@@ -3212,11 +3209,11 @@ exports[`no type assertions`] = {
     "public/app/features/search/page/components/SearchView.test.tsx:773692683": [
       [47, 20, 37, "Do not use any type assertions.", "3345267016"]
     ],
-    "public/app/features/search/page/components/SearchView.tsx:1645004519": [
-      [61, 12, 21, "Do not use any type assertions.", "976337522"],
-      [62, 14, 26, "Do not use any type assertions.", "2909521803"]
+    "public/app/features/search/page/components/SearchView.tsx:909228249": [
+      [62, 12, 21, "Do not use any type assertions.", "976337522"],
+      [63, 14, 26, "Do not use any type assertions.", "2909521803"]
     ],
-    "public/app/features/search/page/components/columns.tsx:3208261512": [
+    "public/app/features/search/page/components/columns.tsx:282017932": [
       [33, 20, 70, "Do not use any type assertions.", "512413936"],
       [33, 21, 13, "Do not use any type assertions.", "3933930693"],
       [48, 32, 21, "Do not use any type assertions.", "3454251755"],
@@ -3926,7 +3923,7 @@ exports[`no type assertions`] = {
       [41, 15, 78, "Do not use any type assertions.", "2265747900"],
       [52, 13, 63, "Do not use any type assertions.", "1673299780"]
     ],
-    "public/app/plugins/datasource/cloudwatch/datasource.test.ts:1906445626": [
+    "public/app/plugins/datasource/cloudwatch/datasource.test.ts:3643150425": [
       [30, 42, 53, "Do not use any type assertions.", "1293523870"],
       [30, 67, 16, "Do not use any type assertions.", "1416388343"],
       [40, 42, 65, "Do not use any type assertions.", "3968570046"],
@@ -3941,9 +3938,9 @@ exports[`no type assertions`] = {
       [369, 8, 43, "Do not use any type assertions.", "2822747014"],
       [415, 8, 54, "Do not use any type assertions.", "3062027045"],
       [456, 50, 101, "Do not use any type assertions.", "2285906034"],
-      [571, 19, 83, "Do not use any type assertions.", "55035528"]
+      [570, 19, 83, "Do not use any type assertions.", "55035528"]
     ],
-    "public/app/plugins/datasource/cloudwatch/datasource.ts:1003611696": [
+    "public/app/plugins/datasource/cloudwatch/datasource.ts:1299576841": [
       [218, 26, 85, "Do not use any type assertions.", "598275619"],
       [347, 23, 52, "Do not use any type assertions.", "3463806655"],
       [396, 43, 28, "Do not use any type assertions.", "426490724"],
@@ -3952,8 +3949,8 @@ exports[`no type assertions`] = {
       [630, 16, 26, "Do not use any type assertions.", "1259697827"],
       [865, 11, 47, "Do not use any type assertions.", "3491676769"],
       [865, 11, 19, "Do not use any type assertions.", "2012170033"],
-      [900, 23, 47, "Do not use any type assertions.", "3514668393"],
-      [900, 23, 19, "Do not use any type assertions.", "3095385657"]
+      [898, 23, 47, "Do not use any type assertions.", "3514668393"],
+      [898, 23, 19, "Do not use any type assertions.", "3095385657"]
     ],
     "public/app/plugins/datasource/cloudwatch/dynamic-labels/CompletionItemProvider.test.ts:2308040365": [
       [13, 17, 20, "Do not use any type assertions.", "3987315101"],
@@ -5476,6 +5473,9 @@ exports[`no type assertions`] = {
       [355, 11, 21, "Do not use any type assertions.", "1024434472"],
       [356, 11, 21, "Do not use any type assertions.", "289303780"]
     ],
+    "public/app/plugins/panel/nodeGraph/editor/ArcOptionsEditor.tsx:1375628706": [
+      [11, 100, 82, "Do not use any type assertions.", "2174485803"]
+    ],
     "public/app/plugins/panel/nodeGraph/layout.ts:2480125429": [
       [92, 22, 26, "Do not use any type assertions.", "3179762225"],
       [111, 26, 33, "Do not use any type assertions.", "368186320"]
@@ -5491,11 +5491,11 @@ exports[`no type assertions`] = {
     "public/app/plugins/panel/nodeGraph/useZoom.ts:758274585": [
       [48, 25, 19, "Do not use any type assertions.", "921312868"]
     ],
-    "public/app/plugins/panel/nodeGraph/utils.test.ts:2282439845": [
-      [254, 51, 21, "Do not use any type assertions.", "3576276018"]
+    "public/app/plugins/panel/nodeGraph/utils.test.ts:1496182578": [
+      [255, 51, 21, "Do not use any type assertions.", "3576276018"]
     ],
-    "public/app/plugins/panel/nodeGraph/utils.ts:3638967852": [
-      [129, 13, 289, "Do not use any type assertions.", "3614053404"]
+    "public/app/plugins/panel/nodeGraph/utils.ts:3801653419": [
+      [130, 13, 289, "Do not use any type assertions.", "3614053404"]
     ],
     "public/app/plugins/panel/piechart/migrations.test.ts:922309096": [
       [8, 18, 16, "Do not use any type assertions.", "388222280"],
@@ -9958,11 +9958,11 @@ exports[`no explicit any`] = {
       [57, 24, 3, "Unexpected any. Specify a different type.", "193409811"],
       [67, 24, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/query/state/DashboardQueryRunner/AnnotationsWorker.test.ts:4136590395": [
+    "public/app/features/query/state/DashboardQueryRunner/AnnotationsWorker.test.ts:674871004": [
       [25, 35, 3, "Unexpected any. Specify a different type.", "193409811"],
       [30, 27, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [90, 23, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [99, 23, 3, "Unexpected any. Specify a different type.", "193409811"]
+      [99, 23, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [108, 23, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/query/state/DashboardQueryRunner/DashboardQueryRunner.test.ts:1052443115": [
       [21, 21, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -9993,7 +9993,7 @@ exports[`no explicit any`] = {
       [53, 23, 3, "Unexpected any. Specify a different type.", "193409811"],
       [73, 23, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/query/state/DashboardQueryRunner/testHelpers.ts:2779664026": [
+    "public/app/features/query/state/DashboardQueryRunner/testHelpers.ts:1555409841": [
       [7, 40, 3, "Unexpected any. Specify a different type.", "193409811"],
       [7, 57, 3, "Unexpected any. Specify a different type.", "193409811"],
       [14, 37, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -10049,14 +10049,11 @@ exports[`no explicit any`] = {
     "public/app/features/search/components/SearchCard.tsx:417509806": [
       [20, 36, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/search/components/SearchItem.tsx:491011590": [
+    "public/app/features/search/components/SearchItem.tsx:1278234167": [
       [15, 35, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/search/components/SearchResults.tsx:4264592788": [
       [19, 35, 3, "Unexpected any. Specify a different type.", "193409811"]
-    ],
-    "public/app/features/search/page/components/FolderSection.tsx:2694034564": [
-      [139, 46, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/search/page/components/MoveToFolderModal.tsx:739519709": [
       [31, 63, 3, "Unexpected any. Specify a different type.", "193409811"]
@@ -10067,7 +10064,7 @@ exports[`no explicit any`] = {
     "public/app/features/search/page/components/SearchResultsGrid.tsx:994645204": [
       [29, 28, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/search/page/components/columns.tsx:3208261512": [
+    "public/app/features/search/page/components/columns.tsx:282017932": [
       [33, 31, 3, "Unexpected any. Specify a different type.", "193409811"],
       [48, 50, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
@@ -10092,9 +10089,9 @@ exports[`no explicit any`] = {
     "public/app/features/search/service/sql.ts:1428696565": [
       [91, 36, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/search/types.ts:2500740669": [
-      [58, 12, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [83, 54, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/features/search/types.ts:479421789": [
+      [64, 12, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [89, 54, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/search/utils.test.ts:3441767255": [
       [15, 60, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -10730,7 +10727,7 @@ exports[`no explicit any`] = {
     "public/app/plugins/datasource/cloudwatch/datasource.d.ts:561167771": [
       [0, 34, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/cloudwatch/datasource.test.ts:1906445626": [
+    "public/app/plugins/datasource/cloudwatch/datasource.test.ts:3643150425": [
       [30, 92, 3, "Unexpected any. Specify a different type.", "193409811"],
       [40, 104, 3, "Unexpected any. Specify a different type.", "193409811"],
       [74, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -10743,9 +10740,9 @@ exports[`no explicit any`] = {
       [369, 48, 3, "Unexpected any. Specify a different type.", "193409811"],
       [415, 59, 3, "Unexpected any. Specify a different type.", "193409811"],
       [459, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [577, 7, 3, "Unexpected any. Specify a different type.", "193409811"]
+      [576, 7, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/cloudwatch/datasource.ts:1003611696": [
+    "public/app/plugins/datasource/cloudwatch/datasource.ts:1299576841": [
       [93, 12, 3, "Unexpected any. Specify a different type.", "193409811"],
       [94, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
       [531, 53, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -10764,7 +10761,7 @@ exports[`no explicit any`] = {
       [806, 71, 3, "Unexpected any. Specify a different type.", "193409811"],
       [834, 32, 3, "Unexpected any. Specify a different type.", "193409811"],
       [834, 46, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [968, 26, 3, "Unexpected any. Specify a different type.", "193409811"]
+      [966, 26, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/plugins/datasource/cloudwatch/language_provider.test.ts:609679032": [
       [114, 7, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -13309,17 +13306,25 @@ exports[`no explicit any`] = {
     "public/app/plugins/panel/nodeGraph/ViewControls.tsx:1224159931": [
       [27, 59, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
+    "public/app/plugins/panel/nodeGraph/editor/ArcOptionsEditor.tsx:1375628706": [
+      [9, 62, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [9, 85, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [13, 5, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
     "public/app/plugins/panel/nodeGraph/layout.test.ts:1938392112": [
       [5, 35, 3, "Unexpected any. Specify a different type.", "193409811"],
       [6, 37, 3, "Unexpected any. Specify a different type.", "193409811"],
       [7, 35, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
+    "public/app/plugins/panel/nodeGraph/types.ts:3308622216": [
+      [17, 10, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
     "public/app/plugins/panel/nodeGraph/usePanning.ts:887807615": [
       [186, 16, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/panel/nodeGraph/utils.ts:3638967852": [
-      [193, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [255, 16, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/plugins/panel/nodeGraph/utils.ts:3801653419": [
+      [194, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [256, 16, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/plugins/panel/piechart/PieChart.tsx:1361550264": [
       [201, 12, 3, "Unexpected any. Specify a different type.", "193409811"],
