@@ -12,8 +12,6 @@ export enum ReducerID {
   mean = 'mean',
   variancePopulation = 'variancePopulation',
   stddevPopulation = 'stddevPopulation',
-  varianceSample = 'varianceSample',
-  stddevSample = 'stddevSample',
   last = 'last',
   first = 'first',
   count = 'count',
@@ -158,27 +156,17 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
   { id: ReducerID.mean, name: 'Mean', description: 'Average Value', standard: true, aliasIds: ['avg'] },
   {
     id: ReducerID.variancePopulation,
-    name: 'Variance (Population)',
+    name: 'Variance (p)',
     description: 'Variance (based on population) of all values in a field',
-    standard: true,
+    standard: false,
+    reduce: calculateVariancePopulation,
   },
   {
     id: ReducerID.stddevPopulation,
-    name: 'Standard deviation (Population)',
+    name: 'Standard deviation (p)',
     description: 'Standard deviation (based on population) of all values in a field',
-    standard: true,
-  },
-  {
-    id: ReducerID.varianceSample,
-    name: 'Variance (Sample)',
-    description: 'Variance (based on sample) of all values in a field',
-    standard: true,
-  },
-  {
-    id: ReducerID.stddevSample,
-    name: 'Standard deviation (Sample)',
-    description: 'Standard deviation (based on sample) of all values in a field',
-    standard: true,
+    standard: false,
+    reduce: calculateStddevPopulation,
   },
   {
     id: ReducerID.sum,
@@ -284,10 +272,6 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
     min: Number.MAX_VALUE,
     logmin: Number.MAX_VALUE,
     mean: null,
-    variancePopulation: null,
-    stddevPopulation: null,
-    varianceSample: null,
-    stddevSample: null,
     last: null,
     first: null,
     lastNotNull: null,
@@ -375,10 +359,6 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
         if (currentValue < calcs.logmin && currentValue > 0) {
           calcs.logmin = currentValue;
         }
-
-        let _oldMean = calcs.mean;
-        calcs.mean += (currentValue - _oldMean) / calcs.nonNullCount;
-        squareSum += (currentValue - _oldMean) * (currentValue - calcs.mean);
       }
 
       if (currentValue !== 0) {
@@ -402,19 +382,7 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
   }
 
   if (calcs.nonNullCount > 0) {
-    calcs.variancePopulation = squareSum / calcs.nonNullCount;
-  }
-
-  if (calcs.nonNullCount > 0) {
-    calcs.stddevPopulation = Math.sqrt(calcs.variancePopulation);
-  }
-
-  if (calcs.nonNullCount > 0) {
-    calcs.varianceSample = squareSum / (calcs.nonNullCount - 1);
-  }
-
-  if (calcs.nonNullCount > 0) {
-    calcs.stddevSample = Math.sqrt(calcs.varianceSample);
+    calcs.mean = calcs.sum / calcs.nonNullCount;
   }
 
   if (calcs.allIsNull) {
@@ -465,6 +433,36 @@ function calculateLastNotNull(field: Field, ignoreNulls: boolean, nullAsZero: bo
     }
   }
   return { lastNotNull: null };
+}
+
+function calculateVariancePopulation(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
+  let squareSum = 0;
+  let runningMean = 0;
+  let runningNonNullCount = 0;
+  let variancePopulation = null;
+  const isNumberField = field.type === FieldType.number || FieldType.time;
+  const data = field.values;
+  for (let i = 0; i < data.length; i++) {
+    let currentValue = data.get(i);
+    if (currentValue != null) {
+      if (isNumberField) {
+        runningNonNullCount++;
+        let _oldMean = runningMean;
+        runningMean += (currentValue - _oldMean) / runningNonNullCount;
+        squareSum += (currentValue - _oldMean) * (currentValue - runningMean);
+      }
+    }
+  }
+  if (runningNonNullCount > 0) {
+    variancePopulation = squareSum / runningNonNullCount;
+  }
+  return { variancePopulation: variancePopulation };
+}
+
+function calculateStddevPopulation(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
+  let variancePopulation = calculateVariancePopulation(field, ignoreNulls, nullAsZero).variancePopulation;
+  let stddevPopulation = Math.sqrt(variancePopulation);
+  return { stddevPopulation: stddevPopulation };
 }
 
 function calculateChangeCount(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
