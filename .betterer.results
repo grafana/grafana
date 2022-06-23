@@ -2894,7 +2894,7 @@ exports[`no type assertions`] = {
     "public/app/features/panel/panellinks/linkSuppliers.ts:3654903594": [
       [128, 14, 24, "Do not use any type assertions.", "981021527"]
     ],
-    "public/app/features/panel/panellinks/link_srv.ts:1146418030": [
+    "public/app/features/panel/panellinks/link_srv.ts:2791043804": [
       [86, 13, 23, "Do not use any type assertions.", "2282172877"]
     ],
     "public/app/features/panel/panellinks/specs/link_srv.test.ts:66288990": [
@@ -4906,7 +4906,7 @@ exports[`no type assertions`] = {
     "public/app/plugins/datasource/prometheus/querybuilder/state.ts:1179483326": [
       [26, 16, 67, "Do not use any type assertions.", "4104639321"]
     ],
-    "public/app/plugins/datasource/prometheus/result_transformer.test.ts:1135772145": [
+    "public/app/plugins/datasource/prometheus/result_transformer.test.ts:3301859220": [
       [74, 22, 165, "Do not use any type assertions.", "3616512949"],
       [74, 22, 134, "Do not use any type assertions.", "1610955364"],
       [82, 23, 215, "Do not use any type assertions.", "4105091271"],
@@ -4931,35 +4931,40 @@ exports[`no type assertions`] = {
       [293, 22, 130, "Do not use any type assertions.", "1214974257"],
       [301, 23, 1207, "Do not use any type assertions.", "1842661879"],
       [301, 23, 1186, "Do not use any type assertions.", "4083378012"],
-      [418, 33, 25, "Do not use any type assertions.", "3605151630"],
-      [429, 33, 25, "Do not use any type assertions.", "3605151630"],
-      [463, 33, 25, "Do not use any type assertions.", "3605151630"],
-      [493, 33, 25, "Do not use any type assertions.", "3605151630"],
-      [521, 33, 25, "Do not use any type assertions.", "3605151630"],
-      [545, 33, 25, "Do not use any type assertions.", "3605151630"],
-      [566, 46, 25, "Do not use any type assertions.", "3605151630"],
-      [615, 33, 25, "Do not use any type assertions.", "3605151630"],
-      [615, 60, 42, "Do not use any type assertions.", "537392944"],
-      [647, 33, 25, "Do not use any type assertions.", "3605151630"],
-      [647, 60, 42, "Do not use any type assertions.", "537392944"],
-      [673, 46, 25, "Do not use any type assertions.", "3605151630"],
-      [700, 46, 25, "Do not use any type assertions.", "3605151630"],
-      [713, 33, 31, "Do not use any type assertions.", "1194528341"],
-      [723, 33, 31, "Do not use any type assertions.", "1194528341"],
-      [748, 33, 25, "Do not use any type assertions.", "3605151630"],
-      [777, 33, 25, "Do not use any type assertions.", "3605151630"],
-      [789, 33, 31, "Do not use any type assertions.", "1194528341"],
-      [811, 33, 25, "Do not use any type assertions.", "3605151630"],
-      [828, 48, 25, "Do not use any type assertions.", "3605151630"],
-      [856, 50, 25, "Do not use any type assertions.", "3605151630"],
-      [884, 33, 34, "Do not use any type assertions.", "754911623"],
-      [893, 10, 112, "Do not use any type assertions.", "4208530828"],
-      [935, 33, 25, "Do not use any type assertions.", "3605151630"],
-      [941, 35, 34, "Do not use any type assertions.", "754911623"],
-      [950, 35, 34, "Do not use any type assertions.", "754911623"],
-      [959, 35, 34, "Do not use any type assertions.", "754911623"]
+      [358, 23, 1157, "Do not use any type assertions.", "3145390205"],
+      [358, 23, 1136, "Do not use any type assertions.", "2868687766"],
+      [399, 22, 161, "Do not use any type assertions.", "3494914880"],
+      [399, 22, 130, "Do not use any type assertions.", "1214974257"],
+      [487, 33, 25, "Do not use any type assertions.", "3605151630"],
+      [498, 33, 25, "Do not use any type assertions.", "3605151630"],
+      [532, 33, 25, "Do not use any type assertions.", "3605151630"],
+      [562, 33, 25, "Do not use any type assertions.", "3605151630"],
+      [590, 33, 25, "Do not use any type assertions.", "3605151630"],
+      [614, 33, 25, "Do not use any type assertions.", "3605151630"],
+      [635, 46, 25, "Do not use any type assertions.", "3605151630"],
+      [684, 33, 25, "Do not use any type assertions.", "3605151630"],
+      [684, 60, 42, "Do not use any type assertions.", "537392944"],
+      [716, 33, 25, "Do not use any type assertions.", "3605151630"],
+      [716, 60, 42, "Do not use any type assertions.", "537392944"],
+      [742, 46, 25, "Do not use any type assertions.", "3605151630"],
+      [769, 46, 25, "Do not use any type assertions.", "3605151630"],
+      [782, 33, 31, "Do not use any type assertions.", "1194528341"],
+      [792, 33, 31, "Do not use any type assertions.", "1194528341"],
+      [817, 33, 25, "Do not use any type assertions.", "3605151630"],
+      [846, 33, 25, "Do not use any type assertions.", "3605151630"],
+      [858, 33, 31, "Do not use any type assertions.", "1194528341"],
+      [880, 33, 25, "Do not use any type assertions.", "3605151630"],
+      [897, 48, 25, "Do not use any type assertions.", "3605151630"],
+      [925, 50, 25, "Do not use any type assertions.", "3605151630"],
+      [953, 33, 34, "Do not use any type assertions.", "754911623"],
+      [962, 10, 112, "Do not use any type assertions.", "4208530828"],
+      [1004, 33, 25, "Do not use any type assertions.", "3605151630"],
+      [1010, 35, 34, "Do not use any type assertions.", "754911623"],
+      [1019, 35, 34, "Do not use any type assertions.", "754911623"],
+      [1028, 35, 34, "Do not use any type assertions.", "754911623"],
+      [1045, 35, 34, "Do not use any type assertions.", "754911623"]
     ],
-    "public/app/plugins/datasource/prometheus/result_transformer.ts:1832874527": [
+    "public/app/plugins/datasource/prometheus/result_transformer.ts:2994160514": [
       [110, 15, 135, "Do not use any type assertions.", "3297457942"],
       [178, 58, 37, "Do not use any type assertions.", "1315377127"]
     ],
@@ -6146,14 +6151,14 @@ exports[`no explicit any`] = {
       [211, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
       [228, 51, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "packages/grafana-data/src/types/dataLink.ts:2797648180": [
+    "packages/grafana-data/src/types/dataLink.ts:361792494": [
       [7, 40, 3, "Unexpected any. Specify a different type.", "193409811"],
       [10, 6, 3, "Unexpected any. Specify a different type.", "193409811"],
       [20, 48, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [43, 56, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [55, 31, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [62, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [62, 30, 3, "Unexpected any. Specify a different type.", "193409811"]
+      [46, 56, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [58, 31, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [65, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [65, 30, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "packages/grafana-data/src/types/datasource.ts:753447592": [
       [24, 85, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -9785,7 +9790,7 @@ exports[`no explicit any`] = {
     "public/app/features/panel/panellinks/linkSuppliers.ts:3654903594": [
       [28, 7, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/panel/panellinks/link_srv.ts:1146418030": [
+    "public/app/features/panel/panellinks/link_srv.ts:2791043804": [
       [246, 24, 3, "Unexpected any. Specify a different type.", "193409811"],
       [246, 32, 3, "Unexpected any. Specify a different type.", "193409811"],
       [247, 21, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -12369,36 +12374,39 @@ exports[`no explicit any`] = {
       [17, 50, 3, "Unexpected any. Specify a different type.", "193409811"],
       [32, 50, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/prometheus/result_transformer.test.ts:1135772145": [
-      [408, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [418, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [429, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [463, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [493, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [521, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [545, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [566, 68, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [572, 35, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [615, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [615, 99, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [647, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [647, 99, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [673, 68, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [700, 68, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [713, 61, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [723, 61, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [748, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [777, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [789, 61, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [811, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [828, 70, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [856, 72, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [884, 64, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [898, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [935, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [941, 66, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [950, 66, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [959, 66, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/plugins/datasource/prometheus/result_transformer.test.ts:3301859220": [
+      [407, 25, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [477, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [487, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [498, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [532, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [562, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [590, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [614, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [635, 68, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [641, 35, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [684, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [684, 99, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [716, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [716, 99, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [742, 68, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [769, 68, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [782, 61, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [792, 61, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [817, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [846, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [858, 61, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [880, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [897, 70, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [925, 72, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [953, 64, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [967, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [1004, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [1010, 66, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [1019, 66, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [1028, 66, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [1034, 29, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [1045, 66, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/plugins/datasource/prometheus/types.ts:1752579129": [
       [50, 12, 3, "Unexpected any. Specify a different type.", "193409811"],
