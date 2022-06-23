@@ -62,4 +62,6 @@ export interface FeatureToggles {
   logRequestsInstrumentedAsUnknown?: boolean;
   dataConnectionsConsole?: boolean;
   internationalization?: boolean;
+  topnav?: boolean;
+  customBranding?: boolean;
 }

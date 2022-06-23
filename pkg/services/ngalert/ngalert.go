@@ -151,7 +151,7 @@ func (ng *AlertNG) init() error {
 		appUrl = nil
 	}
 
-	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), appUrl, store, store, ng.SQLStore, ng.dashboardService, ng.imageService)
+	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), appUrl, store, store, ng.dashboardService, ng.imageService, clock.New())
 	scheduler := schedule.NewScheduler(schedCfg, ng.ExpressionService, appUrl, stateManager, ng.bus)
 
 	ng.stateManager = stateManager
