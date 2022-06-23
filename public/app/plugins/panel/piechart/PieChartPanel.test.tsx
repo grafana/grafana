@@ -2,21 +2,34 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { ComponentProps } from 'react';
 
-import { FieldConfigSource, toDataFrame, FieldType, VizOrientation } from '@grafana/data';
+import {
+  FieldConfigSource,
+  toDataFrame,
+  FieldType,
+  VizOrientation,
+  LoadingState,
+  getDefaultTimeRange,
+  EventBusSrv,
+} from '@grafana/data';
 import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
 
 import { PieChartPanel } from './PieChartPanel';
 import { PieChartOptions, PieChartType, PieChartLegendValues } from './types';
 
-(window as any).ResizeObserver = class ResizeObserver {
-  constructor() {}
-  observe() {}
-  disconnect() {}
-};
-
 type PieChartPanelProps = ComponentProps<typeof PieChartPanel>;
 
 describe('PieChartPanel', () => {
+  beforeEach(() => {
+    Object.defineProperty(global, 'ResizeObserver', {
+      writable: true,
+      value: jest.fn().mockImplementation(() => ({
+        observe: jest.fn(),
+        unobserve: jest.fn(),
+        disconnect: jest.fn(),
+      })),
+    });
+  });
+
   describe('series overrides - Hide in area', () => {
     const defaultConfig = {
       custom: {
@@ -169,17 +182,25 @@ const setup = (propsOverrides?: {}) => {
     tooltip: { mode: TooltipDisplayMode.Multi, sort: SortOrder.Ascending },
   };
 
-  const props = {
+  const props: PieChartPanelProps = {
     id: 1,
-    data: {},
+    data: { state: LoadingState.Done, timeRange: getDefaultTimeRange(), series: [] },
     timeZone: 'utc',
     options: options,
     fieldConfig: fieldConfig,
     width: 532,
     height: 250,
-    replaceVariables: (s: any) => s,
+    renderCounter: 0,
+    title: 'A pie chart',
+    transparent: false,
+    onFieldConfigChange: () => {},
+    onOptionsChange: () => {},
+    onChangeTimeRange: () => {},
+    replaceVariables: (s: string) => s,
+    eventBus: new EventBusSrv(),
+    timeRange: getDefaultTimeRange(),
     ...propsOverrides,
-  } as unknown as PieChartPanelProps;
+  };
 
   return render(<PieChartPanel {...props} />);
 };
