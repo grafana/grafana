@@ -179,6 +179,10 @@ const (
 	// Experimental framework to build interactive dashboards
 	FlagScenes = "scenes"
 
+	// FlagUseLegacyHeatmapPanel
+	// Continue to use the angular/flot based heatmap panel
+	FlagUseLegacyHeatmapPanel = "useLegacyHeatmapPanel"
+
 	// FlagCloudMonitoringExperimentalUI
 	// Use grafana-experimental UI in Cloud Monitoring
 	FlagCloudMonitoringExperimentalUI = "cloudMonitoringExperimentalUI"

@@ -59,6 +59,7 @@ export interface FeatureToggles {
   prometheusWideSeries?: boolean;
   canvasPanelNesting?: boolean;
   scenes?: boolean;
+  useLegacyHeatmapPanel?: boolean;
   cloudMonitoringExperimentalUI?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
   dataConnectionsConsole?: boolean;
