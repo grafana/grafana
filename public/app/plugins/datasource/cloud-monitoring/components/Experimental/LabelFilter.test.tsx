@@ -5,6 +5,14 @@ import { openMenu, select } from 'react-select-event';
 
 import { LabelFilter } from './LabelFilter';
 
+const labels = {
+  'metric.label.instance_name': ['instance_name_1', 'instance_name_2'],
+  'resource.label.instance_id': ['instance_id_1', 'instance_id_2'],
+  'resource.label.project_id': ['project_id_1', 'project_id_2'],
+  'resource.label.zone': ['zone_1', 'zone_2'],
+  'resource.type': ['type_1', 'type_2'],
+};
+
 describe('LabelFilter', () => {
   it('should render an add button with no filters passed in', () => {
     render(<LabelFilter labels={{}} filters={[]} onChange={() => {}} variableOptionGroup={[]} />);
@@ -26,13 +34,6 @@ describe('LabelFilter', () => {
   });
 
   it('should render grouped labels', async () => {
-    const labels = {
-      'metric.label.instance_name': ['instance_name_1', 'instance_name_2'],
-      'resource.label.instance_id': ['instance_id_1', 'instance_id_2'],
-      'resource.label.project_id': ['project_id_1', 'project_id_2'],
-      'resource.label.zone': ['zone_1', 'zone_2'],
-      'resource.type': ['type_1', 'type_2'],
-    };
     const filters = ['key_1', '=', 'value_1'];
     render(<LabelFilter labels={labels} filters={filters} onChange={() => {}} variableOptionGroup={[]} />);
 
@@ -52,13 +53,6 @@ describe('LabelFilter', () => {
 
   it('can select a label key to filter on', async () => {
     const onChange = jest.fn();
-    const labels = {
-      'metric.label.instance_name': ['instance_name_1', 'instance_name_2'],
-      'resource.label.instance_id': ['instance_id_1', 'instance_id_2'],
-      'resource.label.project_id': ['project_id_1', 'project_id_2'],
-      'resource.label.zone': ['zone_1', 'zone_2'],
-      'resource.type': ['type_1', 'type_2'],
-    };
     const filters = ['key_1', '=', ''];
     render(<LabelFilter labels={labels} filters={filters} onChange={onChange} variableOptionGroup={[]} />);
 
@@ -69,13 +63,6 @@ describe('LabelFilter', () => {
   });
 
   it('should on render label values for the selected filter key', async () => {
-    const labels = {
-      'metric.label.instance_name': ['instance_name_1', 'instance_name_2'],
-      'resource.label.instance_id': ['instance_id_1', 'instance_id_2'],
-      'resource.label.project_id': ['project_id_1', 'project_id_2'],
-      'resource.label.zone': ['zone_1', 'zone_2'],
-      'resource.type': ['type_1', 'type_2'],
-    };
     const filters = ['metric.label.instance_name', '=', ''];
     render(<LabelFilter labels={labels} filters={filters} onChange={() => {}} variableOptionGroup={[]} />);
 
@@ -94,13 +81,6 @@ describe('LabelFilter', () => {
 
   it('can select a label value to filter on', async () => {
     const onChange = jest.fn();
-    const labels = {
-      'metric.label.instance_name': ['instance_name_1', 'instance_name_2'],
-      'resource.label.instance_id': ['instance_id_1', 'instance_id_2'],
-      'resource.label.project_id': ['project_id_1', 'project_id_2'],
-      'resource.label.zone': ['zone_1', 'zone_2'],
-      'resource.type': ['type_1', 'type_2'],
-    };
     const filters = ['metric.label.instance_name', '=', ''];
     render(<LabelFilter labels={labels} filters={filters} onChange={onChange} variableOptionGroup={[]} />);
 
