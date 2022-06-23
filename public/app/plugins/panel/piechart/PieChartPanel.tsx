@@ -11,7 +11,7 @@ import {
   PanelProps,
 } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
-import { LegendDisplayMode } from '@grafana/schema';
+import { HideSeriesConfig, LegendDisplayMode } from '@grafana/schema';
 import {
   SeriesVisibilityChangeBehavior,
   usePanelContext,
@@ -94,12 +94,13 @@ function getLegend(props: Props, displayValues: FieldDisplay[]) {
       }
     })
     .map<VizLegendItem | undefined>((value, idx) => {
-      const hideFromViz = value.field.custom.hideFrom.viz;
-      const hideFromLegend = value.field.custom?.hideFrom?.legend;
+      const hideFrom = (value.field.custom?.hideFrom ?? {}) as HideSeriesConfig;
 
-      if (hideFromLegend) {
+      if (hideFrom.legend) {
         return undefined;
       }
+
+      const hideFromViz = Boolean(hideFrom.viz);
 
       const display = value.display;
       return {
