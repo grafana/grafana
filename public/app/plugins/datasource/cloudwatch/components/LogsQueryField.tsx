@@ -180,7 +180,7 @@ export const CloudWatchLogsQueryField = (props: CloudWatchLogsQueryFieldProps) =
       const nextQuery = {
         ...query,
         expression: value,
-        logGroupNames: selectedLogGroups.map((logGroupName) => logGroupName.value!) ?? [],
+        logGroupNames: selectedLogGroups?.map((logGroupName) => logGroupName.value!) ?? [],
         statsGroups: getStatsGroups(value),
       };
       onChange(nextQuery);
