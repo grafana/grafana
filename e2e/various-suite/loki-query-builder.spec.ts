@@ -33,10 +33,10 @@ describe('Loki query builder', () => {
     });
 
     e2e().intercept(/series?/, (req) => {
-      req.reply({ status: 'success', data: [{ source: 'data' }] });
+      req.reply({ status: 'success', data: [{ instance: 'instance1' }] });
     });
 
-    const finalQuery = 'rate({job="unique", instance=~"instance1|instance2"} | logfmt | __error__=`` [$__interval])';
+    const finalQuery = 'rate({instance="instance1"} | logfmt | __error__=`` [$__interval]';
 
     // Go to Explore and choose Loki data source
     e2e.pages.Explore.visit();
@@ -44,36 +44,32 @@ describe('Loki query builder', () => {
     e2e.components.DataSourcePicker.container().should('be.visible').click();
     e2e().contains(dataSourceName).scrollIntoView().should('be.visible').click();
 
-    // Switch to code editor and type query
-    cy.contains('label', 'Code').click();
-    e2e.components.QueryField.container().should('be.visible');
-    e2e.components.QueryField.container().should('be.visible').type('{job="unique",instance=~"instance1|instance2",');
-
-    // Check autocomplete suggestion
-    cy.contains('source').should('be.visible');
-
-    // Switch to query builder and check if query was parsed to visual query builder
-    cy.contains('label', 'Builder').should('be.visible').click();
-    cy.contains('Operations').should('be.visible');
-    cy.contains('instance').should('be.visible');
-    cy.contains('instance1').should('be.visible');
-    cy.contains('instance2').should('be.visible');
-
-    // Click and choose query pattern
+    // Start in builder mode, click and choose query pattern
     e2e.components.QueryBuilder.queryPatterns().click().type('Log query with parsing{enter}');
-    cy.contains('No pipeline errors').should('be.visible');
-    cy.contains('Logfmt').should('be.visible');
+    e2e().contains('No pipeline errors').should('be.visible');
+    e2e().contains('Logfmt').should('be.visible');
 
     // Add operation
-    cy.contains('Operations').should('be.visible').click();
-    cy.contains('Range functions').should('be.visible').click();
-    cy.contains('Rate').should('be.visible').click();
+    e2e().contains('Operations').should('be.visible').click();
+    e2e().contains('Range functions').should('be.visible').click();
 
-    // Check if raw query is visible
-    cy.contains(finalQuery).should('be.visible');
+    e2e().contains('Rate').should('be.visible').click();
+
+    // Check for error
+    e2e().contains('You need to specify at least 1 label filter (stream selector)').should('be.visible');
+
+    // Add labels
+    e2e().get('#prometheus-dimensions-filter-item-key').should('be.visible').click().type('instance{enter}');
+    e2e().get('#prometheus-dimensions-filter-item-value').should('be.visible').click().type('instance1{enter}');
+    e2e().contains(finalQuery).should('be.visible');
+
+    // Switch to code editor and type query
+    for (const word of finalQuery.split(' ')) {
+      e2e().contains(word).should('be.visible');
+    }
 
     // Switch to explain mode and check if query is visible
-    cy.contains('label', 'Explain').click();
-    cy.contains(finalQuery).should('be.visible');
+    e2e().contains('label', 'Explain').click();
+    e2e().contains(finalQuery).should('be.visible');
   });
 });

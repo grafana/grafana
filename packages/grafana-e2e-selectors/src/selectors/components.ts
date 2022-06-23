@@ -270,6 +270,9 @@ export const Components = {
   QueryField: { container: 'Query field' },
   QueryBuilder: {
     queryPatterns: 'Query patterns',
+    labelSelect: 'Select label',
+    valueSelect: 'Select value',
+    matchOperatorSelect: 'Select match operator',
   },
   ValuePicker: {
     button: (name: string) => `Value picker button ${name}`,
