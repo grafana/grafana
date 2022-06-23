@@ -320,7 +320,7 @@ exports[`no type assertions`] = {
     "packages/grafana-data/src/field/getFieldDisplayValuesProxy.ts:303705866": [
       [21, 19, 34, "Do not use any type assertions.", "2511902902"]
     ],
-    "packages/grafana-data/src/field/overrides/processors.ts:976588100": [
+    "packages/grafana-data/src/field/overrides/processors.ts:598024215": [
       [60, 9, 19, "Do not use any type assertions.", "4019024842"],
       [70, 9, 23, "Do not use any type assertions.", "1315062429"],
       [124, 9, 25, "Do not use any type assertions.", "4066157234"]
@@ -574,10 +574,10 @@ exports[`no type assertions`] = {
       [241, 15, 29, "Do not use any type assertions.", "1194183871"],
       [281, 20, 14, "Do not use any type assertions.", "2578702492"]
     ],
-    "packages/grafana-runtime/src/utils/PublicDashboardDataSource.test.ts:610172508": [
+    "packages/grafana-runtime/src/utils/PublicDashboardDataSource.test.ts:1736449083": [
       [9, 19, 123, "Do not use any type assertions.", "3028355264"],
       [9, 19, 109, "Do not use any type assertions.", "4248357345"],
-      [34, 13, 198, "Do not use any type assertions.", "3912034118"]
+      [34, 13, 206, "Do not use any type assertions.", "1200376833"]
     ],
     "packages/grafana-runtime/src/utils/queryResponse.test.ts:1749674203": [
       [6, 13, 1293, "Do not use any type assertions.", "389191137"],
@@ -1416,8 +1416,8 @@ exports[`no type assertions`] = {
       [52, 8, 48, "Do not use any type assertions.", "824171569"],
       [53, 8, 48, "Do not use any type assertions.", "335398257"]
     ],
-    "public/app/core/components/SharedPreferences/SharedPreferences.tsx:1974319039": [
-      [65, 12, 29, "Do not use any type assertions.", "3057120496"]
+    "public/app/core/components/SharedPreferences/SharedPreferences.tsx:144153621": [
+      [101, 12, 29, "Do not use any type assertions.", "3057120496"]
     ],
     "public/app/core/components/connectWithCleanUp.tsx:1482653004": [
       [41, 11, 40, "Do not use any type assertions.", "28234765"]
@@ -2020,7 +2020,7 @@ exports[`no type assertions`] = {
       [28, 10, 11, "Do not use any type assertions.", "750480870"],
       [78, 17, 16, "Do not use any type assertions.", "388222280"]
     ],
-    "public/app/features/annotations/standardAnnotationSupport.ts:867613978": [
+    "public/app/features/annotations/standardAnnotationSupport.ts:888850301": [
       [35, 11, 23, "Do not use any type assertions.", "1775837378"],
       [123, 9, 13, "Do not use any type assertions.", "3840621009"],
       [217, 13, 11, "Do not use any type assertions.", "2583374607"]
@@ -2035,7 +2035,7 @@ exports[`no type assertions`] = {
     "public/app/features/api-keys/ApiKeysTable.tsx:3836162659": [
       [45, 36, 34, "Do not use any type assertions.", "3924286587"]
     ],
-    "public/app/features/canvas/runtime/element.tsx:1655992663": [
+    "public/app/features/canvas/runtime/element.tsx:1053184115": [
       [84, 49, 15, "Do not use any type assertions.", "151603256"],
       [182, 23, 10, "Do not use any type assertions.", "1501063862"],
       [182, 38, 21, "Do not use any type assertions.", "1600738939"],
@@ -2194,12 +2194,18 @@ exports[`no type assertions`] = {
       [111, 24, 63, "Do not use any type assertions.", "3674793430"],
       [203, 22, 55, "Do not use any type assertions.", "2080143574"]
     ],
-    "public/app/features/dashboard/components/ShareModal/SharePublicDashboard.test.tsx:1329488608": [
-      [16, 19, 68, "Do not use any type assertions.", "630749985"],
-      [16, 19, 54, "Do not use any type assertions.", "4291334336"],
-      [21, 6, 59, "Do not use any type assertions.", "3685154675"],
-      [21, 6, 49, "Do not use any type assertions.", "1184085652"],
-      [48, 22, 55, "Do not use any type assertions.", "2080143574"]
+    "public/app/features/dashboard/components/ShareModal/SharePublicDashboard.test.tsx:3005912975": [
+      [18, 19, 68, "Do not use any type assertions.", "630749985"],
+      [18, 19, 54, "Do not use any type assertions.", "4291334336"],
+      [23, 6, 59, "Do not use any type assertions.", "3685154675"],
+      [23, 6, 49, "Do not use any type assertions.", "1184085652"],
+      [50, 22, 55, "Do not use any type assertions.", "2080143574"]
+    ],
+    "public/app/features/dashboard/components/ShareModal/SharePublicDashboardUtils.test.tsx:3549968113": [
+      [24, 18, 46, "Do not use any type assertions.", "2293567025"],
+      [31, 18, 38, "Do not use any type assertions.", "1524369398"],
+      [36, 18, 30, "Do not use any type assertions.", "387012726"],
+      [38, 14, 21, "Do not use any type assertions.", "3316176532"]
     ],
     "public/app/features/dashboard/components/ShareModal/utils.test.ts:3192556439": [
       [34, 31, 115, "Do not use any type assertions.", "3780428905"],
@@ -2233,9 +2239,9 @@ exports[`no type assertions`] = {
       [203, 22, 62, "Do not use any type assertions.", "2897830729"],
       [264, 15, 56, "Do not use any type assertions.", "2674630592"]
     ],
-    "public/app/features/dashboard/containers/DashboardPage.tsx:2669087350": [
-      [106, 36, 40, "Do not use any type assertions.", "2547843745"],
-      [140, 32, 40, "Do not use any type assertions.", "2547843745"]
+    "public/app/features/dashboard/containers/DashboardPage.tsx:707193595": [
+      [107, 36, 40, "Do not use any type assertions.", "2547843745"],
+      [142, 32, 40, "Do not use any type assertions.", "2547843745"]
     ],
     "public/app/features/dashboard/containers/SoloPanelPage.test.tsx:1655234814": [
       [70, 19, 76, "Do not use any type assertions.", "3650478741"],
@@ -2262,7 +2268,7 @@ exports[`no type assertions`] = {
     "public/app/features/dashboard/dashgrid/SeriesVisibilityConfigFactory.ts:3527505596": [
       [47, 20, 67, "Do not use any type assertions.", "2027647299"]
     ],
-    "public/app/features/dashboard/services/PublicDashboardDataSource.ts:2039179566": [
+    "public/app/features/dashboard/services/PublicDashboardDataSource.ts:3574066958": [
       [11, 12, 16, "Do not use any type assertions.", "1747412709"],
       [56, 45, 22, "Do not use any type assertions.", "1838499175"]
     ],
@@ -2314,7 +2320,7 @@ exports[`no type assertions`] = {
       [490, 25, 293, "Do not use any type assertions.", "3989849883"],
       [492, 21, 213, "Do not use any type assertions.", "2695721884"]
     ],
-    "public/app/features/dashboard/state/PanelModel.ts:198409241": [
+    "public/app/features/dashboard/state/PanelModel.ts:1354672921": [
       [210, 18, 11, "Do not use any type assertions.", "3816020039"],
       [214, 18, 11, "Do not use any type assertions.", "3816020039"],
       [218, 14, 11, "Do not use any type assertions.", "3816020039"],
@@ -2880,9 +2886,9 @@ exports[`no type assertions`] = {
     "public/app/features/manage-dashboards/state/reducers.ts:3417985415": [
       [68, 10, 21, "Do not use any type assertions.", "2133660528"]
     ],
-    "public/app/features/org/OrgDetailsPage.test.tsx:3835042085": [
-      [21, 18, 18, "Do not use any type assertions.", "1715686858"],
-      [22, 14, 125, "Do not use any type assertions.", "795479886"]
+    "public/app/features/org/OrgDetailsPage.test.tsx:351096404": [
+      [41, 18, 18, "Do not use any type assertions.", "1715686858"],
+      [42, 14, 125, "Do not use any type assertions.", "795479886"]
     ],
     "public/app/features/org/state/reducers.ts:3134794613": [
       [5, 16, 18, "Do not use any type assertions.", "1715686858"],
@@ -3102,7 +3108,7 @@ exports[`no type assertions`] = {
       [325, 33, 50, "Do not use any type assertions.", "1035791784"],
       [325, 33, 13, "Do not use any type assertions.", "2146830713"]
     ],
-    "public/app/features/query/state/PanelQueryRunner.ts:1368352867": [
+    "public/app/features/query/state/PanelQueryRunner.ts:3224973507": [
       [110, 39, 118, "Do not use any type assertions.", "2873233307"],
       [238, 5, 14, "Do not use any type assertions.", "4095749936"],
       [285, 20, 46, "Do not use any type assertions.", "1712789723"],
@@ -3203,7 +3209,10 @@ exports[`no type assertions`] = {
     "public/app/features/search/page/components/SearchResultsGrid.tsx:994645204": [
       [30, 16, 28, "Do not use any type assertions.", "1941050010"]
     ],
-    "public/app/features/search/page/components/SearchView.tsx:3990054691": [
+    "public/app/features/search/page/components/SearchView.test.tsx:773692683": [
+      [47, 20, 37, "Do not use any type assertions.", "3345267016"]
+    ],
+    "public/app/features/search/page/components/SearchView.tsx:1645004519": [
       [61, 12, 21, "Do not use any type assertions.", "976337522"],
       [62, 14, 26, "Do not use any type assertions.", "2909521803"]
     ],
@@ -5350,7 +5359,7 @@ exports[`no type assertions`] = {
     "public/app/plugins/panel/heatmap-new/migrations.ts:784553340": [
       [128, 22, 27, "Do not use any type assertions.", "3349635193"]
     ],
-    "public/app/plugins/panel/heatmap-new/module.tsx:126397679": [
+    "public/app/plugins/panel/heatmap-new/module.tsx:3365492927": [
       [27, 16, 30, "Do not use any type assertions.", "3478399522"],
       [28, 18, 30, "Do not use any type assertions.", "3478399522"],
       [45, 35, 37, "Do not use any type assertions.", "1961056471"]
@@ -5958,7 +5967,7 @@ exports[`no explicit any`] = {
     "packages/grafana-data/src/field/getFieldDisplayValuesProxy.ts:303705866": [
       [22, 15, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "packages/grafana-data/src/field/overrides/processors.ts:976588100": [
+    "packages/grafana-data/src/field/overrides/processors.ts:598024215": [
       [10, 98, 3, "Unexpected any. Specify a different type.", "193409811"],
       [23, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
       [35, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -6142,7 +6151,7 @@ exports[`no explicit any`] = {
       [62, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
       [62, 30, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "packages/grafana-data/src/types/datasource.ts:867502575": [
+    "packages/grafana-data/src/types/datasource.ts:753447592": [
       [24, 85, 3, "Unexpected any. Specify a different type.", "193409811"],
       [27, 73, 3, "Unexpected any. Specify a different type.", "193409811"],
       [46, 28, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -8651,7 +8660,7 @@ exports[`no explicit any`] = {
     "public/app/features/annotations/executeAnnotationQuery.ts:1287843533": [
       [18, 17, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/annotations/standardAnnotationSupport.ts:867613978": [
+    "public/app/features/annotations/standardAnnotationSupport.ts:888850301": [
       [23, 28, 3, "Unexpected any. Specify a different type.", "193409811"],
       [123, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
       [199, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -8692,7 +8701,7 @@ exports[`no explicit any`] = {
       [42, 44, 3, "Unexpected any. Specify a different type.", "193409811"],
       [42, 49, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/canvas/runtime/element.tsx:1655992663": [
+    "public/app/features/canvas/runtime/element.tsx:1053184115": [
       [38, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
       [182, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
       [182, 56, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -8932,9 +8941,9 @@ exports[`no explicit any`] = {
     "public/app/features/dashboard/components/ShareModal/ShareModal.tsx:3869940488": [
       [86, 20, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/dashboard/components/ShareModal/SharePublicDashboard.test.tsx:1329488608": [
-      [42, 24, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [52, 9, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/features/dashboard/components/ShareModal/SharePublicDashboard.test.tsx:3005912975": [
+      [44, 24, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [54, 9, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx:305910085": [
       [148, 43, 3, "Unexpected any. Specify a different type.", "193409811"]
@@ -9004,9 +9013,9 @@ exports[`no explicit any`] = {
       [205, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
       [266, 13, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/dashboard/containers/DashboardPage.tsx:2669087350": [
-      [106, 73, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [140, 69, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/features/dashboard/containers/DashboardPage.tsx:707193595": [
+      [107, 73, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [142, 69, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/dashboard/containers/SoloPanelPage.test.tsx:1655234814": [
       [26, 29, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -9037,7 +9046,7 @@ exports[`no explicit any`] = {
     "public/app/features/dashboard/dashgrid/DashboardPanel.tsx:2217542239": [
       [57, 34, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/dashboard/dashgrid/PanelChrome.tsx:23613933": [
+    "public/app/features/dashboard/dashgrid/PanelChrome.tsx:497257738": [
       [54, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
       [141, 34, 3, "Unexpected any. Specify a different type.", "193409811"],
       [380, 30, 3, "Unexpected any. Specify a different type.", "193409811"]
@@ -9061,7 +9070,7 @@ exports[`no explicit any`] = {
       [45, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
       [92, 48, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/dashboard/services/PublicDashboardDataSource.ts:2039179566": [
+    "public/app/features/dashboard/services/PublicDashboardDataSource.ts:3574066958": [
       [5, 61, 3, "Unexpected any. Specify a different type.", "193409811"],
       [21, 34, 3, "Unexpected any. Specify a different type.", "193409811"],
       [39, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -9215,7 +9224,7 @@ exports[`no explicit any`] = {
       [373, 28, 3, "Unexpected any. Specify a different type.", "193409811"],
       [376, 102, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/dashboard/state/PanelModel.ts:198409241": [
+    "public/app/features/dashboard/state/PanelModel.ts:1354672921": [
       [112, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
       [131, 10, 3, "Unexpected any. Specify a different type.", "193409811"],
       [145, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -9270,8 +9279,8 @@ exports[`no explicit any`] = {
       [141, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
       [145, 11, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/dashboard/state/initDashboard.ts:1868023251": [
-      [214, 71, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/features/dashboard/state/initDashboard.ts:4291397377": [
+      [215, 71, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/dashboard/state/reducers.ts:2272523560": [
       [64, 9, 3, "Unexpected any. Specify a different type.", "193409811"]
@@ -10005,7 +10014,7 @@ exports[`no explicit any`] = {
       [111, 24, 3, "Unexpected any. Specify a different type.", "193409811"],
       [123, 18, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/query/state/PanelQueryRunner.ts:1368352867": [
+    "public/app/features/query/state/PanelQueryRunner.ts:3224973507": [
       [189, 46, 3, "Unexpected any. Specify a different type.", "193409811"],
       [238, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
       [367, 35, 3, "Unexpected any. Specify a different type.", "193409811"]
@@ -13075,7 +13084,7 @@ exports[`no explicit any`] = {
       [43, 47, 3, "Unexpected any. Specify a different type.", "193409811"],
       [160, 21, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/panel/heatmap-new/module.tsx:126397679": [
+    "public/app/plugins/panel/heatmap-new/module.tsx:3365492927": [
       [27, 43, 3, "Unexpected any. Specify a different type.", "193409811"],
       [28, 45, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
@@ -13617,9 +13626,9 @@ exports[`no explicit any`] = {
       [20, 78, 3, "Unexpected any. Specify a different type.", "193409811"],
       [20, 107, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/types/dashboard.ts:660798147": [
-      [61, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [82, 9, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/types/dashboard.ts:901779567": [
+      [60, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [81, 9, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/types/events.ts:2477887635": [
       [16, 10, 3, "Unexpected any. Specify a different type.", "193409811"],
