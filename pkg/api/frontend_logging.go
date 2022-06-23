@@ -61,7 +61,7 @@ func GrafanaJavascriptAgentLogMessageHandler(store *frontendlogging.SourceMapSto
 
 		if event.Logs != nil && len(event.Logs) > 0 {
 			for _, logEntry := range event.Logs {
-				ctx = append(ctx, "original_timestamp", logEntry.Timestamp)
+				ctx = append(ctx, "kind", "log", "original_timestamp", logEntry.Timestamp)
 				if logEntry.LogLevel != "" {
 					ctx = append(ctx, "original_log_level", logEntry.LogLevel)
 				}
@@ -76,7 +76,7 @@ func GrafanaJavascriptAgentLogMessageHandler(store *frontendlogging.SourceMapSto
 			for _, measurementEntry := range event.Measurements {
 				for measurementName, measurementValue := range measurementEntry.Values {
 					ctx = append(ctx, measurementName, measurementValue)
-					ctx = append(ctx, "original_timestamp", measurementEntry.Timestamp)
+					ctx = append(ctx, "kind", "measurement", "original_timestamp", measurementEntry.Timestamp)
 					grafanaJavascriptAgentLogger.Info("Measurement: "+measurementEntry.Type, ctx...)
 				}
 			}
@@ -85,9 +85,9 @@ func GrafanaJavascriptAgentLogMessageHandler(store *frontendlogging.SourceMapSto
 			for _, exception := range event.Exceptions {
 				exception := exception
 				transformedException := frontendlogging.TransformException(&exception, store)
-				ctx = append(ctx, "exception", transformedException.String())
+				ctx = append(ctx, "kind", "exception", "type", transformedException.Type, "value", transformedException.Value, "stacktrace", transformedException.String())
 				ctx = append(ctx, "original_timestamp", exception.Timestamp)
-				grafanaJavascriptAgentLogger.Info(exception.Message(), ctx...)
+				grafanaJavascriptAgentLogger.Error(exception.Message(), ctx...)
 			}
 		}
 		return response.Success("ok")

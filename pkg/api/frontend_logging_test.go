@@ -445,7 +445,7 @@ func TestFrontendLoggingEndpointGrafanaJavascriptAgent(t *testing.T) {
 		logGrafanaJavascriptAgentEventScenario(t, "Should log received log event", logEvent,
 			func(sc *scenarioContext, logs map[string]interface{}, sourceMapReads []SourceMapReadRecord) {
 				assert.Equal(t, 200, sc.resp.Code)
-				assert.Len(t, logs, 10)
+				assert.Len(t, logs, 11)
 				assertContextContains(t, logs, "logger", "grafana_javascript_agent")
 				assertContextContains(t, logs, "msg", "This is a test log message")
 				assertContextContains(t, logs, "original_log_level", frontendlogging.LogLevel("info"))
@@ -533,7 +533,7 @@ func TestFrontendLoggingEndpointGrafanaJavascriptAgent(t *testing.T) {
 		logGrafanaJavascriptAgentEventScenario(t, "Should load sourcemap and transform stacktrace line when possible", errorEventForSourceMapping,
 			func(sc *scenarioContext, logs map[string]interface{}, sourceMapReads []SourceMapReadRecord) {
 				assert.Equal(t, 200, sc.resp.Code)
-				assertContextContains(t, logs, "exception", `UserError: Please replace user and try again
+				assertContextContains(t, logs, "stacktrace", `UserError: Please replace user and try again
   at ? (webpack:///./some_source.ts:2:2)
   at ? (webpack:///./some_source.ts:3:2)
   at explode (http://localhost:3000/public/build/error.js:3:10)
