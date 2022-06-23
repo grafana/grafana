@@ -1,14 +1,18 @@
 import { useEffect } from 'react';
 import { Subject } from 'rxjs';
 
+import { NavModelItem } from '@grafana/data';
+
 export interface TopNavProps {
-  title: string;
+  subNav?: NavModelItem;
   actions?: React.ReactNode;
 }
 
 export const topNavUpdates = new Subject<TopNavProps>();
 export const topNavDefaultProps: TopNavProps = {
-  title: 'Home',
+  subNav: {
+    text: 'Home',
+  },
 };
 
 /**

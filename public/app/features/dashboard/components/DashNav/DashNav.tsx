@@ -276,7 +276,12 @@ export const DashNav = React.memo<Props>((props) => {
   const onGoBack = isFullscreen ? onClose : undefined;
 
   if (config.featureToggles.topnav) {
-    return <TopNavUpdate title={title} actions={<ToolbarButton onClick={onOpenSettings} icon="cog"></ToolbarButton>} />;
+    return (
+      <TopNavUpdate
+        subNav={{ text: title }}
+        actions={<ToolbarButton onClick={onOpenSettings} icon="cog"></ToolbarButton>}
+      />
+    );
   }
 
   return (

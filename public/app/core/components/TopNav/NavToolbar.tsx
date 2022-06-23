@@ -2,31 +2,29 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { ToolbarButton, useStyles2, Icon } from '@grafana/ui';
+import { IconButton, ToolbarButton, useStyles2 } from '@grafana/ui';
 
+import { Breadcrumbs } from './Breadcrumbs';
 import { TopNavProps } from './TopNavUpdate';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
 
 export interface Props extends TopNavProps {
   onToggleSearchBar(): void;
   searchBarHidden?: boolean;
-  pageNavItem: NavModelItem;
+  sectionNav: NavModelItem;
+  subNav?: NavModelItem;
 }
 
-export function NavToolbar({ title, actions, onToggleSearchBar, searchBarHidden, pageNavItem }: Props) {
+export function NavToolbar({ actions, onToggleSearchBar, searchBarHidden, sectionNav, subNav }: Props) {
   const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.pageToolbar}>
-      <div className={styles.breadcrumbs}>
-        {/** This is just temporary placeholder code. To be replaced by proper breadcrumbs component */}
-        {pageNavItem.parentItem && (
-          <span>
-            {pageNavItem.parentItem.text} <Icon name="angle-right" />
-          </span>
-        )}
-        {pageNavItem.text}
+      <div className={styles.menuButton}>
+        <IconButton name="bars" tooltip="Toggle menu" tooltipPlacement="bottom" size="xl" onClick={() => {}} />
       </div>
+      <Breadcrumbs sectionNav={sectionNav} subNav={subNav} />
+      <div className={styles.leftActions}></div>
       <div className={styles.rightActions}>
         {actions}
         <ToolbarButton icon={searchBarHidden ? 'angle-down' : 'angle-up'} onClick={onToggleSearchBar} />
@@ -44,9 +42,21 @@ const getStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
       justifyContent: 'space-between',
     }),
+    menuButton: css({
+      display: 'flex',
+      alignItems: 'center',
+      paddingRight: theme.spacing(1),
+    }),
     breadcrumbs: css({
       display: 'flex',
       alignItems: 'center',
+      fontWeight: theme.typography.fontWeightMedium,
+      gap: theme.spacing(2),
+    }),
+    leftActions: css({
+      display: 'flex',
+      alignItems: 'center',
+      flexGrow: 1,
       gap: theme.spacing(2),
     }),
     rightActions: css({
