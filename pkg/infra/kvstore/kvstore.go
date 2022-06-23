@@ -60,6 +60,7 @@ func (kv *NamespacedKVStore) Keys(ctx context.Context, keyPrefix string) ([]Key,
 	return kv.kvStore.Keys(ctx, kv.orgId, kv.namespace, keyPrefix)
 }
 
+// GetAll returns all the keys and values stored per organization. It returns a map of org -> key -> value.
 func (kv *NamespacedKVStore) GetAll(ctx context.Context) (map[int64]map[string]string, error) {
 	return kv.kvStore.GetAll(ctx, kv.orgId, kv.namespace)
 }
