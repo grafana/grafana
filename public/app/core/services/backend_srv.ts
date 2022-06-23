@@ -407,7 +407,7 @@ export class BackendSrv implements BackendService {
     return this.inspectorStream;
   }
 
-  async get<T = any>(url: string, params?: any, requestId?: string, options?: BackendSrvRequest): Promise<T> {
+  async get<T = any>(url: string, params?: any, requestId?: string, options?: Partial<BackendSrvRequest>): Promise<T> {
     return await this.request({ ...options, method: 'GET', url, params, requestId });
   }
 
