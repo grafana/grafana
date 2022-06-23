@@ -2384,10 +2384,10 @@ exports[`no type assertions`] = {
       [70, 30, 10, "Do not use any type assertions.", "1501063862"],
       [71, 13, 12, "Do not use any type assertions.", "1619708599"]
     ],
-    "public/app/features/datasources/DataSourceDashboards.test.tsx:1369048021": [
-      [12, 14, 14, "Do not use any type assertions.", "3112983303"],
-      [13, 16, 23, "Do not use any type assertions.", "860279322"],
-      [14, 16, 24, "Do not use any type assertions.", "3405802617"]
+    "public/app/features/datasources/DataSourceDashboards.test.tsx:4128546737": [
+      [14, 16, 23, "Do not use any type assertions.", "860279322"],
+      [15, 16, 24, "Do not use any type assertions.", "3405802617"],
+      [21, 11, 21, "Do not use any type assertions.", "3218407483"]
     ],
     "public/app/features/datasources/DataSourcesListPage.test.tsx:368182366": [
       [19, 17, 26, "Do not use any type assertions.", "3994646623"],
