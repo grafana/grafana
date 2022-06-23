@@ -2,7 +2,7 @@
 aliases:
   - /docs/grafana/latest/administration/provisioning/
   - /docs/grafana/latest/installation/provisioning/
-description: ''
+description: Describes provisioning settings for Grafana using configuration files.
 keywords:
   - grafana
   - provisioning
@@ -16,7 +16,7 @@ In previous versions of Grafana, you could only use the API for provisioning dat
 
 ## Config File
 
-Check out the [configuration]({{< relref "../setup-grafana/configure-grafana/" >}}) page for more information on what you can configure in `grafana.ini`
+See [Configuration]({{< relref "../../setup-grafana/configure-grafana/" >}}) for more information on what you can configure in `grafana.ini`.
 
 ### Config File Locations
 
@@ -194,7 +194,7 @@ Since not all datasources have the same configuration settings we only have the 
 
 `{"authType":"keys","defaultRegion":"us-west-2","timeField":"@timestamp"}`
 
-Secure json data is a map of settings that will be encrypted with [secret key]({{< relref "../setup-grafana/configure-grafana/#secret-key" >}}) from the Grafana config. The purpose of this is only to hide content from the users of the application. This should be used for storing TLS Cert and password that Grafana will append to the request on the server side. All of these settings are optional.
+Secure json data is a map of settings that will be encrypted with [secret key]({{< relref "../../setup-grafana/configure-grafana/#secret-key" >}}) from the Grafana config. The purpose of this is only to hide content from the users of the application. This should be used for storing TLS Cert and password that Grafana will append to the request on the server side. All of these settings are optional.
 
 > **Note:** Datasources tagged with _HTTP\*_ below denotes any data source which communicates using the HTTP protocol, e.g. all core data source plugins except MySQL, PostgreSQL and MSSQL.
 
@@ -233,7 +233,7 @@ datasources:
 
 > This feature is available from v7.1
 
-You can manage plugins in Grafana by adding one or more YAML config files in the [`provisioning/plugins`]({{< relref "../setup-grafana/configure-grafana/#provisioning" >}}) directory. Each config file can contain a list of `apps` that will be updated during start up. Grafana updates each app to match the configuration file.
+You can manage plugins in Grafana by adding one or more YAML config files in the [`provisioning/plugins`]({{< relref "../../setup-grafana/configure-grafana/#provisioning" >}}) directory. Each config file can contain a list of `apps` that will be updated during start up. Grafana updates each app to match the configuration file.
 
 ### Example plugin configuration file
 
@@ -261,7 +261,7 @@ apps:
 
 ## Dashboards
 
-You can manage dashboards in Grafana by adding one or more YAML config files in the [`provisioning/dashboards`]({{< relref "../setup-grafana/configure-grafana/" >}}) directory. Each config file can contain a list of `dashboards providers` that load dashboards into Grafana from the local filesystem.
+You can manage dashboards in Grafana by adding one or more YAML config files in the [`provisioning/dashboards`]({{< relref "../../setup-grafana/configure-grafana/" >}}) directory. Each config file can contain a list of `dashboards providers` that load dashboards into Grafana from the local filesystem.
 
 The dashboard provider config file looks somewhat like this:
 
@@ -316,7 +316,7 @@ Note: The JSON definition in the input field when using `Copy JSON to Clipboard`
 
 ### Reusable Dashboard URLs
 
-If the dashboard in the JSON file contains an [UID]({{< relref "../dashboards/json-model/" >}}), Grafana forces insert/update on that UID. This allows you to migrate dashboards between Grafana instances and provisioning Grafana from configuration without breaking the URLs given because the new dashboard URL uses the UID as identifier.
+If the dashboard in the JSON file contains an [UID]({{< relref "../../dashboards/json-model/" >}}), Grafana forces insert/update on that UID. This allows you to migrate dashboards between Grafana instances and provisioning Grafana from configuration without breaking the URLs given because the new dashboard URL uses the UID as identifier.
 When Grafana starts, it updates/inserts all dashboards available in the configured folders. If you modify the file, then the dashboard is also updated.
 By default, Grafana deletes dashboards in the database if the file is removed. You can disable this behavior using the `disableDeletion` setting.
 
@@ -601,4 +601,4 @@ The following sections detail the supported settings and secure settings for eac
 
 Grafana Enterprise supports provisioning for the following resources:
 
-- [Role-based access control provisioning]({{< relref "../enterprise/access-control/rbac-provisioning/" >}})
+- [Role-based access control provisioning]({{< relref "../roles-and-permissions/access-control/rbac-provisioning/" >}})

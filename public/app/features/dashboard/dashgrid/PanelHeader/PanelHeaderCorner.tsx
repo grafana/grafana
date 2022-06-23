@@ -14,7 +14,7 @@ enum InfoMode {
   Links = 'Links',
 }
 
-interface Props {
+export interface Props {
   panel: PanelModel;
   title?: string;
   description?: string;

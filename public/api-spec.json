@@ -9465,7 +9465,7 @@
         "provisionedExternalId": {
           "type": "string"
         },
-        "publicDashboardUid": {
+        "publicDashboardAccessToken": {
           "type": "string"
         },
         "slug": {
