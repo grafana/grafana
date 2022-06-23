@@ -95,6 +95,6 @@ export class AnnotationsWorker implements DashboardQueryRunnerWorker {
   }
 
   publicDashboardViewMode(dashboard: DashboardModel): boolean {
-    return !!dashboard.meta.isPublic && dashboard.meta.publicDashboardUid !== '';
+    return dashboard.meta.publicDashboardAccessToken !== undefined && dashboard.meta.publicDashboardAccessToken !== '';
   }
 }
