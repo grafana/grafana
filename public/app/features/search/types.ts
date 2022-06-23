@@ -8,6 +8,9 @@ export enum DashboardSearchItemType {
   DashFolder = 'dash-folder',
 }
 
+/**
+ * @deprecated
+ */
 export interface DashboardSection {
   id: number;
   uid?: string;
@@ -25,6 +28,9 @@ export interface DashboardSection {
   itemsFetching?: boolean;
 }
 
+/**
+ * @deprecated
+ */
 export interface DashboardSectionItem {
   checked?: boolean;
   folderId?: number;

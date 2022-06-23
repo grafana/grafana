@@ -85,7 +85,7 @@ func getBody(t *testing.T, body io.ReadCloser) string {
 	return string(b)
 }
 
-func AlertRuleGen() func() apimodels.PostableExtendedRuleNode {
+func alertRuleGen() func() apimodels.PostableExtendedRuleNode {
 	return func() apimodels.PostableExtendedRuleNode {
 		return apimodels.PostableExtendedRuleNode{
 			ApiRuleNode: &apimodels.ApiRuleNode{
@@ -115,7 +115,7 @@ func AlertRuleGen() func() apimodels.PostableExtendedRuleNode {
 	}
 }
 
-func GenerateAlertRuleGroup(rulesCount int, gen func() apimodels.PostableExtendedRuleNode) apimodels.PostableRuleGroupConfig {
+func generateAlertRuleGroup(rulesCount int, gen func() apimodels.PostableExtendedRuleNode) apimodels.PostableRuleGroupConfig {
 	rules := make([]apimodels.PostableExtendedRuleNode, 0, rulesCount)
 	for i := 0; i < rulesCount; i++ {
 		rules = append(rules, gen())
@@ -127,10 +127,10 @@ func GenerateAlertRuleGroup(rulesCount int, gen func() apimodels.PostableExtende
 	}
 }
 
-func ConvertGettableRuleGroupToPostable(gettable apimodels.GettableRuleGroupConfig) apimodels.PostableRuleGroupConfig {
+func convertGettableRuleGroupToPostable(gettable apimodels.GettableRuleGroupConfig) apimodels.PostableRuleGroupConfig {
 	rules := make([]apimodels.PostableExtendedRuleNode, 0, len(gettable.Rules))
 	for _, rule := range gettable.Rules {
-		rules = append(rules, ConvertGettableRuleToPostable(rule))
+		rules = append(rules, convertGettableRuleToPostable(rule))
 	}
 	return apimodels.PostableRuleGroupConfig{
 		Name:     gettable.Name,
@@ -139,14 +139,14 @@ func ConvertGettableRuleGroupToPostable(gettable apimodels.GettableRuleGroupConf
 	}
 }
 
-func ConvertGettableRuleToPostable(gettable apimodels.GettableExtendedRuleNode) apimodels.PostableExtendedRuleNode {
+func convertGettableRuleToPostable(gettable apimodels.GettableExtendedRuleNode) apimodels.PostableExtendedRuleNode {
 	return apimodels.PostableExtendedRuleNode{
 		ApiRuleNode:         gettable.ApiRuleNode,
-		GrafanaManagedAlert: ConvertGettableGrafanaRuleToPostable(gettable.GrafanaManagedAlert),
+		GrafanaManagedAlert: convertGettableGrafanaRuleToPostable(gettable.GrafanaManagedAlert),
 	}
 }
 
-func ConvertGettableGrafanaRuleToPostable(gettable *apimodels.GettableGrafanaRule) *apimodels.PostableGrafanaRule {
+func convertGettableGrafanaRuleToPostable(gettable *apimodels.GettableGrafanaRule) *apimodels.PostableGrafanaRule {
 	if gettable == nil {
 		return nil
 	}

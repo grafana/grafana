@@ -6,10 +6,15 @@ import { PanelProps } from '@grafana/data';
 import { useLinks } from '../../../features/explore/utils/links';
 
 import { NodeGraph } from './NodeGraph';
-import { Options } from './types';
+import { NodeGraphOptions } from './types';
 import { getNodeGraphDataFrames } from './utils';
 
-export const NodeGraphPanel: React.FunctionComponent<PanelProps<Options>> = ({ width, height, data }) => {
+export const NodeGraphPanel: React.FunctionComponent<PanelProps<NodeGraphOptions>> = ({
+  width,
+  height,
+  data,
+  options,
+}) => {
   const getLinks = useLinks(data.timeRange);
   if (!data || !data.series.length) {
     return (
@@ -22,7 +27,7 @@ export const NodeGraphPanel: React.FunctionComponent<PanelProps<Options>> = ({ w
   const memoizedGetNodeGraphDataFrames = memoizeOne(getNodeGraphDataFrames);
   return (
     <div style={{ width, height }}>
-      <NodeGraph dataFrames={memoizedGetNodeGraphDataFrames(data.series)} getLinks={getLinks} />
+      <NodeGraph dataFrames={memoizedGetNodeGraphDataFrames(data.series, options)} getLinks={getLinks} />
     </div>
   );
 };
