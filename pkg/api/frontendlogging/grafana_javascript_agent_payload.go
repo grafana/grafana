@@ -213,7 +213,7 @@ const (
 	// LogLevelInfo is "info"
 	LogLevelInfo LogLevel = "info"
 	// LogLevelWarning is "warning"
-	LogLevelWarning LogLevel = "warning"
+	LogLevelWarning LogLevel = "warn"
 	// LogLevelError is "error"
 	LogLevelError LogLevel = "error"
 )

@@ -73,7 +73,6 @@ export class GrafanaJavascriptAgentBackend
   }
 
   addEvent = (e: EchoEvent) => {
-    //console.log("Calling addEvent");
     this.transports.forEach((t) => t.send(e.payload));
   };
 

@@ -61,13 +61,32 @@ func GrafanaJavascriptAgentLogMessageHandler(store *frontendlogging.SourceMapSto
 			ctx = event.AddMetaToContext(ctx)
 			for _, logEntry := range event.Logs {
 				ctx = append(ctx, "kind", "log", "original_timestamp", logEntry.Timestamp)
-				if logEntry.LogLevel != "" {
-					ctx = append(ctx, "original_log_level", logEntry.LogLevel)
-				}
+
 				for k, v := range frontendlogging.KeyValToInterfaceMap(logEntry.KeyValContext()) {
 					ctx = append(ctx, k, v)
 				}
-				frontendLogger.Info(logEntry.Message, ctx...)
+				switch logEntry.LogLevel {
+				case frontendlogging.LogLevelDebug:
+					{
+						ctx = append(ctx, "original_log_level", logEntry.LogLevel)
+						frontendLogger.Debug(logEntry.Message, ctx...)
+					}
+				case frontendlogging.LogLevelError:
+					{
+						ctx = append(ctx, "original_log_level", logEntry.LogLevel)
+						frontendLogger.Error(logEntry.Message, ctx...)
+					}
+				case frontendlogging.LogLevelWarning:
+					{
+						ctx = append(ctx, "original_log_level", logEntry.LogLevel)
+						frontendLogger.Warn(logEntry.Message, ctx...)
+					}
+				default:
+					{
+						ctx = append(ctx, "original_log_level", logEntry.LogLevel)
+						frontendLogger.Info(logEntry.Message, ctx...)
+					}
+				}
 			}
 		}
 
