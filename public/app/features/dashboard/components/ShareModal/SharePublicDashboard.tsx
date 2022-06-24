@@ -159,12 +159,16 @@ export const SharePublicDashboard = (props: Props) => {
                   <Switch
                     disabled={dashboardHasTemplateVariables(dashboardVariables)}
                     value={publicDashboard?.isEnabled}
-                    onChange={() =>
+                    onChange={() => {
+                      reportInteraction('grafana_dashboards_public_enable_clicked', {
+                        action: publicDashboard?.isEnabled ? 'disable' : 'enable',
+                      });
+
                       setPublicDashboardConfig({
                         ...publicDashboard,
                         isEnabled: !publicDashboard.isEnabled,
-                      })
-                    }
+                      });
+                    }}
                   />
                 </Field>
                 {publicDashboardPersisted(publicDashboard) && publicDashboard.isEnabled && (
