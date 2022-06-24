@@ -26,6 +26,7 @@ steps:
   image: grafana/build-container:1.5.7
   name: gen-version
 - commands:
+  - yarn config get cacheFolder
   - yarn install --immutable
   depends_on:
   - grabpl
@@ -4862,6 +4863,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 6ba4210b47ad27e54a79381815c9eb78cbf098a166ea424b1daeb36bed2efd7a
+hmac: d2f0e4614e1df6624298653cec51a8f8826ae47e25e10a2928c7f267c5645de1
 
 ...
