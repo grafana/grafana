@@ -4508,7 +4508,7 @@ exports[`no explicit any`] = {
       [45, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
       [47, 17, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/teams/TeamGroupSync.tsx:187124828": [
+    "public/app/features/teams/TeamGroupSync.tsx:2819142271": [
       [59, 32, 3, "Unexpected any. Specify a different type.", "193409811"],
       [63, 23, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
@@ -6740,36 +6740,39 @@ exports[`no explicit any`] = {
       [17, 50, 3, "Unexpected any. Specify a different type.", "193409811"],
       [32, 50, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/prometheus/result_transformer.test.ts:1135772145": [
-      [408, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [418, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [429, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [463, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [493, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [521, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [545, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [566, 68, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [572, 35, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [615, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [615, 99, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [647, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [647, 99, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [673, 68, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [700, 68, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [713, 61, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [723, 61, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [748, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [777, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [789, 61, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [811, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [828, 70, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [856, 72, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [884, 64, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [898, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [935, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [941, 66, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [950, 66, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [959, 66, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/plugins/datasource/prometheus/result_transformer.test.ts:3921188682": [
+      [408, 25, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [477, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [487, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [498, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [532, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [562, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [590, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [614, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [635, 68, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [641, 35, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [684, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [684, 99, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [716, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [716, 99, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [742, 68, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [769, 68, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [782, 61, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [792, 61, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [817, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [846, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [858, 61, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [880, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [897, 70, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [925, 72, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [953, 64, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [967, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [1004, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [1010, 66, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [1019, 66, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [1028, 66, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [1034, 29, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [1045, 66, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/plugins/datasource/prometheus/types.ts:1752579129": [
       [50, 12, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -7687,18 +7690,10 @@ exports[`no explicit any`] = {
     "public/app/plugins/panel/nodeGraph/ViewControls.tsx:1224159931": [
       [27, 59, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/panel/nodeGraph/editor/ArcOptionsEditor.tsx:1375628706": [
-      [9, 62, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [9, 85, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [13, 5, 3, "Unexpected any. Specify a different type.", "193409811"]
-    ],
     "public/app/plugins/panel/nodeGraph/layout.test.ts:1938392112": [
       [5, 35, 3, "Unexpected any. Specify a different type.", "193409811"],
       [6, 37, 3, "Unexpected any. Specify a different type.", "193409811"],
       [7, 35, 3, "Unexpected any. Specify a different type.", "193409811"]
-    ],
-    "public/app/plugins/panel/nodeGraph/types.ts:3308622216": [
-      [17, 10, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/plugins/panel/nodeGraph/usePanning.ts:887807615": [
       [186, 16, 3, "Unexpected any. Specify a different type.", "193409811"]
