@@ -2109,6 +2109,10 @@ exports[`no type assertions`] = {
     "public/app/features/dashboard/components/DashboardSettings/GeneralSettings.tsx:2117359978": [
       [38, 14, 51, "Do not use any type assertions.", "4093646718"]
     ],
+    "public/app/features/dashboard/components/FolderView/FolderView.tsx:2598065146": [
+      [24, 20, 47, "Do not use any type assertions.", "3786275544"],
+      [24, 21, 17, "Do not use any type assertions.", "3089290125"]
+    ],
     "public/app/features/dashboard/components/Inspector/PanelInspectActions.tsx:199822845": [
       [63, 19, 79, "Do not use any type assertions.", "3480786380"],
       [63, 20, 13, "Do not use any type assertions.", "538937261"]
@@ -3276,6 +3280,9 @@ exports[`no type assertions`] = {
       [13, 18, 23, "Do not use any type assertions.", "499357842"],
       [15, 10, 14, "Do not use any type assertions.", "2767045528"],
       [43, 19, 25, "Do not use any type assertions.", "1122467828"]
+    ],
+    "public/app/features/storage/helper.ts:3756991877": [
+      [16, 16, 49, "Do not use any type assertions.", "672585023"]
     ],
     "public/app/features/teams/CreateTeam.test.tsx:136903941": [
       [30, 14, 34, "Do not use any type assertions.", "463003776"]
@@ -8794,6 +8801,9 @@ exports[`no explicit any`] = {
       [23, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
       [23, 29, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
+    "public/app/features/dashboard/components/FolderView/FolderView.tsx:2598065146": [
+      [24, 35, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
     "public/app/features/dashboard/components/Inspector/PanelInspectActions.tsx:199822845": [
       [63, 30, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
@@ -10105,6 +10115,10 @@ exports[`no explicit any`] = {
       [44, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
       [45, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
       [47, 17, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/features/storage/UploadPopoverContainer.tsx:125733030": [
+      [21, 37, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [33, 33, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/teams/TeamGroupSync.tsx:187124828": [
       [59, 32, 3, "Unexpected any. Specify a different type.", "193409811"],

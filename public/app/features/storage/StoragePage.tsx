@@ -1,187 +1,159 @@
 import { css } from '@emotion/css';
 import React, { useState } from 'react';
 import { useAsync } from 'react-use';
+import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { FilterInput, Spinner, useStyles2, Button, FileDropzone, Field } from '@grafana/ui';
+import { DisplayProcessor, getValueFormat, GrafanaTheme2, isDataFrame, SelectableValue } from '@grafana/data';
+import { useStyles2, Table, Select } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 
+import { UploadPopoverContainer } from './UploadPopoverContainer';
 import { getGrafanaStorage } from './helper';
 
-interface ErrorResponse {
-  message: string;
-}
+const bytesFormatter = getValueFormat('bytes');
+const bytesDisplayProcessor: DisplayProcessor = (v) => ({ ...bytesFormatter(v, 2), numeric: NaN });
+const textDisplayProcessor: DisplayProcessor = (v) => ({ text: `${v}`, numeric: NaN });
 
-export function FileDropzoneCustomChildren({ secondaryText = 'Drag and drop here or browse' }) {
-  const styles = useStyles2(getStyles);
-
-  return (
-    <div className={styles.iconWrapper}>
-      <small className={styles.small}>{secondaryText}</small>
-      <Button type="button" icon="upload">
-        Upload
-      </Button>
-    </div>
-  );
-}
+const pathsSupportingUpload = ['resources'];
+const paths = [
+  'resources',
+  'public-static',
+  'public-static/img/bg',
+  'public-static/img/icons/unicons',
+  'public-static/img/icons/iot',
+  'public-static/img/icons/marker',
+];
+const pathOptions: Array<SelectableValue<string>> = paths.map((p) => ({ label: p, value: p }));
 
 export default function StoragePage() {
   const styles = useStyles2(getStyles);
   const navModel = useNavModel('storage');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [path] = useState('resources'); // from URL?
-  const [dropped, setDropped] = useState<boolean>(false);
-  const [file, setFile] = useState<string>(''); // for preview but might not need
-  const [formData, setFormData] = useState<FormData>(new FormData());
-  const [error, setError] = useState<ErrorResponse>({ message: '' });
-  // TODO: check file uploaded to set mediaType if we want to keep
-  // the preview. hardcode as image for now.
-  const mediaType = 'image';
+  const [path, setPath] = useState('resources'); // from URL?
 
-  const folder = useAsync(async () => {
-    return getGrafanaStorage().list(path);
-  }, [path]);
+  // TODO: remove this. It's currently used as a workaround to close the popover
+  const [_, setUploadModalCloseTime] = useState(Date.now());
 
-  const Preview = () => (
-    <Field label="Preview">
-      <div className={styles.iconPreview}>
-        {/* TODO: preview icon */}
-        {/* {mediaType === 'icon' && <SVG src={file} className={styles.img} />} */}
-        {mediaType === 'image' && <img src={file} className={styles.img} />}
-      </div>
-    </Field>
-  );
+  // TODO: remove. used as a workaround to refresh the table after uploading a file
+  const [uploadTime, setUploadTime] = useState(Date.now());
 
-  const acceptableFiles = 'image/jpeg,image/png,image/gif,image/png, image/webp';
+  const files = useAsync(async () => {
+    const listResult = await getGrafanaStorage().list(path);
+    if (isDataFrame(listResult)) {
+      listResult.fields = listResult.fields.map((f) => {
+        switch (f.name) {
+          case 'name':
+            return {
+              ...f,
+              name: 'Filename',
+              display: textDisplayProcessor,
+            };
+          case 'mediaType':
+            return {
+              ...f,
+              name: 'File type',
+              display: textDisplayProcessor,
+            };
+          case 'size':
+            return {
+              ...f,
+              display: bytesDisplayProcessor,
+              name: 'Size',
+            };
+          default:
+            return f;
+        }
+      });
+    }
 
-  const renderFolder = () => {
-    if (folder.value) {
-      return (
-        <>
-          {/* TODO: should this be hidden under an Upload button? */}
-          <FileDropzone
-            readAs="readAsBinaryString"
-            onFileRemove={() => setDropped(false)}
-            options={{
-              accept: acceptableFiles,
-              multiple: false,
-              onDrop: (acceptedFiles: File[]) => {
-                let formData = new FormData();
-                formData.append('file', acceptedFiles[0]);
-                setFile(URL.createObjectURL(acceptedFiles[0]));
-                setDropped(true);
-                setFormData(formData);
-              },
+    return listResult;
+  }, [path, uploadTime]);
+
+  const renderTable = () => {
+    const dataFrame = files.value;
+    if (!isDataFrame(dataFrame)) {
+      return <></>;
+    }
+
+    return (
+      <div className={styles.wrapper}>
+        <div className={styles.tableControlRowWrapper}>
+          <Select
+            className={styles.tableControlRowItem}
+            options={pathOptions}
+            value={path}
+            onChange={(v) => {
+              if (typeof v.value === 'string') {
+                setPath(v.value);
+              }
             }}
-          >
-            {error.message !== '' && dropped ? (
-              <p>{error.message}</p>
-            ) : dropped ? (
-              <Preview />
-            ) : (
-              <FileDropzoneCustomChildren />
+          />
+          <div className={styles.tableControlRowItem}>
+            {
+              <UploadPopoverContainer
+                disabled={!pathsSupportingUpload.includes(path)}
+                onUpload={() => {
+                  setUploadTime(Date.now);
+                }}
+                onClose={() => {
+                  setUploadModalCloseTime(Date.now);
+                }}
+              />
+            }
+          </div>
+        </div>
+        <div className={styles.tableWrapper}>
+          <AutoSizer>
+            {({ width, height }) => (
+              <div style={{ width: `${width}px`, height: `${height}px` }}>
+                <Table
+                  height={height}
+                  width={width}
+                  data={dataFrame}
+                  noHeader={false}
+                  showTypeIcons={false}
+                  resizable={false}
+                />
+              </div>
             )}
-          </FileDropzone>
-          <Button
-            className={styles.button}
-            variant={dropped ? 'primary' : 'secondary'}
-            onClick={() => {
-              fetch('/api/storage/resources', {
-                method: 'POST',
-                body: formData,
-              })
-                // TODO: once upload is done, show list files
-                // and hide the dropzone?
-                .then((res) => {
-                  if (res.status >= 400) {
-                    res.json().then((data) => setError(data));
-                    return;
-                  } else {
-                    setDropped(false);
-                    return res.json();
-                  }
-                })
-                .catch((err) => console.error(err));
-            }}
-          >
-            Select
-          </Button>
-        </>
-      );
-    }
-    if (folder.loading) {
-      return <Spinner />;
-    }
-    return <div>??</div>; // should not be possible
+          </AutoSizer>
+        </div>
+      </div>
+    );
   };
 
   return (
     <Page navModel={navModel}>
-      <Page.Contents isLoading={folder.loading}>
-        <div className={styles.toolbar}>
-          <FilterInput value={searchQuery} onChange={setSearchQuery} placeholder="Search by name or type" width={50} />
-        </div>
-
-        {renderFolder()}
-      </Page.Contents>
+      <Page.Contents isLoading={files.loading}>{renderTable()}</Page.Contents>
     </Page>
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, isDragActive?: boolean) => ({
-  toolbar: css`
+const getStyles = (theme: GrafanaTheme2) => ({
+  // TODO: remove `height: 90%`
+  wrapper: css`
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
+    height: 90%;
+  `,
+  tableControlRowWrapper: css`
+    display: flex;
+    flex-direction: row;
     align-items: center;
-    padding-bottom: ${theme.spacing(2)};
+  `,
+  // TODO: remove `height: 100%`
+  tableWrapper: css`
+    border: 1px solid ${theme.colors.border.medium};
+    height: 100%;
+  `,
+  tableControlRowItem: css`
+    margin: ${theme.spacing(2)};
+  `,
+  tableSelect: css`
+    border: 1px solid ${theme.colors.border.medium};
   `,
   border: css`
     border: 1px solid ${theme.colors.border.medium};
     padding: ${theme.spacing(2)};
-  `,
-  modalBody: css`
-    display: flex;
-    flex-direction: row;
-  `,
-  dropzone: css`
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    align-items: center;
-    padding: ${theme.spacing(6)};
-    border-radius: 2px;
-    border: 2px dashed ${theme.colors.border.medium};
-    background-color: ${isDragActive ? theme.colors.background.secondary : theme.colors.background.primary};
-    cursor: pointer;
-  `,
-  iconWrapper: css`
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  `,
-  iconPreview: css`
-    width: 238px;
-    height: 198px;
-    border: 1px solid ${theme.colors.border.medium};
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  `,
-  acceptMargin: css`
-    margin: ${theme.spacing(2, 0, 1)};
-  `,
-  small: css`
-    color: ${theme.colors.text.secondary};
-    margin-bottom: ${theme.spacing(2)};
-  `,
-  img: css`
-    width: 147px;
-    height: 147px;
-    fill: ${theme.colors.text.primary};
-  `,
-  button: css`
-    margin: 12px 20px 2px;
-    float: right;
   `,
 });
