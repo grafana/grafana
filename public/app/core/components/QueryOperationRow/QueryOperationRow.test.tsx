@@ -60,7 +60,7 @@ describe('QueryOperationRow', () => {
 
     it('should expose api to headerElement rendered as function', () => {
       const propsSpy = jest.fn();
-      const title = (props: any) => {
+      const title = (props: Partial<QueryOperationRowProps>) => {
         propsSpy(props);
         return <div aria-label="test title">Test</div>;
       };
@@ -86,7 +86,7 @@ describe('QueryOperationRow', () => {
 
     it('should expose api to title rendered as function', () => {
       const propsSpy = jest.fn();
-      const actions = (props: any) => {
+      const actions = (props: Partial<QueryOperationRowProps>) => {
         propsSpy(props);
         return <div aria-label="test actions">test-actions</div>;
       };
