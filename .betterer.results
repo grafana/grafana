@@ -7694,18 +7694,10 @@ exports[`no explicit any`] = {
     "public/app/plugins/panel/nodeGraph/ViewControls.tsx:1224159931": [
       [27, 59, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/panel/nodeGraph/editor/ArcOptionsEditor.tsx:1375628706": [
-      [9, 62, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [9, 85, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [13, 5, 3, "Unexpected any. Specify a different type.", "193409811"]
-    ],
     "public/app/plugins/panel/nodeGraph/layout.test.ts:1938392112": [
       [5, 35, 3, "Unexpected any. Specify a different type.", "193409811"],
       [6, 37, 3, "Unexpected any. Specify a different type.", "193409811"],
       [7, 35, 3, "Unexpected any. Specify a different type.", "193409811"]
-    ],
-    "public/app/plugins/panel/nodeGraph/types.ts:3308622216": [
-      [17, 10, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/plugins/panel/nodeGraph/usePanning.ts:887807615": [
       [186, 16, 3, "Unexpected any. Specify a different type.", "193409811"]

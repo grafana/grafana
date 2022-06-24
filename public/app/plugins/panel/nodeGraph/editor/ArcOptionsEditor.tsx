@@ -1,17 +1,14 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { Field, FieldNamePickerConfigSettings, StandardEditorProps, StandardEditorsRegistryItem } from '@grafana/data';
+import { Field, StandardEditorProps } from '@grafana/data';
 import { Button, ColorPicker, useStyles2 } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
 
 import { ArcOption, NodeGraphOptions } from '../types';
 
-type ArcOptionsEditorProps = StandardEditorProps<ArcOption[], any, NodeGraphOptions, any>;
-
-const fieldNamePickerSettings: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
-  settings: { filter: (field: Field) => field.name.includes('arc__') },
-} as any;
+type Settings = { filter: (field: Field) => boolean };
+type ArcOptionsEditorProps = StandardEditorProps<ArcOption[], Settings, NodeGraphOptions, undefined>;
 
 export const ArcOptionsEditor = ({ value, onChange, context }: ArcOptionsEditorProps) => {
   const styles = useStyles2(getStyles);
@@ -44,7 +41,14 @@ export const ArcOptionsEditor = ({ value, onChange, context }: ArcOptionsEditorP
               onChange={(val) => {
                 updateField(i, 'field', val);
               }}
-              item={fieldNamePickerSettings}
+              item={{
+                settings: {
+                  filter: (field: Field) => field.name.includes('arc__'),
+                },
+                id: `arc-field-${i}`,
+                name: `arc-field-${i}`,
+                editor: () => null,
+              }}
             />
             <ColorPicker
               color={arc.color || '#808080'}
