@@ -34,6 +34,7 @@ import getGlobalActions from './actions/global.static.actions';
 export const CommandPalette = () => {
   const styles = useStyles2(getSearchStyles);
   const [actions, setActions] = useState<Action[]>([]);
+  const [staticActions, setStaticActions] = useState<Action[]>([]);
   const { query, showing } = useKBar((state) => ({
     showing: state.visualState === VisualState.showing,
   }));
@@ -48,18 +49,16 @@ export const CommandPalette = () => {
   useEffect(() => {
     (async () => {
       if (isNotLogin) {
-        setActions([{ id: 'init', name: 'Loading...' }]);
+        setStaticActions(getGlobalActions(navBarTree));
+        setActions(staticActions);
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isNotLogin]);
+  }, [isNotLogin, navBarTree]);
 
   useEffect(() => {
     if (showing) {
       reportInteraction('commandPalette_opened');
-
-      const staticActions = getGlobalActions(navBarTree);
-      setActions(staticActions);
 
       // Do dashboard search on demand
       getDashboardNavActions('go/dashboard').then((dashAct) => {
