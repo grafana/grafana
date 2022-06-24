@@ -18,6 +18,10 @@ type ErrCaseInsensitiveLoginConflict struct {
 	users []models.User
 }
 
+func (e *ErrCaseInsensitiveLoginConflict) Unwrap() error {
+	return models.ErrCaseInsensitive
+}
+
 func (e *ErrCaseInsensitiveLoginConflict) Error() string {
 	n := len(e.users)
 
