@@ -37,6 +37,7 @@ import {
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import { dedupLogRows, filterLogLevels } from 'app/core/logsModel';
 import store from 'app/core/store';
+import { CloudWatchLogsQuery } from 'app/plugins/datasource/cloudwatch/types';
 import { ExploreId } from 'app/types/explore';
 
 import { LogsMetaRow } from './LogsMetaRow';
@@ -275,6 +276,22 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
   scrollToTopLogs = () => this.topLogsRef.current?.scrollIntoView();
 
+  getRowContext = async (row: LogRowModel, options: RowContextOptions = {}): Promise<any> => {
+    const { getRowContext, datasourceType, logsQueries } = this.props;
+    if (getRowContext) {
+      if (datasourceType === 'cloudwatch') {
+        logsQueries?.forEach((query) => {
+          if (query.refId === row.dataFrame.refId) {
+            options.region = (query as CloudWatchLogsQuery).region;
+          }
+        });
+      }
+      return getRowContext(row, options);
+    }
+
+    return [];
+  };
+
   render() {
     const {
       width,
@@ -438,7 +455,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
               logRows={logRows}
               deduplicatedRows={dedupedRows}
               dedupStrategy={dedupStrategy}
-              getRowContext={this.props.getRowContext}
+              getRowContext={this.getRowContext}
               onClickFilterLabel={onClickFilterLabel}
               onClickFilterOutLabel={onClickFilterOutLabel}
               showContextToggle={showContextToggle}

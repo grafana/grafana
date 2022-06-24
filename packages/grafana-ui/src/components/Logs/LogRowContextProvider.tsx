@@ -14,6 +14,7 @@ import {
 export interface RowContextOptions {
   direction?: 'BACKWARD' | 'FORWARD';
   limit?: number;
+  region?: string;
 }
 
 export interface LogRowContextRows {
