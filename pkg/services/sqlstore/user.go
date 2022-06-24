@@ -15,18 +15,20 @@ import (
 )
 
 type ErrCaseInsensitiveLoginConflict struct {
-	users []*models.User
+	users []models.User
 }
 
 func (e *ErrCaseInsensitiveLoginConflict) Error() string {
 	n := len(e.users)
 
-	userStrings := make([]string, 0, 3)
+	userStrings := make([]string, 0, n)
 	for _, v := range e.users {
 		userStrings = append(userStrings, fmt.Sprintf("%s (%s)", v.Login, v.Email))
 	}
 
-	return fmt.Sprintf("Found a conflict in user login information. %d users already exist with either the same login or email: [%s].", n, strings.Join(userStrings, ", "))
+	return fmt.Sprintf(
+		"Found a conflict in user login information. %d users already exist with either the same login or email: [%s].",
+		n, strings.Join(userStrings, ", "))
 }
 
 func (ss *SQLStore) getOrgIDForNewUser(sess *DBSession, args models.CreateUserCommand) (int64, error) {
@@ -46,12 +48,10 @@ func (ss *SQLStore) getOrgIDForNewUser(sess *DBSession, args models.CreateUserCo
 }
 
 func (ss *SQLStore) userCaseInsensitiveLoginConflict(ctx context.Context, sess *DBSession, login, email string) error {
-	users := make([]*models.User, 0)
-	where := "LOWER(email)=LOWER(?) OR LOWER(login)=LOWER(?)"
-	login = strings.ToLower(login)
-	email = strings.ToLower(email)
+	users := make([]models.User, 0)
 
-	if err := sess.Where(where, email, login).Find(&users); err != nil {
+	if err := sess.Where("LOWER(email)=LOWER(?) OR LOWER(login)=LOWER(?)",
+		email, login).Find(&users); err != nil {
 		return err
 	}
 
