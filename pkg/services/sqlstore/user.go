@@ -23,7 +23,7 @@ func (e *ErrCaseInsensitiveLoginConflict) Error() string {
 
 	userStrings := make([]string, 0, n)
 	for _, v := range e.users {
-		userStrings = append(userStrings, fmt.Sprintf("%s (%s)", v.Login, v.Email))
+		userStrings = append(userStrings, fmt.Sprintf("%s (email:%s, id:%d)", v.Login, v.Email, v.Id))
 	}
 
 	return fmt.Sprintf(
