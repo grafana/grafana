@@ -42,7 +42,7 @@ export class TextPanel extends PureComponent<Props, State> {
 
   prepareHTML(html: string): string {
     const result = this.interpolateString(html);
-    return this.sanitizeString(result);
+    return config.disableSanitizeHtml ? result : this.sanitizeString(result);
   }
 
   prepareMarkdown(content: string): string {
