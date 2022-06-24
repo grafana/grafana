@@ -77,7 +77,7 @@ async function doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
     search: {
       ...query,
       query: query.query ?? '*',
-      limit: firstPageSize,
+      limit: query.limit ?? firstPageSize,
     },
   };
   const rsp = await lastValueFrom(
