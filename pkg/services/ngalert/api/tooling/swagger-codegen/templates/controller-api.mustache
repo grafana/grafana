@@ -19,16 +19,16 @@ type {{classname}}ForkingService interface { {{#operation}}
 
 {{#operations}}{{#operation}}
 func (f *Forked{{classname}}) {{nickname}}(ctx *models.ReqContext) response.Response {
+	{{#pathParams}}
+	{{paramName}}Param := web.Params(ctx.Req)[":{{baseName}}"]
+	{{/pathParams}}
 	{{#bodyParams}}
 	conf := apimodels.{{dataType}}{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.fork{{nickname}}(ctx, conf)
 	{{/bodyParams}}
-	{{^bodyParams}}
-	return f.fork{{nickname}}(ctx)
-	{{/bodyParams}}
+	return f.fork{{nickname}}(ctx{{#bodyParams}}, conf{{/bodyParams}}{{#pathParams}}, {{paramName}}Param{{/pathParams}})
 }
 {{/operation}}{{/operations}}
 

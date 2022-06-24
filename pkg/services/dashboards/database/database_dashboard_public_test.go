@@ -190,19 +190,37 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 	var sqlStore *sqlstore.SQLStore
 	var dashboardStore *DashboardStore
 	var savedDashboard *models.Dashboard
+	var anotherSavedDashboard *models.Dashboard
 
 	setup := func() {
 		sqlStore = sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagPublicDashboards}})
 		dashboardStore = ProvideDashboardStore(sqlStore)
 		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
+		anotherSavedDashboard = insertTestDashboard(t, dashboardStore, "test another Dashie", 1, 0, true)
 	}
 
 	t.Run("updates an existing dashboard", func(t *testing.T) {
 		setup()
 
-		pdUid := "asdf1234"
-
+		// inserting two different public dashboards to test update works and only affect the desired pd by uid
+		anotherPdUid := "anotherUid"
 		_, err := dashboardStore.SavePublicDashboardConfig(context.Background(), models.SavePublicDashboardConfigCommand{
+			DashboardUid: anotherSavedDashboard.Uid,
+			OrgId:        anotherSavedDashboard.OrgId,
+			PublicDashboard: models.PublicDashboard{
+				Uid:          anotherPdUid,
+				DashboardUid: anotherSavedDashboard.Uid,
+				OrgId:        anotherSavedDashboard.OrgId,
+				IsEnabled:    true,
+				CreatedAt:    DefaultTime,
+				CreatedBy:    7,
+				AccessToken:  "fakeaccesstoken",
+			},
+		})
+		require.NoError(t, err)
+
+		pdUid := "asdf1234"
+		_, err = dashboardStore.SavePublicDashboardConfig(context.Background(), models.SavePublicDashboardConfigCommand{
 			DashboardUid: savedDashboard.Uid,
 			OrgId:        savedDashboard.OrgId,
 			PublicDashboard: models.PublicDashboard{
@@ -234,6 +252,7 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 		})
 		require.NoError(t, err)
 
+		// updated dashboard should have changed
 		pdRetrieved, err := dashboardStore.GetPublicDashboardConfig(context.Background(), savedDashboard.OrgId, savedDashboard.Uid)
 		require.NoError(t, err)
 
@@ -241,5 +260,12 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 		// make sure we're correctly updated IsEnabled because we have to call
 		// UseBool with xorm
 		assert.Equal(t, updatedPublicDashboard.IsEnabled, pdRetrieved.IsEnabled)
+
+		// not updated dashboard shouldn't have changed
+		pdNotUpdatedRetrieved, err := dashboardStore.GetPublicDashboardConfig(context.Background(), anotherSavedDashboard.OrgId, anotherSavedDashboard.Uid)
+		require.NoError(t, err)
+
+		assert.NotEqual(t, updatedPublicDashboard.UpdatedAt, pdNotUpdatedRetrieved.UpdatedAt)
+		assert.NotEqual(t, updatedPublicDashboard.IsEnabled, pdNotUpdatedRetrieved.IsEnabled)
 	})
 }

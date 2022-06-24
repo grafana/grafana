@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/web"
 )
 
 const (
@@ -103,13 +102,12 @@ func (srv AlertmanagerSrv) RouteDeleteAlertingConfig(c *models.ReqContext) respo
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "configuration deleted; the default is applied"})
 }
 
-func (srv AlertmanagerSrv) RouteDeleteSilence(c *models.ReqContext) response.Response {
+func (srv AlertmanagerSrv) RouteDeleteSilence(c *models.ReqContext, silenceID string) response.Response {
 	am, errResp := srv.AlertmanagerFor(c.OrgId)
 	if errResp != nil {
 		return errResp
 	}
 
-	silenceID := web.Params(c.Req)[":SilenceId"]
 	if err := am.DeleteSilence(silenceID); err != nil {
 		if errors.Is(err, notifier.ErrSilenceNotFound) {
 			return ErrResp(http.StatusNotFound, err, "")
@@ -181,13 +179,12 @@ func (srv AlertmanagerSrv) RouteGetAMAlerts(c *models.ReqContext) response.Respo
 	return response.JSON(http.StatusOK, alerts)
 }
 
-func (srv AlertmanagerSrv) RouteGetSilence(c *models.ReqContext) response.Response {
+func (srv AlertmanagerSrv) RouteGetSilence(c *models.ReqContext, silenceID string) response.Response {
 	am, errResp := srv.AlertmanagerFor(c.OrgId)
 	if errResp != nil {
 		return errResp
 	}
 
-	silenceID := web.Params(c.Req)[":SilenceId"]
 	gettableSilence, err := am.GetSilence(silenceID)
 	if err != nil {
 		if errors.Is(err, notifier.ErrSilenceNotFound) {
