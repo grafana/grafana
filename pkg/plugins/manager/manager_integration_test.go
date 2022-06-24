@@ -120,7 +120,7 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, pm *PluginMana
 		"gettingstarted": {},
 		"graph":          {},
 		"heatmap":        {},
-		"heatmap-new":    {},
+		"heatmap-old":    {},
 		"histogram":      {},
 		"icon":           {},
 		"live":           {},

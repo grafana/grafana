@@ -1,9 +1,27 @@
 import { omit } from 'lodash';
 
-import { VariableQuery, VariableQueryType, OldVariableQuery } from '../types';
+import { Dimensions, VariableQuery, VariableQueryType, OldVariableQuery, MultiFilters } from '../types';
+
+const jsonVariable = /\${(\w+):json}/g;
 
 function isVariableQuery(rawQuery: string | VariableQuery | OldVariableQuery): rawQuery is VariableQuery {
   return typeof rawQuery !== 'string' && typeof rawQuery.ec2Filters !== 'string' && typeof rawQuery.tags !== 'string';
+}
+
+function migrateMultiFilters(oldFilters: string): MultiFilters {
+  const tempFilters = oldFilters.replace(jsonVariable, '"$$$1"');
+  const parsedFilters: Dimensions = JSON.parse(tempFilters);
+  const newFilters: MultiFilters = {};
+  // if the old filter was {key:value} transform it to {key:[value]}
+  Object.keys(parsedFilters).forEach((key) => {
+    const value = parsedFilters[key];
+    if (typeof value === 'string') {
+      newFilters[key] = [value];
+    } else if (value !== undefined) {
+      newFilters[key] = value;
+    }
+  });
+  return newFilters;
 }
 
 export function migrateVariableQuery(rawQuery: string | VariableQuery | OldVariableQuery): VariableQuery {
@@ -19,22 +37,23 @@ export function migrateVariableQuery(rawQuery: string | VariableQuery | OldVaria
     newQuery.tags = {};
 
     if (rawQuery.dimensionFilters !== '' && rawQuery.ec2Filters !== '[]') {
+      const tempFilters = rawQuery.dimensionFilters.replace(jsonVariable, '"$$$1"');
       try {
-        newQuery.dimensionFilters = JSON.parse(rawQuery.dimensionFilters);
+        newQuery.dimensionFilters = JSON.parse(tempFilters);
       } catch {
         throw new Error(`unable to migrate poorly formed filters: ${rawQuery.dimensionFilters}`);
       }
     }
     if (rawQuery.ec2Filters !== '' && rawQuery.ec2Filters !== '[]') {
       try {
-        newQuery.ec2Filters = JSON.parse(rawQuery.ec2Filters);
+        newQuery.ec2Filters = migrateMultiFilters(rawQuery.ec2Filters);
       } catch {
         throw new Error(`unable to migrate poorly formed filters: ${rawQuery.ec2Filters}`);
       }
     }
     if (rawQuery.tags !== '' && rawQuery.tags !== '[]') {
       try {
-        newQuery.tags = JSON.parse(rawQuery.tags);
+        newQuery.tags = migrateMultiFilters(rawQuery.tags);
       } catch {
         throw new Error(`unable to migrate poorly formed filters: ${rawQuery.tags}`);
       }
@@ -94,8 +113,9 @@ export function migrateVariableQuery(rawQuery: string | VariableQuery | OldVaria
     newQuery.dimensionKey = dimensionValuesQuery[4];
     newQuery.dimensionFilters = {};
     if (!!dimensionValuesQuery[6] && dimensionValuesQuery[6] !== '[]') {
+      const tempFilters = dimensionValuesQuery[6].replace(jsonVariable, '"$$$1"');
       try {
-        newQuery.dimensionFilters = JSON.parse(dimensionValuesQuery[6]);
+        newQuery.dimensionFilters = JSON.parse(tempFilters);
       } catch {
         throw new Error(`unable to migrate poorly formed filters: ${dimensionValuesQuery[6]}`);
       }
@@ -118,7 +138,7 @@ export function migrateVariableQuery(rawQuery: string | VariableQuery | OldVaria
     newQuery.attributeName = ec2InstanceAttributeQuery[2];
     if (ec2InstanceAttributeQuery[3] && ec2InstanceAttributeQuery[3] !== '[]') {
       try {
-        newQuery.ec2Filters = JSON.parse(ec2InstanceAttributeQuery[3]);
+        newQuery.ec2Filters = migrateMultiFilters(ec2InstanceAttributeQuery[3]);
       } catch {
         throw new Error(`unable to migrate poorly formed filters: ${ec2InstanceAttributeQuery[3]}`);
       }
@@ -133,7 +153,7 @@ export function migrateVariableQuery(rawQuery: string | VariableQuery | OldVaria
     newQuery.resourceType = resourceARNsQuery[2];
     if (resourceARNsQuery[3] && resourceARNsQuery[3] !== '[]') {
       try {
-        newQuery.tags = JSON.parse(resourceARNsQuery[3]);
+        newQuery.tags = migrateMultiFilters(resourceARNsQuery[3]);
       } catch {
         throw new Error(`unable to migrate poorly formed filters: ${resourceARNsQuery[3]}`);
       }
