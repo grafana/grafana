@@ -1,5 +1,5 @@
 import { isNumber } from 'lodash';
-import uPlot from 'uplot';
+import uPlot, { AlignedData } from 'uplot';
 
 import {
   DashboardCursorSync,
@@ -25,6 +25,7 @@ import {
   ScaleDirection,
   ScaleOrientation,
   StackingMode,
+  GraphTransform,
 } from '@grafana/schema';
 
 import { buildScaleKey } from '../GraphNG/utils';
@@ -284,6 +285,28 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       if (customRenderedFields.indexOf(dispName) >= 0) {
         pathBuilder = () => null;
         pointsBuilder = () => undefined;
+      } else if (customConfig.transform === GraphTransform.Constant) {
+        // patch some monkeys!
+        let defaultBuilder = uPlot.paths!.linear!();
+
+        pathBuilder = (u, seriesIdx, idx0, idx1) => {
+          let _data: uPlot.AlignedData = u._data;
+
+          // the data we want the line renderer to pull is x at each plot edge with paired flat y values
+
+          const r = getTimeRange();
+          let xData = [r.from.valueOf(), r.to.valueOf()];
+          let firstY = _data[seriesIdx].find((v: number | null | undefined) => v != null);
+          let yData = [firstY, firstY];
+          let fauxData = _data.slice();
+          fauxData[0] = xData;
+          fauxData[seriesIdx] = yData;
+
+          return defaultBuilder({
+            ...u,
+            _data: fauxData,
+          }, seriesIdx, 0, 1);
+        };
       }
 
       if (customConfig.fillBelowTo) {

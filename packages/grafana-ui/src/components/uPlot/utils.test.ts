@@ -174,40 +174,6 @@ describe('preparePlotData2', () => {
         ]
       `);
     });
-    it('constant transform', () => {
-      const df = new MutableDataFrame({
-        fields: [
-          { name: 'time', type: FieldType.time, values: [9997, 9998, 9999] },
-          { name: 'a', values: [-10, 20, 10], config: { custom: { transform: GraphTransform.Constant } } },
-          { name: 'b', values: [10, 10, 10] },
-          { name: 'c', values: [20, 20, 20] },
-        ],
-      });
-      expect(preparePlotData2(df, getStackingGroups(df))).toMatchInlineSnapshot(`
-        Array [
-          Array [
-            9997,
-            9998,
-            9999,
-          ],
-          Array [
-            -10,
-            -10,
-            -10,
-          ],
-          Array [
-            10,
-            10,
-            10,
-          ],
-          Array [
-            20,
-            20,
-            20,
-          ],
-        ]
-      `);
-    });
   });
   describe('stacking', () => {
     it('none', () => {
