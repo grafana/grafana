@@ -239,6 +239,11 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:        "useLegacyHeatmapPanel",
+			Description: "Continue to use the angular/flot based heatmap panel",
+			State:       FeatureStateStable,
+		},
+		{
 			Name:         "cloudMonitoringExperimentalUI",
 			Description:  "Use grafana-experimental UI in Cloud Monitoring",
 			State:        FeatureStateAlpha,
@@ -261,6 +266,11 @@ var (
 		{
 			Name:        "topnav",
 			Description: "New top nav and page layouts",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "customBranding",
+			Description: "Replaces whitelabeling with the new custom branding feature",
 			State:       FeatureStateAlpha,
 		},
 	}

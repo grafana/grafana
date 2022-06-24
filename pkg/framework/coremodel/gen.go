@@ -50,7 +50,7 @@ func main() {
 	var lins []*gcgen.ExtractedLineage
 	for _, item := range items {
 		if item.IsDir() {
-			lin, err := gcgen.ExtractLineage(filepath.Join(cmroot, item.Name(), "lineage.cue"), lib)
+			lin, err := gcgen.ExtractLineage(filepath.Join(cmroot, item.Name(), "coremodel.cue"), lib)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "could not process coremodel dir %s: %s\n", cmroot, err)
 				os.Exit(1)
