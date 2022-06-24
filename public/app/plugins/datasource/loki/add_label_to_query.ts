@@ -31,11 +31,10 @@ export function addLabelToQuery(query: string, key: string, value: string, opera
     return query;
   }
 
+  const filter = toLabelFilter(key, value, operator);
   if (!parserPositions.length) {
-    const filter = toLabelFilter(key, value, operator);
     return addFilterToStreamSelector(query, streamSelectorPositions, filter);
   } else {
-    const filter = toLabelFilter(key, value, operator);
     return addFilterAsLabelFilter(query, parserPositions, filter);
   }
 }
