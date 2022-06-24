@@ -32,7 +32,7 @@ var (
 )
 
 type PublicDashboard struct {
-	Uid          string           `json:"uid" xorm:"uid"`
+	Uid          string           `json:"uid" xorm:"pk uid"`
 	DashboardUid string           `json:"dashboardUid" xorm:"dashboard_uid"`
 	OrgId        int64            `json:"-" xorm:"org_id"` // Don't ever marshal orgId to Json
 	TimeSettings *simplejson.Json `json:"timeSettings" xorm:"time_settings"`

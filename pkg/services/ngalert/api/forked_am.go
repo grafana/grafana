@@ -38,7 +38,7 @@ func (f *ForkedAlertmanagerApi) getService(ctx *models.ReqContext) (*LotexAM, er
 	}
 }
 
-func (f *ForkedAlertmanagerApi) forkRouteGetAMStatus(ctx *models.ReqContext) response.Response {
+func (f *ForkedAlertmanagerApi) forkRouteGetAMStatus(ctx *models.ReqContext, dsUID string) response.Response {
 	s, err := f.getService(ctx)
 	if err != nil {
 		return response.Error(400, err.Error(), nil)
@@ -47,7 +47,7 @@ func (f *ForkedAlertmanagerApi) forkRouteGetAMStatus(ctx *models.ReqContext) res
 	return s.RouteGetAMStatus(ctx)
 }
 
-func (f *ForkedAlertmanagerApi) forkRouteCreateSilence(ctx *models.ReqContext, body apimodels.PostableSilence) response.Response {
+func (f *ForkedAlertmanagerApi) forkRouteCreateSilence(ctx *models.ReqContext, body apimodels.PostableSilence, dsUID string) response.Response {
 	s, err := f.getService(ctx)
 	if err != nil {
 		return ErrResp(400, err, "")
@@ -56,7 +56,7 @@ func (f *ForkedAlertmanagerApi) forkRouteCreateSilence(ctx *models.ReqContext, b
 	return s.RouteCreateSilence(ctx, body)
 }
 
-func (f *ForkedAlertmanagerApi) forkRouteDeleteAlertingConfig(ctx *models.ReqContext) response.Response {
+func (f *ForkedAlertmanagerApi) forkRouteDeleteAlertingConfig(ctx *models.ReqContext, dsUID string) response.Response {
 	s, err := f.getService(ctx)
 	if err != nil {
 		return ErrResp(400, err, "")
@@ -65,16 +65,16 @@ func (f *ForkedAlertmanagerApi) forkRouteDeleteAlertingConfig(ctx *models.ReqCon
 	return s.RouteDeleteAlertingConfig(ctx)
 }
 
-func (f *ForkedAlertmanagerApi) forkRouteDeleteSilence(ctx *models.ReqContext) response.Response {
+func (f *ForkedAlertmanagerApi) forkRouteDeleteSilence(ctx *models.ReqContext, silenceID string, dsUID string) response.Response {
 	s, err := f.getService(ctx)
 	if err != nil {
 		return ErrResp(400, err, "")
 	}
 
-	return s.RouteDeleteSilence(ctx)
+	return s.RouteDeleteSilence(ctx, silenceID)
 }
 
-func (f *ForkedAlertmanagerApi) forkRouteGetAlertingConfig(ctx *models.ReqContext) response.Response {
+func (f *ForkedAlertmanagerApi) forkRouteGetAlertingConfig(ctx *models.ReqContext, dsUID string) response.Response {
 	s, err := f.getService(ctx)
 	if err != nil {
 		return ErrResp(400, err, "")
@@ -83,7 +83,7 @@ func (f *ForkedAlertmanagerApi) forkRouteGetAlertingConfig(ctx *models.ReqContex
 	return s.RouteGetAlertingConfig(ctx)
 }
 
-func (f *ForkedAlertmanagerApi) forkRouteGetAMAlertGroups(ctx *models.ReqContext) response.Response {
+func (f *ForkedAlertmanagerApi) forkRouteGetAMAlertGroups(ctx *models.ReqContext, dsUID string) response.Response {
 	s, err := f.getService(ctx)
 	if err != nil {
 		return ErrResp(400, err, "")
@@ -92,7 +92,7 @@ func (f *ForkedAlertmanagerApi) forkRouteGetAMAlertGroups(ctx *models.ReqContext
 	return s.RouteGetAMAlertGroups(ctx)
 }
 
-func (f *ForkedAlertmanagerApi) forkRouteGetAMAlerts(ctx *models.ReqContext) response.Response {
+func (f *ForkedAlertmanagerApi) forkRouteGetAMAlerts(ctx *models.ReqContext, dsUID string) response.Response {
 	s, err := f.getService(ctx)
 	if err != nil {
 		return ErrResp(400, err, "")
@@ -101,16 +101,16 @@ func (f *ForkedAlertmanagerApi) forkRouteGetAMAlerts(ctx *models.ReqContext) res
 	return s.RouteGetAMAlerts(ctx)
 }
 
-func (f *ForkedAlertmanagerApi) forkRouteGetSilence(ctx *models.ReqContext) response.Response {
+func (f *ForkedAlertmanagerApi) forkRouteGetSilence(ctx *models.ReqContext, silenceID string, dsUID string) response.Response {
 	s, err := f.getService(ctx)
 	if err != nil {
 		return ErrResp(400, err, "")
 	}
 
-	return s.RouteGetSilence(ctx)
+	return s.RouteGetSilence(ctx, silenceID)
 }
 
-func (f *ForkedAlertmanagerApi) forkRouteGetSilences(ctx *models.ReqContext) response.Response {
+func (f *ForkedAlertmanagerApi) forkRouteGetSilences(ctx *models.ReqContext, dsUID string) response.Response {
 	s, err := f.getService(ctx)
 	if err != nil {
 		return ErrResp(400, err, "")
@@ -119,7 +119,7 @@ func (f *ForkedAlertmanagerApi) forkRouteGetSilences(ctx *models.ReqContext) res
 	return s.RouteGetSilences(ctx)
 }
 
-func (f *ForkedAlertmanagerApi) forkRoutePostAlertingConfig(ctx *models.ReqContext, body apimodels.PostableUserConfig) response.Response {
+func (f *ForkedAlertmanagerApi) forkRoutePostAlertingConfig(ctx *models.ReqContext, body apimodels.PostableUserConfig, dsUID string) response.Response {
 	s, err := f.getService(ctx)
 	if err != nil {
 		return ErrResp(400, err, "")
@@ -137,7 +137,7 @@ func (f *ForkedAlertmanagerApi) forkRoutePostAlertingConfig(ctx *models.ReqConte
 	return s.RoutePostAlertingConfig(ctx, body)
 }
 
-func (f *ForkedAlertmanagerApi) forkRoutePostAMAlerts(ctx *models.ReqContext, body apimodels.PostableAlerts) response.Response {
+func (f *ForkedAlertmanagerApi) forkRoutePostAMAlerts(ctx *models.ReqContext, body apimodels.PostableAlerts, dsUID string) response.Response {
 	s, err := f.getService(ctx)
 	if err != nil {
 		return ErrResp(400, err, "")
@@ -146,7 +146,7 @@ func (f *ForkedAlertmanagerApi) forkRoutePostAMAlerts(ctx *models.ReqContext, bo
 	return s.RoutePostAMAlerts(ctx, body)
 }
 
-func (f *ForkedAlertmanagerApi) forkRoutePostTestReceivers(ctx *models.ReqContext, body apimodels.TestReceiversConfigBodyParams) response.Response {
+func (f *ForkedAlertmanagerApi) forkRoutePostTestReceivers(ctx *models.ReqContext, body apimodels.TestReceiversConfigBodyParams, dsUID string) response.Response {
 	s, err := f.getService(ctx)
 	if err != nil {
 		return ErrResp(400, err, "")
@@ -155,8 +155,8 @@ func (f *ForkedAlertmanagerApi) forkRoutePostTestReceivers(ctx *models.ReqContex
 	return s.RoutePostTestReceivers(ctx, body)
 }
 
-func (f *ForkedAlertmanagerApi) forkRouteDeleteGrafanaSilence(ctx *models.ReqContext) response.Response {
-	return f.GrafanaSvc.RouteDeleteSilence(ctx)
+func (f *ForkedAlertmanagerApi) forkRouteDeleteGrafanaSilence(ctx *models.ReqContext, id string) response.Response {
+	return f.GrafanaSvc.RouteDeleteSilence(ctx, id)
 }
 
 func (f *ForkedAlertmanagerApi) forkRouteDeleteGrafanaAlertingConfig(ctx *models.ReqContext) response.Response {
@@ -183,8 +183,8 @@ func (f *ForkedAlertmanagerApi) forkRouteGetGrafanaAlertingConfig(ctx *models.Re
 	return f.GrafanaSvc.RouteGetAlertingConfig(ctx)
 }
 
-func (f *ForkedAlertmanagerApi) forkRouteGetGrafanaSilence(ctx *models.ReqContext) response.Response {
-	return f.GrafanaSvc.RouteGetSilence(ctx)
+func (f *ForkedAlertmanagerApi) forkRouteGetGrafanaSilence(ctx *models.ReqContext, id string) response.Response {
+	return f.GrafanaSvc.RouteGetSilence(ctx, id)
 }
 
 func (f *ForkedAlertmanagerApi) forkRouteGetGrafanaSilences(ctx *models.ReqContext) response.Response {
