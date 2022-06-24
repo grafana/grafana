@@ -1225,8 +1225,8 @@ exports[`no type assertions`] = {
     "packages/jaeger-ui-components/src/TraceTimelineViewer/TimelineRow.tsx:1261511008": [
       [63, 72, 11, "Do not use any type assertions.", "3094336209"]
     ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/VirtualizedTraceView.tsx:1118920040": [
-      [209, 25, 64, "Do not use any type assertions.", "837889268"]
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/VirtualizedTraceView.tsx:2520975582": [
+      [210, 25, 64, "Do not use any type assertions.", "837889268"]
     ],
     "packages/jaeger-ui-components/src/constants/index.tsx:1261379693": [
       [14, 45, 10, "Do not use any type assertions.", "1495169303"],
@@ -2543,13 +2543,13 @@ exports[`no type assertions`] = {
       [227, 16, 11, "Do not use any type assertions.", "319541530"],
       [259, 12, 11, "Do not use any type assertions.", "319541530"]
     ],
-    "public/app/features/explore/TraceView/TraceView.tsx:3577738567": [
-      [118, 30, 45, "Do not use any type assertions.", "2423479359"],
-      [119, 33, 48, "Do not use any type assertions.", "1615058495"],
-      [181, 25, 11, "Do not use any type assertions.", "1662677663"],
-      [248, 57, 19, "Do not use any type assertions.", "1794170740"],
-      [254, 13, 9, "Do not use any type assertions.", "3692209159"],
-      [255, 13, 11, "Do not use any type assertions.", "772402835"]
+    "public/app/features/explore/TraceView/TraceView.tsx:3073177399": [
+      [124, 30, 45, "Do not use any type assertions.", "2423479359"],
+      [125, 33, 48, "Do not use any type assertions.", "1615058495"],
+      [189, 25, 11, "Do not use any type assertions.", "1662677663"],
+      [256, 57, 19, "Do not use any type assertions.", "1794170740"],
+      [262, 13, 9, "Do not use any type assertions.", "3692209159"],
+      [263, 13, 11, "Do not use any type assertions.", "772402835"]
     ],
     "public/app/features/explore/TraceView/TraceViewContainer.test.tsx:346725917": [
       [74, 7, 101, "Do not use any type assertions.", "1913214000"],
@@ -4354,8 +4354,8 @@ exports[`no type assertions`] = {
       [111, 15, 72, "Do not use any type assertions.", "3112405971"],
       [327, 10, 9, "Do not use any type assertions.", "3692209159"]
     ],
-    "public/app/plugins/datasource/jaeger/datasource.ts:1034730031": [
-      [82, 37, 27, "Do not use any type assertions.", "4270099088"]
+    "public/app/plugins/datasource/jaeger/datasource.ts:1007148145": [
+      [84, 37, 27, "Do not use any type assertions.", "4270099088"]
     ],
     "public/app/plugins/datasource/jaeger/testResponse.ts:746232565": [
       [53, 65, 17, "Do not use any type assertions.", "2728931639"]
@@ -4978,15 +4978,15 @@ exports[`no type assertions`] = {
       [604, 10, 9, "Do not use any type assertions.", "3692209159"],
       [771, 13, 102, "Do not use any type assertions.", "3728825486"]
     ],
-    "public/app/plugins/datasource/tempo/datasource.ts:1574681416": [
-      [140, 71, 23, "Do not use any type assertions.", "635329421"],
-      [154, 22, 70, "Do not use any type assertions.", "2827277152"],
-      [198, 36, 27, "Do not use any type assertions.", "4270099088"],
-      [337, 47, 23, "Do not use any type assertions.", "4133620855"],
-      [338, 50, 23, "Do not use any type assertions.", "4133620855"],
-      [418, 14, 26, "Do not use any type assertions.", "1503789431"],
-      [556, 13, 121, "Do not use any type assertions.", "3328990452"],
-      [569, 14, 43, "Do not use any type assertions.", "2578485471"]
+    "public/app/plugins/datasource/tempo/datasource.ts:2211569663": [
+      [145, 71, 23, "Do not use any type assertions.", "635329421"],
+      [159, 22, 70, "Do not use any type assertions.", "2827277152"],
+      [203, 36, 27, "Do not use any type assertions.", "4270099088"],
+      [342, 47, 23, "Do not use any type assertions.", "4133620855"],
+      [343, 50, 23, "Do not use any type assertions.", "4133620855"],
+      [423, 14, 26, "Do not use any type assertions.", "1503789431"],
+      [561, 13, 121, "Do not use any type assertions.", "3328990452"],
+      [574, 14, 43, "Do not use any type assertions.", "2578485471"]
     ],
     "public/app/plugins/datasource/tempo/resultTransformer.test.ts:3286880097": [
       [37, 10, 9, "Do not use any type assertions.", "3692209159"],
@@ -5076,8 +5076,8 @@ exports[`no type assertions`] = {
       [50, 17, 76, "Do not use any type assertions.", "1540592467"],
       [81, 8, 9, "Do not use any type assertions.", "3692209159"]
     ],
-    "public/app/plugins/datasource/zipkin/datasource.ts:567926638": [
-      [42, 37, 27, "Do not use any type assertions.", "4270099088"]
+    "public/app/plugins/datasource/zipkin/datasource.ts:2737039856": [
+      [44, 37, 27, "Do not use any type assertions.", "4270099088"]
     ],
     "public/app/plugins/datasource/zipkin/utils/testResponse.ts:535903942": [
       [37, 65, 17, "Do not use any type assertions.", "2728931639"]
@@ -9463,9 +9463,9 @@ exports[`no explicit any`] = {
       [227, 24, 3, "Unexpected any. Specify a different type.", "193409811"],
       [259, 20, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/explore/TraceView/TraceView.tsx:3577738567": [
-      [181, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [254, 19, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/features/explore/TraceView/TraceView.tsx:3073177399": [
+      [189, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [262, 19, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/explore/TraceView/createSpanLink.test.ts:2497775594": [
       [26, 66, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -11450,14 +11450,14 @@ exports[`no explicit any`] = {
       [308, 46, 3, "Unexpected any. Specify a different type.", "193409811"],
       [327, 16, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/jaeger/datasource.ts:1034730031": [
-      [43, 61, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [43, 76, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [162, 34, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [166, 24, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [177, 25, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [212, 42, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [212, 112, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/plugins/datasource/jaeger/datasource.ts:1007148145": [
+      [45, 61, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [45, 76, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [164, 34, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [168, 24, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [179, 25, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [214, 42, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [214, 112, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/plugins/datasource/jaeger/testResponse.ts:746232565": [
       [53, 60, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -12396,18 +12396,18 @@ exports[`no explicit any`] = {
       [591, 7, 3, "Unexpected any. Specify a different type.", "193409811"],
       [604, 16, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/tempo/datasource.ts:1574681416": [
-      [140, 91, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [245, 84, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [312, 42, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [312, 112, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [320, 34, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [326, 49, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [612, 10, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [667, 22, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [709, 21, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [785, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [805, 40, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/plugins/datasource/tempo/datasource.ts:2211569663": [
+      [145, 91, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [250, 84, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [317, 42, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [317, 112, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [325, 34, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [331, 49, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [617, 10, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [672, 22, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [714, 21, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [790, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [810, 40, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/plugins/datasource/tempo/language_provider.ts:1814063185": [
       [10, 59, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -12499,11 +12499,11 @@ exports[`no explicit any`] = {
       [69, 35, 3, "Unexpected any. Specify a different type.", "193409811"],
       [81, 14, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/zipkin/datasource.ts:567926638": [
-      [57, 61, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [57, 76, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [71, 22, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [73, 11, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/plugins/datasource/zipkin/datasource.ts:2737039856": [
+      [59, 61, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [59, 76, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [73, 22, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [75, 11, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/plugins/datasource/zipkin/utils/testData.ts:4233977850": [
       [129, 46, 3, "Unexpected any. Specify a different type.", "193409811"]

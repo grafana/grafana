@@ -124,7 +124,7 @@ export function TraceView(props: Props) {
   const instanceSettings = getDatasourceSrv().getInstanceSettings(datasource?.name);
   const traceToLogsOptions = (instanceSettings?.jsonData as TraceToLogsData)?.tracesToLogs;
   const traceToMetricsOptions = (instanceSettings?.jsonData as TraceToMetricsData)?.tracesToMetrics;
-  const spanBarOptions = (instanceSettings?.jsonData as SpanBarOptionsData)?.spanBar;
+  const spanBarOptions: SpanBarOptionsData | undefined = instanceSettings?.jsonData;
 
   const createSpanLink = useMemo(
     () =>
@@ -162,7 +162,7 @@ export function TraceView(props: Props) {
             scrollToFirstVisibleSpan={noop}
             findMatchesIDs={spanFindMatches}
             trace={traceProp}
-            spanBarOptions={spanBarOptions}
+            spanBarOptions={spanBarOptions?.spanBar}
             traceTimeline={traceTimeline}
             updateNextViewRangeTime={updateNextViewRangeTime}
             updateViewRangeTime={updateViewRangeTime}
