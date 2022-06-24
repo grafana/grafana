@@ -11,7 +11,6 @@ func TestFeatureUsageStats(t *testing.T) {
 	featureManagerWithAllFeatures := WithFeatures(
 		"trimDefaults",
 		"httpclientprovider_azure_auth",
-		"serviceAccounts",
 		"database_metrics",
 		"dashboardPreviews",
 		"live-config",

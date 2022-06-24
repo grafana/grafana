@@ -20,11 +20,6 @@ var (
 			State:       FeatureStateStable,
 		},
 		{
-			Name:        "serviceAccounts",
-			Description: "support service accounts",
-			State:       FeatureStateBeta,
-		},
-		{
 			Name:        "database_metrics",
 			Description: "Add prometheus metrics for database tables",
 			State:       FeatureStateStable,
