@@ -3,7 +3,7 @@ import React, { PureComponent } from 'react';
 import { AppEvents } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { LoadingPlaceholder, JSONFormatter, Icon, HorizontalGroup, ClipboardButton } from '@grafana/ui';
-import appEvents from 'app/core/app_events';
+import appEvents from 'app/core/appEvents';
 
 import { DashboardModel, PanelModel } from '../dashboard/state';
 

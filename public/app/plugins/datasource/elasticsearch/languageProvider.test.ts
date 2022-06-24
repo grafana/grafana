@@ -3,7 +3,7 @@ import { AbstractLabelOperator, AbstractQuery, DataSourceInstanceSettings } from
 import { TemplateSrv } from '../../../features/templating/template_srv';
 
 import { ElasticDatasource } from './datasource';
-import LanguageProvider from './language_provider';
+import LanguageProvider from './languageProvider';
 import { ElasticsearchOptions, ElasticsearchQuery } from './types';
 
 const templateSrvStub = {

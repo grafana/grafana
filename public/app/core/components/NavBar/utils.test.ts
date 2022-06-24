@@ -7,7 +7,7 @@ import { updateConfig } from '../../config';
 
 import { enrichConfigItems, getActiveItem, getForcedLoginUrl, isMatchOrChildMatch, isSearchActive } from './utils';
 
-jest.mock('../../app_events', () => ({
+jest.mock('../../appEvents', () => ({
   publish: jest.fn(),
 }));
 

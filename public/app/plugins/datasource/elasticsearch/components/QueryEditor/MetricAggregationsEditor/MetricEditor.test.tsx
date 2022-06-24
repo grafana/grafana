@@ -5,7 +5,7 @@ import { from } from 'rxjs';
 import { getDefaultTimeRange } from '@grafana/data';
 
 import { ElasticDatasource } from '../../../datasource';
-import { defaultBucketAgg, defaultMetricAgg } from '../../../query_def';
+import { defaultBucketAgg, defaultMetricAgg } from '../../../queryDef';
 import { ElasticsearchQuery } from '../../../types';
 import { ElasticsearchProvider } from '../ElasticsearchQueryContext';
 

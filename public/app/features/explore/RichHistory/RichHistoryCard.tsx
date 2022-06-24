@@ -6,7 +6,7 @@ import { GrafanaTheme, DataSourceApi, DataQuery } from '@grafana/data';
 import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { stylesFactory, useTheme, TextArea, Button, IconButton } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
-import appEvents from 'app/core/app_events';
+import appEvents from 'app/core/appEvents';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { copyStringToClipboard } from 'app/core/utils/explore';
 import { createUrlFromRichHistory, createQueryText } from 'app/core/utils/richHistory';

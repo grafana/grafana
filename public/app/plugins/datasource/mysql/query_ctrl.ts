@@ -4,7 +4,7 @@ import { clone, filter, find, findIndex, indexOf, map } from 'lodash';
 import { PanelEvents, QueryResultMeta } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
 import { SqlPart } from 'app/angular/components/sql_part/sql_part';
-import appEvents from 'app/core/app_events';
+import appEvents from 'app/core/appEvents';
 import { VariableWithMultiSupport } from 'app/features/variables/types';
 import { QueryCtrl } from 'app/plugins/sdk';
 

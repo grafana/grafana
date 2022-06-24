@@ -1,6 +1,6 @@
 import { histogram } from 'd3';
 
-import TimeSeries from 'app/core/time_series2';
+import TimeSeries from 'app/core/timeSeries2';
 
 /**
  * Convert series into array of series values.

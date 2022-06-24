@@ -7,7 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Stack } from '@grafana/experimental';
 import { config, RefreshEvent } from '@grafana/runtime';
 import { Button, ClipboardButton, JSONFormatter, LoadingPlaceholder } from '@grafana/ui';
-import appEvents from 'app/core/app_events';
+import appEvents from 'app/core/appEvents';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { supportsDataQuery } from 'app/features/dashboard/components/PanelEditor/utils';
 import { PanelModel } from 'app/features/dashboard/state';

@@ -10,7 +10,7 @@ import { AbsoluteTimeRange, DataQuery, GrafanaTheme2, LoadingState, RawTimeRange
 import { selectors } from '@grafana/e2e-selectors';
 import { Collapse, CustomScrollbar, ErrorBoundaryAlert, Themeable2, withTheme2, PanelContainer } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, FilterItem } from '@grafana/ui/src/components/Table/types';
-import appEvents from 'app/core/app_events';
+import appEvents from 'app/core/appEvents';
 import { supportedFeatures } from 'app/core/history/richHistoryStorageProvider';
 import { getNodeGraphDataFrames } from 'app/plugins/panel/nodeGraph/utils';
 import { StoreState } from 'app/types';

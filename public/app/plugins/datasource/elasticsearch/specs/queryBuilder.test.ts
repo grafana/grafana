@@ -1,6 +1,6 @@
 import { gte, lt } from 'semver';
 
-import { ElasticQueryBuilder } from '../query_builder';
+import { ElasticQueryBuilder } from '../queryBuilder';
 import { ElasticsearchQuery } from '../types';
 
 describe('ElasticQueryBuilder', () => {

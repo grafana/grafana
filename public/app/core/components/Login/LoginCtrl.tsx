@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 
 import { AppEvents } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import appEvents from 'app/core/app_events';
+import appEvents from 'app/core/appEvents';
 import config from 'app/core/config';
 
 const isOauthEnabled = () => {

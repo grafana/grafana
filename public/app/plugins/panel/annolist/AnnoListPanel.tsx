@@ -16,7 +16,7 @@ import {
 import { config, getBackendSrv, locationService } from '@grafana/runtime';
 import { CustomScrollbar, stylesFactory, TagList } from '@grafana/ui';
 import { AbstractList } from '@grafana/ui/src/components/List/AbstractList';
-import appEvents from 'app/core/app_events';
+import appEvents from 'app/core/appEvents';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { AnnotationListItem } from './AnnotationListItem';

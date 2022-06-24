@@ -4,7 +4,7 @@ import { DropResult } from 'react-beautiful-dnd';
 import { AppEvents, SelectableValue, StandardEditorProps } from '@grafana/data';
 import { config } from '@grafana/runtime/src';
 import { Button, HorizontalGroup } from '@grafana/ui';
-import appEvents from 'app/core/app_events';
+import appEvents from 'app/core/appEvents';
 import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
 import { LayerDragDropList } from 'app/core/components/Layers/LayerDragDropList';
 import { CanvasElementOptions, canvasElementRegistry } from 'app/features/canvas';

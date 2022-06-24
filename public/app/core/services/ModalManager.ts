@@ -4,7 +4,7 @@ import ReactDOM from 'react-dom';
 import { textUtil } from '@grafana/data';
 import { CopyPanelEvent } from '@grafana/runtime';
 import { ConfirmModal, ConfirmModalProps } from '@grafana/ui';
-import appEvents from 'app/core/app_events';
+import appEvents from 'app/core/appEvents';
 import { copyPanel } from 'app/features/dashboard/utils/panel';
 
 import { ShowConfirmModalEvent, ShowConfirmModalPayload, ShowModalReactEvent } from '../../types/events';

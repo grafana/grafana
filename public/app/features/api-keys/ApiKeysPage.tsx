@@ -4,7 +4,7 @@ import { connect, ConnectedProps } from 'react-redux';
 // Utils
 import { rangeUtil } from '@grafana/data';
 import { InlineField, InlineSwitch, VerticalGroup } from '@grafana/ui';
-import appEvents from 'app/core/app_events';
+import appEvents from 'app/core/appEvents';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import Page from 'app/core/components/Page/Page';
 import config from 'app/core/config';
