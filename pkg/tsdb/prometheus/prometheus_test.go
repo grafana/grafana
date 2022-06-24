@@ -45,6 +45,10 @@ func (provider *fakeHTTPClientProvider) New(opts ...sdkHttpClient.Options) (*htt
 	return client, nil
 }
 
+func (provider *fakeHTTPClientProvider) GetTransport(opts ...sdkHttpClient.Options) (http.RoundTripper, error) {
+	return &fakeRoundtripper{}, nil
+}
+
 func TestClient(t *testing.T) {
 	t.Run("Service", func(t *testing.T) {
 		t.Run("CallResource", func(t *testing.T) {
