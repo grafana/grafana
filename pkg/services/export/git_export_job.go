@@ -155,8 +155,13 @@ func (e *gitExportJob) doOrgExportWithHistory(helper *commitHelper) error {
 		return err
 	}
 
+	lookup, err := exportDataSources(helper, e)
+	if err != nil {
+		return err
+	}
+
 	if true {
-		err = exportDashboards(helper, e)
+		err = exportDashboards(helper, e, lookup)
 		if err != nil {
 			return err
 		}
