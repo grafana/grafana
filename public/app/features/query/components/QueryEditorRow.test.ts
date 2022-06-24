@@ -159,6 +159,9 @@ describe('frame results with warnings', () => {
     // @ts-ignore: there are _way_ too many props to inject here :(
     const editorRow = new QueryEditorRow({
       data: dataWithWarnings,
+      query: {
+        refId: 'B',
+      },
     });
 
     const warningsComponent = editorRow.renderWarnings();
@@ -172,6 +175,9 @@ describe('frame results with warnings', () => {
     // @ts-ignore: there are _way_ too many props to inject here :(
     const editorRow = new QueryEditorRow({
       data: dataWithoutWarnings,
+      query: {
+        refId: 'B',
+      },
     });
 
     const warningsComponent = editorRow.renderWarnings();
