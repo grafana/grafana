@@ -22,7 +22,7 @@ import { GrafanaTheme2, TraceKeyValuePair } from '@grafana/data';
 import { stylesFactory, withTheme2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';
-import { DURATION, NONE, PROCESS, TAG } from '../settings/SpanBarSettings';
+import { DURATION, NONE, TAG } from '../settings/SpanBarSettings';
 import { SpanBarOptions, SpanLinkFunc, TNil } from '../types';
 import { SpanLinks } from '../types/links';
 import { TraceSpan } from '../types/trace';
@@ -557,21 +557,16 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
     } else if (type === TAG) {
       const tagKey = spanBarOptions?.tag?.trim() ?? '';
       if (tagKey !== '' && span.tags) {
-        const tag = span.tags.find((tag: TraceKeyValuePair) => {
+        const tag = span.tags?.find((tag: TraceKeyValuePair) => {
           return tag.key === tagKey;
+        });
+        const process = span.process?.tags?.find((process: TraceKeyValuePair) => {
+          return process.key === tagKey;
         });
 
         if (tag) {
           return `(${tag.value})`;
         }
-      }
-    } else if (type === PROCESS) {
-      const processKey = spanBarOptions?.process?.trim() ?? '';
-      if (processKey !== '' && span.process?.tags) {
-        const process = span.process?.tags.find((process: TraceKeyValuePair) => {
-          return process.key === processKey;
-        });
-
         if (process) {
           return `(${process.value})`;
         }
