@@ -4473,12 +4473,12 @@ exports[`no explicit any`] = {
       [24, 44, 3, "Unexpected any. Specify a different type.", "193409811"],
       [24, 78, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/search/service/bluge.ts:3054830800": [
+    "public/app/features/search/service/bluge.ts:59496993": [
       [38, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
       [85, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
       [145, 15, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/search/service/sql.ts:1428696565": [
+    "public/app/features/search/service/sql.ts:4013142735": [
       [91, 36, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/search/types.ts:479421789": [
