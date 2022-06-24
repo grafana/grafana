@@ -13,7 +13,7 @@ import { SelectionChecker, SelectionToggle } from '../selection';
 
 import { TableColumn } from './SearchResultsTable';
 
-const TYPE_COLUMN_WIDTH = 250;
+const TYPE_COLUMN_WIDTH = 175;
 const DATASOURCE_COLUMN_WIDTH = 200;
 const SORT_FIELD_WIDTH = 175;
 
