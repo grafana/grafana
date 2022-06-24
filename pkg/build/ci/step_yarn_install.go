@@ -22,7 +22,7 @@ func yarnInstall(ctx context.Context, opts pipeline.ActionOpts) error {
 		Stdout: opts.Stdout,
 		Stderr: opts.Stderr,
 		Env: []string{
-			"YARN_CACHE_FOLDER=\"/opt/drone/yarncache\"",
+			"YARN_CACHE_FOLDER=/opt/drone/yarncache",
 		},
 	})
 }
