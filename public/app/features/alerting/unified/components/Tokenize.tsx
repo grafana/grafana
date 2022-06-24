@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { createElement } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Badge, useStyles2 } from '@grafana/ui';
@@ -36,23 +36,14 @@ function Tokenize({ input, delimiter = ['{{', '}}'] }: TokenizerProps) {
   const output: React.ReactElement[] = [];
 
   matches.forEach((match, index) => {
-    const before = match.groups?.before?.trim();
+    const before = match.groups?.before;
     const token = match.groups?.token?.trim();
 
-    const firstMatch = index === 0;
-
     if (before) {
-      if (!firstMatch) {
-        output.push(<span key={`${index}-space-before-text`}> </span>);
-      }
       output.push(<span key={`${index}-before`}>{before}</span>);
     }
 
     if (token) {
-      if (before) {
-        output.push(<span key={`${index}-space-before-token`}> </span>);
-      }
-
       const type = tokenType(token);
       const description = type === TokenType.Variable ? token : '';
       const tokenContent = `${open} ${token} ${close}`;
@@ -61,9 +52,7 @@ function Tokenize({ input, delimiter = ['{{', '}}'] }: TokenizerProps) {
     }
   });
 
-  const outputElem = createElement('span', {}, output);
-
-  return <span className={styles.wrapper}>{outputElem}</span>;
+  return <span className={styles.wrapper}>{output}</span>;
 }
 
 enum TokenType {
