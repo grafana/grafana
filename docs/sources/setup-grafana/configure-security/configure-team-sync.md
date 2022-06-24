@@ -49,3 +49,12 @@ If you have already grouped some users into a team, then you can synchronize tha
    - For Auth Proxy, this is the value we receive as part of the custom `Groups` header.
 
 1. Click `Add group` to save.
+
+> Group matching is case insensitive.
+
+## LDAP specific: wildcard matching
+
+When using LDAP, you can use a wildcard (\*) in the common name attribute (CN)
+to match any group in the corresponding Organizational Unit (OU).
+
+Ex: `cn=*,ou=groups,dc=grafana,dc=org` can be matched by `cn=users,ou=groups,dc=grafana,dc=org`

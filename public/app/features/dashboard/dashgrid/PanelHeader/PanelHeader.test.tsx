@@ -16,7 +16,7 @@ let panelModel = new PanelModel({
 let panelData = createEmptyQueryResponse();
 
 describe('Panel Header', () => {
-  const dashboardModel = new DashboardModel({}, { isPublic: true });
+  const dashboardModel = new DashboardModel({}, { publicDashboardAccessToken: 'abc123' });
   it('will render header title but not render dropdown icon when dashboard is being viewed publicly', () => {
     window.history.pushState({}, 'Test Title', '/public-dashboards/abc123');
 
@@ -29,7 +29,7 @@ describe('Panel Header', () => {
   });
 
   it('will render header title and dropdown icon when dashboard is not being viewed publicly', () => {
-    const dashboardModel = new DashboardModel({}, { isPublic: false });
+    const dashboardModel = new DashboardModel({}, { publicDashboardAccessToken: '' });
     window.history.pushState({}, 'Test Title', '/d/abc/123');
 
     render(

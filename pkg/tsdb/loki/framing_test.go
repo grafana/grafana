@@ -46,6 +46,8 @@ func TestSuccessResponse(t *testing.T) {
 		{name: "parse a vector response with special values", filepath: "vector_special_values", query: vectorQuery},
 
 		{name: "parse a simple streams response", filepath: "streams_simple", query: streamsQuery},
+
+		{name: "parse a streams response with parse errors", filepath: "streams_parse_errors", query: streamsQuery},
 	}
 
 	for _, test := range tt {
