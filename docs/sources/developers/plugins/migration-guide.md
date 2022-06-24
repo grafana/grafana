@@ -8,7 +8,7 @@ title: Plugin migration guide
 
 ## Introduction
 
-This guide helps you identify the steps you need to take based on the Grafana version your plugin supports and explains how to migrate the plugin to the 8.2.x or a later version.
+This guide helps you identify the steps you need to take based on the Grafana version your plugin supports and explains how to migrate the plugin to the 9.x or a later version.
 
 > **Note:** If you've successfully migrated your plugin using this guide, then share your experiences with us! If you find missing information, then we encourage you to [submit an issue on GitHub](https://github.com/grafana/grafana/issues/new?title=Docs%20feedback:%20/developers/plugins/migration-guide.md) so that we can improve this guide!
 
@@ -17,6 +17,13 @@ This guide helps you identify the steps you need to take based on the Grafana ve
 - [Plugin migration guide](#plugin-migration-guide)
   - [Introduction](#introduction)
   - [Table of contents](#table-of-contents)
+  - [From version 8.x to 9.x](#from-version-8x-to-9x)
+    - [9.0 deprecations](#90-deprecations)
+      - [theme.visualization.getColorByName replaces getColorForTheme](#themevisualizationgetcolorbyname-replaces-getcolorfortheme)
+      - [VizTextDisplayOptions replaces TextDisplayOptions](#viztextdisplayoptions-replaces-textdisplayoptions)
+      - [Changes in the internal of `backendSrv.fetch()`](#changes-in-the-internal-of-backendsrvfetch)
+      - [GrafanaTheme2 and useStyles2 replaces getFormStyles](#grafanatheme2-and-usestyles2-replaces-getformstyles)
+      - [/api/ds/query replaces /api/tsdb/query](#apidsquery-replaces-apitsdbquery)
   - [From version 8.3.x to 8.4.x](#from-version-83x-to-84x)
     - [Value Mapping Editor has been removed from @grafana-ui library](#value-mapping-editor-has-been-removed-from-grafana-ui-library)
     - [Thresholds Editor has been removed from @grafana-ui library](#thresholds-editor-has-been-removed-from-grafana-ui-library)
@@ -50,6 +57,66 @@ This guide helps you identify the steps you need to take based on the Grafana ve
       - [Migrate a data source plugin](#migrate-a-data-source-plugin)
       - [Migrate to data frames](#migrate-to-data-frames)
     - [Troubleshoot plugin migration](#troubleshoot-plugin-migration)
+
+## From version 8.x to 9.x
+
+### 9.0 deprecations
+
+#### theme.visualization.getColorByName replaces getColorForTheme
+
+`getColorForTheme` was removed, use `theme.visualization.getColorByName` instead
+
+Example:
+
+```ts
+// before
+fillColor: getColorForTheme(panel.sparkline.fillColor, config.theme)
+
+// after
+fillColor: config.theme.visualization.getColorByName(panel.sparkline.fillColor),
+```
+
+#### VizTextDisplayOptions replaces TextDisplayOptions
+
+`TextDisplayOptions` was removed, use `VizTextDisplayOptions` instead
+
+Example:
+
+```ts
+// before
+interface Options {
+...
+text?: TextDisplayOptions;
+...
+}
+
+// after
+interface Options {
+...
+text?: VizTextDisplayOptions;
+...
+}
+```
+
+#### Changes in the internal of `backendSrv.fetch()`
+
+We have changed the internals of `backendSrv.fetch()` to throw an error when the response is an incorrect JSON. Make sure to handle possible errors on the callsite where using `backendSrv.fetch()` (or any other `backendSrv` methods)
+
+```ts
+// PREVIOUSLY: this was returning with an empty object {} - in case the response is an invalid JSON
+return await getBackendSrv().post(`${API_ROOT}/${id}/install`);
+
+// AFTER THIS CHANGE: the following will throw an error - in case the response is an invalid JSON
+return await getBackendSrv().post(`${API_ROOT}/${id}/install`);
+```
+
+#### GrafanaTheme2 and useStyles2 replaces getFormStyles
+
+We have removed the deprecated `getFormStyles` function from [grafana-ui](https://www.npmjs.com/package/@grafana/ui). Use `GrafanaTheme2` and the `useStyles2` hook instead
+
+#### /api/ds/query replaces /api/tsdb/query
+
+We have removed the deprecated `/api/tsdb/query` metrics endpoint. Use [/api/ds/query]({{< relref "../http_api/data_source/#query-a-data-source" >}}) instead
 
 ## From version 8.3.x to 8.4.x
 
