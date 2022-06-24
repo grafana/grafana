@@ -6708,12 +6708,12 @@ exports[`no explicit any`] = {
       [56, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
       [163, 49, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/prometheus/querybuilder/shared/LabelFilterItem.tsx:3990888924": [
-      [69, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [80, 56, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [108, 85, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [111, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [115, 80, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/plugins/datasource/prometheus/querybuilder/shared/LabelFilterItem.tsx:2056401604": [
+      [71, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [83, 56, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [112, 85, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [115, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [119, 80, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/plugins/datasource/prometheus/querybuilder/shared/OperationEditor.tsx:172095144": [
       [23, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
