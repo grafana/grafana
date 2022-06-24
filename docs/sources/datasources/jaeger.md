@@ -75,7 +75,6 @@ One of the following four options can be selected (the default is duration):
 - **None -** Do no show any additional info on the span bar row.
 - **Duration -** Show the span duration on the span bar row.
 - **Tag -** Show the span tag on the span bar row. Note: You will also need to specify the tag key which will be used to get the tag value. For example `span.kind`.
-- **Process -** Show the span process on the span bar row. Note: You will also need to specify the process key which will be used to get the process value. For example `host.name`.
 
 ## Query traces
 
