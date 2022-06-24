@@ -18,12 +18,14 @@ This guide helps you identify the steps you need to take based on the Grafana ve
   - [Introduction](#introduction)
   - [Table of contents](#table-of-contents)
   - [From version 8.x to 9.x](#from-version-8x-to-9x)
-    - [9.0 deprecations](#90-deprecations)
+    - [9.0 breaking changes](#90-breaking-changes)
       - [theme.visualization.getColorByName replaces getColorForTheme](#themevisualizationgetcolorbyname-replaces-getcolorfortheme)
       - [VizTextDisplayOptions replaces TextDisplayOptions](#viztextdisplayoptions-replaces-textdisplayoptions)
       - [Changes in the internal of `backendSrv.fetch()`](#changes-in-the-internal-of-backendsrvfetch)
       - [GrafanaTheme2 and useStyles2 replaces getFormStyles](#grafanatheme2-and-usestyles2-replaces-getformstyles)
       - [/api/ds/query replaces /api/tsdb/query](#apidsquery-replaces-apitsdbquery)
+      - [selectOptionInTest has been removed](#selectoptionintest-has-been-removed)
+      - [Toolkit 9 and webpack](#toolkit-9-and-webpack)
   - [From version 8.3.x to 8.4.x](#from-version-83x-to-84x)
     - [Value Mapping Editor has been removed from @grafana-ui library](#value-mapping-editor-has-been-removed-from-grafana-ui-library)
     - [Thresholds Editor has been removed from @grafana-ui library](#thresholds-editor-has-been-removed-from-grafana-ui-library)
@@ -60,7 +62,7 @@ This guide helps you identify the steps you need to take based on the Grafana ve
 
 ## From version 8.x to 9.x
 
-### 9.0 deprecations
+### 9.0 breaking changes
 
 #### theme.visualization.getColorByName replaces getColorForTheme
 
@@ -117,6 +119,46 @@ We have removed the deprecated `getFormStyles` function from [grafana-ui](https:
 #### /api/ds/query replaces /api/tsdb/query
 
 We have removed the deprecated `/api/tsdb/query` metrics endpoint. Use [/api/ds/query]({{< relref "../http_api/data_source/#query-a-data-source" >}}) instead
+
+#### selectOptionInTest has been removed
+
+The `@grafana/ui` package helper function `selectOptionInTest` used in frontend tests has been removed as it caused testing libraries to be bundled in the production code of Grafana. If you were using this helper function in your tests please update your code accordingly:
+
+```ts
+// before
+import { selectOptionInTest } from '@grafana/ui';
+// ...test usage
+await selectOptionInTest(selectEl, 'Option 2');
+
+// after
+import { select } from 'react-select-event';
+// ...test usage
+await select(selectEl, 'Option 2', { container: document.body });
+```
+
+#### Toolkit 9 and webpack
+
+Plugins using custom Webpack configs could potentially break due to the changes between webpack@4 and webpack@5. Please refer to the [official migration guide](https://webpack.js.org/migrate/5/) for assistance.
+
+Webpack 5 does not include polyfills for node.js core modules by default (e.g. `buffer`, `stream`, `os`). This can result in failed builds for plugins. If polyfills are required it is recommended to create a custom webpack config in the root of the plugin repo and add the required fallbacks:
+
+```js
+// webpack.config.js
+
+module.exports.getWebpackConfig = (config, options) => ({
+  ...config,
+  resolve: {
+    ...config.resolve,
+    fallback: {
+      os: require.resolve('os-browserify/browser'),
+      stream: require.resolve('stream-browserify'),
+      timers: require.resolve('timers-browserify'),
+    },
+  },
+});
+```
+
+Please refer to the webpack build error messages or the [official migration guide](https://webpack.js.org/migrate/5/) for assistance with fallbacks.
 
 ## From version 8.3.x to 8.4.x
 
