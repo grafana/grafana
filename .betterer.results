@@ -5919,7 +5919,7 @@ exports[`no explicit any`] = {
       [58, 64, 3, "Unexpected any. Specify a different type.", "193409811"],
       [65, 17, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/loki/datasource.test.ts:821497219": [
+    "public/app/plugins/datasource/loki/datasource.test.ts:371314051": [
       [42, 39, 3, "Unexpected any. Specify a different type.", "193409811"],
       [43, 40, 3, "Unexpected any. Specify a different type.", "193409811"],
       [135, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -5936,18 +5936,15 @@ exports[`no explicit any`] = {
       [853, 45, 3, "Unexpected any. Specify a different type.", "193409811"],
       [870, 9, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/loki/datasource.ts:1442011327": [
+    "public/app/plugins/datasource/loki/datasource.ts:979697429": [
       [219, 23, 3, "Unexpected any. Specify a different type.", "193409811"],
       [355, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
       [359, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
       [359, 45, 3, "Unexpected any. Specify a different type.", "193409811"],
       [373, 40, 3, "Unexpected any. Specify a different type.", "193409811"],
       [560, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [641, 61, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [641, 77, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [641, 90, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [699, 41, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [706, 46, 3, "Unexpected any. Specify a different type.", "193409811"]
+      [685, 41, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [692, 46, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/plugins/datasource/loki/getDerivedFields.ts:1557842937": [
       [37, 87, 3, "Unexpected any. Specify a different type.", "193409811"]
