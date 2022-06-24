@@ -7,7 +7,7 @@ import { NavBarActions } from './global.static.actions';
 // Grafana Alerting and alerting sub navigation items
 const alertingCommandPaletteStaticActions: NavBarActions[] = [
   {
-    url: '/alerting',
+    url: '/alerting/list',
     actions: [
       {
         id: 'go/alerting',
@@ -20,7 +20,7 @@ const alertingCommandPaletteStaticActions: NavBarActions[] = [
     ],
   },
   {
-    url: '/alerting',
+    url: '/alerting/list',
     actions: [
       {
         id: 'go/alerting/rules',
@@ -33,7 +33,7 @@ const alertingCommandPaletteStaticActions: NavBarActions[] = [
     ],
   },
   {
-    url: '/alerting',
+    url: '/alerting/notifications',
     actions: [
       {
         id: 'go/alerting/contact-points',
@@ -45,7 +45,7 @@ const alertingCommandPaletteStaticActions: NavBarActions[] = [
     ],
   },
   {
-    url: '/alerting',
+    url: '/alerting/routes',
     actions: [
       {
         id: 'go/alerting/notification-policies',
@@ -57,7 +57,7 @@ const alertingCommandPaletteStaticActions: NavBarActions[] = [
     ],
   },
   {
-    url: '/alerting',
+    url: '/alerting/silences',
     actions: [
       {
         id: 'go/alerting/silences',
