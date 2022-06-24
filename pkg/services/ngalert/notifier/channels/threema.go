@@ -133,7 +133,6 @@ func (tn *ThreemaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 
 	_ = withStoredImages(ctx, tn.log, tn.images,
 		func(index int, image *ngmodels.Image) error {
-			fmt.Println("here", index, image)
 			if image != nil && image.URL != "" {
 				message += fmt.Sprintf("*Image:* %s\n", image.URL)
 			}
