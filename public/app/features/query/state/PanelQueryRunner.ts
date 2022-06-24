@@ -361,13 +361,17 @@ async function getDataSource(
   scopedVars: ScopedVars,
   publicDashboardAccessToken?: string
 ): Promise<DataSourceApi> {
-  if (publicDashboardAccessToken) {
-    return new PublicDashboardDataSource();
-  }
+  let ds;
 
   if (datasource && (datasource as any).query) {
-    return datasource as DataSourceApi;
+    ds = datasource as DataSourceApi;
+  } else {
+    ds = await getDatasourceSrv().get(datasource as string, scopedVars);
   }
 
-  return await getDatasourceSrv().get(datasource as string, scopedVars);
+  if (publicDashboardAccessToken) {
+    return new PublicDashboardDataSource(ds.id, ds.uid);
+  }
+
+  return ds;
 }

@@ -4,13 +4,13 @@ import { DataQuery, DataQueryRequest, DataQueryResponse, DataSourceApi, PluginMe
 import { BackendDataSourceResponse, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
 
 export class PublicDashboardDataSource extends DataSourceApi<any> {
-  constructor() {
+  constructor(id: number, uid: string) {
     super({
       name: 'public-ds',
-      id: 1,
+      id,
       type: 'public-ds',
       meta: {} as PluginMeta,
-      uid: '1',
+      uid,
       jsonData: {},
       access: 'proxy',
     });
