@@ -47,11 +47,13 @@ describe('Loki query builder', () => {
     e2e.components.QueryBuilder.queryPatterns().click().type('Log query with parsing{enter}');
     e2e().contains('No pipeline errors').should('be.visible');
     e2e().contains('Logfmt').should('be.visible');
+    e2e().contains('{} | logfmt | __error__=``').should('be.visible');
 
     // Add operation
     e2e().contains('Operations').should('be.visible').click();
     e2e().contains('Range functions').should('be.visible').click();
     e2e().contains('Rate').should('be.visible').click();
+    e2e().contains('rate({} | logfmt | __error__=`` [$__interval]').should('be.visible');
 
     // Check for expected error
     e2e().contains('You need to specify at least 1 label filter (stream selector)').should('be.visible');
