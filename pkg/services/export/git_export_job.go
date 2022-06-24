@@ -1,13 +1,9 @@
 package export
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
-	"os"
 	"path"
-	"strings"
 	"sync"
 	"time"
 
@@ -15,17 +11,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/searchV2/extract"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
-
-// replace any unsafe file name characters... TODO, but be a standard way to do this cleanly!!!
-func cleanFileName(name string) string {
-	name = strings.ReplaceAll(name, "/", "-")
-	name = strings.ReplaceAll(name, "\\", "-")
-	name = strings.ReplaceAll(name, ":", "-")
-	return name
-}
 
 var _ Job = new(gitExportJob)
 
@@ -105,176 +92,11 @@ func (e *gitExportJob) start() {
 		err := e.doExportWithHistory()
 		if err != nil {
 			e.logger.Error("ERROR", "e", err)
+			e.status.Status = "ERROR"
+			e.status.Last = err.Error()
+			e.broadcaster(e.status)
 		}
-	} else {
-		e.doFlatExport()
 	}
-}
-
-func (e *gitExportJob) doFlatExport() {
-	type dashDataQueryResult struct {
-		Id       int64
-		UID      string `xorm:"uid"`
-		IsFolder bool   `xorm:"is_folder"`
-		FolderID int64  `xorm:"folder_id"`
-		Slug     string `xorm:"slug"`
-		Data     []byte
-		Created  time.Time
-		Updated  time.Time
-	}
-
-	target := e.rootDir
-	ctx := context.Background()
-	sql := e.sql
-
-	// key will allow name or uid
-	lookup := func(ref *extract.DataSourceRef) *extract.DataSourceRef {
-		if ref == nil || ref.UID == "" {
-			return &extract.DataSourceRef{
-				UID:  "default.uid",
-				Type: "default.type",
-			}
-		}
-		return ref
-	}
-
-	err := sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		rows := make([]*dashDataQueryResult, 0)
-
-		sess.Table("dashboard").
-			Where("org_id = ?", e.orgID).
-			Cols("id", "uid", "is_folder", "folder_id", "data", "slug", "created", "updated")
-
-		err := sess.Find(&rows)
-		if err != nil {
-			return err
-		}
-
-		return err
-	})
-	if err != nil {
-		e.status.Status = "ERROR"
-		e.logger.Error("ERROR running", "err", err)
-	}
-
-	err = sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		rows := make([]*dashDataQueryResult, 0)
-
-		sess.Table("dashboard").
-			Where("org_id = ?", e.orgID).
-			Cols("id", "uid", "is_folder", "folder_id", "data", "slug", "created", "updated")
-
-		err := sess.Find(&rows)
-		if err != nil {
-			return err
-		}
-
-		alias := make(map[string]string, 100)
-		ids := make(map[int64]string, 100)
-		folders := make(map[int64]string, 100)
-
-		// Process all folders (only one level deep!!!)
-		for _, row := range rows {
-			if row.IsFolder {
-				dash, err := extract.ReadDashboard(bytes.NewReader(row.Data), lookup)
-				if err != nil {
-					return err
-				}
-
-				slug := cleanFileName(dash.Title)
-				fpath := path.Join(target, slug)
-				err = os.MkdirAll(fpath, 0750)
-				if err != nil {
-					return err
-				}
-
-				folder := map[string]string{
-					"title": dash.Title,
-				}
-
-				clean, err := json.MarshalIndent(folder, "", "  ")
-				if err != nil {
-					return err
-				}
-
-				dpath := path.Join(fpath, "__folder.json")
-				err = os.WriteFile(dpath, clean, 0600)
-				if err != nil {
-					return err
-				}
-
-				alias[dash.UID] = slug
-				folders[row.Id] = slug
-			}
-		}
-
-		for _, row := range rows {
-			if !row.IsFolder {
-				fname := row.Slug + ".json"
-				fpath, ok := folders[row.FolderID]
-				if ok {
-					fpath = path.Join(fpath, fname)
-				} else {
-					fpath = fname
-				}
-
-				clean := cleanDashboardJSON(row.Data)
-
-				dpath := path.Join(target, fpath)
-				err = os.WriteFile(dpath, clean, 0600)
-				if err != nil {
-					return err
-				}
-
-				// match the times to the database
-				_ = os.Chtimes(dpath, row.Created, row.Updated)
-
-				alias[fmt.Sprintf("%v", row.UID)] = fpath
-				ids[row.Id] = fpath
-			}
-		}
-
-		clean, err := json.MarshalIndent(alias, "", "  ")
-		if err != nil {
-			return err
-		}
-
-		err = os.WriteFile(path.Join(target, "__alias.json"), clean, 0600)
-		if err != nil {
-			return err
-		}
-
-		clean, err = json.MarshalIndent(ids, "", "  ")
-		if err != nil {
-			return err
-		}
-
-		err = os.WriteFile(path.Join(target, "__ids.json"), clean, 0600)
-		if err != nil {
-			return err
-		}
-
-		return err
-	})
-
-	if err != nil {
-		e.status.Status = "ERROR"
-		e.logger.Error("ERROR running", "err", err)
-	}
-}
-
-func cleanDashboardJSON(data []byte) []byte {
-	var dash map[string]interface{}
-	err := json.Unmarshal(data, &dash)
-	if err != nil {
-		return nil
-	}
-	delete(dash, "id")
-	delete(dash, "uid")
-	delete(dash, "version")
-
-	clean, _ := json.MarshalIndent(dash, "", "  ")
-	return clean
 }
 
 func (e *gitExportJob) doExportWithHistory() error {
@@ -287,9 +109,11 @@ func (e *gitExportJob) doExportWithHistory() error {
 		return err
 	}
 	helper := &commitHelper{
-		repo: r,
-		work: w,
-		ctx:  context.Background(),
+		repo:    r,
+		work:    w,
+		ctx:     context.Background(),
+		workDir: e.rootDir,
+		orgDir:  e.rootDir,
 	}
 
 	cmd := &models.SearchOrgsQuery{}
@@ -300,7 +124,9 @@ func (e *gitExportJob) doExportWithHistory() error {
 
 	// Export each org
 	for _, org := range cmd.Result {
-		helper.baseDir = path.Join(e.rootDir, fmt.Sprintf("org_%d", org.Id))
+		if len(cmd.Result) > 1 {
+			helper.orgDir = path.Join(e.rootDir, fmt.Sprintf("org_%d", org.Id))
+		}
 		err = helper.initOrg(e.sql, org.Id)
 		if err != nil {
 			return err
@@ -315,7 +141,7 @@ func (e *gitExportJob) doExportWithHistory() error {
 	// cleanup the folder
 	e.status.Target = "pruning..."
 	e.broadcaster(e.status)
-	r.Prune(git.PruneOptions{})
+	// NPE! r.Prune(git.PruneOptions{})
 
 	// TODO
 	// git gc --prune=now --aggressive
@@ -324,14 +150,16 @@ func (e *gitExportJob) doExportWithHistory() error {
 }
 
 func (e *gitExportJob) doOrgExportWithHistory(helper *commitHelper) error {
-	err := exportUsers(helper, e)
+	err := exportAuth(helper, e)
 	if err != nil {
 		return err
 	}
 
-	err = exportDashboards(helper, e)
-	if err != nil {
-		return err
+	if false {
+		err = exportDashboards(helper, e)
+		if err != nil {
+			return err
+		}
 	}
 
 	return err

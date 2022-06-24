@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/go-git/go-git/v5"
@@ -14,23 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/searchV2/extract"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
-
-// func readusers(ctx context.Context, orgID int64, sql *sqlstore.SQLStore) map[int64]*userInfo {
-// 	rows := make([]*userInfo, 0)
-// 	_ = sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-// 		sess.Table("user").
-// 			Where("org_id = ?", orgID).
-// 			Cols("id", "login", "email", "name")
-
-// 		return sess.Find(&rows)
-// 	})
-
-// 	lookup := make(map[int64]*userInfo, len(rows))
-// 	for _, row := range rows {
-// 		lookup[row.ID] = row
-// 	}
-// 	return lookup
-// }
 
 func exportDashboards(helper *commitHelper, job *gitExportJob) error {
 	// key will allow name or uid
@@ -49,7 +33,7 @@ func exportDashboards(helper *commitHelper, job *gitExportJob) error {
 	ids := make(map[int64]string, 100)
 	folders := make(map[int64]string, 100)
 
-	rootDir := path.Join(helper.baseDir, "root")
+	rootDir := path.Join(helper.orgDir, "root")
 	_ = os.MkdirAll(rootDir, 0750)
 
 	err := job.sql.WithDbSession(helper.ctx, func(sess *sqlstore.DBSession) error {
@@ -203,8 +187,12 @@ func exportDashboards(helper *commitHelper, job *gitExportJob) error {
 			}
 
 			helper.add(commitOptions{
-				fpath:   filepath.Join(rootDir, fpath),
-				body:    cleanDashboardJSON(row.Data),
+				body: []commitBody{
+					{
+						fpath: filepath.Join(rootDir, fpath),
+						body:  cleanDashboardJSON(row.Data),
+					},
+				},
 				userID:  row.CreatedBy,
 				when:    row.Created,
 				comment: msg,
@@ -223,4 +211,26 @@ func exportDashboards(helper *commitHelper, job *gitExportJob) error {
 	})
 
 	return err
+}
+
+func cleanDashboardJSON(data []byte) []byte {
+	var dash map[string]interface{}
+	err := json.Unmarshal(data, &dash)
+	if err != nil {
+		return nil
+	}
+	delete(dash, "id")
+	delete(dash, "uid")
+	delete(dash, "version")
+
+	clean, _ := json.MarshalIndent(dash, "", "  ")
+	return clean
+}
+
+// replace any unsafe file name characters... TODO, but be a standard way to do this cleanly!!!
+func cleanFileName(name string) string {
+	name = strings.ReplaceAll(name, "/", "-")
+	name = strings.ReplaceAll(name, "\\", "-")
+	name = strings.ReplaceAll(name, ":", "-")
+	return name
 }

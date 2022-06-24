@@ -18,14 +18,19 @@ type commitHelper struct {
 	ctx     context.Context
 	repo    *git.Repository
 	work    *git.Worktree
-	baseDir string
+	orgDir  string // includes the orgID
+	workDir string // same as the worktree root
 	orgID   int64
 	users   map[int64]*userInfo
 }
 
+type commitBody struct {
+	fpath string // absolute
+	body  []byte
+}
+
 type commitOptions struct {
-	fpath   string // absolute
-	body    []byte
+	body    []commitBody
 	when    time.Time
 	userID  int64
 	comment string
@@ -52,23 +57,31 @@ func (ch *commitHelper) initOrg(sql *sqlstore.SQLStore, orgID int64) error {
 }
 
 func (ch *commitHelper) add(opts commitOptions) error {
-	if !strings.HasPrefix(opts.fpath, ch.baseDir) {
-		return fmt.Errorf("invalid path, must be within the root folder")
-	}
+	for _, b := range opts.body {
+		if !strings.HasPrefix(b.fpath, ch.orgDir) {
+			return fmt.Errorf("invalid path, must be within the root folder")
+		}
 
-	// make sure the parent exists
-	if err := os.MkdirAll(path.Dir(opts.fpath), 0750); err != nil {
-		return err
-	}
+		// make sure the parent exists
+		if err := os.MkdirAll(path.Dir(b.fpath), 0750); err != nil {
+			return err
+		}
 
-	err := ioutil.WriteFile(opts.fpath, opts.body, 0644)
-	if err != nil {
-		return err
-	}
+		err := ioutil.WriteFile(b.fpath, b.body, 0644)
+		if err != nil {
+			return err
+		}
 
-	_, err = ch.work.Add(opts.fpath)
-	if err != nil {
-		return err
+		sub := b.fpath[len(ch.workDir):]
+		_, err = ch.work.Add(sub)
+		if err != nil {
+			status, e2 := ch.work.Status()
+			if e2 != nil {
+				return fmt.Errorf("error adding: %s (invalud work status: %s)", sub, e2.Error())
+			}
+			fmt.Printf("STATUS: %+v\n", status)
+			return fmt.Errorf("unable to add file: %s (%d)", sub, len(b.body))
+		}
 	}
 
 	user, ok := ch.users[opts.userID]
@@ -87,7 +100,7 @@ func (ch *commitHelper) add(opts commitOptions) error {
 		Author: &sig,
 	}
 
-	_, err = ch.work.Commit(opts.comment, copts)
+	_, err := ch.work.Commit(opts.comment, copts)
 	return err
 }
 
@@ -98,9 +111,9 @@ type userInfo struct {
 	Name             string    `json:"name"`
 	Password         string    `json:"password"`
 	Salt             string    `json:"salt"`
-	Theme            string    `json:"-"`
-	Created          time.Time `json:"-"`
-	Updated          time.Time `json:"-"`
+	Theme            string    `json:"-"` // managed in preferences
+	Created          time.Time `json:"-"` // managed in git or external source
+	Updated          time.Time `json:"-"` // managed in git or external source
 	IsDisabled       bool      `json:"disabled" xorm:"is_disabled"`
 	IsServiceAccount bool      `json:"serviceAccount" xorm:"is_service_account"`
 	LastSeenAt       time.Time `json:"-" xorm:"last_seen_at"`
