@@ -8,14 +8,11 @@ import (
 	"strconv"
 	"strings"
 
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/propagation"
-	"go.opentelemetry.io/otel/trace"
-
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/web"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type contextKey struct{}
@@ -72,13 +69,19 @@ func RequestTracing(tracer tracing.Tracer) web.Handler {
 
 		rw := res.(web.ResponseWriter)
 
-		wireContext := otel.GetTextMapPropagator().Extract(req.Context(), propagation.HeaderCarrier(req.Header))
-		ctx, span := tracer.Start(req.Context(), fmt.Sprintf("HTTP %s %s", req.Method, req.URL.Path), trace.WithLinks(trace.LinkFromContext(wireContext)))
+		spanContext := trace.SpanContextFromContext(req.Context())
+		traceID := spanContext.TraceID()
+		fmt.Println("TRACE ID:", traceID)
+		wireContext := tracer.Extract(req.Context(), req.Header)
 
+		ctx, span := tracer.Start(req.Context(), fmt.Sprintf("HTTP %s %s", req.Method, req.URL.Path), &wireContext)
 		c.Req = req.WithContext(ctx)
+		spanContext = trace.SpanContextFromContext(ctx)
+		traceID = spanContext.TraceID()
+		fmt.Println("TRACE ID:", traceID)
 		c.Next()
 
-		// Only call span.Finish when a route operation name have been set,
+		// Only call span.End when a route operation name have been set,
 		// meaning that not set the span would not be reported.
 		if routeOperation, exists := routeOperationName(c.Req); exists {
 			defer span.End()

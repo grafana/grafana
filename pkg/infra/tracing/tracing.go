@@ -96,6 +96,10 @@ type OpentracingSpan struct {
 	span opentracing.Span
 }
 
+type OpentracingSpanContext struct {
+	SpanContext opentracing.SpanContext
+}
+
 func (ts *Opentracing) parseSettings() error {
 	var section, err = ts.Cfg.Raw.GetSection("tracing.jaeger")
 	if err != nil {
@@ -194,8 +198,20 @@ func (ts *Opentracing) Run(ctx context.Context) error {
 	return nil
 }
 
-func (ts *Opentracing) Start(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, Span) {
-	span, ctx := opentracing.StartSpanFromContext(ctx, spanName)
+func (ts *Opentracing) Extract(ctx context.Context, header http.Header) SpanContext {
+	tracer := opentracing.GlobalTracer()
+
+	wireContext, _ := tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(header))
+	return SpanContext{Opentracing: wireContext}
+}
+
+func (ts *Opentracing) Start(ctx context.Context, spanName string, spanContext ...*SpanContext) (context.Context, Span) {
+	var span opentracing.Span
+	if spanContext != nil {
+		span, ctx = opentracing.StartSpanFromContext(ctx, spanName, ext.RPCServerOption(spanContext[0].Opentracing))
+	} else {
+		span, ctx = opentracing.StartSpanFromContext(ctx, spanName)
+	}
 	opentracingSpan := OpentracingSpan{span: span}
 	if sctx, ok := span.Context().(jaeger.SpanContext); ok {
 		ctx = context.WithValue(ctx, traceKey{}, traceValue{sctx.TraceID().String(), sctx.IsSampled()})

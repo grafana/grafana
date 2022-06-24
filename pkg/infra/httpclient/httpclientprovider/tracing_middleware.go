@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -21,7 +20,8 @@ const (
 func TracingMiddleware(logger log.Logger, tracer tracing.Tracer) httpclient.Middleware {
 	return httpclient.NamedMiddlewareFunc(TracingMiddlewareName, func(opts httpclient.Options, next http.RoundTripper) http.RoundTripper {
 		return httpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
-			ctx, span := tracer.Start(req.Context(), "HTTP Outgoing Request", trace.WithSpanKind(trace.SpanKindClient))
+			// TO DO
+			ctx, span := tracer.Start(req.Context(), "HTTP Outgoing Request") //, trace.WithSpanKind(trace.SpanKindClient))
 			defer span.End()
 
 			req = req.WithContext(ctx)

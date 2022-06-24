@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/level"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/opentracing/opentracing-go"
 	"go.etcd.io/etcd/api/v3/version"
 	jaegerpropagator "go.opentelemetry.io/contrib/propagators/jaeger"
 	"go.opentelemetry.io/otel"
@@ -34,8 +35,9 @@ const (
 
 type Tracer interface {
 	Run(context.Context) error
-	Start(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, Span)
+	Start(context.Context, string, ...*SpanContext) (context.Context, Span)
 	Inject(context.Context, http.Header, Span)
+	Extract(context.Context, http.Header) SpanContext
 }
 
 type Span interface {
@@ -67,6 +69,14 @@ type tracerProvider interface {
 
 type OpentelemetrySpan struct {
 	span trace.Span
+}
+
+type SpanContext struct {
+	Opentelemetry trace.SpanContext
+	Opentracing   opentracing.SpanContext
+}
+
+type OpenTelemetrySpanContext struct {
 }
 
 type EventValue struct {
@@ -233,13 +243,19 @@ func (ots *Opentelemetry) Run(ctx context.Context) error {
 	return nil
 }
 
-func (ots *Opentelemetry) Start(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, Span) {
+func (ots *Opentelemetry) Start(ctx context.Context, spanName string, spanContext ...*SpanContext) (context.Context, Span) {
 	ctx, span := ots.tracer.Start(ctx, spanName)
 	opentelemetrySpan := OpentelemetrySpan{
 		span: span,
 	}
 	ctx = context.WithValue(ctx, traceKey{}, traceValue{span.SpanContext().TraceID().String(), span.SpanContext().IsSampled()})
 	return ctx, opentelemetrySpan
+}
+
+func (ots *Opentelemetry) Extract(ctx context.Context, header http.Header) SpanContext {
+	// opentelemetrySpan := trace.SpanContextFromContext(ctx)
+	// return SpanContext{Opentelemetry: opentelemetrySpan}
+	return SpanContext{}
 }
 
 func (ots *Opentelemetry) Inject(ctx context.Context, header http.Header, _ Span) {
