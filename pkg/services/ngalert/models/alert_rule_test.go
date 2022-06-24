@@ -3,6 +3,7 @@ package models
 import (
 	"encoding/json"
 	"math/rand"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -354,6 +355,13 @@ func TestDiff(t *testing.T) {
 			assert.Equal(t, rule2.For, diff[0].Right.Interface())
 			difCnt++
 		}
+		if rule1.RuleGroupIndex != rule2.RuleGroupIndex {
+			diff := diffs.GetDiffsForField("RuleGroupIndex")
+			assert.Len(t, diff, 1)
+			assert.Equal(t, rule1.RuleGroupIndex, diff[0].Left.Interface())
+			assert.Equal(t, rule2.RuleGroupIndex, diff[0].Right.Interface())
+			difCnt++
+		}
 
 		require.Lenf(t, diffs, difCnt, "Got some unexpected diffs. Either add to ignore or add assert to it")
 
@@ -536,5 +544,41 @@ func TestDiff(t *testing.T) {
 				t.Logf("rule1: %#v, rule2: %#v\ndiff: %v", rule1, rule2, diff)
 			}
 		})
+	})
+}
+
+func TestSortByGroupIndex(t *testing.T) {
+	ensureNotSorted := func(t *testing.T, rules []*AlertRule, less func(i, j int) bool) {
+		for i := 0; i < 5; i++ {
+			rand.Shuffle(len(rules), func(i, j int) {
+				rules[i], rules[j] = rules[j], rules[i]
+			})
+			if !sort.SliceIsSorted(rules, less) {
+				return
+			}
+		}
+		t.Fatalf("unable to ensure that alerts are not sorted")
+	}
+
+	t.Run("should sort rules by GroupIndex", func(t *testing.T) {
+		rules := GenerateAlertRules(rand.Intn(15)+5, AlertRuleGen(WithUniqueGroupIndex()))
+		ensureNotSorted(t, rules, func(i, j int) bool {
+			return rules[i].RuleGroupIndex < rules[j].RuleGroupIndex
+		})
+		RulesGroup(rules).SortByGroupIndex()
+		require.True(t, sort.SliceIsSorted(rules, func(i, j int) bool {
+			return rules[i].RuleGroupIndex < rules[j].RuleGroupIndex
+		}))
+	})
+
+	t.Run("should sort by ID if same GroupIndex", func(t *testing.T) {
+		rules := GenerateAlertRules(rand.Intn(15)+5, AlertRuleGen(WithUniqueID(), WithGroupIndex(rand.Int())))
+		ensureNotSorted(t, rules, func(i, j int) bool {
+			return rules[i].ID < rules[j].ID
+		})
+		RulesGroup(rules).SortByGroupIndex()
+		require.True(t, sort.SliceIsSorted(rules, func(i, j int) bool {
+			return rules[i].ID < rules[j].ID
+		}))
 	})
 }

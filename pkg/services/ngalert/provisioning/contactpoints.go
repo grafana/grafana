@@ -74,7 +74,8 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, orgID int6
 	return contactPoints, nil
 }
 
-// internal only
+// getContactPointDecrypted is an internal-only function that gets full contact point info, included encrypted fields.
+// nil is returned if no matching contact point exists.
 func (ecp *ContactPointService) getContactPointDecrypted(ctx context.Context, orgID int64, uid string) (apimodels.EmbeddedContactPoint, error) {
 	revision, err := getLastConfiguration(ctx, orgID, ecp.amStore)
 	if err != nil {
@@ -104,7 +105,7 @@ func (ecp *ContactPointService) getContactPointDecrypted(ctx context.Context, or
 		}
 		return embeddedContactPoint, nil
 	}
-	return apimodels.EmbeddedContactPoint{}, fmt.Errorf("contact point with uid '%s' not found", uid)
+	return apimodels.EmbeddedContactPoint{}, fmt.Errorf("%w: contact point with uid '%s' not found", ErrNotFound, uid)
 }
 
 func (ecp *ContactPointService) CreateContactPoint(ctx context.Context, orgID int64,
