@@ -194,4 +194,8 @@ const (
 	// FlagTopnav
 	// New top nav and page layouts
 	FlagTopnav = "topnav"
+
+	// FlagCustomBranding
+	// Replaces whitelabeling with the new custom branding feature
+	FlagCustomBranding = "customBranding"
 )
