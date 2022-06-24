@@ -53,13 +53,31 @@ interface Props {
   value: ElasticsearchQuery;
 }
 
+export const ElasticSearchQueryField = ({ value, onChange }: { value?: string; onChange: (v: string) => void }) => {
+  const styles = useStyles2(getStyles);
+
+  return (
+    <div className={styles.queryFieldWrapper}>
+      <QueryField
+        query={value}
+        // By default QueryField calls onChange if onBlur is not defined, this will trigger a rerender
+        // And slate will claim the focus, making it impossible to leave the field.
+        onBlur={() => {}}
+        onChange={onChange}
+        placeholder="Lucene Query"
+        portalOrigin="elasticsearch"
+      />
+    </div>
+  );
+};
+
 const QueryEditorForm = ({ value }: Props) => {
   const dispatch = useDispatch();
   const nextId = useNextId();
   const styles = useStyles2(getStyles);
 
   // To be considered a time series query, the last bucked aggregation must be a Date Histogram
-  const isTimeSeriesQuery = value.bucketAggs?.slice(-1)[0]?.type === 'date_histogram';
+  const isTimeSeriesQuery = value?.bucketAggs?.slice(-1)[0]?.type === 'date_histogram';
 
   const showBucketAggregationsEditor = value.metrics?.every(
     (metric) => !metricAggregationConfig[metric.type].isSingleMetric
@@ -69,17 +87,8 @@ const QueryEditorForm = ({ value }: Props) => {
     <>
       <div className={styles.root}>
         <InlineLabel width={17}>Query</InlineLabel>
-        <div className={styles.queryFieldWrapper}>
-          <QueryField
-            query={value.query}
-            // By default QueryField calls onChange if onBlur is not defined, this will trigger a rerender
-            // And slate will claim the focus, making it impossible to leave the field.
-            onBlur={() => {}}
-            onChange={(query) => dispatch(changeQuery(query))}
-            placeholder="Lucene Query"
-            portalOrigin="elasticsearch"
-          />
-        </div>
+        <ElasticSearchQueryField onChange={(query) => dispatch(changeQuery(query))} value={value?.query} />
+
         <InlineField
           label="Alias"
           labelWidth={15}

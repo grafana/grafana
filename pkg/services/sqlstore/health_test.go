@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package sqlstore
 
 import (
@@ -12,6 +9,9 @@ import (
 )
 
 func TestIntegrationGetDBHealthQuery(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	store := InitTestDB(t)
 
 	query := models.GetDBHealthQuery{}

@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
@@ -24,17 +25,27 @@ import (
 func TestSlackNotifier(t *testing.T) {
 	tmpl := templateForTests(t)
 
+	fakeImageStore := &fakeImageStore{
+		Images: []*models.Image{
+			{
+				Token: "test-with-url",
+				URL:   "https://www.example.com/image.jpg",
+			},
+		},
+	}
+
 	externalURL, err := url.Parse("http://localhost")
 	require.NoError(t, err)
 	tmpl.ExternalURL = externalURL
 
 	cases := []struct {
-		name         string
-		settings     string
-		alerts       []*types.Alert
-		expMsg       *slackMessage
-		expInitError string
-		expMsgError  error
+		name          string
+		settings      string
+		alerts        []*types.Alert
+		expMsg        *slackMessage
+		expInitError  string
+		expMsgError   error
+		expWebhookURL string
 	}{
 		{
 			name: "Correct config with one alert",
@@ -101,6 +112,42 @@ func TestSlackNotifier(t *testing.T) {
 						FooterIcon: "https://grafana.com/assets/img/fav32.png",
 						Color:      "#D63232",
 						Ts:         0,
+					},
+				},
+			},
+			expMsgError: nil,
+		},
+		{
+			name: "Image URL in alert appears in slack message",
+			settings: `{
+				"token": "1234",
+				"recipient": "#testchannel",
+				"icon_emoji": ":emoji:"
+			}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh", "__alertScreenshotToken__": "test-with-url"},
+					},
+				},
+			},
+			expMsg: &slackMessage{
+				Channel:   "#testchannel",
+				Username:  "Grafana",
+				IconEmoji: ":emoji:",
+				Attachments: []attachment{
+					{
+						Title:      "[FIRING:1]  (val1)",
+						TitleLink:  "http://localhost/alerting/list",
+						Text:       "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
+						Fallback:   "[FIRING:1]  (val1)",
+						Fields:     nil,
+						Footer:     "Grafana v" + setting.BuildVersion,
+						FooterIcon: "https://grafana.com/assets/img/fav32.png",
+						Color:      "#D63232",
+						Ts:         0,
+						ImageURL:   "https://www.example.com/image.jpg",
 					},
 				},
 			},
@@ -206,6 +253,8 @@ func TestSlackNotifier(t *testing.T) {
 
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 			decryptFn := secretsService.GetDecryptedValue
+			notificationService := mockNotificationService()
+
 			fc := FactoryConfig{
 				Config: &NotificationChannelConfig{
 					Name:           "slack_testing",
@@ -213,8 +262,9 @@ func TestSlackNotifier(t *testing.T) {
 					Settings:       settingsJSON,
 					SecureSettings: secureSettings,
 				},
-				ImageStore:          &UnavailableImageStore{},
-				NotificationService: mockNotificationService(),
+				ImageStore: fakeImageStore,
+				// TODO: allow changing the associated values for different tests.
+				NotificationService: notificationService,
 				DecryptFunc:         decryptFn,
 			}
 
@@ -271,6 +321,10 @@ func TestSlackNotifier(t *testing.T) {
 			require.NoError(t, err)
 
 			require.JSONEq(t, string(expBody), body)
+
+			// If we should have sent to the webhook, the mock notification service
+			// will have a record of it.
+			require.Equal(t, c.expWebhookURL, notificationService.Webhook.Url)
 		})
 	}
 }

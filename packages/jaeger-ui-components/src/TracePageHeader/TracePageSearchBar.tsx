@@ -22,7 +22,6 @@ import { Button, useStyles2 } from '@grafana/ui';
 import UiFindInput from '../common/UiFindInput';
 import { ubFlexAuto, ubJustifyEnd } from '../uberUtilityStyles';
 
-import * as markers from './TracePageSearchBar.markers';
 // eslint-disable-next-line no-duplicate-imports
 
 export const getStyles = (theme: GrafanaTheme2) => {
@@ -95,14 +94,13 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
   const styles = useStyles2(getStyles);
 
   const suffix = searchValue ? (
-    <span className={styles.TracePageSearchBarSuffix} data-testid="trace-page-search-bar-suffix">
+    <span className={styles.TracePageSearchBarSuffix} aria-label="Search bar suffix">
       {searchBarSuffix}
     </span>
   ) : null;
 
   const btnClass = cx(styles.TracePageSearchBarBtn, { [styles.TracePageSearchBarBtnDisabled]: !searchValue });
   const uiFindInputInputProps = {
-    'data-test': markers.IN_TRACE_SEARCH,
     className: cx(styles.TracePageSearchBarBar, ubFlexAuto),
     name: 'search',
     suffix,
@@ -175,7 +173,7 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
                 disabled={!searchValue}
                 type="button"
                 icon="arrow-down"
-                data-testid="trace-page-search-bar-next-result-button"
+                aria-label="Next results button"
                 onClick={nextResult}
               />
               <Button
@@ -184,7 +182,7 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
                 disabled={!searchValue}
                 type="button"
                 icon="arrow-up"
-                data-testid="trace-page-search-bar-prev-result-button"
+                aria-label="Prev results button"
                 onClick={prevResult}
               />
             </>

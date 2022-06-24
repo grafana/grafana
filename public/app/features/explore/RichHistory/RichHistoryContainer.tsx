@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
+import { config, reportInteraction } from '@grafana/runtime';
 import { useTheme2 } from '@grafana/ui';
 // Types
 import { ExploreItemState, StoreState } from 'app/types';
@@ -86,6 +87,9 @@ export function RichHistoryContainer(props: Props) {
 
   useEffect(() => {
     initRichHistory();
+    reportInteraction('grafana_explore_query_history_opened', {
+      queryHistoryEnabled: config.queryHistoryEnabled,
+    });
   }, [initRichHistory]);
 
   if (!richHistorySettings) {

@@ -7,9 +7,7 @@ import {
   InlineField,
   InlineFieldRow,
   InlineLabel,
-  NumberValueEditor,
   RadioButtonGroup,
-  SliderValueEditor,
 } from '@grafana/ui';
 import { Observable } from 'rxjs';
 import { useObservable } from 'react-use';
@@ -34,6 +32,8 @@ import {
 import { defaultStyleConfig, GeometryTypeId, StyleConfig, TextAlignment, TextBaseline } from '../../style/types';
 import { styleUsesText } from '../../style/utils';
 import { LayerContentInfo } from '../../utils/getFeatures';
+import { NumberValueEditor } from 'app/core/components/OptionsUI/number';
+import { SliderValueEditor } from 'app/core/components/OptionsUI/slider';
 
 export interface StyleEditorOptions {
   layerInfo?: Observable<LayerContentInfo>;

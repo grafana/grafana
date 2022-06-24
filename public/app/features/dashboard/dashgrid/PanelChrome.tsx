@@ -20,10 +20,9 @@ import {
   toUtc,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { locationService, RefreshEvent } from '@grafana/runtime';
+import { config, locationService, RefreshEvent } from '@grafana/runtime';
 import { VizLegendOptions } from '@grafana/schema';
 import { ErrorBoundary, PanelContext, PanelContextProvider, SeriesVisibilityChangeMode } from '@grafana/ui';
-import config from 'app/core/config';
 import { PANEL_BORDER } from 'app/core/constants';
 import { profiler } from 'app/core/profiler';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
@@ -339,7 +338,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   onRefresh = () => {
-    const { panel, isInView, width } = this.props;
+    const { dashboard, panel, isInView, width } = this.props;
 
     if (!isInView) {
       this.setState({ refreshWhenInView: true });
@@ -357,7 +356,13 @@ export class PanelChrome extends PureComponent<Props, State> {
       if (this.state.refreshWhenInView) {
         this.setState({ refreshWhenInView: false });
       }
-      panel.runAllPanelQueries(this.props.dashboard.id, this.props.dashboard.getTimezone(), timeData, width);
+      panel.runAllPanelQueries(
+        dashboard.id,
+        dashboard.getTimezone(),
+        timeData,
+        width,
+        dashboard.meta.publicDashboardAccessToken
+      );
     } else {
       // The panel should render on refresh as well if it doesn't have a query, like clock panel
       this.setState({

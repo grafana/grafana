@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import React, { FC, ChangeEvent, FormEvent } from 'react';
 
-import { GrafanaTheme, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { HorizontalGroup, RadioButtonGroup, stylesFactory, useTheme, Checkbox, InlineSwitch } from '@grafana/ui';
+import { HorizontalGroup, RadioButtonGroup, Checkbox, InlineSwitch, useStyles2 } from '@grafana/ui';
 import { SortPicker } from 'app/core/components/Select/SortPicker';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { SearchSrv } from 'app/core/services/search_srv';
@@ -40,8 +40,7 @@ export const ActionRow: FC<Props> = ({
   hideLayout,
   showPreviews,
 }) => {
-  const theme = useTheme();
-  const styles = getStyles(theme);
+  const styles = useStyles2(getStyles);
   const previewsEnabled = config.featureToggles.dashboardPreviews;
 
   return (
@@ -78,21 +77,21 @@ export const ActionRow: FC<Props> = ({
 
 ActionRow.displayName = 'ActionRow';
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+export const getStyles = (theme: GrafanaTheme2) => {
   return {
     actionRow: css`
       display: none;
 
-      @media only screen and (min-width: ${theme.breakpoints.md}) {
+      ${theme.breakpoints.up('md')} {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: ${theme.spacing.lg} 0;
+        padding-bottom: ${theme.spacing(2)};
         width: 100%;
       }
     `,
     rowContainer: css`
-      margin-right: ${theme.spacing.md};
+      margin-right: ${theme.spacing(1)};
     `,
     checkboxWrapper: css`
       label {
@@ -100,4 +99,4 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       }
     `,
   };
-});
+};

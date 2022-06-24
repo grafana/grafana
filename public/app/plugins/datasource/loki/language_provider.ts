@@ -439,7 +439,8 @@ export default class LokiLanguageProvider extends LanguageProvider {
   }
 
   async fetchLabelValues(key: string): Promise<string[]> {
-    const interpolatedKey = this.datasource.interpolateString(key);
+    const interpolatedKey = encodeURIComponent(this.datasource.interpolateString(key));
+
     const url = `label/${interpolatedKey}/values`;
     const rangeParams = this.datasource.getTimeRangeParams();
     const { start, end } = rangeParams;

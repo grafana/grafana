@@ -41,7 +41,8 @@ function addExtractedFields(frame: DataFrame, options: ExtractFieldsOptions): Da
   }
   const source = findField(frame, options.source);
   if (!source) {
-    throw new Error('json field not found');
+    // this case can happen when there are multiple queries
+    return frame;
   }
 
   const ext = fieldExtractors.getIfExists(options.format ?? FieldExtractorID.Auto);

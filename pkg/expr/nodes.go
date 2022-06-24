@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
-	"github.com/grafana/grafana/pkg/util/errutil"
 
 	"gonum.org/v1/gonum/graph/simple"
 )
@@ -200,7 +199,7 @@ func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, req *Reques
 func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (mathexp.Results, error) {
 	dsInstanceSettings, err := adapters.ModelToInstanceSettings(dn.datasource, s.decryptSecureJsonDataFn(ctx))
 	if err != nil {
-		return mathexp.Results{}, errutil.Wrap("failed to convert datasource instance settings", err)
+		return mathexp.Results{}, fmt.Errorf("%v: %w", "failed to convert datasource instance settings", err)
 	}
 	pc := backend.PluginContext{
 		OrgID:                      dn.orgID,

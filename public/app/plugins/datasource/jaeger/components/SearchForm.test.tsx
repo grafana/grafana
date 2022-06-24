@@ -14,6 +14,16 @@ import { JaegerQuery } from '../types';
 
 import SearchForm from './SearchForm';
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getTemplateSrv: () => ({
+    replace: jest.fn(),
+    containsTemplate: (val: string): boolean => {
+      return val.includes('$');
+    },
+  }),
+}));
+
 describe('SearchForm', () => {
   it('should call the `onChange` function on click of the Input', async () => {
     const promise = Promise.resolve();
@@ -108,17 +118,46 @@ describe('SearchForm', () => {
     render(<SearchForm datasource={ds} query={query} onChange={() => {}} />);
 
     const asyncServiceSelect = screen.getByRole('combobox', { name: 'select-service-name' });
+    expect(asyncServiceSelect).toBeInTheDocument();
     await user.click(asyncServiceSelect);
     jest.advanceTimersByTime(3000);
-    expect(asyncServiceSelect).toBeInTheDocument();
 
     await user.type(asyncServiceSelect, 'j');
     var option = await screen.findByText('jaeger-query');
     expect(option).toBeDefined();
 
     await user.type(asyncServiceSelect, 'c');
-    option = await screen.findByText('No options found');
+    option = await screen.findByText('Hit enter to add');
     expect(option).toBeDefined();
+  });
+
+  it('should add variable to select menu options', async () => {
+    query = {
+      ...defaultQuery,
+      refId: '121314',
+      service: '$service',
+      operation: '$operation',
+    };
+
+    render(<SearchForm datasource={ds} query={query} onChange={() => {}} />);
+
+    const asyncServiceSelect = screen.getByRole('combobox', { name: 'select-service-name' });
+    expect(asyncServiceSelect).toBeInTheDocument();
+    await user.click(asyncServiceSelect);
+    jest.advanceTimersByTime(3000);
+
+    await user.type(asyncServiceSelect, '$');
+    var serviceOption = await screen.findByText('$service');
+    expect(serviceOption).toBeDefined();
+
+    const asyncOperationSelect = screen.getByRole('combobox', { name: 'select-operation-name' });
+    expect(asyncOperationSelect).toBeInTheDocument();
+    await user.click(asyncOperationSelect);
+    jest.advanceTimersByTime(3000);
+
+    await user.type(asyncOperationSelect, '$');
+    var operationOption = await screen.findByText('$operation');
+    expect(operationOption).toBeDefined();
   });
 });
 

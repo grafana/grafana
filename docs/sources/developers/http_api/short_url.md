@@ -1,9 +1,16 @@
-+++
-aliases = ["/docs/grafana/latest/developers/http_api/short_url/", "/docs/grafana/latest/http_api/short_url/"]
-description = "Grafana Short URL HTTP API"
-keywords = ["grafana", "http", "documentation", "api", "shortUrl"]
-title = "Short URL HTTP API "
-+++
+---
+aliases:
+  - /docs/grafana/latest/developers/http_api/short_url/
+  - /docs/grafana/latest/http_api/short_url/
+description: Grafana Short URL HTTP API
+keywords:
+  - grafana
+  - http
+  - documentation
+  - api
+  - shortUrl
+title: 'Short URL HTTP API '
+---
 
 # Short URL API
 
@@ -30,7 +37,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 JSON body schema:
 
-- **path** – The path to shorten, relative to the Grafana [root_url]({{< relref "../../administration/configuration.md#root_url" >}}).
+- **path** – The path to shorten, relative to the Grafana [root_url]({{< relref "../../setup-grafana/configure-grafana/#root_url" >}}).
 
 **Example response:**
 

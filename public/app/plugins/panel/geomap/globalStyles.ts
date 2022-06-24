@@ -3,6 +3,7 @@ import { css } from '@emotion/react';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import 'ol/ol.css';
+import 'ol-ext/dist/ol-ext.css';
 
 /**
  * Will be loaded *after* the css above

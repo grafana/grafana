@@ -14,12 +14,12 @@ import {
   GAUGE_DEFAULT_MAXIMUM,
   GAUGE_DEFAULT_MINIMUM,
   getFieldColorMode,
-  TextDisplayOptions,
   ThresholdsMode,
   TimeSeriesValue,
   VizOrientation,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { VizTextDisplayOptions } from '@grafana/schema';
 
 import { Themeable2 } from '../../types';
 import { calculateFontSize, measureText } from '../../utils/measureText';
@@ -39,7 +39,7 @@ export interface Props extends Themeable2 {
   display?: DisplayProcessor;
   value: DisplayValue;
   orientation: VizOrientation;
-  text?: TextDisplayOptions;
+  text?: VizTextDisplayOptions;
   itemSpacing?: number;
   lcdCellWidth?: number;
   displayMode: BarGaugeDisplayMode;
@@ -609,7 +609,7 @@ function getValueStyles(
   width: number,
   height: number,
   orientation: VizOrientation,
-  text?: TextDisplayOptions
+  text?: VizTextDisplayOptions
 ): CSSProperties {
   const styles: CSSProperties = {
     color,

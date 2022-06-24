@@ -1,15 +1,17 @@
-+++
-aliases = ["/docs/grafana/latest/datasources/aws-cloudwatch/template-queries-cloudwatch/", "/docs/grafana/latest/datasources/cloudwatch/"]
-description = "Template variables in CloudWatch queryh"
-title = "Template variables in CloudWatch query"
-weight = 10
-+++
+---
+aliases:
+  - /docs/grafana/latest/datasources/aws-cloudwatch/template-queries-cloudwatch/
+  - /docs/grafana/latest/datasources/cloudwatch/
+description: Template variables in CloudWatch queryh
+title: Template variables in CloudWatch query
+weight: 10
+---
 
 # Using template variables in CloudWatch queries
 
 Instead of hard-coding server, application, and sensor names in your metric queries, you can use variables. The variables are listed as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the display of data in your dashboard.
 
-For an introduction to templating and template variables, refer to the [Templating]({{< relref "../../variables/_index.md" >}}) documentation.
+For an introduction to templating and template variables, refer to the [Templating]({{< relref "../../variables/" >}}) documentation.
 
 ## Query variable
 
@@ -28,12 +30,13 @@ Read more about the available dimensions in the [CloudWatch Metrics and Dimensio
 | `EC2 Instance Attributes` | Returns a list of attributes matching the specified `region`, `attribute_name`, and `filters`.                                                                                |
 | `Resource ARNs`           | Returns a list of ARNs matching the specified `region`, `resource_type` and `tags`.                                                                                           |
 | `Statistics`              | Returns a list of all the standard statistics.                                                                                                                                |
+| `LogGroups`               | Returns a list of all log groups matching the specified `region`.                                                                                                             |
 
 For details about the metrics CloudWatch provides, please refer to the [CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/DeveloperGuide/CW_Support_For_AWS.html).
 
 ### Using variables in queries
 
-Variables can be used in the variable form. Refer to the [variable syntax documentation]({{< relref "../../variables/syntax.md" >}}).
+Variables can be used in the variable form. Refer to the [variable syntax documentation]({{< relref "../../variables/syntax/" >}}).
 
 ## ec2_instance_attribute examples
 

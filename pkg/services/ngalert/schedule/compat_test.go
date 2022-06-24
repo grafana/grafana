@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -122,7 +121,7 @@ func Test_stateToPostableAlert(t *testing.T) {
 				t.Run("add __alertScreenshotToken__ if there is an image token", func(t *testing.T) {
 					alertState := randomState(tc.state)
 					alertState.Annotations = randomMapOfStrings()
-					alertState.Image = &store.Image{Token: "test_token"}
+					alertState.Image = &ngModels.Image{Token: "test_token"}
 
 					result := stateToPostableAlert(alertState, appURL)
 

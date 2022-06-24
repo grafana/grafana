@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package queryhistory
 
 import (
@@ -13,6 +10,9 @@ import (
 )
 
 func TestIntegrationDeleteStaleQueryFromQueryHistory(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	testScenarioWithQueryInQueryHistory(t, "Stale query history can be deleted",
 		func(t *testing.T, sc scenarioContext) {
 			olderThan := time.Now().Unix() + 60

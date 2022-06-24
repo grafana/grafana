@@ -50,7 +50,7 @@ describe('Cascader', () => {
     let user: UserEvent;
 
     beforeEach(() => {
-      jest.useFakeTimers('modern');
+      jest.useFakeTimers();
       // Need to use delay: null here to work with fakeTimers
       // see https://github.com/testing-library/user-event/issues/833
       user = userEvent.setup({ delay: null });

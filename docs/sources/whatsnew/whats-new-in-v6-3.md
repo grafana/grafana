@@ -1,13 +1,19 @@
-+++
-aliases = ["/docs/grafana/latest/guides/whats-new-in-v6-3/", "/docs/grafana/latest/whatsnew/whats-new-in-v6-3/"]
-description = "Feature and improvement highlights for Grafana v6.3"
-keywords = ["grafana", "new", "documentation", "6.3", "release notes"]
-title = "What's new in Grafana v6.3"
-weight = -22
-
-[_build]
-  list = false
-+++
+---
+_build:
+  list: false
+aliases:
+  - /docs/grafana/latest/guides/whats-new-in-v6-3/
+  - /docs/grafana/latest/whatsnew/whats-new-in-v6-3/
+description: Feature and improvement highlights for Grafana v6.3
+keywords:
+  - grafana
+  - new
+  - documentation
+  - '6.3'
+  - release notes
+title: What's new in Grafana v6.3
+weight: -22
+---
 
 # What's new in Grafana v6.3
 
@@ -130,13 +136,13 @@ belonging to an LDAP group that gives them access to Grafana.
 
 Built-in support for SAML is now available in Grafana Enterprise.
 
-[See docs]({{< relref "../auth/saml.md" >}})
+[See docs]({{< relref "../setup-grafana/configure-security/configure-authentication/saml/" >}})
 
 ### Team Sync for GitHub OAuth
 
 When setting up OAuth with GitHub it's now possible to sync GitHub teams with Teams in Grafana.
 
-[See docs]({{< relref "../auth/github.md" >}})
+[See docs]({{< relref "../setup-grafana/configure-security/configure-authentication/github/" >}})
 
 ### Team Sync for Auth Proxy
 

@@ -35,7 +35,7 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
     const query = templateSrv.replace(item.query, scopedVars, interpolateVariable);
 
     return {
-      refId: target.refId,
+      ...target,
       queryType: AzureQueryType.AzureResourceGraph,
       subscriptions,
       azureResourceGraph: {

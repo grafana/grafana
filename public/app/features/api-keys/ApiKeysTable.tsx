@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import React, { FC } from 'react';
 
 import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
-import { DeleteButton, Icon, IconName, Tooltip, useTheme2 } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { Button, DeleteButton, HorizontalGroup, Icon, IconName, Tooltip, useTheme2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types';
 
@@ -12,9 +13,10 @@ interface Props {
   apiKeys: ApiKey[];
   timeZone: TimeZone;
   onDelete: (apiKey: ApiKey) => void;
+  onMigrate: (apiKey: ApiKey) => void;
 }
 
-export const ApiKeysTable: FC<Props> = ({ apiKeys, timeZone, onDelete }) => {
+export const ApiKeysTable: FC<Props> = ({ apiKeys, timeZone, onDelete, onMigrate }) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
 
@@ -47,12 +49,19 @@ export const ApiKeysTable: FC<Props> = ({ apiKeys, timeZone, onDelete }) => {
                   )}
                 </td>
                 <td>
-                  <DeleteButton
-                    aria-label="Delete API key"
-                    size="sm"
-                    onConfirm={() => onDelete(key)}
-                    disabled={!contextSrv.hasPermissionInMetadata(AccessControlAction.ActionAPIKeysDelete, key)}
-                  />
+                  <HorizontalGroup justify="flex-end">
+                    {config.featureToggles.serviceAccounts && (
+                      <Button size="sm" onClick={() => onMigrate(key)}>
+                        Migrate
+                      </Button>
+                    )}
+                    <DeleteButton
+                      aria-label="Delete API key"
+                      size="sm"
+                      onConfirm={() => onDelete(key)}
+                      disabled={!contextSrv.hasPermissionInMetadata(AccessControlAction.ActionAPIKeysDelete, key)}
+                    />
+                  </HorizontalGroup>
                 </td>
               </tr>
             );
