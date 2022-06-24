@@ -32,6 +32,10 @@ func exportAuth(helper *commitHelper, job *gitExportJob) error {
 		}
 		p.Theme = user.Theme
 
+		// Avoid saving in git
+		user.Password = "xxxxx"
+		user.Salt = "yyyyyy"
+
 		err := helper.add(commitOptions{
 			body: []commitBody{
 				{
@@ -112,14 +116,16 @@ func exportAPIKeys(helper *commitHelper, job *gitExportJob) error {
 		}
 
 		rows := make([]*keyInfo, 0)
-		err := sess.Table("api_key").Where("org_id = ?", helper.orgID).OrderBy("created").Find(&rows)
+		err := sess.Table("api_key").Where("org_id = ?", helper.orgID).Asc("created").Find(&rows)
 		if err != nil {
 			return err
 		}
 
 		fpath := path.Join(helper.orgDir, "auth", "api_keys.json")
 		keys := make(map[string]*keyInfo, len(rows))
-		for _, k := range rows {
+		for idx, k := range rows {
+			k.Key = fmt.Sprintf("KEY!%d", idx) // avoid saving key in git :)
+
 			k.CreatedMS = k.Created.UnixMilli()
 			k.ExpiresMS = k.ExpiresMS * 1000 // s to millis
 			keys[k.Key] = k

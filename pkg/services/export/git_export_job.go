@@ -141,7 +141,7 @@ func (e *gitExportJob) doExportWithHistory() error {
 	// cleanup the folder
 	e.status.Target = "pruning..."
 	e.broadcaster(e.status)
-	// NPE! r.Prune(git.PruneOptions{})
+	r.Prune(git.PruneOptions{})
 
 	// TODO
 	// git gc --prune=now --aggressive
@@ -155,7 +155,7 @@ func (e *gitExportJob) doOrgExportWithHistory(helper *commitHelper) error {
 		return err
 	}
 
-	if false {
+	if true {
 		err = exportDashboards(helper, e)
 		if err != nil {
 			return err

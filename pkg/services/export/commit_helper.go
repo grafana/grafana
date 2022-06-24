@@ -72,7 +72,7 @@ func (ch *commitHelper) add(opts commitOptions) error {
 			return err
 		}
 
-		sub := b.fpath[len(ch.workDir):]
+		sub := b.fpath[len(ch.workDir)+1:]
 		_, err = ch.work.Add(sub)
 		if err != nil {
 			status, e2 := ch.work.Status()

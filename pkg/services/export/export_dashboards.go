@@ -162,10 +162,15 @@ func exportDashboards(helper *commitHelper, job *gitExportJob) error {
 		rows := make([]*dashVersionResult, 0, len(ids))
 
 		sess.Table("dashboard_version").
-			// Join() for orgid?
-			//	Where("org_id = ?", orgID).
-			Cols("dashboard_id", "version", "created", "created_by", "message", "data").
-			Asc("created")
+			Join("INNER", "dashboard", "dashboard.id = dashboard_version.dashboard_id").
+			Where("org_id = ?", job.orgID).
+			Cols("dashboard_version.dashboard_id",
+				"dashboard_version.version",
+				"dashboard_version.created",
+				"dashboard_version.created_by",
+				"dashboard_version.message",
+				"dashboard_version.data").
+			Asc("dashboard_version.created")
 
 		err := sess.Find(&rows)
 		if err != nil {
