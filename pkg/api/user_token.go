@@ -58,6 +58,7 @@ func (hs *HTTPServer) getUserAuthTokensInternal(c *models.ReqContext, userID int
 			return response.Error(http.StatusConflict,
 				"User has conflicting login or email with another user. Please contact server admin", err)
 		}
+
 		return response.Error(http.StatusInternalServerError, "Failed to get user", err)
 	}
 

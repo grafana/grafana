@@ -143,9 +143,8 @@ func (hs *HTTPServer) handleUpdateUser(ctx context.Context, cmd models.UpdateUse
 	if err := hs.SQLStore.UpdateUser(ctx, &cmd); err != nil {
 		if errors.Is(err, models.ErrCaseInsensitive) {
 			return response.Error(http.StatusConflict, "Update would result in user login conflict", err)
-		} else {
-			return response.Error(http.StatusInternalServerError, "Failed to update user", err)
 		}
+		return response.Error(http.StatusInternalServerError, "Failed to update user", err)
 	}
 
 	return response.Success("User updated")
