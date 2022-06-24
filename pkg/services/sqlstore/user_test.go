@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -473,6 +474,10 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	})
 
 	t.Run("Testing DB - error on case insensitive conflict", func(t *testing.T) {
+		if ss.engine.Dialect().DBType() == migrator.MySQL {
+			t.Skip("Skipping on MySQL due to case insensitive indexes")
+		}
+
 		cmd := models.CreateUserCommand{
 			Email: "confusertest@test.com",
 			Name:  "user name",
@@ -551,6 +556,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 		ss.Cfg.CaseInsensitiveLogin = false
 	})
+
 	ss = InitTestDB(t)
 
 	t.Run("Testing DB - enable all users", func(t *testing.T) {
