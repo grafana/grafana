@@ -691,7 +691,7 @@ type ModelVariableModelType string
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
 type ModelVariableType string
 
-//go:embed lineage.cue
+//go:embed coremodel.cue
 var cueFS embed.FS
 
 // codegen ensures that this is always the latest Thema schema version
