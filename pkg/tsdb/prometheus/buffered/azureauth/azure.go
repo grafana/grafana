@@ -1,4 +1,4 @@
-package promclient
+package azureauth
 
 import (
 	"fmt"
@@ -8,9 +8,10 @@ import (
 	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
 	"github.com/grafana/grafana-azure-sdk-go/azhttpclient"
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/utils"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util/maputil"
 )
 
@@ -22,13 +23,12 @@ var (
 	}
 )
 
-func (p *Provider) configureAzureAuthentication(opts *sdkhttpclient.Options) error {
-	// Azure authentication is experimental (#35857)
-	if !p.features.IsEnabled(featuremgmt.FlagPrometheusAzureAuth) {
-		return nil
+func ConfigureAzureAuthentication(settings backend.DataSourceInstanceSettings, azureSettings *azsettings.AzureSettings, opts *sdkhttpclient.Options) error {
+	jsonData, err := utils.GetJsonData(settings)
+	if err != nil {
+		return fmt.Errorf("failed to get jsonData: %w", err)
 	}
-
-	credentials, err := azcredentials.FromDatasourceData(p.jsonData, p.settings.DecryptedSecureJSONData)
+	credentials, err := azcredentials.FromDatasourceData(jsonData, settings.DecryptedSecureJSONData)
 	if err != nil {
 		err = fmt.Errorf("invalid Azure credentials: %w", err)
 		return err
@@ -37,17 +37,17 @@ func (p *Provider) configureAzureAuthentication(opts *sdkhttpclient.Options) err
 	if credentials != nil {
 		var scopes []string
 
-		if scopes, err = getOverriddenScopes(p.jsonData); err != nil {
+		if scopes, err = getOverriddenScopes(jsonData); err != nil {
 			return err
 		}
 
 		if scopes == nil {
-			if scopes, err = getPrometheusScopes(p.cfg.Azure, credentials); err != nil {
+			if scopes, err = getPrometheusScopes(azureSettings, credentials); err != nil {
 				return err
 			}
 		}
 
-		azhttpclient.AddAzureAuthentication(opts, p.cfg.Azure, credentials, scopes)
+		azhttpclient.AddAzureAuthentication(opts, azureSettings, credentials, scopes)
 	}
 
 	return nil
