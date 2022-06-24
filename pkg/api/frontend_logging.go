@@ -53,12 +53,12 @@ func GrafanaJavascriptAgentLogMessageHandler(store *frontendlogging.SourceMapSto
 		if err := web.Bind(c.Req, &event); err != nil {
 			return response.Error(http.StatusBadRequest, "bad request data", err)
 		}
-		var ctx = frontendlogging.CtxVector{}
 
 		// Meta object is standard across event types, adding it globally.
-		ctx = event.AddMetaToContext(ctx)
 
 		if event.Logs != nil && len(event.Logs) > 0 {
+			var ctx = frontendlogging.CtxVector{}
+			ctx = event.AddMetaToContext(ctx)
 			for _, logEntry := range event.Logs {
 				ctx = append(ctx, "kind", "log", "original_timestamp", logEntry.Timestamp)
 				if logEntry.LogLevel != "" {
@@ -72,6 +72,8 @@ func GrafanaJavascriptAgentLogMessageHandler(store *frontendlogging.SourceMapSto
 		}
 
 		if event.Measurements != nil && len(event.Measurements) > 0 {
+			var ctx = frontendlogging.CtxVector{}
+			ctx = event.AddMetaToContext(ctx)
 			for _, measurementEntry := range event.Measurements {
 				for measurementName, measurementValue := range measurementEntry.Values {
 					ctx = append(ctx, measurementName, measurementValue)
@@ -81,6 +83,8 @@ func GrafanaJavascriptAgentLogMessageHandler(store *frontendlogging.SourceMapSto
 			}
 		}
 		if event.Exceptions != nil && len(event.Exceptions) > 0 {
+			var ctx = frontendlogging.CtxVector{}
+			ctx = event.AddMetaToContext(ctx)
 			for _, exception := range event.Exceptions {
 				exception := exception
 				transformedException := frontendlogging.TransformException(&exception, store)
