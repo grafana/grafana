@@ -4,7 +4,6 @@ import React from 'react';
 import { Field, GrafanaTheme, LinkModel } from '@grafana/data';
 
 import { useStyles } from '../../themes';
-import { Badge } from '../Badge/Badge';
 import { Icon } from '../Icon/Icon';
 
 import { DataLinkButton } from './DataLinkButton';
@@ -20,11 +19,7 @@ export function FieldLinkList({ links }: Props) {
   const styles = useStyles(getStyles);
 
   if (links.length === 1) {
-    return (
-      <MaybeErrorBadge link={links[0]}>
-        <DataLinkButton link={links[0]} />
-      </MaybeErrorBadge>
-    );
+    return shouldShowDataLink(links[0]) ? <DataLinkButton link={links[0]} /> : null;
   }
 
   const externalLinks = links.filter((link) => link.target === '_blank');
@@ -33,42 +28,27 @@ export function FieldLinkList({ links }: Props) {
   return (
     <>
       {internalLinks.map((link, i) => {
-        return (
-          <MaybeErrorBadge link={link} key={i}>
-            <DataLinkButton link={link} />
-          </MaybeErrorBadge>
-        );
+        return shouldShowDataLink(link) ? <DataLinkButton link={link} key={i} /> : null;
       })}
       <div className={styles.wrapper}>
         <p className={styles.externalLinksHeading}>External links</p>
-        {externalLinks.map((link, i) => (
-          <MaybeErrorBadge link={link} key={i}>
-            <a href={link.href} target={link.target} className={styles.externalLink}>
-              <Icon name="external-link-alt" />
-              {link.title}
-            </a>
-          </MaybeErrorBadge>
-        ))}
+        {externalLinks.map(
+          (link, i) =>
+            shouldShowDataLink(link) && (
+              <a href={link.href} target={link.target} className={styles.externalLink} key={i}>
+                <Icon name="external-link-alt" />
+                {link.title}
+              </a>
+            )
+        )}
       </div>
     </>
   );
 }
 
-type MaybeErrorBadgeProps = {
-  link: LinkModel<Field>;
-};
-
-/**
- * @internal
- */
-const MaybeErrorBadge: React.FC<MaybeErrorBadgeProps> = (props) => {
-  const { link, children } = props;
-  return link.origin.config.links && link.origin.config.links[0].error ? (
-    <Badge text={link.title} tooltip={link.error} color="red" icon="external-link-alt" />
-  ) : (
-    <>{children}</>
-  );
-};
+function shouldShowDataLink(link: LinkModel<Field>): boolean {
+  return !(link.origin.config.links && link.origin.config.links[0].error);
+}
 
 const getStyles = (theme: GrafanaTheme) => ({
   wrapper: css`
