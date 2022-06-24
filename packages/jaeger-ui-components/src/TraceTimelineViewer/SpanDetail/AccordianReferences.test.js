@@ -106,6 +106,7 @@ describe('References tests', () => {
   it('render references list', () => {
     setup();
 
+    expect(screen.queryByRole('switch')).not.toBeInTheDocument();
     expect(screen.getAllByRole('link', { name: /^service\d\sop\d/ })).toHaveLength(2);
     expect(screen.getByRole('link', { name: /^View\sLinked/ })).toBeInTheDocument();
   });
