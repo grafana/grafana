@@ -2309,26 +2309,26 @@ exports[`no type assertions`] = {
       [446, 14, 22, "Do not use any type assertions.", "1197383730"],
       [979, 11, 72, "Do not use any type assertions.", "2607733002"]
     ],
-    "public/app/features/dashboard/state/PanelModel.test.ts:1787146930": [
+    "public/app/features/dashboard/state/PanelModel.test.ts:4035235685": [
       [29, 11, 92, "Do not use any type assertions.", "2976372744"],
       [60, 6, 45, "Do not use any type assertions.", "2558079085"],
       [60, 6, 15, "Do not use any type assertions.", "363922340"],
       [352, 80, 25, "Do not use any type assertions.", "2825799852"],
       [376, 80, 25, "Do not use any type assertions.", "2825799852"],
-      [453, 49, 81, "Do not use any type assertions.", "1932069967"],
-      [454, 32, 15, "Do not use any type assertions.", "1703404951"],
-      [490, 25, 293, "Do not use any type assertions.", "3989849883"],
-      [492, 21, 213, "Do not use any type assertions.", "2695721884"]
+      [459, 49, 81, "Do not use any type assertions.", "1932069967"],
+      [460, 32, 15, "Do not use any type assertions.", "1703404951"],
+      [496, 25, 293, "Do not use any type assertions.", "3989849883"],
+      [498, 21, 213, "Do not use any type assertions.", "2695721884"]
     ],
-    "public/app/features/dashboard/state/PanelModel.ts:1354672921": [
+    "public/app/features/dashboard/state/PanelModel.ts:4191868566": [
       [210, 18, 11, "Do not use any type assertions.", "3816020039"],
       [214, 18, 11, "Do not use any type assertions.", "3816020039"],
       [218, 14, 11, "Do not use any type assertions.", "3816020039"],
       [223, 7, 11, "Do not use any type assertions.", "3816020039"],
-      [360, 21, 11, "Do not use any type assertions.", "3816020039"],
-      [373, 7, 11, "Do not use any type assertions.", "3816020039"],
-      [424, 14, 11, "Do not use any type assertions.", "3816020039"],
-      [503, 22, 18, "Do not use any type assertions.", "1060162663"]
+      [362, 21, 11, "Do not use any type assertions.", "3816020039"],
+      [375, 7, 11, "Do not use any type assertions.", "3816020039"],
+      [426, 14, 11, "Do not use any type assertions.", "3816020039"],
+      [505, 22, 18, "Do not use any type assertions.", "1060162663"]
     ],
     "public/app/features/dashboard/state/getPanelOptionsWithDefaults.ts:305941121": [
       [83, 22, 34, "Do not use any type assertions.", "3273769083"],
@@ -9036,7 +9036,7 @@ exports[`no explicit any`] = {
       [21, 38, 3, "Unexpected any. Specify a different type.", "193409811"],
       [21, 59, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/dashboard/dashgrid/DashboardGrid.tsx:3771579139": [
+    "public/app/features/dashboard/dashgrid/DashboardGrid.tsx:25656274": [
       [79, 22, 3, "Unexpected any. Specify a different type.", "193409811"],
       [189, 40, 3, "Unexpected any. Specify a different type.", "193409811"],
       [189, 53, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -9215,7 +9215,7 @@ exports[`no explicit any`] = {
       [1137, 40, 3, "Unexpected any. Specify a different type.", "193409811"],
       [1137, 48, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/dashboard/state/PanelModel.test.ts:1787146930": [
+    "public/app/features/dashboard/state/PanelModel.test.ts:4035235685": [
       [34, 5, 3, "Unexpected any. Specify a different type.", "193409811"],
       [52, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
       [53, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -9224,7 +9224,7 @@ exports[`no explicit any`] = {
       [373, 28, 3, "Unexpected any. Specify a different type.", "193409811"],
       [376, 102, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/dashboard/state/PanelModel.ts:1354672921": [
+    "public/app/features/dashboard/state/PanelModel.ts:4191868566": [
       [112, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
       [131, 10, 3, "Unexpected any. Specify a different type.", "193409811"],
       [145, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -9239,13 +9239,13 @@ exports[`no explicit any`] = {
       [218, 22, 3, "Unexpected any. Specify a different type.", "193409811"],
       [223, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
       [278, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [360, 29, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [373, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [424, 22, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [444, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [455, 22, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [586, 38, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [645, 14, 3, "Unexpected any. Specify a different type.", "193409811"]
+      [362, 29, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [375, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [426, 22, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [446, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [457, 22, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [588, 38, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [647, 14, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/dashboard/state/TimeModel.ts:2763994651": [
       [3, 8, 3, "Unexpected any. Specify a different type.", "193409811"],
