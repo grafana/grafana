@@ -293,16 +293,17 @@ function getDataLinks(options: ExemplarTraceIdDestination): DataLink[] {
     const dataSourceSrv = getDataSourceSrv();
     const dsSettings = dataSourceSrv.getInstanceSettings(options.datasourceUid);
 
-    dataLinks.push({
-      title: options.urlDisplayLabel || (dsSettings ? `Query with ${dsSettings?.name}` : 'Data source not found'),
-      url: '',
-      internal: {
-        query: { query: '${__value.raw}', queryType: 'traceId' },
-        datasourceUid: options.datasourceUid,
-        datasourceName: dsSettings?.name ?? 'Data source not found',
-      },
-      ...(dsSettings ? {} : { error: 'Data source not found or configured incorrectly' }),
-    });
+    if (dsSettings) {
+      dataLinks.push({
+        title: options.urlDisplayLabel || `Query with ${dsSettings?.name}`,
+        url: '',
+        internal: {
+          query: { query: '${__value.raw}', queryType: 'traceId' },
+          datasourceUid: options.datasourceUid,
+          datasourceName: dsSettings?.name ?? 'Data source not found',
+        },
+      });
+    }
   }
 
   if (options.url) {
