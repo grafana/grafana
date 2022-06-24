@@ -47,7 +47,7 @@ describe('Heatmap Migrations', () => {
           },
           "color": Object {
             "exponent": 0.5,
-            "fill": "dark-orange",
+            "fill": "#b4ff00",
             "max": 100,
             "min": 5,
             "mode": "scheme",
