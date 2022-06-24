@@ -30,9 +30,9 @@ import (
 // directory for a Thema lineage.
 type ExtractedLineage struct {
 	Lineage thema.Lineage
-	// Absolute path to the coremodel's lineage.cue file.
+	// Absolute path to the coremodel's coremodel.cue file.
 	LineagePath string
-	// Path to the coremodel's lineage.cue file relative to repo root.
+	// Path to the coremodel's coremodel.cue file relative to repo root.
 	RelativePath string
 	// Indicates whether the coremodel is considered canonical or not. Generated
 	// code from not-yet-canonical coremodels should include appropriate caveats in
@@ -85,7 +85,7 @@ func ExtractLineage(path string, lib thema.Library) (*ExtractedLineage, error) {
 	}
 
 	fs := fstest.MapFS{
-		"lineage.cue": &fstest.MapFile{
+		"coremodel.cue": &fstest.MapFile{
 			Data: byt,
 		},
 	}
@@ -127,7 +127,8 @@ var canonicalCoremodels = map[string]bool{
 	"dashboard": false,
 }
 
-// GenerateGoCoremodel generates a standard Go coremodel from a Thema lineage.
+// GenerateGoCoremodel generates a standard Go model struct and coremodel
+// implementation from a coremodel CUE declaration.
 //
 // The provided path must be a directory. Generated code files will be written
 // to that path. The final element of the path must match the Lineage.Name().
@@ -176,7 +177,8 @@ func (ls *ExtractedLineage) GenerateGoCoremodel(path string) (WriteDiffer, error
 	}
 
 	fset := token.NewFileSet()
-	gf, err := parser.ParseFile(fset, "coremodel_gen.go", gostr+buuf.String(), parser.ParseComments)
+	fname := fmt.Sprintf("%s_gen.go", lin.Name())
+	gf, err := parser.ParseFile(fset, fname, gostr+buuf.String(), parser.ParseComments)
 	if err != nil {
 		return nil, fmt.Errorf("generated go file parsing failed: %w", err)
 	}
@@ -189,13 +191,13 @@ func (ls *ExtractedLineage) GenerateGoCoremodel(path string) (WriteDiffer, error
 		return nil, fmt.Errorf("ast printing failed: %w", err)
 	}
 
-	byt, err := imports.Process("coremodel_gen.go", buf.Bytes(), nil)
+	byt, err := imports.Process(fname, buf.Bytes(), nil)
 	if err != nil {
 		return nil, fmt.Errorf("goimports processing failed: %w", err)
 	}
 
 	wd := NewWriteDiffer()
-	wd[filepath.Join(path, "coremodel_gen.go")] = byt
+	wd[filepath.Join(path, fname)] = byt
 
 	return wd, nil
 }
@@ -227,8 +229,10 @@ func (ls *ExtractedLineage) GenerateTypescriptCoremodel(path string) (WriteDiffe
 	}
 
 	// TODO until cuetsy can toposort its outputs, put the top/parent type at the bottom of the file.
-	parts.Nodes = append(parts.Nodes, top.T, top.D)
-	// parts.Nodes = append([]ts.Decl{top.T, top.D}, parts.Nodes...)
+	parts.Nodes = append(parts.Nodes, top.T)
+	if top.D != nil {
+		parts.Nodes = append(parts.Nodes, top.D)
+	}
 
 	var strb strings.Builder
 	var str string
@@ -318,33 +322,16 @@ var tmplImports = genHeader + `package {{ .PackageName }}
 
 import (
 	"embed"
-	"bytes"
-	"compress/gzip"
-	"context"
-	"encoding/base64"
-	"encoding/json"
-	"encoding/xml"
-	"errors"
-	"fmt"
-	"io"
-	"io/ioutil"
-	"net/http"
-	"net/url"
-	"path"
 	"path/filepath"
-	"strings"
-	"time"
 
-	"github.com/deepmap/oapi-codegen/pkg/runtime"
-	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
-	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/grafana/thema"
 	"github.com/grafana/grafana/pkg/cuectx"
+	"github.com/grafana/grafana/pkg/framework/coremodel"
+	"github.com/grafana/thema"
 )
 `
 
 var tmplAddenda = template.Must(template.New("addenda").Parse(`
-//go:embed lineage.cue
+//go:embed coremodel.cue
 var cueFS embed.FS
 
 // codegen ensures that this is always the latest Thema schema version

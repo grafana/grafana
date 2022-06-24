@@ -104,22 +104,28 @@ export class LokiDatasource
   }
 
   getLogsVolumeDataProvider(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> | undefined {
-    const isLogsVolumeAvailable = request.targets.some((target) => target.expr && !isMetricsQuery(target.expr));
+    const isQuerySuitable = (query: LokiQuery) => {
+      const normalized = getNormalizedLokiQuery(query);
+      const { expr } = normalized;
+      // it has to be a logs-producing range-query
+      return expr && !isMetricsQuery(expr) && normalized.queryType === LokiQueryType.Range;
+    };
+
+    const isLogsVolumeAvailable = request.targets.some(isQuerySuitable);
+
     if (!isLogsVolumeAvailable) {
       return undefined;
     }
 
     const logsVolumeRequest = cloneDeep(request);
-    logsVolumeRequest.targets = logsVolumeRequest.targets
-      .filter((target) => target.expr && !isMetricsQuery(target.expr))
-      .map((target) => {
-        return {
-          ...target,
-          instant: false,
-          volumeQuery: true,
-          expr: `sum by (level) (count_over_time(${target.expr}[$__interval]))`,
-        };
-      });
+    logsVolumeRequest.targets = logsVolumeRequest.targets.filter(isQuerySuitable).map((target) => {
+      return {
+        ...target,
+        instant: false,
+        volumeQuery: true,
+        expr: `sum by (level) (count_over_time(${target.expr}[$__interval]))`,
+      };
+    });
 
     return queryLogsVolume(this, logsVolumeRequest, {
       extractLevel,

@@ -2,7 +2,6 @@ package prometheus
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -43,13 +42,17 @@ func ProvideService(httpClientProvider httpclient.Provider, cfg *setting.Cfg, fe
 
 func newInstanceSettings(httpClientProvider httpclient.Provider, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		var jsonData map[string]interface{}
-		err := json.Unmarshal(settings.JSONData, &jsonData)
+		// Creates a http roundTripper. Probably should be used for both buffered and streaming/querydata instances.
+		opts, err := buffered.CreateTransportOptions(settings, cfg, features, plog)
 		if err != nil {
-			return nil, fmt.Errorf("error reading settings: %w", err)
+			return nil, fmt.Errorf("error creating transport options: %v", err)
+		}
+		roundTripper, err := httpClientProvider.GetTransport(*opts)
+		if err != nil {
+			return nil, fmt.Errorf("error creating http client: %v", err)
 		}
 
-		b, err := buffered.New(httpClientProvider, cfg, features, tracer, settings, plog)
+		b, err := buffered.New(roundTripper, tracer, settings, plog)
 		if err != nil {
 			return nil, err
 		}

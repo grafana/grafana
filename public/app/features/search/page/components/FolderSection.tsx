@@ -99,12 +99,6 @@ export const FolderSection: FC<SectionHeaderProps> = ({
     }
   };
 
-  const onToggleChecked = (item: DashboardSectionItem) => {
-    if (selectionToggle) {
-      selectionToggle('dashboard', item.uid!);
-    }
-  };
-
   const id = useUniqueId();
   const labelId = `section-header-label-${id}`;
 
@@ -116,7 +110,7 @@ export const FolderSection: FC<SectionHeaderProps> = ({
   const renderResults = () => {
     if (!results.value) {
       return null;
-    } else if (results.value.length === 0) {
+    } else if (results.value.length === 0 && !results.loading) {
       return (
         <Card>
           <Card.Heading>No results found</Card.Heading>
@@ -137,7 +131,11 @@ export const FolderSection: FC<SectionHeaderProps> = ({
           key={v.uid}
           item={v}
           onTagSelected={onTagSelected}
-          onToggleChecked={onToggleChecked as any}
+          onToggleChecked={(item) => {
+            if (selectionToggle) {
+              selectionToggle('dashboard', item.uid!);
+            }
+          }}
           editable={Boolean(selection != null)}
         />
       );
