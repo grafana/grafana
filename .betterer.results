@@ -4959,7 +4959,7 @@ exports[`no type assertions`] = {
       [42, 9, 37, "Do not use any type assertions.", "2278774245"],
       [50, 13, 37, "Do not use any type assertions.", "2278774245"]
     ],
-    "public/app/plugins/datasource/tempo/datasource.test.ts:3050670297": [
+    "public/app/plugins/datasource/tempo/datasource.test.ts:3553251449": [
       [48, 15, 97, "Do not use any type assertions.", "3206339370"],
       [48, 27, 75, "Do not use any type assertions.", "509243894"],
       [124, 50, 57, "Do not use any type assertions.", "3834361977"],
@@ -12378,7 +12378,7 @@ exports[`no explicit any`] = {
     "public/app/plugins/datasource/tempo/QueryEditor/QueryField.tsx:920077151": [
       [205, 62, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/tempo/datasource.test.ts:3050670297": [
+    "public/app/plugins/datasource/tempo/datasource.test.ts:3553251449": [
       [48, 109, 3, "Unexpected any. Specify a different type.", "193409811"],
       [71, 25, 3, "Unexpected any. Specify a different type.", "193409811"],
       [88, 25, 3, "Unexpected any. Specify a different type.", "193409811"],
