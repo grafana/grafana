@@ -99,7 +99,7 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 			{errStatus: backend.Timeout, expectedStatus: 504},
 			{errStatus: backend.Unauthorized, expectedStatus: 401},
 			{errStatus: backend.ConnectionError, expectedStatus: 502},
-			{errStatus: backend.Undefined, expectedStatus: 500},
+			{errStatus: backend.Unknown, expectedStatus: 500},
 			{errStatus: 12345, expectedStatus: 400},
 		}
 
