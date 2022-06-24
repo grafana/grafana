@@ -8,7 +8,7 @@ title: Plugin migration guide
 
 ## Introduction
 
-This guide helps you identify the steps you need to take based on the Grafana version your plugin supports and explains how to migrate the plugin to the 9.x or a later version.
+The guide helps you identify the steps required to update a plugin from the Grafana version it currently supports to newer versions of Grafana.
 
 > **Note:** If you've successfully migrated your plugin using this guide, then share your experiences with us! If you find missing information, then we encourage you to [submit an issue on GitHub](https://github.com/grafana/grafana/issues/new?title=Docs%20feedback:%20/developers/plugins/migration-guide.md) so that we can improve this guide!
 
