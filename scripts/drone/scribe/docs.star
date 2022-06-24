@@ -87,7 +87,7 @@ def yarn_install_step():
     "depends_on": [
       "download_grabpl",
     ],
-    "image": "node:18-alpine3.15",
+    "image": "grafana/build-container:1.5.7",
     "name": "yarn_install",
     "volumes": [
       {

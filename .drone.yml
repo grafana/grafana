@@ -562,7 +562,7 @@ steps:
     -log-level=debug -version=v0.9.16-dirty ./pkg/build/ci
   depends_on:
   - download_grabpl
-  image: node:18-alpine3.15
+  image: grafana/build-container:1.5.7
   name: yarn_install
   volumes:
   - name: scribe
@@ -689,7 +689,7 @@ steps:
     -log-level=debug -version=v0.9.16-dirty ./pkg/build/ci
   depends_on:
   - download_grabpl
-  image: node:18-alpine3.15
+  image: grafana/build-container:1.5.7
   name: yarn_install
   volumes:
   - name: scribe
@@ -4862,6 +4862,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 0ea1247ceed430bf48df0ca99a20933a07c7acb1b15b4eccddfafd7824b47726
+hmac: 6ba4210b47ad27e54a79381815c9eb78cbf098a166ea424b1daeb36bed2efd7a
 
 ...

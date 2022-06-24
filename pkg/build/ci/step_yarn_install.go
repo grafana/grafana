@@ -31,7 +31,7 @@ func StepYarnInstall() pipeline.Step {
 	return pipeline.NewStep(yarnInstall).
 		WithArguments(pipeline.ArgumentSourceFS).
 		Provides(ArgumentYarnCache).
-		WithImage(YarnImage)
+		WithImage(BuildImage)
 }
 
 func yarnSetup(ctx context.Context, opts pipeline.ActionOpts) error {
