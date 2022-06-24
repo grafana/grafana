@@ -308,6 +308,12 @@ func (ss *SQLStore) UpdateUser(ctx context.Context, cmd *models.UpdateUserComman
 			return err
 		}
 
+		if ss.Cfg.CaseInsensitiveLogin {
+			if err := ss.userCaseInsensitiveLoginConflict(ctx, sess, user.Login, user.Email); err != nil {
+				return err
+			}
+		}
+
 		sess.publishAfterCommit(&events.UserUpdated{
 			Timestamp: user.Created,
 			Id:        user.Id,
