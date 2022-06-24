@@ -16,7 +16,7 @@ func BuildDocumentation(sc *scribe.Scribe) {
 
 	sc.Parallel(
 		StepCodespell().WithName("codespell"),
-		YarnStep(StepLintDocumentation()).WithName("lint docs"),
+		StepLintDocumentation().WithName("lint docs"),
 	)
 
 	sc.Run(
