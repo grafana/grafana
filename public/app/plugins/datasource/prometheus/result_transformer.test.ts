@@ -10,7 +10,8 @@ jest.mock('@grafana/runtime', () => ({
   getDataSourceSrv: () => {
     return {
       getInstanceSettings: (uid: string) => {
-        return uid === 'Tempo' ? { name: 'Tempo' } : undefined;
+        const uids = ['Tempo', 'jaeger'];
+        return uids.find((u) => u === uid) ? { name: uid } : undefined;
       },
     };
   },
