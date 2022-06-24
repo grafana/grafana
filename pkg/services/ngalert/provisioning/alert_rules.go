@@ -90,17 +90,17 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule model
 	return rule, nil
 }
 
-func (service *AlertRuleService) GetRuleGroup(ctx context.Context, orgID int64, folder, group string) (*definitions.AlertRuleGroup, error) {
+func (service *AlertRuleService) GetRuleGroup(ctx context.Context, orgID int64, folder, group string) (definitions.AlertRuleGroup, error) {
 	q := models.ListAlertRulesQuery{
 		OrgID:         orgID,
 		NamespaceUIDs: []string{folder},
 		RuleGroup:     group,
 	}
 	if err := service.ruleStore.ListAlertRules(ctx, &q); err != nil {
-		return nil, err
+		return definitions.AlertRuleGroup{}, err
 	}
 	if len(q.Result) == 0 {
-		return nil, nil
+		return definitions.AlertRuleGroup{}, store.ErrAlertRuleGroupNotFound
 	}
 	res := definitions.AlertRuleGroup{
 		Title:     q.Result[0].RuleGroup,
@@ -113,7 +113,7 @@ func (service *AlertRuleService) GetRuleGroup(ctx context.Context, orgID int64, 
 			res.Rules = append(res.Rules, *r)
 		}
 	}
-	return &res, nil
+	return res, nil
 }
 
 // UpdateRuleGroup will update the interval for all rules in the group.
