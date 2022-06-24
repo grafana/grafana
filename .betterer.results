@@ -4473,10 +4473,10 @@ exports[`no explicit any`] = {
       [24, 44, 3, "Unexpected any. Specify a different type.", "193409811"],
       [24, 78, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/search/service/bluge.ts:2088777935": [
+    "public/app/features/search/service/bluge.ts:3054830800": [
       [38, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
       [85, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [134, 15, 3, "Unexpected any. Specify a different type.", "193409811"]
+      [145, 15, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/search/service/sql.ts:1428696565": [
       [91, 36, 3, "Unexpected any. Specify a different type.", "193409811"]
@@ -4900,12 +4900,12 @@ exports[`no explicit any`] = {
       [270, 29, 3, "Unexpected any. Specify a different type.", "193409811"],
       [754, 26, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/variables/state/actions.ts:2709491277": [
+    "public/app/features/variables/state/actions.ts:443730774": [
       [601, 32, 3, "Unexpected any. Specify a different type.", "193409811"],
       [678, 32, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [716, 90, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [860, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [934, 32, 3, "Unexpected any. Specify a different type.", "193409811"]
+      [731, 90, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [875, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [949, 32, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/variables/state/initVariableTransaction.test.ts:1177248976": [
       [55, 29, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -5919,7 +5919,7 @@ exports[`no explicit any`] = {
       [58, 64, 3, "Unexpected any. Specify a different type.", "193409811"],
       [65, 17, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/loki/datasource.test.ts:821497219": [
+    "public/app/plugins/datasource/loki/datasource.test.ts:371314051": [
       [42, 39, 3, "Unexpected any. Specify a different type.", "193409811"],
       [43, 40, 3, "Unexpected any. Specify a different type.", "193409811"],
       [135, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -5936,18 +5936,15 @@ exports[`no explicit any`] = {
       [853, 45, 3, "Unexpected any. Specify a different type.", "193409811"],
       [870, 9, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/loki/datasource.ts:1442011327": [
+    "public/app/plugins/datasource/loki/datasource.ts:979697429": [
       [219, 23, 3, "Unexpected any. Specify a different type.", "193409811"],
       [355, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
       [359, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
       [359, 45, 3, "Unexpected any. Specify a different type.", "193409811"],
       [373, 40, 3, "Unexpected any. Specify a different type.", "193409811"],
       [560, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [641, 61, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [641, 77, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [641, 90, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [699, 41, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [706, 46, 3, "Unexpected any. Specify a different type.", "193409811"]
+      [685, 41, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [692, 46, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/plugins/datasource/loki/getDerivedFields.ts:1557842937": [
       [37, 87, 3, "Unexpected any. Specify a different type.", "193409811"]
@@ -7654,13 +7651,6 @@ exports[`no explicit any`] = {
     ],
     "public/app/plugins/panel/heatmap/palettes.ts:4110363347": [
       [87, 59, 3, "Unexpected any. Specify a different type.", "193409811"]
-    ],
-    "public/app/plugins/panel/heatmap/utils.ts:2711553971": [
-      [64, 27, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [215, 21, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [396, 21, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [495, 10, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [527, 9, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/plugins/panel/histogram/Histogram.tsx:3993177092": [
       [130, 31, 3, "Unexpected any. Specify a different type.", "193409811"],
