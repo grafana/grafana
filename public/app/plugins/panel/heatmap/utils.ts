@@ -257,6 +257,7 @@ export function prepConfig(opts: PrepConfigOpts) {
     return builder; // early abort (avoids error)
   }
 
+  // eslint-ignore @typescript-eslint/no-explicit-any
   const yFieldConfig = yField.config?.custom as PanelFieldConfig | undefined;
   const yScale = yFieldConfig?.scaleDistribution ?? { type: ScaleDistribution.Linear };
   const yAxisReverse = Boolean(yAxisConfig.reverse);
