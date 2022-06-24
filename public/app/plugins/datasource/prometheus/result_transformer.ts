@@ -293,6 +293,10 @@ function getDataLinks(options: ExemplarTraceIdDestination): DataLink[] {
     const dataSourceSrv = getDataSourceSrv();
     const dsSettings = dataSourceSrv.getInstanceSettings(options.datasourceUid);
 
+    // dsSettings is undefined because of the reasons below:
+    // - permissions issues (probably most likely)
+    // - deleted datasource
+    // - misconfiguration
     if (dsSettings) {
       dataLinks.push({
         title: options.urlDisplayLabel || `Query with ${dsSettings?.name}`,
