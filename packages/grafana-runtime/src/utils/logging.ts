@@ -1,4 +1,8 @@
 import { captureMessage, captureException, Severity as LogLevel } from '@sentry/browser';
+
+import { config } from '../config';
+import { getEchoSrv, EchoEventType } from '../services/EchoSrv';
+
 export { LogLevel };
 
 // a bit stricter than what Sentry allows
@@ -10,10 +14,25 @@ type Contexts = Record<string, Record<string, number | string | Record<string, s
  * @public
  */
 export function logInfo(message: string, contexts?: Contexts) {
-  captureMessage(message, {
-    level: LogLevel.Info,
-    contexts,
-  });
+  if (config.grafanaJavascriptAgent.enabled) {
+    getEchoSrv().addEvent({
+      type: EchoEventType.GrafanaJavascriptAgent,
+      payload: {
+        type: 'log',
+        payload: {
+          level: 'info',
+          message,
+          context: contexts,
+        },
+      },
+    });
+  }
+  if (config.sentry.enabled) {
+    captureMessage(message, {
+      level: LogLevel.Info,
+      contexts,
+    });
+  }
 }
 
 /**
@@ -22,10 +41,25 @@ export function logInfo(message: string, contexts?: Contexts) {
  * @public
  */
 export function logWarning(message: string, contexts?: Contexts) {
-  captureMessage(message, {
-    level: LogLevel.Warning,
-    contexts,
-  });
+  if (config.grafanaJavascriptAgent.enabled) {
+    getEchoSrv().addEvent({
+      type: EchoEventType.GrafanaJavascriptAgent,
+      payload: {
+        type: 'log',
+        payload: {
+          level: 'warn',
+          message,
+          context: contexts,
+        },
+      },
+    });
+  }
+  if (config.sentry.enabled) {
+    captureMessage(message, {
+      level: LogLevel.Warning,
+      contexts,
+    });
+  }
 }
 
 /**
@@ -34,10 +68,25 @@ export function logWarning(message: string, contexts?: Contexts) {
  * @public
  */
 export function logDebug(message: string, contexts?: Contexts) {
-  captureMessage(message, {
-    level: LogLevel.Debug,
-    contexts,
-  });
+  if (config.grafanaJavascriptAgent.enabled) {
+    getEchoSrv().addEvent({
+      type: EchoEventType.GrafanaJavascriptAgent,
+      payload: {
+        type: 'log',
+        payload: {
+          level: 'debug',
+          message,
+          context: contexts,
+        },
+      },
+    });
+  }
+  if (config.sentry.enabled) {
+    captureMessage(message, {
+      level: LogLevel.Debug,
+      contexts,
+    });
+  }
 }
 
 /**
@@ -46,5 +95,20 @@ export function logDebug(message: string, contexts?: Contexts) {
  * @public
  */
 export function logError(err: Error, contexts?: Contexts) {
-  captureException(err, { contexts });
+  if (config.grafanaJavascriptAgent.enabled) {
+    getEchoSrv().addEvent({
+      type: EchoEventType.GrafanaJavascriptAgent,
+      payload: {
+        type: 'log',
+        payload: {
+          level: 'error',
+          message: err.message,
+          context: contexts,
+        },
+      },
+    });
+  }
+  if (config.sentry.enabled) {
+    captureException(err, { contexts });
+  }
 }
