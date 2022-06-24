@@ -16,7 +16,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { NONE, DURATION, TAG, PROCESS } from '../settings/SpanBarSettings';
+import { NONE, DURATION, TAG } from '../settings/SpanBarSettings';
 
 import SpanBarRow from './SpanBarRow';
 
@@ -49,19 +49,7 @@ describe('<SpanBarRow>', () => {
       hasChildren: true,
       process: {
         serviceName: 'service-name',
-        tags: [
-          {
-            key: 'process',
-            value: 'process-value',
-          },
-        ],
       },
-      tags: [
-        {
-          key: 'tag',
-          value: 'tag-value',
-        },
-      ],
       spanID,
       logs: [],
       references: [],
@@ -235,21 +223,45 @@ describe('<SpanBarRow>', () => {
             tag: 'tag',
           },
         },
-        props
+        {
+          ...props,
+          span: {
+            process: {},
+            tags: [
+              {
+                key: 'tag',
+                value: 'tag-value',
+              },
+            ],
+          },
+        }
       );
       render(<SpanBarRow {...testProps} />);
       expect(screen.getByText('(tag-value)')).toBeInTheDocument();
     });
 
     it('with process value', () => {
-      const testProps = Object.assign(
+      let testProps = Object.assign(
         {
           spanBarOptions: {
-            type: PROCESS,
-            process: 'process',
+            type: TAG,
+            tag: 'tag',
           },
         },
-        props
+        {
+          ...props,
+          span: {
+            process: {
+              tags: [
+                {
+                  key: 'tag',
+                  value: 'process-value',
+                },
+              ],
+            },
+            tags: [],
+          },
+        }
       );
       render(<SpanBarRow {...testProps} />);
       expect(screen.getByText('(process-value)')).toBeInTheDocument();
