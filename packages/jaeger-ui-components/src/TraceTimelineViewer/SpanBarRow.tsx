@@ -557,23 +557,23 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
     } else if (type === TAG) {
       const tagKey = spanBarOptions?.tag?.trim() ?? '';
       if (tagKey !== '' && span.tags) {
-        const tag = span.tags.filter((tag: TraceKeyValuePair) => {
+        const tag = span.tags.find((tag: TraceKeyValuePair) => {
           return tag.key === tagKey;
         });
 
-        if (tag && tag.length > 0) {
-          return `(${tag[0].value})`;
+        if (tag) {
+          return `(${tag.value})`;
         }
       }
     } else if (type === PROCESS) {
       const processKey = spanBarOptions?.process?.trim() ?? '';
       if (processKey !== '' && span.process?.tags) {
-        const process = span.process?.tags.filter((process: TraceKeyValuePair) => {
+        const process = span.process?.tags.find((process: TraceKeyValuePair) => {
           return process.key === processKey;
         });
 
-        if (process && process.length > 0) {
-          return `(${process[0].value})`;
+        if (process) {
+          return `(${process.value})`;
         }
       }
     }
