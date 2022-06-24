@@ -1,10 +1,15 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { createElement } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Badge, Icon, IconName, useStyles2 } from '@grafana/ui';
+import { Badge, useStyles2 } from '@grafana/ui';
 
 import { HoverCard } from './HoverCard';
+
+// we're only focussing on the templating keywords, not all available Golang keywords
+const KEYWORDS = ['if', 'else', 'range', 'end', 'break', 'continue', 'template', 'block', 'with', 'nil', 'define'];
+const VARIABLES = ['$', '.', '"'];
+const FUNCTIONS = ['and', 'call', 'html', 'index', 'slice', 'js', 'len', 'not', 'or', 'print', 'urlquery'];
 
 interface TokenizerProps {
   input: string;
@@ -28,24 +33,24 @@ function Tokenize({ input, delimiter = ['{{', '}}'] }: TokenizerProps) {
 
   const matches = Array.from(normalizedIput.matchAll(regex));
 
-  const output: React.ReactNode[] = [];
+  const output: React.ReactElement[] = [];
 
   matches.forEach((match, index) => {
-    const before = match.groups?.before;
+    const before = match.groups?.before?.trim();
     const token = match.groups?.token?.trim();
 
     const firstMatch = index === 0;
 
     if (before) {
       if (!firstMatch) {
-        output.push(<span> </span>);
+        output.push(<span key={`${index}-space-before-text`}> </span>);
       }
-      output.push(<span key={`${index}-before`}>{before.trim()}</span>);
+      output.push(<span key={`${index}-before`}>{before}</span>);
     }
 
     if (token) {
       if (before) {
-        output.push(<span> </span>);
+        output.push(<span key={`${index}-space-before-token`}> </span>);
       }
 
       const type = tokenType(token);
@@ -56,72 +61,37 @@ function Tokenize({ input, delimiter = ['{{', '}}'] }: TokenizerProps) {
     }
   });
 
-  return <span className={styles.wrapper}>{output}</span>;
-}
+  const outputElem = createElement('span', {}, output);
 
-function tokenType(input: string) {
-  let tokenType;
-  if (isVariable(input)) {
-    tokenType = TokenType.Variable;
-  } else if (isKeyword(input)) {
-    tokenType = TokenType.Keyword;
-  } else {
-    tokenType = TokenType.Function;
-  }
-
-  return tokenType;
-}
-
-function isVariable(input: string) {
-  return input.startsWith('$') || input.startsWith('.');
-}
-
-function isKeyword(input: string) {
-  return input === 'end' || input.startsWith('range');
+  return <span className={styles.wrapper}>{outputElem}</span>;
 }
 
 enum TokenType {
   Variable = 'variable',
   Function = 'function',
   Keyword = 'keyword',
+  Unknown = 'unknown',
 }
-
-const TokenTypeIcon: Record<TokenType, IconName> = {
-  [TokenType.Variable]: 'x',
-  // @ts-ignore: sigma has not been added to the typeings
-  [TokenType.Function]: 'sigma',
-  [TokenType.Keyword]: 'brackets-curly',
-};
 
 interface TokenProps {
   content: string;
   type?: TokenType;
-  icon?: IconName;
   description?: string;
 }
 
-function Token({ content, icon, description, type }: TokenProps) {
+function Token({ content, description, type }: TokenProps) {
   const styles = useStyles2(getStyles);
   const varName = content.trim();
 
-  const iconFromType = icon ?? (type && TokenTypeIcon[type]);
-  const showCard = iconFromType && type;
+  const disableCard = Boolean(type) === false;
 
   return (
     <HoverCard
       placement="top-start"
-      disabled={!showCard}
+      disabled={disableCard}
       content={
         <div className={styles.hoverTokenItem}>
-          <Badge
-            text={
-              <>
-                {iconFromType ? <Icon name={iconFromType} /> : null} {type}
-              </>
-            }
-            color={'blue'}
-          />{' '}
-          {description && <code>{description}</code>}
+          <Badge text={<>{type}</>} color={'blue'} /> {description && <code>{description}</code>}
         </div>
       }
     >
@@ -136,6 +106,33 @@ function normalizeInput(input: string) {
   return input.replace(/\s+/g, ' ').trim();
 }
 
+function isVariable(input: string) {
+  return VARIABLES.some((character) => input.startsWith(character));
+}
+
+function isKeyword(input: string) {
+  return KEYWORDS.some((keyword) => input.startsWith(keyword));
+}
+
+function isFunction(input: string) {
+  return FUNCTIONS.some((functionName) => input.startsWith(functionName));
+}
+
+function tokenType(input: string) {
+  let tokenType;
+  if (isVariable(input)) {
+    tokenType = TokenType.Variable;
+  } else if (isKeyword(input)) {
+    tokenType = TokenType.Keyword;
+  } else if (isFunction(input)) {
+    tokenType = TokenType.Function;
+  } else {
+    tokenType = TokenType.Unknown;
+  }
+
+  return tokenType;
+}
+
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
     display: inline-flex;
@@ -143,7 +140,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     white-space: pre;
   `,
   token: css`
-    cursor: pointer;
+    cursor: default;
+    font-family: ${theme.typography.fontFamilyMonospace};
   `,
   popover: css`
     border-radius: ${theme.shape.borderRadius()};
