@@ -7655,13 +7655,6 @@ exports[`no explicit any`] = {
     "public/app/plugins/panel/heatmap/palettes.ts:4110363347": [
       [87, 59, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/panel/heatmap/utils.ts:2711553971": [
-      [64, 27, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [215, 21, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [396, 21, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [495, 10, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [527, 9, 3, "Unexpected any. Specify a different type.", "193409811"]
-    ],
     "public/app/plugins/panel/histogram/Histogram.tsx:3993177092": [
       [130, 31, 3, "Unexpected any. Specify a different type.", "193409811"],
       [223, 32, 3, "Unexpected any. Specify a different type.", "193409811"],
