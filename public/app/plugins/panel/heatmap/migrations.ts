@@ -140,6 +140,7 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
       break;
     }
   }
+  options.color.fill = color.cardColor;
   options.color.min = color.min;
   options.color.max = color.max;
 
