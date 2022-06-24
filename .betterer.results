@@ -543,9 +543,9 @@ exports[`no type assertions`] = {
       [101, 33, 20, "Do not use any type assertions.", "3781735909"],
       [133, 38, 21, "Do not use any type assertions.", "150266787"]
     ],
-    "packages/grafana-runtime/src/config.ts:2061755826": [
+    "packages/grafana-runtime/src/config.ts:4181107692": [
       [75, 29, 17, "Do not use any type assertions.", "4278379396"],
-      [183, 18, 13, "Do not use any type assertions.", "538937261"]
+      [191, 18, 13, "Do not use any type assertions.", "538937261"]
     ],
     "packages/grafana-runtime/src/services/LocationService.ts:3793815118": [
       [88, 23, 34, "Do not use any type assertions.", "916459105"]
@@ -6107,9 +6107,9 @@ exports[`no explicit any`] = {
     "packages/grafana-data/src/types/app.ts:2148970488": [
       [75, 48, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "packages/grafana-data/src/types/config.ts:1574035243": [
-      [171, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [184, 16, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "packages/grafana-data/src/types/config.ts:2312759525": [
+      [185, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [199, 16, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "packages/grafana-data/src/types/dashboard.ts:1867834569": [
       [12, 39, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -6519,17 +6519,17 @@ exports[`no explicit any`] = {
       [31, 49, 3, "Unexpected any. Specify a different type.", "193409811"],
       [31, 73, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "packages/grafana-runtime/src/config.ts:2061755826": [
+    "packages/grafana-runtime/src/config.ts:4181107692": [
       [66, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [98, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [183, 28, 3, "Unexpected any. Specify a different type.", "193409811"]
+      [106, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [191, 28, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "packages/grafana-runtime/src/services/AngularLoader.ts:3455177907": [
       [45, 14, 3, "Unexpected any. Specify a different type.", "193409811"],
       [61, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
       [61, 30, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "packages/grafana-runtime/src/services/EchoSrv.ts:2163840677": [
+    "packages/grafana-runtime/src/services/EchoSrv.ts:347668574": [
       [51, 51, 3, "Unexpected any. Specify a different type.", "193409811"],
       [51, 60, 3, "Unexpected any. Specify a different type.", "193409811"],
       [63, 53, 3, "Unexpected any. Specify a different type.", "193409811"],

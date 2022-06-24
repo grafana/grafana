@@ -53,7 +53,7 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
   it('will set up FetchTransport if customEndpoint is provided', async () => {
     // arrange
     const originalModule = jest.requireActual('@grafana/agent-web');
-    (initializeAgent as jest.Mock).mockImplementation(originalModule.initializeAgent);
+    jest.mocked(initializeAgent).mockImplementation(originalModule.initializeAgent);
 
     //act
     const backend = new GrafanaJavascriptAgentBackend(options);
@@ -70,10 +70,37 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
       return {
         api: {
           setUser: mockedSetUser,
+          pushLog: jest.fn(),
+          callOriginalConsoleMethod: jest.fn(),
+          pushError: jest.fn(),
+          pushMeasurement: jest.fn(),
+          pushTraces: jest.fn(),
+          initOTEL: jest.fn(),
+          getOTEL: jest.fn(),
+          getTraceContext: jest.fn(),
+        },
+        config: {
+          globalObjectKey: '',
+          instrumentations: [],
+          preventGlobalExposure: false,
+          transports: [],
+          metas: [],
+          parseStacktrace: jest.fn(),
+          app: jest.fn(),
+        },
+        metas: {
+          add: jest.fn(),
+          remove: jest.fn(),
+          value: {},
+        },
+        transports: {
+          add: jest.fn(),
+          execute: jest.fn(),
+          transports: [],
         },
       };
     };
-    (initializeAgent as jest.Mock).mockImplementation(mockedAgent);
+    jest.mocked(initializeAgent).mockImplementation(mockedAgent);
 
     //act
     new GrafanaJavascriptAgentBackend(options);
@@ -93,21 +120,49 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
   it('will forward events to transports', async () => {
     //arrange
     const mockedSetUser = jest.fn();
-    const mockedAgent = {
-      api: {
-        setUser: mockedSetUser,
-      },
-      config: {},
-      metas: {},
-      transports: [],
+    const mockedAgent = () => {
+      return {
+        api: {
+          setUser: mockedSetUser,
+          pushLog: jest.fn(),
+          callOriginalConsoleMethod: jest.fn(),
+          pushError: jest.fn(),
+          pushMeasurement: jest.fn(),
+          pushTraces: jest.fn(),
+          initOTEL: jest.fn(),
+          getOTEL: jest.fn(),
+          getTraceContext: jest.fn(),
+        },
+        config: {
+          globalObjectKey: '',
+          instrumentations: [],
+          preventGlobalExposure: false,
+          transports: [],
+          metas: [],
+          parseStacktrace: jest.fn(),
+          app: jest.fn(),
+        },
+        metas: {
+          add: jest.fn(),
+          remove: jest.fn(),
+          value: {},
+        },
+        transports: {
+          add: jest.fn(),
+          execute: jest.fn(),
+          transports: [],
+        },
+      };
     };
 
-    (initializeAgent as jest.Mock).mockReturnValue(mockedAgent);
+    jest.mocked(initializeAgent).mockImplementation(mockedAgent);
     const backend = new GrafanaJavascriptAgentBackend({
       ...options,
       preventGlobalExposure: true,
     });
+
     backend.transports = [
+      /* eslint-disable */
       { send: jest.fn() } as unknown as BaseTransport,
       { send: jest.fn() } as unknown as BaseTransport,
     ];
@@ -116,6 +171,7 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
       payload: { foo: 'bar' } as unknown as GrafanaJavascriptAgentEchoEvent,
       meta: {} as unknown as EchoMeta,
     };
+    /* eslint-enable */
     backend.addEvent(event);
     backend.transports.forEach((transport) => {
       expect(transport.send).toHaveBeenCalledTimes(1);
