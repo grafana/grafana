@@ -17,6 +17,7 @@ func lintDocumentation(ctx context.Context, opts pipeline.ActionOpts) error {
 		Args:   []string{"run", "prettier:checkDocs"},
 		Env: []string{
 			"NODE_OPTIONS=--max_old_space_size=8192",
+			EnvYarnCacheFolder,
 		},
 	})
 }

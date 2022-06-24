@@ -10,13 +10,14 @@ import (
 )
 
 var (
-	ArgumentYarnCache = pipeline.NewDirectoryArgument("yarn-cache")
+	ArgumentYarnCache  = pipeline.NewDirectoryArgument("yarn-cache")
+	EnvYarnCacheFolder = "YARN_CACHE_FOLDER=/opt/drone/yarncache"
 )
 
 func yarnInstall(ctx context.Context, opts pipeline.ActionOpts) error {
 	sourcePath := opts.State.MustGetDirectoryString(pipeline.ArgumentSourceFS)
 	env := []string{
-		"YARN_CACHE_FOLDER=/opt/drone/yarncache",
+		EnvYarnCacheFolder,
 	}
 
 	if err := exec.RunCommandWithOpts(ctx, exec.RunOpts{
