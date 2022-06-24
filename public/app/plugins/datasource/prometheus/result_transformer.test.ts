@@ -355,7 +355,7 @@ describe('Prometheus Result Transformer', () => {
       expect(series.data[1].fields.length).toEqual(3);
     });
 
-    it('should add a link with an error when exemplarTraceIdDestinations is not configured properly', () => {
+    it('should not add a link with an error when exemplarTraceIdDestinations is not configured properly', () => {
       const response = {
         state: 'Done',
         data: [
@@ -419,8 +419,7 @@ describe('Prometheus Result Transformer', () => {
       expect(series.data[1].name).toEqual('exemplar');
       const traceField = series.data[1].fields.find((f) => f.name === 'traceID');
       expect(traceField).toBeDefined();
-      expect(traceField!.config.links?.every((l) => !!l.error)).toBe(true);
-      expect(traceField!.config.links?.every((l) => l.title === 'Data source not found')).toBe(true);
+      expect(traceField!.config.links?.length).toBe(0);
     });
   });
 
@@ -1031,7 +1030,7 @@ describe('Prometheus Result Transformer', () => {
           expect(result[0].fields.some((f) => f.config.links?.length)).toBe(false);
         });
 
-        it('should add a link with an error when exemplarTraceIdDestinations is not configured', () => {
+        it('should not add a datalink with an error when exemplarTraceIdDestinations is not configured', () => {
           const testOptions: any = {
             target: {},
             query: {},
@@ -1046,8 +1045,7 @@ describe('Prometheus Result Transformer', () => {
           const result = transform({ data: exemplarsResponse } as any, testOptions);
           const traceField = result[0].fields.find((f) => f.name === 'traceID');
           expect(traceField).toBeDefined();
-          expect(traceField!.config.links?.every((l) => !!l.error)).toBe(true);
-          expect(traceField!.config.links?.every((l) => l.title === 'Data source not found')).toBe(true);
+          expect(traceField!.config.links?.length).toBe(0);
         });
       });
     });
