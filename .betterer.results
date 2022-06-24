@@ -3226,7 +3226,7 @@ exports[`no type assertions`] = {
     "public/app/features/search/reducers/manageDashboards.ts:4114284001": [
       [81, 11, 24, "Do not use any type assertions.", "1870559034"]
     ],
-    "public/app/features/search/service/bluge.ts:2088777935": [
+    "public/app/features/search/service/bluge.ts:3054830800": [
       [21, 15, 68, "Do not use any type assertions.", "2766474629"],
       [34, 17, 128, "Do not use any type assertions.", "437379020"],
       [36, 17, 47, "Do not use any type assertions.", "610587748"],
@@ -3234,10 +3234,10 @@ exports[`no type assertions`] = {
       [83, 13, 39, "Do not use any type assertions.", "246018916"],
       [88, 17, 26, "Do not use any type assertions.", "387817714"],
       [104, 15, 37, "Do not use any type assertions.", "1203314137"],
-      [130, 20, 228, "Do not use any type assertions.", "2311473324"],
-      [132, 19, 136, "Do not use any type assertions.", "3888196997"],
-      [150, 24, 46, "Do not use any type assertions.", "1967560255"],
-      [156, 22, 38, "Do not use any type assertions.", "1477056001"]
+      [130, 20, 446, "Do not use any type assertions.", "258020179"],
+      [132, 19, 354, "Do not use any type assertions.", "4208037114"],
+      [161, 24, 46, "Do not use any type assertions.", "1967560255"],
+      [167, 22, 38, "Do not use any type assertions.", "1477056001"]
     ],
     "public/app/features/search/service/sql.ts:1428696565": [
       [99, 18, 61, "Do not use any type assertions.", "2014388220"],
@@ -10067,10 +10067,10 @@ exports[`no explicit any`] = {
       [24, 44, 3, "Unexpected any. Specify a different type.", "193409811"],
       [24, 78, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/search/service/bluge.ts:2088777935": [
+    "public/app/features/search/service/bluge.ts:3054830800": [
       [38, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
       [85, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [134, 15, 3, "Unexpected any. Specify a different type.", "193409811"]
+      [145, 15, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/search/service/sql.ts:1428696565": [
       [91, 36, 3, "Unexpected any. Specify a different type.", "193409811"]
