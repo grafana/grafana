@@ -2,7 +2,11 @@ package export
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
+	"os"
+	"path"
+	"strings"
 	"time"
 
 	"github.com/go-git/go-git/v5"
@@ -20,7 +24,7 @@ type commitHelper struct {
 }
 
 type commitOptions struct {
-	fpath   string
+	fpath   string // absolute
 	body    []byte
 	when    time.Time
 	userID  int64
@@ -48,6 +52,15 @@ func (ch *commitHelper) initOrg(sql *sqlstore.SQLStore, orgID int64) error {
 }
 
 func (ch *commitHelper) add(opts commitOptions) error {
+	if !strings.HasPrefix(opts.fpath, ch.baseDir) {
+		return fmt.Errorf("invalid path, must be within the root folder")
+	}
+
+	// make sure the parent exists
+	if err := os.MkdirAll(path.Dir(opts.fpath), 0750); err != nil {
+		return err
+	}
+
 	err := ioutil.WriteFile(opts.fpath, opts.body, 0644)
 	if err != nil {
 		return err
@@ -66,7 +79,9 @@ func (ch *commitHelper) add(opts commitOptions) error {
 		}
 	}
 	sig := user.getAuthor()
-	sig.When = opts.when
+	if opts.when.Unix() > 10 {
+		sig.When = opts.when
+	}
 
 	copts := &git.CommitOptions{
 		Author: &sig,
@@ -82,12 +97,12 @@ type userInfo struct {
 	Email            string    `json:"email"`
 	Name             string    `json:"name"`
 	Password         string    `json:"password"`
-	Salt             string    `json:"-"`
+	Salt             string    `json:"salt"`
 	Theme            string    `json:"-"`
 	Created          time.Time `json:"-"`
 	Updated          time.Time `json:"-"`
-	IsDisabled       bool      `json:"-" xorm:"is_disabled"`
-	IsServiceAccount bool      `json:"-" xorm:"is_service_account"`
+	IsDisabled       bool      `json:"disabled" xorm:"is_disabled"`
+	IsServiceAccount bool      `json:"serviceAccount" xorm:"is_service_account"`
 	LastSeenAt       time.Time `json:"-" xorm:"last_seen_at"`
 }
 
