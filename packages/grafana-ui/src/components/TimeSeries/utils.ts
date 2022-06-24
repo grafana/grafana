@@ -289,7 +289,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
         // patch some monkeys!
         let defaultBuilder = uPlot.paths!.linear!();
 
-        pathBuilder = (u, seriesIdx, idx0, idx1) => {
+        pathBuilder = (u, seriesIdx) => {
           let _data: uPlot.AlignedData = u._data;
 
           // the data we want the line renderer to pull is x at each plot edge with paired flat y values

@@ -215,9 +215,12 @@ export function preparePlotData2(
     }
 
     // apply transforms
-    // if (custom.transform === GraphTransform.Constant) {
-    //   vals = Array(vals.length).fill(vals[0]);
-    // } else {
+    if (custom.transform === GraphTransform.Constant) {
+      let firstValIdx = vals.findIndex((v) => v != null);
+      let firstVal = vals[firstValIdx];
+      vals = Array(vals.length).fill(undefined);
+      vals[firstValIdx] = firstVal;
+    } else {
       vals = vals.slice();
 
       if (custom.transform === GraphTransform.NegativeY) {
@@ -227,7 +230,7 @@ export function preparePlotData2(
           }
         }
       }
-    // }
+    }
 
     let stackingMode = custom.stacking?.mode;
 
