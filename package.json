@@ -54,7 +54,6 @@
     "i18n:compile": "lingui compile",
     "postinstall": "husky install",
     "betterer": "betterer --cache",
-    "betterer:update": "betterer --update",
     "betterer:stats": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/reportBettererStats.ts"
   },
   "grafana": {
