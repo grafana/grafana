@@ -54,6 +54,7 @@
     "i18n:compile": "lingui compile",
     "postinstall": "husky install",
     "betterer": "betterer --cache",
+    "betterer:update": "betterer --update",
     "betterer:stats": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/reportBettererStats.ts"
   },
   "grafana": {
@@ -96,7 +97,7 @@
     "@emotion/eslint-plugin": "11.7.0",
     "@grafana/api-documenter": "7.11.2",
     "@grafana/e2e": "workspace:*",
-    "@grafana/eslint-config": "3.0.0",
+    "@grafana/eslint-config": "4.0.0",
     "@grafana/toolkit": "workspace:*",
     "@grafana/tsconfig": "^1.2.0-rc1",
     "@lingui/cli": "3.13.3",
