@@ -187,7 +187,7 @@ export const ServiceAccountsListPageUnconnected = ({
               interactive
               content={
                 <>
-                  API keys are now Service Accounts with tokens. Find out more{' '}
+                  API keys are now service accounts with tokens. Find out more{' '}
                   <a href="https://grafana.com/docs/grafana/latest/administration/service-accounts/">here.</a>
                 </>
               }
