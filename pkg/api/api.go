@@ -89,11 +89,6 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/a/:id/*", reqSignedIn, hs.Index) // App Root Page
 	r.Get("/a/:id", reqSignedIn, hs.Index)
 
-	//pubdash
-	if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
-		r.Get("/public-dashboards/:uid", middleware.SetPublicDashboardFlag(), hs.Index)
-	}
-
 	r.Get("/d/:uid/:slug", reqSignedIn, redirectFromLegacyPanelEditURL, hs.Index)
 	r.Get("/d/:uid", reqSignedIn, redirectFromLegacyPanelEditURL, hs.Index)
 	r.Get("/dashboard/script/*", reqSignedIn, hs.Index)
@@ -438,11 +433,11 @@ func (hs *HTTPServer) registerRoutes() {
 		// Playlist
 		apiRoute.Group("/playlists", func(playlistRoute routing.RouteRegister) {
 			playlistRoute.Get("/", routing.Wrap(hs.SearchPlaylists))
-			playlistRoute.Get("/:id", hs.ValidateOrgPlaylist, routing.Wrap(hs.GetPlaylist))
-			playlistRoute.Get("/:id/items", hs.ValidateOrgPlaylist, routing.Wrap(hs.GetPlaylistItems))
-			playlistRoute.Get("/:id/dashboards", hs.ValidateOrgPlaylist, routing.Wrap(hs.GetPlaylistDashboards))
-			playlistRoute.Delete("/:id", reqEditorRole, hs.ValidateOrgPlaylist, routing.Wrap(hs.DeletePlaylist))
-			playlistRoute.Put("/:id", reqEditorRole, hs.ValidateOrgPlaylist, routing.Wrap(hs.UpdatePlaylist))
+			playlistRoute.Get("/:uid", hs.ValidateOrgPlaylist, routing.Wrap(hs.GetPlaylist))
+			playlistRoute.Get("/:uid/items", hs.ValidateOrgPlaylist, routing.Wrap(hs.GetPlaylistItems))
+			playlistRoute.Get("/:uid/dashboards", hs.ValidateOrgPlaylist, routing.Wrap(hs.GetPlaylistDashboards))
+			playlistRoute.Delete("/:uid", reqEditorRole, hs.ValidateOrgPlaylist, routing.Wrap(hs.DeletePlaylist))
+			playlistRoute.Put("/:uid", reqEditorRole, hs.ValidateOrgPlaylist, routing.Wrap(hs.UpdatePlaylist))
 			playlistRoute.Post("/", reqEditorRole, routing.Wrap(hs.CreatePlaylist))
 		})
 
@@ -612,7 +607,9 @@ func (hs *HTTPServer) registerRoutes() {
 
 	// Public API
 	if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
-		r.Get("/api/public/dashboards/:uid", routing.Wrap(hs.GetPublicDashboard))
+		r.Get("/public-dashboards/:accessToken", middleware.SetPublicDashboardFlag(), hs.Index)
+		r.Get("/api/public/dashboards/:accessToken", routing.Wrap(hs.GetPublicDashboard))
+		r.Post("/api/public/dashboards/:accessToken/panels/:panelId/query", routing.Wrap(hs.QueryPublicDashboard))
 	}
 
 	// Frontend logs

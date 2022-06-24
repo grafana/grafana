@@ -30,7 +30,7 @@ import { findField } from 'app/features/dimensions';
 
 import { BarsOptions, getConfig } from './bars';
 import { BarChartFieldConfig, PanelOptions, defaultBarChartFieldConfig } from './models.gen';
-import { BarChartDisplayValues } from './types';
+import { BarChartDisplayValues, BarChartDisplayWarning } from './types';
 
 function getBarCharScaleOrientation(orientation: VizOrientation) {
   if (orientation === VizOrientation.Vertical) {
@@ -298,9 +298,9 @@ export function prepareBarChartDisplayValues(
   series: DataFrame[],
   theme: GrafanaTheme2,
   options: PanelOptions
-): BarChartDisplayValues {
+): BarChartDisplayValues | BarChartDisplayWarning {
   if (!series?.length) {
-    return { warn: 'No data in response' } as BarChartDisplayValues;
+    return { warn: 'No data in response' };
   }
 
   // Bar chart requires a single frame
@@ -312,7 +312,7 @@ export function prepareBarChartDisplayValues(
         )
       : outerJoinDataFrames({ frames: series });
   if (!frame) {
-    return { warn: 'Unable to join data' } as BarChartDisplayValues;
+    return { warn: 'Unable to join data' };
   }
 
   // Color by a field different than the input
@@ -320,7 +320,7 @@ export function prepareBarChartDisplayValues(
   if (options.colorByField) {
     colorByField = findField(frame, options.colorByField);
     if (!colorByField) {
-      return { warn: 'Color field not found' } as BarChartDisplayValues;
+      return { warn: 'Color field not found' };
     }
   }
 
@@ -328,7 +328,7 @@ export function prepareBarChartDisplayValues(
   if (options.xField) {
     xField = findField(frame, options.xField);
     if (!xField) {
-      return { warn: 'Configured x field not found' } as BarChartDisplayValues;
+      return { warn: 'Configured x field not found' };
     }
   }
 
@@ -398,13 +398,13 @@ export function prepareBarChartDisplayValues(
   if (!firstField) {
     return {
       warn: 'Bar charts requires a string or time field',
-    } as BarChartDisplayValues;
+    };
   }
 
   if (!fields.length) {
     return {
       warn: 'No numeric fields found',
-    } as BarChartDisplayValues;
+    };
   }
 
   // Show the first number value

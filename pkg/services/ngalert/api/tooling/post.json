@@ -539,6 +539,13 @@
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
+  "ContactPoints": {
+   "items": {
+    "$ref": "#/definitions/EmbeddedContactPoint"
+   },
+   "type": "array",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+  },
   "CreateDashboardSnapshotCommand": {
    "properties": {
     "Result": {
@@ -1581,14 +1588,16 @@
   },
   "MessageTemplate": {
    "properties": {
-    "Name": {
-     "type": "string"
-    },
-    "Template": {
-     "type": "string"
+    "name": {
+     "type": "string",
+     "x-go-name": "Name"
     },
     "provenance": {
      "$ref": "#/definitions/Provenance"
+    },
+    "template": {
+     "type": "string",
+     "x-go-name": "Template"
     }
    },
    "type": "object",
@@ -1596,8 +1605,9 @@
   },
   "MessageTemplateContent": {
    "properties": {
-    "Template": {
-     "type": "string"
+    "template": {
+     "type": "string",
+     "x-go-name": "Template"
     }
    },
    "type": "object",
@@ -3176,6 +3186,7 @@
   "ValidationError": {
    "properties": {
     "msg": {
+     "example": "error message",
      "type": "string",
      "x-go-name": "Msg"
     }
@@ -3513,6 +3524,7 @@
    "$ref": "#/definitions/Duration"
   },
   "gettableAlert": {
+   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -3571,16 +3583,15 @@
     "status",
     "updatedAt"
    ],
-   "type": "object",
-   "x-go-name": "GettableAlert",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "gettableAlerts": {
-   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
-   "type": "array"
+   "type": "array",
+   "x-go-name": "GettableAlerts",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "gettableSilence": {
    "properties": {
@@ -3639,11 +3650,12 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "gettableSilences": {
-   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
-   "type": "array"
+   "type": "array",
+   "x-go-name": "GettableSilences",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "labelSet": {
    "additionalProperties": {
@@ -3815,6 +3827,7 @@
    "type": "object"
   },
   "receiver": {
+   "description": "Receiver receiver",
    "properties": {
     "name": {
      "description": "name",
@@ -3825,9 +3838,7 @@
    "required": [
     "name"
    ],
-   "type": "object",
-   "x-go-name": "Receiver",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "silence": {
    "description": "Silence silence",
@@ -5593,6 +5604,9 @@
   },
   "/api/v1/provisioning/alert-rules": {
    "post": {
+    "consumes": [
+     "application/json"
+    ],
     "operationId": "RoutePostAlertRule",
     "parameters": [
      {
@@ -5628,6 +5642,7 @@
     "operationId": "RouteDeleteAlertRule",
     "parameters": [
      {
+      "description": "Alert rule UID",
       "in": "path",
       "name": "UID",
       "required": true,
@@ -5637,12 +5652,6 @@
     "responses": {
      "204": {
       "description": " The alert rule was deleted successfully."
-     },
-     "400": {
-      "description": "ValidationError",
-      "schema": {
-       "$ref": "#/definitions/ValidationError"
-      }
      }
     },
     "summary": "Delete a specific alert rule by UID.",
@@ -5654,6 +5663,7 @@
     "operationId": "RouteGetAlertRule",
     "parameters": [
      {
+      "description": "Alert rule UID",
       "in": "path",
       "name": "UID",
       "required": true,
@@ -5667,11 +5677,8 @@
        "$ref": "#/definitions/AlertRule"
       }
      },
-     "400": {
-      "description": "ValidationError",
-      "schema": {
-       "$ref": "#/definitions/ValidationError"
-      }
+     "404": {
+      "description": " Not found."
      }
     },
     "summary": "Get a specific alert rule by UID.",
@@ -5686,6 +5693,7 @@
     "operationId": "RoutePutAlertRule",
     "parameters": [
      {
+      "description": "Alert rule UID",
       "in": "path",
       "name": "UID",
       "required": true,
@@ -5724,15 +5732,9 @@
     "operationId": "RouteGetContactpoints",
     "responses": {
      "200": {
-      "description": "Route",
+      "description": "ContactPoints",
       "schema": {
-       "$ref": "#/definitions/Route"
-      }
-     },
-     "400": {
-      "description": "ValidationError",
-      "schema": {
-       "$ref": "#/definitions/ValidationError"
+       "$ref": "#/definitions/ContactPoints"
       }
      }
     },
@@ -5757,9 +5759,9 @@
     ],
     "responses": {
      "202": {
-      "description": "Ack",
+      "description": "EmbeddedContactPoint",
       "schema": {
-       "$ref": "#/definitions/Ack"
+       "$ref": "#/definitions/EmbeddedContactPoint"
       }
      },
      "400": {
@@ -5791,17 +5793,8 @@
      }
     ],
     "responses": {
-     "202": {
-      "description": "Ack",
-      "schema": {
-       "$ref": "#/definitions/Ack"
-      }
-     },
-     "400": {
-      "description": "ValidationError",
-      "schema": {
-       "$ref": "#/definitions/ValidationError"
-      }
+     "204": {
+      "description": " The contact point was deleted successfully."
      }
     },
     "summary": "Delete a contact point.",
@@ -5906,12 +5899,6 @@
       "schema": {
        "$ref": "#/definitions/MuteTimings"
       }
-     },
-     "400": {
-      "description": "ValidationError",
-      "schema": {
-       "$ref": "#/definitions/ValidationError"
-      }
      }
     },
     "summary": "Get all the mute timings.",
@@ -5958,7 +5945,7 @@
     "operationId": "RouteDeleteMuteTiming",
     "parameters": [
      {
-      "description": "Template Name",
+      "description": "Mute timing name",
       "in": "path",
       "name": "name",
       "required": true,
@@ -5968,10 +5955,7 @@
     ],
     "responses": {
      "204": {
-      "description": "Ack",
-      "schema": {
-       "$ref": "#/definitions/Ack"
-      }
+      "description": " The mute timing was deleted successfully."
      }
     },
     "summary": "Delete a mute timing.",
@@ -5983,7 +5967,7 @@
     "operationId": "RouteGetMuteTiming",
     "parameters": [
      {
-      "description": "Template Name",
+      "description": "Mute timing name",
       "in": "path",
       "name": "name",
       "required": true,
@@ -5998,11 +5982,8 @@
        "$ref": "#/definitions/MuteTimeInterval"
       }
      },
-     "400": {
-      "description": "ValidationError",
-      "schema": {
-       "$ref": "#/definitions/ValidationError"
-      }
+     "404": {
+      "description": " Not found."
      }
     },
     "summary": "Get a mute timing.",
@@ -6017,7 +5998,7 @@
     "operationId": "RoutePutMuteTiming",
     "parameters": [
      {
-      "description": "Template Name",
+      "description": "Mute timing name",
       "in": "path",
       "name": "name",
       "required": true,
@@ -6061,12 +6042,6 @@
       "schema": {
        "$ref": "#/definitions/Route"
       }
-     },
-     "400": {
-      "description": "ValidationError",
-      "schema": {
-       "$ref": "#/definitions/ValidationError"
-      }
      }
     },
     "summary": "Get the notification policy tree.",
@@ -6081,6 +6056,7 @@
     "operationId": "RoutePutPolicyTree",
     "parameters": [
      {
+      "description": "The new notification routing tree to use",
       "in": "body",
       "name": "Body",
       "schema": {
@@ -6113,16 +6089,13 @@
     "operationId": "RouteGetTemplates",
     "responses": {
      "200": {
-      "description": "MessageTemplate",
+      "description": "MessageTemplates",
       "schema": {
-       "$ref": "#/definitions/MessageTemplate"
+       "$ref": "#/definitions/MessageTemplates"
       }
      },
-     "400": {
-      "description": "ValidationError",
-      "schema": {
-       "$ref": "#/definitions/ValidationError"
-      }
+     "404": {
+      "description": " Not found."
      }
     },
     "summary": "Get all message templates.",
@@ -6146,10 +6119,7 @@
     ],
     "responses": {
      "204": {
-      "description": "Ack",
-      "schema": {
-       "$ref": "#/definitions/Ack"
-      }
+      "description": " The template was deleted successfully."
      }
     },
     "summary": "Delete a template.",
@@ -6177,10 +6147,7 @@
       }
      },
      "404": {
-      "description": "NotFound",
-      "schema": {
-       "$ref": "#/definitions/NotFound"
-      }
+      "description": " Not found."
      }
     },
     "summary": "Get a message template.",
@@ -6212,9 +6179,9 @@
     ],
     "responses": {
      "202": {
-      "description": "Ack",
+      "description": "MessageTemplate",
       "schema": {
-       "$ref": "#/definitions/Ack"
+       "$ref": "#/definitions/MessageTemplate"
       }
      },
      "400": {

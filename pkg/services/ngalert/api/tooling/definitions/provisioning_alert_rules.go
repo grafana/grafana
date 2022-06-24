@@ -12,11 +12,14 @@ import (
 //
 //     Responses:
 //       200: AlertRule
-//       400: ValidationError
+//       404: description: Not found.
 
 // swagger:route POST /api/v1/provisioning/alert-rules provisioning stable RoutePostAlertRule
 //
 // Create a new alert rule.
+//
+//     Consumes:
+//     - application/json
 //
 //     Responses:
 //       201: AlertRule
@@ -39,10 +42,10 @@ import (
 //
 //     Responses:
 //       204: description: The alert rule was deleted successfully.
-//       400: ValidationError
 
 // swagger:parameters RouteGetAlertRule RoutePutAlertRule RouteDeleteAlertRule
 type AlertRuleUIDReference struct {
+	// Alert rule UID
 	// in:path
 	UID string
 }

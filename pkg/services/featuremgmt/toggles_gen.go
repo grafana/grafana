@@ -71,10 +71,6 @@ const (
 	// Query InfluxDB InfluxQL without the proxy
 	FlagInfluxdbBackendMigration = "influxdbBackendMigration"
 
-	// FlagNewNavigation
-	// Try the next gen navigation model
-	FlagNewNavigation = "newNavigation"
-
 	// FlagShowFeatureFlagsInUI
 	// Show feature flags in the settings UI
 	FlagShowFeatureFlagsInUI = "showFeatureFlagsInUI"
@@ -179,6 +175,10 @@ const (
 	// Allow elements nesting
 	FlagCanvasPanelNesting = "canvasPanelNesting"
 
+	// FlagUseLegacyHeatmapPanel
+	// Continue to use the angular/flot based heatmap panel
+	FlagUseLegacyHeatmapPanel = "useLegacyHeatmapPanel"
+
 	// FlagCloudMonitoringExperimentalUI
 	// Use grafana-experimental UI in Cloud Monitoring
 	FlagCloudMonitoringExperimentalUI = "cloudMonitoringExperimentalUI"
@@ -194,4 +194,12 @@ const (
 	// FlagInternationalization
 	// Enables work-in-progress internationalization
 	FlagInternationalization = "internationalization"
+
+	// FlagTopnav
+	// New top nav and page layouts
+	FlagTopnav = "topnav"
+
+	// FlagCustomBranding
+	// Replaces whitelabeling with the new custom branding feature
+	FlagCustomBranding = "customBranding"
 )

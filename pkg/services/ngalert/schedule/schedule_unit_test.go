@@ -18,6 +18,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 
+	busmock "github.com/grafana/grafana/pkg/bus/mock"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
@@ -33,7 +34,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -397,6 +397,21 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 				require.Equal(t, rule.UID, queries[0].UID)
 				require.Equal(t, rule.OrgID, queries[0].OrgID)
 			})
+			t.Run("it should get rule folder title from database and attach as label", func(t *testing.T) {
+				queries := make([]store.GenericRecordedQuery, 0)
+				for _, op := range ruleStore.RecordedOps {
+					switch q := op.(type) {
+					case store.GenericRecordedQuery:
+						queries = append(queries, q)
+					}
+				}
+				require.NotEmptyf(t, queries, "Expected a %T request to rule store but nothing was recorded", store.GenericRecordedQuery{})
+				require.Len(t, queries, 1, "Expected exactly one request of %T but got %d", store.GenericRecordedQuery{}, len(queries))
+				require.Equal(t, rule.NamespaceUID, queries[0].Params[1])
+				require.Equal(t, rule.OrgID, queries[0].Params[0])
+				require.NotEmptyf(t, rule.Labels[models.FolderTitleLabel], "Expected a non-empty title in label %s", models.FolderTitleLabel)
+				require.Equal(t, rule.Labels[models.FolderTitleLabel], ruleStore.Folders[rule.OrgID][0].Title)
+			})
 			t.Run("it should process evaluation results via state manager", func(t *testing.T) {
 				// TODO rewrite when we are able to mock/fake state manager
 				states := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
@@ -441,10 +456,22 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 				// duration metric has 0 values because of mocked clock that do not advance
 				expectedMetric := fmt.Sprintf(
 					`# HELP grafana_alerting_rule_evaluation_duration_seconds The duration for a rule to execute.
-        	            	# TYPE grafana_alerting_rule_evaluation_duration_seconds summary
-        	            	grafana_alerting_rule_evaluation_duration_seconds{org="%[1]d",quantile="0.5"} 0
-        	            	grafana_alerting_rule_evaluation_duration_seconds{org="%[1]d",quantile="0.9"} 0
-        	            	grafana_alerting_rule_evaluation_duration_seconds{org="%[1]d",quantile="0.99"} 0
+        	            	# TYPE grafana_alerting_rule_evaluation_duration_seconds histogram
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.005"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.01"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.025"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.05"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.1"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.25"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.5"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="1"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="2.5"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="5"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="10"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="25"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="50"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="100"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="+Inf"} 1
         	            	grafana_alerting_rule_evaluation_duration_seconds_sum{org="%[1]d"} 0
         	            	grafana_alerting_rule_evaluation_duration_seconds_count{org="%[1]d"} 1
 							# HELP grafana_alerting_rule_evaluation_failures_total The total number of rule evaluation failures.
@@ -931,12 +958,12 @@ func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, ac
 		Metrics:                 m.GetSchedulerMetrics(),
 		AdminConfigPollInterval: 10 * time.Minute, // do not poll in unit tests.
 	}
-	st := state.NewManager(schedCfg.Logger, m.GetStateMetrics(), nil, rs, is, mockstore.NewSQLStoreMock(), &dashboards.FakeDashboardService{}, &image.NoopImageService{})
+	st := state.NewManager(schedCfg.Logger, m.GetStateMetrics(), nil, rs, is, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, clock.NewMock())
 	appUrl := &url.URL{
 		Scheme: "http",
 		Host:   "localhost",
 	}
-	return NewScheduler(schedCfg, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil), appUrl, st), mockedClock
+	return NewScheduler(schedCfg, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil), appUrl, st, busmock.New()), mockedClock
 }
 
 // createTestAlertRule creates a dummy alert definition to be used by the tests.
@@ -1008,7 +1035,7 @@ func CreateTestAlertRule(t *testing.T, dbstore *store.FakeRuleStore, intervalSec
 		ExecErrState:    models.AlertingErrState,
 		For:             forDuration,
 		Annotations:     map[string]string{"testAnnoKey": "testAnnoValue"},
-		Labels:          nil,
+		Labels:          make(map[string]string),
 	}
 
 	dbstore.PutRule(ctx, rule)

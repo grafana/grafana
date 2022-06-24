@@ -77,12 +77,6 @@
         "parameters": [
           {
             "type": "string",
-            "name": "roleUID",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
             "name": "builtinRole",
             "in": "path",
             "required": true
@@ -92,6 +86,12 @@
             "description": "A flag indicating if the assignment is global or not. If set to false, the default org ID of the authenticated user will be used from the request to remove assignment.",
             "name": "global",
             "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "roleUID",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -142,7 +142,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/SetUserRolesCommand"
+              "$ref": "#/definitions/CreateRoleWithPermissionsCommand"
             }
           }
         ],
@@ -195,18 +195,18 @@
         "operationId": "updateRoleWithPermissions",
         "parameters": [
           {
-            "type": "string",
-            "name": "roleUID",
-            "in": "path",
-            "required": true
-          },
-          {
             "name": "body",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/UpdateRoleCommand"
             }
+          },
+          {
+            "type": "string",
+            "name": "roleUID",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -347,19 +347,19 @@
         "operationId": "addTeamRole",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "name": "teamId",
-            "in": "path",
-            "required": true
-          },
-          {
             "name": "body",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/AddTeamRoleCommand"
             }
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "teamId",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -421,7 +421,7 @@
         }
       }
     },
-    "/access-control/users/{user_id}/roles": {
+    "/access-control/users/{userId}/roles": {
       "get": {
         "description": "Lists the roles that have been directly assigned to a given user. The list does not include built-in roles (Viewer, Editor, Admin or Grafana Admin), and it does not include roles that have been inherited from a team.\n\nYou need to have a permission with action `users.roles:list` and scope `users:id:\u003cuser ID\u003e`.",
         "tags": ["access_control", "enterprise"],
@@ -431,7 +431,7 @@
           {
             "type": "integer",
             "format": "int64",
-            "name": "user_id",
+            "name": "userId",
             "in": "path",
             "required": true
           }
@@ -458,9 +458,17 @@
         "operationId": "setUserRoles",
         "parameters": [
           {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/SetUserRolesCommand"
+            }
+          },
+          {
             "type": "integer",
             "format": "int64",
-            "name": "user_id",
+            "name": "userId",
             "in": "path",
             "required": true
           }
@@ -500,7 +508,7 @@
           {
             "type": "integer",
             "format": "int64",
-            "name": "user_id",
+            "name": "userId",
             "in": "path",
             "required": true
           }
@@ -521,7 +529,7 @@
         }
       }
     },
-    "/access-control/users/{user_id}/roles/{roleUID}": {
+    "/access-control/users/{userId}/roles/{roleUID}": {
       "delete": {
         "description": "Revoke a role from a user. For bulk updates consider Set user role assignments.\n\nYou need to have a permission with action `users.roles:remove` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only unassign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to unassign a role which will allow to do that. This is done to prevent escalation of privileges.",
         "tags": ["access_control", "enterprise"],
@@ -529,21 +537,21 @@
         "operationId": "removeUserRole",
         "parameters": [
           {
-            "type": "string",
-            "name": "roleUID",
-            "in": "path",
-            "required": true
-          },
-          {
             "type": "boolean",
             "description": "A flag indicating if the assignment is global or not. If set to false, the default org ID of the authenticated user will be used from the request to remove assignment.",
             "name": "global",
             "in": "query"
           },
           {
+            "type": "string",
+            "name": "roleUID",
+            "in": "path",
+            "required": true
+          },
+          {
             "type": "integer",
             "format": "int64",
-            "name": "user_id",
+            "name": "userId",
             "in": "path",
             "required": true
           }
@@ -1334,19 +1342,19 @@
             "required": true
           },
           {
+            "type": "integer",
+            "format": "int64",
+            "name": "user_id",
+            "in": "path",
+            "required": true
+          },
+          {
             "name": "body",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/UpdateUserQuotaCmd"
             }
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "user_id",
-            "in": "path",
-            "required": true
           }
         ],
         "responses": {
@@ -1569,14 +1577,8 @@
         "description": "Updates an existing notification channel identified by uid.",
         "tags": ["legacy_alerts_notification_channels"],
         "summary": "Update notification channel by UID.",
-        "operationId": "updateAlertNotificationChannelBYUID",
+        "operationId": "updateAlertNotificationChannelByUID",
         "parameters": [
-          {
-            "type": "string",
-            "name": "notification_channel_uid",
-            "in": "path",
-            "required": true
-          },
           {
             "name": "body",
             "in": "body",
@@ -1584,6 +1586,12 @@
             "schema": {
               "$ref": "#/definitions/UpdateAlertNotificationWithUidCommand"
             }
+          },
+          {
+            "type": "string",
+            "name": "notification_channel_uid",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -1676,19 +1684,19 @@
         "operationId": "updateAlertNotificationChannel",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "name": "notification_channel_id",
-            "in": "path",
-            "required": true
-          },
-          {
             "name": "body",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/UpdateAlertNotificationCommand"
             }
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "notification_channel_id",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -2947,18 +2955,18 @@
         "operationId": "postDashboardPermissionsWithUid",
         "parameters": [
           {
-            "type": "string",
-            "name": "uid",
-            "in": "path",
-            "required": true
-          },
-          {
             "name": "Body",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/UpdateDashboardAclCommand"
             }
+          },
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -3268,13 +3276,13 @@
         "parameters": [
           {
             "type": "string",
-            "name": "uid",
+            "name": "datasource_proxy_route",
             "in": "path",
             "required": true
           },
           {
             "type": "string",
-            "name": "datasource_proxy_route",
+            "name": "uid",
             "in": "path",
             "required": true
           }
@@ -3307,14 +3315,22 @@
         "operationId": "datasourceProxyPOSTByUIDcalls",
         "parameters": [
           {
+            "name": "DatasourceProxyParam",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object"
+            }
+          },
+          {
             "type": "string",
-            "name": "uid",
+            "name": "datasource_proxy_route",
             "in": "path",
             "required": true
           },
           {
             "type": "string",
-            "name": "datasource_proxy_route",
+            "name": "uid",
             "in": "path",
             "required": true
           }
@@ -3394,13 +3410,13 @@
         "parameters": [
           {
             "type": "string",
-            "name": "id",
+            "name": "datasource_proxy_route",
             "in": "path",
             "required": true
           },
           {
             "type": "string",
-            "name": "datasource_proxy_route",
+            "name": "id",
             "in": "path",
             "required": true
           }
@@ -3434,10 +3450,12 @@
         "deprecated": true,
         "parameters": [
           {
-            "type": "string",
-            "name": "id",
-            "in": "path",
-            "required": true
+            "name": "DatasourceProxyParam",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object"
+            }
           },
           {
             "type": "string",
@@ -3446,12 +3464,10 @@
             "required": true
           },
           {
-            "name": "DatasourceProxyParam",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "type": "object"
-            }
+            "type": "string",
+            "name": "id",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -3562,18 +3578,18 @@
         "operationId": "updateDatasourceByUID",
         "parameters": [
           {
-            "type": "string",
-            "name": "uid",
-            "in": "path",
-            "required": true
-          },
-          {
             "name": "Body",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/UpdateDataSourceCommand"
             }
+          },
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -3884,18 +3900,18 @@
         "deprecated": true,
         "parameters": [
           {
-            "type": "string",
-            "name": "id",
-            "in": "path",
-            "required": true
-          },
-          {
             "name": "Body",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/UpdateDataSourceCommand"
             }
+          },
+          {
+            "type": "string",
+            "name": "id",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -4325,18 +4341,18 @@
         "operationId": "updateFolderPermissions",
         "parameters": [
           {
+            "type": "string",
+            "name": "folder_uid",
+            "in": "path",
+            "required": true
+          },
+          {
             "name": "Body",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/UpdateDashboardAclCommand"
             }
-          },
-          {
-            "type": "string",
-            "name": "folder_uid",
-            "in": "path",
-            "required": true
           }
         ],
         "responses": {
@@ -4570,18 +4586,18 @@
         "operationId": "updateLibraryElement",
         "parameters": [
           {
-            "type": "string",
-            "name": "library_element_uid",
-            "in": "path",
-            "required": true
-          },
-          {
             "name": "body",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/PatchLibraryElementCommand"
             }
+          },
+          {
+            "type": "string",
+            "name": "library_element_uid",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -5589,6 +5605,14 @@
         "operationId": "updateOrgQuota",
         "parameters": [
           {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateOrgQuotaCmd"
+            }
+          },
+          {
             "type": "string",
             "name": "quota_target",
             "in": "path",
@@ -5600,14 +5624,6 @@
             "name": "org_id",
             "in": "path",
             "required": true
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/UpdateOrgQuotaCmd"
-            }
           }
         ],
         "responses": {
@@ -6573,19 +6589,19 @@
         "operationId": "updateReport",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "name": "reportID",
-            "in": "path",
-            "required": true
-          },
-          {
             "name": "body",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/CreateOrUpdateConfigCmd"
             }
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "reportID",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -7135,14 +7151,14 @@
           {
             "type": "integer",
             "format": "int64",
-            "name": "groupId",
+            "name": "teamId",
             "in": "path",
             "required": true
           },
           {
             "type": "integer",
             "format": "int64",
-            "name": "teamId",
+            "name": "groupId",
             "in": "path",
             "required": true
           }
@@ -7206,18 +7222,18 @@
         "operationId": "updateTeam",
         "parameters": [
           {
-            "type": "string",
-            "name": "team_id",
-            "in": "path",
-            "required": true
-          },
-          {
             "name": "body",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/UpdateTeamCommand"
             }
+          },
+          {
+            "type": "string",
+            "name": "team_id",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -7309,6 +7325,14 @@
         "operationId": "addTeamMember",
         "parameters": [
           {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/AddTeamMemberCommand"
+            }
+          },
+          {
             "type": "string",
             "name": "team_id",
             "in": "path",
@@ -7341,18 +7365,18 @@
         "operationId": "updateTeamMember",
         "parameters": [
           {
-            "type": "string",
-            "name": "team_id",
-            "in": "path",
-            "required": true
-          },
-          {
             "name": "body",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/UpdateTeamMemberCommand"
             }
+          },
+          {
+            "type": "string",
+            "name": "team_id",
+            "in": "path",
+            "required": true
           },
           {
             "type": "integer",
@@ -7779,7 +7803,7 @@
         "description": "Revokes the given auth token (device) for the actual user. User of issued auth token (device) will no longer be logged in and will be required to authenticate again upon next activity.",
         "tags": ["signed_in_user"],
         "summary": "Revoke an auth token of the actual User.",
-        "operationId": "revokeSignedINAuthTokenCmd",
+        "operationId": "revokeSignedInAuthToken",
         "parameters": [
           {
             "name": "body",
@@ -8065,13 +8089,6 @@
         "operationId": "updateUser",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "name": "user_id",
-            "in": "path",
-            "required": true
-          },
-          {
             "description": "To change the email, name, login, theme, provide another one.",
             "name": "body",
             "in": "body",
@@ -8079,6 +8096,13 @@
             "schema": {
               "$ref": "#/definitions/UpdateUserCommand"
             }
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "user_id",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -9439,6 +9463,9 @@
           "type": "boolean"
         },
         "provisionedExternalId": {
+          "type": "string"
+        },
+        "publicDashboardAccessToken": {
           "type": "string"
         },
         "slug": {

@@ -16,7 +16,7 @@ export const useNavModel = () => {
 
   main.children = main.children?.map((item) => ({
     ...item,
-    active: item.url === pathname,
+    active: pathname.startsWith(item.url || ''),
   }));
 
   return {
