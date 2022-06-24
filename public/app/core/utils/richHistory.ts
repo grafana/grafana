@@ -274,12 +274,27 @@ export function createDatasourcesList() {
     });
 }
 
+type EmptyQuery = {
+  [key: string]: boolean;
+};
+
 export function notEmptyQuery(query: DataQuery) {
   /* Check if query has any other properties besides key, refId and datasource.
    * If not, then we consider it empty query.
    */
   const strippedQuery = omit(query, ['key', 'refId', 'datasource']);
   const queryKeys = Object.keys(strippedQuery);
+
+  // Check for empty queries from loki
+  const emptyQuery: EmptyQuery = {
+    '{} |= ``': true,
+    '': true,
+  };
+
+  // @ts-ignore --> not recognising query.expr as a property
+  if (emptyQuery[query.expr]) {
+    return false;
+  }
 
   if (queryKeys.length > 0) {
     return true;
