@@ -742,6 +742,8 @@ func TestRuleGroupSequence(t *testing.T) {
 	folder1Title := "folder1"
 	client.CreateFolder(t, util.GenerateShortUID(), folder1Title)
 
+	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
+
 	group1 := generateAlertRuleGroup(5, alertRuleGen())
 	group2 := generateAlertRuleGroup(5, alertRuleGen())
 
