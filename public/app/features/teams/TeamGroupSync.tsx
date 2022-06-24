@@ -132,11 +132,12 @@ export class TeamGroupSync extends PureComponent<Props, State> {
               <InlineFieldRow>
                 <InlineField
                   label={'Add External Group'}
-                  tooltip={'LDAP Group Example: cn=users,ou=groups,dc=grafana,dc=org.'}
+                  tooltip="LDAP Group Example: cn=users,ou=groups,dc=grafana,dc=org."
                 >
                   <Input
                     type="text"
                     id={'add-external-group'}
+                    placeholder=""
                     value={newGroupId}
                     onChange={this.onNewGroupIdChanged}
                     disabled={isReadOnly}
