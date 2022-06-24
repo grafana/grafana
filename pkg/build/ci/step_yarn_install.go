@@ -15,15 +15,39 @@ var (
 
 func yarnInstall(ctx context.Context, opts pipeline.ActionOpts) error {
 	sourcePath := opts.State.MustGetDirectoryString(pipeline.ArgumentSourceFS)
+	env := []string{
+		"YARN_CACHE_FOLDER=/opt/drone/yarncache",
+	}
+
+	if err := exec.RunCommandWithOpts(ctx, exec.RunOpts{
+		Name:   "yarn",
+		Args:   []string{"config", "get", "cacheFolder"},
+		Path:   sourcePath,
+		Stdout: opts.Stdout,
+		Stderr: opts.Stderr,
+		Env:    env,
+	}); err != nil {
+		return err
+	}
+
+	if err := exec.RunCommandWithOpts(ctx, exec.RunOpts{
+		Name:   "ls",
+		Args:   []string{"-al", "/opt/drone/yarncache"},
+		Path:   sourcePath,
+		Stdout: opts.Stdout,
+		Stderr: opts.Stderr,
+		Env:    env,
+	}); err != nil {
+		return err
+	}
+
 	return exec.RunCommandWithOpts(ctx, exec.RunOpts{
 		Name:   "yarn",
 		Args:   []string{"install", "--immutable"},
 		Path:   sourcePath,
 		Stdout: opts.Stdout,
 		Stderr: opts.Stderr,
-		Env: []string{
-			"YARN_CACHE_FOLDER=/opt/drone/yarncache",
-		},
+		Env:    env,
 	})
 }
 
