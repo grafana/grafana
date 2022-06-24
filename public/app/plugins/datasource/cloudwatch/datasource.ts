@@ -181,7 +181,7 @@ export class CloudWatchDatasource
     const queryParams = logQueries.map((target: CloudWatchLogsQuery) => ({
       queryString: target.expression || '',
       refId: target.refId,
-      logGroupNames: this.getActualLogGroups(target.logGroupNames),
+      logGroupNames: target.logGroupNames || this.defaultLogGroups,
       region: this.replace(this.getActualRegion(target.region), options.scopedVars, true, 'region'),
     }));
 
@@ -828,10 +828,6 @@ export class CloudWatchDatasource
       return this.getDefaultRegion();
     }
     return region;
-  }
-
-  getActualLogGroups(logGroups?: string[]) {
-    return logGroups ?? this.defaultLogGroups;
   }
 
   showContextToggle() {

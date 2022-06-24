@@ -27,7 +27,7 @@ export type Props = DataSourcePluginOptionsEditorProps<CloudWatchJsonData, Cloud
 export const ConfigEditor: FC<Props> = (props: Props) => {
   const { options } = props;
   const { defaultLogGroups, logsTimeout, defaultRegion } = options.jsonData;
-  const [saved, setSaved] = useState(true);
+  const [saved, setSaved] = useState(!!options.version && options.version > 1);
 
   const datasource = useDatasource(options.name, saved);
   useAuthenticationWarning(options.jsonData);
