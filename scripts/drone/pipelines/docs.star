@@ -17,11 +17,20 @@ def docs_pipelines(edition, ver_mode, trigger):
 
     pipeline["name"] = '{}-docs'.format(ver_mode)
     pipeline["steps"] = steps + pipeline["steps"]
-    pipeline["trigger"] = trigger_docs()
+    pipeline["trigger"] = trigger_docs(ver_mode)
+    pipeline["node"] = {
+        "type": "no-parallel",
+    }
 
     return pipeline
 
-def trigger_docs():
+def trigger_docs(ver_mode):
+    if ver_mode == 'main':
+        return {
+            'event': ['push',],
+            'branch': 'main',
+        }
+
     return {
         'event': [
             'pull_request',

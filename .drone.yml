@@ -26,7 +26,6 @@ steps:
   image: grafana/build-container:1.5.7
   name: gen-version
 - commands:
-  - yarn config get cacheFolder
   - yarn install --immutable
   depends_on:
   - grabpl
@@ -655,6 +654,8 @@ volumes:
 ---
 kind: pipeline
 name: main-docs
+node:
+  type: no-parallel
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
@@ -762,14 +763,9 @@ steps:
   - name: scribe-state
     path: /var/scribe-state
 trigger:
+  branch: main
   event:
-  - pull_request
-  paths:
-    include:
-    - '*.md'
-    - docs/**
-    - packages/**
-    - latest.json
+  - push
 type: docker
 volumes:
 - name: scribe
@@ -4865,6 +4861,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: d9a47c862a5925ab42d610a7c5604e7a8377ad36425fb3d399f12e017280687a
+hmac: 5ad824d620ee8ea6cc2a3889e9f2bf1a3ef17b0e06e2417a14c64536ef44d223
 
 ...
