@@ -48,7 +48,7 @@ export const CommandPalette = () => {
   useEffect(() => {
     (async () => {
       if (isNotLogin) {
-        setActions(getGlobalActions(navBarTree));
+        setActions([{ id: 'init', name: 'Loading...' }]);
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -58,9 +58,11 @@ export const CommandPalette = () => {
     if (showing) {
       reportInteraction('commandPalette_opened');
 
+      const staticActions = getGlobalActions(navBarTree);
+      setActions(staticActions);
+
       // Do dashboard search on demand
       getDashboardNavActions('go/dashboard').then((dashAct) => {
-        const staticActions = getGlobalActions(navBarTree);
         setActions([...staticActions, ...dashAct]);
       });
 
