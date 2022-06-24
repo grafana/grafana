@@ -1643,6 +1643,50 @@
         }
       }
     },
+    "/api/v1/ngalert/history/grafana/rules/{UID}": {
+      "get": {
+        "description": "Get the alerting state history for a specific Grafana Alerting Rule",
+        "tags": [
+          "history"
+        ],
+        "operationId": "RouteGetAlertStateHistory",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Alert rule UID",
+            "name": "UID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "number",
+            "format": "double",
+            "description": "Start time, in Unix seconds",
+            "name": "Start",
+            "in": "query"
+          },
+          {
+            "type": "number",
+            "format": "double",
+            "description": "End time, in Unix seconds",
+            "name": "End",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "Maximum # of series to return",
+            "name": "Limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/GetAlertStateHistoryResponse"
+          }
+        }
+      }
+    },
     "/api/v1/provisioning/alert-rules": {
       "post": {
         "consumes": [
@@ -2755,6 +2799,11 @@
         }
       }
     },
+    "ConfFloat64": {
+      "description": "ConfFloat64 is a float64. It Marshals float64 values of NaN of Inf\nto null.",
+      "type": "number",
+      "format": "double"
+    },
     "Config": {
       "type": "object",
       "title": "Config is the top-level configuration for Alertmanager's config files.",
@@ -2791,98 +2840,32 @@
         "$ref": "#/definitions/EmbeddedContactPoint"
       }
     },
-    "CreateDashboardSnapshotCommand": {
+    "DataLink": {
+      "description": "DataLink define what",
       "type": "object",
-      "required": [
-        "dashboard"
-      ],
       "properties": {
-        "Result": {
-          "$ref": "#/definitions/DashboardSnapshot"
+        "targetBlank": {
+          "type": "boolean"
         },
-        "dashboard": {
-          "$ref": "#/definitions/Json"
-        },
-        "deleteKey": {
-          "description": "Unique key used to delete the snapshot. It is different from the `key` so that only the creator can delete the snapshot. Required if `external` is `true`.",
+        "title": {
           "type": "string"
         },
-        "expires": {
-          "description": "When the snapshot should expire in seconds in seconds. Default is never to expire.",
-          "type": "integer",
-          "format": "int64",
-          "default": 0
-        },
-        "external": {
-          "description": "these are passed when storing an external snapshot ref\nSave the snapshot on an external server rather than locally.",
-          "type": "boolean",
-          "default": false
-        },
-        "key": {
-          "description": "Define the unique key. Required if `external` is `true`.",
-          "type": "string"
-        },
-        "name": {
-          "description": "Snapshot name",
+        "url": {
           "type": "string"
         }
       }
     },
-    "DashboardSnapshot": {
-      "description": "DashboardSnapshot model",
+    "DataResponse": {
+      "description": "A map of RefIDs (unique query identifiers) to this type makes up the Responses property of a QueryDataResponse.\nThe Error property is used to allow for partial success responses from the containing QueryDataResponse.",
       "type": "object",
+      "title": "DataResponse contains the results from a DataQuery.",
       "properties": {
-        "Created": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "Dashboard": {
-          "$ref": "#/definitions/Json"
-        },
-        "DashboardEncrypted": {
-          "type": "array",
-          "items": {
-            "type": "integer",
-            "format": "uint8"
-          }
-        },
-        "DeleteKey": {
+        "Error": {
+          "description": "Error is a property to be set if the the corresponding DataQuery has an error.",
           "type": "string"
         },
-        "Expires": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "External": {
-          "type": "boolean"
-        },
-        "ExternalDeleteUrl": {
-          "type": "string"
-        },
-        "ExternalUrl": {
-          "type": "string"
-        },
-        "Id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Key": {
-          "type": "string"
-        },
-        "Name": {
-          "type": "string"
-        },
-        "OrgId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Updated": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "UserId": {
-          "type": "integer",
-          "format": "int64"
+        "Frames": {
+          "$ref": "#/definitions/Frames"
         }
       }
     },
@@ -3115,6 +3098,212 @@
     },
     "Failure": {
       "$ref": "#/definitions/ResponseDetails"
+    },
+    "Field": {
+      "description": "A Field is essentially a slice of various types with extra properties and methods.\nSee NewField() for supported types.\n\nThe slice data in the Field is a not exported, so methods on the Field are used to to manipulate its data.",
+      "type": "object",
+      "title": "Field represents a typed column of data within a Frame.",
+      "properties": {
+        "config": {
+          "$ref": "#/definitions/FieldConfig"
+        },
+        "labels": {
+          "$ref": "#/definitions/Labels"
+        },
+        "name": {
+          "description": "Name is default identifier of the field. The name does not have to be unique, but the combination\nof name and Labels should be unique for proper behavior in all situations.",
+          "type": "string"
+        }
+      }
+    },
+    "FieldConfig": {
+      "type": "object",
+      "title": "FieldConfig represents the display properties for a Field.",
+      "properties": {
+        "color": {
+          "description": "Map values to a display color\nNOTE: this interface is under development in the frontend... so simple map for now",
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          }
+        },
+        "custom": {
+          "description": "Panel Specific Values",
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          }
+        },
+        "decimals": {
+          "type": "integer",
+          "format": "uint16"
+        },
+        "description": {
+          "description": "Description is human readable field metadata",
+          "type": "string"
+        },
+        "displayName": {
+          "description": "DisplayName overrides Grafana default naming, should not be used from a data source",
+          "type": "string"
+        },
+        "displayNameFromDS": {
+          "description": "DisplayNameFromDS overrides Grafana default naming in a better way that allows users to override it easily.",
+          "type": "string"
+        },
+        "filterable": {
+          "description": "Filterable indicates if the Field's data can be filtered by additional calls.",
+          "type": "boolean"
+        },
+        "interval": {
+          "description": "Interval indicates the expected regular step between values in the series.\nWhen an interval exists, consumers can identify \"missing\" values when the expected value is not present.\nThe grafana timeseries visualization will render disconnected values when missing values are found it the time field.\nThe interval uses the same units as the values.  For time.Time, this is defined in milliseconds.",
+          "type": "number",
+          "format": "double"
+        },
+        "links": {
+          "description": "The behavior when clicking on a result",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DataLink"
+          }
+        },
+        "mappings": {
+          "$ref": "#/definitions/ValueMappings"
+        },
+        "max": {
+          "$ref": "#/definitions/ConfFloat64"
+        },
+        "min": {
+          "$ref": "#/definitions/ConfFloat64"
+        },
+        "noValue": {
+          "description": "Alternative to empty string",
+          "type": "string"
+        },
+        "path": {
+          "description": "Path is an explicit path to the field in the datasource. When the frame meta includes a path,\nthis will default to `${frame.meta.path}/${field.name}\n\nWhen defined, this value can be used as an identifier within the datasource scope, and\nmay be used as an identifier to update values in a subsequent request",
+          "type": "string"
+        },
+        "thresholds": {
+          "$ref": "#/definitions/ThresholdsConfig"
+        },
+        "unit": {
+          "description": "Numeric Options",
+          "type": "string"
+        },
+        "writeable": {
+          "description": "Writeable indicates that the datasource knows how to update this value",
+          "type": "boolean"
+        }
+      }
+    },
+    "Frame": {
+      "description": "Each Field is well typed by its FieldType and supports optional Labels.\n\nA Frame is a general data container for Grafana. A Frame can be table data\nor time series data depending on its content and field types.",
+      "type": "object",
+      "title": "Frame is a columnar data structure where each column is a Field.",
+      "properties": {
+        "Fields": {
+          "description": "Fields are the columns of a frame.\nAll Fields must be of the same the length when marshalling the Frame for transmission.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Field"
+          }
+        },
+        "Meta": {
+          "$ref": "#/definitions/FrameMeta"
+        },
+        "Name": {
+          "description": "Name is used in some Grafana visualizations.",
+          "type": "string"
+        },
+        "RefID": {
+          "description": "RefID is a property that can be set to match a Frame to its originating query.",
+          "type": "string"
+        }
+      }
+    },
+    "FrameMeta": {
+      "description": "https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/types/data.ts#L11\nNOTE -- in javascript this can accept any `[key: string]: any;` however\nthis interface only exposes the values we want to be exposed",
+      "type": "object",
+      "title": "FrameMeta matches:",
+      "properties": {
+        "channel": {
+          "description": "Channel is the path to a stream in grafana live that has real-time updates for this data.",
+          "type": "string"
+        },
+        "custom": {
+          "description": "Custom datasource specific values.",
+          "type": "object"
+        },
+        "executedQueryString": {
+          "description": "ExecutedQueryString is the raw query sent to the underlying system. All macros and templating\nhave been applied.  When metadata contains this value, it will be shown in the query inspector.",
+          "type": "string"
+        },
+        "notices": {
+          "description": "Notices provide additional information about the data in the Frame that\nGrafana can display to the user in the user interface.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Notice"
+          }
+        },
+        "path": {
+          "description": "Path is a browsable path on the datasource.",
+          "type": "string"
+        },
+        "pathSeparator": {
+          "description": "PathSeparator defines the separator pattern to decode a hierarchy. The default separator is '/'.",
+          "type": "string"
+        },
+        "preferredVisualisationType": {
+          "$ref": "#/definitions/VisType"
+        },
+        "stats": {
+          "description": "Stats is an array of query result statistics.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/QueryStat"
+          }
+        },
+        "type": {
+          "$ref": "#/definitions/FrameType"
+        }
+      }
+    },
+    "FrameType": {
+      "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.",
+      "type": "string"
+    },
+    "Frames": {
+      "description": "It is the main data container within a backend.DataResponse.",
+      "type": "array",
+      "title": "Frames is a slice of Frame pointers.",
+      "items": {
+        "$ref": "#/definitions/Frame"
+      }
+    },
+    "GetAlertStateHistoryBodyParams": {
+      "type": "object",
+      "properties": {
+        "Found": {
+          "description": "The # of series found.",
+          "type": "integer",
+          "format": "int64"
+        },
+        "Limit": {
+          "description": "The series limit passed in the request.",
+          "type": "integer",
+          "format": "int64"
+        },
+        "data": {
+          "$ref": "#/definitions/DataResponse"
+        },
+        "message": {
+          "description": "A human-readable message describing the response.",
+          "type": "string"
+        },
+        "rule_uid": {
+          "type": "string"
+        }
+      }
     },
     "GettableAlertmanagers": {
       "type": "object",
@@ -3628,6 +3817,11 @@
         }
       }
     },
+    "InspectType": {
+      "type": "integer",
+      "format": "int64",
+      "title": "InspectType is a type for the Inspect property of a Notice."
+    },
     "Json": {
       "type": "object"
     },
@@ -3663,10 +3857,13 @@
       "title": "A LabelValue is an associated value for a LabelName."
     },
     "Labels": {
-      "description": "Labels is a sorted set of labels. Order has to be guaranteed upon\ninstantiation.",
-      "type": "array",
+      "description": "Labels are used to add metadata to an object.  The JSON will always be sorted keys",
+      "type": "object",
       "items": {
         "$ref": "#/definitions/Label"
+      },
+      "additionalProperties": {
+        "type": "string"
       }
     },
     "MatchRegexps": {
@@ -3781,6 +3978,31 @@
     },
     "NotFound": {
       "type": "object"
+    },
+    "Notice": {
+      "type": "object",
+      "title": "Notice provides a structure for presenting notifications in Grafana's user interface.",
+      "properties": {
+        "inspect": {
+          "$ref": "#/definitions/InspectType"
+        },
+        "link": {
+          "description": "Link is an optional link for display in the user interface and can be an\nabsolute URL or a path relative to Grafana's root url.",
+          "type": "string"
+        },
+        "severity": {
+          "$ref": "#/definitions/NoticeSeverity"
+        },
+        "text": {
+          "description": "Text is freeform descriptive text for the notice.",
+          "type": "string"
+        }
+      }
+    },
+    "NoticeSeverity": {
+      "type": "integer",
+      "format": "int64",
+      "title": "NoticeSeverity is a type for the Severity property of a Notice."
     },
     "NotifierConfig": {
       "type": "object",
@@ -4315,6 +4537,91 @@
         },
         "user_key": {
           "$ref": "#/definitions/Secret"
+        }
+      }
+    },
+    "QueryStat": {
+      "description": "The embedded FieldConfig's display name must be set.\nIt corresponds to the QueryResultMetaStat on the frontend (https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/types/data.ts#L53).",
+      "type": "object",
+      "title": "QueryStat is used for storing arbitrary statistics metadata related to a query and its result, e.g. total request time, data processing time.",
+      "properties": {
+        "color": {
+          "description": "Map values to a display color\nNOTE: this interface is under development in the frontend... so simple map for now",
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          }
+        },
+        "custom": {
+          "description": "Panel Specific Values",
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          }
+        },
+        "decimals": {
+          "type": "integer",
+          "format": "uint16"
+        },
+        "description": {
+          "description": "Description is human readable field metadata",
+          "type": "string"
+        },
+        "displayName": {
+          "description": "DisplayName overrides Grafana default naming, should not be used from a data source",
+          "type": "string"
+        },
+        "displayNameFromDS": {
+          "description": "DisplayNameFromDS overrides Grafana default naming in a better way that allows users to override it easily.",
+          "type": "string"
+        },
+        "filterable": {
+          "description": "Filterable indicates if the Field's data can be filtered by additional calls.",
+          "type": "boolean"
+        },
+        "interval": {
+          "description": "Interval indicates the expected regular step between values in the series.\nWhen an interval exists, consumers can identify \"missing\" values when the expected value is not present.\nThe grafana timeseries visualization will render disconnected values when missing values are found it the time field.\nThe interval uses the same units as the values.  For time.Time, this is defined in milliseconds.",
+          "type": "number",
+          "format": "double"
+        },
+        "links": {
+          "description": "The behavior when clicking on a result",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DataLink"
+          }
+        },
+        "mappings": {
+          "$ref": "#/definitions/ValueMappings"
+        },
+        "max": {
+          "$ref": "#/definitions/ConfFloat64"
+        },
+        "min": {
+          "$ref": "#/definitions/ConfFloat64"
+        },
+        "noValue": {
+          "description": "Alternative to empty string",
+          "type": "string"
+        },
+        "path": {
+          "description": "Path is an explicit path to the field in the datasource. When the frame meta includes a path,\nthis will default to `${frame.meta.path}/${field.name}\n\nWhen defined, this value can be used as an identifier within the datasource scope, and\nmay be used as an identifier to update values in a subsequent request",
+          "type": "string"
+        },
+        "thresholds": {
+          "$ref": "#/definitions/ThresholdsConfig"
+        },
+        "unit": {
+          "description": "Numeric Options",
+          "type": "string"
+        },
+        "value": {
+          "type": "number",
+          "format": "double"
+        },
+        "writeable": {
+          "description": "Writeable indicates that the datasource knows how to update this value",
+          "type": "boolean"
         }
       }
     },
@@ -4960,6 +5267,41 @@
         }
       }
     },
+    "Threshold": {
+      "description": "Threshold a single step on the threshold list",
+      "type": "object",
+      "properties": {
+        "color": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/definitions/ConfFloat64"
+        }
+      }
+    },
+    "ThresholdsConfig": {
+      "description": "ThresholdsConfig setup thresholds",
+      "type": "object",
+      "properties": {
+        "mode": {
+          "$ref": "#/definitions/ThresholdsMode"
+        },
+        "steps": {
+          "description": "Must be sorted by 'value', first value is always -Infinity",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Threshold"
+          }
+        }
+      }
+    },
+    "ThresholdsMode": {
+      "description": "ThresholdsMode absolute or percentage",
+      "type": "string"
+    },
     "TimeInterval": {
       "description": "TimeInterval describes intervals of time. ContainsTime will tell you if a golang time is contained\nwithin the interval.",
       "type": "object",
@@ -5061,6 +5403,16 @@
         }
       }
     },
+    "ValueMapping": {
+      "description": "ValueMapping allows mapping input values to text and color",
+      "type": "object"
+    },
+    "ValueMappings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ValueMapping"
+      }
+    },
     "Vector": {
       "description": "Vector is basically only an alias for model.Samples, but the\ncontract is that in a Vector, all Samples have the same timestamp.",
       "type": "array",
@@ -5109,6 +5461,10 @@
           "type": "string"
         }
       }
+    },
+    "VisType": {
+      "type": "string",
+      "title": "VisType is used to indicate how the data should be visualized in explore."
     },
     "WebhookConfig": {
       "type": "object",
@@ -5240,6 +5596,7 @@
       "$ref": "#/definitions/alertGroup"
     },
     "alertGroups": {
+      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
@@ -5404,6 +5761,7 @@
       "$ref": "#/definitions/gettableAlert"
     },
     "gettableAlerts": {
+      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
@@ -5411,6 +5769,7 @@
       "$ref": "#/definitions/gettableAlerts"
     },
     "gettableSilence": {
+      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -5571,6 +5930,7 @@
       }
     },
     "postableSilence": {
+      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",

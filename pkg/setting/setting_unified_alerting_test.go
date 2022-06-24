@@ -11,33 +11,38 @@ import (
 )
 
 func TestCfg_ReadUnifiedAlertingSettings(t *testing.T) {
+	require := require.New(t)
 	cfg := NewCfg()
 	err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
-	require.NoError(t, err)
+	require.NoError(err)
 
+	ua := cfg.UnifiedAlerting
 	// It sets the correct defaults.
 	{
-		require.Equal(t, 60*time.Second, cfg.UnifiedAlerting.AdminConfigPollInterval)
-		require.Equal(t, 60*time.Second, cfg.UnifiedAlerting.AlertmanagerConfigPollInterval)
-		require.Equal(t, 15*time.Second, cfg.UnifiedAlerting.HAPeerTimeout)
-		require.Equal(t, "0.0.0.0:9094", cfg.UnifiedAlerting.HAListenAddr)
-		require.Equal(t, "", cfg.UnifiedAlerting.HAAdvertiseAddr)
-		require.Len(t, cfg.UnifiedAlerting.HAPeers, 0)
-		require.Equal(t, 200*time.Millisecond, cfg.UnifiedAlerting.HAGossipInterval)
-		require.Equal(t, 60*time.Second, cfg.UnifiedAlerting.HAPushPullInterval)
+		require.Equal(60*time.Second, ua.AdminConfigPollInterval)
+		require.Equal(60*time.Second, ua.AlertmanagerConfigPollInterval)
+		require.Equal(15*time.Second, ua.HAPeerTimeout)
+		require.Equal("0.0.0.0:9094", ua.HAListenAddr)
+		require.Equal("", ua.HAAdvertiseAddr)
+		require.Len(ua.HAPeers, 0)
+		require.Equal(200*time.Millisecond, ua.HAGossipInterval)
+		require.Equal(60*time.Second, ua.HAPushPullInterval)
+
+		// History settings
+		require.Equal(false, ua.History.DemoEnabled)
 	}
 
 	// With peers set, it correctly parses them.
 	{
-		require.Len(t, cfg.UnifiedAlerting.HAPeers, 0)
+		require.Len(ua.HAPeers, 0)
 		s, err := cfg.Raw.NewSection("unified_alerting")
-		require.NoError(t, err)
+		require.NoError(err)
 		_, err = s.NewKey("ha_peers", "hostname1:9090,hostname2:9090,hostname3:9090")
-		require.NoError(t, err)
+		require.NoError(err)
 
-		require.NoError(t, cfg.ReadUnifiedAlertingSettings(cfg.Raw))
-		require.Len(t, cfg.UnifiedAlerting.HAPeers, 3)
-		require.ElementsMatch(t, []string{"hostname1:9090", "hostname2:9090", "hostname3:9090"}, cfg.UnifiedAlerting.HAPeers)
+		require.NoError(cfg.ReadUnifiedAlertingSettings(cfg.Raw))
+		require.Len(cfg.UnifiedAlerting.HAPeers, 3)
+		require.ElementsMatch([]string{"hostname1:9090", "hostname2:9090", "hostname3:9090"}, cfg.UnifiedAlerting.HAPeers)
 	}
 }
 
@@ -265,4 +270,18 @@ func TestMinInterval(t *testing.T) {
 			testCase.verifyCfg(t, cfg, err)
 		})
 	}
+}
+
+func TestUnifiedAlertingHistorySettings(t *testing.T) {
+	t.Run("Invalid Storage Values return an error", func(t *testing.T) {
+		f := ini.Empty()
+		// This setting is required to avoid a read-time error.
+		section, _ := f.NewSection("unified_alerting")
+		_, _ = section.NewKey("enabled", "true")
+		section, _ = f.NewSection("unified_alerting.history")
+		_, _ = section.NewKey("storage", "invalid")
+		err := NewCfg().ReadUnifiedAlertingSettings(f)
+		require.Error(t, err, "An invalid setting was accepted for alert history storage")
+	})
+
 }

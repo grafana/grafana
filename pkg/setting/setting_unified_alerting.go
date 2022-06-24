@@ -81,12 +81,48 @@ type UnifiedAlertingSettings struct {
 	// DefaultRuleEvaluationInterval default interval between evaluations of a rule.
 	DefaultRuleEvaluationInterval time.Duration
 	Screenshots                   UnifiedAlertingScreenshotSettings
+	History                       UnifiedAlertingHistorySettings
 }
 
 type UnifiedAlertingScreenshotSettings struct {
 	Capture                    bool
 	MaxConcurrentScreenshots   int64
 	UploadExternalImageStorage bool
+}
+
+type UnifiedAlertingHistoryStorage string
+
+func (u UnifiedAlertingHistoryStorage) IsValid() bool {
+	switch u {
+	case UnifiedAlertingHistoryStorageLocal:
+		return true
+	case UnifiedAlertingHistoryStorageNone:
+		return true
+	case UnifiedAlertingHistoryStorageRemote:
+		return true
+	case "":
+		return true
+	default:
+		return false
+	}
+}
+
+const (
+	UnifiedAlertingHistoryStorageLocal  UnifiedAlertingHistoryStorage = "local"
+	UnifiedAlertingHistoryStorageNone   UnifiedAlertingHistoryStorage = "none"
+	UnifiedAlertingHistoryStorageRemote UnifiedAlertingHistoryStorage = "remote"
+)
+
+var UnifiedAlertingHistoryStorageString = fmt.Sprintf("[ '%v', '%v', '%v']",
+	UnifiedAlertingHistoryStorageNone,
+	UnifiedAlertingHistoryStorageLocal,
+	UnifiedAlertingHistoryStorageRemote,
+)
+
+const UnifiedAlertingHistoryMaxLocalDiskBytesDefault = 500 * 1024 * 1024
+
+type UnifiedAlertingHistorySettings struct {
+	DemoEnabled bool
 }
 
 // IsEnabled returns true if UnifiedAlertingSettings.Enabled is either nil or true.
@@ -97,7 +133,7 @@ func (u *UnifiedAlertingSettings) IsEnabled() bool {
 
 // readUnifiedAlertingEnabledSettings reads the settings for unified alerting.
 // It returns a non-nil bool and a nil error when unified alerting is enabled either
-// because it has been enabled in the settings or by default. It returns nil and
+// because it has been e4nabled in the settings or by default. It returns nil and
 // a non-nil error both unified alerting and legacy alerting are enabled at the same time.
 func (cfg *Cfg) readUnifiedAlertingEnabledSetting(section *ini.Section) (*bool, error) {
 	// At present an invalid value is considered the same as no value. This means that a
@@ -272,6 +308,11 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfgScreenshots.MaxConcurrentScreenshots = screenshots.Key("max_concurrent_screenshots").MustInt64(screenshotsDefaultMaxConcurrent)
 	uaCfgScreenshots.UploadExternalImageStorage = screenshots.Key("upload_external_image_storage").MustBool(screenshotsDefaultUploadImageStorage)
 	uaCfg.Screenshots = uaCfgScreenshots
+
+	history := iniFile.Section("unified_alerting.history")
+	historyCfg := uaCfg.History
+	historyCfg.DemoEnabled = history.Key("demo_enabled").MustBool(false)
+	uaCfg.History = historyCfg
 
 	cfg.UnifiedAlerting = uaCfg
 	return nil

@@ -185,6 +185,12 @@ func (ctx *Context) QueryInt64(name string) int64 {
 	return n
 }
 
+// QueryFloat64 returns query result in int type.
+func (ctx *Context) QueryFloat64(name string) float64 {
+	n, _ := strconv.ParseFloat(ctx.Query(name), 64)
+	return n
+}
+
 // GetCookie returns given cookie value from request header.
 func (ctx *Context) GetCookie(name string) string {
 	cookie, err := ctx.Req.Cookie(name)

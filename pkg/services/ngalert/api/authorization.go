@@ -97,6 +97,10 @@ func (api *API) authorize(method, path string) web.Handler {
 
 	// Alert Instances and Silences
 
+	// Alert Instance State History. Grafana Path.
+	case http.MethodGet + "/api/v1/ngalert/history/grafana/rules/{UID}":
+		eval = ac.EvalPermission(ac.ActionAlertingRuleRead)
+
 	// Silences. Grafana Paths
 	case http.MethodDelete + "/api/alertmanager/grafana/api/v2/silence/{SilenceId}":
 		eval = ac.EvalPermission(ac.ActionAlertingInstanceUpdate) // delete endpoint actually expires silence
