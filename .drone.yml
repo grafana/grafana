@@ -526,6 +526,8 @@ volumes:
 ---
 kind: pipeline
 name: pr-docs
+node:
+  type: no-parallel
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
@@ -4863,6 +4865,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: d2f0e4614e1df6624298653cec51a8f8826ae47e25e10a2928c7f267c5645de1
+hmac: d9a47c862a5925ab42d610a7c5604e7a8377ad36425fb3d399f12e017280687a
 
 ...
