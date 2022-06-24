@@ -1549,7 +1549,7 @@ exports[`no explicit any`] = {
     "packages/grafana-ui/src/components/TimeSeries/TimeSeries.tsx:2866260042": [
       [56, 43, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "packages/grafana-ui/src/components/TimeSeries/utils.ts:1993181937": [
+    "packages/grafana-ui/src/components/TimeSeries/utils.ts:2073304208": [
       [34, 29, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "packages/grafana-ui/src/components/ToolbarButton/ToolbarButton.tsx:3161520285": [
