@@ -18,8 +18,8 @@ func (cfg *Cfg) readSentryConfig() {
 			DSN:            raw.Key("sentry_dsn").String(),
 			CustomEndpoint: raw.Key("custom_endpoint").MustString("/log"),
 			SampleRate:     raw.Key("sample_rate").MustFloat64(),
-			EndpointRPS:    raw.Key("log_endpoint_requests_per_second_limit").MustInt(),
-			EndpointBurst:  raw.Key("log_endpoint_burst_limit").MustInt(),
+			EndpointRPS:    raw.Key("log_endpoint_requests_per_second_limit").MustInt(3),
+			EndpointBurst:  raw.Key("log_endpoint_burst_limit").MustInt(15),
 		}
 	}
 }
