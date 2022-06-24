@@ -24,10 +24,6 @@ describe('addLabelToQuery()', () => {
     );
   });
 
-  it('should convert number Infinity to +Inf', () => {
-    expect(addLabelToQuery('sum(rate({}[5m])) by (le)', 'le', Infinity)).toBe('sum(rate({le="+Inf"}[5m])) by (le)');
-  });
-
   it('should handle selectors with punctuation', () => {
     expect(addLabelToQuery('{instance="my-host.com:9100"}', 'bar', 'baz')).toBe(
       '{instance="my-host.com:9100", bar="baz"}'

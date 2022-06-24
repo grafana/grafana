@@ -20,7 +20,7 @@ import { LokiVisualQuery } from './querybuilder/types';
  * @param value
  * @param operator
  */
-export function addLabelToQuery(query: string, key: string, value: string | number, operator = '='): string {
+export function addLabelToQuery(query: string, key: string, value: string, operator = '='): string {
   if (!key || !value) {
     throw new Error('Need label to add to query.');
   }
@@ -81,10 +81,9 @@ function getParserPositions(query: string): PipelineStagePosition[] {
   return positions;
 }
 
-function toLabelFilter(key: string, value: string | number, operator: string): QueryBuilderLabelFilter {
+function toLabelFilter(key: string, value: string, operator: string): QueryBuilderLabelFilter {
   // We need to make sure that we convert the value back to string because it may be a number
-  const transformedValue = value === Infinity ? '+Inf' : value.toString();
-  return { label: key, op: operator, value: transformedValue };
+  return { label: key, op: operator, value };
 }
 
 /**

@@ -633,25 +633,16 @@ export class LokiDatasource
     const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
     let expr = queryExpr;
 
-    expr = adhocFilters.reduce((acc: string, filter: { key?: any; operator?: any; value?: any }) => {
-      const { key, operator } = filter;
-      let { value } = filter;
-      return this.addLabelToQuery(acc, key, value, operator, true);
+    expr = adhocFilters.reduce((acc: string, filter: { key: string; operator: string; value: string }) => {
+      const { key, operator, value } = filter;
+      return this.addLabelToQuery(acc, key, value, operator);
     }, expr);
 
     return expr;
   }
 
-  addLabelToQuery(
-    queryExpr: string,
-    key: string,
-    value: string | number,
-    operator: string,
-    // Override to make sure that we use label as actual label and not parsed label
-    notParsedLabelOverride?: boolean
-  ) {
-    let escapedValue = escapeLabelValueInSelector(value.toString(), operator);
-
+  addLabelToQuery(queryExpr: string, key: string, value: string, operator: string) {
+    const escapedValue = escapeLabelValueInSelector(value, operator);
     return addLabelToQuery(queryExpr, key, escapedValue, operator);
   }
 
