@@ -369,11 +369,11 @@ export class LokiDatasource
     let expression = query.expr ?? '';
     switch (action.type) {
       case 'ADD_FILTER': {
-        expression = this.addLabelToQuery(expression, action.key, action.value, '=');
+        expression = this.addLabelToQuery(expression, action.key, '=', action.value);
         break;
       }
       case 'ADD_FILTER_OUT': {
-        expression = this.addLabelToQuery(expression, action.key, action.value, '!=');
+        expression = this.addLabelToQuery(expression, action.key, '!=', action.value);
         break;
       }
       default:
@@ -635,15 +635,15 @@ export class LokiDatasource
 
     expr = adhocFilters.reduce((acc: string, filter: { key: string; operator: string; value: string }) => {
       const { key, operator, value } = filter;
-      return this.addLabelToQuery(acc, key, value, operator);
+      return this.addLabelToQuery(acc, key, operator, value);
     }, expr);
 
     return expr;
   }
 
-  addLabelToQuery(queryExpr: string, key: string, value: string, operator: string) {
+  addLabelToQuery(queryExpr: string, key: string, operator: string, value: string) {
     const escapedValue = escapeLabelValueInSelector(value, operator);
-    return addLabelToQuery(queryExpr, key, escapedValue, operator);
+    return addLabelToQuery(queryExpr, key, operator, escapedValue);
   }
 
   // Used when running queries through backend

@@ -20,7 +20,7 @@ import { LokiVisualQuery } from './querybuilder/types';
  * @param value
  * @param operator
  */
-export function addLabelToQuery(query: string, key: string, value: string, operator = '='): string {
+export function addLabelToQuery(query: string, key: string, operator: string, value: string): string {
   if (!key || !value) {
     throw new Error('Need label to add to query.');
   }
