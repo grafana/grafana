@@ -3,7 +3,7 @@ import { eslint } from '@betterer/eslint';
 
 export default {
   'no enzyme tests': () => regexp(/from 'enzyme'/g).include('**/*.test.*'),
-  'better typescript': () =>
+  'better eslint': () =>
     eslint({
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/consistent-type-assertions': [

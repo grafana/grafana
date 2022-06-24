@@ -134,7 +134,7 @@ exports[`no enzyme tests`] = {
   }`
 };
 
-exports[`better typescript`] = {
+exports[`better eslint`] = {
   value: `{
     "e2e/benchmarks/live/4-20hz-panels.spec.ts:11038257": [
       [12, 17, 10, "Do not use any type assertions.", "1579919174"],
