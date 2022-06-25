@@ -169,7 +169,7 @@ func (e *gitExportJob) doOrgExportWithHistory(helper *commitHelper) error {
 		return err
 	}
 
-	if true {
+	if false {
 		err = exportDashboards(helper, e, lookup)
 		if err != nil {
 			return err
@@ -178,10 +178,8 @@ func (e *gitExportJob) doOrgExportWithHistory(helper *commitHelper) error {
 
 	// Run all the simple exporters
 	exporters := []simpleExporter{
+		dumpAuthTables,
 		exportUsers,
-		exportTeams,
-		exportAPIKeys,
-		exportRoles,
 		exportAnnotations,
 		exportPlaylists,
 	}
@@ -201,9 +199,6 @@ func (e *gitExportJob) doOrgExportWithHistory(helper *commitHelper) error {
 }
 
 /**
-
-// TODO -- initalize on main!! (currently master)
-git branch -m master main
 
 git remote add origin git@github.com:ryantxu/test-dash-repo.git
 git branch -M main

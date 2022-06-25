@@ -11,7 +11,9 @@ import (
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	jsoniter "github.com/json-iterator/go"
 )
 
 type commitHelper struct {
@@ -27,6 +29,7 @@ type commitHelper struct {
 type commitBody struct {
 	fpath string // absolute
 	body  []byte
+	frame *data.Frame
 }
 
 type commitOptions struct {
@@ -66,11 +69,20 @@ func (ch *commitHelper) add(opts commitOptions) error {
 		}
 
 		// make sure the parent exists
-		if err := os.MkdirAll(path.Dir(b.fpath), 0750); err != nil {
+		err := os.MkdirAll(path.Dir(b.fpath), 0750)
+		if err != nil {
 			return err
 		}
 
-		err := ioutil.WriteFile(b.fpath, b.body, 0644)
+		body := b.body
+		if b.frame != nil {
+			body, err = jsoniter.ConfigCompatibleWithStandardLibrary.MarshalIndent(b.frame, "", "  ")
+			if err != nil {
+				return err
+			}
+		}
+
+		err = ioutil.WriteFile(b.fpath, body, 0644)
 		if err != nil {
 			return err
 		}
