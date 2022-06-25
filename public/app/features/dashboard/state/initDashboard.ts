@@ -144,6 +144,11 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
       locationService.partial({ orgId: storeState.user.orgId }, true);
     }
 
+    // Make a timezone supplied through a URL parameter take preference.
+    if (queryParams.tz) {
+      dashboard.timezone = queryParams.tz;
+    }
+
     // init services
     const timeSrv: TimeSrv = getTimeSrv();
     const dashboardSrv: DashboardSrv = getDashboardSrv();
