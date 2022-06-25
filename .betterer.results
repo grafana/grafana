@@ -130,6 +130,7 @@ exports[`no enzyme tests`] = {
     ]
   }`
 };
+
 exports[`no explicit any`] = {
   value: `{
     "e2e/benchmarks/live/4-20hz-panels.spec.ts:11038257": [
@@ -1742,7 +1743,7 @@ exports[`no explicit any`] = {
     "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanBar.tsx:1954428690": [
       [97, 35, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanDetail/KeyValuesTable.tsx:1594863792": [
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanDetail/KeyValuesTable.tsx:3587041872": [
       [77, 35, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanDetail/index.tsx:3379895243": [
