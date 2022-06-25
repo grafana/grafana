@@ -6864,6 +6864,9 @@ exports[`better eslint`] = {
       [24, 44, 3, "Unexpected any. Specify a different type.", "193409811"],
       [24, 78, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
+    "public/app/features/search/reducers/manageDashboards.ts:4114284001": [
+      [81, 11, 24, "Do not use any type assertions.", "1870559034"]
+    ],
     "public/app/features/search/service/bluge.ts:59496993": [
       [21, 15, 68, "Do not use any type assertions.", "2766474629"],
       [34, 17, 128, "Do not use any type assertions.", "437379020"],
@@ -11849,6 +11852,13 @@ exports[`better eslint`] = {
       [5, 35, 3, "Unexpected any. Specify a different type.", "193409811"],
       [6, 37, 3, "Unexpected any. Specify a different type.", "193409811"],
       [7, 35, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/nodeGraph/layout.ts:2480125429": [
+      [92, 22, 26, "Do not use any type assertions.", "3179762225"],
+      [111, 26, 33, "Do not use any type assertions.", "368186320"]
+    ],
+    "public/app/plugins/panel/nodeGraph/useCategorizeFrames.ts:188281746": [
+      [21, 6, 70, "Do not use any type assertions.", "933181280"]
     ],
     "public/app/plugins/panel/nodeGraph/usePanning.ts:887807615": [
       [186, 7, 12, "Do not use any type assertions.", "881223021"],
