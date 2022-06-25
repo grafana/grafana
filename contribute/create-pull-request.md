@@ -68,7 +68,7 @@ You can also prevent introducing a11y errors by installing an a11y plugin in you
 
 ### Betterer
 
-We make use of a tool called [**Betterer**](https://phenomnomnominal.github.io/betterer/) in order to drive long-running code quality improvements. The intention is for this to be as unintrusive as possible, however sometimes action may be required:
+We make use of a tool called [**Betterer**](https://phenomnomnominal.github.io/betterer/) in order to drive long-running code quality improvements. The intention is for this to be as unintrusive as possible, however there are some things to be aware of:
 
 - **Betterer runs as a precommit hook**:
   - You may see changes to the `.betterer.results` file automatically added to your commits.
