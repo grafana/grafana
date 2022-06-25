@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -15,12 +16,11 @@ type userPreferences struct {
 	Stars []string `json:"stars"`
 }
 
-func exportAuth(helper *commitHelper, job *gitExportJob) error {
+func exportUsers(helper *commitHelper, job *gitExportJob) error {
 	preferencesDir := path.Join(helper.orgDir, "preferences")
 
 	authDir := path.Join(helper.orgDir, "auth")
 	userDir := path.Join(authDir, "users")
-	//teamsDir := path.Join(authDir, "teams")
 	userPreferencesDir := path.Join(preferencesDir, "users")
 
 	stars := readStars(helper, job)
@@ -33,8 +33,8 @@ func exportAuth(helper *commitHelper, job *gitExportJob) error {
 		p.Theme = user.Theme
 
 		// Avoid saving in git
-		user.Password = "xxxxx"
-		user.Salt = "yyyyyy"
+		user.Password = "$$$xxxxx"
+		user.Salt = "$$$yyyyyy"
 
 		err := helper.add(commitOptions{
 			body: []commitBody{
@@ -55,18 +55,6 @@ func exportAuth(helper *commitHelper, job *gitExportJob) error {
 			return err
 		}
 	}
-
-	err := readTeams(helper, job)
-	if err != nil {
-		return err
-	}
-
-	// Add the API keys
-	err = exportAPIKeys(helper, job)
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -75,44 +63,99 @@ func prettyJSON(v interface{}) []byte {
 	return b
 }
 
-// This will get all stars across all users
-func readTeams(helper *commitHelper, job *gitExportJob) error {
+func exportTeams(helper *commitHelper, job *gitExportJob) error {
+	type teamResult struct {
+		ID      int64 `xorm:"id"`
+		Name    string
+		Email   string
+		Created time.Time
+		Updated time.Time
+	}
+
 	teamDir := path.Join(helper.orgDir, "auth", "team")
-	return job.sql.WithDbSession(helper.ctx, func(sess *sqlstore.DBSession) error {
-		type teamResult struct {
-			ID      int64 `xorm:"id"`
-			Name    string
-			Email   string
-			Created time.Time
-			Updated time.Time
+	teams := make([]*teamResult, 0)
+	err := job.sql.WithDbSession(helper.ctx, func(sess *sqlstore.DBSession) error {
+		sess.Table("team").Where("org_id = ?", helper.orgID)
+		return sess.Find(&teams)
+	})
+	if err != nil {
+		return err
+	}
+
+	for _, team := range teams {
+		type memberResult struct {
+			ID         int64 `xorm:"id" json:"user_id"`
+			External   bool  `json:"external"`
+			Permission int64 `json:"permissions"`
 		}
 
-		rows := make([]*teamResult, 0)
-
-		sess.Table("team").Where("org_id = ?", helper.orgID)
-
-		err := sess.Find(&rows)
+		members := make([]*memberResult, 0)
+		err := job.sql.WithDbSession(helper.ctx, func(sess *sqlstore.DBSession) error {
+			sess.Table("team_member").Where("team_id = ?", team.ID)
+			return sess.Find(&members)
+		})
 		if err != nil {
 			return err
 		}
 
-		for _, row := range rows {
-			err := helper.add(commitOptions{
-				body: []commitBody{
-					{
-						fpath: filepath.Join(teamDir, fmt.Sprintf("%d.json", row.ID)),
-						body:  prettyJSON(row),
-					},
+		item := make(map[string]interface{}, 10)
+		item["id"] = team.ID
+		item["name"] = team.Name
+		item["email"] = team.Email
+		item["members"] = members
+
+		err = helper.add(commitOptions{
+			body: []commitBody{
+				{
+					fpath: filepath.Join(teamDir, fmt.Sprintf("%d.json", team.ID)),
+					body:  prettyJSON(item),
 				},
-				when:    row.Created,
-				comment: fmt.Sprintf("add team: %s", row.Name),
-			})
-			if err != nil {
-				return err
-			}
+			},
+			when:    team.Created,
+			comment: fmt.Sprintf("add team: %s", team.Name),
+		})
+		if err != nil {
+			return err
 		}
-		return err
+	}
+	return err
+}
+
+func exportRoles(helper *commitHelper, job *gitExportJob) error {
+	type roleResult struct {
+		Name        string    `json:"name"`
+		DisplayName string    `xorm:"display_name" json:"display"`
+		GroupName   string    `xorm:"group_name" json:"group"`
+		Description string    `json:"description"`
+		Created     time.Time `json:"-"`
+	}
+
+	teamDir := path.Join(helper.orgDir, "auth", "role")
+	roles := make([]*roleResult, 0)
+	err := job.sql.WithDbSession(helper.ctx, func(sess *sqlstore.DBSession) error {
+		sess.Table("role").Where("org_id = ? AND hidden = 0", helper.orgID)
+		return sess.Find(&roles)
 	})
+	if err != nil {
+		return err
+	}
+
+	for _, role := range roles {
+		err = helper.add(commitOptions{
+			body: []commitBody{
+				{
+					fpath: filepath.Join(teamDir, fmt.Sprintf("%s-role.json", strings.ReplaceAll(role.Name, ":", "-"))),
+					body:  prettyJSON(role),
+				},
+			},
+			when:    role.Created,
+			comment: fmt.Sprintf("add role: %s", role.Name),
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return err
 }
 
 // This will get all stars across all users
@@ -150,7 +193,6 @@ func readStars(helper *commitHelper, job *gitExportJob) map[int64]*userPreferenc
 	return prefs
 }
 
-// This will get all stars across all users
 func exportAPIKeys(helper *commitHelper, job *gitExportJob) error {
 	return job.sql.WithDbSession(helper.ctx, func(sess *sqlstore.DBSession) error {
 		type keyInfo struct {

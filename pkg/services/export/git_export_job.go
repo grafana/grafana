@@ -155,10 +155,6 @@ func (e *gitExportJob) doExportWithHistory() error {
 }
 
 func (e *gitExportJob) doOrgExportWithHistory(helper *commitHelper) error {
-	err := exportAuth(helper, e)
-	if err != nil {
-		return err
-	}
 
 	lookup, err := exportDataSources(helper, e)
 	if err != nil {
@@ -174,6 +170,10 @@ func (e *gitExportJob) doOrgExportWithHistory(helper *commitHelper) error {
 
 	// Run all the simple exporters
 	exporters := []simpleExporter{
+		exportUsers,
+		exportTeams,
+		exportAPIKeys,
+		exportRoles,
 		exportAnnotations,
 		exportPlaylists,
 	}

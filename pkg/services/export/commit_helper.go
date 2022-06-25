@@ -114,10 +114,10 @@ type userInfo struct {
 	Name             string    `json:"name"`
 	Password         string    `json:"password"`
 	Salt             string    `json:"salt"`
-	Role             string    `json:"role"` // org role
-	Theme            string    `json:"-"`    // managed in preferences
-	Created          time.Time `json:"-"`    // managed in git or external source
-	Updated          time.Time `json:"-"`    // managed in git or external source
+	Role             string    `json:"org_role"` // org role
+	Theme            string    `json:"-"`        // managed in preferences
+	Created          time.Time `json:"-"`        // managed in git or external source
+	Updated          time.Time `json:"-"`        // managed in git or external source
 	IsDisabled       bool      `json:"disabled" xorm:"is_disabled"`
 	IsServiceAccount bool      `json:"serviceAccount" xorm:"is_service_account"`
 	LastSeenAt       time.Time `json:"-" xorm:"last_seen_at"`
