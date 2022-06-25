@@ -47,10 +47,10 @@ export class ClickOutsideWrapper extends PureComponent<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props) {
-    if (this.props.setHandlers) {
-      this.setHandlers();
-    } else {
-      if (prevProps.setHandlers) {
+    if (this.props.setHandlers !== prevProps.setHandlers) {
+      if (this.props.setHandlers) {
+        this.setHandlers();
+      } else {
         this.removeHandlers();
       }
     }
