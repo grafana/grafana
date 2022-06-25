@@ -39,7 +39,7 @@ func exportDataSources(helper *commitHelper, job *gitExportJob) (dsLookup, error
 		err := helper.add(commitOptions{
 			body: []commitBody{
 				{
-					fpath: filepath.Join(helper.orgDir, "ds", fmt.Sprintf("%s-ds.json", ds.Uid)),
+					fpath: filepath.Join(helper.orgDir, "datasources", fmt.Sprintf("%s-ds.json", ds.Uid)),
 					body:  prettyJSON(ds),
 				},
 			},

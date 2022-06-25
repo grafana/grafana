@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -109,6 +110,13 @@ func (e *gitExportJob) doExportWithHistory() error {
 	if err != nil {
 		return err
 	}
+	// default to "main" branch
+	h := plumbing.NewSymbolicReference(plumbing.HEAD, plumbing.ReferenceName("refs/heads/main"))
+	err = r.Storer.SetReference(h)
+	if err != nil {
+		return err
+	}
+
 	w, err := r.Worktree()
 	if err != nil {
 		return err
@@ -161,7 +169,7 @@ func (e *gitExportJob) doOrgExportWithHistory(helper *commitHelper) error {
 		return err
 	}
 
-	if false {
+	if true {
 		err = exportDashboards(helper, e, lookup)
 		if err != nil {
 			return err
