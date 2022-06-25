@@ -56,8 +56,16 @@ func exportAuth(helper *commitHelper, job *gitExportJob) error {
 		}
 	}
 
+	err := readTeams(helper, job)
+	if err != nil {
+		return err
+	}
+
 	// Add the API keys
-	exportAPIKeys(helper, job)
+	err = exportAPIKeys(helper, job)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -65,6 +73,46 @@ func exportAuth(helper *commitHelper, job *gitExportJob) error {
 func prettyJSON(v interface{}) []byte {
 	b, _ := json.MarshalIndent(v, "", "  ")
 	return b
+}
+
+// This will get all stars across all users
+func readTeams(helper *commitHelper, job *gitExportJob) error {
+	teamDir := path.Join(helper.orgDir, "auth", "team")
+	return job.sql.WithDbSession(helper.ctx, func(sess *sqlstore.DBSession) error {
+		type teamResult struct {
+			ID      int64 `xorm:"id"`
+			Name    string
+			Email   string
+			Created time.Time
+			Updated time.Time
+		}
+
+		rows := make([]*teamResult, 0)
+
+		sess.Table("team").Where("org_id = ?", helper.orgID)
+
+		err := sess.Find(&rows)
+		if err != nil {
+			return err
+		}
+
+		for _, row := range rows {
+			err := helper.add(commitOptions{
+				body: []commitBody{
+					{
+						fpath: filepath.Join(teamDir, fmt.Sprintf("%d.json", row.ID)),
+						body:  prettyJSON(row),
+					},
+				},
+				when:    row.Created,
+				comment: fmt.Sprintf("add team: %s", row.Name),
+			})
+			if err != nil {
+				return err
+			}
+		}
+		return err
+	})
 }
 
 // This will get all stars across all users
