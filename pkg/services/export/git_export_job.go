@@ -179,7 +179,7 @@ func (e *gitExportJob) doOrgExportWithHistory(helper *commitHelper) error {
 	// Run all the simple exporters
 	exporters := []simpleExporter{
 		dumpAuthTables,
-		exportUsers,
+		exportPreferences,
 		exportAnnotations,
 		exportPlaylists,
 	}

@@ -42,9 +42,10 @@ type commitOptions struct {
 func (ch *commitHelper) initOrg(sql *sqlstore.SQLStore, orgID int64) error {
 	return sql.WithDbSession(ch.ctx, func(sess *sqlstore.DBSession) error {
 		sess.Table("user").
-			Join("INNER", "org_user", "user.id = org_user.user_id").
-			Asc("user.created").
-			Where("user.org_id = ?", orgID)
+			Join("inner", "org_user", "user.id = org_user.user_id").
+			Cols("user.*", "org_user.role").
+			Where("org_user.org_id = ?", orgID).
+			Asc("user.id")
 
 		rows := make([]*userInfo, 0)
 		err := sess.Find(&rows)
