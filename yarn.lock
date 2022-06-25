@@ -3072,6 +3072,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@betterer/eslint@npm:5.3.5":
+  version: 5.3.5
+  resolution: "@betterer/eslint@npm:5.3.5"
+  dependencies:
+    "@betterer/betterer": ^5.3.5
+    "@betterer/errors": ^5.3.0
+    tslib: ^2.3.1
+  peerDependencies:
+    eslint: ">=7.0.0"
+  checksum: 5a225c43de7fd87542476b2432b990bdea4552d6264f0ad34ac6873f9643ec4e9f21261288e0d9d0927248a4470d6a4e786b4567c68a526d8833b8b9dc467e2f
+  languageName: node
+  linkType: hard
+
 "@betterer/logger@npm:^5.3.4":
   version: 5.3.4
   resolution: "@betterer/logger@npm:5.3.4"
@@ -19423,6 +19436,7 @@ __metadata:
     "@babel/preset-typescript": 7.17.12
     "@betterer/betterer": 5.3.5
     "@betterer/cli": 5.3.5
+    "@betterer/eslint": 5.3.5
     "@betterer/regexp": 5.3.5
     "@emotion/css": 11.9.0
     "@emotion/eslint-plugin": 11.7.0
