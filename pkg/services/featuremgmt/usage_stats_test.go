@@ -22,7 +22,6 @@ func TestFeatureUsageStats(t *testing.T) {
 	require.Equal(t, map[string]interface{}{
 		"stats.features.trim_defaults.count":                 1,
 		"stats.features.httpclientprovider_azure_auth.count": 1,
-		"stats.features.service_accounts.count":              1,
 		"stats.features.database_metrics.count":              1,
 		"stats.features.dashboard_previews.count":            1,
 		"stats.features.live_config.count":                   1,
