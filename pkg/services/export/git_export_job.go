@@ -169,7 +169,7 @@ func (e *gitExportJob) doOrgExportWithHistory(helper *commitHelper) error {
 		return err
 	}
 
-	if false {
+	if true {
 		err = exportDashboards(helper, e, lookup)
 		if err != nil {
 			return err
