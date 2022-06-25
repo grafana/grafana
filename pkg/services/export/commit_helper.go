@@ -38,7 +38,10 @@ type commitOptions struct {
 
 func (ch *commitHelper) initOrg(sql *sqlstore.SQLStore, orgID int64) error {
 	return sql.WithDbSession(ch.ctx, func(sess *sqlstore.DBSession) error {
-		sess.Table("user").Where("org_id = ?", orgID)
+		sess.Table("user").
+			Join("INNER", "org_user", "user.id = org_user.user_id").
+			Asc("user.created").
+			Where("user.org_id = ?", orgID)
 
 		rows := make([]*userInfo, 0)
 		err := sess.Find(&rows)
@@ -111,9 +114,10 @@ type userInfo struct {
 	Name             string    `json:"name"`
 	Password         string    `json:"password"`
 	Salt             string    `json:"salt"`
-	Theme            string    `json:"-"` // managed in preferences
-	Created          time.Time `json:"-"` // managed in git or external source
-	Updated          time.Time `json:"-"` // managed in git or external source
+	Role             string    `json:"role"` // org role
+	Theme            string    `json:"-"`    // managed in preferences
+	Created          time.Time `json:"-"`    // managed in git or external source
+	Updated          time.Time `json:"-"`    // managed in git or external source
 	IsDisabled       bool      `json:"disabled" xorm:"is_disabled"`
 	IsServiceAccount bool      `json:"serviceAccount" xorm:"is_service_account"`
 	LastSeenAt       time.Time `json:"-" xorm:"last_seen_at"`

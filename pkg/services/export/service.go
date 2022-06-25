@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -28,26 +29,30 @@ type ExportService interface {
 
 type StandardExport struct {
 	logger  log.Logger
-	sql     *sqlstore.SQLStore
 	glive   *live.GrafanaLive
 	mutex   sync.Mutex
 	dataDir string
+
+	// Services
+	sql                       *sqlstore.SQLStore
+	dashboardsnapshotsService dashboardsnapshots.Service
 
 	// updated with mutex
 	exportJob Job
 }
 
-func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles, gl *live.GrafanaLive, cfg *setting.Cfg) ExportService {
+func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles, gl *live.GrafanaLive, cfg *setting.Cfg, dashboardsnapshotsService dashboardsnapshots.Service) ExportService {
 	if !features.IsEnabled(featuremgmt.FlagExport) {
 		return &StubExport{}
 	}
 
 	return &StandardExport{
-		sql:       sql,
-		glive:     gl,
-		logger:    log.New("export_service"),
-		exportJob: &stoppedJob{},
-		dataDir:   cfg.DataPath,
+		sql:                       sql,
+		glive:                     gl,
+		logger:                    log.New("export_service"),
+		dashboardsnapshotsService: dashboardsnapshotsService,
+		exportJob:                 &stoppedJob{},
+		dataDir:                   cfg.DataPath,
 	}
 }
 
@@ -86,7 +91,7 @@ func (ex *StandardExport) HandleRequestExport(c *models.ReqContext) response.Res
 		if err := os.MkdirAll(dir, os.ModePerm); err != nil {
 			return response.Error(http.StatusBadRequest, "Error creating export folder", nil)
 		}
-		job, err = startGitExportJob(cfg, ex.sql, dir, c.OrgId, broadcast)
+		job, err = startGitExportJob(cfg, ex.sql, ex.dashboardsnapshotsService, dir, c.OrgId, broadcast)
 	default:
 		return response.Error(http.StatusBadRequest, "Unsupported job format", nil)
 	}

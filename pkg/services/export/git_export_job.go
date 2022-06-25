@@ -11,16 +11,18 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 var _ Job = new(gitExportJob)
 
 type gitExportJob struct {
-	logger  log.Logger
-	sql     *sqlstore.SQLStore
-	orgID   int64
-	rootDir string
+	logger                    log.Logger
+	sql                       *sqlstore.SQLStore
+	dashboardsnapshotsService dashboardsnapshots.Service
+	orgID                     int64
+	rootDir                   string
 
 	statusMu    sync.Mutex
 	status      ExportStatus
@@ -28,14 +30,17 @@ type gitExportJob struct {
 	broadcaster statusBroadcaster
 }
 
-func startGitExportJob(cfg ExportConfig, sql *sqlstore.SQLStore, rootDir string, orgID int64, broadcaster statusBroadcaster) (Job, error) {
+type simpleExporter = func(helper *commitHelper, job *gitExportJob) error
+
+func startGitExportJob(cfg ExportConfig, sql *sqlstore.SQLStore, dashboardsnapshotsService dashboardsnapshots.Service, rootDir string, orgID int64, broadcaster statusBroadcaster) (Job, error) {
 	job := &gitExportJob{
-		logger:      log.New("git_export_job"),
-		cfg:         cfg,
-		sql:         sql,
-		orgID:       orgID,
-		rootDir:     rootDir,
-		broadcaster: broadcaster,
+		logger:                    log.New("git_export_job"),
+		cfg:                       cfg,
+		sql:                       sql,
+		dashboardsnapshotsService: dashboardsnapshotsService,
+		orgID:                     orgID,
+		rootDir:                   rootDir,
+		broadcaster:               broadcaster,
 		status: ExportStatus{
 			Running: true,
 			Target:  "git export",
@@ -167,13 +172,23 @@ func (e *gitExportJob) doOrgExportWithHistory(helper *commitHelper) error {
 		}
 	}
 
-	if true {
-		err = exportAnnotations(helper, e)
+	// Run all the simple exporters
+	exporters := []simpleExporter{
+		exportAnnotations,
+		exportPlaylists,
+	}
+
+	// This needs a real admin user to use the interfaces (and decrypt)
+	if false {
+		exporters = append(exporters, exportSnapshots)
+	}
+
+	for _, fn := range exporters {
+		err = fn(helper, e)
 		if err != nil {
 			return err
 		}
 	}
-
 	return err
 }
 
