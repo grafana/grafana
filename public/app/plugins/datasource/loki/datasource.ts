@@ -50,7 +50,7 @@ import { LokiAnnotationsQueryEditor } from './components/AnnotationsQueryEditor'
 import LanguageProvider from './language_provider';
 import { escapeLabelValueInSelector } from './language_utils';
 import { LiveStreams, LokiLiveTarget } from './live_streams';
-import { addParsedLabelToQuery, getNormalizedLokiQuery, queryHasPipeParser } from './query_utils';
+import { getNormalizedLokiQuery } from './query_utils';
 import { sortDataFrameByTime } from './sortDataFrame';
 import { doLokiChannelStream } from './streaming';
 import syntax from './syntax';
@@ -375,11 +375,11 @@ export class LokiDatasource
     let expression = query.expr ?? '';
     switch (action.type) {
       case 'ADD_FILTER': {
-        expression = this.addLabelToQuery(expression, action.key, action.value, '=');
+        expression = this.addLabelToQuery(expression, action.key, '=', action.value);
         break;
       }
       case 'ADD_FILTER_OUT': {
-        expression = this.addLabelToQuery(expression, action.key, action.value, '!=');
+        expression = this.addLabelToQuery(expression, action.key, '!=', action.value);
         break;
       }
       default:
@@ -639,31 +639,17 @@ export class LokiDatasource
     const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
     let expr = queryExpr;
 
-    expr = adhocFilters.reduce((acc: string, filter: { key?: any; operator?: any; value?: any }) => {
-      const { key, operator } = filter;
-      let { value } = filter;
-      return this.addLabelToQuery(acc, key, value, operator, true);
+    expr = adhocFilters.reduce((acc: string, filter: { key: string; operator: string; value: string }) => {
+      const { key, operator, value } = filter;
+      return this.addLabelToQuery(acc, key, operator, value);
     }, expr);
 
     return expr;
   }
 
-  addLabelToQuery(
-    queryExpr: string,
-    key: string,
-    value: string | number,
-    operator: string,
-    // Override to make sure that we use label as actual label and not parsed label
-    notParsedLabelOverride?: boolean
-  ) {
-    let escapedValue = escapeLabelValueInSelector(value.toString(), operator);
-
-    if (queryHasPipeParser(queryExpr) && !isMetricsQuery(queryExpr) && !notParsedLabelOverride) {
-      // If query has parser, we treat all labels as parsed and use | key="value" syntax
-      return addParsedLabelToQuery(queryExpr, key, escapedValue, operator);
-    } else {
-      return addLabelToQuery(queryExpr, key, escapedValue, operator, true);
-    }
+  addLabelToQuery(queryExpr: string, key: string, operator: string, value: string) {
+    const escapedValue = escapeLabelValueInSelector(value, operator);
+    return addLabelToQuery(queryExpr, key, operator, escapedValue);
   }
 
   // Used when running queries through backend
