@@ -14,6 +14,27 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+type ErrCaseInsensitiveLoginConflict struct {
+	users []models.User
+}
+
+func (e *ErrCaseInsensitiveLoginConflict) Unwrap() error {
+	return models.ErrCaseInsensitive
+}
+
+func (e *ErrCaseInsensitiveLoginConflict) Error() string {
+	n := len(e.users)
+
+	userStrings := make([]string, 0, n)
+	for _, v := range e.users {
+		userStrings = append(userStrings, fmt.Sprintf("%s (email:%s, id:%d)", v.Login, v.Email, v.Id))
+	}
+
+	return fmt.Sprintf(
+		"Found a conflict in user login information. %d users already exist with either the same login or email: [%s].",
+		n, strings.Join(userStrings, ", "))
+}
+
 func (ss *SQLStore) getOrgIDForNewUser(sess *DBSession, args models.CreateUserCommand) (int64, error) {
 	if ss.Cfg.AutoAssignOrg && args.OrgId != 0 {
 		if err := verifyExistingOrg(sess, args.OrgId); err != nil {
@@ -28,6 +49,21 @@ func (ss *SQLStore) getOrgIDForNewUser(sess *DBSession, args models.CreateUserCo
 	}
 
 	return ss.getOrCreateOrg(sess, orgName)
+}
+
+func (ss *SQLStore) userCaseInsensitiveLoginConflict(ctx context.Context, sess *DBSession, login, email string) error {
+	users := make([]models.User, 0)
+
+	if err := sess.Where("LOWER(email)=LOWER(?) OR LOWER(login)=LOWER(?)",
+		email, login).Find(&users); err != nil {
+		return err
+	}
+
+	if len(users) > 1 {
+		return &ErrCaseInsensitiveLoginConflict{users}
+	}
+
+	return nil
 }
 
 // createUser creates a user in the database
@@ -46,7 +82,14 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args models
 		args.Email = args.Login
 	}
 
-	exists, err := sess.Where("email=? OR login=?", args.Email, args.Login).Get(&models.User{})
+	where := "email=? OR login=?"
+	if ss.Cfg.CaseInsensitiveLogin {
+		where = "LOWER(email)=LOWER(?) OR LOWER(login)=LOWER(?)"
+		args.Login = strings.ToLower(args.Login)
+		args.Email = strings.ToLower(args.Email)
+	}
+
+	exists, err := sess.Where(where, args.Email, args.Login).Get(&models.User{})
 	if err != nil {
 		return user, err
 	}
@@ -158,6 +201,12 @@ func (ss *SQLStore) GetUserById(ctx context.Context, query *models.GetUserByIdQu
 			return models.ErrUserNotFound
 		}
 
+		if ss.Cfg.CaseInsensitiveLogin {
+			if err := ss.userCaseInsensitiveLoginConflict(ctx, sess, user.Login, user.Email); err != nil {
+				return err
+			}
+		}
+
 		query.Result = user
 
 		return nil
@@ -172,9 +221,13 @@ func (ss *SQLStore) GetUserByLogin(ctx context.Context, query *models.GetUserByL
 
 		// Try and find the user by login first.
 		// It's not sufficient to assume that a LoginOrEmail with an "@" is an email.
-		user := &models.User{Login: query.LoginOrEmail}
-		has, err := sess.Where(notServiceAccountFilter(ss)).Get(user)
+		user := &models.User{}
+		where := "login=?"
+		if ss.Cfg.CaseInsensitiveLogin {
+			where = "LOWER(login)=LOWER(?)"
+		}
 
+		has, err := sess.Where(notServiceAccountFilter(ss)).Where(where, query.LoginOrEmail).Get(user)
 		if err != nil {
 			return err
 		}
@@ -182,14 +235,24 @@ func (ss *SQLStore) GetUserByLogin(ctx context.Context, query *models.GetUserByL
 		if !has && strings.Contains(query.LoginOrEmail, "@") {
 			// If the user wasn't found, and it contains an "@" fallback to finding the
 			// user by email.
-			user = &models.User{Email: query.LoginOrEmail}
-			has, err = sess.Get(user)
+			where = "email=?"
+			if ss.Cfg.CaseInsensitiveLogin {
+				where = "LOWER(email)=LOWER(?)"
+			}
+			user = &models.User{}
+			has, err = sess.Where(notServiceAccountFilter(ss)).Where(where, query.LoginOrEmail).Get(user)
 		}
 
 		if err != nil {
 			return err
 		} else if !has {
 			return models.ErrUserNotFound
+		}
+
+		if ss.Cfg.CaseInsensitiveLogin {
+			if err := ss.userCaseInsensitiveLoginConflict(ctx, sess, user.Login, user.Email); err != nil {
+				return err
+			}
 		}
 
 		query.Result = user
@@ -204,13 +267,24 @@ func (ss *SQLStore) GetUserByEmail(ctx context.Context, query *models.GetUserByE
 			return models.ErrUserNotFound
 		}
 
-		user := &models.User{Email: query.Email}
-		has, err := sess.Where(notServiceAccountFilter(ss)).Get(user)
+		user := &models.User{}
+		where := "email=?"
+		if ss.Cfg.CaseInsensitiveLogin {
+			where = "LOWER(email)=LOWER(?)"
+		}
+
+		has, err := sess.Where(notServiceAccountFilter(ss)).Where(where, query.Email).Get(user)
 
 		if err != nil {
 			return err
 		} else if !has {
 			return models.ErrUserNotFound
+		}
+
+		if ss.Cfg.CaseInsensitiveLogin {
+			if err := ss.userCaseInsensitiveLoginConflict(ctx, sess, user.Login, user.Email); err != nil {
+				return err
+			}
 		}
 
 		query.Result = user
@@ -220,6 +294,11 @@ func (ss *SQLStore) GetUserByEmail(ctx context.Context, query *models.GetUserByE
 }
 
 func (ss *SQLStore) UpdateUser(ctx context.Context, cmd *models.UpdateUserCommand) error {
+	if ss.Cfg.CaseInsensitiveLogin {
+		cmd.Login = strings.ToLower(cmd.Login)
+		cmd.Email = strings.ToLower(cmd.Email)
+	}
+
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		user := models.User{
 			Name:    cmd.Name,
@@ -231,6 +310,12 @@ func (ss *SQLStore) UpdateUser(ctx context.Context, cmd *models.UpdateUserComman
 
 		if _, err := sess.ID(cmd.UserId).Where(notServiceAccountFilter(ss)).Update(&user); err != nil {
 			return err
+		}
+
+		if ss.Cfg.CaseInsensitiveLogin {
+			if err := ss.userCaseInsensitiveLoginConflict(ctx, sess, user.Login, user.Email); err != nil {
+				return err
+			}
 		}
 
 		sess.publishAfterCommit(&events.UserUpdated{
@@ -430,9 +515,17 @@ func (ss *SQLStore) GetSignedInUser(ctx context.Context, query *models.GetSigned
 		case query.UserId > 0:
 			sess.SQL(rawSQL+"WHERE u.id=?", query.UserId)
 		case query.Login != "":
-			sess.SQL(rawSQL+"WHERE u.login=?", query.Login)
+			if ss.Cfg.CaseInsensitiveLogin {
+				sess.SQL(rawSQL+"WHERE LOWER(u.login)=LOWER(?)", query.Login)
+			} else {
+				sess.SQL(rawSQL+"WHERE u.login=?", query.Login)
+			}
 		case query.Email != "":
-			sess.SQL(rawSQL+"WHERE u.email=?", query.Email)
+			if ss.Cfg.CaseInsensitiveLogin {
+				sess.SQL(rawSQL+"WHERE LOWER(u.email)=LOWER(?)", query.Email)
+			} else {
+				sess.SQL(rawSQL+"WHERE u.email=?", query.Email)
+			}
 		}
 
 		var user models.SignedInUser

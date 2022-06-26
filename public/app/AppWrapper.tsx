@@ -105,6 +105,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
     const commandPaletteActionSelected = (action: Action) => {
       reportInteraction('commandPalette_action_selected', {
         actionId: action.id,
+        actionName: action.name,
       });
     };
 
