@@ -1,5 +1,5 @@
 import { isNumber } from 'lodash';
-import uPlot, { AlignedData } from 'uplot';
+import uPlot from 'uplot';
 
 import {
   DashboardCursorSync,
@@ -290,7 +290,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
         let defaultBuilder = uPlot.paths!.linear!();
 
         pathBuilder = (u, seriesIdx) => {
-          let _data: uPlot.AlignedData = u._data;
+          const _data: any[] = (u as any)._data; // uplot.AlignedData not exposed in types
 
           // the data we want the line renderer to pull is x at each plot edge with paired flat y values
 
@@ -302,10 +302,15 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
           fauxData[0] = xData;
           fauxData[seriesIdx] = yData;
 
-          return defaultBuilder({
-            ...u,
-            _data: fauxData,
-          }, seriesIdx, 0, 1);
+          return defaultBuilder(
+            {
+              ...u,
+              _data: fauxData,
+            } as any,
+            seriesIdx,
+            0,
+            1
+          );
         };
       }
 
