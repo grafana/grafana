@@ -2,7 +2,7 @@ import { dateTime, TimeRange } from '@grafana/data';
 
 import { calculateTimesWithin, TimeRegionConfig } from './timeRegions';
 
-describe('timeReginos', () => {
+describe('timeRegions', () => {
   describe('day of week', () => {
     it('4 sundays in january 2021', () => {
       const cfg: TimeRegionConfig = {
