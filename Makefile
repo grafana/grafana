@@ -127,14 +127,28 @@ run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild
 test-go: test-go-unit test-go-integration
 
 .PHONY: test-go-unit
-test-go-unit: ## Run unit tests for backend.
+test-go-unit: ## Run unit tests for backend with flags.
 	@echo "test backend unit tests"
 	$(GO) test -short -covermode=atomic -timeout=30m ./pkg/...
 
 .PHONY: test-go-integration
-test-go-integration: ## Run integration tests for backend.
+test-go-integration: ## Run integration tests for backend with flags.
 	@echo "test backend integration tests"
 	$(GO) test -run Integration -covermode=atomic -timeout=30m ./pkg/...
+
+.PHONY: test-go-integration-postgres
+test-go-integration-postgres: ## Run integration tests for postgres backend with flags.
+	@echo "test backend integration postgres tests"
+	make devenv sources=postgres_tests
+	GRAFANA_TEST_DB=postgres
+	$(GO) list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=30m {}'
+
+.PHONY: test-go-integration-mysql
+test-go-integration-mysql: ## Run integration tests for mysql backend with flags.
+	@echo "test backend integration mysql tests"
+	make devenv sources=mysql_tests
+	GRAFANA_TEST_DB=mysql
+	$(GO) list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=30m {}'
 
 test-js: ## Run tests for frontend.
 	@echo "test frontend"
