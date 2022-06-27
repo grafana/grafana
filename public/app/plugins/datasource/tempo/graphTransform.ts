@@ -142,10 +142,10 @@ export const rateMetric = {
 };
 export const errorRateMetric = {
   expr: 'topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name))',
-  params: ['span_status="STATUS_CODE_ERROR"'],
+  params: ['status_code="STATUS_CODE_ERROR"'],
 };
 export const durationMetric = {
-  expr: 'histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{}[$__range])) by (le))',
+  expr: 'histogram_quantile(.9, sum(rate(traces_spanmetrics_latency_bucket{}[$__range])) by (le))',
   params: [],
 };
 

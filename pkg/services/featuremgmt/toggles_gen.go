@@ -15,10 +15,6 @@ const (
 	// Disable envelope encryption (emergency only)
 	FlagDisableEnvelopeEncryption = "disableEnvelopeEncryption"
 
-	// FlagServiceAccounts
-	// support service accounts
-	FlagServiceAccounts = "serviceAccounts"
-
 	// FlagDatabaseMetrics
 	// Add prometheus metrics for database tables
 	FlagDatabaseMetrics = "database_metrics"
