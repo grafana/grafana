@@ -620,7 +620,7 @@ func isSymlinkRelativeTo(basePath string, symlinkDestPath string, symlinkOrigPat
 			return false
 		}
 
-		if strings.HasPrefix(p, ".."+string(filepath.Separator)) {
+		if p == ".." || strings.HasPrefix(p, ".."+string(filepath.Separator)) {
 			return false
 		}
 	}
