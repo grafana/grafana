@@ -92,18 +92,18 @@ func (p *DataSourceProxyService) ProxyDatasourceRequestWithID(c *models.ReqConte
 }
 
 func toAPIError(c *models.ReqContext, err error) {
-	if errors.Is(err, models.ErrDataSourceAccessDenied) {
+	if errors.Is(err, datasources.ErrDataSourceAccessDenied) {
 		c.JsonApiErr(http.StatusForbidden, "Access denied to datasource", err)
 		return
 	}
-	if errors.Is(err, models.ErrDataSourceNotFound) {
+	if errors.Is(err, datasources.ErrDataSourceNotFound) {
 		c.JsonApiErr(http.StatusNotFound, "Unable to find datasource", err)
 		return
 	}
 	c.JsonApiErr(http.StatusInternalServerError, "Unable to load datasource meta data", err)
 }
 
-func (p *DataSourceProxyService) proxyDatasourceRequest(c *models.ReqContext, ds *models.DataSource) {
+func (p *DataSourceProxyService) proxyDatasourceRequest(c *models.ReqContext, ds *datasources.DataSource) {
 	err := p.PluginRequestValidator.Validate(ds.Url, c.Req)
 	if err != nil {
 		c.JsonApiErr(http.StatusForbidden, "Access denied", err)
