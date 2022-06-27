@@ -121,8 +121,6 @@ func (st *DBstore) UpdateAlertmanagerConfiguration(ctx context.Context, cmd *mod
 			cmd.OrgID,
 			cmd.FetchedConfigurationHash,
 		)
-		query, args := sess.LastSQL()
-		st.Logger.Info("last SQL", "query", query, "args", args)
 		if err != nil {
 			return err
 		}
