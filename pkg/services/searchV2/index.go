@@ -124,6 +124,9 @@ func (i *dashboardIndex) run(ctx context.Context, orgIDs []int64, reIndexSignalC
 		return err
 	}
 
+	// This semaphore channel allows limiting concurrent async re-indexing routines to 1.
+	asyncReIndexSemaphore := make(chan struct{}, 1)
+
 	// Channel to handle signals about asynchronous full re-indexing completion.
 	reIndexDoneCh := make(chan int64, 1)
 
@@ -140,15 +143,7 @@ func (i *dashboardIndex) run(ctx context.Context, orgIDs []int64, reIndexSignalC
 		case <-reIndexSignalCh:
 			// External systems may trigger re-indexing, at this moment provisioning does this.
 			i.logger.Info("Full re-indexing due to external signal")
-			lastIndexedEventID := lastEventID
-			// Prevent full re-indexing while we are building index for new org.
-			// Full re-indexing will be later re-started in `case lastIndexedEventID := <-reIndexDoneCh`
-			// branch.
-			fullReIndexTimer.Stop()
-			go func() {
-				i.reIndexFromScratch(ctx)
-				reIndexDoneCh <- lastIndexedEventID
-			}()
+			fullReIndexTimer.Reset(0)
 		case signal := <-i.buildSignals:
 			// When search read request meets new not-indexed org we build index for it.
 			i.mu.RLock()
@@ -166,6 +161,9 @@ func (i *dashboardIndex) run(ctx context.Context, orgIDs []int64, reIndexSignalC
 			// branch.
 			fullReIndexTimer.Stop()
 			go func() {
+				// We need semaphore here since asynchronous re-indexing may be in progress already.
+				asyncReIndexSemaphore <- struct{}{}
+				defer func() { <-asyncReIndexSemaphore }()
 				_, err = i.buildOrgIndex(ctx, signal.orgID)
 				signal.done <- err
 				reIndexDoneCh <- lastIndexedEventID
@@ -180,6 +178,11 @@ func (i *dashboardIndex) run(ctx context.Context, orgIDs []int64, reIndexSignalC
 			go func() {
 				// Do full re-index asynchronously to avoid blocking index synchronization
 				// on read for a long time.
+
+				// We need semaphore here since re-indexing due to build signal may be in progress already.
+				asyncReIndexSemaphore <- struct{}{}
+				defer func() { <-asyncReIndexSemaphore }()
+
 				started := time.Now()
 				i.logger.Info("Start re-indexing")
 				i.reIndexFromScratch(ctx)
