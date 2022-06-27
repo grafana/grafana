@@ -23,14 +23,19 @@ describe('useIsRuleEditable', () => {
   describe('RBAC enabled', () => {
     beforeEach(enableRBAC);
     describe('Grafana rules', () => {
-      // When RBAC is enabled we require only folder:read permission and apriopriate alerting permissions
+      // When RBAC is enabled we require appropriate alerting permissions in the folder scope
 
-      beforeEach(() => {
-        mockUseFolder({ canSave: false });
-      });
+      // beforeEach(() => {
+      //   mockUseFolder({ canSave: false });
+      // });
 
-      it('Should allow editing when the user has the alert rule update permission', () => {
-        mockPermissions([AccessControlAction.AlertingRuleUpdate]);
+      it('Should allow editing when the user has the alert rule update permission in the folder', () => {
+        mockUseFolder({
+          accessControl: {
+            [AccessControlAction.AlertingRuleUpdate]: true,
+          },
+        });
+
         const wrapper = getProviderWrapper();
 
         const { result } = renderHook(() => useIsRuleEditable('grafana', mockRulerGrafanaRule()), { wrapper });
@@ -40,7 +45,12 @@ describe('useIsRuleEditable', () => {
       });
 
       it('Should allow deleting when the user has the alert rule delete permission', () => {
-        mockPermissions([AccessControlAction.AlertingRuleDelete]);
+        mockUseFolder({
+          accessControl: {
+            [AccessControlAction.AlertingRuleDelete]: true,
+          },
+        });
+
         const wrapper = getProviderWrapper();
 
         const { result } = renderHook(() => useIsRuleEditable('grafana', mockRulerGrafanaRule()), { wrapper });
@@ -50,7 +60,8 @@ describe('useIsRuleEditable', () => {
       });
 
       it('Should forbid editing when the user has no alert rule update permission', () => {
-        mockPermissions([]);
+        mockUseFolder({ accessControl: {} });
+
         const wrapper = getProviderWrapper();
 
         const { result } = renderHook(() => useIsRuleEditable('grafana', mockRulerGrafanaRule()), { wrapper });
@@ -60,7 +71,8 @@ describe('useIsRuleEditable', () => {
       });
 
       it('Should forbid deleting when the user has no alert rule delete permission', () => {
-        mockPermissions([]);
+        mockUseFolder({ accessControl: {} });
+
         const wrapper = getProviderWrapper();
 
         const { result } = renderHook(() => useIsRuleEditable('grafana', mockRulerGrafanaRule()), { wrapper });
@@ -69,9 +81,15 @@ describe('useIsRuleEditable', () => {
         expect(result.current.isRemovable).toBe(false);
       });
 
-      it('Should allow editing and deleting when the user has aler rule permissions but does not have folder canSave permission', () => {
-        mockPermissions([AccessControlAction.AlertingRuleUpdate, AccessControlAction.AlertingRuleDelete]);
-        mockUseFolder({ canSave: false });
+      it('Should allow editing and deleting when the user has alert rule permissions but does not have folder canSave permission', () => {
+        mockUseFolder({
+          canSave: false,
+          accessControl: {
+            [AccessControlAction.AlertingRuleUpdate]: true,
+            [AccessControlAction.AlertingRuleDelete]: true,
+          },
+        });
+
         const wrapper = getProviderWrapper();
 
         const { result } = renderHook(() => useIsRuleEditable('grafana', mockRulerGrafanaRule()), { wrapper });
