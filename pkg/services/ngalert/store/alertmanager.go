@@ -121,6 +121,11 @@ func (st *DBstore) UpdateAlertmanagerConfiguration(ctx context.Context, cmd *mod
 	})
 }
 
+// getInsertQuery is used to determinate the insert query for the alertmanager config
+// based on the provided sql driver. This is necesarry as such an advanced query
+// is not supported by our ORM and we need to generate it manually for each SQL dialect.
+// We introduced this as part of a bug fix as the old approach wasn't working.
+// Rel: https://github.com/grafana/grafana/issues/51356
 func getInsertQuery(driver string) string {
 	switch driver {
 	case "mysql":
