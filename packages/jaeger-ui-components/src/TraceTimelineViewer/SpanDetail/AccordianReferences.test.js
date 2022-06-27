@@ -79,34 +79,17 @@ describe('AccordianReferences tests', () => {
     expect(screen.getByRole('switch', { name: 'References (3)' })).toBeInTheDocument();
   });
 
+  it('content doesnt show when not expanded', () => {
+    setup({ isOpen: false });
+
+    expect(screen.queryByRole('link', { name: /^View\sLinked/ })).not.toBeInTheDocument();
+    expect(screen.queryAllByRole('link', { name: /^service\d\sop\d/ })).toHaveLength(0);
+  });
+
   it('renders the content when it is expanded', () => {
     setup({ isOpen: true });
 
     expect(screen.getByRole('switch', { name: 'References (3)' })).toBeInTheDocument();
-    expect(screen.getAllByRole('link', { name: /^service\d\sop\d/ })).toHaveLength(2);
-    expect(screen.getByRole('link', { name: /^View\sLinked/ })).toBeInTheDocument();
-  });
-});
-
-describe('References tests', () => {
-  const setup = (propOverrides) => {
-    const props = {
-      data: references,
-      createFocusSpanLink: () => link,
-      ...propOverrides,
-    };
-
-    return render(<References {...props} />);
-  };
-
-  it('renders without exploding', () => {
-    expect(() => setup()).not.toThrow();
-  });
-
-  it('render references list', () => {
-    setup();
-
-    expect(screen.queryByRole('switch')).not.toBeInTheDocument();
     expect(screen.getAllByRole('link', { name: /^service\d\sop\d/ })).toHaveLength(2);
     expect(screen.getByRole('link', { name: /^View\sLinked/ })).toBeInTheDocument();
   });
