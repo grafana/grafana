@@ -1749,7 +1749,7 @@ exports[`better eslint`] = {
       [2, 101, 3, "Unexpected any. Specify a different type.", "193409811"],
       [15, 28, 17, "Do not use any type assertions.", "2923536692"]
     ],
-    "packages/grafana-ui/src/components/GraphNG/utils.ts:3480871323": [
+    "packages/grafana-ui/src/components/GraphNG/utils.ts:460323924": [
       [23, 18, 35, "Do not use any type assertions.", "180126096"],
       [23, 48, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
@@ -2092,7 +2092,7 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/Switch/Switch.story.tsx:3337756944": [
       [11, 15, 258, "Do not use any type assertions.", "1871090638"]
     ],
-    "packages/grafana-ui/src/components/Table/BarGaugeCell.tsx:2469721145": [
+    "packages/grafana-ui/src/components/Table/BarGaugeCell.tsx:1481110243": [
       [46, 13, 17, "Do not use any type assertions.", "3640560184"]
     ],
     "packages/grafana-ui/src/components/Table/CellActions.tsx:3266589396": [
@@ -2100,8 +2100,8 @@ exports[`better eslint`] = {
       [22, 10, 16, "Do not use any type assertions.", "737436615"],
       [23, 22, 25, "Do not use any type assertions.", "1478996352"]
     ],
-    "packages/grafana-ui/src/components/Table/DefaultCell.tsx:1844923424": [
-      [14, 34, 40, "Do not use any type assertions.", "91092480"]
+    "packages/grafana-ui/src/components/Table/DefaultCell.tsx:3618905143": [
+      [16, 34, 40, "Do not use any type assertions.", "91092480"]
     ],
     "packages/grafana-ui/src/components/Table/Filter.tsx:1102571026": [
       [13, 10, 3, "Unexpected any. Specify a different type.", "193409811"]
@@ -2121,8 +2121,8 @@ exports[`better eslint`] = {
       [53, 38, 13, "Do not use any type assertions.", "947160887"],
       [53, 48, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "packages/grafana-ui/src/components/Table/JSONViewCell.tsx:4022130242": [
-      [11, 34, 40, "Do not use any type assertions.", "91092480"]
+    "packages/grafana-ui/src/components/Table/JSONViewCell.tsx:2181157412": [
+      [12, 34, 40, "Do not use any type assertions.", "91092480"]
     ],
     "packages/grafana-ui/src/components/Table/Table.story.tsx:4272567078": [
       [23, 15, 364, "Do not use any type assertions.", "4121186137"]
@@ -2219,7 +2219,7 @@ exports[`better eslint`] = {
       [56, 22, 24, "Do not use any type assertions.", "4121028738"],
       [56, 43, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "packages/grafana-ui/src/components/TimeSeries/utils.ts:3806893813": [
+    "packages/grafana-ui/src/components/TimeSeries/utils.ts:1695012447": [
       [33, 29, 3, "Unexpected any. Specify a different type.", "193409811"],
       [135, 19, 146, "Do not use any type assertions.", "3723122882"]
     ],
@@ -2486,9 +2486,6 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/utils/colors.ts:349987544": [
       [110, 25, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "packages/grafana-ui/src/utils/dataLinks.ts:2916992126": [
-      [16, 12, 71, "Do not use any type assertions.", "1504235577"]
-    ],
     "packages/grafana-ui/src/utils/debug.ts:2900904491": [
       [6, 56, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
@@ -2516,9 +2513,9 @@ exports[`better eslint`] = {
       [38, 72, 3, "Unexpected any. Specify a different type.", "193409811"],
       [38, 85, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "packages/grafana-ui/src/utils/table.ts:3564715667": [
-      [8, 52, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [9, 22, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "packages/grafana-ui/src/utils/table.ts:2798596296": [
+      [7, 52, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [8, 29, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "packages/grafana-ui/src/utils/useAsyncDependency.ts:4089662838": [
       [3, 60, 3, "Unexpected any. Specify a different type.", "193409811"]
@@ -10930,8 +10927,8 @@ exports[`better eslint`] = {
       [102, 16, 9, "Do not use any type assertions.", "3692209159"],
       [102, 22, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/panel/bargauge/BarGaugePanel.tsx:3184205061": [
-      [114, 75, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/plugins/panel/bargauge/BarGaugePanel.tsx:2584207123": [
+      [112, 75, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/plugins/panel/candlestick/CandlestickPanel.tsx:3928129934": [
       [116, 26, 33, "Do not use any type assertions.", "1940217301"],
@@ -11877,7 +11874,7 @@ exports[`better eslint`] = {
       [194, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
       [256, 16, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/panel/piechart/PieChart.tsx:1361550264": [
+    "public/app/plugins/panel/piechart/PieChart.tsx:287896203": [
       [201, 12, 3, "Unexpected any. Specify a different type.", "193409811"],
       [217, 12, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
