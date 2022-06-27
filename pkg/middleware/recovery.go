@@ -105,12 +105,14 @@ func function(pc uintptr) []byte {
 func Recovery(cfg *setting.Cfg) web.Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			c := web.FromContext(req.Context())
+
 			defer func() {
 				if r := recover(); r != nil {
 					var panicLogger log.Logger
 					panicLogger = log.New("recovery")
 					// try to get request logger
-					ctx := contexthandler.FromContext(req.Context())
+					ctx := contexthandler.FromContext(c.Req.Context())
 					if ctx != nil {
 						panicLogger = ctx.Logger
 					}
@@ -129,7 +131,7 @@ func Recovery(cfg *setting.Cfg) web.Middleware {
 					panicLogger.Error("Request error", "error", r, "stack", string(stack))
 
 					// if response has already been written, skip.
-					if ctx.Resp.Written() {
+					if c.Resp.Written() {
 						return
 					}
 

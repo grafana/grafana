@@ -509,7 +509,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 		m.UseMiddleware(middleware.Gziper())
 	}
 
-	m.Use(middleware.Recovery(hs.Cfg))
+	m.UseMiddleware(middleware.Recovery(hs.Cfg))
 	m.UseMiddleware(hs.Csrf.Middleware(hs.log))
 
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "build", "public/build")
