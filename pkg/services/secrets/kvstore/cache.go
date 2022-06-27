@@ -29,7 +29,14 @@ func (kv *CachedKVStore) Get(ctx context.Context, orgId int64, namespace string,
 		kv.log.Debug("got secret value from cache", "orgId", orgId, "type", typ, "namespace", namespace)
 		return fmt.Sprint(value), true, nil
 	}
-	return kv.store.Get(ctx, orgId, namespace, typ)
+	value, ok, err := kv.store.Get(ctx, orgId, namespace, typ)
+	if err != nil {
+		return "", false, err
+	}
+	if ok {
+		kv.cache.SetDefault(key, value)
+	}
+	return value, ok, err
 }
 
 func (kv *CachedKVStore) Set(ctx context.Context, orgId int64, namespace string, typ string, value string) error {
