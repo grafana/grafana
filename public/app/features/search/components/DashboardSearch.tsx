@@ -1,12 +1,14 @@
 import { css } from '@emotion/css';
 import React, { FC, memo, useState } from 'react';
-import { useDebounce } from 'react-use';
+import { useDebounce, useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { CustomScrollbar, IconButton, stylesFactory, useStyles2, useTheme2 } from '@grafana/ui';
 
+import { SEARCH_PANELS_LOCAL_STORAGE_KEY } from '../constants';
 import { useDashboardSearch } from '../hooks/useDashboardSearch';
+import { useKeyNavigationListener } from '../hooks/useSearchKeyboardSelection';
 import { useSearchQuery } from '../hooks/useSearchQuery';
 import { SearchView } from '../page/components/SearchView';
 
@@ -20,23 +22,31 @@ export interface Props {
 }
 
 export default function DashboardSearch({ onCloseSearch }: Props) {
-  if (false && config.featureToggles.panelTitleSearch) {
+  if (config.featureToggles.panelTitleSearch) {
     // TODO: "folder:current" ????
-    return <DashbaordSearchNEW onCloseSearch={onCloseSearch} />;
+    return <DashboardSearchNew onCloseSearch={onCloseSearch} />;
   }
   return <DashboardSearchOLD onCloseSearch={onCloseSearch} />;
 }
 
-function DashbaordSearchNEW({ onCloseSearch }: Props) {
+function DashboardSearchNew({ onCloseSearch }: Props) {
   const styles = useStyles2(getStyles);
   const { query, onQueryChange } = useSearchQuery({});
+
+  let [includePanels, setIncludePanels] = useLocalStorage<boolean>(SEARCH_PANELS_LOCAL_STORAGE_KEY, true);
+  if (!config.featureToggles.panelTitleSearch) {
+    includePanels = false;
+  }
 
   const [inputValue, setInputValue] = useState(query.query ?? '');
   const onSearchQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
     setInputValue(e.currentTarget.value);
   };
+
   useDebounce(() => onQueryChange(inputValue), 200, [inputValue]);
+
+  const { onKeyDown, keyboardEvents } = useKeyNavigationListener();
 
   return (
     <div tabIndex={0} className={styles.overlay}>
@@ -45,9 +55,10 @@ function DashbaordSearchNEW({ onCloseSearch }: Props) {
           <div>
             <input
               type="text"
-              placeholder="Search dashboards by name"
+              placeholder={includePanels ? 'Search dashboards and panels by name' : 'Search dashboards by name'}
               value={inputValue}
               onChange={onSearchQueryChange}
+              onKeyDown={onKeyDown}
               tabIndex={0}
               spellCheck={false}
               className={styles.input}
@@ -56,11 +67,20 @@ function DashbaordSearchNEW({ onCloseSearch }: Props) {
           </div>
 
           <div className={styles.closeBtn}>
-            <IconButton name="times" surface="panel" onClick={onCloseSearch} size="xxl" tooltip="Close search" />
+            <IconButton name="times" onClick={onCloseSearch} size="xxl" tooltip="Close search" />
           </div>
         </div>
         <div className={styles.search}>
-          <SearchView showManage={false} queryText={query.query} />
+          <SearchView
+            onQueryTextChange={(newQueryText) => {
+              setInputValue(newQueryText);
+            }}
+            showManage={false}
+            queryText={query.query}
+            includePanels={includePanels!}
+            setIncludePanels={setIncludePanels}
+            keyboardEvents={keyboardEvents}
+          />
         </div>
       </div>
     </div>
@@ -82,7 +102,7 @@ export const DashboardSearchOLD: FC<Props> = memo(({ onCloseSearch }) => {
         <div className={styles.searchField}>
           <SearchField query={query} onChange={onQueryChange} onKeyDown={onKeyDown} autoFocus clearable />
           <div className={styles.closeBtn}>
-            <IconButton name="times" surface="panel" onClick={onCloseSearch} size="xxl" tooltip="Close search" />
+            <IconButton name="times" onClick={onCloseSearch} size="xxl" tooltip="Close search" />
           </div>
         </div>
         <div className={styles.search}>
@@ -130,21 +150,26 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       z-index: ${theme.zIndex.sidemenu};
       position: fixed;
       background: ${theme.colors.background.canvas};
+      padding: ${theme.spacing(1)};
 
       ${theme.breakpoints.up('md')} {
         left: ${theme.components.sidemenu.width}px;
         z-index: ${theme.zIndex.navbarFixed + 1};
+        padding: ${theme.spacing(2)};
       }
     `,
     container: css`
+      display: flex;
+      flex-direction: column;
       max-width: 1400px;
       margin: 0 auto;
-      padding: ${theme.spacing(2)};
-
+      padding: ${theme.spacing(1)};
+      background: ${theme.colors.background.primary};
+      border: 1px solid ${theme.components.panel.borderColor};
       height: 100%;
 
       ${theme.breakpoints.up('md')} {
-        padding: ${theme.spacing(4)};
+        padding: ${theme.spacing(3)};
       }
     `,
     closeBtn: css`
@@ -159,8 +184,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     search: css`
       display: flex;
       flex-direction: column;
+      overflow: hidden;
       height: 100%;
-      padding-bottom: ${theme.spacing(3)};
+      padding: ${theme.spacing(2, 0, 3, 0)};
     `,
     input: css`
       box-sizing: border-box;

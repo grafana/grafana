@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package service
 
 import (
@@ -12,6 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	busmock "github.com/grafana/grafana/pkg/bus/mock"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -25,27 +23,24 @@ import (
 var orgID = int64(1)
 var user = &models.SignedInUser{UserId: 1}
 
-func TestProvideFolderService(t *testing.T) {
+func TestIntegrationProvideFolderService(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	t.Run("should register scope resolvers", func(t *testing.T) {
-		store := &dashboards.FakeDashboardStore{}
 		cfg := setting.NewCfg()
-		features := featuremgmt.WithFeatures()
-		cfg.IsFeatureToggleEnabled = features.IsEnabled
-		folderPermissions := acmock.NewMockedPermissionsService()
-		dashboardPermissions := acmock.NewMockedPermissionsService()
-		dashboardService := ProvideDashboardService(cfg, store, nil, features, folderPermissions, dashboardPermissions)
 		ac := acmock.New()
 
-		ProvideFolderService(
-			cfg, &dashboards.FakeDashboardService{DashboardService: dashboardService},
-			store, nil, features, folderPermissions, ac,
-		)
+		ProvideFolderService(cfg, nil, nil, nil, nil, nil, ac, busmock.New())
 
 		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 2)
 	})
 }
 
-func TestFolderService(t *testing.T) {
+func TestIntegrationFolderService(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	t.Run("Folder service tests", func(t *testing.T) {
 		store := &dashboards.FakeDashboardStore{}
 		cfg := setting.NewCfg()
@@ -53,7 +48,7 @@ func TestFolderService(t *testing.T) {
 		cfg.IsFeatureToggleEnabled = features.IsEnabled
 		folderPermissions := acmock.NewMockedPermissionsService()
 		dashboardPermissions := acmock.NewMockedPermissionsService()
-		dashboardService := ProvideDashboardService(cfg, store, nil, features, folderPermissions, dashboardPermissions)
+		dashboardService := ProvideDashboardService(cfg, store, nil, features, folderPermissions, dashboardPermissions, acmock.New())
 
 		service := FolderServiceImpl{
 			cfg:              cfg,
@@ -63,6 +58,7 @@ func TestFolderService(t *testing.T) {
 			searchService:    nil,
 			features:         features,
 			permissions:      folderPermissions,
+			bus:              busmock.New(),
 		}
 
 		t.Run("Given user has no permissions", func(t *testing.T) {
@@ -106,7 +102,7 @@ func TestFolderService(t *testing.T) {
 					folder := args.Get(1).(*models.GetDashboardQuery)
 					folder.Result = models.NewDashboard("dashboard-test")
 					folder.Result.IsFolder = true
-				}).Return(nil)
+				}).Return(&models.Dashboard{}, nil)
 				err := service.UpdateFolder(context.Background(), user, orgID, folderUID, &models.UpdateFolderCommand{
 					Uid:   folderUID,
 					Title: "Folder-TEST",

@@ -37,8 +37,7 @@ import (
 func TestDataSourceProxy_routeRule(t *testing.T) {
 	cfg := &setting.Cfg{}
 	httpClientProvider := httpclient.NewProvider()
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
+	tracer := tracing.InitializeTracerForTest()
 
 	t.Run("Plugin with routes", func(t *testing.T) {
 		routes := []*plugins.Route{
@@ -366,7 +365,6 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			Url:      "http://influxdb:8083",
 			Database: "site",
 			User:     "user",
-			Password: "password",
 		}
 
 		ctx := &models.ReqContext{}
@@ -557,18 +555,18 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 
 		tests := []*testCase{
-			createAuthTest(t, secretsStore, models.DS_INFLUXDB_08, "http://localhost:9090", authTypePassword, authCheckQuery, false),
-			createAuthTest(t, secretsStore, models.DS_INFLUXDB_08, "http://localhost:9090", authTypePassword, authCheckQuery, true),
-			createAuthTest(t, secretsStore, models.DS_INFLUXDB, "http://localhost:9090", authTypePassword, authCheckHeader, true),
-			createAuthTest(t, secretsStore, models.DS_INFLUXDB, "http://localhost:9090", authTypePassword, authCheckHeader, false),
-			createAuthTest(t, secretsStore, models.DS_INFLUXDB, "http://localhost:9090", authTypeBasic, authCheckHeader, true),
-			createAuthTest(t, secretsStore, models.DS_INFLUXDB, "http://localhost:9090", authTypeBasic, authCheckHeader, false),
+			createAuthTest(t, secretsStore, models.DS_INFLUXDB_08, "http://localhost:9090", authTypePassword, authCheckQuery),
+			createAuthTest(t, secretsStore, models.DS_INFLUXDB_08, "http://localhost:9090", authTypePassword, authCheckQuery),
+			createAuthTest(t, secretsStore, models.DS_INFLUXDB, "http://localhost:9090", authTypePassword, authCheckHeader),
+			createAuthTest(t, secretsStore, models.DS_INFLUXDB, "http://localhost:9090", authTypePassword, authCheckHeader),
+			createAuthTest(t, secretsStore, models.DS_INFLUXDB, "http://localhost:9090", authTypeBasic, authCheckHeader),
+			createAuthTest(t, secretsStore, models.DS_INFLUXDB, "http://localhost:9090", authTypeBasic, authCheckHeader),
 
 			// These two should be enough for any other datasource at the moment. Proxy has special handling
 			// only for Influx, others have the same path and only BasicAuth. Non BasicAuth datasources
 			// do not go through proxy but through TSDB API which is not tested here.
-			createAuthTest(t, secretsStore, models.DS_ES, "http://localhost:9200", authTypeBasic, authCheckHeader, false),
-			createAuthTest(t, secretsStore, models.DS_ES, "http://localhost:9200", authTypeBasic, authCheckHeader, true),
+			createAuthTest(t, secretsStore, models.DS_ES, "http://localhost:9200", authTypeBasic, authCheckHeader),
+			createAuthTest(t, secretsStore, models.DS_ES, "http://localhost:9200", authTypeBasic, authCheckHeader),
 		}
 		for _, test := range tests {
 			runDatasourceAuthTest(t, secretsService, secretsStore, cfg, test)
@@ -629,8 +627,7 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 		}, ds
 	}
 
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
+	tracer := tracing.InitializeTracerForTest()
 
 	t.Run("When response header Set-Cookie is not set should remove proxied Set-Cookie header", func(t *testing.T) {
 		ctx, ds := setUp(t)
@@ -766,13 +763,12 @@ func TestNewDataSourceProxy_InvalidURL(t *testing.T) {
 		Url:  "://host/root",
 	}
 	cfg := &setting.Cfg{}
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
+	tracer := tracing.InitializeTracerForTest()
 	var routes []*plugins.Route
 	secretsStore := kvstore.SetupTestService(t)
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	dsService := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
-	_, err = NewDataSourceProxy(&ds, routes, &ctx, "api/method", cfg, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer)
+	_, err := NewDataSourceProxy(&ds, routes, &ctx, "api/method", cfg, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer)
 	require.Error(t, err)
 	assert.True(t, strings.HasPrefix(err.Error(), `validation of data source URL "://host/root" failed`))
 }
@@ -787,14 +783,13 @@ func TestNewDataSourceProxy_ProtocolLessURL(t *testing.T) {
 		Url:  "127.0.01:5432",
 	}
 	cfg := &setting.Cfg{}
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
+	tracer := tracing.InitializeTracerForTest()
 
 	var routes []*plugins.Route
 	secretsStore := kvstore.SetupTestService(t)
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	dsService := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
-	_, err = NewDataSourceProxy(&ds, routes, &ctx, "api/method", cfg, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer)
+	_, err := NewDataSourceProxy(&ds, routes, &ctx, "api/method", cfg, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer)
 
 	require.NoError(t, err)
 }
@@ -805,8 +800,7 @@ func TestNewDataSourceProxy_MSSQL(t *testing.T) {
 		Context:      &web.Context{},
 		SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_EDITOR},
 	}
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
+	tracer := tracing.InitializeTracerForTest()
 
 	tcs := []struct {
 		description string
@@ -859,8 +853,7 @@ func getDatasourceProxiedRequest(t *testing.T, ctx *models.ReqContext, cfg *sett
 		Type: "custom",
 		Url:  "http://host/root/",
 	}
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
+	tracer := tracing.InitializeTracerForTest()
 
 	var routes []*plugins.Route
 	secretsStore := kvstore.SetupTestService(t)
@@ -918,7 +911,7 @@ const (
 	authCheckHeader = "header"
 )
 
-func createAuthTest(t *testing.T, secretsStore kvstore.SecretsKVStore, dsType string, url string, authType string, authCheck string, useSecureJsonData bool) *testCase {
+func createAuthTest(t *testing.T, secretsStore kvstore.SecretsKVStore, dsType string, url string, authType string, authCheck string) *testCase {
 	// Basic user:password
 	base64AuthHeader := "Basic dXNlcjpwYXNzd29yZA=="
 
@@ -926,7 +919,7 @@ func createAuthTest(t *testing.T, secretsStore kvstore.SecretsKVStore, dsType st
 		datasource: &models.DataSource{
 			Id:       1,
 			OrgId:    1,
-			Name:     fmt.Sprintf("%s,%s,%s,%s,%t", dsType, url, authType, authCheck, useSecureJsonData),
+			Name:     fmt.Sprintf("%s,%s,%s,%s", dsType, url, authType, authCheck),
 			Type:     dsType,
 			JsonData: simplejson.New(),
 			Url:      url,
@@ -937,38 +930,28 @@ func createAuthTest(t *testing.T, secretsStore kvstore.SecretsKVStore, dsType st
 	if authType == authTypePassword {
 		message = fmt.Sprintf("%v should add username and password", dsType)
 		test.datasource.User = "user"
-		if useSecureJsonData {
-			secureJsonData, err := json.Marshal(map[string]string{
-				"password": "password",
-			})
-			require.NoError(t, err)
+		secureJsonData, err := json.Marshal(map[string]string{
+			"password": "password",
+		})
+		require.NoError(t, err)
 
-			err = secretsStore.Set(context.Background(), test.datasource.OrgId, test.datasource.Name, "datasource", string(secureJsonData))
-			require.NoError(t, err)
-		} else {
-			test.datasource.Password = "password"
-		}
+		err = secretsStore.Set(context.Background(), test.datasource.OrgId, test.datasource.Name, "datasource", string(secureJsonData))
+		require.NoError(t, err)
 	} else {
 		message = fmt.Sprintf("%v should add basic auth username and password", dsType)
 		test.datasource.BasicAuth = true
 		test.datasource.BasicAuthUser = "user"
-		if useSecureJsonData {
-			secureJsonData, err := json.Marshal(map[string]string{
-				"basicAuthPassword": "password",
-			})
-			require.NoError(t, err)
+		secureJsonData, err := json.Marshal(map[string]string{
+			"basicAuthPassword": "password",
+		})
+		require.NoError(t, err)
 
-			err = secretsStore.Set(context.Background(), test.datasource.OrgId, test.datasource.Name, "datasource", string(secureJsonData))
-			require.NoError(t, err)
-		} else {
-			test.datasource.BasicAuthPassword = "password"
-		}
+		err = secretsStore.Set(context.Background(), test.datasource.OrgId, test.datasource.Name, "datasource", string(secureJsonData))
+		require.NoError(t, err)
 	}
 	require.NoError(t, err)
 
-	if useSecureJsonData {
-		message += " from securejsondata"
-	}
+	message += " from securejsondata"
 
 	if authCheck == authCheckQuery {
 		message += " to query params"
@@ -989,8 +972,7 @@ func createAuthTest(t *testing.T, secretsStore kvstore.SecretsKVStore, dsType st
 
 func runDatasourceAuthTest(t *testing.T, secretsService secrets.Service, secretsStore kvstore.SecretsKVStore, cfg *setting.Cfg, test *testCase) {
 	ctx := &models.ReqContext{}
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
+	tracer := tracing.InitializeTracerForTest()
 
 	var routes []*plugins.Route
 	dsService := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
@@ -1022,8 +1004,7 @@ func Test_PathCheck(t *testing.T) {
 			Method:  http.MethodGet,
 		},
 	}
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
+	tracer := tracing.InitializeTracerForTest()
 
 	setUp := func() (*models.ReqContext, *http.Request) {
 		req, err := http.NewRequest("GET", "http://localhost/asd", nil)

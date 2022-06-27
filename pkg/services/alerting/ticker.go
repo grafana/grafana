@@ -6,6 +6,7 @@ import (
 
 	"github.com/benbjohnson/clock"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/alerting/metrics"
 )
 
@@ -20,6 +21,7 @@ type Ticker struct {
 	last     time.Time
 	interval time.Duration
 	metrics  *metrics.Ticker
+	stopCh   chan struct{}
 }
 
 // NewTicker returns a Ticker that ticks on interval marks (or very shortly after) starting at c.Now(), and never drops ticks. interval should not be negative or zero.
@@ -30,28 +32,55 @@ func NewTicker(c clock.Clock, interval time.Duration, metric *metrics.Ticker) *T
 	t := &Ticker{
 		C:        make(chan time.Time),
 		clock:    c,
-		last:     c.Now(),
+		last:     getStartTick(c, interval),
 		interval: interval,
 		metrics:  metric,
+		stopCh:   make(chan struct{}),
 	}
 	metric.IntervalSeconds.Set(t.interval.Seconds()) // Seconds report fractional part as well, so it matches the format of the timestamp we report below
 	go t.run()
 	return t
 }
 
+func getStartTick(clk clock.Clock, interval time.Duration) time.Time {
+	nano := clk.Now().UnixNano()
+	return time.Unix(0, nano-(nano%interval.Nanoseconds()))
+}
+
 func (t *Ticker) run() {
+	logger := log.New("ticker")
+	logger.Info("starting", "first_tick", t.last.Add(t.interval))
+LOOP:
 	for {
 		next := t.last.Add(t.interval) // calculate the time of the next tick
 		t.metrics.NextTickTime.Set(float64(next.UnixNano()) / 1e9)
 		diff := t.clock.Now().Sub(next) // calculate the difference between the current time and the next tick
 		// if difference is not negative, then it should tick
 		if diff >= 0 {
-			t.C <- next
+			select {
+			case t.C <- next:
+			case <-t.stopCh:
+				break LOOP
+			}
 			t.last = next
 			t.metrics.LastTickTime.Set(float64(next.UnixNano()) / 1e9)
 			continue
 		}
 		// tick is too young. try again when ...
-		<-t.clock.After(-diff) // ...it'll definitely be old enough
+		select {
+		case <-t.clock.After(-diff): // ...it'll definitely be old enough
+		case <-t.stopCh:
+			break LOOP
+		}
+	}
+	logger.Info("stopped", "last_tick", t.last)
+}
+
+// Stop stops the ticker. It does not close the C channel
+func (t *Ticker) Stop() {
+	select {
+	case t.stopCh <- struct{}{}:
+	default:
+		// already stopped
 	}
 }

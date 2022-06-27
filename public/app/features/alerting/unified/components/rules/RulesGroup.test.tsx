@@ -4,6 +4,7 @@ import React from 'react';
 import { Provider } from 'react-redux';
 import { byTestId, byText } from 'testing-library-selector';
 
+import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 
@@ -16,7 +17,9 @@ jest.mock('../../hooks/useHasRuler', () => ({
   useHasRuler: () => hasRulerMock,
 }));
 
-beforeEach(() => hasRulerMock.mockReset());
+beforeEach(() => {
+  hasRulerMock.mockReset();
+});
 
 const ui = {
   editGroupButton: byTestId('edit-group'),
@@ -61,6 +64,10 @@ describe('Rules group tests', () => {
   });
 
   describe('When the datasource is not grafana', () => {
+    beforeEach(() => {
+      contextSrv.isEditor = true;
+    });
+
     const group: CombinedRuleGroup = {
       name: 'TestGroup',
       rules: [mockCombinedRule()],

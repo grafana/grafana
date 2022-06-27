@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package sqlstore
 
 import (
@@ -12,7 +9,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestSavingTags(t *testing.T) {
+func TestIntegrationSavingTags(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	ss := InitTestDB(t)
 
 	tagPairs := []*models.Tag{

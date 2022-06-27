@@ -16,12 +16,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
@@ -31,9 +31,6 @@ type Response struct {
 }
 
 func TestAMConfigAccess(t *testing.T) {
-	_, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
-
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -319,7 +316,7 @@ func TestAMConfigAccess(t *testing.T) {
 	})
 
 	var silences apimodels.GettableSilences
-	err = json.Unmarshal(blob, &silences)
+	err := json.Unmarshal(blob, &silences)
 	require.NoError(t, err)
 	assert.Len(t, silences, 2)
 	silenceIDs := make([]string, 0, len(silences))
@@ -392,9 +389,6 @@ func TestAMConfigAccess(t *testing.T) {
 }
 
 func TestAlertAndGroupsQuery(t *testing.T) {
-	_, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
-
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -563,8 +557,6 @@ func TestAlertAndGroupsQuery(t *testing.T) {
 }
 
 func TestRulerAccess(t *testing.T) {
-	_, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
@@ -595,7 +587,7 @@ func TestRulerAccess(t *testing.T) {
 	})
 
 	// Create the namespace we'll save our alerts to.
-	err = createFolder(t, "default", grafanaListedAddr, "editor", "editor")
+	err := createFolder(t, "default", grafanaListedAddr, "editor", "editor")
 	reloadCachedPermissions(t, grafanaListedAddr, "editor", "editor")
 	require.NoError(t, err)
 
@@ -616,7 +608,7 @@ func TestRulerAccess(t *testing.T) {
 			desc:            "viewer request should fail",
 			url:             "http://viewer:viewer@%s/api/ruler/grafana/api/v1/rules/default",
 			expStatus:       http.StatusForbidden,
-			expectedMessage: `You'll need additional permissions to perform this action. Permissions needed: any of alert.rules:update, alert.rules:create, alert.rules:delete`,
+			expectedMessage: `You'll need additional permissions to perform this action. Permissions needed: any of alert.rules:write, alert.rules:create, alert.rules:delete`,
 		},
 		{
 			desc:            "editor request should succeed",
@@ -695,8 +687,6 @@ func TestRulerAccess(t *testing.T) {
 }
 
 func TestDeleteFolderWithRules(t *testing.T) {
-	_, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
@@ -722,7 +712,7 @@ func TestDeleteFolderWithRules(t *testing.T) {
 
 	// Create the namespace we'll save our alerts to.
 	namespaceUID := "default"
-	err = createFolder(t, namespaceUID, grafanaListedAddr, "editor", "editor")
+	err := createFolder(t, namespaceUID, grafanaListedAddr, "editor", "editor")
 	reloadCachedPermissions(t, grafanaListedAddr, "editor", "editor")
 	require.NoError(t, err)
 
@@ -858,8 +848,6 @@ func TestDeleteFolderWithRules(t *testing.T) {
 }
 
 func TestAlertRuleCRUD(t *testing.T) {
-	_, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
@@ -878,7 +866,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 	})
 
 	// Create the namespace we'll save our alerts to.
-	err = createFolder(t, "default", grafanaListedAddr, "grafana", "password")
+	err := createFolder(t, "default", grafanaListedAddr, "grafana", "password")
 	require.NoError(t, err)
 	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
 
@@ -2004,8 +1992,6 @@ func TestAlertmanagerStatus(t *testing.T) {
 }
 
 func TestQuota(t *testing.T) {
-	_, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
@@ -2025,7 +2011,7 @@ func TestQuota(t *testing.T) {
 	})
 
 	// Create the namespace we'll save our alerts to.
-	err = createFolder(t, "default", grafanaListedAddr, "grafana", "password")
+	err := createFolder(t, "default", grafanaListedAddr, "grafana", "password")
 	require.NoError(t, err)
 	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
 
@@ -2252,8 +2238,6 @@ func TestQuota(t *testing.T) {
 }
 
 func TestEval(t *testing.T) {
-	_, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
@@ -2272,16 +2256,16 @@ func TestEval(t *testing.T) {
 	})
 
 	// Create the namespace we'll save our alerts to.
-	err = createFolder(t, "default", grafanaListedAddr, "grafana", "password")
+	err := createFolder(t, "default", grafanaListedAddr, "grafana", "password")
 	require.NoError(t, err)
 
 	// test eval conditions
 	testCases := []struct {
 		desc               string
 		payload            string
-		expectedStatusCode int
-		expectedResponse   string
-		expectedMessage    string
+		expectedStatusCode func() int
+		expectedResponse   func() string
+		expectedMessage    func() string
 	}{
 		{
 			desc: "alerting condition",
@@ -2307,8 +2291,10 @@ func TestEval(t *testing.T) {
 				}
 			}
 			`,
-			expectedStatusCode: http.StatusOK,
-			expectedResponse: `{
+			expectedMessage:    func() string { return "" },
+			expectedStatusCode: func() int { return http.StatusOK },
+			expectedResponse: func() string {
+				return `{
 			"instances": [
 			  {
 				"schema": {
@@ -2342,7 +2328,8 @@ func TestEval(t *testing.T) {
 				}
 			  }
 			]
-		  }`,
+		  }`
+			},
 		},
 		{
 			desc: "normal condition",
@@ -2368,8 +2355,10 @@ func TestEval(t *testing.T) {
 				}
 			}
 			`,
-			expectedStatusCode: http.StatusOK,
-			expectedResponse: `{
+			expectedMessage:    func() string { return "" },
+			expectedStatusCode: func() int { return http.StatusOK },
+			expectedResponse: func() string {
+				return `{
 			"instances": [
 			  {
 				"schema": {
@@ -2403,7 +2392,8 @@ func TestEval(t *testing.T) {
 				}
 			  }
 			]
-		  }`,
+		  }`
+			},
 		},
 		{
 			desc: "condition not found in any query or expression",
@@ -2429,8 +2419,11 @@ func TestEval(t *testing.T) {
 				}
 			}
 			`,
-			expectedStatusCode: http.StatusBadRequest,
-			expectedMessage:    "invalid condition: condition B not found in any query or expression: it should be one of: [A]",
+			expectedStatusCode: func() int { return http.StatusBadRequest },
+			expectedMessage: func() string {
+				return "invalid condition: condition B not found in any query or expression: it should be one of: [A]"
+			},
+			expectedResponse: func() string { return "" },
 		},
 		{
 			desc: "unknown query datasource",
@@ -2454,8 +2447,19 @@ func TestEval(t *testing.T) {
 				}
 			}
 			`,
-			expectedStatusCode: http.StatusUnauthorized,
-			expectedMessage:    "user is not authorized to query one or many data sources used by the rule",
+			expectedStatusCode: func() int {
+				if setting.IsEnterprise {
+					return http.StatusUnauthorized
+				}
+				return http.StatusBadRequest
+			},
+			expectedMessage: func() string {
+				if setting.IsEnterprise {
+					return "user is not authorized to query one or many data sources used by the rule"
+				}
+				return "invalid condition: invalid query A: data source not found: unknown"
+			},
+			expectedResponse: func() string { return "" },
 		},
 	}
 
@@ -2476,12 +2480,12 @@ func TestEval(t *testing.T) {
 			err = json.Unmarshal(b, &res)
 			require.NoError(t, err)
 
-			assert.Equal(t, tc.expectedStatusCode, resp.StatusCode)
-			if tc.expectedResponse != "" {
-				require.JSONEq(t, tc.expectedResponse, string(b))
+			assert.Equal(t, tc.expectedStatusCode(), resp.StatusCode)
+			if tc.expectedResponse() != "" {
+				require.JSONEq(t, tc.expectedResponse(), string(b))
 			}
-			if tc.expectedMessage != "" {
-				assert.Equal(t, tc.expectedMessage, res.Message)
+			if tc.expectedMessage() != "" {
+				assert.Equal(t, tc.expectedMessage(), res.Message)
 				assert.NotEmpty(t, res.TraceID)
 			}
 		})
@@ -2491,9 +2495,9 @@ func TestEval(t *testing.T) {
 	testCases = []struct {
 		desc               string
 		payload            string
-		expectedStatusCode int
-		expectedResponse   string
-		expectedMessage    string
+		expectedStatusCode func() int
+		expectedResponse   func() string
+		expectedMessage    func() string
 	}{
 		{
 			desc: "alerting condition",
@@ -2516,8 +2520,10 @@ func TestEval(t *testing.T) {
 				"now": "2021-04-11T14:38:14Z"
 			}
 			`,
-			expectedStatusCode: http.StatusOK,
-			expectedResponse: `{
+			expectedMessage:    func() string { return "" },
+			expectedStatusCode: func() int { return http.StatusOK },
+			expectedResponse: func() string {
+				return `{
 				"results": {
 				  "A": {
 					"frames": [
@@ -2546,7 +2552,8 @@ func TestEval(t *testing.T) {
 					]
 				  }
 				}
-			}`,
+			}`
+			},
 		},
 		{
 			desc: "normal condition",
@@ -2569,8 +2576,10 @@ func TestEval(t *testing.T) {
 				"now": "2021-04-11T14:38:14Z"
 			}
 			`,
-			expectedStatusCode: http.StatusOK,
-			expectedResponse: `{
+			expectedMessage:    func() string { return "" },
+			expectedStatusCode: func() int { return http.StatusOK },
+			expectedResponse: func() string {
+				return `{
 				"results": {
 				  "A": {
 					"frames": [
@@ -2599,7 +2608,8 @@ func TestEval(t *testing.T) {
 					]
 				  }
 				}
-			}`,
+			}`
+			},
 		},
 		{
 			desc: "unknown query datasource",
@@ -2620,8 +2630,19 @@ func TestEval(t *testing.T) {
 				"now": "2021-04-11T14:38:14Z"
 			}
 			`,
-			expectedStatusCode: http.StatusUnauthorized,
-			expectedMessage:    "user is not authorized to query one or many data sources used by the rule",
+			expectedResponse: func() string { return "" },
+			expectedStatusCode: func() int {
+				if setting.IsEnterprise {
+					return http.StatusUnauthorized
+				}
+				return http.StatusBadRequest
+			},
+			expectedMessage: func() string {
+				if setting.IsEnterprise {
+					return "user is not authorized to query one or many data sources used by the rule"
+				}
+				return "invalid queries or expressions: invalid query A: data source not found: unknown"
+			},
 		},
 	}
 
@@ -2642,13 +2663,12 @@ func TestEval(t *testing.T) {
 			err = json.Unmarshal(b, &res)
 			require.NoError(t, err)
 
-			assert.Equal(t, tc.expectedStatusCode, resp.StatusCode)
-			if tc.expectedResponse != "" {
-				require.JSONEq(t, tc.expectedResponse, string(b))
+			assert.Equal(t, tc.expectedStatusCode(), resp.StatusCode)
+			if tc.expectedResponse() != "" {
+				require.JSONEq(t, tc.expectedResponse(), string(b))
 			}
-
-			if tc.expectedMessage != "" {
-				require.Equal(t, tc.expectedMessage, res.Message)
+			if tc.expectedMessage() != "" {
+				require.Equal(t, tc.expectedMessage(), res.Message)
 				require.NotEmpty(t, res.TraceID)
 			}
 		})
@@ -2705,6 +2725,9 @@ func rulesNamespaceWithoutVariableValues(t *testing.T, b []byte) (string, map[st
 
 func createUser(t *testing.T, store *sqlstore.SQLStore, cmd models.CreateUserCommand) int64 {
 	t.Helper()
+
+	store.Cfg.AutoAssignOrg = true
+	store.Cfg.AutoAssignOrgId = 1
 
 	u, err := store.CreateUser(context.Background(), cmd)
 	require.NoError(t, err)

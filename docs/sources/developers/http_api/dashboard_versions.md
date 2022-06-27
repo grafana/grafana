@@ -1,9 +1,18 @@
-+++
-aliases = ["/docs/grafana/latest/developers/http_api/dashboard_versions/", "/docs/grafana/latest/http_api/dashboard_versions/", "/docs/grafana/latest/http_api/dashboardversions/"]
-description = "Grafana Dashboard Versions HTTP API"
-keywords = ["grafana", "http", "documentation", "api", "dashboard", "versions"]
-title = "Dashboard Versions HTTP API "
-+++
+---
+aliases:
+  - /docs/grafana/latest/developers/http_api/dashboard_versions/
+  - /docs/grafana/latest/http_api/dashboard_versions/
+  - /docs/grafana/latest/http_api/dashboardversions/
+description: Grafana Dashboard Versions HTTP API
+keywords:
+  - grafana
+  - http
+  - documentation
+  - api
+  - dashboard
+  - versions
+title: 'Dashboard Versions HTTP API '
+---
 
 # Dashboard Versions
 
@@ -168,7 +177,6 @@ Content-Length: 1300
     "editable": true,
     "gnetId": null,
     "graphTooltip": 0,
-    "hideControls": false,
     "id": 1,
     "links": [
 
@@ -281,7 +289,6 @@ Content-Length: 1300
     "editable": true,
     "gnetId": null,
     "graphTooltip": 0,
-    "hideControls": false,
     "id": 1,
     "links": [
 

@@ -64,6 +64,11 @@ func (hs *HTTPServer) ResetPassword(c *models.ReqContext) response.Response {
 		return response.Error(400, "Passwords do not match", nil)
 	}
 
+	password := models.Password(form.NewPassword)
+	if password.IsWeak() {
+		return response.Error(400, "New password is too short", nil)
+	}
+
 	cmd := models.ChangeUserPasswordCommand{}
 	cmd.UserId = query.Result.Id
 	var err error

@@ -1,13 +1,21 @@
-+++
-aliases = ["/docs/grafana/latest/developers/http_api/data_source/", "/docs/grafana/latest/http_api/data_source/", "/docs/grafana/latest/http_api/datasource/"]
-description = "Grafana Data source HTTP API"
-keywords = ["grafana", "http", "documentation", "api", "data source"]
-title = "Data source HTTP API "
-+++
+---
+aliases:
+  - /docs/grafana/latest/developers/http_api/data_source/
+  - /docs/grafana/latest/http_api/data_source/
+  - /docs/grafana/latest/http_api/datasource/
+description: Grafana Data source HTTP API
+keywords:
+  - grafana
+  - http
+  - documentation
+  - api
+  - data source
+title: 'Data source HTTP API '
+---
 
 # Data source API
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../enterprise/access-control/custom-role-actions-scopes" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../enterprise/access-control/custom-role-actions-scopes/" >}}) for more information.
 
 ## Get all data sources
 
@@ -65,9 +73,11 @@ Content-Type: application/json
 ]
 ```
 
-## Get a single data source by Id
+## Get a single data source by id
 
 `GET /api/datasources/:datasourceId`
+
+> **Warning:** This API is deprecated since Grafana v9.0.0 and will be removed in a future release. Refer to the [API for getting a single data source by UID](#get-a-single-data-source-by-uid) or to the [API for getting a single data source by its name](#get-a-single-data-source-by-name).
 
 **Required permissions**
 
@@ -121,7 +131,7 @@ Content-Type: application/json
 }
 ```
 
-## Get a single data source by UID
+## Get a single data source by uid
 
 `GET /api/datasources/uid/:uid`
 
@@ -177,7 +187,7 @@ Content-Type: application/json
 }
 ```
 
-## Get a single data source by Name
+## Get a single data source by name
 
 `GET /api/datasources/name/:name`
 
@@ -233,7 +243,7 @@ Content-Type: application/json
 }
 ```
 
-## Get data source Id by Name
+## Get data source Id by name
 
 `GET /api/datasources/id/:name`
 
@@ -415,9 +425,11 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 }
 ```
 
-## Update an existing data source
+## Update an existing data source by id
 
 `PUT /api/datasources/:datasourceId`
+
+> **Warning:** This API is deprecated since Grafana v9.0.0 and will be removed in a future release. Refer to the [new data source update API](#update-an-existing-data-source).
 
 **Required permissions**
 
@@ -466,6 +478,7 @@ Content-Type: application/json
 {
   "datasource": {
     "id": 1,
+    "uid": "kLtEtcRGk",
     "orgId": 1,
     "name": "test_datasource",
     "type": "graphite",
@@ -495,9 +508,93 @@ Content-Type: application/json
 
 > **Note:** Similar to [creating a data source](#create-a-data-source), `password` and `basicAuthPassword` should be defined under `secureJsonData` in order to be stored securely as an encrypted blob in the database. Then, the encrypted fields are listed under `secureJsonFields` section in the response.
 
+## Update an existing data source
+
+`PUT /api/datasources/uid/:uid`
+
+**Required permissions**
+
+See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
+
+| Action            | Scope                                                                                  |
+| ----------------- | -------------------------------------------------------------------------------------- |
+| datasources:write | datasources:\*<br>datasources:uid:\*<br>datasources:uid:kLtEtcRGk (single data source) |
+
+### Examples
+
+**Example Request**:
+
+```http
+PUT /api/datasources/uid/kLtEtcRGk HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+{
+  "id":1,
+  "uid": "updated UID",
+  "orgId":1,
+  "name":"test_datasource",
+  "type":"graphite",
+  "access":"proxy",
+  "url":"http://mydatasource.com",
+  "password":"",
+  "user":"",
+  "database":"",
+  "basicAuth":true,
+  "basicAuthUser":"basicuser",
+  "secureJsonData": {
+    "basicAuthPassword": "basicpassword"
+  },
+  "isDefault":false,
+  "jsonData":null
+}
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+  "datasource": {
+    "id": 1,
+    "uid": "updated UID",
+    "orgId": 1,
+    "name": "test_datasource",
+    "type": "graphite",
+    "typeLogoUrl": "",
+    "access": "proxy",
+    "url": "http://mydatasource.com",
+    "password": "",
+    "user": "",
+    "database": "",
+    "basicAuth": true,
+    "basicAuthUser": "basicuser",
+    "basicAuthPassword": "",
+    "withCredentials": false,
+    "isDefault": false,
+    "jsonData": {},
+    "secureJsonFields": {
+      "basicAuthPassword": true
+    },
+    "version": 1,
+    "readOnly": false
+  },
+  "id": 102,
+  "message": "Datasource updated",
+  "name": "test_datasource"
+}
+```
+
+> **Note:** Similar to [creating a data source](#create-a-data-source), `password` and `basicAuthPassword` should be defined under `secureJsonData` in order to be stored securely as an encrypted blob in the database. Then, the encrypted fields are listed under `secureJsonFields` section in the response.## Update an existing data source by id
+
 ## Delete an existing data source by id
 
 `DELETE /api/datasources/:datasourceId`
+
+> **Warning:** This API is deprecated since Grafana v9.0.0 and will be removed in a future release. Refer to the [API for deleting an existing data source by UID](#delete-an-existing-data-source-by-uid) or to the [API for deleting an existing data source by its name](#delete-an-existing-data-source-by-name)
 
 **Required permissions**
 
@@ -527,7 +624,7 @@ Content-Type: application/json
 {"message":"Data source deleted"}
 ```
 
-## Delete an existing data source by UID
+## Delete an existing data source by uid
 
 `DELETE /api/datasources/uid/:uid`
 
@@ -597,11 +694,19 @@ Content-Type: application/json
 }
 ```
 
-## Data source proxy calls
+## Data source proxy calls by id
+
+> **Warning:** This API is deprecated since Grafana v9.0.0 and will be removed in a future release. Refer to the [new data source API for proxying requests](#data-source-proxy-calls).
 
 `GET /api/datasources/proxy/:datasourceId/*`
 
-Proxies all calls to the actual data source.
+Proxies all calls to the actual data source identified by the `datasourceId`.
+
+## Data source proxy calls
+
+`GET /api/datasources/proxy/uid/:uid/*`
+
+Proxies all calls to the actual data source identified by the `uid`.
 
 ## Check data source health by id
 
@@ -855,117 +960,3 @@ In addition, specific properties of each data source should be added in a reques
 | 403  | Access denied.                                                                                                                                                                   |
 | 404  | Either the data source or plugin required to fulfil the request could not be found.                                                                                              |
 | 500  | Unexpected error. Refer to the body and/or server logs for more details.                                                                                                         |
-
-## Deprecated resources
-
-The following resources have been deprecated. They will be removed in a future release.
-
-### Query a data source by ID
-
-> **Warning:** This API is deprecated since Grafana v8.5.0 and will be removed in a future release. Refer to the [new data source query API](#query-a-data-source-by-id).
-
-Queries a data source having a backend implementation.
-
-`POST /api/tsdb/query`
-
-> **Note:** Grafana's built-in data sources usually have a backend implementation.
-
-**Example Request**:
-
-```http
-POST /api/tsdb/query HTTP/1.1
-Accept: application/json
-Content-Type: application/json
-
-{
-  "from": "1420066800000",
-  "to": "1575845999999",
-  "queries": [
-    {
-      "refId": "A",
-      "intervalMs": 86400000,
-      "maxDataPoints": 1092,
-      "datasourceId": 86,
-      "rawSql": "SELECT 1 as valueOne, 2 as valueTwo",
-      "format": "table"
-    }
-  ]
-}
-```
-
-JSON Body schema:
-
-- **from/to** – Specifies the time range for the queries. The time can be either epoch timestamps in milliseconds or relative using Grafana time units. For example, `now-5m`.
-- **queries.refId** – Specifies an identifier of the query. Defaults to "A".
-- **queries.format** – Specifies the format the data should be returned in. Valid options are `time_series` or `table` depending on the data source.
-- **queries.datasourceId** – Specifies the data source to be queried. Each `query` in the request must have a unique `datasourceId`.
-- **queries.maxDataPoints** - Species the maximum amount of data points that a dashboard panel can render. Defaults to 100.
-- **queries.intervalMs** - Specifies the time series time interval in milliseconds. Defaults to 1000.
-
-In addition, specific properties of each data source should be added in a request. To better understand how to form a query for a certain data source, use the Developer Tools in your browser of choice and inspect the HTTP requests being made to `/api/tsdb/query`.
-
-**Example request for the MySQL data source:**
-
-```http
-POST /api/tsdb/query HTTP/1.1
-Accept: application/json
-Content-Type: application/json
-
-{
-  "from": "1420066800000",
-  "to": "1575845999999",
-  "queries": [
-    {
-      "refId": "A",
-      "intervalMs": 86400000,
-      "maxDataPoints": 1092,
-      "datasourceId": 86,
-      "rawSql": "SELECT\n  time,\n  sum(opened) AS \"Opened\",\n  sum(closed) AS \"Closed\"\nFROM\n  issues_activity\nWHERE\n  $__unixEpochFilter(time) AND\n  period = 'm' AND\n  repo IN('grafana/grafana') AND\n  opened_by IN('Contributor','Grafana Labs')\nGROUP BY 1\nORDER BY 1\n",
-      "format": "time_series"
-    }
-  ]
-}
-```
-
-**Example MySQL time series query response:**
-
-```http
-HTTP/1.1 200
-Content-Type: application/json
-
-{
-  "results": {
-    "A": {
-      "refId": "A",
-      "meta": {
-        "rowCount": 0,
-        "sql": "SELECT\n  time,\n  sum(opened) AS \"Opened\",\n  sum(closed) AS \"Closed\"\nFROM\n  issues_activity\nWHERE\n  time >= 1420066800 AND time <= 1575845999 AND\n  period = 'm' AND\n  repo IN('grafana/grafana') AND\n  opened_by IN('Contributor','Grafana Labs')\nGROUP BY 1\nORDER BY 1\n"
-      },
-      "series": [
-        {
-          "name": "Opened",
-          "points": [
-            [
-              109,
-              1420070400000
-            ],
-            [
-              122,
-              1422748800000
-            ]
-          ]
-        },
-        {
-          "name": "Closed",
-          "points": [
-            [
-              89,
-              1420070400000
-            ]
-          ]
-        }
-      ]
-    }
-  }
-}
-```

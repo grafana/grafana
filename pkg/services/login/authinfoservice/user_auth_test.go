@@ -278,6 +278,16 @@ func TestUserAuth(t *testing.T) {
 
 			// Now reuse first auth module and make sure it's updated to the most recent
 			database.GetTime = func() time.Time { return fixedTime }
+
+			// add oauth info to auth_info to make sure update date does not overwrite it
+			updateAuthCmd := &models.UpdateAuthInfoCommand{UserId: user.Id, AuthModule: "test1", AuthId: "test1", OAuthToken: &oauth2.Token{
+				AccessToken:  "access_token",
+				TokenType:    "token_type",
+				RefreshToken: "refresh_token",
+				Expiry:       fixedTime,
+			}}
+			err = authInfoStore.UpdateAuthInfo(context.Background(), updateAuthCmd)
+			require.Nil(t, err)
 			user, err = srv.LookupAndUpdate(context.Background(), queryOne)
 
 			require.Nil(t, err)
@@ -287,6 +297,8 @@ func TestUserAuth(t *testing.T) {
 
 			require.Nil(t, err)
 			require.Equal(t, "test1", getAuthQuery.Result.AuthModule)
+			// make sure oauth info is not overwritten by update date
+			require.Equal(t, "access_token", getAuthQuery.Result.OAuthAccessToken)
 
 			// Now reuse second auth module and make sure it's updated to the most recent
 			database.GetTime = func() time.Time { return fixedTime.AddDate(0, 0, 1) }

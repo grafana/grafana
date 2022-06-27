@@ -73,7 +73,7 @@ describe('LokiQueryModeller', () => {
         labels: [{ label: 'app', op: '=', value: 'grafana' }],
         operations: [{ id: LokiOperationId.LineContains, params: [''] }],
       })
-    ).toBe('{app="grafana"}');
+    ).toBe('{app="grafana"} |= ``');
   });
 
   it('Can query with line filter contains not operation', () => {

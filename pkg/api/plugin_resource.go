@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -174,7 +173,7 @@ func (hs *HTTPServer) flushStream(stream callResourceClientResponseStream, w htt
 		}
 		if err != nil {
 			if processedStreams == 0 {
-				return errutil.Wrap("failed to receive response from resource call", err)
+				return fmt.Errorf("%v: %w", "failed to receive response from resource call", err)
 			}
 
 			hs.log.Error("Failed to receive response from resource call", "err", err)

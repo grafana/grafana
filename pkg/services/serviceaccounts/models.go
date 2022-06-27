@@ -23,6 +23,10 @@ type ServiceAccount struct {
 	Id int64
 }
 
+type CreateServiceAccountForm struct {
+	Name string `json:"name" binding:"Required"`
+}
+
 type UpdateServiceAccountForm struct {
 	Name       *string          `json:"name"`
 	Role       *models.RoleType `json:"role"`
@@ -67,12 +71,18 @@ type ServiceAccountProfileDTO struct {
 	AvatarUrl     string          `json:"avatarUrl" xorm:"-"`
 	Role          string          `json:"role" xorm:"role"`
 	Teams         []string        `json:"teams" xorm:"-"`
+	Tokens        int64           `json:"tokens,omitempty"`
 	AccessControl map[string]bool `json:"accessControl,omitempty" xorm:"-"`
 }
 
 type ServiceAccountFilter string // used for filtering
 
+type APIKeysMigrationStatus struct {
+	Migrated bool `json:"migrated"`
+}
+
 const (
 	FilterOnlyExpiredTokens ServiceAccountFilter = "expiredTokens"
+	FilterOnlyDisabled      ServiceAccountFilter = "disabled"
 	FilterIncludeAll        ServiceAccountFilter = "all"
 )

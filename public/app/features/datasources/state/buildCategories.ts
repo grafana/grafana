@@ -88,7 +88,7 @@ function sortPlugins(plugins: DataSourcePluginMeta[]) {
       return 1;
     }
 
-    return a.name > b.name ? -1 : 1;
+    return a.name > b.name ? 1 : -1;
   });
 }
 
@@ -191,7 +191,7 @@ function getEnterprisePhantomPlugins(): DataSourcePluginMeta[] {
       imgUrl: 'public/img/plugins/signalfx-logo.svg',
     }),
     getPhantomPlugin({
-      id: 'grafana-azure-devops-datasource',
+      id: 'grafana-azuredevops-datasource',
       description: 'Azure Devops datasource',
       name: 'Azure Devops',
       imgUrl: 'public/img/plugins/azure-devops.png',

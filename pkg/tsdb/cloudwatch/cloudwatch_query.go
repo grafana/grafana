@@ -102,7 +102,7 @@ func (q *cloudWatchQuery) isMultiValuedDimensionExpression() bool {
 	return false
 }
 
-func (q *cloudWatchQuery) buildDeepLink(startTime time.Time, endTime time.Time) (string, error) {
+func (q *cloudWatchQuery) buildDeepLink(startTime time.Time, endTime time.Time, dynamicLabelEnabled bool) (string, error) {
 	if q.isMathExpression() || q.MetricQueryType == MetricQueryTypeQuery {
 		return "", nil
 	}
@@ -117,16 +117,24 @@ func (q *cloudWatchQuery) buildDeepLink(startTime time.Time, endTime time.Time) 
 	}
 
 	if q.isSearchExpression() {
-		link.Metrics = []interface{}{&metricExpression{Expression: q.UsedExpression}}
+		metricExpressions := &metricExpression{Expression: q.UsedExpression}
+		if dynamicLabelEnabled {
+			metricExpressions.Label = q.Label
+		}
+		link.Metrics = []interface{}{metricExpressions}
 	} else {
 		metricStat := []interface{}{q.Namespace, q.MetricName}
 		for dimensionKey, dimensionValues := range q.Dimensions {
 			metricStat = append(metricStat, dimensionKey, dimensionValues[0])
 		}
-		metricStat = append(metricStat, &metricStatMeta{
+		metricStatMeta := &metricStatMeta{
 			Stat:   q.Statistic,
 			Period: q.Period,
-		})
+		}
+		if dynamicLabelEnabled {
+			metricStatMeta.Label = q.Label
+		}
+		metricStat = append(metricStat, metricStatMeta)
 		link.Metrics = []interface{}{metricStat}
 	}
 

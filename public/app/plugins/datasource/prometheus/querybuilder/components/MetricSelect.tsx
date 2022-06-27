@@ -95,7 +95,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     label: select__match-highlight;
     background: inherit;
     padding: inherit;
-    color: ${theme.colors.warning.main};
-    background-color: rgba(${theme.colors.warning.main}, 0.1);
+    color: ${theme.colors.warning.contrastText};
+    background-color: ${theme.colors.warning.main};
   `,
 });

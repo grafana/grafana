@@ -30,6 +30,7 @@ describe('LokiQueryBuilderContainer', () => {
       ),
       onChange: jest.fn(),
       onRunQuery: () => {},
+      showRawQuery: true,
     };
     render(<LokiQueryBuilderContainer {...props} />);
     expect(screen.getByText('testjob')).toBeInTheDocument();

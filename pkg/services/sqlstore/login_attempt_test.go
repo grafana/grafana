@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package sqlstore
 
 import (
@@ -18,7 +15,10 @@ func mockTime(mock time.Time) time.Time {
 	return mock
 }
 
-func TestLoginAttempts(t *testing.T) {
+func TestIntegrationLoginAttempts(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	var beginningOfTime, timePlusOneMinute, timePlusTwoMinutes time.Time
 	var sqlStore *SQLStore
 	user := "user"

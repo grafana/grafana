@@ -39,11 +39,9 @@ export const ConfigEditor: React.FC<Props> = ({ options, onOptionsChange }) => {
         </div>
       )}
 
-      {config.featureToggles.tempoSearch && (
-        <div className="gf-form-group">
-          <SearchSettings options={options} onOptionsChange={onOptionsChange} />
-        </div>
-      )}
+      <div className="gf-form-group">
+        <SearchSettings options={options} onOptionsChange={onOptionsChange} />
+      </div>
 
       <div className="gf-form-group">
         <NodeGraphSettings options={options} onOptionsChange={onOptionsChange} />

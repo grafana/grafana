@@ -144,7 +144,7 @@ export default (navBarTree: NavModelItem[]) => {
 
   navBarActionMap.forEach((navBarAction) => {
     const navBarItem = navBarTree.find((navBarItem) => navBarItem.url === navBarAction.url);
-    if (navBarItem && !navBarItem.hideFromNavbar) {
+    if (navBarItem) {
       navBarActions.push(...navBarAction.actions);
     }
   });

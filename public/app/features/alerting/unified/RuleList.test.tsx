@@ -7,6 +7,7 @@ import { Router } from 'react-router-dom';
 import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
 
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
+import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types';
 import { PromAlertingRuleState, PromApplication } from 'app/types/unified-alerting-dto';
@@ -116,6 +117,10 @@ const ui = {
 };
 
 describe('RuleList', () => {
+  beforeEach(() => {
+    contextSrv.isEditor = true;
+  });
+
   afterEach(() => {
     jest.resetAllMocks();
     setDataSourceSrv(undefined as any);

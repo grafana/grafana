@@ -39,7 +39,7 @@ export interface DashboardPageRouteParams {
   slug?: string;
 }
 
-type DashboardPageRouteSearchParams = {
+export type DashboardPageRouteSearchParams = {
   tab?: string;
   folderId?: string;
   editPanel?: string;
@@ -67,7 +67,12 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-export type Props = Themeable2 &
+type OwnProps = {
+  isPublic?: boolean;
+};
+
+export type Props = OwnProps &
+  Themeable2 &
   GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams> &
   ConnectedProps<typeof connector>;
 
@@ -112,7 +117,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   }
 
   initDashboard() {
-    const { dashboard, match, queryParams } = this.props;
+    const { dashboard, isPublic, match, queryParams } = this.props;
 
     if (dashboard) {
       this.closeDashboard();
@@ -124,7 +129,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       urlType: match.params.type,
       urlFolderId: queryParams.folderId,
       routeName: this.props.route.routeName,
-      fixUrl: true,
+      fixUrl: !isPublic,
     });
 
     // small delay to start live updates
@@ -312,9 +317,9 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, initError, queryParams, theme } = this.props;
+    const { dashboard, initError, queryParams, theme, isPublic } = this.props;
     const { editPanel, viewPanel, updateScrollTop } = this.state;
-    const kioskMode = getKioskMode();
+    const kioskMode = !isPublic ? getKioskMode() : KioskMode.Full;
     const styles = getStyles(theme, kioskMode);
 
     if (!dashboard) {

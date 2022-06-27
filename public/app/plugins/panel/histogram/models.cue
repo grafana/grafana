@@ -14,23 +14,28 @@
 
 package grafanaschema
 
-import ui "github.com/grafana/grafana/packages/grafana-schema/src/schema"
+import (
+	"github.com/grafana/thema"
+	ui "github.com/grafana/grafana/packages/grafana-schema/src/schema"
+)
 
-Panel: {
-    lineages: [
-        [
-            {
-                PanelOptions: {
-                    ui.OptionsWithLegend
-                    ui.OptionsWithTooltip
-                    bucketSize?: int
-                    bucketOffset: int | *0
-                    combine?: bool
-                } @cuetsy(kind="interface")
+Panel: thema.#Lineage & {
+	name: "histogram"
+	seqs: [
+		{
+			schemas: [
+				{
+					PanelOptions: {
+						ui.OptionsWithLegend
+						ui.OptionsWithTooltip
+						bucketSize?:  int
+						bucketOffset: int | *0
+						combine?:     bool
+					} @cuetsy(kind="interface")
 
-                PanelFieldConfig: ui.GraphFieldConfig & {} @cuetsy(kind="interface")
-            }
-        ]
-    ]
-    migrations: []
+					PanelFieldConfig: ui.GraphFieldConfig & {} @cuetsy(kind="interface")
+				},
+			]
+		},
+	]
 }

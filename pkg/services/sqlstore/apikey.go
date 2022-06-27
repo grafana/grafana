@@ -2,6 +2,7 @@ package sqlstore
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"xorm.io/xorm"
@@ -41,12 +42,14 @@ func (ss *SQLStore) GetAPIKeys(ctx context.Context, query *models.GetApiKeysQuer
 	})
 }
 
-// GetAllOrgsAPIKeys queries the database for valid non SA APIKeys across all orgs
-func (ss *SQLStore) GetAllOrgsAPIKeys(ctx context.Context) []*models.ApiKey {
+// GetAllAPIKeys queries the database for valid non SA APIKeys across all orgs
+func (ss *SQLStore) GetAllAPIKeys(ctx context.Context, orgID int64) []*models.ApiKey {
 	result := make([]*models.ApiKey, 0)
 	err := ss.WithDbSession(ctx, func(dbSession *DBSession) error {
-		sess := dbSession. //CHECK how many API keys do our clients have?  Can we load them all?
-					Where("(expires IS NULL OR expires >= ?) AND service_account_id IS NULL", timeNow().Unix()).Asc("name")
+		sess := dbSession.Where("service_account_id IS NULL").Asc("name")
+		if orgID != -1 {
+			sess = sess.Where("org_id=?", orgID)
+		}
 		return sess.Find(&result)
 	})
 	if err != nil {
@@ -143,4 +146,20 @@ func (ss *SQLStore) GetApiKeyByName(ctx context.Context, query *models.GetApiKey
 		query.Result = &apikey
 		return nil
 	})
+}
+
+func (ss *SQLStore) GetAPIKeyByHash(ctx context.Context, hash string) (*models.ApiKey, error) {
+	var apikey models.ApiKey
+	err := ss.WithDbSession(ctx, func(sess *DBSession) error {
+		has, err := sess.Table("api_key").Where(fmt.Sprintf("%s = ?", dialect.Quote("key")), hash).Get(&apikey)
+		if err != nil {
+			return err
+		} else if !has {
+			return models.ErrInvalidApiKey
+		}
+
+		return nil
+	})
+
+	return &apikey, err
 }

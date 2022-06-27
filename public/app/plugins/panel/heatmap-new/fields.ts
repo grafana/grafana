@@ -5,37 +5,26 @@ import {
   FieldType,
   formattedValueToString,
   getDisplayProcessor,
-  getFieldDisplayName,
-  getValueFormat,
   GrafanaTheme2,
-  incrRoundDn,
-  incrRoundUp,
+  outerJoinDataFrames,
   PanelData,
+  ValueFormatter,
 } from '@grafana/data';
-import { calculateHeatmapFromData, bucketsToScanlines } from 'app/features/transformers/calculateHeatmap/heatmap';
+import {
+  calculateHeatmapFromData,
+  isHeatmapCellsDense,
+  readHeatmapRowsCustomMeta,
+  rowsToCellsHeatmap,
+} from 'app/features/transformers/calculateHeatmap/heatmap';
+import { HeatmapCellLayout } from 'app/features/transformers/calculateHeatmap/models.gen';
 
-import { HeatmapSourceMode, PanelOptions } from './models.gen';
-
-export const enum BucketLayout {
-  le = 'le',
-  ge = 'ge',
-}
-
-export interface HeatmapDataMapping {
-  lookup: Array<number[] | null>;
-  high: number[]; // index of values bigger than the max Y
-  low: number[]; // index of values less than the min Y
-}
-
-export const HEATMAP_NOT_SCANLINES_ERROR = 'A calculated heatmap was expected, but not found';
+import { CellValues, PanelOptions } from './models.gen';
+import { boundedMinMax } from './utils';
 
 export interface HeatmapData {
-  // List of heatmap frames
-  heatmap?: DataFrame;
-  exemplars?: DataFrame;
-  exemplarsMappings?: HeatmapDataMapping;
-
-  yAxisValues?: Array<number | string | null>;
+  heatmap?: DataFrame; // data we will render
+  exemplars?: DataFrame; // optionally linked exemplars
+  exemplarColor?: string;
 
   xBucketSize?: number;
   yBucketSize?: number;
@@ -43,8 +32,12 @@ export interface HeatmapData {
   xBucketCount?: number;
   yBucketCount?: number;
 
-  xLayout?: BucketLayout;
-  yLayout?: BucketLayout;
+  xLayout?: HeatmapCellLayout;
+  yLayout?: HeatmapCellLayout;
+
+  // color scale range
+  minValue?: number;
+  maxValue?: number;
 
   // Print a heatmap cell value
   display?: (v: number) => string;
@@ -54,135 +47,100 @@ export interface HeatmapData {
 }
 
 export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme: GrafanaTheme2): HeatmapData {
-  const frames = data.series;
+  let frames = data.series;
   if (!frames?.length) {
     return {};
   }
 
-  const { source } = options;
-
   const exemplars = data.annotations?.find((f) => f.name === 'exemplar');
 
-  if (source === HeatmapSourceMode.Calculate) {
-    // TODO, check for error etc
-    return getHeatmapData(calculateHeatmapFromData(frames, options.heatmap ?? {}), exemplars, theme);
+  if (options.calculate) {
+    return getDenseHeatmapData(calculateHeatmapFromData(frames, options.calculation ?? {}), exemplars, options, theme);
   }
 
-  let sparseCellsHeatmap = frames.find((f) => f.meta?.type === DataFrameType.HeatmapSparse);
-  if (sparseCellsHeatmap) {
-    return getSparseHeatmapData(sparseCellsHeatmap, exemplars, theme);
-  }
+  // Check for known heatmap types
+  let rowsHeatmap: DataFrame | undefined = undefined;
+  for (const frame of frames) {
+    switch (frame.meta?.type) {
+      case DataFrameType.HeatmapCells:
+        return isHeatmapCellsDense(frame)
+          ? getDenseHeatmapData(frame, exemplars, options, theme)
+          : getSparseHeatmapData(frame, exemplars, options, theme);
 
-  // Find a well defined heatmap
-  let scanlinesHeatmap = frames.find((f) => f.meta?.type === DataFrameType.HeatmapScanlines);
-  if (scanlinesHeatmap) {
-    return getHeatmapData(scanlinesHeatmap, exemplars, theme);
-  }
-
-  let bucketsHeatmap = frames.find((f) => f.meta?.type === DataFrameType.HeatmapBuckets);
-  if (bucketsHeatmap) {
-    return {
-      yAxisValues: frames[0].fields.flatMap((field) =>
-        field.type === FieldType.number ? getFieldDisplayName(field) : []
-      ),
-      ...getHeatmapData(bucketsToScanlines(bucketsHeatmap), exemplars, theme),
-    };
-  }
-
-  if (source === HeatmapSourceMode.Data) {
-    let first = frames[0];
-    if (first.meta?.type !== DataFrameType.HeatmapScanlines) {
-      first = bucketsToScanlines(frames[0]);
+      case DataFrameType.HeatmapRows:
+        rowsHeatmap = frame; // the default format
     }
-    return getHeatmapData(first, exemplars, theme);
   }
 
-  // TODO, check for error etc
-  return getHeatmapData(calculateHeatmapFromData(frames, options.heatmap ?? {}), exemplars, theme);
+  // Everything past here assumes a field for each row in the heatmap (buckets)
+  if (!rowsHeatmap) {
+    if (frames.length > 1) {
+      rowsHeatmap = [
+        outerJoinDataFrames({
+          frames,
+        })!,
+      ][0];
+    } else {
+      rowsHeatmap = frames[0];
+    }
+  }
+
+  return getDenseHeatmapData(
+    rowsToCellsHeatmap({
+      unit: options.yAxis?.unit, // used to format the ordinal lookup values
+      decimals: options.yAxis?.decimals,
+      ...options.rowsFrame,
+      frame: rowsHeatmap,
+    }),
+    exemplars,
+    options,
+    theme
+  );
 }
-
-const getHeatmapFields = (dataFrame: DataFrame): Array<Field | undefined> => {
-  const xField: Field | undefined = dataFrame.fields.find((f) => f.name === 'xMin');
-  const yField: Field | undefined = dataFrame.fields.find((f) => f.name === 'yMin');
-  const countField: Field | undefined = dataFrame.fields.find((f) => f.name === 'count');
-
-  return [xField, yField, countField];
-};
-
-export const getExemplarsMapping = (heatmapData: HeatmapData, rawData: DataFrame): HeatmapDataMapping => {
-  if (heatmapData.heatmap?.meta?.type !== DataFrameType.HeatmapScanlines) {
-    throw HEATMAP_NOT_SCANLINES_ERROR;
-  }
-
-  const [fxs, fys] = getHeatmapFields(heatmapData.heatmap!);
-
-  if (!fxs || !fys) {
-    throw HEATMAP_NOT_SCANLINES_ERROR;
-  }
-
-  const mapping: HeatmapDataMapping = {
-    lookup: new Array(heatmapData.xBucketCount! * heatmapData.yBucketCount!).fill(null),
-    high: [],
-    low: [],
-  };
-
-  const xos: number[] | undefined = rawData.fields.find((f: Field) => f.type === 'time')?.values.toArray();
-  const yos: number[] | undefined = rawData.fields.find((f: Field) => f.type === 'number')?.values.toArray();
-
-  if (!xos || !yos) {
-    return mapping;
-  }
-
-  const xsmin = fxs.values.get(0);
-  const ysmin = fys.values.get(0);
-  const xsmax = fxs.values.get(fxs.values.length - 1) + heatmapData.xBucketSize!;
-  const ysmax = fys.values.get(fys.values.length - 1) + heatmapData.yBucketSize!;
-  xos.forEach((xo: number, i: number) => {
-    const yo = yos[i];
-    const xBucketIdx = Math.floor(incrRoundDn(incrRoundUp((xo - xsmin) / heatmapData.xBucketSize!, 1e-7), 1e-7));
-    const yBucketIdx = Math.floor(incrRoundDn(incrRoundUp((yo - ysmin) / heatmapData.yBucketSize!, 1e-7), 1e-7));
-
-    if (xo < xsmin || yo < ysmin) {
-      mapping.low.push(i);
-      return;
-    }
-
-    if (xo >= xsmax || yo >= ysmax) {
-      mapping.high.push(i);
-      return;
-    }
-
-    const index = xBucketIdx * heatmapData.yBucketCount! + yBucketIdx;
-    if (mapping.lookup[index] === null) {
-      mapping.lookup[index] = [];
-    }
-    mapping.lookup[index]?.push(i);
-  });
-  return mapping;
-};
 
 const getSparseHeatmapData = (
   frame: DataFrame,
   exemplars: DataFrame | undefined,
+  options: PanelOptions,
   theme: GrafanaTheme2
 ): HeatmapData => {
-  if (frame.meta?.type !== DataFrameType.HeatmapSparse) {
+  if (frame.meta?.type !== DataFrameType.HeatmapCells || isHeatmapCellsDense(frame)) {
     return {
       warning: 'Expected sparse heatmap format',
       heatmap: frame,
     };
   }
 
-  const disp = frame.fields[3].display ?? getValueFormat('short');
+  // y axis tick label display
+  updateFieldDisplay(frame.fields[1], options.yAxis, theme);
+
+  // cell value display
+  const disp = updateFieldDisplay(frame.fields[3], options.cellValues, theme);
+
+  let [minValue, maxValue] = boundedMinMax(
+    frame.fields[3].values.toArray(),
+    options.color.min,
+    options.color.max,
+    options.filterValues?.le,
+    options.filterValues?.ge
+  );
+
   return {
     heatmap: frame,
+    minValue,
+    maxValue,
     exemplars,
     display: (v) => formattedValueToString(disp(v)),
   };
 };
 
-const getHeatmapData = (frame: DataFrame, exemplars: DataFrame | undefined, theme: GrafanaTheme2): HeatmapData => {
-  if (frame.meta?.type !== DataFrameType.HeatmapScanlines) {
+const getDenseHeatmapData = (
+  frame: DataFrame,
+  exemplars: DataFrame | undefined,
+  options: PanelOptions,
+  theme: GrafanaTheme2
+): HeatmapData => {
+  if (frame.meta?.type !== DataFrameType.HeatmapCells) {
     return {
       warning: 'Expected heatmap scanlines format',
       heatmap: frame,
@@ -193,10 +151,53 @@ const getHeatmapData = (frame: DataFrame, exemplars: DataFrame | undefined, them
     return { heatmap: frame };
   }
 
-  // Y field values (display is used in the axis)
-  if (!frame.fields[1].display) {
-    frame.fields[1].display = getDisplayProcessor({ field: frame.fields[1], theme });
+  const meta = readHeatmapRowsCustomMeta(frame);
+  let xName: string | undefined = undefined;
+  let yName: string | undefined = undefined;
+  let valueField: Field | undefined = undefined;
+
+  // validate field display properties
+  for (const field of frame.fields) {
+    switch (field.name) {
+      case 'y':
+        yName = field.name;
+
+      case 'yMin':
+      case 'yMax': {
+        if (!yName) {
+          yName = field.name;
+        }
+        if (meta.yOrdinalDisplay == null) {
+          updateFieldDisplay(field, options.yAxis, theme);
+        }
+        break;
+      }
+
+      case 'x':
+      case 'xMin':
+      case 'xMax':
+        xName = field.name;
+        break;
+
+      default: {
+        if (field.type === FieldType.number && !valueField) {
+          valueField = field;
+        }
+      }
+    }
   }
+
+  if (!yName) {
+    return { warning: 'Missing Y field', heatmap: frame };
+  }
+  if (!yName) {
+    return { warning: 'Missing X field', heatmap: frame };
+  }
+  if (!valueField) {
+    return { warning: 'Missing value field', heatmap: frame };
+  }
+
+  const disp = updateFieldDisplay(valueField, options.cellValues, theme);
 
   // infer bucket sizes from data (for now)
   // the 'heatmap-scanlines' dense frame format looks like:
@@ -215,27 +216,51 @@ const getHeatmapData = (frame: DataFrame, exemplars: DataFrame | undefined, them
   let yBinIncr = ys[1] - ys[0];
   let xBinIncr = xs[yBinQty] - xs[0];
 
-  // The "count" field
-  const disp = frame.fields[2].display ?? getValueFormat('short');
+  let [minValue, maxValue] = boundedMinMax(
+    valueField.values.toArray(),
+    options.color.min,
+    options.color.max,
+    options.filterValues?.le,
+    options.filterValues?.ge
+  );
+
   const data: HeatmapData = {
     heatmap: frame,
-    exemplars,
+    exemplars: exemplars?.length ? exemplars : undefined,
     xBucketSize: xBinIncr,
     yBucketSize: yBinIncr,
     xBucketCount: xBinQty,
     yBucketCount: yBinQty,
 
+    minValue,
+    maxValue,
+
     // TODO: improve heuristic
-    xLayout: frame.fields[0].name === 'xMax' ? BucketLayout.le : BucketLayout.ge,
-    yLayout: frame.fields[1].name === 'yMax' ? BucketLayout.le : BucketLayout.ge,
+    xLayout:
+      xName === 'xMax' ? HeatmapCellLayout.le : xName === 'xMin' ? HeatmapCellLayout.ge : HeatmapCellLayout.unknown,
+    yLayout:
+      yName === 'yMax' ? HeatmapCellLayout.le : yName === 'yMin' ? HeatmapCellLayout.ge : HeatmapCellLayout.unknown,
 
     display: (v) => formattedValueToString(disp(v)),
   };
 
-  if (exemplars) {
-    data.exemplarsMappings = getExemplarsMapping(data, exemplars);
-    console.log('EXEMPLARS', data.exemplarsMappings, data.exemplars);
-  }
-
   return data;
 };
+
+function updateFieldDisplay(field: Field, opts: CellValues | undefined, theme: GrafanaTheme2): ValueFormatter {
+  if (opts?.unit?.length || opts?.decimals != null) {
+    const { unit, decimals } = opts;
+    field.display = undefined;
+    field.config = { ...field.config };
+    if (unit?.length) {
+      field.config.unit = unit;
+    }
+    if (decimals != null) {
+      field.config.decimals = decimals;
+    }
+  }
+  if (!field.display) {
+    field.display = getDisplayProcessor({ field, theme });
+  }
+  return field.display;
+}

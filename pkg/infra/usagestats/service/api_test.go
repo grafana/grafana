@@ -103,9 +103,6 @@ func contextProvider(tc *testContext) web.Handler {
 			SkipCache:    true,
 			Logger:       log.New("test"),
 		}
-		c.Map(reqCtx)
-
 		c.Req = c.Req.WithContext(ctxkey.Set(c.Req.Context(), reqCtx))
-		c.Map(c.Req)
 	}
 }

@@ -1,8 +1,10 @@
-+++
-aliases = ["/docs/grafana/latest/panels/working-with-panels/apply-color-to-series/", "/docs/sources/panels/working-with-panels/apply-color-to-series/"]
-title = "Apply color to series and fields"
-weight = 50
-+++
+---
+aliases:
+  - /docs/grafana/latest/panels/working-with-panels/apply-color-to-series/
+  - /docs/sources/panels/working-with-panels/apply-color-to-series/
+title: Apply color to series and fields
+weight: 50
+---
 
 # Apply color to series and fields
 
@@ -13,7 +15,7 @@ Continuous color interpolates a color using the percentage of a value relative t
 
 ## Before you begin
 
-- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).
+- [Add a panel to a dashboard]({{< relref "add-panel/" >}}).
 
 **To apply color to series and fields**:
 

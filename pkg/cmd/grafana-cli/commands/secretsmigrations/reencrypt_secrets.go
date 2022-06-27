@@ -86,7 +86,7 @@ func (s b64Secret) reencrypt(ctx context.Context, secretsSrv *manager.SecretsSer
 		}
 
 		err := sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-			decoded, err := base64.StdEncoding.DecodeString(row.Secret)
+			decoded, err := s.encoding.DecodeString(row.Secret)
 			if err != nil {
 				logger.Warn("Could not decode base64-encoded secret while re-encrypting it", "table", s.tableName, "id", row.Id, "error", err)
 				return err
@@ -104,7 +104,7 @@ func (s b64Secret) reencrypt(ctx context.Context, secretsSrv *manager.SecretsSer
 				return err
 			}
 
-			encoded := base64.StdEncoding.EncodeToString(encrypted)
+			encoded := s.encoding.EncodeToString(encrypted)
 			if s.hasUpdatedColumn {
 				updateSQL := fmt.Sprintf("UPDATE %s SET %s = ?, updated = ? WHERE id = ?", s.tableName, s.columnName)
 				_, err = sess.Exec(updateSQL, encoded, nowInUTC(), row.Id)
@@ -267,7 +267,7 @@ func (s alertingSecret) reencrypt(ctx context.Context, secretsSrv *manager.Secre
 }
 
 func ReEncryptSecrets(_ utils.CommandLine, runner runner.Runner) error {
-	if !runner.Features.IsEnabled(featuremgmt.FlagEnvelopeEncryption) {
+	if runner.Features.IsEnabled(featuremgmt.FlagDisableEnvelopeEncryption) {
 		logger.Warn("Envelope encryption is not enabled, quitting...")
 		return nil
 	}
@@ -276,10 +276,10 @@ func ReEncryptSecrets(_ utils.CommandLine, runner runner.Runner) error {
 		reencrypt(context.Context, *manager.SecretsService, *sqlstore.SQLStore)
 	}{
 		simpleSecret{tableName: "dashboard_snapshot", columnName: "dashboard_encrypted"},
-		b64Secret{simpleSecret: simpleSecret{tableName: "user_auth", columnName: "o_auth_access_token"}},
-		b64Secret{simpleSecret: simpleSecret{tableName: "user_auth", columnName: "o_auth_refresh_token"}},
-		b64Secret{simpleSecret: simpleSecret{tableName: "user_auth", columnName: "o_auth_token_type"}},
-		b64Secret{simpleSecret: simpleSecret{tableName: "secrets", columnName: "value"}, hasUpdatedColumn: true},
+		b64Secret{simpleSecret: simpleSecret{tableName: "user_auth", columnName: "o_auth_access_token"}, encoding: base64.StdEncoding},
+		b64Secret{simpleSecret: simpleSecret{tableName: "user_auth", columnName: "o_auth_refresh_token"}, encoding: base64.StdEncoding},
+		b64Secret{simpleSecret: simpleSecret{tableName: "user_auth", columnName: "o_auth_token_type"}, encoding: base64.StdEncoding},
+		b64Secret{simpleSecret: simpleSecret{tableName: "secrets", columnName: "value"}, hasUpdatedColumn: true, encoding: base64.RawStdEncoding},
 		jsonSecret{tableName: "data_source"},
 		jsonSecret{tableName: "plugin_setting"},
 		alertingSecret{},

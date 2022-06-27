@@ -4,6 +4,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import { renderMarkdown } from '@grafana/data';
 import { HorizontalGroup, Pagination, VerticalGroup } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
+import { contextSrv } from 'app/core/core';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { OrgUser, OrgRole, StoreState } from 'app/types';
 
@@ -106,6 +107,7 @@ export class UsersListPage extends PureComponent<Props, State> {
         <VerticalGroup spacing="md">
           <UsersTable
             users={paginatedUsers}
+            orgId={contextSrv.user.orgId}
             onRoleChange={(role, user) => this.onRoleChange(role, user)}
             onRemoveUser={(user) => this.props.removeUser(user.userId)}
           />

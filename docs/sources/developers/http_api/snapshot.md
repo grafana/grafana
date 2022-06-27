@@ -1,9 +1,16 @@
-+++
-aliases = ["/docs/grafana/latest/developers/http_api/snapshot/", "/docs/grafana/latest/http_api/snapshot/"]
-description = "Grafana HTTP API"
-keywords = ["grafana", "http", "documentation", "api", "snapshot"]
-title = "HTTP Snapshot API "
-+++
+---
+aliases:
+  - /docs/grafana/latest/developers/http_api/snapshot/
+  - /docs/grafana/latest/http_api/snapshot/
+description: Grafana HTTP API
+keywords:
+  - grafana
+  - http
+  - documentation
+  - api
+  - snapshot
+title: 'HTTP Snapshot API '
+---
 
 # Snapshot API
 
@@ -22,7 +29,6 @@ title = "HTTP Snapshot API "
     {
       "dashboard": {
         "editable":false,
-        "hideControls":true,
         "nav":[
         {
           "enable":false,
@@ -150,7 +156,6 @@ Content-Type: application/json
   },
   "dashboard": {
     "editable":false,
-    "hideControls":true,
     "nav": [
       {
         "enable":false,
