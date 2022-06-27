@@ -27,6 +27,7 @@ export interface AxisProps {
   values?: Axis.Values;
   isTime?: boolean;
   timeZone?: TimeZone;
+  color?: string;
 }
 
 export const UPLOT_AXIS_FONT_SIZE = 12;
@@ -106,6 +107,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       theme,
       tickLabelRotation,
       size,
+      color,
     } = this.props;
 
     const font = `${UPLOT_AXIS_FONT_SIZE}px ${theme.typography.fontFamily}`;
@@ -119,7 +121,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
     let config: Axis = {
       scale: scaleKey,
       show,
-      stroke: theme.colors.text.primary,
+      stroke: color ?? theme.colors.text.primary,
       side: getUPlotSideFromAxis(placement),
       font,
       size:

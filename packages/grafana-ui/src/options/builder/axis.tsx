@@ -81,6 +81,18 @@ export function addAxisConfig(
           { value: false, label: 'Off' },
         ],
       },
+    })
+    .addRadio({
+      path: 'axisColorFromSeries',
+      name: 'Color',
+      category,
+      defaultValue: false,
+      settings: {
+        options: [
+          { value: false, label: 'Auto' },
+          { value: true, label: 'From series' },
+        ],
+      },
     });
 
   if (!hideScale) {
