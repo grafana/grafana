@@ -1,18 +1,30 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
+import { Provider } from 'react-redux';
 
 import { LayoutModes } from '@grafana/data';
+import { configureStore } from 'app/store/configureStore';
+import { DataSourcesState } from 'app/types';
 
 import DataSourcesList from './DataSourcesList';
 import { getMockDataSources } from './__mocks__/dataSourcesMocks';
+import { initialState } from './state/reducers';
 
-const setup = () => {
-  const props = {
-    dataSources: getMockDataSources(3),
-    layoutMode: LayoutModes.Grid,
-  };
+const setup = (stateOverride?: Partial<DataSourcesState>) => {
+  const store = configureStore({
+    dataSources: {
+      ...initialState,
+      dataSources: getMockDataSources(3),
+      layoutMode: LayoutModes.Grid,
+      ...stateOverride,
+    },
+  });
 
-  return render(<DataSourcesList {...props} />);
+  return render(
+    <Provider store={store}>
+      <DataSourcesList />
+    </Provider>
+  );
 };
 
 describe('DataSourcesList', () => {
