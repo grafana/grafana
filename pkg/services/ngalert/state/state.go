@@ -200,7 +200,7 @@ func (a *State) setEndsAt(alertRule *ngModels.AlertRule, result eval.Result) {
 		ends = time.Second * time.Duration(alertRule.IntervalSeconds)
 	}
 
-	a.EndsAt = result.EvaluatedAt.Add(ends * 10) //LOGZ.IO GRAFANA CHANGE :: Increase interval to keep last state of alert
+	a.EndsAt = result.EvaluatedAt.Add(ends * 7) //LOGZ.IO GRAFANA CHANGE :: Increase interval to keep last state of alert
 }
 
 func (a *State) GetLabels(opts ...ngModels.LabelOption) map[string]string {

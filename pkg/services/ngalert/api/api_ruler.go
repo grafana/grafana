@@ -511,6 +511,14 @@ func calculateChanges(ctx context.Context, ruleStore store.RuleStore, orgId int6
 	var toAdd, toDelete []*ngmodels.AlertRule
 	var toUpdate []ruleUpdate
 	for _, r := range submittedRules {
+		// LOGZ.IO GRAFANA CHANGE :: Prevent setting annotation and labels to null json string
+		if r.Annotations == nil {
+			r.Annotations = map[string]string{}
+		}
+		if r.Labels == nil {
+			r.Labels = map[string]string{}
+		}
+		// LOGZ.IO GRAFANA CHANGE :: end
 		var existing *ngmodels.AlertRule = nil
 
 		if r.UID != "" {
