@@ -107,7 +107,6 @@ func (st *DBstore) UpdateAlertmanagerConfiguration(ctx context.Context, cmd *mod
 			cmd.OrgID,
 			cmd.FetchedConfigurationHash,
 		)
-		//st.Logger.Info("query", "driver", st.SQLStore.Dialect.DriverName())
 		if err != nil {
 			return err
 		}
@@ -125,6 +124,22 @@ func (st *DBstore) UpdateAlertmanagerConfiguration(ctx context.Context, cmd *mod
 
 func getInsertQuery(driver string) string {
 	switch driver {
+	case "mysql":
+		return `
+		INSERT INTO alert_configuration
+		(alertmanager_configuration, configuration_hash, configuration_version, org_id, created_at, %s) 
+		SELECT T.* FROM (SELECT ? AS alertmanager_configuration,? AS configuration_hash,? AS configuration_version,? AS org_id,? AS created_at,? AS 'default') AS T
+		WHERE
+		EXISTS (
+			SELECT 1 
+			FROM alert_configuration 
+			WHERE 
+				org_id = ? 
+			AND 
+				id = (SELECT MAX(id) FROM alert_configuration WHERE org_id = ?) 
+			AND 
+				configuration_hash = ?
+		)`
 	case "postgres":
 		return `
 		INSERT INTO alert_configuration
