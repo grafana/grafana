@@ -57,9 +57,9 @@ func GrafanaJavascriptAgentLogMessageHandler(store *frontendlogging.SourceMapSto
 		// Meta object is standard across event types, adding it globally.
 
 		if event.Logs != nil && len(event.Logs) > 0 {
-			var ctx = frontendlogging.CtxVector{}
-			ctx = event.AddMetaToContext(ctx)
 			for _, logEntry := range event.Logs {
+				var ctx = frontendlogging.CtxVector{}
+				ctx = event.AddMetaToContext(ctx)
 				ctx = append(ctx, "kind", "log", "original_timestamp", logEntry.Timestamp)
 
 				for k, v := range frontendlogging.KeyValToInterfaceMap(logEntry.KeyValContext()) {
@@ -91,10 +91,10 @@ func GrafanaJavascriptAgentLogMessageHandler(store *frontendlogging.SourceMapSto
 		}
 
 		if event.Measurements != nil && len(event.Measurements) > 0 {
-			var ctx = frontendlogging.CtxVector{}
-			ctx = event.AddMetaToContext(ctx)
 			for _, measurementEntry := range event.Measurements {
 				for measurementName, measurementValue := range measurementEntry.Values {
+					var ctx = frontendlogging.CtxVector{}
+					ctx = event.AddMetaToContext(ctx)
 					ctx = append(ctx, measurementName, measurementValue)
 					ctx = append(ctx, "kind", "measurement", "original_timestamp", measurementEntry.Timestamp)
 					frontendLogger.Info("Measurement: "+measurementEntry.Type, ctx...)
@@ -102,9 +102,9 @@ func GrafanaJavascriptAgentLogMessageHandler(store *frontendlogging.SourceMapSto
 			}
 		}
 		if event.Exceptions != nil && len(event.Exceptions) > 0 {
-			var ctx = frontendlogging.CtxVector{}
-			ctx = event.AddMetaToContext(ctx)
 			for _, exception := range event.Exceptions {
+				var ctx = frontendlogging.CtxVector{}
+				ctx = event.AddMetaToContext(ctx)
 				exception := exception
 				transformedException := frontendlogging.TransformException(&exception, store)
 				ctx = append(ctx, "kind", "exception", "type", transformedException.Type, "value", transformedException.Value, "stacktrace", transformedException.String())
