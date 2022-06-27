@@ -23,7 +23,7 @@ import { defaultCondition } from 'app/features/expressions/utils/expressionTypes
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { AlertingQueryRunner } from '../../state/AlertingQueryRunner';
-import { getDefaultOrFirstCompatibleDataSource, getFirstCompatibleDataSource } from '../../utils/datasource';
+import { getDefaultOrFirstCompatibleDataSource } from '../../utils/datasource';
 
 import { QueryRows } from './QueryRows';
 
@@ -151,7 +151,7 @@ export class QueryEditor extends PureComponent<Props, State> {
           onRunQueries={this.onRunQueries}
         />
         <HorizontalGroup spacing="sm" align="flex-start">
-          <Tooltip content={'You appear to have no compatible data sources'}>
+          <Tooltip content={'You appear to have no compatible data sources'} show={noCompatibleDataSources}>
             <Button
               type="button"
               icon="plus"
