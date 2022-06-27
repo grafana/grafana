@@ -28,28 +28,31 @@ import (
 //go:generate mockery --name Evaluator --structname FakeEvaluator --inpackage --filename evaluator_mock.go --with-expecter
 type Evaluator interface {
 	// ConditionEval executes conditions and evaluates the result.
-	ConditionEval(condition *models.Condition, now time.Time, expressionService *expr.Service) (Results, error)
+	ConditionEval(condition *models.Condition, now time.Time) (Results, error)
 	// QueriesAndExpressionsEval executes queries and expressions and returns the result.
-	QueriesAndExpressionsEval(orgID int64, data []models.AlertQuery, now time.Time, expressionService *expr.Service) (*backend.QueryDataResponse, error)
+	QueriesAndExpressionsEval(orgID int64, data []models.AlertQuery, now time.Time) (*backend.QueryDataResponse, error)
 }
 
 type evaluatorImpl struct {
-	cfg             *setting.Cfg
-	log             log.Logger
-	dataSourceCache datasources.CacheService
-	secretsService  secrets.Service
+	cfg               *setting.Cfg
+	log               log.Logger
+	dataSourceCache   datasources.CacheService
+	secretsService    secrets.Service
+	expressionService *expr.Service
 }
 
 func NewEvaluator(
 	cfg *setting.Cfg,
 	log log.Logger,
 	datasourceCache datasources.CacheService,
-	secretsService secrets.Service) Evaluator {
+	secretsService secrets.Service,
+	expressionService *expr.Service) Evaluator {
 	return &evaluatorImpl{
-		cfg:             cfg,
-		log:             log,
-		dataSourceCache: datasourceCache,
-		secretsService:  secretsService,
+		cfg:               cfg,
+		log:               log,
+		dataSourceCache:   datasourceCache,
+		secretsService:    secretsService,
+		expressionService: expressionService,
 	}
 }
 
@@ -588,26 +591,26 @@ func (evalResults Results) AsDataFrame() data.Frame {
 }
 
 // ConditionEval executes conditions and evaluates the result.
-func (e *evaluatorImpl) ConditionEval(condition *models.Condition, now time.Time, expressionService *expr.Service) (Results, error) {
+func (e *evaluatorImpl) ConditionEval(condition *models.Condition, now time.Time) (Results, error) {
 	alertCtx, cancelFn := context.WithTimeout(context.Background(), e.cfg.UnifiedAlerting.EvaluationTimeout)
 	defer cancelFn()
 
 	alertExecCtx := AlertExecCtx{OrgID: condition.OrgID, Ctx: alertCtx, ExpressionsEnabled: e.cfg.ExpressionsEnabled, Log: e.log}
 
-	execResult := executeCondition(alertExecCtx, condition, now, expressionService, e.dataSourceCache, e.secretsService)
+	execResult := executeCondition(alertExecCtx, condition, now, e.expressionService, e.dataSourceCache, e.secretsService)
 
 	evalResults := evaluateExecutionResult(execResult, now)
 	return evalResults, nil
 }
 
 // QueriesAndExpressionsEval executes queries and expressions and returns the result.
-func (e *evaluatorImpl) QueriesAndExpressionsEval(orgID int64, data []models.AlertQuery, now time.Time, expressionService *expr.Service) (*backend.QueryDataResponse, error) {
+func (e *evaluatorImpl) QueriesAndExpressionsEval(orgID int64, data []models.AlertQuery, now time.Time) (*backend.QueryDataResponse, error) {
 	alertCtx, cancelFn := context.WithTimeout(context.Background(), e.cfg.UnifiedAlerting.EvaluationTimeout)
 	defer cancelFn()
 
 	alertExecCtx := AlertExecCtx{OrgID: orgID, Ctx: alertCtx, ExpressionsEnabled: e.cfg.ExpressionsEnabled, Log: e.log}
 
-	execResult, err := executeQueriesAndExpressions(alertExecCtx, data, now, expressionService, e.dataSourceCache, e.secretsService)
+	execResult, err := executeQueriesAndExpressions(alertExecCtx, data, now, e.expressionService, e.dataSourceCache, e.secretsService)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute conditions: %w", err)
 	}
