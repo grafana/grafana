@@ -66,7 +66,7 @@ func GrafanaJavascriptAgentLogMessageHandler(store *frontendlogging.SourceMapSto
 					ctx = append(ctx, k, v)
 				}
 				switch logEntry.LogLevel {
-				case frontendlogging.LogLevelDebug:
+				case frontendlogging.LogLevelDebug, frontendlogging.LogLevelTrace:
 					{
 						ctx = append(ctx, "original_log_level", logEntry.LogLevel)
 						frontendLogger.Debug(logEntry.Message, ctx...)

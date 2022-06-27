@@ -4509,6 +4509,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/runtime@workspace:packages/grafana-runtime"
   dependencies:
+    "@grafana/agent-web": ^0.3.0
     "@grafana/data": 9.1.0-pre
     "@grafana/e2e-selectors": 9.1.0-pre
     "@grafana/tsconfig": ^1.2.0-rc1
