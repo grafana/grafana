@@ -4670,18 +4670,18 @@ exports[`better eslint`] = {
       [145, 16, 12, "Do not use any type assertions.", "1619708599"],
       [145, 25, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/dashboard/components/DashboardPrompt/DashboardPrompt.tsx:3611825383": [
+    "public/app/features/dashboard/components/DashboardPrompt/DashboardPrompt.tsx:504165216": [
       [77, 15, 51, "Do not use any type assertions.", "3757670082"],
       [78, 18, 33, "Do not use any type assertions.", "1234314966"],
       [167, 52, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [189, 39, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [198, 62, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [206, 27, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [206, 39, 19, "Do not use any type assertions.", "3284667245"],
-      [206, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [207, 28, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [207, 40, 20, "Do not use any type assertions.", "2225958749"],
-      [207, 57, 3, "Unexpected any. Specify a different type.", "193409811"]
+      [186, 39, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [195, 62, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [203, 27, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [203, 39, 19, "Do not use any type assertions.", "3284667245"],
+      [203, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [204, 28, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [204, 40, 20, "Do not use any type assertions.", "2225958749"],
+      [204, 57, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/dashboard/components/DashboardRow/DashboardRow.test.tsx:3204880669": [
       [9, 40, 3, "Unexpected any. Specify a different type.", "193409811"]
