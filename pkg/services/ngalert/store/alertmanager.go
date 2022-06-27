@@ -4,8 +4,10 @@ import (
 	"context"
 	"crypto/md5"
 	"fmt"
+	"time"
 
 	"xorm.io/builder"
+	"xorm.io/core"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -93,22 +95,104 @@ func (st *DBstore) UpdateAlertmanagerConfiguration(ctx context.Context, cmd *mod
 			ConfigurationVersion:      cmd.ConfigurationVersion,
 			Default:                   cmd.Default,
 			OrgID:                     cmd.OrgID,
+			CreatedAt:                 time.Now().Unix(),
 		}
-		rows, err := sess.Table("alert_configuration").Where(`
-			EXISTS (
-				SELECT 1 
-				FROM alert_configuration 
-				WHERE 
-					org_id = ? 
-				AND 
-					id = (SELECT MAX(id) FROM alert_configuration WHERE org_id = ?) 
-				AND 
-					configuration_hash = ?
-			)`,
-			cmd.OrgID, cmd.OrgID, cmd.FetchedConfigurationHash).Insert(config)
+		res, err := sess.Exec(fmt.Sprintf(getInsertQuery(st.SQLStore.Dialect.DriverName()), st.SQLStore.Dialect.Quote("default")),
+			config.AlertmanagerConfiguration,
+			config.ConfigurationHash,
+			config.ConfigurationVersion,
+			config.OrgID,
+			config.CreatedAt,
+			st.SQLStore.Dialect.BooleanStr(config.Default),
+			cmd.OrgID,
+			cmd.OrgID,
+			cmd.FetchedConfigurationHash,
+		)
+		if err != nil {
+			return err
+		}
+		rows, err := res.RowsAffected()
+		if err != nil {
+			return err
+		}
 		if rows == 0 {
 			return ErrVersionLockedObjectNotFound
 		}
 		return err
 	})
+}
+
+// getInsertQuery is used to determinate the insert query for the alertmanager config
+// based on the provided sql driver. This is necesarry as such an advanced query
+// is not supported by our ORM and we need to generate it manually for each SQL dialect.
+// We introduced this as part of a bug fix as the old approach wasn't working.
+// Rel: https://github.com/grafana/grafana/issues/51356
+func getInsertQuery(driver string) string {
+	switch driver {
+	case core.MYSQL:
+		return `
+		INSERT INTO alert_configuration
+		(alertmanager_configuration, configuration_hash, configuration_version, org_id, created_at, %s) 
+		SELECT T.* FROM (SELECT ? AS alertmanager_configuration,? AS configuration_hash,? AS configuration_version,? AS org_id,? AS created_at,? AS 'default') AS T
+		WHERE
+		EXISTS (
+			SELECT 1 
+			FROM alert_configuration 
+			WHERE 
+				org_id = ? 
+			AND 
+				id = (SELECT MAX(id) FROM alert_configuration WHERE org_id = ?) 
+			AND 
+				configuration_hash = ?
+		)`
+	case core.POSTGRES:
+		return `
+		INSERT INTO alert_configuration
+		(alertmanager_configuration, configuration_hash, configuration_version, org_id, created_at, %s) 
+		SELECT T.* FROM (VALUES($1,$2,$3,$4::bigint,$5::integer,$6::boolean)) AS T
+		WHERE
+		EXISTS (
+			SELECT 1 
+			FROM alert_configuration 
+			WHERE 
+				org_id = $7 
+			AND 
+				id = (SELECT MAX(id) FROM alert_configuration WHERE org_id = $8::bigint) 
+			AND 
+				configuration_hash = $9
+		)`
+	case core.SQLITE:
+		return `
+		INSERT INTO alert_configuration
+		(alertmanager_configuration, configuration_hash, configuration_version, org_id, created_at, %s) 
+		SELECT T.* FROM (VALUES(?,?,?,?,?,?)) AS T
+		WHERE
+		EXISTS (
+			SELECT 1 
+			FROM alert_configuration 
+			WHERE 
+				org_id = ? 
+			AND 
+				id = (SELECT MAX(id) FROM alert_configuration WHERE org_id = ?) 
+			AND 
+				configuration_hash = ?
+		)`
+	default:
+		// SQLite version
+		return `
+		INSERT INTO alert_configuration
+		(alertmanager_configuration, configuration_hash, configuration_version, org_id, created_at, %s) 
+		SELECT T.* FROM (VALUES(?,?,?,?,?,?)) AS T
+		WHERE
+		EXISTS (
+			SELECT 1 
+			FROM alert_configuration 
+			WHERE 
+				org_id = ? 
+			AND 
+				id = (SELECT MAX(id) FROM alert_configuration WHERE org_id = ?) 
+			AND 
+				configuration_hash = ?
+		)`
+	}
 }
