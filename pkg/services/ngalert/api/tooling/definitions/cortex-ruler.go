@@ -122,6 +122,135 @@ import (
 //     Responses:
 //       202: Ack
 
+// swagger:route POST /v1/api/alerting/rules/eval ruler RouteEvaluateGrafanaRule
+//
+// Evaluate a Grafana alert rule expression
+//     Consumes:
+//     - application/json
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//        200: EvaluateRuleResponse
+//        204: NoDataResponse
+//        500: EvaluateRuleError
+
+// swagger:parameters RouteEvaluateGrafanaRule
+type EvaluateRuleRequest struct {
+	// in:body
+	Body EvaluateRuleRequestBody
+}
+
+type RefID string
+
+type AlertRuleCondition struct {
+	Condition RefID        `json:"condition"`
+	Data      []AlertQuery `json:"data"`
+}
+
+type EvaluateRuleRequestBody struct {
+	AlertRuleCondition
+	Now time.Time `json:"now"`
+}
+
+// Duration is a type used for marshalling durations.
+type Duration time.Duration
+
+func (d Duration) String() string {
+	return time.Duration(d).String()
+}
+
+func (d Duration) MarshalJSON() ([]byte, error) {
+	return json.Marshal(time.Duration(d).Seconds())
+}
+
+func (d *Duration) UnmarshalJSON(b []byte) error {
+	var v interface{}
+	if err := json.Unmarshal(b, &v); err != nil {
+		return err
+	}
+	switch value := v.(type) {
+	case float64:
+		*d = Duration(time.Duration(value) * time.Second)
+		return nil
+	default:
+		return fmt.Errorf("invalid duration %v", v)
+	}
+}
+
+// RelativeTimeRange is the per query start and end time
+// for requests.
+type RelativeTimeRange struct {
+	From Duration `json:"from"`
+	To   Duration `json:"to"`
+}
+
+// AlertQuery represents a single query associated with an alert definition.
+type AlertQuery struct {
+	// RefID is the unique identifier of the query, set by the frontend call.
+	RefID RefID `json:"refId"`
+
+	// QueryType is an optional identifier for the type of query.
+	// It can be used to distinguish different types of queries.
+	QueryType *string `json:"queryType"`
+
+	// RelativeTimeRange is the relative Start and End of the query as sent by the frontend.
+	RelativeTimeRange *RelativeTimeRange `json:"relativeTimeRange"`
+
+	// Grafana data source unique identifier; it should be '-100' for a Server Side Expression operation.
+	DatasourceUID string `json:"datasourceUid"`
+
+	// JSON is the raw JSON query and includes the above properties as well as custom properties.
+	Model json.RawMessage `json:"model"`
+}
+
+// swagger:model
+type EvaluateRuleResponse struct {
+	Results            []EvaluationResult `json:"result"`
+	Condition          RefID              `json:"condition"`
+	EvaluatedAt        time.Time          `json:"evaluatedAt"`
+	EvaluationDuration model.Duration     `json:"duration"`
+}
+
+// swagger:model
+type EvaluateRuleError struct {
+	EvaluatedAt time.Time `json:"evaluatedAt"`
+	Errors      []error   `json:"errors"`
+}
+
+// swagger:model
+type NoDataResponse struct {
+}
+
+// EvaluationState is an enum of the evaluation State for an alert instance.
+type EvaluationState string
+
+const (
+	// NormalEvaluationState is the eval state for an alert instance condition
+	// that evaluated to false.
+	NormalEvaluationState EvaluationState = "Normal"
+
+	// AlertingEvaluationState is the eval state for an alert instance condition
+	// that evaluated to true (Alerting).
+	AlertingEvaluationState = "Alerting"
+)
+
+// EvaluationResult contains the evaluated State of an alert instance
+// identified by its labels.
+type EvaluationResult struct {
+	State EvaluationState `json:"state"`
+
+	// Values contains the RefID and value of reduce and math expressions.
+	// It does not contain values for classic conditions as the values
+	// in classic conditions do not have a RefID.
+	Values map[RefID]NumberValueCapture `json:"values"`
+}
+
+type NumberValueCapture struct {
+	Labels map[string]string `json:"labels"`
+	Value  *float64          `json:"value"`
+}
+
 // swagger:parameters RoutePostNameRulesConfig RoutePostNameGrafanaRulesConfig
 type NamespaceConfig struct {
 	// in:path
