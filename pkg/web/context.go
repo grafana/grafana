@@ -67,8 +67,8 @@ func (ctx *Context) run() {
 	// }
 
 	h := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
-	for _, mw := range ctx.mws {
-		h = mw(h)
+	for i := len(ctx.mws) - 1; i >= 0; i-- {
+		h = ctx.mws[i](h)
 	}
 
 	h.ServeHTTP(ctx.Resp, ctx.Req)
