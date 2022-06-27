@@ -132,7 +132,7 @@ func (m *SQLStoreMock) DeleteOldLoginAttempts(ctx context.Context, cmd *models.D
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) CreateUser(ctx context.Context, cmd models.CreateUserCommand) (*models.User, error) {
+func (m *SQLStoreMock) CreateUser(ctx context.Context, cmd user.CreateUserCommand) (*user.User, error) {
 	return nil, m.ExpectedError
 }
 

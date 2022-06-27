@@ -112,6 +112,7 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 		}
 		_, err = s.orgService.InsertUser(ctx, &orgUser)
 		if err != nil {
+			//  HERE ADD DELETE USER
 			return usr, err
 		}
 	}
