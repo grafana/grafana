@@ -11,7 +11,7 @@ import { ElementState } from '../../../../features/canvas/runtime/element';
 import { FrameState } from '../../../../features/canvas/runtime/frame';
 import { getGlobalStyles } from '../globalStyles';
 import { PanelOptions } from '../models.gen';
-import { getTreeData, TreeElement } from '../tree';
+import { getTreeData, getUpdatedSelection, TreeElement } from '../tree';
 import { LayerActionID } from '../types';
 import { doSelect } from '../utils';
 
@@ -35,11 +35,23 @@ export class TreeNavigationEditor extends PureComponent<Props, State> {
     };
   }
 
+  UNSAFE_componentWillReceiveProps(nextProps: any) {
+    const { settings } = nextProps.item;
+    if (settings) {
+      const selection: string[] = settings.selected ? settings.selected.map((v: ElementState) => v.getName()) : [];
+      const treeData = getUpdatedSelection([...this.state.treeData], selection, this.selectedBgColor);
+      this.setState({
+        treeData: treeData,
+      });
+    }
+  }
+
   globalCSS = getGlobalStyles(config.theme2);
   settings = this.props.item.settings;
   theme = getTheme();
   styles = getStyles(this.theme);
   rootElements = this.props.item?.settings?.scene.root.elements;
+  selectedBgColor = this.theme.colors.border1;
 
   onSelect = (selectedKeys: Key[], info: any) => {
     doSelect(this.settings, info.node.dataRef);
@@ -146,13 +158,9 @@ export class TreeNavigationEditor extends PureComponent<Props, State> {
   };
 
   render() {
-    const { settings } = this.props.item;
-    if (!settings) {
+    if (!this.settings) {
       return <div>No settings</div>;
     }
-
-    const selection: string[] = settings.selected ? settings.selected.map((v) => v.getName()) : [];
-    const treeData = getTreeData(this.props.item?.settings?.scene.root, selection, this.theme.colors.border1);
 
     return (
       <>
@@ -166,7 +174,7 @@ export class TreeNavigationEditor extends PureComponent<Props, State> {
           showIcon={false}
           allowDrop={this.allowDrop}
           onDrop={this.onDrop}
-          treeData={treeData}
+          treeData={this.state.treeData}
         />
       </>
     );

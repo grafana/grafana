@@ -29,7 +29,27 @@ export function reorderElements(src: FlatElement, dest: FlatElement, elements: a
   return result;
 }
 
-export function getTreeData(root?: RootElement | FrameState, selection?: string[], color?: string) {
+export function getUpdatedSelection(treeData: TreeElement[], selection?: string[], selectedColor?: string) {
+  let elements: TreeElement[] = [];
+  treeData.map((data) => {
+    const isSelected = isItemSelected(data.dataRef, selection);
+    if (isSelected) {
+      data.style = { backgroundColor: selectedColor };
+    } else {
+      data.style = { backgroundColor: '' };
+    }
+
+    if (data.children) {
+      getUpdatedSelection(data.children, selection, selectedColor);
+    }
+
+    elements.push(data);
+  });
+
+  return elements;
+}
+
+export function getTreeData(root?: RootElement | FrameState, selection?: string[], selectedColor?: string) {
   let elements: TreeElement[] = [];
   if (root) {
     for (let i = root.elements.length; i--; i >= 0) {
@@ -43,11 +63,11 @@ export function getTreeData(root?: RootElement | FrameState, selection?: string[
 
       const isSelected = isItemSelected(item, selection);
       if (isSelected) {
-        element.style = { backgroundColor: color };
+        element.style = { backgroundColor: selectedColor };
       }
 
       if (item instanceof FrameState) {
-        element.children = getTreeData(item, selection, color);
+        element.children = getTreeData(item, selection, selectedColor);
       }
       elements.push(element);
     }
