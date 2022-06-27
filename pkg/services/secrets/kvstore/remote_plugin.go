@@ -2,7 +2,6 @@ package kvstore
 
 import (
 	"context"
-	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -12,18 +11,14 @@ import (
 
 // secretsKVStorePlugin provides a key/value store backed by the Grafana plugin gRPC interface
 type secretsKVStorePlugin struct {
-	log             log.Logger
-	secretsPlugin   smp.SecretsManagerPlugin
-	secretsService  secrets.Service
-	decryptionCache decryptionCache
+	log            log.Logger
+	secretsPlugin  smp.SecretsManagerPlugin
+	secretsService secrets.Service
+	shortCache     CachedKVStore
 }
 
 // Get an item from the store
 func (kv *secretsKVStorePlugin) Get(ctx context.Context, orgId int64, namespace string, typ string) (string, bool, error) {
-	if cache := kv.decryptionCache.recent(orgId, namespace, typ); cache != nil {
-		return cache.value, true, nil
-	}
-
 	req := &smp.GetSecretRequest{
 		KeyDescriptor: &smp.Key{
 			OrgId:     orgId,
@@ -36,8 +31,6 @@ func (kv *secretsKVStorePlugin) Get(ctx context.Context, orgId int64, namespace 
 		return "", false, err
 	} else if res.UserFriendlyError != "" {
 		err = wrapUserFriendlySecretError(res.UserFriendlyError)
-	} else {
-		kv.decryptionCache.set(orgId, namespace, typ, res.DecryptedValue, time.Now())
 	}
 
 	return res.DecryptedValue, res.Exists, err
@@ -55,12 +48,8 @@ func (kv *secretsKVStorePlugin) Set(ctx context.Context, orgId int64, namespace 
 	}
 
 	res, err := kv.secretsPlugin.SetSecret(ctx, req)
-	if err == nil {
-		if res.UserFriendlyError != "" {
-			err = wrapUserFriendlySecretError(res.UserFriendlyError)
-		} else {
-			kv.decryptionCache.set(orgId, namespace, typ, value, time.Now())
-		}
+	if err == nil && res.UserFriendlyError != "" {
+		err = wrapUserFriendlySecretError(res.UserFriendlyError)
 	}
 
 	return err
@@ -77,12 +66,8 @@ func (kv *secretsKVStorePlugin) Del(ctx context.Context, orgId int64, namespace 
 	}
 
 	res, err := kv.secretsPlugin.DeleteSecret(ctx, req)
-	if err == nil {
-		if res.UserFriendlyError != "" {
-			err = wrapUserFriendlySecretError(res.UserFriendlyError)
-		} else {
-			kv.decryptionCache.delete(orgId, namespace, typ)
-		}
+	if err == nil && res.UserFriendlyError != "" {
+		err = wrapUserFriendlySecretError(res.UserFriendlyError)
 	}
 
 	return err
@@ -122,12 +107,8 @@ func (kv *secretsKVStorePlugin) Rename(ctx context.Context, orgId int64, namespa
 	}
 
 	res, err := kv.secretsPlugin.RenameSecret(ctx, req)
-	if err == nil {
-		if res.UserFriendlyError != "" {
-			err = wrapUserFriendlySecretError(res.UserFriendlyError)
-		} else {
-			kv.decryptionCache.rename(orgId, namespace, typ, newNamespace, time.Now())
-		}
+	if err == nil && res.UserFriendlyError != "" {
+		err = wrapUserFriendlySecretError(res.UserFriendlyError)
 	}
 
 	return err
