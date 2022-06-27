@@ -1292,11 +1292,11 @@ exports[`better eslint`] = {
       [249, 34, 3, "Unexpected any. Specify a different type.", "193409811"],
       [281, 20, 14, "Do not use any type assertions.", "2578702492"]
     ],
-    "packages/grafana-runtime/src/utils/PublicDashboardDataSource.test.ts:2842646678": [
-      [13, 19, 123, "Do not use any type assertions.", "3028355264"],
-      [13, 19, 109, "Do not use any type assertions.", "4248357345"],
-      [38, 13, 206, "Do not use any type assertions.", "1200376833"],
-      [71, 49, 52, "Do not use any type assertions.", "2628705608"]
+    "packages/grafana-runtime/src/utils/PublicDashboardDataSource.test.ts:2092121707": [
+      [14, 19, 123, "Do not use any type assertions.", "3028355264"],
+      [14, 19, 109, "Do not use any type assertions.", "4248357345"],
+      [39, 13, 206, "Do not use any type assertions.", "1200376833"],
+      [72, 49, 54, "Do not use any type assertions.", "114713672"]
     ],
     "packages/grafana-runtime/src/utils/analytics.ts:2587372676": [
       [44, 87, 3, "Unexpected any. Specify a different type.", "193409811"]
@@ -5106,7 +5106,7 @@ exports[`better eslint`] = {
       [45, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
       [92, 48, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/dashboard/services/PublicDashboardDataSource.ts:3329147675": [
+    "public/app/features/dashboard/services/PublicDashboardDataSource.ts:1922680204": [
       [14, 61, 3, "Unexpected any. Specify a different type.", "193409811"],
       [20, 12, 16, "Do not use any type assertions.", "1747412709"],
       [41, 34, 3, "Unexpected any. Specify a different type.", "193409811"],
