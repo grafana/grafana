@@ -9,7 +9,7 @@ separation where commands are instructions for a mutation and queries retrieve
 records from a service.
 
 Services should define their methods as `func[T, U any](ctx context.Context, args T) (U, error)`
-or `func[T, U any](ctx context.Context, args T) U` for infallible methods
+or `func[T, U any](ctx context.Context, args T) U` for methods that doesn't return errors
 and the type T is a `struct` defined in the service's root package (see
 the instructions for [package hierarchy](package-hierarchy.md)) that
 contains zero or more arguments that can be passed to the method.
