@@ -24,11 +24,6 @@ describe('useIsRuleEditable', () => {
     beforeEach(enableRBAC);
     describe('Grafana rules', () => {
       // When RBAC is enabled we require appropriate alerting permissions in the folder scope
-
-      // beforeEach(() => {
-      //   mockUseFolder({ canSave: false });
-      // });
-
       it('Should allow editing when the user has the alert rule update permission in the folder', () => {
         mockUseFolder({
           accessControl: {
