@@ -62,7 +62,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 				{Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(data2.DatasourceUID)},
 			})
 
-			ds := &fakes.FakeCacheService{DataSources: []*models2.DataSource{
+			ds := &fakes.FakeCacheService{DataSources: []*datasources.DataSource{
 				{Uid: data1.DatasourceUID},
 				{Uid: data2.DatasourceUID},
 			}}
@@ -103,7 +103,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 		t.Run("should require user to be signed in", func(t *testing.T) {
 			data1 := models.GenerateAlertQuery()
 
-			ds := &fakes.FakeCacheService{DataSources: []*models2.DataSource{
+			ds := &fakes.FakeCacheService{DataSources: []*datasources.DataSource{
 				{Uid: data1.DatasourceUID},
 			}}
 
@@ -183,7 +183,7 @@ func TestRouteEvalQueries(t *testing.T) {
 				{Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(data2.DatasourceUID)},
 			})
 
-			ds := &fakes.FakeCacheService{DataSources: []*models2.DataSource{
+			ds := &fakes.FakeCacheService{DataSources: []*datasources.DataSource{
 				{Uid: data1.DatasourceUID},
 				{Uid: data2.DatasourceUID},
 			}}
@@ -227,7 +227,7 @@ func TestRouteEvalQueries(t *testing.T) {
 		t.Run("should require user to be signed in", func(t *testing.T) {
 			data1 := models.GenerateAlertQuery()
 
-			ds := &fakes.FakeCacheService{DataSources: []*models2.DataSource{
+			ds := &fakes.FakeCacheService{DataSources: []*datasources.DataSource{
 				{Uid: data1.DatasourceUID},
 			}}
 
