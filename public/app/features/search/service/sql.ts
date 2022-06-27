@@ -6,6 +6,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSearchHit } from '../types';
 
 import { LocationInfo } from './types';
+import { replaceCurrentFolderQuery } from './utils';
 
 import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery } from '.';
 
@@ -16,11 +17,9 @@ interface APIQuery {
   page?: number;
   type?: string;
   // DashboardIds []int64
+  dashboardUID?: string[];
   folderIds?: number[];
   sort?: string;
-
-  // NEW!!!! TODO TODO: needs backend support?
-  dashboardUIDs?: string[];
 }
 
 // Internal object to hold folderId
@@ -43,11 +42,12 @@ export class SQLSearcher implements GrafanaSearcher {
       throw 'facets not supported!';
     }
     const q: APIQuery = {
-      limit: 1000, // 1k max values
+      limit: query.limit ?? 1000, // default 1k max values
       tag: query.tags,
       sort: query.sort,
     };
 
+    query = await replaceCurrentFolderQuery(query);
     if (query.query === '*') {
       if (query.kind?.length === 1 && query.kind[0] === 'folder') {
         q.type = 'dash-folder';
@@ -57,8 +57,7 @@ export class SQLSearcher implements GrafanaSearcher {
     }
 
     if (query.uid) {
-      q.query = query.uid.join(', '); // TODO! this will return nothing
-      q.dashboardUIDs = query.uid;
+      q.dashboardUID = query.uid;
     } else if (query.location?.length) {
       let info = this.locationInfo[query.location];
       if (!info) {

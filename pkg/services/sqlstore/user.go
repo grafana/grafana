@@ -11,51 +11,36 @@ import (
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func getOrgIdForNewUser(sess *DBSession, cmd models.CreateUserCommand) (int64, error) {
-	if cmd.SkipOrgSetup {
-		return -1, nil
-	}
-
-	if setting.AutoAssignOrg && cmd.OrgId != 0 {
-		err := verifyExistingOrg(sess, cmd.OrgId)
-		if err != nil {
-			return -1, err
-		}
-		return cmd.OrgId, nil
-	}
-
-	orgName := cmd.OrgName
-	if len(orgName) == 0 {
-		orgName = util.StringsFallback2(cmd.Email, cmd.Login)
-	}
-
-	return getOrCreateOrg(sess, orgName)
+type ErrCaseInsensitiveLoginConflict struct {
+	users []models.User
 }
 
-type userCreationArgs struct {
-	Login          string
-	Email          string
-	Name           string
-	Company        string
-	Password       string
-	IsAdmin        bool
-	IsDisabled     bool
-	EmailVerified  bool
-	OrgID          int64
-	OrgName        string
-	DefaultOrgRole string
+func (e *ErrCaseInsensitiveLoginConflict) Unwrap() error {
+	return models.ErrCaseInsensitive
 }
 
-func (ss *SQLStore) getOrgIDForNewUser(sess *DBSession, args userCreationArgs) (int64, error) {
-	if ss.Cfg.AutoAssignOrg && args.OrgID != 0 {
-		if err := verifyExistingOrg(sess, args.OrgID); err != nil {
+func (e *ErrCaseInsensitiveLoginConflict) Error() string {
+	n := len(e.users)
+
+	userStrings := make([]string, 0, n)
+	for _, v := range e.users {
+		userStrings = append(userStrings, fmt.Sprintf("%s (email:%s, id:%d)", v.Login, v.Email, v.Id))
+	}
+
+	return fmt.Sprintf(
+		"Found a conflict in user login information. %d users already exist with either the same login or email: [%s].",
+		n, strings.Join(userStrings, ", "))
+}
+
+func (ss *SQLStore) getOrgIDForNewUser(sess *DBSession, args models.CreateUserCommand) (int64, error) {
+	if ss.Cfg.AutoAssignOrg && args.OrgId != 0 {
+		if err := verifyExistingOrg(sess, args.OrgId); err != nil {
 			return -1, err
 		}
-		return args.OrgID, nil
+		return args.OrgId, nil
 	}
 
 	orgName := args.OrgName
@@ -66,11 +51,26 @@ func (ss *SQLStore) getOrgIDForNewUser(sess *DBSession, args userCreationArgs) (
 	return ss.getOrCreateOrg(sess, orgName)
 }
 
+func (ss *SQLStore) userCaseInsensitiveLoginConflict(ctx context.Context, sess *DBSession, login, email string) error {
+	users := make([]models.User, 0)
+
+	if err := sess.Where("LOWER(email)=LOWER(?) OR LOWER(login)=LOWER(?)",
+		email, login).Find(&users); err != nil {
+		return err
+	}
+
+	if len(users) > 1 {
+		return &ErrCaseInsensitiveLoginConflict{users}
+	}
+
+	return nil
+}
+
 // createUser creates a user in the database
-func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args userCreationArgs, skipOrgSetup bool) (models.User, error) {
+func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args models.CreateUserCommand) (models.User, error) {
 	var user models.User
 	var orgID int64 = -1
-	if !skipOrgSetup {
+	if !args.SkipOrgSetup {
 		var err error
 		orgID, err = ss.getOrgIDForNewUser(sess, args)
 		if err != nil {
@@ -82,7 +82,14 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args userCr
 		args.Email = args.Login
 	}
 
-	exists, err := sess.Where("email=? OR login=?", args.Email, args.Login).Get(&models.User{})
+	where := "email=? OR login=?"
+	if ss.Cfg.CaseInsensitiveLogin {
+		where = "LOWER(email)=LOWER(?) OR LOWER(login)=LOWER(?)"
+		args.Login = strings.ToLower(args.Login)
+		args.Email = strings.ToLower(args.Email)
+	}
+
+	exists, err := sess.Where(where, args.Email, args.Login).Get(&models.User{})
 	if err != nil {
 		return user, err
 	}
@@ -103,7 +110,7 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args userCr
 		Created:          time.Now(),
 		Updated:          time.Now(),
 		LastSeenAt:       time.Now().AddDate(-10, 0, 0),
-		IsServiceAccount: false,
+		IsServiceAccount: args.IsServiceAccount,
 	}
 
 	salt, err := util.GetRandomString(10)
@@ -140,7 +147,7 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args userCr
 	})
 
 	// create org user link
-	if !skipOrgSetup {
+	if !args.SkipOrgSetup {
 		orgUser := models.OrgUser{
 			OrgId:   orgID,
 			UserId:  user.Id,
@@ -166,101 +173,12 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args userCr
 }
 
 func (ss *SQLStore) CreateUser(ctx context.Context, cmd models.CreateUserCommand) (*models.User, error) {
-	var user *models.User
-	err := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-		orgId, err := getOrgIdForNewUser(sess, cmd)
-		if err != nil {
-			return err
-		}
-
-		if cmd.Email == "" {
-			cmd.Email = cmd.Login
-		}
-
-		exists, err := sess.Where("email=? OR login=?", cmd.Email, cmd.Login).Get(&models.User{})
-		if err != nil {
-			return err
-		}
-		if exists {
-			return models.ErrUserAlreadyExists
-		}
-
-		// create user
-		user = &models.User{
-			Email:            cmd.Email,
-			Name:             cmd.Name,
-			Login:            cmd.Login,
-			Company:          cmd.Company,
-			IsAdmin:          cmd.IsAdmin,
-			IsDisabled:       cmd.IsDisabled,
-			OrgId:            orgId,
-			EmailVerified:    cmd.EmailVerified,
-			Created:          time.Now(),
-			Updated:          time.Now(),
-			LastSeenAt:       time.Now().AddDate(-10, 0, 0),
-			IsServiceAccount: cmd.IsServiceAccount,
-		}
-
-		salt, err := util.GetRandomString(10)
-		if err != nil {
-			return err
-		}
-		user.Salt = salt
-		rands, err := util.GetRandomString(10)
-		if err != nil {
-			return err
-		}
-		user.Rands = rands
-
-		if len(cmd.Password) > 0 {
-			encodedPassword, err := util.EncodePassword(cmd.Password, user.Salt)
-			if err != nil {
-				return err
-			}
-			user.Password = encodedPassword
-		}
-
-		sess.UseBool("is_admin")
-
-		if _, err := sess.Insert(user); err != nil {
-			return err
-		}
-
-		sess.publishAfterCommit(&events.UserCreated{
-			Timestamp: user.Created,
-			Id:        user.Id,
-			Name:      user.Name,
-			Login:     user.Login,
-			Email:     user.Email,
-		})
-
-		// create org user link
-		if !cmd.SkipOrgSetup {
-			orgUser := models.OrgUser{
-				OrgId:   orgId,
-				UserId:  user.Id,
-				Role:    models.ROLE_ADMIN,
-				Created: time.Now(),
-				Updated: time.Now(),
-			}
-
-			if setting.AutoAssignOrg && !user.IsAdmin {
-				if len(cmd.DefaultOrgRole) > 0 {
-					orgUser.Role = models.RoleType(cmd.DefaultOrgRole)
-				} else {
-					orgUser.Role = models.RoleType(setting.AutoAssignOrgRole)
-				}
-			}
-
-			if _, err = sess.Insert(&orgUser); err != nil {
-				return err
-			}
-		}
-
-		return nil
+	var user models.User
+	createErr := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) (err error) {
+		user, err = ss.createUser(ctx, sess, cmd)
+		return
 	})
-
-	return user, err
+	return &user, createErr
 }
 
 func notServiceAccountFilter(ss *SQLStore) string {
@@ -283,6 +201,12 @@ func (ss *SQLStore) GetUserById(ctx context.Context, query *models.GetUserByIdQu
 			return models.ErrUserNotFound
 		}
 
+		if ss.Cfg.CaseInsensitiveLogin {
+			if err := ss.userCaseInsensitiveLoginConflict(ctx, sess, user.Login, user.Email); err != nil {
+				return err
+			}
+		}
+
 		query.Result = user
 
 		return nil
@@ -297,9 +221,13 @@ func (ss *SQLStore) GetUserByLogin(ctx context.Context, query *models.GetUserByL
 
 		// Try and find the user by login first.
 		// It's not sufficient to assume that a LoginOrEmail with an "@" is an email.
-		user := &models.User{Login: query.LoginOrEmail}
-		has, err := sess.Where(notServiceAccountFilter(ss)).Get(user)
+		user := &models.User{}
+		where := "login=?"
+		if ss.Cfg.CaseInsensitiveLogin {
+			where = "LOWER(login)=LOWER(?)"
+		}
 
+		has, err := sess.Where(notServiceAccountFilter(ss)).Where(where, query.LoginOrEmail).Get(user)
 		if err != nil {
 			return err
 		}
@@ -307,14 +235,24 @@ func (ss *SQLStore) GetUserByLogin(ctx context.Context, query *models.GetUserByL
 		if !has && strings.Contains(query.LoginOrEmail, "@") {
 			// If the user wasn't found, and it contains an "@" fallback to finding the
 			// user by email.
-			user = &models.User{Email: query.LoginOrEmail}
-			has, err = sess.Get(user)
+			where = "email=?"
+			if ss.Cfg.CaseInsensitiveLogin {
+				where = "LOWER(email)=LOWER(?)"
+			}
+			user = &models.User{}
+			has, err = sess.Where(notServiceAccountFilter(ss)).Where(where, query.LoginOrEmail).Get(user)
 		}
 
 		if err != nil {
 			return err
 		} else if !has {
 			return models.ErrUserNotFound
+		}
+
+		if ss.Cfg.CaseInsensitiveLogin {
+			if err := ss.userCaseInsensitiveLoginConflict(ctx, sess, user.Login, user.Email); err != nil {
+				return err
+			}
 		}
 
 		query.Result = user
@@ -329,13 +267,24 @@ func (ss *SQLStore) GetUserByEmail(ctx context.Context, query *models.GetUserByE
 			return models.ErrUserNotFound
 		}
 
-		user := &models.User{Email: query.Email}
-		has, err := sess.Where(notServiceAccountFilter(ss)).Get(user)
+		user := &models.User{}
+		where := "email=?"
+		if ss.Cfg.CaseInsensitiveLogin {
+			where = "LOWER(email)=LOWER(?)"
+		}
+
+		has, err := sess.Where(notServiceAccountFilter(ss)).Where(where, query.Email).Get(user)
 
 		if err != nil {
 			return err
 		} else if !has {
 			return models.ErrUserNotFound
+		}
+
+		if ss.Cfg.CaseInsensitiveLogin {
+			if err := ss.userCaseInsensitiveLoginConflict(ctx, sess, user.Login, user.Email); err != nil {
+				return err
+			}
 		}
 
 		query.Result = user
@@ -345,6 +294,11 @@ func (ss *SQLStore) GetUserByEmail(ctx context.Context, query *models.GetUserByE
 }
 
 func (ss *SQLStore) UpdateUser(ctx context.Context, cmd *models.UpdateUserCommand) error {
+	if ss.Cfg.CaseInsensitiveLogin {
+		cmd.Login = strings.ToLower(cmd.Login)
+		cmd.Email = strings.ToLower(cmd.Email)
+	}
+
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		user := models.User{
 			Name:    cmd.Name,
@@ -356,6 +310,12 @@ func (ss *SQLStore) UpdateUser(ctx context.Context, cmd *models.UpdateUserComman
 
 		if _, err := sess.ID(cmd.UserId).Where(notServiceAccountFilter(ss)).Update(&user); err != nil {
 			return err
+		}
+
+		if ss.Cfg.CaseInsensitiveLogin {
+			if err := ss.userCaseInsensitiveLoginConflict(ctx, sess, user.Login, user.Email); err != nil {
+				return err
+			}
 		}
 
 		sess.publishAfterCommit(&events.UserUpdated{
@@ -555,9 +515,17 @@ func (ss *SQLStore) GetSignedInUser(ctx context.Context, query *models.GetSigned
 		case query.UserId > 0:
 			sess.SQL(rawSQL+"WHERE u.id=?", query.UserId)
 		case query.Login != "":
-			sess.SQL(rawSQL+"WHERE u.login=?", query.Login)
+			if ss.Cfg.CaseInsensitiveLogin {
+				sess.SQL(rawSQL+"WHERE LOWER(u.login)=LOWER(?)", query.Login)
+			} else {
+				sess.SQL(rawSQL+"WHERE u.login=?", query.Login)
+			}
 		case query.Email != "":
-			sess.SQL(rawSQL+"WHERE u.email=?", query.Email)
+			if ss.Cfg.CaseInsensitiveLogin {
+				sess.SQL(rawSQL+"WHERE LOWER(u.email)=LOWER(?)", query.Email)
+			} else {
+				sess.SQL(rawSQL+"WHERE u.email=?", query.Email)
+			}
 		}
 
 		var user models.SignedInUser
@@ -577,7 +545,20 @@ func (ss *SQLStore) GetSignedInUser(ctx context.Context, query *models.GetSigned
 			user.ExternalAuthId = ""
 		}
 
-		getTeamsByUserQuery := &models.GetTeamsByUserQuery{OrgId: user.OrgId, UserId: user.UserId}
+		// tempUser is used to retrieve the teams for the signed in user for internal use.
+		tempUser := &models.SignedInUser{
+			OrgId: user.OrgId,
+			Permissions: map[int64]map[string][]string{
+				user.OrgId: {
+					ac.ActionTeamsRead: {ac.ScopeTeamsAll},
+				},
+			},
+		}
+		getTeamsByUserQuery := &models.GetTeamsByUserQuery{
+			OrgId:        user.OrgId,
+			UserId:       user.UserId,
+			SignedInUser: tempUser,
+		}
 		err = ss.GetTeamsByUser(ctx, getTeamsByUserQuery)
 		if err != nil {
 			return err

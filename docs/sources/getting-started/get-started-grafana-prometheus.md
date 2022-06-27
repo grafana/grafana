@@ -56,11 +56,11 @@ Prometheus node_exporter is a widely used tool that exposes system metrics. Inst
 
 #### Check Prometheus metrics in Grafana Explore view
 
-In your Grafana instance, go to the [Explore]({{< relref "../explore/_index.md" >}}) view and build queries to experiment with the metrics you want to monitor. Here you can also debug issues related to collecting metrics from Prometheus. Pay special attention to the [Prometheus-specific features]({{< relref "../explore/_index.md#prometheus-specific-features" >}}) to avail custom querying experience for Prometheus.
+In your Grafana instance, go to the [Explore]({{< relref "../explore/" >}}) view and build queries to experiment with the metrics you want to monitor. Here you can also debug issues related to collecting metrics from Prometheus. Pay special attention to the [Prometheus-specific features]({{< relref "../explore/#prometheus-specific-features" >}}) to avail custom querying experience for Prometheus.
 
 #### Start building dashboards
 
-Now that you have a curated list of queries, create [dashboards]({{< relref "../dashboards/_index.md" >}}) to render system metrics monitored by Prometheus. When you install Prometheus and node_exporter or windows_exporter, you will find recommended dashboards for use.
+Now that you have a curated list of queries, create [dashboards]({{< relref "../dashboards/" >}}) to render system metrics monitored by Prometheus. When you install Prometheus and node_exporter or windows_exporter, you will find recommended dashboards for use.
 
 The following image shows a dashboard with three panels showing some system metrics.
 
@@ -68,5 +68,5 @@ The following image shows a dashboard with three panels showing some system metr
 
 To learn more:
 
-- Grafana documentation: [Prometheus data source]({{< relref "../datasources/prometheus.md" >}})
+- Grafana documentation: [Prometheus data source]({{< relref "../datasources/prometheus/" >}})
 - Prometheus documentation: [What is Prometheus?](https://prometheus.io/docs/introduction/overview/)

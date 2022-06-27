@@ -7,16 +7,19 @@ import (
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
 type store interface {
 	Get(context.Context, *dashver.GetDashboardVersionQuery) (*dashver.DashboardVersion, error)
 	GetBatch(context.Context, *dashver.DeleteExpiredVersionsCommand, int, int) ([]interface{}, error)
 	DeleteBatch(context.Context, *dashver.DeleteExpiredVersionsCommand, []interface{}) (int64, error)
+	List(context.Context, *dashver.ListDashboardVersionsQuery) ([]*dashver.DashboardVersionDTO, error)
 }
 
 type sqlStore struct {
-	db db.DB
+	db      db.DB
+	dialect migrator.Dialect
 }
 
 func (ss *sqlStore) Get(ctx context.Context, query *dashver.GetDashboardVersionQuery) (*dashver.DashboardVersion, error) {
@@ -74,4 +77,39 @@ func (ss *sqlStore) DeleteBatch(ctx context.Context, cmd *dashver.DeleteExpiredV
 		return err
 	})
 	return deleted, err
+}
+
+func (ss *sqlStore) List(ctx context.Context, query *dashver.ListDashboardVersionsQuery) ([]*dashver.DashboardVersionDTO, error) {
+	var dashboardVersion []*dashver.DashboardVersionDTO
+	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		err := sess.Table("dashboard_version").
+			Select(`dashboard_version.id,
+				dashboard_version.dashboard_id,
+				dashboard_version.parent_version,
+				dashboard_version.restored_from,
+				dashboard_version.version,
+				dashboard_version.created,
+				dashboard_version.created_by as created_by_id,
+				dashboard_version.message,
+				dashboard_version.data,`+
+				ss.dialect.Quote("user")+`.login as created_by`).
+			Join("LEFT", ss.dialect.Quote("user"), `dashboard_version.created_by = `+ss.dialect.Quote("user")+`.id`).
+			Join("LEFT", "dashboard", `dashboard.id = dashboard_version.dashboard_id`).
+			Where("dashboard_version.dashboard_id=? AND dashboard.org_id=?", query.DashboardID, query.OrgID).
+			OrderBy("dashboard_version.version DESC").
+			Limit(query.Limit, query.Start).
+			Find(&dashboardVersion)
+		if err != nil {
+			return err
+		}
+
+		if len(dashboardVersion) < 1 {
+			return dashver.ErrNoVersionsForDashboardID
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return dashboardVersion, nil
 }

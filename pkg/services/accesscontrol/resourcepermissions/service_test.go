@@ -36,7 +36,7 @@ func TestService_SetUserPermission(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, sql := setupTestEnvironment(t, []*accesscontrol.Permission{}, Options{
+			service, sql := setupTestEnvironment(t, []accesscontrol.Permission{}, Options{
 				Resource:             "dashboards",
 				Assignments:          Assignments{Users: true},
 				PermissionsToActions: nil,
@@ -80,7 +80,7 @@ func TestService_SetTeamPermission(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, sql := setupTestEnvironment(t, []*accesscontrol.Permission{}, Options{
+			service, sql := setupTestEnvironment(t, []accesscontrol.Permission{}, Options{
 				Resource:             "dashboards",
 				Assignments:          Assignments{Teams: true},
 				PermissionsToActions: nil,
@@ -124,7 +124,7 @@ func TestService_SetBuiltInRolePermission(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, _ := setupTestEnvironment(t, []*accesscontrol.Permission{}, Options{
+			service, _ := setupTestEnvironment(t, []accesscontrol.Permission{}, Options{
 				Resource:             "dashboards",
 				Assignments:          Assignments{BuiltInRoles: true},
 				PermissionsToActions: nil,
@@ -197,7 +197,7 @@ func TestService_SetPermissions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, sql := setupTestEnvironment(t, []*accesscontrol.Permission{}, tt.options)
+			service, sql := setupTestEnvironment(t, []accesscontrol.Permission{}, tt.options)
 
 			// seed user
 			_, err := sql.CreateUser(context.Background(), models.CreateUserCommand{Login: "user", OrgId: 1})
@@ -216,7 +216,7 @@ func TestService_SetPermissions(t *testing.T) {
 	}
 }
 
-func setupTestEnvironment(t *testing.T, permissions []*accesscontrol.Permission, ops Options) (*Service, *sqlstore.SQLStore) {
+func setupTestEnvironment(t *testing.T, permissions []accesscontrol.Permission, ops Options) (*Service, *sqlstore.SQLStore) {
 	t.Helper()
 
 	sql := sqlstore.InitTestDB(t)

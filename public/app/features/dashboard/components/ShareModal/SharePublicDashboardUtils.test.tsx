@@ -1,17 +1,42 @@
-import { DashboardModel } from 'app/features/dashboard/state';
+import { VariableModel } from 'app/features/variables/types';
 
-import { dashboardCanBePublic } from './SharePublicDashboardUtils';
+import {
+  PublicDashboard,
+  dashboardHasTemplateVariables,
+  generatePublicDashboardUrl,
+  publicDashboardPersisted,
+} from './SharePublicDashboardUtils';
 
-describe('dashboardCanBePublic', () => {
-  it('can be public with no template variables', () => {
-    //@ts-ignore
-    const dashboard: DashboardModel = { templating: { list: [] } };
-    expect(dashboardCanBePublic(dashboard)).toBe(true);
+describe('dashboardHasTemplateVariables', () => {
+  it('false', () => {
+    let variables: VariableModel[] = [];
+    expect(dashboardHasTemplateVariables(variables)).toBe(false);
   });
 
-  it('cannot be public with template variables', () => {
+  it('true', () => {
     //@ts-ignore
-    const dashboard: DashboardModel = { templating: { list: [{}] } };
-    expect(dashboardCanBePublic(dashboard)).toBe(false);
+    let variables: VariableModel[] = ['a'];
+    expect(dashboardHasTemplateVariables(variables)).toBe(true);
+  });
+});
+
+describe('generatePublicDashboardUrl', () => {
+  it('has the right uid', () => {
+    let pubdash = { accessToken: 'abcd1234' } as PublicDashboard;
+    expect(generatePublicDashboardUrl(pubdash)).toEqual(`${window.location.origin}/public-dashboards/abcd1234`);
+  });
+});
+
+describe('publicDashboardPersisted', () => {
+  it('true', () => {
+    let pubdash = { uid: 'abcd1234' } as PublicDashboard;
+    expect(publicDashboardPersisted(pubdash)).toBe(true);
+  });
+
+  it('false', () => {
+    let pubdash = { uid: '' } as PublicDashboard;
+    expect(publicDashboardPersisted(pubdash)).toBe(false);
+    pubdash = {} as PublicDashboard;
+    expect(publicDashboardPersisted(pubdash)).toBe(false);
   });
 });

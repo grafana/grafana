@@ -42,7 +42,7 @@ The API does not currently work with an API Token. So in order to use these API 
 | ------ | --------------------------------------------------------------------------------------- | ---------------------------------- |
 | POST   | [/api/access-control/builtin-roles](#add-builtin-role)                                  | Create a built-in role assignment. |
 | POST   | [/api/access-control/teams/{teamId}/roles](#add-team-role)                              | Add team role.                     |
-| POST   | [/api/access-control/users/{user_id}/roles](#add-user-role)                             | Add a user role assignment.        |
+| POST   | [/api/access-control/users/{userId}/roles](#add-user-role)                              | Add a user role assignment.        |
 | POST   | [/api/access-control/roles](#create-role-with-permissions)                              | Create a new custom role.          |
 | DELETE | [/api/access-control/roles/{roleUID}](#delete-custom-role)                              | Delete a custom role.              |
 | GET    | [/api/access-control/status](#get-access-control-status)                                | Get status.                        |
@@ -50,12 +50,12 @@ The API does not currently work with an API Token. So in order to use these API 
 | GET    | [/api/access-control/roles/{roleUID}](#get-role)                                        | Get a role.                        |
 | GET    | [/api/access-control/builtin-roles](#list-builtin-roles)                                | Get all built-in role assignments. |
 | GET    | [/api/access-control/teams/{teamId}/roles](#list-team-roles)                            | Get team roles.                    |
-| GET    | [/api/access-control/users/{user_id}/roles](#list-user-roles)                           | List roles assigned to a user.     |
+| GET    | [/api/access-control/users/{userId}/roles](#list-user-roles)                            | List roles assigned to a user.     |
 | DELETE | [/api/access-control/builtin-roles/{builtinRole}/roles/{roleUID}](#remove-builtin-role) | Remove a built-in role assignment. |
 | DELETE | [/api/access-control/teams/{teamId}/roles/{roleUID}](#remove-team-role)                 | Remove team role.                  |
-| DELETE | [/api/access-control/users/{user_id}/roles/{roleUID}](#remove-user-role)                | Remove a user role assignment.     |
+| DELETE | [/api/access-control/users/{userId}/roles/{roleUID}](#remove-user-role)                 | Remove a user role assignment.     |
 | PUT    | [/api/access-control/teams/{teamId}/roles](#set-team-roles)                             | Update team role.                  |
-| PUT    | [/api/access-control/users/{user_id}/roles](#set-user-roles)                            | Set user role assignments.         |
+| PUT    | [/api/access-control/users/{userId}/roles](#set-user-roles)                             | Set user role assignments.         |
 | PUT    | [/api/access-control/roles/{roleUID}](#update-role-with-permissions)                    | Update a custom role.              |
 
 ### access_control_provisioning
@@ -282,18 +282,18 @@ The identifier (id) of a notification channel is an auto-incrementing numeric va
 The unique identifier (uid) of a notification channel can be used for uniquely identify a notification channel between multiple Grafana installs. It’s automatically generated if not provided when creating a notification channel. The uid allows having consistent URLs for accessing notification channels and when syncing notification channels between multiple Grafana installations, refer to alert notification channel provisioning.
 The uid can have a maximum length of 40 characters.
 
-| Method | URI                                                                                                   | Summary                                |
-| ------ | ----------------------------------------------------------------------------------------------------- | -------------------------------------- |
-| POST   | [/api/alert-notifications](#create-alert-notification-channel)                                        | Create notification channel.           |
-| DELETE | [/api/alert-notifications/{notification_channel_id}](#delete-alert-notification-channel)              | Delete alert notification by ID.       |
-| DELETE | [/api/alert-notifications/uid/{notification_channel_uid}](#delete-alert-notification-channel-by-uid)  | Delete alert notification by UID.      |
-| GET    | [/api/alert-notifications/{notification_channel_id}](#get-alert-notification-channel-by-id)           | Get notification channel by ID.        |
-| GET    | [/api/alert-notifications/uid/{notification_channel_uid}](#get-alert-notification-channel-by-uid)     | Get notification channel by UID        |
-| GET    | [/api/alert-notifications](#get-alert-notification-channels)                                          | Get all notification channels.         |
-| GET    | [/api/alert-notifications/lookup](#lookup-alert-notification-channels)                                | Get all notification channels (lookup) |
-| POST   | [/api/alert-notifications/test](#notification-channel-test)                                           | Test notification channel.             |
-| PUT    | [/api/alert-notifications/{notification_channel_id}](#update-alert-notification-channel)              | Update notification channel by ID.     |
-| PUT    | [/api/alert-notifications/uid/{notification_channel_uid}](#update-alert-notification-channel-b-y-uid) | Update notification channel by UID.    |
+| Method | URI                                                                                                  | Summary                                |
+| ------ | ---------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| POST   | [/api/alert-notifications](#create-alert-notification-channel)                                       | Create notification channel.           |
+| DELETE | [/api/alert-notifications/{notification_channel_id}](#delete-alert-notification-channel)             | Delete alert notification by ID.       |
+| DELETE | [/api/alert-notifications/uid/{notification_channel_uid}](#delete-alert-notification-channel-by-uid) | Delete alert notification by UID.      |
+| GET    | [/api/alert-notifications/{notification_channel_id}](#get-alert-notification-channel-by-id)          | Get notification channel by ID.        |
+| GET    | [/api/alert-notifications/uid/{notification_channel_uid}](#get-alert-notification-channel-by-uid)    | Get notification channel by UID        |
+| GET    | [/api/alert-notifications](#get-alert-notification-channels)                                         | Get all notification channels.         |
+| GET    | [/api/alert-notifications/lookup](#lookup-alert-notification-channels)                               | Get all notification channels (lookup) |
+| POST   | [/api/alert-notifications/test](#notification-channel-test)                                          | Test notification channel.             |
+| PUT    | [/api/alert-notifications/{notification_channel_id}](#update-alert-notification-channel)             | Update notification channel by ID.     |
+| PUT    | [/api/alert-notifications/uid/{notification_channel_uid}](#update-alert-notification-channel-by-uid) | Update notification channel by UID.    |
 
 ### library_elements
 
@@ -363,6 +363,46 @@ The Admin Organizations HTTP API does not currently work with an API Token. API 
 | GET    | [/api/orgs](#search-org)                                      |                                            |
 | PUT    | [/api/orgs/{org_id}/quotas/{quota_target}](#update-org-quota) | Update user quota.                         |
 
+### provisioning
+
+| Method | URI                                                                                        | Summary                              |
+| ------ | ------------------------------------------------------------------------------------------ | ------------------------------------ |
+| DELETE | [/api/v1/provisioning/alert-rules/{UID}](#route-delete-alert-rule)                         | Delete a specific alert rule by UID. |
+| DELETE | [/api/v1/provisioning/contact-points/{UID}](#route-delete-contactpoints)                   | Delete a contact point.              |
+| DELETE | [/api/v1/provisioning/mute-timings/{name}](#route-delete-mute-timing)                      | Delete a mute timing.                |
+| DELETE | [/api/v1/provisioning/templates/{name}](#route-delete-template)                            | Delete a template.                   |
+| GET    | [/api/v1/provisioning/alert-rules/{UID}](#route-get-alert-rule)                            | Get a specific alert rule by UID.    |
+| GET    | [/api/v1/provisioning/contact-points](#route-get-contactpoints)                            | Get all the contact points.          |
+| GET    | [/api/v1/provisioning/mute-timings/{name}](#route-get-mute-timing)                         | Get a mute timing.                   |
+| GET    | [/api/v1/provisioning/mute-timings](#route-get-mute-timings)                               | Get all the mute timings.            |
+| GET    | [/api/v1/provisioning/policies](#route-get-policy-tree)                                    | Get the notification policy tree.    |
+| GET    | [/api/v1/provisioning/templates/{name}](#route-get-template)                               | Get a message template.              |
+| GET    | [/api/v1/provisioning/templates](#route-get-templates)                                     | Get all message templates.           |
+| POST   | [/api/v1/provisioning/alert-rules](#route-post-alert-rule)                                 | Create a new alert rule.             |
+| POST   | [/api/v1/provisioning/contact-points](#route-post-contactpoints)                           | Create a contact point.              |
+| POST   | [/api/v1/provisioning/mute-timings](#route-post-mute-timing)                               | Create a new mute timing.            |
+| PUT    | [/api/v1/provisioning/alert-rules/{UID}](#route-put-alert-rule)                            | Update an existing alert rule.       |
+| PUT    | [/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}](#route-put-alert-rule-group) | Update the interval of a rule group. |
+| PUT    | [/api/v1/provisioning/contact-points/{UID}](#route-put-contactpoint)                       | Update an existing contact point.    |
+| PUT    | [/api/v1/provisioning/mute-timings/{name}](#route-put-mute-timing)                         | Replace an existing mute timing.     |
+| PUT    | [/api/v1/provisioning/policies](#route-put-policy-tree)                                    | Sets the notification policy tree.   |
+| PUT    | [/api/v1/provisioning/templates/{name}](#route-put-template)                               | Updates an existing template.        |
+
+### query_history
+
+The identifier (ID) of a query in query history is an auto-incrementing numeric value that is unique per Grafana install.
+The unique identifier (UID) of a query history uniquely identifies queries in query history between multiple Grafana installs. It’s automatically generated. The UID provides consistent URLs for accessing queries in query history.
+
+| Method | URI                                                            | Summary                                    |
+| ------ | -------------------------------------------------------------- | ------------------------------------------ |
+| POST   | [/api/query-history](#create-query)                            | Add query to query history.                |
+| DELETE | [/api/query-history/{query_history_uid}](#delete-query)        | Delete query in query history.             |
+| POST   | [/api/query-history/migrate](#migrate-queries)                 | Migrate queries to query history.          |
+| PATCH  | [/api/query-history/{query_history_uid}](#patch-query-comment) | Update comment for query in query history. |
+| GET    | [/api/query-history](#search-queries)                          | Query history search.                      |
+| POST   | [/api/query-history/star/{query_history_uid}](#star-query)     | Add star to query in query history.        |
+| DELETE | [/api/query-history/star/{query_history_uid}](#unstar-query)   | Remove star to query in query history.     |
+
 ### recording_rules
 
 | Method | URI                                                                | Summary                      |
@@ -415,21 +455,21 @@ If you have Fine-grained access Control enabled, for some endpoints you would ne
 
 ### signed_in_user
 
-| Method | URI                                                              | Summary                                  |
-| ------ | ---------------------------------------------------------------- | ---------------------------------------- |
-| PUT    | [/api/user/password](#change-user-password)                      | Change Password.                         |
-| GET    | [/api/user/helpflags/clear](#clear-help-flags)                   | Clear user help flag.                    |
-| GET    | [/api/user](#get-signed-in-user)                                 | Get signed in User.                      |
-| GET    | [/api/user/auth-tokens](#get-signed-in-user-auth-tokens)         | Auth tokens of the actual User.          |
-| GET    | [/api/user/orgs](#get-signed-in-user-org-list)                   | Organizations of the actual User.        |
-| GET    | [/api/user/teams](#get-signed-in-user-team-list)                 | Teams that the actual User is member of. |
-| GET    | [/api/user/quotas](#get-user-quotas)                             | Fetch user quota.                        |
-| POST   | [/api/user/revoke-auth-token](#revoke-signed-i-n-auth-token-cmd) | Revoke an auth token of the actual User. |
-| PUT    | [/api/user/helpflags/{flag_id}](#set-help-flag)                  | Set user help flag.                      |
-| POST   | [/api/user/stars/dashboard/{dashboard_id}](#star-dashboard)      | Star a dashboard.                        |
-| DELETE | [/api/user/stars/dashboard/{dashboard_id}](#unstar-dashboard)    | Unstar a dashboard.                      |
-| PUT    | [/api/user](#update-signed-in-user)                              | Update signed in User.                   |
-| POST   | [/api/user/using/{org_id}](#user-set-using-org)                  | Switch user context for signed in user.  |
+| Method | URI                                                           | Summary                                  |
+| ------ | ------------------------------------------------------------- | ---------------------------------------- |
+| PUT    | [/api/user/password](#change-user-password)                   | Change Password.                         |
+| GET    | [/api/user/helpflags/clear](#clear-help-flags)                | Clear user help flag.                    |
+| GET    | [/api/user](#get-signed-in-user)                              | Get signed in User.                      |
+| GET    | [/api/user/auth-tokens](#get-signed-in-user-auth-tokens)      | Auth tokens of the actual User.          |
+| GET    | [/api/user/orgs](#get-signed-in-user-org-list)                | Organizations of the actual User.        |
+| GET    | [/api/user/teams](#get-signed-in-user-team-list)              | Teams that the actual User is member of. |
+| GET    | [/api/user/quotas](#get-user-quotas)                          | Fetch user quota.                        |
+| POST   | [/api/user/revoke-auth-token](#revoke-signed-in-auth-token)   | Revoke an auth token of the actual User. |
+| PUT    | [/api/user/helpflags/{flag_id}](#set-help-flag)               | Set user help flag.                      |
+| POST   | [/api/user/stars/dashboard/{dashboard_id}](#star-dashboard)   | Star a dashboard.                        |
+| DELETE | [/api/user/stars/dashboard/{dashboard_id}](#unstar-dashboard) | Unstar a dashboard.                      |
+| PUT    | [/api/user](#update-signed-in-user)                           | Update signed in User.                   |
+| POST   | [/api/user/using/{org_id}](#user-set-using-org)               | Switch user context for signed in user.  |
 
 ### snapshots
 
@@ -489,6 +529,689 @@ This API can be used to create/update/delete Teams and to add/remove users to Te
 | PUT    | [/api/users/{user_id}](#update-user)             | Update user.                |
 
 ## Paths
+
+### <span id="route-delete-alert-rule"></span> Delete a specific alert rule by UID. (_RouteDeleteAlertRule_)
+
+```
+DELETE /api/v1/provisioning/alert-rules/{UID}
+```
+
+#### Parameters
+
+| Name | Source | Type   | Go type  | Separator | Required | Default | Description    |
+| ---- | ------ | ------ | -------- | --------- | :------: | ------- | -------------- |
+| UID  | `path` | string | `string` |           |    ✓     |         | Alert rule UID |
+
+#### All responses
+
+| Code                                | Status     | Description                              | Has headers | Schema                                        |
+| ----------------------------------- | ---------- | ---------------------------------------- | :---------: | --------------------------------------------- |
+| [204](#route-delete-alert-rule-204) | No Content | The alert rule was deleted successfully. |             | [schema](#route-delete-alert-rule-204-schema) |
+
+#### Responses
+
+##### <span id="route-delete-alert-rule-204"></span> 204 - The alert rule was deleted successfully.
+
+Status: No Content
+
+###### <span id="route-delete-alert-rule-204-schema"></span> Schema
+
+### <span id="route-delete-contactpoints"></span> Delete a contact point. (_RouteDeleteContactpoints_)
+
+```
+DELETE /api/v1/provisioning/contact-points/{UID}
+```
+
+#### Consumes
+
+- application/json
+
+#### Parameters
+
+| Name | Source | Type   | Go type  | Separator | Required | Default | Description                                |
+| ---- | ------ | ------ | -------- | --------- | :------: | ------- | ------------------------------------------ |
+| UID  | `path` | string | `string` |           |    ✓     |         | UID is the contact point unique identifier |
+
+#### All responses
+
+| Code                                   | Status     | Description                                 | Has headers | Schema                                           |
+| -------------------------------------- | ---------- | ------------------------------------------- | :---------: | ------------------------------------------------ |
+| [204](#route-delete-contactpoints-204) | No Content | The contact point was deleted successfully. |             | [schema](#route-delete-contactpoints-204-schema) |
+
+#### Responses
+
+##### <span id="route-delete-contactpoints-204"></span> 204 - The contact point was deleted successfully.
+
+Status: No Content
+
+###### <span id="route-delete-contactpoints-204-schema"></span> Schema
+
+### <span id="route-delete-mute-timing"></span> Delete a mute timing. (_RouteDeleteMuteTiming_)
+
+```
+DELETE /api/v1/provisioning/mute-timings/{name}
+```
+
+#### Parameters
+
+| Name | Source | Type   | Go type  | Separator | Required | Default | Description      |
+| ---- | ------ | ------ | -------- | --------- | :------: | ------- | ---------------- |
+| name | `path` | string | `string` |           |    ✓     |         | Mute timing name |
+
+#### All responses
+
+| Code                                 | Status     | Description                               | Has headers | Schema                                         |
+| ------------------------------------ | ---------- | ----------------------------------------- | :---------: | ---------------------------------------------- |
+| [204](#route-delete-mute-timing-204) | No Content | The mute timing was deleted successfully. |             | [schema](#route-delete-mute-timing-204-schema) |
+
+#### Responses
+
+##### <span id="route-delete-mute-timing-204"></span> 204 - The mute timing was deleted successfully.
+
+Status: No Content
+
+###### <span id="route-delete-mute-timing-204-schema"></span> Schema
+
+### <span id="route-delete-template"></span> Delete a template. (_RouteDeleteTemplate_)
+
+```
+DELETE /api/v1/provisioning/templates/{name}
+```
+
+#### Parameters
+
+| Name | Source | Type   | Go type  | Separator | Required | Default | Description   |
+| ---- | ------ | ------ | -------- | --------- | :------: | ------- | ------------- |
+| name | `path` | string | `string` |           |    ✓     |         | Template Name |
+
+#### All responses
+
+| Code                              | Status     | Description                            | Has headers | Schema                                      |
+| --------------------------------- | ---------- | -------------------------------------- | :---------: | ------------------------------------------- |
+| [204](#route-delete-template-204) | No Content | The template was deleted successfully. |             | [schema](#route-delete-template-204-schema) |
+
+#### Responses
+
+##### <span id="route-delete-template-204"></span> 204 - The template was deleted successfully.
+
+Status: No Content
+
+###### <span id="route-delete-template-204-schema"></span> Schema
+
+### <span id="route-get-alert-rule"></span> Get a specific alert rule by UID. (_RouteGetAlertRule_)
+
+```
+GET /api/v1/provisioning/alert-rules/{UID}
+```
+
+#### Parameters
+
+| Name | Source | Type   | Go type  | Separator | Required | Default | Description    |
+| ---- | ------ | ------ | -------- | --------- | :------: | ------- | -------------- |
+| UID  | `path` | string | `string` |           |    ✓     |         | Alert rule UID |
+
+#### All responses
+
+| Code                             | Status    | Description | Has headers | Schema                                     |
+| -------------------------------- | --------- | ----------- | :---------: | ------------------------------------------ |
+| [200](#route-get-alert-rule-200) | OK        | AlertRule   |             | [schema](#route-get-alert-rule-200-schema) |
+| [404](#route-get-alert-rule-404) | Not Found | Not found.  |             | [schema](#route-get-alert-rule-404-schema) |
+
+#### Responses
+
+##### <span id="route-get-alert-rule-200"></span> 200 - AlertRule
+
+Status: OK
+
+###### <span id="route-get-alert-rule-200-schema"></span> Schema
+
+[AlertRule](#alert-rule)
+
+##### <span id="route-get-alert-rule-404"></span> 404 - Not found.
+
+Status: Not Found
+
+###### <span id="route-get-alert-rule-404-schema"></span> Schema
+
+### <span id="route-get-contactpoints"></span> Get all the contact points. (_RouteGetContactpoints_)
+
+```
+GET /api/v1/provisioning/contact-points
+```
+
+#### All responses
+
+| Code                                | Status | Description   | Has headers | Schema                                        |
+| ----------------------------------- | ------ | ------------- | :---------: | --------------------------------------------- |
+| [200](#route-get-contactpoints-200) | OK     | ContactPoints |             | [schema](#route-get-contactpoints-200-schema) |
+
+#### Responses
+
+##### <span id="route-get-contactpoints-200"></span> 200 - ContactPoints
+
+Status: OK
+
+###### <span id="route-get-contactpoints-200-schema"></span> Schema
+
+[ContactPoints](#contact-points)
+
+### <span id="route-get-mute-timing"></span> Get a mute timing. (_RouteGetMuteTiming_)
+
+```
+GET /api/v1/provisioning/mute-timings/{name}
+```
+
+#### Parameters
+
+| Name | Source | Type   | Go type  | Separator | Required | Default | Description      |
+| ---- | ------ | ------ | -------- | --------- | :------: | ------- | ---------------- |
+| name | `path` | string | `string` |           |    ✓     |         | Mute timing name |
+
+#### All responses
+
+| Code                              | Status    | Description      | Has headers | Schema                                      |
+| --------------------------------- | --------- | ---------------- | :---------: | ------------------------------------------- |
+| [200](#route-get-mute-timing-200) | OK        | MuteTimeInterval |             | [schema](#route-get-mute-timing-200-schema) |
+| [404](#route-get-mute-timing-404) | Not Found | Not found.       |             | [schema](#route-get-mute-timing-404-schema) |
+
+#### Responses
+
+##### <span id="route-get-mute-timing-200"></span> 200 - MuteTimeInterval
+
+Status: OK
+
+###### <span id="route-get-mute-timing-200-schema"></span> Schema
+
+[MuteTimeInterval](#mute-time-interval)
+
+##### <span id="route-get-mute-timing-404"></span> 404 - Not found.
+
+Status: Not Found
+
+###### <span id="route-get-mute-timing-404-schema"></span> Schema
+
+### <span id="route-get-mute-timings"></span> Get all the mute timings. (_RouteGetMuteTimings_)
+
+```
+GET /api/v1/provisioning/mute-timings
+```
+
+#### All responses
+
+| Code                               | Status | Description | Has headers | Schema                                       |
+| ---------------------------------- | ------ | ----------- | :---------: | -------------------------------------------- |
+| [200](#route-get-mute-timings-200) | OK     | MuteTimings |             | [schema](#route-get-mute-timings-200-schema) |
+
+#### Responses
+
+##### <span id="route-get-mute-timings-200"></span> 200 - MuteTimings
+
+Status: OK
+
+###### <span id="route-get-mute-timings-200-schema"></span> Schema
+
+[MuteTimings](#mute-timings)
+
+### <span id="route-get-policy-tree"></span> Get the notification policy tree. (_RouteGetPolicyTree_)
+
+```
+GET /api/v1/provisioning/policies
+```
+
+#### All responses
+
+| Code                              | Status | Description | Has headers | Schema                                      |
+| --------------------------------- | ------ | ----------- | :---------: | ------------------------------------------- |
+| [200](#route-get-policy-tree-200) | OK     | Route       |             | [schema](#route-get-policy-tree-200-schema) |
+
+#### Responses
+
+##### <span id="route-get-policy-tree-200"></span> 200 - Route
+
+Status: OK
+
+###### <span id="route-get-policy-tree-200-schema"></span> Schema
+
+[Route](#route)
+
+### <span id="route-get-template"></span> Get a message template. (_RouteGetTemplate_)
+
+```
+GET /api/v1/provisioning/templates/{name}
+```
+
+#### Parameters
+
+| Name | Source | Type   | Go type  | Separator | Required | Default | Description   |
+| ---- | ------ | ------ | -------- | --------- | :------: | ------- | ------------- |
+| name | `path` | string | `string` |           |    ✓     |         | Template Name |
+
+#### All responses
+
+| Code                           | Status    | Description     | Has headers | Schema                                   |
+| ------------------------------ | --------- | --------------- | :---------: | ---------------------------------------- |
+| [200](#route-get-template-200) | OK        | MessageTemplate |             | [schema](#route-get-template-200-schema) |
+| [404](#route-get-template-404) | Not Found | Not found.      |             | [schema](#route-get-template-404-schema) |
+
+#### Responses
+
+##### <span id="route-get-template-200"></span> 200 - MessageTemplate
+
+Status: OK
+
+###### <span id="route-get-template-200-schema"></span> Schema
+
+[MessageTemplate](#message-template)
+
+##### <span id="route-get-template-404"></span> 404 - Not found.
+
+Status: Not Found
+
+###### <span id="route-get-template-404-schema"></span> Schema
+
+### <span id="route-get-templates"></span> Get all message templates. (_RouteGetTemplates_)
+
+```
+GET /api/v1/provisioning/templates
+```
+
+#### All responses
+
+| Code                            | Status    | Description      | Has headers | Schema                                    |
+| ------------------------------- | --------- | ---------------- | :---------: | ----------------------------------------- |
+| [200](#route-get-templates-200) | OK        | MessageTemplates |             | [schema](#route-get-templates-200-schema) |
+| [404](#route-get-templates-404) | Not Found | Not found.       |             | [schema](#route-get-templates-404-schema) |
+
+#### Responses
+
+##### <span id="route-get-templates-200"></span> 200 - MessageTemplates
+
+Status: OK
+
+###### <span id="route-get-templates-200-schema"></span> Schema
+
+[MessageTemplates](#message-templates)
+
+##### <span id="route-get-templates-404"></span> 404 - Not found.
+
+Status: Not Found
+
+###### <span id="route-get-templates-404-schema"></span> Schema
+
+### <span id="route-post-alert-rule"></span> Create a new alert rule. (_RoutePostAlertRule_)
+
+```
+POST /api/v1/provisioning/alert-rules
+```
+
+#### Consumes
+
+- application/json
+
+#### Parameters
+
+| Name | Source | Type                     | Go type            | Separator | Required | Default | Description |
+| ---- | ------ | ------------------------ | ------------------ | --------- | :------: | ------- | ----------- |
+| Body | `body` | [AlertRule](#alert-rule) | `models.AlertRule` |           |          |         |             |
+
+#### All responses
+
+| Code                              | Status      | Description     | Has headers | Schema                                      |
+| --------------------------------- | ----------- | --------------- | :---------: | ------------------------------------------- |
+| [201](#route-post-alert-rule-201) | Created     | AlertRule       |             | [schema](#route-post-alert-rule-201-schema) |
+| [400](#route-post-alert-rule-400) | Bad Request | ValidationError |             | [schema](#route-post-alert-rule-400-schema) |
+
+#### Responses
+
+##### <span id="route-post-alert-rule-201"></span> 201 - AlertRule
+
+Status: Created
+
+###### <span id="route-post-alert-rule-201-schema"></span> Schema
+
+[AlertRule](#alert-rule)
+
+##### <span id="route-post-alert-rule-400"></span> 400 - ValidationError
+
+Status: Bad Request
+
+###### <span id="route-post-alert-rule-400-schema"></span> Schema
+
+[ValidationError](#validation-error)
+
+### <span id="route-post-contactpoints"></span> Create a contact point. (_RoutePostContactpoints_)
+
+```
+POST /api/v1/provisioning/contact-points
+```
+
+#### Consumes
+
+- application/json
+
+#### Parameters
+
+| Name | Source | Type                                            | Go type                       | Separator | Required | Default | Description |
+| ---- | ------ | ----------------------------------------------- | ----------------------------- | --------- | :------: | ------- | ----------- |
+| Body | `body` | [EmbeddedContactPoint](#embedded-contact-point) | `models.EmbeddedContactPoint` |           |          |         |             |
+
+#### All responses
+
+| Code                                 | Status      | Description          | Has headers | Schema                                         |
+| ------------------------------------ | ----------- | -------------------- | :---------: | ---------------------------------------------- |
+| [202](#route-post-contactpoints-202) | Accepted    | EmbeddedContactPoint |             | [schema](#route-post-contactpoints-202-schema) |
+| [400](#route-post-contactpoints-400) | Bad Request | ValidationError      |             | [schema](#route-post-contactpoints-400-schema) |
+
+#### Responses
+
+##### <span id="route-post-contactpoints-202"></span> 202 - EmbeddedContactPoint
+
+Status: Accepted
+
+###### <span id="route-post-contactpoints-202-schema"></span> Schema
+
+[EmbeddedContactPoint](#embedded-contact-point)
+
+##### <span id="route-post-contactpoints-400"></span> 400 - ValidationError
+
+Status: Bad Request
+
+###### <span id="route-post-contactpoints-400-schema"></span> Schema
+
+[ValidationError](#validation-error)
+
+### <span id="route-post-mute-timing"></span> Create a new mute timing. (_RoutePostMuteTiming_)
+
+```
+POST /api/v1/provisioning/mute-timings
+```
+
+#### Consumes
+
+- application/json
+
+#### Parameters
+
+| Name | Source | Type                                    | Go type                   | Separator | Required | Default | Description |
+| ---- | ------ | --------------------------------------- | ------------------------- | --------- | :------: | ------- | ----------- |
+| Body | `body` | [MuteTimeInterval](#mute-time-interval) | `models.MuteTimeInterval` |           |          |         |             |
+
+#### All responses
+
+| Code                               | Status      | Description      | Has headers | Schema                                       |
+| ---------------------------------- | ----------- | ---------------- | :---------: | -------------------------------------------- |
+| [201](#route-post-mute-timing-201) | Created     | MuteTimeInterval |             | [schema](#route-post-mute-timing-201-schema) |
+| [400](#route-post-mute-timing-400) | Bad Request | ValidationError  |             | [schema](#route-post-mute-timing-400-schema) |
+
+#### Responses
+
+##### <span id="route-post-mute-timing-201"></span> 201 - MuteTimeInterval
+
+Status: Created
+
+###### <span id="route-post-mute-timing-201-schema"></span> Schema
+
+[MuteTimeInterval](#mute-time-interval)
+
+##### <span id="route-post-mute-timing-400"></span> 400 - ValidationError
+
+Status: Bad Request
+
+###### <span id="route-post-mute-timing-400-schema"></span> Schema
+
+[ValidationError](#validation-error)
+
+### <span id="route-put-alert-rule"></span> Update an existing alert rule. (_RoutePutAlertRule_)
+
+```
+PUT /api/v1/provisioning/alert-rules/{UID}
+```
+
+#### Consumes
+
+- application/json
+
+#### Parameters
+
+| Name | Source | Type                     | Go type            | Separator | Required | Default | Description    |
+| ---- | ------ | ------------------------ | ------------------ | --------- | :------: | ------- | -------------- |
+| UID  | `path` | string                   | `string`           |           |    ✓     |         | Alert rule UID |
+| Body | `body` | [AlertRule](#alert-rule) | `models.AlertRule` |           |          |         |                |
+
+#### All responses
+
+| Code                             | Status      | Description     | Has headers | Schema                                     |
+| -------------------------------- | ----------- | --------------- | :---------: | ------------------------------------------ |
+| [200](#route-put-alert-rule-200) | OK          | AlertRule       |             | [schema](#route-put-alert-rule-200-schema) |
+| [400](#route-put-alert-rule-400) | Bad Request | ValidationError |             | [schema](#route-put-alert-rule-400-schema) |
+
+#### Responses
+
+##### <span id="route-put-alert-rule-200"></span> 200 - AlertRule
+
+Status: OK
+
+###### <span id="route-put-alert-rule-200-schema"></span> Schema
+
+[AlertRule](#alert-rule)
+
+##### <span id="route-put-alert-rule-400"></span> 400 - ValidationError
+
+Status: Bad Request
+
+###### <span id="route-put-alert-rule-400-schema"></span> Schema
+
+[ValidationError](#validation-error)
+
+### <span id="route-put-alert-rule-group"></span> Update the interval of a rule group. (_RoutePutAlertRuleGroup_)
+
+```
+PUT /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}
+```
+
+#### Consumes
+
+- application/json
+
+#### Parameters
+
+| Name      | Source | Type                                | Go type                 | Separator | Required | Default | Description |
+| --------- | ------ | ----------------------------------- | ----------------------- | --------- | :------: | ------- | ----------- |
+| FolderUID | `path` | string                              | `string`                |           |    ✓     |         |             |
+| Group     | `path` | string                              | `string`                |           |    ✓     |         |             |
+| Body      | `body` | [AlertRuleGroup](#alert-rule-group) | `models.AlertRuleGroup` |           |          |         |             |
+
+#### All responses
+
+| Code                                   | Status      | Description     | Has headers | Schema                                           |
+| -------------------------------------- | ----------- | --------------- | :---------: | ------------------------------------------------ |
+| [200](#route-put-alert-rule-group-200) | OK          | AlertRuleGroup  |             | [schema](#route-put-alert-rule-group-200-schema) |
+| [400](#route-put-alert-rule-group-400) | Bad Request | ValidationError |             | [schema](#route-put-alert-rule-group-400-schema) |
+
+#### Responses
+
+##### <span id="route-put-alert-rule-group-200"></span> 200 - AlertRuleGroup
+
+Status: OK
+
+###### <span id="route-put-alert-rule-group-200-schema"></span> Schema
+
+[AlertRuleGroup](#alert-rule-group)
+
+##### <span id="route-put-alert-rule-group-400"></span> 400 - ValidationError
+
+Status: Bad Request
+
+###### <span id="route-put-alert-rule-group-400-schema"></span> Schema
+
+[ValidationError](#validation-error)
+
+### <span id="route-put-contactpoint"></span> Update an existing contact point. (_RoutePutContactpoint_)
+
+```
+PUT /api/v1/provisioning/contact-points/{UID}
+```
+
+#### Consumes
+
+- application/json
+
+#### Parameters
+
+| Name | Source | Type                                            | Go type                       | Separator | Required | Default | Description                                |
+| ---- | ------ | ----------------------------------------------- | ----------------------------- | --------- | :------: | ------- | ------------------------------------------ |
+| UID  | `path` | string                                          | `string`                      |           |    ✓     |         | UID is the contact point unique identifier |
+| Body | `body` | [EmbeddedContactPoint](#embedded-contact-point) | `models.EmbeddedContactPoint` |           |          |         |                                            |
+
+#### All responses
+
+| Code                               | Status      | Description     | Has headers | Schema                                       |
+| ---------------------------------- | ----------- | --------------- | :---------: | -------------------------------------------- |
+| [202](#route-put-contactpoint-202) | Accepted    | Ack             |             | [schema](#route-put-contactpoint-202-schema) |
+| [400](#route-put-contactpoint-400) | Bad Request | ValidationError |             | [schema](#route-put-contactpoint-400-schema) |
+
+#### Responses
+
+##### <span id="route-put-contactpoint-202"></span> 202 - Ack
+
+Status: Accepted
+
+###### <span id="route-put-contactpoint-202-schema"></span> Schema
+
+[Ack](#ack)
+
+##### <span id="route-put-contactpoint-400"></span> 400 - ValidationError
+
+Status: Bad Request
+
+###### <span id="route-put-contactpoint-400-schema"></span> Schema
+
+[ValidationError](#validation-error)
+
+### <span id="route-put-mute-timing"></span> Replace an existing mute timing. (_RoutePutMuteTiming_)
+
+```
+PUT /api/v1/provisioning/mute-timings/{name}
+```
+
+#### Consumes
+
+- application/json
+
+#### Parameters
+
+| Name | Source | Type                                    | Go type                   | Separator | Required | Default | Description      |
+| ---- | ------ | --------------------------------------- | ------------------------- | --------- | :------: | ------- | ---------------- |
+| name | `path` | string                                  | `string`                  |           |    ✓     |         | Mute timing name |
+| Body | `body` | [MuteTimeInterval](#mute-time-interval) | `models.MuteTimeInterval` |           |          |         |                  |
+
+#### All responses
+
+| Code                              | Status      | Description      | Has headers | Schema                                      |
+| --------------------------------- | ----------- | ---------------- | :---------: | ------------------------------------------- |
+| [200](#route-put-mute-timing-200) | OK          | MuteTimeInterval |             | [schema](#route-put-mute-timing-200-schema) |
+| [400](#route-put-mute-timing-400) | Bad Request | ValidationError  |             | [schema](#route-put-mute-timing-400-schema) |
+
+#### Responses
+
+##### <span id="route-put-mute-timing-200"></span> 200 - MuteTimeInterval
+
+Status: OK
+
+###### <span id="route-put-mute-timing-200-schema"></span> Schema
+
+[MuteTimeInterval](#mute-time-interval)
+
+##### <span id="route-put-mute-timing-400"></span> 400 - ValidationError
+
+Status: Bad Request
+
+###### <span id="route-put-mute-timing-400-schema"></span> Schema
+
+[ValidationError](#validation-error)
+
+### <span id="route-put-policy-tree"></span> Sets the notification policy tree. (_RoutePutPolicyTree_)
+
+```
+PUT /api/v1/provisioning/policies
+```
+
+#### Consumes
+
+- application/json
+
+#### Parameters
+
+| Name | Source | Type            | Go type        | Separator | Required | Default | Description                              |
+| ---- | ------ | --------------- | -------------- | --------- | :------: | ------- | ---------------------------------------- |
+| Body | `body` | [Route](#route) | `models.Route` |           |          |         | The new notification routing tree to use |
+
+#### All responses
+
+| Code                              | Status      | Description     | Has headers | Schema                                      |
+| --------------------------------- | ----------- | --------------- | :---------: | ------------------------------------------- |
+| [202](#route-put-policy-tree-202) | Accepted    | Ack             |             | [schema](#route-put-policy-tree-202-schema) |
+| [400](#route-put-policy-tree-400) | Bad Request | ValidationError |             | [schema](#route-put-policy-tree-400-schema) |
+
+#### Responses
+
+##### <span id="route-put-policy-tree-202"></span> 202 - Ack
+
+Status: Accepted
+
+###### <span id="route-put-policy-tree-202-schema"></span> Schema
+
+[Ack](#ack)
+
+##### <span id="route-put-policy-tree-400"></span> 400 - ValidationError
+
+Status: Bad Request
+
+###### <span id="route-put-policy-tree-400-schema"></span> Schema
+
+[ValidationError](#validation-error)
+
+### <span id="route-put-template"></span> Updates an existing template. (_RoutePutTemplate_)
+
+```
+PUT /api/v1/provisioning/templates/{name}
+```
+
+#### Consumes
+
+- application/json
+
+#### Parameters
+
+| Name | Source | Type                                                | Go type                         | Separator | Required | Default | Description   |
+| ---- | ------ | --------------------------------------------------- | ------------------------------- | --------- | :------: | ------- | ------------- |
+| name | `path` | string                                              | `string`                        |           |    ✓     |         | Template Name |
+| Body | `body` | [MessageTemplateContent](#message-template-content) | `models.MessageTemplateContent` |           |          |         |               |
+
+#### All responses
+
+| Code                           | Status      | Description     | Has headers | Schema                                   |
+| ------------------------------ | ----------- | --------------- | :---------: | ---------------------------------------- |
+| [202](#route-put-template-202) | Accepted    | MessageTemplate |             | [schema](#route-put-template-202-schema) |
+| [400](#route-put-template-400) | Bad Request | ValidationError |             | [schema](#route-put-template-400-schema) |
+
+#### Responses
+
+##### <span id="route-put-template-202"></span> 202 - MessageTemplate
+
+Status: Accepted
+
+###### <span id="route-put-template-202-schema"></span> Schema
+
+[MessageTemplate](#message-template)
+
+##### <span id="route-put-template-400"></span> 400 - ValidationError
+
+Status: Bad Request
+
+###### <span id="route-put-template-400-schema"></span> Schema
+
+[ValidationError](#validation-error)
 
 ### <span id="add-a-p-ikey"></span> Creates an API key. (_addAPIkey_)
 
@@ -930,9 +1653,10 @@ POST /api/teams/{team_id}/members
 
 #### Parameters
 
-| Name    | Source | Type   | Go type  | Separator | Required | Default | Description |
-| ------- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
-| team_id | `path` | string | `string` |           |    ✓     |         |             |
+| Name    | Source | Type                                             | Go type                       | Separator | Required | Default | Description |
+| ------- | ------ | ------------------------------------------------ | ----------------------------- | --------- | :------: | ------- | ----------- |
+| team_id | `path` | string                                           | `string`                      |           |    ✓     |         |             |
+| body    | `body` | [AddTeamMemberCommand](#add-team-member-command) | `models.AddTeamMemberCommand` |           |    ✓     |         |             |
 
 #### All responses
 
@@ -1056,7 +1780,7 @@ Status: Internal Server Error
 ### <span id="add-user-role"></span> Add a user role assignment. (_addUserRole_)
 
 ```
-POST /api/access-control/users/{user_id}/roles
+POST /api/access-control/users/{userId}/roles
 ```
 
 Assign a role to a specific user. For bulk updates consider Set user role assignments.
@@ -1065,10 +1789,10 @@ You need to have a permission with action `users.roles:add` and scope `permissio
 
 #### Parameters
 
-| Name    | Source | Type                                         | Go type                     | Separator | Required | Default | Description |
-| ------- | ------ | -------------------------------------------- | --------------------------- | --------- | :------: | ------- | ----------- |
-| user_id | `path` | int64 (formatted integer)                    | `int64`                     |           |    ✓     |         |             |
-| body    | `body` | [AddUserRoleCommand](#add-user-role-command) | `models.AddUserRoleCommand` |           |    ✓     |         |             |
+| Name   | Source | Type                                         | Go type                     | Separator | Required | Default | Description |
+| ------ | ------ | -------------------------------------------- | --------------------------- | --------- | :------: | ------- | ----------- |
+| userId | `path` | int64 (formatted integer)                    | `int64`                     |           |    ✓     |         |             |
+| body   | `body` | [AddUserRoleCommand](#add-user-role-command) | `models.AddUserRoleCommand` |           |    ✓     |         |             |
 
 #### All responses
 
@@ -2407,6 +3131,63 @@ Status: Internal Server Error
 | message | string                    | `string` |    ✓     |         | Message Message of the created org. | `Data source added` |
 | orgId   | int64 (formatted integer) | `int64`  |    ✓     |         | ID Identifier of the created org.   | `65`                |
 
+### <span id="create-query"></span> Add query to query history. (_createQuery_)
+
+```
+POST /api/query-history
+```
+
+Adds new query to query history.
+
+#### Parameters
+
+| Name | Source | Type                                                                       | Go type                                   | Separator | Required | Default | Description |
+| ---- | ------ | -------------------------------------------------------------------------- | ----------------------------------------- | --------- | :------: | ------- | ----------- |
+| body | `body` | [CreateQueryInQueryHistoryCommand](#create-query-in-query-history-command) | `models.CreateQueryInQueryHistoryCommand` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                     | Status                | Description                                                                         | Has headers | Schema                             |
+| ------------------------ | --------------------- | ----------------------------------------------------------------------------------- | :---------: | ---------------------------------- |
+| [200](#create-query-200) | OK                    |                                                                                     |             | [schema](#create-query-200-schema) |
+| [400](#create-query-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed. |             | [schema](#create-query-400-schema) |
+| [401](#create-query-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                |             | [schema](#create-query-401-schema) |
+| [500](#create-query-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.  |             | [schema](#create-query-500-schema) |
+
+#### Responses
+
+##### <span id="create-query-200"></span> 200
+
+Status: OK
+
+###### <span id="create-query-200-schema"></span> Schema
+
+[QueryHistoryResponse](#query-history-response)
+
+##### <span id="create-query-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+
+Status: Bad Request
+
+###### <span id="create-query-400-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="create-query-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="create-query-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="create-query-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="create-query-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
 ### <span id="create-recording-rule"></span> Create a new recording rule. (_createRecordingRule_)
 
 ```
@@ -2634,9 +3415,9 @@ For example, if a user does not have required permissions for creating users, th
 
 #### Parameters
 
-| Name | Source | Type                                           | Go type                      | Separator | Required | Default | Description |
-| ---- | ------ | ---------------------------------------------- | ---------------------------- | --------- | :------: | ------- | ----------- |
-| body | `body` | [SetUserRolesCommand](#set-user-roles-command) | `models.SetUserRolesCommand` |           |    ✓     |         |             |
+| Name | Source | Type                                                                      | Go type                                   | Separator | Required | Default | Description |
+| ---- | ------ | ------------------------------------------------------------------------- | ----------------------------------------- | --------- | :------: | ------- | ----------- |
+| body | `body` | [CreateRoleWithPermissionsCommand](#create-role-with-permissions-command) | `models.CreateRoleWithPermissionsCommand` |           |    ✓     |         |             |
 
 #### All responses
 
@@ -3217,10 +3998,11 @@ Proxies all calls to the actual data source. The data source should support POST
 
 #### Parameters
 
-| Name                   | Source | Type   | Go type  | Separator | Required | Default | Description |
-| ---------------------- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
-| datasource_proxy_route | `path` | string | `string` |           |    ✓     |         |             |
-| uid                    | `path` | string | `string` |           |    ✓     |         |             |
+| Name                   | Source | Type                      | Go type       | Separator | Required | Default | Description |
+| ---------------------- | ------ | ------------------------- | ------------- | --------- | :------: | ------- | ----------- |
+| datasource_proxy_route | `path` | string                    | `string`      |           |    ✓     |         |             |
+| uid                    | `path` | string                    | `string`      |           |    ✓     |         |             |
+| DatasourceProxyParam   | `body` | [interface{}](#interface) | `interface{}` |           |    ✓     |         |             |
 
 #### All responses
 
@@ -4362,6 +5144,54 @@ Status: Not Found
 Status: Internal Server Error
 
 ###### <span id="delete-permissions-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="delete-query"></span> Delete query in query history. (_deleteQuery_)
+
+```
+DELETE /api/query-history/{query_history_uid}
+```
+
+Deletes an existing query in query history as specified by the UID. This operation cannot be reverted.
+
+#### Parameters
+
+| Name              | Source | Type   | Go type  | Separator | Required | Default | Description |
+| ----------------- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
+| query_history_uid | `path` | string | `string` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                     | Status                | Description                                                                        | Has headers | Schema                             |
+| ------------------------ | --------------------- | ---------------------------------------------------------------------------------- | :---------: | ---------------------------------- |
+| [200](#delete-query-200) | OK                    |                                                                                    |             | [schema](#delete-query-200-schema) |
+| [401](#delete-query-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.               |             | [schema](#delete-query-401-schema) |
+| [500](#delete-query-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally. |             | [schema](#delete-query-500-schema) |
+
+#### Responses
+
+##### <span id="delete-query-200"></span> 200
+
+Status: OK
+
+###### <span id="delete-query-200-schema"></span> Schema
+
+[QueryHistoryDeleteQueryResponse](#query-history-delete-query-response)
+
+##### <span id="delete-query-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="delete-query-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="delete-query-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="delete-query-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
@@ -9834,7 +10664,7 @@ Status: Internal Server Error
 ### <span id="list-user-roles"></span> List roles assigned to a user. (_listUserRoles_)
 
 ```
-GET /api/access-control/users/{user_id}/roles
+GET /api/access-control/users/{userId}/roles
 ```
 
 Lists the roles that have been directly assigned to a given user. The list does not include built-in roles (Viewer, Editor, Admin or Grafana Admin), and it does not include roles that have been inherited from a team.
@@ -9843,9 +10673,9 @@ You need to have a permission with action `users.roles:list` and scope `users:id
 
 #### Parameters
 
-| Name    | Source | Type                      | Go type | Separator | Required | Default | Description |
-| ------- | ------ | ------------------------- | ------- | --------- | :------: | ------- | ----------- |
-| user_id | `path` | int64 (formatted integer) | `int64` |           |    ✓     |         |             |
+| Name   | Source | Type                      | Go type | Separator | Required | Default | Description |
+| ------ | ------ | ------------------------- | ------- | --------- | :------: | ------- | ----------- |
+| userId | `path` | int64 (formatted integer) | `int64` |           |    ✓     |         |             |
 
 #### All responses
 
@@ -10126,6 +10956,63 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
+### <span id="migrate-queries"></span> Migrate queries to query history. (_migrateQueries_)
+
+```
+POST /api/query-history/migrate
+```
+
+Adds multiple queries to query history.
+
+#### Parameters
+
+| Name | Source | Type                                                                             | Go type                                      | Separator | Required | Default | Description |
+| ---- | ------ | -------------------------------------------------------------------------------- | -------------------------------------------- | --------- | :------: | ------- | ----------- |
+| body | `body` | [MigrateQueriesToQueryHistoryCommand](#migrate-queries-to-query-history-command) | `models.MigrateQueriesToQueryHistoryCommand` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                        | Status                | Description                                                                         | Has headers | Schema                                |
+| --------------------------- | --------------------- | ----------------------------------------------------------------------------------- | :---------: | ------------------------------------- |
+| [200](#migrate-queries-200) | OK                    |                                                                                     |             | [schema](#migrate-queries-200-schema) |
+| [400](#migrate-queries-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed. |             | [schema](#migrate-queries-400-schema) |
+| [401](#migrate-queries-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                |             | [schema](#migrate-queries-401-schema) |
+| [500](#migrate-queries-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.  |             | [schema](#migrate-queries-500-schema) |
+
+#### Responses
+
+##### <span id="migrate-queries-200"></span> 200
+
+Status: OK
+
+###### <span id="migrate-queries-200-schema"></span> Schema
+
+[QueryHistoryMigrationResponse](#query-history-migration-response)
+
+##### <span id="migrate-queries-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+
+Status: Bad Request
+
+###### <span id="migrate-queries-400-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="migrate-queries-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="migrate-queries-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="migrate-queries-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="migrate-queries-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
 ### <span id="notification-channel-test"></span> Test notification channel. (_notificationChannelTest_)
 
 ```
@@ -10342,6 +11229,64 @@ Status: Internal Server Error
 | ------- | ------------------------- | -------- | :------: | ------- | ---------------------------------- | ------------------- |
 | id      | int64 (formatted integer) | `int64`  |    ✓     |         | ID Identifier of the added user.   | `65`                |
 | message | string                    | `string` |    ✓     |         | Message Message of the added user. | `Data source added` |
+
+### <span id="patch-query-comment"></span> Update comment for query in query history. (_patchQueryComment_)
+
+```
+PATCH /api/query-history/{query_history_uid}
+```
+
+Updates comment for query in query history as specified by the UID.
+
+#### Parameters
+
+| Name              | Source | Type                                                                                    | Go type                                         | Separator | Required | Default | Description |
+| ----------------- | ------ | --------------------------------------------------------------------------------------- | ----------------------------------------------- | --------- | :------: | ------- | ----------- |
+| query_history_uid | `path` | string                                                                                  | `string`                                        |           |    ✓     |         |             |
+| body              | `body` | [PatchQueryCommentInQueryHistoryCommand](#patch-query-comment-in-query-history-command) | `models.PatchQueryCommentInQueryHistoryCommand` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                            | Status                | Description                                                                         | Has headers | Schema                                    |
+| ------------------------------- | --------------------- | ----------------------------------------------------------------------------------- | :---------: | ----------------------------------------- |
+| [200](#patch-query-comment-200) | OK                    |                                                                                     |             | [schema](#patch-query-comment-200-schema) |
+| [400](#patch-query-comment-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed. |             | [schema](#patch-query-comment-400-schema) |
+| [401](#patch-query-comment-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                |             | [schema](#patch-query-comment-401-schema) |
+| [500](#patch-query-comment-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.  |             | [schema](#patch-query-comment-500-schema) |
+
+#### Responses
+
+##### <span id="patch-query-comment-200"></span> 200
+
+Status: OK
+
+###### <span id="patch-query-comment-200-schema"></span> Schema
+
+[QueryHistoryResponse](#query-history-response)
+
+##### <span id="patch-query-comment-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+
+Status: Bad Request
+
+###### <span id="patch-query-comment-400-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="patch-query-comment-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="patch-query-comment-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="patch-query-comment-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="patch-query-comment-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
 
 ### <span id="patch-user-preferences"></span> Patch user preferences. (_patchUserPreferences_)
 
@@ -11718,7 +12663,7 @@ Status: Internal Server Error
 ### <span id="remove-user-role"></span> Remove a user role assignment. (_removeUserRole_)
 
 ```
-DELETE /api/access-control/users/{user_id}/roles/{roleUID}
+DELETE /api/access-control/users/{userId}/roles/{roleUID}
 ```
 
 Revoke a role from a user. For bulk updates consider Set user role assignments.
@@ -11730,7 +12675,7 @@ You need to have a permission with action `users.roles:remove` and scope `permis
 | Name    | Source  | Type                      | Go type  | Separator | Required | Default | Description                                                                                                                                                             |
 | ------- | ------- | ------------------------- | -------- | --------- | :------: | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | roleUID | `path`  | string                    | `string` |           |    ✓     |         |                                                                                                                                                                         |
-| user_id | `path`  | int64 (formatted integer) | `int64`  |           |    ✓     |         |                                                                                                                                                                         |
+| userId  | `path`  | int64 (formatted integer) | `int64`  |           |    ✓     |         |                                                                                                                                                                         |
 | global  | `query` | boolean                   | `bool`   |           |          |         | A flag indicating if the assignment is global or not. If set to false, the default org ID of the authenticated user will be used from the request to remove assignment. |
 
 #### All responses
@@ -12208,7 +13153,7 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="revoke-signed-i-n-auth-token-cmd"></span> Revoke an auth token of the actual User. (_revokeSignedINAuthTokenCmd_)
+### <span id="revoke-signed-in-auth-token"></span> Revoke an auth token of the actual User. (_revokeSignedInAuthToken_)
 
 ```
 POST /api/user/revoke-auth-token
@@ -12224,53 +13169,53 @@ Revokes the given auth token (device) for the actual user. User of issued auth t
 
 #### All responses
 
-| Code                                         | Status                | Description                                                                                                 | Has headers | Schema                                                 |
-| -------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------------------ |
-| [200](#revoke-signed-i-n-auth-token-cmd-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#revoke-signed-i-n-auth-token-cmd-200-schema) |
-| [400](#revoke-signed-i-n-auth-token-cmd-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#revoke-signed-i-n-auth-token-cmd-400-schema) |
-| [401](#revoke-signed-i-n-auth-token-cmd-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#revoke-signed-i-n-auth-token-cmd-401-schema) |
-| [403](#revoke-signed-i-n-auth-token-cmd-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#revoke-signed-i-n-auth-token-cmd-403-schema) |
-| [500](#revoke-signed-i-n-auth-token-cmd-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#revoke-signed-i-n-auth-token-cmd-500-schema) |
+| Code                                    | Status                | Description                                                                                                 | Has headers | Schema                                            |
+| --------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ------------------------------------------------- |
+| [200](#revoke-signed-in-auth-token-200) | OK                    | An OKResponse is returned if the request was successful.                                                    |             | [schema](#revoke-signed-in-auth-token-200-schema) |
+| [400](#revoke-signed-in-auth-token-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#revoke-signed-in-auth-token-400-schema) |
+| [401](#revoke-signed-in-auth-token-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#revoke-signed-in-auth-token-401-schema) |
+| [403](#revoke-signed-in-auth-token-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#revoke-signed-in-auth-token-403-schema) |
+| [500](#revoke-signed-in-auth-token-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#revoke-signed-in-auth-token-500-schema) |
 
 #### Responses
 
-##### <span id="revoke-signed-i-n-auth-token-cmd-200"></span> 200 - An OKResponse is returned if the request was successful.
+##### <span id="revoke-signed-in-auth-token-200"></span> 200 - An OKResponse is returned if the request was successful.
 
 Status: OK
 
-###### <span id="revoke-signed-i-n-auth-token-cmd-200-schema"></span> Schema
+###### <span id="revoke-signed-in-auth-token-200-schema"></span> Schema
 
 [SuccessResponseBody](#success-response-body)
 
-##### <span id="revoke-signed-i-n-auth-token-cmd-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+##### <span id="revoke-signed-in-auth-token-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
 
 Status: Bad Request
 
-###### <span id="revoke-signed-i-n-auth-token-cmd-400-schema"></span> Schema
+###### <span id="revoke-signed-in-auth-token-400-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="revoke-signed-i-n-auth-token-cmd-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+##### <span id="revoke-signed-in-auth-token-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
 Status: Unauthorized
 
-###### <span id="revoke-signed-i-n-auth-token-cmd-401-schema"></span> Schema
+###### <span id="revoke-signed-in-auth-token-401-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="revoke-signed-i-n-auth-token-cmd-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="revoke-signed-in-auth-token-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="revoke-signed-i-n-auth-token-cmd-403-schema"></span> Schema
+###### <span id="revoke-signed-in-auth-token-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="revoke-signed-i-n-auth-token-cmd-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="revoke-signed-in-auth-token-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="revoke-signed-i-n-auth-token-cmd-500-schema"></span> Schema
+###### <span id="revoke-signed-in-auth-token-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
@@ -12477,6 +13422,63 @@ Status: Conflict
 Status: Internal Server Error
 
 ###### <span id="search-org-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="search-queries"></span> Query history search. (_searchQueries_)
+
+```
+GET /api/query-history
+```
+
+Returns a list of queries in the query history that matches the search criteria.
+Query history search supports pagination. Use the `limit` parameter to control the maximum number of queries returned; the default limit is 100.
+You can also use the `page` query parameter to fetch queries from any page other than the first one.
+
+#### Parameters
+
+| Name          | Source  | Type                      | Go type    | Separator | Required | Default       | Description                                                                                           |
+| ------------- | ------- | ------------------------- | ---------- | --------- | :------: | ------------- | ----------------------------------------------------------------------------------------------------- |
+| datasourceUid | `query` | []string                  | `[]string` | `multi`   |          |               | List of data source UIDs to search for                                                                |
+| from          | `query` | int64 (formatted integer) | `int64`    |           |          |               | From range for the query history search                                                               |
+| limit         | `query` | int64 (formatted integer) | `int64`    |           |          |               | Limit the number of returned results                                                                  |
+| onlyStarred   | `query` | boolean                   | `bool`     |           |          |               | Flag indicating if only starred queries should be returned                                            |
+| page          | `query` | int64 (formatted integer) | `int64`    |           |          |               | Use this parameter to access hits beyond limit. Numbering starts at 1. limit param acts as page size. |
+| searchString  | `query` | string                    | `string`   |           |          |               | Text inside query or comments that is searched for                                                    |
+| sort          | `query` | string                    | `string`   |           |          | `"time-desc"` | Sort method                                                                                           |
+| to            | `query` | int64 (formatted integer) | `int64`    |           |          |               | To range for the query history search                                                                 |
+
+#### All responses
+
+| Code                       | Status                | Description                                                                        | Has headers | Schema                               |
+| -------------------------- | --------------------- | ---------------------------------------------------------------------------------- | :---------: | ------------------------------------ |
+| [200](#search-queries-200) | OK                    |                                                                                    |             | [schema](#search-queries-200-schema) |
+| [401](#search-queries-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.               |             | [schema](#search-queries-401-schema) |
+| [500](#search-queries-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally. |             | [schema](#search-queries-500-schema) |
+
+#### Responses
+
+##### <span id="search-queries-200"></span> 200
+
+Status: OK
+
+###### <span id="search-queries-200-schema"></span> Schema
+
+[QueryHistorySearchResponse](#query-history-search-response)
+
+##### <span id="search-queries-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="search-queries-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="search-queries-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="search-queries-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
@@ -13132,7 +14134,7 @@ Status: Internal Server Error
 ### <span id="set-user-roles"></span> Set user role assignments. (_setUserRoles_)
 
 ```
-PUT /api/access-control/users/{user_id}/roles
+PUT /api/access-control/users/{userId}/roles
 ```
 
 Update the user’s role assignments to match the provided set of UIDs. This will remove any assigned roles that aren’t in the request and add roles that are in the set but are not already assigned to the user.
@@ -13142,9 +14144,10 @@ You need to have a permission with action `users.roles:add` and `users.roles:rem
 
 #### Parameters
 
-| Name    | Source | Type                      | Go type | Separator | Required | Default | Description |
-| ------- | ------ | ------------------------- | ------- | --------- | :------: | ------- | ----------- |
-| user_id | `path` | int64 (formatted integer) | `int64` |           |    ✓     |         |             |
+| Name   | Source | Type                                           | Go type                      | Separator | Required | Default | Description |
+| ------ | ------ | ---------------------------------------------- | ---------------------------- | --------- | :------: | ------- | ----------- |
+| userId | `path` | int64 (formatted integer)                      | `int64`                      |           |    ✓     |         |             |
+| body   | `body` | [SetUserRolesCommand](#set-user-roles-command) | `models.SetUserRolesCommand` |           |    ✓     |         |             |
 
 #### All responses
 
@@ -13261,6 +14264,54 @@ Status: Forbidden
 Status: Internal Server Error
 
 ###### <span id="star-dashboard-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="star-query"></span> Add star to query in query history. (_starQuery_)
+
+```
+POST /api/query-history/star/{query_history_uid}
+```
+
+Adds star to query in query history as specified by the UID.
+
+#### Parameters
+
+| Name              | Source | Type   | Go type  | Separator | Required | Default | Description |
+| ----------------- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
+| query_history_uid | `path` | string | `string` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                   | Status                | Description                                                                        | Has headers | Schema                           |
+| ---------------------- | --------------------- | ---------------------------------------------------------------------------------- | :---------: | -------------------------------- |
+| [200](#star-query-200) | OK                    |                                                                                    |             | [schema](#star-query-200-schema) |
+| [401](#star-query-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.               |             | [schema](#star-query-401-schema) |
+| [500](#star-query-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally. |             | [schema](#star-query-500-schema) |
+
+#### Responses
+
+##### <span id="star-query-200"></span> 200
+
+Status: OK
+
+###### <span id="star-query-200-schema"></span> Schema
+
+[QueryHistoryResponse](#query-history-response)
+
+##### <span id="star-query-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="star-query-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="star-query-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="star-query-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
@@ -13574,6 +14625,54 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
+### <span id="unstar-query"></span> Remove star to query in query history. (_unstarQuery_)
+
+```
+DELETE /api/query-history/star/{query_history_uid}
+```
+
+Removes star from query in query history as specified by the UID.
+
+#### Parameters
+
+| Name              | Source | Type   | Go type  | Separator | Required | Default | Description |
+| ----------------- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
+| query_history_uid | `path` | string | `string` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                     | Status                | Description                                                                        | Has headers | Schema                             |
+| ------------------------ | --------------------- | ---------------------------------------------------------------------------------- | :---------: | ---------------------------------- |
+| [200](#unstar-query-200) | OK                    |                                                                                    |             | [schema](#unstar-query-200-schema) |
+| [401](#unstar-query-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.               |             | [schema](#unstar-query-401-schema) |
+| [500](#unstar-query-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally. |             | [schema](#unstar-query-500-schema) |
+
+#### Responses
+
+##### <span id="unstar-query-200"></span> 200
+
+Status: OK
+
+###### <span id="unstar-query-200-schema"></span> Schema
+
+[QueryHistoryResponse](#query-history-response)
+
+##### <span id="unstar-query-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="unstar-query-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="unstar-query-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="unstar-query-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
 ### <span id="update-alert-notification-channel"></span> Update notification channel by ID. (_updateAlertNotificationChannel_)
 
 ```
@@ -13641,7 +14740,7 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
-### <span id="update-alert-notification-channel-b-y-uid"></span> Update notification channel by UID. (_updateAlertNotificationChannelBYUID_)
+### <span id="update-alert-notification-channel-by-uid"></span> Update notification channel by UID. (_updateAlertNotificationChannelByUID_)
 
 ```
 PUT /api/alert-notifications/uid/{notification_channel_uid}
@@ -13658,53 +14757,53 @@ Updates an existing notification channel identified by uid.
 
 #### All responses
 
-| Code                                                  | Status                | Description                                                                                                 | Has headers | Schema                                                          |
-| ----------------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------------------------------------- |
-| [200](#update-alert-notification-channel-b-y-uid-200) | OK                    |                                                                                                             |             | [schema](#update-alert-notification-channel-b-y-uid-200-schema) |
-| [401](#update-alert-notification-channel-b-y-uid-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#update-alert-notification-channel-b-y-uid-401-schema) |
-| [403](#update-alert-notification-channel-b-y-uid-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#update-alert-notification-channel-b-y-uid-403-schema) |
-| [404](#update-alert-notification-channel-b-y-uid-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#update-alert-notification-channel-b-y-uid-404-schema) |
-| [500](#update-alert-notification-channel-b-y-uid-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#update-alert-notification-channel-b-y-uid-500-schema) |
+| Code                                                 | Status                | Description                                                                                                 | Has headers | Schema                                                         |
+| ---------------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | -------------------------------------------------------------- |
+| [200](#update-alert-notification-channel-by-uid-200) | OK                    |                                                                                                             |             | [schema](#update-alert-notification-channel-by-uid-200-schema) |
+| [401](#update-alert-notification-channel-by-uid-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#update-alert-notification-channel-by-uid-401-schema) |
+| [403](#update-alert-notification-channel-by-uid-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#update-alert-notification-channel-by-uid-403-schema) |
+| [404](#update-alert-notification-channel-by-uid-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#update-alert-notification-channel-by-uid-404-schema) |
+| [500](#update-alert-notification-channel-by-uid-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#update-alert-notification-channel-by-uid-500-schema) |
 
 #### Responses
 
-##### <span id="update-alert-notification-channel-b-y-uid-200"></span> 200
+##### <span id="update-alert-notification-channel-by-uid-200"></span> 200
 
 Status: OK
 
-###### <span id="update-alert-notification-channel-b-y-uid-200-schema"></span> Schema
+###### <span id="update-alert-notification-channel-by-uid-200-schema"></span> Schema
 
 [AlertNotification](#alert-notification)
 
-##### <span id="update-alert-notification-channel-b-y-uid-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+##### <span id="update-alert-notification-channel-by-uid-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
 Status: Unauthorized
 
-###### <span id="update-alert-notification-channel-b-y-uid-401-schema"></span> Schema
+###### <span id="update-alert-notification-channel-by-uid-401-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="update-alert-notification-channel-b-y-uid-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+##### <span id="update-alert-notification-channel-by-uid-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 
 Status: Forbidden
 
-###### <span id="update-alert-notification-channel-b-y-uid-403-schema"></span> Schema
+###### <span id="update-alert-notification-channel-by-uid-403-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="update-alert-notification-channel-b-y-uid-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+##### <span id="update-alert-notification-channel-by-uid-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
 
 Status: Not Found
 
-###### <span id="update-alert-notification-channel-b-y-uid-404-schema"></span> Schema
+###### <span id="update-alert-notification-channel-by-uid-404-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
-##### <span id="update-alert-notification-channel-b-y-uid-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+##### <span id="update-alert-notification-channel-by-uid-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
 
 Status: Internal Server Error
 
-###### <span id="update-alert-notification-channel-b-y-uid-500-schema"></span> Schema
+###### <span id="update-alert-notification-channel-by-uid-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
@@ -15267,9 +16366,9 @@ Status: Internal Server Error
 
 | Name          | Type                      | Go type  | Required | Default | Description | Example |
 | ------------- | ------------------------- | -------- | :------: | ------- | ----------- | ------- |
-| Name          | string                    | `string` |          |         |             |         |
-| Role          | string                    | `string` |          |         |             |         |
-| SecondsToLive | int64 (formatted integer) | `int64`  |          |         |             |         |
+| name          | string                    | `string` |          |         |             |         |
+| role          | string                    | `string` |          |         |             |         |
+| secondsToLive | int64 (formatted integer) | `int64`  |          |         |             |         |
 
 ### <span id="add-built-in-role-command"></span> AddBuiltInRoleCommand
 
@@ -15287,23 +16386,21 @@ Status: Internal Server Error
 
 **Properties**
 
-| Name              | Type                   | Go type             | Required | Default | Description | Example |
-| ----------------- | ---------------------- | ------------------- | :------: | ------- | ----------- | ------- |
-| access            | [DsAccess](#ds-access) | `DsAccess`          |          |         |             |         |
-| basicAuth         | boolean                | `bool`              |          |         |             |         |
-| basicAuthPassword | string                 | `string`            |          |         |             |         |
-| basicAuthUser     | string                 | `string`            |          |         |             |         |
-| database          | string                 | `string`            |          |         |             |         |
-| isDefault         | boolean                | `bool`              |          |         |             |         |
-| jsonData          | [JSON](#json)          | `JSON`              |          |         |             |         |
-| name              | string                 | `string`            |          |         |             |         |
-| password          | string                 | `string`            |          |         |             |         |
-| secureJsonData    | map of string          | `map[string]string` |          |         |             |         |
-| type              | string                 | `string`            |          |         |             |         |
-| uid               | string                 | `string`            |          |         |             |         |
-| url               | string                 | `string`            |          |         |             |         |
-| user              | string                 | `string`            |          |         |             |         |
-| withCredentials   | boolean                | `bool`              |          |         |             |         |
+| Name            | Type                   | Go type             | Required | Default | Description | Example |
+| --------------- | ---------------------- | ------------------- | :------: | ------- | ----------- | ------- |
+| access          | [DsAccess](#ds-access) | `DsAccess`          |          |         |             |         |
+| basicAuth       | boolean                | `bool`              |          |         |             |         |
+| basicAuthUser   | string                 | `string`            |          |         |             |         |
+| database        | string                 | `string`            |          |         |             |         |
+| isDefault       | boolean                | `bool`              |          |         |             |         |
+| jsonData        | [JSON](#json)          | `JSON`              |          |         |             |         |
+| name            | string                 | `string`            |          |         |             |         |
+| secureJsonData  | map of string          | `map[string]string` |          |         |             |         |
+| type            | string                 | `string`            |          |         |             |         |
+| uid             | string                 | `string`            |          |         |             |         |
+| url             | string                 | `string`            |          |         |             |         |
+| user            | string                 | `string`            |          |         |             |         |
+| withCredentials | boolean                | `bool`              |          |         |             |         |
 
 ### <span id="add-invite-form"></span> AddInviteForm
 
@@ -15434,27 +16531,15 @@ Status: Internal Server Error
 
 ### <span id="alert"></span> Alert
 
-> Alert alert
-
-**Properties**
-
-| Name         | Type                   | Go type      | Required | Default | Description   | Example |
-| ------------ | ---------------------- | ------------ | :------: | ------- | ------------- | ------- |
-| GeneratorURL | uri (formatted string) | `strfmt.URI` |          |         | generator URL |
-| Format: uri  |                        |
-| labels       | [LabelSet](#label-set) | `LabelSet`   |    ✓     |         |               |         |
-
-### <span id="alert"></span> Alert
-
 **Properties**
 
 | Name        | Type                               | Go type           | Required | Default | Description | Example |
 | ----------- | ---------------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
-| ActiveAt    | date-time (formatted string)       | `strfmt.DateTime` |          |         |             |         |
-| State       | string                             | `string`          |    ✓     |         |             |         |
-| Value       | string                             | `string`          |    ✓     |         |             |         |
+| activeAt    | date-time (formatted string)       | `strfmt.DateTime` |          |         |             |         |
 | annotations | [OverrideLabels](#override-labels) | `OverrideLabels`  |    ✓     |         |             |         |
 | labels      | [OverrideLabels](#override-labels) | `OverrideLabels`  |    ✓     |         |             |         |
+| state       | string                             | `string`          |    ✓     |         |             |         |
+| value       | string                             | `string`          |    ✓     |         |             |         |
 
 ### <span id="alert-discovery"></span> AlertDiscovery
 
@@ -15462,11 +16547,7 @@ Status: Internal Server Error
 
 | Name   | Type              | Go type    | Required | Default | Description | Example |
 | ------ | ----------------- | ---------- | :------: | ------- | ----------- | ------- |
-| Alerts | [][alert](#alert) | `[]*Alert` |    ✓     |         |             |         |
-
-### <span id="alert-groups"></span> AlertGroups
-
-[][alertgroup](#alert-group)
+| alerts | [][alert](#alert) | `[]*Alert` |    ✓     |         |             |         |
 
 ### <span id="alert-instances-response"></span> AlertInstancesResponse
 
@@ -15474,7 +16555,7 @@ Status: Internal Server Error
 
 | Name                                                                                                                                     | Type               | Go type     | Required | Default | Description                                       | Example |
 | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------------ | ----------- | :------: | ------- | ------------------------------------------------- | ------- |
-| Instances                                                                                                                                | [][]uint8](#uint8) | `[][]uint8` |          |         | Instances is an array of arrow encoded dataframes |
+| instances                                                                                                                                | [][]uint8](#uint8) | `[][]uint8` |          |         | Instances is an array of arrow encoded dataframes |
 | each frame has a single row, and a column for each instance (alert identified by unique labels) with a boolean value (firing/not firing) |                    |
 
 ### <span id="alert-list-item-d-t-o"></span> AlertListItemDTO
@@ -15502,7 +16583,7 @@ Status: Internal Server Error
 
 | Name | Type   | Go type  | Required | Default | Description | Example |
 | ---- | ------ | -------- | :------: | ------- | ----------- | ------- |
-| URL  | string | `string` |          |         |             |         |
+| url  | string | `string` |          |         |             |         |
 
 ### <span id="alert-manager-not-found"></span> AlertManagerNotFound
 
@@ -15516,10 +16597,10 @@ Status: Internal Server Error
 
 **Properties**
 
-| Name    | Type                             | Go type           | Required | Default | Description | Example |
-| ------- | -------------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
-| Active  | [][alertmanager](#alert-manager) | `[]*AlertManager` |          |         |             |         |
-| Dropped | [][alertmanager](#alert-manager) | `[]*AlertManager` |          |         |             |         |
+| Name                 | Type                             | Go type           | Required | Default | Description | Example |
+| -------------------- | -------------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
+| activeAlertManagers  | [][alertmanager](#alert-manager) | `[]*AlertManager` |          |         |             |         |
+| droppedAlertManagers | [][alertmanager](#alert-manager) | `[]*AlertManager` |          |         |             |         |
 
 ### <span id="alert-notification"></span> AlertNotification
 
@@ -15558,11 +16639,11 @@ Status: Internal Server Error
 
 | Name                                                      | Type                                      | Go type             | Required | Default | Description                                                                                        | Example |
 | --------------------------------------------------------- | ----------------------------------------- | ------------------- | :------: | ------- | -------------------------------------------------------------------------------------------------- | ------- |
-| DatasourceUID                                             | string                                    | `string`            |          |         | Grafana data source unique identifier; it should be '-100' for a Server Side Expression operation. |         |
-| Model                                                     | [interface{}](#interface)                 | `interface{}`       |          |         | JSON is the raw JSON query and includes the above properties as well as custom properties.         |         |
-| QueryType                                                 | string                                    | `string`            |          |         | QueryType is an optional identifier for the type of query.                                         |
+| datasourceUid                                             | string                                    | `string`            |          |         | Grafana data source unique identifier; it should be '-100' for a Server Side Expression operation. |         |
+| model                                                     | [interface{}](#interface)                 | `interface{}`       |          |         | JSON is the raw JSON query and includes the above properties as well as custom properties.         |         |
+| queryType                                                 | string                                    | `string`            |          |         | QueryType is an optional identifier for the type of query.                                         |
 | It can be used to distinguish different types of queries. |                                           |
-| RefID                                                     | string                                    | `string`            |          |         | RefID is the unique identifier of the query, set by the frontend call.                             |         |
+| refId                                                     | string                                    | `string`            |          |         | RefID is the unique identifier of the query, set by the frontend call.                             |         |
 | relativeTimeRange                                         | [RelativeTimeRange](#relative-time-range) | `RelativeTimeRange` |          |         |                                                                                                    |         |
 
 ### <span id="alert-response"></span> AlertResponse
@@ -15571,10 +16652,40 @@ Status: Internal Server Error
 
 | Name      | Type                               | Go type          | Required | Default | Description | Example |
 | --------- | ---------------------------------- | ---------------- | :------: | ------- | ----------- | ------- |
-| Error     | string                             | `string`         |          |         |             |         |
-| Status    | string                             | `string`         |    ✓     |         |             |         |
 | data      | [AlertDiscovery](#alert-discovery) | `AlertDiscovery` |          |         |             |         |
+| error     | string                             | `string`         |          |         |             |         |
 | errorType | [ErrorType](#error-type)           | `ErrorType`      |          |         |             |         |
+| status    | string                             | `string`         |    ✓     |         |             |         |
+
+### <span id="alert-rule"></span> AlertRule
+
+**Properties**
+
+| Name         | Type                         | Go type             | Required | Default | Description | Example                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ------------ | ---------------------------- | ------------------- | :------: | ------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| annotations  | map of string                | `map[string]string` |          |         |             | `{"runbook_url":"https://supercoolrunbook.com/page/13"}`                                                                                                                                                                                                                                                                                                                                                                         |
+| condition    | string                       | `string`            |    ✓     |         |             | `A`                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| data         | [][alertquery](#alert-query) | `[]*AlertQuery`     |    ✓     |         |             | `[{"datasourceUid":"-100","model":{"conditions":[{"evaluator":{"params":[0,0],"type":"gt"},"operator":{"type":"and"},"query":{"params":null},"reducer":{"params":null,"type":"avg"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1 == 1","hide":false,"intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"},"queryType":"","refId":"A","relativeTimeRange":{"from":0,"to":0}}]` |
+| execErrState | string                       | `string`            |    ✓     |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| folderUID    | string                       | `string`            |    ✓     |         |             | `project_x`                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| for          | [Duration](#duration)        | `Duration`          |    ✓     |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| id           | int64 (formatted integer)    | `int64`             |          |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| labels       | map of string                | `map[string]string` |          |         |             | `{"team":"sre-team-1"}`                                                                                                                                                                                                                                                                                                                                                                                                          |
+| noDataState  | string                       | `string`            |    ✓     |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| orgID        | int64 (formatted integer)    | `int64`             |    ✓     |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| provenance   | [Provenance](#provenance)    | `Provenance`        |          |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ruleGroup    | string                       | `string`            |    ✓     |         |             | `eval_group_1`                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| title        | string                       | `string`            |    ✓     |         |             | `Always firing`                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| uid          | string                       | `string`            |          |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| updated      | date-time (formatted string) | `strfmt.DateTime`   |          |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+
+### <span id="alert-rule-group"></span> AlertRuleGroup
+
+**Properties**
+
+| Name     | Type                      | Go type | Required | Default | Description | Example |
+| -------- | ------------------------- | ------- | :------: | ------- | ----------- | ------- |
+| interval | int64 (formatted integer) | `int64` |          |         |             |         |
 
 ### <span id="alert-state-info-d-t-o"></span> AlertStateInfoDTO
 
@@ -15593,18 +16704,6 @@ Status: Internal Server Error
 | Name           | Type   | Go type | Default | Description | Example |
 | -------------- | ------ | ------- | ------- | ----------- | ------- |
 | AlertStateType | string | string  |         |             |         |
-
-### <span id="alert-status"></span> AlertStatus
-
-> AlertStatus alert status
-
-**Properties**
-
-| Name        | Type     | Go type    | Required | Default | Description  | Example |
-| ----------- | -------- | ---------- | :------: | ------- | ------------ | ------- |
-| InhibitedBy | []string | `[]string` |    ✓     |         | inhibited by |         |
-| SilencedBy  | []string | `[]string` |    ✓     |         | silenced by  |         |
-| State       | string   | `string`   |    ✓     |         | state        |         |
 
 ### <span id="alert-test-command"></span> AlertTestCommand
 
@@ -15646,41 +16745,18 @@ Status: Internal Server Error
 
 | Name           | Type                               | Go type           | Required | Default | Description                                   | Example |
 | -------------- | ---------------------------------- | ----------------- | :------: | ------- | --------------------------------------------- | ------- |
-| Alerts         | [][alert](#alert)                  | `[]*Alert`        |    ✓     |         |                                               |         |
-| Duration       | double (formatted number)          | `float64`         |          |         |                                               |         |
-| EvaluationTime | double (formatted number)          | `float64`         |          |         |                                               |         |
-| Health         | string                             | `string`          |    ✓     |         |                                               |         |
-| LastError      | string                             | `string`          |          |         |                                               |         |
-| LastEvaluation | date-time (formatted string)       | `strfmt.DateTime` |          |         |                                               |         |
-| Name           | string                             | `string`          |    ✓     |         |                                               |         |
-| Query          | string                             | `string`          |    ✓     |         |                                               |         |
-| State          | string                             | `string`          |    ✓     |         | State can be "pending", "firing", "inactive". |         |
+| alerts         | [][alert](#alert)                  | `[]*Alert`        |    ✓     |         |                                               |         |
 | annotations    | [OverrideLabels](#override-labels) | `OverrideLabels`  |    ✓     |         |                                               |         |
+| duration       | double (formatted number)          | `float64`         |          |         |                                               |         |
+| evaluationTime | double (formatted number)          | `float64`         |          |         |                                               |         |
+| health         | string                             | `string`          |    ✓     |         |                                               |         |
 | labels         | [OverrideLabels](#override-labels) | `OverrideLabels`  |          |         |                                               |         |
+| lastError      | string                             | `string`          |          |         |                                               |         |
+| lastEvaluation | date-time (formatted string)       | `strfmt.DateTime` |          |         |                                               |         |
+| name           | string                             | `string`          |    ✓     |         |                                               |         |
+| query          | string                             | `string`          |    ✓     |         |                                               |         |
+| state          | string                             | `string`          |    ✓     |         | State can be "pending", "firing", "inactive". |         |
 | type           | [RuleType](#rule-type)             | `RuleType`        |    ✓     |         |                                               |         |
-
-### <span id="alertmanager-config"></span> AlertmanagerConfig
-
-> AlertmanagerConfig alertmanager config
-
-**Properties**
-
-| Name     | Type   | Go type  | Required | Default | Description | Example |
-| -------- | ------ | -------- | :------: | ------- | ----------- | ------- |
-| Original | string | `string` |    ✓     |         | original    |         |
-
-### <span id="alertmanager-status"></span> AlertmanagerStatus
-
-> AlertmanagerStatus alertmanager status
-
-**Properties**
-
-| Name        | Type                                       | Go type              | Required | Default | Description | Example |
-| ----------- | ------------------------------------------ | -------------------- | :------: | ------- | ----------- | ------- |
-| Uptime      | date-time (formatted string)               | `strfmt.DateTime`    |    ✓     |         | uptime      |         |
-| cluster     | [ClusterStatus](#cluster-status)           | `ClusterStatus`      |    ✓     |         |             |         |
-| config      | [AlertmanagerConfig](#alertmanager-config) | `AlertmanagerConfig` |    ✓     |         |             |         |
-| versionInfo | [VersionInfo](#version-info)               | `VersionInfo`        |    ✓     |         |             |         |
 
 ### <span id="annotation-actions"></span> AnnotationActions
 
@@ -15719,32 +16795,32 @@ Status: Internal Server Error
 
 | Name        | Type                  | Go type             | Required | Default | Description | Example |
 | ----------- | --------------------- | ------------------- | :------: | ------- | ----------- | ------- |
-| Alert       | string                | `string`            |          |         |             |         |
-| Annotations | map of string         | `map[string]string` |          |         |             |         |
-| Expr        | string                | `string`            |          |         |             |         |
-| Labels      | map of string         | `map[string]string` |          |         |             |         |
-| Record      | string                | `string`            |          |         |             |         |
+| alert       | string                | `string`            |          |         |             |         |
+| annotations | map of string         | `map[string]string` |          |         |             |         |
+| expr        | string                | `string`            |          |         |             |         |
 | for         | [Duration](#duration) | `Duration`          |          |         |             |         |
+| labels      | map of string         | `map[string]string` |          |         |             |         |
+| record      | string                | `string`            |          |         |             |         |
 
 ### <span id="authorization"></span> Authorization
 
 **Properties**
 
-| Name            | Type              | Go type  | Required | Default | Description | Example |
-| --------------- | ----------------- | -------- | :------: | ------- | ----------- | ------- |
-| CredentialsFile | string            | `string` |          |         |             |         |
-| Type            | string            | `string` |          |         |             |         |
-| credentials     | [Secret](#secret) | `Secret` |          |         |             |         |
+| Name             | Type              | Go type  | Required | Default | Description | Example |
+| ---------------- | ----------------- | -------- | :------: | ------- | ----------- | ------- |
+| credentials      | [Secret](#secret) | `Secret` |          |         |             |         |
+| credentials_file | string            | `string` |          |         |             |         |
+| type             | string            | `string` |          |         |             |         |
 
 ### <span id="basic-auth"></span> BasicAuth
 
 **Properties**
 
-| Name         | Type              | Go type  | Required | Default | Description | Example |
-| ------------ | ----------------- | -------- | :------: | ------- | ----------- | ------- |
-| PasswordFile | string            | `string` |          |         |             |         |
-| Username     | string            | `string` |          |         |             |         |
-| password     | [Secret](#secret) | `Secret` |          |         |             |         |
+| Name          | Type              | Go type  | Required | Default | Description | Example |
+| ------------- | ----------------- | -------- | :------: | ------- | ----------- | ------- |
+| password      | [Secret](#secret) | `Secret` |          |         |             |         |
+| password_file | string            | `string` |          |         |             |         |
+| username      | string            | `string` |          |         |             |         |
 
 ### <span id="branding-options-d-t-o"></span> BrandingOptionsDTO
 
@@ -15777,18 +16853,6 @@ Status: Internal Server Error
 | newPassword | string | `string` |          |         |             |         |
 | oldPassword | string | `string` |          |         |             |         |
 
-### <span id="cluster-status"></span> ClusterStatus
-
-> ClusterStatus cluster status
-
-**Properties**
-
-| Name   | Type                         | Go type         | Required | Default | Description | Example |
-| ------ | ---------------------------- | --------------- | :------: | ------- | ----------- | ------- |
-| Name   | string                       | `string`        |          |         | name        |         |
-| Peers  | [][peerstatus](#peer-status) | `[]*PeerStatus` |          |         | peers       |         |
-| Status | string                       | `string`        |    ✓     |         | status      |         |
-
 ### <span id="conf-float64"></span> ConfFloat64
 
 > ConfFloat64 is a float64. It Marshals float64 values of NaN of Inf
@@ -15803,13 +16867,13 @@ Status: Internal Server Error
 
 **Properties**
 
-| Name              | Type                                      | Go type               | Required | Default | Description | Example |
-| ----------------- | ----------------------------------------- | --------------------- | :------: | ------- | ----------- | ------- |
-| InhibitRules      | [][inhibitrule](#inhibit-rule)            | `[]*InhibitRule`      |          |         |             |         |
-| MuteTimeIntervals | [][mutetimeinterval](#mute-time-interval) | `[]*MuteTimeInterval` |          |         |             |         |
-| Templates         | []string                                  | `[]string`            |          |         |             |         |
-| global            | [GlobalConfig](#global-config)            | `GlobalConfig`        |          |         |             |         |
-| route             | [Route](#route)                           | `Route`               |          |         |             |         |
+| Name                | Type                                      | Go type               | Required | Default | Description | Example |
+| ------------------- | ----------------------------------------- | --------------------- | :------: | ------- | ----------- | ------- |
+| global              | [GlobalConfig](#global-config)            | `GlobalConfig`        |          |         |             |         |
+| inhibit_rules       | [][inhibitrule](#inhibit-rule)            | `[]*InhibitRule`      |          |         |             |         |
+| mute_time_intervals | [][mutetimeinterval](#mute-time-interval) | `[]*MuteTimeInterval` |          |         |             |         |
+| route               | [Route](#route)                           | `Route`               |          |         |             |         |
+| templates           | []string                                  | `[]string`            |          |         |             |         |
 
 ### <span id="config-d-t-o"></span> ConfigDTO
 
@@ -15835,10 +16899,14 @@ Status: Internal Server Error
 | recipients         | string                                    | `string`           |          |         |             |         |
 | replyTo            | string                                    | `string`           |          |         |             |         |
 | schedule           | [ScheduleDTO](#schedule-d-t-o)            | `ScheduleDTO`      |          |         |             |         |
-| state              | string                                    | `string`           |          |         |             |         |
+| state              | [State](#state)                           | `State`            |          |         |             |         |
 | templateVars       | [interface{}](#interface)                 | `interface{}`      |          |         |             |         |
 | updated            | date-time (formatted string)              | `strfmt.DateTime`  |          |         |             |         |
 | userId             | int64 (formatted integer)                 | `int64`            |          |         |             |         |
+
+### <span id="contact-points"></span> ContactPoints
+
+[][embeddedcontactpoint](#embedded-contact-point)
 
 ### <span id="create-alert-notification-command"></span> CreateAlertNotificationCommand
 
@@ -15862,14 +16930,14 @@ Status: Internal Server Error
 
 | Name                                                         | Type                                     | Go type             | Required | Default | Description                                                                                                                                                | Example |
 | ------------------------------------------------------------ | ---------------------------------------- | ------------------- | :------: | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
-| DeleteKey                                                    | string                                   | `string`            |          |         | Unique key used to delete the snapshot. It is different from the `key` so that only the creator can delete the snapshot. Required if `external` is `true`. |         |
-| Expires                                                      | int64 (formatted integer)                | `int64`             |          |         | When the snapshot should expire in seconds in seconds. Default is never to expire.                                                                         |         |
-| External                                                     | boolean                                  | `bool`              |          |         | these are passed when storing an external snapshot ref                                                                                                     |
-| Save the snapshot on an external server rather than locally. |                                          |
-| Key                                                          | string                                   | `string`            |          |         | Define the unique key. Required if `external` is `true`.                                                                                                   |         |
-| Name                                                         | string                                   | `string`            |          |         | Snapshot name                                                                                                                                              |         |
 | Result                                                       | [DashboardSnapshot](#dashboard-snapshot) | `DashboardSnapshot` |          |         |                                                                                                                                                            |         |
 | dashboard                                                    | [JSON](#json)                            | `JSON`              |    ✓     |         |                                                                                                                                                            |         |
+| deleteKey                                                    | string                                   | `string`            |          |         | Unique key used to delete the snapshot. It is different from the `key` so that only the creator can delete the snapshot. Required if `external` is `true`. |         |
+| expires                                                      | int64 (formatted integer)                | `int64`             |          |         | When the snapshot should expire in seconds in seconds. Default is never to expire.                                                                         |         |
+| external                                                     | boolean                                  | `bool`              |          |         | these are passed when storing an external snapshot ref                                                                                                     |
+| Save the snapshot on an external server rather than locally. |                                          |
+| key                                                          | string                                   | `string`            |          |         | Define the unique key. Required if `external` is `true`.                                                                                                   |         |
+| name                                                         | string                                   | `string`            |          |         | Snapshot name                                                                                                                                              |         |
 
 ### <span id="create-folder-command"></span> CreateFolderCommand
 
@@ -15927,6 +16995,17 @@ Description:
 | Name | Type   | Go type  | Required | Default | Description | Example |
 | ---- | ------ | -------- | :------: | ------- | ----------- | ------- |
 | name | string | `string` |          |         |             |         |
+
+### <span id="create-query-in-query-history-command"></span> CreateQueryInQueryHistoryCommand
+
+> CreateQueryInQueryHistoryCommand is the command for adding query history
+
+**Properties**
+
+| Name          | Type          | Go type  | Required | Default | Description                                          | Example             |
+| ------------- | ------------- | -------- | :------: | ------- | ---------------------------------------------------- | ------------------- |
+| datasourceUid | string        | `string` |          |         | UID of the data source for which are queries stored. | `PE1C5CBDA0504A6A3` |
+| queries       | [JSON](#json) | `JSON`   |    ✓     |         |                                                      |                     |
 
 ### <span id="create-role-with-permissions-command"></span> CreateRoleWithPermissionsCommand
 
@@ -16034,35 +17113,35 @@ Description:
 
 **Properties**
 
-| Name                   | Type                                           | Go type                | Required | Default | Description | Example |
-| ---------------------- | ---------------------------------------------- | ---------------------- | :------: | ------- | ----------- | ------- |
-| annotationsPermissions | [AnnotationPermission](#annotation-permission) | `AnnotationPermission` |          |         |             |         |
-| canAdmin               | boolean                                        | `bool`                 |          |         |             |         |
-| canDelete              | boolean                                        | `bool`                 |          |         |             |         |
-| canEdit                | boolean                                        | `bool`                 |          |         |             |         |
-| canSave                | boolean                                        | `bool`                 |          |         |             |         |
-| canStar                | boolean                                        | `bool`                 |          |         |             |         |
-| created                | date-time (formatted string)                   | `strfmt.DateTime`      |          |         |             |         |
-| createdBy              | string                                         | `string`               |          |         |             |         |
-| expires                | date-time (formatted string)                   | `strfmt.DateTime`      |          |         |             |         |
-| folderId               | int64 (formatted integer)                      | `int64`                |          |         |             |         |
-| folderTitle            | string                                         | `string`               |          |         |             |         |
-| folderUid              | string                                         | `string`               |          |         |             |         |
-| folderUrl              | string                                         | `string`               |          |         |             |         |
-| hasAcl                 | boolean                                        | `bool`                 |          |         |             |         |
-| isFolder               | boolean                                        | `bool`                 |          |         |             |         |
-| isHome                 | boolean                                        | `bool`                 |          |         |             |         |
-| isPublic               | boolean                                        | `bool`                 |          |         |             |         |
-| isSnapshot             | boolean                                        | `bool`                 |          |         |             |         |
-| isStarred              | boolean                                        | `bool`                 |          |         |             |         |
-| provisioned            | boolean                                        | `bool`                 |          |         |             |         |
-| provisionedExternalId  | string                                         | `string`               |          |         |             |         |
-| slug                   | string                                         | `string`               |          |         |             |         |
-| type                   | string                                         | `string`               |          |         |             |         |
-| updated                | date-time (formatted string)                   | `strfmt.DateTime`      |          |         |             |         |
-| updatedBy              | string                                         | `string`               |          |         |             |         |
-| url                    | string                                         | `string`               |          |         |             |         |
-| version                | int64 (formatted integer)                      | `int64`                |          |         |             |         |
+| Name                       | Type                                           | Go type                | Required | Default | Description | Example |
+| -------------------------- | ---------------------------------------------- | ---------------------- | :------: | ------- | ----------- | ------- |
+| annotationsPermissions     | [AnnotationPermission](#annotation-permission) | `AnnotationPermission` |          |         |             |         |
+| canAdmin                   | boolean                                        | `bool`                 |          |         |             |         |
+| canDelete                  | boolean                                        | `bool`                 |          |         |             |         |
+| canEdit                    | boolean                                        | `bool`                 |          |         |             |         |
+| canSave                    | boolean                                        | `bool`                 |          |         |             |         |
+| canStar                    | boolean                                        | `bool`                 |          |         |             |         |
+| created                    | date-time (formatted string)                   | `strfmt.DateTime`      |          |         |             |         |
+| createdBy                  | string                                         | `string`               |          |         |             |         |
+| expires                    | date-time (formatted string)                   | `strfmt.DateTime`      |          |         |             |         |
+| folderId                   | int64 (formatted integer)                      | `int64`                |          |         |             |         |
+| folderTitle                | string                                         | `string`               |          |         |             |         |
+| folderUid                  | string                                         | `string`               |          |         |             |         |
+| folderUrl                  | string                                         | `string`               |          |         |             |         |
+| hasAcl                     | boolean                                        | `bool`                 |          |         |             |         |
+| isFolder                   | boolean                                        | `bool`                 |          |         |             |         |
+| isHome                     | boolean                                        | `bool`                 |          |         |             |         |
+| isSnapshot                 | boolean                                        | `bool`                 |          |         |             |         |
+| isStarred                  | boolean                                        | `bool`                 |          |         |             |         |
+| provisioned                | boolean                                        | `bool`                 |          |         |             |         |
+| provisionedExternalId      | string                                         | `string`               |          |         |             |         |
+| publicDashboardAccessToken | string                                         | `string`               |          |         |             |         |
+| slug                       | string                                         | `string`               |          |         |             |         |
+| type                       | string                                         | `string`               |          |         |             |         |
+| updated                    | date-time (formatted string)                   | `strfmt.DateTime`      |          |         |             |         |
+| updatedBy                  | string                                         | `string`               |          |         |             |         |
+| url                        | string                                         | `string`               |          |         |             |         |
+| version                    | int64 (formatted integer)                      | `int64`                |          |         |             |         |
 
 ### <span id="dashboard-redirect"></span> DashboardRedirect
 
@@ -16135,9 +17214,6 @@ Description:
 
 ### <span id="dashboard-version-d-t-o"></span> DashboardVersionDTO
 
-> DashboardVersionDTO represents a dashboard version, without the dashboard
-> map.
-
 **Properties**
 
 | Name          | Type                         | Go type           | Required | Default | Description | Example |
@@ -16187,7 +17263,7 @@ Description:
 
 ### <span id="data-response"></span> DataResponse
 
-> A map of RefIDs (unique query identifers) to this type makes up the Responses property of a QueryDataResponse.
+> A map of RefIDs (unique query identifiers) to this type makes up the Responses property of a QueryDataResponse.
 > The Error property is used to allow for partial success responses from the containing QueryDataResponse.
 
 **Properties**
@@ -16201,29 +17277,27 @@ Description:
 
 **Properties**
 
-| Name              | Type                      | Go type           | Required | Default | Description | Example |
-| ----------------- | ------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
-| access            | [DsAccess](#ds-access)    | `DsAccess`        |          |         |             |         |
-| accessControl     | [Metadata](#metadata)     | `Metadata`        |          |         |             |         |
-| basicAuth         | boolean                   | `bool`            |          |         |             |         |
-| basicAuthPassword | string                    | `string`          |          |         |             |         |
-| basicAuthUser     | string                    | `string`          |          |         |             |         |
-| database          | string                    | `string`          |          |         |             |         |
-| id                | int64 (formatted integer) | `int64`           |          |         |             |         |
-| isDefault         | boolean                   | `bool`            |          |         |             |         |
-| jsonData          | [JSON](#json)             | `JSON`            |          |         |             |         |
-| name              | string                    | `string`          |          |         |             |         |
-| orgId             | int64 (formatted integer) | `int64`           |          |         |             |         |
-| password          | string                    | `string`          |          |         |             |         |
-| readOnly          | boolean                   | `bool`            |          |         |             |         |
-| secureJsonFields  | map of boolean            | `map[string]bool` |          |         |             |         |
-| type              | string                    | `string`          |          |         |             |         |
-| typeLogoUrl       | string                    | `string`          |          |         |             |         |
-| uid               | string                    | `string`          |          |         |             |         |
-| url               | string                    | `string`          |          |         |             |         |
-| user              | string                    | `string`          |          |         |             |         |
-| version           | int64 (formatted integer) | `int64`           |          |         |             |         |
-| withCredentials   | boolean                   | `bool`            |          |         |             |         |
+| Name             | Type                      | Go type           | Required | Default | Description | Example |
+| ---------------- | ------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
+| access           | [DsAccess](#ds-access)    | `DsAccess`        |          |         |             |         |
+| accessControl    | [Metadata](#metadata)     | `Metadata`        |          |         |             |         |
+| basicAuth        | boolean                   | `bool`            |          |         |             |         |
+| basicAuthUser    | string                    | `string`          |          |         |             |         |
+| database         | string                    | `string`          |          |         |             |         |
+| id               | int64 (formatted integer) | `int64`           |          |         |             |         |
+| isDefault        | boolean                   | `bool`            |          |         |             |         |
+| jsonData         | [JSON](#json)             | `JSON`            |          |         |             |         |
+| name             | string                    | `string`          |          |         |             |         |
+| orgId            | int64 (formatted integer) | `int64`           |          |         |             |         |
+| readOnly         | boolean                   | `bool`            |          |         |             |         |
+| secureJsonFields | map of boolean            | `map[string]bool` |          |         |             |         |
+| type             | string                    | `string`          |          |         |             |         |
+| typeLogoUrl      | string                    | `string`          |          |         |             |         |
+| uid              | string                    | `string`          |          |         |             |         |
+| url              | string                    | `string`          |          |         |             |         |
+| user             | string                    | `string`          |          |         |             |         |
+| version          | int64 (formatted integer) | `int64`           |          |         |             |         |
+| withCredentials  | boolean                   | `bool`            |          |         |             |         |
 
 ### <span id="data-source-list"></span> DataSourceList
 
@@ -16243,7 +17317,6 @@ Description:
 | jsonData    | [JSON](#json)             | `JSON`     |          |         |             |         |
 | name        | string                    | `string`   |          |         |             |         |
 | orgId       | int64 (formatted integer) | `int64`    |          |         |             |         |
-| password    | string                    | `string`   |          |         |             |         |
 | readOnly    | boolean                   | `bool`     |          |         |             |         |
 | type        | string                    | `string`   |          |         |             |         |
 | typeLogoUrl | string                    | `string`   |          |         |             |         |
@@ -16290,9 +17363,9 @@ This just tries to make it worry-free. | |
 
 | Name      | Type                     | Go type     | Required | Default | Description | Example |
 | --------- | ------------------------ | ----------- | :------: | ------- | ----------- | ------- |
-| Error     | string                   | `string`    |          |         |             |         |
-| Status    | string                   | `string`    |    ✓     |         |             |         |
+| error     | string                   | `string`    |          |         |             |         |
 | errorType | [ErrorType](#error-type) | `ErrorType` |          |         |             |         |
+| status    | string                   | `string`    |    ✓     |         |             |         |
 
 ### <span id="ds-access"></span> DsAccess
 
@@ -16319,15 +17392,15 @@ Enum: 0,1 | |
 
 ### <span id="duration"></span> Duration
 
-| Name     | Type                      | Go type | Default | Description | Example |
-| -------- | ------------------------- | ------- | ------- | ----------- | ------- |
-| Duration | int64 (formatted integer) | int64   |         |             |         |
-
-### <span id="duration"></span> Duration
-
 [Duration](#duration)
 
 #### Inlined models
+
+### <span id="duration"></span> Duration
+
+| Name     | Type                      | Go type | Default | Description | Example |
+| -------- | ------------------------- | ------- | ------- | ----------- | ------- |
+| Duration | int64 (formatted integer) | int64   |         |             |         |
 
 ### <span id="email-config"></span> EmailConfig
 
@@ -16335,20 +17408,20 @@ Enum: 0,1 | |
 
 | Name          | Type                     | Go type             | Required | Default | Description              | Example |
 | ------------- | ------------------------ | ------------------- | :------: | ------- | ------------------------ | ------- |
-| AuthIdentity  | string                   | `string`            |          |         |                          |         |
-| AuthUsername  | string                   | `string`            |          |         |                          |         |
-| From          | string                   | `string`            |          |         |                          |         |
-| HTML          | string                   | `string`            |          |         |                          |         |
-| Headers       | map of string            | `map[string]string` |          |         |                          |         |
-| Hello         | string                   | `string`            |          |         |                          |         |
-| RequireTLS    | boolean                  | `bool`              |          |         |                          |         |
-| Text          | string                   | `string`            |          |         |                          |         |
-| To            | string                   | `string`            |          |         | Email address to notify. |         |
-| VSendResolved | boolean                  | `bool`              |          |         |                          |         |
+| auth_identity | string                   | `string`            |          |         |                          |         |
 | auth_password | [Secret](#secret)        | `Secret`            |          |         |                          |         |
 | auth_secret   | [Secret](#secret)        | `Secret`            |          |         |                          |         |
+| auth_username | string                   | `string`            |          |         |                          |         |
+| from          | string                   | `string`            |          |         |                          |         |
+| headers       | map of string            | `map[string]string` |          |         |                          |         |
+| hello         | string                   | `string`            |          |         |                          |         |
+| html          | string                   | `string`            |          |         |                          |         |
+| require_tls   | boolean                  | `bool`              |          |         |                          |         |
+| send_resolved | boolean                  | `bool`              |          |         |                          |         |
 | smarthost     | [HostPort](#host-port)   | `HostPort`          |          |         |                          |         |
+| text          | string                   | `string`            |          |         |                          |         |
 | tls_config    | [TLSConfig](#tls-config) | `TLSConfig`         |          |         |                          |         |
+| to            | string                   | `string`            |          |         | Email address to notify. |         |
 
 ### <span id="embedded-contact-point"></span> EmbeddedContactPoint
 
@@ -16357,16 +17430,16 @@ Enum: 0,1 | |
 
 **Properties**
 
-| Name                                 | Type          | Go type  | Required | Default | Description                                                     | Example |
-| ------------------------------------ | ------------- | -------- | :------: | ------- | --------------------------------------------------------------- | ------- |
-| DisableResolveMessage                | boolean       | `bool`   |          |         |                                                                 |         |
-| Name                                 | string        | `string` |          |         | Name is used as grouping key in the UI. Contact points with the |
-| same name will be grouped in the UI. |               |
-| Provenance                           | string        | `string` |          |         |                                                                 |         |
-| Type                                 | string        | `string` |          |         |                                                                 |         |
-| UID                                  | string        | `string` |          |         | UID is the unique identifier of the contact point. This will be |
-| automatically set be the Grafana.    |               |
-| settings                             | [JSON](#json) | `JSON`   |          |         |                                                                 |         |
+| Name                                 | Type                    | Go type  | Required | Default | Description                                                       | Example   |
+| ------------------------------------ | ----------------------- | -------- | :------: | ------- | ----------------------------------------------------------------- | --------- |
+| disableResolveMessage                | boolean                 | `bool`   |          |         |                                                                   | `false`   |
+| name                                 | string                  | `string` |          |         | Name is used as grouping key in the UI. Contact points with the   |
+| same name will be grouped in the UI. | `webhook_1`             |
+| provenance                           | string                  | `string` |          |         |                                                                   |           |
+| settings                             | [JSON](#json)           | `JSON`   |    ✓     |         |                                                                   |           |
+| type                                 | string                  | `string` |    ✓     |         |                                                                   | `webhook` |
+| uid                                  | string                  | `string` |          |         | UID is the unique identifier of the contact point. The UID can be |
+| set by the user.                     | `my_external_reference` |
 
 ### <span id="error-response-body"></span> ErrorResponseBody
 
@@ -16394,9 +17467,9 @@ For example, a 412 Precondition Failed error may include additional information 
 
 | Name      | Type                         | Go type           | Required | Default | Description | Example |
 | --------- | ---------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
-| Condition | string                       | `string`          |          |         |             |         |
-| Data      | [][alertquery](#alert-query) | `[]*AlertQuery`   |          |         |             |         |
-| Now       | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
+| condition | string                       | `string`          |          |         |             |         |
+| data      | [][alertquery](#alert-query) | `[]*AlertQuery`   |          |         |             |         |
+| now       | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
 
 ### <span id="eval-match"></span> EvalMatch
 
@@ -16414,8 +17487,8 @@ For example, a 412 Precondition Failed error may include additional information 
 
 | Name | Type                         | Go type           | Required | Default | Description | Example |
 | ---- | ---------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
-| Data | [][alertquery](#alert-query) | `[]*AlertQuery`   |          |         |             |         |
-| Now  | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
+| data | [][alertquery](#alert-query) | `[]*AlertQuery`   |          |         |             |         |
+| now  | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
 
 ### <span id="eval-queries-response"></span> EvalQueriesResponse
 
@@ -16525,32 +17598,34 @@ may be used as an identifier to update values in a subsequent request | |
 
 **Properties**
 
-| Name      | Type                         | Go type           | Required | Default | Description | Example |
-| --------- | ---------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
-| canAdmin  | boolean                      | `bool`            |          |         |             |         |
-| canDelete | boolean                      | `bool`            |          |         |             |         |
-| canEdit   | boolean                      | `bool`            |          |         |             |         |
-| canSave   | boolean                      | `bool`            |          |         |             |         |
-| created   | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
-| createdBy | string                       | `string`          |          |         |             |         |
-| hasAcl    | boolean                      | `bool`            |          |         |             |         |
-| id        | int64 (formatted integer)    | `int64`           |          |         |             |         |
-| title     | string                       | `string`          |          |         |             |         |
-| uid       | string                       | `string`          |          |         |             |         |
-| updated   | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
-| updatedBy | string                       | `string`          |          |         |             |         |
-| url       | string                       | `string`          |          |         |             |         |
-| version   | int64 (formatted integer)    | `int64`           |          |         |             |         |
+| Name          | Type                         | Go type           | Required | Default | Description | Example |
+| ------------- | ---------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
+| accessControl | [Metadata](#metadata)        | `Metadata`        |          |         |             |         |
+| canAdmin      | boolean                      | `bool`            |          |         |             |         |
+| canDelete     | boolean                      | `bool`            |          |         |             |         |
+| canEdit       | boolean                      | `bool`            |          |         |             |         |
+| canSave       | boolean                      | `bool`            |          |         |             |         |
+| created       | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
+| createdBy     | string                       | `string`          |          |         |             |         |
+| hasAcl        | boolean                      | `bool`            |          |         |             |         |
+| id            | int64 (formatted integer)    | `int64`           |          |         |             |         |
+| title         | string                       | `string`          |          |         |             |         |
+| uid           | string                       | `string`          |          |         |             |         |
+| updated       | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
+| updatedBy     | string                       | `string`          |          |         |             |         |
+| url           | string                       | `string`          |          |         |             |         |
+| version       | int64 (formatted integer)    | `int64`           |          |         |             |         |
 
 ### <span id="folder-search-hit"></span> FolderSearchHit
 
 **Properties**
 
-| Name  | Type                      | Go type  | Required | Default | Description | Example |
-| ----- | ------------------------- | -------- | :------: | ------- | ----------- | ------- |
-| id    | int64 (formatted integer) | `int64`  |          |         |             |         |
-| title | string                    | `string` |          |         |             |         |
-| uid   | string                    | `string` |          |         |             |         |
+| Name          | Type                      | Go type    | Required | Default | Description | Example |
+| ------------- | ------------------------- | ---------- | :------: | ------- | ----------- | ------- |
+| accessControl | [Metadata](#metadata)     | `Metadata` |          |         |             |         |
+| id            | int64 (formatted integer) | `int64`    |          |         |             |         |
+| title         | string                    | `string`   |          |         |             |         |
+| uid           | string                    | `string`   |          |         |             |         |
 
 ### <span id="frame"></span> Frame
 
@@ -16577,19 +17652,19 @@ or time series data depending on its content and field types.
 
 **Properties**
 
-| Name                                                                                           | Type                       | Go type        | Required | Default | Description                                                                                     | Example |
-| ---------------------------------------------------------------------------------------------- | -------------------------- | -------------- | :------: | ------- | ----------------------------------------------------------------------------------------------- | ------- |
-| channel                                                                                        | string                     | `string`       |          |         | Channel is the path to a stream in grafana live that has real-time updates for this data.       |         |
-| custom                                                                                         | [interface{}](#interface)  | `interface{}`  |          |         | Custom datasource specific values.                                                              |         |
-| executedQueryString                                                                            | string                     | `string`       |          |         | ExecutedQueryString is the raw query sent to the underlying system. All macros and templating   |
+| Name                                                                                           | Type                       | Go type        | Required | Default | Description                                                                                      | Example |
+| ---------------------------------------------------------------------------------------------- | -------------------------- | -------------- | :------: | ------- | ------------------------------------------------------------------------------------------------ | ------- |
+| channel                                                                                        | string                     | `string`       |          |         | Channel is the path to a stream in grafana live that has real-time updates for this data.        |         |
+| custom                                                                                         | [interface{}](#interface)  | `interface{}`  |          |         | Custom datasource specific values.                                                               |         |
+| executedQueryString                                                                            | string                     | `string`       |          |         | ExecutedQueryString is the raw query sent to the underlying system. All macros and templating    |
 | have been applied. When metadata contains this value, it will be shown in the query inspector. |                            |
-| notices                                                                                        | [][notice](#notice)        | `[]*Notice`    |          |         | Notices provide additional information about the data in the Frame that                         |
+| notices                                                                                        | [][notice](#notice)        | `[]*Notice`    |          |         | Notices provide additional information about the data in the Frame that                          |
 | Grafana can display to the user in the user interface.                                         |                            |
-| path                                                                                           | string                     | `string`       |          |         | Path is a browsable path on the datasource.                                                     |         |
-| pathSeparator                                                                                  | string                     | `string`       |          |         | PathSeparator defines the separator pattern to decode a hiearchy. The default separator is '/'. |         |
-| preferredVisualisationType                                                                     | [VisType](#vis-type)       | `VisType`      |          |         |                                                                                                 |         |
-| stats                                                                                          | [][querystat](#query-stat) | `[]*QueryStat` |          |         | Stats is an array of query result statistics.                                                   |         |
-| type                                                                                           | [FrameType](#frame-type)   | `FrameType`    |          |         |                                                                                                 |         |
+| path                                                                                           | string                     | `string`       |          |         | Path is a browsable path on the datasource.                                                      |         |
+| pathSeparator                                                                                  | string                     | `string`       |          |         | PathSeparator defines the separator pattern to decode a hierarchy. The default separator is '/'. |         |
+| preferredVisualisationType                                                                     | [VisType](#vis-type)       | `VisType`      |          |         |                                                                                                  |         |
+| stats                                                                                          | [][querystat](#query-stat) | `[]*QueryStat` |          |         | Stats is an array of query result statistics.                                                    |         |
+| type                                                                                           | [FrameType](#frame-type)   | `FrameType`    |          |         |                                                                                                  |         |
 
 ### <span id="frame-type"></span> FrameType
 
@@ -16645,39 +17720,40 @@ the Frame correspond to a defined FrameType. | |
 
 | Name   | Type                                          | Go type               | Required | Default | Description | Example |
 | ------ | --------------------------------------------- | --------------------- | :------: | ------- | ----------- | ------- |
-| Status | string                                        | `string`              |          |         |             |         |
 | data   | [AlertManagersResult](#alert-managers-result) | `AlertManagersResult` |          |         |             |         |
+| status | string                                        | `string`              |          |         |             |         |
 
 ### <span id="gettable-api-alerting-config"></span> GettableApiAlertingConfig
 
 **Properties**
 
-| Name              | Type                                            | Go type                  | Required | Default | Description                              | Example |
-| ----------------- | ----------------------------------------------- | ------------------------ | :------: | ------- | ---------------------------------------- | ------- |
-| InhibitRules      | [][inhibitrule](#inhibit-rule)                  | `[]*InhibitRule`         |          |         |                                          |         |
-| MuteTimeIntervals | [][mutetimeinterval](#mute-time-interval)       | `[]*MuteTimeInterval`    |          |         |                                          |         |
-| Receivers         | [][gettableapireceiver](#gettable-api-receiver) | `[]*GettableAPIReceiver` |          |         | Override with our superset receiver type |         |
-| Templates         | []string                                        | `[]string`               |          |         |                                          |         |
-| global            | [GlobalConfig](#global-config)                  | `GlobalConfig`           |          |         |                                          |         |
-| route             | [Route](#route)                                 | `Route`                  |          |         |                                          |         |
+| Name                | Type                                            | Go type                  | Required | Default | Description                              | Example |
+| ------------------- | ----------------------------------------------- | ------------------------ | :------: | ------- | ---------------------------------------- | ------- |
+| global              | [GlobalConfig](#global-config)                  | `GlobalConfig`           |          |         |                                          |         |
+| inhibit_rules       | [][inhibitrule](#inhibit-rule)                  | `[]*InhibitRule`         |          |         |                                          |         |
+| muteTimeProvenances | map of [Provenance](#provenance)                | `map[string]Provenance`  |          |         |                                          |         |
+| mute_time_intervals | [][mutetimeinterval](#mute-time-interval)       | `[]*MuteTimeInterval`    |          |         |                                          |         |
+| receivers           | [][gettableapireceiver](#gettable-api-receiver) | `[]*GettableAPIReceiver` |          |         | Override with our superset receiver type |         |
+| route               | [Route](#route)                                 | `Route`                  |          |         |                                          |         |
+| templates           | []string                                        | `[]string`               |          |         |                                          |         |
 
 ### <span id="gettable-api-receiver"></span> GettableApiReceiver
 
 **Properties**
 
-| Name                    | Type                                                    | Go type                      | Required | Default | Description                            | Example |
-| ----------------------- | ------------------------------------------------------- | ---------------------------- | :------: | ------- | -------------------------------------- | ------- |
-| EmailConfigs            | [][emailconfig](#email-config)                          | `[]*EmailConfig`             |          |         |                                        |         |
-| GrafanaManagedReceivers | [][gettablegrafanareceiver](#gettable-grafana-receiver) | `[]*GettableGrafanaReceiver` |          |         |                                        |         |
-| Name                    | string                                                  | `string`                     |          |         | A unique identifier for this receiver. |         |
-| OpsGenieConfigs         | [][opsgenieconfig](#ops-genie-config)                   | `[]*OpsGenieConfig`          |          |         |                                        |         |
-| PagerdutyConfigs        | [][pagerdutyconfig](#pagerduty-config)                  | `[]*PagerdutyConfig`         |          |         |                                        |         |
-| PushoverConfigs         | [][pushoverconfig](#pushover-config)                    | `[]*PushoverConfig`          |          |         |                                        |         |
-| SNSConfigs              | [][snsconfig](#s-n-s-config)                            | `[]*SNSConfig`               |          |         |                                        |         |
-| SlackConfigs            | [][slackconfig](#slack-config)                          | `[]*SlackConfig`             |          |         |                                        |         |
-| VictorOpsConfigs        | [][victoropsconfig](#victor-ops-config)                 | `[]*VictorOpsConfig`         |          |         |                                        |         |
-| WebhookConfigs          | [][webhookconfig](#webhook-config)                      | `[]*WebhookConfig`           |          |         |                                        |         |
-| WechatConfigs           | [][wechatconfig](#wechat-config)                        | `[]*WechatConfig`            |          |         |                                        |         |
+| Name                             | Type                                                    | Go type                      | Required | Default | Description                            | Example |
+| -------------------------------- | ------------------------------------------------------- | ---------------------------- | :------: | ------- | -------------------------------------- | ------- |
+| email_configs                    | [][emailconfig](#email-config)                          | `[]*EmailConfig`             |          |         |                                        |         |
+| grafana_managed_receiver_configs | [][gettablegrafanareceiver](#gettable-grafana-receiver) | `[]*GettableGrafanaReceiver` |          |         |                                        |         |
+| name                             | string                                                  | `string`                     |          |         | A unique identifier for this receiver. |         |
+| opsgenie_configs                 | [][opsgenieconfig](#ops-genie-config)                   | `[]*OpsGenieConfig`          |          |         |                                        |         |
+| pagerduty_configs                | [][pagerdutyconfig](#pagerduty-config)                  | `[]*PagerdutyConfig`         |          |         |                                        |         |
+| pushover_configs                 | [][pushoverconfig](#pushover-config)                    | `[]*PushoverConfig`          |          |         |                                        |         |
+| slack_configs                    | [][slackconfig](#slack-config)                          | `[]*SlackConfig`             |          |         |                                        |         |
+| sns_configs                      | [][snsconfig](#s-n-s-config)                            | `[]*SNSConfig`               |          |         |                                        |         |
+| victorops_configs                | [][victoropsconfig](#victor-ops-config)                 | `[]*VictorOpsConfig`         |          |         |                                        |         |
+| webhook_configs                  | [][webhookconfig](#webhook-config)                      | `[]*WebhookConfig`           |          |         |                                        |         |
+| wechat_configs                   | [][wechatconfig](#wechat-config)                        | `[]*WechatConfig`            |          |         |                                        |         |
 
 ### <span id="gettable-extended-rule-node"></span> GettableExtendedRuleNode
 
@@ -16685,13 +17761,13 @@ the Frame correspond to a defined FrameType. | |
 
 | Name          | Type                                          | Go type               | Required | Default | Description | Example |
 | ------------- | --------------------------------------------- | --------------------- | :------: | ------- | ----------- | ------- |
-| Alert         | string                                        | `string`              |          |         |             |         |
-| Annotations   | map of string                                 | `map[string]string`   |          |         |             |         |
-| Expr          | string                                        | `string`              |          |         |             |         |
-| Labels        | map of string                                 | `map[string]string`   |          |         |             |         |
-| Record        | string                                        | `string`              |          |         |             |         |
+| alert         | string                                        | `string`              |          |         |             |         |
+| annotations   | map of string                                 | `map[string]string`   |          |         |             |         |
+| expr          | string                                        | `string`              |          |         |             |         |
 | for           | [Duration](#duration)                         | `Duration`            |          |         |             |         |
 | grafana_alert | [GettableGrafanaRule](#gettable-grafana-rule) | `GettableGrafanaRule` |          |         |             |         |
+| labels        | map of string                                 | `map[string]string`   |          |         |             |         |
+| record        | string                                        | `string`              |          |         |             |         |
 
 ### <span id="gettable-grafana-receiver"></span> GettableGrafanaReceiver
 
@@ -16699,21 +17775,21 @@ the Frame correspond to a defined FrameType. | |
 
 | Name                  | Type                      | Go type           | Required | Default | Description | Example |
 | --------------------- | ------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
-| DisableResolveMessage | boolean                   | `bool`            |          |         |             |         |
-| Name                  | string                    | `string`          |          |         |             |         |
-| SecureFields          | map of boolean            | `map[string]bool` |          |         |             |         |
-| Type                  | string                    | `string`          |          |         |             |         |
-| UID                   | string                    | `string`          |          |         |             |         |
+| disableResolveMessage | boolean                   | `bool`            |          |         |             |         |
+| name                  | string                    | `string`          |          |         |             |         |
 | provenance            | [Provenance](#provenance) | `Provenance`      |          |         |             |         |
+| secureFields          | map of boolean            | `map[string]bool` |          |         |             |         |
 | settings              | [JSON](#json)             | `JSON`            |          |         |             |         |
+| type                  | string                    | `string`          |          |         |             |         |
+| uid                   | string                    | `string`          |          |         |             |         |
 
 ### <span id="gettable-grafana-receivers"></span> GettableGrafanaReceivers
 
 **Properties**
 
-| Name                    | Type                                                    | Go type                      | Required | Default | Description | Example |
-| ----------------------- | ------------------------------------------------------- | ---------------------------- | :------: | ------- | ----------- | ------- |
-| GrafanaManagedReceivers | [][gettablegrafanareceiver](#gettable-grafana-receiver) | `[]*GettableGrafanaReceiver` |          |         |             |         |
+| Name                             | Type                                                    | Go type                      | Required | Default | Description | Example |
+| -------------------------------- | ------------------------------------------------------- | ---------------------------- | :------: | ------- | ----------- | ------- |
+| grafana_managed_receiver_configs | [][gettablegrafanareceiver](#gettable-grafana-receiver) | `[]*GettableGrafanaReceiver` |          |         |             |         |
 
 ### <span id="gettable-grafana-rule"></span> GettableGrafanaRule
 
@@ -16721,21 +17797,21 @@ the Frame correspond to a defined FrameType. | |
 
 | Name            | Type                         | Go type           | Required | Default | Description | Example |
 | --------------- | ---------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
-| Condition       | string                       | `string`          |          |         |             |         |
-| Data            | [][alertquery](#alert-query) | `[]*AlertQuery`   |          |         |             |         |
-| ExecErrState    | string                       | `string`          |          |         |             |         |
-| ID              | int64 (formatted integer)    | `int64`           |          |         |             |         |
-| IntervalSeconds | int64 (formatted integer)    | `int64`           |          |         |             |         |
-| NamespaceID     | int64 (formatted integer)    | `int64`           |          |         |             |         |
-| NamespaceUID    | string                       | `string`          |          |         |             |         |
-| NoDataState     | string                       | `string`          |          |         |             |         |
-| OrgID           | int64 (formatted integer)    | `int64`           |          |         |             |         |
-| RuleGroup       | string                       | `string`          |          |         |             |         |
-| Title           | string                       | `string`          |          |         |             |         |
-| UID             | string                       | `string`          |          |         |             |         |
-| Updated         | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
-| Version         | int64 (formatted integer)    | `int64`           |          |         |             |         |
+| condition       | string                       | `string`          |          |         |             |         |
+| data            | [][alertquery](#alert-query) | `[]*AlertQuery`   |          |         |             |         |
+| exec_err_state  | string                       | `string`          |          |         |             |         |
+| id              | int64 (formatted integer)    | `int64`           |          |         |             |         |
+| intervalSeconds | int64 (formatted integer)    | `int64`           |          |         |             |         |
+| namespace_id    | int64 (formatted integer)    | `int64`           |          |         |             |         |
+| namespace_uid   | string                       | `string`          |          |         |             |         |
+| no_data_state   | string                       | `string`          |          |         |             |         |
+| orgId           | int64 (formatted integer)    | `int64`           |          |         |             |         |
 | provenance      | [Provenance](#provenance)    | `Provenance`      |          |         |             |         |
+| rule_group      | string                       | `string`          |          |         |             |         |
+| title           | string                       | `string`          |          |         |             |         |
+| uid             | string                       | `string`          |          |         |             |         |
+| updated         | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
+| version         | int64 (formatted integer)    | `int64`           |          |         |             |         |
 
 ### <span id="gettable-n-galert-config"></span> GettableNGalertConfig
 
@@ -16743,23 +17819,19 @@ the Frame correspond to a defined FrameType. | |
 
 | Name                | Type     | Go type    | Required | Default | Description | Example |
 | ------------------- | -------- | ---------- | :------: | ------- | ----------- | ------- |
-| Alertmanagers       | []string | `[]string` |          |         |             |         |
-| AlertmanagersChoice | string   | `string`   |          |         |             |         |
+| alertmanagers       | []string | `[]string` |          |         |             |         |
+| alertmanagersChoice | string   | `string`   |          |         |             |         |
 
 ### <span id="gettable-rule-group-config"></span> GettableRuleGroupConfig
 
 **Properties**
 
-| Name          | Type                                                       | Go type                       | Required | Default | Description | Example |
-| ------------- | ---------------------------------------------------------- | ----------------------------- | :------: | ------- | ----------- | ------- |
-| Name          | string                                                     | `string`                      |          |         |             |         |
-| Rules         | [][gettableextendedrulenode](#gettable-extended-rule-node) | `[]*GettableExtendedRuleNode` |          |         |             |         |
-| SourceTenants | []string                                                   | `[]string`                    |          |         |             |         |
-| interval      | [Duration](#duration)                                      | `Duration`                    |          |         |             |         |
-
-### <span id="gettable-silences"></span> GettableSilences
-
-[][gettablesilence](#gettable-silence)
+| Name           | Type                                                       | Go type                       | Required | Default | Description | Example |
+| -------------- | ---------------------------------------------------------- | ----------------------------- | :------: | ------- | ----------- | ------- |
+| interval       | [Duration](#duration)                                      | `Duration`                    |          |         |             |         |
+| name           | string                                                     | `string`                      |          |         |             |         |
+| rules          | [][gettableextendedrulenode](#gettable-extended-rule-node) | `[]*GettableExtendedRuleNode` |          |         |             |         |
+| source_tenants | []string                                                   | `[]string`                    |          |         |             |         |
 
 ### <span id="gettable-status"></span> GettableStatus
 
@@ -16767,20 +17839,20 @@ the Frame correspond to a defined FrameType. | |
 
 | Name        | Type                                                       | Go type                     | Required | Default | Description | Example |
 | ----------- | ---------------------------------------------------------- | --------------------------- | :------: | ------- | ----------- | ------- |
-| Uptime      | date-time (formatted string)                               | `strfmt.DateTime`           |    ✓     |         | uptime      |         |
 | cluster     | [ClusterStatus](#cluster-status)                           | `ClusterStatus`             |    ✓     |         |             |         |
 | config      | [PostableAPIAlertingConfig](#postable-api-alerting-config) | `PostableAPIAlertingConfig` |    ✓     |         |             |         |
+| uptime      | date-time (formatted string)                               | `strfmt.DateTime`           |    ✓     |         | uptime      |         |
 | versionInfo | [VersionInfo](#version-info)                               | `VersionInfo`               |    ✓     |         |             |         |
 
 ### <span id="gettable-user-config"></span> GettableUserConfig
 
 **Properties**
 
-| Name                    | Type                                                       | Go type                     | Required | Default | Description | Example |
-| ----------------------- | ---------------------------------------------------------- | --------------------------- | :------: | ------- | ----------- | ------- |
-| TemplateFileProvenances | map of [Provenance](#provenance)                           | `map[string]Provenance`     |          |         |             |         |
-| TemplateFiles           | map of string                                              | `map[string]string`         |          |         |             |         |
-| alertmanager_config     | [GettableAPIAlertingConfig](#gettable-api-alerting-config) | `GettableAPIAlertingConfig` |          |         |             |         |
+| Name                      | Type                                                       | Go type                     | Required | Default | Description | Example |
+| ------------------------- | ---------------------------------------------------------- | --------------------------- | :------: | ------- | ----------- | ------- |
+| alertmanager_config       | [GettableAPIAlertingConfig](#gettable-api-alerting-config) | `GettableAPIAlertingConfig` |          |         |             |         |
+| template_file_provenances | map of [Provenance](#provenance)                           | `map[string]Provenance`     |          |         |             |         |
+| template_files            | map of string                                              | `map[string]string`         |          |         |             |         |
 
 ### <span id="global-config"></span> GlobalConfig
 
@@ -16789,45 +17861,45 @@ the Frame correspond to a defined FrameType. | |
 
 **Properties**
 
-| Name               | Type                                    | Go type            | Required | Default | Description | Example |
-| ------------------ | --------------------------------------- | ------------------ | :------: | ------- | ----------- | ------- |
-| OpsGenieAPIKeyFile | string                                  | `string`           |          |         |             |         |
-| SMTPAuthIdentity   | string                                  | `string`           |          |         |             |         |
-| SMTPAuthUsername   | string                                  | `string`           |          |         |             |         |
-| SMTPFrom           | string                                  | `string`           |          |         |             |         |
-| SMTPHello          | string                                  | `string`           |          |         |             |         |
-| SMTPRequireTLS     | boolean                                 | `bool`             |          |         |             |         |
-| SlackAPIURLFile    | string                                  | `string`           |          |         |             |         |
-| WeChatAPICorpID    | string                                  | `string`           |          |         |             |         |
-| http_config        | [HTTPClientConfig](#http-client-config) | `HTTPClientConfig` |          |         |             |         |
-| opsgenie_api_key   | [Secret](#secret)                       | `Secret`           |          |         |             |         |
-| opsgenie_api_url   | [URL](#url)                             | `URL`              |          |         |             |         |
-| pagerduty_url      | [URL](#url)                             | `URL`              |          |         |             |         |
-| resolve_timeout    | [Duration](#duration)                   | `Duration`         |          |         |             |         |
-| slack_api_url      | [SecretURL](#secret-url)                | `SecretURL`        |          |         |             |         |
-| smtp_auth_password | [Secret](#secret)                       | `Secret`           |          |         |             |         |
-| smtp_auth_secret   | [Secret](#secret)                       | `Secret`           |          |         |             |         |
-| smtp_smarthost     | [HostPort](#host-port)                  | `HostPort`         |          |         |             |         |
-| victorops_api_key  | [Secret](#secret)                       | `Secret`           |          |         |             |         |
-| victorops_api_url  | [URL](#url)                             | `URL`              |          |         |             |         |
-| wechat_api_secret  | [Secret](#secret)                       | `Secret`           |          |         |             |         |
-| wechat_api_url     | [URL](#url)                             | `URL`              |          |         |             |         |
+| Name                  | Type                                    | Go type            | Required | Default | Description | Example |
+| --------------------- | --------------------------------------- | ------------------ | :------: | ------- | ----------- | ------- |
+| http_config           | [HTTPClientConfig](#http-client-config) | `HTTPClientConfig` |          |         |             |         |
+| opsgenie_api_key      | [Secret](#secret)                       | `Secret`           |          |         |             |         |
+| opsgenie_api_key_file | string                                  | `string`           |          |         |             |         |
+| opsgenie_api_url      | [URL](#url)                             | `URL`              |          |         |             |         |
+| pagerduty_url         | [URL](#url)                             | `URL`              |          |         |             |         |
+| resolve_timeout       | [Duration](#duration)                   | `Duration`         |          |         |             |         |
+| slack_api_url         | [SecretURL](#secret-url)                | `SecretURL`        |          |         |             |         |
+| slack_api_url_file    | string                                  | `string`           |          |         |             |         |
+| smtp_auth_identity    | string                                  | `string`           |          |         |             |         |
+| smtp_auth_password    | [Secret](#secret)                       | `Secret`           |          |         |             |         |
+| smtp_auth_secret      | [Secret](#secret)                       | `Secret`           |          |         |             |         |
+| smtp_auth_username    | string                                  | `string`           |          |         |             |         |
+| smtp_from             | string                                  | `string`           |          |         |             |         |
+| smtp_hello            | string                                  | `string`           |          |         |             |         |
+| smtp_require_tls      | boolean                                 | `bool`             |          |         |             |         |
+| smtp_smarthost        | [HostPort](#host-port)                  | `HostPort`         |          |         |             |         |
+| victorops_api_key     | [Secret](#secret)                       | `Secret`           |          |         |             |         |
+| victorops_api_url     | [URL](#url)                             | `URL`              |          |         |             |         |
+| wechat_api_corp_id    | string                                  | `string`           |          |         |             |         |
+| wechat_api_secret     | [Secret](#secret)                       | `Secret`           |          |         |             |         |
+| wechat_api_url        | [URL](#url)                             | `URL`              |          |         |             |         |
 
 ### <span id="http-client-config"></span> HTTPClientConfig
 
 **Properties**
 
-| Name                           | Type    | Go type  | Required | Default | Description                                                                    | Example |
-| ------------------------------ | ------- | -------- | :------: | ------- | ------------------------------------------------------------------------------ | ------- |
-| BearerTokenFile                | string  | `string` |          |         | The bearer token file for the targets. Deprecated in favour of                 |
-| Authorization.CredentialsFile. |         |
-| FollowRedirects                | boolean | `bool`   |          |         | FollowRedirects specifies whether the client should follow HTTP 3xx redirects. |
+| Name                           | Type                            | Go type         | Required | Default | Description                                                                    | Example |
+| ------------------------------ | ------------------------------- | --------------- | :------: | ------- | ------------------------------------------------------------------------------ | ------- |
+| authorization                  | [Authorization](#authorization) | `Authorization` |          |         |                                                                                |         |
+| basic_auth                     | [BasicAuth](#basic-auth)        | `BasicAuth`     |          |         |                                                                                |         |
+| bearer_token                   | [Secret](#secret)               | `Secret`        |          |         |                                                                                |         |
+| bearer_token_file              | string                          | `string`        |          |         | The bearer token file for the targets. Deprecated in favour of                 |
+| Authorization.CredentialsFile. |                                 |
+| follow_redirects               | boolean                         | `bool`          |          |         | FollowRedirects specifies whether the client should follow HTTP 3xx redirects. |
 
 The omitempty flag is not set, because it would be hidden from the
 marshalled configuration when set to false. | |
-| authorization | [Authorization](#authorization)| `Authorization` | | | | |
-| basic_auth | [BasicAuth](#basic-auth)| `BasicAuth` | | | | |
-| bearer_token | [Secret](#secret)| `Secret` | | | | |
 | oauth2 | [OAuth2](#o-auth2)| `OAuth2` | | | | |
 | proxy_url | [URL](#url)| `URL` | | | | |
 | tls_config | [TLSConfig](#tls-config)| `TLSConfig` | | | | |
@@ -16938,13 +18010,13 @@ marshalled configuration when set to false. | |
 
 | Name                                                             | Type                           | Go type             | Required | Default | Description                                                      | Example |
 | ---------------------------------------------------------------- | ------------------------------ | ------------------- | :------: | ------- | ---------------------------------------------------------------- | ------- |
-| SourceMatch                                                      | map of string                  | `map[string]string` |          |         | SourceMatch defines a set of labels that have to equal the given |
-| value for source alerts. Deprecated. Remove before v1.0 release. |                                |
-| TargetMatch                                                      | map of string                  | `map[string]string` |          |         | TargetMatch defines a set of labels that have to equal the given |
-| value for target alerts. Deprecated. Remove before v1.0 release. |                                |
 | equal                                                            | [LabelNames](#label-names)     | `LabelNames`        |          |         |                                                                  |         |
+| source_match                                                     | map of string                  | `map[string]string` |          |         | SourceMatch defines a set of labels that have to equal the given |
+| value for source alerts. Deprecated. Remove before v1.0 release. |                                |
 | source_match_re                                                  | [MatchRegexps](#match-regexps) | `MatchRegexps`      |          |         |                                                                  |         |
 | source_matchers                                                  | [Matchers](#matchers)          | `Matchers`          |          |         |                                                                  |         |
+| target_match                                                     | map of string                  | `map[string]string` |          |         | TargetMatch defines a set of labels that have to equal the given |
+| value for target alerts. Deprecated. Remove before v1.0 release. |                                |
 | target_match_re                                                  | [MatchRegexps](#match-regexps) | `MatchRegexps`      |          |         |                                                                  |         |
 | target_matchers                                                  | [Matchers](#matchers)          | `Matchers`          |          |         |                                                                  |         |
 
@@ -16988,9 +18060,9 @@ marshalled configuration when set to false. | |
 
 **Properties**
 
-| Name  | Type   | Go type  | Required | Default | Description | Example |
-| ----- | ------ | -------- | :------: | ------- | ----------- | ------- |
-| Value | string | `string` |          |         |             |         |
+| Name | Type   | Go type  | Required | Default | Description | Example |
+| ---- | ------ | -------- | :------: | ------- | ----------- | ------- |
+| Name | string | `string` |          |         |             |         |
 
 ### <span id="label-name"></span> LabelName
 
@@ -17013,12 +18085,6 @@ marshalled configuration when set to false. | |
 > Metric in the data store or not. All operations that occur within the realm
 > of a LabelSet can emit a vector of Metric entities to which the LabelSet may
 > match.
-
-[LabelSet](#label-set)
-
-### <span id="label-set"></span> LabelSet
-
-> LabelSet label set
 
 [LabelSet](#label-set)
 
@@ -17149,19 +18215,6 @@ marshalled configuration when set to false. | |
 
 ### <span id="matcher"></span> Matcher
 
-> Matcher matcher
-
-**Properties**
-
-| Name    | Type    | Go type  | Required | Default | Description | Example |
-| ------- | ------- | -------- | :------: | ------- | ----------- | ------- |
-| IsEqual | boolean | `bool`   |          |         | is equal    |         |
-| IsRegex | boolean | `bool`   |    ✓     |         | is regex    |         |
-| Name    | string  | `string` |    ✓     |         | name        |         |
-| Value   | string  | `string` |    ✓     |         | value       |         |
-
-### <span id="matcher"></span> Matcher
-
 **Properties**
 
 | Name  | Type                     | Go type     | Required | Default | Description | Example |
@@ -17178,21 +18231,15 @@ marshalled configuration when set to false. | |
 
 [][matcher](#matcher)
 
-### <span id="matchers"></span> Matchers
-
-> Matchers matchers
-
-[][matcher](#matcher)
-
 ### <span id="message-template"></span> MessageTemplate
 
 **Properties**
 
 | Name       | Type                      | Go type      | Required | Default | Description | Example |
 | ---------- | ------------------------- | ------------ | :------: | ------- | ----------- | ------- |
-| Name       | string                    | `string`     |          |         |             |         |
-| Template   | string                    | `string`     |          |         |             |         |
+| name       | string                    | `string`     |          |         |             |         |
 | provenance | [Provenance](#provenance) | `Provenance` |          |         |             |         |
+| template   | string                    | `string`     |          |         |             |         |
 
 ### <span id="message-template-content"></span> MessageTemplateContent
 
@@ -17200,7 +18247,7 @@ marshalled configuration when set to false. | |
 
 | Name     | Type   | Go type  | Required | Default | Description | Example |
 | -------- | ------ | -------- | :------: | ------- | ----------- | ------- |
-| Template | string | `string` |          |         |             |         |
+| template | string | `string` |          |         |             |         |
 
 ### <span id="message-templates"></span> MessageTemplates
 
@@ -17228,6 +18275,16 @@ queries.maxDataPoints - Species maximum amount of data points that dashboard pan
 queries.intervalMs - Specifies the time interval in milliseconds of time series. Is optional and defaults to 1000. | `[{"datasource":{"uid":"PD8C576611E62080A"},"format":"table","intervalMs":86400000,"maxDataPoints":1092,"rawSql":"SELECT 1 as valueOne, 2 as valueTwo","refId":"A"}]` |
 | to | string| `string` | ✓ | | To End time in epoch timestamps in milliseconds or relative using Grafana time units. | `now` |
 
+### <span id="migrate-queries-to-query-history-command"></span> MigrateQueriesToQueryHistoryCommand
+
+> MigrateQueriesToQueryHistoryCommand is the command used for migration of old queries into query history
+
+**Properties**
+
+| Name    | Type                                  | Go type             | Required | Default | Description                                 | Example |
+| ------- | ------------------------------------- | ------------------- | :------: | ------- | ------------------------------------------- | ------- |
+| queries | [][querytomigrate](#query-to-migrate) | `[]*QueryToMigrate` |          |         | Array of queries to store in query history. |         |
+
 ### <span id="month-range"></span> MonthRange
 
 **Properties**
@@ -17245,10 +18302,10 @@ queries.intervalMs - Specifies the time interval in milliseconds of time series.
 
 **Properties**
 
-| Name          | Type                             | Go type           | Required | Default | Description | Example |
-| ------------- | -------------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
-| Name          | string                           | `string`          |          |         |             |         |
-| TimeIntervals | [][timeinterval](#time-interval) | `[]*TimeInterval` |          |         |             |         |
+| Name           | Type                             | Go type           | Required | Default | Description | Example |
+| -------------- | -------------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
+| name           | string                           | `string`          |          |         |             |         |
+| time_intervals | [][timeinterval](#time-interval) | `[]*TimeInterval` |          |         |             |         |
 
 ### <span id="mute-timings"></span> MuteTimings
 
@@ -17330,21 +18387,21 @@ queries.intervalMs - Specifies the time interval in milliseconds of time series.
 
 | Name          | Type    | Go type | Required | Default | Description | Example |
 | ------------- | ------- | ------- | :------: | ------- | ----------- | ------- |
-| VSendResolved | boolean | `bool`  |          |         |             |         |
+| send_resolved | boolean | `bool`  |          |         |             |         |
 
 ### <span id="o-auth2"></span> OAuth2
 
 **Properties**
 
-| Name             | Type                     | Go type             | Required | Default | Description | Example |
-| ---------------- | ------------------------ | ------------------- | :------: | ------- | ----------- | ------- |
-| ClientID         | string                   | `string`            |          |         |             |         |
-| ClientSecretFile | string                   | `string`            |          |         |             |         |
-| EndpointParams   | map of string            | `map[string]string` |          |         |             |         |
-| Scopes           | []string                 | `[]string`          |          |         |             |         |
-| TLSConfig        | [TLSConfig](#tls-config) | `TLSConfig`         |          |         |             |         |
-| TokenURL         | string                   | `string`            |          |         |             |         |
-| client_secret    | [Secret](#secret)        | `Secret`            |          |         |             |         |
+| Name               | Type                     | Go type             | Required | Default | Description | Example |
+| ------------------ | ------------------------ | ------------------- | :------: | ------- | ----------- | ------- |
+| TLSConfig          | [TLSConfig](#tls-config) | `TLSConfig`         |          |         |             |         |
+| client_id          | string                   | `string`            |          |         |             |         |
+| client_secret      | [Secret](#secret)        | `Secret`            |          |         |             |         |
+| client_secret_file | string                   | `string`            |          |         |             |         |
+| endpoint_params    | map of string            | `map[string]string` |          |         |             |         |
+| scopes             | []string                 | `[]string`          |          |         |             |         |
+| token_url          | string                   | `string`            |          |         |             |         |
 
 ### <span id="object-matchers"></span> ObjectMatchers
 
@@ -17358,22 +18415,22 @@ queries.intervalMs - Specifies the time interval in milliseconds of time series.
 
 | Name          | Type                                                     | Go type                      | Required | Default | Description | Example |
 | ------------- | -------------------------------------------------------- | ---------------------------- | :------: | ------- | ----------- | ------- |
-| APIKeyFile    | string                                                   | `string`                     |          |         |             |         |
-| Actions       | string                                                   | `string`                     |          |         |             |         |
-| Description   | string                                                   | `string`                     |          |         |             |         |
-| Details       | map of string                                            | `map[string]string`          |          |         |             |         |
-| Entity        | string                                                   | `string`                     |          |         |             |         |
-| Message       | string                                                   | `string`                     |          |         |             |         |
-| Note          | string                                                   | `string`                     |          |         |             |         |
-| Priority      | string                                                   | `string`                     |          |         |             |         |
-| Responders    | [][opsgenieconfigresponder](#ops-genie-config-responder) | `[]*OpsGenieConfigResponder` |          |         |             |         |
-| Source        | string                                                   | `string`                     |          |         |             |         |
-| Tags          | string                                                   | `string`                     |          |         |             |         |
-| UpdateAlerts  | boolean                                                  | `bool`                       |          |         |             |         |
-| VSendResolved | boolean                                                  | `bool`                       |          |         |             |         |
+| actions       | string                                                   | `string`                     |          |         |             |         |
 | api_key       | [Secret](#secret)                                        | `Secret`                     |          |         |             |         |
+| api_key_file  | string                                                   | `string`                     |          |         |             |         |
 | api_url       | [URL](#url)                                              | `URL`                        |          |         |             |         |
+| description   | string                                                   | `string`                     |          |         |             |         |
+| details       | map of string                                            | `map[string]string`          |          |         |             |         |
+| entity        | string                                                   | `string`                     |          |         |             |         |
 | http_config   | [HTTPClientConfig](#http-client-config)                  | `HTTPClientConfig`           |          |         |             |         |
+| message       | string                                                   | `string`                     |          |         |             |         |
+| note          | string                                                   | `string`                     |          |         |             |         |
+| priority      | string                                                   | `string`                     |          |         |             |         |
+| responders    | [][opsgenieconfigresponder](#ops-genie-config-responder) | `[]*OpsGenieConfigResponder` |          |         |             |         |
+| send_resolved | boolean                                                  | `bool`                       |          |         |             |         |
+| source        | string                                                   | `string`                     |          |         |             |         |
+| tags          | string                                                   | `string`                     |          |         |             |         |
+| update_alerts | boolean                                                  | `bool`                       |          |         |             |         |
 
 ### <span id="ops-genie-config-responder"></span> OpsGenieConfigResponder
 
@@ -17381,10 +18438,10 @@ queries.intervalMs - Specifies the time interval in milliseconds of time series.
 
 | Name     | Type   | Go type  | Required | Default | Description                           | Example |
 | -------- | ------ | -------- | :------: | ------- | ------------------------------------- | ------- |
-| ID       | string | `string` |          |         | One of those 3 should be filled.      |         |
-| Name     | string | `string` |          |         |                                       |         |
-| Type     | string | `string` |          |         | team, user, escalation, schedule etc. |         |
-| Username | string | `string` |          |         |                                       |         |
+| id       | string | `string` |          |         | One of those 3 should be filled.      |         |
+| name     | string | `string` |          |         |                                       |         |
+| type     | string | `string` |          |         | team, user, escalation, schedule etc. |         |
+| username | string | `string` |          |         |                                       |         |
 
 ### <span id="org-d-t-o"></span> OrgDTO
 
@@ -17428,20 +18485,20 @@ queries.intervalMs - Specifies the time interval in milliseconds of time series.
 
 | Name          | Type                                    | Go type             | Required | Default | Description | Example |
 | ------------- | --------------------------------------- | ------------------- | :------: | ------- | ----------- | ------- |
-| Class         | string                                  | `string`            |          |         |             |         |
-| Client        | string                                  | `string`            |          |         |             |         |
-| ClientURL     | string                                  | `string`            |          |         |             |         |
-| Component     | string                                  | `string`            |          |         |             |         |
-| Description   | string                                  | `string`            |          |         |             |         |
-| Details       | map of string                           | `map[string]string` |          |         |             |         |
-| Group         | string                                  | `string`            |          |         |             |         |
-| Images        | [][pagerdutyimage](#pagerduty-image)    | `[]*PagerdutyImage` |          |         |             |         |
-| Links         | [][pagerdutylink](#pagerduty-link)      | `[]*PagerdutyLink`  |          |         |             |         |
-| Severity      | string                                  | `string`            |          |         |             |         |
-| VSendResolved | boolean                                 | `bool`              |          |         |             |         |
+| class         | string                                  | `string`            |          |         |             |         |
+| client        | string                                  | `string`            |          |         |             |         |
+| client_url    | string                                  | `string`            |          |         |             |         |
+| component     | string                                  | `string`            |          |         |             |         |
+| description   | string                                  | `string`            |          |         |             |         |
+| details       | map of string                           | `map[string]string` |          |         |             |         |
+| group         | string                                  | `string`            |          |         |             |         |
 | http_config   | [HTTPClientConfig](#http-client-config) | `HTTPClientConfig`  |          |         |             |         |
+| images        | [][pagerdutyimage](#pagerduty-image)    | `[]*PagerdutyImage` |          |         |             |         |
+| links         | [][pagerdutylink](#pagerduty-link)      | `[]*PagerdutyLink`  |          |         |             |         |
 | routing_key   | [Secret](#secret)                       | `Secret`            |          |         |             |         |
+| send_resolved | boolean                                 | `bool`              |          |         |             |         |
 | service_key   | [Secret](#secret)                       | `Secret`            |          |         |             |         |
+| severity      | string                                  | `string`            |          |         |             |         |
 | url           | [URL](#url)                             | `URL`               |          |         |             |         |
 
 ### <span id="pagerduty-image"></span> PagerdutyImage
@@ -17452,9 +18509,9 @@ queries.intervalMs - Specifies the time interval in milliseconds of time series.
 
 | Name | Type   | Go type  | Required | Default | Description | Example |
 | ---- | ------ | -------- | :------: | ------- | ----------- | ------- |
-| Alt  | string | `string` |          |         |             |         |
-| Href | string | `string` |          |         |             |         |
-| Src  | string | `string` |          |         |             |         |
+| alt  | string | `string` |          |         |             |         |
+| href | string | `string` |          |         |             |         |
+| src  | string | `string` |          |         |             |         |
 
 ### <span id="pagerduty-link"></span> PagerdutyLink
 
@@ -17464,8 +18521,8 @@ queries.intervalMs - Specifies the time interval in milliseconds of time series.
 
 | Name | Type   | Go type  | Required | Default | Description | Example |
 | ---- | ------ | -------- | :------: | ------- | ----------- | ------- |
-| Href | string | `string` |          |         |             |         |
-| Text | string | `string` |          |         |             |         |
+| href | string | `string` |          |         |             |         |
+| text | string | `string` |          |         |             |         |
 
 ### <span id="patch-annotations-cmd"></span> PatchAnnotationsCmd
 
@@ -17507,11 +18564,22 @@ Description:
 | ---------------- | --------------------------------------------------- | ------------------------ | :------: | ------- | ------------------------------------------ | ------- |
 | homeDashboardId  | int64 (formatted integer)                           | `int64`                  |          |         | The numerical :id of a favorited dashboard |         |
 | homeDashboardUID | string                                              | `string`                 |          |         |                                            |         |
+| locale           | string                                              | `string`                 |          |         |                                            |         |
 | navbar           | [NavbarPreference](#navbar-preference)              | `NavbarPreference`       |          |         |                                            |         |
 | queryHistory     | [QueryHistoryPreference](#query-history-preference) | `QueryHistoryPreference` |          |         |                                            |         |
 | theme            | string                                              | `string`                 |          |         |                                            |         |
 | timezone         | string                                              | `string`                 |          |         |                                            |         |
 | weekStart        | string                                              | `string`                 |          |         |                                            |         |
+
+### <span id="patch-query-comment-in-query-history-command"></span> PatchQueryCommentInQueryHistoryCommand
+
+> PatchQueryCommentInQueryHistoryCommand is the command for updating comment for query in query history
+
+**Properties**
+
+| Name    | Type   | Go type  | Required | Default | Description     | Example |
+| ------- | ------ | -------- | :------: | ------- | --------------- | ------- |
+| comment | string | `string` |          |         | Updated comment |         |
 
 ### <span id="pause-alert-command"></span> PauseAlertCommand
 
@@ -17529,17 +18597,6 @@ Description:
 | Name   | Type    | Go type | Required | Default | Description | Example |
 | ------ | ------- | ------- | :------: | ------- | ----------- | ------- |
 | paused | boolean | `bool`  |          |         |             |         |
-
-### <span id="peer-status"></span> PeerStatus
-
-> PeerStatus peer status
-
-**Properties**
-
-| Name    | Type   | Go type  | Required | Default | Description | Example |
-| ------- | ------ | -------- | :------: | ------- | ----------- | ------- |
-| Address | string | `string` |    ✓     |         | address     |         |
-| Name    | string | `string` |    ✓     |         | name        |         |
 
 ### <span id="permission"></span> Permission
 
@@ -17597,59 +18654,36 @@ Description:
 | what | string                    | `string`      |          |         |             |         |
 | when | int64 (formatted integer) | `int64`       |          |         |             |         |
 
-### <span id="postable-alert"></span> PostableAlert
-
-> PostableAlert postable alert
-
-**Properties**
-
-| Name              | Type                         | Go type           | Required | Default | Description   | Example |
-| ----------------- | ---------------------------- | ----------------- | :------: | ------- | ------------- | ------- |
-| EndsAt            | date-time (formatted string) | `strfmt.DateTime` |          |         | ends at       |
-| Format: date-time |                              |
-| GeneratorURL      | uri (formatted string)       | `strfmt.URI`      |          |         | generator URL |
-| Format: uri       |                              |
-| StartsAt          | date-time (formatted string) | `strfmt.DateTime` |          |         | starts at     |
-| Format: date-time |                              |
-| annotations       | [LabelSet](#label-set)       | `LabelSet`        |          |         |               |         |
-| labels            | [LabelSet](#label-set)       | `LabelSet`        |    ✓     |         |               |         |
-
-### <span id="postable-alerts"></span> PostableAlerts
-
-> PostableAlerts postable alerts
-
-[][postablealert](#postable-alert)
-
 ### <span id="postable-api-alerting-config"></span> PostableApiAlertingConfig
 
 **Properties**
 
-| Name              | Type                                            | Go type                  | Required | Default | Description                              | Example |
-| ----------------- | ----------------------------------------------- | ------------------------ | :------: | ------- | ---------------------------------------- | ------- |
-| InhibitRules      | [][inhibitrule](#inhibit-rule)                  | `[]*InhibitRule`         |          |         |                                          |         |
-| MuteTimeIntervals | [][mutetimeinterval](#mute-time-interval)       | `[]*MuteTimeInterval`    |          |         |                                          |         |
-| Receivers         | [][postableapireceiver](#postable-api-receiver) | `[]*PostableAPIReceiver` |          |         | Override with our superset receiver type |         |
-| Templates         | []string                                        | `[]string`               |          |         |                                          |         |
-| global            | [GlobalConfig](#global-config)                  | `GlobalConfig`           |          |         |                                          |         |
-| route             | [Route](#route)                                 | `Route`                  |          |         |                                          |         |
+| Name                | Type                                            | Go type                  | Required | Default | Description                              | Example |
+| ------------------- | ----------------------------------------------- | ------------------------ | :------: | ------- | ---------------------------------------- | ------- |
+| global              | [GlobalConfig](#global-config)                  | `GlobalConfig`           |          |         |                                          |         |
+| inhibit_rules       | [][inhibitrule](#inhibit-rule)                  | `[]*InhibitRule`         |          |         |                                          |         |
+| mute_time_intervals | [][mutetimeinterval](#mute-time-interval)       | `[]*MuteTimeInterval`    |          |         |                                          |         |
+| receivers           | [][postableapireceiver](#postable-api-receiver) | `[]*PostableAPIReceiver` |          |         | Override with our superset receiver type |         |
+| route               | [Route](#route)                                 | `Route`                  |          |         |                                          |         |
+| templates           | []string                                        | `[]string`               |          |         |                                          |         |
 
 ### <span id="postable-api-receiver"></span> PostableApiReceiver
 
 **Properties**
 
-| Name                    | Type                                                    | Go type                      | Required | Default | Description                            | Example |
-| ----------------------- | ------------------------------------------------------- | ---------------------------- | :------: | ------- | -------------------------------------- | ------- |
-| EmailConfigs            | [][emailconfig](#email-config)                          | `[]*EmailConfig`             |          |         |                                        |         |
-| GrafanaManagedReceivers | [][postablegrafanareceiver](#postable-grafana-receiver) | `[]*PostableGrafanaReceiver` |          |         |                                        |         |
-| Name                    | string                                                  | `string`                     |          |         | A unique identifier for this receiver. |         |
-| OpsGenieConfigs         | [][opsgenieconfig](#ops-genie-config)                   | `[]*OpsGenieConfig`          |          |         |                                        |         |
-| PagerdutyConfigs        | [][pagerdutyconfig](#pagerduty-config)                  | `[]*PagerdutyConfig`         |          |         |                                        |         |
-| PushoverConfigs         | [][pushoverconfig](#pushover-config)                    | `[]*PushoverConfig`          |          |         |                                        |         |
-| SNSConfigs              | [][snsconfig](#s-n-s-config)                            | `[]*SNSConfig`               |          |         |                                        |         |
-| SlackConfigs            | [][slackconfig](#slack-config)                          | `[]*SlackConfig`             |          |         |                                        |         |
-| VictorOpsConfigs        | [][victoropsconfig](#victor-ops-config)                 | `[]*VictorOpsConfig`         |          |         |                                        |         |
-| WebhookConfigs          | [][webhookconfig](#webhook-config)                      | `[]*WebhookConfig`           |          |         |                                        |         |
-| WechatConfigs           | [][wechatconfig](#wechat-config)                        | `[]*WechatConfig`            |          |         |                                        |         |
+| Name                             | Type                                                    | Go type                      | Required | Default | Description                            | Example |
+| -------------------------------- | ------------------------------------------------------- | ---------------------------- | :------: | ------- | -------------------------------------- | ------- |
+| email_configs                    | [][emailconfig](#email-config)                          | `[]*EmailConfig`             |          |         |                                        |         |
+| grafana_managed_receiver_configs | [][postablegrafanareceiver](#postable-grafana-receiver) | `[]*PostableGrafanaReceiver` |          |         |                                        |         |
+| name                             | string                                                  | `string`                     |          |         | A unique identifier for this receiver. |         |
+| opsgenie_configs                 | [][opsgenieconfig](#ops-genie-config)                   | `[]*OpsGenieConfig`          |          |         |                                        |         |
+| pagerduty_configs                | [][pagerdutyconfig](#pagerduty-config)                  | `[]*PagerdutyConfig`         |          |         |                                        |         |
+| pushover_configs                 | [][pushoverconfig](#pushover-config)                    | `[]*PushoverConfig`          |          |         |                                        |         |
+| slack_configs                    | [][slackconfig](#slack-config)                          | `[]*SlackConfig`             |          |         |                                        |         |
+| sns_configs                      | [][snsconfig](#s-n-s-config)                            | `[]*SNSConfig`               |          |         |                                        |         |
+| victorops_configs                | [][victoropsconfig](#victor-ops-config)                 | `[]*VictorOpsConfig`         |          |         |                                        |         |
+| webhook_configs                  | [][webhookconfig](#webhook-config)                      | `[]*WebhookConfig`           |          |         |                                        |         |
+| wechat_configs                   | [][wechatconfig](#wechat-config)                        | `[]*WechatConfig`            |          |         |                                        |         |
 
 ### <span id="postable-extended-rule-node"></span> PostableExtendedRuleNode
 
@@ -17657,13 +18691,13 @@ Description:
 
 | Name          | Type                                          | Go type               | Required | Default | Description | Example |
 | ------------- | --------------------------------------------- | --------------------- | :------: | ------- | ----------- | ------- |
-| Alert         | string                                        | `string`              |          |         |             |         |
-| Annotations   | map of string                                 | `map[string]string`   |          |         |             |         |
-| Expr          | string                                        | `string`              |          |         |             |         |
-| Labels        | map of string                                 | `map[string]string`   |          |         |             |         |
-| Record        | string                                        | `string`              |          |         |             |         |
+| alert         | string                                        | `string`              |          |         |             |         |
+| annotations   | map of string                                 | `map[string]string`   |          |         |             |         |
+| expr          | string                                        | `string`              |          |         |             |         |
 | for           | [Duration](#duration)                         | `Duration`            |          |         |             |         |
 | grafana_alert | [PostableGrafanaRule](#postable-grafana-rule) | `PostableGrafanaRule` |          |         |             |         |
+| labels        | map of string                                 | `map[string]string`   |          |         |             |         |
+| record        | string                                        | `string`              |          |         |             |         |
 
 ### <span id="postable-grafana-receiver"></span> PostableGrafanaReceiver
 
@@ -17671,33 +18705,33 @@ Description:
 
 | Name                  | Type          | Go type             | Required | Default | Description | Example |
 | --------------------- | ------------- | ------------------- | :------: | ------- | ----------- | ------- |
-| DisableResolveMessage | boolean       | `bool`              |          |         |             |         |
-| Name                  | string        | `string`            |          |         |             |         |
-| SecureSettings        | map of string | `map[string]string` |          |         |             |         |
-| Type                  | string        | `string`            |          |         |             |         |
-| UID                   | string        | `string`            |          |         |             |         |
+| disableResolveMessage | boolean       | `bool`              |          |         |             |         |
+| name                  | string        | `string`            |          |         |             |         |
+| secureSettings        | map of string | `map[string]string` |          |         |             |         |
 | settings              | [JSON](#json) | `JSON`              |          |         |             |         |
+| type                  | string        | `string`            |          |         |             |         |
+| uid                   | string        | `string`            |          |         |             |         |
 
 ### <span id="postable-grafana-receivers"></span> PostableGrafanaReceivers
 
 **Properties**
 
-| Name                    | Type                                                    | Go type                      | Required | Default | Description | Example |
-| ----------------------- | ------------------------------------------------------- | ---------------------------- | :------: | ------- | ----------- | ------- |
-| GrafanaManagedReceivers | [][postablegrafanareceiver](#postable-grafana-receiver) | `[]*PostableGrafanaReceiver` |          |         |             |         |
+| Name                             | Type                                                    | Go type                      | Required | Default | Description | Example |
+| -------------------------------- | ------------------------------------------------------- | ---------------------------- | :------: | ------- | ----------- | ------- |
+| grafana_managed_receiver_configs | [][postablegrafanareceiver](#postable-grafana-receiver) | `[]*PostableGrafanaReceiver` |          |         |             |         |
 
 ### <span id="postable-grafana-rule"></span> PostableGrafanaRule
 
 **Properties**
 
-| Name         | Type                         | Go type         | Required | Default | Description | Example |
-| ------------ | ---------------------------- | --------------- | :------: | ------- | ----------- | ------- |
-| Condition    | string                       | `string`        |          |         |             |         |
-| Data         | [][alertquery](#alert-query) | `[]*AlertQuery` |          |         |             |         |
-| ExecErrState | string                       | `string`        |          |         |             |         |
-| NoDataState  | string                       | `string`        |          |         |             |         |
-| Title        | string                       | `string`        |          |         |             |         |
-| UID          | string                       | `string`        |          |         |             |         |
+| Name           | Type                         | Go type         | Required | Default | Description | Example |
+| -------------- | ---------------------------- | --------------- | :------: | ------- | ----------- | ------- |
+| condition      | string                       | `string`        |          |         |             |         |
+| data           | [][alertquery](#alert-query) | `[]*AlertQuery` |          |         |             |         |
+| exec_err_state | string                       | `string`        |          |         |             |         |
+| no_data_state  | string                       | `string`        |          |         |             |         |
+| title          | string                       | `string`        |          |         |             |         |
+| uid            | string                       | `string`        |          |         |             |         |
 
 ### <span id="postable-n-galert-config"></span> PostableNGalertConfig
 
@@ -17705,8 +18739,8 @@ Description:
 
 | Name                | Type     | Go type    | Required | Default | Description | Example |
 | ------------------- | -------- | ---------- | :------: | ------- | ----------- | ------- |
-| Alertmanagers       | []string | `[]string` |          |         |             |         |
-| AlertmanagersChoice | string   | `string`   |          |         |             |         |
+| alertmanagers       | []string | `[]string` |          |         |             |         |
+| alertmanagersChoice | string   | `string`   |          |         |             |         |
 
 ### <span id="postable-rule-group-config"></span> PostableRuleGroupConfig
 
@@ -17714,9 +18748,9 @@ Description:
 
 | Name     | Type                                                       | Go type                       | Required | Default | Description | Example |
 | -------- | ---------------------------------------------------------- | ----------------------------- | :------: | ------- | ----------- | ------- |
-| Name     | string                                                     | `string`                      |          |         |             |         |
-| Rules    | [][postableextendedrulenode](#postable-extended-rule-node) | `[]*PostableExtendedRuleNode` |          |         |             |         |
 | interval | [Duration](#duration)                                      | `Duration`                    |          |         |             |         |
+| name     | string                                                     | `string`                      |          |         |             |         |
+| rules    | [][postableextendedrulenode](#postable-extended-rule-node) | `[]*PostableExtendedRuleNode` |          |         |             |         |
 
 ### <span id="postable-user-config"></span> PostableUserConfig
 
@@ -17724,8 +18758,8 @@ Description:
 
 | Name                | Type                                                       | Go type                     | Required | Default | Description | Example |
 | ------------------- | ---------------------------------------------------------- | --------------------------- | :------: | ------- | ----------- | ------- |
-| TemplateFiles       | map of string                                              | `map[string]string`         |          |         |             |         |
 | alertmanager_config | [PostableAPIAlertingConfig](#postable-api-alerting-config) | `PostableAPIAlertingConfig` |          |         |             |         |
+| template_files      | map of string                                              | `map[string]string`         |          |         |             |         |
 
 ### <span id="prefs"></span> Prefs
 
@@ -17735,6 +18769,7 @@ Description:
 | ---------------- | --------------------------------------------------- | ------------------------ | :------: | ------- | ----------- | ------- |
 | homeDashboardId  | int64 (formatted integer)                           | `int64`                  |          |         |             |         |
 | homeDashboardUID | string                                              | `string`                 |          |         |             |         |
+| locale           | string                                              | `string`                 |          |         |             |         |
 | navbar           | [NavbarPreference](#navbar-preference)              | `NavbarPreference`       |          |         |             |         |
 | queryHistory     | [QueryHistoryPreference](#query-history-preference) | `QueryHistoryPreference` |          |         |             |         |
 | theme            | string                                              | `string`                 |          |         |             |         |
@@ -17763,18 +18798,18 @@ Description:
 
 | Name          | Type                                    | Go type            | Required | Default | Description | Example |
 | ------------- | --------------------------------------- | ------------------ | :------: | ------- | ----------- | ------- |
-| HTML          | boolean                                 | `bool`             |          |         |             |         |
-| Message       | string                                  | `string`           |          |         |             |         |
-| Priority      | string                                  | `string`           |          |         |             |         |
-| Sound         | string                                  | `string`           |          |         |             |         |
-| Title         | string                                  | `string`           |          |         |             |         |
-| URL           | string                                  | `string`           |          |         |             |         |
-| URLTitle      | string                                  | `string`           |          |         |             |         |
-| VSendResolved | boolean                                 | `bool`             |          |         |             |         |
 | expire        | [Duration](#duration)                   | `Duration`         |          |         |             |         |
+| html          | boolean                                 | `bool`             |          |         |             |         |
 | http_config   | [HTTPClientConfig](#http-client-config) | `HTTPClientConfig` |          |         |             |         |
+| message       | string                                  | `string`           |          |         |             |         |
+| priority      | string                                  | `string`           |          |         |             |         |
 | retry         | [Duration](#duration)                   | `Duration`         |          |         |             |         |
+| send_resolved | boolean                                 | `bool`             |          |         |             |         |
+| sound         | string                                  | `string`           |          |         |             |         |
+| title         | string                                  | `string`           |          |         |             |         |
 | token         | [Secret](#secret)                       | `Secret`           |          |         |             |         |
+| url           | string                                  | `string`           |          |         |             |         |
+| url_title     | string                                  | `string`           |          |         |             |         |
 | user_key      | [Secret](#secret)                       | `Secret`           |          |         |             |         |
 
 ### <span id="query-data-response"></span> QueryDataResponse
@@ -17787,6 +18822,41 @@ Description:
 | --------- | ----------------------- | ----------- | :------: | ------- | ----------- | ------- |
 | Responses | [Responses](#responses) | `Responses` |          |         |             |         |
 
+### <span id="query-history-d-t-o"></span> QueryHistoryDTO
+
+**Properties**
+
+| Name          | Type                      | Go type  | Required | Default | Description | Example |
+| ------------- | ------------------------- | -------- | :------: | ------- | ----------- | ------- |
+| comment       | string                    | `string` |          |         |             |         |
+| createdAt     | int64 (formatted integer) | `int64`  |          |         |             |         |
+| createdBy     | int64 (formatted integer) | `int64`  |          |         |             |         |
+| datasourceUid | string                    | `string` |          |         |             |         |
+| queries       | [JSON](#json)             | `JSON`   |          |         |             |         |
+| starred       | boolean                   | `bool`   |          |         |             |         |
+| uid           | string                    | `string` |          |         |             |         |
+
+### <span id="query-history-delete-query-response"></span> QueryHistoryDeleteQueryResponse
+
+> QueryHistoryDeleteQueryResponse is the response struct for deleting a query from query history
+
+**Properties**
+
+| Name    | Type                      | Go type  | Required | Default | Description | Example |
+| ------- | ------------------------- | -------- | :------: | ------- | ----------- | ------- |
+| id      | int64 (formatted integer) | `int64`  |          |         |             |         |
+| message | string                    | `string` |          |         |             |         |
+
+### <span id="query-history-migration-response"></span> QueryHistoryMigrationResponse
+
+**Properties**
+
+| Name         | Type                      | Go type  | Required | Default | Description | Example |
+| ------------ | ------------------------- | -------- | :------: | ------- | ----------- | ------- |
+| message      | string                    | `string` |          |         |             |         |
+| starredCount | int64 (formatted integer) | `int64`  |          |         |             |         |
+| totalCount   | int64 (formatted integer) | `int64`  |          |         |             |         |
+
 ### <span id="query-history-preference"></span> QueryHistoryPreference
 
 **Properties**
@@ -17794,6 +18864,35 @@ Description:
 | Name    | Type   | Go type  | Required | Default | Description | Example |
 | ------- | ------ | -------- | :------: | ------- | ----------- | ------- |
 | homeTab | string | `string` |          |         |             |         |
+
+### <span id="query-history-response"></span> QueryHistoryResponse
+
+> QueryHistoryResponse is a response struct for QueryHistoryDTO
+
+**Properties**
+
+| Name   | Type                                    | Go type           | Required | Default | Description | Example |
+| ------ | --------------------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
+| result | [QueryHistoryDTO](#query-history-d-t-o) | `QueryHistoryDTO` |          |         |             |         |
+
+### <span id="query-history-search-response"></span> QueryHistorySearchResponse
+
+**Properties**
+
+| Name   | Type                                                     | Go type                    | Required | Default | Description | Example |
+| ------ | -------------------------------------------------------- | -------------------------- | :------: | ------- | ----------- | ------- |
+| result | [QueryHistorySearchResult](#query-history-search-result) | `QueryHistorySearchResult` |          |         |             |         |
+
+### <span id="query-history-search-result"></span> QueryHistorySearchResult
+
+**Properties**
+
+| Name         | Type                                      | Go type              | Required | Default | Description | Example |
+| ------------ | ----------------------------------------- | -------------------- | :------: | ------- | ----------- | ------- |
+| page         | int64 (formatted integer)                 | `int64`              |          |         |             |         |
+| perPage      | int64 (formatted integer)                 | `int64`              |          |         |             |         |
+| queryHistory | [][queryhistorydto](#query-history-d-t-o) | `[]*QueryHistoryDTO` |          |         |             |         |
+| totalCount   | int64 (formatted integer)                 | `int64`              |          |         |             |         |
 
 ### <span id="query-stat"></span> QueryStat
 
@@ -17832,30 +18931,34 @@ may be used as an identifier to update values in a subsequent request | |
 | value | double (formatted number)| `float64` | | | | |
 | writeable | boolean| `bool` | | | Writeable indicates that the datasource knows how to update this value | |
 
-### <span id="receiver"></span> Receiver
+### <span id="query-to-migrate"></span> QueryToMigrate
 
 **Properties**
 
-| Name             | Type                                    | Go type              | Required | Default | Description                            | Example |
-| ---------------- | --------------------------------------- | -------------------- | :------: | ------- | -------------------------------------- | ------- |
-| EmailConfigs     | [][emailconfig](#email-config)          | `[]*EmailConfig`     |          |         |                                        |         |
-| Name             | string                                  | `string`             |          |         | A unique identifier for this receiver. |         |
-| OpsGenieConfigs  | [][opsgenieconfig](#ops-genie-config)   | `[]*OpsGenieConfig`  |          |         |                                        |         |
-| PagerdutyConfigs | [][pagerdutyconfig](#pagerduty-config)  | `[]*PagerdutyConfig` |          |         |                                        |         |
-| PushoverConfigs  | [][pushoverconfig](#pushover-config)    | `[]*PushoverConfig`  |          |         |                                        |         |
-| SNSConfigs       | [][snsconfig](#s-n-s-config)            | `[]*SNSConfig`       |          |         |                                        |         |
-| SlackConfigs     | [][slackconfig](#slack-config)          | `[]*SlackConfig`     |          |         |                                        |         |
-| VictorOpsConfigs | [][victoropsconfig](#victor-ops-config) | `[]*VictorOpsConfig` |          |         |                                        |         |
-| WebhookConfigs   | [][webhookconfig](#webhook-config)      | `[]*WebhookConfig`   |          |         |                                        |         |
-| WechatConfigs    | [][wechatconfig](#wechat-config)        | `[]*WechatConfig`    |          |         |                                        |         |
+| Name          | Type                      | Go type  | Required | Default | Description | Example |
+| ------------- | ------------------------- | -------- | :------: | ------- | ----------- | ------- |
+| comment       | string                    | `string` |          |         |             |         |
+| createdAt     | int64 (formatted integer) | `int64`  |          |         |             |         |
+| datasourceUid | string                    | `string` |          |         |             |         |
+| queries       | [JSON](#json)             | `JSON`   |          |         |             |         |
+| starred       | boolean                   | `bool`   |          |         |             |         |
 
 ### <span id="receiver"></span> Receiver
 
 **Properties**
 
-| Name | Type   | Go type  | Required | Default | Description | Example |
-| ---- | ------ | -------- | :------: | ------- | ----------- | ------- |
-| Name | string | `string` |    ✓     |         | name        |         |
+| Name              | Type                                    | Go type              | Required | Default | Description                            | Example |
+| ----------------- | --------------------------------------- | -------------------- | :------: | ------- | -------------------------------------- | ------- |
+| email_configs     | [][emailconfig](#email-config)          | `[]*EmailConfig`     |          |         |                                        |         |
+| name              | string                                  | `string`             |          |         | A unique identifier for this receiver. |         |
+| opsgenie_configs  | [][opsgenieconfig](#ops-genie-config)   | `[]*OpsGenieConfig`  |          |         |                                        |         |
+| pagerduty_configs | [][pagerdutyconfig](#pagerduty-config)  | `[]*PagerdutyConfig` |          |         |                                        |         |
+| pushover_configs  | [][pushoverconfig](#pushover-config)    | `[]*PushoverConfig`  |          |         |                                        |         |
+| slack_configs     | [][slackconfig](#slack-config)          | `[]*SlackConfig`     |          |         |                                        |         |
+| sns_configs       | [][snsconfig](#s-n-s-config)            | `[]*SNSConfig`       |          |         |                                        |         |
+| victorops_configs | [][victoropsconfig](#victor-ops-config) | `[]*VictorOpsConfig` |          |         |                                        |         |
+| webhook_configs   | [][webhookconfig](#webhook-config)      | `[]*WebhookConfig`   |          |         |                                        |         |
+| wechat_configs    | [][wechatconfig](#wechat-config)        | `[]*WechatConfig`    |          |         |                                        |         |
 
 ### <span id="recording-rule-json"></span> RecordingRuleJSON
 
@@ -17923,7 +19026,7 @@ may be used as an identifier to update values in a subsequent request | |
 
 | Name | Type   | Go type  | Required | Default | Description | Example |
 | ---- | ------ | -------- | :------: | ------- | ----------- | ------- |
-| Msg  | string | `string` |          |         |             |         |
+| msg  | string | `string` |          |         |             |         |
 
 ### <span id="responses"></span> Responses
 
@@ -17973,21 +19076,21 @@ may be used as an identifier to update values in a subsequent request | |
 
 **Properties**
 
-| Name              | Type                               | Go type             | Required | Default | Description                             | Example |
-| ----------------- | ---------------------------------- | ------------------- | :------: | ------- | --------------------------------------- | ------- |
-| Continue          | boolean                            | `bool`              |          |         |                                         |         |
-| GroupByStr        | []string                           | `[]string`          |          |         |                                         |         |
-| Match             | map of string                      | `map[string]string` |          |         | Deprecated. Remove before v1.0 release. |         |
-| MuteTimeIntervals | []string                           | `[]string`          |          |         |                                         |         |
-| Receiver          | string                             | `string`            |          |         |                                         |         |
-| Routes            | [][route](#route)                  | `[]*Route`          |          |         |                                         |         |
-| group_interval    | [Duration](#duration)              | `Duration`          |          |         |                                         |         |
-| group_wait        | [Duration](#duration)              | `Duration`          |          |         |                                         |         |
-| match_re          | [MatchRegexps](#match-regexps)     | `MatchRegexps`      |          |         |                                         |         |
-| matchers          | [Matchers](#matchers)              | `Matchers`          |          |         |                                         |         |
-| object_matchers   | [ObjectMatchers](#object-matchers) | `ObjectMatchers`    |          |         |                                         |         |
-| provenance        | [Provenance](#provenance)          | `Provenance`        |          |         |                                         |         |
-| repeat_interval   | [Duration](#duration)              | `Duration`          |          |         |                                         |         |
+| Name                | Type                               | Go type             | Required | Default | Description                             | Example |
+| ------------------- | ---------------------------------- | ------------------- | :------: | ------- | --------------------------------------- | ------- |
+| continue            | boolean                            | `bool`              |          |         |                                         |         |
+| group_by            | []string                           | `[]string`          |          |         |                                         |         |
+| group_interval      | [Duration](#duration)              | `Duration`          |          |         |                                         |         |
+| group_wait          | [Duration](#duration)              | `Duration`          |          |         |                                         |         |
+| match               | map of string                      | `map[string]string` |          |         | Deprecated. Remove before v1.0 release. |         |
+| match_re            | [MatchRegexps](#match-regexps)     | `MatchRegexps`      |          |         |                                         |         |
+| matchers            | [Matchers](#matchers)              | `Matchers`          |          |         |                                         |         |
+| mute_time_intervals | []string                           | `[]string`          |          |         |                                         |         |
+| object_matchers     | [ObjectMatchers](#object-matchers) | `ObjectMatchers`    |          |         |                                         |         |
+| provenance          | [Provenance](#provenance)          | `Provenance`        |          |         |                                         |         |
+| receiver            | string                             | `string`            |          |         |                                         |         |
+| repeat_interval     | [Duration](#duration)              | `Duration`          |          |         |                                         |         |
+| routes              | [][route](#route)                  | `[]*Route`          |          |         |                                         |         |
 
 ### <span id="rule"></span> Rule
 
@@ -17997,22 +19100,22 @@ may be used as an identifier to update values in a subsequent request | |
 
 | Name           | Type                               | Go type           | Required | Default | Description | Example |
 | -------------- | ---------------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
-| EvaluationTime | double (formatted number)          | `float64`         |          |         |             |         |
-| Health         | string                             | `string`          |    ✓     |         |             |         |
-| LastError      | string                             | `string`          |          |         |             |         |
-| LastEvaluation | date-time (formatted string)       | `strfmt.DateTime` |          |         |             |         |
-| Name           | string                             | `string`          |    ✓     |         |             |         |
-| Query          | string                             | `string`          |    ✓     |         |             |         |
+| evaluationTime | double (formatted number)          | `float64`         |          |         |             |         |
+| health         | string                             | `string`          |    ✓     |         |             |         |
 | labels         | [OverrideLabels](#override-labels) | `OverrideLabels`  |          |         |             |         |
+| lastError      | string                             | `string`          |          |         |             |         |
+| lastEvaluation | date-time (formatted string)       | `strfmt.DateTime` |          |         |             |         |
+| name           | string                             | `string`          |    ✓     |         |             |         |
+| query          | string                             | `string`          |    ✓     |         |             |         |
 | type           | [RuleType](#rule-type)             | `RuleType`        |    ✓     |         |             |         |
 
 ### <span id="rule-discovery"></span> RuleDiscovery
 
 **Properties**
 
-| Name       | Type                       | Go type        | Required | Default | Description | Example |
-| ---------- | -------------------------- | -------------- | :------: | ------- | ----------- | ------- |
-| RuleGroups | [][rulegroup](#rule-group) | `[]*RuleGroup` |    ✓     |         |             |         |
+| Name   | Type                       | Go type        | Required | Default | Description | Example |
+| ------ | -------------------------- | -------------- | :------: | ------- | ----------- | ------- |
+| groups | [][rulegroup](#rule-group) | `[]*RuleGroup` |    ✓     |         |             |         |
 
 ### <span id="rule-group"></span> RuleGroup
 
@@ -18020,12 +19123,12 @@ may be used as an identifier to update values in a subsequent request | |
 
 | Name           | Type                             | Go type           | Required | Default | Description                                                                     | Example |
 | -------------- | -------------------------------- | ----------------- | :------: | ------- | ------------------------------------------------------------------------------- | ------- |
-| EvaluationTime | double (formatted number)        | `float64`         |          |         |                                                                                 |         |
-| File           | string                           | `string`          |    ✓     |         |                                                                                 |         |
-| Interval       | double (formatted number)        | `float64`         |    ✓     |         |                                                                                 |         |
-| LastEvaluation | date-time (formatted string)     | `strfmt.DateTime` |          |         |                                                                                 |         |
-| Name           | string                           | `string`          |    ✓     |         |                                                                                 |         |
-| Rules          | [][alertingrule](#alerting-rule) | `[]*AlertingRule` |    ✓     |         | In order to preserve rule ordering, while exposing type (alerting or recording) |
+| evaluationTime | double (formatted number)        | `float64`         |          |         |                                                                                 |         |
+| file           | string                           | `string`          |    ✓     |         |                                                                                 |         |
+| interval       | double (formatted number)        | `float64`         |    ✓     |         |                                                                                 |         |
+| lastEvaluation | date-time (formatted string)     | `strfmt.DateTime` |          |         |                                                                                 |         |
+| name           | string                           | `string`          |    ✓     |         |                                                                                 |         |
+| rules          | [][alertingrule](#alerting-rule) | `[]*AlertingRule` |    ✓     |         | In order to preserve rule ordering, while exposing type (alerting or recording) |
 
 specific properties, both alerting and recording rules are exposed in the
 same array. | |
@@ -18034,12 +19137,12 @@ same array. | |
 
 **Properties**
 
-| Name          | Type                                                       | Go type                       | Required | Default | Description | Example |
-| ------------- | ---------------------------------------------------------- | ----------------------------- | :------: | ------- | ----------- | ------- |
-| Name          | string                                                     | `string`                      |          |         |             |         |
-| Rules         | [][gettableextendedrulenode](#gettable-extended-rule-node) | `[]*GettableExtendedRuleNode` |          |         |             |         |
-| SourceTenants | []string                                                   | `[]string`                    |          |         |             |         |
-| interval      | [Duration](#duration)                                      | `Duration`                    |          |         |             |         |
+| Name           | Type                                                       | Go type                       | Required | Default | Description | Example |
+| -------------- | ---------------------------------------------------------- | ----------------------------- | :------: | ------- | ----------- | ------- |
+| interval       | [Duration](#duration)                                      | `Duration`                    |          |         |             |         |
+| name           | string                                                     | `string`                      |          |         |             |         |
+| rules          | [][gettableextendedrulenode](#gettable-extended-rule-node) | `[]*GettableExtendedRuleNode` |          |         |             |         |
+| source_tenants | []string                                                   | `[]string`                    |          |         |             |         |
 
 ### <span id="rule-response"></span> RuleResponse
 
@@ -18047,10 +19150,10 @@ same array. | |
 
 | Name      | Type                             | Go type         | Required | Default | Description | Example |
 | --------- | -------------------------------- | --------------- | :------: | ------- | ----------- | ------- |
-| Error     | string                           | `string`        |          |         |             |         |
-| Status    | string                           | `string`        |    ✓     |         |             |         |
 | data      | [RuleDiscovery](#rule-discovery) | `RuleDiscovery` |          |         |             |         |
+| error     | string                           | `string`        |          |         |             |         |
 | errorType | [ErrorType](#error-type)         | `ErrorType`     |          |         |             |         |
+| status    | string                           | `string`        |    ✓     |         |             |         |
 
 ### <span id="rule-type"></span> RuleType
 
@@ -18064,16 +19167,16 @@ same array. | |
 
 | Name          | Type                                    | Go type             | Required | Default | Description | Example |
 | ------------- | --------------------------------------- | ------------------- | :------: | ------- | ----------- | ------- |
-| APIUrl        | string                                  | `string`            |          |         |             |         |
-| Attributes    | map of string                           | `map[string]string` |          |         |             |         |
-| Message       | string                                  | `string`            |          |         |             |         |
-| PhoneNumber   | string                                  | `string`            |          |         |             |         |
-| Subject       | string                                  | `string`            |          |         |             |         |
-| TargetARN     | string                                  | `string`            |          |         |             |         |
-| TopicARN      | string                                  | `string`            |          |         |             |         |
-| VSendResolved | boolean                                 | `bool`              |          |         |             |         |
+| api_url       | string                                  | `string`            |          |         |             |         |
+| attributes    | map of string                           | `map[string]string` |          |         |             |         |
 | http_config   | [HTTPClientConfig](#http-client-config) | `HTTPClientConfig`  |          |         |             |         |
+| message       | string                                  | `string`            |          |         |             |         |
+| phone_number  | string                                  | `string`            |          |         |             |         |
+| send_resolved | boolean                                 | `bool`              |          |         |             |         |
 | sigv4         | [SigV4Config](#sig-v4-config)           | `SigV4Config`       |          |         |             |         |
+| subject       | string                                  | `string`            |          |         |             |         |
+| target_arn    | string                                  | `string`            |          |         |             |         |
+| topic_arn     | string                                  | `string`            |          |         |             |         |
 
 ### <span id="sample"></span> Sample
 
@@ -18191,30 +19294,6 @@ same array. | |
 | RoleARN   | string            | `string` |          |         |             |         |
 | SecretKey | [Secret](#secret) | `Secret` |          |         |             |         |
 
-### <span id="silence"></span> Silence
-
-> Silence silence
-
-**Properties**
-
-| Name      | Type                         | Go type           | Required | Default | Description | Example |
-| --------- | ---------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
-| Comment   | string                       | `string`          |    ✓     |         | comment     |         |
-| CreatedBy | string                       | `string`          |    ✓     |         | created by  |         |
-| EndsAt    | date-time (formatted string) | `strfmt.DateTime` |    ✓     |         | ends at     |         |
-| StartsAt  | date-time (formatted string) | `strfmt.DateTime` |    ✓     |         | starts at   |         |
-| matchers  | [Matchers](#matchers)        | `Matchers`        |    ✓     |         |             |         |
-
-### <span id="silence-status"></span> SilenceStatus
-
-> SilenceStatus silence status
-
-**Properties**
-
-| Name  | Type   | Go type  | Required | Default | Description | Example |
-| ----- | ------ | -------- | :------: | ------- | ----------- | ------- |
-| State | string | `string` |    ✓     |         | state       |         |
-
 ### <span id="slack-action"></span> SlackAction
 
 > See https://api.slack.com/docs/message-attachments#action_fields and https://api.slack.com/docs/message-buttons
@@ -18224,13 +19303,13 @@ same array. | |
 
 | Name    | Type                                                | Go type                  | Required | Default | Description | Example |
 | ------- | --------------------------------------------------- | ------------------------ | :------: | ------- | ----------- | ------- |
-| Name    | string                                              | `string`                 |          |         |             |         |
-| Style   | string                                              | `string`                 |          |         |             |         |
-| Text    | string                                              | `string`                 |          |         |             |         |
-| Type    | string                                              | `string`                 |          |         |             |         |
-| URL     | string                                              | `string`                 |          |         |             |         |
-| Value   | string                                              | `string`                 |          |         |             |         |
 | confirm | [SlackConfirmationField](#slack-confirmation-field) | `SlackConfirmationField` |          |         |             |         |
+| name    | string                                              | `string`                 |          |         |             |         |
+| style   | string                                              | `string`                 |          |         |             |         |
+| text    | string                                              | `string`                 |          |         |             |         |
+| type    | string                                              | `string`                 |          |         |             |         |
+| url     | string                                              | `string`                 |          |         |             |         |
+| value   | string                                              | `string`                 |          |         |             |         |
 
 ### <span id="slack-config"></span> SlackConfig
 
@@ -18238,29 +19317,29 @@ same array. | |
 
 | Name          | Type                                    | Go type            | Required | Default | Description                                                 | Example |
 | ------------- | --------------------------------------- | ------------------ | :------: | ------- | ----------------------------------------------------------- | ------- |
-| APIURLFile    | string                                  | `string`           |          |         |                                                             |         |
-| Actions       | [][slackaction](#slack-action)          | `[]*SlackAction`   |          |         |                                                             |         |
-| CallbackID    | string                                  | `string`           |          |         |                                                             |         |
-| Channel       | string                                  | `string`           |          |         | Slack channel override, (like #other-channel or @username). |         |
-| Color         | string                                  | `string`           |          |         |                                                             |         |
-| Fallback      | string                                  | `string`           |          |         |                                                             |         |
-| Fields        | [][slackfield](#slack-field)            | `[]*SlackField`    |          |         |                                                             |         |
-| Footer        | string                                  | `string`           |          |         |                                                             |         |
-| IconEmoji     | string                                  | `string`           |          |         |                                                             |         |
-| IconURL       | string                                  | `string`           |          |         |                                                             |         |
-| ImageURL      | string                                  | `string`           |          |         |                                                             |         |
-| LinkNames     | boolean                                 | `bool`             |          |         |                                                             |         |
-| MrkdwnIn      | []string                                | `[]string`         |          |         |                                                             |         |
-| Pretext       | string                                  | `string`           |          |         |                                                             |         |
-| ShortFields   | boolean                                 | `bool`             |          |         |                                                             |         |
-| Text          | string                                  | `string`           |          |         |                                                             |         |
-| ThumbURL      | string                                  | `string`           |          |         |                                                             |         |
-| Title         | string                                  | `string`           |          |         |                                                             |         |
-| TitleLink     | string                                  | `string`           |          |         |                                                             |         |
-| Username      | string                                  | `string`           |          |         |                                                             |         |
-| VSendResolved | boolean                                 | `bool`             |          |         |                                                             |         |
+| actions       | [][slackaction](#slack-action)          | `[]*SlackAction`   |          |         |                                                             |         |
 | api_url       | [SecretURL](#secret-url)                | `SecretURL`        |          |         |                                                             |         |
+| api_url_file  | string                                  | `string`           |          |         |                                                             |         |
+| callback_id   | string                                  | `string`           |          |         |                                                             |         |
+| channel       | string                                  | `string`           |          |         | Slack channel override, (like #other-channel or @username). |         |
+| color         | string                                  | `string`           |          |         |                                                             |         |
+| fallback      | string                                  | `string`           |          |         |                                                             |         |
+| fields        | [][slackfield](#slack-field)            | `[]*SlackField`    |          |         |                                                             |         |
+| footer        | string                                  | `string`           |          |         |                                                             |         |
 | http_config   | [HTTPClientConfig](#http-client-config) | `HTTPClientConfig` |          |         |                                                             |         |
+| icon_emoji    | string                                  | `string`           |          |         |                                                             |         |
+| icon_url      | string                                  | `string`           |          |         |                                                             |         |
+| image_url     | string                                  | `string`           |          |         |                                                             |         |
+| link_names    | boolean                                 | `bool`             |          |         |                                                             |         |
+| mrkdwn_in     | []string                                | `[]string`         |          |         |                                                             |         |
+| pretext       | string                                  | `string`           |          |         |                                                             |         |
+| send_resolved | boolean                                 | `bool`             |          |         |                                                             |         |
+| short_fields  | boolean                                 | `bool`             |          |         |                                                             |         |
+| text          | string                                  | `string`           |          |         |                                                             |         |
+| thumb_url     | string                                  | `string`           |          |         |                                                             |         |
+| title         | string                                  | `string`           |          |         |                                                             |         |
+| title_link    | string                                  | `string`           |          |         |                                                             |         |
+| username      | string                                  | `string`           |          |         |                                                             |         |
 
 ### <span id="slack-confirmation-field"></span> SlackConfirmationField
 
@@ -18270,12 +19349,12 @@ same array. | |
 
 **Properties**
 
-| Name        | Type   | Go type  | Required | Default | Description | Example |
-| ----------- | ------ | -------- | :------: | ------- | ----------- | ------- |
-| DismissText | string | `string` |          |         |             |         |
-| OkText      | string | `string` |          |         |             |         |
-| Text        | string | `string` |          |         |             |         |
-| Title       | string | `string` |          |         |             |         |
+| Name         | Type   | Go type  | Required | Default | Description | Example |
+| ------------ | ------ | -------- | :------: | ------- | ----------- | ------- |
+| dismiss_text | string | `string` |          |         |             |         |
+| ok_text      | string | `string` |          |         |             |         |
+| text         | string | `string` |          |         |             |         |
+| title        | string | `string` |          |         |             |         |
 
 ### <span id="slack-field"></span> SlackField
 
@@ -18287,13 +19366,19 @@ same array. | |
 
 | Name  | Type    | Go type  | Required | Default | Description | Example |
 | ----- | ------- | -------- | :------: | ------- | ----------- | ------- |
-| Short | boolean | `bool`   |          |         |             |         |
-| Title | string  | `string` |          |         |             |         |
-| Value | string  | `string` |          |         |             |         |
+| short | boolean | `bool`   |          |         |             |         |
+| title | string  | `string` |          |         |             |         |
+| value | string  | `string` |          |         |             |         |
 
 ### <span id="smtp-not-enabled"></span> SmtpNotEnabled
 
 - composed type [ResponseDetails](#response-details)
+
+### <span id="state"></span> State
+
+| Name  | Type   | Go type | Default | Description | Example |
+| ----- | ------ | ------- | ------- | ----------- | ------- |
+| State | string | string  |         |             |         |
 
 ### <span id="status"></span> Status
 
@@ -18331,13 +19416,13 @@ same array. | |
 
 **Properties**
 
-| Name               | Type    | Go type  | Required | Default | Description                                  | Example |
-| ------------------ | ------- | -------- | :------: | ------- | -------------------------------------------- | ------- |
-| CAFile             | string  | `string` |          |         | The CA cert to use for the targets.          |         |
-| CertFile           | string  | `string` |          |         | The client cert file for the targets.        |         |
-| InsecureSkipVerify | boolean | `bool`   |          |         | Disable target certificate validation.       |         |
-| KeyFile            | string  | `string` |          |         | The client key file for the targets.         |         |
-| ServerName         | string  | `string` |          |         | Used to verify the hostname for the targets. |         |
+| Name                 | Type    | Go type  | Required | Default | Description                                  | Example |
+| -------------------- | ------- | -------- | :------: | ------- | -------------------------------------------- | ------- |
+| ca_file              | string  | `string` |          |         | The CA cert to use for the targets.          |         |
+| cert_file            | string  | `string` |          |         | The client cert file for the targets.        |         |
+| insecure_skip_verify | boolean | `bool`   |          |         | Disable target certificate validation.       |         |
+| key_file             | string  | `string` |          |         | The client key file for the targets.         |         |
+| server_name          | string  | `string` |          |         | Used to verify the hostname for the targets. |         |
 
 ### <span id="tags-d-t-o"></span> TagsDTO
 
@@ -18431,19 +19516,19 @@ same array. | |
 
 | Name   | Type   | Go type  | Required | Default | Description | Example |
 | ------ | ------ | -------- | :------: | ------- | ----------- | ------- |
-| Error  | string | `string` |          |         |             |         |
-| Name   | string | `string` |          |         |             |         |
-| Status | string | `string` |          |         |             |         |
-| UID    | string | `string` |          |         |             |         |
+| error  | string | `string` |          |         |             |         |
+| name   | string | `string` |          |         |             |         |
+| status | string | `string` |          |         |             |         |
+| uid    | string | `string` |          |         |             |         |
 
 ### <span id="test-receiver-result"></span> TestReceiverResult
 
 **Properties**
 
-| Name    | Type                                                       | Go type                       | Required | Default | Description | Example |
-| ------- | ---------------------------------------------------------- | ----------------------------- | :------: | ------- | ----------- | ------- |
-| Configs | [][testreceiverconfigresult](#test-receiver-config-result) | `[]*TestReceiverConfigResult` |          |         |             |         |
-| Name    | string                                                     | `string`                      |          |         |             |         |
+| Name                             | Type                                                       | Go type                       | Required | Default | Description | Example |
+| -------------------------------- | ---------------------------------------------------------- | ----------------------------- | :------: | ------- | ----------- | ------- |
+| grafana_managed_receiver_configs | [][testreceiverconfigresult](#test-receiver-config-result) | `[]*TestReceiverConfigResult` |          |         |             |         |
+| name                             | string                                                     | `string`                      |          |         |             |         |
 
 ### <span id="test-receivers-config-alert-params"></span> TestReceiversConfigAlertParams
 
@@ -18460,18 +19545,18 @@ same array. | |
 
 | Name      | Type                                                                  | Go type                          | Required | Default | Description | Example |
 | --------- | --------------------------------------------------------------------- | -------------------------------- | :------: | ------- | ----------- | ------- |
-| Receivers | [][postableapireceiver](#postable-api-receiver)                       | `[]*PostableAPIReceiver`         |          |         |             |         |
 | alert     | [TestReceiversConfigAlertParams](#test-receivers-config-alert-params) | `TestReceiversConfigAlertParams` |          |         |             |         |
+| receivers | [][postableapireceiver](#postable-api-receiver)                       | `[]*PostableAPIReceiver`         |          |         |             |         |
 
 ### <span id="test-receivers-result"></span> TestReceiversResult
 
 **Properties**
 
-| Name       | Type                                                                  | Go type                          | Required | Default | Description | Example |
-| ---------- | --------------------------------------------------------------------- | -------------------------------- | :------: | ------- | ----------- | ------- |
-| NotifiedAt | date-time (formatted string)                                          | `strfmt.DateTime`                |          |         |             |         |
-| Receivers  | [][testreceiverresult](#test-receiver-result)                         | `[]*TestReceiverResult`          |          |         |             |         |
-| alert      | [TestReceiversConfigAlertParams](#test-receivers-config-alert-params) | `TestReceiversConfigAlertParams` |          |         |             |         |
+| Name        | Type                                                                  | Go type                          | Required | Default | Description | Example |
+| ----------- | --------------------------------------------------------------------- | -------------------------------- | :------: | ------- | ----------- | ------- |
+| alert       | [TestReceiversConfigAlertParams](#test-receivers-config-alert-params) | `TestReceiversConfigAlertParams` |          |         |             |         |
+| notified_at | date-time (formatted string)                                          | `strfmt.DateTime`                |          |         |             |         |
+| receivers   | [][testreceiverresult](#test-receiver-result)                         | `[]*TestReceiverResult`          |          |         |             |         |
 
 ### <span id="test-rule-payload"></span> TestRulePayload
 
@@ -18479,7 +19564,7 @@ same array. | |
 
 | Name              | Type                                                       | Go type                     | Required | Default | Description | Example                                                                                                                                                                                                                                                        |
 | ----------------- | ---------------------------------------------------------- | --------------------------- | :------: | ------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Expr              | string                                                     | `string`                    |          |         |             | `(node_filesystem_avail_bytes{fstype!=\"\",job=\"integrations/node_exporter\"} node_filesystem_size_bytes{fstype!=\"\",job=\"integrations/node_exporter\"} * 100 \u003c 5 and node_filesystem_readonly{fstype!=\"\",job=\"integrations/node_exporter\"} == 0)` |
+| expr              | string                                                     | `string`                    |          |         |             | `(node_filesystem_avail_bytes{fstype!=\"\",job=\"integrations/node_exporter\"} node_filesystem_size_bytes{fstype!=\"\",job=\"integrations/node_exporter\"} * 100 \u003c 5 and node_filesystem_readonly{fstype!=\"\",job=\"integrations/node_exporter\"} == 0)` |
 | grafana_condition | [EvalAlertConditionCommand](#eval-alert-condition-command) | `EvalAlertConditionCommand` |          |         |             |                                                                                                                                                                                                                                                                |
 
 ### <span id="test-rule-response"></span> TestRuleResponse
@@ -18529,13 +19614,13 @@ same array. | |
 
 **Properties**
 
-| Name        | Type                                     | Go type              | Required | Default | Description | Example |
-| ----------- | ---------------------------------------- | -------------------- | :------: | ------- | ----------- | ------- |
-| DaysOfMonth | [][dayofmonthrange](#day-of-month-range) | `[]*DayOfMonthRange` |          |         |             |         |
-| Months      | [][monthrange](#month-range)             | `[]*MonthRange`      |          |         |             |         |
-| Times       | [][timerange](#time-range)               | `[]*TimeRange`       |          |         |             |         |
-| Weekdays    | [][weekdayrange](#weekday-range)         | `[]*WeekdayRange`    |          |         |             |         |
-| Years       | [][yearrange](#year-range)               | `[]*YearRange`       |          |         |             |         |
+| Name          | Type                                     | Go type              | Required | Default | Description | Example |
+| ------------- | ---------------------------------------- | -------------------- | :------: | ------- | ----------- | ------- |
+| days_of_month | [][dayofmonthrange](#day-of-month-range) | `[]*DayOfMonthRange` |          |         |             |         |
+| months        | [][monthrange](#month-range)             | `[]*MonthRange`      |          |         |             |         |
+| times         | [][timerange](#time-range)               | `[]*TimeRange`       |          |         |             |         |
+| weekdays      | [][weekdayrange](#weekday-range)         | `[]*WeekdayRange`    |          |         |             |         |
+| years         | [][yearrange](#year-range)               | `[]*YearRange`       |          |         |             |         |
 
 ### <span id="time-range"></span> TimeRange
 
@@ -18619,6 +19704,23 @@ same array. | |
 
 ### <span id="url"></span> URL
 
+> The general form represented is:
+
+[scheme:]//[userinfo@]host][/]path[?query][#fragment]
+
+URLs that do not start with a slash after the scheme are interpreted as:
+
+scheme:opaque[?query][#fragment]
+
+Note that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.
+A consequence is that it is impossible to tell which slashes in the Path were
+slashes in the raw URL and which were %2f. This distinction is rarely important,
+but when it is, the code should use RawPath, an optional field which only gets
+set if the default encoding is different from Path.
+
+URL's String method uses the EscapedPath method to obtain the path. See the
+EscapedPath method for more details.
+
 **Properties**
 
 | Name        | Type                  | Go type    | Required | Default | Description | Example |
@@ -18693,24 +19795,22 @@ same array. | |
 
 **Properties**
 
-| Name              | Type                      | Go type             | Required | Default | Description | Example |
-| ----------------- | ------------------------- | ------------------- | :------: | ------- | ----------- | ------- |
-| access            | [DsAccess](#ds-access)    | `DsAccess`          |          |         |             |         |
-| basicAuth         | boolean                   | `bool`              |          |         |             |         |
-| basicAuthPassword | string                    | `string`            |          |         |             |         |
-| basicAuthUser     | string                    | `string`            |          |         |             |         |
-| database          | string                    | `string`            |          |         |             |         |
-| isDefault         | boolean                   | `bool`              |          |         |             |         |
-| jsonData          | [JSON](#json)             | `JSON`              |          |         |             |         |
-| name              | string                    | `string`            |          |         |             |         |
-| password          | string                    | `string`            |          |         |             |         |
-| secureJsonData    | map of string             | `map[string]string` |          |         |             |         |
-| type              | string                    | `string`            |          |         |             |         |
-| uid               | string                    | `string`            |          |         |             |         |
-| url               | string                    | `string`            |          |         |             |         |
-| user              | string                    | `string`            |          |         |             |         |
-| version           | int64 (formatted integer) | `int64`             |          |         |             |         |
-| withCredentials   | boolean                   | `bool`              |          |         |             |         |
+| Name            | Type                      | Go type             | Required | Default | Description | Example |
+| --------------- | ------------------------- | ------------------- | :------: | ------- | ----------- | ------- |
+| access          | [DsAccess](#ds-access)    | `DsAccess`          |          |         |             |         |
+| basicAuth       | boolean                   | `bool`              |          |         |             |         |
+| basicAuthUser   | string                    | `string`            |          |         |             |         |
+| database        | string                    | `string`            |          |         |             |         |
+| isDefault       | boolean                   | `bool`              |          |         |             |         |
+| jsonData        | [JSON](#json)             | `JSON`              |          |         |             |         |
+| name            | string                    | `string`            |          |         |             |         |
+| secureJsonData  | map of string             | `map[string]string` |          |         |             |         |
+| type            | string                    | `string`            |          |         |             |         |
+| uid             | string                    | `string`            |          |         |             |         |
+| url             | string                    | `string`            |          |         |             |         |
+| user            | string                    | `string`            |          |         |             |         |
+| version         | int64 (formatted integer) | `int64`             |          |         |             |         |
+| withCredentials | boolean                   | `bool`              |          |         |             |         |
 
 ### <span id="update-folder-command"></span> UpdateFolderCommand
 
@@ -18769,6 +19869,7 @@ same array. | |
 | ---------------- | --------------------------------------------------- | ------------------------ | :------: | ------- | ------------------------------------------ | ------- |
 | homeDashboardId  | int64 (formatted integer)                           | `int64`                  |          |         | The numerical :id of a favorited dashboard |         |
 | homeDashboardUID | string                                              | `string`                 |          |         |                                            |         |
+| locale           | string                                              | `string`                 |          |         |                                            |         |
 | navbar           | [NavbarPreference](#navbar-preference)              | `NavbarPreference`       |          |         |                                            |         |
 | queryHistory     | [QueryHistoryPreference](#query-history-preference) | `QueryHistoryPreference` |          |         |                                            |         |
 | theme            | string                                              | `string`                 |          |         |                                            |         |
@@ -18941,9 +20042,9 @@ same array. | |
 
 **Properties**
 
-| Name | Type   | Go type  | Required | Default | Description | Example |
-| ---- | ------ | -------- | :------: | ------- | ----------- | ------- |
-| Msg  | string | `string` |          |         |             |         |
+| Name | Type   | Go type  | Required | Default | Description | Example         |
+| ---- | ------ | -------- | :------: | ------- | ----------- | --------------- |
+| msg  | string | `string` |          |         |             | `error message` |
 
 ### <span id="value-mapping"></span> ValueMapping
 
@@ -18962,38 +20063,23 @@ same array. | |
 
 [][sample](#sample)
 
-### <span id="version-info"></span> VersionInfo
-
-> VersionInfo version info
-
-**Properties**
-
-| Name      | Type   | Go type  | Required | Default | Description | Example |
-| --------- | ------ | -------- | :------: | ------- | ----------- | ------- |
-| Branch    | string | `string` |    ✓     |         | branch      |         |
-| BuildDate | string | `string` |    ✓     |         | build date  |         |
-| BuildUser | string | `string` |    ✓     |         | build user  |         |
-| GoVersion | string | `string` |    ✓     |         | go version  |         |
-| Revision  | string | `string` |    ✓     |         | revision    |         |
-| Version   | string | `string` |    ✓     |         | version     |         |
-
 ### <span id="victor-ops-config"></span> VictorOpsConfig
 
 **Properties**
 
-| Name              | Type                                    | Go type             | Required | Default | Description | Example |
-| ----------------- | --------------------------------------- | ------------------- | :------: | ------- | ----------- | ------- |
-| CustomFields      | map of string                           | `map[string]string` |          |         |             |         |
-| EntityDisplayName | string                                  | `string`            |          |         |             |         |
-| MessageType       | string                                  | `string`            |          |         |             |         |
-| MonitoringTool    | string                                  | `string`            |          |         |             |         |
-| RoutingKey        | string                                  | `string`            |          |         |             |         |
-| StateMessage      | string                                  | `string`            |          |         |             |         |
-| VSendResolved     | boolean                                 | `bool`              |          |         |             |         |
-| api_key           | [Secret](#secret)                       | `Secret`            |          |         |             |         |
-| api_key_file      | [Secret](#secret)                       | `Secret`            |          |         |             |         |
-| api_url           | [URL](#url)                             | `URL`               |          |         |             |         |
-| http_config       | [HTTPClientConfig](#http-client-config) | `HTTPClientConfig`  |          |         |             |         |
+| Name                | Type                                    | Go type             | Required | Default | Description | Example |
+| ------------------- | --------------------------------------- | ------------------- | :------: | ------- | ----------- | ------- |
+| api_key             | [Secret](#secret)                       | `Secret`            |          |         |             |         |
+| api_key_file        | [Secret](#secret)                       | `Secret`            |          |         |             |         |
+| api_url             | [URL](#url)                             | `URL`               |          |         |             |         |
+| custom_fields       | map of string                           | `map[string]string` |          |         |             |         |
+| entity_display_name | string                                  | `string`            |          |         |             |         |
+| http_config         | [HTTPClientConfig](#http-client-config) | `HTTPClientConfig`  |          |         |             |         |
+| message_type        | string                                  | `string`            |          |         |             |         |
+| monitoring_tool     | string                                  | `string`            |          |         |             |         |
+| routing_key         | string                                  | `string`            |          |         |             |         |
+| send_resolved       | boolean                                 | `bool`              |          |         |             |         |
+| state_message       | string                                  | `string`            |          |         |             |         |
 
 ### <span id="vis-type"></span> VisType
 
@@ -19005,14 +20091,14 @@ same array. | |
 
 **Properties**
 
-| Name      | Type                       | Go type  | Required | Default | Description                                                               | Example |
-| --------- | -------------------------- | -------- | :------: | ------- | ------------------------------------------------------------------------- | ------- |
-| MaxAlerts | uint64 (formatted integer) | `uint64` |          |         | MaxAlerts is the maximum number of alerts to be sent per webhook message. |
+| Name        | Type                                    | Go type            | Required | Default | Description                                                               | Example |
+| ----------- | --------------------------------------- | ------------------ | :------: | ------- | ------------------------------------------------------------------------- | ------- |
+| http_config | [HTTPClientConfig](#http-client-config) | `HTTPClientConfig` |          |         |                                                                           |         |
+| max_alerts  | uint64 (formatted integer)              | `uint64`           |          |         | MaxAlerts is the maximum number of alerts to be sent per webhook message. |
 
 Alerts exceeding this threshold will be truncated. Setting this to 0
 allows an unlimited number of alerts. | |
-| VSendResolved | boolean| `bool` | | | | |
-| http_config | [HTTPClientConfig](#http-client-config)| `HTTPClientConfig` | | | | |
+| send_resolved | boolean| `bool` | | | | |
 | url | [URL](#url)| `URL` | | | | |
 
 ### <span id="wechat-config"></span> WechatConfig
@@ -19021,17 +20107,17 @@ allows an unlimited number of alerts. | |
 
 | Name          | Type                                    | Go type            | Required | Default | Description | Example |
 | ------------- | --------------------------------------- | ------------------ | :------: | ------- | ----------- | ------- |
-| AgentID       | string                                  | `string`           |          |         |             |         |
-| CorpID        | string                                  | `string`           |          |         |             |         |
-| Message       | string                                  | `string`           |          |         |             |         |
-| MessageType   | string                                  | `string`           |          |         |             |         |
-| ToParty       | string                                  | `string`           |          |         |             |         |
-| ToTag         | string                                  | `string`           |          |         |             |         |
-| ToUser        | string                                  | `string`           |          |         |             |         |
-| VSendResolved | boolean                                 | `bool`             |          |         |             |         |
+| agent_id      | string                                  | `string`           |          |         |             |         |
 | api_secret    | [Secret](#secret)                       | `Secret`           |          |         |             |         |
 | api_url       | [URL](#url)                             | `URL`              |          |         |             |         |
+| corp_id       | string                                  | `string`           |          |         |             |         |
 | http_config   | [HTTPClientConfig](#http-client-config) | `HTTPClientConfig` |          |         |             |         |
+| message       | string                                  | `string`           |          |         |             |         |
+| message_type  | string                                  | `string`           |          |         |             |         |
+| send_resolved | boolean                                 | `bool`             |          |         |             |         |
+| to_party      | string                                  | `string`           |          |         |             |         |
+| to_tag        | string                                  | `string`           |          |         |             |         |
+| to_user       | string                                  | `string`           |          |         |             |         |
 
 ### <span id="weekday-range"></span> WeekdayRange
 
@@ -19051,6 +20137,18 @@ allows an unlimited number of alerts. | |
 | Begin | int64 (formatted integer) | `int64` |          |         |             |         |
 | End   | int64 (formatted integer) | `int64` |          |         |             |         |
 
+### <span id="alert"></span> alert
+
+> Alert alert
+
+**Properties**
+
+| Name         | Type                   | Go type      | Required | Default | Description   | Example |
+| ------------ | ---------------------- | ------------ | :------: | ------- | ------------- | ------- |
+| generatorURL | uri (formatted string) | `strfmt.URI` |          |         | generator URL |
+| Format: uri  |                        |
+| labels       | [LabelSet](#label-set) | `LabelSet`   |    ✓     |         |               |         |
+
 ### <span id="alert-group"></span> alertGroup
 
 > AlertGroup alert group
@@ -19059,32 +20157,81 @@ allows an unlimited number of alerts. | |
 
 | Name     | Type                               | Go type            | Required | Default | Description | Example |
 | -------- | ---------------------------------- | ------------------ | :------: | ------- | ----------- | ------- |
-| Alerts   | [][gettablealert](#gettable-alert) | `[]*GettableAlert` |    ✓     |         | alerts      |         |
+| alerts   | [][gettablealert](#gettable-alert) | `[]*GettableAlert` |    ✓     |         | alerts      |         |
 | labels   | [LabelSet](#label-set)             | `LabelSet`         |    ✓     |         |             |         |
 | receiver | [Receiver](#receiver)              | `Receiver`         |    ✓     |         |             |         |
 
-### <span id="gettable-alert"></span> gettableAlert
+### <span id="alert-groups"></span> alertGroups
 
-> GettableAlert gettable alert
+> AlertGroups alert groups
+
+[][alertgroup](#alert-group)
+
+### <span id="alert-status"></span> alertStatus
+
+> AlertStatus alert status
+
+**Properties**
+
+| Name        | Type     | Go type    | Required | Default | Description  | Example |
+| ----------- | -------- | ---------- | :------: | ------- | ------------ | ------- |
+| inhibitedBy | []string | `[]string` |    ✓     |         | inhibited by |         |
+| silencedBy  | []string | `[]string` |    ✓     |         | silenced by  |         |
+| state       | string   | `string`   |    ✓     |         | state        |         |
+
+### <span id="alertmanager-config"></span> alertmanagerConfig
+
+> AlertmanagerConfig alertmanager config
+
+**Properties**
+
+| Name     | Type   | Go type  | Required | Default | Description | Example |
+| -------- | ------ | -------- | :------: | ------- | ----------- | ------- |
+| original | string | `string` |    ✓     |         | original    |         |
+
+### <span id="alertmanager-status"></span> alertmanagerStatus
+
+> AlertmanagerStatus alertmanager status
+
+**Properties**
+
+| Name        | Type                                       | Go type              | Required | Default | Description | Example |
+| ----------- | ------------------------------------------ | -------------------- | :------: | ------- | ----------- | ------- |
+| cluster     | [ClusterStatus](#cluster-status)           | `ClusterStatus`      |    ✓     |         |             |         |
+| config      | [AlertmanagerConfig](#alertmanager-config) | `AlertmanagerConfig` |    ✓     |         |             |         |
+| uptime      | date-time (formatted string)               | `strfmt.DateTime`    |    ✓     |         | uptime      |         |
+| versionInfo | [VersionInfo](#version-info)               | `VersionInfo`        |    ✓     |         |             |         |
+
+### <span id="cluster-status"></span> clusterStatus
+
+> ClusterStatus cluster status
+
+**Properties**
+
+| Name   | Type                         | Go type         | Required | Default | Description | Example |
+| ------ | ---------------------------- | --------------- | :------: | ------- | ----------- | ------- |
+| name   | string                       | `string`        |          |         | name        |         |
+| peers  | [][peerstatus](#peer-status) | `[]*PeerStatus` |          |         | peers       |         |
+| status | string                       | `string`        |    ✓     |         | status      |         |
+
+### <span id="gettable-alert"></span> gettableAlert
 
 **Properties**
 
 | Name         | Type                         | Go type           | Required | Default | Description   | Example |
 | ------------ | ---------------------------- | ----------------- | :------: | ------- | ------------- | ------- |
-| EndsAt       | date-time (formatted string) | `strfmt.DateTime` |    ✓     |         | ends at       |         |
-| Fingerprint  | string                       | `string`          |    ✓     |         | fingerprint   |         |
-| GeneratorURL | uri (formatted string)       | `strfmt.URI`      |          |         | generator URL |
-| Format: uri  |                              |
-| Receivers    | [][receiver](#receiver)      | `[]*Receiver`     |    ✓     |         | receivers     |         |
-| StartsAt     | date-time (formatted string) | `strfmt.DateTime` |    ✓     |         | starts at     |         |
-| UpdatedAt    | date-time (formatted string) | `strfmt.DateTime` |    ✓     |         | updated at    |         |
 | annotations  | [LabelSet](#label-set)       | `LabelSet`        |    ✓     |         |               |         |
+| endsAt       | date-time (formatted string) | `strfmt.DateTime` |    ✓     |         | ends at       |         |
+| fingerprint  | string                       | `string`          |    ✓     |         | fingerprint   |         |
+| generatorURL | uri (formatted string)       | `strfmt.URI`      |          |         | generator URL |
+| Format: uri  |                              |
 | labels       | [LabelSet](#label-set)       | `LabelSet`        |    ✓     |         |               |         |
+| receivers    | [][receiver](#receiver)      | `[]*Receiver`     |    ✓     |         | receivers     |         |
+| startsAt     | date-time (formatted string) | `strfmt.DateTime` |    ✓     |         | starts at     |         |
 | status       | [AlertStatus](#alert-status) | `AlertStatus`     |    ✓     |         |               |         |
+| updatedAt    | date-time (formatted string) | `strfmt.DateTime` |    ✓     |         | updated at    |         |
 
 ### <span id="gettable-alerts"></span> gettableAlerts
-
-> GettableAlerts gettable alerts
 
 [][gettablealert](#gettable-alert)
 
@@ -19096,14 +20243,43 @@ allows an unlimited number of alerts. | |
 
 | Name      | Type                             | Go type           | Required | Default | Description | Example |
 | --------- | -------------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
-| Comment   | string                           | `string`          |    ✓     |         | comment     |         |
-| CreatedBy | string                           | `string`          |    ✓     |         | created by  |         |
-| EndsAt    | date-time (formatted string)     | `strfmt.DateTime` |    ✓     |         | ends at     |         |
-| ID        | string                           | `string`          |    ✓     |         | id          |         |
-| StartsAt  | date-time (formatted string)     | `strfmt.DateTime` |    ✓     |         | starts at   |         |
-| UpdatedAt | date-time (formatted string)     | `strfmt.DateTime` |    ✓     |         | updated at  |         |
+| comment   | string                           | `string`          |    ✓     |         | comment     |         |
+| createdBy | string                           | `string`          |    ✓     |         | created by  |         |
+| endsAt    | date-time (formatted string)     | `strfmt.DateTime` |    ✓     |         | ends at     |         |
+| id        | string                           | `string`          |    ✓     |         | id          |         |
 | matchers  | [Matchers](#matchers)            | `Matchers`        |    ✓     |         |             |         |
+| startsAt  | date-time (formatted string)     | `strfmt.DateTime` |    ✓     |         | starts at   |         |
 | status    | [SilenceStatus](#silence-status) | `SilenceStatus`   |    ✓     |         |             |         |
+| updatedAt | date-time (formatted string)     | `strfmt.DateTime` |    ✓     |         | updated at  |         |
+
+### <span id="gettable-silences"></span> gettableSilences
+
+[][gettablesilence](#gettable-silence)
+
+### <span id="label-set"></span> labelSet
+
+> LabelSet label set
+
+[LabelSet](#label-set)
+
+### <span id="matcher"></span> matcher
+
+> Matcher matcher
+
+**Properties**
+
+| Name    | Type    | Go type  | Required | Default | Description | Example |
+| ------- | ------- | -------- | :------: | ------- | ----------- | ------- |
+| isEqual | boolean | `bool`   |          |         | is equal    |         |
+| isRegex | boolean | `bool`   |    ✓     |         | is regex    |         |
+| name    | string  | `string` |    ✓     |         | name        |         |
+| value   | string  | `string` |    ✓     |         | value       |         |
+
+### <span id="matchers"></span> matchers
+
+> Matchers matchers
+
+[][matcher](#matcher)
 
 ### <span id="override-labels"></span> overrideLabels
 
@@ -19111,17 +20287,98 @@ allows an unlimited number of alerts. | |
 
 [OverrideLabels](#override-labels)
 
-### <span id="postable-silence"></span> postableSilence
+### <span id="peer-status"></span> peerStatus
 
-> PostableSilence postable silence
+> PeerStatus peer status
+
+**Properties**
+
+| Name    | Type   | Go type  | Required | Default | Description | Example |
+| ------- | ------ | -------- | :------: | ------- | ----------- | ------- |
+| address | string | `string` |    ✓     |         | address     |         |
+| name    | string | `string` |    ✓     |         | name        |         |
+
+### <span id="postable-alert"></span> postableAlert
+
+> PostableAlert postable alert
+
+**Properties**
+
+| Name              | Type                         | Go type           | Required | Default | Description   | Example |
+| ----------------- | ---------------------------- | ----------------- | :------: | ------- | ------------- | ------- |
+| annotations       | [LabelSet](#label-set)       | `LabelSet`        |          |         |               |         |
+| endsAt            | date-time (formatted string) | `strfmt.DateTime` |          |         | ends at       |
+| Format: date-time |                              |
+| generatorURL      | uri (formatted string)       | `strfmt.URI`      |          |         | generator URL |
+| Format: uri       |                              |
+| labels            | [LabelSet](#label-set)       | `LabelSet`        |    ✓     |         |               |         |
+| startsAt          | date-time (formatted string) | `strfmt.DateTime` |          |         | starts at     |
+| Format: date-time |                              |
+
+### <span id="postable-alerts"></span> postableAlerts
+
+> PostableAlerts postable alerts
+
+[][postablealert](#postable-alert)
+
+### <span id="postable-silence"></span> postableSilence
 
 **Properties**
 
 | Name      | Type                         | Go type           | Required | Default | Description | Example |
 | --------- | ---------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
-| Comment   | string                       | `string`          |    ✓     |         | comment     |         |
-| CreatedBy | string                       | `string`          |    ✓     |         | created by  |         |
-| EndsAt    | date-time (formatted string) | `strfmt.DateTime` |    ✓     |         | ends at     |         |
-| ID        | string                       | `string`          |          |         | id          |         |
-| StartsAt  | date-time (formatted string) | `strfmt.DateTime` |    ✓     |         | starts at   |         |
+| comment   | string                       | `string`          |    ✓     |         | comment     |         |
+| createdBy | string                       | `string`          |    ✓     |         | created by  |         |
+| endsAt    | date-time (formatted string) | `strfmt.DateTime` |    ✓     |         | ends at     |         |
+| id        | string                       | `string`          |          |         | id          |         |
 | matchers  | [Matchers](#matchers)        | `Matchers`        |    ✓     |         |             |         |
+| startsAt  | date-time (formatted string) | `strfmt.DateTime` |    ✓     |         | starts at   |         |
+
+### <span id="receiver"></span> receiver
+
+> Receiver receiver
+
+**Properties**
+
+| Name | Type   | Go type  | Required | Default | Description | Example |
+| ---- | ------ | -------- | :------: | ------- | ----------- | ------- |
+| name | string | `string` |    ✓     |         | name        |         |
+
+### <span id="silence"></span> silence
+
+> Silence silence
+
+**Properties**
+
+| Name      | Type                         | Go type           | Required | Default | Description | Example |
+| --------- | ---------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
+| comment   | string                       | `string`          |    ✓     |         | comment     |         |
+| createdBy | string                       | `string`          |    ✓     |         | created by  |         |
+| endsAt    | date-time (formatted string) | `strfmt.DateTime` |    ✓     |         | ends at     |         |
+| matchers  | [Matchers](#matchers)        | `Matchers`        |    ✓     |         |             |         |
+| startsAt  | date-time (formatted string) | `strfmt.DateTime` |    ✓     |         | starts at   |         |
+
+### <span id="silence-status"></span> silenceStatus
+
+> SilenceStatus silence status
+
+**Properties**
+
+| Name  | Type   | Go type  | Required | Default | Description | Example |
+| ----- | ------ | -------- | :------: | ------- | ----------- | ------- |
+| state | string | `string` |    ✓     |         | state       |         |
+
+### <span id="version-info"></span> versionInfo
+
+> VersionInfo version info
+
+**Properties**
+
+| Name      | Type   | Go type  | Required | Default | Description | Example |
+| --------- | ------ | -------- | :------: | ------- | ----------- | ------- |
+| branch    | string | `string` |    ✓     |         | branch      |         |
+| buildDate | string | `string` |    ✓     |         | build date  |         |
+| buildUser | string | `string` |    ✓     |         | build user  |         |
+| goVersion | string | `string` |    ✓     |         | go version  |         |
+| revision  | string | `string` |    ✓     |         | revision    |         |
+| version   | string | `string` |    ✓     |         | version     |         |

@@ -15,7 +15,7 @@ weight: 100
 
 # Annotate time series
 
-This section explains how to create annotations in the Time series panel. To read more about annotations support in Grafana please refer to [Annotations]({{< relref "../../dashboards/annotations.md" >}}).
+This section explains how to create annotations in the Time series panel. To read more about annotations support in Grafana please refer to [Annotations]({{< relref "../../dashboards/annotations/" >}}).
 
 ## Add annotation
 

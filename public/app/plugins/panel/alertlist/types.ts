@@ -40,7 +40,7 @@ export interface AlertListOptions {
 interface StateFilter {
   firing: boolean;
   pending: boolean;
-  inactive: boolean;
+  inactive?: boolean; // backwards compat
   noData: boolean;
   normal: boolean;
   error: boolean;

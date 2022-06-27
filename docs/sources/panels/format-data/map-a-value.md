@@ -12,7 +12,7 @@ Map a value when you want to format a single value.
 
 ## Before you begin
 
-- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).
+- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel/" >}}).
 
 **To map a value**:
 

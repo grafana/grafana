@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
@@ -24,6 +25,7 @@ var (
 	ErrAlertRuleUniqueConstraintViolation = errors.New("a conflicting alert rule is found: rule title under the same organisation and folder should be unique")
 )
 
+// swagger:enum NoDataState
 type NoDataState string
 
 func (noDataState NoDataState) String() string {
@@ -49,6 +51,7 @@ const (
 	OK       NoDataState = "OK"
 )
 
+// swagger:enum ExecutionErrorState
 type ExecutionErrorState string
 
 func (executionErrorState ExecutionErrorState) String() string {
@@ -85,6 +88,14 @@ const (
 	// This isn't a hard-coded secret token, hence the nolint.
 	//nolint:gosec
 	ScreenshotTokenAnnotation = "__alertScreenshotToken__"
+
+	// GrafanaReservedLabelPrefix contains the prefix for Grafana reserved labels. These differ from "__<label>__" labels
+	// in that they are not meant for internal-use only and will be passed-through to AMs and available to users in the same
+	// way as manually configured labels.
+	GrafanaReservedLabelPrefix = "grafana_"
+
+	// FolderTitleLabel is the label that will contain the title of an alert's folder/namespace.
+	FolderTitleLabel = GrafanaReservedLabelPrefix + "folder"
 )
 
 var (
@@ -109,12 +120,13 @@ type AlertRule struct {
 	Data            []AlertQuery
 	Updated         time.Time
 	IntervalSeconds int64
-	Version         int64
+	Version         int64   `xorm:"version"` // this tag makes xorm add optimistic lock (see https://xorm.io/docs/chapter-06/1.lock/)
 	UID             string  `xorm:"uid"`
 	NamespaceUID    string  `xorm:"namespace_uid"`
 	DashboardUID    *string `xorm:"dashboard_uid"`
 	PanelID         *int64  `xorm:"panel_id"`
 	RuleGroup       string
+	RuleGroupIndex  int `xorm:"rule_group_idx"`
 	NoDataState     NoDataState
 	ExecErrState    ExecutionErrorState
 	// ideally this field should have been apimodels.ApiDuration
@@ -125,10 +137,14 @@ type AlertRule struct {
 }
 
 type SchedulableAlertRule struct {
+	Title           string
 	UID             string `xorm:"uid"`
 	OrgID           int64  `xorm:"org_id"`
 	IntervalSeconds int64
 	Version         int64
+	NamespaceUID    string `xorm:"namespace_uid"`
+	RuleGroup       string
+	RuleGroupIndex  int `xorm:"rule_group_idx"`
 }
 
 type LabelOption func(map[string]string)
@@ -157,13 +173,13 @@ func (alertRule *AlertRule) GetLabels(opts ...LabelOption) map[string]string {
 // Diff calculates diff between two alert rules. Returns nil if two rules are equal. Otherwise, returns cmputil.DiffReport
 func (alertRule *AlertRule) Diff(rule *AlertRule, ignore ...string) cmputil.DiffReport {
 	var reporter cmputil.DiffReporter
-	ops := make([]cmp.Option, 0, 4)
+	ops := make([]cmp.Option, 0, 5)
 
 	// json.RawMessage is a slice of bytes and therefore cmp's default behavior is to compare it by byte, which is not really useful
 	var jsonCmp = cmp.Transformer("", func(in json.RawMessage) string {
 		return string(in)
 	})
-	ops = append(ops, cmp.Reporter(&reporter), cmpopts.IgnoreFields(AlertQuery{}, "modelProps"), jsonCmp)
+	ops = append(ops, cmp.Reporter(&reporter), cmpopts.IgnoreFields(AlertQuery{}, "modelProps"), jsonCmp, cmpopts.EquateEmpty())
 
 	if len(ignore) > 0 {
 		ops = append(ops, cmpopts.IgnoreFields(AlertRule{}, ignore...))
@@ -240,6 +256,7 @@ type AlertRuleVersion struct {
 	RuleUID          string `xorm:"rule_uid"`
 	RuleNamespaceUID string `xorm:"rule_namespace_uid"`
 	RuleGroup        string
+	RuleGroupIndex   int `xorm:"rule_group_idx"`
 	ParentVersion    int64
 	RestoredFrom     int64
 	Version          int64
@@ -286,7 +303,7 @@ type ListAlertRulesQuery struct {
 	DashboardUID string
 	PanelID      int64
 
-	Result []*AlertRule
+	Result RulesGroup
 }
 
 type GetAlertRulesForSchedulingQuery struct {
@@ -374,4 +391,23 @@ func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRule) {
 	if ruleToPatch.For == 0 {
 		ruleToPatch.For = existingRule.For
 	}
+}
+
+func ValidateRuleGroupInterval(intervalSeconds, baseIntervalSeconds int64) error {
+	if intervalSeconds%baseIntervalSeconds != 0 || intervalSeconds <= 0 {
+		return fmt.Errorf("%w: interval (%v) should be non-zero and divided exactly by scheduler interval: %v",
+			ErrAlertRuleFailedValidation, time.Duration(intervalSeconds)*time.Second, baseIntervalSeconds)
+	}
+	return nil
+}
+
+type RulesGroup []*AlertRule
+
+func (g RulesGroup) SortByGroupIndex() {
+	sort.Slice(g, func(i, j int) bool {
+		if g[i].RuleGroupIndex == g[j].RuleGroupIndex {
+			return g[i].ID < g[j].ID
+		}
+		return g[i].RuleGroupIndex < g[j].RuleGroupIndex
+	})
 }

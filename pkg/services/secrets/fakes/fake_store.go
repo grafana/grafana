@@ -24,9 +24,9 @@ func (f FakeSecretsStore) GetDataKey(_ context.Context, id string) (*secrets.Dat
 	return key, nil
 }
 
-func (f FakeSecretsStore) GetCurrentDataKey(_ context.Context, name string) (*secrets.DataKey, error) {
+func (f FakeSecretsStore) GetCurrentDataKey(_ context.Context, label string) (*secrets.DataKey, error) {
 	for _, key := range f.store {
-		if key.Name == name && key.Active {
+		if key.Label == label && key.Active {
 			return key, nil
 		}
 	}

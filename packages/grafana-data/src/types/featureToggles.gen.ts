@@ -28,21 +28,20 @@ export interface FeatureToggles {
   queryOverLive?: boolean;
   panelTitleSearch?: boolean;
   tempoServiceGraph?: boolean;
-  lokiBackendMode?: boolean;
+  tempoApmTable?: boolean;
   prometheus_azure_auth?: boolean;
   prometheusAzureOverrideAudience?: boolean;
   influxdbBackendMigration?: boolean;
-  newNavigation?: boolean;
   showFeatureFlagsInUI?: boolean;
   publicDashboards?: boolean;
   lokiLive?: boolean;
+  lokiDataframeApi?: boolean;
   swaggerUi?: boolean;
   featureHighlights?: boolean;
   dashboardComments?: boolean;
   annotationComments?: boolean;
   migrationLocking?: boolean;
   storage?: boolean;
-  alertProvisioning?: boolean;
   export?: boolean;
   storageLocalUpload?: boolean;
   azureMonitorResourcePickerForMetrics?: boolean;
@@ -56,6 +55,14 @@ export interface FeatureToggles {
   traceToMetrics?: boolean;
   prometheusStreamingJSONParser?: boolean;
   validateDashboardsOnSave?: boolean;
+  autoMigrateGraphPanels?: boolean;
   prometheusWideSeries?: boolean;
   canvasPanelNesting?: boolean;
+  useLegacyHeatmapPanel?: boolean;
+  cloudMonitoringExperimentalUI?: boolean;
+  logRequestsInstrumentedAsUnknown?: boolean;
+  dataConnectionsConsole?: boolean;
+  internationalization?: boolean;
+  topnav?: boolean;
+  customBranding?: boolean;
 }

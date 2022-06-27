@@ -15,7 +15,7 @@ weight: 800
 # Jaeger data source
 
 Grafana ships with built-in support for Jaeger, which provides open source, end-to-end distributed tracing.
-Just add it as a data source and you are ready to query your traces in [Explore]({{< relref "../explore/_index.md" >}}).
+Just add it as a data source and you are ready to query your traces in [Explore]({{< relref "../explore/" >}}).
 
 ## Add data source
 
@@ -68,7 +68,7 @@ This is a configuration for the beta Node Graph visualization. The Node Graph is
 
 ## Query traces
 
-You can query and display traces from Jaeger via [Explore]({{< relref "../explore/_index.md" >}}).
+You can query and display traces from Jaeger via [Explore]({{< relref "../explore/" >}}).
 
 {{< figure src="/static/img/docs/explore/jaeger-search-form.png" class="docs-image--no-shadow" caption="Screenshot of the Jaeger query editor" >}}
 
@@ -143,7 +143,7 @@ Here is an example JSON:
 
 ## Linking Trace ID from logs
 
-You can link to Jaeger trace from logs in Loki by configuring a derived field with internal link. See the [Derived fields]({{< relref "loki.md#derived-fields" >}}) section in the [Loki data source]({{< relref "loki.md" >}}) documentation for details.
+You can link to Jaeger trace from logs in Loki by configuring a derived field with internal link. See the [Derived fields]({{< relref "loki/#derived-fields" >}}) section in the [Loki data source]({{< relref "loki/" >}}) documentation for details.
 
 ## Configure the data source with provisioning
 

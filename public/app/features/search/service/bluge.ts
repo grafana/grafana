@@ -6,6 +6,8 @@ import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
+import { replaceCurrentFolderQuery } from './utils';
+
 import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery, SearchResultMeta } from '.';
 
 export class BlugeSearcher implements GrafanaSearcher {
@@ -19,13 +21,15 @@ export class BlugeSearcher implements GrafanaSearcher {
   async tags(query: SearchQuery): Promise<TermCount[]> {
     const ds = (await getDataSourceSrv().get('-- Grafana --')) as GrafanaDatasource;
     const target = {
-      ...query,
-      refId: 'A',
+      refId: 'TagsQuery',
       queryType: GrafanaQueryType.Search,
-      query: query.query ?? '*',
-      sort: undefined, // no need to sort the initial query results (not used)
-      facet: [{ field: 'tag' }],
-      limit: 1, // 0 would be better, but is ignored by the backend
+      search: {
+        ...query,
+        query: query.query ?? '*',
+        sort: undefined, // no need to sort the initial query results (not used)
+        facet: [{ field: 'tag' }],
+        limit: 1, // 0 would be better, but is ignored by the backend
+      },
     };
 
     const data = (
@@ -65,13 +69,16 @@ const firstPageSize = 50;
 const nextPageSizes = 100;
 
 async function doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
+  query = await replaceCurrentFolderQuery(query);
   const ds = (await getDataSourceSrv().get('-- Grafana --')) as GrafanaDatasource;
   const target = {
-    ...query,
-    refId: 'A',
+    refId: 'Search',
     queryType: GrafanaQueryType.Search,
-    query: query.query ?? '*',
-    limit: firstPageSize,
+    search: {
+      ...query,
+      query: query.query ?? '*',
+      limit: query.limit ?? firstPageSize,
+    },
   };
   const rsp = await lastValueFrom(
     ds.query({
@@ -124,7 +131,18 @@ async function doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
       const frame = (
         await lastValueFrom(
           ds.query({
-            targets: [{ ...target, refId: 'Page', facet: undefined, from, limit: Math.max(limit, nextPageSizes) }],
+            targets: [
+              {
+                ...target,
+                search: {
+                  ...(target?.search ?? {}),
+                  from,
+                  limit: Math.max(limit, nextPageSizes),
+                },
+                refId: 'Page',
+                facet: undefined,
+              },
+            ],
           } as any)
         )
       ).data?.[0] as DataFrame;

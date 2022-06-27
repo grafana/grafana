@@ -20,6 +20,18 @@ jest.mock('../../components/monaco-query-field/MonacoQueryFieldWrapper', () => {
   };
 });
 
+jest.mock('app/core/store', () => {
+  return {
+    get() {
+      return undefined;
+    },
+    set() {},
+    getObject(key: string, defaultValue: any) {
+      return defaultValue;
+    },
+  };
+});
+
 jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
@@ -87,23 +99,14 @@ describe('PromQueryEditorSelector', () => {
   });
 
   it('Can enable raw query', async () => {
-    const { onChange } = renderWithMode(QueryEditorMode.Builder);
-    expect(screen.queryByLabelText('selector')).not.toBeInTheDocument();
-
+    renderWithMode(QueryEditorMode.Builder);
+    expect(screen.queryByLabelText('selector')).toBeInTheDocument();
     screen.getByLabelText('Raw query').click();
-
-    expect(onChange).toBeCalledWith({
-      refId: 'A',
-      expr: defaultQuery.expr,
-      range: true,
-      editorMode: QueryEditorMode.Builder,
-      rawQuery: true,
-    });
+    expect(screen.queryByLabelText('selector')).not.toBeInTheDocument();
   });
 
-  it('Should show raw query', async () => {
+  it('Should show raw query by default', async () => {
     renderWithProps({
-      rawQuery: true,
       editorMode: QueryEditorMode.Builder,
       expr: 'my_metric',
     });

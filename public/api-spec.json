@@ -77,12 +77,6 @@
         "parameters": [
           {
             "type": "string",
-            "name": "roleUID",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
             "name": "builtinRole",
             "in": "path",
             "required": true
@@ -92,6 +86,12 @@
             "description": "A flag indicating if the assignment is global or not. If set to false, the default org ID of the authenticated user will be used from the request to remove assignment.",
             "name": "global",
             "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "roleUID",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -142,7 +142,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/SetUserRolesCommand"
+              "$ref": "#/definitions/CreateRoleWithPermissionsCommand"
             }
           }
         ],
@@ -195,18 +195,18 @@
         "operationId": "updateRoleWithPermissions",
         "parameters": [
           {
-            "type": "string",
-            "name": "roleUID",
-            "in": "path",
-            "required": true
-          },
-          {
             "name": "body",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/UpdateRoleCommand"
             }
+          },
+          {
+            "type": "string",
+            "name": "roleUID",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -347,19 +347,19 @@
         "operationId": "addTeamRole",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "name": "teamId",
-            "in": "path",
-            "required": true
-          },
-          {
             "name": "body",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/AddTeamRoleCommand"
             }
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "teamId",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -421,7 +421,7 @@
         }
       }
     },
-    "/access-control/users/{user_id}/roles": {
+    "/access-control/users/{userId}/roles": {
       "get": {
         "description": "Lists the roles that have been directly assigned to a given user. The list does not include built-in roles (Viewer, Editor, Admin or Grafana Admin), and it does not include roles that have been inherited from a team.\n\nYou need to have a permission with action `users.roles:list` and scope `users:id:\u003cuser ID\u003e`.",
         "tags": ["access_control", "enterprise"],
@@ -431,7 +431,7 @@
           {
             "type": "integer",
             "format": "int64",
-            "name": "user_id",
+            "name": "userId",
             "in": "path",
             "required": true
           }
@@ -458,9 +458,17 @@
         "operationId": "setUserRoles",
         "parameters": [
           {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/SetUserRolesCommand"
+            }
+          },
+          {
             "type": "integer",
             "format": "int64",
-            "name": "user_id",
+            "name": "userId",
             "in": "path",
             "required": true
           }
@@ -500,7 +508,7 @@
           {
             "type": "integer",
             "format": "int64",
-            "name": "user_id",
+            "name": "userId",
             "in": "path",
             "required": true
           }
@@ -521,7 +529,7 @@
         }
       }
     },
-    "/access-control/users/{user_id}/roles/{roleUID}": {
+    "/access-control/users/{userId}/roles/{roleUID}": {
       "delete": {
         "description": "Revoke a role from a user. For bulk updates consider Set user role assignments.\n\nYou need to have a permission with action `users.roles:remove` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only unassign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to unassign a role which will allow to do that. This is done to prevent escalation of privileges.",
         "tags": ["access_control", "enterprise"],
@@ -529,21 +537,21 @@
         "operationId": "removeUserRole",
         "parameters": [
           {
-            "type": "string",
-            "name": "roleUID",
-            "in": "path",
-            "required": true
-          },
-          {
             "type": "boolean",
             "description": "A flag indicating if the assignment is global or not. If set to false, the default org ID of the authenticated user will be used from the request to remove assignment.",
             "name": "global",
             "in": "query"
           },
           {
+            "type": "string",
+            "name": "roleUID",
+            "in": "path",
+            "required": true
+          },
+          {
             "type": "integer",
             "format": "int64",
-            "name": "user_id",
+            "name": "userId",
             "in": "path",
             "required": true
           }
@@ -1334,19 +1342,19 @@
             "required": true
           },
           {
+            "type": "integer",
+            "format": "int64",
+            "name": "user_id",
+            "in": "path",
+            "required": true
+          },
+          {
             "name": "body",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/UpdateUserQuotaCmd"
             }
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "user_id",
-            "in": "path",
-            "required": true
           }
         ],
         "responses": {
@@ -1569,14 +1577,8 @@
         "description": "Updates an existing notification channel identified by uid.",
         "tags": ["legacy_alerts_notification_channels"],
         "summary": "Update notification channel by UID.",
-        "operationId": "updateAlertNotificationChannelBYUID",
+        "operationId": "updateAlertNotificationChannelByUID",
         "parameters": [
-          {
-            "type": "string",
-            "name": "notification_channel_uid",
-            "in": "path",
-            "required": true
-          },
           {
             "name": "body",
             "in": "body",
@@ -1584,6 +1586,12 @@
             "schema": {
               "$ref": "#/definitions/UpdateAlertNotificationWithUidCommand"
             }
+          },
+          {
+            "type": "string",
+            "name": "notification_channel_uid",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -1676,19 +1684,19 @@
         "operationId": "updateAlertNotificationChannel",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "name": "notification_channel_id",
-            "in": "path",
-            "required": true
-          },
-          {
             "name": "body",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/UpdateAlertNotificationCommand"
             }
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "notification_channel_id",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -2947,18 +2955,18 @@
         "operationId": "postDashboardPermissionsWithUid",
         "parameters": [
           {
-            "type": "string",
-            "name": "uid",
-            "in": "path",
-            "required": true
-          },
-          {
             "name": "Body",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/UpdateDashboardAclCommand"
             }
+          },
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -3268,13 +3276,13 @@
         "parameters": [
           {
             "type": "string",
-            "name": "uid",
+            "name": "datasource_proxy_route",
             "in": "path",
             "required": true
           },
           {
             "type": "string",
-            "name": "datasource_proxy_route",
+            "name": "uid",
             "in": "path",
             "required": true
           }
@@ -3307,14 +3315,22 @@
         "operationId": "datasourceProxyPOSTByUIDcalls",
         "parameters": [
           {
+            "name": "DatasourceProxyParam",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object"
+            }
+          },
+          {
             "type": "string",
-            "name": "uid",
+            "name": "datasource_proxy_route",
             "in": "path",
             "required": true
           },
           {
             "type": "string",
-            "name": "datasource_proxy_route",
+            "name": "uid",
             "in": "path",
             "required": true
           }
@@ -3394,13 +3410,13 @@
         "parameters": [
           {
             "type": "string",
-            "name": "id",
+            "name": "datasource_proxy_route",
             "in": "path",
             "required": true
           },
           {
             "type": "string",
-            "name": "datasource_proxy_route",
+            "name": "id",
             "in": "path",
             "required": true
           }
@@ -3434,10 +3450,12 @@
         "deprecated": true,
         "parameters": [
           {
-            "type": "string",
-            "name": "id",
-            "in": "path",
-            "required": true
+            "name": "DatasourceProxyParam",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object"
+            }
           },
           {
             "type": "string",
@@ -3446,12 +3464,10 @@
             "required": true
           },
           {
-            "name": "DatasourceProxyParam",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "type": "object"
-            }
+            "type": "string",
+            "name": "id",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -3562,18 +3578,18 @@
         "operationId": "updateDatasourceByUID",
         "parameters": [
           {
-            "type": "string",
-            "name": "uid",
-            "in": "path",
-            "required": true
-          },
-          {
             "name": "Body",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/UpdateDataSourceCommand"
             }
+          },
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -3884,18 +3900,18 @@
         "deprecated": true,
         "parameters": [
           {
-            "type": "string",
-            "name": "id",
-            "in": "path",
-            "required": true
-          },
-          {
             "name": "Body",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/UpdateDataSourceCommand"
             }
+          },
+          {
+            "type": "string",
+            "name": "id",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -4325,18 +4341,18 @@
         "operationId": "updateFolderPermissions",
         "parameters": [
           {
+            "type": "string",
+            "name": "folder_uid",
+            "in": "path",
+            "required": true
+          },
+          {
             "name": "Body",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/UpdateDashboardAclCommand"
             }
-          },
-          {
-            "type": "string",
-            "name": "folder_uid",
-            "in": "path",
-            "required": true
           }
         ],
         "responses": {
@@ -4570,18 +4586,18 @@
         "operationId": "updateLibraryElement",
         "parameters": [
           {
-            "type": "string",
-            "name": "library_element_uid",
-            "in": "path",
-            "required": true
-          },
-          {
             "name": "body",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/PatchLibraryElementCommand"
             }
+          },
+          {
+            "type": "string",
+            "name": "library_element_uid",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -5589,6 +5605,14 @@
         "operationId": "updateOrgQuota",
         "parameters": [
           {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateOrgQuotaCmd"
+            }
+          },
+          {
             "type": "string",
             "name": "quota_target",
             "in": "path",
@@ -5600,14 +5624,6 @@
             "name": "org_id",
             "in": "path",
             "required": true
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/UpdateOrgQuotaCmd"
-            }
           }
         ],
         "responses": {
@@ -5783,6 +5799,262 @@
           },
           "403": {
             "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/query-history": {
+      "get": {
+        "description": "Returns a list of queries in the query history that matches the search criteria.\nQuery history search supports pagination. Use the `limit` parameter to control the maximum number of queries returned; the default limit is 100.\nYou can also use the `page` query parameter to fetch queries from any page other than the first one.",
+        "tags": ["query_history"],
+        "summary": "Query history search.",
+        "operationId": "searchQueries",
+        "parameters": [
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "List of data source UIDs to search for",
+            "name": "datasourceUid",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Text inside query or comments that is searched for",
+            "name": "searchString",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "description": "Flag indicating if only starred queries should be returned",
+            "name": "onlyStarred",
+            "in": "query"
+          },
+          {
+            "enum": ["time-desc", "time-asc"],
+            "type": "string",
+            "default": "time-desc",
+            "description": "Sort method",
+            "name": "sort",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "Use this parameter to access hits beyond limit. Numbering starts at 1. limit param acts as page size.",
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "Limit the number of returned results",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "From range for the query history search",
+            "name": "from",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "To range for the query history search",
+            "name": "to",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getQueryHistorySearchResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "description": "Adds new query to query history.",
+        "tags": ["query_history"],
+        "summary": "Add query to query history.",
+        "operationId": "createQuery",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreateQueryInQueryHistoryCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getQueryHistoryResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/query-history/migrate": {
+      "post": {
+        "description": "Adds multiple queries to query history.",
+        "tags": ["query_history"],
+        "summary": "Migrate queries to query history.",
+        "operationId": "migrateQueries",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/MigrateQueriesToQueryHistoryCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getQueryHistoryMigrationResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/query-history/star/{query_history_uid}": {
+      "post": {
+        "description": "Adds star to query in query history as specified by the UID.",
+        "tags": ["query_history"],
+        "summary": "Add star to query in query history.",
+        "operationId": "starQuery",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "query_history_uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getQueryHistoryResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "delete": {
+        "description": "Removes star from query in query history as specified by the UID.",
+        "tags": ["query_history"],
+        "summary": "Remove star to query in query history.",
+        "operationId": "unstarQuery",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "query_history_uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getQueryHistoryResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/query-history/{query_history_uid}": {
+      "delete": {
+        "description": "Deletes an existing query in query history as specified by the UID. This operation cannot be reverted.",
+        "tags": ["query_history"],
+        "summary": "Delete query in query history.",
+        "operationId": "deleteQuery",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "query_history_uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getQueryHistoryDeleteQueryResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "patch": {
+        "description": "Updates comment for query in query history as specified by the UID.",
+        "tags": ["query_history"],
+        "summary": "Update comment for query in query history.",
+        "operationId": "patchQueryComment",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "query_history_uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/PatchQueryCommentInQueryHistoryCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getQueryHistoryResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
           },
           "500": {
             "$ref": "#/responses/internalServerError"
@@ -6317,19 +6589,19 @@
         "operationId": "updateReport",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "name": "reportID",
-            "in": "path",
-            "required": true
-          },
-          {
             "name": "body",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/CreateOrUpdateConfigCmd"
             }
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "reportID",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -6879,14 +7151,14 @@
           {
             "type": "integer",
             "format": "int64",
-            "name": "groupId",
+            "name": "teamId",
             "in": "path",
             "required": true
           },
           {
             "type": "integer",
             "format": "int64",
-            "name": "teamId",
+            "name": "groupId",
             "in": "path",
             "required": true
           }
@@ -6950,18 +7222,18 @@
         "operationId": "updateTeam",
         "parameters": [
           {
-            "type": "string",
-            "name": "team_id",
-            "in": "path",
-            "required": true
-          },
-          {
             "name": "body",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/UpdateTeamCommand"
             }
+          },
+          {
+            "type": "string",
+            "name": "team_id",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -7053,6 +7325,14 @@
         "operationId": "addTeamMember",
         "parameters": [
           {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/AddTeamMemberCommand"
+            }
+          },
+          {
             "type": "string",
             "name": "team_id",
             "in": "path",
@@ -7085,18 +7365,18 @@
         "operationId": "updateTeamMember",
         "parameters": [
           {
-            "type": "string",
-            "name": "team_id",
-            "in": "path",
-            "required": true
-          },
-          {
             "name": "body",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/UpdateTeamMemberCommand"
             }
+          },
+          {
+            "type": "string",
+            "name": "team_id",
+            "in": "path",
+            "required": true
           },
           {
             "type": "integer",
@@ -7523,7 +7803,7 @@
         "description": "Revokes the given auth token (device) for the actual user. User of issued auth token (device) will no longer be logged in and will be required to authenticate again upon next activity.",
         "tags": ["signed_in_user"],
         "summary": "Revoke an auth token of the actual User.",
-        "operationId": "revokeSignedINAuthTokenCmd",
+        "operationId": "revokeSignedInAuthToken",
         "parameters": [
           {
             "name": "body",
@@ -7809,13 +8089,6 @@
         "operationId": "updateUser",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "name": "user_id",
-            "in": "path",
-            "required": true
-          },
-          {
             "description": "To change the email, name, login, theme, provide another one.",
             "name": "body",
             "in": "body",
@@ -7823,6 +8096,13 @@
             "schema": {
               "$ref": "#/definitions/UpdateUserCommand"
             }
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "user_id",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -7993,9 +8273,6 @@
         "basicAuth": {
           "type": "boolean"
         },
-        "basicAuthPassword": {
-          "type": "string"
-        },
         "basicAuthUser": {
           "type": "string"
         },
@@ -8009,9 +8286,6 @@
           "$ref": "#/definitions/Json"
         },
         "name": {
-          "type": "string"
-        },
-        "password": {
           "type": "string"
         },
         "secureJsonData": {
@@ -8706,7 +8980,7 @@
           "$ref": "#/definitions/ScheduleDTO"
         },
         "state": {
-          "type": "string"
+          "$ref": "#/definitions/State"
         },
         "templateVars": {
           "type": "object"
@@ -8893,6 +9167,21 @@
       "properties": {
         "name": {
           "type": "string"
+        }
+      }
+    },
+    "CreateQueryInQueryHistoryCommand": {
+      "description": "CreateQueryInQueryHistoryCommand is the command for adding query history",
+      "type": "object",
+      "required": ["queries"],
+      "properties": {
+        "datasourceUid": {
+          "description": "UID of the data source for which are queries stored.",
+          "type": "string",
+          "example": "PE1C5CBDA0504A6A3"
+        },
+        "queries": {
+          "$ref": "#/definitions/Json"
         }
       }
     },
@@ -9161,9 +9450,6 @@
         "isHome": {
           "type": "boolean"
         },
-        "isPublic": {
-          "type": "boolean"
-        },
         "isSnapshot": {
           "type": "boolean"
         },
@@ -9174,6 +9460,9 @@
           "type": "boolean"
         },
         "provisionedExternalId": {
+          "type": "string"
+        },
+        "publicDashboardAccessToken": {
           "type": "string"
         },
         "slug": {
@@ -9334,7 +9623,6 @@
       }
     },
     "DashboardVersionDTO": {
-      "description": "DashboardVersionDTO represents a dashboard version, without the dashboard\nmap.",
       "type": "object",
       "properties": {
         "created": {
@@ -9430,7 +9718,7 @@
       }
     },
     "DataResponse": {
-      "description": "A map of RefIDs (unique query identifers) to this type makes up the Responses property of a QueryDataResponse.\nThe Error property is used to allow for partial success responses from the containing QueryDataResponse.",
+      "description": "A map of RefIDs (unique query identifiers) to this type makes up the Responses property of a QueryDataResponse.\nThe Error property is used to allow for partial success responses from the containing QueryDataResponse.",
       "type": "object",
       "title": "DataResponse contains the results from a DataQuery.",
       "properties": {
@@ -9455,9 +9743,6 @@
         "basicAuth": {
           "type": "boolean"
         },
-        "basicAuthPassword": {
-          "type": "string"
-        },
         "basicAuthUser": {
           "type": "string"
         },
@@ -9480,9 +9765,6 @@
         "orgId": {
           "type": "integer",
           "format": "int64"
-        },
-        "password": {
-          "type": "string"
         },
         "readOnly": {
           "type": "boolean"
@@ -9551,9 +9833,6 @@
         "orgId": {
           "type": "integer",
           "format": "int64"
-        },
-        "password": {
-          "type": "string"
         },
         "readOnly": {
           "type": "boolean"
@@ -9772,6 +10051,9 @@
     "Folder": {
       "type": "object",
       "properties": {
+        "accessControl": {
+          "$ref": "#/definitions/Metadata"
+        },
         "canAdmin": {
           "type": "boolean"
         },
@@ -9823,6 +10105,9 @@
     "FolderSearchHit": {
       "type": "object",
       "properties": {
+        "accessControl": {
+          "$ref": "#/definitions/Metadata"
+        },
         "id": {
           "type": "integer",
           "format": "int64"
@@ -9889,7 +10174,7 @@
           "type": "string"
         },
         "pathSeparator": {
-          "description": "PathSeparator defines the separator pattern to decode a hiearchy. The default separator is '/'.",
+          "description": "PathSeparator defines the separator pattern to decode a hierarchy. The default separator is '/'.",
           "type": "string"
         },
         "preferredVisualisationType": {
@@ -10448,6 +10733,19 @@
         }
       }
     },
+    "MigrateQueriesToQueryHistoryCommand": {
+      "description": "MigrateQueriesToQueryHistoryCommand is the command used for migration of old queries into query history",
+      "type": "object",
+      "properties": {
+        "queries": {
+          "description": "Array of queries to store in query history.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/QueryToMigrate"
+          }
+        }
+      }
+    },
     "NavLink": {
       "type": "object",
       "properties": {
@@ -10692,6 +10990,9 @@
         "homeDashboardUID": {
           "type": "string"
         },
+        "locale": {
+          "type": "string"
+        },
         "navbar": {
           "$ref": "#/definitions/NavbarPreference"
         },
@@ -10707,6 +11008,16 @@
           "enum": ["utc", "browser"]
         },
         "weekStart": {
+          "type": "string"
+        }
+      }
+    },
+    "PatchQueryCommentInQueryHistoryCommand": {
+      "description": "PatchQueryCommentInQueryHistoryCommand is the command for updating comment for query in query history",
+      "type": "object",
+      "properties": {
+        "comment": {
+          "description": "Updated comment",
           "type": "string"
         }
       }
@@ -10819,6 +11130,9 @@
         "homeDashboardUID": {
           "type": "string"
         },
+        "locale": {
+          "type": "string"
+        },
         "navbar": {
           "$ref": "#/definitions/NavbarPreference"
         },
@@ -10860,11 +11174,108 @@
         }
       }
     },
+    "QueryHistoryDTO": {
+      "type": "object",
+      "properties": {
+        "comment": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "createdBy": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "datasourceUid": {
+          "type": "string"
+        },
+        "queries": {
+          "$ref": "#/definitions/Json"
+        },
+        "starred": {
+          "type": "boolean"
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
+    },
+    "QueryHistoryDeleteQueryResponse": {
+      "description": "QueryHistoryDeleteQueryResponse is the response struct for deleting a query from query history",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "QueryHistoryMigrationResponse": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "starredCount": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "totalCount": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "QueryHistoryPreference": {
       "type": "object",
       "properties": {
         "homeTab": {
           "type": "string"
+        }
+      }
+    },
+    "QueryHistoryResponse": {
+      "description": "QueryHistoryResponse is a response struct for QueryHistoryDTO",
+      "type": "object",
+      "properties": {
+        "result": {
+          "$ref": "#/definitions/QueryHistoryDTO"
+        }
+      }
+    },
+    "QueryHistorySearchResponse": {
+      "type": "object",
+      "properties": {
+        "result": {
+          "$ref": "#/definitions/QueryHistorySearchResult"
+        }
+      }
+    },
+    "QueryHistorySearchResult": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "perPage": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "queryHistory": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/QueryHistoryDTO"
+          }
+        },
+        "totalCount": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -10949,6 +11360,27 @@
         },
         "writeable": {
           "description": "Writeable indicates that the datasource knows how to update this value",
+          "type": "boolean"
+        }
+      }
+    },
+    "QueryToMigrate": {
+      "type": "object",
+      "properties": {
+        "comment": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "datasourceUid": {
+          "type": "string"
+        },
+        "queries": {
+          "$ref": "#/definitions/Json"
+        },
+        "starred": {
           "type": "boolean"
         }
       }
@@ -11271,6 +11703,9 @@
           "format": "int64"
         }
       }
+    },
+    "State": {
+      "type": "string"
     },
     "Status": {
       "type": "object",
@@ -11772,9 +12207,6 @@
         "basicAuth": {
           "type": "boolean"
         },
-        "basicAuthPassword": {
-          "type": "string"
-        },
         "basicAuthUser": {
           "type": "string"
         },
@@ -11788,9 +12220,6 @@
           "$ref": "#/definitions/Json"
         },
         "name": {
-          "type": "string"
-        },
-        "password": {
           "type": "string"
         },
         "secureJsonData": {
@@ -11900,6 +12329,9 @@
           "default": 0
         },
         "homeDashboardUID": {
+          "type": "string"
+        },
+        "locale": {
           "type": "string"
         },
         "navbar": {
@@ -12778,6 +13210,30 @@
         "$ref": "#/definitions/Prefs"
       }
     },
+    "getQueryHistoryDeleteQueryResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/QueryHistoryDeleteQueryResponse"
+      }
+    },
+    "getQueryHistoryMigrationResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/QueryHistoryMigrationResponse"
+      }
+    },
+    "getQueryHistoryResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/QueryHistoryResponse"
+      }
+    },
+    "getQueryHistorySearchResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/QueryHistorySearchResponse"
+      }
+    },
     "getQuotaResponse": {
       "description": "",
       "schema": {
@@ -13223,6 +13679,10 @@
     {
       "description": "The identifier (ID) of a library element is an auto-incrementing numeric value that is unique per Grafana install.\nThe unique identifier (UID) of a library element uniquely identifies library elements between multiple Grafana installs. It’s automatically generated unless you specify it during library element creation. The UID provides consistent URLs for accessing library elements and when syncing library elements between multiple Grafana installs.\nThe maximum length of a UID is 40 characters.",
       "name": "library_elements"
+    },
+    {
+      "description": "The identifier (ID) of a query in query history is an auto-incrementing numeric value that is unique per Grafana install.\nThe unique identifier (UID) of a query history uniquely identifies queries in query history between multiple Grafana installs. It’s automatically generated. The UID provides consistent URLs for accessing queries in query history.",
+      "name": "query_history"
     },
     {
       "description": "The Admin Organizations HTTP API does not currently work with an API Token. API Tokens are currently only linked to an organization and an organization role. They cannot be given the permission of server admin, only users can be given that permission. So in order to use these API calls you will have to use Basic Auth and the Grafana user must have the Grafana Admin permission (The default admin user is called `admin` and has permission to use this API).",
