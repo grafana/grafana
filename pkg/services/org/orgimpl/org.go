@@ -72,3 +72,7 @@ func (s *Service) GetIDForNewUser(ctx context.Context, cmd org.GetOrgIDForNewUse
 
 	return s.store.Insert(ctx, &orga)
 }
+
+func (s *Service) InsertUser(ctx context.Context, orguser *org.OrgUser) (int64, error) {
+	return s.store.InsertUser(ctx, orguser)
+}

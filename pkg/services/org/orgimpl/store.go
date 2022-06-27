@@ -15,6 +15,7 @@ const MainOrgName = "Main Org."
 type store interface {
 	Get(context.Context, int64) (*org.Org, error)
 	Insert(context.Context, *org.Org) (int64, error)
+	InsertUser(context.Context, *org.OrgUser) (int64, error)
 }
 
 type sqlStore struct {
@@ -58,6 +59,21 @@ func (ss *sqlStore) Insert(ctx context.Context, org *org.Org) (int64, error) {
 			Id:        org.ID,
 			Name:      org.Name,
 		})
+		return nil
+	})
+	if err != nil {
+		return 0, err
+	}
+	return orgID, nil
+}
+
+func (ss *sqlStore) InsertUser(ctx context.Context, cmd *org.OrgUser) (int64, error) {
+	var orgID int64
+	var err error
+	err = ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		if orgID, err = sess.Insert(cmd); err != nil {
+			return err
+		}
 		return nil
 	})
 	if err != nil {

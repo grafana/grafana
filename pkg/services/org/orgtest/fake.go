@@ -18,3 +18,7 @@ func NewOrgServiceFake() *FakeOrgService {
 func (f *FakeOrgService) GetIDForNewUser(ctx context.Context, cmd org.GetOrgIDForNewUserCommand) (int64, error) {
 	return f.ExpectedOrgUserID, f.ExpectedError
 }
+
+func (f *FakeOrgService) Insert(ctx context.Context, cmd *org.OrgUser) (int64, error) {
+	return f.ExpectedOrgUserID, f.ExpectedError
+}

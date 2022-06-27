@@ -49,9 +49,10 @@ func TestOrgService(t *testing.T) {
 }
 
 type FakeOrgStore struct {
-	ExpectedOrg   *org.Org
-	ExpectedOrgID int64
-	ExpectedError error
+	ExpectedOrg    *org.Org
+	ExpectedOrgID  int64
+	ExpectedUserID int64
+	ExpectedError  error
 }
 
 func newOrgStoreFake() *FakeOrgStore {
@@ -64,4 +65,8 @@ func (f *FakeOrgStore) Get(ctx context.Context, orgID int64) (*org.Org, error) {
 
 func (f *FakeOrgStore) Insert(ctx context.Context, org *org.Org) (int64, error) {
 	return f.ExpectedOrgID, f.ExpectedError
+}
+
+func (f *FakeOrgStore) InsertUser(ctx context.Context, org *org.OrgUser) (int64, error) {
+	return f.ExpectedUserID, f.ExpectedError
 }
