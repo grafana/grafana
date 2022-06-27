@@ -6,7 +6,7 @@ import React from 'react';
 import { PanelData, LoadingState, DataFrame, CoreApp } from '@grafana/data';
 
 import { PrometheusDatasource } from '../datasource';
-import PromQlLanguageProvider from '../language_provider';
+import PromQlLanguageProvider from '../languageProvider';
 
 import PromQueryField from './PromQueryField';
 

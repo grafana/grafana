@@ -5,7 +5,7 @@ import { act } from 'react-dom/test-utils';
 import { ExploreMode, LoadingState, PanelData, toUtc, TimeRange } from '@grafana/data';
 
 import { LokiDatasource } from '../datasource';
-import LokiLanguageProvider from '../language_provider';
+import LokiLanguageProvider from '../languageProvider';
 import { makeMockLokiDatasource } from '../mocks';
 import { LokiQuery } from '../types';
 

@@ -4,8 +4,8 @@ import { cloneDeep, defaultsDeep } from 'lodash';
 import React from 'react';
 
 import { PrometheusDatasource } from '../../datasource';
-import PromQlLanguageProvider from '../../language_provider';
-import { EmptyLanguageProviderMock } from '../../language_provider.mock';
+import PromQlLanguageProvider from '../../languageProvider';
+import { EmptyLanguageProviderMock } from '../../languageProvider.mock';
 import { PromQuery } from '../../types';
 import { QueryEditorMode } from '../shared/types';
 

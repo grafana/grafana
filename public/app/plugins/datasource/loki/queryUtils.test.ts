@@ -1,4 +1,4 @@
-import { getHighlighterExpressionsFromQuery, getNormalizedLokiQuery } from './query_utils';
+import { getHighlighterExpressionsFromQuery, getNormalizedLokiQuery } from './queryUtils';
 import { LokiQuery, LokiQueryType } from './types';
 
 describe('getHighlighterExpressionsFromQuery', () => {

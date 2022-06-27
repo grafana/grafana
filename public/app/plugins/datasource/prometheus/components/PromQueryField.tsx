@@ -20,7 +20,7 @@ import {
 } from 'app/core/utils/CancelablePromise';
 
 import { PrometheusDatasource } from '../datasource';
-import { roundMsToMin } from '../language_utils';
+import { roundMsToMin } from '../languageUtils';
 import { PromQuery, PromOptions } from '../types';
 
 import { PrometheusMetricsBrowser } from './PrometheusMetricsBrowser';

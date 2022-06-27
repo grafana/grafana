@@ -1,4 +1,4 @@
-import { escapeLabelValueInExactSelector } from '../../../language_utils';
+import { escapeLabelValueInExactSelector } from '../../../languageUtils';
 import { FUNCTIONS } from '../../../promql';
 
 import type { Situation, Label } from './situation';

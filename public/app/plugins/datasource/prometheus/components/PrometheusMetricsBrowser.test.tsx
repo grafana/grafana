@@ -4,7 +4,7 @@ import React from 'react';
 
 import { getTheme } from '@grafana/ui';
 
-import PromQlLanguageProvider from '../language_provider';
+import PromQlLanguageProvider from '../languageProvider';
 
 import {
   buildSelector,

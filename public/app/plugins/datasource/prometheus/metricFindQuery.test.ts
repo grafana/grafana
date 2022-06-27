@@ -6,7 +6,7 @@ import { FetchResponse } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 
 import { PrometheusDatasource } from './datasource';
-import PrometheusMetricFindQuery from './metric_find_query';
+import PrometheusMetricFindQuery from './metricFindQuery';
 import { PromOptions } from './types';
 
 jest.mock('@grafana/runtime', () => ({

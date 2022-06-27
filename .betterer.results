@@ -107,7 +107,7 @@ exports[`no enzyme tests`] = {
     "public/app/plugins/datasource/influxdb/components/ConfigEditor.test.tsx:57753101": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/plugins/datasource/loki/components/LokiExploreQueryEditor.test.tsx:1488067923": [
+    "public/app/plugins/datasource/loki/components/LokiExploreQueryEditor.test.tsx:2766872204": [
       [0, 26, 13, "RegExp match", "2409514259"]
     ],
     "public/app/plugins/datasource/loki/components/LokiQueryEditor.test.tsx:146069464": [
@@ -7070,7 +7070,7 @@ exports[`better eslint`] = {
     "public/app/features/transformers/calculateHeatmap/editor/helper.ts:2898656130": [
       [10, 37, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/transformers/calculateHeatmap/heatmap.ts:2895010613": [
+    "public/app/features/transformers/calculateHeatmap/heatmap.ts:1350621834": [
       [65, 9, 52, "Do not use any type assertions.", "3480700880"],
       [306, 63, 29, "Do not use any type assertions.", "255738422"],
       [306, 89, 3, "Unexpected any. Specify a different type.", "193409811"]
@@ -9196,16 +9196,16 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/jaeger/util.ts:1878021635": [
       [6, 14, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/loki/components/LokiExploreQueryEditor.test.tsx:1488067923": [
+    "public/app/plugins/datasource/loki/components/LokiExploreQueryEditor.test.tsx:2766872204": [
       [14, 29, 3, "Unexpected any. Specify a different type.", "193409811"],
       [60, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
       [63, 15, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/loki/components/LokiLabelBrowser.test.tsx:2061687302": [
+    "public/app/plugins/datasource/loki/components/LokiLabelBrowser.test.tsx:2318223129": [
       [118, 24, 55, "Do not use any type assertions.", "56609734"],
       [118, 24, 31, "Do not use any type assertions.", "590524422"]
     ],
-    "public/app/plugins/datasource/loki/components/LokiLabelBrowser.tsx:1737806516": [
+    "public/app/plugins/datasource/loki/components/LokiLabelBrowser.tsx:1800598699": [
       [181, 12, 23, "Do not use any type assertions.", "18217491"],
       [488, 35, 33, "Do not use any type assertions.", "1081481793"]
     ],
@@ -9226,7 +9226,7 @@ exports[`better eslint`] = {
       [17, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
       [19, 7, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/loki/components/LokiQueryField.tsx:3526508846": [
+    "public/app/plugins/datasource/loki/components/LokiQueryField.tsx:2645017038": [
       [100, 14, 29, "Do not use any type assertions.", "115491437"],
       [168, 33, 51, "Do not use any type assertions.", "2001608277"],
       [189, 33, 51, "Do not use any type assertions.", "2001608277"]
@@ -9313,7 +9313,7 @@ exports[`better eslint`] = {
       [868, 15, 27, "Do not use any type assertions.", "2478144973"],
       [870, 9, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/loki/datasource.ts:1935613834": [
+    "public/app/plugins/datasource/loki/datasource.ts:2941749717": [
       [219, 23, 3, "Unexpected any. Specify a different type.", "193409811"],
       [355, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
       [359, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -9327,7 +9327,7 @@ exports[`better eslint`] = {
       [37, 87, 3, "Unexpected any. Specify a different type.", "193409811"],
       [65, 5, 16, "Do not use any type assertions.", "2916460327"]
     ],
-    "public/app/plugins/datasource/loki/language_provider.test.ts:1057594308": [
+    "public/app/plugins/datasource/loki/languageProvider.test.ts:1956841211": [
       [107, 41, 244, "Do not use any type assertions.", "3324956309"],
       [107, 41, 226, "Do not use any type assertions.", "2543026667"],
       [108, 48, 11, "Do not use any type assertions.", "1435517025"],
@@ -9336,12 +9336,12 @@ exports[`better eslint`] = {
       [266, 37, 27, "Do not use any type assertions.", "3942339387"],
       [266, 61, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/loki/language_provider.ts:3407323642": [
+    "public/app/plugins/datasource/loki/languageProvider.ts:2259866053": [
       [79, 58, 3, "Unexpected any. Specify a different type.", "193409811"],
       [96, 41, 3, "Unexpected any. Specify a different type.", "193409811"],
       [96, 55, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/loki/live_streams.test.ts:2871358043": [
+    "public/app/plugins/datasource/loki/liveStreams.test.ts:3947608708": [
       [10, 24, 3, "Unexpected any. Specify a different type.", "193409811"],
       [34, 29, 3, "Unexpected any. Specify a different type.", "193409811"],
       [74, 29, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -9355,10 +9355,10 @@ exports[`better eslint`] = {
       [141, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
       [142, 59, 53, "Do not use any type assertions.", "3541955280"]
     ],
-    "public/app/plugins/datasource/loki/live_streams.ts:821043317": [
+    "public/app/plugins/datasource/loki/liveStreams.ts:1896051402": [
       [47, 38, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/loki/live_streams_result_transformer.ts:3295122507": [
+    "public/app/plugins/datasource/loki/liveStreamsResultTransformer.ts:3295122507": [
       [62, 77, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/plugins/datasource/loki/mocks.ts:2085354163": [
@@ -9374,7 +9374,7 @@ exports[`better eslint`] = {
       [43, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
       [44, 9, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/loki/querybuilder/components/LokiQueryBuilder.tsx:1944597108": [
+    "public/app/plugins/datasource/loki/querybuilder/components/LokiQueryBuilder.tsx:2136053163": [
       [34, 86, 3, "Unexpected any. Specify a different type.", "193409811"],
       [98, 22, 27, "Do not use any type assertions.", "2133479311"]
     ],
@@ -9924,7 +9924,7 @@ exports[`better eslint`] = {
       [40, 21, 342, "Do not use any type assertions.", "3967834366"],
       [40, 21, 318, "Do not use any type assertions.", "1899122267"]
     ],
-    "public/app/plugins/datasource/prometheus/components/PromQueryField.test.tsx:100935429": [
+    "public/app/plugins/datasource/prometheus/components/PromQueryField.test.tsx:2023999546": [
       [16, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
       [25, 14, 212, "Do not use any type assertions.", "838981829"],
       [25, 14, 188, "Do not use any type assertions.", "2148223584"],
@@ -9938,18 +9938,18 @@ exports[`better eslint`] = {
       [156, 28, 3, "Unexpected any. Specify a different type.", "193409811"],
       [165, 7, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/prometheus/components/PromQueryField.tsx:3960112145": [
+    "public/app/plugins/datasource/prometheus/components/PromQueryField.tsx:3325799086": [
       [87, 67, 3, "Unexpected any. Specify a different type.", "193409811"],
       [89, 65, 3, "Unexpected any. Specify a different type.", "193409811"],
       [96, 25, 3, "Unexpected any. Specify a different type.", "193409811"],
       [97, 28, 3, "Unexpected any. Specify a different type.", "193409811"],
       [99, 14, 29, "Do not use any type assertions.", "115491437"]
     ],
-    "public/app/plugins/datasource/prometheus/components/PrometheusMetricsBrowser.test.tsx:545523800": [
+    "public/app/plugins/datasource/prometheus/components/PrometheusMetricsBrowser.test.tsx:2608662471": [
       [136, 24, 57, "Do not use any type assertions.", "1107201626"],
       [136, 24, 31, "Do not use any type assertions.", "590524422"]
     ],
-    "public/app/plugins/datasource/prometheus/components/PrometheusMetricsBrowser.tsx:726044907": [
+    "public/app/plugins/datasource/prometheus/components/PrometheusMetricsBrowser.tsx:1033331403": [
       [192, 12, 23, "Do not use any type assertions.", "18217491"],
       [500, 35, 36, "Do not use any type assertions.", "1841380465"],
       [589, 39, 33, "Do not use any type assertions.", "1081481793"]
@@ -9991,7 +9991,7 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/prometheus/configuration/PromSettings.tsx:426080943": [
       [160, 10, 36, "Do not use any type assertions.", "2983800720"]
     ],
-    "public/app/plugins/datasource/prometheus/datasource.test.ts:1436458137": [
+    "public/app/plugins/datasource/prometheus/datasource.test.ts:2983362841": [
       [39, 33, 11, "Do not use any type assertions.", "1435517025"],
       [39, 39, 3, "Unexpected any. Specify a different type.", "193409811"],
       [40, 40, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -10203,7 +10203,7 @@ exports[`better eslint`] = {
       [2213, 36, 3, "Unexpected any. Specify a different type.", "193409811"],
       [2233, 9, 71, "Do not use any type assertions.", "282262522"]
     ],
-    "public/app/plugins/datasource/prometheus/datasource.tsx:2454771469": [
+    "public/app/plugins/datasource/prometheus/datasource.tsx:1808337389": [
       [79, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
       [80, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
       [88, 25, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -10242,7 +10242,7 @@ exports[`better eslint`] = {
       [1178, 47, 3, "Unexpected any. Specify a different type.", "193409811"],
       [1182, 52, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/prometheus/language_provider.test.ts:1970826648": [
+    "public/app/plugins/datasource/prometheus/languageProvider.test.ts:311750279": [
       [11, 43, 207, "Do not use any type assertions.", "100349463"],
       [11, 43, 183, "Do not use any type assertions.", "144249394"],
       [12, 44, 11, "Do not use any type assertions.", "1435517025"],
@@ -10296,7 +10296,7 @@ exports[`better eslint`] = {
       [632, 56, 26, "Do not use any type assertions.", "900749337"],
       [636, 11, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/prometheus/language_provider.ts:1179388110": [
+    "public/app/plugins/datasource/prometheus/languageProvider.ts:2162545361": [
       [43, 66, 3, "Unexpected any. Specify a different type.", "193409811"],
       [88, 29, 3, "Unexpected any. Specify a different type.", "193409811"],
       [122, 46, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -10305,7 +10305,7 @@ exports[`better eslint`] = {
       [554, 54, 3, "Unexpected any. Specify a different type.", "193409811"],
       [558, 23, 22, "Do not use any type assertions.", "326162577"]
     ],
-    "public/app/plugins/datasource/prometheus/language_utils.ts:3405383743": [
+    "public/app/plugins/datasource/prometheus/languageUtils.ts:3472455871": [
       [57, 77, 3, "Unexpected any. Specify a different type.", "193409811"],
       [237, 36, 3, "Unexpected any. Specify a different type.", "193409811"],
       [272, 61, 70, "Do not use any type assertions.", "1374617983"],
@@ -10317,7 +10317,7 @@ exports[`better eslint`] = {
       [327, 27, 45, "Do not use any type assertions.", "881765776"],
       [330, 29, 45, "Do not use any type assertions.", "881765776"]
     ],
-    "public/app/plugins/datasource/prometheus/metric_find_query.test.ts:142842024": [
+    "public/app/plugins/datasource/prometheus/metricFindQuery.test.ts:3752966760": [
       [12, 6, 59, "Do not use any type assertions.", "3685154675"],
       [12, 6, 49, "Do not use any type assertions.", "1184085652"],
       [18, 25, 178, "Do not use any type assertions.", "2743844758"],
@@ -10334,7 +10334,7 @@ exports[`better eslint`] = {
       [216, 21, 3, "Unexpected any. Specify a different type.", "193409811"],
       [240, 21, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/prometheus/metric_find_query.ts:3246701167": [
+    "public/app/plugins/datasource/prometheus/metricFindQuery.ts:3246701167": [
       [62, 70, 3, "Unexpected any. Specify a different type.", "193409811"],
       [83, 72, 3, "Unexpected any. Specify a different type.", "193409811"],
       [96, 72, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -10342,10 +10342,10 @@ exports[`better eslint`] = {
       [140, 43, 35, "Do not use any type assertions.", "2712117061"],
       [175, 70, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/prometheus/query_hints.test.ts:3821515673": [
+    "public/app/plugins/datasource/prometheus/queryHints.test.ts:268435718": [
       [45, 23, 28, "Do not use any type assertions.", "252196522"]
     ],
-    "public/app/plugins/datasource/prometheus/query_hints.ts:740561303": [
+    "public/app/plugins/datasource/prometheus/queryHints.ts:740561303": [
       [11, 54, 3, "Unexpected any. Specify a different type.", "193409811"],
       [21, 11, 200, "Do not use any type assertions.", "3050257633"],
       [100, 13, 187, "Do not use any type assertions.", "1395985836"],
@@ -10368,7 +10368,7 @@ exports[`better eslint`] = {
       [43, 29, 3, "Unexpected any. Specify a different type.", "193409811"],
       [43, 63, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryBuilder.test.tsx:3447149653": [
+    "public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryBuilder.test.tsx:639424405": [
       [168, 17, 15, "Do not use any type assertions.", "2931285723"],
       [188, 27, 68, "Do not use any type assertions.", "1641181778"],
       [188, 27, 42, "Do not use any type assertions.", "1860367374"],
@@ -10377,10 +10377,10 @@ exports[`better eslint`] = {
       [193, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
       [194, 9, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryBuilder.tsx:4173778590": [
+    "public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryBuilder.tsx:2721936385": [
       [106, 22, 27, "Do not use any type assertions.", "2133479311"]
     ],
-    "public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryBuilderContainer.test.tsx:3545369509": [
+    "public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryBuilderContainer.test.tsx:1452218597": [
       [36, 27, 68, "Do not use any type assertions.", "1641181778"],
       [36, 27, 42, "Do not use any type assertions.", "1860367374"],
       [38, 4, 72, "Do not use any type assertions.", "2534116811"],
@@ -10396,7 +10396,7 @@ exports[`better eslint`] = {
       [57, 29, 31, "Do not use any type assertions.", "3190934078"],
       [75, 30, 27, "Do not use any type assertions.", "2126393756"]
     ],
-    "public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryEditorSelector.test.tsx:4261267010": [
+    "public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryEditorSelector.test.tsx:217597698": [
       [28, 41, 3, "Unexpected any. Specify a different type.", "193409811"],
       [56, 12, 9, "Do not use any type assertions.", "3692209159"],
       [56, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -10430,7 +10430,7 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/prometheus/querybuilder/shared/OperationHeader.tsx:788862795": [
       [15, 19, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/prometheus/querybuilder/shared/OperationList.test.tsx:1620880507": [
+    "public/app/plugins/datasource/prometheus/querybuilder/shared/OperationList.test.tsx:1611762491": [
       [65, 27, 68, "Do not use any type assertions.", "1641181778"],
       [65, 27, 42, "Do not use any type assertions.", "1860367374"],
       [67, 16, 193, "Do not use any type assertions.", "3010885491"],
@@ -10470,7 +10470,7 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/prometheus/querybuilder/state.ts:1179483326": [
       [26, 16, 67, "Do not use any type assertions.", "4104639321"]
     ],
-    "public/app/plugins/datasource/prometheus/result_transformer.test.ts:3921188682": [
+    "public/app/plugins/datasource/prometheus/resultTransformer.test.ts:1115832341": [
       [75, 22, 165, "Do not use any type assertions.", "3616512949"],
       [75, 22, 134, "Do not use any type assertions.", "1610955364"],
       [83, 23, 215, "Do not use any type assertions.", "4105091271"],
@@ -10560,7 +10560,7 @@ exports[`better eslint`] = {
       [1045, 35, 34, "Do not use any type assertions.", "754911623"],
       [1045, 66, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/prometheus/result_transformer.ts:1104861278": [
+    "public/app/plugins/datasource/prometheus/resultTransformer.ts:1104861278": [
       [110, 15, 135, "Do not use any type assertions.", "3297457942"],
       [178, 58, 37, "Do not use any type assertions.", "1315377127"]
     ],

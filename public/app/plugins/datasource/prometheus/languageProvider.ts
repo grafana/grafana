@@ -23,7 +23,7 @@ import {
   processLabels,
   roundSecToMin,
   toPromLikeQuery,
-} from './language_utils';
+} from './languageUtils';
 import PromqlSyntax, { FUNCTIONS, RATE_RANGES } from './promql';
 import { PromMetricsMetadata, PromQuery } from './types';
 

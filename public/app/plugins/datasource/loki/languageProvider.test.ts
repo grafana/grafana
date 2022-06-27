@@ -4,7 +4,7 @@ import { AbstractLabelOperator } from '@grafana/data';
 import { TypeaheadInput } from '@grafana/ui';
 
 import { LokiDatasource } from './datasource';
-import LanguageProvider, { LokiHistoryItem } from './language_provider';
+import LanguageProvider, { LokiHistoryItem } from './languageProvider';
 import { makeMockLokiDatasource } from './mocks';
 import { LokiQueryType } from './types';
 

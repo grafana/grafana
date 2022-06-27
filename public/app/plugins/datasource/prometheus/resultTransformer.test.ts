@@ -1,6 +1,6 @@
 import { DataFrame, DataQueryRequest, DataQueryResponse, FieldType, MutableDataFrame } from '@grafana/data';
 
-import { parseSampleValue, transform, transformDFToTable, transformV2 } from './result_transformer';
+import { parseSampleValue, transform, transformDFToTable, transformV2 } from './resultTransformer';
 import { PromQuery } from './types';
 
 jest.mock('@grafana/runtime', () => ({

@@ -17,9 +17,9 @@ import {
   fuzzyMatch,
 } from '@grafana/ui';
 
-import PromQlLanguageProvider from '../../prometheus/language_provider';
-import LokiLanguageProvider from '../language_provider';
-import { escapeLabelValueInExactSelector, escapeLabelValueInRegexSelector } from '../language_utils';
+import PromQlLanguageProvider from '../../prometheus/languageProvider';
+import LokiLanguageProvider from '../languageProvider';
+import { escapeLabelValueInExactSelector, escapeLabelValueInRegexSelector } from '../languageUtils';
 
 // Hard limit on labels to render
 const MAX_LABEL_COUNT = 1000;

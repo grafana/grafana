@@ -7,7 +7,7 @@ import {
   fixSummariesMetadata,
   parseSelector,
   toPromLikeQuery,
-} from './language_utils';
+} from './languageUtils';
 
 describe('parseSelector()', () => {
   let parsed;

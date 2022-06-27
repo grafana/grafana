@@ -3,8 +3,8 @@ import { Token } from 'prismjs';
 
 import { DataQuery, AbstractQuery, AbstractLabelOperator, AbstractLabelMatcher } from '@grafana/data';
 
-import { addLabelToQuery } from './add_label_to_query';
-import { SUGGESTIONS_LIMIT } from './language_provider';
+import { addLabelToQuery } from './addLabelToQuery';
+import { SUGGESTIONS_LIMIT } from './languageProvider';
 import { PromMetricsMetadata, PromMetricsMetadataItem } from './types';
 
 export const processHistogramMetrics = (metrics: string[]) => {

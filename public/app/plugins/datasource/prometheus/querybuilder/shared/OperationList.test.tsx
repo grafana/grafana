@@ -5,8 +5,8 @@ import React from 'react';
 import { DataSourceApi } from '@grafana/data';
 
 import { PrometheusDatasource } from '../../datasource';
-import PromQlLanguageProvider from '../../language_provider';
-import { EmptyLanguageProviderMock } from '../../language_provider.mock';
+import PromQlLanguageProvider from '../../languageProvider';
+import { EmptyLanguageProviderMock } from '../../languageProvider.mock';
 import { promQueryModeller } from '../PromQueryModeller';
 import { PromVisualQuery } from '../types';
 

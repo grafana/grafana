@@ -17,8 +17,8 @@ import {
 import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
 
 import { LokiDatasource } from '../datasource';
-import LokiLanguageProvider from '../language_provider';
-import { escapeLabelValueInSelector, shouldRefreshLabels } from '../language_utils';
+import LokiLanguageProvider from '../languageProvider';
+import { escapeLabelValueInSelector, shouldRefreshLabels } from '../languageUtils';
 import { LokiQuery, LokiOptions } from '../types';
 
 import { LokiLabelBrowser } from './LokiLabelBrowser';

@@ -14,8 +14,8 @@ import {
   BrowserLabel as PromLabel,
 } from '@grafana/ui';
 
-import PromQlLanguageProvider from '../language_provider';
-import { escapeLabelValueInExactSelector, escapeLabelValueInRegexSelector } from '../language_utils';
+import PromQlLanguageProvider from '../languageProvider';
+import { escapeLabelValueInExactSelector, escapeLabelValueInRegexSelector } from '../languageUtils';
 
 // Hard limit on labels to render
 const EMPTY_SELECTOR = '{}';

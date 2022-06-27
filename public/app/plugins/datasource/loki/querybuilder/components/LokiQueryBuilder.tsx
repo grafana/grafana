@@ -8,7 +8,7 @@ import { OperationsEditorRow } from 'app/plugins/datasource/prometheus/querybuil
 import { QueryBuilderLabelFilter } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
 
 import { LokiDatasource } from '../../datasource';
-import { escapeLabelValueInSelector } from '../../language_utils';
+import { escapeLabelValueInSelector } from '../../languageUtils';
 import { lokiQueryModeller } from '../LokiQueryModeller';
 import { LokiOperationId, LokiVisualQuery } from '../types';
 

@@ -4,7 +4,7 @@ import { DataSourceApi, PanelData, SelectableValue } from '@grafana/data';
 import { EditorRow } from '@grafana/experimental';
 
 import { PrometheusDatasource } from '../../datasource';
-import { getMetadataString } from '../../language_provider';
+import { getMetadataString } from '../../languageProvider';
 import { promQueryModeller } from '../PromQueryModeller';
 import { LabelFilters } from '../shared/LabelFilters';
 import { OperationList } from '../shared/OperationList';

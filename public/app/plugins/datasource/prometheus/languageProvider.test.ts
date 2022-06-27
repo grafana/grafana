@@ -5,7 +5,7 @@ import { AbstractLabelOperator, HistoryItem } from '@grafana/data';
 import { SearchFunctionType } from '@grafana/ui';
 
 import { PrometheusDatasource } from './datasource';
-import LanguageProvider from './language_provider';
+import LanguageProvider from './languageProvider';
 import { PromQuery } from './types';
 
 describe('Language completion provider', () => {

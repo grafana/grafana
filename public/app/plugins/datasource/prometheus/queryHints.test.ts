@@ -1,5 +1,5 @@
 import { PrometheusDatasource } from './datasource';
-import { getQueryHints, SUM_HINT_THRESHOLD_COUNT } from './query_hints';
+import { getQueryHints, SUM_HINT_THRESHOLD_COUNT } from './queryHints';
 
 describe('getQueryHints()', () => {
   it('returns no hints for no series', () => {

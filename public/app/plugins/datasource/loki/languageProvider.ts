@@ -9,7 +9,7 @@ import {
   parseSelector,
   processLabels,
   toPromLikeExpr,
-} from 'app/plugins/datasource/prometheus/language_utils';
+} from 'app/plugins/datasource/prometheus/languageUtils';
 
 import { LokiDatasource } from './datasource';
 import syntax, { FUNCTIONS, PIPE_PARSERS, PIPE_OPERATORS } from './syntax';

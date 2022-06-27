@@ -44,13 +44,13 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 import { serializeParams } from '../../../core/utils/fetch';
 import { renderLegendFormat } from '../prometheus/legend';
 
-import { addLabelToQuery } from './add_label_to_query';
+import { addLabelToQuery } from './addLabelToQuery';
 import { transformBackendResult } from './backendResultTransformer';
 import { LokiAnnotationsQueryEditor } from './components/AnnotationsQueryEditor';
-import LanguageProvider from './language_provider';
-import { escapeLabelValueInSelector } from './language_utils';
-import { LiveStreams, LokiLiveTarget } from './live_streams';
-import { getNormalizedLokiQuery } from './query_utils';
+import LanguageProvider from './languageProvider';
+import { escapeLabelValueInSelector } from './languageUtils';
+import { LiveStreams, LokiLiveTarget } from './liveStreams';
+import { getNormalizedLokiQuery } from './queryUtils';
 import { sortDataFrameByTime } from './sortDataFrame';
 import { doLokiChannelStream } from './streaming';
 import syntax from './syntax';

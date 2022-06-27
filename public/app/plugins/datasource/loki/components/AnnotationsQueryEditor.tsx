@@ -6,7 +6,7 @@ import { EditorRow, EditorField } from '@grafana/experimental';
 import { Input } from '@grafana/ui';
 
 // Types
-import { getNormalizedLokiQuery } from '../query_utils';
+import { getNormalizedLokiQuery } from '../queryUtils';
 import { LokiQuery, LokiQueryType } from '../types';
 
 import { LokiOptionFields } from './LokiOptionFields';

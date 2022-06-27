@@ -5,7 +5,7 @@ import * as rxJsWebSocket from 'rxjs/webSocket';
 
 import { DataFrame, DataFrameView, formatLabels, Labels } from '@grafana/data';
 
-import { LiveStreams } from './live_streams';
+import { LiveStreams } from './liveStreams';
 import { LokiTailResponse } from './types';
 
 let fakeSocket: Subject<any>;

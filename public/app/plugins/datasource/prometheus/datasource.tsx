@@ -40,14 +40,14 @@ import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { PromApplication, PromApiFeatures } from 'app/types/unified-alerting-dto';
 
-import { addLabelToQuery } from './add_label_to_query';
+import { addLabelToQuery } from './addLabelToQuery';
 import { AnnotationQueryEditor } from './components/AnnotationQueryEditor';
-import PrometheusLanguageProvider from './language_provider';
-import { expandRecordingRules } from './language_utils';
+import PrometheusLanguageProvider from './languageProvider';
+import { expandRecordingRules } from './languageUtils';
 import { renderLegendFormat } from './legend';
-import PrometheusMetricFindQuery from './metric_find_query';
-import { getInitHints, getQueryHints } from './query_hints';
-import { getOriginalMetricName, transform, transformV2 } from './result_transformer';
+import PrometheusMetricFindQuery from './metricFindQuery';
+import { getInitHints, getQueryHints } from './queryHints';
+import { getOriginalMetricName, transform, transformV2 } from './resultTransformer';
 import {
   ExemplarTraceIdDestination,
   PromDataErrorResponse,
@@ -1174,7 +1174,7 @@ export function extractRuleMappingFromGroups(groups: any[]) {
 }
 
 // NOTE: these two functions are very similar to the escapeLabelValueIn* functions
-// in language_utils.ts, but they are not exactly the same algorithm, and we found
+// in languageUtils.ts, but they are not exactly the same algorithm, and we found
 // no way to reuse one in the another or vice versa.
 export function prometheusRegularEscape(value: any) {
   return typeof value === 'string' ? value.replace(/\\/g, '\\\\').replace(/'/g, "\\\\'") : value;

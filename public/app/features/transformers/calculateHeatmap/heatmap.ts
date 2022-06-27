@@ -207,7 +207,7 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
 }
 
 // Sorts frames ASC by numeric bucket name and de-accumulates values in each frame's Value field [1]
-// similar to Prometheus result_transformer.ts -> transformToHistogramOverTime()
+// similar to Prometheus resultTransformer.ts -> transformToHistogramOverTime()
 export function prepBucketFrames(frames: DataFrame[]): DataFrame[] {
   frames = frames.slice();
 
