@@ -1749,7 +1749,7 @@ exports[`better eslint`] = {
       [2, 101, 3, "Unexpected any. Specify a different type.", "193409811"],
       [15, 28, 17, "Do not use any type assertions.", "2923536692"]
     ],
-    "packages/grafana-ui/src/components/GraphNG/utils.ts:3480871323": [
+    "packages/grafana-ui/src/components/GraphNG/utils.ts:460323924": [
       [23, 18, 35, "Do not use any type assertions.", "180126096"],
       [23, 48, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
@@ -2219,7 +2219,7 @@ exports[`better eslint`] = {
       [56, 22, 24, "Do not use any type assertions.", "4121028738"],
       [56, 43, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "packages/grafana-ui/src/components/TimeSeries/utils.ts:3806893813": [
+    "packages/grafana-ui/src/components/TimeSeries/utils.ts:1695012447": [
       [33, 29, 3, "Unexpected any. Specify a different type.", "193409811"],
       [135, 19, 146, "Do not use any type assertions.", "3723122882"]
     ],
