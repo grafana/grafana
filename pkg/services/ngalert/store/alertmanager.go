@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/md5"
 	"fmt"
+	"time"
 
 	"xorm.io/builder"
 
@@ -93,19 +94,42 @@ func (st *DBstore) UpdateAlertmanagerConfiguration(ctx context.Context, cmd *mod
 			ConfigurationVersion:      cmd.ConfigurationVersion,
 			Default:                   cmd.Default,
 			OrgID:                     cmd.OrgID,
+			CreatedAt:                 time.Now().Unix(),
 		}
-		rows, err := sess.Table("alert_configuration").Where(`
-			EXISTS (
-				SELECT 1 
-				FROM alert_configuration 
-				WHERE 
-					org_id = ? 
-				AND 
-					id = (SELECT MAX(id) FROM alert_configuration WHERE org_id = ?) 
-				AND 
-					configuration_hash = ?
-			)`,
-			cmd.OrgID, cmd.OrgID, cmd.FetchedConfigurationHash).Insert(config)
+		res, err := sess.Exec(fmt.Sprintf(`
+		INSERT INTO alert_configuration
+		(alertmanager_configuration, configuration_hash, configuration_version, org_id, created_at, %s) 
+		SELECT T.* FROM (VALUES(?,?,?,?,?,?)) AS T
+		WHERE
+		EXISTS (
+			SELECT 1 
+			FROM alert_configuration 
+			WHERE 
+				org_id = ? 
+			AND 
+				id = (SELECT MAX(id) FROM alert_configuration WHERE org_id = ?) 
+			AND 
+				configuration_hash = ?
+		)`, st.SQLStore.Dialect.Quote("default")),
+			config.AlertmanagerConfiguration,
+			config.ConfigurationHash,
+			config.ConfigurationVersion,
+			config.OrgID,
+			config.CreatedAt,
+			st.SQLStore.Dialect.BooleanStr(config.Default),
+			cmd.OrgID,
+			cmd.OrgID,
+			cmd.FetchedConfigurationHash,
+		)
+		query, args := sess.LastSQL()
+		st.Logger.Info("last SQL", "query", query, "args", args)
+		if err != nil {
+			return err
+		}
+		rows, err := res.RowsAffected()
+		if err != nil {
+			return err
+		}
 		if rows == 0 {
 			return ErrVersionLockedObjectNotFound
 		}
