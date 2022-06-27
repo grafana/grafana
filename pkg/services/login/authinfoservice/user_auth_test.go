@@ -12,6 +12,7 @@ import (
 	secretstore "github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 )
@@ -29,7 +30,7 @@ func TestUserAuth(t *testing.T) {
 
 	t.Run("Given 5 users", func(t *testing.T) {
 		for i := 0; i < 5; i++ {
-			cmd := models.CreateUserCommand{
+			cmd := user.CreateUserCommand{
 				Email: fmt.Sprint("user", i, "@test.com"),
 				Name:  fmt.Sprint("user", i),
 				Login: fmt.Sprint("loginuser", i),
@@ -176,7 +177,7 @@ func TestUserAuth(t *testing.T) {
 			sqlStore = sqlstore.InitTestDB(t)
 
 			for i := 0; i < 5; i++ {
-				cmd := models.CreateUserCommand{
+				cmd := user.CreateUserCommand{
 					Email: fmt.Sprint("user", i, "@test.com"),
 					Name:  fmt.Sprint("user", i),
 					Login: fmt.Sprint("loginuser", i),
@@ -240,7 +241,7 @@ func TestUserAuth(t *testing.T) {
 			sqlStore = sqlstore.InitTestDB(t)
 
 			for i := 0; i < 5; i++ {
-				cmd := models.CreateUserCommand{
+				cmd := user.CreateUserCommand{
 					Email: fmt.Sprint("user", i, "@test.com"),
 					Name:  fmt.Sprint("user", i),
 					Login: fmt.Sprint("loginuser", i),
@@ -354,11 +355,11 @@ func TestUserAuth(t *testing.T) {
 			sqlStore = sqlstore.InitTestDB(t)
 
 			for i := 0; i < 5; i++ {
-				cmd := models.CreateUserCommand{
+				cmd := user.CreateUserCommand{
 					Email: fmt.Sprint("user", i, "@test.com"),
 					Name:  fmt.Sprint("user", i),
 					Login: fmt.Sprint("loginuser", i),
-					OrgId: 1,
+					OrgID: 1,
 				}
 				_, err := sqlStore.CreateUser(context.Background(), cmd)
 				require.Nil(t, err)
@@ -366,7 +367,7 @@ func TestUserAuth(t *testing.T) {
 
 			// "Skipping duplicate users test for mysql as it does make unique constraint case insensitive by default
 			if sqlStore.GetDialect().DriverName() != "mysql" {
-				dupUserEmailcmd := models.CreateUserCommand{
+				dupUserEmailcmd := user.CreateUserCommand{
 					Email: "USERDUPLICATETEST1@TEST.COM",
 					Name:  "user name 1",
 					Login: "USER_DUPLICATE_TEST_1_LOGIN",
@@ -375,7 +376,7 @@ func TestUserAuth(t *testing.T) {
 				require.NoError(t, err)
 
 				// add additional user with duplicate login where DOMAIN is upper case
-				dupUserLogincmd := models.CreateUserCommand{
+				dupUserLogincmd := user.CreateUserCommand{
 					Email: "userduplicatetest1@test.com",
 					Name:  "user name 1",
 					Login: "user_duplicate_test_1_login",

@@ -17,6 +17,7 @@ import (
 	acdb "github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -34,7 +35,7 @@ func TestAlertRulePermissions(t *testing.T) {
 	permissionsStore := acdb.ProvideService(store)
 
 	// Create a user to make authenticated requests
-	userID := createUser(t, store, models.CreateUserCommand{
+	userID := createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),
 		Password:       "password",
 		Login:          "grafana",
@@ -326,7 +327,7 @@ func TestAlertRuleConflictingTitle(t *testing.T) {
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
 	// Create user
-	createUser(t, store, models.CreateUserCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_ADMIN),
 		Password:       "admin",
 		Login:          "admin",
@@ -393,7 +394,7 @@ func TestRulerRulesFilterByDashboard(t *testing.T) {
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
 	// Create a user to make authenticated requests
-	createUser(t, store, models.CreateUserCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),
 		Password:       "password",
 		Login:          "grafana",
@@ -732,7 +733,7 @@ func TestRuleGroupSequence(t *testing.T) {
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
 	// Create a user to make authenticated requests
-	createUser(t, store, models.CreateUserCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),
 		Password:       "password",
 		Login:          "grafana",

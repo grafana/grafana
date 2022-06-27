@@ -59,7 +59,7 @@ func TestStore_DeleteServiceAccount(t *testing.T) {
 		t.Run(c.desc, func(t *testing.T) {
 			db, store := setupTestDatabase(t)
 			user := tests.SetupUserServiceAccount(t, db, c.user)
-			err := store.DeleteServiceAccount(context.Background(), user.OrgId, user.Id)
+			err := store.DeleteServiceAccount(context.Background(), user.OrgID, user.ID)
 			if c.expectedErr != nil {
 				require.ErrorIs(t, err, c.expectedErr)
 			} else {
@@ -98,7 +98,7 @@ func TestStore_RetrieveServiceAccount(t *testing.T) {
 		t.Run(c.desc, func(t *testing.T) {
 			db, store := setupTestDatabase(t)
 			user := tests.SetupUserServiceAccount(t, db, c.user)
-			dto, err := store.RetrieveServiceAccount(context.Background(), user.OrgId, user.Id)
+			dto, err := store.RetrieveServiceAccount(context.Background(), user.OrgID, user.ID)
 			if c.expectedErr != nil {
 				require.ErrorIs(t, err, c.expectedErr)
 			} else {

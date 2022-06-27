@@ -16,7 +16,7 @@ import (
 )
 
 type ErrCaseInsensitiveLoginConflict struct {
-	users []models.User
+	users []user.User
 }
 
 func (e *ErrCaseInsensitiveLoginConflict) Unwrap() error {
@@ -28,7 +28,7 @@ func (e *ErrCaseInsensitiveLoginConflict) Error() string {
 
 	userStrings := make([]string, 0, n)
 	for _, v := range e.users {
-		userStrings = append(userStrings, fmt.Sprintf("%s (email:%s, id:%d)", v.Login, v.Email, v.Id))
+		userStrings = append(userStrings, fmt.Sprintf("%s (email:%s, id:%d)", v.Login, v.Email, v.ID))
 	}
 
 	return fmt.Sprintf(
@@ -53,7 +53,7 @@ func (ss *SQLStore) getOrgIDForNewUser(sess *DBSession, args user.CreateUserComm
 }
 
 func (ss *SQLStore) userCaseInsensitiveLoginConflict(ctx context.Context, sess *DBSession, login, email string) error {
-	users := make([]models.User, 0)
+	users := make([]user.User, 0)
 
 	if err := sess.Where("LOWER(email)=LOWER(?) OR LOWER(login)=LOWER(?)",
 		email, login).Find(&users); err != nil {
@@ -90,7 +90,7 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args user.C
 		args.Email = strings.ToLower(args.Email)
 	}
 
-	exists, err := sess.Where(where, args.Email, args.Login).Get(&models.User{})
+	exists, err := sess.Where(where, args.Email, args.Login).Get(&user.User{})
 	if err != nil {
 		return usr, err
 	}
@@ -303,7 +303,7 @@ func (ss *SQLStore) UpdateUser(ctx context.Context, cmd *models.UpdateUserComman
 	}
 
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-		user := models.User{
+		user := user.User{
 			Name:    cmd.Name,
 			Email:   cmd.Email,
 			Login:   cmd.Login,
@@ -323,7 +323,7 @@ func (ss *SQLStore) UpdateUser(ctx context.Context, cmd *models.UpdateUserComman
 
 		sess.publishAfterCommit(&events.UserUpdated{
 			Timestamp: user.Created,
-			Id:        user.Id,
+			Id:        user.ID,
 			Name:      user.Name,
 			Login:     user.Login,
 			Email:     user.Email,
@@ -335,7 +335,7 @@ func (ss *SQLStore) UpdateUser(ctx context.Context, cmd *models.UpdateUserComman
 
 func (ss *SQLStore) ChangeUserPassword(ctx context.Context, cmd *models.ChangeUserPasswordCommand) error {
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-		user := models.User{
+		user := user.User{
 			Password: cmd.NewPassword,
 			Updated:  time.Now(),
 		}
@@ -347,8 +347,8 @@ func (ss *SQLStore) ChangeUserPassword(ctx context.Context, cmd *models.ChangeUs
 
 func (ss *SQLStore) UpdateUserLastSeenAt(ctx context.Context, cmd *models.UpdateUserLastSeenAtCommand) error {
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-		user := models.User{
-			Id:         cmd.UserId,
+		user := user.User{
+			ID:         cmd.UserId,
 			LastSeenAt: time.Now(),
 		}
 
@@ -379,9 +379,9 @@ func (ss *SQLStore) SetUsingOrg(ctx context.Context, cmd *models.SetUsingOrgComm
 }
 
 func setUsingOrgInTransaction(sess *DBSession, userID int64, orgID int64) error {
-	user := models.User{
-		Id:    userID,
-		OrgId: orgID,
+	user := user.User{
+		ID:    userID,
+		OrgID: orgID,
 	}
 
 	_, err := sess.ID(userID).Update(&user)
@@ -389,9 +389,9 @@ func setUsingOrgInTransaction(sess *DBSession, userID int64, orgID int64) error 
 }
 
 func removeUserOrg(sess *DBSession, userID int64) error {
-	user := models.User{
-		Id:    userID,
-		OrgId: 0,
+	user := user.User{
+		ID:    userID,
+		OrgID: 0,
 	}
 
 	_, err := sess.ID(userID).MustCols("org_id").Update(&user)
@@ -400,7 +400,7 @@ func removeUserOrg(sess *DBSession, userID int64) error {
 
 func (ss *SQLStore) GetUserProfile(ctx context.Context, query *models.GetUserProfileQuery) error {
 	return ss.WithDbSession(ctx, func(sess *DBSession) error {
-		var user models.User
+		var user user.User
 		has, err := sess.ID(query.UserId).Where(notServiceAccountFilter(ss)).Get(&user)
 
 		if err != nil {
@@ -410,14 +410,14 @@ func (ss *SQLStore) GetUserProfile(ctx context.Context, query *models.GetUserPro
 		}
 
 		query.Result = models.UserProfileDTO{
-			Id:             user.Id,
+			Id:             user.ID,
 			Name:           user.Name,
 			Email:          user.Email,
 			Login:          user.Login,
 			Theme:          user.Theme,
 			IsGrafanaAdmin: user.IsAdmin,
 			IsDisabled:     user.IsDisabled,
-			OrgId:          user.OrgId,
+			OrgId:          user.OrgID,
 			UpdatedAt:      user.Updated,
 			CreatedAt:      user.Created,
 		}
@@ -657,7 +657,7 @@ func (ss *SQLStore) SearchUsers(ctx context.Context, query *models.SearchUsersQu
 		}
 
 		// get total
-		user := models.User{}
+		user := user.User{}
 		countSess := dbSess.Table("user").Alias("u")
 
 		// Join with user_auth table if users filtered by auth_module
@@ -694,7 +694,7 @@ func (ss *SQLStore) SearchUsers(ctx context.Context, query *models.SearchUsersQu
 
 func (ss *SQLStore) DisableUser(ctx context.Context, cmd *models.DisableUserCommand) error {
 	return ss.WithDbSession(ctx, func(dbSess *DBSession) error {
-		user := models.User{}
+		user := user.User{}
 		sess := dbSess.Table("user")
 
 		if has, err := sess.ID(cmd.UserId).Where(notServiceAccountFilter(ss)).Get(&user); err != nil {
@@ -740,7 +740,7 @@ func (ss *SQLStore) DeleteUser(ctx context.Context, cmd *models.DeleteUserComman
 
 func deleteUserInTransaction(ss *SQLStore, sess *DBSession, cmd *models.DeleteUserCommand) error {
 	// Check if user exists
-	user := models.User{Id: cmd.UserId}
+	user := user.User{ID: cmd.UserId}
 	has, err := sess.Where(notServiceAccountFilter(ss)).Get(&user)
 	if err != nil {
 		return err
@@ -816,7 +816,7 @@ func UserDeletions() []string {
 // UpdateUserPermissions sets the user Server Admin flag
 func (ss *SQLStore) UpdateUserPermissions(userID int64, isAdmin bool) error {
 	return ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
-		var user models.User
+		var user user.User
 		if _, err := sess.ID(userID).Where(notServiceAccountFilter(ss)).Get(&user); err != nil {
 			return err
 		}
@@ -824,7 +824,7 @@ func (ss *SQLStore) UpdateUserPermissions(userID int64, isAdmin bool) error {
 		user.IsAdmin = isAdmin
 		sess.UseBool("is_admin")
 
-		_, err := sess.ID(user.Id).Update(&user)
+		_, err := sess.ID(user.ID).Update(&user)
 		if err != nil {
 			return err
 		}
@@ -840,9 +840,9 @@ func (ss *SQLStore) UpdateUserPermissions(userID int64, isAdmin bool) error {
 
 func (ss *SQLStore) SetUserHelpFlag(ctx context.Context, cmd *models.SetUserHelpFlagCommand) error {
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-		user := models.User{
-			Id:         cmd.UserId,
-			HelpFlags1: cmd.HelpFlags1,
+		user := user.User{
+			ID:         cmd.UserId,
+			HelpFlags1: user.HelpFlags1(cmd.HelpFlags1),
 			Updated:    time.Now(),
 		}
 
@@ -853,7 +853,7 @@ func (ss *SQLStore) SetUserHelpFlag(ctx context.Context, cmd *models.SetUserHelp
 
 // validateOneAdminLeft validate that there is an admin user left
 func validateOneAdminLeft(sess *DBSession) error {
-	count, err := sess.Where("is_admin=?", true).Count(&models.User{})
+	count, err := sess.Where("is_admin=?", true).Count(&user.User{})
 	if err != nil {
 		return err
 	}

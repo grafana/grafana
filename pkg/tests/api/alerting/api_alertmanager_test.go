@@ -21,6 +21,7 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
@@ -41,17 +42,17 @@ func TestAMConfigAccess(t *testing.T) {
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
 	// Create a users to make authenticated requests
-	createUser(t, store, models.CreateUserCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_VIEWER),
 		Password:       "viewer",
 		Login:          "viewer",
 	})
-	createUser(t, store, models.CreateUserCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),
 		Password:       "editor",
 		Login:          "editor",
 	})
-	createUser(t, store, models.CreateUserCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_ADMIN),
 		Password:       "admin",
 		Login:          "admin",
@@ -415,7 +416,7 @@ func TestAlertAndGroupsQuery(t *testing.T) {
 	}
 
 	// Create a user to make authenticated requests
-	createUser(t, store, models.CreateUserCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),
 		Password:       "password",
 		Login:          "grafana",
@@ -560,17 +561,17 @@ func TestRulerAccess(t *testing.T) {
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
 	// Create a users to make authenticated requests
-	createUser(t, store, models.CreateUserCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_VIEWER),
 		Password:       "viewer",
 		Login:          "viewer",
 	})
-	createUser(t, store, models.CreateUserCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),
 		Password:       "editor",
 		Login:          "editor",
 	})
-	createUser(t, store, models.CreateUserCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_ADMIN),
 		Password:       "admin",
 		Login:          "admin",
@@ -675,12 +676,12 @@ func TestDeleteFolderWithRules(t *testing.T) {
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
-	createUser(t, store, models.CreateUserCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_VIEWER),
 		Password:       "viewer",
 		Login:          "viewer",
 	})
-	createUser(t, store, models.CreateUserCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),
 		Password:       "editor",
 		Login:          "editor",
@@ -836,7 +837,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
-	createUser(t, store, models.CreateUserCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),
 		Password:       "password",
 		Login:          "grafana",
@@ -1878,7 +1879,7 @@ func TestQuota(t *testing.T) {
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
 	// Create a user to make authenticated requests
-	createUser(t, store, models.CreateUserCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),
 		Password:       "password",
 		Login:          "grafana",
@@ -2095,7 +2096,7 @@ func TestEval(t *testing.T) {
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
-	createUser(t, store, models.CreateUserCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),
 		Password:       "password",
 		Login:          "grafana",
@@ -2550,7 +2551,7 @@ func rulesNamespaceWithoutVariableValues(t *testing.T, b []byte) (string, map[st
 	return string(json), m
 }
 
-func createUser(t *testing.T, store *sqlstore.SQLStore, cmd models.CreateUserCommand) int64 {
+func createUser(t *testing.T, store *sqlstore.SQLStore, cmd user.CreateUserCommand) int64 {
 	t.Helper()
 
 	store.Cfg.AutoAssignOrg = true
@@ -2558,7 +2559,7 @@ func createUser(t *testing.T, store *sqlstore.SQLStore, cmd models.CreateUserCom
 
 	u, err := store.CreateUser(context.Background(), cmd)
 	require.NoError(t, err)
-	return u.Id
+	return u.ID
 }
 
 func createOrg(t *testing.T, store *sqlstore.SQLStore, name string, userID int64) int64 {
