@@ -118,7 +118,7 @@ export const PieChart: FC<PieChartProps> = ({
 
                   if (arc.data.hasLinks && arc.data.getLinks) {
                     return (
-                      <DataLinksContextMenu config={arc.data.field} key={arc.index} links={arc.data.getLinks}>
+                      <DataLinksContextMenu key={arc.index} links={arc.data.getLinks}>
                         {(api) => (
                           <PieSlice
                             tooltip={tooltip}
