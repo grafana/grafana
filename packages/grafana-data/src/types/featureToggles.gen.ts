@@ -18,7 +18,6 @@ export interface FeatureToggles {
 
   trimDefaults?: boolean;
   disableEnvelopeEncryption?: boolean;
-  serviceAccounts?: boolean;
   database_metrics?: boolean;
   dashboardPreviews?: boolean;
   dashboardPreviewsAdmin?: boolean;
@@ -58,6 +57,7 @@ export interface FeatureToggles {
   autoMigrateGraphPanels?: boolean;
   prometheusWideSeries?: boolean;
   canvasPanelNesting?: boolean;
+  useLegacyHeatmapPanel?: boolean;
   cloudMonitoringExperimentalUI?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
   dataConnectionsConsole?: boolean;

@@ -77,7 +77,7 @@ async function doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
     search: {
       ...query,
       query: query.query ?? '*',
-      limit: firstPageSize,
+      limit: query.limit ?? firstPageSize,
     },
   };
   const rsp = await lastValueFrom(
@@ -131,7 +131,18 @@ async function doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
       const frame = (
         await lastValueFrom(
           ds.query({
-            targets: [{ ...target, refId: 'Page', facet: undefined, from, limit: Math.max(limit, nextPageSizes) }],
+            targets: [
+              {
+                ...target,
+                search: {
+                  ...(target?.search ?? {}),
+                  from,
+                  limit: Math.max(limit, nextPageSizes),
+                },
+                refId: 'Page',
+                facet: undefined,
+              },
+            ],
           } as any)
         )
       ).data?.[0] as DataFrame;
