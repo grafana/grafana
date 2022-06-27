@@ -39,7 +39,7 @@
     "@babel/preset-react": "^7.16.7",
     "@babel/preset-typescript": "^7.16.7",
     "@grafana/data": "9.1.0-pre",
-    "@grafana/eslint-config": "^3.0.0",
+    "@grafana/eslint-config": "^4.0.0",
     "@grafana/tsconfig": "^1.2.0-rc1",
     "@grafana/ui": "9.1.0-pre",
     "@jest/core": "27.5.1",

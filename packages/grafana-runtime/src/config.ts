@@ -119,6 +119,11 @@ export class GrafanaBootConfig implements GrafanaConfig {
   reporting = {
     enabled: true,
   };
+  googleAnalyticsId: undefined;
+  rudderstackWriteKey: undefined;
+  rudderstackDataPlaneUrl: undefined;
+  rudderstackSdkUrl: undefined;
+  rudderstackConfigUrl: undefined;
 
   constructor(options: GrafanaBootConfig) {
     const mode = options.bootData.user.lightTheme ? 'light' : 'dark';
