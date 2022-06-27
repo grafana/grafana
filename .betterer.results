@@ -12538,82 +12538,82 @@ exports[`better eslint`] = {
 exports[`no undocumented stories`] = {
   value: `{
     "packages/grafana-ui/src/components/ButtonCascader/ButtonCascader.story.tsx:5381": [
-      [0, 0, 0, "no undocumented stories!", "5381"]
+      [0, 0, 0, "no undocumented stories", "5381"]
     ],
     "packages/grafana-ui/src/components/ColorPicker/ColorPickerPopover.story.tsx:5381": [
-      [0, 0, 0, "no undocumented stories!", "5381"]
+      [0, 0, 0, "no undocumented stories", "5381"]
     ],
     "packages/grafana-ui/src/components/ColorPicker/NamedColorsPalette.story.tsx:5381": [
-      [0, 0, 0, "no undocumented stories!", "5381"]
+      [0, 0, 0, "no undocumented stories", "5381"]
     ],
     "packages/grafana-ui/src/components/ColorPicker/SpectrumPalette.story.tsx:5381": [
-      [0, 0, 0, "no undocumented stories!", "5381"]
+      [0, 0, 0, "no undocumented stories", "5381"]
     ],
     "packages/grafana-ui/src/components/DateTimePickers/RelativeTimeRangePicker/RelativeTimeRangePicker.story.tsx:5381": [
-      [0, 0, 0, "no undocumented stories!", "5381"]
+      [0, 0, 0, "no undocumented stories", "5381"]
     ],
     "packages/grafana-ui/src/components/DateTimePickers/TimeOfDayPicker.story.tsx:5381": [
-      [0, 0, 0, "no undocumented stories!", "5381"]
+      [0, 0, 0, "no undocumented stories", "5381"]
     ],
     "packages/grafana-ui/src/components/DateTimePickers/TimeRangePicker.story.tsx:5381": [
-      [0, 0, 0, "no undocumented stories!", "5381"]
+      [0, 0, 0, "no undocumented stories", "5381"]
     ],
     "packages/grafana-ui/src/components/DateTimePickers/TimeZonePicker.story.tsx:5381": [
-      [0, 0, 0, "no undocumented stories!", "5381"]
+      [0, 0, 0, "no undocumented stories", "5381"]
     ],
     "packages/grafana-ui/src/components/DateTimePickers/WeekStartPicker.story.tsx:5381": [
-      [0, 0, 0, "no undocumented stories!", "5381"]
+      [0, 0, 0, "no undocumented stories", "5381"]
     ],
     "packages/grafana-ui/src/components/PageLayout/PageToolbar.story.tsx:5381": [
-      [0, 0, 0, "no undocumented stories!", "5381"]
+      [0, 0, 0, "no undocumented stories", "5381"]
     ],
     "packages/grafana-ui/src/components/PanelChrome/PanelChrome.story.tsx:5381": [
-      [0, 0, 0, "no undocumented stories!", "5381"]
+      [0, 0, 0, "no undocumented stories", "5381"]
     ],
     "packages/grafana-ui/src/components/PluginSignatureBadge/PluginSignatureBadge.story.tsx:5381": [
-      [0, 0, 0, "no undocumented stories!", "5381"]
+      [0, 0, 0, "no undocumented stories", "5381"]
     ],
     "packages/grafana-ui/src/components/QueryField/QueryField.story.tsx:5381": [
-      [0, 0, 0, "no undocumented stories!", "5381"]
+      [0, 0, 0, "no undocumented stories", "5381"]
     ],
     "packages/grafana-ui/src/components/RefreshPicker/RefreshPicker.story.tsx:5381": [
-      [0, 0, 0, "no undocumented stories!", "5381"]
+      [0, 0, 0, "no undocumented stories", "5381"]
     ],
     "packages/grafana-ui/src/components/SecretInput/SecretInput.story.tsx:5381": [
-      [0, 0, 0, "no undocumented stories!", "5381"]
+      [0, 0, 0, "no undocumented stories", "5381"]
     ],
     "packages/grafana-ui/src/components/SecretTextArea/SecretTextArea.story.tsx:5381": [
-      [0, 0, 0, "no undocumented stories!", "5381"]
+      [0, 0, 0, "no undocumented stories", "5381"]
     ],
     "packages/grafana-ui/src/components/Segment/Segment.story.tsx:5381": [
-      [0, 0, 0, "no undocumented stories!", "5381"]
+      [0, 0, 0, "no undocumented stories", "5381"]
     ],
     "packages/grafana-ui/src/components/Segment/SegmentAsync.story.tsx:5381": [
-      [0, 0, 0, "no undocumented stories!", "5381"]
+      [0, 0, 0, "no undocumented stories", "5381"]
     ],
     "packages/grafana-ui/src/components/Segment/SegmentInput.story.tsx:5381": [
-      [0, 0, 0, "no undocumented stories!", "5381"]
+      [0, 0, 0, "no undocumented stories", "5381"]
     ],
     "packages/grafana-ui/src/components/StatsPicker/StatsPicker.story.tsx:5381": [
-      [0, 0, 0, "no undocumented stories!", "5381"]
+      [0, 0, 0, "no undocumented stories", "5381"]
     ],
     "packages/grafana-ui/src/components/Tabs/Tabs.story.tsx:5381": [
-      [0, 0, 0, "no undocumented stories!", "5381"]
+      [0, 0, 0, "no undocumented stories", "5381"]
     ],
     "packages/grafana-ui/src/components/ThemeDemos/ThemeDemo.story.tsx:5381": [
-      [0, 0, 0, "no undocumented stories!", "5381"]
+      [0, 0, 0, "no undocumented stories", "5381"]
     ],
     "packages/grafana-ui/src/components/Typography/Typography.story.tsx:5381": [
-      [0, 0, 0, "no undocumented stories!", "5381"]
+      [0, 0, 0, "no undocumented stories", "5381"]
     ],
     "packages/grafana-ui/src/components/VizLayout/VizLayout.story.tsx:5381": [
-      [0, 0, 0, "no undocumented stories!", "5381"]
+      [0, 0, 0, "no undocumented stories", "5381"]
     ],
     "packages/grafana-ui/src/components/VizLegend/VizLegend.story.tsx:5381": [
-      [0, 0, 0, "no undocumented stories!", "5381"]
+      [0, 0, 0, "no undocumented stories", "5381"]
     ],
     "packages/grafana-ui/src/components/VizTooltip/SeriesTable.story.tsx:5381": [
-      [0, 0, 0, "no undocumented stories!", "5381"]
+      [0, 0, 0, "no undocumented stories", "5381"]
     ]
   }`
 };
