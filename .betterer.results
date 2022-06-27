@@ -6037,8 +6037,10 @@ exports[`better eslint`] = {
       [9, 6, 59, "Do not use any type assertions.", "3685154675"],
       [9, 6, 49, "Do not use any type assertions.", "1184085652"]
     ],
-    "public/app/features/geo/utils/frameVectorSource.ts:3630880852": [
-      [28, 20, 29, "Do not use any type assertions.", "1337699239"]
+    "public/app/features/geo/utils/frameVectorSource.ts:119928285": [
+      [28, 20, 29, "Do not use any type assertions.", "1337699239"],
+      [47, 21, 81, "Do not use any type assertions.", "1774144811"],
+      [52, 18, 13, "Do not use any type assertions.", "18139833"]
     ],
     "public/app/features/geo/utils/location.test.ts:3751297173": [
       [30, 61, 10, "Do not use any type assertions.", "525921067"],
@@ -11712,14 +11714,15 @@ exports[`better eslint`] = {
     "public/app/plugins/panel/heatmap/fields.test.ts:2095719388": [
       [7, 32, 18, "Do not use any type assertions.", "739464119"]
     ],
-    "public/app/plugins/panel/heatmap/migrations.test.ts:1017455994": [
-      [15, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [18, 18, 16, "Do not use any type assertions.", "388222280"]
+    "public/app/plugins/panel/heatmap/migrations.test.ts:22150861": [
+      [15, 18, 16, "Do not use any type assertions.", "388222280"],
+      [96, 8, 16, "Do not use any type assertions.", "388222280"],
+      [108, 8, 16, "Do not use any type assertions.", "388222280"]
     ],
-    "public/app/plugins/panel/heatmap/migrations.ts:2547355944": [
+    "public/app/plugins/panel/heatmap/migrations.ts:100419160": [
       [43, 47, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [128, 22, 27, "Do not use any type assertions.", "3349635193"],
-      [161, 21, 3, "Unexpected any. Specify a different type.", "193409811"]
+      [129, 22, 27, "Do not use any type assertions.", "3349635193"],
+      [162, 21, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/plugins/panel/heatmap/module.tsx:3365492927": [
       [27, 16, 30, "Do not use any type assertions.", "3478399522"],
