@@ -166,7 +166,7 @@ func (ss *SQLStore) GetAPIKeyByHash(ctx context.Context, hash string) (*models.A
 
 // UpdateAPIKeyLastUsedDate updates the last used date of the API key to current time.
 func (ss *SQLStore) UpdateAPIKeyLastUsedDate(ctx context.Context, tokenID int64) error {
-	now := time.Now()
+	now := timeNow()
 	return ss.WithDbSession(ctx, func(sess *DBSession) error {
 		if _, err := sess.Table("api_key").ID(tokenID).Cols("last_used_at").Update(&models.ApiKey{LastUsedAt: &now}); err != nil {
 			return err
