@@ -6835,13 +6835,13 @@ exports[`better eslint`] = {
       [62, 12, 21, "Do not use any type assertions.", "976337522"],
       [63, 14, 26, "Do not use any type assertions.", "2909521803"]
     ],
-    "public/app/features/search/page/components/columns.tsx:282017932": [
-      [33, 20, 70, "Do not use any type assertions.", "512413936"],
-      [33, 21, 13, "Do not use any type assertions.", "3933930693"],
-      [33, 31, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [48, 32, 21, "Do not use any type assertions.", "3454251755"],
-      [48, 50, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [127, 15, 56, "Do not use any type assertions.", "1375039711"]
+    "public/app/features/search/page/components/columns.tsx:408992621": [
+      [34, 20, 70, "Do not use any type assertions.", "512413936"],
+      [34, 21, 13, "Do not use any type assertions.", "3933930693"],
+      [34, 31, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [49, 32, 21, "Do not use any type assertions.", "3454251755"],
+      [49, 50, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [145, 15, 56, "Do not use any type assertions.", "1375039711"]
     ],
     "public/app/features/search/reducers/dashboardSearch.test.ts:1813679195": [
       [5, 66, 17, "Do not use any type assertions.", "3518965757"],
