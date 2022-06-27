@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/setting"
@@ -191,10 +192,10 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 }
 
 func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins EnabledPlugins) (map[string]plugins.DataSourceDTO, error) {
-	orgDataSources := make([]*models.DataSource, 0)
+	orgDataSources := make([]*datasources.DataSource, 0)
 
 	if c.OrgId != 0 {
-		query := models.GetDataSourcesQuery{OrgId: c.OrgId, DataSourceLimit: hs.Cfg.DataSourceLimit}
+		query := datasources.GetDataSourcesQuery{OrgId: c.OrgId, DataSourceLimit: hs.Cfg.DataSourceLimit}
 		err := hs.SQLStore.GetDataSources(c.Req.Context(), &query)
 
 		if err != nil {
@@ -214,7 +215,7 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 	for _, ds := range orgDataSources {
 		url := ds.Url
 
-		if ds.Access == models.DS_ACCESS_PROXY {
+		if ds.Access == datasources.DS_ACCESS_PROXY {
 			url = "/api/datasources/proxy/" + strconv.FormatInt(ds.Id, 10)
 		}
 
@@ -248,7 +249,7 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 			dsDTO.JSONData = ds.JsonData.MustMap()
 		}
 
-		if ds.Access == models.DS_ACCESS_DIRECT {
+		if ds.Access == datasources.DS_ACCESS_DIRECT {
 			if ds.BasicAuth {
 				password, err := hs.DataSourcesService.DecryptedBasicAuthPassword(c.Req.Context(), ds)
 				if err != nil {
@@ -264,7 +265,7 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 				dsDTO.WithCredentials = ds.WithCredentials
 			}
 
-			if ds.Type == models.DS_INFLUXDB_08 {
+			if ds.Type == datasources.DS_INFLUXDB_08 {
 				password, err := hs.DataSourcesService.DecryptedPassword(c.Req.Context(), ds)
 				if err != nil {
 					return nil, err
@@ -275,7 +276,7 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 				dsDTO.URL = url + "/db/" + ds.Database
 			}
 
-			if ds.Type == models.DS_INFLUXDB {
+			if ds.Type == datasources.DS_INFLUXDB {
 				password, err := hs.DataSourcesService.DecryptedPassword(c.Req.Context(), ds)
 				if err != nil {
 					return nil, err
@@ -287,11 +288,11 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 			}
 		}
 
-		if (ds.Type == models.DS_INFLUXDB) || (ds.Type == models.DS_ES) {
+		if (ds.Type == datasources.DS_INFLUXDB) || (ds.Type == datasources.DS_ES) {
 			dsDTO.Database = ds.Database
 		}
 
-		if ds.Type == models.DS_PROMETHEUS {
+		if ds.Type == datasources.DS_PROMETHEUS {
 			// add unproxied server URL for link to Prometheus web UI
 			ds.JsonData.Set("directUrl", ds.Url)
 		}

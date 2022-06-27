@@ -202,6 +202,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
             formatValue: (v) => formattedValueToString(fmt(v)),
             theme,
             grid: { show: customConfig.axisGridShow },
+            show: customConfig.hideFrom?.viz === false,
           },
           field
         )
@@ -287,9 +288,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
         pointsBuilder = () => undefined;
       } else if (customConfig.transform === GraphTransform.Constant) {
         // patch some monkeys!
-        let defaultBuilder = uPlot.paths!.linear!();
+        const defaultBuilder = uPlot.paths!.linear!();
 
         pathBuilder = (u, seriesIdx) => {
+          //eslint-disable-next-line
           const _data: any[] = (u as any)._data; // uplot.AlignedData not exposed in types
 
           // the data we want the line renderer to pull is x at each plot edge with paired flat y values
@@ -302,6 +304,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
           fauxData[0] = xData;
           fauxData[seriesIdx] = yData;
 
+          //eslint-disable-next-line
           return defaultBuilder(
             {
               ...u,
