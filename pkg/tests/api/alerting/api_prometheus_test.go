@@ -45,7 +45,6 @@ func TestPrometheusRules(t *testing.T) {
 
 	// Create the namespace we'll save our alerts to.
 	apiClient.CreateFolder(t, "default", "default")
-	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
 
 	interval, err := model.ParseDuration("10s")
 	require.NoError(t, err)
@@ -340,7 +339,6 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 	// Create the namespace we'll save our alerts to.
 	dashboardUID := "default"
 	apiClient.CreateFolder(t, dashboardUID, dashboardUID)
-	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
 
 	interval, err := model.ParseDuration("10s")
 	require.NoError(t, err)
@@ -642,8 +640,6 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 	// Create the namespace we'll save our alerts to.
 	apiClient.CreateFolder(t, "folder2", "folder2")
 
-	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
-
 	// Create rule under folder1
 	createRule(t, apiClient, "folder1")
 
@@ -678,7 +674,7 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 
 	// remove permissions from folder2
 	removeFolderPermission(t, permissionsStore, 1, userID, models.ROLE_EDITOR, "folder2")
-	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
+	apiClient.ReloadCachedPermissions(t)
 
 	// make sure that folder2 is not included in the response
 	{
@@ -703,7 +699,7 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 
 	// remove permissions from folder1
 	removeFolderPermission(t, permissionsStore, 1, userID, models.ROLE_EDITOR, "folder1")
-	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
+	apiClient.ReloadCachedPermissions(t)
 
 	// make sure that no folders are included in the response
 	{
@@ -727,19 +723,6 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 	}
 }`, string(b))
 	}
-}
-
-func reloadCachedPermissions(t *testing.T, addr, login, password string) {
-	t.Helper()
-
-	u := fmt.Sprintf("http://%s:%s@%s/api/access-control/user/permissions?reloadcache=true", login, password, addr)
-	// nolint:gosec
-	resp, err := http.Get(u)
-	t.Cleanup(func() {
-		require.NoError(t, resp.Body.Close())
-	})
-	require.NoError(t, err)
-	require.Equal(t, http.StatusOK, resp.StatusCode)
 }
 
 func removeFolderPermission(t *testing.T, store *acdb.AccessControlStore, orgID, userID int64, role models.RoleType, uid string) {
