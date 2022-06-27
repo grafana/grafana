@@ -2,6 +2,7 @@ package kvstore
 
 import (
 	"context"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -14,28 +15,31 @@ const (
 )
 
 func ProvideService(sqlStore sqlstore.Store, secretsService secrets.Service, remoteCheck UseRemoteSecretsPluginCheck) SecretsKVStore {
+	var store SecretsKVStore
 	logger := log.New("secrets.kvstore")
+	store = &secretsKVStoreSQL{
+		sqlStore:       sqlStore,
+		secretsService: secretsService,
+		log:            logger,
+		decryptionCache: decryptionCache{
+			cache: make(map[int64]cachedDecrypted),
+		},
+	}
 	if remoteCheck.ShouldUseRemoteSecretsPlugin() {
 		logger.Debug("secrets kvstore is using a remote plugin for secrets management")
 		secretsPlugin, err := remoteCheck.GetPlugin()
 		if err != nil {
 			logger.Error("plugin client was nil, falling back to SQL implementation")
 		} else {
-			return &secretsKVStorePlugin{
-				secretsPlugin:   secretsPlugin,
-				secretsService:  secretsService,
-				log:             logger,
-				decryptionCache: newDecryptionCache(),
+			store = &secretsKVStorePlugin{
+				secretsPlugin:  secretsPlugin,
+				secretsService: secretsService,
+				log:            logger,
 			}
 		}
 	}
 	logger.Debug("secrets kvstore is using the default (SQL) implementation for secrets management")
-	return &secretsKVStoreSQL{
-		sqlStore:        sqlStore,
-		secretsService:  secretsService,
-		log:             logger,
-		decryptionCache: newDecryptionCache(),
-	}
+	return NewCachedKVStore(store, 5*time.Second, 10*time.Second)
 }
 
 // SecretsKVStore is an interface for k/v store.
