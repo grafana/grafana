@@ -38,7 +38,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 		Login:          "grafana",
 		Password:       "password",
 	})
-
+	apiClient := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
 	// create another organisation
 	orgID := createOrg(t, s, "another org", userID)
 	// ensure that the orgID is 3 (the disabled org)
@@ -150,8 +150,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 	// Now, let's set an alert that should fire as quickly as possible.
 	{
 		// Create the namespace we'll save our alerts to
-		err := createFolder(t, "default", grafanaListedAddr, "grafana", "password")
-		require.NoError(t, err)
+		apiClient.CreateFolder(t, "default", "default")
 		interval, err := model.ParseDuration("10s")
 		require.NoError(t, err)
 

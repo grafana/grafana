@@ -257,6 +257,34 @@ func TestIsSymlinkRelativeTo(t *testing.T) {
 			symlinkOrigPath: "/dir/sub-dir/test1.txt",
 			expected:        false,
 		},
+		{
+			desc:            "Symbolic link pointing to relative file outside basePath should return false",
+			basePath:        "/dir",
+			symlinkDestPath: "../../",
+			symlinkOrigPath: "/dir/sub-sir/symlink.txt",
+			expected:        false,
+		},
+		{
+			desc:            "Symbolic link pointing to relative file outside basePath should return false",
+			basePath:        "/dir",
+			symlinkDestPath: "../..",
+			symlinkOrigPath: "/dir/sub-sir/symlink.txt",
+			expected:        false,
+		},
+		{
+			desc:            "Symbolic link pointing to relative file outside basePath should return false",
+			basePath:        "/dir",
+			symlinkDestPath: "../../",
+			symlinkOrigPath: "/dir/sub-sir/",
+			expected:        false,
+		},
+		{
+			desc:            "Symbolic link pointing to relative file outside basePath should return false",
+			basePath:        "/dir",
+			symlinkDestPath: "../..",
+			symlinkOrigPath: "/dir/sub-sir/",
+			expected:        false,
+		},
 	}
 
 	for _, tc := range tcs {

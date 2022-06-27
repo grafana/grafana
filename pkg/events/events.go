@@ -62,3 +62,11 @@ type DataSourceCreated struct {
 	UID       string    `json:"uid"`
 	OrgID     int64     `json:"org_id"`
 }
+
+type FolderUpdated struct {
+	Timestamp time.Time `json:"timestamp"`
+	Title     string    `json:"name"`
+	ID        int64     `json:"id"`
+	UID       string    `json:"uid"`
+	OrgID     int64     `json:"org_id"`
+}

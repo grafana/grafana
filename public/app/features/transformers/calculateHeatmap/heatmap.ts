@@ -11,6 +11,10 @@ import {
   DataFrameType,
   getFieldDisplayName,
   Field,
+  getValueFormat,
+  formattedValueToString,
+  durationToMilliseconds,
+  parseDuration,
 } from '@grafana/data';
 import { ScaleDistribution } from '@grafana/schema';
 
@@ -49,21 +53,44 @@ export function sortAscStrInf(aName?: string | null, bName?: string | null) {
   return parseNumeric(aName) - parseNumeric(bName);
 }
 
-export interface HeatmapScanlinesCustomMeta {
+export interface HeatmapRowsCustomMeta {
   /** This provides the lookup values */
   yOrdinalDisplay: string[];
   yOrdinalLabel?: string[];
   yMatchWithLabel?: string;
+  yMinDisplay?: string;
 }
 
 /** simple utility to get heatmap metadata from a frame */
-export function readHeatmapScanlinesCustomMeta(frame?: DataFrame): HeatmapScanlinesCustomMeta {
-  return (frame?.meta?.custom ?? {}) as HeatmapScanlinesCustomMeta;
+export function readHeatmapRowsCustomMeta(frame?: DataFrame): HeatmapRowsCustomMeta {
+  return (frame?.meta?.custom ?? {}) as HeatmapRowsCustomMeta;
+}
+
+export function isHeatmapCellsDense(frame: DataFrame) {
+  let foundY = false;
+
+  for (let field of frame.fields) {
+    // dense heatmap frames can only have one of these fields
+    switch (field.name) {
+      case 'y':
+      case 'yMin':
+      case 'yMax':
+        if (foundY) {
+          return false;
+        }
+
+        foundY = true;
+    }
+  }
+
+  return foundY;
 }
 
 export interface RowsHeatmapOptions {
   frame: DataFrame;
   value?: string; // the field value name
+  unit?: string;
+  decimals?: number;
   layout?: HeatmapCellLayout;
 }
 
@@ -117,13 +144,35 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
       break;
   }
 
-  const custom: HeatmapScanlinesCustomMeta = {
+  const custom: HeatmapRowsCustomMeta = {
     yOrdinalDisplay: yFields.map((f) => getFieldDisplayName(f, opts.frame)),
     yMatchWithLabel: Object.keys(yFields[0].labels ?? {})[0],
   };
   if (custom.yMatchWithLabel) {
     custom.yOrdinalLabel = yFields.map((f) => f.labels?.[custom.yMatchWithLabel!] ?? '');
+    if (custom.yMatchWithLabel === 'le') {
+      custom.yMinDisplay = '0.0';
+    }
   }
+
+  // Format the labels as a value
+  // TODO: this leaves the internally prepended '0.0' without this formatting treatment
+  if (opts.unit?.length || opts.decimals != null) {
+    const fmt = getValueFormat(opts.unit ?? 'short');
+    if (custom.yMinDisplay) {
+      custom.yMinDisplay = formattedValueToString(fmt(0, opts.decimals));
+    }
+    custom.yOrdinalDisplay = custom.yOrdinalDisplay.map((name) => {
+      let num = +name;
+
+      if (!Number.isNaN(num)) {
+        return formattedValueToString(fmt(num, opts.decimals));
+      }
+
+      return name;
+    });
+  }
+
   return {
     length: xs.length,
     refId: opts.frame.refId,
@@ -247,11 +296,12 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
   const scaleDistribution = options.yBuckets?.scale ?? {
     type: ScaleDistribution.Linear,
   };
+
   const heat2d = heatmap(xs, ys, {
     xSorted: true,
     xTime: xField.type === FieldType.time,
     xMode: xBucketsCfg.mode,
-    xSize: xBucketsCfg.value ? +xBucketsCfg.value : undefined,
+    xSize: durationToMilliseconds(parseDuration(xBucketsCfg.value ?? '')),
     yMode: yBucketsCfg.mode,
     ySize: yBucketsCfg.value ? +yBucketsCfg.value : undefined,
     yLog: scaleDistribution?.type === ScaleDistribution.Log ? (scaleDistribution?.log as any) : undefined,
@@ -293,9 +343,6 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
   };
 
   //console.timeEnd('calculateHeatmapFromData');
-
-  //console.log({ tiles: frame.length });
-
   return frame;
 }
 
@@ -340,6 +387,8 @@ function heatmap(xs: number[], ys: number[], opts?: HeatmapOpts) {
   let maxX = xSorted ? xs[len - 1] : -Infinity;
   let maxY = ySorted ? ys[len - 1] : -Infinity;
 
+  let yExp = opts?.yLog;
+
   for (let i = 0; i < len; i++) {
     if (!xSorted) {
       minX = Math.min(minX, xs[i]);
@@ -347,15 +396,11 @@ function heatmap(xs: number[], ys: number[], opts?: HeatmapOpts) {
     }
 
     if (!ySorted) {
-      minY = Math.min(minY, ys[i]);
-      maxY = Math.max(maxY, ys[i]);
+      if (!yExp || ys[i] > 0) {
+        minY = Math.min(minY, ys[i]);
+        maxY = Math.max(maxY, ys[i]);
+      }
     }
-  }
-
-  let yExp = opts?.yLog;
-
-  if (yExp && (minY <= 0 || maxY <= 0)) {
-    throw 'Log Y axes cannot have values <= 0';
   }
 
   //let scaleX = opts?.xLog === 10 ? Math.log10 : opts?.xLog === 2 ? Math.log2 : (v: number) => v;
@@ -419,6 +464,10 @@ function heatmap(xs: number[], ys: number[], opts?: HeatmapOpts) {
   let [xs2, ys2, counts] = initBins(xBinQty, yBinQty, minXBin, xBinIncr, minYBin, yBinIncr, yExp);
 
   for (let i = 0; i < len; i++) {
+    if (yExp && ys[i] <= 0) {
+      continue;
+    }
+
     const xi = (binX(xs[i]) - minXBin) / xBinIncr;
     const yi = (binY(ys[i]) - minYBin) / yBinIncr;
     const ci = xi * yBinQty + yi;

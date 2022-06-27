@@ -81,8 +81,6 @@ func New(
 		return nil, fmt.Errorf("error reading settings: %w", err)
 	}
 
-	p := client.NewProvider(settings, jsonData, httpClientProvider, cfg, features, plog)
-
 	customHeaders := make(map[string]string)
 	var jsonDataMap map[string]interface{}
 
@@ -113,7 +111,7 @@ func New(
 
 	return &Resource{
 		log:           plog,
-		provider:      p,
+		provider:      client.NewProvider(settings, jsonData, httpClientProvider, cfg, features, plog),
 		customHeaders: customHeaders,
 	}, nil
 }

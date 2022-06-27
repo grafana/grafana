@@ -46,9 +46,12 @@ Scopes must have an order to ensure consistency and ease of search, this helps u
 ## Grafana Alerting - main / unreleased
 
 - [CHANGE] Rule API to reject request to update rules that affects provisioned rules #50835
+- [FEATURE] Add first Grafana reserved label, grafana_folder is created during runtime and stores an alert's folder/namespace title #50262
 - [FEATURE] use optimistic lock by version field when updating alert rules #50274
+- [BUGFIX] State manager to use tick time to determine stale states #50991
 - [ENHANCEMENT] Scheduler: Drop ticks if rule evaluation is too slow and adds a metric grafana_alerting_schedule_rule_evaluations_missed_total to track missed evaluations per rule #48885
 - [ENHANCEMENT] Ticker to tick at predictable time #50197
+- [ENHANCEMENT] Migration: Don't stop the migration when failing to parse alert rule tags #51253
 
 ## 9.0.0
 
@@ -70,6 +73,7 @@ Scopes must have an order to ensure consistency and ease of search, this helps u
 - [FEATURE] Indicate whether contact point is provisioned when GETting Alertmanager configuration #48323
 - [FEATURE] Indicate whether alert rule is provisioned when GETting the rule #48458
 - [FEATURE] Alert rules with associated panels will take screenshots. #49293 #49338 #49374 #49377 #49378 #49379 #49381 #49385 #49439 #49445
+- [FEATURE] Persistent order of alert rules in a group #50051
 - [BUGFIX] Migration: ignore alerts that do not belong to any existing organization\dashboard #49192
 - [BUGFIX] Allow anonymous access to alerts #49203
 - [BUGFIX] RBAC: replace create\update\delete actions for notification policies by alert.notifications:write #49185
