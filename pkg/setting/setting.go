@@ -360,6 +360,7 @@ type Cfg struct {
 	// User
 	UserInviteMaxLifetime time.Duration
 	HiddenUsers           map[string]struct{}
+	CaseInsensitiveLogin  bool // Login and Email will be considered case insensitive
 
 	// Annotations
 	AnnotationCleanupJobBatchSize      int64
@@ -397,8 +398,9 @@ type Cfg struct {
 
 	Quota QuotaSettings
 
-	DefaultTheme string
-	HomePage     string
+	DefaultTheme  string
+	DefaultLocale string
+	HomePage      string
 
 	AutoAssignOrg              bool
 	AutoAssignOrgId            int
@@ -972,7 +974,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	ProfileEnabled = profile.Key("enabled").MustBool(true)
 
 	queryHistory := iniFile.Section("query_history")
-	cfg.QueryHistoryEnabled = queryHistory.Key("enabled").MustBool(false)
+	cfg.QueryHistoryEnabled = queryHistory.Key("enabled").MustBool(true)
 
 	panelsSection := iniFile.Section("panels")
 	cfg.DisableSanitizeHtml = panelsSection.Key("disable_sanitize_html").MustBool(false)
@@ -1353,9 +1355,12 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	AutoAssignOrgRole = cfg.AutoAssignOrgRole
 	VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
 
+	cfg.CaseInsensitiveLogin = users.Key("case_insensitive_login").MustBool(false)
+
 	LoginHint = valueAsString(users, "login_hint", "")
 	PasswordHint = valueAsString(users, "password_hint", "")
 	cfg.DefaultTheme = valueAsString(users, "default_theme", "")
+	cfg.DefaultLocale = valueAsString(users, "default_locale", "")
 	cfg.HomePage = valueAsString(users, "home_page", "")
 	ExternalUserMngLinkUrl = valueAsString(users, "external_manage_link_url", "")
 	ExternalUserMngLinkName = valueAsString(users, "external_manage_link_name", "")

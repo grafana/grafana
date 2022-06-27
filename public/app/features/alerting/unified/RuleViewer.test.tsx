@@ -16,7 +16,7 @@ import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 
 jest.mock('./hooks/useCombinedRule');
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as any),
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => {
     return {
       getInstanceSettings: () => ({ name: 'prometheus' }),

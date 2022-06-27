@@ -160,9 +160,12 @@ compilation-stats.json
 *_gen.go
 !pkg/services/featuremgmt/toggles_gen.go
 !pkg/coremodel/**/*_gen.go
+!pkg/framework/**/*_gen.go
 
 # Auto-generated localisation files
 public/locales/_build/
 public/locales/**/*.js
 
 deployment_tools_config.json
+
+.betterer.cache

@@ -26,11 +26,4 @@ export enum DataFrameType {
    * If the y value is actually ordinal, use `meta.custom` to specify the bucket lookup values
    */
   HeatmapCells = 'heatmap-cells',
-
-  /**
-   *  WIP sparse heatmap support
-   *
-   *  @private
-   */
-  HeatmapSparse = 'heatmap-cells-sparse',
 }

@@ -23,6 +23,8 @@ import {
   changeStateFilter,
   createServiceAccountToken,
   getApiKeysMigrationStatus,
+  getApiKeysMigrationInfo,
+  closeApiKeysMigrationInfo,
 } from './state/actions';
 
 interface OwnProps {}
@@ -45,6 +47,8 @@ const mapDispatchToProps = {
   changeStateFilter,
   createServiceAccountToken,
   getApiKeysMigrationStatus,
+  getApiKeysMigrationInfo,
+  closeApiKeysMigrationInfo,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -58,6 +62,7 @@ export const ServiceAccountsListPageUnconnected = ({
   query,
   serviceAccountStateFilter,
   apiKeysMigrated,
+  showApiKeysMigrationInfo,
   changeQuery,
   fetchACOptions,
   fetchServiceAccounts,
@@ -66,6 +71,8 @@ export const ServiceAccountsListPageUnconnected = ({
   changeStateFilter,
   createServiceAccountToken,
   getApiKeysMigrationStatus,
+  getApiKeysMigrationInfo,
+  closeApiKeysMigrationInfo,
 }: Props): JSX.Element => {
   const styles = useStyles2(getStyles);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -77,10 +84,11 @@ export const ServiceAccountsListPageUnconnected = ({
   useEffect(() => {
     fetchServiceAccounts({ withLoadingIndicator: true });
     getApiKeysMigrationStatus();
+    getApiKeysMigrationInfo();
     if (contextSrv.licensedAccessControlEnabled()) {
       fetchACOptions();
     }
-  }, [fetchACOptions, fetchServiceAccounts, getApiKeysMigrationStatus]);
+  }, [fetchACOptions, fetchServiceAccounts, getApiKeysMigrationStatus, getApiKeysMigrationInfo]);
 
   const noServiceAccountsCreated =
     serviceAccounts.length === 0 && serviceAccountStateFilter === ServiceAccountStateFilter.All && !query;
@@ -157,13 +165,13 @@ export const ServiceAccountsListPageUnconnected = ({
   };
 
   const onMigrationInfoClose = () => {
-    // TODO: dismiss banner permanently
+    closeApiKeysMigrationInfo();
   };
 
   return (
     <Page navModel={navModel}>
       <Page.Contents>
-        {apiKeysMigrated && (
+        {apiKeysMigrated && showApiKeysMigrationInfo && (
           <Alert
             title="API keys migrated to Service accounts. Your keys are now called tokens and live inside respective service
           accounts. Learn more."
@@ -179,7 +187,8 @@ export const ServiceAccountsListPageUnconnected = ({
               interactive
               content={
                 <>
-                  API keys are now service Accounts with tokens. <a href="">Read more</a>
+                  API keys are now service accounts with tokens. Find out more{' '}
+                  <a href="https://grafana.com/docs/grafana/latest/administration/service-accounts/">here.</a>
                 </>
               }
             >

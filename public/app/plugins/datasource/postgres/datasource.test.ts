@@ -6,7 +6,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { PostgresDatasource } from './datasource';
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as any),
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
   getTemplateSrv: () => ({
     replace: (val: string): string => {
