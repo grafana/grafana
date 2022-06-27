@@ -3,7 +3,7 @@
   "license": "AGPL-3.0-only",
   "private": true,
   "name": "grafana",
-  "version": "9.0.0-pre",
+  "version": "9.1.0-pre",
   "repository": "github:grafana/grafana",
   "scripts": {
     "api-tests": "jest --notify --watch --config=devenv/e2e-api-tests/jest.js",
@@ -53,7 +53,8 @@
     "i18n:extract": "lingui extract",
     "i18n:compile": "lingui compile",
     "postinstall": "husky install",
-    "betterer": "betterer --cache",
+    "betterer": "betterer",
+    "betterer:merge": "betterer merge",
     "betterer:stats": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/reportBettererStats.ts"
   },
   "grafana": {
@@ -62,7 +63,7 @@
   },
   "lint-staged": {
     "*.{js,ts,tsx}": [
-      "betterer --cache precommit",
+      "betterer precommit",
       "eslint --ext .js,.tsx,.ts --cache --fix",
       "prettier --write"
     ],
@@ -96,7 +97,7 @@
     "@emotion/eslint-plugin": "11.7.0",
     "@grafana/api-documenter": "7.11.2",
     "@grafana/e2e": "workspace:*",
-    "@grafana/eslint-config": "3.0.0",
+    "@grafana/eslint-config": "4.0.0",
     "@grafana/toolkit": "workspace:*",
     "@grafana/tsconfig": "^1.2.0-rc1",
     "@lingui/cli": "3.13.3",
