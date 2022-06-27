@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { FieldConfig, LinkModel } from '@grafana/data';
+import { LinkModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { linkModelToContextMenuItems } from '../../utils/dataLinks';
@@ -12,7 +12,6 @@ import { MenuItem } from '../Menu/MenuItem';
 interface DataLinksContextMenuProps {
   children: (props: DataLinksContextMenuApi) => JSX.Element;
   links: () => LinkModel[];
-  config: FieldConfig;
 }
 
 export interface DataLinksContextMenuApi {
@@ -20,9 +19,9 @@ export interface DataLinksContextMenuApi {
   targetClassName?: string;
 }
 
-export const DataLinksContextMenu: React.FC<DataLinksContextMenuProps> = ({ children, links, config }) => {
-  const linksCounter = config.links!.length;
+export const DataLinksContextMenu: React.FC<DataLinksContextMenuProps> = ({ children, links }) => {
   const itemsGroup: MenuItemsGroup[] = [{ items: linkModelToContextMenuItems(links), label: 'Data links' }];
+  const linksCounter = itemsGroup[0].items.length;
   const renderMenuGroupItems = () => {
     return itemsGroup.map((group, index) => (
       <MenuGroup key={`${group.label}${index}`} label={group.label}>
