@@ -100,7 +100,7 @@ export class DashboardGridUnconnected extends PureComponent<Props, State> {
 
   onLayoutChange = (newLayout: ReactGridLayout.Layout[]) => {
     for (const newPos of newLayout) {
-      this.panelMap[newPos.i!].updateGridPos(newPos);
+      this.panelMap[newPos.i!].updateGridPos(newPos, this.state.isLayoutInitialized);
     }
 
     this.props.dashboard.sortPanelsByGridPos();
