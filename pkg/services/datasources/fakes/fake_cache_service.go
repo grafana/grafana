@@ -8,25 +8,25 @@ import (
 )
 
 type FakeCacheService struct {
-	DataSources []*models.DataSource
+	DataSources []*datasources.DataSource
 }
 
 var _ datasources.CacheService = &FakeCacheService{}
 
-func (c *FakeCacheService) GetDatasource(ctx context.Context, datasourceID int64, user *models.SignedInUser, skipCache bool) (*models.DataSource, error) {
+func (c *FakeCacheService) GetDatasource(ctx context.Context, datasourceID int64, user *models.SignedInUser, skipCache bool) (*datasources.DataSource, error) {
 	for _, datasource := range c.DataSources {
 		if datasource.Id == datasourceID {
 			return datasource, nil
 		}
 	}
-	return nil, models.ErrDataSourceNotFound
+	return nil, datasources.ErrDataSourceNotFound
 }
 
-func (c *FakeCacheService) GetDatasourceByUID(ctx context.Context, datasourceUID string, user *models.SignedInUser, skipCache bool) (*models.DataSource, error) {
+func (c *FakeCacheService) GetDatasourceByUID(ctx context.Context, datasourceUID string, user *models.SignedInUser, skipCache bool) (*datasources.DataSource, error) {
 	for _, datasource := range c.DataSources {
 		if datasource.Uid == datasourceUID {
 			return datasource, nil
 		}
 	}
-	return nil, models.ErrDataSourceNotFound
+	return nil, datasources.ErrDataSourceNotFound
 }

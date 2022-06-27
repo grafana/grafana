@@ -34,4 +34,5 @@ type SearchService interface {
 	registry.BackgroundService
 	DoDashboardQuery(ctx context.Context, user *backend.User, orgId int64, query DashboardQuery) *backend.DataResponse
 	RegisterDashboardIndexExtender(ext DashboardIndexExtender)
+	TriggerReIndex()
 }

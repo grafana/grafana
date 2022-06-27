@@ -161,7 +161,7 @@ func GetExprRequest(ctx AlertExecCtx, data []models.AlertQuery, now time.Time, d
 		},
 	}
 
-	datasources := make(map[string]*m.DataSource, len(data))
+	datasources := make(map[string]*datasources.DataSource, len(data))
 
 	for i := range data {
 		q := data[i]
