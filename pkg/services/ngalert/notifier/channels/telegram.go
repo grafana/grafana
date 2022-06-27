@@ -124,7 +124,11 @@ func (tn *TelegramNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 				if err != nil {
 					return fmt.Errorf("failed to open image: %w", err)
 				}
-				defer f.Close()
+				defer func() {
+					if err := f.Close(); err != nil {
+						tn.log.Warn("failed to close image", "err", err)
+					}
+				}()
 				fw, err := w.CreateFormFile("photo", image.Path)
 				if err != nil {
 					return fmt.Errorf("failed to create form file: %w", err)
