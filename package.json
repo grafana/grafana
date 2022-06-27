@@ -211,7 +211,7 @@
     "jest-junit": "13.2.0",
     "jest-matcher-utils": "28.1.0",
     "jest-mock-console": "1.2.3",
-    "lerna": "^4.0.0",
+    "lerna": "5.1.6",
     "lint-staged": "12.4.1",
     "mini-css-extract-plugin": "2.6.0",
     "mutationobserver-shim": "0.3.7",
