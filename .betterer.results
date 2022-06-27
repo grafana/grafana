@@ -9466,10 +9466,10 @@ exports[`better eslint`] = {
       [51, 27, 3, "Unexpected any. Specify a different type.", "193409811"],
       [56, 19, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/mssql/response_parser.ts:4040977456": [
-      [5, 19, 44, "Do not use any type assertions.", "1721934533"],
-      [37, 45, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [38, 19, 55, "Do not use any type assertions.", "52331741"]
+    "public/app/plugins/datasource/mssql/response_parser.ts:3188817026": [
+      [7, 19, 44, "Do not use any type assertions.", "1721934533"],
+      [36, 45, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [37, 19, 55, "Do not use any type assertions.", "52331741"]
     ],
     "public/app/plugins/datasource/mssql/specs/datasource.test.ts:1031027185": [
       [11, 6, 59, "Do not use any type assertions.", "3685154675"],
@@ -9590,10 +9590,10 @@ exports[`better eslint`] = {
       [642, 24, 3, "Unexpected any. Specify a different type.", "193409811"],
       [642, 30, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/mysql/response_parser.ts:2781493345": [
-      [5, 19, 44, "Do not use any type assertions.", "1721934533"],
-      [37, 45, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [38, 19, 55, "Do not use any type assertions.", "52331741"]
+    "public/app/plugins/datasource/mysql/response_parser.ts:2094461587": [
+      [7, 19, 44, "Do not use any type assertions.", "1721934533"],
+      [36, 45, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [37, 19, 55, "Do not use any type assertions.", "52331741"]
     ],
     "public/app/plugins/datasource/mysql/specs/datasource.test.ts:3991124757": [
       [19, 38, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -9850,10 +9850,10 @@ exports[`better eslint`] = {
       [688, 24, 3, "Unexpected any. Specify a different type.", "193409811"],
       [688, 30, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/postgres/response_parser.ts:2077296207": [
-      [5, 19, 44, "Do not use any type assertions.", "1721934533"],
-      [37, 45, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [38, 19, 55, "Do not use any type assertions.", "52331741"]
+    "public/app/plugins/datasource/postgres/response_parser.ts:2167297341": [
+      [7, 19, 44, "Do not use any type assertions.", "1721934533"],
+      [36, 45, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [37, 19, 55, "Do not use any type assertions.", "52331741"]
     ],
     "public/app/plugins/datasource/postgres/specs/datasource.test.ts:2366687477": [
       [19, 6, 59, "Do not use any type assertions.", "3685154675"],
