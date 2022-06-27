@@ -201,6 +201,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
             formatValue: (v) => formattedValueToString(fmt(v)),
             theme,
             grid: { show: customConfig.axisGridShow },
+            show: customConfig.hideFrom?.viz === false,
           },
           field
         )
