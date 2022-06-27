@@ -42,7 +42,7 @@ export class SQLSearcher implements GrafanaSearcher {
       throw 'facets not supported!';
     }
     const q: APIQuery = {
-      limit: 1000, // 1k max values
+      limit: query.limit ?? 1000, // default 1k max values
       tag: query.tags,
       sort: query.sort,
     };

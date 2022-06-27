@@ -744,6 +744,8 @@ func TestNotificationChannels(t *testing.T) {
 		Login:          "grafana",
 	})
 
+	apiClient := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
+
 	{
 		// There are no notification channel config initially - so it returns the default configuration.
 		alertsURL := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
@@ -755,9 +757,7 @@ func TestNotificationChannels(t *testing.T) {
 
 	{
 		// Create the namespace we'll save our alerts to.
-		err := createFolder(t, "default", grafanaListedAddr, "grafana", "password")
-		require.NoError(t, err)
-		reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
+		apiClient.CreateFolder(t, "default", "default")
 
 		// Post the alertmanager config.
 		u := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
