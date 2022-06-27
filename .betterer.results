@@ -86,7 +86,7 @@ exports[`no enzyme tests`] = {
     "public/app/features/alerting/TestRuleResult.test.tsx:2358420489": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/dashboard/components/ShareModal/ShareLink.test.tsx:3553646686": [
+    "public/app/features/dashboard/components/ShareModal/ShareLink.test.tsx:3716733755": [
       [0, 35, 13, "RegExp match", "2409514259"]
     ],
     "public/app/features/dashboard/dashgrid/DashboardGrid.test.tsx:2723773538": [
@@ -4886,36 +4886,12 @@ exports[`better eslint`] = {
       [16, 40, 3, "Unexpected any. Specify a different type.", "193409811"],
       [30, 18, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/dashboard/components/ShareModal/ShareEmbed.test.tsx:2703340283": [
-      [39, 3, 13, "Do not use any type assertions.", "538937261"],
-      [39, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [48, 24, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [54, 22, 55, "Do not use any type assertions.", "2080143574"],
-      [58, 9, 3, "Unexpected any. Specify a different type.", "193409811"]
-    ],
-    "public/app/features/dashboard/components/ShareModal/ShareExport.tsx:3901008754": [
-      [51, 67, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [55, 25, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [66, 23, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [81, 67, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [85, 25, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [96, 23, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [105, 28, 3, "Unexpected any. Specify a different type.", "193409811"]
-    ],
-    "public/app/features/dashboard/components/ShareModal/ShareLink.test.tsx:2357087833": [
-      [33, 3, 13, "Do not use any type assertions.", "538937261"],
-      [33, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [42, 3, 13, "Do not use any type assertions.", "538937261"],
-      [42, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [76, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [77, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [80, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [81, 21, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [111, 24, 63, "Do not use any type assertions.", "3674793430"],
-      [115, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [197, 24, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [203, 22, 55, "Do not use any type assertions.", "2080143574"],
-      [207, 9, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/features/dashboard/components/ShareModal/ShareEmbed.test.tsx:1798881678": [
+      [41, 3, 13, "Do not use any type assertions.", "538937261"],
+      [41, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [50, 24, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [57, 22, 55, "Do not use any type assertions.", "2080143574"],
+      [61, 9, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/dashboard/components/ShareModal/ShareExport.tsx:1231464422": [
       [55, 67, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -4926,28 +4902,30 @@ exports[`better eslint`] = {
       [100, 23, 3, "Unexpected any. Specify a different type.", "193409811"],
       [109, 28, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/dashboard/components/ShareModal/ShareLink.test.tsx:3553646686": [
-      [34, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
+    "public/app/features/dashboard/components/ShareModal/ShareLink.test.tsx:3716733755": [
+      [43, 3, 13, "Do not use any type assertions.", "538937261"],
       [43, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
       [77, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
       [78, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
       [81, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
       [82, 21, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [113, 24, 63, "Do not use any type assertions.", "3674793430"],
       [117, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
       [199, 24, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [205, 22, 55, "Do not use any type assertions.", "2080143574"],
       [209, 9, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/dashboard/components/ShareModal/ShareModal.tsx:2780210084": [
       [86, 20, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/dashboard/components/ShareModal/SharePublicDashboard.test.tsx:3005912975": [
-      [18, 19, 68, "Do not use any type assertions.", "630749985"],
-      [18, 19, 54, "Do not use any type assertions.", "4291334336"],
-      [23, 6, 59, "Do not use any type assertions.", "3685154675"],
-      [23, 6, 49, "Do not use any type assertions.", "1184085652"],
-      [44, 24, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [50, 22, 55, "Do not use any type assertions.", "2080143574"],
-      [54, 9, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/features/dashboard/components/ShareModal/SharePublicDashboard.test.tsx:3176925826": [
+      [20, 19, 68, "Do not use any type assertions.", "630749985"],
+      [20, 19, 54, "Do not use any type assertions.", "4291334336"],
+      [25, 6, 59, "Do not use any type assertions.", "3685154675"],
+      [25, 6, 49, "Do not use any type assertions.", "1184085652"],
+      [46, 24, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [53, 22, 55, "Do not use any type assertions.", "2080143574"],
+      [57, 9, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/dashboard/components/ShareModal/SharePublicDashboardUtils.test.tsx:3549968113": [
       [24, 18, 46, "Do not use any type assertions.", "2293567025"],
@@ -4955,8 +4933,8 @@ exports[`better eslint`] = {
       [36, 18, 30, "Do not use any type assertions.", "387012726"],
       [38, 14, 21, "Do not use any type assertions.", "3316176532"]
     ],
-    "public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx:305910085": [
-      [148, 43, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx:2987761063": [
+      [149, 43, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/dashboard/components/ShareModal/utils.test.ts:3192556439": [
       [34, 31, 115, "Do not use any type assertions.", "3780428905"],
