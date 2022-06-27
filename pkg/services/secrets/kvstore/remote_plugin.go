@@ -14,7 +14,6 @@ type secretsKVStorePlugin struct {
 	log            log.Logger
 	secretsPlugin  smp.SecretsManagerPlugin
 	secretsService secrets.Service
-	shortCache     CachedKVStore
 }
 
 // Get an item from the store
