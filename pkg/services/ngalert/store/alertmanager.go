@@ -119,7 +119,6 @@ func (st *DBstore) UpdateAlertmanagerConfiguration(ctx context.Context, cmd *mod
 		}
 		return err
 	})
-
 }
 
 func getInsertQuery(driver string) string {
