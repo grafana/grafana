@@ -4,8 +4,6 @@ package eval
 
 import (
 	backend "github.com/grafana/grafana-plugin-sdk-go/backend"
-	expr "github.com/grafana/grafana/pkg/expr"
-
 	mock "github.com/stretchr/testify/mock"
 
 	models "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -26,13 +24,13 @@ func (_m *FakeEvaluator) EXPECT() *FakeEvaluator_Expecter {
 	return &FakeEvaluator_Expecter{mock: &_m.Mock}
 }
 
-// ConditionEval provides a mock function with given fields: condition, now, expressionService
-func (_m *FakeEvaluator) ConditionEval(condition *models.Condition, now time.Time, expressionService *expr.Service) (Results, error) {
-	ret := _m.Called(condition, now, expressionService)
+// ConditionEval provides a mock function with given fields: condition, now
+func (_m *FakeEvaluator) ConditionEval(condition *models.Condition, now time.Time) (Results, error) {
+	ret := _m.Called(condition, now)
 
 	var r0 Results
-	if rf, ok := ret.Get(0).(func(*models.Condition, time.Time, *expr.Service) Results); ok {
-		r0 = rf(condition, now, expressionService)
+	if rf, ok := ret.Get(0).(func(*models.Condition, time.Time) Results); ok {
+		r0 = rf(condition, now)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(Results)
@@ -40,8 +38,8 @@ func (_m *FakeEvaluator) ConditionEval(condition *models.Condition, now time.Tim
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(*models.Condition, time.Time, *expr.Service) error); ok {
-		r1 = rf(condition, now, expressionService)
+	if rf, ok := ret.Get(1).(func(*models.Condition, time.Time) error); ok {
+		r1 = rf(condition, now)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -57,14 +55,13 @@ type FakeEvaluator_ConditionEval_Call struct {
 // ConditionEval is a helper method to define mock.On call
 //  - condition *models.Condition
 //  - now time.Time
-//  - expressionService *expr.Service
-func (_e *FakeEvaluator_Expecter) ConditionEval(condition interface{}, now interface{}, expressionService interface{}) *FakeEvaluator_ConditionEval_Call {
-	return &FakeEvaluator_ConditionEval_Call{Call: _e.mock.On("ConditionEval", condition, now, expressionService)}
+func (_e *FakeEvaluator_Expecter) ConditionEval(condition interface{}, now interface{}) *FakeEvaluator_ConditionEval_Call {
+	return &FakeEvaluator_ConditionEval_Call{Call: _e.mock.On("ConditionEval", condition, now)}
 }
 
-func (_c *FakeEvaluator_ConditionEval_Call) Run(run func(condition *models.Condition, now time.Time, expressionService *expr.Service)) *FakeEvaluator_ConditionEval_Call {
+func (_c *FakeEvaluator_ConditionEval_Call) Run(run func(condition *models.Condition, now time.Time)) *FakeEvaluator_ConditionEval_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(*models.Condition), args[1].(time.Time), args[2].(*expr.Service))
+		run(args[0].(*models.Condition), args[1].(time.Time))
 	})
 	return _c
 }
@@ -74,13 +71,13 @@ func (_c *FakeEvaluator_ConditionEval_Call) Return(_a0 Results, _a1 error) *Fake
 	return _c
 }
 
-// QueriesAndExpressionsEval provides a mock function with given fields: orgID, data, now, expressionService
-func (_m *FakeEvaluator) QueriesAndExpressionsEval(orgID int64, data []models.AlertQuery, now time.Time, expressionService *expr.Service) (*backend.QueryDataResponse, error) {
-	ret := _m.Called(orgID, data, now, expressionService)
+// QueriesAndExpressionsEval provides a mock function with given fields: orgID, data, now
+func (_m *FakeEvaluator) QueriesAndExpressionsEval(orgID int64, data []models.AlertQuery, now time.Time) (*backend.QueryDataResponse, error) {
+	ret := _m.Called(orgID, data, now)
 
 	var r0 *backend.QueryDataResponse
-	if rf, ok := ret.Get(0).(func(int64, []models.AlertQuery, time.Time, *expr.Service) *backend.QueryDataResponse); ok {
-		r0 = rf(orgID, data, now, expressionService)
+	if rf, ok := ret.Get(0).(func(int64, []models.AlertQuery, time.Time) *backend.QueryDataResponse); ok {
+		r0 = rf(orgID, data, now)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*backend.QueryDataResponse)
@@ -88,8 +85,8 @@ func (_m *FakeEvaluator) QueriesAndExpressionsEval(orgID int64, data []models.Al
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(int64, []models.AlertQuery, time.Time, *expr.Service) error); ok {
-		r1 = rf(orgID, data, now, expressionService)
+	if rf, ok := ret.Get(1).(func(int64, []models.AlertQuery, time.Time) error); ok {
+		r1 = rf(orgID, data, now)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -106,14 +103,13 @@ type FakeEvaluator_QueriesAndExpressionsEval_Call struct {
 //  - orgID int64
 //  - data []models.AlertQuery
 //  - now time.Time
-//  - expressionService *expr.Service
-func (_e *FakeEvaluator_Expecter) QueriesAndExpressionsEval(orgID interface{}, data interface{}, now interface{}, expressionService interface{}) *FakeEvaluator_QueriesAndExpressionsEval_Call {
-	return &FakeEvaluator_QueriesAndExpressionsEval_Call{Call: _e.mock.On("QueriesAndExpressionsEval", orgID, data, now, expressionService)}
+func (_e *FakeEvaluator_Expecter) QueriesAndExpressionsEval(orgID interface{}, data interface{}, now interface{}) *FakeEvaluator_QueriesAndExpressionsEval_Call {
+	return &FakeEvaluator_QueriesAndExpressionsEval_Call{Call: _e.mock.On("QueriesAndExpressionsEval", orgID, data, now)}
 }
 
-func (_c *FakeEvaluator_QueriesAndExpressionsEval_Call) Run(run func(orgID int64, data []models.AlertQuery, now time.Time, expressionService *expr.Service)) *FakeEvaluator_QueriesAndExpressionsEval_Call {
+func (_c *FakeEvaluator_QueriesAndExpressionsEval_Call) Run(run func(orgID int64, data []models.AlertQuery, now time.Time)) *FakeEvaluator_QueriesAndExpressionsEval_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(int64), args[1].([]models.AlertQuery), args[2].(time.Time), args[3].(*expr.Service))
+		run(args[0].(int64), args[1].([]models.AlertQuery), args[2].(time.Time))
 	})
 	return _c
 }
