@@ -16,6 +16,7 @@ export interface NavLinkDTO {
   hideFromTabs?: boolean;
   children?: NavLinkDTO[];
   highlightText?: string;
+  emptyMessageId?: string;
 }
 
 export interface NavModelItem extends NavLinkDTO {

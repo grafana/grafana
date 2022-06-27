@@ -15,7 +15,7 @@ interface NodeOptions {
 
 export interface ArcOption {
   field?: string;
-  color?: any;
+  color?: string;
 }
 
 interface EdgeOptions {
