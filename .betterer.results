@@ -1,5 +1,5 @@
 // BETTERER RESULTS V2.
-//
+// 
 // If this file contains merge conflicts, use `betterer merge` to automatically resolve them:
 // https://phenomnomnominal.github.io/betterer/docs/results-file/#merge
 //
@@ -717,7 +717,7 @@ exports[`better eslint`] = {
       [62, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
       [62, 30, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "packages/grafana-data/src/types/datasource.ts:753447592": [
+    "packages/grafana-data/src/types/datasource.ts:1730680024": [
       [24, 85, 3, "Unexpected any. Specify a different type.", "193409811"],
       [27, 73, 3, "Unexpected any. Specify a different type.", "193409811"],
       [46, 28, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -741,13 +741,13 @@ exports[`better eslint`] = {
       [382, 14, 3, "Unexpected any. Specify a different type.", "193409811"],
       [408, 14, 3, "Unexpected any. Specify a different type.", "193409811"],
       [414, 58, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [609, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [619, 37, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [619, 42, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [620, 43, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [620, 59, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [626, 46, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [627, 22, 3, "Unexpected any. Specify a different type.", "193409811"]
+      [608, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [618, 37, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [618, 42, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [619, 43, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [619, 59, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [625, 46, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [626, 22, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "packages/grafana-data/src/types/displayValue.ts:1720677526": [
       [2, 39, 3, "Unexpected any. Specify a different type.", "193409811"]
@@ -1292,10 +1292,11 @@ exports[`better eslint`] = {
       [249, 34, 3, "Unexpected any. Specify a different type.", "193409811"],
       [281, 20, 14, "Do not use any type assertions.", "2578702492"]
     ],
-    "packages/grafana-runtime/src/utils/PublicDashboardDataSource.test.ts:1736449083": [
-      [9, 19, 123, "Do not use any type assertions.", "3028355264"],
-      [9, 19, 109, "Do not use any type assertions.", "4248357345"],
-      [34, 13, 206, "Do not use any type assertions.", "1200376833"]
+    "packages/grafana-runtime/src/utils/PublicDashboardDataSource.test.ts:2842646678": [
+      [13, 19, 123, "Do not use any type assertions.", "3028355264"],
+      [13, 19, 109, "Do not use any type assertions.", "4248357345"],
+      [38, 13, 206, "Do not use any type assertions.", "1200376833"],
+      [71, 49, 52, "Do not use any type assertions.", "2628705608"]
     ],
     "packages/grafana-runtime/src/utils/analytics.ts:2587372676": [
       [44, 87, 3, "Unexpected any. Specify a different type.", "193409811"]
@@ -5105,13 +5106,13 @@ exports[`better eslint`] = {
       [45, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
       [92, 48, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/dashboard/services/PublicDashboardDataSource.ts:3387028257": [
-      [5, 61, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [11, 12, 16, "Do not use any type assertions.", "1747412709"],
-      [21, 34, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [39, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [56, 45, 22, "Do not use any type assertions.", "1838499175"],
-      [64, 28, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/features/dashboard/services/PublicDashboardDataSource.ts:3329147675": [
+      [14, 61, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [20, 12, 16, "Do not use any type assertions.", "1747412709"],
+      [41, 34, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [59, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [76, 45, 22, "Do not use any type assertions.", "1838499175"],
+      [84, 28, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/dashboard/services/TimeSrv.test.ts:1828409802": [
       [16, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -6697,7 +6698,7 @@ exports[`better eslint`] = {
       [325, 33, 50, "Do not use any type assertions.", "1035791784"],
       [325, 33, 13, "Do not use any type assertions.", "2146830713"]
     ],
-    "public/app/features/query/state/PanelQueryRunner.ts:3224973507": [
+    "public/app/features/query/state/PanelQueryRunner.ts:3311920590": [
       [110, 39, 118, "Do not use any type assertions.", "2873233307"],
       [189, 46, 3, "Unexpected any. Specify a different type.", "193409811"],
       [238, 5, 14, "Do not use any type assertions.", "4095749936"],
