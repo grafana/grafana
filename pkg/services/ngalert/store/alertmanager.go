@@ -96,7 +96,53 @@ func (st *DBstore) UpdateAlertmanagerConfiguration(ctx context.Context, cmd *mod
 			OrgID:                     cmd.OrgID,
 			CreatedAt:                 time.Now().Unix(),
 		}
-		res, err := sess.Exec(fmt.Sprintf(`
+		res, err := sess.Exec(fmt.Sprintf(getInsertQuery(st.SQLStore.Dialect.DriverName()), st.SQLStore.Dialect.Quote("default")),
+			config.AlertmanagerConfiguration,
+			config.ConfigurationHash,
+			config.ConfigurationVersion,
+			config.OrgID,
+			config.CreatedAt,
+			st.SQLStore.Dialect.BooleanStr(config.Default),
+			cmd.OrgID,
+			cmd.OrgID,
+			cmd.FetchedConfigurationHash,
+		)
+		//st.Logger.Info("query", "driver", st.SQLStore.Dialect.DriverName())
+		if err != nil {
+			return err
+		}
+		rows, err := res.RowsAffected()
+		if err != nil {
+			return err
+		}
+		if rows == 0 {
+			return ErrVersionLockedObjectNotFound
+		}
+		return err
+	})
+
+}
+
+func getInsertQuery(driver string) string {
+	switch driver {
+	case "postgres":
+		return `
+		INSERT INTO alert_configuration
+		(alertmanager_configuration, configuration_hash, configuration_version, org_id, created_at, %s) 
+		SELECT T.* FROM (VALUES($1,$2,$3,$4::bigint,$5::integer,$6::boolean)) AS T
+		WHERE
+		EXISTS (
+			SELECT 1 
+			FROM alert_configuration 
+			WHERE 
+				org_id = $7 
+			AND 
+				id = (SELECT MAX(id) FROM alert_configuration WHERE org_id = $8::bigint) 
+			AND 
+				configuration_hash = $9
+		)`
+	default:
+		return `
 		INSERT INTO alert_configuration
 		(alertmanager_configuration, configuration_hash, configuration_version, org_id, created_at, %s) 
 		SELECT T.* FROM (VALUES(?,?,?,?,?,?)) AS T
@@ -110,27 +156,6 @@ func (st *DBstore) UpdateAlertmanagerConfiguration(ctx context.Context, cmd *mod
 				id = (SELECT MAX(id) FROM alert_configuration WHERE org_id = ?) 
 			AND 
 				configuration_hash = ?
-		)`, st.SQLStore.Dialect.Quote("default")),
-			config.AlertmanagerConfiguration,
-			config.ConfigurationHash,
-			config.ConfigurationVersion,
-			config.OrgID,
-			config.CreatedAt,
-			st.SQLStore.Dialect.BooleanStr(config.Default),
-			cmd.OrgID,
-			cmd.OrgID,
-			cmd.FetchedConfigurationHash,
-		)
-		if err != nil {
-			return err
-		}
-		rows, err := res.RowsAffected()
-		if err != nil {
-			return err
-		}
-		if rows == 0 {
-			return ErrVersionLockedObjectNotFound
-		}
-		return err
-	})
+		)`
+	}
 }
