@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
-	"github.com/grafana/grafana/pkg/services/orguser/orgusertest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
 )
@@ -13,11 +12,9 @@ import (
 func TestUserService(t *testing.T) {
 	userStore := newUserStoreFake()
 	orgService := orgtest.NewOrgServiceFake()
-	orgUserService := orgusertest.NewOrgUserServiceFake()
 	userService := Service{
-		store:          userStore,
-		orgService:     orgService,
-		orgUserService: orgUserService,
+		store:      userStore,
+		orgService: orgService,
 	}
 
 	t.Run("create user", func(t *testing.T) {

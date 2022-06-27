@@ -36,12 +36,12 @@ func (e *ErrCaseInsensitiveLoginConflict) Error() string {
 		n, strings.Join(userStrings, ", "))
 }
 
-func (ss *SQLStore) getOrgIDForNewUser(sess *DBSession, args models.CreateUserCommand) (int64, error) {
-	if ss.Cfg.AutoAssignOrg && args.OrgId != 0 {
-		if err := verifyExistingOrg(sess, args.OrgId); err != nil {
+func (ss *SQLStore) getOrgIDForNewUser(sess *DBSession, args user.CreateUserCommand) (int64, error) {
+	if ss.Cfg.AutoAssignOrg && args.OrgID != 0 {
+		if err := verifyExistingOrg(sess, args.OrgID); err != nil {
 			return -1, err
 		}
-		return args.OrgId, nil
+		return args.OrgID, nil
 	}
 
 	orgName := args.OrgName
@@ -68,14 +68,14 @@ func (ss *SQLStore) userCaseInsensitiveLoginConflict(ctx context.Context, sess *
 }
 
 // createUser creates a user in the database
-func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args models.CreateUserCommand) (models.User, error) {
-	var user models.User
+func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args user.CreateUserCommand) (user.User, error) {
+	var usr user.User
 	var orgID int64 = -1
 	if !args.SkipOrgSetup {
 		var err error
 		orgID, err = ss.getOrgIDForNewUser(sess, args)
 		if err != nil {
-			return user, err
+			return usr, err
 		}
 	}
 
@@ -92,21 +92,21 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args models
 
 	exists, err := sess.Where(where, args.Email, args.Login).Get(&models.User{})
 	if err != nil {
-		return user, err
+		return usr, err
 	}
 	if exists {
-		return user, models.ErrUserAlreadyExists
+		return usr, models.ErrUserAlreadyExists
 	}
 
 	// create user
-	user = models.User{
+	usr = user.User{
 		Email:            args.Email,
 		Name:             args.Name,
 		Login:            args.Login,
 		Company:          args.Company,
 		IsAdmin:          args.IsAdmin,
 		IsDisabled:       args.IsDisabled,
-		OrgId:            orgID,
+		OrgID:            orgID,
 		EmailVerified:    args.EmailVerified,
 		Created:          time.Now(),
 		Updated:          time.Now(),
@@ -116,48 +116,48 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args models
 
 	salt, err := util.GetRandomString(10)
 	if err != nil {
-		return user, err
+		return usr, err
 	}
-	user.Salt = salt
+	usr.Salt = salt
 	rands, err := util.GetRandomString(10)
 	if err != nil {
-		return user, err
+		return usr, err
 	}
-	user.Rands = rands
+	usr.Rands = rands
 
 	if len(args.Password) > 0 {
-		encodedPassword, err := util.EncodePassword(args.Password, user.Salt)
+		encodedPassword, err := util.EncodePassword(args.Password, usr.Salt)
 		if err != nil {
-			return user, err
+			return usr, err
 		}
-		user.Password = encodedPassword
+		usr.Password = encodedPassword
 	}
 
 	sess.UseBool("is_admin")
 
-	if _, err := sess.Insert(&user); err != nil {
-		return user, err
+	if _, err := sess.Insert(&usr); err != nil {
+		return usr, err
 	}
 
 	sess.publishAfterCommit(&events.UserCreated{
-		Timestamp: user.Created,
-		Id:        user.Id,
-		Name:      user.Name,
-		Login:     user.Login,
-		Email:     user.Email,
+		Timestamp: usr.Created,
+		Id:        usr.ID,
+		Name:      usr.Name,
+		Login:     usr.Login,
+		Email:     usr.Email,
 	})
 
 	// create org user link
 	if !args.SkipOrgSetup {
 		orgUser := models.OrgUser{
 			OrgId:   orgID,
-			UserId:  user.Id,
+			UserId:  usr.ID,
 			Role:    models.ROLE_ADMIN,
 			Created: time.Now(),
 			Updated: time.Now(),
 		}
 
-		if ss.Cfg.AutoAssignOrg && !user.IsAdmin {
+		if ss.Cfg.AutoAssignOrg && !usr.IsAdmin {
 			if len(args.DefaultOrgRole) > 0 {
 				orgUser.Role = models.RoleType(args.DefaultOrgRole)
 			} else {
@@ -166,16 +166,16 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args models
 		}
 
 		if _, err = sess.Insert(&orgUser); err != nil {
-			return user, err
+			return usr, err
 		}
 	}
 
-	return user, nil
+	return usr, nil
 }
 
 //  deprecated method, use only for tests
-func (ss *SQLStore) CreateUser(ctx context.Context, cmd models.CreateUserCommand) (*models.User, error) {
-	var user models.User
+func (ss *SQLStore) CreateUser(ctx context.Context, cmd user.CreateUserCommand) (*user.User, error) {
+	var user user.User
 	createErr := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) (err error) {
 		user, err = ss.createUser(ctx, sess, cmd)
 		return
