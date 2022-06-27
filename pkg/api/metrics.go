@@ -70,19 +70,23 @@ func (hs *HTTPServer) toJsonStreamingResponse(qdr *backend.QueryDataResponse) re
 		if resp.Error != nil {
 			statusCode = http.StatusMultiStatus
 			qr.Status = http.StatusBadRequest
-			if resp.ErrorDetails != nil {
-				switch resp.ErrorDetails.Status {
-				case backend.Unauthorized:
-					qr.Status = http.StatusUnauthorized
-				case backend.Unknown:
-					qr.Status = http.StatusInternalServerError
-				case backend.ConnectionError:
-					qr.Status = http.StatusBadGateway
-				case backend.Timeout:
-					qr.Status = http.StatusGatewayTimeout
-				default:
-					qr.Status = http.StatusBadRequest
+
+			if resp.ErrorDetails == nil {
+				resp.ErrorDetails = &backend.ErrorDetails{
+					Status: backend.InferErrorStatus(resp.Error),
 				}
+			}
+			switch resp.ErrorDetails.Status {
+			case backend.Unauthorized:
+				qr.Status = http.StatusUnauthorized
+			case backend.Unknown:
+				qr.Status = http.StatusInternalServerError
+			case backend.ConnectionError:
+				qr.Status = http.StatusBadGateway
+			case backend.Timeout:
+				qr.Status = http.StatusGatewayTimeout
+			default:
+				qr.Status = http.StatusBadRequest
 			}
 		}
 		res[refID] = qr
