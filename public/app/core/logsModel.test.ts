@@ -28,7 +28,7 @@ import {
   LIMIT_LABEL,
   logSeriesToLogsModel,
   queryLogsVolume,
-} from './logs_model';
+} from './logsModel';
 
 describe('dedupLogRows()', () => {
   test('should return rows as is when dedup is set to none', () => {
