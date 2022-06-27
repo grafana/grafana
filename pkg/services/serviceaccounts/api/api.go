@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 	"github.com/grafana/grafana/pkg/setting"
@@ -46,13 +45,7 @@ func NewServiceAccountsAPI(
 	}
 }
 
-func (api *ServiceAccountsAPI) RegisterAPIEndpoints(
-	features featuremgmt.FeatureToggles,
-) {
-	if !features.IsEnabled(featuremgmt.FlagServiceAccounts) {
-		return
-	}
-
+func (api *ServiceAccountsAPI) RegisterAPIEndpoints() {
 	auth := accesscontrol.Middleware(api.accesscontrol)
 	api.RouterRegister.Group("/api/serviceaccounts", func(serviceAccountsRoute routing.RouteRegister) {
 		serviceAccountsRoute.Get("/search", auth(middleware.ReqOrgAdmin,

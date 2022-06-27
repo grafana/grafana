@@ -53,7 +53,8 @@
     "i18n:extract": "lingui extract",
     "i18n:compile": "lingui compile",
     "postinstall": "husky install",
-    "betterer": "betterer --cache",
+    "betterer": "betterer",
+    "betterer:merge": "betterer merge",
     "betterer:stats": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/reportBettererStats.ts"
   },
   "grafana": {
@@ -62,7 +63,7 @@
   },
   "lint-staged": {
     "*.{js,ts,tsx}": [
-      "betterer --cache precommit",
+      "betterer precommit",
       "eslint --ext .js,.tsx,.ts --cache --fix",
       "prettier --write"
     ],
