@@ -95,8 +95,7 @@ func (st *DBstore) UpdateAlertmanagerConfiguration(ctx context.Context, cmd *mod
 			OrgID:                     cmd.OrgID,
 		}
 
-		rows, err := sess.Where(`org_id = ? AND configuration_hash = ? AND id = (SELECT MAX(id) FROM alert_configuration WHERE org_id = ?)`, cmd.OrgID, cmd.FetchedConfigurationHash, cmd.OrgID).Update(config)
-
+		rows, err := sess.Where(`org_id = ? AND configuration_hash = ? AND id = (SELECT MAX(T.id) FROM (SELECT MAX(id) AS id FROM alert_configuration WHERE org_id = ?) AS T)`, cmd.OrgID, cmd.FetchedConfigurationHash, cmd.OrgID).Update(config)
 		if err != nil {
 			return err
 		}
