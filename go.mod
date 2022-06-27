@@ -34,7 +34,7 @@ require (
 	github.com/fatih/color v1.13.0
 	github.com/gchaincl/sqlhooks v1.3.0
 	github.com/getsentry/sentry-go v0.13.0
-	github.com/go-kit/kit v0.11.0 // indirect
+	github.com/go-kit/kit v0.11.0
 	github.com/go-openapi/strfmt v0.20.2
 	github.com/go-redis/redis/v8 v8.11.4
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible
@@ -244,6 +244,7 @@ require (
 	github.com/Azure/go-autorest/autorest/adal v0.9.17
 	github.com/armon/go-radix v1.0.0
 	github.com/blugelabs/bluge v0.2.1
+	github.com/blugelabs/bluge_segment_api v0.2.0
 	github.com/getkin/kin-openapi v0.94.0
 	github.com/golang-migrate/migrate/v4 v4.7.0
 	github.com/grafana/dskit v0.0.0-20211011144203-3a88ec0b675f
@@ -260,7 +261,7 @@ require (
 	github.com/armon/go-metrics v0.3.10 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
-	github.com/hashicorp/memberlist v0.3.0 // indirect
+	github.com/hashicorp/memberlist v0.3.1 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mitchellh/mapstructure v1.4.3 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
@@ -281,7 +282,6 @@ require (
 	github.com/blevesearch/segment v0.9.0 // indirect
 	github.com/blevesearch/snowballstem v0.9.0 // indirect
 	github.com/blevesearch/vellum v1.0.7 // indirect
-	github.com/blugelabs/bluge_segment_api v0.2.0 // indirect
 	github.com/blugelabs/ice v1.0.0 // indirect
 	github.com/blugelabs/ice/v2 v2.0.1 // indirect
 	github.com/caio/go-tdigest v3.1.0+incompatible // indirect
@@ -324,7 +324,8 @@ replace github.com/crewjam/saml => github.com/grafana/saml v0.0.0-20211007135653
 
 replace github.com/apache/thrift => github.com/apache/thrift v0.14.1
 
-replace github.com/hashicorp/consul => github.com/hashicorp/consul v1.10.2
+// Upgraded to address CVE-2022-29153
+replace github.com/hashicorp/consul => github.com/hashicorp/consul v1.10.10
 
 replace github.com/gin-gonic/gin => github.com/gin-gonic/gin v1.7.7
 
