@@ -21,7 +21,7 @@ func (hs *HTTPServer) AddOrgUserToCurrentOrg(c *models.ReqContext) response.Resp
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	cmd.OrgId = c.OrgId
-	return hs.addOrgUserHelper(c.Req.Context(), cmd)
+	return hs.addOrgUserHelper(c, cmd)
 }
 
 // POST /api/orgs/:orgId/users
@@ -36,16 +36,19 @@ func (hs *HTTPServer) AddOrgUser(c *models.ReqContext) response.Response {
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "orgId is invalid", err)
 	}
-	return hs.addOrgUserHelper(c.Req.Context(), cmd)
+	return hs.addOrgUserHelper(c, cmd)
 }
 
-func (hs *HTTPServer) addOrgUserHelper(ctx context.Context, cmd models.AddOrgUserCommand) response.Response {
+func (hs *HTTPServer) addOrgUserHelper(c *models.ReqContext, cmd models.AddOrgUserCommand) response.Response {
 	if !cmd.Role.IsValid() {
 		return response.Error(400, "Invalid role specified", nil)
 	}
+	if !c.OrgRole.Includes(cmd.Role) && !c.IsGrafanaAdmin {
+		return response.Error(http.StatusForbidden, "Cannot assign a role higher than user's role", nil)
+	}
 
 	userQuery := models.GetUserByLoginQuery{LoginOrEmail: cmd.LoginOrEmail}
-	err := hs.SQLStore.GetUserByLogin(ctx, &userQuery)
+	err := hs.SQLStore.GetUserByLogin(c.Req.Context(), &userQuery)
 	if err != nil {
 		return response.Error(404, "User not found", nil)
 	}
@@ -54,7 +57,7 @@ func (hs *HTTPServer) addOrgUserHelper(ctx context.Context, cmd models.AddOrgUse
 
 	cmd.UserId = userToAdd.Id
 
-	if err := hs.SQLStore.AddOrgUser(ctx, &cmd); err != nil {
+	if err := hs.SQLStore.AddOrgUser(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, models.ErrOrgUserAlreadyAdded) {
 			return response.JSON(409, util.DynMap{
 				"message": "User is already member of this organization",
@@ -217,7 +220,7 @@ func (hs *HTTPServer) UpdateOrgUserForCurrentOrg(c *models.ReqContext) response.
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "userId is invalid", err)
 	}
-	return hs.updateOrgUserHelper(c.Req.Context(), cmd)
+	return hs.updateOrgUserHelper(c, cmd)
 }
 
 // PATCH /api/orgs/:orgId/users/:userId
@@ -235,14 +238,17 @@ func (hs *HTTPServer) UpdateOrgUser(c *models.ReqContext) response.Response {
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "userId is invalid", err)
 	}
-	return hs.updateOrgUserHelper(c.Req.Context(), cmd)
+	return hs.updateOrgUserHelper(c, cmd)
 }
 
-func (hs *HTTPServer) updateOrgUserHelper(ctx context.Context, cmd models.UpdateOrgUserCommand) response.Response {
+func (hs *HTTPServer) updateOrgUserHelper(c *models.ReqContext, cmd models.UpdateOrgUserCommand) response.Response {
 	if !cmd.Role.IsValid() {
 		return response.Error(400, "Invalid role specified", nil)
 	}
-	if err := hs.SQLStore.UpdateOrgUser(ctx, &cmd); err != nil {
+	if !c.OrgRole.Includes(cmd.Role) && !c.IsGrafanaAdmin {
+		return response.Error(http.StatusForbidden, "Cannot assign a role higher than user's role", nil)
+	}
+	if err := hs.SQLStore.UpdateOrgUser(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, models.ErrLastOrgAdmin) {
 			return response.Error(400, "Cannot change role so that there is no organization admin left", nil)
 		}

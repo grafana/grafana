@@ -5,15 +5,13 @@
  ],
  "definitions": {
   "Ack": {
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "AddApiKeyCommand": {
    "description": "COMMANDS",
    "properties": {
     "name": {
-     "type": "string",
-     "x-go-name": "Name"
+     "type": "string"
     },
     "role": {
      "enum": [
@@ -21,25 +19,20 @@
       "Editor",
       "Admin"
      ],
-     "type": "string",
-     "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
-     "x-go-name": "Role"
+     "type": "string"
     },
     "secondsToLive": {
      "format": "int64",
-     "type": "integer",
-     "x-go-name": "SecondsToLive"
+     "type": "integer"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/models"
+   "type": "object"
   },
   "Alert": {
    "properties": {
     "activeAt": {
      "format": "date-time",
-     "type": "string",
-     "x-go-name": "ActiveAt"
+     "type": "string"
     },
     "annotations": {
      "$ref": "#/definitions/overrideLabels"
@@ -48,12 +41,10 @@
      "$ref": "#/definitions/overrideLabels"
     },
     "state": {
-     "type": "string",
-     "x-go-name": "State"
+     "type": "string"
     },
     "value": {
-     "type": "string",
-     "x-go-name": "Value"
+     "type": "string"
     }
    },
    "required": [
@@ -63,8 +54,7 @@
     "value"
    ],
    "title": "Alert has info for an alert.",
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "AlertDiscovery": {
    "properties": {
@@ -72,16 +62,14 @@
      "items": {
       "$ref": "#/definitions/Alert"
      },
-     "type": "array",
-     "x-go-name": "Alerts"
+     "type": "array"
     }
    },
    "required": [
     "alerts"
    ],
    "title": "AlertDiscovery has info for all active alerts.",
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "AlertInstancesResponse": {
    "properties": {
@@ -94,31 +82,25 @@
       },
       "type": "array"
      },
-     "type": "array",
-     "x-go-name": "Instances"
+     "type": "array"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "AlertManager": {
    "properties": {
     "url": {
-     "type": "string",
-     "x-go-name": "URL"
+     "type": "string"
     }
    },
    "title": "AlertManager models a configured Alert Manager.",
-   "type": "object",
-   "x-go-package": "github.com/prometheus/client_golang/api/prometheus/v1"
+   "type": "object"
   },
   "AlertManagerNotFound": {
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "AlertManagerNotReady": {
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "AlertManagersResult": {
    "properties": {
@@ -126,50 +108,42 @@
      "items": {
       "$ref": "#/definitions/AlertManager"
      },
-     "type": "array",
-     "x-go-name": "Active"
+     "type": "array"
     },
     "droppedAlertManagers": {
      "items": {
       "$ref": "#/definitions/AlertManager"
      },
-     "type": "array",
-     "x-go-name": "Dropped"
+     "type": "array"
     }
    },
    "title": "AlertManagersResult contains the result from querying the alertmanagers endpoint.",
-   "type": "object",
-   "x-go-package": "github.com/prometheus/client_golang/api/prometheus/v1"
+   "type": "object"
   },
   "AlertQuery": {
    "properties": {
     "datasourceUid": {
      "description": "Grafana data source unique identifier; it should be '-100' for a Server Side Expression operation.",
-     "type": "string",
-     "x-go-name": "DatasourceUID"
+     "type": "string"
     },
     "model": {
      "description": "JSON is the raw JSON query and includes the above properties as well as custom properties.",
-     "type": "object",
-     "x-go-name": "Model"
+     "type": "object"
     },
     "queryType": {
      "description": "QueryType is an optional identifier for the type of query.\nIt can be used to distinguish different types of queries.",
-     "type": "string",
-     "x-go-name": "QueryType"
+     "type": "string"
     },
     "refId": {
      "description": "RefID is the unique identifier of the query, set by the frontend call.",
-     "type": "string",
-     "x-go-name": "RefID"
+     "type": "string"
     },
     "relativeTimeRange": {
      "$ref": "#/definitions/RelativeTimeRange"
     }
    },
    "title": "AlertQuery represents a single query associated with an alert definition.",
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/models"
+   "type": "object"
   },
   "AlertResponse": {
    "properties": {
@@ -177,22 +151,19 @@
      "$ref": "#/definitions/AlertDiscovery"
     },
     "error": {
-     "type": "string",
-     "x-go-name": "Error"
+     "type": "string"
     },
     "errorType": {
      "$ref": "#/definitions/ErrorType"
     },
     "status": {
-     "type": "string",
-     "x-go-name": "Status"
+     "type": "string"
     }
    },
    "required": [
     "status"
    ],
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "AlertRule": {
    "properties": {
@@ -203,13 +174,11 @@
      "example": {
       "runbook_url": "https://supercoolrunbook.com/page/13"
      },
-     "type": "object",
-     "x-go-name": "Annotations"
+     "type": "object"
     },
     "condition": {
      "example": "A",
-     "type": "string",
-     "x-go-name": "Condition"
+     "type": "string"
     },
     "data": {
      "example": [
@@ -260,32 +229,26 @@
      "items": {
       "$ref": "#/definitions/AlertQuery"
      },
-     "type": "array",
-     "x-go-name": "Data"
+     "type": "array"
     },
     "execErrState": {
-     "description": "\nAlerting AlertingErrState\nError ErrorErrState\nOK OkErrState",
      "enum": [
       "Alerting",
       "Error",
       "OK"
      ],
-     "type": "string",
-     "x-go-enum-desc": "Alerting AlertingErrState\nError ErrorErrState\nOK OkErrState",
-     "x-go-name": "ExecErrState"
+     "type": "string"
     },
     "folderUID": {
      "example": "project_x",
-     "type": "string",
-     "x-go-name": "FolderUID"
+     "type": "string"
     },
     "for": {
      "$ref": "#/definitions/Duration"
     },
     "id": {
      "format": "int64",
-     "type": "integer",
-     "x-go-name": "ID"
+     "type": "integer"
     },
     "labels": {
      "additionalProperties": {
@@ -294,24 +257,19 @@
      "example": {
       "team": "sre-team-1"
      },
-     "type": "object",
-     "x-go-name": "Labels"
+     "type": "object"
     },
     "noDataState": {
-     "description": "\nAlerting Alerting\nNoData NoData\nOK OK",
      "enum": [
       "Alerting",
       "NoData",
       "OK"
      ],
-     "type": "string",
-     "x-go-enum-desc": "Alerting Alerting\nNoData NoData\nOK OK",
-     "x-go-name": "NoDataState"
+     "type": "string"
     },
     "orgID": {
      "format": "int64",
-     "type": "integer",
-     "x-go-name": "OrgID"
+     "type": "integer"
     },
     "provenance": {
      "$ref": "#/definitions/Provenance"
@@ -320,25 +278,21 @@
      "example": "eval_group_1",
      "maxLength": 190,
      "minLength": 1,
-     "type": "string",
-     "x-go-name": "RuleGroup"
+     "type": "string"
     },
     "title": {
      "example": "Always firing",
      "maxLength": 190,
      "minLength": 1,
-     "type": "string",
-     "x-go-name": "Title"
+     "type": "string"
     },
     "uid": {
-     "type": "string",
-     "x-go-name": "UID"
+     "type": "string"
     },
     "updated": {
      "format": "date-time",
      "readOnly": true,
-     "type": "string",
-     "x-go-name": "Updated"
+     "type": "string"
     }
    },
    "required": [
@@ -352,19 +306,16 @@
     "execErrState",
     "for"
    ],
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "AlertRuleGroup": {
    "properties": {
     "interval": {
      "format": "int64",
-     "type": "integer",
-     "x-go-name": "Interval"
+     "type": "integer"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "AlertingRule": {
    "description": "adapted from cortex",
@@ -373,50 +324,41 @@
      "items": {
       "$ref": "#/definitions/Alert"
      },
-     "type": "array",
-     "x-go-name": "Alerts"
+     "type": "array"
     },
     "annotations": {
      "$ref": "#/definitions/overrideLabels"
     },
     "duration": {
      "format": "double",
-     "type": "number",
-     "x-go-name": "Duration"
+     "type": "number"
     },
     "evaluationTime": {
      "format": "double",
-     "type": "number",
-     "x-go-name": "EvaluationTime"
+     "type": "number"
     },
     "health": {
-     "type": "string",
-     "x-go-name": "Health"
+     "type": "string"
     },
     "labels": {
      "$ref": "#/definitions/overrideLabels"
     },
     "lastError": {
-     "type": "string",
-     "x-go-name": "LastError"
+     "type": "string"
     },
     "lastEvaluation": {
      "format": "date-time",
-     "type": "string",
-     "x-go-name": "LastEvaluation"
+     "type": "string"
     },
     "name": {
-     "type": "string",
-     "x-go-name": "Name"
+     "type": "string"
     },
     "query": {
-     "type": "string",
-     "x-go-name": "Query"
+     "type": "string"
     },
     "state": {
      "description": "State can be \"pending\", \"firing\", \"inactive\".",
-     "type": "string",
-     "x-go-name": "State"
+     "type": "string"
     },
     "type": {
      "$ref": "#/definitions/RuleType"
@@ -431,25 +373,21 @@
     "annotations",
     "alerts"
    ],
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "ApiRuleNode": {
    "properties": {
     "alert": {
-     "type": "string",
-     "x-go-name": "Alert"
+     "type": "string"
     },
     "annotations": {
      "additionalProperties": {
       "type": "string"
      },
-     "type": "object",
-     "x-go-name": "Annotations"
+     "type": "object"
     },
     "expr": {
-     "type": "string",
-     "x-go-name": "Expr"
+     "type": "string"
     },
     "for": {
      "$ref": "#/definitions/Duration"
@@ -458,16 +396,13 @@
      "additionalProperties": {
       "type": "string"
      },
-     "type": "object",
-     "x-go-name": "Labels"
+     "type": "object"
     },
     "record": {
-     "type": "string",
-     "x-go-name": "Record"
+     "type": "string"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "Authorization": {
    "properties": {
@@ -475,17 +410,14 @@
      "$ref": "#/definitions/Secret"
     },
     "credentials_file": {
-     "type": "string",
-     "x-go-name": "CredentialsFile"
+     "type": "string"
     },
     "type": {
-     "type": "string",
-     "x-go-name": "Type"
+     "type": "string"
     }
    },
    "title": "Authorization contains HTTP authorization credentials.",
-   "type": "object",
-   "x-go-package": "github.com/prometheus/common/config"
+   "type": "object"
   },
   "BasicAuth": {
    "properties": {
@@ -493,17 +425,14 @@
      "$ref": "#/definitions/Secret"
     },
     "password_file": {
-     "type": "string",
-     "x-go-name": "PasswordFile"
+     "type": "string"
     },
     "username": {
-     "type": "string",
-     "x-go-name": "Username"
+     "type": "string"
     }
    },
    "title": "BasicAuth contains basic HTTP authentication credentials.",
-   "type": "object",
-   "x-go-package": "github.com/prometheus/common/config"
+   "type": "object"
   },
   "Config": {
    "properties": {
@@ -514,15 +443,13 @@
      "items": {
       "$ref": "#/definitions/InhibitRule"
      },
-     "type": "array",
-     "x-go-name": "InhibitRules"
+     "type": "array"
     },
     "mute_time_intervals": {
      "items": {
       "$ref": "#/definitions/MuteTimeInterval"
      },
-     "type": "array",
-     "x-go-name": "MuteTimeIntervals"
+     "type": "array"
     },
     "route": {
      "$ref": "#/definitions/Route"
@@ -531,20 +458,17 @@
      "items": {
       "type": "string"
      },
-     "type": "array",
-     "x-go-name": "Templates"
+     "type": "array"
     }
    },
    "title": "Config is the top-level configuration for Alertmanager's config files.",
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "ContactPoints": {
    "items": {
     "$ref": "#/definitions/EmbeddedContactPoint"
    },
-   "type": "array",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "array"
   },
   "CreateDashboardSnapshotCommand": {
    "properties": {
@@ -556,38 +480,32 @@
     },
     "deleteKey": {
      "description": "Unique key used to delete the snapshot. It is different from the `key` so that only the creator can delete the snapshot. Required if `external` is `true`.",
-     "type": "string",
-     "x-go-name": "DeleteKey"
+     "type": "string"
     },
     "expires": {
      "default": 0,
      "description": "When the snapshot should expire in seconds in seconds. Default is never to expire.",
      "format": "int64",
-     "type": "integer",
-     "x-go-name": "Expires"
+     "type": "integer"
     },
     "external": {
      "default": false,
      "description": "these are passed when storing an external snapshot ref\nSave the snapshot on an external server rather than locally.",
-     "type": "boolean",
-     "x-go-name": "External"
+     "type": "boolean"
     },
     "key": {
      "description": "Define the unique key. Required if `external` is `true`.",
-     "type": "string",
-     "x-go-name": "Key"
+     "type": "string"
     },
     "name": {
      "description": "Snapshot name",
-     "type": "string",
-     "x-go-name": "Name"
+     "type": "string"
     }
    },
    "required": [
     "dashboard"
    ],
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/models"
+   "type": "object"
   },
   "DashboardSnapshot": {
    "description": "DashboardSnapshot model",
@@ -645,14 +563,12 @@
      "type": "integer"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/models"
+   "type": "object"
   },
   "DateTime": {
    "description": "DateTime is a time but it serializes to ISO8601 format with millis\nIt knows how to read 3 different variations of a RFC3339 date time.\nMost APIs we encounter want either millisecond or second precision times.\nThis just tries to make it worry-free.",
    "format": "date-time",
-   "type": "string",
-   "x-go-package": "github.com/go-openapi/strfmt"
+   "type": "string"
   },
   "DayOfMonthRange": {
    "properties": {
@@ -666,34 +582,29 @@
     }
    },
    "title": "A DayOfMonthRange is an inclusive range that may have negative Beginning/End values that represent distance from the End of the month Beginning at -1.",
-   "type": "object",
-   "x-go-package": "github.com/prometheus/alertmanager/timeinterval"
+   "type": "object"
   },
   "DiscoveryBase": {
    "properties": {
     "error": {
-     "type": "string",
-     "x-go-name": "Error"
+     "type": "string"
     },
     "errorType": {
      "$ref": "#/definitions/ErrorType"
     },
     "status": {
-     "type": "string",
-     "x-go-name": "Status"
+     "type": "string"
     }
    },
    "required": [
     "status"
    ],
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "DsPermissionType": {
    "description": "Datasource permission\nDescription:\n`0` - No Access\n`1` - Query\nEnum: 0,1",
    "format": "int64",
-   "type": "integer",
-   "x-go-package": "github.com/grafana/grafana/pkg/models"
+   "type": "integer"
   },
   "Duration": {
    "format": "int64",
@@ -703,8 +614,7 @@
   "EmailConfig": {
    "properties": {
     "auth_identity": {
-     "type": "string",
-     "x-go-name": "AuthIdentity"
+     "type": "string"
     },
     "auth_password": {
      "$ref": "#/definitions/Secret"
@@ -713,74 +623,61 @@
      "$ref": "#/definitions/Secret"
     },
     "auth_username": {
-     "type": "string",
-     "x-go-name": "AuthUsername"
+     "type": "string"
     },
     "from": {
-     "type": "string",
-     "x-go-name": "From"
+     "type": "string"
     },
     "headers": {
      "additionalProperties": {
       "type": "string"
      },
-     "type": "object",
-     "x-go-name": "Headers"
+     "type": "object"
     },
     "hello": {
-     "type": "string",
-     "x-go-name": "Hello"
+     "type": "string"
     },
     "html": {
-     "type": "string",
-     "x-go-name": "HTML"
+     "type": "string"
     },
     "require_tls": {
-     "type": "boolean",
-     "x-go-name": "RequireTLS"
+     "type": "boolean"
     },
     "send_resolved": {
-     "type": "boolean",
-     "x-go-name": "VSendResolved"
+     "type": "boolean"
     },
     "smarthost": {
      "$ref": "#/definitions/HostPort"
     },
     "text": {
-     "type": "string",
-     "x-go-name": "Text"
+     "type": "string"
     },
     "tls_config": {
      "$ref": "#/definitions/TLSConfig"
     },
     "to": {
      "description": "Email address to notify.",
-     "type": "string",
-     "x-go-name": "To"
+     "type": "string"
     }
    },
    "title": "EmailConfig configures notifications via mail.",
-   "type": "object",
-   "x-go-package": "github.com/prometheus/alertmanager/config"
+   "type": "object"
   },
   "EmbeddedContactPoint": {
    "description": "EmbeddedContactPoint is the contact point type that is used\nby grafanas embedded alertmanager implementation.",
    "properties": {
     "disableResolveMessage": {
      "example": false,
-     "type": "boolean",
-     "x-go-name": "DisableResolveMessage"
+     "type": "boolean"
     },
     "name": {
      "description": "Name is used as grouping key in the UI. Contact points with the\nsame name will be grouped in the UI.",
      "example": "webhook_1",
-     "type": "string",
-     "x-go-name": "Name"
+     "type": "string"
     },
     "provenance": {
      "readOnly": true,
-     "type": "string",
-     "x-go-name": "Provenance"
+     "type": "string"
     },
     "settings": {
      "$ref": "#/definitions/Json"
@@ -807,50 +704,42 @@
       " wecom"
      ],
      "example": "webhook",
-     "type": "string",
-     "x-go-name": "Type"
+     "type": "string"
     },
     "uid": {
      "description": "UID is the unique identifier of the contact point. The UID can be\nset by the user.",
      "example": "my_external_reference",
-     "type": "string",
-     "x-go-name": "UID"
+     "type": "string"
     }
    },
    "required": [
     "type",
     "settings"
    ],
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "ErrorType": {
    "title": "ErrorType models the different API error types.",
-   "type": "string",
-   "x-go-package": "github.com/prometheus/client_golang/api/prometheus/v1"
+   "type": "string"
   },
   "EvalAlertConditionCommand": {
    "description": "EvalAlertConditionCommand is the command for evaluating a condition",
    "properties": {
     "condition": {
-     "type": "string",
-     "x-go-name": "Condition"
+     "type": "string"
     },
     "data": {
      "items": {
       "$ref": "#/definitions/AlertQuery"
      },
-     "type": "array",
-     "x-go-name": "Data"
+     "type": "array"
     },
     "now": {
      "format": "date-time",
-     "type": "string",
-     "x-go-name": "Now"
+     "type": "string"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/models"
+   "type": "object"
   },
   "EvalQueriesPayload": {
    "properties": {
@@ -858,17 +747,14 @@
      "items": {
       "$ref": "#/definitions/AlertQuery"
      },
-     "type": "array",
-     "x-go-name": "Data"
+     "type": "array"
     },
     "now": {
      "format": "date-time",
-     "type": "string",
-     "x-go-name": "Now"
+     "type": "string"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "EvalQueriesResponse": {},
   "ExtendedReceiver": {
@@ -901,8 +787,7 @@
      "$ref": "#/definitions/WechatConfig"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "Failure": {
    "$ref": "#/definitions/ResponseDetails"
@@ -913,12 +798,10 @@
      "$ref": "#/definitions/AlertManagersResult"
     },
     "status": {
-     "type": "string",
-     "x-go-name": "Status"
+     "type": "string"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "GettableApiAlertingConfig": {
    "properties": {
@@ -929,30 +812,26 @@
      "items": {
       "$ref": "#/definitions/InhibitRule"
      },
-     "type": "array",
-     "x-go-name": "InhibitRules"
+     "type": "array"
     },
     "muteTimeProvenances": {
      "additionalProperties": {
       "$ref": "#/definitions/Provenance"
      },
-     "type": "object",
-     "x-go-name": "MuteTimeProvenances"
+     "type": "object"
     },
     "mute_time_intervals": {
      "items": {
       "$ref": "#/definitions/MuteTimeInterval"
      },
-     "type": "array",
-     "x-go-name": "MuteTimeIntervals"
+     "type": "array"
     },
     "receivers": {
      "description": "Override with our superset receiver type",
      "items": {
       "$ref": "#/definitions/GettableApiReceiver"
      },
-     "type": "array",
-     "x-go-name": "Receivers"
+     "type": "array"
     },
     "route": {
      "$ref": "#/definitions/Route"
@@ -961,12 +840,10 @@
      "items": {
       "type": "string"
      },
-     "type": "array",
-     "x-go-name": "Templates"
+     "type": "array"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "GettableApiReceiver": {
    "properties": {
@@ -974,97 +851,82 @@
      "items": {
       "$ref": "#/definitions/EmailConfig"
      },
-     "type": "array",
-     "x-go-name": "EmailConfigs"
+     "type": "array"
     },
     "grafana_managed_receiver_configs": {
      "items": {
       "$ref": "#/definitions/GettableGrafanaReceiver"
      },
-     "type": "array",
-     "x-go-name": "GrafanaManagedReceivers"
+     "type": "array"
     },
     "name": {
      "description": "A unique identifier for this receiver.",
-     "type": "string",
-     "x-go-name": "Name"
+     "type": "string"
     },
     "opsgenie_configs": {
      "items": {
       "$ref": "#/definitions/OpsGenieConfig"
      },
-     "type": "array",
-     "x-go-name": "OpsGenieConfigs"
+     "type": "array"
     },
     "pagerduty_configs": {
      "items": {
       "$ref": "#/definitions/PagerdutyConfig"
      },
-     "type": "array",
-     "x-go-name": "PagerdutyConfigs"
+     "type": "array"
     },
     "pushover_configs": {
      "items": {
       "$ref": "#/definitions/PushoverConfig"
      },
-     "type": "array",
-     "x-go-name": "PushoverConfigs"
+     "type": "array"
     },
     "slack_configs": {
      "items": {
       "$ref": "#/definitions/SlackConfig"
      },
-     "type": "array",
-     "x-go-name": "SlackConfigs"
+     "type": "array"
     },
     "sns_configs": {
      "items": {
       "$ref": "#/definitions/SNSConfig"
      },
-     "type": "array",
-     "x-go-name": "SNSConfigs"
+     "type": "array"
     },
     "victorops_configs": {
      "items": {
       "$ref": "#/definitions/VictorOpsConfig"
      },
-     "type": "array",
-     "x-go-name": "VictorOpsConfigs"
+     "type": "array"
     },
     "webhook_configs": {
      "items": {
       "$ref": "#/definitions/WebhookConfig"
      },
-     "type": "array",
-     "x-go-name": "WebhookConfigs"
+     "type": "array"
     },
     "wechat_configs": {
      "items": {
       "$ref": "#/definitions/WechatConfig"
      },
-     "type": "array",
-     "x-go-name": "WechatConfigs"
+     "type": "array"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "GettableExtendedRuleNode": {
    "properties": {
     "alert": {
-     "type": "string",
-     "x-go-name": "Alert"
+     "type": "string"
     },
     "annotations": {
      "additionalProperties": {
       "type": "string"
      },
-     "type": "object",
-     "x-go-name": "Annotations"
+     "type": "object"
     },
     "expr": {
-     "type": "string",
-     "x-go-name": "Expr"
+     "type": "string"
     },
     "for": {
      "$ref": "#/definitions/Duration"
@@ -1076,26 +938,21 @@
      "additionalProperties": {
       "type": "string"
      },
-     "type": "object",
-     "x-go-name": "Labels"
+     "type": "object"
     },
     "record": {
-     "type": "string",
-     "x-go-name": "Record"
+     "type": "string"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "GettableGrafanaReceiver": {
    "properties": {
     "disableResolveMessage": {
-     "type": "boolean",
-     "x-go-name": "DisableResolveMessage"
+     "type": "boolean"
     },
     "name": {
-     "type": "string",
-     "x-go-name": "Name"
+     "type": "string"
     },
     "provenance": {
      "$ref": "#/definitions/Provenance"
@@ -1104,23 +961,19 @@
      "additionalProperties": {
       "type": "boolean"
      },
-     "type": "object",
-     "x-go-name": "SecureFields"
+     "type": "object"
     },
     "settings": {
      "$ref": "#/definitions/Json"
     },
     "type": {
-     "type": "string",
-     "x-go-name": "Type"
+     "type": "string"
     },
     "uid": {
-     "type": "string",
-     "x-go-name": "UID"
+     "type": "string"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "GettableGrafanaReceivers": {
    "properties": {
@@ -1128,25 +981,21 @@
      "items": {
       "$ref": "#/definitions/GettableGrafanaReceiver"
      },
-     "type": "array",
-     "x-go-name": "GrafanaManagedReceivers"
+     "type": "array"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "GettableGrafanaRule": {
    "properties": {
     "condition": {
-     "type": "string",
-     "x-go-name": "Condition"
+     "type": "string"
     },
     "data": {
      "items": {
       "$ref": "#/definitions/AlertQuery"
      },
-     "type": "array",
-     "x-go-name": "Data"
+     "type": "array"
     },
     "exec_err_state": {
      "enum": [
@@ -1154,28 +1003,22 @@
       "Alerting",
       "Error"
      ],
-     "type": "string",
-     "x-go-enum-desc": "OK OkErrState\nAlerting AlertingErrState\nError ErrorErrState",
-     "x-go-name": "ExecErrState"
+     "type": "string"
     },
     "id": {
      "format": "int64",
-     "type": "integer",
-     "x-go-name": "ID"
+     "type": "integer"
     },
     "intervalSeconds": {
      "format": "int64",
-     "type": "integer",
-     "x-go-name": "IntervalSeconds"
+     "type": "integer"
     },
     "namespace_id": {
      "format": "int64",
-     "type": "integer",
-     "x-go-name": "NamespaceID"
+     "type": "integer"
     },
     "namespace_uid": {
-     "type": "string",
-     "x-go-name": "NamespaceUID"
+     "type": "string"
     },
     "no_data_state": {
      "enum": [
@@ -1183,43 +1026,34 @@
       "NoData",
       "OK"
      ],
-     "type": "string",
-     "x-go-enum-desc": "Alerting Alerting\nNoData NoData\nOK OK",
-     "x-go-name": "NoDataState"
+     "type": "string"
     },
     "orgId": {
      "format": "int64",
-     "type": "integer",
-     "x-go-name": "OrgID"
+     "type": "integer"
     },
     "provenance": {
      "$ref": "#/definitions/Provenance"
     },
     "rule_group": {
-     "type": "string",
-     "x-go-name": "RuleGroup"
+     "type": "string"
     },
     "title": {
-     "type": "string",
-     "x-go-name": "Title"
+     "type": "string"
     },
     "uid": {
-     "type": "string",
-     "x-go-name": "UID"
+     "type": "string"
     },
     "updated": {
      "format": "date-time",
-     "type": "string",
-     "x-go-name": "Updated"
+     "type": "string"
     },
     "version": {
      "format": "int64",
-     "type": "integer",
-     "x-go-name": "Version"
+     "type": "integer"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "GettableNGalertConfig": {
    "properties": {
@@ -1227,8 +1061,7 @@
      "items": {
       "type": "string"
      },
-     "type": "array",
-     "x-go-name": "Alertmanagers"
+     "type": "array"
     },
     "alertmanagersChoice": {
      "enum": [
@@ -1236,13 +1069,10 @@
       "internal",
       "external"
      ],
-     "type": "string",
-     "x-go-enum-desc": "all AllAlertmanagers\ninternal InternalAlertmanager\nexternal ExternalAlertmanagers",
-     "x-go-name": "AlertmanagersChoice"
+     "type": "string"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "GettableRuleGroupConfig": {
    "properties": {
@@ -1250,26 +1080,22 @@
      "$ref": "#/definitions/Duration"
     },
     "name": {
-     "type": "string",
-     "x-go-name": "Name"
+     "type": "string"
     },
     "rules": {
      "items": {
       "$ref": "#/definitions/GettableExtendedRuleNode"
      },
-     "type": "array",
-     "x-go-name": "Rules"
+     "type": "array"
     },
     "source_tenants": {
      "items": {
       "type": "string"
      },
-     "type": "array",
-     "x-go-name": "SourceTenants"
+     "type": "array"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "GettableStatus": {
    "properties": {
@@ -1282,8 +1108,7 @@
     "uptime": {
      "description": "uptime",
      "format": "date-time",
-     "type": "string",
-     "x-go-name": "Uptime"
+     "type": "string"
     },
     "versionInfo": {
      "$ref": "#/definitions/versionInfo"
@@ -1295,8 +1120,7 @@
     "uptime",
     "versionInfo"
    ],
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "GettableUserConfig": {
    "properties": {
@@ -1307,19 +1131,16 @@
      "additionalProperties": {
       "$ref": "#/definitions/Provenance"
      },
-     "type": "object",
-     "x-go-name": "TemplateFileProvenances"
+     "type": "object"
     },
     "template_files": {
      "additionalProperties": {
       "type": "string"
      },
-     "type": "object",
-     "x-go-name": "TemplateFiles"
+     "type": "object"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "GlobalConfig": {
    "description": "GlobalConfig defines configuration parameters that are valid globally\nunless overwritten.",
@@ -1331,8 +1152,7 @@
      "$ref": "#/definitions/Secret"
     },
     "opsgenie_api_key_file": {
-     "type": "string",
-     "x-go-name": "OpsGenieAPIKeyFile"
+     "type": "string"
     },
     "opsgenie_api_url": {
      "$ref": "#/definitions/URL"
@@ -1347,12 +1167,10 @@
      "$ref": "#/definitions/SecretURL"
     },
     "slack_api_url_file": {
-     "type": "string",
-     "x-go-name": "SlackAPIURLFile"
+     "type": "string"
     },
     "smtp_auth_identity": {
-     "type": "string",
-     "x-go-name": "SMTPAuthIdentity"
+     "type": "string"
     },
     "smtp_auth_password": {
      "$ref": "#/definitions/Secret"
@@ -1361,20 +1179,16 @@
      "$ref": "#/definitions/Secret"
     },
     "smtp_auth_username": {
-     "type": "string",
-     "x-go-name": "SMTPAuthUsername"
+     "type": "string"
     },
     "smtp_from": {
-     "type": "string",
-     "x-go-name": "SMTPFrom"
+     "type": "string"
     },
     "smtp_hello": {
-     "type": "string",
-     "x-go-name": "SMTPHello"
+     "type": "string"
     },
     "smtp_require_tls": {
-     "type": "boolean",
-     "x-go-name": "SMTPRequireTLS"
+     "type": "boolean"
     },
     "smtp_smarthost": {
      "$ref": "#/definitions/HostPort"
@@ -1386,8 +1200,7 @@
      "$ref": "#/definitions/URL"
     },
     "wechat_api_corp_id": {
-     "type": "string",
-     "x-go-name": "WeChatAPICorpID"
+     "type": "string"
     },
     "wechat_api_secret": {
      "$ref": "#/definitions/Secret"
@@ -1396,8 +1209,7 @@
      "$ref": "#/definitions/URL"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/prometheus/alertmanager/config"
+   "type": "object"
   },
   "HTTPClientConfig": {
    "properties": {
@@ -1412,13 +1224,11 @@
     },
     "bearer_token_file": {
      "description": "The bearer token file for the targets. Deprecated in favour of\nAuthorization.CredentialsFile.",
-     "type": "string",
-     "x-go-name": "BearerTokenFile"
+     "type": "string"
     },
     "follow_redirects": {
      "description": "FollowRedirects specifies whether the client should follow HTTP 3xx redirects.\nThe omitempty flag is not set, because it would be hidden from the\nmarshalled configuration when set to false.",
-     "type": "boolean",
-     "x-go-name": "FollowRedirects"
+     "type": "boolean"
     },
     "oauth2": {
      "$ref": "#/definitions/OAuth2"
@@ -1431,8 +1241,7 @@
     }
    },
    "title": "HTTPClientConfig configures an HTTP client.",
-   "type": "object",
-   "x-go-package": "github.com/prometheus/common/config"
+   "type": "object"
   },
   "HostPort": {
    "properties": {
@@ -1444,8 +1253,7 @@
     }
    },
    "title": "HostPort represents a \"host:port\" network address.",
-   "type": "object",
-   "x-go-package": "github.com/prometheus/alertmanager/config"
+   "type": "object"
   },
   "InclusiveRange": {
    "properties": {
@@ -1459,8 +1267,7 @@
     }
    },
    "title": "InclusiveRange is used to hold the Beginning and End values of many time interval components.",
-   "type": "object",
-   "x-go-package": "github.com/prometheus/alertmanager/timeinterval"
+   "type": "object"
   },
   "InhibitRule": {
    "description": "InhibitRule defines an inhibition rule that mutes alerts that match the\ntarget labels if an alert matching the source labels exists.\nBoth alerts have to have a set of labels being equal.",
@@ -1473,8 +1280,7 @@
       "type": "string"
      },
      "description": "SourceMatch defines a set of labels that have to equal the given\nvalue for source alerts. Deprecated. Remove before v1.0 release.",
-     "type": "object",
-     "x-go-name": "SourceMatch"
+     "type": "object"
     },
     "source_match_re": {
      "$ref": "#/definitions/MatchRegexps"
@@ -1487,8 +1293,7 @@
       "type": "string"
      },
      "description": "TargetMatch defines a set of labels that have to equal the given\nvalue for target alerts. Deprecated. Remove before v1.0 release.",
-     "type": "object",
-     "x-go-name": "TargetMatch"
+     "type": "object"
     },
     "target_match_re": {
      "$ref": "#/definitions/MatchRegexps"
@@ -1497,71 +1302,60 @@
      "$ref": "#/definitions/Matchers"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/prometheus/alertmanager/config"
+   "type": "object"
   },
   "Json": {
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/components/simplejson"
+   "type": "object"
   },
   "Label": {
    "properties": {
     "Name": {
-     "type": "string",
-     "x-go-name": "Value"
+     "type": "string"
     }
    },
    "title": "Label is a key/value pair of strings.",
-   "type": "object",
-   "x-go-package": "github.com/prometheus/prometheus/pkg/labels"
+   "type": "object"
   },
   "LabelName": {
    "description": "A LabelName is a key for a LabelSet or Metric.  It has a value associated\ntherewith.",
-   "type": "string",
-   "x-go-package": "github.com/prometheus/common/model"
+   "type": "string"
   },
   "LabelNames": {
    "items": {
     "$ref": "#/definitions/LabelName"
    },
    "title": "LabelNames is a sortable LabelName slice. In implements sort.Interface.",
-   "type": "array",
-   "x-go-package": "github.com/prometheus/common/model"
+   "type": "array"
   },
   "LabelSet": {
    "additionalProperties": {
     "$ref": "#/definitions/LabelValue"
    },
    "description": "A LabelSet is a collection of LabelName and LabelValue pairs.  The LabelSet\nmay be fully-qualified down to the point where it may resolve to a single\nMetric in the data store or not.  All operations that occur within the realm\nof a LabelSet can emit a vector of Metric entities to which the LabelSet may\nmatch.",
-   "type": "object",
-   "x-go-package": "github.com/prometheus/common/model"
+   "type": "object"
   },
   "LabelValue": {
    "title": "A LabelValue is an associated value for a LabelName.",
-   "type": "string",
-   "x-go-package": "github.com/prometheus/common/model"
+   "type": "string"
   },
   "Labels": {
    "description": "Labels is a sorted set of labels. Order has to be guaranteed upon\ninstantiation.",
    "items": {
     "$ref": "#/definitions/Label"
    },
-   "type": "array",
-   "x-go-package": "github.com/prometheus/prometheus/pkg/labels"
+   "type": "array"
   },
   "MatchRegexps": {
    "additionalProperties": {
     "$ref": "#/definitions/Regexp"
    },
    "title": "MatchRegexps represents a map of Regexp.",
-   "type": "object",
-   "x-go-package": "github.com/prometheus/alertmanager/config"
+   "type": "object"
   },
   "MatchType": {
    "format": "int64",
    "title": "MatchType is an enum for label matching types.",
-   "type": "integer",
-   "x-go-package": "github.com/prometheus/alertmanager/pkg/labels"
+   "type": "integer"
   },
   "Matcher": {
    "properties": {
@@ -1576,8 +1370,7 @@
     }
    },
    "title": "Matcher models the matching of a label.",
-   "type": "object",
-   "x-go-package": "github.com/prometheus/alertmanager/pkg/labels"
+   "type": "object"
   },
   "Matchers": {
    "description": "Matchers is a slice of Matchers that is sortable, implements Stringer, and\nprovides a Matches method to match a LabelSet against all Matchers in the\nslice. Note that some users of Matchers might require it to be sorted.",
@@ -1589,36 +1382,30 @@
   "MessageTemplate": {
    "properties": {
     "name": {
-     "type": "string",
-     "x-go-name": "Name"
+     "type": "string"
     },
     "provenance": {
      "$ref": "#/definitions/Provenance"
     },
     "template": {
-     "type": "string",
-     "x-go-name": "Template"
+     "type": "string"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "MessageTemplateContent": {
    "properties": {
     "template": {
-     "type": "string",
-     "x-go-name": "Template"
+     "type": "string"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "MessageTemplates": {
    "items": {
     "$ref": "#/definitions/MessageTemplate"
    },
-   "type": "array",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "array"
   },
   "MonthRange": {
    "properties": {
@@ -1632,37 +1419,31 @@
     }
    },
    "title": "A MonthRange is an inclusive range between [1, 12] where 1 = January.",
-   "type": "object",
-   "x-go-package": "github.com/prometheus/alertmanager/timeinterval"
+   "type": "object"
   },
   "MultiStatus": {
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "MuteTimeInterval": {
    "properties": {
     "name": {
-     "type": "string",
-     "x-go-name": "Name"
+     "type": "string"
     },
     "time_intervals": {
      "items": {
       "$ref": "#/definitions/TimeInterval"
      },
-     "type": "array",
-     "x-go-name": "TimeIntervals"
+     "type": "array"
     }
    },
    "title": "MuteTimeInterval represents a named set of time intervals for which a route should be muted.",
-   "type": "object",
-   "x-go-package": "github.com/prometheus/alertmanager/config"
+   "type": "object"
   },
   "MuteTimings": {
    "items": {
     "$ref": "#/definitions/MuteTimeInterval"
    },
-   "type": "array",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "array"
   },
   "NamespaceConfigResponse": {
    "additionalProperties": {
@@ -1671,23 +1452,19 @@
     },
     "type": "array"
    },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "NotFound": {
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "NotifierConfig": {
    "properties": {
     "send_resolved": {
-     "type": "boolean",
-     "x-go-name": "VSendResolved"
+     "type": "boolean"
     }
    },
    "title": "NotifierConfig contains base options common across all notifier configurations.",
-   "type": "object",
-   "x-go-package": "github.com/prometheus/alertmanager/config"
+   "type": "object"
   },
   "OAuth2": {
    "properties": {
@@ -1695,38 +1472,32 @@
      "$ref": "#/definitions/TLSConfig"
     },
     "client_id": {
-     "type": "string",
-     "x-go-name": "ClientID"
+     "type": "string"
     },
     "client_secret": {
      "$ref": "#/definitions/Secret"
     },
     "client_secret_file": {
-     "type": "string",
-     "x-go-name": "ClientSecretFile"
+     "type": "string"
     },
     "endpoint_params": {
      "additionalProperties": {
       "type": "string"
      },
-     "type": "object",
-     "x-go-name": "EndpointParams"
+     "type": "object"
     },
     "scopes": {
      "items": {
       "type": "string"
      },
-     "type": "array",
-     "x-go-name": "Scopes"
+     "type": "array"
     },
     "token_url": {
-     "type": "string",
-     "x-go-name": "TokenURL"
+     "type": "string"
     }
    },
    "title": "OAuth2 is the oauth2 client configuration.",
-   "type": "object",
-   "x-go-package": "github.com/prometheus/common/config"
+   "type": "object"
   },
   "ObjectMatchers": {
    "$ref": "#/definitions/Matchers",
@@ -1735,133 +1506,107 @@
   "OpsGenieConfig": {
    "properties": {
     "actions": {
-     "type": "string",
-     "x-go-name": "Actions"
+     "type": "string"
     },
     "api_key": {
      "$ref": "#/definitions/Secret"
     },
     "api_key_file": {
-     "type": "string",
-     "x-go-name": "APIKeyFile"
+     "type": "string"
     },
     "api_url": {
      "$ref": "#/definitions/URL"
     },
     "description": {
-     "type": "string",
-     "x-go-name": "Description"
+     "type": "string"
     },
     "details": {
      "additionalProperties": {
       "type": "string"
      },
-     "type": "object",
-     "x-go-name": "Details"
+     "type": "object"
     },
     "entity": {
-     "type": "string",
-     "x-go-name": "Entity"
+     "type": "string"
     },
     "http_config": {
      "$ref": "#/definitions/HTTPClientConfig"
     },
     "message": {
-     "type": "string",
-     "x-go-name": "Message"
+     "type": "string"
     },
     "note": {
-     "type": "string",
-     "x-go-name": "Note"
+     "type": "string"
     },
     "priority": {
-     "type": "string",
-     "x-go-name": "Priority"
+     "type": "string"
     },
     "responders": {
      "items": {
       "$ref": "#/definitions/OpsGenieConfigResponder"
      },
-     "type": "array",
-     "x-go-name": "Responders"
+     "type": "array"
     },
     "send_resolved": {
-     "type": "boolean",
-     "x-go-name": "VSendResolved"
+     "type": "boolean"
     },
     "source": {
-     "type": "string",
-     "x-go-name": "Source"
+     "type": "string"
     },
     "tags": {
-     "type": "string",
-     "x-go-name": "Tags"
+     "type": "string"
     },
     "update_alerts": {
-     "type": "boolean",
-     "x-go-name": "UpdateAlerts"
+     "type": "boolean"
     }
    },
    "title": "OpsGenieConfig configures notifications via OpsGenie.",
-   "type": "object",
-   "x-go-package": "github.com/prometheus/alertmanager/config"
+   "type": "object"
   },
   "OpsGenieConfigResponder": {
    "properties": {
     "id": {
      "description": "One of those 3 should be filled.",
-     "type": "string",
-     "x-go-name": "ID"
+     "type": "string"
     },
     "name": {
-     "type": "string",
-     "x-go-name": "Name"
+     "type": "string"
     },
     "type": {
      "description": "team, user, escalation, schedule etc.",
-     "type": "string",
-     "x-go-name": "Type"
+     "type": "string"
     },
     "username": {
-     "type": "string",
-     "x-go-name": "Username"
+     "type": "string"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/prometheus/alertmanager/config"
+   "type": "object"
   },
   "PagerdutyConfig": {
    "properties": {
     "class": {
-     "type": "string",
-     "x-go-name": "Class"
+     "type": "string"
     },
     "client": {
-     "type": "string",
-     "x-go-name": "Client"
+     "type": "string"
     },
     "client_url": {
-     "type": "string",
-     "x-go-name": "ClientURL"
+     "type": "string"
     },
     "component": {
-     "type": "string",
-     "x-go-name": "Component"
+     "type": "string"
     },
     "description": {
-     "type": "string",
-     "x-go-name": "Description"
+     "type": "string"
     },
     "details": {
      "additionalProperties": {
       "type": "string"
      },
-     "type": "object",
-     "x-go-name": "Details"
+     "type": "object"
     },
     "group": {
-     "type": "string",
-     "x-go-name": "Group"
+     "type": "string"
     },
     "http_config": {
      "$ref": "#/definitions/HTTPClientConfig"
@@ -1870,75 +1615,62 @@
      "items": {
       "$ref": "#/definitions/PagerdutyImage"
      },
-     "type": "array",
-     "x-go-name": "Images"
+     "type": "array"
     },
     "links": {
      "items": {
       "$ref": "#/definitions/PagerdutyLink"
      },
-     "type": "array",
-     "x-go-name": "Links"
+     "type": "array"
     },
     "routing_key": {
      "$ref": "#/definitions/Secret"
     },
     "send_resolved": {
-     "type": "boolean",
-     "x-go-name": "VSendResolved"
+     "type": "boolean"
     },
     "service_key": {
      "$ref": "#/definitions/Secret"
     },
     "severity": {
-     "type": "string",
-     "x-go-name": "Severity"
+     "type": "string"
     },
     "url": {
      "$ref": "#/definitions/URL"
     }
    },
    "title": "PagerdutyConfig configures notifications via PagerDuty.",
-   "type": "object",
-   "x-go-package": "github.com/prometheus/alertmanager/config"
+   "type": "object"
   },
   "PagerdutyImage": {
    "description": "PagerdutyImage is an image",
    "properties": {
     "alt": {
-     "type": "string",
-     "x-go-name": "Alt"
+     "type": "string"
     },
     "href": {
-     "type": "string",
-     "x-go-name": "Href"
+     "type": "string"
     },
     "src": {
-     "type": "string",
-     "x-go-name": "Src"
+     "type": "string"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/prometheus/alertmanager/config"
+   "type": "object"
   },
   "PagerdutyLink": {
    "description": "PagerdutyLink is a link",
    "properties": {
     "href": {
-     "type": "string",
-     "x-go-name": "Href"
+     "type": "string"
     },
     "text": {
-     "type": "string",
-     "x-go-name": "Text"
+     "type": "string"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/prometheus/alertmanager/config"
+   "type": "object"
   },
   "PermissionDenied": {
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "Point": {
    "properties": {
@@ -1952,8 +1684,7 @@
     }
    },
    "title": "Point represents a single data point for a given timestamp.",
-   "type": "object",
-   "x-go-package": "github.com/prometheus/prometheus/promql"
+   "type": "object"
   },
   "PostableApiAlertingConfig": {
    "properties": {
@@ -1964,23 +1695,20 @@
      "items": {
       "$ref": "#/definitions/InhibitRule"
      },
-     "type": "array",
-     "x-go-name": "InhibitRules"
+     "type": "array"
     },
     "mute_time_intervals": {
      "items": {
       "$ref": "#/definitions/MuteTimeInterval"
      },
-     "type": "array",
-     "x-go-name": "MuteTimeIntervals"
+     "type": "array"
     },
     "receivers": {
      "description": "Override with our superset receiver type",
      "items": {
       "$ref": "#/definitions/PostableApiReceiver"
      },
-     "type": "array",
-     "x-go-name": "Receivers"
+     "type": "array"
     },
     "route": {
      "$ref": "#/definitions/Route"
@@ -1989,12 +1717,10 @@
      "items": {
       "type": "string"
      },
-     "type": "array",
-     "x-go-name": "Templates"
+     "type": "array"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "PostableApiReceiver": {
    "properties": {
@@ -2002,97 +1728,82 @@
      "items": {
       "$ref": "#/definitions/EmailConfig"
      },
-     "type": "array",
-     "x-go-name": "EmailConfigs"
+     "type": "array"
     },
     "grafana_managed_receiver_configs": {
      "items": {
       "$ref": "#/definitions/PostableGrafanaReceiver"
      },
-     "type": "array",
-     "x-go-name": "GrafanaManagedReceivers"
+     "type": "array"
     },
     "name": {
      "description": "A unique identifier for this receiver.",
-     "type": "string",
-     "x-go-name": "Name"
+     "type": "string"
     },
     "opsgenie_configs": {
      "items": {
       "$ref": "#/definitions/OpsGenieConfig"
      },
-     "type": "array",
-     "x-go-name": "OpsGenieConfigs"
+     "type": "array"
     },
     "pagerduty_configs": {
      "items": {
       "$ref": "#/definitions/PagerdutyConfig"
      },
-     "type": "array",
-     "x-go-name": "PagerdutyConfigs"
+     "type": "array"
     },
     "pushover_configs": {
      "items": {
       "$ref": "#/definitions/PushoverConfig"
      },
-     "type": "array",
-     "x-go-name": "PushoverConfigs"
+     "type": "array"
     },
     "slack_configs": {
      "items": {
       "$ref": "#/definitions/SlackConfig"
      },
-     "type": "array",
-     "x-go-name": "SlackConfigs"
+     "type": "array"
     },
     "sns_configs": {
      "items": {
       "$ref": "#/definitions/SNSConfig"
      },
-     "type": "array",
-     "x-go-name": "SNSConfigs"
+     "type": "array"
     },
     "victorops_configs": {
      "items": {
       "$ref": "#/definitions/VictorOpsConfig"
      },
-     "type": "array",
-     "x-go-name": "VictorOpsConfigs"
+     "type": "array"
     },
     "webhook_configs": {
      "items": {
       "$ref": "#/definitions/WebhookConfig"
      },
-     "type": "array",
-     "x-go-name": "WebhookConfigs"
+     "type": "array"
     },
     "wechat_configs": {
      "items": {
       "$ref": "#/definitions/WechatConfig"
      },
-     "type": "array",
-     "x-go-name": "WechatConfigs"
+     "type": "array"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "PostableExtendedRuleNode": {
    "properties": {
     "alert": {
-     "type": "string",
-     "x-go-name": "Alert"
+     "type": "string"
     },
     "annotations": {
      "additionalProperties": {
       "type": "string"
      },
-     "type": "object",
-     "x-go-name": "Annotations"
+     "type": "object"
     },
     "expr": {
-     "type": "string",
-     "x-go-name": "Expr"
+     "type": "string"
     },
     "for": {
      "$ref": "#/definitions/Duration"
@@ -2104,48 +1815,39 @@
      "additionalProperties": {
       "type": "string"
      },
-     "type": "object",
-     "x-go-name": "Labels"
+     "type": "object"
     },
     "record": {
-     "type": "string",
-     "x-go-name": "Record"
+     "type": "string"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "PostableGrafanaReceiver": {
    "properties": {
     "disableResolveMessage": {
-     "type": "boolean",
-     "x-go-name": "DisableResolveMessage"
+     "type": "boolean"
     },
     "name": {
-     "type": "string",
-     "x-go-name": "Name"
+     "type": "string"
     },
     "secureSettings": {
      "additionalProperties": {
       "type": "string"
      },
-     "type": "object",
-     "x-go-name": "SecureSettings"
+     "type": "object"
     },
     "settings": {
      "$ref": "#/definitions/Json"
     },
     "type": {
-     "type": "string",
-     "x-go-name": "Type"
+     "type": "string"
     },
     "uid": {
-     "type": "string",
-     "x-go-name": "UID"
+     "type": "string"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "PostableGrafanaReceivers": {
    "properties": {
@@ -2153,25 +1855,21 @@
      "items": {
       "$ref": "#/definitions/PostableGrafanaReceiver"
      },
-     "type": "array",
-     "x-go-name": "GrafanaManagedReceivers"
+     "type": "array"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "PostableGrafanaRule": {
    "properties": {
     "condition": {
-     "type": "string",
-     "x-go-name": "Condition"
+     "type": "string"
     },
     "data": {
      "items": {
       "$ref": "#/definitions/AlertQuery"
      },
-     "type": "array",
-     "x-go-name": "Data"
+     "type": "array"
     },
     "exec_err_state": {
      "enum": [
@@ -2179,9 +1877,7 @@
       "Alerting",
       "Error"
      ],
-     "type": "string",
-     "x-go-enum-desc": "OK OkErrState\nAlerting AlertingErrState\nError ErrorErrState",
-     "x-go-name": "ExecErrState"
+     "type": "string"
     },
     "no_data_state": {
      "enum": [
@@ -2189,21 +1885,16 @@
       "NoData",
       "OK"
      ],
-     "type": "string",
-     "x-go-enum-desc": "Alerting Alerting\nNoData NoData\nOK OK",
-     "x-go-name": "NoDataState"
+     "type": "string"
     },
     "title": {
-     "type": "string",
-     "x-go-name": "Title"
+     "type": "string"
     },
     "uid": {
-     "type": "string",
-     "x-go-name": "UID"
+     "type": "string"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "PostableNGalertConfig": {
    "properties": {
@@ -2211,8 +1902,7 @@
      "items": {
       "type": "string"
      },
-     "type": "array",
-     "x-go-name": "Alertmanagers"
+     "type": "array"
     },
     "alertmanagersChoice": {
      "enum": [
@@ -2220,13 +1910,10 @@
       "internal",
       "external"
      ],
-     "type": "string",
-     "x-go-enum-desc": "all AllAlertmanagers\ninternal InternalAlertmanager\nexternal ExternalAlertmanagers",
-     "x-go-name": "AlertmanagersChoice"
+     "type": "string"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "PostableRuleGroupConfig": {
    "properties": {
@@ -2234,19 +1921,16 @@
      "$ref": "#/definitions/Duration"
     },
     "name": {
-     "type": "string",
-     "x-go-name": "Name"
+     "type": "string"
     },
     "rules": {
      "items": {
       "$ref": "#/definitions/PostableExtendedRuleNode"
      },
-     "type": "array",
-     "x-go-name": "Rules"
+     "type": "array"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "PostableUserConfig": {
    "properties": {
@@ -2257,16 +1941,13 @@
      "additionalProperties": {
       "type": "string"
      },
-     "type": "object",
-     "x-go-name": "TemplateFiles"
+     "type": "object"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "Provenance": {
-   "type": "string",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/models"
+   "type": "string"
   },
   "PushoverConfig": {
    "properties": {
@@ -2274,52 +1955,43 @@
      "$ref": "#/definitions/duration"
     },
     "html": {
-     "type": "boolean",
-     "x-go-name": "HTML"
+     "type": "boolean"
     },
     "http_config": {
      "$ref": "#/definitions/HTTPClientConfig"
     },
     "message": {
-     "type": "string",
-     "x-go-name": "Message"
+     "type": "string"
     },
     "priority": {
-     "type": "string",
-     "x-go-name": "Priority"
+     "type": "string"
     },
     "retry": {
      "$ref": "#/definitions/duration"
     },
     "send_resolved": {
-     "type": "boolean",
-     "x-go-name": "VSendResolved"
+     "type": "boolean"
     },
     "sound": {
-     "type": "string",
-     "x-go-name": "Sound"
+     "type": "string"
     },
     "title": {
-     "type": "string",
-     "x-go-name": "Title"
+     "type": "string"
     },
     "token": {
      "$ref": "#/definitions/Secret"
     },
     "url": {
-     "type": "string",
-     "x-go-name": "URL"
+     "type": "string"
     },
     "url_title": {
-     "type": "string",
-     "x-go-name": "URLTitle"
+     "type": "string"
     },
     "user_key": {
      "$ref": "#/definitions/Secret"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/prometheus/alertmanager/config"
+   "type": "object"
   },
   "Receiver": {
    "properties": {
@@ -2327,80 +1999,68 @@
      "items": {
       "$ref": "#/definitions/EmailConfig"
      },
-     "type": "array",
-     "x-go-name": "EmailConfigs"
+     "type": "array"
     },
     "name": {
      "description": "A unique identifier for this receiver.",
-     "type": "string",
-     "x-go-name": "Name"
+     "type": "string"
     },
     "opsgenie_configs": {
      "items": {
       "$ref": "#/definitions/OpsGenieConfig"
      },
-     "type": "array",
-     "x-go-name": "OpsGenieConfigs"
+     "type": "array"
     },
     "pagerduty_configs": {
      "items": {
       "$ref": "#/definitions/PagerdutyConfig"
      },
-     "type": "array",
-     "x-go-name": "PagerdutyConfigs"
+     "type": "array"
     },
     "pushover_configs": {
      "items": {
       "$ref": "#/definitions/PushoverConfig"
      },
-     "type": "array",
-     "x-go-name": "PushoverConfigs"
+     "type": "array"
     },
     "slack_configs": {
      "items": {
       "$ref": "#/definitions/SlackConfig"
      },
-     "type": "array",
-     "x-go-name": "SlackConfigs"
+     "type": "array"
     },
     "sns_configs": {
      "items": {
       "$ref": "#/definitions/SNSConfig"
      },
-     "type": "array",
-     "x-go-name": "SNSConfigs"
+     "type": "array"
     },
     "victorops_configs": {
      "items": {
       "$ref": "#/definitions/VictorOpsConfig"
      },
-     "type": "array",
-     "x-go-name": "VictorOpsConfigs"
+     "type": "array"
     },
     "webhook_configs": {
      "items": {
       "$ref": "#/definitions/WebhookConfig"
      },
-     "type": "array",
-     "x-go-name": "WebhookConfigs"
+     "type": "array"
     },
     "wechat_configs": {
      "items": {
       "$ref": "#/definitions/WechatConfig"
      },
-     "type": "array",
-     "x-go-name": "WechatConfigs"
+     "type": "array"
     }
    },
    "title": "Receiver configuration provides configuration on how to contact a receiver.",
-   "type": "object",
-   "x-go-package": "github.com/prometheus/alertmanager/config"
+   "type": "object"
   },
   "Regexp": {
    "description": "A Regexp is safe for concurrent use by multiple goroutines,\nexcept for configuration methods, such as Longest.",
    "title": "Regexp is the representation of a compiled regular expression.",
-   "type": "object",
-   "x-go-package": "regexp"
+   "type": "object"
   },
   "RelativeTimeRange": {
    "description": "RelativeTimeRange is the per query start and end time\nfor requests.",
@@ -2412,32 +2072,27 @@
      "$ref": "#/definitions/Duration"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/models"
+   "type": "object"
   },
   "ResponseDetails": {
    "properties": {
     "msg": {
-     "type": "string",
-     "x-go-name": "Msg"
+     "type": "string"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "Route": {
    "description": "A Route is a node that contains definitions of how to handle alerts. This is modified\nfrom the upstream alertmanager in that it adds the ObjectMatchers property.",
    "properties": {
     "continue": {
-     "type": "boolean",
-     "x-go-name": "Continue"
+     "type": "boolean"
     },
     "group_by": {
      "items": {
       "type": "string"
      },
-     "type": "array",
-     "x-go-name": "GroupByStr"
+     "type": "array"
     },
     "group_interval": {
      "$ref": "#/definitions/Duration"
@@ -2450,8 +2105,7 @@
       "type": "string"
      },
      "description": "Deprecated. Remove before v1.0 release.",
-     "type": "object",
-     "x-go-name": "Match"
+     "type": "object"
     },
     "match_re": {
      "$ref": "#/definitions/MatchRegexps"
@@ -2463,8 +2117,7 @@
      "items": {
       "type": "string"
      },
-     "type": "array",
-     "x-go-name": "MuteTimeIntervals"
+     "type": "array"
     },
     "object_matchers": {
      "$ref": "#/definitions/ObjectMatchers"
@@ -2473,8 +2126,7 @@
      "$ref": "#/definitions/Provenance"
     },
     "receiver": {
-     "type": "string",
-     "x-go-name": "Receiver"
+     "type": "string"
     },
     "repeat_interval": {
      "$ref": "#/definitions/Duration"
@@ -2483,44 +2135,36 @@
      "items": {
       "$ref": "#/definitions/Route"
      },
-     "type": "array",
-     "x-go-name": "Routes"
+     "type": "array"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "Rule": {
    "description": "adapted from cortex",
    "properties": {
     "evaluationTime": {
      "format": "double",
-     "type": "number",
-     "x-go-name": "EvaluationTime"
+     "type": "number"
     },
     "health": {
-     "type": "string",
-     "x-go-name": "Health"
+     "type": "string"
     },
     "labels": {
      "$ref": "#/definitions/overrideLabels"
     },
     "lastError": {
-     "type": "string",
-     "x-go-name": "LastError"
+     "type": "string"
     },
     "lastEvaluation": {
      "format": "date-time",
-     "type": "string",
-     "x-go-name": "LastEvaluation"
+     "type": "string"
     },
     "name": {
-     "type": "string",
-     "x-go-name": "Name"
+     "type": "string"
     },
     "query": {
-     "type": "string",
-     "x-go-name": "Query"
+     "type": "string"
     },
     "type": {
      "$ref": "#/definitions/RuleType"
@@ -2532,8 +2176,7 @@
     "health",
     "type"
    ],
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "RuleDiscovery": {
    "properties": {
@@ -2541,48 +2184,40 @@
      "items": {
       "$ref": "#/definitions/RuleGroup"
      },
-     "type": "array",
-     "x-go-name": "RuleGroups"
+     "type": "array"
     }
    },
    "required": [
     "groups"
    ],
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "RuleGroup": {
    "properties": {
     "evaluationTime": {
      "format": "double",
-     "type": "number",
-     "x-go-name": "EvaluationTime"
+     "type": "number"
     },
     "file": {
-     "type": "string",
-     "x-go-name": "File"
+     "type": "string"
     },
     "interval": {
      "format": "double",
-     "type": "number",
-     "x-go-name": "Interval"
+     "type": "number"
     },
     "lastEvaluation": {
      "format": "date-time",
-     "type": "string",
-     "x-go-name": "LastEvaluation"
+     "type": "string"
     },
     "name": {
-     "type": "string",
-     "x-go-name": "Name"
+     "type": "string"
     },
     "rules": {
      "description": "In order to preserve rule ordering, while exposing type (alerting or recording)\nspecific properties, both alerting and recording rules are exposed in the\nsame array.",
      "items": {
       "$ref": "#/definitions/AlertingRule"
      },
-     "type": "array",
-     "x-go-name": "Rules"
+     "type": "array"
     }
    },
    "required": [
@@ -2591,8 +2226,7 @@
     "rules",
     "interval"
    ],
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "RuleGroupConfigResponse": {
    "properties": {
@@ -2600,26 +2234,22 @@
      "$ref": "#/definitions/Duration"
     },
     "name": {
-     "type": "string",
-     "x-go-name": "Name"
+     "type": "string"
     },
     "rules": {
      "items": {
       "$ref": "#/definitions/GettableExtendedRuleNode"
      },
-     "type": "array",
-     "x-go-name": "Rules"
+     "type": "array"
     },
     "source_tenants": {
      "items": {
       "type": "string"
      },
-     "type": "array",
-     "x-go-name": "SourceTenants"
+     "type": "array"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "RuleResponse": {
    "properties": {
@@ -2627,74 +2257,61 @@
      "$ref": "#/definitions/RuleDiscovery"
     },
     "error": {
-     "type": "string",
-     "x-go-name": "Error"
+     "type": "string"
     },
     "errorType": {
      "$ref": "#/definitions/ErrorType"
     },
     "status": {
-     "type": "string",
-     "x-go-name": "Status"
+     "type": "string"
     }
    },
    "required": [
     "status"
    ],
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "RuleType": {
    "title": "RuleType models the type of a rule.",
-   "type": "string",
-   "x-go-package": "github.com/prometheus/client_golang/api/prometheus/v1"
+   "type": "string"
   },
   "SNSConfig": {
    "properties": {
     "api_url": {
-     "type": "string",
-     "x-go-name": "APIUrl"
+     "type": "string"
     },
     "attributes": {
      "additionalProperties": {
       "type": "string"
      },
-     "type": "object",
-     "x-go-name": "Attributes"
+     "type": "object"
     },
     "http_config": {
      "$ref": "#/definitions/HTTPClientConfig"
     },
     "message": {
-     "type": "string",
-     "x-go-name": "Message"
+     "type": "string"
     },
     "phone_number": {
-     "type": "string",
-     "x-go-name": "PhoneNumber"
+     "type": "string"
     },
     "send_resolved": {
-     "type": "boolean",
-     "x-go-name": "VSendResolved"
+     "type": "boolean"
     },
     "sigv4": {
      "$ref": "#/definitions/SigV4Config"
     },
     "subject": {
-     "type": "string",
-     "x-go-name": "Subject"
+     "type": "string"
     },
     "target_arn": {
-     "type": "string",
-     "x-go-name": "TargetARN"
+     "type": "string"
     },
     "topic_arn": {
-     "type": "string",
-     "x-go-name": "TopicARN"
+     "type": "string"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/prometheus/alertmanager/config"
+   "type": "object"
   },
   "Sample": {
    "properties": {
@@ -2711,13 +2328,11 @@
     }
    },
    "title": "Sample is a single sample belonging to a metric.",
-   "type": "object",
-   "x-go-package": "github.com/prometheus/prometheus/promql"
+   "type": "object"
   },
   "Secret": {
    "title": "Secret special type for storing secrets.",
-   "type": "string",
-   "x-go-package": "github.com/prometheus/common/config"
+   "type": "string"
   },
   "SecretURL": {
    "$ref": "#/definitions/URL",
@@ -2742,8 +2357,7 @@
      "$ref": "#/definitions/Secret"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/prometheus/common/sigv4"
+   "type": "object"
   },
   "SlackAction": {
    "description": "See https://api.slack.com/docs/message-attachments#action_fields and https://api.slack.com/docs/message-buttons\nfor more information.",
@@ -2752,33 +2366,26 @@
      "$ref": "#/definitions/SlackConfirmationField"
     },
     "name": {
-     "type": "string",
-     "x-go-name": "Name"
+     "type": "string"
     },
     "style": {
-     "type": "string",
-     "x-go-name": "Style"
+     "type": "string"
     },
     "text": {
-     "type": "string",
-     "x-go-name": "Text"
+     "type": "string"
     },
     "type": {
-     "type": "string",
-     "x-go-name": "Type"
+     "type": "string"
     },
     "url": {
-     "type": "string",
-     "x-go-name": "URL"
+     "type": "string"
     },
     "value": {
-     "type": "string",
-     "x-go-name": "Value"
+     "type": "string"
     }
    },
    "title": "SlackAction configures a single Slack action that is sent with each notification.",
-   "type": "object",
-   "x-go-package": "github.com/prometheus/alertmanager/config"
+   "type": "object"
   },
   "SlackConfig": {
    "properties": {
@@ -2786,149 +2393,118 @@
      "items": {
       "$ref": "#/definitions/SlackAction"
      },
-     "type": "array",
-     "x-go-name": "Actions"
+     "type": "array"
     },
     "api_url": {
      "$ref": "#/definitions/SecretURL"
     },
     "api_url_file": {
-     "type": "string",
-     "x-go-name": "APIURLFile"
+     "type": "string"
     },
     "callback_id": {
-     "type": "string",
-     "x-go-name": "CallbackID"
+     "type": "string"
     },
     "channel": {
      "description": "Slack channel override, (like #other-channel or @username).",
-     "type": "string",
-     "x-go-name": "Channel"
+     "type": "string"
     },
     "color": {
-     "type": "string",
-     "x-go-name": "Color"
+     "type": "string"
     },
     "fallback": {
-     "type": "string",
-     "x-go-name": "Fallback"
+     "type": "string"
     },
     "fields": {
      "items": {
       "$ref": "#/definitions/SlackField"
      },
-     "type": "array",
-     "x-go-name": "Fields"
+     "type": "array"
     },
     "footer": {
-     "type": "string",
-     "x-go-name": "Footer"
+     "type": "string"
     },
     "http_config": {
      "$ref": "#/definitions/HTTPClientConfig"
     },
     "icon_emoji": {
-     "type": "string",
-     "x-go-name": "IconEmoji"
+     "type": "string"
     },
     "icon_url": {
-     "type": "string",
-     "x-go-name": "IconURL"
+     "type": "string"
     },
     "image_url": {
-     "type": "string",
-     "x-go-name": "ImageURL"
+     "type": "string"
     },
     "link_names": {
-     "type": "boolean",
-     "x-go-name": "LinkNames"
+     "type": "boolean"
     },
     "mrkdwn_in": {
      "items": {
       "type": "string"
      },
-     "type": "array",
-     "x-go-name": "MrkdwnIn"
+     "type": "array"
     },
     "pretext": {
-     "type": "string",
-     "x-go-name": "Pretext"
+     "type": "string"
     },
     "send_resolved": {
-     "type": "boolean",
-     "x-go-name": "VSendResolved"
+     "type": "boolean"
     },
     "short_fields": {
-     "type": "boolean",
-     "x-go-name": "ShortFields"
+     "type": "boolean"
     },
     "text": {
-     "type": "string",
-     "x-go-name": "Text"
+     "type": "string"
     },
     "thumb_url": {
-     "type": "string",
-     "x-go-name": "ThumbURL"
+     "type": "string"
     },
     "title": {
-     "type": "string",
-     "x-go-name": "Title"
+     "type": "string"
     },
     "title_link": {
-     "type": "string",
-     "x-go-name": "TitleLink"
+     "type": "string"
     },
     "username": {
-     "type": "string",
-     "x-go-name": "Username"
+     "type": "string"
     }
    },
    "title": "SlackConfig configures notifications via Slack.",
-   "type": "object",
-   "x-go-package": "github.com/prometheus/alertmanager/config"
+   "type": "object"
   },
   "SlackConfirmationField": {
    "description": "SlackConfirmationField protect users from destructive actions or particularly distinguished decisions\nby asking them to confirm their button click one more time.\nSee https://api.slack.com/docs/interactive-message-field-guide#confirmation_fields for more information.",
    "properties": {
     "dismiss_text": {
-     "type": "string",
-     "x-go-name": "DismissText"
+     "type": "string"
     },
     "ok_text": {
-     "type": "string",
-     "x-go-name": "OkText"
+     "type": "string"
     },
     "text": {
-     "type": "string",
-     "x-go-name": "Text"
+     "type": "string"
     },
     "title": {
-     "type": "string",
-     "x-go-name": "Title"
+     "type": "string"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/prometheus/alertmanager/config"
+   "type": "object"
   },
   "SlackField": {
    "description": "Each field must contain a title, value, and optionally, a boolean value to indicate if the field\nis short enough to be displayed next to other fields designated as short.\nSee https://api.slack.com/docs/message-attachments#fields for more information.",
    "properties": {
     "short": {
-     "type": "boolean",
-     "x-go-name": "Short"
+     "type": "boolean"
     },
     "title": {
-     "type": "string",
-     "x-go-name": "Title"
+     "type": "string"
     },
     "value": {
-     "type": "string",
-     "x-go-name": "Value"
+     "type": "string"
     }
    },
    "title": "SlackField configures a single Slack field that is sent with each notification.",
-   "type": "object",
-   "x-go-package": "github.com/prometheus/alertmanager/config"
+   "type": "object"
   },
   "SmtpNotEnabled": {
    "$ref": "#/definitions/ResponseDetails"
@@ -2940,55 +2516,44 @@
    "properties": {
     "ca_file": {
      "description": "The CA cert to use for the targets.",
-     "type": "string",
-     "x-go-name": "CAFile"
+     "type": "string"
     },
     "cert_file": {
      "description": "The client cert file for the targets.",
-     "type": "string",
-     "x-go-name": "CertFile"
+     "type": "string"
     },
     "insecure_skip_verify": {
      "description": "Disable target certificate validation.",
-     "type": "boolean",
-     "x-go-name": "InsecureSkipVerify"
+     "type": "boolean"
     },
     "key_file": {
      "description": "The client key file for the targets.",
-     "type": "string",
-     "x-go-name": "KeyFile"
+     "type": "string"
     },
     "server_name": {
      "description": "Used to verify the hostname for the targets.",
-     "type": "string",
-     "x-go-name": "ServerName"
+     "type": "string"
     }
    },
    "title": "TLSConfig configures the options for TLS connections.",
-   "type": "object",
-   "x-go-package": "github.com/prometheus/common/config"
+   "type": "object"
   },
   "TestReceiverConfigResult": {
    "properties": {
     "error": {
-     "type": "string",
-     "x-go-name": "Error"
+     "type": "string"
     },
     "name": {
-     "type": "string",
-     "x-go-name": "Name"
+     "type": "string"
     },
     "status": {
-     "type": "string",
-     "x-go-name": "Status"
+     "type": "string"
     },
     "uid": {
-     "type": "string",
-     "x-go-name": "UID"
+     "type": "string"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "TestReceiverResult": {
    "properties": {
@@ -2996,16 +2561,13 @@
      "items": {
       "$ref": "#/definitions/TestReceiverConfigResult"
      },
-     "type": "array",
-     "x-go-name": "Configs"
+     "type": "array"
     },
     "name": {
-     "type": "string",
-     "x-go-name": "Name"
+     "type": "string"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "TestReceiversConfigAlertParams": {
    "properties": {
@@ -3016,8 +2578,7 @@
      "$ref": "#/definitions/LabelSet"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "TestReceiversConfigBodyParams": {
    "properties": {
@@ -3028,12 +2589,10 @@
      "items": {
       "$ref": "#/definitions/PostableApiReceiver"
      },
-     "type": "array",
-     "x-go-name": "Receivers"
+     "type": "array"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "TestReceiversResult": {
    "properties": {
@@ -3042,33 +2601,28 @@
     },
     "notified_at": {
      "format": "date-time",
-     "type": "string",
-     "x-go-name": "NotifiedAt"
+     "type": "string"
     },
     "receivers": {
      "items": {
       "$ref": "#/definitions/TestReceiverResult"
      },
-     "type": "array",
-     "x-go-name": "Receivers"
+     "type": "array"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "TestRulePayload": {
    "properties": {
     "expr": {
      "example": "(node_filesystem_avail_bytes{fstype!=\"\",job=\"integrations/node_exporter\"} node_filesystem_size_bytes{fstype!=\"\",job=\"integrations/node_exporter\"} * 100 \u003c 5 and node_filesystem_readonly{fstype!=\"\",job=\"integrations/node_exporter\"} == 0)",
-     "type": "string",
-     "x-go-name": "Expr"
+     "type": "string"
     },
     "grafana_condition": {
      "$ref": "#/definitions/EvalAlertConditionCommand"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "TestRuleResponse": {
    "properties": {
@@ -3079,8 +2633,7 @@
      "$ref": "#/definitions/AlertInstancesResponse"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "TimeInterval": {
    "description": "TimeInterval describes intervals of time. ContainsTime will tell you if a golang time is contained\nwithin the interval.",
@@ -3089,40 +2642,34 @@
      "items": {
       "$ref": "#/definitions/DayOfMonthRange"
      },
-     "type": "array",
-     "x-go-name": "DaysOfMonth"
+     "type": "array"
     },
     "months": {
      "items": {
       "$ref": "#/definitions/MonthRange"
      },
-     "type": "array",
-     "x-go-name": "Months"
+     "type": "array"
     },
     "times": {
      "items": {
       "$ref": "#/definitions/TimeRange"
      },
-     "type": "array",
-     "x-go-name": "Times"
+     "type": "array"
     },
     "weekdays": {
      "items": {
       "$ref": "#/definitions/WeekdayRange"
      },
-     "type": "array",
-     "x-go-name": "Weekdays"
+     "type": "array"
     },
     "years": {
      "items": {
       "$ref": "#/definitions/YearRange"
      },
-     "type": "array",
-     "x-go-name": "Years"
+     "type": "array"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/prometheus/alertmanager/timeinterval"
+   "type": "object"
   },
   "TimeRange": {
    "description": "For example, 4:00PM to End of the day would Begin at 1020 and End at 1440.",
@@ -3137,8 +2684,7 @@
     }
    },
    "title": "TimeRange represents a range of minutes within a 1440 minute day, exclusive of the End minute. A day consists of 1440 minutes.",
-   "type": "object",
-   "x-go-package": "github.com/prometheus/alertmanager/timeinterval"
+   "type": "object"
   },
   "URL": {
    "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
@@ -3175,32 +2721,27 @@
     }
    },
    "title": "A URL represents a parsed URL (technically, a URI reference).",
-   "type": "object",
-   "x-go-package": "net/url"
+   "type": "object"
   },
   "Userinfo": {
    "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
-   "type": "object",
-   "x-go-package": "net/url"
+   "type": "object"
   },
   "ValidationError": {
    "properties": {
     "msg": {
      "example": "error message",
-     "type": "string",
-     "x-go-name": "Msg"
+     "type": "string"
     }
    },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "Vector": {
    "description": "Vector is basically only an alias for model.Samples, but the\ncontract is that in a Vector, all Samples have the same timestamp.",
    "items": {
     "$ref": "#/definitions/Sample"
    },
-   "type": "array",
-   "x-go-package": "github.com/prometheus/prometheus/promql"
+   "type": "array"
   },
   "VictorOpsConfig": {
    "properties": {
@@ -3217,40 +2758,32 @@
      "additionalProperties": {
       "type": "string"
      },
-     "type": "object",
-     "x-go-name": "CustomFields"
+     "type": "object"
     },
     "entity_display_name": {
-     "type": "string",
-     "x-go-name": "EntityDisplayName"
+     "type": "string"
     },
     "http_config": {
      "$ref": "#/definitions/HTTPClientConfig"
     },
     "message_type": {
-     "type": "string",
-     "x-go-name": "MessageType"
+     "type": "string"
     },
     "monitoring_tool": {
-     "type": "string",
-     "x-go-name": "MonitoringTool"
+     "type": "string"
     },
     "routing_key": {
-     "type": "string",
-     "x-go-name": "RoutingKey"
+     "type": "string"
     },
     "send_resolved": {
-     "type": "boolean",
-     "x-go-name": "VSendResolved"
+     "type": "boolean"
     },
     "state_message": {
-     "type": "string",
-     "x-go-name": "StateMessage"
+     "type": "string"
     }
    },
    "title": "VictorOpsConfig configures notifications via VictorOps.",
-   "type": "object",
-   "x-go-package": "github.com/prometheus/alertmanager/config"
+   "type": "object"
   },
   "WebhookConfig": {
    "properties": {
@@ -3260,26 +2793,22 @@
     "max_alerts": {
      "description": "MaxAlerts is the maximum number of alerts to be sent per webhook message.\nAlerts exceeding this threshold will be truncated. Setting this to 0\nallows an unlimited number of alerts.",
      "format": "uint64",
-     "type": "integer",
-     "x-go-name": "MaxAlerts"
+     "type": "integer"
     },
     "send_resolved": {
-     "type": "boolean",
-     "x-go-name": "VSendResolved"
+     "type": "boolean"
     },
     "url": {
      "$ref": "#/definitions/URL"
     }
    },
    "title": "WebhookConfig configures notifications via a generic webhook.",
-   "type": "object",
-   "x-go-package": "github.com/prometheus/alertmanager/config"
+   "type": "object"
   },
   "WechatConfig": {
    "properties": {
     "agent_id": {
-     "type": "string",
-     "x-go-name": "AgentID"
+     "type": "string"
     },
     "api_secret": {
      "$ref": "#/definitions/Secret"
@@ -3288,40 +2817,32 @@
      "$ref": "#/definitions/URL"
     },
     "corp_id": {
-     "type": "string",
-     "x-go-name": "CorpID"
+     "type": "string"
     },
     "http_config": {
      "$ref": "#/definitions/HTTPClientConfig"
     },
     "message": {
-     "type": "string",
-     "x-go-name": "Message"
+     "type": "string"
     },
     "message_type": {
-     "type": "string",
-     "x-go-name": "MessageType"
+     "type": "string"
     },
     "send_resolved": {
-     "type": "boolean",
-     "x-go-name": "VSendResolved"
+     "type": "boolean"
     },
     "to_party": {
-     "type": "string",
-     "x-go-name": "ToParty"
+     "type": "string"
     },
     "to_tag": {
-     "type": "string",
-     "x-go-name": "ToTag"
+     "type": "string"
     },
     "to_user": {
-     "type": "string",
-     "x-go-name": "ToUser"
+     "type": "string"
     }
    },
    "title": "WechatConfig configures notifications via Wechat.",
-   "type": "object",
-   "x-go-package": "github.com/prometheus/alertmanager/config"
+   "type": "object"
   },
   "WeekdayRange": {
    "properties": {
@@ -3335,8 +2856,7 @@
     }
    },
    "title": "A WeekdayRange is an inclusive range between [0, 6] where 0 = Sunday.",
-   "type": "object",
-   "x-go-package": "github.com/prometheus/alertmanager/timeinterval"
+   "type": "object"
   },
   "YearRange": {
    "properties": {
@@ -3350,8 +2870,7 @@
     }
    },
    "title": "A YearRange is a positive inclusive range.",
-   "type": "object",
-   "x-go-package": "github.com/prometheus/alertmanager/timeinterval"
+   "type": "object"
   },
   "alert": {
    "description": "Alert alert",
@@ -3359,8 +2878,7 @@
     "generatorURL": {
      "description": "generator URL\nFormat: uri",
      "format": "uri",
-     "type": "string",
-     "x-go-name": "GeneratorURL"
+     "type": "string"
     },
     "labels": {
      "$ref": "#/definitions/labelSet"
@@ -3369,19 +2887,17 @@
    "required": [
     "labels"
    ],
-   "type": "object",
-   "x-go-name": "Alert",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "alertGroup": {
+   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
      "items": {
       "$ref": "#/definitions/gettableAlert"
      },
-     "type": "array",
-     "x-go-name": "Alerts"
+     "type": "array"
     },
     "labels": {
      "$ref": "#/definitions/labelSet"
@@ -3395,12 +2911,9 @@
     "labels",
     "receiver"
    ],
-   "type": "object",
-   "x-go-name": "AlertGroup",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "alertGroups": {
-   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
@@ -3414,24 +2927,21 @@
      "items": {
       "type": "string"
      },
-     "type": "array",
-     "x-go-name": "InhibitedBy"
+     "type": "array"
     },
     "silencedBy": {
      "description": "silenced by",
      "items": {
       "type": "string"
      },
-     "type": "array",
-     "x-go-name": "SilencedBy"
+     "type": "array"
     },
     "state": {
      "description": "state",
      "enum": [
       "[unprocessed active suppressed]"
      ],
-     "type": "string",
-     "x-go-name": "State"
+     "type": "string"
     }
    },
    "required": [
@@ -3439,25 +2949,20 @@
     "silencedBy",
     "state"
    ],
-   "type": "object",
-   "x-go-name": "AlertStatus",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "alertmanagerConfig": {
    "description": "AlertmanagerConfig alertmanager config",
    "properties": {
     "original": {
      "description": "original",
-     "type": "string",
-     "x-go-name": "Original"
+     "type": "string"
     }
    },
    "required": [
     "original"
    ],
-   "type": "object",
-   "x-go-name": "AlertmanagerConfig",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "alertmanagerStatus": {
    "description": "AlertmanagerStatus alertmanager status",
@@ -3471,8 +2976,7 @@
     "uptime": {
      "description": "uptime",
      "format": "date-time",
-     "type": "string",
-     "x-go-name": "Uptime"
+     "type": "string"
     },
     "versionInfo": {
      "$ref": "#/definitions/versionInfo"
@@ -3484,47 +2988,39 @@
     "uptime",
     "versionInfo"
    ],
-   "type": "object",
-   "x-go-name": "AlertmanagerStatus",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "clusterStatus": {
    "description": "ClusterStatus cluster status",
    "properties": {
     "name": {
      "description": "name",
-     "type": "string",
-     "x-go-name": "Name"
+     "type": "string"
     },
     "peers": {
      "description": "peers",
      "items": {
       "$ref": "#/definitions/peerStatus"
      },
-     "type": "array",
-     "x-go-name": "Peers"
+     "type": "array"
     },
     "status": {
      "description": "status",
      "enum": [
       "[ready settling disabled]"
      ],
-     "type": "string",
-     "x-go-name": "Status"
+     "type": "string"
     }
    },
    "required": [
     "status"
    ],
-   "type": "object",
-   "x-go-name": "ClusterStatus",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "duration": {
    "$ref": "#/definitions/Duration"
   },
   "gettableAlert": {
-   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -3532,19 +3028,16 @@
     "endsAt": {
      "description": "ends at",
      "format": "date-time",
-     "type": "string",
-     "x-go-name": "EndsAt"
+     "type": "string"
     },
     "fingerprint": {
      "description": "fingerprint",
-     "type": "string",
-     "x-go-name": "Fingerprint"
+     "type": "string"
     },
     "generatorURL": {
      "description": "generator URL\nFormat: uri",
      "format": "uri",
-     "type": "string",
-     "x-go-name": "GeneratorURL"
+     "type": "string"
     },
     "labels": {
      "$ref": "#/definitions/labelSet"
@@ -3554,14 +3047,12 @@
      "items": {
       "$ref": "#/definitions/receiver"
      },
-     "type": "array",
-     "x-go-name": "Receivers"
+     "type": "array"
     },
     "startsAt": {
      "description": "starts at",
      "format": "date-time",
-     "type": "string",
-     "x-go-name": "StartsAt"
+     "type": "string"
     },
     "status": {
      "$ref": "#/definitions/alertStatus"
@@ -3569,8 +3060,7 @@
     "updatedAt": {
      "description": "updated at",
      "format": "date-time",
-     "type": "string",
-     "x-go-name": "UpdatedAt"
+     "type": "string"
     }
    },
    "required": [
@@ -3589,32 +3079,26 @@
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
-   "type": "array",
-   "x-go-name": "GettableAlerts",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "array"
   },
   "gettableSilence": {
    "properties": {
     "comment": {
      "description": "comment",
-     "type": "string",
-     "x-go-name": "Comment"
+     "type": "string"
     },
     "createdBy": {
      "description": "created by",
-     "type": "string",
-     "x-go-name": "CreatedBy"
+     "type": "string"
     },
     "endsAt": {
      "description": "ends at",
      "format": "date-time",
-     "type": "string",
-     "x-go-name": "EndsAt"
+     "type": "string"
     },
     "id": {
      "description": "id",
-     "type": "string",
-     "x-go-name": "ID"
+     "type": "string"
     },
     "matchers": {
      "$ref": "#/definitions/matchers"
@@ -3622,8 +3106,7 @@
     "startsAt": {
      "description": "starts at",
      "format": "date-time",
-     "type": "string",
-     "x-go-name": "StartsAt"
+     "type": "string"
     },
     "status": {
      "$ref": "#/definitions/silenceStatus"
@@ -3631,8 +3114,7 @@
     "updatedAt": {
      "description": "updated at",
      "format": "date-time",
-     "type": "string",
-     "x-go-name": "UpdatedAt"
+     "type": "string"
     }
    },
    "required": [
@@ -3645,49 +3127,39 @@
     "status",
     "updatedAt"
    ],
-   "type": "object",
-   "x-go-name": "GettableSilence",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "gettableSilences": {
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
-   "type": "array",
-   "x-go-name": "GettableSilences",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "array"
   },
   "labelSet": {
    "additionalProperties": {
     "type": "string"
    },
    "description": "LabelSet label set",
-   "type": "object",
-   "x-go-name": "LabelSet",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "matcher": {
    "description": "Matcher matcher",
    "properties": {
     "isEqual": {
      "description": "is equal",
-     "type": "boolean",
-     "x-go-name": "IsEqual"
+     "type": "boolean"
     },
     "isRegex": {
      "description": "is regex",
-     "type": "boolean",
-     "x-go-name": "IsRegex"
+     "type": "boolean"
     },
     "name": {
      "description": "name",
-     "type": "string",
-     "x-go-name": "Name"
+     "type": "string"
     },
     "value": {
      "description": "value",
-     "type": "string",
-     "x-go-name": "Value"
+     "type": "string"
     }
    },
    "required": [
@@ -3695,18 +3167,14 @@
     "name",
     "value"
    ],
-   "type": "object",
-   "x-go-name": "Matcher",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "matchers": {
    "description": "Matchers matchers",
    "items": {
     "$ref": "#/definitions/matcher"
    },
-   "type": "array",
-   "x-go-name": "Matchers",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "array"
   },
   "overrideLabels": {
    "additionalProperties": {
@@ -3714,30 +3182,25 @@
    },
    "description": "The custom marshaling for labels.Labels ends up doing this anyways.",
    "title": "override the labels type with a map for generation.",
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "type": "object"
   },
   "peerStatus": {
    "description": "PeerStatus peer status",
    "properties": {
     "address": {
      "description": "address",
-     "type": "string",
-     "x-go-name": "Address"
+     "type": "string"
     },
     "name": {
      "description": "name",
-     "type": "string",
-     "x-go-name": "Name"
+     "type": "string"
     }
    },
    "required": [
     "address",
     "name"
    ],
-   "type": "object",
-   "x-go-name": "PeerStatus",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "postableAlert": {
    "description": "PostableAlert postable alert",
@@ -3748,14 +3211,12 @@
     "endsAt": {
      "description": "ends at\nFormat: date-time",
      "format": "date-time",
-     "type": "string",
-     "x-go-name": "EndsAt"
+     "type": "string"
     },
     "generatorURL": {
      "description": "generator URL\nFormat: uri",
      "format": "uri",
-     "type": "string",
-     "x-go-name": "GeneratorURL"
+     "type": "string"
     },
     "labels": {
      "$ref": "#/definitions/labelSet"
@@ -3763,49 +3224,39 @@
     "startsAt": {
      "description": "starts at\nFormat: date-time",
      "format": "date-time",
-     "type": "string",
-     "x-go-name": "StartsAt"
+     "type": "string"
     }
    },
    "required": [
     "labels"
    ],
-   "type": "object",
-   "x-go-name": "PostableAlert",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "postableAlerts": {
    "description": "PostableAlerts postable alerts",
    "items": {
     "$ref": "#/definitions/postableAlert"
    },
-   "type": "array",
-   "x-go-name": "PostableAlerts",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "array"
   },
   "postableSilence": {
-   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
-     "type": "string",
-     "x-go-name": "Comment"
+     "type": "string"
     },
     "createdBy": {
      "description": "created by",
-     "type": "string",
-     "x-go-name": "CreatedBy"
+     "type": "string"
     },
     "endsAt": {
      "description": "ends at",
      "format": "date-time",
-     "type": "string",
-     "x-go-name": "EndsAt"
+     "type": "string"
     },
     "id": {
      "description": "id",
-     "type": "string",
-     "x-go-name": "ID"
+     "type": "string"
     },
     "matchers": {
      "$ref": "#/definitions/matchers"
@@ -3813,8 +3264,7 @@
     "startsAt": {
      "description": "starts at",
      "format": "date-time",
-     "type": "string",
-     "x-go-name": "StartsAt"
+     "type": "string"
     }
    },
    "required": [
@@ -3831,8 +3281,7 @@
    "properties": {
     "name": {
      "description": "name",
-     "type": "string",
-     "x-go-name": "Name"
+     "type": "string"
     }
    },
    "required": [
@@ -3845,19 +3294,16 @@
    "properties": {
     "comment": {
      "description": "comment",
-     "type": "string",
-     "x-go-name": "Comment"
+     "type": "string"
     },
     "createdBy": {
      "description": "created by",
-     "type": "string",
-     "x-go-name": "CreatedBy"
+     "type": "string"
     },
     "endsAt": {
      "description": "ends at",
      "format": "date-time",
-     "type": "string",
-     "x-go-name": "EndsAt"
+     "type": "string"
     },
     "matchers": {
      "$ref": "#/definitions/matchers"
@@ -3865,8 +3311,7 @@
     "startsAt": {
      "description": "starts at",
      "format": "date-time",
-     "type": "string",
-     "x-go-name": "StartsAt"
+     "type": "string"
     }
    },
    "required": [
@@ -3876,9 +3321,7 @@
     "matchers",
     "startsAt"
    ],
-   "type": "object",
-   "x-go-name": "Silence",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "silenceStatus": {
    "description": "SilenceStatus silence status",
@@ -3888,49 +3331,40 @@
      "enum": [
       "[expired active pending]"
      ],
-     "type": "string",
-     "x-go-name": "State"
+     "type": "string"
     }
    },
    "required": [
     "state"
    ],
-   "type": "object",
-   "x-go-name": "SilenceStatus",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "versionInfo": {
    "description": "VersionInfo version info",
    "properties": {
     "branch": {
      "description": "branch",
-     "type": "string",
-     "x-go-name": "Branch"
+     "type": "string"
     },
     "buildDate": {
      "description": "build date",
-     "type": "string",
-     "x-go-name": "BuildDate"
+     "type": "string"
     },
     "buildUser": {
      "description": "build user",
-     "type": "string",
-     "x-go-name": "BuildUser"
+     "type": "string"
     },
     "goVersion": {
      "description": "go version",
-     "type": "string",
-     "x-go-name": "GoVersion"
+     "type": "string"
     },
     "revision": {
      "description": "revision",
-     "type": "string",
-     "x-go-name": "Revision"
+     "type": "string"
     },
     "version": {
      "description": "version",
-     "type": "string",
-     "x-go-name": "Version"
+     "type": "string"
     }
    },
    "required": [
@@ -3941,9 +3375,7 @@
     "revision",
     "version"
    ],
-   "type": "object",
-   "x-go-name": "VersionInfo",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   }
  },
  "info": {
@@ -3962,24 +3394,21 @@
       "description": "Show active alerts",
       "in": "query",
       "name": "active",
-      "type": "boolean",
-      "x-go-name": "Active"
+      "type": "boolean"
      },
      {
       "default": true,
       "description": "Show silenced alerts",
       "in": "query",
       "name": "silenced",
-      "type": "boolean",
-      "x-go-name": "Silenced"
+      "type": "boolean"
      },
      {
       "default": true,
       "description": "Show inhibited alerts",
       "in": "query",
       "name": "inhibited",
-      "type": "boolean",
-      "x-go-name": "Inhibited"
+      "type": "boolean"
      },
      {
       "description": "A list of matchers to filter alerts by",
@@ -3988,15 +3417,13 @@
        "type": "string"
       },
       "name": "filter",
-      "type": "array",
-      "x-go-name": "Matchers"
+      "type": "array"
      },
      {
       "description": "A regex matching receivers to filter alerts by",
       "in": "query",
       "name": "receiver",
-      "type": "string",
-      "x-go-name": "Receivers"
+      "type": "string"
      }
     ],
     "responses": {
@@ -4061,24 +3488,21 @@
       "description": "Show active alerts",
       "in": "query",
       "name": "active",
-      "type": "boolean",
-      "x-go-name": "Active"
+      "type": "boolean"
      },
      {
       "default": true,
       "description": "Show silenced alerts",
       "in": "query",
       "name": "silenced",
-      "type": "boolean",
-      "x-go-name": "Silenced"
+      "type": "boolean"
      },
      {
       "default": true,
       "description": "Show inhibited alerts",
       "in": "query",
       "name": "inhibited",
-      "type": "boolean",
-      "x-go-name": "Inhibited"
+      "type": "boolean"
      },
      {
       "description": "A list of matchers to filter alerts by",
@@ -4087,15 +3511,13 @@
        "type": "string"
       },
       "name": "filter",
-      "type": "array",
-      "x-go-name": "Matchers"
+      "type": "array"
      },
      {
       "description": "A regex matching receivers to filter alerts by",
       "in": "query",
       "name": "receiver",
-      "type": "string",
-      "x-go-name": "Receivers"
+      "type": "string"
      }
     ],
     "responses": {
@@ -4188,8 +3610,7 @@
        "type": "string"
       },
       "name": "filter",
-      "type": "array",
-      "x-go-name": "Filter"
+      "type": "array"
      }
     ],
     "responses": {
@@ -4410,24 +3831,21 @@
       "description": "Show active alerts",
       "in": "query",
       "name": "active",
-      "type": "boolean",
-      "x-go-name": "Active"
+      "type": "boolean"
      },
      {
       "default": true,
       "description": "Show silenced alerts",
       "in": "query",
       "name": "silenced",
-      "type": "boolean",
-      "x-go-name": "Silenced"
+      "type": "boolean"
      },
      {
       "default": true,
       "description": "Show inhibited alerts",
       "in": "query",
       "name": "inhibited",
-      "type": "boolean",
-      "x-go-name": "Inhibited"
+      "type": "boolean"
      },
      {
       "description": "A list of matchers to filter alerts by",
@@ -4436,15 +3854,13 @@
        "type": "string"
       },
       "name": "filter",
-      "type": "array",
-      "x-go-name": "Matchers"
+      "type": "array"
      },
      {
       "description": "A regex matching receivers to filter alerts by",
       "in": "query",
       "name": "receiver",
-      "type": "string",
-      "x-go-name": "Receivers"
+      "type": "string"
      },
      {
       "description": "DatasoureUID should be the datasource UID identifier",
@@ -4523,24 +3939,21 @@
       "description": "Show active alerts",
       "in": "query",
       "name": "active",
-      "type": "boolean",
-      "x-go-name": "Active"
+      "type": "boolean"
      },
      {
       "default": true,
       "description": "Show silenced alerts",
       "in": "query",
       "name": "silenced",
-      "type": "boolean",
-      "x-go-name": "Silenced"
+      "type": "boolean"
      },
      {
       "default": true,
       "description": "Show inhibited alerts",
       "in": "query",
       "name": "inhibited",
-      "type": "boolean",
-      "x-go-name": "Inhibited"
+      "type": "boolean"
      },
      {
       "description": "A list of matchers to filter alerts by",
@@ -4549,15 +3962,13 @@
        "type": "string"
       },
       "name": "filter",
-      "type": "array",
-      "x-go-name": "Matchers"
+      "type": "array"
      },
      {
       "description": "A regex matching receivers to filter alerts by",
       "in": "query",
       "name": "receiver",
-      "type": "string",
-      "x-go-name": "Receivers"
+      "type": "string"
      },
      {
       "description": "DatasoureUID should be the datasource UID identifier",
@@ -4671,8 +4082,7 @@
        "type": "string"
       },
       "name": "filter",
-      "type": "array",
-      "x-go-name": "Filter"
+      "type": "array"
      },
      {
       "description": "DatasoureUID should be the datasource UID identifier",
@@ -4948,8 +4358,7 @@
       "description": "Include Grafana specific labels as part of the response.",
       "in": "query",
       "name": "includeInternalLabels",
-      "type": "boolean",
-      "x-go-name": "IncludeInternalLabels"
+      "type": "boolean"
      }
     ],
     "responses": {
@@ -4975,8 +4384,7 @@
       "description": "Include Grafana specific labels as part of the response.",
       "in": "query",
       "name": "includeInternalLabels",
-      "type": "boolean",
-      "x-go-name": "IncludeInternalLabels"
+      "type": "boolean"
      },
      {
       "description": "Filter the list of rules to those that belong to the specified dashboard UID.",
@@ -5785,7 +5193,7 @@
     "operationId": "RouteDeleteContactpoints",
     "parameters": [
      {
-      "description": "UID should be the contact point unique identifier",
+      "description": "UID is the contact point unique identifier",
       "in": "path",
       "name": "UID",
       "required": true,
@@ -5809,7 +5217,7 @@
     "operationId": "RoutePutContactpoint",
     "parameters": [
      {
-      "description": "UID should be the contact point unique identifier",
+      "description": "UID is the contact point unique identifier",
       "in": "path",
       "name": "UID",
       "required": true,
@@ -5949,8 +5357,7 @@
       "in": "path",
       "name": "name",
       "required": true,
-      "type": "string",
-      "x-go-name": "Name"
+      "type": "string"
      }
     ],
     "responses": {
@@ -5971,8 +5378,7 @@
       "in": "path",
       "name": "name",
       "required": true,
-      "type": "string",
-      "x-go-name": "Name"
+      "type": "string"
      }
     ],
     "responses": {
@@ -6002,8 +5408,7 @@
       "in": "path",
       "name": "name",
       "required": true,
-      "type": "string",
-      "x-go-name": "Name"
+      "type": "string"
      },
      {
       "in": "body",
@@ -6113,8 +5518,7 @@
       "in": "path",
       "name": "name",
       "required": true,
-      "type": "string",
-      "x-go-name": "Name"
+      "type": "string"
      }
     ],
     "responses": {
@@ -6135,8 +5539,7 @@
       "in": "path",
       "name": "name",
       "required": true,
-      "type": "string",
-      "x-go-name": "Name"
+      "type": "string"
      }
     ],
     "responses": {
@@ -6166,8 +5569,7 @@
       "in": "path",
       "name": "name",
       "required": true,
-      "type": "string",
-      "x-go-name": "Name"
+      "type": "string"
      },
      {
       "in": "body",

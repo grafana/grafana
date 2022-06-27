@@ -108,6 +108,14 @@ func Calculate(mlog log.Logger, plugin *plugins.Plugin) (plugins.Signature, erro
 		}, nil
 	}
 
+	pluginFiles, err := pluginFilesRequiringVerification(plugin)
+	if err != nil {
+		mlog.Warn("Could not collect plugin file information in directory", "pluginID", plugin.ID, "dir", plugin.PluginDir)
+		return plugins.Signature{
+			Status: plugins.SignatureInvalid,
+		}, err
+	}
+
 	manifestPath := filepath.Join(plugin.PluginDir, "MANIFEST.txt")
 
 	// nolint:gosec
@@ -183,14 +191,6 @@ func Calculate(mlog log.Logger, plugin *plugins.Plugin) (plugins.Signature, erro
 	}
 
 	if manifest.isV2() {
-		pluginFiles, err := pluginFilesRequiringVerification(plugin)
-		if err != nil {
-			mlog.Warn("Could not collect plugin file information in directory", "pluginID", plugin.ID, "dir", plugin.PluginDir)
-			return plugins.Signature{
-				Status: plugins.SignatureInvalid,
-			}, err
-		}
-
 		// Track files missing from the manifest
 		var unsignedFiles []string
 		for _, f := range pluginFiles {
@@ -263,18 +263,18 @@ func pluginFilesRequiringVerification(plugin *plugins.Plugin) ([]string, error) 
 				return err
 			}
 
-			// skip symlink directories
-			if symlink.IsDir() {
-				return nil
-			}
-
 			// verify that symlinked file is within plugin directory
 			p, err := filepath.Rel(plugin.PluginDir, symlinkPath)
 			if err != nil {
 				return err
 			}
-			if strings.HasPrefix(p, ".."+string(filepath.Separator)) {
+			if p == ".." || strings.HasPrefix(p, ".."+string(filepath.Separator)) {
 				return fmt.Errorf("file '%s' not inside of plugin directory", p)
+			}
+
+			// skip adding symlinked directories
+			if symlink.IsDir() {
+				return nil
 			}
 		}
 
