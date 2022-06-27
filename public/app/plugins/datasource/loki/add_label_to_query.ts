@@ -1,140 +1,159 @@
-import { chain, isEqual } from 'lodash';
+import { parser } from '@grafana/lezer-logql';
 
-import { PROM_KEYWORDS, OPERATORS, LOGICAL_OPERATORS } from 'app/plugins/datasource/prometheus/promql';
+import { QueryBuilderLabelFilter } from '../prometheus/querybuilder/shared/types';
 
-import { LOKI_KEYWORDS } from './syntax';
+import { LokiQueryModeller } from './querybuilder/LokiQueryModeller';
+import { buildVisualQueryFromString } from './querybuilder/parsing';
+import { LokiVisualQuery } from './querybuilder/types';
 
-const builtInWords = [...PROM_KEYWORDS, ...OPERATORS, ...LOGICAL_OPERATORS, ...LOKI_KEYWORDS];
-
-// We want to extract all possible metrics and also keywords
-const metricsAndKeywordsRegexp = /([A-Za-z:][\w:]*)\b(?![\]{=!",])/g;
-
-export function addLabelToQuery(
-  query: string,
-  key: string,
-  value: string | number,
-  operator?: string,
-  hasNoMetrics?: boolean
-): string {
+/**
+ * Adds label filter to existing query. Useful for query modification for example for ad hoc filters.
+ *
+ * It uses LogQL parser to find instances of labels, alters them and then splices them back into the query.
+ * In a case when we have parser, instead of adding new instance of label it adds label filter after the parser.
+ *
+ * This operates on substrings of the query with labels and operates just on those. This makes this
+ * more robust and can alter even invalid queries, and preserves in general the query structure and whitespace.
+ *
+ * @param query
+ * @param key
+ * @param value
+ * @param operator
+ */
+export function addLabelToQuery(query: string, key: string, operator: string, value: string): string {
   if (!key || !value) {
     throw new Error('Need label to add to query.');
   }
 
-  // We need to make sure that we convert the value back to string because it may be a number
-  const transformedValue = value === Infinity ? '+Inf' : value.toString();
+  const streamSelectorPositions = getStreamSelectorPositions(query);
+  const parserPositions = getParserPositions(query);
+  if (!streamSelectorPositions.length) {
+    return query;
+  }
 
-  // Add empty selectors to bare metric names
-  let previousWord: string;
+  const filter = toLabelFilter(key, value, operator);
+  if (!parserPositions.length) {
+    return addFilterToStreamSelector(query, streamSelectorPositions, filter);
+  } else {
+    return addFilterAsLabelFilter(query, parserPositions, filter);
+  }
+}
 
-  query = query.replace(metricsAndKeywordsRegexp, (match, word, offset) => {
-    const isMetric = isWordMetric(query, word, offset, previousWord, hasNoMetrics);
-    previousWord = word;
+type StreamSelectorPosition = { from: number; to: number; query: LokiVisualQuery };
+type PipelineStagePosition = { from: number; to: number };
 
-    return isMetric ? `${word}{}` : word;
+/**
+ * Parse the string and get all Selector positions in the query together with parsed representation of the
+ * selector.
+ * @param query
+ */
+function getStreamSelectorPositions(query: string): StreamSelectorPosition[] {
+  const tree = parser.parse(query);
+  const positions: StreamSelectorPosition[] = [];
+  tree.iterate({
+    enter: (type, from, to, get): false | void => {
+      if (type.name === 'Selector') {
+        const visQuery = buildVisualQueryFromString(query.substring(from, to));
+        positions.push({ query: visQuery.query, from, to });
+        return false;
+      }
+    },
   });
+  return positions;
+}
 
-  //This is a RegExp for stream selector - e.g. {job="grafana"}
-  const selectorRegexp = /(\$)?{([^{]*)}/g;
-  const parts = [];
-  let lastIndex = 0;
-  let suffix = '';
+/**
+ * Parse the string and get all LabelParser positions in the query.
+ * @param query
+ */
+function getParserPositions(query: string): PipelineStagePosition[] {
+  const tree = parser.parse(query);
+  const positions: PipelineStagePosition[] = [];
+  tree.iterate({
+    enter: (type, from, to, get): false | void => {
+      if (type.name === 'LabelParser') {
+        positions.push({ from, to });
+        return false;
+      }
+    },
+  });
+  return positions;
+}
 
-  let match = selectorRegexp.exec(query);
-  /* 
-    There are 2 possible false positive scenarios: 
-    
-    1. We match Grafana's variables with ${ syntax - such as${__rate_s}. To filter these out we could use negative lookbehind,
-    but Safari browser currently doesn't support it. Therefore we need to hack this by creating 2 matching groups. 
-    (\$) is for the Grafana's variables and if we match it, we know this is not a stream selector and we don't want to add label.
+function toLabelFilter(key: string, value: string, operator: string): QueryBuilderLabelFilter {
+  // We need to make sure that we convert the value back to string because it may be a number
+  return { label: key, op: operator, value };
+}
 
-    2. Log queries can include {{.label}} syntax when line_format is used. We need to filter these out by checking
-    if match starts with "{."
-  */
-  while (match) {
-    const prefix = query.slice(lastIndex, match.index);
-    lastIndex = match.index + match[2].length + 2;
-    suffix = query.slice(match.index + match[0].length);
+/**
+ * Add filter as to stream selectors
+ * @param query
+ * @param vectorSelectorPositions
+ * @param filter
+ */
+function addFilterToStreamSelector(
+  query: string,
+  vectorSelectorPositions: StreamSelectorPosition[],
+  filter: QueryBuilderLabelFilter
+): string {
+  const modeller = new LokiQueryModeller();
+  let newQuery = '';
+  let prev = 0;
 
-    // Filtering our false positives
-    if (match[0].startsWith('{.') || match[1]) {
-      parts.push(prefix);
-      parts.push(match[0]);
-    } else {
-      // If we didn't match first group, we are inside selector and we want to add labels
-      const selector = match[2];
-      const selectorWithLabel = addLabelToSelector(selector, key, transformedValue, operator);
-      parts.push(prefix, selectorWithLabel);
+  for (let i = 0; i < vectorSelectorPositions.length; i++) {
+    // This is basically just doing splice on a string for each matched vector selector.
+
+    const match = vectorSelectorPositions[i];
+    const isLast = i === vectorSelectorPositions.length - 1;
+
+    const start = query.substring(prev, match.from);
+    const end = isLast ? query.substring(match.to) : '';
+
+    if (!labelExists(match.query.labels, filter)) {
+      // We don't want to add duplicate labels.
+      match.query.labels.push(filter);
     }
-
-    match = selectorRegexp.exec(query);
+    const newLabels = modeller.renderQuery(match.query);
+    newQuery += start + newLabels + end;
+    prev = match.to;
   }
-
-  parts.push(suffix);
-  return parts.join('');
+  return newQuery;
 }
 
-const labelRegexp = /(\w+)\s*(=|!=|=~|!~)\s*("[^"]*")/g;
+/**
+ * Add filter as label filter after the parsers
+ * @param query
+ * @param parserPositions
+ * @param filter
+ */
+function addFilterAsLabelFilter(
+  query: string,
+  parserPositions: PipelineStagePosition[],
+  filter: QueryBuilderLabelFilter
+): string {
+  let newQuery = '';
+  let prev = 0;
 
-export function addLabelToSelector(selector: string, labelKey: string, labelValue: string, labelOperator?: string) {
-  const parsedLabels = [];
+  for (let i = 0; i < parserPositions.length; i++) {
+    // This is basically just doing splice on a string for each matched vector selector.
+    const match = parserPositions[i];
+    const isLast = i === parserPositions.length - 1;
 
-  // Split selector into labels
-  if (selector) {
-    let match = labelRegexp.exec(selector);
-    while (match) {
-      parsedLabels.push({ key: match[1], operator: match[2], value: match[3] });
-      match = labelRegexp.exec(selector);
-    }
+    const start = query.substring(prev, match.to);
+    const end = isLast ? query.substring(match.to) : '';
+
+    const labelFilter = ` | ${filter.label}${filter.op}\`${filter.value}\``;
+    newQuery += start + labelFilter + end;
+    prev = match.to;
   }
-
-  // Add new label
-  const operatorForLabelKey = labelOperator || '=';
-  parsedLabels.push({ key: labelKey, operator: operatorForLabelKey, value: `"${labelValue}"` });
-
-  // Sort labels by key and put them together
-  const formatted = chain(parsedLabels)
-    .uniqWith(isEqual)
-    .compact()
-    .sortBy('key')
-    .map(({ key, operator, value }) => `${key}${operator}${value}`)
-    .value()
-    .join(',');
-
-  return `{${formatted}}`;
+  return newQuery;
 }
 
-function isPositionInsideChars(text: string, position: number, openChar: string, closeChar: string) {
-  const nextSelectorStart = text.slice(position).indexOf(openChar);
-  const nextSelectorEnd = text.slice(position).indexOf(closeChar);
-  return nextSelectorEnd > -1 && (nextSelectorStart === -1 || nextSelectorStart > nextSelectorEnd);
+/**
+ * Check if label exists in the list of labels but ignore the operator.
+ * @param labels
+ * @param filter
+ */
+function labelExists(labels: QueryBuilderLabelFilter[], filter: QueryBuilderLabelFilter) {
+  return labels.find((label) => label.label === filter.label && label.value === filter.value);
 }
-
-function isWordMetric(query: string, word: string, offset: number, previousWord: string, hasNoMetrics?: boolean) {
-  const insideSelector = isPositionInsideChars(query, offset, '{', '}');
-  // Handle "sum by (key) (metric)"
-  const previousWordIsKeyWord = previousWord && OPERATORS.indexOf(previousWord) > -1;
-  // Check for colon as as "word boundary" symbol
-  const isColonBounded = word.endsWith(':');
-  // Check for words that start with " which means that they are not metrics
-  const startsWithQuote = query[offset - 1] === '"';
-  // Check for template variables
-  const isTemplateVariable = query[offset - 1] === '$';
-  // Check for time units
-  const isTimeUnit = ['s', 'm', 'h', 'd', 'w'].includes(word) && Boolean(Number(query[offset - 1]));
-
-  if (
-    !hasNoMetrics &&
-    !insideSelector &&
-    !isColonBounded &&
-    !previousWordIsKeyWord &&
-    !startsWithQuote &&
-    !isTemplateVariable &&
-    !isTimeUnit &&
-    builtInWords.indexOf(word) === -1
-  ) {
-    return true;
-  }
-  return false;
-}
-
-export default addLabelToQuery;
