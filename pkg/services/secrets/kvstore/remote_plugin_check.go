@@ -19,7 +19,6 @@ func ProvideRemotePluginCheck() *OSSRemoteSecretsPluginCheck {
 
 func (c *OSSRemoteSecretsPluginCheck) ShouldUseRemoteSecretsPlugin() bool {
 	return false
-
 }
 
 func (c *OSSRemoteSecretsPluginCheck) GetPlugin() (secretsmanagerplugin.SecretsManagerPlugin, error) {
