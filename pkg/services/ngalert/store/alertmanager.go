@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"xorm.io/builder"
+	"xorm.io/core"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -128,7 +129,7 @@ func (st *DBstore) UpdateAlertmanagerConfiguration(ctx context.Context, cmd *mod
 // Rel: https://github.com/grafana/grafana/issues/51356
 func getInsertQuery(driver string) string {
 	switch driver {
-	case "mysql":
+	case core.MYSQL:
 		return `
 		INSERT INTO alert_configuration
 		(alertmanager_configuration, configuration_hash, configuration_version, org_id, created_at, %s) 
@@ -144,7 +145,7 @@ func getInsertQuery(driver string) string {
 			AND 
 				configuration_hash = ?
 		)`
-	case "postgres":
+	case core.POSTGRES:
 		return `
 		INSERT INTO alert_configuration
 		(alertmanager_configuration, configuration_hash, configuration_version, org_id, created_at, %s) 
@@ -160,7 +161,24 @@ func getInsertQuery(driver string) string {
 			AND 
 				configuration_hash = $9
 		)`
+	case core.SQLITE:
+		return `
+		INSERT INTO alert_configuration
+		(alertmanager_configuration, configuration_hash, configuration_version, org_id, created_at, %s) 
+		SELECT T.* FROM (VALUES(?,?,?,?,?,?)) AS T
+		WHERE
+		EXISTS (
+			SELECT 1 
+			FROM alert_configuration 
+			WHERE 
+				org_id = ? 
+			AND 
+				id = (SELECT MAX(id) FROM alert_configuration WHERE org_id = ?) 
+			AND 
+				configuration_hash = ?
+		)`
 	default:
+		// SQLite version
 		return `
 		INSERT INTO alert_configuration
 		(alertmanager_configuration, configuration_hash, configuration_version, org_id, created_at, %s) 
