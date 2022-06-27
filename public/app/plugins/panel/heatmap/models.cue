@@ -17,7 +17,7 @@ package grafanaschema
 import "github.com/grafana/thema"
 
 Panel: thema.#Lineage & {
-	name: "heatmap-new"
+	name: "heatmap"
 	seqs: [
 		{
 			schemas: [

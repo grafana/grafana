@@ -20,11 +20,6 @@ var (
 			State:       FeatureStateStable,
 		},
 		{
-			Name:        "serviceAccounts",
-			Description: "support service accounts",
-			State:       FeatureStateBeta,
-		},
-		{
 			Name:        "database_metrics",
 			Description: "Add prometheus metrics for database tables",
 			State:       FeatureStateStable,
@@ -237,6 +232,11 @@ var (
 			Description:  "Allow elements nesting",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+		},
+		{
+			Name:        "useLegacyHeatmapPanel",
+			Description: "Continue to use the angular/flot based heatmap panel",
+			State:       FeatureStateStable,
 		},
 		{
 			Name:         "cloudMonitoringExperimentalUI",

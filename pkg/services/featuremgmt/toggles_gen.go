@@ -15,10 +15,6 @@ const (
 	// Disable envelope encryption (emergency only)
 	FlagDisableEnvelopeEncryption = "disableEnvelopeEncryption"
 
-	// FlagServiceAccounts
-	// support service accounts
-	FlagServiceAccounts = "serviceAccounts"
-
 	// FlagDatabaseMetrics
 	// Add prometheus metrics for database tables
 	FlagDatabaseMetrics = "database_metrics"
@@ -174,6 +170,10 @@ const (
 	// FlagCanvasPanelNesting
 	// Allow elements nesting
 	FlagCanvasPanelNesting = "canvasPanelNesting"
+
+	// FlagUseLegacyHeatmapPanel
+	// Continue to use the angular/flot based heatmap panel
+	FlagUseLegacyHeatmapPanel = "useLegacyHeatmapPanel"
 
 	// FlagCloudMonitoringExperimentalUI
 	// Use grafana-experimental UI in Cloud Monitoring
