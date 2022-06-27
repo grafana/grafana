@@ -541,6 +541,10 @@ func (m *SQLStoreMock) GetApiKeyByName(ctx context.Context, query *models.GetApi
 	return m.ExpectedError
 }
 
+func (m *SQLStoreMock) UpdateAPIKeyLastUsedDate(ctx context.Context, tokenID int64) error {
+	return nil
+}
+
 func (m *SQLStoreMock) UpdateTempUserStatus(ctx context.Context, cmd *models.UpdateTempUserStatusCommand) error {
 	return m.ExpectedError
 }
