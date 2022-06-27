@@ -20,4 +20,5 @@ type Store interface {
 	GetUserById(ctx context.Context, id int64) (*models.User, error)
 	GetUserByLogin(ctx context.Context, login string) (*models.User, error)
 	GetUserByEmail(ctx context.Context, email string) (*models.User, error)
+	CollectLoginStats(ctx context.Context) (map[string]interface{}, error)
 }

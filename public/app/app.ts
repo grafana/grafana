@@ -85,8 +85,8 @@ import { configureStore } from './store/configureStore';
 _.move = arrayMove;
 
 // import symlinked extensions
-const extensionsIndex = (require as any).context('.', true, /extensions\/index.ts/);
-const extensionsExports = extensionsIndex.keys().map((key: any) => {
+const extensionsIndex = require.context('.', true, /extensions\/index.ts/);
+const extensionsExports = extensionsIndex.keys().map((key) => {
   return extensionsIndex(key);
 });
 
@@ -159,7 +159,7 @@ export class GrafanaApp {
         }),
         document.getElementById('reactRoot')
       );
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to start Grafana', error);
       window.__grafana_load_failed();
     }
@@ -211,22 +211,22 @@ function initEchoSrv() {
     );
   }
 
-  if ((config as any).googleAnalyticsId) {
+  if (config.googleAnalyticsId) {
     registerEchoBackend(
       new GAEchoBackend({
-        googleAnalyticsId: (config as any).googleAnalyticsId,
+        googleAnalyticsId: config.googleAnalyticsId,
       })
     );
   }
 
-  if ((config as any).rudderstackWriteKey && (config as any).rudderstackDataPlaneUrl) {
+  if (config.rudderstackWriteKey && config.rudderstackDataPlaneUrl) {
     registerEchoBackend(
       new RudderstackBackend({
-        writeKey: (config as any).rudderstackWriteKey,
-        dataPlaneUrl: (config as any).rudderstackDataPlaneUrl,
+        writeKey: config.rudderstackWriteKey,
+        dataPlaneUrl: config.rudderstackDataPlaneUrl,
         user: config.bootData.user,
-        sdkUrl: (config as any).rudderstackSdkUrl,
-        configUrl: (config as any).rudderstackConfigUrl,
+        sdkUrl: config.rudderstackSdkUrl,
+        configUrl: config.rudderstackConfigUrl,
       })
     );
   }
