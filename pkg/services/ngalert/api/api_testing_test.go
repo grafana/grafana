@@ -43,7 +43,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 
 			response := srv.RouteTestGrafanaRuleConfig(rc, definitions.TestRulePayload{
 				Expr: "",
-				GrafanaManagedCondition: &models.EvalAlertConditionCommand{
+				GrafanaManagedCondition: &definitions.EvalAlertConditionCommand{
 					Condition: data1.RefID,
 					Data:      []models.AlertQuery{data1, data2},
 					Now:       time.Time{},
@@ -75,7 +75,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 
 			response := srv.RouteTestGrafanaRuleConfig(rc, definitions.TestRulePayload{
 				Expr: "",
-				GrafanaManagedCondition: &models.EvalAlertConditionCommand{
+				GrafanaManagedCondition: &definitions.EvalAlertConditionCommand{
 					Condition: data1.RefID,
 					Data:      []models.AlertQuery{data1, data2},
 					Now:       time.Time{},
@@ -115,7 +115,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 
 			response := srv.RouteTestGrafanaRuleConfig(rc, definitions.TestRulePayload{
 				Expr: "",
-				GrafanaManagedCondition: &models.EvalAlertConditionCommand{
+				GrafanaManagedCondition: &definitions.EvalAlertConditionCommand{
 					Condition: data1.RefID,
 					Data:      []models.AlertQuery{data1},
 					Now:       time.Time{},
@@ -129,7 +129,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 
 			response = srv.RouteTestGrafanaRuleConfig(rc, definitions.TestRulePayload{
 				Expr: "",
-				GrafanaManagedCondition: &models.EvalAlertConditionCommand{
+				GrafanaManagedCondition: &definitions.EvalAlertConditionCommand{
 					Condition: data1.RefID,
 					Data:      []models.AlertQuery{data1},
 					Now:       time.Time{},
