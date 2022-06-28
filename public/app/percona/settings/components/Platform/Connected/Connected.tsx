@@ -1,23 +1,29 @@
 import { LoaderButton, logger, TextInputField } from '@percona/platform-core';
 import React, { FC, useCallback, useState } from 'react';
 import { Form } from 'react-final-form';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
+import { AppEvents } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { ConfirmModal, useStyles } from '@grafana/ui';
-import { getPerconaServer } from 'app/percona/shared/core/selectors';
+import { ConfirmModal, useStyles2 } from '@grafana/ui';
+import { appEvents } from 'app/core/app_events';
+import { fetchServerInfoAction, fetchSettingsAction } from 'app/percona/shared/core/reducers';
+import { getPerconaServer, getPerconaUser } from 'app/percona/shared/core/selectors';
 
 import { Messages as PlatformMessages } from '../Platform.messages';
 import { PlatformService } from '../Platform.service';
 
 import { Messages } from './Connected.messages';
 import { getStyles } from './Connected.styles';
+import { ModalBody } from './ModalBody/ModalBody';
 
 export const Connected: FC = () => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const [disconnecting, setDisconnecting] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const { serverId = '', serverName = '' } = useSelector(getPerconaServer);
+  const { isPlatformUser } = useSelector(getPerconaUser);
+  const dispatch = useDispatch();
 
   const handleDisconnect = async () => {
     setDisconnecting(true);
@@ -29,6 +35,21 @@ export const Connected: FC = () => {
         console.log('timeout');
         return;
       }, 3000);
+    } catch (e) {
+      logger.error(e);
+      setDisconnecting(false);
+    }
+  };
+
+  const handleForceDisconnect = async () => {
+    setDisconnecting(true);
+    closeModal();
+    try {
+      await PlatformService.forceDisconnect();
+      appEvents.emit(AppEvents.alertSuccess, [Messages.forceDisconnectSucceeded]);
+      setDisconnecting(false);
+      dispatch(fetchServerInfoAction());
+      dispatch(fetchSettingsAction());
     } catch (e) {
       logger.error(e);
       setDisconnecting(false);
@@ -65,12 +86,12 @@ export const Connected: FC = () => {
         </LoaderButton>
       </section>
       <ConfirmModal
-        body={Messages.modalBody}
+        body={<ModalBody />}
         confirmText={Messages.disconnect}
         isOpen={showModal}
         title={Messages.modalTitle}
         onDismiss={closeModal}
-        onConfirm={handleDisconnect}
+        onConfirm={isPlatformUser ? handleDisconnect : handleForceDisconnect}
       />
     </>
   );
