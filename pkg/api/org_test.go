@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -185,17 +186,17 @@ func TestAPIEndpoint_PutCurrentOrgAddress_AccessControl(t *testing.T) {
 // `/api/orgs/` endpoints test
 
 // setupOrgsDBForAccessControlTests stores users and create specified number of orgs
-func setupOrgsDBForAccessControlTests(t *testing.T, db sqlstore.Store, user models.SignedInUser, orgsCount int) {
+func setupOrgsDBForAccessControlTests(t *testing.T, db sqlstore.Store, usr models.SignedInUser, orgsCount int) {
 	t.Helper()
 
-	_, err := db.CreateUser(context.Background(), models.CreateUserCommand{Email: user.Email, SkipOrgSetup: true, Login: user.Login})
+	_, err := db.CreateUser(context.Background(), user.CreateUserCommand{Email: usr.Email, SkipOrgSetup: true, Login: usr.Login})
 	require.NoError(t, err)
 
 	// Create `orgsCount` orgs
 	for i := 1; i <= orgsCount; i++ {
 		_, err = db.CreateOrgWithMember(fmt.Sprintf("TestOrg%v", i), 0)
 		require.NoError(t, err)
-		err = db.AddOrgUser(context.Background(), &models.AddOrgUserCommand{LoginOrEmail: user.Login, Role: user.OrgRole, OrgId: int64(i), UserId: user.UserId})
+		err = db.AddOrgUser(context.Background(), &models.AddOrgUserCommand{LoginOrEmail: usr.Login, Role: usr.OrgRole, OrgId: int64(i), UserId: usr.UserId})
 		require.NoError(t, err)
 	}
 }
