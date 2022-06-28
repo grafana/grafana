@@ -554,18 +554,6 @@ export class PanelChrome extends PureComponent<Props, State> {
         className={containerClassNames}
         aria-label={selectors.components.Panels.Panel.containerByTitle(panel.title)}
       >
-        <PanelHeader
-          panel={panel}
-          dashboard={dashboard}
-          title={panel.title}
-          description={panel.description}
-          links={panel.links}
-          error={errorMessage}
-          isEditing={isEditing}
-          isViewing={isViewing}
-          alertState={alertState}
-          data={data}
-        />
         <ErrorBoundary
           dependencies={[data, plugin, panel.getOptions()]}
           onError={this.onPanelError}
@@ -578,6 +566,21 @@ export class PanelChrome extends PureComponent<Props, State> {
             return this.renderPanel(width, height);
           }}
         </ErrorBoundary>
+
+        <PanelHeader
+          /* Panel header should follow the content because in some cases(i.e. hidden title) it will be absolutely
+          positioned and covers content */
+          panel={panel}
+          dashboard={dashboard}
+          title={panel.title}
+          description={panel.description}
+          links={panel.links}
+          error={errorMessage}
+          isEditing={isEditing}
+          isViewing={isViewing}
+          alertState={alertState}
+          data={data}
+        />
       </section>
     );
   }

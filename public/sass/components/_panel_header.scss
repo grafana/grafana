@@ -1,6 +1,7 @@
 $panel-header-no-title-zindex: 1;
 
 .panel-header {
+  order: -1;
   &:hover {
     transition: background-color 0.1s ease-in-out;
     background-color: $panel-header-hover-bg;
@@ -12,7 +13,7 @@ $panel-header-no-title-zindex: 1;
     position: absolute;
     left: min(50px, 10%); // allows space for interaction in the corders
     right: min(50px, 10%);
-    z-index: $panel-header-z-index;
+    order: 1;
 
     &:hover {
       left: 0;
