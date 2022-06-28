@@ -4222,7 +4222,7 @@ exports[`better eslint`] = {
       [127, 14, 16, "Do not use any type assertions.", "1747412709"],
       [128, 18, 24, "Do not use any type assertions.", "3254438164"]
     ],
-    "public/app/features/alerting/unified/RuleEditor.test.tsx:1442720581": [
+    "public/app/features/alerting/unified/RuleEditor.test.tsx:2974108144": [
       [233, 42, 149, "Do not use any type assertions.", "2017267554"],
       [454, 42, 32, "Do not use any type assertions.", "2259972478"],
       [507, 65, 3, "Unexpected any. Specify a different type.", "193409811"],
