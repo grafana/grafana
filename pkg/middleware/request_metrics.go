@@ -61,7 +61,8 @@ func RequestMetrics(features featuremgmt.FeatureToggles) web.Middleware {
 			code := sanitizeCode(status)
 
 			handler := "unknown"
-			if routeOperation, exists := routeOperationName(r); exists {
+			// TODO: do not depend on web.Context from the future
+			if routeOperation, exists := routeOperationName(web.FromContext(r.Context()).Req); exists {
 				handler = routeOperation
 			} else {
 				// if grafana does not recognize the handler and returns 404 we should register it as `notfound`

@@ -64,9 +64,7 @@ func routeOperationName(req *http.Request) (string, bool) {
 func RequestTracing(tracer tracing.Tracer) web.Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			if strings.HasPrefix(req.URL.Path, "/public/") ||
-				req.URL.Path == "/robots.txt" ||
-				req.URL.Path == "/favicon.ico" {
+			if strings.HasPrefix(req.URL.Path, "/public/") || req.URL.Path == "/robots.txt" || req.URL.Path == "/favicon.ico" {
 				next.ServeHTTP(w, req)
 				return
 			}
@@ -81,7 +79,8 @@ func RequestTracing(tracer tracing.Tracer) web.Middleware {
 
 			// Only call span.Finish when a route operation name have been set,
 			// meaning that not set the span would not be reported.
-			if routeOperation, exists := routeOperationName(req); exists {
+			// TODO: do not depend on web.Context from the future
+			if routeOperation, exists := routeOperationName(web.FromContext(req.Context()).Req); exists {
 				defer span.End()
 				span.SetName(fmt.Sprintf("HTTP %s %s", req.Method, routeOperation))
 			}
