@@ -2,11 +2,14 @@ package grpcserver
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -15,12 +18,14 @@ import (
 
 // Authenticator can authenticate GRPC requests.
 type Authenticator struct {
-	logger log.Logger
+	logger   log.Logger
+	SQLStore sqlstore.Store
 }
 
-func NewAuthenticator() *Authenticator {
+func NewAuthenticator(sqlStore sqlstore.Store) *Authenticator {
 	return &Authenticator{
-		logger: log.New("grpc-server-authenticator"),
+		logger:   log.New("grpc-server-authenticator"),
+		SQLStore: sqlStore,
 	}
 }
 
@@ -49,7 +54,7 @@ func (a *Authenticator) tokenAuth(ctx context.Context) (context.Context, error) 
 
 	newCtx := purgeHeader(ctx, "authorization")
 
-	err = a.validateToken(token)
+	err = a.validateToken(ctx, token)
 	if err != nil {
 		logger.Warn("request with invalid token", "error", err, "token", token)
 		return ctx, status.Error(codes.Unauthenticated, "invalid token")
@@ -57,9 +62,28 @@ func (a *Authenticator) tokenAuth(ctx context.Context) (context.Context, error) 
 	return newCtx, nil
 }
 
-func (a *Authenticator) validateToken(_ string) error {
-	// TODO: implement API key check, require admin role.
-	return errors.New("not implemented")
+func (a *Authenticator) validateToken(ctx context.Context, keyString string) error {
+	// prefixed decode key
+	decoded, err := apikeygenprefix.Decode(keyString)
+	if err != nil {
+		return err
+	}
+
+	hash, err := decoded.Hash()
+	if err != nil {
+		return err
+	}
+
+	key, err := a.SQLStore.GetAPIKeyByHash(ctx, hash)
+	if err != nil {
+		return err
+	}
+
+	if key.Role != models.ROLE_ADMIN {
+		return fmt.Errorf("api key does not have admin role")
+	}
+
+	return nil
 }
 
 func extractAuthorization(ctx context.Context) (string, error) {
