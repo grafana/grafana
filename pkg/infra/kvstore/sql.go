@@ -109,3 +109,28 @@ func (kv *kvStoreSQL) Keys(ctx context.Context, orgId int64, namespace string, k
 	})
 	return keys, err
 }
+
+// GetAll get all items a given namespace and org. To query for all
+// organizations the constant 'kvstore.AllOrganizations' can be passed as orgId.
+// The map result is like map[orgId]map[key]value
+func (kv *kvStoreSQL) GetAll(ctx context.Context, orgId int64, namespace string) (map[int64]map[string]string, error) {
+	var results []Item
+	err := kv.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		query := dbSession.Where("namespace = ?", namespace)
+		if orgId != AllOrganizations {
+			query.And("org_id = ?", orgId)
+		}
+
+		return query.Find(&results)
+	})
+
+	items := map[int64]map[string]string{}
+	for _, r := range results {
+		if _, ok := items[*r.OrgId]; !ok {
+			items[*r.OrgId] = map[string]string{}
+		}
+		items[*r.OrgId][*r.Key] = r.Value
+	}
+
+	return items, err
+}
