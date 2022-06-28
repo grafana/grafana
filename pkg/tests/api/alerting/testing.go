@@ -171,7 +171,21 @@ func newAlertingApiClient(host, user, pass string) apiClient {
 	return apiClient{url: fmt.Sprintf("http://%s:%s@%s", user, pass, host)}
 }
 
-// CreateFolder creates a folder for storing our alerts under.
+// ReloadCachedPermissions sends a request to access control API to refresh cached user permissions
+func (a apiClient) ReloadCachedPermissions(t *testing.T) {
+	t.Helper()
+
+	u := fmt.Sprintf("%s/api/access-control/user/permissions?reloadcache=true", a.url)
+	// nolint:gosec
+	resp, err := http.Get(u)
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	require.NoErrorf(t, err, "failed to reload permissions cache")
+	require.Equalf(t, http.StatusOK, resp.StatusCode, "failed to reload permissions cache")
+}
+
+// CreateFolder creates a folder for storing our alerts, and then refreshes the permission cache to make sure that following requests will be accepted
 func (a apiClient) CreateFolder(t *testing.T, uID string, title string) {
 	t.Helper()
 	payload := fmt.Sprintf(`{"uid": "%s","title": "%s"}`, uID, title)
@@ -184,6 +198,7 @@ func (a apiClient) CreateFolder(t *testing.T, uID string, title string) {
 	}()
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	a.ReloadCachedPermissions(t)
 }
 
 func (a apiClient) PostRulesGroup(t *testing.T, folder string, group *apimodels.PostableRuleGroupConfig) (int, string) {

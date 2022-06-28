@@ -1,10 +1,10 @@
-package models
+package datasources
 
 import (
-	"errors"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/models"
 )
 
 const (
@@ -26,17 +26,6 @@ const (
 	DS_ACCESS_PROXY   = "proxy"
 	DS_ES_OPEN_DISTRO = "grafana-es-open-distro-datasource"
 	DS_ES_OPENSEARCH  = "grafana-opensearch-datasource"
-)
-
-var (
-	ErrDataSourceNotFound                = errors.New("data source not found")
-	ErrDataSourceNameExists              = errors.New("data source with the same name already exists")
-	ErrDataSourceUidExists               = errors.New("data source with the same uid already exists")
-	ErrDataSourceUpdatingOldVersion      = errors.New("trying to update old version of datasource")
-	ErrDatasourceIsReadOnly              = errors.New("data source is readonly, can only be updated from configuration")
-	ErrDataSourceAccessDenied            = errors.New("data source access denied")
-	ErrDataSourceFailedGenerateUniqueUid = errors.New("failed to generate unique datasource ID")
-	ErrDataSourceIdentifierNotSet        = errors.New("unique identifier and org id are needed to be able to get or delete a datasource")
 )
 
 type DsAccess string
@@ -167,7 +156,7 @@ type UpdateSecretFn func() error
 type GetDataSourcesQuery struct {
 	OrgId           int64
 	DataSourceLimit int
-	User            *SignedInUser
+	User            *models.SignedInUser
 	Result          []*DataSource
 }
 
@@ -178,7 +167,7 @@ type GetDataSourcesByTypeQuery struct {
 
 type GetDefaultDataSourceQuery struct {
 	OrgId  int64
-	User   *SignedInUser
+	User   *models.SignedInUser
 	Result *DataSource
 }
 
@@ -220,7 +209,7 @@ func (p DsPermissionType) String() string {
 }
 
 type DatasourcesPermissionFilterQuery struct {
-	User        *SignedInUser
+	User        *models.SignedInUser
 	Datasources []*DataSource
 	Result      []*DataSource
 }
