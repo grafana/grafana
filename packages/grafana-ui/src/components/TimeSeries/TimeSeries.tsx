@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Component } from 'react';
 
 import { DataFrame, TimeRange } from '@grafana/data';
 
@@ -15,7 +15,7 @@ const propsToDiff: Array<string | PropDiffFn> = ['legend', 'options'];
 
 type TimeSeriesProps = Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend'>;
 
-export class UnthemedTimeSeries extends React.Component<TimeSeriesProps> {
+export class UnthemedTimeSeries extends Component<TimeSeriesProps> {
   static contextType = PanelContextRoot;
   panelContext: PanelContext = {} as PanelContext;
 
