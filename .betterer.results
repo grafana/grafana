@@ -3544,7 +3544,7 @@ exports[`better eslint`] = {
       [11, 6, 169, "Do not use any type assertions.", "2248693214"],
       [17, 11, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/core/navigation/types.ts:2017971154": [
+    "public/app/core/navigation/types.ts:1868912292": [
       [10, 38, 3, "Unexpected any. Specify a different type.", "193409811"],
       [14, 35, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
@@ -4653,8 +4653,8 @@ exports[`better eslint`] = {
       [176, 29, 13, "Do not use any type assertions.", "2146830713"],
       [195, 32, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/dashboard/components/DashNav/DashNav.tsx:574528540": [
-      [66, 87, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/features/dashboard/components/DashNav/DashNav.tsx:1533394562": [
+      [67, 87, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/dashboard/components/DashNav/DashNavTimeControls.test.tsx:3825334541": [
       [49, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -6580,16 +6580,16 @@ exports[`better eslint`] = {
     "public/app/features/profile/state/reducers.test.ts:1105044753": [
       [18, 15, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/query/components/QueryEditorRow.test.ts:589354782": [
-      [5, 9, 60, "Do not use any type assertions.", "155833034"],
-      [48, 22, 101, "Do not use any type assertions.", "3734235969"],
-      [48, 22, 88, "Do not use any type assertions.", "3757401717"]
+    "public/app/features/query/components/QueryEditorRow.test.ts:4201471442": [
+      [7, 9, 60, "Do not use any type assertions.", "155833034"],
+      [50, 22, 101, "Do not use any type assertions.", "3734235969"],
+      [50, 22, 88, "Do not use any type assertions.", "3757401717"]
     ],
-    "public/app/features/query/components/QueryEditorRow.tsx:3534885470": [
-      [95, 22, 20, "Do not use any type assertions.", "2923490522"],
-      [142, 18, 46, "Do not use any type assertions.", "1673417097"],
-      [142, 18, 21, "Do not use any type assertions.", "1354497810"],
-      [317, 22, 40, "Do not use any type assertions.", "1350130209"]
+    "public/app/features/query/components/QueryEditorRow.tsx:209136238": [
+      [97, 22, 20, "Do not use any type assertions.", "2923490522"],
+      [144, 18, 46, "Do not use any type assertions.", "1673417097"],
+      [144, 18, 21, "Do not use any type assertions.", "1354497810"],
+      [356, 22, 40, "Do not use any type assertions.", "1350130209"]
     ],
     "public/app/features/query/components/QueryEditorRowHeader.test.tsx:2607197828": [
       [99, 16, 32, "Do not use any type assertions.", "2255106576"]
