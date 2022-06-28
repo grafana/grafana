@@ -308,6 +308,7 @@ require (
 	github.com/segmentio/asm v1.1.1 // indirect
 	github.com/smartystreets/goconvey v1.7.2 // indirect
 	github.com/valyala/fasttemplate v1.2.1 // indirect
+	github.com/wk8/go-ordered-map v1.0.0
 	github.com/xlab/treeprint v1.1.0 // indirect
 	github.com/yudai/pp v2.0.1+incompatible // indirect
 	go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.6.3 // indirect

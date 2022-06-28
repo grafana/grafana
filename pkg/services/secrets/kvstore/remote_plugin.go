@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	smp "github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/secrets"
 )
 
@@ -124,6 +124,6 @@ func parseKeys(keys []*smp.Key) []Key {
 	return newKeys
 }
 
-func wrapUserFriendlySecretError(ufe string) models.ErrDatasourceSecretsPluginUserFriendly {
-	return models.ErrDatasourceSecretsPluginUserFriendly{Err: ufe}
+func wrapUserFriendlySecretError(ufe string) datasources.ErrDatasourceSecretsPluginUserFriendly {
+	return datasources.ErrDatasourceSecretsPluginUserFriendly{Err: ufe}
 }
