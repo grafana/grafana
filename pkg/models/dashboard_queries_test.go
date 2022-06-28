@@ -56,6 +56,57 @@ const (
   "schemaVersion": 35
 }`
 
+	dashboardWithDuplicateDatasources = `
+{
+  "panels": [
+    {
+	  "datasource": {
+		"type": "prometheus",
+		"uid": "_yxMP8Ynk"
+	  },
+      "id": 2,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "_yxMP8Ynk"
+          },
+          "exemplar": true,
+          "expr": "go_goroutines{job=\"$job\"}",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Panel Title",
+      "type": "timeseries"
+    },
+    {
+	  "datasource": {
+		"type": "prometheus",
+		"uid": "_yxMP8Ynk"
+	  },
+      "id": 3,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "_yxMP8Ynk"
+          },
+          "exemplar": true,
+          "expr": "go_goroutines{job=\"$job\"}",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Panel Title",
+      "type": "timeseries"
+    }
+  ],
+  "schemaVersion": 35
+}`
+
 	oldStyleDashboard = `
 {
   "panels": [
@@ -79,7 +130,26 @@ const (
 }`
 )
 
-func TestGetQueriesFromDashboard(t *testing.T) {
+func TestGetUniqueDashboardDatasourceUids(t *testing.T) {
+	t.Run("can get unique datasource ids from dashboard", func(t *testing.T) {
+		json, err := simplejson.NewJson([]byte(dashboardWithDuplicateDatasources))
+		require.NoError(t, err)
+
+		uids := GetUniqueDashboardDatasourceUids(json)
+		require.Len(t, uids, 1)
+		require.Equal(t, "_yxMP8Ynk", uids[0])
+	})
+
+	t.Run("can get no datasource uids from empty dashboard", func(t *testing.T) {
+		json, err := simplejson.NewJson([]byte(`{"panels": {}}`))
+		require.NoError(t, err)
+
+		uids := GetUniqueDashboardDatasourceUids(json)
+		require.Len(t, uids, 0)
+	})
+}
+
+func TestGroupQueriesByPanelId(t *testing.T) {
 	t.Run("can extract no queries from empty dashboard", func(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(`{"panels": {}}`))
 		require.NoError(t, err)
