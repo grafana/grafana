@@ -2328,7 +2328,7 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/uPlot/types.ts:1918909040": [
       [16, 26, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "packages/grafana-ui/src/components/uPlot/utils.ts:1200596632": [
+    "packages/grafana-ui/src/components/uPlot/utils.ts:1283022966": [
       [70, 13, 20, "Do not use any type assertions.", "1571376654"],
       [131, 20, 34, "Do not use any type assertions.", "1148863494"],
       [134, 11, 35, "Do not use any type assertions.", "2376372234"],
@@ -10875,15 +10875,15 @@ exports[`better eslint`] = {
     "public/app/plugins/panel/barchart/TickSpacingEditor.tsx:335508426": [
       [28, 69, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/panel/barchart/bars.ts:4025264055": [
+    "public/app/plugins/panel/barchart/bars.ts:3843272290": [
       [51, 58, 3, "Unexpected any. Specify a different type.", "193409811"],
       [53, 42, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [409, 7, 17, "Do not use any type assertions.", "3632921021"],
-      [464, 23, 11, "Do not use any type assertions.", "319541530"],
-      [464, 31, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [466, 23, 11, "Do not use any type assertions.", "319541530"],
-      [466, 31, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [474, 22, 33, "Do not use any type assertions.", "3146060940"]
+      [414, 7, 17, "Do not use any type assertions.", "3632921021"],
+      [469, 23, 11, "Do not use any type assertions.", "319541530"],
+      [469, 31, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [471, 23, 11, "Do not use any type assertions.", "319541530"],
+      [471, 31, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [479, 22, 33, "Do not use any type assertions.", "3146060940"]
     ],
     "public/app/plugins/panel/barchart/module.tsx:780565076": [
       [70, 95, 9, "Do not use any type assertions.", "3692209159"],
