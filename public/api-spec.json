@@ -10987,6 +10987,9 @@
         "homeDashboardUID": {
           "type": "string"
         },
+        "locale": {
+          "type": "string"
+        },
         "navbar": {
           "$ref": "#/definitions/NavbarPreference"
         },
@@ -11122,6 +11125,9 @@
           "format": "int64"
         },
         "homeDashboardUID": {
+          "type": "string"
+        },
+        "locale": {
           "type": "string"
         },
         "navbar": {
@@ -12317,6 +12323,9 @@
           "default": 0
         },
         "homeDashboardUID": {
+          "type": "string"
+        },
+        "locale": {
           "type": "string"
         },
         "navbar": {

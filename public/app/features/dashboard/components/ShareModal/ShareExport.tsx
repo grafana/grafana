@@ -1,7 +1,7 @@
 import { saveAs } from 'file-saver';
 import React, { PureComponent } from 'react';
 
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { Button, Field, Modal, Switch } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
 import { getBackendSrv } from 'app/core/services/backend_srv';
@@ -29,6 +29,10 @@ export class ShareExport extends PureComponent<Props, State> {
     };
 
     this.exporter = new DashboardExporter();
+  }
+
+  componentDidMount() {
+    reportInteraction('grafana_dashboards_export_share_viewed');
   }
 
   onShareExternallyChange = () => {
