@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -26,11 +27,11 @@ func setUpGetOrgUsersDB(t *testing.T, sqlStore *sqlstore.SQLStore) {
 	sqlStore.Cfg.AutoAssignOrg = true
 	sqlStore.Cfg.AutoAssignOrgId = int(testOrgID)
 
-	_, err := sqlStore.CreateUser(context.Background(), models.CreateUserCommand{Email: "testUser@grafana.com", Login: testUserLogin})
+	_, err := sqlStore.CreateUser(context.Background(), user.CreateUserCommand{Email: "testUser@grafana.com", Login: testUserLogin})
 	require.NoError(t, err)
-	_, err = sqlStore.CreateUser(context.Background(), models.CreateUserCommand{Email: "user1@grafana.com", Login: "user1"})
+	_, err = sqlStore.CreateUser(context.Background(), user.CreateUserCommand{Email: "user1@grafana.com", Login: "user1"})
 	require.NoError(t, err)
-	_, err = sqlStore.CreateUser(context.Background(), models.CreateUserCommand{Email: "user2@grafana.com", Login: "user2"})
+	_, err = sqlStore.CreateUser(context.Background(), user.CreateUserCommand{Email: "user2@grafana.com", Login: "user2"})
 	require.NoError(t, err)
 }
 
@@ -280,11 +281,11 @@ func setupOrgUsersDBForAccessControlTests(t *testing.T, db sqlstore.Store) {
 
 	var err error
 
-	_, err = db.CreateUser(context.Background(), models.CreateUserCommand{Email: testServerAdminViewer.Email, SkipOrgSetup: true, Login: testServerAdminViewer.Login})
+	_, err = db.CreateUser(context.Background(), user.CreateUserCommand{Email: testServerAdminViewer.Email, SkipOrgSetup: true, Login: testServerAdminViewer.Login})
 	require.NoError(t, err)
-	_, err = db.CreateUser(context.Background(), models.CreateUserCommand{Email: testAdminOrg2.Email, SkipOrgSetup: true, Login: testAdminOrg2.Login})
+	_, err = db.CreateUser(context.Background(), user.CreateUserCommand{Email: testAdminOrg2.Email, SkipOrgSetup: true, Login: testAdminOrg2.Login})
 	require.NoError(t, err)
-	_, err = db.CreateUser(context.Background(), models.CreateUserCommand{Email: testEditorOrg1.Email, SkipOrgSetup: true, Login: testEditorOrg1.Login})
+	_, err = db.CreateUser(context.Background(), user.CreateUserCommand{Email: testEditorOrg1.Email, SkipOrgSetup: true, Login: testEditorOrg1.Login})
 	require.NoError(t, err)
 
 	// Create both orgs with server admin
