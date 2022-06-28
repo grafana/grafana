@@ -7457,11 +7457,11 @@ exports[`better eslint`] = {
     "public/app/features/variables/pickers/OptionsPicker/OptionPicker.test.tsx:2807633419": [
       [51, 15, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/variables/pickers/OptionsPicker/actions.test.ts:436404309": [
-      [365, 15, 14, "Do not use any type assertions.", "241960896"],
-      [365, 24, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/features/variables/pickers/OptionsPicker/actions.test.ts:1831073775": [
+      [400, 15, 14, "Do not use any type assertions.", "241960896"],
+      [400, 24, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/variables/pickers/OptionsPicker/actions.ts:1878014439": [
+    "public/app/features/variables/pickers/OptionsPicker/actions.ts:4177332433": [
       [79, 74, 3, "Unexpected any. Specify a different type.", "193409811"],
       [105, 61, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
@@ -7781,18 +7781,18 @@ exports[`better eslint`] = {
       [168, 77, 3, "Unexpected any. Specify a different type.", "193409811"],
       [168, 100, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/variables/utils.ts:3099442303": [
+    "public/app/features/variables/utils.ts:724230159": [
       [58, 42, 3, "Unexpected any. Specify a different type.", "193409811"],
       [74, 40, 3, "Unexpected any. Specify a different type.", "193409811"],
       [108, 41, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [145, 22, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [158, 24, 30, "Do not use any type assertions.", "4095267826"],
-      [181, 41, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [181, 47, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [238, 42, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [238, 48, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [278, 44, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [289, 45, 9, "Do not use any type assertions.", "744351187"]
+      [161, 22, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [174, 24, 30, "Do not use any type assertions.", "4095267826"],
+      [197, 41, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [197, 47, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [254, 42, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [254, 48, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [294, 44, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [305, 45, 9, "Do not use any type assertions.", "744351187"]
     ],
     "public/app/plugins/datasource/alertmanager/ConfigEditor.tsx:2064418308": [
       [50, 36, 41, "Do not use any type assertions.", "3906591734"]

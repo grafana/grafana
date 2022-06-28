@@ -192,7 +192,11 @@ describe('options picker actions', () => {
 
   it('supports having variables with the same label and different values', async () => {
     const options = [createOption('sameLabel', 'A'), createOption('sameLabel', 'B')];
-    const variable = createMultiVariable({ options, current: createOption(['sameLabel'], ['A'], true), includeAll: false });
+    const variable = createMultiVariable({
+      options,
+      current: createOption(['sameLabel'], ['A'], true),
+      includeAll: false,
+    });
 
     const clearOthers = false;
     const key = NavigationKey.selectAndClose;
@@ -214,10 +218,7 @@ describe('options picker actions', () => {
     tester.thenDispatchedActionsShouldEqual(
       toKeyedAction('key', toggleOption({ option: options[1], forceSelect: true, clearOthers })),
       toKeyedAction('key', setCurrentVariableValue(toVariablePayload(variable, { option }))),
-      toKeyedAction(
-        'key',
-        changeVariableProp(toVariablePayload(variable, { propName: 'queryValue', propValue: '' }))
-      ),
+      toKeyedAction('key', changeVariableProp(toVariablePayload(variable, { propName: 'queryValue', propValue: '' }))),
       toKeyedAction('key', hideOptions()),
       toKeyedAction('key', setCurrentVariableValue(toVariablePayload(variable, { option })))
     );
