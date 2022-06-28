@@ -27,7 +27,7 @@ func exportPreferences(helper *commitHelper, job *gitExportJob) error {
 		QueryHistory  interface{} `json:"queryHistory,omitempty"`
 	}
 
-	prefsDir := path.Join(helper.orgDir, "preferences")
+	prefsDir := path.Join(helper.orgDir, "system", "preferences")
 	users := make(map[int64]*userInfo, len(helper.users))
 	for _, user := range helper.users {
 		users[user.ID] = user

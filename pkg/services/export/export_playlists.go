@@ -31,7 +31,7 @@ func exportPlaylists(helper *commitHelper, job *gitExportJob) error {
 		// TODO: fix the playlist API so it returns the json we need :)
 
 		gitcmd.body = append(gitcmd.body, commitBody{
-			fpath: filepath.Join(helper.orgDir, "playlists", fmt.Sprintf("%s-playlist.json", playlist.UID)),
+			fpath: filepath.Join(helper.orgDir, "system", "playlists", fmt.Sprintf("%s-playlist.json", playlist.UID)),
 			body:  prettyJSON(playlist),
 		})
 	}

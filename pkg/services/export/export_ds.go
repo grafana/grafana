@@ -5,14 +5,14 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/searchV2/extract"
 )
 
 type dsLookup func(ref *extract.DataSourceRef) *extract.DataSourceRef
 
 func exportDataSources(helper *commitHelper, job *gitExportJob) (dsLookup, error) {
-	cmd := &models.GetDataSourcesQuery{
+	cmd := &datasources.GetDataSourcesQuery{
 		OrgId: job.orgID,
 	}
 	err := job.sql.GetDataSources(helper.ctx, cmd)
