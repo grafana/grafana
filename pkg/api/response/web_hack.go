@@ -23,6 +23,8 @@ type (
 
 func wrap_handler(h web.Handler) http.HandlerFunc {
 	switch handle := h.(type) {
+	case http.HandlerFunc:
+		return handle
 	case handlerStd:
 		return handle
 	case handlerStdCtx:

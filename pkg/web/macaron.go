@@ -120,7 +120,7 @@ func SetURLParams(r *http.Request, vars map[string]string) *http.Request {
 	return r.WithContext(context.WithValue(r.Context(), paramsKey{}, vars))
 }
 
-type Middleware func(next http.Handler) http.Handler
+type Middleware = func(next http.Handler) http.Handler
 
 // UseMiddleware is a traditional approach to writing middleware in Go.
 // A middleware is a function that has a reference to the next handler in the chain
