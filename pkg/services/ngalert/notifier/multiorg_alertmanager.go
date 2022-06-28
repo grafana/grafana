@@ -246,7 +246,10 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 func (moa *MultiOrgAlertmanager) cleanupAMConfigTable(ctx context.Context) {
 	for orgID := range moa.alertmanagers {
 		// delete old records but keep at least 100 records
-		moa.configStore.DeleteOldConfigurations(ctx, orgID, 100)
+		_, err := moa.configStore.DeleteOldConfigurations(ctx, orgID, 100)
+		if err != nil {
+			moa.logger.Warn("failed to delete old am configs", "org", orgID, "err", err)
+		}
 	}
 }
 
