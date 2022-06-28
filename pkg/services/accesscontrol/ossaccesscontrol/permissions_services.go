@@ -58,9 +58,10 @@ func ProvideTeamPermissions(
 			return nil
 		},
 		Assignments: resourcepermissions.Assignments{
-			Users:        true,
-			Teams:        false,
-			BuiltInRoles: false,
+			Users:           true,
+			Teams:           false,
+			BuiltInRoles:    false,
+			ServiceAccounts: true,
 		},
 		PermissionsToActions: map[string][]string{
 			"Member": TeamMemberActions,
