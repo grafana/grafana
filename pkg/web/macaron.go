@@ -150,6 +150,11 @@ func (m *Macaron) UseMiddleware(mw Middleware) {
 // and panics if the handler is not a callable func.
 // Middleware Handlers are invoked in the order that they are added.
 func (m *Macaron) Use(h Handler) {
+	if mw, ok := h.(Middleware); ok {
+		m.UseMiddleware(mw)
+		return
+	}
+
 	m.mws = append(m.mws, mwFromHandler(h))
 }
 
