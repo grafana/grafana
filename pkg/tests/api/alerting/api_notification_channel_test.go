@@ -758,7 +758,6 @@ func TestNotificationChannels(t *testing.T) {
 	{
 		// Create the namespace we'll save our alerts to.
 		apiClient.CreateFolder(t, "default", "default")
-		reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
 
 		// Post the alertmanager config.
 		u := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)

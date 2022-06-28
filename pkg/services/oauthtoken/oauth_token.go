@@ -4,11 +4,13 @@ import (
 	"context"
 	"errors"
 
+	"golang.org/x/oauth2"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/login"
-	"golang.org/x/oauth2"
 )
 
 var (
@@ -22,7 +24,7 @@ type Service struct {
 
 type OAuthTokenService interface {
 	GetCurrentOAuthToken(context.Context, *models.SignedInUser) *oauth2.Token
-	IsOAuthPassThruEnabled(*models.DataSource) bool
+	IsOAuthPassThruEnabled(*datasources.DataSource) bool
 }
 
 func ProvideService(socialService social.Service, authInfoService login.AuthInfoService) *Service {
@@ -100,7 +102,7 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, user *models.SignedI
 }
 
 // IsOAuthPassThruEnabled returns true if Forward OAuth Identity (oauthPassThru) is enabled for the provided data source.
-func (o *Service) IsOAuthPassThruEnabled(ds *models.DataSource) bool {
+func (o *Service) IsOAuthPassThruEnabled(ds *datasources.DataSource) bool {
 	return ds.JsonData != nil && ds.JsonData.Get("oauthPassThru").MustBool()
 }
 
