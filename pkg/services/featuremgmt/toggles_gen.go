@@ -194,4 +194,8 @@ const (
 	// FlagCustomBranding
 	// Replaces whitelabeling with the new custom branding feature
 	FlagCustomBranding = "customBranding"
+
+	// FlagConditionalDatasource
+	// Enable conditional datasource
+	FlagConditionalDatasource = "conditionalDatasource"
 )

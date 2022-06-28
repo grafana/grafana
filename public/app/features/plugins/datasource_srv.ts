@@ -286,7 +286,7 @@ export class DatasourceSrv implements DataSourceService {
         }
       }
 
-      if (filters.conditional) {
+      if (filters.conditional && config.featureToggles.conditionalDatasource) {
         const conditionalInstanceSettings = this.getInstanceSettings(CONDITIONAL_DATASOURCE_NAME);
         if (conditionalInstanceSettings) {
           base.push(conditionalInstanceSettings);

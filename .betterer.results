@@ -6496,7 +6496,7 @@ exports[`better eslint`] = {
     "public/app/features/plugins/components/AppRootPage.tsx:1453161637": [
       [109, 21, 34, "Do not use any type assertions.", "462520373"]
     ],
-    "public/app/features/plugins/datasource_srv.ts:796174948": [
+    "public/app/features/plugins/datasource_srv.ts:175835112": [
       [56, 53, 27, "Do not use any type assertions.", "508490654"],
       [56, 77, 3, "Unexpected any. Specify a different type.", "193409811"],
       [57, 48, 27, "Do not use any type assertions.", "508490654"],

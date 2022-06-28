@@ -263,5 +263,10 @@ var (
 			Description: "Replaces whitelabeling with the new custom branding feature",
 			State:       FeatureStateAlpha,
 		},
+		{
+			Name:        "conditionalDatasource",
+			Description: "Enable conditional datasource",
+			State:       FeatureStateAlpha,
+		},
 	}
 )
