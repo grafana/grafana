@@ -49,7 +49,7 @@ func (s *DataSourceSecretMigrationService) WaitForProvisioning() error {
 		wait = true
 		return nil
 	})
-	time.After(5 * time.Second)
+	time.After(30 * time.Second)
 	if wait {
 		return s.WaitForProvisioning()
 	} else {
