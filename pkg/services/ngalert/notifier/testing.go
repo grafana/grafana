@@ -97,6 +97,10 @@ func (f *FakeConfigStore) UpdateAlertmanagerConfiguration(_ context.Context, cmd
 	return errors.New("config not found or hash not valid")
 }
 
+func (f *FakeConfigStore) DeleteOldConfigurations(ctx context.Context, orgID, limit int64) (int64, error) {
+	return 0, nil
+}
+
 type FakeOrgStore struct {
 	orgs []int64
 }
