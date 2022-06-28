@@ -57,9 +57,13 @@ var loginUsingLDAP = func(ctx context.Context, query *models.LoginUserQuery) (bo
 		ReqContext:    query.ReqContext,
 		ExternalUser:  externalUser,
 		SignupAllowed: setting.LDAPAllowSignup,
+		UserLookupParams: models.UserLookupParams{
+			Login:  &externalUser.Login,
+			Email:  &externalUser.Email,
+			UserID: nil,
+		},
 	}
-	err = bus.DispatchCtx(ctx, upsert)
-	if err != nil {
+	if err = bus.DispatchCtx(ctx, upsert); err != nil {
 		return true, err
 	}
 	query.User = upsert.Result

@@ -310,6 +310,11 @@ func syncUser(
 		ReqContext:    ctx,
 		ExternalUser:  extUser,
 		SignupAllowed: connect.IsSignupAllowed(),
+		UserLookupParams: models.UserLookupParams{
+			Email:  &extUser.Email,
+			UserID: nil,
+			Login:  nil,
+		},
 	}
 	if err := bus.Dispatch(cmd); err != nil {
 		return nil, err
