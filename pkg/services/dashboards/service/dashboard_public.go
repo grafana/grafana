@@ -144,8 +144,9 @@ func (dr *DashboardServiceImpl) BuildPublicDashboardMetricRequest(ctx context.Co
 	}, nil
 }
 
+// BuildAnonymousUser creates a user with permissions to read from all datasources used in the dashboard
 func (dr *DashboardServiceImpl) BuildAnonymousUser(ctx context.Context, dashboard *models.Dashboard) (*models.SignedInUser, error) {
-	datasourceUids := models.GetAllDashboardDatasourceUids(dashboard.Data)
+	datasourceUids := models.GetUniqueDashboardDatasourceUids(dashboard.Data)
 
 	// Create a temp user with read-only datasource permissions
 	anonymousUser := &models.SignedInUser{OrgId: dashboard.OrgId, Permissions: make(map[int64]map[string][]string)}

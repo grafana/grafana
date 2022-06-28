@@ -4,12 +4,17 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
-func GetAllDashboardDatasourceUids(dashboard *simplejson.Json) []string {
+func GetUniqueDashboardDatasourceUids(dashboard *simplejson.Json) []string {
 	var datasourceUids []string
+	exists := map[string]bool{}
 
 	for _, panelObj := range dashboard.Get("panels").MustArray() {
 		panel := simplejson.NewFromAny(panelObj)
-		datasourceUids = append(datasourceUids, panel.Get("datasource").Get("uid").MustString())
+		uid := panel.Get("datasource").Get("uid").MustString()
+		if _, ok := exists[uid]; !ok {
+			datasourceUids = append(datasourceUids, uid)
+			exists[uid] = true
+		}
 	}
 
 	return datasourceUids
