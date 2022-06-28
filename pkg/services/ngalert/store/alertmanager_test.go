@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/stretchr/testify/require"
@@ -18,6 +19,7 @@ func TestIntegrationAlertManagerHash(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
 	store := &DBstore{
 		SQLStore: sqlStore,
+		Logger:   log.NewNopLogger(),
 	}
 
 	t.Run("After saving the DB should return the right hash", func(t *testing.T) {
@@ -80,6 +82,7 @@ func TestIntegrationAlertManagerConfigCleanup(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
 	store := &DBstore{
 		SQLStore: sqlStore,
+		Logger:   log.NewNopLogger(),
 	}
 	t.Run("when calling the cleanup with less records than the limit all recrods should stay", func(t *testing.T) {
 		var orgID int64 = 3
