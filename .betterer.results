@@ -10436,8 +10436,1619 @@ exports[`no undocumented stories`] = {
     "packages/grafana-ui/src/components/VizLegend/VizLegend.story.tsx:5381": [
       [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
+<<<<<<< HEAD
     "packages/grafana-ui/src/components/VizTooltip/SeriesTable.story.tsx:5381": [
       [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
+=======
+    "public/app/plugins/panel/bargauge/BarGaugePanel.test.tsx:3368730691": [
+      [102, 16, 9, "Do not use any type assertions.", "3692209159"],
+      [102, 22, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/bargauge/BarGaugePanel.tsx:2584207123": [
+      [112, 75, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/candlestick/CandlestickPanel.tsx:3928129934": [
+      [116, 26, 33, "Do not use any type assertions.", "1940217301"],
+      [163, 20, 27, "Do not use any type assertions.", "2091836047"],
+      [163, 21, 11, "Do not use any type assertions.", "672877327"],
+      [163, 29, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/candlestick/fields.test.ts:734234717": [
+      [8, 38, 24, "Do not use any type assertions.", "1806924006"],
+      [124, 40, 94, "Do not use any type assertions.", "89499567"],
+      [186, 40, 96, "Do not use any type assertions.", "2643461470"],
+      [248, 40, 95, "Do not use any type assertions.", "2146438436"]
+    ],
+    "public/app/plugins/panel/candlestick/module.tsx:3212118941": [
+      [26, 20, 211, "Do not use any type assertions.", "2313351983"],
+      [32, 21, 149, "Do not use any type assertions.", "1973127165"],
+      [37, 24, 170, "Do not use any type assertions.", "1318935259"],
+      [52, 20, 23, "Do not use any type assertions.", "2078201556"]
+    ],
+    "public/app/plugins/panel/candlestick/utils.ts:1960311121": [
+      [125, 10, 21, "Do not use any type assertions.", "2762377771"],
+      [126, 10, 19, "Do not use any type assertions.", "2663605681"],
+      [127, 10, 21, "Do not use any type assertions.", "2469295302"],
+      [138, 10, 18, "Do not use any type assertions.", "516790078"],
+      [139, 10, 16, "Do not use any type assertions.", "3831122660"],
+      [140, 10, 18, "Do not use any type assertions.", "3407005619"],
+      [183, 15, 19, "Do not use any type assertions.", "2663605681"],
+      [186, 15, 21, "Do not use any type assertions.", "2469295302"],
+      [189, 15, 21, "Do not use any type assertions.", "2762377771"],
+      [194, 15, 16, "Do not use any type assertions.", "3831122660"],
+      [197, 15, 18, "Do not use any type assertions.", "3407005619"],
+      [200, 15, 18, "Do not use any type assertions.", "516790078"]
+    ],
+    "public/app/plugins/panel/canvas/CanvasContextMenu.tsx:1200380152": [
+      [31, 33, 47, "Do not use any type assertions.", "3512730894"]
+    ],
+    "public/app/plugins/panel/canvas/CanvasPanel.tsx:4244563785": [
+      [39, 31, 18, "Do not use any type assertions.", "3890263992"],
+      [81, 24, 28, "Do not use any type assertions.", "4099457225"]
+    ],
+    "public/app/plugins/panel/canvas/InlineEdit.tsx:2487240299": [
+      [38, 29, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [38, 47, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/canvas/InlineEditBody.tsx:2585809618": [
+      [26, 57, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [26, 94, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [65, 46, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [66, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [90, 36, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [91, 40, 20, "Do not use any type assertions.", "481937809"],
+      [91, 57, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/canvas/editor/APIEditor.tsx:1893804420": [
+      [13, 92, 26, "Do not use any type assertions.", "51717362"],
+      [15, 5, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [26, 23, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [41, 64, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [41, 69, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/canvas/editor/LayerElementListEditor.tsx:2866351070": [
+      [21, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [40, 30, 44, "Do not use any type assertions.", "712744497"],
+      [50, 20, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/canvas/editor/PlacementEditor.tsx:1494111960": [
+      [33, 53, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/canvas/editor/elementEditor.tsx:984525295": [
+      [27, 38, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [59, 14, 16, "Do not use any type assertions.", "2939667099"],
+      [59, 27, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/canvas/editor/layerEditor.tsx:975717531": [
+      [24, 25, 24, "Do not use any type assertions.", "3274929259"],
+      [52, 38, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [79, 34, 14, "Do not use any type assertions.", "2244802944"],
+      [79, 45, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [80, 30, 14, "Do not use any type assertions.", "2244802944"],
+      [80, 41, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/dashlist/module.tsx:3488104479": [
+      [88, 73, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/debug/CursorView.tsx:1482143737": [
+      [66, 22, 13, "Do not use any type assertions.", "2748726293"],
+      [66, 32, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/debug/EventBusLogger.tsx:3356031256": [
+      [26, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [54, 21, 19, "Do not use any type assertions.", "1200709783"],
+      [54, 37, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/debug/RenderInfoViewer.tsx:2867503780": [
+      [57, 46, 18, "Do not use any type assertions.", "3358449386"]
+    ],
+    "public/app/plugins/panel/gauge/GaugeMigrations.test.ts:3862496446": [
+      [6, 18, 1440, "Do not use any type assertions.", "1488404351"],
+      [80, 46, 19, "Do not use any type assertions.", "2735740472"],
+      [90, 12, 19, "Do not use any type assertions.", "2735740472"],
+      [143, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [157, 18, 16, "Do not use any type assertions.", "388222280"]
+    ],
+    "public/app/plugins/panel/gauge/GaugeMigrations.ts:3608685218": [
+      [12, 45, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [14, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [17, 15, 85, "Do not use any type assertions.", "1595644447"]
+    ],
+    "public/app/plugins/panel/geomap/GeomapPanel.tsx:4106514858": [
+      [71, 31, 18, "Do not use any type assertions.", "3890263992"],
+      [99, 24, 28, "Do not use any type assertions.", "4099457225"],
+      [273, 17, 37, "Do not use any type assertions.", "2544440943"],
+      [273, 17, 20, "Do not use any type assertions.", "3781735909"],
+      [359, 18, 24, "Do not use any type assertions.", "181784893"],
+      [359, 39, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [378, 35, 24, "Do not use any type assertions.", "47548872"],
+      [382, 34, 12, "Do not use any type assertions.", "3529972290"],
+      [382, 43, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [391, 44, 18, "Do not use any type assertions.", "457862215"],
+      [412, 34, 35, "Do not use any type assertions.", "2795303183"],
+      [412, 35, 8, "Do not use any type assertions.", "1000026477"],
+      [412, 40, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [525, 31, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [542, 5, 18, "Do not use any type assertions.", "469843579"],
+      [542, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [549, 44, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [549, 75, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [595, 25, 21, "Do not use any type assertions.", "650165461"],
+      [595, 42, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/geomap/components/DataHoverRows.tsx:641704907": [
+      [65, 16, 33, "Do not use any type assertions.", "2799878314"]
+    ],
+    "public/app/plugins/panel/geomap/components/DataHoverView.tsx:2298521936": [
+      [35, 38, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/geomap/editor/GeomapStyleRulesEditor.tsx:355286202": [
+      [11, 82, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [11, 87, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [44, 54, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [44, 86, 34, "Do not use any type assertions.", "1257118222"],
+      [46, 11, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/geomap/editor/LayersEditor.tsx:132528714": [
+      [12, 45, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [12, 50, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [38, 43, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [42, 43, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [46, 47, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [50, 47, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/geomap/editor/MapViewEditor.tsx:557613329": [
+      [11, 66, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/geomap/editor/StyleRuleEditor.tsx:517251024": [
+      [31, 73, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [31, 78, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [195, 12, 133, "Do not use any type assertions.", "1788850073"],
+      [200, 17, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/geomap/editor/layerEditor.tsx:1533036298": [
+      [28, 38, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/geomap/layers/basemaps/carto.ts:1541137355": [
+      [38, 18, 19, "Do not use any type assertions.", "2831497983"]
+    ],
+    "public/app/plugins/panel/geomap/layers/basemaps/esri.ts:2813488755": [
+      [70, 39, 16, "Do not use any type assertions.", "2424858948"]
+    ],
+    "public/app/plugins/panel/geomap/layers/registry.ts:3202853078": [
+      [47, 69, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [58, 62, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/geomap/migrations.test.ts:2347734178": [
+      [14, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [17, 18, 16, "Do not use any type assertions.", "388222280"],
+      [115, 18, 578, "Do not use any type assertions.", "495293879"],
+      [115, 18, 564, "Do not use any type assertions.", "4258938716"],
+      [140, 9, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/geomap/migrations.ts:1115172016": [
+      [28, 49, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [90, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [98, 31, 24, "Do not use any type assertions.", "3914131866"],
+      [98, 52, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [104, 21, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/geomap/module.tsx:2632823621": [
+      [42, 18, 44, "Do not use any type assertions.", "2803830839"]
+    ],
+    "public/app/plugins/panel/geomap/style/utils.test.ts:3368608151": [
+      [33, 19, 11, "Do not use any type assertions.", "319541530"],
+      [33, 27, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/geomap/types.ts:1512545097": [
+      [90, 41, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/geomap/utils/selection.ts:177287346": [
+      [2, 35, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/geomap/view.ts:547733112": [
+      [16, 8, 25, "Do not use any type assertions.", "459066573"],
+      [21, 8, 26, "Do not use any type assertions.", "3208966452"],
+      [55, 8, 33, "Do not use any type assertions.", "2751540711"]
+    ],
+    "public/app/plugins/panel/gettingstarted/GettingStarted.tsx:573115148": [
+      [79, 18, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/gettingstarted/components/Step.tsx:1870095353": [
+      [29, 49, 24, "Do not use any type assertions.", "3136223651"]
+    ],
+    "public/app/plugins/panel/graph/GraphContextMenuCtrl.ts:3089249312": [
+      [5, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [15, 22, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/graph/GraphMigrations.test.ts:3282531231": [
+      [6, 18, 2472, "Do not use any type assertions.", "338831987"],
+      [55, 15, 539, "Do not use any type assertions.", "2037639798"],
+      [55, 15, 524, "Do not use any type assertions.", "367742648"],
+      [120, 46, 19, "Do not use any type assertions.", "2735740472"],
+      [121, 24, 47, "Do not use any type assertions.", "376550359"],
+      [121, 25, 12, "Do not use any type assertions.", "1619708599"],
+      [121, 34, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [131, 18, 250, "Do not use any type assertions.", "1064975162"],
+      [131, 18, 236, "Do not use any type assertions.", "3592514897"],
+      [146, 31, 19, "Do not use any type assertions.", "2735740472"],
+      [147, 24, 47, "Do not use any type assertions.", "376550359"],
+      [147, 25, 12, "Do not use any type assertions.", "1619708599"],
+      [147, 34, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/graph/GraphMigrations.ts:4037126903": [
+      [5, 61, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [5, 76, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [15, 33, 31, "Do not use any type assertions.", "2592978588"]
+    ],
+    "public/app/plugins/panel/graph/Legend/Legend.tsx:3526861258": [
+      [14, 34, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [15, 26, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [15, 41, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [21, 47, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [22, 60, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [28, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [95, 19, 187, "Do not use any type assertions.", "3203397108"],
+      [109, 47, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [188, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [189, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [260, 29, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/graph/Legend/LegendSeriesItem.tsx:462614305": [
+      [14, 25, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [14, 37, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [15, 26, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [16, 25, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [50, 21, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [130, 24, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [216, 25, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/graph/align_yaxes.ts:2026331733": [
+      [5, 35, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [5, 47, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [105, 32, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [109, 32, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/graph/annotation_tooltip.ts:163107101": [
+      [10, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [13, 12, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [30, 18, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/graph/axes_editor.ts:4031433550": [
+      [5, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [7, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [8, 14, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [9, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [10, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [14, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [15, 21, 24, "Do not use any type assertions.", "1383913339"],
+      [51, 32, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/graph/data_processor.ts:140288660": [
+      [14, 29, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [72, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [145, 21, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [154, 32, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [170, 17, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/graph/event_editor.ts:2882796375": [
+      [16, 8, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [17, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [91, 37, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/graph/event_manager.ts:2471483155": [
+      [30, 28, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [30, 37, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [49, 43, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [54, 29, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [54, 47, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [59, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [155, 35, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [155, 75, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/graph/graph.ts:821139426": [
+      [65, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [68, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [69, 8, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [70, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [71, 8, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [79, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [81, 81, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [81, 91, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [122, 23, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [196, 48, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [202, 51, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [257, 20, 71, "Do not use any type assertions.", "1504235577"],
+      [268, 45, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [268, 56, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [303, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [335, 46, 59, "Do not use any type assertions.", "1399684711"],
+      [335, 102, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [341, 45, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [383, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [412, 26, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [425, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [432, 25, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [445, 31, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [485, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [495, 23, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [512, 24, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [512, 36, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [565, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [582, 26, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [588, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [651, 21, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [651, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [684, 23, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [702, 26, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [718, 29, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [776, 25, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [797, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [797, 44, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [836, 21, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [844, 22, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [844, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [877, 32, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [925, 37, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [948, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [948, 44, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [965, 54, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [969, 18, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/graph/graph_tooltip.d.ts:1576685019": [
+      [0, 26, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/graph/graph_tooltip.ts:4183530575": [
+      [12, 43, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [12, 54, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [12, 70, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [12, 82, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [12, 100, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [24, 61, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [42, 39, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [42, 52, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [61, 94, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [68, 59, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [71, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [165, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [165, 87, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [173, 42, 10, "Do not use any type assertions.", "3459414797"],
+      [173, 49, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [178, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [178, 43, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [178, 54, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [200, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [200, 31, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/graph/histogram.ts:3622208037": [
+      [32, 106, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [51, 8, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [53, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [56, 3, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [57, 27, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/graph/jquery.flot.events.ts:3370109374": [
+      [52, 29, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [80, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [139, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [140, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [141, 14, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [142, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [143, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [144, 10, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [145, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [150, 14, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [151, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [152, 14, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [195, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [196, 12, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [197, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [198, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [201, 23, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [231, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [232, 10, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [233, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [234, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [237, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [248, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [255, 22, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [270, 26, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [270, 34, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [331, 32, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [331, 42, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [331, 58, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [436, 41, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [462, 12, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [462, 34, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [462, 45, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [480, 35, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [480, 81, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [571, 39, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [596, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [596, 44, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [596, 79, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [596, 90, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [614, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [636, 27, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [636, 38, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [660, 28, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [666, 40, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [666, 54, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [673, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [690, 22, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/graph/module.ts:2663356615": [
+      [36, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [40, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [41, 14, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [44, 10, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [49, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [147, 22, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [184, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [188, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [192, 35, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [208, 5, 22, "Do not use any type assertions.", "1917861168"],
+      [208, 24, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [211, 7, 22, "Do not use any type assertions.", "1917861168"],
+      [211, 26, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [298, 27, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [304, 34, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [310, 26, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [310, 41, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [316, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [316, 45, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [317, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [326, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [330, 33, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/graph/series_overrides_ctrl.ts:2579635488": [
+      [6, 44, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [6, 79, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [12, 74, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [26, 74, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [46, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [55, 37, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/graph/specs/data_processor.test.ts:3651132688": [
+      [5, 15, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/graph/specs/graph.test.ts:2003285807": [
+      [29, 12, 9, "Do not use any type assertions.", "3692209159"],
+      [29, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [30, 10, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [42, 35, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [43, 22, 64, "Do not use any type assertions.", "3552776194"],
+      [47, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [48, 4, 1119, "Do not use any type assertions.", "22905176"],
+      [97, 10, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [127, 6, 39, "Do not use any type assertions.", "1195076675"],
+      [129, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [136, 26, 9, "Do not use any type assertions.", "3692209159"],
+      [136, 32, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [136, 41, 9, "Do not use any type assertions.", "3692209159"],
+      [136, 47, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [136, 64, 88, "Do not use any type assertions.", "1231463515"],
+      [140, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [1351, 4, 49, "Do not use any type assertions.", "1099684144"],
+      [1351, 50, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [1352, 4, 9, "Do not use any type assertions.", "3692209159"],
+      [1352, 10, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/graph/specs/graph_ctrl.test.ts:333554474": [
+      [33, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [41, 14, 9, "Do not use any type assertions.", "3692209159"],
+      [41, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [44, 36, 15, "Do not use any type assertions.", "3302915971"],
+      [44, 48, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [101, 18, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/graph/specs/graph_tooltip.test.ts:1540008850": [
+      [6, 13, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/graph/specs/histogram.test.ts:1918538591": [
+      [4, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [49, 14, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/graph/specs/series_override_ctrl.test.ts:925994791": [
+      [4, 14, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [15, 32, 12, "Do not use any type assertions.", "4107961265"]
+    ],
+    "public/app/plugins/panel/graph/specs/threshold_manager.test.ts:1564753622": [
+      [7, 51, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [9, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [19, 31, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [19, 42, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [34, 57, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [53, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [72, 67, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [91, 68, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [110, 61, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/graph/specs/time_region_manager.test.ts:3844932500": [
+      [5, 51, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [7, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [20, 28, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [20, 39, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [20, 48, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [33, 46, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [47, 87, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [55, 87, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [66, 56, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [98, 54, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [125, 52, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [152, 57, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [179, 75, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [206, 64, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [233, 61, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [260, 59, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [287, 69, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [305, 69, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [323, 95, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [347, 71, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/graph/threshold_manager.ts:1638035193": [
+      [9, 8, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [10, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [11, 10, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [12, 14, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [14, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [18, 29, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [18, 74, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [35, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [45, 27, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [90, 27, 21, "Do not use any type assertions.", "4170053750"],
+      [90, 45, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [119, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [136, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [163, 26, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [163, 38, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/graph/thresholds_form.ts:2449768094": [
+      [5, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [6, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [10, 30, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/graph/time_region_manager.ts:1293043074": [
+      [11, 25, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [46, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [71, 8, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [72, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [74, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [76, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [81, 26, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [81, 38, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [92, 22, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [92, 31, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [93, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [99, 54, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [235, 18, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/graph/time_regions_form.ts:3849973633": [
+      [5, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [6, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [8, 14, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [11, 30, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/graph/utils.ts:1760782600": [
+      [33, 47, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/heatmap-old/axes_editor.ts:3923458214": [
+      [1, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [2, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [3, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [4, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [5, 21, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [8, 22, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [8, 41, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/heatmap-old/color_legend.ts:3585235020": [
+      [26, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [41, 29, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [62, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [81, 31, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [97, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [110, 25, 32, "Do not use any type assertions.", "3363799010"],
+      [110, 54, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [141, 12, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [151, 25, 32, "Do not use any type assertions.", "3363799010"],
+      [151, 54, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [182, 12, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [183, 12, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [215, 57, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [220, 23, 32, "Do not use any type assertions.", "3363799010"],
+      [220, 52, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [253, 25, 32, "Do not use any type assertions.", "3363799010"],
+      [253, 54, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [256, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [287, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [287, 23, 18, "Do not use any type assertions.", "3968413993"],
+      [287, 38, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [295, 39, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [296, 17, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/heatmap-old/color_scale.ts:433524801": [
+      [3, 43, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [3, 106, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [3, 114, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [15, 44, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [15, 60, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [18, 3, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/heatmap-old/display_editor.ts:1605320932": [
+      [1, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [2, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [5, 22, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/heatmap-old/heatmap_ctrl.ts:2784513824": [
+      [29, 21, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [119, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [120, 14, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [121, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [123, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [124, 8, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [126, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [133, 22, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [168, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [351, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [381, 14, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [381, 25, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [381, 37, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [381, 48, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/heatmap-old/heatmap_data_converter.ts:718034718": [
+      [14, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [94, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [142, 35, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [146, 23, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [156, 21, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [233, 29, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [244, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [244, 45, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [268, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [292, 36, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [316, 50, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [316, 63, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [363, 21, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [363, 34, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [434, 34, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [434, 45, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [477, 23, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [477, 33, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/heatmap-old/heatmap_tooltip.ts:2789219159": [
+      [14, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [15, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [16, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [17, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [18, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [19, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [21, 21, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [23, 35, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [39, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [59, 25, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [59, 38, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [82, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [153, 38, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [153, 47, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [153, 56, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [153, 69, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [159, 46, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [162, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [168, 48, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [176, 36, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [176, 44, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [176, 56, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [235, 21, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [239, 21, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [242, 26, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [247, 26, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [247, 39, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [247, 52, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [270, 56, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/heatmap-old/rendering.ts:923167403": [
+      [32, 41, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [32, 52, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [32, 64, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [32, 75, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [38, 10, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [39, 10, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [50, 14, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [51, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [52, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [53, 8, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [54, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [55, 12, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [57, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [58, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [60, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [61, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [62, 10, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [67, 29, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [67, 48, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [67, 60, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [67, 79, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [104, 29, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [131, 22, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [148, 23, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [420, 29, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [442, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [444, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [524, 23, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [550, 32, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [554, 32, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [560, 23, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [572, 28, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [594, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [606, 23, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [659, 27, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [667, 29, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [675, 24, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [682, 21, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [718, 21, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [739, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [739, 42, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [739, 62, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [739, 70, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [742, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [762, 45, 10, "Do not use any type assertions.", "3459414797"],
+      [762, 52, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [820, 32, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/heatmap-old/specs/heatmap_ctrl.test.ts:4128755898": [
+      [6, 14, 9, "Do not use any type assertions.", "3692209159"],
+      [6, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [29, 50, 13, "Do not use any type assertions.", "2566260947"],
+      [34, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [60, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [81, 18, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/heatmap-old/specs/heatmap_data_converter.test.ts:2752362950": [
+      [14, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [73, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [120, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [233, 13, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/heatmap-old/types.ts:2221161687": [
+      [2, 7, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [3, 12, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [4, 12, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [5, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [12, 11, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/heatmap/HeatmapHoverView.tsx:4206969103": [
+      [32, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [51, 38, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [51, 95, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/heatmap/HeatmapPanel.tsx:1036460904": [
+      [72, 26, 79, "Do not use any type assertions.", "2972403194"],
+      [74, 26, 54, "Do not use any type assertions.", "2184934679"],
+      [113, 24, 103, "Do not use any type assertions.", "1385046468"],
+      [189, 45, 13, "Do not use any type assertions.", "1645847559"],
+      [189, 55, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/heatmap/fields.test.ts:2095719388": [
+      [7, 32, 18, "Do not use any type assertions.", "739464119"]
+    ],
+    "public/app/plugins/panel/heatmap/migrations.test.ts:1017455994": [
+      [15, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [18, 18, 16, "Do not use any type assertions.", "388222280"]
+    ],
+    "public/app/plugins/panel/heatmap/migrations.ts:2547355944": [
+      [43, 47, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [128, 22, 27, "Do not use any type assertions.", "3349635193"],
+      [161, 21, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/heatmap/module.tsx:3365492927": [
+      [27, 16, 30, "Do not use any type assertions.", "3478399522"],
+      [27, 43, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [28, 18, 30, "Do not use any type assertions.", "3478399522"],
+      [28, 45, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [45, 35, 37, "Do not use any type assertions.", "1961056471"]
+    ],
+    "public/app/plugins/panel/heatmap/palettes.ts:4110363347": [
+      [87, 39, 23, "Do not use any type assertions.", "3906212682"],
+      [87, 59, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/heatmap/utils.ts:215809412": [
+      [260, 23, 53, "Do not use any type assertions.", "4087268626"],
+      [287, 49, 51, "Do not use any type assertions.", "4216242190"],
+      [287, 49, 28, "Do not use any type assertions.", "1631991143"],
+      [476, 14, 190, "Do not use any type assertions.", "4120382085"],
+      [487, 14, 55, "Do not use any type assertions.", "2123957774"],
+      [487, 14, 43, "Do not use any type assertions.", "3195961945"],
+      [630, 19, 27, "Do not use any type assertions.", "3603045978"],
+      [630, 19, 15, "Do not use any type assertions.", "3099372941"],
+      [631, 19, 27, "Do not use any type assertions.", "3664280731"],
+      [631, 19, 15, "Do not use any type assertions.", "2963010956"],
+      [632, 23, 27, "Do not use any type assertions.", "1493467224"],
+      [632, 23, 15, "Do not use any type assertions.", "2572578447"],
+      [738, 25, 30, "Do not use any type assertions.", "1186575399"],
+      [738, 25, 16, "Do not use any type assertions.", "1728826198"],
+      [810, 22, 27, "Do not use any type assertions.", "3603045978"],
+      [810, 22, 15, "Do not use any type assertions.", "3099372941"],
+      [811, 22, 27, "Do not use any type assertions.", "3664280731"],
+      [811, 22, 15, "Do not use any type assertions.", "2963010956"],
+      [812, 22, 27, "Do not use any type assertions.", "1493467224"],
+      [812, 22, 15, "Do not use any type assertions.", "2572578447"],
+      [813, 23, 27, "Do not use any type assertions.", "1554701977"],
+      [813, 23, 15, "Do not use any type assertions.", "2436216462"]
+    ],
+    "public/app/plugins/panel/histogram/Histogram.tsx:3993177092": [
+      [130, 31, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [223, 26, 9, "Do not use any type assertions.", "3815122951"],
+      [223, 32, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [257, 23, 11, "Do not use any type assertions.", "319541530"],
+      [257, 31, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [321, 23, 11, "Do not use any type assertions.", "319541530"],
+      [321, 31, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/icon/IconPanel.tsx:3229106771": [
+      [33, 46, 25, "Do not use any type assertions.", "1711465209"],
+      [33, 68, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/icon/module.tsx:3436434683": [
+      [33, 20, 31, "Do not use any type assertions.", "2174163364"],
+      [33, 48, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/live/LiveChannelEditor.tsx:3327779311": [
+      [15, 53, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [53, 26, 152, "Do not use any type assertions.", "1319110163"],
+      [55, 19, 30, "Do not use any type assertions.", "2243881570"],
+      [55, 19, 20, "Do not use any type assertions.", "3781735909"],
+      [56, 14, 30, "Do not use any type assertions.", "2243881570"],
+      [56, 14, 20, "Do not use any type assertions.", "3781735909"],
+      [62, 19, 111, "Do not use any type assertions.", "1675446560"],
+      [64, 12, 30, "Do not use any type assertions.", "2243881570"],
+      [64, 12, 20, "Do not use any type assertions.", "3781735909"],
+      [75, 19, 89, "Do not use any type assertions.", "2972387960"]
+    ],
+    "public/app/plugins/panel/live/LivePanel.tsx:1065750103": [
+      [30, 10, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [33, 12, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [182, 32, 329, "Do not use any type assertions.", "334207914"],
+      [194, 22, 111, "Do not use any type assertions.", "503082886"],
+      [197, 24, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/live/types.ts:468842904": [
+      [13, 9, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/logs/LogsPanel.test.tsx:1980330429": [
+      [100, 16, 495, "Do not use any type assertions.", "2521048876"],
+      [100, 16, 477, "Do not use any type assertions.", "1400793553"]
+    ],
+    "public/app/plugins/panel/logs/LogsPanel.tsx:4080293044": [
+      [95, 41, 28, "Do not use any type assertions.", "3428864287"]
+    ],
+    "public/app/plugins/panel/news/utils.test.ts:1075350837": [
+      [25, 24, 2416, "Do not use any type assertions.", "1190328332"]
+    ],
+    "public/app/plugins/panel/nodeGraph/Edge.tsx:2960703341": [
+      [15, 29, 48, "Do not use any type assertions.", "2120930245"],
+      [32, 33, 24, "Do not use any type assertions.", "1032455982"],
+      [32, 70, 24, "Do not use any type assertions.", "1618014818"]
+    ],
+    "public/app/plugins/panel/nodeGraph/EdgeLabel.tsx:1493938445": [
+      [32, 29, 48, "Do not use any type assertions.", "2120930245"]
+    ],
+    "public/app/plugins/panel/nodeGraph/Legend.test.tsx:2799280474": [
+      [15, 6, 318, "Do not use any type assertions.", "1998907975"],
+      [17, 18, 43, "Do not use any type assertions.", "3333482165"],
+      [17, 58, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [18, 23, 43, "Do not use any type assertions.", "4062169270"],
+      [18, 63, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [20, 10, 103, "Do not use any type assertions.", "3935151357"],
+      [20, 110, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [22, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [29, 12, 33, "Do not use any type assertions.", "3391279780"]
+    ],
+    "public/app/plugins/panel/nodeGraph/Legend.tsx:1268135127": [
+      [76, 17, 71, "Do not use any type assertions.", "3338237457"]
+    ],
+    "public/app/plugins/panel/nodeGraph/Node.tsx:3389284631": [
+      [172, 16, 23, "Do not use any type assertions.", "522368601"]
+    ],
+    "public/app/plugins/panel/nodeGraph/NodeGraph.test.tsx:1151389009": [
+      [237, 16, 29, "Do not use any type assertions.", "3573448706"]
+    ],
+    "public/app/plugins/panel/nodeGraph/NodeGraph.tsx:2094573586": [
+      [176, 7, 47, "Do not use any type assertions.", "4262176341"],
+      [332, 13, 21, "Do not use any type assertions.", "1024434472"],
+      [333, 13, 21, "Do not use any type assertions.", "289303780"],
+      [355, 11, 21, "Do not use any type assertions.", "1024434472"],
+      [356, 11, 21, "Do not use any type assertions.", "289303780"]
+    ],
+    "public/app/plugins/panel/nodeGraph/ViewControls.tsx:1224159931": [
+      [27, 59, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/nodeGraph/layout.test.ts:1938392112": [
+      [5, 35, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [6, 37, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [7, 35, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/nodeGraph/layout.ts:2480125429": [
+      [92, 22, 26, "Do not use any type assertions.", "3179762225"],
+      [111, 26, 33, "Do not use any type assertions.", "368186320"]
+    ],
+    "public/app/plugins/panel/nodeGraph/useCategorizeFrames.ts:188281746": [
+      [21, 6, 70, "Do not use any type assertions.", "933181280"]
+    ],
+    "public/app/plugins/panel/nodeGraph/usePanning.ts:887807615": [
+      [186, 7, 12, "Do not use any type assertions.", "881223021"],
+      [186, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [187, 14, 19, "Do not use any type assertions.", "1347340882"],
+      [190, 14, 19, "Do not use any type assertions.", "1208927574"]
+    ],
+    "public/app/plugins/panel/nodeGraph/useZoom.ts:758274585": [
+      [48, 25, 19, "Do not use any type assertions.", "921312868"]
+    ],
+    "public/app/plugins/panel/nodeGraph/utils.test.ts:1496182578": [
+      [255, 51, 21, "Do not use any type assertions.", "3576276018"]
+    ],
+    "public/app/plugins/panel/nodeGraph/utils.ts:3801653419": [
+      [130, 13, 289, "Do not use any type assertions.", "3614053404"],
+      [194, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [256, 16, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/piechart/PieChart.tsx:3082793434": [
+      [201, 12, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [217, 12, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/piechart/migrations.test.ts:922309096": [
+      [8, 18, 16, "Do not use any type assertions.", "388222280"],
+      [15, 18, 29, "Do not use any type assertions.", "2708403940"],
+      [41, 18, 29, "Do not use any type assertions.", "2708403940"],
+      [51, 18, 29, "Do not use any type assertions.", "2708403940"],
+      [64, 18, 29, "Do not use any type assertions.", "2708403940"]
+    ],
+    "public/app/plugins/panel/piechart/migrations.ts:2645273282": [
+      [6, 48, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [8, 15, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/piechart/suggestions.ts:1406588475": [
+      [17, 16, 70, "Do not use any type assertions.", "1339483802"],
+      [20, 13, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/stat/StatMigrations.test.ts:2018600100": [
+      [7, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [17, 18, 16, "Do not use any type assertions.", "388222280"],
+      [23, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [33, 18, 16, "Do not use any type assertions.", "388222280"],
+      [39, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [47, 18, 16, "Do not use any type assertions.", "388222280"],
+      [53, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [59, 18, 16, "Do not use any type assertions.", "388222280"],
+      [65, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [71, 16, 16, "Do not use any type assertions.", "388222280"],
+      [82, 12, 16, "Do not use any type assertions.", "388222280"]
+    ],
+    "public/app/plugins/panel/stat/StatMigrations.ts:1507612747": [
+      [8, 45, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [10, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [13, 18, 85, "Do not use any type assertions.", "1595644447"]
+    ],
+    "public/app/plugins/panel/stat/common.ts:1547792830": [
+      [52, 12, 57, "Do not use any type assertions.", "440836321"],
+      [52, 66, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/state-timeline/TimelineChart.tsx:2812729233": [
+      [36, 31, 18, "Do not use any type assertions.", "3890263992"],
+      [38, 62, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [52, 24, 28, "Do not use any type assertions.", "4099457225"]
+    ],
+    "public/app/plugins/panel/state-timeline/migrations.test.ts:1433329305": [
+      [6, 18, 16, "Do not use any type assertions.", "388222280"]
+    ],
+    "public/app/plugins/panel/state-timeline/migrations.ts:1710036125": [
+      [8, 48, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [10, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [12, 16, 40, "Do not use any type assertions.", "1690487699"],
+      [36, 22, 17, "Do not use any type assertions.", "127493185"],
+      [38, 27, 16, "Do not use any type assertions.", "1026575937"],
+      [45, 21, 16, "Do not use any type assertions.", "1026575937"],
+      [46, 22, 17, "Do not use any type assertions.", "1780507223"],
+      [62, 21, 16, "Do not use any type assertions.", "1026575937"]
+    ],
+    "public/app/plugins/panel/state-timeline/timeline.ts:1723686742": [
+      [47, 44, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [50, 43, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [137, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [530, 13, 32, "Do not use any type assertions.", "1901514128"],
+      [544, 12, 28, "Do not use any type assertions.", "1255945455"]
+    ],
+    "public/app/plugins/panel/state-timeline/types.ts:3228907517": [
+      [20, 62, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/state-timeline/utils.test.ts:2922455252": [
+      [17, 9, 9, "Do not use any type assertions.", "3692209159"],
+      [17, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [78, 18, 147, "Do not use any type assertions.", "893298400"],
+      [82, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [88, 18, 139, "Do not use any type assertions.", "3045277193"],
+      [92, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [98, 18, 150, "Do not use any type assertions.", "1747702495"],
+      [102, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [108, 18, 291, "Do not use any type assertions.", "3141576499"],
+      [124, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [130, 18, 106, "Do not use any type assertions.", "328761055"],
+      [134, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [165, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [222, 53, 46, "Do not use any type assertions.", "697874192"],
+      [222, 96, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/state-timeline/utils.ts:1740139691": [
+      [79, 53, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [211, 19, 48, "Do not use any type assertions.", "1573487560"],
+      [262, 26, 11, "Do not use any type assertions.", "319541530"],
+      [262, 34, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [286, 46, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [286, 54, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [288, 13, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/table-old/column_options.ts:3218485965": [
+      [5, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [6, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [7, 14, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [8, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [9, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [10, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [11, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [12, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [13, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [14, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [16, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [18, 14, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [27, 22, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [64, 53, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [76, 24, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [77, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [114, 27, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [126, 23, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [133, 21, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [141, 24, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [146, 21, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [154, 24, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/table-old/editor.ts:622652234": [
+      [6, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [7, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [8, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [9, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [10, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [11, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [16, 22, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [16, 49, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [50, 38, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [56, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [92, 47, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/table-old/module.ts:3595626038": [
+      [19, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [20, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [21, 12, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [25, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [57, 22, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [57, 38, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [57, 67, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [57, 91, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [71, 71, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [72, 64, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [88, 27, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [98, 21, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [110, 27, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [148, 24, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [148, 39, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [167, 14, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [167, 40, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [168, 14, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [188, 27, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [239, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [260, 52, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [270, 38, 49, "Do not use any type assertions.", "1240031247"],
+      [270, 38, 15, "Do not use any type assertions.", "363922340"],
+      [270, 82, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/table-old/renderer.ts:2869672175": [
+      [22, 14, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [23, 14, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [29, 26, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [29, 34, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [84, 26, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [106, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [110, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [120, 34, 8, "Do not use any type assertions.", "1788342839"],
+      [120, 39, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [138, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [138, 23, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [194, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [194, 23, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [208, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [213, 23, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [241, 45, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [249, 59, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/table-old/specs/renderer.test.ts:3638012257": [
+      [11, 25, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [16, 19, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/table-old/specs/transformers.test.ts:2341841046": [
+      [3, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [421, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [431, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [442, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [486, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [496, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [507, 18, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/table-old/transformers.ts:1857002339": [
+      [10, 47, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [10, 53, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [24, 46, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [24, 52, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [66, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [177, 23, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [193, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [218, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [244, 22, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [280, 36, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [280, 48, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/table-old/types.ts:905513491": [
+      [5, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [5, 26, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [6, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [6, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [17, 8, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [25, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [27, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [32, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [33, 14, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [34, 14, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [36, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [37, 12, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [38, 16, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/table/migrations.test.ts:2084798246": [
+      [55, 25, 16, "Do not use any type assertions.", "388222280"],
+      [58, 22, 16, "Do not use any type assertions.", "388222280"],
+      [61, 30, 16, "Do not use any type assertions.", "388222280"],
+      [64, 23, 16, "Do not use any type assertions.", "388222280"],
+      [128, 18, 16, "Do not use any type assertions.", "388222280"]
+    ],
+    "public/app/plugins/panel/table/migrations.ts:145557382": [
+      [21, 31, 12, "Do not use any type assertions.", "1619708599"],
+      [21, 40, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [75, 45, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [76, 22, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [222, 45, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [224, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [230, 53, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [232, 52, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/table/module.tsx:464655817": [
+      [129, 16, 57, "Do not use any type assertions.", "440836321"],
+      [129, 70, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [150, 31, 29, "Do not use any type assertions.", "1753772827"],
+      [150, 57, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/text/TextPanelEditor.tsx:1261010451": [
+      [15, 61, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/text/textPanelMigrationHandler.test.ts:81346811": [
+      [8, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [25, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [42, 21, 34, "Do not use any type assertions.", "3760901310"],
+      [42, 21, 13, "Do not use any type assertions.", "2146830713"],
+      [64, 19, 29, "Do not use any type assertions.", "19304750"],
+      [64, 19, 17, "Do not use any type assertions.", "2051682914"],
+      [67, 21, 34, "Do not use any type assertions.", "3760901310"],
+      [67, 21, 13, "Do not use any type assertions.", "2146830713"]
+    ],
+    "public/app/plugins/panel/text/textPanelMigrationHandler.ts:3230512821": [
+      [10, 24, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [10, 30, 12, "Do not use any type assertions.", "1619708599"],
+      [10, 39, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [12, 17, 29, "Do not use any type assertions.", "4085879016"]
+    ],
+    "public/app/plugins/panel/timeseries/FillBelowToEditor.tsx:4143865253": [
+      [5, 75, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/timeseries/LayoutBuilder.ts:3734608408": [
+      [4, 22, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [17, 35, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/timeseries/LineStyleEditor.tsx:47523809": [
+      [54, 75, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/timeseries/SpanNullsEditor.tsx:282540635": [
+      [20, 82, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [22, 62, 15, "Do not use any type assertions.", "3610795007"],
+      [23, 41, 15, "Do not use any type assertions.", "3610795007"],
+      [41, 20, 15, "Do not use any type assertions.", "2911858555"],
+      [41, 32, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/timeseries/ThresholdsStyleEditor.tsx:256405004": [
+      [7, 79, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/timeseries/migrations.test.ts:1953319587": [
+      [18, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [23, 18, 16, "Do not use any type assertions.", "388222280"],
+      [29, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [32, 18, 16, "Do not use any type assertions.", "388222280"],
+      [47, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [50, 18, 16, "Do not use any type assertions.", "388222280"],
+      [56, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [59, 18, 16, "Do not use any type assertions.", "388222280"],
+      [65, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [68, 18, 16, "Do not use any type assertions.", "388222280"],
+      [74, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [77, 18, 16, "Do not use any type assertions.", "388222280"],
+      [86, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [99, 20, 16, "Do not use any type assertions.", "388222280"],
+      [104, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [117, 20, 16, "Do not use any type assertions.", "388222280"],
+      [122, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [125, 20, 16, "Do not use any type assertions.", "388222280"],
+      [130, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [142, 20, 16, "Do not use any type assertions.", "388222280"],
+      [150, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [153, 20, 16, "Do not use any type assertions.", "388222280"],
+      [158, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [161, 20, 16, "Do not use any type assertions.", "388222280"],
+      [169, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [191, 20, 16, "Do not use any type assertions.", "388222280"],
+      [213, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [236, 20, 16, "Do not use any type assertions.", "388222280"],
+      [258, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [273, 20, 16, "Do not use any type assertions.", "388222280"],
+      [291, 20, 16, "Do not use any type assertions.", "388222280"],
+      [335, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [342, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [350, 21, 16, "Do not use any type assertions.", "388222280"],
+      [351, 21, 16, "Do not use any type assertions.", "388222280"],
+      [361, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [370, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [379, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [388, 45, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [397, 21, 16, "Do not use any type assertions.", "388222280"],
+      [398, 21, 16, "Do not use any type assertions.", "388222280"],
+      [399, 21, 16, "Do not use any type assertions.", "388222280"],
+      [400, 21, 16, "Do not use any type assertions.", "388222280"],
+      [416, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [424, 20, 16, "Do not use any type assertions.", "388222280"],
+      [432, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [442, 20, 16, "Do not use any type assertions.", "388222280"],
+      [450, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [455, 20, 16, "Do not use any type assertions.", "388222280"],
+      [460, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [465, 20, 16, "Do not use any type assertions.", "388222280"]
+    ],
+    "public/app/plugins/panel/timeseries/migrations.ts:3727223994": [
+      [63, 44, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [269, 30, 22, "Do not use any type assertions.", "1304381333"],
+      [316, 21, 38, "Do not use any type assertions.", "3634861180"],
+      [378, 20, 40, "Do not use any type assertions.", "1240468460"],
+      [510, 40, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [521, 16, 21, "Do not use any type assertions.", "3512717836"],
+      [548, 19, 9, "Do not use any type assertions.", "3045367786"],
+      [548, 25, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [549, 39, 9, "Do not use any type assertions.", "4279042889"],
+      [549, 45, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [561, 19, 10, "Do not use any type assertions.", "229908173"],
+      [561, 26, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [562, 19, 10, "Do not use any type assertions.", "3620201998"],
+      [562, 26, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [571, 26, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [584, 51, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [596, 53, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/timeseries/overrides/hideSeriesConfigFactory.ts:789153464": [
+      [18, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [20, 21, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [59, 20, 67, "Do not use any type assertions.", "2027647299"]
+    ],
+    "public/app/plugins/panel/timeseries/plugins/ContextMenuPlugin.tsx:1970246981": [
+      [122, 25, 23, "Do not use any type assertions.", "465915630"],
+      [262, 24, 71, "Do not use any type assertions.", "1504235577"]
+    ],
+    "public/app/plugins/panel/timeseries/plugins/annotations/AnnotationEditor.tsx:4103438520": [
+      [85, 37, 78, "Do not use any type assertions.", "1122966567"]
+    ],
+    "public/app/plugins/panel/timeseries/suggestions.ts:263886228": [
+      [25, 16, 9, "Do not use any type assertions.", "3692209159"],
+      [25, 22, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/traces/TracesPanel.test.tsx:3657450764": [
+      [9, 18, 135, "Do not use any type assertions.", "358256210"],
+      [9, 18, 121, "Do not use any type assertions.", "965173368"]
+    ],
+    "public/app/plugins/panel/xychart/ExplicitEditor.tsx:1911760428": [
+      [6, 74, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/xychart/XYDimsEditor.tsx:2549691188": [
+      [21, 69, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/xychart/dims.ts:473680168": [
+      [28, 11, 48, "Do not use any type assertions.", "1674988454"],
+      [38, 11, 59, "Do not use any type assertions.", "2625754477"],
+      [101, 30, 16, "Do not use any type assertions.", "2939667099"],
+      [101, 43, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [101, 48, 16, "Do not use any type assertions.", "2939667099"],
+      [101, 61, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/panel/xychart/scatter.ts:372699546": [
+      [308, 18, 43, "Do not use any type assertions.", "585008608"],
+      [308, 18, 28, "Do not use any type assertions.", "1748984188"],
+      [328, 29, 18, "Do not use any type assertions.", "2059697499"],
+      [328, 44, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [329, 31, 20, "Do not use any type assertions.", "2512567584"],
+      [329, 48, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [424, 17, 27, "Do not use any type assertions.", "3603063350"],
+      [424, 41, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [432, 17, 27, "Do not use any type assertions.", "2854648439"],
+      [432, 41, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [435, 17, 27, "Do not use any type assertions.", "1954861872"],
+      [435, 41, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [563, 23, 44, "Do not use any type assertions.", "3074173021"],
+      [600, 17, 19, "Do not use any type assertions.", "1105346161"],
+      [649, 46, 11, "Do not use any type assertions.", "2565170753"],
+      [652, 58, 11, "Do not use any type assertions.", "3261401808"]
+    ],
+    "public/app/plugins/panel/xychart/types.ts:4276980915": [
+      [25, 21, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/polyfills/old-mediaquerylist.ts:1408370095": [
+      [4, 70, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/store/configureStore.ts:3951464425": [
+      [11, 41, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/store/store.ts:1160152146": [
+      [13, 11, 79, "Do not use any type assertions.", "2486330760"],
+      [19, 33, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/types/alerting.ts:3481327440": [
+      [12, 47, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [34, 47, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [107, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [141, 23, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [175, 8, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/types/appEvent.ts:3224869604": [
+      [8, 32, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [12, 32, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [12, 96, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [19, 69, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [19, 98, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [20, 78, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [20, 107, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/types/dashboard.ts:901779567": [
+      [60, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [81, 9, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/types/events.ts:2477887635": [
+      [16, 10, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [20, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [21, 10, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [25, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [26, 10, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [53, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [56, 52, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [63, 7, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [64, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [65, 8, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [69, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [70, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [86, 43, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/types/explore.ts:3965355590": [
+      [208, 11, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/types/jquery/jquery.d.ts:143083225": [
+      [1, 40, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [1, 54, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [2, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [10, 12, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [11, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [12, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [13, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [14, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [15, 11, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/types/plugins.ts:781783078": [
+      [38, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [39, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [40, 14, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/types/store.ts:912020089": [
+      [23, 81, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/types/templates.ts:3574464591": [
+      [3, 11, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/types/unified-alerting-dto.ts:1838666739": [
+      [33, 51, 30, "Do not use any type assertions.", "990588535"],
+      [42, 11, 30, "Do not use any type assertions.", "2138056949"]
+    ],
+    "public/app/types/unified-alerting.ts:1090871288": [
+      [25, 39, 42, "Do not use any type assertions.", "3314504643"],
+      [155, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [178, 8, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/test/core/redux/mocks.ts:1870340410": [
+      [2, 71, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [7, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [9, 92, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/test/core/redux/reducerTester.ts:4054388132": [
+      [4, 24, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [26, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [32, 34, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [32, 53, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [41, 28, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/test/core/redux/reduxTester.ts:1549782547": [
+      [22, 12, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [26, 12, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [56, 50, 62, "Do not use any type assertions.", "914116460"],
+      [56, 50, 13, "Do not use any type assertions.", "2146830713"],
+      [60, 56, 87, "Do not use any type assertions.", "2853743899"],
+      [64, 7, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [69, 18, 90, "Do not use any type assertions.", "3045800216"],
+      [69, 18, 62, "Do not use any type assertions.", "1012229817"],
+      [73, 13, 12, "Do not use any type assertions.", "903706718"],
+      [73, 22, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [79, 12, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [95, 12, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/test/core/thunk/thunkTester.ts:2336747354": [
+      [8, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [12, 35, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [12, 71, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [15, 42, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [17, 22, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [18, 45, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [20, 37, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [26, 48, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [26, 82, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/test/global-jquery-shim.ts:3064565802": [
+      [2, 15, 13, "Do not use any type assertions.", "538937261"],
+      [2, 25, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/test/helpers/convertToStoreState.ts:1614888077": [
+      [3, 57, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [8, 9, 65, "Do not use any type assertions.", "3985373075"]
+    ],
+    "public/test/helpers/createFetchResponse.ts:154176934": [
+      [11, 13, 24, "Do not use any type assertions.", "297012103"],
+      [11, 13, 13, "Do not use any type assertions.", "2146830713"]
+    ],
+    "public/test/helpers/getDashboardModel.ts:1139344098": [
+      [2, 40, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [2, 51, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/test/helpers/initTemplateSrv.ts:3487039074": [
+      [7, 56, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/test/jest-setup.ts:1854110193": [
+      [16, 15, 13, "Do not use any type assertions.", "538937261"],
+      [16, 25, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [49, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [54, 34, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/test/jest-shim.ts:3325467433": [
+      [0, 1, 13, "Do not use any type assertions.", "615815978"],
+      [0, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [0, 51, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [4, 1, 24, "Do not use any type assertions.", "3551577854"],
+      [4, 22, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [4, 58, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [7, 10, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [9, 10, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/test/lib/common.ts:455018988": [
+      [0, 16, 13, "Do not use any type assertions.", "538937261"],
+      [0, 26, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/test/matchers/index.ts:4084403932": [
+      [6, 59, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/test/matchers/toEmitValues.test.ts:2096928533": [
+      [9, 27, 37, "Do not use any type assertions.", "337745570"],
+      [9, 27, 15, "Do not use any type assertions.", "363922340"],
+      [18, 27, 42, "Do not use any type assertions.", "3418176611"],
+      [18, 27, 20, "Do not use any type assertions.", "3781735909"],
+      [27, 27, 34, "Do not use any type assertions.", "2510143784"],
+      [27, 27, 12, "Do not use any type assertions.", "844110126"],
+      [54, 27, 59, "Do not use any type assertions.", "2993782234"],
+      [54, 27, 37, "Do not use any type assertions.", "761345450"],
+      [109, 27, 221, "Do not use any type assertions.", "1471797766"],
+      [109, 27, 190, "Do not use any type assertions.", "2691724425"],
+      [125, 27, 245, "Do not use any type assertions.", "1350352550"],
+      [125, 27, 214, "Do not use any type assertions.", "371512873"]
+    ],
+    "public/test/matchers/toEmitValues.ts:2483571136": [
+      [6, 31, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [6, 48, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [16, 31, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [16, 48, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [26, 35, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [26, 52, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [60, 50, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [60, 66, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [67, 26, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/test/matchers/toEmitValuesWith.test.ts:464288295": [
+      [9, 27, 37, "Do not use any type assertions.", "337745570"],
+      [9, 27, 15, "Do not use any type assertions.", "363922340"],
+      [23, 27, 42, "Do not use any type assertions.", "3418176611"],
+      [23, 27, 20, "Do not use any type assertions.", "3781735909"],
+      [37, 27, 34, "Do not use any type assertions.", "2510143784"],
+      [37, 27, 12, "Do not use any type assertions.", "844110126"],
+      [79, 27, 59, "Do not use any type assertions.", "2993782234"],
+      [79, 27, 37, "Do not use any type assertions.", "761345450"]
+    ],
+    "public/test/matchers/toEmitValuesWith.ts:1853025909": [
+      [5, 35, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [5, 67, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [30, 23, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [31, 25, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [39, 26, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/test/matchers/utils.ts:1498242290": [
+      [5, 86, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [24, 54, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [37, 57, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [50, 43, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/test/mocks/angular.ts:964690942": [
+      [1, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [2, 14, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [3, 13, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/test/mocks/backend_srv.ts:1291041292": [
+      [1, 10, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/test/mocks/common.ts:1079183690": [
+      [10, 39, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [11, 14, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [14, 17, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/test/mocks/datasource_srv.ts:3405296524": [
+      [33, 64, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [34, 10, 73, "Do not use any type assertions.", "1310990615"],
+      [39, 25, 26, "Do not use any type assertions.", "1093089864"],
+      [62, 67, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [63, 10, 73, "Do not use any type assertions.", "1310990615"],
+      [69, 25, 26, "Do not use any type assertions.", "1093089864"]
+    ],
+    "public/test/mocks/workers.ts:665232371": [
+      [5, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [7, 19, 173, "Do not use any type assertions.", "3229080867"],
+      [12, 13, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/test/specs/helpers.ts:577060204": [
+      [9, 44, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [23, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [31, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [32, 42, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [40, 26, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [40, 36, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [46, 38, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [47, 45, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [47, 90, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [65, 30, 31, "Do not use any type assertions.", "1414893441"],
+      [78, 45, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [78, 90, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [102, 26, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [107, 45, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [130, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [151, 38, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [162, 29, 3, "Unexpected any. Specify a different type.", "193409811"]
+>>>>>>> f97f48c977 (Canvas: position inline editor default via panel)
     ]
   }`
 };

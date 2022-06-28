@@ -192,7 +192,7 @@ export class CanvasPanel extends Component<Props, State> {
   };
 
   renderInlineEdit = () => {
-    return <InlineEdit onClose={() => this.inlineEditButtonClose()} />;
+    return <InlineEdit onClose={() => this.inlineEditButtonClose()} id={this.props.id} />;
   };
 
   render() {

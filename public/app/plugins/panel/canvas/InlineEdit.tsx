@@ -11,19 +11,21 @@ import { InlineEditBody } from './InlineEditBody';
 
 type Props = {
   onClose?: () => void;
+  id: number;
 };
 
-const OFFSET_X = 70;
+const OFFSET_X = 10;
+const OFFSET_Y = 32;
 
-export const InlineEdit = ({ onClose }: Props) => {
-  const btnInlineEdit = document.querySelector('[data-btninlineedit]')!.getBoundingClientRect();
+export const InlineEdit = ({ onClose, id }: Props) => {
+  const parentPanel = document.querySelector(`[data-panelid="${id}"]`)!.getBoundingClientRect();
   const ref = useRef<HTMLDivElement>(null);
   const styles = useStyles2(getStyles);
-  const inlineEditKey = 'inlineEditPanel';
+  const inlineEditKey = 'inlineEditPanel' + id.toString();
 
   const defaultMeasurements = { width: 350, height: 400 };
-  const defaultX = btnInlineEdit.x + OFFSET_X;
-  const defaultY = btnInlineEdit.y - defaultMeasurements.height;
+  const defaultX = parentPanel.x + parentPanel.width - defaultMeasurements.width - OFFSET_X;
+  const defaultY = parentPanel.y + OFFSET_Y;
 
   const savedPlacement = store.getObject(inlineEditKey, {
     x: defaultX,
