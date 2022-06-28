@@ -15,10 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/api"
-	"github.com/grafana/grafana/pkg/services/publicdashboards/database"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/query"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -38,7 +36,7 @@ var _ publicdashboards.Service = (*PublicDashboardServiceImpl)(nil)
 // builds the service, and api, and configures routes
 func ProvideService(
 	cfg *setting.Cfg,
-	sqlStore *sqlstore.SQLStore,
+	store publicdashboards.Store,
 	rr routing.RouteRegister,
 	ac accesscontrol.AccessControl,
 	qs *query.Service,
@@ -48,7 +46,7 @@ func ProvideService(
 	s := &PublicDashboardServiceImpl{
 		log:   log.New("publicdashboards"),
 		cfg:   cfg,
-		store: database.ProvideStore(sqlStore),
+		store: store,
 	}
 
 	// attach api if feature is enabled
