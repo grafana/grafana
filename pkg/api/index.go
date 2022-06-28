@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/navlinks"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -77,7 +76,7 @@ func (hs *HTTPServer) getProfileNode(c *models.ReqContext) *dtos.NavLink {
 }
 
 func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error) {
-	hasAccess := accesscontrol.HasAccess(hs.AccessControl, c)
+	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	enabledPlugins, err := hs.enabledPlugins(c.Req.Context(), c.OrgId)
 	if err != nil {
 		return nil, err
@@ -89,7 +88,7 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 			continue
 		}
 
-		if !hasAccess(accesscontrol.ReqSignedIn,
+		if !hasAccess(ac.ReqSignedIn,
 			ac.EvalPermission(plugins.ActionAppAccess, plugins.ScopeProvider.GetResourceScope(plugin.ID))) {
 			continue
 		}
