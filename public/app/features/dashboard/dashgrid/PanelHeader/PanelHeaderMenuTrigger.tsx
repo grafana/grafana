@@ -14,18 +14,18 @@ interface Props extends HTMLAttributes<HTMLDivElement> {
 export const PanelHeaderMenuTrigger: FC<Props> = ({ children, ...divProps }) => {
   const [clickCoordinates, setClickCoordinates] = useState<CartesianCoords2D>({ x: 0, y: 0 });
   const [panelMenuOpen, setPanelMenuOpen] = useState<boolean>(false);
+
   const onMenuToggle = useCallback(
     (event: MouseEvent<HTMLDivElement>) => {
       if (!isClick(clickCoordinates, eventToClickCoordinates(event))) {
         return;
       }
 
-      event.stopPropagation();
-
       setPanelMenuOpen(!panelMenuOpen);
     },
     [clickCoordinates, panelMenuOpen, setPanelMenuOpen]
   );
+
   const onMouseDown = useCallback(
     (event: MouseEvent<HTMLDivElement>) => {
       setClickCoordinates(eventToClickCoordinates(event));
