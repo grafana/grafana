@@ -321,7 +321,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/login',
       component: LoginPage,
       pageClass: 'login-page sidemenu-hidden',
-      noTopNav: true,
+      hideNav: true,
     },
     {
       path: '/invite/:code',
@@ -329,7 +329,7 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "SignupInvited" */ 'app/features/invites/SignupInvited')
       ),
       pageClass: 'sidemenu-hidden',
-      noTopNav: true,
+      hideNav: true,
     },
     {
       path: '/verify',
@@ -339,7 +339,7 @@ export function getAppRoutes(): RouteDescriptor[] {
             () => import(/* webpackChunkName "VerifyEmailPage"*/ 'app/core/components/Signup/VerifyEmailPage')
           ),
       pageClass: 'login-page sidemenu-hidden',
-      noTopNav: true,
+      hideNav: true,
     },
     {
       path: '/signup',
@@ -347,12 +347,12 @@ export function getAppRoutes(): RouteDescriptor[] {
         ? () => <Redirect to="/login" />
         : SafeDynamicImport(() => import(/* webpackChunkName "SignupPage"*/ 'app/core/components/Signup/SignupPage')),
       pageClass: 'sidemenu-hidden login-page',
-      noTopNav: true,
+      hideNav: true,
     },
     {
       path: '/user/password/send-reset-email',
       pageClass: 'sidemenu-hidden',
-      noTopNav: true,
+      hideNav: true,
       component: SafeDynamicImport(
         () =>
           import(/* webpackChunkName: "SendResetMailPage" */ 'app/core/components/ForgottenPassword/SendResetMailPage')
@@ -367,7 +367,7 @@ export function getAppRoutes(): RouteDescriptor[] {
           )
       ),
       pageClass: 'sidemenu-hidden login-page',
-      noTopNav: true,
+      hideNav: true,
     },
     {
       path: '/dashboard/snapshots',

@@ -3544,7 +3544,7 @@ exports[`better eslint`] = {
       [11, 6, 169, "Do not use any type assertions.", "2248693214"],
       [17, 11, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/core/navigation/types.ts:2017971154": [
+    "public/app/core/navigation/types.ts:1188829294": [
       [10, 38, 3, "Unexpected any. Specify a different type.", "193409811"],
       [14, 35, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
