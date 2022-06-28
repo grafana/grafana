@@ -161,7 +161,6 @@ func (tn *TelegramNotifier) buildTelegramMessage(ctx context.Context, as []*type
 
 	tmpl, _ := TmplText(ctx, tn.tmpl, as, tn.log, &tmplErr)
 	m := make(map[string]string)
-	m["chat_id"] = tmpl(tn.ChatID)
 	m["text"] = tmpl(tn.Message)
 	m["parse_mode"] = "html"
 	return m, nil
