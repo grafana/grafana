@@ -1,5 +1,7 @@
-import { QueryConditionInfo, QueryConditionID, QueryConditionType, toPascalCase } from '@grafana/data';
+import { toPascalCase } from '@grafana/data';
 import { KeyValueVariableModel } from 'app/features/variables/types';
+
+import { QueryConditionID, QueryConditionInfo, QueryConditionType } from '../types';
 
 import { FieldValueClickConditionEditor, ValueClickConditionOptions } from './FieldValueClickConditionEditor';
 

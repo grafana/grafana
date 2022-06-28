@@ -1,18 +1,12 @@
 import { Observable } from 'rxjs';
 
-import {
-  DataQuery,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceInstanceSettings,
-  QueryConditionConfig,
-  QueryConditionExecutionContext,
-} from '@grafana/data';
+import { DataQuery, DataQueryRequest, DataQueryResponse, DataSourceInstanceSettings } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import { MixedDatasource } from '../mixed/MixedDataSource';
 
 import { queryConditionsRegistry } from './QueryConditionsRegistry';
+import { QueryConditionConfig, QueryConditionExecutionContext } from './types';
 
 export const CONDITIONAL_DATASOURCE_NAME = '-- Conditional --';
 

@@ -1,9 +1,10 @@
-import { QueryConditionType, DataLinkBuiltInVars } from '@grafana/data';
+import { DataLinkBuiltInVars } from '@grafana/data';
 import {
   ConditionalDataSourceQuery,
   CONDITIONAL_DATASOURCE_NAME,
 } from 'app/plugins/datasource/conditional/ConditionalDataSource';
 import { queryConditionsRegistry } from 'app/plugins/datasource/conditional/QueryConditionsRegistry';
+import { QueryConditionType } from 'app/plugins/datasource/conditional/types';
 
 import { safeStringifyValue } from '../../../core/utils/explore';
 import { DashboardModel, PanelModel } from '../../dashboard/state';
@@ -327,13 +328,15 @@ export function getAffectedPanelIdsForVariable(variableId: string, panels: Panel
     if (panel.datasource?.uid === CONDITIONAL_DATASOURCE_NAME) {
       // iterate over each target
       for (let i = 0; i < panel.targets.length; i++) {
+        // we know these are conditional queries, as we check the datasource type above
+        // eslint-disable-next-line
         const target = panel.targets[i] as ConditionalDataSourceQuery;
         if (!target.conditions) {
           continue;
         }
         // iterate over each condition within a target
         for (let j = 0; j < target.conditions.length; j++) {
-          const condition = target.conditions[j] as any;
+          const condition = target.conditions[j];
 
           const conditionDef = queryConditionsRegistry.getIfExists(target.conditions[j].id);
 

@@ -1,7 +1,7 @@
 import { DataSourcePlugin } from '@grafana/data';
 
-import { ConditionalDataSource } from './ConditionalDataSource';
+import { ConditionalDataSource, ConditionalDataSourceQuery } from './ConditionalDataSource';
 
-const plugin = new DataSourcePlugin<any, any, any>(ConditionalDataSource);
+const plugin = new DataSourcePlugin<ConditionalDataSource, ConditionalDataSourceQuery, {}>(ConditionalDataSource);
 
 export { plugin };

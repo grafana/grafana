@@ -154,6 +154,8 @@ export class PanelQueryRunner {
 
           if (dataSourceRef && dataSourceRef.uid === CONDITIONAL_DATASOURCE_NAME && data.request) {
             getConditionalDataLinks = getConditionalDataLinksSupplier(
+              // we know these are conditional queries, as we check the datasource type above
+              // eslint-disable-next-line
               data.request.targets as ConditionalDataSourceQuery[]
             );
           }

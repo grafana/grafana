@@ -1,4 +1,6 @@
-import { QueryConditionInfo, QueryConditionID, QueryConditionType, rangeUtil } from '@grafana/data';
+import { rangeUtil } from '@grafana/data';
+
+import { QueryConditionID, QueryConditionInfo, QueryConditionType } from '../types';
 
 import {
   OPERATORS,
@@ -26,5 +28,5 @@ export const timeRangeIntervalCondition: QueryConditionInfo<TimeRangeIntervalCon
     return evaluate(currentTimeRangeInMs, interval);
   },
   editor: TimeRangeIntervalConditionEditor,
-  getVariableName: (options: any) => '',
+  getVariableName: () => '',
 };

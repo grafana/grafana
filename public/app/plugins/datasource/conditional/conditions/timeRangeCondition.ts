@@ -1,5 +1,6 @@
-import { QueryConditionInfo, QueryConditionID, QueryConditionType } from '@grafana/data';
 import { quickOptions } from '@grafana/ui/src/components/DateTimePickers/options';
+
+import { QueryConditionID, QueryConditionInfo, QueryConditionType } from '../types';
 
 import { TimeRangeConditionEditor, TimeRangeConditionOptions } from './TimeRangeConditionEditor';
 
@@ -21,5 +22,5 @@ export const timeRangeCondition: QueryConditionInfo<TimeRangeConditionOptions> =
     return false;
   },
   editor: TimeRangeConditionEditor,
-  getVariableName: (options: any) => '',
+  getVariableName: () => '',
 };

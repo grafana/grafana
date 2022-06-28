@@ -1,14 +1,12 @@
-import { RegistryItemWithOptions } from '../utils/Registry';
-
-import { VariableModel } from './templateVars';
-import { TimeRange } from './time';
+import { RegistryItemWithOptions, TimeRange, VariableModel } from '@grafana/data';
 
 export interface QueryConditionExecutionContext {
   timeRange: TimeRange;
   variables: VariableModel[];
 }
 
-export interface QueryConditionInfo<TOptions = any> extends RegistryItemWithOptions<TOptions> {
+// eslint-disable-next-line
+export interface QueryConditionInfo<TOptions extends {} = any> extends RegistryItemWithOptions<TOptions> {
   type: QueryConditionType;
   /**
    * Given condition configuration returns boolean representing condition being met or not
@@ -28,7 +26,7 @@ export interface QueryConditionInfo<TOptions = any> extends RegistryItemWithOpti
   variablePrefix?: string;
 }
 
-export interface QueryConditionUIProps<TOptions = any> {
+export interface QueryConditionUIProps<TOptions = {}> {
   options: TOptions;
   onChange: (options: TOptions) => void;
 }
@@ -44,9 +42,10 @@ export enum QueryConditionType {
   TimeRange = 'time-range',
 }
 
-export type QueryConditionConfig = {
+// eslint-disable-next-line
+export type QueryConditionConfig<TOptions = any> = {
   id: QueryConditionID;
-  options: any;
+  options: TOptions;
 };
 
 export type QueryConditions = QueryConditionConfig[];

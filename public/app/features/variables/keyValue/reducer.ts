@@ -2,7 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { getInstanceState } from '../state/selectors';
 import { initialVariablesState, VariablePayload, VariablesState } from '../state/types';
-import { KeyValueVariableModel, initialVariableModelState, VariableHide, VariableOption } from '../types';
+import { KeyValueVariableModel, initialVariableModelState, VariableHide } from '../types';
 
 export const initialKeyValueVariableModelState: KeyValueVariableModel = {
   ...initialVariableModelState,
@@ -10,7 +10,7 @@ export const initialKeyValueVariableModelState: KeyValueVariableModel = {
   hide: VariableHide.hideVariable,
   key: '',
   query: '',
-  current: {} as VariableOption,
+  current: { text: '', selected: false, value: '' },
   options: [],
 };
 

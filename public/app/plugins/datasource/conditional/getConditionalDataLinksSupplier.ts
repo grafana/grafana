@@ -1,16 +1,7 @@
 import { isEqual } from 'lodash';
 
-import {
-  DataFrame,
-  Field,
-  FieldMatcherID,
-  fieldMatchers,
-  LinkModel,
-  LoadingState,
-  QueryConditionConfig,
-  QueryConditionType,
-} from '@grafana/data';
-import { VariableAdapter, variableAdapters } from 'app/features/variables/adapters';
+import { DataFrame, Field, FieldMatcherID, fieldMatchers, LinkModel, LoadingState } from '@grafana/data';
+import { variableAdapters } from 'app/features/variables/adapters';
 import { toKeyedAction } from 'app/features/variables/state/keyedVariablesReducer';
 import {
   getLastKey,
@@ -27,6 +18,7 @@ import { store } from 'app/store/store';
 import { ConditionalDataSourceQuery } from './ConditionalDataSource';
 import { queryConditionsRegistry } from './QueryConditionsRegistry';
 import { ValueClickConditionOptions } from './conditions/FieldValueClickConditionEditor';
+import { QueryConditionType, QueryConditionConfig } from './types';
 
 export function getConditionalDataLinksSupplier(targets: ConditionalDataSourceQuery[]) {
   // Find targets that have field conditions
@@ -114,9 +106,10 @@ function findRelatedDataLinks(
 
     if (hasAllConditionsMet) {
       links.push({
+        // eslint-disable-next-line
         title: 'Drill down on ' + result[i].map((c) => (c.options as ValueClickConditionOptions).name).join(', '),
         href: '',
-        onClick: async (evt: any, origin: any) => {
+        onClick: async (_, origin) => {
           // Figure out variables that need to be created from scratch
           const variablesToCreate = result[i].map((c) => {
             const conditionDef = queryConditionsRegistry.getIfExists(c.id);
@@ -169,12 +162,14 @@ function findRelatedDataLinks(
               )
             );
 
+            // eslint-disable-next-line
             const existing = getVariable(
               toKeyedVariableIdentifier(variable),
               store.getState()
             ) as KeyValueVariableModel;
             const value = fieldReferencesPerTarget[k].values.get(origin.rowIndex);
-            const adapter = variableAdapters.get('keyValue') as VariableAdapter<KeyValueVariableModel>;
+
+            const adapter = variableAdapters.get('keyValue');
             await adapter.setValue(existing, { selected: true, value, text: value ? value.toString() : '' }, true);
           }
         },

@@ -1,14 +1,15 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { QueryConditionID, GrafanaTheme2, QueryConditionConfig, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Icon, IconButton, Tooltip, useStyles2, ValuePicker } from '@grafana/ui';
 
 import { queryConditionsRegistry } from './QueryConditionsRegistry';
+import { QueryConditionConfig, QueryConditionID } from './types';
 
 interface QueryConditionRowProps {
   condition: QueryConditionConfig;
-  onChange: (options: any) => void;
+  onChange: (options: QueryConditionConfig) => void;
   onRemove: () => void;
 }
 
@@ -48,7 +49,7 @@ const QueryConditionRow: React.FC<QueryConditionRowProps> = ({ condition, onChan
 
 interface QueryConditionsEditorProps {
   conditions?: QueryConditionConfig[];
-  onChange: (i: number, options: any) => void;
+  onChange: (i: number, options: QueryConditionConfig) => void;
   onAddCondition: (conditionId: QueryConditionID) => void;
   onRemoveCondition: (idx: number) => void;
 }
@@ -66,7 +67,7 @@ export const QueryConditionsEditor: React.FC<QueryConditionsEditorProps> = ({
         <QueryConditionRow
           key={`${c.id}-${JSON.stringify(c.options)}-${i}`}
           condition={c}
-          onChange={(options: any) => onChange(i, options)}
+          onChange={(options) => onChange(i, options)}
           onRemove={() => onRemoveCondition(i)}
         />
       ))}
@@ -82,6 +83,7 @@ export const QueryConditionsEditor: React.FC<QueryConditionsEditorProps> = ({
           .filter((o) => !o.excludeFromPicker)
           .map<SelectableValue<QueryConditionID>>((i) => ({
             label: i.name,
+            // eslint-disable-next-line
             value: i.id as QueryConditionID,
             description: i.description,
           }))}

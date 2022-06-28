@@ -2,7 +2,6 @@ import React, { PureComponent } from 'react';
 import { DragDropContext, DragStart, Droppable, DropResult } from 'react-beautiful-dnd';
 
 import {
-  QueryConditionID,
   CoreApp,
   DataQuery,
   DataSourceInstanceSettings,
@@ -18,6 +17,7 @@ import {
 } from 'app/plugins/datasource/conditional/ConditionalDataSource';
 import { QueryConditionsEditor } from 'app/plugins/datasource/conditional/QueryConditionsEditor';
 import { queryConditionsRegistry } from 'app/plugins/datasource/conditional/QueryConditionsRegistry';
+import { QueryConditionID } from 'app/plugins/datasource/conditional/types';
 
 import { QueryEditorRow } from './QueryEditorRow';
 
@@ -143,6 +143,7 @@ export class QueryEditorRows extends PureComponent<Props> {
       console.error(`Could not find condition definition for ${conditionId}`);
     }
 
+    // eslint-disable-next-line
     const q = queries[queryIdx] as ConditionalDataSourceQuery;
     q.conditions = q.conditions
       ? [...q.conditions, { id: conditionId, options: { ...conditionDef!.defaultOptions } }]
@@ -157,6 +158,7 @@ export class QueryEditorRows extends PureComponent<Props> {
   onRemoveCondition = (queryIdx: number) => (idx: number) => {
     const { queries, onQueriesChange } = this.props;
 
+    // eslint-disable-next-line
     const q = queries[queryIdx] as ConditionalDataSourceQuery;
     q.conditions.splice(idx, 1);
     const nextQueries = [...queries];
@@ -165,9 +167,11 @@ export class QueryEditorRows extends PureComponent<Props> {
     onQueriesChange(nextQueries);
   };
 
+  // eslint-disable-next-line
   onQueryConditionChange = (queryIdx: number) => (conditionIdx: number, options: any) => {
     const { queries, onQueriesChange } = this.props;
 
+    // eslint-disable-next-line
     const q = queries[queryIdx] as ConditionalDataSourceQuery;
     q.conditions[conditionIdx].options = options;
 
@@ -224,7 +228,8 @@ export class QueryEditorRows extends PureComponent<Props> {
                       eventBus={eventBus}
                       renderConditionsEditor={
                         isConditional
-                          ? () => this.renderConditionsEditor(query as ConditionalDataSourceQuery, index)
+                          ? //eslint-disable-next-line
+                            () => this.renderConditionsEditor(query as ConditionalDataSourceQuery, index)
                           : undefined
                       }
                     />

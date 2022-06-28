@@ -1,7 +1,9 @@
 import React from 'react';
 
-import { QueryConditionUIProps, SelectableValue } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 import { Field, HorizontalGroup, Input, Select } from '@grafana/ui';
+
+import { QueryConditionUIProps } from '../types';
 
 export interface TimeRangeIntervalConditionOptions {
   // interval in ms

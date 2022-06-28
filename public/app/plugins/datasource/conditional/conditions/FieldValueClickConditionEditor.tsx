@@ -1,8 +1,9 @@
 import { capitalize } from 'lodash';
 import React, { useState } from 'react';
 
-import { QueryConditionUIProps } from '@grafana/data';
 import { Field, HorizontalGroup, Input } from '@grafana/ui';
+
+import { QueryConditionUIProps } from '../types';
 
 export interface ValueClickConditionOptions {
   pattern: string;

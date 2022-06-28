@@ -15,6 +15,7 @@ export const setKeyValueVariableValue = (
   value: string | null
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
+    // eslint-disable-next-line
     const variable = getVariable(identifier, getState()) as KeyValueVariableModel;
     dispatch(
       toKeyedAction(

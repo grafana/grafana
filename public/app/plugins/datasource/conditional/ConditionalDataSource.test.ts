@@ -1,9 +1,11 @@
-import { dateTime, QueryConditionExecutionContext, QueryConditionID } from '@grafana/data';
+import { dateTime } from '@grafana/data';
 import { KeyValueVariableModel } from 'app/features/variables/types';
+
 import { ConditionalDataSource, ConditionalDataSourceQuery } from './ConditionalDataSource';
-import { ValueClickConditionOptions } from './conditions/FieldValueClickConditionEditor';
-import { OPERATOR_ID, TimeRangeIntervalConditionOptions } from './conditions/TimeRangeIntervalConditionEditor';
 import { getQueryConditionItems, queryConditionsRegistry } from './QueryConditionsRegistry';
+import { ValueClickConditionOptions } from './conditions/FieldValueClickConditionEditor';
+import { OPERATOR_ID } from './conditions/TimeRangeIntervalConditionEditor';
+import { QueryConditionExecutionContext, QueryConditionID } from './types';
 
 describe('ConditionalDatasource', () => {
   // eslint-disable-next-line
@@ -67,12 +69,14 @@ describe('ConditionalDatasource', () => {
       const ctx: QueryConditionExecutionContext = {
         timeRange: timeRangeMock,
         variables: [
+          /* eslint-disable */
           {
             id: 'valueClickFieldInclude',
             name: 'valueClickFieldInclude',
             type: 'keyValue',
             current: { value: 'includeValue' },
           } as KeyValueVariableModel,
+          /* eslint-enable */
         ],
       };
 
@@ -102,13 +106,13 @@ describe('ConditionalDatasource', () => {
   describe('Selecting queries for execution', () => {
     describe('default query', () => {
       it('returns no query when there is no default query defined', () => {
-        const targets: Array<ConditionalDataSourceQuery> = [
+        const targets: ConditionalDataSourceQuery[] = [
           {
             refId: 'A',
             conditions: [
               {
                 id: QueryConditionID.ValueClick,
-                options: { name: 'conditionName', pattern: 'conditionPattern' } as ValueClickConditionOptions,
+                options: { name: 'conditionName', pattern: 'conditionPattern' },
               },
             ],
           },
@@ -124,7 +128,7 @@ describe('ConditionalDatasource', () => {
         expect(result).toHaveLength(0);
       });
       it('runs query without conditions when no conditions are met for other queries', () => {
-        const targets: Array<ConditionalDataSourceQuery> = [
+        const targets: ConditionalDataSourceQuery[] = [
           // default query
           {
             refId: 'A',
@@ -135,7 +139,7 @@ describe('ConditionalDatasource', () => {
             conditions: [
               {
                 id: QueryConditionID.ValueClick,
-                options: { name: 'conditionName', pattern: 'conditionPattern' } as ValueClickConditionOptions,
+                options: { name: 'conditionName', pattern: 'conditionPattern' },
               },
             ],
           },
@@ -152,7 +156,7 @@ describe('ConditionalDatasource', () => {
         expect(result[0]).toEqual(targets[0]);
       });
       it('runs multiple queries without conditions when no conditions are met for other queries', () => {
-        const targets: Array<ConditionalDataSourceQuery> = [
+        const targets: ConditionalDataSourceQuery[] = [
           // default query
           {
             refId: 'A',
@@ -163,7 +167,7 @@ describe('ConditionalDatasource', () => {
             conditions: [
               {
                 id: QueryConditionID.ValueClick,
-                options: { name: 'conditionName', pattern: 'conditionPattern' } as ValueClickConditionOptions,
+                options: { name: 'conditionName', pattern: 'conditionPattern' },
               },
             ],
           },
@@ -188,7 +192,7 @@ describe('ConditionalDatasource', () => {
   });
 
   it('runs query that has conditions met', () => {
-    const targets: Array<ConditionalDataSourceQuery> = [
+    const targets: ConditionalDataSourceQuery[] = [
       // default query
       {
         refId: 'A',
@@ -199,7 +203,7 @@ describe('ConditionalDatasource', () => {
         conditions: [
           {
             id: QueryConditionID.ValueClick,
-            options: { name: 'conditionName', pattern: 'conditionPattern' } as ValueClickConditionOptions,
+            options: { name: 'conditionName', pattern: 'conditionPattern' },
           },
         ],
       },
@@ -208,7 +212,7 @@ describe('ConditionalDatasource', () => {
         conditions: [
           {
             id: QueryConditionID.TimeRangeInterval,
-            options: { operator: OPERATOR_ID.LessThan, interval: '1M' } as TimeRangeIntervalConditionOptions,
+            options: { operator: OPERATOR_ID.LessThan, interval: '1M' },
           },
         ],
       },
@@ -217,7 +221,7 @@ describe('ConditionalDatasource', () => {
         conditions: [
           {
             id: QueryConditionID.TimeRangeInterval,
-            options: { operator: OPERATOR_ID.GreaterThan, interval: '14d' } as TimeRangeIntervalConditionOptions,
+            options: { operator: OPERATOR_ID.GreaterThan, interval: '14d' },
           },
         ],
       },
@@ -235,11 +239,13 @@ describe('ConditionalDatasource', () => {
     const ctx: QueryConditionExecutionContext = {
       timeRange: timeRangeMock,
       variables: [
+        /* eslint-disable */
         {
           id: 'valueClickConditionName',
           name: 'valueClickConditionName',
           current: { value: 'blah' },
         } as KeyValueVariableModel,
+        /* eslint-enable */
       ],
     };
 
@@ -251,7 +257,7 @@ describe('ConditionalDatasource', () => {
 
   describe('when multiple conditions met', () => {
     it('runs query that has the largest number of conditions met', () => {
-      const targets: Array<ConditionalDataSourceQuery> = [
+      const targets: ConditionalDataSourceQuery[] = [
         // default query
         {
           refId: 'A',
@@ -262,7 +268,7 @@ describe('ConditionalDatasource', () => {
           conditions: [
             {
               id: QueryConditionID.ValueClick,
-              options: { name: 'conditionName', pattern: 'conditionPattern' } as ValueClickConditionOptions,
+              options: { name: 'conditionName', pattern: 'conditionPattern' },
             },
           ],
         },
@@ -271,11 +277,11 @@ describe('ConditionalDatasource', () => {
           conditions: [
             {
               id: QueryConditionID.ValueClick,
-              options: { name: 'conditionName', pattern: 'conditionPattern' } as ValueClickConditionOptions,
+              options: { name: 'conditionName', pattern: 'conditionPattern' },
             },
             {
               id: QueryConditionID.ValueClick,
-              options: { name: 'conditionName1', pattern: 'conditionPattern1' } as ValueClickConditionOptions,
+              options: { name: 'conditionName1', pattern: 'conditionPattern1' },
             },
           ],
         },
@@ -285,6 +291,7 @@ describe('ConditionalDatasource', () => {
         // eslint-disable-next-line
         timeRange: {} as any,
         variables: [
+          /* eslint-disable */
           {
             id: 'valueClickConditionName',
             name: 'valueClickConditionName',
@@ -295,6 +302,7 @@ describe('ConditionalDatasource', () => {
             name: 'valueClickConditionName1',
             current: { value: 'blah1' },
           } as KeyValueVariableModel,
+          /* eslint-enable */
         ],
       };
 
@@ -305,7 +313,7 @@ describe('ConditionalDatasource', () => {
     });
 
     it('runs query that has the largest number of conditions met no matter the condition type', () => {
-      const targets: Array<ConditionalDataSourceQuery> = [
+      const targets: ConditionalDataSourceQuery[] = [
         // default query
         {
           refId: 'A',
@@ -316,7 +324,7 @@ describe('ConditionalDatasource', () => {
           conditions: [
             {
               id: QueryConditionID.ValueClick,
-              options: { name: 'conditionName', pattern: 'conditionPattern' } as ValueClickConditionOptions,
+              options: { name: 'conditionName', pattern: 'conditionPattern' },
             },
           ],
         },
@@ -325,11 +333,11 @@ describe('ConditionalDatasource', () => {
           conditions: [
             {
               id: QueryConditionID.ValueClick,
-              options: { name: 'conditionName', pattern: 'conditionPattern' } as ValueClickConditionOptions,
+              options: { name: 'conditionName', pattern: 'conditionPattern' },
             },
             {
               id: QueryConditionID.TimeRangeInterval,
-              options: { operator: OPERATOR_ID.LessThan, interval: '1M' } as TimeRangeIntervalConditionOptions,
+              options: { operator: OPERATOR_ID.LessThan, interval: '1M' },
             },
           ],
         },
@@ -347,6 +355,7 @@ describe('ConditionalDatasource', () => {
       const ctx: QueryConditionExecutionContext = {
         timeRange: timeRangeMock,
         variables: [
+          /* eslint-disable */
           {
             id: 'valueClickConditionName',
             name: 'valueClickConditionName',
@@ -357,6 +366,7 @@ describe('ConditionalDatasource', () => {
             name: 'valueClickConditionName1',
             current: { value: 'blah1' },
           } as KeyValueVariableModel,
+          /* eslint-enable */
         ],
       };
 
@@ -367,7 +377,7 @@ describe('ConditionalDatasource', () => {
     });
 
     it('can return multiple queries when multiple independent conditions are met', () => {
-      const targets: Array<ConditionalDataSourceQuery> = [
+      const targets: ConditionalDataSourceQuery[] = [
         // default query
         {
           refId: 'A',
@@ -378,7 +388,7 @@ describe('ConditionalDatasource', () => {
           conditions: [
             {
               id: QueryConditionID.ValueClick,
-              options: { name: 'conditionName', pattern: 'conditionPattern' } as ValueClickConditionOptions,
+              options: { name: 'conditionName', pattern: 'conditionPattern' },
             },
           ],
         },
@@ -387,11 +397,11 @@ describe('ConditionalDatasource', () => {
           conditions: [
             {
               id: QueryConditionID.ValueClick,
-              options: { name: 'conditionName', pattern: 'conditionPattern' } as ValueClickConditionOptions,
+              options: { name: 'conditionName', pattern: 'conditionPattern' },
             },
             {
               id: QueryConditionID.TimeRangeInterval,
-              options: { operator: OPERATOR_ID.LessThan, interval: '1M' } as TimeRangeIntervalConditionOptions,
+              options: { operator: OPERATOR_ID.LessThan, interval: '1M' },
             },
           ],
         },
@@ -400,11 +410,11 @@ describe('ConditionalDatasource', () => {
           conditions: [
             {
               id: QueryConditionID.ValueClick,
-              options: { name: 'conditionName', pattern: 'conditionPattern' } as ValueClickConditionOptions,
+              options: { name: 'conditionName', pattern: 'conditionPattern' },
             },
             {
               id: QueryConditionID.ValueClick,
-              options: { name: 'conditionName1', pattern: 'conditionPattern1' } as ValueClickConditionOptions,
+              options: { name: 'conditionName1', pattern: 'conditionPattern1' },
             },
           ],
         },
@@ -422,6 +432,7 @@ describe('ConditionalDatasource', () => {
       const ctx: QueryConditionExecutionContext = {
         timeRange: timeRangeMock,
         variables: [
+          /* eslint-disable */
           {
             id: 'valueClickConditionName',
             name: 'valueClickConditionName',
@@ -432,6 +443,7 @@ describe('ConditionalDatasource', () => {
             name: 'valueClickConditionName1',
             current: { value: 'blah1' },
           } as KeyValueVariableModel,
+          /* eslint-enable */
         ],
       };
 
