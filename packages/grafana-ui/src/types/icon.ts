@@ -106,6 +106,7 @@ export const getAvailableIcons = () =>
     'heart',
     'heart-break',
     'history',
+    'home',
     'home-alt',
     'horizontal-align-center',
     'horizontal-align-left',
