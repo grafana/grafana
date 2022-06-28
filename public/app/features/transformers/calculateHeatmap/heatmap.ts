@@ -244,15 +244,26 @@ export function prepBucketFrames(frames: DataFrame[]): DataFrame[] {
 export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCalculationOptions): DataFrame {
   //console.time('calculateHeatmapFromData');
 
-  let xs: number[] = [];
-  let ys: number[] = [];
-
   // optimization
   //let xMin = Infinity;
   //let xMax = -Infinity;
 
   let xField: Field | undefined = undefined;
   let yField: Field | undefined = undefined;
+
+  let dataLen = 0;
+  // pre-allocate arrays
+  for (let frame of frames) {
+    // TODO: assumes numeric timestamps, ordered asc, without nulls
+    const x = frame.fields.find((f) => f.type === FieldType.time);
+    if (x) {
+      dataLen += frame.length;
+    }
+  }
+
+  let xs: number[] = Array(dataLen);
+  let ys: number[] = Array(dataLen);
+  let j = 0;
 
   for (let frame of frames) {
     // TODO: assumes numeric timestamps, ordered asc, without nulls
@@ -268,8 +279,12 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
     const xValues = x.values.toArray();
     for (let field of frame.fields) {
       if (field !== x && field.type === FieldType.number) {
-        xs = xs.concat(xValues);
-        ys = ys.concat(field.values.toArray());
+        const yValues = field.values.toArray();
+
+        for (let i = 0; i < xValues.length; i++, j++) {
+          xs[j] = xValues[i];
+          ys[j] = yValues[i];
+        }
 
         if (!yField) {
           yField = field;
