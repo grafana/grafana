@@ -27,6 +27,7 @@ import { Group as LayerGroup } from 'ol/layer';
 import VectorSource from 'ol/source/Vector';
 import { Fill, Stroke, Style, Circle } from 'ol/style';
 import Feature from 'ol/Feature';
+import { alpha } from '@grafana/data/src/themes/colorManipulator';
 
 // Configuration options for Circle overlays
 export interface RouteConfig {
@@ -103,14 +104,15 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
 
     // Crosshair layer
     const crosshairFeature = new Feature({});
+    const crosshairRadius = (style.base.lineWidth || 6) + 2;
     const crosshairStyle = new Style({
       image: new Circle({
-        radius: 6,
+        radius: crosshairRadius,
         stroke: new Stroke({
-          color: 'rgb(253, 253, 253)',
-          width: 1.5
+          color: alpha(style.base.color, 0.4),
+          width: crosshairRadius + 2
         }),
-        fill: new Fill({color: 'rgb(242, 204, 12)'}),
+        fill: new Fill({color: style.base.color}),
       })
     });
 
