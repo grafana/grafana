@@ -106,6 +106,7 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
       width: 100%;
       overflow: auto;
       display: flex;
+      flex-direction: column;
     `,
     thead: css`
       label: thead;
@@ -183,9 +184,6 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
       li {
         margin-bottom: 0;
       }
-      position: absolute;
-      bottom: 0;
-      left: 0;
     `,
     paginationItem: css`
       flex: 20%;
