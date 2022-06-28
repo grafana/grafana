@@ -2127,7 +2127,7 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/Table/Table.story.tsx:4272567078": [
       [23, 15, 364, "Do not use any type assertions.", "4121186137"]
     ],
-    "packages/grafana-ui/src/components/Table/Table.tsx:1333323294": [
+    "packages/grafana-ui/src/components/Table/Table.tsx:3722321297": [
       [55, 35, 3, "Unexpected any. Specify a different type.", "193409811"],
       [59, 26, 45, "Do not use any type assertions.", "2766835372"],
       [59, 68, 3, "Unexpected any. Specify a different type.", "193409811"],
