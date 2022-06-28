@@ -1,11 +1,12 @@
 {
   "compilerOptions": {
     "baseUrl": "./",
-    "declarationDir": "dist",
-    "outDir": "compiled",
-    "rootDirs": [".", "stories"]
+    "declarationDir": "./compiled",
+    "emitDeclarationOnly": true,
+    "isolatedModules": true,
+    "rootDirs": ["."]
   },
-  "exclude": ["dist", "node_modules"],
+  "exclude": ["dist/**/*"],
   "extends": "@grafana/tsconfig",
-  "include": ["src/**/*.ts*", "../../public/app/types/*.d.ts", "../grafana-schema/src/schema/models.gen.ts"]
+  "include": ["src/**/*.ts*", "../../public/app/types/*.d.ts"]
 }
