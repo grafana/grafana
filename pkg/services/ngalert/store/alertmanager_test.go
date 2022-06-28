@@ -110,7 +110,7 @@ func TestIntegrationAlertManagerConfigCleanup(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		rowsAffacted, err := store.DeleteOldConfigurations(context.Background(), orgID, 100)
+		rowsAffacted, err := store.deleteOldConfigurations(context.Background(), orgID, 100)
 		require.Equal(t, int64(0), rowsAffacted)
 		require.NoError(t, err)
 
@@ -150,7 +150,7 @@ func TestIntegrationAlertManagerConfigCleanup(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		rowsAffacted, err := store.DeleteOldConfigurations(context.Background(), orgID, 1)
+		rowsAffacted, err := store.deleteOldConfigurations(context.Background(), orgID, 1)
 		require.Equal(t, int64(2), rowsAffacted)
 		require.NoError(t, err)
 
@@ -162,11 +162,11 @@ func TestIntegrationAlertManagerConfigCleanup(t *testing.T) {
 		require.Equal(t, "newest-record", req.Result.AlertmanagerConfiguration)
 	})
 	t.Run("limit set to 0 should fail", func(t *testing.T) {
-		_, err := store.DeleteOldConfigurations(context.Background(), 1, 0)
+		_, err := store.deleteOldConfigurations(context.Background(), 1, 0)
 		require.Error(t, err)
 	})
 	t.Run("limit set to negative should fail", func(t *testing.T) {
-		_, err := store.DeleteOldConfigurations(context.Background(), 1, -1)
+		_, err := store.deleteOldConfigurations(context.Background(), 1, -1)
 		require.Error(t, err)
 	})
 }

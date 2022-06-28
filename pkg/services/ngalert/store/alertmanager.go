@@ -19,6 +19,9 @@ var (
 	// ErrVersionLockedObjectNotFound is returned when an object is not
 	// found using the current hash.
 	ErrVersionLockedObjectNotFound = fmt.Errorf("could not find object using provided id and hash")
+	// ConfigRecordsLimit defines the limot of how many alertmanager configuration versions
+	// should be stored in the database for each organization.
+	ConfigRecordsLimit = 100
 )
 
 // GetLatestAlertmanagerConfiguration returns the lastest version of the alertmanager configuration.
@@ -78,7 +81,9 @@ func (st DBstore) SaveAlertmanagerConfigurationWithCallback(ctx context.Context,
 		if _, err := sess.Insert(config); err != nil {
 			return err
 		}
-
+		if _, err := st.deleteOldConfigurations(ctx, cmd.OrgID, 100); err != nil {
+			st.Logger.Warn("failed to delete old am configs", "org", cmd.OrgID, "err", err)
+		}
 		if err := callback(); err != nil {
 			return err
 		}
@@ -117,6 +122,9 @@ func (st *DBstore) UpdateAlertmanagerConfiguration(ctx context.Context, cmd *mod
 		}
 		if rows == 0 {
 			return ErrVersionLockedObjectNotFound
+		}
+		if _, err := st.deleteOldConfigurations(ctx, cmd.OrgID, 100); err != nil {
+			st.Logger.Warn("failed to delete old am configs", "org", cmd.OrgID, "err", err)
 		}
 		return err
 	})
@@ -197,7 +205,7 @@ func getInsertQuery(driver string) string {
 	}
 }
 
-func (st *DBstore) DeleteOldConfigurations(ctx context.Context, orgID, limit int64) (int64, error) {
+func (st *DBstore) deleteOldConfigurations(ctx context.Context, orgID, limit int64) (int64, error) {
 	if limit < 1 {
 		return 0, fmt.Errorf("failed to delete old configurations: limit is set to '%d' but needs to be > 0", limit)
 	}
