@@ -43,8 +43,6 @@
     "moment-timezone": "0.5.34",
     "ol": "6.15.1",
     "papaparse": "5.3.2",
-    "react": "17.0.2",
-    "react-dom": "17.0.2",
     "regenerator-runtime": "0.13.9",
     "rxjs": "7.5.6",
     "tslib": "2.4.0",
@@ -77,6 +75,8 @@
     "@types/tinycolor2": "1.4.3",
     "esbuild": "^0.14.47",
     "history": "4.10.1",
+    "react": "17.0.2",
+    "react-dom": "17.0.2",
     "react-test-renderer": "17.0.2",
     "rimraf": "3.0.2",
     "rollup": "2.77.2",
@@ -88,5 +88,9 @@
     "sinon": "14.0.0",
     "tinycolor2": "1.4.2",
     "typescript": "4.7.4"
+  },
+  "peerDependencies": {
+    "react": "17.0.2",
+    "react-dom": "17.0.2"
   }
 }
