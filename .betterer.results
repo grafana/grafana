@@ -9375,9 +9375,9 @@ exports[`better eslint`] = {
       [43, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
       [44, 9, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/loki/querybuilder/components/LokiQueryBuilder.tsx:1944597108": [
-      [34, 86, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [98, 22, 27, "Do not use any type assertions.", "2133479311"]
+    "public/app/plugins/datasource/loki/querybuilder/components/LokiQueryBuilder.tsx:2376559976": [
+      [33, 86, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [97, 22, 27, "Do not use any type assertions.", "2133479311"]
     ],
     "public/app/plugins/datasource/loki/querybuilder/components/LokiQueryBuilderContainer.test.tsx:3009382449": [
       [25, 16, 9, "Do not use any type assertions.", "3692209159"],
@@ -10378,8 +10378,8 @@ exports[`better eslint`] = {
       [193, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
       [194, 9, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryBuilder.tsx:4173778590": [
-      [106, 22, 27, "Do not use any type assertions.", "2133479311"]
+    "public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryBuilder.tsx:3149551043": [
+      [105, 22, 27, "Do not use any type assertions.", "2133479311"]
     ],
     "public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryBuilderContainer.test.tsx:3545369509": [
       [36, 27, 68, "Do not use any type assertions.", "1641181778"],
