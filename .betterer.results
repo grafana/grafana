@@ -4591,8 +4591,8 @@ exports[`better eslint`] = {
       [28, 4, 25, "Do not use any type assertions.", "2565039386"],
       [106, 22, 82, "Do not use any type assertions.", "713417051"]
     ],
-    "public/app/features/alerting/unified/utils/datasource.ts:3067316372": [
-      [132, 5, 69, "Do not use any type assertions.", "2540015575"]
+    "public/app/features/alerting/unified/utils/datasource.ts:2753515890": [
+      [133, 5, 69, "Do not use any type assertions.", "2540015575"]
     ],
     "public/app/features/alerting/unified/utils/misc.test.ts:962758579": [
       [19, 29, 3, "Unexpected any. Specify a different type.", "193409811"],
