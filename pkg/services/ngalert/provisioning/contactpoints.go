@@ -74,7 +74,8 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, orgID int6
 	return contactPoints, nil
 }
 
-// internal only
+// getContactPointDecrypted is an internal-only function that gets full contact point info, included encrypted fields.
+// nil is returned if no matching contact point exists.
 func (ecp *ContactPointService) getContactPointDecrypted(ctx context.Context, orgID int64, uid string) (apimodels.EmbeddedContactPoint, error) {
 	revision, err := getLastConfiguration(ctx, orgID, ecp.amStore)
 	if err != nil {
@@ -104,7 +105,7 @@ func (ecp *ContactPointService) getContactPointDecrypted(ctx context.Context, or
 		}
 		return embeddedContactPoint, nil
 	}
-	return apimodels.EmbeddedContactPoint{}, fmt.Errorf("contact point with uid '%s' not found", uid)
+	return apimodels.EmbeddedContactPoint{}, fmt.Errorf("%w: contact point with uid '%s' not found", ErrNotFound, uid)
 }
 
 func (ecp *ContactPointService) CreateContactPoint(ctx context.Context, orgID int64,
@@ -145,6 +146,15 @@ func (ecp *ContactPointService) CreateContactPoint(ctx context.Context, orgID in
 
 	receiverFound := false
 	for _, receiver := range revision.cfg.AlertmanagerConfig.Receivers {
+		// check if uid is already used in receiver
+		for _, rec := range receiver.PostableGrafanaReceivers.GrafanaManagedReceivers {
+			if grafanaReceiver.UID == rec.UID {
+				return apimodels.EmbeddedContactPoint{}, fmt.Errorf(
+					"receiver configuration with UID '%s' already exist in contact point '%s'. Please use unique identifiers for receivers across all contact points",
+					rec.UID,
+					rec.Name)
+			}
+		}
 		if receiver.Name == contactPoint.Name {
 			receiver.PostableGrafanaReceivers.GrafanaManagedReceivers = append(receiver.PostableGrafanaReceivers.GrafanaManagedReceivers, grafanaReceiver)
 			receiverFound = true

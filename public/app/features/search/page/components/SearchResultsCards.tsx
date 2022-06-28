@@ -41,15 +41,6 @@ export const SearchResultsCards = React.memo(
       }
     }, [response, listEl]);
 
-    const onToggleChecked = useCallback(
-      (item: DashboardSectionItem) => {
-        if (selectionToggle) {
-          selectionToggle('dashboard', item.uid!);
-        }
-      },
-      [selectionToggle]
-    );
-
     const RenderRow = useCallback(
       ({ index: rowIndex, style }) => {
         const meta = response.view.dataFrame.meta?.custom as SearchResultMeta;
@@ -92,13 +83,17 @@ export const SearchResultsCards = React.memo(
             <SearchItem
               item={v}
               onTagSelected={onTagSelected}
-              onToggleChecked={onToggleChecked as any}
+              onToggleChecked={(item) => {
+                if (selectionToggle) {
+                  selectionToggle('dashboard', item.uid!);
+                }
+              }}
               editable={Boolean(selection != null)}
             />
           </div>
         );
       },
-      [response.view, highlightIndex, styles, onTagSelected, selection, selectionToggle, onToggleChecked]
+      [response.view, highlightIndex, styles, onTagSelected, selection, selectionToggle]
     );
 
     if (!response.totalRows) {
