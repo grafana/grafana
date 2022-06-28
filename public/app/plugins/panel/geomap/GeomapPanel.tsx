@@ -10,6 +10,7 @@ import { Coordinate } from 'ol/coordinate';
 import { createEmpty, extend, isEmpty } from 'ol/extent';
 import { defaults as interactionDefaults } from 'ol/interaction';
 import MouseWheelZoom from 'ol/interaction/MouseWheelZoom';
+import { Group as LayerGroup } from 'ol/layer';
 import BaseLayer from 'ol/layer/Base';
 import VectorLayer from 'ol/layer/Vector';
 import { fromLonLat, toLonLat } from 'ol/proj';
@@ -592,8 +593,18 @@ export class GeomapPanel extends Component<Props, State> {
         } else if (v.id === MapCenterID.Fit) {
           var extent = layers
             .getArray()
-            .filter((l) => l instanceof VectorLayer)
-            .map((l) => (l as VectorLayer<any>).getSource().getExtent() ?? [])
+            .filter((l) => l instanceof VectorLayer || l instanceof LayerGroup)
+            .flatMap((l) => {
+              if (l instanceof LayerGroup) {
+                return l
+                  .getLayers()
+                  .getArray()
+                  .filter((l) => l instanceof VectorLayer)
+                  .map((l) => (l as VectorLayer<any>).getSource().getExtent() ?? []);
+              } else if (l instanceof VectorLayer) {
+                return l.getSource().getExtent() ?? [];
+              }
+            })
             .reduce(extend, createEmpty());
           if (!isEmpty(extent)) {
             view.fit(extent, {
