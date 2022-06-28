@@ -12,6 +12,7 @@ import { LibraryElementExport } from '../../dashboard/components/DashExportModal
 import { getLibraryPanel } from '../../library-panels/state/api';
 import { LibraryElementDTO, LibraryElementKind } from '../../library-panels/types';
 import { DashboardSearchHit } from '../../search/types';
+import { DeleteDashboardResponse } from '../types';
 
 import {
   clearDashboard,
@@ -309,7 +310,7 @@ export function getFolderById(id: number): Promise<{ id: number; title: string }
 
 export function deleteDashboard(uid: string, showSuccessAlert: boolean) {
   return lastValueFrom(
-    getBackendSrv().fetch({
+    getBackendSrv().fetch<DeleteDashboardResponse>({
       method: 'DELETE',
       url: `/api/dashboards/uid/${uid}`,
       showSuccessAlert: showSuccessAlert,

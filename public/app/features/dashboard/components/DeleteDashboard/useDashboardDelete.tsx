@@ -13,7 +13,7 @@ export const useDashboardDelete = (uid: string, cleanUpDashboardAndVariables: ()
     if (state.value) {
       cleanUpDashboardAndVariables();
       locationService.replace('/');
-      notifyApp.success('Dashboard Deleted', `${state.value.title} has been deleted`);
+      notifyApp.success('Dashboard Deleted', `${state.value.data.title} has been deleted`);
     }
   }, [state, notifyApp, cleanUpDashboardAndVariables]);
 
