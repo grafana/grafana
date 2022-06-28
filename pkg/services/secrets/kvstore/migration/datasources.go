@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
@@ -41,7 +40,7 @@ func ProvideDataSourceMigrationService(
 
 func (s *DataSourceSecretMigrationService) Run(ctx context.Context) error {
 	return s.sqlStore.InTransaction(ctx, func(ctx context.Context) error {
-		query := &models.GetDataSourcesQuery{}
+		query := &datasources.GetDataSourcesQuery{}
 		err := s.dataSourcesService.GetDataSources(ctx, query)
 		if err != nil {
 			return err
@@ -67,14 +66,14 @@ func (s *DataSourceSecretMigrationService) Run(ctx context.Context) error {
 				}
 
 				ds.JsonData.Set("secretMigrationComplete", true)
-				err = s.dataSourcesService.UpdateDataSource(ctx, &models.UpdateDataSourceCommand{Id: ds.Id, OrgId: ds.OrgId, Uid: ds.Uid, JsonData: ds.JsonData})
+				err = s.dataSourcesService.UpdateDataSource(ctx, &datasources.UpdateDataSourceCommand{Id: ds.Id, OrgId: ds.OrgId, Uid: ds.Uid, JsonData: ds.JsonData})
 				if err != nil {
 					return err
 				}
 			}
 
 			if s.features.IsEnabled(featuremgmt.FlagDisableSecretsCompatibility) && len(ds.SecureJsonData) > 0 {
-				err := s.dataSourcesService.DeleteDataSourceSecrets(ctx, &models.DeleteDataSourceSecretsCommand{UID: ds.Uid, OrgID: ds.OrgId, ID: ds.Id})
+				err := s.dataSourcesService.DeleteDataSourceSecrets(ctx, &datasources.DeleteDataSourceSecretsCommand{UID: ds.Uid, OrgID: ds.OrgId, ID: ds.Id})
 				if err != nil {
 					return err
 				}
