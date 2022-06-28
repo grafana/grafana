@@ -20,11 +20,6 @@ var (
 			State:       FeatureStateStable,
 		},
 		{
-			Name:        "serviceAccounts",
-			Description: "support service accounts",
-			State:       FeatureStateBeta,
-		},
-		{
 			Name:        "database_metrics",
 			Description: "Add prometheus metrics for database tables",
 			State:       FeatureStateStable,
@@ -181,11 +176,6 @@ var (
 		{
 			Name:        "commandPalette",
 			Description: "Enable command palette",
-			State:       FeatureStateAlpha,
-		},
-		{
-			Name:        "savedItems",
-			Description: "Enable Saved Items in the navbar.",
 			State:       FeatureStateAlpha,
 		},
 		{

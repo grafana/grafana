@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -556,9 +557,9 @@ func createDashboard(t *testing.T, id int64, orgId int64, uid string) *models.Da
 }
 
 // createDatasource creates a ddatasource for inserting into the test database.
-func createDatasource(t *testing.T, id int64, orgId int64, uid string) *models.DataSource {
+func createDatasource(t *testing.T, id int64, orgId int64, uid string) *datasources.DataSource {
 	t.Helper()
-	return &models.DataSource{
+	return &datasources.DataSource{
 		Id:      id,
 		OrgId:   orgId,
 		Uid:     uid,
@@ -613,7 +614,7 @@ func setupLegacyAlertsTables(t *testing.T, x *xorm.Engine, legacyChannels []*mod
 	require.NoError(t, errDashboards)
 
 	// Setup data_sources.
-	dataSources := []models.DataSource{
+	dataSources := []datasources.DataSource{
 		*createDatasource(t, 1, 1, "ds1-1"),
 		*createDatasource(t, 2, 1, "ds2-1"),
 		*createDatasource(t, 3, 2, "ds3-2"),
