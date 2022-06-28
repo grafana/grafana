@@ -100,7 +100,6 @@ func (s *DataSourceSecretMigrationService) Run(ctx context.Context) error {
 					return err
 				}
 			}
-
 		}
 		s.log.Debug("data source secret migration complete")
 		return nil
