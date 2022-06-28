@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/mattn/go-sqlite3"
 	"xorm.io/xorm"
 
@@ -18,6 +19,16 @@ var tsclogger = log.New("sqlstore.transactions")
 // WithTransactionalDbSession calls the callback with a session within a transaction.
 func (ss *SQLStore) WithTransactionalDbSession(ctx context.Context, callback DBTransactionFunc) error {
 	return inTransactionWithRetryCtx(ctx, ss.engine, ss.bus, callback, 0)
+}
+
+// // apparently dbsession = dbtransaction here
+// // we need to create connection then create transaction based on connection
+// func (ss *SQLStore) WithDbConn(ctx context.Context, callback DBTransactionFunc) error {
+
+// }
+
+func (ss *SQLStore) GetSQLXDB() *sqlx.DB {
+	return ss.sqlxDB
 }
 
 func (ss *SQLStore) InTransaction(ctx context.Context, fn func(ctx context.Context) error) error {

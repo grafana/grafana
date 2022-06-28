@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"xorm.io/xorm"
 
@@ -44,14 +45,17 @@ type SQLStore struct {
 	Cfg          *setting.Cfg
 	CacheService *localcache.CacheService
 
-	bus                         bus.Bus
-	dbCfg                       DatabaseConfig
+	bus   bus.Bus
+	dbCfg DatabaseConfig
+	// Inside of engine, there is core.DB, which is an implementation of sql.DB itself, if we share it with the other library,
+	// we can avoid concurrency of the DB access directly
 	engine                      *xorm.Engine
 	log                         log.Logger
 	Dialect                     migrator.Dialect
 	skipEnsureDefaultOrgAndUser bool
 	migrations                  registry.DatabaseMigrator
 	tracer                      tracing.Tracer
+	sqlxDB                      *sqlx.DB
 }
 
 func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, migrations registry.DatabaseMigrator, bus bus.Bus, tracer tracing.Tracer) (*SQLStore, error) {
@@ -348,6 +352,7 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 	if engine == nil {
 		var err error
 		engine, err = xorm.NewEngine(ss.dbCfg.Type, connectionString)
+		engine.DB()
 		if err != nil {
 			return err
 		}
@@ -369,6 +374,17 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 	}
 
 	ss.engine = engine
+
+	if ss.sqlxDB == nil {
+		sqlxDB := sqlx.NewDb(ss.engine.DB().DB, ss.dbCfg.Type)
+		if err != nil {
+			return err
+		}
+		ss.sqlxDB = sqlxDB
+	}
+	ss.sqlxDB.SetMaxOpenConns(ss.dbCfg.MaxOpenConn)
+	ss.sqlxDB.SetMaxIdleConns(ss.dbCfg.MaxIdleConn)
+	ss.sqlxDB.SetConnMaxLifetime(time.Second * time.Duration(ss.dbCfg.ConnMaxLifetime))
 	return nil
 }
 
