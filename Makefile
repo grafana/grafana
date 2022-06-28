@@ -137,18 +137,14 @@ test-go-integration: ## Run integration tests for backend with flags.
 	$(GO) test -run Integration -covermode=atomic -timeout=30m ./pkg/...
 
 .PHONY: test-go-integration-postgres
-test-go-integration-postgres: ## Run integration tests for postgres backend with flags.
+test-go-integration-postgres: devenv-postgres ## Run integration tests for postgres backend with flags.
 	@echo "test backend integration postgres tests"
-	make devenv sources=postgres_tests
-	GRAFANA_TEST_DB=postgres
-	$(GO) list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=30m {}'
+	GRAFANA_TEST_DB=postgres $(GO) list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=30m {}'
 
 .PHONY: test-go-integration-mysql
-test-go-integration-mysql: ## Run integration tests for mysql backend with flags.
+test-go-integration-mysql: devenv-mysql ## Run integration tests for mysql backend with flags.
 	@echo "test backend integration mysql tests"
-	make devenv sources=mysql_tests
-	GRAFANA_TEST_DB=mysql
-	$(GO) list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=30m {}'
+	GRAFANA_TEST_DB=mysql $(GO) list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=30m {}'
 
 test-js: ## Run tests for frontend.
 	@echo "test frontend"
@@ -204,6 +200,14 @@ devenv-down: ## Stop optional services.
 	@cd devenv; \
 	test -f docker-compose.yaml && \
 	docker-compose down || exit 0;
+
+devenv-postgres:
+	@cd devenv; \
+	sources=postgres
+
+devenv-mysql:
+	@cd devenv; \
+	sources=mysql
 
 ##@ Helpers
 
