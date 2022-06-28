@@ -8,10 +8,8 @@ import (
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 )
 
-// These are the api contracts. The API should match the underlying service and
-// store
+// These are the api contracts. The API should match the underlying service and store
 
-// DashboardProvisioningService is a service for operating on provisioned dashboards.
 //go:generate mockery --name Service --structname FakePublicDashboardService --inpackage --filename public_dashboard_service_mock.go
 type Service interface {
 	GetPublicDashboard(ctx context.Context, accessToken string) (*models.Dashboard, error)
@@ -20,8 +18,7 @@ type Service interface {
 	BuildPublicDashboardMetricRequest(ctx context.Context, dashboard *models.Dashboard, publicDashboard *PublicDashboard, panelId int64) (dtos.MetricRequest, error)
 }
 
-//go:generate mockery --name Store --structname FakePublicDashboardStore --inpackage --filename store_mock.go
-// Store is a dashboard store.
+//go:generate mockery --name Store --structname FakePublicDashboardStore --inpackage --filename public_dashboard_store_mock.go
 type Store interface {
 	GetPublicDashboard(ctx context.Context, accessToken string) (*PublicDashboard, *models.Dashboard, error)
 	GetPublicDashboardConfig(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error)
