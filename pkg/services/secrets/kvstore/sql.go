@@ -121,6 +121,8 @@ func (kv *secretsKVStoreSQL) Set(ctx context.Context, orgId int64, namespace str
 			if err != nil {
 				kv.log.Debug("error updating secret value", "orgId", orgId, "type", typ, "namespace", namespace, "err", err)
 			} else {
+				kv.decryptionCache.Lock()
+				defer kv.decryptionCache.Unlock()
 				kv.decryptionCache.cache[item.Id] = cachedDecrypted{
 					updated: item.Updated,
 					value:   value,
@@ -163,6 +165,8 @@ func (kv *secretsKVStoreSQL) Del(ctx context.Context, orgId int64, namespace str
 			if err != nil {
 				kv.log.Debug("error deleting secret value", "orgId", orgId, "type", typ, "namespace", namespace, "err", err)
 			} else {
+				kv.decryptionCache.Lock()
+				defer kv.decryptionCache.Unlock()
 				delete(kv.decryptionCache.cache, item.Id)
 				kv.log.Debug("secret value deleted", "orgId", orgId, "type", typ, "namespace", namespace)
 			}
@@ -212,13 +216,6 @@ func (kv *secretsKVStoreSQL) Rename(ctx context.Context, orgId int64, namespace 
 				kv.log.Debug("error updating secret namespace", "orgId", orgId, "type", typ, "namespace", namespace, "err", err)
 			} else {
 				kv.log.Debug("secret namespace updated", "orgId", orgId, "type", typ, "namespace", namespace)
-				if cache, ok := kv.decryptionCache.cache[item.Id]; ok {
-					kv.decryptionCache.cache[item.Id] = cachedDecrypted{
-						updated: item.Updated,
-						value:   cache.value,
-					}
-					delete(kv.decryptionCache.cache, item.Id)
-				}
 			}
 			return err
 		}
