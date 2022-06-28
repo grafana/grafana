@@ -76,6 +76,24 @@ func TestIntegrationApiKeyDataAccess(t *testing.T) {
 			assert.Equal(t, *query.Result.Expires, expected)
 		})
 
+		t.Run("Last Used At datetime update", func(t *testing.T) {
+			// expires in one hour
+			cmd := models.AddApiKeyCommand{OrgId: 1, Name: "last-update-at", Key: "asd3", SecondsToLive: 3600}
+			err := ss.AddAPIKey(context.Background(), &cmd)
+			require.NoError(t, err)
+
+			assert.Nil(t, cmd.Result.LastUsedAt)
+
+			err = ss.UpdateAPIKeyLastUsedDate(context.Background(), cmd.Result.Id)
+			require.NoError(t, err)
+
+			query := models.GetApiKeyByNameQuery{KeyName: "last-update-at", OrgId: 1}
+			err = ss.GetApiKeyByName(context.Background(), &query)
+			assert.Nil(t, err)
+
+			assert.NotNil(t, query.Result.LastUsedAt)
+		})
+
 		t.Run("Add a key with negative lifespan", func(t *testing.T) {
 			// expires in one day
 			cmd := models.AddApiKeyCommand{OrgId: 1, Name: "key-with-negative-lifespan", Key: "asd3", SecondsToLive: -3600}
