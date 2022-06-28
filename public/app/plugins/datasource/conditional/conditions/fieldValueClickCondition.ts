@@ -1,6 +1,4 @@
-import { capitalize } from 'lodash';
-
-import { QueryConditionInfo, QueryConditionID, QueryConditionType } from '@grafana/data';
+import { QueryConditionInfo, QueryConditionID, QueryConditionType, toPascalCase } from '@grafana/data';
 import { KeyValueVariableModel } from 'app/features/variables/types';
 
 import { FieldValueClickConditionEditor, ValueClickConditionOptions } from './FieldValueClickConditionEditor';
@@ -12,17 +10,20 @@ export const fieldValueClickCondition: QueryConditionInfo<ValueClickConditionOpt
   type: QueryConditionType.Field,
   name: 'Field value click',
   description: 'When a value is clicked',
-  defaultOptions: {} as ValueClickConditionOptions,
   variablePrefix: FIELD_VALUE_CLICK_VARIABLE_PREFIX,
   execute: (options, context) => {
     const drilldownTplVars = context.variables.filter(
       (arg) =>
+        // disabling because we know only keyValue variables are passed to this function
+        // eslint-disable-next-line
         (arg as KeyValueVariableModel).id.includes('valueClick') && (arg as KeyValueVariableModel).current.value !== ''
     );
 
     return (
       drilldownTplVars.filter((arg) => {
-        const result = (arg as KeyValueVariableModel).name.replace('valueClick', '').match(capitalize(options.name));
+        // disabling because we know only keyValue variables are passed to this function
+        // eslint-disable-next-line
+        const result = (arg as KeyValueVariableModel).name.replace('valueClick', '').match(toPascalCase(options.name));
 
         return result;
       }).length !== 0
@@ -30,6 +31,6 @@ export const fieldValueClickCondition: QueryConditionInfo<ValueClickConditionOpt
   },
   editor: FieldValueClickConditionEditor,
   getVariableName: (options: ValueClickConditionOptions) => {
-    return `${FIELD_VALUE_CLICK_VARIABLE_PREFIX}${capitalize(options.name)}`;
+    return `${FIELD_VALUE_CLICK_VARIABLE_PREFIX}${toPascalCase(options.name)}`;
   },
 };

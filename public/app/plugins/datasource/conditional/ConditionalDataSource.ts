@@ -60,14 +60,13 @@ export class ConditionalDataSource extends MixedDatasource<ConditionalDataSource
     }
   }
 
-  query(request: DataQueryRequest<ConditionalDataSourceQuery>): Observable<DataQueryResponse> {
+  getRunnableQueries(
+    targets: ConditionalDataSourceQuery[],
+    context: QueryConditionExecutionContext
+  ): ConditionalDataSourceQuery[] {
     const queryScores: Array<number | null> = [];
-    const context: QueryConditionExecutionContext = {
-      timeRange: request.range,
-      variables: getTemplateSrv().getVariables(),
-    };
 
-    const queries = (request.targets as ConditionalDataSourceQuery[]).filter((q) => {
+    const queries = targets.filter((q) => {
       const result = this.filterQueries(q, context);
       if (result.applicable) {
         queryScores.push(result.score);
@@ -100,8 +99,24 @@ export class ConditionalDataSource extends MixedDatasource<ConditionalDataSource
         })
         .filter((q) => q !== undefined);
 
+      // disabling because we know queries passed to this datasource are conditional...
+      // eslint-disable-next-line
       runnableQueries = findQueryWithHighestNumberOfConditions(runnableQueries as ConditionalDataSourceQuery[]);
     }
+
+    return runnableQueries;
+  }
+  query(request: DataQueryRequest<ConditionalDataSourceQuery>): Observable<DataQueryResponse> {
+    const context: QueryConditionExecutionContext = {
+      timeRange: request.range,
+      variables: getTemplateSrv()
+        .getVariables()
+        .filter((v) => v.type === 'keyValue'),
+    };
+
+    // disabling because we know queries passed to this datasource are conditional...
+    // eslint-disable-next-line
+    const runnableQueries = this.getRunnableQueries(request.targets as ConditionalDataSourceQuery[], context);
 
     return super.query({ ...request, targets: runnableQueries });
   }

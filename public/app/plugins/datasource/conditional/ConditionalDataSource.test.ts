@@ -1,145 +1,446 @@
-// import { lastValueFrom } from 'rxjs';
-// import { getQueryOptions } from 'test/helpers/getQueryOptions';
-// import { DatasourceSrvMock, MockObservableDataSourceApi } from 'test/mocks/datasource_srv';
+import { dateTime, QueryConditionExecutionContext, QueryConditionID } from '@grafana/data';
+import { KeyValueVariableModel } from 'app/features/variables/types';
+import { ConditionalDataSource, ConditionalDataSourceQuery } from './ConditionalDataSource';
+import { ValueClickConditionOptions } from './conditions/FieldValueClickConditionEditor';
+import { OPERATOR_ID, TimeRangeIntervalConditionOptions } from './conditions/TimeRangeIntervalConditionEditor';
+import { getQueryConditionItems, queryConditionsRegistry } from './QueryConditionsRegistry';
 
-// import { LoadingState } from '@grafana/data';
+describe('ConditionalDatasource', () => {
+  // eslint-disable-next-line
+  const ds = new ConditionalDataSource({} as any);
 
-// import { MIXED_DATASOURCE_NAME } from './ConditionalDataSource';
-// import { MixedDatasource } from './module';
+  beforeAll(() => {
+    queryConditionsRegistry.setInit(getQueryConditionItems);
+  });
 
-// const defaultDS = new MockObservableDataSourceApi('DefaultDS', [{ data: ['DDD'] }]);
-// const datasourceSrv = new DatasourceSrvMock(defaultDS, {
-//   '-- Mixed --': new MockObservableDataSourceApi('mixed'),
-//   A: new MockObservableDataSourceApi('DSA', [{ data: ['AAAA'] }]),
-//   B: new MockObservableDataSourceApi('DSB', [{ data: ['BBBB'] }]),
-//   C: new MockObservableDataSourceApi('DSC', [{ data: ['CCCC'] }]),
-//   D: new MockObservableDataSourceApi('DSD', [{ data: [] }], {}, 'syntax error near FROM'),
-//   E: new MockObservableDataSourceApi('DSE', [{ data: [] }], {}, 'syntax error near WHERE'),
-//   Loki: new MockObservableDataSourceApi('Loki', [
-//     { data: ['A'], key: 'A' },
-//     { data: ['B'], key: 'B' },
-//   ]),
-// });
+  describe('Filtering runnable queries', () => {
+    it('does not filter out query without conditions ', () => {
+      const timeRangeMock = {
+        from: dateTime('2022-01-01'),
+        to: dateTime('2022-01-15'),
+        raw: {
+          from: '2001-01-01',
+          to: '2001-01-15',
+        },
+      };
 
-// const getDataSourceSrvMock = jest.fn().mockReturnValue(datasourceSrv);
-// jest.mock('@grafana/runtime', () => ({
-//   ...(jest.requireActual('@grafana/runtime') as unknown as object),
-//   getDataSourceSrv: () => getDataSourceSrvMock(),
-// }));
+      const ctx: QueryConditionExecutionContext = {
+        timeRange: timeRangeMock,
+        variables: [],
+      };
 
-// describe('MixedDatasource', () => {
-//   describe('with no errors', () => {
-//     it('direct query should return results', async () => {
-//       const ds = new MixedDatasource({} as any);
-//       const requestMixed = getQueryOptions({
-//         targets: [
-//           { refId: 'QA', datasource: { uid: 'A' } }, // 1
-//           { refId: 'QB', datasource: { uid: 'B' } }, // 2
-//           { refId: 'QC', datasource: { uid: 'C' } }, // 3
-//         ],
-//       });
+      const result = ds.filterQueries(
+        {
+          refId: 'A',
+          datasource: { type: 'testdata', uid: 'testdata' },
+          conditions: [],
+        },
+        ctx
+      );
 
-//       await expect(ds.query(requestMixed)).toEmitValuesWith((results) => {
-//         expect(results.length).toBe(3);
-//         expect(results[0].data).toEqual(['AAAA']);
-//         expect(results[0].state).toEqual(LoadingState.Loading);
-//         expect(results[1].data).toEqual(['BBBB']);
-//         expect(results[2].data).toEqual(['CCCC']);
-//         expect(results[2].state).toEqual(LoadingState.Done);
-//       });
-//     });
-//   });
+      expect(result).toMatchInlineSnapshot(`
+        Object {
+          "applicable": true,
+          "score": 0,
+        }
+      `);
+    });
 
-//   describe('with errors', () => {
-//     it('direct query should return results', async () => {
-//       const ds = new MixedDatasource({} as any);
-//       const requestMixed = getQueryOptions({
-//         targets: [
-//           { refId: 'QA', datasource: { uid: 'A' } }, // 1
-//           { refId: 'QD', datasource: { uid: 'D' } }, // 2
-//           { refId: 'QB', datasource: { uid: 'B' } }, // 3
-//           { refId: 'QE', datasource: { uid: 'E' } }, // 4
-//           { refId: 'QC', datasource: { uid: 'C' } }, // 5
-//         ],
-//       });
+    it('filter out queries that have conditions not met', () => {
+      // eslint-disable-next-line
+      const ds = new ConditionalDataSource({} as any);
 
-//       await expect(ds.query(requestMixed)).toEmitValuesWith((results) => {
-//         expect(results[0].data).toEqual(['AAAA']);
-//         expect(results[0].state).toEqual(LoadingState.Loading);
-//         expect(results[1].data).toEqual([]);
-//         expect(results[1].state).toEqual(LoadingState.Error);
-//         expect(results[1].error).toEqual({ message: 'DSD: syntax error near FROM' });
-//         expect(results[2].data).toEqual(['BBBB']);
-//         expect(results[2].state).toEqual(LoadingState.Loading);
-//         expect(results[3].data).toEqual([]);
-//         expect(results[3].state).toEqual(LoadingState.Error);
-//         expect(results[3].error).toEqual({ message: 'DSE: syntax error near WHERE' });
-//         expect(results[4].data).toEqual(['CCCC']);
-//         expect(results[4].state).toEqual(LoadingState.Loading);
-//         expect(results[5].data).toEqual([]);
-//         expect(results[5].state).toEqual(LoadingState.Error);
-//         expect(results[5].error).toEqual({ message: 'DSD: syntax error near FROM' });
-//       });
-//     });
-//   });
+      const notOkCondition: ValueClickConditionOptions = {
+        name: 'willNotPass',
+        pattern: 'anything',
+      };
 
-//   it('should return both query results from the same data source', async () => {
-//     const ds = new MixedDatasource({} as any);
-//     const request: any = {
-//       targets: [
-//         { refId: 'A', datasource: { uid: 'Loki' } },
-//         { refId: 'B', datasource: { uid: 'Loki' } },
-//         { refId: 'C', datasource: { uid: 'A' } },
-//       ],
-//     };
+      const timeRangeMock = {
+        from: dateTime('2022-01-01'),
+        to: dateTime('2022-01-15'),
+        raw: {
+          from: '2001-01-01',
+          to: '2001-01-15',
+        },
+      };
 
-//     await expect(ds.query(request)).toEmitValuesWith((results) => {
-//       expect(results).toHaveLength(3);
-//       expect(results[0].key).toBe('mixed-0-A');
-//       expect(results[1].key).toBe('mixed-0-B');
-//       expect(results[1].state).toBe(LoadingState.Loading);
-//       expect(results[2].key).toBe('mixed-1-');
-//       expect(results[2].state).toBe(LoadingState.Done);
-//     });
-//   });
+      const ctx: QueryConditionExecutionContext = {
+        timeRange: timeRangeMock,
+        variables: [
+          {
+            id: 'valueClickFieldInclude',
+            name: 'valueClickFieldInclude',
+            type: 'keyValue',
+            current: { value: 'includeValue' },
+          } as KeyValueVariableModel,
+        ],
+      };
 
-//   it('should not return the error for the second time', async () => {
-//     const ds = new MixedDatasource({} as any);
-//     const request: any = {
-//       targets: [
-//         { refId: 'A', datasource: 'Loki' },
-//         { refId: 'DD', datasource: 'D' },
-//         { refId: 'C', datasource: 'A' },
-//       ],
-//     };
+      const result1 = ds.filterQueries(
+        {
+          refId: 'A',
+          datasource: { type: 'testdata', uid: 'testdata' },
+          conditions: [
+            {
+              id: QueryConditionID.ValueClick,
+              options: notOkCondition,
+            },
+          ],
+        },
+        ctx
+      );
 
-//     await lastValueFrom(ds.query(request));
+      expect(result1).toMatchInlineSnapshot(`
+        Object {
+          "applicable": false,
+          "score": 1,
+        }
+      `);
+    });
+  });
 
-//     await expect(
-//       ds.query({
-//         targets: [
-//           { refId: 'QA', datasource: { uid: 'A' } },
-//           { refId: 'QB', datasource: { uid: 'B' } },
-//         ],
-//       } as any)
-//     ).toEmitValuesWith((results) => {
-//       expect(results).toHaveLength(2);
-//       expect(results[0].key).toBe('mixed-0-');
-//       expect(results[1].key).toBe('mixed-1-');
-//       expect(results[1].state).toBe(LoadingState.Done);
-//     });
-//   });
+  describe('Selecting queries for execution', () => {
+    describe('default query', () => {
+      it('returns no query when there is no default query defined', () => {
+        const targets: Array<ConditionalDataSourceQuery> = [
+          {
+            refId: 'A',
+            conditions: [
+              {
+                id: QueryConditionID.ValueClick,
+                options: { name: 'conditionName', pattern: 'conditionPattern' } as ValueClickConditionOptions,
+              },
+            ],
+          },
+        ];
 
-//   it('should filter out MixedDataSource queries', async () => {
-//     const ds = new MixedDatasource({} as any);
+        const ctx: QueryConditionExecutionContext = {
+          // eslint-disable-next-line
+          timeRange: {} as any,
+          variables: [],
+        };
 
-//     await expect(
-//       ds.query({
-//         targets: [{ refId: 'A', datasource: { uid: MIXED_DATASOURCE_NAME, id: 'datasource' } }],
-//       } as any)
-//     ).toEmitValuesWith((results) => {
-//       expect(results).toHaveLength(1);
-//       expect(results[0].data).toHaveLength(0);
-//     });
-//   });
-// });
+        const result = ds.getRunnableQueries(targets, ctx);
+        expect(result).toHaveLength(0);
+      });
+      it('runs query without conditions when no conditions are met for other queries', () => {
+        const targets: Array<ConditionalDataSourceQuery> = [
+          // default query
+          {
+            refId: 'A',
+            conditions: [],
+          },
+          {
+            refId: 'B',
+            conditions: [
+              {
+                id: QueryConditionID.ValueClick,
+                options: { name: 'conditionName', pattern: 'conditionPattern' } as ValueClickConditionOptions,
+              },
+            ],
+          },
+        ];
+
+        const ctx: QueryConditionExecutionContext = {
+          //eslint-disable-next-line
+          timeRange: {} as any,
+          variables: [],
+        };
+
+        const result = ds.getRunnableQueries(targets, ctx);
+        expect(result).toHaveLength(1);
+        expect(result[0]).toEqual(targets[0]);
+      });
+      it('runs multiple queries without conditions when no conditions are met for other queries', () => {
+        const targets: Array<ConditionalDataSourceQuery> = [
+          // default query
+          {
+            refId: 'A',
+            conditions: [],
+          },
+          {
+            refId: 'B',
+            conditions: [
+              {
+                id: QueryConditionID.ValueClick,
+                options: { name: 'conditionName', pattern: 'conditionPattern' } as ValueClickConditionOptions,
+              },
+            ],
+          },
+          {
+            refId: 'C',
+            conditions: [],
+          },
+        ];
+
+        const ctx: QueryConditionExecutionContext = {
+          // eslint-disable-next-line
+          timeRange: {} as any,
+          variables: [],
+        };
+
+        const result = ds.getRunnableQueries(targets, ctx);
+        expect(result).toHaveLength(2);
+        expect(result[0]).toEqual(targets[0]);
+        expect(result[1]).toEqual(targets[2]);
+      });
+    });
+  });
+
+  it('runs query that has conditions met', () => {
+    const targets: Array<ConditionalDataSourceQuery> = [
+      // default query
+      {
+        refId: 'A',
+        conditions: [],
+      },
+      {
+        refId: 'B',
+        conditions: [
+          {
+            id: QueryConditionID.ValueClick,
+            options: { name: 'conditionName', pattern: 'conditionPattern' } as ValueClickConditionOptions,
+          },
+        ],
+      },
+      {
+        refId: 'C',
+        conditions: [
+          {
+            id: QueryConditionID.TimeRangeInterval,
+            options: { operator: OPERATOR_ID.LessThan, interval: '1M' } as TimeRangeIntervalConditionOptions,
+          },
+        ],
+      },
+      {
+        refId: 'D',
+        conditions: [
+          {
+            id: QueryConditionID.TimeRangeInterval,
+            options: { operator: OPERATOR_ID.GreaterThan, interval: '14d' } as TimeRangeIntervalConditionOptions,
+          },
+        ],
+      },
+    ];
+
+    const timeRangeMock = {
+      from: dateTime('2022-01-01'),
+      to: dateTime('2022-01-15'),
+      raw: {
+        from: '2022-01-01',
+        to: '2022-01-15',
+      },
+    };
+
+    const ctx: QueryConditionExecutionContext = {
+      timeRange: timeRangeMock,
+      variables: [
+        {
+          id: 'valueClickConditionName',
+          name: 'valueClickConditionName',
+          current: { value: 'blah' },
+        } as KeyValueVariableModel,
+      ],
+    };
+
+    const result = ds.getRunnableQueries(targets, ctx);
+    expect(result).toHaveLength(2);
+    expect(result[0]).toEqual(targets[1]);
+    expect(result[1]).toEqual(targets[2]);
+  });
+
+  describe('when multiple conditions met', () => {
+    it('runs query that has the largest number of conditions met', () => {
+      const targets: Array<ConditionalDataSourceQuery> = [
+        // default query
+        {
+          refId: 'A',
+          conditions: [],
+        },
+        {
+          refId: 'B',
+          conditions: [
+            {
+              id: QueryConditionID.ValueClick,
+              options: { name: 'conditionName', pattern: 'conditionPattern' } as ValueClickConditionOptions,
+            },
+          ],
+        },
+        {
+          refId: 'C',
+          conditions: [
+            {
+              id: QueryConditionID.ValueClick,
+              options: { name: 'conditionName', pattern: 'conditionPattern' } as ValueClickConditionOptions,
+            },
+            {
+              id: QueryConditionID.ValueClick,
+              options: { name: 'conditionName1', pattern: 'conditionPattern1' } as ValueClickConditionOptions,
+            },
+          ],
+        },
+      ];
+
+      const ctx: QueryConditionExecutionContext = {
+        // eslint-disable-next-line
+        timeRange: {} as any,
+        variables: [
+          {
+            id: 'valueClickConditionName',
+            name: 'valueClickConditionName',
+            current: { value: 'blah' },
+          } as KeyValueVariableModel,
+          {
+            id: 'valueClickConditionName1',
+            name: 'valueClickConditionName1',
+            current: { value: 'blah1' },
+          } as KeyValueVariableModel,
+        ],
+      };
+
+      const result = ds.getRunnableQueries(targets, ctx);
+      // We expect query C to be returned as it has the largest number of conditions met
+      expect(result).toHaveLength(1);
+      expect(result[0]).toEqual(targets[2]);
+    });
+
+    it('runs query that has the largest number of conditions met no matter the condition type', () => {
+      const targets: Array<ConditionalDataSourceQuery> = [
+        // default query
+        {
+          refId: 'A',
+          conditions: [],
+        },
+        {
+          refId: 'B',
+          conditions: [
+            {
+              id: QueryConditionID.ValueClick,
+              options: { name: 'conditionName', pattern: 'conditionPattern' } as ValueClickConditionOptions,
+            },
+          ],
+        },
+        {
+          refId: 'C',
+          conditions: [
+            {
+              id: QueryConditionID.ValueClick,
+              options: { name: 'conditionName', pattern: 'conditionPattern' } as ValueClickConditionOptions,
+            },
+            {
+              id: QueryConditionID.TimeRangeInterval,
+              options: { operator: OPERATOR_ID.LessThan, interval: '1M' } as TimeRangeIntervalConditionOptions,
+            },
+          ],
+        },
+      ];
+
+      const timeRangeMock = {
+        from: dateTime('2022-01-01'),
+        to: dateTime('2022-01-15'),
+        raw: {
+          from: '2022-01-01',
+          to: '2022-01-15',
+        },
+      };
+
+      const ctx: QueryConditionExecutionContext = {
+        timeRange: timeRangeMock,
+        variables: [
+          {
+            id: 'valueClickConditionName',
+            name: 'valueClickConditionName',
+            current: { value: 'blah' },
+          } as KeyValueVariableModel,
+          {
+            id: 'valueClickConditionName1',
+            name: 'valueClickConditionName1',
+            current: { value: 'blah1' },
+          } as KeyValueVariableModel,
+        ],
+      };
+
+      const result = ds.getRunnableQueries(targets, ctx);
+      // We expect query C to be returned as it has the largest number of conditions met
+      expect(result).toHaveLength(1);
+      expect(result[0]).toEqual(targets[2]);
+    });
+
+    it('can return multiple queries when multiple independent conditions are met', () => {
+      const targets: Array<ConditionalDataSourceQuery> = [
+        // default query
+        {
+          refId: 'A',
+          conditions: [],
+        },
+        {
+          refId: 'B',
+          conditions: [
+            {
+              id: QueryConditionID.ValueClick,
+              options: { name: 'conditionName', pattern: 'conditionPattern' } as ValueClickConditionOptions,
+            },
+          ],
+        },
+        {
+          refId: 'C',
+          conditions: [
+            {
+              id: QueryConditionID.ValueClick,
+              options: { name: 'conditionName', pattern: 'conditionPattern' } as ValueClickConditionOptions,
+            },
+            {
+              id: QueryConditionID.TimeRangeInterval,
+              options: { operator: OPERATOR_ID.LessThan, interval: '1M' } as TimeRangeIntervalConditionOptions,
+            },
+          ],
+        },
+        {
+          refId: 'D',
+          conditions: [
+            {
+              id: QueryConditionID.ValueClick,
+              options: { name: 'conditionName', pattern: 'conditionPattern' } as ValueClickConditionOptions,
+            },
+            {
+              id: QueryConditionID.ValueClick,
+              options: { name: 'conditionName1', pattern: 'conditionPattern1' } as ValueClickConditionOptions,
+            },
+          ],
+        },
+      ];
+
+      const timeRangeMock = {
+        from: dateTime('2022-01-01'),
+        to: dateTime('2022-01-15'),
+        raw: {
+          from: '2022-01-01',
+          to: '2022-01-15',
+        },
+      };
+
+      const ctx: QueryConditionExecutionContext = {
+        timeRange: timeRangeMock,
+        variables: [
+          {
+            id: 'valueClickConditionName',
+            name: 'valueClickConditionName',
+            current: { value: 'blah' },
+          } as KeyValueVariableModel,
+          {
+            id: 'valueClickConditionName1',
+            name: 'valueClickConditionName1',
+            current: { value: 'blah1' },
+          } as KeyValueVariableModel,
+        ],
+      };
+
+      const result = ds.getRunnableQueries(targets, ctx);
+
+      // We expect both query C & D to be returned as they both end up having the same number of conditions met, even though the conditions are indpeendent
+      expect(result).toHaveLength(2);
+      expect(result[0]).toEqual(targets[2]);
+      expect(result[1]).toEqual(targets[3]);
+    });
+  });
+});
