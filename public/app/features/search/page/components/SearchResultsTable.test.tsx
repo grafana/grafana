@@ -2,7 +2,15 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { Subject } from 'rxjs';
 
-import { ArrayVector, DataFrame, DataFrameView, FieldType } from '@grafana/data';
+import {
+  applyFieldOverrides,
+  ArrayVector,
+  createTheme,
+  DataFrame,
+  DataFrameView,
+  FieldType,
+  toDataFrame,
+} from '@grafana/data';
 
 import { DashboardQueryResult, getGrafanaSearcher, QueryResponse } from '../../service';
 import { DashboardSearchItemType } from '../../types';
@@ -17,25 +25,36 @@ describe('SearchResultsTable', () => {
   const mockKeyboardEvents = new Subject<React.KeyboardEvent>();
 
   describe('when there is data', () => {
-    const searchData: DataFrame = {
+    const searchData = toDataFrame({
+      name: 'A',
       fields: [
-        { name: 'kind', type: FieldType.string, config: {}, values: new ArrayVector([DashboardSearchItemType.DashDB]) },
-        { name: 'uid', type: FieldType.string, config: {}, values: new ArrayVector(['my-dashboard-1']) },
-        { name: 'name', type: FieldType.string, config: {}, values: new ArrayVector(['My dashboard 1']) },
-        { name: 'panel_type', type: FieldType.string, config: {}, values: new ArrayVector(['']) },
-        { name: 'url', type: FieldType.string, config: {}, values: new ArrayVector(['/my-dashboard-1']) },
-        { name: 'tags', type: FieldType.other, config: {}, values: new ArrayVector([['foo', 'bar']]) },
-        { name: 'ds_uid', type: FieldType.other, config: {}, values: new ArrayVector(['']) },
-        { name: 'location', type: FieldType.string, config: {}, values: new ArrayVector(['/my-dashboard-1']) },
+        { name: 'kind', type: FieldType.string, config: {}, values: [DashboardSearchItemType.DashDB] },
+        { name: 'uid', type: FieldType.string, config: {}, values: ['my-dashboard-1'] },
+        { name: 'name', type: FieldType.string, config: {}, values: ['My dashboard 1'] },
+        { name: 'panel_type', type: FieldType.string, config: {}, values: [''] },
+        { name: 'url', type: FieldType.string, config: {}, values: ['/my-dashboard-1'] },
+        { name: 'tags', type: FieldType.other, config: {}, values: [['foo', 'bar']] },
+        { name: 'ds_uid', type: FieldType.other, config: {}, values: [''] },
+        { name: 'location', type: FieldType.string, config: {}, values: ['/my-dashboard-1'] },
       ],
-      length: 1,
-    };
+    });
+    const dataFrames = applyFieldOverrides({
+      data: [searchData],
+      fieldConfig: {
+        defaults: {},
+        overrides: [],
+      },
+      replaceVariables: (value, vars, format) => {
+        return vars && value === '${__value.text}' ? vars['__value'].value.text : value;
+      },
+      theme: createTheme(),
+    });
 
     const mockSearchResult: QueryResponse = {
       isItemLoaded: jest.fn(),
       loadMoreItems: jest.fn(),
       totalRows: searchData.length,
-      view: new DataFrameView<DashboardQueryResult>(searchData),
+      view: new DataFrameView<DashboardQueryResult>(dataFrames[0]),
     };
 
     beforeAll(() => {
@@ -76,9 +95,7 @@ describe('SearchResultsTable', () => {
       expect(screen.getByRole('columnheader', { name: 'Tags' })).toBeInTheDocument();
     });
 
-    // TODO enable this test
-    // i cannot for the life of me figure out why it won't render anything in the table
-    it.skip('displays the data correctly in the table', () => {
+    it('displays the data correctly in the table', () => {
       render(
         <SearchResultsTable
           keyboardEvents={mockKeyboardEvents}
@@ -93,6 +110,7 @@ describe('SearchResultsTable', () => {
       );
 
       const rows = screen.getAllByRole('row');
+
       expect(rows).toHaveLength(2);
       expect(screen.getByText('My dashboard 1')).toBeInTheDocument();
       expect(screen.getByText('foo')).toBeInTheDocument();
