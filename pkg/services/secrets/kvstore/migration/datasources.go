@@ -58,7 +58,9 @@ func (s *DataSourceSecretMigrationService) WaitForProvisioning() error {
 }
 
 func (s *DataSourceSecretMigrationService) Run(ctx context.Context) error {
-	s.WaitForProvisioning()
+	if err := s.WaitForProvisioning(); err != nil {
+		return err
+	}
 	return s.sqlStore.InTransaction(ctx, func(ctx context.Context) error {
 		query := &datasources.GetDataSourcesQuery{}
 		err := s.dataSourcesService.GetDataSources(ctx, query)
