@@ -19,8 +19,9 @@ var (
 	// ErrVersionLockedObjectNotFound is returned when an object is not
 	// found using the current hash.
 	ErrVersionLockedObjectNotFound = fmt.Errorf("could not find object using provided id and hash")
-	// ConfigRecordsLimit defines the limot of how many alertmanager configuration versions
-	// should be stored in the database for each organization.
+	// ConfigRecordsLimit defines the limit of how many alertmanager configuration versions
+	// should be stored in the database for each organization including the current one.
+	// Has to be > 0
 	ConfigRecordsLimit = 100
 )
 
