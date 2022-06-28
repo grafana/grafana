@@ -18,12 +18,12 @@ type Props = {
 export function PluginUsage({ plugin }: Props) {
   const styles = useStyles2(getStyles);
 
-  const searchQuery = useMemo(() => {
+  const searchQuery = useMemo<SearchQuery>(() => {
     return {
       query: '*',
       panel_type: plugin.id,
       kind: ['panel'],
-    } as SearchQuery;
+    };
   }, [plugin]);
 
   const results = useAsync(() => {
