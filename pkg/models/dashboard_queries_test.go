@@ -84,7 +84,7 @@ func TestGetQueriesFromDashboard(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(`{"panels": {}}`))
 		require.NoError(t, err)
 
-		queries := GetQueriesFromDashboard(json)
+		queries := GroupQueriesByPanelId(json)
 		require.Len(t, queries, 0)
 	})
 
@@ -92,7 +92,7 @@ func TestGetQueriesFromDashboard(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(dashboardWithNoQueries))
 		require.NoError(t, err)
 
-		queries := GetQueriesFromDashboard(json)
+		queries := GroupQueriesByPanelId(json)
 		require.Len(t, queries, 1)
 		require.Contains(t, queries, int64(2))
 		require.Len(t, queries[2], 0)
@@ -102,7 +102,7 @@ func TestGetQueriesFromDashboard(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(dashboardWithQueries))
 		require.NoError(t, err)
 
-		queries := GetQueriesFromDashboard(json)
+		queries := GroupQueriesByPanelId(json)
 		require.Len(t, queries, 1)
 		require.Contains(t, queries, int64(2))
 		require.Len(t, queries[2], 2)
@@ -138,7 +138,7 @@ func TestGetQueriesFromDashboard(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(oldStyleDashboard))
 		require.NoError(t, err)
 
-		queries := GetQueriesFromDashboard(json)
+		queries := GroupQueriesByPanelId(json)
 		require.Len(t, queries, 1)
 		require.Contains(t, queries, int64(2))
 		require.Len(t, queries[2], 1)

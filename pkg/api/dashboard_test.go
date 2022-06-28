@@ -986,7 +986,7 @@ func (hs *HTTPServer) callGetDashboardVersions(sc *scenarioContext) {
 
 func (hs *HTTPServer) callDeleteDashboardByUID(t *testing.T,
 	sc *scenarioContext, mockDashboard *dashboards.FakeDashboardService) {
-	hs.dashboardService = mockDashboard
+	hs.DashboardService = mockDashboard
 	sc.handlerFunc = hs.DeleteDashboardByUID
 	sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 }

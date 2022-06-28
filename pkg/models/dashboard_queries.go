@@ -4,7 +4,18 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
-func GetQueriesFromDashboard(dashboard *simplejson.Json) map[int64][]*simplejson.Json {
+func GetAllDashboardDatasourceUids(dashboard *simplejson.Json) []string {
+	var datasourceUids []string
+
+	for _, panelObj := range dashboard.Get("panels").MustArray() {
+		panel := simplejson.NewFromAny(panelObj)
+		datasourceUids = append(datasourceUids, panel.Get("datasource").Get("uid").MustString())
+	}
+
+	return datasourceUids
+}
+
+func GroupQueriesByPanelId(dashboard *simplejson.Json) map[int64][]*simplejson.Json {
 	result := make(map[int64][]*simplejson.Json)
 
 	for _, panelObj := range dashboard.Get("panels").MustArray() {
