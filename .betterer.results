@@ -2219,9 +2219,11 @@ exports[`better eslint`] = {
       [56, 22, 24, "Do not use any type assertions.", "4121028738"],
       [56, 43, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "packages/grafana-ui/src/components/TimeSeries/utils.ts:1695012447": [
-      [33, 29, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [135, 19, 146, "Do not use any type assertions.", "3723122882"]
+    "packages/grafana-ui/src/components/TimeSeries/utils.ts:1896295166": [
+      [34, 29, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [136, 19, 146, "Do not use any type assertions.", "3723122882"],
+      [308, 12, 73, "Do not use any type assertions.", "587500217"],
+      [311, 17, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "packages/grafana-ui/src/components/ToolbarButton/ToolbarButton.story.tsx:1133352709": [
       [10, 15, 780, "Do not use any type assertions.", "3533394757"]
@@ -2329,13 +2331,13 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/uPlot/types.ts:1918909040": [
       [16, 26, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "packages/grafana-ui/src/components/uPlot/utils.ts:20167453": [
+    "packages/grafana-ui/src/components/uPlot/utils.ts:1200596632": [
       [70, 13, 20, "Do not use any type assertions.", "1571376654"],
       [131, 20, 34, "Do not use any type assertions.", "1148863494"],
       [134, 11, 35, "Do not use any type assertions.", "2376372234"],
       [136, 11, 45, "Do not use any type assertions.", "1627514634"],
       [164, 13, 41, "Do not use any type assertions.", "1747339107"],
-      [261, 14, 32, "Do not use any type assertions.", "319021204"]
+      [264, 14, 32, "Do not use any type assertions.", "319021204"]
     ],
     "packages/grafana-ui/src/options/builder/axis.tsx:1832382450": [
       [91, 14, 30, "Do not use any type assertions.", "3478399522"],
