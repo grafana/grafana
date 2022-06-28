@@ -10319,7 +10319,7 @@ exports[`better eslint`] = {
       [327, 27, 45, "Do not use any type assertions.", "881765776"],
       [330, 29, 45, "Do not use any type assertions.", "881765776"]
     ],
-    "public/app/plugins/datasource/prometheus/metric_find_query.test.ts:142842024": [
+    "public/app/plugins/datasource/prometheus/metric_find_query.test.ts:336931457": [
       [12, 6, 59, "Do not use any type assertions.", "3685154675"],
       [12, 6, 49, "Do not use any type assertions.", "1184085652"],
       [18, 25, 178, "Do not use any type assertions.", "2743844758"],
@@ -10334,7 +10334,7 @@ exports[`better eslint`] = {
       [60, 42, 53, "Do not use any type assertions.", "1065771343"],
       [165, 21, 3, "Unexpected any. Specify a different type.", "193409811"],
       [216, 21, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [240, 21, 3, "Unexpected any. Specify a different type.", "193409811"]
+      [239, 21, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/plugins/datasource/prometheus/metric_find_query.ts:1417569751": [
       [62, 70, 3, "Unexpected any. Specify a different type.", "193409811"],
