@@ -135,9 +135,6 @@ def lint_docs_step():
     "name": "lint_docs",
     "volumes": [
       {
-        "name": "yarn_cache",
-      },
-      {
         "name": "scribe",
         "path": "/var/scribe",
       },

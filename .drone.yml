@@ -591,7 +591,6 @@ steps:
   image: grafana/build-container:1.5.7
   name: lint_docs
   volumes:
-  - name: yarn_cache
   - name: scribe
     path: /var/scribe
   - name: scribe-state
@@ -720,7 +719,6 @@ steps:
   image: grafana/build-container:1.5.7
   name: lint_docs
   volumes:
-  - name: yarn_cache
   - name: scribe
     path: /var/scribe
   - name: scribe-state
@@ -4861,6 +4859,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 5ad824d620ee8ea6cc2a3889e9f2bf1a3ef17b0e06e2417a14c64536ef44d223
+hmac: 913f578e8fc57e1c318c4a6002cfd0511817e8f75dc27698f4495d2b371f96a4
 
 ...

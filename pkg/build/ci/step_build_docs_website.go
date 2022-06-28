@@ -36,7 +36,8 @@ func buildDocsWebsite(ctx context.Context, opts pipeline.ActionOpts) error {
 	})
 }
 
-// StepBuildDocs MUST run with the DocsWebsiteImage.
+// StepBuildDocs builds the documentation website from the docs sources from the grafana repo and the content in the docs website image.
+// This step MUST run with the DocsWebsiteImage.
 func StepBuildDocsWebsite() pipeline.Step {
 	return pipeline.
 		NewStep(buildDocsWebsite).

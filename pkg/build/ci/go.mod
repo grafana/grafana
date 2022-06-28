@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
-	github.com/grafana/scribe v0.9.16
+	github.com/grafana/scribe v0.9.17
 )
 
 require (
@@ -41,7 +41,7 @@ require (
 	go.opencensus.io v0.23.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	golang.org/x/net v0.0.0-20220615171555-694bf12d69de // indirect
-	golang.org/x/sys v0.0.0-20220622161953-175b2fd9d664 // indirect
+	golang.org/x/sys v0.0.0-20220627191245-f75cf1eec38b // indirect
 )
 
 replace github.com/grafana/grafana => ../../../
