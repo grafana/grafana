@@ -155,7 +155,7 @@ func (dr *DashboardServiceImpl) BuildAnonymousUser(ctx context.Context, dashboar
 	readScopes := make([]string, 0)
 	for _, uid := range datasourceUids {
 		queryScopes = append(queryScopes, fmt.Sprintf("datasources:uid:%s", uid))
-		readScopes = append(readScopes, fmt.Sprintf("datasources:uid:%s"), uid)
+		readScopes = append(readScopes, fmt.Sprintf("datasources:uid:%s", uid))
 	}
 	permissions[datasources.ActionQuery] = queryScopes
 	permissions[datasources.ActionRead] = readScopes
