@@ -43,6 +43,11 @@ func (hs *HTTPServer) initAppPluginRoutes(r *web.Mux) {
 				ReqSignedIn: true,
 			}))
 
+			// Preventing access to plugin routes if the user has no right to access the plugin
+			authorize := ac.Middleware(hs.AccessControl)
+			handlers = append(handlers, authorize(ac.ReqSignedIn,
+				ac.EvalPermission(plugins.ActionAppAccess, plugins.ScopeProvider.GetResourceScope(plugin.ID))))
+
 			if route.ReqRole != "" {
 				if route.ReqRole == models.ROLE_ADMIN {
 					handlers = append(handlers, middleware.RoleAuth(models.ROLE_ADMIN))
@@ -50,11 +55,6 @@ func (hs *HTTPServer) initAppPluginRoutes(r *web.Mux) {
 					handlers = append(handlers, middleware.RoleAuth(models.ROLE_EDITOR, models.ROLE_ADMIN))
 				}
 			}
-
-			// Preventing access to plugin routes if the user has no right to access the plugin
-			authorize := ac.Middleware(hs.AccessControl)
-			handlers = append(handlers, authorize(ac.ReqSignedIn,
-				ac.EvalPermission(plugins.ActionAppAccess, plugins.ScopeProvider.GetResourceScope(plugin.ID))))
 
 			handlers = append(handlers, AppPluginRoute(route, plugin.ID, hs))
 			for _, method := range strings.Split(route.Method, ",") {
