@@ -128,40 +128,38 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
     // Crosshair sharing subscriptions
     const subscriptions = new Subscription();
 
-    if (true) {
-      subscriptions.add(
-        eventBus
-          .getStream(DataHoverEvent)
-          .pipe(throttleTime(50))
-          .subscribe({
-            next: (event) => {
-              const feature = source.getFeatures()[0];
-              const frame = feature?.get('frame') as DataFrame;
-              const time = event.payload?.point?.time as number;
-              if (frame && time) {
-                const timeField = frame.fields.find((f) => f.name === TIME_SERIES_TIME_FIELD_NAME);
-                if (timeField) {
-                  const timestamps: number[] = timeField.values.toArray();
-                  const pointIdx = findNearestTimeIndex(timestamps, time);
-                  if (pointIdx !== null) {
-                    const out = getGeometryField(frame, location);
-                    if (out.field) {
-                      crosshairFeature.setGeometry(out.field.values.get(pointIdx));
-                      crosshairFeature.setStyle(crosshairStyle);
-                    }
+    subscriptions.add(
+      eventBus
+        .getStream(DataHoverEvent)
+        .pipe(throttleTime(50))
+        .subscribe({
+          next: (event) => {
+            const feature = source.getFeatures()[0];
+            const frame = feature?.get('frame') as DataFrame;
+            const time = event.payload?.point?.time as number;
+            if (frame && time) {
+              const timeField = frame.fields.find((f) => f.name === TIME_SERIES_TIME_FIELD_NAME);
+              if (timeField) {
+                const timestamps: number[] = timeField.values.toArray();
+                const pointIdx = findNearestTimeIndex(timestamps, time);
+                if (pointIdx !== null) {
+                  const out = getGeometryField(frame, location);
+                  if (out.field) {
+                    crosshairFeature.setGeometry(out.field.values.get(pointIdx));
+                    crosshairFeature.setStyle(crosshairStyle);
                   }
                 }
               }
-            },
-          })
-      );
-
-      subscriptions.add(
-        eventBus.subscribe(DataHoverClearEvent, (event) => {
-          crosshairFeature.setStyle(new Style({}));
+            }
+          },
         })
-      );
-    }
+    );
+
+    subscriptions.add(
+      eventBus.subscribe(DataHoverClearEvent, (event) => {
+        crosshairFeature.setStyle(new Style({}));
+      })
+    );
 
     return {
       init: () => layer,
