@@ -98,7 +98,7 @@ export function AnnotationMarker({ annotation, timeZone, style }: Props) {
     );
   }, [canEditAnnotations, canDeleteAnnotations, onAnnotationDelete, onAnnotationEdit, timeFormatter, annotation]);
 
-  const isRegionAnnotation = Boolean(annotation.isRegion);
+  const isRegionAnnotation = Boolean(annotation.isRegion) && style !== undefined;
 
   let marker = (
     <div className={commonStyles(annotation).markerTriangle} style={{ transform: 'translate3d(-100%,-50%, 0)' }} />

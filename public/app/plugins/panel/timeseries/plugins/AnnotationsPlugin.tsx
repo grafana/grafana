@@ -131,7 +131,14 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
           x1 = plotInstance.current.bbox.width / window.devicePixelRatio;
         }
         markerStyle = { width: `${x1 - x0}px` };
+
+        if (x1 - x0 < 8) {
+          markerStyle = undefined;
+        }
       }
+
+      console.log(annotation);
+      console.log(markerStyle);
 
       return <AnnotationMarker annotation={annotation} timeZone={timeZone} style={markerStyle} />;
     },
