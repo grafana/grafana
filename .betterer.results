@@ -11514,6 +11514,10 @@ exports[`better eslint`] = {
     "public/app/plugins/panel/graph/utils.ts:1760782600": [
       [33, 47, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
+    "public/app/plugins/panel/heatmap-new/testframe-pods-exemplars.ts:1287620265": [
+      [2, 13, 1788032, "Do not use any type assertions.", "897132011"],
+      [2, 13, 1788017, "Do not use any type assertions.", "1851801458"]
+    ],
     "public/app/plugins/panel/heatmap-old/axes_editor.ts:3923458214": [
       [1, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
       [2, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -11734,29 +11738,29 @@ exports[`better eslint`] = {
       [87, 39, 23, "Do not use any type assertions.", "3906212682"],
       [87, 59, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/panel/heatmap/utils.ts:4206680384": [
+    "public/app/plugins/panel/heatmap/utils.ts:2227722730": [
       [260, 23, 53, "Do not use any type assertions.", "4087268626"],
       [287, 49, 51, "Do not use any type assertions.", "4216242190"],
       [287, 49, 28, "Do not use any type assertions.", "1631991143"],
-      [487, 14, 190, "Do not use any type assertions.", "4120382085"],
-      [498, 14, 55, "Do not use any type assertions.", "2123957774"],
-      [498, 14, 43, "Do not use any type assertions.", "3195961945"],
-      [641, 19, 27, "Do not use any type assertions.", "3603045978"],
-      [641, 19, 15, "Do not use any type assertions.", "3099372941"],
-      [642, 19, 27, "Do not use any type assertions.", "3664280731"],
-      [642, 19, 15, "Do not use any type assertions.", "2963010956"],
-      [643, 23, 27, "Do not use any type assertions.", "1493467224"],
-      [643, 23, 15, "Do not use any type assertions.", "2572578447"],
-      [749, 25, 30, "Do not use any type assertions.", "1186575399"],
-      [749, 25, 16, "Do not use any type assertions.", "1728826198"],
-      [821, 22, 27, "Do not use any type assertions.", "3603045978"],
-      [821, 22, 15, "Do not use any type assertions.", "3099372941"],
-      [822, 22, 27, "Do not use any type assertions.", "3664280731"],
-      [822, 22, 15, "Do not use any type assertions.", "2963010956"],
-      [823, 22, 27, "Do not use any type assertions.", "1493467224"],
-      [823, 22, 15, "Do not use any type assertions.", "2572578447"],
-      [824, 23, 27, "Do not use any type assertions.", "1554701977"],
-      [824, 23, 15, "Do not use any type assertions.", "2436216462"]
+      [488, 14, 190, "Do not use any type assertions.", "4120382085"],
+      [499, 14, 55, "Do not use any type assertions.", "2123957774"],
+      [499, 14, 43, "Do not use any type assertions.", "3195961945"],
+      [642, 19, 27, "Do not use any type assertions.", "3603045978"],
+      [642, 19, 15, "Do not use any type assertions.", "3099372941"],
+      [643, 19, 27, "Do not use any type assertions.", "3664280731"],
+      [643, 19, 15, "Do not use any type assertions.", "2963010956"],
+      [644, 23, 27, "Do not use any type assertions.", "1493467224"],
+      [644, 23, 15, "Do not use any type assertions.", "2572578447"],
+      [750, 25, 30, "Do not use any type assertions.", "1186575399"],
+      [750, 25, 16, "Do not use any type assertions.", "1728826198"],
+      [822, 22, 27, "Do not use any type assertions.", "3603045978"],
+      [822, 22, 15, "Do not use any type assertions.", "3099372941"],
+      [823, 22, 27, "Do not use any type assertions.", "3664280731"],
+      [823, 22, 15, "Do not use any type assertions.", "2963010956"],
+      [824, 22, 27, "Do not use any type assertions.", "1493467224"],
+      [824, 22, 15, "Do not use any type assertions.", "2572578447"],
+      [825, 23, 27, "Do not use any type assertions.", "1554701977"],
+      [825, 23, 15, "Do not use any type assertions.", "2436216462"]
     ],
     "public/app/plugins/panel/histogram/Histogram.tsx:3993177092": [
       [130, 31, 3, "Unexpected any. Specify a different type.", "193409811"],
