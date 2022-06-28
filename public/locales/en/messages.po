@@ -191,6 +191,14 @@ msgid "nav.snapshots"
 msgstr "Snapshots"
 
 #: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.starred"
+msgstr "Starred"
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.starred-empty"
+msgstr "Your starred dashboards will appear here"
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
 msgid "nav.teams"
 msgstr "Teams"
 

@@ -48,8 +48,6 @@ func TestAlertRulePermissions(t *testing.T) {
 	// Create the namespace we'll save our alerts to.
 	apiClient.CreateFolder(t, "folder2", "folder2")
 
-	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
-
 	// Create rule under folder1
 	createRule(t, apiClient, "folder1")
 
@@ -179,7 +177,7 @@ func TestAlertRulePermissions(t *testing.T) {
 
 		// remove permissions from folder2
 		removeFolderPermission(t, permissionsStore, 1, userID, models.ROLE_EDITOR, "folder2")
-		reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
+		apiClient.ReloadCachedPermissions(t)
 
 		// make sure that folder2 is not included in the response
 		// nolint:gosec
@@ -253,7 +251,7 @@ func TestAlertRulePermissions(t *testing.T) {
 
 	// Remove permissions from folder1.
 	removeFolderPermission(t, permissionsStore, 1, userID, models.ROLE_EDITOR, "folder1")
-	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
+	apiClient.ReloadCachedPermissions(t)
 	{
 		u := fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules", grafanaListedAddr)
 		// nolint:gosec
@@ -405,8 +403,6 @@ func TestRulerRulesFilterByDashboard(t *testing.T) {
 	dashboardUID := "default"
 	// Create the namespace under default organisation (orgID = 1) where we'll save our alerts to.
 	apiClient.CreateFolder(t, "default", "default")
-
-	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
 
 	interval, err := model.ParseDuration("10s")
 	require.NoError(t, err)
@@ -742,8 +738,6 @@ func TestRuleGroupSequence(t *testing.T) {
 	client := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
 	folder1Title := "folder1"
 	client.CreateFolder(t, util.GenerateShortUID(), folder1Title)
-
-	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
 
 	group1 := generateAlertRuleGroup(5, alertRuleGen())
 	group2 := generateAlertRuleGroup(5, alertRuleGen())

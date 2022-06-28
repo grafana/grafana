@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { AppEvents } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime/src';
 import { Alert, Button, Checkbox, ClipboardButton, Field, FieldSet, Icon, Input, Switch } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
@@ -39,10 +40,14 @@ export const SharePublicDashboard = (props: Props) => {
   });
 
   useEffect(() => {
+    reportInteraction('grafana_dashboards_public_share_viewed');
+
     getPublicDashboardConfig(props.dashboard.uid, setPublicDashboardConfig).catch();
   }, [props.dashboard.uid]);
 
   const onSavePublicConfig = () => {
+    reportInteraction('grafana_dashboards_public_create_clicked');
+
     if (dashboardHasTemplateVariables(dashboardVariables)) {
       dispatch(
         notifyApp(createErrorNotification('This dashboard cannot be made public because it has template variables'))
@@ -154,12 +159,16 @@ export const SharePublicDashboard = (props: Props) => {
                   <Switch
                     disabled={dashboardHasTemplateVariables(dashboardVariables)}
                     value={publicDashboard?.isEnabled}
-                    onChange={() =>
+                    onChange={() => {
+                      reportInteraction('grafana_dashboards_public_enable_clicked', {
+                        action: publicDashboard?.isEnabled ? 'disable' : 'enable',
+                      });
+
                       setPublicDashboardConfig({
                         ...publicDashboard,
                         isEnabled: !publicDashboard.isEnabled,
-                      })
-                    }
+                      });
+                    }}
                   />
                 </Field>
                 {publicDashboardPersisted(publicDashboard) && publicDashboard.isEnabled && (

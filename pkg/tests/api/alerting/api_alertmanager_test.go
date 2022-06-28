@@ -480,7 +480,6 @@ func TestAlertAndGroupsQuery(t *testing.T) {
 	{
 		// Create the namespace we'll save our alerts to.
 		apiClient.CreateFolder(t, "default", "default")
-		reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
 	}
 
 	// Create an alert that will fire as quickly as possible
@@ -581,7 +580,6 @@ func TestRulerAccess(t *testing.T) {
 
 	// Create the namespace we'll save our alerts to.
 	client.CreateFolder(t, "default", "default")
-	reloadCachedPermissions(t, grafanaListedAddr, "editor", "editor")
 
 	// Now, let's test the access policies.
 	testCases := []struct {
@@ -692,7 +690,6 @@ func TestDeleteFolderWithRules(t *testing.T) {
 	// Create the namespace we'll save our alerts to.
 	namespaceUID := "default"
 	apiClient.CreateFolder(t, namespaceUID, namespaceUID)
-	reloadCachedPermissions(t, grafanaListedAddr, "editor", "editor")
 
 	createRule(t, apiClient, "default")
 
@@ -847,7 +844,6 @@ func TestAlertRuleCRUD(t *testing.T) {
 
 	// Create the namespace we'll save our alerts to.
 	apiClient.CreateFolder(t, "default", "default")
-	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
 
 	interval, err := model.ParseDuration("1m")
 	require.NoError(t, err)
@@ -1887,7 +1883,6 @@ func TestQuota(t *testing.T) {
 	apiClient := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
 	// Create the namespace we'll save our alerts to.
 	apiClient.CreateFolder(t, "default", "default")
-	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
 
 	interval, err := model.ParseDuration("1m")
 	require.NoError(t, err)

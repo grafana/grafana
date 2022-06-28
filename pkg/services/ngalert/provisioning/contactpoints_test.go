@@ -58,6 +58,19 @@ func TestContactPointService(t *testing.T) {
 		require.Equal(t, customUID, cps[1].UID)
 	})
 
+	t.Run("it's not possbile to use the same uid twice", func(t *testing.T) {
+		customUID := "1337"
+		sut := createContactPointServiceSut(secretsService)
+		newCp := createTestContactPoint()
+		newCp.UID = customUID
+
+		_, err := sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		_, err = sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+		require.Error(t, err)
+	})
+
 	t.Run("create rejects contact points that fail validation", func(t *testing.T) {
 		sut := createContactPointServiceSut(secretsService)
 		newCp := createTestContactPoint()
