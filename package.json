@@ -252,6 +252,8 @@
   "dependencies": {
     "@emotion/css": "11.9.0",
     "@emotion/react": "11.9.0",
+    "@grafana/agent-core": "^0.3.0",
+    "@grafana/agent-web": "^0.3.0",
     "@grafana/aws-sdk": "0.0.36",
     "@grafana/data": "workspace:*",
     "@grafana/e2e-selectors": "workspace:*",
