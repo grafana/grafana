@@ -126,6 +126,7 @@ function findRelatedDataLinks(
           const rootStateKey = toStateKey(key);
 
           for (let k = 0; k < variablesToCreate.length; k++) {
+            const shouldEmitChanges = k === variablesToCreate.length - 1;
             const id = variablesToCreate[k];
 
             // ignore existing variables
@@ -170,7 +171,11 @@ function findRelatedDataLinks(
             const value = fieldReferencesPerTarget[k].values.get(origin.rowIndex);
 
             const adapter = variableAdapters.get('keyValue');
-            await adapter.setValue(existing, { selected: true, value, text: value ? value.toString() : '' }, true);
+            await adapter.setValue(
+              existing,
+              { selected: true, value, text: value ? value.toString() : '' },
+              shouldEmitChanges
+            );
           }
         },
         target: undefined,
