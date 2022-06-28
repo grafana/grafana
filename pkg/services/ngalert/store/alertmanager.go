@@ -198,6 +198,9 @@ func getInsertQuery(driver string) string {
 }
 
 func (st *DBstore) DeleteOldConfigurations(ctx context.Context, orgID, limit int64) (int64, error) {
+	if limit < 1 {
+		return 0, fmt.Errorf("failed to delete old configurations: limit is set to '%d' but needs to be > 0", limit)
+	}
 	var affactedRows int64
 	err := st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		res, err := sess.Exec(`

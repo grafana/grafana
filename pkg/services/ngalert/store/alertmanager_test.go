@@ -161,7 +161,14 @@ func TestIntegrationAlertManagerConfigCleanup(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "newest-record", req.Result.AlertmanagerConfiguration)
 	})
-
+	t.Run("limit set to 0 should fail", func(t *testing.T) {
+		_, err := store.DeleteOldConfigurations(context.Background(), 1, 0)
+		require.Error(t, err)
+	})
+	t.Run("limit set to negative should fail", func(t *testing.T) {
+		_, err := store.DeleteOldConfigurations(context.Background(), 1, -1)
+		require.Error(t, err)
+	})
 }
 
 func setupConfig(t *testing.T, config string, store *DBstore) (string, string) {
