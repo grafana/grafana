@@ -1,5 +1,12 @@
 syntax = "proto3";
 
+// COPIED FROM LOKI
+// If you modify this file, you need to manually generate the
+// logproto.pb.go file as well.
+//
+// Install gogoslick from https://github.com/gogo/protobuf
+// protoc --proto_path=$GOPATH/src/ --proto_path=. --gogoslick_out=plugins=grpc:. logproto.proto
+
 package logproto;
 
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";

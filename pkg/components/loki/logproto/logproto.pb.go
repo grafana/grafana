@@ -7,8 +7,8 @@ import (
 	context "context"
 	fmt "fmt"
 	_ "github.com/gogo/protobuf/gogoproto"
+	proto "github.com/gogo/protobuf/proto"
 	github_com_gogo_protobuf_types "github.com/gogo/protobuf/types"
-	proto "github.com/golang/protobuf/proto"
 	_ "github.com/golang/protobuf/ptypes/timestamp"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
@@ -16,6 +16,8 @@ import (
 	io "io"
 	math "math"
 	math_bits "math/bits"
+	reflect "reflect"
+	strings "strings"
 	time "time"
 )
 
@@ -29,18 +31,14 @@ var _ = time.Kitchen
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
+const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 type PushRequest struct {
-	Streams              []Stream `protobuf:"bytes,1,rep,name=streams,proto3,customtype=Stream" json:"streams"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Streams []Stream `protobuf:"bytes,1,rep,name=streams,proto3,customtype=Stream" json:"streams"`
 }
 
-func (m *PushRequest) Reset()         { *m = PushRequest{} }
-func (m *PushRequest) String() string { return proto.CompactTextString(m) }
-func (*PushRequest) ProtoMessage()    {}
+func (m *PushRequest) Reset()      { *m = PushRequest{} }
+func (*PushRequest) ProtoMessage() {}
 func (*PushRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_7a8976f235a02f79, []int{0}
 }
@@ -72,14 +70,10 @@ func (m *PushRequest) XXX_DiscardUnknown() {
 var xxx_messageInfo_PushRequest proto.InternalMessageInfo
 
 type PushResponse struct {
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *PushResponse) Reset()         { *m = PushResponse{} }
-func (m *PushResponse) String() string { return proto.CompactTextString(m) }
-func (*PushResponse) ProtoMessage()    {}
+func (m *PushResponse) Reset()      { *m = PushResponse{} }
+func (*PushResponse) ProtoMessage() {}
 func (*PushResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_7a8976f235a02f79, []int{1}
 }
@@ -114,15 +108,11 @@ type StreamAdapter struct {
 	Labels  string         `protobuf:"bytes,1,opt,name=labels,proto3" json:"labels"`
 	Entries []EntryAdapter `protobuf:"bytes,2,rep,name=entries,proto3" json:"entries"`
 	// hash contains the original hash of the stream.
-	Hash                 uint64   `protobuf:"varint,3,opt,name=hash,proto3" json:"-"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Hash uint64 `protobuf:"varint,3,opt,name=hash,proto3" json:"-"`
 }
 
-func (m *StreamAdapter) Reset()         { *m = StreamAdapter{} }
-func (m *StreamAdapter) String() string { return proto.CompactTextString(m) }
-func (*StreamAdapter) ProtoMessage()    {}
+func (m *StreamAdapter) Reset()      { *m = StreamAdapter{} }
+func (*StreamAdapter) ProtoMessage() {}
 func (*StreamAdapter) Descriptor() ([]byte, []int) {
 	return fileDescriptor_7a8976f235a02f79, []int{2}
 }
@@ -175,16 +165,12 @@ func (m *StreamAdapter) GetHash() uint64 {
 }
 
 type EntryAdapter struct {
-	Timestamp            time.Time `protobuf:"bytes,1,opt,name=timestamp,proto3,stdtime" json:"ts"`
-	Line                 string    `protobuf:"bytes,2,opt,name=line,proto3" json:"line"`
-	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
-	XXX_unrecognized     []byte    `json:"-"`
-	XXX_sizecache        int32     `json:"-"`
+	Timestamp time.Time `protobuf:"bytes,1,opt,name=timestamp,proto3,stdtime" json:"ts"`
+	Line      string    `protobuf:"bytes,2,opt,name=line,proto3" json:"line"`
 }
 
-func (m *EntryAdapter) Reset()         { *m = EntryAdapter{} }
-func (m *EntryAdapter) String() string { return proto.CompactTextString(m) }
-func (*EntryAdapter) ProtoMessage()    {}
+func (m *EntryAdapter) Reset()      { *m = EntryAdapter{} }
+func (*EntryAdapter) ProtoMessage() {}
 func (*EntryAdapter) Descriptor() ([]byte, []int) {
 	return fileDescriptor_7a8976f235a02f79, []int{3}
 }
@@ -239,31 +225,202 @@ func init() {
 func init() { proto.RegisterFile("logproto.proto", fileDescriptor_7a8976f235a02f79) }
 
 var fileDescriptor_7a8976f235a02f79 = []byte{
-	// 370 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x5c, 0x52, 0x31, 0x6f, 0xa3, 0x30,
-	0x18, 0x8d, 0x13, 0x8e, 0x24, 0x4e, 0x2e, 0x27, 0x59, 0x4a, 0x8e, 0x43, 0x27, 0x1c, 0x31, 0x65,
-	0x09, 0x91, 0xd2, 0xa1, 0x73, 0x90, 0x2a, 0x65, 0xac, 0x68, 0xa5, 0x4a, 0xdd, 0xa0, 0x75, 0x01,
-	0x09, 0x30, 0xc5, 0xa6, 0x52, 0xff, 0x45, 0xbb, 0xf5, 0x27, 0x65, 0xec, 0xdc, 0x81, 0x56, 0xe9,
-	0xc6, 0xaf, 0xa8, 0x30, 0x38, 0xa4, 0x5d, 0xec, 0xef, 0x3d, 0xde, 0xf7, 0xf9, 0xf9, 0x61, 0x38,
-	0x89, 0xa8, 0x9f, 0x66, 0x94, 0x53, 0x4b, 0xac, 0x68, 0x20, 0xb1, 0xbe, 0xf4, 0x43, 0x1e, 0xe4,
-	0x9e, 0x75, 0x43, 0xe3, 0x95, 0x4f, 0x7d, 0xba, 0x12, 0xb4, 0x97, 0xdf, 0x09, 0x24, 0x80, 0xa8,
-	0xea, 0x46, 0x1d, 0xfb, 0x94, 0xfa, 0x11, 0x69, 0x55, 0x3c, 0x8c, 0x09, 0xe3, 0x6e, 0x9c, 0xd6,
-	0x02, 0xf3, 0x0a, 0x8e, 0xce, 0x73, 0x16, 0x38, 0xe4, 0x3e, 0x27, 0x8c, 0xa3, 0x2d, 0xec, 0x33,
-	0x9e, 0x11, 0x37, 0x66, 0x1a, 0x98, 0xf7, 0x16, 0xa3, 0xf5, 0x5f, 0xeb, 0x60, 0xe5, 0x42, 0x7c,
-	0xd8, 0xdc, 0xba, 0x29, 0x27, 0x99, 0x3d, 0x7d, 0x2b, 0xb0, 0x5a, 0x53, 0x65, 0x81, 0x65, 0x97,
-	0x23, 0x0b, 0x73, 0x02, 0xc7, 0xf5, 0x60, 0x96, 0xd2, 0x84, 0x11, 0xf3, 0x19, 0xc0, 0xdf, 0xdf,
-	0x26, 0x20, 0x13, 0xaa, 0x91, 0xeb, 0x91, 0xa8, 0x3a, 0x0a, 0x2c, 0x86, 0x36, 0x2c, 0x0b, 0xdc,
-	0x30, 0x4e, 0xb3, 0xa3, 0x0d, 0xec, 0x93, 0x84, 0x67, 0x21, 0x61, 0x5a, 0x57, 0xf8, 0x99, 0xb5,
-	0x7e, 0xce, 0x12, 0x9e, 0x3d, 0x4a, 0x3b, 0x7f, 0x76, 0x05, 0xee, 0x54, 0x46, 0x1a, 0xb9, 0x23,
-	0x0b, 0xf4, 0x0f, 0x2a, 0x81, 0xcb, 0x02, 0xad, 0x37, 0x07, 0x0b, 0xc5, 0xfe, 0x55, 0x16, 0x18,
-	0x2c, 0x1d, 0x41, 0x99, 0x0f, 0x70, 0x7c, 0x3c, 0x04, 0x6d, 0xe1, 0xf0, 0x90, 0x8f, 0x30, 0x35,
-	0x5a, 0xeb, 0x56, 0x9d, 0xa0, 0x25, 0x13, 0xb4, 0x2e, 0xa5, 0xc2, 0x9e, 0x34, 0x67, 0x76, 0x39,
-	0x7b, 0x7a, 0xc7, 0xc0, 0x69, 0x9b, 0xd1, 0x7f, 0xa8, 0x44, 0x61, 0x42, 0xb4, 0xae, 0xb8, 0xd9,
-	0xa0, 0x2c, 0xb0, 0xc0, 0x8e, 0x58, 0xd7, 0x1b, 0xa8, 0x56, 0xd9, 0x90, 0x0c, 0x9d, 0x42, 0xa5,
-	0xaa, 0xd0, 0xb4, 0xbd, 0xd6, 0xd1, 0xef, 0xd0, 0x67, 0x3f, 0xe9, 0x26, 0xcc, 0x8e, 0xad, 0xef,
-	0xf6, 0x06, 0x78, 0xdd, 0x1b, 0xe0, 0x63, 0x6f, 0x80, 0x97, 0x4f, 0xa3, 0x73, 0x7d, 0x78, 0x23,
-	0x9e, 0x2a, 0xb6, 0x93, 0xaf, 0x00, 0x00, 0x00, 0xff, 0xff, 0x58, 0x95, 0x46, 0x3f, 0x46, 0x02,
-	0x00, 0x00,
+	// 406 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x5c, 0x52, 0x41, 0x8f, 0x93, 0x40,
+	0x18, 0x9d, 0xe9, 0x22, 0xbb, 0x3b, 0x5d, 0x6b, 0x32, 0xc9, 0xae, 0x48, 0xcc, 0xcc, 0x86, 0x53,
+	0x2f, 0xa5, 0x49, 0x3d, 0x78, 0x33, 0x29, 0x89, 0x49, 0x8f, 0x06, 0x4d, 0x4c, 0xbc, 0x81, 0x8e,
+	0x40, 0x02, 0x0c, 0x32, 0x83, 0x89, 0x37, 0x7f, 0x42, 0xfd, 0x17, 0xfe, 0x94, 0x1e, 0x7b, 0x6c,
+	0x3c, 0xa0, 0xa5, 0x17, 0xc3, 0xa9, 0x3f, 0xc1, 0x30, 0x40, 0xa9, 0x7b, 0x99, 0xf9, 0xde, 0xe3,
+	0x7d, 0xdf, 0xbc, 0x79, 0x0c, 0x9a, 0xc4, 0x3c, 0xc8, 0x72, 0x2e, 0xb9, 0xad, 0x56, 0x7c, 0xd5,
+	0x63, 0x73, 0x16, 0x44, 0x32, 0x2c, 0x7c, 0xfb, 0x23, 0x4f, 0xe6, 0x01, 0x0f, 0xf8, 0x5c, 0xd1,
+	0x7e, 0xf1, 0x59, 0x21, 0x05, 0x54, 0xd5, 0x36, 0x9a, 0x34, 0xe0, 0x3c, 0x88, 0xd9, 0xa0, 0x92,
+	0x51, 0xc2, 0x84, 0xf4, 0x92, 0xac, 0x15, 0x58, 0xef, 0xd1, 0xf8, 0x4d, 0x21, 0x42, 0x97, 0x7d,
+	0x29, 0x98, 0x90, 0x78, 0x85, 0x2e, 0x85, 0xcc, 0x99, 0x97, 0x08, 0x03, 0xde, 0x5f, 0x4c, 0xc7,
+	0x8b, 0xa7, 0xf6, 0xc9, 0xca, 0x5b, 0xf5, 0x61, 0xf9, 0xc9, 0xcb, 0x24, 0xcb, 0x9d, 0xdb, 0x5f,
+	0x25, 0xd5, 0x5b, 0xaa, 0x2e, 0x69, 0xdf, 0xe5, 0xf6, 0x85, 0x35, 0x41, 0x37, 0xed, 0x60, 0x91,
+	0xf1, 0x54, 0x30, 0xeb, 0x07, 0x44, 0x8f, 0xff, 0x9b, 0x80, 0x2d, 0xa4, 0xc7, 0x9e, 0xcf, 0xe2,
+	0xe6, 0x28, 0x38, 0xbd, 0x76, 0x50, 0x5d, 0xd2, 0x8e, 0x71, 0xbb, 0x1d, 0x2f, 0xd1, 0x25, 0x4b,
+	0x65, 0x1e, 0x31, 0x61, 0x8c, 0x94, 0x9f, 0xbb, 0xc1, 0xcf, 0xeb, 0x54, 0xe6, 0xdf, 0x7a, 0x3b,
+	0x4f, 0x36, 0x25, 0x05, 0x8d, 0x91, 0x4e, 0xee, 0xf6, 0x05, 0x7e, 0x86, 0xb4, 0xd0, 0x13, 0xa1,
+	0x71, 0x71, 0x0f, 0xa7, 0x9a, 0xf3, 0xa8, 0x2e, 0x29, 0x9c, 0xb9, 0x8a, 0xb2, 0xbe, 0xa2, 0x9b,
+	0xf3, 0x21, 0x78, 0x85, 0xae, 0x4f, 0xf9, 0x28, 0x53, 0xe3, 0x85, 0x69, 0xb7, 0x09, 0xda, 0x7d,
+	0x82, 0xf6, 0xbb, 0x5e, 0xe1, 0x4c, 0xba, 0x33, 0x47, 0x52, 0xac, 0x7f, 0x53, 0xe8, 0x0e, 0xcd,
+	0xf8, 0x39, 0xd2, 0xe2, 0x28, 0x65, 0xc6, 0x48, 0xdd, 0xec, 0xaa, 0x2e, 0xa9, 0xc2, 0xae, 0x5a,
+	0x17, 0x4b, 0xa4, 0x37, 0xd9, 0xb0, 0x1c, 0xbf, 0x44, 0x5a, 0x53, 0xe1, 0xdb, 0xe1, 0x5a, 0x67,
+	0xbf, 0xc3, 0xbc, 0x7b, 0x48, 0x77, 0x61, 0x02, 0xe7, 0xd5, 0x76, 0x4f, 0xc0, 0x6e, 0x4f, 0xc0,
+	0x71, 0x4f, 0xe0, 0xf7, 0x8a, 0xc0, 0x9f, 0x15, 0x81, 0x9b, 0x8a, 0xc0, 0x6d, 0x45, 0xe0, 0x9f,
+	0x8a, 0xc0, 0xbf, 0x15, 0x01, 0xc7, 0x8a, 0xc0, 0xf5, 0x81, 0x80, 0xed, 0x81, 0x80, 0xdd, 0x81,
+	0x80, 0x0f, 0xa7, 0x77, 0xe4, 0xeb, 0x6a, 0x7b, 0xf1, 0x2f, 0x00, 0x00, 0xff, 0xff, 0x81, 0x6a,
+	0x10, 0x6d, 0x6a, 0x02, 0x00, 0x00,
+}
+
+func (this *PushRequest) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*PushRequest)
+	if !ok {
+		that2, ok := that.(PushRequest)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if len(this.Streams) != len(that1.Streams) {
+		return false
+	}
+	for i := range this.Streams {
+		if !this.Streams[i].Equal(that1.Streams[i]) {
+			return false
+		}
+	}
+	return true
+}
+func (this *PushResponse) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*PushResponse)
+	if !ok {
+		that2, ok := that.(PushResponse)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	return true
+}
+func (this *StreamAdapter) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*StreamAdapter)
+	if !ok {
+		that2, ok := that.(StreamAdapter)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if this.Labels != that1.Labels {
+		return false
+	}
+	if len(this.Entries) != len(that1.Entries) {
+		return false
+	}
+	for i := range this.Entries {
+		if !this.Entries[i].Equal(&that1.Entries[i]) {
+			return false
+		}
+	}
+	if this.Hash != that1.Hash {
+		return false
+	}
+	return true
+}
+func (this *EntryAdapter) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*EntryAdapter)
+	if !ok {
+		that2, ok := that.(EntryAdapter)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if !this.Timestamp.Equal(that1.Timestamp) {
+		return false
+	}
+	if this.Line != that1.Line {
+		return false
+	}
+	return true
+}
+func (this *PushRequest) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 5)
+	s = append(s, "&logproto.PushRequest{")
+	s = append(s, "Streams: "+fmt.Sprintf("%#v", this.Streams)+",\n")
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *PushResponse) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 4)
+	s = append(s, "&logproto.PushResponse{")
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *StreamAdapter) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 7)
+	s = append(s, "&logproto.StreamAdapter{")
+	s = append(s, "Labels: "+fmt.Sprintf("%#v", this.Labels)+",\n")
+	if this.Entries != nil {
+		vs := make([]EntryAdapter, len(this.Entries))
+		for i := range vs {
+			vs[i] = this.Entries[i]
+		}
+		s = append(s, "Entries: "+fmt.Sprintf("%#v", vs)+",\n")
+	}
+	s = append(s, "Hash: "+fmt.Sprintf("%#v", this.Hash)+",\n")
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *EntryAdapter) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 6)
+	s = append(s, "&logproto.EntryAdapter{")
+	s = append(s, "Timestamp: "+fmt.Sprintf("%#v", this.Timestamp)+",\n")
+	s = append(s, "Line: "+fmt.Sprintf("%#v", this.Line)+",\n")
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func valueToGoStringLogproto(v interface{}, typ string) string {
+	rv := reflect.ValueOf(v)
+	if rv.IsNil() {
+		return "nil"
+	}
+	pv := reflect.Indirect(rv).Interface()
+	return fmt.Sprintf("func(v %v) *%v { return &v } ( %#v )", typ, typ, pv)
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -366,10 +523,6 @@ func (m *PushRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.XXX_unrecognized != nil {
-		i -= len(m.XXX_unrecognized)
-		copy(dAtA[i:], m.XXX_unrecognized)
-	}
 	if len(m.Streams) > 0 {
 		for iNdEx := len(m.Streams) - 1; iNdEx >= 0; iNdEx-- {
 			{
@@ -407,10 +560,6 @@ func (m *PushResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.XXX_unrecognized != nil {
-		i -= len(m.XXX_unrecognized)
-		copy(dAtA[i:], m.XXX_unrecognized)
-	}
 	return len(dAtA) - i, nil
 }
 
@@ -434,10 +583,6 @@ func (m *StreamAdapter) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.XXX_unrecognized != nil {
-		i -= len(m.XXX_unrecognized)
-		copy(dAtA[i:], m.XXX_unrecognized)
-	}
 	if m.Hash != 0 {
 		i = encodeVarintLogproto(dAtA, i, uint64(m.Hash))
 		i--
@@ -487,10 +632,6 @@ func (m *EntryAdapter) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.XXX_unrecognized != nil {
-		i -= len(m.XXX_unrecognized)
-		copy(dAtA[i:], m.XXX_unrecognized)
-	}
 	if len(m.Line) > 0 {
 		i -= len(m.Line)
 		copy(dAtA[i:], m.Line)
@@ -532,9 +673,6 @@ func (m *PushRequest) Size() (n int) {
 			n += 1 + l + sovLogproto(uint64(l))
 		}
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -544,9 +682,6 @@ func (m *PushResponse) Size() (n int) {
 	}
 	var l int
 	_ = l
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -569,9 +704,6 @@ func (m *StreamAdapter) Size() (n int) {
 	if m.Hash != 0 {
 		n += 1 + sovLogproto(uint64(m.Hash))
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -587,9 +719,6 @@ func (m *EntryAdapter) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovLogproto(uint64(l))
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -598,6 +727,61 @@ func sovLogproto(x uint64) (n int) {
 }
 func sozLogproto(x uint64) (n int) {
 	return sovLogproto(uint64((x << 1) ^ uint64((int64(x) >> 63))))
+}
+func (this *PushRequest) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&PushRequest{`,
+		`Streams:` + fmt.Sprintf("%v", this.Streams) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *PushResponse) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&PushResponse{`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *StreamAdapter) String() string {
+	if this == nil {
+		return "nil"
+	}
+	repeatedStringForEntries := "[]EntryAdapter{"
+	for _, f := range this.Entries {
+		repeatedStringForEntries += strings.Replace(strings.Replace(f.String(), "EntryAdapter", "EntryAdapter", 1), `&`, ``, 1) + ","
+	}
+	repeatedStringForEntries += "}"
+	s := strings.Join([]string{`&StreamAdapter{`,
+		`Labels:` + fmt.Sprintf("%v", this.Labels) + `,`,
+		`Entries:` + repeatedStringForEntries + `,`,
+		`Hash:` + fmt.Sprintf("%v", this.Hash) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *EntryAdapter) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&EntryAdapter{`,
+		`Timestamp:` + strings.Replace(strings.Replace(fmt.Sprintf("%v", this.Timestamp), "Timestamp", "timestamp.Timestamp", 1), `&`, ``, 1) + `,`,
+		`Line:` + fmt.Sprintf("%v", this.Line) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func valueToStringLogproto(v interface{}) string {
+	rv := reflect.ValueOf(v)
+	if rv.IsNil() {
+		return "nil"
+	}
+	pv := reflect.Indirect(rv).Interface()
+	return fmt.Sprintf("*%v", pv)
 }
 func (m *PushRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
@@ -674,7 +858,6 @@ func (m *PushRequest) Unmarshal(dAtA []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -725,7 +908,6 @@ func (m *PushResponse) Unmarshal(dAtA []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -861,7 +1043,6 @@ func (m *StreamAdapter) Unmarshal(dAtA []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -977,7 +1158,6 @@ func (m *EntryAdapter) Unmarshal(dAtA []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
