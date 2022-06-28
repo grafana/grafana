@@ -7,14 +7,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestAlertRuleExtraction(t *testing.T) {
@@ -23,14 +24,14 @@ func TestAlertRuleExtraction(t *testing.T) {
 	})
 
 	// mock data
-	defaultDs := &models.DataSource{Id: 12, OrgId: 1, Name: "I am default", IsDefault: true, Uid: "def-uid"}
-	graphite2Ds := &models.DataSource{Id: 15, OrgId: 1, Name: "graphite2", Uid: "graphite2-uid"}
+	defaultDs := &datasources.DataSource{Id: 12, OrgId: 1, Name: "I am default", IsDefault: true, Uid: "def-uid"}
+	graphite2Ds := &datasources.DataSource{Id: 15, OrgId: 1, Name: "graphite2", Uid: "graphite2-uid"}
 
 	json, err := ioutil.ReadFile("./testdata/graphite-alert.json")
 	require.Nil(t, err)
 
 	dsPermissions := permissions.NewMockDatasourcePermissionService()
-	dsPermissions.DsResult = []*models.DataSource{
+	dsPermissions.DsResult = []*datasources.DataSource{
 		{
 			Id: 1,
 		},
@@ -69,7 +70,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 		dashJSON, err := simplejson.NewJson(json)
 		require.Nil(t, err)
 
-		dsService.ExpectedDatasource = &models.DataSource{Id: 12}
+		dsService.ExpectedDatasource = &datasources.DataSource{Id: 12}
 		alerts, err := extractor.GetAlerts(context.Background(), DashAlertInfo{
 			User:  nil,
 			Dash:  models.NewDashboardFromJson(dashJSON),
@@ -168,7 +169,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 		dashJSON, err := simplejson.NewJson(panelWithoutSpecifiedDatasource)
 		require.Nil(t, err)
 
-		dsService.ExpectedDatasource = &models.DataSource{Id: 12}
+		dsService.ExpectedDatasource = &datasources.DataSource{Id: 12}
 		alerts, err := extractor.GetAlerts(context.Background(), DashAlertInfo{
 			User:  nil,
 			Dash:  models.NewDashboardFromJson(dashJSON),
@@ -305,7 +306,7 @@ func TestFilterPermissionsErrors(t *testing.T) {
 	})
 
 	// mock data
-	defaultDs := &models.DataSource{Id: 12, OrgId: 1, Name: "I am default", IsDefault: true, Uid: "def-uid"}
+	defaultDs := &datasources.DataSource{Id: 12, OrgId: 1, Name: "I am default", IsDefault: true, Uid: "def-uid"}
 
 	json, err := ioutil.ReadFile("./testdata/graphite-alert.json")
 	require.Nil(t, err)
@@ -318,13 +319,13 @@ func TestFilterPermissionsErrors(t *testing.T) {
 
 	tc := []struct {
 		name        string
-		result      []*models.DataSource
+		result      []*datasources.DataSource
 		err         error
 		expectedErr error
 	}{
 		{
 			"Data sources are filtered and return results don't return an error",
-			[]*models.DataSource{defaultDs},
+			[]*datasources.DataSource{defaultDs},
 			nil,
 			nil,
 		},
@@ -332,7 +333,7 @@ func TestFilterPermissionsErrors(t *testing.T) {
 			"Data sources are filtered but return empty results should return error",
 			nil,
 			nil,
-			models.ErrDataSourceAccessDenied,
+			datasources.ErrDataSourceAccessDenied,
 		},
 		{
 			"Using default OSS implementation doesn't return an error",
@@ -363,16 +364,16 @@ func TestFilterPermissionsErrors(t *testing.T) {
 }
 
 type fakeDatasourceService struct {
-	ExpectedDatasource *models.DataSource
+	ExpectedDatasource *datasources.DataSource
 	datasources.DataSourceService
 }
 
-func (f *fakeDatasourceService) GetDefaultDataSource(ctx context.Context, query *models.GetDefaultDataSourceQuery) error {
+func (f *fakeDatasourceService) GetDefaultDataSource(ctx context.Context, query *datasources.GetDefaultDataSourceQuery) error {
 	query.Result = f.ExpectedDatasource
 	return nil
 }
 
-func (f *fakeDatasourceService) GetDataSource(ctx context.Context, query *models.GetDataSourceQuery) error {
+func (f *fakeDatasourceService) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) error {
 	query.Result = f.ExpectedDatasource
 	return nil
 }

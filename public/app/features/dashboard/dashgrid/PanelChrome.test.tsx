@@ -19,7 +19,7 @@ jest.mock('app/core/profiler', () => ({
 }));
 
 function setupTestContext(options: Partial<Props>) {
-  const mockStore = configureMockStore<any, any>();
+  const mockStore = configureMockStore();
   const store = mockStore({ dashboard: { panels: [] } });
   const subject: ReplaySubject<PanelData> = new ReplaySubject<PanelData>();
   const panelQueryRunner = {

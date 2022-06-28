@@ -20,13 +20,13 @@ export class PublicDashboardDataSource extends DataSourceApi<any> {
    * Ideally final -- any other implementation may not work as expected
    */
   query(request: DataQueryRequest<any>): Observable<DataQueryResponse> {
-    const { intervalMs, maxDataPoints, range, requestId, publicDashboardUid, panelId } = request;
+    const { intervalMs, maxDataPoints, range, requestId, publicDashboardAccessToken, panelId } = request;
     let targets = request.targets;
 
     const queries = targets.map((q) => {
       return {
         ...q,
-        publicDashboardUid,
+        publicDashboardAccessToken,
         intervalMs,
         maxDataPoints,
       };
@@ -37,7 +37,7 @@ export class PublicDashboardDataSource extends DataSourceApi<any> {
       return of({ data: [] });
     }
 
-    const body: any = { queries, publicDashboardUid, panelId };
+    const body: any = { queries, publicDashboardAccessToken, panelId };
 
     if (range) {
       body.range = range;
@@ -47,7 +47,7 @@ export class PublicDashboardDataSource extends DataSourceApi<any> {
 
     return getBackendSrv()
       .fetch<BackendDataSourceResponse>({
-        url: `/api/public/dashboards/${publicDashboardUid}/panels/${panelId}/query`,
+        url: `/api/public/dashboards/${publicDashboardAccessToken}/panels/${panelId}/query`,
         method: 'POST',
         data: body,
         requestId,

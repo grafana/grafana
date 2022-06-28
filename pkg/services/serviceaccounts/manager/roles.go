@@ -9,7 +9,6 @@ import (
 func RegisterRoles(ac accesscontrol.AccessControl) error {
 	saReader := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Version:     1,
 			Name:        "fixed:serviceaccounts:reader",
 			DisplayName: "Service accounts reader",
 			Description: "Read service accounts and service account tokens.",
@@ -26,7 +25,6 @@ func RegisterRoles(ac accesscontrol.AccessControl) error {
 
 	saWriter := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Version:     4,
 			Name:        "fixed:serviceaccounts:writer",
 			DisplayName: "Service accounts writer",
 			Description: "Create, delete, read, or query service accounts.",

@@ -205,7 +205,7 @@ To display the APM table:
 1. Select the **Service Graph** query type and run the query.
 1. (Optional): filter your results.
 
-Note: The metric traces_spanmetrics_calls_total is used to display the name, rate & error rate columns and traces_spanmetrics_duration_seconds_bucket is used to display the duration column (these metrics will need to exist in your Prometheus datasource).
+Note: The metric traces_spanmetrics_calls_total is used to display the name, rate & error rate columns and traces_spanmetrics_latency_bucket is used to display the duration column (these metrics will need to exist in your Prometheus datasource).
 
 Click a row in the rate, error rate, or duration columns to open a query in Prometheus with the span name of that row automatically set in the query. Click a row in the links column to open a query in Tempo with the span name of that row automatically set in the query.
 

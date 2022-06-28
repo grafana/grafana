@@ -18,8 +18,8 @@ func NewForkedTestingApi(svc *TestingApiSrv) *ForkedTestingApi {
 	}
 }
 
-func (f *ForkedTestingApi) forkRouteTestRuleConfig(c *models.ReqContext, body apimodels.TestRulePayload) response.Response {
-	return f.svc.RouteTestRuleConfig(c, body)
+func (f *ForkedTestingApi) forkRouteTestRuleConfig(c *models.ReqContext, body apimodels.TestRulePayload, dsUID string) response.Response {
+	return f.svc.RouteTestRuleConfig(c, body, dsUID)
 }
 
 func (f *ForkedTestingApi) forkRouteTestRuleGrafanaConfig(c *models.ReqContext, body apimodels.TestRulePayload) response.Response {
