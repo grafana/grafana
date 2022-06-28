@@ -131,7 +131,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
     subscriptions.add(
       eventBus
         .getStream(DataHoverEvent)
-        .pipe(throttleTime(50))
+        .pipe(throttleTime(8))
         .subscribe({
           next: (event) => {
             const feature = source.getFeatures()[0];
