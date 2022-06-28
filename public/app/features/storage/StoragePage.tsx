@@ -79,7 +79,6 @@ export default function StoragePage() {
       <div className={styles.wrapper}>
         <div className={styles.tableControlRowWrapper}>
           <Select
-            className={styles.tableControlRowItem}
             options={pathOptions}
             value={path}
             onChange={(v) => {
@@ -88,19 +87,20 @@ export default function StoragePage() {
               }
             }}
           />
-          <div className={styles.tableControlRowItem}>
-            {
-              <UploadPopoverContainer
-                disabled={!pathsSupportingUpload.includes(path)}
-                onUpload={() => {
-                  setUploadTime(Date.now);
-                }}
-                onClose={() => {
-                  setUploadModalCloseTime(Date.now);
-                }}
-              />
-            }
-          </div>
+          {pathsSupportingUpload.includes(path) && (
+            <div className={styles.uploadSpot}>
+              {
+                <UploadPopoverContainer
+                  onUpload={() => {
+                    setUploadTime(Date.now);
+                  }}
+                  onClose={() => {
+                    setUploadModalCloseTime(Date.now);
+                  }}
+                />
+              }
+            </div>
+          )}
         </div>
         <div className={styles.tableWrapper}>
           <AutoSizer>
@@ -134,23 +134,21 @@ const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
     display: flex;
     flex-direction: column;
-    height: 90%;
+    height: 100%;
   `,
   tableControlRowWrapper: css`
     display: flex;
     flex-direction: row;
     align-items: center;
+    margin-bottom: ${theme.spacing(2)};
   `,
   // TODO: remove `height: 100%`
   tableWrapper: css`
     border: 1px solid ${theme.colors.border.medium};
     height: 100%;
   `,
-  tableControlRowItem: css`
-    margin: ${theme.spacing(2)};
-  `,
-  tableSelect: css`
-    border: 1px solid ${theme.colors.border.medium};
+  uploadSpot: css`
+    margin-left: ${theme.spacing(2)};
   `,
   border: css`
     border: 1px solid ${theme.colors.border.medium};

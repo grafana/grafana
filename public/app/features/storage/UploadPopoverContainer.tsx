@@ -10,7 +10,7 @@ import { UploadPopover } from './UploadPopover';
 interface Props {
   onUpload: () => void;
   onClose: () => void;
-  disabled: boolean;
+  disabled?: boolean;
 }
 
 export const UploadPopoverContainer = (props: Props) => {

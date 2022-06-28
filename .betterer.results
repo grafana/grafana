@@ -4737,6 +4737,8 @@ exports[`better eslint`] = {
       [23, 29, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/dashboard/components/FolderView/FolderView.tsx:2598065146": [
+      [24, 20, 47, "Do not use any type assertions.", "3786275544"],
+      [24, 21, 17, "Do not use any type assertions.", "3089290125"],
       [24, 35, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/dashboard/components/Inspector/PanelInspectActions.tsx:199822845": [
@@ -6944,14 +6946,14 @@ exports[`better eslint`] = {
       [47, 11, 9, "Do not use any type assertions.", "3692209159"],
       [47, 17, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/storage/UploadPopoverContainer.tsx:125733030": [
-      [21, 37, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [33, 33, 3, "Unexpected any. Specify a different type.", "193409811"]
-    ],
     "public/app/features/serviceaccounts/state/reducers.ts:816482675": [
       [13, 18, 23, "Do not use any type assertions.", "499357842"],
       [15, 10, 14, "Do not use any type assertions.", "2767045528"],
       [43, 19, 25, "Do not use any type assertions.", "1122467828"]
+    ],
+    "public/app/features/storage/UploadPopoverContainer.tsx:2134539033": [
+      [21, 37, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [33, 33, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/teams/CreateTeam.test.tsx:136903941": [
       [30, 14, 34, "Do not use any type assertions.", "463003776"]

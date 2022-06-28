@@ -1,4 +1,4 @@
-import { DataFrame, dataFrameFromJSON, DataFrameJSON } from '@grafana/data';
+import { DataFrame, dataFrameFromJSON } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 
 // Likely should be built into the search interface!
@@ -14,7 +14,7 @@ class SimpleStorage implements GrafanaStorage {
     if (path) {
       url += path + '/';
     }
-    const rsp = (await getBackendSrv().get(url)) as DataFrameJSON;
+    const rsp = await getBackendSrv().get(url); // as DataFrameJSON;
     if (rsp && rsp.data) {
       return dataFrameFromJSON(rsp);
     }
