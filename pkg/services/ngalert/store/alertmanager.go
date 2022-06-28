@@ -22,7 +22,7 @@ var (
 	// ConfigRecordsLimit defines the limit of how many alertmanager configuration versions
 	// should be stored in the database for each organization including the current one.
 	// Has to be > 0
-	ConfigRecordsLimit = 100
+	ConfigRecordsLimit int64 = 100
 )
 
 // GetLatestAlertmanagerConfiguration returns the lastest version of the alertmanager configuration.
@@ -82,7 +82,7 @@ func (st DBstore) SaveAlertmanagerConfigurationWithCallback(ctx context.Context,
 		if _, err := sess.Insert(config); err != nil {
 			return err
 		}
-		if _, err := st.deleteOldConfigurations(ctx, cmd.OrgID, 100); err != nil {
+		if _, err := st.deleteOldConfigurations(ctx, cmd.OrgID, ConfigRecordsLimit); err != nil {
 			st.Logger.Warn("failed to delete old am configs", "org", cmd.OrgID, "err", err)
 		}
 		if err := callback(); err != nil {
@@ -124,7 +124,7 @@ func (st *DBstore) UpdateAlertmanagerConfiguration(ctx context.Context, cmd *mod
 		if rows == 0 {
 			return ErrVersionLockedObjectNotFound
 		}
-		if _, err := st.deleteOldConfigurations(ctx, cmd.OrgID, 100); err != nil {
+		if _, err := st.deleteOldConfigurations(ctx, cmd.OrgID, ConfigRecordsLimit); err != nil {
 			st.Logger.Warn("failed to delete old am configs", "org", cmd.OrgID, "err", err)
 		}
 		return err
