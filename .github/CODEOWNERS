@@ -12,8 +12,8 @@
 # This should make it easy to add new rules without breaking existing ones.
 
 # Documentation owner: Jita Chatterjee
-/docs/ @grafana/docs-squad @pkolyvas
-/contribute/ @marcusolsson @grafana/docs-squad @pkolyvas
+/docs/ @grafana/docs-squad
+/contribute/ @marcusolsson @grafana/docs-squad
 /docs/sources/developers/plugins/ @marcusolsson @grafana/docs-squad @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
 /docs/sources/developers/plugins/backend @marcusolsson @grafana/docs-squad @grafana/plugins-platform-backend
 /docs/sources/enterprise/ @osg-grafana @grafana/docs-squad
