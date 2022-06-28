@@ -41,11 +41,9 @@ func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUser
 	extUser := cmd.ExternalUser
 
 	user, err := ls.AuthInfoService.LookupAndUpdate(ctx, &models.GetUserByAuthInfoQuery{
-		AuthModule: extUser.AuthModule,
-		AuthId:     extUser.AuthId,
-		UserId:     extUser.UserId,
-		Email:      extUser.Email,
-		Login:      extUser.Login,
+		AuthModule:       extUser.AuthModule,
+		AuthId:           extUser.AuthId,
+		UserLookupParams: cmd.UserLookupParams,
 	})
 	if err != nil {
 		if !errors.Is(err, models.ErrUserNotFound) {
