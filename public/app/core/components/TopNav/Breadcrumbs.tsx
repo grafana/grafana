@@ -13,7 +13,7 @@ export interface Props extends TopNavProps {
 
 export interface Breadcrumb {
   text?: string;
-  icon?: string;
+  icon?: IconName;
   href?: string;
 }
 
@@ -42,7 +42,7 @@ export function Breadcrumbs({ sectionNav, subNav }: Props) {
           {breadcrumb.href && (
             <a className={styles.breadcrumbLink} href={breadcrumb.href}>
               {breadcrumb.text}
-              {breadcrumb.icon && <Icon name={breadcrumb.icon as IconName} />}
+              {breadcrumb.icon && <Icon name={breadcrumb.icon} />}
             </a>
           )}
           {!breadcrumb.href && <span className={styles.breadcrumbLink}>{breadcrumb.text}</span>}
