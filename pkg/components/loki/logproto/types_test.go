@@ -14,20 +14,20 @@ var (
 		Labels: `{job="foobar", cluster="foo-central1", namespace="bar", container_name="buzz"}`,
 		Hash:   1234*10 ^ 9,
 		Entries: []Entry{
-			{now, line},
-			{now.Add(1 * time.Second), line},
-			{now.Add(2 * time.Second), line},
-			{now.Add(3 * time.Second), line},
+			{Timestamp: now, Line: line},
+			{Timestamp: now.Add(1 * time.Second), Line: line},
+			{Timestamp: now.Add(2 * time.Second), Line: line},
+			{Timestamp: now.Add(3 * time.Second), Line: line},
 		},
 	}
 	streamAdapter = StreamAdapter{
 		Labels: `{job="foobar", cluster="foo-central1", namespace="bar", container_name="buzz"}`,
 		Hash:   1234*10 ^ 9,
 		Entries: []EntryAdapter{
-			{now, line},
-			{now.Add(1 * time.Second), line},
-			{now.Add(2 * time.Second), line},
-			{now.Add(3 * time.Second), line},
+			{Timestamp: now, Line: line},
+			{Timestamp: now.Add(1 * time.Second), Line: line},
+			{Timestamp: now.Add(2 * time.Second), Line: line},
+			{Timestamp: now.Add(3 * time.Second), Line: line},
 		},
 	}
 )
