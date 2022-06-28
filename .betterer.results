@@ -5494,9 +5494,9 @@ exports[`better eslint`] = {
       [151, 23, 66, "Do not use any type assertions.", "119077733"],
       [213, 13, 24, "Do not use any type assertions.", "3405802617"]
     ],
-    "public/app/features/datasources/state/navModel.ts:1240404259": [
-      [172, 4, 495, "Do not use any type assertions.", "1598410110"],
-      [196, 9, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/features/datasources/state/navModel.ts:488728151": [
+      [174, 4, 495, "Do not use any type assertions.", "1598410110"],
+      [198, 9, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/datasources/state/reducers.test.ts:4195246710": [
       [28, 3, 276, "Do not use any type assertions.", "3381534227"],

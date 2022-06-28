@@ -94,7 +94,9 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
   }
 
   if (featureEnabled('analytics')) {
-    navModel.children!.push(analytics);
+    if (contextSrv.hasPermission(AccessControlAction.DataSourcesInsightsRead)) {
+      navModel.children!.push(analytics);
+    }
   } else if (highlightsEnabled && !isLoadingNav) {
     navModel.children!.push({
       ...analytics,
