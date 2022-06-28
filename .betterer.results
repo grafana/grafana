@@ -5025,11 +5025,11 @@ exports[`better eslint`] = {
       [264, 15, 56, "Do not use any type assertions.", "2674630592"],
       [266, 13, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/dashboard/containers/DashboardPage.tsx:707193595": [
-      [107, 36, 40, "Do not use any type assertions.", "2547843745"],
-      [107, 73, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [142, 32, 40, "Do not use any type assertions.", "2547843745"],
-      [142, 69, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/features/dashboard/containers/DashboardPage.tsx:3173260528": [
+      [108, 36, 40, "Do not use any type assertions.", "2547843745"],
+      [108, 73, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [144, 32, 40, "Do not use any type assertions.", "2547843745"],
+      [144, 69, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/dashboard/containers/SoloPanelPage.test.tsx:1655234814": [
       [26, 29, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -5366,8 +5366,8 @@ exports[`better eslint`] = {
       [143, 17, 41, "Do not use any type assertions.", "1363816804"],
       [145, 11, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/dashboard/state/initDashboard.ts:4291397377": [
-      [215, 71, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/features/dashboard/state/initDashboard.ts:1143357497": [
+      [216, 84, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/dashboard/state/reducers.ts:2272523560": [
       [64, 9, 3, "Unexpected any. Specify a different type.", "193409811"]
@@ -6420,8 +6420,8 @@ exports[`better eslint`] = {
       [32, 25, 3, "Unexpected any. Specify a different type.", "193409811"],
       [61, 22, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/plugins/admin/components/PluginDetailsBody.tsx:3199506957": [
-      [45, 35, 25, "Do not use any type assertions.", "3298329852"]
+    "public/app/features/plugins/admin/components/PluginDetailsBody.tsx:2575001007": [
+      [46, 35, 25, "Do not use any type assertions.", "3298329852"]
     ],
     "public/app/features/plugins/admin/components/PluginDetailsHeader.tsx:4233259": [
       [64, 48, 3, "Unexpected any. Specify a different type.", "193409811"]
@@ -6462,7 +6462,7 @@ exports[`better eslint`] = {
     "public/app/features/plugins/admin/pages/PluginDetails.test.tsx:186575126": [
       [85, 15, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/plugins/admin/pages/PluginDetails.tsx:4160094062": [
+    "public/app/features/plugins/admin/pages/PluginDetails.tsx:2558474094": [
       [43, 18, 32, "Do not use any type assertions.", "4000149916"],
       [87, 24, 20, "Do not use any type assertions.", "2850977225"]
     ],
@@ -6478,8 +6478,8 @@ exports[`better eslint`] = {
     "public/app/features/plugins/admin/state/selectors.ts:345773501": [
       [62, 23, 27, "Do not use any type assertions.", "1285719276"]
     ],
-    "public/app/features/plugins/admin/types.ts:593250396": [
-      [236, 10, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/features/plugins/admin/types.ts:1638901340": [
+      [238, 10, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/plugins/built_in_plugins.ts:2973583336": [
       [93, 22, 3, "Unexpected any. Specify a different type.", "193409811"]
@@ -6839,13 +6839,13 @@ exports[`better eslint`] = {
       [62, 12, 21, "Do not use any type assertions.", "976337522"],
       [63, 14, 26, "Do not use any type assertions.", "2909521803"]
     ],
-    "public/app/features/search/page/components/columns.tsx:282017932": [
-      [33, 20, 70, "Do not use any type assertions.", "512413936"],
-      [33, 21, 13, "Do not use any type assertions.", "3933930693"],
-      [33, 31, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [48, 32, 21, "Do not use any type assertions.", "3454251755"],
-      [48, 50, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [127, 15, 56, "Do not use any type assertions.", "1375039711"]
+    "public/app/features/search/page/components/columns.tsx:2440349722": [
+      [34, 20, 70, "Do not use any type assertions.", "512413936"],
+      [34, 21, 13, "Do not use any type assertions.", "3933930693"],
+      [34, 31, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [49, 32, 21, "Do not use any type assertions.", "3454251755"],
+      [49, 50, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [145, 15, 56, "Do not use any type assertions.", "1375039711"]
     ],
     "public/app/features/search/reducers/dashboardSearch.test.ts:1813679195": [
       [5, 66, 17, "Do not use any type assertions.", "3518965757"],

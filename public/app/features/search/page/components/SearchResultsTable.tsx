@@ -84,7 +84,8 @@ export const SearchResultsTable = React.memo(
         clearSelection,
         styles,
         onTagSelected,
-        onDatasourceChange
+        onDatasourceChange,
+        response.view?.length >= response.totalRows
       );
     }, [response, width, styles, selection, selectionToggle, clearSelection, onTagSelected, onDatasourceChange]);
 
