@@ -80,6 +80,23 @@ func (m *SQLStoreMock) GetDialect() migrator.Dialect {
 	return nil
 }
 
+func (m *SQLStoreMock) DeleteExpiredSnapshots(ctx context.Context, cmd *models.DeleteExpiredSnapshotsCommand) error {
+	return m.ExpectedError
+}
+
+func (m *SQLStoreMock) CreateDashboardSnapshot(ctx context.Context, cmd *models.CreateDashboardSnapshotCommand) error {
+	return m.ExpectedError
+}
+
+func (m *SQLStoreMock) DeleteDashboardSnapshot(ctx context.Context, cmd *models.DeleteDashboardSnapshotCommand) error {
+	return m.ExpectedError
+}
+
+func (m *SQLStoreMock) GetDashboardSnapshot(ctx context.Context, query *models.GetDashboardSnapshotQuery) error {
+	query.Result = m.ExpectedDashboardSnapshot
+	return m.ExpectedError
+}
+
 func (m *SQLStoreMock) HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error {
 	return m.ExpectedError
 }
