@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 )
 
 type loginStats struct {
@@ -43,7 +42,7 @@ func (s *AuthInfoStore) CollectLoginStats(ctx context.Context) (map[string]inter
 }
 
 func (s *AuthInfoStore) duplicateUserEntriesSQL(ctx context.Context) string {
-	userDialect := db.DB.GetDialect(s.sqlStore).Quote("user")
+	userDialect := s.sqlStore.GetDialect().Quote("user")
 	// this query counts how many users have the same login or email.
 	// which might be confusing, but gives a good indication
 	// we want this query to not require too much cpu
