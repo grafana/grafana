@@ -24,6 +24,9 @@ type AlertingStore interface {
 	SaveAlertmanagerConfiguration(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error
 	SaveAlertmanagerConfigurationWithCallback(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd, callback SaveCallback) error
 	UpdateAlertmanagerConfiguration(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error
+	// DeleteOldConfigurations will delete all records that surpases the limit count.
+	// i.e. if you want to keep the latest 100 records max at any time, set the limit to 100.
+	DeleteOldConfigurations(ctx context.Context, orgID, limit int64) (int64, error)
 }
 
 // DBstore stores the alert definitions and instances in the database.

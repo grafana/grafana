@@ -196,3 +196,31 @@ func getInsertQuery(driver string) string {
 		)`
 	}
 }
+
+func (st *DBstore) DeleteOldConfigurations(ctx context.Context, orgID, limit int64) (int64, error) {
+	var affactedRows int64
+	err := st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		res, err := sess.Exec(`
+			DELETE FROM 
+				alert_configuration 
+			WHERE
+				org_id = ?
+			AND 
+				id NOT IN (
+					SELECT id 
+					FROM alert_configuration 
+					WHERE org_id = ? ORDER BY ID DESC LIMIT ?
+				)
+		`, orgID, orgID, limit)
+		if err != nil {
+			return err
+		}
+		rows, err := res.RowsAffected()
+		if err != nil {
+			return err
+		}
+		affactedRows = rows
+		return nil
+	})
+	return affactedRows, err
+}

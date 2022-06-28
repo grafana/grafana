@@ -233,10 +233,21 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 		am.fileStore.CleanUp()
 	}
 
+	moa.cleanupAMConfigTable(ctx)
+
 	// We look for orphan directories and remove them. Orphan directories can
 	// occur when an organization is deleted and the node running Grafana is
 	// shutdown before the next sync is executed.
 	moa.cleanupOrphanLocalOrgState(ctx, orgsFound)
+}
+
+// cleanupAMConfigTable will remove the oldest entries from the alert_configuration
+// table so that we make sure to not overpopulate the table with old entires.
+func (moa *MultiOrgAlertmanager) cleanupAMConfigTable(ctx context.Context) {
+	for orgID := range moa.alertmanagers {
+		// delete old records but keep at least 100 records
+		moa.configStore.DeleteOldConfigurations(ctx, orgID, 100)
+	}
 }
 
 // cleanupOrphanLocalOrgState will check if there is any organization on
