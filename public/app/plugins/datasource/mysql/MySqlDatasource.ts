@@ -1,12 +1,12 @@
 import { map as _map } from 'lodash';
 
 import { DataSourceInstanceSettings, ScopedVars, TimeRange } from '@grafana/data';
-import { LanguageCompletionProvider } from '@grafana/experimental';
+import { CompletionItemKind, LanguageCompletionProvider } from '@grafana/experimental';
 import { TemplateSrv } from '@grafana/runtime';
 import MySQLQueryModel from 'app/plugins/datasource/mysql/MySqlQueryModel';
 
 import { SqlDatasource } from '../sql/datasource/SqlDatasource';
-import { DB, ResponseParser, SQLOptions, SQLQuery, TableSchema, ValidationResults } from '../sql/types';
+import { DB, ResponseParser, SQLOptions, SQLQuery, ValidationResults } from '../sql/types';
 
 import MySqlResponseParser from './MySqlResponseParser';
 import { mapFieldsToTypes } from './fields';
@@ -18,7 +18,7 @@ export class MySqlDatasource extends SqlDatasource {
   responseParser: MySqlResponseParser;
   completionProvider: LanguageCompletionProvider | undefined;
 
-  constructor(instanceSettings: DataSourceInstanceSettings<SQLOptions>) {
+  constructor(private instanceSettings: DataSourceInstanceSettings<SQLOptions>) {
     super(instanceSettings);
     this.responseParser = new MySqlResponseParser();
     this.completionProvider = undefined;
@@ -39,6 +39,7 @@ export class MySqlDatasource extends SqlDatasource {
     const args = {
       getColumns: { current: (query: MySQLQuery) => fetchColumns(db, query) },
       getTables: { current: (dataset?: string) => fetchTables(db, { dataset } as SQLQuery) },
+      fetchMeta: { current: (path?: string) => this.fetchMeta(path) },
     };
     this.completionProvider = getSqlCompletionProvider(args);
     return this.completionProvider;
@@ -64,49 +65,44 @@ export class MySqlDatasource extends SqlDatasource {
     return mapFieldsToTypes(fields);
   }
 
-  getDB(dsID?: string): DB {
+  async fetchMeta(path?: string) {
+    const defaultDB = this.instanceSettings.jsonData.database;
+    path = path?.trim();
+    if (!path && defaultDB) {
+      const tables = await this.fetchTables(defaultDB);
+      return tables.map((t) => ({ name: t, completion: t, kind: CompletionItemKind.Class }));
+    } else if (!path) {
+      const datasets = await this.fetchDatasets();
+      return datasets.map((d) => ({ name: d, completion: `${d}.`, kind: CompletionItemKind.Module }));
+    } else {
+      const parts = path.split('.').filter((s: string) => s);
+      if (parts.length > 2) {
+        return [];
+      }
+      if (parts.length === 1 && !defaultDB) {
+        const tables = await this.fetchTables(parts[0]);
+        return tables.map((t) => ({ name: t, completion: t, kind: CompletionItemKind.Class }));
+      } else if (parts.length === 1 && defaultDB) {
+        const fields = await this.fetchFields({ dataset: defaultDB, table: parts[0] } as SQLQuery);
+        return fields.map((t) => ({ name: t.value, completion: t.value, kind: CompletionItemKind.Field }));
+      } else {
+        return [];
+      }
+    }
+  }
+
+  getDB(): DB {
     if (this.db !== undefined) {
       return this.db;
     }
     return {
-      init: () => {
-        return Promise.resolve(true);
-      },
       datasets: () => this.fetchDatasets(),
       tables: (dataset?: string) => this.fetchTables(dataset),
-      tableSchema: (query: SQLQuery | string) => {
-        const schema = {} as TableSchema;
-        return Promise.resolve(schema);
-      },
       fields: (query: SQLQuery) => this.fetchFields(query),
-      validateQuery: (query: SQLQuery, range?: TimeRange) => {
-        const results = {} as ValidationResults;
-        return Promise.resolve(results);
-      },
-      dsID: () => {
-        return this.id;
-      },
-      dispose: (dsID?: string) => {},
-      lookup: async (path?: string) => {
-        if (!path) {
-          const datasets = await this.fetchDatasets();
-          return datasets.map((d) => ({ name: d, completion: `${d}.` }));
-        } else {
-          const parts = path.split('.').filter((s: string) => s);
-          if (parts.length > 2) {
-            return [];
-          }
-          if (parts.length === 1) {
-            const tables = await this.fetchTables(path[0]);
-            return tables.map((t) => ({ name: t, completion: `${t}\`` }));
-          } else {
-            return [];
-          }
-        }
-      },
-      getSqlCompletionProvider: () => {
-        return this.getSqlCompletionProvider(this.db);
-      },
+      validateQuery: (query: SQLQuery, range?: TimeRange) => Promise.resolve({} as ValidationResults),
+      dsID: () => this.id,
+      lookup: (path?: string) => this.fetchMeta(path),
+      getSqlCompletionProvider: () => this.getSqlCompletionProvider(this.db),
     };
   }
 }

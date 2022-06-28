@@ -69,6 +69,9 @@ def wire_install_step():
         'commands': [
             'make gen-go',
         ],
+        'depends_on': [
+            'verify-gen-cue',
+        ],
     }
 
 
@@ -203,13 +206,13 @@ def enterprise_downstream_step(edition, ver_mode):
             'params': [
                 'SOURCE_BUILD_NUMBER=${DRONE_COMMIT}',
                 'SOURCE_COMMIT=${DRONE_COMMIT}',
-                'OSS_PULL_REQUEST=${DRONE_PULL_REQUEST}',
             ],
         },
     }
 
     if ver_mode == 'pr':
         step.update({ 'failure': 'ignore' })
+        step['settings']['params'].append('OSS_PULL_REQUEST=${DRONE_PULL_REQUEST}')
 
     return step
 
@@ -227,7 +230,7 @@ def lint_backend_step(edition):
         ],
         'commands': [
             # Don't use Make since it will re-download the linters
-            './bin/grabpl lint-backend --edition {}'.format(edition),
+            'make lint-go',
         ],
     }
 
@@ -499,16 +502,28 @@ def build_plugins_step(edition, sign=False):
 
 
 def test_backend_step(edition):
-    return {
-        'name': 'test-backend' + enterprise2_suffix(edition),
-        'image': build_image,
-        'depends_on': [
-            'wire-install',
-        ],
-        'commands': [
-            './bin/grabpl test-backend --edition {}'.format(edition),
-        ],
-    }
+    if edition == 'oss':
+        return {
+            'name': 'test-backend' + enterprise2_suffix(edition),
+            'image': build_image,
+            'depends_on': [
+                'wire-install',
+            ],
+            'commands': [
+                'go test -short -covermode=atomic -timeout=30m ./pkg/...',
+            ],
+        }
+    else:
+        return {
+            'name': 'test-backend' + enterprise2_suffix(edition),
+            'image': build_image,
+            'depends_on': [
+                'wire-install',
+            ],
+            'commands': [
+                './bin/grabpl test-backend --edition {}'.format(edition),
+            ],
+        }
 
 def test_backend_integration_step(edition):
     if edition == 'oss':
@@ -855,7 +870,21 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, trigger=None):
 
 def postgres_integration_tests_step(edition, ver_mode):
     deps = []
-    deps.extend(['grabpl'])
+    cmds = [
+            'apt-get update',
+            'apt-get install -yq postgresql-client',
+            'dockerize -wait tcp://postgres:5432 -timeout 120s',
+            'psql -p 5432 -h postgres -U grafanatest -d grafanatest -f ' +
+            'devenv/docker/blocks/postgres_tests/setup.sql',
+            # Make sure that we don't use cached results for another database
+            'go clean -testcache',
+        ]
+    if edition == 'oss':
+        deps.extend(['wire-install'])
+        cmds.extend(["go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=30m {}'"])
+    else:
+        deps.extend(['grabpl'])
+        cmds.extend(['./bin/grabpl integration-tests --database postgres'])
     return {
         'name': 'postgres-integration-tests',
         'image': build_image,
@@ -865,22 +894,26 @@ def postgres_integration_tests_step(edition, ver_mode):
             'GRAFANA_TEST_DB': 'postgres',
             'POSTGRES_HOST': 'postgres',
         },
-        'commands': [
-            'apt-get update',
-            'apt-get install -yq postgresql-client',
-            'dockerize -wait tcp://postgres:5432 -timeout 120s',
-            'psql -p 5432 -h postgres -U grafanatest -d grafanatest -f ' +
-            'devenv/docker/blocks/postgres_tests/setup.sql',
-            # Make sure that we don't use cached results for another database
-            'go clean -testcache',
-            './bin/grabpl integration-tests --database postgres',
-        ],
+        'commands': cmds,
     }
 
 
 def mysql_integration_tests_step(edition, ver_mode):
     deps = []
-    deps.extend(['grabpl'])
+    cmds = [
+            'apt-get update',
+            'apt-get install -yq default-mysql-client',
+            'dockerize -wait tcp://mysql:3306 -timeout 120s',
+            'cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass',
+            # Make sure that we don't use cached results for another database
+            'go clean -testcache',
+        ]
+    if edition == 'oss':
+        deps.extend(['wire-install'])
+        cmds.extend(["go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=30m {}'"])
+    else:
+        deps.extend(['grabpl'])
+        cmds.extend(['./bin/grabpl integration-tests --database mysql'])
     return {
         'name': 'mysql-integration-tests',
         'image': build_image,
@@ -889,25 +922,15 @@ def mysql_integration_tests_step(edition, ver_mode):
             'GRAFANA_TEST_DB': 'mysql',
             'MYSQL_HOST': 'mysql',
         },
-        'commands': [
-            'apt-get update',
-            'apt-get install -yq default-mysql-client',
-            'dockerize -wait tcp://mysql:3306 -timeout 120s',
-            'cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass',
-            # Make sure that we don't use cached results for another database
-            'go clean -testcache',
-            './bin/grabpl integration-tests --database mysql',
-        ],
+        'commands': cmds,
     }
 
 
 def redis_integration_tests_step():
-    deps = []
-    deps.extend(['grabpl'])
     return {
         'name': 'redis-integration-tests',
         'image': build_image,
-        'depends_on': deps,
+        'depends_on': ['init-enterprise'],
         'environment': {
             'REDIS_URL': 'redis://redis:6379/0',
         },
@@ -919,12 +942,10 @@ def redis_integration_tests_step():
 
 
 def memcached_integration_tests_step():
-    deps = []
-    deps.extend(['grabpl'])
     return {
         'name': 'memcached-integration-tests',
         'image': build_image,
-        'depends_on': deps,
+        'depends_on': ['init-enterprise'],
         'environment': {
             'MEMCACHED_HOSTS': 'memcached:11211',
         },

@@ -12,6 +12,9 @@ import (
 )
 
 func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	t.Run("Testing DB", func(t *testing.T) {
 		var sqlStore *sqlstore.SQLStore
 		var folder, dashInRoot, childDash *models.Dashboard

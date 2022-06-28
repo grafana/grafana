@@ -8,11 +8,32 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"reflect"
 	"strings"
 
 	"github.com/go-openapi/loads"
 	"github.com/go-openapi/spec"
 )
+
+func mergeVectors(a, b []string) []string {
+	for _, p := range b {
+		exist := false
+		for _, op := range a {
+			if op == p {
+				exist = true
+				break
+			}
+		}
+		if !exist {
+			a = append(a, p)
+		}
+	}
+	return a
+}
+
+func compareDefinition(a, b spec.Schema) bool {
+	return reflect.DeepEqual(a.Type, b.Type) && a.Format == b.Format && reflect.DeepEqual(a.Properties, b.Properties)
+}
 
 // mergeSpecs merges OSS API spec with one or more other OpenAPI specs
 func mergeSpecs(output string, sources ...string) error {
@@ -41,15 +62,33 @@ func mergeSpecs(output string, sources ...string) error {
 			return fmt.Errorf("failed to load spec from: %s: %w", s, err)
 		}
 
-		//TODO: consumes, produces, schemes
+		// Merge consumes
+		specOSS.SwaggerProps.Consumes = mergeVectors(specOSS.SwaggerProps.Consumes, additionalSpec.OrigSpec().Consumes)
 
-		//TODO: check for conflicts
-		for k, d := range additionalSpec.OrigSpec().SwaggerProps.Definitions {
-			specOSS.SwaggerProps.Definitions[k] = d
+		// Merge produces
+		specOSS.SwaggerProps.Produces = mergeVectors(specOSS.SwaggerProps.Produces, additionalSpec.OrigSpec().Produces)
+
+		// Merge schemes
+		specOSS.SwaggerProps.Schemes = mergeVectors(specOSS.SwaggerProps.Schemes, additionalSpec.OrigSpec().Schemes)
+
+		//TODO: When there are conflict between definitions, we need to error out, but here we need to fix the existing conflict first
+		// there are false positives, we will have to fix those by regenerate alerting api spec
+		for k, ad := range additionalSpec.OrigSpec().SwaggerProps.Definitions {
+			if ossd, exists := specOSS.SwaggerProps.Definitions[k]; exists {
+				if !compareDefinition(ad, ossd) {
+					fmt.Printf("the definition of %s differs in specs!\n", k)
+				}
+			}
+			specOSS.SwaggerProps.Definitions[k] = ad
 		}
 
-		for k, r := range additionalSpec.OrigSpec().SwaggerProps.Responses {
-			specOSS.SwaggerProps.Responses[k] = r
+		for k, ar := range additionalSpec.OrigSpec().SwaggerProps.Responses {
+			if ossr, exists := specOSS.SwaggerProps.Responses[k]; exists {
+				if !reflect.DeepEqual(ar, ossr) {
+					fmt.Printf("the definition of response %s differs in specs!\n", k)
+				}
+			}
+			specOSS.SwaggerProps.Responses[k] = ar
 		}
 
 		for k, p := range additionalSpec.OrigSpec().SwaggerProps.Parameters {

@@ -10,7 +10,7 @@ import {
   TimeRange,
   toOption as toOptionFromData,
 } from '@grafana/data';
-import { EditorMode, LanguageCompletionProvider } from '@grafana/experimental';
+import { CompletionItemKind, EditorMode, LanguageCompletionProvider } from '@grafana/experimental';
 import { BackendDataSourceResponse } from '@grafana/runtime';
 
 import { QueryWithDefaults } from './defaults';
@@ -31,6 +31,7 @@ export interface SqlQueryForInterpolation {
 
 export interface SQLOptions extends DataSourceJsonData {
   timeInterval: string;
+  database: string;
 }
 
 export type ResultFormat = 'time_series' | 'table';
@@ -48,6 +49,7 @@ export interface SQLQuery extends DataQuery {
   table?: string;
   sql?: SQLExpression;
   editorMode?: EditorMode;
+  rawQuery?: boolean;
 }
 
 export interface NameValue {
@@ -59,14 +61,10 @@ export type SQLFilters = NameValue[];
 
 export interface SQLExpression {
   columns?: QueryEditorFunctionExpression[];
-  // TODO: seems database should be here
-  // TODO: seems like this should be here ( table )
-  // from?: string;
   whereJsonTree?: JsonTree;
   whereString?: string;
   filters?: SQLFilters;
   groupBy?: QueryEditorGroupByExpression[];
-  // TODO: Maybe change this to array in the future
   orderBy?: QueryEditorPropertyExpression;
   orderByDirection?: 'ASC' | 'DESC';
   limit?: number;
@@ -103,7 +101,6 @@ const backWardToOption = (value: string) => ({ label: value, value } as Selectab
 export const toOption = toOptionFromData ?? backWardToOption;
 
 export interface ResourceSelectorProps {
-  // apiClient: BigQueryAPI;
   disabled?: boolean;
   className?: string;
   applyDefault?: boolean;
@@ -117,16 +114,16 @@ export interface SQLSelectableValue extends SelectableValue {
   raqbFieldType?: RAQBFieldTypes;
 }
 export interface DB {
-  init: (datasourceId?: string) => Promise<boolean>;
+  init?: (datasourceId?: string) => Promise<boolean>;
   datasets: () => Promise<string[]>;
   tables: (dataset?: string) => Promise<string[]>;
-  tableSchema: (query: SQLQuery | string) => Promise<TableSchema>;
   fields: (query: SQLQuery, order?: boolean) => Promise<SQLSelectableValue[]>;
   validateQuery: (query: SQLQuery, range?: TimeRange) => Promise<ValidationResults>;
   dsID: () => string;
-  dispose: (dsID?: string) => void;
+  dispose?: (dsID?: string) => void;
   lookup: (path?: string) => Promise<Array<{ name: string; completion: string }>>;
   getSqlCompletionProvider: () => LanguageCompletionProvider;
+  toRawSql?: (query: SQLQuery) => string;
 }
 
 export interface QueryEditorProps {
@@ -148,12 +145,17 @@ export interface ValidationResults {
 }
 
 export interface SqlQueryModel {
-  buildQuery: () => string;
-  render: (v: any) => string;
+  interpolate: () => string;
   quoteLiteral: (v: string) => string;
 }
 
 export interface ResponseParser {
   transformAnnotationResponse: (options: any, data: BackendDataSourceResponse) => Promise<AnnotationEvent[]>;
   transformMetricFindResponse: (frame: DataFrame) => MetricFindValue[];
+}
+
+export interface MetaDefinition {
+  name: string;
+  completion?: string;
+  kind: CompletionItemKind;
 }

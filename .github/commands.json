@@ -217,5 +217,93 @@
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/87"
     }
+  },
+  {
+    "type": "label",
+    "name": "team/grafana-authnz",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/86"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/auth",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/86"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/auth/rbac",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/86"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/auth/serviceaccount",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/86"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/auth/authproxy",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/86"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/auth/oauth",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/86"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/auth/ldap",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/86"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/auth/saml",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/86"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/auth/apikeys",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/86"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/auth/dspermissions",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/86"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/auth/teamsync",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/86"
+    }
   }
 ]

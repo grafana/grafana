@@ -1,6 +1,5 @@
-import { map as _map } from 'lodash';
 import { lastValueFrom, of } from 'rxjs';
-import { catchError, map, mapTo } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 
 import {
   AnnotationEvent,
@@ -21,7 +20,6 @@ import {
   TemplateSrv,
 } from '@grafana/runtime';
 import { toTestingStatus } from '@grafana/runtime/src/utils/queryResponse';
-import MySQLQueryModel from 'app/plugins/datasource/mysql/MySqlQueryModel';
 
 import { getSearchFilterScopedVar } from '../../../../features/variables/utils';
 import {
@@ -72,10 +70,12 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
       return value;
     }
 
-    const quotedValues = _map(value, (v: any) => {
-      return this.getQueryModel().quoteLiteral(v);
-    });
-    return quotedValues.join(',');
+    if (Array.isArray(value)) {
+      const quotedValues = value.map((v) => this.getQueryModel().quoteLiteral(v));
+      return quotedValues.join(',');
+    }
+
+    return value;
   };
 
   interpolateVariablesInQueries(
@@ -102,13 +102,18 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
   }
 
   applyTemplateVariables(target: SQLQuery, scopedVars: ScopedVars): Record<string, any> {
-    const queryModel = new MySQLQueryModel(target, this.templateSrv, scopedVars);
+    const queryModel = this.getQueryModel(target, this.templateSrv, scopedVars);
+    const rawSql = this.clean(queryModel.interpolate());
     return {
       refId: target.refId,
       datasource: this.getRef(),
-      rawSql: queryModel.render(this.interpolateVariable as any),
+      rawSql,
       format: target.format,
     };
+  }
+
+  clean(value: string) {
+    return value.replace(/''/g, "'");
   }
 
   async annotationQuery(options: any): Promise<AnnotationEvent[]> {
@@ -147,11 +152,6 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
   }
 
   async metricFindQuery(query: string, optionalOptions: any): Promise<MetricFindValue[]> {
-    // let refId = 'tempvar';
-    // if (optionalOptions && optionalOptions.variable && optionalOptions.variable.name) {
-    //   refId = optionalOptions.variable.name;
-    // }
-
     const rawSql = this.templateSrv.replace(
       query,
       getSearchFilterScopedVar({ query, wildcardChar: '%', options: optionalOptions }),
@@ -159,7 +159,6 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     );
 
     const interpolatedQuery = {
-      // refId: refId,
       datasourceId: this.id,
       datasource: this.getRef(),
       rawSql,
@@ -170,9 +169,9 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     return this.getResponseParser().transformMetricFindResponse(response);
   }
 
-  async runSql(query: string) {
+  async runSql<T = any>(query: string) {
     const frame = await this.runQuery({ rawSql: query, format: QueryFormat.Table }, {});
-    return new DataFrameView(frame);
+    return new DataFrameView<T>(frame);
   }
 
   private runQuery(request: Partial<SQLQuery>, options?: any): Promise<DataFrame> {
@@ -210,7 +209,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
           },
         })
         .pipe(
-          mapTo({ status: 'success', message: 'Database Connection OK' }),
+          map(() => ({ status: 'success', message: 'Database Connection OK' })),
           catchError((err) => {
             return of(toTestingStatus(err));
           })
@@ -219,25 +218,6 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
   }
 
   targetContainsTemplate(target: any) {
-    let rawSql = '';
-
-    if (target.rawQuery) {
-      rawSql = target.rawSql;
-    } else {
-      const query = new MySQLQueryModel(target);
-      rawSql = query.buildQuery();
-    }
-
-    rawSql = rawSql.replace('$__', '');
-
-    return this.templateSrv.containsTemplate(rawSql);
-  }
-
-  async fetchTables(dataset?: string): Promise<string[]> {
-    return [];
-  }
-
-  async fetchDatasets(): Promise<string[]> {
-    return [];
+    return this.templateSrv.containsTemplate(target.rawSql);
   }
 }

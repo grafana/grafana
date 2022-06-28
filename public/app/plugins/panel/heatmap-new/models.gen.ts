@@ -4,7 +4,7 @@
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 import { AxisConfig, AxisPlacement, HideableFieldConfig, ScaleDistributionConfig, VisibilityMode } from '@grafana/schema';
-import { HeatmapBucketLayout, HeatmapCalculationOptions } from 'app/features/transformers/calculateHeatmap/models.gen';
+import { HeatmapCellLayout, HeatmapCalculationOptions } from 'app/features/transformers/calculateHeatmap/models.gen';
 
 export const modelVersion = Object.freeze([1, 0]);
 
@@ -39,6 +39,11 @@ export interface YAxisConfig extends AxisConfig {
   max?: number;
 }
 
+export interface CellValues {
+  unit?: string;
+  decimals?: number;
+}
+
 export interface FilterValueRange {
   le?: number;
   ge?: number;
@@ -56,9 +61,9 @@ export interface ExemplarConfig {
   color: string;
 }
 
-export interface BucketFrameOptions {
+export interface RowsHeatmapOptions {
   value?: string; // value field name
-  layout?: HeatmapBucketLayout;
+  layout?: HeatmapCellLayout;
 }
 
 export interface PanelOptions {
@@ -67,13 +72,15 @@ export interface PanelOptions {
 
   color: HeatmapColorOptions;
   filterValues?: FilterValueRange; // was hideZeroBuckets
-  bucketFrame?: BucketFrameOptions;
+  rowsFrame?: RowsHeatmapOptions;
   showValue: VisibilityMode;
 
   cellGap?: number; // was cardPadding
   cellRadius?: number; // was cardRadius (not used, but migrated from angular)
-
+  cellValues?: CellValues;
+  
   yAxis: YAxisConfig;
+  
   legend: HeatmapLegend;
 
   tooltip: HeatmapTooltip;
@@ -90,11 +97,14 @@ export const defaultPanelOptions: PanelOptions = {
     exponent: 0.5,
     steps: 64,
   },
-  bucketFrame: {
-    layout: HeatmapBucketLayout.auto,
+  rowsFrame: {
+    layout: HeatmapCellLayout.auto,
   },
   yAxis: {
     axisPlacement: AxisPlacement.Left,
+  },
+  cellValues: {
+
   },
   showValue: VisibilityMode.Auto,
   tooltip: {

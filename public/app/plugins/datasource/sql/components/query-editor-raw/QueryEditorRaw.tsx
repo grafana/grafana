@@ -7,9 +7,6 @@ import { formatSQL } from '../../utils/formatSQL';
 
 type Props = {
   query: SQLQuery;
-  // getTables: (d?: string) => Promise<TableDefinition[]>;
-  // getColumns: (q: SQLQuery) => Promise<ColumnDefinition[]>;
-  // getTableSchema: (path: string) => Promise<TableSchema | null>;
   onChange: (value: SQLQuery, processQuery: boolean) => void;
   children?: (props: { formatQuery: () => void }) => React.ReactNode;
   width?: number;
@@ -17,26 +14,12 @@ type Props = {
   completionProvider: LanguageCompletionProvider;
 };
 
-export function QueryEditorRaw({
-  children,
-  // getColumns: fetchColumns,
-  // getTables: fetchTables,
-  onChange,
-  query,
-  width,
-  height,
-  completionProvider,
-}: Props) {
+export function QueryEditorRaw({ children, onChange, query, width, height, completionProvider }: Props) {
   // We need to pass query via ref to SQLEditor as onChange is executed via monacoEditor.onDidChangeModelContent callback, not onChange property
   const queryRef = useRef<SQLQuery>(query);
   useEffect(() => {
     queryRef.current = query;
   }, [query]);
-
-  // useEffect(() => {
-  //   getColumns.current = fetchColumns;
-  //   getTables.current = fetchTables;
-  // }, [fetchColumns, fetchTables]);
 
   const onRawQueryChange = useCallback(
     (rawSql: string, processQuery: boolean) => {

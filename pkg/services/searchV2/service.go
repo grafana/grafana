@@ -70,24 +70,39 @@ func (s *StandardSearchService) RegisterDashboardIndexExtender(ext DashboardInde
 func (s *StandardSearchService) getUser(ctx context.Context, backendUser *backend.User, orgId int64) (*models.SignedInUser, error) {
 	// TODO: get user & user's permissions from the request context
 
-	getSignedInUserQuery := &models.GetSignedInUserQuery{
-		Login: backendUser.Login,
-		Email: backendUser.Email,
-		OrgId: orgId,
-	}
+	var user *models.SignedInUser
+	if s.cfg.AnonymousEnabled && backendUser.Email == "" && backendUser.Login == "" {
+		org, err := s.sql.GetOrgByName(s.cfg.AnonymousOrgName)
+		if err != nil {
+			s.logger.Error("Anonymous access organization error.", "org_name", s.cfg.AnonymousOrgName, "error", err)
+			return nil, err
+		}
 
-	err := s.sql.GetSignedInUser(ctx, getSignedInUserQuery)
-	if err != nil {
-		s.logger.Error("Error while retrieving user", "error", err, "email", backendUser.Email)
-		return nil, errors.New("auth error")
-	}
+		user = &models.SignedInUser{
+			OrgId:       org.Id,
+			OrgName:     org.Name,
+			OrgRole:     models.RoleType(s.cfg.AnonymousOrgRole),
+			IsAnonymous: true,
+		}
+	} else {
+		getSignedInUserQuery := &models.GetSignedInUserQuery{
+			Login: backendUser.Login,
+			Email: backendUser.Email,
+			OrgId: orgId,
+		}
+		err := s.sql.GetSignedInUser(ctx, getSignedInUserQuery)
+		if err != nil {
+			s.logger.Error("Error while retrieving user", "error", err, "email", backendUser.Email)
+			return nil, errors.New("auth error")
+		}
 
-	if getSignedInUserQuery.Result == nil {
-		s.logger.Error("No user found", "email", backendUser.Email)
-		return nil, errors.New("auth error")
-	}
+		if getSignedInUserQuery.Result == nil {
+			s.logger.Error("No user found", "email", backendUser.Email)
+			return nil, errors.New("auth error")
+		}
 
-	user := getSignedInUserQuery.Result
+		user = getSignedInUserQuery.Result
+	}
 
 	if s.ac.IsDisabled() {
 		return user, nil

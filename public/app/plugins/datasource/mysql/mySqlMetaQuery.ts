@@ -76,55 +76,6 @@ export class MysqlMetaQuery {
     return query;
   }
 
-  // buildTableConstraint(table: string) {
-  //   let query = '';
-
-  //   // check for schema qualified table
-  //   if (table.includes('.')) {
-  //     const parts = table.split('.');
-  //     query = 'table_schema = ' + this.quoteIdentAsLiteral(parts[0]);
-  //     query += ' AND table_name = ' + this.quoteIdentAsLiteral(parts[1]);
-  //     return query;
-  //   } else {
-  //     query = 'table_schema = database() AND table_name = ' + this.quoteIdentAsLiteral(table);
-
-  //     return query;
-  //   }
-  // }
-
-  // buildTableQuery() {
-  //   return 'SELECT table_name FROM information_schema.tables WHERE table_schema = database() ORDER BY table_name';
-  // }
-
-  // buildColumnQuery(type?: string) {
-  //   let query = 'SELECT column_name FROM information_schema.columns WHERE ';
-  //   query += this.buildTableConstraint(this.target.table);
-
-  //   switch (type) {
-  //     case 'time': {
-  //       query += " AND data_type IN ('timestamp','datetime','bigint','int','double','float')";
-  //       break;
-  //     }
-  //     case 'metric': {
-  //       query += " AND data_type IN ('text','tinytext','mediumtext','longtext','varchar','char')";
-  //       break;
-  //     }
-  //     case 'value': {
-  //       query += " AND data_type IN ('bigint','int','smallint','mediumint','tinyint','double','decimal','float')";
-  //       query += ' AND column_name <> ' + this.quoteIdentAsLiteral(this.target.timeColumn);
-  //       break;
-  //     }
-  //     case 'group': {
-  //       query += " AND data_type IN ('text','tinytext','mediumtext','longtext','varchar','char')";
-  //       break;
-  //     }
-  //   }
-
-  //   query += ' ORDER BY column_name';
-
-  //   return query;
-  // }
-
   buildValueQuery(column: string) {
     let query = 'SELECT DISTINCT QUOTE(' + column + ')';
     query += ' FROM ' + this.target.table;

@@ -1,9 +1,9 @@
-import { SelectableValue } from '@grafana/data';
+import { RAQBFieldTypes, SQLSelectableValue } from '../sql/types';
 
-export function mapFieldsToTypes(columns: SelectableValue[]) {
-  const fields: SelectableValue[] = [];
+export function mapFieldsToTypes(columns: SQLSelectableValue[]) {
+  const fields: SQLSelectableValue[] = [];
   for (const col of columns) {
-    let type = 'text';
+    let type: RAQBFieldTypes = 'text';
     switch (col.type) {
       case 'BOOLEAN':
       case 'BOOL': {
@@ -47,7 +47,7 @@ export function mapFieldsToTypes(columns: SelectableValue[]) {
         break;
     }
 
-    fields.push({ ...col, type, icon: mapColumnTypeToIcon(col.type.toUpperCase()) });
+    fields.push({ ...col, raqbFieldType: type, icon: mapColumnTypeToIcon(col.type!.toUpperCase()) });
   }
   return fields;
 }

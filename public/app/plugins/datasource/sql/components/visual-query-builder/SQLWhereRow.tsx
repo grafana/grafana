@@ -4,7 +4,7 @@ import useAsync from 'react-use/lib/useAsync';
 import { SelectableValue } from '@grafana/data';
 
 import { QueryWithDefaults } from '../../defaults';
-import { SQLExpression, SQLQuery } from '../../types';
+import { DB, SQLExpression, SQLQuery, SQLSelectableValue } from '../../types';
 import { useSqlChange } from '../../utils/useSqlChange';
 
 import { Config } from './AwesomeQueryBuilder';
@@ -14,14 +14,15 @@ interface WhereRowProps {
   query: QueryWithDefaults;
   fields: SelectableValue[];
   onQueryChange: (query: SQLQuery) => void;
+  db: DB;
 }
 
-export function SQLWhereRow({ query, fields, onQueryChange }: WhereRowProps) {
+export function SQLWhereRow({ query, fields, onQueryChange, db }: WhereRowProps) {
   const state = useAsync(async () => {
     return mapFieldsToTypes(fields);
   }, [fields]);
 
-  const { onSqlChange } = useSqlChange({ query, onQueryChange });
+  const { onSqlChange } = useSqlChange({ query, onQueryChange, db });
 
   return (
     <WhereRow
@@ -37,11 +38,11 @@ export function SQLWhereRow({ query, fields, onQueryChange }: WhereRowProps) {
 }
 
 // needed for awesome query builder
-function mapFieldsToTypes(columns: SelectableValue[]) {
+function mapFieldsToTypes(columns: SQLSelectableValue[]) {
   const fields: Config['fields'] = {};
   for (const col of columns) {
     fields[col.value] = {
-      type: col.type,
+      type: col.raqbFieldType || 'text',
       valueSources: ['value'],
       mainWidgetProps: { customProps: { icon: col.icon } },
     };

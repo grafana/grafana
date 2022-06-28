@@ -193,8 +193,7 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 	userAuthTokenSvc := auth.NewFakeUserAuthTokenService()
 	renderSvc := &fakeRenderService{}
 	authJWTSvc := models.NewFakeJWTService()
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
+	tracer := tracing.InitializeTracerForTest()
 	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginservice.LoginServiceMock{}, sqlStore)
 	loginService := &logintest.LoginServiceFake{}
 	authenticator := &logintest.AuthenticatorFake{}
@@ -231,7 +230,7 @@ func (s *fakeRenderService) Init() error {
 	return nil
 }
 
-func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url string, permissions []*accesscontrol.Permission) (*scenarioContext, *HTTPServer) {
+func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url string, permissions []accesscontrol.Permission) (*scenarioContext, *HTTPServer) {
 	cfg.Quota.Enabled = false
 
 	store := sqlstore.InitTestDB(t)
@@ -260,7 +259,7 @@ type accessControlTestCase struct {
 	desc         string
 	url          string
 	method       string
-	permissions  []*accesscontrol.Permission
+	permissions  []accesscontrol.Permission
 }
 
 // accessControlScenarioContext contains the setups for accesscontrol tests
@@ -287,9 +286,9 @@ type accessControlScenarioContext struct {
 	dashboardsStore dashboards.Store
 }
 
-func setAccessControlPermissions(acmock *accesscontrolmock.Mock, perms []*accesscontrol.Permission, org int64) {
+func setAccessControlPermissions(acmock *accesscontrolmock.Mock, perms []accesscontrol.Permission, org int64) {
 	acmock.GetUserPermissionsFunc =
-		func(_ context.Context, u *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
+		func(_ context.Context, u *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
 			if u.OrgId == org {
 				return perms, nil
 			}

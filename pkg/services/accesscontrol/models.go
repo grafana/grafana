@@ -385,6 +385,10 @@ const (
 	// External alerting notifications actions. We can only narrow it down to writes or reads, as we don't control the atomicity in the external system.
 	ActionAlertingNotificationsExternalWrite = "alert.notifications.external:write"
 	ActionAlertingNotificationsExternalRead  = "alert.notifications.external:read"
+
+	// Alerting provisioning actions
+	ActionAlertingProvisioningRead  = "alert.provisioning:read"
+	ActionAlertingProvisioningWrite = "alert.provisioning:write"
 )
 
 var (

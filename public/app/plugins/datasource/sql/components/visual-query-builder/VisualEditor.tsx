@@ -59,6 +59,7 @@ export const VisualEditor: React.FC<VisualEditorProps> = ({
           </EditorRow>
         )}
         <EditorRow>
+<<<<<<< HEAD
           <SQLOrderByRow fields={state.value || []} query={query} onQueryChange={onChange} />
         </EditorRow>
         {/* {queryRowFilter.filter && (
@@ -80,6 +81,29 @@ export const VisualEditor: React.FC<VisualEditorProps> = ({
           <SQLOrderByRow fields={state.value || []} query={query} onQueryChange={onChange} />
         </EditorRow>
       )} */}
+=======
+          <SQLSelectRow fields={state.value || []} query={query} onQueryChange={onChange} db={db} />
+        </EditorRow>
+        {queryRowFilter.filter && (
+          <EditorRow>
+            <EditorField label="Filter by column value" optional>
+              <SQLWhereRow fields={state.value || []} query={query} onQueryChange={onChange} db={db} />
+            </EditorField>
+          </EditorRow>
+        )}
+        {queryRowFilter.group && (
+          <EditorRow>
+            <EditorField label="Group by column">
+              <SQLGroupByRow fields={state.value || []} query={query} onQueryChange={onChange} db={db} />
+            </EditorField>
+          </EditorRow>
+        )}
+        {queryRowFilter.order && (
+          <EditorRow>
+            <SQLOrderByRow fields={state.value || []} query={query} onQueryChange={onChange} db={db} />
+          </EditorRow>
+        )}
+>>>>>>> c93459144ff1476f7612e06bd113643fd62cbf3a
         {queryRowFilter.preview && query.rawSql && (
           <EditorRow>
             <Preview rawSql={query.rawSql} />

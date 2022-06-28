@@ -5,12 +5,10 @@ import useDebounce from 'react-use/lib/useDebounce';
 
 import { formattedValueToString, getValueFormat, TimeRange } from '@grafana/data';
 import { Icon, Spinner, useTheme2 } from '@grafana/ui';
-// import { BigQueryAPI, ValidationResults } from 'api';
 
 import { DB, SQLQuery, ValidationResults } from '../../types';
 
 export interface QueryValidatorProps {
-  // apiClient: BigQueryAPI;
   db: DB;
   query: SQLQuery;
   range?: TimeRange;

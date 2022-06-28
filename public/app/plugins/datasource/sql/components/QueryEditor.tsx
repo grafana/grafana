@@ -18,7 +18,14 @@ type Props = QueryEditorProps<SqlDatasource, SQLQuery, SQLOptions>;
 export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range }: Props) {
   const [isQueryRunnable, setIsQueryRunnable] = useState(true);
   const db = datasource.getDB();
-  const { loading, error } = useAsync(async () => await db.init(datasource.id), [datasource]);
+  const { loading, error } = useAsync(async () => {
+    return () => {
+      if (datasource.getDB(datasource.id).init !== undefined) {
+        datasource.getDB(datasource.id).init!();
+      }
+    };
+  }, [datasource]);
+
   const queryWithDefaults = applyQueryDefaults(query);
   const [queryRowFilter, setQueryRowFilter] = useState<QueryRowFilter>({
     filter: !!queryWithDefaults.sql.whereString,
@@ -30,7 +37,9 @@ export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range 
 
   useEffect(() => {
     return () => {
-      datasource.getDB(datasource.id).dispose();
+      if (datasource.getDB(datasource.id).dispose !== undefined) {
+        datasource.getDB(datasource.id).dispose!();
+      }
     };
   }, [datasource]);
 
