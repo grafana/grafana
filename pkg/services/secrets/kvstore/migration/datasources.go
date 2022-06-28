@@ -3,7 +3,10 @@ package migration
 import (
 	"context"
 	"encoding/json"
+	"time"
 
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -22,12 +25,13 @@ type DataSourceSecretMigrationService struct {
 	secretsStore       kvstore.SecretsKVStore
 	features           featuremgmt.FeatureToggles
 	log                log.Logger
+	bus                bus.Bus
 }
 
 func ProvideDataSourceMigrationService(
 	cfg *setting.Cfg, dataSourcesService datasources.DataSourceService,
 	secretsStore kvstore.SecretsKVStore, features featuremgmt.FeatureToggles,
-	sqlStore *sqlstore.SQLStore,
+	sqlStore *sqlstore.SQLStore, bus bus.Bus,
 ) kvstore.SecretMigrationService {
 	return &DataSourceSecretMigrationService{
 		sqlStore:           sqlStore,
@@ -35,10 +39,26 @@ func ProvideDataSourceMigrationService(
 		secretsStore:       secretsStore,
 		features:           features,
 		log:                log.New("secret.migration"),
+		bus:                bus,
+	}
+}
+
+func (s *DataSourceSecretMigrationService) WaitForProvisioning() error {
+	wait := false
+	s.bus.AddEventListener(func(ctx context.Context, e *events.DataSourceCreated) error {
+		wait = true
+		return nil
+	})
+	time.After(5 * time.Second)
+	if wait {
+		return s.WaitForProvisioning()
+	} else {
+		return nil
 	}
 }
 
 func (s *DataSourceSecretMigrationService) Run(ctx context.Context) error {
+	s.WaitForProvisioning()
 	return s.sqlStore.InTransaction(ctx, func(ctx context.Context) error {
 		query := &datasources.GetDataSourcesQuery{}
 		err := s.dataSourcesService.GetDataSources(ctx, query)
