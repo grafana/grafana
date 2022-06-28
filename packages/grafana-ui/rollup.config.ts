@@ -36,7 +36,7 @@ export default [
     input: './compiled/index.d.ts',
     plugins: [dts()],
     output: {
-      file: `${name}.d.ts`,
+      file: pkg.publishConfig.types,
       format: 'es',
     },
   }),
