@@ -490,7 +490,7 @@ func (hs *HTTPServer) buildLegacyAlertNavLinks(c *models.ReqContext) []*dtos.Nav
 		{
 			Text:       "Alerting",
 			SubTitle:   "Alert rules and notifications",
-			Id:         "alerting",
+			Id:         "alerting-legacy",
 			Icon:       "bell",
 			Url:        hs.Cfg.AppSubURL + "/alerting/list",
 			Children:   alertChildNavs,
