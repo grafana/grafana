@@ -74,7 +74,6 @@ func Logger(cfg *setting.Cfg) web.Middleware {
 			}
 		})
 	}
-
 }
 
 func sanitizeURL(ctx *models.ReqContext, s string) string {

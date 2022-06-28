@@ -60,17 +60,6 @@ func validateAndWrapHandler(h Handler) http.Handler {
 	return hack_wrap(h)
 }
 
-// validateAndWrapHandlers preforms validation and wrapping for each input handler.
-// It accepts an optional wrapper function to perform custom wrapping on handlers.
-func validateAndWrapHandlers(handlers []Handler) []http.Handler {
-	wrappedHandlers := make([]http.Handler, len(handlers))
-	for i, h := range handlers {
-		wrappedHandlers[i] = validateAndWrapHandler(h)
-	}
-
-	return wrappedHandlers
-}
-
 // Macaron represents the top level web application.
 // Injector methods can be invoked to map services on a global level.
 type Macaron struct {
@@ -132,18 +121,6 @@ type Middleware = func(next http.Handler) http.Handler
 // further middlewares in the chain.
 func (m *Macaron) UseMiddleware(mw Middleware) {
 	m.mws = append(m.mws, mw)
-
-	// next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-	// 	c := FromContext(req.Context())
-	// 	c.Req = req
-	// 	if mrw, ok := rw.(*responseWriter); ok {
-	// 		c.Resp = mrw
-	// 	} else {
-	// 		c.Resp = NewResponseWriter(req.Method, rw)
-	// 	}
-	// 	c.Next()
-	// })
-	// m.handlers = append(m.handlers, middleware(next))
 }
 
 // Use adds a middleware Handler to the stack,
@@ -181,9 +158,7 @@ func mwFromHandler(handler Handler) Middleware {
 
 func (m *Macaron) createContext(rw http.ResponseWriter, req *http.Request) *Context {
 	c := &Context{
-		// handlers: m.handlers,
-		mws: m.mws,
-		// index:  0,
+		mws:    m.mws,
 		Router: m.Router,
 		Resp:   NewResponseWriter(req.Method, rw),
 		logger: log.New("macaron.context"),

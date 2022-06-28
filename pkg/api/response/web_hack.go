@@ -71,7 +71,6 @@ func reqCtx(w http.ResponseWriter, r *http.Request) *models.ReqContext {
 	wCtx := webCtx(w, r)
 	reqCtx, ok := wCtx.Req.Context().Value(ctxkey.Key{}).(*models.ReqContext)
 	if !ok {
-
 		panic("no *models.ReqContext found")
 	}
 	return reqCtx

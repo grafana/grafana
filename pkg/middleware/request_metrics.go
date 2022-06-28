@@ -101,7 +101,6 @@ func RequestMetrics(features featuremgmt.FeatureToggles) web.Middleware {
 			}
 		})
 	}
-
 }
 
 func countApiRequests(status int) {

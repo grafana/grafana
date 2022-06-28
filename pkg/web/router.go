@@ -154,11 +154,6 @@ func (r *Router) Handle(method string, pattern string, handlers []Handler) {
 			c.mws = append(c.mws, mwFromHandler(h))
 		}
 		c.run()
-
-		// c.handlers = make([]http.Handler, 0, len(r.m.handlers)+len(handlers))
-		// c.handlers = append(c.handlers, r.m.handlers...)
-		// c.handlers = append(c.handlers, httpHandlers...)
-		// c.run()
 	})
 }
 
@@ -206,12 +201,6 @@ func (r *Router) NotFound(handlers ...Handler) {
 			c.mws = append(c.mws, mwFromHandler(h))
 		}
 		c.run()
-
-		// c := r.m.createContext(rw, req)
-		// c.handlers = make([]http.Handler, 0, len(r.m.handlers)+len(handlers))
-		// c.handlers = append(c.handlers, r.m.handlers...)
-		// c.handlers = append(c.handlers, httpHandlers...)
-		// c.run()
 	}
 }
 
