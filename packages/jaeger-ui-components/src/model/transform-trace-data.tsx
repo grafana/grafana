@@ -16,7 +16,7 @@ import { isEqual as _isEqual } from 'lodash';
 
 // @ts-ignore
 import { getTraceSpanIdsAsTree } from '../selectors/trace';
-import { TraceKeyValuePair, TraceSpan, Trace, TraceResponse } from '../types/trace';
+import { TraceKeyValuePair, TraceSpan, Trace, TraceResponse, TraceProcess } from '../types/trace';
 // @ts-ignore
 import TreeNode from '../utils/TreeNode';
 import { getConfigValue } from '../utils/config/get-config';
@@ -40,7 +40,7 @@ export function deduplicateTags(spanTags: TraceKeyValuePair[]) {
 
 // exported for tests
 export function orderTags(spanTags: TraceKeyValuePair[], topPrefixes?: string[]) {
-  const orderedTags: TraceKeyValuePair[] = spanTags.slice();
+  const orderedTags: TraceKeyValuePair[] = spanTags?.slice() ?? [];
   const tp = (topPrefixes || []).map((p: string) => p.toLowerCase());
 
   orderedTags.sort((a, b) => {
@@ -87,11 +87,20 @@ export default function transformTraceData(data: TraceResponse | undefined): Tra
   // eslint-disable-next-line no-param-reassign
   data.spans = data.spans.filter((span) => Boolean(span.startTime));
 
+  // Sort process tags
+  data.processes = Object.entries(data.processes).reduce<Record<string, TraceProcess>>((processes, [id, process]) => {
+    processes[id] = {
+      ...process,
+      tags: orderTags(process.tags),
+    };
+    return processes;
+  }, {});
+
   const max = data.spans.length;
   for (let i = 0; i < max; i++) {
     const span: TraceSpan = data.spans[i] as TraceSpan;
     const { startTime, duration, processID } = span;
-    //
+
     let spanID = span.spanID;
     // check for start / end time for the trace
     if (startTime < traceStartTime) {
