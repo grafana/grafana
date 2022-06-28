@@ -1217,9 +1217,9 @@ exports[`better eslint`] = {
     "packages/grafana-runtime/src/config.ts:4181107692": [
       [66, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
       [75, 29, 17, "Do not use any type assertions.", "4278379396"],
-      [98, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [183, 18, 13, "Do not use any type assertions.", "538937261"],
-      [183, 28, 3, "Unexpected any. Specify a different type.", "193409811"]
+      [106, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [191, 18, 13, "Do not use any type assertions.", "538937261"],
+      [191, 28, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "packages/grafana-runtime/src/services/AngularLoader.ts:3455177907": [
       [45, 14, 3, "Unexpected any. Specify a different type.", "193409811"],
