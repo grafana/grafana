@@ -220,6 +220,11 @@ func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) response.Respon
 		ReqContext:    c,
 		ExternalUser:  user,
 		SignupAllowed: hs.Cfg.LDAPAllowSignup,
+		UserLookupParams: models.UserLookupParams{
+			UserID: &query.Result.ID, // Upsert by ID only
+			Email:  nil,
+			Login:  nil,
+		},
 	}
 
 	err = hs.Login.UpsertUser(c.Req.Context(), upsertCmd)

@@ -76,7 +76,8 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		}
 		idToken := "testidtoken"
 		token = token.WithExtra(map[string]interface{}{"id_token": idToken})
-		query := &models.GetUserByAuthInfoQuery{Login: "loginuser", AuthModule: "test", AuthId: "test"}
+		login := "loginuser"
+		query := &models.GetUserByAuthInfoQuery{AuthModule: "test", AuthId: "test", UserLookupParams: models.UserLookupParams{Login: &login}}
 		cmd := &models.UpdateAuthInfoCommand{
 			UserId:     user.ID,
 			AuthId:     query.AuthId,
