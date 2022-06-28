@@ -3347,6 +3347,12 @@ exports[`better eslint`] = {
       [65, 22, 22, "Do not use any type assertions.", "4054086100"],
       [104, 34, 21, "Do not use any type assertions.", "2401004021"]
     ],
+    "public/app/core/components/PageLayouts/NewPage.tsx:4153212563": [
+      [66, 34, 22, "Do not use any type assertions.", "4054086100"]
+    ],
+    "public/app/core/components/PageLayouts/SectionNav.tsx:1750474659": [
+      [20, 34, 21, "Do not use any type assertions.", "2401004021"]
+    ],
     "public/app/core/components/PanelTypeFilter/PanelTypeFilter.tsx:1614517181": [
       [41, 24, 3, "Unexpected any. Specify a different type.", "193409811"],
       [42, 24, 3, "Unexpected any. Specify a different type.", "193409811"]
@@ -3965,23 +3971,23 @@ exports[`better eslint`] = {
       [26, 5, 29, "Do not use any type assertions.", "2635161824"],
       [67, 9, 60, "Do not use any type assertions.", "738572730"]
     ],
-    "public/app/features/admin/AdminListOrgsPage.tsx:1232501301": [
+    "public/app/features/admin/AdminListOrgsPage.tsx:851621779": [
       [22, 32, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/admin/AdminSettings.tsx:876474391": [
+    "public/app/features/admin/AdminSettings.tsx:3612709745": [
       [18, 10, 63, "Do not use any type assertions.", "1950730127"]
     ],
     "public/app/features/admin/OrgRolePicker.tsx:2826049686": [
       [23, 34, 20, "Do not use any type assertions.", "3568020359"]
     ],
-    "public/app/features/admin/UserListAdminPage.tsx:3454473979": [
+    "public/app/features/admin/UserListAdminPage.tsx:1874540957": [
       [27, 21, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/admin/UserProfile.tsx:2121737967": [
       [205, 24, 3, "Unexpected any. Specify a different type.", "193409811"],
       [302, 10, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/admin/ldap/LdapPage.tsx:1724804732": [
+    "public/app/features/admin/ldap/LdapPage.tsx:2036572570": [
       [73, 19, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/admin/state/reducers.test.ts:3463255684": [
@@ -4000,7 +4006,7 @@ exports[`better eslint`] = {
       [57, 34, 39, "Do not use any type assertions.", "935682756"],
       [57, 70, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/alerting/AlertRuleList.tsx:474918126": [
+    "public/app/features/alerting/AlertRuleList.tsx:3637063496": [
       [134, 24, 17, "Do not use any type assertions.", "2518695225"],
       [137, 58, 17, "Do not use any type assertions.", "2518695225"]
     ],
@@ -4050,7 +4056,7 @@ exports[`better eslint`] = {
       [402, 51, 3, "Unexpected any. Specify a different type.", "193409811"],
       [468, 34, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/alerting/EditNotificationChannelPage.tsx:3397946803": [
+    "public/app/features/alerting/EditNotificationChannelPage.tsx:3335986965": [
       [21, 23, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/alerting/StateHistory.tsx:3418297987": [
@@ -5022,7 +5028,7 @@ exports[`better eslint`] = {
       [264, 15, 56, "Do not use any type assertions.", "2674630592"],
       [266, 13, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/dashboard/containers/DashboardPage.tsx:3173260528": [
+    "public/app/features/dashboard/containers/DashboardPage.tsx:3380941351": [
       [108, 36, 40, "Do not use any type assertions.", "2547843745"],
       [108, 73, 3, "Unexpected any. Specify a different type.", "193409811"],
       [144, 32, 40, "Do not use any type assertions.", "2547843745"],
@@ -5446,14 +5452,14 @@ exports[`better eslint`] = {
       [15, 16, 24, "Do not use any type assertions.", "3405802617"],
       [21, 11, 21, "Do not use any type assertions.", "3218407483"]
     ],
-    "public/app/features/datasources/DataSourceDashboards.tsx:3932611556": [
+    "public/app/features/datasources/DataSourceDashboards.tsx:2085374850": [
       [49, 16, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/datasources/DataSourcesListPage.test.tsx:368182366": [
       [19, 17, 26, "Do not use any type assertions.", "3994646623"],
       [22, 14, 126, "Do not use any type assertions.", "1409469672"]
     ],
-    "public/app/features/datasources/DataSourcesListPage.tsx:247845505": [
+    "public/app/features/datasources/DataSourcesListPage.tsx:2606271463": [
       [44, 14, 22, "Do not use any type assertions.", "2167463294"]
     ],
     "public/app/features/datasources/__mocks__/dataSourcesMocks.ts:1217473343": [
@@ -6162,7 +6168,7 @@ exports[`better eslint`] = {
     "public/app/features/live/pages/AddNewRule.tsx:2593231672": [
       [59, 16, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/live/pages/PipelineAdminPage.tsx:952820098": [
+    "public/app/features/live/pages/PipelineAdminPage.tsx:87558436": [
       [13, 51, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/live/pages/PipelineTable.tsx:894975337": [
@@ -6189,7 +6195,7 @@ exports[`better eslint`] = {
     "public/app/features/live/pages/utils.ts:270086979": [
       [19, 37, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/manage-dashboards/DashboardImportPage.tsx:1780804260": [
+    "public/app/features/manage-dashboards/DashboardImportPage.tsx:1590008002": [
       [81, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
       [82, 25, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
@@ -6490,7 +6496,7 @@ exports[`better eslint`] = {
       [68, 90, 12, "Do not use any type assertions.", "3603862904"],
       [68, 99, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/plugins/components/AppRootPage.tsx:1453161637": [
+    "public/app/features/plugins/components/AppRootPage.tsx:3831200387": [
       [109, 21, 34, "Do not use any type assertions.", "462520373"]
     ],
     "public/app/features/plugins/datasource_srv.ts:3002426838": [
@@ -6771,7 +6777,7 @@ exports[`better eslint`] = {
       [12, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
       [41, 9, 43, "Do not use any type assertions.", "4109129169"]
     ],
-    "public/app/features/sandbox/TestStuffPage.tsx:3698683147": [
+    "public/app/features/sandbox/TestStuffPage.tsx:1930871651": [
       [134, 30, 29, "Do not use any type assertions.", "3195381622"]
     ],
     "public/app/features/search/components/DashboardSearch.test.tsx:3245889886": [
@@ -6979,7 +6985,7 @@ exports[`better eslint`] = {
       [79, 18, 88, "Do not use any type assertions.", "2247670218"],
       [138, 20, 95, "Do not use any type assertions.", "4068964415"]
     ],
-    "public/app/features/teams/TeamPages.tsx:3881385980": [
+    "public/app/features/teams/TeamPages.tsx:2748675066": [
       [52, 43, 18, "Do not use any type assertions.", "373851894"]
     ],
     "public/app/features/teams/state/reducers.ts:1856799550": [

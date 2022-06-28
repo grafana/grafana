@@ -60,11 +60,11 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     content: css({
       display: 'flex',
-      paddingTop: TOP_BAR_LEVEL_HEIGHT * 2 + 16,
+      paddingTop: TOP_BAR_LEVEL_HEIGHT * 2,
       flexGrow: 1,
     }),
     contentNoSearchBar: css({
-      paddingTop: TOP_BAR_LEVEL_HEIGHT + 16,
+      paddingTop: TOP_BAR_LEVEL_HEIGHT,
     }),
     topNav: css({
       display: 'flex',

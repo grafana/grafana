@@ -3,6 +3,7 @@ import { css, cx } from '@emotion/css';
 import React, { FC, HTMLAttributes, useEffect } from 'react';
 
 import { GrafanaTheme2, NavModel } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { CustomScrollbar, useStyles2 } from '@grafana/ui';
 import { getTitleFromNavModel } from 'app/core/selectors/navModel';
 
@@ -10,6 +11,7 @@ import { getTitleFromNavModel } from 'app/core/selectors/navModel';
 import { Branding } from '../Branding/Branding';
 import { Footer } from '../Footer/Footer';
 import PageHeader from '../PageHeader/PageHeader';
+import { NewPage } from '../PageLayouts/NewPage';
 
 import { PageContents } from './PageContents';
 
@@ -23,7 +25,7 @@ export interface PageType extends FC<Props> {
   Contents: typeof PageContents;
 }
 
-export const Page: PageType = ({ navModel, children, className, ...otherProps }) => {
+export const OldPage: PageType = ({ navModel, children, className, ...otherProps }) => {
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
@@ -48,12 +50,12 @@ export const Page: PageType = ({ navModel, children, className, ...otherProps })
   );
 };
 
-Page.Header = PageHeader;
-Page.Contents = PageContents;
+OldPage.Header = PageHeader;
+OldPage.Contents = PageContents;
 
-export default Page;
+export const Page: PageType = config.featureToggles.topnav ? NewPage : OldPage;
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (_: GrafanaTheme2) => ({
   wrapper: css`
     width: 100%;
     flex-grow: 1;

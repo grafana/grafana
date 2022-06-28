@@ -4,7 +4,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { getTimeZone, GrafanaTheme2, NavModel } from '@grafana/data';
 import { Button, ConfirmModal, IconButton, useStyles2 } from '@grafana/ui';
-import Page from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';

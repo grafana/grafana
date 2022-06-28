@@ -5,7 +5,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import { NavModel } from '@grafana/data';
 import { featureEnabled } from '@grafana/runtime';
 import { Themeable2, withTheme2 } from '@grafana/ui';
-import Page from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import { UpgradeBox } from 'app/core/components/Upgrade/UpgradeBox';
 import config from 'app/core/config';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
