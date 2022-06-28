@@ -101,10 +101,72 @@ Grafana HTTP API (not including Grafana Enterprise).
 
 ## Practical example
 
-The `pkg/plugins` package contains plugin domain types, for example `DataPlugin`, and also interfaces
-such as `RequestHandler`. Then you have the `pkg/plugins/managers` subpackage, which contains concrete implementations
-such as the service `PluginManager`. The subpackage `pkg/plugins/backendplugin/coreplugin` contains `plugins.DataPlugin`
-implementations.
+The following is a simplified example of the package structure for a
+service that doesn't do anything in particular.
+
+None of the methods or functions are populated and in practice most
+packages will consist of multiple files. There isn't a Grafana-wide
+convention for which files should exist and contain what.
+
+`pkg/services/alphabetical`
+
+```
+package alphabetical
+
+type Alphabetical interface {
+  // GetLetter returns either an error or letter.
+  GetLetter(context.Context, GetLetterQuery) (Letter, error)
+  // ListCachedLetters cannot fail, and doesn't return an error.
+  ListCachedLetters(context.Context, ListCachedLettersQuery) Letters
+  // DeleteLetter doesn't have any return values other than errors, so it
+  // returns only an error.
+  DeleteLetter(context.Contxt, DeltaCommand) error
+}
+
+type Letter byte
+
+type Letters []Letter
+
+type GetLetterQuery struct {
+  ID int
+}
+
+// Create queries/commands for methods even if they are empty.
+type ListCachedLettersQuery struct {}
+
+type DeleteLetterCommand struct {
+  ID int
+}
+
+```
+
+`pkg/services/alphabetical/alphabeticalimpl`
+
+```
+package alphabeticalimpl
+
+// this name can be whatever, it's not supposed to be used from outside
+// the service except for in Wire.
+type Svc struct { … }
+
+func ProviceSvc(numbers numerical.Numerical, db db.DB) Svc { … }
+
+func (s *Svc) GetLetter(ctx context.Context, q root.GetLetterQuery) (root.Letter, error) { … }
+func (s *Svc) ListCachedLetters(ctx context.Context, q root.ListCachedLettersQuery) root.Letters { … }
+func (s *Svc) DeleteLetter(ctx context.Context, q root.DeleteLetterCommand) error { … }
+
+type letterStore interface {
+  Get(ctx.Context, id int) (root.Letter, error)
+  Delete(ctx.Context, root.DeleteLetterCommand) error
+}
+
+type sqlLetterStore struct {
+  db.DB
+}
+
+func (s *sqlStore) Get(ctx.Context, id int) (root.Letter, error) { … }
+func (s *sqlStore) Delete(ctx.Context, root.DeleteLetterCommand) error { … }
+```
 
 ## Legacy package hierarchy
 

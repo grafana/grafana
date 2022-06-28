@@ -8,11 +8,35 @@ Grafana structures arguments to [services](services.md) using a command/query
 separation where commands are instructions for a mutation and queries retrieve
 records from a service.
 
-Services should define their methods as `func[T, U any](ctx context.Context, args T) (U, error)`
-or `func[T, U any](ctx context.Context, args T) U` for methods that doesn't return errors
-and the type T is a `struct` defined in the service's root package (see
-the instructions for [package hierarchy](package-hierarchy.md)) that
-contains zero or more arguments that can be passed to the method.
+Services should define their methods as `func[T, U any](ctx context.Context, args T) (U, error)`.
+
+Each function should take two arguments. First, a `context.Context` that
+carries information about the tracing span, cancellation, and similar
+runtime information that might be relevant to the call. Secondly, `T` is
+a `struct` defined in the service's root package (see the instructions
+for [package hierarchy](package-hierarchy.md)) that contains zero or
+more arguments that can be passed to the method.
+
+The return values is more flexible, and may consist of none, one, or two
+values. If there are two values returned, the second value should be
+either an `bool` or `error` indicating the success or failure of the
+call. The first value `U` carries a value of any exported type that
+makes sense for the service.
+
+Following is an example of an interface providing method signatures for
+some calls adhering to these guidelines:
+
+```
+type Alphabetical interface {
+  // GetLetter returns either an error or letter.
+  GetLetter(context.Context, GetLetterQuery) (Letter, error)
+  // ListCachedLetters cannot fail, and doesn't return an error.
+  ListCachedLetters(context.Context, ListCachedLettersQuery) Letters
+  // DeleteLetter doesn't have any return values other than errors, so it
+  // returns only an error.
+  DeleteLetter(context.Contxt, DeleteLetterCommand) error
+}
+```
 
 > Because we request an operation to be performed, command are written in imperative mood, such as `CreateFolderCommand`, `GetDashboardQuery` and `DeletePlaylistCommand`.
 
