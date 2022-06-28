@@ -95,7 +95,7 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
       </button>
     );
 
-    return tooltip ? (
+    return tooltip && !isOpen ? (
       <Tooltip content={tooltip} placement="bottom">
         {body}
       </Tooltip>

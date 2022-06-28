@@ -51,6 +51,7 @@ export interface State {
 
 export function UnthemedTimeRangePicker(props: TimeRangePickerProps): ReactElement {
   const [isOpen, setOpen] = useState(false);
+  const [tooltipVis, setTooltipVis] = useState(false);
 
   const {
     value,
@@ -78,10 +79,18 @@ export function UnthemedTimeRangePicker(props: TimeRangePickerProps): ReactEleme
     event.stopPropagation();
     event.preventDefault();
     setOpen(!isOpen);
+    setTooltipVis(false);
   };
 
   const onClose = () => {
     setOpen(false);
+  };
+
+  const onMouseEnter = () => {
+    setTooltipVis(true);
+  };
+  const onMouseLeave = () => {
+    setTooltipVis(false);
   };
 
   const ref = createRef<HTMLElement>();
@@ -104,19 +113,26 @@ export function UnthemedTimeRangePicker(props: TimeRangePickerProps): ReactEleme
         />
       )}
 
-      <Tooltip content={<TimePickerTooltip timeRange={value} timeZone={timeZone} />} placement="bottom" interactive>
-        <ToolbarButton
-          data-testid={selectors.components.TimePicker.openButton}
-          aria-label={`Time range picker with current time range ${formattedRange(value, timeZone)} selected`}
-          aria-controls="TimePickerContent"
-          onClick={onOpen}
-          icon="clock-nine"
-          isOpen={isOpen}
-          variant={variant}
+      <div onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+        <Tooltip
+          content={<TimePickerTooltip timeRange={value} timeZone={timeZone} />}
+          show={tooltipVis}
+          placement="bottom"
+          interactive
         >
-          <TimePickerButtonLabel {...props} />
-        </ToolbarButton>
-      </Tooltip>
+          <ToolbarButton
+            data-testid={selectors.components.TimePicker.openButton}
+            aria-label={`Time range picker with current time range ${formattedRange(value, timeZone)} selected`}
+            aria-controls="TimePickerContent"
+            onClick={onOpen}
+            icon="clock-nine"
+            isOpen={isOpen}
+            variant={variant}
+          >
+            <TimePickerButtonLabel {...props} />
+          </ToolbarButton>
+        </Tooltip>
+      </div>
       {isOpen && (
         <FocusScope contain autoFocus restoreFocus>
           <section ref={ref} {...overlayProps} {...dialogProps}>
