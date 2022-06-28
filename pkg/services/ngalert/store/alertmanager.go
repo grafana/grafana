@@ -209,7 +209,7 @@ func (st *DBstore) DeleteOldConfigurations(ctx context.Context, orgID, limit int
 				id NOT IN (
 					SELECT id 
 					FROM alert_configuration 
-					WHERE org_id = ? ORDER BY ID DESC LIMIT ?
+					WHERE org_id = ? ORDER BY id DESC LIMIT ?
 				)
 		`, orgID, orgID, limit)
 		if err != nil {
