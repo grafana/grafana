@@ -451,15 +451,17 @@ func (h *ContextHandler) initContextWithRenderAuth(reqContext *models.ReqContext
 		return true
 	}
 
-	query := models.GetSignedInUserQuery{UserId: renderUser.UserID, OrgId: renderUser.OrgID}
-	if err := h.SQLStore.GetSignedInUserWithCacheCtx(ctx, &query); err != nil {
-		reqContext.SignedInUser = &models.SignedInUser{
-			OrgId:   renderUser.OrgID,
-			UserId:  renderUser.UserID,
-			OrgRole: models.RoleType(renderUser.OrgRole),
+	reqContext.SignedInUser = &models.SignedInUser{
+		OrgId:   renderUser.OrgID,
+		UserId:  renderUser.UserID,
+		OrgRole: models.RoleType(renderUser.OrgRole),
+	}
+
+	if renderUser.UserID != 0 {
+		query := models.GetSignedInUserQuery{UserId: renderUser.UserID, OrgId: renderUser.OrgID}
+		if err := h.SQLStore.GetSignedInUserWithCacheCtx(ctx, &query); err == nil {
+			reqContext.SignedInUser = query.Result
 		}
-	} else {
-		reqContext.SignedInUser = query.Result
 	}
 
 	reqContext.IsSignedIn = true
