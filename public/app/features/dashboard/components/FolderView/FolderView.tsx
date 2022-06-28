@@ -33,7 +33,9 @@ export const FolderView = ({ dashboard }: Props) => {
   return (
     <div>
       {isRoot && <PageToolbar pageIcon={'apps'} title="Dashboard storage locations"></PageToolbar>}
-      {!isRoot && <Breadcrumb pathName={location.pathname} onPathChange={(changedPath) => history.push(changedPath)} />}
+      {!isRoot && (
+        <Breadcrumb pathName={location.pathname} onPathChange={(changedPath: string) => history.push(changedPath)} />
+      )}
 
       <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true} updateAfterMountMs={500}>
         <div>
