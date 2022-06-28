@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/web"
 )
 
 type TestingApiSrv struct {
@@ -69,13 +68,12 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *models.ReqContext, body a
 	})
 }
 
-func (srv TestingApiSrv) RouteTestRuleConfig(c *models.ReqContext, body apimodels.TestRulePayload) response.Response {
+func (srv TestingApiSrv) RouteTestRuleConfig(c *models.ReqContext, body apimodels.TestRulePayload, datasourceUID string) response.Response {
 	if body.Type() != apimodels.LoTexRulerBackend {
 		return ErrResp(http.StatusBadRequest, errors.New("unexpected payload"), "")
 	}
 
 	var path string
-	datasourceUID := web.Params(c.Req)[":DatasourceUID"]
 	ds, err := srv.DatasourceCache.GetDatasourceByUID(context.Background(), datasourceUID, c.SignedInUser, c.SkipCache)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to get datasource")

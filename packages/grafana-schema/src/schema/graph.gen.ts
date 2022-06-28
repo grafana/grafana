@@ -272,6 +272,7 @@ export interface VizLegendOptions {
   placement: LegendPlacement;
   sortBy?: string;
   sortDesc?: boolean;
+  width?: number;
 }
 
 export enum BarGaugeDisplayMode {

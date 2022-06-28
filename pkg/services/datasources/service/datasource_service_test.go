@@ -561,7 +561,7 @@ func TestService_HTTPClientOptions(t *testing.T) {
 
 	t.Run("Azure authentication", func(t *testing.T) {
 		t.Run("given feature flag enabled", func(t *testing.T) {
-			features := featuremgmt.WithFeatures(featuremgmt.FlagHttpclientproviderAzureAuth)
+			features := featuremgmt.WithFeatures(featuremgmt.FlagPrometheusAzureAuth)
 
 			t.Run("should set Azure middleware when JsonData contains valid credentials", func(t *testing.T) {
 				t.Cleanup(func() { ds.JsonData = emptyJsonData; ds.SecureJsonData = emptySecureJsonData })
@@ -571,7 +571,6 @@ func TestService_HTTPClientOptions(t *testing.T) {
 					"azureCredentials": map[string]interface{}{
 						"authType": "msi",
 					},
-					"azureEndpointResourceId": "https://api.example.com/abd5c4ce-ca73-41e9-9cb2-bed39aa2adb5",
 				})
 
 				secretsStore := kvstore.SetupTestService(t)

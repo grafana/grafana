@@ -434,20 +434,39 @@ func vectorToDataFrames(vector model.Vector, query *PrometheusQuery, frames data
 	return frames
 }
 
-func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *PrometheusQuery, frames data.Frames) data.Frames {
+// normalizeExemplars transforms the exemplar results into a single list of events. At the same time we make sure
+// that all exemplar events have the same labels which is important when converting to dataFrames so that we have
+// the same length of each field (each label will be a separate field). Exemplars can have different label either
+// because the exemplar event have different labels or because they are from different series.
+// Reason why we merge exemplars into single list even if they are from different series is that for example in case
+// of a histogram query, like histogram_quantile(0.99, sum(rate(traces_spanmetrics_duration_seconds_bucket[15s])) by (le))
+// Prometheus still returns all the exemplars for all the series of metric traces_spanmetrics_duration_seconds_bucket.
+// Which makes sense because each histogram bucket is separate series but we still want to show all the exemplars for
+// the metric and we don't specifically care which buckets they are from.
+// For non histogram queries or if you split by some label it would probably be nicer to then split also exemplars to
+// multiple frames (so they will have different symbols in the UI) but that would require understanding the query so it
+// is not implemented now.
+func normalizeExemplars(response []apiv1.ExemplarQueryResult) []ExemplarEvent {
 	// TODO: this preallocation is very naive.
 	// We should figure out a better approximation here.
 	events := make([]ExemplarEvent, 0, len(response)*2)
-	// Prometheus treats empty value as same as null, so `event.Labels` may not be consistent across `events`,
-	// leading errors like "frame has different field lengths, field 0 is len 5 but field 14 is len 2", need a fix.
+
+	// Get all the labels across all exemplars both from the examplars and their series labels. We will use this to make
+	// sure the resulting data frame has consistent number of values in each column.
 	eventLabels := make(map[string]struct{})
 	for _, exemplarData := range response {
+		// Check each exemplar labels as there isn't a guarantee they are consistent
 		for _, exemplar := range exemplarData.Exemplars {
 			for label := range exemplar.Labels {
 				eventLabels[string(label)] = struct{}{}
 			}
 		}
+
+		for label := range exemplarData.SeriesLabels {
+			eventLabels[string(label)] = struct{}{}
+		}
 	}
+
 	for _, exemplarData := range response {
 		for _, exemplar := range exemplarData.Exemplars {
 			event := ExemplarEvent{}
@@ -456,26 +475,26 @@ func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *Prometheu
 			event.Value = float64(exemplar.Value)
 			event.Labels = make(map[string]string)
 
-			for label, value := range exemplar.Labels {
-				event.Labels[string(label)] = string(value)
-			}
-
-			for seriesLabel, seriesValue := range exemplarData.SeriesLabels {
-				event.Labels[string(seriesLabel)] = string(seriesValue)
-			}
-
-			if len(event.Labels) != len(eventLabels) {
-				// Fill event labels with empty value.
-				for label := range eventLabels {
-					if _, ok := event.Labels[label]; !ok {
-						event.Labels[label] = ""
-					}
+			// Fill in all the labels from eventLabels with values from exemplar labels or series labels or fill with
+			// empty string
+			for label := range eventLabels {
+				if _, ok := exemplar.Labels[model.LabelName(label)]; ok {
+					event.Labels[label] = string(exemplar.Labels[model.LabelName(label)])
+				} else if _, ok := exemplarData.SeriesLabels[model.LabelName(label)]; ok {
+					event.Labels[label] = string(exemplarData.SeriesLabels[model.LabelName(label)])
+				} else {
+					event.Labels[label] = ""
 				}
 			}
 
 			events = append(events, event)
 		}
 	}
+	return events
+}
+
+func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *PrometheusQuery, frames data.Frames) data.Frames {
+	events := normalizeExemplars(response)
 
 	// Sampling of exemplars
 	bucketedExemplars := make(map[string][]ExemplarEvent)
@@ -562,11 +581,25 @@ func exemplarToDataFrames(response []apiv1.ExemplarQueryResult, query *Prometheu
 
 	dataFields := make([]*data.Field, 0, len(labelsVector)+2)
 	dataFields = append(dataFields, timeField, valueField)
-	for label, vector := range labelsVector {
-		dataFields = append(dataFields, data.NewField(label, nil, vector))
+
+	// Sort the labels/fields so that it is consistent (mainly for easier testing)
+	allLabels := sortedLabels(labelsVector)
+	for _, label := range allLabels {
+		dataFields = append(dataFields, data.NewField(label, nil, labelsVector[label]))
 	}
 
 	return append(frames, newDataFrame("exemplar", "exemplar", dataFields...))
+}
+
+func sortedLabels(labelsVector map[string][]string) []string {
+	allLabels := make([]string, len(labelsVector))
+	i := 0
+	for key := range labelsVector {
+		allLabels[i] = key
+		i++
+	}
+	sort.Strings(allLabels)
+	return allLabels
 }
 
 func deviation(values []float64) float64 {

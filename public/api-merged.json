@@ -507,14 +507,6 @@
         "operationId": "addUserRole",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "x-go-name": "UserID",
-            "name": "user_id",
-            "in": "path",
-            "required": true
-          },
-          {
             "x-go-name": "Body",
             "name": "body",
             "in": "body",
@@ -522,6 +514,14 @@
             "schema": {
               "$ref": "#/definitions/AddUserRoleCommand"
             }
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID",
+            "name": "user_id",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -548,14 +548,6 @@
         "operationId": "removeUserRole",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "x-go-name": "UserID",
-            "name": "user_id",
-            "in": "path",
-            "required": true
-          },
-          {
             "type": "string",
             "x-go-name": "RoleUID",
             "name": "roleUID",
@@ -568,6 +560,14 @@
             "description": "A flag indicating if the assignment is global or not. If set to false, the default org ID of the authenticated user will be used from the request to remove assignment.",
             "name": "global",
             "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID",
+            "name": "user_id",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -1793,944 +1793,6 @@
         }
       }
     },
-    "/alertmanager/grafana/api/v2/alerts": {
-      "get": {
-        "description": "get alertmanager alerts",
-        "tags": ["alertmanager"],
-        "operationId": "RouteGetGrafanaAMAlerts",
-        "parameters": [
-          {
-            "type": "boolean",
-            "default": true,
-            "x-go-name": "Active",
-            "description": "Show active alerts",
-            "name": "active",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
-            "default": true,
-            "x-go-name": "Silenced",
-            "description": "Show silenced alerts",
-            "name": "silenced",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
-            "default": true,
-            "x-go-name": "Inhibited",
-            "description": "Show inhibited alerts",
-            "name": "inhibited",
-            "in": "query"
-          },
-          {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "x-go-name": "Matchers",
-            "description": "A list of matchers to filter alerts by",
-            "name": "filter",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "x-go-name": "Receivers",
-            "description": "A regex matching receivers to filter alerts by",
-            "name": "receiver",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "gettableAlerts",
-            "schema": {
-              "$ref": "#/definitions/gettableAlerts"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "post": {
-        "description": "create alertmanager alerts",
-        "tags": ["alertmanager"],
-        "operationId": "RoutePostGrafanaAMAlerts",
-        "parameters": [
-          {
-            "name": "PostableAlerts",
-            "in": "body",
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/postableAlert"
-              }
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/alertmanager/grafana/api/v2/alerts/groups": {
-      "get": {
-        "description": "get alertmanager alerts",
-        "tags": ["alertmanager"],
-        "operationId": "RouteGetGrafanaAMAlertGroups",
-        "parameters": [
-          {
-            "type": "boolean",
-            "default": true,
-            "x-go-name": "Active",
-            "description": "Show active alerts",
-            "name": "active",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
-            "default": true,
-            "x-go-name": "Silenced",
-            "description": "Show silenced alerts",
-            "name": "silenced",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
-            "default": true,
-            "x-go-name": "Inhibited",
-            "description": "Show inhibited alerts",
-            "name": "inhibited",
-            "in": "query"
-          },
-          {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "x-go-name": "Matchers",
-            "description": "A list of matchers to filter alerts by",
-            "name": "filter",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "x-go-name": "Receivers",
-            "description": "A regex matching receivers to filter alerts by",
-            "name": "receiver",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "alertGroups",
-            "schema": {
-              "$ref": "#/definitions/alertGroups"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/alertmanager/grafana/api/v2/silence/{SilenceId}": {
-      "get": {
-        "description": "get silence",
-        "tags": ["alertmanager"],
-        "operationId": "RouteGetGrafanaSilence",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "SilenceId",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "gettableSilence",
-            "schema": {
-              "$ref": "#/definitions/gettableSilence"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "delete": {
-        "description": "delete silence",
-        "tags": ["alertmanager"],
-        "operationId": "RouteDeleteGrafanaSilence",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "SilenceId",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/alertmanager/grafana/api/v2/silences": {
-      "get": {
-        "description": "get silences",
-        "tags": ["alertmanager"],
-        "operationId": "RouteGetGrafanaSilences",
-        "parameters": [
-          {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "x-go-name": "Filter",
-            "name": "filter",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "gettableSilences",
-            "schema": {
-              "$ref": "#/definitions/gettableSilences"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "post": {
-        "description": "create silence",
-        "tags": ["alertmanager"],
-        "operationId": "RouteCreateGrafanaSilence",
-        "parameters": [
-          {
-            "name": "Silence",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/postableSilence"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "gettableSilence",
-            "schema": {
-              "$ref": "#/definitions/gettableSilence"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/alertmanager/grafana/api/v2/status": {
-      "get": {
-        "description": "get alertmanager status and configuration",
-        "tags": ["alertmanager"],
-        "operationId": "RouteGetGrafanaAMStatus",
-        "responses": {
-          "200": {
-            "description": "GettableStatus",
-            "schema": {
-              "$ref": "#/definitions/GettableStatus"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/alertmanager/grafana/config/api/v1/alerts": {
-      "get": {
-        "description": "gets an Alerting config",
-        "tags": ["alertmanager"],
-        "operationId": "RouteGetGrafanaAlertingConfig",
-        "responses": {
-          "200": {
-            "description": "GettableUserConfig",
-            "schema": {
-              "$ref": "#/definitions/GettableUserConfig"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "post": {
-        "description": "sets an Alerting config",
-        "tags": ["alertmanager"],
-        "operationId": "RoutePostGrafanaAlertingConfig",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/PostableUserConfig"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "delete": {
-        "description": "deletes the Alerting config for a tenant",
-        "tags": ["alertmanager"],
-        "operationId": "RouteDeleteGrafanaAlertingConfig",
-        "responses": {
-          "200": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/alertmanager/grafana/config/api/v1/receivers/test": {
-      "post": {
-        "tags": ["alertmanager"],
-        "summary": "Test Grafana managed receivers without saving them.",
-        "operationId": "RoutePostTestGrafanaReceivers",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/TestReceiversConfigBodyParams"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "207": {
-            "description": "MultiStatus",
-            "schema": {
-              "$ref": "#/definitions/MultiStatus"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          },
-          "403": {
-            "description": "PermissionDenied",
-            "schema": {
-              "$ref": "#/definitions/PermissionDenied"
-            }
-          },
-          "404": {
-            "description": "AlertManagerNotFound",
-            "schema": {
-              "$ref": "#/definitions/AlertManagerNotFound"
-            }
-          },
-          "408": {
-            "description": "Failure",
-            "schema": {
-              "$ref": "#/definitions/Failure"
-            }
-          },
-          "409": {
-            "description": "AlertManagerNotReady",
-            "schema": {
-              "$ref": "#/definitions/AlertManagerNotReady"
-            }
-          }
-        }
-      }
-    },
-    "/alertmanager/{DatasourceUID}/api/v2/alerts": {
-      "get": {
-        "description": "get alertmanager alerts",
-        "tags": ["alertmanager"],
-        "operationId": "RouteGetAMAlerts",
-        "parameters": [
-          {
-            "type": "boolean",
-            "default": true,
-            "x-go-name": "Active",
-            "description": "Show active alerts",
-            "name": "active",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
-            "default": true,
-            "x-go-name": "Silenced",
-            "description": "Show silenced alerts",
-            "name": "silenced",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
-            "default": true,
-            "x-go-name": "Inhibited",
-            "description": "Show inhibited alerts",
-            "name": "inhibited",
-            "in": "query"
-          },
-          {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "x-go-name": "Matchers",
-            "description": "A list of matchers to filter alerts by",
-            "name": "filter",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "x-go-name": "Receivers",
-            "description": "A regex matching receivers to filter alerts by",
-            "name": "receiver",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "gettableAlerts",
-            "schema": {
-              "$ref": "#/definitions/gettableAlerts"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "post": {
-        "description": "create alertmanager alerts",
-        "tags": ["alertmanager"],
-        "operationId": "RoutePostAMAlerts",
-        "parameters": [
-          {
-            "name": "PostableAlerts",
-            "in": "body",
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/postableAlert"
-              }
-            }
-          },
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/alertmanager/{DatasourceUID}/api/v2/alerts/groups": {
-      "get": {
-        "description": "get alertmanager alerts",
-        "tags": ["alertmanager"],
-        "operationId": "RouteGetAMAlertGroups",
-        "parameters": [
-          {
-            "type": "boolean",
-            "default": true,
-            "x-go-name": "Active",
-            "description": "Show active alerts",
-            "name": "active",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
-            "default": true,
-            "x-go-name": "Silenced",
-            "description": "Show silenced alerts",
-            "name": "silenced",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
-            "default": true,
-            "x-go-name": "Inhibited",
-            "description": "Show inhibited alerts",
-            "name": "inhibited",
-            "in": "query"
-          },
-          {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "x-go-name": "Matchers",
-            "description": "A list of matchers to filter alerts by",
-            "name": "filter",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "x-go-name": "Receivers",
-            "description": "A regex matching receivers to filter alerts by",
-            "name": "receiver",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "alertGroups",
-            "schema": {
-              "$ref": "#/definitions/alertGroups"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/alertmanager/{DatasourceUID}/api/v2/silence/{SilenceId}": {
-      "get": {
-        "description": "get silence",
-        "tags": ["alertmanager"],
-        "operationId": "RouteGetSilence",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "SilenceId",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "gettableSilence",
-            "schema": {
-              "$ref": "#/definitions/gettableSilence"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "delete": {
-        "description": "delete silence",
-        "tags": ["alertmanager"],
-        "operationId": "RouteDeleteSilence",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "SilenceId",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/alertmanager/{DatasourceUID}/api/v2/silences": {
-      "get": {
-        "description": "get silences",
-        "tags": ["alertmanager"],
-        "operationId": "RouteGetSilences",
-        "parameters": [
-          {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "x-go-name": "Filter",
-            "name": "filter",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "gettableSilences",
-            "schema": {
-              "$ref": "#/definitions/gettableSilences"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "post": {
-        "description": "create silence",
-        "tags": ["alertmanager"],
-        "operationId": "RouteCreateSilence",
-        "parameters": [
-          {
-            "name": "Silence",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/postableSilence"
-            }
-          },
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "gettableSilence",
-            "schema": {
-              "$ref": "#/definitions/gettableSilence"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/alertmanager/{DatasourceUID}/api/v2/status": {
-      "get": {
-        "description": "get alertmanager status and configuration",
-        "tags": ["alertmanager"],
-        "operationId": "RouteGetAMStatus",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "GettableStatus",
-            "schema": {
-              "$ref": "#/definitions/GettableStatus"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/alertmanager/{DatasourceUID}/config/api/v1/alerts": {
-      "get": {
-        "description": "gets an Alerting config",
-        "tags": ["alertmanager"],
-        "operationId": "RouteGetAlertingConfig",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "GettableUserConfig",
-            "schema": {
-              "$ref": "#/definitions/GettableUserConfig"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "post": {
-        "description": "sets an Alerting config",
-        "tags": ["alertmanager"],
-        "operationId": "RoutePostAlertingConfig",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/PostableUserConfig"
-            }
-          },
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "delete": {
-        "description": "deletes the Alerting config for a tenant",
-        "tags": ["alertmanager"],
-        "operationId": "RouteDeleteAlertingConfig",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/alertmanager/{DatasourceUID}/config/api/v1/receivers/test": {
-      "post": {
-        "tags": ["alertmanager"],
-        "summary": "Test Grafana managed receivers without saving them.",
-        "operationId": "RoutePostTestReceivers",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/TestReceiversConfigBodyParams"
-            }
-          },
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "207": {
-            "description": "MultiStatus",
-            "schema": {
-              "$ref": "#/definitions/MultiStatus"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          },
-          "403": {
-            "description": "PermissionDenied",
-            "schema": {
-              "$ref": "#/definitions/PermissionDenied"
-            }
-          },
-          "404": {
-            "description": "AlertManagerNotFound",
-            "schema": {
-              "$ref": "#/definitions/AlertManagerNotFound"
-            }
-          },
-          "408": {
-            "description": "Failure",
-            "schema": {
-              "$ref": "#/definitions/Failure"
-            }
-          },
-          "409": {
-            "description": "AlertManagerNotReady",
-            "schema": {
-              "$ref": "#/definitions/AlertManagerNotReady"
-            }
-          }
-        }
-      }
-    },
     "/alerts": {
       "get": {
         "tags": ["legacy_alerts"],
@@ -3196,6 +2258,15 @@
         "tags": ["annotations"],
         "summary": "Get Annotation by Id.",
         "operationId": "getAnnotation",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "AnnotationID",
+            "name": "annotation_id",
+            "in": "path",
+            "required": true
+          }
+        ],
         "responses": {
           "200": {
             "$ref": "#/responses/getAnnotationResponse"
@@ -4747,7 +3818,7 @@
         }
       }
     },
-    "/datasources/{datasource_id}/disable-permissions": {
+    "/datasources/{datasourceId}/disable-permissions": {
       "post": {
         "description": "Disables permissions for the data source with the given id. All existing permissions will be removed and anyone will be able to query the data source.\n\nYou need to have a permission with action `datasources.permissions:toggle` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
         "tags": ["datasource_permissions", "enterprise"],
@@ -4757,7 +3828,7 @@
           {
             "type": "string",
             "x-go-name": "DatasourceID",
-            "name": "id",
+            "name": "datasourceId",
             "in": "path",
             "required": true
           }
@@ -4784,7 +3855,7 @@
         }
       }
     },
-    "/datasources/{datasource_id}/enable-permissions": {
+    "/datasources/{datasourceId}/enable-permissions": {
       "post": {
         "description": "Enables permissions for the data source with the given id.\nNo one except Org Admins will be able to query the data source until permissions have been added\nwhich permit certain users or teams to query the data source.\n\nYou need to have a permission with action `datasources.permissions:toggle` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
         "tags": ["datasource_permissions", "enterprise"],
@@ -4794,7 +3865,7 @@
           {
             "type": "string",
             "x-go-name": "DatasourceID",
-            "name": "id",
+            "name": "datasourceId",
             "in": "path",
             "required": true
           }
@@ -4821,7 +3892,7 @@
         }
       }
     },
-    "/datasources/{datasource_id}/permissions": {
+    "/datasources/{datasourceId}/permissions": {
       "get": {
         "description": "Gets all existing permissions for the data source with the given id.\n\nYou need to have a permission with action `datasources.permissions:read` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
         "tags": ["datasource_permissions", "enterprise"],
@@ -4831,7 +3902,7 @@
           {
             "type": "string",
             "x-go-name": "DatasourceID",
-            "name": "id",
+            "name": "datasourceId",
             "in": "path",
             "required": true
           }
@@ -4855,7 +3926,7 @@
         }
       }
     },
-    "/datasources/{datasource_id}/permissions/{permissionId}": {
+    "/datasources/{datasourceId}/permissions/{permissionId}": {
       "delete": {
         "description": "Removes the permission with the given permissionId for the data source with the given id.\n\nYou need to have a permission with action `datasources.permissions:delete` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
         "tags": ["datasource_permissions", "enterprise"],
@@ -4865,7 +3936,7 @@
           {
             "type": "string",
             "x-go-name": "DatasourceID",
-            "name": "id",
+            "name": "datasourceId",
             "in": "path",
             "required": true
           },
@@ -6918,361 +5989,6 @@
         }
       }
     },
-    "/prometheus/grafana/api/v1/alerts": {
-      "get": {
-        "description": "gets the current alerts",
-        "tags": ["prometheus"],
-        "operationId": "RouteGetGrafanaAlertStatuses",
-        "parameters": [
-          {
-            "type": "boolean",
-            "default": false,
-            "x-go-name": "IncludeInternalLabels",
-            "description": "Include Grafana specific labels as part of the response.",
-            "name": "includeInternalLabels",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "AlertResponse",
-            "schema": {
-              "$ref": "#/definitions/AlertResponse"
-            }
-          }
-        }
-      }
-    },
-    "/prometheus/grafana/api/v1/rules": {
-      "get": {
-        "description": "gets the evaluation statuses of all rules",
-        "tags": ["prometheus"],
-        "operationId": "RouteGetGrafanaRuleStatuses",
-        "parameters": [
-          {
-            "type": "boolean",
-            "default": false,
-            "x-go-name": "IncludeInternalLabels",
-            "description": "Include Grafana specific labels as part of the response.",
-            "name": "includeInternalLabels",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "Filter the list of rules to those that belong to the specified dashboard UID.",
-            "name": "DashboardUID",
-            "in": "query"
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "description": "Filter the list of rules to those that belong to the specified panel ID. Dashboard UID must be specified.",
-            "name": "PanelID",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "RuleResponse",
-            "schema": {
-              "$ref": "#/definitions/RuleResponse"
-            }
-          }
-        }
-      }
-    },
-    "/prometheus/{DatasourceUID}/api/v1/alerts": {
-      "get": {
-        "description": "gets the current alerts",
-        "tags": ["prometheus"],
-        "operationId": "RouteGetAlertStatuses",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "AlertResponse",
-            "schema": {
-              "$ref": "#/definitions/AlertResponse"
-            }
-          }
-        }
-      }
-    },
-    "/prometheus/{DatasourceUID}/api/v1/rules": {
-      "get": {
-        "description": "gets the evaluation statuses of all rules",
-        "tags": ["prometheus"],
-        "operationId": "RouteGetRuleStatuses",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "RuleResponse",
-            "schema": {
-              "$ref": "#/definitions/RuleResponse"
-            }
-          }
-        }
-      }
-    },
-    "/provisioning/contact-points": {
-      "get": {
-        "tags": ["provisioning"],
-        "summary": "Get all the contact points.",
-        "operationId": "RouteGetContactpoints",
-        "responses": {
-          "200": {
-            "description": "Route",
-            "schema": {
-              "$ref": "#/definitions/Route"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "post": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
-        "summary": "Create a contact point.",
-        "operationId": "RoutePostContactpoints",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/EmbeddedContactPoint"
-            }
-          }
-        ],
-        "responses": {
-          "202": {
-            "$ref": "#/responses/Accepted"
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/provisioning/contact-points/{ID}": {
-      "put": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
-        "summary": "Update an existing contact point.",
-        "operationId": "RoutePutContactpoint",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/EmbeddedContactPoint"
-            }
-          }
-        ],
-        "responses": {
-          "202": {
-            "$ref": "#/responses/Accepted"
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "delete": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
-        "summary": "Delete a contact point.",
-        "operationId": "RouteDeleteContactpoints",
-        "responses": {
-          "202": {
-            "$ref": "#/responses/Accepted"
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/provisioning/mute-timings": {
-      "get": {
-        "tags": ["provisioning"],
-        "summary": "Get all the mute timings.",
-        "operationId": "RouteGetMuteTimings",
-        "responses": {
-          "200": {
-            "$ref": "#/responses/MuteTiming"
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/provisioning/mute-timings/{name}": {
-      "get": {
-        "tags": ["provisioning"],
-        "summary": "Get a mute timing.",
-        "operationId": "RouteGetMuteTiming",
-        "responses": {
-          "200": {
-            "$ref": "#/responses/MuteTiming"
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/provisioning/policies": {
-      "get": {
-        "tags": ["provisioning"],
-        "summary": "Get the notification policy tree.",
-        "operationId": "RouteGetPolicyTree",
-        "responses": {
-          "200": {
-            "description": "Route",
-            "schema": {
-              "$ref": "#/definitions/Route"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "put": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
-        "summary": "Sets the notification policy tree.",
-        "operationId": "RoutePutPolicyTree",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/Route"
-            }
-          }
-        ],
-        "responses": {
-          "202": {
-            "$ref": "#/responses/Accepted"
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/provisioning/templates": {
-      "get": {
-        "tags": ["provisioning"],
-        "summary": "Get all message templates.",
-        "operationId": "RouteGetTemplates",
-        "responses": {
-          "200": {
-            "$ref": "#/responses/MessageTemplate"
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/provisioning/templates/{name}": {
-      "get": {
-        "tags": ["provisioning"],
-        "summary": "Get a message template.",
-        "operationId": "RouteGetTemplate",
-        "responses": {
-          "200": {
-            "$ref": "#/responses/MessageTemplate"
-          },
-          "404": {
-            "$ref": "#/responses/NotFound"
-          }
-        }
-      },
-      "put": {
-        "consumes": ["application/json"],
-        "tags": ["provisioning"],
-        "summary": "Updates an existing template.",
-        "operationId": "RoutePutTemplate",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/MessageTemplateContent"
-            }
-          }
-        ],
-        "responses": {
-          "202": {
-            "$ref": "#/responses/Accepted"
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": ["provisioning"],
-        "summary": "Delete a template.",
-        "operationId": "RouteDeleteTemplate",
-        "responses": {
-          "204": {
-            "$ref": "#/responses/Accepted"
-          }
-        }
-      }
-    },
     "/recording-rules": {
       "get": {
         "tags": ["recording_rules", "enterprise"],
@@ -7881,368 +6597,6 @@
           },
           "500": {
             "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/ruler/grafana/api/v1/rules": {
-      "get": {
-        "description": "List rule groups",
-        "produces": ["application/json"],
-        "tags": ["ruler"],
-        "operationId": "RouteGetGrafanaRulesConfig",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "DashboardUID",
-            "in": "query"
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "PanelID",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "NamespaceConfigResponse",
-            "schema": {
-              "$ref": "#/definitions/NamespaceConfigResponse"
-            }
-          }
-        }
-      }
-    },
-    "/ruler/grafana/api/v1/rules/{Namespace}": {
-      "get": {
-        "description": "Get rule groups by namespace",
-        "produces": ["application/json"],
-        "tags": ["ruler"],
-        "operationId": "RouteGetNamespaceGrafanaRulesConfig",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "Namespace",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "NamespaceConfigResponse",
-            "schema": {
-              "$ref": "#/definitions/NamespaceConfigResponse"
-            }
-          }
-        }
-      },
-      "post": {
-        "description": "Creates or updates a rule group",
-        "consumes": ["application/json", "application/yaml"],
-        "tags": ["ruler"],
-        "operationId": "RoutePostNameGrafanaRulesConfig",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "Namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/PostableRuleGroupConfig"
-            }
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          }
-        }
-      },
-      "delete": {
-        "description": "Delete namespace",
-        "tags": ["ruler"],
-        "operationId": "RouteDeleteNamespaceGrafanaRulesConfig",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "Namespace",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          }
-        }
-      }
-    },
-    "/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}": {
-      "get": {
-        "description": "Get rule group",
-        "produces": ["application/json"],
-        "tags": ["ruler"],
-        "operationId": "RouteGetGrafanaRuleGroupConfig",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "Namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "Groupname",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "RuleGroupConfigResponse",
-            "schema": {
-              "$ref": "#/definitions/RuleGroupConfigResponse"
-            }
-          }
-        }
-      },
-      "delete": {
-        "description": "Delete rule group",
-        "tags": ["ruler"],
-        "operationId": "RouteDeleteGrafanaRuleGroupConfig",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "Namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "Groupname",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          }
-        }
-      }
-    },
-    "/ruler/{DatasourceUID}/api/v1/rules": {
-      "get": {
-        "description": "List rule groups",
-        "produces": ["application/json"],
-        "tags": ["ruler"],
-        "operationId": "RouteGetRulesConfig",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "DashboardUID",
-            "in": "query"
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "PanelID",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "NamespaceConfigResponse",
-            "schema": {
-              "$ref": "#/definitions/NamespaceConfigResponse"
-            }
-          }
-        }
-      }
-    },
-    "/ruler/{DatasourceUID}/api/v1/rules/{Namespace}": {
-      "get": {
-        "description": "Get rule groups by namespace",
-        "produces": ["application/json"],
-        "tags": ["ruler"],
-        "operationId": "RouteGetNamespaceRulesConfig",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "Namespace",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "NamespaceConfigResponse",
-            "schema": {
-              "$ref": "#/definitions/NamespaceConfigResponse"
-            }
-          }
-        }
-      },
-      "post": {
-        "description": "Creates or updates a rule group",
-        "consumes": ["application/json", "application/yaml"],
-        "tags": ["ruler"],
-        "operationId": "RoutePostNameRulesConfig",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "Namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/PostableRuleGroupConfig"
-            }
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          }
-        }
-      },
-      "delete": {
-        "description": "Delete namespace",
-        "tags": ["ruler"],
-        "operationId": "RouteDeleteNamespaceRulesConfig",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "Namespace",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          }
-        }
-      }
-    },
-    "/ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname}": {
-      "get": {
-        "description": "Get rule group",
-        "produces": ["application/json"],
-        "tags": ["ruler"],
-        "operationId": "RouteGetRulegGroupConfig",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "Namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "Groupname",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "RuleGroupConfigResponse",
-            "schema": {
-              "$ref": "#/definitions/RuleGroupConfigResponse"
-            }
-          }
-        }
-      },
-      "delete": {
-        "description": "Delete rule group",
-        "tags": ["ruler"],
-        "operationId": "RouteDeleteRuleGroupConfig",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "Namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "Groupname",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
           }
         }
       }
@@ -9119,45 +7473,6 @@
         }
       }
     },
-    "/tsdb/query": {
-      "post": {
-        "description": "Please refer to [updated API](#/ds/queryMetricsWithExpressions) instead\n\nQueries a data source having backend implementation.\n\nMost of Grafana’s builtin data sources have backend implementation.\n\nIf you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:query`.",
-        "tags": ["datasources"],
-        "summary": "Query metrics.",
-        "operationId": "queryDatasource",
-        "deprecated": true,
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/MetricRequest"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/queryDatasourceResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
     "/user": {
       "get": {
         "tags": ["signed_in_user"],
@@ -9863,184 +8178,6 @@
           }
         }
       }
-    },
-    "/v1/eval": {
-      "post": {
-        "description": "Test rule",
-        "consumes": ["application/json"],
-        "produces": ["application/json"],
-        "tags": ["testing"],
-        "operationId": "RouteEvalQueries",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/EvalQueriesPayload"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "EvalQueriesResponse",
-            "schema": {
-              "$ref": "#/definitions/EvalQueriesResponse"
-            }
-          }
-        }
-      }
-    },
-    "/v1/ngalert/admin_config": {
-      "get": {
-        "produces": ["application/json"],
-        "tags": ["configuration"],
-        "summary": "Get the NGalert configuration of the user's organization, returns 404 if no configuration is present.",
-        "operationId": "RouteGetNGalertConfig",
-        "responses": {
-          "200": {
-            "description": "GettableNGalertConfig",
-            "schema": {
-              "$ref": "#/definitions/GettableNGalertConfig"
-            }
-          },
-          "404": {
-            "description": "Failure",
-            "schema": {
-              "$ref": "#/definitions/Failure"
-            }
-          },
-          "500": {
-            "description": "Failure",
-            "schema": {
-              "$ref": "#/definitions/Failure"
-            }
-          }
-        }
-      },
-      "post": {
-        "consumes": ["application/json"],
-        "tags": ["configuration"],
-        "summary": "Creates or updates the NGalert configuration of the user's organization. If no value is sent for alertmanagersChoice, it defaults to \"all\".",
-        "operationId": "RoutePostNGalertConfig",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/PostableNGalertConfig"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "delete": {
-        "consumes": ["application/json"],
-        "tags": ["configuration"],
-        "summary": "Deletes the NGalert configuration of the user's organization.",
-        "operationId": "RouteDeleteNGalertConfig",
-        "responses": {
-          "200": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "500": {
-            "description": "Failure",
-            "schema": {
-              "$ref": "#/definitions/Failure"
-            }
-          }
-        }
-      }
-    },
-    "/v1/ngalert/alertmanagers": {
-      "get": {
-        "produces": ["application/json"],
-        "tags": ["configuration"],
-        "summary": "Get the discovered and dropped Alertmanagers of the user's organization based on the specified configuration.",
-        "operationId": "RouteGetAlertmanagers",
-        "responses": {
-          "200": {
-            "description": "GettableAlertmanagers",
-            "schema": {
-              "$ref": "#/definitions/GettableAlertmanagers"
-            }
-          }
-        }
-      }
-    },
-    "/v1/rule/test/grafana": {
-      "post": {
-        "description": "Test a rule against Grafana ruler",
-        "consumes": ["application/json"],
-        "produces": ["application/json"],
-        "tags": ["testing"],
-        "operationId": "RouteTestRuleGrafanaConfig",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/TestRulePayload"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "TestRuleResponse",
-            "schema": {
-              "$ref": "#/definitions/TestRuleResponse"
-            }
-          }
-        }
-      }
-    },
-    "/v1/rule/test/{DatasourceUID}": {
-      "post": {
-        "description": "Test a rule against external data source ruler",
-        "consumes": ["application/json"],
-        "produces": ["application/json"],
-        "tags": ["testing"],
-        "operationId": "RouteTestRuleConfig",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          },
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/TestRulePayload"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "TestRuleResponse",
-            "schema": {
-              "$ref": "#/definitions/TestRuleResponse"
-            }
-          }
-        }
-      }
     }
   },
   "definitions": {
@@ -10145,10 +8282,6 @@
           "type": "boolean",
           "x-go-name": "BasicAuth"
         },
-        "basicAuthPassword": {
-          "type": "string",
-          "x-go-name": "BasicAuthPassword"
-        },
         "basicAuthUser": {
           "type": "string",
           "x-go-name": "BasicAuthUser"
@@ -10167,10 +8300,6 @@
         "name": {
           "type": "string",
           "x-go-name": "Name"
-        },
-        "password": {
-          "type": "string",
-          "x-go-name": "Password"
         },
         "secureJsonData": {
           "type": "object",
@@ -11141,6 +9270,12 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
+    "ConfFloat64": {
+      "description": "ConfFloat64 is a float64. It Marshals float64 values of NaN of Inf\nto null.",
+      "type": "number",
+      "format": "double",
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
+    },
     "Config": {
       "type": "object",
       "title": "Config is the top-level configuration for Alertmanager's config files.",
@@ -11211,6 +9346,13 @@
         "enableDashboardUrl": {
           "type": "boolean",
           "x-go-name": "EnableDashboardURL"
+        },
+        "formats": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Type"
+          },
+          "x-go-name": "Formats"
         },
         "id": {
           "type": "integer",
@@ -11429,6 +9571,13 @@
         "enableDashboardUrl": {
           "type": "boolean",
           "x-go-name": "EnableDashboardURL"
+        },
+        "formats": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Type"
+          },
+          "x-go-name": "Formats"
         },
         "message": {
           "type": "string",
@@ -12115,67 +10264,39 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
-    "DataFrames": {
-      "description": "See NewDecodedDataFrames and NewEncodedDataFrames for more information.",
-      "type": "object",
-      "title": "DataFrames is an interface for retrieving encoded and decoded data frames.",
-      "x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
-    },
-    "DataQueryResult": {
-      "description": "Deprecated: DataQueryResult should use backend.QueryDataResponse",
+    "DataLink": {
+      "description": "DataLink define what",
       "type": "object",
       "properties": {
-        "dataframes": {
-          "$ref": "#/definitions/DataFrames"
+        "targetBlank": {
+          "type": "boolean",
+          "x-go-name": "TargetBlank"
         },
-        "error": {
+        "title": {
           "type": "string",
-          "x-go-name": "ErrorString"
+          "x-go-name": "Title"
         },
-        "meta": {
-          "$ref": "#/definitions/Json"
-        },
-        "refId": {
+        "url": {
           "type": "string",
-          "x-go-name": "RefID"
-        },
-        "series": {
-          "$ref": "#/definitions/DataTimeSeriesSlice"
-        },
-        "tables": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/DataTable"
-          },
-          "x-go-name": "Tables"
+          "x-go-name": "URL"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
     },
     "DataResponse": {
-      "description": "Deprecated: DataResponse -- this structure is deprecated, all new work should use backend.QueryDataResponse",
+      "description": "A map of RefIDs (unique query identifers) to this type makes up the Responses property of a QueryDataResponse.\nThe Error property is used to allow for partial success responses from the containing QueryDataResponse.",
       "type": "object",
+      "title": "DataResponse contains the results from a DataQuery.",
       "properties": {
-        "message": {
-          "type": "string",
-          "x-go-name": "Message"
+        "Error": {
+          "description": "Error is a property to be set if the the corresponding DataQuery has an error.",
+          "type": "string"
         },
-        "results": {
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/DataQueryResult"
-          },
-          "x-go-name": "Results"
+        "Frames": {
+          "$ref": "#/definitions/Frames"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
-    },
-    "DataRowValues": {
-      "type": "array",
-      "items": {
-        "type": "object"
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/backend"
     },
     "DataSource": {
       "type": "object",
@@ -12189,10 +10310,6 @@
         "basicAuth": {
           "type": "boolean",
           "x-go-name": "BasicAuth"
-        },
-        "basicAuthPassword": {
-          "type": "string",
-          "x-go-name": "BasicAuthPassword"
         },
         "basicAuthUser": {
           "type": "string",
@@ -12222,10 +10339,6 @@
           "type": "integer",
           "format": "int64",
           "x-go-name": "OrgId"
-        },
-        "password": {
-          "type": "string",
-          "x-go-name": "Password"
         },
         "readOnly": {
           "type": "boolean",
@@ -12312,10 +10425,6 @@
           "format": "int64",
           "x-go-name": "OrgId"
         },
-        "password": {
-          "type": "string",
-          "x-go-name": "Password"
-        },
         "readOnly": {
           "type": "boolean",
           "x-go-name": "ReadOnly"
@@ -12346,78 +10455,6 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
-    },
-    "DataTable": {
-      "type": "object",
-      "properties": {
-        "columns": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/DataTableColumn"
-          },
-          "x-go-name": "Columns"
-        },
-        "rows": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/DataRowValues"
-          },
-          "x-go-name": "Rows"
-        }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
-    },
-    "DataTableColumn": {
-      "type": "object",
-      "properties": {
-        "text": {
-          "type": "string",
-          "x-go-name": "Text"
-        }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
-    },
-    "DataTimePoint": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/Float"
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
-    },
-    "DataTimeSeries": {
-      "description": "DataTimeSeries -- this structure is deprecated, all new work should use DataFrames from the SDK",
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string",
-          "x-go-name": "Name"
-        },
-        "points": {
-          "$ref": "#/definitions/DataTimeSeriesPoints"
-        },
-        "tags": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "x-go-name": "Tags"
-        }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
-    },
-    "DataTimeSeriesPoints": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/DataTimePoint"
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
-    },
-    "DataTimeSeriesSlice": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/DataTimeSeries"
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/tsdb/legacydata"
     },
     "DateTime": {
       "description": "DateTime is a time but it serializes to ISO8601 format with millis\nIt knows how to read 3 different variations of a RFC3339 date time.\nMost APIs we encounter want either millisecond or second precision times.\nThis just tries to make it worry-free.",
@@ -12716,6 +10753,119 @@
     "Failure": {
       "$ref": "#/definitions/ResponseDetails"
     },
+    "Field": {
+      "description": "A Field is essentially a slice of various types with extra properties and methods.\nSee NewField() for supported types.\n\nThe slice data in the Field is a not exported, so methods on the Field are used to to manipulate its data.",
+      "type": "object",
+      "title": "Field represents a typed column of data within a Frame.",
+      "properties": {
+        "config": {
+          "$ref": "#/definitions/FieldConfig"
+        },
+        "labels": {
+          "$ref": "#/definitions/Labels"
+        },
+        "name": {
+          "description": "Name is default identifier of the field. The name does not have to be unique, but the combination\nof name and Labels should be unique for proper behavior in all situations.",
+          "type": "string",
+          "x-go-name": "Name"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
+    },
+    "FieldConfig": {
+      "type": "object",
+      "title": "FieldConfig represents the display properties for a Field.",
+      "properties": {
+        "color": {
+          "description": "Map values to a display color\nNOTE: this interface is under development in the frontend... so simple map for now",
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Color"
+        },
+        "custom": {
+          "description": "Panel Specific Values",
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Custom"
+        },
+        "decimals": {
+          "type": "integer",
+          "format": "uint16",
+          "x-go-name": "Decimals"
+        },
+        "description": {
+          "description": "Description is human readable field metadata",
+          "type": "string",
+          "x-go-name": "Description"
+        },
+        "displayName": {
+          "description": "DisplayName overrides Grafana default naming, should not be used from a data source",
+          "type": "string",
+          "x-go-name": "DisplayName"
+        },
+        "displayNameFromDS": {
+          "description": "DisplayNameFromDS overrides Grafana default naming in a better way that allows users to override it easily.",
+          "type": "string",
+          "x-go-name": "DisplayNameFromDS"
+        },
+        "filterable": {
+          "description": "Filterable indicates if the Field's data can be filtered by additional calls.",
+          "type": "boolean",
+          "x-go-name": "Filterable"
+        },
+        "interval": {
+          "description": "Interval indicates the expected regular step between values in the series.\nWhen an interval exists, consumers can identify \"missing\" values when the expected value is not present.\nThe grafana timeseries visualization will render disconnected values when missing values are found it the time field.\nThe interval uses the same units as the values.  For time.Time, this is defined in milliseconds.",
+          "type": "number",
+          "format": "double",
+          "x-go-name": "Interval"
+        },
+        "links": {
+          "description": "The behavior when clicking on a result",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DataLink"
+          },
+          "x-go-name": "Links"
+        },
+        "mappings": {
+          "$ref": "#/definitions/ValueMappings"
+        },
+        "max": {
+          "$ref": "#/definitions/ConfFloat64"
+        },
+        "min": {
+          "$ref": "#/definitions/ConfFloat64"
+        },
+        "noValue": {
+          "description": "Alternative to empty string",
+          "type": "string",
+          "x-go-name": "NoValue"
+        },
+        "path": {
+          "description": "Path is an explicit path to the field in the datasource. When the frame meta includes a path,\nthis will default to `${frame.meta.path}/${field.name}\n\nWhen defined, this value can be used as an identifier within the datasource scope, and\nmay be used as an identifier to update values in a subsequent request",
+          "type": "string",
+          "x-go-name": "Path"
+        },
+        "thresholds": {
+          "$ref": "#/definitions/ThresholdsConfig"
+        },
+        "unit": {
+          "description": "Numeric Options",
+          "type": "string",
+          "x-go-name": "Unit"
+        },
+        "writeable": {
+          "description": "Writeable indicates that the datasource knows how to update this value",
+          "type": "boolean",
+          "x-go-name": "Writeable"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
+    },
     "FindTagsResult": {
       "type": "object",
       "title": "FindTagsResult is the result of a tags search.",
@@ -12829,6 +10979,101 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
+    "Frame": {
+      "description": "Each Field is well typed by its FieldType and supports optional Labels.\n\nA Frame is a general data container for Grafana. A Frame can be table data\nor time series data depending on its content and field types.",
+      "type": "object",
+      "title": "Frame is a columnar data structure where each column is a Field.",
+      "properties": {
+        "Fields": {
+          "description": "Fields are the columns of a frame.\nAll Fields must be of the same the length when marshalling the Frame for transmission.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Field"
+          }
+        },
+        "Meta": {
+          "$ref": "#/definitions/FrameMeta"
+        },
+        "Name": {
+          "description": "Name is used in some Grafana visualizations.",
+          "type": "string"
+        },
+        "RefID": {
+          "description": "RefID is a property that can be set to match a Frame to its originating query.",
+          "type": "string"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
+    },
+    "FrameMeta": {
+      "description": "https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/types/data.ts#L11\nNOTE -- in javascript this can accept any `[key: string]: any;` however\nthis interface only exposes the values we want to be exposed",
+      "type": "object",
+      "title": "FrameMeta matches:",
+      "properties": {
+        "channel": {
+          "description": "Channel is the path to a stream in grafana live that has real-time updates for this data.",
+          "type": "string",
+          "x-go-name": "Channel"
+        },
+        "custom": {
+          "description": "Custom datasource specific values.",
+          "type": "object",
+          "x-go-name": "Custom"
+        },
+        "executedQueryString": {
+          "description": "ExecutedQueryString is the raw query sent to the underlying system. All macros and templating\nhave been applied.  When metadata contains this value, it will be shown in the query inspector.",
+          "type": "string",
+          "x-go-name": "ExecutedQueryString"
+        },
+        "notices": {
+          "description": "Notices provide additional information about the data in the Frame that\nGrafana can display to the user in the user interface.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Notice"
+          },
+          "x-go-name": "Notices"
+        },
+        "path": {
+          "description": "Path is a browsable path on the datasource.",
+          "type": "string",
+          "x-go-name": "Path"
+        },
+        "pathSeparator": {
+          "description": "PathSeparator defines the separator pattern to decode a hiearchy. The default separator is '/'.",
+          "type": "string",
+          "x-go-name": "PathSeparator"
+        },
+        "preferredVisualisationType": {
+          "$ref": "#/definitions/VisType"
+        },
+        "stats": {
+          "description": "Stats is an array of query result statistics.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/QueryStat"
+          },
+          "x-go-name": "Stats"
+        },
+        "type": {
+          "$ref": "#/definitions/FrameType"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
+    },
+    "FrameType": {
+      "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.",
+      "type": "string",
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
+    },
+    "Frames": {
+      "description": "It is the main data container within a backend.DataResponse.",
+      "type": "array",
+      "title": "Frames is a slice of Frame pointers.",
+      "items": {
+        "$ref": "#/definitions/Frame"
+      },
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
     },
     "GetAnnotationTagsResponse": {
       "type": "object",
@@ -13240,6 +11485,13 @@
         "alertmanager_config": {
           "$ref": "#/definitions/GettableApiAlertingConfig"
         },
+        "template_file_provenances": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Provenance"
+          },
+          "x-go-name": "TemplateFileProvenances"
+        },
         "template_files": {
           "type": "object",
           "additionalProperties": {
@@ -13638,6 +11890,12 @@
         }
       },
       "x-go-package": "github.com/prometheus/alertmanager/config"
+    },
+    "InspectType": {
+      "type": "integer",
+      "format": "int64",
+      "title": "InspectType is a type for the Inspect property of a Notice.",
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
     },
     "ItemDTO": {
       "type": "object",
@@ -14056,12 +12314,34 @@
         "$ref": "#/definitions/Matcher"
       }
     },
+    "MessageTemplate": {
+      "type": "object",
+      "properties": {
+        "Name": {
+          "type": "string"
+        },
+        "Template": {
+          "type": "string"
+        },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+    },
     "MessageTemplateContent": {
       "type": "object",
       "properties": {
         "Template": {
           "type": "string"
         }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+    },
+    "MessageTemplates": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/MessageTemplate"
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
     },
@@ -14153,6 +12433,13 @@
       },
       "x-go-package": "github.com/prometheus/alertmanager/config"
     },
+    "MuteTimings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/MuteTimeInterval"
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+    },
     "NamespaceConfigResponse": {
       "type": "object",
       "additionalProperties": {
@@ -14216,6 +12503,39 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
+    "NotFound": {
+      "type": "object",
+      "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+    },
+    "Notice": {
+      "type": "object",
+      "title": "Notice provides a structure for presenting notifications in Grafana's user interface.",
+      "properties": {
+        "inspect": {
+          "$ref": "#/definitions/InspectType"
+        },
+        "link": {
+          "description": "Link is an optional link for display in the user interface and can be an\nabsolute URL or a path relative to Grafana's root url.",
+          "type": "string",
+          "x-go-name": "Link"
+        },
+        "severity": {
+          "$ref": "#/definitions/NoticeSeverity"
+        },
+        "text": {
+          "description": "Text is freeform descriptive text for the notice.",
+          "type": "string",
+          "x-go-name": "Text"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
+    },
+    "NoticeSeverity": {
+      "type": "integer",
+      "format": "int64",
+      "title": "NoticeSeverity is a type for the Severity property of a Notice.",
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
     },
     "NotificationTestCommand": {
       "type": "object",
@@ -15280,7 +13600,107 @@
           "x-go-name": "HomeTab"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/models"
+      "x-go-package": "github.com/grafana/grafana/pkg/services/preference"
+    },
+    "QueryStat": {
+      "description": "The embedded FieldConfig's display name must be set.\nIt corresponds to the QueryResultMetaStat on the frontend (https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/types/data.ts#L53).",
+      "type": "object",
+      "title": "QueryStat is used for storing arbitrary statistics metadata related to a query and its result, e.g. total request time, data processing time.",
+      "properties": {
+        "color": {
+          "description": "Map values to a display color\nNOTE: this interface is under development in the frontend... so simple map for now",
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Color"
+        },
+        "custom": {
+          "description": "Panel Specific Values",
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Custom"
+        },
+        "decimals": {
+          "type": "integer",
+          "format": "uint16",
+          "x-go-name": "Decimals"
+        },
+        "description": {
+          "description": "Description is human readable field metadata",
+          "type": "string",
+          "x-go-name": "Description"
+        },
+        "displayName": {
+          "description": "DisplayName overrides Grafana default naming, should not be used from a data source",
+          "type": "string",
+          "x-go-name": "DisplayName"
+        },
+        "displayNameFromDS": {
+          "description": "DisplayNameFromDS overrides Grafana default naming in a better way that allows users to override it easily.",
+          "type": "string",
+          "x-go-name": "DisplayNameFromDS"
+        },
+        "filterable": {
+          "description": "Filterable indicates if the Field's data can be filtered by additional calls.",
+          "type": "boolean",
+          "x-go-name": "Filterable"
+        },
+        "interval": {
+          "description": "Interval indicates the expected regular step between values in the series.\nWhen an interval exists, consumers can identify \"missing\" values when the expected value is not present.\nThe grafana timeseries visualization will render disconnected values when missing values are found it the time field.\nThe interval uses the same units as the values.  For time.Time, this is defined in milliseconds.",
+          "type": "number",
+          "format": "double",
+          "x-go-name": "Interval"
+        },
+        "links": {
+          "description": "The behavior when clicking on a result",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DataLink"
+          },
+          "x-go-name": "Links"
+        },
+        "mappings": {
+          "$ref": "#/definitions/ValueMappings"
+        },
+        "max": {
+          "$ref": "#/definitions/ConfFloat64"
+        },
+        "min": {
+          "$ref": "#/definitions/ConfFloat64"
+        },
+        "noValue": {
+          "description": "Alternative to empty string",
+          "type": "string",
+          "x-go-name": "NoValue"
+        },
+        "path": {
+          "description": "Path is an explicit path to the field in the datasource. When the frame meta includes a path,\nthis will default to `${frame.meta.path}/${field.name}\n\nWhen defined, this value can be used as an identifier within the datasource scope, and\nmay be used as an identifier to update values in a subsequent request",
+          "type": "string",
+          "x-go-name": "Path"
+        },
+        "thresholds": {
+          "$ref": "#/definitions/ThresholdsConfig"
+        },
+        "unit": {
+          "description": "Numeric Options",
+          "type": "string",
+          "x-go-name": "Unit"
+        },
+        "value": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "Value"
+        },
+        "writeable": {
+          "description": "Writeable indicates that the datasource knows how to update this value",
+          "type": "boolean",
+          "x-go-name": "Writeable"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
     },
     "Receiver": {
       "type": "object",
@@ -16688,6 +15108,47 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
     },
+    "Threshold": {
+      "description": "Threshold a single step on the threshold list",
+      "type": "object",
+      "properties": {
+        "color": {
+          "type": "string",
+          "x-go-name": "Color"
+        },
+        "state": {
+          "type": "string",
+          "x-go-name": "State"
+        },
+        "value": {
+          "$ref": "#/definitions/ConfFloat64"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
+    },
+    "ThresholdsConfig": {
+      "description": "ThresholdsConfig setup thresholds",
+      "type": "object",
+      "properties": {
+        "mode": {
+          "$ref": "#/definitions/ThresholdsMode"
+        },
+        "steps": {
+          "description": "Must be sorted by 'value', first value is always -Infinity",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Threshold"
+          },
+          "x-go-name": "Steps"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
+    },
+    "ThresholdsMode": {
+      "description": "ThresholdsMode absolute or percentage",
+      "type": "string",
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
+    },
     "TimeInterval": {
       "description": "TimeInterval describes intervals of time. ContainsTime will tell you if a golang time is contained\nwithin the interval.",
       "type": "object",
@@ -16773,7 +15234,7 @@
         },
         "details_url": {
           "type": "string",
-          "x-go-name": "DetailsUrl"
+          "x-go-name": "DetailsURL"
         },
         "exp": {
           "type": "integer",
@@ -16785,20 +15246,10 @@
           "format": "int64",
           "x-go-name": "Issued"
         },
-        "included_admins": {
-          "type": "integer",
-          "format": "int64",
-          "x-go-name": "IncludedAdmins"
-        },
         "included_users": {
           "type": "integer",
           "format": "int64",
           "x-go-name": "IncludedUsers"
-        },
-        "included_viewers": {
-          "type": "integer",
-          "format": "int64",
-          "x-go-name": "IncludedViewers"
         },
         "iss": {
           "type": "string",
@@ -16806,7 +15257,7 @@
         },
         "jti": {
           "type": "string",
-          "x-go-name": "Id"
+          "x-go-name": "ID"
         },
         "lexp": {
           "type": "integer",
@@ -16820,7 +15271,7 @@
         },
         "lid": {
           "type": "string",
-          "x-go-name": "LicenseId"
+          "x-go-name": "LicenseID"
         },
         "limit_by": {
           "type": "string",
@@ -16909,9 +15360,14 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
     },
+    "Type": {
+      "type": "string",
+      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report/models"
+    },
     "URL": {
+      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
       "type": "object",
-      "title": "URL is a custom URL type that allows validation at configuration load time.",
+      "title": "A URL represents a parsed URL (technically, a URI reference).",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -16944,7 +15400,7 @@
           "$ref": "#/definitions/Userinfo"
         }
       },
-      "x-go-package": "github.com/prometheus/common/config"
+      "x-go-package": "net/url"
     },
     "UpdateAlertNotificationCommand": {
       "type": "object",
@@ -17095,10 +15551,6 @@
           "type": "boolean",
           "x-go-name": "BasicAuth"
         },
-        "basicAuthPassword": {
-          "type": "string",
-          "x-go-name": "BasicAuthPassword"
-        },
         "basicAuthUser": {
           "type": "string",
           "x-go-name": "BasicAuthUser"
@@ -17117,10 +15569,6 @@
         "name": {
           "type": "string",
           "x-go-name": "Name"
-        },
-        "password": {
-          "type": "string",
-          "x-go-name": "Password"
         },
         "secureJsonData": {
           "type": "object",
@@ -17659,6 +16107,18 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
     },
+    "ValueMapping": {
+      "description": "ValueMapping allows mapping input values to text and color",
+      "type": "object",
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
+    },
+    "ValueMappings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ValueMapping"
+      },
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
+    },
     "Vector": {
       "description": "Vector is basically only an alias for model.Samples, but the\ncontract is that in a Vector, all Samples have the same timestamp.",
       "type": "array",
@@ -17716,6 +16176,11 @@
         }
       },
       "x-go-package": "github.com/prometheus/alertmanager/config"
+    },
+    "VisType": {
+      "type": "string",
+      "title": "VisType is used to indicate how the data should be visualized in explore.",
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/data"
     },
     "WebhookConfig": {
       "type": "object",
@@ -18020,12 +16485,11 @@
       }
     },
     "gettableAlerts": {
+      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
-      },
-      "x-go-name": "GettableAlerts",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+      }
     },
     "gettableSilence": {
       "type": "object",
@@ -19220,12 +17684,6 @@
       "description": "",
       "schema": {
         "$ref": "#/definitions/QueryDataResponse"
-      }
-    },
-    "queryDatasourceResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/DataResponse"
       }
     },
     "recordingRuleResponse": {

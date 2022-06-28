@@ -1,15 +1,17 @@
-+++
-aliases = ["/docs/grafana/latest/datasources/aws-cloudwatch/template-queries-cloudwatch/", "/docs/grafana/latest/datasources/cloudwatch/"]
-description = "Template variables in CloudWatch queryh"
-title = "Template variables in CloudWatch query"
-weight = 10
-+++
+---
+aliases:
+  - /docs/grafana/latest/datasources/aws-cloudwatch/template-queries-cloudwatch/
+  - /docs/grafana/latest/datasources/cloudwatch/
+description: Template variables in CloudWatch queryh
+title: Template variables in CloudWatch query
+weight: 10
+---
 
 # Using template variables in CloudWatch queries
 
 Instead of hard-coding server, application, and sensor names in your metric queries, you can use variables. The variables are listed as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the display of data in your dashboard.
 
-For an introduction to templating and template variables, refer to the [Templating]({{< relref "../../variables/_index.md" >}}) documentation.
+For an introduction to templating and template variables, refer to the [Templating]({{< relref "../../variables/" >}}) documentation.
 
 ## Query variable
 
@@ -33,7 +35,7 @@ For details about the metrics CloudWatch provides, please refer to the [CloudWat
 
 ### Using variables in queries
 
-Variables can be used in the variable form. Refer to the [variable syntax documentation]({{< relref "../../variables/syntax.md" >}}).
+Variables can be used in the variable form. Refer to the [variable syntax documentation]({{< relref "../../variables/syntax/" >}}).
 
 ## ec2_instance_attribute examples
 

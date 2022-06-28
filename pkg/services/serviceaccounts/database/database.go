@@ -209,25 +209,7 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccount(ctx context.Context, o
 		return nil
 	})
 
-	if err != nil {
-		return nil, err
-	}
-
-	// Get Teams of service account. Can be optimized by combining with the query above
-	// in refactor
-	getTeamQuery := models.GetTeamsByUserQuery{UserId: serviceAccountID, OrgId: orgID}
-	if err := s.sqlStore.GetTeamsByUser(ctx, &getTeamQuery); err != nil {
-		return nil, err
-	}
-	teams := make([]string, len(getTeamQuery.Result))
-
-	for i := range getTeamQuery.Result {
-		teams[i] = getTeamQuery.Result[i].Name
-	}
-
-	serviceAccount.Teams = teams
-
-	return serviceAccount, nil
+	return serviceAccount, err
 }
 
 func (s *ServiceAccountsStoreImpl) RetrieveServiceAccountIdByName(ctx context.Context, orgID int64, name string) (int64, error) {

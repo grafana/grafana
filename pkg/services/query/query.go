@@ -3,6 +3,7 @@ package query
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
@@ -18,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
+	"github.com/grafana/grafana/pkg/util/proxyutil"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
@@ -149,6 +151,13 @@ func (s *Service) handleQueryData(ctx context.Context, user *models.SignedInUser
 		req.Headers[k] = v
 	}
 
+	if parsedReq.httpRequest != nil {
+		proxyutil.ClearCookieHeader(parsedReq.httpRequest, ds.AllowedCookies())
+		if cookieStr := parsedReq.httpRequest.Header.Get("Cookie"); cookieStr != "" {
+			req.Headers["Cookie"] = cookieStr
+		}
+	}
+
 	for _, q := range parsedReq.parsedQueries {
 		req.Queries = append(req.Queries, q.query)
 	}
@@ -164,6 +173,7 @@ type parsedQuery struct {
 type parsedRequest struct {
 	hasExpression bool
 	parsedQueries []parsedQuery
+	httpRequest   *http.Request
 }
 
 func customHeaders(jsonData *simplejson.Json, decryptedJsonData map[string]string) map[string]string {
@@ -241,6 +251,10 @@ func (s *Service) parseMetricRequest(ctx context.Context, user *models.SignedInU
 			// We do not (yet) support mixed query type
 			return nil, NewErrBadQuery("all queries must use the same datasource")
 		}
+	}
+
+	if reqDTO.HTTPRequest != nil {
+		req.httpRequest = reqDTO.HTTPRequest
 	}
 
 	return req, nil

@@ -1,14 +1,22 @@
-+++
-aliases = ["/docs/grafana/latest/alerting/alerting-rules/alert-annotation-label/", "/docs/grafana/latest/alerting/unified-alerting/alerting-rules/alert-annotation-label/"]
-description = "Annotations and labels for alerting"
-keywords = ["grafana", "alerting", "guide", "rules", "create"]
-title = "Annotations and labels for alerting rules"
-weight = 401
-+++
+---
+aliases:
+  - /docs/grafana/latest/alerting/alerting-rules/alert-annotation-label/
+  - /docs/grafana/latest/alerting/fundamentals/annotation-label/
+  - /docs/grafana/latest/alerting/unified-alerting/alerting-rules/alert-annotation-label/
+description: Annotations and labels for alerting
+keywords:
+  - grafana
+  - alerting
+  - guide
+  - rules
+  - create
+title: Annotations and labels for alerting rules
+weight: 401
+---
 
 # Annotations and labels for alerting rules
 
-Annotations and labels are key value pairs associated with alerts originating from the alerting rule, datasource response, and as a result of alerting rule evaluation. They can be used in alert notifications directly or in [templates]({{< relref "../../contact-points/message-templating/_index.md" >}}) and [template functions]({{< relref "../../contact-points/message-templating/template-functions" >}}) to create notification contact dynamically.
+Annotations and labels are key value pairs associated with alerts originating from the alerting rule, datasource response, and as a result of alerting rule evaluation. They can be used in alert notifications directly or in [templates]({{< relref "../../contact-points/message-templating/" >}}) and [template functions]({{< relref "../../contact-points/message-templating/template-functions/" >}}) to create notification contact dynamically.
 
 ## Annotations
 
@@ -20,6 +28,6 @@ Labels are key-value pairs that contain information about, and are used to uniqu
 
 Before you begin using annotations and labels, familiarize yourself with:
 
-- [Labels in Grafana alerting]({{< relref "./how-to-use-labels.md" >}})
-- [How label matching works]({{< relref "./how-to-use-labels.md" >}})
-- [Template variables for alerting rule labels and annotations]({{< relref "./variables-label-annotation.md" >}})
+- [Labels in Grafana Alerting]({{< relref "how-to-use-labels/" >}})
+- [How label matching works]({{< relref "how-to-use-labels/" >}})
+- [How to template annotations and labels]({{< relref "variables-label-annotation/" >}})

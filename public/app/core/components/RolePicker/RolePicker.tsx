@@ -5,7 +5,7 @@ import { Role, OrgRole } from 'app/types';
 
 import { RolePickerInput } from './RolePickerInput';
 import { RolePickerMenu } from './RolePickerMenu';
-import { MENU_MAX_HEIGHT } from './constants';
+import { MENU_MAX_HEIGHT, ROLE_PICKER_WIDTH } from './constants';
 
 export interface Props {
   builtInRole?: OrgRole;
@@ -37,7 +37,7 @@ export const RolePicker = ({
   const [selectedRoles, setSelectedRoles] = useState<Role[]>(appliedRoles);
   const [selectedBuiltInRole, setSelectedBuiltInRole] = useState<OrgRole | undefined>(builtInRole);
   const [query, setQuery] = useState('');
-  const [offset, setOffset] = useState(0);
+  const [offset, setOffset] = useState({ vertical: 0, horizontal: 0 });
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -50,14 +50,22 @@ export const RolePicker = ({
     if (!dimensions || !isOpen) {
       return;
     }
-    const { bottom, top } = dimensions;
+    const { bottom, top, left, right } = dimensions;
     const distance = window.innerHeight - bottom;
-    const offset = bottom - top + 10; // Add extra 10px to offset to account for border and outline
-    if (distance < MENU_MAX_HEIGHT) {
-      setOffset(offset);
-    } else {
-      setOffset(-offset);
+    const offsetVertical = bottom - top + 10; // Add extra 10px to offset to account for border and outline
+    const offsetHorizontal = right - left;
+    let horizontal = -offsetHorizontal;
+    let vertical = -offsetVertical;
+
+    if (distance < MENU_MAX_HEIGHT + 20) {
+      vertical = offsetVertical;
     }
+
+    if (window.innerWidth - right < ROLE_PICKER_WIDTH) {
+      horizontal = offsetHorizontal;
+    }
+
+    setOffset({ horizontal, vertical });
   }, [isOpen, selectedRoles]);
 
   const onOpen = useCallback(

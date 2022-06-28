@@ -54,7 +54,7 @@ type schedule struct {
 	baseInterval time.Duration
 
 	// each alert rule gets its own channel and routine
-	registry alertRuleRegistry
+	registry alertRuleInfoRegistry
 
 	maxAttempts int64
 
@@ -97,6 +97,12 @@ type schedule struct {
 	adminConfigPollInterval time.Duration
 	disabledOrgs            map[int64]struct{}
 	minRuleInterval         time.Duration
+
+	// schedulableAlertRules contains the alert rules that are considered for
+	// evaluation in the current tick. The evaluation of an alert rule in the
+	// current tick depends on its evaluation interval and when it was
+	// last evaluated.
+	schedulableAlertRules schedulableAlertRulesRegistry
 }
 
 // SchedulerCfg is the scheduler configuration.
@@ -124,7 +130,7 @@ func NewScheduler(cfg SchedulerCfg, expressionService *expr.Service, appURL *url
 	ticker := alerting.NewTicker(cfg.C, cfg.BaseInterval, cfg.Metrics.Ticker)
 
 	sch := schedule{
-		registry:                alertRuleRegistry{alertRuleInfo: make(map[models.AlertRuleKey]*alertRuleInfo)},
+		registry:                alertRuleInfoRegistry{alertRuleInfo: make(map[models.AlertRuleKey]*alertRuleInfo)},
 		maxAttempts:             cfg.MaxAttempts,
 		clock:                   cfg.C,
 		baseInterval:            cfg.BaseInterval,
@@ -148,6 +154,7 @@ func NewScheduler(cfg SchedulerCfg, expressionService *expr.Service, appURL *url
 		adminConfigPollInterval: cfg.AdminConfigPollInterval,
 		disabledOrgs:            cfg.DisabledOrgs,
 		minRuleInterval:         cfg.MinRuleInterval,
+		schedulableAlertRules:   schedulableAlertRulesRegistry{rules: make(map[models.AlertRuleKey]*models.SchedulableAlertRule)},
 	}
 	return &sch
 }
@@ -314,13 +321,26 @@ func (sch *schedule) UpdateAlertRule(key models.AlertRuleKey) {
 
 // DeleteAlertRule stops evaluation of the rule, deletes it from active rules, and cleans up state cache.
 func (sch *schedule) DeleteAlertRule(key models.AlertRuleKey) {
+	// It can happen that the scheduler has deleted the alert rule before the
+	// Ruler API has called DeleteAlertRule. This can happen as requests to
+	// the Ruler API do not hold an exclusive lock over all scheduler operations.
+	if _, ok := sch.schedulableAlertRules.del(key); !ok {
+		sch.log.Info("alert rule cannot be removed from the scheduler as it is not scheduled", "uid", key.UID, "org_id", key.OrgID)
+	}
+
+	// Delete the rule routine
 	ruleInfo, ok := sch.registry.del(key)
 	if !ok {
-		sch.log.Info("unable to delete alert rule routine information by key", "uid", key.UID, "org_id", key.OrgID)
+		sch.log.Info("alert rule cannot be stopped as it is not running", "uid", key.UID, "org_id", key.OrgID)
 		return
 	}
 	// stop rule evaluation
 	ruleInfo.stop()
+
+	// Our best bet at this point is that we update the metrics with what we hope to schedule in the next tick.
+	alertRules := sch.schedulableAlertRules.all()
+	sch.metrics.SchedulableAlertRules.Set(float64(len(alertRules)))
+	sch.metrics.SchedulableAlertRulesHash.Set(float64(hashUIDs(alertRules)))
 }
 
 func (sch *schedule) adminConfigSync(ctx context.Context) error {
@@ -362,7 +382,11 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 				disabledOrgs = append(disabledOrgs, disabledOrg)
 			}
 
-			alertRules := sch.getAlertRules(ctx, disabledOrgs)
+			if err := sch.updateSchedulableAlertRules(ctx, disabledOrgs); err != nil {
+				sch.log.Error("scheduler failed to update alert rules", "err", err)
+			}
+			alertRules := sch.schedulableAlertRules.all()
+
 			sch.log.Debug("alert rules fetched", "count", len(alertRules), "disabled_orgs", disabledOrgs)
 
 			// registeredDefinitions is a map used for finding deleted alert rules
@@ -370,6 +394,11 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 			// each alert rule found also in this cycle is removed
 			// so, at the end, the remaining registered alert rules are the deleted ones
 			registeredDefinitions := sch.registry.keyMap()
+
+			// While these are the rules that we iterate over, at the moment there's no 100% guarantee that they'll be
+			// scheduled as rules could be removed before we get a chance to evaluate them.
+			sch.metrics.SchedulableAlertRules.Set(float64(len(alertRules)))
+			sch.metrics.SchedulableAlertRulesHash.Set(float64(hashUIDs(alertRules)))
 
 			type readyToRunItem struct {
 				key      models.AlertRuleKey
@@ -424,7 +453,7 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 				time.AfterFunc(time.Duration(int64(i)*step), func() {
 					success := item.ruleInfo.eval(tick, item.version)
 					if !success {
-						sch.log.Debug("Scheduled evaluation was canceled because evaluation routine was stopped", "uid", item.key.UID, "org", item.key.OrgID, "time", tick)
+						sch.log.Debug("scheduled evaluation was canceled because evaluation routine was stopped", "uid", item.key.UID, "org", item.key.OrgID, "time", tick)
 					}
 				})
 			}
@@ -585,12 +614,12 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 				return nil
 			})
 			if err != nil {
-				logger.Error("updating rule failed after all retries", "error", err)
+				logger.Error("updating rule failed after all retries", "err", err)
 			}
 		// evalCh - used by the scheduler to signal that evaluation is needed.
 		case ctx, ok := <-evalCh:
 			if !ok {
-				logger.Debug("Evaluation channel has been closed. Exiting")
+				logger.Debug("evaluation channel has been closed. Exiting")
 				return nil
 			}
 			if evalRunning {

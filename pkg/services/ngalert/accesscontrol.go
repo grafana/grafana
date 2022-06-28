@@ -36,7 +36,7 @@ var (
 			DisplayName: "Rules Editor",
 			Description: "Can add, update, and delete rules in any Grafana folder and external providers",
 			Group:       AlertRolesGroup,
-			Version:     2,
+			Version:     3,
 			Permissions: accesscontrol.ConcatPermissions(rulesReaderRole.Role.Permissions, []accesscontrol.Permission{
 				{
 					Action: accesscontrol.ActionAlertingRuleCreate,
@@ -84,7 +84,7 @@ var (
 			DisplayName: "Silences Editor",
 			Description: "Can add and update silences in Grafana and external providers",
 			Group:       AlertRolesGroup,
-			Version:     1,
+			Version:     2,
 			Permissions: accesscontrol.ConcatPermissions(instancesReaderRole.Role.Permissions, []accesscontrol.Permission{
 				{
 					Action: accesscontrol.ActionAlertingInstanceCreate,
@@ -161,6 +161,25 @@ var (
 		},
 		Grants: []string{string(models.ROLE_EDITOR), string(models.ROLE_ADMIN)},
 	}
+
+	alertingProvisioningRole = accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        accesscontrol.FixedRolePrefix + "alerting:provisioning",
+			DisplayName: "Access to alert rules provisioning API",
+			Description: "Can manage all alert rules, contact points, notification policies, silences, etc. in the organization via provisioning API.",
+			Group:       AlertRolesGroup,
+			Version:     1,
+			Permissions: []accesscontrol.Permission{
+				{
+					Action: accesscontrol.ActionAlertingProvisioningRead, // organization scope
+				},
+				{
+					Action: accesscontrol.ActionAlertingProvisioningWrite, // organization scope
+				},
+			},
+		},
+		Grants: []string{string(models.ROLE_ADMIN)},
+	}
 )
 
 func DeclareFixedRoles(ac accesscontrol.AccessControl) error {
@@ -168,6 +187,6 @@ func DeclareFixedRoles(ac accesscontrol.AccessControl) error {
 		rulesReaderRole, rulesEditorRole,
 		instancesReaderRole, instancesEditorRole,
 		notificationsReaderRole, notificationsEditorRole,
-		alertingReaderRole, alertingWriterRole,
+		alertingReaderRole, alertingWriterRole, alertingProvisioningRole,
 	)
 }

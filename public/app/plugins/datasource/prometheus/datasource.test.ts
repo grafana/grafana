@@ -59,6 +59,7 @@ describe('PrometheusDatasource', () => {
   let ds: PrometheusDatasource;
   const instanceSettings = {
     url: 'proxied',
+    id: 1,
     directUrl: 'direct',
     user: 'test',
     password: 'mupp',
@@ -149,7 +150,7 @@ describe('PrometheusDatasource', () => {
       it('added to metadata request', () => {
         promDs.metadataRequest('/foo');
         expect(fetchMock.mock.calls.length).toBe(1);
-        expect(fetchMock.mock.calls[0][0].url).toBe('proxied/foo?customQuery=123');
+        expect(fetchMock.mock.calls[0][0].url).toBe('/api/datasources/1/resources/foo?customQuery=123');
       });
 
       it('adds params to timeseries query', () => {
@@ -184,13 +185,13 @@ describe('PrometheusDatasource', () => {
       it('added to metadata request with non-POST endpoint', () => {
         promDs.metadataRequest('/foo');
         expect(fetchMock.mock.calls.length).toBe(1);
-        expect(fetchMock.mock.calls[0][0].url).toBe('proxied/foo?customQuery=123');
+        expect(fetchMock.mock.calls[0][0].url).toBe('/api/datasources/1/resources/foo?customQuery=123');
       });
 
       it('added to metadata request with POST endpoint', () => {
         promDs.metadataRequest('/api/v1/labels');
         expect(fetchMock.mock.calls.length).toBe(1);
-        expect(fetchMock.mock.calls[0][0].url).toBe('proxied/api/v1/labels');
+        expect(fetchMock.mock.calls[0][0].url).toBe('/api/datasources/1/resources/api/v1/labels');
         expect(fetchMock.mock.calls[0][0].data.customQuery).toBe('123');
       });
 
@@ -431,7 +432,7 @@ describe('PrometheusDatasource', () => {
     });
   });
 
-  describe('Prometheus regular escaping', () => {
+  describe('Prometheus regular escaping', () => {
     it('should not escape non-string', () => {
       expect(prometheusRegularEscape(12)).toEqual(12);
     });
@@ -457,7 +458,7 @@ describe('PrometheusDatasource', () => {
     });
   });
 
-  describe('Prometheus regexes escaping', () => {
+  describe('Prometheus regexes escaping', () => {
     it('should not escape simple string', () => {
       expect(prometheusSpecialRegexEscape('cryptodepression')).toEqual('cryptodepression');
     });

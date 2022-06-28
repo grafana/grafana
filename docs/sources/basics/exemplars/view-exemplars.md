@@ -1,10 +1,15 @@
-+++
-aliases = ["/docs/grafana/latest/basics/exemplars/view-exemplars/"]
-description = "Exemplars"
-keywords = ["grafana", "concepts", "exemplars", "prometheus"]
-title = "View exemplar data"
-weight = 400
-+++
+---
+aliases:
+  - /docs/grafana/latest/basics/exemplars/view-exemplars/
+description: Exemplars
+keywords:
+  - grafana
+  - concepts
+  - exemplars
+  - prometheus
+title: View exemplar data
+weight: 400
+---
 
 # View exemplar data
 
@@ -12,7 +17,7 @@ When support for exemplar support is enabled for a Prometheus data source, you c
 
 ## In Explore
 
-Explore visualizes exemplar traces as highlighted stars alongside metrics data. For more information on how Explore visualizes trace data, refer to [Tracing in Explore]({{< relref "../../explore/trace-integration.md" >}}).
+Explore visualizes exemplar traces as highlighted stars alongside metrics data. For more information on how Explore visualizes trace data, refer to [Tracing in Explore]({{< relref "../../explore/trace-integration/" >}}).
 
 To examine the details of an exemplar trace:
 
@@ -28,7 +33,7 @@ For more information on how to drill down and analyze the trace and span details
 
 ## In logs
 
-You can also view exemplar trace details from the Loki logs in Explore. Use regex within the Derived fields links for Loki to extract the `traceID` information. Now when you expand Loki logs, you can see a `traceID` property under the **Detected fields** section. To learn more about how to extract a part of a log message into an internal or external link, refer to [using derived fields in Loki]({{< relref "../../explore/logs-integration.md" >}}).
+You can also view exemplar trace details from the Loki logs in Explore. Use regex within the Derived fields links for Loki to extract the `traceID` information. Now when you expand Loki logs, you can see a `traceID` property under the **Detected fields** section. To learn more about how to extract a part of a log message into an internal or external link, refer to [using derived fields in Loki]({{< relref "../../explore/logs-integration/" >}}).
 
 To view the details of an exemplar trace:
 

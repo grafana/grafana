@@ -366,7 +366,6 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			Url:      "http://influxdb:8083",
 			Database: "site",
 			User:     "user",
-			Password: "password",
 		}
 
 		ctx := &models.ReqContext{}
@@ -557,18 +556,18 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 
 		tests := []*testCase{
-			createAuthTest(t, secretsStore, models.DS_INFLUXDB_08, "http://localhost:9090", authTypePassword, authCheckQuery, false),
-			createAuthTest(t, secretsStore, models.DS_INFLUXDB_08, "http://localhost:9090", authTypePassword, authCheckQuery, true),
-			createAuthTest(t, secretsStore, models.DS_INFLUXDB, "http://localhost:9090", authTypePassword, authCheckHeader, true),
-			createAuthTest(t, secretsStore, models.DS_INFLUXDB, "http://localhost:9090", authTypePassword, authCheckHeader, false),
-			createAuthTest(t, secretsStore, models.DS_INFLUXDB, "http://localhost:9090", authTypeBasic, authCheckHeader, true),
-			createAuthTest(t, secretsStore, models.DS_INFLUXDB, "http://localhost:9090", authTypeBasic, authCheckHeader, false),
+			createAuthTest(t, secretsStore, models.DS_INFLUXDB_08, "http://localhost:9090", authTypePassword, authCheckQuery),
+			createAuthTest(t, secretsStore, models.DS_INFLUXDB_08, "http://localhost:9090", authTypePassword, authCheckQuery),
+			createAuthTest(t, secretsStore, models.DS_INFLUXDB, "http://localhost:9090", authTypePassword, authCheckHeader),
+			createAuthTest(t, secretsStore, models.DS_INFLUXDB, "http://localhost:9090", authTypePassword, authCheckHeader),
+			createAuthTest(t, secretsStore, models.DS_INFLUXDB, "http://localhost:9090", authTypeBasic, authCheckHeader),
+			createAuthTest(t, secretsStore, models.DS_INFLUXDB, "http://localhost:9090", authTypeBasic, authCheckHeader),
 
 			// These two should be enough for any other datasource at the moment. Proxy has special handling
 			// only for Influx, others have the same path and only BasicAuth. Non BasicAuth datasources
 			// do not go through proxy but through TSDB API which is not tested here.
-			createAuthTest(t, secretsStore, models.DS_ES, "http://localhost:9200", authTypeBasic, authCheckHeader, false),
-			createAuthTest(t, secretsStore, models.DS_ES, "http://localhost:9200", authTypeBasic, authCheckHeader, true),
+			createAuthTest(t, secretsStore, models.DS_ES, "http://localhost:9200", authTypeBasic, authCheckHeader),
+			createAuthTest(t, secretsStore, models.DS_ES, "http://localhost:9200", authTypeBasic, authCheckHeader),
 		}
 		for _, test := range tests {
 			runDatasourceAuthTest(t, secretsService, secretsStore, cfg, test)
@@ -918,7 +917,7 @@ const (
 	authCheckHeader = "header"
 )
 
-func createAuthTest(t *testing.T, secretsStore kvstore.SecretsKVStore, dsType string, url string, authType string, authCheck string, useSecureJsonData bool) *testCase {
+func createAuthTest(t *testing.T, secretsStore kvstore.SecretsKVStore, dsType string, url string, authType string, authCheck string) *testCase {
 	// Basic user:password
 	base64AuthHeader := "Basic dXNlcjpwYXNzd29yZA=="
 
@@ -926,7 +925,7 @@ func createAuthTest(t *testing.T, secretsStore kvstore.SecretsKVStore, dsType st
 		datasource: &models.DataSource{
 			Id:       1,
 			OrgId:    1,
-			Name:     fmt.Sprintf("%s,%s,%s,%s,%t", dsType, url, authType, authCheck, useSecureJsonData),
+			Name:     fmt.Sprintf("%s,%s,%s,%s", dsType, url, authType, authCheck),
 			Type:     dsType,
 			JsonData: simplejson.New(),
 			Url:      url,
@@ -937,38 +936,28 @@ func createAuthTest(t *testing.T, secretsStore kvstore.SecretsKVStore, dsType st
 	if authType == authTypePassword {
 		message = fmt.Sprintf("%v should add username and password", dsType)
 		test.datasource.User = "user"
-		if useSecureJsonData {
-			secureJsonData, err := json.Marshal(map[string]string{
-				"password": "password",
-			})
-			require.NoError(t, err)
+		secureJsonData, err := json.Marshal(map[string]string{
+			"password": "password",
+		})
+		require.NoError(t, err)
 
-			err = secretsStore.Set(context.Background(), test.datasource.OrgId, test.datasource.Name, "datasource", string(secureJsonData))
-			require.NoError(t, err)
-		} else {
-			test.datasource.Password = "password"
-		}
+		err = secretsStore.Set(context.Background(), test.datasource.OrgId, test.datasource.Name, "datasource", string(secureJsonData))
+		require.NoError(t, err)
 	} else {
 		message = fmt.Sprintf("%v should add basic auth username and password", dsType)
 		test.datasource.BasicAuth = true
 		test.datasource.BasicAuthUser = "user"
-		if useSecureJsonData {
-			secureJsonData, err := json.Marshal(map[string]string{
-				"basicAuthPassword": "password",
-			})
-			require.NoError(t, err)
+		secureJsonData, err := json.Marshal(map[string]string{
+			"basicAuthPassword": "password",
+		})
+		require.NoError(t, err)
 
-			err = secretsStore.Set(context.Background(), test.datasource.OrgId, test.datasource.Name, "datasource", string(secureJsonData))
-			require.NoError(t, err)
-		} else {
-			test.datasource.BasicAuthPassword = "password"
-		}
+		err = secretsStore.Set(context.Background(), test.datasource.OrgId, test.datasource.Name, "datasource", string(secureJsonData))
+		require.NoError(t, err)
 	}
 	require.NoError(t, err)
 
-	if useSecureJsonData {
-		message += " from securejsondata"
-	}
+	message += " from securejsondata"
 
 	if authCheck == authCheckQuery {
 		message += " to query params"

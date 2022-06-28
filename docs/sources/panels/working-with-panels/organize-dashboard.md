@@ -1,8 +1,10 @@
-+++
-aliases = ["/docs/grafana/latest/panels/working-with-panels/organize-dashboard/", "/docs/sources/panels/working-with-panels/organize-dashboard/"]
-title = "Organize a dashboard"
-weight = 80
-+++
+---
+aliases:
+  - /docs/grafana/latest/panels/working-with-panels/organize-dashboard/
+  - /docs/sources/panels/working-with-panels/organize-dashboard/
+title: Organize a dashboard
+weight: 80
+---
 
 # Organize a dashboard
 

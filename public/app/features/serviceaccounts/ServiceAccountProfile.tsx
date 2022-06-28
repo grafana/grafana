@@ -73,7 +73,7 @@ export function ServiceAccountProfile({
     <>
       <div style={{ marginBottom: '10px' }}>
         <a href="org/serviceaccounts" style={{ display: 'inline-block', verticalAlign: 'middle' }}>
-          <Button variant="link" icon="backward" />
+          <Button fill="text" icon="backward" />
         </a>
         <h1
           className="page-heading"

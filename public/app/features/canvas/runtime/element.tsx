@@ -114,6 +114,7 @@ export class ElementState implements LayerElement {
         style.top = `${placement.top}px`;
         style.bottom = `${placement.bottom}px`;
         delete placement.height;
+        style.height = '';
         break;
       case VerticalConstraint.Center:
         placement.top = placement.top ?? 0;
@@ -129,6 +130,7 @@ export class ElementState implements LayerElement {
         style.top = `${placement.top}%`;
         style.bottom = `${placement.bottom}%`;
         delete placement.height;
+        style.height = '';
         break;
     }
 
@@ -153,6 +155,7 @@ export class ElementState implements LayerElement {
         style.left = `${placement.left}px`;
         style.right = `${placement.right}px`;
         delete placement.width;
+        style.width = '';
         break;
       case HorizontalConstraint.Center:
         placement.left = placement.left ?? 0;
@@ -168,6 +171,7 @@ export class ElementState implements LayerElement {
         style.left = `${placement.left}%`;
         style.right = `${placement.right}%`;
         delete placement.width;
+        style.width = '';
         break;
     }
 
@@ -197,13 +201,13 @@ export class ElementState implements LayerElement {
     }
 
     const relativeTop =
-      elementContainer && parentContainer ? Math.abs(Math.round(elementContainer.top - parentContainer.top)) : 0;
+      elementContainer && parentContainer ? Math.round(elementContainer.top - parentContainer.top) : 0;
     const relativeBottom =
-      elementContainer && parentContainer ? Math.abs(Math.round(elementContainer.bottom - parentContainer.bottom)) : 0;
+      elementContainer && parentContainer ? Math.round(parentContainer.bottom - elementContainer.bottom) : 0;
     const relativeLeft =
-      elementContainer && parentContainer ? Math.abs(Math.round(elementContainer.left - parentContainer.left)) : 0;
+      elementContainer && parentContainer ? Math.round(elementContainer.left - parentContainer.left) : 0;
     const relativeRight =
-      elementContainer && parentContainer ? Math.abs(Math.round(elementContainer.right - parentContainer.right)) : 0;
+      elementContainer && parentContainer ? Math.round(parentContainer.right - elementContainer.right) : 0;
 
     const placement = {} as Placement;
 

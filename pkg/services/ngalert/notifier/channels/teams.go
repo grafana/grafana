@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
@@ -93,21 +94,14 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	ruleURL := joinUrlPath(tn.tmpl.ExternalURL.String(), "/alerting/list", tn.log)
 
 	images := []teamsImage{}
-	for i := range as {
-		imgToken := getTokenFromAnnotations(as[i].Annotations)
-		timeoutCtx, cancel := context.WithTimeout(ctx, ImageStoreTimeout)
-		imgURL, err := tn.images.GetURL(timeoutCtx, imgToken)
-		cancel()
-		if err != nil {
-			if !errors.Is(err, ErrImagesUnavailable) {
-				// Ignore errors. Don't log "ImageUnavailable", which means the storage doesn't exist.
-				tn.log.Warn("failed to retrieve image url from store", "error", err)
+	_ = withStoredImages(ctx, tn.log, tn.images,
+		func(index int, image *ngmodels.Image) error {
+			if image != nil && len(image.URL) != 0 {
+				images = append(images, teamsImage{Image: image.URL})
 			}
-		}
-		if len(imgURL) > 0 {
-			images = append(images, teamsImage{Image: imgURL})
-		}
-	}
+			return nil
+		},
+		as...)
 
 	// Note: these template calls must remain in this order
 	title := tmpl(tn.Title)

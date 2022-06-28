@@ -19,11 +19,6 @@ var (
 			State:       FeatureStateStable,
 		},
 		{
-			Name:        "httpclientprovider_azure_auth",
-			Description: "Experimental. Allow datasources to configure Azure authentication directly via JsonData",
-			State:       FeatureStateBeta,
-		},
-		{
 			Name:        "serviceAccounts",
 			Description: "support service accounts",
 			State:       FeatureStateBeta,
@@ -101,26 +96,21 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
+			Name:        "prometheusAzureOverrideAudience",
+			Description: "Experimental. Allow override default AAD audience for Azure Prometheus endpoint",
+			State:       FeatureStateBeta,
+		},
+		{
 			Name:         "influxdbBackendMigration",
 			Description:  "Query InfluxDB InfluxQL without the proxy",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 		},
 		{
-			Name:        "newNavigation",
-			Description: "Try the next gen navigation model",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:            "showFeatureFlagsInUI",
 			Description:     "Show feature flags in the settings UI",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
-		},
-		{
-			Name:        "disable_http_request_histogram",
-			Description: "Do not create histograms for http requests",
-			State:       FeatureStateAlpha,
 		},
 		{
 			Name:            "publicDashboards",
@@ -164,11 +154,6 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:        "alertProvisioning",
-			Description: "Provisioning-friendly routes for alerting",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:            "export",
 			Description:     "Export grafana instance (to git, etc)",
 			State:           FeatureStateAlpha,
@@ -200,12 +185,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:         "persistNotifications",
-			Description:  "PoC Notifications page",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-		},
-		{
 			Name:        "commandPalette",
 			Description: "Enable command palette",
 			State:       FeatureStateAlpha,
@@ -226,11 +205,10 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:            "azureMonitorExperimentalUI",
-			Description:     "Use grafana-experimental UI in Azure Monitor",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-			FrontendOnly:    true,
+			Name:         "azureMonitorExperimentalUI",
+			Description:  "Use grafana-experimental UI in Azure Monitor",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
 		},
 		{
 			Name:         "traceToMetrics",
@@ -241,7 +219,7 @@ var (
 		{
 			Name:        "prometheusStreamingJSONParser",
 			Description: "Enable streaming JSON parser for Prometheus datasource",
-			State:       FeatureStateAlpha,
+			State:       FeatureStateBeta,
 		},
 		{
 			Name:            "validateDashboardsOnSave",
@@ -252,6 +230,11 @@ var (
 		{
 			Name:        "prometheusWideSeries",
 			Description: "Enable wide series responses in the Prometheus datasource",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "logRequestsInstrumentedAsUnknown",
+			Description: "Logs the path for requests that are instrumented as unknown",
 			State:       FeatureStateAlpha,
 		},
 	}

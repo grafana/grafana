@@ -1,14 +1,21 @@
-+++
-aliases = ["/docs/grafana/latest/datasources/tempo/", "/docs/grafana/latest/features/datasources/tempo/"]
-description = "High volume, minimal dependency trace storage. OSS tracing solution from Grafana Labs."
-keywords = ["grafana", "tempo", "guide", "tracing"]
-title = "Tempo"
-weight = 1400
-+++
+---
+aliases:
+  - /docs/grafana/latest/datasources/tempo/
+  - /docs/grafana/latest/features/datasources/tempo/
+description: High volume, minimal dependency trace storage. OSS tracing solution from
+  Grafana Labs.
+keywords:
+  - grafana
+  - tempo
+  - guide
+  - tracing
+title: Tempo
+weight: 1400
+---
 
 # Tempo data source
 
-Grafana ships with built-in support for Tempo a high volume, minimal dependency trace storage, OSS tracing solution from Grafana Labs. Add it as a data source, and you are ready to query your traces in [Explore]({{< relref "../explore/_index.md" >}}).
+Grafana ships with built-in support for Tempo a high volume, minimal dependency trace storage, OSS tracing solution from Grafana Labs. Add it as a data source, and you are ready to query your traces in [Explore]({{< relref "../explore/" >}}).
 
 ## Add data source
 
@@ -27,7 +34,7 @@ To access Tempo settings, click the **Configuration** (gear) icon, then click **
 
 > **Note:** This feature is available in Grafana 7.4+.
 
-This is a configuration for the [trace to logs feature]({{< relref "../explore/trace-integration" >}}). Select target data source (at this moment limited to Loki or Splunk \[logs\] data sources) and select which tags will be used in the logs query.
+This is a configuration for the [trace to logs feature]({{< relref "../explore/trace-integration/" >}}). Select target data source (at this moment limited to Loki or Splunk \[logs\] data sources) and select which tags will be used in the logs query.
 
 - **Data source -** Target data source.
 - **Tags -** The tags that will be used in the logs query. Default is `'cluster', 'hostname', 'namespace', 'pod'`.
@@ -78,7 +85,7 @@ This is a configuration for the Loki search query type.
 
 ## Query traces
 
-You can query and display traces from Tempo via [Explore]({{< relref "../explore/_index.md" >}}).
+You can query and display traces from Tempo via [Explore]({{< relref "../explore/" >}}).
 
 ### Tempo search
 
@@ -100,7 +107,7 @@ You must also configure your Tempo data source to use this feature.Refer to the 
 
 ### Loki search
 
-To find traces to visualize, use the [Loki query editor]({{< relref "loki.md#loki-query-editor" >}}). To get search results, you must have [derived fields]({{< relref "loki.md#derived-fields" >}}) configured, which point to this data source.
+To find traces to visualize, use the [Loki query editor]({{< relref "loki/#loki-query-editor" >}}). To get search results, you must have [derived fields]({{< relref "loki/#derived-fields" >}}) configured, which point to this data source.
 
 {{< figure src="/static/img/docs/tempo/query-editor-search.png" class="docs-image--no-shadow" max-width="750px" caption="Screenshot of the Tempo query editor showing the search tab" >}}
 
@@ -168,7 +175,7 @@ To display the service graph:
 
 - [Configure the Grafana Agent](https://grafana.com/docs/tempo/next/grafana-agent/service-graphs/#quickstart) to generate service graph data
 - Link a Prometheus datasource in the Tempo datasource settings.
-- Navigate to [Explore]({{< relref "../explore/_index.md" >}})
+- Navigate to [Explore]({{< relref "../explore/" >}})
 - Select the Tempo datasource
 - Select the **Service Graph** query type and run the query
 - Optionally, filter by service name
@@ -188,7 +195,7 @@ Click on the service to see a context menu with additional links for quick navig
 
 ## Linking Trace ID from logs
 
-You can link to Tempo trace from logs in Loki or Elastic by configuring an internal link. See the [Derived fields]({{< relref "loki.md#derived-fields" >}}) section in the [Loki data source]({{< relref "loki.md" >}}) or [Data links]({{< relref "elasticsearch.md#data-links" >}}) section in the [Elastic data source]({{< relref "elasticsearch.md" >}}) for configuration instructions.
+You can link to Tempo trace from logs in Loki or Elastic by configuring an internal link. See the [Derived fields]({{< relref "loki/#derived-fields" >}}) section in the [Loki data source]({{< relref "loki/" >}}) or [Data links]({{< relref "elasticsearch/#data-links" >}}) section in the [Elastic data source]({{< relref "elasticsearch/" >}}) for configuration instructions.
 
 ## Provision the Tempo data source
 

@@ -247,10 +247,11 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 
 	err := st.maybeTakeScreenshot(ctx, alertRule, currentState, oldState)
 	if err != nil {
-		st.log.Warn("Error generating a screenshot for an alert instance.",
+		st.log.Warn("failed to generate a screenshot for an alert instance",
 			"alert_rule", alertRule.UID,
 			"dashboard", alertRule.DashboardUID,
-			"panel", alertRule.PanelID)
+			"panel", alertRule.PanelID,
+			"err", err)
 	}
 
 	st.set(currentState)
@@ -352,7 +353,7 @@ func (st *Manager) annotateState(ctx context.Context, alertRule *ngModels.AlertR
 
 		err = st.dashboardService.GetDashboard(ctx, query)
 		if err != nil {
-			st.log.Error("error getting dashboard for alert annotation", "dashboardUID", dashUid, "alertRuleUID", alertRule.UID, "error", err.Error())
+			st.log.Error("error getting dashboard for alert annotation", "dashboardUID", dashUid, "alertRuleUID", alertRule.UID, "err", err.Error())
 			return
 		}
 
@@ -362,7 +363,7 @@ func (st *Manager) annotateState(ctx context.Context, alertRule *ngModels.AlertR
 
 	annotationRepo := annotations.GetRepository()
 	if err := annotationRepo.Save(item); err != nil {
-		st.log.Error("error saving alert annotation", "alertRuleUID", alertRule.UID, "error", err.Error())
+		st.log.Error("error saving alert annotation", "alertRuleUID", alertRule.UID, "err", err.Error())
 		return
 	}
 }
@@ -377,11 +378,11 @@ func (st *Manager) staleResultsHandler(ctx context.Context, alertRule *ngModels.
 			ilbs := ngModels.InstanceLabels(s.Labels)
 			_, labelsHash, err := ilbs.StringAndHash()
 			if err != nil {
-				st.log.Error("unable to get labelsHash", "error", err.Error(), "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID)
+				st.log.Error("unable to get labelsHash", "err", err.Error(), "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID)
 			}
 
 			if err = st.instanceStore.DeleteAlertInstance(ctx, s.OrgID, s.AlertRuleUID, labelsHash); err != nil {
-				st.log.Error("unable to delete stale instance from database", "error", err.Error(), "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID, "cacheID", s.CacheId)
+				st.log.Error("unable to delete stale instance from database", "err", err.Error(), "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID, "cacheID", s.CacheId)
 			}
 
 			if s.State == eval.Alerting {

@@ -288,8 +288,17 @@ export function createFolder(payload: any) {
   return getBackendSrv().post('/api/folders', payload);
 }
 
-export function searchFolders(query: any, permission?: PermissionLevelString): Promise<DashboardSearchHit[]> {
-  return getBackendSrv().get('/api/search', { query, type: 'dash-folder', permission });
+export function searchFolders(
+  query: any,
+  permission?: PermissionLevelString,
+  withAccessControl = false
+): Promise<DashboardSearchHit[]> {
+  return getBackendSrv().get('/api/search', {
+    query,
+    type: 'dash-folder',
+    permission,
+    accesscontrol: withAccessControl,
+  });
 }
 
 export function getFolderById(id: number): Promise<{ id: number; title: string }> {

@@ -1,14 +1,21 @@
-+++
-aliases = ["/docs/grafana/latest/alerting/high-availability/enable-alerting-ha/", "/docs/grafana/latest/alerting/unified-alerting/high-availability/"]
-description = "Enable alerting high availability"
-keywords = ["grafana", "alerting", "tutorials", "ha", "high availability"]
-title = "Enable alerting high availability"
-weight = 450
-+++
+---
+aliases:
+  - /docs/grafana/latest/alerting/high-availability/enable-alerting-ha/
+  - /docs/grafana/latest/alerting/unified-alerting/high-availability/
+description: Enable alerting high availability
+keywords:
+  - grafana
+  - alerting
+  - tutorials
+  - ha
+  - high availability
+title: Enable alerting high availability
+weight: 450
+---
 
 # Enable alerting high availability
 
-You can enable [alerting high availability]({{< relref "./_index.md" >}}) support by updating the Grafana configuration file. On Kubernetes, you can enable alerting high availability by updating the Kubernetes container definition.
+You can enable [alerting high availability]({{< relref "_index.md" >}}) support by updating the Grafana configuration file. On Kubernetes, you can enable alerting high availability by updating the Kubernetes container definition.
 
 ## Update Grafana configuration file
 

@@ -30,7 +30,6 @@ export const QueryOperationAction: React.FC<QueryOperationActionProps> = ({
         className={styles.icon}
         disabled={!!disabled}
         onClick={onClick}
-        surface="header"
         type="button"
         aria-label={selectors.components.QueryEditorRow.actionButton(title)}
       />

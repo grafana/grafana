@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 
@@ -81,7 +82,7 @@ func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*Bas
 		return nil, fmt.Errorf("failed to extract groups: %w", err)
 	}
 
-	logger.Debug("AzureAD OAuth: extracted groups", "email", email, "groups", groups)
+	logger.Debug("AzureAD OAuth: extracted groups", "email", email, "groups", fmt.Sprintf("%v", groups))
 	if !s.IsGroupMember(groups) {
 		return nil, errMissingGroupMembership
 	}
@@ -214,9 +215,11 @@ func extractGroups(client *http.Client, claims azureClaims, token *oauth2.Token)
 	if res.StatusCode != http.StatusOK {
 		if res.StatusCode == http.StatusForbidden {
 			logger.Warn("AzureAD OAuh: Token need GroupMember.Read.All permission to fetch all groups")
-			return []string{}, nil
+		} else {
+			body, _ := io.ReadAll(res.Body)
+			logger.Warn("AzureAD OAuh: could not fetch user groups", "code", res.StatusCode, "body", string(body))
 		}
-		return nil, errors.New("error fetching groups")
+		return []string{}, nil
 	}
 
 	var body getAzureGroupResponse

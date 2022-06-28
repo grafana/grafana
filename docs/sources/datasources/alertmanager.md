@@ -1,14 +1,19 @@
-+++
-aliases = ["/docs/grafana/latest/datasources/alertmanager/", "/docs/grafana/latest/features/datasources/alertmanager/"]
-description = "Guide for using Alertmanager in Grafana"
-keywords = ["grafana", "prometheus", "guide"]
-title = "Alertmanager"
-weight = 150
-+++
+---
+aliases:
+  - /docs/grafana/latest/datasources/alertmanager/
+  - /docs/grafana/latest/features/datasources/alertmanager/
+description: Guide for using Alertmanager in Grafana
+keywords:
+  - grafana
+  - prometheus
+  - guide
+title: Alertmanager
+weight: 150
+---
 
 # Alertmanager data source
 
-Grafana includes built-in support for Prometheus Alertmanager. It is presently in alpha and not accessible unless [alpha plugins are enabled in Grafana settings](https://grafana.com/docs/grafana/latest/administration/configuration/#enable_alpha-1). Once you add it as a data source, you can use the [Grafana alerting UI](https://grafana.com/docs/grafana/latest/alerting/) to manage silences, contact points as well as notification policies. A drop-down option in these pages allows you to switch between Grafana and any configured Alertmanager data sources.
+Grafana includes built-in support for Prometheus Alertmanager. Once you add it as a data source, you can use the [Grafana Alerting UI](https://grafana.com/docs/grafana/latest/alerting/) to manage silences, contact points as well as notification policies. A drop-down option in these pages allows you to switch between Grafana and any configured Alertmanager data sources.
 
 ## Alertmanager implementations
 
@@ -32,5 +37,6 @@ datasources:
     # optionally
     basicAuth: true
     basicAuthUser: my_user
-    basicAuthPassword: test_password
+    secureJsonData:
+      basicAuthPassword: test_password
 ```

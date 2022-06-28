@@ -1,8 +1,6 @@
 package migrations
 
 import (
-	"os"
-
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
@@ -52,11 +50,6 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	addUserAuthTokenMigrations(mg)
 	addCacheMigration(mg)
 	addShortURLMigrations(mg)
-	// TODO Delete when unified alerting is enabled by default unconditionally (Grafana v9)
-	if err := ualert.CheckUnifiedAlertingEnabledByDefault(mg); err != nil { // this should always go before any other ualert migration
-		mg.Logger.Error("failed to determine the status of alerting engine. Enable either legacy or unified alerting explicitly and try again", "err", err)
-		os.Exit(1)
-	}
 	ualert.AddTablesMigrations(mg)
 	ualert.AddDashAlertMigration(mg)
 	addLibraryElementsMigrations(mg)
@@ -76,13 +69,10 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	accesscontrol.AddMigration(mg)
 	addQueryHistoryMigrations(mg)
 
-	if mg.Cfg != nil && mg.Cfg.IsFeatureToggleEnabled != nil {
-		if mg.Cfg.RBACEnabled {
-			accesscontrol.AddTeamMembershipMigrations(mg)
-			accesscontrol.AddDashboardPermissionsMigrator(mg)
-			accesscontrol.AddAlertingPermissionsMigrator(mg)
-		}
-	}
+	accesscontrol.AddTeamMembershipMigrations(mg)
+	accesscontrol.AddDashboardPermissionsMigrator(mg)
+	accesscontrol.AddAlertingPermissionsMigrator(mg)
+
 	addQueryHistoryStarMigrations(mg)
 
 	if mg.Cfg != nil && mg.Cfg.IsFeatureToggleEnabled != nil {
@@ -98,7 +88,10 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	ualert.CreateDefaultFoldersForAlertingMigration(mg)
 	addDbFileStorageMigration(mg)
 
-	accesscontrol.AddManagedPermissionsMigration(mg)
+	accesscontrol.AddManagedPermissionsMigration(mg, accesscontrol.ManagedPermissionsMigrationID)
+	accesscontrol.AddManagedFolderAlertActionsMigration(mg)
+	accesscontrol.AddActionNameMigrator(mg)
+	addPlaylistUIDMigration(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {

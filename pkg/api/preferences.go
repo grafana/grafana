@@ -120,6 +120,8 @@ func (hs *HTTPServer) updatePreferencesFor(ctx context.Context, orgID, userID, t
 		Timezone:        dtoCmd.Timezone,
 		WeekStart:       dtoCmd.WeekStart,
 		HomeDashboardID: dtoCmd.HomeDashboardID,
+		QueryHistory:    dtoCmd.QueryHistory,
+		Navbar:          dtoCmd.Navbar,
 	}
 
 	if err := hs.preferenceService.Save(ctx, &saveCmd); err != nil {

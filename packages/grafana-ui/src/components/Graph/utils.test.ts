@@ -4,7 +4,6 @@ import {
   FieldCache,
   FieldColorModeId,
   Field,
-  getColorForTheme,
   applyFieldOverrides,
   createTheme,
   DataFrame,
@@ -88,7 +87,7 @@ const cSeries = passThroughFieldOverrides(
 )[0];
 
 function getFixedThemedColor(field: Field): string {
-  return getColorForTheme(field.config.color!.fixedColor!, getTheme());
+  return getTheme().visualization.getColorByName(field.config.color!.fixedColor!);
 }
 
 describe('Graph utils', () => {

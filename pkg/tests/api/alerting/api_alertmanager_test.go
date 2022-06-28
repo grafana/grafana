@@ -617,7 +617,7 @@ func TestRulerAccess(t *testing.T) {
 			desc:            "viewer request should fail",
 			url:             "http://viewer:viewer@%s/api/ruler/grafana/api/v1/rules/default",
 			expStatus:       http.StatusForbidden,
-			expectedMessage: `You'll need additional permissions to perform this action. Permissions needed: any of alert.rules:update, alert.rules:create, alert.rules:delete`,
+			expectedMessage: `You'll need additional permissions to perform this action. Permissions needed: any of alert.rules:write, alert.rules:create, alert.rules:delete`,
 		},
 		{
 			desc:            "editor request should succeed",
@@ -2742,6 +2742,9 @@ func rulesNamespaceWithoutVariableValues(t *testing.T, b []byte) (string, map[st
 
 func createUser(t *testing.T, store *sqlstore.SQLStore, cmd models.CreateUserCommand) int64 {
 	t.Helper()
+
+	store.Cfg.AutoAssignOrg = true
+	store.Cfg.AutoAssignOrgId = 1
 
 	u, err := store.CreateUser(context.Background(), cmd)
 	require.NoError(t, err)

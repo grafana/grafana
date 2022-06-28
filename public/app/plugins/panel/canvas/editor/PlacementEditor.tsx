@@ -48,6 +48,12 @@ export const PlacementEditor: FC<StandardEditorProps<any, CanvasEditorOptions, P
   const { options } = element;
   const { placement, constraint: layout } = options;
 
+  const reselectElementAfterChange = () => {
+    setTimeout(() => {
+      settings.scene.select({ targets: [element.div!] });
+    });
+  };
+
   const onHorizontalConstraintSelect = (h: SelectableValue<HorizontalConstraint>) => {
     onHorizontalConstraintChange(h.value!);
   };
@@ -57,6 +63,7 @@ export const PlacementEditor: FC<StandardEditorProps<any, CanvasEditorOptions, P
     element.setPlacementFromConstraint();
     settings.scene.revId++;
     settings.scene.save(true);
+    reselectElementAfterChange();
   };
 
   const onVerticalConstraintSelect = (v: SelectableValue<VerticalConstraint>) => {
@@ -68,16 +75,14 @@ export const PlacementEditor: FC<StandardEditorProps<any, CanvasEditorOptions, P
     element.setPlacementFromConstraint();
     settings.scene.revId++;
     settings.scene.save(true);
+    reselectElementAfterChange();
   };
 
   const onPositionChange = (value: number | undefined, placement: keyof Placement) => {
     element.options.placement![placement] = value ?? element.options.placement![placement];
     element.applyLayoutStylesToDiv();
     settings.scene.clearCurrentSelection(true);
-    // TODO: This needs to have a better sync method with where div is
-    setTimeout(() => {
-      settings.scene.select({ targets: [element.div!] });
-    }, 100);
+    reselectElementAfterChange();
   };
 
   const constraint = element.tempConstraint ?? layout ?? {};

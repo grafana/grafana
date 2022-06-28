@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -77,7 +78,7 @@ func NewGoogleChatNotifier(config *GoogleChatConfig, images ImageStore, ns notif
 
 // Notify send an alert notification to Google Chat.
 func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	gcn.log.Debug("Executing Google Chat notification")
+	gcn.log.Debug("executing Google Chat notification")
 
 	var tmplErr error
 	tmpl, _ := TmplText(ctx, gcn.tmpl, as, gcn.log, &tmplErr)
@@ -188,40 +189,32 @@ func (gcn *GoogleChatNotifier) buildScreenshotCard(ctx context.Context, alerts [
 		},
 		Sections: []section{},
 	}
-	for _, alert := range alerts {
-		imgToken := getTokenFromAnnotations(alert.Annotations)
-		if len(imgToken) == 0 {
-			continue
-		}
 
-		timeoutCtx, cancel := context.WithTimeout(ctx, ImageStoreTimeout)
-		imgURL, err := gcn.images.GetURL(timeoutCtx, imgToken)
-		cancel()
-		if err != nil {
-			if !errors.Is(err, ErrImagesUnavailable) {
-				// Ignore errors. Don't log "ImageUnavailable", which means the storage doesn't exist.
-				gcn.log.Warn("failed to retrieve image url from store", "error", err)
+	_ = withStoredImages(ctx, gcn.log, gcn.images,
+		func(index int, image *ngmodels.Image) error {
+			if image == nil || len(image.URL) == 0 {
+				return nil
 			}
-		}
 
-		if len(imgURL) > 0 {
 			section := section{
 				Widgets: []widget{
 					textParagraphWidget{
 						Text: text{
-							Text: fmt.Sprintf("%s: %s", alert.Status(), alert.Name()),
+							Text: fmt.Sprintf("%s: %s", alerts[index].Status(), alerts[index].Name()),
 						},
 					},
 					imageWidget{
 						Image: imageData{
-							ImageURL: imgURL,
+							ImageURL: image.URL,
 						},
 					},
 				},
 			}
 			card.Sections = append(card.Sections, section)
-		}
-	}
+
+			return nil
+		}, alerts...)
+
 	if len(card.Sections) == 0 {
 		return nil
 	}

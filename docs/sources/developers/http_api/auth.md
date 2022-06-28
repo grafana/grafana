@@ -1,13 +1,21 @@
-+++
-aliases = ["/docs/grafana/latest/developers/http_api/auth/", "/docs/grafana/latest/http_api/auth/", "/docs/grafana/latest/http_api/authentication/"]
-description = "Grafana Authentication HTTP API"
-keywords = ["grafana", "http", "documentation", "api", "authentication"]
-title = "Authentication HTTP API "
-+++
+---
+aliases:
+  - /docs/grafana/latest/developers/http_api/auth/
+  - /docs/grafana/latest/http_api/auth/
+  - /docs/grafana/latest/http_api/authentication/
+description: Grafana Authentication HTTP API
+keywords:
+  - grafana
+  - http
+  - documentation
+  - api
+  - authentication
+title: 'Authentication HTTP API '
+---
 
 # Authentication API
 
-> If you are running Grafana Enterprise, for some endpoints you would need to have relevant permissions. Refer to [Role-based access control permissions]({{< relref "../../enterprise/access-control/custom-role-actions-scopes" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you would need to have relevant permissions. Refer to [Role-based access control permissions]({{< relref "../../enterprise/access-control/custom-role-actions-scopes/" >}}) for more information.
 
 ## Tokens
 
