@@ -60,6 +60,20 @@ export interface SentryConfig {
 }
 
 /**
+ * Describes GrafanaJavascriptAgentConfig integration config
+ *
+ * @public
+ */
+export interface GrafanaJavascriptAgentConfig {
+  enabled: boolean;
+  customEndpoint: string;
+  errorInstrumentalizationEnabled: boolean;
+  consoleInstrumentalizationEnabled: boolean;
+  webVitalsInstrumentalizationEnabled: boolean;
+  apiKey: string;
+}
+
+/**
  * Describes the plugins that should be preloaded prior to start Grafana.
  *
  * @public
@@ -182,6 +196,7 @@ export interface GrafanaConfig {
   http2Enabled: boolean;
   dateFormats?: SystemDateFormatSettings;
   sentry: SentryConfig;
+  grafanaJavascriptAgent: GrafanaJavascriptAgentConfig;
   customTheme?: any;
   geomapDefaultBaseLayer?: MapLayerOptions;
   geomapDisableCustomBaseLayer?: boolean;

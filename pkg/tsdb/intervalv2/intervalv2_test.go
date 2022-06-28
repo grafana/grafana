@@ -5,8 +5,9 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 func TestIntervalCalculator_Calculate(t *testing.T) {
@@ -103,7 +104,7 @@ func TestFormatDuration(t *testing.T) {
 func TestGetIntervalFrom(t *testing.T) {
 	testCases := []struct {
 		name            string
-		dsInfo          *models.DataSource
+		dsInfo          *datasources.DataSource
 		queryInterval   string
 		queryIntervalMs int64
 		defaultInterval time.Duration

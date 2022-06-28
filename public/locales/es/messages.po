@@ -14,6 +14,22 @@ msgstr ""
 "Plural-Forms: \n"
 
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx
+msgid "common.locale.default"
+msgstr ""
+
+#: public/app/core/components/SharedPreferences/SharedPreferences.tsx
+msgid "common.locale.en"
+msgstr ""
+
+#: public/app/core/components/SharedPreferences/SharedPreferences.tsx
+msgid "common.locale.es"
+msgstr ""
+
+#: public/app/core/components/SharedPreferences/SharedPreferences.tsx
+msgid "common.locale.fr"
+msgstr ""
+
+#: public/app/core/components/SharedPreferences/SharedPreferences.tsx
 #: public/app/features/profile/UserProfileEditForm.tsx
 msgid "common.save"
 msgstr ""
@@ -175,6 +191,14 @@ msgid "nav.snapshots"
 msgstr ""
 
 #: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.starred"
+msgstr ""
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.starred-empty"
+msgstr ""
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
 msgid "nav.teams"
 msgstr ""
 
@@ -196,6 +220,14 @@ msgstr ""
 
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx
 msgid "shared-preferences.fields.home-dashboard-tooltip"
+msgstr ""
+
+#: public/app/core/components/SharedPreferences/SharedPreferences.tsx
+msgid "shared-preferences.fields.locale-label"
+msgstr ""
+
+#: public/app/core/components/SharedPreferences/SharedPreferences.tsx
+msgid "shared-preferences.fields.locale-placeholder"
 msgstr ""
 
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx
