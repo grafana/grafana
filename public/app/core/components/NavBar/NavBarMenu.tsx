@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { useLingui } from '@lingui/react';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { OverlayContainer, useOverlay } from '@react-aria/overlays';
@@ -16,6 +17,7 @@ import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
 import { NavBarMenuItem } from './NavBarMenuItem';
 import { NavBarToggle } from './NavBarToggle';
 import { NavFeatureHighlight } from './NavFeatureHighlight';
+import menuItemTranslations from './navBarItem-translations';
 import { isMatchOrChildMatch } from './utils';
 
 const MENU_WIDTH = '350px';
@@ -35,6 +37,7 @@ export function NavBarMenu({ activeItem, isOpen, navItems, onClose, setMenuAnima
   const animStyles = getAnimStyles(theme, ANIMATION_DURATION);
   const ref = useRef(null);
   const { dialogProps } = useDialog({}, ref);
+
   const { overlayProps, underlayProps } = useOverlay(
     {
       isDismissable: true,
@@ -226,6 +229,7 @@ function NavItem({
   activeItem?: NavModelItem;
   onClose: () => void;
 }) {
+  const { i18n } = useLingui();
   const styles = useStyles2(getNavItemStyles);
 
   if (linkHasChildren(link)) {
@@ -252,6 +256,15 @@ function NavItem({
                 />
               )
           )}
+        </ul>
+      </CollapsibleNavItem>
+    );
+  } else if (link.emptyMessageId) {
+    const emptyMessageTranslated = i18n._(menuItemTranslations[link.emptyMessageId]);
+    return (
+      <CollapsibleNavItem onClose={onClose} link={link} isActive={isMatchOrChildMatch(link, activeItem)}>
+        <ul className={styles.children}>
+          <div className={styles.emptyMessage}>{emptyMessageTranslated}</div>
         </ul>
       </CollapsibleNavItem>
     );
@@ -325,6 +338,11 @@ const getNavItemStyles = (theme: GrafanaTheme2) => ({
     fontSize: theme.typography.pxToRem(14),
     justifySelf: 'start',
     padding: theme.spacing(0.5, 4.25, 0.5, 0.5),
+  }),
+  emptyMessage: css({
+    color: theme.colors.text.secondary,
+    fontStyle: 'italic',
+    padding: theme.spacing(1, 1.5),
   }),
 });
 

@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions/types"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -75,11 +76,11 @@ func setupResourceBenchmark(b *testing.B, dsNum, usersNum int) (*AccessControlSt
 func GenerateDatasourcePermissions(b *testing.B, db *sqlstore.SQLStore, ac *AccessControlStore, dsNum, usersNum, permissionsPerDs int) []int64 {
 	dataSources := make([]int64, 0)
 	for i := 0; i < dsNum; i++ {
-		addDSCommand := &models.AddDataSourceCommand{
+		addDSCommand := &datasources.AddDataSourceCommand{
 			OrgId:  0,
 			Name:   fmt.Sprintf("ds_%d", i),
-			Type:   models.DS_GRAPHITE,
-			Access: models.DS_ACCESS_DIRECT,
+			Type:   datasources.DS_GRAPHITE,
+			Access: datasources.DS_ACCESS_DIRECT,
 			Url:    "http://test",
 		}
 

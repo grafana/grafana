@@ -146,6 +146,15 @@ func (ecp *ContactPointService) CreateContactPoint(ctx context.Context, orgID in
 
 	receiverFound := false
 	for _, receiver := range revision.cfg.AlertmanagerConfig.Receivers {
+		// check if uid is already used in receiver
+		for _, rec := range receiver.PostableGrafanaReceivers.GrafanaManagedReceivers {
+			if grafanaReceiver.UID == rec.UID {
+				return apimodels.EmbeddedContactPoint{}, fmt.Errorf(
+					"receiver configuration with UID '%s' already exist in contact point '%s'. Please use unique identifiers for receivers across all contact points",
+					rec.UID,
+					rec.Name)
+			}
+		}
 		if receiver.Name == contactPoint.Name {
 			receiver.PostableGrafanaReceivers.GrafanaManagedReceivers = append(receiver.PostableGrafanaReceivers.GrafanaManagedReceivers, grafanaReceiver)
 			receiverFound = true

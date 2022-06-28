@@ -120,12 +120,11 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	), m)
 	api.RegisterTestingApiEndpoints(NewForkedTestingApi(
 		&TestingApiSrv{
-			AlertingProxy:     proxy,
-			ExpressionService: api.ExpressionService,
-			DatasourceCache:   api.DatasourceCache,
-			log:               logger,
-			accessControl:     api.AccessControl,
-			evaluator:         eval.NewEvaluator(api.Cfg, log.New("ngalert.eval"), api.DatasourceCache, api.SecretsService),
+			AlertingProxy:   proxy,
+			DatasourceCache: api.DatasourceCache,
+			log:             logger,
+			accessControl:   api.AccessControl,
+			evaluator:       eval.NewEvaluator(api.Cfg, log.New("ngalert.eval"), api.DatasourceCache, api.SecretsService, api.ExpressionService),
 		}), m)
 	api.RegisterConfigurationApiEndpoints(NewForkedConfiguration(
 		&AdminSrv{
