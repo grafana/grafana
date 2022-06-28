@@ -123,10 +123,10 @@ func (s *FakeDataSourceService) DecryptedPassword(ctx context.Context, ds *datas
 	return "", nil
 }
 
-func (s *FakeDataSourceService) DeleteDataSourceSecrets(ctx context.Context, cmd *models.DeleteDataSourceSecretsCommand) error {
+func (s *FakeDataSourceService) DeleteDataSourceSecrets(ctx context.Context, cmd *datasources.DeleteDataSourceSecretsCommand) error {
 	return nil
 }
 
-func (s *FakeDataSourceService) DecryptLegacySecrets(ctx context.Context, ds *models.DataSource) (map[string]string, error) {
+func (s *FakeDataSourceService) DecryptLegacySecrets(ctx context.Context, ds *datasources.DataSource) (map[string]string, error) {
 	return make(map[string]string), nil
 }
