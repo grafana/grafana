@@ -10486,9 +10486,9 @@ exports[`no undocumented stories`] = {
       [39, 31, 18, "Do not use any type assertions.", "3890263992"],
       [81, 24, 28, "Do not use any type assertions.", "4099457225"]
     ],
-    "public/app/plugins/panel/canvas/InlineEdit.tsx:2487240299": [
-      [38, 29, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [38, 47, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/plugins/panel/canvas/InlineEdit.tsx:2513249821": [
+      [52, 29, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [52, 47, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/plugins/panel/canvas/InlineEditBody.tsx:2585809618": [
       [26, 57, 3, "Unexpected any. Specify a different type.", "193409811"],

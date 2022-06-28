@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { SyntheticEvent, useRef, useState } from 'react';
+import React, { SyntheticEvent, useEffect, useRef, useState } from 'react';
 import Draggable from 'react-draggable';
 import { Resizable, ResizeCallbackData } from 'react-resizable';
 
@@ -19,6 +19,8 @@ const OFFSET_Y = 32;
 
 export const InlineEdit = ({ onClose, id }: Props) => {
   const parentPanel = document.querySelector(`[data-panelid="${id}"]`)!.getBoundingClientRect();
+  const windowHeight = window.innerHeight;
+  const windowWidth = window.innerWidth;
   const ref = useRef<HTMLDivElement>(null);
   const styles = useStyles2(getStyles);
   const inlineEditKey = 'inlineEditPanel' + id.toString();
@@ -35,6 +37,18 @@ export const InlineEdit = ({ onClose, id }: Props) => {
   });
   const [measurements, setMeasurements] = useState<Dimensions2D>({ width: savedPlacement.w, height: savedPlacement.h });
   const [placement, setPlacement] = useState({ x: savedPlacement.x, y: savedPlacement.y });
+
+  // Checks that placement is within browser window
+  useEffect(() => {
+    const minX = windowWidth - measurements.width - OFFSET_X;
+    const minY = windowHeight - measurements.height - OFFSET_Y;
+    if (minX < placement.x && minX > 0) {
+      setPlacement({ ...placement, x: minX });
+    }
+    if (minY < placement.y && minY > 0) {
+      setPlacement({ ...placement, y: minY });
+    }
+  }, [windowHeight, windowWidth, placement, measurements]);
 
   const onDragStop = (event: any, dragElement: any) => {
     let x = dragElement.x < 0 ? 0 : dragElement.x;
