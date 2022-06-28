@@ -8,4 +8,7 @@ export const PlatformService = {
   disconnect(): Promise<void> {
     return api.post<void, Object>('/v1/Platform/Disconnect', {});
   },
+  forceDisconnect(): Promise<void> {
+    return api.post<void, Object>('/v1/Platform/Disconnect', { force: true });
+  },
 };

@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-export const getStyles = ({ colors, typography, spacing }: GrafanaTheme) => ({
+export const getStyles = ({ v1: { colors, typography, spacing } }: GrafanaTheme2) => ({
   wrapper: css`
     max-width: 500px;
   `,
