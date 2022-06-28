@@ -39,7 +39,7 @@ func ProvideService(sqlStore sqlstore.Store, secretsService secrets.Service, rem
 		}
 	}
 	logger.Debug("secrets kvstore is using the default (SQL) implementation for secrets management")
-	return NewCachedKVStore(store, 5*time.Second, 10*time.Second)
+	return NewCachedKVStore(store, 5*time.Second, 5*time.Minute)
 }
 
 // SecretsKVStore is an interface for k/v store.
