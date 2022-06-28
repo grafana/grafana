@@ -1,5 +1,6 @@
 import { ArrayVector, createTheme, DataFrame, FieldType, MutableDataFrame } from '@grafana/data';
 
+import { NodeGraphOptions } from './types';
 import {
   getEdgeFields,
   getNodeFields,
@@ -292,5 +293,69 @@ describe('processNodes', () => {
     expect(edgeFields.target).toBeDefined();
     expect(edgeFields.mainStat).toBeDefined();
     expect(edgeFields.secondaryStat).toBeDefined();
+  });
+
+  it('interpolates panel options correctly', () => {
+    const frames = [
+      new MutableDataFrame({
+        refId: 'nodes',
+        fields: [
+          { name: 'id', type: FieldType.string },
+          { name: 'mainStat', type: FieldType.string },
+          { name: 'secondaryStat', type: FieldType.string },
+          { name: 'arc__primary', type: FieldType.string },
+          { name: 'arc__secondary', type: FieldType.string },
+          { name: 'arc__tertiary', type: FieldType.string },
+        ],
+      }),
+      new MutableDataFrame({
+        refId: 'edges',
+        fields: [
+          { name: 'id', type: FieldType.string },
+          { name: 'source', type: FieldType.string },
+          { name: 'target', type: FieldType.string },
+          { name: 'mainStat', type: FieldType.string },
+          { name: 'secondaryStat', type: FieldType.string },
+        ],
+      }),
+    ];
+
+    const panelOptions: NodeGraphOptions = {
+      nodes: {
+        mainStatUnit: 'r/min',
+        secondaryStatUnit: 'ms/r',
+        arcs: [
+          { field: 'arc__primary', color: 'red' },
+          { field: 'arc__secondary', color: 'yellow' },
+          { field: 'arc__tertiary', color: '#dd40ec' },
+        ],
+      },
+      edges: {
+        mainStatUnit: 'r/sec',
+        secondaryStatUnit: 'ft^2',
+      },
+    };
+
+    const nodeGraphFrames = getNodeGraphDataFrames(frames, panelOptions);
+    expect(nodeGraphFrames).toHaveLength(2);
+
+    const nodesFrame = nodeGraphFrames.find((f) => f.refId === 'nodes');
+    expect(nodesFrame).toBeDefined();
+    expect(nodesFrame?.fields.find((f) => f.name === 'mainStat')?.config).toEqual({ unit: 'r/min' });
+    expect(nodesFrame?.fields.find((f) => f.name === 'secondaryStat')?.config).toEqual({ unit: 'ms/r' });
+    expect(nodesFrame?.fields.find((f) => f.name === 'arc__primary')?.config).toEqual({
+      color: { mode: 'fixed', fixedColor: 'red' },
+    });
+    expect(nodesFrame?.fields.find((f) => f.name === 'arc__secondary')?.config).toEqual({
+      color: { mode: 'fixed', fixedColor: 'yellow' },
+    });
+    expect(nodesFrame?.fields.find((f) => f.name === 'arc__tertiary')?.config).toEqual({
+      color: { mode: 'fixed', fixedColor: '#dd40ec' },
+    });
+
+    const edgesFrame = nodeGraphFrames.find((f) => f.refId === 'edges');
+    expect(edgesFrame).toBeDefined();
+    expect(edgesFrame?.fields.find((f) => f.name === 'mainStat')?.config).toEqual({ unit: 'r/sec' });
+    expect(edgesFrame?.fields.find((f) => f.name === 'secondaryStat')?.config).toEqual({ unit: 'ft^2' });
   });
 });
