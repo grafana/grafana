@@ -227,10 +227,23 @@ func ReadDashboard(stream io.Reader, lookup DatasourceLookup) (*DashboardInfo, e
 		}
 	}
 
+	replaceDatasourceVariables(dash, datasourceVariablesLookup)
+
+	targets := newTargetInfo(lookup)
+	for _, panel := range dash.Panels {
+		targets.addPanel(panel)
+	}
+	dash.Datasource = targets.GetDatasourceInfo()
+
+	return dash, iter.Error
+}
+
+func replaceDatasourceVariables(dash *DashboardInfo, datasourceVariablesLookup *datasourceVariableLookup) {
 	for i, panel := range dash.Panels {
 		var dsVariableRefs []DataSourceRef
 		var dsRefs []DataSourceRef
 
+		// partition into actual datasource references and variables
 		for i := range panel.Datasource {
 			isVariableRef := strings.HasPrefix(panel.Datasource[i].UID, "$")
 			if isVariableRef {
@@ -240,29 +253,26 @@ func ReadDashboard(stream io.Reader, lookup DatasourceLookup) (*DashboardInfo, e
 			}
 		}
 
-		var referencedDs []DataSourceRef
-		for _, dsVariableRef := range dsVariableRefs {
-			variableName := dsVariableRef.UID
-			if strings.HasPrefix(variableName, "${") {
-				variableName = strings.TrimPrefix(strings.TrimSuffix(variableName, "}"), "${")
-			} else {
-				variableName = strings.TrimPrefix(variableName, "$")
-			}
+		dash.Panels[i].Datasource = append(dsRefs, findDatasourceRefsForVariables(dsVariableRefs, datasourceVariablesLookup)...)
+	}
+}
 
-			refs := datasourceVariablesLookup.getDatasourceRefs(variableName)
-			referencedDs = append(referencedDs, refs...)
-		}
-
-		dash.Panels[i].Datasource = append(dsRefs, referencedDs...)
+func getDataSourceVariableName(dsVariableRef DataSourceRef) string {
+	if strings.HasPrefix(dsVariableRef.UID, "${") {
+		return strings.TrimPrefix(strings.TrimSuffix(dsVariableRef.UID, "}"), "${")
 	}
 
-	targets := newTargetInfo(lookup)
-	for _, panel := range dash.Panels {
-		targets.addPanel(panel)
-	}
-	dash.Datasource = targets.GetDatasourceInfo()
+	return strings.TrimPrefix(dsVariableRef.UID, "$")
+}
 
-	return dash, iter.Error
+func findDatasourceRefsForVariables(dsVariableRefs []DataSourceRef, datasourceVariablesLookup *datasourceVariableLookup) []DataSourceRef {
+	var referencedDs []DataSourceRef
+	for _, dsVariableRef := range dsVariableRefs {
+		variableName := getDataSourceVariableName(dsVariableRef)
+		refs := datasourceVariablesLookup.getDatasourceRefs(variableName)
+		referencedDs = append(referencedDs, refs...)
+	}
+	return referencedDs
 }
 
 // will always return strings for now
