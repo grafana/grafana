@@ -26,7 +26,7 @@ function countUndocumentedStories() {
         // In this case the file contents don't matter:
         const file = fileTestResult.addFile(filePath, '');
         // Add the issue to the first character of the file:
-        file.addIssue(0, 0, 'no undocumented stories');
+        file.addIssue(0, 0, `No undocumented stories are allowed, please add a ${filePath.replace(/\.story.tsx$/, '.mdx')} with some documentation.`);
       }
     });
   });
