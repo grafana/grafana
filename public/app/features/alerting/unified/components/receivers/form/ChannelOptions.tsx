@@ -34,9 +34,12 @@ export function ChannelOptions<R extends ChannelValues>({
     <>
       {selectedChannelOptions.map((option: NotificationChannelOption, index: number) => {
         const key = `${option.label}-${index}`;
-        // Some options can be dependent on other options, this determines what is selected in the dependency options
-        // I think this needs more thought.
-        const selectedOptionValue = currentFormValues[`${pathPrefix}settings.${option.showWhen.field}`];
+        let selectedOptionValue = undefined;
+
+        //On initial load of a new contact point, the settings property does not exist
+        if (Object.keys(currentFormValues['items'][0]).includes('settings')) {
+          selectedOptionValue = currentFormValues['items'][0]['settings'][option.showWhen.field];
+        }
 
         if (option.showWhen.field && selectedOptionValue !== option.showWhen.is) {
           return null;

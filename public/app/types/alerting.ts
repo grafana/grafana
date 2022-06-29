@@ -41,6 +41,7 @@ export type GrafanaNotifierType =
   | 'email'
   | 'sensu'
   | 'sensugo'
+  | 'sns'
   | 'googlechat'
   | 'threema'
   | 'teams'

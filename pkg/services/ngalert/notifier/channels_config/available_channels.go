@@ -1,6 +1,8 @@
 package channels_config
 
 import (
+	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
+	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 )
 
@@ -196,6 +198,116 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Description:  "Templated subject of the email",
 					PropertyName: "subject",
 					Placeholder:  `{{ template "default.title" . }}`,
+				},
+			},
+		},
+		{
+			Type:        "sns",
+			Name:        "AWS SNS",
+			Description: "Sends message to AWS SNS Topic",
+			Heading:     "AWS SNS settings",
+			Options: []NotifierOption{
+				{
+					Label:        "Topic",
+					Element:      ElementTypeInput,
+					Required:     true,
+					InputType:    InputTypeText,
+					Placeholder:  "snsTopic",
+					PropertyName: "topic",
+				},
+				{
+					Label:    "Auth Provider",
+					Element:  ElementTypeSelect,
+					Required: true,
+					SelectOptions: []SelectOption{
+						{
+							Value: awsds.AuthTypeDefault.String(),
+							Label: "Workspace IAM Role",
+						},
+						{
+							Value: awsds.AuthTypeSharedCreds.String(),
+							Label: "Credentials profile",
+						},
+						{
+							Value: awsds.AuthTypeKeys.String(),
+							Label: "Access & secret key",
+						},
+					},
+					PropertyName: "authProvider",
+				},
+				{
+					Label:    "Alert Message format",
+					Element:  ElementTypeSelect,
+					Required: true,
+					SelectOptions: []SelectOption{
+						{
+							Value: "text",
+							Label: "Text",
+						},
+						{
+							Value: "json",
+							Label: "JSON",
+						},
+						{
+							Value: "body",
+							Label: "Text Body Only",
+						},
+					},
+					PropertyName: "messageFormat",
+				},
+				{
+					Label:        "Subject",
+					Element:      ElementTypeInput,
+					Required:     false,
+					InputType:    InputTypeText,
+					Placeholder:  "SNS Subject",
+					PropertyName: "subject",
+				},
+				{
+					Label:        "Text Body",
+					Element:      ElementTypeInput,
+					Required:     false,
+					InputType:    ElementTypeTextArea,
+					Placeholder:  "Text Body",
+					PropertyName: "body",
+				},
+				{
+					Label:        "Credentials Profile",
+					Element:      ElementTypeInput,
+					Required:     true,
+					InputType:    InputTypeText,
+					Placeholder:  "default",
+					PropertyName: "credentials",
+					ShowWhen: ShowWhen{
+						Field: "authProvider",
+						Is:    awsds.AuthTypeSharedCreds.String(),
+					},
+				},
+				{
+					Label:        "Access Key",
+					Element:      ElementTypeInput,
+					Required:     true,
+					Secure:       true,
+					InputType:    InputTypeText,
+					Placeholder:  "",
+					PropertyName: "accessKey",
+					ShowWhen: ShowWhen{
+						Field: "authProvider",
+						Is:    awsds.AuthTypeKeys.String(),
+					},
+				},
+				{
+					Label:        "Secret Key",
+					Element:      ElementTypeInput,
+					Required:     true,
+					Secure:       true,
+					InputType:    InputTypeText,
+					Placeholder:  "",
+					PropertyName: "secretKey",
+					ShowWhen: ShowWhen{
+						Field: "authProvider",
+						Is:    awsds.AuthTypeKeys.String(),
+					},
 				},
 			},
 		},
