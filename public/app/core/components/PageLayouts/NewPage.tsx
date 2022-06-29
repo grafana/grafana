@@ -1,14 +1,13 @@
 // Libraries
 import { css, cx } from '@emotion/css';
-import React, { HTMLAttributes, useEffect, FC } from 'react';
+import React, { HTMLAttributes, FC } from 'react';
 
 import { GrafanaTheme2, NavModel, NavModelItem } from '@grafana/data';
 import { CustomScrollbar, useStyles2 } from '@grafana/ui';
-import { getTitleFromNavModel } from 'app/core/selectors/navModel';
 
 // Components
-import { Branding } from '../Branding/Branding';
 import { Footer } from '../Footer/Footer';
+import { usePageNav } from '../Page/usePageNav';
 
 import { PageContents } from './PageContents';
 import { PageHeader } from './PageHeader';
@@ -17,6 +16,7 @@ import { SectionNav } from './SectionNav';
 
 interface Props extends HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
+  navId?: string;
   navModel?: NavModel;
   pageNav?: NavModelItem;
 }
@@ -26,21 +26,16 @@ export interface PageType extends FC<Props> {
   Contents: typeof PageContents;
 }
 
-export const NewPage: PageType = ({ navModel, pageNav, children, className, ...otherProps }: Props) => {
+export const NewPage: PageType = ({
+  navId,
+  navModel: oldNavProp,
+  pageNav,
+  children,
+  className,
+  ...otherProps
+}: Props) => {
   const styles = useStyles2(getStyles);
-
-  useEffect(() => {
-    if (navModel) {
-      const title = getTitleFromNavModel(navModel);
-      document.title = title ? `${title} - ${Branding.AppTitle}` : Branding.AppTitle;
-    } else {
-      document.title = Branding.AppTitle;
-    }
-  }, [navModel]);
-
-  if (!navModel) {
-    return null;
-  }
+  const navModel = usePageNav(navId, oldNavProp);
 
   return (
     <div {...otherProps} className={cx(styles.wrapper, className)}>

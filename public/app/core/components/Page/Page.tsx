@@ -1,20 +1,17 @@
 // Libraries
 import { css, cx } from '@emotion/css';
 import React, { FC, HTMLAttributes } from 'react';
-import { useSelector } from 'react-redux';
-import { createSelector } from 'reselect';
 
 import { GrafanaTheme2, NavModel, NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { CustomScrollbar, useStyles2 } from '@grafana/ui';
-import { getNavModel } from 'app/core/selectors/navModel';
-import { StoreState } from 'app/types';
 
 import { Footer } from '../Footer/Footer';
 import { PageHeader } from '../PageHeader/PageHeader';
 import { NewPage } from '../PageLayouts/NewPage';
 
 import { PageContents } from './PageContents';
+import { usePageNav } from './usePageNav';
 import { usePageTitle } from './usePageTitle';
 
 interface Props extends HTMLAttributes<HTMLDivElement> {
@@ -31,9 +28,7 @@ export interface PageType extends FC<Props> {
 
 export const OldPage: PageType = ({ navId, navModel: oldNavProp, pageNav, children, className, ...otherProps }) => {
   const styles = useStyles2(getStyles);
-  const navModel = useSelector(
-    createSelector(getNavIndex, (navIndex) => oldNavProp ?? getNavModel(navIndex, navId ?? 'home'))
-  );
+  const navModel = usePageNav(navId, oldNavProp);
 
   usePageTitle(navModel, pageNav);
 
@@ -62,7 +57,3 @@ const getStyles = (_: GrafanaTheme2) => ({
     min-height: 0;
   `,
 });
-
-function getNavIndex(store: StoreState) {
-  return store.navIndex;
-}
