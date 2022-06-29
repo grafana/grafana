@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React, { FC, useMemo, useState } from 'react';
 import { useTable, usePagination, useExpanded } from 'react-table';
 
 import { useStyles } from '@grafana/ui';
 import { Overlay } from 'app/percona/shared/components/Elements/Overlay/Overlay';
 
+import { Filter } from './Filter/Filter';
 import { Pagination } from './Pagination';
 import { PAGE_SIZES } from './Pagination/Pagination.constants';
 import { getStyles } from './Table.styles';
@@ -15,7 +16,7 @@ const defaultPropGetter = () => ({});
 
 export const Table: FC<TableProps> = ({
   pendingRequest = false,
-  data,
+  data: rawData,
   columns,
   showPagination,
   totalPages,
@@ -33,7 +34,10 @@ export const Table: FC<TableProps> = ({
   getRowProps = defaultPropGetter,
   getColumnProps = defaultPropGetter,
   getCellProps = defaultPropGetter,
+  showFilter = false,
 }) => {
+  const [filterData, setFilteredData] = useState<Object[]>([]);
+  const data = useMemo(() => (showFilter ? filterData : rawData), [showFilter, filterData, rawData]);
   const style = useStyles(getStyles);
   const manualPagination = !!(totalPages && totalPages >= 0);
   const initialState: Partial<PaginatedTableState> = {
@@ -91,6 +95,7 @@ export const Table: FC<TableProps> = ({
   return (
     <>
       <Overlay dataTestId="table-loading" isPending={pendingRequest}>
+        {showFilter && <Filter columns={columns} rawData={rawData} setFilteredData={setFilteredData} />}
         <div className={style.tableWrap} data-testid="table-outer-wrapper">
           <div className={style.table} data-testid="table-inner-wrapper">
             <TableContent loading={pendingRequest} hasData={hasData} emptyMessage={emptyMessage}>
