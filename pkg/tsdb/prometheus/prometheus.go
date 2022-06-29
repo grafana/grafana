@@ -43,24 +43,18 @@ func ProvideService(httpClientProvider httpclient.Provider, cfg *setting.Cfg, fe
 func newInstanceSettings(httpClientProvider httpclient.Provider, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		// Creates a http roundTripper. Probably should be used for both buffered and streaming/querydata instances.
-		opts, err := buffered.CreateTransportOptions(settings, cfg, features, plog)
+		opts, err := buffered.CreateTransportOptions(settings, cfg.Azure, features, plog)
 		if err != nil {
 			return nil, fmt.Errorf("error creating transport options: %v", err)
 		}
-		roundTripper, err := httpClientProvider.GetTransport(*opts)
-		if err != nil {
-			return nil, fmt.Errorf("error creating http round tripper: %v", err)
-		}
-
-		// Older version using standard Go Prometheus client
-		b, err := buffered.New(roundTripper, tracer, settings, plog)
-		if err != nil {
-			return nil, err
-		}
-
 		httpClient, err := httpClientProvider.New(*opts)
 		if err != nil {
 			return nil, fmt.Errorf("error creating http client: %v", err)
+		}
+		// Older version using standard Go Prometheus client
+		b, err := buffered.New(httpClient.Transport, tracer, settings, plog)
+		if err != nil {
+			return nil, err
 		}
 
 		// New version using custom client and better response parsing

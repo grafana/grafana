@@ -53,7 +53,7 @@ func (provider *fakeHTTPClientProvider) GetTransport(opts ...sdkHttpClient.Optio
 	return &fakeRoundtripper{}, nil
 }
 
-func TestClient(t *testing.T) {
+func TestService(t *testing.T) {
 	t.Run("Service", func(t *testing.T) {
 		t.Run("CallResource", func(t *testing.T) {
 			t.Run("creates correct request", func(t *testing.T) {
