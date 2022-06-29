@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -107,9 +108,9 @@ func (hs *HTTPServer) AddOrgInvite(c *models.ReqContext) response.Response {
 	return response.Success(fmt.Sprintf("Created invite for %s", inviteDto.LoginOrEmail))
 }
 
-func (hs *HTTPServer) inviteExistingUserToOrg(c *models.ReqContext, user *models.User, inviteDto *dtos.AddInviteForm) response.Response {
+func (hs *HTTPServer) inviteExistingUserToOrg(c *models.ReqContext, user *user.User, inviteDto *dtos.AddInviteForm) response.Response {
 	// user exists, add org role
-	createOrgUserCmd := models.AddOrgUserCommand{OrgId: c.OrgId, UserId: user.Id, Role: inviteDto.Role}
+	createOrgUserCmd := models.AddOrgUserCommand{OrgId: c.OrgId, UserId: user.ID, Role: inviteDto.Role}
 	if err := hs.SQLStore.AddOrgUser(c.Req.Context(), &createOrgUserCmd); err != nil {
 		if errors.Is(err, models.ErrOrgUserAlreadyAdded) {
 			return response.Error(412, fmt.Sprintf("User %s is already added to organization", inviteDto.LoginOrEmail), err)
@@ -135,7 +136,7 @@ func (hs *HTTPServer) inviteExistingUserToOrg(c *models.ReqContext, user *models
 
 	return response.JSON(http.StatusOK, util.DynMap{
 		"message": fmt.Sprintf("Existing Grafana user %s added to org %s", user.NameOrFallback(), c.OrgName),
-		"userId":  user.Id,
+		"userId":  user.ID,
 	})
 }
 
@@ -191,7 +192,7 @@ func (hs *HTTPServer) CompleteInvite(c *models.ReqContext) response.Response {
 		return response.Error(412, fmt.Sprintf("Invite cannot be used in status %s", invite.Status), nil)
 	}
 
-	cmd := models.CreateUserCommand{
+	cmd := user.CreateUserCommand{
 		Email:        completeInvite.Email,
 		Name:         completeInvite.Name,
 		Login:        completeInvite.Username,
@@ -199,7 +200,7 @@ func (hs *HTTPServer) CompleteInvite(c *models.ReqContext) response.Response {
 		SkipOrgSetup: true,
 	}
 
-	user, err := hs.Login.CreateUser(cmd)
+	usr, err := hs.Login.CreateUser(cmd)
 	if err != nil {
 		if errors.Is(err, models.ErrUserAlreadyExists) {
 			return response.Error(412, fmt.Sprintf("User with email '%s' or username '%s' already exists", completeInvite.Email, completeInvite.Username), err)
@@ -209,17 +210,17 @@ func (hs *HTTPServer) CompleteInvite(c *models.ReqContext) response.Response {
 	}
 
 	if err := hs.bus.Publish(c.Req.Context(), &events.SignUpCompleted{
-		Name:  user.NameOrFallback(),
-		Email: user.Email,
+		Name:  usr.NameOrFallback(),
+		Email: usr.Email,
 	}); err != nil {
 		return response.Error(500, "failed to publish event", err)
 	}
 
-	if ok, rsp := hs.applyUserInvite(c.Req.Context(), user, invite, true); !ok {
+	if ok, rsp := hs.applyUserInvite(c.Req.Context(), usr, invite, true); !ok {
 		return rsp
 	}
 
-	err = hs.loginUserWithUser(user, c)
+	err = hs.loginUserWithUser(usr, c)
 	if err != nil {
 		return response.Error(500, "failed to accept invite", err)
 	}
@@ -229,7 +230,7 @@ func (hs *HTTPServer) CompleteInvite(c *models.ReqContext) response.Response {
 
 	return response.JSON(http.StatusOK, util.DynMap{
 		"message": "User created and logged in",
-		"id":      user.Id,
+		"id":      usr.ID,
 	})
 }
 
@@ -243,9 +244,9 @@ func (hs *HTTPServer) updateTempUserStatus(ctx context.Context, code string, sta
 	return true, nil
 }
 
-func (hs *HTTPServer) applyUserInvite(ctx context.Context, user *models.User, invite *models.TempUserDTO, setActive bool) (bool, response.Response) {
+func (hs *HTTPServer) applyUserInvite(ctx context.Context, user *user.User, invite *models.TempUserDTO, setActive bool) (bool, response.Response) {
 	// add to org
-	addOrgUserCmd := models.AddOrgUserCommand{OrgId: invite.OrgId, UserId: user.Id, Role: invite.Role}
+	addOrgUserCmd := models.AddOrgUserCommand{OrgId: invite.OrgId, UserId: user.ID, Role: invite.Role}
 	if err := hs.SQLStore.AddOrgUser(ctx, &addOrgUserCmd); err != nil {
 		if !errors.Is(err, models.ErrOrgUserAlreadyAdded) {
 			return false, response.Error(500, "Error while trying to create org user", err)
@@ -259,7 +260,7 @@ func (hs *HTTPServer) applyUserInvite(ctx context.Context, user *models.User, in
 
 	if setActive {
 		// set org to active
-		if err := hs.SQLStore.SetUsingOrg(ctx, &models.SetUsingOrgCommand{OrgId: invite.OrgId, UserId: user.Id}); err != nil {
+		if err := hs.SQLStore.SetUsingOrg(ctx, &models.SetUsingOrgCommand{OrgId: invite.OrgId, UserId: user.ID}); err != nil {
 			return false, response.Error(500, "Failed to set org as active", err)
 		}
 	}
