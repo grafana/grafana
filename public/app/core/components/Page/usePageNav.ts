@@ -5,7 +5,14 @@ import { NavModel } from '@grafana/data';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState } from 'app/types';
 
-export function usePageNav(navId?: string, oldProp?: NavModel) {
+export function usePageNav(navId?: string, oldProp?: NavModel): NavModel {
+  // Page component is used in so many tests, this simplifies not having to initialize a full redux store and navIndex
+  if (process.env.JEST_WORKER_ID) {
+    const node = { text: navId ?? 'No navId' };
+    return { main: node, node };
+  }
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   return useSelector(createSelector(getNavIndex, (navIndex) => oldProp ?? getNavModel(navIndex, navId ?? 'home')));
 }
 

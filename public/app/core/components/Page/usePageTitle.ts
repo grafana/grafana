@@ -30,7 +30,3 @@ export function usePageTitle(navModel?: NavModel, pageNav?: NavModelItem) {
     document.title = parts.join(' - ');
   }, [navModel, pageNav]);
 }
-
-export const getTitleFromNavModel = (navModel: NavModel) => {
-  return `${navModel.main.text}${navModel.node.text ? ': ' + navModel.node.text : ''}`;
-};

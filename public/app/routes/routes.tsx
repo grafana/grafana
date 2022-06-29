@@ -162,6 +162,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/explore',
       pageClass: 'page-explore',
+      navId: 'explore',
       roles: () =>
         contextSrv.evaluatePermission(
           () => (config.viewersCanEdit ? [] : ['Editor', 'Admin']),
@@ -183,12 +184,14 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/org',
+      navId: 'org-settings',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "OrgDetailsPage" */ '../features/org/OrgDetailsPage')
       ),
     },
     {
       path: '/org/new',
+      navId: 'global-orgs',
       component: SafeDynamicImport(() => import(/* webpackChunkName: "NewOrgPage" */ 'app/features/org/NewOrgPage')),
     },
     {
@@ -214,6 +217,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/org/serviceaccounts',
+      navId: 'serviceaccounts',
       roles: () => contextSrv.evaluatePermission(() => ['Admin'], [AccessControlAction.ServiceAccountsRead]),
       component: SafeDynamicImport(
         () =>
@@ -222,6 +226,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/org/serviceaccounts/create',
+      navId: 'serviceaccounts',
       component: SafeDynamicImport(
         () =>
           import(
@@ -231,6 +236,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/org/serviceaccounts/:id',
+      navId: 'serviceaccounts',
       component: ServiceAccountPage,
     },
     {
@@ -245,6 +251,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/org/teams/new',
+      navId: 'teams',
       roles: () =>
         contextSrv.evaluatePermission(
           () => (config.editorsCanAdmin ? ['Editor', 'Admin'] : ['Admin']),
@@ -254,6 +261,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/org/teams/edit/:id/:page?',
+      navId: 'teams',
       roles: () =>
         contextSrv.evaluatePermission(
           () => (config.editorsCanAdmin ? ['Editor', 'Admin'] : ['Admin']),
@@ -270,6 +278,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/admin/settings',
+      navId: 'server-settings',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "AdminSettings" */ 'app/features/admin/AdminSettings')
       ),

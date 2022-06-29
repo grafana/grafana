@@ -7,6 +7,7 @@ import { ServiceAccountCreatePage, Props } from './ServiceAccountCreatePage';
 const postMock = jest.fn().mockResolvedValue({});
 const patchMock = jest.fn().mockResolvedValue({});
 const putMock = jest.fn().mockResolvedValue({});
+
 jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => ({
     post: postMock,
@@ -26,6 +27,7 @@ jest.mock('@grafana/runtime', () => ({
       licenseUrl: '',
     },
     appSubUrl: '',
+    featureToggles: {},
   },
 }));
 

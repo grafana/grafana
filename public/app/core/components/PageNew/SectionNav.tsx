@@ -68,6 +68,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'column',
       background: theme.colors.background.canvas,
       padding: theme.spacing(3, 2),
+      flexShrink: 0,
       [theme.breakpoints.up('md')]: {
         width: '250px',
       },
