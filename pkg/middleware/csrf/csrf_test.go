@@ -180,8 +180,9 @@ func TestCSRF_Check(t *testing.T) {
 				require.NoError(t, err)
 			} else {
 				require.Error(t, err)
-				actual := err.(*errorWithStatus).HTTPStatus
-				assert.EqualValues(t, tc.expectedStatus, actual)
+				var actual *errorWithStatus
+				require.True(errors.As(err, &actual))
+				assert.EqualValues(t, tc.expectedStatus, actual.HTTPStatus)
 			}
 		})
 	}
