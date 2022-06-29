@@ -159,6 +159,9 @@ func FormatDuration(inter time.Duration) string {
 //nolint: gocyclo
 func roundInterval(interval time.Duration) time.Duration {
 	switch {
+	// 0.01s
+	case interval <= 10*time.Millisecond:
+		return time.Millisecond * 1 // 0.001s
 	// 0.015s
 	case interval <= 15*time.Millisecond:
 		return time.Millisecond * 10 // 0.01s

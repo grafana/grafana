@@ -69,7 +69,7 @@ This indicates whether the user account has the Grafana administrator flag appli
 
 ![Server Admin Permissions section](/static/img/docs/manage-users/server-admin-permissions-7-3.png)
 
-#### Organisations
+#### Organizations
 
 This section lists the organizations the user belongs to and their assigned role.
 
