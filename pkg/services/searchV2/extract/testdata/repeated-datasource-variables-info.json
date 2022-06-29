@@ -7,11 +7,11 @@
   ],
   "datasource": [
     {
-      "uid": "SQLite Grafana",
+      "uid": "SQLite Grafana2",
       "type": "sqlite-datasource"
     },
     {
-      "uid": "SQLite Grafana2",
+      "uid": "SQLite Grafana",
       "type": "sqlite-datasource"
     }
   ],
@@ -23,11 +23,11 @@
       "pluginVersion": "9.1.0-pre",
       "datasource": [
         {
-          "uid": "SQLite Grafana",
+          "uid": "SQLite Grafana2",
           "type": "sqlite-datasource"
         },
         {
-          "uid": "SQLite Grafana2",
+          "uid": "SQLite Grafana",
           "type": "sqlite-datasource"
         }
       ]

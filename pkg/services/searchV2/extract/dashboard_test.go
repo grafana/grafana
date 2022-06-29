@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"sort"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -51,6 +53,8 @@ func TestReadDashboard(t *testing.T) {
 		require.NoError(t, err)
 
 		dash, err := ReadDashboard(f, ds)
+		sortDatasources(dash)
+
 		require.NoError(t, err)
 		out, err := json.MarshalIndent(dash, "", "  ")
 		require.NoError(t, err)
@@ -68,5 +72,18 @@ func TestReadDashboard(t *testing.T) {
 		if update {
 			_ = os.WriteFile(savedPath, out, 0600)
 		}
+	}
+}
+
+// assure consistent ordering of datasources to prevent random failures of `assert.JSONEq`
+func sortDatasources(dash *DashboardInfo) {
+	sort.Slice(dash.Datasource, func(i, j int) bool {
+		return strings.Compare(dash.Datasource[i].UID, dash.Datasource[j].UID) > 0
+	})
+
+	for panelId := range dash.Panels {
+		sort.Slice(dash.Panels[panelId].Datasource, func(i, j int) bool {
+			return strings.Compare(dash.Panels[panelId].Datasource[i].UID, dash.Panels[panelId].Datasource[j].UID) > 0
+		})
 	}
 }
