@@ -401,29 +401,6 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 
 	configNodes := []*dtos.NavLink{}
 
-	if c.OrgRole == models.ROLE_ADMIN || c.IsGrafanaAdmin {
-		configNodes = append(configNodes, &dtos.NavLink{
-			Text:         "PMM Inventory",
-			Icon:         "percona-inventory",
-			Id:           "pmm-inventory",
-			Url:          setting.AppSubUrl + "/inventory",
-			HideFromTabs: true,
-			Children:     inventoryChildNavs,
-		})
-
-		configNodes = append(configNodes, &dtos.NavLink{
-			Text:         "Settings",
-			Icon:         "percona-setting",
-			Id:           "pmm-settings",
-			Url:          setting.AppSubUrl + "/settings",
-			HideFromTabs: true,
-		})
-
-		configNodes = append(configNodes, &dtos.NavLink{
-			Text: "Divider", Divider: true, Id: "divider", HideFromTabs: true,
-		})
-	}
-
 	if hasAccess(ac.ReqOrgAdmin, datasources.ConfigurationPageAccess) {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "Data sources",

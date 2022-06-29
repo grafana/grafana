@@ -2,11 +2,12 @@ package api
 
 import (
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
 	"os"
 )
 
-func GetPerconaSaasHost() response.Response {
+func GetPerconaSaasHost(c *models.ReqContext) response.Response {
 	saasHost := ""
 	envHost, ok := os.LookupEnv("PERCONA_TEST_SAAS_HOST")
 

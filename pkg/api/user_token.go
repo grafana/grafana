@@ -49,7 +49,7 @@ func (hs *HTTPServer) logoutUserFromAllDevicesInternal(ctx context.Context, user
 }
 
 func (hs *HTTPServer) GetUserOAuthToken(c *models.ReqContext) response.Response {
-	if token := hs.OAuthTokenService.GetCurrentOAuthToken(hs.context, c.SignedInUser); token != nil {
+	if token := hs.DataProxy.OAuthTokenService.GetCurrentOAuthToken(hs.context, c.SignedInUser); token != nil {
 		return response.JSON(200, token)
 	}
 

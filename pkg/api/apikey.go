@@ -13,10 +13,10 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func GetAPIKeyCurrent(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetAPIKeyCurrent(c *models.ReqContext) response.Response {
 	query := models.GetApiKeyByIdQuery{ApiKeyId: c.ApiKeyId}
 
-	if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
+	if err := hs.SQLStore.GetApiKeyById(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "Failed to list api keys", err)
 	}
 
