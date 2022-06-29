@@ -3343,14 +3343,14 @@ exports[`better eslint`] = {
       [39, 34, 10, "Do not use any type assertions.", "883420344"],
       [39, 41, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/core/components/PageHeader/PageHeader.tsx:3742780580": [
+    "public/app/core/components/PageHeader/PageHeader.tsx:503869166": [
       [65, 22, 22, "Do not use any type assertions.", "4054086100"],
       [102, 34, 21, "Do not use any type assertions.", "2401004021"]
     ],
-    "public/app/core/components/PageLayouts/PageTabs.tsx:3543915334": [
-      [24, 22, 22, "Do not use any type assertions.", "4054086100"]
+    "public/app/core/components/PageNew/PageTabs.tsx:3261576880": [
+      [23, 22, 22, "Do not use any type assertions.", "4054086100"]
     ],
-    "public/app/core/components/PageLayouts/SectionNav.tsx:1750474659": [
+    "public/app/core/components/PageNew/SectionNav.tsx:1750474659": [
       [20, 34, 21, "Do not use any type assertions.", "2401004021"]
     ],
     "public/app/core/components/PanelTypeFilter/PanelTypeFilter.tsx:1614517181": [
@@ -6980,7 +6980,7 @@ exports[`better eslint`] = {
       [79, 18, 88, "Do not use any type assertions.", "2247670218"],
       [138, 20, 95, "Do not use any type assertions.", "4068964415"]
     ],
-    "public/app/features/teams/TeamPages.tsx:4058522017": [
+    "public/app/features/teams/TeamPages.tsx:342488801": [
       [52, 43, 18, "Do not use any type assertions.", "373851894"]
     ],
     "public/app/features/teams/state/reducers.ts:1856799550": [
@@ -7186,9 +7186,9 @@ exports[`better eslint`] = {
     "public/app/features/users/UsersActionBar.tsx:1795710611": [
       [66, 32, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/users/UsersListPage.test.tsx:2080788337": [
-      [25, 11, 15, "Do not use any type assertions.", "2789568508"],
-      [26, 14, 15, "Do not use any type assertions.", "3505843099"]
+    "public/app/features/users/UsersListPage.test.tsx:761605339": [
+      [26, 11, 15, "Do not use any type assertions.", "2789568508"],
+      [27, 14, 15, "Do not use any type assertions.", "3505843099"]
     ],
     "public/app/features/users/UsersTable.test.tsx:2179189208": [
       [19, 11, 15, "Do not use any type assertions.", "2789568508"]

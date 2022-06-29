@@ -21,7 +21,6 @@ export function PageTabs({ navItem }: Props) {
                 label={child.text}
                 active={child.active}
                 key={`${child.url}-${index}`}
-                // eslint-ignore
                 icon={child.icon as IconName}
                 href={child.url}
                 suffix={child.tabSuffix}

@@ -1,41 +1,26 @@
 // Libraries
 import { css, cx } from '@emotion/css';
-import React, { HTMLAttributes, FC } from 'react';
+import React from 'react';
 
-import { GrafanaTheme2, NavModel, NavModelItem } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { CustomScrollbar, useStyles2 } from '@grafana/ui';
 
 // Components
 import { Footer } from '../Footer/Footer';
+import { PageType } from '../Page/types';
 import { usePageNav } from '../Page/usePageNav';
+import { usePageTitle } from '../Page/usePageTitle';
 
 import { PageContents } from './PageContents';
 import { PageHeader } from './PageHeader';
 import { PageTabs } from './PageTabs';
 import { SectionNav } from './SectionNav';
 
-interface Props extends HTMLAttributes<HTMLDivElement> {
-  children: React.ReactNode;
-  navId?: string;
-  navModel?: NavModel;
-  pageNav?: NavModelItem;
-}
-
-export interface PageType extends FC<Props> {
-  Header: typeof PageHeader;
-  Contents: typeof PageContents;
-}
-
-export const NewPage: PageType = ({
-  navId,
-  navModel: oldNavProp,
-  pageNav,
-  children,
-  className,
-  ...otherProps
-}: Props) => {
+export const Page: PageType = ({ navId, navModel: oldNavProp, pageNav, children, className, ...otherProps }) => {
   const styles = useStyles2(getStyles);
   const navModel = usePageNav(navId, oldNavProp);
+
+  usePageTitle(navModel, pageNav);
 
   return (
     <div {...otherProps} className={cx(styles.wrapper, className)}>
@@ -44,7 +29,7 @@ export const NewPage: PageType = ({
         <div className={styles.pageContent}>
           <CustomScrollbar autoHeightMin={'100%'}>
             <div className={styles.pageInner}>
-              <PageHeader navItem={pageNav ?? navModel.main} />
+              <PageHeader navItem={pageNav ?? navModel.node} />
               {pageNav && pageNav.children && <PageTabs navItem={pageNav} />}
               {children}
             </div>
@@ -56,8 +41,8 @@ export const NewPage: PageType = ({
   );
 };
 
-NewPage.Header = PageHeader;
-NewPage.Contents = PageContents;
+Page.Header = PageHeader;
+Page.Contents = PageContents;
 
 const getStyles = (theme: GrafanaTheme2) => {
   const style1 = window.location.href.indexOf('style=1') > -1;
