@@ -4896,7 +4896,6 @@ __metadata:
     "@grafana/e2e-selectors": 9.2.0-pre
     "@grafana/tsconfig": ^1.2.0-rc1
     "@mochajs/json-file-reporter": ^1.2.0
-    "@rollup/plugin-commonjs": 22.0.1
     "@rollup/plugin-node-resolve": 13.3.0
     "@types/chrome-remote-interface": 0.31.4
     "@types/lodash": 4.14.182
@@ -4909,6 +4908,7 @@ __metadata:
     cypress: 9.5.1
     cypress-file-upload: 5.0.8
     devtools-protocol: 0.0.1028580
+    esbuild: ^0.14.47
     execa: 5.1.1
     lodash: 4.17.21
     mocha: 10.0.0
@@ -4916,8 +4916,9 @@ __metadata:
     rimraf: 3.0.2
     rollup: 2.77.2
     rollup-plugin-copy: 3.4.0
-    rollup-plugin-sourcemaps: 0.6.3
-    rollup-plugin-terser: 7.0.2
+    rollup-plugin-dts: ^4.2.2
+    rollup-plugin-esbuild: ^4.9.1
+    rollup-plugin-node-externals: ^4.1.0
     tracelib: 1.0.1
     ts-loader: 6.2.2
     tslib: 2.4.0
@@ -34616,10 +34617,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"source-map@npm:^0.7.3, source-map@npm:~0.7.2":
+"source-map@npm:^0.7.3":
   version: 0.7.3
   resolution: "source-map@npm:0.7.3"
   checksum: cd24efb3b8fa69b64bf28e3c1b1a500de77e84260c5b7f2b873f88284df17974157cc88d386ee9b6d081f08fdd8242f3fc05c953685a6ad81aad94c7393dedea
+  languageName: node
+  linkType: hard
+
+"source-map@npm:~0.7.2":
+  version: 0.7.4
+  resolution: "source-map@npm:0.7.4"
+  checksum: 01cc5a74b1f0e1d626a58d36ad6898ea820567e87f18dfc9d24a9843a351aaa2ec09b87422589906d6ff1deed29693e176194dc88bcae7c9a852dc74b311dbf5
   languageName: node
   linkType: hard
 
@@ -35777,9 +35785,9 @@ __metadata:
   version: 5.12.0
   resolution: "terser@npm:5.12.0"
   dependencies:
+    "@jridgewell/source-map": ^0.3.2
     acorn: ^8.5.0
     commander: ^2.20.0
-    source-map: ~0.7.2
     source-map-support: ~0.5.20
   bin:
     terser: bin/terser
