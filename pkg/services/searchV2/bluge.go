@@ -403,6 +403,7 @@ func doSearchQuery(
 			AddShould(bluge.NewMatchPhraseQuery(q.Query).SetField(documentFieldDescription).SetBoost(3)).
 			AddShould(bluge.NewMatchQuery(q.Query).
 				SetField(documentFieldName_ngram).
+				SetOperator(bluge.MatchQueryOperatorAnd). // all terms must match
 				SetAnalyzer(ngramQueryAnalyzer).SetBoost(1))
 
 		if len(q.Query) > 4 {
