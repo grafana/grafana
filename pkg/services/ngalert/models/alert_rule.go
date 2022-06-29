@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
@@ -87,6 +88,14 @@ const (
 	// This isn't a hard-coded secret token, hence the nolint.
 	//nolint:gosec
 	ScreenshotTokenAnnotation = "__alertScreenshotToken__"
+
+	// GrafanaReservedLabelPrefix contains the prefix for Grafana reserved labels. These differ from "__<label>__" labels
+	// in that they are not meant for internal-use only and will be passed-through to AMs and available to users in the same
+	// way as manually configured labels.
+	GrafanaReservedLabelPrefix = "grafana_"
+
+	// FolderTitleLabel is the label that will contain the title of an alert's folder/namespace.
+	FolderTitleLabel = GrafanaReservedLabelPrefix + "folder"
 )
 
 var (
@@ -117,6 +126,7 @@ type AlertRule struct {
 	DashboardUID    *string `xorm:"dashboard_uid"`
 	PanelID         *int64  `xorm:"panel_id"`
 	RuleGroup       string
+	RuleGroupIndex  int `xorm:"rule_group_idx"`
 	NoDataState     NoDataState
 	ExecErrState    ExecutionErrorState
 	// ideally this field should have been apimodels.ApiDuration
@@ -132,6 +142,9 @@ type SchedulableAlertRule struct {
 	OrgID           int64  `xorm:"org_id"`
 	IntervalSeconds int64
 	Version         int64
+	NamespaceUID    string `xorm:"namespace_uid"`
+	RuleGroup       string
+	RuleGroupIndex  int `xorm:"rule_group_idx"`
 }
 
 type LabelOption func(map[string]string)
@@ -243,6 +256,7 @@ type AlertRuleVersion struct {
 	RuleUID          string `xorm:"rule_uid"`
 	RuleNamespaceUID string `xorm:"rule_namespace_uid"`
 	RuleGroup        string
+	RuleGroupIndex   int `xorm:"rule_group_idx"`
 	ParentVersion    int64
 	RestoredFrom     int64
 	Version          int64
@@ -289,7 +303,7 @@ type ListAlertRulesQuery struct {
 	DashboardUID string
 	PanelID      int64
 
-	Result []*AlertRule
+	Result RulesGroup
 }
 
 type GetAlertRulesForSchedulingQuery struct {
@@ -385,4 +399,15 @@ func ValidateRuleGroupInterval(intervalSeconds, baseIntervalSeconds int64) error
 			ErrAlertRuleFailedValidation, time.Duration(intervalSeconds)*time.Second, baseIntervalSeconds)
 	}
 	return nil
+}
+
+type RulesGroup []*AlertRule
+
+func (g RulesGroup) SortByGroupIndex() {
+	sort.Slice(g, func(i, j int) bool {
+		if g[i].RuleGroupIndex == g[j].RuleGroupIndex {
+			return g[i].ID < g[j].ID
+		}
+		return g[i].RuleGroupIndex < g[j].RuleGroupIndex
+	})
 }

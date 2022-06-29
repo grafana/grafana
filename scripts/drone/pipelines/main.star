@@ -41,7 +41,8 @@ load(
     'upload_cdn_step',
     'verify_gen_cue_step',
     'test_a11y_frontend_step',
-    'trigger_oss'
+    'trigger_oss',
+    'betterer_frontend_step'
 )
 
 load(
@@ -82,6 +83,7 @@ def main_test_frontend():
     ]
     test_steps = [
         lint_frontend_step(),
+        betterer_frontend_step(),
         test_frontend_step(),
     ]
     return pipeline(
@@ -93,7 +95,7 @@ def main_test_backend():
         identify_runner_step(),
         download_grabpl_step(),
         gen_version_step(ver_mode),
-        verify_gen_cue_step(),
+        verify_gen_cue_step(edition="oss"),
         wire_install_step(),
     ]
     test_steps = [
@@ -114,7 +116,7 @@ def get_steps(edition):
         identify_runner_step(),
         download_grabpl_step(),
         gen_version_step(ver_mode),
-        verify_gen_cue_step(),
+        verify_gen_cue_step(edition="oss"),
         wire_install_step(),
         yarn_install_step(),
     ]
@@ -220,7 +222,7 @@ def main_pipelines(edition):
         volumes=volumes,
     ), pipeline(
         name='main-integration-tests', edition=edition, trigger=trigger, services=services,
-        steps=[download_grabpl_step(), identify_runner_step(), verify_gen_cue_step(), wire_install_step(), ] + integration_test_steps,
+        steps=[download_grabpl_step(), identify_runner_step(), verify_gen_cue_step(edition="oss"), wire_install_step(), ] + integration_test_steps,
         volumes=volumes,
     ), pipeline(
         name='main-windows', edition=edition, trigger=dict(trigger, repo=['grafana/grafana']),

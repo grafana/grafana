@@ -2,7 +2,7 @@ package definitions
 
 import (
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 // swagger:route GET /datasources datasources getDatasources
@@ -457,14 +457,14 @@ type DatasourceProxyPOSTByUIDcallsParams struct {
 type AddDatasourceParams struct {
 	// in:body
 	// required:true
-	Body models.AddDataSourceCommand
+	Body datasources.AddDataSourceCommand
 }
 
 // swagger:parameters updateDatasourceByID
 type UpdateDatasourceParams struct {
 	// in:body
 	// required:true
-	Body models.UpdateDataSourceCommand
+	Body datasources.UpdateDataSourceCommand
 	// in:path
 	// required:true
 	DatasourceID string `json:"id"`
@@ -474,7 +474,7 @@ type UpdateDatasourceParams struct {
 type UpdateDatasourceByUIDParams struct {
 	// in:body
 	// required:true
-	Body models.UpdateDataSourceCommand
+	Body datasources.UpdateDataSourceCommand
 	// in:path
 	// required:true
 	DatasourceUID string `json:"uid"`

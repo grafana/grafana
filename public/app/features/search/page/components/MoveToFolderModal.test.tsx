@@ -19,7 +19,7 @@ describe('MoveToFolderModal', () => {
     dashboardsUIDs.add('uid2');
     items.set('dashboard', dashboardsUIDs);
     const isMoveModalOpen = true;
-    const mockStore = configureMockStore<any, any>();
+    const mockStore = configureMockStore();
     const store = mockStore({ dashboard: { panels: [] } });
     const onMoveItems = jest.fn();
 
