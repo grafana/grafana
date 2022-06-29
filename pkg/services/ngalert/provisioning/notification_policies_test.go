@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/prometheus/common/model"
+	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -23,6 +24,12 @@ func TestNotificationPolicyService(t *testing.T) {
 
 	t.Run("service stitches policy tree into org's AM config", func(t *testing.T) {
 		sut := createNotificationPolicyServiceSut()
+		sut.contactPoints.(*MockContactPoints).EXPECT().
+			GetContactPoints(mock.Anything, mock.Anything).
+			Return([]definitions.EmbeddedContactPoint{{
+				Name: "a new receiver",
+			}}, nil)
+
 		newRoute := createTestRoutingTree()
 
 		err := sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceNone)
@@ -44,6 +51,11 @@ func TestNotificationPolicyService(t *testing.T) {
 
 	t.Run("service returns upgraded provenance value", func(t *testing.T) {
 		sut := createNotificationPolicyServiceSut()
+		sut.contactPoints.(*MockContactPoints).EXPECT().
+			GetContactPoints(mock.Anything, mock.Anything).
+			Return([]definitions.EmbeddedContactPoint{{
+				Name: "a new receiver",
+			}}, nil)
 		newRoute := createTestRoutingTree()
 
 		err := sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceAPI)
@@ -56,6 +68,11 @@ func TestNotificationPolicyService(t *testing.T) {
 
 	t.Run("service respects concurrency token when updating", func(t *testing.T) {
 		sut := createNotificationPolicyServiceSut()
+		sut.contactPoints.(*MockContactPoints).EXPECT().
+			GetContactPoints(mock.Anything, mock.Anything).
+			Return([]definitions.EmbeddedContactPoint{{
+				Name: "a new receiver",
+			}}, nil)
 		newRoute := createTestRoutingTree()
 		q := models.GetLatestAlertmanagerConfigurationQuery{
 			OrgID: 1,
@@ -90,6 +107,7 @@ func createNotificationPolicyServiceSut() *NotificationPolicyService {
 		amStore:         newFakeAMConfigStore(),
 		provenanceStore: NewFakeProvisioningStore(),
 		xact:            newNopTransactionManager(),
+		contactPoints:   &MockContactPoints{},
 		log:             log.NewNopLogger(),
 	}
 }
