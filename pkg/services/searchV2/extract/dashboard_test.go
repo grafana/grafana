@@ -18,6 +18,8 @@ func TestReadDashboard(t *testing.T) {
 		"datasource-variable",
 		"empty-datasource-variable",
 		"repeated-datasource-variables",
+		"string-datasource-variable",
+		"datasource-variable-no-curly-braces",
 	}
 
 	// key will allow name or uid

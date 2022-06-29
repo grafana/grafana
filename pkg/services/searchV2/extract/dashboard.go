@@ -228,7 +228,7 @@ func ReadDashboard(stream io.Reader, lookup DatasourceLookup) (*DashboardInfo, e
 		var dsRefs []DataSourceRef
 
 		for i := range panel.Datasource {
-			isVariableRef := strings.HasPrefix(panel.Datasource[i].UID, "${")
+			isVariableRef := strings.HasPrefix(panel.Datasource[i].UID, "$")
 			if isVariableRef {
 				dsVariableRefs = append(dsVariableRefs, panel.Datasource[i])
 			} else {
@@ -238,9 +238,14 @@ func ReadDashboard(stream io.Reader, lookup DatasourceLookup) (*DashboardInfo, e
 
 		var referencedDs []DataSourceRef
 		for _, dsVariableRef := range dsVariableRefs {
-			variableName := strings.TrimSuffix(strings.TrimPrefix(dsVariableRef.UID, "${"), "}")
-			refs := datasourceVariablesLookup.getDatasourceRefs(variableName)
+			variableName := dsVariableRef.UID
+			if strings.HasPrefix(variableName, "${") {
+				variableName = strings.TrimPrefix(strings.TrimSuffix(variableName, "}"), "${")
+			} else {
+				variableName = strings.TrimPrefix(variableName, "$")
+			}
 
+			refs := datasourceVariablesLookup.getDatasourceRefs(variableName)
 			referencedDs = append(referencedDs, refs...)
 		}
 
