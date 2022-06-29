@@ -470,101 +470,6 @@
    },
    "type": "array"
   },
-  "CreateDashboardSnapshotCommand": {
-   "properties": {
-    "Result": {
-     "$ref": "#/definitions/DashboardSnapshot"
-    },
-    "dashboard": {
-     "$ref": "#/definitions/Json"
-    },
-    "deleteKey": {
-     "description": "Unique key used to delete the snapshot. It is different from the `key` so that only the creator can delete the snapshot. Required if `external` is `true`.",
-     "type": "string"
-    },
-    "expires": {
-     "default": 0,
-     "description": "When the snapshot should expire in seconds in seconds. Default is never to expire.",
-     "format": "int64",
-     "type": "integer"
-    },
-    "external": {
-     "default": false,
-     "description": "these are passed when storing an external snapshot ref\nSave the snapshot on an external server rather than locally.",
-     "type": "boolean"
-    },
-    "key": {
-     "description": "Define the unique key. Required if `external` is `true`.",
-     "type": "string"
-    },
-    "name": {
-     "description": "Snapshot name",
-     "type": "string"
-    }
-   },
-   "required": [
-    "dashboard"
-   ],
-   "type": "object"
-  },
-  "DashboardSnapshot": {
-   "description": "DashboardSnapshot model",
-   "properties": {
-    "Created": {
-     "format": "date-time",
-     "type": "string"
-    },
-    "Dashboard": {
-     "$ref": "#/definitions/Json"
-    },
-    "DashboardEncrypted": {
-     "items": {
-      "format": "uint8",
-      "type": "integer"
-     },
-     "type": "array"
-    },
-    "DeleteKey": {
-     "type": "string"
-    },
-    "Expires": {
-     "format": "date-time",
-     "type": "string"
-    },
-    "External": {
-     "type": "boolean"
-    },
-    "ExternalDeleteUrl": {
-     "type": "string"
-    },
-    "ExternalUrl": {
-     "type": "string"
-    },
-    "Id": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "Key": {
-     "type": "string"
-    },
-    "Name": {
-     "type": "string"
-    },
-    "OrgId": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "Updated": {
-     "format": "date-time",
-     "type": "string"
-    },
-    "UserId": {
-     "format": "int64",
-     "type": "integer"
-    }
-   },
-   "type": "object"
-  },
   "DateTime": {
    "description": "DateTime is a time but it serializes to ISO8601 format with millis\nIt knows how to read 3 different variations of a RFC3339 date time.\nMost APIs we encounter want either millisecond or second precision times.\nThis just tries to make it worry-free.",
    "format": "date-time",
@@ -2687,7 +2592,6 @@
    "type": "object"
   },
   "URL": {
-   "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
    "properties": {
     "ForceQuery": {
      "type": "boolean"
@@ -2720,7 +2624,7 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-   "title": "A URL represents a parsed URL (technically, a URI reference).",
+   "title": "URL is a custom URL type that allows validation at configuration load time.",
    "type": "object"
   },
   "Userinfo": {
@@ -2890,7 +2794,6 @@
    "type": "object"
   },
   "alertGroup": {
-   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -2914,6 +2817,7 @@
    "type": "object"
   },
   "alertGroups": {
+   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
@@ -3021,6 +2925,7 @@
    "$ref": "#/definitions/Duration"
   },
   "gettableAlert": {
+   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -3076,6 +2981,7 @@
    "type": "object"
   },
   "gettableAlerts": {
+   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
@@ -3277,7 +3183,6 @@
    "type": "object"
   },
   "receiver": {
-   "description": "Receiver receiver",
    "properties": {
     "name": {
      "description": "name",
