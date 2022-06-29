@@ -227,9 +227,18 @@ func (hs *thumbService) GetImage(c *models.ReqContext) {
 		return
 	}
 
-	if err != nil {
+	if err != nil || res == nil {
 		hs.log.Error("Error when retrieving thumbnail", "dashboardUid", req.UID, "err", err.Error())
 		c.JSON(500, map[string]string{"dashboardUID": req.UID, "error": "unknown"})
+		return
+	}
+
+	currentEtag := fmt.Sprintf("%d", res.Updated.Unix())
+	c.Resp.Header().Set("ETag", currentEtag)
+
+	previousEtag := c.Req.Header.Get("If-None-Match")
+	if previousEtag == currentEtag {
+		c.Resp.WriteHeader(http.StatusNotModified)
 		return
 	}
 

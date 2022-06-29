@@ -14,6 +14,22 @@ msgstr ""
 "Plural-Forms: \n"
 
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx
+msgid "common.locale.default"
+msgstr "Default"
+
+#: public/app/core/components/SharedPreferences/SharedPreferences.tsx
+msgid "common.locale.en"
+msgstr "English"
+
+#: public/app/core/components/SharedPreferences/SharedPreferences.tsx
+msgid "common.locale.es"
+msgstr "Spanish"
+
+#: public/app/core/components/SharedPreferences/SharedPreferences.tsx
+msgid "common.locale.fr"
+msgstr "French"
+
+#: public/app/core/components/SharedPreferences/SharedPreferences.tsx
 #: public/app/features/profile/UserProfileEditForm.tsx
 msgid "common.save"
 msgstr "Save"
@@ -175,6 +191,14 @@ msgid "nav.snapshots"
 msgstr "Snapshots"
 
 #: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.starred"
+msgstr "Starred"
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.starred-empty"
+msgstr "Your starred dashboards will appear here"
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
 msgid "nav.teams"
 msgstr "Teams"
 
@@ -197,6 +221,14 @@ msgstr "Choose default dashboard"
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx
 msgid "shared-preferences.fields.home-dashboard-tooltip"
 msgstr "Not finding the dashboard you want? Star it first, then it should appear in this select box."
+
+#: public/app/core/components/SharedPreferences/SharedPreferences.tsx
+msgid "shared-preferences.fields.locale-label"
+msgstr "Language"
+
+#: public/app/core/components/SharedPreferences/SharedPreferences.tsx
+msgid "shared-preferences.fields.locale-placeholder"
+msgstr "Choose language"
 
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx
 msgid "shared-preferences.fields.theme-label"

@@ -42,7 +42,7 @@
     "react-test-renderer"
   ],
   "ignorePaths": ["packages/grafana-toolkit/package.json", "emails/**", "plugins-bundled/**", "**/mocks/**"],
-  "labels": ["area/frontend", "dependencies"],
+  "labels": ["area/frontend", "dependencies", "no-backport", "no-changelog"],
   "packageRules": [
     {
       "matchUpdateTypes": ["patch"],

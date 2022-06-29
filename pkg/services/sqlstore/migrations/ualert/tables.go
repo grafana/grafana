@@ -241,6 +241,16 @@ func AddAlertRuleMigrations(mg *migrator.Migrator, defaultIntervalSeconds int64)
 			Cols: []string{"org_id", "dashboard_uid", "panel_id"},
 		},
 	))
+
+	mg.AddMigration("add rule_group_idx column to alert_rule", migrator.NewAddColumnMigration(
+		migrator.Table{Name: "alert_rule"},
+		&migrator.Column{
+			Name:     "rule_group_idx",
+			Type:     migrator.DB_Int,
+			Nullable: false,
+			Default:  "1",
+		},
+	))
 }
 
 func AddAlertRuleVersionMigrations(mg *migrator.Migrator) {
@@ -284,6 +294,16 @@ func AddAlertRuleVersionMigrations(mg *migrator.Migrator) {
 
 	// add labels column
 	mg.AddMigration("add column labels to alert_rule_version", migrator.NewAddColumnMigration(alertRuleVersion, &migrator.Column{Name: "labels", Type: migrator.DB_Text, Nullable: true}))
+
+	mg.AddMigration("add rule_group_idx column to alert_rule_version", migrator.NewAddColumnMigration(
+		migrator.Table{Name: "alert_rule_version"},
+		&migrator.Column{
+			Name:     "rule_group_idx",
+			Type:     migrator.DB_Int,
+			Nullable: false,
+			Default:  "1",
+		},
+	))
 }
 
 func AddAlertmanagerConfigMigrations(mg *migrator.Migrator) {

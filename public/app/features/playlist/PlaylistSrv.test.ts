@@ -18,7 +18,7 @@ jest.mock('@grafana/runtime', () => {
   };
 });
 
-const mockStore = configureMockStore<any, any>();
+const mockStore = configureMockStore();
 
 setStore(
   mockStore({
