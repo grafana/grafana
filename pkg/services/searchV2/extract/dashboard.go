@@ -50,7 +50,7 @@ func (d *datasourceVariableLookup) add(templateVariable templateVariable) {
 	}
 
 	if value, stringValue := templateVariable.current.value.(string); stringValue {
-		if value != "" && value != "No data sources found" {
+		if value != "" && value != "No data sources found" && value != "$__all" {
 			refs = append(refs, DataSourceRef{
 				UID:  value,
 				Type: datasourceType,
