@@ -21,11 +21,13 @@ export const OldPage: PageType = ({ navId, navModel: oldNavProp, pageNav, childr
 
   usePageTitle(navModel, pageNav);
 
+  const pageHeaderNav = pageNav ?? navModel?.main;
+
   return (
     <div {...otherProps} className={cx(styles.wrapper, className)}>
       <CustomScrollbar autoHeightMin={'100%'}>
         <div className="page-scrollbar-content">
-          <PageHeader navItem={pageNav ?? navModel.main} />
+          {pageHeaderNav && <PageHeader navItem={pageHeaderNav} />}
           {children}
           <Footer />
         </div>

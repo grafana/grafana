@@ -22,14 +22,16 @@ export const Page: PageType = ({ navId, navModel: oldNavProp, pageNav, children,
 
   usePageTitle(navModel, pageNav);
 
+  const pageHeaderNav = pageNav ?? navModel?.node;
+
   return (
     <div {...otherProps} className={cx(styles.wrapper, className)}>
       <div className={styles.panes}>
-        {navModel.main.children && <SectionNav model={navModel} />}
+        {navModel && navModel.main.children && <SectionNav model={navModel} />}
         <div className={styles.pageContent}>
           <CustomScrollbar autoHeightMin={'100%'}>
             <div className={styles.pageInner}>
-              <PageHeader navItem={pageNav ?? navModel.node} />
+              {pageHeaderNav && <PageHeader navItem={pageHeaderNav} />}
               {pageNav && pageNav.children && <PageTabs navItem={pageNav} />}
               {children}
             </div>
