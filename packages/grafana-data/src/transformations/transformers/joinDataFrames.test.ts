@@ -294,5 +294,12 @@ describe('align frames', () => {
       expect(isLikelyAscendingVector(new ArrayVector([7, 6, null]))).toBeFalsy();
       expect(isLikelyAscendingVector(new ArrayVector([7, 8, 6]))).toBeFalsy();
     });
+
+    it('ascending first/last', () => {
+      expect(isLikelyAscendingVector(new ArrayVector([10, 20, 30, 5, 15, 7, 43, 29, 11]), 3)).toBeFalsy();
+      expect(
+        isLikelyAscendingVector(new ArrayVector([null, 10, 20, 30, 5, null, 15, 7, 43, 29, 11, null]), 3)
+      ).toBeFalsy();
+    });
   });
 });
