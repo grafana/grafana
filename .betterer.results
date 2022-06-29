@@ -3626,22 +3626,22 @@ exports[`better eslint`] = {
       [0, 34, 3, "Unexpected any. Specify a different type.", "193409811"],
       [0, 39, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/core/services/backend_srv.ts:3006666473": [
-      [79, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [149, 63, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [227, 40, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [281, 38, 20, "Do not use any type assertions.", "443888156"],
-      [281, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [352, 103, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [388, 49, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [392, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [392, 43, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [396, 35, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [400, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
+    "public/app/core/services/backend_srv.ts:360059123": [
+      [83, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [153, 63, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [231, 40, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [285, 38, 20, "Do not use any type assertions.", "443888156"],
+      [285, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [356, 103, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [392, 49, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [396, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [396, 43, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [400, 35, 3, "Unexpected any. Specify a different type.", "193409811"],
       [404, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [408, 31, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [408, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
       [412, 31, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [423, 16, 3, "Unexpected any. Specify a different type.", "193409811"]
+      [416, 31, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [427, 16, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/core/services/context_srv.ts:698805616": [
       [59, 10, 3, "Unexpected any. Specify a different type.", "193409811"],
