@@ -1,7 +1,8 @@
 import { isEqual } from 'lodash';
+import { Store } from 'redux';
 
-import { DataFrame, Field, FieldMatcherID, fieldMatchers, LinkModel, LoadingState } from '@grafana/data';
-import { variableAdapters } from 'app/features/variables/adapters';
+import { DataFrame, Field, FieldMatcherID, fieldMatchers, LinkModel, LoadingState, VariableModel } from '@grafana/data';
+import { VariableAdapter, variableAdapters } from 'app/features/variables/adapters';
 import { toKeyedAction } from 'app/features/variables/state/keyedVariablesReducer';
 import {
   getLastKey,
@@ -14,6 +15,7 @@ import { AddVariable, VariableIdentifier } from 'app/features/variables/state/ty
 import { KeyValueVariableModel, VariableHide } from 'app/features/variables/types';
 import { toKeyedVariableIdentifier, toStateKey, toVariablePayload } from 'app/features/variables/utils';
 import { store } from 'app/store/store';
+import { StoreState } from 'app/types';
 
 import { ConditionalDataSourceQuery } from './ConditionalDataSource';
 import { queryConditionsRegistry } from './QueryConditionsRegistry';
@@ -49,12 +51,28 @@ export function getConditionalDataLinksSupplier(targets: ConditionalDataSourceQu
   };
 }
 
-function findRelatedDataLinks(
+export function findRelatedDataLinks(
   condition: QueryConditionConfig,
   allConditions: QueryConditionConfig[][],
   targetFrame: DataFrame,
   allFrames: DataFrame[],
-  field: Field
+  field: Field,
+  // dependencies to provide mock implementation in tests
+  dependencies: {
+    store: Store<StoreState>;
+    actions: {
+      addVariable: typeof addVariable;
+    };
+    getVariableWithName: (name: string) => VariableModel | undefined;
+    getKeyValueAdapter: () => VariableAdapter<KeyValueVariableModel>;
+  } = {
+    store,
+    actions: { addVariable },
+    getVariableWithName: (name: string) => {
+      return getVariableWithName(name, store.getState());
+    },
+    getKeyValueAdapter: () => variableAdapters.get('keyValue'),
+  }
 ): LinkModel[] {
   const links: LinkModel[] = [];
   // let's find all conditions that also contain provided condition
@@ -95,7 +113,7 @@ function findRelatedDataLinks(
         // Check if there is a template variable defined for a given condition already;
         const conditionDef = queryConditionsRegistry.getIfExists(result[i][idx].id);
         const expectedVariableName = conditionDef?.getVariableName(result[i][idx].options);
-        const existingVariable = getVariableWithName(expectedVariableName!, store.getState());
+        const existingVariable = dependencies.getVariableWithName(expectedVariableName!);
         if (existingVariable) {
           conditionsMet[idx] = true;
         }
@@ -114,25 +132,27 @@ function findRelatedDataLinks(
           const variablesToCreate = result[i].map((c) => {
             const conditionDef = queryConditionsRegistry.getIfExists(c.id);
             const varName = conditionDef!.getVariableName(c.options);
-            if (!getVariableWithName(varName!, store.getState())) {
+
+            if (!dependencies.getVariableWithName(varName!)) {
               return varName;
             }
             // if the variable already exists, it means it was already produced by user interacting with data
             return null;
           });
 
-          const state = store.getState();
+          const state = dependencies.store.getState();
           const key = getLastKey(state);
           const rootStateKey = toStateKey(key);
+          let createdVariablesCounter = variablesToCreate.filter((v) => v).length;
 
           for (let k = 0; k < variablesToCreate.length; k++) {
-            const shouldEmitChanges = k === variablesToCreate.length - 1;
             const id = variablesToCreate[k];
 
             // ignore existing variables
             if (!id) {
               continue;
             }
+            createdVariablesCounter--;
 
             const identifier: VariableIdentifier = { type: 'keyValue', id };
             const global = false;
@@ -156,25 +176,27 @@ function findRelatedDataLinks(
               current: { selected: true, value: '', text: '' },
             };
 
-            store.dispatch(
+            dependencies.store.dispatch(
               toKeyedAction(
                 rootStateKey,
-                addVariable(toVariablePayload<AddVariable>(identifier, { global, model: variable, index }))
+                dependencies.actions.addVariable(
+                  toVariablePayload<AddVariable>(identifier, { global, model: variable, index })
+                )
               )
             );
 
             // eslint-disable-next-line
             const existing = getVariable(
               toKeyedVariableIdentifier(variable),
-              store.getState()
+              dependencies.store.getState()
             ) as KeyValueVariableModel;
             const value = fieldReferencesPerTarget[k].values.get(origin.rowIndex);
 
-            const adapter = variableAdapters.get('keyValue');
-            await adapter.setValue(
+            await dependencies.getKeyValueAdapter().setValue(
               existing,
               { selected: true, value, text: value ? value.toString() : '' },
-              shouldEmitChanges
+              // Changes should be emited only for the last update to avoid multiple queries being executed
+              createdVariablesCounter === 0
             );
           }
         },
