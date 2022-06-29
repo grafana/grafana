@@ -40,7 +40,7 @@ func TestNotificationPolicyService(t *testing.T) {
 		require.Equal(t, "a new receiver", updated.Receiver)
 	})
 
-	t.Run("not existing receiver will error", func(t *testing.T) {
+	t.Run("not existing receiver reference will error", func(t *testing.T) {
 		sut := createNotificationPolicyServiceSut()
 		sut.contactPoints.(*MockContactPointProvider).EXPECT().
 			GetContactPoints(mock.Anything, mock.Anything).
