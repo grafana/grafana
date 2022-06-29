@@ -37,6 +37,7 @@ type RenderingService struct {
 	renderAction      renderFunc
 	renderCSVAction   renderCSVFunc
 	sanitizeSVGAction sanitizeFunc
+	sanitizeURL       string
 	domain            string
 	inProgressCount   int32
 	version           string
@@ -62,8 +63,14 @@ func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, rm p
 		return nil, fmt.Errorf("failed to create CSVs directory %q: %w", cfg.CSVsDir, err)
 	}
 
+	logger := log.New("rendering")
+
+	// URL for HTTP sanitize API
+	var sanitizeURL string
+
+	//  value used for domain attribute of renderKey cookie
 	var domain string
-	// set value used for domain attribute of renderKey cookie
+
 	switch {
 	case cfg.RendererUrl != "":
 		// RendererCallbackUrl has already been passed, it won't generate an error.
@@ -72,6 +79,7 @@ func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, rm p
 			return nil, err
 		}
 
+		sanitizeURL = getSanitizerURL(cfg.RendererUrl)
 		domain = u.Hostname()
 	case cfg.HTTPAddr != setting.DefaultHTTPAddr:
 		domain = cfg.HTTPAddr
@@ -79,7 +87,6 @@ func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, rm p
 		domain = "localhost"
 	}
 
-	logger := log.New("rendering")
 	s := &RenderingService{
 		perRequestRenderKeyProvider: &perRequestRenderKeyProvider{
 			cache:     remoteCache,
@@ -105,8 +112,14 @@ func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, rm p
 		RendererPluginManager: rm,
 		log:                   logger,
 		domain:                domain,
+		sanitizeURL:           sanitizeURL,
 	}
 	return s, nil
+}
+
+func getSanitizerURL(rendererURL string) string {
+	rendererBaseURL := strings.TrimSuffix(rendererURL, "/render")
+	return rendererBaseURL + "/sanitize"
 }
 
 func (rs *RenderingService) Run(ctx context.Context) error {

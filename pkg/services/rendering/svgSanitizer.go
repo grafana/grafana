@@ -67,7 +67,7 @@ func createMultipartRequestBody(values []formFile) (bytes.Buffer, string, error)
 }
 
 func (rs *RenderingService) sanitizeViaHTTP(ctx context.Context, req *SanitizeSVGRequest) (*SanitizeSVGResponse, error) {
-	sanitizerUrl, err := url.Parse(rs.Cfg.RendererUrl + "/sanitize")
+	sanitizerUrl, err := url.Parse(rs.sanitizeURL)
 	if err != nil {
 		return nil, err
 	}
