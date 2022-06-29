@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
@@ -19,7 +18,7 @@ type NotificationPolicyService struct {
 }
 
 type ContactPointProvider interface {
-	GetContactPoints(ctx context.Context, orgID int64) ([]apimodels.EmbeddedContactPoint, error)
+	GetContactPoints(ctx context.Context, orgID int64) ([]definitions.EmbeddedContactPoint, error)
 }
 
 func NewNotificationPolicyService(am AMConfigStore, prov ProvisioningStore,
