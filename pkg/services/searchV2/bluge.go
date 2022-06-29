@@ -399,8 +399,8 @@ func doSearchQuery(
 	} else {
 		// The actual se
 		bq := bluge.NewBooleanQuery().
-			AddShould(bluge.NewMatchPhraseQuery(q.Query).SetField(documentFieldName).SetBoost(6)).
-			AddShould(bluge.NewMatchPhraseQuery(q.Query).SetField(documentFieldDescription).SetBoost(3)).
+			AddShould(bluge.NewMatchQuery(q.Query).SetField(documentFieldName).SetBoost(6)).
+			AddShould(bluge.NewMatchQuery(q.Query).SetField(documentFieldDescription).SetBoost(3)).
 			AddShould(bluge.NewMatchQuery(q.Query).
 				SetField(documentFieldName_ngram).
 				SetOperator(bluge.MatchQueryOperatorAnd). // all terms must match

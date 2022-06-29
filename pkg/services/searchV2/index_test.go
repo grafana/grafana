@@ -520,13 +520,27 @@ var punctuationSplitNgramDashboards = []dashboard{
 			Title: "heat-torkel",
 		},
 	},
+	{
+		id:  2,
+		uid: "2",
+		info: &extract.DashboardInfo{
+			Title: "topology heatmap",
+		},
+	},
 }
 
 func TestDashboardIndex_PunctuationNgram(t *testing.T) {
 	t.Run("ngram-punctuation-split", func(t *testing.T) {
 		_, reader, _ := initTestIndexFromDashes(t, punctuationSplitNgramDashboards)
 		checkSearchResponse(t, filepath.Base(t.Name()), reader, testAllowAllFilter,
-			DashboardQuery{Query: "tork"},
+			DashboardQuery{Query: "tork he"},
+		)
+	})
+
+	t.Run("ngram-simple", func(t *testing.T) {
+		_, reader, _ := initTestIndexFromDashes(t, punctuationSplitNgramDashboards)
+		checkSearchResponse(t, filepath.Base(t.Name()), reader, testAllowAllFilter,
+			DashboardQuery{Query: "hea"},
 		)
 	})
 }
