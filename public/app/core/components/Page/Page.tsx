@@ -39,7 +39,7 @@ export const Page: PageType = ({ navModel, children, className, ...otherProps })
     <div {...otherProps} className={cx(styles.wrapper, className)}>
       <CustomScrollbar autoHeightMin={'100%'}>
         <div className="page-scrollbar-content">
-          {navModel && <PageHeader model={navModel} />}
+          {navModel && <PageHeader model={navModel.main} />}
           {children}
           <Footer />
         </div>
