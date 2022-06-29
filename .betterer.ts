@@ -30,8 +30,8 @@ function countUndocumentedStories() {
           0,
           0,
           `No undocumented stories are allowed, please add a ${filePath.replace(
-            /\.story.tsx$/,
-            '.mdx'
+            /^(.*\/)(\w+)\.story\.tsx$/,
+            '$2.mdx'
           )} with some documentation.`
         );
       }
