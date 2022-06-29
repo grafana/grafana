@@ -10,6 +10,7 @@ enum TokenType {
   Number = 'number',
   Comment = 'comment',
   Operator = 'operator',
+  Identifier = 'idenfifier',
 }
 
 // Monarch language definition, see https://microsoft.github.io/monaco-editor/monarch.html
@@ -17,53 +18,75 @@ enum TokenType {
 // see https://pkg.go.dev/text/template for the available keywords etc
 export const language: monacoType.languages.IMonarchLanguage = {
   defaultToken: '', // change this to "invalid" to find tokens that were never matched
+  keywords: ['define', 'if', 'else', 'end', 'range', 'break', 'continue', 'template', 'block', 'with'],
+  functions: [
+    // built-in functions
+    'and',
+    'call',
+    'html',
+    'index',
+    'slice',
+    'js',
+    'len',
+    'not',
+    'or',
+    'print',
+    'printf',
+    'println',
+    'urlquery',
+    // boolean functions
+    'eq',
+    'ne',
+    'lt',
+    'le',
+    'gt',
+    'ge',
+    // extra functions
+    'join',
+  ],
+  operators: ['|'],
   tokenizer: {
     root: [
-      // values
-      [/".*"/, TokenType.String],
-      [/'.'/, TokenType.String],
-      [/[0-9]+/, TokenType.Number],
+      // strings
+      [/"/, TokenType.String, '@string'],
+      [/`/, TokenType.String, '@rawstring'],
+      // numbers
+      [/\d*\d+[eE]([\-+]?\d+)?/, 'number.float'],
+      [/\d*\.\d+([eE][\-+]?\d+)?/, 'number.float'],
+      [/0[xX][0-9a-fA-F']*[0-9a-fA-F]/, 'number.hex'],
+      [/0[0-7']*[0-7]/, 'number.octal'],
+      [/0[bB][0-1']*[0-1]/, 'number.binary'],
+      [/\d[\d']*/, TokenType.Number],
+      [/\d/, TokenType.Number],
+      // delimiter: after number because of .\d floats
+      [/[;,.]/, TokenType.Delimiter],
       // delimiters
       [/{{-?/, TokenType.Delimiter],
       [/-?}}/, TokenType.Delimiter],
-      // keywords
-      ['define ', TokenType.Keyword],
-      ['if ', TokenType.Keyword],
-      ['else ', TokenType.Keyword],
-      ['end', TokenType.Keyword],
-      ['range ', TokenType.Keyword],
-      ['break', TokenType.Keyword],
-      ['continue', TokenType.Keyword],
-      ['template ', TokenType.Keyword],
-      ['block ', TokenType.Keyword],
-      ['with ', TokenType.Keyword],
-      // operators
-      // ['|', TokenType.Operator],
-      // functions
-      ['and ', TokenType.Function],
-      ['call ', TokenType.Function],
-      ['html ', TokenType.Function],
-      ['index ', TokenType.Function],
-      ['slice ', TokenType.Function],
-      ['js ', TokenType.Function],
-      ['len ', TokenType.Function],
-      ['not ', TokenType.Function],
-      ['or ', TokenType.Function],
-      [/print(f|ln)? /, TokenType.Function],
-      ['urlquery ', TokenType.Function],
-      // extra functions from Prometheus
-      ['join ', TokenType.Function],
-      // boolean functions
-      ['eq ', TokenType.Function],
-      ['ne ', TokenType.Function],
-      ['lt ', TokenType.Function],
-      ['le ', TokenType.Function],
-      ['gt ', TokenType.Function],
-      ['ge ', TokenType.Function],
       // variables
-      [/\.([A-Za-z]+)?/, TokenType.Variable],
+      // [/\.([A-Za-z]+)?/, TokenType.Variable],
+      // identifiers and keywords
+      [
+        /[a-zA-Z_]\w*/,
+        {
+          cases: {
+            '@keywords': { token: TokenType.Keyword },
+            '@functions': { token: TokenType.Function },
+            '@default': TokenType.Identifier,
+          },
+        },
+      ],
       // comments
       [/\/\*.*\*\//, TokenType.Comment],
+    ],
+    string: [
+      [/[^\\"]+/, TokenType.String],
+      [/\\./, 'string.escape.invalid'],
+      [/"/, TokenType.String, '@pop'],
+    ],
+    rawstring: [
+      [/[^\`]/, TokenType.String],
+      [/`/, TokenType.String, '@pop'],
     ],
   },
 };
@@ -72,14 +95,21 @@ export const conf: monacoType.languages.LanguageConfiguration = {
   comments: {
     blockComment: ['/*', '*/'],
   },
-  brackets: [['{{', '}}']],
+  brackets: [
+    ['{{', '}}'],
+    ['(', ')'],
+  ],
   autoClosingPairs: [
     { open: '{{', close: '}}' },
+    { open: '(', close: ')' },
+    { open: '`', close: '`' },
     { open: '"', close: '"' },
     { open: "'", close: "'" },
   ],
   surroundingPairs: [
     { open: '{{', close: '}}' },
+    { open: '(', close: ')' },
+    { open: '`', close: '`' },
     { open: '"', close: '"' },
     { open: "'", close: "'" },
   ],
