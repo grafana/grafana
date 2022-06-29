@@ -301,5 +301,12 @@ describe('align frames', () => {
         isLikelyAscendingVector(new ArrayVector([null, 10, 20, 30, 5, null, 15, 7, 43, 29, 11, null]), 3)
       ).toBeFalsy();
     });
+
+    it('null stuffs', () => {
+      expect(isLikelyAscendingVector(new ArrayVector([null, null, 1]), 3)).toBeTruthy();
+      expect(isLikelyAscendingVector(new ArrayVector([1, null, null]), 3)).toBeTruthy();
+      expect(isLikelyAscendingVector(new ArrayVector([null, null, null]), 3)).toBeTruthy();
+      expect(isLikelyAscendingVector(new ArrayVector([null, 1, null]), 3)).toBeTruthy();
+    });
   });
 });
