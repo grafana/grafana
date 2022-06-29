@@ -207,7 +207,7 @@ devenv-postgres:
 
 devenv-mysql:
 	@cd devenv; \
-	sources=mysql
+	sources=mysql_tests
 
 ##@ Helpers
 
