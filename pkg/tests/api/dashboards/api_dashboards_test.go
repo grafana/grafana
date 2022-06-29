@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -34,7 +35,7 @@ func TestDashboardQuota(t *testing.T) {
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 	// Create user
-	createUser(t, store, models.CreateUserCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_ADMIN),
 		Password:       "admin",
 		Login:          "admin",
@@ -90,7 +91,7 @@ func TestDashboardQuota(t *testing.T) {
 	})
 }
 
-func createUser(t *testing.T, store *sqlstore.SQLStore, cmd models.CreateUserCommand) int64 {
+func createUser(t *testing.T, store *sqlstore.SQLStore, cmd user.CreateUserCommand) int64 {
 	t.Helper()
 
 	store.Cfg.AutoAssignOrg = true
@@ -98,7 +99,7 @@ func createUser(t *testing.T, store *sqlstore.SQLStore, cmd models.CreateUserCom
 
 	u, err := store.CreateUser(context.Background(), cmd)
 	require.NoError(t, err)
-	return u.Id
+	return u.ID
 }
 
 func TestUpdatingProvisionionedDashboards(t *testing.T) {
@@ -127,7 +128,7 @@ providers:
 	require.NoError(t, err)
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 	// Create user
-	createUser(t, store, models.CreateUserCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_ADMIN),
 		Password:       "admin",
 		Login:          "admin",
