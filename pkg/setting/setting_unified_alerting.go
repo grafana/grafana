@@ -90,37 +90,6 @@ type UnifiedAlertingScreenshotSettings struct {
 	UploadExternalImageStorage bool
 }
 
-type UnifiedAlertingHistoryStorage string
-
-func (u UnifiedAlertingHistoryStorage) IsValid() bool {
-	switch u {
-	case UnifiedAlertingHistoryStorageLocal:
-		return true
-	case UnifiedAlertingHistoryStorageNone:
-		return true
-	case UnifiedAlertingHistoryStorageRemote:
-		return true
-	case "":
-		return true
-	default:
-		return false
-	}
-}
-
-const (
-	UnifiedAlertingHistoryStorageLocal  UnifiedAlertingHistoryStorage = "local"
-	UnifiedAlertingHistoryStorageNone   UnifiedAlertingHistoryStorage = "none"
-	UnifiedAlertingHistoryStorageRemote UnifiedAlertingHistoryStorage = "remote"
-)
-
-var UnifiedAlertingHistoryStorageString = fmt.Sprintf("[ '%v', '%v', '%v']",
-	UnifiedAlertingHistoryStorageNone,
-	UnifiedAlertingHistoryStorageLocal,
-	UnifiedAlertingHistoryStorageRemote,
-)
-
-const UnifiedAlertingHistoryMaxLocalDiskBytesDefault = 500 * 1024 * 1024
-
 type UnifiedAlertingHistorySettings struct {
 	DemoEnabled bool
 }
@@ -133,7 +102,7 @@ func (u *UnifiedAlertingSettings) IsEnabled() bool {
 
 // readUnifiedAlertingEnabledSettings reads the settings for unified alerting.
 // It returns a non-nil bool and a nil error when unified alerting is enabled either
-// because it has been e4nabled in the settings or by default. It returns nil and
+// because it has been enabled in the settings or by default. It returns nil and
 // a non-nil error both unified alerting and legacy alerting are enabled at the same time.
 func (cfg *Cfg) readUnifiedAlertingEnabledSetting(section *ini.Section) (*bool, error) {
 	// At present an invalid value is considered the same as no value. This means that a

@@ -118,7 +118,6 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			ac:              api.AccessControl,
 		},
 	), m)
-
 	api.RegisterHistoryApiEndpoints(&ForkedHistoryApi{
 		log: logger,
 		cfg: &api.Cfg.UnifiedAlerting.History,

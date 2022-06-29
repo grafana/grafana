@@ -86,15 +86,9 @@ func historyDemoData(ruleUID string, start, end float64, limit int) ([]*data.Fra
 		})
 	}
 
-	fmt.Println(frames[0].Fields)
-
-	var i int
 	for t := start; t <= end; t += 63.0 {
-		sec, nsec := func(seconds float64) (int64, int64) {
-			sec := int64(seconds) // Rounds toward 0, per the language spec
-			nsec := int64((seconds - math.Floor(seconds)) * 1e9)
-			return sec, nsec
-		}(t)
+		sec := int64(t) // Rounds toward 0, per the language spec
+		nsec := int64((t - math.Floor(t)) * 1e9)
 
 		// The first series is always alerting
 		frames[0].Fields[0].Append(time.Unix(sec, nsec))
@@ -115,9 +109,6 @@ func historyDemoData(ruleUID string, start, end float64, limit int) ([]*data.Fra
 		// The fifth series toggles between Alerting and Alerting (Error), and OK randomly.
 		frames[4].Fields[0].Append(time.Unix(sec, nsec))
 		frames[4].Fields[1].Append(chooseFrom("Alerting", "Alerting (Error)", "OK"))
-
-		// The series are in "long" format in separate frames. TODO: can the panel type handle long format? If no, why not?
-		i++
 	}
 
 	return frames, nil

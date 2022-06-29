@@ -32,12 +32,6 @@ type StateHistoryParameters struct {
 	Limit int
 }
 
-// swagger:parameters RouteGetAlertStateHistory
-type StateHistoryQueryParameters struct {
-
-	// TODO: RuleName for Prometheus sources.
-}
-
 // swagger: response GetAlertStateHistoryResponse
 type GetAlertStateHistoryResponse struct {
 	// The response message
