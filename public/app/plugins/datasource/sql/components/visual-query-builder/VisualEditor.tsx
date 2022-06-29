@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAsync } from 'react-use';
 
-import { EditorRow, EditorRows } from '@grafana/experimental';
+import { EditorRow, EditorRows, EditorField } from '@grafana/experimental';
 import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 
 import { DB, QueryEditorProps, QueryRowFilter } from '../../types';
@@ -39,16 +39,16 @@ export const VisualEditor: React.FC<VisualEditorProps> = ({
         {query.format === 'table' && (
           <>
             <EditorRow>
-              <SQLSelectRow fields={state.value || []} query={query} onQueryChange={onChange} />
+              <SQLSelectRow db={db} fields={state.value || []} query={query} onQueryChange={onChange} />
             </EditorRow>
             <EditorRow>
               <OptionsPaneCategory id="filter-by-column-value" title="Filter by column value" isOpenDefault={false}>
-                <SQLWhereRow fields={state.value || []} query={query} onQueryChange={onChange} />
+                <SQLWhereRow db={db} fields={state.value || []} query={query} onQueryChange={onChange} />
               </OptionsPaneCategory>
             </EditorRow>
             <EditorRow>
               <OptionsPaneCategory id="group-by-column" title="Group by column" isOpenDefault={false}>
-                <SQLGroupByRow fields={state.value || []} query={query} onQueryChange={onChange} />
+                <SQLGroupByRow db={db} fields={state.value || []} query={query} onQueryChange={onChange} />
               </OptionsPaneCategory>
             </EditorRow>
           </>
@@ -59,29 +59,6 @@ export const VisualEditor: React.FC<VisualEditorProps> = ({
           </EditorRow>
         )}
         <EditorRow>
-<<<<<<< HEAD
-          <SQLOrderByRow fields={state.value || []} query={query} onQueryChange={onChange} />
-        </EditorRow>
-        {/* {queryRowFilter.filter && (
-        <EditorRow>
-          <EditorField label="Filter by column value" optional>
-            <SQLWhereRow fields={state.value || []} query={query} onQueryChange={onChange} />
-          </EditorField>
-        </EditorRow>
-      )} */}
-        {/* {queryRowFilter.group && (
-        <EditorRow>
-          <EditorField label="Group by column">
-            <SQLGroupByRow fields={state.value || []} query={query} onQueryChange={onChange} />
-          </EditorField>
-        </EditorRow>
-      )} */}
-        {/* {queryRowFilter.order && (
-        <EditorRow>
-          <SQLOrderByRow fields={state.value || []} query={query} onQueryChange={onChange} />
-        </EditorRow>
-      )} */}
-=======
           <SQLSelectRow fields={state.value || []} query={query} onQueryChange={onChange} db={db} />
         </EditorRow>
         {queryRowFilter.filter && (
@@ -103,7 +80,6 @@ export const VisualEditor: React.FC<VisualEditorProps> = ({
             <SQLOrderByRow fields={state.value || []} query={query} onQueryChange={onChange} db={db} />
           </EditorRow>
         )}
->>>>>>> c93459144ff1476f7612e06bd113643fd62cbf3a
         {queryRowFilter.preview && query.rawSql && (
           <EditorRow>
             <Preview rawSql={query.rawSql} />
