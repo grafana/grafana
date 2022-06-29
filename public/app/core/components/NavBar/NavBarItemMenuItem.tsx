@@ -88,11 +88,5 @@ function getStyles(theme: GrafanaTheme2, isFocused: boolean, isSection: boolean)
         transition: none;
       }
     `,
-    upgradeBoxContainer: css`
-      padding: ${theme.spacing(1)};
-    `,
-    upgradeBox: css`
-      width: 300px;
-    `,
   };
 }

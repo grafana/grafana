@@ -8,9 +8,11 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/web/webtest"
-	"github.com/stretchr/testify/require"
 
 	"golang.org/x/oauth2"
 
@@ -51,7 +53,7 @@ func (ts *fakeOAuthTokenService) GetCurrentOAuthToken(context.Context, *models.S
 	return ts.token
 }
 
-func (ts *fakeOAuthTokenService) IsOAuthPassThruEnabled(*models.DataSource) bool {
+func (ts *fakeOAuthTokenService) IsOAuthPassThruEnabled(*datasources.DataSource) bool {
 	return ts.passThruEnabled
 }
 

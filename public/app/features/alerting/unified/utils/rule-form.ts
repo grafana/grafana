@@ -29,7 +29,7 @@ import { RuleFormType, RuleFormValues } from '../types/rule-form';
 
 import { getRulesAccess } from './access-control';
 import { Annotation } from './constants';
-import { isGrafanaRulesSource } from './datasource';
+import { getDefaultOrFirstCompatibleDataSource, isGrafanaRulesSource } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
 import { isAlertingRulerRule, isGrafanaRulerRule, isRecordingRulerRule } from './rules';
 import { parseInterval } from './time';
@@ -170,7 +170,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
 }
 
 export const getDefaultQueries = (): AlertQuery[] => {
-  const dataSource = getDataSourceSrv().getInstanceSettings('default');
+  const dataSource = getDefaultOrFirstCompatibleDataSource();
 
   if (!dataSource) {
     return [getDefaultExpression('A')];
