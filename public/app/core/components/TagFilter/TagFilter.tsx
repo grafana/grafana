@@ -161,7 +161,7 @@ export const TagFilter: FC<Props> = ({
   return (
     <div className={styles.tagFilter}>
       {isClearable && tags.length > 0 && (
-        <span className={styles.clear} onClick={() => onTagChange([])}>
+        <span className={styles.clear} onClick={() => onTagChange([])} tabIndex={0}>
           Clear tags
         </span>
       )}
@@ -187,7 +187,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     text-decoration: underline;
     font-size: 12px;
     position: absolute;
-    top: -22px;
+    top: -17px;
     right: 0;
     cursor: pointer;
     color: ${theme.colors.text.secondary};
