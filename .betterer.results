@@ -3401,14 +3401,14 @@ exports[`better eslint`] = {
       [8, 12, 3, "Unexpected any. Specify a different type.", "193409811"],
       [11, 53, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/core/components/TagFilter/TagFilter.tsx:3569632478": [
+    "public/app/core/components/TagFilter/TagFilter.tsx:818083657": [
       [35, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [103, 32, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [121, 24, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [122, 24, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [133, 27, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [136, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [145, 44, 3, "Unexpected any. Specify a different type.", "193409811"]
+      [109, 32, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [132, 24, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [133, 24, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [144, 27, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [147, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [156, 44, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/core/components/TagFilter/TagOption.tsx:108355790": [
       [10, 50, 3, "Unexpected any. Specify a different type.", "193409811"],
