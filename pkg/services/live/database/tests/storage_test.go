@@ -10,6 +10,9 @@ import (
 )
 
 func TestIntegrationLiveMessage(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	storage := SetupTestStorage(t)
 
 	getQuery := &models.GetLiveMessageQuery{

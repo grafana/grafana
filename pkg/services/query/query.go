@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -22,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 )
 
 const (
@@ -81,6 +83,33 @@ func (s *Service) QueryData(ctx context.Context, user *models.SignedInUser, skip
 	return s.handleQueryData(ctx, user, parsedReq)
 }
 
+// QueryData can process queries and return query responses.
+func (s *Service) QueryDataMultipleSources(ctx context.Context, user *models.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest, handleExpressions bool) (*backend.QueryDataResponse, error) {
+	byDataSource := models.GroupQueriesByDataSource(reqDTO.Queries)
+
+	if len(byDataSource) == 1 {
+		return s.QueryData(ctx, user, skipCache, reqDTO, handleExpressions)
+	} else {
+		resp := backend.NewQueryDataResponse()
+
+		for _, queries := range byDataSource {
+			subDTO := reqDTO.CloneWithQueries(queries)
+
+			subResp, err := s.QueryData(ctx, user, skipCache, subDTO, handleExpressions)
+
+			if err != nil {
+				return nil, err
+			}
+
+			for refId, queryResponse := range subResp.Responses {
+				resp.Responses[refId] = queryResponse
+			}
+		}
+
+		return resp, nil
+	}
+}
+
 // handleExpressions handles POST /api/ds/query when there is an expression.
 func (s *Service) handleExpressions(ctx context.Context, user *models.SignedInUser, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
 	exprReq := expr.Request{
@@ -117,7 +146,7 @@ func (s *Service) handleExpressions(ctx context.Context, user *models.SignedInUs
 func (s *Service) handleQueryData(ctx context.Context, user *models.SignedInUser, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
 	ds := parsedReq.parsedQueries[0].datasource
 	if err := s.pluginRequestValidator.Validate(ds.Url, nil); err != nil {
-		return nil, models.ErrDataSourceAccessDenied
+		return nil, datasources.ErrDataSourceAccessDenied
 	}
 
 	instanceSettings, err := adapters.ModelToInstanceSettings(ds, s.decryptSecureJsonDataFn(ctx))
@@ -136,6 +165,13 @@ func (s *Service) handleQueryData(ctx context.Context, user *models.SignedInUser
 		Queries: []backend.DataQuery{},
 	}
 
+	middlewares := []httpclient.Middleware{}
+	if parsedReq.httpRequest != nil {
+		middlewares = append(middlewares,
+			httpclientprovider.ForwardedCookiesMiddleware(parsedReq.httpRequest.Cookies(), ds.AllowedCookies()),
+		)
+	}
+
 	if s.oAuthTokenService.IsOAuthPassThruEnabled(ds) {
 		if token := s.oAuthTokenService.GetCurrentOAuthToken(ctx, user); token != nil {
 			req.Headers["Authorization"] = fmt.Sprintf("%s %s", token.Type(), token.AccessToken)
@@ -144,6 +180,7 @@ func (s *Service) handleQueryData(ctx context.Context, user *models.SignedInUser
 			if ok && idToken != "" {
 				req.Headers["X-ID-Token"] = idToken
 			}
+			middlewares = append(middlewares, httpclientprovider.ForwardedOAuthIdentityMiddleware(token))
 		}
 	}
 
@@ -162,11 +199,13 @@ func (s *Service) handleQueryData(ctx context.Context, user *models.SignedInUser
 		req.Queries = append(req.Queries, q.query)
 	}
 
+	ctx = httpclient.WithContextualMiddleware(ctx, middlewares...)
+
 	return s.pluginClient.QueryData(ctx, req)
 }
 
 type parsedQuery struct {
-	datasource *models.DataSource
+	datasource *datasources.DataSource
 	query      backend.DataQuery
 }
 
@@ -208,7 +247,7 @@ func (s *Service) parseMetricRequest(ctx context.Context, user *models.SignedInU
 	}
 
 	// Parse the queries
-	datasourcesByUid := map[string]*models.DataSource{}
+	datasourcesByUid := map[string]*datasources.DataSource{}
 	for _, query := range reqDTO.Queries {
 		ds, err := s.getDataSourceFromQuery(ctx, user, skipCache, query, datasourcesByUid)
 		if err != nil {
@@ -260,7 +299,7 @@ func (s *Service) parseMetricRequest(ctx context.Context, user *models.SignedInU
 	return req, nil
 }
 
-func (s *Service) getDataSourceFromQuery(ctx context.Context, user *models.SignedInUser, skipCache bool, query *simplejson.Json, history map[string]*models.DataSource) (*models.DataSource, error) {
+func (s *Service) getDataSourceFromQuery(ctx context.Context, user *models.SignedInUser, skipCache bool, query *simplejson.Json, history map[string]*datasources.DataSource) (*datasources.DataSource, error) {
 	var err error
 	uid := query.Get("datasource").Get("uid").MustString()
 
@@ -304,8 +343,8 @@ func (s *Service) getDataSourceFromQuery(ctx context.Context, user *models.Signe
 	return nil, NewErrBadQuery("missing data source ID/UID")
 }
 
-func (s *Service) decryptSecureJsonDataFn(ctx context.Context) func(ds *models.DataSource) map[string]string {
-	return func(ds *models.DataSource) map[string]string {
+func (s *Service) decryptSecureJsonDataFn(ctx context.Context) func(ds *datasources.DataSource) map[string]string {
+	return func(ds *datasources.DataSource) map[string]string {
 		decryptedJsonData, err := s.dataSourceService.DecryptedValues(ctx, ds)
 		if err != nil {
 			s.log.Error("Failed to decrypt secure json data", "error", err)

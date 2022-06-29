@@ -23,6 +23,7 @@
     "node-fetch", // we should bump this once we move to esm modules
     "react-hook-form", // due to us exposing these hooks via @grafana/ui form components bumping can break plugins
     "react-icons", // jaeger-ui-components is being refactored to use @grafana/ui icons instead
+    "react-redux", // react-beautiful-dnd depends on react-redux 7.x, we need to update that one first
     "react-router-dom", // we should bump this together with history
     "slate",
     "slate-plain-serializer",
@@ -41,7 +42,7 @@
     "react-test-renderer"
   ],
   "ignorePaths": ["packages/grafana-toolkit/package.json", "emails/**", "plugins-bundled/**", "**/mocks/**"],
-  "labels": ["area/frontend", "dependencies"],
+  "labels": ["area/frontend", "dependencies", "no-backport", "no-changelog"],
   "packageRules": [
     {
       "matchUpdateTypes": ["patch"],

@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -26,7 +27,7 @@ import (
 type getDescriptionTestCase struct {
 	desc           string
 	options        Options
-	permissions    []*accesscontrol.Permission
+	permissions    []accesscontrol.Permission
 	expected       Description
 	expectedStatus int
 }
@@ -49,7 +50,7 @@ func TestApi_getDescription(t *testing.T) {
 					"Admin": {"dashboards:read", "dashboards:write", "dashboards:delete", "dashboards.permissions:read", "dashboards:permissions:write"},
 				},
 			},
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: "dashboards.permissions:read"},
 			},
 			expected: Description{
@@ -76,7 +77,7 @@ func TestApi_getDescription(t *testing.T) {
 					"View": {"dashboards:read"},
 				},
 			},
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: "dashboards.permissions:read"},
 			},
 			expected: Description{
@@ -103,7 +104,7 @@ func TestApi_getDescription(t *testing.T) {
 					"View": {"dashboards:read"},
 				},
 			},
-			permissions:    []*accesscontrol.Permission{},
+			permissions:    []accesscontrol.Permission{},
 			expected:       Description{},
 			expectedStatus: http.StatusForbidden,
 		},
@@ -132,7 +133,7 @@ func TestApi_getDescription(t *testing.T) {
 type getPermissionsTestCase struct {
 	desc           string
 	resourceID     string
-	permissions    []*accesscontrol.Permission
+	permissions    []accesscontrol.Permission
 	expectedStatus int
 }
 
@@ -141,7 +142,7 @@ func TestApi_getPermissions(t *testing.T) {
 		{
 			desc:       "expect permissions for resource with id 1",
 			resourceID: "1",
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
 				{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
 				{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
@@ -151,7 +152,7 @@ func TestApi_getPermissions(t *testing.T) {
 		{
 			desc:           "expect http status 403 when missing permission",
 			resourceID:     "1",
-			permissions:    []*accesscontrol.Permission{},
+			permissions:    []accesscontrol.Permission{},
 			expectedStatus: 403,
 		},
 	}
@@ -179,7 +180,7 @@ type setBuiltinPermissionTestCase struct {
 	builtInRole    string
 	expectedStatus int
 	permission     string
-	permissions    []*accesscontrol.Permission
+	permissions    []accesscontrol.Permission
 }
 
 func TestApi_setBuiltinRolePermission(t *testing.T) {
@@ -190,7 +191,7 @@ func TestApi_setBuiltinRolePermission(t *testing.T) {
 			builtInRole:    "Viewer",
 			expectedStatus: 200,
 			permission:     "Edit",
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
 				{Action: "dashboards.permissions:write", Scope: "dashboards:id:1"},
 				{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
@@ -203,7 +204,7 @@ func TestApi_setBuiltinRolePermission(t *testing.T) {
 			builtInRole:    "Admin",
 			expectedStatus: 200,
 			permission:     "View",
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
 				{Action: "dashboards.permissions:write", Scope: "dashboards:id:1"},
 				{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
@@ -216,7 +217,7 @@ func TestApi_setBuiltinRolePermission(t *testing.T) {
 			builtInRole:    "Invalid",
 			expectedStatus: http.StatusBadRequest,
 			permission:     "View",
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
 				{Action: "dashboards.permissions:write", Scope: "dashboards:id:1"},
 			},
@@ -227,7 +228,7 @@ func TestApi_setBuiltinRolePermission(t *testing.T) {
 			builtInRole:    "Invalid",
 			expectedStatus: http.StatusForbidden,
 			permission:     "View",
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
 			},
 		},
@@ -257,7 +258,7 @@ type setTeamPermissionTestCase struct {
 	resourceID     string
 	expectedStatus int
 	permission     string
-	permissions    []*accesscontrol.Permission
+	permissions    []accesscontrol.Permission
 }
 
 func TestApi_setTeamPermission(t *testing.T) {
@@ -268,7 +269,7 @@ func TestApi_setTeamPermission(t *testing.T) {
 			resourceID:     "1",
 			expectedStatus: 200,
 			permission:     "Edit",
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
 				{Action: "dashboards.permissions:write", Scope: "dashboards:id:1"},
 				{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
@@ -281,7 +282,7 @@ func TestApi_setTeamPermission(t *testing.T) {
 			resourceID:     "1",
 			expectedStatus: 200,
 			permission:     "View",
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
 				{Action: "dashboards.permissions:write", Scope: "dashboards:id:1"},
 				{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
@@ -294,7 +295,7 @@ func TestApi_setTeamPermission(t *testing.T) {
 			resourceID:     "1",
 			expectedStatus: http.StatusBadRequest,
 			permission:     "View",
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
 				{Action: "dashboards.permissions:write", Scope: "dashboards:id:1"},
 			},
@@ -305,7 +306,7 @@ func TestApi_setTeamPermission(t *testing.T) {
 			resourceID:     "1",
 			expectedStatus: http.StatusForbidden,
 			permission:     "View",
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
 			},
 		},
@@ -340,7 +341,7 @@ type setUserPermissionTestCase struct {
 	resourceID     string
 	expectedStatus int
 	permission     string
-	permissions    []*accesscontrol.Permission
+	permissions    []accesscontrol.Permission
 }
 
 func TestApi_setUserPermission(t *testing.T) {
@@ -351,7 +352,7 @@ func TestApi_setUserPermission(t *testing.T) {
 			resourceID:     "1",
 			expectedStatus: 200,
 			permission:     "Edit",
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
 				{Action: "dashboards.permissions:write", Scope: "dashboards:id:1"},
 				{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
@@ -364,7 +365,7 @@ func TestApi_setUserPermission(t *testing.T) {
 			resourceID:     "1",
 			expectedStatus: 200,
 			permission:     "View",
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
 				{Action: "dashboards.permissions:write", Scope: "dashboards:id:1"},
 				{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
@@ -377,7 +378,7 @@ func TestApi_setUserPermission(t *testing.T) {
 			resourceID:     "1",
 			expectedStatus: http.StatusBadRequest,
 			permission:     "View",
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
 				{Action: "dashboards.permissions:write", Scope: "dashboards:id:1"},
 			},
@@ -388,7 +389,7 @@ func TestApi_setUserPermission(t *testing.T) {
 			resourceID:     "1",
 			expectedStatus: http.StatusForbidden,
 			permission:     "View",
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
 			},
 		},
@@ -400,7 +401,7 @@ func TestApi_setUserPermission(t *testing.T) {
 			server := setupTestServer(t, &models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}, service)
 
 			// seed user
-			_, err := sql.CreateUser(context.Background(), models.CreateUserCommand{Login: "test", OrgId: 1})
+			_, err := sql.CreateUser(context.Background(), user.CreateUserCommand{Login: "test", OrgID: 1})
 			require.NoError(t, err)
 
 			recorder := setPermission(t, server, testOptions.Resource, tt.resourceID, tt.permission, "users", strconv.Itoa(int(tt.userID)))
@@ -502,9 +503,9 @@ func seedPermissions(t *testing.T, resourceID string, sql *sqlstore.SQLStore, se
 	_, err = service.SetTeamPermission(context.Background(), team.OrgId, team.Id, resourceID, "Edit")
 	require.NoError(t, err)
 	// seed user 1 with "View" permission on dashboard 1
-	u, err := sql.CreateUser(context.Background(), models.CreateUserCommand{Login: "test", OrgId: 1})
+	u, err := sql.CreateUser(context.Background(), user.CreateUserCommand{Login: "test", OrgID: 1})
 	require.NoError(t, err)
-	_, err = service.SetUserPermission(context.Background(), u.OrgId, accesscontrol.User{ID: u.Id}, resourceID, "View")
+	_, err = service.SetUserPermission(context.Background(), u.OrgID, accesscontrol.User{ID: u.ID}, resourceID, "View")
 	require.NoError(t, err)
 	// seed built in role Admin with "Edit" permission on dashboard 1
 	_, err = service.SetBuiltInRolePermission(context.Background(), 1, "Admin", resourceID, "Edit")

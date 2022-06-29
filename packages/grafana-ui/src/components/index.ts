@@ -24,7 +24,6 @@ export { ButtonCascader } from './ButtonCascader/ButtonCascader';
 
 export { LoadingPlaceholder, LoadingPlaceholderProps } from './LoadingPlaceholder/LoadingPlaceholder';
 export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
-export { ColorValueEditor, ColorValueEditorProps } from './OptionsUI/color';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';
 export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
 export { UnitPicker } from './UnitPicker/UnitPicker';
@@ -175,19 +174,12 @@ export { Drawer } from './Drawer/Drawer';
 export { Slider } from './Slider/Slider';
 export { RangeSlider } from './Slider/RangeSlider';
 
-// TODO: namespace!!
-export { StringValueEditor } from './OptionsUI/string';
-export { StringArrayEditor } from './OptionsUI/strings';
-export { NumberValueEditor } from './OptionsUI/number';
-export { SliderValueEditor } from './OptionsUI/slider';
-export { SelectValueEditor } from './OptionsUI/select';
-export { MultiSelectValueEditor } from './OptionsUI/multiSelect';
-
 // Next-gen forms
 export { Form } from './Forms/Form';
 export { sharedInputStyle } from './Forms/commonStyles';
 export { InputControl } from './InputControl';
-export { Button, LinkButton, ButtonVariant, ToolbarButton, ButtonGroup, ToolbarButtonRow, ButtonProps } from './Button';
+export { Button, LinkButton, ButtonVariant, ButtonGroup, ButtonProps } from './Button';
+export { ToolbarButton, ToolbarButtonRow } from './ToolbarButton';
 export { ValuePicker } from './ValuePicker/ValuePicker';
 export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
 export { Link } from './Link/Link';

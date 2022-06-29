@@ -10,7 +10,7 @@ weight: 200
 
 # Configure Grafana
 
-Grafana has default and custom configuration files. You can customize your Grafana instance by modifying the custom configuration file or by using environment variables. To see the list of settings for a Grafana instance, refer to [View server settings]({{< relref "../../administration/view-server/view-server-settings/" >}}).
+Grafana has default and custom configuration files. You can customize your Grafana instance by modifying the custom configuration file or by using environment variables. To see the list of settings for a Grafana instance, refer to [View server settings]({{< relref "../../administration/stats-and-license#view-server-settings" >}}).
 
 > **Note:** After you add custom options, [uncomment](#remove-comments-in-the-ini-files) the relevant sections of the configuration file. Restart Grafana for your changes to take effect.
 
@@ -26,7 +26,7 @@ If you installed Grafana using the `deb` or `rpm` packages, then your configurat
 
 ### Docker
 
-Refer to [Configure a Grafana Docker image]({{< relref "../../administration/configure-docker/" >}}) for information about environmental variables, persistent storage, and building custom Docker images.
+Refer to [Configure a Grafana Docker image]({{< relref "../configure-docker/" >}}) for information about environmental variables, persistent storage, and building custom Docker images.
 
 ### Windows
 
@@ -170,7 +170,7 @@ Override log path using the command line argument `cfg:default.paths.logs`:
 
 ### plugins
 
-Directory where Grafana automatically scans and looks for plugins. For information about manually or automatically installing plugins, refer to [Install Grafana plugins]({{< relref "../../plugins/installation/" >}}).
+Directory where Grafana automatically scans and looks for plugins. For information about manually or automatically installing plugins, refer to [Install Grafana plugins]({{< relref "../../administration/plugin-management/#install-grafana-plugins" >}}).
 
 **macOS:** By default, the Mac plugin location is: `/usr/local/var/lib/grafana/plugins`.
 
@@ -672,7 +672,7 @@ Path to the default home dashboard. If this value is empty, then Grafana uses St
 
 Set to `false` to prohibit users from being able to sign up / create
 user accounts. Default is `false`. The admin user can still create
-users. For more information about creating a user, refer to [Add a user]({{< relref "../../administration/manage-users-and-permissions/manage-server-users/add-user/" >}}).
+users. For more information about creating a user, refer to [Add a user]({{< relref "../../administration/user-management/server-user-management/#add-a-user" >}}).
 
 ### allow_org_create
 
@@ -1103,6 +1103,10 @@ Syslog tag. By default, the process's `argv[0]` is used.
 
 Sentry javascript agent is initialized. Default is `false`.
 
+### provider
+
+Defines which provider to use `sentry` or `grafana`. Default is `sentry`
+
 ### sentry_dsn
 
 Sentry DSN if you want to send events to Sentry
@@ -1122,6 +1126,22 @@ Requests per second limit enforced per an extended period, for Grafana backend l
 ### log_endpoint_burst_limit
 
 Maximum requests accepted per short interval of time for Grafana backend log ingestion endpoint, `/log`. Default is `15`.
+
+### instrumentations_errors_enabled
+
+Turn on error instrumentation. Only affects Grafana Javascript Agent.
+
+### instrumentations_console_enabled
+
+Turn on console instrumentation. Only affects Grafana Javascript Agent
+
+### instrumentations_webvitals_enabled
+
+Turn on webvitals instrumentation. Only affects Grafana Javascript Agent
+
+### api_key
+
+If `custom_endpoint` required authentication, you can set the api key here. Only relevant for Grafana Javascript Agent provider.
 
 <hr>
 
@@ -1189,7 +1209,7 @@ For more information about the Grafana alerts, refer to [About Grafana Alerting]
 
 ### enabled
 
-Enable the Unified Alerting sub-system and interface. When enabled we'll migrate all of your alert rules and notification channels to the new system. New alert rules will be created and your notification channels will be converted into an Alertmanager configuration. Previous data is preserved to enable backwards compatibility but new data is removed. The default value is `false`.
+Enable or disable Grafana Alerting. If enabled, we’ll migrate all your alert rules and notification channels to the new system as alert rules and notification channels you had previously defined will be converted into an Alertmanager configuration. Legacy alerting data is preserved to enable backwards compatibility. If disabled, all your legacy alerting data will be available again, but the data you created using Grafana Alerting will be deleted. Set force_migration=true to avoid deletion of data. The default value is `true`.
 
 Alerting Rules migrated from dashboards and panels will include a link back via the `annotations`.
 
@@ -1269,7 +1289,7 @@ The interval string is a possibly signed sequence of decimal numbers, followed b
 
 ## [unified_alerting.screenshots]
 
-For more information about screenshots, refer to [Images in notifications]({{< relref "../../alerting/images-in-notifications" >}}).
+For more information about screenshots, refer to [Images in notifications]({{< relref "../../alerting/images-in-notifications/" >}}).
 
 ### capture
 
@@ -1722,13 +1742,13 @@ Set to `true` if you want to test alpha plugins that are not yet ready for gener
 
 Enter a comma-separated list of plugin identifiers to identify plugins to load even if they are unsigned. Plugins with modified signatures are never loaded.
 
-We do _not_ recommend using this option. For more information, refer to [Plugin signatures]({{< relref "../../plugins/plugin-signatures/" >}}).
+We do _not_ recommend using this option. For more information, refer to [Plugin signatures]({{< relref "../../administration/plugin-management/#plugin-signatures" >}}).
 
 ### plugin_admin_enabled
 
 Available to Grafana administrators only, enables installing / uninstalling / updating plugins directly from the Grafana UI. Set to `true` by default. Setting it to `false` will hide the install / uninstall / update controls.
 
-For more information, refer to [Plugin catalog]({{< relref "../../plugins/catalog/" >}}).
+For more information, refer to [Plugin catalog]({{< relref "../../administration/plugin-management/#plugin-catalog" >}}).
 
 ### plugin_admin_external_manage_enabled
 
@@ -2000,4 +2020,4 @@ Refer to the [dashboards previews]({{< relref "../../dashboards/previews/" >}}) 
 
 ## [rbac]
 
-Refer to [Role-based access control]({{< relref "../../enterprise/access-control/about-rbac/" >}}) for more information.
+Refer to [Role-based access control]({{< relref "../../administration/roles-and-permissions/access-control/" >}}) for more information.
