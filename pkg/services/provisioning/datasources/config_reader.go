@@ -11,7 +11,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
 )
 
@@ -135,12 +135,12 @@ func (cr *configReader) validateAccessAndOrgID(ctx context.Context, ds *upsertDa
 	}
 
 	if ds.Access == "" {
-		ds.Access = models.DS_ACCESS_PROXY
+		ds.Access = datasources.DS_ACCESS_PROXY
 	}
 
-	if ds.Access != models.DS_ACCESS_DIRECT && ds.Access != models.DS_ACCESS_PROXY {
+	if ds.Access != datasources.DS_ACCESS_DIRECT && ds.Access != datasources.DS_ACCESS_PROXY {
 		cr.log.Warn("invalid access value, will use 'proxy' instead", "value", ds.Access)
-		ds.Access = models.DS_ACCESS_PROXY
+		ds.Access = datasources.DS_ACCESS_PROXY
 	}
 	return nil
 }

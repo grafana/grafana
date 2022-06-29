@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting/metrics"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -28,7 +29,7 @@ import (
 // A subset is needed to make it easier to mock during the tests.
 type AlertStore interface {
 	GetAllAlertQueryHandler(context.Context, *models.GetAllAlertsQuery) error
-	GetDataSource(context.Context, *models.GetDataSourceQuery) error
+	GetDataSource(context.Context, *datasources.GetDataSourceQuery) error
 	SetAlertNotificationStateToCompleteCommand(context.Context, *models.SetAlertNotificationStateToCompleteCommand) error
 	SetAlertNotificationStateToPendingCommand(context.Context, *models.SetAlertNotificationStateToPendingCommand) error
 	GetAlertNotificationUidWithId(context.Context, *models.GetAlertNotificationUidQuery) error

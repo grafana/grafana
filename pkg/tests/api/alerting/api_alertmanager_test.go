@@ -21,6 +21,7 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
@@ -41,17 +42,17 @@ func TestAMConfigAccess(t *testing.T) {
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
 	// Create a users to make authenticated requests
-	createUser(t, store, models.CreateUserCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_VIEWER),
 		Password:       "viewer",
 		Login:          "viewer",
 	})
-	createUser(t, store, models.CreateUserCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),
 		Password:       "editor",
 		Login:          "editor",
 	})
-	createUser(t, store, models.CreateUserCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_ADMIN),
 		Password:       "admin",
 		Login:          "admin",
@@ -415,7 +416,7 @@ func TestAlertAndGroupsQuery(t *testing.T) {
 	}
 
 	// Create a user to make authenticated requests
-	createUser(t, store, models.CreateUserCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),
 		Password:       "password",
 		Login:          "grafana",
@@ -479,7 +480,6 @@ func TestAlertAndGroupsQuery(t *testing.T) {
 	{
 		// Create the namespace we'll save our alerts to.
 		apiClient.CreateFolder(t, "default", "default")
-		reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
 	}
 
 	// Create an alert that will fire as quickly as possible
@@ -560,17 +560,17 @@ func TestRulerAccess(t *testing.T) {
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
 	// Create a users to make authenticated requests
-	createUser(t, store, models.CreateUserCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_VIEWER),
 		Password:       "viewer",
 		Login:          "viewer",
 	})
-	createUser(t, store, models.CreateUserCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),
 		Password:       "editor",
 		Login:          "editor",
 	})
-	createUser(t, store, models.CreateUserCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_ADMIN),
 		Password:       "admin",
 		Login:          "admin",
@@ -580,7 +580,6 @@ func TestRulerAccess(t *testing.T) {
 
 	// Create the namespace we'll save our alerts to.
 	client.CreateFolder(t, "default", "default")
-	reloadCachedPermissions(t, grafanaListedAddr, "editor", "editor")
 
 	// Now, let's test the access policies.
 	testCases := []struct {
@@ -675,12 +674,12 @@ func TestDeleteFolderWithRules(t *testing.T) {
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
-	createUser(t, store, models.CreateUserCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_VIEWER),
 		Password:       "viewer",
 		Login:          "viewer",
 	})
-	createUser(t, store, models.CreateUserCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),
 		Password:       "editor",
 		Login:          "editor",
@@ -691,7 +690,6 @@ func TestDeleteFolderWithRules(t *testing.T) {
 	// Create the namespace we'll save our alerts to.
 	namespaceUID := "default"
 	apiClient.CreateFolder(t, namespaceUID, namespaceUID)
-	reloadCachedPermissions(t, grafanaListedAddr, "editor", "editor")
 
 	createRule(t, apiClient, "default")
 
@@ -836,7 +834,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
-	createUser(t, store, models.CreateUserCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),
 		Password:       "password",
 		Login:          "grafana",
@@ -846,7 +844,6 @@ func TestAlertRuleCRUD(t *testing.T) {
 
 	// Create the namespace we'll save our alerts to.
 	apiClient.CreateFolder(t, "default", "default")
-	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
 
 	interval, err := model.ParseDuration("1m")
 	require.NoError(t, err)
@@ -1879,7 +1876,7 @@ func TestQuota(t *testing.T) {
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
 	// Create a user to make authenticated requests
-	createUser(t, store, models.CreateUserCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),
 		Password:       "password",
 		Login:          "grafana",
@@ -1887,7 +1884,6 @@ func TestQuota(t *testing.T) {
 	apiClient := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
 	// Create the namespace we'll save our alerts to.
 	apiClient.CreateFolder(t, "default", "default")
-	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
 
 	interval, err := model.ParseDuration("1m")
 	require.NoError(t, err)
@@ -2096,7 +2092,7 @@ func TestEval(t *testing.T) {
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
-	createUser(t, store, models.CreateUserCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),
 		Password:       "password",
 		Login:          "grafana",
@@ -2551,7 +2547,7 @@ func rulesNamespaceWithoutVariableValues(t *testing.T, b []byte) (string, map[st
 	return string(json), m
 }
 
-func createUser(t *testing.T, store *sqlstore.SQLStore, cmd models.CreateUserCommand) int64 {
+func createUser(t *testing.T, store *sqlstore.SQLStore, cmd user.CreateUserCommand) int64 {
 	t.Helper()
 
 	store.Cfg.AutoAssignOrg = true
@@ -2559,7 +2555,7 @@ func createUser(t *testing.T, store *sqlstore.SQLStore, cmd models.CreateUserCom
 
 	u, err := store.CreateUser(context.Background(), cmd)
 	require.NoError(t, err)
-	return u.Id
+	return u.ID
 }
 
 func createOrg(t *testing.T, store *sqlstore.SQLStore, name string, userID int64) int64 {

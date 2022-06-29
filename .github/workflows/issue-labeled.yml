@@ -8,8 +8,8 @@ jobs:
   notify:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - name: "Download teams.yml to know which label is for which team"
+        run: wget https://raw.githubusercontent.com/grafana/grafana/main/.github/teams.yml
 
       - name: "Determine which team to notify"
         run: |
@@ -19,10 +19,10 @@ jobs:
           echo "${{ github.event.label.name }} label added"
           export CURRENT_LABEL="${{ github.event.label.name }}" # Enable the use of the label in yq evaluations
           # yq is installed by default in ubuntu-latest
-          if [[ $(yq e 'keys | .[] | select(. == env(CURRENT_LABEL))' .github/teams.yml ) ]]; then
+          if [[ $(yq e 'keys | .[] | select(. == env(CURRENT_LABEL))' teams.yml ) ]]; then
             # Check if we have a channel set to notify on comments.
-            if [[ $(yq '.[env(CURRENT_LABEL)] | has("channel-label")' .github/teams.yml ) == true ]]; then
-              CHANNEL=$(yq '.[env(CURRENT_LABEL)].channel-label' .github/teams.yml)
+            if [[ $(yq '.[env(CURRENT_LABEL)] | has("channel-label")' teams.yml ) == true ]]; then
+              CHANNEL=$(yq '.[env(CURRENT_LABEL)].channel-label' teams.yml)
             fi
           fi
 

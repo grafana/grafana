@@ -2,46 +2,42 @@ package service
 
 import (
 	"context"
-	"encoding/json"
+	"fmt"
+	"time"
 
+	"github.com/gofrs/uuid"
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 )
 
-// Gets public dashboard via generated Uid
-func (dr *DashboardServiceImpl) GetPublicDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error) {
-	pdc, d, err := dr.dashboardStore.GetPublicDashboard(dashboardUid)
+// Gets public dashboard via access token
+func (dr *DashboardServiceImpl) GetPublicDashboard(ctx context.Context, accessToken string) (*models.Dashboard, error) {
+	pubdash, d, err := dr.dashboardStore.GetPublicDashboard(ctx, accessToken)
 
 	if err != nil {
 		return nil, err
 	}
 
-	if pdc == nil || d == nil {
+	if pubdash == nil || d == nil {
 		return nil, models.ErrPublicDashboardNotFound
 	}
 
-	if !d.IsPublic {
+	if !pubdash.IsEnabled {
 		return nil, models.ErrPublicDashboardNotFound
 	}
 
-	// Replace dashboard time range with pubdash time range
-	if pdc.TimeSettings != "" {
-		var pdcTimeSettings map[string]interface{}
-		err = json.Unmarshal([]byte(pdc.TimeSettings), &pdcTimeSettings)
-		if err != nil {
-			return nil, err
-		}
-
-		d.Data.Set("time", pdcTimeSettings)
-	}
+	ts := pubdash.BuildTimeSettings(d)
+	d.Data.SetPath([]string{"time", "from"}, ts.From)
+	d.Data.SetPath([]string{"time", "to"}, ts.To)
 
 	return d, nil
 }
 
 // GetPublicDashboardConfig is a helper method to retrieve the public dashboard configuration for a given dashboard from the database
-func (dr *DashboardServiceImpl) GetPublicDashboardConfig(ctx context.Context, orgId int64, dashboardUid string) (*models.PublicDashboardConfig, error) {
-	pdc, err := dr.dashboardStore.GetPublicDashboardConfig(orgId, dashboardUid)
+func (dr *DashboardServiceImpl) GetPublicDashboardConfig(ctx context.Context, orgId int64, dashboardUid string) (*models.PublicDashboard, error) {
+	pdc, err := dr.dashboardStore.GetPublicDashboardConfig(ctx, orgId, dashboardUid)
 	if err != nil {
 		return nil, err
 	}
@@ -51,42 +47,85 @@ func (dr *DashboardServiceImpl) GetPublicDashboardConfig(ctx context.Context, or
 
 // SavePublicDashboardConfig is a helper method to persist the sharing config
 // to the database. It handles validations for sharing config and persistence
-func (dr *DashboardServiceImpl) SavePublicDashboardConfig(ctx context.Context, dto *dashboards.SavePublicDashboardConfigDTO) (*models.PublicDashboardConfig, error) {
-	cmd := models.SavePublicDashboardConfigCommand{
-		DashboardUid:          dto.DashboardUid,
-		OrgId:                 dto.OrgId,
-		PublicDashboardConfig: *dto.PublicDashboardConfig,
+func (dr *DashboardServiceImpl) SavePublicDashboardConfig(ctx context.Context, dto *dashboards.SavePublicDashboardConfigDTO) (*models.PublicDashboard, error) {
+	if len(dto.DashboardUid) == 0 {
+		return nil, models.ErrDashboardIdentifierNotSet
 	}
 
-	// Eventually we want this to propagate to array of public dashboards
-	cmd.PublicDashboardConfig.PublicDashboard.OrgId = dto.OrgId
-	cmd.PublicDashboardConfig.PublicDashboard.DashboardUid = dto.DashboardUid
+	// set default value for time settings
+	if dto.PublicDashboard.TimeSettings == nil {
+		json, err := simplejson.NewJson([]byte("{}"))
+		if err != nil {
+			return nil, err
+		}
+		dto.PublicDashboard.TimeSettings = json
+	}
 
-	pdc, err := dr.dashboardStore.SavePublicDashboardConfig(cmd)
+	if dto.PublicDashboard.Uid == "" {
+		return dr.savePublicDashboardConfig(ctx, dto)
+	}
+
+	return dr.updatePublicDashboardConfig(ctx, dto)
+}
+
+func (dr *DashboardServiceImpl) savePublicDashboardConfig(ctx context.Context, dto *dashboards.SavePublicDashboardConfigDTO) (*models.PublicDashboard, error) {
+	uid, err := dr.dashboardStore.GenerateNewPublicDashboardUid(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return pdc, nil
+	accessToken, err := GenerateAccessToken()
+	if err != nil {
+		return nil, err
+	}
+
+	cmd := models.SavePublicDashboardConfigCommand{
+		DashboardUid: dto.DashboardUid,
+		OrgId:        dto.OrgId,
+		PublicDashboard: models.PublicDashboard{
+			Uid:          uid,
+			DashboardUid: dto.DashboardUid,
+			OrgId:        dto.OrgId,
+			IsEnabled:    dto.PublicDashboard.IsEnabled,
+			TimeSettings: dto.PublicDashboard.TimeSettings,
+			CreatedBy:    dto.UserId,
+			CreatedAt:    time.Now(),
+			AccessToken:  accessToken,
+		},
+	}
+
+	return dr.dashboardStore.SavePublicDashboardConfig(ctx, cmd)
 }
 
-func (dr *DashboardServiceImpl) BuildPublicDashboardMetricRequest(ctx context.Context, publicDashboardUid string, panelId int64) (dtos.MetricRequest, error) {
-	publicDashboardConfig, dashboard, err := dr.dashboardStore.GetPublicDashboard(publicDashboardUid)
-	if err != nil {
-		return dtos.MetricRequest{}, err
+func (dr *DashboardServiceImpl) updatePublicDashboardConfig(ctx context.Context, dto *dashboards.SavePublicDashboardConfigDTO) (*models.PublicDashboard, error) {
+	cmd := models.SavePublicDashboardConfigCommand{
+		PublicDashboard: models.PublicDashboard{
+			Uid:          dto.PublicDashboard.Uid,
+			IsEnabled:    dto.PublicDashboard.IsEnabled,
+			TimeSettings: dto.PublicDashboard.TimeSettings,
+			UpdatedBy:    dto.UserId,
+			UpdatedAt:    time.Now(),
+		},
 	}
 
-	if !dashboard.IsPublic {
+	err := dr.dashboardStore.UpdatePublicDashboardConfig(ctx, cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	publicDashboard, err := dr.dashboardStore.GetPublicDashboardConfig(ctx, dto.OrgId, dto.DashboardUid)
+	if err != nil {
+		return nil, err
+	}
+
+	return publicDashboard, nil
+}
+
+// BuildPublicDashboardMetricRequest merges public dashboard parameters with
+// dashboard and returns a metrics request to be sent to query backend
+func (dr *DashboardServiceImpl) BuildPublicDashboardMetricRequest(ctx context.Context, dashboard *models.Dashboard, publicDashboard *models.PublicDashboard, panelId int64) (dtos.MetricRequest, error) {
+	if !publicDashboard.IsEnabled {
 		return dtos.MetricRequest{}, models.ErrPublicDashboardNotFound
-	}
-
-	var timeSettings struct {
-		From string `json:"from"`
-		To   string `json:"to"`
-	}
-	err = json.Unmarshal([]byte(publicDashboardConfig.TimeSettings), &timeSettings)
-	if err != nil {
-		return dtos.MetricRequest{}, err
 	}
 
 	queriesByPanel := models.GetQueriesFromDashboard(dashboard.Data)
@@ -95,9 +134,21 @@ func (dr *DashboardServiceImpl) BuildPublicDashboardMetricRequest(ctx context.Co
 		return dtos.MetricRequest{}, models.ErrPublicDashboardPanelNotFound
 	}
 
+	ts := publicDashboard.BuildTimeSettings(dashboard)
+
 	return dtos.MetricRequest{
-		From:    timeSettings.From,
-		To:      timeSettings.To,
+		From:    ts.From,
+		To:      ts.To,
 		Queries: queriesByPanel[panelId],
 	}, nil
+}
+
+// generates a uuid formatted without dashes to use as access token
+func GenerateAccessToken() (string, error) {
+	token, err := uuid.NewV4()
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%x", token), nil
 }
