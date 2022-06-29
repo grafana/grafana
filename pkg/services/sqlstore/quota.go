@@ -10,9 +10,9 @@ import (
 )
 
 const (
-	alertRuleTarget  = "alert_rule"
-	dashboardTarget  = "dashboard"
-	filesInSqlTarget = "files_in_sql"
+	alertRuleTarget = "alert_rule"
+	dashboardTarget = "dashboard"
+	filesTarget     = "file"
 )
 
 type targetCount struct {
@@ -257,7 +257,7 @@ func (ss *SQLStore) GetGlobalQuotaByTarget(ctx context.Context, query *models.Ge
 	return ss.WithDbSession(ctx, func(sess *DBSession) error {
 		var used int64
 
-		if query.Target == filesInSqlTarget {
+		if query.Target == filesTarget {
 			// get quota used.
 			rawSQL := fmt.Sprintf("SELECT COUNT(*) AS count FROM %s",
 				dialect.Quote("file"))

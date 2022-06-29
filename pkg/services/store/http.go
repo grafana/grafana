@@ -55,7 +55,7 @@ func UploadErrorToStatusCode(err error) int {
 
 func (s *httpStorage) Upload(c *models.ReqContext) response.Response {
 	// assumes we are only uploading to the SQL database - TODO: refactor once we introduce object stores
-	quotaReached, err := s.quotaService.CheckQuotaReached(c.Req.Context(), "files_in_sql", nil)
+	quotaReached, err := s.quotaService.CheckQuotaReached(c.Req.Context(), "file", nil)
 	if err != nil {
 		return response.Error(500, "Internal server error", err)
 	}
