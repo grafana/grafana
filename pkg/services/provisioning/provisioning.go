@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
+	prov_alerting "github.com/grafana/grafana/pkg/services/provisioning/alerting"
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning/datasources"
 	"github.com/grafana/grafana/pkg/services/provisioning/notifiers"
@@ -41,6 +42,8 @@ func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, pluginStore p
 		NotificationService:          notificatonService,
 		log:                          log.New("provisioning"),
 		newDashboardProvisioner:      dashboards.New,
+		alertRuleProvisioner:         prov_alerting.NewAlertRuleProvisioner(),
+		alertmanagerProvisioner:      prov_alerting.NewAlertmanagerProvisioner(),
 		provisionNotifiers:           notifiers.Provision,
 		provisionDatasources:         datasources.Provision,
 		provisionPlugins:             plugins.Provision,
@@ -61,6 +64,8 @@ type ProvisioningService interface {
 	ProvisionPlugins(ctx context.Context) error
 	ProvisionNotifications(ctx context.Context) error
 	ProvisionDashboards(ctx context.Context) error
+	ProvisionAlertRules(ctx context.Context) error
+	ProvisionAlertmanager(ctx context.Context) error
 	GetDashboardProvisionerResolvedPath(name string) string
 	GetAllowUIUpdatesFromConfig(name string) bool
 }
@@ -73,6 +78,8 @@ func NewProvisioningServiceImpl() *ProvisioningServiceImpl {
 		provisionNotifiers:      notifiers.Provision,
 		provisionDatasources:    datasources.Provision,
 		provisionPlugins:        plugins.Provision,
+		alertRuleProvisioner:    prov_alerting.NewAlertRuleProvisioner(),
+		alertmanagerProvisioner: prov_alerting.NewAlertmanagerProvisioner(),
 	}
 }
 
@@ -102,6 +109,8 @@ type ProvisioningServiceImpl struct {
 	pollingCtxCancel             context.CancelFunc
 	newDashboardProvisioner      dashboards.DashboardProvisionerFactory
 	dashboardProvisioner         dashboards.DashboardProvisioner
+	alertRuleProvisioner         prov_alerting.AlertRuleProvisioner
+	alertmanagerProvisioner      prov_alerting.AlertmanagerProvisioner
 	provisionNotifiers           func(context.Context, string, notifiers.Manager, notifiers.SQLStore, encryption.Internal, *notifications.NotificationService) error
 	provisionDatasources         func(context.Context, string, datasources.Store, utils.OrgStore) error
 	provisionPlugins             func(context.Context, string, plugins.Store, plugifaces.Store, pluginsettings.Service) error
@@ -126,6 +135,16 @@ func (ps *ProvisioningServiceImpl) RunInitProvisioners(ctx context.Context) erro
 	}
 
 	err = ps.ProvisionNotifications(ctx)
+	if err != nil {
+		return err
+	}
+
+	err = ps.ProvisionAlertRules(ctx)
+	if err != nil {
+		return err
+	}
+
+	err = ps.ProvisionAlertmanager(ctx)
 	if err != nil {
 		return err
 	}
@@ -216,6 +235,20 @@ func (ps *ProvisioningServiceImpl) ProvisionDashboards(ctx context.Context) erro
 	}
 	ps.dashboardProvisioner = dashProvisioner
 	return nil
+}
+
+func (ps *ProvisioningServiceImpl) ProvisionAlertRules(ctx context.Context) error {
+	alertRulesPath := filepath.Join(ps.Cfg.ProvisioningPath, "alertrules")
+	return ps.alertRuleProvisioner.Provision(ctx, alertRulesPath)
+}
+
+func (ps *ProvisioningServiceImpl) ProvisionAlertmanager(ctx context.Context) error {
+	return ps.alertmanagerProvisioner.Provision(ctx, prov_alerting.AlertmanagerProvisionerConfig{
+		ContactPointPath: filepath.Join(ps.Cfg.ProvisioningPath, "contactpoints"),
+		TemplatesPath:    filepath.Join(ps.Cfg.ProvisioningPath, "templates"),
+		PolicyPath:       filepath.Join(ps.Cfg.ProvisioningPath, "policies"),
+		MuteTimesPath:    filepath.Join(ps.Cfg.ProvisioningPath, "mutetimes"),
+	})
 }
 
 func (ps *ProvisioningServiceImpl) GetDashboardProvisionerResolvedPath(name string) string {
