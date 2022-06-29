@@ -3111,7 +3111,7 @@ exports[`better eslint`] = {
       [35, 46, 3, "Unexpected any. Specify a different type.", "193409811"],
       [37, 26, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/angular/services/nav_model_srv.ts:1949768361": [
+    "public/app/angular/services/nav_model_srv.ts:356083867": [
       [57, 39, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/angular/services/ng_react.ts:1219930949": [
@@ -3343,9 +3343,9 @@ exports[`better eslint`] = {
       [39, 32, 10, "Do not use any type assertions.", "883420344"],
       [39, 39, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/core/components/PageHeader/PageHeader.tsx:952684291": [
+    "public/app/core/components/PageHeader/PageHeader.tsx:130343011": [
       [65, 22, 22, "Do not use any type assertions.", "4054086100"],
-      [104, 34, 21, "Do not use any type assertions.", "2401004021"]
+      [102, 34, 21, "Do not use any type assertions.", "2401004021"]
     ],
     "public/app/core/components/PageLayouts/NewPage.tsx:4153212563": [
       [66, 34, 22, "Do not use any type assertions.", "4054086100"]
@@ -3561,7 +3561,7 @@ exports[`better eslint`] = {
     "public/app/core/reducers/appNotification.ts:735507530": [
       [77, 35, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/core/reducers/navModel.ts:2486277874": [
+    "public/app/core/reducers/navModel.ts:3755863968": [
       [7, 20, 41, "Do not use any type assertions.", "680953089"]
     ],
     "public/app/core/reducers/processsAclItems.ts:2776156466": [
@@ -10412,20 +10412,20 @@ exports[`better eslint`] = {
       [163, 25, 27, "Do not use any type assertions.", "3051431932"],
       [163, 49, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/prometheus/querybuilder/shared/LabelFilterItem.tsx:3990888924": [
-      [65, 23, 155, "Do not use any type assertions.", "2419762696"],
-      [65, 23, 128, "Do not use any type assertions.", "1950878359"],
-      [69, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [80, 23, 63, "Do not use any type assertions.", "168255657"],
-      [80, 23, 36, "Do not use any type assertions.", "381764118"],
-      [80, 56, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [108, 23, 92, "Do not use any type assertions.", "511072900"],
-      [108, 23, 65, "Do not use any type assertions.", "791801755"],
-      [108, 85, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [111, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [115, 23, 87, "Do not use any type assertions.", "1044305842"],
-      [115, 23, 60, "Do not use any type assertions.", "4026468781"],
-      [115, 80, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/plugins/datasource/prometheus/querybuilder/shared/LabelFilterItem.tsx:2056401604": [
+      [67, 23, 155, "Do not use any type assertions.", "2419762696"],
+      [67, 23, 128, "Do not use any type assertions.", "1950878359"],
+      [71, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [83, 23, 63, "Do not use any type assertions.", "168255657"],
+      [83, 23, 36, "Do not use any type assertions.", "381764118"],
+      [83, 56, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [112, 23, 92, "Do not use any type assertions.", "511072900"],
+      [112, 23, 65, "Do not use any type assertions.", "791801755"],
+      [112, 85, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [115, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [119, 23, 87, "Do not use any type assertions.", "1044305842"],
+      [119, 23, 60, "Do not use any type assertions.", "4026468781"],
+      [119, 80, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/plugins/datasource/prometheus/querybuilder/shared/LabelFilters.tsx:1456752614": [
       [36, 15, 38, "Do not use any type assertions.", "1544016021"]
