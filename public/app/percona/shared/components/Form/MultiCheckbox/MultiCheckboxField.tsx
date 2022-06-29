@@ -28,7 +28,7 @@ export const MultiCheckboxField: FC<MultiCheckboxFieldProps> = React.memo(
   }) => {
     const styles = useStyles(getStyles);
     const [selectedOptions, setSelectedOptions] = useState(initialOptions);
-    const validate = useMemo(() => (Array.isArray(validators) ? compose(...validators) : undefined), [validators]);
+    const validate = useMemo(() => (Array.isArray(validators) ? compose(validators) : undefined), [validators]);
     const onChangeOption = useCallback(
       (input: FieldInputProps<string, HTMLElement>) =>
         ({ target }: ChangeEvent<HTMLInputElement>) => {

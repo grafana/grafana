@@ -2,14 +2,6 @@ import React, { useCallback, useRef } from 'react';
 
 import { Button, ButtonProps } from '../Button';
 
-/** @deprecated Will be removed in next major release */
-interface ClipboardEvent {
-  action: string;
-  text: string;
-  trigger: Element;
-  clearSelection(): void;
-}
-
 export interface Props extends ButtonProps {
   /** A function that returns text to be copied */
   getText(): string;

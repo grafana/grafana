@@ -121,7 +121,7 @@ export const NotificationChannel: FC = () => {
               <Button
                 size="md"
                 icon="plus-square"
-                variant="link"
+                fill="text"
                 onClick={() => {
                   setSelectedNotificationChannel(null);
                   setAddModalVisible(!addModalVisible);

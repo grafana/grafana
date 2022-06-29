@@ -5,7 +5,6 @@ import {
   AsyncThunkPayloadCreator,
   createAsyncThunk as createAsyncThunkUntyped,
   PayloadAction,
-  configureStore,
 } from '@reduxjs/toolkit';
 import {
   useSelector as useSelectorUntyped,
@@ -15,6 +14,7 @@ import {
 import { ThunkAction, ThunkDispatch as GenericThunkDispatch } from 'redux-thunk';
 
 import type { createRootReducer } from 'app/core/reducers/root';
+import { configureStore } from 'app/store/configureStore';
 
 export type StoreState = ReturnType<ReturnType<typeof createRootReducer>>;
 
@@ -36,17 +36,3 @@ export const createAsyncThunk = <Returned, ThunkArg = void, ThunkApiConfig = Def
   payloadCreator: AsyncThunkPayloadCreator<Returned, ThunkArg, ThunkApiConfig>,
   options?: AsyncThunkOptions<ThunkArg, ThunkApiConfig>
 ): AsyncThunk<Returned, ThunkArg, ThunkApiConfig> => createAsyncThunkUntyped(typePrefix, payloadCreator, options);
-/*
- * This allows us to correctly type dispatch
- */
-// class FakeConfigureStoreWrapper {
-//   wrapped(options: ConfigureStoreOptions) {
-//     return configureStore<StoreState, AnyAction, ReadonlyArray<ThunkMiddlewareFor<StoreState, { thunk: true }>>>(
-//       options
-//     );
-//   }
-// }
-
-// type FakeStoreType = ReturnType<FakeConfigureStoreWrapper['wrapped']>;
-// let fakeStore: FakeStoreType;
-// export type AppDispatch = typeof fakeStore.dispatch;

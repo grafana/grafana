@@ -8,7 +8,7 @@ import { Overlay } from 'app/percona/shared/components/Elements/Overlay/Overlay'
 import { Pagination } from './Pagination';
 import { PAGE_SIZES } from './Pagination/Pagination.constants';
 import { getStyles } from './Table.styles';
-import { TableProps, PaginatedTableInstance, PaginatedTableOptions, PaginatedTableState } from './Table.types';
+import { TableProps, PaginatedTableOptions, PaginatedTableState } from './Table.types';
 import { TableContent } from './TableContent';
 
 const defaultPropGetter = () => ({});
@@ -61,7 +61,7 @@ export const Table: FC<TableProps> = ({
     }
   }
 
-  const tableInstance = useTable(tableOptions, ...plugins) as PaginatedTableInstance;
+  const tableInstance = useTable(tableOptions, ...plugins);
   const {
     getTableProps,
     getTableBodyProps,

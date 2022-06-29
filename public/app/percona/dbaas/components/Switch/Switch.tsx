@@ -21,7 +21,7 @@ export const SwitchField: FC<SwitchFieldProps> = ({
 }) => {
   const styles = useStyles(getStyles);
   const inputId = `input-${name}-id`;
-  const validate = useMemo(() => (Array.isArray(validators) ? compose(...validators) : undefined), [validators]);
+  const validate = useMemo(() => (Array.isArray(validators) ? compose(validators) : undefined), [validators]);
 
   return (
     <Field<boolean> {...fieldConfig} type="checkbox" name={name} validate={validate}>

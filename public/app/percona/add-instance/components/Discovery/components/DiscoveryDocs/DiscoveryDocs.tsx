@@ -13,12 +13,12 @@ export const DiscoveryDocs: FC = () => {
     <div data-testid="discovery-docs" className={styles.infoWrapper}>
       <ul className={styles.infoItems}>
         <li>
-          <Button type="button" variant="link" onClick={() => window.open(SECURITY_CREDENTIALS_DOC_LINK, '_blank')}>
+          <Button type="button" fill="text" onClick={() => window.open(SECURITY_CREDENTIALS_DOC_LINK, '_blank')}>
             {Messages.credentialsDocLink}
           </Button>
         </li>
         <li>
-          <Button type="button" variant="link" onClick={() => window.open(IAM_ROLE_DOC_LINK, '_blank')}>
+          <Button type="button" fill="text" onClick={() => window.open(IAM_ROLE_DOC_LINK, '_blank')}>
             {Messages.iamRoleDocLink}
           </Button>
         </li>

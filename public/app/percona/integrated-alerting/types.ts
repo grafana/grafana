@@ -14,9 +14,4 @@ declare module 'react-table' {
     className?: string;
     style?: CSSProperties;
   }
-
-  interface ColumnInstance {
-    className?: string;
-    style?: CSSProperties;
-  }
 }

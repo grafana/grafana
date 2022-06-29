@@ -49,7 +49,7 @@ export const KubernetesOperatorStatus: FC<KubernetesOperatorStatusProps> = ({
         <OperatorStatus operator={operator} />
       )}
       {isVersionAvailable && (
-        <Button data-testid="update-operator-button" size="md" onClick={updateOperator} icon="upload" variant="link">
+        <Button data-testid="update-operator-button" size="md" onClick={updateOperator} icon="upload" fill="text">
           {Messages.kubernetes.updateOperator}
         </Button>
       )}

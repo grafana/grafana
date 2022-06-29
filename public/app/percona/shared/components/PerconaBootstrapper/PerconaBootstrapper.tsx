@@ -8,11 +8,11 @@ import {
   fetchServerSaasHostAction,
   fetchUserStatusAction,
 } from 'app/percona/shared/core/reducers';
-import { useAppDispatch } from 'app/store/store';
+import { useDispatch } from 'app/types';
 
 // This component is only responsible for populating the store with Percona's settings initially
 export const PerconaBootstrapper = () => {
-  const dispatch = useAppDispatch();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     const getSettings = async () => {

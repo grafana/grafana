@@ -91,7 +91,7 @@ export const translateApiError = (error: ApiErrorCode): ApiVerboseError | undefi
 };
 
 export const apiErrorParser = (e: AxiosError): ApiVerboseError[] => {
-  const errorData: ApiError = e.response?.data;
+  const errorData: ApiError = e.response?.data as ApiError;
   let result: ApiVerboseError[] = [];
 
   if (errorData) {

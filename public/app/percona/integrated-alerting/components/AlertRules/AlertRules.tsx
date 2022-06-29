@@ -181,7 +181,7 @@ export const AlertRules: FC = () => {
               <Button
                 size="md"
                 icon="plus-square"
-                variant="link"
+                fill="text"
                 onClick={handleAddButton}
                 data-testid="alert-rule-template-add-modal-button"
               >

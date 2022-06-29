@@ -311,7 +311,7 @@ export const ScheduledBackups: FC = () => {
             <Button
               size="md"
               icon="plus-square"
-              variant="link"
+              fill="text"
               data-testid="scheduled-backup-add-modal-button"
               onClick={onAddClick}
             >

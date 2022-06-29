@@ -159,7 +159,7 @@ export const StorageLocations: FC = () => {
             <Button
               size="md"
               icon="plus-square"
-              variant="link"
+              fill="text"
               data-testid="storage-location-add-modal-button"
               onClick={() => {
                 setSelectedLocation(null);

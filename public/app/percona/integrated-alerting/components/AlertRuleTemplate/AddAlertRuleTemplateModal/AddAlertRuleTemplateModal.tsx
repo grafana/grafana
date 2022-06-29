@@ -1,6 +1,7 @@
 import { Modal, LoaderButton, TextareaInputField, validators, logger } from '@percona/platform-core';
-import { Form, FormApi } from 'final-form';
+import { FormApi } from 'final-form';
 import React, { FC, ChangeEvent, useCallback, useRef } from 'react';
+import { Form } from 'react-final-form';
 
 import { AppEvents } from '@grafana/data';
 import { Button, HorizontalGroup, Icon, useStyles } from '@grafana/ui';

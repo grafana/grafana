@@ -205,7 +205,7 @@ export const Alerts: FC = () => {
             <Button
               size="md"
               icon="bell-slash"
-              variant="link"
+              fill="text"
               onClick={() => handleSilenceAll('TRUE')}
               data-testid="alert-rule-template-add-modal-button"
             >
@@ -214,7 +214,7 @@ export const Alerts: FC = () => {
             <Button
               size="md"
               icon="bell"
-              variant="link"
+              fill="text"
               onClick={() => handleSilenceAll('FALSE')}
               data-testid="alert-rule-template-add-modal-button"
             >
