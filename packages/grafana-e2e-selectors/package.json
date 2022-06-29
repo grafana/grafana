@@ -43,9 +43,7 @@
     "rollup": "2.77.2",
     "rollup-plugin-dts": "^4.2.2",
     "rollup-plugin-esbuild": "^4.9.1",
-    "rollup-plugin-node-externals": "^4.1.0",
-    "rollup-plugin-sourcemaps": "0.6.3",
-    "rollup-plugin-terser": "7.0.2"
+    "rollup-plugin-node-externals": "^4.1.0"
   },
   "dependencies": {
     "@grafana/tsconfig": "^1.2.0-rc1",

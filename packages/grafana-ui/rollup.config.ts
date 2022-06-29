@@ -6,7 +6,6 @@ import { externals } from 'rollup-plugin-node-externals';
 import svg from 'rollup-plugin-svg-import';
 
 const pkg = require('./package.json');
-const name = pkg.main.replace(/\.js$/, '');
 
 const bundle = (config) => ({
   input: 'src/index.ts',

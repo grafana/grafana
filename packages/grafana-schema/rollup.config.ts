@@ -5,7 +5,6 @@ import esbuild from 'rollup-plugin-esbuild';
 import { externals } from 'rollup-plugin-node-externals';
 
 const pkg = require('./package.json');
-const name = pkg.main.replace(/\.js$/, '');
 
 const bundle = (config) => ({
   input: 'src/index.ts',

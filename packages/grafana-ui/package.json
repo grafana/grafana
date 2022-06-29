@@ -182,7 +182,6 @@
     "rollup-plugin-esbuild": "^4.9.1",
     "rollup-plugin-node-externals": "^4.1.0",
     "rollup-plugin-svg-import": "^1.6.0",
-    "rollup-plugin-terser": "7.0.2",
     "sass-loader": "13.0.2",
     "storybook-dark-mode": "1.1.0",
     "style-loader": "3.3.1",
