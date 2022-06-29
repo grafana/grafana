@@ -25,7 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-type PublicDashboardAPI struct {
+type Api struct {
 	PublicDashboardService publicdashboards.Service
 	RouteRegister          routing.RouteRegister
 	AccessControl          accesscontrol.AccessControl
@@ -33,29 +33,30 @@ type PublicDashboardAPI struct {
 	Features               *featuremgmt.FeatureManager
 }
 
-// Factory method for building api
-func NewPublicDashboardApi(
+func ProvideApi(
 	pd publicdashboards.Service,
 	rr routing.RouteRegister,
 	ac accesscontrol.AccessControl,
 	qds *query.Service,
 	features *featuremgmt.FeatureManager,
-) *PublicDashboardAPI {
-	return &PublicDashboardAPI{
+) *Api {
+	api := &Api{
 		PublicDashboardService: pd,
 		RouteRegister:          rr,
 		AccessControl:          ac,
 		QueryDataService:       qds,
 		Features:               features,
 	}
-}
 
-func (api *PublicDashboardAPI) RegisterAPIEndpoints() {
-	// Don't mount routes if feature is not enabled
-	if !api.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
-		return
+	// attach api if PublicDashboards feature flag is enabled
+	if features.IsEnabled(featuremgmt.FlagPublicDashboards) {
+		api.RegisterAPIEndpoints()
 	}
 
+	return api
+}
+
+func (api *Api) RegisterAPIEndpoints() {
 	auth := accesscontrol.Middleware(api.AccessControl)
 	reqSignedIn := middleware.ReqSignedIn
 
@@ -73,7 +74,7 @@ func (api *PublicDashboardAPI) RegisterAPIEndpoints() {
 }
 
 // gets public dashboard
-func (api *PublicDashboardAPI) GetPublicDashboard(c *models.ReqContext) response.Response {
+func (api *Api) GetPublicDashboard(c *models.ReqContext) response.Response {
 	accessToken := web.Params(c.Req)[":accessToken"]
 
 	dash, err := api.PublicDashboardService.GetPublicDashboard(c.Req.Context(), accessToken)
@@ -103,7 +104,7 @@ func (api *PublicDashboardAPI) GetPublicDashboard(c *models.ReqContext) response
 }
 
 // gets public dashboard configuration for dashboard
-func (api *PublicDashboardAPI) GetPublicDashboardConfig(c *models.ReqContext) response.Response {
+func (api *Api) GetPublicDashboardConfig(c *models.ReqContext) response.Response {
 	pdc, err := api.PublicDashboardService.GetPublicDashboardConfig(c.Req.Context(), c.OrgId, web.Params(c.Req)[":uid"])
 	if err != nil {
 		return handleDashboardErr(http.StatusInternalServerError, "Failed to get public dashboard config", err)
@@ -112,7 +113,7 @@ func (api *PublicDashboardAPI) GetPublicDashboardConfig(c *models.ReqContext) re
 }
 
 // sets public dashboard configuration for dashboard
-func (api *PublicDashboardAPI) SavePublicDashboardConfig(c *models.ReqContext) response.Response {
+func (api *Api) SavePublicDashboardConfig(c *models.ReqContext) response.Response {
 	pubdash := &PublicDashboard{}
 	if err := web.Bind(c.Req, pubdash); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -138,7 +139,7 @@ func (api *PublicDashboardAPI) SavePublicDashboardConfig(c *models.ReqContext) r
 
 // QueryPublicDashboard returns all results for a given panel on a public dashboard
 // POST /api/public/dashboard/:accessToken/panels/:panelId/query
-func (api *PublicDashboardAPI) QueryPublicDashboard(c *models.ReqContext) response.Response {
+func (api *Api) QueryPublicDashboard(c *models.ReqContext) response.Response {
 	panelId, err := strconv.ParseInt(web.Params(c.Req)[":panelId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "invalid panel ID", err)

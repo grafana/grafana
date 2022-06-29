@@ -77,8 +77,9 @@ import (
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/preference/prefimpl"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
-	publicdashboardstore "github.com/grafana/grafana/pkg/services/publicdashboards/database"
-	publicdashboardservice "github.com/grafana/grafana/pkg/services/publicdashboards/service"
+	publicdashboardsApi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
+	publicdashboardsStore "github.com/grafana/grafana/pkg/services/publicdashboards/database"
+	publicdashboardsService "github.com/grafana/grafana/pkg/services/publicdashboards/service"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/queryhistory"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -274,10 +275,11 @@ var wireBasicSet = wire.NewSet(
 	starimpl.ProvideService,
 	dashverimpl.ProvideService,
 
-	publicdashboardservice.ProvideService,
-	wire.Bind(new(publicdashboards.Service), new(*publicdashboardservice.PublicDashboardServiceImpl)),
-	publicdashboardstore.ProvideStore,
-	wire.Bind(new(publicdashboards.Store), new(*publicdashboardstore.PublicDashboardStoreImpl)),
+	publicdashboardsService.ProvideService,
+	wire.Bind(new(publicdashboards.Service), new(*publicdashboardsService.PublicDashboardServiceImpl)),
+	publicdashboardsStore.ProvideStore,
+	wire.Bind(new(publicdashboards.Store), new(*publicdashboardsStore.PublicDashboardStoreImpl)),
+	publicdashboardsApi.ProvideApi,
 )
 
 var wireSet = wire.NewSet(

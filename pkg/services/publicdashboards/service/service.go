@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
-	"github.com/grafana/grafana/pkg/services/publicdashboards/api"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/setting"
@@ -42,20 +41,11 @@ func ProvideService(
 	qs *query.Service,
 	features *featuremgmt.FeatureManager,
 ) *PublicDashboardServiceImpl {
-	// build the service
-	s := &PublicDashboardServiceImpl{
+	return &PublicDashboardServiceImpl{
 		log:   log.New("publicdashboards"),
 		cfg:   cfg,
 		store: store,
 	}
-
-	// attach api if feature is enabled
-	if features.IsEnabled(featuremgmt.FlagPublicDashboards) {
-		api := api.NewPublicDashboardApi(s, rr, ac, qs, features)
-		api.RegisterAPIEndpoints()
-	}
-
-	return s
 }
 
 // Gets public dashboard via access token
