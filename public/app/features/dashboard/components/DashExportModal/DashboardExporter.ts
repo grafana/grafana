@@ -100,11 +100,11 @@ export class DashboardExporter {
       let datasource: string = obj.datasource;
       let datasourceVariable: any = null;
 
+      const datasourceUid: string = (datasource as any)?.uid;
       // ignore data source properties that contain a variable
-      if (datasource && (datasource as any).uid) {
-        const uid = (datasource as any).uid as string;
-        if (uid.indexOf('$') === 0) {
-          datasourceVariable = variableLookup[uid.substring(1)];
+      if (datasourceUid) {
+        if (datasourceUid.indexOf('$') === 0) {
+          datasourceVariable = variableLookup[datasourceUid.substring(1)];
           if (datasourceVariable && datasourceVariable.current) {
             datasource = datasourceVariable.current.value;
           }

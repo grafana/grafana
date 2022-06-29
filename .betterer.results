@@ -4606,7 +4606,7 @@ exports[`better eslint`] = {
       [90, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
       [126, 18, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/dashboard/components/DashExportModal/DashboardExporter.test.ts:2274633003": [
+    "public/app/features/dashboard/components/DashExportModal/DashboardExporter.test.ts:3288513450": [
       [22, 6, 59, "Do not use any type assertions.", "3685154675"],
       [22, 6, 49, "Do not use any type assertions.", "1184085652"],
       [25, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -4631,27 +4631,25 @@ exports[`better eslint`] = {
       [318, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
       [325, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
       [334, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [370, 13, 18, "Do not use any type assertions.", "3420875325"],
-      [371, 9, 55, "Do not use any type assertions.", "1888720338"],
-      [371, 17, 10, "Do not use any type assertions.", "1501063862"],
-      [371, 24, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [371, 61, 3, "Unexpected any. Specify a different type.", "193409811"]
+      [364, 13, 18, "Do not use any type assertions.", "3420875325"],
+      [365, 9, 55, "Do not use any type assertions.", "1888720338"],
+      [365, 17, 10, "Do not use any type assertions.", "1501063862"],
+      [365, 24, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [365, 61, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/dashboard/components/DashExportModal/DashboardExporter.ts:568589687": [
-      [17, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [44, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [65, 43, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [72, 45, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [79, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [82, 25, 17, "Do not use any type assertions.", "1733699692"],
-      [82, 39, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [83, 20, 33, "Do not use any type assertions.", "1729190460"],
-      [83, 21, 17, "Do not use any type assertions.", "1733699692"],
-      [83, 35, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [148, 41, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [176, 29, 31, "Do not use any type assertions.", "1451241646"],
-      [176, 29, 13, "Do not use any type assertions.", "2146830713"],
-      [195, 32, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/features/dashboard/components/DashExportModal/DashboardExporter.ts:565128344": [
+      [18, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [47, 37, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [65, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [86, 43, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [93, 45, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [100, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [102, 37, 17, "Do not use any type assertions.", "1733699692"],
+      [102, 51, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [169, 41, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [198, 29, 31, "Do not use any type assertions.", "1451241646"],
+      [198, 29, 13, "Do not use any type assertions.", "2146830713"],
+      [217, 32, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/dashboard/components/DashNav/DashNav.tsx:1533394562": [
       [67, 87, 3, "Unexpected any. Specify a different type.", "193409811"]
@@ -6193,7 +6191,7 @@ exports[`better eslint`] = {
       [81, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
       [82, 25, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/manage-dashboards/components/ImportDashboardForm.tsx:72231267": [
+    "public/app/features/manage-dashboards/components/ImportDashboardForm.tsx:123008784": [
       [62, 28, 9, "Do not use any type assertions.", "3692209159"],
       [62, 34, 3, "Unexpected any. Specify a different type.", "193409811"],
       [125, 22, 23, "Do not use any type assertions.", "2412780303"],
@@ -6221,7 +6219,7 @@ exports[`better eslint`] = {
       [38, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
       [44, 23, 174, "Do not use any type assertions.", "1993531937"]
     ],
-    "public/app/features/manage-dashboards/state/actions.ts:2109642147": [
+    "public/app/features/manage-dashboards/state/actions.ts:658353090": [
       [43, 47, 3, "Unexpected any. Specify a different type.", "193409811"],
       [51, 38, 3, "Unexpected any. Specify a different type.", "193409811"],
       [54, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -6244,7 +6242,7 @@ exports[`better eslint`] = {
       [295, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
       [319, 31, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/manage-dashboards/state/reducers.test.ts:4097685863": [
+    "public/app/features/manage-dashboards/state/reducers.test.ts:354708423": [
       [94, 25, 53, "Do not use any type assertions.", "3616064645"],
       [95, 23, 51, "Do not use any type assertions.", "2715348726"],
       [108, 25, 53, "Do not use any type assertions.", "3616064645"],
@@ -6255,7 +6253,7 @@ exports[`better eslint`] = {
       [125, 23, 51, "Do not use any type assertions.", "2715348726"],
       [128, 23, 71, "Do not use any type assertions.", "1935232832"]
     ],
-    "public/app/features/manage-dashboards/state/reducers.ts:3417985415": [
+    "public/app/features/manage-dashboards/state/reducers.ts:2004505684": [
       [58, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
       [68, 10, 21, "Do not use any type assertions.", "2133660528"],
       [76, 81, 3, "Unexpected any. Specify a different type.", "193409811"],
