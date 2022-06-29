@@ -307,7 +307,7 @@ export class Scene {
     this.selecto = new Selecto({
       container: this.div,
       selectableTargets: targetElements,
-      selectByClick: true,
+      toggleContinueSelect: 'shift',
     });
 
     this.moveable = new Moveable(this.div!, {
