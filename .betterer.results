@@ -3179,7 +3179,7 @@ exports[`better eslint`] = {
       [73, 37, 3, "Unexpected any. Specify a different type.", "193409811"],
       [89, 39, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/core/components/ColorScale/ColorScale.tsx:661627953": [
+    "public/app/core/components/ColorScale/ColorScale.tsx:12349772": [
       [38, 24, 43, "Do not use any type assertions.", "1727107527"],
       [38, 25, 19, "Do not use any type assertions.", "1979047218"],
       [38, 41, 3, "Unexpected any. Specify a different type.", "193409811"]
