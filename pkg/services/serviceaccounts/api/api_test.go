@@ -185,7 +185,7 @@ func TestServiceAccountsAPI_DeleteServiceAccount(t *testing.T) {
 		serviceAccountRequestScenario(t, http.MethodDelete, serviceAccountIDPath, &testcase.user, func(httpmethod string, endpoint string, user *tests.TestUser) {
 			createduser := tests.SetupUserServiceAccount(t, store, testcase.user)
 			server, _ := setupTestServer(t, &svcmock, routing.NewRouteRegister(), testcase.acmock, store, saStore)
-			actual := requestResponse(server, httpmethod, fmt.Sprintf(endpoint, fmt.Sprint(createduser.Id))).Code
+			actual := requestResponse(server, httpmethod, fmt.Sprintf(endpoint, fmt.Sprint(createduser.ID))).Code
 			require.Equal(t, testcase.expectedCode, actual)
 		})
 	})
@@ -209,7 +209,7 @@ func TestServiceAccountsAPI_DeleteServiceAccount(t *testing.T) {
 		serviceAccountRequestScenario(t, http.MethodDelete, serviceAccountIDPath, &testcase.user, func(httpmethod string, endpoint string, user *tests.TestUser) {
 			createduser := tests.SetupUserServiceAccount(t, store, testcase.user)
 			server, _ := setupTestServer(t, &svcmock, routing.NewRouteRegister(), testcase.acmock, store, saStore)
-			actual := requestResponse(server, httpmethod, fmt.Sprintf(endpoint, createduser.Id)).Code
+			actual := requestResponse(server, httpmethod, fmt.Sprintf(endpoint, createduser.ID)).Code
 			require.Equal(t, testcase.expectedCode, actual)
 		})
 	})
@@ -314,7 +314,7 @@ func TestServiceAccountsAPI_RetrieveServiceAccount(t *testing.T) {
 				scopeID := tc.Id
 				if tc.user != nil {
 					createdUser := tests.SetupUserServiceAccount(t, store, *tc.user)
-					scopeID = int(createdUser.Id)
+					scopeID = int(createdUser.ID)
 				}
 				server, _ := setupTestServer(t, &svcmock, routing.NewRouteRegister(), tc.acmock, store, saStore)
 
@@ -440,7 +440,7 @@ func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
 			scopeID := tc.Id
 			if tc.user != nil {
 				createdUser := tests.SetupUserServiceAccount(t, store, *tc.user)
-				scopeID = int(createdUser.Id)
+				scopeID = int(createdUser.ID)
 			}
 
 			var rawBody io.Reader = http.NoBody

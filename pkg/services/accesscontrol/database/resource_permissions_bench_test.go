@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions/types"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 const (
@@ -150,11 +151,11 @@ func generateTeamsAndUsers(b *testing.B, db *sqlstore.SQLStore, users int) ([]in
 		for u := 0; u < UsersPerTeam; u++ {
 			userName := fmt.Sprintf("%s%v", "user", globalUserId)
 			userEmail := fmt.Sprintf("%s@example.org", userName)
-			createUserCmd := models.CreateUserCommand{Email: userEmail, Name: userName, Login: userName, OrgId: 1}
+			createUserCmd := user.CreateUserCommand{Email: userEmail, Name: userName, Login: userName, OrgID: 1}
 
 			user, err := db.CreateUser(context.Background(), createUserCmd)
 			require.NoError(b, err)
-			userId := user.Id
+			userId := user.ID
 			globalUserId++
 			userIds = append(userIds, userId)
 
