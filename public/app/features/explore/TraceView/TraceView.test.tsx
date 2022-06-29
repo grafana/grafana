@@ -119,21 +119,21 @@ describe('TraceView', () => {
     const firstSpan = screen.getAllByText('', { selector: 'div[data-testid="span-view"]' })[0];
     await userEvent.click(firstSpan);
     await userEvent.click(screen.getByText(/Process/));
-    table = screen.getByText('', { selector: 'div[data-test-id="KeyValueTable"]' });
+    table = screen.getByText('', { selector: 'div[data-testid="KeyValueTable"]' });
     expect(table.innerHTML).toContain('client-uuid-1');
     await userEvent.click(firstSpan);
 
     const secondSpan = screen.getAllByText('', { selector: 'div[data-testid="span-view"]' })[1];
     await userEvent.click(secondSpan);
     await userEvent.click(screen.getByText(/Process/));
-    table = screen.getByText('', { selector: 'div[data-test-id="KeyValueTable"]' });
+    table = screen.getByText('', { selector: 'div[data-testid="KeyValueTable"]' });
     expect(table.innerHTML).toContain('client-uuid-2');
     await userEvent.click(secondSpan);
 
     const thirdSpan = screen.getAllByText('', { selector: 'div[data-testid="span-view"]' })[2];
     await userEvent.click(thirdSpan);
     await userEvent.click(screen.getByText(/Process/));
-    table = screen.getByText('', { selector: 'div[data-test-id="KeyValueTable"]' });
+    table = screen.getByText('', { selector: 'div[data-testid="KeyValueTable"]' });
     expect(table.innerHTML).toContain('client-uuid-3');
   });
 

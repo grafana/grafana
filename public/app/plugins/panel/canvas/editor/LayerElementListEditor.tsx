@@ -48,7 +48,7 @@ export class LayerElementListEditor extends PureComponent<Props> {
     layer.reinitializeMoveable();
   };
 
-  onSelect = (item: any) => {
+  onSelect = (item: ElementState) => {
     const { settings } = this.props.item;
 
     if (settings?.scene) {
