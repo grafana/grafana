@@ -2,11 +2,13 @@
 aliases:
   - /docs/grafana/latest/setup-grafana/enable-diagnostics/
   - /docs/grafana/latest/troubleshooting/diagnostics/
-title: Enable diagnostics to troubleshoot Grafana
-weight: 1200
+  - /docs/grafana/latest/setup-grafana/configure-grafana/configure-tracing/
+title: Configure tracing to troubleshoot Grafana
+menuTitle: Configure tracing
+weight: 200
 ---
 
-# Enable diagnostics to troubleshoot Grafana
+# Configure tracing to troubleshoot Grafana
 
 You can set up the `grafana-server` process to enable certain diagnostics when it starts. This can be helpful
 when investigating certain performance problems. It's _not_ recommended to have these enabled by default.

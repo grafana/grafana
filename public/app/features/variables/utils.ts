@@ -12,7 +12,7 @@ import { variableAdapters } from './adapters';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from './constants';
 import { getVariablesState } from './state/selectors';
 import { KeyedVariableIdentifier, VariableIdentifier, VariablePayload } from './state/types';
-import { QueryVariableModel, TransactionStatus, VariableModel, VariableRefresh } from './types';
+import { QueryVariableModel, TransactionStatus, VariableModel, VariableRefresh, VariableWithOptions } from './types';
 
 /*
  * This regex matches 3 types of variable reference with an optional format specifier
@@ -128,6 +128,22 @@ export const getCurrentText = (variable: any): string => {
   }
 
   return variable.current.text;
+};
+
+export const getCurrentValue = (variable: VariableWithOptions): string | null => {
+  if (!variable || !variable.current || variable.current.value === undefined || variable.current.value === null) {
+    return null;
+  }
+
+  if (Array.isArray(variable.current.value)) {
+    return variable.current.value.toString();
+  }
+
+  if (typeof variable.current.value !== 'string') {
+    return null;
+  }
+
+  return variable.current.value;
 };
 
 export function getTemplatedRegex(variable: QueryVariableModel, templateSrv = getTemplateSrv()): string {
