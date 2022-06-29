@@ -99,7 +99,7 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRu
 	// TODO: Check for screenshot upload failures. These images should still be
 	// stored because we have a local disk path that could be useful.
 	if err != nil {
-		return nil, fmt.Errorf("failed to take screenshot: %w", err)
+		return nil, err
 	}
 
 	v := models.Image{

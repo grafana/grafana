@@ -8,7 +8,7 @@ import { getVariable, getVariablesState } from '../../state/selectors';
 import { changeVariableProp, setCurrentVariableValue } from '../../state/sharedReducer';
 import { KeyedVariableIdentifier } from '../../state/types';
 import { VariableOption, VariableWithMultiSupport, VariableWithOptions } from '../../types';
-import { containsSearchFilter, getCurrentText, toVariablePayload } from '../../utils';
+import { containsSearchFilter, getCurrentValue, toVariablePayload } from '../../utils';
 import { NavigationKey } from '../types';
 
 import {
@@ -90,7 +90,7 @@ export const commitChangesToVariable = (key: string, callback?: (updated: any) =
     const updated = getVariable<VariableWithMultiSupport>(identifier, getState());
     dispatch(toKeyedAction(key, hideOptions()));
 
-    if (getCurrentText(existing) === getCurrentText(updated)) {
+    if (getCurrentValue(existing) === getCurrentValue(updated)) {
       return;
     }
 

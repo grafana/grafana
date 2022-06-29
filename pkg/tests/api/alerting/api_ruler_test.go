@@ -17,6 +17,7 @@ import (
 	acdb "github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -34,7 +35,7 @@ func TestAlertRulePermissions(t *testing.T) {
 	permissionsStore := acdb.ProvideService(store)
 
 	// Create a user to make authenticated requests
-	userID := createUser(t, store, models.CreateUserCommand{
+	userID := createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),
 		Password:       "password",
 		Login:          "grafana",
@@ -46,8 +47,6 @@ func TestAlertRulePermissions(t *testing.T) {
 	apiClient.CreateFolder(t, "folder1", "folder1")
 	// Create the namespace we'll save our alerts to.
 	apiClient.CreateFolder(t, "folder2", "folder2")
-
-	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
 
 	// Create rule under folder1
 	createRule(t, apiClient, "folder1")
@@ -178,7 +177,7 @@ func TestAlertRulePermissions(t *testing.T) {
 
 		// remove permissions from folder2
 		removeFolderPermission(t, permissionsStore, 1, userID, models.ROLE_EDITOR, "folder2")
-		reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
+		apiClient.ReloadCachedPermissions(t)
 
 		// make sure that folder2 is not included in the response
 		// nolint:gosec
@@ -252,7 +251,7 @@ func TestAlertRulePermissions(t *testing.T) {
 
 	// Remove permissions from folder1.
 	removeFolderPermission(t, permissionsStore, 1, userID, models.ROLE_EDITOR, "folder1")
-	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
+	apiClient.ReloadCachedPermissions(t)
 	{
 		u := fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules", grafanaListedAddr)
 		// nolint:gosec
@@ -326,7 +325,7 @@ func TestAlertRuleConflictingTitle(t *testing.T) {
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
 	// Create user
-	createUser(t, store, models.CreateUserCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_ADMIN),
 		Password:       "admin",
 		Login:          "admin",
@@ -393,7 +392,7 @@ func TestRulerRulesFilterByDashboard(t *testing.T) {
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
 	// Create a user to make authenticated requests
-	createUser(t, store, models.CreateUserCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),
 		Password:       "password",
 		Login:          "grafana",
@@ -404,8 +403,6 @@ func TestRulerRulesFilterByDashboard(t *testing.T) {
 	dashboardUID := "default"
 	// Create the namespace under default organisation (orgID = 1) where we'll save our alerts to.
 	apiClient.CreateFolder(t, "default", "default")
-
-	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
 
 	interval, err := model.ParseDuration("10s")
 	require.NoError(t, err)
@@ -732,7 +729,7 @@ func TestRuleGroupSequence(t *testing.T) {
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
 	// Create a user to make authenticated requests
-	createUser(t, store, models.CreateUserCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),
 		Password:       "password",
 		Login:          "grafana",
@@ -741,8 +738,6 @@ func TestRuleGroupSequence(t *testing.T) {
 	client := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
 	folder1Title := "folder1"
 	client.CreateFolder(t, util.GenerateShortUID(), folder1Title)
-
-	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
 
 	group1 := generateAlertRuleGroup(5, alertRuleGen())
 	group2 := generateAlertRuleGroup(5, alertRuleGen())

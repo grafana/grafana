@@ -14,13 +14,14 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 
 	"github.com/stretchr/testify/require"
 )
 
 func TestUserAuthToken(t *testing.T) {
 	ctx := createTestContext(t)
-	user := &models.User{Id: int64(10)}
+	user := &user.User{ID: int64(10)}
 	// userID := user.Id
 
 	now := time.Date(2018, 12, 13, 13, 45, 0, 0, time.UTC)
@@ -49,7 +50,7 @@ func TestUserAuthToken(t *testing.T) {
 			userToken, err := ctx.tokenService.LookupToken(context.Background(), userToken.UnhashedToken)
 			require.Nil(t, err)
 			require.NotNil(t, userToken)
-			require.Equal(t, user.Id, userToken.UserId)
+			require.Equal(t, user.ID, userToken.UserId)
 			require.True(t, userToken.AuthTokenSeen)
 
 			storedAuthToken, err := ctx.getAuthTokenByID(userToken.Id)
@@ -104,21 +105,21 @@ func TestUserAuthToken(t *testing.T) {
 			require.NotNil(t, userToken2)
 
 			t.Run("Can get first user token", func(t *testing.T) {
-				token, err := ctx.tokenService.GetUserToken(context.Background(), user.Id, userToken.Id)
+				token, err := ctx.tokenService.GetUserToken(context.Background(), user.ID, userToken.Id)
 				require.Nil(t, err)
 				require.NotNil(t, token)
 				require.Equal(t, userToken.Id, token.Id)
 			})
 
 			t.Run("Can get second user token", func(t *testing.T) {
-				token, err := ctx.tokenService.GetUserToken(context.Background(), user.Id, userToken2.Id)
+				token, err := ctx.tokenService.GetUserToken(context.Background(), user.ID, userToken2.Id)
 				require.Nil(t, err)
 				require.NotNil(t, token)
 				require.Equal(t, userToken2.Id, token.Id)
 			})
 
 			t.Run("Can get user tokens", func(t *testing.T) {
-				tokens, err := ctx.tokenService.GetUserTokens(context.Background(), user.Id)
+				tokens, err := ctx.tokenService.GetUserTokens(context.Background(), user.ID)
 				require.Nil(t, err)
 				require.Equal(t, 2, len(tokens))
 				require.Equal(t, userToken.Id, tokens[0].Id)
@@ -126,7 +127,7 @@ func TestUserAuthToken(t *testing.T) {
 			})
 
 			t.Run("Can revoke all user tokens", func(t *testing.T) {
-				err := ctx.tokenService.RevokeAllUserTokens(context.Background(), user.Id)
+				err := ctx.tokenService.RevokeAllUserTokens(context.Background(), user.ID)
 				require.Nil(t, err)
 
 				model, err := ctx.getAuthTokenByID(userToken.Id)
@@ -143,7 +144,7 @@ func TestUserAuthToken(t *testing.T) {
 			t.Run("Can revoke all users tokens", func(t *testing.T) {
 				userIds := []int64{}
 				for i := 0; i < 3; i++ {
-					userId := user.Id + int64(i+1)
+					userId := user.ID + int64(i+1)
 					userIds = append(userIds, userId)
 					_, err := ctx.tokenService.CreateToken(context.Background(), user,
 						net.ParseIP("192.168.10.11"), "some user agent")
