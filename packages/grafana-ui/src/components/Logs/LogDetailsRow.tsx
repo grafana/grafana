@@ -198,15 +198,6 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
               size="sm"
               className={styles.hoverValueCopy}
             />
-            // <span className={styles.hoverValueCopy}>
-            //   <IconButton
-            //     name="copy"
-            //     title="Copy this value to clipboard"
-            //     onClick={() => {
-            //       navigator.clipboard.writeText(parsedValue);
-            //     }}
-            //   />
-            // </span>
           )}
           {links?.map((link) => (
             <span key={link.title}>
