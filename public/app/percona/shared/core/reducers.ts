@@ -19,7 +19,7 @@ import {
 import { KubernetesClusterStatus } from 'app/percona/dbaas/components/Kubernetes/KubernetesClusterStatus/KubernetesClusterStatus.types';
 import { SettingsService } from 'app/percona/settings/Settings.service';
 import { Settings, SettingsAPIChangePayload } from 'app/percona/settings/Settings.types';
-import { api, apiManagement } from 'app/percona/shared/helpers/api';
+import { api } from 'app/percona/shared/helpers/api';
 
 import { UserService } from '../services/user/User.service';
 
@@ -237,9 +237,10 @@ export const fetchDBClustersAction = createAsyncThunk(
   (args: { kubernetes: Kubernetes[]; tokens: CancelToken[] }): Promise<DBCluster[]> =>
     withSerializedError(
       (async () => {
-        const requests = args.kubernetes.map((k, idx) =>
-          apiManagement.post<any, Kubernetes>('/DBaaS/DBClusters/List', k, true, args.tokens[idx])
-        );
+        const requests = args.kubernetes.map((k, idx) => KubernetesService.getDBClusters(k, args.tokens[idx]));
+        // const requests = args.kubernetes.map((k, idx) =>
+        //   apiManagement.post<any, Kubernetes>('/DBaaS/DBClusters/List', k, true, args.tokens[idx])
+        // );
         const promiseResults = await Promise.all(requests);
         return formatDBClusters(promiseResults, args.kubernetes);
       })()

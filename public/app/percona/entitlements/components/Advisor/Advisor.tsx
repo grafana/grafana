@@ -1,5 +1,7 @@
-import { Icon, useStyles2 } from '@grafana/ui';
 import React from 'react';
+
+import { Icon, useStyles2 } from '@grafana/ui';
+
 import { getStyles } from './Advisor.styles';
 import { AdvisorProps } from './Advisor.types';
 

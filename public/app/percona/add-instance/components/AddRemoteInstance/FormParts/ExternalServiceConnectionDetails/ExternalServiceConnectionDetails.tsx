@@ -92,6 +92,7 @@ export const ExternalServiceConnectionDetails: FC<FormPartProps> = ({ form }) =>
           </div>
           <TextInputField
             name="address"
+            initialValue=""
             placeholder={Messages.form.placeholders.externalService.address}
             validators={[validators.required]}
           />
@@ -99,7 +100,11 @@ export const ExternalServiceConnectionDetails: FC<FormPartProps> = ({ form }) =>
             <span>{Messages.form.labels.externalService.metricsPath}</span>
             <LinkTooltip tooltipText={Messages.form.tooltips.externalService.metricsPath} icon="info-circle" />
           </div>
-          <TextInputField name="metrics_path" placeholder={Messages.form.placeholders.externalService.metricsPath} />
+          <TextInputField
+            name="metrics_path"
+            initialValue=""
+            placeholder={Messages.form.placeholders.externalService.metricsPath}
+          />
           <div className={styles.labelWrapper} data-testid="port-label">
             <span>{Messages.form.labels.externalService.port}</span>
             <LinkTooltip tooltipText={Messages.form.tooltips.externalService.port} icon="info-circle" />
@@ -111,6 +116,7 @@ export const ExternalServiceConnectionDetails: FC<FormPartProps> = ({ form }) =>
           </div>
           <TextInputField
             name="username"
+            initialValue=""
             placeholder={Messages.form.placeholders.externalService.username}
             format={trim}
           />
@@ -120,6 +126,7 @@ export const ExternalServiceConnectionDetails: FC<FormPartProps> = ({ form }) =>
           </div>
           <PasswordInputField
             name="password"
+            initialValue=""
             placeholder={Messages.form.placeholders.externalService.password}
             format={trim}
           />

@@ -67,7 +67,7 @@ describe('PlatformConnectedLoader', () => {
         } as StoreState)}
       >
         <PlatformConnectedLoader>
-          <div data-testId="dummy-child">Test</div>
+          <div data-testid="dummy-child">Test</div>
         </PlatformConnectedLoader>
       </Provider>
     );

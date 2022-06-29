@@ -24,6 +24,8 @@ const entitlement: Entitlement = {
 
 describe('Entitlements Content', () => {
   test('renders SectionContent with correct data', async () => {
+    // TODO <Advisor> can't be within a <p> !!!
+    jest.spyOn(console, 'error').mockImplementation();
     render(<SectionContent entitlement={entitlement} />);
 
     expect(screen.getByText(/Tier 1/)).toBeInTheDocument();

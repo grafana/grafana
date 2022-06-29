@@ -36,4 +36,5 @@ export const KubernetesService = {
       },
     }),
   installOperator: (): Promise<void> => Promise.resolve(),
+  getDBClusters: () => Promise.resolve(),
 };

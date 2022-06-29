@@ -8,6 +8,8 @@ import { StoreState } from 'app/types';
 
 import { AlertManager } from './AlertManager';
 
+jest.mock('app/percona/settings/Settings.service');
+
 describe('AlertManager::', () => {
   it('Renders correctly with props', async () => {
     render(

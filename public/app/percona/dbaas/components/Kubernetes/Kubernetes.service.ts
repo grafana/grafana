@@ -56,6 +56,9 @@ export const KubernetesService = {
       token
     );
   },
+  getDBClusters(kubernetes: Kubernetes, token?: CancelToken) {
+    return apiManagement.post<any, Kubernetes>('/DBaaS/DBClusters/List', kubernetes, true, token);
+  },
 };
 
 const toAPI = (kubernetes: Kubernetes, force?: boolean) => ({

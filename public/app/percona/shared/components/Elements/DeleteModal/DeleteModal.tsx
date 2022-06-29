@@ -47,7 +47,13 @@ export const DeleteModal: FC<DeleteModalProps> = ({
               >
                 {cancel || defaultCancel}
               </Button>
-              <LoaderButton loading={loading} variant="destructive" size="md" data-testid={confirmButtondataTestId}>
+              <LoaderButton
+                type="submit"
+                loading={loading}
+                variant="destructive"
+                size="md"
+                data-testid={confirmButtondataTestId}
+              >
                 {confirm || defaultConfirm}
               </LoaderButton>
             </HorizontalGroup>

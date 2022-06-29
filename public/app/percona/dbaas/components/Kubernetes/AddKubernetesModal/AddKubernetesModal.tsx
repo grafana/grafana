@@ -88,6 +88,7 @@ export const AddKubernetesModal = ({
               )}
               <HorizontalGroup justify="center" spacing="md">
                 <Button
+                  type="submit"
                   data-testid="kubernetes-add-cluster-button"
                   size="md"
                   variant="primary"

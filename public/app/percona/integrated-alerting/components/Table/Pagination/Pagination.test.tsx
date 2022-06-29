@@ -301,7 +301,7 @@ describe('Pagination', () => {
       fireEvent.click(btn);
     }
 
-    const input = screen.getAllByRole('textbox')[0];
+    const input = screen.getAllByRole('combobox')[0];
 
     fireEvent.keyDown(input, { key: 'ArrowDown' });
 

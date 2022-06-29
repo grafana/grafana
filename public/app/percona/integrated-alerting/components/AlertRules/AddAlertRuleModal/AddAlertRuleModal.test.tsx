@@ -185,13 +185,21 @@ describe('AddAlertRuleModal', () => {
   it('should add filter fields when clicked on add filter button', async () => {
     render(<AddAlertRuleModal setVisible={jest.fn()} isVisible />);
     fireEvent.click(screen.getByTestId('add-filter-button'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('filter-fields-row')).toBeInTheDocument();
+    });
+
     expect(screen.getByTestId('filter-fields-row')).toBeInTheDocument();
   });
 
   it('should remove filter field when clicked on remove filter icon', async () => {
     render(<AddAlertRuleModal setVisible={jest.fn()} isVisible />);
     fireEvent.click(screen.getByTestId('add-filter-button'));
-    expect(screen.getByTestId('filter-fields-row')).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('filter-fields-row')).toBeInTheDocument();
+    });
 
     fireEvent.click(screen.getByTestId('delete-filter-button'));
     expect(screen.queryByTestId('filter-fields-row')).not.toBeInTheDocument();

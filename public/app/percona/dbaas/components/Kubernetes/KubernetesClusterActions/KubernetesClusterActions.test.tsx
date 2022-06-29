@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
 
 import { kubernetesStub } from '../__mocks__/kubernetesStubs';
@@ -39,8 +39,8 @@ describe('KubernetesClusterActions::', () => {
     fireEvent.click(screen.getByRole('button'));
     fireEvent.click(screen.getByText('Unregister'));
 
-    expect(setSelectedCluster).toHaveBeenCalled();
-    expect(setDeleteModalVisible).toHaveBeenCalled();
+    await waitFor(() => expect(setSelectedCluster).toHaveBeenCalled());
+    await waitFor(() => expect(setDeleteModalVisible).toHaveBeenCalled());
   });
 
   it('Select view cluster config action', async () => {
@@ -62,7 +62,7 @@ describe('KubernetesClusterActions::', () => {
     fireEvent.click(screen.getByRole('button'));
     fireEvent.click(screen.getByText('Show configuration'));
 
-    expect(setSelectedCluster).toHaveBeenCalled();
-    expect(setViewConfigModalVisible).toHaveBeenCalled();
+    await waitFor(() => expect(setSelectedCluster).toHaveBeenCalled());
+    await waitFor(() => expect(setViewConfigModalVisible).toHaveBeenCalled());
   });
 });

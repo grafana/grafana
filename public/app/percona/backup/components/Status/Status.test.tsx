@@ -1,5 +1,4 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 
 import { BackupStatus, RestoreStatus } from '../../Backup.types';
@@ -48,7 +47,7 @@ describe('Status', () => {
     it('should call onLogClick', () => {
       const onLogClick = jest.fn();
       render(<Status showLogsAction status={BackupStatus.BACKUP_STATUS_IN_PROGRESS} onLogClick={onLogClick} />);
-      userEvent.click(screen.queryByText(Messages.logs)!);
+      fireEvent.click(screen.queryByText(Messages.logs)!);
       expect(onLogClick).toHaveBeenCalled();
     });
   });

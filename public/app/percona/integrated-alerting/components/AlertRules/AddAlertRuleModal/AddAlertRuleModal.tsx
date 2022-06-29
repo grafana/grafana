@@ -308,7 +308,7 @@ export const AddAlertRuleModal: FC<AddAlertRuleModalProps> = ({ isVisible, setVi
               {({ input }) => (
                 <div className={styles.toogleField}>
                   <Label label={Messages.activateSwitch} dataTestId="enabled-toggle-label" />
-                  <Switch {...input} value={input.checked} data-testid="enabled-toggle-input" />
+                  <Switch {...input} checked={undefined} value={input.checked} data-testid="enabled-toggle-input" />
                 </div>
               )}
             </Field>

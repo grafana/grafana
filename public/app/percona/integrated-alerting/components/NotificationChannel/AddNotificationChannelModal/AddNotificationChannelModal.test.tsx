@@ -32,7 +32,7 @@ describe('AddNotificationChannelModal', () => {
   it('should render modal with correct fields', async () => {
     render(withContext(<AddNotificationChannelModal setVisible={jest.fn()} isVisible />));
 
-    expect(screen.getAllByRole('textbox')).toHaveLength(2);
+    expect(screen.getByTestId('name-text-input')).toBeInTheDocument();
     expect(screen.getByTestId('notification-channel-add-button')).toBeInTheDocument();
     expect(screen.getByTestId('notification-channel-cancel-button')).toBeInTheDocument();
   });

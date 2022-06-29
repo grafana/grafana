@@ -24,6 +24,7 @@ export const HAProxyConnectionDetails: FC<MainDetailsFormPartProps> = ({ remoteI
       </div>
       <TextInputField
         name="address"
+        initialValue=""
         placeholder={Messages.form.placeholders.mainDetails.address}
         validators={[validators.required]}
       />
@@ -31,13 +32,18 @@ export const HAProxyConnectionDetails: FC<MainDetailsFormPartProps> = ({ remoteI
         <span>{Messages.form.labels.mainDetails.serviceName}</span>
         <LinkTooltip tooltipText={Messages.form.tooltips.mainDetails.serviceName} icon="info-circle" />
       </div>
-      <TextInputField name="serviceName" placeholder={Messages.form.placeholders.mainDetails.serviceName} />
+      <TextInputField
+        name="serviceName"
+        initialValue=""
+        placeholder={Messages.form.placeholders.mainDetails.serviceName}
+      />
       <div className={styles.labelWrapper} data-testid="port-label">
         <span>{Messages.form.labels.mainDetails.port}</span>
         <LinkTooltip tooltipText={Messages.form.tooltips.haproxy.port} icon="info-circle" />
       </div>
       <TextInputField
         name="port"
+        initialValue=""
         placeholder={`Port (default: ${remoteInstanceCredentials.port} )`}
         validators={portValidators}
       />
@@ -45,12 +51,22 @@ export const HAProxyConnectionDetails: FC<MainDetailsFormPartProps> = ({ remoteI
         <span>{Messages.form.labels.mainDetails.username}</span>
         <LinkTooltip tooltipText={Messages.form.tooltips.haproxy.username} icon="info-circle" />
       </div>
-      <TextInputField name="username" placeholder={Messages.form.placeholders.mainDetails.username} format={trim} />
+      <TextInputField
+        name="username"
+        initialValue=""
+        placeholder={Messages.form.placeholders.mainDetails.username}
+        format={trim}
+      />
       <div className={styles.labelWrapper} data-testid="password-label">
         <span>{Messages.form.labels.mainDetails.password}</span>
         <LinkTooltip tooltipText={Messages.form.tooltips.haproxy.password} icon="info-circle" />
       </div>
-      <PasswordInputField name="password" placeholder={Messages.form.placeholders.mainDetails.password} format={trim} />
+      <PasswordInputField
+        name="password"
+        initialValue=""
+        placeholder={Messages.form.placeholders.mainDetails.password}
+        format={trim}
+      />
     </div>
   );
 };

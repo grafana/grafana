@@ -103,7 +103,7 @@ export const Table: FC<TableProps> = ({
                 prepareRow(row);
 
                 return (
-                  <tr data-testid="table-row" {...row.getRowProps()} key={rowKey ? rowKey(row) : i}>
+                  <tr data-testid="table-row" {...row.getRowProps()} key={i}>
                     {row.cells.map((cell, index) => (
                       <td
                         {...cell.getCellProps()}

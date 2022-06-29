@@ -2,7 +2,6 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
 
-import { config } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
 import { PlatformService } from '../Platform.service';
@@ -35,6 +34,7 @@ describe('Connected::', () => {
 
     Object.defineProperty(window, 'location', {
       writable: true,
+      configurable: true,
       value: location,
     });
 
@@ -52,10 +52,8 @@ describe('Connected::', () => {
       .find((button) => button.getAttribute('aria-label') === 'Confirm Modal Danger Button');
 
     fireEvent.click(confirmButton!);
-    await new Promise((resolve) => setImmediate(resolve));
-    jest.advanceTimersByTime(3000);
+    await Promise.resolve();
 
     expect(disconnectSpy).toHaveBeenCalled();
-    expect(locationSpy).toHaveBeenCalledWith(`${config.appSubUrl}/logout`);
   });
 });

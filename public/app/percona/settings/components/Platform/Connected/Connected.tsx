@@ -26,6 +26,7 @@ export const Connected: FC = () => {
       await PlatformService.disconnect();
       setTimeout(() => {
         window.location.assign(`${config.appSubUrl}/logout`);
+        console.log('timeout');
         return;
       }, 3000);
     } catch (e) {
