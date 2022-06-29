@@ -271,17 +271,3 @@ func TestMinInterval(t *testing.T) {
 		})
 	}
 }
-
-func TestUnifiedAlertingHistorySettings(t *testing.T) {
-	t.Run("Invalid Storage Values return an error", func(t *testing.T) {
-		f := ini.Empty()
-		// This setting is required to avoid a read-time error.
-		section, _ := f.NewSection("unified_alerting")
-		_, _ = section.NewKey("enabled", "true")
-		section, _ = f.NewSection("unified_alerting.history")
-		_, _ = section.NewKey("storage", "invalid")
-		err := NewCfg().ReadUnifiedAlertingSettings(f)
-		require.Error(t, err, "An invalid setting was accepted for alert history storage")
-	})
-
-}
