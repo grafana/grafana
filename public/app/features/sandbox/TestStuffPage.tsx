@@ -4,6 +4,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import {
   ApplyFieldOverrideOptions,
+  DataConfigSource,
   DataTransformerConfig,
   dateMath,
   FieldColorModeId,
@@ -131,10 +132,11 @@ export function getDefaultState(): State {
     theme: config.theme2,
   };
 
-  const dataConfig = {
+  const dataConfig: DataConfigSource = {
     getTransformations: () => [] as DataTransformerConfig[],
     getFieldOverrideOptions: () => options,
     getDataSupport: () => ({ annotations: false, alertStates: false }),
+    getDataSourceRef: () => null,
   };
 
   return {

@@ -6771,8 +6771,8 @@ exports[`better eslint`] = {
       [12, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
       [41, 9, 43, "Do not use any type assertions.", "4109129169"]
     ],
-    "public/app/features/sandbox/TestStuffPage.tsx:3698683147": [
-      [134, 30, 29, "Do not use any type assertions.", "3195381622"]
+    "public/app/features/sandbox/TestStuffPage.tsx:1496303768": [
+      [135, 30, 29, "Do not use any type assertions.", "3195381622"]
     ],
     "public/app/features/search/components/DashboardSearch.test.tsx:3245889886": [
       [18, 23, 33, "Do not use any type assertions.", "2540133228"],
@@ -7772,14 +7772,14 @@ exports[`better eslint`] = {
     ],
     "public/app/features/variables/types.ts:2570647821": [
       [82, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [140, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [148, 8, 29, "Do not use any type assertions.", "3580926259"],
-      [148, 8, 13, "Do not use any type assertions.", "3075929919"],
-      [159, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [160, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [161, 14, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [168, 77, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [168, 100, 3, "Unexpected any. Specify a different type.", "193409811"]
+      [143, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [151, 8, 29, "Do not use any type assertions.", "3580926259"],
+      [151, 8, 13, "Do not use any type assertions.", "3075929919"],
+      [162, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [163, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [164, 14, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [171, 77, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [171, 100, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/variables/utils.ts:1349446567": [
       [58, 42, 3, "Unexpected any. Specify a different type.", "193409811"],
