@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	m "github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -22,7 +21,7 @@ func TestIntegrationDashboardService(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	t.Run("Dashboard service tests", func(t *testing.T) {
-		fakeStore := m.FakeDashboardStore{}
+		fakeStore := dashboards.FakeDashboardStore{}
 		defer fakeStore.AssertExpectations(t)
 		service := &DashboardServiceImpl{
 			log:                log.New("test.logger"),
@@ -35,7 +34,7 @@ func TestIntegrationDashboardService(t *testing.T) {
 		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
 
 		t.Run("Save dashboard validation", func(t *testing.T) {
-			dto := &m.SaveDashboardDTO{}
+			dto := &dashboards.SaveDashboardDTO{}
 
 			t.Run("When saving a dashboard with empty title it should return error", func(t *testing.T) {
 				titles := []string{"", " ", "   \t   "}
@@ -124,7 +123,7 @@ func TestIntegrationDashboardService(t *testing.T) {
 		})
 
 		t.Run("Save provisioned dashboard validation", func(t *testing.T) {
-			dto := &m.SaveDashboardDTO{}
+			dto := &dashboards.SaveDashboardDTO{}
 
 			t.Run("Should not return validation error if dashboard is provisioned", func(t *testing.T) {
 				fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything).Return(true, nil).Once()
@@ -158,7 +157,7 @@ func TestIntegrationDashboardService(t *testing.T) {
 		})
 
 		t.Run("Import dashboard validation", func(t *testing.T) {
-			dto := &m.SaveDashboardDTO{}
+			dto := &dashboards.SaveDashboardDTO{}
 
 			t.Run("Should return validation error if dashboard is provisioned", func(t *testing.T) {
 				fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything).Return(true, nil).Once()
