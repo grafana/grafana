@@ -10318,7 +10318,7 @@ exports[`better eslint`] = {
       [327, 27, 45, "Do not use any type assertions.", "881765776"],
       [330, 29, 45, "Do not use any type assertions.", "881765776"]
     ],
-    "public/app/plugins/datasource/prometheus/metric_find_query.test.ts:142842024": [
+    "public/app/plugins/datasource/prometheus/metric_find_query.test.ts:1350978765": [
       [12, 6, 59, "Do not use any type assertions.", "3685154675"],
       [12, 6, 49, "Do not use any type assertions.", "1184085652"],
       [18, 25, 178, "Do not use any type assertions.", "2743844758"],
@@ -10330,18 +10330,15 @@ exports[`better eslint`] = {
       [47, 5, 3, "Unexpected any. Specify a different type.", "193409811"],
       [59, 38, 3, "Unexpected any. Specify a different type.", "193409811"],
       [60, 42, 70, "Do not use any type assertions.", "164910658"],
-      [60, 42, 53, "Do not use any type assertions.", "1065771343"],
-      [165, 21, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [216, 21, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [240, 21, 3, "Unexpected any. Specify a different type.", "193409811"]
+      [60, 42, 53, "Do not use any type assertions.", "1065771343"]
     ],
-    "public/app/plugins/datasource/prometheus/metric_find_query.ts:3246701167": [
+    "public/app/plugins/datasource/prometheus/metric_find_query.ts:1417569751": [
       [62, 70, 3, "Unexpected any. Specify a different type.", "193409811"],
       [83, 72, 3, "Unexpected any. Specify a different type.", "193409811"],
       [96, 72, 3, "Unexpected any. Specify a different type.", "193409811"],
       [122, 70, 3, "Unexpected any. Specify a different type.", "193409811"],
       [140, 43, 35, "Do not use any type assertions.", "2712117061"],
-      [175, 70, 3, "Unexpected any. Specify a different type.", "193409811"]
+      [188, 70, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/plugins/datasource/prometheus/query_hints.test.ts:3821515673": [
       [45, 23, 28, "Do not use any type assertions.", "252196522"]
