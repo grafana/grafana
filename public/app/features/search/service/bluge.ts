@@ -60,8 +60,8 @@ export class BlugeSearcher implements GrafanaSearcher {
         opts.push({ value: `${sf.name}`, label: `${sf.display} (least)` });
       }
       for (const sf of sortTimeFields) {
-        opts.push({ value: `-${sf.name}`, label: `${sf.display} (recent first)` });
-        opts.push({ value: `${sf.name}`, label: `${sf.display} (oldest first)` });
+        opts.push({ value: `-${sf.name}`, label: `${sf.display} (recent)` });
+        opts.push({ value: `${sf.name}`, label: `${sf.display} (oldest)` });
       }
     }
 
@@ -210,6 +210,11 @@ const sortTimeFields = [
 /** Given the internal field name, this gives a reasonable display name for the table colum header */
 function getSortFieldDisplayName(name: string) {
   for (const sf of sortFields) {
+    if (sf.name === name) {
+      return sf.display;
+    }
+  }
+  for (const sf of sortTimeFields) {
     if (sf.name === name) {
       return sf.display;
     }

@@ -6831,13 +6831,13 @@ exports[`better eslint`] = {
       [62, 12, 21, "Do not use any type assertions.", "976337522"],
       [63, 14, 26, "Do not use any type assertions.", "2909521803"]
     ],
-    "public/app/features/search/page/components/columns.tsx:2440349722": [
-      [34, 20, 70, "Do not use any type assertions.", "512413936"],
-      [34, 21, 13, "Do not use any type assertions.", "3933930693"],
-      [34, 31, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [49, 32, 21, "Do not use any type assertions.", "3454251755"],
-      [49, 50, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [145, 15, 56, "Do not use any type assertions.", "1375039711"]
+    "public/app/features/search/page/components/columns.tsx:3221170075": [
+      [33, 20, 70, "Do not use any type assertions.", "512413936"],
+      [33, 21, 13, "Do not use any type assertions.", "3933930693"],
+      [33, 31, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [52, 32, 21, "Do not use any type assertions.", "3454251755"],
+      [52, 50, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [148, 15, 56, "Do not use any type assertions.", "1375039711"]
     ],
     "public/app/features/search/reducers/dashboardSearch.test.ts:1813679195": [
       [5, 66, 17, "Do not use any type assertions.", "3518965757"],
@@ -6858,21 +6858,21 @@ exports[`better eslint`] = {
     "public/app/features/search/reducers/manageDashboards.ts:4114284001": [
       [81, 11, 24, "Do not use any type assertions.", "1870559034"]
     ],
-    "public/app/features/search/service/bluge.ts:59496993": [
+    "public/app/features/search/service/bluge.ts:3991565237": [
       [21, 15, 68, "Do not use any type assertions.", "2766474629"],
       [34, 17, 128, "Do not use any type assertions.", "437379020"],
       [36, 17, 47, "Do not use any type assertions.", "610587748"],
       [38, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [72, 13, 68, "Do not use any type assertions.", "2766474629"],
-      [83, 13, 39, "Do not use any type assertions.", "246018916"],
-      [85, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [88, 17, 26, "Do not use any type assertions.", "387817714"],
-      [104, 15, 37, "Do not use any type assertions.", "1203314137"],
-      [130, 20, 446, "Do not use any type assertions.", "258020179"],
-      [132, 19, 354, "Do not use any type assertions.", "4208037114"],
-      [145, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [161, 24, 46, "Do not use any type assertions.", "1967560255"],
-      [167, 22, 38, "Do not use any type assertions.", "1477056001"]
+      [76, 13, 68, "Do not use any type assertions.", "2766474629"],
+      [87, 13, 39, "Do not use any type assertions.", "246018916"],
+      [89, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [92, 17, 26, "Do not use any type assertions.", "387817714"],
+      [108, 15, 37, "Do not use any type assertions.", "1203314137"],
+      [134, 20, 446, "Do not use any type assertions.", "258020179"],
+      [136, 19, 354, "Do not use any type assertions.", "4208037114"],
+      [149, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [165, 24, 46, "Do not use any type assertions.", "1967560255"],
+      [171, 22, 38, "Do not use any type assertions.", "1477056001"]
     ],
     "public/app/features/search/service/sql.ts:4013142735": [
       [91, 36, 3, "Unexpected any. Specify a different type.", "193409811"],
