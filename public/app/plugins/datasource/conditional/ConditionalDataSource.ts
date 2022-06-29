@@ -40,7 +40,7 @@ export class ConditionalDataSource extends MixedDatasource<ConditionalDataSource
           throw new Error(`Unknown condition type: ${condition.id}`);
         }
 
-        if (!conditionDef.execute(condition.options, context)) {
+        if (!conditionDef.shouldExecute(condition.options, context)) {
           isCorrectTarget = false;
           break;
         } else {

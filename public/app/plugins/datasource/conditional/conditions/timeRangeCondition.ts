@@ -15,7 +15,7 @@ export const timeRangeCondition: QueryConditionInfo<TimeRangeConditionOptions> =
       to: quickOptions[0].to,
     },
   },
-  execute: (o, context) => {
+  shouldExecute: (o, context) => {
     if (o.value.from === context.timeRange.raw.from && o.value.to === context.timeRange.raw.to) {
       return true;
     }

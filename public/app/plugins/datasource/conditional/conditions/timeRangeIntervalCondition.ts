@@ -18,7 +18,7 @@ export const timeRangeIntervalCondition: QueryConditionInfo<TimeRangeIntervalCon
     operator: OPERATOR_ID.LessThan,
     interval: '1m',
   },
-  execute: (o, context) => {
+  shouldExecute: (o, context) => {
     const currentTimeRangeInMs = context.timeRange.to.diff(context.timeRange.from);
     const interval = rangeUtil.intervalToMs(o.interval);
     const evaluate = OPERATORS.find((op) => op.id === o.operator)?.evaluate;

@@ -13,7 +13,7 @@ export const fieldValueClickCondition: QueryConditionInfo<ValueClickConditionOpt
   name: 'Field value click',
   description: 'When a value is clicked',
   variablePrefix: FIELD_VALUE_CLICK_VARIABLE_PREFIX,
-  execute: (options, context) => {
+  shouldExecute: (options, context) => {
     const drilldownTplVars = context.variables.filter(
       (arg) =>
         // disabling because we know only keyValue variables are passed to this function

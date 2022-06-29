@@ -11,7 +11,7 @@ export interface QueryConditionInfo<TOptions extends {} = any> extends RegistryI
   /**
    * Given condition configuration returns boolean representing condition being met or not
    */
-  execute: (options: TOptions, context: QueryConditionExecutionContext) => boolean;
+  shouldExecute: (options: TOptions, context: QueryConditionExecutionContext) => boolean;
   /**
    * Component used to render the condition config
    */
