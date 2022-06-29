@@ -630,7 +630,9 @@ func newDataFrame(name string, typ string, fields ...*data.Field) *data.Frame {
 }
 
 func alignTimeRange(t time.Time, step time.Duration, offset int64) time.Time {
-	return time.Unix(int64(math.Floor((float64(t.Unix()+offset)/step.Seconds()))*step.Seconds()-float64(offset)), 0)
+	offsetNano := float64(offset * 1e9)
+	stepNano := float64(step.Nanoseconds())
+	return time.Unix(0, int64(math.Floor((float64(t.UnixNano())+offsetNano)/stepNano)*stepNano-offsetNano))
 }
 
 func isVariableInterval(interval string) bool {

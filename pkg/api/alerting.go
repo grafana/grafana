@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/search"
@@ -151,7 +152,7 @@ func (hs *HTTPServer) AlertTest(c *models.ReqContext) response.Response {
 		if errors.As(err, &validationErr) {
 			return response.Error(422, validationErr.Error(), nil)
 		}
-		if errors.Is(err, models.ErrDataSourceAccessDenied) {
+		if errors.Is(err, datasources.ErrDataSourceAccessDenied) {
 			return response.Error(403, "Access denied to datasource", err)
 		}
 		return response.Error(500, "Failed to test rule", err)
