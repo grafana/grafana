@@ -335,7 +335,7 @@ export function join(tables: AlignedData[], nullModes?: number[][]) {
   return data;
 }
 
-// Quick test if the first and last points look to be ascending
+// Test a few samples to see if the values are ascending
 // Only exported for tests
 export function isLikelyAscendingVector(data: Vector, samples = 50) {
   const len = data.length;
