@@ -33,6 +33,7 @@ import {
   TimeRange,
   rangeUtil,
   toUtc,
+  QueryHint,
 } from '@grafana/data';
 import { FetchError, config, DataSourceWithBackend } from '@grafana/runtime';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
@@ -44,13 +45,14 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 import { serializeParams } from '../../../core/utils/fetch';
 import { renderLegendFormat } from '../prometheus/legend';
 
-import { addLabelToQuery } from './add_label_to_query';
+import { addLabelToQuery, addParserToQuery } from './add_label_to_query';
 import { transformBackendResult } from './backendResultTransformer';
 import { LokiAnnotationsQueryEditor } from './components/AnnotationsQueryEditor';
 import LanguageProvider from './language_provider';
 import { escapeLabelValueInSelector } from './language_utils';
 import { LiveStreams, LokiLiveTarget } from './live_streams';
-import { getNormalizedLokiQuery } from './query_utils';
+import { getQueryHints } from './queryHints';
+import { getNormalizedLokiQuery, isLogsQuery, isValidQuery } from './query_utils';
 import { sortDataFrameByTime } from './sortDataFrame';
 import { doLokiChannelStream } from './streaming';
 import syntax from './syntax';
@@ -348,7 +350,24 @@ export class LokiDatasource
     return Array.from(streams);
   }
 
-  // By implementing getTagKeys and getTagValues we add ad-hoc filtters functionality
+  async getDataSamples(query: LokiQuery): Promise<DataFrame[]> {
+    // Currently works only for log samples
+    if (!isValidQuery(query.expr) || !isLogsQuery(query.expr)) {
+      return [];
+    }
+
+    const lokiLogsQuery: LokiQuery = {
+      expr: query.expr,
+      queryType: LokiQueryType.Range,
+      refId: 'log-samples',
+      maxLines: 10,
+    };
+
+    const request = makeRequest(lokiLogsQuery, this.timeSrv.timeRange(), CoreApp.Explore, 'log-samples');
+    return await lastValueFrom(this.query(request).pipe(switchMap((res) => of(res.data))));
+  }
+
+  // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
   async getTagKeys() {
     return await this.labelNamesQuery();
   }
@@ -380,6 +399,14 @@ export class LokiDatasource
       }
       case 'ADD_FILTER_OUT': {
         expression = this.addLabelToQuery(expression, action.key, '!=', action.value);
+        break;
+      }
+      case 'ADD_LOGFMT_PARSER': {
+        expression = addParserToQuery(expression, 'logfmt');
+        break;
+      }
+      case 'ADD_JSON_PARSER': {
+        expression = addParserToQuery(expression, 'json');
         break;
       }
       default:
@@ -680,6 +707,10 @@ export class LokiDatasource
 
   getVariables(): string[] {
     return this.templateSrv.getVariables().map((v) => `$${v.name}`);
+  }
+
+  getQueryHints(query: LokiQuery, result: DataFrame[]): QueryHint[] {
+    return getQueryHints(query.expr, result);
   }
 }
 
