@@ -124,7 +124,7 @@ func (d *DashboardStore) SavePublicDashboardConfig(ctx context.Context, cmd mode
 // updates existing public dashboard configuration
 func (d *DashboardStore) UpdatePublicDashboardConfig(ctx context.Context, cmd models.SavePublicDashboardConfigCommand) error {
 	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		_, err := sess.ID(cmd.PublicDashboard.Uid).UseBool("is_enabled").Update(&cmd.PublicDashboard)
+		_, err := sess.ID(cmd.PublicDashboard.Uid).Omit("time_settings").UseBool("is_enabled").Update(&cmd.PublicDashboard)
 		if err != nil {
 			return err
 		}

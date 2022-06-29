@@ -54,11 +54,7 @@ func (dr *DashboardServiceImpl) SavePublicDashboardConfig(ctx context.Context, d
 
 	// set default value for time settings
 	if dto.PublicDashboard.TimeSettings == nil {
-		json, err := simplejson.NewJson([]byte("{}"))
-		if err != nil {
-			return nil, err
-		}
-		dto.PublicDashboard.TimeSettings = json
+		dto.PublicDashboard.TimeSettings = simplejson.New()
 	}
 
 	if dto.PublicDashboard.Uid == "" {
@@ -100,11 +96,10 @@ func (dr *DashboardServiceImpl) savePublicDashboardConfig(ctx context.Context, d
 func (dr *DashboardServiceImpl) updatePublicDashboardConfig(ctx context.Context, dto *dashboards.SavePublicDashboardConfigDTO) (*models.PublicDashboard, error) {
 	cmd := models.SavePublicDashboardConfigCommand{
 		PublicDashboard: models.PublicDashboard{
-			Uid:          dto.PublicDashboard.Uid,
-			IsEnabled:    dto.PublicDashboard.IsEnabled,
-			TimeSettings: dto.PublicDashboard.TimeSettings,
-			UpdatedBy:    dto.UserId,
-			UpdatedAt:    time.Now(),
+			Uid:       dto.PublicDashboard.Uid,
+			IsEnabled: dto.PublicDashboard.IsEnabled,
+			UpdatedBy: dto.UserId,
+			UpdatedAt: time.Now(),
 		},
 	}
 
