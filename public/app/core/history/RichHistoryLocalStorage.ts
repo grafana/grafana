@@ -78,7 +78,7 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
     try {
       store.setObject(RICH_HISTORY_KEY, updatedHistory);
     } catch (error) {
-      if (error.name === 'QuotaExceededError') {
+      if (error instanceof Error && error.name === 'QuotaExceededError') {
         throwError(RichHistoryServiceError.StorageFull, `Saving rich history failed: ${error.message}`);
       } else {
         throw error;

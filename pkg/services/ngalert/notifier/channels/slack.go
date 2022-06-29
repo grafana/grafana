@@ -8,25 +8,24 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math/rand"
-	"mime/multipart"
 	"net"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var SlackAPIEndpoint = "https://slack.com/api/chat.postMessage"
-var SlackImageAPIEndpoint = "https://slack.com/api/files.upload"
 
 // SlackNotifier is responsible for sending
 // alert notification to Slack.
@@ -38,7 +37,6 @@ type SlackNotifier struct {
 	webhookSender notifications.WebhookSender
 
 	URL            *url.URL
-	ImageUploadURL string
 	Username       string
 	IconEmoji      string
 	IconURL        string
@@ -54,7 +52,6 @@ type SlackNotifier struct {
 type SlackConfig struct {
 	*NotificationChannelConfig
 	URL            *url.URL
-	ImageUploadURL string
 	Username       string
 	IconEmoji      string
 	IconURL        string
@@ -82,7 +79,6 @@ func NewSlackConfig(factoryConfig FactoryConfig) (*SlackConfig, error) {
 	channelConfig := factoryConfig.Config
 	decryptFunc := factoryConfig.DecryptFunc
 	endpointURL := channelConfig.Settings.Get("endpointUrl").MustString(SlackAPIEndpoint)
-	imageUploadURL := channelConfig.Settings.Get("imageUploadUrl").MustString(SlackImageAPIEndpoint)
 	slackURL := decryptFunc(context.Background(), channelConfig.SecureSettings, "url", channelConfig.Settings.Get("url").MustString())
 	if slackURL == "" {
 		slackURL = endpointURL
@@ -126,7 +122,6 @@ func NewSlackConfig(factoryConfig FactoryConfig) (*SlackConfig, error) {
 		MentionUsers:              mentionUsers,
 		MentionGroups:             mentionGroups,
 		URL:                       apiURL,
-		ImageUploadURL:            imageUploadURL,
 		Username:                  channelConfig.Settings.Get("username").MustString("Grafana"),
 		IconEmoji:                 channelConfig.Settings.Get("icon_emoji").MustString(),
 		IconURL:                   channelConfig.Settings.Get("icon_url").MustString(),
@@ -151,7 +146,6 @@ func NewSlackNotifier(config *SlackConfig,
 			Settings:              config.Settings,
 		}),
 		URL:            config.URL,
-		ImageUploadURL: config.ImageUploadURL,
 		Recipient:      config.Recipient,
 		MentionUsers:   config.MentionUsers,
 		MentionGroups:  config.MentionGroups,
@@ -195,6 +189,7 @@ type attachment struct {
 
 // Notify sends an alert notification to Slack.
 func (sn *SlackNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bool, error) {
+	sn.log.Debug("building slack message", "alerts", len(alerts))
 	msg, err := sn.buildSlackMessage(ctx, alerts)
 	if err != nil {
 		return false, fmt.Errorf("build slack message: %w", err)
@@ -205,7 +200,7 @@ func (sn *SlackNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bo
 		return false, fmt.Errorf("marshal json: %w", err)
 	}
 
-	sn.log.Debug("Sending Slack API request", "url", sn.URL.String(), "data", string(b))
+	sn.log.Debug("sending Slack API request", "url", sn.URL.String(), "data", string(b))
 	request, err := http.NewRequestWithContext(ctx, http.MethodPost, sn.URL.String(), bytes.NewReader(b))
 	if err != nil {
 		return false, fmt.Errorf("failed to create HTTP request: %w", err)
@@ -218,7 +213,7 @@ func (sn *SlackNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bo
 			panic("Token should be set when using the Slack chat API")
 		}
 	} else {
-		sn.log.Debug("Adding authorization header to HTTP request")
+		sn.log.Debug("adding authorization header to HTTP request")
 		request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", sn.Token))
 	}
 
@@ -226,42 +221,18 @@ func (sn *SlackNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bo
 		return false, err
 	}
 
-	// Try to upload if we have an image path but no image URL. This uploads the file
-	// immediately after the message. A bit of a hack, but it doesn't require the
-	// user to have an image host set up.
-	// TODO: how many image files should we upload? In what order? Should we
-	// assume the alerts array is already sorted?
-	// TODO: We need a refactoring so we don't do two database reads for the same data.
-	// TODO: Should we process all alerts' annotations? We can only have on image.
-	// TODO: Should we guard out-of-bounds errors here? Callers should prevent that from happening, imo
-	imgToken := getTokenFromAnnotations(alerts[0].Annotations)
-	dbContext, cancel := context.WithTimeout(ctx, ImageStoreTimeout)
-	imgData, err := sn.images.GetData(dbContext, imgToken)
-	cancel()
-	if err != nil {
-		if !errors.Is(err, ErrImagesUnavailable) {
-			// Ignore errors. Don't log "ImageUnavailable", which means the storage doesn't exist.
-			sn.log.Warn("Error reading screenshot data from ImageStore: %v", err)
-		}
-		return true, nil
-	}
-
-	defer func() {
-		// Nothing for us to do.
-		_ = imgData.Close()
-	}()
-
-	err = sn.slackFileUpload(ctx, imgData, sn.Recipient, sn.Token)
-	if err != nil {
-		sn.log.Warn("Error reading screenshot data from ImageStore: %v", err)
-	}
-
 	return true, nil
 }
 
 // sendSlackRequest sends a request to the Slack API.
 // Stubbable by tests.
-var sendSlackRequest = func(request *http.Request, logger log.Logger) error {
+var sendSlackRequest = func(request *http.Request, logger log.Logger) (retErr error) {
+	defer func() {
+		if retErr != nil {
+			logger.Warn("failed to send slack request", "err", retErr)
+		}
+	}()
+
 	netTransport := &http.Transport{
 		TLSClientConfig: &tls.Config{
 			Renegotiation: tls.RenegotiateFreelyAsClient,
@@ -282,7 +253,7 @@ var sendSlackRequest = func(request *http.Request, logger log.Logger) error {
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			logger.Warn("Failed to close response body", "err", err)
+			logger.Warn("failed to close response body", "err", err)
 		}
 	}()
 
@@ -315,29 +286,16 @@ var sendSlackRequest = func(request *http.Request, logger log.Logger) error {
 		return fmt.Errorf("failed to make Slack API request: %s", rslt.Err)
 	}
 
-	logger.Debug("Sending Slack API request succeeded", "url", request.URL.String(), "statusCode", resp.Status)
+	logger.Debug("sending Slack API request succeeded", "url", request.URL.String(), "statusCode", resp.Status)
 	return nil
 }
 
-func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Alert) (*slackMessage, error) {
-	alerts := types.Alerts(as...)
+func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, alrts []*types.Alert) (*slackMessage, error) {
+	alerts := types.Alerts(alrts...)
 	var tmplErr error
-	tmpl, _ := TmplText(ctx, sn.tmpl, as, sn.log, &tmplErr)
+	tmpl, _ := TmplText(ctx, sn.tmpl, alrts, sn.log, &tmplErr)
 
 	ruleURL := joinUrlPath(sn.tmpl.ExternalURL.String(), "/alerting/list", sn.log)
-
-	// TODO: Should we process all alerts' annotations? We can only have on image.
-	// TODO: Should we guard out-of-bounds errors here? Callers should prevent that from happening, imo
-	imgToken := getTokenFromAnnotations(as[0].Annotations)
-	timeoutCtx, cancel := context.WithTimeout(ctx, ImageStoreTimeout)
-	imgURL, err := sn.images.GetURL(timeoutCtx, imgToken)
-	cancel()
-	if err != nil {
-		if !errors.Is(err, ErrImagesUnavailable) {
-			// Ignore errors. Don't log "ImageUnavailable", which means the storage doesn't exist.
-			sn.log.Warn("failed to retrieve image url from store", "error", err)
-		}
-	}
 
 	req := &slackMessage{
 		Channel:   tmpl(sn.Recipient),
@@ -353,7 +311,6 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Aler
 				Fallback:   tmpl(sn.Title),
 				Footer:     "Grafana v" + setting.BuildVersion,
 				FooterIcon: FooterIconURL,
-				ImageURL:   imgURL,
 				Ts:         time.Now().Unix(),
 				TitleLink:  ruleURL,
 				Text:       tmpl(sn.Text),
@@ -361,6 +318,17 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Aler
 			},
 		},
 	}
+
+	_ = withStoredImage(ctx, sn.log, sn.images,
+		func(index int, image *ngmodels.Image) error {
+			if image != nil {
+				req.Attachments[0].ImageURL = image.URL
+				return ErrImagesDone
+			}
+			return nil
+		},
+		0, alrts...)
+
 	if tmplErr != nil {
 		sn.log.Warn("failed to template Slack message", "err", tmplErr.Error())
 	}
@@ -405,60 +373,4 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Aler
 
 func (sn *SlackNotifier) SendResolved() bool {
 	return !sn.GetDisableResolveMessage()
-}
-
-func (sn *SlackNotifier) slackFileUpload(ctx context.Context, data io.Reader, recipient, token string) error {
-	sn.log.Info("Uploading to slack via file.upload API")
-	headers, uploadBody, err := sn.generateFileUploadBody(data, token, recipient)
-	if err != nil {
-		return err
-	}
-	cmd := &models.SendWebhookSync{
-		Url: sn.ImageUploadURL, Body: uploadBody.String(), HttpHeader: headers, HttpMethod: "POST",
-	}
-	if err := sn.webhookSender.SendWebhookSync(ctx, cmd); err != nil {
-		sn.log.Error("Failed to upload slack image", "error", err, "webhook", "file.upload")
-		return err
-	}
-	return nil
-}
-
-func (sn *SlackNotifier) generateFileUploadBody(data io.Reader, token string, recipient string) (map[string]string, bytes.Buffer, error) {
-	// Slack requires all POSTs to files.upload to present
-	// an "application/x-www-form-urlencoded" encoded querystring
-	// See https://api.slack.com/methods/files.upload
-	var b bytes.Buffer
-	w := multipart.NewWriter(&b)
-	defer func() {
-		if err := w.Close(); err != nil {
-			// Shouldn't matter since we already close w explicitly on the non-error path
-			sn.log.Warn("Failed to close multipart writer", "err", err)
-		}
-	}()
-
-	// TODO: perhaps we should pass the filename through to here to use the local name.
-	// https://github.com/grafana/grafana/issues/49375
-	fw, err := w.CreateFormFile("file", fmt.Sprintf("screenshot-%v", rand.Intn(2e6)))
-	if err != nil {
-		return nil, b, err
-	}
-	if _, err := io.Copy(fw, data); err != nil {
-		return nil, b, err
-	}
-	// Add the authorization token
-	if err := w.WriteField("token", token); err != nil {
-		return nil, b, err
-	}
-	// Add the channel(s) to POST to
-	if err := w.WriteField("channels", recipient); err != nil {
-		return nil, b, err
-	}
-	if err := w.Close(); err != nil {
-		return nil, b, fmt.Errorf("failed to close multipart writer: %w", err)
-	}
-	headers := map[string]string{
-		"Content-Type":  w.FormDataContentType(),
-		"Authorization": "auth_token=\"" + token + "\"",
-	}
-	return headers, b, nil
 }

@@ -3,9 +3,9 @@ package channels
 import (
 	"context"
 	"errors"
-	"io"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/prometheus/alertmanager/template"
 )
@@ -19,11 +19,8 @@ type FactoryConfig struct {
 	Template *template.Template
 }
 
-// A specialization of store.ImageStore, to avoid an import loop.
 type ImageStore interface {
-	GetURL(ctx context.Context, token string) (string, error)
-	GetFilepath(ctx context.Context, token string) (string, error)
-	GetData(ctx context.Context, token string) (io.ReadCloser, error)
+	GetImage(ctx context.Context, token string) (*models.Image, error)
 }
 
 func NewFactoryConfig(config *NotificationChannelConfig, notificationService notifications.Service,

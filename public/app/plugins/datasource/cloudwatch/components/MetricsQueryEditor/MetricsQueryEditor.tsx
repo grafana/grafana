@@ -16,6 +16,7 @@ import {
   MetricQueryType,
   MetricStat,
 } from '../../types';
+import { DynamicLabelsField } from '../DynamicLabelsField';
 import QueryHeader from '../QueryHeader';
 
 import { Alias } from './Alias';
@@ -138,14 +139,12 @@ export const MetricsQueryEditor = (props: Props) => {
             optional
             tooltip="Change time series legend name using Dynamic labels. See documentation for details."
           >
-            <Input
-              id={`${query.refId}-cloudwatch-metric-query-editor-label`}
-              onBlur={onRunQuery}
-              value={preparedQuery.label ?? ''}
-              onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                onChange({ ...preparedQuery, label: event.target.value })
-              }
-            />
+            <DynamicLabelsField
+              width={52}
+              onRunQuery={onRunQuery}
+              label={preparedQuery.label ?? ''}
+              onChange={(label) => props.onChange({ ...query, label })}
+            ></DynamicLabelsField>
           </EditorField>
         ) : (
           <EditorField

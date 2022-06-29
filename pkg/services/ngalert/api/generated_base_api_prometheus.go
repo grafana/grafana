@@ -4,7 +4,6 @@
  *
  *Do not manually edit these files, please find ngalert/api/swagger-codegen/ for commands on how to generate them.
  */
-
 package api
 
 import (
@@ -15,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 type PrometheusApiForkingService interface {
@@ -25,19 +25,18 @@ type PrometheusApiForkingService interface {
 }
 
 func (f *ForkedPrometheusApi) RouteGetAlertStatuses(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetAlertStatuses(ctx)
+	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
+	return f.forkRouteGetAlertStatuses(ctx, datasourceUIDParam)
 }
-
 func (f *ForkedPrometheusApi) RouteGetGrafanaAlertStatuses(ctx *models.ReqContext) response.Response {
 	return f.forkRouteGetGrafanaAlertStatuses(ctx)
 }
-
 func (f *ForkedPrometheusApi) RouteGetGrafanaRuleStatuses(ctx *models.ReqContext) response.Response {
 	return f.forkRouteGetGrafanaRuleStatuses(ctx)
 }
-
 func (f *ForkedPrometheusApi) RouteGetRuleStatuses(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetRuleStatuses(ctx)
+	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
+	return f.forkRouteGetRuleStatuses(ctx, datasourceUIDParam)
 }
 
 func (api *API) RegisterPrometheusApiEndpoints(srv PrometheusApiForkingService, m *metrics.API) {

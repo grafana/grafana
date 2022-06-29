@@ -1,7 +1,7 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v2.9.48'
-build_image = 'grafana/build-container:1.5.4'
+grabpl_version = 'v2.9.50'
+build_image = 'grafana/build-container:1.5.7'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
 alpine_image = 'alpine:3.15'
@@ -68,6 +68,9 @@ def wire_install_step():
         'image': build_image,
         'commands': [
             'make gen-go',
+        ],
+        'depends_on': [
+            'verify-gen-cue',
         ],
     }
 
@@ -203,13 +206,13 @@ def enterprise_downstream_step(edition, ver_mode):
             'params': [
                 'SOURCE_BUILD_NUMBER=${DRONE_COMMIT}',
                 'SOURCE_COMMIT=${DRONE_COMMIT}',
-                'OSS_PULL_REQUEST=${DRONE_PULL_REQUEST}',
             ],
         },
     }
 
     if ver_mode == 'pr':
         step.update({ 'failure': 'ignore' })
+        step['settings']['params'].append('OSS_PULL_REQUEST=${DRONE_PULL_REQUEST}')
 
     return step
 
@@ -227,7 +230,7 @@ def lint_backend_step(edition):
         ],
         'commands': [
             # Don't use Make since it will re-download the linters
-            './bin/grabpl lint-backend --edition {}'.format(edition),
+            'make lint-go',
         ],
     }
 
@@ -499,29 +502,43 @@ def build_plugins_step(edition, sign=False):
 
 
 def test_backend_step(edition):
-    return {
-        'name': 'test-backend' + enterprise2_suffix(edition),
-        'image': build_image,
-        'depends_on': [
-            'wire-install',
-        ],
-        'commands': [
-            './bin/grabpl test-backend --edition {}'.format(edition),
-        ],
-    }
+    if edition == 'enterprise2':
+        return {
+            'name': 'test-backend' + enterprise2_suffix(edition),
+            'image': build_image,
+            'depends_on': [
+                'wire-install',
+            ],
+            'commands': [
+                'go test -tags=pro -covermode=atomic -timeout=30m ./pkg/...',
+            ],
+        }
+    else:
+        return {
+            'name': 'test-backend' + enterprise2_suffix(edition),
+            'image': build_image,
+            'depends_on': [
+                'wire-install',
+            ],
+            'commands': [
+                'go test -short -covermode=atomic -timeout=30m ./pkg/...',
+            ],
+        }
+
 
 
 def test_backend_integration_step(edition):
     return {
-        'name': 'test-backend-integration' + enterprise2_suffix(edition),
+        'name': 'test-backend-integration',
         'image': build_image,
         'depends_on': [
             'wire-install',
         ],
         'commands': [
-            './bin/grabpl integration-tests --edition {}'.format(edition),
+            'go test -run Integration -covermode=atomic -timeout=30m ./pkg/...',
         ],
     }
+
 
 
 def test_frontend_step():
@@ -842,18 +859,7 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, trigger=None):
 
 
 def postgres_integration_tests_step(edition, ver_mode):
-    deps = []
-    deps.extend(['grabpl'])
-    return {
-        'name': 'postgres-integration-tests',
-        'image': build_image,
-        'depends_on': deps,
-        'environment': {
-            'PGPASSWORD': 'grafanatest',
-            'GRAFANA_TEST_DB': 'postgres',
-            'POSTGRES_HOST': 'postgres',
-        },
-        'commands': [
+    cmds = [
             'apt-get update',
             'apt-get install -yq postgresql-client',
             'dockerize -wait tcp://postgres:5432 -timeout 120s',
@@ -861,41 +867,48 @@ def postgres_integration_tests_step(edition, ver_mode):
             'devenv/docker/blocks/postgres_tests/setup.sql',
             # Make sure that we don't use cached results for another database
             'go clean -testcache',
-            './bin/grabpl integration-tests --database postgres',
-        ],
+            "go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=30m {}'",
+        ]
+    return {
+        'name': 'postgres-integration-tests',
+        'image': build_image,
+        'depends_on': ['wire-install'],
+        'environment': {
+            'PGPASSWORD': 'grafanatest',
+            'GRAFANA_TEST_DB': 'postgres',
+            'POSTGRES_HOST': 'postgres',
+        },
+        'commands': cmds,
     }
 
 
 def mysql_integration_tests_step(edition, ver_mode):
-    deps = []
-    deps.extend(['grabpl'])
-    return {
-        'name': 'mysql-integration-tests',
-        'image': build_image,
-        'depends_on': deps,
-        'environment': {
-            'GRAFANA_TEST_DB': 'mysql',
-            'MYSQL_HOST': 'mysql',
-        },
-        'commands': [
+    cmds = [
             'apt-get update',
             'apt-get install -yq default-mysql-client',
             'dockerize -wait tcp://mysql:3306 -timeout 120s',
             'cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass',
             # Make sure that we don't use cached results for another database
             'go clean -testcache',
-            './bin/grabpl integration-tests --database mysql',
-        ],
+            "go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=30m {}'",
+        ]
+    return {
+        'name': 'mysql-integration-tests',
+        'image': build_image,
+        'depends_on': ['wire-install'],
+        'environment': {
+            'GRAFANA_TEST_DB': 'mysql',
+            'MYSQL_HOST': 'mysql',
+        },
+        'commands': cmds,
     }
 
 
 def redis_integration_tests_step():
-    deps = []
-    deps.extend(['grabpl'])
     return {
         'name': 'redis-integration-tests',
         'image': build_image,
-        'depends_on': deps,
+        'depends_on': ['wire-install'],
         'environment': {
             'REDIS_URL': 'redis://redis:6379/0',
         },
@@ -907,12 +920,10 @@ def redis_integration_tests_step():
 
 
 def memcached_integration_tests_step():
-    deps = []
-    deps.extend(['grabpl'])
     return {
         'name': 'memcached-integration-tests',
         'image': build_image,
-        'depends_on': deps,
+        'depends_on': ['wire-install'],
         'environment': {
             'MEMCACHED_HOSTS': 'memcached:11211',
         },
@@ -1137,36 +1148,20 @@ def get_windows_steps(edition, ver_mode):
 
     return steps
 
-
-def validate_scuemata_step():
+def verify_gen_cue_step(edition):
+    deps = []
+    if edition == "enterprise":
+        deps.extend(['init-enterprise'])
     return {
-        'name': 'validate-scuemata',
+        'name': 'verify-gen-cue',
         'image': build_image,
-        'depends_on': [
-            'build-backend',
-        ],
+        'depends_on': deps,
         'commands': [
-            './bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .',
+            '# It is required that code generated from Thema/CUE be committed and in sync with its inputs.',
+            '# The following command will fail if running code generators produces any diff in output.',
+            'CODEGEN_VERIFY=1 make gen-cue',
         ],
     }
-
-
-def ensure_cuetsified_step():
-    return {
-        'name': 'ensure-cuetsified',
-        'image': build_image,
-        'depends_on': [
-            'validate-scuemata',
-        ],
-        'commands': [
-            '# It is required that the generated Typescript be in sync with the input CUE files.',
-            '# To enforce this, the following command will attempt to generate Typescript from all',
-            '# appropriate .cue files, then compare with the corresponding (*.gen.ts) file the generated',
-            '# code would have been written to. It exits 1 if any diffs are found.',
-            './bin/linux-amd64/grafana-cli cue gen-ts --grafana-root . --diff',
-        ],
-    }
-
 
 def end_to_end_tests_deps(edition):
     if disable_tests:

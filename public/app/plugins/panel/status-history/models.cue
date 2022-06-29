@@ -15,28 +15,31 @@
 package grafanaschema
 
 import (
-    ui "github.com/grafana/grafana/packages/grafana-schema/src/schema"
+	"github.com/grafana/thema"
+	ui "github.com/grafana/grafana/packages/grafana-schema/src/schema"
 )
 
-Panel: {
-    lineages: [
-        [
-            {
-                PanelOptions: {
-                    ui.OptionsWithLegend
-                    ui.OptionsWithTooltip
-                    showValue: ui.VisibilityMode
-                    rowHeight: number
-                    colWidth?: number
-                    alignValue: "center" | *"left" | "right"
-                } @cuetsy(kind="interface")
-                PanelFieldConfig: {
-                    ui.HideableFieldConfig
-                    lineWidth?: number | *1
-                    fillOpacity?: number | *70
-                } @cuetsy(kind="interface")
-            }
-        ]
-    ]
-    migrations: []
+Panel: thema.#Lineage & {
+	name: "status-history"
+	seqs: [
+		{
+			schemas: [
+				{
+					PanelOptions: {
+						ui.OptionsWithLegend
+						ui.OptionsWithTooltip
+						showValue:  ui.VisibilityMode
+						rowHeight:  number
+						colWidth?:  number
+						alignValue: "center" | *"left" | "right"
+					} @cuetsy(kind="interface")
+					PanelFieldConfig: {
+						ui.HideableFieldConfig
+						lineWidth?:   number | *1
+						fillOpacity?: number | *70
+					} @cuetsy(kind="interface")
+				},
+			]
+		},
+	]
 }

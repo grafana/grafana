@@ -3,15 +3,12 @@ package testdatasource
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -62,9 +59,7 @@ func TestUSAScenario(t *testing.T) {
 		require.NotNil(t, rsp)
 		for k, v := range rsp.Responses {
 			dr := v
-			filePath := filepath.Join("testdata", fmt.Sprintf("usa-%s.txt", k))
-			err = experimental.CheckGoldenDataResponse(filePath, &dr, true)
-			assert.NoError(t, err) // require will fail after a single value
+			experimental.CheckGoldenJSONResponse(t, "testdata", "usa-"+k, &dr, true)
 		}
 	})
 }

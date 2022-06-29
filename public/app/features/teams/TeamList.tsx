@@ -125,7 +125,7 @@ export class TeamList extends PureComponent<Props, State> {
         )}
         <td className="text-right">
           <DeleteButton
-            aria-label="Delete team"
+            aria-label={`Delete team ${team.name}`}
             size="sm"
             disabled={!canDelete}
             onConfirm={() => this.deleteTeam(team)}

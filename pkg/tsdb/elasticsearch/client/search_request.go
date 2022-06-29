@@ -342,11 +342,6 @@ func (b *aggBuilderImpl) DateHistogram(key, field string, fn func(a *DateHistogr
 		fn(innerAgg, builder)
 	}
 
-	if b.version.Major() >= 8 {
-		innerAgg.FixedInterval = innerAgg.Interval
-		innerAgg.Interval = ""
-	}
-
 	b.aggDefs = append(b.aggDefs, aggDef)
 
 	return b

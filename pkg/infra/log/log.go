@@ -20,8 +20,8 @@ import (
 	"github.com/go-stack/stack"
 	"github.com/grafana/grafana/pkg/infra/log/level"
 	"github.com/grafana/grafana/pkg/infra/log/term"
+	"github.com/grafana/grafana/pkg/infra/log/text"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/mattn/go-isatty"
 	"gopkg.in/ini.v1"
 )
@@ -326,11 +326,11 @@ func getLogFormat(format string) Formatedlogger {
 			}
 		}
 		return func(w io.Writer) gokitlog.Logger {
-			return gokitlog.NewLogfmtLogger(w)
+			return text.NewTextLogger(w)
 		}
 	case "text":
 		return func(w io.Writer) gokitlog.Logger {
-			return gokitlog.NewLogfmtLogger(w)
+			return text.NewTextLogger(w)
 		}
 	case "json":
 		return func(w io.Writer) gokitlog.Logger {
@@ -338,7 +338,7 @@ func getLogFormat(format string) Formatedlogger {
 		}
 	default:
 		return func(w io.Writer) gokitlog.Logger {
-			return gokitlog.NewLogfmtLogger(w)
+			return text.NewTextLogger(w)
 		}
 	}
 }
@@ -392,7 +392,7 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 		sec, err := cfg.GetSection("log." + mode)
 		if err != nil {
 			_ = level.Error(root).Log("Unknown log mode", "mode", mode)
-			return errutil.Wrapf(err, "failed to get config section log.%s", mode)
+			return fmt.Errorf("failed to get config section log. %s: %w", mode, err)
 		}
 
 		// Log level.

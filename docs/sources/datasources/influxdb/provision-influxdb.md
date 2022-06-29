@@ -1,9 +1,10 @@
-+++
-aliases = ["/docs/grafana/latest/datasources/influxdb/provision-influxdb/"]
-description = "Guide for provisioning InfluxDB"
-title = "Provision InfluxDB"
-weight = 400
-+++
+---
+aliases:
+  - /docs/grafana/latest/datasources/influxdb/provision-influxdb/
+description: Guide for provisioning InfluxDB
+title: Provision InfluxDB
+weight: 400
+---
 
 # Provision InfluxDB
 

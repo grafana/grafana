@@ -82,6 +82,7 @@ export class UnThemedLogMessageAnsi extends PureComponent<Props, State> {
     return chunks.map((chunk, index) => {
       const chunkText = this.props.highlight?.searchWords ? (
         <Highlighter
+          key={index}
           textToHighlight={chunk.text}
           searchWords={this.props.highlight.searchWords}
           findChunks={findHighlightChunksInText}

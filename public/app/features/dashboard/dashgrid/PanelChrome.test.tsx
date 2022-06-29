@@ -19,7 +19,7 @@ jest.mock('app/core/profiler', () => ({
 }));
 
 function setupTestContext(options: Partial<Props>) {
-  const mockStore = configureMockStore<any, any>();
+  const mockStore = configureMockStore();
   const store = mockStore({ dashboard: { panels: [] } });
   const subject: ReplaySubject<PanelData> = new ReplaySubject<PanelData>();
   const panelQueryRunner = {
@@ -47,6 +47,9 @@ function setupTestContext(options: Partial<Props>) {
       panelInitialized: jest.fn(),
       getTimezone: () => 'browser',
       events: new EventBusSrv(),
+      meta: {
+        isPublic: false,
+      },
     } as unknown as DashboardModel,
     plugin: {
       meta: { skipDataQuery: false },

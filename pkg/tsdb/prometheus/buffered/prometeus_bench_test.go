@@ -21,14 +21,11 @@ func BenchmarkJson(b *testing.B) {
 	api, err := makeMockedApi(resp)
 	require.NoError(b, err)
 
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(b, err)
-
-	s := Buffered{tracer: tracer, log: &fakeLogger{}}
+	s := Buffered{tracer: tracing.InitializeTracerForTest(), log: &fakeLogger{}, client: api}
 
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		_, err := s.runQueries(context.Background(), api, []*PrometheusQuery{&query})
+		_, err := s.runQueries(context.Background(), []*PrometheusQuery{&query})
 		require.NoError(b, err)
 	}
 }
@@ -54,6 +51,10 @@ func makeJsonTestValue(r *rand.Rand) string {
 func makeJsonTestSeries(start int64, step int64, timestampCount int, r *rand.Rand, seriesIndex int) string {
 	var values []string
 	for i := 0; i < timestampCount; i++ {
+		// create out of order timestamps to test sorting
+		if seriesIndex == 0 && i%2 == 0 {
+			continue
+		}
 		value := fmt.Sprintf(`[%d,"%v"]`, start+(int64(i)*step), makeJsonTestValue(r))
 		values = append(values, value)
 	}

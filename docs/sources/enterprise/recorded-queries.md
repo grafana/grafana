@@ -1,16 +1,23 @@
-+++
-aliases = ["/docs/grafana/latest/enterprise/recorded-queries/"]
-description = "Grafana Enterprise recorded queries"
-keywords = ["grafana", "query", "queries", "recorded"]
-title = "Recorded queries"
-weight = 300
-+++
+---
+aliases:
+  - /docs/grafana/latest/enterprise/recorded-queries/
+description: Grafana Enterprise recorded queries
+keywords:
+  - grafana
+  - query
+  - queries
+  - recorded
+title: Recorded queries
+weight: 300
+---
 
 # Recorded queries
 
 Recorded queries allow you to see trends over time by taking a snapshot of a data point on a set interval. This can give you insight into historic trends.
 
 For our plugins that do not return time series, it might be useful to plot historical data. For example, you might want to query ServiceNow to see a history of request response times but it can only return current point-in-time metrics.
+
+> **Note:** Available in [Grafana Enterprise]({{< relref "../enterprise/" >}}).
 
 ## How recorded queries work
 

@@ -46,8 +46,7 @@ export const DashboardListPage: FC<Props> = memo(({ navModel, match, location })
 
   return (
     <Page navModel={value?.pageNavModel ?? navModel}>
-      {/*Todo: remove the false to test, or when we feel confident with thsi approach */}
-      {false && config.featureToggles.panelTitleSearch ? (
+      {Boolean(config.featureToggles.panelTitleSearch) ? (
         <Page.Contents
           isLoading={loading}
           className={css`

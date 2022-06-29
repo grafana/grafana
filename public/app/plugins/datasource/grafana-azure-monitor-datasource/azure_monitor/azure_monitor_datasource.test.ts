@@ -1,12 +1,13 @@
-import { startsWith } from 'lodash';
+import { startsWith, get, set } from 'lodash';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import createMockQuery from '../__mocks__/query';
+import { createTemplateVariables } from '../__mocks__/utils';
 import { singleVariable, subscriptionsVariable } from '../__mocks__/variables';
 import AzureMonitorDatasource from '../datasource';
-import { AzureDataSourceJsonData, AzureQueryType, DatasourceValidationResult } from '../types';
+import { AzureDataSourceJsonData, AzureQueryType } from '../types';
 
 const templateSrv = new TemplateSrv();
 
@@ -31,51 +32,6 @@ describe('AzureMonitorDatasource', () => {
       jsonData: { subscriptionId: 'mock-subscription-id', cloudName: 'azuremonitor' },
     } as unknown as DataSourceInstanceSettings<AzureDataSourceJsonData>;
     ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
-  });
-
-  describe('When performing testDatasource', () => {
-    describe('and an error is returned', () => {
-      const error = {
-        data: {
-          error: {
-            code: 'InvalidApiVersionParameter',
-            message: `An error message.`,
-          },
-        },
-        status: 400,
-        statusText: 'Bad Request',
-      };
-
-      beforeEach(() => {
-        ctx.instanceSettings.jsonData.azureAuthType = 'msi';
-        ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockRejectedValue(error);
-      });
-
-      it('should return error status and a detailed error message', () => {
-        return ctx.ds.azureMonitorDatasource.testDatasource().then((result: DatasourceValidationResult) => {
-          expect(result.status).toEqual('error');
-          expect(result.message).toEqual('Azure Monitor: Bad Request: InvalidApiVersionParameter. An error message.');
-        });
-      });
-    });
-
-    describe('and a list of resource groups is returned', () => {
-      const response = {
-        value: [{ name: 'grp1' }, { name: 'grp2' }],
-      };
-
-      beforeEach(() => {
-        ctx.instanceSettings.jsonData.tenantId = 'xxx';
-        ctx.instanceSettings.jsonData.clientId = 'xxx';
-        ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockResolvedValue({ data: response, status: 200 });
-      });
-
-      it('should return success status', () => {
-        return ctx.ds.azureMonitorDatasource.testDatasource().then((result: DatasourceValidationResult) => {
-          expect(result.status).toEqual('success');
-        });
-      });
-    });
   });
 
   describe('When performing getMetricNamespaces', () => {
@@ -259,6 +215,50 @@ describe('AzureMonitorDatasource', () => {
     });
   });
 
+  describe('When performing interpolateVariablesInQueries for azure_monitor_metrics', () => {
+    beforeEach(() => {
+      templateSrv.init([]);
+    });
+
+    it('should return a query unchanged if no template variables are provided', () => {
+      const query = createMockQuery();
+      const templatedQuery = ctx.ds.interpolateVariablesInQueries([query], {});
+      expect(templatedQuery[0]).toEqual(query);
+    });
+
+    it('should return a query with any template variables replaced', () => {
+      const templateableProps = [
+        'resourceUri',
+        'resourceGroup',
+        'resourceName',
+        'metricNamespace',
+        'metricDefinition',
+        'timeGrain',
+        'aggregation',
+        'top',
+        'dimensionFilters[0].dimension',
+        'dimensionFilters[0].filters[0]',
+      ];
+      const templateVariables = createTemplateVariables(templateableProps);
+      templateSrv.init(Array.from(templateVariables.values()).map((item) => item.templateVariable));
+      const query = createMockQuery();
+      const azureMonitorQuery: { [index: string]: any } = {};
+      for (const [path, templateVariable] of templateVariables.entries()) {
+        set(azureMonitorQuery, path, `$${templateVariable.variableName}`);
+      }
+
+      query.azureMonitor = {
+        ...query.azureMonitor,
+        ...azureMonitorQuery,
+      };
+      const templatedQuery = ctx.ds.interpolateVariablesInQueries([query], {});
+      expect(templatedQuery[0]).toHaveProperty('datasource');
+      for (const [path, templateVariable] of templateVariables.entries()) {
+        expect(get(templatedQuery[0].azureMonitor, path)).toEqual(templateVariable.templateVariable.current.value);
+      }
+    });
+  });
+
   describe('Legacy Azure Monitor Query Object data fetchers', () => {
     describe('When performing getSubscriptions', () => {
       const response = {
@@ -358,11 +358,11 @@ describe('AzureMonitorDatasource', () => {
           .getMetricDefinitions('mock-subscription-id', 'nodesapp')
           .then((results: Array<{ text: string; value: string }>) => {
             expect(results.length).toEqual(7);
-            expect(results[0].text).toEqual('Network interface');
+            expect(results[0].text).toEqual('Network interfaces');
             expect(results[0].value).toEqual('Microsoft.Network/networkInterfaces');
-            expect(results[1].text).toEqual('Virtual machine');
+            expect(results[1].text).toEqual('Virtual machines');
             expect(results[1].value).toEqual('Microsoft.Compute/virtualMachines');
-            expect(results[2].text).toEqual('Storage account');
+            expect(results[2].text).toEqual('Storage accounts');
             expect(results[2].value).toEqual('Microsoft.Storage/storageAccounts');
             expect(results[3].text).toEqual('Microsoft.Storage/storageAccounts/blobServices');
             expect(results[3].value).toEqual('Microsoft.Storage/storageAccounts/blobServices');

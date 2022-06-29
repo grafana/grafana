@@ -1,7 +1,7 @@
 import { Dispatch } from 'react';
 import { Action } from 'redux';
 
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue, WithAccessControlMetadata } from '@grafana/data';
 
 import { FolderInfo } from '../../types';
 
@@ -11,6 +11,9 @@ export enum DashboardSearchItemType {
   DashFolder = 'dash-folder',
 }
 
+/**
+ * @deprecated
+ */
 export interface DashboardSection {
   id: number;
   uid?: string;
@@ -28,6 +31,9 @@ export interface DashboardSection {
   itemsFetching?: boolean;
 }
 
+/**
+ * @deprecated
+ */
 export interface DashboardSectionItem {
   checked?: boolean;
   folderId?: number;
@@ -48,7 +54,7 @@ export interface DashboardSectionItem {
   sortMetaName?: string;
 }
 
-export interface DashboardSearchHit extends DashboardSectionItem, DashboardSection {}
+export interface DashboardSearchHit extends DashboardSectionItem, DashboardSection, WithAccessControlMetadata {}
 
 export interface DashboardTag {
   term: string;

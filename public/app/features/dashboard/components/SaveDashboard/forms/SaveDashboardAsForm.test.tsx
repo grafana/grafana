@@ -1,6 +1,6 @@
-import { mount } from 'enzyme';
+import { screen, render } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { act } from 'react-dom/test-utils';
 
 import { DashboardModel } from 'app/features/dashboard/state';
 import * as api from 'app/features/manage-dashboards/state/actions';
@@ -35,7 +35,7 @@ const renderAndSubmitForm = async (
   submitSpy: jest.Mock,
   otherProps: Partial<SaveDashboardAsFormProps> = {}
 ) => {
-  const container = mount(
+  render(
     <SaveDashboardAsForm
       dashboard={dashboard as DashboardModel}
       onCancel={() => {}}
@@ -48,11 +48,8 @@ const renderAndSubmitForm = async (
     />
   );
 
-  // @ts-ignore strict null error below
-  await act(async () => {
-    const button = container.find('button[aria-label="Save dashboard button"]');
-    button.simulate('submit');
-  });
+  const button = screen.getByRole('button', { name: 'Save dashboard button' });
+  await userEvent.click(button);
 };
 describe('SaveDashboardAsForm', () => {
   describe('default values', () => {
@@ -69,7 +66,6 @@ describe('SaveDashboardAsForm', () => {
       expect(savedDashboardModel.id).toBe(null);
       expect(savedDashboardModel.title).toBe('name');
       expect(savedDashboardModel.editable).toBe(true);
-      expect(savedDashboardModel.hideControls).toBe(false);
     });
 
     it("appends 'Copy' to the name when the dashboard isnt new", async () => {

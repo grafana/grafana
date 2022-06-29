@@ -2,7 +2,7 @@ import React, { lazy, PureComponent, RefObject, Suspense } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { DataSourceInstanceSettings, RawTimeRange } from '@grafana/data';
-import { config, DataSourcePicker } from '@grafana/runtime';
+import { config, DataSourcePicker, reportInteraction } from '@grafana/runtime';
 import {
   defaultIntervals,
   PageToolbar,
@@ -11,7 +11,9 @@ import {
   ToolbarButton,
   ToolbarButtonRow,
 } from '@grafana/ui';
+import { contextSrv } from 'app/core/core';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
+import { AccessControlAction } from 'app/types';
 import { ExploreId } from 'app/types/explore';
 import { StoreState } from 'app/types/store';
 
@@ -120,6 +122,10 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
     const showSmallDataSourcePicker = (splitted ? containerWidth < 700 : containerWidth < 800) || false;
     const showSmallTimePicker = splitted || containerWidth < 1210;
 
+    const showExploreToDashboard =
+      contextSrv.hasAccess(AccessControlAction.DashboardsCreate, contextSrv.isEditor) ||
+      contextSrv.hasAccess(AccessControlAction.DashboardsWrite, contextSrv.isEditor);
+
     return (
       <div ref={topOfViewRef}>
         <PageToolbar
@@ -158,7 +164,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
               </ToolbarButton>
             )}
 
-            {config.featureToggles.explore2Dashboard && (
+            {config.featureToggles.explore2Dashboard && showExploreToDashboard && (
               <Suspense fallback={null}>
                 <AddToDashboard exploreId={exploreId} />
               </Suspense>
@@ -186,17 +192,28 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
 
             {hasLiveOption && (
               <LiveTailControls exploreId={exploreId}>
-                {(controls) => (
-                  <LiveTailButton
-                    splitted={splitted}
-                    isLive={isLive}
-                    isPaused={isPaused}
-                    start={controls.start}
-                    pause={controls.pause}
-                    resume={controls.resume}
-                    stop={controls.stop}
-                  />
-                )}
+                {(c) => {
+                  const controls = {
+                    ...c,
+                    start: () => {
+                      reportInteraction('grafana_explore_logs_live_tailing_clicked', {
+                        datasourceType: this.props.datasourceType,
+                      });
+                      c.start();
+                    },
+                  };
+                  return (
+                    <LiveTailButton
+                      splitted={splitted}
+                      isLive={isLive}
+                      isPaused={isPaused}
+                      start={controls.start}
+                      pause={controls.pause}
+                      resume={controls.resume}
+                      stop={controls.stop}
+                    />
+                  );
+                }}
               </LiveTailControls>
             )}
           </ToolbarButtonRow>
@@ -217,6 +234,7 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps) => {
   return {
     datasourceMissing,
     datasourceName: datasourceInstance?.name,
+    datasourceType: datasourceInstance?.type,
     loading,
     range,
     timeZone: getTimeZone(state.user),

@@ -429,6 +429,10 @@ export class BackendSrv implements BackendService {
     return this.get<DashboardDTO>(`/api/dashboards/uid/${uid}`);
   }
 
+  getPublicDashboardByUid(uid: string) {
+    return this.get<DashboardDTO>(`/api/public/dashboards/${uid}`);
+  }
+
   getFolderByUid(uid: string) {
     return this.get<FolderDTO>(`/api/folders/${uid}`);
   }

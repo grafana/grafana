@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package service
 
 import (
@@ -19,7 +16,10 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func TestDashboardService(t *testing.T) {
+func TestIntegrationDashboardService(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	t.Run("Dashboard service tests", func(t *testing.T) {
 		fakeStore := m.FakeDashboardStore{}
 		defer fakeStore.AssertExpectations(t)
@@ -187,7 +187,6 @@ func TestDashboardService(t *testing.T) {
 		})
 
 		t.Run("Given non provisioned dashboard", func(t *testing.T) {
-
 			t.Run("DeleteProvisionedDashboard should delete the dashboard", func(t *testing.T) {
 				args := &models.DeleteDashboardCommand{OrgId: 1, Id: 1, ForceDeleteFolderRules: false}
 				fakeStore.On("DeleteDashboard", mock.Anything, args).Return(nil).Once()
@@ -204,8 +203,4 @@ func TestDashboardService(t *testing.T) {
 			})
 		})
 	})
-}
-
-type Result struct {
-	deleteWasCalled bool
 }

@@ -33,7 +33,7 @@ func (ss *SecretsStoreImpl) GetDataKey(ctx context.Context, id string) (*secrets
 	err := ss.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var err error
 		exists, err = sess.Table(dataKeysTable).
-			Where("id = ?", id).
+			Where("name = ?", id).
 			Get(dataKey)
 		return err
 	})
@@ -49,14 +49,14 @@ func (ss *SecretsStoreImpl) GetDataKey(ctx context.Context, id string) (*secrets
 	return dataKey, nil
 }
 
-func (ss *SecretsStoreImpl) GetCurrentDataKey(ctx context.Context, name string) (*secrets.DataKey, error) {
+func (ss *SecretsStoreImpl) GetCurrentDataKey(ctx context.Context, label string) (*secrets.DataKey, error) {
 	dataKey := &secrets.DataKey{}
 	var exists bool
 
 	err := ss.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var err error
 		exists, err = sess.Table(dataKeysTable).
-			Where("name = ? AND active = ?", name, ss.sqlStore.Dialect.BooleanStr(true)).
+			Where("label = ? AND active = ?", label, ss.sqlStore.Dialect.BooleanStr(true)).
 			Get(dataKey)
 		return err
 	})
@@ -66,7 +66,7 @@ func (ss *SecretsStoreImpl) GetCurrentDataKey(ctx context.Context, name string) 
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("failed getting data key: %w", err)
+		return nil, fmt.Errorf("failed getting current data key: %w", err)
 	}
 
 	return dataKey, nil
@@ -137,7 +137,7 @@ func (ss *SecretsStoreImpl) ReEncryptDataKeys(
 				ss.log.Warn(
 					"Could not find provider to re-encrypt data encryption key",
 					"id", k.Id,
-					"name", k.Name,
+					"label", k.Label,
 					"provider", k.Provider,
 				)
 				return nil
@@ -148,7 +148,7 @@ func (ss *SecretsStoreImpl) ReEncryptDataKeys(
 				ss.log.Warn(
 					"Error while decrypting data encryption key to re-encrypt it",
 					"id", k.Id,
-					"name", k.Name,
+					"label", k.Label,
 					"provider", k.Provider,
 					"err", err,
 				)
@@ -158,25 +158,25 @@ func (ss *SecretsStoreImpl) ReEncryptDataKeys(
 			// Updating current data key by re-encrypting it with current provider.
 			// Accessing the current provider within providers map should be safe.
 			k.Provider = currProvider
-			k.Name = secrets.KeyName(k.Scope, currProvider)
+			k.Label = secrets.KeyLabel(k.Scope, currProvider)
 			k.Updated = time.Now()
 			k.EncryptedData, err = providers[currProvider].Encrypt(ctx, decrypted)
 			if err != nil {
 				ss.log.Warn(
 					"Error while re-encrypting data encryption key",
 					"id", k.Id,
-					"name", k.Name,
+					"label", k.Label,
 					"provider", k.Provider,
 					"err", err,
 				)
 				return nil
 			}
 
-			if _, err := sess.Table(dataKeysTable).Where("id = ?", k.Id).Update(k); err != nil {
+			if _, err := sess.Table(dataKeysTable).Where("name = ?", k.Id).Update(k); err != nil {
 				ss.log.Warn(
 					"Error while re-encrypting data encryption key",
 					"id", k.Id,
-					"name", k.Name,
+					"label", k.Label,
 					"provider", k.Provider,
 					"err", err,
 				)

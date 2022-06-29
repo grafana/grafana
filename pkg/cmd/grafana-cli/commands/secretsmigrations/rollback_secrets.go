@@ -291,7 +291,7 @@ func (s alertingSecret) rollback(
 }
 
 func RollBackSecrets(_ utils.CommandLine, runner runner.Runner) error {
-	if !runner.Features.IsEnabled(featuremgmt.FlagEnvelopeEncryption) {
+	if runner.Features.IsEnabled(featuremgmt.FlagDisableEnvelopeEncryption) {
 		logger.Warn("Envelope encryption is not enabled, quitting...")
 		return nil
 	}

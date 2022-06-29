@@ -1,8 +1,10 @@
-+++
-aliases = ["/docs/grafana/latest/panels/override-field-values/delete-a-field-override/", "/docs/sources/panels/override-field-values/delete-a-field-override/"]
-title = "Delete a field override"
-weight = 50
-+++
+---
+aliases:
+  - /docs/grafana/latest/panels/override-field-values/delete-a-field-override/
+  - /docs/sources/panels/override-field-values/delete-a-field-override/
+title: Delete a field override
+weight: 50
+---
 
 # Delete a field override
 
@@ -12,8 +14,8 @@ When you delete an override, the appearance of value defaults to its original fo
 
 ## Before you begin
 
-- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).
-- [Add a field override]({{< relref "../override-field-values/add-a-field-override.md" >}}).
+- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel/" >}}).
+- [Add a field override]({{< relref "add-a-field-override/" >}}).
 
 **To delete a field override**:
 

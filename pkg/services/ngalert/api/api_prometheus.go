@@ -139,7 +139,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 	}
 
 	if len(namespaceMap) == 0 {
-		srv.log.Debug("User does not have access to any namespaces")
+		srv.log.Debug("user does not have access to any namespaces")
 		return response.JSON(http.StatusOK, ruleResponse)
 	}
 
@@ -166,9 +166,6 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 
 	groupedRules := make(map[ngmodels.AlertRuleGroupKey][]*ngmodels.AlertRule)
 	for _, rule := range alertRuleQuery.Result {
-		if !authorizeDatasourceAccessForRule(rule, hasAccess) {
-			continue
-		}
 		key := rule.GetGroupKey()
 		rulesInGroup := groupedRules[key]
 		rulesInGroup = append(rulesInGroup, rule)
@@ -181,6 +178,9 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 			srv.log.Warn("query returned rules that belong to folder the user does not have access to. All rules that belong to that namespace will not be added to the response", "folder_uid", groupKey.NamespaceUID)
 			continue
 		}
+		if !authorizeAccessToRuleGroup(rules, hasAccess) {
+			continue
+		}
 		ruleResponse.Data.RuleGroups = append(ruleResponse.Data.RuleGroups, srv.toRuleGroup(groupKey.RuleGroup, folder, rules, labelOptions))
 	}
 	return response.JSON(http.StatusOK, ruleResponse)
@@ -191,7 +191,7 @@ func (srv PrometheusSrv) toRuleGroup(groupName string, folder *models.Folder, ru
 		Name: groupName,
 		File: folder.Title, // file is what Prometheus uses for provisioning, we replace it with namespace.
 	}
-
+	ngmodels.RulesGroup(rules).SortByGroupIndex()
 	for _, rule := range rules {
 		alertingRule := apimodels.AlertingRule{
 			State:       "inactive",

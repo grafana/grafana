@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package serverlock
 
 import (
@@ -11,7 +8,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestServerLok(t *testing.T) {
+func TestIntegrationServerLok(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	sl := createTestableServerLock(t)
 
 	counter := 0
