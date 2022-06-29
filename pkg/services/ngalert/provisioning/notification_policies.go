@@ -13,17 +13,17 @@ import (
 type NotificationPolicyService struct {
 	amStore         AMConfigStore
 	provenanceStore ProvisioningStore
-	contactPoints   ContactPoints
+	contactPoints   ContactPointProvider
 	xact            TransactionManager
 	log             log.Logger
 }
 
-type ContactPoints interface {
+type ContactPointProvider interface {
 	GetContactPoints(ctx context.Context, orgID int64) ([]apimodels.EmbeddedContactPoint, error)
 }
 
 func NewNotificationPolicyService(am AMConfigStore, prov ProvisioningStore,
-	cps ContactPoints, xact TransactionManager,
+	cps ContactPointProvider, xact TransactionManager,
 	log log.Logger) *NotificationPolicyService {
 	return &NotificationPolicyService{
 		amStore:         am,

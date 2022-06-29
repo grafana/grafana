@@ -24,7 +24,7 @@ func TestNotificationPolicyService(t *testing.T) {
 
 	t.Run("service stitches policy tree into org's AM config", func(t *testing.T) {
 		sut := createNotificationPolicyServiceSut()
-		sut.contactPoints.(*MockContactPoints).EXPECT().
+		sut.contactPoints.(*MockContactPointProvider).EXPECT().
 			GetContactPoints(mock.Anything, mock.Anything).
 			Return([]definitions.EmbeddedContactPoint{{
 				Name: "a new receiver",
@@ -51,7 +51,7 @@ func TestNotificationPolicyService(t *testing.T) {
 
 	t.Run("service returns upgraded provenance value", func(t *testing.T) {
 		sut := createNotificationPolicyServiceSut()
-		sut.contactPoints.(*MockContactPoints).EXPECT().
+		sut.contactPoints.(*MockContactPointProvider).EXPECT().
 			GetContactPoints(mock.Anything, mock.Anything).
 			Return([]definitions.EmbeddedContactPoint{{
 				Name: "a new receiver",
@@ -68,7 +68,7 @@ func TestNotificationPolicyService(t *testing.T) {
 
 	t.Run("service respects concurrency token when updating", func(t *testing.T) {
 		sut := createNotificationPolicyServiceSut()
-		sut.contactPoints.(*MockContactPoints).EXPECT().
+		sut.contactPoints.(*MockContactPointProvider).EXPECT().
 			GetContactPoints(mock.Anything, mock.Anything).
 			Return([]definitions.EmbeddedContactPoint{{
 				Name: "a new receiver",
@@ -107,7 +107,7 @@ func createNotificationPolicyServiceSut() *NotificationPolicyService {
 		amStore:         newFakeAMConfigStore(),
 		provenanceStore: NewFakeProvisioningStore(),
 		xact:            newNopTransactionManager(),
-		contactPoints:   &MockContactPoints{},
+		contactPoints:   &MockContactPointProvider{},
 		log:             log.NewNopLogger(),
 	}
 }
