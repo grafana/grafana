@@ -15,11 +15,17 @@ func (s *ServiceAccountsStoreImpl) GetUsageMetrics(ctx context.Context) (map[str
 	sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("user") +
 		` WHERE is_service_account = ` + dialect.BooleanStr(true) + `) AS serviceaccounts,`)
 	sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("api_key") +
-		` WHERE service_account_id IS NOT NULL ) AS serviceaccount_tokens`)
+		` WHERE service_account_id IS NOT NULL ) AS serviceaccount_tokens,`)
+	// Add count to how many service accounts are in teams
+	sb.Write(`(SELECT COUNT(*) FROM team_member
+	JOIN ` + dialect.Quote("user") + ` on team_member.user_id=` + dialect.Quote("user") + `.id
+	WHERE ` + dialect.Quote("user") + `.is_service_account=` + dialect.BooleanStr(true) + ` ) as serviceaccounts_in_teams`)
+	//  Add count to how many RBAC permissions are granted to service accounts
 
 	type saStats struct {
 		ServiceAccounts int64 `xorm:"serviceaccounts"`
 		Tokens          int64 `xorm:"serviceaccount_tokens"`
+		InTeams         int64 `xorm:"serviceaccounts_in_teams"`
 	}
 
 	var sqlStats saStats
@@ -32,6 +38,7 @@ func (s *ServiceAccountsStoreImpl) GetUsageMetrics(ctx context.Context) (map[str
 
 	stats["stats.serviceaccounts.count"] = sqlStats.ServiceAccounts
 	stats["stats.serviceaccounts.tokens.count"] = sqlStats.Tokens
+	stats["stats.serviceaccounts.in_teams.count"] = sqlStats.InTeams
 
 	return stats, nil
 }
