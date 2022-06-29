@@ -23,6 +23,7 @@ import {
   ThresholdsMode,
   TimeRange,
 } from '@grafana/data';
+import { maybeSortFrame } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import { VizLegendOptions, AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/schema';
 import {
   FIXED_UNIT,
@@ -459,6 +460,13 @@ export function prepareTimelineFields(
   }
   if (!frames.length) {
     return { warn: 'No graphable fields' };
+  }
+  if (frames.length === 1) {
+    const sortedFrame = maybeSortFrame(
+      frames[0],
+      frames[0].fields.findIndex((f) => f.type === FieldType.time)
+    );
+    return { frames: [sortedFrame] };
   }
   return { frames };
 }
