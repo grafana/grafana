@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions/types"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type getUserPermissionsTestCase struct {
@@ -81,7 +82,7 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 			user, team := createUserAndTeam(t, sql, tt.orgID)
 
 			for _, id := range tt.userPermissions {
-				_, err := store.SetUserResourcePermission(context.Background(), tt.orgID, accesscontrol.User{ID: user.Id}, types.SetResourcePermissionCommand{
+				_, err := store.SetUserResourcePermission(context.Background(), tt.orgID, accesscontrol.User{ID: user.ID}, types.SetResourcePermissionCommand{
 					Actions:    []string{"dashboards:write"},
 					Resource:   "dashboards",
 					ResourceID: id,
@@ -119,7 +120,7 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 
 			permissions, err := store.GetUserPermissions(context.Background(), accesscontrol.GetUserPermissionsQuery{
 				OrgID:   tt.orgID,
-				UserID:  user.Id,
+				UserID:  user.ID,
 				Roles:   roles,
 				Actions: tt.actions,
 			})
@@ -130,19 +131,19 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 	}
 }
 
-func createUserAndTeam(t *testing.T, sql *sqlstore.SQLStore, orgID int64) (*models.User, models.Team) {
+func createUserAndTeam(t *testing.T, sql *sqlstore.SQLStore, orgID int64) (*user.User, models.Team) {
 	t.Helper()
 
-	user, err := sql.CreateUser(context.Background(), models.CreateUserCommand{
+	user, err := sql.CreateUser(context.Background(), user.CreateUserCommand{
 		Login: "user",
-		OrgId: orgID,
+		OrgID: orgID,
 	})
 	require.NoError(t, err)
 
 	team, err := sql.CreateTeam("team", "", orgID)
 	require.NoError(t, err)
 
-	err = sql.AddTeamMember(user.Id, orgID, team.Id, false, models.PERMISSION_VIEW)
+	err = sql.AddTeamMember(user.ID, orgID, team.Id, false, models.PERMISSION_VIEW)
 	require.NoError(t, err)
 
 	return user, team

@@ -13,6 +13,7 @@ export interface SearchQuery {
   ds_uid?: string;
   tags?: string[];
   kind?: string[];
+  panel_type?: string;
   uid?: string[];
   id?: number[];
   facet?: FacetField[];

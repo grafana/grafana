@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { PluginIncludeType, PluginType } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { usePluginConfig } from '../hooks/usePluginConfig';
 import { isOrgAdmin } from '../permissions';
@@ -23,7 +24,6 @@ export const usePluginDetailsTabs = (plugin?: CatalogPlugin, defaultTabs: Plugin
     const canConfigurePlugins = isOrgAdmin();
     const tabs: PluginDetailsTab[] = [...defaultTabs];
     let defaultTab;
-
     if (isPublished) {
       tabs.push({
         label: PluginTabLabels.VERSIONS,
@@ -37,6 +37,15 @@ export const usePluginDetailsTabs = (plugin?: CatalogPlugin, defaultTabs: Plugin
     if (!pluginConfig) {
       defaultTab = PluginTabIds.OVERVIEW;
       return [tabs, defaultTab];
+    }
+
+    if (config.featureToggles.panelTitleSearch && pluginConfig.meta.type === PluginType.panel) {
+      tabs.push({
+        label: PluginTabLabels.USAGE,
+        icon: 'list-ul',
+        id: PluginTabIds.USAGE,
+        href: `${pathname}?page=${PluginTabIds.USAGE}`,
+      });
     }
 
     if (canConfigurePlugins) {
