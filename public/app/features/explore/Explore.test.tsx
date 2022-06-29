@@ -90,7 +90,7 @@ jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
     getDataSourceSrv: () => ({
       get: () => Promise.resolve({}),
       getList: () => [],
-      getInstanceSettings: () => {},
+      getInstanceSettings: () => ({ name: 'dsName', uid: 'xxx', meta: { info: { logos: { small: 'path' } } } }),
     }),
   };
 });
