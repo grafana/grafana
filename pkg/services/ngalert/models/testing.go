@@ -9,9 +9,11 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+type AlertRuleMutator func(*AlertRule)
+
 // AlertRuleGen provides a factory function that generates a random AlertRule.
 // The mutators arguments allows changing fields of the resulting structure
-func AlertRuleGen(mutators ...func(*AlertRule)) func() *AlertRule {
+func AlertRuleGen(mutators ...AlertRuleMutator) func() *AlertRule {
 	return func() *AlertRule {
 		randNoDataState := func() NoDataState {
 			s := [...]NoDataState{
@@ -74,6 +76,7 @@ func AlertRuleGen(mutators ...func(*AlertRule)) func() *AlertRule {
 			DashboardUID:    dashUID,
 			PanelID:         panelID,
 			RuleGroup:       "TEST-GROUP-" + util.GenerateShortUID(),
+			RuleGroupIndex:  rand.Int(),
 			NoDataState:     randNoDataState(),
 			ExecErrState:    randErrState(),
 			For:             forInterval,
@@ -85,6 +88,48 @@ func AlertRuleGen(mutators ...func(*AlertRule)) func() *AlertRule {
 			mutator(rule)
 		}
 		return rule
+	}
+}
+
+func WithUniqueID() AlertRuleMutator {
+	usedID := make(map[int64]struct{})
+	return func(rule *AlertRule) {
+		for {
+			id := rand.Int63()
+			if _, ok := usedID[id]; !ok {
+				usedID[id] = struct{}{}
+				rule.ID = id
+				return
+			}
+		}
+	}
+}
+
+func WithGroupIndex(groupIndex int) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.RuleGroupIndex = groupIndex
+	}
+}
+
+func WithUniqueGroupIndex() AlertRuleMutator {
+	usedIdx := make(map[int]struct{})
+	return func(rule *AlertRule) {
+		for {
+			idx := rand.Int()
+			if _, ok := usedIdx[idx]; !ok {
+				usedIdx[idx] = struct{}{}
+				rule.RuleGroupIndex = idx
+				return
+			}
+		}
+	}
+}
+
+func WithSequentialGroupIndex() AlertRuleMutator {
+	idx := 1
+	return func(rule *AlertRule) {
+		rule.RuleGroupIndex = idx
+		idx++
 	}
 }
 
@@ -155,6 +200,7 @@ func CopyRule(r *AlertRule) *AlertRule {
 		UID:             r.UID,
 		NamespaceUID:    r.NamespaceUID,
 		RuleGroup:       r.RuleGroup,
+		RuleGroupIndex:  r.RuleGroupIndex,
 		NoDataState:     r.NoDataState,
 		ExecErrState:    r.ExecErrState,
 		For:             r.For,

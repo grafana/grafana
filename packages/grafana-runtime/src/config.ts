@@ -83,6 +83,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     thumbnailsExist: boolean;
   } = { systemRequirements: { met: false, requiredImageRendererPluginVersion: '' }, thumbnailsExist: false };
   rendererVersion = '';
+  secretsManagerPluginEnabled = false;
   http2Enabled = false;
   dateFormats?: SystemDateFormatSettings;
   sentry = {
@@ -90,6 +91,14 @@ export class GrafanaBootConfig implements GrafanaConfig {
     dsn: '',
     customEndpoint: '',
     sampleRate: 1,
+  };
+  grafanaJavascriptAgent = {
+    enabled: false,
+    customEndpoint: '',
+    apiKey: '',
+    errorInstrumentalizationEnabled: true,
+    consoleInstrumentalizationEnabled: false,
+    webVitalsInstrumentalizationEnabled: false,
   };
   pluginCatalogURL = 'https://grafana.com/grafana/plugins/';
   pluginAdminEnabled = true;

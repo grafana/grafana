@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
 )
 
@@ -14,7 +15,7 @@ func TestIntegrationDashboardAclDataAccess(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	var sqlStore *sqlstore.SQLStore
-	var currentUser models.User
+	var currentUser user.User
 	var savedFolder, childDash *models.Dashboard
 	var dashboardStore *DashboardStore
 
@@ -87,7 +88,7 @@ func TestIntegrationDashboardAclDataAccess(t *testing.T) {
 			setup(t)
 			err := updateDashboardAcl(t, dashboardStore, savedFolder.Id, models.DashboardAcl{
 				OrgID:       1,
-				UserID:      currentUser.Id,
+				UserID:      currentUser.ID,
 				DashboardID: savedFolder.Id,
 				Permission:  models.PERMISSION_EDIT,
 			})
@@ -106,7 +107,7 @@ func TestIntegrationDashboardAclDataAccess(t *testing.T) {
 			t.Run("Given child dashboard permission", func(t *testing.T) {
 				err := updateDashboardAcl(t, dashboardStore, childDash.Id, models.DashboardAcl{
 					OrgID:       1,
-					UserID:      currentUser.Id,
+					UserID:      currentUser.ID,
 					DashboardID: childDash.Id,
 					Permission:  models.PERMISSION_EDIT,
 				})
@@ -131,7 +132,7 @@ func TestIntegrationDashboardAclDataAccess(t *testing.T) {
 			setup(t)
 			err := updateDashboardAcl(t, dashboardStore, childDash.Id, models.DashboardAcl{
 				OrgID:       1,
-				UserID:      currentUser.Id,
+				UserID:      currentUser.ID,
 				DashboardID: childDash.Id,
 				Permission:  models.PERMISSION_EDIT,
 			})
@@ -158,7 +159,7 @@ func TestIntegrationDashboardAclDataAccess(t *testing.T) {
 			setup(t)
 			err := updateDashboardAcl(t, dashboardStore, savedFolder.Id, models.DashboardAcl{
 				OrgID:       1,
-				UserID:      currentUser.Id,
+				UserID:      currentUser.ID,
 				DashboardID: savedFolder.Id,
 				Permission:  models.PERMISSION_EDIT,
 			})
@@ -171,7 +172,7 @@ func TestIntegrationDashboardAclDataAccess(t *testing.T) {
 			require.Equal(t, savedFolder.Id, q1.Result[0].DashboardId)
 			require.Equal(t, models.PERMISSION_EDIT, q1.Result[0].Permission)
 			require.Equal(t, "Edit", q1.Result[0].PermissionName)
-			require.Equal(t, currentUser.Id, q1.Result[0].UserId)
+			require.Equal(t, currentUser.ID, q1.Result[0].UserId)
 			require.Equal(t, currentUser.Login, q1.Result[0].UserLogin)
 			require.Equal(t, currentUser.Email, q1.Result[0].UserEmail)
 
@@ -248,15 +249,15 @@ func TestIntegrationDashboardAclDataAccess(t *testing.T) {
 	})
 }
 
-func createUser(t *testing.T, sqlStore *sqlstore.SQLStore, name string, role string, isAdmin bool) models.User {
+func createUser(t *testing.T, sqlStore *sqlstore.SQLStore, name string, role string, isAdmin bool) user.User {
 	t.Helper()
 	sqlStore.Cfg.AutoAssignOrg = true
 	sqlStore.Cfg.AutoAssignOrgId = 1
 	sqlStore.Cfg.AutoAssignOrgRole = role
-	currentUserCmd := models.CreateUserCommand{Login: name, Email: name + "@test.com", Name: "a " + name, IsAdmin: isAdmin}
+	currentUserCmd := user.CreateUserCommand{Login: name, Email: name + "@test.com", Name: "a " + name, IsAdmin: isAdmin}
 	currentUser, err := sqlStore.CreateUser(context.Background(), currentUserCmd)
 	require.NoError(t, err)
-	q1 := models.GetUserOrgListQuery{UserId: currentUser.Id}
+	q1 := models.GetUserOrgListQuery{UserId: currentUser.ID}
 	err = sqlStore.GetUserOrgList(context.Background(), &q1)
 	require.NoError(t, err)
 	require.Equal(t, models.RoleType(role), q1.Result[0].Role)

@@ -108,7 +108,7 @@ func TestWarmStateCache(t *testing.T) {
 		Metrics:                 testMetrics.GetSchedulerMetrics(),
 		AdminConfigPollInterval: 10 * time.Minute, // do not poll in unit tests.
 	}
-	st := state.NewManager(schedCfg.Logger, testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &dashboards.FakeDashboardService{}, &image.NoopImageService{})
+	st := state.NewManager(schedCfg.Logger, testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, clock.NewMock())
 	st.Warm(ctx)
 
 	t.Run("instance cache has expected entries", func(t *testing.T) {
@@ -160,12 +160,12 @@ func TestAlertingTicker(t *testing.T) {
 			disabledOrgID: {},
 		},
 	}
-	st := state.NewManager(schedCfg.Logger, testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &dashboards.FakeDashboardService{}, &image.NoopImageService{})
+	st := state.NewManager(schedCfg.Logger, testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, clock.NewMock())
 	appUrl := &url.URL{
 		Scheme: "http",
 		Host:   "localhost",
 	}
-	sched := schedule.NewScheduler(schedCfg, nil, appUrl, st, busmock.New())
+	sched := schedule.NewScheduler(schedCfg, appUrl, st, busmock.New())
 
 	go func() {
 		err := sched.Run(ctx)

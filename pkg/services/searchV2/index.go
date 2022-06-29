@@ -3,9 +3,11 @@ package searchV2
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"runtime"
 	"strconv"
 	"strings"
@@ -99,7 +101,7 @@ func (i *dashboardIndex) sync(ctx context.Context) error {
 	}
 }
 
-func (i *dashboardIndex) run(ctx context.Context, orgIDs []int64) error {
+func (i *dashboardIndex) run(ctx context.Context, orgIDs []int64, reIndexSignalCh chan struct{}) error {
 	reIndexInterval := 5 * time.Minute
 	fullReIndexTimer := time.NewTimer(reIndexInterval)
 	defer fullReIndexTimer.Stop()
@@ -122,18 +124,28 @@ func (i *dashboardIndex) run(ctx context.Context, orgIDs []int64) error {
 		return err
 	}
 
+	// This semaphore channel allows limiting concurrent async re-indexing routines to 1.
+	asyncReIndexSemaphore := make(chan struct{}, 1)
+
 	// Channel to handle signals about asynchronous full re-indexing completion.
 	reIndexDoneCh := make(chan int64, 1)
 
 	for {
 		select {
 		case doneCh := <-i.syncCh:
+			// Executed on search read requests to make sure index is consistent.
 			lastEventID = i.applyIndexUpdates(ctx, lastEventID)
 			close(doneCh)
 		case <-partialUpdateTimer.C:
+			// Periodically apply updates collected in entity events table.
 			lastEventID = i.applyIndexUpdates(ctx, lastEventID)
 			partialUpdateTimer.Reset(partialUpdateInterval)
+		case <-reIndexSignalCh:
+			// External systems may trigger re-indexing, at this moment provisioning does this.
+			i.logger.Info("Full re-indexing due to external signal")
+			fullReIndexTimer.Reset(0)
 		case signal := <-i.buildSignals:
+			// When search read request meets new not-indexed org we build index for it.
 			i.mu.RLock()
 			_, ok := i.perOrgWriter[signal.orgID]
 			if ok {
@@ -149,15 +161,28 @@ func (i *dashboardIndex) run(ctx context.Context, orgIDs []int64) error {
 			// branch.
 			fullReIndexTimer.Stop()
 			go func() {
+				// We need semaphore here since asynchronous re-indexing may be in progress already.
+				asyncReIndexSemaphore <- struct{}{}
+				defer func() { <-asyncReIndexSemaphore }()
 				_, err = i.buildOrgIndex(ctx, signal.orgID)
 				signal.done <- err
 				reIndexDoneCh <- lastIndexedEventID
 			}()
 		case <-fullReIndexTimer.C:
+			// Periodically rebuild indexes since we could miss updates. At this moment we are issuing
+			// entity events non-atomically (outside of transaction) and do not cover all possible dashboard
+			// change places, so periodic re-indexing fixes possibly broken state. But ideally we should
+			// come to an approach which does not require periodic re-indexing at all. One possible way
+			// is to use DB triggers, see https://github.com/grafana/grafana/pull/47712.
 			lastIndexedEventID := lastEventID
 			go func() {
 				// Do full re-index asynchronously to avoid blocking index synchronization
 				// on read for a long time.
+
+				// We need semaphore here since re-indexing due to build signal may be in progress already.
+				asyncReIndexSemaphore <- struct{}{}
+				defer func() { <-asyncReIndexSemaphore }()
+
 				started := time.Now()
 				i.logger.Info("Start re-indexing")
 				i.reIndexFromScratch(ctx)
@@ -195,19 +220,19 @@ func (i *dashboardIndex) buildInitialIndexes(ctx context.Context, orgIDs []int64
 }
 
 func (i *dashboardIndex) buildInitialIndex(ctx context.Context, orgID int64) error {
-	memCtx, memCancel := context.WithCancel(ctx)
+	debugCtx, debugCtxCancel := context.WithCancel(ctx)
 	if os.Getenv("GF_SEARCH_DEBUG") != "" {
-		go i.debugMemStats(memCtx, 200*time.Millisecond)
+		go i.debugResourceUsage(debugCtx, 200*time.Millisecond)
 	}
 
 	started := time.Now()
 	numDashboards, err := i.buildOrgIndex(ctx, orgID)
 	if err != nil {
-		memCancel()
-		return fmt.Errorf("can't build dashboard search index for org ID %d: %w", orgID, err)
+		debugCtxCancel()
+		return fmt.Errorf("can't build dashboard search index for org ID 1: %w", err)
 	}
 	i.logger.Info("Indexing for org finished", "orgIndexElapsed", time.Since(started), "orgId", orgID, "numDashboards", numDashboards)
-	memCancel()
+	debugCtxCancel()
 
 	if os.Getenv("GF_SEARCH_DEBUG") != "" {
 		// May help to estimate size of index when introducing changes. Though it's not a direct
@@ -219,7 +244,47 @@ func (i *dashboardIndex) buildInitialIndex(ctx context.Context, orgID int64) err
 	return nil
 }
 
-func (i *dashboardIndex) debugMemStats(ctx context.Context, frequency time.Duration) {
+// This is a naive implementation of process CPU getting (credits to
+// https://stackoverflow.com/a/11357813/1288429). Should work on both Linux and Darwin.
+// Since we only use this during development – seems simple and cheap solution to get
+// process CPU usage in cross-platform way.
+func getProcessCPU(currentPid int) (float64, error) {
+	cmd := exec.Command("ps", "aux")
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	err := cmd.Run()
+	if err != nil {
+		return 0, err
+	}
+	for {
+		line, err := out.ReadString('\n')
+		if err != nil {
+			break
+		}
+		tokens := strings.Split(line, " ")
+		ft := make([]string, 0)
+		for _, t := range tokens {
+			if t != "" && t != "\t" {
+				ft = append(ft, t)
+			}
+		}
+		pid, err := strconv.Atoi(ft[1])
+		if err != nil {
+			continue
+		}
+		if pid != currentPid {
+			continue
+		}
+		cpu, err := strconv.ParseFloat(ft[2], 64)
+		if err != nil {
+			return 0, err
+		}
+		return cpu, nil
+	}
+	return 0, errors.New("process not found")
+}
+
+func (i *dashboardIndex) debugResourceUsage(ctx context.Context, frequency time.Duration) {
 	var maxHeapInuse uint64
 	var maxSys uint64
 
@@ -234,15 +299,29 @@ func (i *dashboardIndex) debugMemStats(ctx context.Context, frequency time.Durat
 		}
 	}
 
+	var cpuUtilization []float64
+
+	captureCPUStats := func() {
+		cpu, err := getProcessCPU(os.Getpid())
+		if err != nil {
+			i.logger.Error("CPU stats error", "error", err)
+			return
+		}
+		// Just collect CPU utilization to a slice and show in the of index build.
+		cpuUtilization = append(cpuUtilization, cpu)
+	}
+
 	captureMemStats()
+	captureCPUStats()
 
 	for {
 		select {
 		case <-ctx.Done():
-			i.logger.Warn("Memory stats during indexing", "maxHeapInUse", formatBytes(maxHeapInuse), "maxSys", formatBytes(maxSys))
+			i.logger.Warn("Resource usage during indexing", "maxHeapInUse", formatBytes(maxHeapInuse), "maxSys", formatBytes(maxSys), "cpuPercent", cpuUtilization)
 			return
 		case <-time.After(frequency):
 			captureMemStats()
+			captureCPUStats()
 		}
 	}
 }
