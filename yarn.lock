@@ -14361,8 +14361,9 @@ __metadata:
   version: 1.2.5
   resolution: "array.prototype.flat@npm:1.2.5"
   dependencies:
+    call-bind: ^1.0.2
     define-properties: ^1.1.3
-    es-abstract: ^1.17.0-next.1
+    es-abstract: ^1.19.0
   checksum: 9cc6414b111abfc7717e39546e4887b1e5ec74df8f1618d83425deaa95752bf05d475d1d241253b4d88d4a01f8e1bc84845ad5b7cc2047f8db2f614512acd40e
   languageName: node
   linkType: hard
@@ -14385,8 +14386,7 @@ __metadata:
   dependencies:
     call-bind: ^1.0.0
     define-properties: ^1.1.3
-    es-abstract: ^1.18.0-next.1
-    function-bind: ^1.1.1
+    es-abstract: ^1.19.0
   checksum: a14119a28e5687a13cf3fd6756a8e7810563a9e81cd4227e27a25c31d362df47ac72553f06a271fd728741e199047933ad43d561d64a28da0b4e1a26f74e939e
   languageName: node
   linkType: hard
@@ -20100,7 +20100,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"es-abstract@npm:^1.12.0, es-abstract@npm:^1.17.0-next.1, es-abstract@npm:^1.17.2, es-abstract@npm:^1.18.0-next.1, es-abstract@npm:^1.18.0-next.2, es-abstract@npm:^1.18.2, es-abstract@npm:^1.19.0, es-abstract@npm:^1.19.5, es-abstract@npm:^1.20.1, es-abstract@npm:^1.5.1":
+"es-abstract@npm:^1.12.0, es-abstract@npm:^1.17.0-next.1, es-abstract@npm:^1.17.2, es-abstract@npm:^1.18.0-next.2, es-abstract@npm:^1.18.2, es-abstract@npm:^1.19.0, es-abstract@npm:^1.19.5, es-abstract@npm:^1.20.1, es-abstract@npm:^1.5.1":
   version: 1.20.1
   resolution: "es-abstract@npm:1.20.1"
   dependencies:
@@ -29950,27 +29950,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"object-is@npm:^1.0.1":
-  version: 1.0.1
-  resolution: "object-is@npm:1.0.1"
-  checksum: 7c6c2131e3386950e930e2ec28c284784ea94e8a77c8b3afebe03077a33f85c78c29011231721626b09d2983eb8eac9480dad70b07f5deb2d8a7121ab5bc7bd1
-  languageName: node
-  linkType: hard
-
-"object-is@npm:^1.0.2":
-  version: 1.0.2
-  resolution: "object-is@npm:1.0.2"
-  checksum: 736cbe568e7f80f9c4ee7295af47be3a49423b549f5afc8b5c33dfa063b7a0959077109709f473a3c053268593ded108fd5dd7e2011faee3fd3aeaeb0a189ef9
-  languageName: node
-  linkType: hard
-
-"object-is@npm:^1.1.2":
-  version: 1.1.3
-  resolution: "object-is@npm:1.1.3"
+"object-is@npm:^1.0.1, object-is@npm:^1.0.2, object-is@npm:^1.1.2":
+  version: 1.1.5
+  resolution: "object-is@npm:1.1.5"
   dependencies:
     call-bind: ^1.0.2
     define-properties: ^1.1.3
-  checksum: 8b03d2706f489b4f86c1de803e16389bdf7facd6e715c044bd898376d370b98a47aafdf64c26be6c6151e57cf8b4e499210d2768935b24b369dac90ad2ce8a19
+  checksum: 989b18c4cba258a6b74dc1d74a41805c1a1425bce29f6cabb50dcb1a6a651ea9104a1b07046739a49a5bb1bc49727bcb00efd5c55f932f6ea04ec8927a7901fe
   languageName: node
   linkType: hard
 
