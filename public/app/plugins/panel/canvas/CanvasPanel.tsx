@@ -57,6 +57,7 @@ export class CanvasPanel extends Component<Props, State> {
     this.scene = new Scene(this.props.options.root, this.props.options.inlineEditing, this.onUpdateScene);
     this.scene.updateSize(props.width, props.height);
     this.scene.updateData(props.data);
+    this.scene.inlineEditingCallback = this.inlineEditButtonClick;
 
     this.subs.add(
       this.props.eventBus.subscribe(PanelEditEnteredEvent, (evt) => {

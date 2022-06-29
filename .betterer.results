@@ -1396,6 +1396,7 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/ConfirmModal/ConfirmModal.story.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+<<<<<<< HEAD
     "packages/grafana-ui/src/components/CustomScrollbar/CustomScrollbar.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
@@ -1405,6 +1406,182 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "7"]
+=======
+    "public/app/features/canvas/elements/windTurbine.tsx:100490884": [
+      [67, 48, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [67, 53, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/features/canvas/runtime/ables.tsx:2486234637": [
+      [10, 44, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [10, 49, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [42, 44, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [42, 49, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/features/canvas/runtime/element.tsx:1053184115": [
+      [38, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [84, 49, 15, "Do not use any type assertions.", "151603256"],
+      [182, 23, 10, "Do not use any type assertions.", "1501063862"],
+      [182, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [182, 38, 21, "Do not use any type assertions.", "1600738939"],
+      [182, 56, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [186, 23, 10, "Do not use any type assertions.", "1501063862"],
+      [186, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [186, 38, 21, "Do not use any type assertions.", "67485134"],
+      [186, 56, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [211, 22, 15, "Do not use any type assertions.", "151603256"]
+    ],
+    "public/app/features/canvas/runtime/frame.tsx:3835871966": [
+      [47, 42, 23, "Do not use any type assertions.", "1788531953"],
+      [114, 45, 15, "Do not use any type assertions.", "151603256"]
+    ],
+    "public/app/features/canvas/runtime/root.tsx:2845174121": [
+      [24, 19, 36, "Do not use any type assertions.", "1413431594"]
+    ],
+    "public/app/features/canvas/runtime/scene.tsx:1375864257": [
+      [157, 61, 25, "Do not use any type assertions.", "588553285"],
+      [162, 42, 25, "Do not use any type assertions.", "588553285"]
+    ],
+    "public/app/features/comments/CommentView.tsx:3338885322": [
+      [31, 20, 32, "Do not use any type assertions.", "3501587761"]
+    ],
+    "public/app/features/dashboard/components/AddPanelWidget/AddPanelWidget.test.tsx:1976108855": [
+      [9, 15, 20, "Do not use any type assertions.", "2923490522"],
+      [10, 11, 16, "Do not use any type assertions.", "388222280"],
+      [11, 14, 16, "Do not use any type assertions.", "2607709806"],
+      [11, 27, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/features/dashboard/components/AddPanelWidget/AddPanelWidget.tsx:3675352369": [
+      [24, 36, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [24, 67, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [24, 75, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [24, 89, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [47, 22, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [90, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [126, 18, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/features/dashboard/components/DashExportModal/DashboardExporter.test.ts:2274633003": [
+      [22, 6, 59, "Do not use any type assertions.", "3685154675"],
+      [22, 6, 49, "Do not use any type assertions.", "1184085652"],
+      [25, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [47, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [74, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [79, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [94, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [100, 12, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [100, 27, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [201, 29, 100, "Do not use any type assertions.", "2603231511"],
+      [207, 29, 100, "Do not use any type assertions.", "1574182326"],
+      [213, 31, 104, "Do not use any type assertions.", "3067343445"],
+      [240, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [245, 24, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [272, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [280, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [285, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [290, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [297, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [304, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [311, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [318, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [325, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [334, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [370, 13, 18, "Do not use any type assertions.", "3420875325"],
+      [371, 9, 55, "Do not use any type assertions.", "1888720338"],
+      [371, 17, 10, "Do not use any type assertions.", "1501063862"],
+      [371, 24, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [371, 61, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/features/dashboard/components/DashExportModal/DashboardExporter.ts:568589687": [
+      [17, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [44, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [65, 43, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [72, 45, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [79, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [82, 25, 17, "Do not use any type assertions.", "1733699692"],
+      [82, 39, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [83, 20, 33, "Do not use any type assertions.", "1729190460"],
+      [83, 21, 17, "Do not use any type assertions.", "1733699692"],
+      [83, 35, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [148, 41, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [176, 29, 31, "Do not use any type assertions.", "1451241646"],
+      [176, 29, 13, "Do not use any type assertions.", "2146830713"],
+      [195, 32, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/features/dashboard/components/DashNav/DashNav.tsx:574528540": [
+      [66, 87, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/features/dashboard/components/DashNav/DashNavTimeControls.test.tsx:3825334541": [
+      [49, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [59, 17, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/features/dashboard/components/DashboardPrompt/DashboardPrompt.test.tsx:3008088829": [
+      [34, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [36, 14, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [37, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [98, 29, 33, "Do not use any type assertions.", "630620957"],
+      [98, 29, 15, "Do not use any type assertions.", "363922340"],
+      [145, 16, 12, "Do not use any type assertions.", "1619708599"],
+      [145, 25, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/features/dashboard/components/DashboardPrompt/DashboardPrompt.tsx:3611825383": [
+      [77, 15, 51, "Do not use any type assertions.", "3757670082"],
+      [78, 18, 33, "Do not use any type assertions.", "1234314966"],
+      [167, 52, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [189, 39, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [198, 62, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [206, 27, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [206, 39, 19, "Do not use any type assertions.", "3284667245"],
+      [206, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [207, 28, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [207, 40, 20, "Do not use any type assertions.", "2225958749"],
+      [207, 57, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/features/dashboard/components/DashboardRow/DashboardRow.test.tsx:3204880669": [
+      [9, 40, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/features/dashboard/components/DashboardRow/DashboardRow.tsx:2916737379": [
+      [19, 69, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [46, 30, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/features/dashboard/components/DashboardSettings/AnnotationsSettings.test.tsx:1365286122": [
+      [12, 17, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/features/dashboard/components/DashboardSettings/AutoRefreshIntervals.test.tsx:3538366127": [
+      [35, 43, 27, "Do not use any type assertions.", "534928261"],
+      [35, 43, 15, "Do not use any type assertions.", "363922340"],
+      [100, 11, 97, "Do not use any type assertions.", "2003251453"],
+      [100, 11, 86, "Do not use any type assertions.", "2306986637"],
+      [101, 43, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [116, 11, 97, "Do not use any type assertions.", "2003251453"],
+      [116, 11, 86, "Do not use any type assertions.", "2306986637"],
+      [117, 43, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [132, 11, 97, "Do not use any type assertions.", "2003251453"],
+      [132, 11, 86, "Do not use any type assertions.", "2306986637"],
+      [133, 43, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [149, 11, 97, "Do not use any type assertions.", "2003251453"],
+      [149, 11, 86, "Do not use any type assertions.", "2306986637"],
+      [150, 43, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [164, 11, 134, "Do not use any type assertions.", "2236909939"],
+      [164, 11, 123, "Do not use any type assertions.", "29480259"]
+    ],
+    "public/app/features/dashboard/components/DashboardSettings/DashboardSettings.test.tsx:2247570785": [
+      [20, 14, 50, "Do not use any type assertions.", "3302172944"],
+      [22, 5, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/features/dashboard/components/DashboardSettings/DashboardSettings.tsx:1752755114": [
+      [40, 53, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/features/dashboard/components/DashboardSettings/GeneralSettings.test.tsx:1246666905": [
+      [13, 14, 50, "Do not use any type assertions.", "3302172944"],
+      [15, 5, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [19, 15, 428, "Do not use any type assertions.", "4070674009"],
+      [19, 15, 410, "Do not use any type assertions.", "815903200"]
+    ],
+    "public/app/features/dashboard/components/DashboardSettings/GeneralSettings.tsx:2117359978": [
+      [38, 14, 51, "Do not use any type assertions.", "4093646718"]
+    ],
+    "public/app/features/dashboard/components/DashboardSettings/VersionsSettings.test.tsx:390868385": [
+      [25, 19, 3, "Unexpected any. Specify a different type.", "193409811"]
+>>>>>>> ae0f8c4088 (Add inline edit callback to context menu.)
     ],
     "packages/grafana-ui/src/components/DataLinks/DataLinkInput.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -10479,12 +10656,12 @@ exports[`no undocumented stories`] = {
       [197, 15, 18, "Do not use any type assertions.", "3407005619"],
       [200, 15, 18, "Do not use any type assertions.", "516790078"]
     ],
-    "public/app/plugins/panel/canvas/CanvasContextMenu.tsx:1200380152": [
+    "public/app/plugins/panel/canvas/CanvasContextMenu.tsx:2767170725": [
       [31, 33, 47, "Do not use any type assertions.", "3512730894"]
     ],
-    "public/app/plugins/panel/canvas/CanvasPanel.tsx:4244563785": [
+    "public/app/plugins/panel/canvas/CanvasPanel.tsx:1106212612": [
       [39, 31, 18, "Do not use any type assertions.", "3890263992"],
-      [81, 24, 28, "Do not use any type assertions.", "4099457225"]
+      [82, 24, 28, "Do not use any type assertions.", "4099457225"]
     ],
     "public/app/plugins/panel/canvas/InlineEdit.tsx:2513249821": [
       [52, 29, 3, "Unexpected any. Specify a different type.", "193409811"],

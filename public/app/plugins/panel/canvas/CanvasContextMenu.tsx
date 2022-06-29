@@ -87,6 +87,14 @@ export const CanvasContextMenu = ({ scene }: Props) => {
           }}
           className={styles.menuItem}
         />
+        <MenuItem
+          label="Edit Canvas"
+          onClick={() => {
+            scene.inlineEditingCallback!();
+            closeContextMenu();
+          }}
+          className={styles.menuItem}
+        />
       </>
     );
   };
