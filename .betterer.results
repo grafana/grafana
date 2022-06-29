@@ -4578,7 +4578,7 @@ exports[`better eslint`] = {
     "public/app/features/canvas/runtime/root.tsx:2845174121": [
       [24, 19, 36, "Do not use any type assertions.", "1413431594"]
     ],
-    "public/app/features/canvas/runtime/scene.tsx:4285479205": [
+    "public/app/features/canvas/runtime/scene.tsx:4221384430": [
       [155, 61, 25, "Do not use any type assertions.", "588553285"],
       [160, 42, 25, "Do not use any type assertions.", "588553285"]
     ],
@@ -6871,10 +6871,8 @@ exports[`better eslint`] = {
       [161, 24, 46, "Do not use any type assertions.", "1967560255"],
       [167, 22, 38, "Do not use any type assertions.", "1477056001"]
     ],
-    "public/app/features/search/service/sql.ts:4013142735": [
-      [91, 36, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [99, 18, 61, "Do not use any type assertions.", "2014388220"],
-      [104, 16, 68, "Do not use any type assertions.", "257067967"]
+    "public/app/features/search/service/sql.ts:3331148655": [
+      [91, 36, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/search/types.ts:479421789": [
       [64, 12, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -10977,7 +10975,7 @@ exports[`better eslint`] = {
       [41, 64, 3, "Unexpected any. Specify a different type.", "193409811"],
       [41, 69, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/panel/canvas/editor/LayerElementListEditor.tsx:374041207": [
+    "public/app/plugins/panel/canvas/editor/LayerElementListEditor.tsx:2123096129": [
       [21, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
       [40, 30, 44, "Do not use any type assertions.", "712744497"]
     ],
