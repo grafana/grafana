@@ -9,7 +9,6 @@ import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { contextSrv } from 'app/core/core';
-import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState, ServiceAccountDTO, AccessControlAction, ServiceAccountStateFilter } from 'app/types';
 
 import { CreateTokenModal, ServiceAccountToken } from './components/CreateTokenModal';
@@ -33,7 +32,6 @@ export type Props = OwnProps & ConnectedProps<typeof connector>;
 
 function mapStateToProps(state: StoreState) {
   return {
-    navModel: getNavModel(state.navIndex, 'serviceaccounts'),
     ...state.serviceAccounts,
   };
 }
@@ -54,7 +52,6 @@ const mapDispatchToProps = {
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
 export const ServiceAccountsListPageUnconnected = ({
-  navModel,
   serviceAccounts,
   isLoading,
   roleOptions,
@@ -169,7 +166,7 @@ export const ServiceAccountsListPageUnconnected = ({
   };
 
   return (
-    <Page navModel={navModel}>
+    <Page navId="serviceaccounts">
       <Page.Contents>
         {apiKeysMigrated && showApiKeysMigrationInfo && (
           <Alert

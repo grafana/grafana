@@ -1,23 +1,27 @@
 // Libraries
 import { css, cx } from '@emotion/css';
-import React, { FC, HTMLAttributes, useEffect } from 'react';
+import React, { FC, HTMLAttributes } from 'react';
+import { useSelector } from 'react-redux';
+import { createSelector } from 'reselect';
 
-import { GrafanaTheme2, NavModel } from '@grafana/data';
+import { GrafanaTheme2, NavModel, NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { CustomScrollbar, useStyles2 } from '@grafana/ui';
-import { getTitleFromNavModel } from 'app/core/selectors/navModel';
+import { getNavModel } from 'app/core/selectors/navModel';
+import { StoreState } from 'app/types';
 
-// Components
-import { Branding } from '../Branding/Branding';
 import { Footer } from '../Footer/Footer';
-import PageHeader from '../PageHeader/PageHeader';
+import { PageHeader } from '../PageHeader/PageHeader';
 import { NewPage } from '../PageLayouts/NewPage';
 
 import { PageContents } from './PageContents';
+import { usePageTitle } from './usePageTitle';
 
 interface Props extends HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
+  navId?: string;
   navModel?: NavModel;
+  pageNav?: NavModelItem;
 }
 
 export interface PageType extends FC<Props> {
@@ -25,23 +29,19 @@ export interface PageType extends FC<Props> {
   Contents: typeof PageContents;
 }
 
-export const OldPage: PageType = ({ navModel, children, className, ...otherProps }) => {
+export const OldPage: PageType = ({ navId, navModel: oldNavProp, pageNav, children, className, ...otherProps }) => {
   const styles = useStyles2(getStyles);
+  const navModel = useSelector(
+    createSelector(getNavIndex, (navIndex) => oldNavProp ?? getNavModel(navIndex, navId ?? 'home'))
+  );
 
-  useEffect(() => {
-    if (navModel) {
-      const title = getTitleFromNavModel(navModel);
-      document.title = title ? `${title} - ${Branding.AppTitle}` : Branding.AppTitle;
-    } else {
-      document.title = Branding.AppTitle;
-    }
-  }, [navModel]);
+  usePageTitle(navModel, pageNav);
 
   return (
     <div {...otherProps} className={cx(styles.wrapper, className)}>
       <CustomScrollbar autoHeightMin={'100%'}>
         <div className="page-scrollbar-content">
-          {navModel && <PageHeader model={navModel.main} />}
+          <PageHeader navItem={pageNav ?? navModel.main} />
           {children}
           <Footer />
         </div>
@@ -62,3 +62,7 @@ const getStyles = (_: GrafanaTheme2) => ({
     min-height: 0;
   `,
 });
+
+function getNavIndex(store: StoreState) {
+  return store.navIndex;
+}

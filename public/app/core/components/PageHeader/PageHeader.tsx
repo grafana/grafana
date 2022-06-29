@@ -8,7 +8,7 @@ import { PanelHeaderMenuItem } from 'app/features/dashboard/dashgrid/PanelHeader
 import { ProBadge } from '../Upgrade/ProBadge';
 
 export interface Props {
-  model: NavModelItem;
+  navItem: NavModelItem;
 }
 
 const SelectNav = ({ children, customCss }: { children: NavModelItem[]; customCss: string }) => {
@@ -75,7 +75,7 @@ const Navigation = ({ children }: { children: NavModelItem[] }) => {
   );
 };
 
-export const PageHeader: FC<Props> = ({ model }) => {
+export const PageHeader: FC<Props> = ({ navItem: model }) => {
   const styles = useStyles2(getStyles);
 
   if (!model) {
@@ -155,5 +155,3 @@ const getStyles = (theme: GrafanaTheme2) => ({
     background: ${theme.colors.background.canvas};
   `,
 });
-
-export default PageHeader;

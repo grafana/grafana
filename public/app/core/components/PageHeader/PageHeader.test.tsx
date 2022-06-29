@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import PageHeader from './PageHeader';
+import { PageHeader } from './PageHeader';
 
 describe('PageHeader', () => {
   describe('when the nav tree has a node with a title', () => {
@@ -17,7 +17,7 @@ describe('PageHeader', () => {
         node: {},
       };
 
-      render(<PageHeader model={nav as any} />);
+      render(<PageHeader navItem={nav as any} />);
 
       expect(screen.getByRole('heading', { name: 'node' })).toBeInTheDocument();
     });
@@ -37,7 +37,7 @@ describe('PageHeader', () => {
         node: {},
       };
 
-      render(<PageHeader model={nav as any} />);
+      render(<PageHeader navItem={nav as any} />);
 
       expect(screen.getByRole('heading', { name: 'Parent / child' })).toBeInTheDocument();
       expect(screen.getByRole('link', { name: 'Parent' })).toBeInTheDocument();

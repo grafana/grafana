@@ -2,9 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { NavModel } from '@grafana/data';
-
-import { CreateTeam, Props } from './CreateTeam';
+import { CreateTeam } from './CreateTeam';
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -27,10 +25,7 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 const setup = () => {
-  const props: Props = {
-    navModel: { node: {}, main: {} } as NavModel,
-  };
-  return render(<CreateTeam {...props} />);
+  return render(<CreateTeam />);
 };
 
 describe('Create team', () => {

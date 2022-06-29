@@ -23,13 +23,13 @@ export const AppPluginLoader = ({ id, basePath }: AppPluginLoaderProps) => {
   const { pathname } = useLocation();
 
   if (error) {
-    return <Page.Header model={getWarningNav(error.message, error.stack).main} />;
+    return <Page.Header navItem={getWarningNav(error.message, error.stack).main} />;
   }
 
   return (
     <>
       {loading && <PageLoader />}
-      {nav && <Page.Header model={nav.main} />}
+      {nav && <Page.Header navItem={nav.main} />}
       {!loading && plugin && plugin.root && (
         <plugin.root
           meta={plugin.meta}

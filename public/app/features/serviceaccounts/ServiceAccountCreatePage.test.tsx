@@ -2,7 +2,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { ServiceAccountCreatePageUnconnected, Props } from './ServiceAccountCreatePage';
+import { ServiceAccountCreatePage, Props } from './ServiceAccountCreatePage';
 
 const postMock = jest.fn().mockResolvedValue({});
 const patchMock = jest.fn().mockResolvedValue({});
@@ -52,7 +52,7 @@ const setup = (propOverrides: Partial<Props>) => {
 
   Object.assign(props, propOverrides);
 
-  render(<ServiceAccountCreatePageUnconnected {...props} />);
+  render(<ServiceAccountCreatePage {...props} />);
 };
 
 describe('ServiceAccountCreatePage tests', () => {
