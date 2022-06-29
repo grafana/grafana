@@ -1,0 +1,49 @@
+{
+  "id": 209,
+  "title": "ds-variables",
+  "tags": null,
+  "templateVars": [
+    "sqllite"
+  ],
+  "datasource": [
+    {
+      "uid": "All",
+      "type": "frser-sqlite-datasource"
+    }
+  ],
+  "panels": [
+    {
+      "id": 7,
+      "title": "Panel Title",
+      "type": "timeseries",
+      "datasource": [
+        {
+          "uid": "All",
+          "type": "frser-sqlite-datasource"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Row title",
+      "type": "row"
+    },
+    {
+      "id": 1,
+      "title": "usersss!",
+      "type": "table",
+      "pluginVersion": "9.1.0-pre",
+      "datasource": [
+        {
+          "uid": "All",
+          "type": "frser-sqlite-datasource"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 36,
+  "linkCount": 0,
+  "timeFrom": "now-6h",
+  "timeTo": "now",
+  "timezone": ""
+}

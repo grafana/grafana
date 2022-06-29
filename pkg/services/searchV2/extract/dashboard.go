@@ -37,10 +37,14 @@ func (d *datasourceVariableLookup) add(templateVariable templateVariable) {
 	if values, multiValueVariable := templateVariable.current.value.([]interface{}); multiValueVariable {
 		for _, value := range values {
 			if valueAsString, ok := value.(string); ok {
-				refs = append(refs, DataSourceRef{
-					UID:  valueAsString,
-					Type: datasourceType,
-				})
+				if valueAsString == "$__all" {
+					// TODO: add all matching datasources from db.. ?
+				} else {
+					refs = append(refs, DataSourceRef{
+						UID:  valueAsString,
+						Type: datasourceType,
+					})
+				}
 			}
 		}
 	}
