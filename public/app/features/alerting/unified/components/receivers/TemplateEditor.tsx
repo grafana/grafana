@@ -3,6 +3,7 @@
  *
  * It includes auto-complete for template data and syntax highlighting
  */
+import { editor } from 'monaco-editor';
 import React, { FC } from 'react';
 
 import { CodeEditor } from '@grafana/ui';
@@ -15,16 +16,35 @@ const getSuggestions = () => {
   return [];
 };
 
-type TemplateEditorProps = Omit<CodeEditorProps, 'language' | 'theme'>;
+type TemplateEditorProps = Omit<CodeEditorProps, 'language' | 'theme'> & {
+  autoHeight?: boolean;
+};
 
 const TemplateEditor: FC<TemplateEditorProps> = (props) => {
+  const shouldAutoHeight = Boolean(props.autoHeight);
+
+  const onEditorDidMount = (editor: editor.IStandaloneCodeEditor) => {
+    if (shouldAutoHeight) {
+      const contentHeight = editor.getContentHeight();
+
+      try {
+        // we're passing NaN in to the width because the type definition wants a number (NaN is a number, go figure)
+        // but the width could be defined as a string "auto", passing NaN seems to just ignore our width update here
+        editor.layout({ height: contentHeight, width: NaN });
+      } catch (err) {}
+    }
+  };
+
   return (
     <CodeEditor
       {...props}
       showLineNumbers={true}
       getSuggestions={getSuggestions}
       showMiniMap={false}
-      onBeforeEditorMount={(monaco) => registerLanguage(monaco, goTemplateLanguageDefinition)}
+      onEditorDidMount={onEditorDidMount}
+      onBeforeEditorMount={(monaco) => {
+        registerLanguage(monaco, goTemplateLanguageDefinition);
+      }}
       theme={GO_TEMPLATE_THEME_ID}
       language={GO_TEMPLATE_LANGUAGE_ID}
     />
