@@ -26,10 +26,10 @@ Alpha and beta releases are published under the `next` tag on npm.
 
 ### Automatic prereleases
 
-Every commit to main that has changes within the `packages` directory is a subject of npm packages release. _ALL_ packages must be released under version from lerna.json file with commit SHA added to it:
+Every commit to main that has changes within the `packages` directory is a subject of npm packages release. _ALL_ packages must be released under version from lerna.json file with the drone build number added to it:
 
 ```
-<lerna.json version>-<COMMIT_SHA>
+<lerna.json version>-<DRONE_BUILD_NUMBER>
 ```
 
 ### Manual release
