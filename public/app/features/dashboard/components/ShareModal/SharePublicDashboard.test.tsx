@@ -1,17 +1,21 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 
-import { BackendSrv } from '@grafana/runtime';
+import { BackendSrv, setEchoSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 
+import { Echo } from '../../../../core/services/echo/Echo';
+
 import { ShareModal } from './ShareModal';
-import { PublicDashboardConfig } from './SharePublicDashboardUtils';
+import { PublicDashboard } from './SharePublicDashboardUtils';
 
 // Mock api request
-const publicDashboardconfigResp: PublicDashboardConfig = {
-  isPublic: true,
-  publicDashboard: { uid: '', dashboardUid: '' },
+const publicDashboardconfigResp: PublicDashboard = {
+  isEnabled: true,
+  uid: '',
+  dashboardUid: '',
+  accessToken: '',
 };
 
 const backendSrv = {
@@ -43,6 +47,7 @@ describe('SharePublic', () => {
   let originalBootData: any;
 
   beforeAll(() => {
+    setEchoSrv(new Echo());
     originalBootData = config.bootData;
     config.appUrl = 'http://dashboards.grafana.com/';
 
@@ -88,6 +93,13 @@ describe('SharePublic', () => {
 
     fireEvent.click(screen.getByText('Public Dashboard'));
 
-    await waitFor(() => screen.getByText('Enabled'));
+    await screen.findByText('Welcome to Grafana public dashboards alpha!');
   });
+
+  // test when checkboxes show up
+  // test checkboxes hidden
+  // test url hidden
+  // test url shows up
+  //
+  // test checking if current version of dashboard in state is persisted to db
 });

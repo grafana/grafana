@@ -16,6 +16,7 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
@@ -33,23 +34,23 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 	grafanaListedAddr, s := testinfra.StartGrafana(t, dir, path)
 
 	// Create a user to make authenticated requests
-	userID := createUser(t, s, models.CreateUserCommand{
+	userID := createUser(t, s, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_ADMIN),
 		Login:          "grafana",
 		Password:       "password",
 	})
-
+	apiClient := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
 	// create another organisation
 	orgID := createOrg(t, s, "another org", userID)
 	// ensure that the orgID is 3 (the disabled org)
 	require.Equal(t, disableOrgID, orgID)
 
 	// create user under different organisation
-	createUser(t, s, models.CreateUserCommand{
+	createUser(t, s, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_ADMIN),
 		Password:       "admin-42",
 		Login:          "admin-42",
-		OrgId:          orgID,
+		OrgID:          orgID,
 	})
 
 	// Create a couple of "fake" Alertmanagers
@@ -150,8 +151,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 	// Now, let's set an alert that should fire as quickly as possible.
 	{
 		// Create the namespace we'll save our alerts to
-		err := createFolder(t, "default", grafanaListedAddr, "grafana", "password")
-		require.NoError(t, err)
+		apiClient.CreateFolder(t, "default", "default")
 		interval, err := model.ParseDuration("10s")
 		require.NoError(t, err)
 

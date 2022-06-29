@@ -4,10 +4,11 @@ import { SelectableValue } from '@grafana/data';
 
 import CloudMonitoringDatasource from '../../datasource';
 import { CustomMetaData, MetricDescriptor, MetricQuery, SLOQuery } from '../../types';
-import { LabelFilter, Metrics } from '../index';
+import { LabelFilter } from '../index';
 
 import { Alignment } from './Alignment';
 import { GroupBy } from './GroupBy';
+import { Metrics } from './Metrics';
 import { Preprocessor } from './Preprocessor';
 
 export interface Props {
@@ -34,7 +35,6 @@ function Editor({
   return (
     <Metrics
       refId={refId}
-      templateSrv={datasource.templateSrv}
       projectName={query.projectName}
       metricType={query.metricType}
       templateVariableOptions={variableOptionGroup.options}

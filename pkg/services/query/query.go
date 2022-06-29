@@ -146,7 +146,7 @@ func (s *Service) handleExpressions(ctx context.Context, user *models.SignedInUs
 func (s *Service) handleQueryData(ctx context.Context, user *models.SignedInUser, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
 	ds := parsedReq.parsedQueries[0].datasource
 	if err := s.pluginRequestValidator.Validate(ds.Url, nil); err != nil {
-		return nil, models.ErrDataSourceAccessDenied
+		return nil, datasources.ErrDataSourceAccessDenied
 	}
 
 	instanceSettings, err := adapters.ModelToInstanceSettings(ds, s.decryptSecureJsonDataFn(ctx))
@@ -205,7 +205,7 @@ func (s *Service) handleQueryData(ctx context.Context, user *models.SignedInUser
 }
 
 type parsedQuery struct {
-	datasource *models.DataSource
+	datasource *datasources.DataSource
 	query      backend.DataQuery
 }
 
@@ -247,7 +247,7 @@ func (s *Service) parseMetricRequest(ctx context.Context, user *models.SignedInU
 	}
 
 	// Parse the queries
-	datasourcesByUid := map[string]*models.DataSource{}
+	datasourcesByUid := map[string]*datasources.DataSource{}
 	for _, query := range reqDTO.Queries {
 		ds, err := s.getDataSourceFromQuery(ctx, user, skipCache, query, datasourcesByUid)
 		if err != nil {
@@ -299,7 +299,7 @@ func (s *Service) parseMetricRequest(ctx context.Context, user *models.SignedInU
 	return req, nil
 }
 
-func (s *Service) getDataSourceFromQuery(ctx context.Context, user *models.SignedInUser, skipCache bool, query *simplejson.Json, history map[string]*models.DataSource) (*models.DataSource, error) {
+func (s *Service) getDataSourceFromQuery(ctx context.Context, user *models.SignedInUser, skipCache bool, query *simplejson.Json, history map[string]*datasources.DataSource) (*datasources.DataSource, error) {
 	var err error
 	uid := query.Get("datasource").Get("uid").MustString()
 
@@ -343,8 +343,8 @@ func (s *Service) getDataSourceFromQuery(ctx context.Context, user *models.Signe
 	return nil, NewErrBadQuery("missing data source ID/UID")
 }
 
-func (s *Service) decryptSecureJsonDataFn(ctx context.Context) func(ds *models.DataSource) map[string]string {
-	return func(ds *models.DataSource) map[string]string {
+func (s *Service) decryptSecureJsonDataFn(ctx context.Context) func(ds *datasources.DataSource) map[string]string {
+	return func(ds *datasources.DataSource) map[string]string {
 		decryptedJsonData, err := s.dataSourceService.DecryptedValues(ctx, ds)
 		if err != nil {
 			s.log.Error("Failed to decrypt secure json data", "error", err)

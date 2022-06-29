@@ -177,6 +177,7 @@ func validateRuleGroup(
 			}
 			uids[rule.UID] = idx
 		}
+		rule.RuleGroupIndex = idx + 1
 		result = append(result, rule)
 	}
 	return result, nil
