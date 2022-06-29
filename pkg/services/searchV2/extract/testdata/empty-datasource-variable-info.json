@@ -5,24 +5,12 @@
   "templateVars": [
     "sqllite"
   ],
-  "datasource": [
-    {
-      "uid": "${sqllite}",
-      "type": "frser-sqlite-datasource"
-    }
-  ],
   "panels": [
     {
       "id": 1,
       "title": "usersss!",
       "type": "table",
-      "pluginVersion": "9.1.0-pre",
-      "datasource": [
-        {
-          "uid": "${sqllite}",
-          "type": "frser-sqlite-datasource"
-        }
-      ]
+      "pluginVersion": "9.1.0-pre"
     }
   ],
   "schemaVersion": 36,

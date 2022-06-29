@@ -31,7 +31,7 @@
   "panels": [
     {
       "datasource": {
-        "type": "frser-sqlite-datasource",
+        "type": "sqlite-datasource",
         "uid": "${sqllite}"
       },
       "fieldConfig": {
@@ -79,7 +79,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "frser-sqlite-datasource",
+            "type": "sqlite-datasource",
             "uid": "${sqllite}"
           },
           "queryText": "select * from user",
@@ -112,7 +112,7 @@
         "multi": false,
         "name": "sqllite",
         "options": [],
-        "query": "frser-sqlite-datasource",
+        "query": "sqlite-datasource",
         "queryValue": "",
         "refresh": 1,
         "regex": "asdgasd",

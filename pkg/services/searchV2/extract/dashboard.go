@@ -3,6 +3,7 @@ package extract
 import (
 	"io"
 	"strconv"
+	"strings"
 
 	jsoniter "github.com/json-iterator/go"
 )
@@ -11,12 +12,74 @@ func logf(format string, a ...interface{}) {
 	//fmt.Printf(format, a...)
 }
 
+type templateVariable struct {
+	current struct {
+		value interface{}
+	}
+	name         string
+	query        interface{}
+	variableType string
+}
+
+type datasourceVariableLookup struct {
+	variableNameToRefs map[string][]DataSourceRef
+}
+
+func (d *datasourceVariableLookup) add(templateVariable templateVariable) {
+	var refs []DataSourceRef
+
+	datasourceType, isDataSourceTypeValid := templateVariable.query.(string)
+	if !isDataSourceTypeValid {
+		d.variableNameToRefs[templateVariable.name] = refs
+		return
+	}
+
+	if values, multiValueVariable := templateVariable.current.value.([]interface{}); multiValueVariable {
+		for _, value := range values {
+			if valueAsString, ok := value.(string); ok {
+				refs = append(refs, DataSourceRef{
+					UID:  valueAsString,
+					Type: datasourceType,
+				})
+			}
+		}
+	}
+
+	if value, stringValue := templateVariable.current.value.(string); stringValue {
+		if value != "" && value != "No data sources found" {
+			refs = append(refs, DataSourceRef{
+				UID:  value,
+				Type: datasourceType,
+			})
+		}
+	}
+
+	d.variableNameToRefs[templateVariable.name] = refs
+}
+
+func (d *datasourceVariableLookup) getDatasourceRefs(name string) []DataSourceRef {
+	refs, ok := d.variableNameToRefs[name]
+	if ok {
+		return refs
+	}
+
+	return []DataSourceRef{}
+}
+
+func newDatasourceVariableLookup() *datasourceVariableLookup {
+	return &datasourceVariableLookup{
+		variableNameToRefs: make(map[string][]DataSourceRef),
+	}
+}
+
 // nolint:gocyclo
 // ReadDashboard will take a byte stream and return dashboard info
 func ReadDashboard(stream io.Reader, lookup DatasourceLookup) (*DashboardInfo, error) {
 	dash := &DashboardInfo{}
 
 	iter := jsoniter.Parse(jsoniter.ConfigDefault, stream, 1024)
+
+	datasourceVariablesLookup := newDatasourceVariableLookup()
 
 	for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
 		// Skip null values so we don't need special int handling
@@ -112,12 +175,33 @@ func ReadDashboard(stream io.Reader, lookup DatasourceLookup) (*DashboardInfo, e
 			for sub := iter.ReadObject(); sub != ""; sub = iter.ReadObject() {
 				if sub == "list" {
 					for iter.ReadArray() {
+						templateVariable := templateVariable{}
+
 						for k := iter.ReadObject(); k != ""; k = iter.ReadObject() {
-							if k == "name" {
-								dash.TemplateVars = append(dash.TemplateVars, iter.ReadString())
-							} else {
+							switch k {
+							case "name":
+								name := iter.ReadString()
+								dash.TemplateVars = append(dash.TemplateVars, name)
+								templateVariable.name = name
+							case "type":
+								templateVariable.variableType = iter.ReadString()
+							case "query":
+								templateVariable.query = iter.Read()
+							case "current":
+								for c := iter.ReadObject(); c != ""; c = iter.ReadObject() {
+									if c != "value" {
+										templateVariable.current.value = iter.Read()
+									} else {
+										iter.Skip()
+									}
+								}
+							default:
 								iter.Skip()
 							}
+						}
+
+						if templateVariable.variableType == "datasource" {
+							datasourceVariablesLookup.add(templateVariable)
 						}
 					}
 				} else {
@@ -137,6 +221,30 @@ func ReadDashboard(stream io.Reader, lookup DatasourceLookup) (*DashboardInfo, e
 			v := iter.Read()
 			logf("[DASHBOARD] support key: %s / %v\n", l1Field, v)
 		}
+	}
+
+	for i, panel := range dash.Panels {
+		var dsVariableRefs []DataSourceRef
+		var dsRefs []DataSourceRef
+
+		for i := range panel.Datasource {
+			isVariableRef := strings.HasPrefix(panel.Datasource[i].UID, "${")
+			if isVariableRef {
+				dsVariableRefs = append(dsVariableRefs, panel.Datasource[i])
+			} else {
+				dsRefs = append(dsRefs, panel.Datasource[i])
+			}
+		}
+
+		var referencedDs []DataSourceRef
+		for _, dsVariableRef := range dsVariableRefs {
+			variableName := strings.TrimSuffix(strings.TrimPrefix(dsVariableRef.UID, "${"), "}")
+			refs := datasourceVariablesLookup.getDatasourceRefs(variableName)
+
+			referencedDs = append(referencedDs, refs...)
+		}
+
+		dash.Panels[i].Datasource = append(dsRefs, referencedDs...)
 	}
 
 	targets := newTargetInfo(lookup)

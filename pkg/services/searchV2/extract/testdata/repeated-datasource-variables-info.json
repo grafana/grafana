@@ -7,8 +7,12 @@
   ],
   "datasource": [
     {
-      "uid": "${sqllite}",
-      "type": "frser-sqlite-datasource"
+      "uid": "SQLite Grafana",
+      "type": "sqlite-datasource"
+    },
+    {
+      "uid": "SQLite Grafana2",
+      "type": "sqlite-datasource"
     }
   ],
   "panels": [
@@ -19,8 +23,12 @@
       "pluginVersion": "9.1.0-pre",
       "datasource": [
         {
-          "uid": "${sqllite}",
-          "type": "frser-sqlite-datasource"
+          "uid": "SQLite Grafana",
+          "type": "sqlite-datasource"
+        },
+        {
+          "uid": "SQLite Grafana2",
+          "type": "sqlite-datasource"
         }
       ]
     }
