@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type OrgListResponse []struct {
@@ -18,7 +19,7 @@ type SQLStoreMock struct {
 	LastLoginAttemptCommand *models.CreateLoginAttemptCommand
 	LatestUserId            int64
 
-	ExpectedUser                   *models.User
+	ExpectedUser                   *user.User
 	ExpectedDatasource             *datasources.DataSource
 	ExpectedAlert                  *models.Alert
 	ExpectedPluginSetting          *models.PluginSetting
@@ -132,7 +133,7 @@ func (m *SQLStoreMock) DeleteOldLoginAttempts(ctx context.Context, cmd *models.D
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) CreateUser(ctx context.Context, cmd models.CreateUserCommand) (*models.User, error) {
+func (m *SQLStoreMock) CreateUser(ctx context.Context, cmd user.CreateUserCommand) (*user.User, error) {
 	return nil, m.ExpectedError
 }
 
@@ -540,6 +541,10 @@ func (m *SQLStoreMock) GetApiKeyById(ctx context.Context, query *models.GetApiKe
 func (m *SQLStoreMock) GetApiKeyByName(ctx context.Context, query *models.GetApiKeyByNameQuery) error {
 	query.Result = m.ExpectedAPIKey
 	return m.ExpectedError
+}
+
+func (m *SQLStoreMock) UpdateAPIKeyLastUsedDate(ctx context.Context, tokenID int64) error {
+	return nil
 }
 
 func (m *SQLStoreMock) UpdateTempUserStatus(ctx context.Context, cmd *models.UpdateTempUserStatusCommand) error {
