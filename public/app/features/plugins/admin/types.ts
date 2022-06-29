@@ -212,6 +212,7 @@ export enum PluginTabLabels {
   VERSIONS = 'Version history',
   CONFIG = 'Config',
   DASHBOARDS = 'Dashboards',
+  USAGE = 'Usage',
 }
 
 export enum PluginTabIds {
@@ -219,6 +220,7 @@ export enum PluginTabIds {
   VERSIONS = 'version-history',
   CONFIG = 'config',
   DASHBOARDS = 'dashboards',
+  USAGE = 'usage',
 }
 
 export enum RequestStatus {

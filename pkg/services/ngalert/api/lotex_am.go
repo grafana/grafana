@@ -8,12 +8,14 @@ import (
 	"io"
 	"net/http"
 
+	"gopkg.in/yaml.v3"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/web"
-	"gopkg.in/yaml.v3"
 )
 
 var endpoints = map[string]map[string]string{
@@ -74,10 +76,10 @@ func (am *LotexAM) withAMReq(
 
 	ds, err := am.DataProxy.DataSourceCache.GetDatasourceByUID(ctx.Req.Context(), datasourceUID, ctx.SignedInUser, ctx.SkipCache)
 	if err != nil {
-		if errors.Is(err, models.ErrDataSourceAccessDenied) {
+		if errors.Is(err, datasources.ErrDataSourceAccessDenied) {
 			return ErrResp(http.StatusForbidden, err, "Access denied to datasource")
 		}
-		if errors.Is(err, models.ErrDataSourceNotFound) {
+		if errors.Is(err, datasources.ErrDataSourceNotFound) {
 			return ErrResp(http.StatusNotFound, err, "Unable to find datasource")
 		}
 		return ErrResp(http.StatusInternalServerError, err, "Unable to load datasource meta data")

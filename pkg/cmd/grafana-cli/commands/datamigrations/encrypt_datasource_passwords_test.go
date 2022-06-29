@@ -5,13 +5,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/commandstest"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestPasswordMigrationCommand(t *testing.T) {
@@ -20,7 +21,7 @@ func TestPasswordMigrationCommand(t *testing.T) {
 	session := sqlstore.NewSession(context.Background())
 	defer session.Close()
 
-	datasources := []*models.DataSource{
+	ds := []*datasources.DataSource{
 		{Type: "influxdb", Name: "influxdb", Password: "foobar", Uid: "influx"},
 		{Type: "graphite", Name: "graphite", BasicAuthPassword: "foobar", Uid: "graphite"},
 		{Type: "prometheus", Name: "prometheus", Uid: "prom"},
@@ -28,7 +29,7 @@ func TestPasswordMigrationCommand(t *testing.T) {
 	}
 
 	// set required default values
-	for _, ds := range datasources {
+	for _, ds := range ds {
 		ds.Created = time.Now()
 		ds.Updated = time.Now()
 
@@ -42,7 +43,7 @@ func TestPasswordMigrationCommand(t *testing.T) {
 		}
 	}
 
-	_, err := session.Insert(&datasources)
+	_, err := session.Insert(&ds)
 	require.NoError(t, err)
 
 	// force secure_json_data to be null to verify that migration can handle that
@@ -56,7 +57,7 @@ func TestPasswordMigrationCommand(t *testing.T) {
 	require.NoError(t, err)
 
 	// verify that no datasources still have password or basic_auth
-	var dss []*models.DataSource
+	var dss []*datasources.DataSource
 	err = session.SQL("select * from data_source").Find(&dss)
 	require.NoError(t, err)
 	assert.Equal(t, len(dss), 4)
@@ -95,7 +96,7 @@ func TestPasswordMigrationCommand(t *testing.T) {
 	}
 }
 
-func DecryptSecureJsonData(ds *models.DataSource) (map[string]string, error) {
+func DecryptSecureJsonData(ds *datasources.DataSource) (map[string]string, error) {
 	decrypted := make(map[string]string)
 	for key, data := range ds.SecureJsonData {
 		decryptedData, err := util.Decrypt(data, setting.SecretKey)

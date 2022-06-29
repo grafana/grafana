@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
@@ -41,7 +42,7 @@ func TestTestReceivers(t *testing.T) {
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-		createUser(t, env.SQLStore, models.CreateUserCommand{
+		createUser(t, env.SQLStore, user.CreateUserCommand{
 			DefaultOrgRole: string(models.ROLE_EDITOR),
 			Login:          "grafana",
 			Password:       "password",
@@ -75,7 +76,7 @@ func TestTestReceivers(t *testing.T) {
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-		createUser(t, env.SQLStore, models.CreateUserCommand{
+		createUser(t, env.SQLStore, user.CreateUserCommand{
 			DefaultOrgRole: string(models.ROLE_EDITOR),
 			Login:          "grafana",
 			Password:       "password",
@@ -157,7 +158,7 @@ func TestTestReceivers(t *testing.T) {
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-		createUser(t, env.SQLStore, models.CreateUserCommand{
+		createUser(t, env.SQLStore, user.CreateUserCommand{
 			DefaultOrgRole: string(models.ROLE_EDITOR),
 			Login:          "grafana",
 			Password:       "password",
@@ -234,7 +235,7 @@ func TestTestReceivers(t *testing.T) {
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-		createUser(t, env.SQLStore, models.CreateUserCommand{
+		createUser(t, env.SQLStore, user.CreateUserCommand{
 			DefaultOrgRole: string(models.ROLE_EDITOR),
 			Login:          "grafana",
 			Password:       "password",
@@ -321,7 +322,7 @@ func TestTestReceivers(t *testing.T) {
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-		createUser(t, env.SQLStore, models.CreateUserCommand{
+		createUser(t, env.SQLStore, user.CreateUserCommand{
 			DefaultOrgRole: string(models.ROLE_EDITOR),
 			Login:          "grafana",
 			Password:       "password",
@@ -434,7 +435,7 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-		createUser(t, env.SQLStore, models.CreateUserCommand{
+		createUser(t, env.SQLStore, user.CreateUserCommand{
 			DefaultOrgRole: string(models.ROLE_EDITOR),
 			Login:          "grafana",
 			Password:       "password",
@@ -527,7 +528,7 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-		createUser(t, env.SQLStore, models.CreateUserCommand{
+		createUser(t, env.SQLStore, user.CreateUserCommand{
 			DefaultOrgRole: string(models.ROLE_EDITOR),
 			Login:          "grafana",
 			Password:       "password",
@@ -615,7 +616,7 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-		createUser(t, env.SQLStore, models.CreateUserCommand{
+		createUser(t, env.SQLStore, user.CreateUserCommand{
 			DefaultOrgRole: string(models.ROLE_EDITOR),
 			Login:          "grafana",
 			Password:       "password",
@@ -721,7 +722,7 @@ func TestNotificationChannels(t *testing.T) {
 	channels.DefaultTemplateString = channels.TemplateForTestsString
 	channels.SlackAPIEndpoint = fmt.Sprintf("http://%s/slack_recvX/slack_testX", mockChannel.server.Addr)
 	channels.PagerdutyEventAPIURL = fmt.Sprintf("http://%s/pagerduty_recvX/pagerduty_testX", mockChannel.server.Addr)
-	channels.TelegramAPIURL = fmt.Sprintf("http://%s/telegram_recv/bot%%s", mockChannel.server.Addr)
+	channels.TelegramAPIURL = fmt.Sprintf("http://%s/telegram_recv/bot%%s/%%s", mockChannel.server.Addr)
 	channels.PushoverEndpoint = fmt.Sprintf("http://%s/pushover_recv/pushover_test", mockChannel.server.Addr)
 	channels.LineNotifyURL = fmt.Sprintf("http://%s/line_recv/line_test", mockChannel.server.Addr)
 	channels.ThreemaGwBaseURL = fmt.Sprintf("http://%s/threema_recv/threema_test", mockChannel.server.Addr)
@@ -738,7 +739,7 @@ func TestNotificationChannels(t *testing.T) {
 	}
 
 	// Create a user to make authenticated requests
-	createUser(t, env.SQLStore, models.CreateUserCommand{
+	createUser(t, env.SQLStore, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),
 		Password:       "password",
 		Login:          "grafana",
@@ -932,8 +933,8 @@ func (nc *mockNotificationChannel) ServeHTTP(res http.ResponseWriter, req *http.
 	nc.receivedNotificationsMtx.Lock()
 	defer nc.receivedNotificationsMtx.Unlock()
 
-	urlParts := strings.Split(req.URL.String(), "/")
-	key := fmt.Sprintf("%s/%s", urlParts[len(urlParts)-2], urlParts[len(urlParts)-1])
+	paths := strings.Split(req.URL.Path[1:], "/")
+	key := strings.Join(paths[0:2], "/")
 	body := getBody(nc.t, req.Body)
 
 	nc.receivedNotifications[key] = append(nc.receivedNotifications[key], body)
@@ -973,7 +974,7 @@ func (nc *mockNotificationChannel) matchesExpNotifications(t *testing.T, exp map
 			case "slack_recv1/slack_test_without_token":
 				// It has a time component "ts".
 				r1 = regexp.MustCompile(`.*"ts"\s*:\s*([0-9]+)`)
-			case "sensugo/events":
+			case "sensugo_recv/sensugo_test":
 				// It has a time component "ts".
 				r1 = regexp.MustCompile(`.*"issued"\s*:\s*([0-9]+)`)
 			case "pagerduty_recvX/pagerduty_testX":
@@ -985,7 +986,7 @@ func (nc *mockNotificationChannel) matchesExpNotifications(t *testing.T, exp map
 			case "victorops_recv/victorops_test":
 				// It has a time component "timestamp".
 				r1 = regexp.MustCompile(`.*"timestamp"\s*:\s*([0-9]+)`)
-			case "v1/alerts":
+			case "alertmanager_recv/alertmanager_test":
 				// It has a changing time fields.
 				r1 = regexp.MustCompile(`.*"startsAt"\s*:\s*"([^"]+)"`)
 				r2 = regexp.MustCompile(`.*"UpdatedAt"\s*:\s*"([^"]+)"`)
@@ -993,7 +994,7 @@ func (nc *mockNotificationChannel) matchesExpNotifications(t *testing.T, exp map
 			if r1 != nil {
 				parts := r1.FindStringSubmatch(actVals[i])
 				require.Len(t, parts, 2)
-				if expKey == "v1/alerts" {
+				if expKey == "alertmanager_recv/alertmanager_test" {
 					// 2 fields for Prometheus Alertmanager.
 					parts2 := r2.FindStringSubmatch(actVals[i])
 					require.Len(t, parts2, 2)
@@ -2277,7 +2278,7 @@ var expNonEmailNotifications = map[string][]string{
 		  "username": "Grafana"
 		}`,
 	},
-	"sensugo/events": {
+	"sensugo_recv/sensugo_test": {
 		`{
 		  "check": {
 			"handlers": null,
@@ -2396,7 +2397,7 @@ var expNonEmailNotifications = map[string][]string{
 		}`,
 	},
 	// Prometheus Alertmanager.
-	"v1/alerts": {
+	"alertmanager_recv/alertmanager_test": {
 		`[
 		  {
 			"labels": {

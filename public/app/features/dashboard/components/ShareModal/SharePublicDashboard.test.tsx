@@ -1,9 +1,11 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 
-import { BackendSrv } from '@grafana/runtime';
+import { BackendSrv, setEchoSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+
+import { Echo } from '../../../../core/services/echo/Echo';
 
 import { ShareModal } from './ShareModal';
 import { PublicDashboard } from './SharePublicDashboardUtils';
@@ -45,6 +47,7 @@ describe('SharePublic', () => {
   let originalBootData: any;
 
   beforeAll(() => {
+    setEchoSrv(new Echo());
     originalBootData = config.bootData;
     config.appUrl = 'http://dashboards.grafana.com/';
 
