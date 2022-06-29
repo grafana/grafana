@@ -3617,7 +3617,7 @@ exports[`better eslint`] = {
       [0, 34, 3, "Unexpected any. Specify a different type.", "193409811"],
       [0, 39, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/core/services/backend_srv.ts:3750224237": [
+    "public/app/core/services/backend_srv.ts:1863148476": [
       [79, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
       [149, 63, 3, "Unexpected any. Specify a different type.", "193409811"],
       [227, 40, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -3632,7 +3632,7 @@ exports[`better eslint`] = {
       [404, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
       [408, 31, 3, "Unexpected any. Specify a different type.", "193409811"],
       [412, 31, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [423, 16, 3, "Unexpected any. Specify a different type.", "193409811"]
+      [424, 16, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/core/services/context_srv.ts:1157446284": [
       [59, 10, 3, "Unexpected any. Specify a different type.", "193409811"],

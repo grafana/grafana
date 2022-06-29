@@ -421,6 +421,7 @@ export class BackendSrv implements BackendService {
     return this.request({ url: '/api/login/ping', method: 'GET', retry: 1 });
   }
 
+  /** @deprecated */
   search(query: any): Promise<DashboardSearchHit[]> {
     return this.get('/api/search', query);
   }
