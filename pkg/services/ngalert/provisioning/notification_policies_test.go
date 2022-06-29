@@ -40,6 +40,20 @@ func TestNotificationPolicyService(t *testing.T) {
 		require.Equal(t, "a new receiver", updated.Receiver)
 	})
 
+	t.Run("not existing receiver will error", func(t *testing.T) {
+		sut := createNotificationPolicyServiceSut()
+		sut.contactPoints.(*MockContactPointProvider).EXPECT().
+			GetContactPoints(mock.Anything, mock.Anything).
+			Return([]definitions.EmbeddedContactPoint{{
+				Name: "not the one we need",
+			}}, nil)
+
+		newRoute := createTestRoutingTree()
+
+		err := sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceNone)
+		require.Error(t, err)
+	})
+
 	t.Run("default provenance of records is none", func(t *testing.T) {
 		sut := createNotificationPolicyServiceSut()
 
