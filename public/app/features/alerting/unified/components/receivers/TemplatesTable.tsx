@@ -134,6 +134,7 @@ export const TemplatesTable: FC<Props> = ({ config, alertManagerName }) => {
                           height={'auto'}
                           autoHeight={true}
                           value={template}
+                          showLineNumbers={false}
                           monacoOptions={{
                             readOnly: true,
                             scrollBeyondLastLine: false,

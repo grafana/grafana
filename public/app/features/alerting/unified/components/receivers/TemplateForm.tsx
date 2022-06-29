@@ -87,6 +87,7 @@ export const TemplateForm: FC<Props> = ({ existing, alertManagerSourceName, conf
     register,
     formState: { errors },
     getValues,
+    setValue,
   } = useForm<Values>({
     mode: 'onSubmit',
     defaultValues: existing ?? defaults,
@@ -150,7 +151,12 @@ export const TemplateForm: FC<Props> = ({ existing, alertManagerSourceName, conf
           <div className={styles.editWrapper}>
             <AutoSizer>
               {({ width, height }) => (
-                <TemplateEditor value={getValues('content') ?? ''} width={width} height={height} />
+                <TemplateEditor
+                  value={getValues('content')}
+                  width={width}
+                  height={height}
+                  onBlur={(value) => setValue('content', value)}
+                />
               )}
             </AutoSizer>
           </div>
