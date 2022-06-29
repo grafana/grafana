@@ -110,8 +110,6 @@ export const TagFilter: FC<Props> = ({
   }, [onFocus, previousTags, tags]);
 
   const onTagChange = (newTags: any[]) => {
-    newTags.forEach((tag) => (tag.count = 0));
-
     // On remove with 1 item returns null, so we need to make sure it's an empty array in that case
     // https://github.com/JedWatson/react-select/issues/3632
     onChange((newTags || []).map((tag) => tag.value));
