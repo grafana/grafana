@@ -56,9 +56,7 @@ export const TagFilter: FC<Props> = ({
   const [options, setOptions] = useState<TagSelectOption[]>(currentlySelectedTags);
   const [isLoading, setIsLoading] = useState(false);
   const [previousTags, setPreviousTags] = useState(tags);
-
-  const initialCustomTags = tags.map((tag) => ({ value: tag, label: tag, count: 0 }));
-  const [customTags, setCustomTags] = useState<TagSelectOption[]>(initialCustomTags);
+  const [customTags, setCustomTags] = useState<TagSelectOption[]>(currentlySelectedTags);
 
   // Necessary to force re-render to keep tag options up to date / relevant
   const selectKey = useMemo(() => tags.join(), [tags]);
@@ -110,6 +108,8 @@ export const TagFilter: FC<Props> = ({
   }, [onFocus, previousTags, tags]);
 
   const onTagChange = (newTags: any[]) => {
+    newTags.forEach((tag) => (tag.count = 0));
+
     // On remove with 1 item returns null, so we need to make sure it's an empty array in that case
     // https://github.com/JedWatson/react-select/issues/3632
     onChange((newTags || []).map((tag) => tag.value));
