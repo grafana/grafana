@@ -1,148 +1,131 @@
 package api
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"testing"
 
+	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
-func TestNew(t *testing.T) {
-	t.Run("It should 404 if featureflag is not enabled", func(t *testing.T) {
-		qs := buildQueryDataService()
-		features := featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards)
-		ds := &publicdashboards.FakePublicDashboardStore{}
-		ts := setupTestServer(t, qs, features, ds)
-
-		dashSvc := dashboards.NewFakeDashboardService(t)
-		dashSvc.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).
-			Return(&models.Dashboard{}, nil).Maybe()
-		//sc.hs.dashboardService = dashSvc
-
-		response := callAPI(
-			ts,
-			http.MethodGet,
-			"/api/public/dashboards",
-			nil,
-			t,
-		)
-		assert.Equal(t, http.StatusNotFound, response.Code)
-		response = callAPI(
-			ts,
-			http.MethodGet,
-			"/api/public/dashboards/asdf",
-			nil,
-			t,
-		)
-		assert.Equal(t, http.StatusNotFound, response.Code)
-	})
-}
-
-//func TestAPIGetPublicDashboard(t *testing.T) {
+//func TestNew(t *testing.T) {
 //  t.Run("It should 404 if featureflag is not enabled", func(t *testing.T) {
-//    sc := setupHTTPServerWithMockDb(t, false, false, featuremgmt.WithFeatures())
-//    dashSvc := dashboards.NewFakeDashboardService(t)
-//    dashSvc.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).
-//      Return(&models.Dashboard{}, nil).Maybe()
-//    sc.hs.dashboardService = dashSvc
+//    cfg := setting.NewCfg()
+//    qs := buildQueryDataService(t, cfg)
+//    features := featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards)
+//    ds := &publicdashboards.FakePublicDashboardStore{}
+//    testServer := setupTestServer(t, cfg, qs, features, ds)
 
-//    setInitCtxSignedInViewer(sc.initCtx)
-//    response := callAPI(
-//      sc.server,
-//      http.MethodGet,
-//      "/api/public/dashboards",
-//      nil,
-//      t,
-//    )
+//    response := callAPI(testServer, http.MethodGet, "/api/public/dashboards", nil, t)
 //    assert.Equal(t, http.StatusNotFound, response.Code)
-//    response = callAPI(
-//      sc.server,
-//      http.MethodGet,
-//      "/api/public/dashboards/asdf",
-//      nil,
-//      t,
-//    )
+
+//    response = callAPI(testServer, http.MethodGet, "/api/public/dashboards/asdf", nil, t)
 //    assert.Equal(t, http.StatusNotFound, response.Code)
 //  })
-
-//  DashboardUid := "dashboard-abcd1234"
-//  token, err := uuid.NewV4()
-//  require.NoError(t, err)
-//  accessToken := fmt.Sprintf("%x", token)
-
-//  testCases := []struct {
-//    Name                  string
-//    AccessToken           string
-//    ExpectedHttpResponse  int
-//    publicDashboardResult *models.Dashboard
-//    publicDashboardErr    error
-//  }{
-//    {
-//      Name:                 "It gets a public dashboard",
-//      AccessToken:          accessToken,
-//      ExpectedHttpResponse: http.StatusOK,
-//      publicDashboardResult: &models.Dashboard{
-//        Data: simplejson.NewFromAny(map[string]interface{}{
-//          "Uid": DashboardUid,
-//        }),
-//      },
-//      publicDashboardErr: nil,
-//    },
-//    {
-//      Name:                  "It should return 404 if isPublicDashboard is false",
-//      AccessToken:           accessToken,
-//      ExpectedHttpResponse:  http.StatusNotFound,
-//      publicDashboardResult: nil,
-//      publicDashboardErr:    ErrPublicDashboardNotFound,
-//    },
-//  }
-
-//  for _, test := range testCases {
-//    t.Run(test.Name, func(t *testing.T) {
-//      sc := setupHTTPServerWithMockDb(t, false, false, featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards))
-//      dashSvc := dashboards.NewFakeDashboardService(t)
-//      dashSvc.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).
-//        Return(test.publicDashboardResult, test.publicDashboardErr)
-//      sc.hs.dashboardService = dashSvc
-
-//      setInitCtxSignedInViewer(sc.initCtx)
-//      response := callAPI(
-//        sc.server,
-//        http.MethodGet,
-//        fmt.Sprintf("/api/public/dashboards/%s", test.AccessToken),
-//        nil,
-//        t,
-//      )
-
-//      assert.Equal(t, test.ExpectedHttpResponse, response.Code)
-
-//      if test.publicDashboardErr == nil {
-//        var dashResp dtos.DashboardFullWithMeta
-//        err := json.Unmarshal(response.Body.Bytes(), &dashResp)
-//        require.NoError(t, err)
-
-//        assert.Equal(t, DashboardUid, dashResp.Dashboard.Get("Uid").MustString())
-//        assert.Equal(t, false, dashResp.Meta.CanEdit)
-//        assert.Equal(t, false, dashResp.Meta.CanDelete)
-//        assert.Equal(t, false, dashResp.Meta.CanSave)
-//      } else {
-//        var errResp struct {
-//          Error string `json:"error"`
-//        }
-//        err := json.Unmarshal(response.Body.Bytes(), &errResp)
-//        require.NoError(t, err)
-//        assert.Equal(t, test.publicDashboardErr.Error(), errResp.Error)
-//      }
-//    })
-//  }
 //}
+
+func TestAPIGetPublicDashboard(t *testing.T) {
+	t.Run("It should 404 if featureflag is not enabled", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		qs := buildQueryDataService(t, cfg)
+		features := featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards)
+		service := publicdashboards.NewFakePublicDashboardService(t)
+		service.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).
+			Return(&models.Dashboard{}, nil).Maybe()
+
+		testServer := setupTestServer(t, cfg, qs, features, service)
+
+		response := callAPI(testServer, http.MethodGet, "/api/public/dashboards", nil, t)
+		assert.Equal(t, http.StatusNotFound, response.Code)
+
+		response = callAPI(testServer, http.MethodGet, "/api/public/dashboards/asdf", nil, t)
+		assert.Equal(t, http.StatusNotFound, response.Code)
+	})
+
+	DashboardUid := "dashboard-abcd1234"
+	token, err := uuid.NewV4()
+	require.NoError(t, err)
+	accessToken := fmt.Sprintf("%x", token)
+
+	testCases := []struct {
+		Name                  string
+		AccessToken           string
+		ExpectedHttpResponse  int
+		publicDashboardResult *models.Dashboard
+		publicDashboardErr    error
+	}{
+		{
+			Name:                 "It gets a public dashboard",
+			AccessToken:          accessToken,
+			ExpectedHttpResponse: http.StatusOK,
+			publicDashboardResult: &models.Dashboard{
+				Data: simplejson.NewFromAny(map[string]interface{}{
+					"Uid": DashboardUid,
+				}),
+			},
+			publicDashboardErr: nil,
+		},
+		{
+			Name:                  "It should return 404 if isPublicDashboard is false",
+			AccessToken:           accessToken,
+			ExpectedHttpResponse:  http.StatusNotFound,
+			publicDashboardResult: nil,
+			publicDashboardErr:    ErrPublicDashboardNotFound,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.Name, func(t *testing.T) {
+
+			cfg := setting.NewCfg()
+			qs := buildQueryDataService(t, cfg)
+			features := featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards)
+			service := publicdashboards.NewFakePublicDashboardService(t)
+			service.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).
+				Return(test.publicDashboardResult, test.publicDashboardErr).Maybe()
+
+			testServer := setupTestServer(t, cfg, qs, features, service)
+
+			response := callAPI(testServer, http.MethodGet,
+				fmt.Sprintf("/api/public/dashboards/%s", test.AccessToken),
+				nil,
+				t,
+			)
+
+			assert.Equal(t, test.ExpectedHttpResponse, response.Code)
+
+			if test.publicDashboardErr == nil {
+				var dashResp dtos.DashboardFullWithMeta
+				err := json.Unmarshal(response.Body.Bytes(), &dashResp)
+				require.NoError(t, err)
+
+				assert.Equal(t, DashboardUid, dashResp.Dashboard.Get("Uid").MustString())
+				assert.Equal(t, false, dashResp.Meta.CanEdit)
+				assert.Equal(t, false, dashResp.Meta.CanDelete)
+				assert.Equal(t, false, dashResp.Meta.CanSave)
+			} else {
+				var errResp struct {
+					Error string `json:"error"`
+				}
+				err := json.Unmarshal(response.Body.Bytes(), &errResp)
+				require.NoError(t, err)
+				assert.Equal(t, test.publicDashboardErr.Error(), errResp.Error)
+			}
+		})
+	}
+}
 
 //func TestAPIGetPublicDashboardConfig(t *testing.T) {
 //  pubdash := &PublicDashboard{IsEnabled: true}
@@ -535,10 +518,11 @@ func TestNew(t *testing.T) {
 //}
 
 //func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T) {
-//  config := setting.NewCfg()
+//  cfg := setting.NewCfg()
 //  db := sqlstore.InitTestDB(t)
 //  scenario := setupHTTPServerWithCfgDb(t, false, false, config, db, db, featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards))
 //  scenario.initCtx.SkipCache = true
+//  qs := buildQueryDataService(t, cfg)
 //  cacheService := service.ProvideCacheService(localcache.ProvideService(), db)
 //  qds := query.ProvideService(
 //    nil,
