@@ -2,9 +2,10 @@
   "compilerOptions": {
     "declarationDir": "dist",
     "noUnusedLocals": false,
-    "outDir": "compiled"
+    "outDir": "compiled",
+    "isolatedModules": false
   },
-  "exclude": ["../dist", "../node_modules"],
+  "exclude": ["../dist/**/*"],
   "extends": "../tsconfig.json",
   "include": ["../src/**/*.ts", "../src/**/*.tsx", "../../../public/app/types/svg.d.ts"]
 }
