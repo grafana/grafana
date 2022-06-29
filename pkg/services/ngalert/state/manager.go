@@ -22,6 +22,12 @@ import (
 
 var ResendDelay = 30 * time.Second
 
+// LOGZ.IO GRAFANA CHANGE :: Evict old entries from state manager
+const EvaluationDelayToClearAlertState = time.Duration(1) * time.Hour
+const ClearOldAlertFrequency = time.Duration(40) * time.Minute
+
+// LOGZ.IO GRAFANA CHANGE :: end
+
 // AlertInstanceManager defines the interface for querying the current alert instances.
 type AlertInstanceManager interface {
 	GetAll(orgID int64) []*State
@@ -54,6 +60,7 @@ func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
 		sqlStore:      sqlStore,
 	}
 	go manager.recordMetrics()
+	go manager.clearOldEntries()
 	return manager
 }
 
@@ -226,6 +233,64 @@ func (st *Manager) recordMetrics() {
 		}
 	}
 }
+
+// LOGZ.IO GRAFANA CHANGE :: Clear old entries from state cache
+func (st *Manager) clearOldEntries() {
+	ticker := time.NewTicker(ClearOldAlertFrequency)
+
+	for {
+		select {
+		case <-ticker.C:
+			st.log.Debug("clearing old alert states", "now", time.Now())
+			for orgId := range st.cache.states {
+				st.clearDeletedAlertEntriesForOrg(orgId)
+			}
+		case <-st.quit:
+			st.log.Debug("stopping old alert clear routine", "now", time.Now())
+			ticker.Stop()
+			return
+		}
+	}
+}
+
+func (st *Manager) clearDeletedAlertEntriesForOrg(orgId int64) {
+	lastStatePerRuleUuid := make(map[string]*State)
+	shouldRemove := func(state *State, now time.Time) bool {
+		if state != nil {
+			return state.LastEvaluationTime.Add(EvaluationDelayToClearAlertState).Before(now) &&
+				state.EndsAt.Before(now)
+		} else {
+			return false
+		}
+	}
+
+	for _, state := range st.GetAll(orgId) {
+		if lastState, found := lastStatePerRuleUuid[state.AlertRuleUID]; found {
+			if state.LastEvaluationTime.After(lastState.LastEvaluationTime) {
+				lastStatePerRuleUuid[state.AlertRuleUID] = state
+			}
+		} else {
+			lastStatePerRuleUuid[state.AlertRuleUID] = state
+		}
+	}
+
+	now := time.Now()
+	totalCleared := 0
+	for ruleUID, lastState := range lastStatePerRuleUuid {
+		if shouldRemove(lastState, now) {
+			st.RemoveByRuleUID(orgId, ruleUID)
+			totalCleared++
+		}
+	}
+
+	if totalCleared == 0 {
+		st.log.Debug("No alerts cleared from state cache")
+	} else {
+		st.log.Debug("Cleared alerts from state cache", "total cleared", totalCleared)
+	}
+}
+
+// LOGZ.IO GRAFANA CHANGE :: end
 
 func (st *Manager) Put(states []*State) {
 	for _, s := range states {

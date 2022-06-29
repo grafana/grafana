@@ -118,21 +118,25 @@ func (srv *LogzioAlertingService) RouteProcessAlert(request apimodels.AlertProce
 	srv.saveAlertStates(processedStates)
 	alerts := schedule.FromAlertStateToPostableAlerts(processedStates, srv.StateManager, srv.AppUrl)
 
-	n, err := srv.MultiOrgAlertmanager.AlertmanagerFor(alertRule.OrgID)
-	if err == nil {
-		srv.Log.Info("Pushing alerts to alert manager")
-		if err := n.PutAlerts(alerts); err != nil {
-			srv.Log.Error("failed to put alerts in the local notifier", "count", len(alerts.PostableAlerts), "err", err, "ruleId", alertRule.ID)
-			return response.Error(http.StatusInternalServerError, "Failed to process alert", err)
+	if len(alerts.PostableAlerts) > 0 {
+		n, err := srv.MultiOrgAlertmanager.AlertmanagerFor(alertRule.OrgID)
+		if err == nil {
+			srv.Log.Info("Pushing alerts to alert manager")
+			if err := n.PutAlerts(alerts); err != nil {
+				srv.Log.Error("failed to put alerts in the local notifier", "count", len(alerts.PostableAlerts), "err", err, "ruleId", alertRule.ID)
+				return response.Error(http.StatusInternalServerError, "Failed to process alert", err)
+			}
+		} else {
+			if errors.Is(err, notifier.ErrNoAlertmanagerForOrg) {
+				srv.Log.Info("local notifier was not found", "orgId", alertRule.OrgID)
+				return response.Error(http.StatusBadRequest, "Alert manager for organization not found", err)
+			} else {
+				srv.Log.Error("local notifier is not available", "err", err, "orgId", alertRule.OrgID)
+				return response.Error(http.StatusInternalServerError, "Failed to process alert", err)
+			}
 		}
 	} else {
-		if errors.Is(err, notifier.ErrNoAlertmanagerForOrg) {
-			srv.Log.Info("local notifier was not found", "orgId", alertRule.OrgID)
-			return response.Error(http.StatusBadRequest, "Alert manager for organization not found", err)
-		} else {
-			srv.Log.Error("local notifier is not available", "err", err, "orgId", alertRule.OrgID)
-			return response.Error(http.StatusInternalServerError, "Failed to process alert", err)
-		}
+		srv.Log.Debug("no alerts to put in the notifier or to send to external Alertmanager(s)")
 	}
 
 	return response.JSONStreaming(http.StatusOK, alerts)
