@@ -684,7 +684,7 @@ exports[`better eslint`] = {
     "packages/grafana-data/src/types/app.ts:2148970488": [
       [75, 48, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "packages/grafana-data/src/types/config.ts:2312759525": [
+    "packages/grafana-data/src/types/config.ts:21897200": [
       [185, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
       [199, 16, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
@@ -819,10 +819,10 @@ exports[`better eslint`] = {
       [192, 52, 3, "Unexpected any. Specify a different type.", "193409811"],
       [192, 72, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "packages/grafana-data/src/types/plugin.ts:695757440": [
-      [173, 22, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [190, 29, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [196, 16, 7, "Do not use any type assertions.", "3399135973"]
+    "packages/grafana-data/src/types/plugin.ts:2556367579": [
+      [174, 22, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [191, 29, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [197, 16, 7, "Do not use any type assertions.", "3399135973"]
     ],
     "packages/grafana-data/src/types/query.ts:4277928644": [
       [100, 14, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -1211,12 +1211,12 @@ exports[`better eslint`] = {
       [31, 49, 3, "Unexpected any. Specify a different type.", "193409811"],
       [31, 73, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "packages/grafana-runtime/src/config.ts:4181107692": [
+    "packages/grafana-runtime/src/config.ts:2639113063": [
       [66, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
       [75, 29, 17, "Do not use any type assertions.", "4278379396"],
-      [106, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [191, 18, 13, "Do not use any type assertions.", "538937261"],
-      [191, 28, 3, "Unexpected any. Specify a different type.", "193409811"]
+      [107, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [192, 18, 13, "Do not use any type assertions.", "538937261"],
+      [192, 28, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "packages/grafana-runtime/src/services/AngularLoader.ts:3455177907": [
       [45, 14, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -6439,8 +6439,8 @@ exports[`better eslint`] = {
       [135, 28, 52, "Do not use any type assertions.", "963107955"],
       [177, 42, 56, "Do not use any type assertions.", "2128061450"]
     ],
-    "public/app/features/plugins/admin/helpers.ts:2721255382": [
-      [215, 5, 45, "Do not use any type assertions.", "2083447632"]
+    "public/app/features/plugins/admin/helpers.ts:1783021315": [
+      [216, 5, 45, "Do not use any type assertions.", "2083447632"]
     ],
     "public/app/features/plugins/admin/hooks/useHistory.tsx:3882862818": [
       [4, 22, 3, "Unexpected any. Specify a different type.", "193409811"]
@@ -6475,8 +6475,8 @@ exports[`better eslint`] = {
     "public/app/features/plugins/admin/state/selectors.ts:345773501": [
       [62, 23, 27, "Do not use any type assertions.", "1285719276"]
     ],
-    "public/app/features/plugins/admin/types.ts:1638901340": [
-      [238, 10, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/features/plugins/admin/types.ts:804526334": [
+      [239, 10, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/plugins/built_in_plugins.ts:2973583336": [
       [93, 22, 3, "Unexpected any. Specify a different type.", "193409811"]
