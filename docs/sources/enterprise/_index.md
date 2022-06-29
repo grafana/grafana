@@ -63,7 +63,7 @@ Grafana Enterprise adds the following features:
 - [Data source query caching]({{< relref "query-caching/" >}}) to temporarily store query results in Grafana to reduce data source load and rate limiting.
 - [Reporting]({{< relref "reporting/" >}}) to generate a PDF report from any dashboard and set up a schedule to have it emailed to whoever you choose.
 - [Export dashboard as PDF]({{< relref "export-pdf/" >}})
-- [White labeling]({{< relref "../setup-grafana/enable-custom-branding/" >}}) to customize Grafana from the brand and logo to the footer links.
+- [Custom branding]({{< relref "../setup-grafana/configure-grafana/configure-custom-branding/" >}}) to customize Grafana from the brand and logo to the footer links.
 - [Usage insights]({{< relref "usage-insights/" >}}) to understand how your Grafana instance is used.
 - [Vault integration]({{< relref "../setup-grafana/configure-security/configure-database-encryption/integrate-with-hashicorp-vault/" >}}) to manage your configuration or provisioning secrets with Vault.
 - [Auditing]({{< relref "../setup-grafana/configure-security/audit-grafana/" >}}) tracks important changes to your Grafana instance to help you manage and mitigate suspicious activity and meet compliance requirements.
