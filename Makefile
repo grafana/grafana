@@ -203,7 +203,7 @@ devenv-down: ## Stop optional services.
 
 devenv-postgres:
 	@cd devenv; \
-	sources=postgres
+	sources=postgres_tests
 
 devenv-mysql:
 	@cd devenv; \
