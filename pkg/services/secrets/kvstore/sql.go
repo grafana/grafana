@@ -52,7 +52,6 @@ func (kv *secretsKVStoreSQL) Get(ctx context.Context, orgId int64, namespace str
 			return nil
 		}
 		isFound = true
-		kv.log.Debug("got secret value", "orgId", orgId, "type", typ, "namespace", namespace)
 		return nil
 	})
 
@@ -60,7 +59,8 @@ func (kv *secretsKVStoreSQL) Get(ctx context.Context, orgId int64, namespace str
 		kv.decryptionCache.Lock()
 		defer kv.decryptionCache.Unlock()
 
-		if cache, present := kv.decryptionCache.cache[item.Id]; present && item.Updated.Equal(cache.updated) {
+		if cache, ok := kv.decryptionCache.cache[item.Id]; ok && item.Updated.Equal(cache.updated) {
+			kv.log.Debug("got secret value from decryption cache", "orgId", orgId, "type", typ, "namespace", namespace)
 			return cache.value, isFound, err
 		}
 
@@ -82,6 +82,7 @@ func (kv *secretsKVStoreSQL) Get(ctx context.Context, orgId int64, namespace str
 		}
 	}
 
+	kv.log.Debug("got secret value", "orgId", orgId, "type", typ, "namespace", namespace)
 	return string(decryptedValue), isFound, err
 }
 
@@ -120,6 +121,8 @@ func (kv *secretsKVStoreSQL) Set(ctx context.Context, orgId int64, namespace str
 			if err != nil {
 				kv.log.Debug("error updating secret value", "orgId", orgId, "type", typ, "namespace", namespace, "err", err)
 			} else {
+				kv.decryptionCache.Lock()
+				defer kv.decryptionCache.Unlock()
 				kv.decryptionCache.cache[item.Id] = cachedDecrypted{
 					updated: item.Updated,
 					value:   value,
@@ -162,6 +165,8 @@ func (kv *secretsKVStoreSQL) Del(ctx context.Context, orgId int64, namespace str
 			if err != nil {
 				kv.log.Debug("error deleting secret value", "orgId", orgId, "type", typ, "namespace", namespace, "err", err)
 			} else {
+				kv.decryptionCache.Lock()
+				defer kv.decryptionCache.Unlock()
 				delete(kv.decryptionCache.cache, item.Id)
 				kv.log.Debug("secret value deleted", "orgId", orgId, "type", typ, "namespace", namespace)
 			}

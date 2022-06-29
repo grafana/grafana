@@ -131,10 +131,6 @@ const (
 	// Enable command palette
 	FlagCommandPalette = "commandPalette"
 
-	// FlagSavedItems
-	// Enable Saved Items in the navbar.
-	FlagSavedItems = "savedItems"
-
 	// FlagCloudWatchDynamicLabels
 	// Use dynamic labels instead of alias patterns in CloudWatch datasource
 	FlagCloudWatchDynamicLabels = "cloudWatchDynamicLabels"
