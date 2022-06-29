@@ -625,9 +625,6 @@ exports[`better eslint`] = {
       [315, 14, 3, "Unexpected any. Specify a different type.", "193409811"],
       [315, 22, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "packages/grafana-data/src/transformations/transformers/joinDataFrames.ts:1554585514": [
-      [340, 13, 3, "Unexpected any. Specify a different type.", "193409811"]
-    ],
     "packages/grafana-data/src/transformations/transformers/labelsToFields.test.ts:1352052528": [
       [393, 13, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
