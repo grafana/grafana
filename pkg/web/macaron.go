@@ -53,10 +53,8 @@ type Handler interface{}
 //go:linkname hack_wrap github.com/grafana/grafana/pkg/api/response.wrap_handler
 func hack_wrap(Handler) http.HandlerFunc
 
-// validateAndWrapHandler makes sure a handler is a callable function, it panics if not.
-// When the handler is also potential to be any built-in inject.FastInvoker,
-// it wraps the handler automatically to have some performance gain.
-func validateAndWrapHandler(h Handler) http.Handler {
+// wrapHandler turns any supported handler type into a http.Handler by wrapping it accordingly
+func wrapHandler(h Handler) http.Handler {
 	return hack_wrap(h)
 }
 
@@ -111,33 +109,24 @@ func SetURLParams(r *http.Request, vars map[string]string) *http.Request {
 
 type Middleware = func(next http.Handler) http.Handler
 
-// UseMiddleware is a traditional approach to writing middleware in Go.
-// A middleware is a function that has a reference to the next handler in the chain
-// and returns the actual middleware handler, that may do its job and optionally
-// call next.
-// Due to how Macaron handles/injects requests and responses we patch the web.Context
-// to use the new ResponseWriter and http.Request here. The caller may only call
-// `next.ServeHTTP(rw, req)` to pass a modified response writer and/or a request to the
-// further middlewares in the chain.
+// UseMiddleware registers the given Middleware
 func (m *Macaron) UseMiddleware(mw Middleware) {
 	m.mws = append(m.mws, mw)
 }
 
-// Use adds a middleware Handler to the stack,
-// and panics if the handler is not a callable func.
-// Middleware Handlers are invoked in the order that they are added.
+// Use registers the provided Handler as a middleware.
+// The argument may be any supported handler or the Middleware type
+// Deprecated: use UseMiddleware instead
 func (m *Macaron) Use(h Handler) {
-	if mw, ok := h.(Middleware); ok {
-		m.UseMiddleware(mw)
-		return
-	}
-
 	m.mws = append(m.mws, mwFromHandler(h))
 }
 
 func mwFromHandler(handler Handler) Middleware {
-	h := validateAndWrapHandler(handler)
+	if mw, ok := handler.(Middleware); ok {
+		return mw
+	}
 
+	h := wrapHandler(handler)
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			mrw, ok := w.(*responseWriter)
