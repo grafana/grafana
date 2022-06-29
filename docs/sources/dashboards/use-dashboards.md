@@ -25,8 +25,8 @@ The dashboard UI has the following sections to allow you to customize the presen
 
 - **Zoom out time range** (1)
 - **Time picker dropdown** (2). Access relative time range options, auto refresh options and set custom absolute time ranges.
-- **Manual refresh option** (3) Fetch new data.
-- **Dashboard panel** (4) Click the panel title to edit panels.
+- **Refresh option** (3) Click to trigger queries or set auto refresh.
+- **Dashboard panel** (4) Click the panel title to open panel menu.
 - **Graph legend** (5) Change series colors, y-axis and series visibility directly from the legend.
 
 For more details, see [Dashboard header]({{< relref "#dashboard-header" >}}) and [Dashboard rows]({{< relref "#dashboard-rows" >}}).
@@ -37,41 +37,45 @@ The dashboard header has the following sections.
 
 {{< figure src="/static/img/docs/v50/top_nav_annotated.png" width="450px" >}}
 
-- **Side menubar toggle** (1): This option toggles the side menu. It provides access to features unrelated to a dashboard such as users, organizations, data sources, and alerting.
-- **Dashboard dropdown** (2): Use this option to view the current dashboard name. From here, you can:
-  - Select another dashboard name to easily switch to that dashboard.
-  - Create a new dashboard or folder, import existing dashboards, and manage dashboard playlists.
-- **Add panel** (3): Use this option to add a new panel to the current dashboard.
+- **Dashboard title** (2): This also opens the dashboard search when clicked.
+- **Add panel** (3): Use this option to add a new panel or row to the current dashboard.
 - **Star dashboard** (4): Use this option to star (or unstar) the current dashboard. Starred dashboards show up on your own home dashboard by default. It is a convenient way to mark Dashboards that you're interested in.
-- **Share dashboard** (5): Use this option to share the current dashboard by creating a link or create a static snapshot of it. You must save the dashboard before sharing.
+- **Share dashboard** (5): Use this option to share the current dashboard by link or snapshot. You can also export the dashboard definition from the share modal.
 - **Save dashboard** (6): Use this option to save the current dashboard using its current name.
-- **Settings** (7): Use this option to manage dashboard settings and configure templates and annotations.
+- **Settings** (7): Use this option to open dashboard settings. Here you change dashboard name, folder, tags as well as manage variables and annotation queries.
+
+## Dashboard panels
+
+The main building block of dashboard is the panel. You add new panels via the `Add panel` button at the top of the dashboard. This will add view at the top where you can choose if you want to add a new panel, row or library panel. Library panels are panels that can be shared (reused) in many dashboards. You can move panels around by just draging the panel header. To resize panel use the lower right corner.
 
 ## Dashboard rows
 
-A dashboard row is a logical divider within a dashboard. It is used to group panels together.
+A dashboard row is a logical divider within a dashboard. It is used to group panels together. Rows can be collapsed or expanded allowing you to hide parts of the dashboard. Panels inside a collapsed row will not issue any queries.
 
-Grafana uses a base unit abstraction so that dashboards and panels look great on all screen sizes. Dashboard rows are always 12 “units” wide. These units are automatically scaled dependent on the horizontal resolution of your browser. You can control the relative width of panels within a row by setting their specific width.
-
-> **Note:** With MaxDataPoint functionality, Grafana can show you the perfect number of data points, regardless of resolution or time range.
-
-### Create or remove rows
-
-Use the [repeating rows]({{< relref "../panels/add-panels-dynamically/configure-repeating-rows" >}}) functionality to dynamically create or remove entire rows, which can be filled with panels, based on the template variables selected.
-
-### Collapse rows
-
-Collapse a row by clicking on the row title. If you save a dashboard with a row collapsed, then it saves in that state and does not load those graphs until you expand the row.
+Use the [repeating rows]({{< relref "../panels/add-panels-dynamically/configure-repeating-rows" >}}) to dynamically create rows based on a template variable.
 
 ## Keyboard shortcuts
 
 Grafana has a number of keyboard shortcuts available. Press `?` or `h` on your keyboard to display all keyboard shortcuts available in your version of Grafana.
 
-- Ctrl+S saves the current dashboard.
-- Ctrl+F opens the dashboard finder / search.
-- Ctrl+H hides all controls (good for tv displays).
-- Ctrl+K opens the command palette.
-- Press Escape to exit graph when in fullscreen or edit mode.
+- `Ctrl+S`: Saves the current dashboard.
+- `f`: Opens the dashboard finder / search.
+- `d+k`: Toogle kiosk mode (hides the menu).
+- `d+e`: Expand all rows.
+- `d+s`: Dashboard settings.
+- `Ctrl+K`: Opens the command palette.
+- `Esc`: Exits panel when in fullscreen view or edit mode. Also returns you to the dashboard from dashboard settings.
+
+**Focused Panel**
+
+By hovering over a panel with the mouse you can use some shortcuts that will target that panel.
+
+- `e`: Toggle panel edit view
+- `v`: Toggle panel fullscreen view
+- `ps`: Open Panel Share Modal
+- `pd`: Duplicate Panel
+- `pr`: Remove Panel
+- `pl`: Toggle panel legend
 
 ## Dashboard Search
 
