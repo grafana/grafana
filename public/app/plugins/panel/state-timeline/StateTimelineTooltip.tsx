@@ -34,33 +34,25 @@ export const StateTimelineTooltip: React.FC<StateTimelineTooltipProps> = ({
     return null;
   }
 
-  const visibleFields = alignedData.fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.tooltip));
-
-  if (visibleFields.length === 0) {
-    return null;
-  }
+  const field = alignedData.fields[seriesIdx!];
 
   const links: Array<LinkModel<Field>> = [];
   const linkLookup = new Set<string>();
 
-  for (const f of visibleFields) {
-    const v = f.values.get(datapointIdx);
-    const disp = f.display ? f.display(v) : { text: `${v}`, numeric: +v };
-    if (f.getLinks) {
-      f.getLinks({ calculatedValue: disp, valueRowIndex: datapointIdx }).forEach((link) => {
-        const key = `${link.title}/${link.href}`;
-        if (!linkLookup.has(key)) {
-          links.push(link);
-          linkLookup.add(key);
-        }
-      });
-    }
+  if (field.getLinks) {
+    const v = field.values.get(datapointIdx);
+    const disp = field.display ? field.display(v) : { text: `${v}`, numeric: +v };
+    field.getLinks({ calculatedValue: disp, valueRowIndex: datapointIdx }).forEach((link) => {
+      const key = `${link.title}/${link.href}`;
+      if (!linkLookup.has(key)) {
+        links.push(link);
+        linkLookup.add(key);
+      }
+    });
   }
 
   const xField = alignedData.fields[0];
   const xFieldFmt = xField.display || getDisplayProcessor({ field: xField, timeZone, theme });
-
-  const field = alignedData.fields[seriesIdx!];
 
   const dataFrameFieldIndex = field.state?.origin;
   const fieldFmt = field.display || getDisplayProcessor({ field, timeZone, theme });
