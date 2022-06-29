@@ -76,6 +76,15 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
+	muteTimes := map[string]struct{}{}
+	for _, mt := range revision.cfg.AlertmanagerConfig.MuteTimeIntervals {
+		muteTimes[mt.Name] = struct{}{}
+	}
+	err = tree.ValidateMuteTimes(muteTimes)
+	if err != nil {
+		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
+	}
+	
 	revision.cfg.AlertmanagerConfig.Config.Route = &tree
 
 	serialized, err := serializeAlertmanagerConfig(*revision.cfg)
