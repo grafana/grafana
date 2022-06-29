@@ -15,6 +15,9 @@ func TestReadDashboard(t *testing.T) {
 		"check-string-datasource-id",
 		"all-panels",
 		"panel-graph/graph-shared-tooltips",
+		"datasource-variable",
+		"empty-datasource-variable",
+		"repeated-datasource-variables",
 	}
 
 	// key will allow name or uid
