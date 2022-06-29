@@ -1,4 +1,4 @@
 {
-  "exclude": ["dist", "node_modules", "**/*.test.ts*"],
+  "exclude": ["dist/**/*", "src/schema/dashboard/dashboard_experimental.gen.ts", "**/*.test.ts*"],
   "extends": "./tsconfig.json"
 }
