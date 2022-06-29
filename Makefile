@@ -139,11 +139,13 @@ test-go-integration: ## Run integration tests for backend with flags.
 .PHONY: test-go-integration-postgres
 test-go-integration-postgres: devenv-postgres ## Run integration tests for postgres backend with flags.
 	@echo "test backend integration postgres tests"
+	$(GO) clean -testcache
 	$(GO) list './pkg/...' | xargs -I {} sh -c 'GRAFANA_TEST_DB=postgres go test -run Integration -covermode=atomic -timeout=30m {}'
 
 .PHONY: test-go-integration-mysql
 test-go-integration-mysql: devenv-mysql ## Run integration tests for mysql backend with flags.
 	@echo "test backend integration mysql tests"
+	$(GO) clean -testcache
 	$(GO) list './pkg/...' | xargs -I {} sh -c 'GRAFANA_TEST_DB=mysql go test -run Integration -covermode=atomic -timeout=30m {}'
 
 test-js: ## Run tests for frontend.
