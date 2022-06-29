@@ -57,6 +57,9 @@ export const TagFilter: FC<Props> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [previousTags, setPreviousTags] = useState(tags);
 
+  const initialCustomTags = tags.map((tag) => ({ value: tag, label: tag, count: 0 }));
+  const [customTags, setCustomTags] = useState<TagSelectOption[]>(initialCustomTags);
+
   // Necessary to force re-render to keep tag options up to date / relevant
   const selectKey = useMemo(() => tags.join(), [tags]);
 
@@ -82,9 +85,14 @@ export const TagFilter: FC<Props> = ({
   const onFocus = useCallback(async () => {
     setIsLoading(true);
     const results = await onLoadOptions();
+
+    if (allowCustomValue) {
+      customTags.forEach((customTag) => results.push(customTag));
+    }
+
     setOptions(results);
     setIsLoading(false);
-  }, [onLoadOptions]);
+  }, [allowCustomValue, customTags, onLoadOptions]);
 
   useEffect(() => {
     // Load options when tag is selected externally
@@ -102,11 +110,16 @@ export const TagFilter: FC<Props> = ({
   }, [onFocus, previousTags, tags]);
 
   const onTagChange = (newTags: any[]) => {
-    // On remove with 1 item returns null, so we need to make sure it's an empty array in that case
-    // https://github.com/JedWatson/react-select/issues/3632
     newTags.forEach((tag) => (tag.count = 0));
 
+    // On remove with 1 item returns null, so we need to make sure it's an empty array in that case
+    // https://github.com/JedWatson/react-select/issues/3632
     onChange((newTags || []).map((tag) => tag.value));
+
+    // If custom values are allowed, set custom tags to prevent overwriting from query update
+    if (allowCustomValue) {
+      setCustomTags(newTags.filter((tag) => !tags.includes(tag)));
+    }
   };
 
   const selectOptions = {
