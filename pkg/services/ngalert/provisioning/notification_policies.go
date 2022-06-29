@@ -84,7 +84,7 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 	if err != nil {
 		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
-	
+
 	revision.cfg.AlertmanagerConfig.Config.Route = &tree
 
 	serialized, err := serializeAlertmanagerConfig(*revision.cfg)
