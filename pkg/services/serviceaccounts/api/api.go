@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 	"github.com/grafana/grafana/pkg/setting"
@@ -46,13 +45,7 @@ func NewServiceAccountsAPI(
 	}
 }
 
-func (api *ServiceAccountsAPI) RegisterAPIEndpoints(
-	features featuremgmt.FeatureToggles,
-) {
-	if !features.IsEnabled(featuremgmt.FlagServiceAccounts) {
-		return
-	}
-
+func (api *ServiceAccountsAPI) RegisterAPIEndpoints() {
 	auth := accesscontrol.Middleware(api.accesscontrol)
 	api.RouterRegister.Group("/api/serviceaccounts", func(serviceAccountsRoute routing.RouteRegister) {
 		serviceAccountsRoute.Get("/search", auth(middleware.ReqOrgAdmin,
@@ -86,18 +79,15 @@ func (api *ServiceAccountsAPI) RegisterAPIEndpoints(
 
 // POST /api/serviceaccounts
 func (api *ServiceAccountsAPI) CreateServiceAccount(c *models.ReqContext) response.Response {
-	type createServiceAccountForm struct {
-		Name string `json:"name" binding:"Required"`
-	}
-	cmd := createServiceAccountForm{}
+	cmd := serviceaccounts.CreateServiceAccountForm{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "Bad request data", err)
 	}
 
 	serviceAccount, err := api.store.CreateServiceAccount(c.Req.Context(), c.OrgId, cmd.Name)
 	switch {
-	case errors.Is(err, &database.ErrSAInvalidName{}):
-		return response.Error(http.StatusBadRequest, "Failed due to %s", err)
+	case errors.Is(err, database.ErrServiceAccountAlreadyExists):
+		return response.Error(http.StatusBadRequest, "Failed to create service account", err)
 	case err != nil:
 		return response.Error(http.StatusInternalServerError, "Failed to create service account", err)
 	}
@@ -143,7 +133,7 @@ func (api *ServiceAccountsAPI) UpdateServiceAccount(c *models.ReqContext) respon
 		return response.Error(http.StatusBadRequest, "Service Account ID is invalid", err)
 	}
 
-	var cmd serviceaccounts.UpdateServiceAccountForm
+	cmd := serviceaccounts.UpdateServiceAccountForm{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "Bad request data", err)
 	}
@@ -256,11 +246,11 @@ func (api *ServiceAccountsAPI) HideApiKeysTab(ctx *models.ReqContext) response.R
 
 // POST /api/serviceaccounts/migrate
 func (api *ServiceAccountsAPI) MigrateApiKeysToServiceAccounts(ctx *models.ReqContext) response.Response {
-	if err := api.store.MigrateApiKeysToServiceAccounts(ctx.Req.Context(), ctx.OrgId); err == nil {
-		return response.Success("API keys migrated to service accounts")
-	} else {
+	if err := api.store.MigrateApiKeysToServiceAccounts(ctx.Req.Context(), ctx.OrgId); err != nil {
 		return response.Error(http.StatusInternalServerError, "Internal server error", err)
 	}
+
+	return response.Success("API keys migrated to service accounts")
 }
 
 // POST /api/serviceaccounts/migrate/:keyId
@@ -269,11 +259,12 @@ func (api *ServiceAccountsAPI) ConvertToServiceAccount(ctx *models.ReqContext) r
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Key ID is invalid", err)
 	}
-	if err := api.store.MigrateApiKey(ctx.Req.Context(), ctx.OrgId, keyId); err == nil {
-		return response.Success("Service accounts converted")
-	} else {
+
+	if err := api.store.MigrateApiKey(ctx.Req.Context(), ctx.OrgId, keyId); err != nil {
 		return response.Error(http.StatusInternalServerError, "Error converting API key", err)
 	}
+
+	return response.Success("Service accounts migrated")
 }
 
 // POST /api/serviceaccounts/revert/:keyId
@@ -282,10 +273,11 @@ func (api *ServiceAccountsAPI) RevertApiKey(ctx *models.ReqContext) response.Res
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Key ID is invalid", err)
 	}
+
 	if err := api.store.RevertApiKey(ctx.Req.Context(), keyId); err != nil {
-		return response.Error(http.StatusInternalServerError, "Error reverting API key", err)
+		return response.Error(http.StatusInternalServerError, "Error reverting to API key", err)
 	}
-	return response.Success("API key reverted")
+	return response.Success("Reverted service account to API key")
 }
 
 func (api *ServiceAccountsAPI) getAccessControlMetadata(c *models.ReqContext, saIDs map[string]bool) map[string]accesscontrol.Metadata {

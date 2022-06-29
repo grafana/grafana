@@ -62,6 +62,8 @@ export const CloudReceiverForm: FC<Props> = ({ existing, alertManagerSourceName,
     [config, existing]
   );
 
+  const readOnly = isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName);
+
   return (
     <>
       {!isVanillaAM && (
@@ -70,6 +72,7 @@ export const CloudReceiverForm: FC<Props> = ({ existing, alertManagerSourceName,
         </Alert>
       )}
       <ReceiverForm<CloudChannelValues>
+        readOnly={readOnly}
         config={config}
         onSubmit={onSubmit}
         initialValues={existingValue}

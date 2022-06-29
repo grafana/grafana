@@ -224,10 +224,17 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       (this as any)[property] = model[property];
     }
 
-    // Special 'graph' migration logic
-    if (this.type === 'graph' && config?.featureToggles?.autoMigrateGraphPanels) {
-      this.autoMigrateFrom = this.type;
-      this.type = 'timeseries';
+    switch (this.type) {
+      case 'graph':
+        if (config?.featureToggles?.autoMigrateGraphPanels) {
+          this.autoMigrateFrom = this.type;
+          this.type = 'timeseries';
+        }
+        break;
+      case 'heatmap-new':
+        this.autoMigrateFrom = this.type;
+        this.type = 'heatmap';
+        break;
     }
 
     // defaults
@@ -297,11 +304,23 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.isViewing = isViewing;
   }
 
-  updateGridPos(newPos: GridPos) {
+  updateGridPos(newPos: GridPos, manuallyUpdated = true) {
+    if (
+      newPos.x === this.gridPos.x &&
+      newPos.y === this.gridPos.y &&
+      newPos.h === this.gridPos.h &&
+      newPos.w === this.gridPos.w
+    ) {
+      return;
+    }
+
     this.gridPos.x = newPos.x;
     this.gridPos.y = newPos.y;
     this.gridPos.w = newPos.w;
     this.gridPos.h = newPos.h;
+    if (manuallyUpdated) {
+      this.configRev++;
+    }
   }
 
   runAllPanelQueries(
@@ -309,14 +328,14 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     dashboardTimezone: string,
     timeData: TimeOverrideResult,
     width: number,
-    publicDashboardUid?: string
+    publicDashboardAccessToken?: string
   ) {
     this.getQueryRunner().run({
       datasource: this.datasource,
       queries: this.targets,
       panelId: this.id,
       dashboardId: dashboardId,
-      publicDashboardUid,
+      publicDashboardAccessToken,
       timezone: dashboardTimezone,
       timeRange: timeData.timeRange,
       timeInfo: timeData.timeInfo,

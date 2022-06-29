@@ -1158,7 +1158,7 @@ func (m *mockLibraryPanelService) ConnectLibraryPanelsForDashboard(c context.Con
 	return nil
 }
 
-func (m *mockLibraryPanelService) ImportLibraryPanelsForDashboard(c context.Context, signedInUser *models.SignedInUser, dash *models.Dashboard, folderID int64) error {
+func (m *mockLibraryPanelService) ImportLibraryPanelsForDashboard(c context.Context, signedInUser *models.SignedInUser, libraryPanels *simplejson.Json, panels []interface{}, folderID int64) error {
 	return nil
 }
 

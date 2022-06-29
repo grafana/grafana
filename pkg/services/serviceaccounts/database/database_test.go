@@ -59,7 +59,7 @@ func TestStore_DeleteServiceAccount(t *testing.T) {
 		t.Run(c.desc, func(t *testing.T) {
 			db, store := setupTestDatabase(t)
 			user := tests.SetupUserServiceAccount(t, db, c.user)
-			err := store.DeleteServiceAccount(context.Background(), user.OrgId, user.Id)
+			err := store.DeleteServiceAccount(context.Background(), user.OrgID, user.ID)
 			if c.expectedErr != nil {
 				require.ErrorIs(t, err, c.expectedErr)
 			} else {
@@ -98,7 +98,7 @@ func TestStore_RetrieveServiceAccount(t *testing.T) {
 		t.Run(c.desc, func(t *testing.T) {
 			db, store := setupTestDatabase(t)
 			user := tests.SetupUserServiceAccount(t, db, c.user)
-			dto, err := store.RetrieveServiceAccount(context.Background(), user.OrgId, user.Id)
+			dto, err := store.RetrieveServiceAccount(context.Background(), user.OrgID, user.ID)
 			if c.expectedErr != nil {
 				require.ErrorIs(t, err, c.expectedErr)
 			} else {
@@ -183,6 +183,16 @@ func TestStore_MigrateAllApiKeys(t *testing.T) {
 			},
 			orgId:                  1,
 			expectedServiceAccouts: 0,
+			expectedErr:            nil,
+		},
+		{
+			desc: "expired api keys should be migrated",
+			keys: []tests.TestApiKey{
+				{Name: "test1", Role: models.ROLE_EDITOR, Key: "secret1", OrgId: 1},
+				{Name: "test2", Role: models.ROLE_EDITOR, Key: "secret2", OrgId: 1, IsExpired: true},
+			},
+			orgId:                  1,
+			expectedServiceAccouts: 2,
 			expectedErr:            nil,
 		},
 	}

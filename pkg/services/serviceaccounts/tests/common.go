@@ -9,6 +9,7 @@ import (
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
 )
 
@@ -20,19 +21,20 @@ type TestUser struct {
 }
 
 type TestApiKey struct {
-	Name  string
-	Role  models.RoleType
-	OrgId int64
-	Key   string
+	Name      string
+	Role      models.RoleType
+	OrgId     int64
+	Key       string
+	IsExpired bool
 }
 
-func SetupUserServiceAccount(t *testing.T, sqlStore *sqlstore.SQLStore, testUser TestUser) *models.User {
+func SetupUserServiceAccount(t *testing.T, sqlStore *sqlstore.SQLStore, testUser TestUser) *user.User {
 	role := string(models.ROLE_VIEWER)
 	if testUser.Role != "" {
 		role = testUser.Role
 	}
 
-	u1, err := sqlStore.CreateUser(context.Background(), models.CreateUserCommand{
+	u1, err := sqlStore.CreateUser(context.Background(), user.CreateUserCommand{
 		Login:            testUser.Login,
 		IsServiceAccount: testUser.IsServiceAccount,
 		DefaultOrgRole:   role,
@@ -61,6 +63,19 @@ func SetupApiKey(t *testing.T, sqlStore *sqlstore.SQLStore, testKey TestApiKey) 
 	}
 	err := sqlStore.AddAPIKey(context.Background(), addKeyCmd)
 	require.NoError(t, err)
+
+	if testKey.IsExpired {
+		err := sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			// Force setting expires to time before now to make key expired
+			var expires int64 = 1
+			key := models.ApiKey{Expires: &expires}
+			rowsAffected, err := sess.ID(addKeyCmd.Result.Id).Update(&key)
+			require.Equal(t, int64(1), rowsAffected)
+			return err
+		})
+		require.NoError(t, err)
+	}
+
 	return addKeyCmd.Result
 }
 

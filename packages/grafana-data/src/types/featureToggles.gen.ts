@@ -18,7 +18,6 @@ export interface FeatureToggles {
 
   trimDefaults?: boolean;
   disableEnvelopeEncryption?: boolean;
-  serviceAccounts?: boolean;
   database_metrics?: boolean;
   dashboardPreviews?: boolean;
   dashboardPreviewsAdmin?: boolean;
@@ -32,7 +31,6 @@ export interface FeatureToggles {
   prometheus_azure_auth?: boolean;
   prometheusAzureOverrideAudience?: boolean;
   influxdbBackendMigration?: boolean;
-  newNavigation?: boolean;
   showFeatureFlagsInUI?: boolean;
   publicDashboards?: boolean;
   lokiLive?: boolean;
@@ -49,7 +47,6 @@ export interface FeatureToggles {
   explore2Dashboard?: boolean;
   tracing?: boolean;
   commandPalette?: boolean;
-  savedItems?: boolean;
   cloudWatchDynamicLabels?: boolean;
   datasourceQueryMultiStatus?: boolean;
   azureMonitorExperimentalUI?: boolean;
@@ -59,8 +56,11 @@ export interface FeatureToggles {
   autoMigrateGraphPanels?: boolean;
   prometheusWideSeries?: boolean;
   canvasPanelNesting?: boolean;
+  useLegacyHeatmapPanel?: boolean;
   cloudMonitoringExperimentalUI?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
   dataConnectionsConsole?: boolean;
   internationalization?: boolean;
+  topnav?: boolean;
+  customBranding?: boolean;
 }

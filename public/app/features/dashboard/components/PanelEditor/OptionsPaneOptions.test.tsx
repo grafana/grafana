@@ -24,10 +24,10 @@ import { dataOverrideTooltipDescription, overrideRuleTooltipDescription } from '
 standardEditorsRegistry.setInit(getAllOptionEditors);
 standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
 
-const mockStore = configureMockStore<any, any>();
+const mockStore = configureMockStore();
 const OptionsPaneSelector = selectors.components.PanelEditor.OptionsPane;
 jest.mock('react-router-dom', () => ({
-  ...(jest.requireActual('react-router-dom') as any),
+  ...jest.requireActual('react-router-dom'),
   useLocation: () => ({
     pathname: 'localhost:3000/example/path',
   }),

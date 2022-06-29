@@ -2,10 +2,10 @@ package kvstore
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	smp "github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/secrets"
 )
 
@@ -29,7 +29,7 @@ func (kv *secretsKVStorePlugin) Get(ctx context.Context, orgId int64, namespace 
 	if err != nil {
 		return "", false, err
 	} else if res.UserFriendlyError != "" {
-		err = fmt.Errorf(res.UserFriendlyError)
+		err = wrapUserFriendlySecretError(res.UserFriendlyError)
 	}
 
 	return res.DecryptedValue, res.Exists, err
@@ -48,7 +48,7 @@ func (kv *secretsKVStorePlugin) Set(ctx context.Context, orgId int64, namespace 
 
 	res, err := kv.secretsPlugin.SetSecret(ctx, req)
 	if err == nil && res.UserFriendlyError != "" {
-		err = fmt.Errorf(res.UserFriendlyError)
+		err = wrapUserFriendlySecretError(res.UserFriendlyError)
 	}
 
 	return err
@@ -66,7 +66,7 @@ func (kv *secretsKVStorePlugin) Del(ctx context.Context, orgId int64, namespace 
 
 	res, err := kv.secretsPlugin.DeleteSecret(ctx, req)
 	if err == nil && res.UserFriendlyError != "" {
-		err = fmt.Errorf(res.UserFriendlyError)
+		err = wrapUserFriendlySecretError(res.UserFriendlyError)
 	}
 
 	return err
@@ -88,7 +88,7 @@ func (kv *secretsKVStorePlugin) Keys(ctx context.Context, orgId int64, namespace
 	if err != nil {
 		return nil, err
 	} else if res.UserFriendlyError != "" {
-		err = fmt.Errorf(res.UserFriendlyError)
+		err = wrapUserFriendlySecretError(res.UserFriendlyError)
 	}
 
 	return parseKeys(res.Keys), err
@@ -107,7 +107,7 @@ func (kv *secretsKVStorePlugin) Rename(ctx context.Context, orgId int64, namespa
 
 	res, err := kv.secretsPlugin.RenameSecret(ctx, req)
 	if err == nil && res.UserFriendlyError != "" {
-		err = fmt.Errorf(res.UserFriendlyError)
+		err = wrapUserFriendlySecretError(res.UserFriendlyError)
 	}
 
 	return err
@@ -122,4 +122,8 @@ func parseKeys(keys []*smp.Key) []Key {
 	}
 
 	return newKeys
+}
+
+func wrapUserFriendlySecretError(ufe string) datasources.ErrDatasourceSecretsPluginUserFriendly {
+	return datasources.ErrDatasourceSecretsPluginUserFriendly{Err: ufe}
 }
