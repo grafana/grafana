@@ -516,6 +516,7 @@ func TestRulerRulesFilterByDashboard(t *testing.T) {
 			}
 		}, {
 			"expr": "",
+			"for":"0s",
 			"grafana_alert": {
 				"id": 2,
 				"orgId": 1,
