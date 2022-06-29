@@ -163,6 +163,7 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, pm *PluginMana
 		"jaeger":                           {},
 		"mixed":                            {},
 		"zipkin":                           {},
+		"conditional":                      {},
 	}
 
 	expApps := map[string]struct{}{
