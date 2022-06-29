@@ -163,7 +163,7 @@ type HTTPServer struct {
 	folderPermissionsService     accesscontrol.FolderPermissionsService
 	dashboardPermissionsService  accesscontrol.DashboardPermissionsService
 	dashboardVersionService      dashver.Service
-	publicDashboardsApi          publicdashboardsApi.Api
+	publicDashboardsApi          *publicdashboardsApi.Api
 	starService                  star.Service
 	CoremodelRegistry            *registry.Generic
 	CoremodelStaticRegistry      *registry.Static
@@ -203,7 +203,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
 	starService star.Service, csrfService csrf.Service, coremodelRegistry *registry.Generic, coremodelStaticRegistry *registry.Static,
 	kvStore kvstore.KVStore,
-	publicDashboardsApi publicdashboardsApi.Api,
+	publicDashboardsApi *publicdashboardsApi.Api,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
