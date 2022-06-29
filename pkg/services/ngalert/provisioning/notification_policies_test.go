@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/common/model"
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -24,11 +25,6 @@ func TestNotificationPolicyService(t *testing.T) {
 
 	t.Run("service stitches policy tree into org's AM config", func(t *testing.T) {
 		sut := createNotificationPolicyServiceSut()
-		sut.contactPoints.(*MockContactPointProvider).EXPECT().
-			GetContactPoints(mock.Anything, mock.Anything).
-			Return([]definitions.EmbeddedContactPoint{{
-				Name: "a new receiver",
-			}}, nil)
 
 		newRoute := createTestRoutingTree()
 
@@ -42,16 +38,52 @@ func TestNotificationPolicyService(t *testing.T) {
 
 	t.Run("not existing receiver reference will error", func(t *testing.T) {
 		sut := createNotificationPolicyServiceSut()
-		sut.contactPoints.(*MockContactPointProvider).EXPECT().
-			GetContactPoints(mock.Anything, mock.Anything).
-			Return([]definitions.EmbeddedContactPoint{{
-				Name: "not the one we need",
-			}}, nil)
 
 		newRoute := createTestRoutingTree()
+		newRoute.Routes = append(newRoute.Routes, &definitions.Route{
+			Receiver: "not-existing",
+		})
 
 		err := sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceNone)
 		require.Error(t, err)
+	})
+
+	t.Run("existing receiver reference will pass", func(t *testing.T) {
+		sut := createNotificationPolicyServiceSut()
+		sut.amStore = &MockAMConfigStore{}
+		sut.amStore.(*MockAMConfigStore).On("GetLatestAlertmanagerConfiguration", mock.Anything, mock.Anything).
+			Return(
+				func(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) error {
+					cfg, _ := deserializeAlertmanagerConfig([]byte(defaultConfig))
+					cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers,
+						&definitions.PostableApiReceiver{
+							Receiver: config.Receiver{
+								// default one from createTestRoutingTree()
+								Name: "a new receiver",
+							},
+						})
+					cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers,
+						&definitions.PostableApiReceiver{
+							Receiver: config.Receiver{
+								Name: "existing",
+							},
+						})
+					data, _ := serializeAlertmanagerConfig(*cfg)
+					query.Result = &models.AlertConfiguration{
+						AlertmanagerConfiguration: string(data),
+					}
+					return nil
+				})
+		sut.amStore.(*MockAMConfigStore).EXPECT().
+			UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).
+			Return(nil)
+		newRoute := createTestRoutingTree()
+		newRoute.Routes = append(newRoute.Routes, &definitions.Route{
+			Receiver: "existing",
+		})
+
+		err := sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceNone)
+		require.NoError(t, err)
 	})
 
 	t.Run("default provenance of records is none", func(t *testing.T) {
@@ -65,11 +97,6 @@ func TestNotificationPolicyService(t *testing.T) {
 
 	t.Run("service returns upgraded provenance value", func(t *testing.T) {
 		sut := createNotificationPolicyServiceSut()
-		sut.contactPoints.(*MockContactPointProvider).EXPECT().
-			GetContactPoints(mock.Anything, mock.Anything).
-			Return([]definitions.EmbeddedContactPoint{{
-				Name: "a new receiver",
-			}}, nil)
 		newRoute := createTestRoutingTree()
 
 		err := sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceAPI)
@@ -82,11 +109,6 @@ func TestNotificationPolicyService(t *testing.T) {
 
 	t.Run("service respects concurrency token when updating", func(t *testing.T) {
 		sut := createNotificationPolicyServiceSut()
-		sut.contactPoints.(*MockContactPointProvider).EXPECT().
-			GetContactPoints(mock.Anything, mock.Anything).
-			Return([]definitions.EmbeddedContactPoint{{
-				Name: "a new receiver",
-			}}, nil)
 		newRoute := createTestRoutingTree()
 		q := models.GetLatestAlertmanagerConfigurationQuery{
 			OrgID: 1,
@@ -121,7 +143,6 @@ func createNotificationPolicyServiceSut() *NotificationPolicyService {
 		amStore:         newFakeAMConfigStore(),
 		provenanceStore: NewFakeProvisioningStore(),
 		xact:            newNopTransactionManager(),
-		contactPoints:   &MockContactPointProvider{},
 		log:             log.NewNopLogger(),
 	}
 }

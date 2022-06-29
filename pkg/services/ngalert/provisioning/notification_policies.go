@@ -12,22 +12,15 @@ import (
 type NotificationPolicyService struct {
 	amStore         AMConfigStore
 	provenanceStore ProvisioningStore
-	contactPoints   ContactPointProvider
 	xact            TransactionManager
 	log             log.Logger
 }
 
-type ContactPointProvider interface {
-	GetContactPoints(ctx context.Context, orgID int64) ([]definitions.EmbeddedContactPoint, error)
-}
-
 func NewNotificationPolicyService(am AMConfigStore, prov ProvisioningStore,
-	cps ContactPointProvider, xact TransactionManager,
-	log log.Logger) *NotificationPolicyService {
+	xact TransactionManager, log log.Logger) *NotificationPolicyService {
 	return &NotificationPolicyService{
 		amStore:         am,
 		provenanceStore: prov,
-		contactPoints:   cps,
 		xact:            xact,
 		log:             log,
 	}
@@ -71,14 +64,16 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 	if err != nil {
 		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
-	receivers, err := nps.receivers(ctx, orgID)
-	err = tree.ValidateReceivers(receivers)
-	if err != nil {
-		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
-	}
+
 	revision, err := getLastConfiguration(ctx, orgID, nps.amStore)
 	if err != nil {
 		return err
+	}
+
+	receivers, err := nps.receiversToMap(revision.cfg.AlertmanagerConfig.Receivers)
+	err = tree.ValidateReceivers(receivers)
+	if err != nil {
+		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
 	revision.cfg.AlertmanagerConfig.Config.Route = &tree
@@ -112,14 +107,10 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 	return nil
 }
 
-func (nps *NotificationPolicyService) receivers(ctx context.Context, orgID int64) (map[string]struct{}, error) {
+func (nps *NotificationPolicyService) receiversToMap(records []*definitions.PostableApiReceiver) (map[string]struct{}, error) {
 	receivers := map[string]struct{}{}
-	cps, err := nps.contactPoints.GetContactPoints(ctx, orgID)
-	if err != nil {
-		return receivers, err
-	}
-	for _, cp := range cps {
-		receivers[cp.Name] = struct{}{}
+	for _, receiver := range records {
+		receivers[receiver.Name] = struct{}{}
 	}
 	return receivers, nil
 }
