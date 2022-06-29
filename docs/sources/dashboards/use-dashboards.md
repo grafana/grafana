@@ -46,7 +46,7 @@ The dashboard header has the following sections.
 
 ## Dashboard panels
 
-The main building block of dashboard is the panel. You add new panels via the `Add panel` button at the top of the dashboard. This will add view at the top where you can choose if you want to add a new panel, row or library panel. Library panels are panels that can be shared (reused) in many dashboards. You can move panels around by just draging the panel header. To resize panel use the lower right corner.
+The main building block of dashboard is the panel. You add new panels via the `Add panel` button at the top of the dashboard. This will add view at the top where you can choose if you want to add a new panel, row or library panel. Library panels are panels that can be shared (reused) in many dashboards. You can move panels around by just dragging the panel header. To resize panel use the lower right corner.
 
 ## Dashboard rows
 
@@ -60,7 +60,7 @@ Grafana has a number of keyboard shortcuts available. Press `?` or `h` on your k
 
 - `Ctrl+S`: Saves the current dashboard.
 - `f`: Opens the dashboard finder / search.
-- `d+k`: Toogle kiosk mode (hides the menu).
+- `d+k`: Toggle kiosk mode (hides the menu).
 - `d+e`: Expand all rows.
 - `d+s`: Dashboard settings.
 - `Ctrl+K`: Opens the command palette.
