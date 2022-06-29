@@ -1,3 +1,4 @@
+import { SelectableValue } from '@grafana/data';
 import {
   Column,
   TableInstance,
@@ -24,9 +25,21 @@ export interface ExtendedTableHeaderProps extends TableHeaderProps {
   onClick?: () => void;
 }
 
+export type ExtendedColumn<D extends object = {}> = Column<D> & {
+  type?: FilterFieldTypes;
+  options?: Array<SelectableValue<any>>;
+  label?: string;
+};
+
+export enum FilterFieldTypes {
+  TEXT,
+  RADIO_BUTTON,
+  DROPDOWN,
+}
+
 export interface TableProps {
   data: object[];
-  columns: Array<Column<any>>;
+  columns: Array<ExtendedColumn<any>>;
   pendingRequest?: boolean;
   emptyMessage?: string;
   showPagination?: boolean;
@@ -45,6 +58,7 @@ export interface TableProps {
   getRowProps?: (row: Row<any>) => ExtendedTableRowProps;
   getColumnProps?: (column: ColumnInstance) => ExtendedTableCellProps;
   getCellProps?: (cell: Cell<any, any>) => ExtendedTableCellProps;
+  showFilter?: boolean;
 }
 
 export interface PaginatedTableState extends TableState {

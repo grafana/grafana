@@ -1,11 +1,10 @@
 import React, { FC, useEffect, useState, useCallback, useMemo } from 'react';
 import { useStyles2 } from '@grafana/ui';
 import { AppEvents } from '@grafana/data';
-import { Column } from 'react-table';
 import { LoaderButton, logger } from '@percona/platform-core';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
-import { Table } from 'app/percona/integrated-alerting/components/Table';
+import { ExtendedColumn, FilterFieldTypes, Table } from 'app/percona/integrated-alerting/components/Table';
 import { CheckDetails, Interval } from 'app/percona/check/types';
 import { CheckService } from 'app/percona/check/Check.service';
 import { GET_ALL_CHECKS_CANCEL_TOKEN } from './AllChecksTab.constants';
@@ -120,14 +119,16 @@ export const AllChecksTab: FC = () => {
   // const applyFilters = ({ categories }: FormValues) => setQueryParams({ category: categories });
 
   const columns = useMemo(
-    (): Array<Column<CheckDetails>> => [
+    (): Array<ExtendedColumn<CheckDetails>> => [
       {
         Header: Messages.table.columns.name,
         accessor: 'summary',
+        type: FilterFieldTypes.TEXT,
       },
       {
         Header: Messages.table.columns.description,
         accessor: 'description',
+        type: FilterFieldTypes.TEXT,
       },
       // {
       //   Header: Messages.table.columns.category,
@@ -137,11 +138,37 @@ export const AllChecksTab: FC = () => {
         Header: Messages.table.columns.status,
         accessor: 'disabled',
         Cell: ({ value }) => (!!value ? Messages.disabled : Messages.enabled),
+        type: FilterFieldTypes.RADIO_BUTTON,
+        options: [
+          {
+            label: Messages.enabled,
+            value: false,
+          },
+          {
+            label: Messages.disabled,
+            value: true,
+          },
+        ],
       },
       {
         Header: Messages.table.columns.interval,
         accessor: 'interval',
         Cell: ({ value }) => Interval[value],
+        type: FilterFieldTypes.DROPDOWN,
+        options: [
+          {
+            label: Interval.STANDARD,
+            value: Interval.STANDARD,
+          },
+          {
+            label: Interval.RARE,
+            value: Interval.RARE,
+          },
+          {
+            label: Interval.FREQUENT,
+            value: Interval.FREQUENT,
+          },
+        ],
       },
       {
         Header: Messages.table.columns.actions,
@@ -167,7 +194,7 @@ export const AllChecksTab: FC = () => {
       try {
         const checks = await CheckService.getAllChecks(generateToken(GET_ALL_CHECKS_CANCEL_TOKEN));
 
-        setChecks(checks);
+        setChecks(checks.map((check) => (!!check.disabled ? check : { ...check, disabled: false })));
       } catch (e) {
         if (isApiCancelError(e)) {
           return;
@@ -246,6 +273,7 @@ export const AllChecksTab: FC = () => {
             columns={columns}
             pendingRequest={fetchChecksPending}
             emptyMessage={Messages.table.noData}
+            showFilter
           />
           {!!selectedCheck && checkIntervalModalVisible && (
             <ChangeCheckIntervalModal
