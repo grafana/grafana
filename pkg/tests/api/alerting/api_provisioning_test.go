@@ -67,6 +67,7 @@ func TestProvisioning(t *testing.T) {
 		req := createTestRequest("POST", urlReceiver, "admin", bodyReceiver)
 		resp, err := http.DefaultClient.Do(req)
 		require.NoError(t, err)
+		require.NoError(t, resp.Body.Close())
 		require.Equal(t, 202, resp.StatusCode)
 
 		t.Run("un-authenticated GET should 401", func(t *testing.T) {
