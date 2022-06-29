@@ -4581,7 +4581,7 @@ exports[`better eslint`] = {
     "public/app/features/canvas/runtime/root.tsx:2845174121": [
       [24, 19, 36, "Do not use any type assertions.", "1413431594"]
     ],
-    "public/app/features/canvas/runtime/scene.tsx:2490140997": [
+    "public/app/features/canvas/runtime/scene.tsx:4285479205": [
       [155, 61, 25, "Do not use any type assertions.", "588553285"],
       [160, 42, 25, "Do not use any type assertions.", "588553285"]
     ],
@@ -10980,10 +10980,9 @@ exports[`better eslint`] = {
       [41, 64, 3, "Unexpected any. Specify a different type.", "193409811"],
       [41, 69, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/panel/canvas/editor/LayerElementListEditor.tsx:2866351070": [
+    "public/app/plugins/panel/canvas/editor/LayerElementListEditor.tsx:374041207": [
       [21, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [40, 30, 44, "Do not use any type assertions.", "712744497"],
-      [50, 20, 3, "Unexpected any. Specify a different type.", "193409811"]
+      [40, 30, 44, "Do not use any type assertions.", "712744497"]
     ],
     "public/app/plugins/panel/canvas/editor/PlacementEditor.tsx:1494111960": [
       [33, 53, 3, "Unexpected any. Specify a different type.", "193409811"]
