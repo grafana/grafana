@@ -1,7 +1,9 @@
 import React from 'react';
-import { SectionContentProps } from './SectionContent.types';
-import { Messages } from './SectionContent.messages';
+
 import { Advisor } from '../Advisor/Advisor';
+
+import { Messages } from './SectionContent.messages';
+import { SectionContentProps } from './SectionContent.types';
 export const SectionContent = ({ entitlement }: SectionContentProps) => {
   const {
     summary,

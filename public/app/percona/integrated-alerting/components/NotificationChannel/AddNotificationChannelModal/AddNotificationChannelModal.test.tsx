@@ -101,7 +101,7 @@ describe('AddNotificationChannelModal', () => {
 
     it('should only send one of the keys', async () => {
       const serviceAddMock = jest.fn();
-      spyOn(NotificationChannelService, 'change').and.callFake(serviceAddMock);
+      jest.spyOn(NotificationChannelService, 'change').mockImplementation(serviceAddMock);
 
       render(
         withContext(<AddNotificationChannelModal setVisible={jest.fn()} isVisible notificationChannel={channel} />)

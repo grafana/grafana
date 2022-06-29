@@ -18,45 +18,12 @@ import {
 } from 'app/percona/dbaas/components/Kubernetes/Kubernetes.types';
 import { KubernetesClusterStatus } from 'app/percona/dbaas/components/Kubernetes/KubernetesClusterStatus/KubernetesClusterStatus.types';
 import { SettingsService } from 'app/percona/settings/Settings.service';
-import {
-  Settings,
-  SettingsAPIChangePayload,
-  SettingsAPIResponse,
-  SettingsPayload,
-} from 'app/percona/settings/Settings.types';
+import { Settings, SettingsAPIChangePayload } from 'app/percona/settings/Settings.types';
 import { api, apiManagement } from 'app/percona/shared/helpers/api';
 
 import { UserService } from '../services/user/User.service';
 
 import { ServerInfo } from './types';
-
-const toSettingsModel = (response: SettingsPayload): Settings => ({
-  awsPartitions: response.aws_partitions,
-  updatesDisabled: response.updates_disabled,
-  telemetryEnabled: response.telemetry_enabled,
-  metricsResolutions: response.metrics_resolutions,
-  dataRetention: response.data_retention,
-  sshKey: response.ssh_key,
-  alertManagerUrl: response.alert_manager_url,
-  alertManagerRules: response.alert_manager_rules,
-  sttEnabled: response.stt_enabled,
-  platformEmail: response.platform_email,
-  azureDiscoverEnabled: response.azurediscover_enabled,
-  dbaasEnabled: response.dbaas_enabled,
-  alertingEnabled: response.alerting_enabled,
-  alertingSettings: {
-    email: response.email_alerting_settings || {},
-    slack: response.slack_alerting_settings || {},
-  },
-  publicAddress: response.pmm_public_address,
-  sttCheckIntervals: {
-    rareInterval: response.stt_check_intervals.rare_interval,
-    standardInterval: response.stt_check_intervals.standard_interval,
-    frequentInterval: response.stt_check_intervals.frequent_interval,
-  },
-  backupEnabled: response.backup_management_enabled,
-  isConnectedToPortal: response.connected_to_platform,
-});
 
 const initialSettingsState: Settings = {
   updatesDisabled: true,
@@ -159,7 +126,7 @@ export const fetchSettingsAction = createAsyncThunk(
 
 export const updateSettingsAction = createAsyncThunk(
   'percona/updateSettings',
-  (args: { body: Partial<SettingsAPIChangePayload>; token?: CancelToken }, thunkAPI): Promise<Settings> =>
+  (args: { body: Partial<SettingsAPIChangePayload>; token?: CancelToken }, thunkAPI): Promise<Settings | undefined> =>
     withAppEvents(
       withSerializedError(
         (async () => {
@@ -175,14 +142,9 @@ export const updateSettingsAction = createAsyncThunk(
               args.body.email_alerting_settings!.test_email = undefined;
             }
           }
-          const { settings }: SettingsAPIResponse = await api.post<any, Partial<SettingsAPIChangePayload>>(
-            '/v1/Settings/Change',
-            args.body,
-            false,
-            args.token
-          );
+          const settings = await SettingsService.setSettings(args.body, args.token);
           await thunkAPI.dispatch(fetchSettingsAction({ usedPassword: password, testEmail }));
-          return toSettingsModel(settings);
+          return settings;
         })()
       ),
       {

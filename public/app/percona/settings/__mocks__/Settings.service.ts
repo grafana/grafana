@@ -1,5 +1,5 @@
 import * as settingsService from '../Settings.service';
-import { Settings } from '../Settings.types';
+import { Settings, SettingsAPIChangePayload } from '../Settings.types';
 
 export const SettingsService = jest.genMockFromModule<typeof settingsService>('../Settings.service').SettingsService;
 export const stub: Settings = {
@@ -38,3 +38,4 @@ export const stub: Settings = {
 };
 
 SettingsService.getSettings = () => Promise.resolve(stub);
+SettingsService.setSettings = (body: Partial<SettingsAPIChangePayload>) => Promise.resolve({ ...stub, ...body });

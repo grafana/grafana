@@ -1,7 +1,9 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { SectionContent } from './SectionContent';
+import React from 'react';
+
 import { Entitlement } from '../../Entitlements.types';
+
+import { SectionContent } from './SectionContent';
 
 const entitlement: Entitlement = {
   number: 'ENTLMT0001028',

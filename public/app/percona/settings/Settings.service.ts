@@ -1,11 +1,8 @@
 import { logger } from '@percona/platform-core';
 import { CancelToken } from 'axios';
 
-import { AppEvents } from '@grafana/data';
-import { appEvents } from 'app/core/app_events';
 import { api } from 'app/percona/shared/helpers/api';
 
-import { Messages } from './Settings.messages';
 import { Settings, SettingsAPIChangePayload, SettingsAPIResponse, SettingsPayload } from './Settings.types';
 
 export type LoadingCallback = (value: boolean) => void;
@@ -16,15 +13,18 @@ export const SettingsService = {
     const { settings }: SettingsAPIResponse = await api.post('/v1/Settings/Get', {}, disableNotifications, token);
     return toModel(settings);
   },
-  async setSettings(body: SettingsAPIChangePayload, token?: CancelToken): Promise<Settings | undefined> {
+  async setSettings(body: Partial<SettingsAPIChangePayload>, token?: CancelToken): Promise<Settings | undefined> {
     let response;
     try {
-      const { settings }: SettingsAPIResponse = await api.post<any, any>('/v1/Settings/Change', body, false, token);
+      const { settings }: SettingsAPIResponse = await api.post<any, Partial<SettingsAPIChangePayload>>(
+        '/v1/Settings/Change',
+        body,
+        false,
+        token
+      );
       response = toModel(settings);
-      appEvents.emit(AppEvents.alertSuccess, [Messages.service.success]);
     } catch (e) {
       logger.error(e);
-    } finally {
     }
 
     return response;

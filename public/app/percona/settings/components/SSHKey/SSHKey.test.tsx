@@ -44,7 +44,7 @@ describe('SSHKey::', () => {
   });
 
   it('Calls apply changes', async () => {
-    const spy = spyOn(reducers, 'updateSettingsAction').and.callThrough();
+    const spy = jest.spyOn(reducers, 'updateSettingsAction');
     const { container } = render(
       <Provider
         store={configureStore({

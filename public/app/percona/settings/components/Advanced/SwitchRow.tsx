@@ -29,7 +29,7 @@ export const SwitchRow: FC<SwitchRowProps> = ({
         </div>
       </div>
       <div className={className}>
-        <Switch {...input} value={input.checked} disabled={disabled} />
+        <Switch {...input} checked={undefined} value={input.checked} disabled={disabled} />
       </div>
     </div>
   );

@@ -19,13 +19,15 @@ const Dummy = () => {
   );
 };
 
-const originalPlatformCore = jest.requireActual('@percona/platform-core');
-jest.mock('@percona/platform-core', () => ({
-  ...originalPlatformCore,
-  logger: {
-    error: jest.fn(),
-  },
-}));
+jest.mock('@percona/platform-core', () => {
+  const originalModule = jest.requireActual('@percona/platform-core');
+  return {
+    ...originalModule,
+    logger: {
+      error: jest.fn(),
+    },
+  };
+});
 
 describe('useRecurringCall', () => {
   beforeEach(() => {

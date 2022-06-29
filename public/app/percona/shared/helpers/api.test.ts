@@ -13,17 +13,14 @@ declare module './api' {
   }
 }
 
-// Notice how `create` was not being mocked here...
-const mockNoop = jest.fn();
-
 jest.mock('axios', () => ({
   create: jest.fn(() => ({
-    default: mockNoop,
-    get: mockNoop,
-    post: mockNoop,
-    put: mockNoop,
-    delete: mockNoop,
-    patch: mockNoop,
+    default: jest.fn(),
+    get: jest.fn(),
+    post: jest.fn(),
+    put: jest.fn(),
+    delete: jest.fn(),
+    patch: jest.fn(),
   })),
   isCancel: jest.fn(),
 }));

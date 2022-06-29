@@ -36,7 +36,7 @@ describe('StorageLocations', () => {
   });
 
   it('should close delete modal after deletion confirmation', async () => {
-    const spy = spyOn(StorageLocationsService, 'delete').and.callThrough();
+    const spy = jest.spyOn(StorageLocationsService, 'delete');
     render(
       <Provider
         store={configureStore({

@@ -8,6 +8,8 @@ import { StoreState } from 'app/types';
 
 import { Advanced } from './Advanced';
 
+jest.mock('app/percona/settings/Settings.service');
+
 describe('Advanced::', () => {
   it('Renders correctly with props', () => {
     render(
@@ -42,7 +44,7 @@ describe('Advanced::', () => {
   });
 
   it('Calls apply changes', async () => {
-    const spy = spyOn(reducers, 'updateSettingsAction').and.callThrough();
+    const spy = jest.spyOn(reducers, 'updateSettingsAction');
     const { container } = render(
       <Provider
         store={configureStore({
@@ -119,7 +121,7 @@ describe('Advanced::', () => {
   });
 
   it('Does not include STT check intervals in the change request if STT checks are disabled', async () => {
-    const spy = spyOn(reducers, 'updateSettingsAction').and.callThrough();
+    const spy = jest.spyOn(reducers, 'updateSettingsAction');
 
     const { container } = render(
       <Provider
@@ -152,11 +154,14 @@ describe('Advanced::', () => {
     fireEvent.submit(screen.getByTestId('advanced-button'));
     await waitForElementToBeRemoved(() => container.querySelector('.fa-spin'));
 
-    expect(spy.calls.mostRecent().args[0].body.stt_check_intervals).toBeUndefined();
+    // expect(spy.calls.mostRecent().args[0].body.stt_check_intervals).toBeUndefined();
+    expect(spy).toHaveBeenLastCalledWith(
+      expect.objectContaining({ body: expect.objectContaining({ stt_check_intervals: undefined }) })
+    );
   });
 
   it('Includes STT check intervals in the change request if STT checks are enabled', async () => {
-    const spy = spyOn(reducers, 'updateSettingsAction').and.callThrough();
+    const spy = jest.spyOn(reducers, 'updateSettingsAction');
 
     const { container } = render(
       <Provider
@@ -179,6 +184,7 @@ describe('Advanced::', () => {
               },
             },
           },
+          navIndex: {},
         } as StoreState)}
       >
         <Advanced />
@@ -189,6 +195,9 @@ describe('Advanced::', () => {
     fireEvent.submit(screen.getByTestId('advanced-button'));
     await waitForElementToBeRemoved(() => container.querySelector('.fa-spin'));
 
-    expect(spy.calls.mostRecent().args[0].body.stt_check_intervals).toBeDefined();
+    // expect(spy.calls.mostRecent().args[0].body.stt_check_intervals).toBeDefined();
+    expect(spy).toHaveBeenLastCalledWith(
+      expect.objectContaining({ body: expect.objectContaining({ stt_check_intervals: expect.anything() }) })
+    );
   });
 });
