@@ -79,7 +79,7 @@ func checkSearchResponse(t *testing.T, fileName string, index *orgIndex, filter 
 func checkSearchResponseExtended(t *testing.T, fileName string, index *orgIndex, filter ResourceFilter, query DashboardQuery, extender QueryExtender) {
 	t.Helper()
 	resp := doSearchQuery(context.Background(), testLogger, index, filter, query, extender, "/pfix")
-	experimental.CheckGoldenJSONResponse(t, "testdata", fileName, resp, true)
+	experimental.CheckGoldenJSONResponse(t, "testdata", fileName, resp, false)
 }
 
 var testDashboards = []dashboard{
