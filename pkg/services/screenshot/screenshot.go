@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/url"
 	"path"
+	"strconv"
 	"time"
 
 	gocache "github.com/patrickmn/go-cache"
@@ -81,71 +82,6 @@ type ScreenshotService interface {
 	Take(ctx context.Context, opts ScreenshotOptions) (*Screenshot, error)
 }
 
-// BrowserScreenshotService takes screenshots using a headless browser.
-type BrowserScreenshotService struct {
-	ds dashboards.DashboardService
-	rs rendering.Service
-}
-
-func NewBrowserScreenshotService(ds dashboards.DashboardService, rs rendering.Service) ScreenshotService {
-	return &BrowserScreenshotService{
-		ds: ds,
-		rs: rs,
-	}
-}
-
-// Take returns a screenshot or an error if either the dashboard does not exist
-// or it failed to screenshot the dashboard. It uses both the context and the
-// timeout in ScreenshotOptions, however the timeout in ScreenshotOptions is
-// sent to the remote browser where it is used as a client timeout.
-func (s *BrowserScreenshotService) Take(ctx context.Context, opts ScreenshotOptions) (*Screenshot, error) {
-	q := models.GetDashboardQuery{Uid: opts.DashboardUID}
-	if err := s.ds.GetDashboard(ctx, &q); err != nil {
-		return nil, err
-	}
-
-	opts = opts.SetDefaults()
-
-	// Compute the URL to screenshot.
-	renderPath := path.Join("d-solo", q.Result.Uid, q.Result.Slug)
-	url := &url.URL{}
-	url.Path = renderPath
-	qParams := url.Query()
-	qParams.Add("orgId", fmt.Sprint(q.Result.OrgId))
-	if opts.PanelID != 0 {
-		qParams.Add("panelId", fmt.Sprint(opts.PanelID))
-	}
-	url.RawQuery = qParams.Encode()
-	path := url.String()
-
-	renderOpts := rendering.Opts{
-		AuthOpts: rendering.AuthOpts{
-			OrgID:   q.Result.OrgId,
-			OrgRole: models.ROLE_ADMIN,
-		},
-		ErrorOpts: rendering.ErrorOpts{
-			ErrorConcurrentLimitReached: true,
-			ErrorRenderUnavailable:      true,
-		},
-		TimeoutOpts: rendering.TimeoutOpts{
-			Timeout: opts.Timeout,
-		},
-		Width:           opts.Width,
-		Height:          opts.Height,
-		Theme:           opts.Theme,
-		ConcurrentLimit: setting.AlertingRenderLimit,
-		Path:            path,
-	}
-
-	result, err := s.rs.Render(ctx, renderOpts, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to take screenshot: %w", err)
-	}
-
-	screenshot := Screenshot{Path: result.FilePath}
-	return &screenshot, nil
-}
-
 // CachableScreenshotService caches screenshots.
 type CachableScreenshotService struct {
 	cache       *gocache.Cache
@@ -203,7 +139,7 @@ func (s *NoopScreenshotService) Take(_ context.Context, _ ScreenshotOptions) (*S
 type ObservableScreenshotService struct {
 	service   ScreenshotService
 	duration  prometheus.Histogram
-	failures  prometheus.Counter
+	failures  *prometheus.CounterVec
 	successes prometheus.Counter
 }
 
@@ -216,11 +152,11 @@ func NewObservableScreenshotService(r prometheus.Registerer, service ScreenshotS
 			Namespace: namespace,
 			Subsystem: subsystem,
 		}),
-		failures: promauto.With(r).NewCounter(prometheus.CounterOpts{
+		failures: promauto.With(r).NewCounterVec(prometheus.CounterOpts{
 			Name:      "failures_total",
 			Namespace: namespace,
 			Subsystem: subsystem,
-		}),
+		}, []string{"reason"}),
 		successes: promauto.With(r).NewCounter(prometheus.CounterOpts{
 			Name:      "successes_total",
 			Namespace: namespace,
@@ -235,11 +171,84 @@ func (s *ObservableScreenshotService) Take(ctx context.Context, opts ScreenshotO
 
 	screenshot, err := s.service.Take(ctx, opts)
 	if err != nil {
-		defer s.failures.Inc()
+		if errors.Is(err, models.ErrDashboardNotFound) {
+			defer s.failures.With(prometheus.Labels{
+				"reason": "dashboard_not_found",
+			}).Inc()
+		} else if errors.Is(err, context.Canceled) {
+			defer s.failures.With(prometheus.Labels{
+				"reason": "context_canceled",
+			}).Inc()
+		} else {
+			defer s.failures.With(prometheus.Labels{
+				"reason": "error",
+			}).Inc()
+		}
 	} else {
 		defer s.successes.Inc()
 	}
 	return screenshot, err
+}
+
+// RemoteRenderScreenshotService takes screenshots using a remote render service.
+type RemoteRenderScreenshotService struct {
+	ds dashboards.DashboardService
+	rs rendering.Service
+}
+
+func NewRemoteRenderScreenshotService(ds dashboards.DashboardService, rs rendering.Service) ScreenshotService {
+	return &RemoteRenderScreenshotService{
+		ds: ds,
+		rs: rs,
+	}
+}
+
+// Take returns a screenshot or an error if either the dashboard does not exist or
+// the service failed to screenshot the dashboard. It uses both the context and the
+// timeout in ScreenshotOptions, however the context is used in any database queries
+// and the request to the remote render service, while the timeout in ScreenshotOptions
+// is passed to the remote render service where it is used as a client timeout. It is
+// not recommended to pass a context without a deadline.
+func (s *RemoteRenderScreenshotService) Take(ctx context.Context, opts ScreenshotOptions) (*Screenshot, error) {
+	q := models.GetDashboardQuery{Uid: opts.DashboardUID}
+	if err := s.ds.GetDashboard(ctx, &q); err != nil {
+		return nil, err
+	}
+
+	u := url.URL{}
+	u.Path = path.Join("d-solo", q.Result.Uid, q.Result.Slug)
+	p := u.Query()
+	p.Add("orgId", strconv.FormatInt(q.Result.OrgId, 10))
+	p.Add("panelId", strconv.FormatInt(opts.PanelID, 10))
+	u.RawQuery = p.Encode()
+
+	opts = opts.SetDefaults()
+	renderOpts := rendering.Opts{
+		AuthOpts: rendering.AuthOpts{
+			OrgID:   q.Result.OrgId,
+			OrgRole: models.ROLE_ADMIN,
+		},
+		ErrorOpts: rendering.ErrorOpts{
+			ErrorConcurrentLimitReached: true,
+			ErrorRenderUnavailable:      true,
+		},
+		TimeoutOpts: rendering.TimeoutOpts{
+			Timeout: opts.Timeout,
+		},
+		Width:           opts.Width,
+		Height:          opts.Height,
+		Theme:           opts.Theme,
+		ConcurrentLimit: setting.AlertingRenderLimit,
+		Path:            u.String(),
+	}
+
+	result, err := s.rs.Render(ctx, renderOpts, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to take screenshot: %w", err)
+	}
+
+	screenshot := Screenshot{Path: result.FilePath}
+	return &screenshot, nil
 }
 
 type ScreenshotUnavailableService struct{}

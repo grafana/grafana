@@ -66,8 +66,8 @@ func NewScreenshotImageServiceFromCfg(cfg *setting.Cfg, metrics prometheus.Regis
 		}, nil
 	}
 
-	s := screenshot.NewBrowserScreenshotService(ds, rs)
 	// Image uploading is an optional feature of screenshots
+	s := screenshot.NewRemoteRenderScreenshotService(ds, rs)
 	if cfg.UnifiedAlerting.Screenshots.UploadExternalImageStorage {
 		u, err := imguploader.NewImageUploader()
 		if err != nil {
