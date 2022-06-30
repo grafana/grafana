@@ -54,11 +54,7 @@ func (dr *DashboardServiceImpl) SavePublicDashboardConfig(ctx context.Context, d
 
 	// set default value for time settings
 	if dto.PublicDashboard.TimeSettings == nil {
-		json, err := simplejson.NewJson([]byte("{}"))
-		if err != nil {
-			return nil, err
-		}
-		dto.PublicDashboard.TimeSettings = json
+		dto.PublicDashboard.TimeSettings = simplejson.New()
 	}
 
 	if dto.PublicDashboard.Uid == "" {

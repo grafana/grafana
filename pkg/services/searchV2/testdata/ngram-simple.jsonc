@@ -3,18 +3,19 @@
 //  Frame[0] {
 //      "type": "search-results",
 //      "custom": {
-//          "count": 1
+//          "count": 2
 //      }
 //  }
 //  Name: Query results
-//  Dimensions: 8 Fields by 1 Rows
-//  +----------------+----------------+--------------------+------------------+----------------+--------------------------+--------------------------+----------------+
-//  | Name: kind     | Name: uid      | Name: name         | Name: panel_type | Name: url      | Name: tags               | Name: ds_uid             | Name: location |
-//  | Labels:        | Labels:        | Labels:            | Labels:          | Labels:        | Labels:                  | Labels:                  | Labels:        |
-//  | Type: []string | Type: []string | Type: []string     | Type: []string   | Type: []string | Type: []*json.RawMessage | Type: []*json.RawMessage | Type: []string |
-//  +----------------+----------------+--------------------+------------------+----------------+--------------------------+--------------------------+----------------+
-//  | dashboard      | 2              | Document Sync repo |                  | /pfix/d/2/     | null                     | null                     |                |
-//  +----------------+----------------+--------------------+------------------+----------------+--------------------------+--------------------------+----------------+
+//  Dimensions: 8 Fields by 2 Rows
+//  +----------------+----------------+------------------+------------------+----------------+--------------------------+--------------------------+----------------+
+//  | Name: kind     | Name: uid      | Name: name       | Name: panel_type | Name: url      | Name: tags               | Name: ds_uid             | Name: location |
+//  | Labels:        | Labels:        | Labels:          | Labels:          | Labels:        | Labels:                  | Labels:                  | Labels:        |
+//  | Type: []string | Type: []string | Type: []string   | Type: []string   | Type: []string | Type: []*json.RawMessage | Type: []*json.RawMessage | Type: []string |
+//  +----------------+----------------+------------------+------------------+----------------+--------------------------+--------------------------+----------------+
+//  | dashboard      | 1              | heat-torkel      |                  | /pfix/d/1/     | null                     | null                     |                |
+//  | dashboard      | 2              | topology heatmap |                  | /pfix/d/2/     | null                     | null                     |                |
+//  +----------------+----------------+------------------+------------------+----------------+--------------------------+--------------------------+----------------+
 //  
 //  
 //  🌟 This was machine generated.  Do not edit. 🌟
@@ -26,7 +27,7 @@
         "meta": {
           "type": "search-results",
           "custom": {
-            "count": 1
+            "count": 2
           }
         },
         "fields": [
@@ -101,27 +102,35 @@
       "data": {
         "values": [
           [
+            "dashboard",
             "dashboard"
           ],
           [
+            "1",
             "2"
           ],
           [
-            "Document Sync repo"
+            "heat-torkel",
+            "topology heatmap"
           ],
           [
+            "",
             ""
           ],
           [
+            "/pfix/d/1/",
             "/pfix/d/2/"
           ],
           [
+            null,
             null
           ],
           [
+            null,
             null
           ],
           [
+            "",
             ""
           ]
         ]
