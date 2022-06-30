@@ -87,7 +87,7 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 			AccessToken:           accessToken,
 			ExpectedHttpResponse:  http.StatusNotFound,
 			publicDashboardResult: nil,
-			publicDashboardErr:    models.ErrPublicDashboardNotFound,
+			publicDashboardErr:    dashboards.ErrPublicDashboardNotFound,
 		},
 	}
 
@@ -153,7 +153,7 @@ func TestAPIGetPublicDashboardConfig(t *testing.T) {
 			DashboardUid:          "77777",
 			ExpectedHttpResponse:  http.StatusNotFound,
 			PublicDashboardResult: nil,
-			PublicDashboardError:  models.ErrDashboardNotFound,
+			PublicDashboardError:  dashboards.ErrDashboardNotFound,
 		},
 		{
 			Name:                  "returns 500 when internal server error",
@@ -218,7 +218,7 @@ func TestApiSavePublicDashboardConfig(t *testing.T) {
 			Name:                  "returns 404 when dashboard not found",
 			ExpectedHttpResponse:  http.StatusNotFound,
 			publicDashboardConfig: &models.PublicDashboard{},
-			saveDashboardError:    models.ErrDashboardNotFound,
+			saveDashboardError:    dashboards.ErrDashboardNotFound,
 		},
 	}
 
