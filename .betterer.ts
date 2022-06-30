@@ -1,20 +1,18 @@
 import { regexp } from '@betterer/regexp';
 import { BettererFileTest } from '@betterer/betterer';
 import { ESLint, Linter } from 'eslint';
+import { existsSync } from 'fs';
 
 export default {
   'no enzyme tests': () => regexp(/from 'enzyme'/g).include('**/*.test.*'),
   'better eslint': () => countEslintErrors().include('**/*.{ts,tsx}'),
-  // TODO fix this - it won't work properly in a precommit hook!
-  'no undocumented stories': () => countUndocumentedStories().include('**/*.{story.tsx,mdx}'),
+  'no undocumented stories': () => countUndocumentedStories().include('**/*.story.tsx'),
 };
 
 function countUndocumentedStories() {
   return new BettererFileTest(async (filePaths, fileTestResult) => {
-    const storyFilePaths = filePaths.filter((filePath) => filePath.endsWith('story.tsx'));
-    const mdxFilePaths = filePaths.filter((filePath) => filePath.endsWith('mdx'));
-    storyFilePaths.forEach((filePath) => {
-      if (!mdxFilePaths.includes(filePath.replace(/\.story.tsx$/, '.mdx'))) {
+    filePaths.forEach((filePath) => {
+      if (!existsSync(filePath.replace(/\.story.tsx$/, '.mdx'))) {
         // In this case the file contents don't matter:
         const file = fileTestResult.addFile(filePath, '');
         // Add the issue to the first character of the file:
