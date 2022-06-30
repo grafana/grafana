@@ -126,6 +126,6 @@ describe('Connected:', () => {
 
     fireEvent.click(confirmButton!);
 
-    expect(forceDisconnectSpy).toHaveBeenCalled();
+    await waitFor(() => expect(forceDisconnectSpy).toHaveBeenCalled());
   });
 });

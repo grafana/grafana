@@ -98,6 +98,11 @@ jest.mock('react-router-dom', () => ({
 const setFilteredData = jest.fn();
 
 describe('Filter', () => {
+  beforeEach(() => {
+    // There's a warning about keys coming from within ReactFinalForm
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
   it('should render the filter', async () => {
     render(<Filter columns={columns} rawData={data} setFilteredData={setFilteredData} />);
 

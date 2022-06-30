@@ -2003,7 +2003,7 @@ exports[`better eslint`] = {
       [21, 13, 20, "Do not use any type assertions.", "3451286408"],
       [21, 30, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "packages/grafana-ui/src/components/Portal/Portal.tsx:658106202": [
+    "packages/grafana-ui/src/components/Portal/Portal.tsx:1351578201": [
       [8, 17, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "packages/grafana-ui/src/components/QueryField/QueryField.test.tsx:375894800": [
@@ -2601,9 +2601,9 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/types/mdx.d.ts:2961840461": [
       [1, 28, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "packages/grafana-ui/src/types/react-table-config.d.ts:551377687": [
+    "packages/grafana-ui/src/types/react-table-config.d.ts:2884126644": [
       [64, 21, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [107, 89, 3, "Unexpected any. Specify a different type.", "193409811"]
+      [110, 89, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "packages/grafana-ui/src/utils/colors.ts:349987544": [
       [110, 25, 3, "Unexpected any. Specify a different type.", "193409811"]
@@ -3457,15 +3457,21 @@ exports[`better eslint`] = {
       [241, 54, 26, "Do not use any type assertions.", "1541386804"],
       [445, 23, 21, "Do not use any type assertions.", "1121249950"]
     ],
+    "public/app/core/components/NavBar/NavBarMenuItem.tsx:3959297243": [
+      [77, 20, 21, "Do not use any type assertions.", "2327357803"]
+    ],
+    "public/app/core/components/NavBar/NestedSubMenu.tsx:1315632916": [
+      [17, 38, 21, "Do not use any type assertions.", "2327357803"]
+    ],
     "public/app/core/components/PageHeader/PageHeader.test.tsx:3755271251": [
       [19, 32, 10, "Do not use any type assertions.", "883420344"],
       [19, 39, 3, "Unexpected any. Specify a different type.", "193409811"],
       [39, 32, 10, "Do not use any type assertions.", "883420344"],
       [39, 39, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/core/components/PageHeader/PageHeader.tsx:952684291": [
-      [65, 22, 22, "Do not use any type assertions.", "4054086100"],
-      [104, 34, 21, "Do not use any type assertions.", "2401004021"]
+    "public/app/core/components/PageHeader/PageHeader.tsx:3875073415": [
+      [78, 22, 22, "Do not use any type assertions.", "4054086100"],
+      [121, 34, 21, "Do not use any type assertions.", "2401004021"]
     ],
     "public/app/core/components/PanelTypeFilter/PanelTypeFilter.tsx:1614517181": [
       [41, 24, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -3696,7 +3702,7 @@ exports[`better eslint`] = {
     "public/app/core/reducers/appNotification.ts:735507530": [
       [77, 35, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/core/reducers/navModel.ts:2486277874": [
+    "public/app/core/reducers/navModel.ts:2429673026": [
       [7, 20, 41, "Do not use any type assertions.", "680953089"]
     ],
     "public/app/core/reducers/processsAclItems.ts:2776156466": [
@@ -3710,13 +3716,13 @@ exports[`better eslint`] = {
       [80, 20, 21, "Do not use any type assertions.", "4154873866"],
       [81, 32, 148, "Do not use any type assertions.", "2154524672"]
     ],
-    "public/app/core/reducers/root.ts:2873598299": [
-      [48, 40, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [58, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [63, 30, 30, "Do not use any type assertions.", "2185737917"],
-      [63, 56, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [71, 43, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [71, 60, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/core/reducers/root.ts:16538901": [
+      [51, 40, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [61, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [66, 30, 30, "Do not use any type assertions.", "2185737917"],
+      [66, 56, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [74, 43, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [74, 60, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/core/services/FetchQueue.ts:3303728942": [
       [37, 64, 23, "Do not use any type assertions.", "1258929971"],
@@ -4611,16 +4617,16 @@ exports[`better eslint`] = {
       [245, 16, 10, "Do not use any type assertions.", "1579919174"],
       [245, 23, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/alerting/unified/utils/redux.ts:3218947324": [
-      [28, 68, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [28, 73, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [74, 18, 48, "Do not use any type assertions.", "4184003583"],
-      [78, 47, 42, "Do not use any type assertions.", "2319175372"],
-      [78, 47, 17, "Do not use any type assertions.", "2386071297"],
-      [95, 18, 29, "Do not use any type assertions.", "1259940188"],
-      [100, 30, 42, "Do not use any type assertions.", "2319175372"],
-      [100, 30, 17, "Do not use any type assertions.", "2386071297"],
-      [158, 10, 10, "Do not use any type assertions.", "2289501258"]
+    "public/app/features/alerting/unified/utils/redux.ts:91140006": [
+      [36, 68, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [36, 73, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [85, 9, 48, "Do not use any type assertions.", "4184003583"],
+      [89, 47, 42, "Do not use any type assertions.", "2319175372"],
+      [89, 47, 17, "Do not use any type assertions.", "2386071297"],
+      [106, 18, 29, "Do not use any type assertions.", "1259940188"],
+      [111, 30, 42, "Do not use any type assertions.", "2319175372"],
+      [111, 30, 17, "Do not use any type assertions.", "2386071297"],
+      [170, 10, 10, "Do not use any type assertions.", "2289501258"]
     ],
     "public/app/features/alerting/unified/utils/rulerClient.ts:4049234446": [
       [185, 48, 30, "Do not use any type assertions.", "1488340788"],
@@ -5070,7 +5076,10 @@ exports[`better eslint`] = {
       [203, 22, 55, "Do not use any type assertions.", "2080143574"],
       [207, 9, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/dashboard/components/ShareModal/ShareModal.tsx:3869940488": [
+    "public/app/features/dashboard/components/ShareModal/ShareLink.tsx:2968301443": [
+      [90, 21, 49, "Do not use any type assertions.", "2361608006"]
+    ],
+    "public/app/features/dashboard/components/ShareModal/ShareModal.tsx:235616983": [
       [86, 20, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/dashboard/components/ShareModal/SharePublicDashboard.test.tsx:3736292666": [
@@ -5078,8 +5087,8 @@ exports[`better eslint`] = {
       [31, 22, 55, "Do not use any type assertions.", "2080143574"],
       [35, 9, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx:305910085": [
-      [148, 43, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx:782122834": [
+      [153, 43, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/dashboard/components/ShareModal/utils.test.ts:3192556439": [
       [34, 31, 115, "Do not use any type assertions.", "3780428905"],
@@ -5101,11 +5110,11 @@ exports[`better eslint`] = {
       [21, 22, 3, "Unexpected any. Specify a different type.", "193409811"],
       [67, 19, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/dashboard/components/SubMenu/DashboardLinksDashboard.tsx:1077727613": [
-      [16, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [132, 6, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [138, 8, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [148, 15, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/features/dashboard/components/SubMenu/DashboardLinksDashboard.tsx:2294710913": [
+      [18, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [148, 6, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [154, 8, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [164, 15, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/dashboard/components/SubMenu/SubMenu.tsx:2844370097": [
       [31, 49, 3, "Unexpected any. Specify a different type.", "193409811"]
@@ -5155,7 +5164,7 @@ exports[`better eslint`] = {
       [17, 40, 3, "Unexpected any. Specify a different type.", "193409811"],
       [56, 32, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/dashboard/containers/DashboardPage.test.tsx:1097909569": [
+    "public/app/features/dashboard/containers/DashboardPage.test.tsx:2045885613": [
       [76, 38, 3, "Unexpected any. Specify a different type.", "193409811"],
       [76, 59, 3, "Unexpected any. Specify a different type.", "193409811"],
       [108, 19, 49, "Do not use any type assertions.", "3190798329"],
@@ -7985,6 +7994,674 @@ exports[`better eslint`] = {
       [12, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
       [13, 23, 13, "Do not use any type assertions.", "538937261"],
       [13, 33, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/add-instance/components/AddInstance/AddInstance.tsx:4293822443": [
+      [45, 82, 29, "Do not use any type assertions.", "320793447"]
+    ],
+    "public/app/percona/add-instance/components/AddRemoteInstance/AddRemoteInstance.service.tsx:116889728": [
+      [94, 51, 43, "Do not use any type assertions.", "998044103"],
+      [96, 49, 41, "Do not use any type assertions.", "1366100159"],
+      [98, 54, 46, "Do not use any type assertions.", "4106851171"],
+      [100, 52, 44, "Do not use any type assertions.", "1805018887"],
+      [113, 34, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [120, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [189, 49, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [196, 20, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/add-instance/components/AddRemoteInstance/AddRemoteInstance.tools.tsx:571594021": [
+      [10, 42, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [56, 40, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [106, 82, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [107, 44, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [114, 20, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/add-instance/components/AddRemoteInstance/AddRemoteInstance.tsx:4291987235": [
+      [51, 12, 45, "Do not use any type assertions.", "543640072"],
+      [56, 12, 49, "Do not use any type assertions.", "1481489770"]
+    ],
+    "public/app/percona/add-instance/components/AddRemoteInstance/AddRemoteInstance.types.ts:3089674820": [
+      [62, 18, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/add-instance/components/AddRemoteInstance/FormParts/ExternalServiceConnectionDetails/ExternalServiceConnectionDetails.test.tsx:3802908298": [
+      [28, 12, 60, "Do not use any type assertions.", "1905123530"],
+      [29, 12, 65, "Do not use any type assertions.", "2561153337"],
+      [30, 12, 57, "Do not use any type assertions.", "4025123109"],
+      [31, 12, 61, "Do not use any type assertions.", "4133189226"],
+      [32, 12, 65, "Do not use any type assertions.", "103348129"]
+    ],
+    "public/app/percona/add-instance/components/AddRemoteInstance/FormParts/FormParts.test.tsx:677258870": [
+      [15, 19, 20, "Do not use any type assertions.", "2732244068"],
+      [15, 35, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [61, 62, 26, "Do not use any type assertions.", "4240975093"],
+      [61, 62, 15, "Do not use any type assertions.", "780531273"],
+      [97, 18, 26, "Do not use any type assertions.", "4240975093"],
+      [97, 18, 15, "Do not use any type assertions.", "780531273"],
+      [119, 76, 15, "Do not use any type assertions.", "1913203439"],
+      [139, 76, 15, "Do not use any type assertions.", "1913203439"],
+      [156, 76, 15, "Do not use any type assertions.", "1913203439"],
+      [174, 76, 15, "Do not use any type assertions.", "1913203439"],
+      [191, 76, 15, "Do not use any type assertions.", "1913203439"]
+    ],
+    "public/app/percona/add-instance/components/AddRemoteInstance/FormParts/HAProxyConnectionDetails/HAProxyConnectionDetails.test.tsx:766608640": [
+      [15, 11, 61, "Do not use any type assertions.", "4133189226"],
+      [16, 11, 65, "Do not use any type assertions.", "103348129"]
+    ],
+    "public/app/percona/add-instance/panel.tsx:1409881208": [
+      [38, 42, 30, "Do not use any type assertions.", "3132084340"]
+    ],
+    "public/app/percona/backup/Backup.utils.test.ts:1488242215": [
+      [12, 26, 22, "Do not use any type assertions.", "1494270372"],
+      [21, 29, 18, "Do not use any type assertions.", "3005183335"],
+      [28, 30, 19, "Do not use any type assertions.", "812355957"]
+    ],
+    "public/app/percona/backup/components/AddBackupModal/AddBackupModal.service.ts:3693451284": [
+      [15, 35, 24, "Do not use any type assertions.", "1653987163"],
+      [17, 37, 24, "Do not use any type assertions.", "1653987163"],
+      [22, 35, 24, "Do not use any type assertions.", "1653987163"]
+    ],
+    "public/app/percona/backup/components/AddBackupModal/AddBackupModal.tsx:82424576": [
+      [110, 54, 19, "Do not use any type assertions.", "412281893"]
+    ],
+    "public/app/percona/backup/components/AddBackupModal/AddBackupModal.utils.ts:3296627271": [
+      [40, 3, 25, "Do not use any type assertions.", "446572278"]
+    ],
+    "public/app/percona/backup/components/AddBackupModal/RetryModeSelector/RetryModeSelector.tsx:1650342827": [
+      [29, 23, 26, "Do not use any type assertions.", "956489489"],
+      [29, 46, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [36, 23, 29, "Do not use any type assertions.", "1075131272"],
+      [36, 49, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/backup/components/BackupInventory/BackupInventory.service.ts:2688230146": [
+      [13, 62, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [80, 65, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [97, 76, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/backup/components/BackupInventory/BackupInventory.test.tsx:4122536887": [
+      [16, 30, 211, "Do not use any type assertions.", "1103659214"]
+    ],
+    "public/app/percona/backup/components/BackupInventory/RestoreBackupModal/RestoreBackupModal.service.ts:1430411822": [
+      [11, 34, 15, "Do not use any type assertions.", "4220885191"]
+    ],
+    "public/app/percona/backup/components/DBIcon/DBIcon.test.tsx:139446789": [
+      [17, 25, 23, "Do not use any type assertions.", "795562122"]
+    ],
+    "public/app/percona/backup/components/RestoreHistory/RestoreHistory.service.ts:3037356990": [
+      [10, 59, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/backup/components/ScheduledBackups/ScheduledBackups.service.ts:3942994363": [
+      [12, 79, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/backup/components/ScheduledBackups/ScheduledBackups.test.tsx:1249464808": [
+      [15, 30, 211, "Do not use any type assertions.", "1103659214"]
+    ],
+    "public/app/percona/backup/components/StorageLocations/AddStorageLocationModal/AddStorageLocation.utils.ts:2708088348": [
+      [71, 18, 20, "Do not use any type assertions.", "2272478066"],
+      [72, 18, 20, "Do not use any type assertions.", "2272478066"],
+      [73, 19, 20, "Do not use any type assertions.", "2272478066"]
+    ],
+    "public/app/percona/backup/components/StorageLocations/AddStorageLocationModal/AddStorageLocationModal.test.tsx:8098892": [
+      [46, 12, 25, "Do not use any type assertions.", "560486106"]
+    ],
+    "public/app/percona/backup/components/StorageLocations/AddStorageLocationModal/S3Fields/S3Fields.test.tsx:1967221205": [
+      [21, 19, 95, "Do not use any type assertions.", "4107341770"]
+    ],
+    "public/app/percona/backup/components/StorageLocations/StorageLocations.test.tsx:733822337": [
+      [18, 30, 211, "Do not use any type assertions.", "1103659214"],
+      [41, 30, 211, "Do not use any type assertions.", "1103659214"],
+      [68, 30, 188, "Do not use any type assertions.", "1603931537"]
+    ],
+    "public/app/percona/backup/components/StorageLocations/StorageLocations.tsx:639301365": [
+      [62, 22, 31, "Do not use any type assertions.", "387686158"],
+      [84, 52, 31, "Do not use any type assertions.", "387686158"]
+    ],
+    "public/app/percona/backup/components/StorageLocations/StorageLocations.utils.ts:705146666": [
+      [22, 7, 25, "Do not use any type assertions.", "4050802571"],
+      [23, 7, 25, "Do not use any type assertions.", "4050802571"],
+      [24, 7, 25, "Do not use any type assertions.", "4050802571"],
+      [33, 25, 30, "Do not use any type assertions.", "4048886002"]
+    ],
+    "public/app/percona/backup/components/StorageLocations/StorageLocationsActions/StorageLocationsActions.test.tsx:1069515212": [
+      [13, 18, 34, "Do not use any type assertions.", "1372013266"],
+      [13, 18, 15, "Do not use any type assertions.", "363922340"]
+    ],
+    "public/app/percona/check/Check.service.ts:4175193423": [
+      [118, 26, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/check/components/AllChecksTab/AllChecksTab.test.tsx:1231801435": [
+      [32, 30, 208, "Do not use any type assertions.", "3349537747"],
+      [53, 30, 208, "Do not use any type assertions.", "3349537747"],
+      [74, 30, 208, "Do not use any type assertions.", "3349537747"],
+      [107, 30, 208, "Do not use any type assertions.", "3349537747"],
+      [140, 30, 208, "Do not use any type assertions.", "3349537747"],
+      [172, 30, 208, "Do not use any type assertions.", "3349537747"]
+    ],
+    "public/app/percona/check/components/AllChecksTab/ChangeCheckIntervalModal/ChangeCheckIntervalModal.constants.ts:1648172844": [
+      [4, 18, 36, "Do not use any type assertions.", "545259311"]
+    ],
+    "public/app/percona/check/components/AllChecksTab/CheckActions/CheckActions.types.ts:2492720864": [
+      [4, 50, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [6, 62, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/check/components/FailedChecksTab/FailedChecksTab.test.tsx:3193118534": [
+      [29, 30, 208, "Do not use any type assertions.", "3349537747"],
+      [52, 30, 208, "Do not use any type assertions.", "3349537747"],
+      [70, 30, 208, "Do not use any type assertions.", "3349537747"]
+    ],
+    "public/app/percona/check/components/FailedChecksTab/Failures/Failures.tsx:3570284708": [
+      [17, 17, 33, "Do not use any type assertions.", "3965983180"],
+      [19, 52, 33, "Do not use any type assertions.", "3965983180"],
+      [20, 22, 33, "Do not use any type assertions.", "3965983180"]
+    ],
+    "public/app/percona/check/components/ServiceChecks/ServiceChecks.test.tsx:50095276": [
+      [16, 30, 183, "Do not use any type assertions.", "3546017751"],
+      [37, 30, 183, "Do not use any type assertions.", "3546017751"]
+    ],
+    "public/app/percona/dbaas/components/DBCluster/AddDBClusterModal/AddDBClusterModal.tsx:2501871992": [
+      [75, 20, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/dbaas/components/DBCluster/AddDBClusterModal/DBClusterAdvancedOptions/DBClusterAdvancedOptions.utils.ts:1942767106": [
+      [16, 25, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [19, 22, 35, "Do not use any type assertions.", "3836094899"]
+    ],
+    "public/app/percona/dbaas/components/DBCluster/AddDBClusterModal/DBClusterBasicOptions/DBClusterBasicOptions.tsx:689921003": [
+      [47, 19, 21, "Do not use any type assertions.", "1828192772"],
+      [49, 38, 70, "Do not use any type assertions.", "495586455"],
+      [49, 68, 21, "Do not use any type assertions.", "2771300292"]
+    ],
+    "public/app/percona/dbaas/components/DBCluster/DBCluster.service.ts:129796077": [
+      [54, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [58, 48, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [70, 44, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/dbaas/components/DBCluster/DBCluster.service.utils.ts:2680138802": [
+      [21, 19, 45, "Do not use any type assertions.", "1483969036"],
+      [27, 15, 15, "Do not use any type assertions.", "132039236"]
+    ],
+    "public/app/percona/dbaas/components/DBCluster/DBCluster.test.tsx:2674625419": [
+      [28, 30, 413, "Do not use any type assertions.", "195950870"],
+      [53, 30, 871, "Do not use any type assertions.", "2385295900"],
+      [93, 30, 870, "Do not use any type assertions.", "1970555063"],
+      [133, 30, 942, "Do not use any type assertions.", "1278650924"]
+    ],
+    "public/app/percona/dbaas/components/DBCluster/DBCluster.utils.tsx:814926575": [
+      [23, 18, 37, "Do not use any type assertions.", "3890711846"],
+      [73, 11, 56, "Do not use any type assertions.", "1936593839"],
+      [74, 14, 62, "Do not use any type assertions.", "396685103"],
+      [75, 12, 58, "Do not use any type assertions.", "2853126511"],
+      [89, 42, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/dbaas/components/DBCluster/DBClusterConnection/DBClusterConnection.tsx:1062850099": [
+      [28, 27, 85, "Do not use any type assertions.", "1047393774"]
+    ],
+    "public/app/percona/dbaas/components/DBCluster/DBClusterLogsModal/DBClusterLogsModal.utils.ts:2147546870": [
+      [26, 5, 22, "Do not use any type assertions.", "3826841494"],
+      [37, 6, 30, "Do not use any type assertions.", "903467851"],
+      [41, 5, 24, "Do not use any type assertions.", "3229688599"]
+    ],
+    "public/app/percona/dbaas/components/DBCluster/DBClusterStatus/DBClusterStatus.tsx:2763361617": [
+      [18, 17, 26, "Do not use any type assertions.", "2807344053"]
+    ],
+    "public/app/percona/dbaas/components/DBCluster/EditDBClusterModal/EditDBClusterModal.tsx:4099875674": [
+      [25, 89, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [95, 57, 28, "Do not use any type assertions.", "1085311320"]
+    ],
+    "public/app/percona/dbaas/components/DBCluster/PSMDB.service.ts:1215711922": [
+      [34, 48, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [38, 48, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [66, 54, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [79, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [83, 51, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [89, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [97, 28, 47, "Do not use any type assertions.", "858642608"]
+    ],
+    "public/app/percona/dbaas/components/DBCluster/ResourcesBar/ResourcesBar.utils.test.ts:636312179": [
+      [21, 50, 57, "Do not use any type assertions.", "3738754480"]
+    ],
+    "public/app/percona/dbaas/components/DBCluster/ResourcesBar/ResourcesBar.utils.ts:3099503155": [
+      [32, 9, 58, "Do not use any type assertions.", "3673427543"]
+    ],
+    "public/app/percona/dbaas/components/DBCluster/XtraDB.service.ts:2233161765": [
+      [34, 48, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [38, 48, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [66, 54, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [79, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [83, 51, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [89, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [98, 28, 44, "Do not use any type assertions.", "3602461371"]
+    ],
+    "public/app/percona/dbaas/components/Kubernetes/ColumnRenderers/ColumnRenderers.tsx:3834618266": [
+      [13, 10, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/dbaas/components/Kubernetes/Kubernetes.constants.ts:2453297682": [
+      [11, 48, 127, "Do not use any type assertions.", "1003395996"]
+    ],
+    "public/app/percona/dbaas/components/Kubernetes/Kubernetes.service.ts:2541371804": [
+      [17, 49, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [20, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [20, 35, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [23, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [23, 35, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [26, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [34, 54, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [59, 30, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/dbaas/components/Kubernetes/Kubernetes.utils.ts:3884873481": [
+      [18, 30, 21, "Do not use any type assertions.", "2771300292"],
+      [19, 29, 21, "Do not use any type assertions.", "2771300292"],
+      [20, 27, 21, "Do not use any type assertions.", "2771300292"]
+    ],
+    "public/app/percona/dbaas/components/Kubernetes/KubernetesInventory.test.tsx:124603007": [
+      [18, 30, 1219, "Do not use any type assertions.", "1903075035"]
+    ],
+    "public/app/percona/dbaas/components/Kubernetes/ManageComponentsVersionsModal/ManageComponentsVersions.hooks.ts:486115356": [
+      [50, 53, 41, "Do not use any type assertions.", "2714473313"],
+      [53, 75, 30, "Do not use any type assertions.", "968401107"],
+      [64, 39, 23, "Do not use any type assertions.", "93406366"],
+      [65, 39, 30, "Do not use any type assertions.", "968401107"],
+      [66, 28, 41, "Do not use any type assertions.", "2714473313"],
+      [73, 14, 21, "Do not use any type assertions.", "2771300292"],
+      [82, 21, 47, "Do not use any type assertions.", "4181929983"],
+      [83, 28, 46, "Do not use any type assertions.", "3134856285"],
+      [84, 33, 41, "Do not use any type assertions.", "3823010377"],
+      [86, 28, 63, "Do not use any type assertions.", "3275189621"],
+      [126, 38, 41, "Do not use any type assertions.", "1124951502"],
+      [154, 27, 41, "Do not use any type assertions.", "2714473313"],
+      [162, 44, 26, "Do not use any type assertions.", "125657522"],
+      [169, 8, 54, "Do not use any type assertions.", "1156715506"]
+    ],
+    "public/app/percona/dbaas/components/Kubernetes/ManageComponentsVersionsModal/ManageComponentsVersions.utils.tsx:2444990819": [
+      [31, 37, 26, "Do not use any type assertions.", "125657522"],
+      [71, 18, 73, "Do not use any type assertions.", "2602103908"],
+      [84, 15, 15, "Do not use any type assertions.", "132039236"]
+    ],
+    "public/app/percona/dbaas/components/Kubernetes/ManageComponentsVersionsModal/ManageComponentsVersionsModal.tsx:4003962596": [
+      [59, 19, 43, "Do not use any type assertions.", "3997220029"],
+      [60, 26, 42, "Do not use any type assertions.", "3143923231"],
+      [72, 34, 74, "Do not use any type assertions.", "611329976"],
+      [72, 59, 27, "Do not use any type assertions.", "1070261473"],
+      [78, 19, 43, "Do not use any type assertions.", "3997220029"],
+      [79, 26, 42, "Do not use any type assertions.", "3143923231"],
+      [98, 46, 54, "Do not use any type assertions.", "60568847"],
+      [98, 65, 21, "Do not use any type assertions.", "2771300292"],
+      [129, 37, 47, "Do not use any type assertions.", "92928100"]
+    ],
+    "public/app/percona/dbaas/components/Kubernetes/ManageComponentsVersionsModal/ManageComponentsVersionsModal.types.ts:2858187701": [
+      [16, 17, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/dbaas/components/Kubernetes/OperatorStatusItem/KubernetesOperatorStatus/UpdateOperatorModal/UpdateOperatorModal.test.tsx:178975735": [
+      [26, 30, 202, "Do not use any type assertions.", "2699362540"],
+      [55, 30, 202, "Do not use any type assertions.", "2699362540"]
+    ],
+    "public/app/percona/dbaas/components/StepProgress/Step/Step.tsx:4202113231": [
+      [44, 25, 42, "Do not use any type assertions.", "232313980"]
+    ],
+    "public/app/percona/dbaas/components/StepProgress/StepProgress.tsx:3031997422": [
+      [12, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [14, 36, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/entitlements/Entitlements.test.tsx:2065860083": [
+      [13, 30, 182, "Do not use any type assertions.", "2228457436"]
+    ],
+    "public/app/percona/environment-overview/components/ContactWidget/Contact.test.tsx:188839041": [
+      [15, 28, 178, "Do not use any type assertions.", "2509815973"]
+    ],
+    "public/app/percona/integrated-alerting/components/AlertRuleTemplate/AlertRuleTemplate.service.ts:1719238094": [
+      [20, 38, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/integrated-alerting/components/AlertRuleTemplate/AlertRuleTemplate.test.tsx:3174310781": [
+      [29, 30, 205, "Do not use any type assertions.", "4111788887"],
+      [51, 30, 205, "Do not use any type assertions.", "4111788887"],
+      [76, 30, 205, "Do not use any type assertions.", "4111788887"]
+    ],
+    "public/app/percona/integrated-alerting/components/AlertRuleTemplate/AlertRuleTemplate.tsx:3502712470": [
+      [49, 23, 18, "Do not use any type assertions.", "1700565186"]
+    ],
+    "public/app/percona/integrated-alerting/components/AlertRuleTemplate/AlertRuleTemplate.utils.test.ts:4116699694": [
+      [7, 21, 158, "Do not use any type assertions.", "3245117702"],
+      [31, 25, 132, "Do not use any type assertions.", "3207274127"]
+    ],
+    "public/app/percona/integrated-alerting/components/AlertRules/AddAlertRuleModal/AddAlertRuleModal.types.ts:2127980434": [
+      [18, 19, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/integrated-alerting/components/AlertRules/AddAlertRuleModal/AddAlertRuleModal.utils.ts:3633110585": [
+      [37, 37, 39, "Do not use any type assertions.", "1166453015"],
+      [50, 78, 23, "Do not use any type assertions.", "1163888420"],
+      [150, 59, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [162, 10, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [167, 10, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/integrated-alerting/components/AlertRules/AlertRuleParamField/AlertRuleParamField.tsx:1095830071": [
+      [11, 25, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/integrated-alerting/components/AlertRules/AlertRules.provider.ts:1752499268": [
+      [4, 73, 23, "Do not use any type assertions.", "1148551613"]
+    ],
+    "public/app/percona/integrated-alerting/components/AlertRules/AlertRules.test.tsx:342834054": [
+      [54, 30, 205, "Do not use any type assertions.", "4111788887"],
+      [73, 30, 205, "Do not use any type assertions.", "4111788887"],
+      [94, 30, 205, "Do not use any type assertions.", "4111788887"],
+      [117, 30, 205, "Do not use any type assertions.", "4111788887"]
+    ],
+    "public/app/percona/integrated-alerting/components/AlertRules/AlertRules.tsx:592796345": [
+      [63, 23, 18, "Do not use any type assertions.", "1700565186"],
+      [106, 53, 17, "Do not use any type assertions.", "907672111"],
+      [200, 24, 18, "Do not use any type assertions.", "1700565186"]
+    ],
+    "public/app/percona/integrated-alerting/components/Alerts/Alerts.test.tsx:647777787": [
+      [20, 30, 205, "Do not use any type assertions.", "4111788887"],
+      [44, 30, 205, "Do not use any type assertions.", "4111788887"]
+    ],
+    "public/app/percona/integrated-alerting/components/Alerts/Alerts.tsx:2070582918": [
+      [113, 55, 21, "Do not use any type assertions.", "2451160324"]
+    ],
+    "public/app/percona/integrated-alerting/components/NotificationChannel/AddNotificationChannelModal/AddNotificationChannelModal.tsx:812897277": [
+      [65, 48, 39, "Do not use any type assertions.", "852535372"]
+    ],
+    "public/app/percona/integrated-alerting/components/NotificationChannel/AddNotificationChannelModal/AddNotificationChannelModal.utils.test.ts:3402358736": [
+      [8, 32, 55, "Do not use any type assertions.", "601668782"]
+    ],
+    "public/app/percona/integrated-alerting/components/NotificationChannel/AddNotificationChannelModal/AddNotificationChannelModal.utils.ts:996734097": [
+      [90, 8, 165, "Do not use any type assertions.", "201546317"]
+    ],
+    "public/app/percona/integrated-alerting/components/NotificationChannel/NotificationChannel.provider.ts:2588527673": [
+      [5, 2, 32, "Do not use any type assertions.", "2587803776"]
+    ],
+    "public/app/percona/integrated-alerting/components/NotificationChannel/NotificationChannel.service.test.ts:3530590728": [
+      [12, 1, 21, "Do not use any type assertions.", "3934842453"]
+    ],
+    "public/app/percona/integrated-alerting/components/NotificationChannel/NotificationChannel.test.tsx:3088302847": [
+      [15, 30, 205, "Do not use any type assertions.", "4111788887"],
+      [36, 30, 205, "Do not use any type assertions.", "4111788887"]
+    ],
+    "public/app/percona/integrated-alerting/components/NotificationChannel/NotificationChannel.tsx:1068350640": [
+      [72, 23, 18, "Do not use any type assertions.", "1700565186"],
+      [153, 35, 38, "Do not use any type assertions.", "104339347"]
+    ],
+    "public/app/percona/integrated-alerting/components/NotificationChannel/NotificationChannel.utils.ts:1558086455": [
+      [103, 27, 34, "Do not use any type assertions.", "3295749692"]
+    ],
+    "public/app/percona/integrated-alerting/components/Table/Filter/Filter.tsx:3858287862": [
+      [42, 28, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/integrated-alerting/components/Table/Filter/Filter.types.ts:2278773812": [
+      [3, 32, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/integrated-alerting/components/Table/Filter/Filter.utils.ts:2890142993": [
+      [14, 52, 25, "Do not use any type assertions.", "3999710659"],
+      [21, 89, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [22, 26, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [36, 21, 25, "Do not use any type assertions.", "3999710659"],
+      [66, 23, 25, "Do not use any type assertions.", "3999710659"],
+      [74, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [85, 55, 25, "Do not use any type assertions.", "3999710659"],
+      [102, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [109, 21, 25, "Do not use any type assertions.", "3999710659"]
+    ],
+    "public/app/percona/integrated-alerting/components/Table/Pagination/Pagination.hooks.ts:2660270815": [
+      [6, 67, 29, "Do not use any type assertions.", "2112456765"],
+      [9, 17, 29, "Do not use any type assertions.", "2112456765"],
+      [13, 33, 38, "Do not use any type assertions.", "1849131876"]
+    ],
+    "public/app/percona/integrated-alerting/components/Table/Pagination/Pagination.tsx:3669101544": [
+      [63, 18, 31, "Do not use any type assertions.", "2007993044"],
+      [95, 18, 32, "Do not use any type assertions.", "3585612527"]
+    ],
+    "public/app/percona/integrated-alerting/components/Table/Table.tsx:3784146776": [
+      [53, 17, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/integrated-alerting/components/Table/Table.types.ts:1592840939": [
+      [30, 34, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [42, 32, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [56, 32, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [58, 26, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [60, 29, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [60, 34, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/inventory/ColumnRenderers/ColumnRenderers.tsx:3275165081": [
+      [7, 47, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [20, 45, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [32, 49, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [43, 44, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/inventory/Inventory.service.ts:824371381": [
+      [25, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [25, 25, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [28, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [28, 25, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [31, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [31, 25, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [35, 56, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [39, 34, 15, "Do not use any type assertions.", "4220885191"],
+      [42, 15, 15, "Do not use any type assertions.", "4220885191"],
+      [52, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [52, 25, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [55, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [55, 25, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [58, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [58, 25, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/inventory/Inventory.test.tsx:1342212316": [
+      [46, 49, 15, "Do not use any type assertions.", "3129159266"],
+      [46, 61, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [71, 51, 15, "Do not use any type assertions.", "3129159266"],
+      [71, 63, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [91, 48, 15, "Do not use any type assertions.", "3129159266"],
+      [91, 60, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/inventory/Inventory.tools.test.ts:3077458022": [
+      [144, 46, 15, "Do not use any type assertions.", "3129159266"],
+      [144, 58, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [192, 48, 15, "Do not use any type assertions.", "3129159266"],
+      [192, 60, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [228, 45, 15, "Do not use any type assertions.", "3129159266"],
+      [228, 57, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [264, 45, 15, "Do not use any type assertions.", "3129159266"],
+      [264, 57, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/inventory/Inventory.tools.ts:1031892125": [
+      [9, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [12, 27, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [28, 72, 21, "Do not use any type assertions.", "410766045"],
+      [31, 31, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [45, 5, 13, "Do not use any type assertions.", "1820018840"],
+      [55, 5, 13, "Do not use any type assertions.", "1820018840"],
+      [65, 5, 13, "Do not use any type assertions.", "1820018840"]
+    ],
+    "public/app/percona/inventory/Tabs/Agents.tsx:3833337337": [
+      [32, 35, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/inventory/Tabs/Nodes.tsx:598886053": [
+      [33, 35, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [88, 26, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [88, 31, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/inventory/Tabs/Services.tsx:1223387150": [
+      [36, 35, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/settings/Settings.service.ts:2928144310": [
+      [18, 63, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/settings/components/Advanced/Advanced.test.tsx:3129698829": [
+      [16, 30, 689, "Do not use any type assertions.", "1517132757"],
+      [49, 30, 689, "Do not use any type assertions.", "1517132757"],
+      [93, 30, 689, "Do not use any type assertions.", "1517132757"],
+      [127, 30, 690, "Do not use any type assertions.", "4083245406"],
+      [167, 30, 713, "Do not use any type assertions.", "2219269672"]
+    ],
+    "public/app/percona/settings/components/Advanced/SwitchRow.types.ts:667447718": [
+      [8, 9, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/settings/components/AlertManager/AlertManager.test.tsx:2575428107": [
+      [16, 30, 211, "Do not use any type assertions.", "2105520162"],
+      [34, 30, 211, "Do not use any type assertions.", "2105520162"],
+      [52, 30, 211, "Do not use any type assertions.", "2105520162"]
+    ],
+    "public/app/percona/settings/components/AlertManager/AlertManager.tsx:2612559100": [
+      [52, 68, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/settings/components/Communication/Email/Email.utils.ts:4065704152": [
+      [75, 55, 28, "Do not use any type assertions.", "3218732322"],
+      [76, 26, 28, "Do not use any type assertions.", "3218732322"]
+    ],
+    "public/app/percona/settings/components/MetricsResolution/MetricsResolution.test.tsx:3129180449": [
+      [15, 30, 266, "Do not use any type assertions.", "3521844871"],
+      [39, 30, 266, "Do not use any type assertions.", "982838214"],
+      [63, 30, 266, "Do not use any type assertions.", "356003012"],
+      [87, 30, 266, "Do not use any type assertions.", "982838214"],
+      [114, 30, 266, "Do not use any type assertions.", "982838214"]
+    ],
+    "public/app/percona/settings/components/MetricsResolution/MetricsResolution.tsx:2223866359": [
+      [69, 43, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [77, 30, 36, "Do not use any type assertions.", "1556382208"]
+    ],
+    "public/app/percona/settings/components/Platform/Connected/Connected.test.tsx:3284907983": [
+      [29, 30, 188, "Do not use any type assertions.", "3571372325"],
+      [61, 30, 188, "Do not use any type assertions.", "3571372325"],
+      [88, 30, 189, "Do not use any type assertions.", "3993552526"],
+      [108, 30, 189, "Do not use any type assertions.", "3993552526"]
+    ],
+    "public/app/percona/settings/components/Platform/Platform.test.tsx:3570676799": [
+      [13, 30, 183, "Do not use any type assertions.", "3546017751"],
+      [30, 30, 182, "Do not use any type assertions.", "2228457436"]
+    ],
+    "public/app/percona/settings/components/SSHKey/SSHKey.test.tsx:96563671": [
+      [16, 30, 175, "Do not use any type assertions.", "209318782"],
+      [33, 30, 175, "Do not use any type assertions.", "209318782"],
+      [51, 30, 175, "Do not use any type assertions.", "209318782"]
+    ],
+    "public/app/percona/shared/components/Elements/ExpandableCell/ExpandableCell.types.ts:106247644": [
+      [5, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [6, 9, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/shared/components/Elements/FeatureLoader/FeatureLoader.test.tsx:1166613859": [
+      [23, 30, 204, "Do not use any type assertions.", "286254140"],
+      [42, 30, 205, "Do not use any type assertions.", "4111788887"],
+      [61, 30, 207, "Do not use any type assertions.", "3168570711"],
+      [80, 30, 206, "Do not use any type assertions.", "948351932"],
+      [99, 30, 206, "Do not use any type assertions.", "948351932"]
+    ],
+    "public/app/percona/shared/components/Elements/PermissionLoader/PermissionLoader.test.tsx:2546256486": [
+      [24, 30, 205, "Do not use any type assertions.", "4111788887"],
+      [43, 38, 58, "Do not use any type assertions.", "2111877618"],
+      [57, 30, 143, "Do not use any type assertions.", "276790659"]
+    ],
+    "public/app/percona/shared/components/Elements/PlatformConnectedLoader/PlatformConnectedLoader.test.tsx:415185428": [
+      [13, 30, 205, "Do not use any type assertions.", "1704391427"],
+      [29, 30, 207, "Do not use any type assertions.", "2319794371"],
+      [45, 30, 206, "Do not use any type assertions.", "2903626600"],
+      [61, 30, 205, "Do not use any type assertions.", "1175795939"]
+    ],
+    "public/app/percona/shared/components/Elements/Table/Table.tsx:812944634": [
+      [47, 56, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [52, 35, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/shared/components/Elements/Table/Table.types.ts:935540241": [
+      [11, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [12, 24, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [16, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [16, 25, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [23, 9, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/shared/components/Form/AsyncSelectField/AsyncSelectField.tsx:3794948019": [
+      [9, 56, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/shared/components/Form/FieldAdapters/Field.tsx:2233448795": [
+      [57, 15, 44, "Do not use any type assertions.", "920199092"]
+    ],
+    "public/app/percona/shared/components/Form/FieldAdapters/FieldAdapters.tsx:179732993": [
+      [44, 41, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/shared/components/Form/FormElement/FormElement.tsx:913163223": [
+      [87, 35, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/shared/components/Form/MultiCheckbox/MultiCheckboxField.tsx:1936851140": [
+      [51, 56, 22, "Do not use any type assertions.", "1005351128"],
+      [51, 75, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/shared/components/Form/MultiCheckbox/MultiCheckboxField.types.ts:3919628834": [
+      [14, 15, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/shared/components/Form/MultiSelectField/MultiSelectField.tsx:1775738769": [
+      [9, 77, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/shared/components/Form/SelectField/SelectField.tsx:917964248": [
+      [9, 67, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/shared/core/reducers.ts:977859710": [
+      [167, 12, 33, "Do not use any type assertions.", "1137218687"],
+      [175, 25, 19, "Do not use any type assertions.", "3005760160"],
+      [179, 55, 34, "Do not use any type assertions.", "2844124911"],
+      [181, 19, 34, "Do not use any type assertions.", "2844124911"]
+    ],
+    "public/app/percona/shared/core/types.ts:3860605867": [
+      [60, 47, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/shared/helpers/api.test.ts:152410397": [
+      [8, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [8, 24, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [9, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [9, 25, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [10, 21, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [10, 26, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [11, 22, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [11, 27, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [33, 5, 36, "Do not use any type assertions.", "3356453116"],
+      [44, 5, 36, "Do not use any type assertions.", "3356453116"],
+      [54, 5, 36, "Do not use any type assertions.", "3356453116"],
+      [64, 5, 36, "Do not use any type assertions.", "3356453116"],
+      [75, 5, 36, "Do not use any type assertions.", "3356453116"],
+      [86, 5, 36, "Do not use any type assertions.", "3356453116"],
+      [95, 29, 21, "Do not use any type assertions.", "2514988604"],
+      [105, 26, 16, "Do not use any type assertions.", "2052684165"],
+      [109, 26, 30, "Do not use any type assertions.", "1892969946"],
+      [113, 26, 40, "Do not use any type assertions.", "439380406"],
+      [117, 26, 40, "Do not use any type assertions.", "439380406"],
+      [122, 21, 127, "Do not use any type assertions.", "4111173193"],
+      [128, 21, 266, "Do not use any type assertions.", "3208923483"]
+    ],
+    "public/app/percona/shared/helpers/api.ts:4081681691": [
+      [65, 36, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [93, 30, 28, "Do not use any type assertions.", "3455137790"],
+      [102, 7, 23, "Do not use any type assertions.", "1429900525"]
+    ],
+    "public/app/percona/shared/helpers/cron/cron.ts:1619451978": [
+      [99, 87, 11, "Do not use any type assertions.", "3489354809"],
+      [99, 95, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/shared/helpers/getValuesFromQueryParams.ts:3794262843": [
+      [4, 40, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/shared/helpers/promises.test.tsx:4012922363": [
+      [27, 12, 38, "Do not use any type assertions.", "3126724535"],
+      [35, 21, 57, "Do not use any type assertions.", "2549792338"],
+      [42, 34, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/shared/helpers/promises.ts:829092691": [
+      [2, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [7, 10, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [12, 62, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/shared/helpers/testUtils.tsx:482145932": [
+      [5, 30, 18, "Do not use any type assertions.", "1829017155"],
+      [16, 32, 20, "Do not use any type assertions.", "383037504"],
+      [26, 35, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [26, 49, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/shared/helpers/validator.types.ts:809635572": [
+      [2, 32, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [2, 61, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [2, 74, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/shared/helpers/validators.ts:2004279887": [
+      [3, 24, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [19, 47, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [27, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [92, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [98, 12, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [98, 41, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/percona/tickets/TicketsPage.test.tsx:3754726446": [
+      [13, 30, 182, "Do not use any type assertions.", "2228457436"]
     ],
     "public/app/plugins/datasource/alertmanager/ConfigEditor.tsx:326563002": [
       [46, 36, 41, "Do not use any type assertions.", "3906591734"]
@@ -12539,9 +13216,9 @@ exports[`better eslint`] = {
     "public/app/store/configureStore.ts:3951464425": [
       [11, 41, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/store/store.ts:1160152146": [
-      [13, 11, 79, "Do not use any type assertions.", "2486330760"],
-      [19, 33, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/store/store.ts:4219138468": [
+      [14, 11, 79, "Do not use any type assertions.", "2486330760"],
+      [20, 33, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/types/alerting.ts:3481327440": [
       [12, 47, 3, "Unexpected any. Specify a different type.", "193409811"],

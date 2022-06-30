@@ -12,5 +12,5 @@ export default {
           assertionStyle: 'never',
         },
       ],
-    }).include('**/*.{ts,tsx}'),
+    }).include('**/*.{ts,tsx}', '!**/*.test.{ts,tsx}'),
 };
