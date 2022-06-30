@@ -62,6 +62,10 @@ func (api *API) authorize(method, path string) web.Handler {
 	case http.MethodGet + "/api/prometheus/grafana/api/v1/rules":
 		eval = ac.EvalPermission(ac.ActionAlertingRuleRead)
 
+	// Only access to data sources is required. Additional datasource authorization happens in the request handler
+	case http.MethodPost + "/v1/api/alerting/rules/eval":
+		eval = ac.EvalPermission(datasources.ActionQuery)
+
 	// Grafana Rules Testing Paths
 	case http.MethodPost + "/api/v1/rule/test/grafana":
 		fallback = middleware.ReqSignedIn
