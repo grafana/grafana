@@ -97,20 +97,23 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string) (
 
 		names := data.NewFieldFromFieldType(data.FieldTypeString, count)
 		title := data.NewFieldFromFieldType(data.FieldTypeString, count)
+		descr := data.NewFieldFromFieldType(data.FieldTypeString, count)
 		types := data.NewFieldFromFieldType(data.FieldTypeString, count)
 		readOnly := data.NewFieldFromFieldType(data.FieldTypeBool, count)
 		builtIn := data.NewFieldFromFieldType(data.FieldTypeBool, count)
 		mtype := data.NewFieldFromFieldType(data.FieldTypeString, count)
 		title.Name = "title"
 		names.Name = "name"
+		descr.Name = "description"
 		mtype.Name = "mediaType"
-		types.Name = "Type"
-		readOnly.Name = "Read only"
-		builtIn.Name = "BuiltIn"
+		types.Name = "storageType"
+		readOnly.Name = "readOnly"
+		builtIn.Name = "builtIn"
 		for _, f := range t.rootsByOrgId[ac.GlobalOrgID] {
 			meta := f.Meta()
 			names.Set(idx, meta.Config.Prefix)
 			title.Set(idx, meta.Config.Name)
+			descr.Set(idx, meta.Config.Description)
 			mtype.Set(idx, "directory")
 			types.Set(idx, meta.Config.Type)
 			readOnly.Set(idx, meta.ReadOnly)
@@ -122,6 +125,7 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string) (
 				meta := f.Meta()
 				names.Set(idx, meta.Config.Prefix)
 				title.Set(idx, meta.Config.Name)
+				descr.Set(idx, meta.Config.Description)
 				mtype.Set(idx, "directory")
 				types.Set(idx, meta.Config.Type)
 				readOnly.Set(idx, meta.ReadOnly)
@@ -130,7 +134,7 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string) (
 			}
 		}
 
-		frame := data.NewFrame("", names, title, mtype, types, readOnly, builtIn)
+		frame := data.NewFrame("", names, title, descr, mtype, types, readOnly, builtIn)
 		frame.SetMeta(&data.FrameMeta{
 			Type: data.FrameTypeDirectoryListing,
 		})

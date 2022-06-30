@@ -62,13 +62,12 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 			Path: cfg.StaticRootPath,
 			Roots: []string{
 				"/testdata/",
-				// "/img/icons/",
-				// "/img/bg/",
 				"/img/",
 				"/gazetteer/",
 				"/maps/",
 			},
-		}).setReadOnly(true).setBuiltin(true),
+		}).setReadOnly(true).setBuiltin(true).
+			setDescription("Access files from the static public files"),
 	}
 
 	// Development dashboards
@@ -81,7 +80,7 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 				Roots: []string{
 					"/dev-dashboards/",
 				},
-			}).setReadOnly(false)
+			}).setReadOnly(false).setDescription("Explore files within the developer environment directly")
 			globalRoots = append(globalRoots, s)
 		}
 	}
@@ -89,7 +88,12 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 	initializeOrgStorages := func(orgId int64) []storageRuntime {
 		storages := make([]storageRuntime, 0)
 		if features.IsEnabled(featuremgmt.FlagStorageLocalUpload) {
-			storages = append(storages, newSQLStorage(RootResources, "Resources", &StorageSQLConfig{orgId: orgId}, sql).setBuiltin(true))
+			storages = append(storages,
+				newSQLStorage(RootResources,
+					"Resources",
+					&StorageSQLConfig{orgId: orgId}, sql).
+					setBuiltin(true).
+					setDescription("Upload custom resource files"))
 		}
 
 		return storages

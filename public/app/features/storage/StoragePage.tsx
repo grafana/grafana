@@ -11,6 +11,7 @@ import { useNavModel } from 'app/core/hooks/useNavModel';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { Breadcrumb } from './Breadcrumb';
+import { StorageRoot } from './StorageRoot';
 import { UploadPopoverContainer } from './UploadPopoverContainer';
 import { getGrafanaStorage } from './helper';
 
@@ -77,9 +78,12 @@ export default function StoragePage(props: Props) {
   }, [path, uploadTime]);
 
   const renderTable = () => {
-    const dataFrame = files.value;
-    if (!isDataFrame(dataFrame)) {
+    const frame = files.value;
+    if (!isDataFrame(frame)) {
       return <></>;
+    }
+    if (!path?.length || path === '/') {
+      return <StorageRoot root={frame} />;
     }
 
     return (
@@ -119,7 +123,7 @@ export default function StoragePage(props: Props) {
                 <Table
                   height={height}
                   width={width}
-                  data={dataFrame}
+                  data={frame}
                   noHeader={false}
                   showTypeIcons={false}
                   resizable={false}
