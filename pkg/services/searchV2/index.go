@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"runtime"
@@ -59,15 +60,21 @@ type buildSignal struct {
 }
 
 type orgIndex struct {
-	writers map[entityKind]*bluge.Writer
+	writers map[indexType]*bluge.Writer
 }
 
-func (i *orgIndex) writerForKind(kind entityKind) *bluge.Writer {
-	return i.writers[kind]
+type indexType string
+
+const (
+	indexTypeDashboard indexType = "dashboard"
+)
+
+func (i *orgIndex) writerForIndex(idxType indexType) *bluge.Writer {
+	return i.writers[idxType]
 }
 
-func (i *orgIndex) readerForKind(kind entityKind) (*bluge.Reader, func(), error) {
-	reader, err := i.writers[kind].Reader()
+func (i *orgIndex) readerForIndex(idxType indexType) (*bluge.Reader, func(), error) {
+	reader, err := i.writers[idxType].Reader()
 	if err != nil {
 		return nil, nil, err
 	}
@@ -233,10 +240,9 @@ func (i *searchIndex) buildInitialIndexes(ctx context.Context, orgIDs []int64) e
 }
 
 func (i *searchIndex) buildInitialIndex(ctx context.Context, orgID int64) error {
-	_, debugCtxCancel := context.WithCancel(ctx)
+	debugCtx, debugCtxCancel := context.WithCancel(ctx)
 	if os.Getenv("GF_SEARCH_DEBUG") != "" {
-		// TODO: fixme
-		//go i.debugResourceUsage(debugCtx, 200*time.Millisecond)
+		go i.debugResourceUsage(debugCtx, 200*time.Millisecond)
 	}
 
 	started := time.Now()
@@ -248,14 +254,13 @@ func (i *searchIndex) buildInitialIndex(ctx context.Context, orgID int64) error 
 	i.logger.Info("Indexing for org finished", "orgIndexElapsed", time.Since(started), "orgId", orgID, "numDashboards", numDashboards)
 	debugCtxCancel()
 
-	// TODO: fixme
-	//if os.Getenv("GF_SEARCH_DEBUG") != "" {
-	//	// May help to estimate size of index when introducing changes. Though it's not a direct
-	//	// match to a memory consumption, but at least make give some relative difference understanding.
-	//	// Moreover, changes in indexing can cause additional memory consumption upon initial index build
-	//	// which is not reflected here.
-	//	i.reportSizeOfIndexDiskBackup(orgID)
-	//}
+	if os.Getenv("GF_SEARCH_DEBUG") != "" {
+		// May help to estimate size of index when introducing changes. Though it's not a direct
+		// match to a memory consumption, but at least make give some relative difference understanding.
+		// Moreover, changes in indexing can cause additional memory consumption upon initial index build
+		// which is not reflected here.
+		i.reportSizeOfIndexDiskBackup(orgID)
+	}
 	return nil
 }
 
@@ -341,38 +346,44 @@ func (i *searchIndex) debugResourceUsage(ctx context.Context, frequency time.Dur
 	}
 }
 
-//func (i *searchIndex) reportSizeOfIndexDiskBackup(orgID int64) {
-//	reader, _ := i.getOrgReader(orgID)
-//
-//	// create a temp directory to store the index
-//	tmpDir, err := ioutil.TempDir("", "grafana.dashboard_index")
-//	if err != nil {
-//		i.logger.Error("can't create temp dir", "error", err)
-//		return
-//	}
-//	defer func() {
-//		err := os.RemoveAll(tmpDir)
-//		if err != nil {
-//			i.logger.Error("can't remove temp dir", "error", err, "tmpDir", tmpDir)
-//			return
-//		}
-//	}()
-//
-//	cancel := make(chan struct{})
-//	err = reader.Backup(tmpDir, cancel)
-//	if err != nil {
-//		i.logger.Error("can't create index disk backup", "error", err)
-//		return
-//	}
-//
-//	size, err := dirSize(tmpDir)
-//	if err != nil {
-//		i.logger.Error("can't calculate dir size", "error", err)
-//		return
-//	}
-//
-//	i.logger.Warn("Size of index disk backup", "size", formatBytes(uint64(size)))
-//}
+func (i *searchIndex) reportSizeOfIndexDiskBackup(orgID int64) {
+	index, _ := i.getOrgIndex(orgID)
+	reader, cancel, err := index.readerForIndex(indexTypeDashboard)
+	if err != nil {
+		i.logger.Warn("Error getting reader", "error", err)
+		return
+	}
+	defer cancel()
+
+	// create a temp directory to store the index
+	tmpDir, err := ioutil.TempDir("", "grafana.dashboard_index")
+	if err != nil {
+		i.logger.Error("can't create temp dir", "error", err)
+		return
+	}
+	defer func() {
+		err := os.RemoveAll(tmpDir)
+		if err != nil {
+			i.logger.Error("can't remove temp dir", "error", err, "tmpDir", tmpDir)
+			return
+		}
+	}()
+
+	cancelCh := make(chan struct{})
+	err = reader.Backup(tmpDir, cancelCh)
+	if err != nil {
+		i.logger.Error("can't create index disk backup", "error", err)
+		return
+	}
+
+	size, err := dirSize(tmpDir)
+	if err != nil {
+		i.logger.Error("can't calculate dir size", "error", err)
+		return
+	}
+
+	i.logger.Warn("Size of index disk backup", "size", formatBytes(uint64(size)))
+}
 
 func (i *searchIndex) buildOrgIndex(ctx context.Context, orgID int64) (int, error) {
 	started := time.Now()
@@ -411,10 +422,14 @@ func (i *searchIndex) buildOrgIndex(ctx context.Context, orgID int64) (int, erro
 	i.perOrgIndex[orgID] = index
 	i.mu.Unlock()
 
-	// TODO: fixme
-	//if orgID == 1 {
-	//	go updateUsageStats(context.Background(), reader, i.logger)
-	//}
+	if orgID == 1 {
+		go func() {
+			if reader, cancel, err := index.readerForIndex(indexTypeDashboard); err == nil {
+				defer cancel()
+				updateUsageStats(context.Background(), reader, i.logger)
+			}
+		}()
+	}
 	return len(dashboards), nil
 }
 
@@ -574,43 +589,35 @@ func (i *searchIndex) removeDashboard(_ context.Context, index *orgIndex, dashbo
 	if dashboardLocation != "" {
 		panelLocation = dashboardLocation + "/" + dashboardUID
 	}
-	panelIDs, err := getDocsIDsByLocationPrefix(index, panelLocation, []entityKind{entityKindPanel})
+	panelIDs, err := getDocsIDsByLocationPrefix(index, panelLocation)
 	if err != nil {
 		return err
 	}
 
-	dashboardWriter := index.writerForKind(entityKindDashboard)
-	panelWriter := index.writerForKind(entityKindPanel)
+	writer := index.writerForIndex(indexTypeDashboard)
 
 	batch := bluge.NewBatch()
+	batch.Delete(bluge.NewDocument(dashboardUID).ID())
 	for _, panelID := range panelIDs {
 		batch.Delete(bluge.NewDocument(panelID).ID())
 	}
-	if err := panelWriter.Batch(batch); err != nil {
-		return err
-	}
 
-	return dashboardWriter.Delete(bluge.NewDocument(dashboardUID).ID())
+	return writer.Batch(batch)
 }
 
 func (i *searchIndex) removeFolder(_ context.Context, index *orgIndex, folderUID string) error {
-	ids, err := getDocsIDsByLocationPrefix(index, folderUID, nil)
+	ids, err := getDocsIDsByLocationPrefix(index, folderUID)
 	if err != nil {
-		return err
+		return fmt.Errorf("error getting by location prefix: %w", err)
 	}
 
-	for _, w := range index.writers {
-		batch := bluge.NewBatch()
-		for _, id := range ids {
-			batch.Delete(bluge.NewDocument(id).ID())
-		}
-		if err := w.Batch(batch); err != nil {
-			return err
-		}
+	batch := bluge.NewBatch()
+	batch.Delete(bluge.NewDocument(folderUID).ID())
+	for _, id := range ids {
+		batch.Delete(bluge.NewDocument(id).ID())
 	}
-
-	writer := index.writerForKind(entityKindFolder)
-	return writer.Delete(bluge.NewDocument(folderUID).ID())
+	writer := index.writerForIndex(indexTypeDashboard)
+	return writer.Batch(batch)
 }
 
 func stringInSlice(str string, slice []string) bool {
@@ -625,17 +632,18 @@ func stringInSlice(str string, slice []string) bool {
 func (i *searchIndex) updateDashboard(ctx context.Context, orgID int64, index *orgIndex, dash dashboard) error {
 	extendDoc := i.extender.GetDashboardExtender(orgID, dash.uid)
 
+	writer := index.writerForIndex(indexTypeDashboard)
+
 	var doc *bluge.Document
 	if dash.isFolder {
 		doc = getFolderDashboardDoc(dash)
 		if err := extendDoc(dash.uid, doc); err != nil {
 			return err
 		}
-		writer := index.writerForKind(entityKindFolder)
 		return writer.Update(doc.ID(), doc)
 	}
 
-	panelBatch := bluge.NewBatch()
+	batch := bluge.NewBatch()
 
 	var folderUID string
 	if dash.folderID == 0 {
@@ -663,7 +671,7 @@ func (i *searchIndex) updateDashboard(ctx context.Context, orgID int64, index *o
 	panelDocs := getDashboardPanelDocs(dash, location)
 	for _, panelDoc := range panelDocs {
 		actualPanelIDs = append(actualPanelIDs, string(panelDoc.ID().Term()))
-		panelBatch.Update(panelDoc.ID(), panelDoc)
+		batch.Update(panelDoc.ID(), panelDoc)
 	}
 
 	indexedPanelIDs, err := getDashboardPanelIDs(index, location)
@@ -673,17 +681,13 @@ func (i *searchIndex) updateDashboard(ctx context.Context, orgID int64, index *o
 
 	for _, panelID := range indexedPanelIDs {
 		if !stringInSlice(panelID, actualPanelIDs) {
-			panelBatch.Delete(bluge.NewDocument(panelID).ID())
+			batch.Delete(bluge.NewDocument(panelID).ID())
 		}
 	}
 
-	panelWriter := index.writerForKind(entityKindPanel)
-	if err := panelWriter.Batch(panelBatch); err != nil {
-		return err
-	}
+	batch.Update(doc.ID(), doc)
 
-	dashboardWriter := index.writerForKind(entityKindDashboard)
-	return dashboardWriter.Update(doc.ID(), doc)
+	return writer.Batch(batch)
 }
 
 type sqlDashboardLoader struct {

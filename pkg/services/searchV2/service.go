@@ -163,7 +163,7 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 		return rsp
 	}
 
-	orgIndex, err := s.dashboardIndex.getOrCreateOrgIndex(ctx, orgID)
+	index, err := s.dashboardIndex.getOrCreateOrgIndex(ctx, orgID)
 	if err != nil {
 		rsp.Error = err
 		return rsp
@@ -175,5 +175,5 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 		return rsp
 	}
 
-	return doSearchQuery(ctx, s.logger, orgIndex, filter, q, s.extender.GetQueryExtender(q), s.cfg.AppSubURL)
+	return doSearchQuery(ctx, s.logger, index, filter, q, s.extender.GetQueryExtender(q), s.cfg.AppSubURL)
 }
