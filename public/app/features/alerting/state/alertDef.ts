@@ -152,8 +152,8 @@ function getStateDisplayModel(state: string) {
       };
     }
 
-    default:
-    case 'unknown': {
+    case 'unknown':
+    default: {
       return {
         text: 'UNKNOWN',
         iconClass: 'question-circle',
