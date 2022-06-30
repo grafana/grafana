@@ -13,37 +13,49 @@ enum TokenType {
   Identifier = 'idenfifier',
 }
 
+// list of available functions in Alertmanager templates
+// see https://cs.github.com/prometheus/alertmanager/blob/805e505288ce82c3e2b625a3ca63aaf2b0aa9cea/template/template.go?q=join#L132-L151
+const availableAlertManagerFunctions = [
+  'toUpper',
+  'toLower',
+  'title',
+  'join',
+  'match',
+  'safeHtml',
+  'reReplaceAll',
+  'stringSlice',
+];
+
+// built-in functions for Go templates
+const builtinFunctions = [
+  'and',
+  'call',
+  'html',
+  'index',
+  'slice',
+  'js',
+  'len',
+  'not',
+  'or',
+  'print',
+  'printf',
+  'println',
+  'urlquery',
+];
+
+// boolean functions
+const booleanFunctions = ['eq', 'ne', 'lt', 'le', 'gt', 'ge'];
+
+// Go template keywords
+const keywords = ['define', 'if', 'else', 'end', 'range', 'break', 'continue', 'template', 'block', 'with'];
+
 // Monarch language definition, see https://microsoft.github.io/monaco-editor/monarch.html
 // check https://github.com/microsoft/monaco-editor/blob/main/src/basic-languages/go/go.ts for an example
 // see https://pkg.go.dev/text/template for the available keywords etc
 export const language: monacoType.languages.IMonarchLanguage = {
   defaultToken: '', // change this to "invalid" to find tokens that were never matched
-  keywords: ['define', 'if', 'else', 'end', 'range', 'break', 'continue', 'template', 'block', 'with'],
-  functions: [
-    // built-in functions
-    'and',
-    'call',
-    'html',
-    'index',
-    'slice',
-    'js',
-    'len',
-    'not',
-    'or',
-    'print',
-    'printf',
-    'println',
-    'urlquery',
-    // boolean functions
-    'eq',
-    'ne',
-    'lt',
-    'le',
-    'gt',
-    'ge',
-    // extra functions
-    'join',
-  ],
+  keywords: keywords,
+  functions: [...builtinFunctions, ...booleanFunctions, ...availableAlertManagerFunctions],
   operators: ['|'],
   tokenizer: {
     root: [
