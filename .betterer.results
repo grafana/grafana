@@ -5718,15 +5718,15 @@ exports[`better eslint`] = {
       [259, 12, 11, "Do not use any type assertions.", "319541530"],
       [259, 20, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/explore/TraceView/TraceView.tsx:3577738567": [
+    "public/app/features/explore/TraceView/TraceView.tsx:1242270734": [
       [118, 30, 45, "Do not use any type assertions.", "2423479359"],
       [119, 33, 48, "Do not use any type assertions.", "1615058495"],
-      [181, 25, 11, "Do not use any type assertions.", "1662677663"],
-      [181, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [248, 57, 19, "Do not use any type assertions.", "1794170740"],
-      [254, 13, 9, "Do not use any type assertions.", "3692209159"],
-      [254, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [255, 13, 11, "Do not use any type assertions.", "772402835"]
+      [183, 25, 11, "Do not use any type assertions.", "1662677663"],
+      [183, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [250, 57, 19, "Do not use any type assertions.", "1794170740"],
+      [256, 13, 9, "Do not use any type assertions.", "3692209159"],
+      [256, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [257, 13, 11, "Do not use any type assertions.", "772402835"]
     ],
     "public/app/features/explore/TraceView/TraceViewContainer.test.tsx:346725917": [
       [74, 7, 101, "Do not use any type assertions.", "1913214000"],
