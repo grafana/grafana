@@ -16,6 +16,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -237,6 +238,16 @@ func validateQueriesAndExpressions(ctx context.Context, data []ngmodels.AlertQue
 		refIDs[query.RefID] = struct{}{}
 	}
 	return refIDs, nil
+}
+
+func checkDatasource(c *models.ReqContext, cache datasources.CacheService) func(uid string) error {
+	return func(uid string) error {
+		if expr.IsDataSource(uid) {
+			return nil
+		}
+		_, err := cache.GetDatasourceByUID(c.Req.Context(), uid, c.SignedInUser, c.SkipCache)
+		return err
+	}
 }
 
 // ErrorResp creates a response with a visible error

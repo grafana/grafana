@@ -201,3 +201,73 @@ func validateRuleGroup(
 	}
 	return result, nil
 }
+
+// validateRuleCondition API models of condition and queries. Returns models.Condition if the input model is correct
+func validateRuleCondition(condition apimodels.AlertRuleCondition, orgID int64, checkDatasourceExists func(uid string) error) (ngmodels.Condition, error) {
+	if len(condition.Data) == 0 {
+		return ngmodels.Condition{}, fmt.Errorf("rule should contain at least one query or expression. Data cannot be empty")
+	}
+	if condition.Condition == "" {
+		return ngmodels.Condition{}, fmt.Errorf("field 'condition' must not be empty and must refer to one of data queries")
+	}
+
+	var conditionRefID string
+	data := make([]ngmodels.AlertQuery, 0, len(condition.Data))
+	for _, query := range condition.Data {
+		if query.RefID == condition.Condition {
+			conditionRefID = string(condition.Condition)
+		}
+		ngQuery, err := validateAlertQuery(query, checkDatasourceExists)
+		if err != nil {
+			return ngmodels.Condition{}, fmt.Errorf("invalid query %v: %w", query.RefID, err)
+		}
+		data = append(data, ngQuery)
+	}
+	if conditionRefID == "" {
+		return ngmodels.Condition{}, fmt.Errorf("field 'condition' must refer to one of data queries. RefID '%s' was not found among provided queries/exprssions", condition.Condition)
+	}
+	return ngmodels.Condition{
+		Condition: conditionRefID,
+		OrgID:     orgID,
+		Data:      data,
+	}, nil
+}
+
+// validateAlertQuery validates API model of alert query. Checks that the datasource exists and relative time range is correct (if specified). Returns models.AlertQuery if the input model is correct
+func validateAlertQuery(query apimodels.AlertQuery, checkDatasourceExists func(uid string) error) (ngmodels.AlertQuery, error) {
+	var queryType string
+	if query.QueryType != nil {
+		queryType = *query.QueryType
+	}
+
+	err := checkDatasourceExists(query.DatasourceUID)
+	if err != nil {
+		return ngmodels.AlertQuery{}, fmt.Errorf("invalid query %s: %w: %s", query.RefID, err, query.DatasourceUID)
+	}
+
+	var timeRange ngmodels.RelativeTimeRange
+	if query.RelativeTimeRange != nil {
+		timeRange, err = validateRelativeTimeRange(*query.RelativeTimeRange)
+		if err != nil {
+			return ngmodels.AlertQuery{}, err
+		}
+	}
+
+	return ngmodels.AlertQuery{
+		RefID:             string(query.RefID),
+		QueryType:         queryType,
+		RelativeTimeRange: timeRange,
+		DatasourceUID:     query.DatasourceUID,
+		Model:             query.Model,
+	}, nil
+}
+
+func validateRelativeTimeRange(timeRange apimodels.RelativeTimeRange) (ngmodels.RelativeTimeRange, error) {
+	if timeRange.From <= timeRange.To {
+		return ngmodels.RelativeTimeRange{}, fmt.Errorf("invalid relative time range: %+v", timeRange)
+	}
+	return ngmodels.RelativeTimeRange{
+		From: ngmodels.Duration(timeRange.From),
+		To:   ngmodels.Duration(timeRange.To),
+	}, nil
+}
