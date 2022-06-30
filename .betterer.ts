@@ -58,8 +58,8 @@ function countEslintErrors() {
         lintResults
           .filter((lintResult) => lintResult.source)
           .forEach((lintResult) => {
-            const { messages, source } = lintResult;
-            const file = fileTestResult.addFile(filePath, source);
+            const { messages } = lintResult;
+            const file = fileTestResult.addFile(filePath, '');
             messages.forEach((message) => {
               file.addIssue(0, 0, message.message);
             });
