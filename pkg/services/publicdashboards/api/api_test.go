@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"strings"
 	"testing"
@@ -33,29 +32,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
-
-//func TestNew(t *testing.T) {
-//  t.Run("It should 404 if featureflag is not enabled", func(t *testing.T) {
-//    cfg := setting.NewCfg()
-//    qs := buildQueryDataService(t, cfg)
-//    service := publicdashboards.NewFakePublicDashboardService(t)
-//    service.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).
-//      Return(&models.Dashboard{}, nil).Maybe()
-
-//    testServer := setupTestServer(t, cfg, qs, featuremgmt.WithFeatures(), service)
-
-//    response := callAPI(testServer, http.MethodGet, "/api/public/dashboards", nil, t)
-//    assert.Equal(t, http.StatusNotFound, response.Code)
-
-//    response = callAPI(testServer, http.MethodGet, "/api/public/dashboards/asdf", nil, t)
-//    assert.Equal(t, http.StatusNotFound, response.Code)
-
-//    // control set
-//    testServer = setupTestServer(t, cfg, qs, featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards), service)
-//    response = callAPI(testServer, http.MethodGet, "/api/public/dashboards/asdf", nil, t)
-//    assert.NotEqual(t, http.StatusNotFound, response.Code)
-//  })
-//}
 
 func TestAPIGetPublicDashboard(t *testing.T) {
 	t.Run("It should 404 if featureflag is not enabled", func(t *testing.T) {
@@ -565,21 +541,13 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 		},
 	}
 
+	// create public dashboard
 	store := publicdashboardsStore.ProvideStore(db)
 	service := publicdashboardsService.ProvideService(setting.NewCfg(), store)
 	pubdash, err := service.SavePublicDashboardConfig(context.Background(), savePubDashboardCmd)
 	require.NoError(t, err)
 
-	pd, d, err := store.GetPublicDashboard(context.Background(), pubdash.AccessToken)
-	fmt.Println("STORE:", pd)
-	fmt.Println("STORE (dashboard):", d)
-
-	pd2, err := service.GetPublicDashboardConfig(context.Background(), dashboard.OrgId, dashboard.Uid)
-	fmt.Println("STORE:", pd2)
-
-	dash, err := service.GetPublicDashboard(context.Background(), pubdash.AccessToken)
-	fmt.Println("SERVICE (dashboard):", dash)
-
+	// setup test server
 	server := setupTestServer(t,
 		setting.NewCfg(),
 		qds,
@@ -588,18 +556,12 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 		db,
 	)
 
-	pd, d, err = store.GetPublicDashboard(context.Background(), pubdash.AccessToken)
-	fmt.Println("STORE:", pd)
-	fmt.Println("STORE (dashboard):", d)
-
 	resp := callAPI(server, http.MethodPost,
 		fmt.Sprintf("/api/public/dashboards/%s/panels/1/query", pubdash.AccessToken),
 		strings.NewReader(`{}`),
 		t,
 	)
-	fmt.Println(string(resp.Body.Bytes()))
 	require.Equal(t, http.StatusOK, resp.Code)
-	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	require.NoError(t, err)
 	require.JSONEq(
 		t,
@@ -619,6 +581,6 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
           }
         }
       }`,
-		string(bodyBytes),
+		string(resp.Body.Bytes()),
 	)
 }
