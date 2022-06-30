@@ -5,16 +5,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gofrs/uuid"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 var timeSettings, _ = simplejson.NewJson([]byte(`{"from": "now-12", "to": "now"}`))
@@ -152,7 +153,7 @@ func TestSavePublicDashboard(t *testing.T) {
 		// Time settings set by db
 		assert.Equal(t, timeSettings, pubdash.TimeSettings)
 		// accessToken is valid uuid
-		_, err = uuid.FromString(pubdash.AccessToken)
+		_, err = uuid.Parse(pubdash.AccessToken)
 		require.NoError(t, err)
 	})
 

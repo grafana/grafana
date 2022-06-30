@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gofrs/uuid"
+	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
@@ -60,7 +60,7 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 	})
 
 	DashboardUid := "dashboard-abcd1234"
-	token, err := uuid.NewV4()
+	token, err := uuid.NewRandom()
 	require.NoError(t, err)
 	accessToken := fmt.Sprintf("%x", token)
 

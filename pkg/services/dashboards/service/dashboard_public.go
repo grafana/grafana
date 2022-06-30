@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gofrs/uuid"
+	"github.com/google/uuid"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
@@ -145,7 +146,7 @@ func (dr *DashboardServiceImpl) BuildPublicDashboardMetricRequest(ctx context.Co
 
 // generates a uuid formatted without dashes to use as access token
 func GenerateAccessToken() (string, error) {
-	token, err := uuid.NewV4()
+	token, err := uuid.NewRandom()
 	if err != nil {
 		return "", err
 	}
