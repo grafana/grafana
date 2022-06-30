@@ -639,7 +639,7 @@ func doSearchQuery(
 	}
 
 	if len(locationItems) > 0 && !q.SkipLocation {
-		header.Locations = getLocationLookupInfo(ctx, index, locationItems)
+		header.Locations = getLocationLookupInfo(ctx, reader, locationItems)
 	}
 
 	response.Frames = append(response.Frames, frame)
@@ -667,24 +667,7 @@ func doSearchQuery(
 	return response
 }
 
-func getLocationLookupInfo(ctx context.Context, index *orgIndex, uids map[string]bool) map[string]locationItem {
-	var readers []*bluge.Reader
-	for _, w := range index.writers {
-		r, err := w.Reader()
-		if err != nil {
-			for _, r := range readers {
-				_ = r.Close()
-			}
-			return nil
-		}
-		readers = append(readers, r)
-	}
-	defer func() {
-		for _, r := range readers {
-			_ = r.Close()
-		}
-	}()
-
+func getLocationLookupInfo(ctx context.Context, reader *bluge.Reader, uids map[string]bool) map[string]locationItem {
 	res := make(map[string]locationItem, len(uids))
 	bq := bluge.NewBooleanQuery()
 	for k := range uids {
@@ -693,7 +676,7 @@ func getLocationLookupInfo(ctx context.Context, index *orgIndex, uids map[string
 
 	req := bluge.NewAllMatches(bq)
 
-	documentMatchIterator, err := bluge.MultiSearch(ctx, req, readers...)
+	documentMatchIterator, err := reader.Search(ctx, req)
 	if err != nil {
 		return res
 	}
