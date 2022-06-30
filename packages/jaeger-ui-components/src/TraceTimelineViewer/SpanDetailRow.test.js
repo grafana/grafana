@@ -18,10 +18,8 @@ import React from 'react';
 
 import { createTheme } from '@grafana/data';
 
-import SpanDetail from './SpanDetail';
 import DetailState from './SpanDetail/DetailState';
 import { UnthemedSpanDetailRow } from './SpanDetailRow';
-import SpanTreeOffset from './SpanTreeOffset';
 
 const testSpan = {
   spanID: 'testSpanID',
@@ -38,7 +36,6 @@ const setup = (propOverrides) => {
     columnDivision: 0.5,
     detailState: new DetailState(),
     onDetailToggled: jest.fn(),
-    linksGetter: jest.fn(),
     isFilteredOut: false,
     logItemToggle: jest.fn(),
     logsToggle: jest.fn(),
@@ -80,16 +77,4 @@ describe('SpanDetailRow tests', () => {
 
     expect(screen.getByTestId('span-detail-component')).toBeInTheDocument();
   });
-
-  // it('adds span when calling linksGetter', () => {
-  //   const spanDetail = wrapper.find(SpanDetail);
-  //   const linksGetter = spanDetail.prop('linksGetter');
-  //   const tags = [{ key: 'myKey', value: 'myValue' }];
-  //   const linksGetterResponse = {};
-  //   props.linksGetter.mockReturnValueOnce(linksGetterResponse);
-  //   const result = linksGetter(tags, 0);
-  //   expect(result).toBe(linksGetterResponse);
-  //   expect(props.linksGetter).toHaveBeenCalledTimes(1);
-  //   expect(props.linksGetter).toHaveBeenCalledWith(props.span, tags, 0);
-  // });
 });
