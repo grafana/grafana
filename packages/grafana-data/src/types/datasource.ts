@@ -473,7 +473,6 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   intervalMs: number;
   maxDataPoints?: number;
   range: TimeRange;
-  fiscalYearStartMonth?: number;
   scopedVars: ScopedVars;
   targets: TQuery[];
   timezone: string;

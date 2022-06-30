@@ -328,8 +328,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     dashboardTimezone: string,
     timeData: TimeOverrideResult,
     width: number,
-    publicDashboardAccessToken?: string,
-    fiscalYearStartMonth?: number
+    publicDashboardAccessToken?: string
   ) {
     this.getQueryRunner().run({
       datasource: this.datasource,
@@ -345,7 +344,6 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       scopedVars: this.scopedVars,
       cacheTimeout: this.cacheTimeout,
       transformations: this.transformations,
-      fiscalYearStartMonth: fiscalYearStartMonth,
     });
   }
 
