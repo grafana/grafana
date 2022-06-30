@@ -6,15 +6,16 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 var timeSettings, _ = simplejson.NewJson([]byte(`{"from": "now-12", "to": "now"}`))
@@ -66,21 +67,21 @@ func TestGetPublicDashboard(t *testing.T) {
 				d:   &models.Dashboard{Uid: "mydashboard"},
 				err: nil,
 			},
-			ErrResp:  models.ErrPublicDashboardNotFound,
+			ErrResp:  dashboards.ErrPublicDashboardNotFound,
 			DashResp: nil,
 		},
 		{
 			Name:        "returns ErrPublicDashboardNotFound if PublicDashboard missing",
 			AccessToken: "abc123",
 			StoreResp:   &storeResp{pd: nil, d: nil, err: nil},
-			ErrResp:     models.ErrPublicDashboardNotFound,
+			ErrResp:     dashboards.ErrPublicDashboardNotFound,
 			DashResp:    nil,
 		},
 		{
 			Name:        "returns ErrPublicDashboardNotFound if Dashboard missing",
 			AccessToken: "abc123",
 			StoreResp:   &storeResp{pd: nil, d: nil, err: nil},
-			ErrResp:     models.ErrPublicDashboardNotFound,
+			ErrResp:     dashboards.ErrPublicDashboardNotFound,
 			DashResp:    nil,
 		},
 	}

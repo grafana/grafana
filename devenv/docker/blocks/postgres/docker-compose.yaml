@@ -3,12 +3,12 @@
     environment:
       POSTGRES_USER: grafana
       POSTGRES_PASSWORD: password
-      POSTGRES_DATABASE: grafana
+      POSTGRES_DB: grafana
     ports:
       - "5432:5432"
     command: postgres -c log_connections=on -c logging_collector=on -c log_destination=stderr -c log_directory=/var/log/postgresql
     healthcheck:
-      test: [ "CMD", "pg_isready", "-q", "-d", "$$POSTGRES_DATABASE", "-U", "$$POSTGRES_USER" ]
+      test: [ "CMD", "pg_isready", "-q", "-d", "grafana", "-U", "grafana" ]
       timeout: 45s
       interval: 10s
       retries: 10
@@ -16,6 +16,7 @@
   fake-postgres-data:
     image: grafana/fake-data-gen
     environment:
+      FD_SERVER: postgres
       FD_DATASOURCE: postgres
       FD_PORT: 5432
     depends_on:

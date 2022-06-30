@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/teamguardian/database"
 	"github.com/grafana/grafana/pkg/services/teamguardian/manager"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -32,11 +33,11 @@ func (t *TeamGuardianMock) CanAdmin(ctx context.Context, orgId int64, teamId int
 
 func setUpGetTeamMembersHandler(t *testing.T, sqlStore *sqlstore.SQLStore) {
 	const testOrgID int64 = 1
-	var userCmd models.CreateUserCommand
+	var userCmd user.CreateUserCommand
 	team, err := sqlStore.CreateTeam("group1 name", "test1@test.com", testOrgID)
 	require.NoError(t, err)
 	for i := 0; i < 3; i++ {
-		userCmd = models.CreateUserCommand{
+		userCmd = user.CreateUserCommand{
 			Email: fmt.Sprint("user", i, "@test.com"),
 			Name:  fmt.Sprint("user", i),
 			Login: fmt.Sprint("loginuser", i),
@@ -44,7 +45,7 @@ func setUpGetTeamMembersHandler(t *testing.T, sqlStore *sqlstore.SQLStore) {
 		// user
 		user, err := sqlStore.CreateUser(context.Background(), userCmd)
 		require.NoError(t, err)
-		err = sqlStore.AddTeamMember(user.Id, testOrgID, team.Id, false, 1)
+		err = sqlStore.AddTeamMember(user.ID, testOrgID, team.Id, false, 1)
 		require.NoError(t, err)
 	}
 }
@@ -103,20 +104,20 @@ func TestTeamMembersAPIEndpoint_userLoggedIn(t *testing.T) {
 }
 
 func createUser(db sqlstore.Store, orgId int64, t *testing.T) int64 {
-	user, err := db.CreateUser(context.Background(), models.CreateUserCommand{
+	user, err := db.CreateUser(context.Background(), user.CreateUserCommand{
 		Login:    fmt.Sprintf("TestUser%d", rand.Int()),
-		OrgId:    orgId,
+		OrgID:    orgId,
 		Password: "password",
 	})
 	require.NoError(t, err)
 
-	return user.Id
+	return user.ID
 }
 
 func setupTeamTestScenario(userCount int, db sqlstore.Store, t *testing.T) int64 {
-	user, err := db.CreateUser(context.Background(), models.CreateUserCommand{SkipOrgSetup: true, Login: testUserLogin})
+	user, err := db.CreateUser(context.Background(), user.CreateUserCommand{SkipOrgSetup: true, Login: testUserLogin})
 	require.NoError(t, err)
-	testOrg, err := db.CreateOrgWithMember("TestOrg", user.Id)
+	testOrg, err := db.CreateOrgWithMember("TestOrg", user.ID)
 	require.NoError(t, err)
 
 	team, err := db.CreateTeam("test", "test@test.com", testOrg.Id)

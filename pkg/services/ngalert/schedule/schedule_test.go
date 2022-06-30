@@ -165,7 +165,7 @@ func TestAlertingTicker(t *testing.T) {
 		Scheme: "http",
 		Host:   "localhost",
 	}
-	sched := schedule.NewScheduler(schedCfg, nil, appUrl, st, busmock.New())
+	sched := schedule.NewScheduler(schedCfg, appUrl, st, busmock.New())
 
 	go func() {
 		err := sched.Run(ctx)

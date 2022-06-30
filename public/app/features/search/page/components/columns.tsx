@@ -25,7 +25,8 @@ export const generateColumns = (
   clearSelection: () => void,
   styles: { [key: string]: string },
   onTagSelected: (tag: string) => void,
-  onDatasourceChange?: (datasource?: string) => void
+  onDatasourceChange?: (datasource?: string) => void,
+  showingEverything?: boolean
 ): TableColumn[] => {
   const columns: TableColumn[] = [];
   const access = response.view.fields;
@@ -125,9 +126,26 @@ export const generateColumns = (
   columns.push(makeTypeColumn(access.kind, access.panel_type, width, styles));
   availableWidth -= width;
 
+  // Show datasources if we have any
+  if (access.ds_uid && onDatasourceChange) {
+    width = Math.min(availableWidth / 2.5, DATASOURCE_COLUMN_WIDTH);
+    columns.push(
+      makeDataSourceColumn(
+        access.ds_uid,
+        width,
+        styles.typeIcon,
+        styles.datasourceItem,
+        styles.invalidDatasourceItem,
+        onDatasourceChange
+      )
+    );
+    availableWidth -= width;
+  }
+
+  const showTags = !showingEverything || hasValue(response.view.fields.tags);
   const meta = response.view.dataFrame.meta?.custom as SearchResultMeta;
   if (meta?.locationInfo && availableWidth > 0) {
-    width = Math.max(availableWidth / 1.75, 300);
+    width = showTags ? Math.max(availableWidth / 1.75, 300) : availableWidth;
     availableWidth -= width;
     columns.push({
       Cell: (p) => {
@@ -154,23 +172,7 @@ export const generateColumns = (
     });
   }
 
-  // Show datasources if we have any
-  if (access.ds_uid && onDatasourceChange) {
-    width = DATASOURCE_COLUMN_WIDTH;
-    columns.push(
-      makeDataSourceColumn(
-        access.ds_uid,
-        width,
-        styles.typeIcon,
-        styles.datasourceItem,
-        styles.invalidDatasourceItem,
-        onDatasourceChange
-      )
-    );
-    availableWidth -= width;
-  }
-
-  if (availableWidth > 0) {
+  if (availableWidth > 0 && showTags) {
     columns.push(makeTagsColumn(access.tags, availableWidth, styles.tagList, onTagSelected));
   }
 
@@ -207,6 +209,15 @@ function getIconForKind(v: string): IconName {
     return 'folder';
   }
   return 'question-circle';
+}
+
+function hasValue(f: Field): boolean {
+  for (let i = 0; i < f.values.length; i++) {
+    if (f.values.get(i) != null) {
+      return true;
+    }
+  }
+  return false;
 }
 
 function makeDataSourceColumn(

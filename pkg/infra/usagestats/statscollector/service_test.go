@@ -190,11 +190,11 @@ func TestDatasourceStats(t *testing.T) {
 
 	sqlStore.ExpectedDataSourceStats = []*models.DataSourceStats{
 		{
-			Type:  models.DS_ES,
+			Type:  datasources.DS_ES,
 			Count: 9,
 		},
 		{
-			Type:  models.DS_PROMETHEUS,
+			Type:  datasources.DS_PROMETHEUS,
 			Count: 10,
 		},
 		{
@@ -207,7 +207,7 @@ func TestDatasourceStats(t *testing.T) {
 		},
 	}
 
-	sqlStore.ExpectedDataSources = []*models.DataSource{
+	sqlStore.ExpectedDataSources = []*datasources.DataSource{
 		{
 			JsonData: simplejson.NewFromAny(map[string]interface{}{
 				"esVersion": 2,
@@ -227,17 +227,17 @@ func TestDatasourceStats(t *testing.T) {
 
 	sqlStore.ExpectedDataSourcesAccessStats = []*models.DataSourceAccessStats{
 		{
-			Type:   models.DS_ES,
+			Type:   datasources.DS_ES,
 			Access: "direct",
 			Count:  1,
 		},
 		{
-			Type:   models.DS_ES,
+			Type:   datasources.DS_ES,
 			Access: "proxy",
 			Count:  2,
 		},
 		{
-			Type:   models.DS_PROMETHEUS,
+			Type:   datasources.DS_PROMETHEUS,
 			Access: "proxy",
 			Count:  3,
 		},
@@ -272,8 +272,8 @@ func TestDatasourceStats(t *testing.T) {
 		db, err := s.collectDatasourceStats(context.Background())
 		require.NoError(t, err)
 
-		assert.EqualValues(t, 9, db["stats.ds."+models.DS_ES+".count"])
-		assert.EqualValues(t, 10, db["stats.ds."+models.DS_PROMETHEUS+".count"])
+		assert.EqualValues(t, 9, db["stats.ds."+datasources.DS_ES+".count"])
+		assert.EqualValues(t, 10, db["stats.ds."+datasources.DS_PROMETHEUS+".count"])
 		assert.EqualValues(t, 11+12, db["stats.ds.other.count"])
 	}
 
@@ -281,9 +281,9 @@ func TestDatasourceStats(t *testing.T) {
 		dba, err := s.collectDatasourceAccess(context.Background())
 		require.NoError(t, err)
 
-		assert.EqualValues(t, 1, dba["stats.ds_access."+models.DS_ES+".direct.count"])
-		assert.EqualValues(t, 2, dba["stats.ds_access."+models.DS_ES+".proxy.count"])
-		assert.EqualValues(t, 3, dba["stats.ds_access."+models.DS_PROMETHEUS+".proxy.count"])
+		assert.EqualValues(t, 1, dba["stats.ds_access."+datasources.DS_ES+".direct.count"])
+		assert.EqualValues(t, 2, dba["stats.ds_access."+datasources.DS_ES+".proxy.count"])
+		assert.EqualValues(t, 3, dba["stats.ds_access."+datasources.DS_PROMETHEUS+".proxy.count"])
 		assert.EqualValues(t, 6+7, dba["stats.ds_access.other.direct.count"])
 		assert.EqualValues(t, 4+8, dba["stats.ds_access.other.proxy.count"])
 	}
@@ -383,16 +383,16 @@ func setupSomeDataSourcePlugins(t *testing.T, s *Service) {
 
 	s.plugins = &fakePluginStore{
 		plugins: map[string]plugins.PluginDTO{
-			models.DS_ES: {
+			datasources.DS_ES: {
 				Signature: "internal",
 			},
-			models.DS_PROMETHEUS: {
+			datasources.DS_PROMETHEUS: {
 				Signature: "internal",
 			},
-			models.DS_GRAPHITE: {
+			datasources.DS_GRAPHITE: {
 				Signature: "internal",
 			},
-			models.DS_MYSQL: {
+			datasources.DS_MYSQL: {
 				Signature: "internal",
 			},
 		},
@@ -446,14 +446,14 @@ func withDatasources(ds datasources.DataSourceService) func(*serviceOptions) {
 type mockDatasourceService struct {
 	datasources.DataSourceService
 
-	datasources []*models.DataSource
+	datasources []*datasources.DataSource
 }
 
-func (s mockDatasourceService) GetDataSourcesByType(ctx context.Context, query *models.GetDataSourcesByTypeQuery) error {
+func (s mockDatasourceService) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) error {
 	query.Result = s.datasources
 	return nil
 }
 
-func (s mockDatasourceService) GetHTTPTransport(ctx context.Context, ds *models.DataSource, provider httpclient.Provider, customMiddlewares ...sdkhttpclient.Middleware) (http.RoundTripper, error) {
+func (s mockDatasourceService) GetHTTPTransport(ctx context.Context, ds *datasources.DataSource, provider httpclient.Provider, customMiddlewares ...sdkhttpclient.Middleware) (http.RoundTripper, error) {
 	return provider.GetTransport()
 }

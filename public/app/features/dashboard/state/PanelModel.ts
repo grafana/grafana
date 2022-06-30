@@ -224,10 +224,17 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       (this as any)[property] = model[property];
     }
 
-    // Special 'graph' migration logic
-    if (this.type === 'graph' && config?.featureToggles?.autoMigrateGraphPanels) {
-      this.autoMigrateFrom = this.type;
-      this.type = 'timeseries';
+    switch (this.type) {
+      case 'graph':
+        if (config?.featureToggles?.autoMigrateGraphPanels) {
+          this.autoMigrateFrom = this.type;
+          this.type = 'timeseries';
+        }
+        break;
+      case 'heatmap-new':
+        this.autoMigrateFrom = this.type;
+        this.type = 'heatmap';
+        break;
     }
 
     // defaults
@@ -297,7 +304,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.isViewing = isViewing;
   }
 
-  updateGridPos(newPos: GridPos) {
+  updateGridPos(newPos: GridPos, manuallyUpdated = true) {
     if (
       newPos.x === this.gridPos.x &&
       newPos.y === this.gridPos.y &&
@@ -311,7 +318,9 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.gridPos.y = newPos.y;
     this.gridPos.w = newPos.w;
     this.gridPos.h = newPos.h;
-    this.configRev++;
+    if (manuallyUpdated) {
+      this.configRev++;
+    }
   }
 
   runAllPanelQueries(
