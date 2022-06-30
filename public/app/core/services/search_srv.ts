@@ -13,6 +13,7 @@ interface Sections {
   [key: string]: Partial<DashboardSection>;
 }
 
+/** @deprecated */
 export class SearchSrv {
   private getRecentDashboards(sections: DashboardSection[] | any) {
     return this.queryForRecentDashboards().then((result: any[]) => {

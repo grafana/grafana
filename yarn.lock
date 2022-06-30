@@ -21329,7 +21329,6 @@ __metadata:
     rxjs: 7.5.5
     sass: 1.52.3
     sass-loader: 13.0.0
-    search-query-parser: 1.6.0
     selecto: 1.16.2
     semver: 7.3.7
     sinon: 14.0.0
@@ -33158,13 +33157,6 @@ __metadata:
   version: 5.1.0
   resolution: "screenfull@npm:5.1.0"
   checksum: e8ab486ba2310055aeabd84d8f76f1c9e729669942a4b1bdd675131333076ac9ee6655fb41c2507de3be93865e120cf3641e5ff636090f9e2458170827e650c7
-  languageName: node
-  linkType: hard
-
-"search-query-parser@npm:1.6.0":
-  version: 1.6.0
-  resolution: "search-query-parser@npm:1.6.0"
-  checksum: 6ce290e1d1602401ab5e4561f2a9744d1ffd75da5759cc8ead162153258d8470dd86757a3be577772e883d48673dec42b26843fc4aa5155f1ec902112ce92225
   languageName: node
   linkType: hard
 
