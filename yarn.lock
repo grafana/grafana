@@ -8287,9 +8287,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rushstack/node-core-library@npm:3.45.5":
-  version: 3.45.5
-  resolution: "@rushstack/node-core-library@npm:3.45.5"
+"@rushstack/node-core-library@npm:3.49.0":
+  version: 3.49.0
+  resolution: "@rushstack/node-core-library@npm:3.49.0"
   dependencies:
     "@types/node": 12.20.24
     colors: ~1.2.1
@@ -8300,7 +8300,7 @@ __metadata:
     semver: ~7.3.0
     timsort: ~0.3.0
     z-schema: ~5.0.2
-  checksum: 4533c809401827eca3f98863ef2adb1975a5c57bca3fef706a710dd90828d0468bcc3fce15bda483784d690573be1dfcf890abb99f368e9a3bff75aa88913997
+  checksum: 6ac8247a466faebc242cf8ca6a9960d78dee305482358cca15e9a9ba22f775c18d4f857a9dfcad4c03853d4a6fde768d142a794b6af2baa6aecd5f8faee989a2
   languageName: node
   linkType: hard
 
@@ -21329,7 +21329,6 @@ __metadata:
     rxjs: 7.5.5
     sass: 1.52.3
     sass-loader: 13.0.0
-    search-query-parser: 1.6.0
     selecto: 1.16.2
     semver: 7.3.7
     sinon: 14.0.0
@@ -33158,13 +33157,6 @@ __metadata:
   version: 5.1.0
   resolution: "screenfull@npm:5.1.0"
   checksum: e8ab486ba2310055aeabd84d8f76f1c9e729669942a4b1bdd675131333076ac9ee6655fb41c2507de3be93865e120cf3641e5ff636090f9e2458170827e650c7
-  languageName: node
-  linkType: hard
-
-"search-query-parser@npm:1.6.0":
-  version: 1.6.0
-  resolution: "search-query-parser@npm:1.6.0"
-  checksum: 6ce290e1d1602401ab5e4561f2a9744d1ffd75da5759cc8ead162153258d8470dd86757a3be577772e883d48673dec42b26843fc4aa5155f1ec902112ce92225
   languageName: node
   linkType: hard
 

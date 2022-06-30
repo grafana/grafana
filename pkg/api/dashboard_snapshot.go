@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/setting"
@@ -272,11 +273,11 @@ func (hs *HTTPServer) DeleteDashboardSnapshot(c *models.ReqContext) response.Res
 	guardian := guardian.New(c.Req.Context(), dashboardID, c.OrgId, c.SignedInUser)
 	canEdit, err := guardian.CanEdit()
 	// check for permissions only if the dahboard is found
-	if err != nil && !errors.Is(err, models.ErrDashboardNotFound) {
+	if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {
 		return response.Error(500, "Error while checking permissions for snapshot", err)
 	}
 
-	if !canEdit && query.Result.UserId != c.SignedInUser.UserId && !errors.Is(err, models.ErrDashboardNotFound) {
+	if !canEdit && query.Result.UserId != c.SignedInUser.UserId && !errors.Is(err, dashboards.ErrDashboardNotFound) {
 		return response.Error(403, "Access denied to this snapshot", nil)
 	}
 
