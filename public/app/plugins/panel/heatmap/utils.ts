@@ -267,7 +267,7 @@ export function prepConfig(opts: PrepConfigOpts) {
 
   // random to prevent syncing y in other heatmaps
   // TODO: try to match TimeSeries y keygen algo to sync with TimeSeries panels (when not isOrdianalY)
-  const yScaleKey = 'y_' + (Math.random() + 1).toString(36).substring(7);
+  const yScaleKey = 'y_' + (Math.random() + 1).toString(36).slice(7);
 
   builder.addScale({
     scaleKey: yScaleKey,

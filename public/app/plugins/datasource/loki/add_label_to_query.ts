@@ -53,7 +53,7 @@ function getStreamSelectorPositions(query: string): StreamSelectorPosition[] {
   tree.iterate({
     enter: (type, from, to, get): false | void => {
       if (type.name === 'Selector') {
-        const visQuery = buildVisualQueryFromString(query.substring(from, to));
+        const visQuery = buildVisualQueryFromString(query.slice(from, to));
         positions.push({ query: visQuery.query, from, to });
         return false;
       }
@@ -106,8 +106,8 @@ function addFilterToStreamSelector(
     const match = vectorSelectorPositions[i];
     const isLast = i === vectorSelectorPositions.length - 1;
 
-    const start = query.substring(prev, match.from);
-    const end = isLast ? query.substring(match.to) : '';
+    const start = query.slice(prev, match.from);
+    const end = isLast ? query.slice(match.to) : '';
 
     if (!labelExists(match.query.labels, filter)) {
       // We don't want to add duplicate labels.
@@ -139,8 +139,8 @@ function addFilterAsLabelFilter(
     const match = parserPositions[i];
     const isLast = i === parserPositions.length - 1;
 
-    const start = query.substring(prev, match.to);
-    const end = isLast ? query.substring(match.to) : '';
+    const start = query.slice(prev, match.to);
+    const end = isLast ? query.slice(match.to) : '';
 
     const labelFilter = ` | ${filter.label}${filter.op}\`${filter.value}\``;
     newQuery += start + labelFilter + end;

@@ -1,5 +1,5 @@
 // BETTERER RESULTS V2.
-//
+// 
 // If this file contains merge conflicts, use `betterer merge` to automatically resolve them:
 // https://phenomnomnominal.github.io/betterer/docs/results-file/#merge
 //
@@ -80,8 +80,8 @@ exports[`no enzyme tests`] = {
     "public/app/features/alerting/TestRuleResult.test.tsx:2358420489": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/dashboard/components/ShareModal/ShareLink.test.tsx:3716733755": [
-      [0, 35, 13, "RegExp match", "2409514259"]
+    "public/app/features/dashboard/components/ShareModal/ShareLink.test.tsx:3399719410": [
+      [1, 35, 13, "RegExp match", "2409514259"]
     ],
     "public/app/features/dashboard/dashgrid/DashboardGrid.test.tsx:2723773538": [
       [0, 35, 13, "RegExp match", "2409514259"]
@@ -112,9 +112,6 @@ exports[`no enzyme tests`] = {
     ],
     "public/app/plugins/datasource/loki/configuration/DebugSection.test.tsx:1551927716": [
       [0, 17, 13, "RegExp match", "2409514259"]
-    ],
-    "public/app/features/dashboard/components/ShareModal/ShareLink.test.tsx:3399719410": [
-      [1, 35, 13, "RegExp match", "2409514259"]
     ],
     "public/app/plugins/datasource/loki/configuration/DerivedFields.test.tsx:2402631398": [
       [0, 17, 13, "RegExp match", "2409514259"]
@@ -1205,7 +1202,7 @@ exports[`better eslint`] = {
       [31, 49, 3, "Unexpected any. Specify a different type.", "193409811"],
       [31, 73, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "packages/grafana-runtime/src/config.ts:2639113063": [
+    "packages/grafana-runtime/src/config.ts:826757766": [
       [66, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
       [75, 29, 17, "Do not use any type assertions.", "4278379396"],
       [107, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -11722,7 +11719,7 @@ exports[`better eslint`] = {
       [87, 39, 23, "Do not use any type assertions.", "3906212682"],
       [87, 59, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/panel/heatmap/utils.ts:2227722730": [
+    "public/app/plugins/panel/heatmap/utils.ts:1133312811": [
       [260, 23, 53, "Do not use any type assertions.", "4087268626"],
       [287, 49, 51, "Do not use any type assertions.", "4216242190"],
       [287, 49, 28, "Do not use any type assertions.", "1631991143"],

@@ -180,7 +180,7 @@ function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
   const params = new URLSearchParams(window.location.search);
   params.forEach((value, key) => {
     if (key.startsWith('__feature.')) {
-      const featureName = key.substring(10);
+      const featureName = key.slice(10);
       const toggleState = value === 'true';
       if (toggleState !== config.featureToggles[key]) {
         config.featureToggles[featureName] = toggleState;
