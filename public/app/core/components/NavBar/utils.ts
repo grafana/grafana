@@ -250,14 +250,14 @@ export const buildInventoryAndSettings = (mainLinks: NavModelItem[]): NavModelIt
       icon: 'cog',
       url: `${config.appSubUrl}/inventory`,
       subTitle: 'Configuration',
-      children: [inventoryLink, DIVIDER, settingsLink],
+      children: [inventoryLink, settingsLink],
     });
   } else {
     if (!configNode.children) {
       configNode.children = [];
     }
     configNode.url = `${config.appSubUrl}/inventory`;
-    configNode.children.unshift(inventoryLink, DIVIDER, settingsLink);
+    configNode.children.unshift(inventoryLink, settingsLink);
   }
 
   return mainLinks;

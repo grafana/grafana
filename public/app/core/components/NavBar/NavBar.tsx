@@ -124,7 +124,7 @@ export const NavBar = React.memo(() => {
   }
 
   if (isAuthorized) {
-    buildInventoryAndSettings(coreItems);
+    buildInventoryAndSettings(configItems);
 
     if (alertingEnabled) {
       buildIntegratedAlertingMenuItem(coreItems);

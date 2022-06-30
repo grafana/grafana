@@ -1,6 +1,33 @@
 import { IconName, IconSize } from '../../types/icon';
 
-const alwaysMonoIcons: IconName[] = ['grafana', 'favorite', 'heart-break', 'heart', 'panel-add', 'library-panel'];
+const alwaysMonoIcons: IconName[] = [
+  'grafana',
+  'favorite',
+  'heart-break',
+  'heart',
+  'panel-add',
+  'library-panel',
+  'percona-database',
+  'percona-analytics',
+  'percona-cluster',
+  'percona-cluster-network',
+  'percona-cluster-computing',
+  'percona-dashboard',
+  'percona-kubernetes',
+  'percona-summary',
+  'percona-inventory',
+  'percona-add',
+  'percona-alert',
+  'percona-disk',
+  'percona-memory',
+  'percona-temperature',
+  'percona-cpu',
+  'percona-surface',
+  'percona-network',
+  'percona-process',
+  'percona-setting',
+  'percona-database-checks',
+];
 
 export function getIconSubDir(name: IconName, type: string): string {
   if (name?.startsWith('gf-')) {
