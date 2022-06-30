@@ -124,7 +124,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		}
 
 		_, err := dashboardStore.GetDashboard(context.Background(), &query)
-		require.Equal(t, err, models.ErrDashboardIdentifierNotSet)
+		require.Equal(t, err, dashboards.ErrDashboardIdentifierNotSet)
 	})
 
 	t.Run("Should be able to get dashboards by IDs & UIDs", func(t *testing.T) {
@@ -227,7 +227,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		setup()
 		deleteCmd := &models.DeleteDashboardCommand{Id: savedFolder.Id, ForceDeleteFolderRules: false}
 		err := dashboardStore.DeleteDashboard(context.Background(), deleteCmd)
-		require.True(t, errors.Is(err, models.ErrFolderContainsAlertRules))
+		require.True(t, errors.Is(err, dashboards.ErrFolderContainsAlertRules))
 	})
 
 	t.Run("Should be able to delete a dashboard folder and its children if force delete rules is enabled", func(t *testing.T) {
@@ -274,7 +274,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		}
 
 		_, err := dashboardStore.SaveDashboard(cmd)
-		require.Equal(t, err, models.ErrDashboardNotFound)
+		require.Equal(t, err, dashboards.ErrDashboardNotFound)
 	})
 
 	t.Run("Should not return error if no dashboard is found for update when dashboard id is zero", func(t *testing.T) {
