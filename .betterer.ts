@@ -1,19 +1,10 @@
 import { regexp } from '@betterer/regexp';
-import { eslint } from '@betterer/eslint';
 import { BettererFileTest } from '@betterer/betterer';
+import { ESLint, Linter } from 'eslint';
 
 export default {
   'no enzyme tests': () => regexp(/from 'enzyme'/g).include('**/*.test.*'),
-  'better eslint': () =>
-    eslint({
-      '@typescript-eslint/no-explicit-any': 'error',
-      '@typescript-eslint/consistent-type-assertions': [
-        'error',
-        {
-          assertionStyle: 'never',
-        },
-      ],
-    }).include('**/*.{ts,tsx}'),
+  'better eslint': () => countEslintErrors().include('**/*.{ts,tsx}'),
   'no undocumented stories': () => countUndocumentedStories().include('**/*.{story.tsx,mdx}'),
 };
 
@@ -29,5 +20,51 @@ function countUndocumentedStories() {
         file.addIssue(0, 0, 'No undocumented stories are allowed, please add an .mdx file with some documentation');
       }
     });
+  });
+}
+
+function countEslintErrors() {
+  return new BettererFileTest(async (filePaths, fileTestResult, resolver) => {
+    const { baseDirectory } = resolver;
+    const cli = new ESLint({ cwd: baseDirectory });
+
+    await Promise.all(
+      filePaths.map(async (filePath) => {
+        const linterOptions = (await cli.calculateConfigForFile(filePath)) as Linter.Config;
+
+        const rules: Partial<Linter.RulesRecord> = {
+          '@typescript-eslint/no-explicit-any': 'error',
+        };
+
+        if (!filePath.endsWith('.test.tsx')) {
+          rules['@typescript-eslint/consistent-type-assertions'] = [
+            'error',
+            {
+              assertionStyle: 'never',
+            },
+          ];
+        }
+
+        const runner = new ESLint({
+          baseConfig: {
+            ...linterOptions,
+            rules,
+          },
+          useEslintrc: false,
+          cwd: baseDirectory,
+        });
+
+        const lintResults = await runner.lintFiles([filePath]);
+        lintResults
+          .filter((lintResult) => lintResult.source)
+          .forEach((lintResult) => {
+            const { messages, source } = lintResult;
+            const file = fileTestResult.addFile(filePath, source);
+            messages.forEach((message) => {
+              file.addIssue(0, 0, message.message);
+            });
+          });
+      })
+    );
   });
 }
