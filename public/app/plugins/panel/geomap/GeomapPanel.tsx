@@ -35,6 +35,7 @@ import { PanelEditExitedEvent } from 'app/types/events';
 import { GeomapOverlay, OverlayProps } from './GeomapOverlay';
 import { GeomapTooltip } from './GeomapTooltip';
 import { DebugOverlay } from './components/DebugOverlay';
+import { MeasureOverlay } from './components/MeasureOverlay';
 import { GeomapHoverPayload, GeomapLayerHover } from './event';
 import { getGlobalStyles } from './globalStyles';
 import { defaultMarkersConfig, MARKERS_LAYER_ID } from './layers/data/markersLayer';
@@ -654,7 +655,12 @@ export class GeomapPanel extends Component<Props, State> {
       topRight = [<DebugOverlay key="debug" map={this.map} />];
     }
 
-    this.setState({ topRight });
+    let bottomMiddle: ReactNode[] = [];
+    if (options.showMeasure) {
+      bottomMiddle = [<MeasureOverlay key="measure" map={this.map} />];
+    }
+
+    this.setState({ topRight, bottomMiddle });
   }
 
   getLegends() {
@@ -669,7 +675,7 @@ export class GeomapPanel extends Component<Props, State> {
   }
 
   render() {
-    let { ttip, ttipOpen, topRight, legends } = this.state;
+    let { ttip, ttipOpen, topRight, legends, bottomMiddle } = this.state;
     const { options } = this.props;
     const showScale = options.controls.showScale;
     if (!ttipOpen && options.tooltip?.mode === TooltipMode.None) {
@@ -681,7 +687,12 @@ export class GeomapPanel extends Component<Props, State> {
         <Global styles={this.globalCSS} />
         <div className={this.style.wrap} onMouseLeave={this.clearTooltip}>
           <div className={this.style.map} ref={this.initMapRef}></div>
-          <GeomapOverlay bottomLeft={legends} topRight={topRight} blStyle={{ bottom: showScale ? '35px' : '8px' }} />
+          <GeomapOverlay
+            bottomLeft={legends}
+            topRight={topRight}
+            bottomMiddle={bottomMiddle}
+            blStyle={{ bottom: showScale ? '35px' : '8px' }}
+          />
         </div>
         <GeomapTooltip ttip={ttip} isOpen={ttipOpen} onClose={this.tooltipPopupClosed} />
       </>
