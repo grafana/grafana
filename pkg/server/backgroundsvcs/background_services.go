@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/searchV2"
-	secretsStore "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/store"
@@ -39,7 +38,7 @@ func ProvideBackgroundServiceRegistry(
 	pluginsUpdateChecker *updatechecker.PluginsService, metrics *metrics.InternalMetricsService,
 	secretsService *secretsManager.SecretsService, remoteCache *remotecache.RemoteCache,
 	thumbnailsService thumbs.Service, StorageService store.StorageService, searchService searchV2.SearchService,
-	entityEventsService store.EntityEventsService, dataSourceSecretMigrationService secretsStore.SecretMigrationService,
+	entityEventsService store.EntityEventsService,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service, _ *alerting.AlertNotificationService,
 	_ serviceaccounts.Service, _ *guardian.Provider,
@@ -69,7 +68,6 @@ func ProvideBackgroundServiceRegistry(
 		thumbnailsService,
 		searchService,
 		entityEventsService,
-		dataSourceSecretMigrationService,
 	)
 }
 

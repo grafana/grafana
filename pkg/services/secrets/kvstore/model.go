@@ -2,14 +2,7 @@ package kvstore
 
 import (
 	"time"
-
-	"github.com/grafana/grafana/pkg/registry"
 )
-
-// SecretMigrationService is used to migrate legacy secrets to new unified secrets.
-type SecretMigrationService interface {
-	registry.BackgroundService
-}
 
 // Item stored in k/v store.
 type Item struct {
