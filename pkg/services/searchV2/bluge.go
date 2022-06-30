@@ -87,9 +87,6 @@ func initOrgIndex(dashboards []dashboard, logger log.Logger, extendDoc ExtendDas
 		}
 		folderIdLookup[dash.id] = uid
 	}
-	if err := flushIfRequired(true); err != nil {
-		return nil, err
-	}
 
 	// Then each dashboard.
 	for _, dash := range dashboards {
@@ -121,6 +118,8 @@ func initOrgIndex(dashboards []dashboard, logger log.Logger, extendDoc ExtendDas
 			}
 		}
 	}
+
+	// Flush docs in batch with force as we are in the end.
 	if err := flushIfRequired(true); err != nil {
 		return nil, err
 	}
