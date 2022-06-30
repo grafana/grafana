@@ -34,15 +34,15 @@ function setupTestContext(options: Partial<Props>) {
   setTimeSrv(timeSrv);
 
   const defaults: Props = {
-    panel: {
+    panel: new PanelModel({
       id: 123,
       hasTitle: jest.fn(),
       replaceVariables: jest.fn(),
-      events: { subscribe: jest.fn() },
+      events: new EventBusSrv(),
       getQueryRunner: () => panelQueryRunner,
       getOptions: jest.fn(),
       getDisplayTitle: jest.fn(),
-    } as unknown as PanelModel,
+    }),
     dashboard: {
       panelInitialized: jest.fn(),
       getTimezone: () => 'browser',
