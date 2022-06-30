@@ -113,9 +113,9 @@ func TestPatchPartialAlertRule(t *testing.T) {
 				},
 			},
 			{
-				name: "For is 0",
+				name: "For is -1",
 				mutator: func(r *AlertRule) {
-					r.For = 0
+					r.For = -1
 				},
 			},
 		}
