@@ -26,7 +26,7 @@ If the pull request fixes a bug:
 - The pull request description must include `Closes #<issue number>` or `Fixes #<issue number>`.
 - To avoid regressions, the pull request should include tests that replicate the fixed bug.
 
-### Frontend-specific guidelines
+## Frontend-specific guidelines
 
 Pull requests for frontend contributions must:
 
@@ -66,7 +66,18 @@ If the contribution introduces new a11y errors, our continuous integration will 
 
 You can also prevent introducing a11y errors by installing an a11y plugin in your browser, for example, axe DevTools, Accessibility Insights for Web among others.
 
-### Backend-specific guidelines
+### Betterer
+
+We make use of a tool called [**Betterer**](https://phenomnomnominal.github.io/betterer/) in order to drive long-running code quality improvements. The intention is for this to be as unintrusive as possible, however there are some things to be aware of:
+
+- **Betterer runs as a precommit hook**:
+  - You may see changes to the `.betterer.results` file automatically added to your commits.
+  - You may get an error when trying to commit something that decreases the overall code quality. You can either fix these errors or temporarily override the checks (e.g. to commit something that's a work in progress) by using `git commit --no-verify`. All errors will eventually have to be fixed before your code can be merged because...
+- **Betterer also runs as part of our CI**:
+  - You may see the following error message in the CI: `Unexpected changes detected in these tests while running in CI mode`. To resolve, merge with the target branch (usually `main`).
+  - You may see merge conflicts for the `.betterer.results` file. To resolve, merge with the target branch (usually `main`) then run `yarn betterer:merge` and commit.
+
+## Backend-specific guidelines
 
 Please refer to the [backend style guidelines](/contribute/style-guides/backend.md).
 

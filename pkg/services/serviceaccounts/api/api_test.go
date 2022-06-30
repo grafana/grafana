@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
@@ -186,7 +185,7 @@ func TestServiceAccountsAPI_DeleteServiceAccount(t *testing.T) {
 		serviceAccountRequestScenario(t, http.MethodDelete, serviceAccountIDPath, &testcase.user, func(httpmethod string, endpoint string, user *tests.TestUser) {
 			createduser := tests.SetupUserServiceAccount(t, store, testcase.user)
 			server, _ := setupTestServer(t, &svcmock, routing.NewRouteRegister(), testcase.acmock, store, saStore)
-			actual := requestResponse(server, httpmethod, fmt.Sprintf(endpoint, fmt.Sprint(createduser.Id))).Code
+			actual := requestResponse(server, httpmethod, fmt.Sprintf(endpoint, fmt.Sprint(createduser.ID))).Code
 			require.Equal(t, testcase.expectedCode, actual)
 		})
 	})
@@ -210,7 +209,7 @@ func TestServiceAccountsAPI_DeleteServiceAccount(t *testing.T) {
 		serviceAccountRequestScenario(t, http.MethodDelete, serviceAccountIDPath, &testcase.user, func(httpmethod string, endpoint string, user *tests.TestUser) {
 			createduser := tests.SetupUserServiceAccount(t, store, testcase.user)
 			server, _ := setupTestServer(t, &svcmock, routing.NewRouteRegister(), testcase.acmock, store, saStore)
-			actual := requestResponse(server, httpmethod, fmt.Sprintf(endpoint, createduser.Id)).Code
+			actual := requestResponse(server, httpmethod, fmt.Sprintf(endpoint, createduser.ID)).Code
 			require.Equal(t, testcase.expectedCode, actual)
 		})
 	})
@@ -226,7 +225,7 @@ func setupTestServer(t *testing.T, svc *tests.ServiceAccountMock,
 	acmock *accesscontrolmock.Mock,
 	sqlStore *sqlstore.SQLStore, saStore serviceaccounts.Store) (*web.Mux, *ServiceAccountsAPI) {
 	a := NewServiceAccountsAPI(setting.NewCfg(), svc, acmock, routerRegister, saStore)
-	a.RegisterAPIEndpoints(featuremgmt.WithFeatures(featuremgmt.FlagServiceAccounts))
+	a.RegisterAPIEndpoints()
 
 	a.cfg.ApiKeyMaxSecondsToLive = -1 // disable api key expiration
 
@@ -315,7 +314,7 @@ func TestServiceAccountsAPI_RetrieveServiceAccount(t *testing.T) {
 				scopeID := tc.Id
 				if tc.user != nil {
 					createdUser := tests.SetupUserServiceAccount(t, store, *tc.user)
-					scopeID = int(createdUser.Id)
+					scopeID = int(createdUser.ID)
 				}
 				server, _ := setupTestServer(t, &svcmock, routing.NewRouteRegister(), tc.acmock, store, saStore)
 
@@ -441,7 +440,7 @@ func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
 			scopeID := tc.Id
 			if tc.user != nil {
 				createdUser := tests.SetupUserServiceAccount(t, store, *tc.user)
-				scopeID = int(createdUser.Id)
+				scopeID = int(createdUser.ID)
 			}
 
 			var rawBody io.Reader = http.NoBody
