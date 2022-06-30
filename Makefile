@@ -176,10 +176,23 @@ gen-ts:
 	tscriptify -interface -package=github.com/grafana/grafana/pkg/services/live/pipeline -import="import { FieldConfig } from '@grafana/data'" -target=public/app/features/live/pipeline/models.gen.ts pkg/services/live/pipeline/config.go
 	go mod tidy
 
+# Scribe is used to generate complex pipelines from Go.
+# See github.com/grafana/scribe
+scribe:
+	@echo "Generating scribe pipeline..."
+	$(GO) run ./pkg/build/ci \
+		-mode drone-starlark \
+		-log-level info \
+		-path ./pkg/build/ci \
+		-version v0.9.17 \
+		-arg source=. \
+		-arg pipeline-go-mod=./pkg/build/ci \
+		> ./scripts/drone/scribe/docs.star
+
 # This repository's configuration is protected (https://readme.drone.io/signature/).
 # Use this make target to regenerate the configuration YAML files when
 # you modify starlark files.
-drone: $(DRONE)
+drone: $(DRONE) scribe
 	$(DRONE) starlark --format
 	$(DRONE) lint .drone.yml --trusted
 	$(DRONE) --server https://drone.grafana.net sign --save grafana/grafana

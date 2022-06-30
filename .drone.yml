@@ -43,6 +43,13 @@ steps:
   image: grafana/build-container:1.5.7
   name: lint-frontend
 - commands:
+  - yarn betterer ci
+  depends_on:
+  - yarn-install
+  failure: ignore
+  image: grafana/build-container:1.5.7
+  name: betterer-frontend
+- commands:
   - yarn run ci:test-frontend
   depends_on:
   - yarn-install
@@ -542,17 +549,17 @@ steps:
     CGO_ENABLED: "0"
     GOARCH: amd64
     GOOS: linux
-  image: grafana/shipwright:go-v0.9.16-dirty
+  image: grafana/shipwright:go-v0.9.17
   name: builtin-compile-pipeline
   volumes:
   - name: scribe
     path: /var/scribe
 - commands:
   - /var/scribe/pipeline -step=1 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json
-    -log-level=debug -version=v0.9.16-dirty ./pkg/build/ci
+    -log-level=debug -version=v0.9.17 ./pkg/build/ci
   depends_on:
   - builtin-compile-pipeline
-  image: grafana/shipwright:v0.9.16-dirty
+  image: grafana/shipwright:v0.9.17
   name: download_grabpl
   volumes:
   - name: scribe
@@ -561,7 +568,7 @@ steps:
     path: /var/scribe-state
 - commands:
   - /var/scribe/pipeline -step=2 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json
-    -log-level=debug -version=v0.9.16-dirty ./pkg/build/ci
+    -log-level=debug -version=v0.9.17 ./pkg/build/ci
   depends_on:
   - download_grabpl
   image: grafana/build-container:1.5.7
@@ -573,7 +580,7 @@ steps:
     path: /var/scribe-state
 - commands:
   - /var/scribe/pipeline -step=5 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json
-    -log-level=debug -version=v0.9.16-dirty ./pkg/build/ci
+    -log-level=debug -version=v0.9.17 ./pkg/build/ci
   depends_on:
   - yarn_install
   image: grafana/build-container:1.5.7
@@ -585,7 +592,7 @@ steps:
     path: /var/scribe-state
 - commands:
   - /var/scribe/pipeline -step=6 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json
-    -log-level=debug -version=v0.9.16-dirty ./pkg/build/ci
+    -log-level=debug -version=v0.9.17 ./pkg/build/ci
   depends_on:
   - yarn_install
   image: grafana/build-container:1.5.7
@@ -597,7 +604,7 @@ steps:
     path: /var/scribe-state
 - commands:
   - /var/scribe/pipeline -step=8 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json
-    -log-level=debug -version=v0.9.16-dirty ./pkg/build/ci
+    -log-level=debug -version=v0.9.17 ./pkg/build/ci
   depends_on:
   - codespell
   - lint_docs
@@ -610,7 +617,7 @@ steps:
     path: /var/scribe-state
 - commands:
   - /var/scribe/pipeline -step=9 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json
-    -log-level=debug -version=v0.9.16-dirty ./pkg/build/ci
+    -log-level=debug -version=v0.9.17 ./pkg/build/ci
   depends_on:
   - build_frontend_package
   image: grafana/build-container:1.5.7
@@ -622,7 +629,7 @@ steps:
     path: /var/scribe-state
 - commands:
   - /var/scribe/pipeline -step=10 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json
-    -log-level=debug -version=v0.9.16-dirty ./pkg/build/ci
+    -log-level=debug -version=v0.9.17 ./pkg/build/ci
   depends_on:
   - build_frontend_documentation
   image: grafana/docs-base:latest
@@ -670,17 +677,17 @@ steps:
     CGO_ENABLED: "0"
     GOARCH: amd64
     GOOS: linux
-  image: grafana/shipwright:go-v0.9.16-dirty
+  image: grafana/shipwright:go-v0.9.17
   name: builtin-compile-pipeline
   volumes:
   - name: scribe
     path: /var/scribe
 - commands:
   - /var/scribe/pipeline -step=1 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json
-    -log-level=debug -version=v0.9.16-dirty ./pkg/build/ci
+    -log-level=debug -version=v0.9.17 ./pkg/build/ci
   depends_on:
   - builtin-compile-pipeline
-  image: grafana/shipwright:v0.9.16-dirty
+  image: grafana/shipwright:v0.9.17
   name: download_grabpl
   volumes:
   - name: scribe
@@ -689,7 +696,7 @@ steps:
     path: /var/scribe-state
 - commands:
   - /var/scribe/pipeline -step=2 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json
-    -log-level=debug -version=v0.9.16-dirty ./pkg/build/ci
+    -log-level=debug -version=v0.9.17 ./pkg/build/ci
   depends_on:
   - download_grabpl
   image: grafana/build-container:1.5.7
@@ -701,7 +708,7 @@ steps:
     path: /var/scribe-state
 - commands:
   - /var/scribe/pipeline -step=5 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json
-    -log-level=debug -version=v0.9.16-dirty ./pkg/build/ci
+    -log-level=debug -version=v0.9.17 ./pkg/build/ci
   depends_on:
   - yarn_install
   image: grafana/build-container:1.5.7
@@ -713,7 +720,7 @@ steps:
     path: /var/scribe-state
 - commands:
   - /var/scribe/pipeline -step=6 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json
-    -log-level=debug -version=v0.9.16-dirty ./pkg/build/ci
+    -log-level=debug -version=v0.9.17 ./pkg/build/ci
   depends_on:
   - yarn_install
   image: grafana/build-container:1.5.7
@@ -725,7 +732,7 @@ steps:
     path: /var/scribe-state
 - commands:
   - /var/scribe/pipeline -step=8 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json
-    -log-level=debug -version=v0.9.16-dirty ./pkg/build/ci
+    -log-level=debug -version=v0.9.17 ./pkg/build/ci
   depends_on:
   - codespell
   - lint_docs
@@ -738,7 +745,7 @@ steps:
     path: /var/scribe-state
 - commands:
   - /var/scribe/pipeline -step=9 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json
-    -log-level=debug -version=v0.9.16-dirty ./pkg/build/ci
+    -log-level=debug -version=v0.9.17 ./pkg/build/ci
   depends_on:
   - build_frontend_package
   image: grafana/build-container:1.5.7
@@ -750,7 +757,7 @@ steps:
     path: /var/scribe-state
 - commands:
   - /var/scribe/pipeline -step=10 -build-id=$DRONE_BUILD_NUMBER -state=file:///var/scribe-state/state.json
-    -log-level=debug -version=v0.9.16-dirty ./pkg/build/ci
+    -log-level=debug -version=v0.9.17 ./pkg/build/ci
   depends_on:
   - build_frontend_documentation
   image: grafana/docs-base:latest
@@ -817,6 +824,13 @@ steps:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.5.7
   name: lint-frontend
+- commands:
+  - yarn betterer ci
+  depends_on:
+  - yarn-install
+  failure: ignore
+  image: grafana/build-container:1.5.7
+  name: betterer-frontend
 - commands:
   - yarn run ci:test-frontend
   depends_on:
@@ -4859,6 +4873,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 913f578e8fc57e1c318c4a6002cfd0511817e8f75dc27698f4495d2b371f96a4
+hmac: 61a0ccdfd54e557de7389bdedc7e9fc8eb9d53939cf446c930a898ddf1c7f7ac
 
 ...
