@@ -5630,10 +5630,10 @@ exports[`better eslint`] = {
       [82, 13, 17, "Do not use any type assertions.", "192014884"],
       [82, 27, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/explore/Explore.tsx:4223583389": [
+    "public/app/features/explore/Explore.tsx:2935084118": [
       [169, 29, 3, "Unexpected any. Specify a different type.", "193409811"],
       [172, 58, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [478, 15, 88, "Do not use any type assertions.", "3946407374"]
+      [481, 15, 88, "Do not use any type assertions.", "3946407374"]
     ],
     "public/app/features/explore/ExploreGraph.tsx:970331414": [
       [173, 10, 200, "Do not use any type assertions.", "1427203377"]
