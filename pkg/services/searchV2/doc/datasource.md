@@ -60,7 +60,7 @@ Currently, we are not considering datasource permissions at all when constructin
 
 Regardless of whether we want to return partially/not-at-all usable dashboards from the search query, it would be useful to add some kind of datasource permission metadata to the query result, similar to how it's done for annotations - https://github.com/grafana/grafana/blob/d076bedb5e6af0d5e720b820587e48f0d44f69d2/pkg/api/dtos/dashboard.go#L35-L47.
 
-#### idea 1 - add `permissions` field, do not filter `ds_uid` array
+#### idea 1 - add `permissions` field, leave the `ds_uid` array as is - do not filter it based on the ds permissions
 
 ```json
 {
