@@ -186,7 +186,7 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, pm *PluginMana
 		require.NotEqual(t, plugins.PluginDTO{}, p)
 		assert.True(t, exists)
 		assert.Contains(t, expDataSources, ds.ID)
-		assert.Contains(t, pm.registeredPlugins(ctx), p.ID)
+		assert.Contains(t, pm.registeredPlugins(ctx), ds.ID)
 	}
 
 	apps := pm.Plugins(ctx, plugins.App)
@@ -196,7 +196,7 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, pm *PluginMana
 		require.NotEqual(t, plugins.PluginDTO{}, p)
 		assert.True(t, exists)
 		assert.Contains(t, expApps, app.ID)
-		assert.Contains(t, pm.registeredPlugins(ctx), p.ID)
+		assert.Contains(t, pm.registeredPlugins(ctx), app.ID)
 	}
 
 	assert.Equal(t, len(expPanels)+len(expDataSources)+len(expApps), len(pm.Plugins(ctx)))
