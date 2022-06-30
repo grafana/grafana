@@ -4176,7 +4176,7 @@ exports[`better eslint`] = {
     "public/app/features/alerting/unified/AmRoutes.tsx:746213791": [
       [54, 20, 124, "Do not use any type assertions.", "1859971542"]
     ],
-    "public/app/features/alerting/unified/PanelAlertTabContent.test.tsx:588013391": [
+    "public/app/features/alerting/unified/PanelAlertTabContent.test.tsx:2750168837": [
       [148, 18, 168, "Do not use any type assertions.", "3635996173"],
       [186, 56, 87, "Do not use any type assertions.", "3591252716"],
       [188, 23, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -4184,9 +4184,9 @@ exports[`better eslint`] = {
       [189, 53, 90, "Do not use any type assertions.", "3360422103"],
       [190, 6, 3, "Unexpected any. Specify a different type.", "193409811"],
       [191, 6, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [251, 5, 46, "Do not use any type assertions.", "3849301614"],
-      [251, 5, 25, "Do not use any type assertions.", "2832141036"],
-      [251, 27, 3, "Unexpected any. Specify a different type.", "193409811"]
+      [257, 5, 46, "Do not use any type assertions.", "3849301614"],
+      [257, 5, 25, "Do not use any type assertions.", "2832141036"],
+      [257, 27, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/alerting/unified/Receivers.test.tsx:3742116867": [
       [143, 34, 29, "Do not use any type assertions.", "2249960884"]
@@ -4694,7 +4694,7 @@ exports[`better eslint`] = {
     "public/app/features/dashboard/components/DashboardSettings/DashboardSettings.tsx:1752755114": [
       [40, 53, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/dashboard/components/DashboardSettings/GeneralSettings.test.tsx:2473056193": [
+    "public/app/features/dashboard/components/DashboardSettings/GeneralSettings.test.tsx:428611755": [
       [13, 14, 50, "Do not use any type assertions.", "3302172944"],
       [15, 5, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
@@ -7361,10 +7361,10 @@ exports[`better eslint`] = {
       [87, 60, 3, "Unexpected any. Specify a different type.", "193409811"],
       [88, 24, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/variables/inspect/utils.test.ts:541438642": [
-      [358, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [1220, 45, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [1719, 28, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/features/variables/inspect/utils.test.ts:1490985138": [
+      [346, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [1208, 45, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [1707, 28, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/variables/inspect/utils.ts:3863933569": [
       [62, 77, 3, "Unexpected any. Specify a different type.", "193409811"],
