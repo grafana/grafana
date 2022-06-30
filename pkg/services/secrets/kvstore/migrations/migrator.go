@@ -38,8 +38,8 @@ func NewSecretMigrationServiceProvider(services ...SecretMigrationService) *Secr
 	return &SecretMigrationServiceProviderImpl{services}
 }
 
-func (r *SecretMigrationServiceProviderImpl) GetServices() []SecretMigrationService {
-	return r.Services
+func (s *SecretMigrationServiceProviderImpl) GetServices() []SecretMigrationService {
+	return s.Services
 }
 
 // Run migration services. This will block until all services have exited.
