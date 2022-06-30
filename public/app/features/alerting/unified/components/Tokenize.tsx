@@ -5,11 +5,9 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Badge, useStyles2 } from '@grafana/ui';
 
 import { HoverCard } from './HoverCard';
+import { keywords as KEYWORDS, builtinFunctions as FUNCTIONS } from './receivers/editor/language';
 
-// we're only focussing on the templating keywords, not all available Golang keywords
-const KEYWORDS = ['if', 'else', 'range', 'end', 'break', 'continue', 'template', 'block', 'with', 'nil', 'define'];
 const VARIABLES = ['$', '.', '"'];
-const FUNCTIONS = ['and', 'call', 'html', 'index', 'slice', 'js', 'len', 'not', 'or', 'print', 'urlquery'];
 
 interface TokenizerProps {
   input: string;
