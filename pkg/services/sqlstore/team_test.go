@@ -10,7 +10,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -395,7 +394,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				}
 				serviceAccount, err := sqlStore.CreateUser(context.Background(), userCmd)
 				require.NoError(t, err)
-        
+
 				teamId := team1.Id
 				err = sqlStore.AddTeamMember(userIds[0], testOrgID, teamId, false, 0)
 				require.NoError(t, err)
@@ -403,10 +402,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.NoError(t, err)
 				err = sqlStore.AddTeamMember(userIds[2], testOrgID, teamId, false, 0)
 				require.NoError(t, err)
-				err = sqlStore.AddTeamMember(serviceAccount.Id, testOrgID, teamId, false, 0)
-				groupId := team2.Id
-				// add service account to team
-				err = sqlStore.AddTeamMember(serviceAccount.ID, testOrgID, groupId, false, 0)
+				err = sqlStore.AddTeamMember(serviceAccount.ID, testOrgID, teamId, false, 0)
 				require.NoError(t, err)
 
 				searchQuery := &models.SearchTeamsQuery{OrgId: testOrgID, Page: 1, Limit: 10, SignedInUser: signedInUser}
