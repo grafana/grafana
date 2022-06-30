@@ -57,7 +57,7 @@ explanation of how we semantically aim to differentiate fakes, mocks,
 and stubs within our codebase.
 
 Place test doubles in a sub-package to your root package named
-`servicetest` or `svctest`, such that the `teapot` service may have the
+`<servicename>test` or `<service-abbreviation>test`, such that the `teapot` service may have the
 `teapottest` or `teatest`
 
 A stub or mock may be sufficient if the service is not a dependency of a
@@ -92,7 +92,7 @@ As of June 2022, the parts that remain outside the service are:
 
 `pkg/services/sqlstore/migrations` contains all migrations for SQL
 databases, for all services (not including Grafana Enterprise).
-Migrations are written per the [database.md](database.md) document.
+Migrations are written per the [database.md](database.md#migrations) document.
 
 #### API endpoints
 
