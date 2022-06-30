@@ -19,7 +19,7 @@ export interface Breadcrumb {
 
 export function Breadcrumbs({ sectionNav, pageNav }: Props) {
   const styles = useStyles2(getStyles);
-  const crumbs: Breadcrumb[] = [{ icon: 'home', href: '/' }];
+  const crumbs: Breadcrumb[] = [{ icon: 'home-alt', href: '/' }];
 
   function addCrumbs(node: NavModelItem) {
     if (node.parentItem) {

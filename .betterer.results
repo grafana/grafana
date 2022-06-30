@@ -4584,7 +4584,7 @@ exports[`better eslint`] = {
     "public/app/features/canvas/runtime/root.tsx:2845174121": [
       [24, 19, 36, "Do not use any type assertions.", "1413431594"]
     ],
-    "public/app/features/canvas/runtime/scene.tsx:4285479205": [
+    "public/app/features/canvas/runtime/scene.tsx:4221384430": [
       [155, 61, 25, "Do not use any type assertions.", "588553285"],
       [160, 42, 25, "Do not use any type assertions.", "588553285"]
     ],
@@ -6941,10 +6941,10 @@ exports[`better eslint`] = {
       [15, 10, 14, "Do not use any type assertions.", "2767045528"],
       [43, 19, 25, "Do not use any type assertions.", "1122467828"]
     ],
-    "public/app/features/teams/CreateTeam.test.tsx:97888541": [
-      [15, 14, 41, "Do not use any type assertions.", "1829744278"],
-      [15, 14, 27, "Do not use any type assertions.", "1339326263"],
-      [17, 5, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/features/teams/CreateTeam.test.tsx:933968426": [
+      [16, 14, 42, "Do not use any type assertions.", "2370189818"],
+      [16, 14, 28, "Do not use any type assertions.", "3912429083"],
+      [18, 5, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/teams/TeamGroupSync.test.tsx:2647720693": [
       [12, 12, 17, "Do not use any type assertions.", "2242876437"]
@@ -10982,7 +10982,7 @@ exports[`better eslint`] = {
       [41, 64, 3, "Unexpected any. Specify a different type.", "193409811"],
       [41, 69, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/panel/canvas/editor/LayerElementListEditor.tsx:374041207": [
+    "public/app/plugins/panel/canvas/editor/LayerElementListEditor.tsx:2123096129": [
       [21, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
       [40, 30, 44, "Do not use any type assertions.", "712744497"]
     ],

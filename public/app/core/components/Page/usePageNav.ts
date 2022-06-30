@@ -3,7 +3,7 @@ import { createSelector } from 'reselect';
 
 import { NavModel } from '@grafana/data';
 import { getNavModel } from 'app/core/selectors/navModel';
-import store from 'app/core/store';
+import { store } from 'app/store/store';
 import { StoreState } from 'app/types';
 
 export function usePageNav(navId?: string, oldProp?: NavModel): NavModel | undefined {

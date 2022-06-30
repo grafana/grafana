@@ -17,17 +17,6 @@ const mockPost = jest.fn(() => {
 setBackendSrv({
   post: mockPost,
 } as any as BackendSrv);
-// jest.mock('@grafana/runtime', () => ({
-//   getBackendSrv: () => {
-//     return {
-//       post: mockPost,
-//     };
-//   },
-//   config: {
-//     buildInfo: {},
-//     licenseInfo: {},
-//   },
-// }));
 
 const setup = () => {
   return render(<CreateTeam />);

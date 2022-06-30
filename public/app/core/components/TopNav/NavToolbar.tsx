@@ -12,7 +12,6 @@ export interface Props extends TopNavProps {
   onToggleSearchBar(): void;
   searchBarHidden?: boolean;
   sectionNav: NavModelItem;
-  pageNav?: NavModelItem;
 }
 
 export function NavToolbar({ actions, onToggleSearchBar, searchBarHidden, sectionNav, pageNav }: Props) {
