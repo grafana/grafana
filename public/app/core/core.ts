@@ -4,7 +4,7 @@ import appEvents from './app_events';
 import { profiler } from './profiler';
 import { contextSrv } from './services/context_srv';
 import { KeybindingSrv } from './services/keybindingSrv';
-import TimeSeries, { updateLegendValues } from './time_series2';
+import TimeSeries, { updateLegendValues } from './timeSeries2';
 import { assignModelProperties } from './utils/model_utils';
 
 export {

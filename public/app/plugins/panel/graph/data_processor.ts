@@ -4,7 +4,7 @@ import { DataFrame, dateTime, Field, FieldType, getFieldDisplayName, getTimeFiel
 import { colors } from '@grafana/ui';
 import { applyNullInsertThreshold } from '@grafana/ui/src/components/GraphNG/nullInsertThreshold';
 import config from 'app/core/config';
-import TimeSeries from 'app/core/time_series2';
+import TimeSeries from 'app/core/timeSeries2';
 
 type Options = {
   dataList: DataFrame[];

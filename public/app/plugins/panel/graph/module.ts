@@ -12,7 +12,7 @@ import { DataFrame, FieldConfigProperty, PanelEvents, PanelPlugin } from '@grafa
 import { locationService } from '@grafana/runtime';
 import { MetricsPanelCtrl } from 'app/angular/panel/metrics_panel_ctrl';
 import config from 'app/core/config';
-import TimeSeries from 'app/core/time_series2';
+import TimeSeries from 'app/core/timeSeries2';
 import { ThresholdMapper } from 'app/features/alerting/state/ThresholdMapper';
 import { changePanelPlugin } from 'app/features/panel/state/actions';
 import { dispatch } from 'app/store/store';

@@ -2,7 +2,7 @@ import { findIndex, isObject, map } from 'lodash';
 
 import { Column, TableData } from '@grafana/data';
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
-import TimeSeries from 'app/core/time_series2';
+import TimeSeries from 'app/core/timeSeries2';
 import flatten from 'app/core/utils/flatten';
 
 import { TableTransform } from './types';

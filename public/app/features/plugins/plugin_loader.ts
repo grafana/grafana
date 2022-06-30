@@ -23,7 +23,7 @@ import { appEvents, contextSrv } from 'app/core/core';
 import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import TableModel from 'app/core/table_model';
-import TimeSeries from 'app/core/time_series2';
+import TimeSeries from 'app/core/timeSeries2';
 import * as flatten from 'app/core/utils/flatten';
 import kbn from 'app/core/utils/kbn';
 import * as ticks from 'app/core/utils/ticks';
@@ -115,7 +115,7 @@ exposeToPlugin('app/core/utils/kbn', kbn);
 exposeToPlugin('app/core/utils/ticks', ticks);
 exposeToPlugin('app/core/config', config);
 exposeToPlugin('app/core/time_series', TimeSeries);
-exposeToPlugin('app/core/time_series2', TimeSeries);
+exposeToPlugin('app/core/timeSeries2', TimeSeries);
 exposeToPlugin('app/core/table_model', TableModel);
 exposeToPlugin('app/core/app_events', appEvents);
 exposeToPlugin('app/core/core', {

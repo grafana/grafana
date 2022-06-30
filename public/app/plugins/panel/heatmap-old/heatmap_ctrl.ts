@@ -3,7 +3,7 @@ import { defaultsDeep, includes, keys, map, reduce, min as _min, max as _max } f
 
 import { LegacyResponseData, PanelEvents, DataFrame, rangeUtil } from '@grafana/data';
 import appEvents from 'app/core/app_events';
-import TimeSeries from 'app/core/time_series2';
+import TimeSeries from 'app/core/timeSeries2';
 import kbn from 'app/core/utils/kbn';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getProcessedDataFrames } from 'app/features/query/state/runRequest';

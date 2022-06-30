@@ -3779,7 +3779,7 @@ exports[`better eslint`] = {
     "public/app/core/specs/ticks.test.ts:2709254772": [
       [4, 15, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/core/specs/time_series.test.ts:993580521": [
+    "public/app/core/specs/time_series.test.ts:4056740758": [
       [3, 22, 3, "Unexpected any. Specify a different type.", "193409811"],
       [5, 46, 3, "Unexpected any. Specify a different type.", "193409811"],
       [240, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -3804,7 +3804,7 @@ exports[`better eslint`] = {
       [143, 37, 3, "Unexpected any. Specify a different type.", "193409811"],
       [173, 5, 23, "Do not use any type assertions.", "422252161"]
     ],
-    "public/app/core/time_series2.ts:4119547856": [
+    "public/app/core/timeSeries2.ts:4119547856": [
       [37, 62, 3, "Unexpected any. Specify a different type.", "193409811"],
       [62, 14, 3, "Unexpected any. Specify a different type.", "193409811"],
       [72, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -6499,7 +6499,7 @@ exports[`better eslint`] = {
       [16, 21, 3, "Unexpected any. Specify a different type.", "193409811"],
       [20, 17, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/plugins/plugin_loader.ts:3068986743": [
+    "public/app/features/plugins/plugin_loader.ts:3538721815": [
       [38, 18, 19, "Do not use any type assertions.", "1303127269"],
       [38, 34, 3, "Unexpected any. Specify a different type.", "193409811"],
       [67, 56, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -11083,7 +11083,7 @@ exports[`better eslint`] = {
       [15, 21, 24, "Do not use any type assertions.", "1383913339"],
       [51, 32, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/panel/graph/data_processor.ts:140288660": [
+    "public/app/plugins/panel/graph/data_processor.ts:697758155": [
       [14, 29, 3, "Unexpected any. Specify a different type.", "193409811"],
       [72, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
       [145, 21, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -11179,7 +11179,7 @@ exports[`better eslint`] = {
       [200, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
       [200, 31, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/panel/graph/histogram.ts:3622208037": [
+    "public/app/plugins/panel/graph/histogram.ts:1811484154": [
       [32, 106, 3, "Unexpected any. Specify a different type.", "193409811"],
       [51, 8, 3, "Unexpected any. Specify a different type.", "193409811"],
       [53, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -11236,7 +11236,7 @@ exports[`better eslint`] = {
       [673, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
       [690, 22, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/panel/graph/module.ts:2663356615": [
+    "public/app/plugins/panel/graph/module.ts:455303192": [
       [36, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
       [40, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
       [41, 14, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -11271,7 +11271,7 @@ exports[`better eslint`] = {
     "public/app/plugins/panel/graph/specs/data_processor.test.ts:3651132688": [
       [5, 15, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/panel/graph/specs/graph.test.ts:2003285807": [
+    "public/app/plugins/panel/graph/specs/graph.test.ts:2522813456": [
       [29, 12, 9, "Do not use any type assertions.", "3692209159"],
       [29, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
       [30, 10, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -11312,7 +11312,7 @@ exports[`better eslint`] = {
       [4, 14, 3, "Unexpected any. Specify a different type.", "193409811"],
       [15, 32, 12, "Do not use any type assertions.", "4107961265"]
     ],
-    "public/app/plugins/panel/graph/specs/threshold_manager.test.ts:1564753622": [
+    "public/app/plugins/panel/graph/specs/threshold_manager.test.ts:2458994249": [
       [7, 51, 3, "Unexpected any. Specify a different type.", "193409811"],
       [9, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
       [19, 31, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -11438,7 +11438,7 @@ exports[`better eslint`] = {
       [2, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
       [5, 22, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/panel/heatmap-old/heatmap_ctrl.ts:2784513824": [
+    "public/app/plugins/panel/heatmap-old/heatmap_ctrl.ts:423821631": [
       [29, 21, 3, "Unexpected any. Specify a different type.", "193409811"],
       [119, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
       [120, 14, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -11562,7 +11562,7 @@ exports[`better eslint`] = {
       [60, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
       [81, 18, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/panel/heatmap-old/specs/heatmap_data_converter.test.ts:2752362950": [
+    "public/app/plugins/panel/heatmap-old/specs/heatmap_data_converter.test.ts:1791539801": [
       [14, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
       [73, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
       [120, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -11941,7 +11941,7 @@ exports[`better eslint`] = {
       [496, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
       [507, 18, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/panel/table-old/transformers.ts:1857002339": [
+    "public/app/plugins/panel/table-old/transformers.ts:4191101660": [
       [10, 47, 3, "Unexpected any. Specify a different type.", "193409811"],
       [10, 53, 3, "Unexpected any. Specify a different type.", "193409811"],
       [24, 46, 3, "Unexpected any. Specify a different type.", "193409811"],
