@@ -192,9 +192,9 @@
     "webpack-filter-warnings-plugin": "1.2.1"
   },
   "peerDependencies": {
-    "@emotion/css": "11.9.0",
-    "@emotion/react": "11.9.3",
-    "react": "17.0.2",
-    "react-dom": "17.0.2"
+    "@emotion/css": "^11.9.0",
+    "@emotion/react": "^11.9.3",
+    "react": "^16.8.0 || ^17.0.0",
+    "react-dom": "^16.8.0 || ^17.0.0"
   }
 }

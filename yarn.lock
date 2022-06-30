@@ -4850,8 +4850,6 @@ __metadata:
     rollup-plugin-dts: ^4.2.2
     rollup-plugin-esbuild: ^4.9.1
     rollup-plugin-node-externals: ^4.1.0
-    rollup-plugin-sourcemaps: 0.6.3
-    rollup-plugin-terser: 7.0.2
     rxjs: 7.5.6
     sinon: 14.0.0
     tinycolor2: 1.4.2
@@ -4860,8 +4858,8 @@ __metadata:
     uplot: 1.6.22
     xss: 1.0.13
   peerDependencies:
-    react: 17.0.2
-    react-dom: 17.0.2
+    react: ^16.8.0 || ^17.0.0
+    react-dom: ^16.8.0 || ^17.0.0
   languageName: unknown
   linkType: soft
 
@@ -4879,8 +4877,6 @@ __metadata:
     rollup-plugin-dts: ^4.2.2
     rollup-plugin-esbuild: ^4.9.1
     rollup-plugin-node-externals: ^4.1.0
-    rollup-plugin-sourcemaps: 0.6.3
-    rollup-plugin-terser: 7.0.2
     tslib: 2.4.0
     typescript: 4.7.4
   languageName: unknown
@@ -5309,7 +5305,6 @@ __metadata:
     rollup-plugin-esbuild: ^4.9.1
     rollup-plugin-node-externals: ^4.1.0
     rollup-plugin-svg-import: ^1.6.0
-    rollup-plugin-terser: 7.0.2
     rxjs: 7.5.6
     sass-loader: 13.0.2
     slate: 0.47.8
@@ -5326,10 +5321,10 @@ __metadata:
     webpack: 5.74.0
     webpack-filter-warnings-plugin: 1.2.1
   peerDependencies:
-    "@emotion/css": 11.9.0
-    "@emotion/react": 11.9.3
-    react: 17.0.2
-    react-dom: 17.0.2
+    "@emotion/css": ^11.9.0
+    "@emotion/react": ^11.9.3
+    react: ^16.8.0 || ^17.0.0
+    react-dom: ^16.8.0 || ^17.0.0
   languageName: unknown
   linkType: soft
 

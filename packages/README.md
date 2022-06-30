@@ -56,7 +56,7 @@ Every commit to main that has changes within the `packages` directory is a subje
 To build individual packages, run:
 
 ```
-grafana-toolkit package:build --scope=<ui|toolkit|runtime|data>
+yarn packages:build --scope=<data|e2e|e2e-selectors|runtime|schema|toolkit|ui>
 ```
 
 ### Setting up @grafana/\* packages for local development
@@ -94,8 +94,8 @@ Locally published packages will be published under `dev` channel, so in your plu
 ```
 // plugin's package.json
 
-{
-  ...
+dependencies: {
+  //... other dependencies
   "@grafana/data": "dev"
 }
 ```
