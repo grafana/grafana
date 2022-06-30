@@ -1,6 +1,5 @@
-import { Meta, Story, Preview, Props } from '@storybook/addon-docs/blocks';
+import { Meta, Preview, Props } from '@storybook/addon-docs/blocks';
 import { PluginSignatureBadge } from './PluginSignatureBadge';
-import { PluginSignatureStatus } from '@grafana/data';
 
 <Meta title="MDX|PluginSignatureBadge" component={PluginSignatureBadge} />
 
@@ -20,7 +19,7 @@ This is a security measure to make sure plugins haven't been tampered with. Upon
 2.- Signed: its signature was successfully verified.
 
 <Preview>
-  <PluginSignatureBadge status="signed" />
+  <PluginSignatureBadge status="valid" />
 </Preview>
 
 3.- Invalid signature: this plugin has a invalid signature.
