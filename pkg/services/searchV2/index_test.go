@@ -262,14 +262,14 @@ var testPrefixDashboards = []dashboard{
 		id:  1,
 		uid: "1",
 		info: &extract.DashboardInfo{
-			Title: "Archer Data",
+			Title: "Archer Data System",
 		},
 	},
 	{
 		id:  2,
 		uid: "2",
 		info: &extract.DashboardInfo{
-			Title: "Document Sync",
+			Title: "Document Sync repo",
 		},
 	},
 }
@@ -315,21 +315,22 @@ func TestDashboardIndex_MultipleTokensInRow(t *testing.T) {
 	t.Run("multiple-tokens-beginning-lower", func(t *testing.T) {
 		index := initTestOrgIndexFromDashes(t, testPrefixDashboards)
 		checkSearchResponse(t, filepath.Base(t.Name()), index, testAllowAllFilter,
-			DashboardQuery{Query: "archer da"},
+			DashboardQuery{Query: "da archer"},
 		)
 	})
 
+	// Not sure it is great this matches, but
 	t.Run("multiple-tokens-middle", func(t *testing.T) {
 		index := initTestOrgIndexFromDashes(t, testPrefixDashboards)
 		checkSearchResponse(t, filepath.Base(t.Name()), index, testAllowAllFilter,
-			DashboardQuery{Query: "rcher Da"},
+			DashboardQuery{Query: "ar Da"},
 		)
 	})
 
 	t.Run("multiple-tokens-middle-lower", func(t *testing.T) {
 		index := initTestOrgIndexFromDashes(t, testPrefixDashboards)
 		checkSearchResponse(t, filepath.Base(t.Name()), index, testAllowAllFilter,
-			DashboardQuery{Query: "cument sy"},
+			DashboardQuery{Query: "doc sy"},
 		)
 	})
 }
@@ -526,6 +527,58 @@ func TestDashboardIndex_Panels(t *testing.T) {
 		require.NoError(t, err)
 		checkSearchResponse(t, filepath.Base(t.Name()), orgIdx, testAllowAllFilter,
 			DashboardQuery{Query: "Panel", Kind: []string{string(entityKindPanel)}},
+		)
+	})
+}
+
+var punctuationSplitNgramDashboards = []dashboard{
+	{
+		id:  1,
+		uid: "1",
+		info: &extract.DashboardInfo{
+			Title: "heat-torkel",
+		},
+	},
+	{
+		id:  2,
+		uid: "2",
+		info: &extract.DashboardInfo{
+			Title: "topology heatmap",
+		},
+	},
+}
+
+func TestDashboardIndex_PunctuationNgram(t *testing.T) {
+	t.Run("ngram-punctuation-split", func(t *testing.T) {
+		index := initTestOrgIndexFromDashes(t, punctuationSplitNgramDashboards)
+		checkSearchResponse(t, filepath.Base(t.Name()), index, testAllowAllFilter,
+			DashboardQuery{Query: "tork he"},
+		)
+	})
+
+	t.Run("ngram-simple", func(t *testing.T) {
+		index := initTestOrgIndexFromDashes(t, punctuationSplitNgramDashboards)
+		checkSearchResponse(t, filepath.Base(t.Name()), index, testAllowAllFilter,
+			DashboardQuery{Query: "hea"},
+		)
+	})
+}
+
+var camelCaseNgramDashboards = []dashboard{
+	{
+		id:  1,
+		uid: "1",
+		info: &extract.DashboardInfo{
+			Title: "heatTorkel",
+		},
+	},
+}
+
+func TestDashboardIndex_CamelCaseNgram(t *testing.T) {
+	t.Run("ngram-camel-case-split", func(t *testing.T) {
+		index := initTestOrgIndexFromDashes(t, camelCaseNgramDashboards)
+		checkSearchResponse(t, filepath.Base(t.Name()), index, testAllowAllFilter,
+			DashboardQuery{Query: "tork"},
 		)
 	})
 }
