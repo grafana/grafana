@@ -267,6 +267,7 @@
     "@react-stately/tree": "3.2.0",
     "@react-types/menu": "3.4.1",
     "@react-types/shared": "^3.10.1",
+    "@reactour/tour": "^2.10.3",
     "@reduxjs/toolkit": "1.7.0",
     "@sentry/browser": "6.15.0",
     "@sentry/types": "6.15.0",
