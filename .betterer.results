@@ -6510,6 +6510,20 @@ exports[`better eslint`] = {
       [173, 23, 47, "Do not use any type assertions.", "3309878203"],
       [195, 43, 45, "Do not use any type assertions.", "15355460"]
     ],
+    "public/app/features/plugins/sql/components/visual-query-builder/AwesomeQueryBuilder.tsx:760854115": [
+      [175, 24, 63, "Do not use any type assertions.", "2252455532"],
+      [198, 13, 47, "Do not use any type assertions.", "2763495851"],
+      [253, 30, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/features/plugins/sql/datasource/SqlDatasource.ts:178321817": [
+      [124, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [159, 56, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [177, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [182, 57, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [184, 18, 135, "Do not use any type assertions.", "3270957200"],
+      [194, 28, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [225, 33, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
     "public/app/features/plugins/tests/datasource_srv.test.ts:2399414445": [
       [10, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
       [44, 48, 21, "Do not use any type assertions.", "932413114"],
