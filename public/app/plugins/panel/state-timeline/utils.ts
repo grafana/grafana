@@ -395,9 +395,13 @@ export function prepareTimelineFields(
   for (let frame of series) {
     let isTimeseries = false;
     let changed = false;
+    let maybeSortedFrame = maybeSortFrame(
+      frame,
+      frame.fields.findIndex((f) => f.type === FieldType.time)
+    );
 
     let nulledFrame = applyNullInsertThreshold({
-      frame,
+      frame: maybeSortedFrame,
       refFieldPseudoMin: timeRange.from.valueOf(),
       refFieldPseudoMax: timeRange.to.valueOf(),
     });
@@ -446,11 +450,11 @@ export function prepareTimelineFields(
       hasTimeseries = true;
       if (changed) {
         frames.push({
-          ...frame,
+          ...maybeSortedFrame,
           fields,
         });
       } else {
-        frames.push(frame);
+        frames.push(maybeSortedFrame);
       }
     }
   }
@@ -460,13 +464,6 @@ export function prepareTimelineFields(
   }
   if (!frames.length) {
     return { warn: 'No graphable fields' };
-  }
-  if (frames.length === 1) {
-    const sortedFrame = maybeSortFrame(
-      frames[0],
-      frames[0].fields.findIndex((f) => f.type === FieldType.time)
-    );
-    return { frames: [sortedFrame] };
   }
   return { frames };
 }
