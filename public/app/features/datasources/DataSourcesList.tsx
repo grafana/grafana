@@ -1,16 +1,16 @@
 // Libraries
 import { css } from '@emotion/css';
 import React from 'react';
-import { useSelector } from 'react-redux';
 
 // Types
+import { DataSourceSettings } from '@grafana/data';
 import { Card, Tag, useStyles } from '@grafana/ui';
-import { StoreState } from 'app/types';
 
-import { getDataSources } from './state/selectors';
+export type Props = {
+  dataSources: DataSourceSettings[];
+};
 
-export const DataSourcesList = () => {
-  const dataSources = useSelector((state: StoreState) => getDataSources(state.dataSources));
+export const DataSourcesList = ({ dataSources }: Props) => {
   const styles = useStyles(getStyles);
 
   return (

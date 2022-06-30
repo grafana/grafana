@@ -22,7 +22,7 @@ const setup = (stateOverride?: Partial<DataSourcesState>) => {
 
   return render(
     <Provider store={store}>
-      <DataSourcesList />
+      <DataSourcesList dataSources={getMockDataSources(3)} />
     </Provider>
   );
 };

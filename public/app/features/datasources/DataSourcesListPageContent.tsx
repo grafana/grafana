@@ -10,7 +10,7 @@ import { StoreState, AccessControlAction } from 'app/types';
 import DataSourcesList from './DataSourcesList';
 import { DataSourcesListHeader } from './DataSourcesListHeader';
 import { loadDataSources } from './state/actions';
-import { getDataSourcesCount } from './state/selectors';
+import { getDataSourcesCount, getDataSources } from './state/selectors';
 
 const buttonIcon: IconName = 'database';
 const emptyListModel = {
@@ -26,6 +26,7 @@ const emptyListModel = {
 
 export const DataSourcesListPageContent = () => {
   const dispatch = useDispatch();
+  const dataSources = useSelector((state: StoreState) => getDataSources(state.dataSources));
   const dataSourcesCount = useSelector(({ dataSources }: StoreState) => getDataSourcesCount(dataSources));
   const hasFetched = useSelector(({ dataSources }: StoreState) => dataSources.hasFetched);
   const canCreateDataSource = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);
@@ -51,7 +52,7 @@ export const DataSourcesListPageContent = () => {
   return (
     <>
       <DataSourcesListHeader />
-      <DataSourcesList key="list" />
+      <DataSourcesList dataSources={dataSources} />
     </>
   );
 };
