@@ -82,6 +82,7 @@ func historyDemoData(ruleUID string, start, end float64, limit int) ([]*data.Fra
 			Fields: []*data.Field{
 				data.NewField("time", nil, []time.Time{}),
 				data.NewField("state", labels, []string{}),
+				data.NewField("__value__", labels, []string{}),
 			},
 		})
 	}
@@ -93,22 +94,27 @@ func historyDemoData(ruleUID string, start, end float64, limit int) ([]*data.Fra
 		// The first series is always alerting
 		frames[0].Fields[0].Append(time.Unix(sec, nsec))
 		frames[0].Fields[1].Append(chooseFrom("Alerting"))
+		frames[0].Fields[2].Append(fmt.Sprintf("%.2f", rand.NormFloat64()*10+5))
 
 		// The second series toggles between alerting and pending randomly.
 		frames[1].Fields[0].Append(time.Unix(sec, nsec))
 		frames[1].Fields[1].Append(chooseFrom("Alerting", "Pending"))
+		frames[1].Fields[2].Append(fmt.Sprintf("%.2f", rand.NormFloat64()*10+5))
 
 		// The third series toggles between alerting and "OK" randomly.
 		frames[2].Fields[0].Append(time.Unix(sec, nsec))
 		frames[2].Fields[1].Append(chooseFrom("Alerting", "OK"))
+		frames[2].Fields[2].Append(fmt.Sprintf("%.2f", rand.NormFloat64()*10+5))
 
 		// The fourth series toggles between OK and OK (No Data) randomly
 		frames[3].Fields[0].Append(time.Unix(sec, nsec))
 		frames[3].Fields[1].Append(chooseFrom("OK", "OK (No Data)"))
+		frames[3].Fields[2].Append(fmt.Sprintf("%.2f", rand.NormFloat64()*10+5))
 
 		// The fifth series toggles between Alerting and Alerting (Error), and OK randomly.
 		frames[4].Fields[0].Append(time.Unix(sec, nsec))
 		frames[4].Fields[1].Append(chooseFrom("Alerting", "Alerting (Error)", "OK"))
+		frames[4].Fields[2].Append(fmt.Sprintf("%.2f", rand.NormFloat64()*10+5))
 	}
 
 	return frames, nil
