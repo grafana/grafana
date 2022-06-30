@@ -81,8 +81,14 @@ function createReducerPart(model: any) {
   return new QueryPart(model, def);
 }
 
+// state can also contain the state it was mapped from, ie. "Alerting (NoData)" which means the alert rule is "Alerting" but
+// because the alert rule was configured to use this state instead of "NoData"
+function normalizeAlertState(state: string) {
+  return state.toLowerCase().replace(/_/g, '').split(' ')[0];
+}
+
 function getStateDisplayModel(state: string) {
-  const normalizedState = state.toLowerCase().replace(/_/g, '');
+  const normalizedState = normalizeAlertState(state);
 
   switch (normalizedState) {
     case 'normal':
