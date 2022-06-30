@@ -595,7 +595,7 @@ func (hs *HTTPServer) registerRoutes() {
 	// grafana.net proxy
 	r.Any("/api/gnet/*", reqSignedIn, hs.ProxyGnetRequest)
 
-	// Gravatar service.ccess
+	// Gravatar service
 	r.Get("/avatar/:hash", hs.AvatarCacheServer.Handler)
 
 	// Snapshots
