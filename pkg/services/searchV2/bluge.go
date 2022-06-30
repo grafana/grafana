@@ -9,9 +9,6 @@ import (
 	"time"
 
 	"github.com/blugelabs/bluge"
-	"github.com/blugelabs/bluge/analysis"
-	"github.com/blugelabs/bluge/analysis/token"
-	"github.com/blugelabs/bluge/analysis/tokenizer"
 	"github.com/blugelabs/bluge/search"
 	"github.com/blugelabs/bluge/search/aggregations"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -218,23 +215,6 @@ func getDashboardPanelDocs(dash dashboard, location string) []*bluge.Document {
 	return docs
 }
 
-const ngramEdgeFilterMaxLength = 7
-
-var ngramIndexAnalyzer = &analysis.Analyzer{
-	Tokenizer: tokenizer.NewWhitespaceTokenizer(),
-	TokenFilters: []analysis.TokenFilter{
-		token.NewLowerCaseFilter(),
-		token.NewEdgeNgramFilter(token.FRONT, 1, ngramEdgeFilterMaxLength),
-	},
-}
-
-var ngramQueryAnalyzer = &analysis.Analyzer{
-	Tokenizer: tokenizer.NewWhitespaceTokenizer(),
-	TokenFilters: []analysis.TokenFilter{
-		token.NewLowerCaseFilter(),
-	},
-}
-
 // Names need to be indexed a few ways to support key features
 func newSearchDocument(uid string, name string, descr string, url string) *bluge.Document {
 	doc := bluge.NewDocument(uid)
@@ -419,10 +399,11 @@ func doSearchQuery(
 	} else {
 		// The actual se
 		bq := bluge.NewBooleanQuery().
-			AddShould(bluge.NewMatchPhraseQuery(q.Query).SetField(documentFieldName).SetBoost(6)).
-			AddShould(bluge.NewMatchPhraseQuery(q.Query).SetField(documentFieldDescription).SetBoost(3)).
+			AddShould(bluge.NewMatchQuery(q.Query).SetField(documentFieldName).SetBoost(6)).
+			AddShould(bluge.NewMatchQuery(q.Query).SetField(documentFieldDescription).SetBoost(3)).
 			AddShould(bluge.NewMatchQuery(q.Query).
 				SetField(documentFieldName_ngram).
+				SetOperator(bluge.MatchQueryOperatorAnd). // all terms must match
 				SetAnalyzer(ngramQueryAnalyzer).SetBoost(1))
 
 		if len(q.Query) > 4 {
