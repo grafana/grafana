@@ -7,14 +7,11 @@ describe('PageHeader', () => {
   describe('when the nav tree has a node with a title', () => {
     it('should render the title', async () => {
       const nav = {
-        main: {
-          icon: 'folder-open',
-          id: 'node',
-          subTitle: 'node subtitle',
-          url: '',
-          text: 'node',
-        },
-        node: {},
+        icon: 'folder-open',
+        id: 'node',
+        subTitle: 'node subtitle',
+        url: '',
+        text: 'node',
       };
 
       render(<PageHeader navItem={nav as any} />);
@@ -26,15 +23,12 @@ describe('PageHeader', () => {
   describe('when the nav tree has a node with breadcrumbs and a title', () => {
     it('should render the title with breadcrumbs first and then title last', async () => {
       const nav = {
-        main: {
-          icon: 'folder-open',
-          id: 'child',
-          subTitle: 'child subtitle',
-          url: '',
-          text: 'child',
-          breadcrumbs: [{ title: 'Parent', url: 'parentUrl' }],
-        },
-        node: {},
+        icon: 'folder-open',
+        id: 'child',
+        subTitle: 'child subtitle',
+        url: '',
+        text: 'child',
+        breadcrumbs: [{ title: 'Parent', url: 'parentUrl' }],
       };
 
       render(<PageHeader navItem={nav as any} />);

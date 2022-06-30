@@ -3331,11 +3331,11 @@ exports[`better eslint`] = {
     "public/app/core/components/OptionsUI/strings.tsx:1826340875": [
       [24, 16, 42, "Do not use any type assertions.", "3301854123"]
     ],
-    "public/app/core/components/PageHeader/PageHeader.test.tsx:1328635381": [
-      [19, 34, 10, "Do not use any type assertions.", "883420344"],
-      [19, 41, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [39, 34, 10, "Do not use any type assertions.", "883420344"],
-      [39, 41, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/core/components/PageHeader/PageHeader.test.tsx:4036541205": [
+      [16, 34, 10, "Do not use any type assertions.", "883420344"],
+      [16, 41, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [33, 34, 10, "Do not use any type assertions.", "883420344"],
+      [33, 41, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/core/components/PageHeader/PageHeader.tsx:503869166": [
       [65, 22, 22, "Do not use any type assertions.", "4054086100"],
