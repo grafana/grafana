@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/segmentio/encoding/json"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -56,6 +58,7 @@ type thumbService struct {
 	canRunCrawler              bool
 	settings                   setting.DashboardPreviewsSettings
 	dashboardService           dashboards.DashboardService
+	searchService              searchV2.SearchService
 }
 
 type crawlerScheduleOptions struct {
@@ -71,7 +74,7 @@ type crawlerScheduleOptions struct {
 func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	lockService *serverlock.ServerLockService, renderService rendering.Service,
 	gl *live.GrafanaLive, store *sqlstore.SQLStore, authSetupService CrawlerAuthSetupService,
-	dashboardService dashboards.DashboardService) Service {
+	dashboardService dashboards.DashboardService, searchService searchV2.SearchService) Service {
 	if !features.IsEnabled(featuremgmt.FlagDashboardPreviews) {
 		return &dummyService{}
 	}
@@ -112,6 +115,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 			auth:             crawlerAuth,
 		},
 		dashboardService: dashboardService,
+		searchService:    searchService,
 	}
 
 	return t
@@ -209,13 +213,68 @@ func (hs *thumbService) UpdateThumbnailState(c *models.ReqContext) {
 	c.JSON(http.StatusOK, map[string]string{"success": "true"})
 }
 
+func getDatasourceUIDs(resp *backend.DataResponse) ([]string, error) {
+	if resp == nil {
+		return nil, errors.New("nil response")
+	}
+
+	if resp.Error != nil {
+		return nil, resp.Error
+	}
+
+	if len(resp.Frames) == 0 {
+		return nil, errors.New("empty response")
+	}
+
+	frame := resp.Frames[0]
+	field, idx := frame.FieldByName("ds_uid")
+
+	if field.Len() == 0 || idx == -1 {
+		return nil, errors.New("no ds_uid field")
+	}
+
+	rawValue, ok := field.At(0).(*json.RawMessage)
+	if !ok || rawValue == nil {
+		return nil, errors.New("invalid value in ds_uid field")
+	}
+
+	jsonValue, err := rawValue.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+
+	var uids []string
+	err = json.Unmarshal(jsonValue, &uids)
+	if err != nil {
+		return nil, err
+	}
+
+	return uids, nil
+}
+
 func (hs *thumbService) GetImage(c *models.ReqContext) {
 	req := hs.parseImageReq(c, false)
 	if req == nil {
 		return // already returned value
 	}
 
-	res, err := hs.thumbnailRepo.getThumbnail(c.Req.Context(), models.DashboardThumbnailMeta{
+	ctx := c.Req.Context()
+
+	dashQueryResponse := hs.searchService.DoDashboardQuery(ctx, &backend.User{
+		Login: c.SignedInUser.Login,
+		Name:  c.SignedInUser.Name,
+		Email: c.SignedInUser.Email,
+		Role:  string(c.SignedInUser.OrgRole),
+	}, req.OrgID, searchV2.DashboardQuery{
+		UIDs: []string{req.UID},
+	})
+
+	dsUids, err := getDatasourceUIDs(dashQueryResponse)
+	if err == nil {
+		hs.log.Info("found dashboard's ds uids", "dashboardUid", req.UID, "dsUids", dsUids)
+	}
+
+	res, err := hs.thumbnailRepo.getThumbnail(ctx, models.DashboardThumbnailMeta{
 		DashboardUID: req.UID,
 		OrgId:        req.OrgID,
 		Theme:        req.Theme,
