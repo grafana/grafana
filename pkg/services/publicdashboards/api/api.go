@@ -67,7 +67,6 @@ func (api *Api) RegisterAPIEndpoints() {
 	api.RouteRegister.Get("/api/public/dashboards/:accessToken", routing.Wrap(api.GetPublicDashboard))
 	api.RouteRegister.Post("/api/public/dashboards/:accessToken/panels/:panelId/query", routing.Wrap(api.QueryPublicDashboard))
 
-	fmt.Println("POTATO:", api.Features.IsEnabled(featuremgmt.FlagPublicDashboards))
 	// Create/Update Public Dashboard
 	api.RouteRegister.Get("/api/dashboards/uid/:uid/public-config", auth(reqSignedIn, accesscontrol.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(api.GetPublicDashboardConfig))
 	api.RouteRegister.Post("/api/dashboards/uid/:uid/public-config", auth(reqSignedIn, accesscontrol.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(api.SavePublicDashboardConfig))
@@ -187,10 +186,19 @@ func (api *Api) QueryPublicDashboard(c *models.ReqContext) response.Response {
 	return toJsonStreamingResponse(api.Features, resp)
 }
 
-// util to help us unpack a dashboard err or use default http code and message
+// util to help us unpack dashboard and publicdashboard errors or use default http code and message
+// we should look to do some future refactoring of these errors as publicdashboard err is the same as a dashboarderr, just defined in a
+// different package.
 func handleDashboardErr(defaultCode int, defaultMsg string, err error) response.Response {
-	var dashboardErr models.DashboardErr
+	var publicDashboardErr PublicDashboardErr
 
+	// handle public dashboard er
+	if ok := errors.As(err, &publicDashboardErr); ok {
+		return response.Error(publicDashboardErr.StatusCode, publicDashboardErr.Error(), publicDashboardErr)
+	}
+
+	// handle dashboard errors as well
+	var dashboardErr models.DashboardErr
 	if ok := errors.As(err, &dashboardErr); ok {
 		return response.Error(dashboardErr.StatusCode, dashboardErr.Error(), dashboardErr)
 	}

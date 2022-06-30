@@ -7,15 +7,11 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
-	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -36,10 +32,6 @@ var _ publicdashboards.Service = (*PublicDashboardServiceImpl)(nil)
 func ProvideService(
 	cfg *setting.Cfg,
 	store publicdashboards.Store,
-	rr routing.RouteRegister,
-	ac accesscontrol.AccessControl,
-	qs *query.Service,
-	features *featuremgmt.FeatureManager,
 ) *PublicDashboardServiceImpl {
 	return &PublicDashboardServiceImpl{
 		log:   log.New("publicdashboards"),
