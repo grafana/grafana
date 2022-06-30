@@ -1,10 +1,11 @@
+import { TourProvider } from '@reactour/tour';
 import { Action, KBarProvider } from 'kbar';
 import React, { ComponentType } from 'react';
 import { Provider } from 'react-redux';
 import { Router, Route, Redirect, Switch } from 'react-router-dom';
 
 import { config, locationService, navigationLogger, reportInteraction } from '@grafana/runtime';
-import { ErrorBoundaryAlert, GlobalStyles, ModalRoot, ModalsProvider, PortalContainer } from '@grafana/ui';
+import { ErrorBoundaryAlert, GlobalStyles, ModalRoot, ModalsProvider, getTheme, PortalContainer } from '@grafana/ui';
 import { SearchWrapper } from 'app/features/search';
 import { PerconaBootstrapper } from 'app/percona/shared/components/PerconaBootstrapper';
 import { getAppRoutes } from 'app/routes/routes';
@@ -22,6 +23,9 @@ import { contextSrv } from './core/services/context_srv';
 import { ConfigContext, ThemeProvider } from './core/utils/ConfigProvider';
 import { CommandPalette } from './features/commandPalette/CommandPalette';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
+import Close from './tour/Close';
+import Navigation from './tour/Navigation';
+import steps from './tour/steps';
 
 interface AppWrapperProps {
   app: GrafanaApp;
@@ -108,21 +112,39 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                     {config.featureToggles.commandPalette && <CommandPalette />}
                     <div className="grafana-app">
                       <Router history={locationService.getHistory()}>
-                        {ready && <NavBar />}
-                        {ready && <PerconaBootstrapper />}
-                        <main className="main-view">
-                          {pageBanners.map((Banner, index) => (
-                            <Banner key={index.toString()} />
-                          ))}
+                        <TourProvider
+                          steps={steps}
+                          components={{ Close, Navigation }}
+                          showBadge={false}
+                          badgeContent={({ totalSteps, currentStep }) => `${currentStep + 1}/${totalSteps}`}
+                          disableFocusLock
+                          onClickClose={({ setIsOpen }) => {
+                            localStorage.setItem('percona.showTour', 'false');
+                            setIsOpen(false);
+                          }}
+                          styles={{
+                            popover: (base) => ({
+                              ...base,
+                              backgroundColor: getTheme(config.bootData.user.lightTheme ? 'light' : 'dark').colors.bg1,
+                            }),
+                          }}
+                        >
+                          {ready && <NavBar />}
+                          {ready && <PerconaBootstrapper />}
+                          <main className="main-view">
+                            {pageBanners.map((Banner, index) => (
+                              <Banner key={index.toString()} />
+                            ))}
 
-                          <AngularRoot />
-                          <AppNotificationList />
-                          <SearchWrapper />
-                          {ready && this.renderRoutes()}
-                          {bodyRenderHooks.map((Hook, index) => (
-                            <Hook key={index.toString()} />
-                          ))}
-                        </main>
+                            <AngularRoot />
+                            <AppNotificationList />
+                            <SearchWrapper />
+                            {ready && this.renderRoutes()}
+                            {bodyRenderHooks.map((Hook, index) => (
+                              <Hook key={index.toString()} />
+                            ))}
+                          </main>
+                        </TourProvider>
                       </Router>
                     </div>
                     <LiveConnectionWarning />

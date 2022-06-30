@@ -182,6 +182,7 @@ import u1178 from '!!raw-loader!../../../../../public/img/icons/mono/percona-set
 import u1179 from '!!raw-loader!../../../../../public/img/icons/mono/percona-summary.svg';
 import u1180 from '!!raw-loader!../../../../../public/img/icons/mono/percona-surface.svg';
 import u1181 from '!!raw-loader!../../../../../public/img/icons/mono/percona-temperature.svg';
+import u1182 from '!!raw-loader!../../../../../public/img/icons/mono/pmm-logo.svg';
 import { cacheStore } from 'react-inlinesvg';
 
 export let cacheInitialized = false;
@@ -381,4 +382,5 @@ export function initIconCache() {
   cacheItem(u1179, 'mono/percona-summary.svg');
   cacheItem(u1180, 'mono/percona-surface.svg');
   cacheItem(u1181, 'mono/percona-temperature.svg');
+  cacheItem(u1182, 'mono/pmm-logo.svg');
 }

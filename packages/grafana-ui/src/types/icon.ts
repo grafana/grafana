@@ -202,6 +202,7 @@ export const getAvailableIcons = () =>
     'percona-setting',
     'percona-bell',
     'percona-bell-slash',
+    'pmm-logo',
   ] as const;
 
 type BrandIconNames = 'google' | 'microsoft' | 'github' | 'gitlab' | 'okta';

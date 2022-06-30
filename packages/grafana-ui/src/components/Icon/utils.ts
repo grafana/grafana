@@ -27,6 +27,7 @@ const alwaysMonoIcons: IconName[] = [
   'percona-process',
   'percona-setting',
   'percona-database-checks',
+  'pmm-logo',
 ];
 
 export function getIconSubDir(name: IconName, type: string): string {
