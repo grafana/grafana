@@ -3176,6 +3176,19 @@ exports[`better eslint`] = {
       [73, 37, 3, "Unexpected any. Specify a different type.", "193409811"],
       [89, 39, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
+    "public/app/core/TableModel.ts:3686225236": [
+      [17, 8, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [19, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [23, 22, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [71, 14, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [78, 49, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [78, 66, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [109, 38, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [121, 5, 21, "Do not use any type assertions.", "1861934631"],
+      [140, 5, 23, "Do not use any type assertions.", "422252161"],
+      [143, 37, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [173, 5, 23, "Do not use any type assertions.", "422252161"]
+    ],
     "public/app/core/components/ColorScale/ColorScale.tsx:12349772": [
       [38, 24, 43, "Do not use any type assertions.", "1727107527"],
       [38, 25, 19, "Do not use any type assertions.", "1979047218"],
@@ -3734,6 +3747,11 @@ exports[`better eslint`] = {
     "public/app/core/specs/OrgSwitcher.test.tsx:3282541144": [
       [35, 22, 14, "Do not use any type assertions.", "2904900588"]
     ],
+    "public/app/core/specs/TableModel.test.ts:2528458506": [
+      [186, 4, 132, "Do not use any type assertions.", "3861720105"],
+      [186, 4, 118, "Do not use any type assertions.", "982577386"],
+      [192, 9, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
     "public/app/core/specs/backend_srv.test.ts:2610588763": [
       [39, 42, 77, "Do not use any type assertions.", "88741020"],
       [39, 42, 57, "Do not use any type assertions.", "2071076705"],
@@ -3771,11 +3789,6 @@ exports[`better eslint`] = {
       [146, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
       [196, 17, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/core/specs/table_model.test.ts:1590805525": [
-      [186, 4, 132, "Do not use any type assertions.", "3861720105"],
-      [186, 4, 118, "Do not use any type assertions.", "982577386"],
-      [192, 9, 3, "Unexpected any. Specify a different type.", "193409811"]
-    ],
     "public/app/core/specs/ticks.test.ts:2709254772": [
       [4, 15, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
@@ -3790,19 +3803,6 @@ exports[`better eslint`] = {
     ],
     "public/app/core/store.ts:21198889": [
       [34, 32, 3, "Unexpected any. Specify a different type.", "193409811"]
-    ],
-    "public/app/core/table_model.ts:3686225236": [
-      [17, 8, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [19, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [23, 22, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [71, 14, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [78, 49, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [78, 66, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [109, 38, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [121, 5, 21, "Do not use any type assertions.", "1861934631"],
-      [140, 5, 23, "Do not use any type assertions.", "422252161"],
-      [143, 37, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [173, 5, 23, "Do not use any type assertions.", "422252161"]
     ],
     "public/app/core/time_series2.ts:4119547856": [
       [37, 62, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -5901,7 +5901,7 @@ exports[`better eslint`] = {
       [63, 15, 35, "Do not use any type assertions.", "935225945"],
       [63, 15, 15, "Do not use any type assertions.", "363922340"]
     ],
-    "public/app/features/explore/utils/decorators.test.ts:4049647594": [
+    "public/app/features/explore/utils/decorators.test.ts:2404654069": [
       [27, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
       [75, 15, 26, "Do not use any type assertions.", "1042505601"],
       [75, 15, 13, "Do not use any type assertions.", "2146830713"],
@@ -6499,7 +6499,7 @@ exports[`better eslint`] = {
       [16, 21, 3, "Unexpected any. Specify a different type.", "193409811"],
       [20, 17, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/plugins/plugin_loader.ts:3068986743": [
+    "public/app/features/plugins/plugin_loader.ts:2912862024": [
       [38, 18, 19, "Do not use any type assertions.", "1303127269"],
       [38, 34, 3, "Unexpected any. Specify a different type.", "193409811"],
       [67, 56, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -8253,7 +8253,7 @@ exports[`better eslint`] = {
       [929, 38, 3, "Unexpected any. Specify a different type.", "193409811"],
       [1007, 49, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/elasticsearch/elastic_response.ts:3088348414": [
+    "public/app/plugins/datasource/elasticsearch/elastic_response.ts:1657151649": [
       [32, 71, 3, "Unexpected any. Specify a different type.", "193409811"],
       [37, 24, 3, "Unexpected any. Specify a different type.", "193409811"],
       [37, 69, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -8932,7 +8932,7 @@ exports[`better eslint`] = {
       [196, 96, 3, "Unexpected any. Specify a different type.", "193409811"],
       [285, 30, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/influxdb/influx_series.ts:148233097": [
+    "public/app/plugins/datasource/influxdb/influx_series.ts:2249787094": [
       [7, 10, 3, "Unexpected any. Specify a different type.", "193409811"],
       [8, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
       [9, 14, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -8981,7 +8981,7 @@ exports[`better eslint`] = {
       [127, 83, 3, "Unexpected any. Specify a different type.", "193409811"],
       [129, 40, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/influxdb/response_parser.ts:90640744": [
+    "public/app/plugins/datasource/influxdb/response_parser.ts:3157584503": [
       [9, 43, 3, "Unexpected any. Specify a different type.", "193409811"],
       [73, 25, 3, "Unexpected any. Specify a different type.", "193409811"],
       [90, 45, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -11928,7 +11928,7 @@ exports[`better eslint`] = {
       [241, 45, 3, "Unexpected any. Specify a different type.", "193409811"],
       [249, 59, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/panel/table-old/specs/renderer.test.ts:3638012257": [
+    "public/app/plugins/panel/table-old/specs/renderer.test.ts:2510676798": [
       [11, 25, 3, "Unexpected any. Specify a different type.", "193409811"],
       [16, 19, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
@@ -11941,7 +11941,7 @@ exports[`better eslint`] = {
       [496, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
       [507, 18, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/panel/table-old/transformers.ts:1857002339": [
+    "public/app/plugins/panel/table-old/transformers.ts:2369300188": [
       [10, 47, 3, "Unexpected any. Specify a different type.", "193409811"],
       [10, 53, 3, "Unexpected any. Specify a different type.", "193409811"],
       [24, 46, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -11954,7 +11954,7 @@ exports[`better eslint`] = {
       [280, 36, 3, "Unexpected any. Specify a different type.", "193409811"],
       [280, 48, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/panel/table-old/types.ts:905513491": [
+    "public/app/plugins/panel/table-old/types.ts:4243646924": [
       [5, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
       [5, 26, 3, "Unexpected any. Specify a different type.", "193409811"],
       [6, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
