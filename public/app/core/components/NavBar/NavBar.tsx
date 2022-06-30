@@ -2,12 +2,13 @@ import { css, cx } from '@emotion/css';
 import { FocusScope } from '@react-aria/focus';
 import { cloneDeep } from 'lodash';
 import React, { useState } from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Icon, useTheme2 } from '@grafana/ui';
+import { updateNavIndex } from 'app/core/actions';
 import { Branding } from 'app/core/components/Branding/Branding';
 import { getKioskMode } from 'app/core/navigation/kiosk';
 import { getPerconaSettings, getPerconaUser } from 'app/percona/shared/core/selectors';
@@ -21,8 +22,22 @@ import { NavBarMenu } from './NavBarMenu';
 import { NavBarMenuPortalContainer } from './NavBarMenuPortalContainer';
 import { NavBarScrollContainer } from './NavBarScrollContainer';
 import { NavBarToggle } from './NavBarToggle';
+import {
+  getPmmSettingsPage,
+  PMM_ADD_INSTANCE_PAGE,
+  PMM_ALERTING_PAGE,
+  PMM_BACKUP_PAGE,
+  PMM_DBAAS_PAGE,
+  PMM_ENTITLEMENTS_PAGE,
+  PMM_ENVIRONMENT_OVERVIEW_PAGE,
+  PMM_INVENTORY_PAGE,
+  PMM_STT_PAGE,
+  PMM_TICKETS_PAGE,
+} from './constants';
 import { NavBarContext } from './context';
 import {
+  buildIntegratedAlertingMenuItem,
+  buildInventoryAndSettings,
   enrichConfigItems,
   enrichWithInteractionTracking,
   getActiveItem,
@@ -103,28 +118,28 @@ export const NavBar = React.memo(() => {
   dispatch(updateNavIndex(PMM_ENVIRONMENT_OVERVIEW_PAGE));
 
   if (isPlatformUser) {
-    topItems.push(PMM_ENTITLEMENTS_PAGE);
-    topItems.push(PMM_TICKETS_PAGE);
-    topItems.push(PMM_ENVIRONMENT_OVERVIEW_PAGE);
+    coreItems.push(PMM_ENTITLEMENTS_PAGE);
+    coreItems.push(PMM_TICKETS_PAGE);
+    coreItems.push(PMM_ENVIRONMENT_OVERVIEW_PAGE);
   }
 
   if (isAuthorized) {
-    buildInventoryAndSettings(topItems);
+    buildInventoryAndSettings(coreItems);
 
     if (alertingEnabled) {
-      buildIntegratedAlertingMenuItem(topItems);
+      buildIntegratedAlertingMenuItem(coreItems);
     }
 
     if (sttEnabled) {
-      topItems.push(PMM_STT_PAGE);
+      coreItems.push(PMM_STT_PAGE);
     }
 
     if (dbaasEnabled) {
-      topItems.push(PMM_DBAAS_PAGE);
+      coreItems.push(PMM_DBAAS_PAGE);
     }
 
     if (backupEnabled) {
-      topItems.push(PMM_BACKUP_PAGE);
+      coreItems.push(PMM_BACKUP_PAGE);
     }
   }
 
