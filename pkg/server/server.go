@@ -128,9 +128,12 @@ func (s *Server) init() error {
 
 	login.ProvideService(s.HTTPServer.SQLStore, s.HTTPServer.Login)
 	social.ProvideService(s.cfg)
-	s.secretMigrationProvider.Run(s.context)
 
 	if err := s.roleRegistry.RegisterFixedRoles(s.context); err != nil {
+		return err
+	}
+
+	if err := s.secretMigrationProvider.Run(s.context); err != nil {
 		return err
 	}
 
