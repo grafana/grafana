@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -222,16 +223,6 @@ func TestApi_setBuiltinRolePermission(t *testing.T) {
 				{Action: "dashboards.permissions:write", Scope: "dashboards:id:1"},
 			},
 		},
-		{
-			desc:           "should set return http 403 when missing permissions",
-			resourceID:     "1",
-			builtInRole:    "Invalid",
-			expectedStatus: http.StatusForbidden,
-			permission:     "View",
-			permissions: []accesscontrol.Permission{
-				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
-			},
-		},
 	}
 
 	for _, tt := range tests {
@@ -407,12 +398,93 @@ func TestApi_setUserPermission(t *testing.T) {
 			recorder := setPermission(t, server, testOptions.Resource, tt.resourceID, tt.permission, "users", strconv.Itoa(int(tt.userID)))
 			assert.Equal(t, tt.expectedStatus, recorder.Code)
 
-			assert.Equal(t, tt.expectedStatus, recorder.Code)
 			if tt.expectedStatus == http.StatusOK {
 				permissions, _ := getPermission(t, server, testOptions.Resource, tt.resourceID)
 				require.Len(t, permissions, 1)
 				assert.Equal(t, tt.permission, permissions[0].Permission)
 				assert.Equal(t, tt.userID, permissions[0].UserID)
+			}
+		})
+	}
+}
+
+type setServiceAccountPermissionTestCase struct {
+	desc             string
+	serviceaccountID int64
+	resourceID       string
+	expectedStatus   int
+	permission       string
+	permissions      []accesscontrol.Permission
+}
+
+func TestApi_setServiceAccountPermission(t *testing.T) {
+	tests := []setServiceAccountPermissionTestCase{
+		{
+			desc:             "should set Edit permission for serviceaccount 1",
+			serviceaccountID: 1,
+			resourceID:       "1",
+			expectedStatus:   200,
+			permission:       "Edit",
+			permissions: []accesscontrol.Permission{
+				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
+				{Action: "dashboards.permissions:write", Scope: "dashboards:id:1"},
+				{Action: serviceaccounts.ActionRead, Scope: serviceaccounts.ScopeAll},
+			},
+		},
+		{
+			desc:             "should set View permission for serviceaccount 1",
+			serviceaccountID: 1,
+			resourceID:       "1",
+			expectedStatus:   200,
+			permission:       "View",
+			permissions: []accesscontrol.Permission{
+				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
+				{Action: "dashboards.permissions:write", Scope: "dashboards:id:1"},
+				{Action: serviceaccounts.ActionRead, Scope: serviceaccounts.ScopeAll},
+			},
+		},
+		{
+			desc:             "should set return http 400 when serviceaccount does not exist",
+			serviceaccountID: 2,
+			resourceID:       "1",
+			expectedStatus:   http.StatusBadRequest,
+			permission:       "View",
+			permissions: []accesscontrol.Permission{
+				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
+				{Action: "dashboards.permissions:write", Scope: "dashboards:id:1"},
+				{Action: serviceaccounts.ActionRead, Scope: serviceaccounts.ScopeAll},
+			},
+		},
+		{
+			desc:             "should return http 403 when missing permissions",
+			serviceaccountID: 1,
+			resourceID:       "1",
+			expectedStatus:   http.StatusForbidden,
+			permission:       "View",
+			permissions: []accesscontrol.Permission{
+				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			service, sql := setupTestEnvironment(t, tt.permissions, testOptions)
+			server := setupTestServer(t, &models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}, service)
+
+			// seed serviceaccount
+			_, err := sql.CreateUser(context.Background(), user.CreateUserCommand{Login: "test", OrgID: 1, IsServiceAccount: true})
+			require.NoError(t, err)
+
+			recorder := setPermission(t, server, testOptions.Resource, tt.resourceID, tt.permission, "users", strconv.Itoa(int(tt.serviceaccountID)))
+			assert.Equal(t, tt.expectedStatus, recorder.Code)
+
+			if tt.expectedStatus == http.StatusOK {
+				permissions, _ := getPermission(t, server, testOptions.Resource, tt.resourceID)
+				require.Len(t, permissions, 1)
+				assert.Equal(t, tt.permission, permissions[0].Permission)
+				assert.Equal(t, tt.serviceaccountID, permissions[0].UserID)
+				assert.Equal(t, true, permissions[0].UserIsServiceAccount)
 			}
 		})
 	}
@@ -448,9 +520,10 @@ var testOptions = Options{
 	Resource:          "dashboards",
 	ResourceAttribute: "id",
 	Assignments: Assignments{
-		Users:        true,
-		Teams:        true,
-		BuiltInRoles: true,
+		Users:           true,
+		Teams:           true,
+		BuiltInRoles:    true,
+		ServiceAccounts: true,
 	},
 	PermissionsToActions: map[string][]string{
 		"View": {"dashboards:read"},
