@@ -12790,82 +12790,82 @@ exports[`better eslint`] = {
 exports[`no undocumented stories`] = {
   value: `{
     "packages/grafana-ui/src/components/Button/ToolbarButton.story.tsx:5381": [
-      [0, 0, 0, "No undocumented stories are allowed, please add a ToolbarButton.mdx with some documentation.", "5381"]
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
     "packages/grafana-ui/src/components/ButtonCascader/ButtonCascader.story.tsx:5381": [
-      [0, 0, 0, "No undocumented stories are allowed, please add a ButtonCascader.mdx with some documentation.", "5381"]
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
     "packages/grafana-ui/src/components/ColorPicker/ColorPickerPopover.story.tsx:5381": [
-      [0, 0, 0, "No undocumented stories are allowed, please add a ColorPickerPopover.mdx with some documentation.", "5381"]
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
     "packages/grafana-ui/src/components/ColorPicker/NamedColorsPalette.story.tsx:5381": [
-      [0, 0, 0, "No undocumented stories are allowed, please add a NamedColorsPalette.mdx with some documentation.", "5381"]
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
     "packages/grafana-ui/src/components/ColorPicker/SpectrumPalette.story.tsx:5381": [
-      [0, 0, 0, "No undocumented stories are allowed, please add a SpectrumPalette.mdx with some documentation.", "5381"]
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
     "packages/grafana-ui/src/components/DateTimePickers/RelativeTimeRangePicker/RelativeTimeRangePicker.story.tsx:5381": [
-      [0, 0, 0, "No undocumented stories are allowed, please add a RelativeTimeRangePicker.mdx with some documentation.", "5381"]
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
     "packages/grafana-ui/src/components/DateTimePickers/TimeOfDayPicker.story.tsx:5381": [
-      [0, 0, 0, "No undocumented stories are allowed, please add a TimeOfDayPicker.mdx with some documentation.", "5381"]
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
     "packages/grafana-ui/src/components/DateTimePickers/TimeRangePicker.story.tsx:5381": [
-      [0, 0, 0, "No undocumented stories are allowed, please add a TimeRangePicker.mdx with some documentation.", "5381"]
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
     "packages/grafana-ui/src/components/DateTimePickers/TimeZonePicker.story.tsx:5381": [
-      [0, 0, 0, "No undocumented stories are allowed, please add a TimeZonePicker.mdx with some documentation.", "5381"]
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
     "packages/grafana-ui/src/components/DateTimePickers/WeekStartPicker.story.tsx:5381": [
-      [0, 0, 0, "No undocumented stories are allowed, please add a WeekStartPicker.mdx with some documentation.", "5381"]
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
     "packages/grafana-ui/src/components/PageLayout/PageToolbar.story.tsx:5381": [
-      [0, 0, 0, "No undocumented stories are allowed, please add a PageToolbar.mdx with some documentation.", "5381"]
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
     "packages/grafana-ui/src/components/PanelChrome/PanelChrome.story.tsx:5381": [
-      [0, 0, 0, "No undocumented stories are allowed, please add a PanelChrome.mdx with some documentation.", "5381"]
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
     "packages/grafana-ui/src/components/PluginSignatureBadge/PluginSignatureBadge.story.tsx:5381": [
-      [0, 0, 0, "No undocumented stories are allowed, please add a PluginSignatureBadge.mdx with some documentation.", "5381"]
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
     "packages/grafana-ui/src/components/QueryField/QueryField.story.tsx:5381": [
-      [0, 0, 0, "No undocumented stories are allowed, please add a QueryField.mdx with some documentation.", "5381"]
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
     "packages/grafana-ui/src/components/RefreshPicker/RefreshPicker.story.tsx:5381": [
-      [0, 0, 0, "No undocumented stories are allowed, please add a RefreshPicker.mdx with some documentation.", "5381"]
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
     "packages/grafana-ui/src/components/SecretInput/SecretInput.story.tsx:5381": [
-      [0, 0, 0, "No undocumented stories are allowed, please add a SecretInput.mdx with some documentation.", "5381"]
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
     "packages/grafana-ui/src/components/Segment/Segment.story.tsx:5381": [
-      [0, 0, 0, "No undocumented stories are allowed, please add a Segment.mdx with some documentation.", "5381"]
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
     "packages/grafana-ui/src/components/Segment/SegmentAsync.story.tsx:5381": [
-      [0, 0, 0, "No undocumented stories are allowed, please add a SegmentAsync.mdx with some documentation.", "5381"]
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
     "packages/grafana-ui/src/components/Segment/SegmentInput.story.tsx:5381": [
-      [0, 0, 0, "No undocumented stories are allowed, please add a SegmentInput.mdx with some documentation.", "5381"]
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
     "packages/grafana-ui/src/components/StatsPicker/StatsPicker.story.tsx:5381": [
-      [0, 0, 0, "No undocumented stories are allowed, please add a StatsPicker.mdx with some documentation.", "5381"]
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
     "packages/grafana-ui/src/components/Tabs/Tabs.story.tsx:5381": [
-      [0, 0, 0, "No undocumented stories are allowed, please add a Tabs.mdx with some documentation.", "5381"]
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
     "packages/grafana-ui/src/components/ThemeDemos/ThemeDemo.story.tsx:5381": [
-      [0, 0, 0, "No undocumented stories are allowed, please add a ThemeDemo.mdx with some documentation.", "5381"]
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
     "packages/grafana-ui/src/components/Typography/Typography.story.tsx:5381": [
-      [0, 0, 0, "No undocumented stories are allowed, please add a Typography.mdx with some documentation.", "5381"]
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
     "packages/grafana-ui/src/components/VizLayout/VizLayout.story.tsx:5381": [
-      [0, 0, 0, "No undocumented stories are allowed, please add a VizLayout.mdx with some documentation.", "5381"]
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
     "packages/grafana-ui/src/components/VizLegend/VizLegend.story.tsx:5381": [
-      [0, 0, 0, "No undocumented stories are allowed, please add a VizLegend.mdx with some documentation.", "5381"]
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
     "packages/grafana-ui/src/components/VizTooltip/SeriesTable.story.tsx:5381": [
-      [0, 0, 0, "No undocumented stories are allowed, please add a SeriesTable.mdx with some documentation.", "5381"]
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ]
   }`
 };
