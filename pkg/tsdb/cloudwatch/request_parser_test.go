@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -38,12 +37,10 @@ func TestRequestParser(t *testing.T) {
 
 			migratedQuery := migratedQueries[0]
 			assert.Equal(t, "A", migratedQuery.RefID)
-			model, err := simplejson.NewJson(migratedQuery.JSON)
+			var model QueryJson
+			err = json.Unmarshal(migratedQuery.JSON, &model)
 			require.NoError(t, err)
-			assert.Equal(t, "Average", model.Get("statistic").MustString())
-			res, err := model.Get("statistic").Array()
-			assert.Error(t, err)
-			assert.Nil(t, res)
+			assert.Equal(t, "Average", *model.Statistic)
 		})
 	})
 
