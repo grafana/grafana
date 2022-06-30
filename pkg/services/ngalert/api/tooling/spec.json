@@ -2322,6 +2322,50 @@
           }
         }
       }
+    },
+    "/v1/api/alerting/rules/eval": {
+      "post": {
+        "description": "Evaluate a Grafana alert rule expression",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "ruler"
+        ],
+        "operationId": "RouteEvaluateGrafanaRule",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/EvaluateRuleRequestBody"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "EvaluateRuleResponse",
+            "schema": {
+              "$ref": "#/definitions/EvaluateRuleResponse"
+            }
+          },
+          "204": {
+            "description": "NoDataResponse",
+            "schema": {
+              "$ref": "#/definitions/NoDataResponse"
+            }
+          },
+          "500": {
+            "description": "EvaluateRuleError",
+            "schema": {
+              "$ref": "#/definitions/EvaluateRuleError"
+            }
+          }
+        }
+      }
     }
   },
   "definitions": {
@@ -2985,6 +3029,80 @@
     },
     "EvalQueriesResponse": {
       "$ref": "#/definitions/EvalQueriesResponse"
+    },
+    "EvaluateRuleError": {
+      "type": "object",
+      "properties": {
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "evaluatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "EvaluateRuleRequestBody": {
+      "type": "object",
+      "properties": {
+        "condition": {
+          "$ref": "#/definitions/RefID"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AlertQuery"
+          }
+        },
+        "now": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "EvaluateRuleResponse": {
+      "type": "object",
+      "properties": {
+        "condition": {
+          "$ref": "#/definitions/RefID"
+        },
+        "duration": {
+          "$ref": "#/definitions/Duration"
+        },
+        "evaluatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "result": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/EvaluationResult"
+          }
+        }
+      }
+    },
+    "EvaluationResult": {
+      "description": "EvaluationResult contains the evaluated State of an alert instance\nidentified by its labels.",
+      "type": "object",
+      "properties": {
+        "state": {
+          "$ref": "#/definitions/EvaluationState"
+        },
+        "values": {
+          "description": "Values contains the RefID and value of reduce and math expressions.\nIt does not contain values for classic conditions as the values\nin classic conditions do not have a RefID.",
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/NumberValueCapture"
+          }
+        }
+      }
+    },
+    "EvaluationState": {
+      "type": "string",
+      "title": "EvaluationState is an enum of the evaluation State for an alert instance."
     },
     "ExtendedReceiver": {
       "type": "object",
@@ -3684,6 +3802,9 @@
         }
       }
     },
+    "NoDataResponse": {
+      "type": "object"
+    },
     "NotFound": {
       "type": "object"
     },
@@ -3693,6 +3814,21 @@
       "properties": {
         "send_resolved": {
           "type": "boolean"
+        }
+      }
+    },
+    "NumberValueCapture": {
+      "type": "object",
+      "properties": {
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "value": {
+          "type": "number",
+          "format": "double"
         }
       }
     },
@@ -4286,6 +4422,9 @@
           }
         }
       }
+    },
+    "RefID": {
+      "type": "string"
     },
     "Regexp": {
       "description": "A Regexp is safe for concurrent use by multiple goroutines,\nexcept for configuration methods, such as Longest.",
@@ -5119,6 +5258,7 @@
       }
     },
     "alertGroup": {
+      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -5309,7 +5449,6 @@
       "$ref": "#/definitions/gettableAlert"
     },
     "gettableAlerts": {
-      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
@@ -5366,6 +5505,7 @@
       "$ref": "#/definitions/gettableSilence"
     },
     "gettableSilences": {
+      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
@@ -5515,6 +5655,7 @@
       "$ref": "#/definitions/postableSilence"
     },
     "receiver": {
+      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "name"

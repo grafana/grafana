@@ -23,6 +23,7 @@ type RulerApiForkingService interface {
 	RouteDeleteNamespaceGrafanaRulesConfig(*models.ReqContext) response.Response
 	RouteDeleteNamespaceRulesConfig(*models.ReqContext) response.Response
 	RouteDeleteRuleGroupConfig(*models.ReqContext) response.Response
+	RouteEvaluateGrafanaRule(*models.ReqContext) response.Response
 	RouteGetGrafanaRuleGroupConfig(*models.ReqContext) response.Response
 	RouteGetGrafanaRulesConfig(*models.ReqContext) response.Response
 	RouteGetNamespaceGrafanaRulesConfig(*models.ReqContext) response.Response
@@ -52,6 +53,13 @@ func (f *ForkedRulerApi) RouteDeleteRuleGroupConfig(ctx *models.ReqContext) resp
 	namespaceParam := web.Params(ctx.Req)[":Namespace"]
 	groupnameParam := web.Params(ctx.Req)[":Groupname"]
 	return f.forkRouteDeleteRuleGroupConfig(ctx, datasourceUIDParam, namespaceParam, groupnameParam)
+}
+func (f *ForkedRulerApi) RouteEvaluateGrafanaRule(ctx *models.ReqContext) response.Response {
+	conf := apimodels.EvaluateRuleRequestBody{}
+	if err := web.Bind(ctx.Req, &conf); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	return f.forkRouteEvaluateGrafanaRule(ctx, conf)
 }
 func (f *ForkedRulerApi) RouteGetGrafanaRuleGroupConfig(ctx *models.ReqContext) response.Response {
 	namespaceParam := web.Params(ctx.Req)[":Namespace"]
@@ -137,6 +145,16 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApiForkingService, m *metrics
 				http.MethodDelete,
 				"/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname}",
 				srv.RouteDeleteRuleGroupConfig,
+				m,
+			),
+		)
+		group.Post(
+			toMacaronPath("/v1/api/alerting/rules/eval"),
+			api.authorize(http.MethodPost, "/v1/api/alerting/rules/eval"),
+			metrics.Instrument(
+				http.MethodPost,
+				"/v1/api/alerting/rules/eval",
+				srv.RouteEvaluateGrafanaRule,
 				m,
 			),
 		)

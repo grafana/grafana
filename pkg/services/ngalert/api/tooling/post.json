@@ -662,6 +662,80 @@
    "type": "object"
   },
   "EvalQueriesResponse": {},
+  "EvaluateRuleError": {
+   "properties": {
+    "Error": {
+     "type": "string"
+    },
+    "EvaluatedAt": {
+     "format": "date-time",
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "EvaluateRuleRequestBody": {
+   "properties": {
+    "condition": {
+     "$ref": "#/definitions/RefID"
+    },
+    "data": {
+     "items": {
+      "$ref": "#/definitions/AlertQuery"
+     },
+     "type": "array"
+    },
+    "now": {
+     "format": "date-time",
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "EvaluateRuleResponse": {
+   "properties": {
+    "EvaluatedAt": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "EvaluationDuration": {
+     "$ref": "#/definitions/Duration"
+    },
+    "result": {
+     "items": {
+      "$ref": "#/definitions/EvaluationResult"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
+  "EvaluationResult": {
+   "description": "EvaluationResult contains the evaluated State of an alert instance\nidentified by its labels.",
+   "properties": {
+    "Labels": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    },
+    "State": {
+     "$ref": "#/definitions/EvaluationState"
+    },
+    "Values": {
+     "additionalProperties": {
+      "$ref": "#/definitions/NumberValueCapture"
+     },
+     "description": "Values contains the RefID and value of reduce and math expressions.\nIt does not contain values for classic conditions as the values\nin classic conditions do not have a RefID.",
+     "type": "object"
+    }
+   },
+   "type": "object"
+  },
+  "EvaluationState": {
+   "title": "EvaluationState is an enum of the evaluation State for an alert instance.",
+   "type": "string"
+  },
   "ExtendedReceiver": {
    "properties": {
     "email_configs": {
@@ -1359,6 +1433,9 @@
    },
    "type": "object"
   },
+  "NoDataResponse": {
+   "type": "object"
+  },
   "NotFound": {
    "type": "object"
   },
@@ -1369,6 +1446,21 @@
     }
    },
    "title": "NotifierConfig contains base options common across all notifier configurations.",
+   "type": "object"
+  },
+  "NumberValueCapture": {
+   "properties": {
+    "Labels": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    },
+    "Value": {
+     "format": "double",
+     "type": "number"
+    }
+   },
    "type": "object"
   },
   "OAuth2": {
@@ -1961,6 +2053,9 @@
    },
    "title": "Receiver configuration provides configuration on how to contact a receiver.",
    "type": "object"
+  },
+  "RefID": {
+   "type": "string"
   },
   "Regexp": {
    "description": "A Regexp is safe for concurrent use by multiple goroutines,\nexcept for configuration methods, such as Longest.",
@@ -2592,6 +2687,7 @@
    "type": "object"
   },
   "URL": {
+   "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
    "properties": {
     "ForceQuery": {
      "type": "boolean"
@@ -2624,7 +2720,7 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-   "title": "URL is a custom URL type that allows validation at configuration load time.",
+   "title": "A URL represents a parsed URL (technically, a URI reference).",
    "type": "object"
   },
   "Userinfo": {
@@ -2925,7 +3021,6 @@
    "$ref": "#/definitions/Duration"
   },
   "gettableAlert": {
-   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -2981,13 +3076,13 @@
    "type": "object"
   },
   "gettableAlerts": {
-   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
    "type": "array"
   },
   "gettableSilence": {
+   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -5572,6 +5667,50 @@
     },
     "tags": [
      "testing"
+    ]
+   }
+  },
+  "/v1/api/alerting/rules/eval": {
+   "post": {
+    "consumes": [
+     "application/json"
+    ],
+    "description": "Evaluate a Grafana alert rule expression",
+    "operationId": "RouteEvaluateGrafanaRule",
+    "parameters": [
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/EvaluateRuleRequestBody"
+      }
+     }
+    ],
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "200": {
+      "description": "EvaluateRuleResponse",
+      "schema": {
+       "$ref": "#/definitions/EvaluateRuleResponse"
+      }
+     },
+     "204": {
+      "description": "NoDataResponse",
+      "schema": {
+       "$ref": "#/definitions/NoDataResponse"
+      }
+     },
+     "500": {
+      "description": "EvaluateRuleError",
+      "schema": {
+       "$ref": "#/definitions/EvaluateRuleError"
+      }
+     }
+    },
+    "tags": [
+     "ruler"
     ]
    }
   }
