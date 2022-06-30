@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/star/starimpl"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func TestIntegrationDashboardDataAccess(t *testing.T) {
@@ -666,15 +667,15 @@ func insertTestRule(t *testing.T, sqlStore *sqlstore.SQLStore, foderOrgID int64,
 	require.NoError(t, err)
 }
 
-func CreateUser(t *testing.T, sqlStore *sqlstore.SQLStore, name string, role string, isAdmin bool) models.User {
+func CreateUser(t *testing.T, sqlStore *sqlstore.SQLStore, name string, role string, isAdmin bool) user.User {
 	t.Helper()
 	sqlStore.Cfg.AutoAssignOrg = true
 	sqlStore.Cfg.AutoAssignOrgId = 1
 	sqlStore.Cfg.AutoAssignOrgRole = role
-	currentUserCmd := models.CreateUserCommand{Login: name, Email: name + "@test.com", Name: "a " + name, IsAdmin: isAdmin}
+	currentUserCmd := user.CreateUserCommand{Login: name, Email: name + "@test.com", Name: "a " + name, IsAdmin: isAdmin}
 	currentUser, err := sqlStore.CreateUser(context.Background(), currentUserCmd)
 	require.NoError(t, err)
-	q1 := models.GetUserOrgListQuery{UserId: currentUser.Id}
+	q1 := models.GetUserOrgListQuery{UserId: currentUser.ID}
 	err = sqlStore.GetUserOrgList(context.Background(), &q1)
 	require.NoError(t, err)
 	require.Equal(t, models.RoleType(role), q1.Result[0].Role)

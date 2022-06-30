@@ -12,10 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { shallow } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
-
-import ReferenceLink from '../../url/ReferenceLink';
 
 import AccordianReferences, { References } from './AccordianReferences';
 
@@ -54,60 +52,45 @@ const references = [
   },
 ];
 
-describe('<AccordianReferences>', () => {
-  let wrapper;
+const link = { href: 'link' };
 
+const setup = (propOverrides) => {
   const props = {
     compact: false,
     data: references,
     highContrast: false,
     isOpen: false,
     onToggle: jest.fn(),
-    createFocusSpanLink: jest.fn(),
+    createFocusSpanLink: () => link,
+    ...propOverrides,
   };
 
-  beforeEach(() => {
-    wrapper = shallow(<AccordianReferences {...props} />);
+  return render(<AccordianReferences {...props} />);
+};
+
+describe('AccordianReferences tests', () => {
+  it('renders without exploding', () => {
+    expect(() => setup()).not.toThrow();
   });
 
-  it('renders without exploding', () => {
-    expect(wrapper).toBeDefined();
-    expect(wrapper.exists()).toBe(true);
+  it('renders the correct number of references', () => {
+    setup();
+
+    expect(screen.getByRole('switch', { name: 'References (3)' })).toBeInTheDocument();
+  });
+
+  it('content doesnt show when not expanded', () => {
+    setup({ isOpen: false });
+
+    expect(screen.queryByRole('link', { name: /^View\sLinked/ })).not.toBeInTheDocument();
+    expect(screen.queryAllByRole('link', { name: /^service\d\sop\d/ })).toHaveLength(0);
   });
 
   it('renders the content when it is expanded', () => {
-    wrapper.setProps({ isOpen: true });
-    const content = wrapper.find(References);
-    expect(content.length).toBe(1);
-    expect(content.prop('data')).toBe(references);
-  });
-});
+    setup({ isOpen: true });
 
-describe('<References>', () => {
-  let wrapper;
-
-  const props = {
-    data: references,
-    createFocusSpanLink: jest.fn(),
-  };
-
-  beforeEach(() => {
-    wrapper = shallow(<References {...props} />);
-  });
-
-  it('render references list', () => {
-    const refLinks = wrapper.find(ReferenceLink);
-    expect(refLinks.length).toBe(references.length);
-    refLinks.forEach((refLink, i) => {
-      const span = references[i].span;
-      const serviceName = refLink.find('span.span-svc-name').text();
-      if (span && span.traceID === traceID) {
-        const endpointName = refLink.find('small.endpoint-name').text();
-        expect(serviceName).toBe(span.process.serviceName);
-        expect(endpointName).toBe(span.operationName);
-      } else {
-        expect(serviceName).toBe('View Linked Span ');
-      }
-    });
+    expect(screen.getByRole('switch', { name: 'References (3)' })).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: /^service\d\sop\d/ })).toHaveLength(2);
+    expect(screen.getByRole('link', { name: /^View\sLinked/ })).toBeInTheDocument();
   });
 });
