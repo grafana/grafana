@@ -312,7 +312,6 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 	}
 
 	pmmChildNavs := []*dtos.NavLink{
-		{Text: "Query Analytics", Id: "qan", Url: setting.AppSubUrl + "/d/pmm-qan/pmm-query-analytics", Icon: "percona-analytics", HideFromTabs: true},
 		{Text: "System (Node)", Id: "system", Url: setting.AppSubUrl + "/d/node-instance-overview/nodes-overview", Icon: "percona-cluster-network", HideFromTabs: true, Children: nodeChildNavs},
 		{Text: "MySQL", Id: "mysql", Url: setting.AppSubUrl + "/d/mysql-instance-overview/mysql-instances-overview", Icon: "percona-database", HideFromTabs: true, Children: mysqlChildNavs},
 		{Text: "MongoDB", Id: "mongo", Url: setting.AppSubUrl + "/d/mongodb-instance-overview/mongodb-instances-overview", Icon: "percona-database", HideFromTabs: true, Children: mongodbChildNavs},
@@ -347,6 +346,16 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 		SortWeight: dtos.WeightDashboard,
 		Section:    dtos.NavSectionCore,
 		Children:   pmmChildNavs,
+	})
+
+	navTree = append(navTree, &dtos.NavLink{
+		Text:         "Query Analytics (QAN)",
+		Id:           "qan",
+		Icon:         "qan-logo",
+		Url:          setting.AppSubUrl + "/d/pmm-qan/pmm-query-analytics",
+		SortWeight:   dtos.WeightDashboard,
+		Section:      dtos.NavSectionCore,
+		HideFromTabs: true,
 	})
 
 	if setting.ExploreEnabled && hasAccess(canExplore, ac.EvalPermission(ac.ActionDatasourcesExplore)) {
