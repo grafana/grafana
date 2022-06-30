@@ -573,8 +573,8 @@ func (dr *DashboardServiceImpl) GetDashboardAclInfoList(ctx context.Context, que
 	return dr.dashboardStore.GetDashboardAclInfoList(ctx, query)
 }
 
-func (dr *DashboardServiceImpl) HasAdminPermissionInFolders(ctx context.Context, query *models.HasAdminPermissionInFoldersQuery) error {
-	return dr.dashboardStore.HasAdminPermissionInFolders(ctx, query)
+func (dr *DashboardServiceImpl) HasAdminPermissionInDashboardsOrFolders(ctx context.Context, query *models.HasAdminPermissionInDashboardsOrFoldersQuery) error {
+	return dr.dashboardStore.HasAdminPermissionInDashboardsOrFolders(ctx, query)
 }
 
 func (dr *DashboardServiceImpl) HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error {
