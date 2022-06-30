@@ -6426,7 +6426,7 @@ exports[`better eslint`] = {
       [93, 11, 110, "Do not use any type assertions.", "1968165501"],
       [108, 16, 33, "Do not use any type assertions.", "3811107685"]
     ],
-    "public/app/features/plugins/admin/state/reducer.ts:4117436501": [
+    "public/app/features/plugins/admin/state/reducer.ts:3395541504": [
       [26, 16, 534, "Do not use any type assertions.", "3555458827"]
     ],
     "public/app/features/plugins/admin/state/selectors.ts:345773501": [
