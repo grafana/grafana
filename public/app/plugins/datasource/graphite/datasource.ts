@@ -179,8 +179,8 @@ export class GraphiteDatasource
 
   query(options: DataQueryRequest<GraphiteQuery>): Observable<DataQueryResponse> {
     const graphOptions = {
-      from: options.range.from.unix(),
-      until: options.range.to.unix(),
+      from: this.translateTime(options.range.from, false, options.timezone),
+      until: this.translateTime(options.range.to, true, options.timezone),
       targets: options.targets,
       format: (options as any).format,
       cacheTimeout: options.cacheTimeout || this.cacheTimeout,
@@ -432,7 +432,6 @@ export class GraphiteDatasource
         date = date.replace('M', 'mon');
         return date;
       }
-
       date = dateMath.parse(date, roundUp, timezone);
     }
 
