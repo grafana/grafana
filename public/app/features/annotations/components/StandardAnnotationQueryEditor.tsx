@@ -76,7 +76,7 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
       executeAnnotationQuery(
         {
           range: getTimeSrv().timeRange(),
-          panel: {} as PanelModel,
+          panel: new PanelModel({}),
           dashboard,
         },
         datasource,
