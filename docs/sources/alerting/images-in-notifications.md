@@ -63,18 +63,18 @@ Images in notifications are supported in the following notifiers and additional 
 | Discord                 | Yes                     | Yes                     |
 | Email                   | Yes                     | Yes                     |
 | Google Hangouts Chat    | No                      | Yes                     |
-| Kafka                   | No                      | Yes                     |
-| Line                    | No                      | Yes                     |
+| Kafka                   | No                      | No                      |
+| Line                    | No                      | No                      |
 | Microsoft Teams         | No                      | Yes                     |
 | Opsgenie                | No                      | Yes                     |
 | Pagerduty               | No                      | Yes                     |
-| Prometheus Alertmanager | No                      | Yes                     |
+| Prometheus Alertmanager | No                      | No                      |
 | Pushover                | No                      | No                      |
-| Sensu Go                | No                      | Yes                     |
+| Sensu Go                | No                      | No                      |
 | Slack                   | No                      | Yes                     |
 | Telegram                | No                      | No                      |
-| Threema                 | No                      | Yes                     |
-| VictorOps               | No                      | Yes                     |
+| Threema                 | No                      | No                      |
+| VictorOps               | No                      | No                      |
 | Webhook                 | No                      | Yes                     |
 
 Include images from URL refers to using the external image store.
