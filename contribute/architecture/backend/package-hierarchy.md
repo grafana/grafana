@@ -96,7 +96,7 @@ Migrations are written per the [database.md](database.md#migrations) document.
 
 #### API endpoints
 
-`pkg/api/api.go` contains the endpoint definitions for the entire
+`pkg/api/api.go` contains the endpoint definitions for the most of
 Grafana HTTP API (not including Grafana Enterprise).
 
 ## Practical example
