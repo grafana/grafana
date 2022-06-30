@@ -34,7 +34,6 @@ export interface FeatureToggles {
   prometheus_azure_auth?: boolean;
   prometheusAzureOverrideAudience?: boolean;
   influxdbBackendMigration?: boolean;
-  newNavigation?: boolean;
   showFeatureFlagsInUI?: boolean;
   publicDashboards?: boolean;
   lokiLive?: boolean;
@@ -58,4 +57,5 @@ export interface FeatureToggles {
   prometheusStreamingJSONParser?: boolean;
   validateDashboardsOnSave?: boolean;
   prometheusWideSeries?: boolean;
+  logRequestsInstrumentedAsUnknown?: boolean;
 }

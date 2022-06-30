@@ -8,6 +8,7 @@ import { CustomScrollbar, IconButton, stylesFactory, useStyles2, useTheme2 } fro
 
 import { SEARCH_PANELS_LOCAL_STORAGE_KEY } from '../constants';
 import { useDashboardSearch } from '../hooks/useDashboardSearch';
+import { useKeyNavigationListener } from '../hooks/useSearchKeyboardSelection';
 import { useSearchQuery } from '../hooks/useSearchQuery';
 import { SearchView } from '../page/components/SearchView';
 
@@ -42,7 +43,10 @@ function DashboardSearchNew({ onCloseSearch }: Props) {
     e.preventDefault();
     setInputValue(e.currentTarget.value);
   };
+
   useDebounce(() => onQueryChange(inputValue), 200, [inputValue]);
+
+  const { onKeyDown, keyboardEvents } = useKeyNavigationListener();
 
   return (
     <div tabIndex={0} className={styles.overlay}>
@@ -54,6 +58,7 @@ function DashboardSearchNew({ onCloseSearch }: Props) {
               placeholder={includePanels ? 'Search dashboards and panels by name' : 'Search dashboards by name'}
               value={inputValue}
               onChange={onSearchQueryChange}
+              onKeyDown={onKeyDown}
               tabIndex={0}
               spellCheck={false}
               className={styles.input}
@@ -74,6 +79,7 @@ function DashboardSearchNew({ onCloseSearch }: Props) {
             }}
             includePanels={includePanels!}
             setIncludePanels={setIncludePanels}
+            keyboardEvents={keyboardEvents}
           />
         </div>
       </div>
@@ -144,10 +150,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       z-index: ${theme.zIndex.sidemenu};
       position: fixed;
       background: ${theme.colors.background.canvas};
+      padding: ${theme.spacing(1)};
 
       ${theme.breakpoints.up('md')} {
         left: ${theme.components.sidemenu.width}px;
         z-index: ${theme.zIndex.navbarFixed + 1};
+        padding: ${theme.spacing(2)};
       }
     `,
     container: css`
@@ -155,11 +163,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       flex-direction: column;
       max-width: 1400px;
       margin: 0 auto;
-      padding: ${theme.spacing(2)};
+      padding: ${theme.spacing(1)};
       background: ${theme.colors.background.primary};
       border: 1px solid ${theme.components.panel.borderColor};
-      margin-top: ${theme.spacing(4)};
-
       height: 100%;
 
       ${theme.breakpoints.up('md')} {

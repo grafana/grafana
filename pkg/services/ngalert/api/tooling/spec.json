@@ -1669,6 +1669,9 @@
     },
     "/api/v1/provisioning/alert-rules": {
       "post": {
+        "consumes": [
+          "application/json"
+        ],
         "tags": [
           "provisioning",
           "stable"
@@ -1711,6 +1714,7 @@
         "parameters": [
           {
             "type": "string",
+            "description": "Alert rule UID",
             "name": "UID",
             "in": "path",
             "required": true
@@ -1723,11 +1727,8 @@
               "$ref": "#/definitions/AlertRule"
             }
           },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
+          "404": {
+            "description": " Not found."
           }
         }
       },
@@ -1744,6 +1745,7 @@
         "parameters": [
           {
             "type": "string",
+            "description": "Alert rule UID",
             "name": "UID",
             "in": "path",
             "required": true
@@ -1781,6 +1783,7 @@
         "parameters": [
           {
             "type": "string",
+            "description": "Alert rule UID",
             "name": "UID",
             "in": "path",
             "required": true
@@ -1789,12 +1792,6 @@
         "responses": {
           "204": {
             "description": " The alert rule was deleted successfully."
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
           }
         }
       }
@@ -1809,15 +1806,9 @@
         "operationId": "RouteGetContactpoints",
         "responses": {
           "200": {
-            "description": "Route",
+            "description": "ContactPoints",
             "schema": {
-              "$ref": "#/definitions/Route"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
+              "$ref": "#/definitions/ContactPoints"
             }
           }
         }
@@ -1843,9 +1834,9 @@
         ],
         "responses": {
           "202": {
-            "description": "Ack",
+            "description": "EmbeddedContactPoint",
             "schema": {
-              "$ref": "#/definitions/Ack"
+              "$ref": "#/definitions/EmbeddedContactPoint"
             }
           },
           "400": {
@@ -1919,17 +1910,8 @@
           }
         ],
         "responses": {
-          "202": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
+          "204": {
+            "description": " The contact point was deleted successfully."
           }
         }
       }
@@ -1996,12 +1978,6 @@
             "schema": {
               "$ref": "#/definitions/MuteTimings"
             }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
           }
         }
       },
@@ -2052,7 +2028,7 @@
           {
             "type": "string",
             "x-go-name": "Name",
-            "description": "Template Name",
+            "description": "Mute timing name",
             "name": "name",
             "in": "path",
             "required": true
@@ -2065,11 +2041,8 @@
               "$ref": "#/definitions/MuteTimeInterval"
             }
           },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
+          "404": {
+            "description": " Not found."
           }
         }
       },
@@ -2087,7 +2060,7 @@
           {
             "type": "string",
             "x-go-name": "Name",
-            "description": "Template Name",
+            "description": "Mute timing name",
             "name": "name",
             "in": "path",
             "required": true
@@ -2126,7 +2099,7 @@
           {
             "type": "string",
             "x-go-name": "Name",
-            "description": "Template Name",
+            "description": "Mute timing name",
             "name": "name",
             "in": "path",
             "required": true
@@ -2134,10 +2107,7 @@
         ],
         "responses": {
           "204": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
+            "description": " The mute timing was deleted successfully."
           }
         }
       }
@@ -2156,12 +2126,6 @@
             "schema": {
               "$ref": "#/definitions/Route"
             }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
           }
         }
       },
@@ -2177,6 +2141,7 @@
         "operationId": "RoutePutPolicyTree",
         "parameters": [
           {
+            "description": "The new notification routing tree to use",
             "name": "Body",
             "in": "body",
             "schema": {
@@ -2210,16 +2175,13 @@
         "operationId": "RouteGetTemplates",
         "responses": {
           "200": {
-            "description": "MessageTemplate",
+            "description": "MessageTemplates",
             "schema": {
-              "$ref": "#/definitions/MessageTemplate"
+              "$ref": "#/definitions/MessageTemplates"
             }
           },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
+          "404": {
+            "description": " Not found."
           }
         }
       }
@@ -2250,10 +2212,7 @@
             }
           },
           "404": {
-            "description": "NotFound",
-            "schema": {
-              "$ref": "#/definitions/NotFound"
-            }
+            "description": " Not found."
           }
         }
       },
@@ -2286,9 +2245,9 @@
         ],
         "responses": {
           "202": {
-            "description": "Ack",
+            "description": "MessageTemplate",
             "schema": {
-              "$ref": "#/definitions/Ack"
+              "$ref": "#/definitions/MessageTemplate"
             }
           },
           "400": {
@@ -2318,10 +2277,7 @@
         ],
         "responses": {
           "204": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
+            "description": " The template was deleted successfully."
           }
         }
       }
@@ -2931,6 +2887,13 @@
           },
           "x-go-name": "Templates"
         }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+    },
+    "ContactPoints": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/EmbeddedContactPoint"
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
     },
@@ -3981,14 +3944,16 @@
     "MessageTemplate": {
       "type": "object",
       "properties": {
-        "Name": {
-          "type": "string"
-        },
-        "Template": {
-          "type": "string"
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
         },
         "provenance": {
           "$ref": "#/definitions/Provenance"
+        },
+        "template": {
+          "type": "string",
+          "x-go-name": "Template"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -3996,8 +3961,9 @@
     "MessageTemplateContent": {
       "type": "object",
       "properties": {
-        "Template": {
-          "type": "string"
+        "template": {
+          "type": "string",
+          "x-go-name": "Template"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -5577,7 +5543,8 @@
       "properties": {
         "msg": {
           "type": "string",
-          "x-go-name": "Msg"
+          "x-go-name": "Msg",
+          "example": "error message"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -5914,6 +5881,7 @@
       "$ref": "#/definitions/Duration"
     },
     "gettableAlert": {
+      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
@@ -5973,16 +5941,15 @@
           "x-go-name": "UpdatedAt"
         }
       },
-      "x-go-name": "GettableAlert",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/gettableAlert"
     },
     "gettableAlerts": {
-      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
       },
+      "x-go-name": "GettableAlerts",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/gettableAlerts"
     },
     "gettableSilence": {
@@ -6221,6 +6188,7 @@
       "$ref": "#/definitions/postableSilence"
     },
     "receiver": {
+      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "name"
@@ -6232,8 +6200,6 @@
           "x-go-name": "Name"
         }
       },
-      "x-go-name": "Receiver",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/receiver"
     },
     "silence": {

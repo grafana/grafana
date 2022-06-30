@@ -36,10 +36,10 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 	store := sqlstore.InitTestDB(t)
 	svcmock := tests.ServiceAccountMock{}
 
-	autoAssignOrg := setting.AutoAssignOrg
-	setting.AutoAssignOrg = true
+	autoAssignOrg := store.Cfg.AutoAssignOrg
+	store.Cfg.AutoAssignOrg = true
 	defer func() {
-		setting.AutoAssignOrg = autoAssignOrg
+		store.Cfg.AutoAssignOrg = autoAssignOrg
 	}()
 
 	orgCmd := &models.CreateOrgCommand{Name: "Some Test Org"}

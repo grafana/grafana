@@ -11,51 +11,15 @@ import (
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func getOrgIdForNewUser(sess *DBSession, cmd models.CreateUserCommand) (int64, error) {
-	if cmd.SkipOrgSetup {
-		return -1, nil
-	}
-
-	if setting.AutoAssignOrg && cmd.OrgId != 0 {
-		err := verifyExistingOrg(sess, cmd.OrgId)
-		if err != nil {
+func (ss *SQLStore) getOrgIDForNewUser(sess *DBSession, args models.CreateUserCommand) (int64, error) {
+	if ss.Cfg.AutoAssignOrg && args.OrgId != 0 {
+		if err := verifyExistingOrg(sess, args.OrgId); err != nil {
 			return -1, err
 		}
-		return cmd.OrgId, nil
-	}
-
-	orgName := cmd.OrgName
-	if len(orgName) == 0 {
-		orgName = util.StringsFallback2(cmd.Email, cmd.Login)
-	}
-
-	return getOrCreateOrg(sess, orgName)
-}
-
-type userCreationArgs struct {
-	Login          string
-	Email          string
-	Name           string
-	Company        string
-	Password       string
-	IsAdmin        bool
-	IsDisabled     bool
-	EmailVerified  bool
-	OrgID          int64
-	OrgName        string
-	DefaultOrgRole string
-}
-
-func (ss *SQLStore) getOrgIDForNewUser(sess *DBSession, args userCreationArgs) (int64, error) {
-	if ss.Cfg.AutoAssignOrg && args.OrgID != 0 {
-		if err := verifyExistingOrg(sess, args.OrgID); err != nil {
-			return -1, err
-		}
-		return args.OrgID, nil
+		return args.OrgId, nil
 	}
 
 	orgName := args.OrgName
@@ -67,10 +31,10 @@ func (ss *SQLStore) getOrgIDForNewUser(sess *DBSession, args userCreationArgs) (
 }
 
 // createUser creates a user in the database
-func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args userCreationArgs, skipOrgSetup bool) (models.User, error) {
+func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args models.CreateUserCommand) (models.User, error) {
 	var user models.User
 	var orgID int64 = -1
-	if !skipOrgSetup {
+	if !args.SkipOrgSetup {
 		var err error
 		orgID, err = ss.getOrgIDForNewUser(sess, args)
 		if err != nil {
@@ -103,7 +67,7 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args userCr
 		Created:          time.Now(),
 		Updated:          time.Now(),
 		LastSeenAt:       time.Now().AddDate(-10, 0, 0),
-		IsServiceAccount: false,
+		IsServiceAccount: args.IsServiceAccount,
 	}
 
 	salt, err := util.GetRandomString(10)
@@ -140,7 +104,7 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args userCr
 	})
 
 	// create org user link
-	if !skipOrgSetup {
+	if !args.SkipOrgSetup {
 		orgUser := models.OrgUser{
 			OrgId:   orgID,
 			UserId:  user.Id,
@@ -166,101 +130,12 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args userCr
 }
 
 func (ss *SQLStore) CreateUser(ctx context.Context, cmd models.CreateUserCommand) (*models.User, error) {
-	var user *models.User
-	err := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-		orgId, err := getOrgIdForNewUser(sess, cmd)
-		if err != nil {
-			return err
-		}
-
-		if cmd.Email == "" {
-			cmd.Email = cmd.Login
-		}
-
-		exists, err := sess.Where("email=? OR login=?", cmd.Email, cmd.Login).Get(&models.User{})
-		if err != nil {
-			return err
-		}
-		if exists {
-			return models.ErrUserAlreadyExists
-		}
-
-		// create user
-		user = &models.User{
-			Email:            cmd.Email,
-			Name:             cmd.Name,
-			Login:            cmd.Login,
-			Company:          cmd.Company,
-			IsAdmin:          cmd.IsAdmin,
-			IsDisabled:       cmd.IsDisabled,
-			OrgId:            orgId,
-			EmailVerified:    cmd.EmailVerified,
-			Created:          time.Now(),
-			Updated:          time.Now(),
-			LastSeenAt:       time.Now().AddDate(-10, 0, 0),
-			IsServiceAccount: cmd.IsServiceAccount,
-		}
-
-		salt, err := util.GetRandomString(10)
-		if err != nil {
-			return err
-		}
-		user.Salt = salt
-		rands, err := util.GetRandomString(10)
-		if err != nil {
-			return err
-		}
-		user.Rands = rands
-
-		if len(cmd.Password) > 0 {
-			encodedPassword, err := util.EncodePassword(cmd.Password, user.Salt)
-			if err != nil {
-				return err
-			}
-			user.Password = encodedPassword
-		}
-
-		sess.UseBool("is_admin")
-
-		if _, err := sess.Insert(user); err != nil {
-			return err
-		}
-
-		sess.publishAfterCommit(&events.UserCreated{
-			Timestamp: user.Created,
-			Id:        user.Id,
-			Name:      user.Name,
-			Login:     user.Login,
-			Email:     user.Email,
-		})
-
-		// create org user link
-		if !cmd.SkipOrgSetup {
-			orgUser := models.OrgUser{
-				OrgId:   orgId,
-				UserId:  user.Id,
-				Role:    models.ROLE_ADMIN,
-				Created: time.Now(),
-				Updated: time.Now(),
-			}
-
-			if setting.AutoAssignOrg && !user.IsAdmin {
-				if len(cmd.DefaultOrgRole) > 0 {
-					orgUser.Role = models.RoleType(cmd.DefaultOrgRole)
-				} else {
-					orgUser.Role = models.RoleType(setting.AutoAssignOrgRole)
-				}
-			}
-
-			if _, err = sess.Insert(&orgUser); err != nil {
-				return err
-			}
-		}
-
-		return nil
+	var user models.User
+	createErr := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) (err error) {
+		user, err = ss.createUser(ctx, sess, cmd)
+		return
 	})
-
-	return user, err
+	return &user, createErr
 }
 
 func notServiceAccountFilter(ss *SQLStore) string {

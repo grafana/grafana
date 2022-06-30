@@ -44,6 +44,8 @@ const LogsQueryEditor: React.FC<LogsQueryEditorProps> = ({
               <ResourceField
                 query={query}
                 datasource={datasource}
+                inlineField={true}
+                labelWidth={10}
                 subscriptionId={subscriptionId}
                 variableOptionGroup={variableOptionGroup}
                 onQueryChange={onChange}
@@ -56,6 +58,7 @@ const LogsQueryEditor: React.FC<LogsQueryEditorProps> = ({
                 ]}
                 setResource={setResource}
                 resourceUri={query.azureLogAnalytics?.resource}
+                queryType="logs"
               />
             </EditorFieldGroup>
           </EditorRow>
@@ -104,6 +107,7 @@ const LogsQueryEditor: React.FC<LogsQueryEditorProps> = ({
           ]}
           setResource={setResource}
           resourceUri={query.azureLogAnalytics?.resource}
+          queryType="logs"
         />
 
         <QueryField

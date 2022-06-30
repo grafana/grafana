@@ -13,6 +13,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/bus"
+
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
@@ -84,6 +86,7 @@ type HTTPServer struct {
 	httpSrv          *http.Server
 	middlewares      []web.Handler
 	namedMiddlewares []routing.RegisterNamedMiddleware
+	bus              bus.Bus
 
 	PluginContextProvider        *plugincontext.Provider
 	RouteRegister                routing.RouteRegister
@@ -162,7 +165,7 @@ type ServerOptions struct {
 	Listener net.Listener
 }
 
-func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routing.RouteRegister,
+func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routing.RouteRegister, bus bus.Bus,
 	renderService rendering.Service, licensing models.Licensing, hooksService *hooks.HooksService,
 	cacheService *localcache.CacheService, sqlStore *sqlstore.SQLStore, alertEngine *alerting.AlertEngine,
 	pluginRequestValidator models.PluginRequestValidator, pluginStaticRouteResolver plugins.StaticRouteResolver,
@@ -197,6 +200,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	hs := &HTTPServer{
 		Cfg:                          cfg,
 		RouteRegister:                routeRegister,
+		bus:                          bus,
 		RenderService:                renderService,
 		License:                      licensing,
 		HooksService:                 hooksService,

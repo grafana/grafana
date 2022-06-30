@@ -9,7 +9,7 @@ import React, { ReactElement, useRef, useState } from 'react';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
 
-import { useNavBarItemMenuContext } from './context';
+import { useNavBarItemMenuContext, useNavBarContext } from './context';
 
 export interface NavBarItemMenuItemProps {
   item: Node<NavModelItem>;
@@ -19,6 +19,7 @@ export interface NavBarItemMenuItemProps {
 
 export function NavBarItemMenuItem({ item, state, onNavigate }: NavBarItemMenuItemProps): ReactElement {
   const { onClose, onLeft } = useNavBarItemMenuContext();
+  const { setMenuIdOpen } = useNavBarContext();
   const { key, rendered } = item;
   const ref = useRef<HTMLLIElement>(null);
   const isDisabled = state.disabledKeys.has(key);
@@ -31,6 +32,7 @@ export function NavBarItemMenuItem({ item, state, onNavigate }: NavBarItemMenuIt
   const isDivider = !!item.value.divider;
   const styles = getStyles(theme, isFocused, isSection, isDivider);
   const onAction = () => {
+    setMenuIdOpen(undefined);
     onNavigate(item.value);
     onClose();
   };

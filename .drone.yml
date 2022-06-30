@@ -1493,7 +1493,7 @@ type: docker
 ---
 depends_on: []
 kind: pipeline
-name: oss-build-e2e-publish-release
+name: release-oss-build-e2e-publish
 node:
   type: no-parallel
 platform:
@@ -1799,7 +1799,7 @@ volumes:
 ---
 depends_on: []
 kind: pipeline
-name: oss-test-release
+name: release-oss-test
 node:
   type: no-parallel
 platform:
@@ -1907,7 +1907,7 @@ volumes:
 ---
 depends_on: []
 kind: pipeline
-name: oss-integration-tests-release
+name: release-oss-integration-tests
 node:
   type: no-parallel
 platform:
@@ -1997,11 +1997,11 @@ volumes:
     medium: memory
 ---
 depends_on:
-- oss-build-e2e-publish-release
-- oss-test-release
-- oss-integration-tests-release
+- release-oss-build-e2e-publish
+- release-oss-test
+- release-oss-integration-tests
 kind: pipeline
-name: oss-windows-release
+name: release-oss-windows
 platform:
   arch: amd64
   os: windows
@@ -2063,7 +2063,7 @@ depends_on: []
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: enterprise-build-e2e-publish-release
+name: release-enterprise-build-e2e-publish
 node:
   type: no-parallel
 platform:
@@ -2420,7 +2420,7 @@ depends_on: []
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: enterprise-test-release
+name: release-enterprise-test
 node:
   type: no-parallel
 platform:
@@ -2573,7 +2573,7 @@ depends_on: []
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: enterprise-integration-tests-release
+name: release-enterprise-integration-tests
 node:
   type: no-parallel
 platform:
@@ -2714,13 +2714,13 @@ volumes:
 clone:
   disable: true
 depends_on:
-- enterprise-build-e2e-publish-release
-- enterprise-test-release
-- enterprise-integration-tests-release
+- release-enterprise-build-e2e-publish
+- release-enterprise-test
+- release-enterprise-integration-tests
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: enterprise-windows-release
+name: release-enterprise-windows
 platform:
   arch: amd64
   os: windows
@@ -3303,7 +3303,7 @@ volumes:
 ---
 depends_on: []
 kind: pipeline
-name: oss-build-e2e-publish-release-branch
+name: release-branch-oss-build-e2e-publish
 node:
   type: no-parallel
 platform:
@@ -3579,7 +3579,7 @@ volumes:
 ---
 depends_on: []
 kind: pipeline
-name: oss-test-release-branch
+name: release-branch-oss-test
 node:
   type: no-parallel
 platform:
@@ -3681,7 +3681,7 @@ volumes:
 ---
 depends_on: []
 kind: pipeline
-name: oss-integration-tests-release-branch
+name: release-branch-oss-integration-tests
 node:
   type: no-parallel
 platform:
@@ -3765,11 +3765,11 @@ volumes:
     medium: memory
 ---
 depends_on:
-- oss-build-e2e-publish-release-branch
-- oss-test-release-branch
-- oss-integration-tests-release-branch
+- release-branch-oss-build-e2e-publish
+- release-branch-oss-test
+- release-branch-oss-integration-tests
 kind: pipeline
-name: oss-windows-release-branch
+name: release-branch-oss-windows
 platform:
   arch: amd64
   os: windows
@@ -3820,7 +3820,7 @@ depends_on: []
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: enterprise-build-e2e-publish-release-branch
+name: release-branch-enterprise-build-e2e-publish
 node:
   type: no-parallel
 platform:
@@ -4175,7 +4175,7 @@ depends_on: []
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: enterprise-test-release-branch
+name: release-branch-enterprise-test
 node:
   type: no-parallel
 platform:
@@ -4319,7 +4319,7 @@ depends_on: []
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: enterprise-integration-tests-release-branch
+name: release-branch-enterprise-integration-tests
 node:
   type: no-parallel
 platform:
@@ -4451,13 +4451,13 @@ volumes:
 clone:
   disable: true
 depends_on:
-- enterprise-build-e2e-publish-release-branch
-- enterprise-test-release-branch
-- enterprise-integration-tests-release-branch
+- release-branch-enterprise-build-e2e-publish
+- release-branch-enterprise-test
+- release-branch-enterprise-integration-tests
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: enterprise-windows-release-branch
+name: release-branch-enterprise-windows
 platform:
   arch: amd64
   os: windows
@@ -4667,6 +4667,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 1a18574b924be58b3568339b9e40a4fc926aa92d748b7e15c95919169e364a9f
+hmac: 9225ad54ce9cda12db965a6f098eb4daf970c4d43a0f456b8c5f1aff81ac2abd
 
 ...

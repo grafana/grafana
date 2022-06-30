@@ -25,7 +25,7 @@ import { CustomVariableModel } from '../../../features/variables/types';
 
 import { isMetricsQuery, LokiDatasource, RangeQueryOptions } from './datasource';
 import { makeMockLokiDatasource } from './mocks';
-import { LokiQuery, LokiResponse, LokiResultType } from './types';
+import { LokiQuery, LokiQueryType, LokiResponse, LokiResultType } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   // @ts-ignore
@@ -996,6 +996,15 @@ describe('LokiDatasource', () => {
       });
 
       expect(ds.getLogsVolumeDataProvider(options)).toBeDefined();
+    });
+
+    it('does not create provider if there is only an instant logs query', () => {
+      const ds = createLokiDSForTests();
+      const options = getQueryOptions<LokiQuery>({
+        targets: [{ expr: '{label=value', refId: 'A', queryType: LokiQueryType.Instant }],
+      });
+
+      expect(ds.getLogsVolumeDataProvider(options)).not.toBeDefined();
     });
   });
 
