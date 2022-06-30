@@ -179,7 +179,7 @@ export class GraphiteDatasource
 
   query(options: DataQueryRequest<GraphiteQuery>): Observable<DataQueryResponse> {
     const graphOptions = {
-      from: this.translateTime(options.range.raw.from, false, options.timezone),
+      from: this.translateTime(options.range.raw.from, false, options.timezone, options.fiscalYearStartMonth),
       until: this.translateTime(options.range.raw.to, true, options.timezone),
       targets: options.targets,
       format: (options as any).format,
@@ -422,7 +422,7 @@ export class GraphiteDatasource
     return this.templateSrv.containsTemplate(target.target ?? '');
   }
 
-  translateTime(date: any, roundUp: any, timezone: any) {
+  translateTime(date: any, roundUp: any, timezone: any, fiscalYearStartMonth?: number) {
     if (isString(date)) {
       if (date === 'now') {
         return 'now';
@@ -432,7 +432,8 @@ export class GraphiteDatasource
         date = date.replace('M', 'mon');
         return date;
       }
-      date = dateMath.parse(date, roundUp, timezone);
+
+      date = dateMath.parse(date, roundUp, timezone, fiscalYearStartMonth);
     }
 
     // graphite' s from filter is exclusive

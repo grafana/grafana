@@ -361,7 +361,8 @@ export class PanelChrome extends PureComponent<Props, State> {
         dashboard.getTimezone(),
         timeData,
         width,
-        dashboard.meta.publicDashboardAccessToken
+        dashboard.meta.publicDashboardAccessToken,
+        dashboard.fiscalYearStartMonth
       );
     } else {
       // The panel should render on refresh as well if it doesn't have a query, like clock panel

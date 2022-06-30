@@ -51,6 +51,7 @@ export interface QueryRunnerOptions<
   timezone: TimeZone;
   timeRange: TimeRange;
   timeInfo?: string; // String description of time range for display
+  fiscalYearStartMonth?: number;
   maxDataPoints: number;
   minInterval: string | undefined | null;
   scopedVars?: ScopedVars;
@@ -210,6 +211,7 @@ export class PanelQueryRunner {
       maxDataPoints,
       scopedVars,
       minInterval,
+      fiscalYearStartMonth,
     } = options;
 
     if (isSharedDashboardQuery(datasource)) {
@@ -225,6 +227,7 @@ export class PanelQueryRunner {
       dashboardId,
       publicDashboardAccessToken,
       range: timeRange,
+      fiscalYearStartMonth,
       timeInfo,
       interval: '',
       intervalMs: 0,
