@@ -159,8 +159,16 @@ func (e *cloudWatchExecutor) handleGetLogEvents(ctx context.Context, logsClient 
 		StartFromHead: aws.Bool(parameters.StartFromHead),
 	}
 
+	if parameters.LogGroupName == "" {
+		return nil, fmt.Errorf("Error: Parameter 'logGroupName' is required")
+	}
 	queryRequest.SetLogGroupName(parameters.LogGroupName)
+
+	if parameters.LogStreamName == "" {
+		return nil, fmt.Errorf("Error: Parameter 'logStreamName' is required")
+	}
 	queryRequest.SetLogStreamName(parameters.LogStreamName)
+
 	queryRequest.SetStartTime(parameters.StartTime)
 	queryRequest.SetEndTime(parameters.EndTime)
 
