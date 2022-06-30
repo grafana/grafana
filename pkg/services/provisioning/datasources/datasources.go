@@ -5,16 +5,15 @@ import (
 	"errors"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
-
-	"github.com/grafana/grafana/pkg/models"
 )
 
 type Store interface {
-	GetDataSource(ctx context.Context, query *models.GetDataSourceQuery) error
-	AddDataSource(ctx context.Context, cmd *models.AddDataSourceCommand) error
-	UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSourceCommand) error
-	DeleteDataSource(ctx context.Context, cmd *models.DeleteDataSourceCommand) error
+	GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) error
+	AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) error
+	UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) error
+	DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error
 }
 
 var (
@@ -52,13 +51,13 @@ func (dc *DatasourceProvisioner) apply(ctx context.Context, cfg *configs) error 
 	}
 
 	for _, ds := range cfg.Datasources {
-		cmd := &models.GetDataSourceQuery{OrgId: ds.OrgID, Name: ds.Name}
+		cmd := &datasources.GetDataSourceQuery{OrgId: ds.OrgID, Name: ds.Name}
 		err := dc.store.GetDataSource(ctx, cmd)
-		if err != nil && !errors.Is(err, models.ErrDataSourceNotFound) {
+		if err != nil && !errors.Is(err, datasources.ErrDataSourceNotFound) {
 			return err
 		}
 
-		if errors.Is(err, models.ErrDataSourceNotFound) {
+		if errors.Is(err, datasources.ErrDataSourceNotFound) {
 			insertCmd := createInsertCommand(ds)
 			dc.log.Info("inserting datasource from configuration ", "name", insertCmd.Name, "uid", insertCmd.Uid)
 			if err := dc.store.AddDataSource(ctx, insertCmd); err != nil {
@@ -93,7 +92,7 @@ func (dc *DatasourceProvisioner) applyChanges(ctx context.Context, configPath st
 
 func (dc *DatasourceProvisioner) deleteDatasources(ctx context.Context, dsToDelete []*deleteDatasourceConfig) error {
 	for _, ds := range dsToDelete {
-		cmd := &models.DeleteDataSourceCommand{OrgID: ds.OrgID, Name: ds.Name}
+		cmd := &datasources.DeleteDataSourceCommand{OrgID: ds.OrgID, Name: ds.Name}
 		if err := dc.store.DeleteDataSource(ctx, cmd); err != nil {
 			return err
 		}

@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -24,11 +23,10 @@ import (
 
 type TestingApiSrv struct {
 	*AlertingProxy
-	ExpressionService *expr.Service
-	DatasourceCache   datasources.CacheService
-	log               log.Logger
-	accessControl     accesscontrol.AccessControl
-	evaluator         eval.Evaluator
+	DatasourceCache datasources.CacheService
+	log             log.Logger
+	accessControl   accesscontrol.AccessControl
+	evaluator       eval.Evaluator
 }
 
 func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *models.ReqContext, body apimodels.TestRulePayload) response.Response {
@@ -57,7 +55,7 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *models.ReqContext, body a
 		now = timeNow()
 	}
 
-	evalResults, err := srv.evaluator.ConditionEval(&evalCond, now, srv.ExpressionService)
+	evalResults, err := srv.evaluator.ConditionEval(&evalCond, now)
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "Failed to evaluate conditions")
 	}
@@ -123,7 +121,7 @@ func (srv TestingApiSrv) RouteEvalQueries(c *models.ReqContext, cmd apimodels.Ev
 		return ErrResp(http.StatusBadRequest, err, "invalid queries or expressions")
 	}
 
-	evalResults, err := srv.evaluator.QueriesAndExpressionsEval(c.SignedInUser.OrgId, cmd.Data, now, srv.ExpressionService)
+	evalResults, err := srv.evaluator.QueriesAndExpressionsEval(c.SignedInUser.OrgId, cmd.Data, now)
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "Failed to evaluate queries and expressions")
 	}

@@ -425,6 +425,12 @@ func doSearchQuery(
 		hasConstraints = true
 	}
 
+	// Panel type
+	if q.PanelType != "" {
+		fullQuery.AddMust(bluge.NewTermQuery(q.PanelType).SetField(documentFieldPanelType))
+		hasConstraints = true
+	}
+
 	// Datasource
 	if q.Datasource != "" {
 		fullQuery.AddMust(bluge.NewTermQuery(q.Datasource).SetField(documentFieldDSUID))
