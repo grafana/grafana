@@ -3,6 +3,7 @@ import { createSelector } from 'reselect';
 
 import { NavModel } from '@grafana/data';
 import { getNavModel } from 'app/core/selectors/navModel';
+import store from 'app/core/store';
 import { StoreState } from 'app/types';
 
 export function usePageNav(navId?: string, oldProp?: NavModel): NavModel | undefined {
@@ -10,8 +11,12 @@ export function usePageNav(navId?: string, oldProp?: NavModel): NavModel | undef
     return oldProp;
   }
 
-  // Page component is used in so many tests, this simplifies not having to initialize a full redux store and navIndex
-  if (!navId || process.env.JEST_WORKER_ID) {
+  if (!navId) {
+    return;
+  }
+
+  // Page component is used in so many tests, this simplifies not having to initialize a full redux store
+  if (!store) {
     return;
   }
 
