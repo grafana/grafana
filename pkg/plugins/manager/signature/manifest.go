@@ -68,10 +68,6 @@ type pluginManifest struct {
 	RootURLs        []string              `json:"rootUrls"`
 }
 
-func (m *pluginManifest) isV2() bool {
-	return strings.HasPrefix(m.ManifestVersion, "2.")
-}
-
 // readPluginManifest attempts to read and verify the plugin manifest
 // if any error occurs or the manifest is not valid, this will return an error
 func readPluginManifest(body []byte) (*pluginManifest, error) {
@@ -190,21 +186,19 @@ func Calculate(mlog log.Logger, plugin *plugins.Plugin) (plugins.Signature, erro
 		manifestFiles[p] = struct{}{}
 	}
 
-	if manifest.isV2() {
-		// Track files missing from the manifest
-		var unsignedFiles []string
-		for _, f := range pluginFiles {
-			if _, exists := manifestFiles[f]; !exists {
-				unsignedFiles = append(unsignedFiles, f)
-			}
+	// Track files missing from the manifest
+	var unsignedFiles []string
+	for _, f := range pluginFiles {
+		if _, exists := manifestFiles[f]; !exists {
+			unsignedFiles = append(unsignedFiles, f)
 		}
+	}
 
-		if len(unsignedFiles) > 0 {
-			mlog.Warn("The following files were not included in the signature", "plugin", plugin.ID, "files", unsignedFiles)
-			return plugins.Signature{
-				Status: plugins.SignatureModified,
-			}, nil
-		}
+	if len(unsignedFiles) > 0 {
+		mlog.Warn("The following files were not included in the signature", "plugin", plugin.ID, "files", unsignedFiles)
+		return plugins.Signature{
+			Status: plugins.SignatureModified,
+		}, nil
 	}
 
 	mlog.Debug("Plugin signature valid", "id", plugin.ID)
