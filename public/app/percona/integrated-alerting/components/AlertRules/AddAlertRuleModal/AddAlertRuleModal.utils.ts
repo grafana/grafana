@@ -1,6 +1,7 @@
 import { SelectableValue } from '@grafana/data';
+import { Severity } from 'app/percona/shared/core';
 
-import { Severity, Template, TemplateParam } from '../../AlertRuleTemplate/AlertRuleTemplate.types';
+import { Template, TemplateParam } from '../../AlertRuleTemplate/AlertRuleTemplate.types';
 import { NotificationChannel } from '../../NotificationChannel/NotificationChannel.types';
 import {
   AlertRule,
@@ -12,7 +13,6 @@ import {
   AlertRulesListResponseChannel,
 } from '../AlertRules.types';
 
-import { Messages } from './AddAlertRuleModal.messages';
 import { AddAlertRuleFormValues, FiltersForm } from './AddAlertRuleModal.types';
 
 export const formatChannelsOptions = (channels: NotificationChannel[]): Array<SelectableValue<string>> =>
@@ -51,8 +51,8 @@ export const formatCreateAPIPayload = (
     channel_ids: notificationChannels ? notificationChannels.map((channel) => channel.value as string) : [],
     filters: filters ? formatFilters(filters) : [],
     for: `${duration}s`,
-    severity: severity.value as Severity,
-    template_name: template.value as string,
+    severity: severity.value!,
+    template_name: template.value!,
     name,
     params: [],
   };
@@ -106,9 +106,9 @@ export const formatEditTemplate = (templateName: string, templateSummary: string
   label: templateSummary,
 });
 
-export const formatEditSeverity = (severity: keyof typeof Severity): SelectableValue<Severity> => ({
-  value: Severity[severity],
-  label: Messages.severities[severity],
+export const formatEditSeverity = (severity: keyof typeof Severity): SelectableValue<keyof typeof Severity> => ({
+  value: severity,
+  label: Severity[severity],
 });
 
 export const formatEditNotificationChannel = (channel: AlertRulesListResponseChannel) => ({

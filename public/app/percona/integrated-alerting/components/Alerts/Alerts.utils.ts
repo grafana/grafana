@@ -1,8 +1,8 @@
 import moment from 'moment/moment';
 
+import { Severity } from 'app/percona/shared/core';
 import { formatLabels } from 'app/percona/shared/helpers/labels';
 
-import { AlertRuleSeverity } from '../AlertRules/AlertRules.types';
 import { formatRule } from '../AlertRules/AlertRules.utils';
 
 import { Alert, AlertsListResponseAlert, AlertStatus } from './Alerts.types';
@@ -14,7 +14,7 @@ export const formatAlert = (alert: AlertsListResponseAlert): Alert => {
     alertId: alert_id,
     activeSince: created_at ? moment(created_at).format('YYYY-MM-DD HH:mm:ss.SSS') : '',
     labels: formatLabels(labels),
-    severity: AlertRuleSeverity[severity],
+    severity: Severity[severity],
     status: AlertStatus[status],
     summary,
     lastNotified: updated_at ? moment(updated_at).format('YYYY-MM-DD HH:mm:ss.SSS') : '',

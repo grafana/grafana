@@ -1,6 +1,6 @@
 import { TemplateParamType, TemplateParamUnit } from '../AlertRuleTemplate/AlertRuleTemplate.types';
 
-import { AlertRule, AlertRuleSeverity } from './AlertRules.types';
+import { AlertRule } from './AlertRules.types';
 import { formatDuration, formatFilter, formatRule, formatRules } from './AlertRules.utils';
 import { rulesStubs } from './__mocks__/alertRulesStubs';
 
@@ -50,7 +50,7 @@ describe('AlertRulesTable utils', () => {
         default_for: '120s',
         last_notified: '2020-11-25T16:53:39.366Z',
         severity: 'SEVERITY_CRITICAL',
-        default_severity: AlertRuleSeverity.SEVERITY_CRITICAL,
+        default_severity: 'SEVERITY_CRITICAL',
         template_name: 'test 1',
         expr_template: '',
         summary: 'Database down - HR - Prod',
@@ -135,7 +135,7 @@ describe('AlertRulesTable utils', () => {
         default_for: '300s',
         last_notified: '',
         severity: 'SEVERITY_WARNING',
-        default_severity: AlertRuleSeverity.SEVERITY_WARNING,
+        default_severity: 'SEVERITY_WARNING',
         summary: 'High network throughput in - Mnfcg - Dev',
         params_values: [
           {
@@ -224,7 +224,7 @@ describe('AlertRulesTable utils', () => {
           default_for: '120s',
           last_notified: '2020-11-25T16:53:39.366Z',
           severity: 'SEVERITY_CRITICAL',
-          default_severity: AlertRuleSeverity.SEVERITY_CRITICAL,
+          default_severity: 'SEVERITY_CRITICAL',
           template_name: 'test 1',
           expr_template: '',
           summary: 'Database down - HR - Prod',
@@ -308,7 +308,7 @@ describe('AlertRulesTable utils', () => {
           default_for: '300s',
           last_notified: '',
           severity: 'SEVERITY_WARNING',
-          default_severity: AlertRuleSeverity.SEVERITY_WARNING,
+          default_severity: 'SEVERITY_WARNING',
           summary: 'High network throughput in - Mnfcg - Dev',
           params_values: [
             {

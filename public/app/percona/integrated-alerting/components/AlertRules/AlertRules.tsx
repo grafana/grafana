@@ -10,11 +10,12 @@ import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoa
 import { TechnicalPreview } from 'app/percona/shared/components/Elements/TechnicalPreview/TechnicalPreview';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
+import { Severity } from 'app/percona/shared/core';
 import { getPerconaSettingFlag } from 'app/percona/shared/core/selectors';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
 
 import { Messages } from '../../IntegratedAlerting.messages';
-import { Severity } from '../Severity';
+import { Severity as SeverityComp } from '../Severity';
 import { useStoredTablePageSize } from '../Table/Pagination';
 import { Table } from '../Table/Table';
 
@@ -23,7 +24,7 @@ import { ALERT_RULES_TABLE_ID, GET_ALERT_RULES_CANCEL_TOKEN } from './AlertRules
 import { AlertRulesProvider } from './AlertRules.provider';
 import { AlertRulesService } from './AlertRules.service';
 import { getStyles } from './AlertRules.styles';
-import { AlertRule, AlertRuleSeverity } from './AlertRules.types';
+import { AlertRule } from './AlertRules.types';
 import { formatRules } from './AlertRules.utils';
 import { AlertRulesActions } from './AlertRulesActions';
 import { AlertRulesParamsDetails } from './AlertRulesParamsDetails';
@@ -103,7 +104,7 @@ export const AlertRules: FC = () => {
       {
         Header: severityColumn,
         accessor: 'severity',
-        Cell: ({ value }) => <Severity severity={value as AlertRuleSeverity} />,
+        Cell: ({ value }) => <SeverityComp severity={value as Severity} />,
         width: '5%',
       },
       {

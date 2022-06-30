@@ -1,5 +1,4 @@
 import {
-  Severity,
   SourceDescription,
   TemplateParamType,
   TemplateParamUnit,
@@ -51,7 +50,7 @@ describe('AddAlertRuleModal utils', () => {
           yaml: 'test',
           params: [],
           expr: '',
-          severity: Severity.SEVERITY_CRITICAL,
+          severity: 'SEVERITY_CRITICAL',
           for: '200s',
         },
         {
@@ -62,7 +61,7 @@ describe('AddAlertRuleModal utils', () => {
           yaml: 'test',
           params: [],
           expr: '',
-          severity: Severity.SEVERITY_ERROR,
+          severity: 'SEVERITY_ERROR',
           for: '100s',
         },
         {
@@ -73,7 +72,7 @@ describe('AddAlertRuleModal utils', () => {
           yaml: 'test',
           params: [],
           expr: '',
-          severity: Severity.SEVERITY_CRITICAL,
+          severity: 'SEVERITY_CRITICAL',
           for: '150s',
         },
       ])
@@ -115,7 +114,7 @@ describe('AddAlertRuleModal utils', () => {
         { value: 'email', label: 'email' },
         { value: 'slack', label: 'Slack' },
       ],
-      severity: { value: Severity.SEVERITY_CRITICAL, label: 'Critical' },
+      severity: { value: 'SEVERITY_CRITICAL', label: 'Critical' },
       template: { value: 'Test Template', label: 'Test Template' },
       threshold: 10,
     };
@@ -158,7 +157,7 @@ describe('AddAlertRuleModal utils', () => {
           type: 'FLOAT',
         },
       ],
-      severity: Severity.SEVERITY_CRITICAL,
+      severity: 'SEVERITY_CRITICAL',
       template_name: 'Test Template',
       name: 'test name',
     });
@@ -181,7 +180,7 @@ describe('AddAlertRuleModal utils', () => {
         { value: 'email', label: 'email' },
         { value: 'slack', label: 'Slack' },
       ],
-      severity: { value: Severity.SEVERITY_CRITICAL, label: 'Critical' },
+      severity: { value: 'SEVERITY_CRITICAL', label: 'Critical' },
       template: { value: 'Test Template', label: 'Test Template' },
       threshold: 10,
     };
@@ -220,7 +219,7 @@ describe('AddAlertRuleModal utils', () => {
           type: 'FLOAT',
         },
       ],
-      severity: Severity.SEVERITY_CRITICAL,
+      severity: 'SEVERITY_CRITICAL',
       template_name: 'Test Template',
       name: 'test name',
     });
@@ -258,7 +257,7 @@ describe('AddAlertRuleModal utils', () => {
   });
 
   test('formatEditSeverity', () => {
-    expect(formatEditSeverity(Severity.SEVERITY_CRITICAL)).toEqual({ value: 'SEVERITY_CRITICAL', label: 'Critical' });
+    expect(formatEditSeverity('SEVERITY_CRITICAL')).toEqual({ value: 'SEVERITY_CRITICAL', label: 'Critical' });
   });
 
   test('formatEditNotificationChannel', () => {

@@ -1,3 +1,5 @@
+import { Severity } from 'app/percona/shared/core';
+
 import { TemplateAnnotation, TemplateParam } from '../AlertRuleTemplate/AlertRuleTemplate.types';
 
 export interface AlertRulesContext {
@@ -12,13 +14,6 @@ export enum AlertRuleFilterType {
   REGEX = '=~',
 }
 
-export enum AlertRuleSeverity {
-  SEVERITY_CRITICAL = 'Critical',
-  SEVERITY_ERROR = 'High',
-  SEVERITY_WARNING = 'Warning',
-  SEVERITY_NOTICE = 'Notice',
-}
-
 export interface AlertRule {
   ruleId: string;
   createdAt: string;
@@ -26,7 +21,7 @@ export interface AlertRule {
   duration: string;
   filters: string[];
   lastNotified: string;
-  severity: AlertRuleSeverity[keyof AlertRuleSeverity];
+  severity: Severity[keyof Severity];
   name: string;
   rawValues: AlertRulesListResponseRule;
   params: AlertRulesParsedParam[];
@@ -70,8 +65,8 @@ export interface AlertRulesListResponseRule {
   last_notified?: string;
   params_values?: AlertRulesListResponseParam[];
   params_definitions: TemplateParam[];
-  severity: keyof typeof AlertRuleSeverity;
-  default_severity: AlertRuleSeverity;
+  severity: keyof typeof Severity;
+  default_severity: keyof typeof Severity;
   name: string;
   expr: string;
   expr_template: string;
@@ -109,7 +104,7 @@ export interface AlertRuleCreatePayload {
   filters: AlertRulesListPayloadFilter[];
   for: string;
   params?: AlertRulesListPayloadParam[];
-  severity: keyof typeof AlertRuleSeverity;
+  severity: keyof typeof Severity;
   name: string;
   template_name: string;
 }

@@ -1,5 +1,5 @@
 import { TemplateParamType, TemplateParamUnit } from '../../AlertRuleTemplate/AlertRuleTemplate.types';
-import { AlertRuleSeverity, AlertRulesListResponseRule } from '../AlertRules.types';
+import { AlertRulesListResponseRule } from '../AlertRules.types';
 import { formatRules } from '../AlertRules.utils';
 
 export const rulesStubs: AlertRulesListResponseRule[] = [
@@ -30,7 +30,7 @@ export const rulesStubs: AlertRulesListResponseRule[] = [
     default_for: '120s',
     last_notified: '2020-11-25T16:53:39.366Z',
     severity: 'SEVERITY_CRITICAL',
-    default_severity: AlertRuleSeverity.SEVERITY_CRITICAL,
+    default_severity: 'SEVERITY_CRITICAL',
     template_name: 'test 1',
     expr_template: '',
     summary: 'Database down - HR - Prod',
@@ -85,7 +85,7 @@ export const rulesStubs: AlertRulesListResponseRule[] = [
     default_for: '300s',
     last_notified: '2020-11-25T16:53:39.366Z',
     severity: 'SEVERITY_WARNING',
-    default_severity: AlertRuleSeverity.SEVERITY_WARNING,
+    default_severity: 'SEVERITY_WARNING',
     expr_template: '',
     summary: 'High CPU load - Sales - Prod',
     params_values: [
@@ -160,7 +160,7 @@ export const rulesStubs: AlertRulesListResponseRule[] = [
     default_for: '300s',
     last_notified: '2020-11-25T16:53:39.366Z',
     severity: 'SEVERITY_ERROR',
-    default_severity: AlertRuleSeverity.SEVERITY_ERROR,
+    default_severity: 'SEVERITY_ERROR',
     expr_template: '',
     summary: 'High memory consumption - Mnfcg - Dev',
     expr: 'sum by (node_name) (mongodb_ss_mem_resident * 1024 * 1024)↵/ on (node_name) (node_memory_MemTotal_bytes)↵* 100↵> 20',
@@ -196,7 +196,7 @@ export const rulesStubs: AlertRulesListResponseRule[] = [
     default_for: '300s',
     last_notified: '',
     severity: 'SEVERITY_WARNING',
-    default_severity: AlertRuleSeverity.SEVERITY_WARNING,
+    default_severity: 'SEVERITY_WARNING',
     summary: 'High network throughput in - Mnfcg - Dev',
     params_values: [
       {
@@ -250,7 +250,7 @@ export const rulesStubs: AlertRulesListResponseRule[] = [
     default_for: '1500s',
     last_notified: '2020-11-25T16:53:39.366Z',
     severity: 'SEVERITY_NOTICE',
-    default_severity: AlertRuleSeverity.SEVERITY_NOTICE,
+    default_severity: 'SEVERITY_NOTICE',
     summary: 'Low memory consumption - Sales - Dev',
     params_values: [
       {
@@ -318,7 +318,7 @@ export const rulesStubs: AlertRulesListResponseRule[] = [
     default_for: '10s',
     last_notified: '2020-11-25T16:53:39.366Z',
     severity: 'SEVERITY_NOTICE',
-    default_severity: AlertRuleSeverity.SEVERITY_NOTICE,
+    default_severity: 'SEVERITY_NOTICE',
     summary: 'Low memory consumption - Sales - Dev',
     expr_template: '',
     expr: 'sum by (node_name) (mongodb_ss_mem_resident * 1024 * 1024)↵/ on (node_name) (node_memory_MemTotal_bytes)↵* 100↵> 20',

@@ -1,9 +1,10 @@
 import moment from 'moment/moment';
 
+import { Severity } from 'app/percona/shared/core';
+
 import {
   AlertRule,
   AlertRuleFilterType,
-  AlertRuleSeverity,
   AlertRulesListPayloadFilter,
   AlertRulesListResponseRule,
   AlertRulesParsedParam,
@@ -61,7 +62,7 @@ export const formatRule = (rule: AlertRulesListResponseRule): AlertRule => {
     disabled,
     duration: formatDuration(duration),
     filters: filters ? filters.map(formatFilter) : [],
-    severity: AlertRuleSeverity[severity],
+    severity: Severity[severity],
     name,
     lastNotified: last_notified ? moment(last_notified).format('YYYY-MM-DD HH:mm:ss.SSS') : '',
     rawValues: rule,

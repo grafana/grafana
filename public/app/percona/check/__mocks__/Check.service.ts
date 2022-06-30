@@ -1,6 +1,5 @@
 import { CheckDetails, ServiceFailedCheck } from 'app/percona/check/types';
-import { AlertRuleSeverity } from 'app/percona/integrated-alerting/components/AlertRules/AlertRules.types';
-import { PaginatedFomattedResponse } from 'app/percona/shared/core';
+import { PaginatedFomattedResponse, Severity } from 'app/percona/shared/core';
 
 /**
  * A mock version of CheckService
@@ -42,7 +41,7 @@ export const CheckService = {
         {
           summary: 'first failed check',
           description: 'check 1',
-          severity: AlertRuleSeverity.SEVERITY_CRITICAL,
+          severity: Severity.SEVERITY_CRITICAL,
           labels: { primary: [], secondary: [] },
           readMoreUrl: 'localhost/check-one',
           serviceName: 'Service One',
@@ -53,7 +52,7 @@ export const CheckService = {
         {
           summary: 'second failed check',
           description: 'check 2',
-          severity: AlertRuleSeverity.SEVERITY_NOTICE,
+          severity: Severity.SEVERITY_NOTICE,
           labels: { primary: [], secondary: [] },
           readMoreUrl: '',
           serviceName: 'Service One',

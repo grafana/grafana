@@ -1,4 +1,4 @@
-import { AlertRuleSeverity } from '../AlertRules/AlertRules.types';
+import { Severity } from 'app/percona/shared/core';
 
 import { Alert } from './Alerts.types';
 import { formatAlert, formatAlerts } from './Alerts.utils';
@@ -14,7 +14,7 @@ const expectedAlertResult1: Alert = {
     primary: ['environment=prod', 'node_name=pxc_instance1', 'cluster=PXCCluster1', 'service_name=my_db1'],
     secondary: ['app=wordpress'],
   },
-  severity: AlertRuleSeverity.SEVERITY_CRITICAL,
+  severity: Severity.SEVERITY_CRITICAL,
   status: 'Firing',
   summary: 'PXC cluster on [HR prod] is down',
   lastNotified: '2020-11-25 16:53:39.366',
@@ -27,7 +27,7 @@ const expectedAlertResult2: Alert = {
     primary: ['environment=dev', 'node_name=mdb_prod_7', 'cluster=MDBReplicaSet2', 'service_name=mdb_replset1'],
     secondary: ['service_type=mongodb'],
   },
-  severity: AlertRuleSeverity.SEVERITY_WARNING,
+  severity: Severity.SEVERITY_WARNING,
   status: 'Silenced',
   summary: 'Memory consumption on [Mncfg Dev] instance 1 reached 80%',
   lastNotified: '',

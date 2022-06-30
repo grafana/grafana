@@ -1,5 +1,5 @@
 import { TemplateParamType, TemplateParamUnit } from '../../AlertRuleTemplate/AlertRuleTemplate.types';
-import { AlertRuleCopyPayload, AlertRuleSeverity } from '../AlertRules.types';
+import { AlertRuleCopyPayload } from '../AlertRules.types';
 
 import { createAlertRuleCopyPayload } from './AlertRulesActions.utils';
 
@@ -13,7 +13,7 @@ describe('AlertRulesActions.utils.test::utils', () => {
         disabled: true,
         filters: [],
         lastNotified: '',
-        severity: AlertRuleSeverity.SEVERITY_CRITICAL,
+        severity: 'SEVERITY_CRITICAL',
         params: [
           {
             name: 'Param 1',
@@ -81,7 +81,7 @@ describe('AlertRulesActions.utils.test::utils', () => {
             },
           ],
           severity: 'SEVERITY_CRITICAL',
-          default_severity: AlertRuleSeverity.SEVERITY_CRITICAL,
+          default_severity: 'SEVERITY_CRITICAL',
           name: 'Rule one',
           expr: 'string',
           expr_template: 'string',

@@ -1,6 +1,5 @@
-import { AlertRuleSeverity } from '../AlertRules/AlertRules.types';
-
+import { Severity } from 'app/percona/shared/core';
 export interface SeverityProps {
-  severity: AlertRuleSeverity;
+  severity: Severity;
   className?: string;
 }
