@@ -151,5 +151,5 @@ func GenerateAccessToken() (string, error) {
 		return "", err
 	}
 
-	return fmt.Sprintf("%x", token), nil
+	return fmt.Sprintf("%x", token[:]), nil
 }

@@ -154,7 +154,7 @@ func TestSavePublicDashboard(t *testing.T) {
 		assert.Equal(t, timeSettings, pubdash.TimeSettings)
 		// accessToken is valid uuid
 		_, err = uuid.Parse(pubdash.AccessToken)
-		require.NoError(t, err)
+		require.NoError(t, err, "expected a valid UUID, got %s", pubdash.AccessToken)
 	})
 
 	t.Run("Validate pubdash has default time setting value", func(t *testing.T) {
