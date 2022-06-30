@@ -205,7 +205,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/org/storage',
+      path: '/org/storage/:path*',
       roles: () => ['Admin'],
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "StoragePage" */ 'app/features/storage/StoragePage')

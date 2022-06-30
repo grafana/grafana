@@ -3,21 +3,21 @@ import React, { useState } from 'react';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { DisplayProcessor, getValueFormat, GrafanaTheme2, isDataFrame, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, isDataFrame, SelectableValue } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { useStyles2, Table, Select } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
+import { Breadcrumb } from './Breadcrumb';
 import { UploadPopoverContainer } from './UploadPopoverContainer';
 import { getGrafanaStorage } from './helper';
-
-const bytesFormatter = getValueFormat('bytes');
-const bytesDisplayProcessor: DisplayProcessor = (v) => ({ ...bytesFormatter(v, 2), numeric: NaN });
-const textDisplayProcessor: DisplayProcessor = (v) => ({ text: `${v}`, numeric: NaN });
 
 const pathsSupportingUpload = ['resources'];
 const paths = [
   'resources',
+  'devenv/dev-dashboards/',
   'public-static',
   'public-static/img/bg',
   'public-static/img/icons/unicons',
@@ -26,10 +26,21 @@ const paths = [
 ];
 const pathOptions: Array<SelectableValue<string>> = paths.map((p) => ({ label: p, value: p }));
 
-export default function StoragePage() {
+interface RouteParams {
+  path: string;
+}
+
+interface Props extends GrafanaRouteComponentProps<RouteParams> {}
+
+export default function StoragePage(props: Props) {
   const styles = useStyles2(getStyles);
   const navModel = useNavModel('storage');
-  const [path, setPath] = useState('resources'); // from URL?
+  const path = props.match.params.path ?? '';
+  const setPath = (p: string) => {
+    locationService.push({
+      pathname: ('/org/storage/' + p).replace('//', '/'),
+    });
+  };
 
   // TODO: remove this. It's currently used as a workaround to close the popover
   const [_, setUploadModalCloseTime] = useState(Date.now());
@@ -37,36 +48,32 @@ export default function StoragePage() {
   // TODO: remove. used as a workaround to refresh the table after uploading a file
   const [uploadTime, setUploadTime] = useState(Date.now());
 
-  const files = useAsync(async () => {
-    const listResult = await getGrafanaStorage().list(path);
-    if (isDataFrame(listResult)) {
-      listResult.fields = listResult.fields.map((f) => {
-        switch (f.name) {
-          case 'name':
-            return {
-              ...f,
-              name: 'Filename',
-              display: textDisplayProcessor,
-            };
-          case 'mediaType':
-            return {
-              ...f,
-              name: 'File type',
-              display: textDisplayProcessor,
-            };
-          case 'size':
-            return {
-              ...f,
-              display: bytesDisplayProcessor,
-              name: 'Size',
-            };
-          default:
-            return f;
+  const files = useAsync(() => {
+    return getGrafanaStorage()
+      .list(path)
+      .then((frame) => {
+        if (frame) {
+          const name = frame.fields[0];
+          frame.fields[0] = {
+            ...name,
+            getLinks: (cfg) => {
+              return [
+                {
+                  title: 'Open XYZ',
+                  href: '#open',
+                  target: '_self',
+                  origin: name,
+                  onClick: () => {
+                    const n = name.values.get(cfg.valueRowIndex ?? 0);
+                    setPath(path + '/' + n);
+                  },
+                },
+              ];
+            },
+          };
         }
+        return frame;
       });
-    }
-
-    return listResult;
   }, [path, uploadTime]);
 
   const renderTable = () => {
@@ -101,6 +108,9 @@ export default function StoragePage() {
               }
             </div>
           )}
+        </div>
+        <div>
+          <Breadcrumb pathName={path} onPathChange={setPath} />
         </div>
         <div className={styles.tableWrapper}>
           <AutoSizer>

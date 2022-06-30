@@ -3,7 +3,7 @@ import { uniqueId } from 'lodash';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { Icon, useStyles2 } from '@grafana/ui';
 
 interface Props {
   pathName: string;
@@ -16,6 +16,9 @@ export function Breadcrumb({ pathName, onPathChange }: Props) {
 
   return (
     <ul className={styles.breadCrumb}>
+      <li onClick={() => onPathChange('')}>
+        <Icon name="home-alt" />
+      </li>
       {paths.map((path, index) => {
         let url = '/' + paths.slice(0, index + 1).join('/');
         return (
