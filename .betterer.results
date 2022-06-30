@@ -1231,24 +1231,24 @@ exports[`better eslint`] = {
       [88, 23, 34, "Do not use any type assertions.", "916459105"],
       [88, 54, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "packages/grafana-runtime/src/services/backendSrv.ts:793786410": [
+    "packages/grafana-runtime/src/services/backendSrv.ts:3777417514": [
       [23, 27, 3, "Unexpected any. Specify a different type.", "193409811"],
       [56, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
       [61, 26, 3, "Unexpected any. Specify a different type.", "193409811"],
       [88, 35, 3, "Unexpected any. Specify a different type.", "193409811"],
       [108, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
       [116, 32, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [145, 28, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [145, 62, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [146, 29, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [146, 43, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [147, 27, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [147, 41, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [148, 28, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [148, 42, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [149, 26, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [149, 40, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [155, 47, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [145, 10, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [145, 37, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [146, 13, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [146, 38, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [147, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [147, 36, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [148, 12, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [148, 37, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [149, 10, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [149, 35, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [155, 14, 3, "Unexpected any. Specify a different type.", "193409811"],
       [165, 24, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "packages/grafana-runtime/src/services/live.ts:3749886101": [
@@ -3617,7 +3617,7 @@ exports[`better eslint`] = {
       [0, 34, 3, "Unexpected any. Specify a different type.", "193409811"],
       [0, 39, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/core/services/backend_srv.ts:2084076322": [
+    "public/app/core/services/backend_srv.ts:1201556162": [
       [83, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
       [153, 63, 3, "Unexpected any. Specify a different type.", "193409811"],
       [231, 40, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -3627,10 +3627,14 @@ exports[`better eslint`] = {
       [392, 49, 3, "Unexpected any. Specify a different type.", "193409811"],
       [396, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
       [396, 43, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [400, 35, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [404, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [408, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [412, 31, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [400, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [400, 44, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [404, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [404, 42, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [408, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [408, 42, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [412, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [412, 40, 3, "Unexpected any. Specify a different type.", "193409811"],
       [416, 31, 3, "Unexpected any. Specify a different type.", "193409811"],
       [428, 16, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
@@ -6422,7 +6426,7 @@ exports[`better eslint`] = {
       [93, 11, 110, "Do not use any type assertions.", "1968165501"],
       [108, 16, 33, "Do not use any type assertions.", "3811107685"]
     ],
-    "public/app/features/plugins/admin/state/reducer.ts:4117436501": [
+    "public/app/features/plugins/admin/state/reducer.ts:3395541504": [
       [26, 16, 534, "Do not use any type assertions.", "3555458827"]
     ],
     "public/app/features/plugins/admin/state/selectors.ts:345773501": [
@@ -6790,10 +6794,8 @@ exports[`better eslint`] = {
       [161, 24, 46, "Do not use any type assertions.", "1967560255"],
       [167, 22, 38, "Do not use any type assertions.", "1477056001"]
     ],
-    "public/app/features/search/service/sql.ts:4013142735": [
-      [91, 36, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [99, 18, 61, "Do not use any type assertions.", "2014388220"],
-      [104, 16, 68, "Do not use any type assertions.", "257067967"]
+    "public/app/features/search/service/sql.ts:3331148655": [
+      [91, 36, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/search/types.ts:762810555": [
       [56, 12, 3, "Unexpected any. Specify a different type.", "193409811"]
