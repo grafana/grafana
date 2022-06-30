@@ -3617,24 +3617,24 @@ exports[`better eslint`] = {
       [0, 34, 3, "Unexpected any. Specify a different type.", "193409811"],
       [0, 39, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/core/services/backend_srv.ts:3750224237": [
-      [79, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [149, 63, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [227, 40, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [281, 38, 20, "Do not use any type assertions.", "443888156"],
-      [281, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [352, 103, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [388, 49, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [392, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [392, 43, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [396, 35, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [400, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
+    "public/app/core/services/backend_srv.ts:360059123": [
+      [83, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [153, 63, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [231, 40, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [285, 38, 20, "Do not use any type assertions.", "443888156"],
+      [285, 55, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [356, 103, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [392, 49, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [396, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [396, 43, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [400, 35, 3, "Unexpected any. Specify a different type.", "193409811"],
       [404, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [408, 31, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [408, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
       [412, 31, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [423, 16, 3, "Unexpected any. Specify a different type.", "193409811"]
+      [416, 31, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [427, 16, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/core/services/context_srv.ts:1157446284": [
+    "public/app/core/services/context_srv.ts:698805616": [
       [59, 10, 3, "Unexpected any. Specify a different type.", "193409811"],
       [60, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
       [62, 14, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -4201,14 +4201,11 @@ exports[`better eslint`] = {
       [127, 14, 16, "Do not use any type assertions.", "1747412709"],
       [128, 18, 24, "Do not use any type assertions.", "3254438164"]
     ],
-    "public/app/features/alerting/unified/RuleEditor.test.tsx:3247797279": [
-      [231, 42, 149, "Do not use any type assertions.", "2017267554"],
-      [418, 23, 50, "Do not use any type assertions.", "772738025"],
-      [418, 23, 36, "Do not use any type assertions.", "4069427080"],
-      [420, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [452, 42, 32, "Do not use any type assertions.", "2259972478"],
-      [505, 65, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [640, 42, 20, "Do not use any type assertions.", "1750699644"]
+    "public/app/features/alerting/unified/RuleEditor.test.tsx:2974108144": [
+      [233, 42, 149, "Do not use any type assertions.", "2017267554"],
+      [454, 42, 32, "Do not use any type assertions.", "2259972478"],
+      [507, 65, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [642, 42, 20, "Do not use any type assertions.", "1750699644"]
     ],
     "public/app/features/alerting/unified/RuleList.test.tsx:629893124": [
       [125, 21, 16, "Do not use any type assertions.", "2939667099"],
@@ -4386,8 +4383,8 @@ exports[`better eslint`] = {
       [43, 13, 12, "Do not use any type assertions.", "96869412"],
       [64, 7, 25, "Do not use any type assertions.", "4119455957"]
     ],
-    "public/app/features/alerting/unified/hooks/useIsRuleEditable.test.tsx:4024141754": [
-      [150, 64, 29, "Do not use any type assertions.", "2249960884"]
+    "public/app/features/alerting/unified/hooks/useIsRuleEditable.test.tsx:2319947585": [
+      [163, 64, 29, "Do not use any type assertions.", "2249960884"]
     ],
     "public/app/features/alerting/unified/mocks.ts:2719319751": [
       [48, 14, 7, "Do not use any type assertions.", "3399135973"],
@@ -4411,11 +4408,9 @@ exports[`better eslint`] = {
       [234, 6, 172, "Do not use any type assertions.", "1154786841"],
       [242, 6, 177, "Do not use any type assertions.", "3855113404"]
     ],
-    "public/app/features/alerting/unified/state/actions.ts:2828725785": [
-      [73, 23, 24, "Do not use any type assertions.", "3178482079"],
-      [253, 70, 24, "Do not use any type assertions.", "3178482079"],
-      [570, 60, 22, "Do not use any type assertions.", "3527197253"],
-      [570, 79, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/features/alerting/unified/state/actions.ts:175963059": [
+      [74, 23, 24, "Do not use any type assertions.", "3178482079"],
+      [254, 70, 24, "Do not use any type assertions.", "3178482079"]
     ],
     "public/app/features/alerting/unified/types/receiver-form.ts:4067603235": [
       [10, 27, 3, "Unexpected any. Specify a different type.", "193409811"],
