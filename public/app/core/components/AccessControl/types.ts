@@ -5,7 +5,7 @@ export type ResourcePermission = {
   userId?: number;
   userLogin?: string;
   userAvatarUrl?: string;
-  userIsServiceAccount?: string;
+  userIsServiceAccount?: boolean;
   team?: string;
   teamId?: number;
   teamAvatarUrl?: string;
