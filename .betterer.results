@@ -4247,9 +4247,9 @@ exports[`better eslint`] = {
       [157, 27, 44, "Do not use any type assertions.", "720973826"],
       [158, 40, 44, "Do not use any type assertions.", "720973826"]
     ],
-    "public/app/features/alerting/unified/components/AnnotationDetailsField.tsx:1101887836": [
-      [19, 33, 27, "Do not use any type assertions.", "1321813536"],
-      [21, 30, 27, "Do not use any type assertions.", "1321813536"]
+    "public/app/features/alerting/unified/components/AnnotationDetailsField.tsx:2388344112": [
+      [20, 33, 27, "Do not use any type assertions.", "1321813536"],
+      [22, 30, 27, "Do not use any type assertions.", "1321813536"]
     ],
     "public/app/features/alerting/unified/components/Expression.tsx:2035202716": [
       [25, 25, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -10512,6 +10512,20 @@ exports[`better eslint`] = {
       [78, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
       [113, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
       [117, 19, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/datasource/sql/components/visual-query-builder/AwesomeQueryBuilder.tsx:1840701731": [
+      [175, 24, 63, "Do not use any type assertions.", "2252455532"],
+      [198, 13, 47, "Do not use any type assertions.", "2763495851"],
+      [253, 30, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
+    "public/app/plugins/datasource/sql/datasource/SqlDatasource.ts:3607048882": [
+      [121, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [156, 56, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [174, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [179, 57, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [181, 18, 135, "Do not use any type assertions.", "3270957200"],
+      [191, 28, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [222, 33, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/plugins/datasource/tempo/QueryEditor/NativeSearch.test.tsx:3510665018": [
       [32, 18, 160, "Do not use any type assertions.", "2324324215"],
