@@ -79,7 +79,7 @@ func (s *Service) Get(ctx context.Context, cmd *GetQuery) error {
 }
 ```
 
-becomes
+should become
 
 ```
 type GetQuery struct {
