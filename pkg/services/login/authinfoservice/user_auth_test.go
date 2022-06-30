@@ -6,11 +6,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice/database"
 	secretstore "github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 )
@@ -20,11 +22,15 @@ func TestUserAuth(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
 	secretsService := secretsManager.SetupTestService(t, secretstore.ProvideSecretsStore(sqlStore))
 	authInfoStore := database.ProvideAuthInfoStore(sqlStore, secretsService)
-	srv := ProvideAuthInfoService(&OSSUserProtectionImpl{}, authInfoStore)
+	srv := ProvideAuthInfoService(
+		&OSSUserProtectionImpl{},
+		authInfoStore,
+		&usagestats.UsageStatsMock{},
+	)
 
 	t.Run("Given 5 users", func(t *testing.T) {
 		for i := 0; i < 5; i++ {
-			cmd := models.CreateUserCommand{
+			cmd := user.CreateUserCommand{
 				Email: fmt.Sprint("user", i, "@test.com"),
 				Name:  fmt.Sprint("user", i),
 				Login: fmt.Sprint("loginuser", i),
@@ -44,12 +50,12 @@ func TestUserAuth(t *testing.T) {
 			require.Equal(t, user.Login, login)
 
 			// By ID
-			id := user.Id
+			id := user.ID
 
 			user, err = srv.LookupByOneOf(context.Background(), id, "", "")
 
 			require.Nil(t, err)
-			require.Equal(t, user.Id, id)
+			require.Equal(t, user.ID, id)
 
 			// By Email
 			email := "user1@test.com"
@@ -93,7 +99,7 @@ func TestUserAuth(t *testing.T) {
 			require.Equal(t, user.Login, login)
 
 			// get with non-matching id
-			id := user.Id
+			id := user.ID
 
 			query.UserId = id + 1
 			user, err = srv.LookupAndUpdate(context.Background(), query)
@@ -110,7 +116,7 @@ func TestUserAuth(t *testing.T) {
 
 			// remove user
 			err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-				_, err := sess.Exec("DELETE FROM "+sqlStore.Dialect.Quote("user")+" WHERE id=?", user.Id)
+				_, err := sess.Exec("DELETE FROM "+sqlStore.Dialect.Quote("user")+" WHERE id=?", user.ID)
 				return err
 			})
 			require.NoError(t, err)
@@ -144,7 +150,7 @@ func TestUserAuth(t *testing.T) {
 			require.Equal(t, user.Login, login)
 
 			cmd := &models.UpdateAuthInfoCommand{
-				UserId:     user.Id,
+				UserId:     user.ID,
 				AuthId:     query.AuthId,
 				AuthModule: query.AuthModule,
 				OAuthToken: token,
@@ -154,7 +160,7 @@ func TestUserAuth(t *testing.T) {
 			require.Nil(t, err)
 
 			getAuthQuery := &models.GetAuthInfoQuery{
-				UserId: user.Id,
+				UserId: user.ID,
 			}
 
 			err = srv.authInfoStore.GetAuthInfo(context.Background(), getAuthQuery)
@@ -171,7 +177,7 @@ func TestUserAuth(t *testing.T) {
 			sqlStore = sqlstore.InitTestDB(t)
 
 			for i := 0; i < 5; i++ {
-				cmd := models.CreateUserCommand{
+				cmd := user.CreateUserCommand{
 					Email: fmt.Sprint("user", i, "@test.com"),
 					Name:  fmt.Sprint("user", i),
 					Login: fmt.Sprint("loginuser", i),
@@ -205,7 +211,7 @@ func TestUserAuth(t *testing.T) {
 
 			// Get the latest entry by not supply an authmodule or authid
 			getAuthQuery := &models.GetAuthInfoQuery{
-				UserId: user.Id,
+				UserId: user.ID,
 			}
 
 			err = authInfoStore.GetAuthInfo(context.Background(), getAuthQuery)
@@ -214,14 +220,14 @@ func TestUserAuth(t *testing.T) {
 			require.Equal(t, getAuthQuery.Result.AuthModule, "test2")
 
 			// "log in" again with the first auth module
-			updateAuthCmd := &models.UpdateAuthInfoCommand{UserId: user.Id, AuthModule: "test1", AuthId: "test1"}
+			updateAuthCmd := &models.UpdateAuthInfoCommand{UserId: user.ID, AuthModule: "test1", AuthId: "test1"}
 			err = authInfoStore.UpdateAuthInfo(context.Background(), updateAuthCmd)
 
 			require.Nil(t, err)
 
 			// Get the latest entry by not supply an authmodule or authid
 			getAuthQuery = &models.GetAuthInfoQuery{
-				UserId: user.Id,
+				UserId: user.ID,
 			}
 
 			err = authInfoStore.GetAuthInfo(context.Background(), getAuthQuery)
@@ -235,7 +241,7 @@ func TestUserAuth(t *testing.T) {
 			sqlStore = sqlstore.InitTestDB(t)
 
 			for i := 0; i < 5; i++ {
-				cmd := models.CreateUserCommand{
+				cmd := user.CreateUserCommand{
 					Email: fmt.Sprint("user", i, "@test.com"),
 					Name:  fmt.Sprint("user", i),
 					Login: fmt.Sprint("loginuser", i),
@@ -268,7 +274,7 @@ func TestUserAuth(t *testing.T) {
 
 			// Get the latest entry by not supply an authmodule or authid
 			getAuthQuery := &models.GetAuthInfoQuery{
-				UserId: user.Id,
+				UserId: user.ID,
 			}
 
 			err = authInfoStore.GetAuthInfo(context.Background(), getAuthQuery)
@@ -280,7 +286,7 @@ func TestUserAuth(t *testing.T) {
 			database.GetTime = func() time.Time { return fixedTime }
 
 			// add oauth info to auth_info to make sure update date does not overwrite it
-			updateAuthCmd := &models.UpdateAuthInfoCommand{UserId: user.Id, AuthModule: "test1", AuthId: "test1", OAuthToken: &oauth2.Token{
+			updateAuthCmd := &models.UpdateAuthInfoCommand{UserId: user.ID, AuthModule: "test1", AuthId: "test1", OAuthToken: &oauth2.Token{
 				AccessToken:  "access_token",
 				TokenType:    "token_type",
 				RefreshToken: "refresh_token",
@@ -312,7 +318,7 @@ func TestUserAuth(t *testing.T) {
 
 			// Ensure test 1 did not have its entry modified
 			getAuthQueryUnchanged := &models.GetAuthInfoQuery{
-				UserId:     user.Id,
+				UserId:     user.ID,
 				AuthModule: "test1",
 			}
 			err = authInfoStore.GetAuthInfo(context.Background(), getAuthQueryUnchanged)
@@ -342,6 +348,47 @@ func TestUserAuth(t *testing.T) {
 
 			require.NotNil(t, err)
 			require.Nil(t, user)
+		})
+
+		t.Run("calculate metrics on duplicate userstats", func(t *testing.T) {
+			// Restore after destructive operation
+			sqlStore = sqlstore.InitTestDB(t)
+
+			for i := 0; i < 5; i++ {
+				cmd := user.CreateUserCommand{
+					Email: fmt.Sprint("user", i, "@test.com"),
+					Name:  fmt.Sprint("user", i),
+					Login: fmt.Sprint("loginuser", i),
+					OrgID: 1,
+				}
+				_, err := sqlStore.CreateUser(context.Background(), cmd)
+				require.Nil(t, err)
+			}
+
+			// "Skipping duplicate users test for mysql as it does make unique constraint case insensitive by default
+			if sqlStore.GetDialect().DriverName() != "mysql" {
+				dupUserEmailcmd := user.CreateUserCommand{
+					Email: "USERDUPLICATETEST1@TEST.COM",
+					Name:  "user name 1",
+					Login: "USER_DUPLICATE_TEST_1_LOGIN",
+				}
+				_, err := sqlStore.CreateUser(context.Background(), dupUserEmailcmd)
+				require.NoError(t, err)
+
+				// add additional user with duplicate login where DOMAIN is upper case
+				dupUserLogincmd := user.CreateUserCommand{
+					Email: "userduplicatetest1@test.com",
+					Name:  "user name 1",
+					Login: "user_duplicate_test_1_login",
+				}
+				_, err = sqlStore.CreateUser(context.Background(), dupUserLogincmd)
+				require.NoError(t, err)
+				// require metrics and statistics to be 2
+				m, err := srv.authInfoStore.CollectLoginStats(context.Background())
+				require.NoError(t, err)
+				require.Equal(t, 2, m["stats.users.duplicate_user_entries"])
+				require.Equal(t, 1, m["stats.users.has_duplicate_user_entries"])
+			}
 		})
 	})
 }

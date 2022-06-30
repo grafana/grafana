@@ -103,29 +103,37 @@ func (cfg *Cfg) readUnifiedAlertingEnabledSetting(section *ini.Section) (*bool, 
 	// At present an invalid value is considered the same as no value. This means that a
 	// spelling mistake in the string "false" could enable unified alerting rather
 	// than disable it. This issue can be found here
-	unifiedAlerting, err := section.Key("enabled").Bool()
-	if err != nil {
+	hasEnabled := section.Key("enabled").Value() != ""
+	if !hasEnabled {
 		// TODO: Remove in Grafana v9
 		if cfg.IsFeatureToggleEnabled("ngalert") {
 			cfg.Logger.Warn("ngalert feature flag is deprecated: use unified alerting enabled setting instead")
 			// feature flag overrides the legacy alerting setting
 			legacyAlerting := false
 			AlertingEnabled = &legacyAlerting
-			unifiedAlerting = true
+			unifiedAlerting := true
 			return &unifiedAlerting, nil
 		}
 
 		// if legacy alerting has not been configured then enable unified alerting
 		if AlertingEnabled == nil {
-			unifiedAlerting = true
+			unifiedAlerting := true
 			return &unifiedAlerting, nil
 		}
 
 		// enable unified alerting and disable legacy alerting
 		legacyAlerting := false
 		AlertingEnabled = &legacyAlerting
-		unifiedAlerting = true
+		unifiedAlerting := true
 		return &unifiedAlerting, nil
+	}
+
+	unifiedAlerting, err := section.Key("enabled").Bool()
+	if err != nil {
+		// the value for unified alerting is invalid so disable all alerting
+		legacyAlerting := false
+		AlertingEnabled = &legacyAlerting
+		return nil, fmt.Errorf("invalid value %s, should be either true or false", section.Key("enabled"))
 	}
 
 	// If both legacy and unified alerting are enabled then return an error
@@ -149,7 +157,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	ua := iniFile.Section("unified_alerting")
 	uaCfg.Enabled, err = cfg.readUnifiedAlertingEnabledSetting(ua)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to read unified alerting enabled setting: %w", err)
 	}
 
 	uaCfg.DisabledOrgs = make(map[int64]struct{})

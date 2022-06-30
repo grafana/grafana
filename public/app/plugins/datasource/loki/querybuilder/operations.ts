@@ -400,9 +400,6 @@ function operationWithRangeVectorRendererAndParam(
 
 function getLineFilterRenderer(operation: string) {
   return function lineFilterRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
-    if (model.params[0] === '') {
-      return innerExpr;
-    }
     return `${innerExpr} ${operation} \`${model.params[0]}\``;
   };
 }

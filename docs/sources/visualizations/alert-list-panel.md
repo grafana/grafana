@@ -56,7 +56,6 @@ Choose which alert states to display in this panel.
 
 - Alerting / Firing
 - Pending
-- Inactive
 - No Data
 - Normal
 - Error

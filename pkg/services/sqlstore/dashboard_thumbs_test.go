@@ -5,17 +5,22 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/stretchr/testify/require"
 )
 
 var theme = models.ThemeDark
 var kind = models.ThumbnailKindDefault
 
 func TestIntegrationSqlStorage(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	var sqlStore *SQLStore
 	var savedFolder *models.Dashboard
 
@@ -310,7 +315,7 @@ func updateTestDashboard(t *testing.T, sqlStore *SQLStore, dashboard *models.Das
 		if affectedRows, err := sess.Insert(dashVersion); err != nil {
 			return err
 		} else if affectedRows == 0 {
-			return models.ErrDashboardNotFound
+			return dashboards.ErrDashboardNotFound
 		}
 
 		return nil

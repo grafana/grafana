@@ -64,7 +64,7 @@ export const ImportDashboardForm: FC<Props> = ({
     }
   }, [errors, getValues, isSubmitted, onSubmit]);
   const newLibraryPanels = inputs?.libraryPanels?.filter((i) => i.state === LibraryPanelInputState.New) ?? [];
-  const existingLibraryPanels = inputs?.libraryPanels?.filter((i) => i.state === LibraryPanelInputState.Exits) ?? [];
+  const existingLibraryPanels = inputs?.libraryPanels?.filter((i) => i.state === LibraryPanelInputState.Exists) ?? [];
 
   return (
     <>

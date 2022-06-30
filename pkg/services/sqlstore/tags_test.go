@@ -10,6 +10,9 @@ import (
 )
 
 func TestIntegrationSavingTags(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	ss := InitTestDB(t)
 
 	tagPairs := []*models.Tag{

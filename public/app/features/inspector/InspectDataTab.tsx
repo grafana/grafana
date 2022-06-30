@@ -16,11 +16,13 @@ import {
   toCSV,
   transformDataFrame,
   TimeZone,
+  CoreApp,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { reportInteraction } from '@grafana/runtime';
 import { Button, Spinner, Table } from '@grafana/ui';
 import { config } from 'app/core/config';
-import { dataFrameToLogsModel } from 'app/core/logs_model';
+import { dataFrameToLogsModel } from 'app/core/logsModel';
 import { PanelModel } from 'app/features/dashboard/state';
 import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
 import { transformToJaeger } from 'app/plugins/datasource/jaeger/responseTransform';
@@ -34,6 +36,7 @@ interface Props {
   isLoading: boolean;
   options: GetDataOptions;
   timeZone: TimeZone;
+  app?: CoreApp;
   data?: DataFrame[];
   panel?: PanelModel;
   onOptionsChange?: (options: GetDataOptions) => void;
@@ -107,7 +110,11 @@ export class InspectDataTab extends PureComponent<Props, State> {
   };
 
   exportLogsAsTxt = () => {
-    const { data, panel } = this.props;
+    const { data, panel, app } = this.props;
+    reportInteraction('grafana_logs_download_logs_clicked', {
+      app,
+      format: 'logs',
+    });
     const logsModel = dataFrameToLogsModel(data || [], undefined);
     let textToDownload = '';
 
@@ -223,7 +230,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
   }
 
   render() {
-    const { isLoading, options, data, panel, onOptionsChange } = this.props;
+    const { isLoading, options, data, panel, onOptionsChange, app } = this.props;
     const { dataFrameIndex, transformId, transformationOptions, selectedDataFrame, downloadForExcel } = this.state;
     const styles = getPanelInspectorStyles();
 
@@ -266,7 +273,15 @@ export class InspectDataTab extends PureComponent<Props, State> {
           />
           <Button
             variant="primary"
-            onClick={() => this.exportCsv(dataFrames[dataFrameIndex], { useExcelHeader: this.state.downloadForExcel })}
+            onClick={() => {
+              if (hasLogs) {
+                reportInteraction('grafana_logs_download_clicked', {
+                  app,
+                  format: 'csv',
+                });
+              }
+              this.exportCsv(dataFrames[dataFrameIndex], { useExcelHeader: this.state.downloadForExcel });
+            }}
             className={css`
               margin-bottom: 10px;
             `}

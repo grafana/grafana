@@ -5,11 +5,15 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { CombinedRule } from 'app/types/unified-alerting';
 
+import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { Annotation } from '../../utils/constants';
+import { isGrafanaRulerRule } from '../../utils/rules';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { DynamicTableWithGuidelines } from '../DynamicTableWithGuidelines';
+import { ProvisioningBadge } from '../Provisioning';
 import { RuleLocation } from '../RuleLocation';
+import { Tokenize } from '../Tokenize';
 
 import { RuleDetails } from './RuleDetails';
 import { RuleHealth } from './RuleHealth';
@@ -69,6 +73,8 @@ export const RulesTable: FC<Props> = ({
         isExpandable={true}
         items={items}
         renderExpandedContent={({ data: rule }) => <RuleDetails rule={rule} />}
+        pagination={{ itemsPerPage: DEFAULT_PER_PAGE_PAGINATION }}
+        paginationStyles={styles.pagination}
       />
     </div>
   );
@@ -85,8 +91,17 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   `,
   wrapper: css`
     width: auto;
-    background-color: ${theme.colors.background.secondary};
     border-radius: ${theme.shape.borderRadius()};
+  `,
+  pagination: css`
+    display: flex;
+    margin: 0;
+    padding-top: ${theme.spacing(1)};
+    padding-bottom: ${theme.spacing(0.25)};
+    justify-content: center;
+    border-left: 1px solid ${theme.colors.border.strong};
+    border-right: 1px solid ${theme.colors.border.strong};
+    border-bottom: 1px solid ${theme.colors.border.strong};
   `,
 });
 
@@ -117,6 +132,23 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean) {
         size: 5,
       },
       {
+        id: 'provisioned',
+        label: '',
+        // eslint-disable-next-line react/display-name
+        renderCell: ({ data: rule }) => {
+          const rulerRule = rule.rulerRule;
+          const isGrafanaManagedRule = isGrafanaRulerRule(rulerRule);
+
+          if (!isGrafanaManagedRule) {
+            return null;
+          }
+
+          const provenance = rulerRule.grafana_alert.provenance;
+          return provenance ? <ProvisioningBadge /> : null;
+        },
+        size: '100px',
+      },
+      {
         id: 'health',
         label: 'Health',
         // eslint-disable-next-line react/display-name
@@ -129,7 +161,9 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean) {
         id: 'summary',
         label: 'Summary',
         // eslint-disable-next-line react/display-name
-        renderCell: ({ data: rule }) => rule.annotations[Annotation.summary] ?? '',
+        renderCell: ({ data: rule }) => {
+          return <Tokenize input={rule.annotations[Annotation.summary] ?? ''} />;
+        },
         size: 5,
       });
     }

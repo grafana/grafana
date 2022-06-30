@@ -14,7 +14,7 @@ weight: 90
 
 Grafana's dashboard UI is all about building dashboards for visualization. Explore strips away the dashboard and panel options so that you can focus on the query. It helps you iterate until you have a working query and then think about building a dashboard.
 
-> Refer to [Role-based access control]({{< relref "../enterprise/access-control/" >}}) in Grafana Enterprise to understand how you can control access with role-based permissions.
+> Refer to [Role-based access control]({{< relref "../administration/roles-and-permissions/access-control/" >}}) in Grafana Enterprise to understand how you can control access with role-based permissions.
 
 If you just want to explore your data and do not want to create a dashboard, then Explore makes this much easier. If your data source supports graph and table data, then Explore shows the results both as a graph and a table. This allows you to see trends in the data and more details at the same time. See also:
 
@@ -25,9 +25,9 @@ If you just want to explore your data and do not want to create a dashboard, the
 
 ## Start exploring
 
-> Refer to [Role-based access Control]({{< relref "../enterprise/access-control/" >}}) in Grafana Enterprise to understand how you can manage Explore with role-based permissions.
+> Refer to [Role-based access Control]({{< relref "../administration/roles-and-permissions/access-control/" >}}) in Grafana Enterprise to understand how you can manage Explore with role-based permissions.
 
-In order to access Explore, you must have an editor or an administrator role, unless the [viewers_can_edit option]({{< relref "../setup-grafana/configure-grafana/#viewers_can_edit" >}}) is enabled. Refer to [About users and permissions]({{< relref "../administration/manage-users-and-permissions/about-users-and-permissions/" >}}) for more information on what each role has access to.
+In order to access Explore, you must have an editor or an administrator role, unless the [viewers_can_edit option]({{< relref "../setup-grafana/configure-grafana/#viewers_can_edit" >}}) is enabled. Refer to [About users and permissions]({{< relref "../administration/roles-and-permissions/" >}}) for more information on what each role has access to.
 
 To access Explore:
 

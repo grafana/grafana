@@ -15,13 +15,13 @@ import (
 type AlertRuleService struct {
 	defaultIntervalSeconds int64
 	baseIntervalSeconds    int64
-	ruleStore              store.RuleStore
+	ruleStore              RuleStore
 	provenanceStore        ProvisioningStore
 	xact                   TransactionManager
 	log                    log.Logger
 }
 
-func NewAlertRuleService(ruleStore store.RuleStore,
+func NewAlertRuleService(ruleStore RuleStore,
 	provenanceStore ProvisioningStore,
 	xact TransactionManager,
 	defaultIntervalSeconds int64,
@@ -53,6 +53,9 @@ func (service *AlertRuleService) GetAlertRule(ctx context.Context, orgID int64, 
 	return *query.Result, provenance, nil
 }
 
+// CreateAlertRule creates a new alert rule. This function will ignore any
+// interval that is set in the rule struct and use the already existing group
+// interval or the default one.
 func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule models.AlertRule, provenance models.Provenance) (models.AlertRule, error) {
 	if rule.UID == "" {
 		rule.UID = util.GenerateShortUID()
@@ -117,6 +120,9 @@ func (service *AlertRuleService) UpdateRuleGroup(ctx context.Context, orgID int6
 	})
 }
 
+// CreateAlertRule creates a new alert rule. This function will ignore any
+// interval that is set in the rule struct and fetch the current group interval
+// from database.
 func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, rule models.AlertRule, provenance models.Provenance) (models.AlertRule, error) {
 	storedRule, storedProvenance, err := service.GetAlertRule(ctx, rule.OrgID, rule.UID)
 	if err != nil {

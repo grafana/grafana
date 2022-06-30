@@ -338,7 +338,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   onRefresh = () => {
-    const { panel, isInView, width } = this.props;
+    const { dashboard, panel, isInView, width } = this.props;
 
     if (!isInView) {
       this.setState({ refreshWhenInView: true });
@@ -356,7 +356,13 @@ export class PanelChrome extends PureComponent<Props, State> {
       if (this.state.refreshWhenInView) {
         this.setState({ refreshWhenInView: false });
       }
-      panel.runAllPanelQueries(this.props.dashboard.id, this.props.dashboard.getTimezone(), timeData, width);
+      panel.runAllPanelQueries(
+        dashboard.id,
+        dashboard.getTimezone(),
+        timeData,
+        width,
+        dashboard.meta.publicDashboardAccessToken
+      );
     } else {
       // The panel should render on refresh as well if it doesn't have a query, like clock panel
       this.setState({

@@ -305,6 +305,21 @@ func (f *FakeRuleStore) GetNamespaceByTitle(_ context.Context, title string, org
 	return nil, fmt.Errorf("not found")
 }
 
+func (f *FakeRuleStore) GetNamespaceByUID(_ context.Context, uid string, orgID int64, _ *models2.SignedInUser) (*models2.Folder, error) {
+	f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{
+		Name:   "GetNamespaceByUID",
+		Params: []interface{}{orgID, uid},
+	})
+
+	folders := f.Folders[orgID]
+	for _, folder := range folders {
+		if folder.Uid == uid {
+			return folder, nil
+		}
+	}
+	return nil, fmt.Errorf("not found")
+}
+
 func (f *FakeRuleStore) UpdateAlertRules(_ context.Context, q []UpdateRule) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
