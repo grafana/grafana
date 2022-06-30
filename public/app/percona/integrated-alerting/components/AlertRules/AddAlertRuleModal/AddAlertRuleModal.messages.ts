@@ -4,18 +4,11 @@ export const Messages = {
     pagerDuty: 'PagerDuty',
     slack: 'Slack',
   },
-  severities: {
-    SEVERITY_CRITICAL: 'Critical',
-    SEVERITY_ERROR: 'High',
-    SEVERITY_WARNING: 'Warning',
-    SEVERITY_NOTICE: 'Notice',
-  },
   tooltips: {
     template: 'The alert template to use for this rule.',
     name: 'The name for this rule.',
     duration: 'The alert query duration, in seconds.',
-    severity:
-      'The severity level for the alert triggered by this rule. Either "Warning", "Notice", "High" or "Critical".',
+    severity: 'The severity level for the alert triggered by this rule.',
     channels: 'Which notification channels should be used to send the alert through.',
     filters: 'Apply rule only to required services or nodes.',
   },

@@ -1,3 +1,5 @@
+import { Severity } from 'app/percona/shared/core';
+
 export interface UploadAlertRuleTemplatePayload {
   yaml: string;
 }
@@ -9,13 +11,6 @@ export interface UpdateAlertRuleTemplatePayload {
 
 export interface DeleteAlertRuleTemplatePayload {
   name: string;
-}
-
-export enum Severity {
-  SEVERITY_CRITICAL = 'SEVERITY_CRITICAL',
-  SEVERITY_ERROR = 'SEVERITY_ERROR',
-  SEVERITY_WARNING = 'SEVERITY_WARNING',
-  SEVERITY_NOTICE = 'SEVERITY_NOTICE',
 }
 
 export interface AlertRuleTemplateGetPayload {
@@ -99,7 +94,7 @@ export interface TemplateAPI {
   params?: TemplateParamAPI[];
   expr: string;
   annotations?: TemplateAnnotation;
-  severity: Severity;
+  severity: keyof typeof Severity;
   for: string;
 }
 

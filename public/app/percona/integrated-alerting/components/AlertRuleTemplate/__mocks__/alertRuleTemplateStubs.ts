@@ -1,6 +1,5 @@
 import {
   FormattedTemplate,
-  Severity,
   SourceDescription,
   Template,
   TemplateParamType,
@@ -30,7 +29,7 @@ export const templateStubs: Template[] = [
       },
     ],
     expr: 'template_1_expression',
-    severity: Severity.SEVERITY_CRITICAL,
+    severity: 'SEVERITY_CRITICAL',
     for: '10s',
     annotations: {
       summary: 'template_1_alert_sample',
@@ -44,7 +43,7 @@ export const templateStubs: Template[] = [
     yaml: 'yaml file content',
     params: [],
     expr: '',
-    severity: Severity.SEVERITY_NOTICE,
+    severity: 'SEVERITY_NOTICE',
     for: '300s',
   },
   {
@@ -55,7 +54,7 @@ export const templateStubs: Template[] = [
     yaml: 'yaml file content',
     params: [],
     expr: '',
-    severity: Severity.SEVERITY_WARNING,
+    severity: 'SEVERITY_WARNING',
     for: '15s',
   },
   {
@@ -64,7 +63,7 @@ export const templateStubs: Template[] = [
     source: SourceDescription.USER_FILE,
     summary: 'Template',
     yaml: 'yaml file content',
-    severity: Severity.SEVERITY_NOTICE,
+    severity: 'SEVERITY_NOTICE',
     for: '20s',
     params: [
       {
@@ -100,7 +99,7 @@ export const templateStubs: Template[] = [
     source: SourceDescription.SAAS,
     summary: 'Template',
     yaml: 'yaml file content',
-    severity: Severity.SEVERITY_ERROR,
+    severity: 'SEVERITY_ERROR',
     for: '20s',
     params: [
       {

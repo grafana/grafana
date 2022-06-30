@@ -1,5 +1,5 @@
 import { SelectableValue } from '@grafana/data';
-import { Severity } from '../../AlertRuleTemplate/AlertRuleTemplate.types';
+import { Severity } from 'app/percona/shared/core';
 import { AlertRule, AlertRuleFilterType } from '../AlertRules.types';
 
 export interface AddAlertRuleModalProps {
@@ -13,7 +13,7 @@ export interface AddAlertRuleFormValues {
   duration: number;
   filters: FiltersForm[];
   notificationChannels: Array<SelectableValue<string>>;
-  severity: SelectableValue<Severity>;
+  severity: SelectableValue<keyof typeof Severity>;
   enabled: boolean;
   [field: string]: any;
 }

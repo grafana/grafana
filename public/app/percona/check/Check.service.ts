@@ -1,4 +1,4 @@
-import { API, PaginatedFomattedResponse } from 'app/percona/shared/core';
+import { API, PaginatedFomattedResponse, Severity } from 'app/percona/shared/core';
 import { api } from 'app/percona/shared/helpers/api';
 import { CancelToken } from 'axios';
 import {
@@ -10,15 +10,19 @@ import {
   FailedCheckSummary,
   ServiceFailedCheck,
 } from 'app/percona/check/types';
-import { AlertRuleSeverity } from '../integrated-alerting/components/AlertRules/AlertRules.types';
+
 import { formatLabels } from '../shared/helpers/labels';
 
 export const makeApiUrl: (segment: string) => string = (segment) => `${API.ALERTMANAGER}/${segment}`;
 const order = {
-  [AlertRuleSeverity.SEVERITY_CRITICAL]: 1,
-  [AlertRuleSeverity.SEVERITY_ERROR]: 2,
-  [AlertRuleSeverity.SEVERITY_WARNING]: 3,
-  [AlertRuleSeverity.SEVERITY_NOTICE]: 4,
+  [Severity.SEVERITY_EMERGENCY]: 1,
+  [Severity.SEVERITY_ALERT]: 2,
+  [Severity.SEVERITY_CRITICAL]: 3,
+  [Severity.SEVERITY_ERROR]: 4,
+  [Severity.SEVERITY_WARNING]: 5,
+  [Severity.SEVERITY_NOTICE]: 6,
+  [Severity.SEVERITY_INFO]: 7,
+  [Severity.SEVERITY_DEBUG]: 8,
 };
 const BASE_URL = '/v1/management/SecurityChecks';
 
@@ -34,13 +38,33 @@ export const CheckService = {
       token
     );
 
-    return result.map(({ service_name, service_id, critical_count = 0, warning_count = 0, notice_count = 0 }) => ({
-      serviceName: service_name,
-      serviceId: service_id,
-      criticalCount: critical_count,
-      warningCount: warning_count,
-      noticeCount: notice_count,
-    }));
+    return result.map(
+      ({
+        service_name,
+        service_id,
+        emergency_count = '0',
+        alert_count = '0',
+        critical_count = '0',
+        error_count = '0',
+        warning_count = '0',
+        notice_count = '0',
+        info_count = '0',
+        debug_count = '0',
+      }) => ({
+        serviceName: service_name,
+        serviceId: service_id,
+        counts: {
+          emergency: parseInt(emergency_count, 10),
+          alert: parseInt(alert_count, 10),
+          critical: parseInt(critical_count, 10),
+          error: parseInt(error_count, 10),
+          warning: parseInt(warning_count, 10),
+          notice: parseInt(notice_count, 10),
+          info: parseInt(info_count, 10),
+          debug: parseInt(debug_count, 10),
+        },
+      })
+    );
   },
   async getFailedCheckForService(
     serviceId: string,
@@ -78,7 +102,7 @@ export const CheckService = {
           }) => ({
             summary,
             description,
-            severity: AlertRuleSeverity[severity],
+            severity: Severity[severity],
             labels: formatLabels(labels),
             readMoreUrl: read_more_url,
             serviceName: service_name,

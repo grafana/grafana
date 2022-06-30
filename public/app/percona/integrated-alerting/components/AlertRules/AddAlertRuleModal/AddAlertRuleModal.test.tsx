@@ -1,6 +1,6 @@
 import React from 'react';
 import { AddAlertRuleModal } from './AddAlertRuleModal';
-import { AlertRule, AlertRuleSeverity } from '../AlertRules.types';
+import { AlertRule } from '../AlertRules.types';
 import { templateStubs } from '../../AlertRuleTemplate/__mocks__/alertRuleTemplateStubs';
 import { SEVERITY_OPTIONS } from './AddAlertRulesModal.constants';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
@@ -41,7 +41,7 @@ describe('AddAlertRuleModal', () => {
       params_values: [],
       default_for: '3600s',
       for: '3600s',
-      default_severity: AlertRuleSeverity.SEVERITY_CRITICAL,
+      default_severity: 'SEVERITY_CRITICAL',
       name: templateName,
       expr_template: '',
       template_name: templateName,

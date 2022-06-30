@@ -75,3 +75,14 @@ export interface ServerInfo {
   serverName: string;
   serverId: string;
 }
+
+export enum Severity {
+  SEVERITY_EMERGENCY = 'Emergency',
+  SEVERITY_ALERT = 'Alert',
+  SEVERITY_CRITICAL = 'Critical',
+  SEVERITY_ERROR = 'Error',
+  SEVERITY_WARNING = 'Warning',
+  SEVERITY_NOTICE = 'Notice',
+  SEVERITY_INFO = 'Info',
+  SEVERITY_DEBUG = 'Debug',
+}

@@ -1,5 +1,5 @@
-import { PrioritizedLabels } from 'app/percona/shared/core';
-import { AlertRulesListResponseRule, AlertRuleSeverity, AlertRule } from '../AlertRules/AlertRules.types';
+import { PrioritizedLabels, Severity } from 'app/percona/shared/core';
+import { AlertRulesListResponseRule, AlertRule } from '../AlertRules/AlertRules.types';
 
 export enum AlertStatus {
   STATUS_INVALID = 'Invalid',
@@ -14,7 +14,7 @@ export interface Alert {
   activeSince: string;
   labels: PrioritizedLabels;
   lastNotified: string;
-  severity: AlertRuleSeverity;
+  severity: Severity;
   status: AlertStatus[keyof AlertStatus];
   summary: string;
   rule?: AlertRule;
@@ -31,7 +31,7 @@ export interface AlertsListResponseAlert {
   labels: { [K: string]: string };
   updated_at?: string;
   rule?: AlertRulesListResponseRule;
-  severity: keyof typeof AlertRuleSeverity;
+  severity: keyof typeof Severity;
   status: keyof typeof AlertStatus;
   summary: string;
 }
