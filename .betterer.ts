@@ -5,6 +5,7 @@ import { ESLint, Linter } from 'eslint';
 export default {
   'no enzyme tests': () => regexp(/from 'enzyme'/g).include('**/*.test.*'),
   'better eslint': () => countEslintErrors().include('**/*.{ts,tsx}'),
+  // TODO fix this - it won't work properly in a precommit hook!
   'no undocumented stories': () => countUndocumentedStories().include('**/*.{story.tsx,mdx}'),
 };
 
@@ -60,8 +61,8 @@ function countEslintErrors() {
           .forEach((lintResult) => {
             const { messages } = lintResult;
             const file = fileTestResult.addFile(filePath, '');
-            messages.forEach((message) => {
-              file.addIssue(0, 0, message.message);
+            messages.forEach((message, index) => {
+              file.addIssue(0, 0, message.message, `${index}`);
             });
           });
       })
