@@ -26,11 +26,10 @@ export interface Props {
   activeItem?: NavModelItem;
   isOpen: boolean;
   navItems: NavModelItem[];
-  setMenuAnimationInProgress: (isInProgress: boolean) => void;
   onClose: () => void;
 }
 
-export function NavBarMenu({ activeItem, isOpen, navItems, onClose, setMenuAnimationInProgress }: Props) {
+export function NavBarMenu({ activeItem, isOpen, navItems, onClose }: Props) {
   const theme = useTheme2();
   const styles = getStyles(theme);
   const ANIMATION_DURATION = theme.transitions.duration.standard;
@@ -50,14 +49,7 @@ export function NavBarMenu({ activeItem, isOpen, navItems, onClose, setMenuAnima
   return (
     <OverlayContainer>
       <FocusScope contain restoreFocus autoFocus>
-        <CSSTransition
-          onEnter={() => setMenuAnimationInProgress(true)}
-          onExited={() => setMenuAnimationInProgress(false)}
-          appear={isOpen}
-          in={isOpen}
-          classNames={animStyles.overlay}
-          timeout={ANIMATION_DURATION}
-        >
+        <CSSTransition appear={isOpen} in={isOpen} classNames={animStyles.overlay} timeout={ANIMATION_DURATION}>
           <div data-testid="navbarmenu" ref={ref} {...overlayProps} {...dialogProps} className={styles.container}>
             <div className={styles.mobileHeader}>
               <Icon name="bars" size="xl" />
@@ -106,7 +98,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     left: 0,
     position: 'fixed',
     right: 0,
-    top: 0,
+    top: 80,
     zIndex: theme.zIndex.modalBackdrop,
   }),
   container: css({
@@ -220,7 +212,7 @@ const getAnimStyles = (theme: GrafanaTheme2, animationDuration: number) => {
   };
 };
 
-function NavItem({
+export function NavItem({
   link,
   activeItem,
   onClose,

@@ -16,17 +16,9 @@ jest.mock('@grafana/runtime', () => ({
 describe('NavBarMenu', () => {
   const mockOnClose = jest.fn();
   const mockNavItems: NavModelItem[] = [];
-  const mockSetMenuAnimationInProgress = jest.fn();
 
   beforeEach(() => {
-    render(
-      <NavBarMenu
-        isOpen
-        onClose={mockOnClose}
-        navItems={mockNavItems}
-        setMenuAnimationInProgress={mockSetMenuAnimationInProgress}
-      />
-    );
+    render(<NavBarMenu isOpen onClose={mockOnClose} navItems={mockNavItems} />);
   });
 
   it('should render the component', () => {

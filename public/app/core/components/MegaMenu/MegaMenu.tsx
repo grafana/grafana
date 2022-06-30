@@ -9,8 +9,9 @@ import { config } from '@grafana/runtime';
 import { useTheme2 } from '@grafana/ui';
 import { StoreState } from 'app/types';
 
-import { NavBarMenu } from '../NavBar/NavBarMenu';
 import { enrichConfigItems, enrichWithInteractionTracking, getActiveItem } from '../NavBar/utils';
+
+import { NavBarMenu } from './NavBarMenu';
 
 export interface Props {
   onClose: () => void;
@@ -47,7 +48,7 @@ export const MegaMenu = React.memo<Props>(({ onClose, searchBarHidden }) => {
     .filter((item) => item.section === NavSection.Plugin)
     .map((item) => enrichWithInteractionTracking(item, true));
   const configItems = enrichConfigItems(
-    navTree.filter((item) => item.section === NavSection.Config),
+    navTree.filter((item) => item.section === NavSection.Config && item && item.id !== 'help' && item.id !== 'profile'),
     location,
     toggleSwitcherModal
   ).map((item) => enrichWithInteractionTracking(item, true));
@@ -58,10 +59,9 @@ export const MegaMenu = React.memo<Props>(({ onClose, searchBarHidden }) => {
     <div className={styles.menuWrapper}>
       <NavBarMenu
         activeItem={activeItem}
-        isOpen={true}
         navItems={[homeItem, ...coreItems, ...pluginItems, ...configItems]}
         onClose={onClose}
-        setMenuAnimationInProgress={() => {}}
+        searchBarHidden={searchBarHidden}
       />
     </div>
   );
