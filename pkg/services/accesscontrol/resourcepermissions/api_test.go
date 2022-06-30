@@ -223,6 +223,16 @@ func TestApi_setBuiltinRolePermission(t *testing.T) {
 				{Action: "dashboards.permissions:write", Scope: "dashboards:id:1"},
 			},
 		},
+		{
+			desc:           "should set return http 403 when missing permissions",
+			resourceID:     "1",
+			builtInRole:    "Invalid",
+			expectedStatus: http.StatusForbidden,
+			permission:     "View",
+			permissions: []accesscontrol.Permission{
+				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
+			},
+		},
 	}
 
 	for _, tt := range tests {
