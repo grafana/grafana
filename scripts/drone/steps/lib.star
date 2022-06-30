@@ -539,6 +539,19 @@ def test_backend_integration_step(edition):
         ],
     }
 
+def betterer_frontend_step():
+    return {
+        'name': 'betterer-frontend',
+        'image': build_image,
+        'depends_on': [
+            'yarn-install',
+        ],
+        'commands': [
+            'yarn betterer ci',
+        ],
+        'failure': 'ignore',
+    }
+
 
 
 def test_frontend_step():
