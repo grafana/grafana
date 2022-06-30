@@ -1,3 +1,74 @@
+<!-- 9.0.1 START -->
+
+# 9.0.1 (2022-06-21)
+
+### Features and enhancements
+
+- **Alerting:** Add support for image annotation in Alertmanager alerts. [#50686](https://github.com/grafana/grafana/pull/50686), [@grobinson-grafana](https://github.com/grobinson-grafana)
+- **Alerting:** Add support for images in SensuGo alerts. [#50718](https://github.com/grafana/grafana/pull/50718), [@grobinson-grafana](https://github.com/grobinson-grafana)
+- **Alerting:** Add support for images in Threema alerts. [#50734](https://github.com/grafana/grafana/pull/50734), [@grobinson-grafana](https://github.com/grobinson-grafana)
+- **Alerting:** Adds Mimir to Alertmanager data source implementation. [#50943](https://github.com/grafana/grafana/pull/50943), [@gillesdemey](https://github.com/gillesdemey)
+- **Alerting:** Invalid setting of enabled for unified alerting should return error. [#49876](https://github.com/grafana/grafana/pull/49876), [@grobinson-grafana](https://github.com/grobinson-grafana)
+- **AzureMonitor:** Clean namespace when changing the resource. [#50311](https://github.com/grafana/grafana/pull/50311), [@andresmgot](https://github.com/andresmgot)
+- **AzureMonitor:** Update supported namespaces and filter resources by the right type. [#50788](https://github.com/grafana/grafana/pull/50788), [@andresmgot](https://github.com/andresmgot)
+- **CLI:** Allow relative symlinks in zip archives when installing plugins. [#50537](https://github.com/grafana/grafana/pull/50537), [@marefr](https://github.com/marefr)
+- **Dashboard:** Don't show unsaved changes modal for automatic schema changes. [#50822](https://github.com/grafana/grafana/pull/50822), [@torkelo](https://github.com/torkelo)
+- **Dashboard:** Unsaved changes warning should not trigger when only pluginVersion has changed. [#50677](https://github.com/grafana/grafana/pull/50677), [@torkelo](https://github.com/torkelo)
+- **Expression:** Execute hidden expressions. [#50636](https://github.com/grafana/grafana/pull/50636), [@yesoreyeram](https://github.com/yesoreyeram)
+- **Geomap:** Support showing tooltip content on click (not just hover). [#50985](https://github.com/grafana/grafana/pull/50985), [@ryantxu](https://github.com/ryantxu)
+- **Heatmap:** Remove alpha flag from new heatmap panel. [#50733](https://github.com/grafana/grafana/pull/50733), [@ryantxu](https://github.com/ryantxu)
+- **Instrumentation:** Define handlers for requests that are not handled with named handlers. [#50613](https://github.com/grafana/grafana/pull/50613), [@bergquist](https://github.com/bergquist)
+- **Log Panel:** Improve log row hover contrast and visibility. [#50908](https://github.com/grafana/grafana/pull/50908), [@Seyaji](https://github.com/Seyaji)
+- **Logs:** Handle backend-mode errors in histogram. [#50535](https://github.com/grafana/grafana/pull/50535), [@gabor](https://github.com/gabor)
+- **Loki:** Do not show histogram for instant queries. [#50711](https://github.com/grafana/grafana/pull/50711), [@gabor](https://github.com/gabor)
+- **Loki:** Handle data source configs with path in the url. [#50971](https://github.com/grafana/grafana/pull/50971), [@gabor](https://github.com/gabor)
+- **Loki:** Handle invalid query type values. [#50755](https://github.com/grafana/grafana/pull/50755), [@gabor](https://github.com/gabor)
+- **OAuth:** Redirect to login if no oauth module is found or if module is not configured. [#50661](https://github.com/grafana/grafana/pull/50661), [@kalleep](https://github.com/kalleep)
+- **OptionsUI:** Move internal options editors out of @grafana/ui. [#50739](https://github.com/grafana/grafana/pull/50739), [@ryantxu](https://github.com/ryantxu)
+- **Prometheus:** Don't show undefined for step in collapsed options in query editor when value is "auto". [#50511](https://github.com/grafana/grafana/pull/50511), [@aocenas](https://github.com/aocenas)
+- **Prometheus:** Show query patterns in all editor modes for Prometheus and Loki. [#50263](https://github.com/grafana/grafana/pull/50263), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Tempo:** Add link to Tempo Search with node service selected. [#49776](https://github.com/grafana/grafana/pull/49776), [@joey-grafana](https://github.com/joey-grafana)
+- **Time Series Panel:** Add Null Filling and "No Value" Support. [#50907](https://github.com/grafana/grafana/pull/50907), [@codeincarnate](https://github.com/codeincarnate)
+- **TimeSeries:** Add an option to set legend width. [#49126](https://github.com/grafana/grafana/pull/49126), [@bobrik](https://github.com/bobrik)
+- **Timeseries:** Improve cursor Y sync behavior. [#50740](https://github.com/grafana/grafana/pull/50740), [@ryantxu](https://github.com/ryantxu)
+- **Traces:** Do not use red in span colors as this looks like an error. [#50074](https://github.com/grafana/grafana/pull/50074), [@joey-grafana](https://github.com/joey-grafana)
+
+### Bug fixes
+
+- **Alerting:** Fix AM config overwrite when SQLite db is locked during sync. [#50951](https://github.com/grafana/grafana/pull/50951), [@JacobsonMT](https://github.com/JacobsonMT)
+- **Alerting:** Fix alert instances filtering for prom rules. [#50850](https://github.com/grafana/grafana/pull/50850), [@konrad147](https://github.com/konrad147)
+- **Alerting:** Fix alert rule page crashing when datasource contained URL unsafe characters. [#51105](https://github.com/grafana/grafana/pull/51105), [@gillesdemey](https://github.com/gillesdemey)
+- **Alerting:** Fix automatically select newly created folder option. [#50949](https://github.com/grafana/grafana/pull/50949), [@gillesdemey](https://github.com/gillesdemey)
+- **Alerting:** Fix removal of notification policy without labels matchers. [#50678](https://github.com/grafana/grafana/pull/50678), [@konrad147](https://github.com/konrad147)
+- **CloudWatch:** Allow hidden queries to be executed in case an ID is provided. [#50987](https://github.com/grafana/grafana/pull/50987), [@sunker](https://github.com/sunker)
+- **Dashboard:** Prevent non-repeating panels being dropped from repeated rows when collapsed/expanded. [#50764](https://github.com/grafana/grafana/pull/50764), [@ashharrison90](https://github.com/ashharrison90)
+- **Dashboards:** Fix folder picker not showing correct results when typing too fast. [#50303](https://github.com/grafana/grafana/pull/50303), [@joshhunt](https://github.com/joshhunt)
+- **Datasource:** Prevent panic when proxying for non-existing data source. [#50667](https://github.com/grafana/grafana/pull/50667), [@wbrowne](https://github.com/wbrowne)
+- **Explore:** Fix log context scroll to bottom. [#50600](https://github.com/grafana/grafana/pull/50600), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Explore:** Revert "Remove support for compact format URLs (#49350)". [#50873](https://github.com/grafana/grafana/pull/50873), [@gelicia](https://github.com/gelicia)
+- **Expressions:** Fixes dashboard schema migration issue that casued Expression datasource to be set on panel level. [#50945](https://github.com/grafana/grafana/pull/50945), [@torkelo](https://github.com/torkelo)
+- **Formatting:** Fixes valueFormats for a value of 0. [#50719](https://github.com/grafana/grafana/pull/50719), [@JoaoSilvaGrafana](https://github.com/JoaoSilvaGrafana)
+- **GrafanaData:** Fix week start for non-English browsers. [#50582](https://github.com/grafana/grafana/pull/50582), [@AgnesToulet](https://github.com/AgnesToulet)
+- **LibraryPanel:** Resizing a library panel to 6x3 no longer crashes the dashboard on startup. [#50400](https://github.com/grafana/grafana/pull/50400), [@ashharrison90](https://github.com/ashharrison90)
+- **LogRow:** Fix placement of icon. [#51010](https://github.com/grafana/grafana/pull/51010), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Loki:** Fix bug in labels framing. [#51015](https://github.com/grafana/grafana/pull/51015), [@gabor](https://github.com/gabor)
+- **Loki:** Fix issues with using query patterns. [#50414](https://github.com/grafana/grafana/pull/50414), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Loki:** Fix showing of duplicated label values in dropdown in query builder. [#50680](https://github.com/grafana/grafana/pull/50680), [@ivanahuckova](https://github.com/ivanahuckova)
+- **MSSQL:** Fix ParseFloat error. [#50815](https://github.com/grafana/grafana/pull/50815), [@zoltanbedi](https://github.com/zoltanbedi)
+- **Panels:** Fixes issue with showing 'Cannot visualize data' when query returned 0 rows. [#50485](https://github.com/grafana/grafana/pull/50485), [@torkelo](https://github.com/torkelo)
+- **Playlists:** Disable Create Playlist buttons for users with viewer role. [#50840](https://github.com/grafana/grafana/pull/50840), [@asymness](https://github.com/asymness)
+- **Plugins:** Fix typo in plugin data frames documentation. [#50554](https://github.com/grafana/grafana/pull/50554), [@osisoft-mbishop](https://github.com/osisoft-mbishop)
+- **Prometheus:** Fix body not being included in resource calls if they are POST. [#50833](https://github.com/grafana/grafana/pull/50833), [@aocenas](https://github.com/aocenas)
+- **RolePicker:** Fix submenu position on horizontal space overflow. [#50769](https://github.com/grafana/grafana/pull/50769), [@Clarity-89](https://github.com/Clarity-89)
+- **Tracing:** Fix trace links in traces panel. [#50028](https://github.com/grafana/grafana/pull/50028), [@connorlindsey](https://github.com/connorlindsey)
+
+### Deprecations
+
+Support for compact Explore URLs is deprecated and will be removed in a future release. Until then, when navigating to Explore using the deprecated format the URLs are automatically converted. If you have existing links pointing to Explore update them using the format generated by Explore upon navigation.
+
+You can identify a compact URL by its format. Compact URLs have the left (and optionally right) url parameter as an array of strings, for example `&left=["now-1h","now"...]`. The standard explore URLs follow a key/value pattern, for example `&left={"datasource":"test"...}`. Please be sure to check your dashboards for any hardcoded links to Explore and update them to the standard URL pattern. Issue [#50873](https://github.com/grafana/grafana/issues/50873)
+
+<!-- 9.0.1 END -->
 <!-- 9.0.0 START -->
 
 # 9.0.0 (2022-06-10)
@@ -276,34 +347,34 @@ to
     console.log(`Text "${copiedText}" was copied!`);
   }}
 />
-``` Issue [#49847](https://github.com/grafana/grafana/issues/49847)
+```
 
+Issue [#49847](https://github.com/grafana/grafana/issues/49847)
 
 The following RBAC action renames have been carried out:
 
-* `users.authtoken:update` -> `users.authtoken:write`;
-* `users.password:update` -> `users.password:write`;
-* `users.permissions:update` -> `users.permissions:write`;
-* `users.quotas:update` -> `users.quotas:write`;
-* `org.users.role:update` -> `org.users:write`;
-* `alert.instances:update` -> `alert.instances:write`;
-* `alert.rules:update` -> `alert.rules:write`;
-* `users.authtoken:list` -> `users.authtoken:read`;
-* `users.quotas:list` -> `users.quotas:read`;
-* `users.teams:read` -> replaced by `users.read` + `teams:read`
+- `users.authtoken:update` -> `users.authtoken:write`;
+- `users.password:update` -> `users.password:write`;
+- `users.permissions:update` -> `users.permissions:write`;
+- `users.quotas:update` -> `users.quotas:write`;
+- `org.users.role:update` -> `org.users:write`;
+- `alert.instances:update` -> `alert.instances:write`;
+- `alert.rules:update` -> `alert.rules:write`;
+- `users.authtoken:list` -> `users.authtoken:read`;
+- `users.quotas:list` -> `users.quotas:read`;
+- `users.teams:read` -> replaced by `users.read` + `teams:read`
 
 We've added a migration from the old action names to the new names and have updated our documentation. But you will have to update any scripts and provisioning files that are using the old action names. Issue [#49730](https://github.com/grafana/grafana/issues/49730)
 
-
 The following RBAC action renames have been carried out:
 
-* `reports.admin:write` -> `reports:write`;
-* `reports.admin:create` -> `reports:create`;
-* `licensing:update` -> `licensing:write`;
-* `roles:list` -> `roles:read`;
-* `teams.roles:list` -> `teams.roles:read`;
-* `users.roles:list` -> `users.roles:read`;
-* `users.permissions:list` -> `users.permissions:read`
+- `reports.admin:write` -> `reports:write`;
+- `reports.admin:create` -> `reports:create`;
+- `licensing:update` -> `licensing:write`;
+- `roles:list` -> `roles:read`;
+- `teams.roles:list` -> `teams.roles:read`;
+- `users.roles:list` -> `users.roles:read`;
+- `users.permissions:list` -> `users.permissions:read`
 
 We've added a migration from the old action names to the new names and have updated our documentation. But you will have to update any scripts and provisioning files that are using the old action names. Issue [#3372](https://github.com/grafana/grafana/issues/3372)
 
@@ -391,7 +462,7 @@ module.exports.getWebpackConfig = (config, options) => ({
     },
   },
 });
-````
+```
 
 Please refer to the webpack build error messages or the [official migration guide](https://webpack.js.org/migrate/5/) for assistance with fallbacks.
 
@@ -651,7 +722,7 @@ The change in behavior is that negative-valued series are now stacked downwards 
 
 The meaning of the default data source has now changed from being a persisted property in a panel. Before when you selected the default data source for a panel and later changed the default data source to another data source it would change all panels who were configured to use the default data source. From now on the default data source is just the default for new panels and changing the default will not impact any currently saved dashboards. Issue [#45132](https://github.com/grafana/grafana/issues/45132)
 
-The Tooltip component provided by `@grafana/ui` is no longer automatically interactive (that is you can hover onto it and click a link or select text). It will from now on by default close automatically when you mouse out from the trigger element. To make tooltips behave like before set the new `interactive` property to true.  
+The Tooltip component provided by `@grafana/ui` is no longer automatically interactive (that is you can hover onto it and click a link or select text). It will from now on by default close automatically when you mouse out from the trigger element. To make tooltips behave like before set the new `interactive` property to true.
  Issue [#45053](https://github.com/grafana/grafana/issues/45053)
 
 ### Deprecations
@@ -5090,3 +5161,4 @@ repo on July 1st. Make sure you have switched to the new repo by then. The new r
 - **Dashboard**: Panel property `minSpan` replaced by `maxPerRow`. Dashboard migration will automatically migrate all dashboard panels using the `minSpan` property to the new `maxPerRow` property [#12991](https://github.com/grafana/grafana/pull/12991)
 
 For older release notes, refer to the [CHANGELOG_ARCHIVE.md](https://github.com/grafana/grafana/blob/master/CHANGELOG_ARCHIVE.md)
+````

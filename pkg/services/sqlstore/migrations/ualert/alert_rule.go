@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
 	legacymodels "github.com/grafana/grafana/pkg/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -77,9 +78,11 @@ func (a *alertRule) makeVersion() *alertRuleVersion {
 }
 
 func addMigrationInfo(da *dashAlert) (map[string]string, map[string]string) {
-	lbls := da.ParsedSettings.AlertRuleTags
-	if lbls == nil {
-		lbls = make(map[string]string)
+	tagsMap := simplejson.NewFromAny(da.ParsedSettings.AlertRuleTags).MustMap()
+	lbls := make(map[string]string, len(tagsMap))
+
+	for k, v := range tagsMap {
+		lbls[k] = simplejson.NewFromAny(v).MustString()
 	}
 
 	annotations := make(map[string]string, 3)
