@@ -28,7 +28,7 @@ type DefaultAlertmanagerProvisioner struct {
 }
 
 func (prov *DefaultAlertmanagerProvisioner) Provision(ctx context.Context, cfg AlertmanagerProvisionerConfig) error {
-	prov.Logger.Info("starting to provision alert rules")
-	prov.Logger.Info("finished to provision alert rules")
+	prov.Logger.Info("starting to provision alertmanager")
+	prov.Logger.Info("finished to provision alertmanager")
 	return nil
 }

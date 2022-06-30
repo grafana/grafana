@@ -34,15 +34,16 @@ func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, pluginStore p
 	alertingService *alerting.AlertNotificationService, pluginSettings pluginsettings.Service,
 	searchService searchV2.SearchService,
 ) (*ProvisioningServiceImpl, error) {
+	logger := log.New("provisioning")
 	s := &ProvisioningServiceImpl{
 		Cfg:                          cfg,
 		SQLStore:                     sqlStore,
 		pluginStore:                  pluginStore,
 		EncryptionService:            encryptionService,
 		NotificationService:          notificatonService,
-		log:                          log.New("provisioning"),
+		log:                          logger,
 		newDashboardProvisioner:      dashboards.New,
-		alertRuleProvisioner:         prov_alerting.NewAlertRuleProvisioner(),
+		alertRuleProvisioner:         prov_alerting.NewAlertRuleProvisioner(logger),
 		alertmanagerProvisioner:      prov_alerting.NewAlertmanagerProvisioner(),
 		provisionNotifiers:           notifiers.Provision,
 		provisionDatasources:         datasources.Provision,
@@ -72,13 +73,14 @@ type ProvisioningService interface {
 
 // Add a public constructor for overriding service to be able to instantiate OSS as fallback
 func NewProvisioningServiceImpl() *ProvisioningServiceImpl {
+	logger := log.New("provisioning")
 	return &ProvisioningServiceImpl{
-		log:                     log.New("provisioning"),
+		log:                     logger,
 		newDashboardProvisioner: dashboards.New,
 		provisionNotifiers:      notifiers.Provision,
 		provisionDatasources:    datasources.Provision,
 		provisionPlugins:        plugins.Provision,
-		alertRuleProvisioner:    prov_alerting.NewAlertRuleProvisioner(),
+		alertRuleProvisioner:    prov_alerting.NewAlertRuleProvisioner(logger),
 		alertmanagerProvisioner: prov_alerting.NewAlertmanagerProvisioner(),
 	}
 }
