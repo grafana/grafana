@@ -107,8 +107,8 @@ func (kn *KafkaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 
 	var contexts []interface{}
 	_ = withStoredImages(ctx, kn.log, kn.images,
-		func(index int, image *ngmodels.Image) error {
-			if image != nil && image.URL != "" {
+		func(_ int, image ngmodels.Image) error {
+			if image.URL != "" {
 				imageJSON := simplejson.New()
 				imageJSON.Set("type", "image")
 				imageJSON.Set("src", image.URL)

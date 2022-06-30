@@ -46,57 +46,51 @@ var (
 	ErrImagesUnavailable = errors.New("alert screenshots are unavailable")
 )
 
-// For each alert, attempts to load the models.Image for an image token
-// associated with the alert, then calls forEachFunc with the index of the
-// alert and the retrieved image struct. If there is no image token, or the
-// image does not exist, forEachFunc will be called with a nil value for the
-// image. If forEachFunc returns an error, withStoredImages will return
-// immediately. If there is a runtime error retrieving images from the image
-// store, withStoredImages will attempt to continue executing, after logging
-// a warning.
-func withStoredImages(ctx context.Context, l log.Logger, imageStore ImageStore, forEachFunc func(index int, image *models.Image) error, alerts ...*types.Alert) error {
-	for i := range alerts {
-		err := withStoredImage(ctx, l, imageStore, forEachFunc, i, alerts...)
-		if err != nil {
-			// Stop iteration as forEachFunc has found the intended image or
-			// iterated the maximum number of images
-			if errors.Is(err, ErrImagesDone) {
-				return nil
-			}
-			return err
-		}
+type forEachImageFunc func(index int, image models.Image) error
+
+// getImage returns the image for the alert or an error. It returns a nil
+// image if the alert does not have an image token or the image does not exist.
+func getImage(ctx context.Context, l log.Logger, imageStore ImageStore, alert types.Alert) (*models.Image, error) {
+	token := getTokenFromAnnotations(alert.Annotations)
+	if token == "" {
+		return nil, nil
 	}
-	return nil
+
+	ctx, cancelFunc := context.WithTimeout(ctx, ImageStoreTimeout)
+	defer cancelFunc()
+
+	img, err := imageStore.GetImage(ctx, token)
+	if errors.Is(err, models.ErrImageNotFound) || errors.Is(err, ErrImagesUnavailable) {
+		return nil, nil
+	} else if err != nil {
+		l.Warn("failed to get image with token", "token", token, "err", err)
+		return nil, err
+	} else {
+		return img, nil
+	}
 }
 
-func withStoredImage(ctx context.Context, l log.Logger, imageStore ImageStore, imageFunc func(index int, image *models.Image) error, index int, alerts ...*types.Alert) error {
-	imgToken := getTokenFromAnnotations(alerts[index].Annotations)
-	if len(imgToken) == 0 {
-		err := imageFunc(index, nil)
+// withStoredImages retrieves the image for each alert and then calls forEachFunc
+// with the index of the alert and the retrieved image struct. If the alert does
+// not have an image token, or the image does not exist then forEachFunc will not be
+// called for that alert. If forEachFunc returns an error, withStoredImages will return
+// the error and not iterate the remaining alerts. A forEachFunc can return ErrImagesDone
+// to stop the iteration of remaining alerts if the intended image or maximum number of
+// images have been found.
+func withStoredImages(ctx context.Context, l log.Logger, imageStore ImageStore, forEachFunc forEachImageFunc, alerts ...*types.Alert) error {
+	for index, alert := range alerts {
+		img, err := getImage(ctx, l, imageStore, *alert)
 		if err != nil {
 			return err
+		} else if img != nil {
+			if err := forEachFunc(index, *img); err != nil {
+				if errors.Is(err, ErrImagesDone) {
+					return nil
+				}
+				return err
+			}
 		}
 	}
-
-	timeoutCtx, cancel := context.WithTimeout(ctx, ImageStoreTimeout)
-	img, err := imageStore.GetImage(timeoutCtx, imgToken)
-	cancel()
-
-	if errors.Is(err, models.ErrImageNotFound) || errors.Is(err, ErrImagesUnavailable) {
-		err := imageFunc(index, nil)
-		if err != nil {
-			return err
-		}
-	} else if err != nil {
-		// Ignore errors. Don't log "ImageUnavailable", which means the storage doesn't exist.
-		l.Warn("failed to retrieve image url from store", "err", err)
-	}
-
-	err = imageFunc(index, img)
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
