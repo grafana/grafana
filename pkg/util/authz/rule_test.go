@@ -1,0 +1,40 @@
+package authz
+
+import (
+	"encoding/json"
+	"fmt"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
+
+func TestCleanRelativePath(t *testing.T) {
+	rules := []AccessRule{
+		// {Path: "/", Verb: AccessAdmin, Kind: "*", Who: "Admin"},
+		// {Path: "/", Verb: AccessRead, Kind: "*", Who: "GroupA"},
+		// {Path: "/", Verb: AccessRead, Kind: "*", Who: "GroupB"},
+		// {Path: "/", Verb: AccessManage, Kind: "dash", Who: "GroupC"},
+		// {Path: "/", Verb: AccessManage, Kind: "ds", Who: "GroupC"},
+		// {Path: "/folder1", Deny: true, Verb: AccessAdmin, Kind: "*", Who: "GroupB"}, // remove access!
+		{Path: "/folder1", Verb: AccessAdmin, Kind: "*", Who: "GroupD"},
+		{Path: "/folder1/sub", Verb: AccessNone, Kind: "*", Who: "GroupD"},
+		{Path: "/aaa/bbb/cccc", Verb: AccessManage, Kind: "*", Who: "GroupD"},
+	}
+
+	access, err := buildAccessTrie(rules)
+	assert.NoError(t, err)
+
+	js, err := json.MarshalIndent(access, "", "  ")
+	assert.NoError(t, err)
+	fmt.Printf("%s\n", string(js))
+
+	assert.True(t, access.HasAccess("/folder1/something", "dash", AccessRead))
+	assert.False(t, access.HasAccess("/folder1/something", "dash", AccessAdmin))
+
+	for _, r := range rules {
+		fmt.Printf("RULE: %+v\n", r)
+	}
+
+	assert.Fail(t, "hello")
+	assert.NotEmpty(t, rules)
+}
