@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gofrs/uuid"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -153,8 +153,8 @@ func TestSavePublicDashboard(t *testing.T) {
 		// Time settings set by db
 		assert.Equal(t, timeSettings, pubdash.TimeSettings)
 		// accessToken is valid uuid
-		_, err = uuid.FromString(pubdash.AccessToken)
-		require.NoError(t, err)
+		_, err = uuid.Parse(pubdash.AccessToken)
+		require.NoError(t, err, "expected a valid UUID, got %s", pubdash.AccessToken)
 	})
 
 	t.Run("Validate pubdash has default time setting value", func(t *testing.T) {
