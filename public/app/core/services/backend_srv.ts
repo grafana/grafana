@@ -15,7 +15,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { AppEvents, DataQueryErrorType } from '@grafana/data';
 import { BackendSrv as BackendService, BackendSrvRequest, FetchError, FetchResponse } from '@grafana/runtime';
-import appEvents from 'app/core/app_events';
+import appEvents from 'app/core/appEvents';
 import { getConfig } from 'app/core/config';
 import { DashboardSearchHit } from 'app/features/search/types';
 import { TokenRevokedModal } from 'app/features/users/TokenRevokedModal';

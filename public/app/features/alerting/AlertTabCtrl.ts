@@ -4,7 +4,7 @@ import { DataQuery, DataSourceApi, rangeUtil } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import coreModule from 'app/angular/core_module';
 import { promiseToDigest } from 'app/angular/promiseToDigest';
-import appEvents from 'app/core/app_events';
+import appEvents from 'app/core/appEvents';
 import config from 'app/core/config';
 import { QueryPart } from 'app/features/alerting/state/query_part';
 import { PanelModel } from 'app/features/dashboard/state';

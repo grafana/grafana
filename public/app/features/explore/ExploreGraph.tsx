@@ -29,7 +29,7 @@ import {
   useStyles2,
   useTheme2,
 } from '@grafana/ui';
-import appEvents from 'app/core/app_events';
+import appEvents from 'app/core/appEvents';
 import { defaultGraphConfig, getGraphFieldConfig } from 'app/plugins/panel/timeseries/config';
 import { TimeSeriesOptions } from 'app/plugins/panel/timeseries/types';
 

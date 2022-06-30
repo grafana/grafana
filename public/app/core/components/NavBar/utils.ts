@@ -6,7 +6,7 @@ import { getConfig } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { ShowModalReactEvent } from '../../../types/events';
-import appEvents from '../../app_events';
+import appEvents from '../../appEvents';
 import { getFooterLinks } from '../Footer/Footer';
 import { HelpModal } from '../help/HelpModal';
 

@@ -1,7 +1,7 @@
 import { lastValueFrom } from 'rxjs';
 
 import { BackendSrvRequest } from '@grafana/runtime';
-import { appEvents } from 'app/core/app_events';
+import { appEvents } from 'app/core/appEvents';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { saveDashboard } from 'app/features/manage-dashboards/state/actions';
 import { DashboardMeta } from 'app/types';

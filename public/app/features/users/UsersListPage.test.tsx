@@ -10,7 +10,7 @@ import { Invitee, OrgUser } from 'app/types';
 import { Props, UsersListPage } from './UsersListPage';
 import { setUsersSearchPage, setUsersSearchQuery } from './state/reducers';
 
-jest.mock('../../core/app_events', () => ({
+jest.mock('../../core/appEvents', () => ({
   emit: jest.fn(),
 }));
 

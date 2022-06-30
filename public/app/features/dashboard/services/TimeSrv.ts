@@ -11,7 +11,7 @@ import {
   toUtc,
 } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import appEvents from 'app/core/app_events';
+import appEvents from 'app/core/appEvents';
 import { config } from 'app/core/config';
 import { contextSrv, ContextSrv } from 'app/core/services/context_srv';
 import { getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';

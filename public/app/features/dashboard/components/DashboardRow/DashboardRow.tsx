@@ -5,7 +5,7 @@ import { Unsubscribable } from 'rxjs';
 import { selectors } from '@grafana/e2e-selectors';
 import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
 import { Icon } from '@grafana/ui';
-import appEvents from 'app/core/app_events';
+import appEvents from 'app/core/appEvents';
 
 import { ShowConfirmModalEvent } from '../../../../types/events';
 import { DashboardModel } from '../../state/DashboardModel';

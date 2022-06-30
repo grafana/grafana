@@ -9,7 +9,7 @@ import { createFolder, getFolderById, searchFolders } from 'app/features/manage-
 import { DashboardSearchHit } from 'app/features/search/types';
 
 import { AccessControlAction, PermissionLevelString } from '../../../types';
-import appEvents from '../../app_events';
+import appEvents from '../../appEvents';
 
 export type FolderPickerFilter = (hits: DashboardSearchHit[]) => DashboardSearchHit[];
 

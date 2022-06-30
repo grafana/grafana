@@ -3,7 +3,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { Button, LegacyForms } from '@grafana/ui';
 const { Input } = LegacyForms;
-import appEvents from 'app/core/app_events';
+import appEvents from 'app/core/appEvents';
 import Page from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';

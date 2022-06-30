@@ -6,7 +6,7 @@ import { NavModel } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 
-import appEvents from '../../core/app_events';
+import appEvents from '../../core/appEvents';
 import { AlertRule } from '../../types';
 import { ShowModalReactEvent } from '../../types/events';
 
@@ -14,7 +14,7 @@ import { AlertHowToModal } from './AlertHowToModal';
 import { AlertRuleListUnconnected, Props } from './AlertRuleList';
 import { setSearchQuery } from './state/reducers';
 
-jest.mock('../../core/app_events', () => ({
+jest.mock('../../core/appEvents', () => ({
   publish: jest.fn(),
 }));
 

@@ -1,6 +1,6 @@
 import { colors, JsonExplorer } from '@grafana/ui/';
 
-import appEvents from './app_events';
+import appEvents from './appEvents';
 import { profiler } from './profiler';
 import { contextSrv } from './services/context_srv';
 import { KeybindingSrv } from './services/keybindingSrv';

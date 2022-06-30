@@ -117,7 +117,7 @@ exposeToPlugin('app/core/config', config);
 exposeToPlugin('app/core/time_series', TimeSeries);
 exposeToPlugin('app/core/time_series2', TimeSeries);
 exposeToPlugin('app/core/table_model', TableModel);
-exposeToPlugin('app/core/app_events', appEvents);
+exposeToPlugin('app/core/appEvents', appEvents);
 exposeToPlugin('app/core/core', {
   appEvents: appEvents,
   contextSrv: contextSrv,

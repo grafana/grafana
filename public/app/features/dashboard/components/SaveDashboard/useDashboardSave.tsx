@@ -4,7 +4,7 @@ import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 import { locationUtil } from '@grafana/data';
 import { locationService, reportInteraction } from '@grafana/runtime';
-import appEvents from 'app/core/app_events';
+import appEvents from 'app/core/appEvents';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
 import { updateDashboardName } from 'app/core/reducers/navBarTree';

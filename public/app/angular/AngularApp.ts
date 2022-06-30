@@ -9,7 +9,7 @@ import { extend } from 'lodash';
 
 import { getTemplateSrv } from '@grafana/runtime';
 import coreModule, { angularModules } from 'app/angular/core_module';
-import appEvents from 'app/core/app_events';
+import appEvents from 'app/core/appEvents';
 import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';

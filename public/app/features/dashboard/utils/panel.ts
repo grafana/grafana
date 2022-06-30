@@ -2,7 +2,7 @@ import { isString as _isString } from 'lodash';
 
 import { TimeRange, AppEvents, rangeUtil, dateMath, PanelModel as IPanelModel } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
-import appEvents from 'app/core/app_events';
+import appEvents from 'app/core/appEvents';
 import config from 'app/core/config';
 import { LS_PANEL_COPY_KEY, PANEL_BORDER } from 'app/core/constants';
 import store from 'app/core/store';

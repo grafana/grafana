@@ -6,7 +6,7 @@ import { Prompt } from 'react-router-dom';
 
 import { locationService } from '@grafana/runtime';
 import { ModalsContext } from '@grafana/ui';
-import { appEvents } from 'app/core/app_events';
+import { appEvents } from 'app/core/appEvents';
 import { contextSrv } from 'app/core/services/context_srv';
 import { SaveLibraryPanelModal } from 'app/features/library-panels/components/SaveLibraryPanelModal/SaveLibraryPanelModal';
 import { PanelModelWithLibraryPanel } from 'app/features/library-panels/types';

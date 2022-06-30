@@ -2,7 +2,7 @@ import { render, screen, fireEvent, getByText } from '@testing-library/react';
 import React from 'react';
 
 import { DataSourceApi, DataQuery } from '@grafana/data';
-import appEvents from 'app/core/app_events';
+import appEvents from 'app/core/appEvents';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import { ShowConfirmModalEvent } from 'app/types/events';
@@ -33,7 +33,7 @@ jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
   };
 });
 
-jest.mock('app/core/app_events', () => ({
+jest.mock('app/core/appEvents', () => ({
   publish: jest.fn(),
 }));
 

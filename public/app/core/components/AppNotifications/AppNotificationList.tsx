@@ -4,7 +4,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import { AppEvents } from '@grafana/data';
 import { VerticalGroup } from '@grafana/ui';
 import { notifyApp, hideAppNotification } from 'app/core/actions';
-import appEvents from 'app/core/app_events';
+import appEvents from 'app/core/appEvents';
 import { selectVisible } from 'app/core/reducers/appNotification';
 import { StoreState } from 'app/types';
 

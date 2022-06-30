@@ -4,7 +4,7 @@ import React from 'react';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { stylesFactory, useTheme, Select, Button, Field, InlineField, InlineSwitch, Alert } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
-import appEvents from 'app/core/app_events';
+import appEvents from 'app/core/appEvents';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { MAX_HISTORY_ITEMS } from 'app/core/history/RichHistoryLocalStorage';
 import { dispatch } from 'app/store/store';

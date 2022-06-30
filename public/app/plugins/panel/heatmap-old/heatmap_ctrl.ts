@@ -2,7 +2,7 @@ import { auto } from 'angular';
 import { defaultsDeep, includes, keys, map, reduce, min as _min, max as _max } from 'lodash';
 
 import { LegacyResponseData, PanelEvents, DataFrame, rangeUtil } from '@grafana/data';
-import appEvents from 'app/core/app_events';
+import appEvents from 'app/core/appEvents';
 import TimeSeries from 'app/core/time_series2';
 import kbn from 'app/core/utils/kbn';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';

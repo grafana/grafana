@@ -7,7 +7,7 @@ import { setLegacyAngularInjector, setAppEvents, setAngularLoader } from '@grafa
 import { colors } from '@grafana/ui';
 import coreModule from 'app/angular/core_module';
 import { AngularLoader } from 'app/angular/services/AngularLoader';
-import appEvents from 'app/core/app_events';
+import appEvents from 'app/core/appEvents';
 import config from 'app/core/config';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { initGrafanaLive } from 'app/features/live';

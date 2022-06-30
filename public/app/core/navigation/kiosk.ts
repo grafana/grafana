@@ -2,7 +2,7 @@ import { AppEvents } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
 import { KioskMode } from '../../types';
-import appEvents from '../app_events';
+import appEvents from '../appEvents';
 
 export function toggleKioskMode() {
   let kiosk = locationService.getSearchObject().kiosk;

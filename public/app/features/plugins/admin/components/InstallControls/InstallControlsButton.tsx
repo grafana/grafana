@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 import { AppEvents } from '@grafana/data';
 import { Button, HorizontalGroup, ConfirmModal } from '@grafana/ui';
-import appEvents from 'app/core/app_events';
+import appEvents from 'app/core/appEvents';
 
 import { useInstallStatus, useUninstallStatus, useInstall, useUninstall } from '../../state/hooks';
 import { CatalogPlugin, PluginStatus, Version } from '../../types';

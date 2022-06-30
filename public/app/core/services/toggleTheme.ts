@@ -1,7 +1,7 @@
 import { createTheme } from '@grafana/data';
 import { ThemeChangedEvent } from '@grafana/runtime';
 
-import appEvents from '../app_events';
+import appEvents from '../appEvents';
 import { config } from '../config';
 import { contextSrv } from '../core';
 
