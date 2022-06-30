@@ -22,8 +22,8 @@ import {
 } from '@grafana/runtime';
 import { toTestingStatus } from '@grafana/runtime/src/utils/queryResponse';
 
-import { VariableWithMultiSupport } from '../../../../features/variables/types';
-import { getSearchFilterScopedVar } from '../../../../features/variables/utils';
+import { VariableWithMultiSupport } from '../../../variables/types';
+import { getSearchFilterScopedVar } from '../../../variables/utils';
 import {
   DB,
   SQLQuery,

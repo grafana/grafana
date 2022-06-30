@@ -196,7 +196,7 @@ export function QueryHeader({
           isOpen={showConfirm}
           onCopy={() => {
             setShowConfirm(false);
-            copyToClipboard(query.rawSql);
+            copyToClipboard(query.rawSql!);
             onChange({
               ...query,
               rawSql: toRawSql(query),
