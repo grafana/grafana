@@ -4134,11 +4134,11 @@ exports[`better eslint`] = {
       [37, 48, 3, "Unexpected any. Specify a different type.", "193409811"],
       [50, 46, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/alerting/state/alertDef.ts:2887521080": [
+    "public/app/features/alerting/state/alertDef.ts:1683373860": [
       [78, 34, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [159, 34, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [174, 4, 14, "Do not use any type assertions.", "3854427458"],
-      [178, 36, 3, "Unexpected any. Specify a different type.", "193409811"]
+      [165, 34, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [180, 4, 14, "Do not use any type assertions.", "3854427458"],
+      [184, 36, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/alerting/state/query_part.ts:2255335987": [
       [4, 10, 3, "Unexpected any. Specify a different type.", "193409811"],
