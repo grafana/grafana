@@ -18,6 +18,16 @@
   "bin": {
     "grafana-toolkit": "./bin/grafana-toolkit.js"
   },
+  "publishConfig": {
+    "bin": {
+      "grafana-toolkit": "./dist/bin/grafana-toolkit.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md"
+  ],
   "scripts": {
     "build": "grafana-toolkit toolkit:build",
     "clean": "rimraf ./dist ./compiled",
