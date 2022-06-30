@@ -18,5 +18,5 @@ interface SQLGroupByRowProps {
 export function SQLGroupByRow({ fields, query, onQueryChange, db }: SQLGroupByRowProps) {
   const { onSqlChange } = useSqlChange({ query, onQueryChange, db });
 
-  return <GroupByRow columns={fields} sql={query.sql} onSqlChange={onSqlChange} />;
+  return <GroupByRow columns={fields} sql={query.sql!} onSqlChange={onSqlChange} />;
 }

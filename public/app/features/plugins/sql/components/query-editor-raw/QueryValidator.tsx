@@ -38,7 +38,7 @@ export function QueryValidator({ db, query, onValidate, range }: QueryValidatorP
 
   const [state, validateQuery] = useAsyncFn(
     async (q: SQLQuery) => {
-      if (q.rawSql.trim() === '') {
+      if (q.rawSql?.trim() === '') {
         return null;
       }
 

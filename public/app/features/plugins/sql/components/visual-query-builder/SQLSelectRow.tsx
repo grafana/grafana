@@ -18,5 +18,5 @@ interface SQLSelectRowProps {
 export function SQLSelectRow({ fields, query, onQueryChange, db }: SQLSelectRowProps) {
   const { onSqlChange } = useSqlChange({ query, onQueryChange, db });
 
-  return <SelectRow columns={fields} sql={query.sql} onSqlChange={onSqlChange} />;
+  return <SelectRow columns={fields} sql={query.sql!} onSqlChange={onSqlChange} />;
 }

@@ -24,7 +24,7 @@ export function SQLOrderByRow({ fields, query, onQueryChange, db }: SQLOrderByRo
       {
         value: '',
         label: 'Selected columns',
-        options: query.sql.columns?.map((c, i) => ({
+        options: query.sql?.columns?.map((c, i) => ({
           value: i + 1,
           label: c.name
             ? `${i + 1} - ${c.name}(${c.parameters?.map((p) => `${p.name}`)})`
@@ -36,5 +36,5 @@ export function SQLOrderByRow({ fields, query, onQueryChange, db }: SQLOrderByRo
     ];
   }
 
-  return <OrderByRow sql={query.sql} onSqlChange={onSqlChange} columns={columnsWithIndices} />;
+  return <OrderByRow sql={query.sql!} onSqlChange={onSqlChange} columns={columnsWithIndices} />;
 }

@@ -37,7 +37,7 @@ export function QueryEditorRaw({ children, onChange, query, width, height, compl
     <SQLEditor
       width={width}
       height={height}
-      query={query.rawSql}
+      query={query.rawSql!}
       onChange={onRawQueryChange}
       language={{ id: 'sql', completionProvider, formatter: formatSQL }}
     >
