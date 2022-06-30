@@ -2,8 +2,7 @@
   "compilerOptions": {
     "declarationDir": "dist",
     "noUnusedLocals": false,
-    "outDir": "compiled",
-    "isolatedModules": false
+    "outDir": "compiled"
   },
   "exclude": ["../dist/**/*"],
   "extends": "../tsconfig.json",
