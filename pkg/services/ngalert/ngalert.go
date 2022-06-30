@@ -133,7 +133,7 @@ func (ng *AlertNG) init() error {
 		BaseInterval:            ng.Cfg.UnifiedAlerting.BaseInterval,
 		Logger:                  ng.Log,
 		MaxAttempts:             ng.Cfg.UnifiedAlerting.MaxAttempts,
-		Evaluator:               eval.NewEvaluator(ng.Cfg, ng.Log, ng.DataSourceCache, ng.SecretsService),
+		Evaluator:               eval.NewEvaluator(ng.Cfg, ng.Log, ng.DataSourceCache, ng.SecretsService, ng.ExpressionService),
 		InstanceStore:           store,
 		RuleStore:               store,
 		AdminConfigStore:        store,
@@ -151,8 +151,8 @@ func (ng *AlertNG) init() error {
 		appUrl = nil
 	}
 
-	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), appUrl, store, store, ng.SQLStore, ng.dashboardService, ng.imageService)
-	scheduler := schedule.NewScheduler(schedCfg, ng.ExpressionService, appUrl, stateManager, ng.bus)
+	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), appUrl, store, store, ng.dashboardService, ng.imageService, clock.New())
+	scheduler := schedule.NewScheduler(schedCfg, appUrl, stateManager, ng.bus)
 
 	ng.stateManager = stateManager
 	ng.schedule = scheduler

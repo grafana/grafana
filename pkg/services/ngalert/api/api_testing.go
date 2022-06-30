@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -20,16 +19,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/web"
 )
 
 type TestingApiSrv struct {
 	*AlertingProxy
-	ExpressionService *expr.Service
-	DatasourceCache   datasources.CacheService
-	log               log.Logger
-	accessControl     accesscontrol.AccessControl
-	evaluator         eval.Evaluator
+	DatasourceCache datasources.CacheService
+	log             log.Logger
+	accessControl   accesscontrol.AccessControl
+	evaluator       eval.Evaluator
 }
 
 func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *models.ReqContext, body apimodels.TestRulePayload) response.Response {
@@ -58,7 +55,7 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *models.ReqContext, body a
 		now = timeNow()
 	}
 
-	evalResults, err := srv.evaluator.ConditionEval(&evalCond, now, srv.ExpressionService)
+	evalResults, err := srv.evaluator.ConditionEval(&evalCond, now)
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "Failed to evaluate conditions")
 	}
@@ -69,13 +66,12 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *models.ReqContext, body a
 	})
 }
 
-func (srv TestingApiSrv) RouteTestRuleConfig(c *models.ReqContext, body apimodels.TestRulePayload) response.Response {
+func (srv TestingApiSrv) RouteTestRuleConfig(c *models.ReqContext, body apimodels.TestRulePayload, datasourceUID string) response.Response {
 	if body.Type() != apimodels.LoTexRulerBackend {
 		return ErrResp(http.StatusBadRequest, errors.New("unexpected payload"), "")
 	}
 
 	var path string
-	datasourceUID := web.Params(c.Req)[":DatasourceUID"]
 	ds, err := srv.DatasourceCache.GetDatasourceByUID(context.Background(), datasourceUID, c.SignedInUser, c.SkipCache)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to get datasource")
@@ -125,7 +121,7 @@ func (srv TestingApiSrv) RouteEvalQueries(c *models.ReqContext, cmd apimodels.Ev
 		return ErrResp(http.StatusBadRequest, err, "invalid queries or expressions")
 	}
 
-	evalResults, err := srv.evaluator.QueriesAndExpressionsEval(c.SignedInUser.OrgId, cmd.Data, now, srv.ExpressionService)
+	evalResults, err := srv.evaluator.QueriesAndExpressionsEval(c.SignedInUser.OrgId, cmd.Data, now)
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "Failed to evaluate queries and expressions")
 	}

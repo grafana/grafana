@@ -154,6 +154,7 @@ func (s *Service) collectSystemStats(ctx context.Context) (map[string]interface{
 	m["stats.api_keys.count"] = statsQuery.Result.APIKeys
 	m["stats.data_keys.count"] = statsQuery.Result.DataKeys
 	m["stats.active_data_keys.count"] = statsQuery.Result.ActiveDataKeys
+	m["stats.public_dashboards.count"] = statsQuery.Result.PublicDashboards
 
 	ossEditionCount := 1
 	enterpriseEditionCount := 0
@@ -255,7 +256,7 @@ func (s *Service) collectDatasourceStats(ctx context.Context) (map[string]interf
 
 func (s *Service) collectElasticStats(ctx context.Context) (map[string]interface{}, error) {
 	m := map[string]interface{}{}
-	esDataSourcesQuery := models.GetDataSourcesByTypeQuery{Type: models.DS_ES}
+	esDataSourcesQuery := datasources.GetDataSourcesByTypeQuery{Type: datasources.DS_ES}
 	if err := s.sqlstore.GetDataSourcesByType(ctx, &esDataSourcesQuery); err != nil {
 		s.log.Error("Failed to get elasticsearch json data", "error", err)
 		return nil, err
@@ -343,6 +344,8 @@ func (s *Service) updateTotalStats(ctx context.Context) bool {
 	metrics.StatsTotalDataKeys.With(prometheus.Labels{"active": "true"}).Set(float64(statsQuery.Result.ActiveDataKeys))
 	inactiveDataKeys := statsQuery.Result.DataKeys - statsQuery.Result.ActiveDataKeys
 	metrics.StatsTotalDataKeys.With(prometheus.Labels{"active": "false"}).Set(float64(inactiveDataKeys))
+
+	metrics.MStatTotalPublicDashboards.Set(float64(statsQuery.Result.PublicDashboards))
 
 	dsStats := models.GetDataSourceStatsQuery{}
 	if err := s.sqlstore.GetDataSourceStats(ctx, &dsStats); err != nil {
