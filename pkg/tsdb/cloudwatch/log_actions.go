@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	LimitExceededException = "LimitExceededException"
+	limitExceededException = "LimitExceededException"
 	defaultLimit           = int64(10)
 )
 
@@ -273,7 +273,7 @@ func (e *cloudWatchExecutor) handleStartQuery(ctx context.Context, logsClient cl
 		var awsErr awserr.Error
 		if errors.As(err, &awsErr) && awsErr.Code() == "LimitExceededException" {
 			plog.Debug("executeStartQuery limit exceeded", "err", awsErr)
-			return nil, &AWSError{Code: LimitExceededException, Message: err.Error()}
+			return nil, &AWSError{Code: limitExceededException, Message: err.Error()}
 		}
 		return nil, err
 	}
