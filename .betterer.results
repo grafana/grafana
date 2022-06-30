@@ -4720,7 +4720,7 @@ exports[`better eslint`] = {
     "public/app/features/canvas/runtime/root.tsx:2845174121": [
       [24, 19, 36, "Do not use any type assertions.", "1413431594"]
     ],
-    "public/app/features/canvas/runtime/scene.tsx:4221384430": [
+    "public/app/features/canvas/runtime/scene.tsx:2928385813": [
       [155, 61, 25, "Do not use any type assertions.", "588553285"],
       [160, 42, 25, "Do not use any type assertions.", "588553285"]
     ],
@@ -5191,15 +5191,17 @@ exports[`better eslint`] = {
     "public/app/features/dashboard/dashgrid/LazyLoader.tsx:2512448803": [
       [52, 23, 60, "Do not use any type assertions.", "1332568031"]
     ],
-    "public/app/features/dashboard/dashgrid/PanelChrome.test.tsx:3660061275": [
+    "public/app/features/dashboard/dashgrid/PanelChrome.test.tsx:1879414306": [
+      [21, 39, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [21, 44, 3, "Unexpected any. Specify a different type.", "193409811"],
       [24, 27, 184, "Do not use any type assertions.", "2137031202"],
       [24, 27, 164, "Do not use any type assertions.", "4126965436"],
       [30, 18, 53, "Do not use any type assertions.", "3326921050"],
       [30, 18, 42, "Do not use any type assertions.", "1020693066"],
-      [45, 15, 188, "Do not use any type assertions.", "3092730874"],
-      [45, 15, 170, "Do not use any type assertions.", "2122268803"],
-      [53, 12, 104, "Do not use any type assertions.", "4098692416"],
-      [53, 12, 89, "Do not use any type assertions.", "504716845"]
+      [45, 15, 140, "Do not use any type assertions.", "3815914317"],
+      [45, 15, 122, "Do not use any type assertions.", "1489375732"],
+      [50, 12, 104, "Do not use any type assertions.", "4098692416"],
+      [50, 12, 89, "Do not use any type assertions.", "504716845"]
     ],
     "public/app/features/dashboard/dashgrid/PanelChrome.tsx:451829163": [
       [55, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -5488,15 +5490,15 @@ exports[`better eslint`] = {
     "public/app/features/dashboard/state/reducers.ts:2272523560": [
       [64, 9, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/dashboard/utils/getPanelMenu.test.ts:2133911514": [
-      [98, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [99, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [100, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [167, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [169, 21, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [175, 16, 66, "Do not use any type assertions.", "1695061805"],
-      [184, 15, 30, "Do not use any type assertions.", "3826941506"],
-      [184, 42, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/features/dashboard/utils/getPanelMenu.test.ts:2434529719": [
+      [99, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [100, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [101, 30, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [168, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [170, 21, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [176, 16, 66, "Do not use any type assertions.", "1695061805"],
+      [185, 15, 30, "Do not use any type assertions.", "3826941506"],
+      [185, 42, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/dashboard/utils/getPanelMenu.ts:4203551117": [
       [27, 47, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -11191,9 +11193,10 @@ exports[`better eslint`] = {
       [40, 64, 3, "Unexpected any. Specify a different type.", "193409811"],
       [40, 69, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/panel/canvas/editor/LayerElementListEditor.tsx:2123096129": [
-      [21, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [40, 30, 44, "Do not use any type assertions.", "712744497"]
+    "public/app/plugins/panel/canvas/editor/LayerElementListEditor.tsx:3239725063": [
+      [20, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [39, 30, 44, "Do not use any type assertions.", "712744497"],
+      [49, 20, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/plugins/panel/canvas/editor/PlacementEditor.tsx:3236159461": [
       [33, 53, 3, "Unexpected any. Specify a different type.", "193409811"]
