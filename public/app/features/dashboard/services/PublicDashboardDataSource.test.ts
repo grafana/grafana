@@ -1,15 +1,10 @@
 import { of } from 'rxjs';
-import { BackendSrv, BackendSrvRequest } from 'src/services';
 
 import { DataQueryRequest, DataSourceInstanceSettings, DataSourceRef } from '@grafana/data';
+import { BackendSrvRequest, BackendSrv, DataSourceWithBackend } from '@grafana/runtime';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
-import {
-  PUBLIC_DATASOURCE,
-  PublicDashboardDataSource,
-} from '../../../../public/app/features/dashboard/services/PublicDashboardDataSource';
-import { MIXED_DATASOURCE_NAME } from '../../../../public/app/plugins/datasource/mixed/MixedDataSource';
-
-import { DataSourceWithBackend } from './DataSourceWithBackend';
+import { PublicDashboardDataSource, PUBLIC_DATASOURCE } from './PublicDashboardDataSource';
 
 const mockDatasourceRequest = jest.fn();
 
