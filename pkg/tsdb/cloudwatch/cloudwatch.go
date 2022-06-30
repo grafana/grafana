@@ -410,9 +410,8 @@ func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, req *back
 		}
 
 		var frames []*data.Frame
-		statsGroups := model.StatsGroups
-		if len(statsGroups) > 0 && len(dataframe.Fields) > 0 {
-			frames, err = groupResults(dataframe, statsGroups)
+		if len(model.StatsGroups) > 0 && len(dataframe.Fields) > 0 {
+			frames, err = groupResults(dataframe, model.StatsGroups)
 			if err != nil {
 				return nil, err
 			}
