@@ -9,7 +9,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/components/imguploader"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -111,7 +110,7 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *ngmodels.Alert
 	if err != nil {
 		// TODO: Check for screenshot upload failures. These images should still be
 		// stored because we have a local disk path that could be useful.
-		if errors.Is(err, models.ErrDashboardNotFound) {
+		if errors.Is(err, dashboards.ErrDashboardNotFound) {
 			return nil, ErrNoDashboard
 		}
 		return nil, err

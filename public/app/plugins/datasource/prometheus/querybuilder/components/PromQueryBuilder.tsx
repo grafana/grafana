@@ -21,7 +21,6 @@ export interface Props {
   datasource: PrometheusDatasource;
   onChange: (update: PromVisualQuery) => void;
   onRunQuery: () => void;
-  nested?: boolean;
   data?: PanelData;
 }
 
