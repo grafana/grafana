@@ -133,7 +133,7 @@ func (d *DashboardStore) UpdatePublicDashboardConfig(ctx context.Context, cmd mo
 			cmd.PublicDashboard.IsEnabled,
 			string(timeSettingsJSON),
 			cmd.PublicDashboard.UpdatedBy,
-			cmd.PublicDashboard.UpdatedAt,
+			cmd.PublicDashboard.UpdatedAt.UTC().Format("2006-01-02 15:04:05"),
 			cmd.PublicDashboard.Uid)
 
 		if err != nil {
