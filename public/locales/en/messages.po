@@ -34,6 +34,10 @@ msgstr "French"
 msgid "common.save"
 msgstr "Save"
 
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.tv-button"
+msgstr "Cycle view mode"
+
 #: public/app/core/components/NavBar/navBarItem-translations.ts
 msgid "nav.alerting"
 msgstr "Alerting"

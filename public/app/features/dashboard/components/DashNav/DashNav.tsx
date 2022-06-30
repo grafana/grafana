@@ -1,3 +1,4 @@
+import { t } from '@lingui/macro';
 import React, { FC, ReactNode } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { useLocation } from 'react-router-dom';
@@ -199,15 +200,17 @@ export const DashNav = React.memo<Props>((props) => {
     );
   };
 
+  const tooltip = t({
+    id: 'dashboard.toolbar.tv-button',
+    message: 'Cycle view mode',
+  });
   const renderRightActionsButton = () => {
     const { dashboard, onAddPanel, isFullscreen, kioskMode } = props;
     const { canSave, canEdit, showSettings } = dashboard.meta;
     const { snapshot } = dashboard;
     const snapshotUrl = snapshot && snapshot.originalUrl;
     const buttons: ReactNode[] = [];
-    const tvButton = (
-      <ToolbarButton tooltip="Cycle view mode" icon="monitor" onClick={onToggleTVMode} key="tv-button" />
-    );
+    const tvButton = <ToolbarButton tooltip={tooltip} icon="monitor" onClick={onToggleTVMode} key="tv-button" />;
 
     if (isPlaylistRunning()) {
       return [renderPlaylistControls(), renderTimeControls()];

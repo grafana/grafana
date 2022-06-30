@@ -34,6 +34,10 @@ msgstr ""
 msgid "common.save"
 msgstr ""
 
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.tv-button"
+msgstr ""
+
 #: public/app/core/components/NavBar/navBarItem-translations.ts
 msgid "nav.alerting"
 msgstr ""
