@@ -56,7 +56,7 @@ Every commit to main that has changes within the `packages` directory is a subje
 To build individual packages, run:
 
 ```
-yarn packages:build --scope=<data|e2e|e2e-selectors|runtime|schema|toolkit|ui>
+yarn packages:build --scope=@grafana/<data|e2e|e2e-selectors|runtime|schema|toolkit|ui>
 ```
 
 ### Setting up @grafana/\* packages for local development

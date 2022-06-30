@@ -29,7 +29,7 @@
     "bundle": "rollup -c rollup.config.ts",
     "clean": "rimraf ./dist ./compiled",
     "docsExtract": "mkdir -p ../../reports/docs && api-extractor run 2>&1 | tee ../../reports/docs/$(basename $(pwd)).log",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --emitDeclarationOnly false --noEmit"
   },
   "devDependencies": {
     "@grafana/tsconfig": "^1.2.0-rc1",

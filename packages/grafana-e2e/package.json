@@ -42,7 +42,7 @@
     "start": "cypress run --browser=chrome",
     "start-benchmark": "CYPRESS_NO_COMMAND_LOG=1 yarn start",
     "test": "pushd test && node ../dist/bin/grafana-e2e.js run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --emitDeclarationOnly false --noEmit"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "13.3.0",

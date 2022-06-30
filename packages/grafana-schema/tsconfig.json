@@ -5,7 +5,7 @@
     "isolatedModules": true,
     "rootDirs": ["."]
   },
-  "exclude": ["dist/**/*"],
+  "exclude": ["dist/**/*", "src/schema/dashboard/dashboard_experimental.gen.ts"],
   "extends": "@grafana/tsconfig",
   "include": ["src/**/*.ts*"]
 }
