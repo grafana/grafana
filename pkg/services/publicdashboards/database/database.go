@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -107,7 +108,7 @@ func (d *PublicDashboardStoreImpl) GenerateNewPublicDashboardUid(ctx context.Con
 // Retrieves public dashboard configuration
 func (d *PublicDashboardStoreImpl) GetPublicDashboardConfig(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error) {
 	if dashboardUid == "" {
-		return nil, models.ErrDashboardIdentifierNotSet
+		return nil, dashboards.ErrDashboardIdentifierNotSet
 	}
 
 	pdRes := &PublicDashboard{OrgId: orgId, DashboardUid: dashboardUid}
@@ -146,10 +147,21 @@ func (d *PublicDashboardStoreImpl) SavePublicDashboardConfig(ctx context.Context
 	return &cmd.PublicDashboard, nil
 }
 
-// Updates existing public dashboard configuration
+// updates existing public dashboard configuration
 func (d *PublicDashboardStoreImpl) UpdatePublicDashboardConfig(ctx context.Context, cmd SavePublicDashboardConfigCommand) error {
 	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		_, err := sess.UseBool("is_enabled").Update(&cmd.PublicDashboard)
+		timeSettingsJSON, err := cmd.PublicDashboard.TimeSettings.MarshalJSON()
+		if err != nil {
+			return err
+		}
+
+		_, err = sess.Exec("UPDATE dashboard_public SET is_enabled = ?, time_settings = ?, updated_by = ?, updated_at = ? WHERE uid = ?",
+			cmd.PublicDashboard.IsEnabled,
+			string(timeSettingsJSON),
+			cmd.PublicDashboard.UpdatedBy,
+			cmd.PublicDashboard.UpdatedAt.UTC().Format("2006-01-02 15:04:05"),
+			cmd.PublicDashboard.Uid)
+
 		if err != nil {
 			return err
 		}

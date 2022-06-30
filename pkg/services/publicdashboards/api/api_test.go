@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gofrs/uuid"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -56,7 +56,7 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 	})
 
 	DashboardUid := "dashboard-abcd1234"
-	token, err := uuid.NewV4()
+	token, err := uuid.NewRandom()
 	require.NoError(t, err)
 	accessToken := fmt.Sprintf("%x", token)
 

@@ -9,6 +9,7 @@ import (
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
 )
 
@@ -27,13 +28,13 @@ type TestApiKey struct {
 	IsExpired bool
 }
 
-func SetupUserServiceAccount(t *testing.T, sqlStore *sqlstore.SQLStore, testUser TestUser) *models.User {
+func SetupUserServiceAccount(t *testing.T, sqlStore *sqlstore.SQLStore, testUser TestUser) *user.User {
 	role := string(models.ROLE_VIEWER)
 	if testUser.Role != "" {
 		role = testUser.Role
 	}
 
-	u1, err := sqlStore.CreateUser(context.Background(), models.CreateUserCommand{
+	u1, err := sqlStore.CreateUser(context.Background(), user.CreateUserCommand{
 		Login:            testUser.Login,
 		IsServiceAccount: testUser.IsServiceAccount,
 		DefaultOrgRole:   role,

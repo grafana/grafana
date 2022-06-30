@@ -5,6 +5,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	dashboards "github.com/grafana/grafana/pkg/services/dashboards/database"
@@ -12,8 +15,6 @@ import (
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 // This is what the db sets empty time settings to
@@ -199,19 +200,20 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 	var dashboardStore *dashboards.DashboardStore
 	var publicdashboardStore *PublicDashboardStoreImpl
 	var savedDashboard *models.Dashboard
+	var anotherSavedDashboard *models.Dashboard
 
 	setup := func() {
 		sqlStore = sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagPublicDashboards}})
 		dashboardStore = dashboards.ProvideDashboardStore(sqlStore)
 		publicdashboardStore = ProvideStore(sqlStore)
 		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
+		anotherSavedDashboard = insertTestDashboard(t, dashboardStore, "test another Dashie", 1, 0, true)
 	}
 
 	t.Run("updates an existing dashboard", func(t *testing.T) {
 		setup()
 
 		pdUid := "asdf1234"
-
 		_, err := publicdashboardStore.SavePublicDashboardConfig(context.Background(), SavePublicDashboardConfigCommand{
 			DashboardUid: savedDashboard.Uid,
 			OrgId:        savedDashboard.OrgId,
@@ -223,6 +225,23 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 				CreatedAt:    DefaultTime,
 				CreatedBy:    7,
 				AccessToken:  "NOTAREALUUID",
+			},
+		})
+		require.NoError(t, err)
+
+		// inserting two different public dashboards to test update works and only affect the desired pd by uid
+		anotherPdUid := "anotherUid"
+		_, err = publicdashboardStore.SavePublicDashboardConfig(context.Background(), SavePublicDashboardConfigCommand{
+			DashboardUid: anotherSavedDashboard.Uid,
+			OrgId:        anotherSavedDashboard.OrgId,
+			PublicDashboard: PublicDashboard{
+				Uid:          anotherPdUid,
+				DashboardUid: anotherSavedDashboard.Uid,
+				OrgId:        anotherSavedDashboard.OrgId,
+				IsEnabled:    true,
+				CreatedAt:    DefaultTime,
+				CreatedBy:    7,
+				AccessToken:  "fakeaccesstoken",
 			},
 		})
 		require.NoError(t, err)
@@ -244,6 +263,7 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 		})
 		require.NoError(t, err)
 
+		// updated dashboard should have changed
 		pdRetrieved, err := publicdashboardStore.GetPublicDashboardConfig(context.Background(), savedDashboard.OrgId, savedDashboard.Uid)
 		require.NoError(t, err)
 
@@ -251,6 +271,13 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 		// make sure we're correctly updated IsEnabled because we have to call
 		// UseBool with xorm
 		assert.Equal(t, updatedPublicDashboard.IsEnabled, pdRetrieved.IsEnabled)
+
+		// not updated dashboard shouldn't have changed
+		pdNotUpdatedRetrieved, err := dashboardStore.GetPublicDashboardConfig(context.Background(), anotherSavedDashboard.OrgId, anotherSavedDashboard.Uid)
+		require.NoError(t, err)
+
+		assert.NotEqual(t, updatedPublicDashboard.UpdatedAt, pdNotUpdatedRetrieved.UpdatedAt)
+		assert.NotEqual(t, updatedPublicDashboard.IsEnabled, pdNotUpdatedRetrieved.IsEnabled)
 	})
 }
 func insertTestDashboard(t *testing.T, dashboardStore *dashboards.DashboardStore, title string, orgId int64,

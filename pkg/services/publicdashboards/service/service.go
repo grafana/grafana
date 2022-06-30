@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gofrs/uuid"
+	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -77,16 +78,12 @@ func (pd *PublicDashboardServiceImpl) GetPublicDashboardConfig(ctx context.Conte
 // to the database. It handles validations for sharing config and persistence
 func (pd *PublicDashboardServiceImpl) SavePublicDashboardConfig(ctx context.Context, dto *SavePublicDashboardConfigDTO) (*PublicDashboard, error) {
 	if len(dto.DashboardUid) == 0 {
-		return nil, models.ErrDashboardIdentifierNotSet
+		return nil, dashboards.ErrDashboardIdentifierNotSet
 	}
 
 	// set default value for time settings
 	if dto.PublicDashboard.TimeSettings == nil {
-		json, err := simplejson.NewJson([]byte("{}"))
-		if err != nil {
-			return nil, err
-		}
-		dto.PublicDashboard.TimeSettings = json
+		dto.PublicDashboard.TimeSettings = simplejson.New()
 	}
 
 	if dto.PublicDashboard.Uid == "" {
@@ -173,10 +170,10 @@ func (pd *PublicDashboardServiceImpl) BuildPublicDashboardMetricRequest(ctx cont
 
 // generates a uuid formatted without dashes to use as access token
 func GenerateAccessToken() (string, error) {
-	token, err := uuid.NewV4()
+	token, err := uuid.NewRandom()
 	if err != nil {
 		return "", err
 	}
 
-	return fmt.Sprintf("%x", token), nil
+	return fmt.Sprintf("%x", token[:]), nil
 }
