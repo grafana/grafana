@@ -220,6 +220,55 @@ func TestValues(t *testing.T) {
 			})
 		})
 
+		t.Run("JSONSliceValue", func(t *testing.T) {
+			type Data struct {
+				Val JSONSliceValue `yaml:"val"`
+			}
+			d := &Data{}
+
+			t.Run("Should unmarshal top-level slices and nested structures", func(t *testing.T) {
+				doc := `
+                 val:
+                   - $STRING
+                   - $INT
+                   - stringMap:
+                       interpolatedString: $STRING
+                       interpolatedInt: $INT
+                       string: "just a string"
+                     sameLevel: $STRING
+               `
+				unmarshalingTest(t, doc, d)
+
+				type stringMap = map[string]interface{}
+
+				require.Equal(t, []interface{}{
+					"test",
+					"1",
+					stringMap{
+						"stringMap": stringMap{
+							"interpolatedString": "test",
+							"interpolatedInt":    "1",
+							"string":             "just a string",
+						},
+						"sameLevel": "test",
+					},
+				}, d.Val.Value())
+
+				require.Equal(t, []interface{}{
+					"$STRING",
+					"$INT",
+					stringMap{
+						"stringMap": stringMap{
+							"interpolatedString": "$STRING",
+							"interpolatedInt":    "$INT",
+							"string":             "just a string",
+						},
+						"sameLevel": "$STRING",
+					},
+				}, d.Val.Raw)
+			})
+		})
+
 		t.Run("StringMapValue", func(t *testing.T) {
 			type Data struct {
 				Val StringMapValue `yaml:"val"`

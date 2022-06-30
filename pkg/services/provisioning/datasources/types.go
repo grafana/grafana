@@ -42,6 +42,7 @@ type upsertDataSourceFromConfig struct {
 	BasicAuthUser   string
 	WithCredentials bool
 	IsDefault       bool
+	Correlations    []datasources.Correlation
 	JSONData        map[string]interface{}
 	SecureJSONData  map[string]string
 	Editable        bool
@@ -86,6 +87,7 @@ type upsertDataSourceFromConfigV0 struct {
 	BasicAuthUser   string                 `json:"basic_auth_user" yaml:"basic_auth_user"`
 	WithCredentials bool                   `json:"with_credentials" yaml:"with_credentials"`
 	IsDefault       bool                   `json:"is_default" yaml:"is_default"`
+	Correlations    []interface{}          `json:"correlations" yaml:"correlations"`
 	JSONData        map[string]interface{} `json:"json_data" yaml:"json_data"`
 	SecureJSONData  map[string]string      `json:"secure_json_data" yaml:"secure_json_data"`
 	Editable        bool                   `json:"editable" yaml:"editable"`
@@ -104,6 +106,7 @@ type upsertDataSourceFromConfigV1 struct {
 	BasicAuthUser   values.StringValue    `json:"basicAuthUser" yaml:"basicAuthUser"`
 	WithCredentials values.BoolValue      `json:"withCredentials" yaml:"withCredentials"`
 	IsDefault       values.BoolValue      `json:"isDefault" yaml:"isDefault"`
+	Correlations    values.JSONSliceValue `json:"correlations" yaml:"correlations"`
 	JSONData        values.JSONValue      `json:"jsonData" yaml:"jsonData"`
 	SecureJSONData  values.StringMapValue `json:"secureJsonData" yaml:"secureJsonData"`
 	Editable        values.BoolValue      `json:"editable" yaml:"editable"`
@@ -120,6 +123,19 @@ func (cfg *configsV1) mapToDatasourceFromConfig(apiVersion int64) *configs {
 	}
 
 	for _, ds := range cfg.Datasources {
+		correlations := make([]datasources.Correlation, 0)
+		for _, v := range ds.Correlations.Value() {
+			field, ok := v.(map[string]interface{})
+
+			if ok {
+				correlations = append(correlations, datasources.Correlation{
+					Target:      field["targetUid"].(string),
+					Description: field["description"].(string),
+					Label:       field["label"].(string),
+				})
+			}
+		}
+
 		r.Datasources = append(r.Datasources, &upsertDataSourceFromConfig{
 			OrgID:           ds.OrgID.Value(),
 			Name:            ds.Name.Value(),
@@ -132,6 +148,7 @@ func (cfg *configsV1) mapToDatasourceFromConfig(apiVersion int64) *configs {
 			BasicAuthUser:   ds.BasicAuthUser.Value(),
 			WithCredentials: ds.WithCredentials.Value(),
 			IsDefault:       ds.IsDefault.Value(),
+			Correlations:    correlations,
 			JSONData:        ds.JSONData.Value(),
 			SecureJSONData:  ds.SecureJSONData.Value(),
 			Editable:        ds.Editable.Value(),
@@ -160,6 +177,19 @@ func (cfg *configsV0) mapToDatasourceFromConfig(apiVersion int64) *configs {
 	}
 
 	for _, ds := range cfg.Datasources {
+		correlations := make([]datasources.Correlation, 0)
+		for _, v := range ds.Correlations {
+			field, ok := v.(map[string]interface{})
+
+			if ok {
+				correlations = append(correlations, datasources.Correlation{
+					Target:      field["targetUid"].(string),
+					Description: field["description"].(string),
+					Label:       field["label"].(string),
+				})
+			}
+		}
+
 		r.Datasources = append(r.Datasources, &upsertDataSourceFromConfig{
 			OrgID:           ds.OrgID,
 			Name:            ds.Name,
@@ -172,6 +202,7 @@ func (cfg *configsV0) mapToDatasourceFromConfig(apiVersion int64) *configs {
 			BasicAuthUser:   ds.BasicAuthUser,
 			WithCredentials: ds.WithCredentials,
 			IsDefault:       ds.IsDefault,
+			Correlations:    correlations,
 			JSONData:        ds.JSONData,
 			SecureJSONData:  ds.SecureJSONData,
 			Editable:        ds.Editable,
@@ -209,6 +240,7 @@ func createInsertCommand(ds *upsertDataSourceFromConfig) *datasources.AddDataSou
 		BasicAuthUser:   ds.BasicAuthUser,
 		WithCredentials: ds.WithCredentials,
 		IsDefault:       ds.IsDefault,
+		Correlations:    ds.Correlations,
 		JsonData:        jsonData,
 		SecureJsonData:  ds.SecureJSONData,
 		ReadOnly:        !ds.Editable,
@@ -250,6 +282,7 @@ func createUpdateCommand(ds *upsertDataSourceFromConfig, id int64) *datasources.
 		BasicAuthUser:   ds.BasicAuthUser,
 		WithCredentials: ds.WithCredentials,
 		IsDefault:       ds.IsDefault,
+		Correlations:    ds.Correlations,
 		JsonData:        jsonData,
 		SecureJsonData:  ds.SecureJSONData,
 		ReadOnly:        !ds.Editable,

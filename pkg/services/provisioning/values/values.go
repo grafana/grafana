@@ -188,6 +188,40 @@ func (val *StringMapValue) Value() map[string]string {
 	return val.value
 }
 
+// JSONSliceValue represents a slice value in a YAML
+// config that can be overridden by environment variables
+
+type JSONSliceValue struct {
+	value []interface{}
+	Raw   []interface{}
+}
+
+// UnmarshalYAML converts YAML into an *JSONSliceValue
+func (val *JSONSliceValue) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	unmarshaled := make([]interface{}, 0)
+	err := unmarshal(&unmarshaled)
+	if err != nil {
+		return err
+	}
+
+	for _, v := range unmarshaled {
+		interpolated, raw, err := transformInterface(v)
+		if err != nil {
+			return err
+		}
+
+		val.value = append(val.value, interpolated)
+		val.Raw = append(val.Raw, raw)
+	}
+
+	return err
+}
+
+// Value returns the wrapped []interface{} value
+func (val *JSONSliceValue) Value() []interface{} {
+	return val.value
+}
+
 // transformInterface tries to transform any interface type into proper value with env expansion. It traverses maps and
 // slices and the actual interpolation is done on all simple string values in the structure. It returns a copy of any
 // map or slice value instead of modifying them in place and also return value without interpolation but with converted

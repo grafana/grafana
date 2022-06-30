@@ -101,6 +101,7 @@ type AddDataSourceCommand struct {
 	BasicAuthUser   string            `json:"basicAuthUser"`
 	WithCredentials bool              `json:"withCredentials"`
 	IsDefault       bool              `json:"isDefault"`
+	Correlations    []Correlation     `json:"-"`
 	JsonData        *simplejson.Json  `json:"jsonData"`
 	SecureJsonData  map[string]string `json:"secureJsonData"`
 	Uid             string            `json:"uid"`
@@ -126,6 +127,7 @@ type UpdateDataSourceCommand struct {
 	BasicAuthUser   string            `json:"basicAuthUser"`
 	WithCredentials bool              `json:"withCredentials"`
 	IsDefault       bool              `json:"isDefault"`
+	Correlations    []Correlation     `json:"correlations"`
 	JsonData        *simplejson.Json  `json:"jsonData"`
 	SecureJsonData  map[string]string `json:"secureJsonData"`
 	Version         int               `json:"version"`
