@@ -87,6 +87,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 	}
 
 	hasAccess := accesscontrol.HasAccess(hs.AccessControl, c)
+	secretsManagerPluginEnabled, _ := hs.remoteSecretsCheck.ShouldUseRemoteSecretsPlugin()
 
 	jsonObj := map[string]interface{}{
 		"defaultDatasource":                   defaultDS,
@@ -152,7 +153,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"featureToggles":                   hs.Features.GetEnabled(c.Req.Context()),
 		"rendererAvailable":                hs.RenderService.IsAvailable(),
 		"rendererVersion":                  hs.RenderService.Version(),
-		"secretsManagerPluginEnabled":      hs.remoteSecretsCheck.ShouldUseRemoteSecretsPlugin(),
+		"secretsManagerPluginEnabled":      secretsManagerPluginEnabled,
 		"http2Enabled":                     hs.Cfg.Protocol == setting.HTTP2Scheme,
 		"sentry":                           hs.Cfg.Sentry,
 		"grafanaJavascriptAgent":           hs.Cfg.GrafanaJavascriptAgent,

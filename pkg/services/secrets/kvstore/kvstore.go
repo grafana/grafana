@@ -3,6 +3,7 @@ package kvstore
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -13,19 +14,36 @@ const (
 	AllOrganizations = -1
 )
 
-func ProvideService(sqlStore sqlstore.Store, secretsService secrets.Service, remoteCheck UseRemoteSecretsPluginCheck) SecretsKVStore {
+func ProvideService(sqlStore sqlstore.Store,
+	secretsService secrets.Service,
+	remoteCheck UseRemoteSecretsPluginCheck,
+	kvstore kvstore.KVStore,
+) (SecretsKVStore, error) {
 	logger := log.New("secrets.kvstore")
-	if remoteCheck.ShouldUseRemoteSecretsPlugin() {
+	namespacedKVStore := GetNamespacedKVStore(kvstore)
+	if usePlugin, err := remoteCheck.ShouldUseRemoteSecretsPlugin(); err == nil && usePlugin {
+		// plugin should be used and there was no error starting it
 		logger.Debug("secrets kvstore is using a remote plugin for secrets management")
 		secretsPlugin, err := remoteCheck.GetPlugin()
 		if err != nil {
 			logger.Error("plugin client was nil, falling back to SQL implementation")
 		} else {
+			// TODO: after we start migrating, set plugin error fatal to true
 			return &secretsKVStorePlugin{
 				secretsPlugin:  secretsPlugin,
 				secretsService: secretsService,
 				log:            logger,
+			}, nil
+		}
+	} else if err != nil {
+		// there was an error starting the plugin
+		if isFatal, err2 := isPluginErrorFatal(context.TODO(), namespacedKVStore); isFatal || err2 != nil {
+			// plugin error was fatal or there was an error determining if the error was fatal
+			logger.Error("secrets management plugin is required to start -- exiting app")
+			if err2 != nil {
+				return nil, err2
 			}
+			return nil, err
 		}
 	}
 	logger.Debug("secrets kvstore is using the default (SQL) implementation for secrets management")
@@ -36,7 +54,7 @@ func ProvideService(sqlStore sqlstore.Store, secretsService secrets.Service, rem
 		decryptionCache: decryptionCache{
 			cache: make(map[int64]cachedDecrypted),
 		},
-	}
+	}, nil
 }
 
 // SecretsKVStore is an interface for k/v store.

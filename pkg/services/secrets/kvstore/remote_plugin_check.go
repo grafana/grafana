@@ -5,7 +5,7 @@ import (
 )
 
 type UseRemoteSecretsPluginCheck interface {
-	ShouldUseRemoteSecretsPlugin() bool
+	ShouldUseRemoteSecretsPlugin() (bool, error)
 	GetPlugin() (secretsmanagerplugin.SecretsManagerPlugin, error)
 }
 
@@ -17,8 +17,8 @@ func ProvideRemotePluginCheck() *OSSRemoteSecretsPluginCheck {
 	return &OSSRemoteSecretsPluginCheck{}
 }
 
-func (c *OSSRemoteSecretsPluginCheck) ShouldUseRemoteSecretsPlugin() bool {
-	return false
+func (c *OSSRemoteSecretsPluginCheck) ShouldUseRemoteSecretsPlugin() (bool, error) {
+	return false, nil
 }
 
 func (c *OSSRemoteSecretsPluginCheck) GetPlugin() (secretsmanagerplugin.SecretsManagerPlugin, error) {
