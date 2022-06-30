@@ -5,13 +5,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 // This is what the db sets empty time settings to
@@ -58,13 +60,13 @@ func TestIntegrationGetPublicDashboard(t *testing.T) {
 	t.Run("returns ErrPublicDashboardNotFound with empty uid", func(t *testing.T) {
 		setup()
 		_, _, err := dashboardStore.GetPublicDashboard(context.Background(), "")
-		require.Error(t, models.ErrPublicDashboardIdentifierNotSet, err)
+		require.Error(t, dashboards.ErrPublicDashboardIdentifierNotSet, err)
 	})
 
 	t.Run("returns ErrPublicDashboardNotFound when PublicDashboard not found", func(t *testing.T) {
 		setup()
 		_, _, err := dashboardStore.GetPublicDashboard(context.Background(), "zzzzzz")
-		require.Error(t, models.ErrPublicDashboardNotFound, err)
+		require.Error(t, dashboards.ErrPublicDashboardNotFound, err)
 	})
 
 	t.Run("returns ErrDashboardNotFound when Dashboard not found", func(t *testing.T) {
@@ -83,7 +85,7 @@ func TestIntegrationGetPublicDashboard(t *testing.T) {
 		})
 		require.NoError(t, err)
 		_, _, err = dashboardStore.GetPublicDashboard(context.Background(), "abc1234")
-		require.Error(t, models.ErrDashboardNotFound, err)
+		require.Error(t, dashboards.ErrDashboardNotFound, err)
 	})
 }
 
@@ -109,7 +111,7 @@ func TestIntegrationGetPublicDashboardConfig(t *testing.T) {
 	t.Run("returns dashboard errDashboardIdentifierNotSet", func(t *testing.T) {
 		setup()
 		_, err := dashboardStore.GetPublicDashboardConfig(context.Background(), savedDashboard.OrgId, "")
-		require.Error(t, models.ErrDashboardIdentifierNotSet, err)
+		require.Error(t, dashboards.ErrDashboardIdentifierNotSet, err)
 	})
 
 	t.Run("returns isPublic along with public dashboard when exists", func(t *testing.T) {
