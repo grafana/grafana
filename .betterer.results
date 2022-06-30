@@ -4271,9 +4271,9 @@ exports[`better eslint`] = {
     "public/app/features/alerting/unified/components/amroutes/AmRoutesTable.tsx:3093815801": [
       [126, 10, 1271, "Do not use any type assertions.", "441563991"]
     ],
-    "public/app/features/alerting/unified/components/receivers/TemplateForm.tsx:312681720": [
-      [101, 29, 12, "Do not use any type assertions.", "3304544793"],
-      [101, 38, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/features/alerting/unified/components/receivers/TemplateForm.tsx:2509382344": [
+      [106, 29, 12, "Do not use any type assertions.", "3304544793"],
+      [106, 38, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/alerting/unified/components/receivers/form/ChannelOptions.tsx:2192936556": [
       [31, 28, 30, "Do not use any type assertions.", "1841535999"],
