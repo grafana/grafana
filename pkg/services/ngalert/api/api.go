@@ -116,6 +116,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			log:             logger,
 			cfg:             &api.Cfg.UnifiedAlerting,
 			ac:              api.AccessControl,
+			evaluator:       eval.NewEvaluator(api.Cfg, log.New("ngalert.eval"), api.DatasourceCache, api.SecretsService, api.ExpressionService),
 		},
 	), m)
 	api.RegisterTestingApiEndpoints(NewForkedTestingApi(

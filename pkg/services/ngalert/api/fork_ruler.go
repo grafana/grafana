@@ -136,3 +136,7 @@ func (f *ForkedRulerApi) forkRoutePostNameGrafanaRulesConfig(ctx *models.ReqCont
 	}
 	return f.GrafanaRuler.RoutePostNameRulesConfig(ctx, conf, namespace)
 }
+
+func (f *ForkedRulerApi) forkRouteEvaluateGrafanaRule(ctx *models.ReqContext, conf apimodels.EvaluateRuleRequestBody) response.Response {
+	return f.GrafanaRuler.EvaluateRule(ctx, conf)
+}

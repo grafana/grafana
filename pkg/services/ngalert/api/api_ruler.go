@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -39,6 +40,7 @@ type RulerSrv struct {
 	log             log.Logger
 	cfg             *setting.UnifiedAlertingSettings
 	ac              accesscontrol.AccessControl
+	evaluator       eval.Evaluator
 }
 
 var (
@@ -441,6 +443,82 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, groupKey ngmod
 	}
 
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "rule group updated successfully"})
+}
+
+func (srv RulerSrv) EvaluateRule(ctx *models.ReqContext, conf apimodels.EvaluateRuleRequestBody) response.Response {
+	now := conf.Now
+	if now.IsZero() {
+		now = timeNow()
+	}
+
+	condition, err := validateRuleCondition(conf.AlertRuleCondition, ctx.OrgId, checkDatasource(ctx, srv.DatasourceCache))
+	if err != nil {
+		return ErrResp(http.StatusBadRequest, err, "")
+	}
+
+	if !authorizeDatasourceAccessForRule(&ngmodels.AlertRule{Data: condition.Data}, func(evaluator accesscontrol.Evaluator) bool {
+		return accesscontrol.HasAccess(srv.ac, ctx)(accesscontrol.ReqViewer, evaluator)
+	}) {
+		return ErrResp(http.StatusUnauthorized, fmt.Errorf("%w to query one or many data sources", ErrAuthorization), "")
+	}
+
+	start := time.Now()
+	evalResults, err := srv.evaluator.ConditionEval(&condition, now)
+	duration := time.Since(start)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "Failed to evaluate queries and expressions")
+	}
+	if len(evalResults) == 0 {
+		return response.Empty(http.StatusNoContent)
+	}
+	var evalResult []apimodels.EvaluationResult
+	var evalErrors []error
+	for _, result := range evalResults {
+		if len(evalErrors) > 0 {
+			if result.State == eval.Error {
+				evalErrors = append(evalErrors, result.Error)
+			}
+			continue
+		}
+
+		var state apimodels.EvaluationState
+		switch result.State {
+		case eval.Normal:
+			state = apimodels.NormalEvaluationState
+		case eval.Alerting, eval.Pending:
+			state = apimodels.AlertingEvaluationState
+		case eval.NoData:
+			return response.Empty(http.StatusNoContent)
+		case eval.Error:
+			evalErrors = append(evalErrors, result.Error)
+			continue
+		}
+
+		var values = make(map[apimodels.RefID]apimodels.NumberValueCapture, len(result.Values))
+		for refID, capture := range result.Values {
+			values[apimodels.RefID(refID)] = apimodels.NumberValueCapture{
+				Labels: capture.Labels,
+				Value:  capture.Value,
+			}
+		}
+		evalResult = append(evalResult, apimodels.EvaluationResult{
+			State:  state,
+			Values: values,
+		})
+	}
+	if len(evalErrors) > 0 {
+		return response.JSON(http.StatusInternalServerError, apimodels.EvaluateRuleError{
+			EvaluatedAt: now,
+			Errors:      evalErrors,
+		})
+	}
+	resp := apimodels.EvaluateRuleResponse{
+		Results:            evalResult,
+		Condition:          apimodels.RefID(condition.Condition),
+		EvaluatedAt:        now,
+		EvaluationDuration: model.Duration(duration),
+	}
+	return response.JSON(http.StatusOK, resp)
 }
 
 func toGettableRuleGroupConfig(groupName string, rules ngmodels.RulesGroup, namespaceID int64, provenanceRecords map[string]ngmodels.Provenance) apimodels.GettableRuleGroupConfig {
