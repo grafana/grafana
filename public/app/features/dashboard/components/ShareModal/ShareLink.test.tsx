@@ -2,10 +2,11 @@ import { shallow, ShallowWrapper } from 'enzyme';
 import React from 'react';
 
 import { getDefaultTimeRange } from '@grafana/data';
-import { setTemplateSrv } from '@grafana/runtime';
+import { setEchoSrv, setTemplateSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 
 import { initTemplateSrv } from '../../../../../test/helpers/initTemplateSrv';
+import { Echo } from '../../../../core/services/echo/Echo';
 import { variableAdapters } from '../../../variables/adapters';
 import { createQueryVariableAdapter } from '../../../variables/query/adapter';
 import { DashboardModel, PanelModel } from '../../state';
@@ -31,7 +32,7 @@ function mockLocationHref(href: string) {
 
   //@ts-ignore
   delete window.location;
-  (window as any).location = {
+  window.location = {
     ...location,
     href,
     origin: new URL(href).origin,
@@ -102,6 +103,7 @@ describe('ShareModal', () => {
   let templateSrv = initTemplateSrv('key', []);
 
   beforeAll(() => {
+    setEchoSrv(new Echo());
     variableAdapters.register(createQueryVariableAdapter());
     setTemplateSrv(templateSrv);
   });
