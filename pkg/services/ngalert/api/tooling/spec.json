@@ -2791,101 +2791,6 @@
         "$ref": "#/definitions/EmbeddedContactPoint"
       }
     },
-    "CreateDashboardSnapshotCommand": {
-      "type": "object",
-      "required": [
-        "dashboard"
-      ],
-      "properties": {
-        "Result": {
-          "$ref": "#/definitions/DashboardSnapshot"
-        },
-        "dashboard": {
-          "$ref": "#/definitions/Json"
-        },
-        "deleteKey": {
-          "description": "Unique key used to delete the snapshot. It is different from the `key` so that only the creator can delete the snapshot. Required if `external` is `true`.",
-          "type": "string"
-        },
-        "expires": {
-          "description": "When the snapshot should expire in seconds in seconds. Default is never to expire.",
-          "type": "integer",
-          "format": "int64",
-          "default": 0
-        },
-        "external": {
-          "description": "these are passed when storing an external snapshot ref\nSave the snapshot on an external server rather than locally.",
-          "type": "boolean",
-          "default": false
-        },
-        "key": {
-          "description": "Define the unique key. Required if `external` is `true`.",
-          "type": "string"
-        },
-        "name": {
-          "description": "Snapshot name",
-          "type": "string"
-        }
-      }
-    },
-    "DashboardSnapshot": {
-      "description": "DashboardSnapshot model",
-      "type": "object",
-      "properties": {
-        "Created": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "Dashboard": {
-          "$ref": "#/definitions/Json"
-        },
-        "DashboardEncrypted": {
-          "type": "array",
-          "items": {
-            "type": "integer",
-            "format": "uint8"
-          }
-        },
-        "DeleteKey": {
-          "type": "string"
-        },
-        "Expires": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "External": {
-          "type": "boolean"
-        },
-        "ExternalDeleteUrl": {
-          "type": "string"
-        },
-        "ExternalUrl": {
-          "type": "string"
-        },
-        "Id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Key": {
-          "type": "string"
-        },
-        "Name": {
-          "type": "string"
-        },
-        "OrgId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Updated": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "UserId": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
     "DateTime": {
       "description": "DateTime is a time but it serializes to ISO8601 format with millis\nIt knows how to read 3 different variations of a RFC3339 date time.\nMost APIs we encounter want either millisecond or second precision times.\nThis just tries to make it worry-free.",
       "type": "string",
@@ -5012,9 +4917,8 @@
       }
     },
     "URL": {
-      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
       "type": "object",
-      "title": "A URL represents a parsed URL (technically, a URI reference).",
+      "title": "URL is a custom URL type that allows validation at configuration load time.",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -5215,7 +5119,6 @@
       }
     },
     "alertGroup": {
-      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -5240,6 +5143,7 @@
       "$ref": "#/definitions/alertGroup"
     },
     "alertGroups": {
+      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
@@ -5348,6 +5252,7 @@
       "$ref": "#/definitions/Duration"
     },
     "gettableAlert": {
+      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
@@ -5404,6 +5309,7 @@
       "$ref": "#/definitions/gettableAlert"
     },
     "gettableAlerts": {
+      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
@@ -5609,7 +5515,6 @@
       "$ref": "#/definitions/postableSilence"
     },
     "receiver": {
-      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "name"

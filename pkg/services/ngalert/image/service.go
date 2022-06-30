@@ -9,26 +9,13 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/components/imguploader"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/screenshot"
 	"github.com/grafana/grafana/pkg/setting"
-)
-
-//go:generate mockgen -destination=mock.go -package=image github.com/grafana/grafana/pkg/services/ngalert/image ImageService
-type ImageService interface {
-	// NewImage returns a new image for the alert instance.
-	NewImage(ctx context.Context, r *models.AlertRule) (*models.Image, error)
-}
-
-var (
-	// ErrNoDashboard is returned when the alert rule does not have a dashboard.
-	ErrNoDashboard = errors.New("no dashboard")
-
-	// ErrNoPanel is returned when the alert rule does not have a panel in a dashboard.
-	ErrNoPanel = errors.New("no panel")
 )
 
 const (
@@ -36,9 +23,26 @@ const (
 	screenshotCacheTTL = 60 * time.Second
 )
 
-// ScreenshotImageService takes screenshots of the panel for an alert rule and
-// saves the image in the store. The image contains a unique token that can be
-// passed as an annotation or label to the Alertmanager.
+var (
+	// ErrNoDashboard is returned when the alert rule does not have a Dashboard UID
+	// in its annotations or the dashboard does not exist.
+	ErrNoDashboard = errors.New("no dashboard")
+
+	// ErrNoPanel is returned when the alert rule does not have a PanelID in its
+	// annotations.
+	ErrNoPanel = errors.New("no panel")
+)
+
+//go:generate mockgen -destination=mock.go -package=image github.com/grafana/grafana/pkg/services/ngalert/image ImageService
+type ImageService interface {
+	// NewImage returns a new image for the alert instance.
+	NewImage(ctx context.Context, r *ngmodels.AlertRule) (*ngmodels.Image, error)
+}
+
+// ScreenshotImageService takes screenshots of the alert rule and saves the
+// image in the store. The image contains a unique token that can be passed
+// as an annotation or label to the Alertmanager. This service cannot take
+// screenshots of alert rules that are not associated with a dashboard panel.
 type ScreenshotImageService struct {
 	screenshots screenshot.ScreenshotService
 	store       store.ImageStore
@@ -55,6 +59,7 @@ func NewScreenshotImageService(screenshots screenshot.ScreenshotService, store s
 // from the configuration.
 func NewScreenshotImageServiceFromCfg(cfg *setting.Cfg, metrics prometheus.Registerer,
 	db *store.DBstore, ds dashboards.DashboardService, rs rendering.Service) (ImageService, error) {
+	// If screenshots are disabled then return the ScreenshotUnavailableService
 	if !cfg.UnifiedAlerting.Screenshots.Capture {
 		return &ScreenshotImageService{
 			screenshots: &screenshot.ScreenshotUnavailableService{},
@@ -62,6 +67,7 @@ func NewScreenshotImageServiceFromCfg(cfg *setting.Cfg, metrics prometheus.Regis
 	}
 
 	s := screenshot.NewBrowserScreenshotService(ds, rs)
+	// Image uploading is an optional feature of screenshots
 	if cfg.UnifiedAlerting.Screenshots.UploadExternalImageStorage {
 		u, err := imguploader.NewImageUploader()
 		if err != nil {
@@ -73,17 +79,20 @@ func NewScreenshotImageServiceFromCfg(cfg *setting.Cfg, metrics prometheus.Regis
 	s = screenshot.NewSingleFlightScreenshotService(s)
 	s = screenshot.NewCachableScreenshotService(metrics, screenshotCacheTTL, s)
 	s = screenshot.NewObservableScreenshotService(metrics, s)
-
 	return &ScreenshotImageService{
 		store:       db,
 		screenshots: s,
 	}, nil
 }
 
-// NewImage returns a screenshot of the panel for the alert rule. It returns
-// ErrNoDashboard if the alert rule does not have a dashboard and ErrNoPanel
-// when the alert rule does not have a panel in a dashboard.
-func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRule) (*models.Image, error) {
+// NewImage returns a screenshot of the alert rule or an error.
+//
+// The alert rule must be associated with a dashboard panel for a screenshot to be
+// taken. If the alert rule does not have a Dashboard UID in its annotations,
+// or the dashboard does not exist, an ErrNoDashboard error is returned. If the
+// alert rule has a Dashboard UID and the dashboard exists, but does not have a
+// Panel ID in its annotations then an ErrNoPanel error is returned.
+func (s *ScreenshotImageService) NewImage(ctx context.Context, r *ngmodels.AlertRule) (*ngmodels.Image, error) {
 	if r.DashboardUID == nil {
 		return nil, ErrNoDashboard
 	}
@@ -91,18 +100,24 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRu
 		return nil, ErrNoPanel
 	}
 
+	ctx, cancelFunc := context.WithTimeout(ctx, screenshotTimeout)
+	defer cancelFunc()
+
 	screenshot, err := s.screenshots.Take(ctx, screenshot.ScreenshotOptions{
 		Timeout:      screenshotTimeout,
 		DashboardUID: *r.DashboardUID,
 		PanelID:      *r.PanelID,
 	})
-	// TODO: Check for screenshot upload failures. These images should still be
-	// stored because we have a local disk path that could be useful.
 	if err != nil {
+		// TODO: Check for screenshot upload failures. These images should still be
+		// stored because we have a local disk path that could be useful.
+		if errors.Is(err, models.ErrDashboardNotFound) {
+			return nil, ErrNoDashboard
+		}
 		return nil, err
 	}
 
-	v := models.Image{
+	v := ngmodels.Image{
 		Path: screenshot.Path,
 		URL:  screenshot.URL,
 	}
@@ -115,12 +130,12 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRu
 
 type NotAvailableImageService struct{}
 
-func (s *NotAvailableImageService) NewImage(ctx context.Context, r *models.AlertRule) (*models.Image, error) {
+func (s *NotAvailableImageService) NewImage(ctx context.Context, r *ngmodels.AlertRule) (*ngmodels.Image, error) {
 	return nil, screenshot.ErrScreenshotsUnavailable
 }
 
 type NoopImageService struct{}
 
-func (s *NoopImageService) NewImage(ctx context.Context, r *models.AlertRule) (*models.Image, error) {
-	return &models.Image{}, nil
+func (s *NoopImageService) NewImage(ctx context.Context, r *ngmodels.AlertRule) (*ngmodels.Image, error) {
+	return &ngmodels.Image{}, nil
 }
