@@ -2,6 +2,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
+import { BackendSrv, setBackendSrv } from '@grafana/runtime';
+
 import { CreateTeam } from './CreateTeam';
 
 beforeEach(() => {
@@ -12,17 +14,20 @@ const mockPost = jest.fn(() => {
   return Promise.resolve({});
 });
 
-jest.mock('@grafana/runtime', () => ({
-  getBackendSrv: () => {
-    return {
-      post: mockPost,
-    };
-  },
-  config: {
-    buildInfo: {},
-    licenseInfo: {},
-  },
-}));
+setBackendSrv({
+  post: mockPost,
+} as any as BackendSrv);
+// jest.mock('@grafana/runtime', () => ({
+//   getBackendSrv: () => {
+//     return {
+//       post: mockPost,
+//     };
+//   },
+//   config: {
+//     buildInfo: {},
+//     licenseInfo: {},
+//   },
+// }));
 
 const setup = () => {
   return render(<CreateTeam />);

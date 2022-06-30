@@ -6949,6 +6949,11 @@ exports[`better eslint`] = {
       [15, 10, 14, "Do not use any type assertions.", "2767045528"],
       [43, 19, 25, "Do not use any type assertions.", "1122467828"]
     ],
+    "public/app/features/teams/CreateTeam.test.tsx:97888541": [
+      [15, 14, 41, "Do not use any type assertions.", "1829744278"],
+      [15, 14, 27, "Do not use any type assertions.", "1339326263"],
+      [17, 5, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ],
     "public/app/features/teams/TeamGroupSync.test.tsx:2647720693": [
       [12, 12, 17, "Do not use any type assertions.", "2242876437"]
     ],
