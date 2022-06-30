@@ -12,10 +12,10 @@ export interface Props extends TopNavProps {
   onToggleSearchBar(): void;
   searchBarHidden?: boolean;
   sectionNav: NavModelItem;
-  subNav?: NavModelItem;
+  pageNav?: NavModelItem;
 }
 
-export function NavToolbar({ actions, onToggleSearchBar, searchBarHidden, sectionNav, subNav }: Props) {
+export function NavToolbar({ actions, onToggleSearchBar, searchBarHidden, sectionNav, pageNav }: Props) {
   const styles = useStyles2(getStyles);
 
   return (
@@ -23,7 +23,7 @@ export function NavToolbar({ actions, onToggleSearchBar, searchBarHidden, sectio
       <div className={styles.menuButton}>
         <IconButton name="bars" tooltip="Toggle menu" tooltipPlacement="bottom" size="xl" onClick={() => {}} />
       </div>
-      <Breadcrumbs sectionNav={sectionNav} subNav={subNav} />
+      <Breadcrumbs sectionNav={sectionNav} pageNav={pageNav} />
       <div className={styles.leftActions}></div>
       <div className={styles.rightActions}>
         {actions}

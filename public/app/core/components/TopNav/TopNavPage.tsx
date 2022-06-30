@@ -36,6 +36,7 @@ export function TopNavPage({ children, navId }: Props) {
           searchBarHidden={searchBarHidden}
           onToggleSearchBar={toggleSearchBar}
           sectionNav={navModel.node}
+          pageNav={props.pageNav}
         />
       </div>
       <div className={cx(styles.content, searchBarHidden && styles.contentNoSearchBar)}>{children}</div>

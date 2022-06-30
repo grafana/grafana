@@ -10,6 +10,7 @@ import { Footer } from '../Footer/Footer';
 import { PageType } from '../Page/types';
 import { usePageNav } from '../Page/usePageNav';
 import { usePageTitle } from '../Page/usePageTitle';
+import { TopNavUpdate } from '../TopNav/TopNavUpdate';
 
 import { PageContents } from './PageContents';
 import { PageHeader } from './PageHeader';
@@ -39,6 +40,8 @@ export const Page: PageType = ({ navId, navModel: oldNavProp, pageNav, children,
           </CustomScrollbar>
         </div>
       </div>
+      {/** Update the breadcrumbs with item level nav */}
+      {pageNav && <TopNavUpdate pageNav={pageNav} />}
     </div>
   );
 };
@@ -47,10 +50,6 @@ Page.Header = PageHeader;
 Page.Contents = PageContents;
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const style1 = window.location.href.indexOf('style=1') > -1;
-  const margin = style1 ? theme.spacing(1, 1, 0, 1) : theme.spacing(2, 2, 2, 1);
-  const border = style1 ? `1px solid ${theme.colors.border.weak}` : 'none';
-
   const shadow = theme.isDark
     ? `0 0.6px 1.5px -1px rgb(0 0 0),0 2px 4px -1px rgb(0 0 0 / 40%),0 5px 10px -1px rgb(0 0 0 / 23%)`
     : '0 0.6px 1.5px -1px rgb(0 0 0 / 8%),0 2px 4px rgb(0 0 0 / 6%),0 5px 10px -1px rgb(0 0 0 / 5%)';
@@ -81,8 +80,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: theme.spacing(3),
       boxShadow: shadow,
       background: theme.colors.background.primary,
-      margin: margin,
-      border: border,
+      margin: theme.spacing(2, 2, 2, 1),
       display: 'flex',
       flexDirection: 'column',
       flexGrow: 1,

@@ -278,7 +278,7 @@ export const DashNav = React.memo<Props>((props) => {
   if (config.featureToggles.topnav) {
     return (
       <TopNavUpdate
-        subNav={{ text: title }}
+        pageNav={{ text: title }}
         actions={<ToolbarButton onClick={onOpenSettings} icon="cog"></ToolbarButton>}
       />
     );

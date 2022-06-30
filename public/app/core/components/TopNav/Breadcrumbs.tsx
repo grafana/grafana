@@ -8,7 +8,7 @@ import { TopNavProps } from './TopNavUpdate';
 
 export interface Props extends TopNavProps {
   sectionNav: NavModelItem;
-  subNav?: NavModelItem;
+  pageNav?: NavModelItem;
 }
 
 export interface Breadcrumb {
@@ -17,7 +17,7 @@ export interface Breadcrumb {
   href?: string;
 }
 
-export function Breadcrumbs({ sectionNav, subNav }: Props) {
+export function Breadcrumbs({ sectionNav, pageNav }: Props) {
   const styles = useStyles2(getStyles);
   const crumbs: Breadcrumb[] = [{ icon: 'home', href: '/' }];
 
@@ -31,8 +31,8 @@ export function Breadcrumbs({ sectionNav, subNav }: Props) {
 
   addCrumbs(sectionNav);
 
-  if (subNav) {
-    addCrumbs(subNav);
+  if (pageNav) {
+    addCrumbs(pageNav);
   }
 
   return (

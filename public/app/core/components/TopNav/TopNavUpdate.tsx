@@ -4,7 +4,7 @@ import { Subject } from 'rxjs';
 import { NavModelItem } from '@grafana/data';
 
 export interface TopNavProps {
-  subNav?: NavModelItem;
+  pageNav?: NavModelItem;
   actions?: React.ReactNode;
 }
 
