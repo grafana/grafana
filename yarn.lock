@@ -5321,8 +5321,6 @@ __metadata:
     webpack: 5.74.0
     webpack-filter-warnings-plugin: 1.2.1
   peerDependencies:
-    "@emotion/css": ^11.9.0
-    "@emotion/react": ^11.9.3
     react: ^16.8.0 || ^17.0.0
     react-dom: ^16.8.0 || ^17.0.0
   languageName: unknown

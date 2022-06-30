@@ -41,6 +41,8 @@
     "not IE 11"
   ],
   "dependencies": {
+    "@emotion/css": "11.9.0",
+    "@emotion/react": "11.9.3",
     "@grafana/data": "9.2.0-pre",
     "@grafana/e2e-selectors": "9.2.0-pre",
     "@grafana/schema": "9.2.0-pre",
@@ -102,8 +104,6 @@
   },
   "devDependencies": {
     "@babel/core": "7.18.9",
-    "@emotion/css": "11.9.0",
-    "@emotion/react": "11.9.3",
     "@grafana/tsconfig": "^1.2.0-rc1",
     "@mdx-js/react": "1.6.22",
     "@rollup/plugin-node-resolve": "13.3.0",
@@ -192,8 +192,6 @@
     "webpack-filter-warnings-plugin": "1.2.1"
   },
   "peerDependencies": {
-    "@emotion/css": "^11.9.0",
-    "@emotion/react": "^11.9.3",
     "react": "^16.8.0 || ^17.0.0",
     "react-dom": "^16.8.0 || ^17.0.0"
   }
