@@ -170,6 +170,14 @@ func (alertRule *AlertRule) GetLabels(opts ...LabelOption) map[string]string {
 	return labels
 }
 
+func (alertRule *AlertRule) GetEvalCondition() Condition {
+	return Condition{
+		Condition: alertRule.Condition,
+		OrgID:     alertRule.OrgID,
+		Data:      alertRule.Data,
+	}
+}
+
 // Diff calculates diff between two alert rules. Returns nil if two rules are equal. Otherwise, returns cmputil.DiffReport
 func (alertRule *AlertRule) Diff(rule *AlertRule, ignore ...string) cmputil.DiffReport {
 	var reporter cmputil.DiffReporter
