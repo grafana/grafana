@@ -422,8 +422,8 @@ var orgsCreateAccessEvaluator = ac.EvalAll(
 	ac.EvalPermission(ActionOrgsCreate),
 )
 
-// usersInviteEvaluator is used to protect
-// TODO description
+// usersInviteEvaluator is used to protect the "Configuration > Users > Invite" page access
+// accessible to org admins and server admins by default
 var usersInviteEvaluator = ac.EvalAny(
 	ac.EvalPermission(ac.ActionUsersCreate),
 	ac.EvalPermission(ac.ActionOrgUsersAdd),

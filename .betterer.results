@@ -7071,7 +7071,7 @@ exports[`better eslint`] = {
     "public/app/features/transformers/utils.ts:4096765926": [
       [21, 9, 29, "Do not use any type assertions.", "1090557251"]
     ],
-    "public/app/features/users/UsersActionBar.tsx:1795710611": [
+    "public/app/features/users/UsersActionBar.tsx:3113864457": [
       [66, 32, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/users/UsersListPage.test.tsx:4284943401": [

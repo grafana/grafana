@@ -310,7 +310,6 @@ const (
 	ActionOrgUsersAdd    = "org.users:add"
 	ActionOrgUsersRemove = "org.users:remove"
 	ActionOrgUsersWrite  = "org.users:write"
-	ActionOrgUsersInvite = "org.users:invite"
 
 	// LDAP actions
 	ActionLDAPUsersRead    = "ldap.user:read"
