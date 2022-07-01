@@ -616,7 +616,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		return q.Result, nil
 	}
 
-	evaluate := func(ctx context.Context, r *ngmodels.AlertRule, attempt int64, e *evaluation) error {
+	evaluate := func(ctx context.Context, r *ngmodels.AlertRule, attempt int64, e *evaluation) {
 		logger := logger.New("version", r.Version, "attempt", attempt, "now", e.scheduledAt)
 		start := sch.clock.Now()
 
@@ -636,7 +636,6 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		alerts := FromAlertStateToPostableAlerts(processedStates, sch.stateManager, sch.appURL)
 
 		notify(alerts, logger)
-		return nil
 	}
 
 	retryIfError := func(f func(attempt int64) error) error {
@@ -698,7 +697,8 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 						currentRule = newRule
 						logger.Debug("new alert rule version fetched", "title", newRule.Title, "version", newRule.Version)
 					}
-					return evaluate(grafanaCtx, currentRule, attempt, ctx)
+					evaluate(grafanaCtx, currentRule, attempt, ctx)
+					return nil
 				})
 				if err != nil {
 					logger.Error("evaluation failed after all retries", "err", err)
