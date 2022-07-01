@@ -25,6 +25,7 @@ export function getAppRoutes(): RouteDescriptor[] {
   return [
     {
       path: '/',
+      navId: 'home',
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Home,
       component: SafeDynamicImport(
@@ -431,12 +432,6 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/library-panels',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "LibraryPanelsPage"*/ 'app/features/library-panels/LibraryPanelsPage')
-      ),
-    },
-    {
-      path: '/notifications',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "NotificationsPage"*/ 'app/features/notifications/NotificationsPage')
       ),
     },
     ...getPluginCatalogRoutes(),
