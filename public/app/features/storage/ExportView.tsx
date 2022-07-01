@@ -5,6 +5,8 @@ import { GrafanaTheme2, isLiveChannelMessageEvent, isLiveChannelStatusEvent, Liv
 import { getBackendSrv, getGrafanaLiveSrv } from '@grafana/runtime';
 import { Button, CodeEditor, Modal, useTheme2 } from '@grafana/ui';
 
+import { StorageView } from './types';
+
 interface ExportStatusMessage {
   running: boolean;
   target: string;
@@ -17,7 +19,11 @@ interface ExportStatusMessage {
   status: string;
 }
 
-export const ExportView = () => {
+interface Props {
+  onPathChange: (p: string, v?: StorageView) => void;
+}
+
+export const ExportView = ({ onPathChange }: Props) => {
   const styles = getStyles(useTheme2());
   const [status, setStatus] = useState<ExportStatusMessage>();
 
@@ -93,6 +99,9 @@ export const ExportView = () => {
 
         <Button onClick={() => setOpen(true)} variant="primary">
           Export
+        </Button>
+        <Button variant="secondary" onClick={() => onPathChange('/')}>
+          Cancel
         </Button>
       </>
     );

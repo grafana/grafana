@@ -92,14 +92,14 @@ export default function StoragePage(props: Props) {
           setPath('');
           return <Spinner />;
         }
-        return <ExportView />;
+        return <ExportView onPathChange={setPath} />;
 
       case StorageView.AddRoot:
         if (!isRoot) {
           setPath('');
           return <Spinner />;
         }
-        return <AddRootView />;
+        return <AddRootView onPathChange={setPath} />;
     }
 
     const frame = listing.value;
