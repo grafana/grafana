@@ -5,30 +5,11 @@ import (
 	"strings"
 )
 
-type AccessVerb int32
-
-const (
-	// Each permission implies the previous
-	AccessUnknown AccessVerb = 0
-	AccessNone    AccessVerb = 1 // same as block
-	AccessRead    AccessVerb = 100
-	AccessWrite   AccessVerb = 200
-	AccessManage  AccessVerb = 300
-	AccessAdmin   AccessVerb = 1000
-)
-
-type AccessRule struct {
-	Path string     `json:"path"`
-	Verb AccessVerb `json:"verb"`
-	Kind string     `json:"kind"` // * or single kind
-	Who  string     `json:"who"`  // group or userid
-}
-
 type accessNode struct {
-	Verb         AccessVerb             `json:"verb"`
-	Kind         map[string]AccessVerb  `json:"kind"`
-	Children     map[string]*accessNode `json:"sub"`
-	defaultAcces bool                   // only allow folder checks
+	Verb     AccessVerb             `json:"verb,omitempty"`
+	Kind     map[string]AccessVerb  `json:"kind,omitempty"`
+	Children map[string]*accessNode `json:"children,omitempty"`
+	root     bool                   `json:"-"`
 }
 
 // Check if this node has acccess
@@ -50,7 +31,12 @@ func (n accessNode) HasAccess(path string, kind string, verb AccessVerb) bool {
 	if ok {
 		return sub.HasAccess(path[idx+1:], kind, verb)
 	}
-	return n.defaultAcces
+
+	// need to pass though folders
+	if v == 0 {
+		return kind == "folder" && !n.root
+	}
+	return verb <= v
 }
 
 // Check if this node has acccess
@@ -68,10 +54,12 @@ func (n accessNode) add(rule AccessRule) (*accessNode, error) {
 	c, ok := n.Children[part]
 	if !ok {
 		c = &accessNode{
-			Verb:         rule.Verb,
-			defaultAcces: n.defaultAcces,
-			Kind:         make(map[string]AccessVerb),
-			Children:     make(map[string]*accessNode),
+			Verb:     AccessUnknown,
+			Kind:     make(map[string]AccessVerb),
+			Children: make(map[string]*accessNode),
+		}
+		for k, v := range n.Kind {
+			c.Kind[k] = v
 		}
 		n.Children[part] = c
 	}
@@ -79,7 +67,6 @@ func (n accessNode) add(rule AccessRule) (*accessNode, error) {
 		rule.Path = rule.Path[idx+1:]
 		return c.add(rule)
 	}
-	c.defaultAcces = true
 	if rule.Kind == "*" || rule.Kind == "" {
 		c.Verb = rule.Verb
 	} else {
@@ -91,10 +78,10 @@ func (n accessNode) add(rule AccessRule) (*accessNode, error) {
 // HasAccess takes the full path
 func buildAccessTrie(rules []AccessRule) (*accessNode, error) {
 	root := &accessNode{
-		Verb:         0, // unknown
-		defaultAcces: false,
-		Kind:         make(map[string]AccessVerb),
-		Children:     make(map[string]*accessNode),
+		Verb:     AccessUnknown,
+		Kind:     make(map[string]AccessVerb),
+		Children: make(map[string]*accessNode),
+		root:     true,
 	}
 
 	// must be in order
