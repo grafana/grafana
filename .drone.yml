@@ -43,6 +43,13 @@ steps:
   image: grafana/build-container:1.5.7
   name: lint-frontend
 - commands:
+  - yarn betterer ci
+  depends_on:
+  - yarn-install
+  failure: ignore
+  image: grafana/build-container:1.5.7
+  name: betterer-frontend
+- commands:
   - yarn run ci:test-frontend
   depends_on:
   - yarn-install
@@ -100,6 +107,7 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
   image: grafana/build-container:1.5.7
   name: verify-gen-cue
 - commands:
@@ -205,6 +213,7 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
   image: grafana/build-container:1.5.7
   name: verify-gen-cue
 - commands:
@@ -460,6 +469,7 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
   image: grafana/build-container:1.5.7
   name: verify-gen-cue
 - commands:
@@ -739,6 +749,13 @@ steps:
   image: grafana/build-container:1.5.7
   name: lint-frontend
 - commands:
+  - yarn betterer ci
+  depends_on:
+  - yarn-install
+  failure: ignore
+  image: grafana/build-container:1.5.7
+  name: betterer-frontend
+- commands:
   - yarn run ci:test-frontend
   depends_on:
   - yarn-install
@@ -788,6 +805,7 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
   image: grafana/build-container:1.5.7
   name: verify-gen-cue
 - commands:
@@ -882,6 +900,7 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
   image: grafana/build-container:1.5.7
   name: verify-gen-cue
 - commands:
@@ -1303,6 +1322,7 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
   image: grafana/build-container:1.5.7
   name: verify-gen-cue
 - commands:
@@ -1567,6 +1587,7 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
   image: grafana/build-container:1.5.7
   name: verify-gen-cue
 - commands:
@@ -1864,6 +1885,7 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
   image: grafana/build-container:1.5.7
   name: verify-gen-cue
 - commands:
@@ -1996,6 +2018,7 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
   image: grafana/build-container:1.5.7
   name: verify-gen-cue
 - commands:
@@ -2575,13 +2598,13 @@ steps:
   image: grafana/build-container:1.5.7
   name: lint-frontend
 - commands:
-  - ./bin/grabpl test-backend --edition enterprise
+  - go test -short -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.5.7
   name: test-backend
 - commands:
-  - ./bin/grabpl integration-tests --edition enterprise
+  - go test -run Integration -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.5.7
@@ -2603,17 +2626,11 @@ steps:
   image: grafana/build-container:1.5.7
   name: lint-backend-enterprise2
 - commands:
-  - ./bin/grabpl test-backend --edition enterprise2
+  - go test -tags=pro -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.5.7
   name: test-backend-enterprise2
-- commands:
-  - ./bin/grabpl integration-tests --edition enterprise2
-  depends_on:
-  - wire-install
-  image: grafana/build-container:1.5.7
-  name: test-backend-integration-enterprise2
 trigger:
   event:
     exclude:
@@ -2705,14 +2722,31 @@ steps:
   image: grafana/build-container:1.5.7
   name: init-enterprise
 - commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  depends_on:
+  - init-enterprise
+  image: grafana/build-container:1.5.7
+  name: verify-gen-cue
+- commands:
+  - make gen-go
+  depends_on:
+  - verify-gen-cue
+  image: grafana/build-container:1.5.7
+  name: wire-install
+- commands:
   - apt-get update
   - apt-get install -yq postgresql-client
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - ./bin/grabpl integration-tests --database postgres
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+    -timeout=30m {}'
   depends_on:
-  - init-enterprise
+  - wire-install
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -2726,9 +2760,10 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - ./bin/grabpl integration-tests --database mysql
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+    -timeout=30m {}'
   depends_on:
-  - init-enterprise
+  - wire-install
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
@@ -2738,7 +2773,7 @@ steps:
   - dockerize -wait tcp://redis:6379/0 -timeout 120s
   - ./bin/grabpl integration-tests
   depends_on:
-  - init-enterprise
+  - wire-install
   environment:
     REDIS_URL: redis://redis:6379/0
   image: grafana/build-container:1.5.7
@@ -2747,7 +2782,7 @@ steps:
   - dockerize -wait tcp://memcached:11211 -timeout 120s
   - ./bin/grabpl integration-tests
   depends_on:
-  - init-enterprise
+  - wire-install
   environment:
     MEMCACHED_HOSTS: memcached:11211
   image: grafana/build-container:1.5.7
@@ -3395,6 +3430,7 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
   image: grafana/build-container:1.5.7
   name: verify-gen-cue
 - commands:
@@ -3662,6 +3698,7 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
   image: grafana/build-container:1.5.7
   name: verify-gen-cue
 - commands:
@@ -3788,6 +3825,7 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
   image: grafana/build-container:1.5.7
   name: verify-gen-cue
 - commands:
@@ -4345,13 +4383,13 @@ steps:
   image: grafana/build-container:1.5.7
   name: lint-frontend
 - commands:
-  - ./bin/grabpl test-backend --edition enterprise
+  - go test -short -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.5.7
   name: test-backend
 - commands:
-  - ./bin/grabpl integration-tests --edition enterprise
+  - go test -run Integration -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.5.7
@@ -4373,17 +4411,11 @@ steps:
   image: grafana/build-container:1.5.7
   name: lint-backend-enterprise2
 - commands:
-  - ./bin/grabpl test-backend --edition enterprise2
+  - go test -tags=pro -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.5.7
   name: test-backend-enterprise2
-- commands:
-  - ./bin/grabpl integration-tests --edition enterprise2
-  depends_on:
-  - wire-install
-  image: grafana/build-container:1.5.7
-  name: test-backend-integration-enterprise2
 trigger:
   ref:
   - refs/heads/v[0-9]*
@@ -4466,14 +4498,31 @@ steps:
   image: grafana/build-container:1.5.7
   name: init-enterprise
 - commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  depends_on:
+  - init-enterprise
+  image: grafana/build-container:1.5.7
+  name: verify-gen-cue
+- commands:
+  - make gen-go
+  depends_on:
+  - verify-gen-cue
+  image: grafana/build-container:1.5.7
+  name: wire-install
+- commands:
   - apt-get update
   - apt-get install -yq postgresql-client
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - ./bin/grabpl integration-tests --database postgres
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+    -timeout=30m {}'
   depends_on:
-  - init-enterprise
+  - wire-install
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -4487,9 +4536,10 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - ./bin/grabpl integration-tests --database mysql
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+    -timeout=30m {}'
   depends_on:
-  - init-enterprise
+  - wire-install
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
@@ -4499,7 +4549,7 @@ steps:
   - dockerize -wait tcp://redis:6379/0 -timeout 120s
   - ./bin/grabpl integration-tests
   depends_on:
-  - init-enterprise
+  - wire-install
   environment:
     REDIS_URL: redis://redis:6379/0
   image: grafana/build-container:1.5.7
@@ -4508,7 +4558,7 @@ steps:
   - dockerize -wait tcp://memcached:11211 -timeout 120s
   - ./bin/grabpl integration-tests
   depends_on:
-  - init-enterprise
+  - wire-install
   environment:
     MEMCACHED_HOSTS: memcached:11211
   image: grafana/build-container:1.5.7
@@ -4747,6 +4797,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 32e54be4bd96844f07ea81b7ac46b37aa10f755074526353afb3420323e0f2f4
+hmac: 12fbd61337ed1ae006e8c0ff71d1290e27b5910211369cdd47e1d604afd9befa
 
 ...

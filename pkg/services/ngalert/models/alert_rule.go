@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
@@ -125,6 +126,7 @@ type AlertRule struct {
 	DashboardUID    *string `xorm:"dashboard_uid"`
 	PanelID         *int64  `xorm:"panel_id"`
 	RuleGroup       string
+	RuleGroupIndex  int `xorm:"rule_group_idx"`
 	NoDataState     NoDataState
 	ExecErrState    ExecutionErrorState
 	// ideally this field should have been apimodels.ApiDuration
@@ -140,6 +142,9 @@ type SchedulableAlertRule struct {
 	OrgID           int64  `xorm:"org_id"`
 	IntervalSeconds int64
 	Version         int64
+	NamespaceUID    string `xorm:"namespace_uid"`
+	RuleGroup       string
+	RuleGroupIndex  int `xorm:"rule_group_idx"`
 }
 
 type LabelOption func(map[string]string)
@@ -251,6 +256,7 @@ type AlertRuleVersion struct {
 	RuleUID          string `xorm:"rule_uid"`
 	RuleNamespaceUID string `xorm:"rule_namespace_uid"`
 	RuleGroup        string
+	RuleGroupIndex   int `xorm:"rule_group_idx"`
 	ParentVersion    int64
 	RestoredFrom     int64
 	Version          int64
@@ -297,7 +303,7 @@ type ListAlertRulesQuery struct {
 	DashboardUID string
 	PanelID      int64
 
-	Result []*AlertRule
+	Result RulesGroup
 }
 
 type GetAlertRulesForSchedulingQuery struct {
@@ -382,7 +388,7 @@ func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRule) {
 	if ruleToPatch.NoDataState == "" {
 		ruleToPatch.NoDataState = existingRule.NoDataState
 	}
-	if ruleToPatch.For == 0 {
+	if ruleToPatch.For == -1 {
 		ruleToPatch.For = existingRule.For
 	}
 }
@@ -393,4 +399,15 @@ func ValidateRuleGroupInterval(intervalSeconds, baseIntervalSeconds int64) error
 			ErrAlertRuleFailedValidation, time.Duration(intervalSeconds)*time.Second, baseIntervalSeconds)
 	}
 	return nil
+}
+
+type RulesGroup []*AlertRule
+
+func (g RulesGroup) SortByGroupIndex() {
+	sort.Slice(g, func(i, j int) bool {
+		if g[i].RuleGroupIndex == g[j].RuleGroupIndex {
+			return g[i].ID < g[j].ID
+		}
+		return g[i].RuleGroupIndex < g[j].RuleGroupIndex
+	})
 }

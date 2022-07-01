@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -75,7 +76,7 @@ func TestCalculateChanges(t *testing.T) {
 			require.Equal(t, db, toDelete)
 		}
 		require.Contains(t, changes.AffectedGroups, groupKey)
-		require.Equal(t, inDatabase, changes.AffectedGroups[groupKey])
+		require.Equal(t, models.RulesGroup(inDatabase), changes.AffectedGroups[groupKey])
 	})
 
 	t.Run("should detect alerts that needs to be updated", func(t *testing.T) {
@@ -102,7 +103,7 @@ func TestCalculateChanges(t *testing.T) {
 		require.Empty(t, changes.New)
 
 		require.Contains(t, changes.AffectedGroups, groupKey)
-		require.Equal(t, inDatabase, changes.AffectedGroups[groupKey])
+		require.Equal(t, models.RulesGroup(inDatabase), changes.AffectedGroups[groupKey])
 	})
 
 	t.Run("should include only if there are changes ignoring specific fields", func(t *testing.T) {
@@ -335,10 +336,8 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 			scheduler.On("DeleteAlertRule", mock.Anything).Panic("should not be called")
 
 			ac := acMock.New().WithDisabled()
-			request := createRequestContext(orgID, models2.ROLE_VIEWER, map[string]string{
-				":Namespace": folder.Title,
-			})
-			response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(request)
+			request := createRequestContext(orgID, models2.ROLE_VIEWER, nil)
+			response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(request, folder.Title, "")
 			require.Equalf(t, 401, response.Status(), "Expected 403 but got %d: %v", response.Status(), string(response.Body()))
 
 			scheduler.AssertNotCalled(t, "DeleteAlertRule")
@@ -357,10 +356,8 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 			scheduler.On("DeleteAlertRule", mock.Anything)
 
 			ac := acMock.New().WithDisabled()
-			request := createRequestContext(orgID, models2.ROLE_EDITOR, map[string]string{
-				":Namespace": folder.Title,
-			})
-			response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(request)
+			request := createRequestContext(orgID, models2.ROLE_EDITOR, nil)
+			response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(request, folder.Title, "")
 			require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
 			assertRulesDeleted(t, rulesInFolder, ruleStore, scheduler)
 		})
@@ -381,11 +378,8 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 			scheduler.On("DeleteAlertRule", mock.Anything)
 
 			ac := acMock.New().WithDisabled()
-			request := createRequestContext(orgID, models2.ROLE_EDITOR, map[string]string{
-				":Namespace": folder.Title,
-				":Groupname": groupName,
-			})
-			response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(request)
+			request := createRequestContext(orgID, models2.ROLE_EDITOR, nil)
+			response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(request, folder.Title, groupName)
 			require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
 			assertRulesDeleted(t, rulesInFolderInGroup, ruleStore, scheduler)
 		})
@@ -408,10 +402,8 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 			err := svc.provenanceStore.SetProvenance(context.Background(), rulesInFolder[0], orgID, models.ProvenanceAPI)
 			require.NoError(t, err)
 
-			request := createRequestContext(orgID, models2.ROLE_EDITOR, map[string]string{
-				":Namespace": folder.Title,
-			})
-			response := svc.RouteDeleteAlertRules(request)
+			request := createRequestContext(orgID, models2.ROLE_EDITOR, nil)
+			response := svc.RouteDeleteAlertRules(request, folder.Title, "")
 			require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
 			assertRulesDeleted(t, rulesInFolder[1:], ruleStore, scheduler)
 		})
@@ -429,10 +421,8 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 			scheduler.On("DeleteAlertRule", mock.Anything).Panic("should not be called")
 
 			ac := acMock.New()
-			request := createRequestContext(orgID, "None", map[string]string{
-				":Namespace": folder.Title,
-			})
-			response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(request)
+			request := createRequestContext(orgID, "None", nil)
+			response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(request, folder.Title, "")
 			require.Equalf(t, 401, response.Status(), "Expected 403 but got %d: %v", response.Status(), string(response.Body()))
 
 			scheduler.AssertNotCalled(t, "DeleteAlertRule")
@@ -452,11 +442,9 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 				scheduler.On("DeleteAlertRule", mock.Anything)
 
 				ac := acMock.New().WithPermissions(createPermissionsForRules(rulesInFolder))
-				request := createRequestContext(orgID, "None", map[string]string{
-					":Namespace": folder.Title,
-				})
+				request := createRequestContext(orgID, "None", nil)
 
-				response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(request)
+				response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(request, folder.Title, "")
 				require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
 				assertRulesDeleted(t, rulesInFolder, ruleStore, scheduler)
 			})
@@ -478,11 +466,9 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 				err := svc.provenanceStore.SetProvenance(context.Background(), rulesInFolder[0], orgID, models.ProvenanceAPI)
 				require.NoError(t, err)
 
-				request := createRequestContext(orgID, "None", map[string]string{
-					":Namespace": folder.Title,
-				})
+				request := createRequestContext(orgID, "None", nil)
 
-				response := svc.RouteDeleteAlertRules(request)
+				response := svc.RouteDeleteAlertRules(request, folder.Title, "")
 				require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
 				assertRulesDeleted(t, rulesInFolder[1:], ruleStore, scheduler)
 			})
@@ -503,11 +489,9 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 				scheduler.On("DeleteAlertRule", mock.Anything)
 
 				ac := acMock.New().WithPermissions(createPermissionsForRules(authorizedRulesInFolder))
-				request := createRequestContext(orgID, "None", map[string]string{
-					":Namespace": folder.Title,
-				})
+				request := createRequestContext(orgID, "None", nil)
 
-				response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(request)
+				response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(request, folder.Title, "")
 				require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
 				assertRulesDeleted(t, authorizedRulesInFolder, ruleStore, scheduler)
 			})
@@ -530,11 +514,8 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 				scheduler.On("DeleteAlertRule", mock.Anything)
 
 				ac := acMock.New().WithPermissions(createPermissionsForRules(authorizedRulesInGroup))
-				request := createRequestContext(orgID, "None", map[string]string{
-					":Namespace": folder.Title,
-					":Groupname": groupName,
-				})
-				response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(request)
+				request := createRequestContext(orgID, "None", nil)
+				response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(request, folder.Title, groupName)
 				require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
 				assertRulesDeleted(t, authorizedRulesInGroup, ruleStore, scheduler)
 			})
@@ -554,9 +535,8 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 			ruleStore.PutRule(context.Background(), models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))...)
 			ac := acMock.New().WithPermissions(createPermissionsForRules(expectedRules))
 
-			response := createService(ac, ruleStore, nil).RouteGetNamespaceRulesConfig(createRequestContext(orgID, "", map[string]string{
-				":Namespace": folder.Title,
-			}))
+			req := createRequestContext(orgID, "", nil)
+			response := createService(ac, ruleStore, nil).RouteGetNamespaceRulesConfig(req, folder.Title)
 
 			require.Equal(t, http.StatusAccepted, response.Status())
 			result := &apimodels.NamespaceConfigResponse{}
@@ -590,9 +570,8 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 			ruleStore.PutRule(context.Background(), expectedRules...)
 			ac := acMock.New().WithDisabled()
 
-			response := createService(ac, ruleStore, nil).RouteGetNamespaceRulesConfig(createRequestContext(orgID, models2.ROLE_VIEWER, map[string]string{
-				":Namespace": folder.Title,
-			}))
+			req := createRequestContext(orgID, models2.ROLE_VIEWER, nil)
+			response := createService(ac, ruleStore, nil).RouteGetNamespaceRulesConfig(req, folder.Title)
 
 			require.Equal(t, http.StatusAccepted, response.Status())
 			result := &apimodels.NamespaceConfigResponse{}
@@ -634,9 +613,8 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 		err := svc.provenanceStore.SetProvenance(context.Background(), rule, orgID, models.ProvenanceAPI)
 		require.NoError(t, err)
 
-		response := svc.RouteGetNamespaceRulesConfig(createRequestContext(orgID, models2.ROLE_VIEWER, map[string]string{
-			":Namespace": folder.Title,
-		}))
+		req := createRequestContext(orgID, models2.ROLE_VIEWER, nil)
+		response := svc.RouteGetNamespaceRulesConfig(req, folder.Title)
 
 		require.Equal(t, http.StatusAccepted, response.Status())
 		result := &apimodels.NamespaceConfigResponse{}
@@ -657,6 +635,47 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 			}
 		}
 		require.True(t, found)
+	})
+	t.Run("should enforce order of rules in the group", func(t *testing.T) {
+		orgID := rand.Int63()
+		folder := randFolder()
+		ruleStore := store.NewFakeRuleStore(t)
+		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
+		groupKey := models.GenerateGroupKey(orgID)
+		groupKey.NamespaceUID = folder.Uid
+
+		expectedRules := models.GenerateAlertRules(rand.Intn(5)+5, models.AlertRuleGen(withGroupKey(groupKey), models.WithUniqueGroupIndex()))
+		ruleStore.PutRule(context.Background(), expectedRules...)
+		ac := acMock.New().WithDisabled()
+
+		response := createService(ac, ruleStore, nil).RouteGetNamespaceRulesConfig(createRequestContext(orgID, models2.ROLE_VIEWER, nil), folder.Title)
+
+		require.Equal(t, http.StatusAccepted, response.Status())
+		result := &apimodels.NamespaceConfigResponse{}
+		require.NoError(t, json.Unmarshal(response.Body(), result))
+		require.NotNil(t, result)
+
+		models.RulesGroup(expectedRules).SortByGroupIndex()
+
+		require.Contains(t, *result, folder.Title)
+		groups := (*result)[folder.Title]
+		require.Len(t, groups, 1)
+		group := groups[0]
+		require.Equal(t, groupKey.RuleGroup, group.Name)
+		for i, actual := range groups[0].Rules {
+			expected := expectedRules[i]
+			if actual.GrafanaManagedAlert.UID != expected.UID {
+				var actualUIDs []string
+				var expectedUIDs []string
+				for _, rule := range group.Rules {
+					actualUIDs = append(actualUIDs, rule.GrafanaManagedAlert.UID)
+				}
+				for _, rule := range expectedRules {
+					expectedUIDs = append(expectedUIDs, rule.UID)
+				}
+				require.Fail(t, fmt.Sprintf("rules are not sorted by group index. Expected: %v. Actual: %v", expectedUIDs, actualUIDs))
+			}
+		}
 	})
 }
 
@@ -698,6 +717,48 @@ func TestRouteGetRulesConfig(t *testing.T) {
 			})
 		})
 	})
+
+	t.Run("should return rules in group sorted by group index", func(t *testing.T) {
+		orgID := rand.Int63()
+		folder := randFolder()
+		ruleStore := store.NewFakeRuleStore(t)
+		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
+		groupKey := models.GenerateGroupKey(orgID)
+		groupKey.NamespaceUID = folder.Uid
+
+		expectedRules := models.GenerateAlertRules(rand.Intn(5)+5, models.AlertRuleGen(withGroupKey(groupKey), models.WithUniqueGroupIndex()))
+		ruleStore.PutRule(context.Background(), expectedRules...)
+		ac := acMock.New().WithDisabled()
+
+		response := createService(ac, ruleStore, nil).RouteGetRulesConfig(createRequestContext(orgID, models2.ROLE_VIEWER, nil))
+
+		require.Equal(t, http.StatusOK, response.Status())
+		result := &apimodels.NamespaceConfigResponse{}
+		require.NoError(t, json.Unmarshal(response.Body(), result))
+		require.NotNil(t, result)
+
+		models.RulesGroup(expectedRules).SortByGroupIndex()
+
+		require.Contains(t, *result, folder.Title)
+		groups := (*result)[folder.Title]
+		require.Len(t, groups, 1)
+		group := groups[0]
+		require.Equal(t, groupKey.RuleGroup, group.Name)
+		for i, actual := range groups[0].Rules {
+			expected := expectedRules[i]
+			if actual.GrafanaManagedAlert.UID != expected.UID {
+				var actualUIDs []string
+				var expectedUIDs []string
+				for _, rule := range group.Rules {
+					actualUIDs = append(actualUIDs, rule.GrafanaManagedAlert.UID)
+				}
+				for _, rule := range expectedRules {
+					expectedUIDs = append(expectedUIDs, rule.UID)
+				}
+				require.Fail(t, fmt.Sprintf("rules are not sorted by group index. Expected: %v. Actual: %v", expectedUIDs, actualUIDs))
+			}
+		}
+	})
 }
 
 func TestRouteGetRulesGroupConfig(t *testing.T) {
@@ -720,13 +781,13 @@ func TestRouteGetRulesGroupConfig(t *testing.T) {
 
 			t.Run("and return 401 if user does not have access one of rules", func(t *testing.T) {
 				ac := acMock.New().WithPermissions(createPermissionsForRules(expectedRules[1:]))
-				response := createService(ac, ruleStore, nil).RouteGetRulesGroupConfig(request)
+				response := createService(ac, ruleStore, nil).RouteGetRulesGroupConfig(request, folder.Title, groupKey.RuleGroup)
 				require.Equal(t, http.StatusUnauthorized, response.Status())
 			})
 
 			t.Run("and return rules if user has access to all of them", func(t *testing.T) {
 				ac := acMock.New().WithPermissions(createPermissionsForRules(expectedRules))
-				response := createService(ac, ruleStore, nil).RouteGetRulesGroupConfig(request)
+				response := createService(ac, ruleStore, nil).RouteGetRulesGroupConfig(request, folder.Title, groupKey.RuleGroup)
 
 				require.Equal(t, http.StatusAccepted, response.Status())
 				result := &apimodels.RuleGroupConfigResponse{}
@@ -736,12 +797,49 @@ func TestRouteGetRulesGroupConfig(t *testing.T) {
 			})
 		})
 	})
+
+	t.Run("should return rules in group sorted by group index", func(t *testing.T) {
+		orgID := rand.Int63()
+		folder := randFolder()
+		ruleStore := store.NewFakeRuleStore(t)
+		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
+		groupKey := models.GenerateGroupKey(orgID)
+		groupKey.NamespaceUID = folder.Uid
+
+		expectedRules := models.GenerateAlertRules(rand.Intn(5)+5, models.AlertRuleGen(withGroupKey(groupKey), models.WithUniqueGroupIndex()))
+		ruleStore.PutRule(context.Background(), expectedRules...)
+		ac := acMock.New().WithDisabled()
+
+		response := createService(ac, ruleStore, nil).RouteGetRulesGroupConfig(createRequestContext(orgID, models2.ROLE_VIEWER, nil), folder.Title, groupKey.RuleGroup)
+
+		require.Equal(t, http.StatusAccepted, response.Status())
+		result := &apimodels.RuleGroupConfigResponse{}
+		require.NoError(t, json.Unmarshal(response.Body(), result))
+		require.NotNil(t, result)
+
+		models.RulesGroup(expectedRules).SortByGroupIndex()
+
+		for i, actual := range result.Rules {
+			expected := expectedRules[i]
+			if actual.GrafanaManagedAlert.UID != expected.UID {
+				var actualUIDs []string
+				var expectedUIDs []string
+				for _, rule := range result.Rules {
+					actualUIDs = append(actualUIDs, rule.GrafanaManagedAlert.UID)
+				}
+				for _, rule := range expectedRules {
+					expectedUIDs = append(expectedUIDs, rule.UID)
+				}
+				require.Fail(t, fmt.Sprintf("rules are not sorted by group index. Expected: %v. Actual: %v", expectedUIDs, actualUIDs))
+			}
+		}
+	})
 }
 
 func TestVerifyProvisionedRulesNotAffected(t *testing.T) {
 	orgID := rand.Int63()
 	group := models.GenerateGroupKey(orgID)
-	affectedGroups := make(map[models.AlertRuleGroupKey][]*models.AlertRule)
+	affectedGroups := make(map[models.AlertRuleGroupKey]models.RulesGroup)
 	var allRules []*models.AlertRule
 	{
 		rules := models.GenerateAlertRules(rand.Intn(3)+1, models.AlertRuleGen(withGroupKey(group)))
@@ -799,6 +897,141 @@ func TestVerifyProvisionedRulesNotAffected(t *testing.T) {
 	})
 }
 
+func TestCalculateAutomaticChanges(t *testing.T) {
+	orgID := rand.Int63()
+
+	t.Run("should mark all rules in affected groups", func(t *testing.T) {
+		group := models.GenerateGroupKey(orgID)
+		rules := models.GenerateAlertRules(10, models.AlertRuleGen(withGroupKey(group)))
+		// copy rules to make sure that the function does not modify the original rules
+		copies := make([]*models.AlertRule, 0, len(rules))
+		for _, rule := range rules {
+			copies = append(copies, models.CopyRule(rule))
+		}
+
+		var updates []ruleUpdate
+		for i := 0; i < 5; i++ {
+			ruleCopy := models.CopyRule(copies[i])
+			ruleCopy.Title += util.GenerateShortUID()
+			updates = append(updates, ruleUpdate{
+				Existing: copies[i],
+				New:      ruleCopy,
+			})
+		}
+
+		// simulate adding new rules, updating a few existing and delete some from the same rule
+		ch := &changes{
+			GroupKey: group,
+			AffectedGroups: map[models.AlertRuleGroupKey]models.RulesGroup{
+				group: copies,
+			},
+			New:    models.GenerateAlertRules(2, models.AlertRuleGen(withGroupKey(group))),
+			Update: updates,
+			Delete: rules[5:7],
+		}
+
+		result := calculateAutomaticChanges(ch)
+
+		require.NotEqual(t, ch, result)
+		require.Equal(t, ch.GroupKey, result.GroupKey)
+		require.Equal(t, map[models.AlertRuleGroupKey]models.RulesGroup{
+			group: rules,
+		}, result.AffectedGroups)
+		require.Equal(t, ch.New, result.New)
+		require.Equal(t, rules[5:7], result.Delete)
+		var expected []ruleUpdate
+		expected = append(expected, updates...)
+		// all rules that were not updated directly by user should be added to the
+		for _, rule := range rules[7:] {
+			expected = append(expected, ruleUpdate{
+				Existing: rule,
+				New:      rule,
+			})
+		}
+		require.Equal(t, expected, result.Update)
+	})
+
+	t.Run("should re-index rules in affected groups other than updated", func(t *testing.T) {
+		group := models.GenerateGroupKey(orgID)
+		rules := models.GenerateAlertRules(3, models.AlertRuleGen(withGroupKey(group), models.WithSequentialGroupIndex()))
+		group2 := models.GenerateGroupKey(orgID)
+		rules2 := models.GenerateAlertRules(4, models.AlertRuleGen(withGroupKey(group2), models.WithSequentialGroupIndex()))
+
+		movedIndex := rand.Intn(len(rules2) - 1)
+		movedRule := rules2[movedIndex]
+		copyRule := models.CopyRule(movedRule)
+		copyRule.RuleGroup = group.RuleGroup
+		copyRule.NamespaceUID = group.NamespaceUID
+		copyRule.RuleGroupIndex = len(rules)
+		update := ruleUpdate{
+			Existing: movedRule,
+			New:      copyRule,
+		}
+
+		shuffled := make([]*models.AlertRule, 0, len(rules2))
+		copy(shuffled, rules2)
+		rand.Shuffle(len(shuffled), func(i, j int) {
+			shuffled[i], shuffled[j] = shuffled[j], shuffled[i]
+		})
+
+		// simulate moving a rule from one group to another.
+		ch := &changes{
+			GroupKey: group,
+			AffectedGroups: map[models.AlertRuleGroupKey]models.RulesGroup{
+				group:  rules,
+				group2: shuffled,
+			},
+			Update: []ruleUpdate{
+				update,
+			},
+		}
+
+		result := calculateAutomaticChanges(ch)
+
+		require.NotEqual(t, ch, result)
+		require.Equal(t, ch.GroupKey, result.GroupKey)
+		require.Equal(t, ch.AffectedGroups, result.AffectedGroups)
+		require.Equal(t, ch.New, result.New)
+		require.Equal(t, ch.Delete, result.Delete)
+
+		require.Equal(t, ch.Update, result.Update[0:1])
+
+		require.Contains(t, result.Update, update)
+		for _, rule := range rules {
+			assert.Containsf(t, result.Update, ruleUpdate{
+				Existing: rule,
+				New:      rule,
+			}, "automatic changes expected to contain all rules of the updated group")
+		}
+
+		// calculate expected index of the rules in the source group after the move
+		expectedReindex := make(map[string]int, len(rules2)-1)
+		idx := 1
+		for _, rule := range rules2 {
+			if rule.UID == movedRule.UID {
+				continue
+			}
+			expectedReindex[rule.UID] = idx
+			idx++
+		}
+
+		for _, upd := range result.Update {
+			expectedIdx, ok := expectedReindex[upd.Existing.UID]
+			if !ok {
+				continue
+			}
+			diff := upd.Existing.Diff(upd.New)
+			if upd.Existing.RuleGroupIndex != expectedIdx {
+				require.Lenf(t, diff, 1, fmt.Sprintf("the rule in affected group should be re-indexed to %d but it still has index %d. Moved rule with index %d", expectedIdx, upd.Existing.RuleGroupIndex, movedIndex))
+				require.Equal(t, "RuleGroupIndex", diff[0].Path)
+				require.Equal(t, expectedIdx, upd.New.RuleGroupIndex)
+			} else {
+				require.Empty(t, diff)
+			}
+		}
+	})
+}
+
 func createService(ac *acMock.Mock, store *store.FakeRuleStore, scheduler schedule.ScheduleService) *RulerSrv {
 	return &RulerSrv{
 		xactManager:     store,
@@ -818,7 +1051,9 @@ func createRequestContext(orgID int64, role models2.RoleType, params map[string]
 	ctx := web.Context{Req: &http.Request{
 		URL: uri,
 	}}
-	ctx.Req = web.SetURLParams(ctx.Req, params)
+	if params != nil {
+		ctx.Req = web.SetURLParams(ctx.Req, params)
+	}
 
 	return &models2.ReqContext{
 		IsSignedIn: true,
