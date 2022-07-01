@@ -1,13 +1,11 @@
 ---
 aliases:
   - /docs/grafana/latest/panels/working-with-panels/navigate-panel-editor/
-  - /docs/sources/panels/working-with-panels/navigate-panel-editor/
   - /docs/grafana/latest/panels/working-with-panels/navigate-inspector-panel/
-  - /docs/sources/panels/working-with-panels/navigate-inspector-panel/
   - /docs/grafana/latest/dashboards/dashboard-create/
   - /docs/grafana/latest/features/dashboard/dashboards/
   - /docs/grafana/latest/panels/working-with-panels/add-panel/
-  - /docs/sources/panels/working-with-panels/add-panel/
+  - /docs/grafana/latest/dashboards/add-organize-panels/
 title: Add and organize panels
 menuTitle: Add and organize panels
 weight: 2
