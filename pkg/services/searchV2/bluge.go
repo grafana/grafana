@@ -451,7 +451,7 @@ func doSearchQuery(
 	// execute this search on the reader
 	documentMatchIterator, err := reader.Search(ctx, req)
 	if err != nil {
-		logger.Error("error executing search: %v", err)
+		logger.Error("error executing search", "err", err)
 		response.Error = err
 		return response
 	}
@@ -533,7 +533,7 @@ func doSearchQuery(
 			return true
 		})
 		if err != nil {
-			logger.Error("error loading stored fields: %v", err)
+			logger.Error("error loading stored fields", "err", err)
 			response.Error = err
 			return response
 		}
