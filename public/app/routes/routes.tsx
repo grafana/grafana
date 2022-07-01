@@ -25,7 +25,7 @@ export function getAppRoutes(): RouteDescriptor[] {
   return [
     {
       path: '/',
-      navId: 'home',
+      navId: 'dashboards',
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Home,
       component: SafeDynamicImport(
@@ -43,6 +43,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/dashboard/:type/:slug',
+      navId: 'dashboards',
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Normal,
       component: SafeDynamicImport(
@@ -51,10 +52,9 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/dashboard/new',
+      navId: 'dashboards',
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.New,
-      // TODO[Router]
-      //roles: () => (contextSrv.hasEditPermissionInFolders ? [contextSrv.user.orgRole] : ['Admin']),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage')
       ),
@@ -63,6 +63,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/d-solo/:uid/:slug',
       pageClass: 'dashboard-solo',
       routeName: DashboardRoutes.Normal,
+      navHidden: true,
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard/containers/SoloPanelPage')
       ),
@@ -72,6 +73,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/dashboard-solo/:type/:slug',
       pageClass: 'dashboard-solo',
       routeName: DashboardRoutes.Normal,
+      navHidden: true,
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard/containers/SoloPanelPage')
       ),
@@ -80,12 +82,14 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/d-solo/:uid',
       pageClass: 'dashboard-solo',
       routeName: DashboardRoutes.Normal,
+      navHidden: true,
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard/containers/SoloPanelPage')
       ),
     },
     {
       path: '/dashboard/import',
+      navId: 'dashboards/import',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DashboardImport"*/ 'app/features/manage-dashboards/DashboardImportPage')
       ),
@@ -99,6 +103,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/datasources/edit/:uid/',
+      navId: 'datasources',
       component: SafeDynamicImport(
         () =>
           import(
@@ -108,30 +113,35 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/datasources/edit/:uid/dashboards',
+      navId: 'datasources',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DataSourceDashboards"*/ 'app/features/datasources/DataSourceDashboards')
       ),
     },
     {
       path: '/datasources/new',
+      navId: 'datasources',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "NewDataSourcePage"*/ '../features/datasources/NewDataSourcePage')
       ),
     },
     {
       path: '/dashboards',
+      navId: 'dashboards/browse',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DashboardListPage"*/ 'app/features/search/components/DashboardListPage')
       ),
     },
     {
       path: '/dashboards/folder/new',
+      navId: 'dashboards/folder/new',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "NewDashboardsFolder"*/ 'app/features/folders/components/NewDashboardsFolder')
       ),
     },
     {
       path: '/dashboards/f/:uid/:slug/permissions',
+      navId: 'dashboards/browse',
       component:
         config.rbacEnabled && contextSrv.hasPermission(AccessControlAction.FoldersPermissionsRead)
           ? SafeDynamicImport(
@@ -144,18 +154,21 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/dashboards/f/:uid/:slug/settings',
+      navId: 'dashboards/browse',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "FolderSettingsPage"*/ 'app/features/folders/FolderSettingsPage')
       ),
     },
     {
       path: '/dashboards/f/:uid/:slug',
+      navId: 'dashboards/browse',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DashboardListPage"*/ 'app/features/search/components/DashboardListPage')
       ),
     },
     {
       path: '/dashboards/f/:uid',
+      navId: 'dashboards/browse',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DashboardListPage"*/ 'app/features/search/components/DashboardListPage')
       ),
@@ -381,30 +394,35 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/dashboard/snapshots',
+      navId: 'dashboards/snapshots',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "SnapshotListPage" */ 'app/features/manage-dashboards/SnapshotListPage')
       ),
     },
     {
       path: '/playlists',
+      navId: 'dashboards/snapshots',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "PlaylistPage"*/ 'app/features/playlist/PlaylistPage')
       ),
     },
     {
       path: '/playlists/play/:uid',
+      navId: 'dashboards/playlists',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "PlaylistStartPage"*/ 'app/features/playlist/PlaylistStartPage')
       ),
     },
     {
       path: '/playlists/new',
+      navId: 'dashboards/playlists',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "PlaylistNewPage"*/ 'app/features/playlist/PlaylistNewPage')
       ),
     },
     {
       path: '/playlists/edit/:uid',
+      navId: 'dashboards/playlists',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "PlaylistEditPage"*/ 'app/features/playlist/PlaylistEditPage')
       ),
@@ -437,6 +455,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/library-panels',
+      navId: 'dashboards/library-panels',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "LibraryPanelsPage"*/ 'app/features/library-panels/LibraryPanelsPage')
       ),

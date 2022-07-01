@@ -89,7 +89,7 @@ exports[`no enzyme tests`] = {
     "public/app/features/dimensions/editors/ThresholdsEditor/ThresholdsEditor.test.tsx:4164297658": [
       [0, 17, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/folders/FolderSettingsPage.test.tsx:1109052730": [
+    "public/app/features/folders/FolderSettingsPage.test.tsx:1208063654": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
     "public/app/plugins/datasource/cloudwatch/components/ConfigEditor.test.tsx:227258837": [
@@ -5992,8 +5992,8 @@ exports[`better eslint`] = {
     "public/app/features/expressions/guards.ts:4248223389": [
       [14, 21, 28, "Do not use any type assertions.", "3052769877"]
     ],
-    "public/app/features/folders/FolderSettingsPage.test.tsx:1109052730": [
-      [13, 14, 14, "Do not use any type assertions.", "3112983303"],
+    "public/app/features/folders/FolderSettingsPage.test.tsx:1208063654": [
+      [13, 13, 14, "Do not use any type assertions.", "3112983303"],
       [36, 19, 40, "Do not use any type assertions.", "2693764194"]
     ],
     "public/app/features/folders/state/actions.test.ts:2285846850": [
@@ -6187,9 +6187,9 @@ exports[`better eslint`] = {
     "public/app/features/live/pages/utils.ts:270086979": [
       [19, 37, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/manage-dashboards/DashboardImportPage.tsx:1590008002": [
-      [81, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [82, 25, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/features/manage-dashboards/DashboardImportPage.tsx:714958750": [
+      [79, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [80, 25, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/manage-dashboards/components/ImportDashboardForm.tsx:123008784": [
       [62, 28, 9, "Do not use any type assertions.", "3692209159"],
@@ -6339,31 +6339,25 @@ exports[`better eslint`] = {
       [22, 80, 20, "Do not use any type assertions.", "2350865643"],
       [22, 97, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/playlist/PlaylistEditPage.test.tsx:3498330395": [
+    "public/app/features/playlist/PlaylistEditPage.test.tsx:1299360414": [
       [23, 19, 53, "Do not use any type assertions.", "778424295"],
       [23, 19, 41, "Do not use any type assertions.", "3698800435"],
       [25, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
       [26, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
       [27, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [28, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [29, 18, 3, "Unexpected any. Specify a different type.", "193409811"]
+      [28, 17, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/playlist/PlaylistForm.test.tsx:2574850033": [
       [16, 19, 53, "Do not use any type assertions.", "778424295"],
       [16, 19, 41, "Do not use any type assertions.", "3698800435"]
     ],
-    "public/app/features/playlist/PlaylistNewPage.test.tsx:233608604": [
+    "public/app/features/playlist/PlaylistNewPage.test.tsx:424388644": [
       [31, 19, 48, "Do not use any type assertions.", "3787046835"],
-      [31, 19, 36, "Do not use any type assertions.", "2729023463"],
-      [33, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [34, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [35, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [36, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [37, 18, 3, "Unexpected any. Specify a different type.", "193409811"]
+      [31, 19, 36, "Do not use any type assertions.", "2729023463"]
     ],
-    "public/app/features/playlist/PlaylistPage.test.tsx:1746955973": [
-      [12, 6, 59, "Do not use any type assertions.", "3685154675"],
-      [12, 6, 49, "Do not use any type assertions.", "1184085652"]
+    "public/app/features/playlist/PlaylistPage.test.tsx:3564571437": [
+      [10, 6, 59, "Do not use any type assertions.", "3685154675"],
+      [10, 6, 49, "Do not use any type assertions.", "1184085652"]
     ],
     "public/app/features/playlist/PlaylistSrv.test.ts:872989713": [
       [23, 2, 41, "Do not use any type assertions.", "3005722110"],

@@ -20,12 +20,12 @@ const FolderAlerting = ({ match }: OwnProps) => {
   const folder = useSelector((state: StoreState) => state.folder);
 
   const uid = match.params.uid;
-  const navModel = getNavModel(navIndex, `folder-alerting-${uid}`, getLoadingNav(1));
+  const pageNav = getNavModel(navIndex, `folder-alerting-${uid}`, getLoadingNav(1));
 
   const { loading } = useAsync(async () => dispatch(getFolderByUid(uid)), [getFolderByUid, uid]);
 
   return (
-    <Page navModel={navModel}>
+    <Page navId="dashboards/browse" pageNav={pageNav.main}>
       <Page.Contents isLoading={loading}>
         <AlertsFolderView folder={folder} />
       </Page.Contents>
