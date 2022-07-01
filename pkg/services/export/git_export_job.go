@@ -179,9 +179,10 @@ func (e *gitExportJob) doOrgExportWithHistory(helper *commitHelper) error {
 	// Run all the simple exporters
 	exporters := []simpleExporter{
 		dumpAuthTables,
-		exportPreferences,
+		exportSystemPreferences,
+		exportSystemStars,
+		exportSystemPlaylists,
 		exportAnnotations,
-		exportPlaylists,
 	}
 
 	// This needs a real admin user to use the interfaces (and decrypt)

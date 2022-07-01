@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func exportPlaylists(helper *commitHelper, job *gitExportJob) error {
+func exportSystemPlaylists(helper *commitHelper, job *gitExportJob) error {
 	cmd := &models.GetPlaylistsQuery{
 		OrgId: job.orgID,
 		Limit: 500000,

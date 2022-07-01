@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-func exportPreferences(helper *commitHelper, job *gitExportJob) error {
+func exportSystemPreferences(helper *commitHelper, job *gitExportJob) error {
 	type preferences struct {
 		UserID          int64                  `json:"-" xorm:"user_id"`
 		TeamID          int64                  `json:"-" xorm:"team_id"`
@@ -22,7 +22,6 @@ func exportPreferences(helper *commitHelper, job *gitExportJob) error {
 		Timezone      string      `json:"timezone"`
 		WeekStart     string      `json:"week_start,omitempty"`
 		HomeDashboard string      `json:"home,omitempty" xorm:"uid"` // dashboard
-		Stars         []string    `json:"stars,omitempty"`           // GRN
 		NavBar        interface{} `json:"navbar,omitempty"`
 		QueryHistory  interface{} `json:"queryHistory,omitempty"`
 	}
@@ -32,7 +31,6 @@ func exportPreferences(helper *commitHelper, job *gitExportJob) error {
 	for _, user := range helper.users {
 		users[user.ID] = user
 	}
-	stars := readStars(helper, job)
 
 	return job.sql.WithDbSession(helper.ctx, func(sess *sqlstore.DBSession) error {
 		rows := make([]*preferences, 0)
@@ -65,7 +63,6 @@ func exportPreferences(helper *commitHelper, job *gitExportJob) error {
 						Login: fmt.Sprintf("__%d__", row.UserID),
 					}
 				}
-				row.Stars = stars[row.UserID]
 				fpath = filepath.Join(prefsDir, "user", fmt.Sprintf("%s.json", user.Login))
 				comment = fmt.Sprintf("User preferences: %s", user.getAuthor().Name)
 			}
@@ -107,9 +104,8 @@ func exportPreferences(helper *commitHelper, job *gitExportJob) error {
 		}
 
 		// add a file for all useres that may not be in the system
-		for k, user := range users {
+		for _, user := range users {
 			row := preferences{
-				Stars: stars[k],
 				Theme: user.Theme, // never set?
 			}
 			err := helper.add(commitOptions{
@@ -129,35 +125,4 @@ func exportPreferences(helper *commitHelper, job *gitExportJob) error {
 		}
 		return err
 	})
-}
-
-func readStars(helper *commitHelper, job *gitExportJob) map[int64][]string {
-	prefs := make(map[int64][]string, 50)
-
-	_ = job.sql.WithDbSession(helper.ctx, func(sess *sqlstore.DBSession) error {
-		type starResult struct {
-			User int64  `xorm:"user_id"`
-			UID  string `xorm:"uid"`
-		}
-
-		rows := make([]*starResult, 0)
-
-		sess.Table("star").
-			Join("INNER", "dashboard", "dashboard.id = star.dashboard_id").
-			Cols("star.user_id", "dashboard.uid").
-			Where("dashboard.org_id = ?", helper.orgID)
-
-		err := sess.Find(&rows)
-		if err != nil {
-			return err
-		}
-
-		for _, row := range rows {
-			stars := append(prefs[row.User], fmt.Sprintf("dashboard/%s", row.UID))
-			prefs[row.User] = stars
-		}
-		return err
-	})
-
-	return prefs
 }
