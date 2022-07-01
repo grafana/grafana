@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -24,7 +25,7 @@ func (hs *HTTPServer) GetFolderPermissionList(c *models.ReqContext) response.Res
 	g := guardian.New(c.Req.Context(), folder.Id, c.OrgId, c.SignedInUser)
 
 	if canAdmin, err := g.CanAdmin(); err != nil || !canAdmin {
-		return apierrors.ToFolderErrorResponse(models.ErrFolderAccessDenied)
+		return apierrors.ToFolderErrorResponse(dashboards.ErrFolderAccessDenied)
 	}
 
 	acl, err := g.GetAcl()
@@ -78,7 +79,7 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *models.ReqContext) response.Res
 	}
 
 	if !canAdmin {
-		return apierrors.ToFolderErrorResponse(models.ErrFolderAccessDenied)
+		return apierrors.ToFolderErrorResponse(dashboards.ErrFolderAccessDenied)
 	}
 
 	var items []*models.DashboardAcl
