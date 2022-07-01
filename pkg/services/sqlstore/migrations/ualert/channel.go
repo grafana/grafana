@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
 
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
@@ -36,7 +37,7 @@ type defaultChannelsPerOrg map[int64][]*notificationChannel
 type uidOrID interface{}
 
 // setupAlertmanagerConfigs creates Alertmanager configs with migrated receivers and routes.
-func (m *migration) setupAlertmanagerConfigs(rulesPerOrg map[int64]map[string]dashAlert) (amConfigsPerOrg, error) {
+func (m *migration) setupAlertmanagerConfigs(rulesPerOrg map[int64]map[*alertRule][]uidOrID) (amConfigsPerOrg, error) {
 	// allChannels: channelUID -> channelConfig
 	allChannelsPerOrg, defaultChannelsPerOrg, err := m.getNotificationChannelMap()
 	if err != nil {
@@ -83,16 +84,23 @@ func (m *migration) setupAlertmanagerConfigs(rulesPerOrg map[int64]map[string]da
 			amConfig.AlertmanagerConfig.Receivers = append(amConfig.AlertmanagerConfig.Receivers, defaultReceiver)
 		}
 
-		// Create routes
-		if rules, ok := rulesPerOrg[orgID]; ok {
-			for ruleUid, da := range rules {
-				route, err := m.createRouteForAlert(ruleUid, da, receiversMap, defaultReceivers)
-				if err != nil {
-					return nil, fmt.Errorf("failed to create route for alert %s in orgId %d: %w", da.Name, orgID, err)
-				}
+		for _, recv := range receivers {
+			route, err := createRoute(recv)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create route for receiver %s in orgId %d: %w", recv.Name, orgID, err)
+			}
 
-				if route != nil {
-					amConfigPerOrg[da.OrgId].AlertmanagerConfig.Route.Routes = append(amConfigPerOrg[da.OrgId].AlertmanagerConfig.Route.Routes, route)
+			amConfigPerOrg[orgID].AlertmanagerConfig.Route.Routes = append(amConfigPerOrg[orgID].AlertmanagerConfig.Route.Routes, route)
+		}
+
+		for ar, channelUids := range rulesPerOrg[orgID] {
+			filteredReceiverNames := m.filterReceiversForAlert(ar.Title, channelUids, receiversMap, defaultReceivers)
+
+			if len(filteredReceiverNames) != 0 {
+				// Only create a contact label if there are specific receivers, otherwise it defaults to the root-level route.
+				ar.Labels[ContactLabel], err = keysString(filteredReceiverNames)
+				if err != nil {
+					return nil, fmt.Errorf("failed to create contact label for alertRule %s in orgId %d: %w", ar.Title, orgID, err)
 				}
 			}
 		}
@@ -105,6 +113,21 @@ func (m *migration) setupAlertmanagerConfigs(rulesPerOrg map[int64]map[string]da
 	}
 
 	return amConfigPerOrg, nil
+}
+
+func keysString(m map[string]interface{}) (string, error) {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	jsonStr, err := json.Marshal(keys)
+	if err != nil {
+		return "", err
+	}
+
+	return string(jsonStr), nil
 }
 
 // getNotificationChannelMap returns a map of all channelUIDs to channel config as well as a separate map for just those channels that are default.
@@ -239,64 +262,25 @@ func (m *migration) createDefaultRouteAndReceiver(defaultChannels []*notificatio
 	return defaultReceiver, defaultRoute, nil
 }
 
-// Wrapper to select receivers for given alert rules based on associated notification channels and then create the migrated route.
-func (m *migration) createRouteForAlert(ruleUID string, da dashAlert, receivers map[uidOrID]*PostableApiReceiver, defaultReceivers map[string]struct{}) (*Route, error) {
-	// Create route(s) for alert
-	filteredReceiverNames := m.filterReceiversForAlert(da, receivers, defaultReceivers)
-
-	if len(filteredReceiverNames) != 0 {
-		// Only create a route if there are specific receivers, otherwise it defaults to the root-level route.
-		route, err := createRoute(ruleUID, filteredReceiverNames)
-		if err != nil {
-			return nil, err
-		}
-
-		return route, nil
-	}
-
-	return nil, nil
-}
-
-// Create route(s) for the given alert ruleUID and receivers.
-// If the alert had a single channel, it will now have a single route/policy. If the alert had multiple channels, it will now have multiple nested routes/policies.
-func createRoute(ruleUID string, filteredReceiverNames map[string]interface{}) (*Route, error) {
-	n, v := getLabelForRouteMatching(ruleUID)
-	mat, err := labels.NewMatcher(labels.MatchEqual, n, v)
+// Create one route per contact point, matching based on ContactLabel.
+func createRoute(recv *PostableApiReceiver) (*Route, error) {
+	// We create a regex matcher so that each alert rule need only have a single ContactLabel entry for all contact points it needs to send to.
+	// For example, if an alert needs to send to contact1 and contact2 it will have ContactLabel=`["contact1","contact2"]` and will match both routes looking
+	// for `.*"contact1".*` and `.*"contact2".*`.
+	mat, err := labels.NewMatcher(labels.MatchRegexp, ContactLabel, fmt.Sprintf(`.*"%s".*`, recv.Name))
 	if err != nil {
 		return nil, err
 	}
 
-	var route *Route
-	if len(filteredReceiverNames) == 1 {
-		for name := range filteredReceiverNames {
-			route = &Route{
-				Receiver: name,
-				Matchers: Matchers{mat},
-			}
-		}
-	} else {
-		nestedRoutes := []*Route{}
-		for name := range filteredReceiverNames {
-			r := &Route{
-				Receiver: name,
-				Matchers: Matchers{mat},
-				Continue: true,
-			}
-			nestedRoutes = append(nestedRoutes, r)
-		}
-
-		route = &Route{
-			Matchers: Matchers{mat},
-			Routes:   nestedRoutes,
-		}
-	}
-
-	return route, nil
+	return &Route{
+		Receiver: recv.Name,
+		Matchers: Matchers{mat},
+		Continue: true, // We continue so that each sibling contact point route can separately match.
+	}, nil
 }
 
 // Filter receivers to select those that were associated to the given rule as channels.
-func (m *migration) filterReceiversForAlert(da dashAlert, receivers map[uidOrID]*PostableApiReceiver, defaultReceivers map[string]struct{}) map[string]interface{} {
-	channelIDs := extractChannelIDs(da)
+func (m *migration) filterReceiversForAlert(name string, channelIDs []uidOrID, receivers map[uidOrID]*PostableApiReceiver, defaultReceivers map[string]struct{}) map[string]interface{} {
 	if len(channelIDs) == 0 {
 		// If there are no channels associated, we use the default route.
 		return nil
@@ -309,7 +293,7 @@ func (m *migration) filterReceiversForAlert(da dashAlert, receivers map[uidOrID]
 		if ok {
 			filteredReceiverNames[recv.Name] = struct{}{} // Deduplicate on contact point name.
 		} else {
-			m.mg.Logger.Warn("alert linked to obsolete notification channel, ignoring", "alert", da.Name, "uid", uidOrId)
+			m.mg.Logger.Warn("alert linked to obsolete notification channel, ignoring", "alert", name, "uid", uidOrId)
 		}
 	}
 
@@ -401,27 +385,6 @@ func migrateSettingsToSecureSettings(chanType string, settings *simplejson.Json,
 	}
 
 	return cloneSettings, newSecureSettings, nil
-}
-
-func getLabelForRouteMatching(ruleUID string) (string, string) {
-	return "rule_uid", ruleUID
-}
-
-func extractChannelIDs(d dashAlert) (channelUids []uidOrID) {
-	// Extracting channel UID/ID.
-	for _, ui := range d.ParsedSettings.Notifications {
-		if ui.UID != "" {
-			channelUids = append(channelUids, ui.UID)
-			continue
-		}
-		// In certain circumstances, id is used instead of uid.
-		// We add this if there was no uid.
-		if ui.ID > 0 {
-			channelUids = append(channelUids, ui.ID)
-		}
-	}
-
-	return channelUids
 }
 
 // Below is a snapshot of all the config and supporting functions imported

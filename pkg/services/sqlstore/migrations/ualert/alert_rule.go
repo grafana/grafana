@@ -13,6 +13,13 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+const (
+	// ContactLabel is a private label created during migration and used in notification policies.
+	// It stores a string array of all contact point names an alert rule should send to.
+	// It was created as a means to simplify post-migration notification policies.
+	ContactLabel = "__contacts__"
+)
+
 type alertRule struct {
 	ID              int64 `xorm:"pk autoincr 'id'"`
 	OrgID           int64 `xorm:"org_id"`
@@ -135,7 +142,7 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 	}
 
 	// Label for routing and silences.
-	n, v := getLabelForRouteMatching(ar.UID)
+	n, v := getLabelForSilenceMatching(ar.UID)
 	ar.Labels[n] = v
 
 	if err := m.addSilence(da, ar); err != nil {
@@ -276,4 +283,21 @@ func transExecErr(s string) (string, error) {
 		return string(ngmodels.OkErrState), nil
 	}
 	return "", fmt.Errorf("unrecognized Execution Error setting %v", s)
+}
+
+func extractChannelIDs(d dashAlert) (channelUids []uidOrID) {
+	// Extracting channel UID/ID.
+	for _, ui := range d.ParsedSettings.Notifications {
+		if ui.UID != "" {
+			channelUids = append(channelUids, ui.UID)
+			continue
+		}
+		// In certain circumstances, id is used instead of uid.
+		// We add this if there was no uid.
+		if ui.ID > 0 {
+			channelUids = append(channelUids, ui.ID)
+		}
+	}
+
+	return channelUids
 }
