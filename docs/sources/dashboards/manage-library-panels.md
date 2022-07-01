@@ -19,7 +19,7 @@ A library panel is a reusable panel that you can use in any dashboard. When you 
 
 You can save a library panel in a folder alongside saved dashboards.
 
-## Create a Grafana library panel
+## Create a library panel
 
 When you create a library panel, the panel on the source dashboard is converted to a library panel as well. You need to save the original dashboard once a panel is converted.
 
@@ -37,7 +37,7 @@ Once created, you can modify the library panel using any dashboard on which it a
 
 {{< figure src="/static/img/docs/library-panels/create-from-more-8-0.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the edit panel" >}}
 
-## Add a Grafana library panel to a dashboard
+## Add a library panel to a dashboard
 
 Add a Grafana library panel to a dashboard when you want to provide visualizations to other dashboard users.
 
@@ -53,7 +53,7 @@ Add a Grafana library panel to a dashboard when you want to provide visualizatio
 1. Filter the list or search to find the panel you want to add.
 1. Click a panel to add it to the dashboard.
 
-## Unlink a Grafana library panel
+## Unlink a library panel
 
 Unlink a library panel when you want to make a change to the panel and not affect other instances of the library panel.
 
