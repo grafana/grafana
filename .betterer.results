@@ -1891,9 +1891,6 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/SecretFormField/SecretFormField.story.internal.tsx:2020978154": [
       [9, 15, 375, "Do not use any type assertions.", "1137633412"]
     ],
-    "packages/grafana-ui/src/components/SecretInput/SecretInput.story.tsx:3740377999": [
-      [7, 15, 524, "Do not use any type assertions.", "1482818589"]
-    ],
     "packages/grafana-ui/src/components/SecretTextArea/SecretTextArea.story.tsx:381451469": [
       [7, 15, 608, "Do not use any type assertions.", "3324643559"]
     ],
