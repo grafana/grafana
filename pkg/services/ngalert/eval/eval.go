@@ -258,12 +258,7 @@ type NumberValueCapture struct {
 	Value  *float64
 }
 
-func executeCondition(ctx AlertExecCtx, c *models.Condition, now time.Time, exprService *expr.Service, dsCacheService datasources.CacheService, secretsService secrets.Service) ExecutionResults {
-	execResp, err := executeQueriesAndExpressions(ctx, c.Data, now, exprService, dsCacheService, secretsService)
-	if err != nil {
-		return ExecutionResults{Error: err}
-	}
-
+func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.QueryDataResponse) ExecutionResults {
 	// eval captures for the '__value_string__' annotation and the Value property of the API response.
 	captures := make([]NumberValueCapture, 0, len(execResp.Responses))
 	captureVal := func(refID string, labels data.Labels, value *float64) {
@@ -588,16 +583,15 @@ func (evalResults Results) AsDataFrame() data.Frame {
 }
 
 // ConditionEval executes conditions and evaluates the result.
-func (e *evaluatorImpl) ConditionEval(condition *models.Condition, now time.Time) Results {
-	alertCtx, cancelFn := context.WithTimeout(context.Background(), e.cfg.UnifiedAlerting.EvaluationTimeout)
-	defer cancelFn()
-
-	alertExecCtx := AlertExecCtx{OrgID: condition.OrgID, Ctx: alertCtx, ExpressionsEnabled: e.cfg.ExpressionsEnabled, Log: e.log}
-
-	execResult := executeCondition(alertExecCtx, condition, now, e.expressionService, e.dataSourceCache, e.secretsService)
-
-	evalResults := evaluateExecutionResult(execResult, now)
-	return evalResults
+func (e *evaluatorImpl) ConditionEval(condition models.Condition, now time.Time) Results {
+	execResp, err := e.QueriesAndExpressionsEval(condition.OrgID, condition.Data, now)
+	var execResults ExecutionResults
+	if err != nil {
+		execResults = ExecutionResults{Error: err}
+	} else {
+		execResults = queryDataResponseToExecutionResults(condition, execResp)
+	}
+	return evaluateExecutionResult(execResults, now)
 }
 
 // QueriesAndExpressionsEval executes queries and expressions and returns the result.
