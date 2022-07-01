@@ -3344,7 +3344,7 @@ exports[`better eslint`] = {
     "public/app/core/components/PageNew/PageTabs.tsx:3261576880": [
       [23, 22, 22, "Do not use any type assertions.", "4054086100"]
     ],
-    "public/app/core/components/PageNew/SectionNav.tsx:3562461661": [
+    "public/app/core/components/PageNew/SectionNav.tsx:1124011774": [
       [20, 34, 21, "Do not use any type assertions.", "2401004021"]
     ],
     "public/app/core/components/PanelTypeFilter/PanelTypeFilter.tsx:1614517181": [
