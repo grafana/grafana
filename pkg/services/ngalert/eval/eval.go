@@ -153,8 +153,8 @@ type AlertExecCtx struct {
 	Ctx context.Context
 }
 
-// GetExprRequest validates the condition, gets the datasource information and creates an expr.Request from it.
-func GetExprRequest(ctx AlertExecCtx, data []models.AlertQuery, now time.Time, dsCacheService datasources.CacheService, secretsService secrets.Service) (*expr.Request, error) {
+// getExprRequest validates the condition, gets the datasource information and creates an expr.Request from it.
+func getExprRequest(ctx AlertExecCtx, data []models.AlertQuery, now time.Time, dsCacheService datasources.CacheService, secretsService secrets.Service) (*expr.Request, error) {
 	req := &expr.Request{
 		OrgId: ctx.OrgID,
 		Headers: map[string]string{
@@ -356,7 +356,7 @@ func executeQueriesAndExpressions(ctx AlertExecCtx, data []models.AlertQuery, no
 		}
 	}()
 
-	queryDataReq, err := GetExprRequest(ctx, data, now, dsCacheService, secretsService)
+	queryDataReq, err := getExprRequest(ctx, data, now, dsCacheService, secretsService)
 	if err != nil {
 		return nil, err
 	}
