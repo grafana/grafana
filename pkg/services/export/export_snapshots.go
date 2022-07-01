@@ -33,8 +33,6 @@ func exportSnapshots(helper *commitHelper, job *gitExportJob) error {
 	}
 
 	for _, snapshot := range cmd.Result {
-		// TODO: fix the playlist API so it returns the json we need :)
-
 		gitcmd.body = append(gitcmd.body, commitBody{
 			fpath: filepath.Join(helper.orgDir, "snapshot", fmt.Sprintf("%d-snapshot.json", snapshot.Id)),
 			body:  prettyJSON(snapshot),
