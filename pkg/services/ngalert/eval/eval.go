@@ -166,8 +166,7 @@ func getExprRequest(ctx AlertExecCtx, data []models.AlertQuery, now time.Time, d
 
 	datasources := make(map[string]*datasources.DataSource, len(data))
 
-	for i := range data {
-		q := data[i]
+	for _, q := range data {
 		model, err := q.GetModel()
 		if err != nil {
 			return nil, fmt.Errorf("failed to get query model: %w", err)
@@ -563,8 +562,6 @@ func (evalResults Results) AsDataFrame() data.Frame {
 	for k := range uniqueLabelKeys {
 		labelColumns = append(labelColumns, k)
 	}
-
-	labelColumns = sort.StringSlice(labelColumns)
 
 	frame := data.NewFrame("evaluation results")
 	for _, lKey := range labelColumns {
