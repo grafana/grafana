@@ -115,7 +115,7 @@ func exportAnnotations(helper *commitHelper, job *gitExportJob) error {
 			body: []commitBody{
 				{
 					fpath: filepath.Join(helper.orgDir, "annotations", "annotations.json"),
-					body:  js, // TOOD, pretty?
+					body:  js, // TODO, pretty?
 				},
 			},
 			when:    time.Now(),

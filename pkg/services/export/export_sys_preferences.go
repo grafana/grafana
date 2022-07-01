@@ -45,9 +45,9 @@ func exportSystemPreferences(helper *commitHelper, job *gitExportJob) error {
 			return err
 		}
 
+		var comment string
+		var fpath string
 		for _, row := range rows {
-			comment := "adding preferences"
-			fpath := "?"
 			if row.TeamID > 0 {
 				fpath = filepath.Join(prefsDir, "team", fmt.Sprintf("%d.json", row.TeamID))
 				comment = fmt.Sprintf("Team preferences: %d", row.TeamID)

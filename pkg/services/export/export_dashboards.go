@@ -170,7 +170,7 @@ func exportDashboards(helper *commitHelper, job *gitExportJob, lookup dsLookup) 
 				msg = fmt.Sprintf("Version: %d", row.Version)
 			}
 
-			helper.add(commitOptions{
+			err = helper.add(commitOptions{
 				body: []commitBody{
 					{
 						fpath: filepath.Join(rootDir, fpath),
@@ -181,6 +181,9 @@ func exportDashboards(helper *commitHelper, job *gitExportJob, lookup dsLookup) 
 				when:    row.Created,
 				comment: msg,
 			})
+			if err != nil {
+				return err
+			}
 
 			count++
 			fmt.Printf("COMMIT: %d // %s (%d)\n", count, fpath, row.Version)

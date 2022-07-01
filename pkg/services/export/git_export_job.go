@@ -154,16 +154,15 @@ func (e *gitExportJob) doExportWithHistory() error {
 	// cleanup the folder
 	e.status.Target = "pruning..."
 	e.broadcaster(e.status)
-	r.Prune(git.PruneOptions{})
+	err = r.Prune(git.PruneOptions{})
 
 	// TODO
 	// git gc --prune=now --aggressive
 
-	return nil
+	return err
 }
 
 func (e *gitExportJob) doOrgExportWithHistory(helper *commitHelper) error {
-
 	lookup, err := exportDataSources(helper, e)
 	if err != nil {
 		return err
