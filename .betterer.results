@@ -6832,9 +6832,9 @@ exports[`better eslint`] = {
       [15, 10, 14, "Do not use any type assertions.", "2767045528"],
       [43, 19, 25, "Do not use any type assertions.", "1122467828"]
     ],
-    "public/app/features/storage/StoragePage.tsx:263004092": [
+    "public/app/features/storage/StoragePage.tsx:2924894329": [
       [79, 22, 47, "Do not use any type assertions.", "3210893683"],
-      [139, 71, 30, "Do not use any type assertions.", "2950708774"]
+      [141, 71, 30, "Do not use any type assertions.", "2950708774"]
     ],
     "public/app/features/storage/helper.ts:536960999": [
       [7, 12, 3, "Unexpected any. Specify a different type.", "193409811"],

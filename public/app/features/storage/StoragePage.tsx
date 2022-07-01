@@ -4,7 +4,7 @@ import { useAsync } from 'react-use';
 
 import { DataFrame, GrafanaTheme2, isDataFrame, ValueLinkConfig } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { useStyles2, IconName, Spinner, TabsBar, Tab } from '@grafana/ui';
+import { useStyles2, IconName, Spinner, TabsBar, Tab, Button, HorizontalGroup } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -133,12 +133,22 @@ export default function StoragePage(props: Props) {
         text: 'Upload',
       });
     }
+    const canAddFolder = isFolder && path.startsWith('resources');
+    const canDelete = !isFolder && path.startsWith('resources/');
 
     return (
       <div className={styles.wrapper}>
-        <div>
+        <HorizontalGroup width="100%" justify="space-between" height={25}>
           <Breadcrumb pathName={path} onPathChange={setPath} rootIcon={navModel.node.icon as IconName} />
-        </div>
+          <div>
+            {canAddFolder && <Button onClick={() => alert('TODO: new folder modal')}>New Folder</Button>}
+            {canDelete && (
+              <Button variant="destructive" onClick={() => alert('TODO: confirm delete modal')}>
+                Delete
+              </Button>
+            )}
+          </div>
+        </HorizontalGroup>
 
         <TabsBar>
           {opts.map((opt) => (
