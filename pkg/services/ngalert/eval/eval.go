@@ -28,7 +28,7 @@ import (
 //go:generate mockery --name Evaluator --structname FakeEvaluator --inpackage --filename evaluator_mock.go --with-expecter
 type Evaluator interface {
 	// ConditionEval executes conditions and evaluates the result.
-	ConditionEval(condition *models.Condition, now time.Time) (Results, error)
+	ConditionEval(condition models.Condition, now time.Time) Results
 	// QueriesAndExpressionsEval executes queries and expressions and returns the result.
 	QueriesAndExpressionsEval(orgID int64, data []models.AlertQuery, now time.Time) (*backend.QueryDataResponse, error)
 }
@@ -591,7 +591,7 @@ func (evalResults Results) AsDataFrame() data.Frame {
 }
 
 // ConditionEval executes conditions and evaluates the result.
-func (e *evaluatorImpl) ConditionEval(condition *models.Condition, now time.Time) (Results, error) {
+func (e *evaluatorImpl) ConditionEval(condition *models.Condition, now time.Time) Results {
 	alertCtx, cancelFn := context.WithTimeout(context.Background(), e.cfg.UnifiedAlerting.EvaluationTimeout)
 	defer cancelFn()
 
@@ -600,7 +600,7 @@ func (e *evaluatorImpl) ConditionEval(condition *models.Condition, now time.Time
 	execResult := executeCondition(alertExecCtx, condition, now, e.expressionService, e.dataSourceCache, e.secretsService)
 
 	evalResults := evaluateExecutionResult(execResult, now)
-	return evalResults, nil
+	return evalResults
 }
 
 // QueriesAndExpressionsEval executes queries and expressions and returns the result.
