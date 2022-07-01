@@ -3,73 +3,59 @@ import React from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';
-import { Tab, Table, TabsBar, useStyles2 } from '@grafana/ui';
+import { Table, useStyles2 } from '@grafana/ui';
 
+import { UploadView } from './UploadView';
 import { StorageView } from './types';
 
 interface Props {
   listing: DataFrame;
   path: string;
-  onPathChange: (p: string) => void;
+  onPathChange: (p: string, view?: StorageView) => void;
   view: StorageView;
-  setView: (v: StorageView) => void;
 }
 
-export function FolderView({ listing, path, onPathChange, view, setView }: Props) {
+export function FolderView({ listing, path, onPathChange, view }: Props) {
   const styles = useStyles2(getStyles);
-  const opts = [
-    { what: StorageView.Data, text: 'Data' },
-    { what: StorageView.Config, text: 'Configure' },
-    { what: StorageView.Perms, text: 'Permissions' },
-  ];
 
-  if (path.startsWith('resources')) {
-    opts.push({
-      what: StorageView.Upload,
-      text: 'Upload',
-    });
+  switch (view) {
+    case StorageView.Config:
+      return <div>CONFIGURE?</div>;
+    case StorageView.Perms:
+      return <div>Permissions</div>;
+    case StorageView.Upload:
+      return (
+        <UploadView
+          folder={path}
+          onUpload={(rsp) => {
+            console.log('Uploaded: ' + path);
+            if (rsp.path) {
+              onPathChange(rsp.path);
+            } else {
+              onPathChange(path); // back to data
+            }
+          }}
+        />
+      );
   }
 
-  const renderBody = () => {
-    switch (view) {
-      case StorageView.Config:
-        return <div>CONFIGURE?</div>;
-      case StorageView.Perms:
-        return <div>Permissions</div>;
-      case StorageView.Upload:
-        return <div>UPLOAD!</div>;
-    }
-    return (
-      <div className={styles.tableWrapper}>
-        <AutoSizer>
-          {({ width, height }) => (
-            <div style={{ width: `${width}px`, height: `${height}px` }}>
-              <Table
-                height={height}
-                width={width}
-                data={listing}
-                noHeader={false}
-                showTypeIcons={false}
-                resizable={false}
-              />
-            </div>
-          )}
-        </AutoSizer>
-      </div>
-    );
-  };
-
   return (
-    <>
-      <TabsBar>
-        {opts.map((opt) => {
-          return (
-            <Tab key={opt.what} label={opt.text} active={opt.what === view} onChangeTab={() => setView(opt.what)} />
-          );
-        })}
-      </TabsBar>
-      {renderBody()}
-    </>
+    <div className={styles.tableWrapper}>
+      <AutoSizer>
+        {({ width, height }) => (
+          <div style={{ width: `${width}px`, height: `${height}px` }}>
+            <Table
+              height={height}
+              width={width}
+              data={listing}
+              noHeader={false}
+              showTypeIcons={false}
+              resizable={false}
+            />
+          </div>
+        )}
+      </AutoSizer>
+    </div>
   );
 }
 

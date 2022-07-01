@@ -30,7 +30,7 @@ var ErrFileAlreadyExists = errors.New("file exists")
 const RootPublicStatic = "public-static"
 const RootResources = "resources"
 
-const MAX_UPLOAD_SIZE = 1024 * 1024 // 1MB
+const MAX_UPLOAD_SIZE = 3 * 1024 * 1024 // 3MB
 
 type StorageService interface {
 	registry.BackgroundService

@@ -6837,13 +6837,16 @@ exports[`better eslint`] = {
       [15, 10, 14, "Do not use any type assertions.", "2767045528"],
       [43, 19, 25, "Do not use any type assertions.", "1122467828"]
     ],
-    "public/app/features/storage/StoragePage.tsx:3132165410": [
-      [77, 22, 47, "Do not use any type assertions.", "3210893683"],
-      [114, 69, 30, "Do not use any type assertions.", "2950708774"]
+    "public/app/features/storage/StoragePage.tsx:4029684496": [
+      [79, 22, 47, "Do not use any type assertions.", "3210893683"],
+      [140, 71, 30, "Do not use any type assertions.", "2950708774"]
     ],
-    "public/app/features/storage/UploadPopoverContainer.tsx:2134539033": [
-      [21, 37, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [33, 33, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/features/storage/helper.ts:3216654983": [
+      [7, 12, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [15, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [44, 15, 35, "Do not use any type assertions.", "3589576092"],
+      [46, 13, 9, "Do not use any type assertions.", "3692209159"],
+      [46, 19, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/teams/CreateTeam.test.tsx:136903941": [
       [30, 14, 34, "Do not use any type assertions.", "463003776"]

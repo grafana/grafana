@@ -4,7 +4,7 @@ import { useAsync } from 'react-use';
 
 import { DataFrame, GrafanaTheme2, isDataFrame, ValueLinkConfig } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { useStyles2, IconName, Spinner } from '@grafana/ui';
+import { useStyles2, IconName, Spinner, TabsBar, Tab } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -12,6 +12,7 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { AddRootView } from './AddRootView';
 import { Breadcrumb } from './Breadcrumb';
 import { ExportView } from './ExportView';
+import { FileView } from './FileView';
 import { FolderView } from './FolderView';
 import { RootView } from './RootView';
 import { getGrafanaStorage } from './helper';
@@ -32,11 +33,12 @@ export default function StoragePage(props: Props) {
   const navModel = useNavModel('storage');
   const path = props.match.params.path ?? '';
   const view = props.queryParams.view ?? StorageView.Data;
-  const setPath = (p: string) => {
-    locationService.push(('/admin/storage/' + p).replace('//', '/'));
-  };
-  const setView = (s: StorageView) => {
-    locationService.push(location.pathname + '?view=' + s);
+  const setPath = (p: string, view?: StorageView) => {
+    let url = ('/admin/storage/' + p).replace('//', '/');
+    if (view && view !== StorageView.Data) {
+      url += '?view=' + view;
+    }
+    locationService.push(url);
   };
 
   const listing = useAsync((): Promise<DataFrame | undefined> => {
@@ -48,15 +50,15 @@ export default function StoragePage(props: Props) {
           frame.fields[0] = {
             ...name,
             getLinks: (cfg: ValueLinkConfig) => {
+              const p = path + '/' + name.values.get(cfg.valueRowIndex ?? 0);
               return [
                 {
                   title: 'Open XYZ',
-                  href: '#open',
+                  href: `/admin/storage/${p}`,
                   target: '_self',
                   origin: name,
                   onClick: () => {
-                    const n = name.values.get(cfg.valueRowIndex ?? 0);
-                    setPath(path + '/' + n);
+                    setPath(p);
                   },
                 },
               ];
@@ -106,7 +108,30 @@ export default function StoragePage(props: Props) {
     }
 
     if (isRoot) {
-      return <RootView root={frame} onPathChange={setPath} setView={setView} />;
+      return <RootView root={frame} onPathChange={setPath} />;
+    }
+
+    const opts = [{ what: StorageView.Data, text: 'Data' }];
+
+    // Root folders have a config page
+    if (path.indexOf('/') < 0) {
+      opts.push({ what: StorageView.Config, text: 'Configure' });
+    }
+
+    // Lets only apply permissions to folders (for now)
+    if (isFolder) {
+      opts.push({ what: StorageView.Perms, text: 'Permissions' });
+    } else {
+      // TODO: only if the file exists in a storage engine with
+      opts.push({ what: StorageView.History, text: 'History' });
+    }
+
+    // Hardcode the uploadable folder :)
+    if (isFolder && path.startsWith('resources')) {
+      opts.push({
+        what: StorageView.Upload,
+        text: 'Upload',
+      });
     }
 
     return (
@@ -114,10 +139,21 @@ export default function StoragePage(props: Props) {
         <div>
           <Breadcrumb pathName={path} onPathChange={setPath} rootIcon={navModel.node.icon as IconName} />
         </div>
+
+        <TabsBar>
+          {opts.map((opt) => (
+            <Tab
+              key={opt.what}
+              label={opt.text}
+              active={opt.what === view}
+              onChangeTab={() => setPath(path, opt.what)}
+            />
+          ))}
+        </TabsBar>
         {isFolder ? (
-          <FolderView path={path} listing={frame} onPathChange={setPath} view={view} setView={setView} />
+          <FolderView path={path} listing={frame} onPathChange={setPath} view={view} />
         ) : (
-          <div>FILE...</div>
+          <FileView path={path} listing={frame} onPathChange={setPath} view={view} />
         )}
       </div>
     );

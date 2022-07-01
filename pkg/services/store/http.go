@@ -57,7 +57,7 @@ func (s *httpStorage) Upload(c *models.ReqContext) response.Response {
 	}
 	c.Req.Body = http.MaxBytesReader(c.Resp, c.Req.Body, MAX_UPLOAD_SIZE)
 	if err := c.Req.ParseMultipartForm(MAX_UPLOAD_SIZE); err != nil {
-		return response.Error(400, "Please limit file uploaded under 1MB", err)
+		return response.Error(400, "Please limit file uploaded under 3MB", err)
 	}
 
 	files := c.Req.MultipartForm.File["file"]

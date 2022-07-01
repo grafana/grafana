@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { DataFrame, DataFrameView, GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -9,8 +9,7 @@ import { StorageView } from './types';
 
 interface Props {
   root: DataFrame;
-  onPathChange: (p: string) => void;
-  setView: (v: StorageView) => void;
+  onPathChange: (p: string, v?: StorageView) => void;
 }
 
 interface RootFolder {
@@ -22,14 +21,31 @@ interface RootFolder {
   builtIn: boolean;
 }
 
-export function RootView({ root, onPathChange, setView }: Props) {
+export function RootView({ root, onPathChange }: Props) {
   const styles = useStyles2(getStyles);
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const view = new DataFrameView<RootFolder>(root);
   let base = location.pathname;
   if (!base.endsWith('/')) {
     base += '/';
   }
+
+  const roots = useMemo(() => {
+    const view = new DataFrameView<RootFolder>(root);
+    const all = view.map((v) => ({ ...v }));
+    if (searchQuery?.length) {
+      const lower = searchQuery.toLowerCase();
+      return all.filter((v) => {
+        if (v.name.toLowerCase().indexOf(lower) >= 0) {
+          return true;
+        }
+        if (v.description.toLowerCase().indexOf(lower) >= 0) {
+          return true;
+        }
+        return false;
+      });
+    }
+    return all;
+  }, [searchQuery, root]);
 
   return (
     <div>
@@ -37,17 +53,17 @@ export function RootView({ root, onPathChange, setView }: Props) {
         <div className="gf-form gf-form--grow">
           <FilterInput placeholder="Search Storage" value={searchQuery} onChange={setSearchQuery} />
         </div>
-        <Button className="pull-right" onClick={() => setView(StorageView.AddRoot)}>
+        <Button className="pull-right" onClick={() => onPathChange('', StorageView.AddRoot)}>
           Add Root
         </Button>
         {config.featureToggles.export && (
-          <Button className="pull-right" onClick={() => setView(StorageView.Export)}>
+          <Button className="pull-right" onClick={() => onPathChange('', StorageView.Export)}>
             Export
           </Button>
         )}
       </div>
       <VerticalGroup>
-        {view.map((v) => (
+        {roots.map((v) => (
           <Card key={v.name} href={`admin/storage/${v.name}/`}>
             <Card.Heading>{v.title ?? v.name}</Card.Heading>
             <Card.Meta className={styles.clickable}>{v.description}</Card.Meta>
