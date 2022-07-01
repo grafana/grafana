@@ -9,7 +9,7 @@ aliases:
   - /docs/grafana/latest/panels/library-panels/delete-library-panel/
   - /docs/grafana/latest/dashboards/manage-library-panels/
 title: Manage Grafana library panels
-menuTitle: Manage libary panels
+menuTitle: Manage library panels
 weight: 3
 ---
 
