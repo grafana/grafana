@@ -36,6 +36,8 @@ func TestCleanRelativePath(t *testing.T) {
 	assert.False(t, access.HasAccess("unknown/folder/path", "folder", AccessRead))
 	assert.True(t, access.HasAccess("aaa/bbb", "folder", AccessRead))
 	assert.False(t, access.HasAccess("aaa/file.json", "dash", AccessRead))
+	assert.True(t, access.HasAccess("aaa/bbb/dddd/more/more", "ds", AccessRead))
+	assert.False(t, access.HasAccess("aaa/bbb/dddd/more/more", "xx", AccessRead))
 
 	for _, r := range rules {
 		fmt.Printf("RULE: %+v\n", r)

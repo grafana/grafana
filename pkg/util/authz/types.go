@@ -20,8 +20,9 @@ const (
 	AccessUnknown AccessVerb = 0
 	AccessNone    AccessVerb = 1    // block / deny
 	AccessRead    AccessVerb = 100  // read
-	AccessWrite   AccessVerb = 200  // read+write
-	AccessManage  AccessVerb = 300  // read+write+delete
+	AccessExec    AccessVerb = 200  // query, execute, etc
+	AccessWrite   AccessVerb = 300  // read+write
+	AccessManage  AccessVerb = 400  // read+write+delete
 	AccessAdmin   AccessVerb = 1000 // and change permissions
 )
 
@@ -33,6 +34,8 @@ func (p AccessVerb) String() string {
 		return "NONE"
 	case AccessRead:
 		return "READ"
+	case AccessExec:
+		return "EXE"
 	case AccessWrite:
 		return "WRITE"
 	case AccessManage:
@@ -67,14 +70,18 @@ func (p *AccessVerb) UnmarshalJSON(b []byte) error {
 // AccessVerbFor returns a concrete type for a given interface or unknown if not known
 func AccessVerbFrom(str string) AccessVerb {
 	switch str {
-	case "none":
+	case "NONE":
 		return AccessNone
-	case "read":
+	case "READ":
 		return AccessRead
-	case "write":
+	case "EXE":
+		return AccessExec
+	case "WRITE":
 		return AccessWrite
-	case "manage":
+	case "MANAGE":
 		return AccessManage
+	case "ADMIN":
+		return AccessAdmin
 	}
 	return AccessUnknown
 }
