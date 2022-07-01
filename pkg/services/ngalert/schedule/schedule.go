@@ -624,13 +624,12 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		dur := sch.clock.Now().Sub(start)
 		evalTotal.Inc()
 		evalDuration.Observe(dur.Seconds())
-		if err != nil {
+		if results.HasErrors() {
 			evalTotalFailures.Inc()
-			// consider saving alert instance on error
-			logger.Error("failed to evaluate alert rule", "duration", dur, "err", err)
-			return err
+			logger.Error("failed to evaluate alert rule", "results", results, "duration", dur)
+		} else {
+			logger.Debug("alert rule evaluated", "results", results, "duration", dur)
 		}
-		logger.Debug("alert rule evaluated", "results", results, "duration", dur)
 
 		processedStates := sch.stateManager.ProcessEvalResults(ctx, e.scheduledAt, r, results)
 		sch.saveAlertStates(ctx, processedStates)

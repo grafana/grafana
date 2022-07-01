@@ -89,6 +89,15 @@ type ExecutionResults struct {
 // Results is a slice of evaluated alert instances states.
 type Results []Result
 
+func (evalResults Results) HasErrors() bool {
+	for _, r := range evalResults {
+		if r.State == Error {
+			return true
+		}
+	}
+	return false
+}
+
 // Result contains the evaluated State of an alert instance
 // identified by its labels.
 type Result struct {
