@@ -6,8 +6,8 @@ export const versionsStubs = [
 ];
 
 export const initialValuesStubs = {
-  operator: { name: 'psmdb', value: 'psmdb', label: 'PSMDB 1' },
-  component: { name: 'mongod', value: 'mongod', label: 'PSMDB' },
+  operator: { name: 'psmdb', value: 'psmdb', label: 'Percona Operator for MongoDB 1' },
+  component: { name: 'mongod', value: 'mongod', label: 'Percona Operator for MongoDB' },
   psmdbmongod: versionsStubs,
   pxcpxc: versionsStubs,
   pxchaproxy: versionsStubs,
@@ -21,19 +21,19 @@ export const initialValuesStubs = {
 export const omitDefaultLabels = ['psmdbmongoddefault.label', 'pxchaproxydefault.label', 'pxcpxcdefault.label'];
 
 export const possibleComponentOptionsStubs = {
-  psmdb: [{ name: 'mongod', value: 'mongod', label: 'PSMDB' }],
+  psmdb: [{ name: 'mongod', value: 'mongod', label: 'Percona Operator for MongoDB' }],
   pxc: [
-    { name: 'pxc', value: 'pxc', label: 'PXC' },
+    { name: 'pxc', value: 'pxc', label: 'Percona Operator for MySQL' },
     { name: 'haproxy', value: 'haproxy', label: 'HAProxy' },
   ],
 };
 
 export const operatorsOptionsStubs = [
-  { name: 'psmdb', value: 'psmdb', label: 'PSMDB 1' },
-  { name: 'pxc', value: 'pxc', label: 'PXC 1' },
+  { name: 'psmdb', value: 'psmdb', label: 'Percona Operator for MongoDB 1' },
+  { name: 'pxc', value: 'pxc', label: 'Percona Operator for MySQL 1' },
 ];
 
-export const psmdbComponentOptionsStubs = [{ name: 'mongod', value: 'mongod', label: 'PSMDB' }];
+export const psmdbComponentOptionsStubs = [{ name: 'mongod', value: 'mongod', label: 'Percona Operator for MongoDB' }];
 
 export const versionsFieldNameStub = 'psmdbmongod';
 
