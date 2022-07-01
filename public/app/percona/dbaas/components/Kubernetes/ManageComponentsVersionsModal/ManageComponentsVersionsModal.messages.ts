@@ -14,13 +14,13 @@ export const Messages = {
   save: 'Save',
   success: 'Components versions updated successfully',
   operatorLabel: {
-    [Operators.pxc]: (version: string) => `PXC ${version}`,
-    [Operators.psmdb]: (version: string) => `PSMDB ${version}`,
+    [Operators.pxc]: (version: string) => `Percona Operator for MySQL ${version}`,
+    [Operators.psmdb]: (version: string) => `Percona Operator for MongoDB ${version}`,
   },
   componentLabel: {
-    pxc: 'PXC',
+    pxc: 'Percona Operator for MySQL',
     haproxy: 'HAProxy',
     backup: 'Backup',
-    mongod: 'PSMDB',
+    mongod: 'Percona Operator for MongoDB',
   },
 };

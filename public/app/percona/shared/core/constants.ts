@@ -15,18 +15,18 @@ export const DATABASE_LABELS = {
 };
 
 export const OPERATOR_LABELS = {
-  [Databases.mysql]: 'PXC',
-  [Databases.mongodb]: 'PSMDB',
-  [Databases.postgresql]: '',
+  [Databases.mysql]: 'Percona Operator for MySQL',
+  [Databases.mongodb]: 'Percona Operator for MongoDB',
+  [Databases.postgresql]: 'Percona Operator for PostgreSQL',
   [Databases.proxysql]: '',
   [Databases.mariadb]: '',
   [Databases.haproxy]: '',
 };
 
 export const OPERATOR_FULL_LABELS = {
-  [Databases.mysql]: 'Percona XtraDB Cluster',
-  [Databases.mongodb]: 'Percona Server for MongoDB',
-  [Databases.postgresql]: '',
+  [Databases.mysql]: 'Percona Operator for MySQL',
+  [Databases.mongodb]: 'Percona Operator for MongoDB',
+  [Databases.postgresql]: 'Percona Operator for PostgreSQL',
   [Databases.proxysql]: '',
   [Databases.mariadb]: '',
   [Databases.haproxy]: '',

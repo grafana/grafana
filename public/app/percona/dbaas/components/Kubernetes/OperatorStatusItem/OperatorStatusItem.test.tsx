@@ -21,7 +21,7 @@ describe('OperatorStatusItem::', () => {
       />
     );
 
-    expect(container).toHaveTextContent('PXC');
+    expect(container).toHaveTextContent('Percona Operator for MySQL');
     expect(container).toHaveTextContent('Installed');
     expect(container).not.toHaveTextContent('1.8.0');
   });
@@ -38,7 +38,7 @@ describe('OperatorStatusItem::', () => {
       />
     );
 
-    expect(container).toHaveTextContent('PXC');
+    expect(container).toHaveTextContent('Percona Operator for MySQL');
     expect(container).toHaveTextContent('Installed');
     expect(container).toHaveTextContent('1.8.0');
   });
