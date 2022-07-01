@@ -1,8 +1,8 @@
-package prometheus
+package dsschema
 
 import "github.com/grafana/thema"
 
-// TODO schemas defining prometheus query/target (composed into dashboard)
+// TODO schemas defining prometheus query/target (composed into dashboard, alerts)
 Query: thema.#Lineage & {
 	seqs: [
 		{
