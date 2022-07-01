@@ -1,55 +1,45 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import React, { useMemo } from 'react';
 import { useAsync } from 'react-use';
-import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { GrafanaTheme2, isDataFrame, SelectableValue } from '@grafana/data';
+import { DataFrame, GrafanaTheme2, isDataFrame, ValueLinkConfig } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { useStyles2, Table, Select } from '@grafana/ui';
+import { useStyles2, IconName, Spinner } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
+import { AddRootView } from './AddRootView';
 import { Breadcrumb } from './Breadcrumb';
-import { StorageRoot } from './StorageRoot';
-import { UploadPopoverContainer } from './UploadPopoverContainer';
+import { ExportView } from './ExportView';
+import { FolderView } from './FolderView';
+import { RootView } from './RootView';
 import { getGrafanaStorage } from './helper';
-
-const pathsSupportingUpload = ['resources'];
-const paths = [
-  'resources',
-  'devenv/dev-dashboards/',
-  'public-static',
-  'public-static/img/bg',
-  'public-static/img/icons/unicons',
-  'public-static/img/icons/iot',
-  'public-static/img/icons/marker',
-];
-const pathOptions: Array<SelectableValue<string>> = paths.map((p) => ({ label: p, value: p }));
+import { StorageView } from './types';
 
 interface RouteParams {
   path: string;
 }
 
-interface Props extends GrafanaRouteComponentProps<RouteParams> {}
+interface QueryParams {
+  view: StorageView;
+}
+
+interface Props extends GrafanaRouteComponentProps<RouteParams, QueryParams> {}
 
 export default function StoragePage(props: Props) {
   const styles = useStyles2(getStyles);
   const navModel = useNavModel('storage');
   const path = props.match.params.path ?? '';
+  const view = props.queryParams.view ?? StorageView.Data;
   const setPath = (p: string) => {
-    locationService.push({
-      pathname: ('/org/storage/' + p).replace('//', '/'),
-    });
+    locationService.push(('/admin/storage/' + p).replace('//', '/'));
+  };
+  const setView = (s: StorageView) => {
+    locationService.push(location.pathname + '?view=' + s);
   };
 
-  // TODO: remove this. It's currently used as a workaround to close the popover
-  const [_, setUploadModalCloseTime] = useState(Date.now());
-
-  // TODO: remove. used as a workaround to refresh the table after uploading a file
-  const [uploadTime, setUploadTime] = useState(Date.now());
-
-  const files = useAsync(() => {
+  const listing = useAsync((): Promise<DataFrame | undefined> => {
     return getGrafanaStorage()
       .list(path)
       .then((frame) => {
@@ -57,7 +47,7 @@ export default function StoragePage(props: Props) {
           const name = frame.fields[0];
           frame.fields[0] = {
             ...name,
-            getLinks: (cfg) => {
+            getLinks: (cfg: ValueLinkConfig) => {
               return [
                 {
                   title: 'Open XYZ',
@@ -75,70 +65,67 @@ export default function StoragePage(props: Props) {
         }
         return frame;
       });
-  }, [path, uploadTime]);
+  }, [path]);
 
-  const renderTable = () => {
-    const frame = files.value;
+  const isFolder = useMemo(() => {
+    let isFolder = path?.indexOf('/') < 0;
+    if (listing.value) {
+      const length = listing.value.length;
+      if (length > 1) {
+        isFolder = true;
+      }
+      if (length === 1) {
+        const first = listing.value.fields[0].values.get(0) as string;
+        isFolder = !path.endsWith(first);
+      }
+    }
+    return isFolder;
+  }, [path, listing]);
+
+  const renderView = () => {
+    const isRoot = !path?.length || path === '/';
+    switch (view) {
+      case StorageView.Export:
+        if (!isRoot) {
+          setPath('');
+          return <Spinner />;
+        }
+        return <ExportView />;
+
+      case StorageView.AddRoot:
+        if (!isRoot) {
+          setPath('');
+          return <Spinner />;
+        }
+        return <AddRootView />;
+    }
+
+    const frame = listing.value;
     if (!isDataFrame(frame)) {
       return <></>;
     }
-    if (!path?.length || path === '/') {
-      return <StorageRoot root={frame} />;
+
+    if (isRoot) {
+      return <RootView root={frame} onPathChange={setPath} setView={setView} />;
     }
 
     return (
       <div className={styles.wrapper}>
-        <div className={styles.tableControlRowWrapper}>
-          <Select
-            options={pathOptions}
-            value={path}
-            onChange={(v) => {
-              if (typeof v.value === 'string') {
-                setPath(v.value);
-              }
-            }}
-          />
-          {pathsSupportingUpload.includes(path) && (
-            <div className={styles.uploadSpot}>
-              {
-                <UploadPopoverContainer
-                  onUpload={() => {
-                    setUploadTime(Date.now);
-                  }}
-                  onClose={() => {
-                    setUploadModalCloseTime(Date.now);
-                  }}
-                />
-              }
-            </div>
-          )}
-        </div>
         <div>
-          <Breadcrumb pathName={path} onPathChange={setPath} />
+          <Breadcrumb pathName={path} onPathChange={setPath} rootIcon={navModel.node.icon as IconName} />
         </div>
-        <div className={styles.tableWrapper}>
-          <AutoSizer>
-            {({ width, height }) => (
-              <div style={{ width: `${width}px`, height: `${height}px` }}>
-                <Table
-                  height={height}
-                  width={width}
-                  data={frame}
-                  noHeader={false}
-                  showTypeIcons={false}
-                  resizable={false}
-                />
-              </div>
-            )}
-          </AutoSizer>
-        </div>
+        {isFolder ? (
+          <FolderView path={path} listing={frame} onPathChange={setPath} view={view} setView={setView} />
+        ) : (
+          <div>FILE...</div>
+        )}
       </div>
     );
   };
 
   return (
     <Page navModel={navModel}>
-      <Page.Contents isLoading={files.loading}>{renderTable()}</Page.Contents>
+      <Page.Contents isLoading={listing.loading}>{renderView()}</Page.Contents>
     </Page>
   );
 }

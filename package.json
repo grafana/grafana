@@ -53,8 +53,8 @@
     "i18n:extract": "lingui extract",
     "i18n:compile": "lingui compile",
     "postinstall": "husky install",
-    "betterer": "betterer --cache",
-    "betterer:update": "betterer --update",
+    "betterer": "betterer",
+    "betterer:merge": "betterer merge",
     "betterer:stats": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/reportBettererStats.ts"
   },
   "grafana": {

@@ -295,16 +295,6 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 		})
 	}
 
-	if c.OrgRole == models.ROLE_ADMIN && hs.Features.IsEnabled(featuremgmt.FlagStorage) {
-		configNodes = append(configNodes, &dtos.NavLink{
-			Text:        "Storage",
-			Id:          "storage",
-			Description: "Manage file storage",
-			Icon:        "cube",
-			Url:         hs.Cfg.AppSubURL + "/org/storage",
-		})
-	}
-
 	// needs both feature flag and migration to be able to show service accounts
 	if enableServiceAccount(hs, c) {
 		configNodes = append(configNodes, &dtos.NavLink{
@@ -655,6 +645,16 @@ func (hs *HTTPServer) buildAdminNavLinks(c *models.ReqContext) []*dtos.NavLink {
 	if hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionSettingsRead)) {
 		adminNavLinks = append(adminNavLinks, &dtos.NavLink{
 			Text: "Settings", Id: "server-settings", Url: hs.Cfg.AppSubURL + "/admin/settings", Icon: "sliders-v-alt",
+		})
+	}
+
+	if hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionSettingsRead)) && hs.Features.IsEnabled(featuremgmt.FlagStorage) {
+		adminNavLinks = append(adminNavLinks, &dtos.NavLink{
+			Text:        "Storage",
+			Id:          "storage",
+			Description: "Manage file storage",
+			Icon:        "cube",
+			Url:         hs.Cfg.AppSubURL + "/admin/storage",
 		})
 	}
 

@@ -205,13 +205,6 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/org/storage/:path*',
-      roles: () => ['Admin'],
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "StoragePage" */ 'app/features/storage/StoragePage')
-      ),
-    },
-    {
       path: '/org/apikeys',
       navId: 'apikeys',
       roles: () => contextSrv.evaluatePermission(() => ['Admin'], [AccessControlAction.ActionAPIKeysRead]),
@@ -311,6 +304,12 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/admin/orgs/edit/:id',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "AdminEditOrgPage" */ 'app/features/admin/AdminEditOrgPage')
+      ),
+    },
+    {
+      path: '/admin/storage/:path*',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "StoragePage" */ 'app/features/storage/StoragePage')
       ),
     },
     {
