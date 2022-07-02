@@ -31,6 +31,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, pluginStore p
 	dashboardProvisioningService dashboardservice.DashboardProvisioningService,
 	datasourceService datasourceservice.DataSourceService,
 	dashboardService dashboardservice.DashboardService,
+	folderService dashboardservice.FolderService,
 	alertingService *alerting.AlertNotificationService, pluginSettings pluginsettings.Service,
 	searchService searchV2.SearchService,
 ) (*ProvisioningServiceImpl, error) {
@@ -43,7 +44,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, pluginStore p
 		NotificationService:          notificatonService,
 		log:                          logger,
 		newDashboardProvisioner:      dashboards.New,
-		alertRuleProvisioner:         prov_alerting.NewAlertRuleProvisioner(logger),
+		alertRuleProvisioner:         prov_alerting.NewAlertRuleProvisioner(logger, dashboardService, dashboardProvisioningService),
 		alertmanagerProvisioner:      prov_alerting.NewAlertmanagerProvisioner(),
 		provisionNotifiers:           notifiers.Provision,
 		provisionDatasources:         datasources.Provision,
@@ -80,7 +81,7 @@ func NewProvisioningServiceImpl() *ProvisioningServiceImpl {
 		provisionNotifiers:      notifiers.Provision,
 		provisionDatasources:    datasources.Provision,
 		provisionPlugins:        plugins.Provision,
-		alertRuleProvisioner:    prov_alerting.NewAlertRuleProvisioner(logger),
+		alertRuleProvisioner:    prov_alerting.NewAlertRuleProvisioner(logger, nil, nil),
 		alertmanagerProvisioner: prov_alerting.NewAlertmanagerProvisioner(),
 	}
 }
