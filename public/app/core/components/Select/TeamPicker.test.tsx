@@ -1,5 +1,6 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
+
 import { TeamPicker } from './TeamPicker';
 
 jest.mock('@grafana/runtime', () => ({
@@ -13,11 +14,11 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('TeamPicker', () => {
-  it('renders correctly', () => {
+  it('renders correctly', async () => {
     const props = {
       onSelected: () => {},
     };
     render(<TeamPicker {...props} />);
-    expect(screen.getByTestId('teamPicker')).toBeInTheDocument();
+    expect(await screen.findByTestId('teamPicker')).toBeInTheDocument();
   });
 });

@@ -15,13 +15,15 @@ import (
 	"path/filepath"
 	"strings"
 
+	// TODO: replace deprecated `golang.org/x/crypto` package https://github.com/grafana/grafana/issues/46050
+	// nolint:staticcheck
 	"golang.org/x/crypto/openpgp"
+	// nolint:staticcheck
 	"golang.org/x/crypto/openpgp/clearsign"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 // Soon we can fetch keys from:
@@ -79,24 +81,24 @@ func readPluginManifest(body []byte) (*pluginManifest, error) {
 	}
 
 	// Convert to a well typed object
-	manifest := &pluginManifest{}
+	var manifest pluginManifest
 	err := json.Unmarshal(block.Plaintext, &manifest)
 	if err != nil {
-		return nil, errutil.Wrap("Error parsing manifest JSON", err)
+		return nil, fmt.Errorf("%v: %w", "Error parsing manifest JSON", err)
 	}
 
 	keyring, err := openpgp.ReadArmoredKeyRing(bytes.NewBufferString(publicKeyText))
 	if err != nil {
-		return nil, errutil.Wrap("failed to parse public key", err)
+		return nil, fmt.Errorf("%v: %w", "failed to parse public key", err)
 	}
 
 	if _, err := openpgp.CheckDetachedSignature(keyring,
 		bytes.NewBuffer(block.Bytes),
 		block.ArmoredSignature.Body); err != nil {
-		return nil, errutil.Wrap("failed to check signature", err)
+		return nil, fmt.Errorf("%v: %w", "failed to check signature", err)
 	}
 
-	return manifest, nil
+	return &manifest, nil
 }
 
 func Calculate(mlog log.Logger, plugin *plugins.Plugin) (plugins.Signature, error) {
@@ -104,6 +106,14 @@ func Calculate(mlog log.Logger, plugin *plugins.Plugin) (plugins.Signature, erro
 		return plugins.Signature{
 			Status: plugins.SignatureInternal,
 		}, nil
+	}
+
+	pluginFiles, err := pluginFilesRequiringVerification(plugin)
+	if err != nil {
+		mlog.Warn("Could not collect plugin file information in directory", "pluginID", plugin.ID, "dir", plugin.PluginDir)
+		return plugins.Signature{
+			Status: plugins.SignatureInvalid,
+		}, err
 	}
 
 	manifestPath := filepath.Join(plugin.PluginDir, "MANIFEST.txt")
@@ -181,14 +191,6 @@ func Calculate(mlog log.Logger, plugin *plugins.Plugin) (plugins.Signature, erro
 	}
 
 	if manifest.isV2() {
-		pluginFiles, err := pluginFilesRequiringVerification(plugin)
-		if err != nil {
-			mlog.Warn("Could not collect plugin file information in directory", "pluginID", plugin.ID, "dir", plugin.PluginDir)
-			return plugins.Signature{
-				Status: plugins.SignatureInvalid,
-			}, err
-		}
-
 		// Track files missing from the manifest
 		var unsignedFiles []string
 		for _, f := range pluginFiles {
@@ -261,18 +263,18 @@ func pluginFilesRequiringVerification(plugin *plugins.Plugin) ([]string, error) 
 				return err
 			}
 
-			// skip symlink directories
-			if symlink.IsDir() {
-				return nil
-			}
-
 			// verify that symlinked file is within plugin directory
 			p, err := filepath.Rel(plugin.PluginDir, symlinkPath)
 			if err != nil {
 				return err
 			}
-			if strings.HasPrefix(p, ".."+string(filepath.Separator)) {
+			if p == ".." || strings.HasPrefix(p, ".."+string(filepath.Separator)) {
 				return fmt.Errorf("file '%s' not inside of plugin directory", p)
+			}
+
+			// skip adding symlinked directories
+			if symlink.IsDir() {
+				return nil
 			}
 		}
 

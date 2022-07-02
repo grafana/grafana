@@ -3,9 +3,9 @@ package util
 import (
 	"fmt"
 	"math"
-	"regexp"
 	"strings"
 	"time"
+	"unicode"
 )
 
 // StringsFallback2 returns the first of two not empty strings.
@@ -33,7 +33,7 @@ func SplitString(str string) []string {
 		return []string{}
 	}
 
-	return regexp.MustCompile("[, ]+").Split(str, -1)
+	return strings.Fields(strings.ReplaceAll(str, ",", " "))
 }
 
 // GetAgeString returns a string representing certain time from years to minutes.
@@ -107,4 +107,13 @@ func ToCamelCase(str string) string {
 	}
 
 	return strings.Join(finalParts, "")
+}
+
+func Capitalize(s string) string {
+	if len(s) == 0 {
+		return s
+	}
+	r := []rune(s)
+	r[0] = unicode.ToUpper(r[0])
+	return string(r)
 }

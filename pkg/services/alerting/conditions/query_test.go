@@ -6,16 +6,17 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/bus"
+
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 
 	"github.com/stretchr/testify/require"
@@ -35,10 +36,8 @@ func newTimeSeriesPointsFromArgs(values ...float64) legacydata.DataTimeSeriesPoi
 func TestQueryCondition(t *testing.T) {
 	setup := func() *queryConditionTestContext {
 		ctx := &queryConditionTestContext{}
-		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDataSourceQuery) error {
-			query.Result = &models.DataSource{Id: 1, Type: "graphite"}
-			return nil
-		})
+		store := mockstore.NewSQLStoreMock()
+		store.ExpectedDatasource = &datasources.DataSource{Id: 1, Type: "graphite"}
 
 		ctx.reducer = `{"type":"avg"}`
 		ctx.evaluator = `{"type":"gt","params":[100]}`
@@ -46,6 +45,7 @@ func TestQueryCondition(t *testing.T) {
 			Ctx:              context.Background(),
 			Rule:             &alerting.Rule{},
 			RequestValidator: &validations.OSSPluginRequestValidator{},
+			Store:            store,
 		}
 		return ctx
 	}
@@ -250,7 +250,7 @@ type fakeReqHandler struct {
 }
 
 //nolint: staticcheck // legacydata.DataPlugin deprecated
-func (rh fakeReqHandler) HandleRequest(context.Context, *models.DataSource, legacydata.DataQuery) (
+func (rh fakeReqHandler) HandleRequest(context.Context, *datasources.DataSource, legacydata.DataQuery) (
 	legacydata.DataResponse, error) {
 	return rh.response, nil
 }

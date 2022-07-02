@@ -1,9 +1,11 @@
-import React from 'react';
 import { Story } from '@storybook/react';
-import { Tooltip } from './Tooltip';
+import React from 'react';
+
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { Button } from '../Button';
 import mdx from '../Tooltip/Tooltip.mdx';
+
+import { Tooltip } from './Tooltip';
 
 export default {
   title: 'Overlays/Tooltip',
@@ -61,9 +63,10 @@ export const Basic: Story = ({ content, ...args }) => {
     </Tooltip>
   );
 };
+
 Basic.args = {
   content: 'This is a tooltip',
   theme: 'info',
-  show: true,
+  show: undefined,
   placement: 'auto',
 };

@@ -10,13 +10,11 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/datasources"
+	datafakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestService(t *testing.T) {
@@ -30,27 +28,26 @@ func TestService(t *testing.T) {
 
 	cfg := setting.NewCfg()
 
-	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-
 	s := Service{
-		cfg:            cfg,
-		dataService:    me,
-		secretsService: secretsService,
+		cfg:               cfg,
+		dataService:       me,
+		dataSourceService: &datafakes.FakeDataSourceService{},
 	}
-
-	bus.AddHandlerCtx("test", func(_ context.Context, query *models.GetDataSourceQuery) error {
-		query.Result = &models.DataSource{Id: 1, OrgId: 1, Type: "test", JsonData: simplejson.New()}
-		return nil
-	})
 
 	queries := []Query{
 		{
 			RefID: "A",
-			JSON:  json.RawMessage(`{ "datasource": "test", "datasourceId": 1, "orgId": 1, "intervalMs": 1000, "maxDataPoints": 1000 }`),
+			DataSource: &datasources.DataSource{
+				OrgId: 1,
+				Uid:   "test",
+				Type:  "test",
+			},
+			JSON: json.RawMessage(`{ "datasource": { "uid": "1" }, "intervalMs": 1000, "maxDataPoints": 1000 }`),
 		},
 		{
-			RefID: "B",
-			JSON:  json.RawMessage(`{ "datasource": "__expr__", "datasourceId": -100, "type": "math", "expression": "$A * 2" }`),
+			RefID:      "B",
+			DataSource: DataSourceModel(),
+			JSON:       json.RawMessage(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "math", "expression": "$A * 2" }`),
 		},
 	}
 

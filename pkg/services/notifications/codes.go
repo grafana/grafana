@@ -8,7 +8,7 @@ import (
 
 	"github.com/unknwon/com"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -49,7 +49,7 @@ func createTimeLimitCode(data string, minutes int, startInf interface{}) (string
 }
 
 // verify time limit code
-func validateUserEmailCode(cfg *setting.Cfg, user *models.User, code string) (bool, error) {
+func validateUserEmailCode(cfg *setting.Cfg, user *user.User, code string) (bool, error) {
 	if len(code) <= 18 {
 		return false, nil
 	}
@@ -65,12 +65,11 @@ func validateUserEmailCode(cfg *setting.Cfg, user *models.User, code string) (bo
 	}
 
 	// right active code
-	data := com.ToStr(user.Id) + user.Email + user.Login + user.Password + user.Rands
+	data := com.ToStr(user.ID) + user.Email + user.Login + user.Password + user.Rands
 	retCode, err := createTimeLimitCode(data, minutes, start)
 	if err != nil {
 		return false, err
 	}
-	fmt.Printf("code : %s\ncode2: %s", retCode, code)
 	if retCode == code && minutes > 0 {
 		// check time is expired or not
 		before, _ := time.ParseInLocation("200601021504", start, time.Local)
@@ -94,9 +93,9 @@ func getLoginForEmailCode(code string) string {
 	return string(b)
 }
 
-func createUserEmailCode(cfg *setting.Cfg, u *models.User, startInf interface{}) (string, error) {
+func createUserEmailCode(cfg *setting.Cfg, u *user.User, startInf interface{}) (string, error) {
 	minutes := cfg.EmailCodeValidMinutes
-	data := com.ToStr(u.Id) + u.Email + u.Login + u.Password + u.Rands
+	data := com.ToStr(u.ID) + u.Email + u.Login + u.Password + u.Rands
 	code, err := createTimeLimitCode(data, minutes, startInf)
 	if err != nil {
 		return "", err

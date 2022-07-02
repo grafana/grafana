@@ -5,13 +5,16 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
+	legacymodels "github.com/grafana/grafana/pkg/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 type alertRule struct {
+	ID              int64 `xorm:"pk autoincr 'id'"`
 	OrgID           int64 `xorm:"org_id"`
 	Title           string
 	Condition       string
@@ -21,6 +24,7 @@ type alertRule struct {
 	UID             string `xorm:"uid"`
 	NamespaceUID    string `xorm:"namespace_uid"`
 	RuleGroup       string
+	RuleGroupIndex  int `xorm:"rule_group_idx"`
 	NoDataState     string
 	ExecErrState    string
 	For             duration
@@ -34,6 +38,7 @@ type alertRuleVersion struct {
 	RuleUID          string `xorm:"rule_uid"`
 	RuleNamespaceUID string `xorm:"rule_namespace_uid"`
 	RuleGroup        string
+	RuleGroupIndex   int `xorm:"rule_group_idx"`
 	ParentVersion    int64
 	RestoredFrom     int64
 	Version          int64
@@ -58,6 +63,7 @@ func (a *alertRule) makeVersion() *alertRuleVersion {
 		RuleUID:          a.UID,
 		RuleNamespaceUID: a.NamespaceUID,
 		RuleGroup:        a.RuleGroup,
+		RuleGroupIndex:   a.RuleGroupIndex,
 		ParentVersion:    0,
 		RestoredFrom:     0,
 		Version:          1,
@@ -76,9 +82,11 @@ func (a *alertRule) makeVersion() *alertRuleVersion {
 }
 
 func addMigrationInfo(da *dashAlert) (map[string]string, map[string]string) {
-	lbls := da.ParsedSettings.AlertRuleTags
-	if lbls == nil {
-		lbls = make(map[string]string)
+	tagsMap := simplejson.NewFromAny(da.ParsedSettings.AlertRuleTags).MustMap()
+	lbls := make(map[string]string, len(tagsMap))
+
+	for k, v := range tagsMap {
+		lbls[k] = simplejson.NewFromAny(v).MustString()
 	}
 
 	annotations := make(map[string]string, 3)
@@ -87,10 +95,6 @@ func addMigrationInfo(da *dashAlert) (map[string]string, map[string]string) {
 	annotations["__alertId__"] = fmt.Sprintf("%v", da.Id)
 
 	return lbls, annotations
-}
-
-func getMigrationString(da dashAlert) string {
-	return fmt.Sprintf(`{"dashboardUid": "%v", "panelId": %v, "alertId": %v}`, da.DashboardUID, da.PanelId, da.Id)
 }
 
 func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string) (*alertRule, error) {
@@ -163,6 +167,8 @@ func migrateAlertRuleQueries(data []alertQuery) ([]alertQuery, error) {
 		if err != nil {
 			return nil, err
 		}
+		// remove hidden tag from the query (if exists)
+		delete(fixedData, "hide")
 		fixedData = fixGraphiteReferencedSubQueries(fixedData)
 		updatedModel, err := json.Marshal(fixedData)
 		if err != nil {
@@ -245,27 +251,29 @@ func ruleAdjustInterval(freq int64) int64 {
 }
 
 func transNoData(s string) (string, error) {
-	switch s {
-	case "ok":
-		return "OK", nil // values from ngalert/models/rule
-	case "", "no_data":
-		return "NoData", nil
-	case "alerting":
-		return "Alerting", nil
-	case "keep_state":
-		return "NoData", nil // "keep last state" translates to no data because we now emit a special alert when the state is "noData". The result is that the evaluation will not return firing and instead we'll raise the special alert.
+	switch legacymodels.NoDataOption(s) {
+	case legacymodels.NoDataSetOK:
+		return string(ngmodels.OK), nil // values from ngalert/models/rule
+	case "", legacymodels.NoDataSetNoData:
+		return string(ngmodels.NoData), nil
+	case legacymodels.NoDataSetAlerting:
+		return string(ngmodels.Alerting), nil
+	case legacymodels.NoDataKeepState:
+		return string(ngmodels.NoData), nil // "keep last state" translates to no data because we now emit a special alert when the state is "noData". The result is that the evaluation will not return firing and instead we'll raise the special alert.
 	}
 	return "", fmt.Errorf("unrecognized No Data setting %v", s)
 }
 
 func transExecErr(s string) (string, error) {
-	switch s {
-	case "", "alerting":
-		return "Alerting", nil
-	case "keep_state":
+	switch legacymodels.ExecutionErrorOption(s) {
+	case "", legacymodels.ExecutionErrorSetAlerting:
+		return string(ngmodels.AlertingErrState), nil
+	case legacymodels.ExecutionErrorKeepState:
 		// Keep last state is translated to error as we now emit a
 		// DatasourceError alert when the state is error
-		return "Error", nil
+		return string(ngmodels.ErrorErrState), nil
+	case legacymodels.ExecutionErrorSetOk:
+		return string(ngmodels.OkErrState), nil
 	}
 	return "", fmt.Errorf("unrecognized Execution Error setting %v", s)
 }

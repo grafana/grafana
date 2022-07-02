@@ -1,27 +1,26 @@
 import React, { ComponentProps, useCallback, useEffect, useRef, useState } from 'react';
 import { default as ReactSelect } from 'react-select';
-import Creatable from 'react-select/creatable';
 import { default as ReactAsyncSelect } from 'react-select/async';
 import { default as AsyncCreatable } from 'react-select/async-creatable';
+import Creatable from 'react-select/creatable';
 
+import { useTheme2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { Spinner } from '../Spinner/Spinner';
-import { css, cx } from '@emotion/css';
-import resetSelectStyles from './resetSelectStyles';
-import { SelectMenu, SelectMenuOptions } from './SelectMenu';
-import { IndicatorsContainer } from './IndicatorsContainer';
-import { ValueContainer } from './ValueContainer';
-import { InputControl } from './InputControl';
-import { SelectContainer } from './SelectContainer';
+
 import { DropdownIndicator } from './DropdownIndicator';
+import { IndicatorsContainer } from './IndicatorsContainer';
+import { InputControl } from './InputControl';
+import { MultiValueContainer, MultiValueRemove } from './MultiValue';
+import { SelectContainer } from './SelectContainer';
+import { SelectMenu, SelectMenuOptions } from './SelectMenu';
 import { SelectOptionGroup } from './SelectOptionGroup';
 import { SingleValue } from './SingleValue';
-import { MultiValueContainer, MultiValueRemove } from './MultiValue';
-import { useTheme2 } from '../../themes';
+import { ValueContainer } from './ValueContainer';
 import { getSelectStyles } from './getSelectStyles';
-import { cleanValue, findSelectedValue } from './utils';
+import { useCustomSelectStyles } from './resetSelectStyles';
 import { ActionMeta, SelectBaseProps, SelectValue } from './types';
-import { deprecationWarning } from '@grafana/data';
+import { cleanValue, findSelectedValue } from './utils';
 
 interface ExtraValuesIndicatorProps {
   maxVisibleValues?: number | undefined;
@@ -120,7 +119,7 @@ export function SelectBase<T>({
   maxVisibleValues,
   menuPlacement = 'auto',
   menuPosition,
-  menuShouldPortal = false,
+  menuShouldPortal = true,
   noOptionsMessage = 'No options found',
   onBlur,
   onChange,
@@ -129,6 +128,7 @@ export function SelectBase<T>({
   onInputChange,
   onKeyDown,
   onOpenMenu,
+  onFocus,
   openMenuOnFocus = false,
   options = [],
   placeholder = 'Choose',
@@ -139,15 +139,14 @@ export function SelectBase<T>({
   value,
   width,
   isValidNewOption,
+  formatOptionLabel,
 }: SelectBaseProps<T>) {
-  if (menuShouldPortal === false) {
-    deprecationWarning('SelectBase', 'menuShouldPortal={false}', 'menuShouldPortal={true}');
-  }
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
 
   const reactSelectRef = useRef<{ controlRef: HTMLElement }>(null);
   const [closeToBottom, setCloseToBottom] = useState<boolean>(false);
+  const selectStyles = useCustomSelectStyles(theme, width);
 
   // Infer the menu position for asynchronously loaded options. menuPlacement="auto" doesn't work when the menu is
   // automatically opened when the component is created (it happens in SegmentSelect by setting menuIsOpen={true}).
@@ -229,7 +228,7 @@ export function SelectBase<T>({
     menuPlacement: menuPlacement === 'auto' && closeToBottom ? 'top' : menuPlacement,
     menuPosition,
     menuShouldBlockScroll: true,
-    menuPortalTarget: menuShouldPortal ? document.body : undefined,
+    menuPortalTarget: menuShouldPortal && typeof document !== 'undefined' ? document.body : undefined,
     menuShouldScrollIntoView: false,
     onBlur,
     onChange: onChangeWithEmpty,
@@ -237,6 +236,8 @@ export function SelectBase<T>({
     onKeyDown,
     onMenuClose: onCloseMenu,
     onMenuOpen: onOpenMenu,
+    onFocus,
+    formatOptionLabel,
     openMenuOnFocus,
     options,
     placeholder,
@@ -250,7 +251,7 @@ export function SelectBase<T>({
   if (allowCustomValue) {
     ReactSelectComponent = Creatable as any;
     creatableProps.allowCreateWhileLoading = allowCreateWhileLoading;
-    creatableProps.formatCreateLabel = formatCreateLabel ?? ((input: string) => `Create: ${input}`);
+    creatableProps.formatCreateLabel = formatCreateLabel ?? defaultFormatCreateLabel;
     creatableProps.onCreateOption = onCreateOption;
     creatableProps.isValidNewOption = isValidNewOption;
   }
@@ -273,33 +274,6 @@ export function SelectBase<T>({
           MenuList: SelectMenu,
           Group: SelectOptionGroup,
           ValueContainer,
-          Placeholder(props: any) {
-            return (
-              <div
-                {...props.innerProps}
-                className={cx(
-                  css(props.getStyles('placeholder', props)),
-                  css`
-                    display: inline-block;
-                    color: ${theme.colors.text.disabled};
-
-                    box-sizing: border-box;
-                    line-height: 1;
-                    white-space: nowrap;
-                  `,
-                  // When width: auto, the placeholder must take up space in the Select otherwise the width collapses down
-                  width !== 'auto' &&
-                    css`
-                      position: absolute;
-                      top: 50%;
-                      transform: translateY(-50%);
-                    `
-                )}
-              >
-                {props.children}
-              </div>
-            );
-          },
           IndicatorsContainer(props: any) {
             const { selectProps } = props;
             const { value, showAllSelectedWhenOpen, maxVisibleValues, menuIsOpen } = selectProps;
@@ -367,34 +341,24 @@ export function SelectBase<T>({
           SelectContainer,
           ...components,
         }}
-        styles={{
-          ...resetSelectStyles(),
-          menuPortal: (base: any) => ({
-            ...base,
-            zIndex: theme.zIndex.portal,
-          }),
-          //These are required for the menu positioning to function
-          menu: ({ top, bottom, position }: any) => ({
-            top,
-            bottom,
-            position,
-            minWidth: '100%',
-            zIndex: theme.zIndex.dropdown,
-          }),
-          container: () => ({
-            width: width ? theme.spacing(width) : '100%',
-            display: width === 'auto' ? 'inline-flex' : 'flex',
-          }),
-          option: (provided: any, state: any) => ({
-            ...provided,
-            opacity: state.isDisabled ? 0.5 : 1,
-          }),
-        }}
+        styles={selectStyles}
         className={className}
         {...commonSelectProps}
         {...creatableProps}
         {...asyncSelectProps}
       />
     </>
+  );
+}
+
+function defaultFormatCreateLabel(input: string) {
+  return (
+    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+      <div>{input}</div>
+      <div style={{ flexGrow: 1 }} />
+      <div className="muted small" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        Hit enter to add
+      </div>
+    </div>
   );
 }

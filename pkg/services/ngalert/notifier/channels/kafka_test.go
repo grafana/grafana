@@ -10,13 +10,13 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 )
 
 func TestKafkaNotifier(t *testing.T) {
 	tmpl := templateForTests(t)
+
+	images := newFakeImageStore(2)
 
 	externalURL, err := url.Parse("http://localhost")
 	require.NoError(t, err)
@@ -31,7 +31,7 @@ func TestKafkaNotifier(t *testing.T) {
 		expMsgError    error
 	}{
 		{
-			name: "One alert",
+			name: "A single alert with image",
 			settings: `{
 				"kafkaRestProxy": "http://localhost",
 				"kafkaTopic": "sometopic"
@@ -40,7 +40,7 @@ func TestKafkaNotifier(t *testing.T) {
 				{
 					Alert: model.Alert{
 						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
-						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh", "__alertScreenshotToken__": "test-image-1"},
 					},
 				},
 			},
@@ -52,8 +52,9 @@ func TestKafkaNotifier(t *testing.T) {
 						"alert_state": "alerting",
 						"client": "Grafana",
 						"client_url": "http://localhost/alerting/list",
+						"contexts": [{"type": "image", "src": "https://www.example.com/test-image-1.jpg"}],
 						"description": "[FIRING:1]  (val1)",
-						"details": "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
+						"details": "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
 						"incident_key": "6e3538104c14b583da237e9693b76debbc17f0f8058ef20492e5853096cf8733"
 					  }
 					}
@@ -61,7 +62,7 @@ func TestKafkaNotifier(t *testing.T) {
 				}`,
 			expMsgError: nil,
 		}, {
-			name: "Multiple alerts",
+			name: "Multiple alerts with images",
 			settings: `{
 				"kafkaRestProxy": "http://localhost",
 				"kafkaTopic": "sometopic"
@@ -70,12 +71,12 @@ func TestKafkaNotifier(t *testing.T) {
 				{
 					Alert: model.Alert{
 						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
-						Annotations: model.LabelSet{"ann1": "annv1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__alertScreenshotToken__": "test-image-1"},
 					},
 				}, {
 					Alert: model.Alert{
 						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val2"},
-						Annotations: model.LabelSet{"ann1": "annv2"},
+						Annotations: model.LabelSet{"ann1": "annv2", "__alertScreenshotToken__": "test-image-2"},
 					},
 				},
 			},
@@ -87,8 +88,9 @@ func TestKafkaNotifier(t *testing.T) {
 						"alert_state": "alerting",
 						"client": "Grafana",
 						"client_url": "http://localhost/alerting/list",
+						"contexts": [{"type": "image", "src": "https://www.example.com/test-image-1.jpg"}, {"type": "image", "src": "https://www.example.com/test-image-2.jpg"}],
 						"description": "[FIRING:2]  ",
-						"details": "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val2\nAnnotations:\n - ann1 = annv2\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval2\n",
+						"details": "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val2\nAnnotations:\n - ann1 = annv2\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval2\n",
 						"incident_key": "6e3538104c14b583da237e9693b76debbc17f0f8058ef20492e5853096cf8733"
 					  }
 					}
@@ -98,11 +100,11 @@ func TestKafkaNotifier(t *testing.T) {
 		}, {
 			name:         "Endpoint missing",
 			settings:     `{"kafkaTopic": "sometopic"}`,
-			expInitError: `failed to validate receiver "kafka_testing" of type "kafka": could not find kafka rest proxy endpoint property in settings`,
+			expInitError: `could not find kafka rest proxy endpoint property in settings`,
 		}, {
 			name:         "Topic missing",
 			settings:     `{"kafkaRestProxy": "http://localhost"}`,
-			expInitError: `failed to validate receiver "kafka_testing" of type "kafka": could not find kafka topic property in settings`,
+			expInitError: `could not find kafka topic property in settings`,
 		},
 	}
 
@@ -117,7 +119,8 @@ func TestKafkaNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			pn, err := NewKafkaNotifier(m, tmpl)
+			webhookSender := mockNotificationService()
+			cfg, err := NewKafkaConfig(m)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())
@@ -125,16 +128,10 @@ func TestKafkaNotifier(t *testing.T) {
 			}
 			require.NoError(t, err)
 
-			body := ""
-			actUrl := ""
-			bus.AddHandlerCtx("test", func(ctx context.Context, webhook *models.SendWebhookSync) error {
-				body = webhook.Body
-				actUrl = webhook.Url
-				return nil
-			})
-
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
+
+			pn := NewKafkaNotifier(cfg, images, webhookSender, tmpl)
 			ok, err := pn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.False(t, ok)
@@ -145,8 +142,8 @@ func TestKafkaNotifier(t *testing.T) {
 			require.NoError(t, err)
 			require.True(t, ok)
 
-			require.Equal(t, c.expUrl, actUrl)
-			require.JSONEq(t, c.expMsg, body)
+			require.Equal(t, c.expUrl, webhookSender.Webhook.Url)
+			require.JSONEq(t, c.expMsg, webhookSender.Webhook.Body)
 		})
 	}
 }

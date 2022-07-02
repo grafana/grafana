@@ -2,34 +2,54 @@ package provisioning
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
 	"sync"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	plugifaces "github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/alerting"
+	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards"
+	datasourceservice "github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/encryption"
+	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning/datasources"
 	"github.com/grafana/grafana/pkg/services/provisioning/notifiers"
 	"github.com/grafana/grafana/pkg/services/provisioning/plugins"
+	"github.com/grafana/grafana/pkg/services/provisioning/utils"
+	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, pluginStore plugifaces.Store,
-	encryptionService encryption.Internal) (*ProvisioningServiceImpl, error) {
+	encryptionService encryption.Internal, notificatonService *notifications.NotificationService,
+	dashboardProvisioningService dashboardservice.DashboardProvisioningService,
+	datasourceService datasourceservice.DataSourceService,
+	dashboardService dashboardservice.DashboardService,
+	alertingService *alerting.AlertNotificationService, pluginSettings pluginsettings.Service,
+	searchService searchV2.SearchService,
+) (*ProvisioningServiceImpl, error) {
 	s := &ProvisioningServiceImpl{
-		Cfg:                     cfg,
-		SQLStore:                sqlStore,
-		pluginStore:             pluginStore,
-		EncryptionService:       encryptionService,
-		log:                     log.New("provisioning"),
-		newDashboardProvisioner: dashboards.New,
-		provisionNotifiers:      notifiers.Provision,
-		provisionDatasources:    datasources.Provision,
-		provisionPlugins:        plugins.Provision,
+		Cfg:                          cfg,
+		SQLStore:                     sqlStore,
+		pluginStore:                  pluginStore,
+		EncryptionService:            encryptionService,
+		NotificationService:          notificatonService,
+		log:                          log.New("provisioning"),
+		newDashboardProvisioner:      dashboards.New,
+		provisionNotifiers:           notifiers.Provision,
+		provisionDatasources:         datasources.Provision,
+		provisionPlugins:             plugins.Provision,
+		dashboardProvisioningService: dashboardProvisioningService,
+		dashboardService:             dashboardService,
+		datasourceService:            datasourceService,
+		alertingService:              alertingService,
+		pluginsSettings:              pluginSettings,
+		searchService:                searchService,
 	}
 	return s, nil
 }
@@ -38,7 +58,7 @@ type ProvisioningService interface {
 	registry.BackgroundService
 	RunInitProvisioners(ctx context.Context) error
 	ProvisionDatasources(ctx context.Context) error
-	ProvisionPlugins() error
+	ProvisionPlugins(ctx context.Context) error
 	ProvisionNotifications(ctx context.Context) error
 	ProvisionDashboards(ctx context.Context) error
 	GetDashboardProvisionerResolvedPath(name string) string
@@ -59,9 +79,9 @@ func NewProvisioningServiceImpl() *ProvisioningServiceImpl {
 // Used for testing purposes
 func newProvisioningServiceImpl(
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory,
-	provisionNotifiers func(context.Context, string, encryption.Internal) error,
-	provisionDatasources func(context.Context, string) error,
-	provisionPlugins func(string, plugifaces.Store) error,
+	provisionNotifiers func(context.Context, string, notifiers.Manager, notifiers.SQLStore, encryption.Internal, *notifications.NotificationService) error,
+	provisionDatasources func(context.Context, string, datasources.Store, utils.OrgStore) error,
+	provisionPlugins func(context.Context, string, plugins.Store, plugifaces.Store, pluginsettings.Service) error,
 ) *ProvisioningServiceImpl {
 	return &ProvisioningServiceImpl{
 		log:                     log.New("provisioning"),
@@ -73,18 +93,25 @@ func newProvisioningServiceImpl(
 }
 
 type ProvisioningServiceImpl struct {
-	Cfg                     *setting.Cfg
-	SQLStore                *sqlstore.SQLStore
-	pluginStore             plugifaces.Store
-	EncryptionService       encryption.Internal
-	log                     log.Logger
-	pollingCtxCancel        context.CancelFunc
-	newDashboardProvisioner dashboards.DashboardProvisionerFactory
-	dashboardProvisioner    dashboards.DashboardProvisioner
-	provisionNotifiers      func(context.Context, string, encryption.Internal) error
-	provisionDatasources    func(context.Context, string) error
-	provisionPlugins        func(string, plugifaces.Store) error
-	mutex                   sync.Mutex
+	Cfg                          *setting.Cfg
+	SQLStore                     *sqlstore.SQLStore
+	pluginStore                  plugifaces.Store
+	EncryptionService            encryption.Internal
+	NotificationService          *notifications.NotificationService
+	log                          log.Logger
+	pollingCtxCancel             context.CancelFunc
+	newDashboardProvisioner      dashboards.DashboardProvisionerFactory
+	dashboardProvisioner         dashboards.DashboardProvisioner
+	provisionNotifiers           func(context.Context, string, notifiers.Manager, notifiers.SQLStore, encryption.Internal, *notifications.NotificationService) error
+	provisionDatasources         func(context.Context, string, datasources.Store, utils.OrgStore) error
+	provisionPlugins             func(context.Context, string, plugins.Store, plugifaces.Store, pluginsettings.Service) error
+	mutex                        sync.Mutex
+	dashboardProvisioningService dashboardservice.DashboardProvisioningService
+	dashboardService             dashboardservice.DashboardService
+	datasourceService            datasourceservice.DataSourceService
+	alertingService              *alerting.AlertNotificationService
+	pluginsSettings              pluginsettings.Service
+	searchService                searchV2.SearchService
 }
 
 func (ps *ProvisioningServiceImpl) RunInitProvisioners(ctx context.Context) error {
@@ -93,7 +120,7 @@ func (ps *ProvisioningServiceImpl) RunInitProvisioners(ctx context.Context) erro
 		return err
 	}
 
-	err = ps.ProvisionPlugins()
+	err = ps.ProvisionPlugins(ctx)
 	if err != nil {
 		return err
 	}
@@ -111,6 +138,9 @@ func (ps *ProvisioningServiceImpl) Run(ctx context.Context) error {
 	if err != nil {
 		ps.log.Error("Failed to provision dashboard", "error", err)
 		return err
+	}
+	if ps.dashboardProvisioner.HasDashboardSources() {
+		ps.searchService.TriggerReIndex()
 	}
 
 	for {
@@ -137,27 +167,39 @@ func (ps *ProvisioningServiceImpl) Run(ctx context.Context) error {
 
 func (ps *ProvisioningServiceImpl) ProvisionDatasources(ctx context.Context) error {
 	datasourcePath := filepath.Join(ps.Cfg.ProvisioningPath, "datasources")
-	err := ps.provisionDatasources(ctx, datasourcePath)
-	return errutil.Wrap("Datasource provisioning error", err)
+	if err := ps.provisionDatasources(ctx, datasourcePath, ps.datasourceService, ps.SQLStore); err != nil {
+		err = fmt.Errorf("%v: %w", "Datasource provisioning error", err)
+		ps.log.Error("Failed to provision data sources", "error", err)
+		return err
+	}
+	return nil
 }
 
-func (ps *ProvisioningServiceImpl) ProvisionPlugins() error {
+func (ps *ProvisioningServiceImpl) ProvisionPlugins(ctx context.Context) error {
 	appPath := filepath.Join(ps.Cfg.ProvisioningPath, "plugins")
-	err := ps.provisionPlugins(appPath, ps.pluginStore)
-	return errutil.Wrap("app provisioning error", err)
+	if err := ps.provisionPlugins(ctx, appPath, ps.SQLStore, ps.pluginStore, ps.pluginsSettings); err != nil {
+		err = fmt.Errorf("%v: %w", "app provisioning error", err)
+		ps.log.Error("Failed to provision plugins", "error", err)
+		return err
+	}
+	return nil
 }
 
 func (ps *ProvisioningServiceImpl) ProvisionNotifications(ctx context.Context) error {
 	alertNotificationsPath := filepath.Join(ps.Cfg.ProvisioningPath, "notifiers")
-	err := ps.provisionNotifiers(ctx, alertNotificationsPath, ps.EncryptionService)
-	return errutil.Wrap("Alert notification provisioning error", err)
+	if err := ps.provisionNotifiers(ctx, alertNotificationsPath, ps.alertingService, ps.SQLStore, ps.EncryptionService, ps.NotificationService); err != nil {
+		err = fmt.Errorf("%v: %w", "Alert notification provisioning error", err)
+		ps.log.Error("Failed to provision alert notifications", "error", err)
+		return err
+	}
+	return nil
 }
 
 func (ps *ProvisioningServiceImpl) ProvisionDashboards(ctx context.Context) error {
 	dashboardPath := filepath.Join(ps.Cfg.ProvisioningPath, "dashboards")
-	dashProvisioner, err := ps.newDashboardProvisioner(ctx, dashboardPath, ps.SQLStore)
+	dashProvisioner, err := ps.newDashboardProvisioner(ctx, dashboardPath, ps.dashboardProvisioningService, ps.SQLStore, ps.dashboardService)
 	if err != nil {
-		return errutil.Wrap("Failed to create provisioner", err)
+		return fmt.Errorf("%v: %w", "Failed to create provisioner", err)
 	}
 
 	ps.mutex.Lock()
@@ -170,7 +212,7 @@ func (ps *ProvisioningServiceImpl) ProvisionDashboards(ctx context.Context) erro
 	if err != nil {
 		// If we fail to provision with the new provisioner, the mutex will unlock and the polling will restart with the
 		// old provisioner as we did not switch them yet.
-		return errutil.Wrap("Failed to provision dashboards", err)
+		return fmt.Errorf("%v: %w", "Failed to provision dashboards", err)
 	}
 	ps.dashboardProvisioner = dashProvisioner
 	return nil

@@ -1,12 +1,14 @@
-import React, { FunctionComponent, useCallback, useMemo } from 'react';
 import { flatten } from 'lodash';
+import React, { FunctionComponent, useCallback, useMemo } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
-import { CustomControlProps } from '@grafana/ui/src/components/Select/types';
 import { Button, HorizontalGroup, Select, VerticalGroup } from '@grafana/ui';
+import { CustomControlProps } from '@grafana/ui/src/components/Select/types';
+
+import { SELECT_WIDTH } from '../constants';
 import { labelsToGroupedOptions, stringArrayToFilters } from '../functions';
 import { Filter } from '../types';
-import { SELECT_WIDTH } from '../constants';
+
 import { QueryEditorRow } from '.';
 
 export interface Props {
@@ -20,7 +22,7 @@ const operators = ['=', '!=', '=~', '!=~'];
 
 const FilterButton = React.forwardRef<HTMLButtonElement, CustomControlProps<string>>(
   ({ value, isOpen, invalid, ...rest }, ref) => {
-    return <Button {...rest} ref={ref} variant="secondary" icon="plus"></Button>;
+    return <Button {...rest} ref={ref} variant="secondary" icon="plus" aria-label="Add filter"></Button>;
   }
 );
 FilterButton.displayName = 'FilterButton';
@@ -41,10 +43,10 @@ export const LabelFilter: FunctionComponent<Props> = ({
   variableOptionGroup,
 }) => {
   const filters = useMemo(() => stringArrayToFilters(filterArray), [filterArray]);
-  const options = useMemo(() => [variableOptionGroup, ...labelsToGroupedOptions(Object.keys(labels))], [
-    labels,
-    variableOptionGroup,
-  ]);
+  const options = useMemo(
+    () => [variableOptionGroup, ...labelsToGroupedOptions(Object.keys(labels))],
+    [labels, variableOptionGroup]
+  );
 
   const filtersToStringArray = useCallback((filters: Filter[]) => {
     const strArr = flatten(filters.map(({ key, operator, value, condition }) => [key, operator, value, condition!]));
@@ -54,7 +56,6 @@ export const LabelFilter: FunctionComponent<Props> = ({
   const AddFilter = () => {
     return (
       <Select
-        menuShouldPortal
         allowCustomValue
         options={[variableOptionGroup, ...labelsToGroupedOptions(Object.keys(labels))]}
         onChange={({ value: key = '' }) =>
@@ -100,7 +101,7 @@ export const LabelFilter: FunctionComponent<Props> = ({
           return (
             <HorizontalGroup key={index} spacing="xs" width="auto">
               <Select
-                menuShouldPortal
+                aria-label="Filter label key"
                 width={SELECT_WIDTH}
                 allowCustomValue
                 formatCreateLabel={(v) => `Use label key: ${v}`}
@@ -115,7 +116,6 @@ export const LabelFilter: FunctionComponent<Props> = ({
                 }}
               />
               <Select
-                menuShouldPortal
                 value={operator}
                 options={operators.map(toOption)}
                 onChange={({ value: operator = '=' }) =>
@@ -125,7 +125,7 @@ export const LabelFilter: FunctionComponent<Props> = ({
                 renderControl={OperatorButton}
               />
               <Select
-                menuShouldPortal
+                aria-label="Filter label value"
                 width={SELECT_WIDTH}
                 formatCreateLabel={(v) => `Use label value: ${v}`}
                 allowCustomValue

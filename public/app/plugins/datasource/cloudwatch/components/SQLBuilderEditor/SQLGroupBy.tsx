@@ -1,13 +1,14 @@
-import { SelectableValue, toOption } from '@grafana/data';
-import { Select } from '@grafana/ui';
 import React, { useMemo, useState } from 'react';
+
+import { SelectableValue, toOption } from '@grafana/data';
+import { AccessoryButton, EditorList, InputGroup } from '@grafana/experimental';
+import { Select } from '@grafana/ui';
+
 import { CloudWatchDatasource } from '../../datasource';
 import { QueryEditorExpressionType, QueryEditorGroupByExpression, QueryEditorPropertyType } from '../../expressions';
 import { useDimensionKeys } from '../../hooks';
 import { CloudWatchMetricsQuery } from '../../types';
-import AccessoryButton from '../ui/AccessoryButton';
-import EditorList from '../ui/EditorList';
-import InputGroup from '../ui/InputGroup';
+
 import {
   getFlattenedGroupBys,
   getMetricNameFromExpression,
@@ -93,12 +94,12 @@ const GroupByItem: React.FC<GroupByItemProps> = (props) => {
   return (
     <InputGroup>
       <Select
+        aria-label={`Group by ${fieldName ?? 'filter key'}`}
         width="auto"
         value={fieldName ? toOption(fieldName) : null}
         options={options}
         allowCustomValue
         onChange={({ value }) => value && onChange(setGroupByField(value))}
-        menuShouldPortal
       />
 
       <AccessoryButton aria-label="remove" icon="times" variant="secondary" onClick={onDelete} />

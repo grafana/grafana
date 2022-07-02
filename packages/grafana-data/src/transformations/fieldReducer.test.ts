@@ -1,11 +1,11 @@
 import { difference } from 'lodash';
 
-import { fieldReducers, ReducerID, reduceField } from './fieldReducer';
-
-import { Field, FieldType } from '../types/index';
-import { guessFieldTypeFromValue } from '../dataframe/processDataFrame';
 import { MutableDataFrame } from '../dataframe/MutableDataFrame';
+import { guessFieldTypeFromValue } from '../dataframe/processDataFrame';
+import { Field, FieldType } from '../types/index';
 import { ArrayVector } from '../vector/ArrayVector';
+
+import { fieldReducers, ReducerID, reduceField } from './fieldReducer';
 
 /**
  * Run a reducer and get back the value
@@ -95,6 +95,15 @@ describe('Stats Calculators', () => {
 
     expect(stats.step).toEqual(100);
     expect(stats.delta).toEqual(300);
+  });
+
+  it('should calculate unique values', () => {
+    const stats = reduceField({
+      field: createField('x', [1, 2, 2, 3, 1]),
+      reducers: [ReducerID.uniqueValues],
+    });
+
+    expect(stats.uniqueValues).toEqual([1, 2, 3]);
   });
 
   it('consistently check allIsNull/allIsZero', () => {

@@ -1,7 +1,8 @@
-import { Observable, Subscription } from 'rxjs';
 import { matcherHint, printExpected, printReceived } from 'jest-matcher-utils';
-import { expectObservable, forceObservableCompletion } from './utils';
 import { isEqual } from 'lodash';
+import { Observable, Subscription } from 'rxjs';
+
+import { expectObservable, forceObservableCompletion } from './utils';
 
 function passMessage(received: any[], expected: any[]) {
   return `${matcherHint('.not.toEmitValues')}
@@ -49,9 +50,10 @@ function tryExpectations(received: any[], expected: any[]): jest.CustomMatcherRe
       message: () => passMessage(received, expected),
     };
   } catch (err) {
+    const message = err instanceof Error ? err.message : 'An unknown error occurred';
     return {
       pass: false,
-      message: () => err,
+      message: () => message,
     };
   }
 }

@@ -1,4 +1,8 @@
 import { css, cx } from '@emotion/css';
+import { identity } from 'lodash';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { usePrevious } from 'react-use';
+
 import {
   AbsoluteTimeRange,
   applyFieldOverrides,
@@ -16,7 +20,7 @@ import {
   TimeZone,
 } from '@grafana/data';
 import { PanelRenderer } from '@grafana/runtime';
-import { GraphDrawStyle, LegendDisplayMode, TooltipDisplayMode } from '@grafana/schema';
+import { GraphDrawStyle, LegendDisplayMode, TooltipDisplayMode, SortOrder } from '@grafana/schema';
 import {
   Icon,
   PanelContext,
@@ -26,13 +30,12 @@ import {
   useTheme2,
 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
-import { ExploreGraphStyle } from 'app/core/utils/explore';
 import { defaultGraphConfig, getGraphFieldConfig } from 'app/plugins/panel/timeseries/config';
 import { TimeSeriesOptions } from 'app/plugins/panel/timeseries/types';
-import { identity } from 'lodash';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { usePrevious } from 'react-use';
+
+import { ExploreGraphStyle } from '../../types';
 import { seriesVisibilityConfigFactory } from '../dashboard/dashgrid/SeriesVisibilityConfigFactory';
+
 import { applyGraphStyle } from './exploreGraphStyleUtils';
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;
@@ -72,12 +75,8 @@ export function ExploreGraph({
 
   const previousData = usePrevious(data);
   const structureChangesRef = useRef(0);
-
-  if (data && previousData && !compareArrayValues(previousData, data, compareDataFrameStructures)) {
-    structureChangesRef.current++;
-  }
-
   const structureRev = baseStructureRev + structureChangesRef.current;
+  const prevStructureRev = usePrevious(structureRev);
 
   const [fieldConfig, setFieldConfig] = useState<FieldConfigSource>({
     defaults: {
@@ -92,6 +91,14 @@ export function ExploreGraph({
     },
     overrides: [],
   });
+
+  if (data && previousData && !compareArrayValues(previousData, data, compareDataFrameStructures)) {
+    structureChangesRef.current++;
+
+    if (prevStructureRev === structureRev) {
+      setFieldConfig({ ...fieldConfig, overrides: [] });
+    }
+  }
 
   const style = useStyles2(getStyles);
   const timeRange = {
@@ -165,7 +172,7 @@ export function ExploreGraph({
         timeZone={timeZone}
         options={
           {
-            tooltip: { mode: tooltipDisplayMode },
+            tooltip: { mode: tooltipDisplayMode, sort: SortOrder.None },
             legend: { displayMode: LegendDisplayMode.List, placement: 'bottom', calcs: [] },
           } as TimeSeriesOptions
         }

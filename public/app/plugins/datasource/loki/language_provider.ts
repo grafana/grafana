@@ -1,27 +1,19 @@
-// Libraries
 import { chain, difference } from 'lodash';
 import LRU from 'lru-cache';
+import Prism, { Grammar } from 'prismjs';
 
-// Services & Utils
-import {
-  parseSelector,
-  labelRegexp,
-  selectorRegexp,
-  processLabels,
-} from 'app/plugins/datasource/prometheus/language_utils';
-import syntax, { FUNCTIONS, PIPE_PARSERS, PIPE_OPERATORS } from './syntax';
-
-// Types
-import { LokiQuery } from './types';
-import { dateTime, AbsoluteTimeRange, LanguageProvider, HistoryItem, DataQuery, DataSourceApi } from '@grafana/data';
-import { PromQuery } from '../prometheus/types';
-import { GraphiteQuery } from '../graphite/types';
-
-import LokiDatasource from './datasource';
+import { dateTime, AbsoluteTimeRange, LanguageProvider, HistoryItem, AbstractQuery } from '@grafana/data';
 import { CompletionItem, TypeaheadInput, TypeaheadOutput, CompletionItemGroup } from '@grafana/ui';
-import { Grammar } from 'prismjs';
-import fromGraphite from './importing/fromGraphite';
-import { GraphiteDatasource } from '../graphite/datasource';
+import {
+  extractLabelMatchers,
+  parseSelector,
+  processLabels,
+  toPromLikeExpr,
+} from 'app/plugins/datasource/prometheus/language_utils';
+
+import { LokiDatasource } from './datasource';
+import syntax, { FUNCTIONS, PIPE_PARSERS, PIPE_OPERATORS } from './syntax';
+import { LokiQuery, LokiQueryType } from './types';
 
 const DEFAULT_KEYS = ['job', 'namespace'];
 const EMPTY_SELECTOR = '{}';
@@ -82,8 +74,8 @@ export default class LokiLanguageProvider extends LanguageProvider {
    *  not account for different size of a response. If that is needed a `length` function can be added in the options.
    *  10 as a max size is totally arbitrary right now.
    */
-  private seriesCache = new LRU<string, Record<string, string[]>>(10);
-  private labelsCache = new LRU<string, string[]>(10);
+  private seriesCache = new LRU<string, Record<string, string[]>>({ max: 10 });
+  private labelsCache = new LRU<string, string[]>({ max: 10 });
 
   constructor(datasource: LokiDatasource, initialValues?: any) {
     super();
@@ -335,75 +327,24 @@ export default class LokiLanguageProvider extends LanguageProvider {
     return { context, suggestions };
   }
 
-  async importQueries(
-    queries: PromQuery[] | GraphiteQuery[] | DataQuery[],
-    originDataSource: DataSourceApi
-  ): Promise<LokiQuery[]> {
-    const datasourceType = originDataSource.meta.id;
-    if (datasourceType === 'prometheus') {
-      return Promise.all(
-        [...(queries as PromQuery[])].map(async (query) => {
-          const expr = await this.importPrometheusQuery(query.expr);
-          const { refId } = query;
-          return {
-            expr,
-            refId,
-            range: true,
-          };
-        })
-      );
-    }
-    if (datasourceType === 'graphite') {
-      return fromGraphite(queries, originDataSource as GraphiteDatasource);
-    }
-    // Return a cleaned LokiQuery
-    return queries.map((query) => ({
-      refId: query.refId,
-      expr: '',
-    }));
+  importFromAbstractQuery(labelBasedQuery: AbstractQuery): LokiQuery {
+    return {
+      refId: labelBasedQuery.refId,
+      expr: toPromLikeExpr(labelBasedQuery),
+      queryType: LokiQueryType.Range,
+    };
   }
 
-  async importPrometheusQuery(query: string): Promise<string> {
-    if (!query) {
-      return '';
+  exportToAbstractQuery(query: LokiQuery): AbstractQuery {
+    const lokiQuery = query.expr;
+    if (!lokiQuery || lokiQuery.length === 0) {
+      return { refId: query.refId, labelMatchers: [] };
     }
-
-    // Consider only first selector in query
-    const selectorMatch = query.match(selectorRegexp);
-    if (!selectorMatch) {
-      return '';
-    }
-
-    const selector = selectorMatch[0];
-    const labels: { [key: string]: { value: any; operator: any } } = {};
-    selector.replace(labelRegexp, (_, key, operator, value) => {
-      labels[key] = { value, operator };
-      return '';
-    });
-
-    // Keep only labels that exist on origin and target datasource
-    await this.start(); // fetches all existing label keys
-    const existingKeys = this.labelKeys;
-    let labelsToKeep: { [key: string]: { value: any; operator: any } } = {};
-    if (existingKeys && existingKeys.length) {
-      // Check for common labels
-      for (const key in labels) {
-        if (existingKeys && existingKeys.includes(key)) {
-          // Should we check for label value equality here?
-          labelsToKeep[key] = labels[key];
-        }
-      }
-    } else {
-      // Keep all labels by default
-      labelsToKeep = labels;
-    }
-
-    const labelKeys = Object.keys(labelsToKeep).sort();
-    const cleanSelector = labelKeys
-      .map((key) => `${key}${labelsToKeep[key].operator}${labelsToKeep[key].value}`)
-      .join(',');
-
-    return ['{', cleanSelector, '}'].join('');
+    const tokens = Prism.tokenize(lokiQuery, syntax);
+    return {
+      refId: query.refId,
+      labelMatchers: extractLabelMatchers(tokens),
+    };
   }
 
   async getSeriesLabels(selector: string) {
@@ -423,7 +364,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
    * Fetches all label keys
    */
   async fetchLabels(): Promise<string[]> {
-    const url = '/loki/api/v1/label';
+    const url = 'labels';
     const timeRange = this.datasource.getTimeRangeParams();
     this.labelFetchTs = Date.now().valueOf();
 
@@ -451,15 +392,16 @@ export default class LokiLanguageProvider extends LanguageProvider {
    * @param name
    */
   fetchSeriesLabels = async (match: string): Promise<Record<string, string[]>> => {
-    const url = '/loki/api/v1/series';
+    const interpolatedMatch = this.datasource.interpolateString(match);
+    const url = 'series';
     const { start, end } = this.datasource.getTimeRangeParams();
 
-    const cacheKey = this.generateCacheKey(url, start, end, match);
+    const cacheKey = this.generateCacheKey(url, start, end, interpolatedMatch);
     let value = this.seriesCache.get(cacheKey);
     if (!value) {
       // Clear value when requesting new one. Empty object being truthy also makes sure we don't request twice.
       this.seriesCache.set(cacheKey, {});
-      const params = { 'match[]': match, start, end };
+      const params = { 'match[]': interpolatedMatch, start, end };
       const data = await this.request(url, params);
       const { values } = processLabels(data);
       value = values;
@@ -473,7 +415,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
    * @param match
    */
   fetchSeries = async (match: string): Promise<Array<Record<string, string>>> => {
-    const url = '/loki/api/v1/series';
+    const url = 'series';
     const { start, end } = this.datasource.getTimeRangeParams();
     const params = { 'match[]': match, start, end };
     return await this.request(url, params);
@@ -497,11 +439,13 @@ export default class LokiLanguageProvider extends LanguageProvider {
   }
 
   async fetchLabelValues(key: string): Promise<string[]> {
-    const url = `/loki/api/v1/label/${key}/values`;
+    const interpolatedKey = encodeURIComponent(this.datasource.interpolateString(key));
+
+    const url = `label/${interpolatedKey}/values`;
     const rangeParams = this.datasource.getTimeRangeParams();
     const { start, end } = rangeParams;
 
-    const cacheKey = this.generateCacheKey(url, start, end, key);
+    const cacheKey = this.generateCacheKey(url, start, end, interpolatedKey);
     const params = { start, end };
 
     let labelValues = this.labelsCache.get(cacheKey);

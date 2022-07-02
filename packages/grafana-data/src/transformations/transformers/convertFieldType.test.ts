@@ -2,6 +2,7 @@ import { toDataFrame } from '../../dataframe/processDataFrame';
 import { Field, FieldType } from '../../types/dataFrame';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { ArrayVector } from '../../vector';
+
 import {
   ensureTimeField,
   convertFieldType,
@@ -180,6 +181,87 @@ describe('field convert types transformer', () => {
         values: [true, false, true, false, false],
       },
       { type: FieldType.boolean, values: [true, true, true, true, true] },
+    ]);
+  });
+
+  it('will convert field to complex objects', () => {
+    const options = {
+      conversions: [
+        { targetField: 'numbers', destinationType: FieldType.other },
+        { targetField: 'objects', destinationType: FieldType.other },
+        { targetField: 'arrays', destinationType: FieldType.other },
+        { targetField: 'invalids', destinationType: FieldType.other },
+        { targetField: 'mixed', destinationType: FieldType.other },
+      ],
+    };
+
+    const comboTypes = toDataFrame({
+      fields: [
+        {
+          name: 'numbers',
+          type: FieldType.number,
+          values: [-1, 1, null],
+        },
+        {
+          name: 'objects',
+          type: FieldType.string,
+          values: [
+            '{ "neg": -100, "zero": 0, "pos": 1, "null": null, "array": [0, 1, 2], "nested": { "number": 1 } }',
+            '{ "string": "abcd" }',
+            '{}',
+          ],
+        },
+        {
+          name: 'arrays',
+          type: FieldType.string,
+          values: ['[true]', '[99]', '["2021-08-02 00:00:00.000"]'],
+        },
+        {
+          name: 'invalids',
+          type: FieldType.string,
+          values: ['abcd', '{ invalidJson }', '[unclosed array'],
+        },
+        {
+          name: 'mixed',
+          type: FieldType.string,
+          values: [
+            '{ "neg": -100, "zero": 0, "pos": 1, "null": null, "array": [0, 1, 2], "nested": { "number": 1 } }',
+            '["a string", 1234, {"a complex": "object"}]',
+            '["this is invalid JSON]',
+          ],
+        },
+      ],
+    });
+
+    const complex = convertFieldTypes(options, [comboTypes]);
+    expect(
+      complex[0].fields.map((f) => ({
+        type: f.type,
+        values: f.values.toArray(),
+      }))
+    ).toEqual([
+      {
+        type: FieldType.other,
+        values: [-1, 1, null],
+      },
+      {
+        type: FieldType.other,
+        values: [
+          { neg: -100, zero: 0, pos: 1, null: null, array: [0, 1, 2], nested: { number: 1 } },
+          { string: 'abcd' },
+          {},
+        ],
+      },
+      { type: FieldType.other, values: [[true], [99], ['2021-08-02 00:00:00.000']] },
+      { type: FieldType.other, values: [null, null, null] },
+      {
+        type: FieldType.other,
+        values: [
+          { neg: -100, zero: 0, pos: 1, null: null, array: [0, 1, 2], nested: { number: 1 } },
+          ['a string', 1234, { 'a complex': 'object' }],
+          null,
+        ],
+      },
     ]);
   });
 

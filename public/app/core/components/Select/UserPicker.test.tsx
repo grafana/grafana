@@ -1,5 +1,6 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
+
 import { UserPicker } from './UserPicker';
 
 jest.mock('@grafana/runtime', () => ({
@@ -7,8 +8,9 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('UserPicker', () => {
-  it('renders correctly', () => {
+  it('renders correctly', async () => {
     render(<UserPicker onSelected={() => {}} />);
-    expect(screen.getByTestId('userPicker')).toBeInTheDocument();
+
+    expect(await screen.findByTestId('userPicker')).toBeInTheDocument();
   });
 });

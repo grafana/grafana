@@ -55,6 +55,8 @@ export interface DashboardViewEventPayload extends DashboardInfo {
  */
 export interface DataRequestEventPayload extends DataRequestInfo {
   eventName: MetaAnalyticsEventName.DataRequest;
+  totalQueries?: number;
+  cachedQueries?: number;
 }
 
 /**
@@ -105,6 +107,24 @@ export interface InteractionEchoEventPayload {
 export type InteractionEchoEvent = EchoEvent<EchoEventType.Interaction, InteractionEchoEventPayload>;
 
 /**
+ * Describes the payload of an experimentview event.
+ *
+ * @public
+ */
+export interface ExperimentViewEchoEventPayload {
+  experimentId: string;
+  experimentGroup: string;
+  experimentVariant: string;
+}
+
+/**
+ * Describes experimentview event with predefined {@link EchoEventType.EchoEventType} type.
+ *
+ * @public
+ */
+export type ExperimentViewEchoEvent = EchoEvent<EchoEventType.ExperimentView, ExperimentViewEchoEventPayload>;
+
+/**
  * Pageview event typeguard.
  *
  * @public
@@ -120,4 +140,13 @@ export const isPageviewEvent = (event: EchoEvent): event is PageviewEchoEvent =>
  */
 export const isInteractionEvent = (event: EchoEvent): event is InteractionEchoEvent => {
   return Boolean(event.payload.interactionName);
+};
+
+/**
+ * Experimentview event typeguard.
+ *
+ * @public
+ */
+export const isExperimentViewEvent = (event: EchoEvent): event is ExperimentViewEchoEvent => {
+  return Boolean(event.payload.experimentId);
 };

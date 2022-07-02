@@ -1,16 +1,19 @@
 import { clone, keys, sortBy, take, values } from 'lodash';
+
+import { contextSrv } from 'app/core/services/context_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import store from 'app/core/store';
-import { contextSrv } from 'app/core/services/context_srv';
-import { hasFilters } from 'app/features/search/utils';
 import { SECTION_STORAGE_KEY } from 'app/features/search/constants';
 import { DashboardSection, DashboardSearchItemType, DashboardSearchHit, SearchLayout } from 'app/features/search/types';
+import { hasFilters } from 'app/features/search/utils';
+
 import { backendSrv } from './backend_srv';
 
 interface Sections {
   [key: string]: Partial<DashboardSection>;
 }
 
+/** @deprecated */
 export class SearchSrv {
   private getRecentDashboards(sections: DashboardSection[] | any) {
     return this.queryForRecentDashboards().then((result: any[]) => {

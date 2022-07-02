@@ -1,7 +1,8 @@
+import { cx, css } from '@emotion/css';
 import React from 'react';
+
 import { useTheme2 } from '../../themes/ThemeContext';
 import { getInputStyles } from '../Input/Input';
-import { cx, css } from '@emotion/css';
 
 export const IndicatorsContainer = React.forwardRef<HTMLDivElement, React.PropsWithChildren<any>>((props, ref) => {
   const { children } = props;
@@ -22,3 +23,5 @@ export const IndicatorsContainer = React.forwardRef<HTMLDivElement, React.PropsW
     </div>
   );
 });
+
+IndicatorsContainer.displayName = 'IndicatorsContainer';

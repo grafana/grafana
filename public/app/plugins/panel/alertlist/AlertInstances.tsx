@@ -1,78 +1,71 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import pluralize from 'pluralize';
-import { Icon, useStyles2 } from '@grafana/ui';
-import { Alert, PromRuleWithLocation } from 'app/types/unified-alerting';
-import { AlertLabels } from 'app/features/alerting/unified/components/AlertLabels';
-import { AlertStateTag } from 'app/features/alerting/unified/components/rules/AlertStateTag';
-import { dateTime, GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
-import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
-import { omit } from 'lodash';
-import { alertInstanceKey } from 'app/features/alerting/unified/utils/rules';
+import { noop } from 'lodash';
+import pluralize from 'pluralize';
+import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
+
+import { GrafanaTheme2, PanelProps } from '@grafana/data';
+import { Icon, useStyles2 } from '@grafana/ui';
+import { AlertInstancesTable } from 'app/features/alerting/unified/components/rules/AlertInstancesTable';
+import { sortAlerts } from 'app/features/alerting/unified/utils/misc';
+import { Alert } from 'app/types/unified-alerting';
+
+import { DEFAULT_PER_PAGE_PAGINATION } from '../../../core/constants';
+
+import { GroupMode, UnifiedAlertListOptions } from './types';
+import { filterAlerts } from './util';
 
 interface Props {
-  ruleWithLocation: PromRuleWithLocation;
-  showInstances: boolean;
+  alerts: Alert[];
+  options: PanelProps<UnifiedAlertListOptions>['options'];
 }
 
-export const AlertInstances = ({ ruleWithLocation, showInstances }: Props) => {
-  const { rule } = ruleWithLocation;
-  const [displayInstances, setDisplayInstances] = useState<boolean>(showInstances);
+export const AlertInstances: FC<Props> = ({ alerts, options }) => {
+  // when custom grouping is enabled, we will always uncollapse the list of alert instances
+  const defaultShowInstances = options.groupMode === GroupMode.Custom ? true : options.showInstances;
+  const [displayInstances, setDisplayInstances] = useState<boolean>(defaultShowInstances);
   const styles = useStyles2(getStyles);
 
-  useEffect(() => {
-    setDisplayInstances(showInstances);
-  }, [showInstances]);
+  const toggleDisplayInstances = useCallback(() => {
+    setDisplayInstances((display) => !display);
+  }, []);
 
-  // sort instances, because API returns them in random order every time
-  const sortedAlerts = useMemo(
-    (): Alert[] =>
-      displayInstances
-        ? rule.alerts.slice().sort((a, b) => alertInstanceKey(a).localeCompare(alertInstanceKey(b)))
-        : [],
-    [rule, displayInstances]
+  const filteredAlerts = useMemo(
+    (): Alert[] => filterAlerts(options, sortAlerts(options.sortOrder, alerts)) ?? [],
+    [alerts, options]
   );
+
+  const hiddenInstances = alerts.length - filteredAlerts.length;
+
+  const uncollapsible = filteredAlerts.length > 0;
+  const toggleShowInstances = uncollapsible ? toggleDisplayInstances : noop;
+
+  useEffect(() => {
+    if (filteredAlerts.length === 0) {
+      setDisplayInstances(false);
+    }
+  }, [filteredAlerts]);
 
   return (
     <div>
-      {rule.state !== PromAlertingRuleState.Inactive && (
-        <div className={styles.instance} onClick={() => setDisplayInstances(!displayInstances)}>
-          <Icon name={displayInstances ? 'angle-down' : 'angle-right'} size={'md'} />
-          <span>{`${rule.alerts.length} ${pluralize('instance', rule.alerts.length)}`}</span>
+      {options.groupMode === GroupMode.Default && (
+        <div className={uncollapsible ? styles.clickable : ''} onClick={() => toggleShowInstances()}>
+          {uncollapsible && <Icon name={displayInstances ? 'angle-down' : 'angle-right'} size={'md'} />}
+          <span>{`${filteredAlerts.length} ${pluralize('instance', filteredAlerts.length)}`}</span>
+          {hiddenInstances > 0 && <span>, {`${hiddenInstances} hidden by filters`}</span>}
         </div>
       )}
-
-      {!!sortedAlerts.length && (
-        <ol className={styles.list}>
-          {sortedAlerts.map((alert, index) => {
-            return (
-              <li className={styles.listItem} key={`${alert.activeAt}-${index}`}>
-                <div>
-                  <AlertStateTag state={alert.state} />
-                  <span className={styles.date}>{dateTime(alert.activeAt).format('YYYY-MM-DD HH:mm:ss')}</span>
-                </div>
-                <AlertLabels labels={omit(alert.labels, 'alertname')} />
-              </li>
-            );
-          })}
-        </ol>
+      {displayInstances && (
+        <AlertInstancesTable
+          instances={filteredAlerts}
+          pagination={{ itemsPerPage: 2 * DEFAULT_PER_PAGE_PAGINATION }}
+        />
       )}
     </div>
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  instance: css`
+const getStyles = (_: GrafanaTheme2) => ({
+  clickable: css`
     cursor: pointer;
-  `,
-  list: css`
-    list-style-type: none;
-  `,
-  listItem: css`
-    margin-top: ${theme.spacing(1)};
-  `,
-  date: css`
-    font-size: ${theme.typography.bodySmall.fontSize};
-    padding-left: ${theme.spacing(0.5)};
   `,
 });

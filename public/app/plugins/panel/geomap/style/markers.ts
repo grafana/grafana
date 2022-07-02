@@ -1,9 +1,11 @@
 import { Fill, RegularShape, Stroke, Circle, Style, Icon, Text } from 'ol/style';
-import { Registry, RegistryItem } from '@grafana/data';
-import { defaultStyleConfig, DEFAULT_SIZE, StyleConfigValues, StyleMaker } from './types';
-import { getPublicOrAbsoluteUrl } from 'app/features/dimensions';
 import tinycolor from 'tinycolor2';
+
+import { Registry, RegistryItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { getPublicOrAbsoluteUrl } from 'app/features/dimensions';
+
+import { defaultStyleConfig, DEFAULT_SIZE, StyleConfigValues, StyleMaker } from './types';
 
 interface SymbolMaker extends RegistryItem {
   aliasIds: string[];
@@ -40,6 +42,18 @@ export function getFillColor(cfg: StyleConfigValues) {
   return undefined;
 }
 
+export function getStrokeStyle(cfg: StyleConfigValues) {
+  const opacity = cfg.opacity == null ? 0.8 : cfg.opacity;
+  if (opacity === 1) {
+    return new Stroke({ color: cfg.color, width: cfg.lineWidth ?? 1 });
+  }
+  if (opacity > 0) {
+    const color = tinycolor(cfg.color).setAlpha(opacity).toRgbString();
+    return new Stroke({ color, width: cfg.lineWidth ?? 1 });
+  }
+  return undefined;
+}
+
 const textLabel = (cfg: StyleConfigValues) => {
   if (!cfg.text) {
     return undefined;
@@ -65,20 +79,31 @@ export const textMarker = (cfg: StyleConfigValues) => {
 };
 
 export const circleMarker = (cfg: StyleConfigValues) => {
+  const stroke = new Stroke({ color: cfg.color, width: cfg.lineWidth ?? 1 });
   return new Style({
     image: new Circle({
-      stroke: new Stroke({ color: cfg.color, width: cfg.lineWidth ?? 1 }),
+      stroke,
       fill: getFillColor(cfg),
       radius: cfg.size ?? DEFAULT_SIZE,
     }),
     text: textLabel(cfg),
+    stroke, // in case lines are sent to the markers layer
   });
 };
 
+// Does not have image
 export const polyStyle = (cfg: StyleConfigValues) => {
   return new Style({
     fill: getFillColor(cfg),
     stroke: new Stroke({ color: cfg.color, width: cfg.lineWidth ?? 1 }),
+    text: textLabel(cfg),
+  });
+};
+
+export const routeStyle = (cfg: StyleConfigValues) => {
+  return new Style({
+    fill: getFillColor(cfg),
+    stroke: getStrokeStyle(cfg),
     text: textLabel(cfg),
   });
 };

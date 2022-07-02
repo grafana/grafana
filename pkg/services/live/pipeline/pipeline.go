@@ -107,7 +107,7 @@ type FrameOutputter interface {
 // Subscriber can handle channel subscribe events.
 type Subscriber interface {
 	Type() string
-	Subscribe(ctx context.Context, vars Vars) (models.SubscribeReply, backend.SubscribeStreamStatus, error)
+	Subscribe(ctx context.Context, vars Vars, data []byte) (models.SubscribeReply, backend.SubscribeStreamStatus, error)
 }
 
 // PublishAuthChecker checks whether current user can publish to a channel.

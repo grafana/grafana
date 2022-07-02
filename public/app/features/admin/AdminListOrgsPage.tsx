@@ -1,14 +1,16 @@
-import React, { FC, useEffect } from 'react';
-import { getNavModel } from 'app/core/selectors/navModel';
-import Page from 'app/core/components/Page/Page';
+import React, { useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import { StoreState } from 'app/types/store';
-import { LinkButton } from '@grafana/ui';
-import { getBackendSrv } from '@grafana/runtime';
-import { AdminOrgsTable } from './AdminOrgsTable';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
+
+import { getBackendSrv } from '@grafana/runtime';
+import { LinkButton } from '@grafana/ui';
+import Page from 'app/core/components/Page/Page';
+import { getNavModel } from 'app/core/selectors/navModel';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types';
+import { StoreState } from 'app/types/store';
+
+import { AdminOrgsTable } from './AdminOrgsTable';
 
 const deleteOrg = async (orgId: number) => {
   return await getBackendSrv().delete('/api/orgs/' + orgId);
@@ -22,7 +24,7 @@ const getErrorMessage = (error: any) => {
   return error?.data?.message || 'An unexpected error happened.';
 };
 
-export const AdminListOrgsPages: FC = () => {
+export default function AdminListOrgsPages() {
   const navIndex = useSelector((state: StoreState) => state.navIndex);
   const navModel = getNavModel(navIndex, 'global-orgs');
   const [state, fetchOrgs] = useAsyncFn(async () => await getOrgs(), []);
@@ -56,6 +58,4 @@ export const AdminListOrgsPages: FC = () => {
       </Page.Contents>
     </Page>
   );
-};
-
-export default AdminListOrgsPages;
+}

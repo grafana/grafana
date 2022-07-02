@@ -1,4 +1,5 @@
 import { from, lastValueFrom, Observable } from 'rxjs';
+
 import {
   CustomVariableSupport,
   DataQueryRequest,
@@ -6,13 +7,15 @@ import {
   MetricFindValue,
   toDataFrame,
 } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
+
 import VariableEditor from './components/VariableEditor/VariableEditor';
 import DataSource from './datasource';
-import { AzureQueryType, AzureMonitorQuery } from './types';
-import { getTemplateSrv } from '@grafana/runtime';
 import { migrateStringQueriesToObjectQueries } from './grafanaTemplateVariableFns';
+import { AzureMonitorQuery, AzureQueryType } from './types';
 import { GrafanaTemplateVariableQuery } from './types/templateVariables';
 import messageFromError from './utils/messageFromError';
+
 export class VariableSupport extends CustomVariableSupport<DataSource, AzureMonitorQuery> {
   constructor(private readonly datasource: DataSource) {
     super();
@@ -30,7 +33,7 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
         try {
           const templateVariablesResults = await this.callGrafanaTemplateVariableFn(queryObj.grafanaTemplateVariableFn);
           return {
-            data: templateVariablesResults ? [toDataFrame(templateVariablesResults)] : [],
+            data: templateVariablesResults?.length ? [toDataFrame(templateVariablesResults)] : [],
           };
         } catch (err) {
           return { data: [], error: { message: messageFromError(err) } };
@@ -44,17 +47,6 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
   }
 
   callGrafanaTemplateVariableFn(query: GrafanaTemplateVariableQuery): Promise<MetricFindValue[]> | null {
-    // deprecated app insights template variables (will most likely remove in grafana 9)
-    if (this.datasource.insightsAnalyticsDatasource) {
-      if (query.kind === 'AppInsightsMetricNameQuery') {
-        return this.datasource.insightsAnalyticsDatasource.getMetricNames();
-      }
-
-      if (query.kind === 'AppInsightsGroupByQuery') {
-        return this.datasource.insightsAnalyticsDatasource.getGroupBys(getTemplateSrv().replace(query.metricName));
-      }
-    }
-
     if (query.kind === 'SubscriptionsQuery') {
       return this.datasource.getSubscriptions();
     }
@@ -79,22 +71,11 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
     }
 
     if (query.kind === 'MetricNamespaceQuery') {
-      return this.datasource.getMetricNamespaces(
-        this.replaceVariable(query.subscription),
-        this.replaceVariable(query.resourceGroup),
-        this.replaceVariable(query.metricDefinition),
-        this.replaceVariable(query.resourceName)
-      );
+      return this.datasource.azureMonitorDatasource.getMetricNamespaces(query);
     }
 
     if (query.kind === 'MetricNamesQuery') {
-      return this.datasource.getMetricNames(
-        this.replaceVariable(query.subscription),
-        this.replaceVariable(query.resourceGroup),
-        this.replaceVariable(query.metricDefinition),
-        this.replaceVariable(query.resourceName),
-        this.replaceVariable(query.metricNamespace)
-      );
+      return this.datasource.azureMonitorDatasource.getMetricNames(query);
     }
 
     if (query.kind === 'WorkspacesQuery') {

@@ -1,9 +1,12 @@
+import { AbstractLabelOperator, AbstractQuery } from '@grafana/data';
+
 import {
   escapeLabelValueInExactSelector,
   escapeLabelValueInRegexSelector,
   expandRecordingRules,
   fixSummariesMetadata,
   parseSelector,
+  toPromLikeQuery,
 } from './language_utils';
 
 describe('parseSelector()', () => {
@@ -81,8 +84,7 @@ describe('fixSummariesMetadata', () => {
   const synthetics = {
     ALERTS: {
       type: 'counter',
-      help:
-        'Time series showing pending and firing alerts. The sample value is set to 1 as long as the alert is in the indicated active (pending or firing) state.',
+      help: 'Time series showing pending and firing alerts. The sample value is set to 1 as long as the alert is in the indicated active (pending or firing) state.',
     },
   };
   it('returns only synthetics on empty metadata', () => {
@@ -162,7 +164,7 @@ describe('expandRecordingRules()', () => {
       expandRecordingRules('metricA{label1="value1",label2="value,2"}', {
         metricA: 'rate(fooA[])',
       })
-    ).toBe('rate(fooA{label1="value1",label2="value,2"}[])');
+    ).toBe('rate(fooA{label1="value1", label2="value,2"}[])');
     expect(
       expandRecordingRules('metricA{label1="value1"} / metricB{label2="value2"}', {
         metricA: 'rate(fooA[])',
@@ -174,7 +176,7 @@ describe('expandRecordingRules()', () => {
         metricA: 'rate(fooA[])',
         metricB: 'rate(fooB[])',
       })
-    ).toBe('rate(fooA{label1="value1",label2="value2"}[])/ rate(fooB{label3="value3"}[])');
+    ).toBe('rate(fooA{label1="value1", label2="value2"}[])/ rate(fooB{label3="value3"}[])');
   });
 });
 
@@ -217,5 +219,25 @@ describe('escapeLabelValueInRegexSelector()', () => {
     expect(escapeLabelValueInRegexSelector('t\\e"s+t\nl\n$ab"e\\l')).toBe(
       't\\\\\\\\e\\"s\\\\+t\\nl\\n\\\\$ab\\"e\\\\\\\\l'
     );
+  });
+});
+
+describe('toPromLikeQuery', () => {
+  it('export abstract query to PromQL-like query', () => {
+    const abstractQuery: AbstractQuery = {
+      refId: 'bar',
+      labelMatchers: [
+        { name: 'label1', operator: AbstractLabelOperator.Equal, value: 'value1' },
+        { name: 'label2', operator: AbstractLabelOperator.NotEqual, value: 'value2' },
+        { name: 'label3', operator: AbstractLabelOperator.EqualRegEx, value: 'value3' },
+        { name: 'label4', operator: AbstractLabelOperator.NotEqualRegEx, value: 'value4' },
+      ],
+    };
+
+    expect(toPromLikeQuery(abstractQuery)).toMatchObject({
+      refId: 'bar',
+      expr: '{label1="value1", label2!="value2", label3=~"value3", label4!~"value4"}',
+      range: true,
+    });
   });
 });

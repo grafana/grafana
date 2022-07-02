@@ -1,5 +1,7 @@
 import { css } from '@emotion/css';
+
 import { GrafanaTheme2 } from '@grafana/data';
+
 import { stylesFactory } from '../../themes';
 
 export const getModalStyles = stylesFactory((theme: GrafanaTheme2) => {
@@ -28,6 +30,7 @@ export const getModalStyles = stylesFactory((theme: GrafanaTheme2) => {
     `,
     modalBackdrop: css`
       position: fixed;
+      z-index: ${theme.zIndex.modalBackdrop};
       top: 0;
       right: 0;
       bottom: 0;

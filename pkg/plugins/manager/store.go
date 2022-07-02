@@ -8,9 +8,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
-func (m *PluginManager) Plugin(_ context.Context, pluginID string) (plugins.PluginDTO, bool) {
-	p, exists := m.plugin(pluginID)
-
+func (m *PluginManager) Plugin(ctx context.Context, pluginID string) (plugins.PluginDTO, bool) {
+	p, exists := m.plugin(ctx, pluginID)
 	if !exists {
 		return plugins.PluginDTO{}, false
 	}
@@ -18,7 +17,7 @@ func (m *PluginManager) Plugin(_ context.Context, pluginID string) (plugins.Plug
 	return p.ToDTO(), true
 }
 
-func (m *PluginManager) Plugins(_ context.Context, pluginTypes ...plugins.Type) []plugins.PluginDTO {
+func (m *PluginManager) Plugins(ctx context.Context, pluginTypes ...plugins.Type) []plugins.PluginDTO {
 	// if no types passed, assume all
 	if len(pluginTypes) == 0 {
 		pluginTypes = plugins.PluginTypes
@@ -30,7 +29,7 @@ func (m *PluginManager) Plugins(_ context.Context, pluginTypes ...plugins.Type) 
 	}
 
 	pluginsList := make([]plugins.PluginDTO, 0)
-	for _, p := range m.plugins() {
+	for _, p := range m.availablePlugins(ctx) {
 		if _, exists := requestedTypes[p.Type]; exists {
 			pluginsList = append(pluginsList, p.ToDTO())
 		}
@@ -38,14 +37,41 @@ func (m *PluginManager) Plugins(_ context.Context, pluginTypes ...plugins.Type) 
 	return pluginsList
 }
 
-func (m *PluginManager) Add(ctx context.Context, pluginID, version string, opts plugins.AddOpts) error {
-	var pluginZipURL string
-
-	if opts.PluginRepoURL == "" {
-		opts.PluginRepoURL = grafanaComURL
+// plugin finds a plugin with `pluginID` from the registry that is not decommissioned
+func (m *PluginManager) plugin(ctx context.Context, pluginID string) (*plugins.Plugin, bool) {
+	p, exists := m.pluginRegistry.Plugin(ctx, pluginID)
+	if !exists || p.IsDecommissioned() {
+		return nil, false
 	}
 
-	if plugin, exists := m.plugin(pluginID); exists {
+	return p, true
+}
+
+// availablePlugins returns all non-decommissioned plugins from the registry
+func (m *PluginManager) availablePlugins(ctx context.Context) []*plugins.Plugin {
+	var res []*plugins.Plugin
+	for _, p := range m.pluginRegistry.Plugins(ctx) {
+		if !p.IsDecommissioned() {
+			res = append(res, p)
+		}
+	}
+	return res
+}
+
+// registeredPlugins returns all registered plugins from the registry
+func (m *PluginManager) registeredPlugins(ctx context.Context) map[string]struct{} {
+	pluginsByID := make(map[string]struct{})
+	for _, p := range m.pluginRegistry.Plugins(ctx) {
+		pluginsByID[p.ID] = struct{}{}
+	}
+
+	return pluginsByID
+}
+
+func (m *PluginManager) Add(ctx context.Context, pluginID, version string) error {
+	var pluginZipURL string
+
+	if plugin, exists := m.plugin(ctx, pluginID); exists {
 		if !plugin.IsExternalPlugin() {
 			return plugins.ErrInstallCorePlugin
 		}
@@ -58,7 +84,7 @@ func (m *PluginManager) Add(ctx context.Context, pluginID, version string, opts 
 		}
 
 		// get plugin update information to confirm if upgrading is possible
-		updateInfo, err := m.pluginInstaller.GetUpdateInfo(ctx, pluginID, version, opts.PluginRepoURL)
+		updateInfo, err := m.pluginInstaller.GetUpdateInfo(ctx, pluginID, version, grafanaComURL)
 		if err != nil {
 			return err
 		}
@@ -72,20 +98,12 @@ func (m *PluginManager) Add(ctx context.Context, pluginID, version string, opts 
 		}
 	}
 
-	if opts.PluginInstallDir == "" {
-		opts.PluginInstallDir = m.cfg.PluginsPath
-	}
-
-	if opts.PluginZipURL == "" {
-		opts.PluginZipURL = pluginZipURL
-	}
-
-	err := m.pluginInstaller.Install(ctx, pluginID, version, opts.PluginInstallDir, opts.PluginZipURL, opts.PluginRepoURL)
+	err := m.pluginInstaller.Install(ctx, pluginID, version, m.cfg.PluginsPath, pluginZipURL, grafanaComURL)
 	if err != nil {
 		return err
 	}
 
-	err = m.loadPlugins(opts.PluginInstallDir)
+	err = m.loadPlugins(context.Background(), plugins.External, m.cfg.PluginsPath)
 	if err != nil {
 		return err
 	}
@@ -94,7 +112,7 @@ func (m *PluginManager) Add(ctx context.Context, pluginID, version string, opts 
 }
 
 func (m *PluginManager) Remove(ctx context.Context, pluginID string) error {
-	plugin, exists := m.plugin(pluginID)
+	plugin, exists := m.plugin(ctx, pluginID)
 	if !exists {
 		return plugins.ErrPluginNotInstalled
 	}
@@ -109,11 +127,8 @@ func (m *PluginManager) Remove(ctx context.Context, pluginID string) error {
 		return plugins.ErrUninstallOutsideOfPluginDir
 	}
 
-	if m.isRegistered(pluginID) {
-		err := m.unregisterAndStop(ctx, plugin)
-		if err != nil {
-			return err
-		}
+	if err := m.unregisterAndStop(ctx, plugin); err != nil {
+		return err
 	}
 
 	return m.pluginInstaller.Uninstall(ctx, plugin.PluginDir)

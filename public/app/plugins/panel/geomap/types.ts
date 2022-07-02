@@ -1,6 +1,12 @@
-import { MapLayerHandler, MapLayerOptions, SelectableValue } from '@grafana/data';
+import { FeatureLike } from 'ol/Feature';
 import BaseLayer from 'ol/layer/Base';
-import { Units } from 'ol/proj/Units';
+import Units from 'ol/proj/Units';
+import { Subject } from 'rxjs';
+
+import { MapLayerHandler, MapLayerOptions } from '@grafana/data';
+import { HideableFieldConfig } from '@grafana/schema';
+import { LayerElement } from 'app/core/components/Layers/types';
+
 import { StyleConfig } from './style/types';
 import { MapCenterID } from './view';
 
@@ -22,6 +28,15 @@ export interface ControlsOptions {
   showDebug?: boolean;
 }
 
+export enum TooltipMode {
+  None = 'none',
+  Details = 'details',
+}
+
+export interface TooltipOptions {
+  mode: TooltipMode;
+}
+
 export interface MapViewConfig {
   id: string; // placename > lookup
   lat?: number;
@@ -39,11 +54,17 @@ export const defaultView: MapViewConfig = {
   zoom: 1,
 };
 
+/** Support hide from legend/tooltip */
+export interface GeomapFieldConfig extends HideableFieldConfig {
+  // nothing custom yet
+}
+
 export interface GeomapPanelOptions {
   view: MapViewConfig;
   controls: ControlsOptions;
   basemap: MapLayerOptions;
   layers: MapLayerOptions[];
+  tooltip: TooltipOptions;
 }
 export interface FeatureStyleConfig {
   style?: StyleConfig;
@@ -63,17 +84,15 @@ export enum ComparisonOperation {
   GT = 'gt',
   GTE = 'gte',
 }
-export interface GazetteerPathEditorConfigSettings {
-  options?: Array<SelectableValue<string>>;
-}
 
 //-------------------
 // Runtime model
 //-------------------
-export interface MapLayerState<TConfig = any> {
+export interface MapLayerState<TConfig = any> extends LayerElement {
   options: MapLayerOptions<TConfig>;
   handler: MapLayerHandler;
   layer: BaseLayer; // the openlayers instance
   onChange: (cfg: MapLayerOptions<TConfig>) => void;
   isBasemap?: boolean;
+  mouseEvents: Subject<FeatureLike | undefined>;
 }

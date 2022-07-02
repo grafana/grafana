@@ -24,7 +24,7 @@ func (s *ManagedStreamSubscriber) Type() string {
 	return SubscriberTypeManagedStream
 }
 
-func (s *ManagedStreamSubscriber) Subscribe(ctx context.Context, vars Vars) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
+func (s *ManagedStreamSubscriber) Subscribe(ctx context.Context, vars Vars, _ []byte) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
 	stream, err := s.managedStream.GetOrCreateStream(vars.OrgID, vars.Scope, vars.Namespace)
 	if err != nil {
 		logger.Error("Error getting managed stream", "error", err)

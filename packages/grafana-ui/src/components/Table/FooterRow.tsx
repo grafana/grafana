@@ -1,43 +1,31 @@
 import React from 'react';
 import { ColumnInstance, HeaderGroup } from 'react-table';
+
 import { selectors } from '@grafana/e2e-selectors';
-import { getTableStyles, TableStyles } from './styles';
+
 import { useStyles2 } from '../../themes';
-import { FooterItem } from './types';
+
 import { EmptyCell, FooterCell } from './FooterCell';
+import { getTableStyles, TableStyles } from './styles';
+import { FooterItem } from './types';
 
 export interface FooterRowProps {
   totalColumnsWidth: number;
   footerGroups: HeaderGroup[];
-  footerValues?: FooterItem[];
+  footerValues: FooterItem[];
+  isPaginationVisible: boolean;
+  height: number;
 }
 
 export const FooterRow = (props: FooterRowProps) => {
-  const { totalColumnsWidth, footerGroups, footerValues } = props;
+  const { totalColumnsWidth, footerGroups, height, isPaginationVisible } = props;
   const e2eSelectorsTable = selectors.components.Panels.Visualization.Table;
   const tableStyles = useStyles2(getTableStyles);
-  const EXTENDED_ROW_HEIGHT = 27;
-
-  if (!footerValues) {
-    return null;
-  }
-
-  let length = 0;
-  for (const fv of footerValues) {
-    if (Array.isArray(fv) && fv.length > length) {
-      length = fv.length;
-    }
-  }
-
-  let height: number | undefined;
-  if (footerValues && length > 1) {
-    height = EXTENDED_ROW_HEIGHT * length;
-  }
 
   return (
     <table
       style={{
-        position: 'absolute',
+        position: isPaginationVisible ? 'relative' : 'absolute',
         width: totalColumnsWidth ? `${totalColumnsWidth}px` : '100%',
         bottom: '0px',
       }}

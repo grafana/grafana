@@ -1,5 +1,5 @@
-import { GraphDrawStyle, StackingMode } from '@grafana/schema';
 import { lastValueFrom } from 'rxjs';
+
 import {
   ArrayVector,
   DataFrame,
@@ -11,6 +11,9 @@ import {
   TimeRange,
   toDataFrame,
 } from '@grafana/data';
+import { GraphDrawStyle, StackingMode } from '@grafana/schema';
+import TableModel from 'app/core/table_model';
+import { ExplorePanelData } from 'app/types';
 
 import {
   decorateWithFrameTypeMetadata,
@@ -18,11 +21,9 @@ import {
   decorateWithLogsResult,
   decorateWithTableResult,
 } from './decorators';
-import { ExplorePanelData } from 'app/types';
-import TableModel from 'app/core/table_model';
 
 jest.mock('@grafana/data', () => ({
-  ...(jest.requireActual('@grafana/data') as any),
+  ...jest.requireActual('@grafana/data'),
   dateTimeFormat: () => 'format() jest mocked',
   dateTimeFormatTimeAgo: (ts: any) => 'fromNow() jest mocked',
 }));
@@ -72,14 +73,14 @@ const getTestContext = () => {
 const createExplorePanelData = (args: Partial<ExplorePanelData>): ExplorePanelData => {
   const defaults: ExplorePanelData = {
     series: [],
-    timeRange: ({} as unknown) as TimeRange,
+    timeRange: {} as unknown as TimeRange,
     state: LoadingState.Done,
     graphFrames: [],
-    graphResult: (undefined as unknown) as null,
+    graphResult: undefined as unknown as null,
     logsFrames: [],
-    logsResult: (undefined as unknown) as null,
+    logsResult: undefined as unknown as null,
     tableFrames: [],
-    tableResult: (undefined as unknown) as null,
+    tableResult: undefined as unknown as null,
     traceFrames: [],
     nodeGraphFrames: [],
   };
@@ -94,7 +95,7 @@ describe('decorateWithGraphLogsTraceAndTable', () => {
     const panelData: PanelData = {
       series,
       state: LoadingState.Done,
-      timeRange: ({} as unknown) as TimeRange,
+      timeRange: {} as unknown as TimeRange,
     };
 
     expect(decorateWithFrameTypeMetadata(panelData)).toEqual({
@@ -117,7 +118,7 @@ describe('decorateWithGraphLogsTraceAndTable', () => {
     const panelData: PanelData = {
       series,
       state: LoadingState.Done,
-      timeRange: ({} as unknown) as TimeRange,
+      timeRange: {} as unknown as TimeRange,
     };
 
     expect(decorateWithFrameTypeMetadata(panelData)).toEqual({
@@ -142,7 +143,7 @@ describe('decorateWithGraphLogsTraceAndTable', () => {
       series,
       error: {},
       state: LoadingState.Error,
-      timeRange: ({} as unknown) as TimeRange,
+      timeRange: {} as unknown as TimeRange,
     };
 
     expect(decorateWithFrameTypeMetadata(panelData)).toEqual({
@@ -286,7 +287,7 @@ describe('decorateWithTableResult', () => {
 describe('decorateWithLogsResult', () => {
   it('should correctly transform logs dataFrames', () => {
     const { logs } = getTestContext();
-    const request = ({ timezone: 'utc', intervalMs: 60000 } as unknown) as DataQueryRequest;
+    const request = { timezone: 'utc', intervalMs: 60000 } as unknown as DataQueryRequest;
     const panelData = createExplorePanelData({ logsFrames: [logs], request });
     expect(decorateWithLogsResult()(panelData).logsResult).toEqual({
       hasUniqueLabels: false,

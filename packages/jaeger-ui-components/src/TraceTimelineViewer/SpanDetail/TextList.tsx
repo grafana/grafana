@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import * as React from 'react';
 import { css } from '@emotion/css';
 import cx from 'classnames';
+import * as React from 'react';
 
-import { createStyle } from '../../Theme';
+import { useStyles2 } from '@grafana/ui';
 
-const getStyles = createStyle(() => {
+const getStyles = () => {
   return {
     TextList: css`
       max-height: 450px;
@@ -38,7 +38,7 @@ const getStyles = createStyle(() => {
       }
     `,
   };
-});
+};
 
 type TextListProps = {
   data: string[];
@@ -46,9 +46,9 @@ type TextListProps = {
 
 export default function TextList(props: TextListProps) {
   const { data } = props;
-  const styles = getStyles();
+  const styles = useStyles2(getStyles);
   return (
-    <div className={cx(styles.TextList)} data-test-id="TextList">
+    <div className={cx(styles.TextList)} data-testid="TextList">
       <ul className={styles.List}>
         {data.map((row, i) => {
           return (

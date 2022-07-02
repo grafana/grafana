@@ -1,7 +1,7 @@
 jest.mock('app/core/core', () => ({}));
 jest.mock('app/core/config', () => {
   return {
-    ...((jest.requireActual('app/core/config') as unknown) as object),
+    ...(jest.requireActual('app/core/config') as unknown as object),
     bootData: {
       user: {},
     },
@@ -18,6 +18,7 @@ jest.mock('app/core/config', () => {
 });
 
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+
 import { MetricsPanelCtrl } from '../metrics_panel_ctrl';
 
 describe('MetricsPanelCtrl', () => {

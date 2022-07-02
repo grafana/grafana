@@ -1,27 +1,29 @@
 import React, { ChangeEvent } from 'react';
-import { Switch, Input } from '@grafana/ui';
-import { CloudWatchAnnotationQuery, CloudWatchMetricsQuery } from '../types';
-import { PanelData } from '@grafana/data';
+
+import { QueryEditorProps } from '@grafana/data';
+import { EditorField, EditorHeader, EditorRow, InlineSelect, Space, EditorSwitch } from '@grafana/experimental';
+import { Alert, Input } from '@grafana/ui';
+
 import { CloudWatchDatasource } from '../datasource';
-import { MetricStatEditor } from './MetricStatEditor';
-import EditorHeader from './ui/EditorHeader';
-import InlineSelect from './ui/InlineSelect';
-import { Space } from './ui/Space';
+import { isCloudWatchAnnotationQuery } from '../guards';
 import { useRegions } from '../hooks';
-import EditorRow from './ui/EditorRow';
-import EditorField from './ui/EditorField';
+import { CloudWatchJsonData, CloudWatchQuery, MetricStat } from '../types';
 
-export type Props = {
-  query: CloudWatchAnnotationQuery;
-  datasource: CloudWatchDatasource;
-  onChange: (value: CloudWatchAnnotationQuery) => void;
-  data?: PanelData;
-};
+import { MetricStatEditor } from './MetricStatEditor';
 
-export function AnnotationQueryEditor(props: React.PropsWithChildren<Props>) {
+export type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData>;
+
+export const AnnotationQueryEditor = (props: Props) => {
   const { query, onChange, datasource } = props;
-
   const [regions, regionIsLoading] = useRegions(datasource);
+
+  if (!isCloudWatchAnnotationQuery(query)) {
+    return (
+      <Alert severity="error" title="Invalid annotation query" topSpacing={2}>
+        {JSON.stringify(query, null, 4)}
+      </Alert>
+    );
+  }
 
   return (
     <>
@@ -39,8 +41,10 @@ export function AnnotationQueryEditor(props: React.PropsWithChildren<Props>) {
       <Space v={0.5} />
       <MetricStatEditor
         {...props}
+        refId={query.refId}
+        metricStat={query}
         disableExpressions={true}
-        onChange={(editorQuery: CloudWatchMetricsQuery) => onChange({ ...query, ...editorQuery })}
+        onChange={(metricStat: MetricStat) => onChange({ ...query, ...metricStat })}
         onRunQuery={() => {}}
       ></MetricStatEditor>
       <Space v={0.5} />
@@ -53,7 +57,7 @@ export function AnnotationQueryEditor(props: React.PropsWithChildren<Props>) {
           />
         </EditorField>
         <EditorField label="Enable Prefix Matching" optional={true}>
-          <Switch
+          <EditorSwitch
             value={query.prefixMatching}
             onChange={(e) => {
               onChange({
@@ -63,18 +67,16 @@ export function AnnotationQueryEditor(props: React.PropsWithChildren<Props>) {
             }}
           />
         </EditorField>
-        <EditorField label="Action" optional={true}>
+        <EditorField label="Action" optional={true} disabled={!query.prefixMatching}>
           <Input
-            disabled={!query.prefixMatching}
             value={query.actionPrefix || ''}
             onChange={(event: ChangeEvent<HTMLInputElement>) =>
               onChange({ ...query, actionPrefix: event.target.value })
             }
           />
         </EditorField>
-        <EditorField label="Alarm Name" optional={true}>
+        <EditorField label="Alarm Name" optional={true} disabled={!query.prefixMatching}>
           <Input
-            disabled={!query.prefixMatching}
             value={query.alarmNamePrefix || ''}
             onChange={(event: ChangeEvent<HTMLInputElement>) =>
               onChange({ ...query, alarmNamePrefix: event.target.value })
@@ -84,4 +86,4 @@ export function AnnotationQueryEditor(props: React.PropsWithChildren<Props>) {
       </EditorRow>
     </>
   );
-}
+};

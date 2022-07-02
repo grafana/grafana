@@ -10,7 +10,10 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secretsDatabase "github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
@@ -22,7 +25,10 @@ import (
 var wireSet = wire.NewSet(
 	New,
 	localcache.ProvideService,
+	tracing.ProvideService,
 	bus.ProvideBus,
+	featuremgmt.ProvideManagerService,
+	featuremgmt.ProvideToggles,
 	wire.Bind(new(bus.Bus), new(*bus.InProcBus)),
 	sqlstore.ProvideService,
 	wire.InterfaceValue(new(usagestats.Service), noOpUsageStats{}),
@@ -31,6 +37,7 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(secrets.Store), new(*secretsDatabase.SecretsStoreImpl)),
 	secretsManager.ProvideSecretsService,
 	wire.Bind(new(secrets.Service), new(*secretsManager.SecretsService)),
+	hooks.ProvideService,
 )
 
 func Initialize(cfg *setting.Cfg) (Runner, error) {
@@ -51,7 +58,7 @@ func (noOpUsageStats) RegisterMetricsFunc(_ usagestats.MetricsFunc) {}
 
 func (noOpUsageStats) RegisterSendReportCallback(_ usagestats.SendReportCallbackFunc) {}
 
-func (noOpUsageStats) ShouldBeReported(string) bool { return false }
+func (noOpUsageStats) ShouldBeReported(context.Context, string) bool { return false }
 
 type noOpRouteRegister struct{}
 
@@ -71,6 +78,6 @@ func (noOpRouteRegister) Group(string, func(routing.RouteRegister), ...web.Handl
 
 func (noOpRouteRegister) Insert(string, func(routing.RouteRegister), ...web.Handler) {}
 
-func (noOpRouteRegister) Register(routing.Router) {}
+func (noOpRouteRegister) Register(routing.Router, ...routing.RegisterNamedMiddleware) {}
 
 func (noOpRouteRegister) Reset() {}

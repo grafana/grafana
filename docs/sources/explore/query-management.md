@@ -1,14 +1,19 @@
-+++
-title = "Query management"
-keywords = ["explore", "loki", "logs"]
-weight = 10
-+++
+---
+aliases:
+  - /docs/grafana/latest/explore/query-management/
+keywords:
+  - explore
+  - loki
+  - logs
+title: Query management
+weight: 10
+---
 
 # Query management in Explore
 
 To help with debugging queries, Explore allows you to investigate query requests and responses, as well as query statistics, via the Query inspector.
-This functionality is similar to the panel inspector [Stats tab]({{< relref "../panels/inspect-panel.md#inspect-query-performance" >}}) and
-[Query tab]({{< relref "../panels/inspect-panel.md##view-raw-request-and-response-to-data-source" >}}).
+This functionality is similar to the panel inspector tasks [Inspect query performance]({{< relref "../panels/query-a-data-source/inspect-query-performance/" >}}) and
+[Inspect query request and response data]({{< relref "../panels/query-a-data-source/inspect-request-and-response-data/" >}}).
 
 {{< figure src="/static/img/docs/v71/query_inspector_explore.png" class="docs-image--no-shadow" max-width= "550px" caption="Screenshot of the query inspector button in Explore" >}}
 

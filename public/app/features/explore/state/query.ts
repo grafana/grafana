@@ -1,19 +1,26 @@
-import { mergeMap, throttleTime } from 'rxjs/operators';
+import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
+import deepEqual from 'fast-deep-equal';
 import { identity, Observable, of, SubscriptionLike, Unsubscribable } from 'rxjs';
+import { mergeMap, throttleTime } from 'rxjs/operators';
+
 import {
   AbsoluteTimeRange,
+  CoreApp,
   DataQuery,
   DataQueryErrorType,
   DataQueryResponse,
   DataSourceApi,
   hasLogsVolumeSupport,
+  hasQueryExportSupport,
+  hasQueryImportSupport,
+  HistoryItem,
   LoadingState,
   PanelData,
   PanelEvents,
   QueryFixAction,
   toLegacyResponseData,
 } from '@grafana/data';
-
+import { config, reportInteraction } from '@grafana/runtime';
 import {
   buildQueryTransaction,
   ensureQueries,
@@ -24,21 +31,20 @@ import {
   stopQueryState,
   updateHistory,
 } from 'app/core/utils/explore';
-import { addToRichHistory } from 'app/core/utils/richHistory';
-import { ExploreItemState, ExplorePanelData, ThunkResult } from 'app/types';
-import { ExploreId, QueryOptions } from 'app/types/explore';
-import { getTimeZone } from 'app/features/profile/state/selectors';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
+import { getTimeZone } from 'app/features/profile/state/selectors';
+import { ExploreItemState, ExplorePanelData, ThunkDispatch, ThunkResult } from 'app/types';
+import { ExploreId, ExploreState, QueryOptions } from 'app/types/explore';
+
 import { notifyApp } from '../../../core/actions';
+import { createErrorNotification } from '../../../core/copy/appNotification';
 import { runRequest } from '../../query/state/runRequest';
 import { decorateData } from '../utils/decorators';
-import { createErrorNotification } from '../../../core/copy/appNotification';
-import { localStorageFullAction, richHistoryLimitExceededAction, richHistoryUpdatedAction, stateSave } from './main';
-import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
+
+import { addHistoryItem, historyUpdatedAction, loadRichHistory } from './history';
+import { stateSave } from './main';
 import { updateTime } from './time';
-import { historyUpdatedAction } from './history';
 import { createCacheKey, getResultsFromCache } from './utils';
-import deepEqual from 'fast-deep-equal';
 
 //
 // Actions and Payloads
@@ -189,7 +195,7 @@ export const scanStopAction = createAction<ScanStopPayload>('explore/scanStop');
 export interface AddResultsToCachePayload {
   exploreId: ExploreId;
   cacheKey: string;
-  queryResponse: PanelData;
+  queryResponse: ExplorePanelData;
 }
 export const addResultsToCacheAction = createAction<AddResultsToCachePayload>('explore/addResultsToCache');
 
@@ -208,10 +214,17 @@ export const clearCacheAction = createAction<ClearCachePayload>('explore/clearCa
 /**
  * Adds a query row after the row with the given index.
  */
-export function addQueryRow(exploreId: ExploreId, index: number): ThunkResult<void> {
+export function addQueryRow(
+  exploreId: ExploreId,
+  index: number,
+  datasource: DataSourceApi | undefined | null
+): ThunkResult<void> {
   return (dispatch, getState) => {
     const queries = getState().explore[exploreId]!.queries;
-    const query = generateEmptyQuery(queries, index);
+    const query = {
+      ...datasource?.getDefaultQuery?.(CoreApp.Explore),
+      ...generateEmptyQuery(queries, index),
+    };
 
     dispatch(addQueryRowAction({ exploreId, index, query }));
   };
@@ -264,6 +277,9 @@ export const importQueries = (
     if (sourceDataSource.meta?.id === targetDataSource.meta?.id) {
       // Keep same queries if same type of datasource, but delete datasource query property to prevent mismatch of new and old data source instance
       importedQueries = queries.map(({ datasource, ...query }) => query);
+    } else if (hasQueryExportSupport(sourceDataSource) && hasQueryImportSupport(targetDataSource)) {
+      const abstractQueries = await sourceDataSource.exportToAbstractQueries(queries);
+      importedQueries = await targetDataSource.importFromAbstractQueries(abstractQueries);
     } else if (targetDataSource.importQueries) {
       // Datasource-specific importers
       importedQueries = await targetDataSource.importQueries(queries, sourceDataSource);
@@ -299,6 +315,27 @@ export function modifyQueries(
   };
 }
 
+async function handleHistory(
+  dispatch: ThunkDispatch,
+  state: ExploreState,
+  history: Array<HistoryItem<DataQuery>>,
+  datasource: DataSourceApi,
+  queries: DataQuery[],
+  exploreId: ExploreId
+) {
+  const datasourceId = datasource.meta.id;
+  const nextHistory = updateHistory(history, datasourceId, queries);
+  dispatch(historyUpdatedAction({ exploreId, history: nextHistory }));
+
+  dispatch(addHistoryItem(datasource.uid, datasource.name, queries));
+
+  // Because filtering happens in the backend we cannot add a new entry without checking if it matches currently
+  // used filters. Instead, we refresh the query history list.
+  // TODO: run only if Query History list is opened (#47252)
+  await dispatch(loadRichHistory(ExploreId.left));
+  await dispatch(loadRichHistory(ExploreId.right));
+}
+
 /**
  * Main action to run queries and dispatches sub-actions based on which result viewers are active
  */
@@ -315,7 +352,6 @@ export const runQueries = (
       dispatch(clearCache(exploreId));
     }
 
-    const { richHistory } = getState().explore;
     const exploreItemState = getState().explore[exploreId]!;
     const {
       datasourceInstance,
@@ -325,11 +361,9 @@ export const runQueries = (
       scanning,
       queryResponse,
       querySubscription,
-      history,
       refreshInterval,
       absoluteRange,
       cache,
-      logsVolumeDataProvider,
     } = exploreItemState;
     let newQuerySub;
 
@@ -338,6 +372,12 @@ export const runQueries = (
       datasource: query.datasource || datasourceInstance?.getRef(),
     }));
 
+    if (datasourceInstance != null) {
+      handleHistory(dispatch, getState().explore, exploreItemState.history, datasourceInstance, queries, exploreId);
+    }
+
+    dispatch(stateSave({ replace: options?.replaceUrl }));
+
     const cachedValue = getResultsFromCache(cache, absoluteRange);
 
     // If we have results saved in cache, we are going to use those results instead of running queries
@@ -345,7 +385,14 @@ export const runQueries = (
       newQuerySub = of(cachedValue)
         .pipe(
           mergeMap((data: PanelData) =>
-            decorateData(data, queryResponse, absoluteRange, refreshInterval, queries, !!logsVolumeDataProvider)
+            decorateData(
+              data,
+              queryResponse,
+              absoluteRange,
+              refreshInterval,
+              queries,
+              datasourceInstance != null && hasLogsVolumeSupport(datasourceInstance)
+            )
           )
         )
         .subscribe((data) => {
@@ -373,8 +420,6 @@ export const runQueries = (
 
       stopQueryState(querySubscription);
 
-      const datasourceId = datasourceInstance?.meta.id;
-
       const queryOptions: QueryOptions = {
         minInterval,
         // maxDataPoints is used in:
@@ -387,11 +432,9 @@ export const runQueries = (
         liveStreaming: live,
       };
 
-      const datasourceName = datasourceInstance.name;
       const timeZone = getTimeZone(getState().user);
       const transaction = buildQueryTransaction(exploreId, queries, queryOptions, range, scanning, timeZone);
 
-      let querySaved = false;
       dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Loading }));
 
       newQuerySub = runRequest(datasourceInstance, transaction.request)
@@ -407,40 +450,17 @@ export const runQueries = (
               absoluteRange,
               refreshInterval,
               queries,
-              !!getState().explore[exploreId]!.logsVolumeDataProvider
+              datasourceInstance != null && hasLogsVolumeSupport(datasourceInstance)
             )
           )
         )
-        .subscribe(
-          (data) => {
-            if (data.state !== LoadingState.Loading && !data.error && !querySaved) {
-              // Side-effect: Saving history in localstorage
-              const nextHistory = updateHistory(history, datasourceId, queries);
-              const { richHistory: nextRichHistory, localStorageFull, limitExceeded } = addToRichHistory(
-                richHistory || [],
-                datasourceId,
-                datasourceName,
-                queries,
-                false,
-                '',
-                '',
-                !getState().explore.localStorageFull,
-                !getState().explore.richHistoryLimitExceededWarningShown
-              );
-              dispatch(historyUpdatedAction({ exploreId, history: nextHistory }));
-              dispatch(richHistoryUpdatedAction({ richHistory: nextRichHistory }));
-              if (localStorageFull) {
-                dispatch(localStorageFullAction());
-              }
-              if (limitExceeded) {
-                dispatch(richHistoryLimitExceededAction());
-              }
-
-              // We save queries to the URL here so that only successfully run queries change the URL.
-              dispatch(stateSave({ replace: options?.replaceUrl }));
-              querySaved = true;
+        .subscribe({
+          next(data) {
+            if (data.logsResult !== null) {
+              reportInteraction('grafana_explore_logs_result_displayed', {
+                datasourceType: datasourceInstance.type,
+              });
             }
-
             dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
 
             // Keep scanning for results if this was the last scanning transaction
@@ -455,12 +475,20 @@ export const runQueries = (
               }
             }
           },
-          (error) => {
+          error(error) {
             dispatch(notifyApp(createErrorNotification('Query processing error', error)));
             dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Error }));
             console.error(error);
-          }
-        );
+          },
+          complete() {
+            // In case we don't get any response at all but the observable completed, make sure we stop loading state.
+            // This is for cases when some queries are noop like running first query after load but we don't have any
+            // actual query input.
+            if (getState().explore[exploreId]!.queryResponse.state === LoadingState.Loading) {
+              dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Done }));
+            }
+          },
+        });
 
       if (live) {
         dispatch(
@@ -471,7 +499,11 @@ export const runQueries = (
         );
         dispatch(cleanLogsVolumeAction({ exploreId }));
       } else if (hasLogsVolumeSupport(datasourceInstance)) {
-        const logsVolumeDataProvider = datasourceInstance.getLogsVolumeDataProvider(transaction.request);
+        const sourceRequest = {
+          ...transaction.request,
+          requestId: transaction.request.requestId + '_log_volume',
+        };
+        const logsVolumeDataProvider = datasourceInstance.getLogsVolumeDataProvider(sourceRequest);
         dispatch(
           storeLogsVolumeDataProviderAction({
             exploreId,
@@ -822,7 +854,8 @@ export const processQueryResponse = (
     }
 
     // Send error to Angular editors
-    if (state.datasourceInstance?.components?.QueryCtrl) {
+    // When angularSupportEnabled is removed we can remove this code and all references to eventBridge
+    if (config.angularSupportEnabled && state.datasourceInstance?.components?.QueryCtrl) {
       state.eventBridge.emit(PanelEvents.dataError, error);
     }
   }
@@ -832,7 +865,8 @@ export const processQueryResponse = (
   }
 
   // Send legacy data to Angular editors
-  if (state.datasourceInstance?.components?.QueryCtrl) {
+  // When angularSupportEnabled is removed we can remove this code and all references to eventBridge
+  if (config.angularSupportEnabled && state.datasourceInstance?.components?.QueryCtrl) {
     const legacy = series.map((v) => toLegacyResponseData(v));
     state.eventBridge.emit(PanelEvents.dataReceived, legacy);
   }

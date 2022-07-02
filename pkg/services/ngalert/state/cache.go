@@ -1,6 +1,7 @@
 package state
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"strings"
@@ -32,14 +33,14 @@ func newCache(logger log.Logger, metrics *metrics.State, externalURL *url.URL) *
 	}
 }
 
-func (c *cache) getOrCreate(alertRule *ngModels.AlertRule, result eval.Result) *State {
+func (c *cache) getOrCreate(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result) *State {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
 
 	// clone the labels so we don't change eval.Result
 	labels := result.Instance.Copy()
 	attachRuleLabels(labels, alertRule)
-	ruleLabels, annotations := c.expandRuleLabelsAndAnnotations(alertRule, labels, result)
+	ruleLabels, annotations := c.expandRuleLabelsAndAnnotations(ctx, alertRule, labels, result)
 
 	// if duplicate labels exist, alertRule label will take precedence
 	lbs := mergeLabels(ruleLabels, result.Instance)
@@ -59,7 +60,17 @@ func (c *cache) getOrCreate(alertRule *ngModels.AlertRule, result eval.Result) *
 	}
 
 	if state, ok := c.states[alertRule.OrgID][alertRule.UID][id]; ok {
-		// Annotations can change over time for the same alert.
+		// Annotations can change over time, however we also want to maintain
+		// certain annotations across evaluations
+		for k, v := range state.Annotations {
+			if _, ok := ngModels.InternalAnnotationNameSet[k]; ok {
+				// If the annotation is not present then it should be copied from the
+				// previous state to the next state
+				if _, ok := annotations[k]; !ok {
+					annotations[k] = v
+				}
+			}
+		}
 		state.Annotations = annotations
 		c.states[alertRule.OrgID][alertRule.UID][id] = state
 		return state
@@ -88,11 +99,11 @@ func attachRuleLabels(m map[string]string, alertRule *ngModels.AlertRule) {
 	m[prometheusModel.AlertNameLabel] = alertRule.Title
 }
 
-func (c *cache) expandRuleLabelsAndAnnotations(alertRule *ngModels.AlertRule, labels map[string]string, alertInstance eval.Result) (map[string]string, map[string]string) {
+func (c *cache) expandRuleLabelsAndAnnotations(ctx context.Context, alertRule *ngModels.AlertRule, labels map[string]string, alertInstance eval.Result) (map[string]string, map[string]string) {
 	expand := func(original map[string]string) map[string]string {
 		expanded := make(map[string]string, len(original))
 		for k, v := range original {
-			ev, err := expandTemplate(alertRule.Title, v, labels, alertInstance, c.externalURL)
+			ev, err := expandTemplate(ctx, alertRule.Title, v, labels, alertInstance, c.externalURL)
 			expanded[k] = ev
 			if err != nil {
 				c.log.Error("error in expanding template", "name", k, "value", v, "err", err.Error())

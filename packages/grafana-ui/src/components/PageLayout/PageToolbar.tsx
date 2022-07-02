@@ -1,14 +1,16 @@
-import React, { FC, ReactNode } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { FC, ReactNode } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+
+import { Link } from '..';
+import { styleMixins } from '../../themes';
 import { useStyles2 } from '../../themes/ThemeContext';
+import { getFocusStyles } from '../../themes/mixins';
 import { IconName } from '../../types';
 import { Icon } from '../Icon/Icon';
-import { styleMixins } from '../../themes';
 import { IconButton } from '../IconButton/IconButton';
-import { selectors } from '@grafana/e2e-selectors';
-import { Link } from '..';
-import { getFocusStyles } from '../../themes/mixins';
 
 export interface Props {
   pageIcon?: IconName;
@@ -21,11 +23,25 @@ export interface Props {
   children?: ReactNode;
   className?: string;
   isFullscreen?: boolean;
+  'aria-label'?: string;
 }
 
 /** @alpha */
 export const PageToolbar: FC<Props> = React.memo(
-  ({ title, parent, pageIcon, onGoBack, children, titleHref, parentHref, leftItems, isFullscreen, className }) => {
+  ({
+    title,
+    parent,
+    pageIcon,
+    onGoBack,
+    children,
+    titleHref,
+    parentHref,
+    leftItems,
+    isFullscreen,
+    className,
+    /** main nav-container aria-label **/
+    'aria-label': ariaLabel,
+  }) => {
     const styles = useStyles2(getStyles);
 
     /**
@@ -44,7 +60,7 @@ export const PageToolbar: FC<Props> = React.memo(
     );
 
     return (
-      <div className={mainStyle}>
+      <nav className={mainStyle} aria-label={ariaLabel}>
         {pageIcon && !onGoBack && (
           <div className={styles.pageIcon}>
             <Icon name={pageIcon} size="lg" aria-hidden />
@@ -57,7 +73,6 @@ export const PageToolbar: FC<Props> = React.memo(
               tooltip="Go back (Esc)"
               tooltipPlacement="bottom"
               size="xxl"
-              surface="dashboard"
               aria-label={selectors.components.BackButton.backArrow}
               onClick={onGoBack}
             />
@@ -110,7 +125,7 @@ export const PageToolbar: FC<Props> = React.memo(
               </div>
             );
           })}
-      </div>
+      </nav>
     );
   }
 );

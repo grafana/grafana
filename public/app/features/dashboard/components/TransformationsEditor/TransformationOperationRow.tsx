@@ -1,17 +1,18 @@
 import React, { useCallback } from 'react';
+import { useToggle } from 'react-use';
+
 import { DataFrame, DataTransformerConfig, TransformerRegistryItem } from '@grafana/data';
 import { HorizontalGroup } from '@grafana/ui';
-
-import { TransformationEditor } from './TransformationEditor';
+import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
+import { QueryOperationAction } from 'app/core/components/QueryOperationRow/QueryOperationAction';
 import {
   QueryOperationRow,
   QueryOperationRowRenderProps,
 } from 'app/core/components/QueryOperationRow/QueryOperationRow';
-import { QueryOperationAction } from 'app/core/components/QueryOperationRow/QueryOperationAction';
-import { TransformationsEditorTransformation } from './types';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
-import { useToggle } from 'react-use';
-import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
+
+import { TransformationEditor } from './TransformationEditor';
+import { TransformationsEditorTransformation } from './types';
 
 interface TransformationOperationRowProps {
   id: string;

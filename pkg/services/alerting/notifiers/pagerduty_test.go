@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
@@ -39,7 +40,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		_, err = NewPagerdutyNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+		_, err = NewPagerdutyNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 		require.Error(t, err)
 	})
 
@@ -55,7 +56,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		not, err := NewPagerdutyNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+		not, err := NewPagerdutyNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 		pagerdutyNotifier := not.(*PagerdutyNotifier)
 
 		require.Nil(t, err)
@@ -78,7 +79,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		not, err := NewPagerdutyNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+		not, err := NewPagerdutyNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 		pagerdutyNotifier := not.(*PagerdutyNotifier)
 
 		require.Nil(t, err)
@@ -105,7 +106,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		not, err := NewPagerdutyNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+		not, err := NewPagerdutyNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 		pagerdutyNotifier := not.(*PagerdutyNotifier)
 
 		require.Nil(t, err)
@@ -130,7 +131,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		not, err := NewPagerdutyNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+		not, err := NewPagerdutyNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 		require.Nil(t, err)
 
 		pagerdutyNotifier := not.(*PagerdutyNotifier)
@@ -139,7 +140,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 			Name:    "someRule",
 			Message: "someMessage",
 			State:   models.AlertStateAlerting,
-		}, &validations.OSSPluginRequestValidator{})
+		}, &validations.OSSPluginRequestValidator{}, nil, nil)
 		evalContext.IsTestRun = true
 
 		payloadJSON, err := pagerdutyNotifier.buildEventPayload(evalContext)
@@ -187,7 +188,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		not, err := NewPagerdutyNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+		not, err := NewPagerdutyNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 		require.Nil(t, err)
 
 		pagerdutyNotifier := not.(*PagerdutyNotifier)
@@ -195,7 +196,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 			ID:    0,
 			Name:  "someRule",
 			State: models.AlertStateAlerting,
-		}, &validations.OSSPluginRequestValidator{})
+		}, &validations.OSSPluginRequestValidator{}, nil, nil)
 		evalContext.IsTestRun = true
 
 		payloadJSON, err := pagerdutyNotifier.buildEventPayload(evalContext)
@@ -244,7 +245,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		not, err := NewPagerdutyNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+		not, err := NewPagerdutyNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 		require.Nil(t, err)
 
 		pagerdutyNotifier := not.(*PagerdutyNotifier)
@@ -253,7 +254,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 			Name:    "someRule",
 			Message: "someMessage",
 			State:   models.AlertStateAlerting,
-		}, &validations.OSSPluginRequestValidator{})
+		}, &validations.OSSPluginRequestValidator{}, nil, nil)
 		evalContext.IsTestRun = true
 		evalContext.EvalMatches = []*alerting.EvalMatch{
 			{
@@ -314,7 +315,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		not, err := NewPagerdutyNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+		not, err := NewPagerdutyNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 		require.NoError(t, err)
 
 		pagerdutyNotifier := not.(*PagerdutyNotifier)
@@ -332,7 +333,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				{Key: "severity", Value: "warning"},
 				{Key: "dedup_key", Value: "key-" + strings.Repeat("x", 260)},
 			},
-		}, &validations.OSSPluginRequestValidator{})
+		}, &validations.OSSPluginRequestValidator{}, nil, nil)
 		evalContext.ImagePublicURL = "http://somewhere.com/omg_dont_panic.png"
 		evalContext.IsTestRun = true
 
@@ -394,7 +395,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		not, err := NewPagerdutyNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+		not, err := NewPagerdutyNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 		require.NoError(t, err)
 
 		pagerdutyNotifier := not.(*PagerdutyNotifier)
@@ -411,7 +412,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				{Key: "component", Value: "aComponent"},
 				{Key: "severity", Value: "info"},
 			},
-		}, &validations.OSSPluginRequestValidator{})
+		}, &validations.OSSPluginRequestValidator{}, nil, nil)
 		evalContext.ImagePublicURL = "http://somewhere.com/omg_dont_panic.png"
 		evalContext.IsTestRun = true
 
@@ -473,7 +474,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		not, err := NewPagerdutyNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+		not, err := NewPagerdutyNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 		require.NoError(t, err)
 
 		pagerdutyNotifier := not.(*PagerdutyNotifier)
@@ -490,7 +491,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				{Key: "component", Value: "aComponent"},
 				{Key: "severity", Value: "llama"},
 			},
-		}, &validations.OSSPluginRequestValidator{})
+		}, &validations.OSSPluginRequestValidator{}, nil, nil)
 		evalContext.ImagePublicURL = "http://somewhere.com/omg_dont_panic.png"
 		evalContext.IsTestRun = true
 

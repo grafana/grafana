@@ -1,5 +1,7 @@
+import { isString } from 'lodash';
 import { from, merge, Observable, of } from 'rxjs';
-import { DataSourceWithBackend, getBackendSrv, getGrafanaLiveSrv, getTemplateSrv } from '@grafana/runtime';
+import { map } from 'rxjs/operators';
+
 import {
   AnnotationQuery,
   AnnotationQueryRequest,
@@ -9,17 +11,23 @@ import {
   DataSourceInstanceSettings,
   DataSourceRef,
   isValidLiveChannelAddress,
+  MutableDataFrame,
   parseLiveChannelAddress,
-  StreamingFrameOptions,
   toDataFrame,
 } from '@grafana/data';
-
-import { GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQuery, GrafanaQueryType } from './types';
-import AnnotationQueryEditor from './components/AnnotationQueryEditor';
-import { getDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
-import { isString } from 'lodash';
+import {
+  DataSourceWithBackend,
+  getBackendSrv,
+  getGrafanaLiveSrv,
+  getTemplateSrv,
+  StreamingFrameOptions,
+} from '@grafana/runtime';
 import { migrateDatasourceNameToRef } from 'app/features/dashboard/state/DashboardMigrator';
-import { map } from 'rxjs/operators';
+
+import { getDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
+
+import AnnotationQueryEditor from './components/AnnotationQueryEditor';
+import { GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQuery, GrafanaQueryType } from './types';
 
 let counter = 100;
 
@@ -42,7 +50,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
       prepareQuery(anno: AnnotationQuery<GrafanaAnnotationQuery>): GrafanaQuery {
         let datasource: DataSourceRef | undefined | null = undefined;
         if (isString(anno.datasource)) {
-          const ref = migrateDatasourceNameToRef(anno.datasource);
+          const ref = migrateDatasourceNameToRef(anno.datasource, { returnDefaultAsNull: false });
           if (ref) {
             datasource = ref;
           }
@@ -65,7 +73,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
           this.getAnnotations({
             range: request.range,
             rangeRaw: request.range.raw,
-            annotation: (target as unknown) as AnnotationQuery<GrafanaAnnotationQuery>,
+            annotation: target as unknown as AnnotationQuery<GrafanaAnnotationQuery>,
             dashboard: getDashboardSrv().getCurrent(),
           })
         );
@@ -77,18 +85,11 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
         let channel = templateSrv.replace(target.channel, request.scopedVars);
         const { filter } = target;
 
-        // Help migrate pre-release channel paths saved in dashboards
-        // NOTE: this should be removed before V8 is released
-        if (channel && channel.startsWith('telegraf/')) {
-          channel = 'stream/' + channel;
-          target.channel = channel; // mutate the current query object so it is saved with `stream/` prefix
-        }
-
         const addr = parseLiveChannelAddress(channel);
         if (!isValidLiveChannelAddress(addr)) {
           continue;
         }
-        const buffer: StreamingFrameOptions = {
+        const buffer: Partial<StreamingFrameOptions> = {
           maxLength: request.maxDataPoints ?? 500,
         };
         if (target.buffer) {
@@ -144,7 +145,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
       ],
     } as any).pipe(
       map((v) => {
-        const frame = v.data[0] ?? toDataFrame({});
+        const frame = v.data[0] ?? new MutableDataFrame();
         return new DataFrameView<FileElement>(frame);
       })
     );
@@ -156,7 +157,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
 
   async getAnnotations(options: AnnotationQueryRequest<GrafanaQuery>): Promise<DataQueryResponse> {
     const templateSrv = getTemplateSrv();
-    const annotation = (options.annotation as unknown) as AnnotationQuery<GrafanaAnnotationQuery>;
+    const annotation = options.annotation as unknown as AnnotationQuery<GrafanaAnnotationQuery>;
     const target = annotation.target!;
     const params: any = {
       from: options.range.from.valueOf(),

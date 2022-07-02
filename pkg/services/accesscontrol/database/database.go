@@ -20,22 +20,33 @@ type AccessControlStore struct {
 	sql *sqlstore.SQLStore
 }
 
-func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]*accesscontrol.Permission, error) {
-	result := make([]*accesscontrol.Permission, 0)
+func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]accesscontrol.Permission, error) {
+	result := make([]accesscontrol.Permission, 0)
 	err := s.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		filter, params := userRolesFilter(query.OrgID, query.UserID, query.Roles)
 
 		// TODO: optimize this
-		q := `SELECT
-			permission.id,
-			permission.role_id,
+		q := `SELECT DISTINCT
 			permission.action,
-			permission.scope,
-			permission.updated,
-			permission.created
+			permission.scope
 			FROM permission
 			INNER JOIN role ON role.id = permission.role_id
 		` + filter
+
+		if query.Actions != nil {
+			q += " AND permission.action IN("
+			if len(query.Actions) > 0 {
+				q += "?" + strings.Repeat(",?", len(query.Actions)-1)
+			}
+			q += ")"
+			for _, a := range query.Actions {
+				params = append(params, a)
+			}
+		}
+
+		q += `
+			ORDER BY permission.scope
+		`
 
 		if err := sess.SQL(q, params...).Find(&result); err != nil {
 			return err

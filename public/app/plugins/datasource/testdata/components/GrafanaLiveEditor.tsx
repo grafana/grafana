@@ -1,6 +1,8 @@
 import React from 'react';
-import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
+
 import { SelectableValue } from '@grafana/data';
+import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
+
 import { EditorProps } from '../QueryEditor';
 
 const liveTestDataChannels = [
@@ -13,6 +15,11 @@ const liveTestDataChannels = [
     label: 'random-flakey-stream',
     value: 'random-flakey-stream',
     description: 'Stream that returns data in random intervals',
+  },
+  {
+    label: 'random-labeled-stream',
+    value: 'random-labeled-stream',
+    description: 'Value with moving labels',
   },
   {
     label: 'random-20Hz-stream',
@@ -30,7 +37,6 @@ export const GrafanaLiveEditor = ({ onChange, query }: EditorProps) => {
     <InlineFieldRow>
       <InlineField label="Channel" labelWidth={14}>
         <Select
-          menuShouldPortal
           width={32}
           onChange={onChannelChange}
           placeholder="Select channel"

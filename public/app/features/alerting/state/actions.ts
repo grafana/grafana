@@ -1,8 +1,9 @@
-import { AppEvents } from '@grafana/data';
-import { getBackendSrv, locationService } from '@grafana/runtime';
-import { appEvents } from 'app/core/core';
-import { loadAlertRules, loadedAlertRules, notificationChannelLoaded, setNotificationChannels } from './reducers';
+import { getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
+import { notifyApp } from 'app/core/actions';
+import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import { AlertRuleDTO, NotifierDTO, ThunkResult } from 'app/types';
+
+import { loadAlertRules, loadedAlertRules, notificationChannelLoaded, setNotificationChannels } from './reducers';
 
 export function getAlertRulesAsync(options: { state: string }): ThunkResult<void> {
   return async (dispatch) => {
@@ -20,14 +21,16 @@ export function togglePauseAlertRule(id: number, options: { paused: boolean }): 
   };
 }
 
-export function createNotificationChannel(data: any): ThunkResult<void> {
+export function createNotificationChannel(data: any): ThunkResult<Promise<void>> {
   return async (dispatch) => {
     try {
       await getBackendSrv().post(`/api/alert-notifications`, data);
-      appEvents.emit(AppEvents.alertSuccess, ['Notification created']);
+      dispatch(notifyApp(createSuccessNotification('Notification created')));
       locationService.push('/alerting/notifications');
     } catch (error) {
-      appEvents.emit(AppEvents.alertError, [error.data.error]);
+      if (isFetchError(error)) {
+        dispatch(notifyApp(createErrorNotification(error.data.error)));
+      }
     }
   };
 }
@@ -36,9 +39,11 @@ export function updateNotificationChannel(data: any): ThunkResult<void> {
   return async (dispatch) => {
     try {
       await getBackendSrv().put(`/api/alert-notifications/${data.id}`, data);
-      appEvents.emit(AppEvents.alertSuccess, ['Notification updated']);
+      dispatch(notifyApp(createSuccessNotification('Notification updated')));
     } catch (error) {
-      appEvents.emit(AppEvents.alertError, [error.data.error]);
+      if (isFetchError(error)) {
+        dispatch(notifyApp(createErrorNotification(error.data.error)));
+      }
     }
   };
 }

@@ -1,17 +1,18 @@
 import React, { PureComponent } from 'react';
-import { chain } from 'lodash';
-import { AppEvents, PanelData, SelectableValue } from '@grafana/data';
-import { Button, CodeEditor, Field, Select } from '@grafana/ui';
 import AutoSizer from 'react-virtualized-auto-sizer';
+
+import { AppEvents, DataFrameJSON, dataFrameToJSON, DataTopic, PanelData, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Button, CodeEditor, Field, Select } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+
 import { getPanelInspectorStyles } from '../inspector/styles';
 
 enum ShowContent {
   PanelJSON = 'panel',
-  DataJSON = 'data',
-  DataStructure = 'structure',
+  PanelData = 'data',
+  DataFrames = 'frames',
 }
 
 const options: Array<SelectableValue<ShowContent>> = [
@@ -21,14 +22,14 @@ const options: Array<SelectableValue<ShowContent>> = [
     value: ShowContent.PanelJSON,
   },
   {
-    label: 'Data',
+    label: 'Panel data',
     description: 'The raw model passed to the panel visualization',
-    value: ShowContent.DataJSON,
+    value: ShowContent.PanelData,
   },
   {
-    label: 'DataFrame structure',
-    description: 'Response info without any values',
-    value: ShowContent.DataStructure,
+    label: 'DataFrame JSON',
+    description: 'JSON formatted DataFrames',
+    value: ShowContent.DataFrames,
   },
 ];
 
@@ -50,9 +51,9 @@ export class InspectJSONTab extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
     this.hasPanelJSON = !!(props.panel && props.dashboard);
-    // If we are in panel, we want to show PanelJSON, otherwise show DataJSON
+    // If we are in panel, we want to show PanelJSON, otherwise show DataFrames
     this.state = {
-      show: this.hasPanelJSON ? ShowContent.PanelJSON : ShowContent.DataJSON,
+      show: this.hasPanelJSON ? ShowContent.PanelJSON : ShowContent.DataFrames,
       text: this.hasPanelJSON ? getPrettyJSON(props.panel!.getSaveModel()) : getPrettyJSON(props.data),
     };
   }
@@ -70,24 +71,12 @@ export class InspectJSONTab extends PureComponent<Props, State> {
 
   getJSONObject(show: ShowContent) {
     const { data, panel } = this.props;
-    if (show === ShowContent.DataJSON) {
+    if (show === ShowContent.PanelData) {
       return data;
     }
 
-    if (show === ShowContent.DataStructure) {
-      const series = data?.series;
-      if (!series) {
-        return { note: 'Missing Response Data' };
-      }
-      return data!.series.map((frame) => {
-        const { table, fields, ...rest } = frame as any; // remove 'table' from arrow response
-        return {
-          ...rest,
-          fields: frame.fields.map((field) => {
-            return chain(field).omit('values').omit('state').omit('display').value();
-          }),
-        };
-      });
+    if (show === ShowContent.DataFrames) {
+      return getPanelDataFrames(data);
     }
 
     if (this.hasPanelJSON && show === ShowContent.PanelJSON) {
@@ -129,7 +118,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
     const styles = getPanelInspectorStyles();
 
     return (
-      <>
+      <div className={styles.wrap}>
         <div className={styles.toolbar} aria-label={selectors.components.PanelInspector.Json.content}>
           <Field label="Select source" className="flex-grow-1">
             <Select
@@ -137,7 +126,6 @@ export class InspectJSONTab extends PureComponent<Props, State> {
               options={jsonOptions}
               value={selected}
               onChange={this.onSelectChanged}
-              menuShouldPortal
             />
           </Field>
           {this.hasPanelJSON && isPanelJSON && canEdit && (
@@ -162,9 +150,29 @@ export class InspectJSONTab extends PureComponent<Props, State> {
             )}
           </AutoSizer>
         </div>
-      </>
+      </div>
     );
   }
+}
+
+function getPanelDataFrames(data?: PanelData): DataFrameJSON[] {
+  const frames: DataFrameJSON[] = [];
+  if (data?.series) {
+    for (const f of data.series) {
+      frames.push(dataFrameToJSON(f));
+    }
+  }
+  if (data?.annotations) {
+    for (const f of data.annotations) {
+      const json = dataFrameToJSON(f);
+      if (!json.schema?.meta) {
+        json.schema!.meta = {};
+      }
+      json.schema!.meta.dataTopic = DataTopic.Annotations;
+      frames.push(json);
+    }
+  }
+  return frames;
 }
 
 function getPrettyJSON(obj: any): string {

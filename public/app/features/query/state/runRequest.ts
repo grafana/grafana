@@ -1,9 +1,9 @@
 // Libraries
-import { from, merge, Observable, of, timer } from 'rxjs';
 import { isString, map as isArray } from 'lodash';
+import { from, merge, Observable, of, timer } from 'rxjs';
 import { catchError, map, mapTo, share, takeUntil, tap } from 'rxjs/operators';
+
 // Utils & Services
-import { backendSrv } from 'app/core/services/backend_srv';
 // Types
 import {
   DataFrame,
@@ -21,11 +21,13 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { toDataQueryError } from '@grafana/runtime';
-import { emitDataRequestEvent } from './queryAnalytics';
+import { isExpressionReference } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { ExpressionQuery } from 'app/features/expressions/types';
+
 import { cancelNetworkRequestsOnUnsubscribe } from './processing/canceler';
-import { isExpressionReference } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import { emitDataRequestEvent } from './queryAnalytics';
 
 type MapOfResponsePackets = { [str: string]: DataQueryResponse };
 
@@ -43,7 +45,9 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
     ...state.packets,
   };
 
-  packets[packet.key || 'A'] = packet;
+  // updates to the same key will replace previous values
+  const key = packet.key ?? packet.data?.[0]?.refId ?? 'A';
+  packets[key] = packet;
 
   let loadingState = packet.state || LoadingState.Done;
   let error: DataQueryError | undefined = undefined;
@@ -143,7 +147,8 @@ export function runRequest(
     }),
     // handle errors
     catchError((err) => {
-      console.error('runRequest.catchError', err);
+      const errLog = typeof err === 'string' ? err : JSON.stringify(err);
+      console.error('runRequest.catchError', errLog);
       return of({
         ...state.panelData,
         state: LoadingState.Error,
@@ -181,6 +186,19 @@ export function callQueryMethod(
   return from(returnVal);
 }
 
+function getProcessedDataFrame(data: DataQueryResponseData): DataFrame {
+  const dataFrame = guessFieldTypes(toDataFrame(data));
+
+  if (dataFrame.fields && dataFrame.fields.length) {
+    // clear out the cached info
+    for (const field of dataFrame.fields) {
+      field.state = null;
+    }
+  }
+
+  return dataFrame;
+}
+
 /**
  * All panels will be passed tables that have our best guess at column type set
  *
@@ -191,22 +209,7 @@ export function getProcessedDataFrames(results?: DataQueryResponseData[]): DataF
     return [];
   }
 
-  const dataFrames: DataFrame[] = [];
-
-  for (const result of results) {
-    const dataFrame = guessFieldTypes(toDataFrame(result));
-
-    if (dataFrame.fields && dataFrame.fields.length) {
-      // clear out the cached info
-      for (const field of dataFrame.fields) {
-        field.state = null;
-      }
-    }
-
-    dataFrames.push(dataFrame);
-  }
-
-  return dataFrames;
+  return results.map((data) => getProcessedDataFrame(data));
 }
 
 export function preProcessPanelData(data: PanelData, lastResult?: PanelData): PanelData {
@@ -227,7 +230,7 @@ export function preProcessPanelData(data: PanelData, lastResult?: PanelData): Pa
 
   // Make sure the data frames are properly formatted
   const STARTTIME = performance.now();
-  const processedDataFrames = getProcessedDataFrames(series);
+  const processedDataFrames = series.map((data) => getProcessedDataFrame(data));
   const annotationsProcessed = getProcessedDataFrames(annotations);
   const STOPTIME = performance.now();
 

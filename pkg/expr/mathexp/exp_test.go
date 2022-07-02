@@ -16,10 +16,7 @@ type tp struct {
 func makeSeries(name string, labels data.Labels, points ...tp) Series {
 	newSeries := NewSeries(name, labels, len(points))
 	for idx, p := range points {
-		err := newSeries.SetPoint(idx, p.t, p.f)
-		if err != nil {
-			panic(err)
-		}
+		newSeries.SetPoint(idx, p.t, p.f)
 	}
 	return newSeries
 }

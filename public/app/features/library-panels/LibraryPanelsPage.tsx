@@ -1,13 +1,14 @@
 import React, { FC, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { GrafanaRouteComponentProps } from '../../core/navigation/types';
-import { StoreState } from '../../types';
-import { getNavModel } from '../../core/selectors/navModel';
 import Page from '../../core/components/Page/Page';
+import { GrafanaRouteComponentProps } from '../../core/navigation/types';
+import { getNavModel } from '../../core/selectors/navModel';
+import { StoreState } from '../../types';
+
 import { LibraryPanelsSearch } from './components/LibraryPanelsSearch/LibraryPanelsSearch';
-import { LibraryElementDTO } from './types';
 import { OpenLibraryPanelModal } from './components/OpenLibraryPanelModal/OpenLibraryPanelModal';
+import { LibraryElementDTO } from './types';
 
 const mapStateToProps = (state: StoreState) => ({
   navModel: getNavModel(state.navIndex, 'library-panels'),

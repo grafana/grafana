@@ -18,6 +18,7 @@ type ChannelClientCount func(orgID int64, channel string) (int, error)
 type SubscribeEvent struct {
 	Channel string
 	Path    string
+	Data    json.RawMessage
 }
 
 // SubscribeReply is a reaction to SubscribeEvent.

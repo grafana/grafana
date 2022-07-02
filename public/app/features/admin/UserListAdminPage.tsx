@@ -1,6 +1,8 @@
-import React, { ComponentType, useEffect, useMemo, memo } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { ComponentType, useEffect, useMemo, memo } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import {
   Icon,
   IconName,
@@ -11,14 +13,15 @@ import {
   useStyles2,
   FilterInput,
 } from '@grafana/ui';
-import { GrafanaTheme2 } from '@grafana/data';
 import Page from 'app/core/components/Page/Page';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { contextSrv } from 'app/core/core';
+
+import PageLoader from '../../core/components/PageLoader/PageLoader';
 import { getNavModel } from '../../core/selectors/navModel';
 import { AccessControlAction, StoreState, Unit, UserDTO, UserFilter } from '../../types';
+
 import { changeFilter, changePage, changeQuery, fetchUsers } from './state/actions';
-import PageLoader from '../../core/components/PageLoader/PageLoader';
 
 export interface FilterProps {
   filters: UserFilter[];

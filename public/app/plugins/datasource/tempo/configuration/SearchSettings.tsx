@@ -1,7 +1,9 @@
 import { css } from '@emotion/css';
+import React from 'react';
+
 import { DataSourcePluginOptionsEditorProps, GrafanaTheme, updateDatasourcePluginJsonDataOption } from '@grafana/data';
 import { InlineField, InlineFieldRow, InlineSwitch, useStyles } from '@grafana/ui';
-import React from 'react';
+
 import { TempoJsonData } from '../datasource';
 
 interface Props extends DataSourcePluginOptionsEditorProps<TempoJsonData> {}
@@ -15,6 +17,7 @@ export function SearchSettings({ options, onOptionsChange }: Props) {
       <InlineFieldRow className={styles.row}>
         <InlineField tooltip="Removes the Search tab from the Tempo query editor." label="Hide search" labelWidth={26}>
           <InlineSwitch
+            id="hideSearch"
             value={options.jsonData.search?.hide}
             onChange={(event: React.SyntheticEvent<HTMLInputElement>) =>
               updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'search', {

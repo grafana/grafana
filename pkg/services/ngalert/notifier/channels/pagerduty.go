@@ -3,16 +3,19 @@ package channels
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 const (
@@ -37,52 +40,81 @@ type PagerdutyNotifier struct {
 	Summary       string
 	tmpl          *template.Template
 	log           log.Logger
+	ns            notifications.WebhookSender
+	images        ImageStore
+}
+
+type PagerdutyConfig struct {
+	*NotificationChannelConfig
+	Key       string
+	Severity  string
+	Class     string
+	Component string
+	Group     string
+	Summary   string
+}
+
+func PagerdutyFactory(fc FactoryConfig) (NotificationChannel, error) {
+	cfg, err := NewPagerdutyConfig(fc.Config, fc.DecryptFunc)
+	if err != nil {
+		return nil, receiverInitError{
+			Reason: err.Error(),
+			Cfg:    *fc.Config,
+		}
+	}
+	return NewPagerdutyNotifier(cfg, fc.NotificationService, fc.ImageStore, fc.Template), nil
+}
+
+func NewPagerdutyConfig(config *NotificationChannelConfig, decryptFunc GetDecryptedValueFn) (*PagerdutyConfig, error) {
+	key := decryptFunc(context.Background(), config.SecureSettings, "integrationKey", config.Settings.Get("integrationKey").MustString())
+	if key == "" {
+		return nil, errors.New("could not find integration key property in settings")
+	}
+	return &PagerdutyConfig{
+		NotificationChannelConfig: config,
+		Key:                       key,
+		Severity:                  config.Settings.Get("severity").MustString("critical"),
+		Class:                     config.Settings.Get("class").MustString("default"),
+		Component:                 config.Settings.Get("component").MustString("Grafana"),
+		Group:                     config.Settings.Get("group").MustString("default"),
+		Summary:                   config.Settings.Get("summary").MustString(DefaultMessageTitleEmbed),
+	}, nil
 }
 
 // NewPagerdutyNotifier is the constructor for the PagerDuty notifier
-func NewPagerdutyNotifier(model *NotificationChannelConfig, t *template.Template, fn GetDecryptedValueFn) (*PagerdutyNotifier, error) {
-	if model.Settings == nil {
-		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
-	}
-	if model.SecureSettings == nil {
-		return nil, receiverInitError{Cfg: *model, Reason: "no secure settings supplied"}
-	}
-
-	key := fn(context.Background(), model.SecureSettings, "integrationKey", model.Settings.Get("integrationKey").MustString())
-	if key == "" {
-		return nil, receiverInitError{Cfg: *model, Reason: "could not find integration key property in settings"}
-	}
-
+func NewPagerdutyNotifier(config *PagerdutyConfig, ns notifications.WebhookSender, images ImageStore, t *template.Template) *PagerdutyNotifier {
 	return &PagerdutyNotifier{
 		Base: NewBase(&models.AlertNotification{
-			Uid:                   model.UID,
-			Name:                  model.Name,
-			Type:                  model.Type,
-			DisableResolveMessage: model.DisableResolveMessage,
-			Settings:              model.Settings,
+			Uid:                   config.UID,
+			Name:                  config.Name,
+			Type:                  config.Type,
+			DisableResolveMessage: config.DisableResolveMessage,
+			Settings:              config.Settings,
 		}),
-		Key: key,
+		Key: config.Key,
 		CustomDetails: map[string]string{
 			"firing":       `{{ template "__text_alert_list" .Alerts.Firing }}`,
 			"resolved":     `{{ template "__text_alert_list" .Alerts.Resolved }}`,
 			"num_firing":   `{{ .Alerts.Firing | len }}`,
 			"num_resolved": `{{ .Alerts.Resolved | len }}`,
 		},
-		Severity:  model.Settings.Get("severity").MustString("critical"),
-		Class:     model.Settings.Get("class").MustString("default"),
-		Component: model.Settings.Get("component").MustString("Grafana"),
-		Group:     model.Settings.Get("group").MustString("default"),
-		Summary:   model.Settings.Get("summary").MustString(DefaultMessageTitleEmbed),
+		Severity:  config.Severity,
+		Class:     config.Class,
+		Component: config.Component,
+		Group:     config.Group,
+		Summary:   config.Summary,
 		tmpl:      t,
-		log:       log.New("alerting.notifier." + model.Name),
-	}, nil
+		log:       log.New("alerting.notifier." + config.Name),
+		ns:        ns,
+		images:    images,
+	}
 }
 
 // Notify sends an alert notification to PagerDuty
 func (pn *PagerdutyNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	alerts := types.Alerts(as...)
 	if alerts.Status() == model.AlertResolved && !pn.SendResolved() {
-		pn.log.Debug("Not sending a trigger to Pagerduty", "status", alerts.Status(), "auto resolve", pn.SendResolved())
+		pn.log.Debug("not sending a trigger to Pagerduty", "status", alerts.Status(), "auto resolve", pn.SendResolved())
 		return true, nil
 	}
 
@@ -96,7 +128,7 @@ func (pn *PagerdutyNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 		return false, fmt.Errorf("marshal json: %w", err)
 	}
 
-	pn.log.Info("Notifying Pagerduty", "event_type", eventType)
+	pn.log.Info("notifying Pagerduty", "event_type", eventType)
 	cmd := &models.SendWebhookSync{
 		Url:        PagerdutyEventAPIURL,
 		Body:       string(body),
@@ -105,7 +137,7 @@ func (pn *PagerdutyNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 			"Content-Type": "application/json",
 		},
 	}
-	if err := bus.DispatchCtx(ctx, cmd); err != nil {
+	if err := pn.ns.SendWebhookSync(ctx, cmd); err != nil {
 		return false, fmt.Errorf("send notification to Pagerduty: %w", err)
 	}
 
@@ -156,6 +188,16 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 		},
 	}
 
+	_ = withStoredImages(ctx, pn.log, pn.images,
+		func(_ int, image ngmodels.Image) error {
+			if len(image.URL) != 0 {
+				msg.Images = append(msg.Images, pagerDutyImage{Src: image.URL})
+			}
+
+			return nil
+		},
+		as...)
+
 	if len(msg.Payload.Summary) > 1024 {
 		// This is the Pagerduty limit.
 		msg.Payload.Summary = msg.Payload.Summary[:1021] + "..."
@@ -187,11 +229,16 @@ type pagerDutyMessage struct {
 	Client      string           `json:"client,omitempty"`
 	ClientURL   string           `json:"client_url,omitempty"`
 	Links       []pagerDutyLink  `json:"links,omitempty"`
+	Images      []pagerDutyImage `json:"images,omitempty"`
 }
 
 type pagerDutyLink struct {
 	HRef string `json:"href"`
 	Text string `json:"text"`
+}
+
+type pagerDutyImage struct {
+	Src string `json:"src"`
 }
 
 type pagerDutyPayload struct {

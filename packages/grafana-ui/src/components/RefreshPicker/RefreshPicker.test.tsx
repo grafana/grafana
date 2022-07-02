@@ -35,5 +35,16 @@ describe('RefreshPicker', () => {
         ]);
       });
     });
+
+    it('should format durations with multiple units', () => {
+      const intervals = ['10s', '1m 30s'];
+
+      const result = intervalsToOptions({ intervals });
+      expect(result).toEqual([
+        { value: '', label: 'Off', ariaLabel: 'Turn off auto refresh' },
+        { value: '10s', label: '10s', ariaLabel: '10 seconds' },
+        { value: '1m 30s', label: '1m 30s', ariaLabel: '1 minute 30 seconds' },
+      ]);
+    });
   });
 });

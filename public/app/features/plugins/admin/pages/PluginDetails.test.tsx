@@ -1,13 +1,19 @@
+import { getDefaultNormalizer, render, RenderResult, SelectorMatcherOptions, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
-import { getDefaultNormalizer, render, RenderResult, SelectorMatcherOptions, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+
+import { PluginErrorCode, PluginSignatureStatus, PluginType, dateTimeFormatTimeAgo } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
-import { mockPluginApis, getCatalogPluginMock, getPluginsStateMock, mockUserPermissions } from '../__mocks__';
-import { configureStore } from 'app/store/configureStore';
-import PluginDetailsPage from './PluginDetails';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
+import { configureStore } from 'app/store/configureStore';
+
+import { mockPluginApis, getCatalogPluginMock, getPluginsStateMock, mockUserPermissions } from '../__mocks__';
+import * as api from '../api';
+import { usePluginConfig } from '../hooks/usePluginConfig';
+import { fetchRemotePlugins } from '../state/actions';
 import {
   CatalogPlugin,
   CatalogPluginDetails,
@@ -16,11 +22,8 @@ import {
   ReducerState,
   RequestStatus,
 } from '../types';
-import * as api from '../api';
-import { fetchRemotePlugins } from '../state/actions';
-import { usePluginConfig } from '../hooks/usePluginConfig';
-import { PluginErrorCode, PluginSignatureStatus, PluginType, dateTimeFormatTimeAgo } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
+
+import PluginDetailsPage from './PluginDetails';
 
 jest.mock('@grafana/runtime', () => {
   const original = jest.requireActual('@grafana/runtime');
@@ -35,6 +38,11 @@ jest.mock('../hooks/usePluginConfig.tsx', () => ({
       meta: {},
     },
   })),
+}));
+
+jest.mock('../helpers.ts', () => ({
+  ...jest.requireActual('../helpers.ts'),
+  updatePanels: jest.fn(),
 }));
 
 const renderPluginDetails = (
@@ -90,7 +98,7 @@ describe('Plugin details page', () => {
   afterEach(() => {
     jest.clearAllMocks();
     config.pluginAdminExternalManageEnabled = false;
-    config.licenseInfo.hasValidLicense = false;
+    config.licenseInfo.enabledFeatures = {};
   });
 
   afterAll(() => {
@@ -325,7 +333,7 @@ describe('Plugin details page', () => {
     });
 
     it('should display an install button for enterprise plugins if license is valid', async () => {
-      config.licenseInfo.hasValidLicense = true;
+      config.licenseInfo.enabledFeatures = { 'enterprise.plugins': true };
 
       const { queryByRole } = renderPluginDetails({ id, isInstalled: false, isEnterprise: true });
 
@@ -333,7 +341,7 @@ describe('Plugin details page', () => {
     });
 
     it('should not display install button for enterprise plugins if license is invalid', async () => {
-      config.licenseInfo.hasValidLicense = false;
+      config.licenseInfo.enabledFeatures = {};
 
       const { queryByRole, queryByText } = renderPluginDetails({ id, isInstalled: true, isEnterprise: true });
 
@@ -442,14 +450,14 @@ describe('Plugin details page', () => {
       await waitFor(() => expect(queryByText(PluginTabLabels.OVERVIEW)).toBeInTheDocument());
 
       // Open the confirmation modal
-      userEvent.click(getByRole('button', { name: /uninstall/i }));
+      await userEvent.click(getByRole('button', { name: /uninstall/i }));
 
       expect(queryByText('Uninstall Akumuli')).toBeInTheDocument();
       expect(queryByText('Are you sure you want to uninstall this plugin?')).toBeInTheDocument();
       expect(api.uninstallPlugin).toHaveBeenCalledTimes(0);
 
       // Confirm the uninstall
-      userEvent.click(getByRole('button', { name: /confirm/i }));
+      await userEvent.click(getByRole('button', { name: /confirm/i }));
       expect(api.uninstallPlugin).toHaveBeenCalledTimes(1);
       expect(api.uninstallPlugin).toHaveBeenCalledWith(id);
 
@@ -630,7 +638,7 @@ describe('Plugin details page', () => {
       await waitFor(() => queryByText('Uninstall'));
 
       // Click on "Enable"
-      userEvent.click(getByRole('button', { name: /enable/i }));
+      await userEvent.click(getByRole('button', { name: /enable/i }));
 
       // Check if the API request was initiated
       expect(api.updatePluginSettings).toHaveBeenCalledTimes(1);
@@ -670,7 +678,7 @@ describe('Plugin details page', () => {
       await waitFor(() => queryByText('Uninstall'));
 
       // Click on "Disable"
-      userEvent.click(getByRole('button', { name: /disable/i }));
+      await userEvent.click(getByRole('button', { name: /disable/i }));
 
       // Check if the API request was initiated
       expect(api.updatePluginSettings).toHaveBeenCalledTimes(1);
@@ -772,7 +780,7 @@ describe('Plugin details page', () => {
     });
 
     it('should not display an install button for enterprise plugins if license is valid', async () => {
-      config.licenseInfo.hasValidLicense = true;
+      config.licenseInfo.enabledFeatures = { 'enterprise.plugins': true };
       const { queryByRole, queryByText } = renderPluginDetails({ id, isInstalled: false, isEnterprise: true });
 
       await waitFor(() => expect(queryByText(PluginTabLabels.OVERVIEW)).toBeInTheDocument());

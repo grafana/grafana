@@ -1,18 +1,22 @@
-//go:build integration
-// +build integration
-
 package sqlstore
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-func TestApiKeyDataAccess(t *testing.T) {
+func TestIntegrationApiKeyDataAccess(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	mockTimeNow()
 	defer resetTimeNow()
 
@@ -30,6 +34,13 @@ func TestApiKeyDataAccess(t *testing.T) {
 
 				assert.Nil(t, err)
 				assert.NotNil(t, query.Result)
+			})
+
+			t.Run("Should be able to get key by hash", func(t *testing.T) {
+				key, err := ss.GetAPIKeyByHash(context.Background(), cmd.Key)
+
+				assert.Nil(t, err)
+				assert.NotNil(t, key)
 			})
 		})
 
@@ -65,6 +76,24 @@ func TestApiKeyDataAccess(t *testing.T) {
 			assert.Equal(t, *query.Result.Expires, expected)
 		})
 
+		t.Run("Last Used At datetime update", func(t *testing.T) {
+			// expires in one hour
+			cmd := models.AddApiKeyCommand{OrgId: 1, Name: "last-update-at", Key: "asd3", SecondsToLive: 3600}
+			err := ss.AddAPIKey(context.Background(), &cmd)
+			require.NoError(t, err)
+
+			assert.Nil(t, cmd.Result.LastUsedAt)
+
+			err = ss.UpdateAPIKeyLastUsedDate(context.Background(), cmd.Result.Id)
+			require.NoError(t, err)
+
+			query := models.GetApiKeyByNameQuery{KeyName: "last-update-at", OrgId: 1}
+			err = ss.GetApiKeyByName(context.Background(), &query)
+			assert.Nil(t, err)
+
+			assert.NotNil(t, query.Result.LastUsedAt)
+		})
+
 		t.Run("Add a key with negative lifespan", func(t *testing.T) {
 			// expires in one day
 			cmd := models.AddApiKeyCommand{OrgId: 1, Name: "key-with-negative-lifespan", Key: "asd3", SecondsToLive: -3600}
@@ -95,7 +124,13 @@ func TestApiKeyDataAccess(t *testing.T) {
 			// advance mocked getTime by 1s
 			timeNow()
 
-			query := models.GetApiKeysQuery{OrgId: 1, IncludeExpired: false}
+			testUser := &models.SignedInUser{
+				OrgId: 1,
+				Permissions: map[int64]map[string][]string{
+					1: {accesscontrol.ActionAPIKeyRead: []string{accesscontrol.ScopeAPIKeysAll}},
+				},
+			}
+			query := models.GetApiKeysQuery{OrgId: 1, IncludeExpired: false, User: testUser}
 			err = ss.GetAPIKeys(context.Background(), &query)
 			assert.Nil(t, err)
 
@@ -105,7 +140,7 @@ func TestApiKeyDataAccess(t *testing.T) {
 				}
 			}
 
-			query = models.GetApiKeysQuery{OrgId: 1, IncludeExpired: true}
+			query = models.GetApiKeysQuery{OrgId: 1, IncludeExpired: true, User: testUser}
 			err = ss.GetAPIKeys(context.Background(), &query)
 			assert.Nil(t, err)
 
@@ -120,7 +155,10 @@ func TestApiKeyDataAccess(t *testing.T) {
 	})
 }
 
-func TestApiKeyErrors(t *testing.T) {
+func TestIntegrationApiKeyErrors(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	mockTimeNow()
 	defer resetTimeNow()
 
@@ -148,4 +186,64 @@ func TestApiKeyErrors(t *testing.T) {
 			})
 		})
 	})
+}
+
+type getApiKeysTestCase struct {
+	desc            string
+	user            *models.SignedInUser
+	expectedNumKeys int
+}
+
+func TestIntegrationSQLStore_GetAPIKeys(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	tests := []getApiKeysTestCase{
+		{
+			desc: "expect all keys for wildcard scope",
+			user: &models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{
+				1: {"apikeys:read": {"apikeys:*"}},
+			}},
+			expectedNumKeys: 10,
+		},
+		{
+			desc: "expect only api keys that user have scopes for",
+			user: &models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{
+				1: {"apikeys:read": {"apikeys:id:1", "apikeys:id:3"}},
+			}},
+			expectedNumKeys: 2,
+		},
+		{
+			desc: "expect no keys when user have no scopes",
+			user: &models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{
+				1: {"apikeys:read": {}},
+			}},
+			expectedNumKeys: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			store := InitTestDB(t, InitTestDBOpt{})
+			seedApiKeys(t, store, 10)
+
+			query := &models.GetApiKeysQuery{OrgId: 1, User: tt.user}
+			err := store.GetAPIKeys(context.Background(), query)
+			require.NoError(t, err)
+			assert.Len(t, query.Result, tt.expectedNumKeys)
+		})
+	}
+}
+
+func seedApiKeys(t *testing.T, store *SQLStore, num int) {
+	t.Helper()
+
+	for i := 0; i < num; i++ {
+		err := store.AddAPIKey(context.Background(), &models.AddApiKeyCommand{
+			Name:  fmt.Sprintf("key:%d", i),
+			Key:   fmt.Sprintf("key:%d", i),
+			OrgId: 1,
+		})
+		require.NoError(t, err)
+	}
 }

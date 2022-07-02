@@ -7,13 +7,11 @@ import (
 	"os"
 
 	"github.com/fatih/color"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 const AdminUserId = 1
@@ -43,7 +41,7 @@ func resetPasswordCommand(c utils.CommandLine, sqlStore *sqlstore.SQLStore) erro
 
 	userQuery := models.GetUserByIdQuery{Id: AdminUserId}
 
-	if err := bus.DispatchCtx(context.Background(), &userQuery); err != nil {
+	if err := sqlStore.GetUserById(context.Background(), &userQuery); err != nil {
 		return fmt.Errorf("could not read user from database. Error: %v", err)
 	}
 
@@ -57,8 +55,8 @@ func resetPasswordCommand(c utils.CommandLine, sqlStore *sqlstore.SQLStore) erro
 		NewPassword: passwordHashed,
 	}
 
-	if err := bus.Dispatch(&cmd); err != nil {
-		return errutil.Wrapf(err, "failed to update user password")
+	if err := sqlStore.ChangeUserPassword(context.Background(), &cmd); err != nil {
+		return fmt.Errorf("failed to update user password: %w", err)
 	}
 
 	logger.Infof("\n")

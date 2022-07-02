@@ -1,6 +1,8 @@
-import { stylesFactory } from '../../themes/stylesFactory';
 import { css } from '@emotion/css';
+
 import { GrafanaTheme2 } from '@grafana/data';
+
+import { stylesFactory } from '../../themes/stylesFactory';
 
 export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
@@ -66,6 +68,7 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
     singleValue: css`
       label: grafana-select-single-value;
       color: ${theme.components.input.text};
+      grid-area: 1 / 1 / 2 / 3;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -75,7 +78,7 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
     valueContainer: css`
       label: grafana-select-value-container;
       align-items: center;
-      display: flex;
+      display: grid;
       position: relative;
       box-sizing: border-box;
       flex: 1 1 0%;
@@ -85,6 +88,7 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
     valueContainerMulti: css`
       label: grafana-select-value-container-multi;
       flex-wrap: wrap;
+      display: flex;
     `,
     loadingMessage: css`
       label: grafana-select-loading-message;

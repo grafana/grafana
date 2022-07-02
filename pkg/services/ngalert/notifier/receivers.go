@@ -59,7 +59,7 @@ func (e ReceiverTimeoutError) Error() string {
 	return fmt.Sprintf("the receiver timed out: %s", e.Err)
 }
 
-func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigParams) (*TestReceiversResult, error) {
+func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*TestReceiversResult, error) {
 	// now represents the start time of the test
 	now := time.Now()
 	testAlert := newTestAlert(c, now, now)
@@ -197,7 +197,7 @@ func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 	return newTestReceiversResult(testAlert, append(invalid, results...), now), nil
 }
 
-func newTestAlert(c apimodels.TestReceiversConfigParams, startsAt, updatedAt time.Time) types.Alert {
+func newTestAlert(c apimodels.TestReceiversConfigBodyParams, startsAt, updatedAt time.Time) types.Alert {
 	var (
 		defaultAnnotations = model.LabelSet{
 			"summary":          "Notification test",

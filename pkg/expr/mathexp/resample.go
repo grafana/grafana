@@ -72,9 +72,7 @@ func (s Series) Resample(refID string, interval time.Duration, downsampler strin
 			}
 			value = tmp
 		}
-		if err := resampled.SetPoint(idx, t, value); err != nil {
-			return resampled, err
-		}
+		resampled.SetPoint(idx, t, value)
 		t = t.Add(interval)
 		idx++
 	}

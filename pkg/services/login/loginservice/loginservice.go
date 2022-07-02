@@ -4,47 +4,51 @@ import (
 	"context"
 	"errors"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 var (
 	logger = log.New("login.ext_user")
 )
 
-func ProvideService(sqlStore *sqlstore.SQLStore, bus bus.Bus, quotaService *quota.QuotaService, authInfoService login.AuthInfoService) *Implementation {
+func ProvideService(
+	sqlStore sqlstore.Store,
+	userService user.Service,
+	quotaService *quota.QuotaService,
+	authInfoService login.AuthInfoService,
+) *Implementation {
 	s := &Implementation{
 		SQLStore:        sqlStore,
-		Bus:             bus,
+		userService:     userService,
 		QuotaService:    quotaService,
 		AuthInfoService: authInfoService,
 	}
-	bus.AddHandler(s.UpsertUser)
 	return s
 }
 
 type Implementation struct {
-	SQLStore        *sqlstore.SQLStore
-	Bus             bus.Bus
+	SQLStore        sqlstore.Store
+	userService     user.Service
 	AuthInfoService login.AuthInfoService
 	QuotaService    *quota.QuotaService
 	TeamSync        login.TeamSyncFunc
 }
 
 // CreateUser creates inserts a new one.
-func (ls *Implementation) CreateUser(cmd models.CreateUserCommand) (*models.User, error) {
+func (ls *Implementation) CreateUser(cmd user.CreateUserCommand) (*user.User, error) {
 	return ls.SQLStore.CreateUser(context.Background(), cmd)
 }
 
 // UpsertUser updates an existing user, or if it doesn't exist, inserts a new one.
-func (ls *Implementation) UpsertUser(cmd *models.UpsertUserCommand) error {
+func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUserCommand) error {
 	extUser := cmd.ExternalUser
 
-	user, err := ls.AuthInfoService.LookupAndUpdate(&models.GetUserByAuthInfoQuery{
+	usr, err := ls.AuthInfoService.LookupAndUpdate(ctx, &models.GetUserByAuthInfoQuery{
 		AuthModule: extUser.AuthModule,
 		AuthId:     extUser.AuthId,
 		UserId:     extUser.UserId,
@@ -57,7 +61,7 @@ func (ls *Implementation) UpsertUser(cmd *models.UpsertUserCommand) error {
 		}
 		if !cmd.SignupAllowed {
 			cmd.ReqContext.Logger.Warn("Not allowing login, user not found in internal user database and allow signup = false", "authmode", extUser.AuthModule)
-			return login.ErrInvalidCredentials
+			return login.ErrSignupNotAllowed
 		}
 
 		limitReached, err := ls.QuotaService.QuotaReached(cmd.ReqContext, "user")
@@ -69,53 +73,75 @@ func (ls *Implementation) UpsertUser(cmd *models.UpsertUserCommand) error {
 			return login.ErrUsersQuotaReached
 		}
 
-		cmd.Result, err = ls.createUser(extUser)
+		result, err := ls.createUser(extUser)
 		if err != nil {
 			return err
 		}
 
+		cmd.Result = &user.User{
+			ID:               result.ID,
+			Version:          result.Version,
+			Email:            result.Email,
+			Name:             result.Name,
+			Login:            result.Login,
+			Password:         result.Password,
+			Salt:             result.Salt,
+			Rands:            result.Rands,
+			Company:          result.Company,
+			EmailVerified:    result.EmailVerified,
+			Theme:            result.Theme,
+			HelpFlags1:       result.HelpFlags1,
+			IsDisabled:       result.IsDisabled,
+			IsAdmin:          result.IsAdmin,
+			IsServiceAccount: result.IsServiceAccount,
+			OrgID:            result.OrgID,
+			Created:          result.Created,
+			Updated:          result.Updated,
+			LastSeenAt:       result.LastSeenAt,
+		}
+
 		if extUser.AuthModule != "" {
 			cmd2 := &models.SetAuthInfoCommand{
-				UserId:     cmd.Result.Id,
+				UserId:     cmd.Result.ID,
 				AuthModule: extUser.AuthModule,
 				AuthId:     extUser.AuthId,
 				OAuthToken: extUser.OAuthToken,
 			}
-			if err := ls.Bus.Dispatch(cmd2); err != nil {
+			if err := ls.AuthInfoService.SetAuthInfo(ctx, cmd2); err != nil {
 				return err
 			}
 		}
 	} else {
-		cmd.Result = user
+		cmd.Result = usr
 
-		err = updateUser(cmd.Result, extUser)
+		err = ls.updateUser(ctx, cmd.Result, extUser)
 		if err != nil {
 			return err
 		}
 
 		// Always persist the latest token at log-in
 		if extUser.AuthModule != "" && extUser.OAuthToken != nil {
-			err = updateUserAuth(cmd.Result, extUser)
+			err = ls.updateUserAuth(ctx, cmd.Result, extUser)
 			if err != nil {
 				return err
 			}
 		}
 
-		if extUser.AuthModule == models.AuthModuleLDAP && user.IsDisabled {
+		if extUser.AuthModule == models.AuthModuleLDAP && usr.IsDisabled {
 			// Re-enable user when it found in LDAP
-			if err := ls.Bus.Dispatch(&models.DisableUserCommand{UserId: cmd.Result.Id, IsDisabled: false}); err != nil {
+			if err := ls.SQLStore.DisableUser(ctx, &models.DisableUserCommand{UserId: cmd.Result.ID, IsDisabled: false}); err != nil {
 				return err
 			}
 		}
 	}
 
-	if err := syncOrgRoles(cmd.Result, extUser); err != nil {
+	if err := ls.syncOrgRoles(ctx, cmd.Result, extUser); err != nil {
 		return err
 	}
 
 	// Sync isGrafanaAdmin permission
 	if extUser.IsGrafanaAdmin != nil && *extUser.IsGrafanaAdmin != cmd.Result.IsAdmin {
-		if err := ls.SQLStore.UpdateUserPermissions(cmd.Result.Id, *extUser.IsGrafanaAdmin); err != nil {
+		if err := ls.SQLStore.UpdateUserPermissions(cmd.Result.ID, *extUser.IsGrafanaAdmin); err != nil {
 			return err
 		}
 	}
@@ -130,26 +156,65 @@ func (ls *Implementation) UpsertUser(cmd *models.UpsertUserCommand) error {
 	return nil
 }
 
+func (ls *Implementation) DisableExternalUser(ctx context.Context, username string) error {
+	// Check if external user exist in Grafana
+	userQuery := &models.GetExternalUserInfoByLoginQuery{
+		LoginOrEmail: username,
+	}
+
+	if err := ls.AuthInfoService.GetExternalUserInfoByLogin(ctx, userQuery); err != nil {
+		return err
+	}
+
+	userInfo := userQuery.Result
+	if userInfo.IsDisabled {
+		return nil
+	}
+
+	logger.Debug(
+		"Disabling external user",
+		"user",
+		userQuery.Result.Login,
+	)
+
+	// Mark user as disabled in grafana db
+	disableUserCmd := &models.DisableUserCommand{
+		UserId:     userQuery.Result.UserId,
+		IsDisabled: true,
+	}
+
+	if err := ls.SQLStore.DisableUser(ctx, disableUserCmd); err != nil {
+		logger.Debug(
+			"Error disabling external user",
+			"user",
+			userQuery.Result.Login,
+			"message",
+			err.Error(),
+		)
+		return err
+	}
+	return nil
+}
+
 // SetTeamSyncFunc sets the function received through args as the team sync function.
 func (ls *Implementation) SetTeamSyncFunc(teamSyncFunc login.TeamSyncFunc) {
 	ls.TeamSync = teamSyncFunc
 }
 
-func (ls *Implementation) createUser(extUser *models.ExternalUserInfo) (*models.User, error) {
-	cmd := models.CreateUserCommand{
+func (ls *Implementation) createUser(extUser *models.ExternalUserInfo) (*user.User, error) {
+	cmd := user.CreateUserCommand{
 		Login:        extUser.Login,
 		Email:        extUser.Email,
 		Name:         extUser.Name,
 		SkipOrgSetup: len(extUser.OrgRoles) > 0,
 	}
-
 	return ls.CreateUser(cmd)
 }
 
-func updateUser(user *models.User, extUser *models.ExternalUserInfo) error {
+func (ls *Implementation) updateUser(ctx context.Context, user *user.User, extUser *models.ExternalUserInfo) error {
 	// sync user info
 	updateCmd := &models.UpdateUserCommand{
-		UserId: user.Id,
+		UserId: user.ID,
 	}
 
 	needsUpdate := false
@@ -175,24 +240,24 @@ func updateUser(user *models.User, extUser *models.ExternalUserInfo) error {
 		return nil
 	}
 
-	logger.Debug("Syncing user info", "id", user.Id, "update", updateCmd)
-	return bus.Dispatch(updateCmd)
+	logger.Debug("Syncing user info", "id", user.ID, "update", updateCmd)
+	return ls.SQLStore.UpdateUser(ctx, updateCmd)
 }
 
-func updateUserAuth(user *models.User, extUser *models.ExternalUserInfo) error {
+func (ls *Implementation) updateUserAuth(ctx context.Context, user *user.User, extUser *models.ExternalUserInfo) error {
 	updateCmd := &models.UpdateAuthInfoCommand{
 		AuthModule: extUser.AuthModule,
 		AuthId:     extUser.AuthId,
-		UserId:     user.Id,
+		UserId:     user.ID,
 		OAuthToken: extUser.OAuthToken,
 	}
 
-	logger.Debug("Updating user_auth info", "user_id", user.Id)
-	return bus.Dispatch(updateCmd)
+	logger.Debug("Updating user_auth info", "user_id", user.ID)
+	return ls.AuthInfoService.UpdateAuthInfo(ctx, updateCmd)
 }
 
-func syncOrgRoles(user *models.User, extUser *models.ExternalUserInfo) error {
-	logger.Debug("Syncing organization roles", "id", user.Id, "extOrgRoles", extUser.OrgRoles)
+func (ls *Implementation) syncOrgRoles(ctx context.Context, user *user.User, extUser *models.ExternalUserInfo) error {
+	logger.Debug("Syncing organization roles", "id", user.ID, "extOrgRoles", extUser.OrgRoles)
 
 	// don't sync org roles if none is specified
 	if len(extUser.OrgRoles) == 0 {
@@ -200,8 +265,8 @@ func syncOrgRoles(user *models.User, extUser *models.ExternalUserInfo) error {
 		return nil
 	}
 
-	orgsQuery := &models.GetUserOrgListQuery{UserId: user.Id}
-	if err := bus.Dispatch(orgsQuery); err != nil {
+	orgsQuery := &models.GetUserOrgListQuery{UserId: user.ID}
+	if err := ls.SQLStore.GetUserOrgList(ctx, orgsQuery); err != nil {
 		return err
 	}
 
@@ -217,8 +282,8 @@ func syncOrgRoles(user *models.User, extUser *models.ExternalUserInfo) error {
 			deleteOrgIds = append(deleteOrgIds, org.OrgId)
 		} else if extRole != org.Role {
 			// update role
-			cmd := &models.UpdateOrgUserCommand{OrgId: org.OrgId, UserId: user.Id, Role: extRole}
-			if err := bus.Dispatch(cmd); err != nil {
+			cmd := &models.UpdateOrgUserCommand{OrgId: org.OrgId, UserId: user.ID, Role: extRole}
+			if err := ls.SQLStore.UpdateOrgUser(ctx, cmd); err != nil {
 				return err
 			}
 		}
@@ -231,8 +296,8 @@ func syncOrgRoles(user *models.User, extUser *models.ExternalUserInfo) error {
 		}
 
 		// add role
-		cmd := &models.AddOrgUserCommand{UserId: user.Id, Role: orgRole, OrgId: orgId}
-		err := bus.Dispatch(cmd)
+		cmd := &models.AddOrgUserCommand{UserId: user.ID, Role: orgRole, OrgId: orgId}
+		err := ls.SQLStore.AddOrgUser(ctx, cmd)
 		if err != nil && !errors.Is(err, models.ErrOrgNotFound) {
 			return err
 		}
@@ -241,9 +306,9 @@ func syncOrgRoles(user *models.User, extUser *models.ExternalUserInfo) error {
 	// delete any removed org roles
 	for _, orgId := range deleteOrgIds {
 		logger.Debug("Removing user's organization membership as part of syncing with OAuth login",
-			"userId", user.Id, "orgId", orgId)
-		cmd := &models.RemoveOrgUserCommand{OrgId: orgId, UserId: user.Id}
-		if err := bus.Dispatch(cmd); err != nil {
+			"userId", user.ID, "orgId", orgId)
+		cmd := &models.RemoveOrgUserCommand{OrgId: orgId, UserId: user.ID}
+		if err := ls.SQLStore.RemoveOrgUser(ctx, cmd); err != nil {
 			if errors.Is(err, models.ErrLastOrgAdmin) {
 				logger.Error(err.Error(), "userId", cmd.UserId, "orgId", cmd.OrgId)
 				continue
@@ -254,15 +319,15 @@ func syncOrgRoles(user *models.User, extUser *models.ExternalUserInfo) error {
 	}
 
 	// update user's default org if needed
-	if _, ok := extUser.OrgRoles[user.OrgId]; !ok {
+	if _, ok := extUser.OrgRoles[user.OrgID]; !ok {
 		for orgId := range extUser.OrgRoles {
-			user.OrgId = orgId
+			user.OrgID = orgId
 			break
 		}
 
-		return bus.Dispatch(&models.SetUsingOrgCommand{
-			UserId: user.Id,
-			OrgId:  user.OrgId,
+		return ls.SQLStore.SetUsingOrg(ctx, &models.SetUsingOrgCommand{
+			UserId: user.ID,
+			OrgId:  user.OrgID,
 		})
 	}
 

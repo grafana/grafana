@@ -1,6 +1,7 @@
 package state
 
 import (
+	"context"
 	"errors"
 	"net/url"
 	"testing"
@@ -56,10 +57,10 @@ func TestExpandTemplate(t *testing.T) {
 		labels:   data.Labels{"instance": "foo"},
 		expected: "foo is down",
 	}, {
-		name:          "missing label in $labels returns error",
-		text:          "{{ $labels.instance }} is down",
-		labels:        data.Labels{},
-		expectedError: errors.New("error executing template __alert_test: template: __alert_test:1:86: executing \"__alert_test\" at <$labels.instance>: map has no entry for key \"instance\""),
+		name:     "missing label in $labels returns <no value>",
+		text:     "{{ $labels.instance }} is down",
+		labels:   data.Labels{},
+		expected: "<no value> is down",
 	}, {
 		name: "values are expanded into $values",
 		text: "{{ $values.A.Labels.instance }} has value {{ $values.A }}",
@@ -87,7 +88,7 @@ func TestExpandTemplate(t *testing.T) {
 		},
 		expected: "foo has value 1.1",
 	}, {
-		name: "missing label in $values returns error",
+		name: "missing label in $values returns <no value>",
 		text: "{{ $values.A.Labels.instance }} has value {{ $values.A }}",
 		alertInstance: eval.Result{
 			Values: map[string]eval.NumberValueCapture{
@@ -98,7 +99,7 @@ func TestExpandTemplate(t *testing.T) {
 				},
 			},
 		},
-		expectedError: errors.New("error executing template __alert_test: template: __alert_test:1:86: executing \"__alert_test\" at <$values.A.Labels.instance>: map has no entry for key \"instance\""),
+		expected: "<no value> has value 1",
 	}, {
 		name: "missing value in $values is returned as NaN",
 		text: "{{ $values.A.Labels.instance }} has value {{ $values.A }}",
@@ -403,7 +404,7 @@ func TestExpandTemplate(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			v, err := expandTemplate("test", c.text, c.labels, c.alertInstance, externalURL)
+			v, err := expandTemplate(context.Background(), "test", c.text, c.labels, c.alertInstance, externalURL)
 			if c.expectedError != nil {
 				require.NotNil(t, err)
 				require.EqualError(t, c.expectedError, err.Error())

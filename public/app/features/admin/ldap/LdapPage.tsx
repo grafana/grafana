@@ -1,14 +1,14 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
+
 import { NavModel } from '@grafana/data';
+import { featureEnabled } from '@grafana/runtime';
 import { Alert, Button, LegacyForms } from '@grafana/ui';
 const { FormField } = LegacyForms;
-import { getNavModel } from 'app/core/selectors/navModel';
-import config from 'app/core/config';
 import Page from 'app/core/components/Page/Page';
-import { LdapConnectionStatus } from './LdapConnectionStatus';
-import { LdapSyncInfo } from './LdapSyncInfo';
-import { LdapUserInfo } from './LdapUserInfo';
+import { contextSrv } from 'app/core/core';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { getNavModel } from 'app/core/selectors/navModel';
 import {
   AppNotificationSeverity,
   LdapError,
@@ -18,6 +18,7 @@ import {
   LdapConnectionInfo,
   AccessControlAction,
 } from 'app/types';
+
 import {
   loadLdapState,
   loadLdapSyncStatus,
@@ -25,8 +26,10 @@ import {
   clearUserError,
   clearUserMappingInfo,
 } from '../state/actions';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { contextSrv } from 'app/core/core';
+
+import { LdapConnectionStatus } from './LdapConnectionStatus';
+import { LdapSyncInfo } from './LdapSyncInfo';
+import { LdapUserInfo } from './LdapUserInfo';
 
 interface OwnProps extends GrafanaRouteComponentProps<{}, { username?: string }> {
   navModel: NavModel;
@@ -99,7 +102,7 @@ export class LdapPage extends PureComponent<Props, State> {
 
             <LdapConnectionStatus ldapConnectionInfo={ldapConnectionInfo} />
 
-            {config.licenseInfo.hasLicense && ldapSyncInfo && <LdapSyncInfo ldapSyncInfo={ldapSyncInfo} />}
+            {featureEnabled('ldapsync') && ldapSyncInfo && <LdapSyncInfo ldapSyncInfo={ldapSyncInfo} />}
 
             {canReadLDAPUser && (
               <>

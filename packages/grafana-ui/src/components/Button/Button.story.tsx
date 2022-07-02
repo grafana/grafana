@@ -1,11 +1,13 @@
-import React from 'react';
 import { Story, Meta } from '@storybook/react';
-import { allButtonVariants, allButtonFills, Button, ButtonProps } from './Button';
-import mdx from './Button.mdx';
-import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
-import { ButtonGroup } from './ButtonGroup';
+import React from 'react';
+
 import { ComponentSize } from '../../types/size';
 import { Card } from '../Card/Card';
+import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
+
+import { allButtonVariants, allButtonFills, Button, ButtonProps } from './Button';
+import mdx from './Button.mdx';
+import { ButtonGroup } from './ButtonGroup';
 
 export default {
   title: 'Buttons/Button',
@@ -69,18 +71,17 @@ export const Variants: Story<ButtonProps> = () => {
           <Button icon="angle-down" />
         </ButtonGroup>
       </HorizontalGroup>
-      <Card heading="Button inside card">
+      <Card>
+        <Card.Heading>Button inside card</Card.Heading>
         <Card.Actions>
-          <>
-            {allButtonVariants.map((variant) => (
-              <Button variant={variant} key={variant}>
-                {variant}
-              </Button>
-            ))}
-            <Button variant="primary" disabled>
-              Disabled
+          {allButtonVariants.map((variant) => (
+            <Button variant={variant} key={variant}>
+              {variant}
             </Button>
-          </>
+          ))}
+          <Button variant="primary" disabled>
+            Disabled
+          </Button>
         </Card.Actions>
       </Card>
     </VerticalGroup>

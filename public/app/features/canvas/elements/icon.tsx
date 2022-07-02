@@ -1,23 +1,26 @@
+import { css } from '@emotion/css';
+import { isString } from 'lodash';
 import React, { CSSProperties } from 'react';
+import SVG from 'react-inlinesvg';
 
-import { CanvasElementItem, CanvasElementProps } from '../element';
 import {
   ColorDimensionConfig,
   ResourceDimensionConfig,
   ResourceDimensionMode,
   getPublicOrAbsoluteUrl,
 } from 'app/features/dimensions';
-import { ColorDimensionEditor, ResourceDimensionEditor } from 'app/features/dimensions/editors';
-import SVG from 'react-inlinesvg';
-import { css } from '@emotion/css';
-import { isString } from 'lodash';
-import { LineConfig } from '../types';
 import { DimensionContext } from 'app/features/dimensions/context';
+import { ColorDimensionEditor, ResourceDimensionEditor } from 'app/features/dimensions/editors';
+import { APIEditor, APIEditorConfig, callApi } from 'app/plugins/panel/canvas/editor/APIEditor';
+
+import { CanvasElementItem, CanvasElementProps } from '../element';
+import { LineConfig } from '../types';
 
 export interface IconConfig {
   path?: ResourceDimensionConfig;
   fill?: ColorDimensionConfig;
   stroke?: LineConfig;
+  api?: APIEditorConfig;
 }
 
 interface IconData {
@@ -25,6 +28,7 @@ interface IconData {
   fill: string;
   strokeColor?: string;
   stroke?: number;
+  api?: APIEditorConfig;
 }
 
 // When a stoke is defined, we want the path to be in page units
@@ -35,10 +39,16 @@ const svgStrokePathClass = css`
 `;
 
 export function IconDisplay(props: CanvasElementProps) {
-  const { width, height, data } = props;
+  const { data } = props;
   if (!data?.path) {
     return null;
   }
+
+  const onClick = () => {
+    if (data?.api) {
+      callApi(data.api);
+    }
+  };
 
   const svgStyle: CSSProperties = {
     fill: data?.fill,
@@ -48,9 +58,8 @@ export function IconDisplay(props: CanvasElementProps) {
 
   return (
     <SVG
+      onClick={onClick}
       src={data.path}
-      width={width}
-      height={height}
       style={svgStyle}
       className={svgStyle.strokeWidth ? svgStrokePathClass : undefined}
     />
@@ -68,6 +77,8 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
     placement: {
       width: 50,
       height: 50,
+      top: 0,
+      left: 0,
     },
     ...options,
     config: {
@@ -92,6 +103,7 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
     const data: IconData = {
       path,
       fill: cfg.fill ? ctx.getColor(cfg.fill).value() : '#CCC',
+      api: cfg?.api ?? undefined,
     };
 
     if (cfg.stroke?.width && cfg.stroke.color) {
@@ -151,6 +163,13 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
           fixed: 'grey',
         },
         showIf: (cfg) => Boolean(cfg?.config?.stroke?.width),
+      })
+      .addCustomEditor({
+        category,
+        id: 'apiSelector',
+        path: 'config.api',
+        name: 'API',
+        editor: APIEditor,
       });
   },
 };

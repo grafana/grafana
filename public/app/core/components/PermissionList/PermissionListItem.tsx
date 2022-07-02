@@ -1,8 +1,9 @@
 import React, { PureComponent } from 'react';
-import { Select, Icon, Button } from '@grafana/ui';
+
 import { SelectableValue } from '@grafana/data';
-import { dashboardPermissionLevels, DashboardAcl, PermissionLevel } from 'app/types/acl';
+import { Select, Icon, Button } from '@grafana/ui';
 import { FolderInfo } from 'app/types';
+import { dashboardPermissionLevels, DashboardAcl, PermissionLevel } from 'app/types/acl';
 
 const setClassNameHelper = (inherited: boolean) => {
   return inherited ? 'gf-form-disabled' : '';
@@ -65,9 +66,13 @@ export default class PermissionsListItem extends PureComponent<Props> {
           {item.inherited && folderInfo && (
             <em className="muted no-wrap">
               Inherited from folder{' '}
-              <a className="text-link" href={`${folderInfo.url}/permissions`}>
-                {folderInfo.title}
-              </a>{' '}
+              {folderInfo.canViewFolderPermissions ? (
+                <a className="text-link" href={`${folderInfo.url}/permissions`}>
+                  {folderInfo.title}
+                </a>
+              ) : (
+                folderInfo.title
+              )}
             </em>
           )}
           {inheritedFromRoot && <em className="muted no-wrap">Default Permission</em>}
@@ -82,7 +87,6 @@ export default class PermissionsListItem extends PureComponent<Props> {
             disabled={item.inherited}
             value={currentPermissionLevel}
             width={25}
-            menuShouldPortal
           />
         </td>
         <td>

@@ -1,36 +1,44 @@
-+++
-title = "Microsoft SQL Server"
-description = "Guide for using Microsoft SQL Server in Grafana"
-keywords = ["grafana", "MSSQL", "Microsoft", "SQL", "guide", "Azure SQL Database"]
-aliases = ["/docs/grafana/latest/features/datasources/mssql/"]
-weight = 900
-+++
+---
+aliases:
+  - /docs/grafana/latest/datasources/mssql/
+  - /docs/grafana/latest/features/datasources/mssql/
+description: Guide for using Microsoft SQL Server in Grafana
+keywords:
+  - grafana
+  - MSSQL
+  - Microsoft
+  - SQL
+  - guide
+  - Azure SQL Database
+title: Microsoft SQL Server
+weight: 900
+---
 
 # Using Microsoft SQL Server in Grafana
 
-Grafana ships with a built-in Microsoft SQL Server (MS SQL) data source plugin that allows you to query and visualize data from any Microsoft SQL Server 2005 or newer, including Microsoft Azure SQL Database. This topic explains options, variables, querying, and other options specific to the MS SQL data source. Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
+Grafana ships with a built-in Microsoft SQL Server (MS SQL) data source plugin that allows you to query and visualize data from any Microsoft SQL Server 2005 or newer, including Microsoft Azure SQL Database. This topic explains options, variables, querying, and other options specific to the MS SQL data source. Refer to [Add a data source]({{< relref "add-a-data-source/" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
 
 ## Data source options
 
 To access data source settings, hover your mouse over the **Configuration** (gear) icon, then click **Data Sources**, and then click the data source.
 
-| Name             | Description                                                                                                                           |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `Name`           | The data source name. This is how you refer to the data source in panels and queries.                                                 |
-| `Default`        | Default data source means that it will be pre-selected for new panels.                                                                |
-| `Host`           | The IP address/hostname and optional port of your MS SQL instance. If the port is omitted, the driver default will be used (0).       |
-| `Database`       | Name of your MS SQL database.                                                                                                         |
-| `Authentication` | Authentication mode. Either using SQL Server Authentication or Windows Authentication (single sign on for Windows users).             |
-| `User`           | Database user's login/username                                                                                                        |
-| `Password`       | Database user's password                                                                                                              |
-| `Encrypt`        | This option determines whether or to which extent a secure SSL TCP/IP connection will be negotiated with the server, default `false`. |
-| `Max open`       | The maximum number of open connections to the database, default `unlimited`.                                                          |
-| `Max idle`       | The maximum number of connections in the idle connection pool, default `2`.                                                           |
-| `Max lifetime`   | The maximum amount of time in seconds a connection may be reused, default `14400`/4 hours.                                            |
+| Name             | Description                                                                                                                                                                                                                                           |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Name`           | The data source name. This is how you refer to the data source in panels and queries.                                                                                                                                                                 |
+| `Default`        | Default data source means that it will be pre-selected for new panels.                                                                                                                                                                                |
+| `Host`           | The IP address/hostname and optional port of your MS SQL instance. If you omit the port, then the driver default is used (0). You can specify multiple connection properties such as ApplicationIntent using ';' character to separate each property. |
+| `Database`       | Name of your MS SQL database.                                                                                                                                                                                                                         |
+| `Authentication` | Authentication mode. Either using SQL Server Authentication or Windows Authentication (single sign on for Windows users).                                                                                                                             |
+| `User`           | Database user's login/username                                                                                                                                                                                                                        |
+| `Password`       | Database user's password                                                                                                                                                                                                                              |
+| `Encrypt`        | This option determines whether or to which extent a secure SSL TCP/IP connection will be negotiated with the server, default `false`.                                                                                                                 |
+| `Max open`       | The maximum number of open connections to the database, default `unlimited`.                                                                                                                                                                          |
+| `Max idle`       | The maximum number of connections in the idle connection pool, default `2`.                                                                                                                                                                           |
+| `Max lifetime`   | The maximum amount of time in seconds a connection may be reused, default `14400`/4 hours.                                                                                                                                                            |
 
 ### Min time interval
 
-A lower limit for the [$__interval]({{< relref "../variables/variable-types/_index.md#the-interval-variable" >}}) and [$__interval_ms]({{< relref "../variables/variable-types/_index.md#the-interval-ms-variable" >}}) variables.
+A lower limit for the [$__interval]({{< relref "../variables/variable-types/global-variables/#__interval" >}}) and [$__interval_ms]({{< relref "../variables/variable-types/global-variables/#__interval_ms" >}}) variables.
 Recommended to be set to write frequency, for example `1m` if your data is written every minute.
 This option can also be overridden/configured in a dashboard panel under data source options. It's important to note that this value **needs** to be formatted as a
 number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 seconds). The following time identifiers are supported:
@@ -170,11 +178,11 @@ The resulting table panel:
 
 If you set Format as to _Time series_, then the query must have a column named time that returns either a SQL datetime or any numeric datatype representing Unix epoch in seconds. In addition, result sets of time series queries must be sorted by time for panels to properly visualize the result.
 
-A time series query result is returned in a [wide data frame format]({{< relref "../developers/plugins/data-frames.md#wide-format" >}}). Any column except time or of type string transforms into value fields in the data frame query result. Any string column transforms into field labels in the data frame query result.
+A time series query result is returned in a [wide data frame format]({{< relref "../developers/plugins/data-frames/#wide-format" >}}). Any column except time or of type string transforms into value fields in the data frame query result. Any string column transforms into field labels in the data frame query result.
 
 > For backward compatibility, there's an exception to the above rule for queries that return three columns including a string column named metric. Instead of transforming the metric column into field labels, it becomes the field name, and then the series name is formatted as the value of the metric column. See the example with the metric column below.
 
-You can optionally customize the default series name formatting using instructions in [Standard field options/Display name]({{< relref "../panels/standard-options.md#display-name" >}}).
+To optionally customize the default series name formatting, refer to [Standard field definitions]({{< relref "../panels/standard-field-definitions/#display-name" >}}).
 
 **Example with `metric` column:**
 
@@ -218,7 +226,7 @@ GROUP BY
 ORDER BY 1
 ```
 
-Given the data frame result in the following example and using the graph panel, you will get two series named _value 10.0.1.1_ and _value 10.0.1.2_. To render the series with a name of _10.0.1.1_ and _10.0.1.2_ , use a [Standard field options/Display name]({{< relref "../panels/standard-options.md#display-name" >}}) value of `${__field.labels.hostname}`.
+Given the data frame result in the following example and using the graph panel, you will get two series named _value 10.0.1.1_ and _value 10.0.1.2_. To render the series with a name of _10.0.1.1_ and _10.0.1.2_ , use a [Standard field definition]({{< relref "../panels/standard-field-definitions/#display-name" >}}) display name value of `${__field.labels.hostname}`.
 
 Data frame result:
 
@@ -263,7 +271,7 @@ Data frame result:
 
 Instead of hard-coding things like server, application and sensor name in your metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../variables/_index.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
+Check out the [Templating]({{< relref "../variables/" >}}) documentation for an introduction to the templating feature and the different types of template variables.
 
 ### Query variable
 
@@ -333,11 +341,11 @@ Grafana automatically creates a quoted, comma-separated string for multi-value v
 
 `${servers:csv}`
 
-Read more about variable formatting options in the [Variables]({{< relref "../variables/variable-types/_index.md#advanced-formatting-options" >}}) documentation.
+Read more about variable formatting options in the [Variables]({{< relref "../variables/variable-types/#advanced-formatting-options" >}}) documentation.
 
 ## Annotations
 
-[Annotations]({{< relref "../dashboards/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation queries via the Dashboard menu / Annotations view.
+[Annotations]({{< relref "../dashboards/annotations/" >}}) allow you to overlay rich event information on top of graphs. You add annotation queries via the Dashboard menu / Annotations view.
 
 **Columns:**
 

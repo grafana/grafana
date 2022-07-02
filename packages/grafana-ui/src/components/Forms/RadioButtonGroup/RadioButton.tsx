@@ -1,10 +1,12 @@
-import React from 'react';
-import { useTheme2, stylesFactory } from '../../../themes';
-import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
-import { getPropertiesForButtonSize } from '../commonStyles';
-import { getFocusStyles, getMouseFocusStyles } from '../../../themes/mixins';
+import React from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import { StringSelector } from '@grafana/e2e-selectors';
+
+import { useTheme2, stylesFactory } from '../../../themes';
+import { getFocusStyles, getMouseFocusStyles } from '../../../themes/mixins';
+import { getPropertiesForButtonSize } from '../commonStyles';
 
 export type RadioButtonSize = 'sm' | 'md';
 
@@ -16,6 +18,7 @@ export interface RadioButtonProps {
   active: boolean;
   id: string;
   onChange: () => void;
+  onClick: () => void;
   fullWidth?: boolean;
   'aria-label'?: StringSelector;
   children?: React.ReactNode;
@@ -29,6 +32,7 @@ export const RadioButton = React.forwardRef<HTMLInputElement, RadioButtonProps>(
       disabled = false,
       size = 'md',
       onChange,
+      onClick,
       id,
       name = undefined,
       description,
@@ -46,6 +50,7 @@ export const RadioButton = React.forwardRef<HTMLInputElement, RadioButtonProps>(
           type="radio"
           className={styles.radio}
           onChange={onChange}
+          onClick={onClick}
           disabled={disabled}
           id={id}
           checked={active}

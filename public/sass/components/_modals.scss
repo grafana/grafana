@@ -114,7 +114,7 @@
   .confirm-modal-buttons {
     margin-bottom: $spacer;
     button {
-      margin-right: $spacer/2;
+      margin-right: calc($spacer/2);
     }
   }
 

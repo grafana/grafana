@@ -2,35 +2,63 @@ package libraryelements
 
 import (
 	"errors"
+	"net/http"
 
-	"github.com/go-macaron/binding"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 func (l *LibraryElementService) registerAPIEndpoints() {
 	l.RouteRegister.Group("/api/library-elements", func(entities routing.RouteRegister) {
-		entities.Post("/", middleware.ReqSignedIn, binding.Bind(CreateLibraryElementCommand{}), routing.Wrap(l.createHandler))
+		entities.Post("/", middleware.ReqSignedIn, routing.Wrap(l.createHandler))
 		entities.Delete("/:uid", middleware.ReqSignedIn, routing.Wrap(l.deleteHandler))
 		entities.Get("/", middleware.ReqSignedIn, routing.Wrap(l.getAllHandler))
 		entities.Get("/:uid", middleware.ReqSignedIn, routing.Wrap(l.getHandler))
 		entities.Get("/:uid/connections/", middleware.ReqSignedIn, routing.Wrap(l.getConnectionsHandler))
 		entities.Get("/name/:name", middleware.ReqSignedIn, routing.Wrap(l.getByNameHandler))
-		entities.Patch("/:uid", middleware.ReqSignedIn, binding.Bind(patchLibraryElementCommand{}), routing.Wrap(l.patchHandler))
+		entities.Patch("/:uid", middleware.ReqSignedIn, routing.Wrap(l.patchHandler))
 	})
 }
 
 // createHandler handles POST /api/library-elements.
-func (l *LibraryElementService) createHandler(c *models.ReqContext, cmd CreateLibraryElementCommand) response.Response {
+func (l *LibraryElementService) createHandler(c *models.ReqContext) response.Response {
+	cmd := CreateLibraryElementCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
+	if cmd.FolderUID != nil {
+		if *cmd.FolderUID == "" {
+			cmd.FolderID = 0
+		} else {
+			folder, err := l.folderService.GetFolderByUID(c.Req.Context(), c.SignedInUser, c.OrgId, *cmd.FolderUID)
+			if err != nil || folder == nil {
+				return response.Error(http.StatusBadRequest, "failed to get folder", err)
+			}
+			cmd.FolderID = folder.Id
+		}
+	}
+
 	element, err := l.createLibraryElement(c.Req.Context(), c.SignedInUser, cmd)
 	if err != nil {
 		return toLibraryElementError(err, "Failed to create library element")
 	}
 
-	return response.JSON(200, LibraryElementResponse{Result: element})
+	if element.FolderID != 0 {
+		folder, err := l.folderService.GetFolderByID(c.Req.Context(), c.SignedInUser, element.FolderID, c.OrgId)
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "failed to get folder", err)
+		}
+		element.FolderUID = folder.Uid
+		element.Meta.FolderUID = folder.Uid
+		element.Meta.FolderName = folder.Title
+	}
+
+	return response.JSON(http.StatusOK, LibraryElementResponse{Result: element})
 }
 
 // deleteHandler handles DELETE /api/library-elements/:uid.
@@ -40,7 +68,7 @@ func (l *LibraryElementService) deleteHandler(c *models.ReqContext) response.Res
 		return toLibraryElementError(err, "Failed to delete library element")
 	}
 
-	return response.JSON(200, DeleteLibraryElementResponse{
+	return response.JSON(http.StatusOK, DeleteLibraryElementResponse{
 		Message: "Library element deleted",
 		ID:      id,
 	})
@@ -53,7 +81,7 @@ func (l *LibraryElementService) getHandler(c *models.ReqContext) response.Respon
 		return toLibraryElementError(err, "Failed to get library element")
 	}
 
-	return response.JSON(200, LibraryElementResponse{Result: element})
+	return response.JSON(http.StatusOK, LibraryElementResponse{Result: element})
 }
 
 // getAllHandler handles GET /api/library-elements/.
@@ -73,17 +101,44 @@ func (l *LibraryElementService) getAllHandler(c *models.ReqContext) response.Res
 		return toLibraryElementError(err, "Failed to get library elements")
 	}
 
-	return response.JSON(200, LibraryElementSearchResponse{Result: elementsResult})
+	return response.JSON(http.StatusOK, LibraryElementSearchResponse{Result: elementsResult})
 }
 
 // patchHandler handles PATCH /api/library-elements/:uid
-func (l *LibraryElementService) patchHandler(c *models.ReqContext, cmd patchLibraryElementCommand) response.Response {
+func (l *LibraryElementService) patchHandler(c *models.ReqContext) response.Response {
+	cmd := PatchLibraryElementCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
+	if cmd.FolderUID != nil {
+		if *cmd.FolderUID == "" {
+			cmd.FolderID = 0
+		} else {
+			folder, err := l.folderService.GetFolderByUID(c.Req.Context(), c.SignedInUser, c.OrgId, *cmd.FolderUID)
+			if err != nil || folder == nil {
+				return response.Error(http.StatusBadRequest, "failed to get folder", err)
+			}
+			cmd.FolderID = folder.Id
+		}
+	}
+
 	element, err := l.patchLibraryElement(c.Req.Context(), c.SignedInUser, cmd, web.Params(c.Req)[":uid"])
 	if err != nil {
 		return toLibraryElementError(err, "Failed to update library element")
 	}
 
-	return response.JSON(200, LibraryElementResponse{Result: element})
+	if element.FolderID != 0 {
+		folder, err := l.folderService.GetFolderByID(c.Req.Context(), c.SignedInUser, element.FolderID, c.OrgId)
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "failed to get folder", err)
+		}
+		element.FolderUID = folder.Uid
+		element.Meta.FolderUID = folder.Uid
+		element.Meta.FolderName = folder.Title
+	}
+
+	return response.JSON(http.StatusOK, LibraryElementResponse{Result: element})
 }
 
 // getConnectionsHandler handles GET /api/library-panels/:uid/connections/.
@@ -93,7 +148,7 @@ func (l *LibraryElementService) getConnectionsHandler(c *models.ReqContext) resp
 		return toLibraryElementError(err, "Failed to get connections")
 	}
 
-	return response.JSON(200, LibraryElementConnectionsResponse{Result: connections})
+	return response.JSON(http.StatusOK, LibraryElementConnectionsResponse{Result: connections})
 }
 
 // getByNameHandler handles GET /api/library-elements/name/:name/.
@@ -103,7 +158,7 @@ func (l *LibraryElementService) getByNameHandler(c *models.ReqContext) response.
 		return toLibraryElementError(err, "Failed to get library element")
 	}
 
-	return response.JSON(200, LibraryElementArrayResponse{Result: elements})
+	return response.JSON(http.StatusOK, LibraryElementArrayResponse{Result: elements})
 }
 
 func toLibraryElementError(err error, message string) response.Response {
@@ -119,11 +174,11 @@ func toLibraryElementError(err error, message string) response.Response {
 	if errors.Is(err, errLibraryElementVersionMismatch) {
 		return response.Error(412, errLibraryElementVersionMismatch.Error(), err)
 	}
-	if errors.Is(err, models.ErrFolderNotFound) {
-		return response.Error(404, models.ErrFolderNotFound.Error(), err)
+	if errors.Is(err, dashboards.ErrFolderNotFound) {
+		return response.Error(404, dashboards.ErrFolderNotFound.Error(), err)
 	}
-	if errors.Is(err, models.ErrFolderAccessDenied) {
-		return response.Error(403, models.ErrFolderAccessDenied.Error(), err)
+	if errors.Is(err, dashboards.ErrFolderAccessDenied) {
+		return response.Error(403, dashboards.ErrFolderAccessDenied.Error(), err)
 	}
 	if errors.Is(err, errLibraryElementHasConnections) {
 		return response.Error(403, errLibraryElementHasConnections.Error(), err)

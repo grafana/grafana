@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { LegendDisplayMode } from '@grafana/schema';
+import { Subscription } from 'rxjs';
+
 import {
   DataHoverClearEvent,
   DataHoverEvent,
@@ -9,11 +10,8 @@ import {
   getFieldDisplayValues,
   PanelProps,
 } from '@grafana/data';
-
-import { PieChart } from './PieChart';
-
-import { PieChartLegendOptions, PieChartLegendValues, PieChartOptions } from './types';
-import { Subscription } from 'rxjs';
+import { PanelDataErrorView } from '@grafana/runtime';
+import { HideSeriesConfig, LegendDisplayMode } from '@grafana/schema';
 import {
   SeriesVisibilityChangeBehavior,
   usePanelContext,
@@ -22,6 +20,9 @@ import {
   VizLegend,
   VizLegendItem,
 } from '@grafana/ui';
+
+import { PieChart } from './PieChart';
+import { PieChartLegendOptions, PieChartLegendValues, PieChartOptions } from './types';
 import { filterDisplayItems, sumDisplayItemsReducer } from './utils';
 
 const defaultLegendOptions: PieChartLegendOptions = {
@@ -37,7 +38,7 @@ interface Props extends PanelProps<PieChartOptions> {}
  * @beta
  */
 export function PieChartPanel(props: Props) {
-  const { data, timeZone, fieldConfig, replaceVariables, width, height, options } = props;
+  const { data, timeZone, fieldConfig, replaceVariables, width, height, options, id } = props;
 
   const theme = useTheme2();
   const highlightedTitle = useSliceHighlightState();
@@ -51,11 +52,7 @@ export function PieChartPanel(props: Props) {
   });
 
   if (!hasFrames(fieldDisplayValues)) {
-    return (
-      <div className="panel-empty">
-        <p>No data</p>
-      </div>
-    );
+    return <PanelDataErrorView panelId={id} fieldConfig={fieldConfig} data={data} />;
   }
 
   return (
@@ -85,7 +82,7 @@ function getLegend(props: Props, displayValues: FieldDisplay[]) {
   }
   const total = displayValues.filter(filterDisplayItems).reduce(sumDisplayItemsReducer, 0);
 
-  const legendItems = displayValues
+  const legendItems: VizLegendItem[] = displayValues
     // Since the pie chart is always sorted, let's sort the legend as well.
     .sort((a, b) => {
       if (isNaN(a.display.numeric)) {
@@ -96,14 +93,21 @@ function getLegend(props: Props, displayValues: FieldDisplay[]) {
         return b.display.numeric - a.display.numeric;
       }
     })
-    .map<VizLegendItem>((value, idx) => {
-      const hidden = value.field.custom.hideFrom.viz;
+    .map<VizLegendItem | undefined>((value: FieldDisplay, idx: number) => {
+      const hideFrom: HideSeriesConfig = value.field.custom?.hideFrom ?? {};
+
+      if (hideFrom.legend) {
+        return undefined;
+      }
+
+      const hideFromViz = Boolean(hideFrom.viz);
+
       const display = value.display;
       return {
         label: display.title ?? '',
         color: display.color ?? FALLBACK_COLOR,
         yAxis: 1,
-        disabled: hidden,
+        disabled: hideFromViz,
         getItemKey: () => (display.title ?? '') + idx,
         getDisplayValues: () => {
           const valuesToShow = legendOptions.values ?? [];
@@ -114,16 +118,16 @@ function getLegend(props: Props, displayValues: FieldDisplay[]) {
           }
 
           if (valuesToShow.includes(PieChartLegendValues.Percent)) {
-            const fractionOfTotal = hidden ? 0 : display.numeric / total;
+            const fractionOfTotal = hideFromViz ? 0 : display.numeric / total;
             const percentOfTotal = fractionOfTotal * 100;
 
             displayValues.push({
               numeric: fractionOfTotal,
               percent: percentOfTotal,
               text:
-                hidden || isNaN(fractionOfTotal)
+                hideFromViz || isNaN(fractionOfTotal)
                   ? props.fieldConfig.defaults.noValue ?? '-'
-                  : percentOfTotal.toFixed(0) + '%',
+                  : percentOfTotal.toFixed(value.field.decimals ?? 0) + '%',
               title: valuesToShow.length > 1 ? 'Percent' : '',
             });
           }
@@ -131,7 +135,8 @@ function getLegend(props: Props, displayValues: FieldDisplay[]) {
           return displayValues;
         },
       };
-    });
+    })
+    .filter((i): i is VizLegendItem => !!i);
 
   return (
     <VizLegend

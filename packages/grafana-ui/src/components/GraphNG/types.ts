@@ -1,4 +1,5 @@
 import { DataFrameFieldIndex, FieldMatcher } from '@grafana/data';
+
 import { SeriesVisibilityChangeMode } from '../PanelChrome';
 
 /**

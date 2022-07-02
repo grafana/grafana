@@ -1,8 +1,8 @@
+import { getTimeField, sortDataFrame } from '../../dataframe';
 import { DataFrame, Field, FieldMatcher, FieldType, Vector } from '../../types';
 import { ArrayVector } from '../../vector';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
-import { getTimeField, sortDataFrame } from '../../dataframe';
 
 export function pickBestJoinField(data: DataFrame[]): FieldMatcher {
   const { timeField } = getTimeField(data[0]);
@@ -49,13 +49,6 @@ export interface JoinOptions {
   keep?: FieldMatcher;
 
   /**
-   * When the result is a single frame, this will to a quick check to see if the values are sorted,
-   * and sort if necessary.  If the first/last values are in order the whole vector is assumed to be
-   * sorted
-   */
-  enforceSort?: boolean;
-
-  /**
    * @internal -- used when we need to keep a reference to the original frame/field index
    */
   keepOriginIndices?: boolean;
@@ -63,6 +56,21 @@ export interface JoinOptions {
 
 function getJoinMatcher(options: JoinOptions): FieldMatcher {
   return options.joinBy ?? pickBestJoinField(options.frames);
+}
+
+/**
+ * @internal
+ */
+export function maybeSortFrame(frame: DataFrame, fieldIdx: number) {
+  if (fieldIdx >= 0) {
+    let sortByField = frame.fields[fieldIdx];
+
+    if (sortByField.type !== FieldType.string && !isLikelyAscendingVector(sortByField.values)) {
+      frame = sortDataFrame(frame, fieldIdx);
+    }
+  }
+
+  return frame;
 }
 
 /**
@@ -109,12 +117,8 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
       }
     }
 
-    if (options.enforceSort) {
-      if (joinIndex >= 0) {
-        if (!isLikelyAscendingVector(frameCopy.fields[joinIndex].values)) {
-          frameCopy = sortDataFrame(frameCopy, joinIndex);
-        }
-      }
+    if (joinIndex >= 0) {
+      frameCopy = maybeSortFrame(frameCopy, joinIndex);
     }
 
     if (options.keep) {
@@ -226,7 +230,21 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
 //--------------------------------------------------------------------------------
 
 // Copied from uplot
-export type AlignedData = [number[], ...Array<Array<number | null | undefined>>];
+export type TypedArray =
+  | Int8Array
+  | Uint8Array
+  | Int16Array
+  | Uint16Array
+  | Int32Array
+  | Uint32Array
+  | Uint8ClampedArray
+  | Float32Array
+  | Float64Array;
+
+export type AlignedData = [
+  xValues: number[] | TypedArray,
+  ...yValues: Array<Array<number | null | undefined> | TypedArray>
+];
 
 // nullModes
 const NULL_REMOVE = 0; // nulls are converted to undefined (e.g. for spanGaps: true)
@@ -317,34 +335,46 @@ export function join(tables: AlignedData[], nullModes?: number[][]) {
   return data;
 }
 
-// Quick test if the first and last points look to be ascending
+// Test a few samples to see if the values are ascending
 // Only exported for tests
-export function isLikelyAscendingVector(data: Vector): boolean {
-  let first: any = undefined;
+export function isLikelyAscendingVector(data: Vector, samples = 50) {
+  const len = data.length;
 
-  for (let idx = 0; idx < data.length; idx++) {
-    const v = data.get(idx);
-    if (v != null) {
-      if (first != null) {
-        if (first > v) {
-          return false; // descending
-        }
-        break;
-      }
-      first = v;
-    }
+  // empty or single value
+  if (len <= 1) {
+    return true;
   }
 
-  let idx = data.length - 1;
-  while (idx >= 0) {
-    const v = data.get(idx--);
+  // skip leading & trailing nullish
+  let firstIdx = 0;
+  let lastIdx = len - 1;
+
+  while (firstIdx <= lastIdx && data.get(firstIdx) == null) {
+    firstIdx++;
+  }
+
+  while (lastIdx >= firstIdx && data.get(lastIdx) == null) {
+    lastIdx--;
+  }
+
+  // all nullish or one value surrounded by nullish
+  if (lastIdx <= firstIdx) {
+    return true;
+  }
+
+  const stride = Math.max(1, Math.floor((lastIdx - firstIdx + 1) / samples));
+
+  for (let prevVal = data.get(firstIdx), i = firstIdx + stride; i <= lastIdx; i += stride) {
+    const v = data.get(i);
+
     if (v != null) {
-      if (first > v) {
+      if (v <= prevVal) {
         return false;
       }
-      return true;
+
+      prevVal = v;
     }
   }
 
-  return true; // only one non-null point
+  return true;
 }

@@ -1,5 +1,7 @@
 import { concat, find, flattenDeep, forEach, get, map } from 'lodash';
-import { AnnotationEvent, dateTime, TimeSeries } from '@grafana/data';
+
+import { AnnotationEvent, dateTime, TimeSeries, VariableModel } from '@grafana/data';
+
 import { AzureLogsTableData, AzureLogsVariable } from '../types';
 import { AzureLogAnalyticsMetadata } from '../types/logAnalyticsMetadata';
 
@@ -212,7 +214,11 @@ function transformMetadataFunction(sourceSchema: AzureLogAnalyticsMetadata) {
   });
 }
 
-export function transformMetadataToKustoSchema(sourceSchema: AzureLogAnalyticsMetadata, nameOrIdOrSomething: string) {
+export function transformMetadataToKustoSchema(
+  sourceSchema: AzureLogAnalyticsMetadata,
+  nameOrIdOrSomething: string,
+  templateVariables: VariableModel[]
+) {
   const database = {
     name: nameOrIdOrSomething,
     tables: sourceSchema.tables,
@@ -221,6 +227,70 @@ export function transformMetadataToKustoSchema(sourceSchema: AzureLogAnalyticsMe
     minorVersion: 0,
   };
 
+  // Adding macros as known functions
+  database.functions.push(
+    {
+      name: '$__timeFilter',
+      body: '{ true }',
+      inputParameters: [
+        {
+          name: 'timeColumn',
+          type: 'System.String',
+          defaultValue: '""',
+          cslDefaultValue: '""',
+        },
+      ],
+    },
+    {
+      name: '$__timeFrom',
+      body: '{ datetime(2018-06-05T18:09:58.907Z) }',
+      inputParameters: [],
+    },
+    {
+      name: '$__timeTo',
+      body: '{ datetime(2018-06-05T20:09:58.907Z) }',
+      inputParameters: [],
+    },
+    {
+      name: '$__escapeMulti',
+      body: `{ @'\\grafana-vm\Network(eth0)\Total', @'\\hello!'}`,
+      inputParameters: [
+        {
+          name: '$myVar',
+          type: 'System.String',
+          defaultValue: '$myVar',
+          cslDefaultValue: '$myVar',
+        },
+      ],
+    },
+    {
+      name: '$__contains',
+      body: `{ colName in ('value1','value2') }`,
+      inputParameters: [
+        {
+          name: 'colName',
+          type: 'System.String',
+          defaultValue: 'colName',
+          cslDefaultValue: 'colName',
+        },
+        {
+          name: '$myVar',
+          type: 'System.String',
+          defaultValue: '$myVar',
+          cslDefaultValue: '$myVar',
+        },
+      ],
+    }
+  );
+
+  // Adding macros as global parameters
+  const globalParameters = templateVariables.map((v) => {
+    return {
+      name: `$${v.name}`,
+      type: 'dynamic',
+    };
+  });
+
   return {
     clusterType: 'Engine',
     cluster: {
@@ -228,5 +298,6 @@ export function transformMetadataToKustoSchema(sourceSchema: AzureLogAnalyticsMe
       databases: [database],
     },
     database: database,
+    globalParameters,
   };
 }

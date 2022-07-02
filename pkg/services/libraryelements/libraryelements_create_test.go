@@ -14,7 +14,8 @@ func TestCreateLibraryElement(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to create a library panel that already exists, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			command := getCreatePanelCommand(sc.folder.Id, "Text - Library Panel")
-			resp := sc.service.createHandler(sc.reqContext, command)
+			sc.reqContext.Req.Body = mockRequestBody(command)
+			resp := sc.service.createHandler(sc.reqContext)
 			require.Equal(t, 400, resp.Status())
 		})
 
@@ -39,6 +40,8 @@ func TestCreateLibraryElement(t *testing.T) {
 					},
 					Version: 1,
 					Meta: LibraryElementDTOMeta{
+						FolderName:          "ScenarioFolder",
+						FolderUID:           "ScenarioFolder",
 						ConnectedDashboards: 0,
 						Created:             sc.initialResult.Result.Meta.Created,
 						Updated:             sc.initialResult.Result.Meta.Updated,
@@ -64,7 +67,8 @@ func TestCreateLibraryElement(t *testing.T) {
 		func(t *testing.T, sc scenarioContext) {
 			command := getCreatePanelCommand(sc.folder.Id, "Nonexistent UID")
 			command.UID = util.GenerateShortUID()
-			resp := sc.service.createHandler(sc.reqContext, command)
+			sc.reqContext.Req.Body = mockRequestBody(command)
+			resp := sc.service.createHandler(sc.reqContext)
 			var result = validateAndUnMarshalResponse(t, resp)
 			var expected = libraryElementResult{
 				Result: libraryElement{
@@ -85,6 +89,8 @@ func TestCreateLibraryElement(t *testing.T) {
 					},
 					Version: 1,
 					Meta: LibraryElementDTOMeta{
+						FolderName:          "ScenarioFolder",
+						FolderUID:           "ScenarioFolder",
 						ConnectedDashboards: 0,
 						Created:             result.Result.Meta.Created,
 						Updated:             result.Result.Meta.Updated,
@@ -110,7 +116,8 @@ func TestCreateLibraryElement(t *testing.T) {
 		func(t *testing.T, sc scenarioContext) {
 			command := getCreatePanelCommand(sc.folder.Id, "Existing UID")
 			command.UID = sc.initialResult.Result.UID
-			resp := sc.service.createHandler(sc.reqContext, command)
+			sc.reqContext.Req.Body = mockRequestBody(command)
+			resp := sc.service.createHandler(sc.reqContext)
 			require.Equal(t, 400, resp.Status())
 		})
 
@@ -118,7 +125,8 @@ func TestCreateLibraryElement(t *testing.T) {
 		func(t *testing.T, sc scenarioContext) {
 			command := getCreatePanelCommand(sc.folder.Id, "Invalid UID")
 			command.UID = "Testing an invalid UID"
-			resp := sc.service.createHandler(sc.reqContext, command)
+			sc.reqContext.Req.Body = mockRequestBody(command)
+			resp := sc.service.createHandler(sc.reqContext)
 			require.Equal(t, 400, resp.Status())
 		})
 
@@ -126,14 +134,16 @@ func TestCreateLibraryElement(t *testing.T) {
 		func(t *testing.T, sc scenarioContext) {
 			command := getCreatePanelCommand(sc.folder.Id, "Invalid UID")
 			command.UID = "j6T00KRZzj6T00KRZzj6T00KRZzj6T00KRZzj6T00K"
-			resp := sc.service.createHandler(sc.reqContext, command)
+			sc.reqContext.Req.Body = mockRequestBody(command)
+			resp := sc.service.createHandler(sc.reqContext)
 			require.Equal(t, 400, resp.Status())
 		})
 
 	testScenario(t, "When an admin tries to create a library panel where name and panel title differ, it should not update panel title",
 		func(t *testing.T, sc scenarioContext) {
 			command := getCreatePanelCommand(1, "Library Panel Name")
-			resp := sc.service.createHandler(sc.reqContext, command)
+			sc.reqContext.Req.Body = mockRequestBody(command)
+			resp := sc.service.createHandler(sc.reqContext)
 			var result = validateAndUnMarshalResponse(t, resp)
 			var expected = libraryElementResult{
 				Result: libraryElement{
@@ -154,6 +164,8 @@ func TestCreateLibraryElement(t *testing.T) {
 					},
 					Version: 1,
 					Meta: LibraryElementDTOMeta{
+						FolderName:          "ScenarioFolder",
+						FolderUID:           "ScenarioFolder",
 						ConnectedDashboards: 0,
 						Created:             result.Result.Meta.Created,
 						Updated:             result.Result.Meta.Updated,

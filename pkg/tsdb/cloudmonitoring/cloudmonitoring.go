@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-google-sdk-go/pkg/utils"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
@@ -24,10 +25,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-	"github.com/grafana/grafana/pkg/services/datasources"
-
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -60,38 +58,31 @@ var (
 )
 
 const (
-	pluginID string = "stackdriver"
-
-	gceAuthentication         string = "gce"
-	jwtAuthentication         string = "jwt"
-	metricQueryType           string = "metrics"
-	sloQueryType              string = "slo"
-	mqlEditorMode             string = "mql"
-	crossSeriesReducerDefault string = "REDUCE_NONE"
-	perSeriesAlignerDefault   string = "ALIGN_MEAN"
+	gceAuthentication         = "gce"
+	jwtAuthentication         = "jwt"
+	metricQueryType           = "metrics"
+	sloQueryType              = "slo"
+	mqlEditorMode             = "mql"
+	crossSeriesReducerDefault = "REDUCE_NONE"
+	perSeriesAlignerDefault   = "ALIGN_MEAN"
 )
 
-func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, registrar plugins.CoreBackendRegistrar,
-	dsService *datasources.Service) *Service {
+func ProvideService(httpClientProvider httpclient.Provider, tracer tracing.Tracer) *Service {
 	s := &Service{
+		tracer:             tracer,
 		httpClientProvider: httpClientProvider,
-		cfg:                cfg,
 		im:                 datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
-		dsService:          dsService,
+
+		gceDefaultProjectGetter: utils.GCEDefaultProject,
 	}
 
-	mux := http.NewServeMux()
-	s.registerRoutes(mux)
-	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler:    s,
-		CallResourceHandler: httpadapter.New(mux),
-		CheckHealthHandler:  s,
-	})
+	s.resourceHandler = httpadapter.New(s.newResourceMux())
 
-	if err := registrar.LoadAndRegister(pluginID, factory); err != nil {
-		slog.Error("Failed to register plugin", "error", err)
-	}
 	return s
+}
+
+func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	return s.resourceHandler.CallResource(ctx, req, sender)
 }
 
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
@@ -102,7 +93,10 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 
 	defaultProject, err := s.getDefaultProject(ctx, *dsInfo)
 	if err != nil {
-		return nil, err
+		return &backend.CheckHealthResult{
+			Status:  backend.HealthStatusError,
+			Message: err.Error(),
+		}, nil
 	}
 
 	url := fmt.Sprintf("%v/v3/projects/%v/metricDescriptors", dsInfo.services[cloudMonitor].url, defaultProject)
@@ -135,9 +129,13 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 
 type Service struct {
 	httpClientProvider httpclient.Provider
-	cfg                *setting.Cfg
 	im                 instancemgmt.InstanceManager
-	dsService          *datasources.Service
+	tracer             tracing.Tracer
+
+	resourceHandler backend.CallResourceHandler
+
+	// mocked in tests
+	gceDefaultProjectGetter func(ctx context.Context) (string, error)
 }
 
 type QueryModel struct {
@@ -262,7 +260,7 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.Query
 	}
 
 	for _, queryExecutor := range queryExecutors {
-		queryRes, dr, executedQueryString, err := queryExecutor.run(ctx, req, s, dsInfo)
+		queryRes, dr, executedQueryString, err := queryExecutor.run(ctx, req, s, dsInfo, s.tracer)
 		if err != nil {
 			return resp, err
 		}
@@ -340,6 +338,7 @@ func (s *Service) buildQueryExecutors(req *backend.QueryDataRequest) ([]cloudMon
 					IntervalMS:  query.Interval.Milliseconds(),
 					AliasBy:     q.MetricQuery.AliasBy,
 					timeRange:   req.Queries[0].TimeRange,
+					GraphPeriod: q.MetricQuery.GraphPeriod,
 				}
 			} else {
 				cmtsf.AliasBy = q.MetricQuery.AliasBy
@@ -622,7 +621,7 @@ func (s *Service) createRequest(ctx context.Context, dsInfo *datasourceInfo, pro
 
 func (s *Service) getDefaultProject(ctx context.Context, dsInfo datasourceInfo) (string, error) {
 	if dsInfo.authenticationType == gceAuthentication {
-		return utils.GCEDefaultProject(ctx)
+		return s.gceDefaultProjectGetter(ctx)
 	}
 	return dsInfo.defaultProject, nil
 }

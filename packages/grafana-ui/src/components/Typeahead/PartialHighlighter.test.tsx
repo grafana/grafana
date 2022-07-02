@@ -1,16 +1,21 @@
+import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { mount, ReactWrapper } from 'enzyme';
+
 import { PartialHighlighter } from './PartialHighlighter';
 
-function assertPart(component: ReactWrapper, isHighlighted: boolean, text: string): void {
-  expect(component.type()).toEqual(isHighlighted ? 'mark' : 'span');
-  expect(component.hasClass('highlight')).toEqual(isHighlighted);
-  expect(component.text()).toEqual(text);
+function assertPart(text: string, isHighlighted: boolean): void {
+  const element = screen.getByText(text);
+  expect(element).toBeInTheDocument();
+  if (isHighlighted) {
+    expect(element).toHaveClass('highlight');
+  } else {
+    expect(element).not.toHaveClass('highlight');
+  }
 }
 
 describe('PartialHighlighter component', () => {
   it('should highlight inner parts correctly', () => {
-    const component = mount(
+    render(
       <PartialHighlighter
         text="Lorem ipsum dolor sit amet"
         highlightClassName="highlight"
@@ -20,17 +25,16 @@ describe('PartialHighlighter component', () => {
         ]}
       />
     );
-    const main = component.find('div');
 
-    assertPart(main.childAt(0), false, 'Lorem ');
-    assertPart(main.childAt(1), true, 'ipsum');
-    assertPart(main.childAt(2), false, ' dolor ');
-    assertPart(main.childAt(3), true, 'sit');
-    assertPart(main.childAt(4), false, ' amet');
+    assertPart('Lorem', false);
+    assertPart('ipsum', true);
+    assertPart('dolor', false);
+    assertPart('sit', true);
+    assertPart('amet', false);
   });
 
   it('should highlight outer parts correctly', () => {
-    const component = mount(
+    render(
       <PartialHighlighter
         text="Lorem ipsum dolor sit amet"
         highlightClassName="highlight"
@@ -40,16 +44,17 @@ describe('PartialHighlighter component', () => {
         ]}
       />
     );
-    const main = component.find('div');
-    assertPart(main.childAt(0), true, 'Lorem');
-    assertPart(main.childAt(1), false, ' ipsum dolor sit ');
-    assertPart(main.childAt(2), true, 'amet');
+    assertPart('Lorem', true);
+    assertPart('ipsum dolor sit', false);
+    assertPart('amet', true);
   });
 
-  it('returns null if highlightParts is empty', () => {
-    const component = mount(
-      <PartialHighlighter text="Lorem ipsum dolor sit amet" highlightClassName="highlight" highlightParts={[]} />
-    );
-    expect(component.html()).toBe(null);
+  it('renders nothing if highlightParts is empty', () => {
+    render(<PartialHighlighter text="Lorem ipsum dolor sit amet" highlightClassName="highlight" highlightParts={[]} />);
+    expect(screen.queryByText('Lorem')).not.toBeInTheDocument();
+    expect(screen.queryByText('ipsum')).not.toBeInTheDocument();
+    expect(screen.queryByText('dolor')).not.toBeInTheDocument();
+    expect(screen.queryByText('sit')).not.toBeInTheDocument();
+    expect(screen.queryByText('amet')).not.toBeInTheDocument();
   });
 });

@@ -12,27 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { createTheme } from '@grafana/data';
+
 import { getColorByKey, clear } from './color-generator';
-import { defaultTheme } from '../Theme';
 
 it('gives the same color for the same key', () => {
   clear();
-  const colorOne = getColorByKey('serviceA', defaultTheme);
-  const colorTwo = getColorByKey('serviceA', defaultTheme);
+  const colorOne = getColorByKey('serviceA', createTheme());
+  const colorTwo = getColorByKey('serviceA', createTheme());
   expect(colorOne).toBe(colorTwo);
 });
 
 it('gives different colors for each for each key', () => {
   clear();
-  const colorOne = getColorByKey('serviceA', defaultTheme);
-  const colorTwo = getColorByKey('serviceB', defaultTheme);
+  const colorOne = getColorByKey('serviceA', createTheme());
+  const colorTwo = getColorByKey('serviceB', createTheme());
   expect(colorOne).not.toBe(colorTwo);
 });
 
-it('should clear cache', () => {
+it('should not allow red', () => {
   clear();
-  const colorOne = getColorByKey('serviceA', defaultTheme);
-  clear();
-  const colorTwo = getColorByKey('serviceB', defaultTheme);
-  expect(colorOne).toBe(colorTwo);
+  // when aPAKNMeFcF is hashed it's index is 4
+  // which is red, which we disallow because it looks like an error
+  const colorOne = getColorByKey('aPAKNMeFcF', createTheme());
+  expect(colorOne).not.toBe('#E24D42');
 });

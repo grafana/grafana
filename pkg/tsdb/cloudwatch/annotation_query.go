@@ -1,8 +1,8 @@
 package cloudwatch
 
 import (
-	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -10,10 +10,16 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, model *simplejson.Json, query backend.DataQuery, pluginCtx backend.PluginContext) (*backend.QueryDataResponse, error) {
+type annotationEvent struct {
+	Title string
+	Time  time.Time
+	Tags  string
+	Text  string
+}
+
+func (e *cloudWatchExecutor) executeAnnotationQuery(pluginCtx backend.PluginContext, model *simplejson.Json, query backend.DataQuery) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
 	usePrefixMatch := model.Get("prefixMatching").MustBool(false)
@@ -29,7 +35,7 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, model *
 	actionPrefix := model.Get("actionPrefix").MustString("")
 	alarmNamePrefix := model.Get("alarmNamePrefix").MustString("")
 
-	cli, err := e.getCWClient(region, pluginCtx)
+	cli, err := e.getCWClient(pluginCtx, region)
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +49,7 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, model *
 		}
 		resp, err := cli.DescribeAlarms(params)
 		if err != nil {
-			return nil, errutil.Wrap("failed to call cloudwatch:DescribeAlarms", err)
+			return nil, fmt.Errorf("%v: %w", "failed to call cloudwatch:DescribeAlarms", err)
 		}
 		alarmNames = filterAlarms(resp, namespace, metricName, dimensions, statistic, period)
 	} else {
@@ -73,14 +79,14 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, model *
 		}
 		resp, err := cli.DescribeAlarmsForMetric(params)
 		if err != nil {
-			return nil, errutil.Wrap("failed to call cloudwatch:DescribeAlarmsForMetric", err)
+			return nil, fmt.Errorf("%v: %w", "failed to call cloudwatch:DescribeAlarmsForMetric", err)
 		}
 		for _, alarm := range resp.MetricAlarms {
 			alarmNames = append(alarmNames, alarm.AlarmName)
 		}
 	}
 
-	annotations := make([]map[string]string, 0)
+	annotations := make([]*annotationEvent, 0)
 	for _, alarmName := range alarmNames {
 		params := &cloudwatch.DescribeAlarmHistoryInput{
 			AlarmName:  alarmName,
@@ -90,15 +96,15 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, model *
 		}
 		resp, err := cli.DescribeAlarmHistory(params)
 		if err != nil {
-			return nil, errutil.Wrap("failed to call cloudwatch:DescribeAlarmHistory", err)
+			return nil, fmt.Errorf("%v: %w", "failed to call cloudwatch:DescribeAlarmHistory", err)
 		}
 		for _, history := range resp.AlarmHistoryItems {
-			annotation := make(map[string]string)
-			annotation["time"] = history.Timestamp.UTC().Format(time.RFC3339)
-			annotation["title"] = *history.AlarmName
-			annotation["tags"] = *history.HistoryItemType
-			annotation["text"] = *history.HistorySummary
-			annotations = append(annotations, annotation)
+			annotations = append(annotations, &annotationEvent{
+				Time:  *history.Timestamp,
+				Title: *history.AlarmName,
+				Tags:  *history.HistoryItemType,
+				Text:  *history.HistorySummary,
+			})
 		}
 	}
 
@@ -109,16 +115,16 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, model *
 	return result, err
 }
 
-func transformAnnotationToTable(annotations []map[string]string, query backend.DataQuery) *data.Frame {
+func transformAnnotationToTable(annotations []*annotationEvent, query backend.DataQuery) *data.Frame {
 	frame := data.NewFrame(query.RefID,
-		data.NewField("time", nil, []string{}),
+		data.NewField("time", nil, []time.Time{}),
 		data.NewField("title", nil, []string{}),
 		data.NewField("tags", nil, []string{}),
 		data.NewField("text", nil, []string{}),
 	)
 
 	for _, a := range annotations {
-		frame.AppendRow(a["time"], a["title"], a["tags"], a["text"])
+		frame.AppendRow(a.Time, a.Title, a.Tags, a.Text)
 	}
 
 	frame.Meta = &data.FrameMeta{

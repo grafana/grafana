@@ -1,37 +1,43 @@
-import React from 'react';
-import { locationService, setDataSourceSrv } from '@grafana/runtime';
 import { render, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import React from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
+import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
+import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
+
+import { locationService, setDataSourceSrv } from '@grafana/runtime';
+import { contextSrv } from 'app/core/services/context_srv';
 import {
   AlertManagerCortexConfig,
   AlertManagerDataSourceJsonData,
   AlertManagerImplementation,
+  MuteTimeInterval,
   Route,
 } from 'app/plugins/datasource/alertmanager/types';
 import { configureStore } from 'app/store/configureStore';
-import { typeAsJestMock } from 'test/helpers/typeAsJestMock';
-import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
+import { AccessControlAction } from 'app/types';
+
 import AmRoutes from './AmRoutes';
 import { fetchAlertManagerConfig, fetchStatus, updateAlertManagerConfig } from './api/alertmanager';
 import { mockDataSource, MockDataSourceSrv, someCloudAlertManagerConfig, someCloudAlertManagerStatus } from './mocks';
 import { getAllDataSources } from './utils/config';
-import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
-import userEvent from '@testing-library/user-event';
-import { selectOptionInTest } from '@grafana/ui';
 import { ALERTMANAGER_NAME_QUERY_KEY } from './utils/constants';
+import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 
 jest.mock('./api/alertmanager');
 jest.mock('./utils/config');
+jest.mock('app/core/services/context_srv');
 
 const mocks = {
-  getAllDataSourcesMock: typeAsJestMock(getAllDataSources),
+  getAllDataSourcesMock: jest.mocked(getAllDataSources),
 
   api: {
-    fetchAlertManagerConfig: typeAsJestMock(fetchAlertManagerConfig),
-    updateAlertManagerConfig: typeAsJestMock(updateAlertManagerConfig),
-    fetchStatus: typeAsJestMock(fetchStatus),
+    fetchAlertManagerConfig: jest.mocked(fetchAlertManagerConfig),
+    updateAlertManagerConfig: jest.mocked(updateAlertManagerConfig),
+    fetchStatus: jest.mocked(fetchStatus),
   },
+  contextSrv: jest.mocked(contextSrv),
 };
 
 const renderAmRoutes = (alertManagerSourceName?: string) => {
@@ -80,13 +86,18 @@ const ui = {
   deleteRouteButton: byLabelText('Delete route'),
   newPolicyButton: byRole('button', { name: /New policy/ }),
   newPolicyCTAButton: byRole('button', { name: /New specific policy/ }),
+  savePolicyButton: byRole('button', { name: /save policy/i }),
 
   receiverSelect: byTestId('am-receiver-select'),
   groupSelect: byTestId('am-group-select'),
+  muteTimingSelect: byTestId('am-mute-timing-select'),
 
   groupWaitContainer: byTestId('am-group-wait'),
   groupIntervalContainer: byTestId('am-group-interval'),
   groupRepeatContainer: byTestId('am-repeat-interval'),
+
+  confirmDeleteModal: byRole('dialog'),
+  confirmDeleteButton: byLabelText('Confirm Modal Danger Button'),
 };
 
 describe('AmRoutes', () => {
@@ -146,6 +157,8 @@ describe('AmRoutes', () => {
     },
   ];
 
+  const emptyRoute: Route = {};
+
   const simpleRoute: Route = {
     receiver: 'simple-receiver',
     matchers: ['hello=world', 'foo!=bar'],
@@ -160,8 +173,24 @@ describe('AmRoutes', () => {
     routes: subroutes,
   };
 
+  const muteInterval: MuteTimeInterval = {
+    name: 'default-mute',
+    time_intervals: [
+      {
+        times: [{ start_time: '12:00', end_time: '24:00' }],
+        weekdays: ['monday:friday'],
+        days_of_month: ['1:7', '-1:-7'],
+        months: ['january:june'],
+        years: ['2020:2022'],
+      },
+    ],
+  };
+
   beforeEach(() => {
     mocks.getAllDataSourcesMock.mockReturnValue(Object.values(dataSources));
+    mocks.contextSrv.hasAccess.mockImplementation(() => true);
+    mocks.contextSrv.hasPermission.mockImplementation(() => true);
+    mocks.contextSrv.evaluatePermission.mockImplementation(() => []);
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
   });
 
@@ -251,24 +280,24 @@ describe('AmRoutes', () => {
 
     // open root route for editing
     const rootRouteContainer = await ui.rootRouteContainer.find();
-    userEvent.click(ui.editButton.get(rootRouteContainer));
+    await userEvent.click(ui.editButton.get(rootRouteContainer));
 
     // configure receiver & group by
     const receiverSelect = await ui.receiverSelect.find();
     await clickSelectOption(receiverSelect, 'critical');
 
     const groupSelect = ui.groupSelect.get();
-    userEvent.type(byRole('textbox').get(groupSelect), 'namespace{enter}');
+    await userEvent.type(byRole('combobox').get(groupSelect), 'namespace{enter}');
 
     // configure timing intervals
-    userEvent.click(byText('Timing options').get(rootRouteContainer));
+    await userEvent.click(byText('Timing options').get(rootRouteContainer));
 
     await updateTiming(ui.groupWaitContainer.get(), '1', 'Minutes');
     await updateTiming(ui.groupIntervalContainer.get(), '4', 'Minutes');
     await updateTiming(ui.groupRepeatContainer.get(), '5', 'Hours');
 
     //save
-    userEvent.click(ui.saveButton.get(rootRouteContainer));
+    await userEvent.click(ui.saveButton.get(rootRouteContainer));
 
     // wait for it to go out of edit mode
     await waitFor(() => expect(ui.editButton.query(rootRouteContainer)).not.toBeInTheDocument());
@@ -287,6 +316,7 @@ describe('AmRoutes', () => {
           group_interval: '4m',
           group_wait: '1m',
           repeat_interval: '5h',
+          mute_time_intervals: [],
         },
         templates: [],
       },
@@ -310,17 +340,17 @@ describe('AmRoutes', () => {
 
     // open root route for editing
     const rootRouteContainer = await ui.rootRouteContainer.find();
-    userEvent.click(ui.editButton.get(rootRouteContainer));
+    await userEvent.click(ui.editButton.get(rootRouteContainer));
 
     // configure receiver & group by
     const receiverSelect = await ui.receiverSelect.find();
     await clickSelectOption(receiverSelect, 'default');
 
     const groupSelect = ui.groupSelect.get();
-    userEvent.type(byRole('textbox').get(groupSelect), 'severity{enter}');
-    userEvent.type(byRole('textbox').get(groupSelect), 'namespace{enter}');
+    await userEvent.type(byRole('combobox').get(groupSelect), 'severity{enter}');
+    await userEvent.type(byRole('combobox').get(groupSelect), 'namespace{enter}');
     //save
-    userEvent.click(ui.saveButton.get(rootRouteContainer));
+    await userEvent.click(ui.saveButton.get(rootRouteContainer));
 
     // wait for it to go out of edit mode
     await waitFor(() => expect(ui.editButton.query(rootRouteContainer)).not.toBeInTheDocument());
@@ -336,10 +366,23 @@ describe('AmRoutes', () => {
           group_by: ['severity', 'namespace'],
           receiver: 'default',
           routes: [],
+          mute_time_intervals: [],
         },
       },
       template_files: {},
     });
+  });
+
+  it('hides create and edit button if user does not have permission', () => {
+    mocks.contextSrv.hasAccess.mockImplementation((action) =>
+      [AccessControlAction.AlertingNotificationsRead, AccessControlAction.AlertingNotificationsRead].includes(
+        action as AccessControlAction
+      )
+    );
+
+    renderAmRoutes();
+    expect(ui.newPolicyButton.query()).not.toBeInTheDocument();
+    expect(ui.editButton.query()).not.toBeInTheDocument();
   });
 
   it('Show error message if loading Alertmanager config fails', async () => {
@@ -390,8 +433,8 @@ describe('AmRoutes', () => {
 
     // Toggle a save to test new object_matchers
     const rootRouteContainer = await ui.rootRouteContainer.find();
-    userEvent.click(ui.editButton.get(rootRouteContainer));
-    userEvent.click(ui.saveButton.get(rootRouteContainer));
+    await userEvent.click(ui.editButton.get(rootRouteContainer));
+    await userEvent.click(ui.saveButton.get(rootRouteContainer));
 
     await waitFor(() => expect(ui.editButton.query(rootRouteContainer)).not.toBeInTheDocument());
 
@@ -406,6 +449,7 @@ describe('AmRoutes', () => {
           group_wait: '1m',
           receiver: 'default',
           repeat_interval: '5h',
+          mute_time_intervals: [],
           routes: [
             {
               continue: false,
@@ -415,6 +459,7 @@ describe('AmRoutes', () => {
                 ['foo', '!=', 'bar'],
               ],
               receiver: 'simple-receiver',
+              mute_time_intervals: [],
               routes: [],
             },
           ],
@@ -423,6 +468,61 @@ describe('AmRoutes', () => {
       },
       template_files: {},
     });
+  });
+
+  it('Should be able to delete an empty route', async () => {
+    const routeConfig = {
+      continue: false,
+      receiver: 'default',
+      group_by: ['alertname'],
+      routes: [emptyRoute],
+      group_interval: '4m',
+      group_wait: '1m',
+      repeat_interval: '5h',
+      mute_time_intervals: [],
+    };
+
+    const defaultConfig: AlertManagerCortexConfig = {
+      alertmanager_config: {
+        receivers: [{ name: 'default' }, { name: 'critical' }],
+        route: routeConfig,
+        templates: [],
+      },
+      template_files: {},
+    };
+
+    mocks.api.fetchAlertManagerConfig.mockImplementation(() => {
+      return Promise.resolve(defaultConfig);
+    });
+
+    mocks.api.updateAlertManagerConfig.mockResolvedValue(Promise.resolve());
+
+    await renderAmRoutes(GRAFANA_RULES_SOURCE_NAME);
+    expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalled();
+
+    const deleteButtons = await ui.deleteRouteButton.findAll();
+    expect(deleteButtons).toHaveLength(1);
+
+    await userEvent.click(deleteButtons[0]);
+
+    const confirmDeleteButton = ui.confirmDeleteButton.get(ui.confirmDeleteModal.get());
+    expect(confirmDeleteButton).toBeInTheDocument();
+
+    await userEvent.click(confirmDeleteButton);
+
+    expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalledWith<[string, AlertManagerCortexConfig]>(
+      GRAFANA_RULES_SOURCE_NAME,
+      {
+        ...defaultConfig,
+        alertmanager_config: {
+          ...defaultConfig.alertmanager_config,
+          route: {
+            ...routeConfig,
+            routes: [],
+          },
+        },
+      }
+    );
   });
 
   it('Keeps matchers for non-grafana alertmanager sources', async () => {
@@ -459,8 +559,8 @@ describe('AmRoutes', () => {
 
     // Toggle a save to test new object_matchers
     const rootRouteContainer = await ui.rootRouteContainer.find();
-    userEvent.click(ui.editButton.get(rootRouteContainer));
-    userEvent.click(ui.saveButton.get(rootRouteContainer));
+    await userEvent.click(ui.editButton.get(rootRouteContainer));
+    await userEvent.click(ui.saveButton.get(rootRouteContainer));
 
     await waitFor(() => expect(ui.editButton.query(rootRouteContainer)).not.toBeInTheDocument());
 
@@ -476,6 +576,7 @@ describe('AmRoutes', () => {
           matchers: [],
           receiver: 'default',
           repeat_interval: '5h',
+          mute_time_intervals: [],
           routes: [
             {
               continue: false,
@@ -483,6 +584,7 @@ describe('AmRoutes', () => {
               matchers: ['hello=world', 'foo!=bar'],
               receiver: 'simple-receiver',
               routes: [],
+              mute_time_intervals: [],
             },
           ],
         },
@@ -528,17 +630,84 @@ describe('AmRoutes', () => {
     expect(mocks.api.fetchAlertManagerConfig).not.toHaveBeenCalled();
     expect(mocks.api.fetchStatus).toHaveBeenCalledTimes(1);
   });
+
+  it('Can add a mute timing to a route', async () => {
+    const defaultConfig: AlertManagerCortexConfig = {
+      alertmanager_config: {
+        receivers: [{ name: 'default' }, { name: 'critical' }],
+        route: {
+          continue: false,
+          receiver: 'default',
+          group_by: ['alertname'],
+          routes: [simpleRoute],
+          group_interval: '4m',
+          group_wait: '1m',
+          repeat_interval: '5h',
+        },
+        templates: [],
+        mute_time_intervals: [muteInterval],
+      },
+      template_files: {},
+    };
+
+    const currentConfig = { current: defaultConfig };
+    mocks.api.updateAlertManagerConfig.mockImplementation((amSourceName, newConfig) => {
+      currentConfig.current = newConfig;
+      return Promise.resolve();
+    });
+
+    mocks.api.fetchAlertManagerConfig.mockResolvedValue(defaultConfig);
+
+    await renderAmRoutes(dataSources.am.name);
+    const rows = await ui.row.findAll();
+    expect(rows).toHaveLength(1);
+    await userEvent.click(ui.editRouteButton.get(rows[0]));
+
+    const muteTimingSelect = ui.muteTimingSelect.get();
+    await clickSelectOption(muteTimingSelect, 'default-mute');
+    expect(muteTimingSelect).toHaveTextContent('default-mute');
+
+    const savePolicyButton = ui.savePolicyButton.get();
+    expect(savePolicyButton).toBeInTheDocument();
+
+    await userEvent.click(savePolicyButton);
+
+    await waitFor(() => expect(savePolicyButton).not.toBeInTheDocument());
+
+    expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalled();
+    expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalledWith(dataSources.am.name, {
+      ...defaultConfig,
+      alertmanager_config: {
+        ...defaultConfig.alertmanager_config,
+        route: {
+          ...defaultConfig.alertmanager_config.route,
+          mute_time_intervals: [],
+          matchers: [],
+          routes: [
+            {
+              ...simpleRoute,
+              mute_time_intervals: [muteInterval.name],
+              routes: [],
+              continue: false,
+              group_by: [],
+            },
+          ],
+        },
+      },
+    });
+  });
 });
 
 const clickSelectOption = async (selectElement: HTMLElement, optionText: string): Promise<void> => {
-  userEvent.click(byRole('textbox').get(selectElement));
+  await userEvent.click(byRole('combobox').get(selectElement));
   await selectOptionInTest(selectElement, optionText);
 };
 
 const updateTiming = async (selectElement: HTMLElement, value: string, timeUnit: string): Promise<void> => {
-  const inputs = byRole('textbox').queryAll(selectElement);
-  expect(inputs).toHaveLength(2);
-  userEvent.type(inputs[0], value);
-  userEvent.click(inputs[1]);
+  const input = byRole('textbox').get(selectElement);
+  const select = byRole('combobox').get(selectElement);
+  await userEvent.clear(input);
+  await userEvent.type(input, value);
+  await userEvent.click(select);
   await selectOptionInTest(selectElement, timeUnit);
 };

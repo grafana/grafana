@@ -1,139 +1,122 @@
-import React, { ReactNode } from 'react';
 import { css, cx } from '@emotion/css';
-import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { Link, useTheme2 } from '@grafana/ui';
-import NavBarDropdown from './NavBarDropdown';
+import { useLingui } from '@lingui/react';
+import { Item } from '@react-stately/collections';
+import React from 'react';
+
+import { GrafanaTheme2, locationUtil, NavMenuItemType, NavModelItem } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
+import { IconName, useTheme2 } from '@grafana/ui';
+
+import { NavBarItemMenu } from './NavBarItemMenu';
+import { NavBarItemMenuTrigger } from './NavBarItemMenuTrigger';
+import { getNavBarItemWithoutMenuStyles } from './NavBarItemWithoutMenu';
+import { NavBarMenuItem } from './NavBarMenuItem';
+import { useNavBarContext } from './context';
+import menuItemTranslations from './navBarItem-translations';
+import { getNavModelItemKey } from './utils';
 
 export interface Props {
   isActive?: boolean;
-  children: ReactNode;
   className?: string;
-  label: string;
-  menuItems?: NavModelItem[];
-  menuSubTitle?: string;
-  onClick?: () => void;
   reverseMenuDirection?: boolean;
-  showMenu?: boolean;
-  target?: HTMLAnchorElement['target'];
-  url?: string;
+  link: NavModelItem;
 }
 
-const NavBarItem = ({
-  isActive = false,
-  children,
-  className,
-  label,
-  menuItems = [],
-  menuSubTitle,
-  onClick,
-  reverseMenuDirection = false,
-  showMenu = true,
-  target,
-  url,
-}: Props) => {
+const NavBarItem = ({ isActive = false, className, reverseMenuDirection = false, link }: Props) => {
+  const { i18n } = useLingui();
   const theme = useTheme2();
-  const styles = getStyles(theme, isActive);
-  let element = (
-    <button className={styles.element} onClick={onClick} aria-label={label}>
-      <span className={styles.icon}>{children}</span>
-    </button>
-  );
+  const menuItems = link.children ?? [];
+  const { menuIdOpen } = useNavBarContext();
 
-  if (url) {
-    element =
-      !target && url.startsWith('/') ? (
-        <Link
-          className={styles.element}
-          href={url}
-          target={target}
-          aria-label={label}
-          onClick={onClick}
-          aria-haspopup="true"
-        >
-          <span className={styles.icon}>{children}</span>
-        </Link>
-      ) : (
-        <a href={url} target={target} className={styles.element} onClick={onClick} aria-label={label}>
-          <span className={styles.icon}>{children}</span>
-        </a>
-      );
-  }
+  // Spreading `menuItems` here as otherwise we'd be mutating props
+  const menuItemsSorted = reverseMenuDirection ? [...menuItems].reverse() : menuItems;
+  const filteredItems = menuItemsSorted
+    .filter((item) => !item.hideFromMenu)
+    .map((i) => ({ ...i, menuItemType: NavMenuItemType.Item }));
+  const adjustHeightForBorder = filteredItems.length === 0;
+  const styles = getStyles(theme, adjustHeightForBorder, isActive);
+  const section: NavModelItem = {
+    ...link,
+    children: filteredItems,
+    menuItemType: NavMenuItemType.Section,
+  };
+  const items: NavModelItem[] = [section].concat(filteredItems);
+
+  const onNavigate = (item: NavModelItem) => {
+    const { url, target, onClick } = item;
+    onClick?.();
+
+    if (url) {
+      if (!target && url.startsWith('/')) {
+        locationService.push(locationUtil.stripBaseFromUrl(url));
+      } else {
+        window.open(url, target);
+      }
+    }
+  };
+
+  const translationKey = link.id && menuItemTranslations[link.id];
+  const linkText = translationKey ? i18n._(translationKey) : link.text;
 
   return (
-    <div className={cx(styles.container, className)}>
-      {element}
-      {showMenu && (
-        <NavBarDropdown
-          headerTarget={target}
-          headerText={label}
-          headerUrl={url}
-          items={menuItems}
-          onHeaderClick={onClick}
-          reverseDirection={reverseMenuDirection}
-          subtitleText={menuSubTitle}
-        />
-      )}
-    </div>
+    <li className={cx(styles.container, { [styles.containerHover]: section.id === menuIdOpen }, className)}>
+      <NavBarItemMenuTrigger
+        item={section}
+        isActive={isActive}
+        label={linkText}
+        reverseMenuDirection={reverseMenuDirection}
+      >
+        <NavBarItemMenu
+          items={items}
+          reverseMenuDirection={reverseMenuDirection}
+          adjustHeightForBorder={adjustHeightForBorder}
+          disabledKeys={['divider', 'subtitle']}
+          aria-label={section.text}
+          onNavigate={onNavigate}
+        >
+          {(item: NavModelItem) => {
+            const translationKey = item.id && menuItemTranslations[item.id];
+            const itemText = translationKey ? i18n._(translationKey) : item.text;
+            const isSection = item.menuItemType === NavMenuItemType.Section;
+            const icon = item.showIconInNavbar && !isSection ? (item.icon as IconName) : undefined;
+
+            return (
+              <Item key={getNavModelItemKey(item)} textValue={item.text}>
+                <NavBarMenuItem
+                  isDivider={!isSection && item.divider}
+                  icon={icon}
+                  target={item.target}
+                  text={itemText}
+                  url={item.url}
+                  onClick={item.onClick}
+                  styleOverrides={cx(styles.primaryText, { [styles.header]: isSection })}
+                />
+              </Item>
+            );
+          }}
+        </NavBarItemMenu>
+      </NavBarItemMenuTrigger>
+    </li>
   );
 };
 
 export default NavBarItem;
 
-const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
-  container: css`
-    position: relative;
-    color: ${isActive ? theme.colors.text.primary : theme.colors.text.secondary};
-
-    &:hover {
-      background-color: ${theme.colors.action.hover};
-      color: ${theme.colors.text.primary};
-
-      // TODO don't use a hardcoded class here, use isVisible in NavBarDropdown
-      .navbar-dropdown {
-        opacity: 1;
-        visibility: visible;
-      }
-    }
-  `,
-  element: css`
-    background-color: transparent;
-    border: none;
-    color: inherit;
-    display: block;
-    line-height: ${theme.components.sidemenu.width}px;
-    padding: 0;
-    text-align: center;
-    width: ${theme.components.sidemenu.width}px;
-
-    &::before {
-      display: ${isActive ? 'block' : 'none'};
-      content: ' ';
-      position: absolute;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      width: 4px;
-      border-radius: 2px;
-      background-image: ${theme.colors.gradients.brandVertical};
-    }
-
-    &:focus-visible {
-      background-color: ${theme.colors.action.hover};
-      box-shadow: none;
-      color: ${theme.colors.text.primary};
-      outline: 2px solid ${theme.colors.primary.main};
-      outline-offset: -2px;
-      transition: none;
-    }
-  `,
-  icon: css`
-    height: 100%;
-    width: 100%;
-
-    img {
-      border-radius: 50%;
-      height: ${theme.spacing(3)};
-      width: ${theme.spacing(3)};
-    }
-  `,
+const getStyles = (theme: GrafanaTheme2, adjustHeightForBorder: boolean, isActive?: boolean) => ({
+  ...getNavBarItemWithoutMenuStyles(theme, isActive),
+  containerHover: css({
+    backgroundColor: theme.colors.action.hover,
+    color: theme.colors.text.primary,
+  }),
+  primaryText: css({
+    color: theme.colors.text.primary,
+  }),
+  header: css({
+    height: `calc(${theme.spacing(6)} - ${adjustHeightForBorder ? 2 : 1}px)`,
+    fontSize: theme.typography.h4.fontSize,
+    fontWeight: theme.typography.h4.fontWeight,
+    padding: `${theme.spacing(1)} ${theme.spacing(2)}`,
+    whiteSpace: 'nowrap',
+    width: '100%',
+  }),
 });

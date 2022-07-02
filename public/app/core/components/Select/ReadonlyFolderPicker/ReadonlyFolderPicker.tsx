@@ -1,13 +1,15 @@
-import React, { ReactElement, useCallback, useState } from 'react';
 import debouncePromise from 'debounce-promise';
+import React, { ReactElement, useCallback, useState } from 'react';
+
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { AsyncSelect } from '@grafana/ui';
 
+import { GENERAL_FOLDER_ID, GENERAL_FOLDER_TITLE } from '../../../../features/search/constants';
 import { FolderInfo, PermissionLevelString } from '../../../../types';
+
 import { findOptionWithId, getFolderAsOption, getFoldersAsOptions } from './api';
 import { PermissionLevel } from './types';
-import { GENERAL_FOLDER_ID, GENERAL_FOLDER_TITLE } from '../../../../features/search/constants';
 
 export const ALL_FOLDER: FolderInfo = { id: undefined, title: 'All' };
 export const GENERAL_FOLDER: FolderInfo = { id: GENERAL_FOLDER_ID, title: GENERAL_FOLDER_TITLE };
@@ -72,7 +74,6 @@ export function ReadonlyFolderPicker({
   return (
     <div data-testid={selectors.components.ReadonlyFolderPicker.container}>
       <AsyncSelect
-        menuShouldPortal
         loadingMessage="Loading folders..."
         defaultOptions
         defaultValue={option}

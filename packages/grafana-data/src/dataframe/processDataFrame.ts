@@ -2,6 +2,9 @@
 import { isArray, isBoolean, isNumber, isString } from 'lodash';
 
 // Types
+import { isDateTime } from '../datetime/moment_wrapper';
+import { fieldIndexComparer } from '../field/fieldComparers';
+import { getFieldDisplayName } from '../field/fieldState';
 import {
   DataFrame,
   Field,
@@ -17,15 +20,13 @@ import {
   TIME_SERIES_VALUE_FIELD_NAME,
   TIME_SERIES_TIME_FIELD_NAME,
 } from '../types/index';
-import { isDateTime } from '../datetime/moment_wrapper';
 import { ArrayVector } from '../vector/ArrayVector';
-import { MutableDataFrame } from './MutableDataFrame';
 import { SortedVector } from '../vector/SortedVector';
-import { ArrayDataFrame } from './ArrayDataFrame';
-import { getFieldDisplayName } from '../field/fieldState';
-import { fieldIndexComparer } from '../field/fieldComparers';
 import { vectorToArray } from '../vector/vectorToArray';
+
+import { ArrayDataFrame } from './ArrayDataFrame';
 import { dataFrameFromJSON } from './DataFrameJSON';
+import { MutableDataFrame } from './MutableDataFrame';
 
 function convertTableToDataFrame(table: TableData): DataFrame {
   const fields = table.columns.map((c) => {
@@ -308,7 +309,7 @@ export const isDataFrame = (data: any): data is DataFrame => data && data.hasOwn
 export function toDataFrame(data: any): DataFrame {
   if ('fields' in data) {
     // DataFrameDTO does not have length
-    if ('length' in data) {
+    if ('length' in data && data.fields[0]?.values?.get) {
       return data as DataFrame;
     }
 
@@ -470,7 +471,12 @@ export function getDataFrameRow(data: DataFrame, row: number): any[] {
  * Returns a copy that does not include functions
  */
 export function toDataFrameDTO(data: DataFrame): DataFrameDTO {
-  const fields: FieldDTO[] = data.fields.map((f) => {
+  return toFilteredDataFrameDTO(data);
+}
+
+export function toFilteredDataFrameDTO(data: DataFrame, fieldPredicate?: (f: Field) => boolean): DataFrameDTO {
+  const filteredFields = fieldPredicate ? data.fields.filter(fieldPredicate) : data.fields;
+  const fields: FieldDTO[] = filteredFields.map((f) => {
     let values = f.values.toArray();
     // The byte buffers serialize like objects
     if (values instanceof Float64Array) {

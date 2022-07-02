@@ -1,8 +1,9 @@
-import { AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
-import React from 'react';
 import { uniq } from 'lodash';
-import { Icon, Label, MultiSelect } from '@grafana/ui';
+import React from 'react';
+
 import { SelectableValue } from '@grafana/data';
+import { Icon, Label, MultiSelect } from '@grafana/ui';
+import { AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 
 interface Props {
   className?: string;

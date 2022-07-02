@@ -7,14 +7,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	"github.com/grafana/grafana/pkg/setting"
-
-	"github.com/stretchr/testify/require"
 )
 
 type FakeEvalHandler struct {
@@ -42,10 +43,68 @@ func (handler *FakeResultHandler) handle(evalContext *EvalContext) error {
 	return nil
 }
 
+// A mock implementation of the AlertStore interface, allowing to override certain methods individually
+type AlertStoreMock struct {
+	getAllAlerts                       func(context.Context, *models.GetAllAlertsQuery) error
+	getDataSource                      func(context.Context, *datasources.GetDataSourceQuery) error
+	getAlertNotificationsWithUidToSend func(ctx context.Context, query *models.GetAlertNotificationsWithUidToSendQuery) error
+	getOrCreateNotificationState       func(ctx context.Context, query *models.GetOrCreateNotificationStateQuery) error
+}
+
+func (a *AlertStoreMock) GetDataSource(c context.Context, cmd *datasources.GetDataSourceQuery) error {
+	if a.getDataSource != nil {
+		return a.getDataSource(c, cmd)
+	}
+	return nil
+}
+
+func (a *AlertStoreMock) GetAllAlertQueryHandler(c context.Context, cmd *models.GetAllAlertsQuery) error {
+	if a.getAllAlerts != nil {
+		return a.getAllAlerts(c, cmd)
+	}
+	return nil
+}
+
+func (a *AlertStoreMock) GetAlertNotificationUidWithId(c context.Context, query *models.GetAlertNotificationUidQuery) error {
+	return nil
+}
+
+func (a *AlertStoreMock) GetAlertNotificationsWithUidToSend(c context.Context, cmd *models.GetAlertNotificationsWithUidToSendQuery) error {
+	if a.getAlertNotificationsWithUidToSend != nil {
+		return a.getAlertNotificationsWithUidToSend(c, cmd)
+	}
+	return nil
+}
+
+func (a *AlertStoreMock) GetOrCreateAlertNotificationState(c context.Context, cmd *models.GetOrCreateNotificationStateQuery) error {
+	if a.getOrCreateNotificationState != nil {
+		return a.getOrCreateNotificationState(c, cmd)
+	}
+	return nil
+}
+
+func (a *AlertStoreMock) GetDashboardUIDById(_ context.Context, _ *models.GetDashboardRefByIdQuery) error {
+	return nil
+}
+
+func (a *AlertStoreMock) SetAlertNotificationStateToCompleteCommand(_ context.Context, _ *models.SetAlertNotificationStateToCompleteCommand) error {
+	return nil
+}
+
+func (a *AlertStoreMock) SetAlertNotificationStateToPendingCommand(_ context.Context, _ *models.SetAlertNotificationStateToPendingCommand) error {
+	return nil
+}
+
+func (a *AlertStoreMock) SetAlertState(_ context.Context, _ *models.SetAlertStateCommand) error {
+	return nil
+}
+
 func TestEngineProcessJob(t *testing.T) {
-	bus := bus.New()
 	usMock := &usagestats.UsageStatsMock{T: t}
-	engine := ProvideAlertEngine(nil, bus, nil, nil, usMock, ossencryption.ProvideService(), setting.NewCfg())
+	tracer := tracing.InitializeTracerForTest()
+
+	store := &AlertStoreMock{}
+	engine := ProvideAlertEngine(nil, nil, nil, usMock, ossencryption.ProvideService(), nil, tracer, store, setting.NewCfg(), nil, nil)
 	setting.AlertingEvaluationTimeout = 30 * time.Second
 	setting.AlertingNotificationTimeout = 30 * time.Second
 	setting.AlertingMaxAttempts = 3
@@ -53,19 +112,19 @@ func TestEngineProcessJob(t *testing.T) {
 	job := &Job{running: true, Rule: &Rule{}}
 
 	t.Run("Should register usage metrics func", func(t *testing.T) {
-		bus.AddHandler(func(q *models.GetAllAlertsQuery) error {
+		store.getAllAlerts = func(ctx context.Context, q *models.GetAllAlertsQuery) error {
 			settings, err := simplejson.NewJson([]byte(`{"conditions": [{"query": { "datasourceId": 1}}]}`))
 			if err != nil {
 				return err
 			}
 			q.Result = []*models.Alert{{Settings: settings}}
 			return nil
-		})
+		}
 
-		bus.AddHandler(func(q *models.GetDataSourceQuery) error {
-			q.Result = &models.DataSource{Id: 1, Type: models.DS_PROMETHEUS}
+		store.getDataSource = func(ctx context.Context, q *datasources.GetDataSourceQuery) error {
+			q.Result = &datasources.DataSource{Id: 1, Type: datasources.DS_PROMETHEUS}
 			return nil
-		})
+		}
 
 		report, err := usMock.GetUsageReport(context.Background())
 		require.Nil(t, err)
@@ -124,7 +183,7 @@ func TestEngineProcessJob(t *testing.T) {
 			evalHandler := NewFakeEvalHandler(0)
 			engine.evalHandler = evalHandler
 
-			err := engine.processJobWithRetry(context.TODO(), job)
+			err := engine.processJobWithRetry(context.Background(), job)
 			require.Nil(t, err)
 			require.Equal(t, expectedAttempts, evalHandler.CallNb)
 		})
@@ -134,7 +193,7 @@ func TestEngineProcessJob(t *testing.T) {
 			evalHandler := NewFakeEvalHandler(1)
 			engine.evalHandler = evalHandler
 
-			err := engine.processJobWithRetry(context.TODO(), job)
+			err := engine.processJobWithRetry(context.Background(), job)
 			require.Nil(t, err)
 			require.Equal(t, expectedAttempts, evalHandler.CallNb)
 		})
@@ -144,7 +203,7 @@ func TestEngineProcessJob(t *testing.T) {
 			evalHandler := NewFakeEvalHandler(expectedAttempts)
 			engine.evalHandler = evalHandler
 
-			err := engine.processJobWithRetry(context.TODO(), job)
+			err := engine.processJobWithRetry(context.Background(), job)
 			require.Nil(t, err)
 			require.Equal(t, expectedAttempts, evalHandler.CallNb)
 		})

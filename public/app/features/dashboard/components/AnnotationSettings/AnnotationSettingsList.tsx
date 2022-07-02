@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
+
+import { arrayUtils } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { DeleteButton, Icon, IconButton, VerticalGroup } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
+
 import { DashboardModel } from '../../state/DashboardModel';
 import { ListNewButton } from '../DashboardSettings/ListNewButton';
-import { arrayUtils } from '@grafana/data';
 
 type Props = {
   dashboard: DashboardModel;
@@ -26,6 +29,7 @@ export const AnnotationSettingsList: React.FC<Props> = ({ dashboard, onNew, onEd
 
   const showEmptyListCTA = annotations.length === 0 || (annotations.length === 1 && annotations[0].builtIn);
 
+  const dataSourceSrv = getDataSourceSrv();
   return (
     <VerticalGroup>
       {annotations.length > 0 && (
@@ -40,37 +44,24 @@ export const AnnotationSettingsList: React.FC<Props> = ({ dashboard, onNew, onEd
           <tbody>
             {dashboard.annotations.list.map((annotation, idx) => (
               <tr key={`${annotation.name}-${idx}`}>
-                {!annotation.builtIn && (
+                {annotation.builtIn ? (
+                  <td style={{ width: '90%' }} className="pointer" onClick={() => onEdit(idx)}>
+                    <Icon name="comment-alt" /> &nbsp; <em className="muted">{annotation.name} (Built-in)</em>
+                  </td>
+                ) : (
                   <td className="pointer" onClick={() => onEdit(idx)}>
                     <Icon name="comment-alt" /> &nbsp; {annotation.name}
                   </td>
                 )}
-                {annotation.builtIn && (
-                  <td style={{ width: '90%' }} className="pointer" onClick={() => onEdit(idx)}>
-                    <Icon name="comment-alt" /> &nbsp; <em className="muted">{annotation.name} (Built-in)</em>
-                  </td>
-                )}
                 <td className="pointer" onClick={() => onEdit(idx)}>
-                  {annotation.datasource || 'Default'}
+                  {dataSourceSrv.getInstanceSettings(annotation.datasource)?.name || annotation.datasource?.uid}
                 </td>
                 <td style={{ width: '1%' }}>
-                  {idx !== 0 && (
-                    <IconButton
-                      surface="header"
-                      name="arrow-up"
-                      aria-label="arrow-up"
-                      onClick={() => onMove(idx, -1)}
-                    />
-                  )}
+                  {idx !== 0 && <IconButton name="arrow-up" aria-label="arrow-up" onClick={() => onMove(idx, -1)} />}
                 </td>
                 <td style={{ width: '1%' }}>
                   {dashboard.annotations.list.length > 1 && idx !== dashboard.annotations.list.length - 1 ? (
-                    <IconButton
-                      surface="header"
-                      name="arrow-down"
-                      aria-label="arrow-down"
-                      onClick={() => onMove(idx, 1)}
-                    />
+                    <IconButton name="arrow-down" aria-label="arrow-down" onClick={() => onMove(idx, 1)} />
                   ) : null}
                 </td>
                 <td style={{ width: '1%' }}>

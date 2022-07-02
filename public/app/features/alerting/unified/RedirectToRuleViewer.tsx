@@ -1,14 +1,16 @@
+import { css } from '@emotion/css';
 import React from 'react';
 import { Redirect } from 'react-router-dom';
-import { css } from '@emotion/css';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Card, Icon, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { useCombinedRulesMatching } from './hooks/useCombinedRule';
-import { createViewLink } from './utils/misc';
-import { getRulesSourceByName } from './utils/datasource';
-import { RuleViewerLayout } from './components/rule-viewer/RuleViewerLayout';
+
 import { AlertLabels } from './components/AlertLabels';
+import { RuleViewerLayout } from './components/rule-viewer/RuleViewerLayout';
+import { useCombinedRulesMatching } from './hooks/useCombinedRule';
+import { getRulesSourceByName } from './utils/datasource';
+import { createViewLink } from './utils/misc';
 
 type RedirectToRuleViewerProps = GrafanaRouteComponentProps<{ name?: string; sourceName?: string }>;
 const pageTitle = 'Alerting / Find rule';
@@ -70,11 +72,8 @@ export function RedirectToRuleViewer(props: RedirectToRuleViewerProps): JSX.Elem
       <div className={styles.rules}>
         {rules.map((rule, index) => {
           return (
-            <Card
-              key={`${rule.name}-${index}`}
-              heading={rule.name}
-              href={createViewLink(rulesSource, rule, '/alerting/list')}
-            >
+            <Card key={`${rule.name}-${index}`} href={createViewLink(rulesSource, rule, '/alerting/list')}>
+              <Card.Heading>{rule.name}</Card.Heading>
               <Card.Meta separator={''}>
                 <Icon name="folder" />
                 <span className={styles.namespace}>{`${rule.namespace.name} / ${rule.group.name}`}</span>

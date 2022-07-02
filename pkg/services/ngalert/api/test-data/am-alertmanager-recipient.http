@@ -1,8 +1,8 @@
-@alertManagerDatasourceID = 36
+@alertManagerDatasourceUID = Y4t6ca_Mz
 
 ###
 # create AM configuration
-POST http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceID}}/config/api/v1/alerts
+POST http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceUID}}/config/api/v1/alerts
 content-type: application/json
 
 {
@@ -62,16 +62,16 @@ content-type: application/json
 
 ###
 # get latest AM configuration
-GET http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceID}}/config/api/v1/alerts
+GET http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceUID}}/config/api/v1/alerts
 content-type: application/json
 
 ###
 # delete AM configuration
-DELETE http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceID}}/config/api/v1/alerts
+DELETE http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceUID}}/config/api/v1/alerts
 
 ###
 # create AM alerts
-POST http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceID}}/api/v2/alerts
+POST http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceUID}}/api/v2/alerts
 content-type: application/json
 
 [
@@ -94,23 +94,23 @@ content-type: application/json
 
 ###
 # get AM alerts
-GET http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceID}}/api/v2/alerts
+GET http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceUID}}/api/v2/alerts
 
 ###
 # get status
-GET http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceID}}/api/v2/status
+GET http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceUID}}/api/v2/status
 
 ###
 # get AM alert groups
-GET http://admin:admin@localhost:3000/alertmanager/{{alertManagerDatasourceID}}/api/v2/alerts/groups
+GET http://admin:admin@localhost:3000/alertmanager/{{alertManagerDatasourceUID}}/api/v2/alerts/groups
 
 ###
 # get silences - no silences
-GET http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceID}}/api/v2/silences?Filter=foo="bar"&Filter=bar="foo"
+GET http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceUID}}/api/v2/silences?Filter=foo="bar"&Filter=bar="foo"
 
 ###
 # create silence
-POST http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceID}}/api/v2/silences
+POST http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceUID}}/api/v2/silences
 content-type: application/json
 
 {
@@ -123,13 +123,13 @@ content-type: application/json
     ],
     "createdBy": "spapagian",
     "comment": "a comment",
-    "startsAt": "2021-04-05T14:45:09.885Z",
-    "endsAt": "2021-04-09T16:45:09.885Z"
+    "startsAt": "2023-04-05T14:45:09.885Z",
+    "endsAt": "2023-04-09T16:45:09.885Z"
 }
 
 ###
 # update silence - does not exist
-POST http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceID}}/api/v2/silences
+POST http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceUID}}/api/v2/silences
 content-type: application/json
 
 {
@@ -150,7 +150,7 @@ content-type: application/json
 ###
 # get silences
 # @name getSilences
-GET http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceID}}/api/v2/silences
+GET http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceUID}}/api/v2/silences
 
 
 ###
@@ -158,17 +158,17 @@ GET http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceI
 
 ###
 # get silence
-GET http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceID}}/api/v2/silence/{{silenceID}}
+GET http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceUID}}/api/v2/silence/{{silenceID}}
 
 
 ###
 # get silence - unknown
-GET http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceID}}/api/v2/silence/unknown
+GET http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceUID}}/api/v2/silence/unknown
 
 ###
 # delete silence
-DELETE http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceID}}/api/v2/silence/{{silenceID}}
+DELETE http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceUID}}/api/v2/silence/{{silenceID}}
 
 ###
 # delete silence - unknown
-DELETE http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceID}}/api/v2/silence/unknown
+DELETE http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceUID}}/api/v2/silence/unknown

@@ -1,14 +1,23 @@
 import { lastValueFrom } from 'rxjs';
+
 import { DataSourcePluginMeta, DataSourceSettings, locationUtil } from '@grafana/data';
-import { DataSourceWithBackend, getDataSourceSrv, locationService } from '@grafana/runtime';
+import {
+  DataSourceWithBackend,
+  getDataSourceSrv,
+  HealthCheckError,
+  HealthCheckResultDetails,
+  isFetchError,
+  locationService,
+} from '@grafana/runtime';
 import { updateNavIndex } from 'app/core/actions';
 import { getBackendSrv } from 'app/core/services/backend_srv';
+import { accessControlQueryParam } from 'app/core/utils/accessControl';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { importDataSourcePlugin } from 'app/features/plugins/plugin_loader';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
+import { importDataSourcePlugin } from 'app/features/plugins/plugin_loader';
 import { DataSourcePluginCategory, ThunkDispatch, ThunkResult } from 'app/types';
 
-import config from '../../../core/config';
+import { contextSrv } from '../../../core/services/context_srv';
 
 import { buildCategories } from './buildCategories';
 import { buildNavModel } from './navModel';
@@ -75,7 +84,9 @@ export const initDataSourceSettings = (
 
       dispatch(initDataSourceSettingsSucceeded(importedPlugin));
     } catch (err) {
-      dispatch(initDataSourceSettingsFailed(err));
+      if (err instanceof Error) {
+        dispatch(initDataSourceSettingsFailed(err));
+      }
     }
   };
 };
@@ -102,9 +113,17 @@ export const testDataSource = (
 
         dispatch(testDataSourceSucceeded(result));
       } catch (err) {
-        const { statusText, message: errMessage, details, data } = err;
+        let message: string | undefined;
+        let details: HealthCheckResultDetails;
 
-        const message = errMessage || data?.message || 'HTTP error ' + statusText;
+        if (err instanceof HealthCheckError) {
+          message = err.message;
+          details = err.details;
+        } else if (isFetchError(err)) {
+          message = err.data.message ?? `HTTP error ${err.statusText}`;
+        } else if (err instanceof Error) {
+          message = err.message;
+        }
 
         dispatch(testDataSourceFailed({ message, details }));
       }
@@ -155,6 +174,7 @@ export async function getDataSourceUsingUidOrId(uid: string | number): Promise<D
       getBackendSrv().fetch<DataSourceSettings>({
         method: 'GET',
         url: `/api/datasources/uid/${uid}`,
+        params: accessControlQueryParam(),
         showErrorAlert: false,
       })
     );
@@ -173,6 +193,7 @@ export async function getDataSourceUsingUidOrId(uid: string | number): Promise<D
       getBackendSrv().fetch<DataSourceSettings>({
         method: 'GET',
         url: `/api/datasources/${id}`,
+        params: accessControlQueryParam(),
         showErrorAlert: false,
       })
     );
@@ -215,7 +236,10 @@ export function addDataSource(plugin: DataSourcePluginMeta): ThunkResult<void> {
     }
 
     const result = await getBackendSrv().post('/api/datasources', newInstance);
-    await updateFrontendSettings();
+    await getDatasourceSrv().reload();
+
+    await contextSrv.fetchUserPermissions();
+
     locationService.push(`/datasources/edit/${result.datasource.uid}`);
   };
 }
@@ -232,7 +256,7 @@ export function loadDataSourcePlugins(): ThunkResult<void> {
 export function updateDataSource(dataSource: DataSourceSettings): ThunkResult<void> {
   return async (dispatch) => {
     await getBackendSrv().put(`/api/datasources/${dataSource.id}`, dataSource); // by UID not yet supported
-    await updateFrontendSettings();
+    await getDatasourceSrv().reload();
     return dispatch(loadDataSource(dataSource.uid));
   };
 }
@@ -242,7 +266,7 @@ export function deleteDataSource(): ThunkResult<void> {
     const dataSource = getStore().dataSources.dataSource;
 
     await getBackendSrv().delete(`/api/datasources/${dataSource.id}`);
-    await updateFrontendSettings();
+    await getDatasourceSrv().reload();
 
     locationService.push('/datasources');
   };
@@ -278,16 +302,6 @@ export function findNewName(dataSources: ItemWithName[], name: string) {
   }
 
   return name;
-}
-
-function updateFrontendSettings() {
-  return getBackendSrv()
-    .get('/api/frontend/settings')
-    .then((settings: any) => {
-      config.datasources = settings.datasources;
-      config.defaultDatasource = settings.defaultDatasource;
-      getDatasourceSrv().init(config.datasources, settings.defaultDatasource);
-    });
 }
 
 function nameHasSuffix(name: string) {

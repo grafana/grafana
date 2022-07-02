@@ -2,6 +2,7 @@ import { toDataFrame } from '../../dataframe/processDataFrame';
 import { FieldType } from '../../types/dataFrame';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { ArrayVector } from '../../vector';
+
 import { calculateFieldTransformer } from './calculateField';
 import { isLikelyAscendingVector, outerJoinDataFrames } from './joinDataFrames';
 
@@ -188,7 +189,7 @@ describe('align frames', () => {
       ],
     });
 
-    const out = outerJoinDataFrames({ frames: [series1], enforceSort: true, keepOriginIndices: true })!;
+    const out = outerJoinDataFrames({ frames: [series1], keepOriginIndices: true })!;
     expect(
       out.fields.map((f) => ({
         name: f.name,
@@ -292,6 +293,20 @@ describe('align frames', () => {
     it('decending', () => {
       expect(isLikelyAscendingVector(new ArrayVector([7, 6, null]))).toBeFalsy();
       expect(isLikelyAscendingVector(new ArrayVector([7, 8, 6]))).toBeFalsy();
+    });
+
+    it('ascending first/last', () => {
+      expect(isLikelyAscendingVector(new ArrayVector([10, 20, 30, 5, 15, 7, 43, 29, 11]), 3)).toBeFalsy();
+      expect(
+        isLikelyAscendingVector(new ArrayVector([null, 10, 20, 30, 5, null, 15, 7, 43, 29, 11, null]), 3)
+      ).toBeFalsy();
+    });
+
+    it('null stuffs', () => {
+      expect(isLikelyAscendingVector(new ArrayVector([null, null, 1]), 3)).toBeTruthy();
+      expect(isLikelyAscendingVector(new ArrayVector([1, null, null]), 3)).toBeTruthy();
+      expect(isLikelyAscendingVector(new ArrayVector([null, null, null]), 3)).toBeTruthy();
+      expect(isLikelyAscendingVector(new ArrayVector([null, 1, null]), 3)).toBeTruthy();
     });
   });
 });

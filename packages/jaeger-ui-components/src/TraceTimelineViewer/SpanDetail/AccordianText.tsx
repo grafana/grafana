@@ -12,18 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import * as React from 'react';
 import { css } from '@emotion/css';
 import cx from 'classnames';
+import * as React from 'react';
 import IoIosArrowDown from 'react-icons/lib/io/ios-arrow-down';
 import IoIosArrowRight from 'react-icons/lib/io/ios-arrow-right';
-import TextList from './TextList';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
+
+import { autoColor } from '../../Theme';
 import { TNil } from '../../types';
-import { getStyles as getAccordianKeyValuesStyles } from './AccordianKeyValues';
-import { autoColor, createStyle, Theme, useTheme } from '../../Theme';
 import { uAlignIcon } from '../../uberUtilityStyles';
 
-const getStyles = createStyle((theme: Theme) => {
+import { getStyles as getAccordianKeyValuesStyles } from './AccordianKeyValues';
+import TextList from './TextList';
+
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     header: css`
       cursor: pointer;
@@ -36,7 +41,7 @@ const getStyles = createStyle((theme: Theme) => {
       }
     `,
   };
-});
+};
 
 type AccordianTextProps = {
   className?: string | TNil;
@@ -66,7 +71,7 @@ export default function AccordianText(props: AccordianTextProps) {
     TextComponent = DefaultTextComponent,
   } = props;
   const isEmpty = !Array.isArray(data) || !data.length;
-  const accordianKeyValuesStyles = getAccordianKeyValuesStyles(useTheme());
+  const accordianKeyValuesStyles = useStyles2(getAccordianKeyValuesStyles);
   const iconCls = cx(uAlignIcon, { [accordianKeyValuesStyles.emptyIcon]: isEmpty });
   let arrow: React.ReactNode | null = null;
   let headerProps: {} | null = null;
@@ -78,10 +83,10 @@ export default function AccordianText(props: AccordianTextProps) {
       role: 'switch',
     };
   }
-  const styles = getStyles(useTheme());
+  const styles = useStyles2(getStyles);
   return (
     <div className={className || ''}>
-      <div className={cx(styles.header, headerClassName)} {...headerProps} data-test-id="AccordianText--header">
+      <div className={cx(styles.header, headerClassName)} {...headerProps} data-testid="AccordianText--header">
         {arrow}
         <strong>{label}</strong> ({data.length})
       </div>

@@ -3,14 +3,15 @@ package alerting
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"regexp"
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -22,6 +23,7 @@ func TestAlertmanagerConfigurationIsTransactional(t *testing.T) {
 		EnableUnifiedAlerting:                 true,
 		NGAlertAlertmanagerConfigPollInterval: 2 * time.Second,
 		DisableAnonymous:                      true,
+		AppModeProduction:                     true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
@@ -29,11 +31,8 @@ func TestAlertmanagerConfigurationIsTransactional(t *testing.T) {
 	// editor from main organisation requests configuration
 	alertConfigURL := fmt.Sprintf("http://editor:editor@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
 
-	// override bus to get the GetSignedInUserQuery handler
-	store.Bus = bus.GetBus()
-
 	// create user under main organisation
-	userID := createUser(t, store, models.CreateUserCommand{
+	userID := createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),
 		Password:       "editor",
 		Login:          "editor",
@@ -43,11 +42,11 @@ func TestAlertmanagerConfigurationIsTransactional(t *testing.T) {
 	orgID := createOrg(t, store, "another org", userID)
 
 	// create user under different organisation
-	createUser(t, store, models.CreateUserCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),
 		Password:       "editor-42",
 		Login:          "editor-42",
-		OrgId:          orgID,
+		OrgID:          orgID,
 	})
 
 	// On a blank start with no configuration, it saves and delivers the default configuration.
@@ -88,9 +87,13 @@ func TestAlertmanagerConfigurationIsTransactional(t *testing.T) {
 }
 `
 		resp := postRequest(t, alertConfigURL, payload, http.StatusBadRequest) // nolint
-		require.JSONEq(t, `{"message": "API error","error":"failed to save and apply Alertmanager configuration: failed to build integration map: the receiver is invalid: failed to validate receiver \"slack.receiver\" of type \"slack\": token must be specified when using the Slack chat API"}`, getBody(t, resp.Body))
-
+		b, err := ioutil.ReadAll(resp.Body)
+		require.NoError(t, err)
+		var res map[string]interface{}
+		require.NoError(t, json.Unmarshal(b, &res))
+		require.Equal(t, `failed to save and apply Alertmanager configuration: failed to build integration map: the receiver is invalid: failed to validate receiver "slack.receiver" of type "slack": token must be specified when using the Slack chat API`, res["message"])
 		resp = getRequest(t, alertConfigURL, http.StatusOK) // nolint
+
 		require.JSONEq(t, defaultAlertmanagerConfigJSON, getBody(t, resp.Body))
 	}
 
@@ -131,15 +134,13 @@ func TestAlertmanagerConfigurationPersistSecrets(t *testing.T) {
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
+		AppModeProduction:     true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 	alertConfigURL := fmt.Sprintf("http://editor:editor@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
 
-	// override bus to get the GetSignedInUserQuery handler
-	store.Bus = bus.GetBus()
-
-	createUser(t, store, models.CreateUserCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),
 		Password:       "editor",
 		Login:          "editor",
@@ -208,7 +209,10 @@ func TestAlertmanagerConfigurationPersistSecrets(t *testing.T) {
 	`
 
 		resp := postRequest(t, alertConfigURL, payload, http.StatusBadRequest) // nolint
-		require.JSONEq(t, `{"message": "API error","error": "unknown receiver: invalid"}`, getBody(t, resp.Body))
+		s := getBody(t, resp.Body)
+		var res map[string]interface{}
+		require.NoError(t, json.Unmarshal([]byte(s), &res))
+		require.Equal(t, "unknown receiver: invalid", res["message"])
 	}
 
 	// The secure settings must be present

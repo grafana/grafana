@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/Masterminds/semver"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -12,8 +13,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
@@ -21,49 +20,38 @@ import (
 var eslog = log.New("tsdb.elasticsearch")
 
 type Service struct {
-	HTTPClientProvider httpclient.Provider
+	httpClientProvider httpclient.Provider
 	intervalCalculator intervalv2.Calculator
 	im                 instancemgmt.InstanceManager
 }
 
-func ProvideService(httpClientProvider httpclient.Provider, registrar plugins.CoreBackendRegistrar) (*Service, error) {
+func ProvideService(httpClientProvider httpclient.Provider) *Service {
 	eslog.Debug("initializing")
 
-	im := datasource.NewInstanceManager(newInstanceSettings())
-	s := newService(im, httpClientProvider)
-
-	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler: newService(im, s.HTTPClientProvider),
-	})
-
-	if err := registrar.LoadAndRegister("elasticsearch", factory); err != nil {
-		eslog.Error("Failed to register plugin", "error", err)
-		return nil, err
-	}
-
-	return s, nil
-}
-
-// newService creates a new executor func.
-func newService(im instancemgmt.InstanceManager, httpClientProvider httpclient.Provider) *Service {
 	return &Service{
-		im:                 im,
-		HTTPClientProvider: httpClientProvider,
+		im:                 datasource.NewInstanceManager(newInstanceSettings()),
+		httpClientProvider: httpClientProvider,
 		intervalCalculator: intervalv2.NewCalculator(),
 	}
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	if len(req.Queries) == 0 {
-		return &backend.QueryDataResponse{}, fmt.Errorf("query contains no queries")
-	}
-
 	dsInfo, err := s.getDSInfo(req.PluginContext)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
 
-	client, err := es.NewClient(ctx, s.HTTPClientProvider, dsInfo, req.Queries[0].TimeRange)
+	// Support for version after their end-of-life (currently <7.10.0) was removed
+	lastSupportedVersion, _ := semver.NewVersion("7.10.0")
+	if dsInfo.ESVersion.LessThan(lastSupportedVersion) {
+		return &backend.QueryDataResponse{}, fmt.Errorf("support for elasticsearch versions after their end-of-life (currently versions < 7.10) was removed")
+	}
+
+	if len(req.Queries) == 0 {
+		return &backend.QueryDataResponse{}, fmt.Errorf("query contains no queries")
+	}
+
+	client, err := es.NewClient(ctx, s.httpClientProvider, dsInfo, req.Queries[0].TimeRange)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
@@ -90,7 +78,6 @@ func newInstanceSettings() datasource.InstanceFactoryFunc {
 		}
 
 		version, err := coerceVersion(jsonData["esVersion"])
-
 		if err != nil {
 			return nil, fmt.Errorf("elasticsearch version is required, err=%v", err)
 		}
@@ -114,8 +101,17 @@ func newInstanceSettings() datasource.InstanceFactoryFunc {
 			timeInterval = ""
 		}
 
-		maxConcurrentShardRequests, ok := jsonData["maxConcurrentShardRequests"].(float64)
-		if !ok {
+		var maxConcurrentShardRequests float64
+
+		switch v := jsonData["maxConcurrentShardRequests"].(type) {
+		case float64:
+			maxConcurrentShardRequests = v
+		case string:
+			maxConcurrentShardRequests, err = strconv.ParseFloat(v, 64)
+			if err != nil {
+				maxConcurrentShardRequests = 256
+			}
+		default:
 			maxConcurrentShardRequests = 256
 		}
 

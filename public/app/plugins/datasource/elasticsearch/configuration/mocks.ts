@@ -1,8 +1,11 @@
 import { DataSourceSettings } from '@grafana/data';
-import { ElasticsearchOptions } from '../types';
-import { createDatasourceSettings } from '../../../../features/datasources/mocks';
 
-export function createDefaultConfigOptions(): DataSourceSettings<ElasticsearchOptions> {
+import { createDatasourceSettings } from '../../../../features/datasources/mocks';
+import { ElasticsearchOptions } from '../types';
+
+export function createDefaultConfigOptions(
+  options?: Partial<ElasticsearchOptions>
+): DataSourceSettings<ElasticsearchOptions> {
   return createDatasourceSettings<ElasticsearchOptions>({
     timeField: '@time',
     esVersion: '7.0.0',
@@ -11,5 +14,6 @@ export function createDefaultConfigOptions(): DataSourceSettings<ElasticsearchOp
     maxConcurrentShardRequests: 300,
     logMessageField: 'test.message',
     logLevelField: 'test.level',
+    ...options,
   });
 }

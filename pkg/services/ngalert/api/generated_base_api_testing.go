@@ -9,26 +9,49 @@ package api
 import (
 	"net/http"
 
-	"github.com/go-macaron/binding"
-
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/web"
 )
 
-type TestingApiService interface {
-	RouteEvalQueries(*models.ReqContext, apimodels.EvalQueriesPayload) response.Response
-	RouteTestRuleConfig(*models.ReqContext, apimodels.TestRulePayload) response.Response
+type TestingApiForkingService interface {
+	RouteEvalQueries(*models.ReqContext) response.Response
+	RouteTestRuleConfig(*models.ReqContext) response.Response
+	RouteTestRuleGrafanaConfig(*models.ReqContext) response.Response
 }
 
-func (api *API) RegisterTestingApiEndpoints(srv TestingApiService, m *metrics.API) {
+func (f *ForkedTestingApi) RouteEvalQueries(ctx *models.ReqContext) response.Response {
+	conf := apimodels.EvalQueriesPayload{}
+	if err := web.Bind(ctx.Req, &conf); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	return f.forkRouteEvalQueries(ctx, conf)
+}
+func (f *ForkedTestingApi) RouteTestRuleConfig(ctx *models.ReqContext) response.Response {
+	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
+	conf := apimodels.TestRulePayload{}
+	if err := web.Bind(ctx.Req, &conf); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	return f.forkRouteTestRuleConfig(ctx, conf, datasourceUIDParam)
+}
+func (f *ForkedTestingApi) RouteTestRuleGrafanaConfig(ctx *models.ReqContext) response.Response {
+	conf := apimodels.TestRulePayload{}
+	if err := web.Bind(ctx.Req, &conf); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	return f.forkRouteTestRuleGrafanaConfig(ctx, conf)
+}
+
+func (api *API) RegisterTestingApiEndpoints(srv TestingApiForkingService, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Post(
 			toMacaronPath("/api/v1/eval"),
-			binding.Bind(apimodels.EvalQueriesPayload{}),
+			api.authorize(http.MethodPost, "/api/v1/eval"),
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/v1/eval",
@@ -37,12 +60,22 @@ func (api *API) RegisterTestingApiEndpoints(srv TestingApiService, m *metrics.AP
 			),
 		)
 		group.Post(
-			toMacaronPath("/api/v1/rule/test/{Recipient}"),
-			binding.Bind(apimodels.TestRulePayload{}),
+			toMacaronPath("/api/v1/rule/test/{DatasourceUID}"),
+			api.authorize(http.MethodPost, "/api/v1/rule/test/{DatasourceUID}"),
 			metrics.Instrument(
 				http.MethodPost,
-				"/api/v1/rule/test/{Recipient}",
+				"/api/v1/rule/test/{DatasourceUID}",
 				srv.RouteTestRuleConfig,
+				m,
+			),
+		)
+		group.Post(
+			toMacaronPath("/api/v1/rule/test/grafana"),
+			api.authorize(http.MethodPost, "/api/v1/rule/test/grafana"),
+			metrics.Instrument(
+				http.MethodPost,
+				"/api/v1/rule/test/grafana",
+				srv.RouteTestRuleGrafanaConfig,
 				m,
 			),
 		)

@@ -3,6 +3,7 @@ package dtos
 import (
 	"crypto/md5"
 	"fmt"
+	"net/http"
 	"regexp"
 	"strings"
 
@@ -28,6 +29,7 @@ type LoginCommand struct {
 type CurrentUser struct {
 	IsSignedIn                 bool               `json:"isSignedIn"`
 	Id                         int64              `json:"id"`
+	ExternalUserId             string             `json:"externalUserId"`
 	Login                      string             `json:"login"`
 	Email                      string             `json:"email"`
 	Name                       string             `json:"name"`
@@ -48,11 +50,37 @@ type CurrentUser struct {
 
 type UserPermissionsMap map[string]bool
 
+// swagger:model
 type MetricRequest struct {
-	From    string             `json:"from"`
-	To      string             `json:"to"`
+	// From Start time in epoch timestamps in milliseconds or relative using Grafana time units.
+	// required: true
+	// example: now-1h
+	From string `json:"from"`
+	// To End time in epoch timestamps in milliseconds or relative using Grafana time units.
+	// required: true
+	// example: now
+	To string `json:"to"`
+	// queries.refId – Specifies an identifier of the query. Is optional and default to “A”.
+	// queries.datasourceId – Specifies the data source to be queried. Each query in the request must have an unique datasourceId.
+	// queries.maxDataPoints - Species maximum amount of data points that dashboard panel can render. Is optional and default to 100.
+	// queries.intervalMs - Specifies the time interval in milliseconds of time series. Is optional and defaults to 1000.
+	// required: true
+	// example: [ { "refId": "A", "intervalMs": 86400000, "maxDataPoints": 1092, "datasource":{ "uid":"PD8C576611E62080A" }, "rawSql": "SELECT 1 as valueOne, 2 as valueTwo", "format": "table" } ]
 	Queries []*simplejson.Json `json:"queries"`
-	Debug   bool               `json:"debug"`
+	// required: false
+	Debug bool `json:"debug"`
+
+	HTTPRequest *http.Request `json:"-"`
+}
+
+func (mr *MetricRequest) CloneWithQueries(queries []*simplejson.Json) MetricRequest {
+	return MetricRequest{
+		From:        mr.From,
+		To:          mr.To,
+		Queries:     queries,
+		Debug:       mr.Debug,
+		HTTPRequest: mr.HTTPRequest,
+	}
 }
 
 func GetGravatarUrl(text string) string {
@@ -64,11 +92,20 @@ func GetGravatarUrl(text string) string {
 		return ""
 	}
 
+	hash, _ := GetGravatarHash(text)
+	return fmt.Sprintf(setting.AppSubUrl+"/avatar/%x", hash)
+}
+
+func GetGravatarHash(text string) ([]byte, bool) {
+	if text == "" {
+		return make([]byte, 0), false
+	}
+
 	hasher := md5.New()
 	if _, err := hasher.Write([]byte(strings.ToLower(text))); err != nil {
 		mlog.Warn("Failed to hash text", "err", err)
 	}
-	return fmt.Sprintf(setting.AppSubUrl+"/avatar/%x", hasher.Sum(nil))
+	return hasher.Sum(nil), true
 }
 
 func GetGravatarUrlWithDefault(text string, defaultText string) string {

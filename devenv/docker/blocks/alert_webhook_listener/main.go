@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 )
 
 func hello(w http.ResponseWriter, r *http.Request) {
@@ -14,7 +15,8 @@ func hello(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	line := fmt.Sprintf("webbhook: -> %s", string(body))
+	safeBody := strings.Replace(string(body), "\n", "", -1)
+	line := fmt.Sprintf("webbhook: -> %s", safeBody)
 	fmt.Println(line)
 	if _, err := io.WriteString(w, line); err != nil {
 		log.Printf("Failed to write: %v", err)

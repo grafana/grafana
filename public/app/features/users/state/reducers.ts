@@ -1,10 +1,9 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { Invitee, OrgUser, UsersState } from 'app/types';
 import config from 'app/core/config';
+import { OrgUser, UsersState } from 'app/types';
 
 export const initialState: UsersState = {
-  invitees: [] as Invitee[],
   users: [] as OrgUser[],
   searchQuery: '',
   searchPage: 1,
@@ -22,9 +21,6 @@ const usersSlice = createSlice({
     usersLoaded: (state, action: PayloadAction<OrgUser[]>): UsersState => {
       return { ...state, hasFetched: true, users: action.payload };
     },
-    inviteesLoaded: (state, action: PayloadAction<Invitee[]>): UsersState => {
-      return { ...state, hasFetched: true, invitees: action.payload };
-    },
     setUsersSearchQuery: (state, action: PayloadAction<string>): UsersState => {
       // reset searchPage otherwise search results won't appear
       return { ...state, searchQuery: action.payload, searchPage: initialState.searchPage };
@@ -35,7 +31,7 @@ const usersSlice = createSlice({
   },
 });
 
-export const { inviteesLoaded, setUsersSearchQuery, setUsersSearchPage, usersLoaded } = usersSlice.actions;
+export const { setUsersSearchQuery, setUsersSearchPage, usersLoaded } = usersSlice.actions;
 
 export const usersReducer = usersSlice.reducer;
 

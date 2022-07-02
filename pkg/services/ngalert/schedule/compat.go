@@ -6,6 +6,7 @@ import (
 	"path"
 	"time"
 
+	"github.com/benbjohnson/clock"
 	"github.com/go-openapi/strfmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/alertmanager/api/v2/models"
@@ -26,7 +27,7 @@ const (
 
 // stateToPostableAlert converts a state to a model that is accepted by Alertmanager. Annotations and Labels are copied from the state.
 // - if state has at least one result, a new label '__value_string__' is added to the label set
-// - the alert's GeneratorURL is constructed to point to the alert edit page
+// - the alert's GeneratorURL is constructed to point to the alert detail view
 // - if evaluation state is either NoData or Error, the resulting set of labels is changed:
 //   - original alert name (label: model.AlertNameLabel) is backed up to OriginalAlertName
 //   - label model.AlertNameLabel is overwritten to either NoDataAlertName or ErrorAlertName
@@ -34,14 +35,18 @@ func stateToPostableAlert(alertState *state.State, appURL *url.URL) *models.Post
 	nL := alertState.Labels.Copy()
 	nA := data.Labels(alertState.Annotations).Copy()
 
-	if len(alertState.Results) > 0 {
-		nA["__value_string__"] = alertState.Results[0].EvaluationString
+	if alertState.LastEvaluationString != "" {
+		nA["__value_string__"] = alertState.LastEvaluationString
+	}
+
+	if alertState.Image != nil {
+		nA[ngModels.ScreenshotTokenAnnotation] = alertState.Image.Token
 	}
 
 	var urlStr string
 	if uid := nL[ngModels.RuleUIDLabel]; len(uid) > 0 && appURL != nil {
 		u := *appURL
-		u.Path = path.Join(u.Path, fmt.Sprintf("/alerting/%s/edit", uid))
+		u.Path = path.Join(u.Path, fmt.Sprintf("/alerting/grafana/%s/view", uid))
 		urlStr = u.String()
 	} else if appURL != nil {
 		urlStr = appURL.String()
@@ -123,5 +128,21 @@ func FromAlertStateToPostableAlerts(firingStates []*state.State, stateManager *s
 		sentAlerts = append(sentAlerts, alertState)
 	}
 	stateManager.Put(sentAlerts)
+	return alerts
+}
+
+// FromAlertsStateToStoppedAlert converts firingStates that have evaluation state either eval.Alerting or eval.NoData or eval.Error to models.PostableAlert that are accepted by notifiers.
+// Returns a list of alert instances that have expiration time.Now
+func FromAlertsStateToStoppedAlert(firingStates []*state.State, appURL *url.URL, clock clock.Clock) apimodels.PostableAlerts {
+	alerts := apimodels.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(firingStates))}
+	ts := clock.Now()
+	for _, alertState := range firingStates {
+		if alertState.State == eval.Normal || alertState.State == eval.Pending {
+			continue
+		}
+		postableAlert := stateToPostableAlert(alertState, appURL)
+		postableAlert.EndsAt = strfmt.DateTime(ts)
+		alerts.PostableAlerts = append(alerts.PostableAlerts, *postableAlert)
+	}
 	return alerts
 }

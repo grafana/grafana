@@ -1,9 +1,12 @@
-import React, { PureComponent } from 'react';
 import formatDuration from 'date-fns/formatDuration';
+import React, { PureComponent } from 'react';
+
 import { SelectableValue, parseDuration } from '@grafana/data';
-import { ButtonSelect } from '../Dropdown/ButtonSelect';
-import { ButtonGroup, ToolbarButton, ToolbarButtonVariant } from '../Button';
 import { selectors } from '@grafana/e2e-selectors';
+
+import { ButtonGroup } from '../Button';
+import { ButtonSelect } from '../Dropdown/ButtonSelect';
+import { ToolbarButtonVariant, ToolbarButton } from '../ToolbarButton';
 
 // Default intervals used in the refresh picker component
 export const defaultIntervals = ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d'];
@@ -69,6 +72,7 @@ export class RefreshPicker extends PureComponent<Props> {
     return (
       <ButtonGroup className="refresh-picker">
         <ToolbarButton
+          aria-label={text}
           tooltip={tooltip}
           onClick={onRefresh}
           variant={variant}
@@ -102,12 +106,7 @@ export function intervalsToOptions({ intervals = defaultIntervals }: { intervals
 > {
   const intervalsOrDefault = intervals || defaultIntervals;
   const options = intervalsOrDefault.map((interval) => {
-    const duration: { [key: string]: string | number } = parseDuration(interval);
-
-    const key = Object.keys(duration)[0];
-    const value = duration[key];
-    duration[key] = Number(value);
-
+    const duration = parseDuration(interval);
     const ariaLabel = formatDuration(duration);
 
     return {

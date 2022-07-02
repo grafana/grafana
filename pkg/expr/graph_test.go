@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 func TestServicebuildPipeLine(t *testing.T) {
@@ -19,8 +21,8 @@ func TestServicebuildPipeLine(t *testing.T) {
 			req: &Request{
 				Queries: []Query{
 					{
-						RefID:         "A",
-						DatasourceUID: OldDatasourceUID,
+						RefID:      "A",
+						DataSource: DataSourceModel(),
 						JSON: json.RawMessage(`{
 							"expression": "B",
 							"reducer": "mean",
@@ -28,8 +30,10 @@ func TestServicebuildPipeLine(t *testing.T) {
 						}`),
 					},
 					{
-						RefID:         "B",
-						DatasourceUID: "Fake",
+						RefID: "B",
+						DataSource: &datasources.DataSource{
+							Uid: "Fake",
+						},
 					},
 				},
 			},
@@ -40,16 +44,16 @@ func TestServicebuildPipeLine(t *testing.T) {
 			req: &Request{
 				Queries: []Query{
 					{
-						RefID:         "A",
-						DatasourceUID: OldDatasourceUID,
+						RefID:      "A",
+						DataSource: DataSourceModel(),
 						JSON: json.RawMessage(`{
 								"expression": "$B",
 								"type": "math"
 							}`),
 					},
 					{
-						RefID:         "B",
-						DatasourceUID: OldDatasourceUID,
+						RefID:      "B",
+						DataSource: DataSourceModel(),
 						JSON: json.RawMessage(`{
 								"expression": "$A",
 								"type": "math"
@@ -64,8 +68,8 @@ func TestServicebuildPipeLine(t *testing.T) {
 			req: &Request{
 				Queries: []Query{
 					{
-						RefID:         "A",
-						DatasourceUID: OldDatasourceUID,
+						RefID:      "A",
+						DataSource: DataSourceModel(),
 						JSON: json.RawMessage(`{
 								"expression": "$A",
 								"type": "math"
@@ -80,8 +84,8 @@ func TestServicebuildPipeLine(t *testing.T) {
 			req: &Request{
 				Queries: []Query{
 					{
-						RefID:         "A",
-						DatasourceUID: OldDatasourceUID,
+						RefID:      "A",
+						DataSource: DataSourceModel(),
 						JSON: json.RawMessage(`{
 								"expression": "$B",
 								"type": "math"
@@ -96,8 +100,8 @@ func TestServicebuildPipeLine(t *testing.T) {
 			req: &Request{
 				Queries: []Query{
 					{
-						RefID:         "A",
-						DatasourceUID: OldDatasourceUID,
+						RefID:      "A",
+						DataSource: DataSourceModel(),
 						JSON: json.RawMessage(`{
 							"type": "classic_conditions",
 							"conditions": [
@@ -127,8 +131,8 @@ func TestServicebuildPipeLine(t *testing.T) {
 						}`),
 					},
 					{
-						RefID:         "B",
-						DatasourceUID: OldDatasourceUID,
+						RefID:      "B",
+						DataSource: DataSourceModel(),
 						JSON: json.RawMessage(`{
 							"expression": "C",
 							"reducer": "mean",
@@ -136,8 +140,10 @@ func TestServicebuildPipeLine(t *testing.T) {
 						}`),
 					},
 					{
-						RefID:         "C",
-						DatasourceUID: "Fake",
+						RefID: "C",
+						DataSource: &datasources.DataSource{
+							Uid: "Fake",
+						},
 					},
 				},
 			},
@@ -148,8 +154,8 @@ func TestServicebuildPipeLine(t *testing.T) {
 			req: &Request{
 				Queries: []Query{
 					{
-						RefID:         "A",
-						DatasourceUID: OldDatasourceUID,
+						RefID:      "A",
+						DataSource: DataSourceModel(),
 						JSON: json.RawMessage(`{
 							"type": "classic_conditions",
 							"conditions": [
@@ -179,8 +185,8 @@ func TestServicebuildPipeLine(t *testing.T) {
 						}`),
 					},
 					{
-						RefID:         "B",
-						DatasourceUID: OldDatasourceUID,
+						RefID:      "B",
+						DataSource: DataSourceModel(),
 						JSON: json.RawMessage(`{
 							"expression": "A",
 							"reducer": "mean",
@@ -188,8 +194,10 @@ func TestServicebuildPipeLine(t *testing.T) {
 						}`),
 					},
 					{
-						RefID:         "C",
-						DatasourceUID: "Fake",
+						RefID: "C",
+						DataSource: &datasources.DataSource{
+							Uid: "Fake",
+						},
 					},
 				},
 			},
@@ -200,10 +208,8 @@ func TestServicebuildPipeLine(t *testing.T) {
 			req: &Request{
 				Queries: []Query{
 					{
-						RefID: "A",
-						Datasource: DataSourceRef{
-							UID: DatasourceUID,
-						},
+						RefID:      "A",
+						DataSource: DataSourceModel(),
 						JSON: json.RawMessage(`{
 							"expression": "B",
 							"reducer": "mean",
@@ -212,8 +218,8 @@ func TestServicebuildPipeLine(t *testing.T) {
 					},
 					{
 						RefID: "B",
-						Datasource: DataSourceRef{
-							UID: "Fake",
+						DataSource: &datasources.DataSource{
+							Uid: "Fake",
 						},
 					},
 				},

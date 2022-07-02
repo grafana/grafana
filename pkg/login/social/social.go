@@ -45,6 +45,7 @@ type OAuthInfo struct {
 	TeamsUrl               string
 	AllowSignup            bool
 	Name                   string
+	Icon                   string
 	TlsClientCert          string
 	TlsClientKey           string
 	TlsClientCa            string
@@ -81,6 +82,7 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 			HostedDomain:         sec.Key("hosted_domain").String(),
 			AllowSignup:          sec.Key("allow_sign_up").MustBool(),
 			Name:                 sec.Key("name").MustString(name),
+			Icon:                 sec.Key("icon").String(),
 			TlsClientCert:        sec.Key("tls_client_cert").String(),
 			TlsClientKey:         sec.Key("tls_client_key").String(),
 			TlsClientCa:          sec.Key("tls_client_ca").String(),
@@ -103,13 +105,26 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 
 		ss.oAuthProvider[name] = info
 
+		var authStyle oauth2.AuthStyle
+		switch strings.ToLower(sec.Key("auth_style").String()) {
+		case "inparams":
+			authStyle = oauth2.AuthStyleInParams
+		case "inheader":
+			authStyle = oauth2.AuthStyleInHeader
+		case "autodetect", "":
+			authStyle = oauth2.AuthStyleAutoDetect
+		default:
+			logger.Warn("Invalid auth style specified, defaulting to auth style AutoDetect", "auth_style", sec.Key("auth_style").String())
+			authStyle = oauth2.AuthStyleAutoDetect
+		}
+
 		config := oauth2.Config{
 			ClientID:     info.ClientId,
 			ClientSecret: info.ClientSecret,
 			Endpoint: oauth2.Endpoint{
 				AuthURL:   info.AuthUrl,
 				TokenURL:  info.TokenUrl,
-				AuthStyle: oauth2.AuthStyleAutoDetect,
+				AuthStyle: authStyle,
 			},
 			RedirectURL: strings.TrimSuffix(cfg.AppURL, "/") + SocialBaseUrl + name,
 			Scopes:      info.Scopes,
@@ -128,10 +143,11 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 		// GitLab.
 		if name == "gitlab" {
 			ss.socialMap["gitlab"] = &SocialGitlab{
-				SocialBase:        newSocialBase(name, &config, info),
-				apiUrl:            info.ApiUrl,
-				allowedGroups:     util.SplitString(sec.Key("allowed_groups").String()),
-				roleAttributePath: info.RoleAttributePath,
+				SocialBase:          newSocialBase(name, &config, info),
+				apiUrl:              info.ApiUrl,
+				allowedGroups:       util.SplitString(sec.Key("allowed_groups").String()),
+				roleAttributePath:   info.RoleAttributePath,
+				roleAttributeStrict: info.RoleAttributeStrict,
 			}
 		}
 
@@ -147,9 +163,10 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 		// AzureAD.
 		if name == "azuread" {
 			ss.socialMap["azuread"] = &SocialAzureAD{
-				SocialBase:        newSocialBase(name, &config, info),
-				allowedGroups:     util.SplitString(sec.Key("allowed_groups").String()),
-				autoAssignOrgRole: cfg.AutoAssignOrgRole,
+				SocialBase:          newSocialBase(name, &config, info),
+				allowedGroups:       util.SplitString(sec.Key("allowed_groups").String()),
+				autoAssignOrgRole:   cfg.AutoAssignOrgRole,
+				roleAttributeStrict: info.RoleAttributeStrict,
 			}
 		}
 

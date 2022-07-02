@@ -1,34 +1,41 @@
-// Libraries
+import classNames from 'classnames';
 import React, { PureComponent, CSSProperties } from 'react';
 import ReactGridLayout, { ItemCallback } from 'react-grid-layout';
-import classNames from 'classnames';
+import { connect, ConnectedProps } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
+import { Subscription } from 'rxjs';
 
-// Components
+import { config } from '@grafana/runtime';
+import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
+import { cleanAndRemoveMany } from 'app/features/panel/state/actions';
+import { DashboardPanelsChangedEvent } from 'app/types/events';
+
 import { AddPanelWidget } from '../components/AddPanelWidget';
 import { DashboardRow } from '../components/DashboardRow';
-
-// Types
-import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
-import { DashboardPanel } from './DashboardPanel';
 import { DashboardModel, PanelModel } from '../state';
-import { Subscription } from 'rxjs';
-import { DashboardPanelsChangedEvent } from 'app/types/events';
 import { GridPos } from '../state/PanelModel';
-import { config } from '@grafana/runtime';
 
-export interface Props {
+import { DashboardPanel } from './DashboardPanel';
+
+export interface OwnProps {
   dashboard: DashboardModel;
   editPanel: PanelModel | null;
   viewPanel: PanelModel | null;
-  scrollTop: number;
 }
 
 export interface State {
   isLayoutInitialized: boolean;
 }
 
-export class DashboardGrid extends PureComponent<Props, State> {
+const mapDispatchToProps = {
+  cleanAndRemoveMany,
+};
+
+const connector = connect(null, mapDispatchToProps);
+
+export type Props = OwnProps & ConnectedProps<typeof connector>;
+
+export class DashboardGridUnconnected extends PureComponent<Props, State> {
   private panelMap: { [key: string]: PanelModel } = {};
   private eventSubs = new Subscription();
   private windowHeight = 1200;
@@ -52,6 +59,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
 
   componentWillUnmount() {
     this.eventSubs.unsubscribe();
+    this.props.cleanAndRemoveMany(Object.keys(this.panelMap));
   }
 
   buildLayout() {
@@ -92,7 +100,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
 
   onLayoutChange = (newLayout: ReactGridLayout.Layout[]) => {
     for (const newPos of newLayout) {
-      this.panelMap[newPos.i!].updateGridPos(newPos);
+      this.panelMap[newPos.i!].updateGridPos(newPos, this.state.isLayoutInitialized);
     }
 
     this.props.dashboard.sortPanelsByGridPos();
@@ -114,7 +122,6 @@ export class DashboardGrid extends PureComponent<Props, State> {
   onResize: ItemCallback = (layout, oldItem, newItem) => {
     const panel = this.panelMap[newItem.i!];
     panel.updateGridPos(newItem);
-    panel.configRev++; // trigger change handler
   };
 
   onResizeStop: ItemCallback = (layout, oldItem, newItem) => {
@@ -124,32 +131,6 @@ export class DashboardGrid extends PureComponent<Props, State> {
   onDragStop: ItemCallback = (layout, oldItem, newItem) => {
     this.updateGridPos(newItem, layout);
   };
-
-  isInView(panel: PanelModel, gridWidth: number) {
-    if (panel.isViewing || panel.isEditing) {
-      return true;
-    }
-
-    const scrollTop = this.props.scrollTop;
-    const screenPos = this.getPanelScreenPos(panel, gridWidth);
-
-    // Show things that are almost in the view
-    const buffer = 100;
-
-    // The panel is above the viewport
-    if (scrollTop > screenPos.bottom + buffer) {
-      return false;
-    }
-
-    const scrollViewBottom = scrollTop + this.windowHeight;
-
-    // Panel is below view
-    if (screenPos.top > scrollViewBottom + buffer) {
-      return false;
-    }
-
-    return !this.props.dashboard.otherPanelInFullscreen(panel);
-  }
 
   getPanelScreenPos(panel: PanelModel, gridWidth: number): { top: number; bottom: number } {
     let top = 0;
@@ -184,9 +165,6 @@ export class DashboardGrid extends PureComponent<Props, State> {
 
     for (const panel of this.props.dashboard.panels) {
       const panelClasses = classNames({ 'react-grid-item--fullscreen': panel.isViewing });
-
-      // Update is in view state
-      panel.isInView = this.isInView(panel, gridWidth);
 
       panelElements.push(
         <GrafanaGridItem
@@ -226,7 +204,6 @@ export class DashboardGrid extends PureComponent<Props, State> {
         dashboard={this.props.dashboard}
         isEditing={panel.isEditing}
         isViewing={panel.isViewing}
-        isInView={panel.isInView}
         width={width}
         height={height}
       />
@@ -235,13 +212,14 @@ export class DashboardGrid extends PureComponent<Props, State> {
 
   render() {
     const { dashboard } = this.props;
+
+    /**
+     * We have a parent with "flex: 1 1 0" we need to reset it to "flex: 1 1 auto" to have the AutoSizer
+     * properly working. For more information go here:
+     * https://github.com/bvaughn/react-virtualized/blob/master/docs/usingAutoSizer.md#can-i-use-autosizer-within-a-flex-container
+     */
     return (
-      /**
-       * We have a parent with "flex: 1 1 0" we need to reset it to "flex: 1 1 auto" to have the AutoSizer
-       * properly working. For more information go here:
-       * https://github.com/bvaughn/react-virtualized/blob/master/docs/usingAutoSizer.md#can-i-use-autosizer-within-a-flex-container
-       */
-      <div style={{ flex: '1 1 auto' }}>
+      <div style={{ flex: '1 1 auto', display: this.props.editPanel ? 'none' : undefined }}>
         <AutoSizer disableHeight>
           {({ width }) => {
             if (width === 0) {
@@ -345,3 +323,5 @@ function translateGridHeightToScreenHeight(gridHeight: number): number {
 }
 
 GrafanaGridItem.displayName = 'GridItemWithDimensions';
+
+export const DashboardGrid = connector(DashboardGridUnconnected);

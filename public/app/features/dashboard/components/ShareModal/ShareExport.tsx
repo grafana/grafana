@@ -1,12 +1,14 @@
-import React, { PureComponent } from 'react';
 import { saveAs } from 'file-saver';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import React, { PureComponent } from 'react';
+
+import { config, reportInteraction } from '@grafana/runtime';
 import { Button, Field, Modal, Switch } from '@grafana/ui';
-import { DashboardExporter } from 'app/features/dashboard/components/DashExportModal';
 import { appEvents } from 'app/core/core';
+import { getBackendSrv } from 'app/core/services/backend_srv';
+import { DashboardExporter } from 'app/features/dashboard/components/DashExportModal';
 import { ShowModalReactEvent } from 'app/types/events';
+
 import { ViewJsonModal } from './ViewJsonModal';
-import { config } from '@grafana/runtime';
 import { ShareModalTabProps } from './types';
 
 interface Props extends ShareModalTabProps {}
@@ -27,6 +29,10 @@ export class ShareExport extends PureComponent<Props, State> {
     };
 
     this.exporter = new DashboardExporter();
+  }
+
+  componentDidMount() {
+    reportInteraction('grafana_dashboards_export_share_viewed');
   }
 
   onShareExternallyChange = () => {

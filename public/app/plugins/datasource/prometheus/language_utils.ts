@@ -1,6 +1,11 @@
-import { PromMetricsMetadata, PromMetricsMetadataItem } from './types';
+import { invert } from 'lodash';
+import { Token } from 'prismjs';
+
+import { DataQuery, AbstractQuery, AbstractLabelOperator, AbstractLabelMatcher } from '@grafana/data';
+
 import { addLabelToQuery } from './add_label_to_query';
 import { SUGGESTIONS_LIMIT } from './language_provider';
+import { PromMetricsMetadata, PromMetricsMetadataItem } from './types';
 
 export const processHistogramMetrics = (metrics: string[]) => {
   const resultSet: Set<string> = new Set();
@@ -139,8 +144,8 @@ function addLabelsToExpression(expr: string, invalidLabelsRegexp: RegExp) {
 
   // Split query into 2 parts - before the invalidLabelsRegex match and after.
   const indexOfRegexMatch = match.index ?? 0;
-  const exprBeforeRegexMatch = expr.substr(0, indexOfRegexMatch + 1);
-  const exprAfterRegexMatch = expr.substr(indexOfRegexMatch + 1);
+  const exprBeforeRegexMatch = expr.slice(0, indexOfRegexMatch + 1);
+  const exprAfterRegexMatch = expr.slice(indexOfRegexMatch + 1);
 
   // Create arrayOfLabelObjects with label objects that have key, operator and value.
   const arrayOfLabelObjects: Array<{ key: string; operator: string; value: string }> = [];
@@ -149,12 +154,12 @@ function addLabelsToExpression(expr: string, invalidLabelsRegexp: RegExp) {
     return '';
   });
 
-  // Loop trough all of the label objects and add them to query.
+  // Loop through all label objects and add them to query.
   // As a starting point we have valid query without the labels.
   let result = exprBeforeRegexMatch;
   arrayOfLabelObjects.filter(Boolean).forEach((obj) => {
     // Remove extra set of quotes from obj.value
-    const value = obj.value.substr(1, obj.value.length - 2);
+    const value = obj.value.slice(1, -1);
     result = addLabelToQuery(result, obj.key, value, obj.operator);
   });
 
@@ -212,8 +217,7 @@ export function fixSummariesMetadata(metadata: { [metric: string]: PromMetricsMe
   const syntheticMetadata: PromMetricsMetadata = {};
   syntheticMetadata['ALERTS'] = {
     type: 'counter',
-    help:
-      'Time series showing pending and firing alerts. The sample value is set to 1 as long as the alert is in the indicated active (pending or firing) state.',
+    help: 'Time series showing pending and firing alerts. The sample value is set to 1 as long as the alert is in the indicated active (pending or firing) state.',
   };
 
   return { ...baseMetadata, ...summaryMetadata, ...syntheticMetadata };
@@ -258,4 +262,85 @@ export function escapeLabelValueInExactSelector(labelValue: string): string {
 
 export function escapeLabelValueInRegexSelector(labelValue: string): string {
   return escapeLabelValueInExactSelector(escapePrometheusRegexp(labelValue));
+}
+
+const FromPromLikeMap: Record<string, AbstractLabelOperator> = {
+  '=': AbstractLabelOperator.Equal,
+  '!=': AbstractLabelOperator.NotEqual,
+  '=~': AbstractLabelOperator.EqualRegEx,
+  '!~': AbstractLabelOperator.NotEqualRegEx,
+};
+const ToPromLikeMap: Record<AbstractLabelOperator, string> = invert(FromPromLikeMap) as Record<
+  AbstractLabelOperator,
+  string
+>;
+
+export function toPromLikeExpr(labelBasedQuery: AbstractQuery): string {
+  const expr = labelBasedQuery.labelMatchers
+    .map((selector: AbstractLabelMatcher) => {
+      const operator = ToPromLikeMap[selector.operator];
+      if (operator) {
+        return `${selector.name}${operator}"${selector.value}"`;
+      } else {
+        return '';
+      }
+    })
+    .filter((e: string) => e !== '')
+    .join(', ');
+
+  return expr ? `{${expr}}` : '';
+}
+
+export function toPromLikeQuery(labelBasedQuery: AbstractQuery): PromLikeQuery {
+  return {
+    refId: labelBasedQuery.refId,
+    expr: toPromLikeExpr(labelBasedQuery),
+    range: true,
+  };
+}
+
+export interface PromLikeQuery extends DataQuery {
+  expr: string;
+  range: boolean;
+}
+
+export function extractLabelMatchers(tokens: Array<string | Token>): AbstractLabelMatcher[] {
+  const labelMatchers: AbstractLabelMatcher[] = [];
+
+  for (let prop in tokens) {
+    if (tokens[prop] instanceof Token) {
+      let token: Token = tokens[prop] as Token;
+      if (token.type === 'context-labels') {
+        let labelKey = '';
+        let labelValue = '';
+        let labelOperator = '';
+        let contentTokens: any[] = token.content as any[];
+        for (let currentToken in contentTokens) {
+          if (typeof contentTokens[currentToken] === 'string') {
+            let currentStr: string;
+            currentStr = contentTokens[currentToken] as string;
+            if (currentStr === '=' || currentStr === '!=' || currentStr === '=~' || currentStr === '!~') {
+              labelOperator = currentStr;
+            }
+          } else if (contentTokens[currentToken] instanceof Token) {
+            switch (contentTokens[currentToken].type) {
+              case 'label-key':
+                labelKey = contentTokens[currentToken].content as string;
+                break;
+              case 'label-value':
+                labelValue = contentTokens[currentToken].content as string;
+                labelValue = labelValue.substring(1, labelValue.length - 1);
+                const labelComparator = FromPromLikeMap[labelOperator];
+                if (labelComparator) {
+                  labelMatchers.push({ name: labelKey, operator: labelComparator, value: labelValue });
+                }
+                break;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return labelMatchers;
 }

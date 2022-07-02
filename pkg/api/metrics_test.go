@@ -1,186 +1,40 @@
-package api_test
+package api
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 
-	"gopkg.in/macaron.v1"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-
-	"github.com/grafana/grafana/pkg/web"
-
-	"github.com/grafana/grafana/pkg/api/routing"
-
-	"github.com/grafana/grafana/pkg/services/quota"
-
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/web/webtest"
 
 	"golang.org/x/oauth2"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/api"
-	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/secrets"
-	"github.com/stretchr/testify/require"
+	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/query"
 )
 
-func TestQueryData(t *testing.T) {
-	t.Run("it attaches custom headers to the request", func(t *testing.T) {
-		tc := setup()
-		tc.dataSourceCache.ds.JsonData = simplejson.NewFromAny(map[string]interface{}{"httpHeaderName1": "foo", "httpHeaderName2": "bar"})
-		tc.secretService.decryptedJson = map[string]string{"httpHeaderValue1": "test-header", "httpHeaderValue2": "test-header2"}
-
-		_ = tc.httpServer.QueryMetricsV2(requestContext, metricRequest())
-
-		require.Equal(t, map[string]string{"foo": "test-header", "bar": "test-header2"}, tc.pluginContext.req.Headers)
-	})
-
-	t.Run("it attaches auth headers to the request", func(t *testing.T) {
-		token := &oauth2.Token{
-			TokenType:   "bearer",
-			AccessToken: "access-token",
-		}
-		token = token.WithExtra(map[string]interface{}{"id_token": "id-token"})
-
-		tc := setup()
-		tc.oauthTokenService.passThruEnabled = true
-		tc.oauthTokenService.token = token
-
-		_ = tc.httpServer.QueryMetricsV2(requestContext, metricRequest())
-
-		expected := map[string]string{
-			"Authorization": "Bearer access-token",
-			"X-ID-Token":    "id-token",
-		}
-		require.Equal(t, expected, tc.pluginContext.req.Headers)
-	})
-}
-
-func setup() *testContext {
-	pc := &fakePluginClient{}
-	sc := &fakeSecretsService{}
-	dc := &fakeDataSourceCache{ds: &models.DataSource{JsonData: simplejson.New()}}
-	tc := &fakeOAuthTokenService{}
-	rv := &fakePluginRequestValidator{}
-
-	server, err := api.ProvideHTTPServer(
-		api.ServerOptions{},
-		&setting.Cfg{},
-		&noOpRouteRegister{},
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-		rv,
-		nil,
-		nil,
-		nil,
-		pc,
-		nil,
-		nil,
-		dc,
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-		&fakeAccessControl{},
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-		&quota.QuotaService{},
-		nil,
-		tc,
-		nil,
-		nil,
-		nil,
-		nil,
-		sc,
-		nil,
-	)
-	if err != nil {
-		panic(err)
-	}
-
-	return &testContext{
-		pluginContext:          pc,
-		secretService:          sc,
-		dataSourceCache:        dc,
-		oauthTokenService:      tc,
-		pluginRequestValidator: rv,
-		httpServer:             server,
-	}
-}
-
-type testContext struct {
-	pluginContext          *fakePluginClient
-	secretService          *fakeSecretsService
-	dataSourceCache        *fakeDataSourceCache
-	oauthTokenService      *fakeOAuthTokenService
-	pluginRequestValidator *fakePluginRequestValidator
-	httpServer             *api.HTTPServer
-}
-
-func metricRequest() dtos.MetricRequest {
-	q, _ := simplejson.NewJson([]byte(`{"datasourceId":1}`))
-	return dtos.MetricRequest{
-		From:    "",
-		To:      "",
-		Queries: []*simplejson.Json{q},
-		Debug:   false,
-	}
-}
-
-var requestContext = &models.ReqContext{
-	Context: &macaron.Context{
-		Req: &http.Request{},
-	},
-}
-
-type fakeAccessControl struct {
-	accesscontrol.AccessControl
-}
-
-func (ac *fakeAccessControl) IsDisabled() bool {
-	return true
-}
-
-func (ac *fakeAccessControl) DeclareFixedRoles(...accesscontrol.RoleRegistration) error {
-	return nil
-}
-
-type noOpRouteRegister struct{}
-
-func (noOpRouteRegister) Get(string, ...web.Handler)                                 {}
-func (noOpRouteRegister) Post(string, ...web.Handler)                                {}
-func (noOpRouteRegister) Delete(string, ...web.Handler)                              {}
-func (noOpRouteRegister) Put(string, ...web.Handler)                                 {}
-func (noOpRouteRegister) Patch(string, ...web.Handler)                               {}
-func (noOpRouteRegister) Any(string, ...web.Handler)                                 {}
-func (noOpRouteRegister) Group(string, func(routing.RouteRegister), ...web.Handler)  {}
-func (noOpRouteRegister) Insert(string, func(routing.RouteRegister), ...web.Handler) {}
-func (noOpRouteRegister) Register(routing.Router)                                    {}
-func (noOpRouteRegister) Reset()                                                     {}
+var queryDatasourceInput = `{
+"from": "",
+		"to": "",
+		"queries": [
+			{
+				"datasource": {
+					"type": "datasource",
+					"uid": "grafana"
+				},
+				"queryType": "randomWalk",
+				"refId": "A"
+			}
+		]
+	}`
 
 type fakePluginRequestValidator struct {
 	err error
@@ -199,39 +53,54 @@ func (ts *fakeOAuthTokenService) GetCurrentOAuthToken(context.Context, *models.S
 	return ts.token
 }
 
-func (ts *fakeOAuthTokenService) IsOAuthPassThruEnabled(*models.DataSource) bool {
+func (ts *fakeOAuthTokenService) IsOAuthPassThruEnabled(*datasources.DataSource) bool {
 	return ts.passThruEnabled
 }
 
-type fakeSecretsService struct {
-	secrets.Service
+// `/ds/query` endpoint test
+func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
+	qds := query.ProvideService(
+		nil,
+		nil,
+		nil,
+		&fakePluginRequestValidator{},
+		&fakeDatasources.FakeDataSourceService{},
+		&fakePluginClient{
+			QueryDataHandlerFunc: func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+				resp := backend.Responses{
+					"A": backend.DataResponse{
+						Error: fmt.Errorf("query failed"),
+					},
+				}
+				return &backend.QueryDataResponse{Responses: resp}, nil
+			},
+		},
+		&fakeOAuthTokenService{},
+	)
+	serverFeatureEnabled := SetupAPITestServer(t, func(hs *HTTPServer) {
+		hs.queryDataService = qds
+		hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagDatasourceQueryMultiStatus, true)
+	})
+	serverFeatureDisabled := SetupAPITestServer(t, func(hs *HTTPServer) {
+		hs.queryDataService = qds
+		hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagDatasourceQueryMultiStatus, false)
+	})
 
-	decryptedJson map[string]string
-}
+	t.Run("Status code is 400 when data source response has an error and feature toggle is disabled", func(t *testing.T) {
+		req := serverFeatureDisabled.NewPostRequest("/api/ds/query", strings.NewReader(queryDatasourceInput))
+		webtest.RequestWithSignedInUser(req, &models.SignedInUser{UserId: 1, OrgId: 1, OrgRole: models.ROLE_VIEWER})
+		resp, err := serverFeatureDisabled.SendJSON(req)
+		require.NoError(t, err)
+		require.NoError(t, resp.Body.Close())
+		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	})
 
-func (s *fakeSecretsService) DecryptJsonData(ctx context.Context, sjd map[string][]byte) (map[string]string, error) {
-	return s.decryptedJson, nil
-}
-
-type fakeDataSourceCache struct {
-	ds *models.DataSource
-}
-
-func (c *fakeDataSourceCache) GetDatasource(datasourceID int64, user *models.SignedInUser, skipCache bool) (*models.DataSource, error) {
-	return c.ds, nil
-}
-
-func (c *fakeDataSourceCache) GetDatasourceByUID(datasourceUID string, user *models.SignedInUser, skipCache bool) (*models.DataSource, error) {
-	return c.ds, nil
-}
-
-type fakePluginClient struct {
-	plugins.Client
-
-	req *backend.QueryDataRequest
-}
-
-func (c *fakePluginClient) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	c.req = req
-	return &backend.QueryDataResponse{}, nil
+	t.Run("Status code is 207 when data source response has an error and feature toggle is enabled", func(t *testing.T) {
+		req := serverFeatureEnabled.NewPostRequest("/api/ds/query", strings.NewReader(queryDatasourceInput))
+		webtest.RequestWithSignedInUser(req, &models.SignedInUser{UserId: 1, OrgId: 1, OrgRole: models.ROLE_VIEWER})
+		resp, err := serverFeatureEnabled.SendJSON(req)
+		require.NoError(t, err)
+		require.NoError(t, resp.Body.Close())
+		require.Equal(t, http.StatusMultiStatus, resp.StatusCode)
+	})
 }

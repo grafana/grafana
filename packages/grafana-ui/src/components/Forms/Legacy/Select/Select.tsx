@@ -2,27 +2,30 @@
 import classNames from 'classnames';
 import React, { PureComponent } from 'react';
 import { default as ReactSelect, components } from 'react-select';
-import Creatable from 'react-select/creatable';
 import { default as ReactAsyncSelect } from 'react-select/async';
+import Creatable from 'react-select/creatable';
 
 // Components
-import { SelectOption } from './SelectOption';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+
+import { ThemeContext } from '../../../../themes';
+import { CustomScrollbar } from '../../../CustomScrollbar/CustomScrollbar';
 import { SelectOptionGroup } from '../../../Select/SelectOptionGroup';
 import { SingleValue } from '../../../Select/SingleValue';
+import resetSelectStyles from '../../../Select/resetSelectStyles';
 import { SelectCommonProps, SelectAsyncProps } from '../../../Select/types';
+import { Tooltip, PopoverContent } from '../../../Tooltip';
+
 import IndicatorsContainer from './IndicatorsContainer';
 import NoOptionsMessage from './NoOptionsMessage';
-import resetSelectStyles from '../../../Select/resetSelectStyles';
-import { CustomScrollbar } from '../../../CustomScrollbar/CustomScrollbar';
-import { PopoverContent, Tooltip } from '../../../Tooltip/Tooltip';
-import { SelectableValue } from '@grafana/data';
+import { SelectOption } from './SelectOption';
 
 /**
  * Changes in new selects:
  * - noOptionsMessage & loadingMessage is of string type
  * - isDisabled is renamed to disabled
  */
-type LegacyCommonProps<T> = Omit<SelectCommonProps<T>, 'noOptionsMessage' | 'disabled' | 'value'>;
+type LegacyCommonProps<T> = Omit<SelectCommonProps<T>, 'noOptionsMessage' | 'disabled' | 'value' | 'loadingMessage'>;
 
 interface AsyncProps<T> extends LegacyCommonProps<T>, Omit<SelectAsyncProps<T>, 'loadingMessage'> {
   loadingMessage?: () => string;
@@ -49,6 +52,8 @@ export const MenuList = (props: any) => {
   );
 };
 export class Select<T> extends PureComponent<LegacySelectProps<T>> {
+  static contextType = ThemeContext;
+
   static defaultProps: Partial<LegacySelectProps<any>> = {
     className: '',
     isDisabled: false,
@@ -137,7 +142,7 @@ export class Select<T> extends PureComponent<LegacySelectProps<T>> {
               onChange={onChange}
               options={options}
               placeholder={placeholder || 'Choose'}
-              styles={resetSelectStyles()}
+              styles={resetSelectStyles(this.context as GrafanaTheme2)}
               isDisabled={isDisabled}
               isLoading={isLoading}
               isClearable={isClearable}
@@ -218,7 +223,6 @@ export class AsyncSelect<T> extends PureComponent<AsyncProps<T>> {
       <WrapInTooltip onCloseMenu={onCloseMenu} onOpenMenu={onOpenMenu} tooltipContent={tooltipContent} isOpen={isOpen}>
         {(onOpenMenuInternal, onCloseMenuInternal) => {
           return (
-            //@ts-expect-error
             <ReactAsyncSelect
               captureMenuScroll={false}
               classNamePrefix="gf-form-select-box"
@@ -231,6 +235,7 @@ export class AsyncSelect<T> extends PureComponent<AsyncProps<T>> {
               }}
               defaultValue={defaultValue}
               value={value}
+              //@ts-expect-error
               getOptionLabel={getOptionLabel}
               getOptionValue={getOptionValue}
               menuShouldScrollIntoView={false}
@@ -239,6 +244,7 @@ export class AsyncSelect<T> extends PureComponent<AsyncProps<T>> {
               isLoading={isLoading}
               defaultOptions={defaultOptions}
               placeholder={placeholder || 'Choose'}
+              //@ts-expect-error
               styles={resetSelectStyles()}
               loadingMessage={() => loadingMessage}
               noOptionsMessage={noOptionsMessage}

@@ -1,18 +1,18 @@
 import React from 'react';
-import { components, OptionProps } from 'react-select';
+import { components, NoticeProps, GroupBase } from 'react-select';
 
-export interface Props {
-  children: Element;
-}
+import { SelectableValue } from '@grafana/data';
 
-export const NoOptionsMessage = (props: OptionProps<any, any>) => {
+export type Props<T> = NoticeProps<SelectableValue<T>, boolean, GroupBase<SelectableValue<T>>>;
+
+export const NoOptionsMessage = <T extends unknown>(props: Props<T>) => {
   const { children } = props;
   return (
-    <components.Option {...props}>
+    <components.NoOptionsMessage {...props}>
       <div className="gf-form-select-box__desc-option">
         <div className="gf-form-select-box__desc-option__body">{children}</div>
       </div>
-    </components.Option>
+    </components.NoOptionsMessage>
   );
 };
 

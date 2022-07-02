@@ -1,6 +1,8 @@
 import React, { PropsWithChildren, useMemo } from 'react';
+
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+
 import { VariableSelectField } from '../editor/VariableSelectField';
 import { VariableSort } from '../types';
 
@@ -29,7 +31,7 @@ export function QueryVariableSortSelect({ onChange, sort }: PropsWithChildren<Pr
       options={SORT_OPTIONS}
       onChange={onChange}
       labelWidth={10}
-      ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsSortSelect}
+      testId={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsSortSelectV2}
       tooltip="How to sort the values of this variable."
     />
   );

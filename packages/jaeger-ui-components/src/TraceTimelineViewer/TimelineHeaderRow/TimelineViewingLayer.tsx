@@ -12,16 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import * as React from 'react';
 import { css, cx } from '@emotion/css';
+import * as React from 'react';
 
-import { TUpdateViewRangeTimeFunction, ViewRangeTime, ViewRangeTimeUpdate } from '../types';
+import { stylesFactory } from '@grafana/ui';
+
 import { TNil } from '../../types';
 import DraggableManager, { DraggableBounds, DraggingUpdate } from '../../utils/DraggableManager';
-import { createStyle } from '../../Theme';
+import { TUpdateViewRangeTimeFunction, ViewRangeTime, ViewRangeTimeUpdate } from '../types';
 
 // exported for testing
-export const getStyles = createStyle(() => {
+export const getStyles = stylesFactory(() => {
   return {
     TimelineViewingLayer: css`
       label: TimelineViewingLayer;

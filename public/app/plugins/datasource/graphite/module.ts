@@ -1,8 +1,9 @@
-import { GraphiteDatasource } from './datasource';
 import { DataSourcePlugin } from '@grafana/data';
-import { ConfigEditor } from './configuration/ConfigEditor';
-import { MetricTankMetaInspector } from './components/MetricTankMetaInspector';
+
 import { GraphiteQueryEditor } from './components/GraphiteQueryEditor';
+import { MetricTankMetaInspector } from './components/MetricTankMetaInspector';
+import { ConfigEditor } from './configuration/ConfigEditor';
+import { GraphiteDatasource } from './datasource';
 
 class AnnotationsQueryCtrl {
   static templateUrl = 'partials/annotations.editor.html';

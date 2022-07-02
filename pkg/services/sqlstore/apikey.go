@@ -2,20 +2,14 @@ package sqlstore
 
 import (
 	"context"
+	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/models"
 	"xorm.io/xorm"
-)
 
-func (ss *SQLStore) addAPIKeysQueryAndCommandHandlers() {
-	bus.AddHandlerCtx("sql", ss.GetAPIKeys)
-	bus.AddHandlerCtx("sql", ss.GetApiKeyById)
-	bus.AddHandlerCtx("sql", ss.GetApiKeyByName)
-	bus.AddHandlerCtx("sql", ss.DeleteApiKey)
-	bus.AddHandlerCtx("sql", ss.AddAPIKey)
-}
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+)
 
 // GetAPIKeys queries the database based
 // on input on GetApiKeysQuery
@@ -33,9 +27,35 @@ func (ss *SQLStore) GetAPIKeys(ctx context.Context, query *models.GetApiKeysQuer
 				Asc("name")
 		}
 
+		sess = sess.Where("service_account_id IS NULL")
+
+		if !accesscontrol.IsDisabled(ss.Cfg) {
+			filter, err := accesscontrol.Filter(query.User, "id", "apikeys:id:", accesscontrol.ActionAPIKeyRead)
+			if err != nil {
+				return err
+			}
+			sess.And(filter.Where, filter.Args...)
+		}
+
 		query.Result = make([]*models.ApiKey, 0)
 		return sess.Find(&query.Result)
 	})
+}
+
+// GetAllAPIKeys queries the database for valid non SA APIKeys across all orgs
+func (ss *SQLStore) GetAllAPIKeys(ctx context.Context, orgID int64) []*models.ApiKey {
+	result := make([]*models.ApiKey, 0)
+	err := ss.WithDbSession(ctx, func(dbSession *DBSession) error {
+		sess := dbSession.Where("service_account_id IS NULL").Asc("name")
+		if orgID != -1 {
+			sess = sess.Where("org_id=?", orgID)
+		}
+		return sess.Find(&result)
+	})
+	if err != nil {
+		ss.log.Warn("API key not loaded", "err", err)
+	}
+	return result
 }
 
 func (ss *SQLStore) DeleteApiKey(ctx context.Context, cmd *models.DeleteApiKeyCommand) error {
@@ -45,7 +65,7 @@ func (ss *SQLStore) DeleteApiKey(ctx context.Context, cmd *models.DeleteApiKeyCo
 }
 
 func deleteAPIKey(sess *DBSession, id, orgID int64) error {
-	rawSQL := "DELETE FROM api_key WHERE id=? and org_id=?"
+	rawSQL := "DELETE FROM api_key WHERE id=? and org_id=? and service_account_id IS NULL"
 	result, err := sess.Exec(rawSQL, id, orgID)
 	if err != nil {
 		return err
@@ -85,7 +105,7 @@ func (ss *SQLStore) AddAPIKey(ctx context.Context, cmd *models.AddApiKeyCommand)
 			Created:          updated,
 			Updated:          updated,
 			Expires:          expires,
-			ServiceAccountId: cmd.ServiceAccountId,
+			ServiceAccountId: nil,
 		}
 
 		if _, err := sess.Insert(&t); err != nil {
@@ -124,6 +144,34 @@ func (ss *SQLStore) GetApiKeyByName(ctx context.Context, query *models.GetApiKey
 		}
 
 		query.Result = &apikey
+		return nil
+	})
+}
+
+func (ss *SQLStore) GetAPIKeyByHash(ctx context.Context, hash string) (*models.ApiKey, error) {
+	var apikey models.ApiKey
+	err := ss.WithDbSession(ctx, func(sess *DBSession) error {
+		has, err := sess.Table("api_key").Where(fmt.Sprintf("%s = ?", dialect.Quote("key")), hash).Get(&apikey)
+		if err != nil {
+			return err
+		} else if !has {
+			return models.ErrInvalidApiKey
+		}
+
+		return nil
+	})
+
+	return &apikey, err
+}
+
+// UpdateAPIKeyLastUsedDate updates the last used date of the API key to current time.
+func (ss *SQLStore) UpdateAPIKeyLastUsedDate(ctx context.Context, tokenID int64) error {
+	now := timeNow()
+	return ss.WithDbSession(ctx, func(sess *DBSession) error {
+		if _, err := sess.Table("api_key").ID(tokenID).Cols("last_used_at").Update(&models.ApiKey{LastUsedAt: &now}); err != nil {
+			return err
+		}
+
 		return nil
 	})
 }

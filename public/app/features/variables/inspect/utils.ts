@@ -1,10 +1,11 @@
-import { variableAdapters } from '../adapters';
-import { DashboardModel, PanelModel } from '../../dashboard/state';
-import { isAdHoc } from '../guard';
+import { DataLinkBuiltInVars } from '@grafana/data';
+
 import { safeStringifyValue } from '../../../core/utils/explore';
+import { DashboardModel, PanelModel } from '../../dashboard/state';
+import { variableAdapters } from '../adapters';
+import { isAdHoc } from '../guard';
 import { VariableModel } from '../types';
 import { containsVariable, variableRegex, variableRegexExec } from '../utils';
-import { DataLinkBuiltInVars } from '@grafana/data';
 
 export interface GraphNode {
   id: string;
@@ -235,7 +236,7 @@ function createUnknownsNetwork(variables: VariableModel[], dashboard: DashboardM
   for (const unknownVariable of unknownVariables) {
     const props = getPropsWithVariable(unknownVariable, { key: 'model', value: model }, {});
     if (Object.keys(props).length) {
-      const variable = ({ id: unknownVariable, name: unknownVariable } as unknown) as VariableModel;
+      const variable = { id: unknownVariable, name: unknownVariable } as unknown as VariableModel;
       unknown.push({ variable, tree: props });
     }
   }
@@ -394,7 +395,7 @@ const countLeaves = (object: any): number => {
     return count + 1;
   }, 0);
 
-  return (total as unknown) as number;
+  return total as unknown as number;
 };
 
 export const getVariableUsages = (variableId: string, usages: VariableUsageTree[]): number => {

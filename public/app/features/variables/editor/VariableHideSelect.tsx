@@ -1,4 +1,5 @@
 import React, { PropsWithChildren, useMemo } from 'react';
+
 import { SelectableValue, VariableType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -30,7 +31,7 @@ export function VariableHideSelect({ onChange, hide, type }: PropsWithChildren<P
       value={value}
       options={HIDE_OPTIONS}
       onChange={onChange}
-      ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalHideSelect}
+      testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalHideSelectV2}
     />
   );
 }

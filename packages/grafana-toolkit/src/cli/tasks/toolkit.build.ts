@@ -1,7 +1,9 @@
+import chalk from 'chalk';
 import execa = require('execa');
 import * as fs from 'fs';
-import chalk from 'chalk';
+
 import { useSpinner } from '../utils/useSpinner';
+
 import { Task, TaskRunner } from './task';
 
 const path = require('path');

@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Theme } from '../Theme';
 import memoizeOne from 'memoize-one';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { colors } from '@grafana/ui';
 
 // TS needs the precise return type
 function strToRgb(s: string): [number, number, number] {
@@ -30,23 +32,34 @@ class ColorGenerator {
   colorsHex: string[];
   colorsRgb: Array<[number, number, number]>;
   cache: Map<string, number>;
-  currentIdx: number;
 
   constructor(colorsHex: string[]) {
     this.colorsHex = colorsHex;
     this.colorsRgb = colorsHex.map(strToRgb);
     this.cache = new Map();
-    this.currentIdx = 0;
   }
 
   _getColorIndex(key: string): number {
     let i = this.cache.get(key);
     if (i == null) {
-      i = this.currentIdx;
-      this.cache.set(key, this.currentIdx);
-      this.currentIdx = ++this.currentIdx % this.colorsHex.length;
+      const hash = this.hashCode(key.toLowerCase());
+      const hashIndex = Math.abs(hash % this.colorsHex.length);
+      // colors[4] is red (which we want to disallow as a span color because it looks like an error)
+      i = hashIndex === 4 ? hashIndex + 1 : hashIndex;
+      this.cache.set(key, i);
     }
     return i;
+  }
+
+  hashCode(key: string) {
+    var hash = 0,
+      i,
+      chr;
+    for (i = 0; i < key.length; i++) {
+      chr = key.charCodeAt(i);
+      hash = (hash << 5) - hash + chr;
+    }
+    return hash;
   }
 
   /**
@@ -71,7 +84,6 @@ class ColorGenerator {
 
   clear() {
     this.cache.clear();
-    this.currentIdx = 0;
   }
 }
 
@@ -83,10 +95,10 @@ export function clear() {
   getGenerator([]);
 }
 
-export function getColorByKey(key: string, theme: Theme) {
-  return getGenerator(theme.servicesColorPalette).getColorByKey(key);
+export function getColorByKey(key: string, theme: GrafanaTheme2) {
+  return getGenerator(colors).getColorByKey(key);
 }
 
-export function getRgbColorByKey(key: string, theme: Theme): [number, number, number] {
-  return getGenerator(theme.servicesColorPalette).getRgbColorByKey(key);
+export function getRgbColorByKey(key: string, theme: GrafanaTheme2): [number, number, number] {
+  return getGenerator(colors).getRgbColorByKey(key);
 }

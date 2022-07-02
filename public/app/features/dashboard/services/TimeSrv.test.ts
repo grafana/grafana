@@ -1,9 +1,10 @@
-import { TimeSrv } from './TimeSrv';
-import { ContextSrvStub } from 'test/specs/helpers';
-import { dateTime, isDateTime } from '@grafana/data';
 import * as H from 'history';
+import { ContextSrvStub } from 'test/specs/helpers';
+
+import { dateTime, isDateTime } from '@grafana/data';
 import { HistoryWrapper, locationService, setLocationService } from '@grafana/runtime';
-import { beforeEach } from '../../../../test/lib/common';
+
+import { TimeSrv } from './TimeSrv';
 
 jest.mock('app/core/core', () => ({
   appEvents: {
@@ -27,12 +28,10 @@ describe('timeSrv', () => {
     timeSrv = new TimeSrv(new ContextSrvStub() as any);
     timeSrv.init(_dashboard);
 
-    beforeEach(() => {
-      locationUpdates = [];
-      const history = new HistoryWrapper();
-      history.getHistory().listen((x) => locationUpdates.push(x));
-      setLocationService(history);
-    });
+    locationUpdates = [];
+    const history = new HistoryWrapper();
+    history.getHistory().listen((x) => locationUpdates.push(x));
+    setLocationService(history);
   });
 
   describe('timeRange', () => {
@@ -245,6 +244,11 @@ describe('timeSrv', () => {
       timeSrv.setTime({ from: 'now-1h', to: 'now-10s' });
 
       expect(locationUpdates[1].search).toEqual('?kiosk&from=now-1h&to=now-10s');
+    });
+
+    it('should not change the URL if the updateUrl param is false', () => {
+      timeSrv.setTime({ from: '1644340584281', to: '1644340584281' }, false);
+      expect(locationUpdates.length).toBe(0);
     });
   });
 

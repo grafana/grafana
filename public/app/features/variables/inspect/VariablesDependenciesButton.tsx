@@ -1,11 +1,14 @@
 import React, { FC, useMemo } from 'react';
 import { Provider } from 'react-redux';
-// @ts-ignore
+
+import { reportInteraction } from '@grafana/runtime';
 import { Button } from '@grafana/ui';
-import { createDependencyEdges, createDependencyNodes, filterNodesWithDependencies } from './utils';
+
 import { store } from '../../../store/store';
 import { VariableModel } from '../types';
+
 import { NetworkGraphModal } from './NetworkGraphModal';
+import { createDependencyEdges, createDependencyNodes, filterNodesWithDependencies } from './utils';
 
 interface OwnProps {
   variables: VariableModel[];
@@ -34,7 +37,14 @@ export const UnProvidedVariablesDependenciesButton: FC<Props> = ({ variables }) 
     >
       {({ showModal }) => {
         return (
-          <Button onClick={() => showModal()} icon="channel-add" variant="secondary">
+          <Button
+            onClick={() => {
+              reportInteraction('Show variable dependencies');
+              showModal();
+            }}
+            icon="channel-add"
+            variant="secondary"
+          >
             Show dependencies
           </Button>
         );

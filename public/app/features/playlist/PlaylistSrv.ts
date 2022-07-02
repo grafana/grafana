@@ -1,10 +1,10 @@
 // Libraries
+import { Location } from 'history';
 import { pickBy } from 'lodash';
 
 // Utils
-import { getBackendSrv, locationService } from '@grafana/runtime';
 import { locationUtil, urlUtil, rangeUtil } from '@grafana/data';
-import { Location } from 'history';
+import { getBackendSrv, locationService } from '@grafana/runtime';
 
 export const queryParamsToPreserve: { [key: string]: boolean } = {
   kiosk: true,
@@ -68,7 +68,7 @@ export class PlaylistSrv {
     }
   }
 
-  start(playlistId: number) {
+  start(playlistUid: string) {
     this.stop();
 
     this.startUrl = window.location.href;
@@ -79,10 +79,10 @@ export class PlaylistSrv {
     this.locationListenerUnsub = locationService.getHistory().listen(this.locationUpdated);
 
     return getBackendSrv()
-      .get(`/api/playlists/${playlistId}`)
+      .get(`/api/playlists/${playlistUid}`)
       .then((playlist: any) => {
         return getBackendSrv()
-          .get(`/api/playlists/${playlistId}/dashboards`)
+          .get(`/api/playlists/${playlistUid}/dashboards`)
           .then((dashboards: any) => {
             this.dashboards = dashboards;
             this.interval = rangeUtil.intervalToMs(playlist.interval);

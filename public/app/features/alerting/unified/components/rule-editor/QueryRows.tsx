@@ -1,5 +1,7 @@
+import { omit } from 'lodash';
 import React, { PureComponent, useState } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
+
 import {
   DataQuery,
   DataSourceInstanceSettings,
@@ -10,13 +12,14 @@ import {
   ThresholdsMode,
 } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { EmptyQueryWrapper, QueryWrapper } from './QueryWrapper';
-import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
-import { isExpressionQuery } from 'app/features/expressions/guards';
-import { queriesWithUpdatedReferences } from './util';
 import { Button, Card, Icon } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
+import { isExpressionQuery } from 'app/features/expressions/guards';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
+
+import { EmptyQueryWrapper, QueryWrapper } from './QueryWrapper';
+import { queriesWithUpdatedReferences } from './util';
 
 interface Props {
   // The query configuration
@@ -108,19 +111,7 @@ export class QueryRows extends PureComponent<Props, State> {
         return item;
       }
 
-      const previous = getDataSourceSrv().getInstanceSettings(item.datasourceUid);
-
-      if (previous?.type === settings.uid) {
-        return {
-          ...item,
-          datasourceUid: settings.uid,
-        };
-      }
-
-      return {
-        ...item,
-        datasourceUid: settings.uid,
-      };
+      return copyModel(item, settings.uid);
     });
     onQueriesChange(updatedQueries);
   };
@@ -265,7 +256,7 @@ export class QueryRows extends PureComponent<Props, State> {
                   return (
                     <QueryWrapper
                       index={index}
-                      key={`${query.refId}-${index}`}
+                      key={query.refId}
                       dsSettings={dsSettings}
                       data={data}
                       query={query}
@@ -291,6 +282,14 @@ export class QueryRows extends PureComponent<Props, State> {
   }
 }
 
+function copyModel(item: AlertQuery, uid: string): Omit<AlertQuery, 'datasource'> {
+  return {
+    ...item,
+    model: omit(item.model, 'datasource'),
+    datasourceUid: uid,
+  };
+}
+
 interface DatasourceNotFoundProps {
   index: number;
   model: AlertDataQuery;
@@ -314,12 +313,11 @@ const DatasourceNotFound = ({ index, onUpdateDatasource, onRemoveQuery, model }:
   return (
     <EmptyQueryWrapper>
       <QueryOperationRow title={refId} draggable index={index} id={refId} isOpen>
-        <Card
-          heading="This datasource has been removed"
-          description={
-            'The datasource for this query was not found, it was either removed or is not installed correctly.'
-          }
-        >
+        <Card>
+          <Card.Heading>This datasource has been removed</Card.Heading>
+          <Card.Description>
+            The datasource for this query was not found, it was either removed or is not installed correctly.
+          </Card.Description>
           <Card.Figure>
             <Icon name="question-circle" />
           </Card.Figure>

@@ -1,6 +1,7 @@
 package managedstream
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -55,30 +56,30 @@ func TestGetManagedStreams(t *testing.T) {
 
 	managedChannels, err := runner.GetManagedChannels(1)
 	require.NoError(t, err)
-	require.Len(t, managedChannels, 3) // 3 hardcoded testdata streams.
+	require.Len(t, managedChannels, 4) // 4 hardcoded testdata streams.
 
-	err = s1.Push("cpu1", data.NewFrame("cpu1"))
+	err = s1.Push(context.Background(), "cpu1", data.NewFrame("cpu1"))
 	require.NoError(t, err)
 
-	err = s1.Push("cpu2", data.NewFrame("cpu2"))
+	err = s1.Push(context.Background(), "cpu2", data.NewFrame("cpu2"))
 	require.NoError(t, err)
 
-	err = s2.Push("cpu1", data.NewFrame("cpu1"))
+	err = s2.Push(context.Background(), "cpu1", data.NewFrame("cpu1"))
 	require.NoError(t, err)
 
 	managedChannels, err = runner.GetManagedChannels(1)
 	require.NoError(t, err)
-	require.Len(t, managedChannels, 6) // 3 hardcoded testdata streams + 3 test channels.
-	require.Equal(t, "stream/test1/cpu1", managedChannels[3].Channel)
-	require.Equal(t, "stream/test1/cpu2", managedChannels[4].Channel)
-	require.Equal(t, "stream/test2/cpu1", managedChannels[5].Channel)
+	require.Len(t, managedChannels, 7) // 4 hardcoded testdata streams + 3 test channels.
+	require.Equal(t, "stream/test1/cpu1", managedChannels[4].Channel)
+	require.Equal(t, "stream/test1/cpu2", managedChannels[5].Channel)
+	require.Equal(t, "stream/test2/cpu1", managedChannels[6].Channel)
 
 	// Different org.
 	s3, err := runner.GetOrCreateStream(2, "stream", "test1")
 	require.NoError(t, err)
-	err = s3.Push("cpu1", data.NewFrame("cpu1"))
+	err = s3.Push(context.Background(), "cpu1", data.NewFrame("cpu1"))
 	require.NoError(t, err)
 	managedChannels, err = runner.GetManagedChannels(1)
 	require.NoError(t, err)
-	require.Len(t, managedChannels, 6) // Not affected by other org.
+	require.Len(t, managedChannels, 7) // Not affected by other org.
 }

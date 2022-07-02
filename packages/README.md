@@ -32,30 +32,6 @@ Every commit to main that has changes within the `packages` directory is a subje
 <lerna.json version>-<COMMIT_SHA>
 ```
 
-Automatic prereleases are published under the `canary` dist tag to the [github package registry](https://docs.github.com/en/free-pro-team@latest/packages/publishing-and-managing-packages/about-github-packages).
-
-#### Consuming prereleases
-
-As mentioned above the `canary` releases are published to the Github package registry rather than the NPM registry. If you wish to make use of these prereleases please follow these steps:
-
-1. You must use a personal access token to install packages from Github. To create an access token [click here](https://github.com/settings/tokens) and create a token with the `read:packages` scope. Make a copy of the token.
-2. Create / modify your `~/.npmrc` file with the following:
-
-```
-@grafana:registry=https://npm.pkg.github.com
-//npm.pkg.github.com/:_authToken={INSERT_GH_TOKEN_HERE}
-```
-
-3. Update the package.json of your project to use either the `canary` channel or a version of the `canary` channel
-
-```json
-// plugin's package.json
-{
-  ...
-  "@grafana/data": "canary"
-}
-```
-
 ### Manual release
 
 > All of the steps below must be performed on a release branch, according to Grafana Release Guide.

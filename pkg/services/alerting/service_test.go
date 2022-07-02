@@ -2,12 +2,13 @@ package alerting
 
 import (
 	"context"
+	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
@@ -19,7 +20,7 @@ func TestService(t *testing.T) {
 	nType := "test"
 	registerTestNotifier(nType)
 
-	s := ProvideService(bus.New(), sqlStore, ossencryption.ProvideService())
+	s := ProvideService(sqlStore, ossencryption.ProvideService(), nil)
 
 	origSecret := setting.SecretKey
 	setting.SecretKey = "alert_notification_service_test"
@@ -112,11 +113,33 @@ func TestService(t *testing.T) {
 		err = s.DeleteAlertNotification(context.Background(), &delCmd)
 		require.NoError(t, err)
 	})
+
+	t.Run("create alert notification should reject an invalid command", func(t *testing.T) {
+		uid := strings.Repeat("A", 41)
+
+		err := s.CreateAlertNotificationCommand(context.Background(), &models.CreateAlertNotificationCommand{Uid: uid})
+		require.ErrorIs(t, err, ValidationError{Reason: "Invalid UID: Must be 40 characters or less"})
+	})
+
+	t.Run("update alert notification should reject an invalid command", func(t *testing.T) {
+		ctx := context.Background()
+
+		uid := strings.Repeat("A", 41)
+		expectedErr := ValidationError{Reason: "Invalid UID: Must be 40 characters or less"}
+
+		err := s.UpdateAlertNotification(ctx, &models.UpdateAlertNotificationCommand{Uid: uid})
+		require.ErrorIs(t, err, expectedErr)
+
+		err = s.UpdateAlertNotificationWithUid(ctx, &models.UpdateAlertNotificationWithUidCommand{NewUid: uid})
+		require.ErrorIs(t, err, expectedErr)
+	})
 }
 
 func registerTestNotifier(notifierType string) {
 	RegisterNotifier(&NotifierPlugin{
-		Type:    notifierType,
-		Factory: func(*models.AlertNotification, GetDecryptedValueFn) (Notifier, error) { return nil, nil },
+		Type: notifierType,
+		Factory: func(*models.AlertNotification, GetDecryptedValueFn, notifications.Service) (Notifier, error) {
+			return nil, nil
+		},
 	})
 }

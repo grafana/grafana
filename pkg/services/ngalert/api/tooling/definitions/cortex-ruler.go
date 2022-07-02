@@ -5,11 +5,23 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/prometheus/common/model"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-// swagger:route Get /api/ruler/{Recipient}/api/v1/rules ruler RouteGetRulesConfig
+// swagger:route Get /api/ruler/grafana/api/v1/rules ruler RouteGetGrafanaRulesConfig
+//
+// List rule groups
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       202: NamespaceConfigResponse
+//
+
+// swagger:route Get /api/ruler/{DatasourceUID}/api/v1/rules ruler RouteGetRulesConfig
 //
 // List rule groups
 //
@@ -19,7 +31,19 @@ import (
 //     Responses:
 //       202: NamespaceConfigResponse
 
-// swagger:route POST /api/ruler/{Recipient}/api/v1/rules/{Namespace} ruler RoutePostNameRulesConfig
+// swagger:route POST /api/ruler/grafana/api/v1/rules/{Namespace} ruler RoutePostNameGrafanaRulesConfig
+//
+// Creates or updates a rule group
+//
+//     Consumes:
+//     - application/json
+//     - application/yaml
+//
+//     Responses:
+//       202: Ack
+//
+
+// swagger:route POST /api/ruler/{DatasourceUID}/api/v1/rules/{Namespace} ruler RoutePostNameRulesConfig
 //
 // Creates or updates a rule group
 //
@@ -30,7 +54,7 @@ import (
 //     Responses:
 //       202: Ack
 
-// swagger:route Get /api/ruler/{Recipient}/api/v1/rules/{Namespace} ruler RouteGetNamespaceRulesConfig
+// swagger:route Get /api/ruler/grafana/api/v1/rules/{Namespace} ruler RouteGetNamespaceGrafanaRulesConfig
 //
 // Get rule groups by namespace
 //
@@ -40,14 +64,31 @@ import (
 //     Responses:
 //       202: NamespaceConfigResponse
 
-// swagger:route Delete /api/ruler/{Recipient}/api/v1/rules/{Namespace} ruler RouteDeleteNamespaceRulesConfig
+// swagger:route Get /api/ruler/{DatasourceUID}/api/v1/rules/{Namespace} ruler RouteGetNamespaceRulesConfig
+//
+// Get rule groups by namespace
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       202: NamespaceConfigResponse
+
+// swagger:route Delete /api/ruler/grafana/api/v1/rules/{Namespace} ruler RouteDeleteNamespaceGrafanaRulesConfig
 //
 // Delete namespace
 //
 //     Responses:
 //       202: Ack
 
-// swagger:route Get /api/ruler/{Recipient}/api/v1/rules/{Namespace}/{Groupname} ruler RouteGetRulegGroupConfig
+// swagger:route Delete /api/ruler/{DatasourceUID}/api/v1/rules/{Namespace} ruler RouteDeleteNamespaceRulesConfig
+//
+// Delete namespace
+//
+//     Responses:
+//       202: Ack
+
+// swagger:route Get /api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname} ruler RouteGetGrafanaRuleGroupConfig
 //
 // Get rule group
 //
@@ -57,14 +98,31 @@ import (
 //     Responses:
 //       202: RuleGroupConfigResponse
 
-// swagger:route Delete /api/ruler/{Recipient}/api/v1/rules/{Namespace}/{Groupname} ruler RouteDeleteRuleGroupConfig
+// swagger:route Get /api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname} ruler RouteGetRulegGroupConfig
+//
+// Get rule group
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       202: RuleGroupConfigResponse
+
+// swagger:route Delete /api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname} ruler RouteDeleteGrafanaRuleGroupConfig
 //
 // Delete rule group
 //
 //     Responses:
 //       202: Ack
 
-// swagger:parameters RoutePostNameRulesConfig
+// swagger:route Delete /api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname} ruler RouteDeleteRuleGroupConfig
+//
+// Delete rule group
+//
+//     Responses:
+//       202: Ack
+
+// swagger:parameters RoutePostNameRulesConfig RoutePostNameGrafanaRulesConfig
 type NamespaceConfig struct {
 	// in:path
 	Namespace string
@@ -72,13 +130,13 @@ type NamespaceConfig struct {
 	Body PostableRuleGroupConfig
 }
 
-// swagger:parameters RouteGetNamespaceRulesConfig RouteDeleteNamespaceRulesConfig
+// swagger:parameters RouteGetNamespaceRulesConfig RouteDeleteNamespaceRulesConfig RouteGetNamespaceGrafanaRulesConfig RouteDeleteNamespaceGrafanaRulesConfig
 type PathNamespaceConfig struct {
 	// in: path
 	Namespace string
 }
 
-// swagger:parameters RouteGetRulegGroupConfig RouteDeleteRuleGroupConfig
+// swagger:parameters RouteGetRulegGroupConfig RouteDeleteRuleGroupConfig RouteGetGrafanaRuleGroupConfig RouteDeleteGrafanaRuleGroupConfig
 type PathRouleGroupConfig struct {
 	// in: path
 	Namespace string
@@ -86,7 +144,7 @@ type PathRouleGroupConfig struct {
 	Groupname string
 }
 
-// swagger:parameters RouteGetRulesConfig
+// swagger:parameters RouteGetRulesConfig RouteGetGrafanaRulesConfig
 type PathGetRulesParams struct {
 	// in: query
 	DashboardUID string
@@ -150,9 +208,10 @@ func (c *PostableRuleGroupConfig) validate() error {
 
 // swagger:model
 type GettableRuleGroupConfig struct {
-	Name     string                     `yaml:"name" json:"name"`
-	Interval model.Duration             `yaml:"interval,omitempty" json:"interval,omitempty"`
-	Rules    []GettableExtendedRuleNode `yaml:"rules" json:"rules"`
+	Name          string                     `yaml:"name" json:"name"`
+	Interval      model.Duration             `yaml:"interval,omitempty" json:"interval,omitempty"`
+	SourceTenants []string                   `yaml:"source_tenants,omitempty" json:"source_tenants,omitempty"`
+	Rules         []GettableExtendedRuleNode `yaml:"rules" json:"rules"`
 }
 
 func (c *GettableRuleGroupConfig) UnmarshalJSON(b []byte) error {
@@ -198,7 +257,7 @@ type ApiRuleNode struct {
 	Record      string            `yaml:"record,omitempty" json:"record,omitempty"`
 	Alert       string            `yaml:"alert,omitempty" json:"alert,omitempty"`
 	Expr        string            `yaml:"expr" json:"expr"`
-	For         model.Duration    `yaml:"for,omitempty" json:"for,omitempty"`
+	For         *model.Duration   `yaml:"for,omitempty" json:"for,omitempty"`
 	Labels      map[string]string `yaml:"labels,omitempty" json:"labels,omitempty"`
 	Annotations map[string]string `yaml:"annotations,omitempty" json:"annotations,omitempty"`
 }
@@ -296,7 +355,9 @@ const (
 type ExecutionErrorState string
 
 const (
+	OkErrState       ExecutionErrorState = "OK"
 	AlertingErrState ExecutionErrorState = "Alerting"
+	ErrorErrState    ExecutionErrorState = "Error"
 )
 
 // swagger:model
@@ -325,4 +386,5 @@ type GettableGrafanaRule struct {
 	RuleGroup       string              `json:"rule_group" yaml:"rule_group"`
 	NoDataState     NoDataState         `json:"no_data_state" yaml:"no_data_state"`
 	ExecErrState    ExecutionErrorState `json:"exec_err_state" yaml:"exec_err_state"`
+	Provenance      models.Provenance   `json:"provenance,omitempty" yaml:"provenance,omitempty"`
 }

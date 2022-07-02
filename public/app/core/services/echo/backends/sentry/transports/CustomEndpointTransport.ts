@@ -1,6 +1,14 @@
 import { Event, Severity } from '@sentry/browser';
-import { logger, parseRetryAfterHeader, PromiseBuffer, supportsReferrerPolicy, SyncPromise } from '@sentry/utils';
-import { Response, Status } from '@sentry/types';
+import { Response } from '@sentry/types';
+import {
+  logger,
+  makePromiseBuffer,
+  parseRetryAfterHeader,
+  PromiseBuffer,
+  supportsReferrerPolicy,
+  SyncPromise,
+} from '@sentry/utils';
+
 import { BaseTransport } from '../types';
 
 export interface CustomEndpointTransportOptions {
@@ -10,6 +18,8 @@ export interface CustomEndpointTransportOptions {
 }
 
 const DEFAULT_MAX_CONCURRENT_REQUESTS = 3;
+
+const DEFAULT_RATE_LIMIT_TIMEOUT_MS = 5000;
 
 /**
  * This is a copy of sentry's FetchTransport, edited to be able to push to any custom url
@@ -25,7 +35,7 @@ export class CustomEndpointTransport implements BaseTransport {
   private readonly _buffer: PromiseBuffer<Response>;
 
   constructor(public options: CustomEndpointTransportOptions) {
-    this._buffer = new PromiseBuffer(options.maxConcurrentRequests ?? DEFAULT_MAX_CONCURRENT_REQUESTS);
+    this._buffer = makePromiseBuffer(options.maxConcurrentRequests ?? DEFAULT_MAX_CONCURRENT_REQUESTS);
   }
 
   sendEvent(event: Event): PromiseLike<Response> {
@@ -35,7 +45,7 @@ export class CustomEndpointTransport implements BaseTransport {
       return Promise.resolve({
         event,
         reason,
-        status: Status.Skipped,
+        status: 'skipped',
       });
     }
 
@@ -81,41 +91,46 @@ export class CustomEndpointTransport implements BaseTransport {
       Object.assign(options, this.options.fetchParameters);
     }
 
-    if (!this._buffer.isReady()) {
-      const reason = `Dropping frontend log event due to too many requests in flight.`;
-      console.warn(reason);
-      return Promise.resolve({
-        event,
-        reason,
-        status: Status.Skipped,
+    return this._buffer
+      .add(
+        () =>
+          new SyncPromise<Response>((resolve, reject) => {
+            window
+              .fetch(sentryReq.url, options)
+              .then((response) => {
+                if (response.status === 200) {
+                  resolve({ status: 'success' });
+                  return;
+                }
+
+                if (response.status === 429) {
+                  const now = Date.now();
+                  const retryAfterHeader = response.headers.get('Retry-After');
+                  if (retryAfterHeader) {
+                    this._disabledUntil = new Date(now + parseRetryAfterHeader(retryAfterHeader, now));
+                  } else {
+                    this._disabledUntil = new Date(now + DEFAULT_RATE_LIMIT_TIMEOUT_MS);
+                  }
+                  logger.warn(`Too many requests, backing off till: ${this._disabledUntil}`);
+                }
+
+                reject(response);
+              })
+              .catch(reject);
+          })
+      )
+      .then(undefined, (reason) => {
+        if (reason.message === 'Not adding Promise due to buffer limit reached.') {
+          const msg = `Dropping frontend log event due to too many requests in flight.`;
+          console.warn(msg);
+          return {
+            event,
+            reason: msg,
+            status: 'skipped',
+          };
+        }
+        throw reason;
       });
-    }
-
-    return this._buffer.add(
-      () =>
-        new SyncPromise<Response>((resolve, reject) => {
-          window
-            .fetch(sentryReq.url, options)
-            .then((response) => {
-              const status = Status.fromHttpCode(response.status);
-
-              if (status === Status.Success) {
-                resolve({ status });
-                return;
-              }
-
-              if (status === Status.RateLimit) {
-                const now = Date.now();
-                const retryAfterHeader = response.headers.get('Retry-After');
-                this._disabledUntil = new Date(now + parseRetryAfterHeader(now, retryAfterHeader));
-                logger.warn(`Too many requests, backing off till: ${this._disabledUntil}`);
-              }
-
-              reject(response);
-            })
-            .catch(reject);
-        })
-    );
   }
 }
 

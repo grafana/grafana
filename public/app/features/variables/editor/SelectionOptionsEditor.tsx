@@ -1,17 +1,20 @@
 import React, { ChangeEvent, FormEvent, FunctionComponent, useCallback } from 'react';
-import { InlineFieldRow, VerticalGroup } from '@grafana/ui';
-import { selectors } from '@grafana/e2e-selectors';
 
+import { selectors } from '@grafana/e2e-selectors';
+import { InlineFieldRow, VerticalGroup } from '@grafana/ui';
+
+import { KeyedVariableIdentifier } from '../state/types';
 import { VariableWithMultiSupport } from '../types';
-import { VariableEditorProps } from './types';
-import { toVariableIdentifier, VariableIdentifier } from '../state/types';
+import { toKeyedVariableIdentifier } from '../utils';
+
 import { VariableSectionHeader } from './VariableSectionHeader';
 import { VariableSwitchField } from './VariableSwitchField';
 import { VariableTextField } from './VariableTextField';
+import { VariableEditorProps } from './types';
 
 export interface SelectionOptionsEditorProps<Model extends VariableWithMultiSupport = VariableWithMultiSupport>
   extends VariableEditorProps<Model> {
-  onMultiChanged: (identifier: VariableIdentifier, value: boolean) => void;
+  onMultiChanged: (identifier: KeyedVariableIdentifier, value: boolean) => void;
 }
 
 export const SelectionOptionsEditor: FunctionComponent<SelectionOptionsEditorProps> = ({
@@ -21,7 +24,7 @@ export const SelectionOptionsEditor: FunctionComponent<SelectionOptionsEditorPro
 }) => {
   const onMultiChanged = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
-      onMultiChangedProps(toVariableIdentifier(variable), event.target.checked);
+      onMultiChangedProps(toKeyedVariableIdentifier(variable), event.target.checked);
     },
     [onMultiChangedProps, variable]
   );
@@ -68,7 +71,7 @@ export const SelectionOptionsEditor: FunctionComponent<SelectionOptionsEditorPro
             onChange={onAllValueChanged}
             name="Custom all value"
             placeholder="blank = auto"
-            ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInput}
+            testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInputV2}
             labelWidth={20}
           />
         </InlineFieldRow>

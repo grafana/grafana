@@ -1,8 +1,10 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
+
+import { LayoutModes } from '@grafana/data';
+
 import DataSourcesList from './DataSourcesList';
 import { getMockDataSources } from './__mocks__/dataSourcesMocks';
-import { LayoutModes } from '@grafana/data';
 
 const setup = () => {
   const props = {
@@ -23,7 +25,6 @@ describe('DataSourcesList', () => {
   it('should render all elements in the list item', () => {
     setup();
     expect(screen.getByRole('heading', { name: 'dataSource-0' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'dataSource-0 dataSource-0' })).toBeInTheDocument();
-    expect(screen.getByAltText('dataSource-0')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'dataSource-0' })).toBeInTheDocument();
   });
 });

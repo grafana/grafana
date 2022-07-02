@@ -1,4 +1,5 @@
 import { DataFrame, PanelData, Field, getFieldDisplayName, ReducerID } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import {
   getColorDimension,
   getScaledDimension,
@@ -9,8 +10,10 @@ import {
   ResourceDimensionConfig,
   ScaleDimensionConfig,
   TextDimensionConfig,
+  ScalarDimensionConfig,
 } from 'app/features/dimensions';
-import { config } from '@grafana/runtime';
+
+import { getScalarDimension } from './scalar';
 
 export function getColorDimensionFromData(
   data: PanelData | undefined,
@@ -40,6 +43,21 @@ export function getScaleDimensionFromData(
     }
   }
   return getScaledDimension(undefined, cfg);
+}
+
+export function getScalarDimensionFromData(
+  data: PanelData | undefined,
+  cfg: ScalarDimensionConfig
+): DimensionSupplier<number> {
+  if (data?.series && cfg.field) {
+    for (const frame of data.series) {
+      const d = getScalarDimension(frame, cfg);
+      if (!d.isAssumed || data.series.length === 1) {
+        return d;
+      }
+    }
+  }
+  return getScalarDimension(undefined, cfg);
 }
 
 export function getResourceDimensionFromData(

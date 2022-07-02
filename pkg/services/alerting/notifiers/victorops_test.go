@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
@@ -35,7 +36,7 @@ func TestVictoropsNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			_, err := NewVictoropsNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+			_, err := NewVictoropsNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 			require.Error(t, err)
 		})
 
@@ -52,7 +53,7 @@ func TestVictoropsNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := NewVictoropsNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+			not, err := NewVictoropsNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 			victoropsNotifier := not.(*VictoropsNotifier)
 
 			require.Nil(t, err)
@@ -76,7 +77,7 @@ func TestVictoropsNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := NewVictoropsNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+			not, err := NewVictoropsNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 			require.Nil(t, err)
 
 			victoropsNotifier := not.(*VictoropsNotifier)
@@ -90,7 +91,7 @@ func TestVictoropsNotifier(t *testing.T) {
 					{Key: "keyOnly"},
 					{Key: "severity", Value: "warning"},
 				},
-			}, &validations.OSSPluginRequestValidator{})
+			}, &validations.OSSPluginRequestValidator{}, nil, nil)
 			evalContext.IsTestRun = true
 
 			payload, err := victoropsNotifier.buildEventPayload(evalContext)
@@ -124,7 +125,7 @@ func TestVictoropsNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := NewVictoropsNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+			not, err := NewVictoropsNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 			require.Nil(t, err)
 
 			victoropsNotifier := not.(*VictoropsNotifier)
@@ -138,7 +139,7 @@ func TestVictoropsNotifier(t *testing.T) {
 					{Key: "keyOnly"},
 					{Key: "severity", Value: "warning"},
 				},
-			}, &validations.OSSPluginRequestValidator{})
+			}, &validations.OSSPluginRequestValidator{}, nil, nil)
 			evalContext.IsTestRun = true
 
 			payload, err := victoropsNotifier.buildEventPayload(evalContext)

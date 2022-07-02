@@ -1,7 +1,9 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { initialVariableModelState, IntervalVariableModel, VariableOption, VariableRefresh } from '../types';
-import { getInstanceState, VariablePayload, initialVariablesState, VariablesState } from '../state/types';
 import { map } from 'lodash';
+
+import { getInstanceState } from '../state/selectors';
+import { initialVariablesState, VariablePayload, VariablesState } from '../state/types';
+import { initialVariableModelState, IntervalVariableModel, VariableOption, VariableRefresh } from '../types';
 
 export const initialIntervalVariableModelState: IntervalVariableModel = {
   ...initialVariableModelState,

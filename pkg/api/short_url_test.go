@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/shorturls"
@@ -54,8 +53,6 @@ func callCreateShortURL(sc *scenarioContext) {
 
 func createShortURLScenario(t *testing.T, desc string, url string, routePattern string, cmd dtos.CreateShortURLCmd, shortURLService shorturls.Service, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		defer bus.ClearBusHandlers()
-
 		hs := HTTPServer{
 			Cfg:             setting.NewCfg(),
 			ShortURLService: shortURLService,
@@ -64,10 +61,12 @@ func createShortURLScenario(t *testing.T, desc string, url string, routePattern 
 
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+			c.Req.Body = mockRequestBody(cmd)
+			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
 			sc.context.SignedInUser = &models.SignedInUser{OrgId: testOrgID, UserId: testUserID}
 
-			return hs.createShortURL(c, cmd)
+			return hs.createShortURL(c)
 		})
 
 		sc.m.Post(routePattern, sc.defaultHandler)

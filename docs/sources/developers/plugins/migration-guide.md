@@ -1,37 +1,251 @@
-+++
-title = "Plugin migration guide"
-+++
+---
+aliases:
+  - /docs/grafana/latest/developers/plugins/migration-guide/
+title: Plugin migration guide
+---
 
 # Plugin migration guide
 
 ## Introduction
 
-This guide helps you identify the steps you need to take based on the Grafana version your plugin supports and explains how to migrate the plugin to the 8.2.x or a later version.
+This guide helps you identify the steps required to update a plugin from the Grafana version it currently supports to newer versions of Grafana.
 
 > **Note:** If you've successfully migrated your plugin using this guide, then share your experiences with us! If you find missing information, then we encourage you to [submit an issue on GitHub](https://github.com/grafana/grafana/issues/new?title=Docs%20feedback:%20/developers/plugins/migration-guide.md) so that we can improve this guide!
 
 ## Table of contents
 
-- [From version 7.x.x to 8.0.0](#from-version-7xx-to-800)
-  - [Backend plugin v1 support has been dropped](#backend-plugin-v1-support-has-been-dropped)
-    - [1. Add dependency on grafana-plugin-sdk-go](#1-add-dependency-on-grafana-plugin-sdk-go)
-    - [2. Update the way you bootstrap your plugin](#2-update-the-way-you-bootstrap-your-plugin)
-    - [3. Update the plugin package](#3-update-the-plugin-package)
-  - [Sign and load backend plugins](#sign-and-load-backend-plugins)
-  - [Update react-hook-form from v6 to v7](#update-react-hook-form-from-v6-to-v7)
-  - [Update the plugin.json](#update-the-pluginjson)
-  - [Update imports to match emotion 11](#update-imports-to-match-emotion-11)
-  - [8.0 Deprecations](#80-deprecations)
-    - [Grafana theme v1](#grafana-theme-v1)
-- [From version 6.2.x to 7.4.0](#from-version-62x-to-740)
-  - [Legend components](#legend-components)
-- [From version 6.x.x to 7.0.0](#from-version-6xx-to-700)
-  - [What's new in Grafana 7.0?](#whats-new-in-grafana-70)
-  - [Migrate a plugin from Angular to React](#migrate-a-plugin-from-angular-to-react)
-    - [Migrate a panel plugin](#migrate-a-panel-plugin)
-    - [Migrate a data source plugin](#migrate-a-data-source-plugin)
-    - [Migrate to data frames](#migrate-to-data-frames)
-  - [Troubleshoot plugin migration](#troubleshoot-plugin-migration)
+- [Plugin migration guide](#plugin-migration-guide)
+  - [Introduction](#introduction)
+  - [Table of contents](#table-of-contents)
+  - [From version 8.x to 9.x](#from-version-8x-to-9x)
+    - [9.0 breaking changes](#90-breaking-changes)
+      - [theme.visualization.getColorByName replaces getColorForTheme](#themevisualizationgetcolorbyname-replaces-getcolorfortheme)
+      - [VizTextDisplayOptions replaces TextDisplayOptions](#viztextdisplayoptions-replaces-textdisplayoptions)
+      - [Changes in the internal of `backendSrv.fetch()`](#changes-in-the-internal-of-backendsrvfetch)
+      - [GrafanaTheme2 and useStyles2 replaces getFormStyles](#grafanatheme2-and-usestyles2-replaces-getformstyles)
+      - [/api/ds/query replaces /api/tsdb/query](#apidsquery-replaces-apitsdbquery)
+      - [selectOptionInTest has been removed](#selectoptionintest-has-been-removed)
+      - [Toolkit 9 and webpack](#toolkit-9-and-webpack)
+  - [From version 8.3.x to 8.4.x](#from-version-83x-to-84x)
+    - [Value Mapping Editor has been removed from @grafana-ui library](#value-mapping-editor-has-been-removed-from-grafana-ui-library)
+    - [Thresholds Editor has been removed from @grafana-ui library](#thresholds-editor-has-been-removed-from-grafana-ui-library)
+    - [8.4 deprecations](#84-deprecations)
+      - [LocationService replaces getLocationSrv](#locationservice-replaces-getlocationsrv)
+  - [From version 7.x.x to 8.x.x](#from-version-7xx-to-8xx)
+    - [Backend plugin v1 support has been dropped](#backend-plugin-v1-support-has-been-dropped)
+      - [1. Add dependency on grafana-plugin-sdk-go](#1-add-dependency-on-grafana-plugin-sdk-go)
+      - [2. Update the way you bootstrap your plugin](#2-update-the-way-you-bootstrap-your-plugin)
+      - [3. Update the plugin package](#3-update-the-plugin-package)
+    - [Sign and load backend plugins](#sign-and-load-backend-plugins)
+    - [Update react-hook-form from v6 to v7](#update-react-hook-form-from-v6-to-v7)
+    - [Update the plugin.json](#update-the-pluginjson)
+    - [Update imports to match emotion 11](#update-imports-to-match-emotion-11)
+    - [Update needed for app plugins using dashboards](#update-needed-for-app-plugins-using-dashboards)
+    - [8.0 deprecations](#80-deprecations)
+      - [Grafana theme v1](#grafana-theme-v1)
+  - [From version 6.2.x to 7.4.0](#from-version-62x-to-740)
+    - [Legend components](#legend-components)
+  - [From version 6.5.x to 7.3.0](#from-version-65x-to-730)
+    - [getColorForTheme changes](#getcolorfortheme-changes)
+  - [From version 6.x.x to 7.0.0](#from-version-6xx-to-700)
+    - [What's new in Grafana 7.0?](#whats-new-in-grafana-70)
+      - [New data format](#new-data-format)
+      - [Improved TypeScript support](#improved-typescript-support)
+      - [Grafana Toolkit](#grafana-toolkit)
+      - [Field options](#field-options)
+      - [Backend plugins](#backend-plugins)
+    - [Migrate a plugin from Angular to React](#migrate-a-plugin-from-angular-to-react)
+      - [Migrate a panel plugin](#migrate-a-panel-plugin)
+      - [Migrate a data source plugin](#migrate-a-data-source-plugin)
+      - [Migrate to data frames](#migrate-to-data-frames)
+    - [Troubleshoot plugin migration](#troubleshoot-plugin-migration)
+
+## From version 8.x to 9.x
+
+### 9.0 breaking changes
+
+#### theme.visualization.getColorByName replaces getColorForTheme
+
+`getColorForTheme` was removed, use `theme.visualization.getColorByName` instead
+
+Example:
+
+```ts
+// before
+fillColor: getColorForTheme(panel.sparkline.fillColor, config.theme)
+
+// after
+fillColor: config.theme.visualization.getColorByName(panel.sparkline.fillColor),
+```
+
+#### VizTextDisplayOptions replaces TextDisplayOptions
+
+`TextDisplayOptions` was removed, use `VizTextDisplayOptions` instead
+
+Example:
+
+```ts
+// before
+interface Options {
+...
+text?: TextDisplayOptions;
+...
+}
+
+// after
+interface Options {
+...
+text?: VizTextDisplayOptions;
+...
+}
+```
+
+#### Changes in the internal of `backendSrv.fetch()`
+
+We have changed the internals of `backendSrv.fetch()` to throw an error when the response is an incorrect JSON. Make sure to handle possible errors on the callsite where using `backendSrv.fetch()` (or any other `backendSrv` methods)
+
+```ts
+// PREVIOUSLY: this was returning with an empty object {} - in case the response is an invalid JSON
+return await getBackendSrv().post(`${API_ROOT}/${id}/install`);
+
+// AFTER THIS CHANGE: the following will throw an error - in case the response is an invalid JSON
+return await getBackendSrv().post(`${API_ROOT}/${id}/install`);
+```
+
+#### GrafanaTheme2 and useStyles2 replaces getFormStyles
+
+We have removed the deprecated `getFormStyles` function from [grafana-ui](https://www.npmjs.com/package/@grafana/ui). Use `GrafanaTheme2` and the `useStyles2` hook instead
+
+#### /api/ds/query replaces /api/tsdb/query
+
+We have removed the deprecated `/api/tsdb/query` metrics endpoint. Use [/api/ds/query]({{< relref "../http_api/data_source/#query-a-data-source" >}}) instead
+
+#### selectOptionInTest has been removed
+
+The `@grafana/ui` package helper function `selectOptionInTest` used in frontend tests has been removed as it caused testing libraries to be bundled in the production code of Grafana. If you were using this helper function in your tests please update your code accordingly:
+
+```ts
+// before
+import { selectOptionInTest } from '@grafana/ui';
+// ...test usage
+await selectOptionInTest(selectEl, 'Option 2');
+
+// after
+import { select } from 'react-select-event';
+// ...test usage
+await select(selectEl, 'Option 2', { container: document.body });
+```
+
+#### Toolkit 9 and webpack
+
+Plugins using custom Webpack configs could potentially break due to the changes between webpack@4 and webpack@5. Please refer to the [official migration guide](https://webpack.js.org/migrate/5/) for assistance.
+
+Webpack 5 does not include polyfills for node.js core modules by default (e.g. `buffer`, `stream`, `os`). This can result in failed builds for plugins. If polyfills are required it is recommended to create a custom webpack config in the root of the plugin repo and add the required fallbacks:
+
+```js
+// webpack.config.js
+
+module.exports.getWebpackConfig = (config, options) => ({
+  ...config,
+  resolve: {
+    ...config.resolve,
+    fallback: {
+      os: require.resolve('os-browserify/browser'),
+      stream: require.resolve('stream-browserify'),
+      timers: require.resolve('timers-browserify'),
+    },
+  },
+});
+```
+
+Please refer to the webpack build error messages or the [official migration guide](https://webpack.js.org/migrate/5/) for assistance with fallbacks.
+
+## From version 8.3.x to 8.4.x
+
+This section explains how to migrate Grafana v8.3.x plugins to the updated plugin system available in Grafana v8.4.x. Depending on your plugin, you need to perform one or more of the following steps.
+
+### Value Mapping Editor has been removed from @grafana-ui library
+
+Removed due to being an internal component.
+
+### Thresholds Editor has been removed from @grafana-ui library
+
+Removed due to being an internal component.
+
+### 8.4 deprecations
+
+#### LocationService replaces getLocationSrv
+
+In a previous release, we migrated to use a new routing system and introduced a new service for managing locations, navigation, and related information. In this release, we are making that new service the primary service.
+
+**Example:** Import the service.
+
+```ts
+// before
+import { getLocationSrv } from '@grafana/runtime';
+
+// after
+import { locationService } from '@grafana/runtime';
+```
+
+**Example:** Navigate to a path and add a new record in the navigation history so that you can navigate back to the previous one.
+
+```ts
+// before
+getLocationSrv.update({
+  path: '/route-to-navigate-to',
+  replace: false,
+});
+
+// after
+locationService.push('/route-to-navigate-to');
+```
+
+**Example:** Navigate to a path and replace the current record in the navigation history.
+
+```ts
+// before
+getLocationSrv.update({
+  path: '/route-to-navigate-to',
+  replace: true,
+});
+
+// after
+locationService.replace('/route-to-navigate-to');
+```
+
+**Example:** Update the search or query parameter for the current route and add a new record in the navigation history so that you can navigate back to the previous one.
+
+```ts
+// How to navigate to a new path
+// before
+getLocationSrv.update({
+  query: {
+    value: 1,
+  },
+  partial: true,
+  replace: false,
+});
+
+// after
+locationService.partial({ value: 1 });
+```
+
+**Example:** Update the search or query parameter for the current route and add replacing it in the navigation history.
+
+```ts
+// before
+getLocationSrv.update({
+  query: {
+    'var-variable': 1,
+  },
+  partial: true,
+  replace: true,
+});
+
+// after
+locationService.partial({ 'var-variable': 1 }, true);
+```
 
 ## From version 7.x.x to 8.x.x
 
@@ -176,7 +390,7 @@ We strongly recommend that you not allow unsigned plugins in your Grafana instal
 
 To sign your plugin, see [Sign a plugin](https://grafana.com/docs/grafana/latest/developers/plugins/sign-a-plugin/#sign-a-plugin).
 
-You can still run and develop an unsigned plugin by running your Grafana instance in [development mode](https://grafana.com/docs/grafana/latest/administration/configuration/#app_mode). Alternatively, you can use the [allow_loading_unsigned_plugins configuration setting.]({{< relref "../../administration/#allow_loading_unsigned_plugins" >}})
+You can still run and develop an unsigned plugin by running your Grafana instance in [development mode](https://grafana.com/docs/grafana/latest/administration/configuration/#app_mode). Alternatively, you can use the [allow_loading_unsigned_plugins configuration setting.](../../administration/configuration.md#allow_loading_unsigned_plugins)
 
 ### Update react-hook-form from v6 to v7
 
@@ -214,6 +428,42 @@ import { cx, css } from 'emotion';
 
 // after
 import { cx, css } from '@emotion/css';
+```
+
+### Update needed for app plugins using dashboards
+
+To make side navigation work properly - app plugins targeting Grafana `8.+` and integrating into the side menu via [addToNav]({{< relref "metadata/#properties-4" >}}) property need to adjust their `plugin.json` and all dashboard json files to have a matching `uid`.
+
+**`plugin.json`**
+
+```json "linenos=inline,hl_lines=7,linenostart=1"
+{
+  "id": "plugin-id",
+  // ...
+  "includes": [
+    {
+      "type": "dashboard",
+      "name": "(Team) Situation Overview",
+      "path": "dashboards/example-dashboard.json",
+      "addToNav": true,
+      "defaultNav": false,
+      "uid": "l3KqBxCMz"
+    }
+  ]
+  // ...
+}
+```
+
+**`dashboards/example-dashboard.json`**
+
+```json
+{
+  // ...
+  "title": "Example Dashboard",
+  "uid": "l3KqBxCMz",
+  "version": 1
+  // ...
+}
 ```
 
 ### 8.0 deprecations
@@ -377,7 +627,7 @@ const themeColor = getColorForTheme(color, theme);
 
 ```
 
-## From version 6.x.x to 7.x.x
+## From version 6.x.x to 7.0.0
 
 ### What's new in Grafana 7.0?
 
@@ -387,7 +637,7 @@ Plugins built using Angular still work for the foreseeable future, but we encour
 
 #### New data format
 
-Along with the move to React, the new plugin platform introduced a new internal data format called [data frames]({{< relref "data-frames.md" >}}).
+Along with the move to React, the new plugin platform introduced a new internal data format called [data frames](data-frames.md).
 
 Previously, data source plugins could send data either as time series or tables. With data frames, data sources can send any data in a table-like structure. This gives you more flexibility to visualize your data in Grafana.
 
@@ -411,9 +661,9 @@ For plugins prior to Grafana 7.0, all options are considered _Display options_. 
 
 While backend plugins were available as an experimental feature in previous versions of Grafana, the support has been greatly improved for Grafana 7. Backend plugins for Grafana 7.0 are backwards-compatible and will continue to work. However, the old backend plugin system has been deprecated, and we recommend that you use the new SDK for backend plugins.
 
-Since Grafana 7.0 introduced [signing of backend plugins]({{< relref "../../plugins/plugin-signatures.md" >}}), community plugins won’t load by default if they’re unsigned.
+Since Grafana 7.0 introduced [signing of backend plugins](../../administration/plugins), community plugins won’t load by default if they’re unsigned.
 
-To learn more, refer to [Backend plugins]({{< relref "backend" >}}).
+To learn more, refer to [Backend plugins](backend/_index.md).
 
 ### Migrate a plugin from Angular to React
 
@@ -501,8 +751,8 @@ async query(options: DataQueryRequest<MyQuery>): Promise<DataQueryResponse> {
 }
 ```
 
-For more information, refer to [Data frames]({{< relref "data-frames.md">}}).
+For more information, refer to [Data frames](data-frames.md).
 
 ### Troubleshoot plugin migration
 
-As of Grafana 7.0, backend plugins can now be cryptographically signed to verify their origin. By default, Grafana ignores unsigned plugins. For more information, refer to [Allow unsigned plugins]({{< relref "../../plugins/plugin-signatures.md#allow-unsigned-plugins" >}}).
+As of Grafana 7.0, backend plugins can now be cryptographically signed to verify their origin. By default, Grafana ignores unsigned plugins. For more information, refer to [Allow unsigned plugins](../../administration/plugins/#allow-unsigned-plugins).

@@ -99,7 +99,7 @@ type DevRuleBuilder struct {
 func (f *DevRuleBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelRule, error) {
 	return []*LiveChannelRule{
 		{
-			Pattern: "plugin/testdata/random-20Hz-stream",
+			Pattern: "plugin/testdata/random-20Hz-stream:rest",
 			DataOutputters: []DataOutputter{
 				NewLokiDataOutput(
 					os.Getenv("GF_LIVE_LOKI_ENDPOINT"),

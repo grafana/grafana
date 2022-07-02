@@ -1,7 +1,9 @@
-import React, { HTMLProps, useRef } from 'react';
 import { css, cx } from '@emotion/css';
 import { uniqueId } from 'lodash';
+import React, { HTMLProps, useRef } from 'react';
+
 import { GrafanaTheme2, deprecationWarning } from '@grafana/data';
+
 import { stylesFactory, useTheme2 } from '../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 
@@ -47,12 +49,11 @@ export interface InlineSwitchProps extends Props {
 }
 
 export const InlineSwitch = React.forwardRef<HTMLInputElement, InlineSwitchProps>(
-  ({ transparent, showLabel, label, value, id, ...props }, ref) => {
+  ({ transparent, className, showLabel, label, value, id, ...props }, ref) => {
     const theme = useTheme2();
     const styles = getSwitchStyles(theme, transparent);
-
     return (
-      <div className={styles.inlineContainer}>
+      <div className={cx(styles.inlineContainer, className)}>
         {showLabel && (
           <label
             htmlFor={id}

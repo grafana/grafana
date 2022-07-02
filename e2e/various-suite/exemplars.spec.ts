@@ -1,4 +1,5 @@
 import { e2e } from '@grafana/e2e';
+import { selectors } from '@grafana/e2e-selectors';
 
 const dataSourceName = 'PromExemplar';
 const addDataSource = () => {
@@ -9,6 +10,7 @@ const addDataSource = () => {
     form: () => {
       e2e.components.DataSource.Prometheus.configPage.exemplarsAddButton().click();
       e2e.components.DataSource.Prometheus.configPage.internalLinkSwitch().check({ force: true });
+      e2e.components.DataSource.DataSourceHttpSettings.urlInput().type('http://prom-url:9090');
       e2e.components.DataSourcePicker.inputV2().should('be.visible').click({ force: true });
 
       e2e().contains('gdev-tempo').scrollIntoView().should('be.visible').click();
@@ -21,7 +23,7 @@ describe('Exemplars', () => {
     e2e.flows.login('admin', 'admin');
 
     e2e()
-      .request({ url: `/api/datasources/name/${dataSourceName}`, failOnStatusCode: false })
+      .request({ url: `${e2e.env('BASE_URL')}/api/datasources/name/${dataSourceName}`, failOnStatusCode: false })
       .then((response) => {
         if (response.isOkStatusCode) {
           return;
@@ -44,8 +46,11 @@ describe('Exemplars', () => {
 
     e2e.pages.Explore.visit();
 
-    e2e.components.DataSourcePicker.input().should('be.visible').click();
+    e2e.components.DataSourcePicker.container().should('be.visible').click();
     e2e().contains(dataSourceName).scrollIntoView().should('be.visible').click();
+
+    // Switch to code editor
+    cy.contains('label', 'Code').click();
 
     // we need to wait for the query-field being lazy-loaded, in two steps:
     // 1. first we wait for the text 'Loading...' to appear

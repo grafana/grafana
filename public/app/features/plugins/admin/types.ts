@@ -1,4 +1,5 @@
 import { EntityState } from '@reduxjs/toolkit';
+
 import {
   PluginType,
   PluginSignatureStatus,
@@ -30,6 +31,7 @@ export enum PluginIconName {
   datasource = 'database',
   panel = 'credit-card',
   renderer = 'capture',
+  secretsmanager = 'key-skeleton-alt',
 }
 
 export interface CatalogPlugin {
@@ -211,6 +213,7 @@ export enum PluginTabLabels {
   VERSIONS = 'Version history',
   CONFIG = 'Config',
   DASHBOARDS = 'Dashboards',
+  USAGE = 'Usage',
 }
 
 export enum PluginTabIds {
@@ -218,6 +221,7 @@ export enum PluginTabIds {
   VERSIONS = 'version-history',
   CONFIG = 'config',
   DASHBOARDS = 'dashboards',
+  USAGE = 'usage',
 }
 
 export enum RequestStatus {

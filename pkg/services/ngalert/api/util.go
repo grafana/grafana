@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -11,21 +12,16 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/pkg/errors"
+	"gopkg.in/yaml.v3"
+
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/expr"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/pkg/errors"
-	"gopkg.in/yaml.v3"
 )
 
 var searchRegex = regexp.MustCompile(`\{(\w+)\}`)
@@ -39,24 +35,19 @@ func toMacaronPath(path string) string {
 	}))
 }
 
-func backendType(ctx *models.ReqContext, cache datasources.CacheService) (apimodels.Backend, error) {
-	recipient := web.Params(ctx.Req)[":Recipient"]
-	if recipient == apimodels.GrafanaBackend.String() {
-		return apimodels.GrafanaBackend, nil
-	}
-	if datasourceID, err := strconv.ParseInt(recipient, 10, 64); err == nil {
-		if ds, err := cache.GetDatasource(datasourceID, ctx.SignedInUser, ctx.SkipCache); err == nil {
-			switch ds.Type {
-			case "loki", "prometheus":
-				return apimodels.LoTexRulerBackend, nil
-			case "alertmanager":
-				return apimodels.AlertmanagerBackend, nil
-			default:
-				return 0, fmt.Errorf("unexpected backend type (%v)", ds.Type)
-			}
+func backendTypeByUID(ctx *models.ReqContext, cache datasources.CacheService) (apimodels.Backend, error) {
+	datasourceUID := web.Params(ctx.Req)[":DatasourceUID"]
+	if ds, err := cache.GetDatasourceByUID(ctx.Req.Context(), datasourceUID, ctx.SignedInUser, ctx.SkipCache); err == nil {
+		switch ds.Type {
+		case "loki", "prometheus":
+			return apimodels.LoTexRulerBackend, nil
+		case "alertmanager":
+			return apimodels.AlertmanagerBackend, nil
+		default:
+			return 0, fmt.Errorf("unexpected backend type (%v)", ds.Type)
 		}
 	}
-	return 0, fmt.Errorf("unexpected backend type (%v)", recipient)
+	return 0, fmt.Errorf("unexpected backend type (%v)", datasourceUID)
 }
 
 // macaron unsafely asserts the http.ResponseWriter is an http.CloseNotifier, which will panic.
@@ -104,7 +95,22 @@ func (p *AlertingProxy) withReq(
 	}
 	newCtx, resp := replacedResponseWriter(ctx)
 	newCtx.Req = req
-	p.DataProxy.ProxyDatasourceRequestWithID(newCtx, ctx.ParamsInt64(":Recipient"))
+
+	datasourceID := web.Params(ctx.Req)[":DatasourceID"]
+	if datasourceID != "" {
+		recipient, err := strconv.ParseInt(web.Params(ctx.Req)[":DatasourceID"], 10, 64)
+		if err != nil {
+			return ErrResp(http.StatusBadRequest, err, "DatasourceID is invalid")
+		}
+
+		p.DataProxy.ProxyDatasourceRequestWithID(newCtx, recipient)
+	} else {
+		datasourceUID := web.Params(ctx.Req)[":DatasourceUID"]
+		if datasourceUID == "" {
+			return ErrResp(http.StatusBadRequest, err, "DatasourceUID is empty")
+		}
+		p.DataProxy.ProxyDatasourceRequestWithUID(newCtx, datasourceUID)
+	}
 
 	status := resp.Status()
 	if status >= 400 {
@@ -176,12 +182,12 @@ func messageExtractor(resp *response.NormalResponse) (interface{}, error) {
 	return map[string]string{"message": string(resp.Body())}, nil
 }
 
-func validateCondition(c ngmodels.Condition, user *models.SignedInUser, skipCache bool, datasourceCache datasources.CacheService) error {
+func validateCondition(ctx context.Context, c ngmodels.Condition, user *models.SignedInUser, skipCache bool, datasourceCache datasources.CacheService) error {
 	if len(c.Data) == 0 {
 		return nil
 	}
 
-	refIDs, err := validateQueriesAndExpressions(c.Data, user, skipCache, datasourceCache)
+	refIDs, err := validateQueriesAndExpressions(ctx, c.Data, user, skipCache, datasourceCache)
 	if err != nil {
 		return err
 	}
@@ -196,7 +202,14 @@ func validateCondition(c ngmodels.Condition, user *models.SignedInUser, skipCach
 	return nil
 }
 
-func validateQueriesAndExpressions(data []ngmodels.AlertQuery, user *models.SignedInUser, skipCache bool, datasourceCache datasources.CacheService) (map[string]struct{}, error) {
+// conditionValidator returns a curried validateCondition that accepts only condition
+func conditionValidator(c *models.ReqContext, cache datasources.CacheService) func(ngmodels.Condition) error {
+	return func(condition ngmodels.Condition) error {
+		return validateCondition(c.Req.Context(), condition, c.SignedInUser, c.SkipCache, cache)
+	}
+}
+
+func validateQueriesAndExpressions(ctx context.Context, data []ngmodels.AlertQuery, user *models.SignedInUser, skipCache bool, datasourceCache datasources.CacheService) (map[string]struct{}, error) {
 	refIDs := make(map[string]struct{})
 	if len(data) == 0 {
 		return nil, nil
@@ -217,7 +230,7 @@ func validateQueriesAndExpressions(data []ngmodels.AlertQuery, user *models.Sign
 			continue
 		}
 
-		_, err = datasourceCache.GetDatasourceByUID(datasourceUID, user, skipCache)
+		_, err = datasourceCache.GetDatasourceByUID(ctx, datasourceUID, user, skipCache)
 		if err != nil {
 			return nil, fmt.Errorf("invalid query %s: %w: %s", query.RefID, err, datasourceUID)
 		}
@@ -226,39 +239,12 @@ func validateQueriesAndExpressions(data []ngmodels.AlertQuery, user *models.Sign
 	return refIDs, nil
 }
 
-func conditionEval(c *models.ReqContext, cmd ngmodels.EvalAlertConditionCommand, datasourceCache datasources.CacheService, expressionService *expr.Service, cfg *setting.Cfg, log log.Logger) response.Response {
-	evalCond := ngmodels.Condition{
-		Condition: cmd.Condition,
-		OrgID:     c.SignedInUser.OrgId,
-		Data:      cmd.Data,
-	}
-	if err := validateCondition(evalCond, c.SignedInUser, c.SkipCache, datasourceCache); err != nil {
-		return ErrResp(http.StatusBadRequest, err, "invalid condition")
-	}
-
-	now := cmd.Now
-	if now.IsZero() {
-		now = timeNow()
-	}
-
-	evaluator := eval.Evaluator{Cfg: cfg, Log: log}
-	evalResults, err := evaluator.ConditionEval(&evalCond, now, expressionService)
-	if err != nil {
-		return ErrResp(http.StatusBadRequest, err, "Failed to evaluate conditions")
-	}
-
-	frame := evalResults.AsDataFrame()
-	return response.JSONStreaming(http.StatusOK, util.DynMap{
-		"instances": []*data.Frame{&frame},
-	})
-}
-
 // ErrorResp creates a response with a visible error
 func ErrResp(status int, err error, msg string, args ...interface{}) *response.NormalResponse {
 	if msg != "" {
 		err = errors.WithMessagef(err, msg, args...)
 	}
-	return response.Error(status, "API error", err)
+	return response.Error(status, err.Error(), err)
 }
 
 // accessForbiddenResp creates a response of forbidden access.

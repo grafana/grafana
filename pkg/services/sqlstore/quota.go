@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -14,16 +13,6 @@ const (
 	alertRuleTarget = "alert_rule"
 	dashboardTarget = "dashboard"
 )
-
-func (ss *SQLStore) addQuotaQueryAndCommandHandlers() {
-	bus.AddHandlerCtx("sql", ss.GetOrgQuotaByTarget)
-	bus.AddHandlerCtx("sql", ss.GetOrgQuotas)
-	bus.AddHandlerCtx("sql", ss.UpdateOrgQuota)
-	bus.AddHandlerCtx("sql", ss.GetUserQuotaByTarget)
-	bus.AddHandlerCtx("sql", ss.GetUserQuotas)
-	bus.AddHandlerCtx("sql", ss.UpdateUserQuota)
-	bus.AddHandlerCtx("sql", ss.GetGlobalQuotaByTarget)
-}
 
 type targetCount struct {
 	Count int64

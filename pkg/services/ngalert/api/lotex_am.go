@@ -8,16 +8,26 @@ import (
 	"io"
 	"net/http"
 
+	"gopkg.in/yaml.v3"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/web"
-	"gopkg.in/yaml.v3"
 )
 
 var endpoints = map[string]map[string]string{
 	"cortex": {
+		"silences": "/alertmanager/api/v2/silences",
+		"silence":  "/alertmanager/api/v2/silence/%s",
+		"status":   "/alertmanager/api/v2/status",
+		"groups":   "/alertmanager/api/v2/alerts/groups",
+		"alerts":   "/alertmanager/api/v2/alerts",
+		"config":   "/api/v1/alerts",
+	},
+	"mimir": {
 		"silences": "/alertmanager/api/v2/silences",
 		"silence":  "/alertmanager/api/v2/silence/%s",
 		"status":   "/alertmanager/api/v2/status",
@@ -59,12 +69,17 @@ func (am *LotexAM) withAMReq(
 	extractor func(*response.NormalResponse) (interface{}, error),
 	headers map[string]string,
 ) response.Response {
-	ds, err := am.DataProxy.DataSourceCache.GetDatasource(ctx.ParamsInt64(":Recipient"), ctx.SignedInUser, ctx.SkipCache)
+	datasourceUID := web.Params(ctx.Req)[":DatasourceUID"]
+	if datasourceUID == "" {
+		return response.Error(http.StatusBadRequest, "DatasourceUID is invalid", nil)
+	}
+
+	ds, err := am.DataProxy.DataSourceCache.GetDatasourceByUID(ctx.Req.Context(), datasourceUID, ctx.SignedInUser, ctx.SkipCache)
 	if err != nil {
-		if errors.Is(err, models.ErrDataSourceAccessDenied) {
+		if errors.Is(err, datasources.ErrDataSourceAccessDenied) {
 			return ErrResp(http.StatusForbidden, err, "Access denied to datasource")
 		}
-		if errors.Is(err, models.ErrDataSourceNotFound) {
+		if errors.Is(err, datasources.ErrDataSourceNotFound) {
 			return ErrResp(http.StatusNotFound, err, "Unable to find datasource")
 		}
 		return ErrResp(http.StatusInternalServerError, err, "Unable to load datasource meta data")
@@ -135,12 +150,12 @@ func (am *LotexAM) RouteDeleteAlertingConfig(ctx *models.ReqContext) response.Re
 	)
 }
 
-func (am *LotexAM) RouteDeleteSilence(ctx *models.ReqContext) response.Response {
+func (am *LotexAM) RouteDeleteSilence(ctx *models.ReqContext, silenceID string) response.Response {
 	return am.withAMReq(
 		ctx,
 		http.MethodDelete,
 		"silence",
-		[]string{web.Params(ctx.Req)[":SilenceId"]},
+		[]string{silenceID},
 		nil,
 		messageExtractor,
 		nil,
@@ -183,12 +198,12 @@ func (am *LotexAM) RouteGetAMAlerts(ctx *models.ReqContext) response.Response {
 	)
 }
 
-func (am *LotexAM) RouteGetSilence(ctx *models.ReqContext) response.Response {
+func (am *LotexAM) RouteGetSilence(ctx *models.ReqContext, silenceID string) response.Response {
 	return am.withAMReq(
 		ctx,
 		http.MethodGet,
 		"silence",
-		[]string{web.Params(ctx.Req)[":SilenceId"]},
+		[]string{silenceID},
 		nil,
 		jsonExtractor(&apimodels.GettableSilence{}),
 		nil,
@@ -241,6 +256,6 @@ func (am *LotexAM) RoutePostAMAlerts(ctx *models.ReqContext, alerts apimodels.Po
 	)
 }
 
-func (am *LotexAM) RoutePostTestReceivers(ctx *models.ReqContext, config apimodels.TestReceiversConfigParams) response.Response {
+func (am *LotexAM) RoutePostTestReceivers(ctx *models.ReqContext, config apimodels.TestReceiversConfigBodyParams) response.Response {
 	return NotImplementedResp
 }

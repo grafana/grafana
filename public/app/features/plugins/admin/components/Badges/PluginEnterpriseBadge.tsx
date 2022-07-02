@@ -1,8 +1,11 @@
 import React from 'react';
+
+import { featureEnabled } from '@grafana/runtime';
 import { Badge, Button, HorizontalGroup, PluginSignatureBadge, useStyles2 } from '@grafana/ui';
+
 import { CatalogPlugin } from '../../types';
+
 import { getBadgeColor } from './sharedStyles';
-import { config } from '@grafana/runtime';
 
 type Props = { plugin: CatalogPlugin };
 
@@ -17,7 +20,7 @@ export function PluginEnterpriseBadge({ plugin }: Props): React.ReactElement {
     );
   };
 
-  if (config.licenseInfo?.hasValidLicense) {
+  if (featureEnabled('enterprise.plugins')) {
     return <Badge text="Enterprise" color="blue" />;
   }
 

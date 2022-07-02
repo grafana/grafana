@@ -1,3 +1,7 @@
+import { cloneDeep } from 'lodash';
+import { from, Observable, ReplaySubject, Unsubscribable } from 'rxjs';
+import { first } from 'rxjs/operators';
+
 import {
   CoreApp,
   DataQueryRequest,
@@ -12,9 +16,7 @@ import {
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { cloneDeep } from 'lodash';
-import { from, Observable, ReplaySubject, Unsubscribable } from 'rxjs';
-import { first } from 'rxjs/operators';
+
 import { getNextRequestId } from './PanelQueryRunner';
 import { setStructureRevision } from './processing/revision';
 import { preProcessPanelData, runRequest } from './runRequest';
@@ -70,7 +72,7 @@ export class QueryRunner implements QueryRunnerSrv {
     };
 
     // Add deprecated property
-    (request as any).rangeRaw = timeRange.raw;
+    request.rangeRaw = timeRange.raw;
 
     from(getDataSource(datasource, request.scopedVars))
       .pipe(first())
@@ -144,8 +146,9 @@ async function getDataSource(
   datasource: DataSourceRef | DataSourceApi | null,
   scopedVars: ScopedVars
 ): Promise<DataSourceApi> {
-  if (datasource && (datasource as any).query) {
-    return datasource as DataSourceApi;
+  if (datasource && 'query' in datasource) {
+    return datasource;
   }
-  return await getDatasourceSrv().get(datasource, scopedVars);
+
+  return getDatasourceSrv().get(datasource, scopedVars);
 }

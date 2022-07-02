@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/api"
@@ -14,38 +16,47 @@ import (
 )
 
 var (
-	ServiceAccountFeatureToggleNotFound = "FeatureToggle service-accounts not found, try adding it to your custom.ini"
+	ServiceAccountFeatureToggleNotFound = "FeatureToggle serviceAccounts not found, try adding it to your custom.ini"
 )
 
 type ServiceAccountsService struct {
 	store serviceaccounts.Store
-	cfg   *setting.Cfg
 	log   log.Logger
 }
 
 func ProvideServiceAccountsService(
 	cfg *setting.Cfg,
 	store *sqlstore.SQLStore,
+	kvStore kvstore.KVStore,
 	ac accesscontrol.AccessControl,
 	routeRegister routing.RouteRegister,
+	usageStats usagestats.Service,
 ) (*ServiceAccountsService, error) {
 	s := &ServiceAccountsService{
-		cfg:   cfg,
-		store: database.NewServiceAccountsStore(store),
+		store: database.NewServiceAccountsStore(store, kvStore),
 		log:   log.New("serviceaccounts"),
 	}
-	if err := ac.DeclareFixedRoles(role); err != nil {
-		return nil, err
+
+	if err := RegisterRoles(ac); err != nil {
+		s.log.Error("Failed to register roles", "error", err)
 	}
-	serviceaccountsAPI := api.NewServiceAccountsAPI(s, ac, routeRegister)
-	serviceaccountsAPI.RegisterAPIEndpoints(cfg)
+
+	usageStats.RegisterMetricsFunc(s.store.GetUsageMetrics)
+
+	serviceaccountsAPI := api.NewServiceAccountsAPI(cfg, s, ac, routeRegister, s.store)
+	serviceaccountsAPI.RegisterAPIEndpoints()
+
 	return s, nil
 }
 
+func (sa *ServiceAccountsService) CreateServiceAccount(ctx context.Context, orgID int64, name string) (*serviceaccounts.ServiceAccountDTO, error) {
+	return sa.store.CreateServiceAccount(ctx, orgID, name)
+}
+
 func (sa *ServiceAccountsService) DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error {
-	if !sa.cfg.FeatureToggles["service-accounts"] {
-		sa.log.Debug(ServiceAccountFeatureToggleNotFound)
-		return nil
-	}
 	return sa.store.DeleteServiceAccount(ctx, orgID, serviceAccountID)
+}
+
+func (sa *ServiceAccountsService) RetrieveServiceAccountIdByName(ctx context.Context, orgID int64, name string) (int64, error) {
+	return sa.store.RetrieveServiceAccountIdByName(ctx, orgID, name)
 }

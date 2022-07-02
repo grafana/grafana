@@ -1,7 +1,10 @@
 import { cloneDeep, isNumber } from 'lodash';
-import { coreModule } from 'app/angular/core_module';
+
 import { AnnotationEvent, dateTime } from '@grafana/data';
+import { coreModule } from 'app/angular/core_module';
 import { MetricsPanelCtrl } from 'app/angular/panel/metrics_panel_ctrl';
+
+import { contextSrv } from '../../../core/services/context_srv';
 import { deleteAnnotation, saveAnnotation, updateAnnotation } from '../../../features/annotations/api';
 import { getDashboardQueryRunner } from '../../../features/query/state/DashboardQueryRunner/DashboardQueryRunner';
 
@@ -29,6 +32,16 @@ export class EventEditorCtrl {
     }
 
     this.timeFormated = this.panelCtrl.dashboard.formatDate(this.event.time!);
+  }
+
+  canDelete(): boolean {
+    if (contextSrv.accessControlEnabled()) {
+      if (this.event.source.type === 'dashboard') {
+        return !!this.panelCtrl.dashboard.meta.annotationsPermissions?.dashboard.canDelete;
+      }
+      return !!this.panelCtrl.dashboard.meta.annotationsPermissions?.organization.canDelete;
+    }
+    return true;
   }
 
   async save(): Promise<void> {

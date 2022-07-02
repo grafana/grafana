@@ -99,6 +99,9 @@ async function link(scope: any, elem: any, attrs: any) {
   const textarea = elem.find('textarea');
   textarea.addClass('gf-form-input');
 
+  // All aria-label to be set for accessibility
+  textarea.attr('aria-label', attrs.textareaLabel);
+
   if (scope.codeEditorFocus) {
     setTimeout(() => {
       textarea.focus();

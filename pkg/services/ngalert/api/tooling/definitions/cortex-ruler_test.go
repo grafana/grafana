@@ -50,7 +50,7 @@ func Test_Rule_Marshaling(t *testing.T) {
 			desc: "grafana with for, annotation and label properties",
 			input: PostableExtendedRuleNode{
 				ApiRuleNode: &ApiRuleNode{
-					For:         dur,
+					For:         &dur,
 					Annotations: map[string]string{"foo": "bar"},
 					Labels:      map[string]string{"label1": "val1"}},
 				GrafanaManagedAlert: &PostableGrafanaRule{},
@@ -99,6 +99,21 @@ func Test_Rule_Group_Marshaling(t *testing.T) {
 			},
 		},
 		{
+			desc: "success federated lotex",
+			input: PostableRuleGroupConfig{
+				Name:     "foo",
+				Interval: 0,
+				Rules: []PostableExtendedRuleNode{
+					{
+						ApiRuleNode: &ApiRuleNode{},
+					},
+					{
+						ApiRuleNode: &ApiRuleNode{},
+					},
+				},
+			},
+		},
+		{
 			desc: "success grafana",
 			input: PostableRuleGroupConfig{
 				Name:     "foo",
@@ -121,7 +136,7 @@ func Test_Rule_Group_Marshaling(t *testing.T) {
 				Rules: []PostableExtendedRuleNode{
 					{
 						ApiRuleNode: &ApiRuleNode{
-							For:         dur,
+							For:         &dur,
 							Annotations: map[string]string{"foo": "bar"},
 							Labels:      map[string]string{"label1": "val1"},
 						},
@@ -175,6 +190,22 @@ func Test_Rule_Group_Type(t *testing.T) {
 	}{
 		{
 			desc: "success lotex",
+			input: PostableRuleGroupConfig{
+				Name:     "foo",
+				Interval: 0,
+				Rules: []PostableExtendedRuleNode{
+					{
+						ApiRuleNode: &ApiRuleNode{},
+					},
+					{
+						ApiRuleNode: &ApiRuleNode{},
+					},
+				},
+			},
+			expected: LoTexRulerBackend,
+		},
+		{
+			desc: "success federated lotex",
 			input: PostableRuleGroupConfig{
 				Name:     "foo",
 				Interval: 0,

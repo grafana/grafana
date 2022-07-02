@@ -1,9 +1,10 @@
-import React, { ReactNode, useState } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { ReactNode, useState } from 'react';
+
 import { DataQuery, DataSourceInstanceSettings, GrafanaTheme } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { DataSourcePicker } from '@grafana/runtime';
 import { Icon, Input, FieldValidationMessage, useStyles } from '@grafana/ui';
-import { selectors } from '@grafana/e2e-selectors';
 
 export interface Props<TQuery extends DataQuery = DataQuery> {
   query: TQuery;
@@ -15,6 +16,7 @@ export interface Props<TQuery extends DataQuery = DataQuery> {
   onChange: (query: TQuery) => void;
   onClick: (e: React.MouseEvent) => void;
   collapsedText: string | null;
+  alerting?: boolean;
 }
 
 export const QueryEditorRowHeader = <TQuery extends DataQuery>(props: Props<TQuery>) => {
@@ -130,7 +132,7 @@ const renderDataSource = <TQuery extends DataQuery>(
   props: Props<TQuery>,
   styles: ReturnType<typeof getStyles>
 ): ReactNode => {
-  const { dataSource, onChangeDataSource } = props;
+  const { alerting, dataSource, onChangeDataSource } = props;
 
   if (!onChangeDataSource) {
     return <em className={styles.contextInfo}>({dataSource.name})</em>;
@@ -138,7 +140,7 @@ const renderDataSource = <TQuery extends DataQuery>(
 
   return (
     <div className={styles.itemWrapper}>
-      <DataSourcePicker current={dataSource.name} onChange={onChangeDataSource} />
+      <DataSourcePicker variables={true} alerting={alerting} current={dataSource.name} onChange={onChangeDataSource} />
     </div>
   );
 };

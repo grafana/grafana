@@ -1,12 +1,11 @@
+import { extend } from 'lodash';
 import React, { PureComponent } from 'react';
 
-import { extend } from 'lodash';
-
-import { PluginDashboard } from 'app/types';
+import { AppEvents, PluginMeta, DataSourceApi } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
 import DashboardsTable from 'app/features/datasources/DashboardsTable';
-import { AppEvents, PluginMeta, DataSourceApi } from '@grafana/data';
+import { PluginDashboard } from 'app/types';
 
 interface Props {
   plugin: PluginMeta;
@@ -87,7 +86,7 @@ export class PluginDashboards extends PureComponent<Props, State> {
 
   remove = (dash: PluginDashboard) => {
     getBackendSrv()
-      .delete('/api/dashboards/' + dash.importedUri)
+      .delete('/api/dashboards/uid/' + dash.uid)
       .then(() => {
         dash.imported = false;
         this.setState({ dashboards: [...this.state.dashboards] });

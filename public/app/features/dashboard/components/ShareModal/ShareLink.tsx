@@ -1,11 +1,14 @@
 import React, { PureComponent } from 'react';
-import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { Alert, ClipboardButton, Field, FieldSet, Icon, Input, RadioButtonGroup, Switch } from '@grafana/ui';
+
 import { AppEvents, SelectableValue } from '@grafana/data';
-import { buildImageUrl, buildShareUrl } from './utils';
-import { appEvents } from 'app/core/core';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+import { reportInteraction } from '@grafana/runtime/src';
+import { Alert, ClipboardButton, Field, FieldSet, Icon, Input, RadioButtonGroup, Switch } from '@grafana/ui';
 import config from 'app/core/config';
+import { appEvents } from 'app/core/core';
+
 import { ShareModalTabProps } from './types';
+import { buildImageUrl, buildShareUrl } from './utils';
 
 const themeOptions: Array<SelectableValue<string>> = [
   { label: 'Current', value: 'current' },
@@ -36,6 +39,7 @@ export class ShareLink extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
+    reportInteraction('grafana_dashboards_link_share_viewed');
     this.buildUrl();
   }
 
@@ -51,11 +55,11 @@ export class ShareLink extends PureComponent<Props, State> {
   }
 
   buildUrl = async () => {
-    const { panel } = this.props;
+    const { panel, dashboard } = this.props;
     const { useCurrentTimeRange, useShortUrl, selectedTheme } = this.state;
 
     const shareUrl = await buildShareUrl(useCurrentTimeRange, selectedTheme, panel, useShortUrl);
-    const imageUrl = buildImageUrl(useCurrentTimeRange, selectedTheme, panel);
+    const imageUrl = buildImageUrl(useCurrentTimeRange, dashboard.uid, selectedTheme, panel);
 
     this.setState({ shareUrl, imageUrl });
   };

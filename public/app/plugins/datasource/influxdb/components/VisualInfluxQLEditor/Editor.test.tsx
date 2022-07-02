@@ -1,7 +1,9 @@
-import React from 'react';
-import { InfluxQuery } from '../../types';
-import InfluxDatasource from '../../datasource';
 import { render } from '@testing-library/react';
+import React from 'react';
+
+import InfluxDatasource from '../../datasource';
+import { InfluxQuery } from '../../types';
+
 import { Editor } from './Editor';
 
 // we mock the @grafana/ui components we use to make sure they just show their "value".
@@ -36,9 +38,9 @@ jest.mock('./Seg', () => {
 function assertEditor(query: InfluxQuery, textContent: string) {
   const onChange = jest.fn();
   const onRunQuery = jest.fn();
-  const datasource: InfluxDatasource = ({
+  const datasource: InfluxDatasource = {
     metricFindQuery: () => Promise.resolve([]),
-  } as unknown) as InfluxDatasource;
+  } as unknown as InfluxDatasource;
   const { container } = render(
     <Editor query={query} datasource={datasource} onChange={onChange} onRunQuery={onRunQuery} />
   );

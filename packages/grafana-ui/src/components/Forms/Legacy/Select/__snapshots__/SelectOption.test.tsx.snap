@@ -2,7 +2,8 @@
 
 exports[`SelectOption renders correctly 1`] = `
 <div
-  className="css-o8533i-Option"
+  aria-disabled={false}
+  className="css-0"
   id=""
   onClick={[MockFunction]}
   onMouseMove={[MockFunction]}

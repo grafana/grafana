@@ -9,78 +9,213 @@ package api
 import (
 	"net/http"
 
-	"github.com/go-macaron/binding"
-
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/web"
 )
 
-type RulerApiService interface {
+type RulerApiForkingService interface {
+	RouteDeleteGrafanaRuleGroupConfig(*models.ReqContext) response.Response
+	RouteDeleteNamespaceGrafanaRulesConfig(*models.ReqContext) response.Response
 	RouteDeleteNamespaceRulesConfig(*models.ReqContext) response.Response
 	RouteDeleteRuleGroupConfig(*models.ReqContext) response.Response
+	RouteGetGrafanaRuleGroupConfig(*models.ReqContext) response.Response
+	RouteGetGrafanaRulesConfig(*models.ReqContext) response.Response
+	RouteGetNamespaceGrafanaRulesConfig(*models.ReqContext) response.Response
 	RouteGetNamespaceRulesConfig(*models.ReqContext) response.Response
 	RouteGetRulegGroupConfig(*models.ReqContext) response.Response
 	RouteGetRulesConfig(*models.ReqContext) response.Response
-	RoutePostNameRulesConfig(*models.ReqContext, apimodels.PostableRuleGroupConfig) response.Response
+	RoutePostNameGrafanaRulesConfig(*models.ReqContext) response.Response
+	RoutePostNameRulesConfig(*models.ReqContext) response.Response
 }
 
-func (api *API) RegisterRulerApiEndpoints(srv RulerApiService, m *metrics.API) {
+func (f *ForkedRulerApi) RouteDeleteGrafanaRuleGroupConfig(ctx *models.ReqContext) response.Response {
+	namespaceParam := web.Params(ctx.Req)[":Namespace"]
+	groupnameParam := web.Params(ctx.Req)[":Groupname"]
+	return f.forkRouteDeleteGrafanaRuleGroupConfig(ctx, namespaceParam, groupnameParam)
+}
+func (f *ForkedRulerApi) RouteDeleteNamespaceGrafanaRulesConfig(ctx *models.ReqContext) response.Response {
+	namespaceParam := web.Params(ctx.Req)[":Namespace"]
+	return f.forkRouteDeleteNamespaceGrafanaRulesConfig(ctx, namespaceParam)
+}
+func (f *ForkedRulerApi) RouteDeleteNamespaceRulesConfig(ctx *models.ReqContext) response.Response {
+	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
+	namespaceParam := web.Params(ctx.Req)[":Namespace"]
+	return f.forkRouteDeleteNamespaceRulesConfig(ctx, datasourceUIDParam, namespaceParam)
+}
+func (f *ForkedRulerApi) RouteDeleteRuleGroupConfig(ctx *models.ReqContext) response.Response {
+	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
+	namespaceParam := web.Params(ctx.Req)[":Namespace"]
+	groupnameParam := web.Params(ctx.Req)[":Groupname"]
+	return f.forkRouteDeleteRuleGroupConfig(ctx, datasourceUIDParam, namespaceParam, groupnameParam)
+}
+func (f *ForkedRulerApi) RouteGetGrafanaRuleGroupConfig(ctx *models.ReqContext) response.Response {
+	namespaceParam := web.Params(ctx.Req)[":Namespace"]
+	groupnameParam := web.Params(ctx.Req)[":Groupname"]
+	return f.forkRouteGetGrafanaRuleGroupConfig(ctx, namespaceParam, groupnameParam)
+}
+func (f *ForkedRulerApi) RouteGetGrafanaRulesConfig(ctx *models.ReqContext) response.Response {
+	return f.forkRouteGetGrafanaRulesConfig(ctx)
+}
+func (f *ForkedRulerApi) RouteGetNamespaceGrafanaRulesConfig(ctx *models.ReqContext) response.Response {
+	namespaceParam := web.Params(ctx.Req)[":Namespace"]
+	return f.forkRouteGetNamespaceGrafanaRulesConfig(ctx, namespaceParam)
+}
+func (f *ForkedRulerApi) RouteGetNamespaceRulesConfig(ctx *models.ReqContext) response.Response {
+	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
+	namespaceParam := web.Params(ctx.Req)[":Namespace"]
+	return f.forkRouteGetNamespaceRulesConfig(ctx, datasourceUIDParam, namespaceParam)
+}
+func (f *ForkedRulerApi) RouteGetRulegGroupConfig(ctx *models.ReqContext) response.Response {
+	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
+	namespaceParam := web.Params(ctx.Req)[":Namespace"]
+	groupnameParam := web.Params(ctx.Req)[":Groupname"]
+	return f.forkRouteGetRulegGroupConfig(ctx, datasourceUIDParam, namespaceParam, groupnameParam)
+}
+func (f *ForkedRulerApi) RouteGetRulesConfig(ctx *models.ReqContext) response.Response {
+	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
+	return f.forkRouteGetRulesConfig(ctx, datasourceUIDParam)
+}
+func (f *ForkedRulerApi) RoutePostNameGrafanaRulesConfig(ctx *models.ReqContext) response.Response {
+	namespaceParam := web.Params(ctx.Req)[":Namespace"]
+	conf := apimodels.PostableRuleGroupConfig{}
+	if err := web.Bind(ctx.Req, &conf); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	return f.forkRoutePostNameGrafanaRulesConfig(ctx, conf, namespaceParam)
+}
+func (f *ForkedRulerApi) RoutePostNameRulesConfig(ctx *models.ReqContext) response.Response {
+	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
+	namespaceParam := web.Params(ctx.Req)[":Namespace"]
+	conf := apimodels.PostableRuleGroupConfig{}
+	if err := web.Bind(ctx.Req, &conf); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	return f.forkRoutePostNameRulesConfig(ctx, conf, datasourceUIDParam, namespaceParam)
+}
+
+func (api *API) RegisterRulerApiEndpoints(srv RulerApiForkingService, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Delete(
-			toMacaronPath("/api/ruler/{Recipient}/api/v1/rules/{Namespace}"),
+			toMacaronPath("/api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}"),
+			api.authorize(http.MethodDelete, "/api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}"),
 			metrics.Instrument(
 				http.MethodDelete,
-				"/api/ruler/{Recipient}/api/v1/rules/{Namespace}",
+				"/api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}",
+				srv.RouteDeleteGrafanaRuleGroupConfig,
+				m,
+			),
+		)
+		group.Delete(
+			toMacaronPath("/api/ruler/grafana/api/v1/rules/{Namespace}"),
+			api.authorize(http.MethodDelete, "/api/ruler/grafana/api/v1/rules/{Namespace}"),
+			metrics.Instrument(
+				http.MethodDelete,
+				"/api/ruler/grafana/api/v1/rules/{Namespace}",
+				srv.RouteDeleteNamespaceGrafanaRulesConfig,
+				m,
+			),
+		)
+		group.Delete(
+			toMacaronPath("/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}"),
+			api.authorize(http.MethodDelete, "/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}"),
+			metrics.Instrument(
+				http.MethodDelete,
+				"/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}",
 				srv.RouteDeleteNamespaceRulesConfig,
 				m,
 			),
 		)
 		group.Delete(
-			toMacaronPath("/api/ruler/{Recipient}/api/v1/rules/{Namespace}/{Groupname}"),
+			toMacaronPath("/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname}"),
+			api.authorize(http.MethodDelete, "/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname}"),
 			metrics.Instrument(
 				http.MethodDelete,
-				"/api/ruler/{Recipient}/api/v1/rules/{Namespace}/{Groupname}",
+				"/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname}",
 				srv.RouteDeleteRuleGroupConfig,
 				m,
 			),
 		)
 		group.Get(
-			toMacaronPath("/api/ruler/{Recipient}/api/v1/rules/{Namespace}"),
+			toMacaronPath("/api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}"),
+			api.authorize(http.MethodGet, "/api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}"),
 			metrics.Instrument(
 				http.MethodGet,
-				"/api/ruler/{Recipient}/api/v1/rules/{Namespace}",
+				"/api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}",
+				srv.RouteGetGrafanaRuleGroupConfig,
+				m,
+			),
+		)
+		group.Get(
+			toMacaronPath("/api/ruler/grafana/api/v1/rules"),
+			api.authorize(http.MethodGet, "/api/ruler/grafana/api/v1/rules"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/ruler/grafana/api/v1/rules",
+				srv.RouteGetGrafanaRulesConfig,
+				m,
+			),
+		)
+		group.Get(
+			toMacaronPath("/api/ruler/grafana/api/v1/rules/{Namespace}"),
+			api.authorize(http.MethodGet, "/api/ruler/grafana/api/v1/rules/{Namespace}"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/ruler/grafana/api/v1/rules/{Namespace}",
+				srv.RouteGetNamespaceGrafanaRulesConfig,
+				m,
+			),
+		)
+		group.Get(
+			toMacaronPath("/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}"),
+			api.authorize(http.MethodGet, "/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}",
 				srv.RouteGetNamespaceRulesConfig,
 				m,
 			),
 		)
 		group.Get(
-			toMacaronPath("/api/ruler/{Recipient}/api/v1/rules/{Namespace}/{Groupname}"),
+			toMacaronPath("/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname}"),
+			api.authorize(http.MethodGet, "/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname}"),
 			metrics.Instrument(
 				http.MethodGet,
-				"/api/ruler/{Recipient}/api/v1/rules/{Namespace}/{Groupname}",
+				"/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname}",
 				srv.RouteGetRulegGroupConfig,
 				m,
 			),
 		)
 		group.Get(
-			toMacaronPath("/api/ruler/{Recipient}/api/v1/rules"),
+			toMacaronPath("/api/ruler/{DatasourceUID}/api/v1/rules"),
+			api.authorize(http.MethodGet, "/api/ruler/{DatasourceUID}/api/v1/rules"),
 			metrics.Instrument(
 				http.MethodGet,
-				"/api/ruler/{Recipient}/api/v1/rules",
+				"/api/ruler/{DatasourceUID}/api/v1/rules",
 				srv.RouteGetRulesConfig,
 				m,
 			),
 		)
 		group.Post(
-			toMacaronPath("/api/ruler/{Recipient}/api/v1/rules/{Namespace}"),
-			binding.Bind(apimodels.PostableRuleGroupConfig{}),
+			toMacaronPath("/api/ruler/grafana/api/v1/rules/{Namespace}"),
+			api.authorize(http.MethodPost, "/api/ruler/grafana/api/v1/rules/{Namespace}"),
 			metrics.Instrument(
 				http.MethodPost,
-				"/api/ruler/{Recipient}/api/v1/rules/{Namespace}",
+				"/api/ruler/grafana/api/v1/rules/{Namespace}",
+				srv.RoutePostNameGrafanaRulesConfig,
+				m,
+			),
+		)
+		group.Post(
+			toMacaronPath("/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}"),
+			api.authorize(http.MethodPost, "/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}"),
+			metrics.Instrument(
+				http.MethodPost,
+				"/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}",
 				srv.RoutePostNameRulesConfig,
 				m,
 			),

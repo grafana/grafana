@@ -1,8 +1,11 @@
 import { createSlice, createEntityAdapter, Reducer, AnyAction, PayloadAction } from '@reduxjs/toolkit';
-import { fetchAll, fetchDetails, install, uninstall, loadPluginDashboards, panelPluginLoaded } from './actions';
-import { CatalogPlugin, PluginListDisplayMode, ReducerState, RequestStatus } from '../types';
-import { STATE_PREFIX } from '../constants';
+
 import { PanelPlugin } from '@grafana/data';
+
+import { STATE_PREFIX } from '../constants';
+import { CatalogPlugin, PluginListDisplayMode, ReducerState, RequestStatus } from '../types';
+
+import { fetchAll, fetchDetails, install, uninstall, loadPluginDashboards, panelPluginLoaded } from './actions';
 
 export const pluginsAdapter = createEntityAdapter<CatalogPlugin>();
 
@@ -76,7 +79,8 @@ const slice = createSlice({
       // TODO<remove once the "plugin_admin_enabled" feature flag is removed>
       .addCase(loadPluginDashboards.fulfilled, (state, action) => {
         state.isLoadingPluginDashboards = false;
-        state.dashboards = action.payload;
+        // eslint-disable-next-line
+        state.dashboards = action.payload as any; // WritableDraft<PluginDashboard>[],...>
       })
       .addMatcher(isPendingRequest, (state, action) => {
         state.requests[getOriginalActionType(action.type)] = {

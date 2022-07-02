@@ -1,13 +1,14 @@
 'use strict';
 
-const { merge } = require('webpack-merge');
-const common = require('./webpack.common.js');
-const path = require('path');
-const { DefinePlugin } = require('webpack');
 const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const getBabelConfig = require('./babel.config');
+const path = require('path');
+const { DefinePlugin } = require('webpack');
+const { merge } = require('webpack-merge');
+
+const HTMLWebpackCSSChunks = require('./plugins/HTMLWebpackCSSChunks');
+const common = require('./webpack.common.js');
 
 module.exports = merge(common, {
   devtool: 'inline-source-map',
@@ -46,7 +47,10 @@ module.exports = merge(common, {
         test: /\.tsx?$/,
         use: {
           loader: 'babel-loader',
-          options: getBabelConfig({ BABEL_ENV: 'dev', REACT_REFRESH: true }),
+          options: {
+            cacheDirectory: true,
+            cacheCompression: false,
+          },
         },
         exclude: /node_modules/,
         include: [path.resolve(__dirname, '../../public/'), path.resolve(__dirname, '../../packages/')],
@@ -74,16 +78,16 @@ module.exports = merge(common, {
 
   plugins: [
     new MiniCssExtractPlugin({
-      filename: 'grafana.[name].[fullhash].css',
+      filename: 'grafana.[name].[contenthash].css',
     }),
     new HtmlWebpackPlugin({
       filename: path.resolve(__dirname, '../../public/views/index.html'),
       template: path.resolve(__dirname, '../../public/views/index-template.html'),
-      hash: true,
       inject: false,
       chunksSortMode: 'none',
       excludeChunks: ['dark', 'light'],
     }),
+    new HTMLWebpackCSSChunks(),
     new ReactRefreshWebpackPlugin(),
     new DefinePlugin({
       'process.env': {

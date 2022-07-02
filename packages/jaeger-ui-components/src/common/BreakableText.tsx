@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import * as React from 'react';
 import { css } from '@emotion/css';
+import * as React from 'react';
 
-import { createStyle } from '../Theme';
+import { useStyles2 } from '@grafana/ui';
 
-const getStyles = createStyle(() => {
+const getStyles = () => {
   return {
     BreakableText: css`
       label: BreakableText;
@@ -25,7 +25,7 @@ const getStyles = createStyle(() => {
       white-space: pre;
     `,
   };
-});
+};
 
 const WORD_RX = /\W*\w+\W*/g;
 
@@ -41,6 +41,7 @@ export default function BreakableText(
   props: Props
 ): any /* React.ReactNode /* React.ReactElement | React.ReactElement[] \*\/ */ {
   const { className, text, wordRegexp = WORD_RX } = props;
+  const styles = useStyles2(getStyles);
   if (!text) {
     return typeof text === 'string' ? text : null;
   }
@@ -50,7 +51,7 @@ export default function BreakableText(
   let match: RegExpExecArray | string[] | null = wordRegexp.exec(text) || [text];
   while (match) {
     spans.push(
-      <span key={`${text}-${spans.length}`} className={className || getStyles().BreakableText}>
+      <span key={`${text}-${spans.length}`} className={className || styles.BreakableText}>
         {match[0]}
       </span>
     );

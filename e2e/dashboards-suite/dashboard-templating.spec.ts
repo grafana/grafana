@@ -36,11 +36,13 @@ e2e.scenario({
       `Server:date = null`,
       `Server:text = All`,
       `Server:queryparam = var-Server=All`,
+      `1 < 2`,
+      `Example: from=now-6h&to=now`,
     ];
 
     e2e()
       .get('.markdown-html li')
-      .should('have.length', 24)
+      .should('have.length', 26)
       .each((element) => {
         items.push(element.text());
       })
@@ -49,5 +51,10 @@ e2e.scenario({
           expect(items[index]).to.equal(expected);
         });
       });
+
+    // Check link interpolation is working correctly
+    e2e()
+      .contains('a', 'Example: from=now-6h&to=now')
+      .should('have.attr', 'href', 'https://example.com/?from=now-6h&to=now');
   },
 });

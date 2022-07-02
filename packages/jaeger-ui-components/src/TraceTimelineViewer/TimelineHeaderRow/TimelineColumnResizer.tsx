@@ -12,15 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import * as React from 'react';
 import { css } from '@emotion/css';
 import cx from 'classnames';
+import * as React from 'react';
+
+import { stylesFactory } from '@grafana/ui';
 
 import { TNil } from '../../types';
 import DraggableManager, { DraggableBounds, DraggingUpdate } from '../../utils/DraggableManager';
-import { createStyle } from '../../Theme';
 
-export const getStyles = createStyle(() => {
+export const getStyles = stylesFactory(() => {
   return {
     TimelineColumnResizer: css`
       left: 0;

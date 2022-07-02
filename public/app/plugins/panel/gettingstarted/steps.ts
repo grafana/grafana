@@ -1,6 +1,7 @@
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import store from 'app/core/store';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+
 import { SetupStep } from './types';
 
 const step1TutorialTitle = 'Grafana fundamentals';
@@ -21,8 +22,7 @@ export const getSteps = (): SetupStep[] => [
         type: 'tutorial',
         heading: 'Data source and dashboards',
         title: step1TutorialTitle,
-        info:
-          'Set up and understand Grafana if you have no prior experience. This tutorial guides you through the entire process and covers the “Data source” and “Dashboards” steps to the right.',
+        info: 'Set up and understand Grafana if you have no prior experience. This tutorial guides you through the entire process and covers the “Data source” and “Dashboards” steps to the right.',
         href: 'https://grafana.com/tutorials/grafana-fundamentals',
         icon: 'grafana',
         check: () => Promise.resolve(store.get(step1Key)),

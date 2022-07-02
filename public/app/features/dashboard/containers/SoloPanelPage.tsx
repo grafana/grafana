@@ -1,11 +1,13 @@
 import React, { Component } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
+
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { StoreState } from 'app/types';
+
 import { DashboardPanel } from '../dashgrid/DashboardPanel';
 import { initDashboard } from '../state/initDashboard';
-import { StoreState } from 'app/types';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 export interface DashboardPageRouteParams {
   uid?: string;
@@ -115,7 +117,7 @@ export const SoloPanel = ({ dashboard, notFound, panel, panelId }: SoloPanelProp
               panel={panel}
               isEditing={false}
               isViewing={false}
-              isInView={true}
+              lazy={false}
             />
           );
         }}

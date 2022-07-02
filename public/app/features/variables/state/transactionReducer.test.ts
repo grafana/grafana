@@ -1,10 +1,11 @@
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
+import { TransactionStatus } from '../types';
+
 import { removeVariable, variableStateNotStarted } from './sharedReducer';
 import {
   initialTransactionState,
   transactionReducer,
   TransactionState,
-  TransactionStatus,
   variablesClearTransaction,
   variablesCompleteTransaction,
   variablesInitTransaction,

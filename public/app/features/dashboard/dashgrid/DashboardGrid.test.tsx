@@ -1,7 +1,16 @@
-import React from 'react';
 import { shallow, ShallowWrapper } from 'enzyme';
-import { DashboardGrid, Props } from './DashboardGrid';
+import React from 'react';
+
 import { DashboardModel } from '../state';
+
+import { DashboardGridUnconnected as DashboardGrid, Props } from './DashboardGrid';
+
+jest.mock('app/features/dashboard/dashgrid/LazyLoader', () => {
+  const LazyLoader: React.FC = ({ children }) => {
+    return <>{children}</>;
+  };
+  return { LazyLoader };
+});
 
 interface ScenarioContext {
   props: Props;
@@ -59,8 +68,8 @@ function dashboardGridScenario(description: string, scenarioFn: (ctx: ScenarioCo
       props: {
         editPanel: null,
         viewPanel: null,
-        scrollTop: 0,
         dashboard: getTestDashboard(),
+        cleanAndRemoveMany: jest.fn,
       },
       setProps: (props: Partial<Props>) => {
         Object.assign(ctx.props, props);

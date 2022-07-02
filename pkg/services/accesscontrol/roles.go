@@ -8,32 +8,13 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-type RoleRegistry interface {
-	// RegisterFixedRoles registers all roles declared to AccessControl
-	RegisterFixedRoles() error
-}
-
 // Roles definition
 var (
-	datasourcesExplorerRole = RoleDTO{
-		Version:     3,
-		Name:        datasourcesExplorer,
-		DisplayName: "Data source explorer",
-		Description: "Enable the Explore feature. Data source permissions still apply; you can only query data sources for which you have query permissions.",
-		Group:       "Data sources",
-		Permissions: []Permission{
-			{
-				Action: ActionDatasourcesExplore,
-			},
-		},
-	}
-
 	ldapReaderRole = RoleDTO{
-		Name:        ldapReader,
+		Name:        "fixed:ldap:reader",
 		DisplayName: "LDAP reader",
 		Description: "Read LDAP configuration and status.",
 		Group:       "LDAP",
-		Version:     3,
 		Permissions: []Permission{
 			{
 				Action: ActionLDAPUsersRead,
@@ -45,11 +26,10 @@ var (
 	}
 
 	ldapWriterRole = RoleDTO{
-		Name:        ldapWriter,
+		Name:        "fixed:ldap:writer",
 		DisplayName: "LDAP writer",
 		Description: "Read and update LDAP configuration and read LDAP status.",
 		Group:       "LDAP",
-		Version:     4,
 		Permissions: ConcatPermissions(ldapReaderRole.Permissions, []Permission{
 			{
 				Action: ActionLDAPUsersSync,
@@ -61,18 +41,17 @@ var (
 	}
 
 	orgUsersWriterRole = RoleDTO{
-		Name:        orgUsersWriter,
+		Name:        "fixed:org.users:writer",
 		DisplayName: "Organization user writer",
 		Description: "Within a single organization, add a user, invite a user, read information about a user and their role, remove a user from that organization, or change the role of a user.",
 		Group:       "User administration (organizational)",
-		Version:     3,
 		Permissions: ConcatPermissions(orgUsersReaderRole.Permissions, []Permission{
 			{
 				Action: ActionOrgUsersAdd,
 				Scope:  ScopeUsersAll,
 			},
 			{
-				Action: ActionOrgUsersRoleUpdate,
+				Action: ActionOrgUsersWrite,
 				Scope:  ScopeUsersAll,
 			},
 			{
@@ -83,11 +62,10 @@ var (
 	}
 
 	orgUsersReaderRole = RoleDTO{
-		Name:        orgUsersReader,
+		Name:        "fixed:org.users:reader",
 		DisplayName: "Organization user reader",
 		Description: "Read users within a single organization.",
 		Group:       "User administration (organizational)",
-		Version:     3,
 		Permissions: []Permission{
 			{
 				Action: ActionOrgUsersRead,
@@ -96,12 +74,11 @@ var (
 		},
 	}
 
-	settingsReaderRole = RoleDTO{
-		Version:     4,
+	SettingsReaderRole = RoleDTO{
+		Name:        "fixed:settings:reader",
 		DisplayName: "Setting reader",
 		Description: "Read Grafana instance settings.",
 		Group:       "Settings",
-		Name:        settingsReader,
 		Permissions: []Permission{
 			{
 				Action: ActionSettingsRead,
@@ -111,8 +88,7 @@ var (
 	}
 
 	statsReaderRole = RoleDTO{
-		Version:     3,
-		Name:        statsReader,
+		Name:        "fixed:stats:reader",
 		DisplayName: "Statistics reader",
 		Description: "Read Grafana instance statistics.",
 		Group:       "Statistics",
@@ -124,18 +100,13 @@ var (
 	}
 
 	usersReaderRole = RoleDTO{
-		Name:        usersReader,
+		Name:        "fixed:users:reader",
 		DisplayName: "User reader",
 		Description: "Read all users and their information, such as team memberships, authentication tokens, and quotas.",
 		Group:       "User administration (global)",
-		Version:     3,
 		Permissions: []Permission{
 			{
 				Action: ActionUsersRead,
-				Scope:  ScopeGlobalUsersAll,
-			},
-			{
-				Action: ActionUsersTeamRead,
 				Scope:  ScopeGlobalUsersAll,
 			},
 			{
@@ -150,11 +121,10 @@ var (
 	}
 
 	usersWriterRole = RoleDTO{
-		Name:        usersWriter,
+		Name:        "fixed:users:writer",
 		DisplayName: "User writer",
 		Description: "Read and update all attributes and settings for all users in Grafana: update user information, read user information, create or enable or disable a user, make a user a Grafana administrator, sign out a user, update a user’s authentication token, or update quotas for all users.",
 		Group:       "User administration (global)",
-		Version:     3,
 		Permissions: ConcatPermissions(usersReaderRole.Permissions, []Permission{
 			{
 				Action: ActionUsersPasswordUpdate,
@@ -199,60 +169,44 @@ var (
 	}
 )
 
-// Role names definitions
-const (
-	datasourcesExplorer = "fixed:datasources:explorer"
-	ldapReader          = "fixed:ldap:reader"
-	ldapWriter          = "fixed:ldap:writer"
-	orgUsersReader      = "fixed:org.users:reader"
-	orgUsersWriter      = "fixed:org.users:writer"
-	settingsReader      = "fixed:settings:reader"
-	statsReader         = "fixed:stats:reader"
-	usersReader         = "fixed:users:reader"
-	usersWriter         = "fixed:users:writer"
-)
-
-var (
-	// FixedRoles provides a map of permission sets/roles which can be
-	// assigned to a set of users. When adding a new resource protected by
-	// Grafana access control the default permissions should be added to a
-	// new fixed role in this set so that users can access the new
-	// resource. FixedRoleGrants lists which built-in roles are
-	// assigned which fixed roles in this list.
-	FixedRoles = map[string]RoleDTO{
-		datasourcesExplorer: datasourcesExplorerRole,
-		ldapReader:          ldapReaderRole,
-		ldapWriter:          ldapWriterRole,
-		orgUsersReader:      orgUsersReaderRole,
-		orgUsersWriter:      orgUsersWriterRole,
-		settingsReader:      settingsReaderRole,
-		statsReader:         statsReaderRole,
-		usersReader:         usersReaderRole,
-		usersWriter:         usersWriterRole,
+// Declare OSS roles to the accesscontrol service
+func DeclareFixedRoles(ac AccessControl) error {
+	ldapReader := RoleRegistration{
+		Role:   ldapReaderRole,
+		Grants: []string{RoleGrafanaAdmin},
+	}
+	ldapWriter := RoleRegistration{
+		Role:   ldapWriterRole,
+		Grants: []string{RoleGrafanaAdmin},
+	}
+	orgUsersReader := RoleRegistration{
+		Role:   orgUsersReaderRole,
+		Grants: []string{RoleGrafanaAdmin, string(models.ROLE_ADMIN)},
+	}
+	orgUsersWriter := RoleRegistration{
+		Role:   orgUsersWriterRole,
+		Grants: []string{RoleGrafanaAdmin, string(models.ROLE_ADMIN)},
+	}
+	settingsReader := RoleRegistration{
+		Role:   SettingsReaderRole,
+		Grants: []string{RoleGrafanaAdmin},
+	}
+	statsReader := RoleRegistration{
+		Role:   statsReaderRole,
+		Grants: []string{RoleGrafanaAdmin},
+	}
+	usersReader := RoleRegistration{
+		Role:   usersReaderRole,
+		Grants: []string{RoleGrafanaAdmin},
+	}
+	usersWriter := RoleRegistration{
+		Role:   usersWriterRole,
+		Grants: []string{RoleGrafanaAdmin},
 	}
 
-	// FixedRoleGrants specifies which built-in roles are assigned
-	// to which set of FixedRoles by default. Alphabetically sorted.
-	FixedRoleGrants = map[string][]string{
-		RoleGrafanaAdmin: {
-			ldapReader,
-			ldapWriter,
-			orgUsersReader,
-			orgUsersWriter,
-			settingsReader,
-			statsReader,
-			usersReader,
-			usersWriter,
-		},
-		string(models.ROLE_ADMIN): {
-			orgUsersReader,
-			orgUsersWriter,
-		},
-		string(models.ROLE_EDITOR): {
-			datasourcesExplorer,
-		},
-	}
-)
+	return ac.DeclareFixedRoles(ldapReader, ldapWriter, orgUsersReader, orgUsersWriter,
+		settingsReader, statsReader, usersReader, usersWriter)
+}
 
 func ConcatPermissions(permissions ...[]Permission) []Permission {
 	if permissions == nil {
@@ -303,5 +257,54 @@ func (m *RegistrationList) Range(f func(registration RoleRegistration) bool) {
 		if ok := f(registration); !ok {
 			return
 		}
+	}
+}
+
+func BuildBasicRoleDefinitions() map[string]*RoleDTO {
+	return map[string]*RoleDTO{
+		string(models.ROLE_ADMIN): {
+			Name:        BasicRolePrefix + "admin",
+			UID:         BasicRoleUIDPrefix + "admin",
+			OrgID:       GlobalOrgID,
+			Version:     1,
+			DisplayName: string(models.ROLE_ADMIN),
+			Description: "Admin role",
+			Group:       "Basic",
+			Permissions: []Permission{},
+			Hidden:      true,
+		},
+		string(models.ROLE_EDITOR): {
+			Name:        BasicRolePrefix + "editor",
+			UID:         BasicRoleUIDPrefix + "editor",
+			OrgID:       GlobalOrgID,
+			Version:     1,
+			DisplayName: string(models.ROLE_EDITOR),
+			Description: "Editor role",
+			Group:       "Basic",
+			Permissions: []Permission{},
+			Hidden:      true,
+		},
+		string(models.ROLE_VIEWER): {
+			Name:        BasicRolePrefix + "viewer",
+			UID:         BasicRoleUIDPrefix + "viewer",
+			OrgID:       GlobalOrgID,
+			Version:     1,
+			DisplayName: string(models.ROLE_VIEWER),
+			Description: "Viewer role",
+			Group:       "Basic",
+			Permissions: []Permission{},
+			Hidden:      true,
+		},
+		RoleGrafanaAdmin: {
+			Name:        BasicRolePrefix + "grafana_admin",
+			UID:         BasicRoleUIDPrefix + "grafana_admin",
+			OrgID:       GlobalOrgID,
+			Version:     1,
+			DisplayName: RoleGrafanaAdmin,
+			Description: "Grafana Admin role",
+			Group:       "Basic",
+			Permissions: []Permission{},
+			Hidden:      true,
+		},
 	}
 }

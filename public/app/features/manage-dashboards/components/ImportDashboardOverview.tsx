@@ -1,12 +1,17 @@
 import React, { PureComponent } from 'react';
-import { dateTimeFormat } from '@grafana/data';
-import { Form, Legend } from '@grafana/ui';
 import { connect, ConnectedProps } from 'react-redux';
-import { ImportDashboardForm } from './ImportDashboardForm';
+
+import { dateTimeFormat } from '@grafana/data';
+import { locationService, reportInteraction } from '@grafana/runtime';
+import { Form, Legend } from '@grafana/ui';
+import { StoreState } from 'app/types';
+
 import { clearLoadedDashboard, importDashboard } from '../state/actions';
 import { DashboardSource, ImportDashboardDTO } from '../state/reducers';
-import { StoreState } from 'app/types';
-import { locationService } from '@grafana/runtime';
+
+import { ImportDashboardForm } from './ImportDashboardForm';
+
+const IMPORT_FINISHED_EVENT_NAME = 'dashboard_import_imported';
 
 const mapStateToProps = (state: StoreState) => {
   const searchObj = locationService.getSearchObject();
@@ -39,6 +44,8 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
   };
 
   onSubmit = (form: ImportDashboardDTO) => {
+    reportInteraction(IMPORT_FINISHED_EVENT_NAME);
+
     this.props.importDashboard(form);
   };
 

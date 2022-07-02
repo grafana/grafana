@@ -1,15 +1,13 @@
-import { DeleteDataSourceConfig } from './deleteDataSource';
-import { e2e } from '../index';
 import { v4 as uuidv4 } from 'uuid';
+
+import { e2e } from '../index';
+
+import { DeleteDataSourceConfig } from './deleteDataSource';
 
 export interface AddDataSourceConfig {
   basicAuth: boolean;
   basicAuthPassword: string;
   basicAuthUser: string;
-  /**
-   * @deprecated check health request is no longer supported
-   */
-  checkHealth: boolean;
   expectedAlertMessage: string | RegExp;
   form: () => void;
   name: string;
@@ -24,7 +22,6 @@ export const addDataSource = (config?: Partial<AddDataSourceConfig>) => {
     basicAuth: false,
     basicAuthPassword: '',
     basicAuthUser: '',
-    checkHealth: false,
     expectedAlertMessage: 'Data source is working',
     form: () => {},
     name: `e2e-${uuidv4()}`,
@@ -47,7 +44,7 @@ export const addDataSource = (config?: Partial<AddDataSourceConfig>) => {
 
   e2e().logToConsole('Adding data source with name:', name);
   e2e.pages.AddDataSource.visit();
-  e2e.pages.AddDataSource.dataSourcePlugins(type)
+  e2e.pages.AddDataSource.dataSourcePluginsV2(type)
     .scrollIntoView()
     .should('be.visible') // prevents flakiness
     .click();

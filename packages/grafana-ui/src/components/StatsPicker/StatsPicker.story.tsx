@@ -1,9 +1,11 @@
+import { action } from '@storybook/addon-actions';
+import { Meta, Story } from '@storybook/react';
 import React, { PureComponent } from 'react';
 
-import { action } from '@storybook/addon-actions';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { StatsPicker } from '@grafana/ui';
-import { Meta, Story } from '@storybook/react';
+
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+
 import { Props } from './StatsPicker';
 
 interface State {

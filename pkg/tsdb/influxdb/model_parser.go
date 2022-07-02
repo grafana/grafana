@@ -22,6 +22,9 @@ func (qp *InfluxdbQueryParser) Parse(query backend.DataQuery) (*Query, error) {
 	useRawQuery := model.Get("rawQuery").MustBool(false)
 	alias := model.Get("alias").MustString("")
 	tz := model.Get("tz").MustString("")
+	limit := model.Get("limit").MustString("")
+	slimit := model.Get("slimit").MustString("")
+	orderByTime := model.Get("orderByTime").MustString("")
 
 	measurement := model.Get("measurement").MustString("")
 
@@ -60,6 +63,9 @@ func (qp *InfluxdbQueryParser) Parse(query backend.DataQuery) (*Query, error) {
 		Alias:       alias,
 		UseRawQuery: useRawQuery,
 		Tz:          tz,
+		Limit:       limit,
+		Slimit:      slimit,
+		OrderByTime: orderByTime,
 	}, nil
 }
 

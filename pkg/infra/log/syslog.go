@@ -4,11 +4,12 @@
 package log
 
 import (
-	"errors"
 	"log/syslog"
 	"os"
 
-	"github.com/inconshreveable/log15"
+	"github.com/go-kit/log"
+	gokitsyslog "github.com/go-kit/log/syslog"
+	"github.com/grafana/grafana/pkg/infra/log/level"
 	"gopkg.in/ini.v1"
 )
 
@@ -18,13 +19,36 @@ type SysLogHandler struct {
 	Address  string
 	Facility string
 	Tag      string
-	Format   log15.Format
+	Format   Formatedlogger
+	logger   log.Logger
 }
 
-func NewSyslog(sec *ini.Section, format log15.Format) *SysLogHandler {
-	handler := &SysLogHandler{
-		Format: log15.LogfmtFormat(),
+var selector = func(keyvals ...interface{}) syslog.Priority {
+	for i := 0; i < len(keyvals); i += 2 {
+		if level.IsKey(keyvals[i]) {
+			val := level.GetValue(keyvals[i+1])
+			if val != nil {
+				switch val {
+				case level.ErrorValue():
+					return syslog.LOG_ERR
+				case level.WarnValue():
+					return syslog.LOG_WARNING
+				case level.InfoValue():
+					return syslog.LOG_INFO
+				case level.DebugValue():
+					return syslog.LOG_DEBUG
+				}
+			}
+
+			break
+		}
 	}
+
+	return syslog.LOG_INFO
+}
+
+func NewSyslog(sec *ini.Section, format Formatedlogger) *SysLogHandler {
+	handler := &SysLogHandler{}
 
 	handler.Format = format
 	handler.Network = sec.Key("network").MustString("")
@@ -33,18 +57,16 @@ func NewSyslog(sec *ini.Section, format log15.Format) *SysLogHandler {
 	handler.Tag = sec.Key("tag").MustString("")
 
 	if err := handler.Init(); err != nil {
-		Root.Error("Failed to init syslog log handler", "error", err)
+		root.Error("Failed to init syslog log handler", "error", err)
 		os.Exit(1)
 	}
-
+	handler.logger = gokitsyslog.NewSyslogLogger(handler.syslog, format, gokitsyslog.PrioritySelectorOption(selector))
 	return handler
 }
 
 func (sw *SysLogHandler) Init() error {
-	prio, err := parseFacility(sw.Facility)
-	if err != nil {
-		return err
-	}
+	// the facility is the origin of the syslog message
+	prio := parseFacility(sw.Facility)
 
 	w, err := syslog.Dial(sw.Network, sw.Address, prio, sw.Tag)
 	if err != nil {
@@ -55,26 +77,8 @@ func (sw *SysLogHandler) Init() error {
 	return nil
 }
 
-func (sw *SysLogHandler) Log(r *log15.Record) error {
-	var err error
-
-	msg := string(sw.Format.Format(r))
-
-	switch r.Lvl {
-	case log15.LvlDebug:
-		err = sw.syslog.Debug(msg)
-	case log15.LvlInfo:
-		err = sw.syslog.Info(msg)
-	case log15.LvlWarn:
-		err = sw.syslog.Warning(msg)
-	case log15.LvlError:
-		err = sw.syslog.Err(msg)
-	case log15.LvlCrit:
-		err = sw.syslog.Crit(msg)
-	default:
-		err = errors.New("invalid syslog level")
-	}
-
+func (sw *SysLogHandler) Log(keyvals ...interface{}) error {
+	err := sw.logger.Log(keyvals...)
 	return err
 }
 
@@ -95,11 +99,11 @@ var facilities = map[string]syslog.Priority{
 	"local7": syslog.LOG_LOCAL7,
 }
 
-func parseFacility(facility string) (syslog.Priority, error) {
-	prio, ok := facilities[facility]
-	if !ok {
-		return syslog.LOG_LOCAL0, errors.New("invalid syslog facility")
+func parseFacility(facility string) syslog.Priority {
+	v, found := facilities[facility]
+	if !found {
+		// default the facility level to LOG_LOCAL7
+		return syslog.LOG_LOCAL7
 	}
-
-	return prio, nil
+	return v
 }

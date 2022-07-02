@@ -25,7 +25,7 @@ func (hs *HTTPServer) AdminProvisioningReloadDatasources(c *models.ReqContext) r
 }
 
 func (hs *HTTPServer) AdminProvisioningReloadPlugins(c *models.ReqContext) response.Response {
-	err := hs.ProvisioningService.ProvisionPlugins()
+	err := hs.ProvisioningService.ProvisionPlugins(c.Req.Context())
 	if err != nil {
 		return response.Error(500, "Failed to reload plugins config", err)
 	}

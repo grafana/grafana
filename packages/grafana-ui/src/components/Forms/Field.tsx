@@ -1,10 +1,13 @@
-import React, { HTMLAttributes } from 'react';
-import { Label } from './Label';
-import { stylesFactory, useTheme2 } from '../../themes';
 import { css, cx } from '@emotion/css';
+import React, { HTMLAttributes } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
-import { FieldValidationMessage } from './FieldValidationMessage';
+
+import { stylesFactory, useTheme2 } from '../../themes';
 import { getChildId } from '../../utils/reactUtils';
+
+import { FieldValidationMessage } from './FieldValidationMessage';
+import { Label } from './Label';
 
 export interface FieldProps extends HTMLAttributes<HTMLDivElement> {
   /** Form input element, i.e Input or Switch */
@@ -22,7 +25,7 @@ export interface FieldProps extends HTMLAttributes<HTMLDivElement> {
   /** Indicates if field is required */
   required?: boolean;
   /** Error message to display */
-  error?: string | null;
+  error?: React.ReactNode;
   /** Indicates horizontal layout of the field */
   horizontal?: boolean;
   /** make validation message overflow horizontally. Prevents pushing out adjacent inline components */
@@ -94,11 +97,12 @@ export const Field: React.FC<FieldProps> = ({
       label
     );
 
+  const childProps = deleteUndefinedProps({ invalid, disabled, loading });
   return (
     <div className={cx(styles.field, horizontal && styles.fieldHorizontal, className)} {...otherProps}>
       {labelElement}
       <div>
-        {React.cloneElement(children, { invalid, disabled, loading })}
+        {React.cloneElement(children, childProps)}
         {invalid && error && !horizontal && (
           <div
             className={cx(styles.fieldValidationWrapper, {
@@ -122,3 +126,13 @@ export const Field: React.FC<FieldProps> = ({
     </div>
   );
 };
+
+function deleteUndefinedProps<T extends Object>(obj: T): Partial<T> {
+  for (const key in obj) {
+    if (obj[key] === undefined) {
+      delete obj[key];
+    }
+  }
+
+  return obj;
+}

@@ -1,14 +1,17 @@
-import React, { useReducer } from 'react';
-import { HorizontalGroup, useStyles2, VerticalGroup, FilterInput } from '@grafana/ui';
-import { GrafanaTheme2, PanelPluginMeta, SelectableValue } from '@grafana/data';
 import { css } from '@emotion/css';
-import { SortPicker } from '../../../../core/components/Select/SortPicker';
-import { PanelTypeFilter } from '../../../../core/components/PanelTypeFilter/PanelTypeFilter';
-import { LibraryPanelsView } from '../LibraryPanelsView/LibraryPanelsView';
-import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../core/constants';
-import { LibraryElementDTO } from '../../types';
+import React, { useReducer } from 'react';
+
+import { GrafanaTheme2, PanelPluginMeta, SelectableValue } from '@grafana/data';
+import { HorizontalGroup, useStyles2, VerticalGroup, FilterInput } from '@grafana/ui';
+
 import { FolderFilter } from '../../../../core/components/FolderFilter/FolderFilter';
+import { PanelTypeFilter } from '../../../../core/components/PanelTypeFilter/PanelTypeFilter';
+import { SortPicker } from '../../../../core/components/Select/SortPicker';
+import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../core/constants';
 import { FolderInfo } from '../../../../types';
+import { LibraryElementDTO } from '../../types';
+import { LibraryPanelsView } from '../LibraryPanelsView/LibraryPanelsView';
+
 import {
   folderFilterChanged,
   initialLibraryPanelsSearchState,
@@ -66,18 +69,23 @@ export const LibraryPanelsSearch = ({
             placeholder={'Search by name or description'}
             width={0}
           />
-          <HorizontalGroup
-            spacing="sm"
-            justify={(showSort && showPanelFilter) || showFolderFilter ? 'space-between' : 'flex-end'}
-          >
-            {showSort && (
-              <SortPicker value={sortDirection} onChange={onSortChange} filter={['alpha-asc', 'alpha-desc']} />
-            )}
-            <HorizontalGroup spacing="sm" justify={showFolderFilter && showPanelFilter ? 'space-between' : 'flex-end'}>
-              {showFolderFilter && <FolderFilter onChange={onFolderFilterChange} />}
-              {showPanelFilter && <PanelTypeFilter onChange={onPanelFilterChange} />}
+          <div className={styles.buttonRow}>
+            <HorizontalGroup
+              spacing="sm"
+              justify={(showSort && showPanelFilter) || showFolderFilter ? 'space-between' : 'flex-end'}
+            >
+              {showSort && (
+                <SortPicker value={sortDirection} onChange={onSortChange} filter={['alpha-asc', 'alpha-desc']} />
+              )}
+              <HorizontalGroup
+                spacing="sm"
+                justify={showFolderFilter && showPanelFilter ? 'space-between' : 'flex-end'}
+              >
+                {showFolderFilter && <FolderFilter onChange={onFolderFilterChange} />}
+                {showPanelFilter && <PanelTypeFilter onChange={onPanelFilterChange} />}
+              </HorizontalGroup>
             </HorizontalGroup>
-          </HorizontalGroup>
+          </div>
           <div className={styles.libraryPanelsView}>
             <LibraryPanelsView
               onClickCard={onClick}
@@ -98,7 +106,7 @@ export const LibraryPanelsSearch = ({
   return (
     <div className={styles.container}>
       <VerticalGroup spacing="xs">
-        <div className={styles.buttonRow}>
+        <div className={styles.tightButtonRow}>
           <div className={styles.tightFilter}>
             <FilterInput value={searchQuery} onChange={onFilterChange} placeholder={'Search by name'} width={0} />
           </div>
@@ -136,7 +144,13 @@ function getStyles(theme: GrafanaTheme2) {
       display: flex;
       justify-content: space-between;
       width: 100%;
-      margin-top: ${theme.spacing(1.5)}; // Clear types link
+      margin-top: ${theme.spacing(2)}; // Clear types link
+    `,
+    tightButtonRow: css`
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      margin-top: ${theme.spacing(4)}; // Clear types link
     `,
     tightFilter: css`
       flex-grow: 1;

@@ -3,7 +3,9 @@ package models
 import (
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+
 	"golang.org/x/oauth2"
 )
 
@@ -19,6 +21,7 @@ type UserAuth struct {
 	Created           time.Time
 	OAuthAccessToken  string
 	OAuthRefreshToken string
+	OAuthIdToken      string
 	OAuthTokenType    string
 	OAuthExpiry       time.Time
 }
@@ -39,7 +42,7 @@ type ExternalUserInfo struct {
 
 type LoginInfo struct {
 	AuthModule    string
-	User          *User
+	User          *user.User
 	ExternalUser  ExternalUserInfo
 	LoginUsername string
 	HTTPStatus    int
@@ -58,7 +61,7 @@ type UpsertUserCommand struct {
 	ExternalUser  *ExternalUserInfo
 	SignupAllowed bool
 
-	Result *User
+	Result *user.User
 }
 
 type SetAuthInfoCommand struct {
@@ -86,7 +89,7 @@ type LoginUserQuery struct {
 	ReqContext *ReqContext
 	Username   string
 	Password   string
-	User       *User
+	User       *user.User
 	IpAddress  string
 	AuthModule string
 	Cfg        *setting.Cfg
@@ -118,9 +121,4 @@ type TeamOrgGroupDTO struct {
 	TeamName string `json:"teamName"`
 	OrgName  string `json:"orgName"`
 	GroupDN  string `json:"groupDN"`
-}
-
-type GetTeamsForLDAPGroupCommand struct {
-	Groups []string
-	Result []TeamOrgGroupDTO
 }

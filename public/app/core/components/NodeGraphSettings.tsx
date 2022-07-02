@@ -1,5 +1,6 @@
-import React from 'react';
 import { css } from '@emotion/css';
+import React from 'react';
+
 import {
   DataSourceJsonData,
   DataSourcePluginOptionsEditorProps,
@@ -31,6 +32,7 @@ export function NodeGraphSettings({ options, onOptionsChange }: Props) {
           labelWidth={26}
         >
           <InlineSwitch
+            id="enableNodeGraph"
             value={options.jsonData.nodeGraph?.enabled}
             onChange={(event: React.SyntheticEvent<HTMLInputElement>) =>
               updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'nodeGraph', {

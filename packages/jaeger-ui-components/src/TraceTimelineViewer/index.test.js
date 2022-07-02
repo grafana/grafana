@@ -12,14 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from 'react';
 import { shallow } from 'enzyme';
+import React from 'react';
 
-import TraceTimelineViewer from './index';
+import { createTheme } from '@grafana/data';
+
 import traceGenerator from '../demo/trace-generators';
 import transformTraceData from '../model/transform-trace-data';
+
 import TimelineHeaderRow from './TimelineHeaderRow';
-import { defaultTheme } from '../Theme';
+
+import TraceTimelineViewer from './index';
 
 describe('<TraceTimelineViewer>', () => {
   const trace = transformTraceData(traceGenerator.trace({}));
@@ -38,7 +41,7 @@ describe('<TraceTimelineViewer>', () => {
     collapseAll: jest.fn(),
     expandOne: jest.fn(),
     collapseOne: jest.fn(),
-    theme: defaultTheme,
+    theme: createTheme(),
     history: {
       replace: () => {},
     },
@@ -50,7 +53,6 @@ describe('<TraceTimelineViewer>', () => {
 
   beforeEach(() => {
     wrapper = shallow(<TraceTimelineViewer {...props} />)
-      .dive()
       .dive()
       .dive();
   });

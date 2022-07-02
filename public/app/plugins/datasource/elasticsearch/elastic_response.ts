@@ -1,7 +1,5 @@
 import { clone, filter, find, identity, isArray, keys, map, uniq, values as _values } from 'lodash';
-import flatten from 'app/core/utils/flatten';
-import * as queryDef from './query_def';
-import TableModel from 'app/core/table_model';
+
 import {
   DataQueryResponse,
   DataFrame,
@@ -10,14 +8,18 @@ import {
   MutableDataFrame,
   PreferredVisualisationType,
 } from '@grafana/data';
-import { ElasticsearchAggregation, ElasticsearchQuery } from './types';
+import TableModel from 'app/core/table_model';
+import flatten from 'app/core/utils/flatten';
+
 import {
   ExtendedStatMetaType,
   isMetricAggregationWithField,
   TopMetrics,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
-import { describeMetric, getScriptValue } from './utils';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
+import * as queryDef from './query_def';
+import { ElasticsearchAggregation, ElasticsearchQuery } from './types';
+import { describeMetric, getScriptValue } from './utils';
 
 const HIGHLIGHT_TAGS_EXP = `${queryDef.highlightTags.pre}([^@]+)${queryDef.highlightTags.post}`;
 type TopMetricMetric = Record<string, number>;
@@ -399,9 +401,9 @@ export class ElasticResponse {
 
   nameSeries(seriesList: any, target: ElasticsearchQuery) {
     const metricTypeCount = uniq(map(seriesList, 'metric')).length;
-    const hasTopMetricWithMultipleMetrics = (target.metrics?.filter(
-      (m) => m.type === 'top_metrics'
-    ) as TopMetrics[]).some((m) => (m?.settings?.metrics?.length || 0) > 1);
+    const hasTopMetricWithMultipleMetrics = (
+      target.metrics?.filter((m) => m.type === 'top_metrics') as TopMetrics[]
+    ).some((m) => (m?.settings?.metrics?.length || 0) > 1);
 
     for (let i = 0; i < seriesList.length; i++) {
       const series = seriesList[i];
@@ -711,21 +713,23 @@ const createEmptyDataFrame = (
   }
 
   if (logMessageField) {
-    series.addField({
+    const f = series.addField({
       name: logMessageField,
       type: FieldType.string,
-    }).parse = (v: any) => {
+    });
+    series.setParser(f, (v: any) => {
       return v || '';
-    };
+    });
   }
 
   if (logLevelField) {
-    series.addField({
+    const f = series.addField({
       name: 'level',
       type: FieldType.string,
-    }).parse = (v: any) => {
+    });
+    series.setParser(f, (v: any) => {
       return v || '';
-    };
+    });
   }
 
   const fieldNames = series.fields.map((field) => field.name);
@@ -740,15 +744,16 @@ const createEmptyDataFrame = (
       continue;
     }
 
-    series.addField({
+    const f = series.addField({
       config: {
         filterable: true,
       },
       name,
       type,
-    }).parse = (v: any) => {
+    });
+    series.setParser(f, (v: any) => {
       return v || '';
-    };
+    });
   }
 
   return series;
@@ -763,10 +768,10 @@ const addPreferredVisualisationType = (series: any, type: PreferredVisualisation
       });
 };
 
-const toNameTypePair = (docs: Array<Record<string, any>>) => (propName: string): [string, FieldType] => [
-  propName,
-  guessType(docs.find((doc) => doc[propName] !== undefined)?.[propName]),
-];
+const toNameTypePair =
+  (docs: Array<Record<string, any>>) =>
+  (propName: string): [string, FieldType] =>
+    [propName, guessType(docs.find((doc) => doc[propName] !== undefined)?.[propName])];
 
 /**
  * Trying to guess data type from its value. This is far from perfect, as in order to have accurate guess

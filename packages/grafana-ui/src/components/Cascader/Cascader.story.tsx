@@ -1,9 +1,12 @@
 import { Story, Meta } from '@storybook/react';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+import React from 'react';
+
 import { Cascader } from '@grafana/ui';
+
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+
 import { CascaderOption, CascaderProps } from './Cascader';
 import mdx from './Cascader.mdx';
-import React from 'react';
 
 const onSelect = (val: string) => console.log(val);
 const options = [

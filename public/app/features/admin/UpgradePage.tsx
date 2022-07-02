@@ -1,19 +1,22 @@
+import { css } from '@emotion/css';
 import React from 'react';
 import { connect } from 'react-redux';
-import { css } from '@emotion/css';
-import { LinkButton, useStyles2 } from '@grafana/ui';
+
 import { GrafanaTheme2, NavModel } from '@grafana/data';
+import { LinkButton, useStyles2 } from '@grafana/ui';
+
 import Page from '../../core/components/Page/Page';
 import { getNavModel } from '../../core/selectors/navModel';
-import { LicenseChrome } from './LicenseChrome';
 import { StoreState } from '../../types';
+
+import { LicenseChrome } from './LicenseChrome';
 import { ServerStats } from './ServerStats';
 
 interface Props {
   navModel: NavModel;
 }
 
-export const UpgradePage: React.FC<Props> = ({ navModel }) => {
+export function UpgradePage({ navModel }: Props) {
   return (
     <Page navModel={navModel}>
       <Page.Contents>
@@ -25,7 +28,7 @@ export const UpgradePage: React.FC<Props> = ({ navModel }) => {
       </Page.Contents>
     </Page>
   );
-};
+}
 
 const titleStyles = { fontWeight: 500, fontSize: '26px', lineHeight: '123%' };
 

@@ -1,7 +1,7 @@
 package api
 
 import (
-	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -9,10 +9,14 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/login/loginservice"
+	"github.com/grafana/grafana/pkg/services/login/logintest"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/user"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/ldap"
@@ -53,7 +57,7 @@ func (m *LDAPMock) User(login string) (*models.ExternalUserInfo, ldap.ServerConf
 // GetUserFromLDAP tests
 // ***
 
-func getUserFromLDAPContext(t *testing.T, requestURL string) *scenarioContext {
+func getUserFromLDAPContext(t *testing.T, requestURL string, searchOrgRst []*models.OrgDTO) *scenarioContext {
 	t.Helper()
 
 	sc := setupScenarioContext(t, requestURL)
@@ -62,7 +66,7 @@ func getUserFromLDAPContext(t *testing.T, requestURL string) *scenarioContext {
 	setting.LDAPEnabled = true
 	t.Cleanup(func() { setting.LDAPEnabled = origLDAP })
 
-	hs := &HTTPServer{Cfg: setting.NewCfg()}
+	hs := &HTTPServer{Cfg: setting.NewCfg(), ldapGroups: ldap.ProvideGroupsService(), SQLStore: &mockstore.SQLStoreMock{ExpectedSearchOrgList: searchOrgRst}}
 
 	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 		sc.context = c
@@ -90,7 +94,7 @@ func TestGetUserFromLDAPAPIEndpoint_UserNotFound(t *testing.T) {
 
 	userSearchResult = nil
 
-	sc := getUserFromLDAPContext(t, "/api/admin/ldap/user-that-does-not-exist")
+	sc := getUserFromLDAPContext(t, "/api/admin/ldap/user-that-does-not-exist", []*models.OrgDTO{})
 
 	require.Equal(t, sc.resp.Code, http.StatusNotFound)
 	assert.JSONEq(t, "{\"message\":\"No user was found in the LDAP server(s) with that username\"}", sc.resp.Body.String())
@@ -132,11 +136,6 @@ func TestGetUserFromLDAPAPIEndpoint_OrgNotfound(t *testing.T) {
 		{Id: 1, Name: "Main Org."},
 	}
 
-	bus.AddHandler("test", func(query *models.SearchOrgsQuery) error {
-		query.Result = mockOrgSearchResult
-		return nil
-	})
-
 	getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 		return &ldap.Config{}, nil
 	}
@@ -145,17 +144,15 @@ func TestGetUserFromLDAPAPIEndpoint_OrgNotfound(t *testing.T) {
 		return &LDAPMock{}
 	}
 
-	sc := getUserFromLDAPContext(t, "/api/admin/ldap/johndoe")
+	sc := getUserFromLDAPContext(t, "/api/admin/ldap/johndoe", mockOrgSearchResult)
 
 	require.Equal(t, http.StatusBadRequest, sc.resp.Code)
 
-	expected := `
-	{
-		"error": "unable to find organization with ID '2'",
-		"message": "An organization was not found - Please verify your LDAP configuration"
-	}
-	`
-	assert.JSONEq(t, expected, sc.resp.Body.String())
+	var res map[string]interface{}
+	err := json.Unmarshal(sc.resp.Body.Bytes(), &res)
+	assert.NoError(t, err)
+	assert.Equal(t, "unable to find organization with ID '2'", res["error"])
+	assert.Equal(t, "An organization was not found - Please verify your LDAP configuration", res["message"])
 }
 
 func TestGetUserFromLDAPAPIEndpoint(t *testing.T) {
@@ -194,11 +191,6 @@ func TestGetUserFromLDAPAPIEndpoint(t *testing.T) {
 		{Id: 1, Name: "Main Org."},
 	}
 
-	bus.AddHandler("test", func(query *models.SearchOrgsQuery) error {
-		query.Result = mockOrgSearchResult
-		return nil
-	})
-
 	getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 		return &ldap.Config{}, nil
 	}
@@ -207,7 +199,7 @@ func TestGetUserFromLDAPAPIEndpoint(t *testing.T) {
 		return &LDAPMock{}
 	}
 
-	sc := getUserFromLDAPContext(t, "/api/admin/ldap/johndoe")
+	sc := getUserFromLDAPContext(t, "/api/admin/ldap/johndoe", mockOrgSearchResult)
 
 	assert.Equal(t, sc.resp.Code, http.StatusOK)
 
@@ -269,16 +261,6 @@ func TestGetUserFromLDAPAPIEndpoint_WithTeamHandler(t *testing.T) {
 		{Id: 1, Name: "Main Org."},
 	}
 
-	bus.AddHandler("test", func(query *models.SearchOrgsQuery) error {
-		query.Result = mockOrgSearchResult
-		return nil
-	})
-
-	bus.AddHandler("test", func(cmd *models.GetTeamsForLDAPGroupCommand) error {
-		cmd.Result = []models.TeamOrgGroupDTO{}
-		return nil
-	})
-
 	getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 		return &ldap.Config{}, nil
 	}
@@ -287,7 +269,7 @@ func TestGetUserFromLDAPAPIEndpoint_WithTeamHandler(t *testing.T) {
 		return &LDAPMock{}
 	}
 
-	sc := getUserFromLDAPContext(t, "/api/admin/ldap/johndoe")
+	sc := getUserFromLDAPContext(t, "/api/admin/ldap/johndoe", mockOrgSearchResult)
 
 	require.Equal(t, sc.resp.Code, http.StatusOK)
 
@@ -310,7 +292,7 @@ func TestGetUserFromLDAPAPIEndpoint_WithTeamHandler(t *testing.T) {
 			"roles": [
 				{ "orgId": 1, "orgRole": "Admin", "orgName": "Main Org.", "groupDN": "cn=admins,ou=groups,dc=grafana,dc=org" }
 			],
-			"teams": []
+			"teams": null
 		}
 	`
 
@@ -381,10 +363,11 @@ func TestGetLDAPStatusAPIEndpoint(t *testing.T) {
 // PostSyncUserWithLDAP tests
 // ***
 
-func postSyncUserWithLDAPContext(t *testing.T, requestURL string, preHook func(*testing.T, *scenarioContext)) *scenarioContext {
+func postSyncUserWithLDAPContext(t *testing.T, requestURL string, preHook func(*testing.T, *scenarioContext), sqlstoremock sqlstore.Store) *scenarioContext {
 	t.Helper()
 
 	sc := setupScenarioContext(t, requestURL)
+	sc.authInfoService = &logintest.AuthInfoServiceFake{}
 
 	ldap := setting.LDAPEnabled
 	t.Cleanup(func() {
@@ -395,6 +378,9 @@ func postSyncUserWithLDAPContext(t *testing.T, requestURL string, preHook func(*
 	hs := &HTTPServer{
 		Cfg:              sc.cfg,
 		AuthTokenService: auth.NewFakeUserAuthTokenService(),
+		SQLStore:         sqlstoremock,
+		Login:            loginservice.LoginServiceMock{},
+		authInfoService:  sc.authInfoService,
 	}
 
 	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
@@ -417,6 +403,8 @@ func postSyncUserWithLDAPContext(t *testing.T, requestURL string, preHook func(*
 }
 
 func TestPostSyncUserWithLDAPAPIEndpoint_Success(t *testing.T) {
+	sqlstoremock := mockstore.SQLStoreMock{}
+	sqlstoremock.ExpectedUser = &user.User{Login: "ldap-daniel", ID: 34}
 	sc := postSyncUserWithLDAPContext(t, "/api/admin/ldap/sync/34", func(t *testing.T, sc *scenarioContext) {
 		getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 			return &ldap.Config{}, nil
@@ -429,26 +417,7 @@ func TestPostSyncUserWithLDAPAPIEndpoint_Success(t *testing.T) {
 		userSearchResult = &models.ExternalUserInfo{
 			Login: "ldap-daniel",
 		}
-
-		bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
-			require.Equal(t, "ldap-daniel", cmd.ExternalUser.Login)
-			return nil
-		})
-
-		bus.AddHandlerCtx("test", func(ctx context.Context, q *models.GetUserByIdQuery) error {
-			require.Equal(t, q.Id, int64(34))
-
-			q.Result = &models.User{Login: "ldap-daniel", Id: 34}
-			return nil
-		})
-
-		bus.AddHandler("test", func(q *models.GetAuthInfoQuery) error {
-			require.Equal(t, q.UserId, int64(34))
-			require.Equal(t, q.AuthModule, models.AuthModuleLDAP)
-
-			return nil
-		})
-	})
+	}, &sqlstoremock)
 
 	assert.Equal(t, http.StatusOK, sc.resp.Code)
 
@@ -462,6 +431,7 @@ func TestPostSyncUserWithLDAPAPIEndpoint_Success(t *testing.T) {
 }
 
 func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotFound(t *testing.T) {
+	sqlstoremock := mockstore.SQLStoreMock{ExpectedError: models.ErrUserNotFound}
 	sc := postSyncUserWithLDAPContext(t, "/api/admin/ldap/sync/34", func(t *testing.T, sc *scenarioContext) {
 		getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 			return &ldap.Config{}, nil
@@ -470,13 +440,7 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotFound(t *testing.T) {
 		newLDAP = func(_ []*ldap.ServerConfig) multildap.IMultiLDAP {
 			return &LDAPMock{}
 		}
-
-		bus.AddHandlerCtx("test", func(ctx context.Context, q *models.GetUserByIdQuery) error {
-			require.Equal(t, q.Id, int64(34))
-
-			return models.ErrUserNotFound
-		})
-	})
+	}, &sqlstoremock)
 
 	assert.Equal(t, http.StatusNotFound, sc.resp.Code)
 
@@ -490,6 +454,7 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotFound(t *testing.T) {
 }
 
 func TestPostSyncUserWithLDAPAPIEndpoint_WhenGrafanaAdmin(t *testing.T) {
+	sqlstoremock := mockstore.SQLStoreMock{ExpectedUser: &user.User{Login: "ldap-daniel", ID: 34}}
 	sc := postSyncUserWithLDAPContext(t, "/api/admin/ldap/sync/34", func(t *testing.T, sc *scenarioContext) {
 		getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 			return &ldap.Config{}, nil
@@ -502,36 +467,20 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenGrafanaAdmin(t *testing.T) {
 		userSearchError = multildap.ErrDidNotFindUser
 
 		sc.cfg.AdminUser = "ldap-daniel"
-
-		bus.AddHandlerCtx("test", func(ctx context.Context, q *models.GetUserByIdQuery) error {
-			require.Equal(t, q.Id, int64(34))
-
-			q.Result = &models.User{Login: "ldap-daniel", Id: 34}
-			return nil
-		})
-
-		bus.AddHandler("test", func(q *models.GetAuthInfoQuery) error {
-			require.Equal(t, q.UserId, int64(34))
-			require.Equal(t, q.AuthModule, models.AuthModuleLDAP)
-
-			return nil
-		})
-	})
-
+	}, &sqlstoremock)
 	assert.Equal(t, http.StatusBadRequest, sc.resp.Code)
 
-	expected := `
-	{
-		"error": "did not find a user",
-		"message": "Refusing to sync grafana super admin \"ldap-daniel\" - it would be disabled"
-	}
-	`
-
-	assert.JSONEq(t, expected, sc.resp.Body.String())
+	var res map[string]interface{}
+	err := json.Unmarshal(sc.resp.Body.Bytes(), &res)
+	assert.NoError(t, err)
+	assert.Equal(t, "did not find a user", res["error"])
+	assert.Equal(t, "Refusing to sync grafana super admin \"ldap-daniel\" - it would be disabled", res["message"])
 }
 
 func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotInLDAP(t *testing.T) {
+	sqlstoremock := mockstore.SQLStoreMock{ExpectedUser: &user.User{Login: "ldap-daniel", ID: 34}}
 	sc := postSyncUserWithLDAPContext(t, "/api/admin/ldap/sync/34", func(t *testing.T, sc *scenarioContext) {
+		sc.authInfoService.ExpectedExternalUser = &models.ExternalUserInfo{IsDisabled: true, UserId: 34}
 		getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 			return &ldap.Config{}, nil
 		}
@@ -541,31 +490,8 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotInLDAP(t *testing.T) {
 		}
 
 		userSearchResult = nil
-
-		bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
-			require.Equal(t, "ldap-daniel", cmd.ExternalUser.Login)
-			return nil
-		})
-
-		bus.AddHandlerCtx("test", func(ctx context.Context, q *models.GetUserByIdQuery) error {
-			require.Equal(t, q.Id, int64(34))
-
-			q.Result = &models.User{Login: "ldap-daniel", Id: 34}
-			return nil
-		})
-
-		bus.AddHandler("test", func(q *models.GetExternalUserInfoByLoginQuery) error {
-			assert.Equal(t, "ldap-daniel", q.LoginOrEmail)
-			q.Result = &models.ExternalUserInfo{IsDisabled: true, UserId: 34}
-
-			return nil
-		})
-
-		bus.AddHandler("test", func(cmd *models.DisableUserCommand) error {
-			assert.Equal(t, 34, cmd.UserId)
-			return nil
-		})
-	})
+		userSearchError = multildap.ErrDidNotFindUser
+	}, &sqlstoremock)
 
 	assert.Equal(t, http.StatusBadRequest, sc.resp.Code)
 
@@ -589,7 +515,7 @@ func TestLDAP_AccessControl(t *testing.T) {
 			method:       http.MethodPost,
 			desc:         "ReloadLDAPCfg should return 200 for user with correct permissions",
 			expectedCode: http.StatusOK,
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: accesscontrol.ActionLDAPConfigReload},
 			},
 		},
@@ -598,7 +524,7 @@ func TestLDAP_AccessControl(t *testing.T) {
 			method:       http.MethodPost,
 			desc:         "ReloadLDAPCfg should return 403 for user without required permissions",
 			expectedCode: http.StatusForbidden,
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: "wrong"},
 			},
 		},
@@ -607,7 +533,7 @@ func TestLDAP_AccessControl(t *testing.T) {
 			method:       http.MethodGet,
 			desc:         "GetLDAPStatus should return 200 for user without required permissions",
 			expectedCode: http.StatusOK,
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: accesscontrol.ActionLDAPStatusRead},
 			},
 		},
@@ -616,7 +542,7 @@ func TestLDAP_AccessControl(t *testing.T) {
 			method:       http.MethodGet,
 			desc:         "GetLDAPStatus should return 200 for user without required permissions",
 			expectedCode: http.StatusForbidden,
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: "wrong"},
 			},
 		},
@@ -625,7 +551,7 @@ func TestLDAP_AccessControl(t *testing.T) {
 			method:       http.MethodGet,
 			desc:         "GetUserFromLDAP should return 200 for user with required permissions",
 			expectedCode: http.StatusOK,
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: accesscontrol.ActionLDAPUsersRead},
 			},
 		},
@@ -634,25 +560,25 @@ func TestLDAP_AccessControl(t *testing.T) {
 			method:       http.MethodGet,
 			desc:         "GetUserFromLDAP should return 403 for user without required permissions",
 			expectedCode: http.StatusForbidden,
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: "wrong"},
 			},
 		},
 		{
-			url:          "/api/admin/ldap/sync/test",
+			url:          "/api/admin/ldap/sync/1",
 			method:       http.MethodPost,
 			desc:         "PostSyncUserWithLDAP should return 200 for user without required permissions",
 			expectedCode: http.StatusOK,
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: accesscontrol.ActionLDAPUsersSync},
 			},
 		},
 		{
-			url:          "/api/admin/ldap/sync/test",
+			url:          "/api/admin/ldap/sync/1",
 			method:       http.MethodPost,
 			desc:         "PostSyncUserWithLDAP should return 200 for user without required permissions",
 			expectedCode: http.StatusForbidden,
-			permissions: []*accesscontrol.Permission{
+			permissions: []accesscontrol.Permission{
 				{Action: "wrong"},
 			},
 		},
@@ -675,8 +601,10 @@ func TestLDAP_AccessControl(t *testing.T) {
 
 			cfg := setting.NewCfg()
 			cfg.LDAPEnabled = true
-
-			sc, _ := setupAccessControlScenarioContext(t, cfg, test.url, test.permissions)
+			sc, hs := setupAccessControlScenarioContext(t, cfg, test.url, test.permissions)
+			hs.SQLStore = &mockstore.SQLStoreMock{ExpectedUser: &user.User{}}
+			hs.authInfoService = &logintest.AuthInfoServiceFake{}
+			hs.Login = &loginservice.LoginServiceMock{}
 			sc.resp = httptest.NewRecorder()
 			sc.req, err = http.NewRequest(test.method, test.url, nil)
 			assert.NoError(t, err)
@@ -687,19 +615,6 @@ func TestLDAP_AccessControl(t *testing.T) {
 			newLDAP = func(_ []*ldap.ServerConfig) multildap.IMultiLDAP {
 				return &LDAPMock{}
 			}
-
-			bus.AddHandlerCtx("test", func(ctx context.Context, q *models.GetUserByIdQuery) error {
-				q.Result = &models.User{}
-				return nil
-			})
-
-			bus.AddHandler("test", func(q *models.GetAuthInfoQuery) error {
-				return nil
-			})
-
-			bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
-				return nil
-			})
 
 			sc.exec()
 			assert.Equal(t, test.expectedCode, sc.resp.Code)

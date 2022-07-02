@@ -1,11 +1,14 @@
-import { Task, TaskRunner } from './task';
-import { getPluginJson } from '../../config/utils/pluginValidation';
-import { GitHubRelease } from '../utils/githubRelease';
-import { getPluginId } from '../../config/utils/getPluginId';
-import { getCiFolder } from '../../plugins/env';
-import { useSpinner } from '../utils/useSpinner';
-import path = require('path');
 import execa = require('execa');
+import { readFileSync } from 'fs';
+import path = require('path');
+
+import { getPluginId } from '../../config/utils/getPluginId';
+import { getPluginJson } from '../../config/utils/pluginValidation';
+import { getCiFolder } from '../../plugins/env';
+import { GitHubRelease } from '../utils/githubRelease';
+import { useSpinner } from '../utils/useSpinner';
+
+import { Task, TaskRunner } from './task';
 
 interface Command extends Array<any> {}
 const DEFAULT_EMAIL_ADDRESS = 'eng@grafana.com';
@@ -140,6 +143,14 @@ const prepareRelease = ({ dryrun, verbose }: any) =>
     }
   });
 
+export const getToolkitVersion = () => {
+  const pkg = readFileSync(`${__dirname}/../../../package.json`, 'utf8');
+  const { version } = JSON.parse(pkg);
+  if (!version) {
+    throw `Could not find the toolkit version`;
+  }
+  return version;
+};
 interface GithubPublishReleaseOptions {
   commitHash?: string;
   githubToken: string;

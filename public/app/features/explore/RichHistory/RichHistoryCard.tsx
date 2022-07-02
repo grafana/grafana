@@ -1,23 +1,24 @@
+import { css, cx } from '@emotion/css';
 import React, { useState, useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { css, cx } from '@emotion/css';
+
+import { GrafanaTheme, DataSourceApi, DataQuery } from '@grafana/data';
+import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { stylesFactory, useTheme, TextArea, Button, IconButton } from '@grafana/ui';
-import { getDataSourceSrv } from '@grafana/runtime';
-import { GrafanaTheme, DataSourceApi } from '@grafana/data';
-import { RichHistoryQuery, ExploreId } from 'app/types/explore';
+import { notifyApp } from 'app/core/actions';
+import appEvents from 'app/core/app_events';
+import { createSuccessNotification } from 'app/core/copy/appNotification';
+import { copyStringToClipboard } from 'app/core/utils/explore';
 import { createUrlFromRichHistory, createQueryText } from 'app/core/utils/richHistory';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
-import { copyStringToClipboard } from 'app/core/utils/explore';
-import appEvents from 'app/core/app_events';
 import { dispatch } from 'app/store/store';
-import { notifyApp } from 'app/core/actions';
-import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { StoreState } from 'app/types';
+import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 
-import { updateRichHistory } from '../state/history';
-import { changeDatasource } from '../state/datasource';
-import { setQueries } from '../state/query';
 import { ShowConfirmModalEvent } from '../../../types/events';
+import { changeDatasource } from '../state/datasource';
+import { starHistoryItem, commentHistoryItem, deleteHistoryItem } from '../state/history';
+import { setQueries } from '../state/query';
 
 function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
   const explore = state.explore;
@@ -30,19 +31,21 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreI
 
 const mapDispatchToProps = {
   changeDatasource,
-  updateRichHistory,
+  deleteHistoryItem,
+  commentHistoryItem,
+  starHistoryItem,
   setQueries,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-interface OwnProps {
-  query: RichHistoryQuery;
+interface OwnProps<T extends DataQuery = DataQuery> {
+  query: RichHistoryQuery<T>;
   dsImg: string;
   isRemoved: boolean;
 }
 
-export type Props = ConnectedProps<typeof connector> & OwnProps;
+export type Props<T extends DataQuery = DataQuery> = ConnectedProps<typeof connector> & OwnProps<T>;
 
 const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
   /* Hard-coded value so all buttons and icons on right side of card are aligned */
@@ -147,7 +150,9 @@ export function RichHistoryCard(props: Props) {
     query,
     dsImg,
     isRemoved,
-    updateRichHistory,
+    commentHistoryItem,
+    starHistoryItem,
+    deleteHistoryItem,
     changeDatasource,
     exploreId,
     datasourceInstance,
@@ -171,12 +176,17 @@ export function RichHistoryCard(props: Props) {
 
   const onRunQuery = async () => {
     const queriesToRun = query.queries;
-    if (query.datasourceName !== datasourceInstance?.name) {
+    const differentDataSource = query.datasourceName !== datasourceInstance?.name;
+    if (differentDataSource) {
       await changeDatasource(exploreId, query.datasourceName, { importQueries: true });
       setQueries(exploreId, queriesToRun);
     } else {
       setQueries(exploreId, queriesToRun);
     }
+    reportInteraction('grafana_explore_query_history_run', {
+      queryHistoryEnabled: config.queryHistoryEnabled,
+      differentDataSource,
+    });
   };
 
   const onCopyQuery = () => {
@@ -191,6 +201,14 @@ export function RichHistoryCard(props: Props) {
   };
 
   const onDeleteQuery = () => {
+    const performDelete = (queryId: string) => {
+      deleteHistoryItem(queryId);
+      dispatch(notifyApp(createSuccessNotification('Query deleted')));
+      reportInteraction('grafana_explore_query_history_deleted', {
+        queryHistoryEnabled: config.queryHistoryEnabled,
+      });
+    };
+
     // For starred queries, we want confirmation. For non-starred, we don't.
     if (query.starred) {
       appEvents.publish(
@@ -199,27 +217,30 @@ export function RichHistoryCard(props: Props) {
           text: 'Are you sure you want to permanently delete your starred query?',
           yesText: 'Delete',
           icon: 'trash-alt',
-          onConfirm: () => {
-            updateRichHistory(query.ts, 'delete');
-            dispatch(notifyApp(createSuccessNotification('Query deleted')));
-          },
+          onConfirm: () => performDelete(query.id),
         })
       );
     } else {
-      updateRichHistory(query.ts, 'delete');
-      dispatch(notifyApp(createSuccessNotification('Query deleted')));
+      performDelete(query.id);
     }
   };
 
   const onStarrQuery = () => {
-    updateRichHistory(query.ts, 'starred');
+    starHistoryItem(query.id, !query.starred);
+    reportInteraction('grafana_explore_query_history_starred', {
+      queryHistoryEnabled: config.queryHistoryEnabled,
+      newValue: !query.starred,
+    });
   };
 
   const toggleActiveUpdateComment = () => setActiveUpdateComment(!activeUpdateComment);
 
   const onUpdateComment = () => {
-    updateRichHistory(query.ts, 'comment', comment);
+    commentHistoryItem(query.id, comment);
     setActiveUpdateComment(false);
+    reportInteraction('grafana_explore_query_history_commented', {
+      queryHistoryEnabled: config.queryHistoryEnabled,
+    });
   };
 
   const onCancelUpdateComment = () => {

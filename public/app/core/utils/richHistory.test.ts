@@ -1,6 +1,11 @@
+import { dateTime, DataQuery } from '@grafana/data';
+import store from 'app/core/store';
+
+import { RichHistoryQuery } from '../../types';
+import RichHistoryStorage, { RichHistoryStorageWarning } from '../history/RichHistoryStorage';
+
 import {
   addToRichHistory,
-  getRichHistory,
   updateStarredInRichHistory,
   updateCommentInRichHistory,
   mapNumbertoTimeInSlider,
@@ -8,31 +13,56 @@ import {
   createQueryHeading,
   deleteAllFromRichHistory,
   deleteQueryInRichHistory,
-  filterAndSortQueries,
+  migrateQueryHistoryFromLocalStorage,
   SortOrder,
-  MAX_HISTORY_ITEMS,
+  LocalStorageMigrationStatus,
 } from './richHistory';
-import store from 'app/core/store';
-import { dateTime, DataQuery } from '@grafana/data';
-import { RichHistoryQuery } from '../../types';
+
+const richHistoryStorageMock: RichHistoryStorage = {} as RichHistoryStorage;
+
+jest.mock('../history/richHistoryStorageProvider', () => {
+  return {
+    getRichHistoryStorage: () => richHistoryStorageMock,
+  };
+});
+
+const richHistoryLocalStorageMock = { getRichHistory: jest.fn() };
+jest.mock('../history/RichHistoryLocalStorage', () => {
+  return function () {
+    return richHistoryLocalStorageMock;
+  };
+});
+
+const richHistoryRemoteStorageMock = { migrate: jest.fn() };
+jest.mock('../history/RichHistoryRemoteStorage', () => {
+  return function () {
+    return richHistoryRemoteStorageMock;
+  };
+});
+
+interface MockQuery extends DataQuery {
+  expr: string;
+  maxLines?: number | null;
+}
+
+const storedHistory: Array<RichHistoryQuery<MockQuery>> = [
+  {
+    id: '1',
+    createdAt: 1,
+    comment: '',
+    datasourceUid: 'datasource uid',
+    datasourceName: 'datasource history name',
+    queries: [
+      { expr: 'query1', maxLines: null, refId: '1' },
+      { expr: 'query2', refId: '2' },
+    ],
+    starred: true,
+  },
+];
 
 const mock: any = {
-  storedHistory: [
-    {
-      comment: '',
-      datasourceId: 'datasource historyId',
-      datasourceName: 'datasource history name',
-      queries: [
-        { expr: 'query1', maxLines: null, refId: '1' },
-        { expr: 'query2', refId: '2' },
-      ],
-      sessionName: '',
-      starred: true,
-      ts: 1,
-    },
-  ],
   testComment: '',
-  testDatasourceId: 'datasourceId',
+  testDatasourceUid: 'datasourceUid',
   testDatasourceName: 'datasourceName',
   testQueries: [
     { expr: 'query3', refId: 'B' },
@@ -46,8 +76,27 @@ const key = 'grafana.explore.richHistory';
 
 describe('richHistory', () => {
   beforeEach(() => {
-    jest.useFakeTimers('modern');
+    jest.useFakeTimers();
     jest.setSystemTime(new Date(1970, 0, 1));
+
+    richHistoryStorageMock.addToRichHistory = jest.fn((r) => {
+      return Promise.resolve({ richHistoryQuery: { ...r, id: 'GENERATED ID', createdAt: Date.now() } });
+    });
+    richHistoryStorageMock.deleteAll = jest.fn().mockResolvedValue({});
+    richHistoryStorageMock.deleteRichHistory = jest.fn().mockResolvedValue({});
+    richHistoryStorageMock.getRichHistory = jest.fn().mockResolvedValue({});
+    richHistoryStorageMock.updateComment = jest.fn((id, comment) => {
+      return {
+        ...mock,
+        comment,
+      };
+    });
+    richHistoryStorageMock.updateStarred = jest.fn((id, starred) => {
+      return {
+        ...mock,
+        starred,
+      };
+    });
   });
 
   afterEach(() => {
@@ -59,159 +108,103 @@ describe('richHistory', () => {
       deleteAllFromRichHistory();
       expect(store.exists(key)).toBeFalsy();
     });
-    const expectedResult = [
-      {
-        comment: mock.testComment,
-        datasourceId: mock.testDatasourceId,
+
+    it('should append query to query history', async () => {
+      Date.now = jest.fn(() => 2);
+      const { limitExceeded, richHistoryStorageFull } = await addToRichHistory(
+        mock.testDatasourceUid,
+        mock.testDatasourceName,
+        mock.testQueries,
+        mock.testStarred,
+        mock.testComment,
+        true,
+        true
+      );
+      expect(limitExceeded).toBeFalsy();
+      expect(richHistoryStorageFull).toBeFalsy();
+      expect(richHistoryStorageMock.addToRichHistory).toBeCalledWith({
+        datasourceUid: mock.testDatasourceUid,
         datasourceName: mock.testDatasourceName,
-        queries: mock.testQueries,
-        sessionName: mock.testSessionName,
         starred: mock.testStarred,
-        ts: 2,
-      },
-      mock.storedHistory[0],
-    ];
-
-    it('should append query to query history', () => {
-      Date.now = jest.fn(() => 2);
-      const { richHistory: newHistory } = addToRichHistory(
-        mock.storedHistory,
-        mock.testDatasourceId,
-        mock.testDatasourceName,
-        mock.testQueries,
-        mock.testStarred,
-        mock.testComment,
-        mock.testSessionName,
-        true,
-        true
-      );
-      expect(newHistory).toEqual(expectedResult);
+        comment: mock.testComment,
+        queries: mock.testQueries,
+      });
     });
 
-    it('should save query history to localStorage', () => {
+    it('it should return a flag indicating that the limit has been exceed', async () => {
       Date.now = jest.fn(() => 2);
 
-      addToRichHistory(
-        mock.storedHistory,
-        mock.testDatasourceId,
-        mock.testDatasourceName,
-        mock.testQueries,
-        mock.testStarred,
-        mock.testComment,
-        mock.testSessionName,
-        true,
-        true
-      );
-      expect(store.exists(key)).toBeTruthy();
-      expect(store.getObject(key)).toMatchObject(expectedResult);
-    });
-
-    it('should not append duplicated query to query history', () => {
-      Date.now = jest.fn(() => 2);
-      const { richHistory: newHistory } = addToRichHistory(
-        mock.storedHistory,
-        mock.storedHistory[0].datasourceId,
-        mock.storedHistory[0].datasourceName,
-        [{ expr: 'query1', maxLines: null, refId: 'A' } as DataQuery, { expr: 'query2', refId: 'B' } as DataQuery],
-        mock.testStarred,
-        mock.testComment,
-        mock.testSessionName,
-        true,
-        true
-      );
-      expect(newHistory).toEqual([mock.storedHistory[0]]);
-    });
-
-    it('should not save duplicated query to localStorage', () => {
-      Date.now = jest.fn(() => 2);
-      addToRichHistory(
-        mock.storedHistory,
-        mock.storedHistory[0].datasourceId,
-        mock.storedHistory[0].datasourceName,
-        [{ expr: 'query1', maxLines: null, refId: 'A' } as DataQuery, { expr: 'query2', refId: 'B' } as DataQuery],
-        mock.testStarred,
-        mock.testComment,
-        mock.testSessionName,
-        true,
-        true
-      );
-      expect(store.exists(key)).toBeFalsy();
-    });
-
-    it('should not save more than MAX_HISTORY_ITEMS', () => {
-      Date.now = jest.fn(() => 2);
-      const extraItems = 100;
-
-      // the history has more than MAX
-      let history = [];
-      // history = [ { starred: true, comment: "0" }, { starred: false, comment: "1" }, ... ]
-      for (let i = 0; i < MAX_HISTORY_ITEMS + extraItems; i++) {
-        history.push({
-          starred: i % 2 === 0,
-          comment: i.toString(),
-          queries: [],
-          ts: new Date(2019, 11, 31).getTime(),
+      richHistoryStorageMock.addToRichHistory = jest.fn((query) => {
+        return Promise.resolve({
+          richHistoryQuery: { ...query, id: 'GENERATED ID', createdAt: Date.now() },
+          warning: {
+            type: RichHistoryStorageWarning.LimitExceeded,
+            message: 'Limit exceeded',
+          },
         });
-      }
+      });
 
-      const starredItemsInHistory = (MAX_HISTORY_ITEMS + extraItems) / 2;
-      const notStarredItemsInHistory = (MAX_HISTORY_ITEMS + extraItems) / 2;
-
-      expect(history.filter((h) => h.starred)).toHaveLength(starredItemsInHistory);
-      expect(history.filter((h) => !h.starred)).toHaveLength(notStarredItemsInHistory);
-
-      const { richHistory: newHistory } = addToRichHistory(
-        (history as any) as RichHistoryQuery[],
-        mock.storedHistory[0].datasourceId,
-        mock.storedHistory[0].datasourceName,
-        [{ expr: 'query1', maxLines: null, refId: 'A' } as DataQuery, { expr: 'query2', refId: 'B' } as DataQuery],
-        true,
+      const { richHistoryStorageFull, limitExceeded } = await addToRichHistory(
+        mock.testDatasourceUid,
+        mock.testDatasourceName,
+        mock.testQueries,
+        mock.testStarred,
         mock.testComment,
-        mock.testSessionName,
         true,
         true
       );
-
-      // one not starred replaced with a newly added starred item
-      const removedNotStarredItems = extraItems + 1; // + 1 to make space for the new item
-      expect(newHistory.filter((h) => h.starred)).toHaveLength(starredItemsInHistory + 1); // starred item added
-      expect(newHistory.filter((h) => !h.starred)).toHaveLength(starredItemsInHistory - removedNotStarredItems);
+      expect(richHistoryStorageFull).toBeFalsy();
+      expect(limitExceeded).toBeTruthy();
     });
   });
 
   describe('updateStarredInRichHistory', () => {
-    it('should update starred in query in history', () => {
-      const updatedStarred = updateStarredInRichHistory(mock.storedHistory, 1);
-      expect(updatedStarred[0].starred).toEqual(false);
-    });
-    it('should update starred in localStorage', () => {
-      updateStarredInRichHistory(mock.storedHistory, 1);
-      expect(store.exists(key)).toBeTruthy();
-      expect(store.getObject(key)[0].starred).toEqual(false);
+    it('should update starred in query in history', async () => {
+      const updatedStarred = await updateStarredInRichHistory('1', !mock.starred);
+      expect(updatedStarred!.starred).toEqual(!mock.starred);
     });
   });
 
   describe('updateCommentInRichHistory', () => {
-    it('should update comment in query in history', () => {
-      const updatedComment = updateCommentInRichHistory(mock.storedHistory, 1, 'new comment');
-      expect(updatedComment[0].comment).toEqual('new comment');
-    });
-    it('should update comment in localStorage', () => {
-      updateCommentInRichHistory(mock.storedHistory, 1, 'new comment');
-      expect(store.exists(key)).toBeTruthy();
-      expect(store.getObject(key)[0].comment).toEqual('new comment');
+    it('should update comment in query in history', async () => {
+      const updatedComment = await updateCommentInRichHistory('1', 'new comment');
+      expect(updatedComment!.comment).toEqual('new comment');
     });
   });
 
   describe('deleteQueryInRichHistory', () => {
-    it('should delete query in query in history', () => {
-      const deletedHistory = deleteQueryInRichHistory(mock.storedHistory, 1);
-      expect(deletedHistory).toEqual([]);
+    it('should delete query in query in history', async () => {
+      const deletedHistoryId = await deleteQueryInRichHistory('1');
+      expect(deletedHistoryId).toEqual('1');
     });
-    it('should delete query in localStorage', () => {
-      deleteQueryInRichHistory(mock.storedHistory, 1);
-      expect(store.exists(key)).toBeTruthy();
-      expect(store.getObject(key)).toEqual([]);
+  });
+
+  describe('migration', () => {
+    beforeEach(() => {
+      richHistoryRemoteStorageMock.migrate.mockReset();
+    });
+
+    it('migrates history', async () => {
+      const history = { richHistory: [{ id: 'test' }, { id: 'test2' }], total: 2 };
+
+      richHistoryLocalStorageMock.getRichHistory.mockReturnValue(history);
+      const migrationResult = await migrateQueryHistoryFromLocalStorage();
+      expect(richHistoryRemoteStorageMock.migrate).toBeCalledWith(history.richHistory);
+      expect(migrationResult.status).toBe(LocalStorageMigrationStatus.Successful);
+      expect(migrationResult.error).toBeUndefined();
+    });
+    it('does not migrate if there are no entries', async () => {
+      richHistoryLocalStorageMock.getRichHistory.mockReturnValue({ richHistory: [] });
+      const migrationResult = await migrateQueryHistoryFromLocalStorage();
+      expect(richHistoryRemoteStorageMock.migrate).not.toBeCalled();
+      expect(migrationResult.status).toBe(LocalStorageMigrationStatus.NotNeeded);
+      expect(migrationResult.error).toBeUndefined();
+    });
+    it('propagates thrown errors', async () => {
+      richHistoryLocalStorageMock.getRichHistory.mockRejectedValue(new Error('migration failed'));
+      const migrationResult = await migrateQueryHistoryFromLocalStorage();
+      expect(migrationResult.status).toBe(LocalStorageMigrationStatus.Failed);
+      expect(migrationResult.error?.message).toBe('migration failed');
     });
   });
 
@@ -229,109 +222,16 @@ describe('richHistory', () => {
     });
   });
 
-  describe('filterQueries', () => {
-    it('should filter out queries based on data source filter', () => {
-      const filteredQueries = filterAndSortQueries(
-        mock.storedHistory,
-        SortOrder.Ascending,
-        ['not provided data source'],
-        ''
-      );
-      expect(filteredQueries).toHaveLength(0);
-    });
-    it('should keep queries based on data source filter', () => {
-      const filteredQueries = filterAndSortQueries(
-        mock.storedHistory,
-        SortOrder.Ascending,
-        ['datasource history name'],
-        ''
-      );
-      expect(filteredQueries).toHaveLength(1);
-    });
-    it('should filter out all queries based on search filter', () => {
-      const filteredQueries = filterAndSortQueries(
-        mock.storedHistory,
-        SortOrder.Ascending,
-        [],
-        'i do not exist in query'
-      );
-      expect(filteredQueries).toHaveLength(0);
-    });
-    it('should include queries based on search filter', () => {
-      const filteredQueries = filterAndSortQueries(mock.storedHistory, SortOrder.Ascending, [], 'query1');
-      expect(filteredQueries).toHaveLength(1);
-    });
-  });
-
   describe('createQueryHeading', () => {
     it('should correctly create heading for queries when sort order is ascending ', () => {
       // Have to offset the timezone of a 1 microsecond epoch, and then reverse the changes
-      mock.storedHistory[0].ts = 1 + -1 * dateTime().utcOffset() * 60 * 1000;
-      const heading = createQueryHeading(mock.storedHistory[0], SortOrder.Ascending);
+      storedHistory[0].createdAt = 1 + -1 * dateTime().utcOffset() * 60 * 1000;
+      const heading = createQueryHeading(storedHistory[0], SortOrder.Ascending);
       expect(heading).toEqual('January 1');
     });
     it('should correctly create heading for queries when sort order is datasourceAZ ', () => {
-      const heading = createQueryHeading(mock.storedHistory[0], SortOrder.DatasourceAZ);
-      expect(heading).toEqual(mock.storedHistory[0].datasourceName);
-    });
-  });
-
-  describe('getRichHistory', () => {
-    afterEach(() => {
-      deleteAllFromRichHistory();
-      expect(store.exists(key)).toBeFalsy();
-    });
-    describe('should load from localStorage data in old formats', () => {
-      it('should load when queries are strings', () => {
-        const oldHistoryItem = { ...mock.storedHistory[0], queries: ['test query 1', 'test query 2', 'test query 3'] };
-        store.setObject(key, [oldHistoryItem]);
-        const expectedHistoryItem = {
-          ...mock.storedHistory[0],
-          queries: [
-            {
-              expr: 'test query 1',
-              refId: 'A',
-            },
-            {
-              expr: 'test query 2',
-              refId: 'B',
-            },
-            {
-              expr: 'test query 3',
-              refId: 'C',
-            },
-          ],
-        };
-
-        const result = getRichHistory();
-        expect(result).toStrictEqual([expectedHistoryItem]);
-      });
-
-      it('should load when queries are json-encoded strings', () => {
-        const oldHistoryItem = {
-          ...mock.storedHistory[0],
-          queries: ['{"refId":"A","key":"key1","metrics":[]}', '{"refId":"B","key":"key2","metrics":[]}'],
-        };
-        store.setObject(key, [oldHistoryItem]);
-        const expectedHistoryItem = {
-          ...mock.storedHistory[0],
-          queries: [
-            {
-              refId: 'A',
-              key: 'key1',
-              metrics: [],
-            },
-            {
-              refId: 'B',
-              key: 'key2',
-              metrics: [],
-            },
-          ],
-        };
-
-        const result = getRichHistory();
-        expect(result).toStrictEqual([expectedHistoryItem]);
-      });
+      const heading = createQueryHeading(storedHistory[0], SortOrder.DatasourceAZ);
+      expect(heading).toEqual(storedHistory[0].datasourceName);
     });
   });
 });
