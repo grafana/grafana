@@ -22,7 +22,7 @@ function countUndocumentedStories() {
     const storyFilePaths = filePaths.filter((filePath) => filePath.endsWith('story.tsx'));
     const mdxFilePaths = filePaths.filter((filePath) => filePath.endsWith('mdx'));
     storyFilePaths.forEach((filePath) => {
-      if (!mdxFilePaths.includes(filePath.replace(/\.story.tsx$/, '.mdx'))) {
+      if (mdxFilePaths.includes(filePath.replace(/\.story.tsx$/, '.mdx'))) {
         // In this case the file contents don't matter:
         const file = fileTestResult.addFile(filePath, '');
         // Add the issue to the first character of the file:
