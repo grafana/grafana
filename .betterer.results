@@ -2186,7 +2186,7 @@ exports[`better eslint`] = {
       [38, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
       [62, 25, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "packages/grafana-ui/src/components/Tags/Tag.tsx:3517140980": [
+    "packages/grafana-ui/src/components/Tags/Tag.tsx:1784834224": [
       [13, 81, 3, "Unexpected any. Specify a different type.", "193409811"],
       [38, 68, 44, "Do not use any type assertions.", "1737022869"]
     ],
