@@ -4,6 +4,7 @@ import "github.com/grafana/thema"
 
 // TODO schemas defining prometheus query/target (composed into dashboard, alerts)
 Query: thema.#Lineage & {
+	name: "prometheus"
 	seqs: [
 		{
 			schemas: [
@@ -26,6 +27,7 @@ Query: thema.#Lineage & {
 
 // TODO schemas defining prometheus datasource config (composed into datasource.jsonData and datasource.secureJsonData)
 DSOptions: thema.#Lineage & {
+	name: "prometheus"
 	seqs: [
 		{
 			schemas: [
