@@ -74,7 +74,7 @@ export const GraphiteQueryEditorContext = ({
 
   useEffect(
     () => {
-      if (needsRefresh && state) {
+      if (needsRefresh && state && state.target?.target) {
         setNeedsRefresh(false);
         onChange({ ...query, target: state.target.target });
         onRunQuery();

@@ -8821,18 +8821,18 @@ exports[`better eslint`] = {
       [37, 14, 555, "Do not use any type assertions.", "2834937127"],
       [48, 7, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/graphite/state/context.tsx:1303848651": [
+    "public/app/plugins/datasource/graphite/state/context.tsx:4190000323": [
       [13, 59, 25, "Do not use any type assertions.", "695205067"],
       [14, 69, 30, "Do not use any type assertions.", "2823515321"]
     ],
     "public/app/plugins/datasource/graphite/state/helpers.ts:3983357936": [
       [163, 73, 22, "Do not use any type assertions.", "3063692579"]
     ],
-    "public/app/plugins/datasource/graphite/state/store.ts:2705871887": [
-      [93, 16, 34, "Do not use any type assertions.", "2382199947"],
-      [133, 47, 26, "Do not use any type assertions.", "3915892908"],
-      [191, 14, 30, "Do not use any type assertions.", "2823515321"],
-      [198, 9, 31, "Do not use any type assertions.", "3670756765"]
+    "public/app/plugins/datasource/graphite/state/store.ts:2104071825": [
+      [101, 16, 34, "Do not use any type assertions.", "2382199947"],
+      [141, 47, 26, "Do not use any type assertions.", "3915892908"],
+      [206, 14, 30, "Do not use any type assertions.", "2823515321"],
+      [213, 9, 31, "Do not use any type assertions.", "3670756765"]
     ],
     "public/app/plugins/datasource/graphite/types.ts:1719498934": [
       [23, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
