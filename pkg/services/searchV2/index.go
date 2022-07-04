@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -79,6 +80,53 @@ func (i *orgIndex) readerForIndex(idxType indexType) (*bluge.Reader, func(), err
 		return nil, nil, err
 	}
 	return reader, func() { _ = reader.Close() }, nil
+}
+
+func (i *orgIndex) getCurrentDashboardsForComparison() ([]indexedDashboard, error) {
+	reader, cancel, err := i.readerForIndex(indexTypeDashboard)
+	if err != nil {
+		return nil, fmt.Errorf("error getting reader: %w", err)
+	}
+	defer cancel()
+
+	fullQuery := bluge.NewBooleanQuery()
+	fullQuery.AddShould(bluge.NewTermQuery(string(entityKindDashboard)).SetField(documentFieldKind))
+	fullQuery.AddShould(bluge.NewTermQuery(string(entityKindFolder)).SetField(documentFieldKind))
+	req := bluge.NewAllMatches(fullQuery)
+
+	documentMatchIterator, err := reader.Search(context.Background(), req)
+	if err != nil {
+		return nil, fmt.Errorf("error search: %w", err)
+	}
+	var currentDashboards []indexedDashboard
+	match, err := documentMatchIterator.Next()
+	for err == nil && match != nil {
+
+		var uid string
+		var updated time.Time
+
+		// load the identifier for this match
+		err = match.VisitStoredFields(func(field string, value []byte) bool {
+			if field == documentFieldUID {
+				uid = string(value)
+			} else if field == DocumentFieldUpdatedAt {
+				updated, _ = bluge.DecodeDateTime(value)
+			}
+			return true
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		if uid == "general" {
+			uid = ""
+		}
+		currentDashboards = append(currentDashboards, indexedDashboard{UID: uid, Updated: updated})
+
+		// load the next document match
+		match, err = documentMatchIterator.Next()
+	}
+	return currentDashboards, nil
 }
 
 type searchIndex struct {
@@ -385,6 +433,47 @@ func (i *searchIndex) reportSizeOfIndexDiskBackup(orgID int64) {
 	i.logger.Warn("Size of index disk backup", "size", formatBytes(uint64(size)))
 }
 
+type indexedDashboard struct {
+	UID     string
+	Updated time.Time
+}
+
+func (i *searchIndex) needsReIndex(orgID int64, dbDashboards []dashboard) (bool, error) {
+	index, ok := i.getOrgIndex(orgID)
+	if !ok {
+		return true, nil
+	}
+	indexedDashboards, err := index.getCurrentDashboardsForComparison()
+	if err != nil {
+		return false, err
+	}
+	return dashboardsDiffer(dbDashboards, indexedDashboards), nil
+}
+
+// True if different.
+func dashboardsDiffer(dbDashboards []dashboard, indexedDashboards []indexedDashboard) bool {
+	if len(dbDashboards) != len(indexedDashboards) {
+		return true
+	}
+	sort.Slice(dbDashboards, func(i, j int) bool {
+		return dbDashboards[i].uid > dbDashboards[j].uid
+	})
+	sort.Slice(indexedDashboards, func(i, j int) bool {
+		return indexedDashboards[i].UID > indexedDashboards[j].UID
+	})
+
+	for i := 0; i < len(dbDashboards); i++ {
+		if dbDashboards[i].uid != indexedDashboards[i].UID && dbDashboards[i].uid != "" && indexedDashboards[i].UID != "" {
+			return true
+		}
+		if dbDashboards[i].updated.UTC() != indexedDashboards[i].Updated.UTC() && dbDashboards[i].uid != "" && indexedDashboards[i].UID != "" {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (i *searchIndex) buildOrgIndex(ctx context.Context, orgID int64) (int, error) {
 	started := time.Now()
 	ctx, cancel := context.WithTimeout(ctx, time.Minute)
@@ -399,6 +488,16 @@ func (i *searchIndex) buildOrgIndex(ctx context.Context, orgID int64) (int, erro
 	i.logger.Info("Finish loading org dashboards", "elapsed", orgSearchIndexLoadTime, "orgId", orgID)
 
 	dashboardExtender := i.extender.GetDashboardExtender(orgID)
+
+	needReIndex, err := i.needsReIndex(orgID, dashboards)
+	if err != nil {
+		return 0, err
+	}
+	if !needReIndex {
+		i.logger.Info("No need to re-index", "orgId", orgID)
+		return len(dashboards), nil
+	}
+
 	index, err := initOrgIndex(dashboards, i.logger, dashboardExtender)
 	if err != nil {
 		return 0, fmt.Errorf("error initializing index: %w", err)

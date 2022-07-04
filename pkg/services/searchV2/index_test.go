@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
@@ -581,4 +582,56 @@ func TestDashboardIndex_CamelCaseNgram(t *testing.T) {
 			DashboardQuery{Query: "tork"},
 		)
 	})
+}
+
+var reindexCheckInitialDashboards = []dashboard{
+	{
+		id:  1,
+		uid: "1",
+		info: &extract.DashboardInfo{
+			Title: "dash1",
+		},
+		updated: time.Date(2022, 10, 1, 21, 0, 0, 0, time.UTC),
+	},
+}
+
+func TestDashboardIndex_DashboardsDiffer(t *testing.T) {
+	// Same dashboards.
+	require.False(t, dashboardsDiffer(reindexCheckInitialDashboards, []indexedDashboard{
+		{
+			UID:     "1",
+			Updated: time.Date(2022, 10, 1, 21, 0, 0, 0, time.UTC),
+		},
+	}))
+
+	// Updated changed.
+	require.True(t, dashboardsDiffer(reindexCheckInitialDashboards, []indexedDashboard{
+		{
+			UID:     "1",
+			Updated: time.Date(2022, 10, 1, 23, 0, 0, 0, time.UTC),
+		},
+	}))
+
+	// Same size, different uid.
+	require.True(t, dashboardsDiffer(reindexCheckInitialDashboards, []indexedDashboard{
+		{
+			UID:     "2",
+			Updated: time.Date(2022, 10, 1, 21, 0, 0, 0, time.UTC),
+		},
+	}))
+
+	// Dashboard removed.
+	require.True(t, dashboardsDiffer(reindexCheckInitialDashboards, []indexedDashboard{}))
+
+	// Dashboard added.
+	require.True(t, dashboardsDiffer(reindexCheckInitialDashboards, []indexedDashboard{
+		{
+			UID:     "1",
+			Updated: time.Date(2022, 10, 1, 21, 0, 0, 0, time.UTC),
+		},
+		{
+			UID:     "2",
+			Updated: time.Date(2022, 10, 1, 21, 0, 0, 0, time.UTC),
+		},
+	}))
 }
