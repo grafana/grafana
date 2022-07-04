@@ -29,7 +29,7 @@ func (hs *HTTPServer) registerRoutes() {
 	reqGrafanaAdmin := middleware.ReqGrafanaAdmin
 	reqEditorRole := middleware.ReqEditorRole
 	reqOrgAdmin := middleware.ReqOrgAdmin
-	reqOrgAdminFolderAdminOrTeamAdmin := middleware.OrgAdminFolderAdminOrTeamAdmin(hs.SQLStore)
+	reqOrgAdminDashOrFolderAdminOrTeamAdmin := middleware.OrgAdminDashOrFolderAdminOrTeamAdmin(hs.SQLStore)
 	reqCanAccessTeams := middleware.AdminOrEditorAndFeatureEnabled(hs.Cfg.EditorsCanAdmin)
 	reqSnapshotPublicModeOrSignedIn := middleware.SnapshotPublicModeOrSignedIn(hs.Cfg)
 	redirectFromLegacyPanelEditURL := middleware.RedirectFromLegacyPanelEditURL(hs.Cfg)
@@ -247,7 +247,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// current org without requirement of user to be org admin
 		apiRoute.Group("/org", func(orgRoute routing.RouteRegister) {
-			orgRoute.Get("/users/lookup", authorize(reqOrgAdminFolderAdminOrTeamAdmin, ac.EvalPermission(ac.ActionOrgUsersRead)), routing.Wrap(hs.GetOrgUsersForCurrentOrgLookup))
+			orgRoute.Get("/users/lookup", authorize(reqOrgAdminDashOrFolderAdminOrTeamAdmin, ac.EvalPermission(ac.ActionOrgUsersRead)), routing.Wrap(hs.GetOrgUsersForCurrentOrgLookup))
 		})
 
 		// create new org
