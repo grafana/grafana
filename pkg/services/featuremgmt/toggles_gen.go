@@ -151,6 +151,10 @@ const (
 	// Enable streaming JSON parser for Prometheus datasource
 	FlagPrometheusStreamingJSONParser = "prometheusStreamingJSONParser"
 
+	// FlagPrometheusStreamingJSONParserTest
+	// Run both old and streaming requests and log differences
+	FlagPrometheusStreamingJSONParserTest = "prometheusStreamingJSONParserTest"
+
 	// FlagValidateDashboardsOnSave
 	// Validate dashboard JSON POSTed to api/dashboards/db
 	FlagValidateDashboardsOnSave = "validateDashboardsOnSave"
