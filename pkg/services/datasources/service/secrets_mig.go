@@ -3,33 +3,16 @@ package service
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type DataSourceSecretMigrationService struct {
-	sqlStore           *sqlstore.SQLStore
 	dataSourcesService datasources.DataSourceService
-	secretsStore       kvstore.SecretsKVStore
-	features           featuremgmt.FeatureToggles
-	bus                bus.Bus
 }
 
-func ProvideDataSourceMigrationService(
-	cfg *setting.Cfg, dataSourcesService datasources.DataSourceService,
-	secretsStore kvstore.SecretsKVStore, features featuremgmt.FeatureToggles,
-	sqlStore *sqlstore.SQLStore, bus bus.Bus,
-) *DataSourceSecretMigrationService {
+func ProvideDataSourceMigrationService(dataSourcesService datasources.DataSourceService) *DataSourceSecretMigrationService {
 	return &DataSourceSecretMigrationService{
-		sqlStore:           sqlStore,
 		dataSourcesService: dataSourcesService,
-		secretsStore:       secretsStore,
-		features:           features,
-		bus:                bus,
 	}
 }
 
