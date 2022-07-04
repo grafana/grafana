@@ -70,7 +70,6 @@ func ProvideService(
 		log:                          logger,
 		newDashboardProvisioner:      dashboards.New,
 		alertRuleProvisioner:         prov_alerting.NewAlertRuleProvisioner(logger, dashboardService, dashboardProvisioningService, *ruleService),
-		alertmanagerProvisioner:      prov_alerting.NewAlertmanagerProvisioner(),
 		provisionNotifiers:           notifiers.Provision,
 		provisionDatasources:         datasources.Provision,
 		provisionPlugins:             plugins.Provision,
@@ -107,7 +106,6 @@ func NewProvisioningServiceImpl() *ProvisioningServiceImpl {
 		provisionDatasources:    datasources.Provision,
 		provisionPlugins:        plugins.Provision,
 		alertRuleProvisioner:    prov_alerting.NewAlertRuleProvisioner(logger, nil, nil, provisioning.AlertRuleService{}),
-		alertmanagerProvisioner: prov_alerting.NewAlertmanagerProvisioner(),
 	}
 }
 
@@ -138,7 +136,6 @@ type ProvisioningServiceImpl struct {
 	newDashboardProvisioner      dashboards.DashboardProvisionerFactory
 	dashboardProvisioner         dashboards.DashboardProvisioner
 	alertRuleProvisioner         prov_alerting.AlertRuleProvisioner
-	alertmanagerProvisioner      prov_alerting.AlertmanagerProvisioner
 	provisionNotifiers           func(context.Context, string, notifiers.Manager, notifiers.SQLStore, encryption.Internal, *notifications.NotificationService) error
 	provisionDatasources         func(context.Context, string, datasources.Store, utils.OrgStore) error
 	provisionPlugins             func(context.Context, string, plugins.Store, plugifaces.Store, pluginsettings.Service) error
@@ -168,11 +165,6 @@ func (ps *ProvisioningServiceImpl) RunInitProvisioners(ctx context.Context) erro
 	}
 
 	err = ps.ProvisionAlertRules(ctx)
-	if err != nil {
-		return err
-	}
-
-	err = ps.ProvisionAlertmanager(ctx)
 	if err != nil {
 		return err
 	}
@@ -268,15 +260,6 @@ func (ps *ProvisioningServiceImpl) ProvisionDashboards(ctx context.Context) erro
 func (ps *ProvisioningServiceImpl) ProvisionAlertRules(ctx context.Context) error {
 	alertRulesPath := filepath.Join(ps.Cfg.ProvisioningPath, "alertrules")
 	return ps.alertRuleProvisioner.Provision(ctx, alertRulesPath)
-}
-
-func (ps *ProvisioningServiceImpl) ProvisionAlertmanager(ctx context.Context) error {
-	return ps.alertmanagerProvisioner.Provision(ctx, prov_alerting.AlertmanagerProvisionerConfig{
-		ContactPointPath: filepath.Join(ps.Cfg.ProvisioningPath, "contactpoints"),
-		TemplatesPath:    filepath.Join(ps.Cfg.ProvisioningPath, "templates"),
-		PolicyPath:       filepath.Join(ps.Cfg.ProvisioningPath, "policies"),
-		MuteTimesPath:    filepath.Join(ps.Cfg.ProvisioningPath, "mutetimes"),
-	})
 }
 
 func (ps *ProvisioningServiceImpl) GetDashboardProvisionerResolvedPath(name string) string {
