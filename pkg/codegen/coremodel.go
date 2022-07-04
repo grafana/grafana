@@ -426,10 +426,6 @@ var CoremodelSet = wire.NewSet(
 )
 
 var (
-	staticOnce       sync.Once
-	defaultStatic    *Static
-	defaultStaticErr error
-
 	genericOnce       sync.Once
 	defaultGeneric    *Generic
 	defaultGenericErr error
@@ -438,6 +434,7 @@ var (
 // Static is a registry that provides access to individual coremodels via
 // explicit method calls, to aid with static analysis.
 type Static struct {
+	all []coremodel.Interface
 	{{- range .Coremodels }}
 	{{ .Name }} *{{ .Name }}.Coremodel{{end}}
 }
@@ -456,17 +453,6 @@ func (s *Static) {{ .TitleName }}() *{{ .Name }}.Coremodel {
 }
 {{end}}
 
-func provideStatic(lib *thema.Library) (*Static, error) {
-	if lib == nil {
-		staticOnce.Do(func() {
-			defaultStatic, defaultStaticErr = doProvideStatic(cuectx.ProvideThemaLibrary())
-		})
-		return defaultStatic, defaultStaticErr
-	}
-
-	return doProvideStatic(*lib)
-}
-
 func doProvideStatic(lib thema.Library) (*Static, error) {
 	var err error
 	reg := &Static{}
@@ -476,8 +462,12 @@ func doProvideStatic(lib thema.Library) (*Static, error) {
 	if err != nil {
 		return nil, err
 	}
+    reg.all = append(reg.all, reg.{{ .Name }})
 {{end}}
 
+	sort.Slice(reg.all, func(i, j int) bool {
+		return reg.all[i].Lineage().Name() < reg.all[j].Lineage().Name()
+	})
 	return reg, nil
 }
 

@@ -1,6 +1,10 @@
 package registry
 
 import (
+	"sync"
+
+	"github.com/grafana/grafana/pkg/cuectx"
+	"github.com/grafana/grafana/pkg/framework/coremodel"
 	"github.com/grafana/thema"
 )
 
@@ -38,3 +42,30 @@ func ProvideGeneric() (*Generic, error) {
 // NOTE - no ProvideRegistryWithLib is defined because there are no anticipated
 // cases where a caller would need to operate generically across all coremodels,
 // and control the library they're initialized with. If that changes, add one.
+
+var (
+	staticOnce       sync.Once
+	defaultStatic    *Static
+	defaultStaticErr error
+)
+
+func provideStatic(lib *thema.Library) (*Static, error) {
+	if lib == nil {
+		staticOnce.Do(func() {
+			defaultStatic, defaultStaticErr = doProvideStatic(cuectx.ProvideThemaLibrary())
+		})
+		return defaultStatic, defaultStaticErr
+	}
+
+	return doProvideStatic(*lib)
+}
+
+// All returns a slice of all registered coremodels.
+//
+// Prefer this method when operating generically across all coremodels.
+//
+// The slice is sorted lexicographically by coremodel name. The returned slice
+// should not be modified.
+func (s *Static) All() []coremodel.Interface {
+	return s.all
+}
