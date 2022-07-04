@@ -10,6 +10,9 @@ make devenv sources="oauth"
 Here is the conf you need to add to your configuration file (conf/custom.ini):
 
 ```ini
+[auth]
+signout_redirect_url = http://localhost:8087/auth/realms/grafana/protocol/openid-connect/logout?redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Flogin
+
 [auth.generic_oauth]
 enabled = true
 name = Keycloak-OAuth
@@ -20,7 +23,6 @@ empty_scopes = true
 email_attribute_path = email
 login_attribute_path = login
 name_attribute_path = name
-id_token_attribute_name = access_token
 auth_url = http://localhost:8087/auth/realms/grafana/protocol/openid-connect/auth
 token_url = http://localhost:8087/auth/realms/grafana/protocol/openid-connect/token
 api_url = http://localhost:8087/auth/realms/grafana/protocol/openid-connect/userinfo
