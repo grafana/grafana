@@ -2,7 +2,6 @@ package migrations
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"reflect"
 
@@ -42,7 +41,7 @@ func (s *SecretMigrationServiceImpl) Migrate(ctx context.Context) error {
 		serviceName := reflect.TypeOf(service).String()
 		logger.Debug("Starting secret migration service", "service", serviceName)
 		err := service.Migrate(ctx)
-		if err != nil && !errors.Is(err, context.Canceled) {
+		if err != nil {
 			logger.Error("Stopped secret migration service", "service", serviceName, "reason", err)
 			return fmt.Errorf("%s run error: %w", serviceName, err)
 		}
