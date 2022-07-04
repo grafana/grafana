@@ -170,10 +170,11 @@ export const PMM_INVENTORY_PAGE: NavModelItem = {
 export const PMM_ADD_INSTANCE_PAGE: NavModelItem = {
   id: 'add-instance',
   url: `${config.appSubUrl}/add-instance`,
-  icon: 'percona-add',
-  subTitle: 'Add Instance to PMM',
-  text: 'Add Instance',
+  icon: 'plus',
+  subTitle: 'PMM Inventory',
+  text: 'Add Instance to PMM',
   hideFromTabs: true,
+  showIconInNavbar: true,
 };
 
 export const getPmmSettingsPage = (alertingEnabled = false): NavModelItem => {

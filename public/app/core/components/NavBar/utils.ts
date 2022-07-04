@@ -233,13 +233,12 @@ export const buildInventoryAndSettings = (mainLinks: NavModelItem[]): NavModelIt
           },
         ],
       },
-      PMM_ADD_INSTANCE_PAGE,
     ],
   };
   const settingsLink = {
     id: 'settings',
     icon: 'percona-setting',
-    text: 'Settings',
+    text: 'PMM Settings',
     url: `${config.appSubUrl}/settings`,
   };
   const configNode = mainLinks.find((link) => link.id === 'cfg');
@@ -251,14 +250,14 @@ export const buildInventoryAndSettings = (mainLinks: NavModelItem[]): NavModelIt
       icon: 'cog',
       url: `${config.appSubUrl}/inventory`,
       subTitle: 'Configuration',
-      children: [inventoryLink, settingsLink],
+      children: [inventoryLink, settingsLink, DIVIDER, PMM_ADD_INSTANCE_PAGE],
     });
   } else {
     if (!configNode.children) {
       configNode.children = [];
     }
     configNode.url = `${config.appSubUrl}/inventory`;
-    configNode.children.unshift(inventoryLink, settingsLink);
+    configNode.children.unshift(PMM_ADD_INSTANCE_PAGE, DIVIDER, inventoryLink, settingsLink);
   }
 
   return mainLinks;
