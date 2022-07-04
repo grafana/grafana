@@ -9,10 +9,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	plugifaces "github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards"
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/encryption"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	prov_alerting "github.com/grafana/grafana/pkg/services/provisioning/alerting"
@@ -26,16 +29,38 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, pluginStore plugifaces.Store,
-	encryptionService encryption.Internal, notificatonService *notifications.NotificationService,
+func ProvideService(
+	ac accesscontrol.AccessControl,
+	cfg *setting.Cfg,
+	sqlStore *sqlstore.SQLStore,
+	pluginStore plugifaces.Store,
+	encryptionService encryption.Internal,
+	notificatonService *notifications.NotificationService,
 	dashboardProvisioningService dashboardservice.DashboardProvisioningService,
 	datasourceService datasourceservice.DataSourceService,
 	dashboardService dashboardservice.DashboardService,
 	folderService dashboardservice.FolderService,
-	alertingService *alerting.AlertNotificationService, pluginSettings pluginsettings.Service,
+	alertingService *alerting.AlertNotificationService,
+	pluginSettings pluginsettings.Service,
 	searchService searchV2.SearchService,
 ) (*ProvisioningServiceImpl, error) {
 	logger := log.New("provisioning")
+	dbStore := store.DBstore{
+		BaseInterval:     cfg.UnifiedAlerting.BaseInterval,
+		DefaultInterval:  cfg.UnifiedAlerting.DefaultRuleEvaluationInterval,
+		SQLStore:         sqlStore,
+		Logger:           logger,
+		FolderService:    folderService,
+		DashboardService: dashboardService,
+		AccessControl:    ac,
+	}
+	ruleService := provisioning.NewAlertRuleService(
+		dbStore,
+		dbStore,
+		&dbStore,
+		int64(cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
+		int64(cfg.UnifiedAlerting.BaseInterval.Seconds()),
+		logger)
 	s := &ProvisioningServiceImpl{
 		Cfg:                          cfg,
 		SQLStore:                     sqlStore,
@@ -44,7 +69,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, pluginStore p
 		NotificationService:          notificatonService,
 		log:                          logger,
 		newDashboardProvisioner:      dashboards.New,
-		alertRuleProvisioner:         prov_alerting.NewAlertRuleProvisioner(logger, dashboardService, dashboardProvisioningService),
+		alertRuleProvisioner:         prov_alerting.NewAlertRuleProvisioner(logger, dashboardService, dashboardProvisioningService, *ruleService),
 		alertmanagerProvisioner:      prov_alerting.NewAlertmanagerProvisioner(),
 		provisionNotifiers:           notifiers.Provision,
 		provisionDatasources:         datasources.Provision,
@@ -81,7 +106,7 @@ func NewProvisioningServiceImpl() *ProvisioningServiceImpl {
 		provisionNotifiers:      notifiers.Provision,
 		provisionDatasources:    datasources.Provision,
 		provisionPlugins:        plugins.Provision,
-		alertRuleProvisioner:    prov_alerting.NewAlertRuleProvisioner(logger, nil, nil),
+		alertRuleProvisioner:    prov_alerting.NewAlertRuleProvisioner(logger, nil, nil, provisioning.AlertRuleService{}),
 		alertmanagerProvisioner: prov_alerting.NewAlertmanagerProvisioner(),
 	}
 }

@@ -15,22 +15,17 @@ groups:
         severity: warning
       data:
       - refId: A
-        queryType: ''
         relativeTimeRange:
           from: 600
           to: 0
-        datasourceUID: PD8C576611E62080A
+        datasourceUid: PD8C576611E62080A
         model:
           hide: false
           intervalMs: 1000
           maxDataPoints: 43200
           refId: A
       - refId: B
-        queryType: ''
-        relativeTimeRange:
-          from: 0
-          to: 0
-        datasourceUID: "-100"
+        datasourceUid: "-100"
         model:
           conditions:
           - evaluator:
@@ -43,7 +38,6 @@ groups:
               params:
               - A
             reducer:
-              params: []
               type: last
             type: query
           datasource:

@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
 	"math/rand"
 	"sort"
 	"strings"
@@ -584,16 +585,15 @@ func TestSortByGroupIndex(t *testing.T) {
 	})
 }
 
-func TestTimeRangeYAML(t *testing.T) {
-	yamlRaw := "from: 600\nto: 0\n"
-	var rtr RelativeTimeRange
-	err := yaml.Unmarshal([]byte(yamlRaw), &rtr)
+func TestParseDuration(t *testing.T) {
+	var d RelativeTimeRange
+	var jsonString = `{"from":600,"to":0}`
+	err := json.Unmarshal([]byte(jsonString), &d)
 	require.NoError(t, err)
-	// nanoseconds
-	require.Equal(t, Duration(600000000000), rtr.From)
-	require.Equal(t, Duration(0), rtr.To)
-
-	serialized, err := yaml.Marshal(rtr)
+	newString, err := json.Marshal(d)
 	require.NoError(t, err)
-	require.Equal(t, yamlRaw, string(serialized))
+	require.Equal(t, jsonString, string(newString))
+	require.Equal(t, "", fmt.Sprintf("%v", d))
+	require.Equal(t, 600, d.From)
+	require.Equal(t, 0, d.To)
 }

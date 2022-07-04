@@ -8,6 +8,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	alert_models "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -18,12 +20,14 @@ type AlertRuleProvisioner interface {
 func NewAlertRuleProvisioner(
 	logger log.Logger,
 	dashboardService dashboards.DashboardService,
-	dashboardProvService dashboards.DashboardProvisioningService) AlertRuleProvisioner {
+	dashboardProvService dashboards.DashboardProvisioningService,
+	ruleService provisioning.AlertRuleService) AlertRuleProvisioner {
 	return &DefaultAlertRuleProvisioner{
 		logger:               logger,
 		cfgReader:            NewRulesConfigReader(logger),
 		dashboardService:     dashboardService,
 		dashboardProvService: dashboardProvService,
+		ruleService:          ruleService,
 	}
 }
 
@@ -32,6 +36,7 @@ type DefaultAlertRuleProvisioner struct {
 	cfgReader            rulesConfigReader
 	dashboardService     dashboards.DashboardService
 	dashboardProvService dashboards.DashboardProvisioningService
+	ruleService          provisioning.AlertRuleService
 }
 
 func (prov *DefaultAlertRuleProvisioner) Provision(ctx context.Context,
@@ -51,35 +56,69 @@ func (prov *DefaultAlertRuleProvisioner) Provision(ctx context.Context,
 }
 
 func (prov *DefaultAlertRuleProvisioner) provsionRuleFiles(ctx context.Context,
-	ruleFiles []*RuleFileV1) error {
+	ruleFiles []*RuleFile) error {
 	for _, file := range ruleFiles {
 		for _, group := range file.Groups {
-			folderUID, err := prov.getOrCreateFolderUID(ctx, group.Folder.Raw, group.OrgID.Value())
+			folderUID, err := prov.getOrCreateFolderUID(ctx, group.Folder, group.OrgID)
 			if err != nil {
 				return err
 			}
-			prov.logger.Info("provisioning alert rule group", "org", group.OrgID.Value(), "folder", group.Folder.Value(), "folderUID", folderUID, "name", group.Name.Value())
+			prov.logger.Info("provisioning alert rule group",
+				"org", group.OrgID,
+				"folder", group.Folder,
+				"folderUID", folderUID,
+				"name", group.Name)
 			for _, rule := range group.Rules {
-				prov.logger.Info("provisioning alert rule", "uid", rule.UID.Value(), "title", rule.Title.Value())
+				rule.NamespaceUID = folderUID
+				rule.RuleGroup = group.Name
+				err = prov.provisionRule(ctx, group.OrgID, rule, group.Folder, folderUID)
+				if err != nil {
+					return err
+				}
+			}
+			err = prov.ruleService.UpdateRuleGroup(ctx, group.OrgID, folderUID, group.Name, int64(group.Interval.Seconds()))
+			if err != nil {
+				return err
+			}
+		}
+		for _, deleteRule := range file.DeleteRules {
+			err := prov.ruleService.DeleteAlertRule(ctx, deleteRule.OrgID,
+				deleteRule.UID, alert_models.ProvenanceFile)
+			if err != nil {
+				return err
 			}
 		}
 	}
 	return nil
 }
 
+func (prov *DefaultAlertRuleProvisioner) provisionRule(
+	ctx context.Context,
+	orgID int64,
+	rule alert_models.AlertRule,
+	folder,
+	folderUID string) error {
+	prov.logger.Info("provisioning alert rule", "uid", rule.UID, "org", rule.OrgID)
+	_, _, err := prov.ruleService.GetAlertRule(ctx, orgID, rule.UID)
+	if err != nil && !errors.Is(err, alert_models.ErrAlertRuleNotFound) {
+		return err
+	} else if err != nil {
+		prov.logger.Info("creating rule", "uid", rule.UID, "org", rule.OrgID)
+		_, err = prov.ruleService.CreateAlertRule(ctx, rule, alert_models.ProvenanceFile)
+	} else {
+		prov.logger.Info("updating rule", "uid", rule.UID, "org", rule.OrgID)
+		_, err = prov.ruleService.UpdateAlertRule(ctx, rule, alert_models.ProvenanceFile)
+	}
+	return err
+}
+
 func (prov *DefaultAlertRuleProvisioner) getOrCreateFolderUID(
 	ctx context.Context, folderName string, orgID int64) (string, error) {
-	//TODO: move to DTO
-	if orgID == 0 {
-		orgID = 1
+	cmd := &models.GetDashboardQuery{
+		Slug:  models.SlugifyTitle(folderName),
+		OrgId: orgID,
 	}
-	if folderName == "" {
-		return "", errors.New("missing folder name")
-	}
-
-	cmd := &models.GetDashboardQuery{Slug: models.SlugifyTitle(folderName), OrgId: orgID}
 	err := prov.dashboardService.GetDashboard(ctx, cmd)
-
 	if err != nil && !errors.Is(err, models.ErrDashboardNotFound) {
 		return "", err
 	}
@@ -105,5 +144,4 @@ func (prov *DefaultAlertRuleProvisioner) getOrCreateFolderUID(
 	}
 
 	return cmd.Result.Uid, nil
-
 }

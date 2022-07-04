@@ -1,6 +1,13 @@
 package alerting
 
 import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	"strings"
+	"time"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/provisioning/values"
 )
 
@@ -8,10 +15,50 @@ type configVersion struct {
 	APIVersion values.Int64Value `json:"apiVersion" yaml:"apiVersion"`
 }
 
+type RuleFile struct {
+	configVersion
+	Groups      []AlertRuleGroup
+	DeleteRules []RuleDelete
+}
+
 type RuleFileV1 struct {
 	configVersion
-	Groups         []AlertRuleGroupV1 `json:"groups" yaml:"groups"`
-	DeleteRulesUID []string           `json:"deleteRules" yaml:"deleteRules"`
+	Groups      []AlertRuleGroupV1 `json:"groups" yaml:"groups"`
+	DeleteRules []RuleDeleteV1     `json:"deleteRules" yaml:"deleteRules"`
+}
+
+func (ruleFileV1 *RuleFileV1) MapToModel() (RuleFile, error) {
+	ruleFile := RuleFile{}
+	ruleFile.configVersion = ruleFileV1.configVersion
+	for _, groupV1 := range ruleFileV1.Groups {
+		group, err := groupV1.mapToModel()
+		if err != nil {
+			return RuleFile{}, err
+		}
+		ruleFile.Groups = append(ruleFile.Groups, group)
+	}
+	for _, ruleDeleteV1 := range ruleFileV1.DeleteRules {
+		orgID := ruleDeleteV1.OrgID.Value()
+		if orgID < 1 {
+			orgID = 1
+		}
+		ruleDelete := RuleDelete{
+			UID:   ruleDeleteV1.UID.Value(),
+			OrgID: orgID,
+		}
+		ruleFile.DeleteRules = append(ruleFile.DeleteRules, ruleDelete)
+	}
+	return ruleFile, nil
+}
+
+type RuleDelete struct {
+	UID   string
+	OrgID int64
+}
+
+type RuleDeleteV1 struct {
+	UID   values.StringValue `json:"uid" yaml:"uid"`
+	OrgID values.Int64Value  `json:"orgId" yaml:"orgId"`
 }
 
 type AlertRuleGroupV1 struct {
@@ -22,14 +69,50 @@ type AlertRuleGroupV1 struct {
 	Rules    []AlertRuleV1      `json:"rules" yaml:"rules"`
 }
 
+func (ruleGroupV1 *AlertRuleGroupV1) mapToModel() (AlertRuleGroup, error) {
+	ruleGroup := AlertRuleGroup{}
+	ruleGroup.Name = ruleGroupV1.Name.Value()
+	if strings.TrimSpace(ruleGroup.Name) == "" {
+		return AlertRuleGroup{}, errors.New("rule group has no name set")
+	}
+	ruleGroup.OrgID = ruleGroupV1.OrgID.Value()
+	if ruleGroup.OrgID < 1 {
+		ruleGroup.OrgID = 1
+	}
+	interval, err := time.ParseDuration(ruleGroupV1.Interval.Value())
+	if err != nil {
+		return AlertRuleGroup{}, err
+	}
+	ruleGroup.Interval = interval
+	ruleGroup.Folder = ruleGroupV1.Folder.Value()
+	if strings.TrimSpace(ruleGroup.Folder) == "" {
+		return AlertRuleGroup{}, errors.New("rule group has no folder set")
+	}
+	for _, ruleV1 := range ruleGroupV1.Rules {
+		rule, err := ruleV1.mapToModel(ruleGroup.OrgID)
+		if err != nil {
+			return AlertRuleGroup{}, err
+		}
+		ruleGroup.Rules = append(ruleGroup.Rules, rule)
+	}
+	return ruleGroup, nil
+}
+
+type AlertRuleGroup struct {
+	OrgID    int64
+	Name     string
+	Folder   string
+	Interval time.Duration
+	Rules    []models.AlertRule
+}
+
 type AlertRuleV1 struct {
 	UID          values.StringValue    `json:"uid" yaml:"uid"`
-	OrgID        values.Int64Value     `json:"orgId" yaml:"orgId"`
 	Title        values.StringValue    `json:"title" yaml:"title"`
 	Condition    values.StringValue    `json:"condition" yaml:"condition"`
 	Data         []QueryV1             `json:"data" yaml:"data"`
 	DashboardUID values.StringValue    `json:"dasboardUid" yaml:"dashboardUid"`
-	PanelID      values.StringValue    `json:"panelId" yaml:"panelId"`
+	PanelID      values.Int64Value     `json:"panelId" yaml:"panelId"`
 	NoDataState  values.StringValue    `json:"noDataState" yaml:"noDataState"`
 	ExecErrState values.StringValue    `json:"execErrState" yaml:"execErrState"`
 	For          values.StringValue    `json:"for" yaml:"for"`
@@ -37,15 +120,77 @@ type AlertRuleV1 struct {
 	Labels       values.StringMapValue `json:"labels" yaml:"labels"`
 }
 
-type QueryV1 struct {
-	RefID             values.StringValue  `json:"refId" yaml:"refId"`
-	QueryType         values.StringValue  `json:"queryType" yaml:"queryType"`
-	RelativeTimeRange RelativeTimeRangeV1 `json:"relativeTimeRange" yaml:"relativeTimeRange"`
-	DatasourceUID     values.StringValue  `json:"datasourceUid" yaml:"datasourceUid"`
-	Model             values.JSONValue    `json:"model" yaml:"model"`
+func (rule *AlertRuleV1) mapToModel(orgID int64) (models.AlertRule, error) {
+	alertRule := models.AlertRule{}
+	alertRule.Title = rule.Title.Value()
+	alertRule.UID = rule.UID.Value()
+	if alertRule.UID == "" {
+		return alertRule, fmt.Errorf("rule '%s' has no UID set", rule.Title)
+	}
+	alertRule.OrgID = orgID
+	duration, err := time.ParseDuration(rule.For.Value())
+	if err != nil {
+		return models.AlertRule{}, err
+	}
+	alertRule.For = duration
+	dashboardUID := rule.DashboardUID.Value()
+	alertRule.DashboardUID = &dashboardUID
+	panelID := rule.PanelID.Value()
+	alertRule.PanelID = &panelID
+	execErrStateValue := strings.TrimSpace(rule.ExecErrState.Value())
+	execErrState, err := models.ErrStateFromString(execErrStateValue)
+	if err != nil && execErrStateValue != "" {
+		return models.AlertRule{}, fmt.Errorf("rule %s failed to parse: %w", alertRule.Title, err)
+	}
+	if execErrStateValue == "" {
+		execErrState = models.AlertingErrState
+	}
+	alertRule.ExecErrState = execErrState
+	noDataStateValue := strings.TrimSpace(rule.NoDataState.Value())
+	noDataState, err := models.NoDataStateFromString(noDataStateValue)
+	if err != nil && noDataStateValue != "" {
+		return models.AlertRule{}, fmt.Errorf("rule %s failed to parse: %w", alertRule.Title, err)
+	}
+	if noDataStateValue == "" {
+		noDataState = models.NoData
+	}
+	alertRule.NoDataState = noDataState
+	alertRule.Condition = rule.Condition.Value()
+	alertRule.Annotations = rule.Annotations.Value()
+	alertRule.Labels = rule.Labels.Value()
+	for _, queryV1 := range rule.Data {
+		query, err := queryV1.mapToModel()
+		if err != nil {
+			return models.AlertRule{}, err
+		}
+		alertRule.Data = append(alertRule.Data, query)
+	}
+	return alertRule, nil
 }
 
-type RelativeTimeRangeV1 struct {
-	From values.Int64Value `json:"from" yaml:"from"`
-	To   values.Int64Value `json:"to" yaml:"to"`
+type QueryV1 struct {
+	RefID             values.StringValue       `json:"refId" yaml:"refId"`
+	QueryType         values.StringValue       `json:"queryType" yaml:"queryType"`
+	RelativeTimeRange models.RelativeTimeRange `json:"relativeTimeRange" yaml:"relativeTimeRange"`
+	DatasourceUID     values.StringValue       `json:"datasourceUid" yaml:"datasourceUid"`
+	Model             values.JSONValue         `json:"model" yaml:"model"`
+}
+
+func (queryV1 *QueryV1) mapToModel() (models.AlertQuery, error) {
+	encoded, err := json.Marshal(queryV1.Model.Value())
+	if err != nil {
+		return models.AlertQuery{}, err
+	}
+	var rawMessage json.RawMessage
+	err = json.Unmarshal(encoded, &rawMessage)
+	if err != nil {
+		return models.AlertQuery{}, err
+	}
+	return models.AlertQuery{
+		RefID:             queryV1.RefID.Value(),
+		QueryType:         queryV1.QueryType.Value(),
+		DatasourceUID:     queryV1.DatasourceUID.Value(),
+		RelativeTimeRange: queryV1.RelativeTimeRange,
+		Model:             rawMessage,
+	}, nil
 }

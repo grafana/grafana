@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/expr"
+	"gopkg.in/yaml.v3"
 )
 
 const defaultMaxDataPoints float64 = 43200 // 12 hours at 1sec interval

@@ -22,8 +22,8 @@ func NewRulesConfigReader(logger log.Logger) rulesConfigReader {
 	}
 }
 
-func (cr *rulesConfigReader) readConfig(ctx context.Context, path string) ([]*RuleFileV1, error) {
-	var alertRulesFiles []*RuleFileV1
+func (cr *rulesConfigReader) readConfig(ctx context.Context, path string) ([]*RuleFile, error) {
+	var alertRulesFiles []*RuleFile
 	cr.log.Debug("Looking for alert rules provisioning files", "path", path)
 
 	files, err := ioutil.ReadDir(path)
@@ -33,18 +33,22 @@ func (cr *rulesConfigReader) readConfig(ctx context.Context, path string) ([]*Ru
 	}
 
 	for _, file := range files {
-		var ruleFile *RuleFileV1
+		var ruleFileV1 *RuleFileV1
 		cr.log.Debug("Parsing alert rules provisioning file", "path", path, "file.Name", file.Name())
 		if cr.isYAML(file.Name()) || cr.isJSON(file.Name()) {
-			ruleFile, err = cr.parseConfig(path, file)
+			ruleFileV1, err = cr.parseConfig(path, file)
 		} else {
 			return nil, fmt.Errorf("file has invalid suffix '%s' (.yaml,.yml,.json accepted)", file.Name())
 		}
 		if err != nil {
 			return nil, err
 		}
-		if ruleFile != nil {
-			alertRulesFiles = append(alertRulesFiles, ruleFile)
+		if ruleFileV1 != nil {
+			ruleFile, err := ruleFileV1.MapToModel()
+			if err != nil {
+				return nil, err
+			}
+			alertRulesFiles = append(alertRulesFiles, &ruleFile)
 		}
 	}
 	return alertRulesFiles, nil
