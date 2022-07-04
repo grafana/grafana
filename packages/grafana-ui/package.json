@@ -10,6 +10,7 @@
     "react-component",
     "typescript"
   ],
+  "sideEffects": false,
   "repository": {
     "type": "git",
     "url": "http://github.com/grafana/grafana.git",
