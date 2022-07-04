@@ -4598,6 +4598,18 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@grafana/agent-core@npm:0.4.0":
+  version: 0.4.0
+  resolution: "@grafana/agent-core@npm:0.4.0"
+  dependencies:
+    "@opentelemetry/api": ^1.1.0
+    "@opentelemetry/api-metrics": ^0.29.1
+    "@opentelemetry/otlp-transformer": ^0.29.1
+    uuid: ^8.3.2
+  checksum: a71669dd0ec00f8e97dcf9e525b77221b64989918ab6a86c606caa87297a559c8da1f886cfa4c7ac7ade483dfaec24cf9733c93962f271c79540828ba06271a3
+  languageName: node
+  linkType: hard
+
 "@grafana/agent-core@npm:^0.3.0":
   version: 0.3.0
   resolution: "@grafana/agent-core@npm:0.3.0"
@@ -21086,7 +21098,7 @@ __metadata:
     "@emotion/css": 11.9.0
     "@emotion/eslint-plugin": 11.7.0
     "@emotion/react": 11.9.0
-    "@grafana/agent-core": ^0.3.0
+    "@grafana/agent-core": 0.4.0
     "@grafana/agent-web": ^0.3.0
     "@grafana/api-documenter": 7.11.2
     "@grafana/aws-sdk": 0.0.36
