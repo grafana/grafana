@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type Store interface {
@@ -25,7 +27,7 @@ type Store interface {
 	CreateLoginAttempt(ctx context.Context, cmd *models.CreateLoginAttemptCommand) error
 	GetUserLoginAttemptCount(ctx context.Context, query *models.GetUserLoginAttemptCountQuery) error
 	DeleteOldLoginAttempts(ctx context.Context, cmd *models.DeleteOldLoginAttemptsCommand) error
-	CreateUser(ctx context.Context, cmd models.CreateUserCommand) (*models.User, error)
+	CreateUser(ctx context.Context, cmd user.CreateUserCommand) (*user.User, error)
 	GetUserById(ctx context.Context, query *models.GetUserByIdQuery) error
 	GetUserByLogin(ctx context.Context, query *models.GetUserByLoginQuery) error
 	GetUserByEmail(ctx context.Context, query *models.GetUserByEmailQuery) error
@@ -88,13 +90,13 @@ type Store interface {
 	GetOrgUsers(ctx context.Context, query *models.GetOrgUsersQuery) error
 	SearchOrgUsers(ctx context.Context, query *models.SearchOrgUsersQuery) error
 	RemoveOrgUser(ctx context.Context, cmd *models.RemoveOrgUserCommand) error
-	GetDataSource(ctx context.Context, query *models.GetDataSourceQuery) error
-	GetDataSources(ctx context.Context, query *models.GetDataSourcesQuery) error
-	GetDataSourcesByType(ctx context.Context, query *models.GetDataSourcesByTypeQuery) error
-	GetDefaultDataSource(ctx context.Context, query *models.GetDefaultDataSourceQuery) error
-	DeleteDataSource(ctx context.Context, cmd *models.DeleteDataSourceCommand) error
-	AddDataSource(ctx context.Context, cmd *models.AddDataSourceCommand) error
-	UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSourceCommand) error
+	GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) error
+	GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) error
+	GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) error
+	GetDefaultDataSource(ctx context.Context, query *datasources.GetDefaultDataSourceQuery) error
+	DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error
+	AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) error
+	UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) error
 	Migrate(bool) error
 	Sync() error
 	Reset() error
@@ -119,6 +121,7 @@ type Store interface {
 	GetApiKeyById(ctx context.Context, query *models.GetApiKeyByIdQuery) error
 	GetApiKeyByName(ctx context.Context, query *models.GetApiKeyByNameQuery) error
 	GetAPIKeyByHash(ctx context.Context, hash string) (*models.ApiKey, error)
+	UpdateAPIKeyLastUsedDate(ctx context.Context, tokenID int64) error
 	UpdateTempUserStatus(ctx context.Context, cmd *models.UpdateTempUserStatusCommand) error
 	CreateTempUser(ctx context.Context, cmd *models.CreateTempUserCommand) error
 	UpdateTempUserWithEmailSent(ctx context.Context, cmd *models.UpdateTempUserWithEmailSentCommand) error

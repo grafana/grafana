@@ -8980,7 +8980,7 @@
           "$ref": "#/definitions/ScheduleDTO"
         },
         "state": {
-          "type": "string"
+          "$ref": "#/definitions/State"
         },
         "templateVars": {
           "type": "object"
@@ -9448,9 +9448,6 @@
           "type": "boolean"
         },
         "isHome": {
-          "type": "boolean"
-        },
-        "isPublic": {
           "type": "boolean"
         },
         "isSnapshot": {
@@ -10054,6 +10051,9 @@
     "Folder": {
       "type": "object",
       "properties": {
+        "accessControl": {
+          "$ref": "#/definitions/Metadata"
+        },
         "canAdmin": {
           "type": "boolean"
         },
@@ -10105,6 +10105,9 @@
     "FolderSearchHit": {
       "type": "object",
       "properties": {
+        "accessControl": {
+          "$ref": "#/definitions/Metadata"
+        },
         "id": {
           "type": "integer",
           "format": "int64"
@@ -11700,6 +11703,9 @@
           "format": "int64"
         }
       }
+    },
+    "State": {
+      "type": "string"
     },
     "Status": {
       "type": "object",

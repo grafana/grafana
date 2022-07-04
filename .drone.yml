@@ -43,6 +43,13 @@ steps:
   image: grafana/build-container:1.5.7
   name: lint-frontend
 - commands:
+  - yarn betterer ci
+  depends_on:
+  - yarn-install
+  failure: ignore
+  image: grafana/build-container:1.5.7
+  name: betterer-frontend
+- commands:
   - yarn run ci:test-frontend
   depends_on:
   - yarn-install
@@ -741,6 +748,13 @@ steps:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.5.7
   name: lint-frontend
+- commands:
+  - yarn betterer ci
+  depends_on:
+  - yarn-install
+  failure: ignore
+  image: grafana/build-container:1.5.7
+  name: betterer-frontend
 - commands:
   - yarn run ci:test-frontend
   depends_on:
@@ -4783,6 +4797,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: c9b6fd34c919d871a153c3d82bfe8d62f126f1c672bd14636147cdeafe827c10
+hmac: 12fbd61337ed1ae006e8c0ff71d1290e27b5910211369cdd47e1d604afd9befa
 
 ...

@@ -150,7 +150,7 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
               onClick={this._detailToggle}
               role="switch"
               style={{ borderColor: color }}
-              data-test-id="detail-row-expanded-accent"
+              data-testid="detail-row-expanded-accent"
             />
           </span>
         </TimelineRow.Cell>
