@@ -557,7 +557,7 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 				if !cmp.Equal(got, tt.want, compareOpts) {
 					t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, tt.want, compareOpts))
 				}
-				pluginErrs := l.PluginErrors()
+				pluginErrs := l.errs
 				require.Equal(t, len(tt.pluginErrors), len(pluginErrs))
 				for _, pluginErr := range pluginErrs {
 					require.Equal(t, tt.pluginErrors[pluginErr.PluginID], pluginErr)

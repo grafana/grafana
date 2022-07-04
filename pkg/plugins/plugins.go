@@ -408,7 +408,6 @@ func (p *Plugin) CalculateSignature() error {
 	}
 
 	if m.IsV2() {
-
 		// Track files missing from the manifest
 		var unsignedFiles []string
 		for _, f := range pluginFiles {
