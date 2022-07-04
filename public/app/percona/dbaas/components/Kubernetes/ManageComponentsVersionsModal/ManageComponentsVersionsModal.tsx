@@ -195,6 +195,7 @@ export const ManageComponentsVersionsModal: FC<ManageComponentsVersionsModalProp
                       disabled={!valid}
                       loading={submitting}
                       data-testid="kubernetes-components-versions-save"
+                      type="submit"
                     >
                       {Messages.save}
                     </LoaderButton>

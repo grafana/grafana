@@ -58,6 +58,7 @@ export const ChangeCheckIntervalModal: FC<ChangeCheckIntervalModalProps> = ({ ch
                   variant="destructive"
                   size="md"
                   data-testid="change-check-interval-modal-save"
+                  type="submit"
                 >
                   {Messages.save}
                 </LoaderButton>

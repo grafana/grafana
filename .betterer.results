@@ -8056,7 +8056,7 @@ exports[`better eslint`] = {
       [17, 37, 24, "Do not use any type assertions.", "1653987163"],
       [22, 35, 24, "Do not use any type assertions.", "1653987163"]
     ],
-    "public/app/percona/backup/components/AddBackupModal/AddBackupModal.tsx:82424576": [
+    "public/app/percona/backup/components/AddBackupModal/AddBackupModal.tsx:3596433787": [
       [110, 54, 19, "Do not use any type assertions.", "412281893"]
     ],
     "public/app/percona/backup/components/AddBackupModal/AddBackupModal.utils.ts:3296627271": [
@@ -8271,7 +8271,7 @@ exports[`better eslint`] = {
       [71, 18, 73, "Do not use any type assertions.", "2602103908"],
       [84, 15, 15, "Do not use any type assertions.", "132039236"]
     ],
-    "public/app/percona/dbaas/components/Kubernetes/ManageComponentsVersionsModal/ManageComponentsVersionsModal.tsx:4003962596": [
+    "public/app/percona/dbaas/components/Kubernetes/ManageComponentsVersionsModal/ManageComponentsVersionsModal.tsx:1850376639": [
       [59, 19, 43, "Do not use any type assertions.", "3997220029"],
       [60, 26, 42, "Do not use any type assertions.", "3143923231"],
       [72, 34, 74, "Do not use any type assertions.", "611329976"],
@@ -8292,7 +8292,7 @@ exports[`better eslint`] = {
     "public/app/percona/dbaas/components/StepProgress/Step/Step.tsx:4202113231": [
       [44, 25, 42, "Do not use any type assertions.", "232313980"]
     ],
-    "public/app/percona/dbaas/components/StepProgress/StepProgress.tsx:3031997422": [
+    "public/app/percona/dbaas/components/StepProgress/StepProgress.tsx:2544487317": [
       [12, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
       [14, 36, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
@@ -8351,7 +8351,7 @@ exports[`better eslint`] = {
     "public/app/percona/integrated-alerting/components/Alerts/Alerts.tsx:2070582918": [
       [113, 55, 21, "Do not use any type assertions.", "2451160324"]
     ],
-    "public/app/percona/integrated-alerting/components/NotificationChannel/AddNotificationChannelModal/AddNotificationChannelModal.tsx:812897277": [
+    "public/app/percona/integrated-alerting/components/NotificationChannel/AddNotificationChannelModal/AddNotificationChannelModal.tsx:1615062758": [
       [65, 48, 39, "Do not use any type assertions.", "852535372"]
     ],
     "public/app/percona/integrated-alerting/components/NotificationChannel/AddNotificationChannelModal/AddNotificationChannelModal.utils.test.ts:3402358736": [

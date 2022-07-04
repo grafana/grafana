@@ -321,6 +321,7 @@ export const AddAlertRuleModal: FC<AddAlertRuleModalProps> = ({ isVisible, setVi
                   variant="primary"
                   disabled={!valid || pristine}
                   loading={submitting}
+                  type="submit"
                 >
                   {alertRule ? Messages.update : Messages.create}
                 </LoaderButton>

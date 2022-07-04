@@ -90,6 +90,7 @@ export const RestoreBackupModal: FC<RestoreBackupModalProps> = ({
                 variant="primary"
                 disabled={!valid || (values.serviceType === ServiceTypeSelect.SAME && noService)}
                 loading={submitting}
+                type="submit"
               >
                 {Messages.restore}
               </LoaderButton>

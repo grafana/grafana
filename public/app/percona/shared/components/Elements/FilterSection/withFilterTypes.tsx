@@ -39,6 +39,7 @@ export const withFilterTypes =
                   variant="primary"
                   disabled={!valid || pristine}
                   loading={submitting}
+                  type="submit"
                 >
                   Apply
                 </LoaderButton>

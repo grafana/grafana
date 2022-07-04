@@ -99,6 +99,7 @@ export const AddNotificationChannelModal: FC<AddNotificationChannelModalProps> =
                   variant="primary"
                   disabled={!valid || pristine}
                   loading={submitting}
+                  type="submit"
                 >
                   {notificationChannel ? Messages.editAction : Messages.addAction}
                 </LoaderButton>

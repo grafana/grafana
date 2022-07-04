@@ -89,6 +89,7 @@ export const StepProgress: FC<StepProgressProps> = ({ steps, initialValues, subm
               disabled={!valid || pristine || submitting}
               loading={submitting}
               className={styles.createButton}
+              type="submit"
             >
               {submitButtonMessage}
             </LoaderButton>

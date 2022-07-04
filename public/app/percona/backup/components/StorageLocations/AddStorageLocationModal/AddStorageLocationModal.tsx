@@ -95,6 +95,7 @@ export const AddStorageLocationModal: FC<AddStorageLocationModalProps> = ({
                 variant="primary"
                 disabled={!valid || pristine || waitingLocationValidation}
                 loading={submitting}
+                type="submit"
               >
                 {location ? Messages.editAction : Messages.addAction}
               </LoaderButton>

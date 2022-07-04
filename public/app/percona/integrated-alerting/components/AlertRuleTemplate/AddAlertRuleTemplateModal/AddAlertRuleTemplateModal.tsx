@@ -75,6 +75,7 @@ export const AddAlertRuleTemplateModal: FC<AddAlertRuleTemplateModalProps> = ({
                   size="md"
                   variant="primary"
                   disabled={!valid || pristine}
+                  type="submit"
                   loading={submitting}
                 >
                   {Messages.alertRuleTemplate.addModal.confirm}

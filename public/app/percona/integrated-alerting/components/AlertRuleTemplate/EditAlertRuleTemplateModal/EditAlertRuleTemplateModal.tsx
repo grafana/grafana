@@ -59,6 +59,7 @@ export const EditAlertRuleTemplateModal: FC<EditAlertRuleTemplateModalProps> = (
                   variant="primary"
                   disabled={!valid || pristine}
                   loading={submitting}
+                  type="submit"
                 >
                   {Messages.submitButton}
                 </LoaderButton>

@@ -269,6 +269,7 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({ se
           disabled={!valid || pristine || submitting}
           loading={submitting}
           className={styles.createButton}
+          type="submit"
         >
           {Messages.dbcluster.editModal.confirm}
         </LoaderButton>

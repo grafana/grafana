@@ -274,6 +274,7 @@ export const AddBackupModal: FC<AddBackupModalProps> = ({
                 variant="primary"
                 disabled={!valid || pristine}
                 loading={submitting}
+                type="submit"
               >
                 {Messages.getSubmitButtonText(scheduleMode, !!backup)}
               </LoaderButton>
