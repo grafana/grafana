@@ -143,13 +143,13 @@ func (s *Service) GetDataSourcesByType(ctx context.Context, query *datasources.G
 func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) error {
 	return s.SQLStore.InTransaction(ctx, func(ctx context.Context) error {
 		var err error
+
+		cmd.EncryptedSecureJsonData = make(map[string][]byte)
 		if !s.features.IsEnabled(featuremgmt.FlagDisableSecretsCompatibility) {
 			cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
 			if err != nil {
 				return err
 			}
-		} else {
-			cmd.EncryptedSecureJsonData = make(map[string][]byte)
 		}
 
 		cmd.UpdateSecretFn = func() error {
@@ -565,13 +565,12 @@ func (s *Service) fillWithSecureJSONData(ctx context.Context, cmd *datasources.U
 		}
 	}
 
+	cmd.EncryptedSecureJsonData = make(map[string][]byte)
 	if !s.features.IsEnabled(featuremgmt.FlagDisableSecretsCompatibility) {
 		cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
 		if err != nil {
 			return err
 		}
-	} else {
-		cmd.EncryptedSecureJsonData = make(map[string][]byte)
 	}
 
 	return nil
