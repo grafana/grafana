@@ -8828,11 +8828,11 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/graphite/state/helpers.ts:3983357936": [
       [163, 73, 22, "Do not use any type assertions.", "3063692579"]
     ],
-    "public/app/plugins/datasource/graphite/state/store.ts:2705871887": [
+    "public/app/plugins/datasource/graphite/state/store.ts:207960503": [
       [93, 16, 34, "Do not use any type assertions.", "2382199947"],
       [133, 47, 26, "Do not use any type assertions.", "3915892908"],
-      [191, 14, 30, "Do not use any type assertions.", "2823515321"],
-      [198, 9, 31, "Do not use any type assertions.", "3670756765"]
+      [198, 14, 30, "Do not use any type assertions.", "2823515321"],
+      [205, 9, 31, "Do not use any type assertions.", "3670756765"]
     ],
     "public/app/plugins/datasource/graphite/types.ts:1719498934": [
       [23, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
