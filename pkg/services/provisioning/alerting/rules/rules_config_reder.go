@@ -1,4 +1,4 @@
-package alerting
+package rules
 
 import (
 	"context"

@@ -1,4 +1,4 @@
-package alerting
+package rules
 
 import (
 	"context"
@@ -39,6 +39,22 @@ type DefaultAlertRuleProvisioner struct {
 	ruleService          provisioning.AlertRuleService
 }
 
+func Provision(
+	ctx context.Context,
+	path string,
+	dashboardService dashboards.DashboardService,
+	dashboardProvisioningService dashboards.DashboardProvisioningService,
+	ruleService provisioning.AlertRuleService,
+) error {
+	ruleProvisioner := NewAlertRuleProvisioner(
+		log.New("provisioning"),
+		dashboardService,
+		dashboardProvisioningService,
+		ruleService,
+	)
+	return ruleProvisioner.Provision(ctx, path)
+}
+
 func (prov *DefaultAlertRuleProvisioner) Provision(ctx context.Context,
 	path string) error {
 	prov.logger.Info("starting to provision the alert rules")
@@ -46,7 +62,7 @@ func (prov *DefaultAlertRuleProvisioner) Provision(ctx context.Context,
 	if err != nil {
 		return fmt.Errorf("failed to read alert rules files: %w", err)
 	}
-	prov.logger.Info("read all alert rules files", "file_count", len(ruleFiles))
+	prov.logger.Debug("read all alert rules files", "file_count", len(ruleFiles))
 	err = prov.provsionRuleFiles(ctx, ruleFiles)
 	if err != nil {
 		return fmt.Errorf("failed to provision alert rules: %w", err)
@@ -119,12 +135,12 @@ func (prov *DefaultAlertRuleProvisioner) getOrCreateFolderUID(
 		OrgId: orgID,
 	}
 	err := prov.dashboardService.GetDashboard(ctx, cmd)
-	if err != nil && !errors.Is(err, models.ErrDashboardNotFound) {
+	if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {
 		return "", err
 	}
 
 	// dashboard folder not found. create one.
-	if errors.Is(err, models.ErrDashboardNotFound) {
+	if errors.Is(err, dashboards.ErrDashboardNotFound) {
 		dash := &dashboards.SaveDashboardDTO{}
 		dash.Dashboard = models.NewDashboardFolder(folderName)
 		dash.Dashboard.IsFolder = true

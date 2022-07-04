@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
-	prov_alerting "github.com/grafana/grafana/pkg/services/provisioning/alerting"
+	"github.com/grafana/grafana/pkg/services/provisioning/alerting/rules"
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning/datasources"
 	"github.com/grafana/grafana/pkg/services/provisioning/notifiers"
@@ -44,32 +44,14 @@ func ProvideService(
 	pluginSettings pluginsettings.Service,
 	searchService searchV2.SearchService,
 ) (*ProvisioningServiceImpl, error) {
-	logger := log.New("provisioning")
-	dbStore := store.DBstore{
-		BaseInterval:     cfg.UnifiedAlerting.BaseInterval,
-		DefaultInterval:  cfg.UnifiedAlerting.DefaultRuleEvaluationInterval,
-		SQLStore:         sqlStore,
-		Logger:           logger,
-		FolderService:    folderService,
-		DashboardService: dashboardService,
-		AccessControl:    ac,
-	}
-	ruleService := provisioning.NewAlertRuleService(
-		dbStore,
-		dbStore,
-		&dbStore,
-		int64(cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
-		int64(cfg.UnifiedAlerting.BaseInterval.Seconds()),
-		logger)
 	s := &ProvisioningServiceImpl{
 		Cfg:                          cfg,
 		SQLStore:                     sqlStore,
+		ac:                           ac,
 		pluginStore:                  pluginStore,
 		EncryptionService:            encryptionService,
 		NotificationService:          notificatonService,
-		log:                          logger,
 		newDashboardProvisioner:      dashboards.New,
-		alertRuleProvisioner:         prov_alerting.NewAlertRuleProvisioner(logger, dashboardService, dashboardProvisioningService, *ruleService),
 		provisionNotifiers:           notifiers.Provision,
 		provisionDatasources:         datasources.Provision,
 		provisionPlugins:             plugins.Provision,
@@ -91,7 +73,6 @@ type ProvisioningService interface {
 	ProvisionNotifications(ctx context.Context) error
 	ProvisionDashboards(ctx context.Context) error
 	ProvisionAlertRules(ctx context.Context) error
-	ProvisionAlertmanager(ctx context.Context) error
 	GetDashboardProvisionerResolvedPath(name string) string
 	GetAllowUIUpdatesFromConfig(name string) bool
 }
@@ -105,7 +86,7 @@ func NewProvisioningServiceImpl() *ProvisioningServiceImpl {
 		provisionNotifiers:      notifiers.Provision,
 		provisionDatasources:    datasources.Provision,
 		provisionPlugins:        plugins.Provision,
-		alertRuleProvisioner:    prov_alerting.NewAlertRuleProvisioner(logger, nil, nil, provisioning.AlertRuleService{}),
+		provisionRules:          rules.Provision,
 	}
 }
 
@@ -128,6 +109,7 @@ func newProvisioningServiceImpl(
 type ProvisioningServiceImpl struct {
 	Cfg                          *setting.Cfg
 	SQLStore                     *sqlstore.SQLStore
+	ac                           accesscontrol.AccessControl
 	pluginStore                  plugifaces.Store
 	EncryptionService            encryption.Internal
 	NotificationService          *notifications.NotificationService
@@ -135,15 +117,16 @@ type ProvisioningServiceImpl struct {
 	pollingCtxCancel             context.CancelFunc
 	newDashboardProvisioner      dashboards.DashboardProvisionerFactory
 	dashboardProvisioner         dashboards.DashboardProvisioner
-	alertRuleProvisioner         prov_alerting.AlertRuleProvisioner
 	provisionNotifiers           func(context.Context, string, notifiers.Manager, notifiers.SQLStore, encryption.Internal, *notifications.NotificationService) error
 	provisionDatasources         func(context.Context, string, datasources.Store, utils.OrgStore) error
 	provisionPlugins             func(context.Context, string, plugins.Store, plugifaces.Store, pluginsettings.Service) error
+	provisionRules               func(context.Context, string, dashboardservice.DashboardService, dashboardservice.DashboardProvisioningService, provisioning.AlertRuleService) error
 	mutex                        sync.Mutex
 	dashboardProvisioningService dashboardservice.DashboardProvisioningService
 	dashboardService             dashboardservice.DashboardService
 	datasourceService            datasourceservice.DataSourceService
 	alertingService              *alerting.AlertNotificationService
+	ruleService                  provisioning.AlertRuleService
 	pluginsSettings              pluginsettings.Service
 	searchService                searchV2.SearchService
 }
@@ -259,7 +242,24 @@ func (ps *ProvisioningServiceImpl) ProvisionDashboards(ctx context.Context) erro
 
 func (ps *ProvisioningServiceImpl) ProvisionAlertRules(ctx context.Context) error {
 	alertRulesPath := filepath.Join(ps.Cfg.ProvisioningPath, "alertrules")
-	return ps.alertRuleProvisioner.Provision(ctx, alertRulesPath)
+	st := store.DBstore{
+		BaseInterval:     ps.Cfg.UnifiedAlerting.BaseInterval,
+		DefaultInterval:  ps.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval,
+		SQLStore:         ps.SQLStore,
+		Logger:           ps.log,
+		FolderService:    nil, // we don't use it yet
+		AccessControl:    ps.ac,
+		DashboardService: ps.dashboardService,
+	}
+	ruleService := provisioning.NewAlertRuleService(
+		st,
+		st,
+		ps.SQLStore,
+		int64(ps.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
+		int64(ps.Cfg.UnifiedAlerting.BaseInterval.Seconds()),
+		ps.log)
+	return rules.Provision(ctx, alertRulesPath, ps.dashboardService,
+		ps.dashboardProvisioningService, *ruleService)
 }
 
 func (ps *ProvisioningServiceImpl) GetDashboardProvisionerResolvedPath(name string) string {
