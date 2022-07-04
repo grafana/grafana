@@ -9,7 +9,8 @@
     {
       "path": "public/locales/{locale}/messages",
       "include": [
-        "public/app"
+        "public/app",
+        "packages/grafana-ui"
       ],
       "exclude": [
         "**/*.d.ts",

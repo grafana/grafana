@@ -62,6 +62,10 @@ msgstr ""
 msgid "dashboard.toolbar.playlist-stop"
 msgstr ""
 
+#: public/app/features/dashboard/components/DashNav/DashNavTimeControls.tsx
+msgid "dashboard.toolbar.refresh"
+msgstr ""
+
 #: public/app/features/dashboard/components/DashNav/DashNav.tsx
 msgid "dashboard.toolbar.save"
 msgstr ""
@@ -252,6 +256,30 @@ msgstr ""
 
 #: public/app/core/components/NavBar/navBarItem-translations.ts
 msgid "nav.users"
+msgstr ""
+
+#: packages/grafana-ui/src/components/RefreshPicker/RefreshPicker.tsx
+msgid "refresh-picker.live-arialabel"
+msgstr ""
+
+#: packages/grafana-ui/src/components/RefreshPicker/RefreshPicker.tsx
+msgid "refresh-picker.live-label"
+msgstr ""
+
+#: packages/grafana-ui/src/components/RefreshPicker/RefreshPicker.tsx
+msgid "refresh-picker.off-arialabel"
+msgstr ""
+
+#: packages/grafana-ui/src/components/RefreshPicker/RefreshPicker.tsx
+msgid "refresh-picker.off-description"
+msgstr ""
+
+#: packages/grafana-ui/src/components/RefreshPicker/RefreshPicker.tsx
+msgid "refresh-picker.off-label"
+msgstr ""
+
+#: packages/grafana-ui/src/components/RefreshPicker/RefreshPicker.tsx
+msgid "refresh-picker.on-description"
 msgstr ""
 
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx

@@ -62,6 +62,10 @@ msgstr "Go to previous dashboard"
 msgid "dashboard.toolbar.playlist-stop"
 msgstr "Stop playlist"
 
+#: public/app/features/dashboard/components/DashNav/DashNavTimeControls.tsx
+msgid "dashboard.toolbar.refresh"
+msgstr "Refresh dashboard"
+
 #: public/app/features/dashboard/components/DashNav/DashNav.tsx
 msgid "dashboard.toolbar.save"
 msgstr "Save dashboard"
@@ -253,6 +257,30 @@ msgstr "Teams"
 #: public/app/core/components/NavBar/navBarItem-translations.ts
 msgid "nav.users"
 msgstr "Users"
+
+#: packages/grafana-ui/src/components/RefreshPicker/RefreshPicker.tsx
+msgid "refresh-picker.live-arialabel"
+msgstr "Turn on live streaming"
+
+#: packages/grafana-ui/src/components/RefreshPicker/RefreshPicker.tsx
+msgid "refresh-picker.live-label"
+msgstr "Live"
+
+#: packages/grafana-ui/src/components/RefreshPicker/RefreshPicker.tsx
+msgid "refresh-picker.off-arialabel"
+msgstr "Turn off auto refresh"
+
+#: packages/grafana-ui/src/components/RefreshPicker/RefreshPicker.tsx
+msgid "refresh-picker.off-description"
+msgstr "Auto refresh turned off. Choose refresh time interval"
+
+#: packages/grafana-ui/src/components/RefreshPicker/RefreshPicker.tsx
+msgid "refresh-picker.off-label"
+msgstr "Off"
+
+#: packages/grafana-ui/src/components/RefreshPicker/RefreshPicker.tsx
+msgid "refresh-picker.on-description"
+msgstr "Choose refresh time interval with current interval {durationAriaLabel} selected"
 
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx
 msgid "shared-dashboard.fields.timezone-label"

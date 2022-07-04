@@ -1,3 +1,4 @@
+import { t } from '@lingui/macro';
 import React, { Component } from 'react';
 import { Unsubscribable } from 'rxjs';
 
@@ -103,7 +104,7 @@ export class DashNavTimeControls extends Component<Props> {
           onRefresh={this.onRefresh}
           value={dashboard.refresh}
           intervals={intervals}
-          tooltip="Refresh dashboard"
+          tooltip={t({ id: 'dashboard.toolbar.refresh', message: 'Refresh dashboard' })}
           noIntervalPicker={hideIntervalPicker}
         />
       </ToolbarButtonRow>

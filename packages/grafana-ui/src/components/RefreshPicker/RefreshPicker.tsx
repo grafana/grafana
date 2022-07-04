@@ -1,3 +1,5 @@
+import { i18n, MessageDescriptor } from '@lingui/core';
+import { t, defineMessage } from '@lingui/macro';
 import formatDuration from 'date-fns/formatDuration';
 import React, { PureComponent } from 'react';
 
@@ -9,8 +11,8 @@ import { ButtonSelect } from '../Dropdown/ButtonSelect';
 import { ToolbarButtonVariant, ToolbarButton } from '../ToolbarButton';
 
 // Default intervals used in the refresh picker component
+// TODO: How to translate these?
 export const defaultIntervals = ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d'];
-const offLabel = 'Auto refresh turned off. Choose refresh time interval';
 
 export interface Props {
   intervals?: string[];
@@ -26,10 +28,41 @@ export interface Props {
   primary?: boolean;
 }
 
+interface UntranslatedOption {
+  label: MessageDescriptor;
+  value: string;
+  ariaLabel: MessageDescriptor;
+}
+
 export class RefreshPicker extends PureComponent<Props> {
-  static offOption = { label: 'Off', value: '', ariaLabel: 'Turn off auto refresh' };
-  static liveOption = { label: 'Live', value: 'LIVE', ariaLabel: 'Turn on live streaming' };
+  static offOption = {
+    label: defineMessage({
+      id: 'refresh-picker.off-label',
+      message: 'Off',
+    }),
+    value: '',
+    ariaLabel: defineMessage({
+      id: 'refresh-picker.off-arialabel',
+      message: 'Turn off auto refresh',
+    }),
+  };
+  static liveOption = {
+    label: defineMessage({
+      id: 'refresh-picker.live-label',
+      message: 'Live',
+    }),
+    value: 'LIVE',
+    ariaLabel: defineMessage({
+      id: 'refresh-picker.live-arialabel',
+      message: 'Turn on live streaming',
+    }),
+  };
   static isLive = (refreshInterval?: string): boolean => refreshInterval === RefreshPicker.liveOption.value;
+  static translateOption = (option: UntranslatedOption) => ({
+    value: option.value,
+    label: i18n._(option.label),
+    ariaLabel: i18n._(option.ariaLabel),
+  });
 
   constructor(props: Props) {
     super(props);
@@ -63,11 +96,24 @@ export class RefreshPicker extends PureComponent<Props> {
     const variant = this.getVariant();
     const options = intervalsToOptions({ intervals });
     const option = options.find(({ value }) => value === currentValue);
-    let selectedValue = option || RefreshPicker.offOption;
+    const translatedOffOption = RefreshPicker.translateOption(RefreshPicker.offOption);
+    let selectedValue = option || translatedOffOption;
 
-    if (selectedValue.label === RefreshPicker.offOption.label) {
+    if (selectedValue.label === translatedOffOption.label) {
       selectedValue = { value: '' };
     }
+
+    const durationAriaLabel = selectedValue.ariaLabel;
+    const ariaLabel =
+      selectedValue.value === ''
+        ? t({
+            id: 'refresh-picker.off-description',
+            message: 'Auto refresh turned off. Choose refresh time interval',
+          })
+        : t({
+            id: 'refresh-picker.on-description',
+            message: `Choose refresh time interval with current interval ${durationAriaLabel} selected`,
+          });
 
     return (
       <ButtonGroup className="refresh-picker">
@@ -89,11 +135,7 @@ export class RefreshPicker extends PureComponent<Props> {
             onChange={this.onChangeSelect as any}
             variant={variant}
             data-testid={selectors.components.RefreshPicker.intervalButtonV2}
-            aria-label={
-              selectedValue.value === ''
-                ? offLabel
-                : `Choose refresh time interval with current interval ${selectedValue.ariaLabel} selected`
-            }
+            aria-label={ariaLabel}
           />
         )}
       </ButtonGroup>
@@ -116,6 +158,6 @@ export function intervalsToOptions({ intervals = defaultIntervals }: { intervals
     };
   });
 
-  options.unshift(RefreshPicker.offOption);
+  options.unshift(RefreshPicker.translateOption(RefreshPicker.offOption));
   return options;
 }
