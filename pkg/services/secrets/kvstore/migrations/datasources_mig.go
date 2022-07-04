@@ -49,7 +49,7 @@ func (s *DataSourceSecretMigrationService) Migrate(ctx context.Context) error {
 	}
 	for _, ds := range query.Result {
 		err = s.sqlStore.InTransaction(ctx, func(ctx context.Context) error {
-			hasMigration, _ := ds.JsonData.Get("secretMigrationComplete").Bool()
+			hasMigration := ds.JsonData.Get("secretMigrationComplete").MustBool()
 			if !hasMigration {
 				secureJsonData, err := s.dataSourcesService.DecryptLegacySecrets(ctx, ds)
 				if err != nil {
