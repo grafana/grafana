@@ -55,9 +55,6 @@ type DataSourceService interface {
 	// decrypted value.
 	DecryptedPassword(ctx context.Context, ds *DataSource) (string, error)
 
-	// DeleteDataSourceSecrets deletes the secure json data stored in the data source table
-	DeleteDataSourceSecrets(ctx context.Context, cmd *DeleteDataSourceSecretsCommand) error
-
 	// DecryptLegacySecrets decrypts the encrypted data stored in the SecureJsonData field
 	DecryptLegacySecrets(ctx context.Context, ds *DataSource) (map[string]string, error)
 }

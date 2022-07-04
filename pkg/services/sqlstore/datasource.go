@@ -143,33 +143,6 @@ func (ss *SQLStore) DeleteDataSource(ctx context.Context, cmd *datasources.Delet
 	})
 }
 
-// DeleteDataSourceSecrets removes a datasource secure_json_data by org_id as well as either uid (preferred), id, or name.
-func (ss *SQLStore) DeleteDataSourceSecrets(ctx context.Context, cmd *datasources.DeleteDataSourceSecretsCommand) error {
-	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-		if cmd.OrgID == 0 || len(cmd.UID) == 0 {
-			return datasources.ErrDataSourceIdentifierNotSet
-		}
-
-		result, err := sess.Exec("UPDATE data_source SET secure_json_data=? WHERE org_id=? AND uid=?", "{}", cmd.OrgID, cmd.UID)
-		if err != nil {
-			return err
-		}
-
-		cmd.DeletedSecretsCount, _ = result.RowsAffected()
-
-		// Publish data source deletion event
-		sess.publishAfterCommit(&events.DataSourceSecretDeleted{
-			Timestamp: time.Now(),
-			Name:      cmd.Name,
-			ID:        cmd.ID,
-			UID:       cmd.UID,
-			OrgID:     cmd.OrgID,
-		})
-
-		return nil
-	})
-}
-
 func (ss *SQLStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) error {
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		existing := datasources.DataSource{OrgId: cmd.OrgId, Name: cmd.Name}
