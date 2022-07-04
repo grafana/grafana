@@ -4655,12 +4655,11 @@ exports[`better eslint`] = {
       [207, 40, 20, "Do not use any type assertions.", "2225958749"],
       [207, 57, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/dashboard/components/DashboardRow/DashboardRow.test.tsx:3204880669": [
+    "public/app/features/dashboard/components/DashboardRow/DashboardRow.test.tsx:3328105205": [
       [9, 40, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/dashboard/components/DashboardRow/DashboardRow.tsx:2916737379": [
-      [19, 69, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [46, 30, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/features/dashboard/components/DashboardRow/DashboardRow.tsx:3890988818": [
+      [19, 69, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/dashboard/components/DashboardSettings/AnnotationsSettings.test.tsx:1365286122": [
       [12, 17, 3, "Unexpected any. Specify a different type.", "193409811"]
