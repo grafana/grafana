@@ -81,6 +81,22 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
     return <Switch>{getAppRoutes().map((r) => this.renderRoute(r))}</Switch>;
   }
 
+  renderNavBar() {
+    if (config.isPublicDashboardView || !this.state.ready || config.featureToggles.topnav) {
+      return null;
+    }
+
+    return <NavBar />;
+  }
+
+  commandPaletteEnabled() {
+    return config.featureToggles.commandPalette && !config.isPublicDashboardView;
+  }
+
+  searchBarEnabled() {
+    return !config.isPublicDashboardView;
+  }
+
   render() {
     const { ready } = this.state;
 
@@ -89,16 +105,9 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
     const commandPaletteActionSelected = (action: Action) => {
       reportInteraction('commandPalette_action_selected', {
         actionId: action.id,
+        actionName: action.name,
       });
     };
-
-    const commandPaletteEnabled = () => !config.isPublicDashboardView && config.featureToggles.commandPalette;
-
-    const renderNavBar = () => {
-      return !config.isPublicDashboardView && ready && <NavBar />;
-    };
-
-    const searchBarEnabled = () => !config.isPublicDashboardView;
 
     return (
       <Provider store={store}>
@@ -112,10 +121,10 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                 >
                   <ModalsProvider>
                     <GlobalStyles />
-                    {commandPaletteEnabled() && <CommandPalette />}
+                    {this.commandPaletteEnabled() && <CommandPalette />}
                     <div className="grafana-app">
                       <Router history={locationService.getHistory()}>
-                        {renderNavBar()}
+                        {this.renderNavBar()}
                         <main className="main-view">
                           {pageBanners.map((Banner, index) => (
                             <Banner key={index.toString()} />
@@ -123,7 +132,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
 
                           <AngularRoot />
                           <AppNotificationList />
-                          {searchBarEnabled() && <SearchWrapper />}
+                          {this.searchBarEnabled() && <SearchWrapper />}
                           {ready && this.renderRoutes()}
                           {bodyRenderHooks.map((Hook, index) => (
                             <Hook key={index.toString()} />

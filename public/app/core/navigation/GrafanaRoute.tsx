@@ -2,8 +2,9 @@ import React from 'react';
 // @ts-ignore
 import Drop from 'tether-drop';
 
-import { locationSearchToObject, navigationLogger, reportPageview } from '@grafana/runtime';
+import { config, locationSearchToObject, navigationLogger, reportPageview } from '@grafana/runtime';
 
+import { TopNavPage } from '../components/TopNav/TopNavPage';
 import { keybindingSrv } from '../services/keybindingSrv';
 
 import { GrafanaRouteComponentProps } from './types';
@@ -70,7 +71,12 @@ export class GrafanaRoute extends React.Component<Props> {
     navigationLogger('GrafanaRoute', false, 'Rendered', props.route);
 
     const RouteComponent = props.route.component;
+    const routeElement = <RouteComponent {...props} queryParams={locationSearchToObject(props.location.search)} />;
 
-    return <RouteComponent {...props} queryParams={locationSearchToObject(props.location.search)} />;
+    if (config.featureToggles.topnav && !props.route.navHidden) {
+      return <TopNavPage navId={props.route.navId}>{routeElement}</TopNavPage>;
+    }
+
+    return routeElement;
   }
 }

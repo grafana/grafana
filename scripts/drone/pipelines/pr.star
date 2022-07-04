@@ -32,6 +32,7 @@ load(
     'verify_gen_cue_step',
     'test_a11y_frontend_step',
     'enterprise_downstream_step',
+    'betterer_frontend_step',
 )
 
 load(
@@ -79,6 +80,7 @@ def pr_test_frontend():
     ]
     test_steps = [
         lint_frontend_step(),
+        betterer_frontend_step(),
         test_frontend_step(),
     ]
     return pipeline(
@@ -91,7 +93,7 @@ def pr_test_backend():
         identify_runner_step(),
         download_grabpl_step(),
         gen_version_step(ver_mode),
-        verify_gen_cue_step(),
+        verify_gen_cue_step(edition="oss"),
         wire_install_step(),
     ]
     test_steps = [
@@ -115,7 +117,7 @@ def pr_pipelines(edition):
         identify_runner_step(),
         download_grabpl_step(),
         gen_version_step(ver_mode),
-        verify_gen_cue_step(),
+        verify_gen_cue_step(edition="oss"),
         wire_install_step(),
         yarn_install_step(),
     ]
@@ -153,7 +155,7 @@ def pr_pipelines(edition):
             name='pr-build-e2e', edition=edition, trigger=trigger, services=[], steps=init_steps + build_steps,
         ), pipeline(
             name='pr-integration-tests', edition=edition, trigger=trigger, services=services,
-            steps=[download_grabpl_step(), identify_runner_step(), verify_gen_cue_step(), wire_install_step(), ] + integration_test_steps,
+            steps=[download_grabpl_step(), identify_runner_step(), verify_gen_cue_step(edition="oss"), wire_install_step(), ] + integration_test_steps,
             volumes=volumes,
         ), docs_pipelines(edition, ver_mode, trigger_docs())
     ]

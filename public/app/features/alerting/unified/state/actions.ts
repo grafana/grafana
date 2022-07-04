@@ -1,7 +1,7 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { isEmpty } from 'lodash';
 
-import { getBackendSrv, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import {
   AlertmanagerAlert,
   AlertManagerCortexConfig,
@@ -27,6 +27,7 @@ import {
 } from 'app/types/unified-alerting';
 import { PromApplication, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
+import { backendSrv } from '../../../../core/services/backend_srv';
 import {
   addAlertManagers,
   createOrUpdateSilence,
@@ -129,6 +130,7 @@ export const fetchAlertManagerConfigAction = createAsyncThunk(
             return fetchStatus(alertManagerSourceName).then((status) => ({
               alertmanager_config: status.config,
               template_files: {},
+              template_file_provenances: result.template_file_provenances,
             }));
           }
           return result;
@@ -567,7 +569,7 @@ export const deleteTemplateAction = (templateName: string, alertManagerSourceNam
 
 export const fetchFolderAction = createAsyncThunk(
   'unifiedalerting/fetchFolder',
-  (uid: string): Promise<FolderDTO> => withSerializedError((getBackendSrv() as any).getFolderByUid(uid))
+  (uid: string): Promise<FolderDTO> => withSerializedError(backendSrv.getFolderByUid(uid, { withAccessControl: true }))
 );
 
 export const fetchFolderIfNotFetchedAction = (uid: string): ThunkResult<void> => {

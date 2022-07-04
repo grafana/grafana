@@ -7,19 +7,21 @@ import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { BackendSrv, locationService, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
+import { locationService, setDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardSearchHit } from 'app/features/search/types';
 import { configureStore } from 'app/store/configureStore';
 import { GrafanaAlertStateDecision, PromApplication } from 'app/types/unified-alerting-dto';
 
 import { searchFolders } from '../../../../app/features/manage-dashboards/state/actions';
+import { backendSrv } from '../../../core/services/backend_srv';
+import { AccessControlAction } from '../../../types';
 
 import RuleEditor from './RuleEditor';
 import { discoverFeatures } from './api/buildInfo';
 import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
-import { disableRBAC, mockDataSource, MockDataSourceSrv } from './mocks';
+import { disableRBAC, mockDataSource, MockDataSourceSrv, mockFolder } from './mocks';
 import { getAllDataSources } from './utils/config';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { getDefaultQueries } from './utils/rule-form';
@@ -404,10 +406,7 @@ describe('RuleEditor', () => {
       uid: 'abcd',
       id: 1,
     };
-    const getFolderByUid = jest.fn().mockResolvedValue({
-      ...folder,
-      canSave: true,
-    });
+
     const dataSources = {
       default: mockDataSource({
         type: 'prometheus',
@@ -416,10 +415,13 @@ describe('RuleEditor', () => {
       }),
     };
 
-    const backendSrv = {
-      getFolderByUid,
-    } as any as BackendSrv;
-    setBackendSrv(backendSrv);
+    jest.spyOn(backendSrv, 'getFolderByUid').mockResolvedValue({
+      ...mockFolder(),
+      accessControl: {
+        [AccessControlAction.AlertingRuleUpdate]: true,
+      },
+    });
+
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
 
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));

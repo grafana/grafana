@@ -125,7 +125,7 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			endpoint := fmt.Sprintf(serviceaccountIDTokensPath, sa.Id)
+			endpoint := fmt.Sprintf(serviceaccountIDTokensPath, sa.ID)
 			bodyString := ""
 			if tc.body != nil {
 				b, err := json.Marshal(tc.body)
@@ -146,12 +146,12 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 			if actualCode == http.StatusOK {
 				assert.Equal(t, tc.body["name"], actualBody["name"])
 
-				query := models.GetApiKeyByNameQuery{KeyName: tc.body["name"].(string), OrgId: sa.OrgId}
+				query := models.GetApiKeyByNameQuery{KeyName: tc.body["name"].(string), OrgId: sa.OrgID}
 				err = store.GetApiKeyByName(context.Background(), &query)
 				require.NoError(t, err)
 
-				assert.Equal(t, sa.Id, *query.Result.ServiceAccountId)
-				assert.Equal(t, sa.OrgId, query.Result.OrgId)
+				assert.Equal(t, sa.ID, *query.Result.ServiceAccountId)
+				assert.Equal(t, sa.OrgID, query.Result.OrgId)
 				assert.True(t, strings.HasPrefix(actualBody["key"].(string), "glsa"))
 
 				keyInfo, err := apikeygenprefix.Decode(actualBody["key"].(string))
@@ -229,9 +229,9 @@ func TestServiceAccountsAPI_DeleteToken(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			token := createTokenforSA(t, saStore, tc.keyName, sa.OrgId, sa.Id, 1)
+			token := createTokenforSA(t, saStore, tc.keyName, sa.OrgID, sa.ID, 1)
 
-			endpoint := fmt.Sprintf(serviceaccountIDTokensDetailPath, sa.Id, token.Id)
+			endpoint := fmt.Sprintf(serviceaccountIDTokensDetailPath, sa.ID, token.Id)
 			bodyString := ""
 			server, _ := setupTestServer(t, svcMock, routing.NewRouteRegister(), tc.acmock, store, saStore)
 			actual := requestResponse(server, http.MethodDelete, endpoint, strings.NewReader(bodyString))
@@ -242,7 +242,7 @@ func TestServiceAccountsAPI_DeleteToken(t *testing.T) {
 			_ = json.Unmarshal(actual.Body.Bytes(), &actualBody)
 			require.Equal(t, tc.expectedCode, actualCode, endpoint, actualBody)
 
-			query := models.GetApiKeyByNameQuery{KeyName: tc.keyName, OrgId: sa.OrgId}
+			query := models.GetApiKeyByNameQuery{KeyName: tc.keyName, OrgId: sa.OrgID}
 			err := store.GetApiKeyByName(context.Background(), &query)
 			if actualCode == http.StatusOK {
 				require.Error(t, err)
@@ -354,7 +354,7 @@ func TestServiceAccountsAPI_ListTokens(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			endpoint := fmt.Sprintf(serviceAccountIDPath+"/tokens", sa.Id)
+			endpoint := fmt.Sprintf(serviceAccountIDPath+"/tokens", sa.ID)
 			server, _ := setupTestServer(t, &svcmock, routing.NewRouteRegister(), tc.acmock, store, &saStoreMockTokens{saAPIKeys: tc.tokens})
 			actual := requestResponse(server, http.MethodGet, endpoint, http.NoBody)
 
