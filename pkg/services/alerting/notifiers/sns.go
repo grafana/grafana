@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -38,15 +39,15 @@ func init() {
 				Required: true,
 				SelectOptions: []alerting.SelectOption{
 					{
-						Value: "default",
+						Value: awsds.AuthTypeDefault.String(),
 						Label: "AWS SDK Default",
 					},
 					{
-						Value: "credentials",
+						Value: awsds.AuthTypeSharedCreds.String(),
 						Label: "Credentials profile",
 					},
 					{
-						Value: "keys",
+						Value: awsds.AuthTypeKeys.String(),
 						Label: "Access & secret key",
 					},
 				},
@@ -82,7 +83,7 @@ func init() {
 				PropertyName: "credentials",
 				ShowWhen: alerting.ShowWhen{
 					Field: "authProvider",
-					Is:    "credentials",
+					Is:    awsds.AuthTypeSharedCreds.String(),
 				},
 			},
 			{
@@ -95,7 +96,7 @@ func init() {
 				PropertyName: "accessKey",
 				ShowWhen: alerting.ShowWhen{
 					Field: "authProvider",
-					Is:    "keys",
+					Is:    awsds.AuthTypeKeys.String(),
 				},
 			},
 			{
@@ -108,7 +109,7 @@ func init() {
 				PropertyName: "secretKey",
 				ShowWhen: alerting.ShowWhen{
 					Field: "authProvider",
-					Is:    "keys",
+					Is:    awsds.AuthTypeKeys.String(),
 				},
 			},
 		},
@@ -124,24 +125,29 @@ func newSNSNotifier(model *models.AlertNotification, fn alerting.GetDecryptedVal
 		return nil, alerting.ValidationError{Reason: "Invalid topic ARN provided."}
 	}
 
+	var externalID, accessKey, secretKey, credentials string
 	region := arnSlice[3]
-
 	authType := model.Settings.Get("authProvider").MustString()
-	externalID := model.Settings.Get("externalId").MustString()
-	accessKey := fn(context.Background(), model.SecureSettings, "accessKey", model.Settings.Get("accessKey").MustString(), setting.SecretKey)
-	secretKey := fn(context.Background(), model.SecureSettings, "secretKey", model.Settings.Get("secretKey").MustString(), setting.SecretKey)
 	messageFormat := model.Settings.Get("messageFormat").MustString("text")
 	includeTags := model.Settings.Get("includeTags").MustBool(false)
-	credentials := model.Settings.Get("credentials").MustString()
 
 	at := awsds.AuthTypeDefault
 	switch authType {
-	case "credentials":
+	case awsds.AuthTypeSharedCreds.String():
+		credentials = model.Settings.Get("credentials").MustString()
 		if credentials == "" {
 			return nil, alerting.ValidationError{Reason: "Credentials Profile not provided."}
 		}
 		at = awsds.AuthTypeSharedCreds
-	case "keys":
+	case awsds.AuthTypeSharedCreds.String():
+		credentials = model.Settings.Get("credentialsProfile").MustString()
+		if credentials == "" {
+			return nil, alerting.ValidationError{Reason: "Credentials Profile not provided."}
+		}
+		at = awsds.AuthTypeSharedCreds
+	case awsds.AuthTypeKeys.String():
+		accessKey = fn(context.Background(), model.SecureSettings, "accessKey", model.Settings.Get("accessKey").MustString(), setting.SecretKey)
+		secretKey = fn(context.Background(), model.SecureSettings, "secretKey", model.Settings.Get("secretKey").MustString(), setting.SecretKey)
 		if accessKey == "" {
 			return nil, alerting.ValidationError{Reason: "Access Key not provided."}
 		}
@@ -149,10 +155,8 @@ func newSNSNotifier(model *models.AlertNotification, fn alerting.GetDecryptedVal
 			return nil, alerting.ValidationError{Reason: "Secret Key not provided."}
 		}
 		at = awsds.AuthTypeKeys
-	case "default":
+	case awsds.AuthTypeDefault.String():
 		at = awsds.AuthTypeDefault
-	case "ec2_iam_role":
-		at = awsds.AuthTypeEC2IAMRole
 	default:
 		snsLogger.Warn("Unrecognized AWS authentication type", "type", authType)
 	}
@@ -169,7 +173,6 @@ func newSNSNotifier(model *models.AlertNotification, fn alerting.GetDecryptedVal
 	return &SNSNotifier{
 		NotifierBase:          NewNotifierBase(model, ns),
 		SnsTopic:              topicArn,
-		Region:                region,
 		AWSDatasourceSettings: awsDatasourceSettings,
 		Message:               "",
 		MessageFormat:         messageFormat,
@@ -186,7 +189,6 @@ type SNSNotifier struct {
 	MessageFormat         string
 	IncludeTags           bool
 	SNSClient             *sns.SNS
-	Region                string
 	AWSDatasourceSettings *awsds.AWSDatasourceSettings
 	log                   log.Logger
 }
@@ -252,12 +254,12 @@ func (snsNotifier *SNSNotifier) Notify(evalContext *alerting.EvalContext) error 
 	snsNotifier.log.Info("Sending to AWS SNS")
 
 	awsDatasourceSettings := snsNotifier.AWSDatasourceSettings
-	sessionConfig := awsds.SessionConfig{
-		Settings:      *awsDatasourceSettings,
-		UserAgentName: aws.String("Grafana SNS Notifier"),
+	awsSessionConfig := &awsds.SessionConfig{
+		Settings: *awsDatasourceSettings,
 	}
+
 	sessions := awsds.NewSessionCache()
-	session, err := sessions.GetSession(sessionConfig)
+	session, err := sessions.GetSession(*awsSessionConfig)
 
 	if err != nil {
 		return err
