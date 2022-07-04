@@ -319,7 +319,7 @@ exports[`better eslint`] = {
       [91, 13, 28, "Do not use any type assertions.", "2187961375"],
       [93, 13, 24, "Do not use any type assertions.", "1019297299"]
     ],
-    "packages/grafana-data/src/datetime/rangeutil.ts:2182917545": [
+    "packages/grafana-data/src/datetime/rangeutil.ts:2234129242": [
       [88, 18, 3, "Unexpected any. Specify a different type.", "193409811"],
       [89, 27, 3, "Unexpected any. Specify a different type.", "193409811"],
       [92, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -1715,7 +1715,7 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/Graph/GraphContextMenu.tsx:3875310700": [
       [22, 53, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "packages/grafana-ui/src/components/Graph/utils.ts:3717868215": [
+    "packages/grafana-ui/src/components/Graph/utils.ts:3619837376": [
       [104, 56, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "packages/grafana-ui/src/components/GraphNG/GraphNG.tsx:94669281": [
@@ -2299,7 +2299,7 @@ exports[`better eslint`] = {
       [59, 12, 198, "Do not use any type assertions.", "2203342350"],
       [65, 26, 341, "Do not use any type assertions.", "3792878509"]
     ],
-    "packages/grafana-ui/src/components/uPlot/config/UPlotAxisBuilder.ts:895023121": [
+    "packages/grafana-ui/src/components/uPlot/config/UPlotAxisBuilder.ts:3245297597": [
       [23, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
       [170, 39, 3, "Unexpected any. Specify a different type.", "193409811"],
       [174, 5, 13, "Do not use any type assertions.", "268797995"],
@@ -10621,7 +10621,7 @@ exports[`better eslint`] = {
       [604, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
       [771, 13, 102, "Do not use any type assertions.", "3728825486"]
     ],
-    "public/app/plugins/datasource/tempo/datasource.ts:444582083": [
+    "public/app/plugins/datasource/tempo/datasource.ts:252130627": [
       [146, 71, 23, "Do not use any type assertions.", "635329421"],
       [146, 91, 3, "Unexpected any. Specify a different type.", "193409811"],
       [160, 22, 70, "Do not use any type assertions.", "2827277152"],
