@@ -86,6 +86,30 @@ msgstr ""
 msgid "dashboard.toolbar.unmark-favorite"
 msgstr ""
 
+#: packages/grafana-ui/src/components/RefreshPicker/RefreshPicker.tsx
+msgid "grafana-ui.refresh-picker.live-arialabel"
+msgstr ""
+
+#: packages/grafana-ui/src/components/RefreshPicker/RefreshPicker.tsx
+msgid "grafana-ui.refresh-picker.live-label"
+msgstr ""
+
+#: packages/grafana-ui/src/components/RefreshPicker/RefreshPicker.tsx
+msgid "grafana-ui.refresh-picker.off-arialabel"
+msgstr ""
+
+#: packages/grafana-ui/src/components/RefreshPicker/RefreshPicker.tsx
+msgid "grafana-ui.refresh-picker.off-description"
+msgstr ""
+
+#: packages/grafana-ui/src/components/RefreshPicker/RefreshPicker.tsx
+msgid "grafana-ui.refresh-picker.off-label"
+msgstr ""
+
+#: packages/grafana-ui/src/components/RefreshPicker/RefreshPicker.tsx
+msgid "grafana-ui.refresh-picker.on-description"
+msgstr ""
+
 #: public/app/core/components/NavBar/navBarItem-translations.ts
 msgid "nav.alerting"
 msgstr ""
@@ -166,10 +190,6 @@ msgstr ""
 msgid "nav.explore"
 msgstr ""
 
-#: public/app/core/components/NavBar/NavBarItem.tsx
-#~ msgid "nav.folder"
-#~ msgstr ""
-
 #: public/app/core/components/NavBar/navBarItem-translations.ts
 msgid "nav.help"
 msgstr ""
@@ -177,10 +197,6 @@ msgstr ""
 #: public/app/core/components/NavBar/navBarItem-translations.ts
 msgid "nav.home"
 msgstr ""
-
-#: public/app/core/components/NavBar/NavBarItem.tsx
-#~ msgid "nav.import"
-#~ msgstr ""
 
 #: public/app/core/components/NavBar/navBarItem-translations.ts
 msgid "nav.library-panels"
@@ -256,30 +272,6 @@ msgstr ""
 
 #: public/app/core/components/NavBar/navBarItem-translations.ts
 msgid "nav.users"
-msgstr ""
-
-#: packages/grafana-ui/src/components/RefreshPicker/RefreshPicker.tsx
-msgid "refresh-picker.live-arialabel"
-msgstr ""
-
-#: packages/grafana-ui/src/components/RefreshPicker/RefreshPicker.tsx
-msgid "refresh-picker.live-label"
-msgstr ""
-
-#: packages/grafana-ui/src/components/RefreshPicker/RefreshPicker.tsx
-msgid "refresh-picker.off-arialabel"
-msgstr ""
-
-#: packages/grafana-ui/src/components/RefreshPicker/RefreshPicker.tsx
-msgid "refresh-picker.off-description"
-msgstr ""
-
-#: packages/grafana-ui/src/components/RefreshPicker/RefreshPicker.tsx
-msgid "refresh-picker.off-label"
-msgstr ""
-
-#: packages/grafana-ui/src/components/RefreshPicker/RefreshPicker.tsx
-msgid "refresh-picker.on-description"
 msgstr ""
 
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx

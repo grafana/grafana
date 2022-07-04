@@ -37,23 +37,23 @@ interface UntranslatedOption {
 export class RefreshPicker extends PureComponent<Props> {
   static offOption = {
     label: defineMessage({
-      id: 'refresh-picker.off-label',
+      id: 'grafana-ui.refresh-picker.off-label',
       message: 'Off',
     }),
     value: '',
     ariaLabel: defineMessage({
-      id: 'refresh-picker.off-arialabel',
+      id: 'grafana-ui.refresh-picker.off-arialabel',
       message: 'Turn off auto refresh',
     }),
   };
   static liveOption = {
     label: defineMessage({
-      id: 'refresh-picker.live-label',
+      id: 'grafana-ui.refresh-picker.live-label',
       message: 'Live',
     }),
     value: 'LIVE',
     ariaLabel: defineMessage({
-      id: 'refresh-picker.live-arialabel',
+      id: 'grafana-ui.refresh-picker.live-arialabel',
       message: 'Turn on live streaming',
     }),
   };
@@ -107,11 +107,11 @@ export class RefreshPicker extends PureComponent<Props> {
     const ariaLabel =
       selectedValue.value === ''
         ? t({
-            id: 'refresh-picker.off-description',
+            id: 'grafana-ui.refresh-picker.off-description',
             message: 'Auto refresh turned off. Choose refresh time interval',
           })
         : t({
-            id: 'refresh-picker.on-description',
+            id: 'grafana-ui.refresh-picker.on-description',
             message: `Choose refresh time interval with current interval ${durationAriaLabel} selected`,
           });
 

@@ -1886,7 +1886,7 @@ exports[`better eslint`] = {
       [44, 67, 3, "Unexpected any. Specify a different type.", "193409811"],
       [75, 55, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "packages/grafana-ui/src/components/RefreshPicker/RefreshPicker.tsx:3091514351": [
+    "packages/grafana-ui/src/components/RefreshPicker/RefreshPicker.tsx:1150827759": [
       [18, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
       [134, 22, 26, "Do not use any type assertions.", "1691945126"],
       [134, 45, 3, "Unexpected any. Specify a different type.", "193409811"]
