@@ -273,9 +273,9 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(accesscontrol.DashboardPermissionsService), new(*ossaccesscontrol.DashboardPermissionsService)),
 	starimpl.ProvideService,
 	dashverimpl.ProvideService,
-	secretsMigrations.ProvideDataSourceMigrationService,
 	userimpl.ProvideService,
 	orgimpl.ProvideService,
+	datasourceservice.ProvideDataSourceMigrationService,
 	secretsMigrations.ProvideSecretMigrationService,
 	wire.Bind(new(secretsMigrations.SecretMigrationService), new(*secretsMigrations.SecretMigrationServiceImpl)),
 )

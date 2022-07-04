@@ -1,10 +1,9 @@
-package migrations
+package service
 
 import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
@@ -17,7 +16,6 @@ type DataSourceSecretMigrationService struct {
 	dataSourcesService datasources.DataSourceService
 	secretsStore       kvstore.SecretsKVStore
 	features           featuremgmt.FeatureToggles
-	log                log.Logger
 	bus                bus.Bus
 }
 
@@ -31,7 +29,6 @@ func ProvideDataSourceMigrationService(
 		dataSourcesService: dataSourcesService,
 		secretsStore:       secretsStore,
 		features:           features,
-		log:                logger,
 		bus:                bus,
 	}
 }

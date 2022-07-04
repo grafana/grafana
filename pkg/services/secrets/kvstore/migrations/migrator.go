@@ -7,6 +7,7 @@ import (
 	"reflect"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	datasources "github.com/grafana/grafana/pkg/services/datasources/service"
 )
 
 var logger = log.New("secret.migration")
@@ -21,7 +22,7 @@ type SecretMigrationServiceImpl struct {
 }
 
 func ProvideSecretMigrationService(
-	dataSourceSecretMigrationService *DataSourceSecretMigrationService,
+	dataSourceSecretMigrationService *datasources.DataSourceSecretMigrationService,
 ) *SecretMigrationServiceImpl {
 	return NewSecretMigrationService(
 		dataSourceSecretMigrationService,
