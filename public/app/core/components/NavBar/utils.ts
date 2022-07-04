@@ -130,8 +130,9 @@ export const getActiveItem = (
 
   for (const link of navTree) {
     const linkPathname = stripQueryParams(link.url);
+
     if (linkPathname) {
-      if (linkPathname === pathname) {
+      if (linkPathname === pathname || linkPathname.includes(`${config.appSubUrl}${pathname}`)) {
         // exact match
         currentBestMatch = link;
         break;

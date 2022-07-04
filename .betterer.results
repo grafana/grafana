@@ -3457,9 +3457,6 @@ exports[`better eslint`] = {
       [241, 54, 26, "Do not use any type assertions.", "1541386804"],
       [445, 23, 21, "Do not use any type assertions.", "1121249950"]
     ],
-    "public/app/core/components/NavBar/NavBarMenuItem.tsx:3959297243": [
-      [77, 20, 21, "Do not use any type assertions.", "2327357803"]
-    ],
     "public/app/core/components/NavBar/NestedSubMenu.tsx:1315632916": [
       [17, 38, 21, "Do not use any type assertions.", "2327357803"]
     ],

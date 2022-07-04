@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, IconName, Link, useTheme2 } from '@grafana/ui';
 
 export interface Props {
@@ -15,7 +15,6 @@ export interface Props {
   url?: string;
   adjustHeightForBorder?: boolean;
   isMobile?: boolean;
-  childrenItems?: NavModelItem[];
 }
 
 export function NavBarMenuItem({
@@ -28,7 +27,6 @@ export function NavBarMenuItem({
   text,
   url,
   isMobile = false,
-  childrenItems = [],
 }: Props) {
   const theme = useTheme2();
   const styles = getStyles(theme, isActive);
@@ -60,31 +58,6 @@ export function NavBarMenuItem({
           {linkContent}
         </a>
       );
-  }
-  if (isMobile) {
-    return (
-      <>
-        {isDivider ? (
-          <li data-testid="dropdown-child-divider" className={styles.divider} tabIndex={-1} aria-disabled />
-        ) : (
-          <li>{element}</li>
-        )}
-        {!!childrenItems.length &&
-          childrenItems.map((item) => (
-            <NavBarMenuItem
-              text={item.text}
-              key={item.id}
-              isDivider={item.divider}
-              icon={item.icon as IconName}
-              target={item.target}
-              onClick={item.onClick}
-              url={item.url}
-              styleOverrides={styleOverrides}
-              childrenItems={item.children}
-            />
-          ))}
-      </>
-    );
   }
 
   if (isMobile) {
