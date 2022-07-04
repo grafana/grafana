@@ -7,12 +7,10 @@ import Attribution from 'ol/control/Attribution';
 import ScaleLine from 'ol/control/ScaleLine';
 import Zoom from 'ol/control/Zoom';
 import { Coordinate } from 'ol/coordinate';
-import { createEmpty, extend, isEmpty } from 'ol/extent';
+import { isEmpty } from 'ol/extent';
 import { defaults as interactionDefaults } from 'ol/interaction';
 import MouseWheelZoom from 'ol/interaction/MouseWheelZoom';
-import { Group as LayerGroup } from 'ol/layer';
 import BaseLayer from 'ol/layer/Base';
-import VectorLayer from 'ol/layer/Vector';
 import { fromLonLat, toLonLat } from 'ol/proj';
 import React, { Component, ReactNode } from 'react';
 import { Subject, Subscription } from 'rxjs';
@@ -41,6 +39,7 @@ import { getGlobalStyles } from './globalStyles';
 import { defaultMarkersConfig, MARKERS_LAYER_ID } from './layers/data/markersLayer';
 import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry } from './layers/registry';
 import { ControlsOptions, GeomapPanelOptions, MapLayerState, MapViewConfig, TooltipMode } from './types';
+import { getLayersExtent } from './utils/getLayersExtent';
 import { centerPointRegistry, MapCenterID } from './view';
 
 // Allows multiple panels to share the same view instance
@@ -591,21 +590,7 @@ export class GeomapPanel extends Component<Props, State> {
         if (v.id === MapCenterID.Coordinates) {
           coord = [config.lon ?? 0, config.lat ?? 0];
         } else if (v.id === MapCenterID.Fit) {
-          var extent = layers
-            .getArray()
-            .filter((l) => l instanceof VectorLayer || l instanceof LayerGroup)
-            .flatMap((l) => {
-              if (l instanceof LayerGroup) {
-                return l
-                  .getLayers()
-                  .getArray()
-                  .filter((l) => l instanceof VectorLayer)
-                  .map((l) => (l as VectorLayer<any>).getSource().getExtent() ?? []);
-              } else if (l instanceof VectorLayer) {
-                return l.getSource().getExtent() ?? [];
-              }
-            })
-            .reduce(extend, createEmpty());
+          const extent = getLayersExtent(layers);
           if (!isEmpty(extent)) {
             view.fit(extent, {
               padding: [30, 30, 30, 30],
