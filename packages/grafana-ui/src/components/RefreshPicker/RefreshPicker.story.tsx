@@ -9,10 +9,17 @@ import { UseState } from '../../utils/storybook/UseState';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { HorizontalGroup } from '../Layout/Layout';
 
+import mdx from './RefreshPicker.mdx';
+
 export default {
   title: 'Pickers and Editors/RefreshPicker',
   component: RefreshPicker,
   decorators: [withCenteredStory],
+  parameters: {
+    docs: {
+      page: mdx,
+    },
+  },
 };
 
 export const Examples = () => {
