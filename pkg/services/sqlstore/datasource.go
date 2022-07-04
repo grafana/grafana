@@ -50,12 +50,10 @@ func (ss *SQLStore) getDataSource(ctx context.Context, query *datasources.GetDat
 func (ss *SQLStore) GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) error {
 	var sess *xorm.Session
 	return ss.WithDbSession(ctx, func(dbSess *DBSession) error {
-		sess = dbSess.Asc("name")
-		if query.OrgId > 0 {
-			sess = sess.Where("org_id=?", query.OrgId)
-		}
-		if query.DataSourceLimit > 0 {
-			sess = sess.Limit(query.DataSourceLimit, 0)
+		if query.DataSourceLimit <= 0 {
+			sess = dbSess.Where("org_id=?", query.OrgId).Asc("name")
+		} else {
+			sess = dbSess.Limit(query.DataSourceLimit, 0).Where("org_id=?", query.OrgId).Asc("name")
 		}
 
 		query.Result = make([]*datasources.DataSource, 0)
