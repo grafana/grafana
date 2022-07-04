@@ -1549,7 +1549,6 @@ b46bc4f6-2fe5-44d5-b47f-36880742cf50	\N	auth-cookie	grafana	a38aeb47-f27e-4e68-8
 4b782423-ec3d-4e88-8fcf-fa12b4a34fc3	\N	auth-otp-form	grafana	cf4831e9-3e1d-452e-984e-e6d4d9eeafb5	0	20	f	\N	\N
 07052e96-64b2-41b5-95fc-e3ac6abcc577	\N	direct-grant-validate-username	grafana	b478ecfb-db7e-4797-a245-8fc3b4dec884	0	10	f	\N	\N
 10c22bdd-d243-44be-810f-d2fedbb973e1	\N	direct-grant-validate-password	grafana	b478ecfb-db7e-4797-a245-8fc3b4dec884	0	20	f	\N	\N
-5f032dbb-bd37-425b-af1e-ba555c7a8245	\N	\N	grafana	b478ecfb-db7e-4797-a245-8fc3b4dec884	1	30	t	b3491338-0630-4232-97e7-a518c254b248	\N
 6a6273e9-146c-4b4e-b7ce-42ed72cbc03f	\N	conditional-user-configured	grafana	b3491338-0630-4232-97e7-a518c254b248	0	10	f	\N	\N
 d87abeef-9f1d-46f5-9f36-acd7eaf21a72	\N	direct-grant-validate-otp	grafana	b3491338-0630-4232-97e7-a518c254b248	0	20	f	\N	\N
 4f204bab-0311-44b4-80b6-37d23fd0fd5a	\N	registration-page-form	grafana	9d02badd-cb1c-4655-bf5e-f888861433ff	0	10	t	c3ed2ad1-cfb4-49fa-8c75-cf5047527c68	\N
@@ -1586,6 +1585,7 @@ a700b05f-a61d-4eeb-ad75-1a3df05ed429	\N	docker-http-basic-authenticator	grafana	
 4e7d257c-e013-4597-a44d-b186a85606af	\N	basic-auth	grafana	56c40f89-4d69-46fd-bb18-d6c01808d2af	0	10	f	\N	\N
 2ba05817-a59f-4e72-a565-f3b4591390dc	\N	basic-auth-otp	grafana	56c40f89-4d69-46fd-bb18-d6c01808d2af	3	20	f	\N	\N
 5db9c781-6718-4674-a833-9a4ac3e8212e	\N	auth-spnego	grafana	56c40f89-4d69-46fd-bb18-d6c01808d2af	3	30	f	\N	\N
+5f032dbb-bd37-425b-af1e-ba555c7a8245	\N	\N	grafana	b478ecfb-db7e-4797-a245-8fc3b4dec884	1	30	t	b3491338-0630-4232-97e7-a518c254b248	\N
 \.
 
 
@@ -1974,6 +1974,7 @@ a8698f4f-5fa1-4baa-be05-87d03052af49	c61f5b19-c17e-49a1-91b8-a0296411b928	f
 09b79548-8426-4c0e-8e0b-7488467532c7	d6077ed7-b265-4f82-9336-24614967bd5d	t
 09b79548-8426-4c0e-8e0b-7488467532c7	d4723cd4-f717-44b7-a9b0-6c32c5ecd23f	t
 09b79548-8426-4c0e-8e0b-7488467532c7	0a7c7dde-23d7-4a93-bdee-4a8963aee9a4	t
+09b79548-8426-4c0e-8e0b-7488467532c7	74daf2cd-40d4-4304-87a8-92cdca808512	t
 \.
 
 
