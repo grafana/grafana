@@ -68,7 +68,7 @@ exports[`no enzyme tests`] = {
     "packages/jaeger-ui-components/src/TraceTimelineViewer/VirtualizedTraceView.test.js:551014442": [
       [13, 26, 13, "RegExp match", "2409514259"]
     ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/index.test.js:276996587": [
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/index.test.js:1541367299": [
       [14, 19, 13, "RegExp match", "2409514259"]
     ],
     "public/app/core/components/QueryOperationRow/QueryOperationRow.test.tsx:3743889097": [
@@ -5666,12 +5666,12 @@ exports[`better eslint`] = {
     "public/app/features/explore/LogsMetaRow.tsx:305844190": [
       [106, 31, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/explore/NodeGraphContainer.test.tsx:1944552671": [
+    "public/app/features/explore/NodeGraphContainer.test.tsx:2213682271": [
       [16, 19, 17, "Do not use any type assertions.", "192014884"],
       [16, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [31, 19, 17, "Do not use any type assertions.", "192014884"],
-      [31, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [54, 41, 3, "Unexpected any. Specify a different type.", "193409811"]
+      [32, 19, 17, "Do not use any type assertions.", "192014884"],
+      [32, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [56, 41, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/explore/QueryRows.test.tsx:354066618": [
       [21, 36, 3, "Unexpected any. Specify a different type.", "193409811"],
