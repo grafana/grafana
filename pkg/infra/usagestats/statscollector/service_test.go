@@ -198,6 +198,9 @@ func TestCollectingUsageStats(t *testing.T) {
 	assert.EqualValues(t, 3, metrics["stats.active_data_keys.count"])
 	assert.EqualValues(t, 5, metrics["stats.public_dashboards.count"])
 
+	assert.EqualValues(t, 2, metrics["stats.ds."+datasources.DS_ES+".v2_0_0.count"])
+	assert.EqualValues(t, 1, metrics["stats.ds."+datasources.DS_ES+".v70_1_1.count"])
+
 	assert.InDelta(t, int64(65), metrics["stats.uptime"], 6)
 }
 
