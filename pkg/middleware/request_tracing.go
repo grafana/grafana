@@ -69,16 +69,31 @@ func RequestTracing(tracer tracing.Tracer) web.Handler {
 
 		rw := res.(web.ResponseWriter)
 
-		spanContext := trace.SpanContextFromContext(req.Context())
-		traceID := spanContext.TraceID()
-		fmt.Println("TRACE ID:", traceID)
+		// spanContext := trace.SpanContextFromContext(req.Context())
+		// traceID := spanContext.TraceID()
+		// fmt.Println("TRACE ID:", traceID)
+		var thisCtx context.Context
 		wireContext := tracer.Extract(req.Context(), req.Header)
+		for k, v := range req.Header {
+			fmt.Println("STRING:", k, v)
+		}
+		if len(req.Header["Uber-Trace-Id"]) != 0 {
+			traceIDShort := req.Header["Uber-Trace-Id"][0][0:16]
+			traceIDString := traceIDShort + "0000000000000000"
+			traceID, err := trace.TraceIDFromHex(string(traceIDString))
+			fmt.Println("TRACE ID:", traceIDShort, string(traceIDString), traceID, err)
+			spanID, err := trace.SpanIDFromHex(req.Header["Uber-Trace-Id"][0][17:33])
+			fmt.Println("SPAN ID:", spanID, err)
+			spanContext := trace.NewSpanContext(trace.SpanContextConfig{TraceID: traceID, SpanID: spanID})
+			thisCtx = trace.ContextWithSpanContext(req.Context(), spanContext)
+		}
 
-		ctx, span := tracer.Start(req.Context(), fmt.Sprintf("HTTP %s %s", req.Method, req.URL.Path), &wireContext)
+		// tracet.SpanContext
+		ctx, span := tracer.Start(thisCtx, fmt.Sprintf("HTTP %s %s", req.Method, req.URL.Path), &wireContext)
 		c.Req = req.WithContext(ctx)
-		spanContext = trace.SpanContextFromContext(ctx)
-		traceID = spanContext.TraceID()
-		fmt.Println("TRACE ID:", traceID)
+		// spanContext := trace.SpanContextFromContext(ctx)
+		// traceID := spanContext.TraceID()
+		// fmt.Println("TRACE ID:", traceID)
 		c.Next()
 
 		// Only call span.End when a route operation name have been set,
