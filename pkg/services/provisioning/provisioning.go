@@ -61,6 +61,7 @@ func ProvideService(
 		alertingService:              alertingService,
 		pluginsSettings:              pluginSettings,
 		searchService:                searchService,
+		log:                          log.New("provisioning"),
 	}
 	return s, nil
 }
@@ -126,7 +127,6 @@ type ProvisioningServiceImpl struct {
 	dashboardService             dashboardservice.DashboardService
 	datasourceService            datasourceservice.DataSourceService
 	alertingService              *alerting.AlertNotificationService
-	ruleService                  provisioning.AlertRuleService
 	pluginsSettings              pluginsettings.Service
 	searchService                searchV2.SearchService
 }

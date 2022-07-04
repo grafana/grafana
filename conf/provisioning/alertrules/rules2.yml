@@ -1,0 +1,56 @@
+apiVersion: 1
+groups:
+  - name: my_group
+    folder: my_folder
+    interval: 10s
+    rules:
+    - title: my_second_file
+      uid: my_second_file
+      condition: B
+      for: 5m
+      annotations:
+        runbook: http://google.com/
+      labels:
+        team: infra
+        severity: warning
+      data:
+      - refId: A
+        queryType: ''
+        relativeTimeRange:
+          from: 600
+          to: 0
+        datasourceUid: PD8C576611E62080A
+        model:
+          hide: false
+          intervalMs: 1000
+          maxDataPoints: 43200
+          refId: A
+      - refId: B
+        queryType: ''
+        relativeTimeRange:
+          from: 0
+          to: 0
+        datasourceUid: "-100"
+        model:
+          conditions:
+          - evaluator:
+              params:
+              - 9000
+              type: gt
+            operator:
+              type: and
+            query:
+              params:
+              - A
+            reducer:
+              params: []
+              type: last
+            type: query
+          datasource:
+            type: __expr__
+            uid: "-100"
+          hide: false
+          intervalMs: 1000
+          maxDataPoints: 43200
+          refId: B
+          type: classic_conditions
