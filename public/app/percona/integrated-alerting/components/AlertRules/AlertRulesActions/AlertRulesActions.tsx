@@ -8,9 +8,9 @@ import { DeleteModal } from 'app/percona/shared/components/Elements/DeleteModal'
 
 import { AlertRulesProvider } from '../AlertRules.provider';
 import { AlertRulesService } from '../AlertRules.service';
-import { getStyles } from '../AlertRules.styles';
 
 import { Messages } from './AlertRulesActions.messages';
+import { getStyles } from './AlertRulesActions.styles';
 import { AlertRulesActionsProps } from './AlertRulesActions.types';
 import { createAlertRuleCopyPayload } from './AlertRulesActions.utils';
 
