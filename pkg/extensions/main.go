@@ -14,8 +14,6 @@ import (
 	_ "github.com/googleapis/gax-go/v2"
 	_ "github.com/grafana/dskit/backoff"
 	_ "github.com/grafana/dskit/flagext"
-	_ "github.com/grafana/loki/clients/pkg/promtail/client"
-	_ "github.com/grafana/loki/pkg/logproto"
 	_ "github.com/grpc-ecosystem/go-grpc-middleware"
 	_ "github.com/jung-kurt/gofpdf"
 	_ "github.com/linkedin/goavro/v2"

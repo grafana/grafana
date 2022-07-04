@@ -44,6 +44,10 @@ export interface BackendSrvDependencies {
   logout: () => void;
 }
 
+export interface FolderRequestOptions {
+  withAccessControl?: boolean;
+}
+
 export class BackendSrv implements BackendService {
   private inFlightRequests: Subject<string> = new Subject<string>();
   private HTTP_REQUEST_CANCELED = -1;
@@ -433,8 +437,13 @@ export class BackendSrv implements BackendService {
     return this.get<DashboardDTO>(`/api/public/dashboards/${uid}`);
   }
 
-  getFolderByUid(uid: string) {
-    return this.get<FolderDTO>(`/api/folders/${uid}`);
+  getFolderByUid(uid: string, options: FolderRequestOptions = {}) {
+    const queryParams = new URLSearchParams();
+    if (options.withAccessControl) {
+      queryParams.set('accesscontrol', 'true');
+    }
+
+    return this.get<FolderDTO>(`/api/folders/${uid}?${queryParams.toString()}`);
   }
 }
 

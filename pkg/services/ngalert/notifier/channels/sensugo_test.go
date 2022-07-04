@@ -27,8 +27,7 @@ func TestSensuGoNotifier(t *testing.T) {
 	require.NoError(t, err)
 	tmpl.ExternalURL = externalURL
 
-	images, deleteFunc := newFakeImageStore(t)
-	defer deleteFunc()
+	images := newFakeImageStore(2)
 
 	cases := []struct {
 		name         string
@@ -45,7 +44,7 @@ func TestSensuGoNotifier(t *testing.T) {
 				{
 					Alert: model.Alert{
 						Labels:      model.LabelSet{"__alert_rule_uid__": "rule uid", "alertname": "alert1", "lbl1": "val1"},
-						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh", "__alertScreenshotToken__": "test-image"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh", "__alertScreenshotToken__": "test-image-1"},
 					},
 				},
 			},
@@ -60,7 +59,7 @@ func TestSensuGoNotifier(t *testing.T) {
 					"metadata": map[string]interface{}{
 						"name": "default",
 						"labels": map[string]string{
-							"imageURL": "https://www.example.com/test-image.jpg",
+							"imageURL": "https://www.example.com/test-image-1.jpg",
 							"ruleURL":  "http://localhost/alerting/list",
 						},
 					},
@@ -88,7 +87,7 @@ func TestSensuGoNotifier(t *testing.T) {
 				{
 					Alert: model.Alert{
 						Labels:      model.LabelSet{"__alert_rule_uid__": "rule uid", "alertname": "alert1", "lbl1": "val1"},
-						Annotations: model.LabelSet{"ann1": "annv1", "__alertScreenshotToken__": "test-image"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__alertScreenshotToken__": "test-image-1"},
 					},
 				}, {
 					Alert: model.Alert{
@@ -108,7 +107,7 @@ func TestSensuGoNotifier(t *testing.T) {
 					"metadata": map[string]interface{}{
 						"name": "grafana_rule_0",
 						"labels": map[string]string{
-							"imageURL": "https://www.example.com/test-image.jpg",
+							"imageURL": "https://www.example.com/test-image-1.jpg",
 							"ruleURL":  "http://localhost/alerting/list",
 						},
 					},

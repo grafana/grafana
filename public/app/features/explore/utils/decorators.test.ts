@@ -23,7 +23,7 @@ import {
 } from './decorators';
 
 jest.mock('@grafana/data', () => ({
-  ...(jest.requireActual('@grafana/data') as any),
+  ...jest.requireActual('@grafana/data'),
   dateTimeFormat: () => 'format() jest mocked',
   dateTimeFormatTimeAgo: (ts: any) => 'fromNow() jest mocked',
 }));

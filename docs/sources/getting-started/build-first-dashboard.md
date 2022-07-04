@@ -49,7 +49,7 @@ Continue to experiment with what you have built, try the [explore workflow]({{< 
 
 - [Panels]({{< relref "../panels/" >}})
 - [Dashboards]({{< relref "../dashboards/" >}})
-- [Keyboard shortcuts]({{< relref "../dashboards/shortcuts/" >}})
+- [Keyboard shortcuts]({{< relref "../dashboards/use-dashboards/#keyboard-shortcuts" >}})
 - [Plugins](https://grafana.com/grafana/plugins?orderBy=weight&direction=asc)
 
 ##### Admins

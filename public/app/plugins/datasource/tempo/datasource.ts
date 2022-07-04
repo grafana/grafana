@@ -766,6 +766,8 @@ export function buildExpr(
 }
 
 export function buildLinkExpr(expr: string) {
+  // don't want top 5 or by span name in links
+  expr = expr.replace('topk(5, ', '').replace(' by (span_name))', '');
   return expr.replace('__range', '__rate_interval');
 }
 
