@@ -101,7 +101,6 @@ func (i *orgIndex) getCurrentDashboardsForComparison() ([]indexedDashboard, erro
 	var currentDashboards []indexedDashboard
 	match, err := documentMatchIterator.Next()
 	for err == nil && match != nil {
-
 		var uid string
 		var updated time.Time
 
