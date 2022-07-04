@@ -13,7 +13,6 @@ var logger = log.New("secret.migration")
 
 // SecretMigrationServiceProvider provides SecretMigration services.
 type SecretMigrationServiceProvider interface {
-	GetServices() []SecretMigrationService
 	Run(context.Context) error
 }
 
@@ -36,10 +35,6 @@ func ProvideSecretMigrationServiceProvider(
 
 func NewSecretMigrationServiceProvider(services ...SecretMigrationService) *SecretMigrationServiceProviderImpl {
 	return &SecretMigrationServiceProviderImpl{services}
-}
-
-func (s *SecretMigrationServiceProviderImpl) GetServices() []SecretMigrationService {
-	return s.Services
 }
 
 // Run migration services. This will block until all services have exited.
