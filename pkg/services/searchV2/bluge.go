@@ -143,7 +143,7 @@ func getFolderDashboardDoc(dash dashboard) *bluge.Document {
 	}
 
 	return newSearchDocument(uid, dash.info.Title, dash.info.Description, url).
-		AddField(bluge.NewKeywordField(documentFieldKind, string(entityKindFolder)).Aggregatable().StoreValue()).
+		AddField(bluge.NewKeywordField(documentFieldKind, string(entityKindFolder)).Aggregatable()).
 		AddField(bluge.NewDateTimeField(DocumentFieldCreatedAt, dash.created).Sortable().StoreValue()).
 		AddField(bluge.NewDateTimeField(DocumentFieldUpdatedAt, dash.updated).Sortable().StoreValue())
 }
@@ -153,14 +153,13 @@ func getNonFolderDashboardDoc(dash dashboard, location string) *bluge.Document {
 
 	// Dashboard document
 	doc := newSearchDocument(dash.uid, dash.info.Title, dash.info.Description, url).
-		AddField(bluge.NewKeywordField(documentFieldKind, string(entityKindDashboard)).Aggregatable().StoreValue()).
-		AddField(bluge.NewKeywordField(documentFieldLocation, location).Aggregatable().StoreValue()).
+		AddField(bluge.NewKeywordField(documentFieldKind, string(entityKindDashboard)).Aggregatable()).
+		AddField(bluge.NewKeywordField(documentFieldLocation, location).Aggregatable()).
 		AddField(bluge.NewDateTimeField(DocumentFieldCreatedAt, dash.created).Sortable().StoreValue()).
 		AddField(bluge.NewDateTimeField(DocumentFieldUpdatedAt, dash.updated).Sortable().StoreValue())
 
 	for _, tag := range dash.info.Tags {
 		doc.AddField(bluge.NewKeywordField(documentFieldTag, tag).
-			StoreValue().
 			Aggregatable().
 			SearchTermPositions())
 	}
@@ -168,13 +167,11 @@ func getNonFolderDashboardDoc(dash dashboard, location string) *bluge.Document {
 	for _, ds := range dash.info.Datasource {
 		if ds.UID != "" {
 			doc.AddField(bluge.NewKeywordField(documentFieldDSUID, ds.UID).
-				StoreValue().
 				Aggregatable().
 				SearchTermPositions())
 		}
 		if ds.Type != "" {
 			doc.AddField(bluge.NewKeywordField(documentFieldDSType, ds.Type).
-				StoreValue().
 				Aggregatable().
 				SearchTermPositions())
 		}
@@ -195,9 +192,9 @@ func getDashboardPanelDocs(dash dashboard, location string) []*bluge.Document {
 		purl := fmt.Sprintf("%s?viewPanel=%d", url, panel.ID)
 
 		doc := newSearchDocument(uid, panel.Title, panel.Description, purl).
-			AddField(bluge.NewKeywordField(documentFieldPanelType, panel.Type).Aggregatable().StoreValue()).
-			AddField(bluge.NewKeywordField(documentFieldLocation, location).Aggregatable().StoreValue()).
-			AddField(bluge.NewKeywordField(documentFieldKind, string(entityKindPanel)).Aggregatable().StoreValue()) // likely want independent index for this
+			AddField(bluge.NewKeywordField(documentFieldPanelType, panel.Type).Aggregatable()).
+			AddField(bluge.NewKeywordField(documentFieldLocation, location).Aggregatable()).
+			AddField(bluge.NewKeywordField(documentFieldKind, string(entityKindPanel)).Aggregatable()) // likely want independent index for this
 
 		for _, xform := range panel.Transformer {
 			doc.AddField(bluge.NewKeywordField(documentFieldTransformer, xform).Aggregatable())
@@ -206,13 +203,11 @@ func getDashboardPanelDocs(dash dashboard, location string) []*bluge.Document {
 		for _, ds := range panel.Datasource {
 			if ds.UID != "" {
 				doc.AddField(bluge.NewKeywordField(documentFieldDSUID, ds.UID).
-					StoreValue().
 					Aggregatable().
 					SearchTermPositions())
 			}
 			if ds.Type != "" {
 				doc.AddField(bluge.NewKeywordField(documentFieldDSType, ds.Type).
-					StoreValue().
 					Aggregatable().
 					SearchTermPositions())
 			}
@@ -241,7 +236,7 @@ func newSearchDocument(uid string, name string, descr string, url string) *bluge
 		doc.AddField(bluge.NewTextField(documentFieldDescription, descr).SearchTermPositions())
 	}
 	if url != "" {
-		doc.AddField(bluge.NewKeywordField(documentFieldURL, url).StoreValue())
+		doc.AddField(bluge.NewKeywordField(documentFieldURL, url).Aggregatable())
 	}
 	return doc
 }
@@ -333,21 +328,31 @@ func getDashboardLocation(index *orgIndex, dashboardUID string) (string, bool, e
 	if err != nil {
 		return "", false, err
 	}
+
+	docValuesFields := []string{
+		documentFieldLocation,
+	}
+	searchCtx := search.NewSearchContext(0, 0)
+
 	match, err := documentMatchIterator.Next()
 	for err == nil && match != nil {
-		// load the identifier for this match
-		err = match.VisitStoredFields(func(field string, value []byte) bool {
+		err = match.LoadDocumentValues(searchCtx, docValuesFields)
+		if err != nil {
+			return "", false, err
+		}
+		visitFunc := func(field string, value []byte) bool {
 			if field == documentFieldLocation {
 				dashboardLocation = string(value)
 				found = true
 				return false
 			}
 			return true
-		})
+		}
+		err = match.VisitStoredFields(visitFunc)
 		if err != nil {
 			return "", false, err
 		}
-		// load the next document match
+		iterateDocValues(docValuesFields, match, visitFunc)
 		match, err = documentMatchIterator.Next()
 	}
 	return dashboardLocation, found, err
@@ -528,9 +533,27 @@ func doSearchQuery(
 
 	locationItems := make(map[string]bool, 50)
 
+	docValuesFields := []string{
+		documentFieldPanelType,
+		documentFieldKind,
+		documentFieldLocation,
+		documentFieldDSType,
+		documentFieldDSUID,
+		documentFieldTag,
+		documentFieldURL,
+	}
+	searchCtx := search.NewSearchContext(0, 0)
+
 	// iterate through the document matches
 	match, err := documentMatchIterator.Next()
 	for err == nil && match != nil {
+		err = match.LoadDocumentValues(searchCtx, docValuesFields)
+		if err != nil {
+			logger.Error("error loading document values", "error", err)
+			response.Error = err
+			return response
+		}
+
 		uid := ""
 		kind := ""
 		ptype := ""
@@ -540,7 +563,7 @@ func doSearchQuery(
 		var dsUIDs []string
 		var tags []string
 
-		err = match.VisitStoredFields(func(field string, value []byte) bool {
+		visitFunc := func(field string, value []byte) bool {
 			switch field {
 			case documentFieldUID:
 				uid = string(value)
@@ -562,12 +585,15 @@ func doSearchQuery(
 				ext(field, value)
 			}
 			return true
-		})
+		}
+
+		err = match.VisitStoredFields(visitFunc)
 		if err != nil {
-			logger.Error("error loading stored fields", "err", err)
+			logger.Error("error loading stored fields", "error", err)
 			response.Error = err
 			return response
 		}
+		iterateDocValues(docValuesFields, match, visitFunc)
 
 		fKind.Append(kind)
 		fUID.Append(uid)
@@ -673,14 +699,17 @@ func getLocationLookupInfo(ctx context.Context, reader *bluge.Reader, uids map[s
 		return res
 	}
 
-	dvfieldNames := []string{"type"}
-	sctx := search.NewSearchContext(0, 0)
+	docValuesFields := []string{
+		documentFieldKind,
+		documentFieldURL,
+	}
+	searchCtx := search.NewSearchContext(0, 0)
 
 	// execute this search on the reader
 	// iterate through the document matches
 	match, err := documentMatchIterator.Next()
 	for err == nil && match != nil {
-		err = match.LoadDocumentValues(sctx, dvfieldNames)
+		err = match.LoadDocumentValues(searchCtx, docValuesFields)
 		if err != nil {
 			continue
 		}
@@ -688,7 +717,7 @@ func getLocationLookupInfo(ctx context.Context, reader *bluge.Reader, uids map[s
 		uid := ""
 		item := locationItem{}
 
-		_ = match.VisitStoredFields(func(field string, value []byte) bool {
+		visitFunc := func(field string, value []byte) bool {
 			switch field {
 			case documentFieldUID:
 				uid = string(value)
@@ -700,7 +729,10 @@ func getLocationLookupInfo(ctx context.Context, reader *bluge.Reader, uids map[s
 				item.URL = string(value)
 			}
 			return true
-		})
+		}
+
+		_ = match.VisitStoredFields(visitFunc)
+		iterateDocValues(docValuesFields, match, visitFunc)
 
 		res[uid] = item
 
@@ -709,6 +741,17 @@ func getLocationLookupInfo(ctx context.Context, reader *bluge.Reader, uids map[s
 	}
 
 	return res
+}
+
+func iterateDocValues(docValuesFields []string, match *search.DocumentMatch, visitFunc func(field string, value []byte) bool) {
+	for _, field := range docValuesFields {
+		for _, value := range match.DocValues(field) {
+			proceed := visitFunc(field, value)
+			if !proceed {
+				break
+			}
+		}
+	}
 }
 
 type locationItem struct {
