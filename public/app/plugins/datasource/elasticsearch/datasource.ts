@@ -28,7 +28,7 @@ import {
 } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
-import { queryLogsVolume } from 'app/core/logs_model';
+import { queryLogsVolume } from 'app/core/logsModel';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
 import { ElasticsearchAnnotationsQueryEditor } from './components/QueryEditor/AnnotationQueryEditor';

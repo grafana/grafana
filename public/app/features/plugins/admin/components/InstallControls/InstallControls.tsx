@@ -40,6 +40,10 @@ export const InstallControls = ({ plugin, latestCompatibleVersion }: Props) => {
     return <div className={styles.message}>Renderer plugins cannot be managed by the Plugin Catalog.</div>;
   }
 
+  if (plugin.type === PluginType.secretsmanager) {
+    return <div className={styles.message}>Secrets manager plugins cannot be managed by the Plugin Catalog.</div>;
+  }
+
   if (plugin.isEnterprise && !featureEnabled('enterprise.plugins')) {
     return (
       <HorizontalGroup height="auto" align="center">
