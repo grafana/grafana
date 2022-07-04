@@ -988,21 +988,6 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 		})
 	})
 }
-func TestLoader_loadInvalidV1Signature(t *testing.T) {
-	rootDir, err := filepath.Abs("../")
-	if err != nil {
-		t.Errorf("could not construct absolute path of root dir")
-		return
-	}
-	pluginJSON := filepath.Join(rootDir, "testdata/invalid-v1-signature/plugin/plugin.json")
-
-	l := newLoader(&plugins.Cfg{
-		PluginsPath: rootDir,
-	})
-	got, err := l.loadPlugins(context.Background(), plugins.External, []string{pluginJSON}, map[string]struct{}{})
-	require.NoError(t, err)
-	require.Empty(t, got)
-}
 
 func TestLoader_readPluginJSON(t *testing.T) {
 	tests := []struct {
