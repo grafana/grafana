@@ -110,6 +110,26 @@ msgstr "Off"
 msgid "grafana-ui.refresh-picker.on-description"
 msgstr "Choose refresh time interval with current interval {durationAriaLabel} selected"
 
+#: packages/grafana-ui/src/components/DateTimePickers/TimeRangePicker.tsx
+msgid "grafana-ui.time-range-picker.move-back-arialabel"
+msgstr "Move time range backwards"
+
+#: packages/grafana-ui/src/components/DateTimePickers/TimeRangePicker.tsx
+msgid "grafana-ui.time-range-picker.move-forward-arialabel"
+msgstr "Move time range forwards"
+
+#: packages/grafana-ui/src/components/DateTimePickers/TimeRangePicker.tsx
+msgid "grafana-ui.time-range-picker.open-picker-arialabel"
+msgstr "Time range picker with current time range {formattedRangeLabel} selected"
+
+#: packages/grafana-ui/src/components/DateTimePickers/TimeRangePicker.tsx
+msgid "grafana-ui.time-range-picker.zoom-out"
+msgstr "Time range zoom out <0/> CTRL+Z"
+
+#: packages/grafana-ui/src/components/DateTimePickers/TimeRangePicker.tsx
+msgid "grafana-ui.time-range-picker.zoom-out-arialabel"
+msgstr "Zoom out time range"
+
 #: public/app/core/components/NavBar/navBarItem-translations.ts
 msgid "nav.alerting"
 msgstr "Alerting"

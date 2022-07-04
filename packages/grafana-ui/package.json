@@ -38,6 +38,7 @@
     "@grafana/schema": "9.1.0-pre",
     "@grafana/slate-react": "0.22.10-grafana",
     "@lingui/core": "3.13.3",
+    "@lingui/react": "3.13.3",
     "@monaco-editor/react": "4.3.1",
     "@popperjs/core": "2.11.5",
     "@react-aria/button": "3.5.0",
