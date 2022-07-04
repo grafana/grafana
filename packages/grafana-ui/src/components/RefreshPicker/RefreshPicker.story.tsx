@@ -1,4 +1,5 @@
 import { action } from '@storybook/addon-actions';
+import { useArgs } from '@storybook/client-api';
 import { Story } from '@storybook/react';
 import React from 'react';
 
@@ -40,11 +41,11 @@ export default {
 };
 
 export const Examples: Story<Props> = (args) => {
-  const [valueState, setValueState] = React.useState('');
+  const [, updateArgs] = useArgs();
   const intervals = ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d'];
   const onIntervalChanged = (interval: string) => {
     action('onIntervalChanged fired')(interval);
-    setValueState(interval);
+    updateArgs({ value: interval });
   };
 
   const onRefresh = () => {
@@ -54,7 +55,7 @@ export const Examples: Story<Props> = (args) => {
   return (
     <RefreshPicker
       tooltip={args.tooltip}
-      value={valueState}
+      value={args.value}
       text={args.text}
       isLoading={args.isLoading}
       intervals={intervals}
