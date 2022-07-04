@@ -1,3 +1,4 @@
+import { OptionsUIRegistryBuilder } from '../../types/OptionsUIRegistryBuilder';
 import { DataTransformerInfo, MatcherConfig } from '../../types/transformations';
 import { FieldMatcherID } from '../matchers/ids';
 import { RegexpOrNamesMatcherOptions } from '../matchers/nameMatcher';
@@ -20,13 +21,18 @@ export const filterFieldsByNameTransformer: DataTransformerInfo<FilterFieldsByNa
    * Return a modified copy of the series.  If the transform is not or should not
    * be applied, just return the input series
    */
-  operator: (options) => (source) =>
-    source.pipe(
+  operator: (options, replace) => (source) => {
+    options.include.pattern = replace ? replace(options.include.pattern) : options.include.pattern;
+    options.exclude.pattern = replace ? replace(options.exclude.pattern) : options.exclude.pattern;
+
+    return source.pipe(
+
       filterFieldsTransformer.operator({
         include: getMatcherConfig(options.include),
         exclude: getMatcherConfig(options.exclude),
       })
-    ),
+    );
+  },
 };
 
 const getMatcherConfig = (options?: RegexpOrNamesMatcherOptions): MatcherConfig | undefined => {
