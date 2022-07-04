@@ -253,24 +253,18 @@ describe('timeSrv', () => {
   });
 
   describe('pauseAutoRefresh', () => {
-    it('should set refresh to empty value', () => {
+    it('should set refreshActive to false', () => {
       _dashboard.refresh = '10s';
       timeSrv.pauseAutoRefresh();
-      expect(_dashboard.refresh).toBe('');
-    });
-
-    it('should set previousAutoRefresh value', () => {
-      _dashboard.refresh = '10s';
-      timeSrv.pauseAutoRefresh();
-      expect(timeSrv.previousAutoRefresh).toBe('10s');
+      expect(timeSrv.refreshActive).toBe(false);
     });
   });
 
   describe('resumeAutoRefresh', () => {
     it('should set refresh to empty value', () => {
-      timeSrv.previousAutoRefresh = '10s';
+      timeSrv.refreshActive = false;
       timeSrv.resumeAutoRefresh();
-      expect(_dashboard.refresh).toBe('10s');
+      expect(timeSrv.refreshActive).toBe(true);
     });
   });
 
