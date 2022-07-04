@@ -66,6 +66,14 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
     };
 
     await buildSegments(state, false);
+
+    // fix for Explore: graph is not rendered until refresh when the query is duplicated #48145
+    // when copying and pasting a query,
+    // refresh to store the query
+    // set the timeout to handle race conditions with updating the time range
+    // because on duplicating the query a second time
+    // the time range overwrites the state and disrupts the refresh
+    setTimeout(() => state.refresh(), 100);
   }
   if (actions.timeRangeChanged.match(action)) {
     state.range = action.payload;
