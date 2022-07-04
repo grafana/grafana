@@ -8696,7 +8696,7 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/graphite/components/helpers.ts:998249372": [
       [24, 20, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/datasource/graphite/datasource.test.ts:1450253048": [
+    "public/app/plugins/datasource/graphite/datasource.test.ts:2663959062": [
       [13, 6, 59, "Do not use any type assertions.", "3685154675"],
       [13, 6, 49, "Do not use any type assertions.", "1184085652"],
       [25, 12, 13, "Do not use any type assertions.", "4118308366"],
