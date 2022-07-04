@@ -6953,14 +6953,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@microsoft/api-extractor-model@npm:7.20.3":
-  version: 7.20.3
-  resolution: "@microsoft/api-extractor-model@npm:7.20.3"
+"@microsoft/api-extractor-model@npm:7.21.0":
+  version: 7.21.0
+  resolution: "@microsoft/api-extractor-model@npm:7.21.0"
   dependencies:
     "@microsoft/tsdoc": 0.14.1
     "@microsoft/tsdoc-config": ~0.16.1
     "@rushstack/node-core-library": 3.49.0
-  checksum: d5721794e9f98348933fcdc5922e5d8ec681e1250ba03764873c4a864478c815ee86bac877ec4430bbeb4f2ffa980b8ae71cf8edd6b822f3dc937c810804fdab
+  checksum: 9e0cb0cd2d344ee23f32294103856e413fd998ceefc5ea26427b603ef7a6dc155ff6710bf3a30d0c426b9928118e8f56e080f0c0aa9685f3e825e7e154340f62
   languageName: node
   linkType: hard
 
@@ -8333,15 +8333,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rushstack/ts-command-line@npm:4.11.0":
-  version: 4.11.0
-  resolution: "@rushstack/ts-command-line@npm:4.11.0"
+"@rushstack/ts-command-line@npm:4.12.1":
+  version: 4.12.1
+  resolution: "@rushstack/ts-command-line@npm:4.12.1"
   dependencies:
     "@types/argparse": 1.0.38
     argparse: ~1.0.9
     colors: ~1.2.1
     string-argv: ~0.3.1
-  checksum: 966692b5738d198130d6a8f01f819dfa95dccaf7a8e4c2f9d76d36205790584e827afb18f837703f07bfe93faa3b705c81e682888a4aef0da350758c7c6582d1
+  checksum: e9479bd001f4f206d207c867ec7b91444727cf8a1c685dac7589c6a33b54f47200deabc450d6831a1cc38501f0322eb7003c1f78f1fa43230541c4b7ddc4718d
   languageName: node
   linkType: hard
 

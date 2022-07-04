@@ -4655,12 +4655,11 @@ exports[`better eslint`] = {
       [207, 40, 20, "Do not use any type assertions.", "2225958749"],
       [207, 57, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/dashboard/components/DashboardRow/DashboardRow.test.tsx:3204880669": [
+    "public/app/features/dashboard/components/DashboardRow/DashboardRow.test.tsx:3328105205": [
       [9, 40, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/dashboard/components/DashboardRow/DashboardRow.tsx:2916737379": [
-      [19, 69, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [46, 30, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/features/dashboard/components/DashboardRow/DashboardRow.tsx:3890988818": [
+      [19, 69, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/dashboard/components/DashboardSettings/AnnotationsSettings.test.tsx:1365286122": [
       [12, 17, 3, "Unexpected any. Specify a different type.", "193409811"]
@@ -11817,31 +11816,31 @@ exports[`better eslint`] = {
     "public/app/plugins/panel/state-timeline/types.ts:3228907517": [
       [20, 62, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/panel/state-timeline/utils.test.ts:2922455252": [
+    "public/app/plugins/panel/state-timeline/utils.test.ts:4199205996": [
       [17, 9, 9, "Do not use any type assertions.", "3692209159"],
       [17, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [78, 18, 147, "Do not use any type assertions.", "893298400"],
-      [82, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [88, 18, 139, "Do not use any type assertions.", "3045277193"],
-      [92, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [98, 18, 150, "Do not use any type assertions.", "1747702495"],
-      [102, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [108, 18, 291, "Do not use any type assertions.", "3141576499"],
-      [124, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [130, 18, 106, "Do not use any type assertions.", "328761055"],
-      [134, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [165, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [222, 53, 46, "Do not use any type assertions.", "697874192"],
-      [222, 96, 3, "Unexpected any. Specify a different type.", "193409811"]
+      [90, 18, 147, "Do not use any type assertions.", "893298400"],
+      [94, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [100, 18, 139, "Do not use any type assertions.", "3045277193"],
+      [104, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [110, 18, 150, "Do not use any type assertions.", "1747702495"],
+      [114, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [120, 18, 291, "Do not use any type assertions.", "3141576499"],
+      [136, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [142, 18, 106, "Do not use any type assertions.", "328761055"],
+      [146, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [177, 17, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [234, 53, 46, "Do not use any type assertions.", "697874192"],
+      [234, 96, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/panel/state-timeline/utils.ts:1740139691": [
-      [79, 53, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [211, 19, 48, "Do not use any type assertions.", "1573487560"],
-      [262, 26, 11, "Do not use any type assertions.", "319541530"],
-      [262, 34, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [286, 46, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [286, 54, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [288, 13, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/plugins/panel/state-timeline/utils.ts:2030937583": [
+      [80, 53, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [212, 19, 48, "Do not use any type assertions.", "1573487560"],
+      [263, 26, 11, "Do not use any type assertions.", "319541530"],
+      [263, 34, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [287, 46, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [287, 54, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [289, 13, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/plugins/panel/table-old/column_options.ts:3218485965": [
       [5, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
