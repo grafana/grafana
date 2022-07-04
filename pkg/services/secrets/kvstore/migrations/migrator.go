@@ -13,7 +13,7 @@ var logger = log.New("secret.migration")
 
 // SecretMigrationService is used to migrate legacy secrets to new unified secrets.
 type SecretMigrationService interface {
-	Run(ctx context.Context) error
+	Migrate(ctx context.Context) error
 }
 
 type SecretMigrationServiceImpl struct {
@@ -33,14 +33,14 @@ func NewSecretMigrationService(services ...SecretMigrationService) *SecretMigrat
 }
 
 // Run migration services. This will block until all services have exited.
-func (s *SecretMigrationServiceImpl) Run(ctx context.Context) error {
+func (s *SecretMigrationServiceImpl) Migrate(ctx context.Context) error {
 	services := s.Services
 
 	// Start migration services.
 	for _, service := range services {
 		serviceName := reflect.TypeOf(service).String()
 		logger.Debug("Starting secret migration service", "service", serviceName)
-		err := service.Run(ctx)
+		err := service.Migrate(ctx)
 		if err != nil && !errors.Is(err, context.Canceled) {
 			logger.Error("Stopped secret migration service", "service", serviceName, "reason", err)
 			return fmt.Errorf("%s run error: %w", serviceName, err)

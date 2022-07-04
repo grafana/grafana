@@ -133,7 +133,7 @@ func (s *Server) init() error {
 		return err
 	}
 
-	if err := s.secretMigrationProvider.Run(s.context); err != nil {
+	if err := s.secretMigrationProvider.Migrate(s.context); err != nil {
 		return err
 	}
 

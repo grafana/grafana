@@ -41,7 +41,7 @@ func ProvideDataSourceMigrationService(
 	}
 }
 
-func (s *DataSourceSecretMigrationService) Run(ctx context.Context) error {
+func (s *DataSourceSecretMigrationService) Migrate(ctx context.Context) error {
 	query := &datasources.GetDataSourcesQuery{}
 	err := s.dataSourcesService.GetDataSources(ctx, query)
 	if err != nil {
