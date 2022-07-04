@@ -531,8 +531,8 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 					},
 				},
 				pluginErrors: map[string]*plugins.Error{
-					"test": {
-						PluginID:  "test",
+					"test-panel": {
+						PluginID:  "test-panel",
 						ErrorCode: "signatureMissing",
 					},
 				},
@@ -555,6 +555,11 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 				})
 				if !cmp.Equal(got, tt.want, compareOpts) {
 					t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, tt.want, compareOpts))
+				}
+				pluginErrs := l.PluginErrors()
+				require.Equal(t, len(tt.pluginErrors), len(pluginErrs))
+				for _, pluginErr := range pluginErrs {
+					require.Equal(t, tt.pluginErrors[pluginErr.PluginID], pluginErr)
 				}
 			})
 		}
@@ -982,6 +987,21 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 			}
 		})
 	})
+}
+func TestLoader_loadInvalidV1Signature(t *testing.T) {
+	rootDir, err := filepath.Abs("../")
+	if err != nil {
+		t.Errorf("could not construct absolute path of root dir")
+		return
+	}
+	pluginJSON := filepath.Join(rootDir, "testdata/invalid-v1-signature/plugin/plugin.json")
+
+	l := newLoader(&plugins.Cfg{
+		PluginsPath: rootDir,
+	})
+	got, err := l.loadPlugins(context.Background(), plugins.External, []string{pluginJSON}, map[string]struct{}{})
+	require.NoError(t, err)
+	require.Empty(t, got)
 }
 
 func TestLoader_readPluginJSON(t *testing.T) {
