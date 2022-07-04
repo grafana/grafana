@@ -46,6 +46,7 @@ export type DashboardPageRouteSearchParams = {
   editPanel?: string;
   viewPanel?: string;
   editview?: string;
+  panelType?: string;
   inspect?: string;
   from?: string;
   to?: string;
@@ -129,6 +130,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       urlUid: match.params.uid,
       urlType: match.params.type,
       urlFolderId: queryParams.folderId,
+      panelType: queryParams.panelType,
       routeName: this.props.route.routeName,
       fixUrl: !isPublic,
       accessToken: match.params.accessToken,

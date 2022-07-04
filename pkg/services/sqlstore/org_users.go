@@ -8,20 +8,21 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 func (ss *SQLStore) AddOrgUser(ctx context.Context, cmd *models.AddOrgUserCommand) error {
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		// check if user exists
-		var user models.User
+		var user user.User
 		if exists, err := sess.ID(cmd.UserId).Where(notServiceAccountFilter(ss)).Get(&user); err != nil {
 			return err
 		} else if !exists {
 			return models.ErrUserNotFound
 		}
 
-		if res, err := sess.Query("SELECT 1 from org_user WHERE org_id=? and user_id=?", cmd.OrgId, user.Id); err != nil {
+		if res, err := sess.Query("SELECT 1 from org_user WHERE org_id=? and user_id=?", cmd.OrgId, user.ID); err != nil {
 			return err
 		} else if len(res) == 1 {
 			return models.ErrOrgUserAlreadyAdded
@@ -49,7 +50,7 @@ func (ss *SQLStore) AddOrgUser(ctx context.Context, cmd *models.AddOrgUserComman
 		var userOrgs []*models.UserOrgDTO
 		sess.Table("org_user")
 		sess.Join("INNER", "org", "org_user.org_id=org.id")
-		sess.Where("org_user.user_id=? AND org_user.org_id=?", user.Id, user.OrgId)
+		sess.Where("org_user.user_id=? AND org_user.org_id=?", user.ID, user.OrgID)
 		sess.Cols("org.name", "org_user.role", "org_user.org_id")
 		err = sess.Find(&userOrgs)
 
@@ -58,7 +59,7 @@ func (ss *SQLStore) AddOrgUser(ctx context.Context, cmd *models.AddOrgUserComman
 		}
 
 		if len(userOrgs) == 0 {
-			return setUsingOrgInTransaction(sess, user.Id, cmd.OrgId)
+			return setUsingOrgInTransaction(sess, user.ID, cmd.OrgId)
 		}
 
 		return nil
@@ -243,7 +244,7 @@ func (ss *SQLStore) SearchOrgUsers(ctx context.Context, query *models.SearchOrgU
 func (ss *SQLStore) RemoveOrgUser(ctx context.Context, cmd *models.RemoveOrgUserCommand) error {
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		// check if user exists
-		var user models.User
+		var user user.User
 		if exists, err := sess.ID(cmd.UserId).Where(notServiceAccountFilter(ss)).Get(&user); err != nil {
 			return err
 		} else if !exists {
@@ -273,7 +274,7 @@ func (ss *SQLStore) RemoveOrgUser(ctx context.Context, cmd *models.RemoveOrgUser
 		var userOrgs []*models.UserOrgDTO
 		sess.Table("org_user")
 		sess.Join("INNER", "org", "org_user.org_id=org.id")
-		sess.Where("org_user.user_id=?", user.Id)
+		sess.Where("org_user.user_id=?", user.ID)
 		sess.Cols("org.name", "org_user.role", "org_user.org_id")
 		err := sess.Find(&userOrgs)
 
@@ -284,28 +285,28 @@ func (ss *SQLStore) RemoveOrgUser(ctx context.Context, cmd *models.RemoveOrgUser
 		if len(userOrgs) > 0 {
 			hasCurrentOrgSet := false
 			for _, userOrg := range userOrgs {
-				if user.OrgId == userOrg.OrgId {
+				if user.OrgID == userOrg.OrgId {
 					hasCurrentOrgSet = true
 					break
 				}
 			}
 
 			if !hasCurrentOrgSet {
-				err = setUsingOrgInTransaction(sess, user.Id, userOrgs[0].OrgId)
+				err = setUsingOrgInTransaction(sess, user.ID, userOrgs[0].OrgId)
 				if err != nil {
 					return err
 				}
 			}
 		} else if cmd.ShouldDeleteOrphanedUser {
 			// no other orgs, delete the full user
-			if err := deleteUserInTransaction(ss, sess, &models.DeleteUserCommand{UserId: user.Id}); err != nil {
+			if err := deleteUserInTransaction(ss, sess, &models.DeleteUserCommand{UserId: user.ID}); err != nil {
 				return err
 			}
 
 			cmd.UserWasDeleted = true
 		} else {
 			// no orgs, but keep the user -> clean up orgId
-			err = removeUserOrg(sess, user.Id)
+			err = removeUserOrg(sess, user.ID)
 			if err != nil {
 				return err
 			}

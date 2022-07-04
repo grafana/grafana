@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -69,15 +70,15 @@ func Test_teamSync(t *testing.T) {
 	}
 
 	upserCmd := &models.UpsertUserCommand{ExternalUser: &models.ExternalUserInfo{Email: "test_user@example.org"}}
-	expectedUser := &models.User{
-		Id:    1,
+	expectedUser := &user.User{
+		ID:    1,
 		Email: "test_user@example.org",
 		Name:  "test_user",
 		Login: "test_user",
 	}
 	authInfoMock.ExpectedUser = expectedUser
 
-	var actualUser *models.User
+	var actualUser *user.User
 	var actualExternalUser *models.ExternalUserInfo
 
 	t.Run("login.TeamSync should not be called when  nil", func(t *testing.T) {
@@ -87,7 +88,7 @@ func Test_teamSync(t *testing.T) {
 		assert.Nil(t, actualExternalUser)
 
 		t.Run("login.TeamSync should be called when not nil", func(t *testing.T) {
-			teamSyncFunc := func(user *models.User, externalUser *models.ExternalUserInfo) error {
+			teamSyncFunc := func(user *user.User, externalUser *models.ExternalUserInfo) error {
 				actualUser = user
 				actualExternalUser = externalUser
 				return nil
@@ -100,7 +101,7 @@ func Test_teamSync(t *testing.T) {
 		})
 
 		t.Run("login.TeamSync should propagate its errors to the caller", func(t *testing.T) {
-			teamSyncFunc := func(user *models.User, externalUser *models.ExternalUserInfo) error {
+			teamSyncFunc := func(user *user.User, externalUser *models.ExternalUserInfo) error {
 				return errors.New("teamsync test error")
 			}
 			login.TeamSync = teamSyncFunc
@@ -110,9 +111,9 @@ func Test_teamSync(t *testing.T) {
 	})
 }
 
-func createSimpleUser() models.User {
-	user := models.User{
-		Id: 1,
+func createSimpleUser() user.User {
+	user := user.User{
+		ID: 1,
 	}
 
 	return user

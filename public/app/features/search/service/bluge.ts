@@ -59,6 +59,10 @@ export class BlugeSearcher implements GrafanaSearcher {
         opts.push({ value: `-${sf.name}`, label: `${sf.display} (most)` });
         opts.push({ value: `${sf.name}`, label: `${sf.display} (least)` });
       }
+      for (const sf of sortTimeFields) {
+        opts.push({ value: `-${sf.name}`, label: `${sf.display} (recent)` });
+        opts.push({ value: `${sf.name}`, label: `${sf.display} (oldest)` });
+      }
     }
 
     return Promise.resolve(opts);
@@ -77,7 +81,7 @@ async function doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
     search: {
       ...query,
       query: query.query ?? '*',
-      limit: firstPageSize,
+      limit: query.limit ?? firstPageSize,
     },
   };
   const rsp = await lastValueFrom(
@@ -131,7 +135,18 @@ async function doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
       const frame = (
         await lastValueFrom(
           ds.query({
-            targets: [{ ...target, refId: 'Page', facet: undefined, from, limit: Math.max(limit, nextPageSizes) }],
+            targets: [
+              {
+                ...target,
+                search: {
+                  ...(target?.search ?? {}),
+                  from,
+                  limit: Math.max(limit, nextPageSizes),
+                },
+                refId: 'Page',
+                facet: undefined,
+              },
+            ],
           } as any)
         )
       ).data?.[0] as DataFrame;
@@ -186,9 +201,20 @@ const sortFields = [
   { name: 'errors_last_30_days', display: 'Errors 30 days' },
 ];
 
+// Enterprise only time sort field values for dashboards
+const sortTimeFields = [
+  { name: 'created_at', display: 'Created time' },
+  { name: 'updated_at', display: 'Updated time' },
+];
+
 /** Given the internal field name, this gives a reasonable display name for the table colum header */
 function getSortFieldDisplayName(name: string) {
   for (const sf of sortFields) {
+    if (sf.name === name) {
+      return sf.display;
+    }
+  }
+  for (const sf of sortTimeFields) {
     if (sf.name === name) {
       return sf.display;
     }

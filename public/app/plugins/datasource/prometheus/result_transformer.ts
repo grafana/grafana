@@ -1,11 +1,15 @@
 import { descending, deviation } from 'd3';
-import { partition, groupBy } from 'lodash';
+import { groupBy, partition } from 'lodash';
 
 import {
   ArrayDataFrame,
   ArrayVector,
+  CoreApp,
   DataFrame,
+  DataFrameType,
   DataLink,
+  DataQueryRequest,
+  DataQueryResponse,
   DataTopic,
   Field,
   FieldType,
@@ -13,14 +17,10 @@ import {
   getDisplayProcessor,
   Labels,
   MutableField,
+  PreferredVisualisationType,
   ScopedVars,
   TIME_SERIES_TIME_FIELD_NAME,
   TIME_SERIES_VALUE_FIELD_NAME,
-  DataQueryResponse,
-  DataQueryRequest,
-  PreferredVisualisationType,
-  DataFrameType,
-  CoreApp,
 } from '@grafana/data';
 import { FetchResponse, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
 
@@ -293,15 +293,21 @@ function getDataLinks(options: ExemplarTraceIdDestination): DataLink[] {
     const dataSourceSrv = getDataSourceSrv();
     const dsSettings = dataSourceSrv.getInstanceSettings(options.datasourceUid);
 
-    dataLinks.push({
-      title: options.urlDisplayLabel || `Query with ${dsSettings?.name}`,
-      url: '',
-      internal: {
-        query: { query: '${__value.raw}', queryType: 'traceId' },
-        datasourceUid: options.datasourceUid,
-        datasourceName: dsSettings?.name ?? 'Data source not found',
-      },
-    });
+    // dsSettings is undefined because of the reasons below:
+    // - permissions issues (probably most likely)
+    // - deleted datasource
+    // - misconfiguration
+    if (dsSettings) {
+      dataLinks.push({
+        title: options.urlDisplayLabel || `Query with ${dsSettings?.name}`,
+        url: '',
+        internal: {
+          query: { query: '${__value.raw}', queryType: 'traceId' },
+          datasourceUid: options.datasourceUid,
+          datasourceName: dsSettings?.name ?? 'Data source not found',
+        },
+      });
+    }
   }
 
   if (options.url) {
@@ -485,6 +491,7 @@ function getTimeField(data: PromValue[], isMs = false): MutableField {
     values: new ArrayVector<number>(data.map((val) => (isMs ? val[0] : val[0] * 1000))),
   };
 }
+
 type ValueFieldOptions = {
   data: PromValue[];
   valueName?: string;
