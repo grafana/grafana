@@ -203,6 +203,7 @@ export interface GrafanaConfig {
   unifiedAlertingEnabled: boolean;
   angularSupportEnabled: boolean;
   feedbackLinksEnabled: boolean;
+  secretsManagerPluginEnabled: boolean;
   googleAnalyticsId: string | undefined;
   rudderstackWriteKey: string | undefined;
   rudderstackDataPlaneUrl: string | undefined;

@@ -4,7 +4,6 @@ include ../../../../../.bingo/Variables.mk
 
 API_DIR = definitions
 GO_PKG_FILES = $(shell find $(API_DIR) -name *.go -print)
-SWAGGER_TAG ?= latest
 
 PATH_DOWN = pkg/services/ngalert/api/tooling
 PATH_UP = ../../../../..
@@ -22,8 +21,8 @@ ifneq ($(OS),Windows_NT)
 	endif
 endif
 
-spec.json spec-stable.json: $(GO_PKG_FILES)
-	SWAGGER_GENERATE_EXTENSION=false $(SWAGGER) generate spec -m -w $(API_DIR) -o spec.json && $(SWAGGER) generate spec -m --include-tag=stable -o spec-stable.json
+spec.json spec-stable.json: $(GO_PKG_FILES) $(SWAGGER)
+	SWAGGER_GENERATE_EXTENSION=false $(SWAGGER) generate spec -m -w $(API_DIR) -o spec.json && SWAGGER_GENERATE_EXTENSION=false $(SWAGGER) generate spec -m --include-tag=stable -o spec-stable.json
 
 post.json: spec.json
 	go run cmd/clean-swagger/main.go -if $(<) -of $@

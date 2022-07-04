@@ -6,31 +6,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
-var (
-	ErrPublicDashboardFailedGenerateUniqueUid = DashboardErr{
-		Reason:     "Failed to generate unique public dashboard id",
-		StatusCode: 500,
-	}
-	ErrPublicDashboardFailedGenerateAccesstoken = DashboardErr{
-		Reason:     "Failed to public dashboard access token",
-		StatusCode: 500,
-	}
-	ErrPublicDashboardNotFound = DashboardErr{
-		Reason:     "Public dashboard not found",
-		StatusCode: 404,
-		Status:     "not-found",
-	}
-	ErrPublicDashboardPanelNotFound = DashboardErr{
-		Reason:     "Panel not found in dashboard",
-		StatusCode: 404,
-		Status:     "not-found",
-	}
-	ErrPublicDashboardIdentifierNotSet = DashboardErr{
-		Reason:     "No Uid for public dashboard specified",
-		StatusCode: 400,
-	}
-)
-
 type PublicDashboard struct {
 	Uid          string           `json:"uid" xorm:"pk uid"`
 	DashboardUid string           `json:"dashboardUid" xorm:"dashboard_uid"`
