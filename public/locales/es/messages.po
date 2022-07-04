@@ -35,7 +35,51 @@ msgid "common.save"
 msgstr ""
 
 #: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.add-panel"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.comments"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.mark-favorite"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.open-original"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.playlist-next"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.playlist-previous"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.playlist-stop"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.save"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.settings"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.share"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
 msgid "dashboard.toolbar.tv-button"
+msgstr ""
+
+#: public/app/features/dashboard/components/DashNav/DashNav.tsx
+msgid "dashboard.toolbar.unmark-favorite"
 msgstr ""
 
 #: public/app/core/components/NavBar/navBarItem-translations.ts
