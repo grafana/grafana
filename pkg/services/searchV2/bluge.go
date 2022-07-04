@@ -220,7 +220,9 @@ func getDashboardPanelDocs(dash dashboard, location string) []*bluge.Document {
 
 // Names need to be indexed a few ways to support key features
 func newSearchDocument(uid string, name string, descr string, url string) *bluge.Document {
-	doc := bluge.NewDocument(uid)
+	doc := &bluge.Document{
+		bluge.NewKeywordField(documentFieldUID, uid).Sortable(),
+	}
 
 	if name != "" {
 		doc.AddField(bluge.NewTextField(documentFieldName, name).StoreValue().SearchTermPositions())
@@ -254,23 +256,29 @@ func getDashboardPanelIDs(index *orgIndex, panelLocation string) ([]string, erro
 	fullQuery.AddMust(bluge.NewTermQuery(panelLocation).SetField(documentFieldLocation))
 	fullQuery.AddMust(bluge.NewTermQuery(string(entityKindPanel)).SetField(documentFieldKind))
 	req := bluge.NewAllMatches(fullQuery)
+
+	docValuesFields := []string{
+		documentFieldUID,
+	}
+	searchCtx := search.NewSearchContext(0, 0)
+
 	documentMatchIterator, err := reader.Search(context.Background(), req)
 	if err != nil {
 		return nil, err
 	}
 	match, err := documentMatchIterator.Next()
 	for err == nil && match != nil {
-		// load the identifier for this match
-		err = match.VisitStoredFields(func(field string, value []byte) bool {
+		err = match.LoadDocumentValues(searchCtx, docValuesFields)
+		if err != nil {
+			return nil, err
+		}
+		visitFunc := func(field string, value []byte) bool {
 			if field == documentFieldUID {
 				panelIDs = append(panelIDs, string(value))
 			}
 			return true
-		})
-		if err != nil {
-			return nil, err
 		}
-		// load the next document match
+		iterateDocValues(docValuesFields, match, visitFunc)
 		match, err = documentMatchIterator.Next()
 	}
 	return panelIDs, err
@@ -288,23 +296,29 @@ func getDocsIDsByLocationPrefix(index *orgIndex, prefix string) ([]string, error
 	fullQuery := bluge.NewBooleanQuery()
 	fullQuery.AddMust(bluge.NewPrefixQuery(prefix).SetField(documentFieldLocation))
 	req := bluge.NewAllMatches(fullQuery)
+
+	docValuesFields := []string{
+		documentFieldUID,
+	}
+	searchCtx := search.NewSearchContext(0, 0)
+
 	documentMatchIterator, err := reader.Search(context.Background(), req)
 	if err != nil {
 		return nil, fmt.Errorf("error search: %w", err)
 	}
 	match, err := documentMatchIterator.Next()
 	for err == nil && match != nil {
-		// load the identifier for this match
-		err = match.VisitStoredFields(func(field string, value []byte) bool {
+		err = match.LoadDocumentValues(searchCtx, docValuesFields)
+		if err != nil {
+			return nil, err
+		}
+		visitFunc := func(field string, value []byte) bool {
 			if field == documentFieldUID {
 				ids = append(ids, string(value))
 			}
 			return true
-		})
-		if err != nil {
-			return nil, err
 		}
-		// load the next document match
+		iterateDocValues(docValuesFields, match, visitFunc)
 		match, err = documentMatchIterator.Next()
 	}
 	return ids, err
@@ -347,10 +361,6 @@ func getDashboardLocation(index *orgIndex, dashboardUID string) (string, bool, e
 				return false
 			}
 			return true
-		}
-		err = match.VisitStoredFields(visitFunc)
-		if err != nil {
-			return "", false, err
 		}
 		iterateDocValues(docValuesFields, match, visitFunc)
 		match, err = documentMatchIterator.Next()
@@ -534,6 +544,7 @@ func doSearchQuery(
 	locationItems := make(map[string]bool, 50)
 
 	docValuesFields := []string{
+		documentFieldUID,
 		documentFieldPanelType,
 		documentFieldKind,
 		documentFieldLocation,
@@ -700,6 +711,7 @@ func getLocationLookupInfo(ctx context.Context, reader *bluge.Reader, uids map[s
 	}
 
 	docValuesFields := []string{
+		documentFieldUID,
 		documentFieldKind,
 		documentFieldURL,
 	}
