@@ -87,7 +87,7 @@ const (
 
 	// This isn't a hard-coded secret token, hence the nolint.
 	//nolint:gosec
-	ScreenshotTokenAnnotation = "__alertScreenshotToken__"
+	ImageTokenAnnotation = "__alertImageToken__"
 
 	// GrafanaReservedLabelPrefix contains the prefix for Grafana reserved labels. These differ from "__<label>__" labels
 	// in that they are not meant for internal-use only and will be passed-through to AMs and available to users in the same
@@ -105,9 +105,9 @@ var (
 		NamespaceUIDLabel: {},
 	}
 	InternalAnnotationNameSet = map[string]struct{}{
-		DashboardUIDAnnotation:    {},
-		PanelIDAnnotation:         {},
-		ScreenshotTokenAnnotation: {},
+		DashboardUIDAnnotation: {},
+		PanelIDAnnotation:      {},
+		ImageTokenAnnotation:   {},
 	}
 )
 
@@ -388,7 +388,7 @@ func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRule) {
 	if ruleToPatch.NoDataState == "" {
 		ruleToPatch.NoDataState = existingRule.NoDataState
 	}
-	if ruleToPatch.For == 0 {
+	if ruleToPatch.For == -1 {
 		ruleToPatch.For = existingRule.For
 	}
 }

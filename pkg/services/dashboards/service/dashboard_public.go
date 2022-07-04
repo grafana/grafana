@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gofrs/uuid"
+	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
@@ -21,11 +21,11 @@ func (dr *DashboardServiceImpl) GetPublicDashboard(ctx context.Context, accessTo
 	}
 
 	if pubdash == nil || d == nil {
-		return nil, models.ErrPublicDashboardNotFound
+		return nil, dashboards.ErrPublicDashboardNotFound
 	}
 
 	if !pubdash.IsEnabled {
-		return nil, models.ErrPublicDashboardNotFound
+		return nil, dashboards.ErrPublicDashboardNotFound
 	}
 
 	ts := pubdash.BuildTimeSettings(d)
@@ -49,16 +49,12 @@ func (dr *DashboardServiceImpl) GetPublicDashboardConfig(ctx context.Context, or
 // to the database. It handles validations for sharing config and persistence
 func (dr *DashboardServiceImpl) SavePublicDashboardConfig(ctx context.Context, dto *dashboards.SavePublicDashboardConfigDTO) (*models.PublicDashboard, error) {
 	if len(dto.DashboardUid) == 0 {
-		return nil, models.ErrDashboardIdentifierNotSet
+		return nil, dashboards.ErrDashboardIdentifierNotSet
 	}
 
 	// set default value for time settings
 	if dto.PublicDashboard.TimeSettings == nil {
-		json, err := simplejson.NewJson([]byte("{}"))
-		if err != nil {
-			return nil, err
-		}
-		dto.PublicDashboard.TimeSettings = json
+		dto.PublicDashboard.TimeSettings = simplejson.New()
 	}
 
 	if dto.PublicDashboard.Uid == "" {
@@ -125,13 +121,13 @@ func (dr *DashboardServiceImpl) updatePublicDashboardConfig(ctx context.Context,
 // dashboard and returns a metrics request to be sent to query backend
 func (dr *DashboardServiceImpl) BuildPublicDashboardMetricRequest(ctx context.Context, dashboard *models.Dashboard, publicDashboard *models.PublicDashboard, panelId int64) (dtos.MetricRequest, error) {
 	if !publicDashboard.IsEnabled {
-		return dtos.MetricRequest{}, models.ErrPublicDashboardNotFound
+		return dtos.MetricRequest{}, dashboards.ErrPublicDashboardNotFound
 	}
 
 	queriesByPanel := models.GetQueriesFromDashboard(dashboard.Data)
 
 	if _, ok := queriesByPanel[panelId]; !ok {
-		return dtos.MetricRequest{}, models.ErrPublicDashboardPanelNotFound
+		return dtos.MetricRequest{}, dashboards.ErrPublicDashboardPanelNotFound
 	}
 
 	ts := publicDashboard.BuildTimeSettings(dashboard)
@@ -145,10 +141,10 @@ func (dr *DashboardServiceImpl) BuildPublicDashboardMetricRequest(ctx context.Co
 
 // generates a uuid formatted without dashes to use as access token
 func GenerateAccessToken() (string, error) {
-	token, err := uuid.NewV4()
+	token, err := uuid.NewRandom()
 	if err != nil {
 		return "", err
 	}
 
-	return fmt.Sprintf("%x", token), nil
+	return fmt.Sprintf("%x", token[:]), nil
 }
