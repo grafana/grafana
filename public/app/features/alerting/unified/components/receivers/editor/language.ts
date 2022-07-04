@@ -15,7 +15,7 @@ enum TokenType {
 
 // list of available functions in Alertmanager templates
 // see https://cs.github.com/prometheus/alertmanager/blob/805e505288ce82c3e2b625a3ca63aaf2b0aa9cea/template/template.go?q=join#L132-L151
-const availableAlertManagerFunctions = [
+export const availableAlertManagerFunctions = [
   'toUpper',
   'toLower',
   'title',
@@ -26,8 +26,11 @@ const availableAlertManagerFunctions = [
   'stringSlice',
 ];
 
+// boolean functions
+const booleanFunctions = ['eq', 'ne', 'lt', 'le', 'gt', 'ge'];
+
 // built-in functions for Go templates
-const builtinFunctions = [
+export const builtinFunctions = [
   'and',
   'call',
   'html',
@@ -41,13 +44,11 @@ const builtinFunctions = [
   'printf',
   'println',
   'urlquery',
+  ...booleanFunctions,
 ];
 
-// boolean functions
-const booleanFunctions = ['eq', 'ne', 'lt', 'le', 'gt', 'ge'];
-
 // Go template keywords
-const keywords = ['define', 'if', 'else', 'end', 'range', 'break', 'continue', 'template', 'block', 'with'];
+export const keywords = ['define', 'if', 'else', 'end', 'range', 'break', 'continue', 'template', 'block', 'with'];
 
 // Monarch language definition, see https://microsoft.github.io/monaco-editor/monarch.html
 // check https://github.com/microsoft/monaco-editor/blob/main/src/basic-languages/go/go.ts for an example
@@ -55,7 +56,7 @@ const keywords = ['define', 'if', 'else', 'end', 'range', 'break', 'continue', '
 export const language: monacoType.languages.IMonarchLanguage = {
   defaultToken: '', // change this to "invalid" to find tokens that were never matched
   keywords: keywords,
-  functions: [...builtinFunctions, ...booleanFunctions, ...availableAlertManagerFunctions],
+  functions: [...builtinFunctions, ...availableAlertManagerFunctions],
   operators: ['|'],
   tokenizer: {
     root: [

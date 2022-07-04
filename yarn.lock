@@ -4096,6 +4096,24 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@date-io/core@npm:^1.3.13":
+  version: 1.3.13
+  resolution: "@date-io/core@npm:1.3.13"
+  checksum: 5a9e9d1de20f0346a3c7d2d5946190caef4bfb0b64d82ba1f4c566657a9192667c94ebe7f438d11d4286d9c190974daad4fb2159294225cd8af4d9a140239879
+  languageName: node
+  linkType: hard
+
+"@date-io/moment@npm:^1.3.13":
+  version: 1.3.13
+  resolution: "@date-io/moment@npm:1.3.13"
+  dependencies:
+    "@date-io/core": ^1.3.13
+  peerDependencies:
+    moment: ^2.24.0
+  checksum: c4847f9d1bf09bb22c1acc5806fc50825c0bdb52408c9fec8cc5f9a65f16a8014870b5890a0eeb73b2c53a6487c35acbd2ab2a5c49068ff5a5dccbcb5c9e654b
+  languageName: node
+  linkType: hard
+
 "@daybrush/utils@npm:1.6.0, @daybrush/utils@npm:^1.0.0, @daybrush/utils@npm:^1.1.1, @daybrush/utils@npm:^1.3.1, @daybrush/utils@npm:^1.4.0":
   version: 1.6.0
   resolution: "@daybrush/utils@npm:1.6.0"
@@ -6934,14 +6952,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@microsoft/api-extractor-model@npm:7.20.3":
-  version: 7.20.3
-  resolution: "@microsoft/api-extractor-model@npm:7.20.3"
+"@microsoft/api-extractor-model@npm:7.21.0":
+  version: 7.21.0
+  resolution: "@microsoft/api-extractor-model@npm:7.21.0"
   dependencies:
     "@microsoft/tsdoc": 0.14.1
     "@microsoft/tsdoc-config": ~0.16.1
     "@rushstack/node-core-library": 3.49.0
-  checksum: d5721794e9f98348933fcdc5922e5d8ec681e1250ba03764873c4a864478c815ee86bac877ec4430bbeb4f2ffa980b8ae71cf8edd6b822f3dc937c810804fdab
+  checksum: 9e0cb0cd2d344ee23f32294103856e413fd998ceefc5ea26427b603ef7a6dc155ff6710bf3a30d0c426b9928118e8f56e080f0c0aa9685f3e825e7e154340f62
   languageName: node
   linkType: hard
 
@@ -8314,15 +8332,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rushstack/ts-command-line@npm:4.11.0":
-  version: 4.11.0
-  resolution: "@rushstack/ts-command-line@npm:4.11.0"
+"@rushstack/ts-command-line@npm:4.12.1":
+  version: 4.12.1
+  resolution: "@rushstack/ts-command-line@npm:4.12.1"
   dependencies:
     "@types/argparse": 1.0.38
     argparse: ~1.0.9
     colors: ~1.2.1
     string-argv: ~0.3.1
-  checksum: 966692b5738d198130d6a8f01f819dfa95dccaf7a8e4c2f9d76d36205790584e827afb18f837703f07bfe93faa3b705c81e682888a4aef0da350758c7c6582d1
+  checksum: e9479bd001f4f206d207c867ec7b91444727cf8a1c685dac7589c6a33b54f47200deabc450d6831a1cc38501f0322eb7003c1f78f1fa43230541c4b7ddc4718d
   languageName: node
   linkType: hard
 
@@ -15607,6 +15625,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"clone@npm:^2.1.2":
+  version: 2.1.2
+  resolution: "clone@npm:2.1.2"
+  checksum: aaf106e9bc025b21333e2f4c12da539b568db4925c0501a1bf4070836c9e848c892fa22c35548ce0d1132b08bbbfa17a00144fe58fccdab6fa900fec4250f67d
+  languageName: node
+  linkType: hard
+
 "clsx@npm:^1.1.1":
   version: 1.1.1
   resolution: "clsx@npm:1.1.1"
@@ -21292,6 +21317,7 @@ __metadata:
     rc-time-picker: 3.7.3
     re-resizable: 6.9.9
     react: 17.0.2
+    react-awesome-query-builder: ^5.1.2
     react-beautiful-dnd: 13.1.0
     react-diff-viewer: ^3.1.1
     react-dom: 17.0.2
@@ -21329,7 +21355,6 @@ __metadata:
     rxjs: 7.5.5
     sass: 1.52.3
     sass-loader: 13.0.0
-    search-query-parser: 1.6.0
     selecto: 1.16.2
     semver: 7.3.7
     sinon: 14.0.0
@@ -26766,7 +26791,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"moment@npm:2.29.3, moment@npm:2.x, moment@npm:>= 2.9.0, moment@npm:^2.19.4, moment@npm:^2.20.1":
+"moment@npm:2.29.3, moment@npm:2.x, moment@npm:>= 2.9.0, moment@npm:^2.19.4, moment@npm:^2.20.1, moment@npm:^2.29.1":
   version: 2.29.3
   resolution: "moment@npm:2.29.3"
   checksum: 2e780e36d9a1823c08a1b6313cbb08bd01ecbb2a9062095820a34f42c878991ccba53abaa6abb103fd5c01e763724f295162a8c50b7e95b4f1c992ef0772d3f0
@@ -30857,6 +30882,45 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-awesome-query-builder@npm:^5.1.2":
+  version: 5.1.2
+  resolution: "react-awesome-query-builder@npm:5.1.2"
+  dependencies:
+    "@date-io/moment": ^1.3.13
+    classnames: ^2.3.1
+    clone: ^2.1.2
+    immutable: ^3.8.2
+    lodash: ^4.17.21
+    moment: ^2.29.1
+    prop-types: ^15.7.2
+    react-redux: ^7.2.2
+    redux: ^4.1.0
+    spel2js: ^0.2.8
+    sqlstring: ^2.3.2
+  peerDependencies:
+    "@ant-design/icons": ^4.0.0
+    "@emotion/react": ^11.7.1
+    "@emotion/styled": ^11.6.0
+    "@fortawesome/fontawesome-svg-core": ^1.2.36
+    "@fortawesome/free-solid-svg-icons": ^5.15.4
+    "@fortawesome/react-fontawesome": ^0.1.16
+    "@material-ui/core": ^4.12.3
+    "@material-ui/icons": ^4.0.0
+    "@material-ui/lab": ^4.0.0-alpha.57
+    "@material-ui/pickers": ^3.2.10
+    "@mui/icons-material": ^5.2.4
+    "@mui/lab": ^5.0.0-alpha.60
+    "@mui/material": ^5.2.4
+    antd: ^4.0.0
+    bootstrap: ^5.1.3
+    material-ui-confirm: ^2.0.1 || ^3.0.0
+    react: ^16.8.4 || ^17.0.1
+    react-dom: ^16.8.4 || ^17.0.1
+    reactstrap: ^9.0.0
+  checksum: 6efab0fcbb98d4843fbe3b5036a7831fd097774869fc0e175ca40c4770d7939dd3efcb2c3365c6fe539c8ba6b6bb19ddef55d93f491770a9bfdc3f1355cc5e4e
+  languageName: node
+  linkType: hard
+
 "react-beautiful-dnd@npm:13.1.0":
   version: 13.1.0
   resolution: "react-beautiful-dnd@npm:13.1.0"
@@ -31438,6 +31502,27 @@ __metadata:
     react-native:
       optional: true
   checksum: 0bf142ce0d0b80aef955650fd5e9489fca32d94f19ee23893b332f1b01ceee7bd3623337c942cbda642667d1dc9de5ac869c3c1946afa6cf2046407b57d24741
+  languageName: node
+  linkType: hard
+
+"react-redux@npm:^7.2.2":
+  version: 7.2.8
+  resolution: "react-redux@npm:7.2.8"
+  dependencies:
+    "@babel/runtime": ^7.15.4
+    "@types/react-redux": ^7.1.20
+    hoist-non-react-statics: ^3.3.2
+    loose-envify: ^1.4.0
+    prop-types: ^15.7.2
+    react-is: ^17.0.2
+  peerDependencies:
+    react: ^16.8.3 || ^17 || ^18
+  peerDependenciesMeta:
+    react-dom:
+      optional: true
+    react-native:
+      optional: true
+  checksum: ecf1933e91013f2d41bfc781515b536bf81eb1f70ff228607841094c8330fe77d522372b359687e51c0b52b9888dba73db9ac0486aace1896ab9eb9daec102d5
   languageName: node
   linkType: hard
 
@@ -32065,7 +32150,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"redux@npm:4.2.0":
+"redux@npm:4.2.0, redux@npm:^4.1.0":
   version: 4.2.0
   resolution: "redux@npm:4.2.0"
   dependencies:
@@ -33161,13 +33246,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"search-query-parser@npm:1.6.0":
-  version: 1.6.0
-  resolution: "search-query-parser@npm:1.6.0"
-  checksum: 6ce290e1d1602401ab5e4561f2a9744d1ffd75da5759cc8ead162153258d8470dd86757a3be577772e883d48673dec42b26843fc4aa5155f1ec902112ce92225
-  languageName: node
-  linkType: hard
-
 "secure-compare@npm:3.0.1":
   version: 3.0.1
   resolution: "secure-compare@npm:3.0.1"
@@ -34073,6 +34151,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"spel2js@npm:^0.2.8":
+  version: 0.2.8
+  resolution: "spel2js@npm:0.2.8"
+  checksum: a81f30b90438c6fef27627d8f91e2ce9040cc3743918846e535e44bdbf76be4d404d281e83b1be8287f36c1566a22e20d711532b941838f9ca7673e5caebf75f
+  languageName: node
+  linkType: hard
+
 "split-on-first@npm:^1.0.0":
   version: 1.1.0
   resolution: "split-on-first@npm:1.1.0"
@@ -34120,6 +34205,13 @@ __metadata:
   version: 1.0.3
   resolution: "sprintf-js@npm:1.0.3"
   checksum: 19d79aec211f09b99ec3099b5b2ae2f6e9cdefe50bc91ac4c69144b6d3928a640bb6ae5b3def70c2e85a2c3d9f5ec2719921e3a59d3ca3ef4b2fd1a4656a0df3
+  languageName: node
+  linkType: hard
+
+"sqlstring@npm:^2.3.2":
+  version: 2.3.3
+  resolution: "sqlstring@npm:2.3.3"
+  checksum: 1e7e2d51c38a0cf7372e875408ca100b6e0c9a941ab7773975ea41fb36e5528e404dc787689be855780cf6d0a829ff71027964ae3a05a7446e91dce26672fda7
   languageName: node
   linkType: hard
 

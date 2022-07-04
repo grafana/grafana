@@ -131,7 +131,7 @@ func (hs *HTTPServer) QueryPublicDashboard(c *models.ReqContext) response.Respon
 
 // util to help us unpack a dashboard err or use default http code and message
 func handleDashboardErr(defaultCode int, defaultMsg string, err error) response.Response {
-	var dashboardErr models.DashboardErr
+	var dashboardErr dashboards.DashboardErr
 
 	if ok := errors.As(err, &dashboardErr); ok {
 		return response.Error(dashboardErr.StatusCode, dashboardErr.Error(), dashboardErr)
