@@ -306,7 +306,7 @@ func (s *Service) DecryptedValues(ctx context.Context, ds *datasources.DataSourc
 	}
 
 	if !exist || err != nil {
-		decryptedValues, err = s.DecryptLegacySecrets(ctx, ds)
+		decryptedValues, err = s.decryptLegacySecrets(ctx, ds)
 		if err != nil {
 			return nil, err
 		}
@@ -315,7 +315,7 @@ func (s *Service) DecryptedValues(ctx context.Context, ds *datasources.DataSourc
 	return decryptedValues, nil
 }
 
-func (s *Service) DecryptLegacySecrets(ctx context.Context, ds *datasources.DataSource) (map[string]string, error) {
+func (s *Service) decryptLegacySecrets(ctx context.Context, ds *datasources.DataSource) (map[string]string, error) {
 	secureJsonData := make(map[string]string)
 	for k, v := range ds.SecureJsonData {
 		decrypted, err := s.SecretsService.Decrypt(ctx, v)

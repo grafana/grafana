@@ -26,7 +26,7 @@ func (s *DataSourceSecretMigrationService) Migrate(ctx context.Context) error {
 	for _, ds := range query.Result {
 		hasMigration := ds.JsonData.Get("secretMigrationComplete").MustBool()
 		if !hasMigration {
-			secureJsonData, err := s.dataSourcesService.DecryptLegacySecrets(ctx, ds)
+			secureJsonData, err := s.dataSourcesService.DecryptedValues(ctx, ds)
 			if err != nil {
 				return err
 			}

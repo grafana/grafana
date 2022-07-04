@@ -127,7 +127,3 @@ func (s *FakeDataSourceService) DecryptedBasicAuthPassword(ctx context.Context, 
 func (s *FakeDataSourceService) DecryptedPassword(ctx context.Context, ds *datasources.DataSource) (string, error) {
 	return "", nil
 }
-
-func (s *FakeDataSourceService) DecryptLegacySecrets(ctx context.Context, ds *datasources.DataSource) (map[string]string, error) {
-	return make(map[string]string), nil
-}

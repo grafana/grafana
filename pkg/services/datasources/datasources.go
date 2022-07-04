@@ -54,9 +54,6 @@ type DataSourceService interface {
 	// DecryptedPassword decrypts the encrypted datasource password and returns the
 	// decrypted value.
 	DecryptedPassword(ctx context.Context, ds *DataSource) (string, error)
-
-	// DecryptLegacySecrets decrypts the encrypted data stored in the SecureJsonData field
-	DecryptLegacySecrets(ctx context.Context, ds *DataSource) (map[string]string, error)
 }
 
 // CacheService interface for retrieving a cached datasource.
