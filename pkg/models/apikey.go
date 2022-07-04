@@ -20,6 +20,7 @@ type ApiKey struct {
 	Role             RoleType
 	Created          time.Time
 	Updated          time.Time
+	LastUsedAt       *time.Time `xorm:"last_used_at"`
 	Expires          *int64
 	ServiceAccountId *int64
 }

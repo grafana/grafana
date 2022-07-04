@@ -41,7 +41,8 @@ load(
     'upload_cdn_step',
     'verify_gen_cue_step',
     'test_a11y_frontend_step',
-    'trigger_oss'
+    'trigger_oss',
+    'betterer_frontend_step'
 )
 
 load(
@@ -82,6 +83,7 @@ def main_test_frontend():
     ]
     test_steps = [
         lint_frontend_step(),
+        betterer_frontend_step(),
         test_frontend_step(),
     ]
     return pipeline(

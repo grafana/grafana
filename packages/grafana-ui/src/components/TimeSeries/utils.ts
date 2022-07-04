@@ -25,6 +25,7 @@ import {
   ScaleDirection,
   ScaleOrientation,
   StackingMode,
+  GraphTransform,
 } from '@grafana/schema';
 
 import { buildScaleKey } from '../GraphNG/utils';
@@ -285,6 +286,35 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       if (customRenderedFields.indexOf(dispName) >= 0) {
         pathBuilder = () => null;
         pointsBuilder = () => undefined;
+      } else if (customConfig.transform === GraphTransform.Constant) {
+        // patch some monkeys!
+        const defaultBuilder = uPlot.paths!.linear!();
+
+        pathBuilder = (u, seriesIdx) => {
+          //eslint-disable-next-line
+          const _data: any[] = (u as any)._data; // uplot.AlignedData not exposed in types
+
+          // the data we want the line renderer to pull is x at each plot edge with paired flat y values
+
+          const r = getTimeRange();
+          let xData = [r.from.valueOf(), r.to.valueOf()];
+          let firstY = _data[seriesIdx].find((v: number | null | undefined) => v != null);
+          let yData = [firstY, firstY];
+          let fauxData = _data.slice();
+          fauxData[0] = xData;
+          fauxData[seriesIdx] = yData;
+
+          //eslint-disable-next-line
+          return defaultBuilder(
+            {
+              ...u,
+              _data: fauxData,
+            } as any,
+            seriesIdx,
+            0,
+            1
+          );
+        };
       }
 
       if (customConfig.fillBelowTo) {

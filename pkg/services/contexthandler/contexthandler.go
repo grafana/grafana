@@ -272,6 +272,12 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 		return true
 	}
 
+	// update api_key last used date
+	if err := h.SQLStore.UpdateAPIKeyLastUsedDate(reqContext.Req.Context(), apikey.Id); err != nil {
+		reqContext.JsonApiErr(http.StatusInternalServerError, InvalidAPIKey, errKey)
+		return true
+	}
+
 	if apikey.ServiceAccountId == nil || *apikey.ServiceAccountId < 1 { //There is no service account attached to the apikey
 		//Use the old APIkey method.  This provides backwards compatibility.
 		reqContext.SignedInUser = &models.SignedInUser{}
@@ -305,6 +311,7 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 
 	reqContext.IsSignedIn = true
 	reqContext.SignedInUser = querySignedInUser.Result
+
 	return true
 }
 
@@ -348,11 +355,11 @@ func (h *ContextHandler) initContextWithBasicAuth(reqContext *models.ReqContext,
 
 	user := authQuery.User
 
-	query := models.GetSignedInUserQuery{UserId: user.Id, OrgId: orgID}
+	query := models.GetSignedInUserQuery{UserId: user.ID, OrgId: orgID}
 	if err := h.SQLStore.GetSignedInUserWithCacheCtx(ctx, &query); err != nil {
 		reqContext.Logger.Error(
 			"Failed at user signed in",
-			"id", user.Id,
+			"id", user.ID,
 			"org", orgID,
 		)
 		reqContext.JsonApiErr(401, InvalidUsernamePassword, err)
