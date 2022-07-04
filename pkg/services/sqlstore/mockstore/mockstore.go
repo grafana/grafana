@@ -4,8 +4,10 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type OrgListResponse []struct {
@@ -17,8 +19,8 @@ type SQLStoreMock struct {
 	LastLoginAttemptCommand *models.CreateLoginAttemptCommand
 	LatestUserId            int64
 
-	ExpectedUser                   *models.User
-	ExpectedDatasource             *models.DataSource
+	ExpectedUser                   *user.User
+	ExpectedDatasource             *datasources.DataSource
 	ExpectedAlert                  *models.Alert
 	ExpectedPluginSetting          *models.PluginSetting
 	ExpectedDashboards             []*models.Dashboard
@@ -28,11 +30,11 @@ type SQLStoreMock struct {
 	ExpectedTeamsByUser            []*models.TeamDTO
 	ExpectedSearchOrgList          []*models.OrgDTO
 	ExpectedSearchUsers            models.SearchUserQueryResult
-	ExpectedDatasources            []*models.DataSource
+	ExpectedDatasources            []*datasources.DataSource
 	ExpectedOrg                    *models.Org
 	ExpectedSystemStats            *models.SystemStats
 	ExpectedDataSourceStats        []*models.DataSourceStats
-	ExpectedDataSources            []*models.DataSource
+	ExpectedDataSources            []*datasources.DataSource
 	ExpectedDataSourcesAccessStats []*models.DataSourceAccessStats
 	ExpectedNotifierUsageStats     []*models.NotifierUsageStats
 	ExpectedPersistedDashboards    models.HitList
@@ -131,7 +133,7 @@ func (m *SQLStoreMock) DeleteOldLoginAttempts(ctx context.Context, cmd *models.D
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) CreateUser(ctx context.Context, cmd models.CreateUserCommand) (*models.User, error) {
+func (m *SQLStoreMock) CreateUser(ctx context.Context, cmd user.CreateUserCommand) (*user.User, error) {
 	return nil, m.ExpectedError
 }
 
@@ -415,35 +417,36 @@ func (m *SQLStoreMock) GetDashboards(ctx context.Context, query *models.GetDashb
 	return m.ExpectedError
 }
 
-func (m SQLStoreMock) GetDataSource(ctx context.Context, query *models.GetDataSourceQuery) error {
+func (m SQLStoreMock) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) error {
 	query.Result = m.ExpectedDatasource
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) GetDataSources(ctx context.Context, query *models.GetDataSourcesQuery) error {
-	query.Result = m.ExpectedDatasources
+func (m *SQLStoreMock) GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) error {
+	query.Result = m.ExpectedDataSources
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) GetDataSourcesByType(ctx context.Context, query *models.GetDataSourcesByTypeQuery) error {
+func (m *SQLStoreMock) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) error {
+	query.Result = m.ExpectedDataSources
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) GetDefaultDataSource(ctx context.Context, query *models.GetDefaultDataSourceQuery) error {
+func (m *SQLStoreMock) GetDefaultDataSource(ctx context.Context, query *datasources.GetDefaultDataSourceQuery) error {
 	query.Result = m.ExpectedDatasource
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) DeleteDataSource(ctx context.Context, cmd *models.DeleteDataSourceCommand) error {
+func (m *SQLStoreMock) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error {
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) AddDataSource(ctx context.Context, cmd *models.AddDataSourceCommand) error {
+func (m *SQLStoreMock) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) error {
 	cmd.Result = m.ExpectedDatasource
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSourceCommand) error {
+func (m *SQLStoreMock) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) error {
 	cmd.Result = m.ExpectedDatasource
 	return m.ExpectedError
 }
@@ -541,6 +544,10 @@ func (m *SQLStoreMock) GetApiKeyByName(ctx context.Context, query *models.GetApi
 	return m.ExpectedError
 }
 
+func (m *SQLStoreMock) UpdateAPIKeyLastUsedDate(ctx context.Context, tokenID int64) error {
+	return nil
+}
+
 func (m *SQLStoreMock) UpdateTempUserStatus(ctx context.Context, cmd *models.UpdateTempUserStatusCommand) error {
 	return m.ExpectedError
 }
@@ -574,7 +581,7 @@ func (m *SQLStoreMock) SearchOrgs(ctx context.Context, query *models.SearchOrgsQ
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) HasAdminPermissionInFolders(ctx context.Context, query *models.HasAdminPermissionInFoldersQuery) error {
+func (m *SQLStoreMock) HasAdminPermissionInDashboardsOrFolders(ctx context.Context, query *models.HasAdminPermissionInDashboardsOrFoldersQuery) error {
 	return m.ExpectedError
 }
 

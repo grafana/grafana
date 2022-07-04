@@ -3,7 +3,6 @@ package librarypanels
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"testing"
 	"time"
 
@@ -24,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -438,7 +438,6 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 						"libraryPanel": map[string]interface{}{
 							"uid": sc.initialResult.Result.UID,
 						},
-						"type": fmt.Sprintf("Library panel with UID: \"%s\"", sc.initialResult.Result.UID),
 					},
 				},
 			}
@@ -1020,30 +1019,35 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 				"title": "Text - Library Panel",
 				"type":  "text",
 			}
-
-			dashJSON := map[string]interface{}{
-				"panels": []interface{}{
-					map[string]interface{}{
-						"id": int64(1),
-						"gridPos": map[string]interface{}{
-							"h": 6,
-							"w": 6,
-							"x": 0,
-							"y": 0,
-						},
-					},
-					missingModel,
+			var libraryElements = map[string]interface{}{
+				missingUID: map[string]interface{}{
+					"model": missingModel,
 				},
 			}
-			dash := models.Dashboard{
-				Title: "Testing ImportLibraryPanelsForDashboard",
-				Data:  simplejson.NewFromAny(dashJSON),
+
+			panels := []interface{}{
+				map[string]interface{}{
+					"id": int64(1),
+					"gridPos": map[string]interface{}{
+						"h": 6,
+						"w": 6,
+						"x": 0,
+						"y": 0,
+					},
+				},
+				map[string]interface{}{
+					"libraryPanel": map[string]interface{}{
+						"uid":  missingUID,
+						"name": missingName,
+					},
+				},
 			}
-			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.Id)
+
 			_, err := sc.elementService.GetElement(sc.ctx, sc.user, missingUID)
+
 			require.EqualError(t, err, libraryelements.ErrLibraryElementNotFound.Error())
 
-			err = sc.service.ImportLibraryPanelsForDashboard(sc.ctx, sc.user, dashInDB, 0)
+			err = sc.service.ImportLibraryPanelsForDashboard(sc.ctx, sc.user, simplejson.NewFromAny(libraryElements), panels, 0)
 			require.NoError(t, err)
 
 			element, err := sc.elementService.GetElement(sc.ctx, sc.user, missingUID)
@@ -1060,39 +1064,28 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 			var existingUID = sc.initialResult.Result.UID
 			var existingName = sc.initialResult.Result.Name
 
-			dashJSON := map[string]interface{}{
-				"panels": []interface{}{
-					map[string]interface{}{
-						"id": int64(1),
-						"gridPos": map[string]interface{}{
-							"h": 6,
-							"w": 6,
-							"x": 0,
-							"y": 0,
-						},
+			panels := []interface{}{
+				map[string]interface{}{
+					"id": int64(1),
+					"gridPos": map[string]interface{}{
+						"h": 6,
+						"w": 6,
+						"x": 0,
+						"y": 0,
 					},
-					map[string]interface{}{
-						"id":          int64(1),
-						"description": "Updated description",
-						"datasource":  "Updated datasource",
-						"libraryPanel": map[string]interface{}{
-							"uid":  sc.initialResult.Result.UID,
-							"name": sc.initialResult.Result.Name,
-						},
-						"title": "Updated Title",
-						"type":  "stat",
+				},
+				map[string]interface{}{
+					"libraryPanel": map[string]interface{}{
+						"uid":  sc.initialResult.Result.UID,
+						"name": sc.initialResult.Result.Name,
 					},
 				},
 			}
-			dash := models.Dashboard{
-				Title: "Testing ImportLibraryPanelsForDashboard",
-				Data:  simplejson.NewFromAny(dashJSON),
-			}
-			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.Id)
+
 			_, err := sc.elementService.GetElement(sc.ctx, sc.user, existingUID)
 			require.NoError(t, err)
 
-			err = sc.service.ImportLibraryPanelsForDashboard(sc.ctx, sc.user, dashInDB, sc.folder.Id)
+			err = sc.service.ImportLibraryPanelsForDashboard(sc.ctx, sc.user, simplejson.New(), panels, sc.folder.Id)
 			require.NoError(t, err)
 
 			element, err := sc.elementService.GetElement(sc.ctx, sc.user, existingUID)
@@ -1128,6 +1121,7 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 				"title": "Outside row",
 				"type":  "text",
 			}
+
 			var insideUID = "iK7NsyDNz"
 			var insideName = "Inside Library Panel"
 			var insideModel = map[string]interface{}{
@@ -1147,54 +1141,67 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 				"type":  "text",
 			}
 
-			dashJSON := map[string]interface{}{
-				"panels": []interface{}{
-					map[string]interface{}{
-						"id": int64(1),
-						"gridPos": map[string]interface{}{
-							"h": 6,
-							"w": 6,
-							"x": 0,
-							"y": 0,
-						},
-					},
-					map[string]interface{}{
-						"collapsed": true,
-						"gridPos": map[string]interface{}{
-							"h": 6,
-							"w": 6,
-							"x": 0,
-							"y": 6,
-						},
-						"id":   int64(2),
-						"type": "row",
-						"panels": []interface{}{
-							map[string]interface{}{
-								"id": int64(3),
-								"gridPos": map[string]interface{}{
-									"h": 6,
-									"w": 6,
-									"x": 0,
-									"y": 7,
-								},
-							},
-							insideModel,
-						},
-					},
-					outsideModel,
+			var libraryElements = map[string]interface{}{
+				outsideUID: map[string]interface{}{
+					"model": outsideModel,
+				},
+				insideUID: map[string]interface{}{
+					"model": insideModel,
 				},
 			}
-			dash := models.Dashboard{
-				Title: "Testing ImportLibraryPanelsForDashboard",
-				Data:  simplejson.NewFromAny(dashJSON),
+
+			panels := []interface{}{
+				map[string]interface{}{
+					"id": int64(1),
+					"gridPos": map[string]interface{}{
+						"h": 6,
+						"w": 6,
+						"x": 0,
+						"y": 0,
+					},
+				},
+				map[string]interface{}{
+					"libraryPanel": map[string]interface{}{
+						"uid":  outsideUID,
+						"name": outsideName,
+					},
+				},
+				map[string]interface{}{
+					"collapsed": true,
+					"gridPos": map[string]interface{}{
+						"h": 6,
+						"w": 6,
+						"x": 0,
+						"y": 6,
+					},
+					"id":   int64(2),
+					"type": "row",
+					"panels": []interface{}{
+						map[string]interface{}{
+							"id": int64(3),
+							"gridPos": map[string]interface{}{
+								"h": 6,
+								"w": 6,
+								"x": 0,
+								"y": 7,
+							},
+						},
+						map[string]interface{}{
+							"libraryPanel": map[string]interface{}{
+								"uid":  insideUID,
+								"name": insideName,
+							},
+						},
+					},
+				},
 			}
-			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.Id)
+
 			_, err := sc.elementService.GetElement(sc.ctx, sc.user, outsideUID)
 			require.EqualError(t, err, libraryelements.ErrLibraryElementNotFound.Error())
 			_, err = sc.elementService.GetElement(sc.ctx, sc.user, insideUID)
 			require.EqualError(t, err, libraryelements.ErrLibraryElementNotFound.Error())
 
-			err = sc.service.ImportLibraryPanelsForDashboard(sc.ctx, sc.user, dashInDB, 0)
+			err = sc.service.ImportLibraryPanelsForDashboard(sc.ctx, sc.user, simplejson.NewFromAny(libraryElements), panels, 0)
 			require.NoError(t, err)
 
 			element, err := sc.elementService.GetElement(sc.ctx, sc.user, outsideUID)
@@ -1507,7 +1514,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			LibraryElementService: elementService,
 		}
 
-		user := &models.SignedInUser{
+		usr := &models.SignedInUser{
 			UserId:     1,
 			Name:       "Signed In User",
 			Login:      "signed_in_user",
@@ -1520,7 +1527,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		// deliberate difference between signed in user and user in db to make it crystal clear
 		// what to expect in the tests
 		// In the real world these are identical
-		cmd := models.CreateUserCommand{
+		cmd := user.CreateUserCommand{
 			Email: "user.in.db@test.com",
 			Name:  "User In DB",
 			Login: userInDbName,
@@ -1530,7 +1537,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		require.NoError(t, err)
 
 		sc := scenarioContext{
-			user:           user,
+			user:           usr,
 			ctx:            context.Background(),
 			service:        &service,
 			elementService: elementService,

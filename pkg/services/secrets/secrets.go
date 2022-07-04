@@ -69,3 +69,9 @@ func KeyLabel(scope string, providerID ProviderID) string {
 type BackgroundProvider interface {
 	Run(ctx context.Context) error
 }
+
+// Migrator is responsible for secrets migrations like re-encrypting or rolling back secrets.
+type Migrator interface {
+	ReEncryptSecrets(ctx context.Context) error
+	RollBackSecrets(ctx context.Context) error
+}

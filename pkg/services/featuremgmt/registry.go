@@ -97,10 +97,9 @@ var (
 			RequiresDevMode: true,
 		},
 		{
-			Name:            "publicDashboards",
-			Description:     "enables public access to dashboards",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
+			Name:        "publicDashboards",
+			Description: "enables public access to dashboards",
+			State:       FeatureStateAlpha,
 		},
 		{
 			Name:        "lokiLive",
@@ -176,11 +175,6 @@ var (
 		{
 			Name:        "commandPalette",
 			Description: "Enable command palette",
-			State:       FeatureStateAlpha,
-		},
-		{
-			Name:        "savedItems",
-			Description: "Enable Saved Items in the navbar.",
 			State:       FeatureStateAlpha,
 		},
 		{
