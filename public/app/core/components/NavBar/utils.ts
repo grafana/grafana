@@ -132,7 +132,7 @@ export const getActiveItem = (
     const linkPathname = stripQueryParams(link.url);
 
     if (linkPathname) {
-      if (linkPathname === pathname || linkPathname.includes(`${config.appSubUrl}${pathname}`)) {
+      if (linkPathname === pathname) {
         // exact match
         currentBestMatch = link;
         break;
