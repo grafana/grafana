@@ -388,7 +388,7 @@ func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRule) {
 	if ruleToPatch.NoDataState == "" {
 		ruleToPatch.NoDataState = existingRule.NoDataState
 	}
-	if ruleToPatch.For == 0 {
+	if ruleToPatch.For == -1 {
 		ruleToPatch.For = existingRule.For
 	}
 }
