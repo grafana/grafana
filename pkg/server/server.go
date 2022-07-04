@@ -44,10 +44,10 @@ type Options struct {
 func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistry accesscontrol.RoleRegistry,
 	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry,
 	usageStatsProvidersRegistry registry.UsageStatsProvidersRegistry, statsCollectorService *statscollector.Service,
-	secretMigrationServiceProvider secretsMigrations.SecretMigrationService,
+	secretMigrationService secretsMigrations.SecretMigrationService,
 ) (*Server, error) {
 	statsCollectorService.RegisterProviders(usageStatsProvidersRegistry.GetServices())
-	s, err := newServer(opts, cfg, httpServer, roleRegistry, provisioningService, backgroundServiceProvider, secretMigrationServiceProvider)
+	s, err := newServer(opts, cfg, httpServer, roleRegistry, provisioningService, backgroundServiceProvider, secretMigrationService)
 	if err != nil {
 		return nil, err
 	}
@@ -61,27 +61,27 @@ func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistr
 
 func newServer(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistry accesscontrol.RoleRegistry,
 	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry,
-	secretMigrationServiceProvider secretsMigrations.SecretMigrationService,
+	secretMigrationService secretsMigrations.SecretMigrationService,
 ) (*Server, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 	childRoutines, childCtx := errgroup.WithContext(rootCtx)
 
 	s := &Server{
-		context:                 childCtx,
-		childRoutines:           childRoutines,
-		HTTPServer:              httpServer,
-		provisioningService:     provisioningService,
-		roleRegistry:            roleRegistry,
-		shutdownFn:              shutdownFn,
-		shutdownFinished:        make(chan struct{}),
-		log:                     log.New("server"),
-		cfg:                     cfg,
-		pidFile:                 opts.PidFile,
-		version:                 opts.Version,
-		commit:                  opts.Commit,
-		buildBranch:             opts.BuildBranch,
-		backgroundServices:      backgroundServiceProvider.GetServices(),
-		secretMigrationProvider: secretMigrationServiceProvider,
+		context:                childCtx,
+		childRoutines:          childRoutines,
+		HTTPServer:             httpServer,
+		provisioningService:    provisioningService,
+		roleRegistry:           roleRegistry,
+		shutdownFn:             shutdownFn,
+		shutdownFinished:       make(chan struct{}),
+		log:                    log.New("server"),
+		cfg:                    cfg,
+		pidFile:                opts.PidFile,
+		version:                opts.Version,
+		commit:                 opts.Commit,
+		buildBranch:            opts.BuildBranch,
+		backgroundServices:     backgroundServiceProvider.GetServices(),
+		secretMigrationService: secretMigrationService,
 	}
 
 	return s, nil
@@ -105,10 +105,10 @@ type Server struct {
 	buildBranch        string
 	backgroundServices []registry.BackgroundService
 
-	HTTPServer              *api.HTTPServer
-	roleRegistry            accesscontrol.RoleRegistry
-	provisioningService     provisioning.ProvisioningService
-	secretMigrationProvider secretsMigrations.SecretMigrationService
+	HTTPServer             *api.HTTPServer
+	roleRegistry           accesscontrol.RoleRegistry
+	provisioningService    provisioning.ProvisioningService
+	secretMigrationService secretsMigrations.SecretMigrationService
 }
 
 // init initializes the server and its services.
@@ -133,7 +133,7 @@ func (s *Server) init() error {
 		return err
 	}
 
-	if err := s.secretMigrationProvider.Migrate(s.context); err != nil {
+	if err := s.secretMigrationService.Migrate(s.context); err != nil {
 		return err
 	}
 
