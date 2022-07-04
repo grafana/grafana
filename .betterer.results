@@ -2549,7 +2549,7 @@ exports[`better eslint`] = {
     "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanDetail/KeyValuesTable.tsx:3587041872": [
       [77, 35, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanDetail/index.tsx:3379895243": [
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanDetail/index.tsx:977610402": [
       [206, 16, 63, "Do not use any type assertions.", "1292531531"],
       [206, 76, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
@@ -11817,7 +11817,7 @@ exports[`better eslint`] = {
     "public/app/plugins/panel/state-timeline/types.ts:3228907517": [
       [20, 62, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/plugins/panel/state-timeline/utils.test.ts:4199205996": [
+    "public/app/plugins/panel/state-timeline/utils.test.ts:572462615": [
       [17, 9, 9, "Do not use any type assertions.", "3692209159"],
       [17, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
       [90, 18, 147, "Do not use any type assertions.", "893298400"],
