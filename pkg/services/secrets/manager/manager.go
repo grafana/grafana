@@ -479,14 +479,20 @@ func (s *SecretsService) RotateDataKeys(ctx context.Context) error {
 
 func (s *SecretsService) ReEncryptDataKeys(ctx context.Context) error {
 	s.log.Info("Data keys re-encryption triggered")
-	err := s.store.ReEncryptDataKeys(ctx, s.providers, s.currentProviderID)
-	if err != nil {
+
+	if err := s.InitProviders(); err != nil {
+		s.log.Error("Envelope encryption providers initialization failed", "error", err)
+		return err
+	}
+
+	if err := s.store.ReEncryptDataKeys(ctx, s.providers, s.currentProviderID); err != nil {
 		s.log.Error("Data keys re-encryption failed", "error", err)
 		return err
 	}
 
 	s.dataKeyCache.flush()
 	s.log.Info("Data keys re-encryption finished successfully")
+
 	return nil
 }
 
