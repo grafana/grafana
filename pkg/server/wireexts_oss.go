@@ -32,7 +32,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
 	secretsStore "github.com/grafana/grafana/pkg/services/secrets/kvstore"
-	secretsMigrations "github.com/grafana/grafana/pkg/services/secrets/kvstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/thumbs"
 	"github.com/grafana/grafana/pkg/services/validations"
@@ -89,8 +88,6 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(accesscontrol.DatasourcePermissionsService), new(*ossaccesscontrol.DatasourcePermissionsService)),
 	secretsStore.ProvideRemotePluginCheck,
 	wire.Bind(new(secretsStore.UseRemoteSecretsPluginCheck), new(*secretsStore.OSSRemoteSecretsPluginCheck)),
-	secretsMigrations.ProvideSecretMigrationServiceProvider,
-	wire.Bind(new(secretsMigrations.SecretMigrationServiceProvider), new(*secretsMigrations.SecretMigrationServiceProviderImpl)),
 )
 
 var wireExtsSet = wire.NewSet(
