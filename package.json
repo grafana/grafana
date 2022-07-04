@@ -354,6 +354,7 @@
     "rc-time-picker": "3.7.3",
     "re-resizable": "6.9.9",
     "react": "17.0.2",
+    "react-awesome-query-builder": "^5.1.2",
     "react-beautiful-dnd": "13.1.0",
     "react-diff-viewer": "^3.1.1",
     "react-dom": "17.0.2",
@@ -385,7 +386,6 @@
     "rst2html": "github:thoward/rst2html#990cb89f2a300cdd9151790be377c4c0840df809",
     "rxjs": "7.5.5",
     "sass": "link:./public/sass",
-    "search-query-parser": "1.6.0",
     "selecto": "1.16.2",
     "semver": "7.3.7",
     "slate": "0.47.8",
@@ -404,10 +404,10 @@
   "resolutions": {
     "underscore": "1.13.3",
     "@types/slate": "0.47.2",
-    "@microsoft/api-extractor-model": "7.20.3",
+    "@microsoft/api-extractor-model": "7.21.0",
     "@rushstack/node-core-library": "3.49.0",
     "@rushstack/rig-package": "0.3.11",
-    "@rushstack/ts-command-line": "4.11.0",
+    "@rushstack/ts-command-line": "4.12.1",
     "@storybook/react/webpack": "5.73.0",
     "node-fetch": "2.6.7"
   },
