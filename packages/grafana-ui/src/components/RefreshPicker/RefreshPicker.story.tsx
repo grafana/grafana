@@ -1,14 +1,16 @@
 import { action } from '@storybook/addon-actions';
+import { Story } from '@storybook/react';
 import React from 'react';
 
 import { RefreshPicker } from '@grafana/ui';
 
-import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
-import { StoryExample } from '../../utils/storybook/StoryExample';
-import { UseState } from '../../utils/storybook/UseState';
+// import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
+// import { StoryExample } from '../../utils/storybook/StoryExample';
+// import { UseState } from '../../utils/storybook/UseState';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { HorizontalGroup } from '../Layout/Layout';
+// import { HorizontalGroup } from '../Layout/Layout';
 
+import { Props } from './RefreshPicker';
 import mdx from './RefreshPicker.mdx';
 
 export default {
@@ -20,12 +22,29 @@ export default {
       page: mdx,
     },
   },
+  args: {
+    isLoading: false,
+    isLive: false,
+    width: '35px',
+    text: 'Run query',
+    tooltip: 'Run query',
+    value: '1h',
+  },
+  argTypes: {
+    intervals: {
+      control: {
+        type: 'select',
+      },
+    },
+  },
 };
 
-export const Examples = () => {
+export const Examples: Story<Props> = (args) => {
+  const [valueState, setValueState] = React.useState('');
   const intervals = ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d'];
   const onIntervalChanged = (interval: string) => {
     action('onIntervalChanged fired')(interval);
+    setValueState(interval);
   };
 
   const onRefresh = () => {
@@ -33,45 +52,17 @@ export const Examples = () => {
   };
 
   return (
-    <DashboardStoryCanvas>
-      <UseState initialState={'1h'}>
-        {(value, updateValue) => {
-          return (
-            <HorizontalGroup>
-              <StoryExample name="Simple">
-                <RefreshPicker
-                  tooltip="Hello world"
-                  value={value}
-                  intervals={intervals}
-                  onIntervalChanged={onIntervalChanged}
-                  onRefresh={onRefresh}
-                />
-              </StoryExample>
-              <StoryExample name="With text">
-                <RefreshPicker
-                  tooltip="Hello world"
-                  value={value}
-                  text="Run query"
-                  intervals={intervals}
-                  onIntervalChanged={onIntervalChanged}
-                  onRefresh={onRefresh}
-                />
-              </StoryExample>
-              <StoryExample name="With text and loading">
-                <RefreshPicker
-                  tooltip="Hello world"
-                  value={value}
-                  text="Run query"
-                  isLoading={true}
-                  intervals={intervals}
-                  onIntervalChanged={onIntervalChanged}
-                  onRefresh={onRefresh}
-                />
-              </StoryExample>
-            </HorizontalGroup>
-          );
-        }}
-      </UseState>
-    </DashboardStoryCanvas>
+    <RefreshPicker
+      tooltip={args.tooltip}
+      value={valueState}
+      text={args.text}
+      isLoading={args.isLoading}
+      intervals={intervals}
+      width={args.width}
+      onIntervalChanged={onIntervalChanged}
+      onRefresh={onRefresh}
+      noIntervalPicker={args.noIntervalPicker}
+      primary={args.primary}
+    />
   );
 };
