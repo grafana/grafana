@@ -134,7 +134,7 @@ const AddRemoteInstance: FC<AddRemoteInstanceProps> = ({ instance: { type, crede
             <h4 className={styles.addRemoteInstanceTitle}>{getHeader(type)}</h4>
             {formParts(form)}
             <div className={styles.addRemoteInstanceButtons}>
-              <Button id="addInstance" disabled={loading}>
+              <Button id="addInstance" disabled={loading} type="submit">
                 {Messages.form.buttons.addService}
               </Button>
               <Button

@@ -8012,7 +8012,7 @@ exports[`better eslint`] = {
       [107, 44, 3, "Unexpected any. Specify a different type.", "193409811"],
       [114, 20, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/percona/add-instance/components/AddRemoteInstance/AddRemoteInstance.tsx:4291987235": [
+    "public/app/percona/add-instance/components/AddRemoteInstance/AddRemoteInstance.tsx:1517502866": [
       [51, 12, 45, "Do not use any type assertions.", "543640072"],
       [56, 12, 49, "Do not use any type assertions.", "1481489770"]
     ],
