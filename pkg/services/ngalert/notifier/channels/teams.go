@@ -95,8 +95,8 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 
 	images := []teamsImage{}
 	_ = withStoredImages(ctx, tn.log, tn.images,
-		func(index int, image *ngmodels.Image) error {
-			if image != nil && len(image.URL) != 0 {
+		func(_ int, image ngmodels.Image) error {
+			if len(image.URL) != 0 {
 				images = append(images, teamsImage{Image: image.URL})
 			}
 			return nil
