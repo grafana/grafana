@@ -136,6 +136,10 @@ func (s *Service) GetDataSources(ctx context.Context, query *datasources.GetData
 	return s.SQLStore.GetDataSources(ctx, query)
 }
 
+func (s *Service) GetAllDataSources(ctx context.Context, query *datasources.GetAllDataSourcesQuery) error {
+	return s.SQLStore.GetAllDataSources(ctx, query)
+}
+
 func (s *Service) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) error {
 	return s.SQLStore.GetDataSourcesByType(ctx, query)
 }
