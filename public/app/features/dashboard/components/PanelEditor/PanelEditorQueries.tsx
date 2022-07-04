@@ -35,6 +35,7 @@ export class PanelEditorQueries extends PureComponent<Props> {
       },
       queries: panel.targets,
       maxDataPoints: panel.maxDataPoints,
+      resolution: panel.resolution,
       minInterval: panel.interval,
       timeRange: {
         from: panel.timeFrom,

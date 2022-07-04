@@ -5,6 +5,7 @@ export interface QueryGroupOptions {
   dataSource: QueryGroupDataSource;
   maxDataPoints?: number | null;
   minInterval?: string | null;
+  resolution?: number | null;
   cacheTimeout?: string | null;
   timeRange?: {
     from?: string | null;

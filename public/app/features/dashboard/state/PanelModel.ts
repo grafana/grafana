@@ -156,6 +156,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   declare fieldConfig: FieldConfigSource;
 
   maxDataPoints?: number | null;
+  resolution?: number | null;
   interval?: string | null;
   description?: string;
   links?: DataLink[];
@@ -330,6 +331,8 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     width: number,
     publicDashboardAccessToken?: string
   ) {
+    const maxDataPoints = Math.floor((this.maxDataPoints ?? width) * (this.resolution ?? 1));
+
     this.getQueryRunner().run({
       datasource: this.datasource,
       queries: this.targets,
@@ -339,7 +342,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       timezone: dashboardTimezone,
       timeRange: timeData.timeRange,
       timeInfo: timeData.timeInfo,
-      maxDataPoints: this.maxDataPoints || Math.floor(width),
+      maxDataPoints: maxDataPoints,
       minInterval: this.interval,
       scopedVars: this.scopedVars,
       cacheTimeout: this.cacheTimeout,
@@ -501,6 +504,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.hideTimeOverride = options.timeRange?.hide;
     this.interval = options.minInterval;
     this.maxDataPoints = options.maxDataPoints;
+    this.resolution = options.resolution;
     this.targets = options.queries;
     this.configRev++;
 

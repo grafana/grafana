@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import React, { PureComponent, ChangeEvent, FocusEvent } from 'react';
 
-import { rangeUtil, PanelData, DataSourceApi } from '@grafana/data';
-import { Switch, Input, InlineField, InlineFormLabel, stylesFactory } from '@grafana/ui';
+import { rangeUtil, PanelData, DataSourceApi, SelectableValue } from '@grafana/data';
+import { Switch, Input, InlineField, InlineFormLabel, stylesFactory, Select } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { config } from 'app/core/config';
 import { QueryGroupOptions } from 'app/types';
@@ -168,11 +168,29 @@ export class QueryGroupOptionsEditor extends PureComponent<Props, State> {
     );
   }
 
+  onResolutionChange = (resolution: SelectableValue<number | undefined>) => {
+    this.props.onChange({
+      ...this.props.options,
+      resolution: resolution.value,
+    });
+  };
+
   renderMaxDataPointsOption() {
     const { data, options } = this.props;
-    const realMd = data.request?.maxDataPoints;
+    let realMd = data.request?.maxDataPoints;
+    if (realMd && options.resolution) {
+      realMd = Math.floor(realMd * options.resolution);
+    }
+
     const value = options.maxDataPoints ?? '';
     const isAuto = value === '';
+    const resolutionOptions = [
+      { label: '100%', value: undefined },
+      { label: '80%', value: 0.9 },
+      { label: '50%', value: 0.8 },
+      { label: '30%', value: 0.3 },
+      { label: '10%', value: 0.1 },
+    ];
 
     return (
       <div className="gf-form-inline">
@@ -200,6 +218,14 @@ export class QueryGroupOptionsEditor extends PureComponent<Props, State> {
             <>
               <div className="gf-form-label query-segment-operator">=</div>
               <div className="gf-form-label">Width of panel</div>
+              <div className="gf-form-label query-segment-operator">*</div>
+              <Select
+                width={10}
+                value={options.resolution}
+                options={resolutionOptions}
+                placeholder="1"
+                onChange={this.onResolutionChange}
+              />
             </>
           )}
         </div>
