@@ -44,7 +44,7 @@ type Options struct {
 func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistry accesscontrol.RoleRegistry,
 	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry,
 	usageStatsProvidersRegistry registry.UsageStatsProvidersRegistry, statsCollectorService *statscollector.Service,
-	secretMigrationServiceProvider secretsMigrations.SecretMigrationServiceProvider,
+	secretMigrationServiceProvider secretsMigrations.SecretMigrationService,
 ) (*Server, error) {
 	statsCollectorService.RegisterProviders(usageStatsProvidersRegistry.GetServices())
 	s, err := newServer(opts, cfg, httpServer, roleRegistry, provisioningService, backgroundServiceProvider, secretMigrationServiceProvider)
@@ -61,7 +61,7 @@ func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistr
 
 func newServer(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistry accesscontrol.RoleRegistry,
 	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry,
-	secretMigrationServiceProvider secretsMigrations.SecretMigrationServiceProvider,
+	secretMigrationServiceProvider secretsMigrations.SecretMigrationService,
 ) (*Server, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 	childRoutines, childCtx := errgroup.WithContext(rootCtx)
@@ -108,7 +108,7 @@ type Server struct {
 	HTTPServer              *api.HTTPServer
 	roleRegistry            accesscontrol.RoleRegistry
 	provisioningService     provisioning.ProvisioningService
-	secretMigrationProvider secretsMigrations.SecretMigrationServiceProvider
+	secretMigrationProvider secretsMigrations.SecretMigrationService
 }
 
 // init initializes the server and its services.

@@ -11,34 +11,29 @@ import (
 
 var logger = log.New("secret.migration")
 
-// SecretMigrationServiceProvider provides SecretMigration services.
-type SecretMigrationServiceProvider interface {
-	Run(context.Context) error
-}
-
 // SecretMigrationService is used to migrate legacy secrets to new unified secrets.
 type SecretMigrationService interface {
 	Run(ctx context.Context) error
 }
 
-type SecretMigrationServiceProviderImpl struct {
+type SecretMigrationServiceImpl struct {
 	Services []SecretMigrationService
 }
 
-func ProvideSecretMigrationServiceProvider(
+func ProvideSecretMigrationService(
 	dataSourceSecretMigrationService *DataSourceSecretMigrationService,
-) *SecretMigrationServiceProviderImpl {
-	return NewSecretMigrationServiceProvider(
+) *SecretMigrationServiceImpl {
+	return NewSecretMigrationService(
 		dataSourceSecretMigrationService,
 	)
 }
 
-func NewSecretMigrationServiceProvider(services ...SecretMigrationService) *SecretMigrationServiceProviderImpl {
-	return &SecretMigrationServiceProviderImpl{services}
+func NewSecretMigrationService(services ...SecretMigrationService) *SecretMigrationServiceImpl {
+	return &SecretMigrationServiceImpl{services}
 }
 
 // Run migration services. This will block until all services have exited.
-func (s *SecretMigrationServiceProviderImpl) Run(ctx context.Context) error {
+func (s *SecretMigrationServiceImpl) Run(ctx context.Context) error {
 	services := s.Services
 
 	// Start migration services.
