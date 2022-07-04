@@ -16559,10 +16559,7 @@
     "getAlertResponse": {
       "description": "",
       "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/Alert"
-        }
+        "$ref": "#/definitions/Alert"
       }
     },
     "getAlertsResponse": {
