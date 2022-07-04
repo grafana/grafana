@@ -42,13 +42,13 @@ func ProvideDataSourceMigrationService(
 }
 
 func (s *DataSourceSecretMigrationService) Run(ctx context.Context) error {
-	return s.sqlStore.InTransaction(ctx, func(ctx context.Context) error {
-		query := &datasources.GetDataSourcesQuery{}
-		err := s.dataSourcesService.GetDataSources(ctx, query)
-		if err != nil {
-			return err
-		}
-		for _, ds := range query.Result {
+	query := &datasources.GetDataSourcesQuery{}
+	err := s.dataSourcesService.GetDataSources(ctx, query)
+	if err != nil {
+		return err
+	}
+	for _, ds := range query.Result {
+		err = s.sqlStore.InTransaction(ctx, func(ctx context.Context) error {
 			hasMigration, _ := ds.JsonData.Get("secretMigrationComplete").Bool()
 			if !hasMigration {
 				secureJsonData, err := s.dataSourcesService.DecryptLegacySecrets(ctx, ds)
@@ -79,7 +79,11 @@ func (s *DataSourceSecretMigrationService) Run(ctx context.Context) error {
 					return err
 				}
 			}
+			return nil
+		})
+		if err != nil {
+			return err
 		}
-		return nil
-	})
+	}
+	return nil
 }
