@@ -4,7 +4,7 @@ import Drop from 'tether-drop';
 
 import { locationSearchToObject, navigationLogger, reportPageview } from '@grafana/runtime';
 
-import { appChromeService } from '../components/TopNav/AppChromeService';
+import { appChromeService } from '../components/AppChrome/AppChromeService';
 import { keybindingSrv } from '../services/keybindingSrv';
 
 import { GrafanaRouteComponentProps } from './types';

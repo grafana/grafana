@@ -45,15 +45,11 @@ const getStyles = (theme: GrafanaTheme2) => {
     : '0 0.6px 1.5px rgb(0 0 0 / 8%), 0 2px 4px rgb(0 0 0 / 6%), 0 5px 10px rgb(0 0 0 / 5%)';
 
   return {
-    viewport: css({
-      display: 'flex',
-      flexGrow: 1,
-      height: '100%',
-    }),
     content: css({
       display: 'flex',
       paddingTop: TOP_BAR_LEVEL_HEIGHT * 2,
       flexGrow: 1,
+      height: '100%',
     }),
     contentNoSearchBar: css({
       paddingTop: TOP_BAR_LEVEL_HEIGHT,

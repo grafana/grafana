@@ -6,11 +6,11 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { CustomScrollbar, useStyles2 } from '@grafana/ui';
 
 // Components
+import { appChromeService } from '../AppChrome/AppChromeService';
 import { Footer } from '../Footer/Footer';
 import { PageType } from '../Page/types';
 import { usePageNav } from '../Page/usePageNav';
 import { usePageTitle } from '../Page/usePageTitle';
-import { appChromeService } from '../TopNav/AppChromeService';
 
 import { PageContents } from './PageContents';
 import { PageHeader } from './PageHeader';

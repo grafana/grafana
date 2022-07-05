@@ -26,6 +26,7 @@ export class AppChromeService {
       chromeless: route.chromeless === true,
       sectionNav: defaultSection,
       pageNav: undefined,
+      actions: undefined,
     });
   }
 

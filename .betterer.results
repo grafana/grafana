@@ -4635,7 +4635,7 @@ exports[`better eslint`] = {
       [198, 29, 13, "Do not use any type assertions.", "2146830713"],
       [217, 32, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/dashboard/components/DashNav/DashNav.tsx:2724792053": [
+    "public/app/features/dashboard/components/DashNav/DashNav.tsx:2788888629": [
       [67, 87, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/dashboard/components/DashNav/DashNavTimeControls.test.tsx:3825334541": [
