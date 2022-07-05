@@ -258,18 +258,14 @@ const getImportableQueries = async (
   sourceDataSource: DataSourceApi,
   queries: DataQuery[]
 ): Promise<DataQuery[]> => {
-  console.log('importing queries from', targetDataSource.name, sourceDataSource.name);
   let queriesOut: DataQuery[] = [];
   if (sourceDataSource.meta?.id === targetDataSource.meta?.id) {
-    console.log('meta ids are the same, copying');
     queriesOut = queries;
   } else if (hasQueryExportSupport(sourceDataSource) && hasQueryImportSupport(targetDataSource)) {
-    console.log('export/import is compatible, converting');
     const abstractQueries = await sourceDataSource.exportToAbstractQueries(queries);
     queriesOut = await targetDataSource.importFromAbstractQueries(abstractQueries);
   } else if (targetDataSource.importQueries) {
     // Datasource-specific importers
-    console.log('legacy importQueries exists, converting');
     queriesOut = await targetDataSource.importQueries(queries, sourceDataSource);
   }
   // add new datasource to queries before returning
@@ -306,7 +302,6 @@ export const importQueries = (
     }
     // If going from mixed, see what queries you keep by their individual datasources
     else if (sourceDataSource.name === MIXED_DATASOURCE_NAME) {
-      console.log('starting move from mixed');
       const groupedQueries = groupBy(queries, (query) => query.datasource?.uid);
       const groupedImportableQueries = await Promise.all(
         Object.keys(groupedQueries).map(async (key: string) => {
@@ -314,7 +309,6 @@ export const importQueries = (
           return await getImportableQueries(targetDataSource, queryDatasource, groupedQueries[key]);
         })
       );
-      console.log('move from mixed complete', groupedImportableQueries);
       importedQueries = flatten(groupedImportableQueries.filter((arr) => arr.length > 0));
     } else {
       importedQueries = await getImportableQueries(targetDataSource, sourceDataSource, queries);
