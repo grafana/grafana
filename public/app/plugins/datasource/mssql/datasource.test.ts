@@ -1,85 +1,47 @@
 import { of } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
-import { dataFrameToJSON, dateTime, MetricFindValue, MutableDataFrame } from '@grafana/data';
+import {
+  dataFrameToJSON,
+  DataSourceInstanceSettings,
+  dateTime,
+  MetricFindValue,
+  MutableDataFrame,
+  TimeRange,
+} from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { SQLOptions, SQLQuery } from 'app/features/plugins/sql/types';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
-import { initialCustomVariableModelState } from '../../../../features/variables/custom/reducer';
-import { MssqlDatasource } from '../datasource';
+import { initialCustomVariableModelState } from '../../../features/variables/custom/reducer';
+
+import { MssqlDatasource } from './datasource';
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
 }));
 
+const instanceSettings = {
+  id: 1,
+  uid: 'mssql-datasource',
+  type: 'mssql',
+  name: 'MSSQL',
+  access: 'direct',
+} as DataSourceInstanceSettings<SQLOptions>;
+
 describe('MSSQLDatasource', () => {
-  const templateSrv: TemplateSrv = new TemplateSrv();
   const fetchMock = jest.spyOn(backendSrv, 'fetch');
 
-  const ctx: any = {};
+  const ctx = {
+    ds: new MssqlDatasource(instanceSettings),
+    variable: { ...initialCustomVariableModelState },
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
 
-    ctx.instanceSettings = { name: 'mssql' };
-    ctx.ds = new MssqlDatasource(ctx.instanceSettings, templateSrv);
-  });
-
-  describe('When performing annotationQuery', () => {
-    let results: any;
-
-    const annotationName = 'MyAnno';
-
-    const options = {
-      annotation: {
-        name: annotationName,
-        rawQuery: 'select time, text, tags from table;',
-      },
-      range: {
-        from: dateTime(1432288354),
-        to: dateTime(1432288401),
-      },
-    };
-
-    const response = {
-      results: {
-        MyAnno: {
-          frames: [
-            dataFrameToJSON(
-              new MutableDataFrame({
-                fields: [
-                  { name: 'time', values: [1521545610656, 1521546251185, 1521546501378] },
-                  { name: 'text', values: ['some text', 'some text2', 'some text3'] },
-                  { name: 'tags', values: ['TagA,TagB', ' TagB , TagC', null] },
-                ],
-              })
-            ),
-          ],
-        },
-      },
-    };
-
-    beforeEach(() => {
-      fetchMock.mockImplementation(() => of(createFetchResponse(response)));
-
-      return ctx.ds.annotationQuery(options).then((data: any) => {
-        results = data;
-      });
-    });
-
-    it('should return annotation list', () => {
-      expect(results.length).toBe(3);
-
-      expect(results[0].text).toBe('some text');
-      expect(results[0].tags[0]).toBe('TagA');
-      expect(results[0].tags[1]).toBe('TagB');
-
-      expect(results[1].tags[0]).toBe('TagB');
-      expect(results[1].tags[1]).toBe('TagC');
-
-      expect(results[2].tags.length).toBe(0);
-    });
+    ctx.ds = new MssqlDatasource(instanceSettings);
   });
 
   describe('When performing metricFindQuery that returns multiple string fields', () => {
@@ -118,7 +80,7 @@ describe('MSSQLDatasource', () => {
   });
 
   describe('When performing metricFindQuery with key, value columns', () => {
-    let results: any;
+    let results: MetricFindValue[];
     const query = 'select * from atable';
     const response = {
       results: {
@@ -140,7 +102,7 @@ describe('MSSQLDatasource', () => {
     beforeEach(() => {
       fetchMock.mockImplementation(() => of(createFetchResponse(response)));
 
-      return ctx.ds.metricFindQuery(query).then((data: any) => {
+      return ctx.ds.metricFindQuery(query).then((data) => {
         results = data;
       });
     });
@@ -155,7 +117,7 @@ describe('MSSQLDatasource', () => {
   });
 
   describe('When performing metricFindQuery without key, value columns', () => {
-    let results: any;
+    let results: MetricFindValue[];
     const query = 'select id, values from atable';
     const response = {
       results: {
@@ -181,7 +143,7 @@ describe('MSSQLDatasource', () => {
     beforeEach(() => {
       fetchMock.mockImplementation(() => of(createFetchResponse(response)));
 
-      return ctx.ds.metricFindQuery(query).then((data: any) => {
+      return ctx.ds.metricFindQuery(query).then((data) => {
         results = data;
       });
     });
@@ -199,7 +161,7 @@ describe('MSSQLDatasource', () => {
   });
 
   describe('When performing metricFindQuery with key, value columns and with duplicate keys', () => {
-    let results: any;
+    let results: MetricFindValue[];
     const query = 'select * from atable';
     const response = {
       results: {
@@ -220,7 +182,7 @@ describe('MSSQLDatasource', () => {
 
     beforeEach(() => {
       fetchMock.mockImplementation(() => of(createFetchResponse(response)));
-      return ctx.ds.metricFindQuery(query).then((data: any) => {
+      return ctx.ds.metricFindQuery(query).then((data) => {
         results = data;
       });
     });
@@ -247,9 +209,10 @@ describe('MSSQLDatasource', () => {
         },
       },
     };
-    const time = {
+    const time: TimeRange = {
       from: dateTime(1521545610656),
       to: dateTime(1521546251185),
+      raw: { from: '1521545610656', to: '1521546251185' },
     };
 
     beforeEach(() => {
@@ -268,10 +231,6 @@ describe('MSSQLDatasource', () => {
   });
 
   describe('When interpolating variables', () => {
-    beforeEach(() => {
-      ctx.variable = { ...initialCustomVariableModelState };
-    });
-
     describe('and value is a string', () => {
       it('should return an unquoted value', () => {
         expect(ctx.ds.interpolateVariable('abc', ctx.variable)).toEqual('abc');
@@ -314,6 +273,7 @@ describe('MSSQLDatasource', () => {
 
   describe('targetContainsTemplate', () => {
     it('given query that contains template variable it should return true', () => {
+      const templateSrv = new TemplateSrv();
       const rawSql = `SELECT
       $__timeGroup(createdAt,'$summarize') as time,
       avg(value) as value,
@@ -326,17 +286,21 @@ describe('MSSQLDatasource', () => {
       hostname IN($host)
     GROUP BY $__timeGroup(createdAt,'$summarize'), hostname
     ORDER BY 1`;
-      const query = {
+      const query: SQLQuery = {
         rawSql,
+        refId: 'A',
       };
       templateSrv.init([
         { type: 'query', name: 'summarize', current: { value: '1m' } },
         { type: 'query', name: 'host', current: { value: 'a' } },
       ]);
-      expect(ctx.ds.targetContainsTemplate(query)).toBeTruthy();
+      const ds = new MssqlDatasource(instanceSettings, templateSrv);
+
+      expect(ds.targetContainsTemplate(query)).toBeTruthy();
     });
 
     it('given query that only contains global template variable it should return false', () => {
+      const templateSrv: TemplateSrv = new TemplateSrv();
       const rawSql = `SELECT
       $__timeGroup(createdAt,'$__interval') as time,
       avg(value) as value,
@@ -348,14 +312,16 @@ describe('MSSQLDatasource', () => {
       measurement = 'logins.count'
     GROUP BY $__timeGroup(createdAt,'$summarize'), hostname
     ORDER BY 1`;
-      const query = {
+      const query: SQLQuery = {
         rawSql,
+        refId: 'A',
       };
       templateSrv.init([
         { type: 'query', name: 'summarize', current: { value: '1m' } },
         { type: 'query', name: 'host', current: { value: 'a' } },
       ]);
-      expect(ctx.ds.targetContainsTemplate(query)).toBeFalsy();
+      const ds = new MssqlDatasource(instanceSettings, templateSrv);
+      expect(ds.targetContainsTemplate(query)).toBeFalsy();
     });
   });
 });
