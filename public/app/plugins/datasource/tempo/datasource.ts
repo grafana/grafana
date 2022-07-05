@@ -134,7 +134,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       reportInteraction('grafana_traces_loki_search_queried', {
         datasourceType: 'tempo',
         app: options.app ?? '',
-        serviceMapQuery: targets.search[0].linkedQuery?.expr ?? '',
+        linkedQueryExpr: targets.search[0].linkedQuery?.expr ?? '',
       });
 
       const dsSrv = getDatasourceSrv();
