@@ -9,19 +9,27 @@ import { TOP_BAR_LEVEL_HEIGHT } from './types';
 
 export interface Props {
   onToggleSearchBar(): void;
+  onToggleMegaMenu(): void;
   searchBarHidden?: boolean;
   sectionNav: NavModelItem;
   pageNav?: NavModelItem;
   actions: React.ReactNode;
 }
 
-export function NavToolbar({ actions, onToggleSearchBar, searchBarHidden, sectionNav, pageNav }: Props) {
+export function NavToolbar({
+  actions,
+  searchBarHidden,
+  sectionNav,
+  pageNav,
+  onToggleMegaMenu,
+  onToggleSearchBar,
+}: Props) {
   const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.pageToolbar}>
       <div className={styles.menuButton}>
-        <IconButton name="bars" tooltip="Toggle menu" tooltipPlacement="bottom" size="xl" onClick={() => {}} />
+        <IconButton name="bars" tooltip="Toggle menu" tooltipPlacement="bottom" size="xl" onClick={onToggleMegaMenu} />
       </div>
       <Breadcrumbs sectionNav={sectionNav} pageNav={pageNav} />
       <div className={styles.leftActions}></div>

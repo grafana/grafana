@@ -1,10 +1,12 @@
 import { css, cx } from '@emotion/css';
-import React, { PropsWithChildren } from 'react';
+import React, { PropsWithChildren, useState } from 'react';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
+
+import { MegaMenu } from '../MegaMenu/MegaMenu';
 
 import { appChromeService } from './AppChromeService';
 import { NavToolbar } from './NavToolbar';
@@ -16,6 +18,7 @@ export interface Props extends PropsWithChildren<{}> {}
 export function AppChrome({ children }: Props) {
   const styles = useStyles2(getStyles);
   const [searchBarHidden, toggleSearchBar] = useToggle(false); // repace with local storage
+  const [megaMenuOpen, setMegaMenuOpen] = useState(false);
   const state = appChromeService.useState();
 
   if (state.chromeless || !config.featureToggles.topnav) {
@@ -28,13 +31,15 @@ export function AppChrome({ children }: Props) {
         {!searchBarHidden && <TopSearchBar />}
         <NavToolbar
           searchBarHidden={searchBarHidden}
-          onToggleSearchBar={toggleSearchBar}
           sectionNav={state.sectionNav}
           pageNav={state.pageNav}
           actions={state.actions}
+          onToggleSearchBar={toggleSearchBar}
+          onToggleMegaMenu={() => setMegaMenuOpen(!megaMenuOpen)}
         />
       </div>
       <div className={cx(styles.content, searchBarHidden && styles.contentNoSearchBar)}>{children}</div>
+      {megaMenuOpen && <MegaMenu searchBarHidden={searchBarHidden} onClose={() => setMegaMenuOpen(false)} />}
     </main>
   );
 }
