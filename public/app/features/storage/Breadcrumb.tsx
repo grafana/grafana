@@ -24,17 +24,10 @@ export function Breadcrumb({ pathName, onPathChange, rootIcon }: Props) {
       )}
       {paths.map((path, index) => {
         let url = '/' + paths.slice(0, index + 1).join('/');
+        const onClickBreadcrumb = () => onPathChange(url);
+        const isLastBreadcrumb = index === paths.length - 1;
         return (
-          <li
-            key={uniqueId(path)}
-            onClick={() => {
-              // Don't change path if it's the last part
-              if (index === paths.length - 1) {
-                return;
-              }
-              onPathChange(url);
-            }}
-          >
+          <li key={uniqueId(path)} onClick={isLastBreadcrumb ? undefined : onClickBreadcrumb}>
             {path}
           </li>
         );
