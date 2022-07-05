@@ -1,4 +1,4 @@
-package secretsmigrations
+package migrator
 
 import (
 	"context"
@@ -6,9 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/runner"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
@@ -264,30 +261,4 @@ func (s alertingSecret) reencrypt(ctx context.Context, secretsSrv *manager.Secre
 	} else {
 		logger.Info("Alerting configuration secrets have been re-encrypted successfully")
 	}
-}
-
-func ReEncryptSecrets(_ utils.CommandLine, runner runner.Runner) error {
-	if runner.Features.IsEnabled(featuremgmt.FlagDisableEnvelopeEncryption) {
-		logger.Warn("Envelope encryption is not enabled, quitting...")
-		return nil
-	}
-
-	toMigrate := []interface {
-		reencrypt(context.Context, *manager.SecretsService, *sqlstore.SQLStore)
-	}{
-		simpleSecret{tableName: "dashboard_snapshot", columnName: "dashboard_encrypted"},
-		b64Secret{simpleSecret: simpleSecret{tableName: "user_auth", columnName: "o_auth_access_token"}, encoding: base64.StdEncoding},
-		b64Secret{simpleSecret: simpleSecret{tableName: "user_auth", columnName: "o_auth_refresh_token"}, encoding: base64.StdEncoding},
-		b64Secret{simpleSecret: simpleSecret{tableName: "user_auth", columnName: "o_auth_token_type"}, encoding: base64.StdEncoding},
-		b64Secret{simpleSecret: simpleSecret{tableName: "secrets", columnName: "value"}, hasUpdatedColumn: true, encoding: base64.RawStdEncoding},
-		jsonSecret{tableName: "data_source"},
-		jsonSecret{tableName: "plugin_setting"},
-		alertingSecret{},
-	}
-
-	for _, m := range toMigrate {
-		m.reencrypt(context.Background(), runner.SecretsService, runner.SQLStore)
-	}
-
-	return nil
 }
