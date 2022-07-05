@@ -32,7 +32,6 @@ This section describes the parts of the Grafana panel editor.
 1. Data section: The data section contains tabs where you enter queries, transform your data, and create alert rules (if applicable).
 
    - **Query tab -** Select your data source and enter queries here. For more information, refer to [Add a query]({{< relref "../panels/query-a-data-source/add-a-query/" >}}).
-
    - **Transform tab -** Apply data transformations. For more information, refer to [Transform data]({{< relref "../panels/transform-data/" >}}).
    - **Alert tab -** Write alert rules. For more information, refer to [Overview of Grafana 8 alerting]({{< relref "../alerting/" >}}).
 
@@ -70,7 +69,7 @@ The panel inspector consists of the following options:
 
 Dashboards and panels allow you to show your data in visual form. Each panel needs at least one query to display a visualization.
 
-###### Before you begin
+**Before you begin:**
 
 - Ensure that you have the proper permissions. For more information about permissions, refer to [About users and permissions]({{< relref "../administration/roles-and-permissions/" >}}).
 - Identify the dashboard to which you want to add the panel.
@@ -94,7 +93,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
    For more information about individual visualizations, refer to [Visualizations options]({{< relref "../visualizations/" >}}).
 
-1. Refer to the following documentation for ways you adjust panel settings.
+1. Refer to the following documentation for ways you can adjust panel settings.
 
    While not required, most visualizations need some adjustment before they properly display the information that you need.
 
