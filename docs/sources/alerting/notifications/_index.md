@@ -1,6 +1,7 @@
 ---
 aliases:
   - /docs/grafana/latest/alerting/notifications/
+  - /docs/grafana/latest/alerting/old-alerting/notifications/
   - /docs/grafana/latest/alerting/unified-alerting/notifications/
 description: Notification policies
 keywords:
@@ -23,7 +24,7 @@ You can configure Grafana managed notification policies as well as notification 
 
 {{< figure max-width="40%" src="/static/img/docs/alerting/unified/notification-policies-grouping.png" max-width="650px" caption="Notification policies grouping" >}}
 
-Grouping is a new and key concept of Grafana alerting that categorizes alert notifications of similar nature into a single funnel. This allows you to properly route alert notifications during larger outages when many parts of a system fail at once causing a high number of alerts to fire simultaneously.
+Grouping is a new and key concept of Grafana Alerting that categorizes alert notifications of similar nature into a single funnel. This allows you to properly route alert notifications during larger outages when many parts of a system fail at once causing a high number of alerts to fire simultaneously.
 
 For example, suppose you have 100 services connected to a database in different environments. These services are differentiated by the label `env=environmentname`. An alert rule is in place to monitor whether your services can reach the database named `alertname=DatabaseUnreachable`.
 

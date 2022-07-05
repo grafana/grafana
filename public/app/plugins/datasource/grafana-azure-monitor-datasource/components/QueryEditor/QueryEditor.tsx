@@ -16,7 +16,7 @@ import {
 import useLastError from '../../utils/useLastError';
 import ArgQueryEditor from '../ArgQueryEditor';
 import LogsQueryEditor from '../LogsQueryEditor';
-import NewMetricsQueryEditor from '../NewMetricsQueryEditor/MetricsQueryEditor';
+import NewMetricsQueryEditor from '../MetricsQueryEditor/MetricsQueryEditor';
 import { QueryHeader } from '../QueryHeader';
 import { Space } from '../Space';
 
@@ -157,8 +157,6 @@ const EditorForQueryType: React.FC<EditorForQueryTypeProps> = ({
         </Alert>
       );
   }
-
-  return null;
 };
 
 export default QueryEditor;

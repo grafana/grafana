@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -69,17 +70,17 @@ func TestAPIEndpoint_GetCurrentOrg_AccessControl(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("AccessControl allows viewing CurrentOrg with correct permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: ActionOrgsRead}}, sc.initCtx.OrgId)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: ActionOrgsRead}}, sc.initCtx.OrgId)
 		response := callAPI(sc.server, http.MethodGet, getCurrentOrgURL, nil, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 	})
 	t.Run("AccessControl prevents viewing CurrentOrg with correct permissions in another org", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: ActionOrgsRead}}, 2)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: ActionOrgsRead}}, 2)
 		response := callAPI(sc.server, http.MethodGet, getCurrentOrgURL, nil, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 	t.Run("AccessControl prevents viewing CurrentOrg with incorrect permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: "orgs:invalid"}}, sc.initCtx.OrgId)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: "orgs:invalid"}}, sc.initCtx.OrgId)
 		response := callAPI(sc.server, http.MethodGet, getCurrentOrgURL, nil, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
@@ -115,19 +116,19 @@ func TestAPIEndpoint_PutCurrentOrg_AccessControl(t *testing.T) {
 
 	input := strings.NewReader(testUpdateOrgNameForm)
 	t.Run("AccessControl allows updating current org with correct permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: ActionOrgsWrite}}, sc.initCtx.OrgId)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: ActionOrgsWrite}}, sc.initCtx.OrgId)
 		response := callAPI(sc.server, http.MethodPut, putCurrentOrgURL, input, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 	})
 
 	t.Run("AccessControl prevents updating current org with correct permissions in another org", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: ActionOrgsWrite}}, 2)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: ActionOrgsWrite}}, 2)
 		response := callAPI(sc.server, http.MethodPut, putCurrentOrgURL, input, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 
 	t.Run("AccessControl prevents updating current org with incorrect permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: "orgs:invalid"}}, sc.initCtx.OrgId)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: "orgs:invalid"}}, sc.initCtx.OrgId)
 		response := callAPI(sc.server, http.MethodPut, putCurrentOrgURL, input, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
@@ -163,20 +164,20 @@ func TestAPIEndpoint_PutCurrentOrgAddress_AccessControl(t *testing.T) {
 
 	input := strings.NewReader(testUpdateOrgAddressForm)
 	t.Run("AccessControl allows updating current org address with correct permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: ActionOrgsWrite}}, sc.initCtx.OrgId)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: ActionOrgsWrite}}, sc.initCtx.OrgId)
 		response := callAPI(sc.server, http.MethodPut, putCurrentOrgAddressURL, input, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 	})
 
 	input = strings.NewReader(testUpdateOrgAddressForm)
 	t.Run("AccessControl prevents updating current org address with correct permissions in another org", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: ActionOrgsWrite}}, 2)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: ActionOrgsWrite}}, 2)
 		response := callAPI(sc.server, http.MethodPut, putCurrentOrgAddressURL, input, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 
 	t.Run("AccessControl prevents updating current org address with incorrect permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: "orgs:invalid"}}, sc.initCtx.OrgId)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: "orgs:invalid"}}, sc.initCtx.OrgId)
 		response := callAPI(sc.server, http.MethodPut, putCurrentOrgAddressURL, input, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
@@ -185,17 +186,17 @@ func TestAPIEndpoint_PutCurrentOrgAddress_AccessControl(t *testing.T) {
 // `/api/orgs/` endpoints test
 
 // setupOrgsDBForAccessControlTests stores users and create specified number of orgs
-func setupOrgsDBForAccessControlTests(t *testing.T, db sqlstore.Store, user models.SignedInUser, orgsCount int) {
+func setupOrgsDBForAccessControlTests(t *testing.T, db sqlstore.Store, usr models.SignedInUser, orgsCount int) {
 	t.Helper()
 
-	_, err := db.CreateUser(context.Background(), models.CreateUserCommand{Email: user.Email, SkipOrgSetup: true, Login: user.Login})
+	_, err := db.CreateUser(context.Background(), user.CreateUserCommand{Email: usr.Email, SkipOrgSetup: true, Login: usr.Login})
 	require.NoError(t, err)
 
 	// Create `orgsCount` orgs
 	for i := 1; i <= orgsCount; i++ {
 		_, err = db.CreateOrgWithMember(fmt.Sprintf("TestOrg%v", i), 0)
 		require.NoError(t, err)
-		err = db.AddOrgUser(context.Background(), &models.AddOrgUserCommand{LoginOrEmail: user.Login, Role: user.OrgRole, OrgId: int64(i), UserId: user.UserId})
+		err = db.AddOrgUser(context.Background(), &models.AddOrgUserCommand{LoginOrEmail: usr.Login, Role: usr.OrgRole, OrgId: int64(i), UserId: usr.UserId})
 		require.NoError(t, err)
 	}
 }
@@ -235,14 +236,14 @@ func TestAPIEndpoint_CreateOrgs_AccessControl(t *testing.T) {
 
 	input := strings.NewReader(fmt.Sprintf(testCreateOrgCmd, 2))
 	t.Run("AccessControl allows creating Orgs with correct permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: ActionOrgsCreate}}, accesscontrol.GlobalOrgID)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: ActionOrgsCreate}}, accesscontrol.GlobalOrgID)
 		response := callAPI(sc.server, http.MethodPost, createOrgsURL, input, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 	})
 
 	input = strings.NewReader(fmt.Sprintf(testCreateOrgCmd, 3))
 	t.Run("AccessControl prevents creating Orgs with incorrect permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: "orgs:invalid"}}, accesscontrol.GlobalOrgID)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: "orgs:invalid"}}, accesscontrol.GlobalOrgID)
 		response := callAPI(sc.server, http.MethodPost, createOrgsURL, input, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
@@ -273,17 +274,17 @@ func TestAPIEndpoint_DeleteOrgs_AccessControl(t *testing.T) {
 	setupOrgsDBForAccessControlTests(t, sc.db, *sc.initCtx.SignedInUser, 2)
 
 	t.Run("AccessControl prevents deleting Orgs with incorrect permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: "orgs:invalid"}}, 2)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: "orgs:invalid"}}, 2)
 		response := callAPI(sc.server, http.MethodDelete, fmt.Sprintf(deleteOrgsURL, 2), nil, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 	t.Run("AccessControl prevents deleting Orgs with correct permissions in another org", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: ActionOrgsDelete}}, 1)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: ActionOrgsDelete}}, 1)
 		response := callAPI(sc.server, http.MethodDelete, fmt.Sprintf(deleteOrgsURL, 2), nil, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 	t.Run("AccessControl allows deleting Orgs with correct permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: ActionOrgsDelete}}, 2)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: ActionOrgsDelete}}, 2)
 		response := callAPI(sc.server, http.MethodDelete, fmt.Sprintf(deleteOrgsURL, 2), nil, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 	})
@@ -310,17 +311,17 @@ func TestAPIEndpoint_SearchOrgs_AccessControl(t *testing.T) {
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	t.Run("AccessControl allows listing Orgs with correct permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: ActionOrgsRead}}, accesscontrol.GlobalOrgID)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: ActionOrgsRead}}, accesscontrol.GlobalOrgID)
 		response := callAPI(sc.server, http.MethodGet, searchOrgsURL, nil, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 	})
 	t.Run("AccessControl prevents listing Orgs with correct permissions not granted globally", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: ActionOrgsRead}}, 1)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: ActionOrgsRead}}, 1)
 		response := callAPI(sc.server, http.MethodGet, searchOrgsURL, nil, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 	t.Run("AccessControl prevents listing Orgs with incorrect permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: "orgs:invalid"}}, accesscontrol.GlobalOrgID)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: "orgs:invalid"}}, accesscontrol.GlobalOrgID)
 		response := callAPI(sc.server, http.MethodGet, searchOrgsURL, nil, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
@@ -353,17 +354,17 @@ func TestAPIEndpoint_GetOrg_AccessControl(t *testing.T) {
 	setupOrgsDBForAccessControlTests(t, sc.db, *sc.initCtx.SignedInUser, 2)
 
 	t.Run("AccessControl allows viewing another org with correct permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: ActionOrgsRead}}, 2)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: ActionOrgsRead}}, 2)
 		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(getOrgsURL, 2), nil, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 	})
 	t.Run("AccessControl prevents viewing another org with correct permissions in another org", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: ActionOrgsRead}}, 1)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: ActionOrgsRead}}, 1)
 		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(getOrgsURL, 2), nil, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 	t.Run("AccessControl prevents viewing another org with incorrect permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: "orgs:invalid"}}, 2)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: "orgs:invalid"}}, 2)
 		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(getOrgsURL, 2), nil, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
@@ -396,12 +397,12 @@ func TestAPIEndpoint_GetOrgByName_AccessControl(t *testing.T) {
 	setupOrgsDBForAccessControlTests(t, sc.db, *sc.initCtx.SignedInUser, 2)
 
 	t.Run("AccessControl allows viewing another org with correct permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: ActionOrgsRead}}, accesscontrol.GlobalOrgID)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: ActionOrgsRead}}, accesscontrol.GlobalOrgID)
 		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(getOrgsByNameURL, "TestOrg2"), nil, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 	})
 	t.Run("AccessControl prevents viewing another org with incorrect permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: "orgs:invalid"}}, accesscontrol.GlobalOrgID)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: "orgs:invalid"}}, accesscontrol.GlobalOrgID)
 		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(getOrgsByNameURL, "TestOrg2"), nil, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
@@ -437,19 +438,19 @@ func TestAPIEndpoint_PutOrg_AccessControl(t *testing.T) {
 
 	input := strings.NewReader(testUpdateOrgNameForm)
 	t.Run("AccessControl allows updating another org with correct permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: ActionOrgsWrite}}, 2)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: ActionOrgsWrite}}, 2)
 		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(putOrgsURL, 2), input, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 	})
 
 	t.Run("AccessControl prevents updating another org with correct permissions in another org", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: ActionOrgsWrite}}, 1)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: ActionOrgsWrite}}, 1)
 		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(putOrgsURL, 2), input, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 
 	t.Run("AccessControl prevents updating another org with incorrect permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: "orgs:invalid"}}, 2)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: "orgs:invalid"}}, 2)
 		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(putOrgsURL, 2), input, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
@@ -485,20 +486,20 @@ func TestAPIEndpoint_PutOrgAddress_AccessControl(t *testing.T) {
 
 	input := strings.NewReader(testUpdateOrgAddressForm)
 	t.Run("AccessControl allows updating another org address with correct permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: ActionOrgsWrite}}, 2)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: ActionOrgsWrite}}, 2)
 		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(putOrgsAddressURL, 2), input, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 	})
 
 	input = strings.NewReader(testUpdateOrgAddressForm)
 	t.Run("AccessControl prevents updating another org address with correct permissions in the current org", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: ActionOrgsWrite}}, 1)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: ActionOrgsWrite}}, 1)
 		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(putOrgsAddressURL, 2), input, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 
 	t.Run("AccessControl prevents updating another org address with incorrect permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: "orgs:invalid"}}, 2)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: "orgs:invalid"}}, 2)
 		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(putOrgsAddressURL, 2), input, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})

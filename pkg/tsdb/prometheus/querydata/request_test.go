@@ -10,12 +10,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/buffered"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/querydata"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
@@ -58,7 +59,8 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			},
 		}
 
-		tctx := setup(true)
+		tctx, err := setup(true)
+		require.NoError(t, err)
 
 		qm := models.QueryModel{
 			LegendFormat:  "legend {{app}}",
@@ -119,7 +121,8 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			},
 			JSON: b,
 		}
-		tctx := setup(true)
+		tctx, err := setup(true)
+		require.NoError(t, err)
 		res, err := execute(tctx, query, result)
 		require.NoError(t, err)
 
@@ -165,7 +168,8 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			},
 			JSON: b,
 		}
-		tctx := setup(true)
+		tctx, err := setup(true)
+		require.NoError(t, err)
 		res, err := execute(tctx, query, result)
 
 		require.NoError(t, err)
@@ -207,7 +211,8 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			},
 			JSON: b,
 		}
-		tctx := setup(true)
+		tctx, err := setup(true)
+		require.NoError(t, err)
 		res, err := execute(tctx, query, result)
 
 		require.NoError(t, err)
@@ -248,7 +253,8 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			JSON: b,
 		}
 
-		tctx := setup(true)
+		tctx, err := setup(true)
+		require.NoError(t, err)
 		res, err := execute(tctx, query, result)
 		require.NoError(t, err)
 
@@ -277,7 +283,8 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		query := backend.DataQuery{
 			JSON: b,
 		}
-		tctx := setup(true)
+		tctx, err := setup(true)
+		require.NoError(t, err)
 		res, err := execute(tctx, query, qr)
 		require.NoError(t, err)
 
@@ -315,7 +322,8 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		query := backend.DataQuery{
 			JSON: b,
 		}
-		tctx := setup(true)
+		tctx, err := setup(true)
+		require.NoError(t, err)
 		res, err := execute(tctx, query, qr)
 		require.NoError(t, err)
 
@@ -389,11 +397,8 @@ type testContext struct {
 	queryData    *querydata.QueryData
 }
 
-func setup(wideFrames bool) *testContext {
-	tracer, err := tracing.InitializeTracerForTest()
-	if err != nil {
-		panic(err)
-	}
+func setup(wideFrames bool) (*testContext, error) {
+	tracer := tracing.InitializeTracerForTest()
 	httpProvider := &fakeHttpClientProvider{
 		opts: sdkhttpclient.Options{
 			Timeouts: &sdkhttpclient.DefaultTimeoutOptions,
@@ -403,19 +408,29 @@ func setup(wideFrames bool) *testContext {
 			Body:       ioutil.NopCloser(bytes.NewReader([]byte(`{}`))),
 		},
 	}
-	queryData, _ := querydata.New(
-		httpProvider,
-		setting.NewCfg(),
-		&fakeFeatureToggles{flags: map[string]bool{"prometheusStreamingJSONParser": true, "prometheusWideSeries": wideFrames}},
-		tracer,
-		backend.DataSourceInstanceSettings{URL: "http://localhost:9090", JSONData: json.RawMessage(`{"timeInterval": "15s"}`)},
-		&fakeLogger{},
-	)
+	settings := backend.DataSourceInstanceSettings{
+		URL:      "http://localhost:9090",
+		JSONData: json.RawMessage(`{"timeInterval": "15s"}`),
+	}
+
+	features := &fakeFeatureToggles{flags: map[string]bool{"prometheusStreamingJSONParser": true, "prometheusWideSeries": wideFrames}}
+
+	opts, err := buffered.CreateTransportOptions(settings, &azsettings.AzureSettings{}, features, &fakeLogger{})
+	if err != nil {
+		return nil, err
+	}
+
+	httpClient, err := httpProvider.New(*opts)
+	if err != nil {
+		return nil, err
+	}
+
+	queryData, _ := querydata.New(httpClient, features, tracer, settings, &fakeLogger{})
 
 	return &testContext{
 		httpProvider: httpProvider,
 		queryData:    queryData,
-	}
+	}, nil
 }
 
 type fakeFeatureToggles struct {

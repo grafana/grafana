@@ -1,6 +1,7 @@
 import React, { FormEvent, PureComponent } from 'react';
 
 import { AppEvents, SelectableValue } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime/src';
 import { ClipboardButton, Field, Modal, RadioButtonGroup, Switch, TextArea } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
 
@@ -32,6 +33,7 @@ export class ShareEmbed extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
+    reportInteraction('grafana_dashboards_embed_share_viewed');
     this.buildIframeHtml();
   }
 

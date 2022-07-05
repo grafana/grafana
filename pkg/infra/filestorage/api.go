@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
@@ -13,12 +14,56 @@ var (
 	ErrRelativePath          = errors.New("path cant be relative")
 	ErrNonCanonicalPath      = errors.New("path must be canonical")
 	ErrPathTooLong           = errors.New("path is too long")
-	ErrPathInvalid           = errors.New("path is invalid")
+	ErrInvalidCharacters     = errors.New("path contains unsupported characters")
 	ErrPathEndsWithDelimiter = errors.New("path can not end with delimiter")
+	ErrPathPartTooLong       = errors.New("path part is too long")
+	ErrEmptyPathPart         = errors.New("path can not have empty parts")
 	Delimiter                = "/"
 	DirectoryMimeType        = "directory"
 	multipleDelimiters       = regexp.MustCompile(`/+`)
+	pathRegex                = regexp.MustCompile(`(^/$)|(^(/[A-Za-z\d!\-_.*'() ]+)+$)`)
+	maxPathLength            = 1024
+	maxPathPartLength        = 256
 )
+
+func ValidatePath(path string) error {
+	if !filepath.IsAbs(path) {
+		return ErrRelativePath
+	}
+
+	if path == Delimiter {
+		return nil
+	}
+
+	if strings.HasSuffix(path, Delimiter) {
+		return ErrPathEndsWithDelimiter
+	}
+
+	if filepath.Clean(path) != path {
+		return ErrNonCanonicalPath
+	}
+
+	if len(path) > maxPathLength {
+		return ErrPathTooLong
+	}
+
+	for _, part := range strings.Split(strings.TrimPrefix(path, Delimiter), Delimiter) {
+		if strings.TrimSpace(part) == "" {
+			return ErrEmptyPathPart
+		}
+
+		if len(part) > maxPathPartLength {
+			return ErrPathPartTooLong
+		}
+	}
+
+	matches := pathRegex.MatchString(path)
+	if !matches {
+		return ErrInvalidCharacters
+	}
+
+	return nil
+}
 
 func Join(parts ...string) string {
 	joinedPath := Delimiter + strings.Join(parts, Delimiter)

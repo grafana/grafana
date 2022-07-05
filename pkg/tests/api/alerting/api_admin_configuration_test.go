@@ -12,18 +12,16 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
 func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 	const disableOrgID int64 = 3
-	_, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting:          true,
 		EnableUnifiedAlerting:          true,
@@ -36,23 +34,23 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 	grafanaListedAddr, s := testinfra.StartGrafana(t, dir, path)
 
 	// Create a user to make authenticated requests
-	userID := createUser(t, s, models.CreateUserCommand{
+	userID := createUser(t, s, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_ADMIN),
 		Login:          "grafana",
 		Password:       "password",
 	})
-
+	apiClient := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
 	// create another organisation
 	orgID := createOrg(t, s, "another org", userID)
 	// ensure that the orgID is 3 (the disabled org)
 	require.Equal(t, disableOrgID, orgID)
 
 	// create user under different organisation
-	createUser(t, s, models.CreateUserCommand{
+	createUser(t, s, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_ADMIN),
 		Password:       "admin-42",
 		Login:          "admin-42",
-		OrgId:          orgID,
+		OrgID:          orgID,
 	})
 
 	// Create a couple of "fake" Alertmanagers
@@ -153,8 +151,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 	// Now, let's set an alert that should fire as quickly as possible.
 	{
 		// Create the namespace we'll save our alerts to
-		err := createFolder(t, "default", grafanaListedAddr, "grafana", "password")
-		require.NoError(t, err)
+		apiClient.CreateFolder(t, "default", "default")
 		interval, err := model.ParseDuration("10s")
 		require.NoError(t, err)
 
@@ -164,7 +161,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 			Rules: []apimodels.PostableExtendedRuleNode{
 				{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For:         interval,
+						For:         &interval,
 						Labels:      map[string]string{"label1": "val1"},
 						Annotations: map[string]string{"annotation1": "val1"},
 					},

@@ -1,13 +1,14 @@
 ---
 aliases:
   - /docs/grafana/latest/alerting/alerting-rules/
+  - /docs/grafana/latest/alerting/old-alerting/create-alerts/
   - /docs/grafana/latest/alerting/rules/
   - /docs/grafana/latest/alerting/unified-alerting/alerting-rules/
 title: Create and manage rules
 weight: 130
 ---
 
-# Create and manage Grafana alerting rules
+# Create and manage Grafana Alerting rules
 
 An alerting rule is a set of evaluation criteria that determines whether an alert will fire. The rule consists of one or more queries and expressions, a condition, the frequency of evaluation, and optionally, the duration over which the condition is met.
 

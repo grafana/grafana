@@ -3,6 +3,7 @@ import React, { PureComponent } from 'react';
 import { Unsubscribable } from 'rxjs';
 
 import {
+  CoreApp,
   DataQuery,
   DataSourceApi,
   DataSourceInstanceSettings,
@@ -137,6 +138,7 @@ export class QueryGroup extends PureComponent<Props, State> {
     const ds = !dsSettings?.meta.mixed ? dsSettings : defaultDataSource;
 
     return {
+      ...this.state.dataSource?.getDefaultQuery?.(CoreApp.PanelEditor),
       datasource: { uid: ds?.uid, type: ds?.type },
     };
   }

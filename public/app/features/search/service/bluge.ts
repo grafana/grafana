@@ -21,13 +21,15 @@ export class BlugeSearcher implements GrafanaSearcher {
   async tags(query: SearchQuery): Promise<TermCount[]> {
     const ds = (await getDataSourceSrv().get('-- Grafana --')) as GrafanaDatasource;
     const target = {
-      ...query,
-      refId: 'A',
+      refId: 'TagsQuery',
       queryType: GrafanaQueryType.Search,
-      query: query.query ?? '*',
-      sort: undefined, // no need to sort the initial query results (not used)
-      facet: [{ field: 'tag' }],
-      limit: 1, // 0 would be better, but is ignored by the backend
+      search: {
+        ...query,
+        query: query.query ?? '*',
+        sort: undefined, // no need to sort the initial query results (not used)
+        facet: [{ field: 'tag' }],
+        limit: 1, // 0 would be better, but is ignored by the backend
+      },
     };
 
     const data = (
@@ -57,6 +59,10 @@ export class BlugeSearcher implements GrafanaSearcher {
         opts.push({ value: `-${sf.name}`, label: `${sf.display} (most)` });
         opts.push({ value: `${sf.name}`, label: `${sf.display} (least)` });
       }
+      for (const sf of sortTimeFields) {
+        opts.push({ value: `-${sf.name}`, label: `${sf.display} (recent)` });
+        opts.push({ value: `${sf.name}`, label: `${sf.display} (oldest)` });
+      }
     }
 
     return Promise.resolve(opts);
@@ -70,11 +76,13 @@ async function doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
   query = await replaceCurrentFolderQuery(query);
   const ds = (await getDataSourceSrv().get('-- Grafana --')) as GrafanaDatasource;
   const target = {
-    ...query,
-    refId: 'A',
+    refId: 'Search',
     queryType: GrafanaQueryType.Search,
-    query: query.query ?? '*',
-    limit: firstPageSize,
+    search: {
+      ...query,
+      query: query.query ?? '*',
+      limit: query.limit ?? firstPageSize,
+    },
   };
   const rsp = await lastValueFrom(
     ds.query({
@@ -127,7 +135,18 @@ async function doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
       const frame = (
         await lastValueFrom(
           ds.query({
-            targets: [{ ...target, refId: 'Page', facet: undefined, from, limit: Math.max(limit, nextPageSizes) }],
+            targets: [
+              {
+                ...target,
+                search: {
+                  ...(target?.search ?? {}),
+                  from,
+                  limit: Math.max(limit, nextPageSizes),
+                },
+                refId: 'Page',
+                facet: undefined,
+              },
+            ],
           } as any)
         )
       ).data?.[0] as DataFrame;
@@ -182,9 +201,20 @@ const sortFields = [
   { name: 'errors_last_30_days', display: 'Errors 30 days' },
 ];
 
+// Enterprise only time sort field values for dashboards
+const sortTimeFields = [
+  { name: 'created_at', display: 'Created time' },
+  { name: 'updated_at', display: 'Updated time' },
+];
+
 /** Given the internal field name, this gives a reasonable display name for the table colum header */
 function getSortFieldDisplayName(name: string) {
   for (const sf of sortFields) {
+    if (sf.name === name) {
+      return sf.display;
+    }
+  }
+  for (const sf of sortTimeFields) {
     if (sf.name === name) {
       return sf.display;
     }

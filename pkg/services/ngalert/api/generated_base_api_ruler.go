@@ -34,48 +34,68 @@ type RulerApiForkingService interface {
 }
 
 func (f *ForkedRulerApi) RouteDeleteGrafanaRuleGroupConfig(ctx *models.ReqContext) response.Response {
-	return f.forkRouteDeleteGrafanaRuleGroupConfig(ctx)
+	namespaceParam := web.Params(ctx.Req)[":Namespace"]
+	groupnameParam := web.Params(ctx.Req)[":Groupname"]
+	return f.forkRouteDeleteGrafanaRuleGroupConfig(ctx, namespaceParam, groupnameParam)
 }
 func (f *ForkedRulerApi) RouteDeleteNamespaceGrafanaRulesConfig(ctx *models.ReqContext) response.Response {
-	return f.forkRouteDeleteNamespaceGrafanaRulesConfig(ctx)
+	namespaceParam := web.Params(ctx.Req)[":Namespace"]
+	return f.forkRouteDeleteNamespaceGrafanaRulesConfig(ctx, namespaceParam)
 }
 func (f *ForkedRulerApi) RouteDeleteNamespaceRulesConfig(ctx *models.ReqContext) response.Response {
-	return f.forkRouteDeleteNamespaceRulesConfig(ctx)
+	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
+	namespaceParam := web.Params(ctx.Req)[":Namespace"]
+	return f.forkRouteDeleteNamespaceRulesConfig(ctx, datasourceUIDParam, namespaceParam)
 }
 func (f *ForkedRulerApi) RouteDeleteRuleGroupConfig(ctx *models.ReqContext) response.Response {
-	return f.forkRouteDeleteRuleGroupConfig(ctx)
+	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
+	namespaceParam := web.Params(ctx.Req)[":Namespace"]
+	groupnameParam := web.Params(ctx.Req)[":Groupname"]
+	return f.forkRouteDeleteRuleGroupConfig(ctx, datasourceUIDParam, namespaceParam, groupnameParam)
 }
 func (f *ForkedRulerApi) RouteGetGrafanaRuleGroupConfig(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetGrafanaRuleGroupConfig(ctx)
+	namespaceParam := web.Params(ctx.Req)[":Namespace"]
+	groupnameParam := web.Params(ctx.Req)[":Groupname"]
+	return f.forkRouteGetGrafanaRuleGroupConfig(ctx, namespaceParam, groupnameParam)
 }
 func (f *ForkedRulerApi) RouteGetGrafanaRulesConfig(ctx *models.ReqContext) response.Response {
 	return f.forkRouteGetGrafanaRulesConfig(ctx)
 }
 func (f *ForkedRulerApi) RouteGetNamespaceGrafanaRulesConfig(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetNamespaceGrafanaRulesConfig(ctx)
+	namespaceParam := web.Params(ctx.Req)[":Namespace"]
+	return f.forkRouteGetNamespaceGrafanaRulesConfig(ctx, namespaceParam)
 }
 func (f *ForkedRulerApi) RouteGetNamespaceRulesConfig(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetNamespaceRulesConfig(ctx)
+	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
+	namespaceParam := web.Params(ctx.Req)[":Namespace"]
+	return f.forkRouteGetNamespaceRulesConfig(ctx, datasourceUIDParam, namespaceParam)
 }
 func (f *ForkedRulerApi) RouteGetRulegGroupConfig(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetRulegGroupConfig(ctx)
+	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
+	namespaceParam := web.Params(ctx.Req)[":Namespace"]
+	groupnameParam := web.Params(ctx.Req)[":Groupname"]
+	return f.forkRouteGetRulegGroupConfig(ctx, datasourceUIDParam, namespaceParam, groupnameParam)
 }
 func (f *ForkedRulerApi) RouteGetRulesConfig(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetRulesConfig(ctx)
+	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
+	return f.forkRouteGetRulesConfig(ctx, datasourceUIDParam)
 }
 func (f *ForkedRulerApi) RoutePostNameGrafanaRulesConfig(ctx *models.ReqContext) response.Response {
+	namespaceParam := web.Params(ctx.Req)[":Namespace"]
 	conf := apimodels.PostableRuleGroupConfig{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.forkRoutePostNameGrafanaRulesConfig(ctx, conf)
+	return f.forkRoutePostNameGrafanaRulesConfig(ctx, conf, namespaceParam)
 }
 func (f *ForkedRulerApi) RoutePostNameRulesConfig(ctx *models.ReqContext) response.Response {
+	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
+	namespaceParam := web.Params(ctx.Req)[":Namespace"]
 	conf := apimodels.PostableRuleGroupConfig{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.forkRoutePostNameRulesConfig(ctx, conf)
+	return f.forkRoutePostNameRulesConfig(ctx, conf, datasourceUIDParam, namespaceParam)
 }
 
 func (api *API) RegisterRulerApiEndpoints(srv RulerApiForkingService, m *metrics.API) {

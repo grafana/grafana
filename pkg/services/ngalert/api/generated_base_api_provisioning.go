@@ -42,25 +42,31 @@ type ProvisioningApiForkingService interface {
 }
 
 func (f *ForkedProvisioningApi) RouteDeleteAlertRule(ctx *models.ReqContext) response.Response {
-	return f.forkRouteDeleteAlertRule(ctx)
+	uIDParam := web.Params(ctx.Req)[":UID"]
+	return f.forkRouteDeleteAlertRule(ctx, uIDParam)
 }
 func (f *ForkedProvisioningApi) RouteDeleteContactpoints(ctx *models.ReqContext) response.Response {
-	return f.forkRouteDeleteContactpoints(ctx)
+	uIDParam := web.Params(ctx.Req)[":UID"]
+	return f.forkRouteDeleteContactpoints(ctx, uIDParam)
 }
 func (f *ForkedProvisioningApi) RouteDeleteMuteTiming(ctx *models.ReqContext) response.Response {
-	return f.forkRouteDeleteMuteTiming(ctx)
+	nameParam := web.Params(ctx.Req)[":name"]
+	return f.forkRouteDeleteMuteTiming(ctx, nameParam)
 }
 func (f *ForkedProvisioningApi) RouteDeleteTemplate(ctx *models.ReqContext) response.Response {
-	return f.forkRouteDeleteTemplate(ctx)
+	nameParam := web.Params(ctx.Req)[":name"]
+	return f.forkRouteDeleteTemplate(ctx, nameParam)
 }
 func (f *ForkedProvisioningApi) RouteGetAlertRule(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetAlertRule(ctx)
+	uIDParam := web.Params(ctx.Req)[":UID"]
+	return f.forkRouteGetAlertRule(ctx, uIDParam)
 }
 func (f *ForkedProvisioningApi) RouteGetContactpoints(ctx *models.ReqContext) response.Response {
 	return f.forkRouteGetContactpoints(ctx)
 }
 func (f *ForkedProvisioningApi) RouteGetMuteTiming(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetMuteTiming(ctx)
+	nameParam := web.Params(ctx.Req)[":name"]
+	return f.forkRouteGetMuteTiming(ctx, nameParam)
 }
 func (f *ForkedProvisioningApi) RouteGetMuteTimings(ctx *models.ReqContext) response.Response {
 	return f.forkRouteGetMuteTimings(ctx)
@@ -69,7 +75,8 @@ func (f *ForkedProvisioningApi) RouteGetPolicyTree(ctx *models.ReqContext) respo
 	return f.forkRouteGetPolicyTree(ctx)
 }
 func (f *ForkedProvisioningApi) RouteGetTemplate(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetTemplate(ctx)
+	nameParam := web.Params(ctx.Req)[":name"]
+	return f.forkRouteGetTemplate(ctx, nameParam)
 }
 func (f *ForkedProvisioningApi) RouteGetTemplates(ctx *models.ReqContext) response.Response {
 	return f.forkRouteGetTemplates(ctx)
@@ -96,32 +103,37 @@ func (f *ForkedProvisioningApi) RoutePostMuteTiming(ctx *models.ReqContext) resp
 	return f.forkRoutePostMuteTiming(ctx, conf)
 }
 func (f *ForkedProvisioningApi) RoutePutAlertRule(ctx *models.ReqContext) response.Response {
+	uIDParam := web.Params(ctx.Req)[":UID"]
 	conf := apimodels.AlertRule{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.forkRoutePutAlertRule(ctx, conf)
+	return f.forkRoutePutAlertRule(ctx, conf, uIDParam)
 }
 func (f *ForkedProvisioningApi) RoutePutAlertRuleGroup(ctx *models.ReqContext) response.Response {
+	folderUIDParam := web.Params(ctx.Req)[":FolderUID"]
+	groupParam := web.Params(ctx.Req)[":Group"]
 	conf := apimodels.AlertRuleGroup{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.forkRoutePutAlertRuleGroup(ctx, conf)
+	return f.forkRoutePutAlertRuleGroup(ctx, conf, folderUIDParam, groupParam)
 }
 func (f *ForkedProvisioningApi) RoutePutContactpoint(ctx *models.ReqContext) response.Response {
+	uIDParam := web.Params(ctx.Req)[":UID"]
 	conf := apimodels.EmbeddedContactPoint{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.forkRoutePutContactpoint(ctx, conf)
+	return f.forkRoutePutContactpoint(ctx, conf, uIDParam)
 }
 func (f *ForkedProvisioningApi) RoutePutMuteTiming(ctx *models.ReqContext) response.Response {
+	nameParam := web.Params(ctx.Req)[":name"]
 	conf := apimodels.MuteTimeInterval{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.forkRoutePutMuteTiming(ctx, conf)
+	return f.forkRoutePutMuteTiming(ctx, conf, nameParam)
 }
 func (f *ForkedProvisioningApi) RoutePutPolicyTree(ctx *models.ReqContext) response.Response {
 	conf := apimodels.Route{}
@@ -131,11 +143,12 @@ func (f *ForkedProvisioningApi) RoutePutPolicyTree(ctx *models.ReqContext) respo
 	return f.forkRoutePutPolicyTree(ctx, conf)
 }
 func (f *ForkedProvisioningApi) RoutePutTemplate(ctx *models.ReqContext) response.Response {
+	nameParam := web.Params(ctx.Req)[":name"]
 	conf := apimodels.MessageTemplateContent{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.forkRoutePutTemplate(ctx, conf)
+	return f.forkRoutePutTemplate(ctx, conf, nameParam)
 }
 
 func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingService, m *metrics.API) {

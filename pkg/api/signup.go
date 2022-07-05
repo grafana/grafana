@@ -7,10 +7,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -55,7 +55,7 @@ func (hs *HTTPServer) SignUp(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to create signup", err)
 	}
 
-	if err := bus.Publish(c.Req.Context(), &events.SignUpStarted{
+	if err := hs.bus.Publish(c.Req.Context(), &events.SignUpStarted{
 		Email: form.Email,
 		Code:  cmd.Code,
 	}); err != nil {
@@ -76,7 +76,7 @@ func (hs *HTTPServer) SignUpStep2(c *models.ReqContext) response.Response {
 		return response.Error(401, "User signup is disabled", nil)
 	}
 
-	createUserCmd := models.CreateUserCommand{
+	createUserCmd := user.CreateUserCommand{
 		Email:    form.Email,
 		Login:    form.Username,
 		Name:     form.Name,
@@ -92,7 +92,7 @@ func (hs *HTTPServer) SignUpStep2(c *models.ReqContext) response.Response {
 		createUserCmd.EmailVerified = true
 	}
 
-	user, err := hs.Login.CreateUser(createUserCmd)
+	usr, err := hs.Login.CreateUser(createUserCmd)
 	if err != nil {
 		if errors.Is(err, models.ErrUserAlreadyExists) {
 			return response.Error(401, "User with same email address already exists", nil)
@@ -102,9 +102,9 @@ func (hs *HTTPServer) SignUpStep2(c *models.ReqContext) response.Response {
 	}
 
 	// publish signup event
-	if err := bus.Publish(c.Req.Context(), &events.SignUpCompleted{
-		Email: user.Email,
-		Name:  user.NameOrFallback(),
+	if err := hs.bus.Publish(c.Req.Context(), &events.SignUpCompleted{
+		Email: usr.Email,
+		Name:  usr.NameOrFallback(),
 	}); err != nil {
 		return response.Error(500, "Failed to publish event", err)
 	}
@@ -122,13 +122,13 @@ func (hs *HTTPServer) SignUpStep2(c *models.ReqContext) response.Response {
 
 	apiResponse := util.DynMap{"message": "User sign up completed successfully", "code": "redirect-to-landing-page"}
 	for _, invite := range invitesQuery.Result {
-		if ok, rsp := hs.applyUserInvite(c.Req.Context(), user, invite, false); !ok {
+		if ok, rsp := hs.applyUserInvite(c.Req.Context(), usr, invite, false); !ok {
 			return rsp
 		}
 		apiResponse["code"] = "redirect-to-select-org"
 	}
 
-	err = hs.loginUserWithUser(user, c)
+	err = hs.loginUserWithUser(usr, c)
 	if err != nil {
 		return response.Error(500, "failed to login user", err)
 	}
