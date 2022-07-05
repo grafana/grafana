@@ -320,7 +320,7 @@ export const importQueries = (
       importedQueries = await getImportableQueries(targetDataSource, sourceDataSource, queries);
     }
 
-    const nextQueries = await ensureQueries(importedQueries);
+    const nextQueries = await ensureQueries(importedQueries, targetDataSource.getRef());
     dispatch(queriesImportedAction({ exploreId, queries: nextQueries }));
   };
 };
