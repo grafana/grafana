@@ -59,6 +59,7 @@ type buildSignal struct {
 	done  chan error
 }
 
+// orgIndex contains indexes of different indexType. At the moment we only have indexTypeDashboard.
 type orgIndex struct {
 	writers map[indexType]*bluge.Writer
 }
@@ -66,6 +67,7 @@ type orgIndex struct {
 type indexType string
 
 const (
+	// indexTypeDashboard combines dashboards, folders, panels.
 	indexTypeDashboard indexType = "dashboard"
 )
 
@@ -184,7 +186,7 @@ func (i *searchIndex) run(ctx context.Context, orgIDs []int64, reIndexSignalCh c
 				// We need semaphore here since asynchronous re-indexing may be in progress already.
 				asyncReIndexSemaphore <- struct{}{}
 				defer func() { <-asyncReIndexSemaphore }()
-				_, err = i.buildOrgIndex(ctx, signal.orgID)
+				err = i.buildOrgIndex(ctx, signal.orgID)
 				signal.done <- err
 				reIndexDoneCh <- lastIndexedEventID
 			}()
@@ -246,12 +248,12 @@ func (i *searchIndex) buildInitialIndex(ctx context.Context, orgID int64) error 
 	}
 
 	started := time.Now()
-	numDashboards, err := i.buildOrgIndex(ctx, orgID)
+	err := i.buildOrgIndex(ctx, orgID)
 	if err != nil {
 		debugCtxCancel()
 		return fmt.Errorf("can't build dashboard search index for org ID 1: %w", err)
 	}
-	i.logger.Info("Indexing for org finished", "orgIndexElapsed", time.Since(started), "orgId", orgID, "numDashboards", numDashboards)
+	i.logger.Info("Indexing for org finished", "orgIndexElapsed", time.Since(started), "orgId", orgID)
 	debugCtxCancel()
 
 	if os.Getenv("GF_SEARCH_DEBUG") != "" {
@@ -385,33 +387,76 @@ func (i *searchIndex) reportSizeOfIndexDiskBackup(orgID int64) {
 	i.logger.Warn("Size of index disk backup", "size", formatBytes(uint64(size)))
 }
 
-func (i *searchIndex) buildOrgIndex(ctx context.Context, orgID int64) (int, error) {
+func (i *searchIndex) buildOrgIndex(ctx context.Context, orgID int64) error {
+	var config bluge.Config
+	var fromBackup bool
+	backupDir := "data/indexes/" + strconv.FormatInt(orgID, 10)
+	if _, err := os.Stat(backupDir); os.IsNotExist(err) {
+		_ = os.MkdirAll(backupDir, 0755)
+		config = bluge.InMemoryOnlyConfig()
+	} else {
+		fromBackup = true
+		config = bluge.InMemoryFromBackup(backupDir)
+	}
+
 	started := time.Now()
 	ctx, cancel := context.WithTimeout(ctx, time.Minute)
 	defer cancel()
 
 	i.logger.Info("Start building org index", "orgId", orgID)
-	dashboards, err := i.loader.LoadDashboards(ctx, orgID, "")
-	if err != nil {
-		return 0, fmt.Errorf("error loading dashboards: %w", err)
-	}
-	orgSearchIndexLoadTime := time.Since(started)
-	i.logger.Info("Finish loading org dashboards", "elapsed", orgSearchIndexLoadTime, "orgId", orgID)
 
-	dashboardExtender := i.extender.GetDashboardExtender(orgID)
-	index, err := initOrgIndex(dashboards, i.logger, dashboardExtender)
-	if err != nil {
-		return 0, fmt.Errorf("error initializing index: %w", err)
-	}
-	orgSearchIndexTotalTime := time.Since(started)
-	orgSearchIndexBuildTime := orgSearchIndexTotalTime - orgSearchIndexLoadTime
+	var index *orgIndex
 
-	i.logger.Info("Re-indexed dashboards for organization",
-		"orgId", orgID,
-		"orgSearchIndexLoadTime", orgSearchIndexLoadTime,
-		"orgSearchIndexBuildTime", orgSearchIndexBuildTime,
-		"orgSearchIndexTotalTime", orgSearchIndexTotalTime,
-		"orgSearchDashboardCount", len(dashboards))
+	if !fromBackup {
+		dashboards, err := i.loader.LoadDashboards(ctx, orgID, "")
+		if err != nil {
+			return fmt.Errorf("error loading dashboards: %w", err)
+		}
+		orgSearchIndexLoadTime := time.Since(started)
+		i.logger.Info("Finish loading org dashboards", "elapsed", orgSearchIndexLoadTime, "orgId", orgID, "numDashboards", len(dashboards))
+
+		dashboardExtender := i.extender.GetDashboardExtender(orgID)
+		index, err = initOrgIndex(dashboards, i.logger, dashboardExtender)
+		if err != nil {
+			return fmt.Errorf("error initializing index: %w", err)
+		}
+
+		orgSearchIndexTotalTime := time.Since(started)
+		orgSearchIndexBuildTime := orgSearchIndexTotalTime - orgSearchIndexLoadTime
+
+		i.logger.Info("Re-indexed dashboards for organization",
+			"orgId", orgID,
+			"orgSearchIndexLoadTime", orgSearchIndexLoadTime,
+			"orgSearchIndexBuildTime", orgSearchIndexBuildTime,
+			"orgSearchIndexTotalTime", orgSearchIndexTotalTime,
+			"orgSearchDashboardCount", len(dashboards))
+
+		reader, cancel, err := index.readerForIndex(indexTypeDashboard)
+		if err != nil {
+			i.logger.Warn("Error getting reader", "error", err)
+			return err
+		}
+		defer cancel()
+
+		cancelCh := make(chan struct{})
+		err = reader.Backup(backupDir, cancelCh)
+		if err != nil {
+			i.logger.Error("can't create index disk backup", "error", err)
+			return err
+		}
+	} else {
+		i.logger.Info("Load from backup", "orgId", orgID)
+
+		dashboardWriter, err := bluge.OpenWriter(config)
+		if err != nil {
+			return err
+		}
+		index = &orgIndex{
+			writers: map[indexType]*bluge.Writer{
+				indexTypeDashboard: dashboardWriter,
+			},
+		}
+	}
 
 	i.mu.Lock()
 	if oldIndex, ok := i.perOrgIndex[orgID]; ok {
@@ -430,7 +475,7 @@ func (i *searchIndex) buildOrgIndex(ctx context.Context, orgID int64) (int, erro
 			}
 		}()
 	}
-	return len(dashboards), nil
+	return nil
 }
 
 func (i *searchIndex) getOrgIndex(orgID int64) (*orgIndex, bool) {
@@ -476,7 +521,7 @@ func (i *searchIndex) reIndexFromScratch(ctx context.Context) {
 	i.mu.RUnlock()
 
 	for _, orgID := range orgIDs {
-		_, err := i.buildOrgIndex(ctx, orgID)
+		err := i.buildOrgIndex(ctx, orgID)
 		if err != nil {
 			i.logger.Error("Error re-indexing dashboards for organization", "orgId", orgID, "error", err)
 			continue

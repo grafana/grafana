@@ -35,14 +35,26 @@ const (
 )
 
 func initOrgIndex(dashboards []dashboard, logger log.Logger, extendDoc ExtendDashboardFunc) (*orgIndex, error) {
+	started := time.Now()
+	dashboardWriter, err := initDashboardIndex(dashboards, extendDoc)
+	if err != nil {
+		return nil, fmt.Errorf("error building dashboard index: %w", err)
+	}
+	logger.Info("Finish building dashboard index", "elapsed", time.Since(started))
+	logger.Info("Finish building indexes", "totalElapsed", time.Since(started))
+	return &orgIndex{
+		writers: map[indexType]*bluge.Writer{
+			indexTypeDashboard: dashboardWriter,
+		},
+	}, err
+}
+
+func initDashboardIndex(dashboards []dashboard, extendDoc ExtendDashboardFunc) (*bluge.Writer, error) {
 	dashboardWriter, err := bluge.OpenWriter(bluge.InMemoryOnlyConfig())
 	if err != nil {
 		return nil, fmt.Errorf("error opening writer: %v", err)
 	}
 	// Not closing Writer here since we use it later while processing dashboard change events.
-
-	start := time.Now()
-	label := start
 
 	batch := bluge.NewBatch()
 
@@ -123,13 +135,7 @@ func initOrgIndex(dashboards []dashboard, logger log.Logger, extendDoc ExtendDas
 		return nil, err
 	}
 
-	logger.Info("Finish inserting docs into index", "elapsed", time.Since(label))
-	logger.Info("Finish building index", "totalElapsed", time.Since(start))
-	return &orgIndex{
-		writers: map[indexType]*bluge.Writer{
-			indexTypeDashboard: dashboardWriter,
-		},
-	}, err
+	return dashboardWriter, nil
 }
 
 func getFolderDashboardDoc(dash dashboard) *bluge.Document {
