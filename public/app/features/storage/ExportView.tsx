@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 
 import { isLiveChannelMessageEvent, isLiveChannelStatusEvent, LiveChannelScope } from '@grafana/data';
 import { getBackendSrv, getGrafanaLiveSrv } from '@grafana/runtime';
-import { Button, CodeEditor } from '@grafana/ui';
+import { Button, CodeEditor, HorizontalGroup, LinkButton } from '@grafana/ui';
 
 import { StorageView } from './types';
 
@@ -41,8 +41,12 @@ export const ExportView = ({ onPathChange }: Props) => {
     excludeDashboards: false,
     git: {},
   });
+
   const doStart = () => {
     getBackendSrv().post('/api/admin/export', body);
+  };
+  const doStop = () => {
+    getBackendSrv().post('/api/admin/export/stop');
   };
 
   useEffect(() => {
@@ -76,12 +80,7 @@ export const ExportView = ({ onPathChange }: Props) => {
           <pre>{JSON.stringify(status, null, 2)}</pre>
           {status.running && (
             <div>
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  getBackendSrv().post('/api/admin/export/stop');
-                }}
-              >
+              <Button variant="secondary" onClick={doStop}>
                 Stop
               </Button>
             </div>
@@ -92,22 +91,27 @@ export const ExportView = ({ onPathChange }: Props) => {
       {!Boolean(status?.running) && (
         <div>
           <h3>Export grafana instance</h3>
-          <div>
-            <CodeEditor
-              height={200}
-              value={JSON.stringify(body, null, 2) ?? ''}
-              showLineNumbers={false}
-              readOnly={false}
-              language="json"
-              showMiniMap={false}
-              onBlur={(text: string) => {
-                setBody(JSON.parse(text)); // force JSON?
-              }}
-            />
-          </div>{' '}
-          <Button onClick={doStart} variant="primary">
-            Export
-          </Button>
+          <CodeEditor
+            height={200}
+            value={JSON.stringify(body, null, 2) ?? ''}
+            showLineNumbers={false}
+            readOnly={false}
+            language="json"
+            showMiniMap={false}
+            onBlur={(text: string) => {
+              setBody(JSON.parse(text)); // force JSON?
+            }}
+          />
+          <br />
+
+          <HorizontalGroup>
+            <Button onClick={doStart} variant="primary">
+              Export
+            </Button>
+            <LinkButton href="admin/storage/" variant="secondary">
+              Cancel
+            </LinkButton>
+          </HorizontalGroup>
         </div>
       )}
     </div>
