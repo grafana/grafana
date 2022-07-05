@@ -124,6 +124,7 @@ pkg/cmd/grafana-server/__debug_bin
 /packages/**/compiled
 /packages/**/.rpt2_cache
 /packages/**/tsdoc-metadata.json
+/packages/**/package.tgz
 
 # Ignore go local build dependencies
 /scripts/go/bin/**
