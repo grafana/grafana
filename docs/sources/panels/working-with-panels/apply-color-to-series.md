@@ -13,12 +13,6 @@ In addition to specifying color based on thresholds, you can configure the color
 You can specify a single color, or select a continuous (gradient) color schemes, based on a value.
 Continuous color interpolates a color using the percentage of a value relative to min and max.
 
-## Before you begin
-
-- [Add a panel to a dashboard]({{< relref "add-panel/" >}}).
-
-**To apply color to series and fields**:
-
 1. In panel display options, scroll to the **Standard options** or **override** section.
 
 1. Click the **Standard options Color scheme** drop-down, and select one of the following palettes:

@@ -1,3 +1,5 @@
+import { uniqBy } from 'lodash';
+
 import { AnnotationEvent, DataFrame, MetricFindValue } from '@grafana/data';
 import { BackendDataSourceResponse, toDataQueryResponse } from '@grafana/runtime';
 
@@ -21,10 +23,7 @@ export default class ResponseParser {
       );
     }
 
-    return Array.from(new Set(values.map((v) => v.text))).map((text) => ({
-      text,
-      value: values.find((v) => v.text === text)?.value,
-    }));
+    return uniqBy(values, 'text');
   }
 
   async transformAnnotationResponse(options: any, data: BackendDataSourceResponse): Promise<AnnotationEvent[]> {

@@ -143,17 +143,17 @@ export function isFetchError(e: unknown): e is FetchError {
  * @public
  */
 export interface BackendSrv {
-  get(url: string, params?: any, requestId?: string): Promise<any>;
-  delete(url: string, data?: any): Promise<any>;
-  post(url: string, data?: any): Promise<any>;
-  patch(url: string, data?: any): Promise<any>;
-  put(url: string, data?: any): Promise<any>;
+  get<T = any>(url: string, params?: any, requestId?: string): Promise<T>;
+  delete<T = any>(url: string, data?: any): Promise<T>;
+  post<T = any>(url: string, data?: any): Promise<T>;
+  patch<T = any>(url: string, data?: any): Promise<T>;
+  put<T = any>(url: string, data?: any): Promise<T>;
 
   /**
    * @deprecated Use the fetch function instead. If you prefer to work with a promise
    * wrap the Observable returned by fetch with the lastValueFrom function.
    */
-  request(options: BackendSrvRequest): Promise<any>;
+  request<T = any>(options: BackendSrvRequest): Promise<T>;
 
   /**
    * Special function used to communicate with datasources that will emit core

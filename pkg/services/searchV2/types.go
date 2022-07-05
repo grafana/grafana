@@ -20,6 +20,7 @@ type DashboardQuery struct {
 	Datasource   string       `json:"ds_uid,omitempty"`   // "datasource" collides with the JSON value at the same leel :()
 	Tags         []string     `json:"tags,omitempty"`
 	Kind         []string     `json:"kind,omitempty"`
+	PanelType    string       `json:"panel_type,omitempty"`
 	UIDs         []string     `json:"uid,omitempty"`
 	Explain      bool         `json:"explain,omitempty"` // adds details on why document matched
 	Facet        []FacetField `json:"facet,omitempty"`
@@ -34,4 +35,5 @@ type SearchService interface {
 	registry.BackgroundService
 	DoDashboardQuery(ctx context.Context, user *backend.User, orgId int64, query DashboardQuery) *backend.DataResponse
 	RegisterDashboardIndexExtender(ext DashboardIndexExtender)
+	TriggerReIndex()
 }

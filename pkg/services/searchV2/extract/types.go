@@ -22,6 +22,7 @@ type PanelInfo struct {
 }
 
 type DashboardInfo struct {
+	UID           string          `json:"uid,omitempty"`
 	ID            int64           `json:"id,omitempty"` // internal ID
 	Title         string          `json:"title"`
 	Description   string          `json:"description,omitempty"`
