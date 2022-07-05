@@ -5,11 +5,7 @@ import React from 'react';
 
 import { RefreshPicker } from '@grafana/ui';
 
-// import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
-// import { StoryExample } from '../../utils/storybook/StoryExample';
-// import { UseState } from '../../utils/storybook/UseState';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-// import { HorizontalGroup } from '../Layout/Layout';
 
 import { Props } from './RefreshPicker';
 import mdx from './RefreshPicker.mdx';
