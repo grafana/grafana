@@ -416,7 +416,6 @@ func TestApi_setUserPermission(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 type setServiceAccountPermissionTestCase struct {
