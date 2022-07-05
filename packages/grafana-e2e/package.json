@@ -23,7 +23,8 @@
     "types": "dist/index.d.ts",
     "bin": {
       "grafana-e2e": "dist/bin/grafana-e2e.js"
-    }
+    },
+    "access": "public"
   },
   "files": [
     "dist",

@@ -21,7 +21,8 @@
   "publishConfig": {
     "bin": {
       "grafana-toolkit": "./dist/bin/grafana-toolkit.js"
-    }
+    },
+    "access": "public"
   },
   "files": [
     "dist",
