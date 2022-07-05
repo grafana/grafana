@@ -31,9 +31,9 @@ go.sum @grafana/backend-platform
 /pkg/build/ @grafana/grafana-release-eng
 
 # Cloud Datasources backend code
-/pkg/tsdb/cloudwatch @grafana/cloud-datasources
-/pkg/tsdb/azuremonitor @grafana/cloud-datasources
-/pkg/tsdb/cloudmonitoring @grafana/cloud-datasources
+/pkg/tsdb/cloudwatch @grafana/aws-plugins
+/pkg/tsdb/azuremonitor @grafana/cloud-provider-plugins
+/pkg/tsdb/cloudmonitoring @grafana/cloud-provider-plugins
 
 # Observability backend code
 /pkg/tsdb/prometheus @grafana/observability-metrics
@@ -148,9 +148,9 @@ lerna.json @grafana/frontend-ops
 *.mdx @marcusolsson @jessover9000 @grafana/plugins-platform-frontend
 
 # Core datasources
-/public/app/plugins/datasource/cloudwatch @grafana/cloud-datasources
+/public/app/plugins/datasource/cloudwatch @grafana/aws-plugins
 /public/app/plugins/datasource/elasticsearch @grafana/observability-logs-and-traces
-/public/app/plugins/datasource/grafana-azure-monitor-datasource @grafana/cloud-datasources
+/public/app/plugins/datasource/grafana-azure-monitor-datasource @grafana/cloud-provider-plugins
 /public/app/plugins/datasource/graphite @grafana/observability-metrics
 /public/app/plugins/datasource/influxdb @grafana/observability-metrics
 /public/app/plugins/datasource/jaeger @grafana/observability-logs-and-traces
@@ -160,7 +160,7 @@ lerna.json @grafana/frontend-ops
 /public/app/plugins/datasource/opentsdb @grafana/backend-platform
 /public/app/plugins/datasource/postgres @grafana/grafana-bi-squad
 /public/app/plugins/datasource/prometheus @grafana/observability-metrics
-/public/app/plugins/datasource/cloud-monitoring @grafana/cloud-datasources
+/public/app/plugins/datasource/cloud-monitoring @grafana/cloud-provider-plugins
 /public/app/plugins/datasource/zipkin @grafana/observability-logs-and-traces
 /public/app/plugins/datasource/tempo @grafana/observability-logs-and-traces
 /public/app/plugins/datasource/alertmanager @grafana/alerting-squad

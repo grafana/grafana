@@ -16,6 +16,7 @@ import { ProvisioningBadge } from '../Provisioning';
 import { ActionIcon } from '../rules/ActionIcon';
 
 import { ReceiversSection } from './ReceiversSection';
+import { TemplateEditor } from './TemplateEditor';
 
 interface Props {
   config: AlertManagerCortexConfig;
@@ -128,7 +129,17 @@ export const TemplatesTable: FC<Props> = ({ config, alertManagerName }) => {
                     <td></td>
                     <td colSpan={2}>
                       <DetailsField label="Description" horizontal={true}>
-                        <pre>{template}</pre>
+                        <TemplateEditor
+                          width={'auto'}
+                          height={'auto'}
+                          autoHeight={true}
+                          value={template}
+                          showLineNumbers={false}
+                          monacoOptions={{
+                            readOnly: true,
+                            scrollBeyondLastLine: false,
+                          }}
+                        />
                       </DetailsField>
                     </td>
                   </tr>

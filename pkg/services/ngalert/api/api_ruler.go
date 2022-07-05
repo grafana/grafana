@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -483,8 +484,9 @@ func toGettableExtendedRuleNode(r ngmodels.AlertRule, namespaceID int64, provena
 			Provenance:      provenance,
 		},
 	}
+	forDuration := model.Duration(r.For)
 	gettableExtendedRuleNode.ApiRuleNode = &apimodels.ApiRuleNode{
-		For:         model.Duration(r.For),
+		For:         &forDuration,
 		Annotations: r.Annotations,
 		Labels:      r.Labels,
 	}
@@ -495,7 +497,7 @@ func toNamespaceErrorResponse(err error) response.Response {
 	if errors.Is(err, ngmodels.ErrCannotEditNamespace) {
 		return ErrResp(http.StatusForbidden, err, err.Error())
 	}
-	if errors.Is(err, models.ErrDashboardIdentifierNotSet) {
+	if errors.Is(err, dashboards.ErrDashboardIdentifierNotSet) {
 		return ErrResp(http.StatusBadRequest, err, err.Error())
 	}
 	return apierrors.ToFolderErrorResponse(err)

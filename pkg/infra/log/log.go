@@ -18,12 +18,13 @@ import (
 
 	gokitlog "github.com/go-kit/log"
 	"github.com/go-stack/stack"
+	"github.com/mattn/go-isatty"
+	"gopkg.in/ini.v1"
+
 	"github.com/grafana/grafana/pkg/infra/log/level"
 	"github.com/grafana/grafana/pkg/infra/log/term"
 	"github.com/grafana/grafana/pkg/infra/log/text"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/mattn/go-isatty"
-	"gopkg.in/ini.v1"
 )
 
 var (
@@ -181,6 +182,11 @@ func (cl *ConcreteLogger) Debug(msg string, args ...interface{}) {
 	_ = cl.log(msg, level.DebugValue(), args...)
 }
 
+func (cl *ConcreteLogger) Log(ctx ...interface{}) error {
+	logger := gokitlog.With(&cl.SwapLogger, "t", gokitlog.TimestampFormat(now, logTimeFormat))
+	return logger.Log(ctx...)
+}
+
 func (cl *ConcreteLogger) Error(msg string, args ...interface{}) {
 	_ = cl.log(msg, level.ErrorValue(), args...)
 }
@@ -190,10 +196,7 @@ func (cl *ConcreteLogger) Info(msg string, args ...interface{}) {
 }
 
 func (cl *ConcreteLogger) log(msg string, logLevel level.Value, args ...interface{}) error {
-	logger := gokitlog.With(&cl.SwapLogger, "t", gokitlog.TimestampFormat(now, logTimeFormat))
-	args = append([]interface{}{level.Key(), logLevel, "msg", msg}, args...)
-
-	return logger.Log(args...)
+	return cl.Log(append([]interface{}{level.Key(), logLevel, "msg", msg}, args...)...)
 }
 
 func (cl *ConcreteLogger) New(ctx ...interface{}) *ConcreteLogger {
