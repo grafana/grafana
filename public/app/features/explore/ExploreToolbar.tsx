@@ -145,7 +145,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
             !datasourceMissing && (
               <DataSourcePicker
                 key={`${exploreId}-ds-picker`}
-                mixed={true}
+                mixed={config.featureToggles.exploreMixedDatasource === true}
                 onChange={this.onChangeDatasource}
                 current={this.props.datasourceRef}
                 hideTextValue={showSmallDataSourcePicker}
