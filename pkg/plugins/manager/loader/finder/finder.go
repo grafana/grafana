@@ -57,9 +57,8 @@ func (f *Finder) Find(pluginPaths []string) ([]string, error) {
 	}
 
 	for _, findErr := range f.errs {
-		for path := range pluginJSONPaths {
-			pluginDir := filepath.Dir(path)
-
+		for pluginJSONPath := range pluginJSONPaths {
+			pluginDir := filepath.Dir(pluginJSONPath)
 			p, err := filepath.Rel(pluginDir, findErr.path)
 			if err != nil {
 				f.log.Warn("Could not calculate relative path", "base", pluginDir, "target", findErr.path, "err", err)
@@ -68,7 +67,7 @@ func (f *Finder) Find(pluginPaths []string) ([]string, error) {
 			if p == ".." || strings.HasPrefix(p, ".."+string(filepath.Separator)) {
 				continue
 			} else {
-				delete(pluginJSONPaths, path)
+				delete(pluginJSONPaths, pluginJSONPath)
 			}
 		}
 	}
@@ -110,11 +109,8 @@ func (f *Finder) getAbsPluginJSONPaths(path string) ([]string, error) {
 				if err != nil {
 					if errors.Is(err, fs.ErrNotExist) {
 						f.log.Error("Invalid plugin symlink file", "pluginDir", path, "err", err)
-						f.errs[path] = finderErr{
-							path: filepath.Clean(currentPath),
-							err:  err,
-						}
-						return util.ErrWalkSkipFile
+						f.errs[path] = finderErr{path: filepath.Clean(currentPath), err: err}
+						return util.ErrWalkSkipSymlink
 					}
 					return err
 				}
@@ -137,6 +133,5 @@ func (f *Finder) getAbsPluginJSONPaths(path string) ([]string, error) {
 		}); err != nil {
 		return []string{}, err
 	}
-
 	return pluginJSONPaths, nil
 }
