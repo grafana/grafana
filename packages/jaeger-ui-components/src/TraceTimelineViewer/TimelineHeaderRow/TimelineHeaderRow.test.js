@@ -15,12 +15,7 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import Ticks from '../Ticks';
-
-import { TimelineCollapser } from './TimelineCollapser';
-import TimelineColumnResizer from './TimelineColumnResizer';
 import TimelineHeaderRow from './TimelineHeaderRow';
-import TimelineViewingLayer from './TimelineViewingLayer';
 
 const nameColumnWidth = 0.25;
 const setup = () => {
@@ -87,7 +82,6 @@ describe('TimelineHeaderRow', () => {
   });
 
   it('renders the Ticks', () => {
-    // const [viewStart, viewEnd] = props.viewRangeTime.current;
     setup();
 
     expect(screen.getAllByTestId('TicksID')).toHaveLength(5);
