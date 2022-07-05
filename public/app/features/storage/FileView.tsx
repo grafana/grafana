@@ -106,7 +106,7 @@ function getFileDisplayInfo(path: string): FileDisplayInfo {
     case 'svg':
       return { category: 'svg' };
     case 'jpg':
-    case 'jpg':
+    case 'jpeg':
     case 'png':
     case 'webp':
     case 'gif':
