@@ -33,6 +33,12 @@ const CSVWaveEditor = (props: WaveProps) => {
   const onValueChange = <K extends keyof CSVWave, V extends CSVWave[K]>(key: K, value: V) => {
     onChange(index, { ...wave, [key]: value });
   };
+  const onKeyDown = (evt: React.KeyboardEvent<HTMLInputElement>) => {
+    if (evt.key === 'Enter') {
+      onValueChange('valuesCSV', valuesCSV);
+    }
+  };
+
   return (
     <InlineFieldRow>
       <InlineField
@@ -46,6 +52,7 @@ const CSVWaveEditor = (props: WaveProps) => {
           onChange={(e) => setValuesCSV(e.currentTarget.value)}
           autoFocus={true}
           onBlur={() => onValueChange('valuesCSV', valuesCSV)}
+          onKeyDown={onKeyDown}
         />
       </InlineField>
       <InlineField label={'Step'} tooltip="The number of seconds between datapoints.">
