@@ -94,12 +94,12 @@ func (hs *HTTPServer) GetAlerts(c *models.ReqContext) response.Response {
 			Permission:   models.PERMISSION_VIEW,
 		}
 
-		err := hs.SearchService.SearchHandler(c.Req.Context(), &searchQuery)
+		hits, err := hs.SearchService.SearchHandler(c.Req.Context(), &searchQuery)
 		if err != nil {
 			return response.Error(500, "List alerts failed", err)
 		}
 
-		for _, d := range searchQuery.Result {
+		for _, d := range hits {
 			if d.Type == models.DashHitDB && d.ID > 0 {
 				dashboardIDs = append(dashboardIDs, d.ID)
 			}

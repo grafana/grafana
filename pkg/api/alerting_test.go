@@ -31,9 +31,8 @@ type setUpConf struct {
 
 type mockSearchService struct{ ExpectedResult models.HitList }
 
-func (mss *mockSearchService) SearchHandler(_ context.Context, q *search.Query) error {
-	q.Result = mss.ExpectedResult
-	return nil
+func (mss *mockSearchService) SearchHandler(_ context.Context, q *search.Query) (models.HitList, error) {
+	return mss.ExpectedResult, nil
 }
 func (mss *mockSearchService) SortOptions() []models.SortOption { return nil }
 

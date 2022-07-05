@@ -40,12 +40,10 @@ type Query struct {
 	FolderIds     []int64
 	Permission    models.PermissionType
 	Sort          string
-
-	Result models.HitList
 }
 
 type Service interface {
-	SearchHandler(context.Context, *Query) error
+	SearchHandler(context.Context, *Query) (models.HitList, error)
 	SortOptions() []models.SortOption
 }
 
@@ -57,7 +55,7 @@ type SearchService struct {
 	dashboardService dashboards.DashboardService
 }
 
-func (s *SearchService) SearchHandler(ctx context.Context, query *Query) error {
+func (s *SearchService) SearchHandler(ctx context.Context, query *Query) (models.HitList, error) {
 	dashboardQuery := models.FindPersistedDashboardsQuery{
 		Title:         query.Title,
 		SignedInUser:  query.SignedInUser,
@@ -77,7 +75,7 @@ func (s *SearchService) SearchHandler(ctx context.Context, query *Query) error {
 	}
 
 	if err := s.dashboardService.SearchDashboards(ctx, &dashboardQuery); err != nil {
-		return err
+		return nil, err
 	}
 
 	hits := dashboardQuery.Result
@@ -86,12 +84,10 @@ func (s *SearchService) SearchHandler(ctx context.Context, query *Query) error {
 	}
 
 	if err := s.setStarredDashboards(ctx, query.SignedInUser.UserId, hits); err != nil {
-		return err
+		return nil, err
 	}
 
-	query.Result = hits
-
-	return nil
+	return hits, nil
 }
 
 func sortedHits(unsorted models.HitList) models.HitList {

@@ -63,13 +63,14 @@ func (f *FolderServiceImpl) GetFolders(ctx context.Context, user *models.SignedI
 		Page:         page,
 	}
 
-	if err := f.searchService.SearchHandler(ctx, &searchQuery); err != nil {
+	hits, err := f.searchService.SearchHandler(ctx, &searchQuery)
+	if err != nil {
 		return nil, err
 	}
 
 	folders := make([]*models.Folder, 0)
 
-	for _, hit := range searchQuery.Result {
+	for _, hit := range hits {
 		folders = append(folders, &models.Folder{
 			Id:    hit.ID,
 			Uid:   hit.UID,
