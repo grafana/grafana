@@ -11,6 +11,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
@@ -23,8 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -41,12 +42,11 @@ func createTokenforSA(t *testing.T, store serviceaccounts.Store, keyName string,
 		OrgId:         orgID,
 		Key:           key.HashedKey,
 		SecondsToLive: secondsToLive,
-		Result:        &models.ApiKey{},
 	}
 
-	err = store.AddServiceAccountToken(context.Background(), saID, &cmd)
+	apiKey, err := store.AddServiceAccountToken(context.Background(), saID, &cmd)
 	require.NoError(t, err)
-	return cmd.Result
+	return apiKey
 }
 
 func TestServiceAccountsAPI_CreateToken(t *testing.T) {

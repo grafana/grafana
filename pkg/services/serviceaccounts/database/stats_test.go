@@ -4,12 +4,12 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/components/apikeygen"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/serviceaccounts"
-	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/components/apikeygen"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 )
 
 func TestStore_UsageStats(t *testing.T) {
@@ -26,10 +26,9 @@ func TestStore_UsageStats(t *testing.T) {
 		OrgId:         sa.OrgID,
 		Key:           key.HashedKey,
 		SecondsToLive: 0,
-		Result:        &models.ApiKey{},
 	}
 
-	err = store.AddServiceAccountToken(context.Background(), sa.ID, &cmd)
+	_, err = store.AddServiceAccountToken(context.Background(), sa.ID, &cmd)
 	require.NoError(t, err)
 
 	stats, err := store.GetUsageMetrics(context.Background())

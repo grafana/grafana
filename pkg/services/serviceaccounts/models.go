@@ -46,11 +46,10 @@ type ServiceAccountDTO struct {
 }
 
 type AddServiceAccountTokenCommand struct {
-	Name          string         `json:"name" binding:"Required"`
-	OrgId         int64          `json:"-"`
-	Key           string         `json:"-"`
-	SecondsToLive int64          `json:"secondsToLive"`
-	Result        *models.ApiKey `json:"-"`
+	Name          string `json:"name" binding:"Required"`
+	OrgId         int64  `json:"-"`
+	Key           string `json:"-"`
+	SecondsToLive int64  `json:"secondsToLive"`
 }
 
 type SearchServiceAccountsResult struct {

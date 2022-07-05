@@ -4,10 +4,11 @@ import (
 	"context"
 	"time"
 
+	"xorm.io/xorm"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"xorm.io/xorm"
 )
 
 func (s *ServiceAccountsStoreImpl) ListTokens(ctx context.Context, orgId int64, serviceAccountId int64) ([]*models.ApiKey, error) {
@@ -26,9 +27,10 @@ func (s *ServiceAccountsStoreImpl) ListTokens(ctx context.Context, orgId int64, 
 	return result, err
 }
 
-func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, serviceAccountId int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) error {
-	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		if _, err := s.RetrieveServiceAccount(ctx, cmd.OrgId, serviceAccountId); err != nil {
+func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, serviceAccountID int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) (*models.ApiKey, error) {
+	var apiKey *models.ApiKey
+	err := s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		if _, err := s.RetrieveServiceAccount(ctx, cmd.OrgId, serviceAccountID); err != nil {
 			return err
 		}
 
@@ -56,15 +58,17 @@ func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, s
 			Updated:          updated,
 			Expires:          expires,
 			LastUsedAt:       nil,
-			ServiceAccountId: &serviceAccountId,
+			ServiceAccountId: &serviceAccountID,
 		}
 
 		if _, err := sess.Insert(&token); err != nil {
 			return err
 		}
-		cmd.Result = &token
+		apiKey = &token
 		return nil
 	})
+
+	return apiKey, err
 }
 
 func (s *ServiceAccountsStoreImpl) DeleteServiceAccountToken(ctx context.Context, orgId, serviceAccountId, tokenId int64) error {
