@@ -8,8 +8,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/timeinterval"
 	"github.com/prometheus/common/model"
-	mock "github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -21,6 +22,82 @@ func TestNotificationPolicyService(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, "grafana-default-email", tree.Receiver)
+	})
+
+	t.Run("error if referenced mute time interval is not existing", func(t *testing.T) {
+		sut := createNotificationPolicyServiceSut()
+		sut.amStore = &MockAMConfigStore{}
+		sut.amStore.(*MockAMConfigStore).On("GetLatestAlertmanagerConfiguration", mock.Anything, mock.Anything).
+			Return(
+				func(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) error {
+					cfg, _ := deserializeAlertmanagerConfig([]byte(defaultConfig))
+					mti := config.MuteTimeInterval{
+						Name:          "not-the-one-we-need",
+						TimeIntervals: []timeinterval.TimeInterval{},
+					}
+					cfg.AlertmanagerConfig.MuteTimeIntervals = append(cfg.AlertmanagerConfig.MuteTimeIntervals, mti)
+					cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers,
+						&definitions.PostableApiReceiver{
+							Receiver: config.Receiver{
+								// default one from createTestRoutingTree()
+								Name: "a new receiver",
+							},
+						})
+					data, _ := serializeAlertmanagerConfig(*cfg)
+					query.Result = &models.AlertConfiguration{
+						AlertmanagerConfiguration: string(data),
+					}
+					return nil
+				})
+		sut.amStore.(*MockAMConfigStore).EXPECT().
+			UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).
+			Return(nil)
+		newRoute := createTestRoutingTree()
+		newRoute.Routes = append(newRoute.Routes, &definitions.Route{
+			Receiver:          "a new receiver",
+			MuteTimeIntervals: []string{"not-existing"},
+		})
+
+		err := sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceNone)
+		require.Error(t, err)
+	})
+
+	t.Run("pass if referenced mute time interval is existing", func(t *testing.T) {
+		sut := createNotificationPolicyServiceSut()
+		sut.amStore = &MockAMConfigStore{}
+		sut.amStore.(*MockAMConfigStore).On("GetLatestAlertmanagerConfiguration", mock.Anything, mock.Anything).
+			Return(
+				func(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) error {
+					cfg, _ := deserializeAlertmanagerConfig([]byte(defaultConfig))
+					mti := config.MuteTimeInterval{
+						Name:          "existing",
+						TimeIntervals: []timeinterval.TimeInterval{},
+					}
+					cfg.AlertmanagerConfig.MuteTimeIntervals = append(cfg.AlertmanagerConfig.MuteTimeIntervals, mti)
+					cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers,
+						&definitions.PostableApiReceiver{
+							Receiver: config.Receiver{
+								// default one from createTestRoutingTree()
+								Name: "a new receiver",
+							},
+						})
+					data, _ := serializeAlertmanagerConfig(*cfg)
+					query.Result = &models.AlertConfiguration{
+						AlertmanagerConfiguration: string(data),
+					}
+					return nil
+				})
+		sut.amStore.(*MockAMConfigStore).EXPECT().
+			UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).
+			Return(nil)
+		newRoute := createTestRoutingTree()
+		newRoute.Routes = append(newRoute.Routes, &definitions.Route{
+			Receiver:          "a new receiver",
+			MuteTimeIntervals: []string{"existing"},
+		})
+
+		err := sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceNone)
+		require.NoError(t, err)
 	})
 
 	t.Run("service stitches policy tree into org's AM config", func(t *testing.T) {
