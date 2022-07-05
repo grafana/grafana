@@ -62,6 +62,28 @@ const (
     {
 	  "datasource": {
 		"type": "prometheus",
+		"uid": "abc123"
+	  },
+      "id": 1,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "abc123"
+          },
+          "exemplar": true,
+          "expr": "go_goroutines{job=\"$job\"}",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Panel Title",
+      "type": "timeseries"
+    },
+    {
+	  "datasource": {
+		"type": "prometheus",
 		"uid": "_yxMP8Ynk"
 	  },
       "id": 2,
@@ -136,8 +158,9 @@ func TestGetUniqueDashboardDatasourceUids(t *testing.T) {
 		require.NoError(t, err)
 
 		uids := GetUniqueDashboardDatasourceUids(json)
-		require.Len(t, uids, 1)
-		require.Equal(t, "_yxMP8Ynk", uids[0])
+		require.Len(t, uids, 2)
+		require.Equal(t, "abc123", uids[0])
+		require.Equal(t, "_yxMP8Ynk", uids[1])
 	})
 
 	t.Run("can get no datasource uids from empty dashboard", func(t *testing.T) {
