@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -32,6 +33,7 @@ type Service struct {
 	features           featuremgmt.FeatureToggles
 	permissionsService accesscontrol.DatasourcePermissionsService
 	ac                 accesscontrol.AccessControl
+	logger             log.Logger
 
 	ptc proxyTransportCache
 }
@@ -61,6 +63,7 @@ func ProvideService(
 		features:           features,
 		permissionsService: datasourcePermissionsService,
 		ac:                 ac,
+		logger:             log.New("datasources"),
 	}
 
 	ac.RegisterScopeAttributeResolver(NewNameScopeResolver(store))
@@ -303,6 +306,9 @@ func (s *Service) DecryptedValues(ctx context.Context, ds *datasources.DataSourc
 
 	if exist {
 		err = json.Unmarshal([]byte(secret), &decryptedValues)
+		if err != nil {
+			s.logger.Debug("failed to unmarshal secret value, using legacy secrets", "err", err)
+		}
 	}
 
 	if !exist || err != nil {
