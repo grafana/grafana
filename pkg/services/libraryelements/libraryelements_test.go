@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -76,7 +77,7 @@ func TestDeleteLibraryPanelsInFolder(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to delete a folder uid that doesn't exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			err := sc.service.DeleteLibraryElementsInFolder(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, sc.folder.Uid+"xxxx")
-			require.EqualError(t, err, models.ErrFolderNotFound.Error())
+			require.EqualError(t, err, dashboards.ErrFolderNotFound.Error())
 		})
 
 	scenarioWithPanel(t, "When an admin tries to delete a folder that contains disconnected elements, it should delete all disconnected elements too",
@@ -345,7 +346,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			),
 		}
 
-		user := models.SignedInUser{
+		usr := models.SignedInUser{
 			UserId:     1,
 			Name:       "Signed In User",
 			Login:      "signed_in_user",
@@ -358,7 +359,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		// deliberate difference between signed in user and user in db to make it crystal clear
 		// what to expect in the tests
 		// In the real world these are identical
-		cmd := models.CreateUserCommand{
+		cmd := user.CreateUserCommand{
 			Email: "user.in.db@test.com",
 			Name:  "User In DB",
 			Login: userInDbName,
@@ -368,13 +369,13 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		require.NoError(t, err)
 
 		sc := scenarioContext{
-			user:     user,
+			user:     usr,
 			ctx:      &ctx,
 			service:  &service,
 			sqlStore: sqlStore,
 			reqContext: &models.ReqContext{
 				Context:      &ctx,
-				SignedInUser: &user,
+				SignedInUser: &usr,
 			},
 		}
 

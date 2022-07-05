@@ -220,13 +220,10 @@ describe('getPropsWithVariable', () => {
 describe('getAffectedPanelIdsForVariable', () => {
   describe('when called with a real world example with rows and repeats', () => {
     it('then it should return correct panel ids', () => {
-      const panels = dashWithRepeatsAndRows.panels.map(
-        (panel: PanelModel) =>
-          ({
-            id: panel.id,
-            getSaveModel: () => panel,
-          } as unknown as PanelModel)
-      );
+      const panels = dashWithRepeatsAndRows.panels.map((panel: PanelModel) => ({
+        id: panel.id,
+        getSaveModel: () => panel,
+      }));
       const result = getAffectedPanelIdsForVariable('query0', panels);
       expect(result).toEqual([15, 16, 17, 11, 12, 13, 2, 5, 7, 6]);
     });
@@ -264,13 +261,10 @@ describe('getAllAffectedPanelIdsForVariableChange ', () => {
         panels: panelsAsJson,
         templating: { list: variables },
       } = dashWithTemplateDependenciesAndPanels;
-      const panels = panelsAsJson.map(
-        (panel: PanelModel) =>
-          ({
-            id: panel.id,
-            getSaveModel: () => panel,
-          } as unknown as PanelModel)
-      );
+      const panels = panelsAsJson.map((panel: PanelModel) => ({
+        id: panel.id,
+        getSaveModel: () => panel,
+      }));
       const result = getAllAffectedPanelIdsForVariableChange('ds_instance', variables, panels);
       expect(result).toEqual([2, 3, 4, 5]);
     });
@@ -282,13 +276,10 @@ describe('getAllAffectedPanelIdsForVariableChange ', () => {
         panels: panelsAsJson,
         templating: { list: variables },
       } = dashWithTemplateDependenciesAndPanels;
-      const panels = panelsAsJson.map(
-        (panel: PanelModel) =>
-          ({
-            id: panel.id,
-            getSaveModel: () => panel,
-          } as unknown as PanelModel)
-      );
+      const panels = panelsAsJson.map((panel: PanelModel) => ({
+        id: panel.id,
+        getSaveModel: () => panel,
+      }));
       const result = getAllAffectedPanelIdsForVariableChange('depends_on_all', variables, panels);
       expect(result).toEqual([2]);
     });
@@ -300,13 +291,10 @@ describe('getAllAffectedPanelIdsForVariableChange ', () => {
         panels: panelsAsJson,
         templating: { list: variables },
       } = dashWithAllVariables;
-      const panels = panelsAsJson.map(
-        (panel: PanelModel) =>
-          ({
-            id: panel.id,
-            getSaveModel: () => panel,
-          } as unknown as PanelModel)
-      );
+      const panels = panelsAsJson.map((panel: PanelModel) => ({
+        id: panel.id,
+        getSaveModel: () => panel,
+      }));
       const result = getAllAffectedPanelIdsForVariableChange('unknown', variables, panels);
       expect(result).toEqual([2, 3]);
     });
