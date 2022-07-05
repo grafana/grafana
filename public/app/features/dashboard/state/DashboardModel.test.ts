@@ -987,7 +987,7 @@ describe('exitPanelEditor', () => {
     dashboard.startRefresh = jest.fn();
     dashboard.panelInEdit = panel;
     if (pauseAutoRefresh) {
-      timeSrvMock.refreshActive = false;
+      timeSrvMock.autoRefreshPaused = true;
     }
     setTimeSrv(timeSrvMock);
     return { dashboard, panel, timeSrvMock };

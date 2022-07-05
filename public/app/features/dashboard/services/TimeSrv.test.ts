@@ -253,18 +253,18 @@ describe('timeSrv', () => {
   });
 
   describe('pauseAutoRefresh', () => {
-    it('should set refreshActive to false', () => {
+    it('should set autoRefreshPaused to true', () => {
       _dashboard.refresh = '10s';
       timeSrv.pauseAutoRefresh();
-      expect(timeSrv.refreshActive).toBe(false);
+      expect(timeSrv.autoRefreshPaused).toBe(true);
     });
   });
 
   describe('resumeAutoRefresh', () => {
     it('should set refresh to empty value', () => {
-      timeSrv.refreshActive = false;
+      timeSrv.autoRefreshPaused = true;
       timeSrv.resumeAutoRefresh();
-      expect(timeSrv.refreshActive).toBe(true);
+      expect(timeSrv.autoRefreshPaused).toBe(false);
     });
   });
 
