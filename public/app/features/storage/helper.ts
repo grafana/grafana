@@ -14,7 +14,8 @@ class SimpleStorage implements GrafanaStorage {
   constructor() {}
 
   async get<T = any>(path: string): Promise<T> {
-    return getBackendSrv().get<T>(('api/storage/read/' + path).replace('//', '/'));
+    const storagePath = `api/storage/read/${path}`.replace('//', '/')
+    return getBackendSrv().get<T>(storagePath);
   }
 
   async list(path: string): Promise<DataFrame | undefined> {
