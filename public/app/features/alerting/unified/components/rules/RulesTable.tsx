@@ -13,6 +13,7 @@ import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '..
 import { DynamicTableWithGuidelines } from '../DynamicTableWithGuidelines';
 import { ProvisioningBadge } from '../Provisioning';
 import { RuleLocation } from '../RuleLocation';
+import { Tokenize } from '../Tokenize';
 
 import { RuleDetails } from './RuleDetails';
 import { RuleHealth } from './RuleHealth';
@@ -160,7 +161,9 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean) {
         id: 'summary',
         label: 'Summary',
         // eslint-disable-next-line react/display-name
-        renderCell: ({ data: rule }) => rule.annotations[Annotation.summary] ?? '',
+        renderCell: ({ data: rule }) => {
+          return <Tokenize input={rule.annotations[Annotation.summary] ?? ''} />;
+        },
         size: 5,
       });
     }
