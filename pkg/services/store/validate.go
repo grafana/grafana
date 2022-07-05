@@ -70,7 +70,7 @@ func (s *standardStorageService) validateUploadRequest(ctx context.Context, user
 	// TODO: validateProperties
 
 	if err := filestorage.ValidatePath(storagePath); err != nil {
-		return fail("path validation failed: " + err.Error())
+		return fail("path validation failed. error:" + err.Error() + ". path: " + storagePath)
 	}
 
 	switch req.EntityType {
