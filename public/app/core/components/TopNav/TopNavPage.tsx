@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { PropsWithChildren } from 'react';
+import React, { PropsWithChildren, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useObservable, useToggle } from 'react-use';
 import { createSelector } from 'reselect';
@@ -8,6 +8,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState } from 'app/types';
+
+import { MegaMenu } from '../MegaMenu/MegaMenu';
 
 import { NavToolbar } from './NavToolbar';
 import { topNavDefaultProps, topNavUpdates } from './TopNavUpdate';
@@ -26,6 +28,7 @@ export function TopNavPage({ children, navId }: Props) {
   const [searchBarHidden, toggleSearchBar] = useToggle(false); // repace with local storage
   const props = useObservable(topNavUpdates, topNavDefaultProps);
   const navModel = useSelector(createSelector(getNavIndex, (navIndex) => getNavModel(navIndex, navId ?? 'home')));
+  const [megaMenuOpen, setMegaMenuOpen] = useState(false);
 
   return (
     <div className={styles.viewport}>
@@ -35,10 +38,12 @@ export function TopNavPage({ children, navId }: Props) {
           {...props}
           searchBarHidden={searchBarHidden}
           onToggleSearchBar={toggleSearchBar}
+          onToggleMegaMenu={() => setMegaMenuOpen(!megaMenuOpen)}
           sectionNav={navModel.node}
         />
       </div>
       <div className={cx(styles.content, searchBarHidden && styles.contentNoSearchBar)}>{children}</div>
+      {megaMenuOpen && <MegaMenu searchBarHidden={searchBarHidden} onClose={() => setMegaMenuOpen(false)} />}
     </div>
   );
 }

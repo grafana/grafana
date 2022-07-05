@@ -12,11 +12,9 @@ import {
   DataHoverEvent,
 } from '@grafana/data';
 import { LogRows, CustomScrollbar, LogLabels, useStyles2, usePanelContext } from '@grafana/ui';
-import { dataFrameToLogsModel, dedupLogRows } from 'app/core/logs_model';
+import { dataFrameToLogsModel, dedupLogRows, COMMON_LABELS } from 'app/core/logsModel';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
-
-import { COMMON_LABELS } from '../../../core/logs_model';
 
 import { Options } from './types';
 
