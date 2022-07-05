@@ -138,10 +138,13 @@ func createRequest(ctx context.Context, method string, u *url.URL, body []byte, 
 	if header != nil {
 		request.Header = header
 	}
-	// This may not be true but right now we don't have more information here and seems like we send just this type
-	// of encoding right now if it is a POST
 	if strings.ToUpper(method) == http.MethodPost {
+		// This may not be true but right now we don't have more information here and seems like we send just this type
+		// of encoding right now if it is a POST
 		request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		// This allows transport to retry request. See https://github.com/prometheus/client_golang/pull/1022
+		// It's set to nil so it is not actually sent over the wire, just used in Go http lib to retry requests.
+		request.Header["Idempotency-Key"] = nil
 	}
 	return request, nil
 }
