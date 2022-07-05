@@ -94,14 +94,12 @@ func (e *gitExportJob) start() {
 		e.broadcaster(s)
 	}()
 
-	if true {
-		err := e.doExportWithHistory()
-		if err != nil {
-			e.logger.Error("ERROR", "e", err)
-			e.status.Status = "ERROR"
-			e.status.Last = err.Error()
-			e.broadcaster(e.status)
-		}
+	err := e.doExportWithHistory()
+	if err != nil {
+		e.logger.Error("ERROR", "e", err)
+		e.status.Status = "ERROR"
+		e.status.Last = err.Error()
+		e.broadcaster(e.status)
 	}
 }
 
