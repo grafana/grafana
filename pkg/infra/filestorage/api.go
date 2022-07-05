@@ -39,7 +39,7 @@ func ValidatePath(path string) error {
 		return ErrPathEndsWithDelimiter
 	}
 
-	if filepath.Clean(path) != path {
+	if filepath.Clean(filepath.ToSlash(path)) != filepath.ToSlash(path) {
 		return ErrNonCanonicalPath
 	}
 
