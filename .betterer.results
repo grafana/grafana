@@ -140,8 +140,8 @@ exports[`no enzyme tests`] = {
     "public/app/features/api-keys/ApiKeysAddedModal.test.tsx:3246264379": [
       [0, 20, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/dashboard/components/DashboardRow/DashboardRow.test.tsx:1463123173": [
-      [0, 17, 13, "RegExp match", "2409514259"]
+    "public/app/features/dashboard/components/DashboardRow/DashboardRow.test.tsx:1538132660": [
+      [2, 17, 13, "RegExp match", "2409514259"]
     ],
     "public/app/features/dashboard/components/ShareModal/ShareLink.test.tsx:2357087833": [
       [0, 35, 13, "RegExp match", "2409514259"]
@@ -4339,8 +4339,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/features/dashboard/components/DashboardRow/DashboardRow.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/dashboard/components/DashboardSettings/AnnotationsSettings.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
