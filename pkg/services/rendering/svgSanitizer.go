@@ -119,6 +119,12 @@ func (rs *RenderingService) sanitizeViaHTTP(ctx context.Context, req *SanitizeSV
 		return nil, fmt.Errorf("sanitizer - HTTP: failed to send request: %w", err)
 	}
 
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			rs.log.Error("Sanitizer - HTTP: failed to close response body", "statusCode", resp.StatusCode, "error", err)
+		}
+	}()
+
 	if resp.StatusCode != http.StatusOK {
 		if body, err := io.ReadAll(resp.Body); body != nil {
 			rs.log.Error("Sanitizer - HTTP: failed to sanitize", "statusCode", resp.StatusCode, "error", err, "resp", string(body))
