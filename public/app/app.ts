@@ -53,6 +53,7 @@ import { PerformanceBackend } from './core/services/echo/backends/PerformanceBac
 import { ApplicationInsightsBackend } from './core/services/echo/backends/analytics/ApplicationInsightsBackend';
 import { GAEchoBackend } from './core/services/echo/backends/analytics/GABackend';
 import { RudderstackBackend } from './core/services/echo/backends/analytics/RudderstackBackend';
+import { GrafanaJavascriptAgentBackend } from './core/services/echo/backends/grafana-javascript-agent/GrafanaJavascriptAgentBackend';
 import { SentryEchoBackend } from './core/services/echo/backends/sentry/SentryBackend';
 import { initDevFeatures } from './dev';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
@@ -200,6 +201,22 @@ function initEchoSrv() {
         ...config.sentry,
         user: config.bootData.user,
         buildInfo: config.buildInfo,
+      })
+    );
+  }
+  if (config.grafanaJavascriptAgent.enabled) {
+    registerEchoBackend(
+      new GrafanaJavascriptAgentBackend({
+        ...config.grafanaJavascriptAgent,
+        app: {
+          version: config.buildInfo.version,
+          environment: config.buildInfo.env,
+        },
+        buildInfo: config.buildInfo,
+        user: {
+          id: String(config.bootData.user?.id),
+          email: config.bootData.user?.email,
+        },
       })
     );
   }

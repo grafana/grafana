@@ -49,7 +49,7 @@ func (p *Provider) Get(ctx context.Context, pluginID string, user *models.Signed
 
 // GetWithDataSource allows getting plugin context by its ID and PluginContext.DataSourceInstanceSettings will be
 // resolved and appended to the returned context.
-func (p *Provider) GetWithDataSource(ctx context.Context, pluginID string, user *models.SignedInUser, ds *models.DataSource) (backend.PluginContext, bool, error) {
+func (p *Provider) GetWithDataSource(ctx context.Context, pluginID string, user *models.SignedInUser, ds *datasources.DataSource) (backend.PluginContext, bool, error) {
 	pCtx, exists, err := p.pluginContext(ctx, pluginID, user)
 	if err != nil {
 		return pCtx, exists, err
@@ -127,8 +127,8 @@ func (p *Provider) getCachedPluginSettings(ctx context.Context, pluginID string,
 	return ps, nil
 }
 
-func (p *Provider) decryptSecureJsonDataFn(ctx context.Context) func(ds *models.DataSource) map[string]string {
-	return func(ds *models.DataSource) map[string]string {
+func (p *Provider) decryptSecureJsonDataFn(ctx context.Context) func(ds *datasources.DataSource) map[string]string {
+	return func(ds *datasources.DataSource) map[string]string {
 		decryptedJsonData, err := p.dataSourceService.DecryptedValues(ctx, ds)
 		if err != nil {
 			p.logger.Error("Failed to decrypt secure json data", "error", err)

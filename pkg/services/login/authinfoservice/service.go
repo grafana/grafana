@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 const genericOAuthModule = "oauth_generic_oauth"
@@ -28,7 +29,7 @@ func ProvideAuthInfoService(userProtectionService login.UserProtectionService, a
 	return s
 }
 
-func (s *Implementation) LookupAndFix(ctx context.Context, query *models.GetUserByAuthInfoQuery) (bool, *models.User, *models.UserAuth, error) {
+func (s *Implementation) LookupAndFix(ctx context.Context, query *models.GetUserByAuthInfoQuery) (bool, *user.User, *models.UserAuth, error) {
 	authQuery := &models.GetAuthInfoQuery{}
 
 	// Try to find the user by auth module and id first
@@ -77,8 +78,8 @@ func (s *Implementation) LookupAndFix(ctx context.Context, query *models.GetUser
 	return false, nil, nil, models.ErrUserNotFound
 }
 
-func (s *Implementation) LookupByOneOf(ctx context.Context, userId int64, email string, login string) (*models.User, error) {
-	var user *models.User
+func (s *Implementation) LookupByOneOf(ctx context.Context, userId int64, email string, login string) (*user.User, error) {
+	var user *user.User
 	var err error
 
 	// If not found, try to find the user by id
@@ -128,7 +129,7 @@ func (s *Implementation) GenericOAuthLookup(ctx context.Context, authModule stri
 	return nil, nil
 }
 
-func (s *Implementation) LookupAndUpdate(ctx context.Context, query *models.GetUserByAuthInfoQuery) (*models.User, error) {
+func (s *Implementation) LookupAndUpdate(ctx context.Context, query *models.GetUserByAuthInfoQuery) (*user.User, error) {
 	// 1. LookupAndFix = auth info, user, error
 	// TODO: Not a big fan of the fact that we are deleting auth info here, might want to move that
 	foundUser, user, authInfo, err := s.LookupAndFix(ctx, query)
@@ -149,7 +150,7 @@ func (s *Implementation) LookupAndUpdate(ctx context.Context, query *models.GetU
 	}
 
 	// Special case for generic oauth duplicates
-	ai, err := s.GenericOAuthLookup(ctx, query.AuthModule, query.AuthId, user.Id)
+	ai, err := s.GenericOAuthLookup(ctx, query.AuthModule, query.AuthId, user.ID)
 	if !errors.Is(err, models.ErrUserNotFound) {
 		if err != nil {
 			return nil, err
@@ -162,7 +163,7 @@ func (s *Implementation) LookupAndUpdate(ctx context.Context, query *models.GetU
 	if query.AuthModule != "" {
 		if authInfo == nil {
 			cmd := &models.SetAuthInfoCommand{
-				UserId:     user.Id,
+				UserId:     user.ID,
 				AuthModule: query.AuthModule,
 				AuthId:     query.AuthId,
 			}

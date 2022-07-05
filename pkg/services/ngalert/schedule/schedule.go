@@ -10,7 +10,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
-	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
@@ -83,11 +82,10 @@ type schedule struct {
 
 	evaluator eval.Evaluator
 
-	ruleStore         store.RuleStore
-	instanceStore     store.InstanceStore
-	adminConfigStore  store.AdminConfigurationStore
-	orgStore          store.OrgStore
-	expressionService *expr.Service
+	ruleStore        store.RuleStore
+	instanceStore    store.InstanceStore
+	adminConfigStore store.AdminConfigurationStore
+	orgStore         store.OrgStore
 
 	stateManager *state.Manager
 
@@ -136,7 +134,7 @@ type SchedulerCfg struct {
 }
 
 // NewScheduler returns a new schedule.
-func NewScheduler(cfg SchedulerCfg, expressionService *expr.Service, appURL *url.URL, stateManager *state.Manager, bus bus.Bus) *schedule {
+func NewScheduler(cfg SchedulerCfg, appURL *url.URL, stateManager *state.Manager, bus bus.Bus) *schedule {
 	ticker := alerting.NewTicker(cfg.C, cfg.BaseInterval, cfg.Metrics.Ticker)
 
 	sch := schedule{
@@ -152,7 +150,6 @@ func NewScheduler(cfg SchedulerCfg, expressionService *expr.Service, appURL *url
 		ruleStore:               cfg.RuleStore,
 		instanceStore:           cfg.InstanceStore,
 		orgStore:                cfg.OrgStore,
-		expressionService:       expressionService,
 		adminConfigStore:        cfg.AdminConfigStore,
 		multiOrgNotifier:        cfg.MultiOrgNotifier,
 		metrics:                 cfg.Metrics,
@@ -628,7 +625,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			OrgID:     r.OrgID,
 			Data:      r.Data,
 		}
-		results, err := sch.evaluator.ConditionEval(&condition, e.scheduledAt, sch.expressionService)
+		results, err := sch.evaluator.ConditionEval(&condition, e.scheduledAt)
 		dur := sch.clock.Now().Sub(start)
 		evalTotal.Inc()
 		evalDuration.Observe(dur.Seconds())

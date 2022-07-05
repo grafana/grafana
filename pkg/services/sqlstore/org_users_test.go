@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type getOrgUsersTestCase struct {
@@ -151,16 +152,16 @@ func TestSQLStore_RemoveOrgUser(t *testing.T) {
 	store := InitTestDB(t)
 
 	// create org and admin
-	_, err := store.CreateUser(context.Background(), models.CreateUserCommand{
+	_, err := store.CreateUser(context.Background(), user.CreateUserCommand{
 		Login: "admin",
-		OrgId: 1,
+		OrgID: 1,
 	})
 	require.NoError(t, err)
 
 	// create a user with no org
-	_, err = store.CreateUser(context.Background(), models.CreateUserCommand{
+	_, err = store.CreateUser(context.Background(), user.CreateUserCommand{
 		Login:        "user",
-		OrgId:        1,
+		OrgID:        1,
 		SkipOrgSetup: true,
 	})
 	require.NoError(t, err)
@@ -177,7 +178,7 @@ func TestSQLStore_RemoveOrgUser(t *testing.T) {
 	user := &models.GetUserByIdQuery{Id: 2}
 	err = store.GetUserById(context.Background(), user)
 	require.NoError(t, err)
-	require.Equal(t, user.Result.OrgId, int64(1))
+	require.Equal(t, user.Result.OrgID, int64(1))
 
 	// remove the user org
 	err = store.RemoveOrgUser(context.Background(), &models.RemoveOrgUserCommand{
@@ -191,16 +192,16 @@ func TestSQLStore_RemoveOrgUser(t *testing.T) {
 	user = &models.GetUserByIdQuery{Id: 2}
 	err = store.GetUserById(context.Background(), user)
 	require.NoError(t, err)
-	require.Equal(t, user.Result.OrgId, int64(0))
+	require.Equal(t, user.Result.OrgID, int64(0))
 }
 
 func seedOrgUsers(t *testing.T, store *SQLStore, numUsers int) {
 	t.Helper()
 	// Seed users
 	for i := 1; i <= numUsers; i++ {
-		user, err := store.CreateUser(context.Background(), models.CreateUserCommand{
+		user, err := store.CreateUser(context.Background(), user.CreateUserCommand{
 			Login: fmt.Sprintf("user-%d", i),
-			OrgId: 1,
+			OrgID: 1,
 		})
 		require.NoError(t, err)
 
@@ -208,7 +209,7 @@ func seedOrgUsers(t *testing.T, store *SQLStore, numUsers int) {
 			err = store.AddOrgUser(context.Background(), &models.AddOrgUserCommand{
 				Role:   "Viewer",
 				OrgId:  1,
-				UserId: user.Id,
+				UserId: user.ID,
 			})
 			require.NoError(t, err)
 		}

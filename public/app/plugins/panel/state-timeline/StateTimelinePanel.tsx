@@ -4,6 +4,9 @@ import { DataFrame, FieldType, PanelProps } from '@grafana/data';
 import { TooltipPlugin, useTheme2, ZoomPlugin, usePanelContext } from '@grafana/ui';
 import { getLastStreamingDataFramePacket } from 'app/features/live/data/StreamingDataFrame';
 
+import { AnnotationEditorPlugin } from '../timeseries/plugins/AnnotationEditorPlugin';
+import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';
+import { ContextMenuPlugin } from '../timeseries/plugins/ContextMenuPlugin';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 
 import { StateTimelineTooltip } from './StateTimelineTooltip';
@@ -23,10 +26,11 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
   options,
   width,
   height,
+  replaceVariables,
   onChangeTimeRange,
 }) => {
   const theme = useTheme2();
-  const { sync } = usePanelContext();
+  const { sync, canAddAnnotations } = usePanelContext();
 
   const { frames, warn } = useMemo(
     () => prepareTimelineFields(data?.series, options.mergeValues ?? true, timeRange, theme),
@@ -92,6 +96,7 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
       // console.log('STREAM Packet', packet);
     }
   }
+  const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
 
   return (
     <TimelineChart
@@ -119,6 +124,42 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
               renderTooltip={renderCustomTooltip}
             />
             <OutsideRangePlugin config={config} onChangeTimeRange={onChangeTimeRange} />
+
+            {data.annotations && (
+              <AnnotationsPlugin annotations={data.annotations} config={config} timeZone={timeZone} />
+            )}
+
+            {enableAnnotationCreation && (
+              <AnnotationEditorPlugin data={alignedFrame} timeZone={timeZone} config={config}>
+                {({ startAnnotating }) => {
+                  return (
+                    <ContextMenuPlugin
+                      data={alignedFrame}
+                      config={config}
+                      timeZone={timeZone}
+                      replaceVariables={replaceVariables}
+                      defaultItems={[
+                        {
+                          items: [
+                            {
+                              label: 'Add annotation',
+                              ariaLabel: 'Add annotation',
+                              icon: 'comment-alt',
+                              onClick: (e, p) => {
+                                if (!p) {
+                                  return;
+                                }
+                                startAnnotating({ coords: p.coords });
+                              },
+                            },
+                          ],
+                        },
+                      ]}
+                    />
+                  );
+                }}
+              </AnnotationEditorPlugin>
+            )}
           </>
         );
       }}
