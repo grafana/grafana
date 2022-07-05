@@ -27,7 +27,7 @@ var (
 )
 
 func ValidatePath(path string) error {
-	if !filepath.IsAbs(path) {
+	if !strings.HasPrefix(path, Delimiter) {
 		return ErrRelativePath
 	}
 
