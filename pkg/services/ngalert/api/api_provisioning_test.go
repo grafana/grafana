@@ -239,6 +239,28 @@ func TestProvisioningApi(t *testing.T) {
 			require.Equal(t, 404, response.Status())
 		})
 	})
+
+	t.Run("alert rule groups", func(t *testing.T) {
+		t.Run("are present, GET returns 200", func(t *testing.T) {
+			sut := createProvisioningSrvSut(t)
+			rc := createTestRequestCtx()
+			insertRule(t, sut, createTestAlertRule("rule", 1))
+
+			response := sut.RouteGetAlertRuleGroup(&rc, "folder-uid", "my-cool-group")
+
+			require.Equal(t, 200, response.Status())
+		})
+
+		t.Run("are missing, GET returns 404", func(t *testing.T) {
+			sut := createProvisioningSrvSut(t)
+			rc := createTestRequestCtx()
+			insertRule(t, sut, createTestAlertRule("rule", 1))
+
+			response := sut.RouteGetAlertRuleGroup(&rc, "folder-uid", "does not exist")
+
+			require.Equal(t, 404, response.Status())
+		})
+	})
 }
 
 func createProvisioningSrvSut(t *testing.T) ProvisioningSrv {
@@ -382,6 +404,7 @@ func createTestAlertRule(title string, orgID int64) definitions.AlertRule {
 			},
 		},
 		RuleGroup:    "my-cool-group",
+		FolderUID:    "folder-uid",
 		For:          time.Second * 60,
 		NoDataState:  models.OK,
 		ExecErrState: models.OkErrState,
