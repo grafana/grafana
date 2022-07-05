@@ -36,6 +36,13 @@ func TestNotificationPolicyService(t *testing.T) {
 						TimeIntervals: []timeinterval.TimeInterval{},
 					}
 					cfg.AlertmanagerConfig.MuteTimeIntervals = append(cfg.AlertmanagerConfig.MuteTimeIntervals, mti)
+					cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers,
+						&definitions.PostableApiReceiver{
+							Receiver: config.Receiver{
+								// default one from createTestRoutingTree()
+								Name: "a new receiver",
+							},
+						})
 					data, _ := serializeAlertmanagerConfig(*cfg)
 					query.Result = &models.AlertConfiguration{
 						AlertmanagerConfiguration: string(data),
@@ -47,7 +54,7 @@ func TestNotificationPolicyService(t *testing.T) {
 			Return(nil)
 		newRoute := createTestRoutingTree()
 		newRoute.Routes = append(newRoute.Routes, &definitions.Route{
-			Receiver:          "test-receiver",
+			Receiver:          "a new receiver",
 			MuteTimeIntervals: []string{"not-existing"},
 		})
 
@@ -67,6 +74,13 @@ func TestNotificationPolicyService(t *testing.T) {
 						TimeIntervals: []timeinterval.TimeInterval{},
 					}
 					cfg.AlertmanagerConfig.MuteTimeIntervals = append(cfg.AlertmanagerConfig.MuteTimeIntervals, mti)
+					cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers,
+						&definitions.PostableApiReceiver{
+							Receiver: config.Receiver{
+								// default one from createTestRoutingTree()
+								Name: "a new receiver",
+							},
+						})
 					data, _ := serializeAlertmanagerConfig(*cfg)
 					query.Result = &models.AlertConfiguration{
 						AlertmanagerConfiguration: string(data),
@@ -78,7 +92,7 @@ func TestNotificationPolicyService(t *testing.T) {
 			Return(nil)
 		newRoute := createTestRoutingTree()
 		newRoute.Routes = append(newRoute.Routes, &definitions.Route{
-			Receiver:          "test-receiver",
+			Receiver:          "a new receiver",
 			MuteTimeIntervals: []string{"existing"},
 		})
 
