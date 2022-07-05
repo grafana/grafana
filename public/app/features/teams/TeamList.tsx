@@ -1,7 +1,6 @@
 import React, { PureComponent } from 'react';
 
 import { DeleteButton, LinkButton, FilterInput, VerticalGroup, HorizontalGroup, Pagination } from '@grafana/ui';
-import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import { TeamRolePicker } from 'app/core/components/RolePicker/TeamRolePicker';
@@ -226,7 +225,6 @@ export class TeamList extends PureComponent<Props, State> {
 
     return (
       <Page navId="teams">
-        <AppChromeUpdate actions={<h4>hello</h4>} />
         <Page.Contents isLoading={!hasFetched}>{this.renderList()}</Page.Contents>
       </Page>
     );
