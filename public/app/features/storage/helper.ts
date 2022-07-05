@@ -22,7 +22,7 @@ class SimpleStorage implements GrafanaStorage {
     if (path) {
       url += path + '/';
     }
-    const rsp = await getBackendSrv().get<DataFrameJSON>(url); // as DataFrameJSON;
+    const rsp = await getBackendSrv().get<DataFrameJSON>(url);
     if (rsp?.data) {
       const f = dataFrameFromJSON(rsp);
       for (const field of f.fields) {
