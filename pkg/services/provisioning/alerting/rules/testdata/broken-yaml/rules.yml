@@ -1,5 +1,5 @@
 apiVersion: 1
-groups:
+  groups:
   - name: my_group
     folder: my_folder
     interval: 10s

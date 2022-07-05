@@ -16,7 +16,7 @@ type rulesConfigReader struct {
 	log log.Logger
 }
 
-func NewRulesConfigReader(logger log.Logger) rulesConfigReader {
+func newRulesConfigReader(logger log.Logger) rulesConfigReader {
 	return rulesConfigReader{
 		log: logger,
 	}

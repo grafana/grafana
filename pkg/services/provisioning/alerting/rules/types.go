@@ -123,14 +123,17 @@ type AlertRuleV1 struct {
 func (rule *AlertRuleV1) mapToModel(orgID int64) (models.AlertRule, error) {
 	alertRule := models.AlertRule{}
 	alertRule.Title = rule.Title.Value()
+	if alertRule.Title == "" {
+		return models.AlertRule{}, fmt.Errorf("rule has no title set")
+	}
 	alertRule.UID = rule.UID.Value()
 	if alertRule.UID == "" {
-		return alertRule, fmt.Errorf("rule '%s' has no UID set", rule.Title)
+		return models.AlertRule{}, fmt.Errorf("rule '%s' failed to parse: no UID set", alertRule.Title)
 	}
 	alertRule.OrgID = orgID
 	duration, err := time.ParseDuration(rule.For.Value())
 	if err != nil {
-		return models.AlertRule{}, err
+		return models.AlertRule{}, fmt.Errorf("rule '%s' failed to parse: %w", alertRule.Title, err)
 	}
 	alertRule.For = duration
 	dashboardUID := rule.DashboardUID.Value()
@@ -140,7 +143,7 @@ func (rule *AlertRuleV1) mapToModel(orgID int64) (models.AlertRule, error) {
 	execErrStateValue := strings.TrimSpace(rule.ExecErrState.Value())
 	execErrState, err := models.ErrStateFromString(execErrStateValue)
 	if err != nil && execErrStateValue != "" {
-		return models.AlertRule{}, fmt.Errorf("rule %s failed to parse: %w", alertRule.Title, err)
+		return models.AlertRule{}, fmt.Errorf("rule '%s' failed to parse: %w", alertRule.Title, err)
 	}
 	if execErrStateValue == "" {
 		execErrState = models.AlertingErrState
@@ -149,21 +152,27 @@ func (rule *AlertRuleV1) mapToModel(orgID int64) (models.AlertRule, error) {
 	noDataStateValue := strings.TrimSpace(rule.NoDataState.Value())
 	noDataState, err := models.NoDataStateFromString(noDataStateValue)
 	if err != nil && noDataStateValue != "" {
-		return models.AlertRule{}, fmt.Errorf("rule %s failed to parse: %w", alertRule.Title, err)
+		return models.AlertRule{}, fmt.Errorf("rule '%s' failed to parse: %w", alertRule.Title, err)
 	}
 	if noDataStateValue == "" {
 		noDataState = models.NoData
 	}
 	alertRule.NoDataState = noDataState
 	alertRule.Condition = rule.Condition.Value()
+	if alertRule.Condition == "" {
+		return models.AlertRule{}, fmt.Errorf("rule '%s' failed to parse: no condition set", alertRule.Title)
+	}
 	alertRule.Annotations = rule.Annotations.Value()
 	alertRule.Labels = rule.Labels.Value()
 	for _, queryV1 := range rule.Data {
 		query, err := queryV1.mapToModel()
 		if err != nil {
-			return models.AlertRule{}, err
+			return models.AlertRule{}, fmt.Errorf("rule '%s' failed to parse: %w", alertRule.Title, err)
 		}
 		alertRule.Data = append(alertRule.Data, query)
+	}
+	if len(alertRule.Data) == 0 {
+		return models.AlertRule{}, fmt.Errorf("rule '%s' failed to parse: no data set", alertRule.Title)
 	}
 	return alertRule, nil
 }
@@ -177,6 +186,11 @@ type QueryV1 struct {
 }
 
 func (queryV1 *QueryV1) mapToModel() (models.AlertQuery, error) {
+	// In order to get the model into the format we need,
+	// we marshal it back to json and unmarshal it again
+	// in json.RawMessage. We do this as we cannot use
+	// json.RawMessage with a yaml files and have to use
+	// JSONValue that supports both, json and yaml.
 	encoded, err := json.Marshal(queryV1.Model.Value())
 	if err != nil {
 		return models.AlertQuery{}, err

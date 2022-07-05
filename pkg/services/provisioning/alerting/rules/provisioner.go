@@ -24,7 +24,7 @@ func NewAlertRuleProvisioner(
 	ruleService provisioning.AlertRuleService) AlertRuleProvisioner {
 	return &DefaultAlertRuleProvisioner{
 		logger:               logger,
-		cfgReader:            NewRulesConfigReader(logger),
+		cfgReader:            newRulesConfigReader(logger),
 		dashboardService:     dashboardService,
 		dashboardProvService: dashboardProvService,
 		ruleService:          ruleService,
@@ -79,7 +79,7 @@ func (prov *DefaultAlertRuleProvisioner) provsionRuleFiles(ctx context.Context,
 			if err != nil {
 				return err
 			}
-			prov.logger.Info("provisioning alert rule group",
+			prov.logger.Debug("provisioning alert rule group",
 				"org", group.OrgID,
 				"folder", group.Folder,
 				"folderUID", folderUID,
@@ -114,15 +114,15 @@ func (prov *DefaultAlertRuleProvisioner) provisionRule(
 	rule alert_models.AlertRule,
 	folder,
 	folderUID string) error {
-	prov.logger.Info("provisioning alert rule", "uid", rule.UID, "org", rule.OrgID)
+	prov.logger.Debug("provisioning alert rule", "uid", rule.UID, "org", rule.OrgID)
 	_, _, err := prov.ruleService.GetAlertRule(ctx, orgID, rule.UID)
 	if err != nil && !errors.Is(err, alert_models.ErrAlertRuleNotFound) {
 		return err
 	} else if err != nil {
-		prov.logger.Info("creating rule", "uid", rule.UID, "org", rule.OrgID)
+		prov.logger.Debug("creating rule", "uid", rule.UID, "org", rule.OrgID)
 		_, err = prov.ruleService.CreateAlertRule(ctx, rule, alert_models.ProvenanceFile)
 	} else {
-		prov.logger.Info("updating rule", "uid", rule.UID, "org", rule.OrgID)
+		prov.logger.Debug("updating rule", "uid", rule.UID, "org", rule.OrgID)
 		_, err = prov.ruleService.UpdateAlertRule(ctx, rule, alert_models.ProvenanceFile)
 	}
 	return err

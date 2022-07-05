@@ -3,6 +3,7 @@ groups:
   - name: my_group
     folder: my_folder
     interval: 10s
+    orgId: 1337
     rules:
     - title: my_first_rule
       uid: my_first_rule
