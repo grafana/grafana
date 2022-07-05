@@ -4,18 +4,20 @@ export function mapFieldsToTypes(columns: SQLSelectableValue[]) {
   const fields: SQLSelectableValue[] = [];
   for (const col of columns) {
     let type: RAQBFieldTypes = 'text';
-    switch (col.type) {
+    switch (col.type?.toUpperCase()) {
       case 'BOOLEAN':
       case 'BOOL': {
         type = 'boolean';
         break;
       }
-      case 'BYTES': {
+      case 'BYTES':
+      case 'VARCHAR': {
         type = 'text';
         break;
       }
       case 'FLOAT':
       case 'FLOAT64':
+      case 'INT':
       case 'INTEGER':
       case 'INT64':
       case 'NUMERIC':

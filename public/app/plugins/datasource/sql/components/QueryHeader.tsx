@@ -117,7 +117,7 @@ export function QueryHeader({
 
         {editorMode === EditorMode.Builder && (
           <>
-            {/* <InlineSwitch
+            <InlineSwitch
               id="sql-filter"
               label="Filter"
               transparent={true}
@@ -151,7 +151,7 @@ export function QueryHeader({
                 ev.target instanceof HTMLInputElement &&
                 onQueryRowChange({ ...queryRowFilter, order: ev.target.checked })
               }
-            /> */}
+            />
 
             <InlineSwitch
               id="sql-preview"

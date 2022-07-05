@@ -53,6 +53,7 @@ export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range 
   );
 
   const onQueryChange = (q: SQLQuery, process = true) => {
+    console.log('q', q);
     setQueryToValidate(q as any);
     onChange(q);
 

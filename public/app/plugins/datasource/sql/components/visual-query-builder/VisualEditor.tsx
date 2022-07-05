@@ -51,16 +51,19 @@ export const VisualEditor: React.FC<VisualEditorProps> = ({
                 <SQLGroupByRow db={db} fields={state.value || []} query={query} onQueryChange={onChange} />
               </OptionsPaneCategory>
             </EditorRow>
+            <EditorRow>
+              <OptionsPaneCategory id="order-by-row" title="Order by row" isOpenDefault={false}>
+                <SQLOrderByRow fields={state.value || []} query={query} onQueryChange={onChange} db={db} />
+              </OptionsPaneCategory>
+            </EditorRow>
           </>
         )}
         {query.format === 'time_series' && (
           <EditorRow>
-            <SQLTimeSeriesSelectRow fields={state.value || []} query={query} onQueryChange={onChange} />
+            <SQLTimeSeriesSelectRow db={db} fields={state.value || []} query={query} onQueryChange={onChange} />
           </EditorRow>
         )}
-        <EditorRow>
-          <SQLSelectRow fields={state.value || []} query={query} onQueryChange={onChange} db={db} />
-        </EditorRow>
+
         {queryRowFilter.filter && (
           <EditorRow>
             <EditorField label="Filter by column value" optional>
@@ -86,6 +89,7 @@ export const VisualEditor: React.FC<VisualEditorProps> = ({
           </EditorRow>
         )}
       </EditorRows>
+
       <QueryToolbox db={db} query={query} onValidate={onValidate} range={range} />
     </>
   );
