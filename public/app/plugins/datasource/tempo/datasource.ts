@@ -176,7 +176,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           app: options.app ?? '',
           serviceName: targets.nativeSearch[0].serviceName ?? '',
           spanName: targets.nativeSearch[0].spanName ?? '',
-          limit: targets.nativeSearch[0].limit ?? '',
+          resultLimit: targets.nativeSearch[0].limit ?? '',
           search: targets.nativeSearch[0].search ?? '',
         });
 
