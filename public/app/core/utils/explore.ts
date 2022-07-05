@@ -259,13 +259,16 @@ export async function generateEmptyQuery(
   index = 0,
   dataSourceOverride?: DataSourceRef
 ): Promise<DataQuery> {
-  // if queries is empty, datasource is default
   let datasource;
+
+  // datasource override is if we have switched datasources with no carry-over - we want to create a new query with a datasource we define
   if (dataSourceOverride) {
     datasource = dataSourceOverride;
   } else if (queries.length > 0 && queries[queries.length - 1].datasource) {
+    // otherwise use last queries' datasource
     datasource = queries[queries.length - 1].datasource;
   } else {
+    // if neither exists, use the default datasource
     const datasourceFull = await getDataSourceSrv().get();
     datasource = datasourceFull.getRef();
   }

@@ -219,8 +219,7 @@ export function getQueryDisplayText(query: DataQuery, isMixed = false): string {
    * stringifying query that was stripped of key, refId and datasource for nicer
    * formatting and improved readability
    */
-  let keysToStrip = ['key', 'refId', 'datasource'];
-  const strippedQuery = omit(query, keysToStrip);
+  const strippedQuery = omit(query, ['key', 'refId', 'datasource']);
   const strippedQueryJSON = JSON.stringify(strippedQuery);
   const prefix = isMixed ? query.datasource?.type : undefined;
   return `${prefix ? prefix + ': ' : ''}${strippedQueryJSON}`;
