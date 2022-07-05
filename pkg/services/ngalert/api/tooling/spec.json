@@ -1956,7 +1956,10 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/AlertRuleGroup"
+            "description": "AlertRuleGroupMetadata",
+            "schema": {
+              "$ref": "#/definitions/AlertRuleGroupMetadata"
+            }
           },
           "400": {
             "description": "ValidationError",
@@ -2816,12 +2819,7 @@
       "type": "array",
       "items": {
         "$ref": "#/definitions/EmbeddedContactPoint"
-<<<<<<< HEAD
       }
-=======
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
->>>>>>> 01a9b04d19 (Generate shell for new route)
     },
     "DateTime": {
       "description": "DateTime is a time but it serializes to ISO8601 format with millis\nIt knows how to read 3 different variations of a RFC3339 date time.\nMost APIs we encounter want either millisecond or second precision times.\nThis just tries to make it worry-free.",
@@ -4983,16 +4981,7 @@
         "User": {
           "$ref": "#/definitions/Userinfo"
         }
-<<<<<<< HEAD
       }
-=======
-      },
-<<<<<<< HEAD
-      "x-go-package": "github.com/prometheus/common/config"
->>>>>>> 01a9b04d19 (Generate shell for new route)
-=======
-      "x-go-package": "net/url"
->>>>>>> 96e1b2239a (Propagate path parameters)
     },
     "Userinfo": {
       "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
@@ -5186,7 +5175,6 @@
       "$ref": "#/definitions/alertGroup"
     },
     "alertGroups": {
-      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
@@ -5295,7 +5283,6 @@
       "$ref": "#/definitions/Duration"
     },
     "gettableAlert": {
-      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
@@ -5352,7 +5339,6 @@
       "$ref": "#/definitions/gettableAlert"
     },
     "gettableAlerts": {
-      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
@@ -5409,7 +5395,6 @@
       "$ref": "#/definitions/gettableSilence"
     },
     "gettableSilences": {
-      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
@@ -5556,8 +5541,6 @@
           "format": "date-time"
         }
       },
-      "x-go-name": "PostableSilence",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/postableSilence"
     },
     "receiver": {

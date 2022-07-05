@@ -468,12 +468,7 @@
    "items": {
     "$ref": "#/definitions/EmbeddedContactPoint"
    },
-<<<<<<< HEAD
    "type": "array"
-=======
-   "type": "array",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
->>>>>>> 01a9b04d19 (Generate shell for new route)
   },
   "DateTime": {
    "description": "DateTime is a time but it serializes to ISO8601 format with millis\nIt knows how to read 3 different variations of a RFC3339 date time.\nMost APIs we encounter want either millisecond or second precision times.\nThis just tries to make it worry-free.",
@@ -2630,19 +2625,8 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-<<<<<<< HEAD
-   "title": "URL is a custom URL type that allows validation at configuration load time.",
-<<<<<<< HEAD
-   "type": "object"
-=======
-   "type": "object",
-   "x-go-package": "github.com/prometheus/common/config"
->>>>>>> 01a9b04d19 (Generate shell for new route)
-=======
    "title": "A URL represents a parsed URL (technically, a URI reference).",
-   "type": "object",
-   "x-go-package": "net/url"
->>>>>>> 96e1b2239a (Propagate path parameters)
+   "type": "object"
   },
   "Userinfo": {
    "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
@@ -3006,6 +2990,7 @@
    "type": "array"
   },
   "gettableSilence": {
+   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3054,7 +3039,6 @@
    "type": "object"
   },
   "gettableSilences": {
-   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
@@ -3165,6 +3149,7 @@
    "type": "array"
   },
   "postableSilence": {
+   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3199,12 +3184,9 @@
     "matchers",
     "startsAt"
    ],
-   "type": "object",
-   "x-go-name": "PostableSilence",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "receiver": {
-   "description": "Receiver receiver",
    "properties": {
     "name": {
      "description": "name",
@@ -5236,7 +5218,10 @@
     ],
     "responses": {
      "200": {
-      "$ref": "#/responses/AlertRuleGroup"
+      "description": "AlertRuleGroupMetadata",
+      "schema": {
+       "$ref": "#/definitions/AlertRuleGroupMetadata"
+      }
      },
      "400": {
       "description": "ValidationError",
