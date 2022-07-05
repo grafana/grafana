@@ -39,7 +39,7 @@ func ValidatePath(path string) error {
 		return ErrPathEndsWithDelimiter
 	}
 
-	// apply `ToSlash` for
+	// apply `ToSlash` to replace OS-specific separators introduced by the Clean() function
 	if filepath.ToSlash(filepath.Clean(path)) != path {
 		return ErrNonCanonicalPath
 	}
