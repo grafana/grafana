@@ -2,12 +2,14 @@ package store
 
 import (
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -57,7 +59,8 @@ func (s *httpStorage) Upload(c *models.ReqContext) response.Response {
 	}
 	c.Req.Body = http.MaxBytesReader(c.Resp, c.Req.Body, MAX_UPLOAD_SIZE)
 	if err := c.Req.ParseMultipartForm(MAX_UPLOAD_SIZE); err != nil {
-		return response.Error(400, "Please limit file uploaded under 3MB", err)
+		msg := fmt.Sprintf("Please limit file uploaded under %s", util.ByteCountSI(MAX_UPLOAD_SIZE))
+		return response.Error(400, msg, err)
 	}
 
 	files := c.Req.MultipartForm.File["file"]

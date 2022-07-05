@@ -1,9 +1,8 @@
-import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 
-import { GrafanaTheme2, isLiveChannelMessageEvent, isLiveChannelStatusEvent, LiveChannelScope } from '@grafana/data';
+import { isLiveChannelMessageEvent, isLiveChannelStatusEvent, LiveChannelScope } from '@grafana/data';
 import { getBackendSrv, getGrafanaLiveSrv } from '@grafana/runtime';
-import { Button, CodeEditor, Modal, useTheme2 } from '@grafana/ui';
+import { Button, CodeEditor, Modal } from '@grafana/ui';
 
 import { StorageView } from './types';
 
@@ -24,7 +23,6 @@ interface Props {
 }
 
 export const ExportView = ({ onPathChange }: Props) => {
-  const styles = getStyles(useTheme2());
   const [status, setStatus] = useState<ExportStatusMessage>();
 
   const [open, setOpen] = useState(false);
@@ -37,7 +35,6 @@ export const ExportView = ({ onPathChange }: Props) => {
     getBackendSrv()
       .post('/api/admin/export', body)
       .then((v) => {
-        console.log('GOT', v);
         onDismiss();
       });
   };
@@ -76,7 +73,7 @@ export const ExportView = ({ onPathChange }: Props) => {
     return (
       <>
         <Modal title={'Export grafana instance'} isOpen={open} onDismiss={onDismiss}>
-          <div className={styles.wrap}>
+          <div>
             <CodeEditor
               height={200}
               value={JSON.stringify(body, null, 2) ?? ''}
@@ -108,11 +105,11 @@ export const ExportView = ({ onPathChange }: Props) => {
   };
 
   if (!status) {
-    return <div className={styles.wrap}>{renderButton()}</div>;
+    return <div>{renderButton()}</div>;
   }
 
   return (
-    <div className={styles.wrap}>
+    <div>
       <pre>{JSON.stringify(status, null, 2)}</pre>
       {Boolean(!status.running) && renderButton()}
       {Boolean(status.running) && (
@@ -127,15 +124,4 @@ export const ExportView = ({ onPathChange }: Props) => {
       )}
     </div>
   );
-};
-
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    wrap: css`
-      //  border: 4px solid red;
-    `,
-    running: css`
-      // border: 4px solid green;
-    `,
-  };
 };

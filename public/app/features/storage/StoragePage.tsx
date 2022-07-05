@@ -50,10 +50,11 @@ export default function StoragePage(props: Props) {
           frame.fields[0] = {
             ...name,
             getLinks: (cfg: ValueLinkConfig) => {
-              const p = path + '/' + name.values.get(cfg.valueRowIndex ?? 0);
+              const n = name.values.get(cfg.valueRowIndex ?? 0);
+              const p = path + '/' + n;
               return [
                 {
-                  title: 'Open XYZ',
+                  title: `Open ${n}`,
                   href: `/admin/storage/${p}`,
                   target: '_self',
                   origin: name,

@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -68,21 +66,6 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 			},
 		}).setReadOnly(true).setBuiltin(true).
 			setDescription("Access files from the static public files"),
-	}
-
-	// Development dashboards
-	if setting.Env != setting.Prod {
-		devenv := filepath.Join(cfg.StaticRootPath, "..", "devenv")
-		if _, err := os.Stat(devenv); !os.IsNotExist(err) {
-			// path/to/whatever exists
-			s := newDiskStorage("devenv", "Development Environment", &StorageLocalDiskConfig{
-				Path: devenv,
-				Roots: []string{
-					"/dev-dashboards/",
-				},
-			}).setReadOnly(false).setDescription("Explore files within the developer environment directly")
-			globalRoots = append(globalRoots, s)
-		}
 	}
 
 	initializeOrgStorages := func(orgId int64) []storageRuntime {

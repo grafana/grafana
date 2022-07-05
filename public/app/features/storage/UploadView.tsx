@@ -84,7 +84,7 @@ export const UploadView = ({ folder, onUpload }: Props) => {
         {error.message !== '' ? <p>{error.message}</p> : Boolean(file) ? <Preview /> : <FileDropzoneCustomChildren />}
       </FileDropzone>
 
-      <ButtonGroup className={styles.buttonGroup}>
+      <ButtonGroup>
         <Button className={styles.button} variant={'primary'} disabled={!file} onClick={doUpload}>
           Upload
         </Button>
@@ -107,10 +107,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: ${theme.spacing(1)};
     display: flex;
     flex-direction: column;
-  `,
-  buttonGroup: css`
-    // align-self: center;
-    // flex-direction: row;
   `,
   button: css`
     margin: 12px 20px 5px;
