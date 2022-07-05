@@ -59,6 +59,7 @@ describe('Unified Alerting matchers', () => {
       const matchers = [{ name: 'foo', value: 'b{1}a.*', operator: MatcherOperator.regex }];
       const alerts = [
         mockPromAlert({ labels: { foo: 'bbr' } }),
+        mockPromAlert({ labels: { foo: 'aba' } }), // This does not match because the regex is implicitly anchored.
         mockPromAlert({ labels: { foo: 'ba' } }),
         mockPromAlert({ labels: { foo: 'bar' } }),
         mockPromAlert({ labels: { foo: 'baz' } }),
