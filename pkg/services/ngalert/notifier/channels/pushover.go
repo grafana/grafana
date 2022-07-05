@@ -233,39 +233,36 @@ func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Al
 
 	// Pushover supports at most one image attachment with a maximum size of pushoverMaxFileSize.
 	// If the image is larger than pushoverMaxFileSize then return an error.
-	_ = withStoredImages(ctx, pn.log, pn.images, func(index int, image *ngmodels.Image) error {
-		if image != nil {
-			f, err := os.Open(image.Path)
-			if err != nil {
-				return fmt.Errorf("failed to open the image: %w", err)
-			}
-			defer func() {
-				if err := f.Close(); err != nil {
-					pn.log.Error("failed to close the image", "file", image.Path)
-				}
-			}()
-
-			fileInfo, err := f.Stat()
-			if err != nil {
-				return fmt.Errorf("failed to stat the image: %w", err)
-			}
-
-			if fileInfo.Size() > pushoverMaxFileSize {
-				return fmt.Errorf("image would exceeded maximum file size: %d", fileInfo.Size())
-			}
-
-			fw, err := w.CreateFormFile("attachment", image.Path)
-			if err != nil {
-				return fmt.Errorf("failed to create form file for the image: %w", err)
-			}
-
-			if _, err = io.Copy(fw, f); err != nil {
-				return fmt.Errorf("failed to copy the image to the form file: %w", err)
-			}
-
-			return ErrImagesDone
+	_ = withStoredImages(ctx, pn.log, pn.images, func(index int, image ngmodels.Image) error {
+		f, err := os.Open(image.Path)
+		if err != nil {
+			return fmt.Errorf("failed to open the image: %w", err)
 		}
-		return nil
+		defer func() {
+			if err := f.Close(); err != nil {
+				pn.log.Error("failed to close the image", "file", image.Path)
+			}
+		}()
+
+		fileInfo, err := f.Stat()
+		if err != nil {
+			return fmt.Errorf("failed to stat the image: %w", err)
+		}
+
+		if fileInfo.Size() > pushoverMaxFileSize {
+			return fmt.Errorf("image would exceeded maximum file size: %d", fileInfo.Size())
+		}
+
+		fw, err := w.CreateFormFile("attachment", image.Path)
+		if err != nil {
+			return fmt.Errorf("failed to create form file for the image: %w", err)
+		}
+
+		if _, err = io.Copy(fw, f); err != nil {
+			return fmt.Errorf("failed to copy the image to the form file: %w", err)
+		}
+
+		return ErrImagesDone
 	}, as...)
 
 	var sound string
