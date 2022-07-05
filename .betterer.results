@@ -65,9 +65,6 @@ exports[`no enzyme tests`] = {
     "packages/jaeger-ui-components/src/TraceTimelineViewer/index.test.js:276996587": [
       [14, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/core/components/QueryOperationRow/QueryOperationRow.test.tsx:3743889097": [
-      [0, 26, 13, "RegExp match", "2409514259"]
-    ],
     "public/app/core/components/Select/MetricSelect.test.tsx:1074737147": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
@@ -1736,9 +1733,6 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/SecretFormField/SecretFormField.story.internal.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "packages/grafana-ui/src/components/SecretInput/SecretInput.story.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
     "packages/grafana-ui/src/components/SecretTextArea/SecretTextArea.story.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -3127,10 +3121,6 @@ exports[`better eslint`] = {
     ],
     "public/app/core/components/PermissionList/PermissionList.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/core/components/QueryOperationRow/QueryOperationRow.test.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/core/components/RolePicker/RolePickerMenu.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -4535,8 +4525,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "5"]
     ],
     "public/app/features/dashboard/state/DashboardMigrator.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -8692,9 +8681,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "10"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "11"]
     ],
-    "public/app/plugins/datasource/testdata/components/CSVWaveEditor.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
     "public/app/plugins/datasource/testdata/components/PredictablePulseEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -10372,16 +10358,10 @@ exports[`no undocumented stories`] = {
     "packages/grafana-ui/src/components/PanelChrome/PanelChrome.story.tsx:5381": [
       [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
-    "packages/grafana-ui/src/components/PluginSignatureBadge/PluginSignatureBadge.story.tsx:5381": [
-      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
-    ],
     "packages/grafana-ui/src/components/QueryField/QueryField.story.tsx:5381": [
       [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
     "packages/grafana-ui/src/components/RefreshPicker/RefreshPicker.story.tsx:5381": [
-      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
-    ],
-    "packages/grafana-ui/src/components/SecretInput/SecretInput.story.tsx:5381": [
       [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
     "packages/grafana-ui/src/components/SecretTextArea/SecretTextArea.story.tsx:5381": [
