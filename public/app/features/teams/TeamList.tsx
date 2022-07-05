@@ -5,6 +5,7 @@ import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import { TeamRolePicker } from 'app/core/components/RolePicker/TeamRolePicker';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
+import { TopNavUpdate } from 'app/core/components/TopNav/TopNavUpdate';
 import { config } from 'app/core/config';
 import { contextSrv, User } from 'app/core/services/context_srv';
 import { AccessControlAction, Role, StoreState, Team } from 'app/types';
@@ -225,6 +226,7 @@ export class TeamList extends PureComponent<Props, State> {
 
     return (
       <Page navId="teams">
+        <TopNavUpdate actions={<h4>hello</h4>} />
         <Page.Contents isLoading={!hasFetched}>{this.renderList()}</Page.Contents>
       </Page>
     );

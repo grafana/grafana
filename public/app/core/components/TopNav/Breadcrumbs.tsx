@@ -4,9 +4,7 @@ import React from 'react';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { useStyles2, Icon, IconName } from '@grafana/ui';
 
-import { TopNavProps } from './TopNavUpdate';
-
-export interface Props extends TopNavProps {
+export interface Props {
   sectionNav: NavModelItem;
   pageNav?: NavModelItem;
 }

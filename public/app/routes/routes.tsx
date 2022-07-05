@@ -33,7 +33,6 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/d/:uid/:slug?',
-      navId: 'dashboards',
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Normal,
       component: SafeDynamicImport(
@@ -91,7 +90,6 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/datasources',
-      navId: 'datasources',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DataSourcesListPage"*/ 'app/features/datasources/DataSourcesListPage')
       ),
@@ -162,7 +160,6 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/explore',
       pageClass: 'page-explore',
-      navId: 'explore',
       roles: () =>
         contextSrv.evaluatePermission(
           () => (config.viewersCanEdit ? [] : ['Editor', 'Admin']),
@@ -184,19 +181,16 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/org',
-      navId: 'org-settings',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "OrgDetailsPage" */ '../features/org/OrgDetailsPage')
       ),
     },
     {
       path: '/org/new',
-      navId: 'global-orgs',
       component: SafeDynamicImport(() => import(/* webpackChunkName: "NewOrgPage" */ 'app/features/org/NewOrgPage')),
     },
     {
       path: '/org/users',
-      navId: 'users',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "UsersListPage" */ 'app/features/users/UsersListPage')
       ),
@@ -209,7 +203,6 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/org/apikeys',
-      navId: 'apikeys',
       roles: () => contextSrv.evaluatePermission(() => ['Admin'], [AccessControlAction.ActionAPIKeysRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "ApiKeysPage" */ 'app/features/api-keys/ApiKeysPage')
@@ -217,7 +210,6 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/org/serviceaccounts',
-      navId: 'serviceaccounts',
       roles: () => contextSrv.evaluatePermission(() => ['Admin'], [AccessControlAction.ServiceAccountsRead]),
       component: SafeDynamicImport(
         () =>
@@ -226,7 +218,6 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/org/serviceaccounts/create',
-      navId: 'serviceaccounts',
       component: SafeDynamicImport(
         () =>
           import(
@@ -236,12 +227,10 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/org/serviceaccounts/:id',
-      navId: 'serviceaccounts',
       component: ServiceAccountPage,
     },
     {
       path: '/org/teams',
-      navId: 'teams',
       roles: () =>
         contextSrv.evaluatePermission(
           () => (config.editorsCanAdmin ? ['Editor', 'Admin'] : ['Admin']),
@@ -251,7 +240,6 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/org/teams/new',
-      navId: 'teams',
       roles: () =>
         contextSrv.evaluatePermission(
           () => (config.editorsCanAdmin ? ['Editor', 'Admin'] : ['Admin']),
@@ -261,7 +249,6 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/org/teams/edit/:id/:page?',
-      navId: 'teams',
       roles: () =>
         contextSrv.evaluatePermission(
           () => (config.editorsCanAdmin ? ['Editor', 'Admin'] : ['Admin']),
@@ -278,7 +265,6 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/admin/settings',
-      navId: 'server-settings',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "AdminSettings" */ 'app/features/admin/AdminSettings')
       ),
@@ -330,7 +316,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/login',
       component: LoginPage,
       pageClass: 'login-page sidemenu-hidden',
-      navHidden: true,
+      chromeless: true,
     },
     {
       path: '/invite/:code',
@@ -338,7 +324,7 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "SignupInvited" */ 'app/features/invites/SignupInvited')
       ),
       pageClass: 'sidemenu-hidden',
-      navHidden: true,
+      chromeless: true,
     },
     {
       path: '/verify',
@@ -348,7 +334,7 @@ export function getAppRoutes(): RouteDescriptor[] {
             () => import(/* webpackChunkName "VerifyEmailPage"*/ 'app/core/components/Signup/VerifyEmailPage')
           ),
       pageClass: 'login-page sidemenu-hidden',
-      navHidden: true,
+      chromeless: true,
     },
     {
       path: '/signup',
@@ -356,12 +342,12 @@ export function getAppRoutes(): RouteDescriptor[] {
         ? () => <Redirect to="/login" />
         : SafeDynamicImport(() => import(/* webpackChunkName "SignupPage"*/ 'app/core/components/Signup/SignupPage')),
       pageClass: 'sidemenu-hidden login-page',
-      navHidden: true,
+      chromeless: true,
     },
     {
       path: '/user/password/send-reset-email',
       pageClass: 'sidemenu-hidden',
-      navHidden: true,
+      chromeless: true,
       component: SafeDynamicImport(
         () =>
           import(/* webpackChunkName: "SendResetMailPage" */ 'app/core/components/ForgottenPassword/SendResetMailPage')
@@ -376,7 +362,7 @@ export function getAppRoutes(): RouteDescriptor[] {
           )
       ),
       pageClass: 'sidemenu-hidden login-page',
-      navHidden: true,
+      chromeless: true,
     },
     {
       path: '/dashboard/snapshots',

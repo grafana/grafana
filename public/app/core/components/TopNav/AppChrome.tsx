@@ -1,51 +1,42 @@
 import { css, cx } from '@emotion/css';
 import React, { PropsWithChildren } from 'react';
-import { useSelector } from 'react-redux';
-import { useObservable, useToggle } from 'react-use';
-import { createSelector } from 'reselect';
+import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
-import { getNavModel } from 'app/core/selectors/navModel';
-import { StoreState } from 'app/types';
 
+import { appChromeService } from './AppChromeService';
 import { NavToolbar } from './NavToolbar';
-import { topNavDefaultProps, topNavUpdates } from './TopNavUpdate';
 import { TopSearchBar } from './TopSearchBar';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
 
-export interface Props extends PropsWithChildren<{}> {
-  /** This is nav tree id provided by route.
-   *  It's not enough for item navigation. For that pages will need provide an item nav model as well via TopNavUpdate
-   */
-  navId?: string;
-}
+export interface Props extends PropsWithChildren<{}> {}
 
-export function TopNavPage({ children, navId }: Props) {
+export function AppChrome({ children }: Props) {
   const styles = useStyles2(getStyles);
   const [searchBarHidden, toggleSearchBar] = useToggle(false); // repace with local storage
-  const props = useObservable(topNavUpdates, topNavDefaultProps);
-  const navModel = useSelector(createSelector(getNavIndex, (navIndex) => getNavModel(navIndex, navId ?? 'home')));
+  const state = appChromeService.useState();
+
+  if (state.chromeless || !config.featureToggles.topnav) {
+    return <main className="main-view">{children} </main>;
+  }
 
   return (
-    <div className={styles.viewport}>
+    <main className="main-view">
       <div className={styles.topNav}>
         {!searchBarHidden && <TopSearchBar />}
         <NavToolbar
-          {...props}
           searchBarHidden={searchBarHidden}
           onToggleSearchBar={toggleSearchBar}
-          sectionNav={navModel.node}
-          pageNav={props.pageNav}
+          sectionNav={state.sectionNav}
+          pageNav={state.pageNav}
+          actions={state.actions}
         />
       </div>
       <div className={cx(styles.content, searchBarHidden && styles.contentNoSearchBar)}>{children}</div>
-    </div>
+    </main>
   );
-}
-
-function getNavIndex(store: StoreState) {
-  return store.navIndex;
 }
 
 const getStyles = (theme: GrafanaTheme2) => {

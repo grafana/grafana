@@ -1,23 +1,17 @@
-import { useEffect } from 'react';
-import { Subject } from 'rxjs';
+import React, { useEffect } from 'react';
 
-import { NavModelItem } from '@grafana/data';
-
-export interface TopNavProps {
-  pageNav?: NavModelItem;
-  actions?: React.ReactNode;
-}
-
-export const topNavUpdates = new Subject<TopNavProps>();
-export const topNavDefaultProps: TopNavProps = {};
+import { appChromeService } from './AppChromeService';
+import { ToolbarUpdateProps } from './types';
 
 /**
  * This needs to be moved to @grafana/ui or runtime.
  * This is the way core pages and plugins update the breadcrumbs and page toolbar actions
  */
-export function TopNavUpdate(props: TopNavProps) {
+export const TopNavUpdate = React.memo<ToolbarUpdateProps>(({ pageNav, actions }: ToolbarUpdateProps) => {
   useEffect(() => {
-    topNavUpdates.next(props);
+    appChromeService.update({ pageNav, actions });
   });
   return null;
-}
+});
+
+TopNavUpdate.displayName = 'TopNavUpdate';

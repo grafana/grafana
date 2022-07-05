@@ -5,13 +5,14 @@ import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { IconButton, ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { Breadcrumbs } from './Breadcrumbs';
-import { TopNavProps } from './TopNavUpdate';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
 
-export interface Props extends TopNavProps {
+export interface Props {
   onToggleSearchBar(): void;
   searchBarHidden?: boolean;
   sectionNav: NavModelItem;
+  pageNav?: NavModelItem;
+  actions: React.ReactNode;
 }
 
 export function NavToolbar({ actions, onToggleSearchBar, searchBarHidden, sectionNav, pageNav }: Props) {

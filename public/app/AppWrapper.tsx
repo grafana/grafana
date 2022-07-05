@@ -14,6 +14,7 @@ import { loadAndInitAngularIfEnabled } from './angular/loadAndInitAngularIfEnabl
 import { GrafanaApp } from './app';
 import { AppNotificationList } from './core/components/AppNotifications/AppNotificationList';
 import { NavBar } from './core/components/NavBar/NavBar';
+import { AppChrome } from './core/components/TopNav/AppChrome';
 import { I18nProvider } from './core/localisation';
 import { GrafanaRoute } from './core/navigation/GrafanaRoute';
 import { RouteDescriptor } from './core/navigation/types';
@@ -125,7 +126,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                     <div className="grafana-app">
                       <Router history={locationService.getHistory()}>
                         {this.renderNavBar()}
-                        <main className="main-view">
+                        <AppChrome>
                           {pageBanners.map((Banner, index) => (
                             <Banner key={index.toString()} />
                           ))}
@@ -137,7 +138,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                           {bodyRenderHooks.map((Hook, index) => (
                             <Hook key={index.toString()} />
                           ))}
-                        </main>
+                        </AppChrome>
                       </Router>
                     </div>
                     <LiveConnectionWarning />

@@ -3544,7 +3544,7 @@ exports[`better eslint`] = {
       [11, 6, 169, "Do not use any type assertions.", "2248693214"],
       [17, 11, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/core/navigation/types.ts:2395305220": [
+    "public/app/core/navigation/types.ts:2277695285": [
       [10, 38, 3, "Unexpected any. Specify a different type.", "193409811"],
       [14, 35, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
@@ -6874,7 +6874,7 @@ exports[`better eslint`] = {
       [79, 18, 88, "Do not use any type assertions.", "2247670218"],
       [138, 20, 95, "Do not use any type assertions.", "4068964415"]
     ],
-    "public/app/features/teams/TeamPages.tsx:342488801": [
+    "public/app/features/teams/TeamPages.tsx:4058522017": [
       [52, 43, 18, "Do not use any type assertions.", "373851894"]
     ],
     "public/app/features/teams/state/reducers.ts:1856799550": [
