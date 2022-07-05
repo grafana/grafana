@@ -19,6 +19,6 @@ func (ex *StubExport) HandleRequestExport(c *models.ReqContext) response.Respons
 	return response.Error(http.StatusForbidden, "feature not enabled", nil)
 }
 
-func (e *StubExport) HandleRequestStop(c *models.ReqContext) response.Response {
+func (ex *StubExport) HandleRequestStop(c *models.ReqContext) response.Response {
 	return response.Error(http.StatusForbidden, "feature not enabled", nil)
 }
