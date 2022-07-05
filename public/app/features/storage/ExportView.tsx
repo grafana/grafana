@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 
 import { isLiveChannelMessageEvent, isLiveChannelStatusEvent, LiveChannelScope } from '@grafana/data';
 import { getBackendSrv, getGrafanaLiveSrv } from '@grafana/runtime';
-import { Button, CodeEditor, Modal } from '@grafana/ui';
+import { Button, CodeEditor } from '@grafana/ui';
 
 import { StorageView } from './types';
 
@@ -18,6 +18,15 @@ interface ExportStatusMessage {
   status: string;
 }
 
+interface ExportJob {
+  format: 'git';
+  generalFolderPath: string;
+  includeHistory: boolean;
+  excludeDashboards: boolean;
+
+  git?: {};
+}
+
 interface Props {
   onPathChange: (p: string, v?: StorageView) => void;
 }
@@ -25,18 +34,15 @@ interface Props {
 export const ExportView = ({ onPathChange }: Props) => {
   const [status, setStatus] = useState<ExportStatusMessage>();
 
-  const [open, setOpen] = useState(false);
-  const [body, setBody] = useState({
+  const [body, setBody] = useState<ExportJob>({
     format: 'git',
+    generalFolderPath: 'general',
+    includeHistory: true,
+    excludeDashboards: false,
     git: {},
   });
-  const onDismiss = () => setOpen(false);
   const doStart = () => {
-    getBackendSrv()
-      .post('/api/admin/export', body)
-      .then((v) => {
-        onDismiss();
-      });
+    getBackendSrv().post('/api/admin/export', body);
   };
 
   useEffect(() => {
@@ -56,23 +62,36 @@ export const ExportView = ({ onPathChange }: Props) => {
         },
       });
 
-    // if not running, open the thread
-    setTimeout(() => {
-      if (!status) {
-        setOpen(true);
-      }
-    }, 500);
-
     return () => {
       subscription.unsubscribe();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const renderButton = () => {
-    return (
-      <>
-        <Modal title={'Export grafana instance'} isOpen={open} onDismiss={onDismiss}>
+  return (
+    <div>
+      {status && (
+        <div>
+          <h3>Status</h3>
+          <pre>{JSON.stringify(status, null, 2)}</pre>
+          {status.running && (
+            <div>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  getBackendSrv().post('/api/admin/export/stop');
+                }}
+              >
+                Stop
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {!Boolean(status?.running) && (
+        <div>
+          <h3>Export grafana instance</h3>
           <div>
             <CodeEditor
               height={200}
@@ -85,42 +104,11 @@ export const ExportView = ({ onPathChange }: Props) => {
                 setBody(JSON.parse(text)); // force JSON?
               }}
             />
-          </div>
-          <Modal.ButtonRow>
-            <Button onClick={doStart}>Start</Button>
-            <Button variant="secondary" onClick={onDismiss}>
-              Cancel
-            </Button>
-          </Modal.ButtonRow>
-        </Modal>
-
-        <Button onClick={() => setOpen(true)} variant="primary">
-          Export
-        </Button>
-        <Button variant="secondary" onClick={() => onPathChange('/')}>
-          Cancel
-        </Button>
-      </>
-    );
-  };
-
-  if (!status) {
-    return <div>{renderButton()}</div>;
-  }
-
-  return (
-    <div>
-      <pre>{JSON.stringify(status, null, 2)}</pre>
-      {Boolean(!status.running) && renderButton()}
-      {Boolean(status.running) && (
-        <Button
-          variant="secondary"
-          onClick={() => {
-            getBackendSrv().post('/api/admin/export/stop');
-          }}
-        >
-          Stop
-        </Button>
+          </div>{' '}
+          <Button onClick={doStart} variant="primary">
+            Export
+          </Button>
+        </div>
       )}
     </div>
   );

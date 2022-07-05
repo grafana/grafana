@@ -17,13 +17,14 @@ import (
 )
 
 type commitHelper struct {
-	ctx     context.Context
-	repo    *git.Repository
-	work    *git.Worktree
-	orgDir  string // includes the orgID
-	workDir string // same as the worktree root
-	orgID   int64
-	users   map[int64]*userInfo
+	ctx           context.Context
+	repo          *git.Repository
+	work          *git.Worktree
+	orgDir        string // includes the orgID
+	workDir       string // same as the worktree root
+	orgID         int64
+	users         map[int64]*userInfo
+	stopRequested bool
 }
 
 type commitBody struct {
@@ -64,6 +65,10 @@ func (ch *commitHelper) initOrg(sql *sqlstore.SQLStore, orgID int64) error {
 }
 
 func (ch *commitHelper) add(opts commitOptions) error {
+	if ch.stopRequested {
+		return fmt.Errorf("stop requested")
+	}
+
 	for _, b := range opts.body {
 		if !strings.HasPrefix(b.fpath, ch.orgDir) {
 			return fmt.Errorf("invalid path, must be within the root folder")

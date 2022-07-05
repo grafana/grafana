@@ -58,11 +58,15 @@ func exportSystemPreferences(helper *commitHelper, job *gitExportJob) error {
 				user, ok := users[row.UserID]
 				if ok {
 					delete(users, row.UserID)
+					if user.IsServiceAccount {
+						continue // don't write preferences for service account
+					}
 				} else {
 					user = &userInfo{
 						Login: fmt.Sprintf("__%d__", row.UserID),
 					}
 				}
+
 				fpath = filepath.Join(prefsDir, "user", fmt.Sprintf("%s.json", user.Login))
 				comment = fmt.Sprintf("User preferences: %s", user.getAuthor().Name)
 			}

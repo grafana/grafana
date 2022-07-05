@@ -21,8 +21,8 @@ func exportDashboards(helper *commitHelper, job *gitExportJob, lookup dsLookup) 
 	folders := make(map[int64]string, 100)
 
 	// Should root files be at the root or in a subfolder called "general"?
-	if true {
-		folders[0] = "general"
+	if len(job.cfg.GeneralFolderPath) > 0 {
+		folders[0] = job.cfg.GeneralFolderPath // "general"
 	}
 
 	rootDir := path.Join(helper.orgDir, "root")
@@ -132,7 +132,7 @@ func exportDashboards(helper *commitHelper, job *gitExportJob, lookup dsLookup) 
 	// Now walk the history
 	err = job.sql.WithDbSession(helper.ctx, func(sess *sqlstore.DBSession) error {
 		type dashVersionResult struct {
-			DashId    int64     `xorm:"dashboard_id"`
+			DashId    int64     `xorm:"id"`
 			Version   int64     `xorm:"version"`
 			Created   time.Time `xorm:"created"`
 			CreatedBy int64     `xorm:"created_by"`
@@ -142,16 +142,27 @@ func exportDashboards(helper *commitHelper, job *gitExportJob, lookup dsLookup) 
 
 		rows := make([]*dashVersionResult, 0, len(ids))
 
-		sess.Table("dashboard_version").
-			Join("INNER", "dashboard", "dashboard.id = dashboard_version.dashboard_id").
-			Where("org_id = ?", job.orgID).
-			Cols("dashboard_version.dashboard_id",
-				"dashboard_version.version",
-				"dashboard_version.created",
-				"dashboard_version.created_by",
-				"dashboard_version.message",
-				"dashboard_version.data").
-			Asc("dashboard_version.created")
+		if job.cfg.IncludeHistory {
+			sess.Table("dashboard_version").
+				Join("INNER", "dashboard", "dashboard.id = dashboard_version.dashboard_id").
+				Where("org_id = ?", job.orgID).
+				Cols("dashboard.id",
+					"dashboard_version.version",
+					"dashboard_version.created",
+					"dashboard_version.created_by",
+					"dashboard_version.message",
+					"dashboard_version.data").
+				Asc("dashboard_version.created")
+		} else {
+			sess.Table("dashboard").
+				Where("org_id = ?", job.orgID).
+				Cols("id",
+					"version",
+					"created",
+					"created_by",
+					"data").
+				Asc("created")
+		}
 
 		err := sess.Find(&rows)
 		if err != nil {

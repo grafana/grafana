@@ -15,21 +15,21 @@ type ExportStatus struct {
 
 // Basic export config (for now)
 type ExportConfig struct {
-	Format string          `json:"format"`
-	Git    GitExportConfig `json:"git"`
+	Format            string `json:"format"`
+	GeneralFolderPath string `json:"generalFolderPath"`
+	IncludeHistory    bool   `json:"includeHistory"`
+	ExcludeDashboards bool   `json:"excludeDashboards"`
+
+	// Depends on the format
+	Git GitExportConfig `json:"git"`
 }
 
-type GitExportConfig struct {
-	// General folder is either at the root or as a subfolder
-	GeneralAtRoot bool `json:"generalAtRoot"`
-
-	// Keeping all history is nice, but much slower
-	ExcludeHistory bool `json:"excludeHistory"`
-}
+type GitExportConfig struct{}
 
 type Job interface {
 	getStatus() ExportStatus
 	getConfig() ExportConfig
+	requestStop()
 }
 
 // Will broadcast the live status
