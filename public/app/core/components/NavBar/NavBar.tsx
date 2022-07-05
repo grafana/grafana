@@ -42,6 +42,7 @@ export const NavBar = React.memo(() => {
   const kiosk = getKioskMode();
   const [showSwitcherModal, setShowSwitcherModal] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuAnimationInProgress, setMenuAnimationInProgress] = useState(false);
   const [menuIdOpen, setMenuIdOpen] = useState<string | undefined>(undefined);
 
   const toggleSwitcherModal = () => {
@@ -159,11 +160,12 @@ export const NavBar = React.memo(() => {
         </NavBarContext.Provider>
       </nav>
       {showSwitcherModal && <OrgSwitcher onDismiss={toggleSwitcherModal} />}
-      {menuOpen && (
+      {(menuOpen || menuAnimationInProgress) && (
         <div className={styles.menuWrapper}>
           <NavBarMenu
             activeItem={activeItem}
             isOpen={menuOpen}
+            setMenuAnimationInProgress={setMenuAnimationInProgress}
             navItems={[homeItem, searchItem, ...coreItems, ...pluginItems, ...configItems]}
             onClose={() => setMenuOpen(false)}
           />

@@ -67,7 +67,7 @@ export const MegaMenu = React.memo<Props>(({ onClose, searchBarHidden }) => {
   );
 });
 
-MegaMenu.displayName = 'NavBar';
+MegaMenu.displayName = 'MegaMenu';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   menuWrapper: css({
