@@ -11,6 +11,9 @@ import (
 // ErrWalkSkipDir is the Error returned when we want to skip descending into a directory
 var ErrWalkSkipDir = errors.New("skip this directory")
 
+// ErrWalkSkipFile is the Error returned when we want to skip resolving a file
+var ErrWalkSkipFile = errors.New("skip this file")
+
 // WalkFunc is a callback function called for each path as a directory is walked
 // If resolvedPath != "", then we are following symbolic links.
 type WalkFunc func(resolvedPath string, info os.FileInfo, err error) error
@@ -53,6 +56,11 @@ func walk(path string, info os.FileInfo, resolvedPath string, symlinkPathsFollow
 		if info.IsDir() && errors.Is(err, ErrWalkSkipDir) {
 			err = nil
 		}
+
+		if errors.Is(err, ErrWalkSkipFile) {
+			return nil
+		}
+
 		return err
 	}
 

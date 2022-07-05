@@ -3,10 +3,12 @@ package finder
 import (
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 
-	"github.com/grafana/grafana/pkg/infra/fs"
+	fsUtil "github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -15,17 +17,28 @@ var walk = util.Walk
 
 type Finder struct {
 	log log.Logger
+
+	errs map[string]finderErr
+}
+
+type finderErr struct {
+	path string
+	err  error
+}
+
+func (f finderErr) Error() string {
+	return fmt.Sprintf("plugin finder err %v for path: %s", f.err, f.path)
 }
 
 func New() Finder {
-	return Finder{log: log.New("plugin.finder")}
+	return Finder{log: log.New("plugin.finder"), errs: make(map[string]finderErr)}
 }
 
 func (f *Finder) Find(pluginPaths []string) ([]string, error) {
-	var pluginJSONPaths []string
+	pluginJSONPaths := make(map[string]struct{})
 
 	for _, path := range pluginPaths {
-		exists, err := fs.Exists(path)
+		exists, err := fsUtil.Exists(path)
 		if err != nil {
 			f.log.Warn("Error occurred when checking if plugin directory exists", "path", path, "err", err)
 		}
@@ -38,10 +51,33 @@ func (f *Finder) Find(pluginPaths []string) ([]string, error) {
 		if err != nil {
 			return nil, err
 		}
-		pluginJSONPaths = append(pluginJSONPaths, paths...)
+		for _, p := range paths {
+			pluginJSONPaths[p] = struct{}{}
+		}
 	}
 
-	return pluginJSONPaths, nil
+	for _, findErr := range f.errs {
+		for path := range pluginJSONPaths {
+			pluginDir := filepath.Dir(path)
+
+			p, err := filepath.Rel(pluginDir, findErr.path)
+			if err != nil {
+				f.log.Warn("Could not calculate relative path", "base", pluginDir, "target", findErr.path, "err", err)
+				continue
+			}
+			if p == ".." || strings.HasPrefix(p, ".."+string(filepath.Separator)) {
+				continue
+			} else {
+				delete(pluginJSONPaths, path)
+			}
+		}
+	}
+
+	var res []string
+	for path := range pluginJSONPaths {
+		res = append(res, path)
+	}
+	return res, nil
 }
 
 func (f *Finder) getAbsPluginJSONPaths(path string) ([]string, error) {
@@ -53,7 +89,7 @@ func (f *Finder) getAbsPluginJSONPaths(path string) ([]string, error) {
 		return []string{}, err
 	}
 
-	if err := walk(path, true, true,
+	if err = walk(path, true, true,
 		func(currentPath string, fi os.FileInfo, err error) error {
 			if err != nil {
 				if errors.Is(err, os.ErrNotExist) {
@@ -66,6 +102,22 @@ func (f *Finder) getAbsPluginJSONPaths(path string) ([]string, error) {
 				}
 
 				return fmt.Errorf("filepath.Walk reported an error for %q: %w", currentPath, err)
+			}
+
+			// verify if is valid symlink
+			if fi.Mode()&os.ModeSymlink == os.ModeSymlink {
+				_, err = os.Stat(currentPath)
+				if err != nil {
+					if errors.Is(err, fs.ErrNotExist) {
+						f.log.Error("Invalid plugin symlink file", "pluginDir", path, "err", err)
+						f.errs[path] = finderErr{
+							path: filepath.Clean(currentPath),
+							err:  err,
+						}
+						return util.ErrWalkSkipFile
+					}
+					return err
+				}
 			}
 
 			if fi.Name() == "node_modules" {
