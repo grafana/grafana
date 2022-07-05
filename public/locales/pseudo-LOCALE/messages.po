@@ -294,6 +294,10 @@ msgstr ""
 msgid "nav.users"
 msgstr ""
 
+#: public/app/core/navigation/kiosk.ts
+msgid "navigation.kiosk.tv-alert"
+msgstr ""
+
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx
 msgid "shared-dashboard.fields.timezone-label"
 msgstr ""
