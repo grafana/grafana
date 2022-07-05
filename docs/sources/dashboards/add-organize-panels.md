@@ -13,7 +13,7 @@ weight: 2
 
 # Add and organize panels
 
-This section describes the parts of the Grafana panel editor.
+This section describes the areas of the Grafana panel editor.
 
 1. Panel header: The header section lists the dashboard in which the panel appears and the following controls:
 
