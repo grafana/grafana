@@ -97,10 +97,9 @@ var (
 			RequiresDevMode: true,
 		},
 		{
-			Name:            "publicDashboards",
-			Description:     "enables public access to dashboards",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
+			Name:        "publicDashboards",
+			Description: "enables public access to dashboards",
+			State:       FeatureStateAlpha,
 		},
 		{
 			Name:        "lokiLive",

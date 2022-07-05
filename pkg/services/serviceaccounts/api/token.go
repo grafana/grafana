@@ -24,6 +24,7 @@ type TokenDTO struct {
 	Id                     int64      `json:"id"`
 	Name                   string     `json:"name"`
 	Created                *time.Time `json:"created"`
+	LastUsedAt             *time.Time `json:"lastUsedAt"`
 	Expiration             *time.Time `json:"expiration"`
 	SecondsUntilExpiration *float64   `json:"secondsUntilExpiration"`
 	HasExpired             bool       `json:"hasExpired"`
@@ -72,6 +73,7 @@ func (api *ServiceAccountsAPI) ListTokens(ctx *models.ReqContext) response.Respo
 			Expiration:             expiration,
 			SecondsUntilExpiration: &secondsUntilExpiration,
 			HasExpired:             isExpired,
+			LastUsedAt:             t.LastUsedAt,
 		}
 	}
 

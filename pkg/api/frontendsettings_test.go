@@ -13,6 +13,7 @@ import (
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
@@ -55,6 +56,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features *featuremgmt.
 		grafanaUpdateChecker: &updatechecker.GrafanaService{},
 		AccessControl:        accesscontrolmock.New().WithDisabled(),
 		PluginSettings:       pluginSettings.ProvideService(sqlStore, secretsService),
+		remoteSecretsCheck:   &kvstore.OSSRemoteSecretsPluginCheck{},
 	}
 
 	m := web.New()

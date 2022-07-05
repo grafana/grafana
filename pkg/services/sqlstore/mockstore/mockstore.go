@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type OrgListResponse []struct {
@@ -18,7 +19,7 @@ type SQLStoreMock struct {
 	LastLoginAttemptCommand *models.CreateLoginAttemptCommand
 	LatestUserId            int64
 
-	ExpectedUser                   *models.User
+	ExpectedUser                   *user.User
 	ExpectedDatasource             *datasources.DataSource
 	ExpectedAlert                  *models.Alert
 	ExpectedPluginSetting          *models.PluginSetting
@@ -132,7 +133,7 @@ func (m *SQLStoreMock) DeleteOldLoginAttempts(ctx context.Context, cmd *models.D
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) CreateUser(ctx context.Context, cmd models.CreateUserCommand) (*models.User, error) {
+func (m *SQLStoreMock) CreateUser(ctx context.Context, cmd user.CreateUserCommand) (*user.User, error) {
 	return nil, m.ExpectedError
 }
 
@@ -422,11 +423,12 @@ func (m SQLStoreMock) GetDataSource(ctx context.Context, query *datasources.GetD
 }
 
 func (m *SQLStoreMock) GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) error {
-	query.Result = m.ExpectedDatasources
+	query.Result = m.ExpectedDataSources
 	return m.ExpectedError
 }
 
 func (m *SQLStoreMock) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) error {
+	query.Result = m.ExpectedDataSources
 	return m.ExpectedError
 }
 
@@ -542,6 +544,10 @@ func (m *SQLStoreMock) GetApiKeyByName(ctx context.Context, query *models.GetApi
 	return m.ExpectedError
 }
 
+func (m *SQLStoreMock) UpdateAPIKeyLastUsedDate(ctx context.Context, tokenID int64) error {
+	return nil
+}
+
 func (m *SQLStoreMock) UpdateTempUserStatus(ctx context.Context, cmd *models.UpdateTempUserStatusCommand) error {
 	return m.ExpectedError
 }
@@ -575,7 +581,7 @@ func (m *SQLStoreMock) SearchOrgs(ctx context.Context, query *models.SearchOrgsQ
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) HasAdminPermissionInFolders(ctx context.Context, query *models.HasAdminPermissionInFoldersQuery) error {
+func (m *SQLStoreMock) HasAdminPermissionInDashboardsOrFolders(ctx context.Context, query *models.HasAdminPermissionInDashboardsOrFoldersQuery) error {
 	return m.ExpectedError
 }
 
