@@ -8,6 +8,7 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   DataSourceApi,
+  DataSourceJsonData,
   dateTimeFormat,
   dateTimeFormatTimeAgo,
   FieldCache,
@@ -670,10 +671,10 @@ type LogsVolumeQueryOptions<T extends DataQuery> = {
 /**
  * Creates an observable, which makes requests to get logs volume and aggregates results.
  */
-export function queryLogsVolume<T extends DataQuery>(
-  datasource: DataSourceApi<T>,
-  logsVolumeRequest: DataQueryRequest<T>,
-  options: LogsVolumeQueryOptions<T>
+export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataSourceJsonData>(
+  datasource: DataSourceApi<TQuery, TOptions>,
+  logsVolumeRequest: DataQueryRequest<TQuery>,
+  options: LogsVolumeQueryOptions<TQuery>
 ): Observable<DataQueryResponse> {
   const timespan = options.range.to.valueOf() - options.range.from.valueOf();
   const intervalInfo = getIntervalInfo(logsVolumeRequest.scopedVars, timespan);
