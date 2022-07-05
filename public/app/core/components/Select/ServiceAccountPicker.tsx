@@ -1,5 +1,5 @@
 import { debounce, isNil } from 'lodash';
-import React, { Component } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
@@ -10,28 +10,22 @@ export interface Props {
   onSelected: (serviceAccount: SelectableValue<ServiceAccount>) => void;
   className?: string;
   inputId?: string;
+  autoFocus?: boolean;
 }
 
-export interface State {
-  isLoading: boolean;
-}
+export function ServiceAccountPicker({ onSelected, className, inputId, autoFocus }: Props) {
+  const [loadingServiceAccounts, setLoadingServiceAccounts] = useState(false);
 
-export class ServiceAccountPicker extends Component<Props, State> {
-  debouncedSearch: any;
+  // For whatever reason the autoFocus prop doesn't seem to work
+  // with AsyncSelect, hence this workaround. Maybe fixed in a later version?
+  useEffect(() => {
+    if (autoFocus && inputId) {
+      document.getElementById(inputId)?.focus();
+    }
+  }, [autoFocus, inputId]);
 
-  constructor(props: Props) {
-    super(props);
-    this.state = { isLoading: false };
-    this.search = this.search.bind(this);
-
-    this.debouncedSearch = debounce(this.search, 300, {
-      leading: true,
-      trailing: true,
-    });
-  }
-
-  search(query?: string) {
-    this.setState({ isLoading: true });
+  let search = (query?: string) => {
+    setLoadingServiceAccounts(true);
 
     if (isNil(query)) {
       query = '';
@@ -49,31 +43,27 @@ export class ServiceAccountPicker extends Component<Props, State> {
             login: serviceAccount.login,
           };
         });
-
-        this.setState({ isLoading: false });
+        setLoadingServiceAccounts(false);
         return serviceAccounts;
       });
-  }
+  };
 
-  render() {
-    const { className, onSelected, inputId } = this.props;
-    const { isLoading } = this.state;
+  const debouncedSearch = debounce(search, 300, {
+    leading: true,
+    trailing: true,
+  });
 
-    return (
-      <div className="user-picker" data-testid="serviceAccountPicker">
-        <AsyncSelect
-          isClearable
-          className={className}
-          inputId={inputId}
-          isLoading={isLoading}
-          defaultOptions={true}
-          loadOptions={this.debouncedSearch}
-          onChange={onSelected}
-          placeholder="Start typing to search for service accounts"
-          noOptionsMessage="No service accounts found"
-          aria-label="Service account picker"
-        />
-      </div>
-    );
-  }
+  return (
+    <AsyncSelect
+      inputId={inputId}
+      className={className}
+      isLoading={loadingServiceAccounts}
+      defaultOptions={true}
+      isSearchable={true}
+      loadOptions={debouncedSearch}
+      onChange={onSelected}
+      placeholder="Start typing to search for service accounts"
+      noOptionsMessage="No service accounts found"
+    />
+  );
 }
