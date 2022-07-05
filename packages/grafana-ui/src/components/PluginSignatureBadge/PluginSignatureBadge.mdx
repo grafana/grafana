@@ -5,18 +5,18 @@ import { PluginSignatureBadge } from './PluginSignatureBadge';
 
 # Plugin Signature Badge
 
-The Plugin Signature Badge can be found in each information plugin card of the configuration plugins pannel (Grafana menu > Configuration > Plugins).
+The Plugin Signature Badge can be found in each information plugin card of the configuration plugins panel (Grafana menu > Configuration > Plugins).
 This is a security measure to make sure plugins haven't been tampered with. Upon loading, Grafana checks to see the plugin signature status.
 
 ## Badges:
 
-1.- Core: this badge indicates that it has been built into Grafana.
+1.- Core: this badge indicates that the plugin has been built into Grafana.
 
 <Preview>
   <PluginSignatureBadge status="internal" />
 </Preview>
 
-2.- Signed: its signature was successfully verified.
+2.- Signed: the plugin's signature was successfully verified.
 
 <Preview>
   <PluginSignatureBadge status="valid" />
