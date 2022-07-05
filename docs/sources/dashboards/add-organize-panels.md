@@ -45,7 +45,7 @@ This section describes the areas of the Grafana panel editor.
 
 {{< figure src="/static/img/docs/panel-editor/panel-editor-8-0.png" class="docs-image--no-shadow" max-width="1500px" >}}
 
-## Navigate the Grafana Inspector panel
+## Open the panel inspect drawer 
 
 The inspect drawer helps you understand and troubleshoot your panels. You can view the raw data for any panel, export that data to a comma-separated values (CSV) file, view query requests, and export panel and data JSON.
 
