@@ -13,7 +13,7 @@
   "panels": [
     {
       "datasource": {
-        "type": "frser-sqlite-datasource",
+        "type": "sqlite-datasource",
         "uid": "${sqllite}"
       },
       "fieldConfig": {
@@ -89,7 +89,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "frser-sqlite-datasource",
+            "type": "sqlite-datasource",
             "uid": "${sqllite}"
           },
           "queryText": "\n    SELECT CAST(strftime('%s', 'now', '-1 minute') as INTEGER) as time, 4 as value\n    WHERE time >= 1234 and time < 134567\n  ",
@@ -122,7 +122,7 @@
     },
     {
       "datasource": {
-        "type": "frser-sqlite-datasource",
+        "type": "sqlite-datasource",
         "uid": "${sqllite}"
       },
       "fieldConfig": {
@@ -170,7 +170,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "frser-sqlite-datasource",
+            "type": "sqlite-datasource",
             "uid": "${sqllite}"
           },
           "queryText": "select * from user",
@@ -208,7 +208,7 @@
         "multi": true,
         "name": "sqllite",
         "options": [],
-        "query": "frser-sqlite-datasource",
+        "query": "sqlite-datasource",
         "queryValue": "",
         "refresh": 1,
         "regex": "",

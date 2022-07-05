@@ -816,9 +816,48 @@ type datasourceQueryResult struct {
 	IsDefault bool   `xorm:"is_default"`
 }
 
+type dsLookup struct {
+	byName    map[string]*extract.DataSourceRef
+	byUID     map[string]*extract.DataSourceRef
+	byType    map[string][]extract.DataSourceRef
+	defaultDS *extract.DataSourceRef
+}
+
+func (d *dsLookup) ByRef(ref *extract.DataSourceRef) *extract.DataSourceRef {
+	if ref == nil {
+		return d.defaultDS
+	}
+	key := ""
+	if ref.UID != "" {
+		ds, ok := d.byUID[ref.UID]
+		if ok {
+			return ds
+		}
+		key = ref.UID
+	}
+	if key == "" {
+		return d.defaultDS
+	}
+	ds, ok := d.byUID[key]
+	if ok {
+		return ds
+	}
+	return d.byName[key]
+}
+
+func (d *dsLookup) ByType(dsType string) []extract.DataSourceRef {
+	ds, ok := d.byType[dsType]
+	if !ok {
+		return make([]extract.DataSourceRef, 0)
+	}
+
+	return ds
+}
+
 func loadDatasourceLookup(ctx context.Context, orgID int64, sql *sqlstore.SQLStore) (extract.DatasourceLookup, error) {
 	byUID := make(map[string]*extract.DataSourceRef, 50)
 	byName := make(map[string]*extract.DataSourceRef, 50)
+	byType := make(map[string][]extract.DataSourceRef, 50)
 	var defaultDS *extract.DataSourceRef
 
 	err := sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
@@ -842,6 +881,11 @@ func loadDatasourceLookup(ctx context.Context, orgID int64, sql *sqlstore.SQLSto
 			if row.IsDefault {
 				defaultDS = ds
 			}
+
+			if _, ok := byType[ds.Type]; !ok {
+				byType[ds.Type] = make([]extract.DataSourceRef, 5)
+			}
+			byType[ds.Type] = append(byType[ds.Type], *ds)
 		}
 
 		return nil
@@ -851,25 +895,10 @@ func loadDatasourceLookup(ctx context.Context, orgID int64, sql *sqlstore.SQLSto
 	}
 
 	// Lookup by UID or name
-	return func(ref *extract.DataSourceRef) *extract.DataSourceRef {
-		if ref == nil {
-			return defaultDS
-		}
-		key := ""
-		if ref.UID != "" {
-			ds, ok := byUID[ref.UID]
-			if ok {
-				return ds
-			}
-			key = ref.UID
-		}
-		if key == "" {
-			return defaultDS
-		}
-		ds, ok := byUID[key]
-		if ok {
-			return ds
-		}
-		return byName[key]
+	return &dsLookup{
+		byName:    byName,
+		byUID:     byUID,
+		byType:    byType,
+		defaultDS: defaultDS,
 	}, err
 }

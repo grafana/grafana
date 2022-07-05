@@ -7,8 +7,12 @@
   ],
   "datasource": [
     {
-      "uid": "All",
-      "type": "frser-sqlite-datasource"
+      "uid": "sqlite-2",
+      "type": "sqlite-datasource"
+    },
+    {
+      "uid": "sqlite-1",
+      "type": "sqlite-datasource"
     }
   ],
   "panels": [
@@ -18,8 +22,12 @@
       "type": "timeseries",
       "datasource": [
         {
-          "uid": "All",
-          "type": "frser-sqlite-datasource"
+          "uid": "sqlite-2",
+          "type": "sqlite-datasource"
+        },
+        {
+          "uid": "sqlite-1",
+          "type": "sqlite-datasource"
         }
       ]
     },
@@ -35,8 +43,12 @@
       "pluginVersion": "9.1.0-pre",
       "datasource": [
         {
-          "uid": "All",
-          "type": "frser-sqlite-datasource"
+          "uid": "sqlite-2",
+          "type": "sqlite-datasource"
+        },
+        {
+          "uid": "sqlite-1",
+          "type": "sqlite-datasource"
         }
       ]
     }

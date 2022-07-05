@@ -12,28 +12,53 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type dsLookup struct {
+}
+
+func (d *dsLookup) ByRef(ref *DataSourceRef) *DataSourceRef {
+	if ref == nil || ref.UID == "" {
+		return &DataSourceRef{
+			UID:  "default.uid",
+			Type: "default.type",
+		}
+	}
+
+	if ref.UID == "default" {
+		return nil
+	}
+	return ref
+}
+
+func (d *dsLookup) ByType(dsType string) []DataSourceRef {
+	if dsType == "sqlite-datasource" {
+		return []DataSourceRef{
+			{
+				UID:  "sqlite-1",
+				Type: "sqlite-datasource",
+			},
+			{
+				UID:  "sqlite-2",
+				Type: "sqlite-datasource",
+			},
+		}
+	}
+	return make([]DataSourceRef, 0)
+}
+
 func TestReadDashboard(t *testing.T) {
 	inputs := []string{
 		"check-string-datasource-id",
 		"all-panels",
 		"panel-graph/graph-shared-tooltips",
 		"datasource-variable",
+		"default-datasource-variable",
 		"empty-datasource-variable",
 		"repeated-datasource-variables",
 		"string-datasource-variable",
 		"datasource-variable-no-curly-braces",
-		"all-selected-datasource-variable",
-	}
-
-	// key will allow name or uid
-	ds := func(ref *DataSourceRef) *DataSourceRef {
-		if ref == nil || ref.UID == "" {
-			return &DataSourceRef{
-				UID:  "default.uid",
-				Type: "default.type",
-			}
-		}
-		return ref
+		"all-selected-multi-datasource-variable",
+		"all-selected-single-datasource-variable",
+		"repeated-datasource-variables-with-default",
 	}
 
 	devdash := "../../../../devenv/dev-dashboards/"
@@ -52,7 +77,7 @@ func TestReadDashboard(t *testing.T) {
 		}
 		require.NoError(t, err)
 
-		dash, err := ReadDashboard(f, ds)
+		dash, err := ReadDashboard(f, &dsLookup{})
 		sortDatasources(dash)
 
 		require.NoError(t, err)

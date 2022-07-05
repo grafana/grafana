@@ -23,6 +23,33 @@ type templateVariable struct {
 
 type datasourceVariableLookup struct {
 	variableNameToRefs map[string][]DataSourceRef
+	dsLookup           DatasourceLookup
+}
+
+func (d *datasourceVariableLookup) getDsRefsByTemplateVariableValue(value string, datasourceType string) []DataSourceRef {
+	switch value {
+	case "default":
+		// can be the default DS, or a DS with UID="default"
+		candidateDs := d.dsLookup.ByRef(&DataSourceRef{UID: value})
+		if candidateDs == nil {
+			// get the actual default DS
+			candidateDs = d.dsLookup.ByRef(nil)
+		}
+		return []DataSourceRef{*candidateDs}
+	case "$__all":
+		return d.dsLookup.ByType(datasourceType)
+	case "":
+		return []DataSourceRef{}
+	case "No data sources found":
+		return []DataSourceRef{}
+	default:
+		return []DataSourceRef{
+			{
+				UID:  value,
+				Type: datasourceType,
+			},
+		}
+	}
 }
 
 func (d *datasourceVariableLookup) add(templateVariable templateVariable) {
@@ -37,28 +64,28 @@ func (d *datasourceVariableLookup) add(templateVariable templateVariable) {
 	if values, multiValueVariable := templateVariable.current.value.([]interface{}); multiValueVariable {
 		for _, value := range values {
 			if valueAsString, ok := value.(string); ok {
-				if valueAsString == "$__all" {
-					// TODO: add all matching datasources from db.. ?
-				} else {
-					refs = append(refs, DataSourceRef{
-						UID:  valueAsString,
-						Type: datasourceType,
-					})
-				}
+				refs = append(refs, d.getDsRefsByTemplateVariableValue(valueAsString, datasourceType)...)
 			}
 		}
 	}
 
 	if value, stringValue := templateVariable.current.value.(string); stringValue {
-		if value != "" && value != "No data sources found" && value != "$__all" {
-			refs = append(refs, DataSourceRef{
-				UID:  value,
-				Type: datasourceType,
-			})
-		}
+		refs = append(refs, d.getDsRefsByTemplateVariableValue(value, datasourceType)...)
 	}
 
-	d.variableNameToRefs[templateVariable.name] = refs
+	d.variableNameToRefs[templateVariable.name] = unique(refs)
+}
+
+func unique(refs []DataSourceRef) []DataSourceRef {
+	var uniqueRefs []DataSourceRef
+	uidPresence := make(map[string]bool)
+	for _, ref := range refs {
+		if !uidPresence[ref.UID] {
+			uidPresence[ref.UID] = true
+			uniqueRefs = append(uniqueRefs, ref)
+		}
+	}
+	return uniqueRefs
 }
 
 func (d *datasourceVariableLookup) getDatasourceRefs(name string) []DataSourceRef {
@@ -70,9 +97,10 @@ func (d *datasourceVariableLookup) getDatasourceRefs(name string) []DataSourceRe
 	return []DataSourceRef{}
 }
 
-func newDatasourceVariableLookup() *datasourceVariableLookup {
+func newDatasourceVariableLookup(dsLookup DatasourceLookup) *datasourceVariableLookup {
 	return &datasourceVariableLookup{
 		variableNameToRefs: make(map[string][]DataSourceRef),
+		dsLookup:           dsLookup,
 	}
 }
 
@@ -83,7 +111,7 @@ func ReadDashboard(stream io.Reader, lookup DatasourceLookup) (*DashboardInfo, e
 
 	iter := jsoniter.Parse(jsoniter.ConfigDefault, stream, 1024)
 
-	datasourceVariablesLookup := newDatasourceVariableLookup()
+	datasourceVariablesLookup := newDatasourceVariableLookup(lookup)
 
 	for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
 		// Skip null values so we don't need special int handling
@@ -193,7 +221,7 @@ func ReadDashboard(stream io.Reader, lookup DatasourceLookup) (*DashboardInfo, e
 								templateVariable.query = iter.Read()
 							case "current":
 								for c := iter.ReadObject(); c != ""; c = iter.ReadObject() {
-									if c != "value" {
+									if c == "value" {
 										templateVariable.current.value = iter.Read()
 									} else {
 										iter.Skip()
