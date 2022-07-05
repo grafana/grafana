@@ -26,7 +26,7 @@ export default {
   args: {
     isLoading: false,
     isLive: false,
-    width: '35px',
+    width: 'auto',
     text: 'Run query',
     tooltip: 'Run query',
     value: '1h',
