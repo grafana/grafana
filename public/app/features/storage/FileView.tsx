@@ -61,7 +61,7 @@ export function FileView({ listing, path, onPathChange, view }: Props) {
     case 'image':
       return (
         <div>
-          <a href={src}>
+          <a target={'_self'} href={src}>
             <img src={src} className={styles.img} />
           </a>
         </div>
@@ -106,7 +106,7 @@ function getFileDisplayInfo(path: string): FileDisplayInfo {
     case 'svg':
       return { category: 'svg' };
     case 'jpg':
-    case 'jpg':
+    case 'jpeg':
     case 'png':
     case 'webp':
     case 'gif':
