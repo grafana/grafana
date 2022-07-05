@@ -6,6 +6,7 @@ import {
   CoreApp,
   DataQuery,
   DataQueryRequest,
+  DataSourceRef,
   dateMath,
   DateTime,
   DefaultTimeZone,
@@ -253,11 +254,16 @@ export function generateKey(index = 0): string {
   return `Q-${uuidv4()}-${index}`;
 }
 
-// TODO have logic include top level DS for URL reasons
-export async function generateEmptyQuery(queries: DataQuery[], index = 0): Promise<DataQuery> {
+export async function generateEmptyQuery(
+  queries: DataQuery[],
+  index = 0,
+  dataSourceOverride?: DataSourceRef
+): Promise<DataQuery> {
   // if queries is empty, datasource is default
   let datasource;
-  if (queries.length > 0 && queries[queries.length - 1].datasource) {
+  if (dataSourceOverride) {
+    datasource = dataSourceOverride;
+  } else if (queries.length > 0 && queries[queries.length - 1].datasource) {
     datasource = queries[queries.length - 1].datasource;
   } else {
     const datasourceFull = await getDataSourceSrv().get();
@@ -276,7 +282,10 @@ export const generateNewKeyAndAddRefIdIfMissing = (target: DataQuery, queries: D
 /**
  * Ensure at least one target exists and that targets have the necessary keys
  */
-export async function ensureQueries(queries?: DataQuery[]): Promise<DataQuery[]> {
+export async function ensureQueries(
+  queries?: DataQuery[],
+  newQueryDataSourceOverride?: DataSourceRef
+): Promise<DataQuery[]> {
   if (queries && typeof queries === 'object' && queries.length > 0) {
     const allQueries = [];
     for (let index = 0; index < queries.length; index++) {
@@ -295,7 +304,7 @@ export async function ensureQueries(queries?: DataQuery[]): Promise<DataQuery[]>
     }
     return allQueries;
   }
-  const emptyQuery = await generateEmptyQuery(queries ?? []);
+  const emptyQuery = await generateEmptyQuery(queries ?? [], undefined, newQueryDataSourceOverride);
   return [{ ...emptyQuery }];
 }
 
