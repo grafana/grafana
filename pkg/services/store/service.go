@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -33,8 +32,6 @@ const RootResources = "resources"
 const MAX_UPLOAD_SIZE = 3 * 1024 * 1024 // 3MB
 
 type StorageService interface {
-	registry.BackgroundService
-
 	// List folder contents
 	List(ctx context.Context, user *models.SignedInUser, path string) (*data.Frame, error)
 
@@ -57,6 +54,12 @@ type standardStorageService struct {
 }
 
 func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles, cfg *setting.Cfg) StorageService {
+	settings, err := LoadStorageConfig(cfg)
+	if err != nil {
+
+	}
+
+	// always exists
 	globalRoots := []storageRuntime{
 		newDiskStorage(RootPublicStatic, "Public static files", &StorageLocalDiskConfig{
 			Path: cfg.StaticRootPath,
@@ -71,7 +74,7 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 	}
 
 	// Development dashboards
-	if setting.Env != setting.Prod {
+	if settings.AddDevEnv && setting.Env != setting.Prod {
 		devenv := filepath.Join(cfg.StaticRootPath, "..", "devenv")
 		if _, err := os.Stat(devenv); !os.IsNotExist(err) {
 			// path/to/whatever exists
@@ -91,7 +94,7 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 			storages = append(storages,
 				newSQLStorage(RootResources,
 					"Resources",
-					&StorageSQLConfig{orgId: orgId}, sql).
+					&StorageSQLConfig{}, sql, orgId).
 					setBuiltin(true).
 					setDescription("Upload custom resource files"))
 		}
@@ -118,11 +121,6 @@ func newStandardStorageService(globalRoots []storageRuntime, initializeOrgStorag
 	}
 }
 
-func (s *standardStorageService) Run(ctx context.Context) error {
-	grafanaStorageLogger.Info("storage starting")
-	return nil
-}
-
 func getOrgId(user *models.SignedInUser) int64 {
 	if user == nil {
 		return ac.GlobalOrgID
@@ -133,6 +131,7 @@ func getOrgId(user *models.SignedInUser) int64 {
 
 func (s *standardStorageService) List(ctx context.Context, user *models.SignedInUser, path string) (*data.Frame, error) {
 	// apply access control here
+
 	return s.tree.ListFolder(ctx, getOrgId(user), path)
 }
 

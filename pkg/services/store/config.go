@@ -1,5 +1,50 @@
 package store
 
+import (
+	"encoding/json"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+
+	"github.com/grafana/grafana/pkg/setting"
+)
+
+// For now this file is stored in $GRAFANA_HOME/conf/storage.json and updated from the UI
+type GlobalStorageConfig struct {
+	filepath string // Local file path
+
+	// Adds an org scoped "resource" path
+	AllowResourceUploads bool `json:"allowResourceUploads"`
+
+	// Add dev environment
+	AddDevEnv bool `json:"addDevEnv"`
+
+	// Paths under 'root' (NOTE: this is applied to all orgs)
+	Roots []RootStorageConfig `json:"roots,omitempty"`
+}
+
+func LoadStorageConfig(cfg *setting.Cfg) (*GlobalStorageConfig, error) {
+	fpath := filepath.Join(cfg.HomePath, "conf", "storage.json")
+	g := &GlobalStorageConfig{}
+	if _, err := os.Stat(fpath); err == nil {
+		body, err := ioutil.ReadFile(fpath)
+		if err != nil {
+			return nil, err
+		}
+		err = json.Unmarshal(body, g)
+		if err != nil {
+			return nil, err
+		}
+	}
+	g.filepath = fpath
+	return g, nil
+}
+
+func (c *GlobalStorageConfig) save() error {
+
+	return nil
+}
+
 type RootStorageConfig struct {
 	Type        string `json:"type"`
 	Prefix      string `json:"prefix"`
@@ -33,8 +78,7 @@ type StorageGitConfig struct {
 }
 
 type StorageSQLConfig struct {
-	// SQLStorage will prefix all paths with orgId for isolation between orgs
-	orgId int64
+	// Internally SQL storage will have orgId prefixes
 }
 
 type StorageS3Config struct {
