@@ -34,7 +34,7 @@ describe('QueryOperationRow', () => {
 
       const queryRow = screen.getByText(/^test-title$/);
       expect(queryRow).toBeInTheDocument();
-      
+
       // open row on click
       await userEvent.click(queryRow);
       // close row on click
