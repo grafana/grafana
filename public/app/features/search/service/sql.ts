@@ -42,7 +42,7 @@ export class SQLSearcher implements GrafanaSearcher {
       throw 'facets not supported!';
     }
     const q: APIQuery = {
-      limit: 1000, // 1k max values
+      limit: query.limit ?? 1000, // default 1k max values
       tag: query.tags,
       sort: query.sort,
     };
@@ -97,12 +97,12 @@ export class SQLSearcher implements GrafanaSearcher {
 
   // NOTE: the bluge query will find tags within the current results, the SQL based one does not
   async tags(query: SearchQuery): Promise<TermCount[]> {
-    const terms = (await backendSrv.get('/api/dashboards/tags')) as TermCount[];
+    const terms = await backendSrv.get<TermCount[]>('/api/dashboards/tags');
     return terms.sort((a, b) => b.count - a.count);
   }
 
   async doAPIQuery(query: APIQuery): Promise<QueryResponse> {
-    const rsp = (await backendSrv.get('/api/search', query)) as DashboardSearchHit[];
+    const rsp = await backendSrv.get<DashboardSearchHit[]>('/api/search', query);
 
     // Field values (columnar)
     const kind: string[] = [];

@@ -62,7 +62,7 @@ interface PrepConfigOpts {
   theme: GrafanaTheme2;
   eventBus: EventBus;
   onhover?: null | ((evt?: HeatmapHoverEvent | null) => void);
-  onclick?: null | ((evt?: any) => void);
+  onclick?: null | ((evt?: Object) => void);
   onzoom?: null | ((evt: HeatmapZoomEvent) => void);
   isToolTipOpen: MutableRefObject<boolean>;
   timeZone: string;
@@ -113,8 +113,8 @@ export function prepConfig(opts: PrepConfigOpts) {
   let rect: DOMRect;
 
   builder.addHook('init', (u) => {
-    u.root.querySelectorAll('.u-cursor-pt').forEach((el) => {
-      Object.assign((el as HTMLElement).style, {
+    u.root.querySelectorAll<HTMLElement>('.u-cursor-pt').forEach((el) => {
+      Object.assign(el.style, {
         borderRadius: '0',
         border: '1px solid white',
         background: 'transparent',
@@ -175,7 +175,7 @@ export function prepConfig(opts: PrepConfigOpts) {
   };
   const hoverEvent = new DataHoverEvent(payload);
 
-  let pendingOnleave = 0;
+  let pendingOnleave: ReturnType<typeof setTimeout> | 0;
 
   onhover &&
     builder.addHook('setLegend', (u) => {
@@ -213,7 +213,7 @@ export function prepConfig(opts: PrepConfigOpts) {
             payload.rowIndex = undefined;
             payload.point[xScaleUnit] = null;
             eventBus.publish(hoverEvent);
-          }, 100) as any;
+          }, 100);
         }
       }
     });
@@ -257,6 +257,7 @@ export function prepConfig(opts: PrepConfigOpts) {
     return builder; // early abort (avoids error)
   }
 
+  // eslint-ignore @typescript-eslint/no-explicit-any
   const yFieldConfig = yField.config?.custom as PanelFieldConfig | undefined;
   const yScale = yFieldConfig?.scaleDistribution ?? { type: ScaleDistribution.Linear };
   const yAxisReverse = Boolean(yAxisConfig.reverse);
@@ -288,15 +289,21 @@ export function prepConfig(opts: PrepConfigOpts) {
               : [dataMin, dataMax];
 
             if (shouldUseLogScale && !isOrdianalY) {
+              let yExp = u.scales[yScaleKey].log!;
+              let log = yExp === 2 ? Math.log2 : Math.log10;
+
               let { min: explicitMin, max: explicitMax } = yAxisConfig;
 
               // guard against <= 0
               if (explicitMin != null && explicitMin > 0) {
-                scaleMin = explicitMin;
+                // snap to magnitude
+                let minLog = log(explicitMin);
+                scaleMin = yExp ** incrRoundDn(minLog, 1);
               }
 
               if (explicitMax != null && explicitMax > 0) {
-                scaleMax = explicitMax;
+                let maxLog = log(explicitMax);
+                scaleMax = yExp ** incrRoundUp(maxLog, 1);
               }
             }
 
@@ -304,6 +311,9 @@ export function prepConfig(opts: PrepConfigOpts) {
           }
         : // dense and ordinal only have one of yMin|yMax|y, so expand range by one cell in the direction of le/ge/unknown
           (u, dataMin, dataMax) => {
+            let scaleMin = dataMin,
+              scaleMax = dataMax;
+
             let { min: explicitMin, max: explicitMax } = yAxisConfig;
 
             // logarithmic expansion
@@ -313,44 +323,47 @@ export function prepConfig(opts: PrepConfigOpts) {
               let minExpanded = false;
               let maxExpanded = false;
 
-              if (ySizeDivisor !== 1) {
-                let log = yExp === 2 ? Math.log2 : Math.log10;
+              let log = yExp === 2 ? Math.log2 : Math.log10;
 
+              if (ySizeDivisor !== 1) {
                 let minLog = log(dataMin);
                 let maxLog = log(dataMax);
 
                 if (!Number.isInteger(minLog)) {
-                  dataMin = yExp ** incrRoundDn(minLog, 1);
+                  scaleMin = yExp ** incrRoundDn(minLog, 1);
                   minExpanded = true;
                 }
 
                 if (!Number.isInteger(maxLog)) {
-                  dataMax = yExp ** incrRoundUp(maxLog, 1);
+                  scaleMax = yExp ** incrRoundUp(maxLog, 1);
                   maxExpanded = true;
                 }
               }
 
               if (dataRef.current?.yLayout === HeatmapCellLayout.le) {
                 if (!minExpanded) {
-                  dataMin /= yExp;
+                  scaleMin /= yExp;
                 }
               } else if (dataRef.current?.yLayout === HeatmapCellLayout.ge) {
                 if (!maxExpanded) {
-                  dataMax *= yExp;
+                  scaleMax *= yExp;
                 }
               } else {
-                dataMin /= yExp / 2;
-                dataMax *= yExp / 2;
+                scaleMin /= yExp / 2;
+                scaleMax *= yExp / 2;
               }
 
               if (!isOrdianalY) {
                 // guard against <= 0
                 if (explicitMin != null && explicitMin > 0) {
-                  dataMin = explicitMin;
+                  // snap down to magnitude
+                  let minLog = log(explicitMin);
+                  scaleMin = yExp ** incrRoundDn(minLog, 1);
                 }
 
                 if (explicitMax != null && explicitMax > 0) {
-                  dataMax = explicitMax;
+                  let maxLog = log(explicitMax);
+                  scaleMax = yExp ** incrRoundUp(maxLog, 1);
                 }
               }
             }
@@ -364,24 +377,24 @@ export function prepConfig(opts: PrepConfigOpts) {
 
               if (bucketSize) {
                 if (dataRef.current?.yLayout === HeatmapCellLayout.le) {
-                  dataMin -= bucketSize!;
+                  scaleMin -= bucketSize!;
                 } else if (dataRef.current?.yLayout === HeatmapCellLayout.ge) {
-                  dataMax += bucketSize!;
+                  scaleMax += bucketSize!;
                 } else {
-                  dataMin -= bucketSize! / 2;
-                  dataMax += bucketSize! / 2;
+                  scaleMin -= bucketSize! / 2;
+                  scaleMax += bucketSize! / 2;
                 }
               } else {
                 // how to expand scale range if inferred non-regular or log buckets?
               }
 
               if (!isOrdianalY) {
-                dataMin = explicitMin ?? dataMin;
-                dataMax = explicitMax ?? dataMax;
+                scaleMin = explicitMin ?? scaleMin;
+                scaleMax = explicitMax ?? scaleMax;
               }
             }
 
-            return [dataMin, dataMax];
+            return [scaleMin, scaleMax];
           },
   });
 
@@ -394,7 +407,7 @@ export function prepConfig(opts: PrepConfigOpts) {
     size: yAxisConfig.axisWidth || null,
     label: yAxisConfig.axisLabel,
     theme: theme,
-    formatValue: (v: any) => formattedValueToString(dispY(v)),
+    formatValue: (v: number) => formattedValueToString(dispY(v)),
     splits: isOrdianalY
       ? (self: uPlot) => {
           const meta = readHeatmapRowsCustomMeta(dataRef.current?.heatmap);
@@ -493,7 +506,7 @@ export function prepConfig(opts: PrepConfigOpts) {
           index: palette,
         },
       },
-    }) as any,
+    }),
     theme,
     scaleKey: '', // facets' scales used (above)
   });
@@ -525,7 +538,7 @@ export function prepConfig(opts: PrepConfigOpts) {
         },
       },
       exemplarFillColor
-    ) as any,
+    ),
     theme,
     scaleKey: '', // facets' scales used (above)
   });
@@ -570,6 +583,7 @@ export function prepConfig(opts: PrepConfigOpts) {
   if (sync && sync() !== DashboardCursorSync.Off) {
     cursor.sync = {
       key: '__global_',
+      scales: [xScaleKey, yScaleKey],
       filters: {
         pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {
           if (x < 0) {
@@ -705,6 +719,8 @@ export function heatmapPathsDense(opts: PathbuilderOpts) {
         return null;
       }
     );
+
+    return null;
   };
 }
 
@@ -765,6 +781,8 @@ export function heatmapPathsPoints(opts: PointsBuilderOpts, exemplarColor: strin
         u.ctx.restore();
       }
     );
+
+    return null;
   };
 }
 // accepts xMax, yMin, yMax, count
@@ -881,10 +899,10 @@ export function heatmapPathsSparse(opts: PathbuilderOpts) {
         u.ctx.restore();
 
         //console.timeEnd('heatmapPathsSparse');
-
-        return null;
       }
     );
+
+    return null;
   };
 }
 

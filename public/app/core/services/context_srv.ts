@@ -174,7 +174,7 @@ export class ContextSrv {
   }
 
   hasAccessInMetadata(action: string, object: WithAccessControlMetadata, fallBack: boolean) {
-    if (!config.rbacEnabled) {
+    if (!this.accessControlEnabled()) {
       return fallBack;
     }
     return this.hasPermissionInMetadata(action, object);

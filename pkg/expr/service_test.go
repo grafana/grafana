@@ -10,10 +10,11 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/models"
-	datasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/datasources"
+	datafakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestService(t *testing.T) {
@@ -30,13 +31,13 @@ func TestService(t *testing.T) {
 	s := Service{
 		cfg:               cfg,
 		dataService:       me,
-		dataSourceService: &datasources.FakeDataSourceService{},
+		dataSourceService: &datafakes.FakeDataSourceService{},
 	}
 
 	queries := []Query{
 		{
 			RefID: "A",
-			DataSource: &models.DataSource{
+			DataSource: &datasources.DataSource{
 				OrgId: 1,
 				Uid:   "test",
 				Type:  "test",
