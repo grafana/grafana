@@ -68,13 +68,13 @@ This is a configuration for the beta Node Graph visualization. The Node Graph is
 
 ### Span bar label
 
-This is a configuration for the span bar label. The span bar label lets you add additional info to the span bar row.
+You can configure the span bar label. The span bar label allows you add additional information to the span bar row.
 
-One of the following four options can be selected (the default is duration):
+Select one of the following four options. The default selection is Duration.
 
-- **None -** Do no show any additional info on the span bar row.
+- **None -** Do not show any additional information on the span bar row.
 - **Duration -** Show the span duration on the span bar row.
-- **Tag -** Show the span tag on the span bar row. Note: You will also need to specify the tag key which will be used to get the tag value. For example `span.kind`.
+- **Tag -** Show the span tag on the span bar row. Note: You will also need to specify the tag key to use to get the tag value. For example, `span.kind`.
 
 ## Query traces
 
