@@ -1687,7 +1687,7 @@ a5a8fed6-0bca-4646-9946-2fe84175353b	t	f	account	0	f	d0b8b6b6-2a02-412c-84d1-716
 77ff47f8-f578-477d-8c06-e70a846332f5	t	f	broker	0	f	589951e9-e77f-4d1d-90cd-796848190eff	\N	f	\N	f	grafana	openid-connect	0	f	f	${client_broker}	f	client-secret	\N	\N	\N	t	f	f	f
 805aebc8-9d01-42b6-bcce-6ce48ca63ef0	t	f	security-admin-console	0	t	27d2217e-9934-4971-93b8-77969e47ecf7	/admin/grafana/console/	f	\N	f	grafana	openid-connect	0	f	f	${client_security-admin-console}	f	client-secret	${authAdminUrl}	\N	\N	t	f	f	f
 6bd2d943-9800-4839-9ddc-03c04930cd9f	t	f	admin-cli	0	t	da0811c3-5031-4f35-9dc5-441050461a37	\N	f	\N	f	grafana	openid-connect	0	f	f	${client_admin-cli}	f	client-secret	\N	\N	\N	f	f	t	f
-09b79548-8426-4c0e-8e0b-7488467532c7	t	t	grafana-oauth	0	f	d17b9ea9-bcb1-43d2-b132-d339e55872a8	http://127.0.0.1:8088	f	http://127.0.0.1:8088	f	grafana	openid-connect	-1	f	f	\N	f	client-secret	http://127.0.0.1:8088	\N	\N	t	f	t	f
+09b79548-8426-4c0e-8e0b-7488467532c7	t	t	grafana-oauth	0	f	d17b9ea9-bcb1-43d2-b132-d339e55872a8	http://127.0.0.1:8087	f	http://127.0.0.1:8087	f	grafana	openid-connect	-1	f	f	\N	f	client-secret	http://127.0.0.1:8087	\N	\N	t	f	t	f
 \.
 
 
@@ -2218,6 +2218,9 @@ d4b2c483-1dd3-47f6-86bf-42548009918d	\N	password	74e29604-ff35-42bb-a26d-4d0b81e
 b8c9b8b4-5943-43fe-9274-d63fd3e4a139	\N	password	c685749a-645e-4396-b9ee-6eedbfd89d5e	1656420634344	\N	{"value":"IAOFzbDfWwzosZc+Z5nFm/i0B4foqmU4Q0EKG34RU3iwlIYUseEB3BoJqLEfM3Rj9oOSryEbCzblWRDS/5Padw==","salt":"7VR1+KwLVRZ6PenxaQoQTA==","additionalParameters":{}}	{"hashIterations":27500,"algorithm":"pbkdf2-sha256","additionalParameters":{}}	10
 94aeafd3-71a5-4966-b2b6-34a083df6e92	\N	password	bdce2246-bb51-4f55-bb81-b7b8856225bc	1656425248776	\N	{"value":"uD8KlRNocvZwYq1VZUShVp88zEtMUEeQnLYkW8ZvZXDdn1w1EahwnpNWYIc5QewEm3Nnf3DBYlUUrrbMC4XyfQ==","salt":"REwgUSsxRA/sqM5ujSrpcg==","additionalParameters":{}}	{"hashIterations":27500,"algorithm":"pbkdf2-sha256","additionalParameters":{}}	10
 624725ce-9e36-4501-8bc8-ec39ee6b98d5	\N	password	56eff2b3-e36a-4e3e-84a1-361ad312667b	1656428741229	\N	{"value":"4UBzDNd3oPxP54/z7ez1Bd3xSfKJBpbE3rQppM3Xg+2bLaLNoU90TPEK+8SWbpMAFBKHz53qPWrZ50MbNgcGSA==","salt":"iTNvn3xr0acn9wqQxJ3d/A==","additionalParameters":{}}	{"hashIterations":27500,"algorithm":"pbkdf2-sha256","additionalParameters":{}}	10
+cb2bd4ed-94b8-4259-bcaa-9250c3fb28d3	\N	password	6db3c5e5-b84b-4f9d-a7a8-8d05b03c929d	1657026827644	\N	{"value":"q3Z59Nh/5bdezDEpCwEbMPu8d+VgJ5WetafXkR8l0FlsTTkSDQgW+j6GaM3seJR93p3/jCxyfsvZl062d1pq7w==","salt":"ohuHnjLnwF9dBZ38DRJJWg==","additionalParameters":{}}	{"hashIterations":27500,"algorithm":"pbkdf2-sha256","additionalParameters":{}}	10
+b58e1964-6466-40b2-879c-982b724d7f9c	\N	password	88692d07-bb9a-46cf-844c-7ff5c529cd04	1657026904515	\N	{"value":"+/0zWjiJyE3+dCOEf0SO6G3n1/LsFAVoDAZREKTfN4vQ5xJH8srJoCjxcgb+bI1crMr8gknDlFyGRy7CpYn2VQ==","salt":"v/2okNt3wGOZz+x4DjOCDQ==","additionalParameters":{}}	{"hashIterations":27500,"algorithm":"pbkdf2-sha256","additionalParameters":{}}	10
+3ff7dd8f-a299-4b51-bf5d-99665ccfd313	\N	password	8f58cbec-6e40-4bab-bff0-1c5ff899fe2e	1657026943075	\N	{"value":"nMYodMJMiq/J8g9vRPktGc7WSWnOKr6leMDZX4p9K9KgAUYeXFDSu+d29PWWn0rFn93dL0PNdIdHWNQhfkIDMg==","salt":"rmi9WLHgarmIXGukecSIig==","additionalParameters":{}}	{"hashIterations":27500,"algorithm":"pbkdf2-sha256","additionalParameters":{}}	10
 \.
 
 
@@ -3301,6 +3304,9 @@ COPY public.user_entity (id, email, email_constraint, email_verified, enabled, f
 c685749a-645e-4396-b9ee-6eedbfd89d5e	oauth-admin@example.org	oauth-admin@example.org	f	t	\N	Admin	Oauth	grafana	oauth-admin	1656418530879	\N	0
 56eff2b3-e36a-4e3e-84a1-361ad312667b	oauth-editor@example.org	oauth-editor@example.org	f	t	\N	Editor	Oauth	grafana	oauth-editor	1656418563005	\N	0
 bdce2246-bb51-4f55-bb81-b7b8856225bc	oauth-viewer@example.org	oauth-viewer@example.org	f	t	\N	Viewer	Oauth	grafana	oauth-viewer	1656425237046	\N	0
+6db3c5e5-b84b-4f9d-a7a8-8d05b03c929d	jwt-admin@example.org	jwt-admin@example.org	f	t	\N	Admin	JWT	grafana	jwt-admin	1657026796311	\N	0
+88692d07-bb9a-46cf-844c-7ff5c529cd04	jwt-editor@example.com	jwt-editor@example.com	f	t	\N	Editor	JWT	grafana	jwt-editor	1657026894275	\N	0
+8f58cbec-6e40-4bab-bff0-1c5ff899fe2e	jwt-viewer@example.com	jwt-viewer@example.com	f	t	\N	Viewer	JWT	grafana	jwt-viewer	1657026933578	\N	0
 \.
 
 
@@ -3376,6 +3382,21 @@ c49bddc6-ec92-4caa-bc04-57ba80a92eb9	bdce2246-bb51-4f55-bb81-b7b8856225bc
 0f3d47bb-002a-4cd0-a502-725f224308a7	bdce2246-bb51-4f55-bb81-b7b8856225bc
 f1311ecb-6a6a-49d6-bb16-5132daf93a64	bdce2246-bb51-4f55-bb81-b7b8856225bc
 18a7066b-fe71-410e-9581-69f78347ec29	bdce2246-bb51-4f55-bb81-b7b8856225bc
+c49bddc6-ec92-4caa-bc04-57ba80a92eb9	6db3c5e5-b84b-4f9d-a7a8-8d05b03c929d
+0f3d47bb-002a-4cd0-a502-725f224308a7	6db3c5e5-b84b-4f9d-a7a8-8d05b03c929d
+f1311ecb-6a6a-49d6-bb16-5132daf93a64	6db3c5e5-b84b-4f9d-a7a8-8d05b03c929d
+18a7066b-fe71-410e-9581-69f78347ec29	6db3c5e5-b84b-4f9d-a7a8-8d05b03c929d
+60f1b1ea-9059-41ea-acef-573643b24709	6db3c5e5-b84b-4f9d-a7a8-8d05b03c929d
+c49bddc6-ec92-4caa-bc04-57ba80a92eb9	88692d07-bb9a-46cf-844c-7ff5c529cd04
+0f3d47bb-002a-4cd0-a502-725f224308a7	88692d07-bb9a-46cf-844c-7ff5c529cd04
+f1311ecb-6a6a-49d6-bb16-5132daf93a64	88692d07-bb9a-46cf-844c-7ff5c529cd04
+18a7066b-fe71-410e-9581-69f78347ec29	88692d07-bb9a-46cf-844c-7ff5c529cd04
+c49bddc6-ec92-4caa-bc04-57ba80a92eb9	8f58cbec-6e40-4bab-bff0-1c5ff899fe2e
+0f3d47bb-002a-4cd0-a502-725f224308a7	8f58cbec-6e40-4bab-bff0-1c5ff899fe2e
+f1311ecb-6a6a-49d6-bb16-5132daf93a64	8f58cbec-6e40-4bab-bff0-1c5ff899fe2e
+18a7066b-fe71-410e-9581-69f78347ec29	8f58cbec-6e40-4bab-bff0-1c5ff899fe2e
+c9a776f9-2740-435f-a725-4dbcc17a6c91	8f58cbec-6e40-4bab-bff0-1c5ff899fe2e
+c4c74006-c346-48cf-8cf1-1617e3e1cde1	88692d07-bb9a-46cf-844c-7ff5c529cd04
 \.
 
 
@@ -3410,7 +3431,7 @@ COPY public.username_login_failure (realm_id, username, failed_login_not_before,
 COPY public.web_origins (client_id, value) FROM stdin;
 2f521d09-7304-4b5e-a94b-7cc7300b8b50	+
 805aebc8-9d01-42b6-bcce-6ce48ca63ef0	+
-09b79548-8426-4c0e-8e0b-7488467532c7	http://127.0.0.1:8088
+09b79548-8426-4c0e-8e0b-7488467532c7	http://127.0.0.1:8087
 \.
 
 
