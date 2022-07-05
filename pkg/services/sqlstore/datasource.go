@@ -262,6 +262,9 @@ func (ss *SQLStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 		sess.MustCols("password")
 		sess.MustCols("basic_auth_password")
 		sess.MustCols("user")
+		// Make sure secure json data is zeroed out if empty. We do this as we want to migrate secrets from
+		// secure json data to the unified secrets table.
+		sess.MustCols("secure_json_data")
 
 		var updateSession *xorm.Session
 		if cmd.Version != 0 {

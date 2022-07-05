@@ -39,8 +39,16 @@ func (s *DataSourceSecretMigrationService) Migrate(ctx context.Context) error {
 				Id:             ds.Id,
 				OrgId:          ds.OrgId,
 				Uid:            ds.Uid,
+				Name:           ds.Name,
 				JsonData:       ds.JsonData,
 				SecureJsonData: secureJsonData,
+
+				// These are needed by the SQL function due to UseBool and MustCols
+				IsDefault:       ds.IsDefault,
+				BasicAuth:       ds.BasicAuth,
+				WithCredentials: ds.WithCredentials,
+				ReadOnly:        ds.ReadOnly,
+				User:            ds.User,
 			})
 			if err != nil {
 				return err
