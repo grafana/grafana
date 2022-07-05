@@ -65,3 +65,16 @@ func (r *Route) Validate() error {
 	}
 	return r.validateChild()
 }
+
+func (r *Route) ValidateReceivers(receivers map[string]struct{}) error {
+	if _, exists := receivers[r.Receiver]; !exists {
+		return fmt.Errorf("receiver '%s' does not exist", r.Receiver)
+	}
+	for _, children := range r.Routes {
+		err := children.ValidateReceivers(receivers)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
