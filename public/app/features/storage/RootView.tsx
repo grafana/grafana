@@ -35,10 +35,8 @@ export function RootView({ root, onPathChange }: Props) {
     if (searchQuery?.length) {
       const lower = searchQuery.toLowerCase();
       return all.filter((v) => {
-        if (v.name.toLowerCase().indexOf(lower) >= 0) {
-          return true;
-        }
-        if (v.description.toLowerCase().indexOf(lower) >= 0) {
+        const isMatch = v.name.toLowerCase().indexOf(lower) >= 0 || v.description.toLowerCase().indexOf(lower) >= 0;
+        if (isMatch) {
           return true;
         }
         return false;
