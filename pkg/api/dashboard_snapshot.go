@@ -161,12 +161,10 @@ func (hs *HTTPServer) GetDashboardSnapshot(c *models.ReqContext) response.Respon
 
 	query := &dashboardsnapshots.GetDashboardSnapshotQuery{Key: key}
 
-	err := hs.dashboardsnapshotsService.GetDashboardSnapshot(c.Req.Context(), query)
+	snapshot, err := hs.dashboardsnapshotsService.GetDashboardSnapshot(c.Req.Context(), query)
 	if err != nil {
 		return response.Error(500, "Failed to get dashboard snapshot", err)
 	}
-
-	snapshot := query.Result
 
 	// expired snapshots should also be removed from db
 	if snapshot.Expires.Before(time.Now()) {
@@ -228,19 +226,19 @@ func (hs *HTTPServer) DeleteDashboardSnapshotByDeleteKey(c *models.ReqContext) r
 	}
 
 	query := &dashboardsnapshots.GetDashboardSnapshotQuery{DeleteKey: key}
-	err := hs.dashboardsnapshotsService.GetDashboardSnapshot(c.Req.Context(), query)
+	snapshot, err := hs.dashboardsnapshotsService.GetDashboardSnapshot(c.Req.Context(), query)
 	if err != nil {
 		return response.Error(500, "Failed to get dashboard snapshot", err)
 	}
 
-	if query.Result.External {
-		err := deleteExternalDashboardSnapshot(query.Result.ExternalDeleteUrl)
+	if snapshot.External {
+		err := deleteExternalDashboardSnapshot(snapshot.ExternalDeleteUrl)
 		if err != nil {
 			return response.Error(500, "Failed to delete external dashboard", err)
 		}
 	}
 
-	cmd := &dashboardsnapshots.DeleteDashboardSnapshotCommand{DeleteKey: query.Result.DeleteKey}
+	cmd := &dashboardsnapshots.DeleteDashboardSnapshotCommand{DeleteKey: snapshot.DeleteKey}
 
 	if err := hs.dashboardsnapshotsService.DeleteDashboardSnapshot(c.Req.Context(), cmd); err != nil {
 		return response.Error(500, "Failed to delete dashboard snapshot", err)
@@ -248,7 +246,7 @@ func (hs *HTTPServer) DeleteDashboardSnapshotByDeleteKey(c *models.ReqContext) r
 
 	return response.JSON(http.StatusOK, util.DynMap{
 		"message": "Snapshot deleted. It might take an hour before it's cleared from any CDN caches.",
-		"id":      query.Result.Id,
+		"id":      snapshot.Id,
 	})
 }
 
@@ -261,15 +259,15 @@ func (hs *HTTPServer) DeleteDashboardSnapshot(c *models.ReqContext) response.Res
 
 	query := &dashboardsnapshots.GetDashboardSnapshotQuery{Key: key}
 
-	err := hs.dashboardsnapshotsService.GetDashboardSnapshot(c.Req.Context(), query)
+	snapshot, err := hs.dashboardsnapshotsService.GetDashboardSnapshot(c.Req.Context(), query)
 	if err != nil {
 		return response.Error(500, "Failed to get dashboard snapshot", err)
 	}
-	if query.Result == nil {
+	if snapshot == nil {
 		return response.Error(404, "Failed to get dashboard snapshot", nil)
 	}
 
-	dashboardID := query.Result.Dashboard.Get("id").MustInt64()
+	dashboardID := snapshot.Dashboard.Get("id").MustInt64()
 
 	guardian := guardian.New(c.Req.Context(), dashboardID, c.OrgId, c.SignedInUser)
 	canEdit, err := guardian.CanEdit()
@@ -278,18 +276,18 @@ func (hs *HTTPServer) DeleteDashboardSnapshot(c *models.ReqContext) response.Res
 		return response.Error(500, "Error while checking permissions for snapshot", err)
 	}
 
-	if !canEdit && query.Result.UserId != c.SignedInUser.UserId && !errors.Is(err, dashboards.ErrDashboardNotFound) {
+	if !canEdit && snapshot.UserId != c.SignedInUser.UserId && !errors.Is(err, dashboards.ErrDashboardNotFound) {
 		return response.Error(403, "Access denied to this snapshot", nil)
 	}
 
-	if query.Result.External {
-		err := deleteExternalDashboardSnapshot(query.Result.ExternalDeleteUrl)
+	if snapshot.External {
+		err := deleteExternalDashboardSnapshot(snapshot.ExternalDeleteUrl)
 		if err != nil {
 			return response.Error(500, "Failed to delete external dashboard", err)
 		}
 	}
 
-	cmd := &dashboardsnapshots.DeleteDashboardSnapshotCommand{DeleteKey: query.Result.DeleteKey}
+	cmd := &dashboardsnapshots.DeleteDashboardSnapshotCommand{DeleteKey: snapshot.DeleteKey}
 
 	if err := hs.dashboardsnapshotsService.DeleteDashboardSnapshot(c.Req.Context(), cmd); err != nil {
 		return response.Error(500, "Failed to delete dashboard snapshot", err)
@@ -297,7 +295,7 @@ func (hs *HTTPServer) DeleteDashboardSnapshot(c *models.ReqContext) response.Res
 
 	return response.JSON(http.StatusOK, util.DynMap{
 		"message": "Snapshot deleted. It might take an hour before it's cleared from any CDN caches.",
-		"id":      query.Result.Id,
+		"id":      snapshot.Id,
 	})
 }
 
@@ -317,13 +315,13 @@ func (hs *HTTPServer) SearchDashboardSnapshots(c *models.ReqContext) response.Re
 		SignedInUser: c.SignedInUser,
 	}
 
-	err := hs.dashboardsnapshotsService.SearchDashboardSnapshots(c.Req.Context(), &searchQuery)
+	snapshots, err := hs.dashboardsnapshotsService.SearchDashboardSnapshots(c.Req.Context(), &searchQuery)
 	if err != nil {
 		return response.Error(500, "Search failed", err)
 	}
 
-	dtos := make([]*dashboardsnapshots.DashboardSnapshotDTO, len(searchQuery.Result))
-	for i, snapshot := range searchQuery.Result {
+	dtos := make([]*dashboardsnapshots.DashboardSnapshotDTO, len(snapshots))
+	for i, snapshot := range snapshots {
 		dtos[i] = &dashboardsnapshots.DashboardSnapshotDTO{
 			Id:          snapshot.Id,
 			Name:        snapshot.Name,
