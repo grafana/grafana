@@ -36,28 +36,25 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 
 	setUpSnapshotTest := func(t *testing.T, userId int64, deleteUrl string) dashboardsnapshots.Service {
 		t.Helper()
+		res := &dashboardsnapshots.DashboardSnapshot{
+			Id:        1,
+			Key:       "12345",
+			DeleteKey: "54321",
+			Dashboard: jsonModel,
+			Expires:   time.Now().Add(time.Duration(1000) * time.Second),
+			UserId:    999999,
+		}
+		if userId != 0 {
+			res.UserId = userId
+		}
+		if deleteUrl != "" {
+			res.External = true
+			res.ExternalDeleteUrl = deleteUrl
+		}
 
 		dashSnapSvc := dashboardsnapshots.NewMockService(t)
 		dashSnapSvc.On("DeleteDashboardSnapshot", mock.Anything, mock.AnythingOfType("*dashboardsnapshots.DeleteDashboardSnapshotCommand")).Return(nil).Maybe()
-		dashSnapSvc.On("GetDashboardSnapshot", mock.Anything, mock.AnythingOfType("*dashboardsnapshots.GetDashboardSnapshotQuery")).Run(func(args mock.Arguments) {
-			q := args.Get(1).(*dashboardsnapshots.GetDashboardSnapshotQuery)
-			res := &dashboardsnapshots.DashboardSnapshot{
-				Id:        1,
-				Key:       "12345",
-				DeleteKey: "54321",
-				Dashboard: jsonModel,
-				Expires:   time.Now().Add(time.Duration(1000) * time.Second),
-				UserId:    999999,
-			}
-			if userId != 0 {
-				res.UserId = userId
-			}
-			if deleteUrl != "" {
-				res.External = true
-				res.ExternalDeleteUrl = deleteUrl
-			}
-			q.Result = res
-		}).Return(nil)
+		dashSnapSvc.On("GetDashboardSnapshot", mock.Anything, mock.AnythingOfType("*dashboardsnapshots.GetDashboardSnapshotQuery")).Return(res, nil)
 		dashSnapSvc.On("DeleteDashboardSnapshot", mock.Anything, mock.AnythingOfType("*dashboardsnapshots.DeleteDashboardSnapshotCommand")).Return(nil).Maybe()
 		return dashSnapSvc
 	}
