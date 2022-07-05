@@ -195,7 +195,7 @@ export default function SpanDetail(props: SpanDetailProps) {
   const focusSpanLink = createFocusSpanLink(traceID, spanID);
 
   return (
-    <div>
+    <div data-testid="span-detail-component">
       <div className={styles.header}>
         <h2 className={cx(ubM0)}>{operationName}</h2>
         <div className={styles.listWrapper}>

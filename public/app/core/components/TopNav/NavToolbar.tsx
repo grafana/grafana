@@ -10,18 +10,26 @@ import { TOP_BAR_LEVEL_HEIGHT } from './types';
 
 export interface Props extends TopNavProps {
   onToggleSearchBar(): void;
+  onToggleMegaMenu(): void;
   searchBarHidden?: boolean;
   sectionNav: NavModelItem;
   subNav?: NavModelItem;
 }
 
-export function NavToolbar({ actions, onToggleSearchBar, searchBarHidden, sectionNav, subNav }: Props) {
+export function NavToolbar({
+  actions,
+  searchBarHidden,
+  sectionNav,
+  subNav,
+  onToggleMegaMenu,
+  onToggleSearchBar,
+}: Props) {
   const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.pageToolbar}>
       <div className={styles.menuButton}>
-        <IconButton name="bars" tooltip="Toggle menu" tooltipPlacement="bottom" size="xl" onClick={() => {}} />
+        <IconButton name="bars" tooltip="Toggle menu" tooltipPlacement="bottom" size="xl" onClick={onToggleMegaMenu} />
       </div>
       <Breadcrumbs sectionNav={sectionNav} subNav={subNav} />
       <div className={styles.leftActions}></div>
