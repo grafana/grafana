@@ -2215,9 +2215,6 @@ c7e799a5-1250-4bc8-b7c6-ffdc58361477	daaedcc6-e7a6-488e-921e-7022aa808da7
 
 COPY public.credential (id, salt, type, user_id, created_date, user_label, secret_data, credential_data, priority) FROM stdin;
 d4b2c483-1dd3-47f6-86bf-42548009918d	\N	password	74e29604-ff35-42bb-a26d-4d0b81ef0917	1643820449817	\N	{"value":"Hou7HlbGvohOx6II0VSCP4BIGI4Cyzy+BcXbPUQe/kaMQzNU77kH2pOKZ236UPfkiCyOLe7A3oS0afExA+ymAQ==","salt":"urXvCw0KdWf9s74km4G+lA==","additionalParameters":{}}	{"hashIterations":27500,"algorithm":"pbkdf2-sha256","additionalParameters":{}}	10
-b8c9b8b4-5943-43fe-9274-d63fd3e4a139	\N	password	c685749a-645e-4396-b9ee-6eedbfd89d5e	1656420634344	\N	{"value":"IAOFzbDfWwzosZc+Z5nFm/i0B4foqmU4Q0EKG34RU3iwlIYUseEB3BoJqLEfM3Rj9oOSryEbCzblWRDS/5Padw==","salt":"7VR1+KwLVRZ6PenxaQoQTA==","additionalParameters":{}}	{"hashIterations":27500,"algorithm":"pbkdf2-sha256","additionalParameters":{}}	10
-94aeafd3-71a5-4966-b2b6-34a083df6e92	\N	password	bdce2246-bb51-4f55-bb81-b7b8856225bc	1656425248776	\N	{"value":"uD8KlRNocvZwYq1VZUShVp88zEtMUEeQnLYkW8ZvZXDdn1w1EahwnpNWYIc5QewEm3Nnf3DBYlUUrrbMC4XyfQ==","salt":"REwgUSsxRA/sqM5ujSrpcg==","additionalParameters":{}}	{"hashIterations":27500,"algorithm":"pbkdf2-sha256","additionalParameters":{}}	10
-624725ce-9e36-4501-8bc8-ec39ee6b98d5	\N	password	56eff2b3-e36a-4e3e-84a1-361ad312667b	1656428741229	\N	{"value":"4UBzDNd3oPxP54/z7ez1Bd3xSfKJBpbE3rQppM3Xg+2bLaLNoU90TPEK+8SWbpMAFBKHz53qPWrZ50MbNgcGSA==","salt":"iTNvn3xr0acn9wqQxJ3d/A==","additionalParameters":{}}	{"hashIterations":27500,"algorithm":"pbkdf2-sha256","additionalParameters":{}}	10
 cb2bd4ed-94b8-4259-bcaa-9250c3fb28d3	\N	password	6db3c5e5-b84b-4f9d-a7a8-8d05b03c929d	1657026827644	\N	{"value":"q3Z59Nh/5bdezDEpCwEbMPu8d+VgJ5WetafXkR8l0FlsTTkSDQgW+j6GaM3seJR93p3/jCxyfsvZl062d1pq7w==","salt":"ohuHnjLnwF9dBZ38DRJJWg==","additionalParameters":{}}	{"hashIterations":27500,"algorithm":"pbkdf2-sha256","additionalParameters":{}}	10
 b58e1964-6466-40b2-879c-982b724d7f9c	\N	password	88692d07-bb9a-46cf-844c-7ff5c529cd04	1657026904515	\N	{"value":"+/0zWjiJyE3+dCOEf0SO6G3n1/LsFAVoDAZREKTfN4vQ5xJH8srJoCjxcgb+bI1crMr8gknDlFyGRy7CpYn2VQ==","salt":"v/2okNt3wGOZz+x4DjOCDQ==","additionalParameters":{}}	{"hashIterations":27500,"algorithm":"pbkdf2-sha256","additionalParameters":{}}	10
 3ff7dd8f-a299-4b51-bf5d-99665ccfd313	\N	password	8f58cbec-6e40-4bab-bff0-1c5ff899fe2e	1657026943075	\N	{"value":"nMYodMJMiq/J8g9vRPktGc7WSWnOKr6leMDZX4p9K9KgAUYeXFDSu+d29PWWn0rFn93dL0PNdIdHWNQhfkIDMg==","salt":"rmi9WLHgarmIXGukecSIig==","additionalParameters":{}}	{"hashIterations":27500,"algorithm":"pbkdf2-sha256","additionalParameters":{}}	10
@@ -3274,8 +3271,6 @@ COPY public.scope_policy (scope_id, policy_id) FROM stdin;
 --
 
 COPY public.user_attribute (name, value, user_id, id) FROM stdin;
-role	Viewer	bdce2246-bb51-4f55-bb81-b7b8856225bc	6110e90d-fb7c-4910-a283-b0518a1a25f5
-login	oauth-viewer	bdce2246-bb51-4f55-bb81-b7b8856225bc	4ff52580-a54a-40ea-838d-b58b5ed120d2
 \.
 
 
@@ -3301,9 +3296,6 @@ COPY public.user_consent_client_scope (user_consent_id, scope_id) FROM stdin;
 
 COPY public.user_entity (id, email, email_constraint, email_verified, enabled, federation_link, first_name, last_name, realm_id, username, created_timestamp, service_account_client_link, not_before) FROM stdin;
 74e29604-ff35-42bb-a26d-4d0b81ef0917	\N	c8a5d425-4bad-4b76-8828-0e39bae03b67	f	t	\N	\N	\N	master	admin	1643820449683	\N	0
-c685749a-645e-4396-b9ee-6eedbfd89d5e	oauth-admin@example.org	oauth-admin@example.org	f	t	\N	Admin	Oauth	grafana	oauth-admin	1656418530879	\N	0
-56eff2b3-e36a-4e3e-84a1-361ad312667b	oauth-editor@example.org	oauth-editor@example.org	f	t	\N	Editor	Oauth	grafana	oauth-editor	1656418563005	\N	0
-bdce2246-bb51-4f55-bb81-b7b8856225bc	oauth-viewer@example.org	oauth-viewer@example.org	f	t	\N	Viewer	Oauth	grafana	oauth-viewer	1656425237046	\N	0
 6db3c5e5-b84b-4f9d-a7a8-8d05b03c929d	jwt-admin@example.org	jwt-admin@example.org	f	t	\N	Admin	JWT	grafana	jwt-admin	1657026796311	\N	0
 88692d07-bb9a-46cf-844c-7ff5c529cd04	jwt-editor@example.com	jwt-editor@example.com	f	t	\N	Editor	JWT	grafana	jwt-editor	1657026894275	\N	0
 8f58cbec-6e40-4bab-bff0-1c5ff899fe2e	jwt-viewer@example.com	jwt-viewer@example.com	f	t	\N	Viewer	JWT	grafana	jwt-viewer	1657026933578	\N	0
@@ -3368,20 +3360,6 @@ c014bfd1-a210-4e7a-8a26-35d1f5e8f1ed	74e29604-ff35-42bb-a26d-4d0b81ef0917
 86a4b6a9-93db-4177-a72f-95fd937a2c8d	74e29604-ff35-42bb-a26d-4d0b81ef0917
 619ba870-921e-4f28-b26c-89b11f39dddf	74e29604-ff35-42bb-a26d-4d0b81ef0917
 4a3204aa-320e-4584-b8ee-ea2989b3f330	74e29604-ff35-42bb-a26d-4d0b81ef0917
-c49bddc6-ec92-4caa-bc04-57ba80a92eb9	c685749a-645e-4396-b9ee-6eedbfd89d5e
-0f3d47bb-002a-4cd0-a502-725f224308a7	c685749a-645e-4396-b9ee-6eedbfd89d5e
-f1311ecb-6a6a-49d6-bb16-5132daf93a64	c685749a-645e-4396-b9ee-6eedbfd89d5e
-18a7066b-fe71-410e-9581-69f78347ec29	c685749a-645e-4396-b9ee-6eedbfd89d5e
-c49bddc6-ec92-4caa-bc04-57ba80a92eb9	56eff2b3-e36a-4e3e-84a1-361ad312667b
-0f3d47bb-002a-4cd0-a502-725f224308a7	56eff2b3-e36a-4e3e-84a1-361ad312667b
-f1311ecb-6a6a-49d6-bb16-5132daf93a64	56eff2b3-e36a-4e3e-84a1-361ad312667b
-18a7066b-fe71-410e-9581-69f78347ec29	56eff2b3-e36a-4e3e-84a1-361ad312667b
-60f1b1ea-9059-41ea-acef-573643b24709	c685749a-645e-4396-b9ee-6eedbfd89d5e
-c4c74006-c346-48cf-8cf1-1617e3e1cde1	56eff2b3-e36a-4e3e-84a1-361ad312667b
-c49bddc6-ec92-4caa-bc04-57ba80a92eb9	bdce2246-bb51-4f55-bb81-b7b8856225bc
-0f3d47bb-002a-4cd0-a502-725f224308a7	bdce2246-bb51-4f55-bb81-b7b8856225bc
-f1311ecb-6a6a-49d6-bb16-5132daf93a64	bdce2246-bb51-4f55-bb81-b7b8856225bc
-18a7066b-fe71-410e-9581-69f78347ec29	bdce2246-bb51-4f55-bb81-b7b8856225bc
 c49bddc6-ec92-4caa-bc04-57ba80a92eb9	6db3c5e5-b84b-4f9d-a7a8-8d05b03c929d
 0f3d47bb-002a-4cd0-a502-725f224308a7	6db3c5e5-b84b-4f9d-a7a8-8d05b03c929d
 f1311ecb-6a6a-49d6-bb16-5132daf93a64	6db3c5e5-b84b-4f9d-a7a8-8d05b03c929d

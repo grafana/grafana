@@ -44,9 +44,9 @@ docker-compose exec -T oauthkeycloakdb bash -c "pg_dump -U keycloak keycloak" > 
 
 - keycloak admin:                     http://localhost:8087
 - keycloak admin login:               admin:admin
-- grafana oauth viewer login:          oauth-viewer:grafana
-- grafana oauth editor login:          oauth-editor:grafana
-- grafana oauth admin login:           oauth-admin:grafana
+- grafana jwt viewer login:          jwt-viewer:grafana
+- grafana jwt editor login:          jwt-editor:grafana
+- grafana jwt admin login:           jwt-admin:grafana
 
 # Troubleshooting
 
