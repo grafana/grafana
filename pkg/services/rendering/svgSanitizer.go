@@ -150,7 +150,7 @@ func (rs *RenderingService) sanitizeSVGViaPlugin(ctx context.Context, req *Sanit
 	domPurifyConfig, err := json.Marshal(domPurifySvgConfig)
 	if err != nil {
 		rs.log.Error("Sanitizer - plugin: failed to parse domPurifyConfig")
-		return nil, errors.New(fmt.Sprintf("Sanitizer - plugin: failed to parse domPurifyConfig %s", err))
+		return nil, fmt.Errorf("sanitizer - plugin: failed to parse domPurifyConfig %s", err)
 	}
 	grpcReq := &pluginextensionv2.SanitizeRequest{
 		Filename:   req.Filename,
