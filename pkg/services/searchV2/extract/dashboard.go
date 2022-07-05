@@ -37,6 +37,7 @@ func (d *datasourceVariableLookup) getDsRefsByTemplateVariableValue(value string
 		}
 		return []DataSourceRef{*candidateDs}
 	case "$__all":
+		// TODO: filter datasources by template variable's regex
 		return d.dsLookup.ByType(datasourceType)
 	case "":
 		return []DataSourceRef{}
