@@ -1,6 +1,6 @@
 import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
 import deepEqual from 'fast-deep-equal';
-import { groupBy } from 'lodash';
+import { flatten, groupBy } from 'lodash';
 import { identity, Observable, of, SubscriptionLike, Unsubscribable } from 'rxjs';
 import { mergeMap, throttleTime } from 'rxjs/operators';
 
@@ -246,24 +246,31 @@ export function cancelQueries(exploreId: ExploreId): ThunkResult<void> {
   };
 }
 
+const addDatasourceToQueries = (datasource: DataSourceApi, queries: DataQuery[]) => {
+  const dataSourceRef = datasource.getRef();
+  return queries.map((query: DataQuery) => {
+    return { ...query, datasource: dataSourceRef };
+  });
+};
+
 const getImportableQueries = async (
   targetDataSource: DataSourceApi,
   sourceDataSource: DataSourceApi,
   queries: DataQuery[]
 ): Promise<DataQuery[]> => {
+  let queriesOut: DataQuery[] = [];
   if (sourceDataSource.meta?.id === targetDataSource.meta?.id) {
     // Keep same queries if same type of datasource, but delete datasource query property to prevent mismatch of new and old data source instance
-    return queries.map(({ datasource, ...query }) => query);
+    queriesOut = queries;
   } else if (hasQueryExportSupport(sourceDataSource) && hasQueryImportSupport(targetDataSource)) {
     const abstractQueries = await sourceDataSource.exportToAbstractQueries(queries);
-    return targetDataSource.importFromAbstractQueries(abstractQueries);
+    queriesOut = await targetDataSource.importFromAbstractQueries(abstractQueries);
   } else if (targetDataSource.importQueries) {
     // Datasource-specific importers
-    return targetDataSource.importQueries(queries, sourceDataSource);
-  } else {
-    // Default is blank queries
-    return await ensureQueries();
+    queriesOut = await targetDataSource.importQueries(queries, sourceDataSource);
   }
+  // add new datasource to queries before returning
+  return addDatasourceToQueries(targetDataSource, queriesOut);
 };
 
 /**
@@ -297,33 +304,13 @@ export const importQueries = (
     // If going from mixed, see what queries you keep by their individual datasources
     else if (sourceDataSource.name === MIXED_DATASOURCE_NAME) {
       const groupedQueries = groupBy(queries, (query) => query.datasource?.uid);
-      console.log(groupedQueries);
-      const groupedImportableQueries = await Object.keys(groupedQueries).map(async (key: string) => {
-        const queryDatasource = await getDataSourceSrv().get({ uid: key });
-        const groupedQueriesImport = await getImportableQueries(targetDataSource, queryDatasource, groupedQueries[key]);
-        return groupedQueriesImport;
-      });
-
-      console.log(groupedImportableQueries);
-
-      /* queries.map(async query => {
-        const queryDatasource = await getDatasourceSrv().get(query.datasource);
-        if (queryDatasource.meta?.id  === targetDataSource.meta?.id) {
-          return query;
-        } else if (hasQueryExportSupport(queryDatasource) && hasQueryImportSupport(targetDataSource)) {
-          const abstractQueries = await queryDatasource.exportToAbstractQueries([query]);
-          const importedQueries = await targetDataSource.importFromAbstractQueries(abstractQueries);
-          return importedQueries[0];
-        } else if (targetDataSource.importQueries) {
-          // Datasource-specific importers
-          const importedQueries = await targetDataSource.importQueries([query], queryDatasource);
-          return importedQueries[0];
-        } else {
-          // Default is blank queries
-          const importedQueries = await ensureQueries();
-          return importedQueries[0];
-        }
-      })*/
+      const groupedImportableQueries = await Promise.all(
+        Object.keys(groupedQueries).map(async (key: string) => {
+          const queryDatasource = await getDataSourceSrv().get({ uid: key });
+          return await getImportableQueries(targetDataSource, queryDatasource, groupedQueries[key]);
+        })
+      );
+      importedQueries = flatten(groupedImportableQueries.filter((arr) => arr.length > 0));
     } else {
       importedQueries = await getImportableQueries(targetDataSource, sourceDataSource, queries);
     }
