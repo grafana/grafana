@@ -68,7 +68,7 @@ func (s *ServiceImpl) DeleteDashboardSnapshot(ctx context.Context, cmd *dashboar
 	return s.store.DeleteDashboardSnapshot(ctx, cmd)
 }
 
-func (s *ServiceImpl) SearchDashboardSnapshots(ctx context.Context, query *dashboardsnapshots.GetDashboardSnapshotsQuery) error {
+func (s *ServiceImpl) SearchDashboardSnapshots(ctx context.Context, query *dashboardsnapshots.GetDashboardSnapshotsQuery) (dashboardsnapshots.DashboardSnapshotsList, error) {
 	return s.store.SearchDashboardSnapshots(ctx, query)
 }
 

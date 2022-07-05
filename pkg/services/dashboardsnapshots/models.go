@@ -99,6 +99,4 @@ type GetDashboardSnapshotsQuery struct {
 	Limit        int
 	OrgId        int64
 	SignedInUser *models.SignedInUser
-
-	Result DashboardSnapshotsList
 }

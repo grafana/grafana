@@ -73,12 +73,12 @@ func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 				OrgId:        1,
 				SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_ADMIN},
 			}
-			err := dashStore.SearchDashboardSnapshots(context.Background(), &query)
+			snapshots, err := dashStore.SearchDashboardSnapshots(context.Background(), &query)
 			require.NoError(t, err)
 
 			t.Run("Should return all the snapshots", func(t *testing.T) {
-				assert.NotNil(t, query.Result)
-				assert.Len(t, query.Result, 1)
+				assert.NotNil(t, snapshots)
+				assert.Len(t, snapshots, 1)
 			})
 		})
 
@@ -87,12 +87,12 @@ func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 				OrgId:        1,
 				SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_EDITOR, UserId: 1000},
 			}
-			err := dashStore.SearchDashboardSnapshots(context.Background(), &query)
+			snapshots, err := dashStore.SearchDashboardSnapshots(context.Background(), &query)
 			require.NoError(t, err)
 
 			t.Run("Should return all the snapshots", func(t *testing.T) {
-				require.NotNil(t, query.Result)
-				assert.Len(t, query.Result, 1)
+				require.NotNil(t, snapshots)
+				assert.Len(t, snapshots, 1)
 			})
 		})
 
@@ -101,12 +101,12 @@ func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 				OrgId:        1,
 				SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_EDITOR, UserId: 2},
 			}
-			err := dashStore.SearchDashboardSnapshots(context.Background(), &query)
+			snapshots, err := dashStore.SearchDashboardSnapshots(context.Background(), &query)
 			require.NoError(t, err)
 
 			t.Run("Should not return any snapshots", func(t *testing.T) {
-				require.NotNil(t, query.Result)
-				assert.Empty(t, query.Result)
+				require.NotNil(t, snapshots)
+				assert.Empty(t, snapshots)
 			})
 		})
 
@@ -128,11 +128,11 @@ func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 					OrgId:        1,
 					SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_EDITOR, IsAnonymous: true, UserId: 0},
 				}
-				err := dashStore.SearchDashboardSnapshots(context.Background(), &query)
+				snapshots, err := dashStore.SearchDashboardSnapshots(context.Background(), &query)
 				require.NoError(t, err)
 
-				require.NotNil(t, query.Result)
-				assert.Empty(t, query.Result)
+				require.NotNil(t, snapshots)
+				assert.Empty(t, snapshots)
 			})
 		})
 
@@ -169,11 +169,11 @@ func TestIntegrationDeleteExpiredSnapshots(t *testing.T) {
 			OrgId:        1,
 			SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_ADMIN},
 		}
-		err = dashStore.SearchDashboardSnapshots(context.Background(), &query)
+		snapshots, err := dashStore.SearchDashboardSnapshots(context.Background(), &query)
 		require.NoError(t, err)
 
-		assert.Len(t, query.Result, 1)
-		assert.Equal(t, nonExpiredSnapshot.Key, query.Result[0].Key)
+		assert.Len(t, snapshots, 1)
+		assert.Equal(t, nonExpiredSnapshot.Key, snapshots[0].Key)
 
 		err = dashStore.DeleteExpiredSnapshots(context.Background(), &dashboardsnapshots.DeleteExpiredSnapshotsCommand{})
 		require.NoError(t, err)
@@ -182,11 +182,11 @@ func TestIntegrationDeleteExpiredSnapshots(t *testing.T) {
 			OrgId:        1,
 			SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_ADMIN},
 		}
-		err = dashStore.SearchDashboardSnapshots(context.Background(), &query)
+		snapshots, err = dashStore.SearchDashboardSnapshots(context.Background(), &query)
 		require.NoError(t, err)
 
-		require.Len(t, query.Result, 1)
-		require.Equal(t, nonExpiredSnapshot.Key, query.Result[0].Key)
+		require.Len(t, snapshots, 1)
+		require.Equal(t, nonExpiredSnapshot.Key, snapshots[0].Key)
 	})
 }
 

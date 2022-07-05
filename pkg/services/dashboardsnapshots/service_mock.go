@@ -68,28 +68,46 @@ func (_m *MockService) DeleteExpiredSnapshots(_a0 context.Context, _a1 *DeleteEx
 func (_m *MockService) GetDashboardSnapshot(_a0 context.Context, _a1 *GetDashboardSnapshotQuery) (*DashboardSnapshot, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *GetDashboardSnapshotQuery) error); ok {
+	var r0 *DashboardSnapshot
+	if rf, ok := ret.Get(0).(func(context.Context, *GetDashboardSnapshotQuery) *DashboardSnapshot); ok {
 		r0 = rf(_a0, _a1)
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*DashboardSnapshot)
+		}
 	}
 
-	return nil, r0
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *GetDashboardSnapshotQuery) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // SearchDashboardSnapshots provides a mock function with given fields: _a0, _a1
-func (_m *MockService) SearchDashboardSnapshots(_a0 context.Context, _a1 *GetDashboardSnapshotsQuery) error {
+func (_m *MockService) SearchDashboardSnapshots(_a0 context.Context, _a1 *GetDashboardSnapshotsQuery) (DashboardSnapshotsList, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *GetDashboardSnapshotsQuery) error); ok {
+	var r0 DashboardSnapshotsList
+	if rf, ok := ret.Get(0).(func(context.Context, *GetDashboardSnapshotsQuery) DashboardSnapshotsList); ok {
 		r0 = rf(_a0, _a1)
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(DashboardSnapshotsList)
+		}
 	}
 
-	return r0
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *GetDashboardSnapshotsQuery) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 type mockConstructorTestingTNewMockService interface {

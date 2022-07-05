@@ -10,5 +10,5 @@ type Service interface {
 	DeleteDashboardSnapshot(context.Context, *DeleteDashboardSnapshotCommand) error
 	DeleteExpiredSnapshots(context.Context, *DeleteExpiredSnapshotsCommand) error
 	GetDashboardSnapshot(context.Context, *GetDashboardSnapshotQuery) (*DashboardSnapshot, error)
-	SearchDashboardSnapshots(context.Context, *GetDashboardSnapshotsQuery) error
+	SearchDashboardSnapshots(context.Context, *GetDashboardSnapshotsQuery) (DashboardSnapshotsList, error)
 }
