@@ -16,7 +16,7 @@ type SetupConfigParams = {
   onUPlotClick: () => void;
   setFocusedSeriesIdx: Dispatch<SetStateAction<number | null>>;
   setFocusedPointIdx: Dispatch<SetStateAction<number | null>>;
-  setCoords: Dispatch<SetStateAction<CartesianCoords2D | null>>;
+  setCoords: Dispatch<SetStateAction<{ viewport: CartesianCoords2D; canvas: CartesianCoords2D } | null>>;
   setHover: Dispatch<SetStateAction<HoverEvent | undefined>>;
   isToolTipOpen: MutableRefObject<boolean>;
 };
@@ -65,7 +65,7 @@ export const setupConfig = ({
 
           const { x, y } = positionTooltip(u, rect);
           if (x !== undefined && y !== undefined && !isToolTipOpen.current) {
-            setCoords({ x, y });
+            setCoords({ canvas: { x: u.cursor.left!, y: u.cursor.top! }, viewport: { x, y } });
           }
         },
         u

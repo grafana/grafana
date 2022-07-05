@@ -82,7 +82,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
   const isToolTipOpen = useRef<boolean>(false);
 
   const [hover, setHover] = useState<HoverEvent | undefined>(undefined);
-  const [coords, setCoords] = useState<CartesianCoords2D | null>(null);
+  const [coords, setCoords] = useState<{ viewport: CartesianCoords2D; canvas: CartesianCoords2D } | null>(null);
   const [focusedSeriesIdx, setFocusedSeriesIdx] = useState<number | null>(null);
   const [focusedPointIdx, setFocusedPointIdx] = useState<number | null>(null);
   const [shouldDisplayCloseButton, setShouldDisplayCloseButton] = useState<boolean>(false);
@@ -105,6 +105,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
   const chartDisplay = 'viz' in info ? info : null;
 
   const structureRef = useRef(10000);
+
   useMemo(() => {
     structureRef.current++;
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -289,9 +290,10 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
           <Portal>
             {hover && coords && (
               <VizTooltipContainer
-                position={{ x: coords.x, y: coords.y }}
+                position={{ x: coords.viewport.x, y: coords.viewport.y }}
                 offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}
                 allowPointerEvents={isToolTipOpen.current}
+                onClose={onCloseToolTip}
               >
                 {renderTooltip(info.aligned, focusedSeriesIdx, focusedPointIdx)}
               </VizTooltipContainer>

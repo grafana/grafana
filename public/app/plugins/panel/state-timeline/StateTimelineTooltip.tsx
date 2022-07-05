@@ -9,7 +9,7 @@ import {
   TimeZone,
   LinkModel,
 } from '@grafana/data';
-import { LinkButton, SeriesTableRow, useTheme2, VerticalGroup } from '@grafana/ui';
+import { MenuItem, SeriesTableRow, useTheme2 } from '@grafana/ui';
 
 import { findNextStateIndex, fmtDuration } from './utils';
 
@@ -19,6 +19,7 @@ interface StateTimelineTooltipProps {
   seriesIdx: number;
   datapointIdx: number;
   timeZone: TimeZone;
+  onAnnotationAdd?: () => void;
 }
 
 export const StateTimelineTooltip: React.FC<StateTimelineTooltipProps> = ({
@@ -27,6 +28,7 @@ export const StateTimelineTooltip: React.FC<StateTimelineTooltipProps> = ({
   seriesIdx,
   datapointIdx,
   timeZone,
+  onAnnotationAdd,
 }) => {
   const theme = useTheme2();
 
@@ -93,30 +95,34 @@ export const StateTimelineTooltip: React.FC<StateTimelineTooltipProps> = ({
   }
 
   return (
-    <div style={{ fontSize: theme.typography.bodySmall.fontSize }}>
-      {fieldDisplayName}
-      <br />
-      <SeriesTableRow label={display.text} color={display.color || FALLBACK_COLOR} isActive />
-      From <strong>{xFieldFmt(xField.values.get(datapointIdx!)).text}</strong>
-      {toFragment}
-      {durationFragment}
-      {links.length > 0 && (
-        <VerticalGroup>
-          {links.map((link, i) => (
-            <LinkButton
+    <div>
+      <div style={{ fontSize: theme.typography.bodySmall.fontSize }}>
+        {fieldDisplayName}
+        <br />
+        <SeriesTableRow label={display.text} color={display.color || FALLBACK_COLOR} isActive />
+        From <strong>{xFieldFmt(xField.values.get(datapointIdx!)).text}</strong>
+        {toFragment}
+        {durationFragment}
+      </div>
+      <div
+        style={{
+          margin: theme.spacing(1, -1, -1, -1),
+          borderTop: `1px solid ${theme.colors.border.weak}`,
+        }}
+      >
+        {onAnnotationAdd && <MenuItem label={'Add annotation'} icon={'comment-alt'} onClick={onAnnotationAdd} />}
+        {links.length > 0 &&
+          links.map((link, i) => (
+            <MenuItem
               key={i}
               icon={'external-link-alt'}
               target={link.target}
-              href={link.href}
+              label={link.title}
+              url={link.href}
               onClick={link.onClick}
-              fill="text"
-              style={{ width: '100%' }}
-            >
-              {link.title}
-            </LinkButton>
+            />
           ))}
-        </VerticalGroup>
-      )}
+      </div>
     </div>
   );
 };

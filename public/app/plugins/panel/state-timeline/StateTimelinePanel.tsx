@@ -9,7 +9,6 @@ import { getLastStreamingDataFramePacket } from 'app/features/live/data/Streamin
 import { HoverEvent, setupConfig } from '../barchart/config';
 import { AnnotationEditorPlugin } from '../timeseries/plugins/AnnotationEditorPlugin';
 import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';
-import { ContextMenuPlugin } from '../timeseries/plugins/ContextMenuPlugin';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 
 import { StateTimelineTooltip } from './StateTimelineTooltip';
@@ -40,7 +39,7 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
   const isToolTipOpen = useRef<boolean>(false);
 
   const [hover, setHover] = useState<HoverEvent | undefined>(undefined);
-  const [coords, setCoords] = useState<CartesianCoords2D | null>(null);
+  const [coords, setCoords] = useState<{ viewport: CartesianCoords2D; canvas: CartesianCoords2D } | null>(null);
   const [focusedSeriesIdx, setFocusedSeriesIdx] = useState<number | null>(null);
   const [focusedPointIdx, setFocusedPointIdx] = useState<number | null>(null);
   const [shouldDisplayCloseButton, setShouldDisplayCloseButton] = useState<boolean>(false);
@@ -70,7 +69,7 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
   );
 
   const renderCustomTooltip = useCallback(
-    (alignedData: DataFrame, seriesIdx: number | null, datapointIdx: number | null) => {
+    (alignedData: DataFrame, seriesIdx: number | null, datapointIdx: number | null, onAnnotationAdd?: () => void) => {
       const data = frames ?? [];
       // Count value fields in the state-timeline-ready frame
       const valueFieldsCount = data.reduce(
@@ -113,6 +112,7 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
             seriesIdx={seriesIdx}
             datapointIdx={datapointIdx}
             timeZone={timeZone}
+            onAnnotationAdd={onAnnotationAdd}
           />
         </>
       );
@@ -164,53 +164,48 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
         return (
           <>
             <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
-            <Portal>
-              {hover && coords && (
-                <VizTooltipContainer
-                  position={{ x: coords.x, y: coords.y }}
-                  offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}
-                  allowPointerEvents={isToolTipOpen.current}
-                >
-                  {renderCustomTooltip(alignedFrame, focusedSeriesIdx, focusedPointIdx)}
-                </VizTooltipContainer>
-              )}
-            </Portal>
+
             <OutsideRangePlugin config={config} onChangeTimeRange={onChangeTimeRange} />
 
             {data.annotations && (
               <AnnotationsPlugin annotations={data.annotations} config={config} timeZone={timeZone} />
             )}
 
-            {enableAnnotationCreation && (
+            {enableAnnotationCreation ? (
               <AnnotationEditorPlugin data={alignedFrame} timeZone={timeZone} config={config}>
                 {({ startAnnotating }) => {
                   return (
-                    <ContextMenuPlugin
-                      data={alignedFrame}
-                      config={config}
-                      timeZone={timeZone}
-                      replaceVariables={replaceVariables}
-                      defaultItems={[
-                        {
-                          items: [
-                            {
-                              label: 'Add annotation',
-                              ariaLabel: 'Add annotation',
-                              icon: 'comment-alt',
-                              onClick: (e, p) => {
-                                if (!p) {
-                                  return;
-                                }
-                                startAnnotating({ coords: p.coords });
-                              },
-                            },
-                          ],
-                        },
-                      ]}
-                    />
+                    <Portal>
+                      {hover && coords && (
+                        <VizTooltipContainer
+                          position={{ x: coords.viewport.x, y: coords.viewport.y }}
+                          offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}
+                          allowPointerEvents={isToolTipOpen.current}
+                          onClose={onCloseToolTip}
+                        >
+                          {renderCustomTooltip(alignedFrame, focusedSeriesIdx, focusedPointIdx, () => {
+                            startAnnotating({ coords: { plotCanvas: coords.canvas, viewport: coords.viewport } });
+                            onCloseToolTip();
+                          })}
+                        </VizTooltipContainer>
+                      )}
+                    </Portal>
                   );
                 }}
               </AnnotationEditorPlugin>
+            ) : (
+              <Portal>
+                {hover && coords && (
+                  <VizTooltipContainer
+                    position={{ x: coords.viewport.x, y: coords.viewport.y }}
+                    offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}
+                    allowPointerEvents={isToolTipOpen.current}
+                    onClose={onCloseToolTip}
+                  >
+                    {renderCustomTooltip(alignedFrame, focusedSeriesIdx, focusedPointIdx)}
+                  </VizTooltipContainer>
+                )}
+              </Portal>
             )}
           </>
         );

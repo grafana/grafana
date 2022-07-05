@@ -9,7 +9,7 @@ import {
   TimeZone,
   LinkModel,
 } from '@grafana/data';
-import { LinkButton, SeriesTableRow, useTheme2, VerticalGroup } from '@grafana/ui';
+import { MenuItem, SeriesTableRow, useTheme2 } from '@grafana/ui';
 
 interface StatusHistoryTooltipProps {
   data: DataFrame[];
@@ -62,26 +62,30 @@ export const StatusHistoryTooltip: React.FC<StatusHistoryTooltipProps> = ({
     : null;
 
   return (
-    <div style={{ fontSize: theme.typography.bodySmall.fontSize }}>
-      {fieldDisplayName}
-      <br />
-      <SeriesTableRow label={display.text} color={display.color || FALLBACK_COLOR} isActive />
+    <div>
+      <div style={{ fontSize: theme.typography.bodySmall.fontSize }}>
+        {fieldDisplayName}
+        <br />
+        <SeriesTableRow label={display.text} color={display.color || FALLBACK_COLOR} isActive />
+      </div>
       {links.length > 0 && (
-        <VerticalGroup>
+        <div
+          style={{
+            margin: theme.spacing(1, -1, -1, -1),
+            borderTop: `1px solid ${theme.colors.border.weak}`,
+          }}
+        >
           {links.map((link, i) => (
-            <LinkButton
+            <MenuItem
               key={i}
               icon={'external-link-alt'}
               target={link.target}
-              href={link.href}
+              label={link.title}
+              url={link.href}
               onClick={link.onClick}
-              fill="text"
-              style={{ width: '100%' }}
-            >
-              {link.title}
-            </LinkButton>
+            />
           ))}
-        </VerticalGroup>
+        </div>
       )}
     </div>
   );

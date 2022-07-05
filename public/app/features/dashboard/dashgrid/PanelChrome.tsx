@@ -103,7 +103,6 @@ export class PanelChrome extends PureComponent<Props, State> {
 
   canAddAnnotation = () => {
     let canAdd = true;
-
     if (contextSrv.accessControlEnabled()) {
       canAdd = !!this.props.dashboard.meta.annotationsPermissions?.dashboard.canAdd;
     }
