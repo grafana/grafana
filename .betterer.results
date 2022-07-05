@@ -5106,13 +5106,13 @@ exports[`better eslint`] = {
       [45, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
       [92, 48, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/dashboard/services/PublicDashboardDataSource.ts:1922680204": [
+    "public/app/features/dashboard/services/PublicDashboardDataSource.ts:102072381": [
       [14, 61, 3, "Unexpected any. Specify a different type.", "193409811"],
       [20, 12, 16, "Do not use any type assertions.", "1747412709"],
-      [41, 34, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [59, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [76, 45, 22, "Do not use any type assertions.", "1838499175"],
-      [84, 28, 3, "Unexpected any. Specify a different type.", "193409811"]
+      [43, 34, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [61, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [78, 45, 22, "Do not use any type assertions.", "1838499175"],
+      [86, 28, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/dashboard/services/TimeSrv.test.ts:1828409802": [
       [16, 18, 3, "Unexpected any. Specify a different type.", "193409811"],

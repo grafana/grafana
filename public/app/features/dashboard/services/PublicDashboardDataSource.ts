@@ -23,6 +23,8 @@ export class PublicDashboardDataSource extends DataSourceApi<any> {
       jsonData: {},
       access: 'proxy',
     });
+
+    this.interval = '1min';
   }
 
   /**
