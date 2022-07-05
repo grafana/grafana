@@ -462,9 +462,10 @@ func dashboardsDiffer(dbDashboards []dashboard, indexedDashboards []indexedDashb
 	})
 
 	for i := 0; i < len(dbDashboards); i++ {
-		if dbDashboards[i].uid != indexedDashboards[i].UID && dbDashboards[i].uid != "" && indexedDashboards[i].UID != "" {
+		if dbDashboards[i].uid != indexedDashboards[i].UID {
 			return true
 		}
+		// For attached general folder (with empty uid) we always have different times. So skipping the check for it.
 		if dbDashboards[i].updated.UTC() != indexedDashboards[i].Updated.UTC() && dbDashboards[i].uid != "" && indexedDashboards[i].UID != "" {
 			return true
 		}
