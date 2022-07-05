@@ -322,7 +322,7 @@ func (rs *RenderingService) SanitizeSVG(ctx context.Context, req *SanitizeSVGReq
 	}
 
 	if !capability.IsSupported {
-		return nil, fmt.Errorf("svg sanitization unsupported. required image renderer version: %s", capability.SemverConstraint)
+		return nil, fmt.Errorf("svg sanitization unsupported, requires image renderer version: %s", capability.SemverConstraint)
 	}
 
 	start := time.Now()
