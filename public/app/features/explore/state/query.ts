@@ -1,11 +1,11 @@
 import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
 import deepEqual from 'fast-deep-equal';
+import { groupBy } from 'lodash';
 import { identity, Observable, of, SubscriptionLike, Unsubscribable } from 'rxjs';
 import { mergeMap, throttleTime } from 'rxjs/operators';
 
 import {
   AbsoluteTimeRange,
-  CoreApp,
   DataQuery,
   DataQueryErrorType,
   DataQueryResponse,
@@ -20,7 +20,7 @@ import {
   QueryFixAction,
   toLegacyResponseData,
 } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
+import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import {
   buildQueryTransaction,
   ensureQueries,
@@ -246,6 +246,26 @@ export function cancelQueries(exploreId: ExploreId): ThunkResult<void> {
   };
 }
 
+const getImportableQueries = async (
+  targetDataSource: DataSourceApi,
+  sourceDataSource: DataSourceApi,
+  queries: DataQuery[]
+): Promise<DataQuery[]> => {
+  if (sourceDataSource.meta?.id === targetDataSource.meta?.id) {
+    // Keep same queries if same type of datasource, but delete datasource query property to prevent mismatch of new and old data source instance
+    return queries.map(({ datasource, ...query }) => query);
+  } else if (hasQueryExportSupport(sourceDataSource) && hasQueryImportSupport(targetDataSource)) {
+    const abstractQueries = await sourceDataSource.exportToAbstractQueries(queries);
+    return targetDataSource.importFromAbstractQueries(abstractQueries);
+  } else if (targetDataSource.importQueries) {
+    // Datasource-specific importers
+    return targetDataSource.importQueries(queries, sourceDataSource);
+  } else {
+    // Default is blank queries
+    return await ensureQueries();
+  }
+};
+
 /**
  * Import queries from previous datasource if possible eg Loki and Prometheus have similar query language so the
  * labels part can be reused to get similar data.
@@ -268,27 +288,47 @@ export const importQueries = (
     }
 
     let importedQueries = queries;
-    // Check if queries can be imported from previously selected datasource
+    // If going to mixed, keep queries with source datasource
     if (targetDataSource.name === MIXED_DATASOURCE_NAME) {
       importedQueries = queries.map((query) => {
         return { ...query, datasource: sourceDataSource.getRef() };
       });
-    } else if (sourceDataSource.meta?.id === targetDataSource.meta?.id) {
-      // Keep same queries if same type of datasource, but delete datasource query property to prevent mismatch of new and old data source instance
-      importedQueries = queries.map(({ datasource, ...query }) => query);
-    } else if (hasQueryExportSupport(sourceDataSource) && hasQueryImportSupport(targetDataSource)) {
-      const abstractQueries = await sourceDataSource.exportToAbstractQueries(queries);
-      importedQueries = await targetDataSource.importFromAbstractQueries(abstractQueries);
-    } else if (targetDataSource.importQueries) {
-      // Datasource-specific importers
-      importedQueries = await targetDataSource.importQueries(queries, sourceDataSource);
+    }
+    // If going from mixed, see what queries you keep by their individual datasources
+    else if (sourceDataSource.name === MIXED_DATASOURCE_NAME) {
+      const groupedQueries = groupBy(queries, (query) => query.datasource?.uid);
+      console.log(groupedQueries);
+      const groupedImportableQueries = await Object.keys(groupedQueries).map(async (key: string) => {
+        const queryDatasource = await getDataSourceSrv().get({ uid: key });
+        const groupedQueriesImport = await getImportableQueries(targetDataSource, queryDatasource, groupedQueries[key]);
+        return groupedQueriesImport;
+      });
+
+      console.log(groupedImportableQueries);
+
+      /* queries.map(async query => {
+        const queryDatasource = await getDatasourceSrv().get(query.datasource);
+        if (queryDatasource.meta?.id  === targetDataSource.meta?.id) {
+          return query;
+        } else if (hasQueryExportSupport(queryDatasource) && hasQueryImportSupport(targetDataSource)) {
+          const abstractQueries = await queryDatasource.exportToAbstractQueries([query]);
+          const importedQueries = await targetDataSource.importFromAbstractQueries(abstractQueries);
+          return importedQueries[0];
+        } else if (targetDataSource.importQueries) {
+          // Datasource-specific importers
+          const importedQueries = await targetDataSource.importQueries([query], queryDatasource);
+          return importedQueries[0];
+        } else {
+          // Default is blank queries
+          const importedQueries = await ensureQueries();
+          return importedQueries[0];
+        }
+      })*/
     } else {
-      // Default is blank queries
-      importedQueries = await ensureQueries();
+      importedQueries = await getImportableQueries(targetDataSource, sourceDataSource, queries);
     }
 
     const nextQueries = await ensureQueries(importedQueries);
-
     dispatch(queriesImportedAction({ exploreId, queries: nextQueries }));
   };
 };

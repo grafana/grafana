@@ -6,7 +6,6 @@ import {
   CoreApp,
   DataQuery,
   DataQueryRequest,
-  DataSourceApi,
   dateMath,
   DateTime,
   DefaultTimeZone,
