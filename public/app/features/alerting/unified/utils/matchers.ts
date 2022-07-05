@@ -41,29 +41,33 @@ export const findAlertInstancesWithMatchers = (
   instances: Alert[],
   matchers: MatcherFieldValue[]
 ): MatchedInstance[] => {
-  const hasMatcher = (instance: Alert, matcher: MatcherFieldValue) => {
+  const matchesInstance = (instance: Alert, matcher: MatcherFieldValue) => {
     return Object.entries(instance.labels).some(([key, value]) => {
       if (!matcher.name || !matcher.value) {
         return false;
       }
-      if (matcher.operator === MatcherOperator.equal) {
-        return matcher.name === key && matcher.value === value;
+      if (matcher.name !== key) {
+        return false;
       }
-      if (matcher.operator === MatcherOperator.notEqual) {
-        return matcher.name === key && matcher.value !== value;
+      switch (matcher.operator) {
+        case MatcherOperator.equal:
+          return matcher.value === value;
+        case MatcherOperator.notEqual:
+          return matcher.value !== value;
+        case MatcherOperator.regex:
+          const regex = new RegExp(matcher.value);
+          return regex.test(value);
+        case MatcherOperator.notRegex:
+          const negregex = new RegExp(matcher.value);
+          return !negregex.test(value);
+        default:
+          return false;
       }
-      if (matcher.operator === MatcherOperator.regex) {
-        return matcher.name === key && matcher.value.match(value);
-      }
-      if (matcher.operator === MatcherOperator.notRegex) {
-        return matcher.name === key && !matcher.value.match(value);
-      }
-      return false;
     });
   };
 
   const filteredInstances = instances.filter((instance) => {
-    return matchers.every((matcher) => hasMatcher(instance, matcher));
+    return matchers.every((matcher) => matchesInstance(instance, matcher));
   });
   const mappedInstances = filteredInstances.map((instance) => ({
     id: `${instance.activeAt}-${instance.value}`,
