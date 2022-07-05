@@ -219,5 +219,9 @@ func cleanFileName(name string) string {
 	name = strings.ReplaceAll(name, "/", "-")
 	name = strings.ReplaceAll(name, "\\", "-")
 	name = strings.ReplaceAll(name, ":", "-")
+	if err := filestorage.ValidatePath(filestorage.Delimiter + name); err != nil {
+		randomName, _ := uuid.NewRandom()
+		return randomName.String()
+	}
 	return name
 }
