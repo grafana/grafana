@@ -120,11 +120,13 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 
 	if c.IsSignedIn {
 		// Assign login token to auth proxy users if enable_login_token = true
-		if hs.Cfg.AuthProxyEnabled && hs.Cfg.AuthProxyEnableLoginToken {
+		// Assign login token to jwt proxy users if enable_login_token = true
+		if (hs.Cfg.AuthProxyEnabled && hs.Cfg.AuthProxyEnableLoginToken) ||
+			(hs.Cfg.JWTAuthEnabled && hs.Cfg.JWTAuthEnableLoginToken) {
 			user := &user.User{ID: c.SignedInUser.UserId, Email: c.SignedInUser.Email, Login: c.SignedInUser.Login}
 			err := hs.loginUserWithUser(user, c)
 			if err != nil {
-				c.Handle(hs.Cfg, 500, "Failed to sign in user", err)
+				c.Handle(hs.Cfg, http.StatusInternalServerError, "Failed to sign in user", err)
 				return
 			}
 		}

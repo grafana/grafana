@@ -314,16 +314,17 @@ type Cfg struct {
 	OAuthCookieMaxAge int
 
 	// JWT Auth
-	JWTAuthEnabled       bool
-	JWTAuthHeaderName    string
-	JWTAuthEmailClaim    string
-	JWTAuthUsernameClaim string
-	JWTAuthExpectClaims  string
-	JWTAuthJWKSetURL     string
-	JWTAuthCacheTTL      time.Duration
-	JWTAuthKeyFile       string
-	JWTAuthJWKSetFile    string
-	JWTAuthAutoSignUp    bool
+	JWTAuthEnabled          bool
+	JWTAuthEnableLoginToken bool
+	JWTAuthHeaderName       string
+	JWTAuthEmailClaim       string
+	JWTAuthUsernameClaim    string
+	JWTAuthExpectClaims     string
+	JWTAuthJWKSetURL        string
+	JWTAuthCacheTTL         time.Duration
+	JWTAuthKeyFile          string
+	JWTAuthJWKSetFile       string
+	JWTAuthAutoSignUp       bool
 
 	// Dataproxy
 	SendUserHeader                 bool
@@ -1301,6 +1302,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	// JWT auth
 	authJWT := iniFile.Section("auth.jwt")
 	cfg.JWTAuthEnabled = authJWT.Key("enabled").MustBool(false)
+	cfg.JWTAuthEnableLoginToken = authJWT.Key("enable_login_token").MustBool(false)
 	cfg.JWTAuthHeaderName = valueAsString(authJWT, "header_name", "")
 	cfg.JWTAuthEmailClaim = valueAsString(authJWT, "email_claim", "")
 	cfg.JWTAuthUsernameClaim = valueAsString(authJWT, "username_claim", "")
