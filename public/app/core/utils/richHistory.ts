@@ -214,13 +214,16 @@ export function createDateStringFromTs(ts: number) {
   });
 }
 
-export function getQueryDisplayText(query: DataQuery): string {
+export function getQueryDisplayText(query: DataQuery, isMixed = false): string {
   /* If datasource doesn't have getQueryDisplayText, create query display text by
    * stringifying query that was stripped of key, refId and datasource for nicer
    * formatting and improved readability
    */
-  const strippedQuery = omit(query, ['key', 'refId', 'datasource']);
-  return JSON.stringify(strippedQuery);
+  let keysToStrip = ['key', 'refId', 'datasource'];
+  const strippedQuery = omit(query, keysToStrip);
+  const strippedQueryJSON = JSON.stringify(strippedQuery);
+  const prefix = isMixed ? query.datasource?.type : undefined;
+  return `${prefix ? prefix + ': ' : ''}${strippedQueryJSON}`;
 }
 
 export function createQueryHeading(query: RichHistoryQuery, sortOrder: SortOrder) {
@@ -241,7 +244,7 @@ export function createQueryText(query: DataQuery, queryDsInstance: DataSourceApi
     return queryDsInstance.getQueryDisplayText(query);
   }
 
-  return getQueryDisplayText(query);
+  return getQueryDisplayText(query, queryDsInstance?.meta.mixed);
 }
 
 export function mapQueriesToHeadings(query: RichHistoryQuery[], sortOrder: SortOrder) {
@@ -264,7 +267,7 @@ export function mapQueriesToHeadings(query: RichHistoryQuery[], sortOrder: SortO
  */
 export function createDatasourcesList() {
   return getDataSourceSrv()
-    .getList()
+    .getList({ mixed: true })
     .map((dsSettings) => {
       return {
         name: dsSettings.name,
