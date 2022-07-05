@@ -2,28 +2,28 @@ package database
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 // retrieves public dashboard configuration
-func (d *DashboardStore) GetPublicDashboard(uid string) (*models.PublicDashboard, *models.Dashboard, error) {
-	if uid == "" {
-		return nil, nil, models.ErrPublicDashboardIdentifierNotSet
+func (d *DashboardStore) GetPublicDashboard(ctx context.Context, accessToken string) (*models.PublicDashboard, *models.Dashboard, error) {
+	if accessToken == "" {
+		return nil, nil, dashboards.ErrPublicDashboardIdentifierNotSet
 	}
 
 	// get public dashboard
-	pdRes := &models.PublicDashboard{Uid: uid}
-	err := d.sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	pdRes := &models.PublicDashboard{AccessToken: accessToken}
+	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		has, err := sess.Get(pdRes)
 		if err != nil {
 			return err
 		}
 		if !has {
-			return models.ErrPublicDashboardNotFound
+			return dashboards.ErrPublicDashboardNotFound
 		}
 		return nil
 	})
@@ -34,13 +34,13 @@ func (d *DashboardStore) GetPublicDashboard(uid string) (*models.PublicDashboard
 
 	// find dashboard
 	dashRes := &models.Dashboard{OrgId: pdRes.OrgId, Uid: pdRes.DashboardUid}
-	err = d.sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err = d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		has, err := sess.Get(dashRes)
 		if err != nil {
 			return err
 		}
 		if !has {
-			return models.ErrPublicDashboardNotFound
+			return dashboards.ErrPublicDashboardNotFound
 		}
 		return nil
 	})
@@ -53,44 +53,43 @@ func (d *DashboardStore) GetPublicDashboard(uid string) (*models.PublicDashboard
 }
 
 // generates a new unique uid to retrieve a public dashboard
-func generateNewPublicDashboardUid(sess *sqlstore.DBSession) (string, error) {
-	for i := 0; i < 3; i++ {
-		uid := util.GenerateShortUID()
+func (d *DashboardStore) GenerateNewPublicDashboardUid(ctx context.Context) (string, error) {
+	var uid string
 
-		exists, err := sess.Get(&models.PublicDashboard{Uid: uid})
-		if err != nil {
-			return "", err
+	err := d.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		for i := 0; i < 3; i++ {
+			uid = util.GenerateShortUID()
+
+			exists, err := sess.Get(&models.PublicDashboard{Uid: uid})
+			if err != nil {
+				return err
+			}
+
+			if !exists {
+				return nil
+			}
 		}
 
-		if !exists {
-			return uid, nil
-		}
+		return dashboards.ErrPublicDashboardFailedGenerateUniqueUid
+	})
+
+	if err != nil {
+		return "", err
 	}
 
-	return "", models.ErrPublicDashboardFailedGenerateUniqueUid
+	return uid, nil
 }
 
 // retrieves public dashboard configuration
-func (d *DashboardStore) GetPublicDashboardConfig(orgId int64, dashboardUid string) (*models.PublicDashboardConfig, error) {
+func (d *DashboardStore) GetPublicDashboardConfig(ctx context.Context, orgId int64, dashboardUid string) (*models.PublicDashboard, error) {
 	if dashboardUid == "" {
-		return nil, models.ErrDashboardIdentifierNotSet
+		return nil, dashboards.ErrDashboardIdentifierNotSet
 	}
 
-	// get dashboard and publicDashboard
-	dashRes := &models.Dashboard{OrgId: orgId, Uid: dashboardUid}
 	pdRes := &models.PublicDashboard{OrgId: orgId, DashboardUid: dashboardUid}
-	err := d.sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		// dashboard
-		has, err := sess.Get(dashRes)
-		if err != nil {
-			return err
-		}
-		if !has {
-			return models.ErrDashboardNotFound
-		}
-
+	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		// publicDashboard
-		_, err = sess.Get(pdRes)
+		_, err := sess.Get(pdRes)
 		if err != nil {
 			return err
 		}
@@ -102,46 +101,13 @@ func (d *DashboardStore) GetPublicDashboardConfig(orgId int64, dashboardUid stri
 		return nil, err
 	}
 
-	pdc := &models.PublicDashboardConfig{
-		IsPublic:        dashRes.IsPublic,
-		PublicDashboard: *pdRes,
-	}
-
-	return pdc, err
+	return pdRes, err
 }
 
 // persists public dashboard configuration
-func (d *DashboardStore) SavePublicDashboardConfig(cmd models.SavePublicDashboardConfigCommand) (*models.PublicDashboardConfig, error) {
-	if len(cmd.PublicDashboardConfig.PublicDashboard.DashboardUid) == 0 {
-		return nil, models.ErrDashboardIdentifierNotSet
-	}
-
-	err := d.sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		// update isPublic on dashboard entry
-		affectedRowCount, err := sess.Table("dashboard").Where("org_id = ? AND uid = ?", cmd.OrgId, cmd.DashboardUid).Update(map[string]interface{}{"is_public": cmd.PublicDashboardConfig.IsPublic})
-		if err != nil {
-			return err
-		}
-
-		if affectedRowCount == 0 {
-			return models.ErrDashboardNotFound
-		}
-
-		// update dashboard_public_config
-		// if we have a uid, public dashboard config exists. delete it otherwise generate a uid
-		if cmd.PublicDashboardConfig.PublicDashboard.Uid != "" {
-			if _, err = sess.Exec("DELETE FROM dashboard_public_config WHERE uid=?", cmd.PublicDashboardConfig.PublicDashboard.Uid); err != nil {
-				return err
-			}
-		} else {
-			uid, err := generateNewPublicDashboardUid(sess)
-			if err != nil {
-				return fmt.Errorf("failed to generate UID for public dashboard: %w", err)
-			}
-			cmd.PublicDashboardConfig.PublicDashboard.Uid = uid
-		}
-
-		_, err = sess.Insert(&cmd.PublicDashboardConfig.PublicDashboard)
+func (d *DashboardStore) SavePublicDashboardConfig(ctx context.Context, cmd models.SavePublicDashboardConfigCommand) (*models.PublicDashboard, error) {
+	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		_, err := sess.UseBool("is_enabled").Insert(&cmd.PublicDashboard)
 		if err != nil {
 			return err
 		}
@@ -153,5 +119,30 @@ func (d *DashboardStore) SavePublicDashboardConfig(cmd models.SavePublicDashboar
 		return nil, err
 	}
 
-	return &cmd.PublicDashboardConfig, nil
+	return &cmd.PublicDashboard, nil
+}
+
+// updates existing public dashboard configuration
+func (d *DashboardStore) UpdatePublicDashboardConfig(ctx context.Context, cmd models.SavePublicDashboardConfigCommand) error {
+	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		timeSettingsJSON, err := cmd.PublicDashboard.TimeSettings.MarshalJSON()
+		if err != nil {
+			return err
+		}
+
+		_, err = sess.Exec("UPDATE dashboard_public SET is_enabled = ?, time_settings = ?, updated_by = ?, updated_at = ? WHERE uid = ?",
+			cmd.PublicDashboard.IsEnabled,
+			string(timeSettingsJSON),
+			cmd.PublicDashboard.UpdatedBy,
+			cmd.PublicDashboard.UpdatedAt.UTC().Format("2006-01-02 15:04:05"),
+			cmd.PublicDashboard.Uid)
+
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	return err
 }
