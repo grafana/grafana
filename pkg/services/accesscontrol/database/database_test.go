@@ -150,7 +150,7 @@ func TestAccessControlStore_DeleteUserPermissions(t *testing.T) {
 		OrgID:   1,
 		UserID:  user.ID,
 		Roles:   []string{"Admin"},
-		Actions: []string{"dashboards:read"},
+		Actions: []string{"dashboards:write"},
 	})
 	require.NoError(t, err)
 	assert.Len(t, permissions, 0)
