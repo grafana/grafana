@@ -114,6 +114,21 @@ func (r *Route) ValidateReceivers(receivers map[string]struct{}) error {
 	return nil
 }
 
+func (r *Route) ValidateMuteTimes(muteTimes map[string]struct{}) error {
+	for _, name := range r.MuteTimeIntervals {
+		if _, exists := muteTimes[name]; !exists {
+			return fmt.Errorf("mute time interval '%s' does not exist", name)
+		}
+	}
+	for _, child := range r.Routes {
+		err := child.ValidateMuteTimes(muteTimes)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (mt *MuteTimeInterval) Validate() error {
 	s, err := yaml.Marshal(mt.MuteTimeInterval)
 	if err != nil {
