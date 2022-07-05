@@ -53,8 +53,7 @@ export function changeDatasource(
     );
 
     if (options?.importQueries) {
-      //TODO: WHY
-      const queries = getState().explore[exploreId]!.queries; //.filter(q => q.datasource?.type === instance.type);
+      const queries = getState().explore[exploreId]!.queries;
       await dispatch(importQueries(exploreId, queries, currentDataSourceInstance, instance));
     }
 
