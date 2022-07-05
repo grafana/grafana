@@ -14,6 +14,8 @@ export function SceneComponentEditWrapper<T extends SceneObjectBase<any>>({
   const Component = (model as any).constructor['Component'] ?? EmptyRenderer;
   const inner = <Component model={model} isEditing={isEditing} />;
 
+  model.useMount();
+
   if (!isEditing) {
     return inner;
   }

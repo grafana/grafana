@@ -43,7 +43,7 @@ function FlexLayoutChildComponent({
   direction: FlexLayoutDirection;
   isEditing?: boolean;
 }) {
-  const { size } = item.useMount().useState();
+  const { size } = item.useState();
 
   return (
     <div style={getItemStyles(direction, size)}>

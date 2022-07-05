@@ -8,8 +8,8 @@ import { UrlSyncManager } from '../services/UrlSyncManager';
 
 interface SceneState extends SceneObjectState {
   title: string;
-  layout: SceneObject<any>;
-  actions?: Array<SceneObject<any>>;
+  layout: SceneObject;
+  actions?: SceneObject[];
   isEditing?: boolean;
 }
 
@@ -29,7 +29,7 @@ export class Scene extends SceneObjectBase<SceneState> {
 }
 
 function SceneRenderer({ model }: SceneComponentProps<Scene>) {
-  const { title, layout, actions = [], isEditing, $editor } = model.useMount().useState();
+  const { title, layout, actions = [], isEditing, $editor } = model.useState();
 
   console.log('render scene');
 

@@ -11,7 +11,7 @@ import { SceneComponentProps, SceneObjectState } from '../core/types';
 export interface VizPanelState extends SceneObjectState {
   title?: string;
   pluginId: string;
-  options?: any;
+  options?: object;
   fieldConfig?: FieldConfigSource;
 }
 
@@ -33,7 +33,7 @@ export class VizPanel extends SceneObjectBase<VizPanelState> {
 }
 
 function ScenePanelRenderer({ model }: SceneComponentProps<VizPanel>) {
-  const { title, pluginId, options, fieldConfig } = model.useMount().useState();
+  const { title, pluginId, options, fieldConfig } = model.useState();
   const { data } = model.getData().useState();
 
   return (

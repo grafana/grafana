@@ -46,7 +46,7 @@ export interface SceneObject<TState extends SceneObjectState = SceneObjectState>
   /** SceneObject parent */
   parent?: SceneObject;
 
-  /** For only only used by from root to broadcast events */
+  /** Currently only used from root to broadcast events */
   events: EventBus;
 
   /** Utility hook that wraps useObservable. Used by React components to subscribes to state changes */
