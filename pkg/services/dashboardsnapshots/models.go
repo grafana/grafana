@@ -77,8 +77,6 @@ type CreateDashboardSnapshotCommand struct {
 	UserId int64 `json:"-"`
 
 	DashboardEncrypted []byte `json:"-"`
-
-	Result *DashboardSnapshot
 }
 
 type DeleteDashboardSnapshotCommand struct {

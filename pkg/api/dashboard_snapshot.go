@@ -136,7 +136,8 @@ func (hs *HTTPServer) CreateDashboardSnapshot(c *models.ReqContext) response.Res
 		metrics.MApiDashboardSnapshotCreate.Inc()
 	}
 
-	if err := hs.dashboardsnapshotsService.CreateDashboardSnapshot(c.Req.Context(), &cmd); err != nil {
+	snapshot, err := hs.dashboardsnapshotsService.CreateDashboardSnapshot(c.Req.Context(), cmd)
+	if err != nil {
 		c.JsonApiErr(500, "Failed to create snapshot", err)
 		return nil
 	}
@@ -146,7 +147,7 @@ func (hs *HTTPServer) CreateDashboardSnapshot(c *models.ReqContext) response.Res
 		"deleteKey": cmd.DeleteKey,
 		"url":       url,
 		"deleteUrl": setting.ToAbsUrl("api/snapshots-delete/" + cmd.DeleteKey),
-		"id":        cmd.Result.Id,
+		"id":        snapshot.Id,
 	})
 	return nil
 }

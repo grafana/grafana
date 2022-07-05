@@ -25,15 +25,15 @@ func ProvideService(store dashboardsnapshots.Store, secretsService secrets.Servi
 	return s
 }
 
-func (s *ServiceImpl) CreateDashboardSnapshot(ctx context.Context, cmd *dashboardsnapshots.CreateDashboardSnapshotCommand) error {
+func (s *ServiceImpl) CreateDashboardSnapshot(ctx context.Context, cmd dashboardsnapshots.CreateDashboardSnapshotCommand) (*dashboardsnapshots.DashboardSnapshot, error) {
 	marshalledData, err := cmd.Dashboard.Encode()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	encryptedDashboard, err := s.secretsService.Encrypt(ctx, marshalledData, secrets.WithoutScope())
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	cmd.DashboardEncrypted = encryptedDashboard

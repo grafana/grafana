@@ -42,10 +42,10 @@ func TestDashboardSnapshotsService(t *testing.T) {
 			Dashboard: dashboard,
 		}
 
-		err = s.CreateDashboardSnapshot(ctx, &cmd)
+		snapshot, err := s.CreateDashboardSnapshot(ctx, cmd)
 		require.NoError(t, err)
 
-		decrypted, err := s.secretsService.Decrypt(ctx, cmd.Result.DashboardEncrypted)
+		decrypted, err := s.secretsService.Decrypt(ctx, snapshot.DashboardEncrypted)
 		require.NoError(t, err)
 
 		require.Equal(t, rawDashboard, decrypted)

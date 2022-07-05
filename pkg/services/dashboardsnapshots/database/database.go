@@ -46,8 +46,9 @@ func (d *DashboardSnapshotStore) DeleteExpiredSnapshots(ctx context.Context, cmd
 	})
 }
 
-func (d *DashboardSnapshotStore) CreateDashboardSnapshot(ctx context.Context, cmd *dashboardsnapshots.CreateDashboardSnapshotCommand) error {
-	return d.store.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+func (d *DashboardSnapshotStore) CreateDashboardSnapshot(ctx context.Context, cmd dashboardsnapshots.CreateDashboardSnapshotCommand) (*dashboardsnapshots.DashboardSnapshot, error) {
+	var s *dashboardsnapshots.DashboardSnapshot
+	err := d.store.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var expires = time.Now().Add(time.Hour * 24 * 365 * 50)
 		if cmd.Expires > 0 {
 			expires = time.Now().Add(time.Second * time.Duration(cmd.Expires))
@@ -69,10 +70,11 @@ func (d *DashboardSnapshotStore) CreateDashboardSnapshot(ctx context.Context, cm
 			Updated:            time.Now(),
 		}
 		_, err := sess.Insert(snapshot)
-		cmd.Result = snapshot
+		s = snapshot
 
 		return err
 	})
+	return s, err
 }
 
 func (d *DashboardSnapshotStore) DeleteDashboardSnapshot(ctx context.Context, cmd *dashboardsnapshots.DeleteDashboardSnapshotCommand) error {

@@ -46,7 +46,7 @@ func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 			OrgId:              1,
 		}
 
-		err = dashStore.CreateDashboardSnapshot(context.Background(), &cmd)
+		snapshot, err := dashStore.CreateDashboardSnapshot(context.Background(), cmd)
 		require.NoError(t, err)
 
 		t.Run("Should be able to get snapshot by key", func(t *testing.T) {
@@ -120,7 +120,7 @@ func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 				UserId: 0,
 				OrgId:  1,
 			}
-			err := dashStore.CreateDashboardSnapshot(context.Background(), &cmd)
+			_, err := dashStore.CreateDashboardSnapshot(context.Background(), cmd)
 			require.NoError(t, err)
 
 			t.Run("Should not return any snapshots", func(t *testing.T) {
@@ -139,7 +139,7 @@ func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 		t.Run("Should have encrypted dashboard data", func(t *testing.T) {
 			decryptedDashboard, err := secretsService.Decrypt(
 				context.Background(),
-				cmd.Result.DashboardEncrypted,
+				snapshot.DashboardEncrypted,
 			)
 			require.NoError(t, err)
 
@@ -201,18 +201,18 @@ func createTestSnapshot(t *testing.T, dashStore *DashboardSnapshotStore, key str
 		OrgId:   1,
 		Expires: expires,
 	}
-	err := dashStore.CreateDashboardSnapshot(context.Background(), &cmd)
+	snapshot, err := dashStore.CreateDashboardSnapshot(context.Background(), cmd)
 	require.NoError(t, err)
 
 	// Set expiry date manually - to be able to create expired snapshots
 	if expires < 0 {
 		expireDate := time.Now().Add(time.Second * time.Duration(expires))
 		err = dashStore.store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-			_, err := sess.Exec("UPDATE dashboard_snapshot SET expires = ? WHERE id = ?", expireDate, cmd.Result.Id)
+			_, err := sess.Exec("UPDATE dashboard_snapshot SET expires = ? WHERE id = ?", expireDate, snapshot.Id)
 			return err
 		})
 		require.NoError(t, err)
 	}
 
-	return cmd.Result
+	return snapshot
 }
