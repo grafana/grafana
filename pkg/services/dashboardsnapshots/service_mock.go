@@ -65,7 +65,7 @@ func (_m *MockService) DeleteExpiredSnapshots(_a0 context.Context, _a1 *DeleteEx
 }
 
 // GetDashboardSnapshot provides a mock function with given fields: _a0, _a1
-func (_m *MockService) GetDashboardSnapshot(_a0 context.Context, _a1 *GetDashboardSnapshotQuery) error {
+func (_m *MockService) GetDashboardSnapshot(_a0 context.Context, _a1 *GetDashboardSnapshotQuery) (*DashboardSnapshot, error) {
 	ret := _m.Called(_a0, _a1)
 
 	var r0 error
@@ -75,7 +75,7 @@ func (_m *MockService) GetDashboardSnapshot(_a0 context.Context, _a1 *GetDashboa
 		r0 = ret.Error(0)
 	}
 
-	return r0
+	return nil, r0
 }
 
 // SearchDashboardSnapshots provides a mock function with given fields: _a0, _a1

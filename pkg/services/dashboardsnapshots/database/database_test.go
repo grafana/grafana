@@ -51,14 +51,14 @@ func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 
 		t.Run("Should be able to get snapshot by key", func(t *testing.T) {
 			query := dashboardsnapshots.GetDashboardSnapshotQuery{Key: "hej"}
-			err := dashStore.GetDashboardSnapshot(context.Background(), &query)
+			snapshot, err := dashStore.GetDashboardSnapshot(context.Background(), &query)
 			require.NoError(t, err)
 
-			assert.NotNil(t, query.Result)
+			assert.NotNil(t, snapshot)
 
 			decryptedDashboard, err := secretsService.Decrypt(
 				context.Background(),
-				query.Result.DashboardEncrypted,
+				snapshot.DashboardEncrypted,
 			)
 			require.NoError(t, err)
 

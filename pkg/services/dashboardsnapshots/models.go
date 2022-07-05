@@ -90,8 +90,6 @@ type DeleteExpiredSnapshotsCommand struct {
 type GetDashboardSnapshotQuery struct {
 	Key       string
 	DeleteKey string
-
-	Result *DashboardSnapshot
 }
 
 type DashboardSnapshotsList []*DashboardSnapshotDTO

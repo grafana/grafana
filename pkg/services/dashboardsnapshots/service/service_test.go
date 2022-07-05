@@ -59,10 +59,11 @@ func TestDashboardSnapshotsService(t *testing.T) {
 			DeleteKey: dashboardKey,
 		}
 
-		err := s.GetDashboardSnapshot(ctx, &query)
+		snapshot, err := s.GetDashboardSnapshot(ctx, &query)
 		require.NoError(t, err)
+		require.NotNil(t, snapshot)
 
-		decrypted, err := query.Result.Dashboard.Encode()
+		decrypted, err := snapshot.Dashboard.Encode()
 		require.NoError(t, err)
 
 		require.Equal(t, rawDashboard, decrypted)

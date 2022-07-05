@@ -41,27 +41,27 @@ func (s *ServiceImpl) CreateDashboardSnapshot(ctx context.Context, cmd dashboard
 	return s.store.CreateDashboardSnapshot(ctx, cmd)
 }
 
-func (s *ServiceImpl) GetDashboardSnapshot(ctx context.Context, query *dashboardsnapshots.GetDashboardSnapshotQuery) error {
-	err := s.store.GetDashboardSnapshot(ctx, query)
+func (s *ServiceImpl) GetDashboardSnapshot(ctx context.Context, query *dashboardsnapshots.GetDashboardSnapshotQuery) (*dashboardsnapshots.DashboardSnapshot, error) {
+	snapshot, err := s.store.GetDashboardSnapshot(ctx, query)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	if query.Result.DashboardEncrypted != nil {
-		decryptedDashboard, err := s.secretsService.Decrypt(ctx, query.Result.DashboardEncrypted)
+	if snapshot.DashboardEncrypted != nil {
+		decryptedDashboard, err := s.secretsService.Decrypt(ctx, snapshot.DashboardEncrypted)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		dashboard, err := simplejson.NewJson(decryptedDashboard)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		query.Result.Dashboard = dashboard
+		snapshot.Dashboard = dashboard
 	}
 
-	return err
+	return snapshot, err
 }
 
 func (s *ServiceImpl) DeleteDashboardSnapshot(ctx context.Context, cmd *dashboardsnapshots.DeleteDashboardSnapshotCommand) error {

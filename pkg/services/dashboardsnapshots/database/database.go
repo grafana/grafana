@@ -85,9 +85,9 @@ func (d *DashboardSnapshotStore) DeleteDashboardSnapshot(ctx context.Context, cm
 	})
 }
 
-func (d *DashboardSnapshotStore) GetDashboardSnapshot(ctx context.Context, query *dashboardsnapshots.GetDashboardSnapshotQuery) error {
-	return d.store.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		snapshot := dashboardsnapshots.DashboardSnapshot{Key: query.Key, DeleteKey: query.DeleteKey}
+func (d *DashboardSnapshotStore) GetDashboardSnapshot(ctx context.Context, query *dashboardsnapshots.GetDashboardSnapshotQuery) (*dashboardsnapshots.DashboardSnapshot, error) {
+	snapshot := dashboardsnapshots.DashboardSnapshot{Key: query.Key, DeleteKey: query.DeleteKey}
+	err := d.store.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		has, err := sess.Get(&snapshot)
 
 		if err != nil {
@@ -96,9 +96,9 @@ func (d *DashboardSnapshotStore) GetDashboardSnapshot(ctx context.Context, query
 			return dashboardsnapshots.ErrDashboardSnapshotNotFound
 		}
 
-		query.Result = &snapshot
 		return nil
 	})
+	return &snapshot, err
 }
 
 // SearchDashboardSnapshots returns a list of all snapshots for admins
