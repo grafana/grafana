@@ -64,21 +64,16 @@ func (cr *rulesConfigReader) isJSON(file string) bool {
 
 func (cr *rulesConfigReader) parseConfig(path string, file fs.FileInfo) (*RuleFileV1, error) {
 	filename, _ := filepath.Abs(filepath.Join(path, file.Name()))
-
 	// nolint:gosec
 	// We can ignore the gosec G304 warning on this one because `filename` comes from ps.Cfg.ProvisioningPath
 	yamlFile, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
-
 	var cfg *RuleFileV1
 	err = yaml.Unmarshal(yamlFile, &cfg)
 	if err != nil {
 		return nil, err
 	}
-
-	// TODO: run validation, fail early
-
 	return cfg, nil
 }
