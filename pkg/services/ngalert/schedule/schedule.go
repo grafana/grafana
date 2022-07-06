@@ -44,7 +44,7 @@ type ScheduleService interface {
 	folderUpdateHandler(ctx context.Context, evt *events.FolderUpdated) error
 }
 
-//go:generate mockery --name AlertsSender --structname FakeAlertsSender --inpackage --filename alerts_sender_mock.go --with-expecter
+//go:generate mockery --name AlertsSender --structname AlertsSenderMock --inpackage --filename alerts_sender_mock.go --with-expecter
 // AlertsSender is an interface for a service that is responsible for sending notifications to the end-user
 type AlertsSender interface {
 	Send(key ngmodels.AlertRuleKey, alerts definitions.PostableAlerts) error
