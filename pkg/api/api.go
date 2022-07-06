@@ -332,7 +332,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Any("/plugins/:pluginId/resources/*", authorize(reqSignedIn, ac.EvalPermission(plugins.ActionAppAccess, pluginIDScope)), hs.CallResource)
 		apiRoute.Get("/plugins/errors", routing.Wrap(hs.GetPluginErrorsList))
 
-		if hs.Cfg.PluginAdminEnabled {
+		if hs.Cfg.PluginAdminEnabled && !hs.Cfg.PluginAdminExternalManageEnabled {
 			apiRoute.Group("/plugins", func(pluginRoute routing.RouteRegister) {
 				pluginRoute.Post("/:pluginId/install", routing.Wrap(hs.InstallPlugin))
 				pluginRoute.Post("/:pluginId/uninstall", routing.Wrap(hs.UninstallPlugin))
