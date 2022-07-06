@@ -55,6 +55,12 @@ describe('variableQueryMigrations', () => {
           expect(query.dimensionKey).toBe('DBInstanceIdentifier');
           expect(query.dimensionFilters).toStrictEqual({ InstanceId: '$instance_id' });
         });
+        it('should migrate json template variables', () => {
+          const query = migrateVariableQuery(
+            'dimension_values(us-east-1,AWS/RDS,CPUUtilization,DBInstanceIdentifier,{"role":${role:json},"pop":${pop:json}})'
+          );
+          expect(query.dimensionFilters).toStrictEqual({ role: '$role', pop: '$pop' });
+        });
       });
     });
   });
@@ -68,6 +74,12 @@ describe('variableQueryMigrations', () => {
       expect(query.resourceType).toBe('elasticloadbalancing:loadbalancer');
       expect(query.tags).toStrictEqual({ 'elasticbeanstalk:environment-name': ['myApp-dev', 'myApp-prod'] });
     });
+    it('should migrate json template variables', () => {
+      const query = migrateVariableQuery(
+        'resource_arns(eu-west-1,elasticloadbalancing:loadbalancer,{"elasticbeanstalk:environment-name":[${jsonVar:json},"test-$singleVar"]})'
+      );
+      expect(query.tags).toStrictEqual({ 'elasticbeanstalk:environment-name': ['$jsonVar', 'test-$singleVar'] });
+    });
     it('should parse a empty array for tags', () => {
       const query = migrateVariableQuery('resource_arns(eu-west-1,elasticloadbalancing:loadbalancer, [])');
       expect(query.tags).toStrictEqual({});
@@ -80,6 +92,10 @@ describe('variableQueryMigrations', () => {
       expect(query.region).toBe('us-east-1');
       expect(query.attributeName).toBe('rds:db');
       expect(query.ec2Filters).toStrictEqual({ environment: ['$environment'] });
+    });
+    it('should migrate json template variables', () => {
+      const query = migrateVariableQuery('ec2_instance_attribute(us-east-1,rds:db,{"environment":${env:json}})');
+      expect(query.ec2Filters).toStrictEqual({ environment: ['$env'] });
     });
     it('should parse an empty array for filters', () => {
       const query = migrateVariableQuery('ec2_instance_attribute(us-east-1,rds:db,[])');

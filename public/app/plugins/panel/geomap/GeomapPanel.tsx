@@ -7,11 +7,10 @@ import Attribution from 'ol/control/Attribution';
 import ScaleLine from 'ol/control/ScaleLine';
 import Zoom from 'ol/control/Zoom';
 import { Coordinate } from 'ol/coordinate';
-import { createEmpty, extend, isEmpty } from 'ol/extent';
+import { isEmpty } from 'ol/extent';
 import { defaults as interactionDefaults } from 'ol/interaction';
 import MouseWheelZoom from 'ol/interaction/MouseWheelZoom';
 import BaseLayer from 'ol/layer/Base';
-import VectorLayer from 'ol/layer/Vector';
 import { fromLonLat, toLonLat } from 'ol/proj';
 import React, { Component, ReactNode } from 'react';
 import { Subject, Subscription } from 'rxjs';
@@ -40,6 +39,7 @@ import { getGlobalStyles } from './globalStyles';
 import { defaultMarkersConfig, MARKERS_LAYER_ID } from './layers/data/markersLayer';
 import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry } from './layers/registry';
 import { ControlsOptions, GeomapPanelOptions, MapLayerState, MapViewConfig, TooltipMode } from './types';
+import { getLayersExtent } from './utils/getLayersExtent';
 import { centerPointRegistry, MapCenterID } from './view';
 
 // Allows multiple panels to share the same view instance
@@ -98,6 +98,13 @@ export class GeomapPanel extends Component<Props, State> {
 
   componentDidMount() {
     this.panelContext = this.context as PanelContext;
+  }
+
+  componentWillUnmount() {
+    this.subs.unsubscribe();
+    for (const lyr of this.layers) {
+      lyr.handler.dispose?.();
+    }
   }
 
   shouldComponentUpdate(nextProps: Props) {
@@ -404,7 +411,7 @@ export class GeomapPanel extends Component<Props, State> {
       {
         layerFilter: (l) => {
           const hoverLayerState = (l as any).__state as MapLayerState;
-          return hoverLayerState.options.tooltip !== false;
+          return hoverLayerState?.options?.tooltip !== false;
         },
       }
     );
@@ -467,6 +474,7 @@ export class GeomapPanel extends Component<Props, State> {
     const layers = this.layers.slice(0);
     try {
       const info = await this.initLayer(this.map, newOptions, current.isBasemap);
+      layers[layerIndex]?.handler.dispose?.();
       layers[layerIndex] = info;
       group.setAt(layerIndex, info.layer);
 
@@ -504,7 +512,7 @@ export class GeomapPanel extends Component<Props, State> {
       return Promise.reject('unknown layer: ' + options.type);
     }
 
-    const handler = await item.create(map, options, config.theme2);
+    const handler = await item.create(map, options, this.props.eventBus, config.theme2);
     const layer = handler.init();
     if (options.opacity != null) {
       layer.setOpacity(1 - options.opacity);
@@ -582,11 +590,7 @@ export class GeomapPanel extends Component<Props, State> {
         if (v.id === MapCenterID.Coordinates) {
           coord = [config.lon ?? 0, config.lat ?? 0];
         } else if (v.id === MapCenterID.Fit) {
-          var extent = layers
-            .getArray()
-            .filter((l) => l instanceof VectorLayer)
-            .map((l) => (l as VectorLayer<any>).getSource().getExtent() ?? [])
-            .reduce(extend, createEmpty());
+          const extent = getLayersExtent(layers);
           if (!isEmpty(extent)) {
             view.fit(extent, {
               padding: [30, 30, 30, 30],

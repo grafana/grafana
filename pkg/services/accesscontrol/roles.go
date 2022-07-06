@@ -15,7 +15,6 @@ var (
 		DisplayName: "LDAP reader",
 		Description: "Read LDAP configuration and status.",
 		Group:       "LDAP",
-		Version:     3,
 		Permissions: []Permission{
 			{
 				Action: ActionLDAPUsersRead,
@@ -31,7 +30,6 @@ var (
 		DisplayName: "LDAP writer",
 		Description: "Read and update LDAP configuration and read LDAP status.",
 		Group:       "LDAP",
-		Version:     4,
 		Permissions: ConcatPermissions(ldapReaderRole.Permissions, []Permission{
 			{
 				Action: ActionLDAPUsersSync,
@@ -47,7 +45,6 @@ var (
 		DisplayName: "Organization user writer",
 		Description: "Within a single organization, add a user, invite a user, read information about a user and their role, remove a user from that organization, or change the role of a user.",
 		Group:       "User administration (organizational)",
-		Version:     4,
 		Permissions: ConcatPermissions(orgUsersReaderRole.Permissions, []Permission{
 			{
 				Action: ActionOrgUsersAdd,
@@ -69,7 +66,6 @@ var (
 		DisplayName: "Organization user reader",
 		Description: "Read users within a single organization.",
 		Group:       "User administration (organizational)",
-		Version:     3,
 		Permissions: []Permission{
 			{
 				Action: ActionOrgUsersRead,
@@ -83,7 +79,6 @@ var (
 		DisplayName: "Setting reader",
 		Description: "Read Grafana instance settings.",
 		Group:       "Settings",
-		Version:     4,
 		Permissions: []Permission{
 			{
 				Action: ActionSettingsRead,
@@ -97,7 +92,6 @@ var (
 		DisplayName: "Statistics reader",
 		Description: "Read Grafana instance statistics.",
 		Group:       "Statistics",
-		Version:     3,
 		Permissions: []Permission{
 			{
 				Action: ActionServerStatsRead,
@@ -110,7 +104,6 @@ var (
 		DisplayName: "User reader",
 		Description: "Read all users and their information, such as team memberships, authentication tokens, and quotas.",
 		Group:       "User administration (global)",
-		Version:     6,
 		Permissions: []Permission{
 			{
 				Action: ActionUsersRead,
@@ -132,7 +125,6 @@ var (
 		DisplayName: "User writer",
 		Description: "Read and update all attributes and settings for all users in Grafana: update user information, read user information, create or enable or disable a user, make a user a Grafana administrator, sign out a user, update a user’s authentication token, or update quotas for all users.",
 		Group:       "User administration (global)",
-		Version:     5,
 		Permissions: ConcatPermissions(usersReaderRole.Permissions, []Permission{
 			{
 				Action: ActionUsersPasswordUpdate,
