@@ -31,7 +31,7 @@ func ProvideServiceAccountsService(
 ) (*ServiceAccountsService, error) {
 	s := &ServiceAccountsService{
 		store: serviceAccountsStore,
-		log: log.New("serviceaccounts"),
+		log:   log.New("serviceaccounts"),
 	}
 
 	if err := RegisterRoles(ac); err != nil {

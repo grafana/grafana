@@ -38,7 +38,6 @@ func RegisterRoles(ac accesscontrol.AccessControl) error {
 		Grants: []string{string(models.ROLE_ADMIN)},
 	}
 
-	// TODO docs
 	saWriter := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
 			Name:        "fixed:serviceaccounts:writer",
