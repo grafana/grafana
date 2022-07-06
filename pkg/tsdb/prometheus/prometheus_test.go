@@ -95,7 +95,14 @@ func TestService(t *testing.T) {
 				sender := &fakeSender{}
 				err := service.CallResource(context.Background(), req, sender)
 				require.NoError(t, err)
-				require.Equal(t, http.Header{"Content-Type": {"application/x-www-form-urlencoded"}, "foo": {"bar"}}, httpProvider.Roundtripper.Req.Header)
+				require.Equal(
+					t,
+					http.Header{
+						"Content-Type":    {"application/x-www-form-urlencoded"},
+						"Idempotency-Key": []string(nil),
+						"foo":             {"bar"},
+					},
+					httpProvider.Roundtripper.Req.Header)
 				require.Equal(t, http.MethodPost, httpProvider.Roundtripper.Req.Method)
 				body, err := io.ReadAll(httpProvider.Roundtripper.Req.Body)
 				require.NoError(t, err)
