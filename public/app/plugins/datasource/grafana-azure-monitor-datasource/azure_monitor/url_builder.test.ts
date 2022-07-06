@@ -7,6 +7,20 @@ describe('AzureMonitorUrlBuilder', () => {
         '/subscriptions/sub/resourceGroups/group/providers/Microsoft.NetApp/netAppAccounts/name'
       );
     });
+
+    it('builds a resource uri correctly when a template variable is used as namespace', () => {
+      expect(UrlBuilder.buildResourceUri('sub', 'group', '$ns', 'name')).toEqual(
+        '/subscriptions/sub/resourceGroups/group/providers/$ns/name'
+      );
+    });
+
+    it('builds a resource uri correctly when the namespace includes a storage sub-resource', () => {
+      expect(
+        UrlBuilder.buildResourceUri('sub', 'group', 'Microsoft.Storage/storageAccounts/tableServices', 'name')
+      ).toEqual(
+        '/subscriptions/sub/resourceGroups/group/providers/Microsoft.Storage/storageAccounts/name/tableServices/default'
+      );
+    });
   });
 
   describe('when a resource uri is provided', () => {
