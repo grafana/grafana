@@ -696,7 +696,7 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					Placeholder:  `{{ template "default.message" . }}`,
 					PropertyName: "message",
 				},
-				{ // New in 9.0.
+				{ // New in 9.1.
 					Label:        "Title",
 					Element:      alerting.ElementTypeInput,
 					InputType:    alerting.InputTypeText,
