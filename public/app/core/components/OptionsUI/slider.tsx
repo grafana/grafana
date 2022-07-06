@@ -5,8 +5,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { FieldConfigEditorProps, GrafanaTheme2, SliderFieldConfigSettings } from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
-
-import { getStyles } from '../../../../../packages/grafana-ui/src/components/Slider/styles';
+import { getStyles } from '@grafana/ui/src/components/Slider/styles';
 
 import { NumberInput } from './NumberInput';
 
