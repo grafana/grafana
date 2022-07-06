@@ -130,6 +130,11 @@ func (e *gitExportJob) doExportWithHistory() error {
 		ctx:     context.Background(),
 		workDir: e.rootDir,
 		orgDir:  e.rootDir,
+		broadcast: func(p string) {
+			e.status.Last = p[len(e.rootDir):]
+			e.status.Changed = time.Now().UnixMilli()
+			e.broadcaster(e.status)
+		},
 	}
 
 	cmd := &models.SearchOrgsQuery{}

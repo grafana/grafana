@@ -25,6 +25,7 @@ type commitHelper struct {
 	orgID         int64
 	users         map[int64]*userInfo
 	stopRequested bool
+	broadcast     func(path string)
 }
 
 type commitBody struct {
@@ -121,6 +122,7 @@ func (ch *commitHelper) add(opts commitOptions) error {
 		Author: &sig,
 	}
 
+	ch.broadcast(opts.body[0].fpath)
 	_, err := ch.work.Commit(opts.comment, copts)
 	return err
 }

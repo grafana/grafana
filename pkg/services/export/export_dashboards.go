@@ -197,14 +197,8 @@ func exportDashboards(helper *commitHelper, job *gitExportJob, lookup dsLookup) 
 			if err != nil {
 				return err
 			}
-
 			count++
 			fmt.Printf("COMMIT: %d // %s (%d)\n", count, fpath, row.Version)
-
-			job.status.Current = count
-			job.status.Last = fpath
-			job.status.Changed = time.Now().UnixMilli()
-			job.broadcaster(job.status)
 		}
 
 		return nil

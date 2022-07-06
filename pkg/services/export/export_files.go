@@ -23,12 +23,15 @@ func exportFiles(helper *commitHelper, job *gitExportJob) error {
 		}
 
 		for _, f := range rsp.Files {
+			if f.Size < 1 {
+				continue
+			}
 			err = helper.add(commitOptions{
 				body: []commitBody{{
 					body:  f.Contents,
 					fpath: path.Join(helper.orgDir, f.FullPath),
 				}},
-				comment: "add resource",
+				comment: fmt.Sprintf("Adding: %s", path.Base(f.FullPath)),
 				when:    f.Created,
 			})
 			if err != nil {

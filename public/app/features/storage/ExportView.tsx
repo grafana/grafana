@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react';
+import { useLocalStorage } from 'react-use';
 
 import { isLiveChannelMessageEvent, isLiveChannelStatusEvent, LiveChannelScope } from '@grafana/data';
 import { getBackendSrv, getGrafanaLiveSrv } from '@grafana/runtime';
 import { Button, CodeEditor, HorizontalGroup, LinkButton } from '@grafana/ui';
 
 import { StorageView } from './types';
+
+export const EXPORT_LOCAL_STORAGE_KEY = 'grafana.export.config';
 
 interface ExportStatusMessage {
   running: boolean;
@@ -27,20 +30,22 @@ interface ExportJob {
   git?: {};
 }
 
+const defaultJob: ExportJob = {
+  format: 'git',
+  generalFolderPath: 'general',
+  includeHistory: true,
+  excludeDashboards: false,
+  git: {},
+};
+
 interface Props {
   onPathChange: (p: string, v?: StorageView) => void;
 }
 
 export const ExportView = ({ onPathChange }: Props) => {
   const [status, setStatus] = useState<ExportStatusMessage>();
-
-  const [body, setBody] = useState<ExportJob>({
-    format: 'git',
-    generalFolderPath: 'general',
-    includeHistory: true,
-    excludeDashboards: false,
-    git: {},
-  });
+  const [rawBody, setBody] = useLocalStorage<ExportJob>(EXPORT_LOCAL_STORAGE_KEY, defaultJob);
+  const body = { ...defaultJob, ...rawBody };
 
   const doStart = () => {
     getBackendSrv().post('/api/admin/export', body);
