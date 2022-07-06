@@ -8,9 +8,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
+const (
+	secretMigrationStatusKey       = "secretMigrationStatus"
+	compatibleSecretMigrationValue = "compatible"
+	completeSecretMigrationValue   = "complete"
+)
+
 type DataSourceSecretMigrationService struct {
 	dataSourcesService datasources.DataSourceService
-	kvStore            kvstore.KVStore
+	kvStore            *kvstore.NamespacedKVStore
 	features           featuremgmt.FeatureToggles
 }
 
@@ -21,20 +27,20 @@ func ProvideDataSourceMigrationService(
 ) *DataSourceSecretMigrationService {
 	return &DataSourceSecretMigrationService{
 		dataSourcesService: dataSourcesService,
-		kvStore:            kvStore,
+		kvStore:            kvstore.WithNamespace(kvStore, 0, secretType),
 		features:           features,
 	}
 }
 
 func (s *DataSourceSecretMigrationService) Migrate(ctx context.Context) error {
-	migrationStatus, _, err := s.kvStore.Get(ctx, 0, secretType, "secretMigrationStatus")
+	migrationStatus, _, err := s.kvStore.Get(ctx, secretMigrationStatusKey)
 	if err != nil {
 		return err
 	}
 
-	disableSecretsCompatibility := s.features.IsEnabled("disableSecretsCompatibility")
-	needCompatibility := migrationStatus != "compatible" && !disableSecretsCompatibility
-	needMigration := migrationStatus != "complete" && disableSecretsCompatibility
+	disableSecretsCompatibility := s.features.IsEnabled(featuremgmt.FlagDisableSecretsCompatibility)
+	needCompatibility := migrationStatus != compatibleSecretMigrationValue && !disableSecretsCompatibility
+	needMigration := migrationStatus != completeSecretMigrationValue && disableSecretsCompatibility
 
 	if needCompatibility || needMigration {
 		query := &datasources.GetAllDataSourcesQuery{}
@@ -72,9 +78,9 @@ func (s *DataSourceSecretMigrationService) Migrate(ctx context.Context) error {
 		}
 
 		if disableSecretsCompatibility {
-			err = s.kvStore.Set(ctx, 0, secretType, "secretMigrationStatus", "complete")
+			err = s.kvStore.Set(ctx, secretMigrationStatusKey, completeSecretMigrationValue)
 		} else {
-			err = s.kvStore.Set(ctx, 0, secretType, "secretMigrationStatus", "compatible")
+			err = s.kvStore.Set(ctx, secretMigrationStatusKey, compatibleSecretMigrationValue)
 		}
 
 		if err != nil {
