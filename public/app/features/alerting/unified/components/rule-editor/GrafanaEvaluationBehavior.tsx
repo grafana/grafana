@@ -10,19 +10,29 @@ import { positiveDurationValidationPattern, durationValidationPattern } from '..
 import { CollapseToggle } from '../CollapseToggle';
 
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
-import { GrafanaConditionEvalWarning } from './GrafanaConditionEvalWarning';
 import { PreviewRule } from './PreviewRule';
 import { RuleEditorSection } from './RuleEditorSection';
 
 const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
 
-const forValidationOptions: RegisterOptions = {
+const forValidationOptions = (evaluateEvery: string): RegisterOptions => ({
   required: {
     value: true,
     message: 'Required.',
   },
   pattern: durationValidationPattern,
-};
+  validate: (value) => {
+    const evaluateEveryDuration = parseDuration(evaluateEvery);
+    const forDuration = parseDuration(value);
+    const millisFor = durationToMilliseconds(forDuration);
+    const millisEvery = durationToMilliseconds(evaluateEveryDuration);
+
+    if (millisEvery && millisFor && millisEvery <= millisFor) {
+      return 'For duration must be greater than evaluate every duration.';
+    }
+    return true;
+  },
+});
 
 const evaluateEveryValidationOptions: RegisterOptions = {
   required: {
@@ -51,6 +61,7 @@ export const GrafanaEvaluationBehavior: FC = () => {
   const {
     register,
     formState: { errors },
+    watch,
   } = useFormContext<RuleFormValues>();
 
   const evaluateEveryId = 'eval-every-input';
@@ -85,11 +96,14 @@ export const GrafanaEvaluationBehavior: FC = () => {
             invalid={!!errors.evaluateFor?.message}
             validationMessageHorizontalOverflow={true}
           >
-            <Input id={evaluateForId} width={8} {...register('evaluateFor', forValidationOptions)} />
+            <Input
+              id={evaluateForId}
+              width={8}
+              {...register('evaluateFor', forValidationOptions(watch('evaluateEvery')))}
+            />
           </Field>
         </div>
       </Field>
-      <GrafanaConditionEvalWarning />
       <CollapseToggle
         isCollapsed={!showErrorHandling}
         onToggle={(collapsed) => setShowErrorHandling(!collapsed)}
