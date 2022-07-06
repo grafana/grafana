@@ -81,7 +81,7 @@ func TestWeComNotifier(t *testing.T) {
 			settings: `{
 				"url": "http://localhost",
 				"message": "{{ len .Alerts.Firing }} alerts are firing, {{ len .Alerts.Resolved }} are resolved",
-				"title":"This notification is {{ .Status }}!"
+				"title": "This notification is {{ .Status }}!"
 			}`,
 			alerts: []*types.Alert{
 				{
