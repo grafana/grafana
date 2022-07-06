@@ -235,10 +235,16 @@ export type FieldTextAlignment = ('auto' | 'left' | 'right' | 'center');
 export enum TableCellDisplayMode {
   Auto = 'auto',
   ColorBackground = 'color-background',
+  ColorBackgroundSolid = 'color-background-solid',
   ColorText = 'color-text',
   Gauge = 'gauge',
   Image = 'image',
   JSONView = 'json-view',
+}
+
+export enum BackgroundDisplayMode {
+  Basic = 'basic',
+  Gradient = 'gradient',
 }
 
 export interface VizTextDisplayOptions {
@@ -286,9 +292,19 @@ export enum BarGaugeDisplayMode {
   Lcd = 'lcd',
 }
 
+export interface TableCellOptions {
+  backgroundDisplayMode?: BackgroundDisplayMode;
+  displayMode: TableCellDisplayMode;
+  gaugeDisplayMode?: BarGaugeDisplayMode;
+}
+
+export const defaultTableCellOptions: Partial<TableCellOptions> = {
+  displayMode: TableCellDisplayMode.Auto,
+};
+
 export interface TableFieldOptions {
   align: FieldTextAlignment;
-  displayMode: TableCellDisplayMode;
+  cellOptions: TableCellOptions;
   filterable?: boolean;
   hidden?: boolean;
   inspect: boolean;
@@ -298,9 +314,6 @@ export interface TableFieldOptions {
 
 export const defaultTableFieldOptions: Partial<TableFieldOptions> = {
   align: 'auto',
-  cellOptions: {
-    displayMode: TableCellDisplayMode.Auto,
-  },
   inspect: false,
 };
 

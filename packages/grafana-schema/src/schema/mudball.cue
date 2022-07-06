@@ -190,7 +190,11 @@ BigValueTextMode: "auto" | "value" | "value_and_name" | "name" | "none" @cuetsy(
 FieldTextAlignment: "auto" | "left" | "right" | "center" @cuetsy(kind="type")
 
 // TODO docs
-TableCellDisplayMode: "auto" | "color-text" | "color-background" | "color-background-solid" | "gradient-gauge" | "lcd-gauge" | "json-view" | "basic" | "image" @cuetsy(kind="enum",memberNames="Auto|ColorText|ColorBackground|ColorBackgroundSolid|GradientGauge|LcdGauge|JSONView|BasicGauge|Image")
+TableCellDisplayMode: "auto" | "color-text" | "color-background" | "color-background-solid" | "gauge" | "json-view" | "image" @cuetsy(kind="enum",memberNames="Auto|ColorText|ColorBackground|ColorBackgroundSolid|Gauge|JSONView|Image")
+
+// TODO Docs
+BackgroundDisplayMode: "basic" | "gradient" @cuetsy(kind="enum",memberNames="Basic|Gradient")
+
 
 // TODO docs
 VizTextDisplayOptions: {
@@ -237,11 +241,18 @@ VizLegendOptions: {
 BarGaugeDisplayMode: "basic" | "lcd" | "gradient" @cuetsy(kind="enum")
 
 // TODO docs
+TableCellOptions: {
+	displayMode: TableCellDisplayMode | *"auto"
+	gaugeDisplayMode?: BarGaugeDisplayMode
+	backgroundDisplayMode?: BackgroundDisplayMode
+} @cuetsy(kind="interface")
+
+// TODO docs
 TableFieldOptions: {
 	width?:      number
 	minWidth?:   number
 	align: FieldTextAlignment | *"auto"
-	displayMode: TableCellDisplayMode | *"auto"
+	cellOptions: TableCellOptions
 	hidden?:     bool // ?? default is missing or false ??
 	inspect: bool | *false
 	filterable?: bool
