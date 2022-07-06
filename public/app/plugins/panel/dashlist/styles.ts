@@ -48,6 +48,8 @@ export const getStyles = (theme: GrafanaTheme2) => ({
 
   dashlistLinkBody: css`
     flex-grow: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
   `,
 
   dashlistItem: css`

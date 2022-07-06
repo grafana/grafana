@@ -100,6 +100,11 @@ func GetReduceFunc(rFunc string) (ReducerFunc, error) {
 	}
 }
 
+// GetSupportedReduceFuncs returns collection of supported function names
+func GetSupportedReduceFuncs() []string {
+	return []string{"sum", "mean", "min", "max", "count", "last"}
+}
+
 // Reduce turns the Series into a Number based on the given reduction function
 // if ReduceMapper is defined it applies it to the provided series and performs reduction of the resulting series.
 // Otherwise, the reduction operation is done against the original series.

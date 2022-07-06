@@ -1,19 +1,14 @@
-+++
-aliases = ["/docs/grafana/latest/panels/query-a-data-source/download-raw-query-results/", "/docs/sources/panels/query-a-data-source/download-raw-query-results/"]
-title = "Download raw query results"
-weight = 70
-+++
+---
+aliases:
+  - /docs/grafana/latest/panels/query-a-data-source/download-raw-query-results/
+  - /docs/sources/panels/query-a-data-source/download-raw-query-results/
+title: Download raw query results
+weight: 70
+---
 
 # Download raw query results
 
 Grafana generates a CSV file that contains your data, including any transformations to that data. You can choose to view the data before or after the panel applies field options or field option overrides.
-
-## Before you begin
-
-- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).
-- [Add a query]({{< relref "../query-a-data-source/add-a-query.md" >}}).
-
-**To download raw query results**:
 
 1. Edit the panel that contains the query data you want to download.
 1. In the query editor, click **Query Inspector**.

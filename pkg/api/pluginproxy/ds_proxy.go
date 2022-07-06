@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
+
 	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	glog "github.com/grafana/grafana/pkg/infra/log"
@@ -22,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
-	"go.opentelemetry.io/otel/attribute"
 )
 
 var (
@@ -31,7 +32,7 @@ var (
 )
 
 type DataSourceProxy struct {
-	ds                 *models.DataSource
+	ds                 *datasources.DataSource
 	ctx                *models.ReqContext
 	targetUrl          *url.URL
 	proxyPath          string
@@ -49,7 +50,7 @@ type httpClient interface {
 }
 
 // NewDataSourceProxy creates a new Datasource proxy
-func NewDataSourceProxy(ds *models.DataSource, pluginRoutes []*plugins.Route, ctx *models.ReqContext,
+func NewDataSourceProxy(ds *datasources.DataSource, pluginRoutes []*plugins.Route, ctx *models.ReqContext,
 	proxyPath string, cfg *setting.Cfg, clientProvider httpclient.Provider,
 	oAuthTokenService oauthtoken.OAuthTokenService, dsService datasources.DataSourceService,
 	tracer tracing.Tracer) (*DataSourceProxy, error) {
@@ -85,6 +86,7 @@ func (proxy *DataSourceProxy) HandleRequest() {
 		return
 	}
 
+	traceID := tracing.TraceIDFromContext(proxy.ctx.Req.Context(), false)
 	proxyErrorLogger := logger.New(
 		"userId", proxy.ctx.UserId,
 		"orgId", proxy.ctx.OrgId,
@@ -92,6 +94,7 @@ func (proxy *DataSourceProxy) HandleRequest() {
 		"path", proxy.ctx.Req.URL.Path,
 		"remote_addr", proxy.ctx.RemoteAddr(),
 		"referer", proxy.ctx.Req.Referer(),
+		"traceID", traceID,
 	)
 
 	transport, err := proxy.dataSourcesService.GetHTTPTransport(proxy.ctx.Req.Context(), proxy.ds, proxy.clientProvider)
@@ -165,7 +168,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 	reqQueryVals := req.URL.Query()
 
 	switch proxy.ds.Type {
-	case models.DS_INFLUXDB_08:
+	case datasources.DS_INFLUXDB_08:
 		password, err := proxy.dataSourcesService.DecryptedPassword(req.Context(), proxy.ds)
 		if err != nil {
 			logger.Error("Error interpolating proxy url", "error", err)
@@ -176,7 +179,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 		reqQueryVals.Add("u", proxy.ds.User)
 		reqQueryVals.Add("p", password)
 		req.URL.RawQuery = reqQueryVals.Encode()
-	case models.DS_INFLUXDB:
+	case datasources.DS_INFLUXDB:
 		password, err := proxy.dataSourcesService.DecryptedPassword(req.Context(), proxy.ds)
 		if err != nil {
 			logger.Error("Error interpolating proxy url", "error", err)
@@ -220,14 +223,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 
 	applyUserHeader(proxy.cfg.SendUserHeader, req, proxy.ctx.SignedInUser)
 
-	keepCookieNames := []string{}
-	if proxy.ds.JsonData != nil {
-		if keepCookies := proxy.ds.JsonData.Get("keepCookies"); keepCookies != nil {
-			keepCookieNames = keepCookies.MustStringArray()
-		}
-	}
-
-	proxyutil.ClearCookieHeader(req, keepCookieNames)
+	proxyutil.ClearCookieHeader(req, proxy.ds.AllowedCookies())
 	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
 
 	jsonData := make(map[string]interface{})
@@ -271,7 +267,7 @@ func (proxy *DataSourceProxy) validateRequest() error {
 		return errors.New("target URL is not a valid target")
 	}
 
-	if proxy.ds.Type == models.DS_ES {
+	if proxy.ds.Type == datasources.DS_ES {
 		if proxy.ctx.Req.Method == "DELETE" {
 			return errors.New("deletes not allowed on proxied Elasticsearch datasource")
 		}
@@ -306,7 +302,7 @@ func (proxy *DataSourceProxy) validateRequest() error {
 	}
 
 	// Trailing validation below this point for routes that were not matched
-	if proxy.ds.Type == models.DS_PROMETHEUS {
+	if proxy.ds.Type == datasources.DS_PROMETHEUS {
 		if proxy.ctx.Req.Method == "DELETE" {
 			return errors.New("non allow-listed DELETEs not allowed on proxied Prometheus datasource")
 		}

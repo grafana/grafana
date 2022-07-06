@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -556,9 +557,9 @@ func createDashboard(t *testing.T, id int64, orgId int64, uid string) *models.Da
 }
 
 // createDatasource creates a ddatasource for inserting into the test database.
-func createDatasource(t *testing.T, id int64, orgId int64, uid string) *models.DataSource {
+func createDatasource(t *testing.T, id int64, orgId int64, uid string) *datasources.DataSource {
 	t.Helper()
-	return &models.DataSource{
+	return &datasources.DataSource{
 		Id:      id,
 		OrgId:   orgId,
 		Uid:     uid,
@@ -568,9 +569,22 @@ func createDatasource(t *testing.T, id int64, orgId int64, uid string) *models.D
 	}
 }
 
+func createOrg(t *testing.T, id int64) *models.Org {
+	t.Helper()
+	return &models.Org{
+		Id:      id,
+		Version: 1,
+		Name:    fmt.Sprintf("org_%d", id),
+		Created: time.Now(),
+		Updated: time.Now(),
+	}
+}
+
 // teardown cleans the input tables between test cases.
 func teardown(t *testing.T, x *xorm.Engine) {
-	_, err := x.Exec("DELETE from alert")
+	_, err := x.Exec("DELETE from org")
+	require.NoError(t, err)
+	_, err = x.Exec("DELETE from alert")
 	require.NoError(t, err)
 	_, err = x.Exec("DELETE from alert_notification")
 	require.NoError(t, err)
@@ -584,6 +598,11 @@ func teardown(t *testing.T, x *xorm.Engine) {
 func setupLegacyAlertsTables(t *testing.T, x *xorm.Engine, legacyChannels []*models.AlertNotification, alerts []*models.Alert) {
 	t.Helper()
 
+	orgs := []models.Org{
+		*createOrg(t, 1),
+		*createOrg(t, 2),
+	}
+
 	// Setup dashboards.
 	dashboards := []models.Dashboard{
 		*createDashboard(t, 1, 1, "dash1-1"),
@@ -595,12 +614,16 @@ func setupLegacyAlertsTables(t *testing.T, x *xorm.Engine, legacyChannels []*mod
 	require.NoError(t, errDashboards)
 
 	// Setup data_sources.
-	dataSources := []models.DataSource{
+	dataSources := []datasources.DataSource{
 		*createDatasource(t, 1, 1, "ds1-1"),
 		*createDatasource(t, 2, 1, "ds2-1"),
 		*createDatasource(t, 3, 2, "ds3-2"),
 		*createDatasource(t, 4, 2, "ds4-2"),
 	}
+
+	_, errOrgs := x.Insert(orgs)
+	require.NoError(t, errOrgs)
+
 	_, errDataSourcess := x.Insert(dataSources)
 	require.NoError(t, errDataSourcess)
 

@@ -1,5 +1,4 @@
 import { reducerTester } from '../../../test/core/redux/reducerTester';
-import { describe, expect } from '../../../test/lib/common';
 import { initialTeamsState, teamsLoaded } from '../../features/teams/state/reducers';
 import { Team } from '../../types';
 import { StoreState } from '../../types/store';

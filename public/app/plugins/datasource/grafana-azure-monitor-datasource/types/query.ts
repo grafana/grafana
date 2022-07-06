@@ -45,12 +45,10 @@ export interface AzureMetricQuery {
   dimensionFilters?: AzureMetricDimension[];
   alias?: string;
   top?: string;
+  allowedTimeGrainsMs?: number[];
 
   /** @deprecated */
   timeGrainUnit?: string;
-
-  /** @deprecated Remove this once angular is removed */
-  allowedTimeGrainsMs?: number[];
 
   /** @deprecated This property was migrated to dimensionFilters and should only be accessed in the migration */
   dimension?: string;

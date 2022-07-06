@@ -1,8 +1,12 @@
-+++
-aliases = ["/docs/grafana/latest/panels/calculation-types/", "/docs/grafana/latest/panels/calculations-list/", "/docs/grafana/latest/panels/reference-calculation-types/", "/docs/sources/panels/reference-calculation-types/"]
-title = "Calculation types"
-weight = 1100
-+++
+---
+aliases:
+  - /docs/grafana/latest/panels/calculation-types/
+  - /docs/grafana/latest/panels/calculations-list/
+  - /docs/grafana/latest/panels/reference-calculation-types/
+  - /docs/sources/panels/reference-calculation-types/
+title: Calculation types
+weight: 1100
+---
 
 # Reference: Calculation types
 

@@ -1,16 +1,26 @@
-+++
-aliases = ["/docs/grafana/latest/datasources/azuremonitor/template-variables/"]
-description = "Using template variables with Azure Monitor in Grafana"
-keywords = ["grafana", "microsoft", "azure", "monitor", "application", "insights", "log", "analytics", "guide"]
-title = "Azure Monitor template variables"
-weight = 2
-+++
+---
+aliases:
+  - /docs/grafana/latest/datasources/azuremonitor/template-variables/
+description: Using template variables with Azure Monitor in Grafana
+keywords:
+  - grafana
+  - microsoft
+  - azure
+  - monitor
+  - application
+  - insights
+  - log
+  - analytics
+  - guide
+title: Azure Monitor template variables
+weight: 2
+---
 
 # Template variables
 
 Instead of hard-coding values for fields like resource group or resource name in your queries, you can use variables in their place to create more interactive, dynamic, and reusable dashboards.
 
-Check out the [Templating]({{< relref "../../variables/_index.md" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../../variables/" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 The Azure Monitor data source provides the following queries you can specify in the Query field in the Variable edit view

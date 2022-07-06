@@ -1,11 +1,17 @@
-+++
-aliases = ["/docs/grafana/latest/alerting/notifications/", "/docs/grafana/latest/old-alerting/notifications/"]
-description = "Alerting notifications guide"
-draft = true
-keywords = ["Grafana", "alerting", "guide", "notifications"]
-title = "Alert notifications"
-weight = 100
-+++
+---
+aliases:
+  - /docs/grafana/latest/alerting/notifications/
+  - /docs/grafana/latest/old-alerting/notifications/
+description: Alerting notifications guide
+draft: true
+keywords:
+  - Grafana
+  - alerting
+  - guide
+  - notifications
+title: Alert notifications
+weight: 100
+---
 
 # Alert notifications
 
@@ -116,12 +122,12 @@ If you are using the token for a slack bot, then you have to invite the bot to t
 
 To setup Opsgenie you will need an API Key and the Alert API Url. These can be obtained by configuring a new [Grafana Integration](https://docs.opsgenie.com/docs/grafana-integration).
 
-| Setting                   | Description                                                                                                                                                                                                                                |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Alert API URL             | The API URL for your Opsgenie instance. This will normally be either `https://api.opsgenie.com` or, for EU customers, `https://api.eu.opsgenie.com`.                                                                                       |
-| API Key                   | The API Key as provided by Opsgenie for your configured Grafana integration.                                                                                                                                                               |
-| Override priority         | Configures the alert priority using the `og_priority` tag. The `og_priority` tag must have one of the following values: `P1`, `P2`, `P3`, `P4`, or `P5`. Default is `False`.                                                               |
-| Send notification tags as | Specify how you would like [Notification Tags]({{< relref "create-alerts.md/#notifications" >}}) delivered to Opsgenie. They can be delivered as `Tags`, `Extra Properties` or both. Default is Tags. See note below for more information. |
+| Setting                   | Description                                                                                                                                                                                                                             |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Alert API URL             | The API URL for your Opsgenie instance. This will normally be either `https://api.opsgenie.com` or, for EU customers, `https://api.eu.opsgenie.com`.                                                                                    |
+| API Key                   | The API Key as provided by Opsgenie for your configured Grafana integration.                                                                                                                                                            |
+| Override priority         | Configures the alert priority using the `og_priority` tag. The `og_priority` tag must have one of the following values: `P1`, `P2`, `P3`, `P4`, or `P5`. Default is `False`.                                                            |
+| Send notification tags as | Specify how you would like [Notification Tags]({{< relref "create-alerts/#notifications" >}}) delivered to Opsgenie. They can be delivered as `Tags`, `Extra Properties` or both. Default is Tags. See note below for more information. |
 
 > **Note:** When notification tags are sent as `Tags` they are concatenated into a string with a `key:value` format. If you prefer to receive the notifications tags as key/values under Extra Properties in Opsgenie then change the `Send notification tags as` to either `Extra Properties` or `Tags & Extra Properties`.
 
@@ -280,4 +286,4 @@ This URL is based on the [domain]({{< relref "../../administration/configuration
 
 > **Note:** Alert notification templating is only available in Grafana v7.4 and above.
 
-The alert notification template feature allows you to take the [label]({{< relref "../../basics/timeseries-dimensions.md#labels" >}}) value from an alert query and [inject that into alert notifications]({{< relref "./add-notification-template.md" >}}).
+The alert notification template feature allows you to take the [label]({{< relref "../../basics/timeseries-dimensions/#labels" >}}) value from an alert query and [inject that into alert notifications]({{< relref "add-notification-template/" >}}).

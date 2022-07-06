@@ -1,10 +1,15 @@
-+++
-aliases = ["/docs/grafana/latest/sharing/playlists/"]
-draft = "true"
-keywords = ["grafana", "dashboard", "documentation", "playlist"]
-title = "Playlists"
-weight = 4
-+++
+---
+aliases:
+  - /docs/grafana/latest/sharing/playlists/
+draft: 'true'
+keywords:
+  - grafana
+  - dashboard
+  - documentation
+  - playlist
+title: Playlists
+weight: 4
+---
 
 # Playlists
 

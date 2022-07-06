@@ -106,6 +106,7 @@ export enum AlignmentTypes {
   ALIGN_PERCENTILE_50 = 'ALIGN_PERCENTILE_50',
   ALIGN_PERCENTILE_05 = 'ALIGN_PERCENTILE_05',
   ALIGN_PERCENT_CHANGE = 'ALIGN_PERCENT_CHANGE',
+  ALIGN_NONE = 'ALIGN_NONE',
 }
 
 export interface BaseQuery {
@@ -130,6 +131,11 @@ export interface MetricQuery extends BaseQuery {
   graphPeriod?: 'disabled' | string;
 }
 
+export interface AnnotationMetricQuery extends MetricQuery {
+  title?: string;
+  text?: string;
+}
+
 export interface SLOQuery extends BaseQuery {
   selectorName: string;
   serviceId: string;
@@ -142,7 +148,7 @@ export interface SLOQuery extends BaseQuery {
 export interface CloudMonitoringQuery extends DataQuery {
   datasourceId?: number; // Should not be necessary anymore
   queryType: QueryType;
-  metricQuery: MetricQuery;
+  metricQuery: MetricQuery | AnnotationMetricQuery;
   sloQuery?: SLOQuery;
   intervalMs: number;
   type: string;
@@ -160,7 +166,7 @@ export interface CloudMonitoringSecureJsonData {
   privateKey?: string;
 }
 
-export interface AnnotationTarget {
+export interface LegacyCloudMonitoringAnnotationQuery {
   projectName: string;
   metricType: string;
   refId: string;

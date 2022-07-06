@@ -46,12 +46,14 @@ func TestSuccessResponse(t *testing.T) {
 		{name: "parse a vector response with special values", filepath: "vector_special_values", query: vectorQuery},
 
 		{name: "parse a simple streams response", filepath: "streams_simple", query: streamsQuery},
+
+		{name: "parse a streams response with parse errors", filepath: "streams_parse_errors", query: streamsQuery},
 	}
 
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
 			responseFileName := filepath.Join("testdata", test.filepath+".json")
-			goldenFileName := filepath.Join("testdata", test.filepath+".golden.txt")
+			goldenFileName := test.filepath + ".golden"
 
 			bytes, err := os.ReadFile(responseFileName)
 			require.NoError(t, err)
@@ -63,9 +65,7 @@ func TestSuccessResponse(t *testing.T) {
 				Frames: frames,
 				Error:  err,
 			}
-
-			err = experimental.CheckGoldenDataResponse(goldenFileName, dr, true)
-			require.NoError(t, err)
+			experimental.CheckGoldenJSONResponse(t, "testdata", goldenFileName, dr, true)
 		})
 	}
 }
@@ -74,8 +74,7 @@ func TestErrorResponse(t *testing.T) {
 	// NOTE: when there is an error-response, it comes with
 	// HTTP code 400, and the format seems to change between versions:
 	// 2.3.x: content-type=text/plain, content is plaintext
-	// 2.4.x: content-type=application/json, content is plaintext: https://github.com/grafana/loki/issues/4844
-	// main-branch: content-type=application/json, content is JSON
+	// 2.4.x+: content-type=application/json, content is plaintext: https://github.com/grafana/loki/issues/4844
 	// we should always be able to to return some kind of error message
 	tt := []struct {
 		name         string
@@ -95,7 +94,7 @@ func TestErrorResponse(t *testing.T) {
 			errorMessage: "parse error at line 1, col 8: something is wrong",
 		},
 		{
-			name:         "parse a non-json error body with json content type (loki 2.4.0,2.4.1,2.4.2)",
+			name:         "parse a non-json error body with json content type",
 			body:         []byte("parse error at line 1, col 8: something is wrong"),
 			contentType:  "application/json; charset=UTF-8",
 			errorMessage: "parse error at line 1, col 8: something is wrong",

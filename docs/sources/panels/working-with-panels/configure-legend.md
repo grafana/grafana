@@ -1,8 +1,10 @@
-+++
-aliases = ["/docs/grafana/latest/panels/working-with-panels/configure-legend/", "/docs/sources/panels/working-with-panels/configure-legend/"]
-title = "Configure a legend"
-weight = 70
-+++
+---
+aliases:
+  - /docs/grafana/latest/panels/working-with-panels/configure-legend/
+  - /docs/sources/panels/working-with-panels/configure-legend/
+title: Configure a legend
+weight: 70
+---
 
 # Configure a legend
 
@@ -13,12 +15,6 @@ A panel includes a legend that you can use to interpret data displayed in a visu
 Visualizations can often be visually complex, and include many data series. You can simplify the view by removing series data from the visualization, which isolates the data you want to see. Grafana automatically creates a new override in the **Override** tab.
 
 When you apply your changes, the visualization changes appear to all users of the panel.
-
-### Before you begin
-
-- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).
-
-**To isolate series data in a visualization**:
 
 1. Open the panel.
 
@@ -34,12 +30,12 @@ When you apply your changes, the visualization changes appear to all users of th
 
 This topic currently applies to the following visualizations:
 
-- [Bar chart]({{< relref "../../visualizations/bar-chart.md" >}})
-- [Histogram]({{< relref "../../visualizations/histogram.md" >}})
-- [Pie chart]({{< relref "../../visualizations/pie-chart-panel.md" >}})
-- [State timeline]({{< relref "../../visualizations/state-timeline.md" >}})
-- [Status history]({{< relref "../../visualizations/status-history.md" >}})
-- [Time series]({{< relref "../../visualizations/time-series/_index.md" >}})
+- [Bar chart]({{< relref "../../visualizations/bar-chart/" >}})
+- [Histogram]({{< relref "../../visualizations/histogram/" >}})
+- [Pie chart]({{< relref "../../visualizations/pie-chart-panel/" >}})
+- [State timeline]({{< relref "../../visualizations/state-timeline/" >}})
+- [Status history]({{< relref "../../visualizations/status-history/" >}})
+- [Time series]({{< relref "../../visualizations/time-series/" >}})
 
 ## Add values to a legend
 
@@ -83,7 +79,7 @@ By default, Grafana specifies the color of your series data, which you can chang
 
 ## Sort series
 
-Change legend mode to **Table** and choose [calculations]({{< relref "../calculation-types.md" >}}) to be displayed in the legend. Click the calculation name header in the legend table to sort the values in the table in ascending or descending order.
+Change legend mode to **Table** and choose [calculations]({{< relref "../calculation-types/" >}}) to be displayed in the legend. Click the calculation name header in the legend table to sort the values in the table in ascending or descending order.
 
 The sort order affects the positions of the bars in the Bar chart panel as well as the order of stacked series in the Time series and Bar chart panels.
 

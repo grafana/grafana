@@ -6,9 +6,9 @@ const LABEL_WIDTH = 20;
 
 interface VariableTextFieldProps {
   onBlur: (value: string) => void;
-  placeholder: string;
   value: string;
   label: string;
+  placeholder?: string;
   tooltip?: PopoverContent;
   interactive?: boolean;
 }

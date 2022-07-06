@@ -11,7 +11,7 @@ type Service struct {
 	store store
 }
 
-func ProvideService(db db.DB) *Service {
+func ProvideService(db db.DB) star.Service {
 	return &Service{
 		store: &sqlStore{
 			db: db,

@@ -1,8 +1,9 @@
-import { shallow } from 'enzyme';
+import { render } from '@testing-library/react';
 import React from 'react';
+import { Provider } from 'react-redux';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 
-import { NavModel } from '@grafana/data';
+import { configureStore } from 'app/store/configureStore';
 import { Invitee, OrgUser } from 'app/types';
 
 import { Props, UsersListPage } from './UsersListPage';
@@ -12,16 +13,17 @@ jest.mock('../../core/app_events', () => ({
   emit: jest.fn(),
 }));
 
+jest.mock('app/core/core', () => ({
+  contextSrv: {
+    user: { orgId: 1 },
+    hasAccess: () => false,
+    licensedAccessControlEnabled: () => false,
+  },
+}));
+
 const setup = (propOverrides?: object) => {
+  const store = configureStore();
   const props: Props = {
-    navModel: {
-      main: {
-        text: 'Configuration',
-      },
-      node: {
-        text: 'Users',
-      },
-    } as NavModel,
     users: [] as OrgUser[],
     invitees: [] as Invitee[],
     searchQuery: '',
@@ -38,27 +40,23 @@ const setup = (propOverrides?: object) => {
 
   Object.assign(props, propOverrides);
 
-  const wrapper = shallow(<UsersListPage {...props} />);
-  const instance = wrapper.instance() as UsersListPage;
-
-  return {
-    wrapper,
-    instance,
-  };
+  render(
+    <Provider store={store}>
+      <UsersListPage {...props} />
+    </Provider>
+  );
 };
 
 describe('Render', () => {
   it('should render component', () => {
-    const { wrapper } = setup();
-
-    expect(wrapper).toMatchSnapshot();
+    expect(setup).not.toThrow();
   });
 
   it('should render List page', () => {
-    const { wrapper } = setup({
-      hasFetched: true,
-    });
-
-    expect(wrapper).toMatchSnapshot();
+    expect(() =>
+      setup({
+        hasFetched: true,
+      })
+    ).not.toThrow();
   });
 });

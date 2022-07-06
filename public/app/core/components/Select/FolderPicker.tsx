@@ -3,12 +3,15 @@ import React, { PureComponent } from 'react';
 
 import { AppEvents, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { AsyncSelect } from '@grafana/ui';
+import { ActionMeta, AsyncSelect, LoadOptionsCallback } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { createFolder, getFolderById, searchFolders } from 'app/features/manage-dashboards/state/actions';
+import { DashboardSearchHit } from 'app/features/search/types';
 
 import { AccessControlAction, PermissionLevelString } from '../../../types';
 import appEvents from '../../app_events';
+
+export type FolderPickerFilter = (hits: DashboardSearchHit[]) => DashboardSearchHit[];
 
 export interface Props {
   onChange: ($folder: { title: string; id: number }) => void;
@@ -19,8 +22,11 @@ export interface Props {
   initialTitle?: string;
   initialFolderId?: number;
   permissionLevel?: Exclude<PermissionLevelString, PermissionLevelString.Admin>;
+  filter?: FolderPickerFilter;
   allowEmpty?: boolean;
   showRoot?: boolean;
+  onClear?: () => void;
+  accessControlMetadata?: boolean;
   /**
    * Skips loading all folders in order to find the folder matching
    * the folder where the dashboard is stored.
@@ -46,7 +52,7 @@ export class FolderPicker extends PureComponent<Props, State> {
       folder: null,
     };
 
-    this.debouncedSearch = debounce(this.getOptions, 300, {
+    this.debouncedSearch = debounce(this.loadOptions, 300, {
       leading: true,
       trailing: true,
     });
@@ -76,12 +82,26 @@ export class FolderPicker extends PureComponent<Props, State> {
     await this.loadInitialValue();
   };
 
-  getOptions = async (query: string) => {
-    const { rootName, enableReset, initialTitle, permissionLevel, initialFolderId, showRoot } = this.props;
+  // when debouncing, we must use the callback form of react-select's loadOptions so we don't
+  // drop results for user input. This must not return a promise/use await.
+  loadOptions = (query: string, callback: LoadOptionsCallback<number>): void => {
+    this.searchFolders(query).then(callback);
+  };
 
-    const searchHits = await searchFolders(query, permissionLevel);
+  private searchFolders = async (query: string) => {
+    const {
+      rootName,
+      enableReset,
+      initialTitle,
+      permissionLevel,
+      filter,
+      accessControlMetadata,
+      initialFolderId,
+      showRoot,
+    } = this.props;
 
-    const options: Array<SelectableValue<number>> = searchHits.map((hit) => ({ label: hit.title, value: hit.id }));
+    const searchHits = await searchFolders(query, permissionLevel, accessControlMetadata);
+    const options: Array<SelectableValue<number>> = mapSearchHitsToOptions(searchHits, filter);
 
     const hasAccess =
       contextSrv.hasAccess(AccessControlAction.DashboardsWrite, contextSrv.isEditor) ||
@@ -103,9 +123,14 @@ export class FolderPicker extends PureComponent<Props, State> {
     return options;
   };
 
-  onFolderChange = (newFolder: SelectableValue<number>) => {
+  onFolderChange = (newFolder: SelectableValue<number>, actionMeta: ActionMeta) => {
     if (!newFolder) {
       newFolder = { value: 0, label: this.props.rootName };
+    }
+
+    if (actionMeta.action === 'clear' && this.props.onClear) {
+      this.props.onClear();
+      return;
     }
 
     this.setState(
@@ -117,13 +142,21 @@ export class FolderPicker extends PureComponent<Props, State> {
   };
 
   createNewFolder = async (folderName: string) => {
-    // @ts-ignore
     const newFolder = await createFolder({ title: folderName });
-    let folder = { value: -1, label: 'Not created' };
+    let folder: SelectableValue<number> = { value: -1, label: 'Not created' };
+
     if (newFolder.id > -1) {
       appEvents.emit(AppEvents.alertSuccess, ['Folder Created', 'OK']);
       folder = { value: newFolder.id, label: newFolder.title };
-      await this.onFolderChange(folder);
+
+      this.setState(
+        {
+          folder: newFolder,
+        },
+        () => {
+          this.onFolderChange(folder, { action: 'create-option', option: folder });
+        }
+      );
     } else {
       appEvents.emit(AppEvents.alertError, ['Folder could not be created']);
     }
@@ -136,7 +169,7 @@ export class FolderPicker extends PureComponent<Props, State> {
     const resetFolder: SelectableValue<number> = { label: initialTitle, value: undefined };
     const rootFolder: SelectableValue<number> = { label: rootName, value: 0 };
 
-    const options = await this.getOptions('');
+    const options = await this.searchFolders('');
 
     let folder: SelectableValue<number> | null = null;
 
@@ -177,7 +210,8 @@ export class FolderPicker extends PureComponent<Props, State> {
 
   render() {
     const { folder } = this.state;
-    const { enableCreateNew, inputId } = this.props;
+    const { enableCreateNew, inputId, onClear } = this.props;
+    const isClearable = typeof onClear === 'function';
 
     return (
       <div data-testid={selectors.components.FolderPicker.containerV2}>
@@ -192,10 +226,16 @@ export class FolderPicker extends PureComponent<Props, State> {
           loadOptions={this.debouncedSearch}
           onChange={this.onFolderChange}
           onCreateOption={this.createNewFolder}
+          isClearable={isClearable}
         />
       </div>
     );
   }
+}
+
+function mapSearchHitsToOptions(hits: DashboardSearchHit[], filter?: FolderPickerFilter) {
+  const filteredHits = filter ? filter(hits) : hits;
+  return filteredHits.map((hit) => ({ label: hit.title, value: hit.id }));
 }
 
 interface Args {

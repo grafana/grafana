@@ -15,6 +15,8 @@ const TRANSLATED_MENU_ITEMS: Record<string, MessageDescriptor> = {
   import: defineMessage({ id: 'nav.create-import', message: 'Import' }),
   alert: defineMessage({ id: 'nav.create-alert', message: 'New alert rule' }),
 
+  starred: defineMessage({ id: 'nav.starred', message: 'Starred' }),
+  'starred-empty': defineMessage({ id: 'nav.starred-empty', message: 'Your starred dashboards will appear here' }),
   dashboards: defineMessage({ id: 'nav.dashboards', message: 'Dashboards' }),
   'manage-dashboards': defineMessage({ id: 'nav.manage-dashboards', message: 'Browse' }),
   playlists: defineMessage({ id: 'nav.playlists', message: 'Playlists' }),
@@ -26,6 +28,7 @@ const TRANSLATED_MENU_ITEMS: Record<string, MessageDescriptor> = {
   explore: defineMessage({ id: 'nav.explore', message: 'Explore' }),
 
   alerting: defineMessage({ id: 'nav.alerting', message: 'Alerting' }),
+  'alerting-legacy': defineMessage({ id: 'nav.alerting-legacy', message: 'Alerting (legacy)' }),
   'alert-list': defineMessage({ id: 'nav.alerting-list', message: 'Alert rules' }),
   receivers: defineMessage({ id: 'nav.alerting-receivers', message: 'Contact points' }),
   'am-routes': defineMessage({ id: 'nav.alerting-am-routes', message: 'Notification policies' }),

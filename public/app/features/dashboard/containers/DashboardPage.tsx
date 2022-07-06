@@ -5,7 +5,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { CustomScrollbar, stylesFactory, Themeable2, withTheme2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { Branding } from 'app/core/components/Branding/Branding';
@@ -37,14 +37,16 @@ export interface DashboardPageRouteParams {
   uid?: string;
   type?: string;
   slug?: string;
+  accessToken?: string;
 }
 
-type DashboardPageRouteSearchParams = {
+export type DashboardPageRouteSearchParams = {
   tab?: string;
   folderId?: string;
   editPanel?: string;
   viewPanel?: string;
   editview?: string;
+  panelType?: string;
   inspect?: string;
   from?: string;
   to?: string;
@@ -67,7 +69,12 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-export type Props = Themeable2 &
+type OwnProps = {
+  isPublic?: boolean;
+};
+
+export type Props = OwnProps &
+  Themeable2 &
   GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams> &
   ConnectedProps<typeof connector>;
 
@@ -112,7 +119,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   }
 
   initDashboard() {
-    const { dashboard, match, queryParams } = this.props;
+    const { dashboard, isPublic, match, queryParams } = this.props;
 
     if (dashboard) {
       this.closeDashboard();
@@ -123,8 +130,10 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       urlUid: match.params.uid,
       urlType: match.params.type,
       urlFolderId: queryParams.folderId,
+      panelType: queryParams.panelType,
       routeName: this.props.route.routeName,
-      fixUrl: true,
+      fixUrl: !isPublic,
+      accessToken: match.params.accessToken,
     });
 
     // small delay to start live updates
@@ -312,9 +321,9 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, initError, queryParams, theme } = this.props;
+    const { dashboard, initError, queryParams, theme, isPublic } = this.props;
     const { editPanel, viewPanel, updateScrollTop } = this.state;
-    const kioskMode = getKioskMode();
+    const kioskMode = !isPublic ? getKioskMode() : KioskMode.Full;
     const styles = getStyles(theme, kioskMode);
 
     if (!dashboard) {
@@ -378,7 +387,8 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
  * Styles
  */
 export const getStyles = stylesFactory((theme: GrafanaTheme2, kioskMode: KioskMode) => {
-  const contentPadding = kioskMode !== KioskMode.Full ? theme.spacing(0, 2, 2) : theme.spacing(2);
+  const contentPadding =
+    kioskMode === KioskMode.Full || config.featureToggles.topnav ? theme.spacing(2) : theme.spacing(0, 2, 2);
   return {
     dashboardContainer: css`
       width: 100%;

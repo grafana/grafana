@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-import { Button, Checkbox, HorizontalGroup, useStyles2 } from '@grafana/ui';
+import { Button, HorizontalGroup, IconButton, IconName, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { FolderDTO } from 'app/types';
 
@@ -15,9 +15,10 @@ type Props = {
   items: Map<string, Set<string>>;
   folder?: FolderDTO; // when we are loading in folder page
   onChange: OnMoveOrDeleleSelectedItems;
+  clearSelection: () => void;
 };
 
-export function ManageActions({ items, folder, onChange }: Props) {
+export function ManageActions({ items, folder, onChange, clearSelection }: Props) {
   const styles = useStyles2(getStyles);
 
   const canSave = folder?.canSave;
@@ -25,10 +26,7 @@ export function ManageActions({ items, folder, onChange }: Props) {
 
   const canMove = hasEditPermissionInFolders;
 
-  // TODO: check user permissions for delete, should not be able to delete if includes general folder and user don't have permissions
-  // There is not GENERAL_FOLDER_UID configured yet, we need to make sure to add it to the data.
   const selectedFolders = Array.from(items.get('folder') ?? []);
-  console.log({ selectedFolders });
   const includesGeneralFolder = selectedFolders.find((result) => result === GENERAL_FOLDER_UID);
 
   const canDelete = hasEditPermissionInFolders && !includesGeneralFolder;
@@ -43,30 +41,17 @@ export function ManageActions({ items, folder, onChange }: Props) {
     setIsDeleteModalOpen(true);
   };
 
-  const onToggleAll = () => {
-    alert('TODO, toggle all....');
-  };
-
   return (
-    <div className={styles.actionRow}>
+    <div className={styles.actionRow} data-testid="manage-actions">
       <div className={styles.rowContainer}>
         <HorizontalGroup spacing="md" width="auto">
-          <Checkbox value={false} onClick={onToggleAll} />
+          <IconButton name={'check-square' as IconName} onClick={clearSelection} title="Uncheck everything" />
           <Button disabled={!canMove} onClick={onMove} icon="exchange-alt" variant="secondary">
             Move
           </Button>
           <Button disabled={!canDelete} onClick={onDelete} icon="trash-alt" variant="destructive">
             Delete
           </Button>
-
-          {[...items.keys()].map((k) => {
-            const vals = items.get(k);
-            return (
-              <div key={k}>
-                {k} ({vals?.size})
-              </div>
-            );
-          })}
         </HorizontalGroup>
       </div>
 

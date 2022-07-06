@@ -75,22 +75,25 @@ export default function PluginDetails({ match, queryParams }: Props): JSX.Elemen
   return (
     <Page>
       <PluginDetailsHeader currentUrl={`${url}?page=${pageId}`} parentUrl={parentUrl} plugin={plugin} />
+      {/* Tab navigation */}
+      <div>
+        <div className="page-container">
+          <TabsBar hideBorder>
+            {tabs.map((tab: PluginDetailsTab) => {
+              return (
+                <Tab
+                  key={tab.label}
+                  label={tab.label}
+                  href={tab.href}
+                  icon={tab.icon as IconName}
+                  active={tab.id === pageId}
+                />
+              );
+            })}
+          </TabsBar>
+        </div>
+      </div>
       <Page.Contents>
-        {/* Tab navigation */}
-        <TabsBar>
-          {tabs.map((tab: PluginDetailsTab) => {
-            return (
-              <Tab
-                key={tab.label}
-                label={tab.label}
-                href={tab.href}
-                icon={tab.icon as IconName}
-                active={tab.id === pageId}
-              />
-            );
-          })}
-        </TabsBar>
-
         {/* Active tab */}
         <TabContent className={styles.tabContent}>
           <PluginDetailsSignature plugin={plugin} className={styles.alert} />
@@ -111,6 +114,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     // Needed due to block formatting context
     tabContent: css`
       overflow: auto;
+      height: 100%;
     `,
   };
 };

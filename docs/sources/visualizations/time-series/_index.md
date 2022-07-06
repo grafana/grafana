@@ -1,9 +1,17 @@
-+++
-aliases = ["/docs/grafana/latest/panels/visualizations/time-series/", "/docs/grafana/latest/visualizations/time-series/"]
-keywords = ["grafana", "graph panel", "time series panel", "documentation", "guide", "graph"]
-title = "Time series"
-weight = 1200
-+++
+---
+aliases:
+  - /docs/grafana/latest/panels/visualizations/time-series/
+  - /docs/grafana/latest/visualizations/time-series/
+keywords:
+  - grafana
+  - graph panel
+  - time series panel
+  - documentation
+  - guide
+  - graph
+title: Time series
+weight: 1200
+---
 
 # Time series
 
@@ -23,17 +31,17 @@ These options are available whether you are graphing your time series as lines, 
 
 ### Legend calculations
 
-Choose which of the [standard calculations]({{< relref "../../panels/calculation-types.md">}}) to show in the legend. You can have more than one.
+Choose which of the [standard calculations]({{< relref "../../panels/calculation-types/" >}}) to show in the legend. You can have more than one.
 
 ## Graph styles
 
 Use these options to choose how to display your time series data.
 
-- [Graph time series as lines]({{< relref "./graph-time-series-as-lines.md" >}})
-- [Graph time series as bars]({{< relref "./graph-time-series-as-bars.md" >}})
-- [Graph time series as points]({{< relref "./graph-time-series-as-points.md" >}})
-- [Graph stacked time series]({{< relref "./graph-time-series-stacking.md" >}})
-- [Graph and color schemes]({{< relref "./graph-color-scheme.md" >}})
+- [Graph time series as lines]({{< relref "graph-time-series-as-lines/" >}})
+- [Graph time series as bars]({{< relref "graph-time-series-as-bars/" >}})
+- [Graph time series as points]({{< relref "graph-time-series-as-points/" >}})
+- [Graph stacked time series]({{< relref "graph-time-series-stacking/" >}})
+- [Graph and color schemes]({{< relref "graph-color-scheme/" >}})
 
 ### Transform
 
@@ -46,4 +54,4 @@ Use this option to transform the series values without affecting the values show
 
 ## Axis
 
-For more information about adjusting your time series axes, refer to [Change axis display]({{< relref "change-axis-display.md" >}}).
+For more information about adjusting your time series axes, refer to [Change axis display]({{< relref "change-axis-display/" >}}).

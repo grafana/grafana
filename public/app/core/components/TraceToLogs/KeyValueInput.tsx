@@ -65,6 +65,7 @@ const KeyValueInput = ({
               onClick={() => onChange([...values.slice(0, idx), ...values.slice(idx + 1)])}
               className="gf-form-label query-part"
               aria-label="Remove tag"
+              type="button"
             >
               <Icon name="times" />
             </button>
@@ -73,6 +74,7 @@ const KeyValueInput = ({
                 onClick={() => onChange([...values, { key: '', value: '' }])}
                 className="gf-form-label query-part"
                 aria-label="Add tag"
+                type="button"
               >
                 <Icon name="plus" />
               </button>
@@ -84,6 +86,7 @@ const KeyValueInput = ({
           onClick={() => onChange([...values, { key: '', value: '' }])}
           className="gf-form-label query-part"
           aria-label="Add tag"
+          type="button"
         >
           <Icon name="plus" />
         </button>

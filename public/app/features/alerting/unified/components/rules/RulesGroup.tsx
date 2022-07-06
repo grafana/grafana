@@ -5,14 +5,13 @@ import { useDispatch } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Badge, ConfirmModal, HorizontalGroup, Icon, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
-import { contextSrv } from 'app/core/services/context_srv';
 import kbn from 'app/core/utils/kbn';
-import { AccessControlAction } from 'app/types';
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { useFolder } from '../../hooks/useFolder';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { deleteRulesGroupAction } from '../../state/actions';
+import { useRulesAccess } from '../../utils/accessControlHooks';
 import { GRAFANA_RULES_SOURCE_NAME, isCloudRulesSource } from '../../utils/datasource';
 import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
@@ -38,7 +37,7 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll }
   const [isDeletingGroup, setIsDeletingGroup] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(!expandAll);
 
-  const canEditCloudRules = contextSrv.hasPermission(AccessControlAction.AlertingRuleExternalWrite);
+  const { canEditRules } = useRulesAccess();
 
   useEffect(() => {
     setIsCollapsed(!expandAll);
@@ -96,7 +95,7 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll }
         );
       }
     }
-  } else if (canEditCloudRules && hasRuler(rulesSource)) {
+  } else if (canEditRules(rulesSource.name) && hasRuler(rulesSource)) {
     if (!isFederated) {
       actionIcons.push(
         <ActionIcon

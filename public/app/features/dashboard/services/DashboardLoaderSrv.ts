@@ -41,6 +41,15 @@ export class DashboardLoaderSrv {
       });
     } else if (type === 'ds') {
       promise = this._loadFromDatasource(slug); // explore dashboards as code
+    } else if (type === 'public') {
+      promise = backendSrv
+        .getPublicDashboardByUid(uid)
+        .then((result: any) => {
+          return result;
+        })
+        .catch(() => {
+          return this._dashboardLoadFailed('Public Dashboard Not found', true);
+        });
     } else {
       promise = backendSrv
         .getDashboardByUid(uid)

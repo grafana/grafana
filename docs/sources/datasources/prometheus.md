@@ -1,14 +1,19 @@
-+++
-aliases = ["/docs/grafana/latest/datasources/prometheus/", "/docs/grafana/latest/features/datasources/prometheus/"]
-description = "Guide for using Prometheus in Grafana"
-keywords = ["grafana", "prometheus", "guide"]
-title = "Prometheus"
-weight = 1300
-+++
+---
+aliases:
+  - /docs/grafana/latest/datasources/prometheus/
+  - /docs/grafana/latest/features/datasources/prometheus/
+description: Guide for using Prometheus in Grafana
+keywords:
+  - grafana
+  - prometheus
+  - guide
+title: Prometheus
+weight: 1300
+---
 
 # Prometheus data source
 
-Grafana includes built-in support for Prometheus. This topic explains options, variables, querying, and other options specific to the Prometheus data source. Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
+Grafana includes built-in support for Prometheus. This topic explains options, variables, querying, and other options specific to the Prometheus data source. Refer to [Add a data source]({{< relref "add-a-data-source/" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
 
 > **Note:** You can use [Grafana Cloud](https://grafana.com/products/cloud/features/#cloud-logs) to avoid the overhead of installing, maintaining, and scaling your observability stack. The free forever plan includes Grafana, 10K Prometheus series, 50 GB logs, and more.[Create a free account to get started](https://grafana.com/auth/sign-up/create-user?pg=docs-grafana-install&plcmt=in-text).
 
@@ -42,7 +47,9 @@ Prometheus query editor is separated into 3 distinct modes that you can switch b
 
 ![Editor toolbar](/static/img/docs/prometheus/header-8-5.png 'Editor toolbar')
 
-At the top of the editor there is `Run query` button that will run the query and `Explain | Builder | Code` tabs to switch between the editor modes. If the query editor is in Builder mode there are additional elements explained in the Builder section.
+At the top of the editor, select `Run queries` to run a query. Select `Explain | Builder | Code` tabs to switch between the editor modes. If the query editor is in Builder mode, there are additional elements explained in the Builder section.
+
+> **Note:** In Explore, to run Prometheus queries, select `Run query`.
 
 Each mode is synchronized with the other modes, so you can switch between them without losing your work, although there are some limitations. Some more complex queries are not yet supported in the builder mode. If you try to switch from `Code` to `Builder` with such query, editor will show a popup explaining that you can lose some parts of the query, and you can decide if you still want to continue to `Builder` mode or not.
 
@@ -60,7 +67,7 @@ For more information about Prometheus query language, refer to the [Prometheus d
 
 Autocomplete kicks automatically in appropriate times during typing. Use `ctrl/cmd + space` to trigger autocomplete manually when needed. Autocomplete can suggest both static functions, aggregations and keywords but also dynamic items like metrics and labels. Autocomplete dropdown also shows documentation for the suggested items, either static one or dynamic metric documentation where available.
 
-In [Explore]({{< relref "../explore/_index.md" >}}) use `shift + enter` to run the query.
+In [Explore]({{< relref "../explore/" >}}) use `shift + enter` to run the query.
 
 #### Metrics browser
 
@@ -85,17 +92,23 @@ The "Validate selector" button will check with Prometheus how many time series a
 
 ![Options](/static/img/docs/prometheus/options-8-5.png 'Options')
 
-| Name        | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Legend`    | Controls the name of the time series. Use predefined format or use custom format.<br/>`Auto` - only includes unique labels.<br/>`Verbose` - includes all labels.<br/>`Custom` - select will change to text input. Use use tamplating to select which labels will be included. For example, `{{hostname}}` is replaced by the label value for the label `hostname`. Clear the input and click outside the input to go back to select mode.                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| `Min step`  | Set the lower bounds on the interval between data points. For example, set "1h" to hint that measurements are not frequent (taken hourly). `$__interval` and `$__rate_interval` are supported.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| `Format`    | You can switch between `Table` `Time series` or `Heatmap` options. The `Table` option works only in the Table panel. `Heatmap` displays metrics of the Histogram type on a Heatmap panel. Under the hood, it converts cumulative histograms to regular ones and sorts series by the bucket bound.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| `Type`      | `Range` - Query returning a Range vector, a set of time series containing a range of data points over time for each time series.<br/>`Instant` - Perform an "instant" query to return only the latest value that Prometheus has scraped for the requested time series. Instant queries can return results much faster than normal range queries. Use them to look up label sets. Instant query results are made up only of one data point per series but can be shown in the graph panel in a dashboard with the help of [series overrides]({{< relref "../visualizations/graph-panel.md#series-overrides" >}}). To show them in the graph as a latest value point, add a series override and select `Points > true`. To show a horizontal line across the whole graph, add a series override and select `Transform > constant`. <br/>`Both` - Available only in Explore. Runs both range and instant query |
-| `Exemplars` | If on, run exemplars query with the regular query and show exemplars in the graph.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| Name        | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Legend`    | Controls the name of the time series. Use predefined format or use custom format.<br/>`Auto` - if there is a single label, it shows just the value of that label for each series. If there are multiple labels, it works the same as `Verbose`<br/>`Verbose` - includes all labels.<br/>`Custom` - select will change to text input. Use templating to select which labels will be included. For example, `{{hostname}}` is replaced by the label value for the label `hostname`. Clear the input and click outside the input to go back to select mode.                                                                                                                                                                                                                                                                                                                                                  |
+| `Min step`  | Set the lower bounds on the interval between data points. For example, set "1h" to hint that measurements are not frequent (taken hourly). `$__interval` and `$__rate_interval` are supported.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `Format`    | You can switch between `Table` `Time series` or `Heatmap` options. The `Table` option works only in the Table panel. `Heatmap` displays metrics of the Histogram type on a Heatmap panel. Under the hood, it converts cumulative histograms to regular ones and sorts series by the bucket bound.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `Type`      | `Range` - Query returning a Range vector, a set of time series containing a range of data points over time for each time series.<br/>`Instant` - Perform an "instant" query to return only the latest value that Prometheus has scraped for the requested time series. Instant queries can return results much faster than normal range queries. Use them to look up label sets. Instant query results are made up only of one data point per series but can be shown in the graph panel in a dashboard with the help of [series overrides]({{< relref "../visualizations/graph-panel/#series-overrides" >}}). To show them in the graph as a latest value point, add a series override and select `Points > true`. To show a horizontal line across the whole graph, add a series override and select `Transform > constant`. <br/>`Both` - Available only in Explore. Runs both range and instant query |
+| `Exemplars` | If on, run exemplars query with the regular query and show exemplars in the graph.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 
 > **Note:** Grafana modifies the request dates for queries to align them with the dynamically calculated step. This ensures consistent display of metrics data, but it can result in a small gap of data at the right edge of a graph.
 
 ### Builder mode
+
+The following video demonstrates how to use the visual Prometheus query builder available in Grafana version 9.0.
+
+{{< vimeo 720004179 >}}
+
+</br>
 
 #### Toolbar
 
@@ -154,7 +167,7 @@ Instead of hard-coding things like server, application and sensor name in your m
 Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data
 being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../variables/_index.md" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../variables/" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Query variable
@@ -176,7 +189,7 @@ For details of what _metric names_, _label names_ and _label values_ are please 
 
 > Support for `$__range`, `$__range_s` and `$__range_ms` only available from Grafana v5.3
 
-You can use some global built-in variables in query variables, for example, `$__interval`, `$__interval_ms`, `$__range`, `$__range_s` and `$__range_ms`. See [Global built-in variables]({{< relref "../variables/variable-types/global-variables.md" >}}) for more information. They are convenient to use in conjunction with the `query_result` function when you need to filter variable queries since the `label_values` function doesn't support queries.
+You can use some global built-in variables in query variables, for example, `$__interval`, `$__interval_ms`, `$__range`, `$__range_s` and `$__range_ms`. See [Global built-in variables]({{< relref "../variables/variable-types/global-variables/" >}}) for more information. They are convenient to use in conjunction with the `query_result` function when you need to filter variable queries since the `label_values` function doesn't support queries.
 
 Make sure to set the variable's `refresh` trigger to be `On Time Range Change` to get the correct instances when changing the time range on the dashboard.
 
@@ -221,12 +234,12 @@ options are enabled, Grafana converts the labels from plain text to a regex comp
 
 ### Ad hoc filters variable
 
-Prometheus supports the special [ad hoc filters]({{< relref "../variables/variable-types/add-ad-hoc-filters.md" >}}) variable type. It allows you to specify any number of label/value filters on the fly. These filters are automatically
+Prometheus supports the special [ad hoc filters]({{< relref "../variables/variable-types/add-ad-hoc-filters/" >}}) variable type. It allows you to specify any number of label/value filters on the fly. These filters are automatically
 applied to all your Prometheus queries.
 
 ## Annotations
 
-[Annotations]({{< relref "../dashboards/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation
+[Annotations]({{< relref "../dashboards/annotations/" >}}) allow you to overlay rich event information on top of graphs. You add annotation
 queries via the Dashboard menu / Annotations view.
 
 Prometheus supports two ways to query annotations.
@@ -240,7 +253,7 @@ The step option is useful to limit the number of events returned from your query
 
 Grafana exposes metrics for Prometheus on the `/metrics` endpoint. We also bundle a dashboard within Grafana so you can get started viewing your metrics faster. You can import the bundled dashboard by going to the data source edit page and click the dashboard tab. There you can find a dashboard for Grafana and one for Prometheus. Import and start viewing all the metrics!
 
-For detailed instructions, refer to [Internal Grafana metrics]({{< relref "../administration/view-server/internal-metrics.md">}}).
+For detailed instructions, refer to [Internal Grafana metrics]({{< relref "../setup-grafana/set-up-grafana-monitoring/" >}}).
 
 ## Prometheus API
 

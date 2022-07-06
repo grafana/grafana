@@ -6,28 +6,31 @@ import { first } from 'rxjs/operators';
 import Selecto from 'selecto';
 
 import { GrafanaTheme2, PanelData } from '@grafana/data';
-import { stylesFactory } from '@grafana/ui';
+import { locationService } from '@grafana/runtime/src';
+import { Portal, stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { CanvasFrameOptions, DEFAULT_CANVAS_ELEMENT_CONFIG } from 'app/features/canvas';
 import {
   ColorDimensionConfig,
+  DimensionContext,
   ResourceDimensionConfig,
+  ScalarDimensionConfig,
   ScaleDimensionConfig,
   TextDimensionConfig,
-  DimensionContext,
-  ScalarDimensionConfig,
 } from 'app/features/dimensions';
 import {
   getColorDimensionFromData,
-  getScaleDimensionFromData,
   getResourceDimensionFromData,
-  getTextDimensionFromData,
   getScalarDimensionFromData,
+  getScaleDimensionFromData,
+  getTextDimensionFromData,
 } from 'app/features/dimensions/utils';
+import { CanvasContextMenu } from 'app/plugins/panel/canvas/CanvasContextMenu';
 import { LayerActionID } from 'app/plugins/panel/canvas/types';
 
-import { Placement } from '../types';
+import { HorizontalConstraint, Placement, VerticalConstraint } from '../types';
 
+import { constraintViewable, dimensionViewable } from './ables';
 import { ElementState } from './element';
 import { FrameState } from './frame';
 import { RootElement } from './root';
@@ -42,6 +45,7 @@ export class Scene {
   readonly selection = new ReplaySubject<ElementState[]>(1);
   readonly moved = new Subject<number>(); // called after resize/drag for editor updates
   readonly byName = new Map<string, ElementState>();
+
   root: RootElement;
 
   revId = 0;
@@ -56,6 +60,8 @@ export class Scene {
   currentLayer?: FrameState;
   isEditingEnabled?: boolean;
   skipNextSelectionBroadcast = false;
+
+  isPanelEditing = locationService.getSearchObject().editPanel !== undefined;
 
   constructor(cfg: CanvasFrameOptions, enableEditing: boolean, public onSave: (cfg: CanvasFrameOptions) => void) {
     this.root = this.load(cfg, enableEditing);
@@ -100,7 +106,7 @@ export class Scene {
         this.currentLayer = this.root;
         this.selection.next([]);
       }
-    }, 100);
+    });
     return this.root;
   }
 
@@ -220,11 +226,11 @@ export class Scene {
         if (this.div) {
           this.initMoveable(true, this.isEditingEnabled);
         }
-      }, 100);
+      });
     }
   };
 
-  private findElementByTarget = (target: HTMLElement | SVGElement): ElementState | undefined => {
+  findElementByTarget = (target: HTMLElement | SVGElement): ElementState | undefined => {
     // We will probably want to add memoization to this as we are calling on drag / resize
 
     const stack = [...this.root.elements];
@@ -301,16 +307,28 @@ export class Scene {
     this.selecto = new Selecto({
       container: this.div,
       selectableTargets: targetElements,
-      selectByClick: true,
+      toggleContinueSelect: 'shift',
     });
 
     this.moveable = new Moveable(this.div!, {
       draggable: allowChanges,
       resizable: allowChanges,
+      ables: [dimensionViewable, constraintViewable(this)],
+      props: {
+        dimensionViewable: allowChanges,
+        constraintViewable: allowChanges,
+      },
       origin: false,
+      className: this.styles.selected,
     })
       .on('clickGroup', (event) => {
         this.selecto!.clickTarget(event.inputEvent, event.inputTarget);
+      })
+      .on('dragStart', (event) => {
+        const targetedElement = this.findElementByTarget(event.target);
+        if (targetedElement) {
+          targetedElement.isMoving = true;
+        }
       })
       .on('drag', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
@@ -325,10 +343,23 @@ export class Scene {
       .on('dragEnd', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
         if (targetedElement) {
-          targetedElement?.setPlacementFromConstraint();
+          targetedElement.setPlacementFromConstraint();
+          targetedElement.isMoving = false;
         }
 
         this.moved.next(Date.now());
+      })
+      .on('resizeStart', (event) => {
+        const targetedElement = this.findElementByTarget(event.target);
+
+        if (targetedElement) {
+          targetedElement.tempConstraint = { ...targetedElement.options.constraint };
+          targetedElement.options.constraint = {
+            vertical: VerticalConstraint.Top,
+            horizontal: HorizontalConstraint.Left,
+          };
+          targetedElement.setPlacementFromConstraint();
+        }
       })
       .on('resize', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
@@ -346,7 +377,12 @@ export class Scene {
         const targetedElement = this.findElementByTarget(event.target);
 
         if (targetedElement) {
-          targetedElement?.setPlacementFromConstraint();
+          if (targetedElement.tempConstraint) {
+            targetedElement.options.constraint = targetedElement.tempConstraint;
+            targetedElement.tempConstraint = undefined;
+          }
+
+          targetedElement.setPlacementFromConstraint();
         }
       });
 
@@ -358,8 +394,12 @@ export class Scene {
         this.moveable!.isMoveableElement(selectedTarget) ||
         targets.some((target) => target === selectedTarget || target.contains(selectedTarget));
 
-      if (isTargetMoveableElement) {
-        // Prevent drawing selection box when selected target is a moveable element
+      const isTargetAlreadySelected = this.selecto
+        ?.getSelectedTargets()
+        .includes(selectedTarget.parentElement.parentElement);
+
+      if (isTargetMoveableElement || isTargetAlreadySelected) {
+        // Prevent drawing selection box when selected target is a moveable element or already selected
         event.stop();
       }
     }).on('selectEnd', (event) => {
@@ -376,9 +416,16 @@ export class Scene {
   };
 
   render() {
+    const canShowContextMenu = this.isPanelEditing || (!this.isPanelEditing && this.isEditingEnabled);
+
     return (
       <div key={this.revId} className={this.styles.wrap} style={this.style} ref={this.setRef}>
         {this.root.render()}
+        {canShowContextMenu && (
+          <Portal>
+            <CanvasContextMenu scene={this} />
+          </Portal>
+        )}
       </div>
     );
   }
@@ -389,10 +436,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
     overflow: hidden;
     position: relative;
   `,
-
-  toolbar: css`
-    position: absolute;
-    bottom: 0;
-    margin: 10px;
+  selected: css`
+    z-index: 999 !important;
   `,
 }));

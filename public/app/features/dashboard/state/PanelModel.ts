@@ -163,6 +163,8 @@ export class PanelModel implements DataConfigSource, IPanelModel {
 
   libraryPanel?: { uid: undefined; name: string } | PanelModelLibraryPanel;
 
+  autoMigrateFrom?: string;
+
   // non persisted
   isViewing = false;
   isEditing = false;
@@ -220,6 +222,19 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     // copy properties from persisted model
     for (const property in model) {
       (this as any)[property] = model[property];
+    }
+
+    switch (this.type) {
+      case 'graph':
+        if (config?.featureToggles?.autoMigrateGraphPanels) {
+          this.autoMigrateFrom = this.type;
+          this.type = 'timeseries';
+        }
+        break;
+      case 'heatmap-new':
+        this.autoMigrateFrom = this.type;
+        this.type = 'heatmap';
+        break;
     }
 
     // defaults
@@ -289,19 +304,38 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.isViewing = isViewing;
   }
 
-  updateGridPos(newPos: GridPos) {
+  updateGridPos(newPos: GridPos, manuallyUpdated = true) {
+    if (
+      newPos.x === this.gridPos.x &&
+      newPos.y === this.gridPos.y &&
+      newPos.h === this.gridPos.h &&
+      newPos.w === this.gridPos.w
+    ) {
+      return;
+    }
+
     this.gridPos.x = newPos.x;
     this.gridPos.y = newPos.y;
     this.gridPos.w = newPos.w;
     this.gridPos.h = newPos.h;
+    if (manuallyUpdated) {
+      this.configRev++;
+    }
   }
 
-  runAllPanelQueries(dashboardId: number, dashboardTimezone: string, timeData: TimeOverrideResult, width: number) {
+  runAllPanelQueries(
+    dashboardId: number,
+    dashboardTimezone: string,
+    timeData: TimeOverrideResult,
+    width: number,
+    publicDashboardAccessToken?: string
+  ) {
     this.getQueryRunner().run({
       datasource: this.datasource,
       queries: this.targets,
       panelId: this.id,
       dashboardId: dashboardId,
+      publicDashboardAccessToken,
       timezone: dashboardTimezone,
       timeRange: timeData.timeRange,
       timeInfo: timeData.timeInfo,
@@ -368,6 +402,18 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.plugin = plugin;
     const version = getPluginVersion(plugin);
 
+    if (this.autoMigrateFrom) {
+      const wasAngular = this.autoMigrateFrom === 'graph';
+      this.callPanelTypeChangeHandler(
+        plugin,
+        this.autoMigrateFrom,
+        this.getOptionsToRemember(), // old options
+        wasAngular
+      );
+
+      delete this.autoMigrateFrom;
+    }
+
     if (plugin.onPanelMigration) {
       if (version !== this.pluginVersion) {
         this.options = plugin.onPanelMigration(this);
@@ -401,6 +447,19 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     };
   }
 
+  // Let panel plugins inspect options from previous panel and keep any that it can use
+  private callPanelTypeChangeHandler(
+    newPlugin: PanelPlugin,
+    oldPluginId: string,
+    oldOptions: any,
+    wasAngular: boolean
+  ) {
+    if (newPlugin.onPanelTypeChanged) {
+      const prevOptions = wasAngular ? { angular: oldOptions } : oldOptions.options;
+      Object.assign(this.options, newPlugin.onPanelTypeChanged(this, oldPluginId, prevOptions, this.fieldConfig));
+    }
+  }
+
   changePlugin(newPlugin: PanelPlugin) {
     const pluginId = newPlugin.meta.id;
     const oldOptions: any = this.getOptionsToRemember();
@@ -415,11 +474,8 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.clearPropertiesBeforePluginChange();
     this.restorePanelOptions(pluginId);
 
-    // Let panel plugins inspect options from previous panel and keep any that it can use
-    if (newPlugin.onPanelTypeChanged) {
-      const prevOptions = wasAngular ? { angular: oldOptions } : oldOptions.options;
-      Object.assign(this.options, newPlugin.onPanelTypeChanged(this, oldPluginId, prevOptions, prevFieldConfig));
-    }
+    // Potentially modify current options
+    this.callPanelTypeChangeHandler(newPlugin, oldPluginId, oldOptions, wasAngular);
 
     // switch
     this.type = pluginId;

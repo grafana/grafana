@@ -14,12 +14,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var SlackAPIEndpoint = "https://slack.com/api/chat.postMessage"
@@ -28,8 +31,10 @@ var SlackAPIEndpoint = "https://slack.com/api/chat.postMessage"
 // alert notification to Slack.
 type SlackNotifier struct {
 	*Base
-	log  log.Logger
-	tmpl *template.Template
+	log           log.Logger
+	tmpl          *template.Template
+	images        ImageStore
+	webhookSender notifications.WebhookSender
 
 	URL            *url.URL
 	Username       string
@@ -60,19 +65,21 @@ type SlackConfig struct {
 }
 
 func SlackFactory(fc FactoryConfig) (NotificationChannel, error) {
-	cfg, err := NewSlackConfig(fc.Config, fc.DecryptFunc)
+	cfg, err := NewSlackConfig(fc)
 	if err != nil {
 		return nil, receiverInitError{
 			Reason: err.Error(),
 			Cfg:    *fc.Config,
 		}
 	}
-	return NewSlackNotifier(cfg, fc.Template), nil
+	return NewSlackNotifier(cfg, fc.ImageStore, fc.NotificationService, fc.Template), nil
 }
 
-func NewSlackConfig(config *NotificationChannelConfig, decryptFunc GetDecryptedValueFn) (*SlackConfig, error) {
-	endpointURL := config.Settings.Get("endpointUrl").MustString(SlackAPIEndpoint)
-	slackURL := decryptFunc(context.Background(), config.SecureSettings, "url", config.Settings.Get("url").MustString())
+func NewSlackConfig(factoryConfig FactoryConfig) (*SlackConfig, error) {
+	channelConfig := factoryConfig.Config
+	decryptFunc := factoryConfig.DecryptFunc
+	endpointURL := channelConfig.Settings.Get("endpointUrl").MustString(SlackAPIEndpoint)
+	slackURL := decryptFunc(context.Background(), channelConfig.SecureSettings, "url", channelConfig.Settings.Get("url").MustString())
 	if slackURL == "" {
 		slackURL = endpointURL
 	}
@@ -80,19 +87,19 @@ func NewSlackConfig(config *NotificationChannelConfig, decryptFunc GetDecryptedV
 	if err != nil {
 		return nil, fmt.Errorf("invalid URL %q", slackURL)
 	}
-	recipient := strings.TrimSpace(config.Settings.Get("recipient").MustString())
+	recipient := strings.TrimSpace(channelConfig.Settings.Get("recipient").MustString())
 	if recipient == "" && apiURL.String() == SlackAPIEndpoint {
 		return nil, errors.New("recipient must be specified when using the Slack chat API")
 	}
-	mentionChannel := config.Settings.Get("mentionChannel").MustString()
+	mentionChannel := channelConfig.Settings.Get("mentionChannel").MustString()
 	if mentionChannel != "" && mentionChannel != "here" && mentionChannel != "channel" {
 		return nil, fmt.Errorf("invalid value for mentionChannel: %q", mentionChannel)
 	}
-	token := decryptFunc(context.Background(), config.SecureSettings, "token", config.Settings.Get("token").MustString())
+	token := decryptFunc(context.Background(), channelConfig.SecureSettings, "token", channelConfig.Settings.Get("token").MustString())
 	if token == "" && apiURL.String() == SlackAPIEndpoint {
 		return nil, errors.New("token must be specified when using the Slack chat API")
 	}
-	mentionUsersStr := config.Settings.Get("mentionUsers").MustString()
+	mentionUsersStr := channelConfig.Settings.Get("mentionUsers").MustString()
 	mentionUsers := []string{}
 	for _, u := range strings.Split(mentionUsersStr, ",") {
 		u = strings.TrimSpace(u)
@@ -100,7 +107,7 @@ func NewSlackConfig(config *NotificationChannelConfig, decryptFunc GetDecryptedV
 			mentionUsers = append(mentionUsers, u)
 		}
 	}
-	mentionGroupsStr := config.Settings.Get("mentionGroups").MustString()
+	mentionGroupsStr := channelConfig.Settings.Get("mentionGroups").MustString()
 	mentionGroups := []string{}
 	for _, g := range strings.Split(mentionGroupsStr, ",") {
 		g = strings.TrimSpace(g)
@@ -109,23 +116,27 @@ func NewSlackConfig(config *NotificationChannelConfig, decryptFunc GetDecryptedV
 		}
 	}
 	return &SlackConfig{
-		NotificationChannelConfig: config,
-		Recipient:                 strings.TrimSpace(config.Settings.Get("recipient").MustString()),
-		MentionChannel:            config.Settings.Get("mentionChannel").MustString(),
+		NotificationChannelConfig: channelConfig,
+		Recipient:                 strings.TrimSpace(channelConfig.Settings.Get("recipient").MustString()),
+		MentionChannel:            channelConfig.Settings.Get("mentionChannel").MustString(),
 		MentionUsers:              mentionUsers,
 		MentionGroups:             mentionGroups,
 		URL:                       apiURL,
-		Username:                  config.Settings.Get("username").MustString("Grafana"),
-		IconEmoji:                 config.Settings.Get("icon_emoji").MustString(),
-		IconURL:                   config.Settings.Get("icon_url").MustString(),
+		Username:                  channelConfig.Settings.Get("username").MustString("Grafana"),
+		IconEmoji:                 channelConfig.Settings.Get("icon_emoji").MustString(),
+		IconURL:                   channelConfig.Settings.Get("icon_url").MustString(),
 		Token:                     token,
-		Text:                      config.Settings.Get("text").MustString(`{{ template "default.message" . }}`),
-		Title:                     config.Settings.Get("title").MustString(DefaultMessageTitleEmbed),
+		Text:                      channelConfig.Settings.Get("text").MustString(`{{ template "default.message" . }}`),
+		Title:                     channelConfig.Settings.Get("title").MustString(DefaultMessageTitleEmbed),
 	}, nil
 }
 
 // NewSlackNotifier is the constructor for the Slack notifier
-func NewSlackNotifier(config *SlackConfig, t *template.Template) *SlackNotifier {
+func NewSlackNotifier(config *SlackConfig,
+	images ImageStore,
+	webhookSender notifications.WebhookSender,
+	t *template.Template,
+) *SlackNotifier {
 	return &SlackNotifier{
 		Base: NewBase(&models.AlertNotification{
 			Uid:                   config.UID,
@@ -145,6 +156,8 @@ func NewSlackNotifier(config *SlackConfig, t *template.Template) *SlackNotifier 
 		Token:          config.Token,
 		Text:           config.Text,
 		Title:          config.Title,
+		images:         images,
+		webhookSender:  webhookSender,
 		log:            log.New("alerting.notifier.slack"),
 		tmpl:           t,
 	}
@@ -165,6 +178,7 @@ type attachment struct {
 	Title      string              `json:"title,omitempty"`
 	TitleLink  string              `json:"title_link,omitempty"`
 	Text       string              `json:"text"`
+	ImageURL   string              `json:"image_url,omitempty"`
 	Fallback   string              `json:"fallback"`
 	Fields     []config.SlackField `json:"fields,omitempty"`
 	Footer     string              `json:"footer"`
@@ -174,8 +188,9 @@ type attachment struct {
 }
 
 // Notify sends an alert notification to Slack.
-func (sn *SlackNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	msg, err := sn.buildSlackMessage(ctx, as)
+func (sn *SlackNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bool, error) {
+	sn.log.Debug("building slack message", "alerts", len(alerts))
+	msg, err := sn.buildSlackMessage(ctx, alerts)
 	if err != nil {
 		return false, fmt.Errorf("build slack message: %w", err)
 	}
@@ -185,7 +200,7 @@ func (sn *SlackNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		return false, fmt.Errorf("marshal json: %w", err)
 	}
 
-	sn.log.Debug("Sending Slack API request", "url", sn.URL.String(), "data", string(b))
+	sn.log.Debug("sending Slack API request", "url", sn.URL.String(), "data", string(b))
 	request, err := http.NewRequestWithContext(ctx, http.MethodPost, sn.URL.String(), bytes.NewReader(b))
 	if err != nil {
 		return false, fmt.Errorf("failed to create HTTP request: %w", err)
@@ -198,19 +213,26 @@ func (sn *SlackNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 			panic("Token should be set when using the Slack chat API")
 		}
 	} else {
-		sn.log.Debug("Adding authorization header to HTTP request")
+		sn.log.Debug("adding authorization header to HTTP request")
 		request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", sn.Token))
 	}
 
 	if err := sendSlackRequest(request, sn.log); err != nil {
 		return false, err
 	}
+
 	return true, nil
 }
 
 // sendSlackRequest sends a request to the Slack API.
 // Stubbable by tests.
-var sendSlackRequest = func(request *http.Request, logger log.Logger) error {
+var sendSlackRequest = func(request *http.Request, logger log.Logger) (retErr error) {
+	defer func() {
+		if retErr != nil {
+			logger.Warn("failed to send slack request", "err", retErr)
+		}
+	}()
+
 	netTransport := &http.Transport{
 		TLSClientConfig: &tls.Config{
 			Renegotiation: tls.RenegotiateFreelyAsClient,
@@ -231,7 +253,7 @@ var sendSlackRequest = func(request *http.Request, logger log.Logger) error {
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			logger.Warn("Failed to close response body", "err", err)
+			logger.Warn("failed to close response body", "err", err)
 		}
 	}()
 
@@ -264,14 +286,14 @@ var sendSlackRequest = func(request *http.Request, logger log.Logger) error {
 		return fmt.Errorf("failed to make Slack API request: %s", rslt.Err)
 	}
 
-	logger.Debug("Sending Slack API request succeeded", "url", request.URL.String(), "statusCode", resp.Status)
+	logger.Debug("sending Slack API request succeeded", "url", request.URL.String(), "statusCode", resp.Status)
 	return nil
 }
 
-func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Alert) (*slackMessage, error) {
-	alerts := types.Alerts(as...)
+func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, alrts []*types.Alert) (*slackMessage, error) {
+	alerts := types.Alerts(alrts...)
 	var tmplErr error
-	tmpl, _ := TmplText(ctx, sn.tmpl, as, sn.log, &tmplErr)
+	tmpl, _ := TmplText(ctx, sn.tmpl, alrts, sn.log, &tmplErr)
 
 	ruleURL := joinUrlPath(sn.tmpl.ExternalURL.String(), "/alerting/list", sn.log)
 
@@ -280,6 +302,8 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Aler
 		Username:  tmpl(sn.Username),
 		IconEmoji: tmpl(sn.IconEmoji),
 		IconURL:   tmpl(sn.IconURL),
+		// TODO: We should use the Block Kit API instead:
+		// https://api.slack.com/messaging/composing/layouts#when-to-use-attachments
 		Attachments: []attachment{
 			{
 				Color:      getAlertStatusColor(alerts.Status()),
@@ -294,6 +318,12 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Aler
 			},
 		},
 	}
+
+	_ = withStoredImages(ctx, sn.log, sn.images, func(index int, image ngmodels.Image) error {
+		req.Attachments[0].ImageURL = image.URL
+		return ErrImagesDone
+	}, alrts...)
+
 	if tmplErr != nil {
 		sn.log.Warn("failed to template Slack message", "err", tmplErr.Error())
 	}

@@ -14,6 +14,20 @@ export const AUTH_TYPES = [
 
 export const ALIGNMENTS = [
   {
+    text: 'none',
+    value: 'ALIGN_NONE',
+    valueTypes: [
+      ValueTypes.INT64,
+      ValueTypes.DOUBLE,
+      ValueTypes.MONEY,
+      ValueTypes.DISTRIBUTION,
+      ValueTypes.STRING,
+      ValueTypes.VALUE_TYPE_UNSPECIFIED,
+      ValueTypes.BOOL,
+    ],
+    metricKinds: [MetricKind.GAUGE],
+  },
+  {
     text: 'delta',
     value: 'ALIGN_DELTA',
     valueTypes: [ValueTypes.INT64, ValueTypes.DOUBLE, ValueTypes.MONEY, ValueTypes.DISTRIBUTION],

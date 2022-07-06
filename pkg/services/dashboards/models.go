@@ -16,7 +16,22 @@ type SaveDashboardDTO struct {
 }
 
 type SavePublicDashboardConfigDTO struct {
-	Uid                   string
-	OrgId                 int64
-	PublicDashboardConfig models.PublicDashboardConfig
+	DashboardUid    string
+	OrgId           int64
+	UserId          int64
+	PublicDashboard *models.PublicDashboard
+}
+
+type DashboardSearchProjection struct {
+	ID          int64  `xorm:"id"`
+	UID         string `xorm:"uid"`
+	Title       string
+	Slug        string
+	Term        string
+	IsFolder    bool
+	FolderID    int64  `xorm:"folder_id"`
+	FolderUID   string `xorm:"folder_uid"`
+	FolderSlug  string
+	FolderTitle string
+	SortMeta    int64
 }

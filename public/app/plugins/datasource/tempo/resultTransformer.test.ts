@@ -90,7 +90,10 @@ describe('transformFromOTLP()', () => {
       otlpResponse.batches as unknown as collectorTypes.opentelemetryProto.trace.v1.ResourceSpans[],
       false
     );
-    expect(res.data[0]).toMatchObject(otlpDataFrameFromResponse);
+    expect(res.data[0]).toMatchObject({
+      ...otlpDataFrameFromResponse,
+      creator: expect.any(Function),
+    });
   });
 });
 

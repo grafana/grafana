@@ -31,9 +31,11 @@ const MetricNamespaceField: React.FC<MetricNamespaceFieldProps> = ({
   );
 
   const options = useMemo(() => [...metricNamespaces, variableOptionGroup], [metricNamespaces, variableOptionGroup]);
-  const optionValues = metricNamespaces.map((m) => m.value).concat(variableOptionGroup.options.map((p) => p.value));
+  const optionValues = metricNamespaces
+    .map((m) => m.value.toLowerCase())
+    .concat(variableOptionGroup.options.map((p) => p.value));
   const value = query.azureMonitor?.metricNamespace;
-  if (value && !optionValues.includes(value)) {
+  if (value && !optionValues.includes(value.toLowerCase())) {
     options.push({ label: value, value });
   }
 

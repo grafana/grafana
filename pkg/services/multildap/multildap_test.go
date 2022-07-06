@@ -8,6 +8,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/ldap"
 
 	"github.com/stretchr/testify/require"
+
+	//TODO(sh0rez): remove once import cycle resolved
+	_ "github.com/grafana/grafana/pkg/api/response"
 )
 
 func TestMultiLDAP(t *testing.T) {

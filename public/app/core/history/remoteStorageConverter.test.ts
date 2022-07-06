@@ -3,7 +3,7 @@ import { RichHistoryQuery } from '../../types';
 import { backendSrv } from '../services/backend_srv';
 
 import { RichHistoryRemoteStorageDTO } from './RichHistoryRemoteStorage';
-import { fromDTO } from './remoteStorageConverter';
+import { fromDTO, toDTO } from './remoteStorageConverter';
 
 const dsMock = new DatasourceSrv();
 dsMock.init(
@@ -42,5 +42,8 @@ const validDTO: RichHistoryRemoteStorageDTO = {
 describe('RemoteStorage converter', () => {
   it('converts DTO to RichHistoryQuery', () => {
     expect(fromDTO(validDTO)).toMatchObject(validRichHistory);
+  });
+  it('convert RichHistoryQuery to DTO', () => {
+    expect(toDTO(validRichHistory)).toMatchObject(validDTO);
   });
 });

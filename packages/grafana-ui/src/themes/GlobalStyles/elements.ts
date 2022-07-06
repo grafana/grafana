@@ -155,6 +155,12 @@ export function getElementStyles(theme: GrafanaTheme2) {
     .text-center {
       text-align: center;
     }
+
+    .highlight-search-match {
+      background: ${theme.components.textHighlight.background};
+      color: ${theme.components.textHighlight.text};
+      padding: 0;
+    }
   `;
 }
 

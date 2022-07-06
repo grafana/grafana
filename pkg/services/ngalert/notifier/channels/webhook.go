@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
@@ -25,6 +26,7 @@ type WebhookNotifier struct {
 	MaxAlerts  int
 	log        log.Logger
 	ns         notifications.WebhookSender
+	images     ImageStore
 	tmpl       *template.Template
 	orgID      int64
 }
@@ -46,7 +48,7 @@ func WebHookFactory(fc FactoryConfig) (NotificationChannel, error) {
 			Cfg:    *fc.Config,
 		}
 	}
-	return NewWebHookNotifier(cfg, fc.NotificationService, fc.Template), nil
+	return NewWebHookNotifier(cfg, fc.NotificationService, fc.ImageStore, fc.Template), nil
 }
 
 func NewWebHookConfig(config *NotificationChannelConfig, decryptFunc GetDecryptedValueFn) (*WebhookConfig, error) {
@@ -66,7 +68,7 @@ func NewWebHookConfig(config *NotificationChannelConfig, decryptFunc GetDecrypte
 
 // NewWebHookNotifier is the constructor for
 // the WebHook notifier.
-func NewWebHookNotifier(config *WebhookConfig, ns notifications.WebhookSender, t *template.Template) *WebhookNotifier {
+func NewWebHookNotifier(config *WebhookConfig, ns notifications.WebhookSender, images ImageStore, t *template.Template) *WebhookNotifier {
 	return &WebhookNotifier{
 		Base: NewBase(&models.AlertNotification{
 			Uid:                   config.UID,
@@ -83,6 +85,7 @@ func NewWebHookNotifier(config *WebhookConfig, ns notifications.WebhookSender, t
 		MaxAlerts:  config.MaxAlerts,
 		log:        log.New("alerting.notifier.webhook"),
 		ns:         ns,
+		images:     images,
 		tmpl:       t,
 	}
 }
@@ -114,6 +117,17 @@ func (wn *WebhookNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 	as, numTruncated := truncateAlerts(wn.MaxAlerts, as)
 	var tmplErr error
 	tmpl, data := TmplText(ctx, wn.tmpl, as, wn.log, &tmplErr)
+
+	// Augment our Alert data with ImageURLs if available.
+	_ = withStoredImages(ctx, wn.log, wn.images,
+		func(index int, image ngmodels.Image) error {
+			if len(image.URL) != 0 {
+				data.Alerts[index].ImageURL = image.URL
+			}
+			return nil
+		},
+		as...)
+
 	msg := &webhookMessage{
 		Version:         "1",
 		ExtendedData:    data,

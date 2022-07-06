@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azlog"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/macros"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 // AzureLogAnalyticsDatasource calls the Azure Log Analytics API's
@@ -149,7 +148,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 
 	// If azureLogAnalyticsSameAs is defined and set to false, return an error
 	if sameAs, ok := dsInfo.JSONData["azureLogAnalyticsSameAs"]; ok && !sameAs.(bool) {
-		return dataResponseErrorWithExecuted(fmt.Errorf("Log Analytics credentials are no longer supported. Go to the data source configuration to update Azure Monitor credentials")) //nolint:golint,stylecheck
+		return dataResponseErrorWithExecuted(fmt.Errorf("credentials for Log Analytics are no longer supported. Go to the data source configuration to update Azure Monitor credentials"))
 	}
 
 	req, err := e.createRequest(ctx, dsInfo, url)
@@ -188,7 +187,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		return dataResponseErrorWithExecuted(err)
 	}
 
-	frame, err := ResponseTableToFrame(t)
+	frame, err := ResponseTableToFrame(t, logResponse)
 	if err != nil {
 		return dataResponseErrorWithExecuted(err)
 	}
@@ -227,7 +226,7 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		azlog.Debug("Failed to create request", "error", err)
-		return nil, errutil.Wrap("failed to create request", err)
+		return nil, fmt.Errorf("%v: %w", "failed to create request", err)
 	}
 	req.URL.Path = "/"
 	req.Header.Set("Content-Type", "application/json")
@@ -235,9 +234,31 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo 
 	return req, nil
 }
 
+// Error definition has been inferred from real data and other model definitions like
+// https://github.com/Azure/azure-sdk-for-go/blob/3640559afddbad452d265b54fb1c20b30be0b062/services/preview/virtualmachineimagebuilder/mgmt/2019-05-01-preview/virtualmachineimagebuilder/models.go
+type AzureLogAnalyticsAPIError struct {
+	Details *[]AzureLogAnalyticsAPIErrorBase `json:"details,omitempty"`
+	Code    *string                          `json:"code,omitempty"`
+	Message *string                          `json:"message,omitempty"`
+}
+
+type AzureLogAnalyticsAPIErrorBase struct {
+	Code       *string                      `json:"code,omitempty"`
+	Message    *string                      `json:"message,omitempty"`
+	Innererror *AzureLogAnalyticsInnerError `json:"innererror,omitempty"`
+}
+
+type AzureLogAnalyticsInnerError struct {
+	Code         *string `json:"code,omitempty"`
+	Message      *string `json:"message,omitempty"`
+	Severity     *int    `json:"severity,omitempty"`
+	SeverityName *string `json:"severityName,omitempty"`
+}
+
 // AzureLogAnalyticsResponse is the json response object from the Azure Log Analytics API.
 type AzureLogAnalyticsResponse struct {
 	Tables []types.AzureResponseTable `json:"tables"`
+	Error  *AzureLogAnalyticsAPIError `json:"error,omitempty"`
 }
 
 // GetPrimaryResultTable returns the first table in the response named "PrimaryResult", or an

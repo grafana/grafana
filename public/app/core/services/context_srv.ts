@@ -112,8 +112,8 @@ export class ContextSrv {
     return config.rbacEnabled;
   }
 
-  accessControlBuiltinRefactorEnabled(): boolean {
-    return Boolean(config.featureToggles['accesscontrol-builtins']);
+  accessControlBuiltInRoleAssignmentEnabled(): boolean {
+    return config.rbacBuiltInRoleAssignmentEnabled;
   }
 
   licensedAccessControlEnabled(): boolean {
@@ -174,7 +174,7 @@ export class ContextSrv {
   }
 
   hasAccessInMetadata(action: string, object: WithAccessControlMetadata, fallBack: boolean) {
-    if (!config.rbacEnabled) {
+    if (!this.accessControlEnabled()) {
       return fallBack;
     }
     return this.hasPermissionInMetadata(action, object);

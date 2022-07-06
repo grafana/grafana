@@ -1,9 +1,17 @@
-+++
-aliases = ["/docs/grafana/latest/features/panels/text/", "/docs/grafana/latest/panels/visualizations/text-panel/", "/docs/grafana/latest/reference/alertlist/", "/docs/grafana/latest/visualizations/text-panel/"]
-keywords = ["grafana", "text", "documentation", "panel"]
-title = "Text"
-weight = 1100
-+++
+---
+aliases:
+  - /docs/grafana/latest/features/panels/text/
+  - /docs/grafana/latest/panels/visualizations/text-panel/
+  - /docs/grafana/latest/reference/alertlist/
+  - /docs/grafana/latest/visualizations/text-panel/
+keywords:
+  - grafana
+  - text
+  - documentation
+  - panel
+title: Text
+weight: 1100
+---
 
 # Text
 

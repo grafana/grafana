@@ -4,8 +4,6 @@ import { ContextSrvStub } from 'test/specs/helpers';
 import { dateTime, isDateTime } from '@grafana/data';
 import { HistoryWrapper, locationService, setLocationService } from '@grafana/runtime';
 
-import { beforeEach } from '../../../../test/lib/common';
-
 import { TimeSrv } from './TimeSrv';
 
 jest.mock('app/core/core', () => ({
@@ -255,24 +253,18 @@ describe('timeSrv', () => {
   });
 
   describe('pauseAutoRefresh', () => {
-    it('should set refresh to empty value', () => {
+    it('should set autoRefreshPaused to true', () => {
       _dashboard.refresh = '10s';
       timeSrv.pauseAutoRefresh();
-      expect(_dashboard.refresh).toBe('');
-    });
-
-    it('should set previousAutoRefresh value', () => {
-      _dashboard.refresh = '10s';
-      timeSrv.pauseAutoRefresh();
-      expect(timeSrv.previousAutoRefresh).toBe('10s');
+      expect(timeSrv.autoRefreshPaused).toBe(true);
     });
   });
 
   describe('resumeAutoRefresh', () => {
     it('should set refresh to empty value', () => {
-      timeSrv.previousAutoRefresh = '10s';
+      timeSrv.autoRefreshPaused = true;
       timeSrv.resumeAutoRefresh();
-      expect(_dashboard.refresh).toBe('10s');
+      expect(timeSrv.autoRefreshPaused).toBe(false);
     });
   });
 

@@ -4,7 +4,23 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
-func GetQueriesFromDashboard(dashboard *simplejson.Json) map[int64][]*simplejson.Json {
+func GetUniqueDashboardDatasourceUids(dashboard *simplejson.Json) []string {
+	var datasourceUids []string
+	exists := map[string]bool{}
+
+	for _, panelObj := range dashboard.Get("panels").MustArray() {
+		panel := simplejson.NewFromAny(panelObj)
+		uid := panel.Get("datasource").Get("uid").MustString()
+		if _, ok := exists[uid]; !ok {
+			datasourceUids = append(datasourceUids, uid)
+			exists[uid] = true
+		}
+	}
+
+	return datasourceUids
+}
+
+func GroupQueriesByPanelId(dashboard *simplejson.Json) map[int64][]*simplejson.Json {
 	result := make(map[int64][]*simplejson.Json)
 
 	for _, panelObj := range dashboard.Get("panels").MustArray() {
@@ -26,4 +42,24 @@ func GetQueriesFromDashboard(dashboard *simplejson.Json) map[int64][]*simplejson
 	}
 
 	return result
+}
+
+func GroupQueriesByDataSource(queries []*simplejson.Json) (result [][]*simplejson.Json) {
+	byDataSource := make(map[string][]*simplejson.Json)
+
+	for _, query := range queries {
+		dataSourceUid, err := query.GetPath("datasource", "uid").String()
+
+		if err != nil {
+			continue
+		}
+
+		byDataSource[dataSourceUid] = append(byDataSource[dataSourceUid], query)
+	}
+
+	for _, queries := range byDataSource {
+		result = append(result, queries)
+	}
+
+	return
 }

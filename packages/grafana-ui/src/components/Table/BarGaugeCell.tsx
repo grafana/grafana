@@ -57,7 +57,7 @@ export const BarGaugeCell: FC<TableCellProps> = (props) => {
     return field.getLinks({ valueRowIndex: row.index });
   };
 
-  const hasLinks = !!getLinks().length;
+  const hasLinks = Boolean(getLinks().length);
 
   const renderComponent = (menuProps: DataLinksContextMenuApi) => {
     const { openMenu, targetClassName } = menuProps;
@@ -84,7 +84,7 @@ export const BarGaugeCell: FC<TableCellProps> = (props) => {
   return (
     <div {...cellProps} className={tableStyles.cellContainer}>
       {hasLinks && (
-        <DataLinksContextMenu links={getLinks} config={config}>
+        <DataLinksContextMenu links={getLinks} style={{ display: 'flex', width: '100%' }}>
           {(api) => renderComponent(api)}
         </DataLinksContextMenu>
       )}

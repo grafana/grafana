@@ -1,6 +1,7 @@
 import { Field, FieldType } from '@grafana/data';
 
 import { ComponentSize } from './size';
+
 export type IconType = 'mono' | 'default' | 'solid';
 export type IconSize = ComponentSize | 'xl' | 'xxl' | 'xxxl';
 
@@ -105,7 +106,11 @@ export const getAvailableIcons = () =>
     'heart',
     'heart-break',
     'history',
+    'home',
     'home-alt',
+    'horizontal-align-center',
+    'horizontal-align-left',
+    'horizontal-align-right',
     'hourglass',
     'import',
     'info',
@@ -171,7 +176,11 @@ export const getAvailableIcons = () =>
     'upload',
     'user',
     'users-alt',
+    'vertical-align-bottom',
+    'vertical-align-center',
+    'vertical-align-top',
     'wrap-text',
+    'rss',
     'x',
   ] as const;
 

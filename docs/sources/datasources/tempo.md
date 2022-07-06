@@ -1,14 +1,21 @@
-+++
-aliases = ["/docs/grafana/latest/datasources/tempo/", "/docs/grafana/latest/features/datasources/tempo/"]
-description = "High volume, minimal dependency trace storage. OSS tracing solution from Grafana Labs."
-keywords = ["grafana", "tempo", "guide", "tracing"]
-title = "Tempo"
-weight = 1400
-+++
+---
+aliases:
+  - /docs/grafana/latest/datasources/tempo/
+  - /docs/grafana/latest/features/datasources/tempo/
+description: High volume, minimal dependency trace storage. OSS tracing solution from
+  Grafana Labs.
+keywords:
+  - grafana
+  - tempo
+  - guide
+  - tracing
+title: Tempo
+weight: 1400
+---
 
 # Tempo data source
 
-Grafana ships with built-in support for Tempo a high volume, minimal dependency trace storage, OSS tracing solution from Grafana Labs. Add it as a data source, and you are ready to query your traces in [Explore]({{< relref "../explore/_index.md" >}}).
+Grafana ships with built-in support for Tempo a high volume, minimal dependency trace storage, OSS tracing solution from Grafana Labs. Add it as a data source, and you are ready to query your traces in [Explore]({{< relref "../explore/" >}}).
 
 ## Add data source
 
@@ -27,7 +34,7 @@ To access Tempo settings, click the **Configuration** (gear) icon, then click **
 
 > **Note:** This feature is available in Grafana 7.4+.
 
-This is a configuration for the [trace to logs feature]({{< relref "../explore/trace-integration" >}}). Select target data source (at this moment limited to Loki or Splunk \[logs\] data sources) and select which tags will be used in the logs query.
+This is a configuration for the [trace to logs feature]({{< relref "../explore/trace-integration/" >}}). Select target data source (at this moment limited to Loki or Splunk \[logs\] data sources) and select which tags will be used in the logs query.
 
 - **Data source -** Target data source.
 - **Tags -** The tags that will be used in the logs query. Default is `'cluster', 'hostname', 'namespace', 'pod'`.
@@ -46,11 +53,12 @@ This is a configuration for the [trace to logs feature]({{< relref "../explore/t
 To configure trace to metrics, select the target Prometheus data source and create any desired linked queries.
 
 -- **Data source -** Target data source.
+-- **Tags -** You can use tags in the linked queries. The key is the span attribute name. The optional value is the corresponding metric label name (for example, map `k8s.pod` to `pod`). You may interpolate these tags into your queries using the `$__tags` keyword.
 
 Each linked query consists of:
 
 -- **Link Label -** (Optional) Descriptive label for the linked query.
--- **Query -** Query that runs when navigating from a trace to the metrics data source.
+-- **Query -** Query that runs when navigating from a trace to the metrics data source. Interpolate tags using the `$__tags` keyword. For example, when you configure the query `requests_total{$__tags}`with the tags `k8s.pod=pod` and `cluster`, it results in `requests_total{pod="nginx-554b9", cluster="us-east-1"}`.
 
 ### Service Graph
 
@@ -76,9 +84,19 @@ This is a configuration for the Loki search query type.
 
 -- **Data source -** The Loki instance in which you want to search traces. You must configure derived fields in the Loki instance.
 
+### Span bar label
+
+You can configure the span bar label. The span bar label allows you add additional information to the span bar row.
+
+Select one of the following four options. The default selection is Duration.
+
+- **None -** Do not show any additional information on the span bar row.
+- **Duration -** Show the span duration on the span bar row.
+- **Tag -** Show the span tag on the span bar row. Note: You will also need to specify the tag key to use to get the tag value. For example, `span.kind`.
+
 ## Query traces
 
-You can query and display traces from Tempo via [Explore]({{< relref "../explore/_index.md" >}}).
+You can query and display traces from Tempo via [Explore]({{< relref "../explore/" >}}).
 
 ### Tempo search
 
@@ -88,19 +106,15 @@ Tempo search is an experimental feature behind a feature toggle. Use this to sea
 
 #### Search recent traces
 
-Tempo allows you to search recent traces held in the ingesters. By default, ingesters store the last 15 minutes of tracing data, and this search is disabled. Enable this search capability by setting the `tempoSearch` feature toggle.
-
-You must also configure your Tempo data source to use this feature. Refer to the [Tempo documentation](https://grafana.com/docs/tempo/latest/getting-started/tempo-in-grafana/#search-of-recent-traces).
+Tempo allows you to search recent traces held in the ingesters. By default, ingesters store the last 15 minutes of tracing data. You must configure your Tempo data source to use this feature. Refer to the [Tempo documentation](https://grafana.com/docs/tempo/latest/getting-started/tempo-in-grafana/#search-of-recent-traces).
 
 #### Search backend datastore
 
-Tempo includes the ability to search the entire backend datastore. You can enable this capability by setting the `tempoSearch` and `tempoBackendSearch` feature toggles.
-
-You must also configure your Tempo data source to use this feature.Refer to the [Tempo documentation](https://grafana.com/docs/tempo/latest/getting-started/tempo-in-grafana/#search-of-the-backend-datastore).
+Tempo includes the ability to search the entire backend datastore. You must configure your Tempo data source to use this feature. Refer to the [Tempo documentation](https://grafana.com/docs/tempo/latest/getting-started/tempo-in-grafana/#search-of-the-backend-datastore).
 
 ### Loki search
 
-To find traces to visualize, use the [Loki query editor]({{< relref "loki.md#loki-query-editor" >}}). To get search results, you must have [derived fields]({{< relref "loki.md#derived-fields" >}}) configured, which point to this data source.
+To find traces to visualize, use the [Loki query editor]({{< relref "loki/#loki-query-editor" >}}). To get search results, you must have [derived fields]({{< relref "loki/#derived-fields" >}}) configured, which point to this data source.
 
 {{< figure src="/static/img/docs/tempo/query-editor-search.png" class="docs-image--no-shadow" max-width="750px" caption="Screenshot of the Tempo query editor showing the search tab" >}}
 
@@ -112,7 +126,9 @@ To query a particular trace, select the **TraceID** query type, and then put the
 
 ## Upload JSON trace file
 
-You can upload a JSON file that contains a single trace to visualize it. If the file has multiple traces then the first trace is used for visualization.
+You can upload a JSON file that contains a single trace or service graph to visualize it. If the file has multiple traces, the first trace is used for visualization.
+
+You can download a trace or service graph through the inspector. Open the inspector, navigate to the 'Data' tab, and click 'Download traces' or 'Download service graph'.
 
 Here is an example JSON:
 
@@ -168,10 +184,10 @@ To display the service graph:
 
 - [Configure the Grafana Agent](https://grafana.com/docs/tempo/next/grafana-agent/service-graphs/#quickstart) to generate service graph data
 - Link a Prometheus datasource in the Tempo datasource settings.
-- Navigate to [Explore]({{< relref "../explore/_index.md" >}})
-- Select the Tempo datasource
-- Select the **Service Graph** query type and run the query
-- Optionally, filter by service name
+- Navigate to [Explore]({{< relref "../explore/" >}}).
+- Select the Tempo datasource.
+- Select the **Service Graph** query type and run the query.
+- (Optional): filter by service name.
 
 You can pan and zoom the view with buttons or you mouse. For details about the visualization, refer to [Node graph panel](https://grafana.com/docs/grafana/latest/panels/visualizations/node-graph/).
 
@@ -186,9 +202,28 @@ The color of each circle represents the percentage of requests in each of the fo
 
 Click on the service to see a context menu with additional links for quick navigation to other relevant information.
 
+## APM table
+
+The APM (Application Performance Management) table allows you to view several APM metrics out of the box.
+
+To display the APM table:
+
+1. Activate the tempoApmTable feature flag in your ini file.
+1. Link a Prometheus datasource in the Tempo datasource settings.
+1. Navigate to [Explore]({{< relref "../explore/_index.md" >}}).
+1. Select the Tempo datasource.
+1. Select the **Service Graph** query type and run the query.
+1. (Optional): filter your results.
+
+Note: The metric traces_spanmetrics_calls_total is used to display the name, rate & error rate columns and traces_spanmetrics_latency_bucket is used to display the duration column (these metrics will need to exist in your Prometheus datasource).
+
+Click a row in the rate, error rate, or duration columns to open a query in Prometheus with the span name of that row automatically set in the query. Click a row in the links column to open a query in Tempo with the span name of that row automatically set in the query.
+
+{{< figure src="/static/img/docs/tempo/apm-table.png" class="docs-image--no-shadow" max-width="500px" caption="Screenshot of the Tempo APM table" >}}
+
 ## Linking Trace ID from logs
 
-You can link to Tempo trace from logs in Loki or Elastic by configuring an internal link. See the [Derived fields]({{< relref "loki.md#derived-fields" >}}) section in the [Loki data source]({{< relref "loki.md" >}}) or [Data links]({{< relref "elasticsearch.md#data-links" >}}) section in the [Elastic data source]({{< relref "elasticsearch.md" >}}) for configuration instructions.
+You can link to Tempo trace from logs in Loki or Elastic by configuring an internal link. See the [Derived fields]({{< relref "loki/#derived-fields" >}}) section in the [Loki data source]({{< relref "loki/" >}}) or [Data links]({{< relref "elasticsearch/#data-links" >}}) section in the [Elastic data source]({{< relref "elasticsearch/" >}}) for configuration instructions.
 
 ## Provision the Tempo data source
 
@@ -216,6 +251,12 @@ datasources:
         spanEndTimeShift: '1h'
         filterByTraceID: false
         filterBySpanID: false
+      tracesToMetrics:
+        datasourceUid: 'prom'
+        tags: [{ key: 'service.name', value: 'service' }, { key: 'job' }]
+        queries:
+          - name: 'Sample query'
+            query: 'sum(rate(tempo_spanmetrics_latency_bucket{$__tags}[5m]))'
       serviceMap:
         datasourceUid: 'prometheus'
       search:

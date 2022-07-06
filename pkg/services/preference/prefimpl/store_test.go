@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package prefimpl
 
 import (
@@ -15,7 +12,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestPreferencesDataAccess(t *testing.T) {
+func TestIntegrationPreferencesDataAccess(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	ss := sqlstore.InitTestDB(t)
 	prefStore := sqlStore{db: ss}
 	orgNavbarPreferences := pref.NavbarPreference{

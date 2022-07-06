@@ -1,6 +1,7 @@
 package api
 
 import (
+	"math"
 	"math/rand"
 	"net/http"
 	"os"
@@ -16,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestAuthorize(t *testing.T) {
@@ -46,7 +48,7 @@ func TestAuthorize(t *testing.T) {
 		}
 		paths[p] = methods
 	}
-	require.Len(t, paths, 36)
+	require.Len(t, paths, 39)
 
 	ac := acmock.New()
 	api := &API{AccessControl: ac}
@@ -66,6 +68,67 @@ func TestAuthorize(t *testing.T) {
 			api.authorize("test", "test")
 		})
 	})
+}
+
+func createAllCombinationsOfPermissions(permissions map[string][]string) []map[string][]string {
+	type actionscope struct {
+		action string
+		scope  string
+	}
+
+	var flattenPermissions []actionscope
+	for action, scopes := range permissions {
+		for _, scope := range scopes {
+			flattenPermissions = append(flattenPermissions, actionscope{
+				action,
+				scope,
+			})
+		}
+	}
+
+	l := len(flattenPermissions)
+	// this is all possible combinations of the permissions
+	var permissionCombinations []map[string][]string
+	for bit := uint(0); bit < uint(math.Pow(2, float64(l))); bit++ {
+		var tuple []actionscope
+		for idx := 0; idx < l; idx++ {
+			if (bit>>idx)&1 == 1 {
+				tuple = append(tuple, flattenPermissions[idx])
+			}
+		}
+
+		combination := make(map[string][]string)
+		for _, perm := range tuple {
+			combination[perm.action] = append(combination[perm.action], perm.scope)
+		}
+
+		permissionCombinations = append(permissionCombinations, combination)
+	}
+	return permissionCombinations
+}
+
+func getDatasourceScopesForRules(rules models.RulesGroup) []string {
+	scopesMap := map[string]struct{}{}
+	var result []string
+	for _, rule := range rules {
+		for _, query := range rule.Data {
+			scope := datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID)
+			if _, ok := scopesMap[scope]; ok {
+				continue
+			}
+			result = append(result, scope)
+			scopesMap[scope] = struct{}{}
+		}
+	}
+	return result
+}
+
+func mapUpdates(updates []ruleUpdate, mapFunc func(ruleUpdate) *models.AlertRule) models.RulesGroup {
+	result := make(models.RulesGroup, 0, len(updates))
+	for _, update := range updates {
+		result = append(result, mapFunc(update))
+	}
+	return result
 }
 
 func TestAuthorizeRuleChanges(t *testing.T) {
@@ -103,34 +166,60 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 			},
 		},
 		{
-			name: "if there are rules to update within the same namespace it should check update action",
+			name: "if there are rules to delete it should check delete action and query for datasource",
 			changes: func() *changes {
+				rules := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(withGroupKey(groupKey)))
+				rules2 := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(withGroupKey(groupKey)))
+				return &changes{
+					GroupKey: groupKey,
+					AffectedGroups: map[models.AlertRuleGroupKey]models.RulesGroup{
+						groupKey: append(rules, rules2...),
+					},
+					New:    nil,
+					Update: nil,
+					Delete: rules2,
+				}
+			},
+			permissions: func(c *changes) map[string][]string {
+				return map[string][]string{
+					ac.ActionAlertingRuleDelete: {
+						namespaceIdScope,
+					},
+					datasources.ActionQuery: getDatasourceScopesForRules(c.AffectedGroups[c.GroupKey]),
+				}
+			},
+		},
+		{
+			name: "if there are rules to update within the same namespace it should check update action and access to datasource",
+			changes: func() *changes {
+				rules1 := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(withGroupKey(groupKey)))
 				rules := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(withGroupKey(groupKey)))
 				updates := make([]ruleUpdate, 0, len(rules))
 
 				for _, rule := range rules {
+					cp := models.CopyRule(rule)
+					cp.Data = []models.AlertQuery{models.GenerateAlertQuery()}
 					updates = append(updates, ruleUpdate{
 						Existing: rule,
-						New:      models.CopyRule(rule),
+						New:      cp,
 						Diff:     nil,
 					})
 				}
 
 				return &changes{
 					GroupKey: groupKey,
-					New:      nil,
-					Update:   updates,
-					Delete:   nil,
+					AffectedGroups: map[models.AlertRuleGroupKey]models.RulesGroup{
+						groupKey: append(rules, rules1...),
+					},
+					New:    nil,
+					Update: updates,
+					Delete: nil,
 				}
 			},
 			permissions: func(c *changes) map[string][]string {
-				var scopes []string
-				for _, update := range c.Update {
-					for _, query := range update.New.Data {
-						scopes = append(scopes, datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID))
-					}
-				}
-
+				scopes := getDatasourceScopesForRules(append(c.AffectedGroups[c.GroupKey], mapUpdates(c.Update, func(update ruleUpdate) *models.AlertRule {
+					return update.New
+				})...))
 				return map[string][]string{
 					ac.ActionAlertingRuleUpdate: {
 						namespaceIdScope,
@@ -140,43 +229,131 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 			},
 		},
 		{
-			name: "if there are rules that are moved between namespaces it should check update action",
+			name: "if there are rules that are moved between namespaces it should check delete+add action and access to group where rules come from",
 			changes: func() *changes {
+				rules1 := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(withGroupKey(groupKey)))
 				rules := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(withGroupKey(groupKey)))
-				updates := make([]ruleUpdate, 0, len(rules))
 
+				targetGroupKey := models.GenerateGroupKey(groupKey.OrgID)
+
+				updates := make([]ruleUpdate, 0, len(rules))
 				for _, rule := range rules {
 					cp := models.CopyRule(rule)
-					cp.NamespaceUID = rule.NamespaceUID + "other"
+					withGroupKey(targetGroupKey)(cp)
+					cp.Data = []models.AlertQuery{
+						models.GenerateAlertQuery(),
+					}
+
 					updates = append(updates, ruleUpdate{
-						Existing: cp,
-						New:      rule,
-						Diff:     nil,
+						Existing: rule,
+						New:      cp,
 					})
 				}
 
 				return &changes{
-					GroupKey: groupKey,
-					New:      nil,
-					Update:   updates,
-					Delete:   nil,
+					GroupKey: targetGroupKey,
+					AffectedGroups: map[models.AlertRuleGroupKey]models.RulesGroup{
+						groupKey: append(rules, rules1...),
+					},
+					New:    nil,
+					Update: updates,
+					Delete: nil,
 				}
 			},
 			permissions: func(c *changes) map[string][]string {
-				var scopes []string
+				dsScopes := getDatasourceScopesForRules(
+					append(append(append(c.AffectedGroups[c.GroupKey],
+						mapUpdates(c.Update, func(update ruleUpdate) *models.AlertRule {
+							return update.New
+						})...,
+					), mapUpdates(c.Update, func(update ruleUpdate) *models.AlertRule {
+						return update.Existing
+					})...), c.AffectedGroups[groupKey]...),
+				)
+
+				var deleteScopes []string
+				for key := range c.AffectedGroups {
+					deleteScopes = append(deleteScopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(key.NamespaceUID))
+				}
+
+				return map[string][]string{
+					ac.ActionAlertingRuleDelete: deleteScopes,
+					ac.ActionAlertingRuleCreate: {
+						dashboards.ScopeFoldersProvider.GetResourceScopeUID(c.GroupKey.NamespaceUID),
+					},
+					datasources.ActionQuery: dsScopes,
+				}
+			},
+		},
+		{
+			name: "if there are rules that are moved between groups in the same namespace it should check update action and access to all groups (source+target)",
+			changes: func() *changes {
+				targetGroupKey := models.AlertRuleGroupKey{
+					OrgID:        groupKey.OrgID,
+					NamespaceUID: groupKey.NamespaceUID,
+					RuleGroup:    util.GenerateShortUID(),
+				}
+				sourceGroup := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(withGroupKey(groupKey)))
+				targetGroup := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(withGroupKey(targetGroupKey)))
+
+				updates := make([]ruleUpdate, 0, len(sourceGroup))
+				toCopy := len(sourceGroup)
+				if toCopy > 1 {
+					toCopy = rand.Intn(toCopy-1) + 1
+				}
+				for i := 0; i < toCopy; i++ {
+					rule := sourceGroup[0]
+					cp := models.CopyRule(rule)
+					withGroupKey(targetGroupKey)(cp)
+					cp.Data = []models.AlertQuery{
+						models.GenerateAlertQuery(),
+					}
+
+					updates = append(updates, ruleUpdate{
+						Existing: rule,
+						New:      cp,
+					})
+				}
+
+				return &changes{
+					GroupKey: targetGroupKey,
+					AffectedGroups: map[models.AlertRuleGroupKey]models.RulesGroup{
+						groupKey:       sourceGroup,
+						targetGroupKey: targetGroup,
+					},
+					New:    nil,
+					Update: updates,
+					Delete: nil,
+				}
+			},
+			permissions: func(c *changes) map[string][]string {
+				scopes := make(map[string]struct{})
 				for _, update := range c.Update {
 					for _, query := range update.New.Data {
-						scopes = append(scopes, datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID))
+						scopes[datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID)] = struct{}{}
+					}
+					for _, query := range update.Existing.Data {
+						scopes[datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID)] = struct{}{}
 					}
 				}
+				for _, rules := range c.AffectedGroups {
+					for _, rule := range rules {
+						for _, query := range rule.Data {
+							scopes[datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID)] = struct{}{}
+						}
+					}
+				}
+
+				dsScopes := make([]string, 0, len(scopes))
+				for key := range scopes {
+					dsScopes = append(dsScopes, key)
+				}
+
 				return map[string][]string{
-					ac.ActionAlertingRuleDelete: {
-						dashboards.ScopeFoldersProvider.GetResourceScopeUID(groupKey.NamespaceUID + "other"),
+					ac.ActionAlertingRuleUpdate: {
+						dashboards.ScopeFoldersProvider.GetResourceScopeUID(c.GroupKey.NamespaceUID),
 					},
-					ac.ActionAlertingRuleCreate: {
-						namespaceIdScope,
-					},
-					datasources.ActionQuery: scopes,
+					datasources.ActionQuery: dsScopes,
 				}
 			},
 		},
@@ -184,187 +361,35 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
+			groupChanges := testCase.changes()
+			permissions := testCase.permissions(groupChanges)
+
+			t.Run("should fail with insufficient permissions", func(t *testing.T) {
+				permissionCombinations := createAllCombinationsOfPermissions(permissions)
+				permissionCombinations = permissionCombinations[0 : len(permissionCombinations)-1] // exclude all permissions
+				for _, missing := range permissionCombinations {
+					executed := false
+					err := authorizeRuleChanges(groupChanges, func(evaluator ac.Evaluator) bool {
+						response := evaluator.Evaluate(missing)
+						executed = true
+						return response
+					})
+					require.Errorf(t, err, "expected error because less permissions than expected were provided. Provided: %v; Expected: %v", missing, permissions)
+					require.ErrorIs(t, err, ErrAuthorization)
+					require.Truef(t, executed, "evaluation function is expected to be called but it was not.")
+				}
+			})
+
 			executed := false
 
-			groupChanges := testCase.changes()
-
-			result, err := authorizeRuleChanges(groupChanges, func(evaluator ac.Evaluator) bool {
-				response, err := evaluator.Evaluate(make(map[string][]string))
-				require.False(t, response)
-				require.NoError(t, err)
-				executed = true
-				return false
-			})
-			require.Nil(t, result)
-			require.Error(t, err)
-			require.Truef(t, executed, "evaluation function is expected to be called but it was not.")
-
-			permissions := testCase.permissions(groupChanges)
-			executed = false
-			result, err = authorizeRuleChanges(groupChanges, func(evaluator ac.Evaluator) bool {
-				response, err := evaluator.Evaluate(permissions)
-				require.Truef(t, response, "provided permissions [%v] is not enough for requested permissions [%s]", testCase.permissions, evaluator.GoString())
-				require.NoError(t, err)
+			err := authorizeRuleChanges(groupChanges, func(evaluator ac.Evaluator) bool {
+				response := evaluator.Evaluate(permissions)
+				require.Truef(t, response, "provided permissions [%v] is not enough for requested permissions [%s]", permissions, evaluator.GoString())
 				executed = true
 				return true
 			})
 			require.NoError(t, err)
-			require.Equal(t, groupChanges, result)
 			require.Truef(t, executed, "evaluation function is expected to be called but it was not.")
-		})
-	}
-}
-
-func TestAuthorizeRuleDelete(t *testing.T) {
-	groupKey := models.GenerateGroupKey(rand.Int63())
-	namespaceScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(groupKey.NamespaceUID)
-
-	getScopes := func(rules []*models.AlertRule) []string {
-		var scopes []string
-		for _, rule := range rules {
-			for _, query := range rule.Data {
-				scopes = append(scopes, datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID))
-			}
-		}
-		return scopes
-	}
-
-	testCases := []struct {
-		name        string
-		changes     func() *changes
-		permissions func(c *changes) map[string][]string
-		assert      func(t *testing.T, orig, authz *changes, err error)
-	}{
-		{
-			name: "should validate check access to data source and folder",
-			changes: func() *changes {
-				return &changes{
-					GroupKey: groupKey,
-					New:      nil,
-					Update:   nil,
-					Delete:   models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withGroupKey(groupKey))),
-				}
-			},
-			permissions: func(c *changes) map[string][]string {
-				return map[string][]string{
-					ac.ActionAlertingRuleDelete: {
-						namespaceScope,
-					},
-					datasources.ActionQuery: getScopes(c.Delete),
-				}
-			},
-			assert: func(t *testing.T, orig, authz *changes, err error) {
-				require.NoError(t, err)
-				require.Equal(t, orig, authz)
-			},
-		},
-		{
-			name: "should remove rules user does not have access to data source",
-			changes: func() *changes {
-				return &changes{
-					GroupKey: groupKey,
-					New:      nil,
-					Update:   nil,
-					Delete:   models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withGroupKey(groupKey))),
-				}
-			},
-			permissions: func(c *changes) map[string][]string {
-				return map[string][]string{
-					ac.ActionAlertingRuleDelete: {
-						namespaceScope,
-					},
-					datasources.ActionQuery: {
-						getScopes(c.Delete[:1])[0],
-					},
-				}
-			},
-			assert: func(t *testing.T, orig, authz *changes, err error) {
-				require.NoError(t, err)
-				require.Greater(t, len(orig.Delete), len(authz.Delete))
-			},
-		},
-		{
-			name: "should not fail if no changes other than unauthorized",
-			changes: func() *changes {
-				return &changes{
-					GroupKey: groupKey,
-					New:      nil,
-					Update:   nil,
-					Delete:   models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withGroupKey(groupKey))),
-				}
-			},
-			permissions: func(c *changes) map[string][]string {
-				return map[string][]string{
-					ac.ActionAlertingRuleDelete: {
-						namespaceScope,
-					},
-				}
-			},
-			assert: func(t *testing.T, orig, authz *changes, err error) {
-				require.NoError(t, err)
-				require.False(t, orig.isEmpty())
-				require.True(t, authz.isEmpty())
-			},
-		},
-		{
-			name: "should not fail if there are changes and no rules can be deleted",
-			changes: func() *changes {
-				return &changes{
-					GroupKey: groupKey,
-					New:      models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withGroupKey(groupKey))),
-					Update:   nil,
-					Delete:   models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withGroupKey(groupKey))),
-				}
-			},
-			permissions: func(c *changes) map[string][]string {
-				return map[string][]string{
-					ac.ActionAlertingRuleDelete: {
-						namespaceScope,
-					},
-					ac.ActionAlertingRuleCreate: {
-						namespaceScope,
-					},
-					datasources.ActionQuery: getScopes(c.New),
-				}
-			},
-			assert: func(t *testing.T, _, c *changes, err error) {
-				require.NoError(t, err)
-				require.Empty(t, c.Delete)
-			},
-		},
-		{
-			name: "should fail if no access to folder",
-			changes: func() *changes {
-				return &changes{
-					GroupKey: groupKey,
-					New:      nil,
-					Update:   nil,
-					Delete:   models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withGroupKey(groupKey))),
-				}
-			},
-			permissions: func(c *changes) map[string][]string {
-				return map[string][]string{
-					datasources.ActionQuery: getScopes(c.Delete),
-				}
-			},
-			assert: func(t *testing.T, _, c *changes, err error) {
-				require.ErrorIs(t, err, ErrAuthorization)
-				require.Nil(t, c)
-			},
-		},
-	}
-
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			groupChanges := testCase.changes()
-			permissions := testCase.permissions(groupChanges)
-			result, err := authorizeRuleChanges(groupChanges, func(evaluator ac.Evaluator) bool {
-				response, err := evaluator.Evaluate(permissions)
-				require.NoError(t, err)
-				return response
-			})
-
-			testCase.assert(t, groupChanges, result, err)
 		})
 	}
 }
@@ -401,9 +426,8 @@ func TestCheckDatasourcePermissionsForRule(t *testing.T) {
 		executed := 0
 
 		eval := authorizeDatasourceAccessForRule(rule, func(evaluator ac.Evaluator) bool {
-			response, err := evaluator.Evaluate(permissions)
+			response := evaluator.Evaluate(permissions)
 			require.Truef(t, response, "provided permissions [%v] is not enough for requested permissions [%s]", permissions, evaluator.GoString())
-			require.NoError(t, err)
 			executed++
 			return true
 		})
@@ -422,5 +446,50 @@ func TestCheckDatasourcePermissionsForRule(t *testing.T) {
 
 		require.False(t, eval)
 		require.Equal(t, 1, executed)
+	})
+}
+
+func Test_authorizeAccessToRuleGroup(t *testing.T) {
+	t.Run("should return true if user has access to all datasources of all rules in group", func(t *testing.T) {
+		rules := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen())
+		var scopes []string
+		for _, rule := range rules {
+			for _, query := range rule.Data {
+				scopes = append(scopes, datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID))
+			}
+		}
+		permissions := map[string][]string{
+			datasources.ActionQuery: scopes,
+		}
+
+		result := authorizeAccessToRuleGroup(rules, func(evaluator ac.Evaluator) bool {
+			response := evaluator.Evaluate(permissions)
+			require.Truef(t, response, "provided permissions [%v] is not enough for requested permissions [%s]", permissions, evaluator.GoString())
+			return true
+		})
+
+		require.True(t, result)
+	})
+	t.Run("should return false if user does not have access to at least one rule in group", func(t *testing.T) {
+		rules := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen())
+		var scopes []string
+		for _, rule := range rules {
+			for _, query := range rule.Data {
+				scopes = append(scopes, datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID))
+			}
+		}
+		permissions := map[string][]string{
+			datasources.ActionQuery: scopes,
+		}
+
+		rule := models.AlertRuleGen()()
+		rules = append(rules, rule)
+
+		result := authorizeAccessToRuleGroup(rules, func(evaluator ac.Evaluator) bool {
+			response := evaluator.Evaluate(permissions)
+			return response
+		})
+
+		require.False(t, result)
 	})
 }

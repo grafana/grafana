@@ -1,13 +1,19 @@
-+++
-aliases = ["/docs/grafana/latest/guides/whats-new-in-v6-4/", "/docs/grafana/latest/whatsnew/whats-new-in-v6-4/"]
-description = "Feature and improvement highlights for Grafana v6.4"
-keywords = ["grafana", "new", "documentation", "6.4", "release notes"]
-title = "What's new in Grafana v6.4"
-weight = -23
-
-[_build]
-  list = false
-+++
+---
+_build:
+  list: false
+aliases:
+  - /docs/grafana/latest/guides/whats-new-in-v6-4/
+  - /docs/grafana/latest/whatsnew/whats-new-in-v6-4/
+description: Feature and improvement highlights for Grafana v6.4
+keywords:
+  - grafana
+  - new
+  - documentation
+  - '6.4'
+  - release notes
+title: What's new in Grafana v6.4
+weight: -23
+---
 
 # What's new in Grafana v6.4
 
@@ -119,7 +125,7 @@ You'll be able to see how a user authenticating with LDAP would be mapped and wh
 
 The feature is currently limited to Grafana Server Admins.
 
-For more information on how to use this new feature, follow the [guide]({{< relref "../auth/ldap.md#ldap-debug-view" >}}).
+For more information on how to use this new feature, follow the [guide]({{< relref "../setup-grafana/configure-security/configure-authentication/ldap/#ldap-debug-view" >}}).
 
 ## Grafana Enterprise
 

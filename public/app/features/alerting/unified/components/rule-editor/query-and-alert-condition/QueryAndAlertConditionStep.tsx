@@ -22,7 +22,7 @@ export const QueryAndAlertConditionStep: FC<Props> = ({ editingExistingRule }) =
     <RuleEditorSection stepNo={1} title="Set a query and alert condition">
       <AlertType editingExistingRule={editingExistingRule} />
       {type && <Query />}
-      {isGrafanaManagedType && <ConditionField />}
+      {isGrafanaManagedType && <ConditionField existing={editingExistingRule} />}
     </RuleEditorSection>
   );
 };

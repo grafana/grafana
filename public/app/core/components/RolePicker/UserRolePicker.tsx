@@ -16,6 +16,9 @@ export interface Props {
   builtInRoles?: { [key: string]: Role[] };
   disabled?: boolean;
   builtinRolesDisabled?: boolean;
+  updateDisabled?: boolean;
+  onApplyRoles?: (newRoles: Role[], userId: number, orgId: number | undefined) => void;
+  pendingRoles?: Role[];
 }
 
 export const UserRolePicker: FC<Props> = ({
@@ -27,9 +30,17 @@ export const UserRolePicker: FC<Props> = ({
   builtInRoles,
   disabled,
   builtinRolesDisabled,
+  updateDisabled,
+  onApplyRoles,
+  pendingRoles,
 }) => {
   const [{ loading, value: appliedRoles = [] }, getUserRoles] = useAsyncFn(async () => {
     try {
+      if (updateDisabled) {
+        if (pendingRoles?.length! > 0) {
+          return pendingRoles;
+        }
+      }
       if (contextSrv.hasPermission(AccessControlAction.ActionUserRolesList)) {
         return await fetchUserRoles(userId, orgId);
       }
@@ -38,29 +49,39 @@ export const UserRolePicker: FC<Props> = ({
       console.error('Error loading options');
     }
     return [];
-  }, [orgId, userId]);
+  }, [orgId, userId, pendingRoles]);
 
   useEffect(() => {
-    getUserRoles();
-  }, [orgId, userId, getUserRoles]);
+    // only load roles when there is an Org selected
+    if (orgId) {
+      getUserRoles();
+    }
+  }, [orgId, getUserRoles, pendingRoles]);
 
-  const onRolesChange = async (roles: string[]) => {
-    await updateUserRoles(roles, userId, orgId);
-    await getUserRoles();
+  const onRolesChange = async (roles: Role[]) => {
+    if (!updateDisabled) {
+      await updateUserRoles(roles, userId, orgId);
+      await getUserRoles();
+    } else {
+      if (onApplyRoles) {
+        onApplyRoles(roles, userId, orgId);
+      }
+    }
   };
 
   return (
     <RolePicker
+      appliedRoles={appliedRoles}
       builtInRole={builtInRole}
       onRolesChange={onRolesChange}
       onBuiltinRoleChange={onBuiltinRoleChange}
       roleOptions={roleOptions}
-      appliedRoles={appliedRoles}
       builtInRoles={builtInRoles}
       isLoading={loading}
       disabled={disabled}
       builtinRolesDisabled={builtinRolesDisabled}
       showBuiltInRole
+      updateDisabled={updateDisabled || false}
     />
   );
 };

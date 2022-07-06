@@ -4,7 +4,7 @@ import { useAsyncFn } from 'react-use';
 import { SelectableValue } from '@grafana/data';
 import { AsyncSelect } from '@grafana/ui';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { Organization } from 'app/types';
+import { Organization, UserOrg } from 'app/types';
 
 export type OrgSelectItem = SelectableValue<Organization>;
 
@@ -13,9 +13,10 @@ export interface Props {
   className?: string;
   inputId?: string;
   autoFocus?: boolean;
+  excludeOrgs?: UserOrg[];
 }
 
-export function OrgPicker({ onSelected, className, inputId, autoFocus }: Props) {
+export function OrgPicker({ onSelected, className, inputId, autoFocus, excludeOrgs }: Props) {
   // For whatever reason the autoFocus prop doesn't seem to work
   // with AsyncSelect, hence this workaround. Maybe fixed in a later version?
   useEffect(() => {
@@ -26,7 +27,16 @@ export function OrgPicker({ onSelected, className, inputId, autoFocus }: Props) 
 
   const [orgOptionsState, getOrgOptions] = useAsyncFn(async () => {
     const orgs: Organization[] = await getBackendSrv().get('/api/orgs');
-    return orgs.map((org) => ({ value: { id: org.id, name: org.name }, label: org.name }));
+    const allOrgs = orgs.map((org) => ({ value: { id: org.id, name: org.name }, label: org.name }));
+    if (excludeOrgs) {
+      let idArray = excludeOrgs.map((anOrg) => anOrg.orgId);
+      const filteredOrgs = allOrgs.filter((item) => {
+        return !idArray.includes(item.value.id);
+      });
+      return filteredOrgs;
+    } else {
+      return allOrgs;
+    }
   });
 
   return (

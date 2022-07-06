@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package service
 
 import (
@@ -12,6 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	busmock "github.com/grafana/grafana/pkg/bus/mock"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -25,27 +23,24 @@ import (
 var orgID = int64(1)
 var user = &models.SignedInUser{UserId: 1}
 
-func TestProvideFolderService(t *testing.T) {
+func TestIntegrationProvideFolderService(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	t.Run("should register scope resolvers", func(t *testing.T) {
-		store := &dashboards.FakeDashboardStore{}
 		cfg := setting.NewCfg()
-		features := featuremgmt.WithFeatures()
-		cfg.IsFeatureToggleEnabled = features.IsEnabled
-		folderPermissions := acmock.NewMockedPermissionsService()
-		dashboardPermissions := acmock.NewMockedPermissionsService()
-		dashboardService := ProvideDashboardService(cfg, store, nil, features, folderPermissions, dashboardPermissions)
 		ac := acmock.New()
 
-		ProvideFolderService(
-			cfg, &dashboards.FakeDashboardService{DashboardService: dashboardService},
-			store, nil, features, folderPermissions, ac,
-		)
+		ProvideFolderService(cfg, nil, nil, nil, nil, nil, ac, busmock.New())
 
 		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 2)
 	})
 }
 
-func TestFolderService(t *testing.T) {
+func TestIntegrationFolderService(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	t.Run("Folder service tests", func(t *testing.T) {
 		store := &dashboards.FakeDashboardStore{}
 		cfg := setting.NewCfg()
@@ -53,7 +48,7 @@ func TestFolderService(t *testing.T) {
 		cfg.IsFeatureToggleEnabled = features.IsEnabled
 		folderPermissions := acmock.NewMockedPermissionsService()
 		dashboardPermissions := acmock.NewMockedPermissionsService()
-		dashboardService := ProvideDashboardService(cfg, store, nil, features, folderPermissions, dashboardPermissions)
+		dashboardService := ProvideDashboardService(cfg, store, nil, features, folderPermissions, dashboardPermissions, acmock.New())
 
 		service := FolderServiceImpl{
 			cfg:              cfg,
@@ -63,6 +58,7 @@ func TestFolderService(t *testing.T) {
 			searchService:    nil,
 			features:         features,
 			permissions:      folderPermissions,
+			bus:              busmock.New(),
 		}
 
 		t.Run("Given user has no permissions", func(t *testing.T) {
@@ -81,7 +77,7 @@ func TestFolderService(t *testing.T) {
 
 			t.Run("When get folder by id should return access denied error", func(t *testing.T) {
 				_, err := service.GetFolderByID(context.Background(), user, folderId, orgID)
-				require.Equal(t, err, models.ErrFolderAccessDenied)
+				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
 			})
 
 			t.Run("When get folder by id, with id = 0 should return default folder", func(t *testing.T) {
@@ -92,13 +88,13 @@ func TestFolderService(t *testing.T) {
 
 			t.Run("When get folder by uid should return access denied error", func(t *testing.T) {
 				_, err := service.GetFolderByUID(context.Background(), user, orgID, folderUID)
-				require.Equal(t, err, models.ErrFolderAccessDenied)
+				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
 			})
 
 			t.Run("When creating folder should return access denied error", func(t *testing.T) {
 				store.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything).Return(true, nil).Times(2)
 				_, err := service.CreateFolder(context.Background(), user, orgID, folder.Title, folderUID)
-				require.Equal(t, err, models.ErrFolderAccessDenied)
+				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
 			})
 
 			t.Run("When updating folder should return access denied error", func(t *testing.T) {
@@ -106,18 +102,18 @@ func TestFolderService(t *testing.T) {
 					folder := args.Get(1).(*models.GetDashboardQuery)
 					folder.Result = models.NewDashboard("dashboard-test")
 					folder.Result.IsFolder = true
-				}).Return(nil)
+				}).Return(&models.Dashboard{}, nil)
 				err := service.UpdateFolder(context.Background(), user, orgID, folderUID, &models.UpdateFolderCommand{
 					Uid:   folderUID,
 					Title: "Folder-TEST",
 				})
-				require.Equal(t, err, models.ErrFolderAccessDenied)
+				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
 			})
 
 			t.Run("When deleting folder by uid should return access denied error", func(t *testing.T) {
 				_, err := service.DeleteFolder(context.Background(), user, orgID, folderUID, false)
 				require.Error(t, err)
-				require.Equal(t, err, models.ErrFolderAccessDenied)
+				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
 			})
 
 			t.Cleanup(func() {
@@ -148,7 +144,7 @@ func TestFolderService(t *testing.T) {
 				dash.Id = rand.Int63()
 
 				_, err := service.CreateFolder(context.Background(), user, orgID, dash.Title, "general")
-				require.ErrorIs(t, err, models.ErrFolderInvalidUID)
+				require.ErrorIs(t, err, dashboards.ErrFolderInvalidUID)
 			})
 
 			t.Run("When updating folder should not return access denied error", func(t *testing.T) {
@@ -242,14 +238,14 @@ func TestFolderService(t *testing.T) {
 				ActualError   error
 				ExpectedError error
 			}{
-				{ActualError: models.ErrDashboardTitleEmpty, ExpectedError: models.ErrFolderTitleEmpty},
-				{ActualError: models.ErrDashboardUpdateAccessDenied, ExpectedError: models.ErrFolderAccessDenied},
-				{ActualError: models.ErrDashboardWithSameNameInFolderExists, ExpectedError: models.ErrFolderSameNameExists},
-				{ActualError: models.ErrDashboardWithSameUIDExists, ExpectedError: models.ErrFolderWithSameUIDExists},
-				{ActualError: models.ErrDashboardVersionMismatch, ExpectedError: models.ErrFolderVersionMismatch},
-				{ActualError: models.ErrDashboardNotFound, ExpectedError: models.ErrFolderNotFound},
-				{ActualError: models.ErrDashboardFailedGenerateUniqueUid, ExpectedError: models.ErrFolderFailedGenerateUniqueUid},
-				{ActualError: models.ErrDashboardInvalidUid, ExpectedError: models.ErrDashboardInvalidUid},
+				{ActualError: dashboards.ErrDashboardTitleEmpty, ExpectedError: dashboards.ErrFolderTitleEmpty},
+				{ActualError: dashboards.ErrDashboardUpdateAccessDenied, ExpectedError: dashboards.ErrFolderAccessDenied},
+				{ActualError: dashboards.ErrDashboardWithSameNameInFolderExists, ExpectedError: dashboards.ErrFolderSameNameExists},
+				{ActualError: dashboards.ErrDashboardWithSameUIDExists, ExpectedError: dashboards.ErrFolderWithSameUIDExists},
+				{ActualError: dashboards.ErrDashboardVersionMismatch, ExpectedError: dashboards.ErrFolderVersionMismatch},
+				{ActualError: dashboards.ErrDashboardNotFound, ExpectedError: dashboards.ErrFolderNotFound},
+				{ActualError: dashboards.ErrDashboardFailedGenerateUniqueUid, ExpectedError: dashboards.ErrFolderFailedGenerateUniqueUid},
+				{ActualError: dashboards.ErrDashboardInvalidUid, ExpectedError: dashboards.ErrDashboardInvalidUid},
 			}
 
 			for _, tc := range testCases {

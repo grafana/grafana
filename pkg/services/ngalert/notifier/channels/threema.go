@@ -8,12 +8,14 @@ import (
 	"path"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 var (
@@ -28,6 +30,7 @@ type ThreemaNotifier struct {
 	RecipientID string
 	APISecret   string
 	log         log.Logger
+	images      ImageStore
 	ns          notifications.WebhookSender
 	tmpl        *template.Template
 }
@@ -47,7 +50,7 @@ func ThreemaFactory(fc FactoryConfig) (NotificationChannel, error) {
 			Cfg:    *fc.Config,
 		}
 	}
-	return NewThreemaNotifier(cfg, fc.NotificationService, fc.Template), nil
+	return NewThreemaNotifier(cfg, fc.ImageStore, fc.NotificationService, fc.Template), nil
 }
 
 func NewThreemaConfig(config *NotificationChannelConfig, decryptFunc GetDecryptedValueFn) (*ThreemaConfig, error) {
@@ -81,7 +84,7 @@ func NewThreemaConfig(config *NotificationChannelConfig, decryptFunc GetDecrypte
 }
 
 // NewThreemaNotifier is the constructor for the Threema notifier
-func NewThreemaNotifier(config *ThreemaConfig, ns notifications.WebhookSender, t *template.Template) *ThreemaNotifier {
+func NewThreemaNotifier(config *ThreemaConfig, images ImageStore, ns notifications.WebhookSender, t *template.Template) *ThreemaNotifier {
 	return &ThreemaNotifier{
 		Base: NewBase(&models.AlertNotification{
 			Uid:                   config.UID,
@@ -94,6 +97,7 @@ func NewThreemaNotifier(config *ThreemaConfig, ns notifications.WebhookSender, t
 		RecipientID: config.RecipientID,
 		APISecret:   config.APISecret,
 		log:         log.New("alerting.notifier.threema"),
+		images:      images,
 		ns:          ns,
 		tmpl:        t,
 	}
@@ -101,7 +105,7 @@ func NewThreemaNotifier(config *ThreemaConfig, ns notifications.WebhookSender, t
 
 // Notify send an alert notification to Threema
 func (tn *ThreemaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	tn.log.Debug("Sending threema alert notification", "from", tn.GatewayID, "to", tn.RecipientID)
+	tn.log.Debug("sending threema alert notification", "from", tn.GatewayID, "to", tn.RecipientID)
 
 	var tmplErr error
 	tmpl, _ := TmplText(ctx, tn.tmpl, as, tn.log, &tmplErr)
@@ -126,6 +130,15 @@ func (tn *ThreemaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		tmpl(`{{ template "default.message" . }}`),
 		path.Join(tn.tmpl.ExternalURL.String(), "/alerting/list"),
 	)
+
+	_ = withStoredImages(ctx, tn.log, tn.images,
+		func(_ int, image ngmodels.Image) error {
+			if image.URL != "" {
+				message += fmt.Sprintf("*Image:* %s\n", image.URL)
+			}
+			return nil
+		}, as...)
+
 	data.Set("text", message)
 
 	if tmplErr != nil {
@@ -141,7 +154,7 @@ func (tn *ThreemaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		},
 	}
 	if err := tn.ns.SendWebhookSync(ctx, cmd); err != nil {
-		tn.log.Error("Failed to send threema notification", "error", err, "webhook", tn.Name)
+		tn.log.Error("Failed to send threema notification", "err", err, "webhook", tn.Name)
 		return false, err
 	}
 

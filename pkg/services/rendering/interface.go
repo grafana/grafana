@@ -104,6 +104,7 @@ type CapabilitySupportRequestResult struct {
 	SemverConstraint string
 }
 
+//go:generate mockgen -destination=mock.go -package=rendering github.com/grafana/grafana/pkg/services/rendering Service
 type Service interface {
 	IsAvailable() bool
 	Version() string
