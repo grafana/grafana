@@ -4,6 +4,7 @@ import Drop from 'tether-drop';
 
 import { locationSearchToObject, navigationLogger, reportPageview } from '@grafana/runtime';
 
+import { appChromeService } from '../components/AppChrome/AppChromeService';
 import { keybindingSrv } from '../services/keybindingSrv';
 
 import { GrafanaRouteComponentProps } from './types';
@@ -12,6 +13,8 @@ export interface Props extends Omit<GrafanaRouteComponentProps, 'queryParams'> {
 
 export class GrafanaRoute extends React.Component<Props> {
   componentDidMount() {
+    appChromeService.routeMounted(this.props.route);
+
     this.updateBodyClassNames();
     this.cleanupDOM();
     // unbinds all and re-bind global keybindins
@@ -70,7 +73,6 @@ export class GrafanaRoute extends React.Component<Props> {
     navigationLogger('GrafanaRoute', false, 'Rendered', props.route);
 
     const RouteComponent = props.route.component;
-
     return <RouteComponent {...props} queryParams={locationSearchToObject(props.location.search)} />;
   }
 }

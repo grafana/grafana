@@ -135,6 +135,14 @@ func NewAlertRule(rule models.AlertRule, provenance models.Provenance) AlertRule
 	}
 }
 
+// swagger:route GET /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group} provisioning stable RouteGetAlertRuleGroup
+//
+// Get a rule group.
+//
+//     Responses:
+//       200: AlertRuleGroup
+//       404: description: Not found.
+
 // swagger:route PUT /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group} provisioning stable RoutePutAlertRuleGroup
 //
 // Update the interval of a rule group.
@@ -143,16 +151,16 @@ func NewAlertRule(rule models.AlertRule, provenance models.Provenance) AlertRule
 //     - application/json
 //
 //     Responses:
-//       200: AlertRuleGroup
+//       200: AlertRuleGroupMetadata
 //       400: ValidationError
 
-// swagger:parameters RoutePutAlertRuleGroup
+// swagger:parameters RouteGetAlertRuleGroup RoutePutAlertRuleGroup
 type FolderUIDPathParam struct {
 	// in:path
 	FolderUID string `json:"FolderUID"`
 }
 
-// swagger:parameters RoutePutAlertRuleGroup
+// swagger:parameters RouteGetAlertRuleGroup RoutePutAlertRuleGroup
 type RuleGroupPathParam struct {
 	// in:path
 	Group string `json:"Group"`
@@ -161,9 +169,16 @@ type RuleGroupPathParam struct {
 // swagger:parameters RoutePutAlertRuleGroup
 type AlertRuleGroupPayload struct {
 	// in:body
-	Body AlertRuleGroup
+	Body AlertRuleGroupMetadata
+}
+
+type AlertRuleGroupMetadata struct {
+	Interval int64 `json:"interval"`
 }
 
 type AlertRuleGroup struct {
-	Interval int64 `json:"interval"`
+	Title     string             `json:"title"`
+	FolderUID string             `json:"folderUid"`
+	Interval  int64              `json:"interval"`
+	Rules     []models.AlertRule `json:"rules"`
 }

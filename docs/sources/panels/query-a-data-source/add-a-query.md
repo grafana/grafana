@@ -14,7 +14,6 @@ A query returns data that Grafana visualizes in dashboards. When you create a pa
 
 - [Add a data source](../../../datasources/add-a-data-source).
 - Ensure that you know the query language of the data source.
-- [Add a panel]({{< relref "../working-with-panels/add-panel/" >}}).
 
 **To add a query**:
 

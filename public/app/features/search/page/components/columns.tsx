@@ -1,9 +1,8 @@
 import { cx } from '@emotion/css';
-import { isNumber } from 'lodash';
 import React from 'react';
 import SVG from 'react-inlinesvg';
 
-import { Field, getFieldDisplayName } from '@grafana/data';
+import { Field, FieldType, formattedValueToString, getDisplayProcessor, getFieldDisplayName } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Checkbox, Icon, IconButton, IconName, TagList } from '@grafana/ui';
 import { PluginIconName } from 'app/features/plugins/admin/types';
@@ -15,7 +14,6 @@ import { TableColumn } from './SearchResultsTable';
 
 const TYPE_COLUMN_WIDTH = 175;
 const DATASOURCE_COLUMN_WIDTH = 200;
-const SORT_FIELD_WIDTH = 175;
 
 export const generateColumns = (
   response: QueryResponse,
@@ -32,9 +30,14 @@ export const generateColumns = (
   const access = response.view.fields;
   const uidField = access.uid;
   const kindField = access.kind;
+  let sortFieldWith = 0;
   const sortField = (access as any)[response.view.dataFrame.meta?.custom?.sortBy] as Field;
   if (sortField) {
-    availableWidth -= SORT_FIELD_WIDTH; // pre-allocate the space for the last column
+    sortFieldWith = 175;
+    if (sortField.type === FieldType.time) {
+      sortFieldWith += 25;
+    }
+    availableWidth -= sortFieldWith; // pre-allocate the space for the last column
   }
 
   let width = 50;
@@ -176,25 +179,20 @@ export const generateColumns = (
     columns.push(makeTagsColumn(access.tags, availableWidth, styles.tagList, onTagSelected));
   }
 
-  if (sortField) {
+  if (sortField && sortFieldWith) {
+    const disp = sortField.display ?? getDisplayProcessor({ field: sortField, theme: config.theme2 });
     columns.push({
       Header: () => <div className={styles.sortedHeader}>{getFieldDisplayName(sortField)}</div>,
       Cell: (p) => {
-        let value = sortField.values.get(p.row.index);
-        try {
-          if (isNumber(value)) {
-            value = Number(value).toLocaleString();
-          }
-        } catch {}
         return (
           <div {...p.cellProps} className={styles.sortedItems}>
-            {`${value}`}
+            {formattedValueToString(disp(sortField.values.get(p.row.index)))}
           </div>
         );
       },
       id: `column-sort-field`,
       field: sortField,
-      width: SORT_FIELD_WIDTH,
+      width: sortFieldWith,
     });
   }
 
