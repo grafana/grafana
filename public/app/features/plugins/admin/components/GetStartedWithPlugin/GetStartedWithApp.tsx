@@ -2,6 +2,8 @@ import React from 'react';
 
 import { PluginMeta } from '@grafana/data';
 import { Button } from '@grafana/ui';
+import { contextSrv } from 'app/core/core';
+import { AccessControlAction } from 'app/types';
 
 import { updatePluginSettings } from '../../api';
 import { usePluginConfig } from '../../hooks/usePluginConfig';
@@ -15,6 +17,11 @@ export function GetStartedWithApp({ plugin }: Props): React.ReactElement | null 
   const { value: pluginConfig } = usePluginConfig(plugin);
 
   if (!pluginConfig) {
+    return null;
+  }
+
+  // Enforce RBAC
+  if (!contextSrv.hasAccessInMetadata(AccessControlAction.PluginsToggle, plugin, true)) {
     return null;
   }
 
