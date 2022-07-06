@@ -128,6 +128,7 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     isEnterprise: false,
     type,
     error: error?.errorCode,
+    accessControl: accessControl,
   };
 }
 

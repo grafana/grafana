@@ -1,5 +1,6 @@
 import { PluginError, PluginMeta, renderMarkdown } from '@grafana/data';
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
+import { accessControlQueryParam } from 'app/core/utils/accessControl';
 
 import { API_ROOT, GCOM_API_ROOT } from './constants';
 import { isLocalPluginVisible, isRemotePluginVisible } from './helpers';
@@ -28,6 +29,7 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
 }
 
 export async function getRemotePlugins(): Promise<RemotePlugin[]> {
+  // TODO I think we cannot do anything about these
   const { items: remotePlugins }: { items: RemotePlugin[] } = await getBackendSrv().get(`${GCOM_API_ROOT}/plugins`);
 
   return remotePlugins.filter(isRemotePluginVisible);
@@ -91,7 +93,10 @@ async function getLocalPluginReadme(id: string): Promise<string> {
 }
 
 export async function getLocalPlugins(): Promise<LocalPlugin[]> {
-  const localPlugins: LocalPlugin[] = await getBackendSrv().get(`${API_ROOT}`, { embedded: 0 });
+  const localPlugins: LocalPlugin[] = await getBackendSrv().get(
+    `${API_ROOT}`,
+    accessControlQueryParam({ embedded: 0 })
+  );
 
   return localPlugins.filter(isLocalPluginVisible);
 }
