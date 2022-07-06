@@ -20,21 +20,16 @@ export const filterFieldsByNameTransformer: DataTransformerInfo<FilterFieldsByNa
    * Return a modified copy of the series.  If the transform is not or should not
    * be applied, just return the input series
    */
-  operator: (options, replace) => (source) => {
-    if (options.include !== undefined) {
-      options.include.pattern = replace ? replace(options.include!.pattern) : options.include!.pattern;
-    }
-
-    if (options.exclude !== undefined) {
-      options.exclude.pattern = replace ? replace(options.exclude!.pattern) : options.exclude!.pattern;
-    }
-    return source.pipe(
-      filterFieldsTransformer.operator({
-        include: getMatcherConfig(options.include),
-        exclude: getMatcherConfig(options.exclude),
-      })
-    );
-  },
+  operator: (options, replace) => (source) =>
+    source.pipe(
+      filterFieldsTransformer.operator(
+        {
+          include: getMatcherConfig(options.include),
+          exclude: getMatcherConfig(options.exclude),
+        },
+        replace
+      )
+    ),
 };
 
 const getMatcherConfig = (options?: RegexpOrNamesMatcherOptions): MatcherConfig | undefined => {

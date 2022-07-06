@@ -22,9 +22,15 @@ export const filterFieldsTransformer: DataTransformerInfo<FilterOptions> = {
    * Return a modified copy of the series.  If the transform is not or should not
    * be applied, just return the input series
    */
-  operator: (options: FilterOptions) => (source) => {
+  operator: (options: FilterOptions, replace) => (source) => {
     if (!options.include && !options.exclude) {
-      return source.pipe(noopTransformer.operator({}));
+      return source.pipe(noopTransformer.operator({}, replace));
+    }
+    if (options.include !== undefined) {
+      options.include.options = replace ? replace(options.include?.options) : options.include?.options;
+    }
+    if (options.exclude !== undefined) {
+      options.exclude.options = replace ? replace(options.exclude?.options) : options.exclude?.options;
     }
 
     return source.pipe(
