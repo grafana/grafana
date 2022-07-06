@@ -235,7 +235,7 @@ datasources:
 
 You can manage plugin applications in Grafana by adding one or more YAML config files in the [`provisioning/plugins`]({{< relref "../setup-grafana/configure-grafana/#provisioning" >}}) directory. Each config file can contain a list of `apps` that will be updated during start up. Grafana updates each app to match the configuration file.
 
-> **Note:** this feature permits to provision plugin configurations, not the plugins themselves. 
+> **Note:** This feature enables you to provision plugin configurations, not the plugins themselves. 
 > The plugins must already be installed on the grafana instance
 
 ### Example plugin configuration file
