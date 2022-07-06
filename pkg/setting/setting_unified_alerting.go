@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/prometheus/alertmanager/cluster"
@@ -101,9 +100,9 @@ func (u *UnifiedAlertingSettings) IsEnabled() bool {
 	return u.Enabled == nil || *u.Enabled
 }
 
-// IsGrafanaFolderDisabled returns true if UnifiedAlertingReservedLabelSettings.DisabledLabels contains the grafana_folder reserved label.
-func (u *UnifiedAlertingReservedLabelSettings) IsGrafanaFolderDisabled() bool {
-	_, ok := u.DisabledLabels[models.FolderTitleLabel]
+// IsReservedLabelDisabled returns true if UnifiedAlertingReservedLabelSettings.DisabledLabels contains the given reserved label.
+func (u *UnifiedAlertingReservedLabelSettings) IsReservedLabelDisabled(label string) bool {
+	_, ok := u.DisabledLabels[label]
 	return ok
 }
 

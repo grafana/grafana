@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
@@ -143,7 +144,7 @@ func (ng *AlertNG) init() error {
 		AdminConfigPollInterval: ng.Cfg.UnifiedAlerting.AdminConfigPollInterval,
 		DisabledOrgs:            ng.Cfg.UnifiedAlerting.DisabledOrgs,
 		MinRuleInterval:         ng.Cfg.UnifiedAlerting.MinInterval,
-		DisableGrafanaFolder:    ng.Cfg.UnifiedAlerting.ReservedLabels.IsGrafanaFolderDisabled(),
+		DisableGrafanaFolder:    ng.Cfg.UnifiedAlerting.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel),
 	}
 
 	appUrl, err := url.Parse(ng.Cfg.AppURL)
