@@ -63,7 +63,7 @@ describe('LokiQueryEditorSelector', () => {
   it('shows code editor if expr and nothing else', async () => {
     // We opt for showing code editor for queries created before this feature was added
     render(<LokiQueryEditorSelector {...defaultProps} />);
-    await expectCodeEditor();
+    expectCodeEditor();
   });
 
   it('shows builder if new query', async () => {
@@ -81,7 +81,7 @@ describe('LokiQueryEditorSelector', () => {
 
   it('shows code editor when code mode is set', async () => {
     renderWithMode(QueryEditorMode.Code);
-    await expectCodeEditor();
+    expectCodeEditor();
   });
 
   it('shows builder when builder mode is set', async () => {
@@ -91,7 +91,7 @@ describe('LokiQueryEditorSelector', () => {
 
   it('shows explain when explain mode is set', async () => {
     renderWithMode(QueryEditorMode.Explain);
-    await expectExplain();
+    expectExplain();
   });
 
   it('changes to builder mode', async () => {
