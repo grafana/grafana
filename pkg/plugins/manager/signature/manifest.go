@@ -11,10 +11,10 @@ import (
 	"io/ioutil"
 	"net/url"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 
+	"github.com/gobwas/glob"
 	// TODO: replace deprecated `golang.org/x/crypto` package https://github.com/grafana/grafana/issues/46050
 	// nolint:staticcheck
 	"golang.org/x/crypto/openpgp"
@@ -148,26 +148,14 @@ func Calculate(mlog log.Logger, plugin *plugins.Plugin) (plugins.Signature, erro
 	if manifest.SignatureType == plugins.PrivateSignature {
 		appURL, err := url.Parse(setting.AppUrl)
 		if err != nil {
+			mlog.Warn("Could not parse Grafana app URL", "plugin", plugin.ID, "appURL", appURL)
 			return plugins.Signature{}, err
 		}
 
-		foundMatch := false
-		for _, u := range manifest.RootURLs {
-			rootURL, err := url.Parse(u)
-			if err != nil {
-				mlog.Warn("Could not parse plugin root URL", "plugin", plugin.ID, "rootUrl", rootURL)
-				return plugins.Signature{}, err
-			}
-
-			if rootURL.Scheme == appURL.Scheme &&
-				rootURL.Host == appURL.Host &&
-				path.Clean(rootURL.RequestURI()) == path.Clean(appURL.RequestURI()) {
-				foundMatch = true
-				break
-			}
-		}
-
-		if !foundMatch {
+		if match, err := urlMatch(manifest.RootURLs, appURL.String()); err != nil {
+			mlog.Warn("Could verify if root URLs match", "plugin", plugin.ID, "rootUrls", manifest.RootURLs)
+			return plugins.Signature{}, err
+		} else if !match {
 			mlog.Warn("Could not find root URL that matches running application URL", "plugin", plugin.ID,
 				"appUrl", appURL, "rootUrls", manifest.RootURLs)
 			return plugins.Signature{
@@ -298,4 +286,15 @@ func pluginFilesRequiringVerification(plugin *plugins.Plugin) ([]string, error) 
 	})
 
 	return files, err
+}
+
+func urlMatch(specs []string, target string) (bool, error) {
+	for _, spec := range specs {
+		sp, err := glob.Compile(spec, '/', '.')
+		if err != nil {
+			return false, err
+		}
+		return sp.Match(target), nil
+	}
+	return false, nil
 }
