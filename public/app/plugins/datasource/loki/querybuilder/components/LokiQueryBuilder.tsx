@@ -112,7 +112,7 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, onChange
           onRunQuery={onRunQuery}
           datasource={datasource as DataSourceApi}
         />
-        <QueryBuilderHints
+        <QueryBuilderHints<LokiVisualQuery>
           datasource={datasource}
           query={query}
           onChange={onChange}

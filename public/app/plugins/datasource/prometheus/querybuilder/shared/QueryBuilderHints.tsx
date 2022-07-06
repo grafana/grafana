@@ -9,56 +9,61 @@ import { PrometheusDatasource } from '../../datasource';
 
 import { LokiAndPromQueryModellerBase, PromLokiVisualQuery } from './LokiAndPromQueryModellerBase';
 
-export interface Props {
-  query: PromLokiVisualQuery;
+export interface Props<T extends PromLokiVisualQuery> {
+  query: T;
   datasource: PrometheusDatasource | LokiDatasource;
   queryModeller: LokiAndPromQueryModellerBase;
-  buildVisualQueryFromString: (expr: string) => { query: PromLokiVisualQuery };
-  onChange: (update: PromLokiVisualQuery) => void;
+  buildVisualQueryFromString: (expr: string) => { query: T };
+  onChange: (update: T) => void;
   data?: PanelData;
 }
 
-export const QueryBuilderHints = React.memo<Props>(
-  ({ datasource, query: visualQuery, onChange, data, queryModeller, buildVisualQueryFromString }) => {
-    const [hints, setHints] = useState<QueryHint[]>([]);
-    const styles = useStyles2(getStyles);
+export const QueryBuilderHints = <T extends PromLokiVisualQuery>({
+  datasource,
+  query: visualQuery,
+  onChange,
+  data,
+  queryModeller,
+  buildVisualQueryFromString,
+}: Props<T>) => {
+  const [hints, setHints] = useState<QueryHint[]>([]);
+  const styles = useStyles2(getStyles);
 
-    useEffect(() => {
-      const query = { expr: queryModeller.renderQuery(visualQuery), refId: '' };
-      // For now show only actionable hints
-      const hints = datasource.getQueryHints(query, data?.series || []).filter((hint) => hint.fix?.action);
-      setHints(hints);
-    }, [datasource, visualQuery, data, queryModeller]);
+  useEffect(() => {
+    const query = { expr: queryModeller.renderQuery(visualQuery), refId: '' };
+    // For now show only actionable hints
+    const hints = datasource.getQueryHints(query, data?.series || []).filter((hint) => hint.fix?.action);
+    setHints(hints);
+  }, [datasource, visualQuery, data, queryModeller]);
 
-    return (
-      <>
-        {hints.length > 0 && (
-          <div className={styles.container}>
-            {hints.map((hint) => {
-              return (
-                <Tooltip content={`${hint.label} ${hint.fix?.label}`} key={hint.type}>
-                  <Button
-                    onClick={() => {
-                      const query = { expr: queryModeller.renderQuery(visualQuery), refId: '' };
-                      const newQuery = datasource.modifyQuery(query, hint!.fix!.action);
-                      const newVisualQuery = buildVisualQueryFromString(newQuery.expr);
-                      return onChange(newVisualQuery.query);
-                    }}
-                    fill="outline"
-                    size="sm"
-                    className={styles.hint}
-                  >
-                    {'hint: ' + hint.fix?.action?.type.toLowerCase().replace('_', ' ') + '()'}
-                  </Button>
-                </Tooltip>
-              );
-            })}
-          </div>
-        )}
-      </>
-    );
-  }
-);
+  return (
+    <>
+      {hints.length > 0 && (
+        <div className={styles.container}>
+          {hints.map((hint) => {
+            return (
+              <Tooltip content={`${hint.label} ${hint.fix?.label}`} key={hint.type}>
+                <Button
+                  onClick={() => {
+                    const query = { expr: queryModeller.renderQuery(visualQuery), refId: '' };
+                    const newQuery = datasource.modifyQuery(query, hint!.fix!.action);
+                    const newVisualQuery = buildVisualQueryFromString(newQuery.expr);
+                    return onChange(newVisualQuery.query);
+                  }}
+                  fill="outline"
+                  size="sm"
+                  className={styles.hint}
+                >
+                  {'hint: ' + hint.fix?.action?.type.toLowerCase().replace('_', ' ') + '()'}
+                </Button>
+              </Tooltip>
+            );
+          })}
+        </div>
+      )}
+    </>
+  );
+};
 
 QueryBuilderHints.displayName = 'QueryBuilderHints';
 

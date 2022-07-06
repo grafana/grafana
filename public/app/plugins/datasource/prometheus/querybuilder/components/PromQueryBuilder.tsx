@@ -8,7 +8,6 @@ import { getMetadataString } from '../../language_provider';
 import { promQueryModeller } from '../PromQueryModeller';
 import { buildVisualQueryFromString } from '../parsing';
 import { LabelFilters } from '../shared/LabelFilters';
-import { PromLokiVisualQuery } from '../shared/LokiAndPromQueryModellerBase';
 import { OperationList } from '../shared/OperationList';
 import { OperationsEditorRow } from '../shared/OperationsEditorRow';
 import { QueryBuilderHints } from '../shared/QueryBuilderHints';
@@ -110,11 +109,10 @@ export const PromQueryBuilder = React.memo<Props>(({ datasource, query, onChange
           onChange={onChange}
           onRunQuery={onRunQuery}
         />
-        <QueryBuilderHints
+        <QueryBuilderHints<PromVisualQuery>
           datasource={datasource}
           query={query}
-          // eslint-disable-next-line
-          onChange={onChange as (update: PromLokiVisualQuery) => void}
+          onChange={onChange}
           data={data}
           queryModeller={promQueryModeller}
           buildVisualQueryFromString={buildVisualQueryFromString}
