@@ -1,16 +1,16 @@
 // Libraries
 import { css, cx } from '@emotion/css';
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { CustomScrollbar, useStyles2 } from '@grafana/ui';
 
 // Components
+import { appChromeService } from '../AppChrome/AppChromeService';
 import { Footer } from '../Footer/Footer';
 import { PageType } from '../Page/types';
 import { usePageNav } from '../Page/usePageNav';
 import { usePageTitle } from '../Page/usePageTitle';
-import { TopNavUpdate } from '../TopNav/TopNavUpdate';
 
 import { PageContents } from './PageContents';
 import { PageHeader } from './PageHeader';
@@ -24,6 +24,12 @@ export const Page: PageType = ({ navId, navModel: oldNavProp, pageNav, children,
   usePageTitle(navModel, pageNav);
 
   const pageHeaderNav = pageNav ?? navModel?.node;
+
+  useEffect(() => {
+    if (navModel || pageNav) {
+      appChromeService.update({ sectionNav: navModel?.node, pageNav });
+    }
+  }, [navModel, pageNav]);
 
   return (
     <div {...otherProps} className={cx(styles.wrapper, className)}>
@@ -40,8 +46,6 @@ export const Page: PageType = ({ navId, navModel: oldNavProp, pageNav, children,
           </CustomScrollbar>
         </div>
       </div>
-      {/** Update the breadcrumbs with item level nav */}
-      {pageNav && <TopNavUpdate pageNav={pageNav} />}
     </div>
   );
 };
