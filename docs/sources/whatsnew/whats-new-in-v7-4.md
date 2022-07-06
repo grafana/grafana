@@ -104,7 +104,7 @@ _Server-side expressions_ is an experimental feature that allows you to manipula
 
 The main use case is for [multi-dimensional]({{< relref "../basics/timeseries-dimensions/" >}}) data sources used with the upcoming next generation alerting, but expressions can be used with backend data sources and visualization as well.
 
-> **Note:** Queries built with this feature might break with minor version upgrades until Grafana 8 is released. This feature does not work with the current Grafana alerting.
+> **Note:** Queries built with this feature might break with minor version upgrades until Grafana 8 is released. This feature does not work with the current Grafana Alerting.
 
 For more information, refer to [About expressions]({{< relref "../panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions/" >}}). [About queries]({{< relref "../panels/query-a-data-source/about-queries/" >}}) was also updated as a result of this feature.
 
@@ -114,7 +114,7 @@ You can now provide detailed information to alert notification recipients by inj
 
 {{< figure src="/static/img/docs/alerting/alert-notification-template-7-4.png" max-width="700px" caption="Variable support in alert notifications" >}}
 
-For more information, refer to the [alert notification docs](https://grafana.com/docs/grafana/latest/alerting/old-alerting/add-notification-template/).
+For more information, refer to the [alert notification docs]({{< ref "/docs/grafana/v8.5/alerting/old-alerting/add-notification-template/" >}}).
 
 ### Content security policy support
 

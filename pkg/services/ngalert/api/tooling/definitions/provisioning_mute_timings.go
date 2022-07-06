@@ -5,23 +5,22 @@ import (
 	"github.com/prometheus/alertmanager/config"
 )
 
-// swagger:route GET /api/v1/provisioning/mute-timings provisioning RouteGetMuteTimings
+// swagger:route GET /api/v1/provisioning/mute-timings provisioning stable RouteGetMuteTimings
 //
 // Get all the mute timings.
 //
 //     Responses:
 //       200: MuteTimings
-//       400: ValidationError
 
-// swagger:route GET /api/v1/provisioning/mute-timings/{name} provisioning RouteGetMuteTiming
+// swagger:route GET /api/v1/provisioning/mute-timings/{name} provisioning stable RouteGetMuteTiming
 //
 // Get a mute timing.
 //
 //     Responses:
 //       200: MuteTimeInterval
-//       400: ValidationError
+//       404: description: Not found.
 
-// swagger:route POST /api/v1/provisioning/mute-timings provisioning RoutePostMuteTiming
+// swagger:route POST /api/v1/provisioning/mute-timings provisioning stable RoutePostMuteTiming
 //
 // Create a new mute timing.
 //
@@ -32,7 +31,7 @@ import (
 //       201: MuteTimeInterval
 //       400: ValidationError
 
-// swagger:route PUT /api/v1/provisioning/mute-timings/{name} provisioning RoutePutMuteTiming
+// swagger:route PUT /api/v1/provisioning/mute-timings/{name} provisioning stable RoutePutMuteTiming
 //
 // Replace an existing mute timing.
 //
@@ -43,21 +42,21 @@ import (
 //       200: MuteTimeInterval
 //       400: ValidationError
 
-// swagger:route DELETE /api/v1/provisioning/mute-timings/{name} provisioning RouteDeleteMuteTiming
+// swagger:route DELETE /api/v1/provisioning/mute-timings/{name} provisioning stable RouteDeleteMuteTiming
 //
 // Delete a mute timing.
 //
 //     Responses:
-//       204: Ack
+//       204: description: The mute timing was deleted successfully.
 
 // swagger:route
 
 // swagger:model
 type MuteTimings []MuteTimeInterval
 
-// swagger:parameters RouteGetTemplate RouteGetMuteTiming RoutePutMuteTiming RouteDeleteMuteTiming
+// swagger:parameters RouteGetTemplate RouteGetMuteTiming RoutePutMuteTiming stable RouteDeleteMuteTiming
 type RouteGetMuteTimingParam struct {
-	// Template Name
+	// Mute timing name
 	// in:path
 	Name string `json:"name"`
 }

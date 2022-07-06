@@ -7,30 +7,34 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 type AlertRuleService struct {
-	defaultInterval int64
-	ruleStore       store.RuleStore
-	provenanceStore ProvisioningStore
-	xact            TransactionManager
-	log             log.Logger
+	defaultIntervalSeconds int64
+	baseIntervalSeconds    int64
+	ruleStore              RuleStore
+	provenanceStore        ProvisioningStore
+	xact                   TransactionManager
+	log                    log.Logger
 }
 
-func NewAlertRuleService(ruleStore store.RuleStore,
+func NewAlertRuleService(ruleStore RuleStore,
 	provenanceStore ProvisioningStore,
 	xact TransactionManager,
-	defaultInterval int64,
+	defaultIntervalSeconds int64,
+	baseIntervalSeconds int64,
 	log log.Logger) *AlertRuleService {
 	return &AlertRuleService{
-		defaultInterval: defaultInterval,
-		ruleStore:       ruleStore,
-		provenanceStore: provenanceStore,
-		xact:            xact,
-		log:             log,
+		defaultIntervalSeconds: defaultIntervalSeconds,
+		baseIntervalSeconds:    baseIntervalSeconds,
+		ruleStore:              ruleStore,
+		provenanceStore:        provenanceStore,
+		xact:                   xact,
+		log:                    log,
 	}
 }
 
@@ -50,6 +54,9 @@ func (service *AlertRuleService) GetAlertRule(ctx context.Context, orgID int64, 
 	return *query.Result, provenance, nil
 }
 
+// CreateAlertRule creates a new alert rule. This function will ignore any
+// interval that is set in the rule struct and use the already existing group
+// interval or the default one.
 func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule models.AlertRule, provenance models.Provenance) (models.AlertRule, error) {
 	if rule.UID == "" {
 		rule.UID = util.GenerateShortUID()
@@ -57,7 +64,7 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule model
 	interval, err := service.ruleStore.GetRuleGroupInterval(ctx, rule.OrgID, rule.NamespaceUID, rule.RuleGroup)
 	// if the alert group does not exists we just use the default interval
 	if err != nil && errors.Is(err, store.ErrAlertRuleGroupNotFound) {
-		interval = service.defaultInterval
+		interval = service.defaultIntervalSeconds
 	} else if err != nil {
 		return models.AlertRule{}, err
 	}
@@ -75,10 +82,6 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule model
 		} else {
 			return errors.New("couldn't find newly created id")
 		}
-		err = service.ruleStore.UpdateRuleGroup(ctx, rule.OrgID, rule.NamespaceUID, rule.RuleGroup, rule.IntervalSeconds)
-		if err != nil {
-			return err
-		}
 		return service.provenanceStore.SetProvenance(ctx, &rule, rule.OrgID, provenance)
 	})
 	if err != nil {
@@ -87,6 +90,66 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule model
 	return rule, nil
 }
 
+func (service *AlertRuleService) GetRuleGroup(ctx context.Context, orgID int64, folder, group string) (definitions.AlertRuleGroup, error) {
+	q := models.ListAlertRulesQuery{
+		OrgID:         orgID,
+		NamespaceUIDs: []string{folder},
+		RuleGroup:     group,
+	}
+	if err := service.ruleStore.ListAlertRules(ctx, &q); err != nil {
+		return definitions.AlertRuleGroup{}, err
+	}
+	if len(q.Result) == 0 {
+		return definitions.AlertRuleGroup{}, store.ErrAlertRuleGroupNotFound
+	}
+	res := definitions.AlertRuleGroup{
+		Title:     q.Result[0].RuleGroup,
+		FolderUID: q.Result[0].NamespaceUID,
+		Interval:  q.Result[0].IntervalSeconds,
+		Rules:     []models.AlertRule{},
+	}
+	for _, r := range q.Result {
+		if r != nil {
+			res.Rules = append(res.Rules, *r)
+		}
+	}
+	return res, nil
+}
+
+// UpdateRuleGroup will update the interval for all rules in the group.
+func (service *AlertRuleService) UpdateRuleGroup(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string, interval int64) error {
+	if err := models.ValidateRuleGroupInterval(interval, service.baseIntervalSeconds); err != nil {
+		return err
+	}
+	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
+		query := &models.ListAlertRulesQuery{
+			OrgID:         orgID,
+			NamespaceUIDs: []string{namespaceUID},
+			RuleGroup:     ruleGroup,
+		}
+		err := service.ruleStore.ListAlertRules(ctx, query)
+		if err != nil {
+			return fmt.Errorf("failed to list alert rules: %w", err)
+		}
+		updateRules := make([]store.UpdateRule, 0, len(query.Result))
+		for _, rule := range query.Result {
+			if rule.IntervalSeconds == interval {
+				continue
+			}
+			newRule := *rule
+			newRule.IntervalSeconds = interval
+			updateRules = append(updateRules, store.UpdateRule{
+				Existing: rule,
+				New:      newRule,
+			})
+		}
+		return service.ruleStore.UpdateAlertRules(ctx, updateRules)
+	})
+}
+
+// CreateAlertRule creates a new alert rule. This function will ignore any
+// interval that is set in the rule struct and fetch the current group interval
+// from database.
 func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, rule models.AlertRule, provenance models.Provenance) (models.AlertRule, error) {
 	storedRule, storedProvenance, err := service.GetAlertRule(ctx, rule.OrgID, rule.UID)
 	if err != nil {
@@ -109,10 +172,6 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, rule model
 				New:      rule,
 			},
 		})
-		if err != nil {
-			return err
-		}
-		err = service.ruleStore.UpdateRuleGroup(ctx, rule.OrgID, rule.NamespaceUID, rule.RuleGroup, rule.IntervalSeconds)
 		if err != nil {
 			return err
 		}
@@ -144,8 +203,4 @@ func (service *AlertRuleService) DeleteAlertRule(ctx context.Context, orgID int6
 		}
 		return service.provenanceStore.DeleteProvenance(ctx, rule, rule.OrgID)
 	})
-}
-
-func (service *AlertRuleService) UpdateAlertGroup(ctx context.Context, orgID int64, folderUID, roulegroup string, interval int64) error {
-	return service.ruleStore.UpdateRuleGroup(ctx, orgID, folderUID, roulegroup, interval)
 }

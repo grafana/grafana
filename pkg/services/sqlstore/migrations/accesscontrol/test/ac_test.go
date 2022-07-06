@@ -2,6 +2,7 @@ package test
 
 import (
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
@@ -14,7 +15,9 @@ import (
 	acmig "github.com/grafana/grafana/pkg/services/sqlstore/migrations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -37,49 +40,49 @@ func (rp *rawPermission) toPermission(roleID int64, ts time.Time) accesscontrol.
 var (
 	now = time.Now()
 
-	users = []models.User{
+	users = []user.User{
 		{
-			Id:      1,
+			ID:      1,
 			Email:   "viewer1@example.org",
 			Name:    "viewer1",
 			Login:   "viewer1",
-			OrgId:   1,
+			OrgID:   1,
 			Created: now,
 			Updated: now,
 		},
 		{
-			Id:      2,
+			ID:      2,
 			Email:   "viewer2@example.org",
 			Name:    "viewer2",
 			Login:   "viewer2",
-			OrgId:   1,
+			OrgID:   1,
 			Created: now,
 			Updated: now,
 		},
 		{
-			Id:      3,
+			ID:      3,
 			Email:   "editor1@example.org",
 			Name:    "editor1",
 			Login:   "editor1",
-			OrgId:   1,
+			OrgID:   1,
 			Created: now,
 			Updated: now,
 		},
 		{
-			Id:      4,
+			ID:      4,
 			Email:   "admin1@example.org",
 			Name:    "admin1",
 			Login:   "admin1",
-			OrgId:   1,
+			OrgID:   1,
 			Created: now,
 			Updated: now,
 		},
 		{
-			Id:      5,
+			ID:      5,
 			Email:   "editor2@example.org",
 			Name:    "editor2",
 			Login:   "editor2",
-			OrgId:   2,
+			OrgID:   2,
 			Created: now,
 			Updated: now,
 		},
@@ -92,6 +95,37 @@ func convertToRawPermissions(permissions []accesscontrol.Permission) []rawPermis
 		raw[i] = rawPermission{Action: p.Action, Scope: p.Scope}
 	}
 	return raw
+}
+
+func getDBType() string {
+	dbType := migrator.SQLite
+
+	// environment variable present for test db?
+	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
+		dbType = db
+	}
+	return dbType
+}
+
+func getTestDB(t *testing.T, dbType string) sqlutil.TestDB {
+	switch dbType {
+	case "mysql":
+		return sqlutil.MySQLTestDB()
+	case "postgres":
+		return sqlutil.PostgresTestDB()
+	default:
+		f, err := os.CreateTemp(".", "grafana-test-db-")
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			err := os.Remove(f.Name())
+			require.NoError(t, err)
+		})
+
+		return sqlutil.TestDB{
+			DriverName: "sqlite3",
+			ConnStr:    f.Name(),
+		}
+	}
 }
 
 func TestMigrations(t *testing.T) {
@@ -181,9 +215,9 @@ func TestMigrations(t *testing.T) {
 
 			for _, user := range users {
 				// Check managed roles exist
-				roleName := fmt.Sprintf("managed:users:%d:permissions", user.Id)
+				roleName := fmt.Sprintf("managed:users:%d:permissions", user.ID)
 				role := accesscontrol.Role{}
-				hasRole, errManagedRoleSearch := x.Table("role").Where("org_id = ? AND name = ?", user.OrgId, roleName).Get(&role)
+				hasRole, errManagedRoleSearch := x.Table("role").Where("org_id = ? AND name = ?", user.OrgID, roleName).Get(&role)
 
 				require.NoError(t, errManagedRoleSearch)
 				assert.True(t, hasRole, "expected role to be granted to user", user, roleName)
@@ -202,7 +236,7 @@ func TestMigrations(t *testing.T) {
 
 				// Check assignment of the roles
 				assign := accesscontrol.UserRole{}
-				has, errAssignmentSearch := x.Table("user_role").Where("role_id = ? AND user_id = ?", role.ID, user.Id).Get(&assign)
+				has, errAssignmentSearch := x.Table("user_role").Where("role_id = ? AND user_id = ?", role.ID, user.ID).Get(&assign)
 				require.NoError(t, errAssignmentSearch)
 				assert.True(t, has, "expected assignment of role to user", role, user)
 			}
@@ -212,7 +246,8 @@ func TestMigrations(t *testing.T) {
 
 func setupTestDB(t *testing.T) *xorm.Engine {
 	t.Helper()
-	testDB := sqlutil.SQLite3TestDB()
+	dbType := getDBType()
+	testDB := getTestDB(t, dbType)
 
 	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
 	require.NoError(t, err)

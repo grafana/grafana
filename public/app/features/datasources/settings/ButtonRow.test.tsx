@@ -1,5 +1,7 @@
-import { shallow } from 'enzyme';
+import { screen, render } from '@testing-library/react';
 import React from 'react';
+
+import { selectors } from '@grafana/e2e-selectors';
 
 import ButtonRow, { Props } from './ButtonRow';
 
@@ -23,22 +25,18 @@ const setup = (propOverrides?: object) => {
 
   Object.assign(props, propOverrides);
 
-  return shallow(<ButtonRow {...props} />);
+  return render(<ButtonRow {...props} />);
 };
 
-describe('Render', () => {
+describe('Button Row', () => {
   it('should render component', () => {
-    const wrapper = setup();
+    setup();
 
-    expect(wrapper).toMatchSnapshot();
+    expect(screen.getByRole('button', { name: selectors.pages.DataSource.delete })).toBeInTheDocument();
   });
+  it('should render save & test', () => {
+    setup({ canSave: true });
 
-  it('should render with buttons enabled', () => {
-    const wrapper = setup({
-      canSave: true,
-      canDelete: true,
-    });
-
-    expect(wrapper).toMatchSnapshot();
+    expect(screen.getByRole('button', { name: selectors.pages.DataSource.saveAndTest })).toBeInTheDocument();
   });
 });

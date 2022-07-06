@@ -14,7 +14,6 @@ import {
 } from '@grafana/data';
 import { QueryOptions } from 'app/types';
 
-import { describe } from '../../../../test/lib/common';
 import { VariableHide } from '../../../features/variables/types';
 
 import {

@@ -4,6 +4,9 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type Store interface {
@@ -11,12 +14,8 @@ type Store interface {
 	GetAlertNotifiersUsageStats(ctx context.Context, query *models.GetAlertNotifierUsageStatsQuery) error
 	GetDataSourceStats(ctx context.Context, query *models.GetDataSourceStatsQuery) error
 	GetDataSourceAccessStats(ctx context.Context, query *models.GetDataSourceAccessStatsQuery) error
+	GetDialect() migrator.Dialect
 	GetSystemStats(ctx context.Context, query *models.GetSystemStatsQuery) error
-	DeleteExpiredSnapshots(ctx context.Context, cmd *models.DeleteExpiredSnapshotsCommand) error
-	CreateDashboardSnapshot(ctx context.Context, cmd *models.CreateDashboardSnapshotCommand) error
-	DeleteDashboardSnapshot(ctx context.Context, cmd *models.DeleteDashboardSnapshotCommand) error
-	GetDashboardSnapshot(ctx context.Context, query *models.GetDashboardSnapshotQuery) error
-	SearchDashboardSnapshots(ctx context.Context, query *models.GetDashboardSnapshotsQuery) error
 	GetOrgByName(name string) (*models.Org, error)
 	CreateOrg(ctx context.Context, cmd *models.CreateOrgCommand) error
 	CreateOrgWithMember(name string, userID int64) (models.Org, error)
@@ -28,7 +27,7 @@ type Store interface {
 	CreateLoginAttempt(ctx context.Context, cmd *models.CreateLoginAttemptCommand) error
 	GetUserLoginAttemptCount(ctx context.Context, query *models.GetUserLoginAttemptCountQuery) error
 	DeleteOldLoginAttempts(ctx context.Context, cmd *models.DeleteOldLoginAttemptsCommand) error
-	CreateUser(ctx context.Context, cmd models.CreateUserCommand) (*models.User, error)
+	CreateUser(ctx context.Context, cmd user.CreateUserCommand) (*user.User, error)
 	GetUserById(ctx context.Context, query *models.GetUserByIdQuery) error
 	GetUserByLogin(ctx context.Context, query *models.GetUserByLoginQuery) error
 	GetUserByEmail(ctx context.Context, query *models.GetUserByEmailQuery) error
@@ -75,10 +74,10 @@ type Store interface {
 	InTransaction(ctx context.Context, fn func(ctx context.Context) error) error
 	CreatePlaylist(ctx context.Context, cmd *models.CreatePlaylistCommand) error
 	UpdatePlaylist(ctx context.Context, cmd *models.UpdatePlaylistCommand) error
-	GetPlaylist(ctx context.Context, query *models.GetPlaylistByIdQuery) error
+	GetPlaylist(ctx context.Context, query *models.GetPlaylistByUidQuery) error
 	DeletePlaylist(ctx context.Context, cmd *models.DeletePlaylistCommand) error
 	SearchPlaylists(ctx context.Context, query *models.GetPlaylistsQuery) error
-	GetPlaylistItem(ctx context.Context, query *models.GetPlaylistItemsByIdQuery) error
+	GetPlaylistItem(ctx context.Context, query *models.GetPlaylistItemsByUidQuery) error
 	GetAlertById(ctx context.Context, query *models.GetAlertByIdQuery) error
 	GetAllAlertQueryHandler(ctx context.Context, query *models.GetAllAlertsQuery) error
 	HandleAlertsQuery(ctx context.Context, query *models.GetAlertsQuery) error
@@ -91,13 +90,13 @@ type Store interface {
 	GetOrgUsers(ctx context.Context, query *models.GetOrgUsersQuery) error
 	SearchOrgUsers(ctx context.Context, query *models.SearchOrgUsersQuery) error
 	RemoveOrgUser(ctx context.Context, cmd *models.RemoveOrgUserCommand) error
-	GetDataSource(ctx context.Context, query *models.GetDataSourceQuery) error
-	GetDataSources(ctx context.Context, query *models.GetDataSourcesQuery) error
-	GetDataSourcesByType(ctx context.Context, query *models.GetDataSourcesByTypeQuery) error
-	GetDefaultDataSource(ctx context.Context, query *models.GetDefaultDataSourceQuery) error
-	DeleteDataSource(ctx context.Context, cmd *models.DeleteDataSourceCommand) error
-	AddDataSource(ctx context.Context, cmd *models.AddDataSourceCommand) error
-	UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSourceCommand) error
+	GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) error
+	GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) error
+	GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) error
+	GetDefaultDataSource(ctx context.Context, query *datasources.GetDefaultDataSourceQuery) error
+	DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error
+	AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) error
+	UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) error
 	Migrate(bool) error
 	Sync() error
 	Reset() error
@@ -116,12 +115,13 @@ type Store interface {
 	SetAlertNotificationStateToPendingCommand(ctx context.Context, cmd *models.SetAlertNotificationStateToPendingCommand) error
 	GetOrCreateAlertNotificationState(ctx context.Context, cmd *models.GetOrCreateNotificationStateQuery) error
 	GetAPIKeys(ctx context.Context, query *models.GetApiKeysQuery) error
-	GetAllOrgsAPIKeys(ctx context.Context) []*models.ApiKey
+	GetAllAPIKeys(ctx context.Context, orgID int64) []*models.ApiKey
 	DeleteApiKey(ctx context.Context, cmd *models.DeleteApiKeyCommand) error
 	AddAPIKey(ctx context.Context, cmd *models.AddApiKeyCommand) error
 	GetApiKeyById(ctx context.Context, query *models.GetApiKeyByIdQuery) error
 	GetApiKeyByName(ctx context.Context, query *models.GetApiKeyByNameQuery) error
 	GetAPIKeyByHash(ctx context.Context, hash string) (*models.ApiKey, error)
+	UpdateAPIKeyLastUsedDate(ctx context.Context, tokenID int64) error
 	UpdateTempUserStatus(ctx context.Context, cmd *models.UpdateTempUserStatusCommand) error
 	CreateTempUser(ctx context.Context, cmd *models.CreateTempUserCommand) error
 	UpdateTempUserWithEmailSent(ctx context.Context, cmd *models.UpdateTempUserWithEmailSentCommand) error

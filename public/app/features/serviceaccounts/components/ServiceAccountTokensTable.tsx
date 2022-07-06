@@ -23,6 +23,7 @@ export const ServiceAccountTokensTable = ({ tokens, timeZone, tokenActionsDisabl
           <th>Name</th>
           <th>Expires</th>
           <th>Created</th>
+          <th>Last used at</th>
           <th />
         </tr>
       </thead>
@@ -35,6 +36,7 @@ export const ServiceAccountTokensTable = ({ tokens, timeZone, tokenActionsDisabl
                 <TokenExpiration timeZone={timeZone} token={key} />
               </td>
               <td>{formatDate(timeZone, key.created)}</td>
+              <td>{formatLastUsedAtDate(timeZone, key.lastUsedAt)}</td>
               <td>
                 <DeleteButton
                   aria-label={`Delete service account token ${key.name}`}
@@ -50,6 +52,13 @@ export const ServiceAccountTokensTable = ({ tokens, timeZone, tokenActionsDisabl
     </table>
   );
 };
+
+function formatLastUsedAtDate(timeZone: TimeZone, lastUsedAt?: string): string {
+  if (!lastUsedAt) {
+    return 'Never';
+  }
+  return dateTimeFormat(lastUsedAt, { timeZone });
+}
 
 function formatDate(timeZone: TimeZone, expiration?: string): string {
   if (!expiration) {

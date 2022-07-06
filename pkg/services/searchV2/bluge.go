@@ -9,9 +9,6 @@ import (
 	"time"
 
 	"github.com/blugelabs/bluge"
-	"github.com/blugelabs/bluge/analysis"
-	"github.com/blugelabs/bluge/analysis/token"
-	"github.com/blugelabs/bluge/analysis/tokenizer"
 	"github.com/blugelabs/bluge/search"
 	"github.com/blugelabs/bluge/search/aggregations"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -33,12 +30,14 @@ const (
 	documentFieldTransformer = "transformer"
 	documentFieldDSUID       = "ds_uid"
 	documentFieldDSType      = "ds_type"
+	DocumentFieldCreatedAt   = "created_at"
+	DocumentFieldUpdatedAt   = "updated_at"
 )
 
-func initIndex(dashboards []dashboard, logger log.Logger, extendDoc ExtendDashboardFunc) (*bluge.Reader, *bluge.Writer, error) {
-	writer, err := bluge.OpenWriter(bluge.InMemoryOnlyConfig())
+func initOrgIndex(dashboards []dashboard, logger log.Logger, extendDoc ExtendDashboardFunc) (*orgIndex, error) {
+	dashboardWriter, err := bluge.OpenWriter(bluge.InMemoryOnlyConfig())
 	if err != nil {
-		return nil, nil, fmt.Errorf("error opening writer: %v", err)
+		return nil, fmt.Errorf("error opening writer: %v", err)
 	}
 	// Not closing Writer here since we use it later while processing dashboard change events.
 
@@ -58,7 +57,7 @@ func initIndex(dashboards []dashboard, logger log.Logger, extendDoc ExtendDashbo
 		if !needFlush {
 			return nil
 		}
-		err := writer.Batch(batch)
+		err := dashboardWriter.Batch(batch)
 		if err != nil {
 			return err
 		}
@@ -75,11 +74,11 @@ func initIndex(dashboards []dashboard, logger log.Logger, extendDoc ExtendDashbo
 		}
 		doc := getFolderDashboardDoc(dash)
 		if err := extendDoc(dash.uid, doc); err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 		batch.Insert(doc)
 		if err := flushIfRequired(false); err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 		uid := dash.uid
 		if uid == "" {
@@ -97,11 +96,11 @@ func initIndex(dashboards []dashboard, logger log.Logger, extendDoc ExtendDashbo
 		location := folderUID
 		doc := getNonFolderDashboardDoc(dash, location)
 		if err := extendDoc(dash.uid, doc); err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 		batch.Insert(doc)
 		if err := flushIfRequired(false); err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 
 		// Index each panel in dashboard.
@@ -110,32 +109,27 @@ func initIndex(dashboards []dashboard, logger log.Logger, extendDoc ExtendDashbo
 		}
 		location += dash.uid
 		docs := getDashboardPanelDocs(dash, location)
+
 		for _, panelDoc := range docs {
 			batch.Insert(panelDoc)
 			if err := flushIfRequired(false); err != nil {
-				return nil, nil, err
+				return nil, err
 			}
 		}
 	}
+
+	// Flush docs in batch with force as we are in the end.
 	if err := flushIfRequired(true); err != nil {
-		return nil, nil, err
-	}
-	logger.Info("Finish inserting docs into batch", "elapsed", time.Since(label))
-	label = time.Now()
-
-	err = writer.Batch(batch)
-	if err != nil {
-		return nil, nil, err
-	}
-	logger.Info("Finish writing batch", "elapsed", time.Since(label))
-
-	reader, err := writer.Reader()
-	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
+	logger.Info("Finish inserting docs into index", "elapsed", time.Since(label))
 	logger.Info("Finish building index", "totalElapsed", time.Since(start))
-	return reader, writer, err
+	return &orgIndex{
+		writers: map[indexType]*bluge.Writer{
+			indexTypeDashboard: dashboardWriter,
+		},
+	}, err
 }
 
 func getFolderDashboardDoc(dash dashboard) *bluge.Document {
@@ -149,7 +143,9 @@ func getFolderDashboardDoc(dash dashboard) *bluge.Document {
 	}
 
 	return newSearchDocument(uid, dash.info.Title, dash.info.Description, url).
-		AddField(bluge.NewKeywordField(documentFieldKind, string(entityKindFolder)).Aggregatable().StoreValue())
+		AddField(bluge.NewKeywordField(documentFieldKind, string(entityKindFolder)).Aggregatable().StoreValue()).
+		AddField(bluge.NewDateTimeField(DocumentFieldCreatedAt, dash.created).Sortable().StoreValue()).
+		AddField(bluge.NewDateTimeField(DocumentFieldUpdatedAt, dash.updated).Sortable().StoreValue())
 }
 
 func getNonFolderDashboardDoc(dash dashboard, location string) *bluge.Document {
@@ -158,7 +154,9 @@ func getNonFolderDashboardDoc(dash dashboard, location string) *bluge.Document {
 	// Dashboard document
 	doc := newSearchDocument(dash.uid, dash.info.Title, dash.info.Description, url).
 		AddField(bluge.NewKeywordField(documentFieldKind, string(entityKindDashboard)).Aggregatable().StoreValue()).
-		AddField(bluge.NewKeywordField(documentFieldLocation, location).Aggregatable().StoreValue())
+		AddField(bluge.NewKeywordField(documentFieldLocation, location).Aggregatable().StoreValue()).
+		AddField(bluge.NewDateTimeField(DocumentFieldCreatedAt, dash.created).Sortable().StoreValue()).
+		AddField(bluge.NewDateTimeField(DocumentFieldUpdatedAt, dash.updated).Sortable().StoreValue())
 
 	for _, tag := range dash.info.Tags {
 		doc.AddField(bluge.NewKeywordField(documentFieldTag, tag).
@@ -225,23 +223,6 @@ func getDashboardPanelDocs(dash dashboard, location string) []*bluge.Document {
 	return docs
 }
 
-const ngramEdgeFilterMaxLength = 7
-
-var ngramIndexAnalyzer = &analysis.Analyzer{
-	Tokenizer: tokenizer.NewWhitespaceTokenizer(),
-	TokenFilters: []analysis.TokenFilter{
-		token.NewLowerCaseFilter(),
-		token.NewEdgeNgramFilter(token.FRONT, 1, ngramEdgeFilterMaxLength),
-	},
-}
-
-var ngramQueryAnalyzer = &analysis.Analyzer{
-	Tokenizer: tokenizer.NewWhitespaceTokenizer(),
-	TokenFilters: []analysis.TokenFilter{
-		token.NewLowerCaseFilter(),
-	},
-}
-
 // Names need to be indexed a few ways to support key features
 func newSearchDocument(uid string, name string, descr string, url string) *bluge.Document {
 	doc := bluge.NewDocument(uid)
@@ -265,8 +246,15 @@ func newSearchDocument(uid string, name string, descr string, url string) *bluge
 	return doc
 }
 
-func getDashboardPanelIDs(reader *bluge.Reader, panelLocation string) ([]string, error) {
+func getDashboardPanelIDs(index *orgIndex, panelLocation string) ([]string, error) {
 	var panelIDs []string
+
+	reader, cancel, err := index.readerForIndex(indexTypeDashboard)
+	if err != nil {
+		return nil, err
+	}
+	defer cancel()
+
 	fullQuery := bluge.NewBooleanQuery()
 	fullQuery.AddMust(bluge.NewTermQuery(panelLocation).SetField(documentFieldLocation))
 	fullQuery.AddMust(bluge.NewTermQuery(string(entityKindPanel)).SetField(documentFieldKind))
@@ -293,14 +281,21 @@ func getDashboardPanelIDs(reader *bluge.Reader, panelLocation string) ([]string,
 	return panelIDs, err
 }
 
-func getDocsIDsByLocationPrefix(reader *bluge.Reader, prefix string) ([]string, error) {
+func getDocsIDsByLocationPrefix(index *orgIndex, prefix string) ([]string, error) {
 	var ids []string
+
+	reader, cancel, err := index.readerForIndex(indexTypeDashboard)
+	if err != nil {
+		return nil, fmt.Errorf("error getting reader: %w", err)
+	}
+	defer cancel()
+
 	fullQuery := bluge.NewBooleanQuery()
 	fullQuery.AddMust(bluge.NewPrefixQuery(prefix).SetField(documentFieldLocation))
 	req := bluge.NewAllMatches(fullQuery)
 	documentMatchIterator, err := reader.Search(context.Background(), req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error search: %w", err)
 	}
 	match, err := documentMatchIterator.Next()
 	for err == nil && match != nil {
@@ -320,9 +315,16 @@ func getDocsIDsByLocationPrefix(reader *bluge.Reader, prefix string) ([]string, 
 	return ids, err
 }
 
-func getDashboardLocation(reader *bluge.Reader, dashboardUID string) (string, bool, error) {
+func getDashboardLocation(index *orgIndex, dashboardUID string) (string, bool, error) {
 	var dashboardLocation string
 	var found bool
+
+	reader, cancel, err := index.readerForIndex(indexTypeDashboard)
+	if err != nil {
+		return "", false, err
+	}
+	defer cancel()
+
 	fullQuery := bluge.NewBooleanQuery()
 	fullQuery.AddMust(bluge.NewTermQuery(dashboardUID).SetField(documentFieldUID))
 	fullQuery.AddMust(bluge.NewTermQuery(string(entityKindDashboard)).SetField(documentFieldKind))
@@ -355,7 +357,7 @@ func getDashboardLocation(reader *bluge.Reader, dashboardUID string) (string, bo
 func doSearchQuery(
 	ctx context.Context,
 	logger log.Logger,
-	reader *bluge.Reader,
+	index *orgIndex,
 	filter ResourceFilter,
 	q DashboardQuery,
 	extender QueryExtender,
@@ -363,6 +365,14 @@ func doSearchQuery(
 ) *backend.DataResponse {
 	response := &backend.DataResponse{}
 	header := &customMeta{}
+
+	reader, cancel, err := index.readerForIndex(indexTypeDashboard)
+	if err != nil {
+		logger.Error("error getting reader for dashboard index: %v", err)
+		response.Error = err
+		return response
+	}
+	defer cancel()
 
 	hasConstraints := false
 	fullQuery := bluge.NewBooleanQuery()
@@ -401,6 +411,12 @@ func doSearchQuery(
 		hasConstraints = true
 	}
 
+	// Panel type
+	if q.PanelType != "" {
+		fullQuery.AddMust(bluge.NewTermQuery(q.PanelType).SetField(documentFieldPanelType))
+		hasConstraints = true
+	}
+
 	// Datasource
 	if q.Datasource != "" {
 		fullQuery.AddMust(bluge.NewTermQuery(q.Datasource).SetField(documentFieldDSUID))
@@ -420,10 +436,11 @@ func doSearchQuery(
 	} else {
 		// The actual se
 		bq := bluge.NewBooleanQuery().
-			AddShould(bluge.NewMatchPhraseQuery(q.Query).SetField(documentFieldName).SetBoost(6)).
-			AddShould(bluge.NewMatchPhraseQuery(q.Query).SetField(documentFieldDescription).SetBoost(3)).
+			AddShould(bluge.NewMatchQuery(q.Query).SetField(documentFieldName).SetBoost(6)).
+			AddShould(bluge.NewMatchQuery(q.Query).SetField(documentFieldDescription).SetBoost(3)).
 			AddShould(bluge.NewMatchQuery(q.Query).
 				SetField(documentFieldName_ngram).
+				SetOperator(bluge.MatchQueryOperatorAnd). // all terms must match
 				SetAnalyzer(ngramQueryAnalyzer).SetBoost(1))
 
 		if len(q.Query) > 4 {
@@ -465,13 +482,10 @@ func doSearchQuery(
 	// execute this search on the reader
 	documentMatchIterator, err := reader.Search(ctx, req)
 	if err != nil {
-		logger.Error("error executing search: %v", err)
+		logger.Error("error executing search", "err", err)
 		response.Error = err
 		return response
 	}
-
-	dvfieldNames := []string{"type"}
-	sctx := search.NewSearchContext(0, 0)
 
 	fScore := data.NewFieldFromFieldType(data.FieldTypeFloat64, 0)
 	fUID := data.NewFieldFromFieldType(data.FieldTypeString, 0)
@@ -517,11 +531,6 @@ func doSearchQuery(
 	// iterate through the document matches
 	match, err := documentMatchIterator.Next()
 	for err == nil && match != nil {
-		err = match.LoadDocumentValues(sctx, dvfieldNames)
-		if err != nil {
-			continue
-		}
-
 		uid := ""
 		kind := ""
 		ptype := ""
@@ -555,7 +564,7 @@ func doSearchQuery(
 			return true
 		})
 		if err != nil {
-			logger.Error("error loading stored fields: %v", err)
+			logger.Error("error loading stored fields", "err", err)
 			response.Error = err
 			return response
 		}

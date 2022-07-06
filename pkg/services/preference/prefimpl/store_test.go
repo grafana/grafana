@@ -13,6 +13,9 @@ import (
 )
 
 func TestIntegrationPreferencesDataAccess(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	ss := sqlstore.InitTestDB(t)
 	prefStore := sqlStore{db: ss}
 	orgNavbarPreferences := pref.NavbarPreference{

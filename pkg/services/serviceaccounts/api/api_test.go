@@ -11,12 +11,12 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
@@ -34,12 +34,14 @@ var (
 
 func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 	store := sqlstore.InitTestDB(t)
+	kvStore := kvstore.ProvideService(store)
+	saStore := database.NewServiceAccountsStore(store, kvStore)
 	svcmock := tests.ServiceAccountMock{}
 
-	autoAssignOrg := setting.AutoAssignOrg
-	setting.AutoAssignOrg = true
+	autoAssignOrg := store.Cfg.AutoAssignOrg
+	store.Cfg.AutoAssignOrg = true
 	defer func() {
-		setting.AutoAssignOrg = autoAssignOrg
+		store.Cfg.AutoAssignOrg = autoAssignOrg
 	}()
 
 	orgCmd := &models.CreateOrgCommand{Name: "Some Test Org"}
@@ -61,8 +63,8 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 			wantID: "sa-new-sa",
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
-					return []*accesscontrol.Permission{{Action: serviceaccounts.ActionCreate}}, nil
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
+					return []accesscontrol.Permission{{Action: serviceaccounts.ActionCreate}}, nil
 				},
 				false,
 			),
@@ -71,11 +73,11 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 		{
 			desc:      "not ok - duplicate name",
 			body:      map[string]interface{}{"name": "New SA"},
-			wantError: "service account name already in use",
+			wantError: "service account already exists",
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
-					return []*accesscontrol.Permission{{Action: serviceaccounts.ActionCreate}}, nil
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
+					return []accesscontrol.Permission{{Action: serviceaccounts.ActionCreate}}, nil
 				},
 				false,
 			),
@@ -87,8 +89,8 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 			wantError: "required value Name must not be empty",
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
-					return []*accesscontrol.Permission{{Action: serviceaccounts.ActionCreate}}, nil
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
+					return []accesscontrol.Permission{{Action: serviceaccounts.ActionCreate}}, nil
 				},
 				false,
 			),
@@ -99,8 +101,8 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 			body: map[string]interface{}{},
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
-					return []*accesscontrol.Permission{}, nil
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
+					return []accesscontrol.Permission{}, nil
 				},
 				false,
 			),
@@ -121,7 +123,7 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			serviceAccountRequestScenario(t, http.MethodPost, serviceAccountPath, testUser, func(httpmethod string, endpoint string, user *tests.TestUser) {
-				server, _ := setupTestServer(t, &svcmock, routing.NewRouteRegister(), tc.acmock, store, database.NewServiceAccountsStore(store))
+				server, _ := setupTestServer(t, &svcmock, routing.NewRouteRegister(), tc.acmock, store, saStore)
 				marshalled, err := json.Marshal(tc.body)
 				require.NoError(t, err)
 
@@ -152,6 +154,8 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 // with permissions and without permissions
 func TestServiceAccountsAPI_DeleteServiceAccount(t *testing.T) {
 	store := sqlstore.InitTestDB(t)
+	kvStore := kvstore.ProvideService(store)
+	saStore := database.NewServiceAccountsStore(store, kvStore)
 	svcmock := tests.ServiceAccountMock{}
 
 	var requestResponse = func(server *web.Mux, httpMethod, requestpath string) *httptest.ResponseRecorder {
@@ -171,8 +175,8 @@ func TestServiceAccountsAPI_DeleteServiceAccount(t *testing.T) {
 			user: tests.TestUser{Login: "servicetest1@admin", IsServiceAccount: true},
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
-					return []*accesscontrol.Permission{{Action: serviceaccounts.ActionDelete, Scope: serviceaccounts.ScopeAll}}, nil
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
+					return []accesscontrol.Permission{{Action: serviceaccounts.ActionDelete, Scope: serviceaccounts.ScopeAll}}, nil
 				},
 				false,
 			),
@@ -180,8 +184,8 @@ func TestServiceAccountsAPI_DeleteServiceAccount(t *testing.T) {
 		}
 		serviceAccountRequestScenario(t, http.MethodDelete, serviceAccountIDPath, &testcase.user, func(httpmethod string, endpoint string, user *tests.TestUser) {
 			createduser := tests.SetupUserServiceAccount(t, store, testcase.user)
-			server, _ := setupTestServer(t, &svcmock, routing.NewRouteRegister(), testcase.acmock, store, database.NewServiceAccountsStore(store))
-			actual := requestResponse(server, httpmethod, fmt.Sprintf(endpoint, fmt.Sprint(createduser.Id))).Code
+			server, _ := setupTestServer(t, &svcmock, routing.NewRouteRegister(), testcase.acmock, store, saStore)
+			actual := requestResponse(server, httpmethod, fmt.Sprintf(endpoint, fmt.Sprint(createduser.ID))).Code
 			require.Equal(t, testcase.expectedCode, actual)
 		})
 	})
@@ -195,8 +199,8 @@ func TestServiceAccountsAPI_DeleteServiceAccount(t *testing.T) {
 			user: tests.TestUser{Login: "servicetest2@admin", IsServiceAccount: true},
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
-					return []*accesscontrol.Permission{}, nil
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
+					return []accesscontrol.Permission{}, nil
 				},
 				false,
 			),
@@ -204,8 +208,8 @@ func TestServiceAccountsAPI_DeleteServiceAccount(t *testing.T) {
 		}
 		serviceAccountRequestScenario(t, http.MethodDelete, serviceAccountIDPath, &testcase.user, func(httpmethod string, endpoint string, user *tests.TestUser) {
 			createduser := tests.SetupUserServiceAccount(t, store, testcase.user)
-			server, _ := setupTestServer(t, &svcmock, routing.NewRouteRegister(), testcase.acmock, store, database.NewServiceAccountsStore(store))
-			actual := requestResponse(server, httpmethod, fmt.Sprintf(endpoint, createduser.Id)).Code
+			server, _ := setupTestServer(t, &svcmock, routing.NewRouteRegister(), testcase.acmock, store, saStore)
+			actual := requestResponse(server, httpmethod, fmt.Sprintf(endpoint, createduser.ID)).Code
 			require.Equal(t, testcase.expectedCode, actual)
 		})
 	})
@@ -221,7 +225,7 @@ func setupTestServer(t *testing.T, svc *tests.ServiceAccountMock,
 	acmock *accesscontrolmock.Mock,
 	sqlStore *sqlstore.SQLStore, saStore serviceaccounts.Store) (*web.Mux, *ServiceAccountsAPI) {
 	a := NewServiceAccountsAPI(setting.NewCfg(), svc, acmock, routerRegister, saStore)
-	a.RegisterAPIEndpoints(featuremgmt.WithFeatures(featuremgmt.FlagServiceAccounts))
+	a.RegisterAPIEndpoints()
 
 	a.cfg.ApiKeyMaxSecondsToLive = -1 // disable api key expiration
 
@@ -246,6 +250,8 @@ func setupTestServer(t *testing.T, svc *tests.ServiceAccountMock,
 
 func TestServiceAccountsAPI_RetrieveServiceAccount(t *testing.T) {
 	store := sqlstore.InitTestDB(t)
+	kvStore := kvstore.ProvideService(store)
+	saStore := database.NewServiceAccountsStore(store, kvStore)
 	svcmock := tests.ServiceAccountMock{}
 	type testRetrieveSATestCase struct {
 		desc         string
@@ -260,8 +266,8 @@ func TestServiceAccountsAPI_RetrieveServiceAccount(t *testing.T) {
 			user: &tests.TestUser{Login: "servicetest1@admin", IsServiceAccount: true},
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
-					return []*accesscontrol.Permission{{Action: serviceaccounts.ActionRead, Scope: serviceaccounts.ScopeAll}}, nil
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
+					return []accesscontrol.Permission{{Action: serviceaccounts.ActionRead, Scope: serviceaccounts.ScopeAll}}, nil
 				},
 				false,
 			),
@@ -272,8 +278,8 @@ func TestServiceAccountsAPI_RetrieveServiceAccount(t *testing.T) {
 			user: &tests.TestUser{Login: "servicetest2@admin", IsServiceAccount: true},
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
-					return []*accesscontrol.Permission{}, nil
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
+					return []accesscontrol.Permission{}, nil
 				},
 				false,
 			),
@@ -285,8 +291,8 @@ func TestServiceAccountsAPI_RetrieveServiceAccount(t *testing.T) {
 			Id:   12,
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
-					return []*accesscontrol.Permission{{Action: serviceaccounts.ActionRead, Scope: serviceaccounts.ScopeAll}}, nil
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
+					return []accesscontrol.Permission{{Action: serviceaccounts.ActionRead, Scope: serviceaccounts.ScopeAll}}, nil
 				},
 				false,
 			),
@@ -308,9 +314,9 @@ func TestServiceAccountsAPI_RetrieveServiceAccount(t *testing.T) {
 				scopeID := tc.Id
 				if tc.user != nil {
 					createdUser := tests.SetupUserServiceAccount(t, store, *tc.user)
-					scopeID = int(createdUser.Id)
+					scopeID = int(createdUser.ID)
 				}
-				server, _ := setupTestServer(t, &svcmock, routing.NewRouteRegister(), tc.acmock, store, database.NewServiceAccountsStore(store))
+				server, _ := setupTestServer(t, &svcmock, routing.NewRouteRegister(), tc.acmock, store, saStore)
 
 				actual := requestResponse(server, httpmethod, fmt.Sprintf(endpoint, scopeID))
 
@@ -335,6 +341,8 @@ func newString(s string) *string {
 
 func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
 	store := sqlstore.InitTestDB(t)
+	kvStore := kvstore.ProvideService(store)
+	saStore := database.NewServiceAccountsStore(store, kvStore)
 	svcmock := tests.ServiceAccountMock{}
 	type testUpdateSATestCase struct {
 		desc         string
@@ -355,8 +363,8 @@ func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
 			body: &serviceaccounts.UpdateServiceAccountForm{Name: newString("New Name"), Role: &viewerRole},
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
-					return []*accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: serviceaccounts.ScopeAll}}, nil
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
+					return []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: serviceaccounts.ScopeAll}}, nil
 				},
 				false,
 			),
@@ -368,8 +376,8 @@ func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
 			body: &serviceaccounts.UpdateServiceAccountForm{Name: newString("New Name 2"), Role: &editorRole},
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
-					return []*accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: serviceaccounts.ScopeAll}}, nil
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
+					return []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: serviceaccounts.ScopeAll}}, nil
 				},
 				false,
 			),
@@ -381,8 +389,8 @@ func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
 			body: &serviceaccounts.UpdateServiceAccountForm{Name: newString("NameB"), Role: &invalidRole},
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
-					return []*accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: serviceaccounts.ScopeAll}}, nil
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
+					return []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: serviceaccounts.ScopeAll}}, nil
 				},
 				false,
 			),
@@ -394,8 +402,8 @@ func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
 			body: nil,
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
-					return []*accesscontrol.Permission{}, nil
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
+					return []accesscontrol.Permission{}, nil
 				},
 				false,
 			),
@@ -408,8 +416,8 @@ func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
 			Id:   12,
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
-					return []*accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: serviceaccounts.ScopeAll}}, nil
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
+					return []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: serviceaccounts.ScopeAll}}, nil
 				},
 				false,
 			),
@@ -428,11 +436,11 @@ func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			server, saAPI := setupTestServer(t, &svcmock, routing.NewRouteRegister(), tc.acmock, store, database.NewServiceAccountsStore(store))
+			server, saAPI := setupTestServer(t, &svcmock, routing.NewRouteRegister(), tc.acmock, store, saStore)
 			scopeID := tc.Id
 			if tc.user != nil {
 				createdUser := tests.SetupUserServiceAccount(t, store, *tc.user)
-				scopeID = int(createdUser.Id)
+				scopeID = int(createdUser.ID)
 			}
 
 			var rawBody io.Reader = http.NoBody

@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	pb "github.com/prometheus/alertmanager/silence/silencepb"
 	"xorm.io/xorm"
@@ -37,6 +38,7 @@ var migTitle = "move dashboard alerts to unified alerting"
 var rmMigTitle = "remove unified alerting data"
 
 const clearMigrationEntryTitle = "clear migration entry %q"
+const codeMigration = "code migration"
 
 type MigrationError struct {
 	AlertId int64
@@ -59,6 +61,7 @@ func AddDashAlertMigration(mg *migrator.Migrator) {
 	_, migrationRun := logs[migTitle]
 
 	switch {
+	// If unified alerting is enabled and the upgrade migration has not been run
 	case mg.Cfg.UnifiedAlerting.IsEnabled() && !migrationRun:
 		// Remove the migration entry that removes all unified alerting data. This is so when the feature
 		// flag is removed in future the "remove unified alerting data" migration will be run again.
@@ -72,10 +75,16 @@ func AddDashAlertMigration(mg *migrator.Migrator) {
 			seenChannelUIDs: make(map[string]struct{}),
 			silences:        make(map[int64][]*pb.MeshSilence),
 		})
+	// If unified alerting is disabled and upgrade migration has been run
 	case !mg.Cfg.UnifiedAlerting.IsEnabled() && migrationRun:
+		// If legacy alerting is also disabled, there is nothing to do
+		if setting.AlertingEnabled != nil && !*setting.AlertingEnabled {
+			return
+		}
+
 		// Safeguard to prevent data loss when migrating from UA to LA
 		if !mg.Cfg.ForceMigration {
-			panic("New alert rules created while using unified alerting will be deleted, set force_migration=true in your grafana.ini and try again if this is okay.")
+			panic("Grafana has already been migrated to Unified Alerting.\nAny alert rules created while using Unified Alerting will be deleted by rolling back.\n\nSet force_migration=true in your grafana.ini and restart Grafana to roll back and delete Unified Alerting configuration data.")
 		}
 		// Remove the migration entry that creates unified alerting data. This is so when the feature
 		// flag is enabled in the future the migration "move dashboard alerts to unified alerting" will be run again.
@@ -220,7 +229,7 @@ type migration struct {
 }
 
 func (m *migration) SQL(dialect migrator.Dialect) string {
-	return "code migration"
+	return codeMigration
 }
 
 // nolint: gocyclo
@@ -504,7 +513,7 @@ type rmMigration struct {
 }
 
 func (m *rmMigration) SQL(dialect migrator.Dialect) string {
-	return "code migration"
+	return codeMigration
 }
 
 func (m *rmMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
@@ -703,7 +712,7 @@ func (u *upgradeNgAlerting) updateAlertmanagerFiles(orgId int64, migrator *migra
 }
 
 func (u *upgradeNgAlerting) SQL(migrator.Dialect) string {
-	return "code migration"
+	return codeMigration
 }
 
 // getAlertFolderNameFromDashboard generates a folder name for alerts that belong to a dashboard. Formats the string according to DASHBOARD_FOLDER format.
@@ -769,5 +778,86 @@ func (c createDefaultFoldersForAlertingMigration) Exec(sess *xorm.Session, migra
 }
 
 func (c createDefaultFoldersForAlertingMigration) SQL(migrator.Dialect) string {
-	return "code migration"
+	return codeMigration
+}
+
+// UpdateRuleGroupIndexMigration updates a new field rule_group_index for alert rules that belong to a group with more than 1 alert.
+func UpdateRuleGroupIndexMigration(mg *migrator.Migrator) {
+	if !mg.Cfg.UnifiedAlerting.IsEnabled() {
+		return
+	}
+	mg.AddMigration("update group index for alert rules", &updateRulesOrderInGroup{})
+}
+
+type updateRulesOrderInGroup struct {
+	migrator.MigrationBase
+}
+
+func (c updateRulesOrderInGroup) SQL(migrator.Dialect) string {
+	return codeMigration
+}
+
+func (c updateRulesOrderInGroup) Exec(sess *xorm.Session, migrator *migrator.Migrator) error {
+	var rows []*alertRule
+	if err := sess.Table(alertRule{}).Asc("id").Find(&rows); err != nil {
+		return fmt.Errorf("failed to read the list of alert rules: %w", err)
+	}
+
+	if len(rows) == 0 {
+		migrator.Logger.Debug("No rules to migrate.")
+		return nil
+	}
+
+	groups := map[ngmodels.AlertRuleGroupKey][]*alertRule{}
+
+	for _, row := range rows {
+		groupKey := ngmodels.AlertRuleGroupKey{
+			OrgID:        row.OrgID,
+			NamespaceUID: row.NamespaceUID,
+			RuleGroup:    row.RuleGroup,
+		}
+		groups[groupKey] = append(groups[groupKey], row)
+	}
+
+	toUpdate := make([]*alertRule, 0, len(rows))
+
+	for _, rules := range groups {
+		for i, rule := range rules {
+			if rule.RuleGroupIndex == i+1 {
+				continue
+			}
+			rule.RuleGroupIndex = i + 1
+			toUpdate = append(toUpdate, rule)
+		}
+	}
+
+	if len(toUpdate) == 0 {
+		migrator.Logger.Debug("No rules to upgrade group index")
+		return nil
+	}
+
+	updated := time.Now()
+	versions := make([]*alertRuleVersion, 0, len(toUpdate))
+
+	for _, rule := range toUpdate {
+		rule.Updated = updated
+		version := rule.makeVersion()
+		version.Version = rule.Version + 1
+		version.ParentVersion = rule.Version
+		rule.Version++
+		_, err := sess.ID(rule.ID).Cols("version", "updated", "rule_group_idx").Update(rule)
+		if err != nil {
+			migrator.Logger.Error("failed to update alert rule", "uid", rule.UID, "err", err)
+			return fmt.Errorf("unable to update alert rules with group index: %w", err)
+		}
+		migrator.Logger.Debug("updated group index for alert rule", "rule_uid", rule.UID)
+		versions = append(versions, version)
+	}
+
+	_, err := sess.Insert(&versions)
+	if err != nil {
+		migrator.Logger.Error("failed to insert changes to alert_rule_version", "err", err)
+		return fmt.Errorf("unable to update alert rules with group index: %w", err)
+	}
+	return nil
 }

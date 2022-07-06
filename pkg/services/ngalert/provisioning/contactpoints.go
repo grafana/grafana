@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/prometheus/alertmanager/config"
@@ -24,7 +23,7 @@ type ContactPointService struct {
 	log               log.Logger
 }
 
-func NewContactPointService(store store.AlertingStore, encryptionService secrets.Service,
+func NewContactPointService(store AMConfigStore, encryptionService secrets.Service,
 	provenanceStore ProvisioningStore, xact TransactionManager, log log.Logger) *ContactPointService {
 	return &ContactPointService{
 		amStore:           store,
@@ -75,7 +74,8 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, orgID int6
 	return contactPoints, nil
 }
 
-// internal only
+// getContactPointDecrypted is an internal-only function that gets full contact point info, included encrypted fields.
+// nil is returned if no matching contact point exists.
 func (ecp *ContactPointService) getContactPointDecrypted(ctx context.Context, orgID int64, uid string) (apimodels.EmbeddedContactPoint, error) {
 	revision, err := getLastConfiguration(ctx, orgID, ecp.amStore)
 	if err != nil {
@@ -105,13 +105,13 @@ func (ecp *ContactPointService) getContactPointDecrypted(ctx context.Context, or
 		}
 		return embeddedContactPoint, nil
 	}
-	return apimodels.EmbeddedContactPoint{}, fmt.Errorf("contact point with uid '%s' not found", uid)
+	return apimodels.EmbeddedContactPoint{}, fmt.Errorf("%w: contact point with uid '%s' not found", ErrNotFound, uid)
 }
 
 func (ecp *ContactPointService) CreateContactPoint(ctx context.Context, orgID int64,
 	contactPoint apimodels.EmbeddedContactPoint, provenance models.Provenance) (apimodels.EmbeddedContactPoint, error) {
 	if err := contactPoint.Valid(ecp.encryptionService.GetDecryptedValue); err != nil {
-		return apimodels.EmbeddedContactPoint{}, fmt.Errorf("contact point is not valid: %w", err)
+		return apimodels.EmbeddedContactPoint{}, fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
 	revision, err := getLastConfiguration(ctx, orgID, ecp.amStore)
@@ -146,6 +146,15 @@ func (ecp *ContactPointService) CreateContactPoint(ctx context.Context, orgID in
 
 	receiverFound := false
 	for _, receiver := range revision.cfg.AlertmanagerConfig.Receivers {
+		// check if uid is already used in receiver
+		for _, rec := range receiver.PostableGrafanaReceivers.GrafanaManagedReceivers {
+			if grafanaReceiver.UID == rec.UID {
+				return apimodels.EmbeddedContactPoint{}, fmt.Errorf(
+					"receiver configuration with UID '%s' already exist in contact point '%s'. Please use unique identifiers for receivers across all contact points",
+					rec.UID,
+					rec.Name)
+			}
+		}
 		if receiver.Name == contactPoint.Name {
 			receiver.PostableGrafanaReceivers.GrafanaManagedReceivers = append(receiver.PostableGrafanaReceivers.GrafanaManagedReceivers, grafanaReceiver)
 			receiverFound = true
@@ -197,13 +206,16 @@ func (ecp *ContactPointService) CreateContactPoint(ctx context.Context, orgID in
 
 func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID int64, contactPoint apimodels.EmbeddedContactPoint, provenance models.Provenance) error {
 	// set all redacted values with the latest known value from the store
+	if contactPoint.Settings == nil {
+		return fmt.Errorf("%w: %s", ErrValidation, "settings should not be empty")
+	}
 	rawContactPoint, err := ecp.getContactPointDecrypted(ctx, orgID, contactPoint.UID)
 	if err != nil {
 		return err
 	}
 	secretKeys, err := contactPoint.SecretKeys()
 	if err != nil {
-		return err
+		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 	for _, secretKey := range secretKeys {
 		secretValue := contactPoint.Settings.Get(secretKey).MustString()
@@ -211,10 +223,12 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 			contactPoint.Settings.Set(secretKey, rawContactPoint.Settings.Get(secretKey).MustString())
 		}
 	}
+
 	// validate merged values
 	if err := contactPoint.Valid(ecp.encryptionService.GetDecryptedValue); err != nil {
-		return err
+		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
+
 	// check that provenance is not changed in a invalid way
 	storedProvenance, err := ecp.provenanceStore.GetProvenance(ctx, &contactPoint, orgID)
 	if err != nil {
@@ -248,21 +262,12 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	if err != nil {
 		return err
 	}
-	for _, receiver := range revision.cfg.AlertmanagerConfig.Receivers {
-		if receiver.Name == contactPoint.Name {
-			receiverNotFound := true
-			for i, grafanaReceiver := range receiver.GrafanaManagedReceivers {
-				if grafanaReceiver.UID == mergedReceiver.UID {
-					receiverNotFound = false
-					receiver.GrafanaManagedReceivers[i] = mergedReceiver
-					break
-				}
-			}
-			if receiverNotFound {
-				return fmt.Errorf("contact point with uid '%s' not found", mergedReceiver.UID)
-			}
-		}
+
+	configModified := stitchReceiver(revision.cfg, mergedReceiver)
+	if !configModified {
+		return fmt.Errorf("contact point with uid '%s' not found", mergedReceiver.UID)
 	}
+
 	data, err := json.Marshal(revision.cfg)
 	if err != nil {
 		return err
@@ -373,4 +378,74 @@ func (ecp *ContactPointService) encryptValue(value string) (string, error) {
 		return "", fmt.Errorf("failed to encrypt secure settings: %w", err)
 	}
 	return base64.StdEncoding.EncodeToString(encryptedData), nil
+}
+
+// stitchReceiver modifies a receiver, target, in an alertmanager config. It modifies the given config in-place.
+// Returns true if the config was altered in any way, and false otherwise.
+func stitchReceiver(cfg *apimodels.PostableUserConfig, target *apimodels.PostableGrafanaReceiver) bool {
+	// Algorithm to fix up receivers. Receivers are very complex and depend heavily on internal consistency.
+	// All receivers in a given receiver group have the same name. We must maintain this across renames.
+	configModified := false
+groupLoop:
+	for _, receiverGroup := range cfg.AlertmanagerConfig.Receivers {
+		// Does the current group contain the grafana receiver we're interested in?
+		for i, grafanaReceiver := range receiverGroup.GrafanaManagedReceivers {
+			if grafanaReceiver.UID == target.UID {
+				// If it's a basic field change, simply replace it. Done!
+				//
+				// NOTE:
+				// In a "normal" database, receiverGroup.Name should always == grafanaReceiver.Name.
+				// Check it regardless.
+				// If these values are out of sync due to some bug elsewhere in the code, let's fix it up.
+				// Our receiver group fixing logic below will handle it.
+				if grafanaReceiver.Name == target.Name && receiverGroup.Name == grafanaReceiver.Name {
+					receiverGroup.GrafanaManagedReceivers[i] = target
+					configModified = true
+					break groupLoop
+				}
+
+				// If we're renaming, we'll need to fix up the macro receiver group for consistency.
+				// Firstly, if we're the only receiver in the group, simply rename the group to match. Done!
+				if len(receiverGroup.GrafanaManagedReceivers) == 1 {
+					receiverGroup.Name = target.Name
+					receiverGroup.GrafanaManagedReceivers[i] = target
+					configModified = true
+					break groupLoop
+				}
+
+				// Otherwise, we only want to rename the receiver we are touching... NOT all of them.
+				// Check to see whether a different group with the name we want already exists.
+				for i, candidateExistingGroup := range cfg.AlertmanagerConfig.Receivers {
+					// If so, put our modified receiver into that group. Done!
+					if candidateExistingGroup.Name == target.Name {
+						// Drop it from the old group...
+						receiverGroup.GrafanaManagedReceivers = append(receiverGroup.GrafanaManagedReceivers[:i], receiverGroup.GrafanaManagedReceivers[i+1:]...)
+						// Add the modified receiver to the new group...
+						candidateExistingGroup.GrafanaManagedReceivers = append(candidateExistingGroup.GrafanaManagedReceivers, target)
+						configModified = true
+						break groupLoop
+					}
+				}
+
+				// Doesn't exist? Create a new group just for the receiver.
+				newGroup := &apimodels.PostableApiReceiver{
+					Receiver: config.Receiver{
+						Name: target.Name,
+					},
+					PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
+						GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{
+							target,
+						},
+					},
+				}
+				cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers, newGroup)
+				// Drop it from the old spot.
+				receiverGroup.GrafanaManagedReceivers = append(receiverGroup.GrafanaManagedReceivers[:i], receiverGroup.GrafanaManagedReceivers[i+1:]...)
+				configModified = true
+				break groupLoop
+			}
+		}
+	}
+
+	return configModified
 }

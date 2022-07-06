@@ -7,13 +7,12 @@ WIRE_TAGS = "oss"
 -include local/Makefile
 include .bingo/Variables.mk
 
-.PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-full build-docker-full-ubuntu lint-go golangci-lint test-go test-js gen-ts test run run-frontend clean devenv devenv-down protobuf drone help
+.PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-full build-docker-full-ubuntu lint-go golangci-lint test-go test-js gen-ts test run run-frontend clean devenv devenv-down protobuf drone help gen-go gen-cue
 
 GO = go
 GO_FILES ?= ./pkg/...
 SH_FILES ?= $(shell find ./scripts -name *.sh)
 API_DEFINITION_FILES = $(shell find ./pkg/api/docs/definitions -name '*.go' -print)
-SWAGGER_TAG ?= latest
 GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS))
 
@@ -37,47 +36,22 @@ SPEC_TARGET = public/api-spec.json
 MERGED_SPEC_TARGET := public/api-merged.json
 NGALERT_SPEC_TARGET = pkg/services/ngalert/api/tooling/api.json
 
-$(SPEC_TARGET): $(API_DEFINITION_FILES) ## Generate API spec
-	docker run --rm -it \
-	-e GOPATH=${HOME}/go:/go \
-	-e SWAGGER_GENERATE_EXTENSION=false \
-	-v ${HOME}/go:/go \
-	-v $$(pwd):/grafana \
-	-v $$(pwd)/../grafana-enterprise:$$(pwd)/../grafana-enterprise \
-	-w $$(pwd)/pkg/api/docs quay.io/goswagger/swagger:$(SWAGGER_TAG) \
-	generate spec -m -o /grafana/public/api-spec.json \
-	-w /grafana/pkg/server \
-	-x "grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
-	-x "github.com/prometheus/alertmanager" \
-	-i /grafana/pkg/api/docs/tags.json
-
-swagger-api-spec: gen-go $(SPEC_TARGET) $(MERGED_SPEC_TARGET) validate-api-spec
-
 $(NGALERT_SPEC_TARGET):
 	+$(MAKE) -C pkg/services/ngalert/api/tooling api.json
 
 $(MERGED_SPEC_TARGET): $(SPEC_TARGET) $(NGALERT_SPEC_TARGET) ## Merge generated and ngalert API specs
-	go run pkg/api/docs/merge/merge_specs.go -o=public/api-merged.json $(<) pkg/services/ngalert/api/tooling/api.json
+	go run pkg/api/docs/merge/merge_specs.go -o=$(MERGED_SPEC_TARGET) $(<) $(NGALERT_SPEC_TARGET)
 
-ensure_go-swagger_mac:
-	@hash swagger &>/dev/null || (brew tap go-swagger/go-swagger && brew install go-swagger)
-
---swagger-api-spec-mac: ensure_go-swagger_mac $(API_DEFINITION_FILES)  ## Generate API spec (for M1 Mac)
-	SWAGGER_GENERATE_EXTENSION=false swagger generate spec -m -w pkg/server -o public/api-spec.json \
+--swagger-api-spec: $(API_DEFINITION_FILES) $(SWAGGER) ## Generate API Swagger specification
+	SWAGGER_GENERATE_EXTENSION=false $(SWAGGER) generate spec -m -w pkg/server -o public/api-spec.json \
 	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
 	-x "github.com/prometheus/alertmanager" \
 	-i pkg/api/docs/tags.json
 
-swagger-api-spec-mac: gen-go --swagger-api-spec-mac $(MERGED_SPEC_TARGET) validate-api-spec
+swagger-api-spec: gen-go --swagger-api-spec $(MERGED_SPEC_TARGET) validate-api-spec
 
-validate-api-spec: $(MERGED_SPEC_TARGET) ## Validate API spec
-	docker run --rm -it \
-	-e GOPATH=${HOME}/go:/go \
-	-e SWAGGER_GENERATE_EXTENSION=false \
-	-v ${HOME}/go:/go \
-	-v $$(pwd):/grafana \
-	-w $$(pwd)/pkg/api/docs quay.io/goswagger/swagger:$(SWAGGER_TAG) \
-	validate /grafana/$(<)
+validate-api-spec: $(MERGED_SPEC_TARGET) $(SWAGGER) ## Validate API spec
+	$(SWAGGER) validate $(<)
 
 clean-api-spec:
 	rm $(SPEC_TARGET) $(MERGED_SPEC_TARGET)
@@ -89,7 +63,7 @@ gen-cue: ## Do all CUE/Thema code generation
 	go generate ./pkg/framework/coremodel
 	go generate ./public/app/plugins
 
-gen-go: $(WIRE)
+gen-go: $(WIRE) gen-cue
 	@echo "generate go files"
 	$(WIRE) gen -tags $(WIRE_TAGS) ./pkg/server ./pkg/cmd/grafana-cli/runner
 
@@ -112,12 +86,8 @@ build-js: ## Build frontend assets.
 
 build: build-go build-js ## Build backend and frontend.
 
-scripts/go/bin/bra: scripts/go/go.mod
-	@cd scripts/go; \
-	$(GO) build -o ./bin/bra github.com/unknwon/bra
-
-run: scripts/go/bin/bra ## Build and run web server on filesystem changes.
-	@scripts/go/bin/bra run
+run: $(BRA) ## Build and run web server on filesystem changes.
+	$(BRA) run
 
 run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild
 	yarn start
@@ -135,14 +105,10 @@ test-js: ## Run tests for frontend.
 test: test-go test-js ## Run all tests.
 
 ##@ Linting
-scripts/go/bin/golangci-lint: scripts/go/go.mod
-	@cd scripts/go; \
-	$(GO) build -o ./bin/golangci-lint github.com/golangci/golangci-lint/cmd/golangci-lint
-
-golangci-lint: scripts/go/bin/golangci-lint
+golangci-lint: $(GOLANGCI_LINT)
 	@echo "lint via golangci-lint"
-	@scripts/go/bin/golangci-lint run \
-		--config ./scripts/go/configs/.golangci.toml \
+	$(GOLANGCI_LINT) run \
+		--config ./conf/.golangci.toml \
 		$(GO_FILES)
 
 lint-go: golangci-lint ## Run all code checks for backend. You can use GO_FILES to specify exact files to check

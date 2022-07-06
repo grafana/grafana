@@ -34,7 +34,7 @@ func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 	mockDatasourcePermissionService := permissions.NewMockDatasourcePermissionService()
 	loggedInUserScenario(t, "When calling GET on", "/api/datasources/", "/api/datasources/", func(sc *scenarioContext) {
 		// Stubs the database query
-		ds := []*models.DataSource{
+		ds := []*datasources.DataSource{
 			{Name: "mmm"},
 			{Name: "ZZZ"},
 			{Name: "BBB"},
@@ -85,7 +85,7 @@ func TestAddDataSource_InvalidURL(t *testing.T) {
 	}
 
 	sc.m.Post(sc.url, routing.Wrap(func(c *models.ReqContext) response.Response {
-		c.Req.Body = mockRequestBody(models.AddDataSourceCommand{
+		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
 			Name:   "Test",
 			Url:    "invalid:url",
 			Access: "direct",
@@ -106,14 +106,14 @@ func TestAddDataSource_URLWithoutProtocol(t *testing.T) {
 
 	hs := &HTTPServer{
 		DataSourcesService: &dataSourcesServiceMock{
-			expectedDatasource: &models.DataSource{},
+			expectedDatasource: &datasources.DataSource{},
 		},
 	}
 
 	sc := setupScenarioContext(t, "/api/datasources")
 
 	sc.m.Post(sc.url, routing.Wrap(func(c *models.ReqContext) response.Response {
-		c.Req.Body = mockRequestBody(models.AddDataSourceCommand{
+		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
 			Name:   name,
 			Url:    url,
 			Access: "direct",
@@ -135,7 +135,7 @@ func TestUpdateDataSource_InvalidURL(t *testing.T) {
 	sc := setupScenarioContext(t, "/api/datasources/1234")
 
 	sc.m.Put(sc.url, routing.Wrap(func(c *models.ReqContext) response.Response {
-		c.Req.Body = mockRequestBody(models.AddDataSourceCommand{
+		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
 			Name:   "Test",
 			Url:    "invalid:url",
 			Access: "direct",
@@ -156,14 +156,14 @@ func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
 
 	hs := &HTTPServer{
 		DataSourcesService: &dataSourcesServiceMock{
-			expectedDatasource: &models.DataSource{},
+			expectedDatasource: &datasources.DataSource{},
 		},
 	}
 
 	sc := setupScenarioContext(t, "/api/datasources/1234")
 
 	sc.m.Put(sc.url, routing.Wrap(func(c *models.ReqContext) response.Response {
-		c.Req.Body = mockRequestBody(models.AddDataSourceCommand{
+		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
 			Name:   name,
 			Url:    url,
 			Access: "direct",
@@ -178,7 +178,7 @@ func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
 }
 
 func TestAPI_Datasources_AccessControl(t *testing.T) {
-	testDatasource := models.DataSource{
+	testDatasource := datasources.DataSource{
 		Id:     3,
 		Uid:    "testUID",
 		OrgId:  testOrgID,
@@ -187,7 +187,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 		Type:   "postgresql",
 		Access: "Proxy",
 	}
-	testDatasourceReadOnly := models.DataSource{
+	testDatasourceReadOnly := datasources.DataSource{
 		Id:       4,
 		Uid:      "testUID",
 		OrgId:    testOrgID,
@@ -199,7 +199,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 	}
 
 	addDatasourceBody := func() io.Reader {
-		s, _ := json.Marshal(models.AddDataSourceCommand{
+		s, _ := json.Marshal(datasources.AddDataSourceCommand{
 			Name:   "test",
 			Url:    "http://localhost:5432",
 			Type:   "postgresql",
@@ -212,12 +212,12 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 		expectedDatasource: &testDatasource,
 	}
 	dsPermissionService := permissions.NewMockDatasourcePermissionService()
-	dsPermissionService.DsResult = []*models.DataSource{
+	dsPermissionService.DsResult = []*datasources.DataSource{
 		&testDatasource,
 	}
 
 	updateDatasourceBody := func() io.Reader {
-		s, _ := json.Marshal(models.UpdateDataSourceCommand{
+		s, _ := json.Marshal(datasources.UpdateDataSourceCommand{
 			Name:   "test",
 			Url:    "http://localhost:5432",
 			Type:   "postgresql",
@@ -228,7 +228,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 	type acTestCaseWithHandler struct {
 		body func() io.Reader
 		accessControlTestCase
-		expectedDS       *models.DataSource
+		expectedDS       *datasources.DataSource
 		expectedSQLError error
 	}
 	tests := []acTestCaseWithHandler{
@@ -239,14 +239,14 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesPut should return 404 if datasource not found",
 				url:          fmt.Sprintf("/api/datasources/%v", "12345678"),
 				method:       http.MethodPut,
-				permissions: []*ac.Permission{
+				permissions: []ac.Permission{
 					{
 						Action: datasources.ActionWrite,
 						Scope:  datasources.ScopeAll,
 					},
 				},
 			},
-			expectedSQLError: models.ErrDataSourceNotFound,
+			expectedSQLError: datasources.ErrDataSourceNotFound,
 		},
 		{
 			accessControlTestCase: accessControlTestCase{
@@ -254,7 +254,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesGet should return 200 for user with correct permissions",
 				url:          "/api/datasources/",
 				method:       http.MethodGet,
-				permissions:  []*ac.Permission{{Action: datasources.ActionRead, Scope: datasources.ScopeAll}},
+				permissions:  []ac.Permission{{Action: datasources.ActionRead, Scope: datasources.ScopeAll}},
 			},
 		},
 		{
@@ -263,7 +263,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesGet should return 403 for user without required permissions",
 				url:          "/api/datasources/",
 				method:       http.MethodGet,
-				permissions:  []*ac.Permission{{Action: "wrong"}},
+				permissions:  []ac.Permission{{Action: "wrong"}},
 			},
 		},
 		{
@@ -273,7 +273,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesPost should return 200 for user with correct permissions",
 				url:          "/api/datasources/",
 				method:       http.MethodPost,
-				permissions:  []*ac.Permission{{Action: datasources.ActionCreate}},
+				permissions:  []ac.Permission{{Action: datasources.ActionCreate}},
 			},
 			expectedDS: &testDatasource,
 		},
@@ -283,7 +283,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesPost should return 403 for user without required permissions",
 				url:          "/api/datasources/",
 				method:       http.MethodPost,
-				permissions:  []*ac.Permission{{Action: "wrong"}},
+				permissions:  []ac.Permission{{Action: "wrong"}},
 			},
 		},
 		{
@@ -293,7 +293,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesPut should return 200 for user with correct permissions",
 				url:          fmt.Sprintf("/api/datasources/%v", testDatasource.Id),
 				method:       http.MethodPut,
-				permissions: []*ac.Permission{
+				permissions: []ac.Permission{
 					{
 						Action: datasources.ActionWrite,
 						Scope:  fmt.Sprintf("datasources:id:%v", testDatasource.Id),
@@ -308,7 +308,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesPut should return 403 for user without required permissions",
 				url:          fmt.Sprintf("/api/datasources/%v", testDatasource.Id),
 				method:       http.MethodPut,
-				permissions:  []*ac.Permission{{Action: "wrong"}},
+				permissions:  []ac.Permission{{Action: "wrong"}},
 			},
 		},
 		{
@@ -318,7 +318,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesPut should return 403 for read only datasource",
 				url:          fmt.Sprintf("/api/datasources/%v", testDatasourceReadOnly.Id),
 				method:       http.MethodPut,
-				permissions: []*ac.Permission{
+				permissions: []ac.Permission{
 					{
 						Action: datasources.ActionWrite,
 						Scope:  fmt.Sprintf("datasources:id:%v", testDatasourceReadOnly.Id),
@@ -333,7 +333,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesDeleteByID should return 200 for user with correct permissions",
 				url:          fmt.Sprintf("/api/datasources/%v", testDatasource.Id),
 				method:       http.MethodDelete,
-				permissions: []*ac.Permission{
+				permissions: []ac.Permission{
 					{
 						Action: datasources.ActionDelete,
 						Scope:  fmt.Sprintf("datasources:id:%v", testDatasource.Id),
@@ -348,7 +348,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesDeleteByID should return 403 for user without required permissions",
 				url:          fmt.Sprintf("/api/datasources/%v", testDatasource.Id),
 				method:       http.MethodDelete,
-				permissions:  []*ac.Permission{{Action: "wrong"}},
+				permissions:  []ac.Permission{{Action: "wrong"}},
 			},
 		},
 		{
@@ -357,7 +357,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesDeleteByUID should return 200 for user with correct permissions",
 				url:          fmt.Sprintf("/api/datasources/uid/%v", testDatasource.Uid),
 				method:       http.MethodDelete,
-				permissions: []*ac.Permission{
+				permissions: []ac.Permission{
 					{
 						Action: datasources.ActionDelete,
 						Scope:  fmt.Sprintf("datasources:uid:%v", testDatasource.Uid),
@@ -372,7 +372,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesDeleteByUID should return 403 for user without required permissions",
 				url:          fmt.Sprintf("/api/datasources/uid/%v", testDatasource.Uid),
 				method:       http.MethodDelete,
-				permissions:  []*ac.Permission{{Action: "wrong"}},
+				permissions:  []ac.Permission{{Action: "wrong"}},
 			},
 		},
 		{
@@ -381,7 +381,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesDeleteByName should return 200 for user with correct permissions",
 				url:          fmt.Sprintf("/api/datasources/name/%v", testDatasource.Name),
 				method:       http.MethodDelete,
-				permissions: []*ac.Permission{
+				permissions: []ac.Permission{
 					{
 						Action: datasources.ActionDelete,
 						Scope:  fmt.Sprintf("datasources:name:%v", testDatasource.Name),
@@ -396,7 +396,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesDeleteByName should return 403 for user without required permissions",
 				url:          fmt.Sprintf("/api/datasources/name/%v", testDatasource.Name),
 				method:       http.MethodDelete,
-				permissions:  []*ac.Permission{{Action: "wrong"}},
+				permissions:  []ac.Permission{{Action: "wrong"}},
 			},
 		},
 		{
@@ -405,7 +405,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesGetByID should return 200 for user with correct permissions",
 				url:          fmt.Sprintf("/api/datasources/%v", testDatasource.Id),
 				method:       http.MethodGet,
-				permissions: []*ac.Permission{
+				permissions: []ac.Permission{
 					{
 						Action: datasources.ActionRead,
 						Scope:  fmt.Sprintf("datasources:id:%v", testDatasource.Id),
@@ -420,7 +420,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesGetByID should return 403 for user without required permissions",
 				url:          fmt.Sprintf("/api/datasources/%v", testDatasource.Id),
 				method:       http.MethodGet,
-				permissions:  []*ac.Permission{{Action: "wrong"}},
+				permissions:  []ac.Permission{{Action: "wrong"}},
 			},
 		},
 		{
@@ -429,7 +429,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesGetByUID should return 200 for user with correct permissions",
 				url:          fmt.Sprintf("/api/datasources/uid/%v", testDatasource.Uid),
 				method:       http.MethodGet,
-				permissions: []*ac.Permission{
+				permissions: []ac.Permission{
 					{
 						Action: datasources.ActionRead,
 						Scope:  fmt.Sprintf("datasources:uid:%v", testDatasource.Uid),
@@ -444,7 +444,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesGetByUID should return 403 for user without required permissions",
 				url:          fmt.Sprintf("/api/datasources/uid/%v", testDatasource.Uid),
 				method:       http.MethodGet,
-				permissions:  []*ac.Permission{{Action: "wrong"}},
+				permissions:  []ac.Permission{{Action: "wrong"}},
 			},
 		},
 		{
@@ -453,7 +453,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesGetByName should return 200 for user with correct permissions",
 				url:          fmt.Sprintf("/api/datasources/name/%v", testDatasource.Name),
 				method:       http.MethodGet,
-				permissions: []*ac.Permission{
+				permissions: []ac.Permission{
 					{
 						Action: datasources.ActionRead,
 						Scope:  fmt.Sprintf("datasources:name:%v", testDatasource.Name),
@@ -468,7 +468,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesGetByName should return 403 for user without required permissions",
 				url:          fmt.Sprintf("/api/datasources/name/%v", testDatasource.Name),
 				method:       http.MethodGet,
-				permissions:  []*ac.Permission{{Action: "wrong"}},
+				permissions:  []ac.Permission{{Action: "wrong"}},
 			},
 			expectedDS: &testDatasource,
 		},
@@ -478,7 +478,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesGetIdByName should return 200 for user with correct permissions",
 				url:          fmt.Sprintf("/api/datasources/id/%v", testDatasource.Name),
 				method:       http.MethodGet,
-				permissions: []*ac.Permission{
+				permissions: []ac.Permission{
 					{
 						Action: datasources.ActionIDRead,
 						Scope:  fmt.Sprintf("datasources:name:%v", testDatasource.Name),
@@ -493,7 +493,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				desc:         "DatasourcesGetIdByName should return 403 for user without required permissions",
 				url:          fmt.Sprintf("/api/datasources/id/%v", testDatasource.Name),
 				method:       http.MethodGet,
-				permissions:  []*ac.Permission{{Action: "wrong"}},
+				permissions:  []ac.Permission{{Action: "wrong"}},
 			},
 			expectedDS: &testDatasource,
 		},
@@ -507,7 +507,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 			// mock sqlStore and datasource permission service
 			dsServiceMock.expectedError = test.expectedSQLError
 			dsServiceMock.expectedDatasource = test.expectedDS
-			dsPermissionService.DsResult = []*models.DataSource{test.expectedDS}
+			dsPermissionService.DsResult = []*datasources.DataSource{test.expectedDS}
 			if test.expectedDS == nil {
 				dsPermissionService.DsResult = nil
 			}
@@ -547,44 +547,44 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 type dataSourcesServiceMock struct {
 	datasources.DataSourceService
 
-	expectedDatasources []*models.DataSource
-	expectedDatasource  *models.DataSource
+	expectedDatasources []*datasources.DataSource
+	expectedDatasource  *datasources.DataSource
 	expectedError       error
 }
 
-func (m *dataSourcesServiceMock) GetDataSource(ctx context.Context, query *models.GetDataSourceQuery) error {
+func (m *dataSourcesServiceMock) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) error {
 	query.Result = m.expectedDatasource
 	return m.expectedError
 }
 
-func (m *dataSourcesServiceMock) GetDataSources(ctx context.Context, query *models.GetDataSourcesQuery) error {
+func (m *dataSourcesServiceMock) GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) error {
 	query.Result = m.expectedDatasources
 	return m.expectedError
 }
 
-func (m *dataSourcesServiceMock) GetDataSourcesByType(ctx context.Context, query *models.GetDataSourcesByTypeQuery) error {
+func (m *dataSourcesServiceMock) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) error {
 	return m.expectedError
 }
 
-func (m *dataSourcesServiceMock) GetDefaultDataSource(ctx context.Context, query *models.GetDefaultDataSourceQuery) error {
+func (m *dataSourcesServiceMock) GetDefaultDataSource(ctx context.Context, query *datasources.GetDefaultDataSourceQuery) error {
 	return m.expectedError
 }
 
-func (m *dataSourcesServiceMock) DeleteDataSource(ctx context.Context, cmd *models.DeleteDataSourceCommand) error {
+func (m *dataSourcesServiceMock) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error {
 	return m.expectedError
 }
 
-func (m *dataSourcesServiceMock) AddDataSource(ctx context.Context, cmd *models.AddDataSourceCommand) error {
+func (m *dataSourcesServiceMock) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) error {
 	cmd.Result = m.expectedDatasource
 	return m.expectedError
 }
 
-func (m *dataSourcesServiceMock) UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSourceCommand) error {
+func (m *dataSourcesServiceMock) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) error {
 	cmd.Result = m.expectedDatasource
 	return m.expectedError
 }
 
-func (m *dataSourcesServiceMock) DecryptedValues(ctx context.Context, ds *models.DataSource) (map[string]string, error) {
+func (m *dataSourcesServiceMock) DecryptedValues(ctx context.Context, ds *datasources.DataSource) (map[string]string, error) {
 	decryptedValues := make(map[string]string)
 	return decryptedValues, m.expectedError
 }
