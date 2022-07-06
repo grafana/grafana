@@ -130,6 +130,12 @@ func TestAPI_AdminProvisioningReload_AccessControl(t *testing.T) {
 			},
 		},
 		{
+			desc:         "should fail for plugins with no permission",
+			expectedCode: http.StatusForbidden,
+			url:          "/api/admin/provisioning/plugins/reload",
+			exit:         true,
+		},
+		{
 			desc:         "should fail for alert rules with no permission",
 			expectedCode: http.StatusForbidden,
 			url:          "/api/admin/provisioning/alert-rules/reload",
