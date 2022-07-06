@@ -2,7 +2,18 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import { AppEvents } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime/src';
-import { Alert, Button, Checkbox, ClipboardButton, Field, FieldSet, Icon, Input, Switch } from '@grafana/ui';
+import {
+  Alert,
+  Button,
+  Checkbox,
+  ClipboardButton,
+  Field,
+  FieldSet,
+  Icon,
+  Input,
+  LinkButton,
+  Switch,
+} from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { appEvents } from 'app/core/core';
@@ -114,16 +125,32 @@ export const SharePublicDashboard = (props: Props) => {
                   <Checkbox
                     label="Publishing currently only works with a subset of datasources"
                     value={acknowledgements.datasources}
-                    description="Learn more about public datasources"
                     onChange={(e) => onAcknowledge('datasources', e.currentTarget.checked)}
+                  />
+                  <LinkButton
+                    variant="primary"
+                    href="https://grafana.com/docs/grafana/latest/datasources/"
+                    target="_blank"
+                    fill="text"
+                    icon="info-circle"
+                    rel="noopener noreferrer"
+                    tooltip="Learn more about public datasources"
                   />
                 </div>
                 <br />
                 <Checkbox
                   label="Making your dashboard public will cause queries to run each time the dashboard is viewed which may increase costs"
                   value={acknowledgements.usage}
-                  description="Learn more about query caching"
                   onChange={(e) => onAcknowledge('usage', e.currentTarget.checked)}
+                />
+                <LinkButton
+                  variant="primary"
+                  href="https://grafana.com/docs/grafana/latest/enterprise/query-caching/"
+                  target="_blank"
+                  fill="text"
+                  icon="info-circle"
+                  rel="noopener noreferrer"
+                  tooltip="Learn more about query caching"
                 />
                 <br />
                 <br />
