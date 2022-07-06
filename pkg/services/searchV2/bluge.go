@@ -429,7 +429,8 @@ func doSearchQuery(
 		hasConstraints = true
 	}
 
-	if q.Query == "*" || q.Query == "" {
+	isMatchAllQuery := q.Query == "*" || q.Query == ""
+	if isMatchAllQuery {
 		if !hasConstraints {
 			fullQuery.AddShould(bluge.NewMatchAllQuery())
 		}
@@ -600,7 +601,15 @@ func doSearchQuery(
 		}
 
 		if q.Explain {
-			fScore.Append(match.Score)
+			if isMatchAllQuery || true {
+				fScore.Append(float64(fieldLen + q.From))
+
+				// HACK, just for helping test paging issue
+				current := fName.At(fieldLen)
+				fName.Set(fieldLen, fmt.Sprintf("[%d/%d] %s", q.From, fieldLen, current))
+			} else {
+				fScore.Append(match.Score)
+			}
 			if match.Explanation != nil {
 				js, _ := json.Marshal(&match.Explanation)
 				jsb := json.RawMessage(js)
