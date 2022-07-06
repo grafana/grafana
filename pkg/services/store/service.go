@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -34,7 +33,7 @@ type StorageService interface {
 	registry.BackgroundService
 
 	// List folder contents
-	List(ctx context.Context, user *models.SignedInUser, path string) (*data.Frame, error)
+	List(ctx context.Context, user *models.SignedInUser, path string) (*StorageListFrame, error)
 
 	// Read raw file contents out of the store
 	Read(ctx context.Context, user *models.SignedInUser, path string) (*filestorage.File, error)
@@ -114,7 +113,7 @@ func getOrgId(user *models.SignedInUser) int64 {
 	return user.OrgId
 }
 
-func (s *standardStorageService) List(ctx context.Context, user *models.SignedInUser, path string) (*data.Frame, error) {
+func (s *standardStorageService) List(ctx context.Context, user *models.SignedInUser, path string) (*StorageListFrame, error) {
 	// apply access control here
 	return s.tree.ListFolder(ctx, getOrgId(user), path)
 }

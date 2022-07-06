@@ -30,7 +30,7 @@ type WriteValueResponse struct {
 
 type storageTree interface {
 	GetFile(ctx context.Context, orgId int64, path string) (*filestorage.File, error)
-	ListFolder(ctx context.Context, orgId int64, path string) (*data.Frame, error)
+	ListFolder(ctx context.Context, orgId int64, path string) (*StorageListFrame, error)
 }
 
 //-------------------------------------------
@@ -94,4 +94,41 @@ type RootStorageMeta struct {
 	Notice   []data.Notice `json:"notice,omitempty"`
 
 	Config RootStorageConfig `json:"config"`
+}
+
+type StorageListFrame struct {
+	*data.Frame
+}
+
+type listFrameField string
+
+const (
+	titleListFrameField       listFrameField = "title"
+	nameListFrameField        listFrameField = "name"
+	descriptionListFrameField listFrameField = "description"
+	mediaTypeListFrameField   listFrameField = "mediaType"
+	storageTypeListFrameField listFrameField = "storageType"
+	readOnlyListFrameField    listFrameField = "readOnly"
+	builtInListFrameField     listFrameField = "builtIn"
+	sizeListFrameField        listFrameField = "size"
+)
+
+func (s *StorageListFrame) GetFileNames() []string {
+	var fileNames []string
+	if s == nil {
+		return fileNames
+	}
+
+	field, idx := s.FieldByName(string(nameListFrameField))
+	if field.Len() == 0 || idx == -1 {
+		return fileNames
+	}
+
+	for i := 0; i < field.Len(); i++ {
+		if stringValue, ok := field.At(i).(string); ok {
+			fileNames = append(fileNames, stringValue)
+		}
+	}
+
+	return fileNames
 }
