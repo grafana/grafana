@@ -268,7 +268,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 		})
 	}
 
-	if c.OrgRole == models.ROLE_ADMIN {
+	if hasAccess(ac.ReqOrgAdmin, plugins.ConfigurationAccessEvaluator) {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "Plugins",
 			Id:          "plugins",
@@ -669,7 +669,7 @@ func (hs *HTTPServer) buildAdminNavLinks(c *models.ReqContext) []*dtos.NavLink {
 		})
 	}
 
-	if hs.Cfg.PluginAdminEnabled && ac.ReqGrafanaAdmin(c) {
+	if hs.Cfg.PluginAdminEnabled && hasAccess(ac.ReqGrafanaAdmin, plugins.AdminAccessEvaluator) {
 		adminNavLinks = append(adminNavLinks, &dtos.NavLink{
 			Text: "Plugins", Id: "admin-plugins", Url: hs.Cfg.AppSubURL + "/admin/plugins", Icon: "plug",
 		})

@@ -334,9 +334,9 @@ func (hs *HTTPServer) registerRoutes() {
 
 		if hs.Cfg.PluginAdminEnabled && !hs.Cfg.PluginAdminExternalManageEnabled {
 			apiRoute.Group("/plugins", func(pluginRoute routing.RouteRegister) {
-				pluginRoute.Post("/:pluginId/install", routing.Wrap(hs.InstallPlugin))
-				pluginRoute.Post("/:pluginId/uninstall", routing.Wrap(hs.UninstallPlugin))
-			}, reqGrafanaAdmin)
+				pluginRoute.Post("/:pluginId/install", authorize(reqGrafanaAdmin, ac.EvalPermission(plugins.ActionIntall)), routing.Wrap(hs.InstallPlugin))
+				pluginRoute.Post("/:pluginId/uninstall", authorize(reqGrafanaAdmin, ac.EvalPermission(plugins.ActionIntall)), routing.Wrap(hs.UninstallPlugin))
+			})
 		}
 
 		apiRoute.Group("/plugins", func(pluginRoute routing.RouteRegister) {

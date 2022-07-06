@@ -47,8 +47,11 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to get list of plugins", err)
 	}
 
-	result := make(dtos.PluginList, 0)
-	for _, pluginDef := range hs.pluginStore.Plugins(c.Req.Context()) {
+	// Filter plugins
+	pluginDefinitions := hs.pluginStore.Plugins(c.Req.Context())
+	filteredPluginDefinitions := []plugins.PluginDTO{}
+	filteredPluginIDs := map[string]bool{}
+	for _, pluginDef := range pluginDefinitions {
 		// filter out app sub plugins
 		if embeddedFilter == "0" && pluginDef.IncludedInAppID != "" {
 			continue
@@ -68,6 +71,28 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 			continue
 		}
 
+		if pluginDef.BuiltIn {
+			continue
+		}
+
+		// filter out disabled plugins
+		if pluginSetting, exists := pluginSettingsMap[pluginDef.ID]; exists {
+			if enabledFilter == "1" && !pluginSetting.Enabled {
+				continue
+			}
+		}
+
+		filteredPluginDefinitions = append(filteredPluginDefinitions, pluginDef)
+		filteredPluginIDs[pluginDef.ID] = true
+	}
+
+	// Compute metadata
+	pluginsMetadata := hs.getMultiAccessControlMetadata(c, c.OrgId,
+		plugins.ScopeProvider.GetResourceScope(""), filteredPluginIDs)
+
+	// Prepare DTO
+	result := make(dtos.PluginList, 0)
+	for _, pluginDef := range filteredPluginDefinitions {
 		listItem := dtos.PluginListItem{
 			Id:            pluginDef.ID,
 			Name:          pluginDef.Name,
@@ -97,15 +122,8 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 			listItem.DefaultNavUrl = hs.Cfg.AppSubURL + "/plugins/" + listItem.Id + "/"
 		}
 
-		// filter out disabled plugins
-		if enabledFilter == "1" && !listItem.Enabled {
-			continue
-		}
-
-		// filter out built in plugins
-		if pluginDef.BuiltIn {
-			continue
-		}
+		// Set AccessControl Metadata
+		listItem.AccessControl = pluginsMetadata[pluginDef.ID]
 
 		result = append(result, listItem)
 	}
