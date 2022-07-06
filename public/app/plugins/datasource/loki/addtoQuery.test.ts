@@ -1,4 +1,4 @@
-import { addLabelToQuery } from './add_label_to_query';
+import { addLabelToQuery } from './addToQuery';
 
 describe('addLabelToQuery()', () => {
   it('should add label to simple query', () => {
