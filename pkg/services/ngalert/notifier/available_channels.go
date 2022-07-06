@@ -700,7 +700,7 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					Label:        "Title",
 					Element:      alerting.ElementTypeInput,
 					InputType:    alerting.InputTypeText,
-					Description:  "Templated title of the email",
+					Description:  "Templated title of the message",
 					PropertyName: "title",
 					Placeholder:  `{{ template "default.title" . }}`,
 				},
