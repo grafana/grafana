@@ -128,7 +128,7 @@ func (ng *AlertNG) init() error {
 
 	// Let's make sure we're able to complete an initial sync of Alertmanagers before we start the alerting components.
 	if err := ng.MultiOrgAlertmanager.LoadAndSyncAlertmanagersForOrgs(context.Background()); err != nil {
-		return fmt.Errorf("failed to initialize alerting because multiorg alertmanager manager fail to warm up: %w", err)
+		return fmt.Errorf("failed to initialize alerting because multiorg alertmanager manager failed to warm up: %w", err)
 	}
 
 	appUrl, err := url.Parse(ng.Cfg.AppURL)
@@ -142,7 +142,7 @@ func (ng *AlertNG) init() error {
 	alertsRouter := sender.NewAlertsRouter(ng.MultiOrgAlertmanager, store, clk, appUrl, ng.Cfg.UnifiedAlerting.DisabledOrgs, ng.Cfg.UnifiedAlerting.AdminConfigPollInterval)
 
 	if err := alertsRouter.SyncAndApplyConfigFromDatabase(); err != nil {
-		return fmt.Errorf("failed to initialize alerting because alert alertsRouter fails to warm up: %w", err)
+		return fmt.Errorf("failed to initialize alerting because alert notifications router failed to warm up: %w", err)
 	}
 
 	ng.AlertsRouter = alertsRouter
