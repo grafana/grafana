@@ -54,7 +54,10 @@ export const ServiceAccountCreatePageUnconnected = ({ navModel }: Props): JSX.El
           setRoleOptions(options);
         }
 
-        if (contextSrv.hasPermission(AccessControlAction.ActionBuiltinRolesList)) {
+        if (
+          contextSrv.accessControlBuiltInRoleAssignmentEnabled() &&
+          contextSrv.hasPermission(AccessControlAction.ActionBuiltinRolesList)
+        ) {
           const builtInRoles = await fetchBuiltinRoles(currentOrgId);
           setBuiltinRoles(builtInRoles);
         }
