@@ -10,7 +10,7 @@ groups:
       condition: A
       for: 1m
       annotations:
-        runbook: http://google.com/
+        runbook: https://grafana.com
       labels:
         team: infra
         severity: warning
