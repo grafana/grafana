@@ -83,7 +83,9 @@ export const OperationHeader = React.memo<Props>(
                   // copy default params, and override with all current params
                   const newParams = [...newDef.defaultParams];
                   for (let i = 0; i < Math.min(operation.params.length, newParams.length); i++) {
-                    newParams[i] = operation.params[i];
+                    if (newDef.params[i].type === def.params[i].type && newDef.params[i].name === def.params[i].name) {
+                      newParams[i] = operation.params[i];
+                    }
                   }
 
                   const changedOp = { ...operation, params: newParams, id: value.value.id };
