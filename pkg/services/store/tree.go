@@ -102,13 +102,13 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string) (
 		readOnly := data.NewFieldFromFieldType(data.FieldTypeBool, count)
 		builtIn := data.NewFieldFromFieldType(data.FieldTypeBool, count)
 		mtype := data.NewFieldFromFieldType(data.FieldTypeString, count)
-		title.Name = string(titleListFrameField)
-		names.Name = string(nameListFrameField)
-		descr.Name = string(descriptionListFrameField)
-		mtype.Name = string(mediaTypeListFrameField)
-		types.Name = string(storageTypeListFrameField)
-		readOnly.Name = string(readOnlyListFrameField)
-		builtIn.Name = string(builtInListFrameField)
+		title.Name = titleListFrameField
+		names.Name = nameListFrameField
+		descr.Name = descriptionListFrameField
+		mtype.Name = mediaTypeListFrameField
+		types.Name = storageTypeListFrameField
+		readOnly.Name = readOnlyListFrameField
+		builtIn.Name = builtInListFrameField
 		for _, f := range t.rootsByOrgId[ac.GlobalOrgID] {
 			meta := f.Meta()
 			names.Set(idx, meta.Config.Prefix)
@@ -160,9 +160,9 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string) (
 	names := data.NewFieldFromFieldType(data.FieldTypeString, count)
 	mtype := data.NewFieldFromFieldType(data.FieldTypeString, count)
 	fsize := data.NewFieldFromFieldType(data.FieldTypeInt64, count)
-	names.Name = string(nameListFrameField)
-	mtype.Name = string(mediaTypeListFrameField)
-	fsize.Name = string(sizeListFrameField)
+	names.Name = nameListFrameField
+	mtype.Name = mediaTypeListFrameField
+	fsize.Name = sizeListFrameField
 	fsize.Config = &data.FieldConfig{
 		Unit: "bytes",
 	}

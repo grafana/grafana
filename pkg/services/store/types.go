@@ -100,17 +100,15 @@ type StorageListFrame struct {
 	*data.Frame
 }
 
-type listFrameField string
-
 const (
-	titleListFrameField       listFrameField = "title"
-	nameListFrameField        listFrameField = "name"
-	descriptionListFrameField listFrameField = "description"
-	mediaTypeListFrameField   listFrameField = "mediaType"
-	storageTypeListFrameField listFrameField = "storageType"
-	readOnlyListFrameField    listFrameField = "readOnly"
-	builtInListFrameField     listFrameField = "builtIn"
-	sizeListFrameField        listFrameField = "size"
+	titleListFrameField       = "title"
+	nameListFrameField        = "name"
+	descriptionListFrameField = "description"
+	mediaTypeListFrameField   = "mediaType"
+	storageTypeListFrameField = "storageType"
+	readOnlyListFrameField    = "readOnly"
+	builtInListFrameField     = "builtIn"
+	sizeListFrameField        = "size"
 )
 
 func (s *StorageListFrame) GetFileNames() []string {
@@ -119,7 +117,7 @@ func (s *StorageListFrame) GetFileNames() []string {
 		return fileNames
 	}
 
-	field, idx := s.FieldByName(string(nameListFrameField))
+	field, idx := s.FieldByName(nameListFrameField)
 	if field.Len() == 0 || idx == -1 {
 		return fileNames
 	}
