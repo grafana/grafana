@@ -5,6 +5,7 @@ import { useLocation } from 'react-router-dom';
 import { locationUtil, textUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { ButtonGroup, ModalsController, ToolbarButton, PageToolbar, useForceUpdate } from '@grafana/ui';
+import { TopNavUpdate } from 'app/core/components/TopNav/TopNavUpdate';
 import config from 'app/core/config';
 import { toggleKioskMode } from 'app/core/navigation/kiosk';
 import { DashboardCommentsModal } from 'app/features/dashboard/components/DashboardComments/DashboardCommentsModal';
@@ -273,6 +274,15 @@ export const DashNav = React.memo<Props>((props) => {
   const titleHref = locationUtil.getUrlForPartial(location, { search: 'open' });
   const parentHref = locationUtil.getUrlForPartial(location, { search: 'open', folder: 'current' });
   const onGoBack = isFullscreen ? onClose : undefined;
+
+  if (config.featureToggles.topnav) {
+    return (
+      <TopNavUpdate
+        subNav={{ text: title }}
+        actions={<ToolbarButton onClick={onOpenSettings} icon="cog"></ToolbarButton>}
+      />
+    );
+  }
 
   return (
     <PageToolbar

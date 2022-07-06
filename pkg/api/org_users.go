@@ -55,7 +55,7 @@ func (hs *HTTPServer) addOrgUserHelper(c *models.ReqContext, cmd models.AddOrgUs
 
 	userToAdd := userQuery.Result
 
-	cmd.UserId = userToAdd.Id
+	cmd.UserId = userToAdd.ID
 
 	if err := hs.SQLStore.AddOrgUser(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, models.ErrOrgUserAlreadyAdded) {

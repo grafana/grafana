@@ -17,6 +17,7 @@ import (
 	acdb "github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -34,7 +35,7 @@ func TestAlertRulePermissions(t *testing.T) {
 	permissionsStore := acdb.ProvideService(store)
 
 	// Create a user to make authenticated requests
-	userID := createUser(t, store, models.CreateUserCommand{
+	userID := createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),
 		Password:       "password",
 		Login:          "grafana",
@@ -273,14 +274,14 @@ func createRule(t *testing.T, client apiClient, folder string) {
 
 	interval, err := model.ParseDuration("1m")
 	require.NoError(t, err)
-
+	doubleInterval := 2 * interval
 	rules := apimodels.PostableRuleGroupConfig{
 		Name:     "arulegroup",
 		Interval: interval,
 		Rules: []apimodels.PostableExtendedRuleNode{
 			{
 				ApiRuleNode: &apimodels.ApiRuleNode{
-					For:         2 * interval,
+					For:         &doubleInterval,
 					Labels:      map[string]string{"label1": "val1"},
 					Annotations: map[string]string{"annotation1": "val1"},
 				},
@@ -324,7 +325,7 @@ func TestAlertRuleConflictingTitle(t *testing.T) {
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
 	// Create user
-	createUser(t, store, models.CreateUserCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_ADMIN),
 		Password:       "admin",
 		Login:          "admin",
@@ -391,7 +392,7 @@ func TestRulerRulesFilterByDashboard(t *testing.T) {
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
 	// Create a user to make authenticated requests
-	createUser(t, store, models.CreateUserCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),
 		Password:       "password",
 		Login:          "grafana",
@@ -413,7 +414,7 @@ func TestRulerRulesFilterByDashboard(t *testing.T) {
 			Rules: []apimodels.PostableExtendedRuleNode{
 				{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For:    interval,
+						For:    &interval,
 						Labels: map[string]string{},
 						Annotations: map[string]string{
 							"__dashboardUid__": dashboardUID,
@@ -512,6 +513,7 @@ func TestRulerRulesFilterByDashboard(t *testing.T) {
 			}
 		}, {
 			"expr": "",
+			"for":"0s",
 			"grafana_alert": {
 				"id": 2,
 				"orgId": 1,
@@ -728,7 +730,7 @@ func TestRuleGroupSequence(t *testing.T) {
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
 	// Create a user to make authenticated requests
-	createUser(t, store, models.CreateUserCommand{
+	createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),
 		Password:       "password",
 		Login:          "grafana",
@@ -813,13 +815,55 @@ func TestRuleGroupSequence(t *testing.T) {
 	})
 }
 
+func TestRuleUpdate(t *testing.T) {
+	// Setup Grafana and its Database
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		DisableAnonymous:      true,
+		AppModeProduction:     true,
+	})
+	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+
+	// Create a user to make authenticated requests
+	createUser(t, store, user.CreateUserCommand{
+		DefaultOrgRole: string(models.ROLE_EDITOR),
+		Password:       "password",
+		Login:          "grafana",
+	})
+
+	client := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
+	folder1Title := "folder1"
+	client.CreateFolder(t, util.GenerateShortUID(), folder1Title)
+
+	t.Run("should be able to reset 'for' to 0", func(t *testing.T) {
+		group := generateAlertRuleGroup(1, alertRuleGen())
+		expected := model.Duration(10 * time.Second)
+		group.Rules[0].ApiRuleNode.For = &expected
+
+		status, body := client.PostRulesGroup(t, folder1Title, &group)
+		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
+		getGroup := client.GetRulesGroup(t, folder1Title, group.Name)
+		require.Equal(t, expected, *getGroup.Rules[0].ApiRuleNode.For)
+
+		group = convertGettableRuleGroupToPostable(getGroup.GettableRuleGroupConfig)
+		expected = 0
+		group.Rules[0].ApiRuleNode.For = &expected
+		status, body = client.PostRulesGroup(t, folder1Title, &group)
+		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
+
+		getGroup = client.GetRulesGroup(t, folder1Title, group.Name)
+		require.Equal(t, expected, *getGroup.Rules[0].ApiRuleNode.For)
+	})
+}
+
 func newTestingRuleConfig(t *testing.T) apimodels.PostableRuleGroupConfig {
 	interval, err := model.ParseDuration("1m")
 	require.NoError(t, err)
 
 	firstRule := apimodels.PostableExtendedRuleNode{
 		ApiRuleNode: &apimodels.ApiRuleNode{
-			For:         interval,
+			For:         &interval,
 			Labels:      map[string]string{"label1": "val1"},
 			Annotations: map[string]string{"annotation1": "val1"},
 		},
@@ -846,7 +890,7 @@ func newTestingRuleConfig(t *testing.T) apimodels.PostableRuleGroupConfig {
 	}
 	secondRule := apimodels.PostableExtendedRuleNode{
 		ApiRuleNode: &apimodels.ApiRuleNode{
-			For:         interval,
+			For:         &interval,
 			Labels:      map[string]string{"label1": "val1"},
 			Annotations: map[string]string{"annotation1": "val1"},
 		},

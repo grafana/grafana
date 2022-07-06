@@ -7,6 +7,10 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -15,11 +19,10 @@ import (
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web/webtest"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 func TestFoldersAPIEndpoint(t *testing.T) {
@@ -53,15 +56,15 @@ func TestFoldersAPIEndpoint(t *testing.T) {
 			Error              error
 			ExpectedStatusCode int
 		}{
-			{Error: models.ErrFolderWithSameUIDExists, ExpectedStatusCode: 409},
-			{Error: models.ErrFolderTitleEmpty, ExpectedStatusCode: 400},
-			{Error: models.ErrFolderSameNameExists, ExpectedStatusCode: 409},
-			{Error: models.ErrDashboardInvalidUid, ExpectedStatusCode: 400},
-			{Error: models.ErrDashboardUidTooLong, ExpectedStatusCode: 400},
-			{Error: models.ErrFolderAccessDenied, ExpectedStatusCode: 403},
-			{Error: models.ErrFolderNotFound, ExpectedStatusCode: 404},
-			{Error: models.ErrFolderVersionMismatch, ExpectedStatusCode: 412},
-			{Error: models.ErrFolderFailedGenerateUniqueUid, ExpectedStatusCode: 500},
+			{Error: dashboards.ErrFolderWithSameUIDExists, ExpectedStatusCode: 409},
+			{Error: dashboards.ErrFolderTitleEmpty, ExpectedStatusCode: 400},
+			{Error: dashboards.ErrFolderSameNameExists, ExpectedStatusCode: 409},
+			{Error: dashboards.ErrDashboardInvalidUid, ExpectedStatusCode: 400},
+			{Error: dashboards.ErrDashboardUidTooLong, ExpectedStatusCode: 400},
+			{Error: dashboards.ErrFolderAccessDenied, ExpectedStatusCode: 403},
+			{Error: dashboards.ErrFolderNotFound, ExpectedStatusCode: 404},
+			{Error: dashboards.ErrFolderVersionMismatch, ExpectedStatusCode: 412},
+			{Error: dashboards.ErrFolderFailedGenerateUniqueUid, ExpectedStatusCode: 500},
 		}
 
 		cmd := models.CreateFolderCommand{
@@ -108,15 +111,15 @@ func TestFoldersAPIEndpoint(t *testing.T) {
 			Error              error
 			ExpectedStatusCode int
 		}{
-			{Error: models.ErrFolderWithSameUIDExists, ExpectedStatusCode: 409},
-			{Error: models.ErrFolderTitleEmpty, ExpectedStatusCode: 400},
-			{Error: models.ErrFolderSameNameExists, ExpectedStatusCode: 409},
-			{Error: models.ErrDashboardInvalidUid, ExpectedStatusCode: 400},
-			{Error: models.ErrDashboardUidTooLong, ExpectedStatusCode: 400},
-			{Error: models.ErrFolderAccessDenied, ExpectedStatusCode: 403},
-			{Error: models.ErrFolderNotFound, ExpectedStatusCode: 404},
-			{Error: models.ErrFolderVersionMismatch, ExpectedStatusCode: 412},
-			{Error: models.ErrFolderFailedGenerateUniqueUid, ExpectedStatusCode: 500},
+			{Error: dashboards.ErrFolderWithSameUIDExists, ExpectedStatusCode: 409},
+			{Error: dashboards.ErrFolderTitleEmpty, ExpectedStatusCode: 400},
+			{Error: dashboards.ErrFolderSameNameExists, ExpectedStatusCode: 409},
+			{Error: dashboards.ErrDashboardInvalidUid, ExpectedStatusCode: 400},
+			{Error: dashboards.ErrDashboardUidTooLong, ExpectedStatusCode: 400},
+			{Error: dashboards.ErrFolderAccessDenied, ExpectedStatusCode: 403},
+			{Error: dashboards.ErrFolderNotFound, ExpectedStatusCode: 404},
+			{Error: dashboards.ErrFolderVersionMismatch, ExpectedStatusCode: 412},
+			{Error: dashboards.ErrFolderFailedGenerateUniqueUid, ExpectedStatusCode: 500},
 		}
 
 		cmd := models.UpdateFolderCommand{
@@ -230,6 +233,14 @@ func createFolderScenario(t *testing.T, desc string, url string, routePattern st
 	cmd models.CreateFolderCommand, fn scenarioFunc) {
 	setUpRBACGuardian(t)
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
+		aclMockResp := []*models.DashboardAclInfoDTO{}
+		dashSvc := &dashboards.FakeDashboardService{}
+		dashSvc.On("GetDashboardAclInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardAclInfoListQuery")).Run(func(args mock.Arguments) {
+			q := args.Get(1).(*models.GetDashboardAclInfoListQuery)
+			q.Result = aclMockResp
+		}).Return(nil)
+		store := mockstore.NewSQLStoreMock()
+		guardian.InitLegacyGuardian(store, dashSvc)
 		hs := HTTPServer{
 			AccessControl: acmock.New(),
 			folderService: folderService,
