@@ -72,9 +72,13 @@ func (s *DataSourceSecretMigrationService) Migrate(ctx context.Context) error {
 		}
 
 		if disableSecretsCompatibility {
-			s.kvStore.Set(ctx, 0, secretType, "secretMigrationStatus", "complete")
+			err = s.kvStore.Set(ctx, 0, secretType, "secretMigrationStatus", "complete")
 		} else {
-			s.kvStore.Set(ctx, 0, secretType, "secretMigrationStatus", "compatible")
+			err = s.kvStore.Set(ctx, 0, secretType, "secretMigrationStatus", "compatible")
+		}
+
+		if err != nil {
+			return err
 		}
 	}
 
