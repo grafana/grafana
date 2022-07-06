@@ -111,8 +111,9 @@ describe('state functions', () => {
       };
 
       expect(serializeStateToUrlParam(state)).toBe(
-        '{"datasource":"foo","queries":[{"expr":"metric{test=\\"a/b\\"}","refId":"A"},' +
-          '{"expr":"super{foo=\\"x/z\\"}","refId":"B"}],"range":{"from":"now-5h","to":"now"}}'
+        '%7B%22datasource%22%3A%22foo%22%2C%22queries%22%3A%5B%7B%22expr%22%3A%22metric%7Btest%3D%5C%22a%2Fb%5C' +
+          '%22%7D%22%2C%22refId%22%3A%22A%22%7D%2C%7B%22expr%22%3A%22super%7Bfoo%3D%5C%22x%2Fz%5C%22%7D%22%2C%22' +
+          'refId%22%3A%22B%22%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-5h%22%2C%22to%22%3A%22now%22%7D%7D'
       );
     });
   });
@@ -137,7 +138,7 @@ describe('state functions', () => {
           to: 'now',
         },
       };
-      const serialized = serializeStateToUrlParam(state);
+      const serialized = decodeURIComponent(serializeStateToUrlParam(state));
       const parsed = parseUrlState(serialized);
       expect(state).toMatchObject(parsed);
     });
@@ -166,7 +167,7 @@ describe('state functions', () => {
           },
         },
       };
-      const serialized = serializeStateToUrlParam(state);
+      const serialized = decodeURIComponent(serializeStateToUrlParam(state));
       const parsed = parseUrlState(serialized);
       expect(state).toMatchObject(parsed);
     });

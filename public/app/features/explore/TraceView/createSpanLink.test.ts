@@ -462,9 +462,10 @@ describe('createSpanLinkFactory', () => {
       expect(defaultLink).toBeDefined();
       expect(defaultLink!.title).toBe('defaultQuery');
       expect(defaultLink!.href).toBe(
-        `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"prom1","queries":[{"expr":"histogram_quantile(0.5, sum(rate(tempo_spanmetrics_latency_bucket{operation=\\"operation\\"}[5m])) by (le))","refId":"A"}],"panelsState":{}}'
-        )}`
+        '/explore?left=%7B%22range%22%3A%7B%22from%22%3A%222020-10-14T01%3A00%3A00.000Z%22%2C%22to%22%3A%222020' +
+          '-10-14T01%3A00%3A01.000Z%22%7D%2C%22datasource%22%3A%22prom1%22%2C%22queries%22%3A%5B%7B%22expr%22%3A%22' +
+          'histogram_quantile%280.5%2C%20sum%28rate%28tempo_spanmetrics_latency_bucket%7Boperation%3D%5C%22operation' +
+          '%5C%22%7D%5B5m%5D%29%29%20by%20%28le%29%29%22%2C%22refId%22%3A%22A%22%7D%5D%2C%22panelsState%22%3A%7B%7D%7D'
       );
 
       const unnamedQuery = links?.metricLinks?.[2];
