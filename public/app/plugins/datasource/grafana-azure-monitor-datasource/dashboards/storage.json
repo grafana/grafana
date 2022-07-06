@@ -954,9 +954,9 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "Microsoft.Storage/storageAccounts/tableServices",
+            "metricDefinition": "$ns/tableServices",
             "metricName": "Transactions",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/tableServices",
+            "metricNamespace": "$ns/tableServices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
             "timeGrain": "auto",
@@ -1044,9 +1044,9 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "Microsoft.Storage/storageAccounts/blobServices",
+            "metricDefinition": "$ns/blobServices",
             "metricName": "Transactions",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/blobServices",
+            "metricNamespace": "$ns/blobServices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
             "timeGrain": "auto",
@@ -1139,9 +1139,9 @@
                 "value": "FileShare"
               }
             ],
-            "metricDefinition": "Microsoft.Storage/storageAccounts/fileServices",
+            "metricDefinition": "$ns/fileServices",
             "metricName": "Transactions",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/fileServices",
+            "metricNamespace": "$ns/fileServices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
             "timeGrain": "auto",
@@ -1230,9 +1230,9 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "Microsoft.Storage/storageAccounts/queueServices",
+            "metricDefinition": "$ns/queueServices",
             "metricName": "Transactions",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/queueServices",
+            "metricNamespace": "$ns/queueServices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
             "timeGrain": "auto",
@@ -1608,7 +1608,7 @@
             "dimensions": [],
             "metricDefinition": "select",
             "metricName": "select",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/tableServices",
+            "metricNamespace": "$ns/tableServices",
             "resourceGroup": "select",
             "resourceName": "select",
             "timeGrain": "",
@@ -1660,9 +1660,9 @@
                 "value": "Tier"
               }
             ],
-            "metricDefinition": "Microsoft.Storage/storageAccounts/blobServices",
+            "metricDefinition": "$ns/blobServices",
             "metricName": "BlobCapacity",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/blobServices",
+            "metricNamespace": "$ns/blobServices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
             "timeGrain": "auto",
@@ -1711,9 +1711,9 @@
                 "value": "FileShare"
               }
             ],
-            "metricDefinition": "Microsoft.Storage/storageAccounts/fileServices",
+            "metricDefinition": "$ns/fileServices",
             "metricName": "FileCapacity",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/fileServices",
+            "metricNamespace": "$ns/fileServices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
             "timeGrain": "auto",
@@ -1757,9 +1757,9 @@
             "dimensionFilter": "*",
             "dimensionFilters": [],
             "dimensions": [],
-            "metricDefinition": "Microsoft.Storage/storageAccounts/queueServices",
+            "metricDefinition": "$ns/queueServices",
             "metricName": "QueueCapacity",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/queueServices",
+            "metricNamespace": "$ns/queueServices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
             "timeGrain": "auto",
@@ -1887,9 +1887,9 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "Microsoft.Storage/storageAccounts/tableServices",
+            "metricDefinition": "$ns/tableServices",
             "metricName": "Availability",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/tableServices",
+            "metricNamespace": "$ns/tableServices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
             "timeGrain": "auto",
@@ -1973,9 +1973,9 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "Microsoft.Storage/storageAccounts/blobServices",
+            "metricDefinition": "$ns/blobServices",
             "metricName": "Availability",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/blobServices",
+            "metricNamespace": "$ns/blobServices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
             "timeGrain": "auto",
@@ -2064,9 +2064,9 @@
                 "value": "FileShare"
               }
             ],
-            "metricDefinition": "Microsoft.Storage/storageAccounts/fileServices",
+            "metricDefinition": "$ns/fileServices",
             "metricName": "Availability",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/fileServices",
+            "metricNamespace": "$ns/fileServices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
             "timeGrain": "auto",
@@ -2151,9 +2151,9 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "Microsoft.Storage/storageAccounts/queueServices",
+            "metricDefinition": "$ns/queueServices",
             "metricName": "Availability",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/queueServices",
+            "metricNamespace": "$ns/queueServices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
             "timeGrain": "auto",
@@ -2679,9 +2679,9 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "Microsoft.Storage/storageAccounts/blobServices",
+            "metricDefinition": "$ns/blobServices",
             "metricName": "Transactions",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/blobServices",
+            "metricNamespace": "$ns/blobServices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
             "timeGrain": "auto",
@@ -2845,9 +2845,9 @@
                 "value": "FileShare"
               }
             ],
-            "metricDefinition": "Microsoft.Storage/storageAccounts/fileServices",
+            "metricDefinition": "$ns/fileServices",
             "metricName": "Transactions",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/fileServices",
+            "metricNamespace": "$ns/fileServices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
             "timeGrain": "auto",
@@ -3007,9 +3007,9 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "Microsoft.Storage/storageAccounts/tableServices",
+            "metricDefinition": "$ns/tableServices",
             "metricName": "Transactions",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/tableServices",
+            "metricNamespace": "$ns/tableServices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
             "timeGrain": "auto",
@@ -3169,9 +3169,9 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "Microsoft.Storage/storageAccounts/queueServices",
+            "metricDefinition": "$ns/queueServices",
             "metricName": "Transactions",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/queueServices",
+            "metricNamespace": "$ns/queueServices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
             "timeGrain": "auto",
@@ -4227,9 +4227,9 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "Microsoft.Storage/storageAccounts/blobServices",
+            "metricDefinition": "$ns/blobServices",
             "metricName": "Availability",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/blobServices",
+            "metricNamespace": "$ns/blobServices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
             "timeGrain": "auto",
@@ -4314,9 +4314,9 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "Microsoft.Storage/storageAccounts/tableServices",
+            "metricDefinition": "$ns/tableServices",
             "metricName": "Availability",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/tableServices",
+            "metricNamespace": "$ns/tableServices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
             "timeGrain": "auto",
@@ -4405,9 +4405,9 @@
                 "value": "FileShare"
               }
             ],
-            "metricDefinition": "Microsoft.Storage/storageAccounts/fileServices",
+            "metricDefinition": "$ns/fileServices",
             "metricName": "Availability",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/fileServices",
+            "metricNamespace": "$ns/fileServices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
             "timeGrain": "auto",
@@ -4492,9 +4492,9 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "Microsoft.Storage/storageAccounts/queueServices",
+            "metricDefinition": "$ns/queueServices",
             "metricName": "Availability",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/queueServices",
+            "metricNamespace": "$ns/queueServices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
             "timeGrain": "auto",
@@ -4644,9 +4644,9 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "Microsoft.Storage/storageAccounts/blobServices",
+            "metricDefinition": "$ns/blobServices",
             "metricName": "Availability",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/blobServices",
+            "metricNamespace": "$ns/blobServices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
             "timeGrain": "auto",
@@ -4736,9 +4736,9 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "Microsoft.Storage/storageAccounts/tableServices",
+            "metricDefinition": "$ns/tableServices",
             "metricName": "Availability",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/tableServices",
+            "metricNamespace": "$ns/tableServices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
             "timeGrain": "auto",
@@ -4833,9 +4833,9 @@
                 "value": "FileShare"
               }
             ],
-            "metricDefinition": "Microsoft.Storage/storageAccounts/fileServices",
+            "metricDefinition": "$ns/fileServices",
             "metricName": "Availability",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/fileServices",
+            "metricNamespace": "$ns/fileServices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
             "timeGrain": "auto",
@@ -4926,9 +4926,9 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "Microsoft.Storage/storageAccounts/queueServices",
+            "metricDefinition": "$ns/queueServices",
             "metricName": "Availability",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/queueServices",
+            "metricNamespace": "$ns/queueServices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
             "timeGrain": "auto",
@@ -5082,9 +5082,9 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "Microsoft.Storage/storageAccounts/blobServices",
+            "metricDefinition": "$ns/blobServices",
             "metricName": "Availability",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/blobServices",
+            "metricNamespace": "$ns/blobServices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
             "timeGrain": "auto",
@@ -5168,9 +5168,9 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "Microsoft.Storage/storageAccounts/tableServices",
+            "metricDefinition": "$ns/tableServices",
             "metricName": "Availability",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/tableServices",
+            "metricNamespace": "$ns/tableServices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
             "timeGrain": "auto",
@@ -5259,9 +5259,9 @@
                 "value": "FileShare"
               }
             ],
-            "metricDefinition": "Microsoft.Storage/storageAccounts/fileServices",
+            "metricDefinition": "$ns/fileServices",
             "metricName": "Availability",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/fileServices",
+            "metricNamespace": "$ns/fileServices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
             "timeGrain": "auto",
@@ -5346,9 +5346,9 @@
                 "value": "Authentication"
               }
             ],
-            "metricDefinition": "Microsoft.Storage/storageAccounts/queueServices",
+            "metricDefinition": "$ns/queueServices",
             "metricName": "Availability",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/queueServices",
+            "metricNamespace": "$ns/queueServices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
             "timeGrain": "auto",
@@ -5574,9 +5574,9 @@
                 "value": "Tier"
               }
             ],
-            "metricDefinition": "Microsoft.Storage/storageAccounts/blobServices",
+            "metricDefinition": "$ns/blobServices",
             "metricName": "BlobCapacity",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/blobServices",
+            "metricNamespace": "$ns/blobServices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
             "timeGrain": "auto",
@@ -5620,9 +5620,9 @@
             "dimensionFilter": "*",
             "dimensionFilters": [],
             "dimensions": [],
-            "metricDefinition": "Microsoft.Storage/storageAccounts/tableServices",
+            "metricDefinition": "$ns/tableServices",
             "metricName": "TableCapacity",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/tableServices",
+            "metricNamespace": "$ns/tableServices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
             "timeGrain": "auto",
@@ -5671,9 +5671,9 @@
                 "value": "FileShare"
               }
             ],
-            "metricDefinition": "Microsoft.Storage/storageAccounts/fileServices",
+            "metricDefinition": "$ns/fileServices",
             "metricName": "FileCapacity",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/fileServices",
+            "metricNamespace": "$ns/fileServices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
             "timeGrain": "auto",
@@ -5717,9 +5717,9 @@
             "dimensionFilter": "*",
             "dimensionFilters": [],
             "dimensions": [],
-            "metricDefinition": "Microsoft.Storage/storageAccounts/queueServices",
+            "metricDefinition": "$ns/queueServices",
             "metricName": "QueueCapacity",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/queueServices",
+            "metricNamespace": "$ns/queueServices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
             "timeGrain": "auto",
@@ -5829,9 +5829,9 @@
                 "value": "Tier"
               }
             ],
-            "metricDefinition": "Microsoft.Storage/storageAccounts/blobServices",
+            "metricDefinition": "$ns/blobServices",
             "metricName": "BlobCapacity",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/blobServices",
+            "metricNamespace": "$ns/blobServices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
             "timeGrain": "auto",
@@ -5875,9 +5875,9 @@
             "dimensionFilter": "*",
             "dimensionFilters": [],
             "dimensions": [],
-            "metricDefinition": "Microsoft.Storage/storageAccounts/tableServices",
+            "metricDefinition": "$ns/tableServices",
             "metricName": "TableCapacity",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/tableServices",
+            "metricNamespace": "$ns/tableServices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
             "timeGrain": "auto",
@@ -5926,9 +5926,9 @@
                 "value": "FileShare"
               }
             ],
-            "metricDefinition": "Microsoft.Storage/storageAccounts/fileServices",
+            "metricDefinition": "$ns/fileServices",
             "metricName": "FileCapacity",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/fileServices",
+            "metricNamespace": "$ns/fileServices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
             "timeGrain": "auto",
@@ -5972,9 +5972,9 @@
             "dimensionFilter": "*",
             "dimensionFilters": [],
             "dimensions": [],
-            "metricDefinition": "Microsoft.Storage/storageAccounts/queueServices",
+            "metricDefinition": "$ns/queueServices",
             "metricName": "QueueCapacity",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/queueServices",
+            "metricNamespace": "$ns/queueServices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
             "timeGrain": "auto",
@@ -6134,9 +6134,9 @@
                 "value": "Tier"
               }
             ],
-            "metricDefinition": "Microsoft.Storage/storageAccounts/blobServices",
+            "metricDefinition": "$ns/blobServices",
             "metricName": "BlobCount",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/blobServices",
+            "metricNamespace": "$ns/blobServices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
             "timeGrain": "auto",
@@ -6180,9 +6180,9 @@
             "dimensionFilter": "*",
             "dimensionFilters": [],
             "dimensions": [],
-            "metricDefinition": "Microsoft.Storage/storageAccounts/tableServices",
+            "metricDefinition": "$ns/tableServices",
             "metricName": "TableCount",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/tableServices",
+            "metricNamespace": "$ns/tableServices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
             "timeGrain": "auto",
@@ -6231,9 +6231,9 @@
                 "value": "FileShare"
               }
             ],
-            "metricDefinition": "Microsoft.Storage/storageAccounts/fileServices",
+            "metricDefinition": "$ns/fileServices",
             "metricName": "FileCount",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/fileServices",
+            "metricNamespace": "$ns/fileServices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
             "timeGrain": "auto",
@@ -6277,9 +6277,9 @@
             "dimensionFilter": "*",
             "dimensionFilters": [],
             "dimensions": [],
-            "metricDefinition": "Microsoft.Storage/storageAccounts/queueServices",
+            "metricDefinition": "$ns/queueServices",
             "metricName": "QueueCount",
-            "metricNamespace": "Microsoft.Storage/storageAccounts/queueServices",
+            "metricNamespace": "$ns/queueServices",
             "resourceGroup": "$rg",
             "resourceName": "$resource/default",
             "timeGrain": "auto",
