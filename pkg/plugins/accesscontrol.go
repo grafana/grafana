@@ -43,7 +43,7 @@ func DeclareRBACRoles(acService ac.AccessControl) error {
 	}
 	PluginsWriter := ac.RoleRegistration{
 		Role: ac.RoleDTO{
-			Name:        ac.FixedRolePrefix + "plugins.app:reader",
+			Name:        ac.FixedRolePrefix + "plugins:writer",
 			DisplayName: "Plugin Access",
 			Description: "Enable and disable plugins, view and edit plugins' settings",
 			Group:       "Plugins",
@@ -53,9 +53,9 @@ func DeclareRBACRoles(acService ac.AccessControl) error {
 		},
 		Grants: []string{string(models.ROLE_ADMIN)},
 	}
-	PluginsManager := ac.RoleRegistration{
+	PluginsMaintainer := ac.RoleRegistration{
 		Role: ac.RoleDTO{
-			Name:        ac.FixedRolePrefix + "plugins.app:reader",
+			Name:        ac.FixedRolePrefix + "plugins:maintainer",
 			DisplayName: "Plugin Access",
 			Description: "Install, uninstall, enable, disable plugins",
 			Group:       "Plugins",
@@ -66,5 +66,5 @@ func DeclareRBACRoles(acService ac.AccessControl) error {
 		},
 		Grants: []string{ac.RoleGrafanaAdmin},
 	}
-	return acService.DeclareFixedRoles(AppPluginsReader, PluginsWriter, PluginsManager)
+	return acService.DeclareFixedRoles(AppPluginsReader, PluginsWriter, PluginsMaintainer)
 }
