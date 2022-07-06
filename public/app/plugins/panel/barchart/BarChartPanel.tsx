@@ -1,4 +1,3 @@
-import { css } from '@emotion/css';
 import React, { useMemo, useRef, useState } from 'react';
 
 import {
@@ -6,7 +5,6 @@ import {
   compareDataFrameStructures,
   DataFrame,
   getFieldDisplayName,
-  GrafanaTheme2,
   PanelProps,
   TimeRange,
   VizOrientation,
@@ -22,7 +20,6 @@ import {
   UPlotConfigBuilder,
   UPLOT_AXIS_FONT_SIZE,
   usePanelContext,
-  useStyles2,
   useTheme2,
   VizLayout,
   VizLegend,
@@ -75,7 +72,6 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
   id,
 }) => {
   const theme = useTheme2();
-  const styles = useStyles2(getStyles);
   const { eventBus } = usePanelContext();
 
   const oldConfig = useRef<UPlotConfigBuilder | undefined>(undefined);
@@ -167,10 +163,23 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
     return (
       <>
         {shouldDisplayCloseButton && (
-          <>
-            <CloseButton onClick={onCloseToolTip} />
-            <div className={styles.closeButtonSpacer} />
-          </>
+          <div
+            style={{
+              width: '100%',
+              display: 'flex',
+              justifyContent: 'flex-end',
+            }}
+          >
+            <CloseButton
+              onClick={onCloseToolTip}
+              style={{
+                position: 'relative',
+                top: 'auto',
+                right: 'auto',
+                marginRight: 0,
+              }}
+            />
+          </div>
         )}
         <DataHoverView
           data={info.aligned}
@@ -304,9 +313,3 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
     </GraphNG>
   );
 };
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  closeButtonSpacer: css`
-    margin-bottom: 15px;
-  `,
-});

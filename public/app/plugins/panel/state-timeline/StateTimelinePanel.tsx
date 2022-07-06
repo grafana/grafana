@@ -1,4 +1,3 @@
-import { css } from '@emotion/css';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { CartesianCoords2D, DataFrame, FieldType, PanelProps } from '@grafana/data';
@@ -53,7 +52,6 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
 
   const onUPlotClick = () => {
     isToolTipOpen.current = !isToolTipOpen.current;
-
     // Linking into useState required to re-render tooltip
     setShouldDisplayCloseButton(isToolTipOpen.current);
   };
@@ -94,17 +92,27 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
       ) {
         return null;
       }
-      const closeButtonSpacer = css`
-        margin-bottom: 15px;
-      `;
 
       return (
         <>
           {shouldDisplayCloseButton && (
-            <>
-              <CloseButton onClick={onCloseToolTip} />
-              <div className={closeButtonSpacer} />
-            </>
+            <div
+              style={{
+                width: '100%',
+                display: 'flex',
+                justifyContent: 'flex-end',
+              }}
+            >
+              <CloseButton
+                onClick={onCloseToolTip}
+                style={{
+                  position: 'relative',
+                  top: 'auto',
+                  right: 'auto',
+                  marginRight: 0,
+                }}
+              />
+            </div>
           )}
           <StateTimelineTooltip
             data={data}

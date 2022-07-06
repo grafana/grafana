@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import React, { useState, HTMLAttributes, useMemo, useRef, useLayoutEffect } from 'react';
-import { useClickAway, useWindowSize } from 'react-use';
+import { useWindowSize } from 'react-use';
 
 import { Dimensions2D, GrafanaTheme2 } from '@grafana/data';
 
@@ -33,11 +33,6 @@ export const VizTooltipContainer: React.FC<VizTooltipContainerProps> = ({
   ...otherProps
 }) => {
   const tooltipRef = useRef<HTMLDivElement>(null);
-  useClickAway(tooltipRef, () => {
-    if (allowPointerEvents) {
-      onClose?.();
-    }
-  });
   const [tooltipMeasurement, setTooltipMeasurement] = useState<Dimensions2D>({ width: 0, height: 0 });
   const { width, height } = useWindowSize();
   const [placement, setPlacement] = useState({
