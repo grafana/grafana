@@ -1,6 +1,5 @@
 // Libraries
 import { cloneDeep, map as lodashMap } from 'lodash';
-import Prism from 'prismjs';
 import { lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 
@@ -111,7 +110,7 @@ export class LokiDatasource
       const normalized = getNormalizedLokiQuery(query);
       const { expr } = normalized;
       // it has to be a logs-producing range-query
-      return expr && !isMetricsQuery(expr) && normalized.queryType === LokiQueryType.Range;
+      return expr && isLogsQuery(expr) && normalized.queryType === LokiQueryType.Range;
     };
 
     const isLogsVolumeAvailable = request.targets.some(isQuerySuitable);
@@ -174,7 +173,7 @@ export class LokiDatasource
   runLiveQueryThroughBackend(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {
     // this only works in explore-mode, so variables don't need to be handled,
     //  and only for logs-queries, not metric queries
-    const logsQueries = request.targets.filter((query) => query.expr !== '' && !isMetricsQuery(query.expr));
+    const logsQueries = request.targets.filter((query) => query.expr !== '' && isLogsQuery(query.expr));
 
     if (logsQueries.length === 0) {
       return of({
@@ -729,21 +728,6 @@ export function lokiSpecialRegexEscape(value: any) {
     return lokiRegularEscape(value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]+?.()|]/g, '\\\\$&'));
   }
   return value;
-}
-
-/**
- * Checks if the query expression uses function and so should return a time series instead of logs.
- * Sometimes important to know that before we actually do the query.
- */
-export function isMetricsQuery(query: string): boolean {
-  if (!query) {
-    return false;
-  }
-  const tokens = Prism.tokenize(query, syntax);
-  return tokens.some((t) => {
-    // Not sure in which cases it can be string maybe if nothing matched which means it should not be a function
-    return typeof t !== 'string' && t.type === 'function';
-  });
 }
 
 function extractLevel(dataFrame: DataFrame): LogLevel {
