@@ -2,6 +2,9 @@ package api
 
 import (
 	"errors"
+	"net/http"
+	"strconv"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -18,8 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
-	"net/http"
-	"strconv"
 )
 
 type Api struct {

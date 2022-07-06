@@ -38,7 +38,7 @@ import (
 func TestAPIGetPublicDashboard(t *testing.T) {
 	t.Run("It should 404 if featureflag is not enabled", func(t *testing.T) {
 		cfg := setting.NewCfg()
-		qs := buildQueryDataService(t, cfg, nil, nil, nil)
+		qs := buildQueryDataService(t, nil, nil, nil)
 		service := publicdashboards.NewFakePublicDashboardService(t)
 		service.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).
 			Return(&models.Dashboard{}, nil).Maybe()
@@ -98,7 +98,7 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 			testServer := setupTestServer(
 				t,
 				setting.NewCfg(),
-				buildQueryDataService(t, setting.NewCfg(), nil, nil, nil),
+				buildQueryDataService(t, nil, nil, nil),
 				featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards),
 				service,
 				nil,
@@ -175,7 +175,7 @@ func TestAPIGetPublicDashboardConfig(t *testing.T) {
 			testServer := setupTestServer(
 				t,
 				setting.NewCfg(),
-				buildQueryDataService(t, setting.NewCfg(), nil, nil, nil),
+				buildQueryDataService(t, nil, nil, nil),
 				featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards),
 				service,
 				nil,
@@ -239,7 +239,7 @@ func TestApiSavePublicDashboardConfig(t *testing.T) {
 			testServer := setupTestServer(
 				t,
 				setting.NewCfg(),
-				buildQueryDataService(t, setting.NewCfg(), nil, nil, nil),
+				buildQueryDataService(t, nil, nil, nil),
 				featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards),
 				service,
 				nil,
@@ -300,7 +300,7 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 		},
 	}
 
-	qds := buildQueryDataService(t, setting.NewCfg(), cacheService, fakePluginClient, nil)
+	qds := buildQueryDataService(t, cacheService, fakePluginClient, nil)
 
 	setup := func(enabled bool) (*web.Mux, *publicdashboards.FakePublicDashboardService) {
 		service := publicdashboards.NewFakePublicDashboardService(t)
@@ -334,6 +334,7 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 
 		fakeDashboardService.On("GetPublicDashboard", mock.Anything, mock.Anything).Return(&models.Dashboard{}, nil)
 		fakeDashboardService.On("GetPublicDashboardConfig", mock.Anything, mock.Anything, mock.Anything).Return(&PublicDashboard{}, nil)
+		fakeDashboardService.On("BuildAnonymousUser", mock.Anything, mock.Anything, mock.Anything).Return(&models.SignedInUser{}, nil)
 		fakeDashboardService.On("BuildPublicDashboardMetricRequest", mock.Anything, mock.Anything, mock.Anything, int64(2)).Return(dtos.MetricRequest{
 			Queries: []*simplejson.Json{
 				simplejson.MustJson([]byte(`
@@ -384,6 +385,7 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 
 		fakeDashboardService.On("GetPublicDashboard", mock.Anything, mock.Anything).Return(&models.Dashboard{}, nil)
 		fakeDashboardService.On("GetPublicDashboardConfig", mock.Anything, mock.Anything, mock.Anything).Return(&PublicDashboard{}, nil)
+		fakeDashboardService.On("BuildAnonymousUser", mock.Anything, mock.Anything, mock.Anything).Return(&models.SignedInUser{}, nil)
 		fakeDashboardService.On("BuildPublicDashboardMetricRequest", mock.Anything, mock.Anything, mock.Anything, int64(2)).Return(dtos.MetricRequest{
 			Queries: []*simplejson.Json{
 				simplejson.MustJson([]byte(`
@@ -413,6 +415,7 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 
 		fakeDashboardService.On("GetPublicDashboard", mock.Anything, mock.Anything).Return(&models.Dashboard{}, nil)
 		fakeDashboardService.On("GetPublicDashboardConfig", mock.Anything, mock.Anything, mock.Anything).Return(&PublicDashboard{}, nil)
+		fakeDashboardService.On("BuildAnonymousUser", mock.Anything, mock.Anything, mock.Anything).Return(&models.SignedInUser{}, nil)
 		fakeDashboardService.On("BuildPublicDashboardMetricRequest", mock.Anything, mock.Anything, mock.Anything, int64(2)).Return(dtos.MetricRequest{
 			Queries: []*simplejson.Json{
 				simplejson.MustJson([]byte(`
@@ -489,7 +492,7 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	db := sqlstore.InitTestDB(t)
 
 	cacheService := service.ProvideCacheService(localcache.ProvideService(), db)
-	qds := buildQueryDataService(t, setting.NewCfg(), cacheService, nil, db)
+	qds := buildQueryDataService(t, cacheService, nil, db)
 
 	_ = db.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 		Uid:      "ds1",
