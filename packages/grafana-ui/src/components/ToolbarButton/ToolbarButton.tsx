@@ -37,7 +37,7 @@ type CommonProps = {
 
 export type ToolbarButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
 
-export type ToolbarButtonVariant = 'default' | 'primary' | 'destructive' | 'active';
+export type ToolbarButtonVariant = 'default' | 'primary' | 'destructive' | 'active' | 'toolbar';
 
 export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
   (
@@ -181,6 +181,17 @@ const getStyles = (theme: GrafanaTheme2) => {
         background: ${theme.colors.background.secondary};
       }
     `,
+    toolbar: css`
+      color: ${theme.colors.text.secondary};
+      background-color: transparent;
+      border: none;
+
+      &:hover {
+        color: ${theme.colors.text.primary};
+        background: ${theme.colors.background.secondary};
+      }
+    `,
+
     active: css`
       color: ${theme.v1.palette.orangeDark};
       border-color: ${theme.v1.palette.orangeDark};
