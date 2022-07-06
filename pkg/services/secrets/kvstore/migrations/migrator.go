@@ -18,8 +18,8 @@ type SecretMigrationService interface {
 }
 
 type SecretMigrationServiceImpl struct {
-	services          []SecretMigrationService
-	serverLockService *serverlock.ServerLockService
+	Services          []SecretMigrationService
+	ServerLockService *serverlock.ServerLockService
 }
 
 func ProvideSecretMigrationService(
@@ -27,8 +27,8 @@ func ProvideSecretMigrationService(
 	dataSourceSecretMigrationService *datasources.DataSourceSecretMigrationService,
 ) *SecretMigrationServiceImpl {
 	return &SecretMigrationServiceImpl{
-		serverLockService: serverLockService,
-		services: []SecretMigrationService{
+		ServerLockService: serverLockService,
+		Services: []SecretMigrationService{
 			dataSourceSecretMigrationService,
 		},
 	}
@@ -37,8 +37,8 @@ func ProvideSecretMigrationService(
 // Run migration services. This will block until all services have exited.
 func (s *SecretMigrationServiceImpl) Migrate(ctx context.Context) error {
 	// Start migration services.
-	return s.serverLockService.LockAndExecute(ctx, "migrate secrets to unified secrets", time.Minute*10, func(context.Context) {
-		for _, service := range s.services {
+	return s.ServerLockService.LockAndExecute(ctx, "migrate secrets to unified secrets", time.Minute*10, func(context.Context) {
+		for _, service := range s.Services {
 			serviceName := reflect.TypeOf(service).String()
 			logger.Debug("Starting secret migration service", "service", serviceName)
 			err := service.Migrate(ctx)
