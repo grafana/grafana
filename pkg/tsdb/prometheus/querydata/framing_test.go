@@ -118,7 +118,10 @@ func loadStoredQuery(fileName string) (*backend.QueryDataRequest, error) {
 }
 
 func runQuery(response []byte, q *backend.QueryDataRequest, wide bool) (*backend.QueryDataResponse, error) {
-	tCtx := setup(wide)
+	tCtx, err := setup(wide)
+	if err != nil {
+		return nil, err
+	}
 	res := &http.Response{
 		StatusCode: 200,
 		Body:       ioutil.NopCloser(bytes.NewReader(response)),

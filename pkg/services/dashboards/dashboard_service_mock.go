@@ -215,12 +215,12 @@ func (_m *FakeDashboardService) GetPublicDashboardConfig(ctx context.Context, or
 	return r0, r1
 }
 
-// HasAdminPermissionInFolders provides a mock function with given fields: ctx, query
-func (_m *FakeDashboardService) HasAdminPermissionInFolders(ctx context.Context, query *models.HasAdminPermissionInFoldersQuery) error {
+// HasAdminPermissionInDashboardsOrFolders provides a mock function with given fields: ctx, query
+func (_m *FakeDashboardService) HasAdminPermissionInDashboardsOrFolders(ctx context.Context, query *models.HasAdminPermissionInDashboardsOrFoldersQuery) error {
 	ret := _m.Called(ctx, query)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *models.HasAdminPermissionInFoldersQuery) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *models.HasAdminPermissionInDashboardsOrFoldersQuery) error); ok {
 		r0 = rf(ctx, query)
 	} else {
 		r0 = ret.Error(0)
