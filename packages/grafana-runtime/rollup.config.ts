@@ -6,14 +6,10 @@ import { externals } from 'rollup-plugin-node-externals';
 
 const pkg = require('./package.json');
 
-const bundle = (config) => ({
-  input: 'src/index.ts',
-  plugins: [externals({ deps: true, packagePath: './package.json' }), resolve(), esbuild()],
-  ...config,
-});
-
 export default [
-  bundle({
+  {
+    input: 'src/index.ts',
+    plugins: [externals({ deps: true, packagePath: './package.json' }), resolve(), esbuild()],
     output: [
       {
         format: 'cjs',
@@ -25,17 +21,17 @@ export default [
         sourcemap: true,
         dir: path.dirname(pkg.publishConfig.module),
         preserveModules: true,
-        // @ts-expect-error
+        // @ts-expect-error (TS cannot assure that `process.env.PROJECT_CWD` is a string)
         preserveModulesRoot: path.join(process.env.PROJECT_CWD, `packages/grafana-runtime/src`),
       },
     ],
-  }),
-  bundle({
+  },
+  {
     input: './compiled/index.d.ts',
     plugins: [dts()],
     output: {
       file: pkg.publishConfig.types,
       format: 'es',
     },
-  }),
+  },
 ];
