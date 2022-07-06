@@ -2,7 +2,6 @@ import { isString } from 'lodash';
 import React, { useEffect, useState } from 'react';
 
 import { ClipboardButton } from '../ClipboardButton/ClipboardButton';
-import { Icon } from '../Icon/Icon';
 import { Modal } from '../Modal/Modal';
 import { CodeEditor } from '../Monaco/CodeEditor';
 
@@ -60,15 +59,8 @@ export function TableCellInspectModal({ value, onDismiss, mode }: TableCellInspe
         <pre>{text}</pre>
       )}
       <Modal.ButtonRow>
-        <ClipboardButton getText={() => text} onClipboardCopy={() => setIsInClipboard(true)}>
-          {!isInClipboard ? (
-            'Copy to Clipboard'
-          ) : (
-            <>
-              <Icon name="check" />
-              Copied to clipboard
-            </>
-          )}
+        <ClipboardButton icon="check" getText={() => text} onClipboardCopy={() => setIsInClipboard(true)}>
+          Copy
         </ClipboardButton>
       </Modal.ButtonRow>
     </Modal>

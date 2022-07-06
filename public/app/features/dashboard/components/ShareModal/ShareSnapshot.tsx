@@ -1,9 +1,8 @@
 import React, { PureComponent } from 'react';
 
-import { AppEvents, SelectableValue } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 import { getBackendSrv, reportInteraction } from '@grafana/runtime';
-import { Button, ClipboardButton, Field, Icon, Input, LinkButton, Modal, Select, Spinner } from '@grafana/ui';
-import { appEvents } from 'app/core/core';
+import { Button, ClipboardButton, Field, Input, LinkButton, Modal, Select, Spinner } from '@grafana/ui';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 
@@ -198,10 +197,6 @@ export class ShareSnapshot extends PureComponent<Props, State> {
     });
   };
 
-  onSnapshotUrlCopy = () => {
-    appEvents.emit(AppEvents.alertSuccess, ['Content copied to clipboard']);
-  };
-
   renderStep1() {
     const { onDismiss } = this.props;
     const { snapshotName, selectedExpireOption, timeoutSeconds, isLoading, sharingButtonText, externalEnabled } =
@@ -262,17 +257,18 @@ export class ShareSnapshot extends PureComponent<Props, State> {
 
     return (
       <>
-        <div className="gf-form" style={{ marginTop: '40px' }}>
-          <div className="gf-form-row">
-            <a href={snapshotUrl} className="large share-modal-link" target="_blank" rel="noreferrer">
-              <Icon name="external-link-alt" /> {snapshotUrl}
-            </a>
-            <br />
-            <ClipboardButton variant="secondary" getText={this.getSnapshotUrl} onClipboardCopy={this.onSnapshotUrlCopy}>
-              Copy Link
-            </ClipboardButton>
-          </div>
-        </div>
+        <Field label="Snapshot URL">
+          <Input
+            id="snapshot-url-input"
+            value={snapshotUrl}
+            readOnly
+            addonAfter={
+              <ClipboardButton icon="copy" variant="primary" getText={this.getSnapshotUrl}>
+                Copy
+              </ClipboardButton>
+            }
+          />
+        </Field>
 
         <div className="pull-right" style={{ padding: '5px' }}>
           Did you make a mistake?{' '}

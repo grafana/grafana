@@ -1,9 +1,7 @@
 import React, { PureComponent } from 'react';
 
-import { AppEvents } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { LoadingPlaceholder, JSONFormatter, Icon, HorizontalGroup, ClipboardButton } from '@grafana/ui';
-import appEvents from 'app/core/app_events';
 
 import { DashboardModel, PanelModel } from '../dashboard/state';
 
@@ -58,10 +56,6 @@ export class TestRuleResult extends PureComponent<Props, State> {
     return JSON.stringify(this.formattedJson, null, 2);
   };
 
-  onClipboardSuccess = () => {
-    appEvents.emit(AppEvents.alertSuccess, ['Content copied to clipboard']);
-  };
-
   onToggleExpand = () => {
     this.setState((prevState) => ({
       ...prevState,
@@ -108,7 +102,7 @@ export class TestRuleResult extends PureComponent<Props, State> {
         <div className="pull-right">
           <HorizontalGroup spacing="md">
             <div onClick={this.onToggleExpand}>{this.renderExpandCollapse()}</div>
-            <ClipboardButton getText={this.getTextForClipboard} onClipboardCopy={this.onClipboardSuccess} icon="copy">
+            <ClipboardButton getText={this.getTextForClipboard} icon="copy">
               Copy to Clipboard
             </ClipboardButton>
           </HorizontalGroup>

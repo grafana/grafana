@@ -146,12 +146,13 @@ export const CreateTokenModal = ({ isOpen, token, serviceAccountLogin, onCreateT
               <div className={styles.modalTokenRow}>
                 <Input name="tokenValue" value={token} readOnly />
                 <ClipboardButton
+                  icon="copy"
                   className={styles.modalCopyToClipboardButton}
                   variant="secondary"
                   size="md"
                   getText={() => token}
                 >
-                  <Icon name="copy" /> Copy to clipboard
+                  Copy to clipboard
                 </ClipboardButton>
               </div>
             </Field>

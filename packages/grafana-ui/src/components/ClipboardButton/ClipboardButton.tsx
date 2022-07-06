@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 
 import { Button, ButtonProps } from '../Button';
 
@@ -12,9 +12,16 @@ export interface Props extends ButtonProps {
 }
 
 export function ClipboardButton({ onClipboardCopy, onClipboardError, children, getText, ...buttonProps }: Props) {
+  const [buttonText, setButtonText] = useState(children);
+  const [buttonIcon, setButtonIcon] = useState(buttonProps.icon);
+
+  buttonProps.icon = buttonIcon;
+
   const buttonRef = useRef<null | HTMLButtonElement>(null);
   const copyTextCallback = useCallback(async () => {
     const textToCopy = getText();
+    setButtonText('Copied!');
+    setButtonIcon('check');
 
     try {
       await copyText(textToCopy, buttonRef);
@@ -26,7 +33,7 @@ export function ClipboardButton({ onClipboardCopy, onClipboardError, children, g
 
   return (
     <Button onClick={copyTextCallback} {...buttonProps} ref={buttonRef}>
-      {children}
+      {buttonText}
     </Button>
   );
 }

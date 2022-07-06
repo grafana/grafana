@@ -1,11 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { AppEvents } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime/src';
-import { Alert, Button, Checkbox, ClipboardButton, Field, FieldSet, Icon, Input, Switch } from '@grafana/ui';
+import { Alert, Button, Checkbox, ClipboardButton, Field, FieldSet, Input, Switch } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
-import { appEvents } from 'app/core/core';
 import { dispatch } from 'app/store/store';
 
 import {
@@ -56,10 +54,6 @@ export const SharePublicDashboard = (props: Props) => {
     }
 
     savePublicDashboardConfig(props.dashboard.uid, publicDashboard, setPublicDashboardConfig).catch();
-  };
-
-  const onShareUrlCopy = () => {
-    appEvents.emit(AppEvents.alertSuccess, ['Content copied to clipboard']);
   };
 
   const onAcknowledge = useCallback(
@@ -179,12 +173,12 @@ export const SharePublicDashboard = (props: Props) => {
                       addonAfter={
                         <ClipboardButton
                           variant="primary"
+                          icon="copy"
                           getText={() => {
                             return generatePublicDashboardUrl(publicDashboard);
                           }}
-                          onClipboardCopy={onShareUrlCopy}
                         >
-                          <Icon name="copy" /> Copy
+                          Copy
                         </ClipboardButton>
                       }
                     />
