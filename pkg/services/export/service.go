@@ -2,15 +2,21 @@ package export
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 	"sync"
+	"time"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type ExportService interface {
@@ -22,25 +28,31 @@ type ExportService interface {
 }
 
 type StandardExport struct {
-	logger log.Logger
-	sql    *sqlstore.SQLStore
-	glive  *live.GrafanaLive
-	mutex  sync.Mutex
+	logger  log.Logger
+	glive   *live.GrafanaLive
+	mutex   sync.Mutex
+	dataDir string
+
+	// Services
+	sql                       *sqlstore.SQLStore
+	dashboardsnapshotsService dashboardsnapshots.Service
 
 	// updated with mutex
 	exportJob Job
 }
 
-func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles, gl *live.GrafanaLive) ExportService {
+func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles, gl *live.GrafanaLive, cfg *setting.Cfg, dashboardsnapshotsService dashboardsnapshots.Service) ExportService {
 	if !features.IsEnabled(featuremgmt.FlagExport) {
 		return &StubExport{}
 	}
 
 	return &StandardExport{
-		sql:       sql,
-		glive:     gl,
-		logger:    log.New("export_service"),
-		exportJob: &stoppedJob{},
+		sql:                       sql,
+		glive:                     gl,
+		logger:                    log.New("export_service"),
+		dashboardsnapshotsService: dashboardsnapshotsService,
+		exportJob:                 &stoppedJob{},
+		dataDir:                   cfg.DataPath,
 	}
 }
 
@@ -67,9 +79,23 @@ func (ex *StandardExport) HandleRequestExport(c *models.ReqContext) response.Res
 		return response.Error(http.StatusLocked, "export already running", nil)
 	}
 
-	job, err := startDummyExportJob(cfg, func(s ExportStatus) {
+	var job Job
+	broadcast := func(s ExportStatus) {
 		ex.broadcastStatus(c.OrgId, s)
-	})
+	}
+	switch cfg.Format {
+	case "dummy":
+		job, err = startDummyExportJob(cfg, broadcast)
+	case "git":
+		dir := filepath.Join(ex.dataDir, "export_git", fmt.Sprintf("git_%d", time.Now().Unix()))
+		if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+			return response.Error(http.StatusBadRequest, "Error creating export folder", nil)
+		}
+		job, err = startGitExportJob(cfg, ex.sql, ex.dashboardsnapshotsService, dir, c.OrgId, broadcast)
+	default:
+		return response.Error(http.StatusBadRequest, "Unsupported job format", nil)
+	}
+
 	if err != nil {
 		ex.logger.Error("failed to start export job", "err", err)
 		return response.Error(http.StatusBadRequest, "failed to start export job", err)

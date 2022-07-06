@@ -257,7 +257,7 @@ type ApiRuleNode struct {
 	Record      string            `yaml:"record,omitempty" json:"record,omitempty"`
 	Alert       string            `yaml:"alert,omitempty" json:"alert,omitempty"`
 	Expr        string            `yaml:"expr" json:"expr"`
-	For         model.Duration    `yaml:"for,omitempty" json:"for,omitempty"`
+	For         *model.Duration   `yaml:"for,omitempty" json:"for,omitempty"`
 	Labels      map[string]string `yaml:"labels,omitempty" json:"labels,omitempty"`
 	Annotations map[string]string `yaml:"annotations,omitempty" json:"annotations,omitempty"`
 }

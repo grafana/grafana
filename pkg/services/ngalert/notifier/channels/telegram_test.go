@@ -40,7 +40,7 @@ func TestTelegramNotifier(t *testing.T) {
 				{
 					Alert: model.Alert{
 						Labels:       model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
-						Annotations:  model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh", "__alertScreenshotToken__": "test-image-1"},
+						Annotations:  model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh", "__alertImageToken__": "test-image-1"},
 						GeneratorURL: "a URL",
 					},
 				},
@@ -61,13 +61,13 @@ func TestTelegramNotifier(t *testing.T) {
 				{
 					Alert: model.Alert{
 						Labels:       model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
-						Annotations:  model.LabelSet{"ann1": "annv1", "__alertScreenshotToken__": "test-image-1"},
+						Annotations:  model.LabelSet{"ann1": "annv1", "__alertImageToken__": "test-image-1"},
 						GeneratorURL: "a URL",
 					},
 				}, {
 					Alert: model.Alert{
 						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val2"},
-						Annotations: model.LabelSet{"ann1": "annv2", "__alertScreenshotToken__": "test-image-2"},
+						Annotations: model.LabelSet{"ann1": "annv2", "__alertImageToken__": "test-image-2"},
 					},
 				},
 			},
