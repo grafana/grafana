@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/url"
-	"sync"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -152,19 +151,11 @@ func NewScheduler(cfg SchedulerCfg, appURL *url.URL, stateManager *state.Manager
 }
 
 func (sch *schedule) Run(ctx context.Context) error {
-	var wg sync.WaitGroup
-	wg.Add(1)
-
 	defer sch.ticker.Stop()
 
-	go func() {
-		defer wg.Done()
-		if err := sch.schedulePeriodic(ctx); err != nil {
-			sch.log.Error("failure while running the rule evaluation loop", "err", err)
-		}
-	}()
-
-	wg.Wait()
+	if err := sch.schedulePeriodic(ctx); err != nil {
+		sch.log.Error("failure while running the rule evaluation loop", "err", err)
+	}
 	return nil
 }
 
