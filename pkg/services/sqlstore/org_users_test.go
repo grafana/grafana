@@ -187,7 +187,7 @@ func TestSQLStore_AddOrgUser(t *testing.T) {
 
 	require.NoError(t, err)
 
-	// assert the org has been removed
+	// assert the org has been correctly set
 	saFound := new(user.User)
 	err = store.WithDbSession(context.Background(), func(sess *DBSession) error {
 		has, err := sess.ID(sa.ID).Get(saFound)
