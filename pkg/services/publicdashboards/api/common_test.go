@@ -33,7 +33,6 @@ import (
 )
 
 type Server struct {
-	t             testing.TB
 	Mux           *web.Mux
 	RouteRegister routing.RouteRegister
 	TestServer    *httptest.Server
@@ -47,7 +46,6 @@ func setupTestServer(
 	service publicdashboards.Service,
 	db *sqlstore.SQLStore,
 ) *web.Mux {
-
 	// build router to register routes
 	rr := routing.NewRouteRegister()
 
@@ -144,7 +142,6 @@ func buildQueryDataService(
 		fpc,
 		&fakeOAuthTokenService{},
 	)
-
 }
 
 //copied from pkg/api/metrics_test.go
@@ -172,7 +169,6 @@ func (ts *fakeOAuthTokenService) IsOAuthPassThruEnabled(*datasources.DataSource)
 // copied from pkg/api/plugins_test.go
 type fakePluginClient struct {
 	plugins.Client
-	req *backend.CallResourceRequest
 	backend.QueryDataHandlerFunc
 }
 

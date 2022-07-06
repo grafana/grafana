@@ -232,7 +232,6 @@ func TestApiSavePublicDashboardConfig(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.Name, func(t *testing.T) {
-
 			service := publicdashboards.NewFakePublicDashboardService(t)
 			service.On("SavePublicDashboardConfig", mock.Anything, mock.AnythingOfType("*models.SavePublicDashboardConfigDTO")).
 				Return(&PublicDashboard{IsEnabled: true}, test.SaveDashboardErr)
@@ -268,7 +267,6 @@ func TestApiSavePublicDashboardConfig(t *testing.T) {
 
 // `/public/dashboards/:uid/query`` endpoint test
 func TestAPIQueryPublicDashboard(t *testing.T) {
-
 	cacheService := &fakeDatasources.FakeCacheService{
 		DataSources: []*datasources.DataSource{
 			{Uid: "mysqlds"},
@@ -376,7 +374,7 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
         }
       }
     }`,
-			string(resp.Body.Bytes()),
+			resp.Body.String(),
 		)
 		require.Equal(t, http.StatusOK, resp.Code)
 	})
@@ -481,7 +479,7 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 					}
 				}
 			}`,
-			string(resp.Body.Bytes()),
+			resp.Body.String(),
 		)
 		require.Equal(t, http.StatusOK, resp.Code)
 	})
@@ -583,6 +581,6 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
           }
         }
       }`,
-		string(resp.Body.Bytes()),
+		resp.Body.String(),
 	)
 }
