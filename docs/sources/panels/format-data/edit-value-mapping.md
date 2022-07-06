@@ -12,7 +12,6 @@ You can change a value mapping at any time.
 
 ## Before you begin
 
-- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel/" >}}).
 - Ensure you have an existing value mapping to edit.
 
 **To edit a value mapping**:

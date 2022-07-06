@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/contact-points/message-templating/template-functions/
-  - /docs/grafana/latest/alerting/message-templating/template-functions/
-  - /docs/grafana/latest/alerting/unified-alerting/message-templating/template-functions/
+  - /docs/grafana/latest/alerting/fundamentals/annotation-label/template-functions/
+  - /docs/grafana/latest/alerting/unified-alerting/fundamentals/annotation-label/template-functions/
 keywords:
   - grafana
   - alerting
@@ -15,7 +14,7 @@ weight: 125
 
 # Template Functions
 
-Template functions allow you to process labels and annotations to generate dynamic notifications.
+Template functions allow you to process alert evaluation results to generate dynamic notifications.
 
 | Name                                      | Argument type                                                | Return type            | Description                                                                                                                                 |
 | ----------------------------------------- | ------------------------------------------------------------ | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |

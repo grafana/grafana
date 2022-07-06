@@ -89,31 +89,52 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string) (
 	if path == "" || path == "/" {
 		t.assureOrgIsInitialized(orgId)
 
+		idx := 0
 		count := len(t.rootsByOrgId[ac.GlobalOrgID])
 		if orgId != ac.GlobalOrgID {
 			count += len(t.rootsByOrgId[orgId])
 		}
 
-		title := data.NewFieldFromFieldType(data.FieldTypeString, count)
 		names := data.NewFieldFromFieldType(data.FieldTypeString, count)
+		title := data.NewFieldFromFieldType(data.FieldTypeString, count)
+		descr := data.NewFieldFromFieldType(data.FieldTypeString, count)
+		types := data.NewFieldFromFieldType(data.FieldTypeString, count)
+		readOnly := data.NewFieldFromFieldType(data.FieldTypeBool, count)
+		builtIn := data.NewFieldFromFieldType(data.FieldTypeBool, count)
 		mtype := data.NewFieldFromFieldType(data.FieldTypeString, count)
 		title.Name = "title"
 		names.Name = "name"
+		descr.Name = "description"
 		mtype.Name = "mediaType"
-		for i, f := range t.rootsByOrgId[ac.GlobalOrgID] {
-			names.Set(i, f.Meta().Config.Prefix)
-			title.Set(i, f.Meta().Config.Name)
-			mtype.Set(i, "directory")
+		types.Name = "storageType"
+		readOnly.Name = "readOnly"
+		builtIn.Name = "builtIn"
+		for _, f := range t.rootsByOrgId[ac.GlobalOrgID] {
+			meta := f.Meta()
+			names.Set(idx, meta.Config.Prefix)
+			title.Set(idx, meta.Config.Name)
+			descr.Set(idx, meta.Config.Description)
+			mtype.Set(idx, "directory")
+			types.Set(idx, meta.Config.Type)
+			readOnly.Set(idx, meta.ReadOnly)
+			builtIn.Set(idx, meta.Builtin)
+			idx++
 		}
 		if orgId != ac.GlobalOrgID {
-			for i, f := range t.rootsByOrgId[orgId] {
-				names.Set(i, f.Meta().Config.Prefix)
-				title.Set(i, f.Meta().Config.Name)
-				mtype.Set(i, "directory")
+			for _, f := range t.rootsByOrgId[orgId] {
+				meta := f.Meta()
+				names.Set(idx, meta.Config.Prefix)
+				title.Set(idx, meta.Config.Name)
+				descr.Set(idx, meta.Config.Description)
+				mtype.Set(idx, "directory")
+				types.Set(idx, meta.Config.Type)
+				readOnly.Set(idx, meta.ReadOnly)
+				builtIn.Set(idx, meta.Builtin)
+				idx++
 			}
 		}
 
-		frame := data.NewFrame("", names, title, mtype)
+		frame := data.NewFrame("", names, title, descr, mtype, types, readOnly, builtIn)
 		frame.SetMeta(&data.FrameMeta{
 			Type: data.FrameTypeDirectoryListing,
 		})
@@ -125,7 +146,11 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string) (
 		return nil, nil // not found (or not ready)
 	}
 
-	listResponse, err := root.List(ctx, path, nil, &filestorage.ListOptions{Recursive: false, WithFolders: true, WithFiles: true})
+	listResponse, err := root.List(ctx, path, nil, &filestorage.ListOptions{
+		Recursive:   false,
+		WithFolders: true,
+		WithFiles:   true,
+	})
 
 	if err != nil {
 		return nil, err
