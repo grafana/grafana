@@ -4,8 +4,8 @@ import { connect } from 'react-redux';
 
 import { GrafanaTheme2, NavModel } from '@grafana/data';
 import { LinkButton, useStyles2 } from '@grafana/ui';
+import { Page } from 'app/core/components/Page/Page';
 
-import Page from '../../core/components/Page/Page';
 import { getNavModel } from '../../core/selectors/navModel';
 import { StoreState } from '../../types';
 

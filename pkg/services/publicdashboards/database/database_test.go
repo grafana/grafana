@@ -10,7 +10,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	dashboards "github.com/grafana/grafana/pkg/services/dashboards/database"
+	dashboards "github.com/grafana/grafana/pkg/services/dashboards"
+	dashboardsDB "github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -26,13 +27,13 @@ var DefaultTime = time.Now().UTC().Round(time.Second)
 // GetPublicDashboard
 func TestIntegrationGetPublicDashboard(t *testing.T) {
 	var sqlStore *sqlstore.SQLStore
-	var dashboardStore *dashboards.DashboardStore
+	var dashboardStore *dashboardsDB.DashboardStore
 	var publicdashboardStore *PublicDashboardStoreImpl
 	var savedDashboard *models.Dashboard
 
 	setup := func() {
 		sqlStore = sqlstore.InitTestDB(t)
-		dashboardStore = dashboards.ProvideDashboardStore(sqlStore)
+		dashboardStore = dashboardsDB.ProvideDashboardStore(sqlStore)
 		publicdashboardStore = ProvideStore(sqlStore)
 		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
 	}
@@ -88,20 +89,20 @@ func TestIntegrationGetPublicDashboard(t *testing.T) {
 		})
 		require.NoError(t, err)
 		_, _, err = publicdashboardStore.GetPublicDashboard(context.Background(), "abc1234")
-		require.Error(t, models.ErrDashboardNotFound, err)
+		require.Error(t, dashboards.ErrDashboardNotFound, err)
 	})
 }
 
 // GetPublicDashboardConfig
 func TestIntegrationGetPublicDashboardConfig(t *testing.T) {
 	var sqlStore *sqlstore.SQLStore
-	var dashboardStore *dashboards.DashboardStore
+	var dashboardStore *dashboardsDB.DashboardStore
 	var publicdashboardStore *PublicDashboardStoreImpl
 	var savedDashboard *models.Dashboard
 
 	setup := func() {
 		sqlStore = sqlstore.InitTestDB(t)
-		dashboardStore = dashboards.ProvideDashboardStore(sqlStore)
+		dashboardStore = dashboardsDB.ProvideDashboardStore(sqlStore)
 		publicdashboardStore = ProvideStore(sqlStore)
 		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
 	}
@@ -116,7 +117,7 @@ func TestIntegrationGetPublicDashboardConfig(t *testing.T) {
 	t.Run("returns dashboard errDashboardIdentifierNotSet", func(t *testing.T) {
 		setup()
 		_, err := publicdashboardStore.GetPublicDashboardConfig(context.Background(), savedDashboard.OrgId, "")
-		require.Error(t, models.ErrDashboardIdentifierNotSet, err)
+		require.Error(t, dashboards.ErrDashboardIdentifierNotSet, err)
 	})
 
 	t.Run("returns isPublic along with public dashboard when exists", func(t *testing.T) {
@@ -148,14 +149,14 @@ func TestIntegrationGetPublicDashboardConfig(t *testing.T) {
 // SavePublicDashboardConfig
 func TestIntegrationSavePublicDashboardConfig(t *testing.T) {
 	var sqlStore *sqlstore.SQLStore
-	var dashboardStore *dashboards.DashboardStore
+	var dashboardStore *dashboardsDB.DashboardStore
 	var publicdashboardStore *PublicDashboardStoreImpl
 	var savedDashboard *models.Dashboard
 	var savedDashboard2 *models.Dashboard
 
 	setup := func() {
 		sqlStore = sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagPublicDashboards}})
-		dashboardStore = dashboards.ProvideDashboardStore(sqlStore)
+		dashboardStore = dashboardsDB.ProvideDashboardStore(sqlStore)
 		publicdashboardStore = ProvideStore(sqlStore)
 		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
 		savedDashboard2 = insertTestDashboard(t, dashboardStore, "testDashie2", 1, 0, true)
@@ -197,14 +198,14 @@ func TestIntegrationSavePublicDashboardConfig(t *testing.T) {
 
 func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 	var sqlStore *sqlstore.SQLStore
-	var dashboardStore *dashboards.DashboardStore
+	var dashboardStore *dashboardsDB.DashboardStore
 	var publicdashboardStore *PublicDashboardStoreImpl
 	var savedDashboard *models.Dashboard
 	var anotherSavedDashboard *models.Dashboard
 
 	setup := func() {
 		sqlStore = sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagPublicDashboards}})
-		dashboardStore = dashboards.ProvideDashboardStore(sqlStore)
+		dashboardStore = dashboardsDB.ProvideDashboardStore(sqlStore)
 		publicdashboardStore = ProvideStore(sqlStore)
 		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
 		anotherSavedDashboard = insertTestDashboard(t, dashboardStore, "test another Dashie", 1, 0, true)
@@ -273,14 +274,14 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 		assert.Equal(t, updatedPublicDashboard.IsEnabled, pdRetrieved.IsEnabled)
 
 		// not updated dashboard shouldn't have changed
-		pdNotUpdatedRetrieved, err := dashboardStore.GetPublicDashboardConfig(context.Background(), anotherSavedDashboard.OrgId, anotherSavedDashboard.Uid)
+		pdNotUpdatedRetrieved, err := publicdashboardStore.GetPublicDashboardConfig(context.Background(), anotherSavedDashboard.OrgId, anotherSavedDashboard.Uid)
 		require.NoError(t, err)
 
 		assert.NotEqual(t, updatedPublicDashboard.UpdatedAt, pdNotUpdatedRetrieved.UpdatedAt)
 		assert.NotEqual(t, updatedPublicDashboard.IsEnabled, pdNotUpdatedRetrieved.IsEnabled)
 	})
 }
-func insertTestDashboard(t *testing.T, dashboardStore *dashboards.DashboardStore, title string, orgId int64,
+func insertTestDashboard(t *testing.T, dashboardStore *dashboardsDB.DashboardStore, title string, orgId int64,
 	folderId int64, isFolder bool, tags ...interface{}) *models.Dashboard {
 	t.Helper()
 	cmd := models.SaveDashboardCommand{

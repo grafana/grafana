@@ -1,45 +1,33 @@
 // Libraries
 import { css, cx } from '@emotion/css';
-import React, { FC, HTMLAttributes, useEffect } from 'react';
+import React from 'react';
 
-import { GrafanaTheme2, NavModel } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { CustomScrollbar, useStyles2 } from '@grafana/ui';
-import { getTitleFromNavModel } from 'app/core/selectors/navModel';
 
-// Components
-import { Branding } from '../Branding/Branding';
 import { Footer } from '../Footer/Footer';
-import PageHeader from '../PageHeader/PageHeader';
+import { PageHeader } from '../PageHeader/PageHeader';
+import { Page as NewPage } from '../PageNew/Page';
 
 import { PageContents } from './PageContents';
+import { PageType } from './types';
+import { usePageNav } from './usePageNav';
+import { usePageTitle } from './usePageTitle';
 
-interface Props extends HTMLAttributes<HTMLDivElement> {
-  children: React.ReactNode;
-  navModel?: NavModel;
-}
-
-export interface PageType extends FC<Props> {
-  Header: typeof PageHeader;
-  Contents: typeof PageContents;
-}
-
-export const Page: PageType = ({ navModel, children, className, ...otherProps }) => {
+export const OldPage: PageType = ({ navId, navModel: oldNavProp, pageNav, children, className, ...otherProps }) => {
   const styles = useStyles2(getStyles);
+  const navModel = usePageNav(navId, oldNavProp);
 
-  useEffect(() => {
-    if (navModel) {
-      const title = getTitleFromNavModel(navModel);
-      document.title = title ? `${title} - ${Branding.AppTitle}` : Branding.AppTitle;
-    } else {
-      document.title = Branding.AppTitle;
-    }
-  }, [navModel]);
+  usePageTitle(navModel, pageNav);
+
+  const pageHeaderNav = pageNav ?? navModel?.main;
 
   return (
     <div {...otherProps} className={cx(styles.wrapper, className)}>
       <CustomScrollbar autoHeightMin={'100%'}>
         <div className="page-scrollbar-content">
-          {navModel && <PageHeader model={navModel} />}
+          {pageHeaderNav && <PageHeader navItem={pageHeaderNav} />}
           {children}
           <Footer />
         </div>
@@ -48,12 +36,12 @@ export const Page: PageType = ({ navModel, children, className, ...otherProps })
   );
 };
 
-Page.Header = PageHeader;
-Page.Contents = PageContents;
+OldPage.Header = PageHeader;
+OldPage.Contents = PageContents;
 
-export default Page;
+export const Page: PageType = config.featureToggles.topnav ? NewPage : OldPage;
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (_: GrafanaTheme2) => ({
   wrapper: css`
     width: 100%;
     flex-grow: 1;

@@ -150,7 +150,7 @@ type HTTPServer struct {
 	authenticator                loginpkg.Authenticator
 	teamPermissionsService       accesscontrol.TeamPermissionsService
 	NotificationService          *notifications.NotificationService
-	dashboardService             dashboards.DashboardService
+	DashboardService             dashboards.DashboardService
 	dashboardProvisioningService dashboards.DashboardProvisioningService
 	folderService                dashboards.FolderService
 	DatasourcePermissionsService permissions.DatasourcePermissionsService
@@ -170,6 +170,7 @@ type HTTPServer struct {
 	CoremodelRegistry            *registry.Generic
 	CoremodelStaticRegistry      *registry.Static
 	kvStore                      kvstore.KVStore
+	secretsMigrator              secrets.Migrator
 }
 
 type ServerOptions struct {
@@ -204,7 +205,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	teamsPermissionsService accesscontrol.TeamPermissionsService, folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
 	starService star.Service, csrfService csrf.Service, coremodelRegistry *registry.Generic, coremodelStaticRegistry *registry.Static,
-	kvStore kvstore.KVStore, remoteSecretsCheck secretsKV.UseRemoteSecretsPluginCheck, publicDashboardsApi *publicdashboardsApi.Api,
+	kvStore kvstore.KVStore, secretsMigrator secrets.Migrator, remoteSecretsCheck secretsKV.UseRemoteSecretsPluginCheck, publicDashboardsApi *publicdashboardsApi.Api,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -269,7 +270,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		authInfoService:              authInfoService,
 		authenticator:                authenticator,
 		NotificationService:          notificationService,
-		dashboardService:             dashboardService,
+		DashboardService:             dashboardService,
 		dashboardProvisioningService: dashboardProvisioningService,
 		folderService:                folderService,
 		DatasourcePermissionsService: datasourcePermissionsService,
@@ -290,6 +291,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		CoremodelStaticRegistry:      coremodelStaticRegistry,
 		kvStore:                      kvStore,
 		publicDashboardsApi:          publicDashboardsApi,
+		secretsMigrator:              secretsMigrator,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")

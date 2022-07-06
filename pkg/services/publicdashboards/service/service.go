@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -153,7 +154,7 @@ func (pd *PublicDashboardServiceImpl) BuildPublicDashboardMetricRequest(ctx cont
 		return dtos.MetricRequest{}, ErrPublicDashboardNotFound
 	}
 
-	queriesByPanel := models.GetQueriesFromDashboard(dashboard.Data)
+	queriesByPanel := models.GroupQueriesByPanelId(dashboard.Data)
 
 	if _, ok := queriesByPanel[panelId]; !ok {
 		return dtos.MetricRequest{}, ErrPublicDashboardPanelNotFound
@@ -166,6 +167,26 @@ func (pd *PublicDashboardServiceImpl) BuildPublicDashboardMetricRequest(ctx cont
 		To:      ts.To,
 		Queries: queriesByPanel[panelId],
 	}, nil
+}
+
+// BuildAnonymousUser creates a user with permissions to read from all datasources used in the dashboard
+func (pd *PublicDashboardServiceImpl) BuildAnonymousUser(ctx context.Context, dashboard *models.Dashboard) (*models.SignedInUser, error) {
+	datasourceUids := models.GetUniqueDashboardDatasourceUids(dashboard.Data)
+
+	// Create a temp user with read-only datasource permissions
+	anonymousUser := &models.SignedInUser{OrgId: dashboard.OrgId, Permissions: make(map[int64]map[string][]string)}
+	permissions := make(map[string][]string)
+	queryScopes := make([]string, 0)
+	readScopes := make([]string, 0)
+	for _, uid := range datasourceUids {
+		queryScopes = append(queryScopes, fmt.Sprintf("datasources:uid:%s", uid))
+		readScopes = append(readScopes, fmt.Sprintf("datasources:uid:%s", uid))
+	}
+	permissions[datasources.ActionQuery] = queryScopes
+	permissions[datasources.ActionRead] = readScopes
+	anonymousUser.Permissions[dashboard.OrgId] = permissions
+
+	return anonymousUser, nil
 }
 
 // generates a uuid formatted without dashes to use as access token

@@ -20,7 +20,9 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardStore "github.com/grafana/grafana/pkg/services/dashboards/database"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -153,7 +155,7 @@ func TestAPIGetPublicDashboardConfig(t *testing.T) {
 			DashboardUid:          "77777",
 			ExpectedHttpResponse:  http.StatusNotFound,
 			PublicDashboardResult: nil,
-			PublicDashboardErr:    models.ErrDashboardNotFound,
+			PublicDashboardErr:    dashboards.ErrDashboardNotFound,
 		},
 		{
 			Name:                  "returns 500 when internal server error",
@@ -224,7 +226,7 @@ func TestApiSavePublicDashboardConfig(t *testing.T) {
 			Name:                  "returns 404 when dashboard not found",
 			ExpectedHttpResponse:  http.StatusNotFound,
 			publicDashboardConfig: &PublicDashboard{},
-			SaveDashboardErr:      models.ErrDashboardNotFound,
+			SaveDashboardErr:      dashboards.ErrDashboardNotFound,
 		},
 	}
 
@@ -268,7 +270,7 @@ func TestApiSavePublicDashboardConfig(t *testing.T) {
 func TestAPIQueryPublicDashboard(t *testing.T) {
 
 	cacheService := &fakeDatasources.FakeCacheService{
-		DataSources: []*models.DataSource{
+		DataSources: []*datasources.DataSource{
 			{Uid: "mysqlds"},
 			{Uid: "promds"},
 			{Uid: "promds2"},
@@ -491,12 +493,12 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	cacheService := service.ProvideCacheService(localcache.ProvideService(), db)
 	qds := buildQueryDataService(t, setting.NewCfg(), cacheService, nil, db)
 
-	_ = db.AddDataSource(context.Background(), &models.AddDataSourceCommand{
+	_ = db.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 		Uid:      "ds1",
 		OrgId:    1,
 		Name:     "laban",
-		Type:     models.DS_MYSQL,
-		Access:   models.DS_ACCESS_DIRECT,
+		Type:     datasources.DS_MYSQL,
+		Access:   datasources.DS_ACCESS_DIRECT,
 		Url:      "http://test",
 		Database: "site",
 		ReadOnly: true,

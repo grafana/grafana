@@ -19,13 +19,13 @@ func TestWithStoredImages(t *testing.T) {
 	alerts := []*types.Alert{{
 		Alert: model.Alert{
 			Annotations: model.LabelSet{
-				models.ScreenshotTokenAnnotation: "test-image-1",
+				models.ImageTokenAnnotation: "test-image-1",
 			},
 		},
 	}, {
 		Alert: model.Alert{
 			Annotations: model.LabelSet{
-				models.ScreenshotTokenAnnotation: "test-image-2",
+				models.ImageTokenAnnotation: "test-image-2",
 			},
 		},
 	}}

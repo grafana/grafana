@@ -7,7 +7,7 @@ import { Icon } from '@grafana/ui';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState } from 'app/types';
 
-import Page from '../Page/Page';
+import { Page } from '../Page/Page';
 
 interface ConnectedProps {
   navModel: NavModel;

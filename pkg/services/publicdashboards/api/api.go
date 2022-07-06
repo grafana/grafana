@@ -198,7 +198,7 @@ func handleDashboardErr(defaultCode int, defaultMsg string, err error) response.
 	}
 
 	// handle dashboard errors as well
-	var dashboardErr models.DashboardErr
+	var dashboardErr dashboards.DashboardErr
 	if ok := errors.As(err, &dashboardErr); ok {
 		return response.Error(dashboardErr.StatusCode, dashboardErr.Error(), dashboardErr)
 	}
@@ -208,10 +208,10 @@ func handleDashboardErr(defaultCode int, defaultMsg string, err error) response.
 
 // Copied from pkg/api/metrics.go
 func handleQueryMetricsError(err error) *response.NormalResponse {
-	if errors.Is(err, models.ErrDataSourceAccessDenied) {
+	if errors.Is(err, datasources.ErrDataSourceAccessDenied) {
 		return response.Error(http.StatusForbidden, "Access denied to data source", err)
 	}
-	if errors.Is(err, models.ErrDataSourceNotFound) {
+	if errors.Is(err, datasources.ErrDataSourceNotFound) {
 		return response.Error(http.StatusNotFound, "Data source not found", err)
 	}
 	var badQuery *query.ErrBadQuery

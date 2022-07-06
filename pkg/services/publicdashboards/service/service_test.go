@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	dashboards "github.com/grafana/grafana/pkg/services/dashboards/database"
+	dashboardsDB "github.com/grafana/grafana/pkg/services/dashboards/database"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards"
 	database "github.com/grafana/grafana/pkg/services/publicdashboards/database"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
@@ -118,7 +118,7 @@ func TestGetPublicDashboard(t *testing.T) {
 func TestSavePublicDashboard(t *testing.T) {
 	t.Run("Saving public dashboard", func(t *testing.T) {
 		sqlStore := sqlstore.InitTestDB(t)
-		dashboardStore := dashboards.ProvideDashboardStore(sqlStore)
+		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore)
 		publicdashboardStore := database.ProvideStore(sqlStore)
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
 
@@ -162,7 +162,7 @@ func TestSavePublicDashboard(t *testing.T) {
 
 	t.Run("Validate pubdash has default time setting value", func(t *testing.T) {
 		sqlStore := sqlstore.InitTestDB(t)
-		dashboardStore := dashboards.ProvideDashboardStore(sqlStore)
+		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore)
 		publicdashboardStore := database.ProvideStore(sqlStore)
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
 
@@ -196,7 +196,7 @@ func TestSavePublicDashboard(t *testing.T) {
 func TestUpdatePublicDashboard(t *testing.T) {
 	t.Run("Updating public dashboard", func(t *testing.T) {
 		sqlStore := sqlstore.InitTestDB(t)
-		dashboardStore := dashboards.ProvideDashboardStore(sqlStore)
+		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore)
 		publicdashboardStore := database.ProvideStore(sqlStore)
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
 
@@ -263,7 +263,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 
 	t.Run("Updating set empty time settings", func(t *testing.T) {
 		sqlStore := sqlstore.InitTestDB(t)
-		dashboardStore := dashboards.ProvideDashboardStore(sqlStore)
+		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore)
 		publicdashboardStore := database.ProvideStore(sqlStore)
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
 
@@ -320,9 +320,30 @@ func TestUpdatePublicDashboard(t *testing.T) {
 	})
 }
 
+func TestBuildAnonymousUser(t *testing.T) {
+	sqlStore := sqlstore.InitTestDB(t)
+	dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore)
+	dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
+	publicdashboardStore := database.ProvideStore(sqlStore)
+	service := &PublicDashboardServiceImpl{
+		log:   log.New("test.logger"),
+		store: publicdashboardStore,
+	}
+
+	t.Run("will add datasource read and query permissions to user for each datasource in dashboard", func(t *testing.T) {
+		user, err := service.BuildAnonymousUser(context.Background(), dashboard)
+		require.NoError(t, err)
+		require.Equal(t, dashboard.OrgId, user.OrgId)
+		require.Equal(t, "datasources:uid:ds1", user.Permissions[user.OrgId]["datasources:query"][0])
+		require.Equal(t, "datasources:uid:ds3", user.Permissions[user.OrgId]["datasources:query"][1])
+		require.Equal(t, "datasources:uid:ds1", user.Permissions[user.OrgId]["datasources:read"][0])
+		require.Equal(t, "datasources:uid:ds3", user.Permissions[user.OrgId]["datasources:read"][1])
+	})
+}
+
 func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
-	dashboardStore := dashboards.ProvideDashboardStore(sqlStore)
+	dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore)
 	publicdashboardStore := database.ProvideStore(sqlStore)
 
 	publicDashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
@@ -419,7 +440,7 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 	})
 }
 
-func insertTestDashboard(t *testing.T, dashboardStore *dashboards.DashboardStore, title string, orgId int64,
+func insertTestDashboard(t *testing.T, dashboardStore *dashboardsDB.DashboardStore, title string, orgId int64,
 	folderId int64, isFolder bool, tags ...interface{}) *models.Dashboard {
 	t.Helper()
 	cmd := models.SaveDashboardCommand{
@@ -433,6 +454,9 @@ func insertTestDashboard(t *testing.T, dashboardStore *dashboards.DashboardStore
 			"panels": []interface{}{
 				map[string]interface{}{
 					"id": 1,
+					"datasource": map[string]interface{}{
+						"uid": "ds1",
+					},
 					"targets": []interface{}{
 						map[string]interface{}{
 							"datasource": map[string]interface{}{
@@ -452,6 +476,9 @@ func insertTestDashboard(t *testing.T, dashboardStore *dashboards.DashboardStore
 				},
 				map[string]interface{}{
 					"id": 2,
+					"datasource": map[string]interface{}{
+						"uid": "ds3",
+					},
 					"targets": []interface{}{
 						map[string]interface{}{
 							"datasource": map[string]interface{}{

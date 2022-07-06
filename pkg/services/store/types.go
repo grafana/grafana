@@ -82,6 +82,11 @@ func (t *baseStorageRuntime) setBuiltin(val bool) *baseStorageRuntime {
 	return t
 }
 
+func (t *baseStorageRuntime) setDescription(v string) *baseStorageRuntime {
+	t.meta.Config.Description = v
+	return t
+}
+
 type RootStorageMeta struct {
 	ReadOnly bool          `json:"editable,omitempty"`
 	Builtin  bool          `json:"builtin,omitempty"`
