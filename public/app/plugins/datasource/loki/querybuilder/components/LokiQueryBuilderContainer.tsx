@@ -1,8 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import React, { useEffect, useReducer } from 'react';
 
-import { PanelData } from '@grafana/data';
-
 import { LokiDatasource } from '../../datasource';
 import { LokiQuery } from '../../types';
 import { lokiQueryModeller } from '../LokiQueryModeller';
