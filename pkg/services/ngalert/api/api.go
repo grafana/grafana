@@ -91,19 +91,19 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	}
 
 	// Register endpoints for proxying to Alertmanager-compatible backends.
-	api.RegisterAlertmanagerApiEndpoints(NewForkedAM(
+	api.RegisterAlertmanagerApiEndpoints(NewForkingAM(
 		api.DatasourceCache,
 		NewLotexAM(proxy, logger),
 		&AlertmanagerSrv{crypto: api.MultiOrgAlertmanager.Crypto, log: logger, ac: api.AccessControl, mam: api.MultiOrgAlertmanager},
 	), m)
 	// Register endpoints for proxying to Prometheus-compatible backends.
-	api.RegisterPrometheusApiEndpoints(NewForkedProm(
+	api.RegisterPrometheusApiEndpoints(NewForkingProm(
 		api.DatasourceCache,
 		NewLotexProm(proxy, logger),
 		&PrometheusSrv{log: logger, manager: api.StateManager, store: api.RuleStore, ac: api.AccessControl},
 	), m)
 	// Register endpoints for proxying to Cortex Ruler-compatible backends.
-	api.RegisterRulerApiEndpoints(NewForkedRuler(
+	api.RegisterRulerApiEndpoints(NewForkingRuler(
 		api.DatasourceCache,
 		NewLotexRuler(proxy, logger),
 		&RulerSrv{
@@ -118,7 +118,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			ac:              api.AccessControl,
 		},
 	), m)
-	api.RegisterTestingApiEndpoints(NewForkedTestingApi(
+	api.RegisterTestingApiEndpoints(NewTestingApi(
 		&TestingApiSrv{
 			AlertingProxy:   proxy,
 			DatasourceCache: api.DatasourceCache,
@@ -126,7 +126,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			accessControl:   api.AccessControl,
 			evaluator:       eval.NewEvaluator(api.Cfg, log.New("ngalert.eval"), api.DatasourceCache, api.SecretsService, api.ExpressionService),
 		}), m)
-	api.RegisterConfigurationApiEndpoints(NewForkedConfiguration(
+	api.RegisterConfigurationApiEndpoints(NewConfiguration(
 		&AdminSrv{
 			store:     api.AdminConfigStore,
 			log:       logger,
@@ -134,7 +134,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		},
 	), m)
 
-	api.RegisterProvisioningApiEndpoints(NewForkedProvisioningApi(&ProvisioningSrv{
+	api.RegisterProvisioningApiEndpoints(NewProvisioningApi(&ProvisioningSrv{
 		log:                 logger,
 		policies:            api.Policies,
 		contactPointService: api.ContactPointService,

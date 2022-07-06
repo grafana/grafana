@@ -17,29 +17,35 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-type PrometheusApiForkingService interface {
+type PrometheusApiHandler interface {
 	RouteGetAlertStatuses(*models.ReqContext) response.Response
 	RouteGetGrafanaAlertStatuses(*models.ReqContext) response.Response
 	RouteGetGrafanaRuleStatuses(*models.ReqContext) response.Response
 	RouteGetRuleStatuses(*models.ReqContext) response.Response
 }
 
-func (f *ForkedPrometheusApi) RouteGetAlertStatuses(ctx *models.ReqContext) response.Response {
+func (f *PrometheusApi) RouteGetAlertStatuses(ctx *models.ReqContext) response.Response {
+	// Parse Path Parameters
 	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
-	return f.forkRouteGetAlertStatuses(ctx, datasourceUIDParam)
+
+	return f.handleRouteGetAlertStatuses(ctx, datasourceUIDParam)
 }
-func (f *ForkedPrometheusApi) RouteGetGrafanaAlertStatuses(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetGrafanaAlertStatuses(ctx)
+func (f *PrometheusApi) RouteGetGrafanaAlertStatuses(ctx *models.ReqContext) response.Response {
+
+	return f.handleRouteGetGrafanaAlertStatuses(ctx)
 }
-func (f *ForkedPrometheusApi) RouteGetGrafanaRuleStatuses(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetGrafanaRuleStatuses(ctx)
+func (f *PrometheusApi) RouteGetGrafanaRuleStatuses(ctx *models.ReqContext) response.Response {
+
+	return f.handleRouteGetGrafanaRuleStatuses(ctx)
 }
-func (f *ForkedPrometheusApi) RouteGetRuleStatuses(ctx *models.ReqContext) response.Response {
+func (f *PrometheusApi) RouteGetRuleStatuses(ctx *models.ReqContext) response.Response {
+	// Parse Path Parameters
 	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
-	return f.forkRouteGetRuleStatuses(ctx, datasourceUIDParam)
+
+	return f.handleRouteGetRuleStatuses(ctx, datasourceUIDParam)
 }
 
-func (api *API) RegisterPrometheusApiEndpoints(srv PrometheusApiForkingService, m *metrics.API) {
+func (api *API) RegisterPrometheusApiEndpoints(srv PrometheusApiHandler, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Get(
 			toMacaronPath("/api/prometheus/{DatasourceUID}/api/v1/alerts"),

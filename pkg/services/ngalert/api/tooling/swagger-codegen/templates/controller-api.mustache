@@ -13,12 +13,15 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 )
 
-type {{classname}}ForkingService interface { {{#operation}}
+type {{classname}}Handler interface { {{#operation}}
 	{{nickname}}(*models.ReqContext) response.Response{{/operation}}
 }
 
 {{#operations}}{{#operation}}
-func (f *Forked{{classname}}) {{nickname}}(ctx *models.ReqContext) response.Response {
+func (f *{{classname}}) {{nickname}}(ctx *models.ReqContext) response.Response {
+  {{#hasPathParams}}	
+	// Parse Path Parameters
+	{{/hasPathParams}}
 	{{#pathParams}}
 	{{paramName}}Param := web.Params(ctx.Req)[":{{baseName}}"]
 	{{/pathParams}}
@@ -28,11 +31,12 @@ func (f *Forked{{classname}}) {{nickname}}(ctx *models.ReqContext) response.Resp
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	{{/bodyParams}}
-	return f.fork{{nickname}}(ctx{{#bodyParams}}, conf{{/bodyParams}}{{#pathParams}}, {{paramName}}Param{{/pathParams}})
+
+	return f.handle{{nickname}}(ctx{{#bodyParams}}, conf{{/bodyParams}}{{#pathParams}}, {{paramName}}Param{{/pathParams}})
 }
 {{/operation}}{{/operations}}
 
-func (api *API) Register{{classname}}Endpoints(srv {{classname}}ForkingService, m *metrics.API) {
+func (api *API) Register{{classname}}Endpoints(srv {{classname}}Handler, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister){ {{#operations}}{{#operation}}
 	group.{{httpMethod}}(
 		toMacaronPath("{{{path}}}"),
