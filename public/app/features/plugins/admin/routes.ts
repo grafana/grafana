@@ -1,5 +1,7 @@
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
+import { contextSrv } from 'app/core/core';
 import { RouteDescriptor } from 'app/core/navigation/types';
+import { AccessControlAction } from 'app/types';
 
 import { isGrafanaAdmin } from './permissions';
 import { PluginAdminRoutes } from './types';
@@ -41,7 +43,11 @@ const ADMIN_ROUTES = [
 ];
 
 export function getRoutes(): RouteDescriptor[] {
-  if (isGrafanaAdmin()) {
+  // TODO maybe write a hasAnyAccess?
+  if (
+    contextSrv.hasAccess(AccessControlAction.PluginsInstall, isGrafanaAdmin()) ||
+    contextSrv.hasAccess(AccessControlAction.PluginsToggle, isGrafanaAdmin())
+  ) {
     return [...DEFAULT_ROUTES, ...ADMIN_ROUTES];
   }
 
