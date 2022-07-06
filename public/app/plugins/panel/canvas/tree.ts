@@ -29,26 +29,6 @@ export function reorderElements(src: FlatElement, dest: FlatElement, elements: a
   return result;
 }
 
-export function getUpdatedSelection(treeData: TreeElement[], selection?: string[], selectedColor?: string) {
-  let elements: TreeElement[] = [];
-  treeData.map((data) => {
-    const isSelected = isItemSelected(data.dataRef, selection);
-    if (isSelected) {
-      data.style = { backgroundColor: selectedColor };
-    } else {
-      data.style = { backgroundColor: '' };
-    }
-
-    if (data.children) {
-      getUpdatedSelection(data.children, selection, selectedColor);
-    }
-
-    elements.push(data);
-  });
-
-  return elements;
-}
-
 export function getTreeData(root?: RootElement | FrameState, selection?: string[], selectedColor?: string) {
   let elements: TreeElement[] = [];
   if (root) {

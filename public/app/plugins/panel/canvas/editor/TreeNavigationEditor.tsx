@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { Global } from '@emotion/react';
 import Tree from 'rc-tree';
 import React, { Key, PureComponent } from 'react';
+import SVG from 'react-inlinesvg';
 
 import { GrafanaTheme, StandardEditorProps } from '@grafana/data';
 import { config } from '@grafana/runtime/src';
@@ -9,9 +10,10 @@ import { getTheme, stylesFactory } from '@grafana/ui';
 
 import { ElementState } from '../../../../features/canvas/runtime/element';
 import { FrameState } from '../../../../features/canvas/runtime/frame';
+import { RootElement } from '../../../../features/canvas/runtime/root';
 import { getGlobalStyles } from '../globalStyles';
 import { PanelOptions } from '../models.gen';
-import { getTreeData, getUpdatedSelection, TreeElement } from '../tree';
+import { getTreeData, TreeElement } from '../tree';
 import { LayerActionID } from '../types';
 import { doSelect } from '../utils';
 
@@ -22,7 +24,7 @@ type Props = StandardEditorProps<any, TreeViewEditorProps, PanelOptions>;
 type State = {
   treeData: TreeElement[];
   autoExpandParent: boolean;
-  expandedKeys: number[];
+  expandedKeys: Key[];
 };
 
 export class TreeNavigationEditor extends PureComponent<Props, State> {
@@ -35,18 +37,7 @@ export class TreeNavigationEditor extends PureComponent<Props, State> {
     };
   }
 
-  UNSAFE_componentWillReceiveProps(nextProps: any) {
-    const { settings } = nextProps.item;
-    if (settings) {
-      const selection: string[] = settings.selected ? settings.selected.map((v: ElementState) => v.getName()) : [];
-      const treeData = getUpdatedSelection([...this.state.treeData], selection, this.selectedBgColor);
-      this.setState({
-        treeData: treeData,
-      });
-    }
-  }
-
-  globalCSS = getGlobalStyles(config.theme2);
+  globalCSS = getGlobalStyles(config.theme);
   settings = this.props.item.settings;
   theme = getTheme();
   styles = getStyles(this.theme);
@@ -132,35 +123,61 @@ export class TreeNavigationEditor extends PureComponent<Props, State> {
         // same Frame parent
         src.parent?.reorderTree(src, dest, true);
       } else {
-        src.parent?.doAction(LayerActionID.Delete, src);
-        src.parent = dest;
-
-        const destIndex = dest.elements.length - 1;
-        dest.elements.splice(destIndex, 0, src);
-        dest.scene.save();
-
+        this.updateElements(src, dest);
         src.updateData(dest.scene.context);
-        dest.reinitializeMoveable();
+      }
+    } else if (src.parent === dest.parent) {
+      src.parent?.reorderTree(src, dest);
+    } else {
+      if (dest.parent) {
+        this.updateElements(src, dest.parent);
+        src.updateData(dest.parent.scene.context);
       }
     }
-    // else if (dest.parent instanceof FrameState) {
-    //   console.log('here');
-    //
-    // }
-    else if (src.parent === dest.parent) {
-      src.parent?.reorderTree(src, dest);
-    }
   };
 
-  updateSource = (src: ElementState, dest: ElementState, isNewChild = false) => {
+  updateElements = (src: ElementState, dest: FrameState | RootElement) => {
     src.parent?.doAction(LayerActionID.Delete, src);
-    src.parent = dest instanceof FrameState && isNewChild ? dest : dest.parent;
+    src.parent = dest;
+
+    const elementContainer = src.div?.getBoundingClientRect();
+    src.setPlacementFromConstraint(elementContainer, dest.div?.getBoundingClientRect());
+
+    const destIndex = dest.elements.length - 1;
+    dest.elements.splice(destIndex, 0, src);
+    dest.scene.save();
+
+    dest.reinitializeMoveable();
   };
+
+  onExpand = (expandedKeys: Key[]) => {
+    this.setState({
+      expandedKeys,
+      autoExpandParent: false,
+    });
+  };
+
+  getSvgIcon = (path = '', style = {}) => <SVG src={path} title={'Node Icon'} style={{ ...style }} />;
 
   render() {
-    if (!this.settings) {
+    const { settings } = this.props.item;
+    if (!settings) {
       return <div>No settings</div>;
     }
+
+    const selection: string[] = settings.selected ? settings.selected.map((v) => v.getName()) : [];
+    const treeData = getTreeData(this.props.item?.settings?.scene.root, selection, this.theme.colors.border1);
+
+    const switcherIcon = (obj: { isLeaf: boolean; expanded: boolean }) => {
+      if (obj.isLeaf) {
+        return this.getSvgIcon('');
+      }
+
+      return this.getSvgIcon('public/img/icons/unicons/angle-right.svg', {
+        transform: `rotate(${obj.expanded ? 90 : 0}deg)`,
+        fill: this.theme.colors.text,
+      });
+    };
 
     return (
       <>
@@ -174,7 +191,10 @@ export class TreeNavigationEditor extends PureComponent<Props, State> {
           showIcon={false}
           allowDrop={this.allowDrop}
           onDrop={this.onDrop}
-          treeData={this.state.treeData}
+          expandedKeys={this.state.expandedKeys}
+          onExpand={this.onExpand}
+          treeData={treeData}
+          switcherIcon={switcherIcon}
         />
       </>
     );
