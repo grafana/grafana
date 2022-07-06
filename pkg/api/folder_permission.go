@@ -126,7 +126,7 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *models.ReqContext) response.Res
 		return response.Success("Dashboard permissions updated")
 	}
 
-	if err := hs.dashboardService.UpdateDashboardACL(c.Req.Context(), folder.Id, items); err != nil {
+	if err := hs.DashboardService.UpdateDashboardACL(c.Req.Context(), folder.Id, items); err != nil {
 		if errors.Is(err, models.ErrDashboardAclInfoMissing) {
 			err = models.ErrFolderAclInfoMissing
 		}

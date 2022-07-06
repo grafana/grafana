@@ -28,7 +28,7 @@ func (hs *HTTPServer) registerRoutes() {
 	reqGrafanaAdmin := middleware.ReqGrafanaAdmin
 	reqEditorRole := middleware.ReqEditorRole
 	reqOrgAdmin := middleware.ReqOrgAdmin
-	reqOrgAdminDashOrFolderAdminOrTeamAdmin := middleware.OrgAdminDashOrFolderAdminOrTeamAdmin(hs.SQLStore, hs.dashboardService)
+	reqOrgAdminDashOrFolderAdminOrTeamAdmin := middleware.OrgAdminDashOrFolderAdminOrTeamAdmin(hs.SQLStore, hs.DashboardService)
 	reqCanAccessTeams := middleware.AdminOrEditorAndFeatureEnabled(hs.Cfg.EditorsCanAdmin)
 	reqSnapshotPublicModeOrSignedIn := middleware.SnapshotPublicModeOrSignedIn(hs.Cfg)
 	redirectFromLegacyPanelEditURL := middleware.RedirectFromLegacyPanelEditURL(hs.Cfg)
@@ -328,10 +328,12 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Any("/plugins/:pluginId/resources/*", hs.CallResource)
 		apiRoute.Get("/plugins/errors", routing.Wrap(hs.GetPluginErrorsList))
 
-		apiRoute.Group("/plugins", func(pluginRoute routing.RouteRegister) {
-			pluginRoute.Post("/:pluginId/install", routing.Wrap(hs.InstallPlugin))
-			pluginRoute.Post("/:pluginId/uninstall", routing.Wrap(hs.UninstallPlugin))
-		}, reqGrafanaAdmin)
+		if hs.Cfg.PluginAdminEnabled && !hs.Cfg.PluginAdminExternalManageEnabled {
+			apiRoute.Group("/plugins", func(pluginRoute routing.RouteRegister) {
+				pluginRoute.Post("/:pluginId/install", routing.Wrap(hs.InstallPlugin))
+				pluginRoute.Post("/:pluginId/uninstall", routing.Wrap(hs.UninstallPlugin))
+			}, reqGrafanaAdmin)
+		}
 
 		apiRoute.Group("/plugins", func(pluginRoute routing.RouteRegister) {
 			pluginRoute.Get("/:pluginId/dashboards/", routing.Wrap(hs.GetPluginDashboards))

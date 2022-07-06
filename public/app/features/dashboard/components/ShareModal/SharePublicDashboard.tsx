@@ -138,7 +138,7 @@ export const SharePublicDashboard = (props: Props) => {
                 <br />
                 <div style={{ padding: '5px' }}>
                   <Input
-                    value={props.dashboard.time.from}
+                    value={props.dashboard.getDefaultTime().from}
                     disabled={true}
                     addonBefore={
                       <span style={{ width: '50px', display: 'flex', alignItems: 'center', padding: '5px' }}>
@@ -147,7 +147,7 @@ export const SharePublicDashboard = (props: Props) => {
                     }
                   />
                   <Input
-                    value={props.dashboard.time.to}
+                    value={props.dashboard.getDefaultTime().to}
                     disabled={true}
                     addonBefore={
                       <span style={{ width: '50px', display: 'flex', alignItems: 'center', padding: '5px' }}>To:</span>
