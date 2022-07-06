@@ -180,18 +180,18 @@ function renderWithProps(overrides?: Partial<LokiQuery>) {
   return { onChange, ...stuff };
 }
 
-async function expectCodeEditor() {
+function expectCodeEditor() {
   // Log browser shows this until log labels are loaded.
-  expect(await screen.findByText('Loading labels...')).toBeInTheDocument();
+  expect(screen.getByText('Loading labels...')).toBeInTheDocument();
 }
 
 async function expectBuilder() {
   expect(await screen.findByText('Labels')).toBeInTheDocument();
 }
 
-async function expectExplain() {
+function expectExplain() {
   // Base message when there is no query
-  expect(await screen.findByText(/Fetch all log/)).toBeInTheDocument();
+  expect(screen.getByText(/Fetch all log/)).toBeInTheDocument();
 }
 
 async function switchToMode(mode: QueryEditorMode) {
