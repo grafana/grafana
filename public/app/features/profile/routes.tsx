@@ -7,28 +7,24 @@ import { RouteDescriptor } from 'app/core/navigation/types';
 const profileRoutes: RouteDescriptor[] = [
   {
     path: '/profile',
-    navId: 'profile/settings',
     component: SafeDynamicImport(
       () => import(/* webpackChunkName: "UserProfileEditPage" */ 'app/features/profile/UserProfileEditPage')
     ),
   },
   {
     path: '/profile/password',
-    navId: 'profile/password',
     component: SafeDynamicImport(
       () => import(/* webPackChunkName: "ChangePasswordPage" */ 'app/features/profile/ChangePasswordPage')
     ),
   },
   {
     path: '/profile/select-org',
-    navId: 'profile/settings',
     component: SafeDynamicImport(
       () => import(/* webpackChunkName: "SelectOrgPage" */ 'app/features/org/SelectOrgPage')
     ),
   },
   {
     path: '/profile/notifications',
-    navId: 'profile/notifications',
     component: SafeDynamicImport(
       () => import(/* webpackChunkName: "NotificationsPage"*/ 'app/features/notifications/NotificationsPage')
     ),
