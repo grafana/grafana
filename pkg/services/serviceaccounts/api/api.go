@@ -84,7 +84,11 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *models.ReqContext) respon
 		return response.Error(http.StatusBadRequest, "Bad request data", err)
 	}
 
-	serviceAccount, err := api.store.CreateServiceAccount(c.Req.Context(), c.OrgId, cmd.Name)
+	if status, err := api.validateRole(cmd.Role, &c.OrgRole); err != nil {
+		return response.Error(status, err.Error(), err)
+	}
+
+	serviceAccount, err := api.store.CreateServiceAccount(c.Req.Context(), c.OrgId, &cmd)
 	switch {
 	case errors.Is(err, database.ErrServiceAccountAlreadyExists):
 		return response.Error(http.StatusBadRequest, "Failed to create service account", err)
@@ -138,11 +142,8 @@ func (api *ServiceAccountsAPI) UpdateServiceAccount(c *models.ReqContext) respon
 		return response.Error(http.StatusBadRequest, "Bad request data", err)
 	}
 
-	if cmd.Role != nil && !cmd.Role.IsValid() {
-		return response.Error(http.StatusBadRequest, "Invalid role specified", nil)
-	}
-	if cmd.Role != nil && !c.OrgRole.Includes(*cmd.Role) {
-		return response.Error(http.StatusForbidden, "Cannot assign a role higher than user's role", nil)
+	if status, err := api.validateRole(cmd.Role, &c.OrgRole); err != nil {
+		return response.Error(status, err.Error(), err)
 	}
 
 	resp, err := api.store.UpdateServiceAccount(c.Req.Context(), c.OrgId, scopeID, &cmd)
@@ -166,6 +167,16 @@ func (api *ServiceAccountsAPI) UpdateServiceAccount(c *models.ReqContext) respon
 		"name":           resp.Name,
 		"serviceaccount": resp,
 	})
+}
+
+func (api *ServiceAccountsAPI) validateRole(r *models.RoleType, orgRole *models.RoleType) (int, error) {
+	if r != nil && !r.IsValid() {
+		return http.StatusBadRequest, serviceaccounts.ErrServiceAccountInvalidRole
+	}
+	if r != nil && !orgRole.Includes(*r) {
+		return http.StatusForbidden, serviceaccounts.ErrServiceAccountRolePrivilegeDenied
+	}
+	return -1, nil
 }
 
 // DELETE /api/serviceaccounts/:serviceAccountId

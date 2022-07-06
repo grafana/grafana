@@ -58,7 +58,7 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 	}
 	testCases := []testCreateSATestCase{
 		{
-			desc:   "should be ok to create serviceaccount with permissions",
+			desc:   "should be ok to create service account with permissions",
 			body:   map[string]interface{}{"name": "New SA"},
 			wantID: "sa-new-sa",
 			acmock: tests.SetupMockAccesscontrol(

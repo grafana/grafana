@@ -32,13 +32,18 @@ func NewServiceAccountsStore(store *sqlstore.SQLStore, kvStore kvstore.KVStore) 
 }
 
 // CreateServiceAccount creates service account
-func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, orgId int64, name string) (saDTO *serviceaccounts.ServiceAccountDTO, err error) {
-	generatedLogin := "sa-" + strings.ToLower(name)
+func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, orgId int64, saForm *serviceaccounts.CreateServiceAccountForm) (saDTO *serviceaccounts.ServiceAccountDTO, err error) {
+	generatedLogin := "sa-" + strings.ToLower(saForm.Name)
 	generatedLogin = strings.ReplaceAll(generatedLogin, " ", "-")
+	isDisabled := false
+	if saForm.IsDisabled != nil {
+		isDisabled = *saForm.IsDisabled
+	}
 	cmd := user.CreateUserCommand{
 		Login:            generatedLogin,
 		OrgID:            orgId,
-		Name:             name,
+		Name:             saForm.Name,
+		IsDisabled:       isDisabled,
 		IsServiceAccount: true,
 	}
 
@@ -50,13 +55,32 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, org
 		return nil, fmt.Errorf("failed to create service account: %w", err)
 	}
 
-	return &serviceaccounts.ServiceAccountDTO{
-		Id:     newuser.ID,
-		Name:   newuser.Name,
-		Login:  newuser.Login,
-		OrgId:  newuser.OrgID,
-		Tokens: 0,
-	}, nil
+	sa := &serviceaccounts.ServiceAccountDTO{
+		Id:         newuser.ID,
+		Name:       newuser.Name,
+		Login:      newuser.Login,
+		OrgId:      newuser.OrgID,
+		Tokens:     0,
+		IsDisabled: newuser.IsDisabled,
+	}
+	// If the role is specified for service account, update it accordingly
+	if saForm.Role != nil {
+		err = s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			updateTime := time.Now()
+			var orgUser models.OrgUser
+			orgUser.Role = *saForm.Role
+			orgUser.Updated = updateTime
+
+			if _, err := sess.Where("org_id = ? AND user_id = ?", orgId, newuser.ID).Update(&orgUser); err != nil {
+				return err
+			}
+			sa.Role = string(*saForm.Role)
+
+			return nil
+		})
+	}
+
+	return sa, nil
 }
 
 // UpdateServiceAccount updates service account
