@@ -102,6 +102,8 @@ type AddOrgUserCommand struct {
 
 	OrgId  int64 `json:"-"`
 	UserId int64 `json:"-"`
+
+	AllowAddingServiceAccount bool `json:"-"`
 }
 
 type UpdateOrgUserCommand struct {
