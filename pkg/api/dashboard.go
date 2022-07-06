@@ -144,7 +144,7 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	// lookup folder title
 	if dash.FolderId > 0 {
 		query := models.GetDashboardQuery{Id: dash.FolderId, OrgId: c.OrgId}
-		if err := hs.dashboardService.GetDashboard(c.Req.Context(), &query); err != nil {
+		if err := hs.DashboardService.GetDashboard(c.Req.Context(), &query); err != nil {
 			if errors.Is(err, dashboards.ErrFolderNotFound) {
 				return response.Error(404, "Folder not found", err)
 			}
@@ -235,7 +235,7 @@ func (hs *HTTPServer) getDashboardHelper(ctx context.Context, orgID int64, id in
 		query = models.GetDashboardQuery{Id: id, OrgId: orgID}
 	}
 
-	if err := hs.dashboardService.GetDashboard(ctx, &query); err != nil {
+	if err := hs.DashboardService.GetDashboard(ctx, &query); err != nil {
 		return nil, response.Error(404, "Dashboard not found", err)
 	}
 
@@ -262,7 +262,7 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 		hs.log.Error("Failed to disconnect library elements", "dashboard", dash.Id, "user", c.SignedInUser.UserId, "error", err)
 	}
 
-	err = hs.dashboardService.DeleteDashboard(c.Req.Context(), dash.Id, c.OrgId)
+	err = hs.DashboardService.DeleteDashboard(c.Req.Context(), dash.Id, c.OrgId)
 	if err != nil {
 		var dashboardErr dashboards.DashboardErr
 		if ok := errors.As(err, &dashboardErr); ok {
@@ -387,7 +387,7 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		Overwrite: cmd.Overwrite,
 	}
 
-	dashboard, err := hs.dashboardService.SaveDashboard(alerting.WithUAEnabled(ctx, hs.Cfg.UnifiedAlerting.IsEnabled()), dashItem, allowUiUpdate)
+	dashboard, err := hs.DashboardService.SaveDashboard(alerting.WithUAEnabled(ctx, hs.Cfg.UnifiedAlerting.IsEnabled()), dashItem, allowUiUpdate)
 
 	if dashboard != nil && hs.entityEventsService != nil {
 		if err := hs.entityEventsService.SaveEvent(ctx, store.SaveEventCmd{
@@ -460,7 +460,7 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) response.Response {
 
 	if preference.HomeDashboardID != 0 {
 		slugQuery := models.GetDashboardRefByIdQuery{Id: preference.HomeDashboardID}
-		err := hs.dashboardService.GetDashboardUIDById(c.Req.Context(), &slugQuery)
+		err := hs.DashboardService.GetDashboardUIDById(c.Req.Context(), &slugQuery)
 		if err == nil {
 			url := models.GetDashboardUrl(slugQuery.Result.Uid, slugQuery.Result.Slug)
 			dashRedirect := dtos.DashboardRedirect{RedirectUri: url}
@@ -546,7 +546,7 @@ func (hs *HTTPServer) GetDashboardVersions(c *models.ReqContext) response.Respon
 			OrgId: c.SignedInUser.OrgId,
 			Uid:   dashUID,
 		}
-		if err := hs.dashboardService.GetDashboard(c.Req.Context(), &q); err != nil {
+		if err := hs.DashboardService.GetDashboard(c.Req.Context(), &q); err != nil {
 			return response.Error(http.StatusBadRequest, "failed to get dashboard by UID", err)
 		}
 		dashID = q.Result.Id
@@ -605,7 +605,7 @@ func (hs *HTTPServer) GetDashboardVersion(c *models.ReqContext) response.Respons
 			OrgId: c.SignedInUser.OrgId,
 			Uid:   dashUID,
 		}
-		if err := hs.dashboardService.GetDashboard(c.Req.Context(), &q); err != nil {
+		if err := hs.DashboardService.GetDashboard(c.Req.Context(), &q); err != nil {
 			return response.Error(http.StatusBadRequest, "failed to get dashboard by UID", err)
 		}
 		dashID = q.Result.Id
@@ -782,7 +782,7 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *models.ReqContext) response.Res
 
 func (hs *HTTPServer) GetDashboardTags(c *models.ReqContext) {
 	query := models.GetDashboardTagsQuery{OrgId: c.OrgId}
-	err := hs.dashboardService.GetDashboardTags(c.Req.Context(), &query)
+	err := hs.DashboardService.GetDashboardTags(c.Req.Context(), &query)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to get tags from database", err)
 		return
@@ -803,7 +803,7 @@ func (hs *HTTPServer) GetDashboardUIDs(c *models.ReqContext) {
 			continue
 		}
 		q.Id = id
-		err = hs.dashboardService.GetDashboardUIDById(c.Req.Context(), q)
+		err = hs.DashboardService.GetDashboardUIDById(c.Req.Context(), q)
 		if err != nil {
 			continue
 		}

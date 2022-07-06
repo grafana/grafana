@@ -148,7 +148,7 @@ type HTTPServer struct {
 	authenticator                loginpkg.Authenticator
 	teamPermissionsService       accesscontrol.TeamPermissionsService
 	NotificationService          *notifications.NotificationService
-	dashboardService             dashboards.DashboardService
+	DashboardService             dashboards.DashboardService
 	dashboardProvisioningService dashboards.DashboardProvisioningService
 	folderService                dashboards.FolderService
 	DatasourcePermissionsService permissions.DatasourcePermissionsService
@@ -267,7 +267,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		authInfoService:              authInfoService,
 		authenticator:                authenticator,
 		NotificationService:          notificationService,
-		dashboardService:             dashboardService,
+		DashboardService:             dashboardService,
 		dashboardProvisioningService: dashboardProvisioningService,
 		folderService:                folderService,
 		DatasourcePermissionsService: datasourcePermissionsService,
