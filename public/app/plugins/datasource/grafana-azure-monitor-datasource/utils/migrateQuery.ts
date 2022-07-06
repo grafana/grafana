@@ -109,6 +109,10 @@ function migrateResourceUri(query: AzureMonitorQuery): AzureMonitorQuery {
     return query;
   }
 
+  if (metricDefinition.includes('$') || resourceName.includes('$')) {
+    return query;
+  }
+
   const resourceUri = UrlBuilder.buildResourceUri(subscription, resourceGroup, metricDefinition, resourceName);
 
   return {

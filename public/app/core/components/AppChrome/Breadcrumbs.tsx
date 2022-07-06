@@ -4,11 +4,9 @@ import React from 'react';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { useStyles2, Icon, IconName } from '@grafana/ui';
 
-import { TopNavProps } from './TopNavUpdate';
-
-export interface Props extends TopNavProps {
+export interface Props {
   sectionNav: NavModelItem;
-  subNav?: NavModelItem;
+  pageNav?: NavModelItem;
 }
 
 export interface Breadcrumb {
@@ -17,9 +15,9 @@ export interface Breadcrumb {
   href?: string;
 }
 
-export function Breadcrumbs({ sectionNav, subNav }: Props) {
+export function Breadcrumbs({ sectionNav, pageNav }: Props) {
   const styles = useStyles2(getStyles);
-  const crumbs: Breadcrumb[] = [{ icon: 'home', href: '/' }];
+  const crumbs: Breadcrumb[] = [{ icon: 'home-alt', href: '/' }];
 
   function addCrumbs(node: NavModelItem) {
     if (node.parentItem) {
@@ -31,8 +29,8 @@ export function Breadcrumbs({ sectionNav, subNav }: Props) {
 
   addCrumbs(sectionNav);
 
-  if (subNav) {
-    addCrumbs(subNav);
+  if (pageNav) {
+    addCrumbs(pageNav);
   }
 
   return (

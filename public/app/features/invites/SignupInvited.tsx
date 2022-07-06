@@ -3,7 +3,7 @@ import { useAsync } from 'react-use';
 
 import { getBackendSrv } from '@grafana/runtime';
 import { Button, Field, Form, Input } from '@grafana/ui';
-import Page from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import { getConfig } from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
