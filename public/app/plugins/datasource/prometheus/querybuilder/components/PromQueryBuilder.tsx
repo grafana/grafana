@@ -6,17 +6,15 @@ import { EditorRow } from '@grafana/experimental';
 import { PrometheusDatasource } from '../../datasource';
 import { getMetadataString } from '../../language_provider';
 import { promQueryModeller } from '../PromQueryModeller';
-import { buildVisualQueryFromString } from '../parsing';
 import { LabelFilters } from '../shared/LabelFilters';
-import { PromLokiVisualQuery } from '../shared/LokiAndPromQueryModellerBase';
 import { OperationList } from '../shared/OperationList';
 import { OperationsEditorRow } from '../shared/OperationsEditorRow';
-import { QueryBuilderHints } from '../shared/QueryBuilderHints';
 import { QueryBuilderLabelFilter } from '../shared/types';
 import { PromVisualQuery } from '../types';
 
 import { MetricSelect } from './MetricSelect';
 import { NestedQueryList } from './NestedQueryList';
+import { PromQueryBuilderHints } from './PromQueryBuilderHints';
 
 export interface Props {
   query: PromVisualQuery;
@@ -110,14 +108,7 @@ export const PromQueryBuilder = React.memo<Props>(({ datasource, query, onChange
           onChange={onChange}
           onRunQuery={onRunQuery}
         />
-        <QueryBuilderHints
-          datasource={datasource}
-          query={query}
-          onChange={onChange as (query: PromLokiVisualQuery) => void}
-          data={data}
-          queryModeller={promQueryModeller}
-          buildVisualQueryFromString={buildVisualQueryFromString}
-        />
+        <PromQueryBuilderHints datasource={datasource} query={query} onChange={onChange} data={data} />
       </OperationsEditorRow>
       {query.binaryQueries && query.binaryQueries.length > 0 && (
         <NestedQueryList query={query} datasource={datasource} onChange={onChange} onRunQuery={onRunQuery} />
