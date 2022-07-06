@@ -114,7 +114,7 @@ func (ch *commitHelper) add(opts commitOptions) error {
 		}
 	}
 	sig := user.getAuthor()
-	if opts.when.Unix() > 10 {
+	if opts.when.Unix() > 100 {
 		sig.When = opts.when
 	}
 
@@ -147,6 +147,7 @@ func (u *userInfo) getAuthor() object.Signature {
 	return object.Signature{
 		Name:  firstRealStringX(u.Name, u.Login, u.Email, "?"),
 		Email: firstRealStringX(u.Email, u.Login, u.Name, "?"),
+		When:  time.Now(),
 	}
 }
 

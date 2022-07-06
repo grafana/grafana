@@ -109,6 +109,10 @@ func exportSystemPreferences(helper *commitHelper, job *gitExportJob) error {
 
 		// add a file for all useres that may not be in the system
 		for _, user := range users {
+			if user.IsServiceAccount {
+				continue
+			}
+
 			row := preferences{
 				Theme: user.Theme, // never set?
 			}
