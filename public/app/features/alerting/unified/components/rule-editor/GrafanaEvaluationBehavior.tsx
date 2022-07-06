@@ -27,10 +27,7 @@ const forValidationOptions = (evaluateEvery: string): RegisterOptions => ({
     const millisFor = durationToMilliseconds(forDuration);
     const millisEvery = durationToMilliseconds(evaluateEveryDuration);
 
-    if (millisEvery && millisFor && millisEvery <= millisFor) {
-      return 'For duration must be greater than evaluate every duration.';
-    }
-    return true;
+    return millisFor >= millisEvery ? true : 'For must be greater than or equal to evaluate every.';
   },
 });
 
