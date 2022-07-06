@@ -15,8 +15,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	acDatabase "github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
+	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
@@ -35,7 +38,7 @@ var (
 func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 	store := sqlstore.InitTestDB(t)
 	kvStore := kvstore.ProvideService(store)
-	saStore := database.NewServiceAccountsStore(store, kvStore)
+	saStore := database.ProvideServiceAccountsStore(store, kvStore)
 	svcmock := tests.ServiceAccountMock{}
 
 	autoAssignOrg := store.Cfg.AutoAssignOrg
@@ -155,7 +158,7 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 func TestServiceAccountsAPI_DeleteServiceAccount(t *testing.T) {
 	store := sqlstore.InitTestDB(t)
 	kvStore := kvstore.ProvideService(store)
-	saStore := database.NewServiceAccountsStore(store, kvStore)
+	saStore := database.ProvideServiceAccountsStore(store, kvStore)
 	svcmock := tests.ServiceAccountMock{}
 
 	var requestResponse = func(server *web.Mux, httpMethod, requestpath string) *httptest.ResponseRecorder {
@@ -224,7 +227,11 @@ func setupTestServer(t *testing.T, svc *tests.ServiceAccountMock,
 	routerRegister routing.RouteRegister,
 	acmock *accesscontrolmock.Mock,
 	sqlStore *sqlstore.SQLStore, saStore serviceaccounts.Store) (*web.Mux, *ServiceAccountsAPI) {
-	a := NewServiceAccountsAPI(setting.NewCfg(), svc, acmock, routerRegister, saStore)
+	cfg := setting.NewCfg()
+	saPermissionService, err := ossaccesscontrol.ProvideServiceAccountPermissions(cfg, routing.NewRouteRegister(), sqlStore, acmock, acDatabase.ProvideService(sqlStore), &licensing.OSSLicensingService{}, saStore)
+	require.NoError(t, err)
+
+	a := NewServiceAccountsAPI(cfg, svc, acmock, routerRegister, saStore, saPermissionService)
 	a.RegisterAPIEndpoints()
 
 	a.cfg.ApiKeyMaxSecondsToLive = -1 // disable api key expiration
@@ -251,7 +258,7 @@ func setupTestServer(t *testing.T, svc *tests.ServiceAccountMock,
 func TestServiceAccountsAPI_RetrieveServiceAccount(t *testing.T) {
 	store := sqlstore.InitTestDB(t)
 	kvStore := kvstore.ProvideService(store)
-	saStore := database.NewServiceAccountsStore(store, kvStore)
+	saStore := database.ProvideServiceAccountsStore(store, kvStore)
 	svcmock := tests.ServiceAccountMock{}
 	type testRetrieveSATestCase struct {
 		desc         string
@@ -342,7 +349,7 @@ func newString(s string) *string {
 func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
 	store := sqlstore.InitTestDB(t)
 	kvStore := kvstore.ProvideService(store)
-	saStore := database.NewServiceAccountsStore(store, kvStore)
+	saStore := database.ProvideServiceAccountsStore(store, kvStore)
 	svcmock := tests.ServiceAccountMock{}
 	type testUpdateSATestCase struct {
 		desc         string

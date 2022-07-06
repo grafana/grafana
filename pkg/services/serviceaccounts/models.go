@@ -13,10 +13,12 @@ var (
 )
 
 const (
-	ActionRead   = "serviceaccounts:read"
-	ActionWrite  = "serviceaccounts:write"
-	ActionCreate = "serviceaccounts:create"
-	ActionDelete = "serviceaccounts:delete"
+	ActionRead             = "serviceaccounts:read"
+	ActionWrite            = "serviceaccounts:write"
+	ActionCreate           = "serviceaccounts:create"
+	ActionDelete           = "serviceaccounts:delete"
+	ActionPermissionsRead  = "serviceaccounts.permissions:read"
+	ActionPermissionsWrite = "serviceaccounts.permissions:write"
 )
 
 type ServiceAccount struct {

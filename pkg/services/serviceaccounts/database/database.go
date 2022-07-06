@@ -23,7 +23,7 @@ type ServiceAccountsStoreImpl struct {
 	log      log.Logger
 }
 
-func NewServiceAccountsStore(store *sqlstore.SQLStore, kvStore kvstore.KVStore) *ServiceAccountsStoreImpl {
+func ProvideServiceAccountsStore(store *sqlstore.SQLStore, kvStore kvstore.KVStore) *ServiceAccountsStoreImpl {
 	return &ServiceAccountsStoreImpl{
 		sqlStore: store,
 		kvStore:  kvStore,
