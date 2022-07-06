@@ -165,7 +165,7 @@ type HTTPServer struct {
 	folderPermissionsService     accesscontrol.FolderPermissionsService
 	dashboardPermissionsService  accesscontrol.DashboardPermissionsService
 	dashboardVersionService      dashver.Service
-	publicDashboardsApi          *publicdashboardsApi.Api
+	PublicDashboardsApi          *publicdashboardsApi.Api
 	starService                  star.Service
 	CoremodelRegistry            *registry.Generic
 	CoremodelStaticRegistry      *registry.Static
@@ -290,7 +290,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		CoremodelRegistry:            coremodelRegistry,
 		CoremodelStaticRegistry:      coremodelStaticRegistry,
 		kvStore:                      kvStore,
-		publicDashboardsApi:          publicDashboardsApi,
+		PublicDashboardsApi:          publicDashboardsApi,
 		secretsMigrator:              secretsMigrator,
 	}
 	if hs.Listener != nil {

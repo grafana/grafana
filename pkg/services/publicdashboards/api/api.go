@@ -2,11 +2,6 @@ package api
 
 import (
 	"errors"
-	"fmt"
-	"net/http"
-	"strconv"
-	"strings"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -23,6 +18,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
+	"net/http"
+	"strconv"
 )
 
 type Api struct {
@@ -164,19 +161,11 @@ func (api *Api) QueryPublicDashboard(c *models.ReqContext) response.Response {
 		return handleDashboardErr(http.StatusInternalServerError, "Failed to get queries for public dashboard", err)
 	}
 
-	// Get all needed datasource UIDs from queries
-	var uids []string
-	for _, query := range reqDTO.Queries {
-		uids = append(uids, query.Get("datasource").Get("uid").MustString())
-	}
+	anonymousUser, err := api.PublicDashboardService.BuildAnonymousUser(c.Req.Context(), dashboard)
 
-	// Create a temp user with read-only datasource permissions
-	anonymousUser := &models.SignedInUser{OrgId: dashboard.OrgId, Permissions: make(map[int64]map[string][]string)}
-	permissions := make(map[string][]string)
-	datasourceScope := fmt.Sprintf("datasources:uid:%s", strings.Join(uids, ","))
-	permissions[datasources.ActionQuery] = []string{datasourceScope}
-	permissions[datasources.ActionRead] = []string{datasourceScope}
-	anonymousUser.Permissions[dashboard.OrgId] = permissions
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "could not create anonymous user", err)
+	}
 
 	resp, err := api.QueryDataService.QueryDataMultipleSources(c.Req.Context(), anonymousUser, c.SkipCache, reqDTO, true)
 
