@@ -45,7 +45,7 @@ func (hs *HTTPServer) initAppPluginRoutes(r *web.Mux) {
 
 			// Preventing access to plugin routes if the user has no right to access the plugin
 			authorize := ac.Middleware(hs.AccessControl)
-			handlers = append(handlers, authorize(ac.ReqSignedIn,
+			handlers = append(handlers, authorize(middleware.ReqSignedIn,
 				ac.EvalPermission(plugins.ActionAppAccess, plugins.ScopeProvider.GetResourceScope(plugin.ID))))
 
 			if route.ReqRole != "" {
