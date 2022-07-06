@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
-	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/searchV2"
@@ -94,7 +93,7 @@ func TestPluginManager_int_init(t *testing.T) {
 
 	pmCfg := plugins.FromGrafanaCfg(cfg)
 	pm, err := ProvideService(cfg, registry.NewInMemory(), loader.New(pmCfg, license, signature.NewUnsignedAuthorizer(pmCfg),
-		provider.ProvideService(coreRegistry)), acmock.New())
+		provider.ProvideService(coreRegistry)))
 	require.NoError(t, err)
 
 	ctx := context.Background()

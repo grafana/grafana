@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/installer"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -35,7 +34,6 @@ type PluginManager struct {
 	pluginsMu       sync.RWMutex
 	pluginSources   []PluginSource
 	log             log.Logger
-	ac              accesscontrol.AccessControl
 }
 
 type PluginSource struct {
@@ -43,19 +41,19 @@ type PluginSource struct {
 	Paths []string
 }
 
-func ProvideService(grafanaCfg *setting.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service, ac accesscontrol.AccessControl) (*PluginManager, error) {
+func ProvideService(grafanaCfg *setting.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service) (*PluginManager, error) {
 	pm := New(plugins.FromGrafanaCfg(grafanaCfg), pluginRegistry, []PluginSource{
 		{Class: plugins.Core, Paths: corePluginPaths(grafanaCfg)},
 		{Class: plugins.Bundled, Paths: []string{grafanaCfg.BundledPluginsPath}},
 		{Class: plugins.External, Paths: append([]string{grafanaCfg.PluginsPath}, pluginSettingPaths(grafanaCfg)...)},
-	}, pluginLoader, ac)
+	}, pluginLoader)
 	if err := pm.Init(); err != nil {
 		return nil, err
 	}
 	return pm, nil
 }
 
-func New(cfg *plugins.Cfg, pluginRegistry registry.Service, pluginSources []PluginSource, pluginLoader loader.Service, ac accesscontrol.AccessControl) *PluginManager {
+func New(cfg *plugins.Cfg, pluginRegistry registry.Service, pluginSources []PluginSource, pluginLoader loader.Service) *PluginManager {
 	return &PluginManager{
 		cfg:             cfg,
 		pluginLoader:    pluginLoader,
@@ -63,15 +61,10 @@ func New(cfg *plugins.Cfg, pluginRegistry registry.Service, pluginSources []Plug
 		pluginRegistry:  pluginRegistry,
 		log:             log.New("plugin.manager"),
 		pluginInstaller: installer.New(false, cfg.BuildVersion, newInstallerLogger("plugin.installer", true)),
-		ac:              ac,
 	}
 }
 
 func (m *PluginManager) Init() error {
-	if err := plugins.DeclareRBACRoles(m.ac); err != nil {
-		return err
-	}
-
 	for _, ps := range m.pluginSources {
 		err := m.loadPlugins(context.Background(), ps.Class, ps.Paths...)
 		if err != nil {

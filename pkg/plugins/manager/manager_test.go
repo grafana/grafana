@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
-	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 )
 
 const (
@@ -30,7 +29,7 @@ func TestPluginManager_Init(t *testing.T) {
 			{Class: plugins.Bundled, Paths: []string{"path1"}},
 			{Class: plugins.Core, Paths: []string{"path2"}},
 			{Class: plugins.External, Paths: []string{"path3"}},
-		}, loader, acmock.New())
+		}, loader)
 
 		err := pm.Init()
 		require.NoError(t, err)
@@ -316,7 +315,7 @@ func TestPluginManager_registeredPlugins(t *testing.T) {
 				testPluginID: decommissionedPlugin,
 				"test-app":   {},
 			},
-		}, []PluginSource{}, &fakeLoader{}, acmock.New())
+		}, []PluginSource{}, &fakeLoader{})
 
 		rps := pm.registeredPlugins(context.Background())
 		require.Equal(t, 2, len(rps))
@@ -524,7 +523,7 @@ func TestPluginManager_lifecycle_unmanaged(t *testing.T) {
 func createManager(t *testing.T, cbs ...func(*PluginManager)) *PluginManager {
 	t.Helper()
 
-	pm := New(&plugins.Cfg{}, newFakePluginRegistry(), nil, &fakeLoader{}, acmock.New())
+	pm := New(&plugins.Cfg{}, newFakePluginRegistry(), nil, &fakeLoader{})
 
 	for _, cb := range cbs {
 		cb(pm)
@@ -584,7 +583,7 @@ func newScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *managerS
 		ManagedIdentityClientId: "client-id",
 	}
 
-	manager := New(cfg, registry.NewInMemory(), nil, &fakeLoader{}, acmock.New())
+	manager := New(cfg, registry.NewInMemory(), nil, &fakeLoader{})
 	ctx := &managerScenarioCtx{
 		manager: manager,
 	}
