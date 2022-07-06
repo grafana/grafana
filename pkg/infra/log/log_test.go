@@ -38,7 +38,7 @@ func TestLogger(t *testing.T) {
 		require.Equal(t, "logger", ctx.loggedArgs[0][0].(string))
 		require.Equal(t, "one", ctx.loggedArgs[0][1].(string))
 		require.Equal(t, "t", ctx.loggedArgs[0][2].(string))
-		require.Equal(t, ctx.mockedTime.Format("2006-01-02T15:04:05.99-0700"), ctx.loggedArgs[0][3].(fmt.Stringer).String())
+		require.Equal(t, ctx.mockedTime.Format(time.RFC3339Nano), ctx.loggedArgs[0][3].(fmt.Stringer).String())
 		require.Equal(t, "msg", ctx.loggedArgs[0][4].(string))
 		require.Equal(t, "hello 1", ctx.loggedArgs[0][5].(string))
 
@@ -46,7 +46,7 @@ func TestLogger(t *testing.T) {
 		require.Equal(t, "logger", ctx.loggedArgs[1][0].(string))
 		require.Equal(t, "two", ctx.loggedArgs[1][1].(string))
 		require.Equal(t, "t", ctx.loggedArgs[0][2].(string))
-		require.Equal(t, ctx.mockedTime.Format("2006-01-02T15:04:05.99-0700"), ctx.loggedArgs[0][3].(fmt.Stringer).String())
+		require.Equal(t, ctx.mockedTime.Format(time.RFC3339Nano), ctx.loggedArgs[0][3].(fmt.Stringer).String())
 		require.Equal(t, "msg", ctx.loggedArgs[1][4].(string))
 		require.Equal(t, "hello 2", ctx.loggedArgs[1][5].(string))
 
@@ -66,7 +66,7 @@ func TestLogger(t *testing.T) {
 		require.Equal(t, "key", ctx.loggedArgs[3][2].(string))
 		require.Equal(t, "value", ctx.loggedArgs[3][3].(string))
 		require.Equal(t, "t", ctx.loggedArgs[3][4].(string))
-		require.Equal(t, ctx.mockedTime.Format("2006-01-02T15:04:05.99-0700"), ctx.loggedArgs[3][5].(fmt.Stringer).String())
+		require.Equal(t, ctx.mockedTime.Format(time.RFC3339Nano), ctx.loggedArgs[3][5].(fmt.Stringer).String())
 		require.Equal(t, "msg", ctx.loggedArgs[3][6].(string))
 		require.Equal(t, "hello 4", ctx.loggedArgs[3][7].(string))
 
