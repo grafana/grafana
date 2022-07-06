@@ -87,10 +87,10 @@ function legacyCreateSpanLinkFactory(
   createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<Field>
 ) {
   let logsDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
-  const isSplunkDS = logsDataSourceSettings?.type === 'grafana-splunk-datasource';
   if (traceToLogsOptions?.datasourceUid) {
     logsDataSourceSettings = getDatasourceSrv().getInstanceSettings(traceToLogsOptions.datasourceUid);
   }
+  const isSplunkDS = logsDataSourceSettings?.type === 'grafana-splunk-datasource';
 
   let metricsDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
   if (traceToMetricsOptions?.datasourceUid) {
