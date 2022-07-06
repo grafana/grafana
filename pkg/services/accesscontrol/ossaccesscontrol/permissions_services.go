@@ -59,9 +59,10 @@ func ProvideTeamPermissions(
 			return nil
 		},
 		Assignments: resourcepermissions.Assignments{
-			Users:        true,
-			Teams:        false,
-			BuiltInRoles: false,
+			Users:           true,
+			Teams:           false,
+			BuiltInRoles:    false,
+			ServiceAccounts: true,
 		},
 		PermissionsToActions: map[string][]string{
 			"Member": TeamMemberActions,
@@ -150,9 +151,10 @@ func ProvideDashboardPermissions(
 			return []string{}, nil
 		},
 		Assignments: resourcepermissions.Assignments{
-			Users:        true,
-			Teams:        true,
-			BuiltInRoles: true,
+			Users:           true,
+			Teams:           true,
+			BuiltInRoles:    true,
+			ServiceAccounts: false,
 		},
 		PermissionsToActions: map[string][]string{
 			"View":  DashboardViewActions,
@@ -207,9 +209,10 @@ func ProvideFolderPermissions(
 			return nil
 		},
 		Assignments: resourcepermissions.Assignments{
-			Users:        true,
-			Teams:        true,
-			BuiltInRoles: true,
+			Users:           true,
+			Teams:           true,
+			BuiltInRoles:    true,
+			ServiceAccounts: false,
 		},
 		PermissionsToActions: map[string][]string{
 			"View":  append(DashboardViewActions, FolderViewActions...),
