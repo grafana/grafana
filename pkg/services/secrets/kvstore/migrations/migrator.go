@@ -2,10 +2,11 @@ package migrations
 
 import (
 	"context"
-	"fmt"
 	"reflect"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
 	datasources "github.com/grafana/grafana/pkg/services/datasources/service"
 )
 
@@ -17,35 +18,34 @@ type SecretMigrationService interface {
 }
 
 type SecretMigrationServiceImpl struct {
-	Services []SecretMigrationService
+	services          []SecretMigrationService
+	serverLockService *serverlock.ServerLockService
 }
 
 func ProvideSecretMigrationService(
+	serverLockService *serverlock.ServerLockService,
 	dataSourceSecretMigrationService *datasources.DataSourceSecretMigrationService,
 ) *SecretMigrationServiceImpl {
-	return NewSecretMigrationService(
-		dataSourceSecretMigrationService,
-	)
-}
-
-func NewSecretMigrationService(services ...SecretMigrationService) *SecretMigrationServiceImpl {
-	return &SecretMigrationServiceImpl{services}
+	return &SecretMigrationServiceImpl{
+		serverLockService: serverLockService,
+		services: []SecretMigrationService{
+			dataSourceSecretMigrationService,
+		},
+	}
 }
 
 // Run migration services. This will block until all services have exited.
 func (s *SecretMigrationServiceImpl) Migrate(ctx context.Context) error {
-	services := s.Services
-
 	// Start migration services.
-	for _, service := range services {
-		serviceName := reflect.TypeOf(service).String()
-		logger.Debug("Starting secret migration service", "service", serviceName)
-		err := service.Migrate(ctx)
-		if err != nil {
-			logger.Error("Stopped secret migration service", "service", serviceName, "reason", err)
-			return fmt.Errorf("%s run error: %w", serviceName, err)
+	return s.serverLockService.LockAndExecute(ctx, "migrate secrets to unified secrets", time.Minute*10, func(context.Context) {
+		for _, service := range s.services {
+			serviceName := reflect.TypeOf(service).String()
+			logger.Debug("Starting secret migration service", "service", serviceName)
+			err := service.Migrate(ctx)
+			if err != nil {
+				logger.Error("Stopped secret migration service", "service", serviceName, "reason", err)
+			}
+			logger.Debug("Finished secret migration service", "service", serviceName)
 		}
-		logger.Debug("Finished secret migration service", "service", serviceName)
-	}
-	return nil
+	})
 }
