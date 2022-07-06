@@ -254,10 +254,13 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
     values: new ArrayVector(joinedHists[0]),
     type: FieldType.number,
     state: undefined,
-    config: {
-      ...config,
-      decimals: Math.max(config?.decimals ?? 0, bucketDecimals),
-    },
+    config:
+      bucketDecimals === 0
+        ? config ?? {}
+        : {
+            ...config,
+            decimals: bucketDecimals,
+          },
   };
   const bucketMax = {
     ...bucketMin,
