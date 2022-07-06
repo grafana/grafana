@@ -314,6 +314,26 @@ func TestUpdatePublicDashboard(t *testing.T) {
 	})
 }
 
+func TestBuildAnonymousUser(t *testing.T) {
+	sqlStore := sqlstore.InitTestDB(t)
+	dashboardStore := database.ProvideDashboardStore(sqlStore)
+	dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
+	service := &DashboardServiceImpl{
+		log:            log.New("test.logger"),
+		dashboardStore: dashboardStore,
+	}
+
+	t.Run("will add datasource read and query permissions to user for each datasource in dashboard", func(t *testing.T) {
+		user, err := service.BuildAnonymousUser(context.Background(), dashboard)
+		require.NoError(t, err)
+		require.Equal(t, dashboard.OrgId, user.OrgId)
+		require.Equal(t, "datasources:uid:ds1", user.Permissions[user.OrgId]["datasources:query"][0])
+		require.Equal(t, "datasources:uid:ds3", user.Permissions[user.OrgId]["datasources:query"][1])
+		require.Equal(t, "datasources:uid:ds1", user.Permissions[user.OrgId]["datasources:read"][0])
+		require.Equal(t, "datasources:uid:ds3", user.Permissions[user.OrgId]["datasources:read"][1])
+	})
+}
+
 func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
 	dashboardStore := database.ProvideDashboardStore(sqlStore)
@@ -425,6 +445,9 @@ func insertTestDashboard(t *testing.T, dashboardStore *database.DashboardStore, 
 			"panels": []interface{}{
 				map[string]interface{}{
 					"id": 1,
+					"datasource": map[string]interface{}{
+						"uid": "ds1",
+					},
 					"targets": []interface{}{
 						map[string]interface{}{
 							"datasource": map[string]interface{}{
@@ -444,6 +467,9 @@ func insertTestDashboard(t *testing.T, dashboardStore *database.DashboardStore, 
 				},
 				map[string]interface{}{
 					"id": 2,
+					"datasource": map[string]interface{}{
+						"uid": "ds3",
+					},
 					"targets": []interface{}{
 						map[string]interface{}{
 							"datasource": map[string]interface{}{
