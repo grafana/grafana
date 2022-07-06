@@ -25,7 +25,6 @@ export function getAppRoutes(): RouteDescriptor[] {
   return [
     {
       path: '/',
-      navId: 'home',
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Home,
       component: SafeDynamicImport(
