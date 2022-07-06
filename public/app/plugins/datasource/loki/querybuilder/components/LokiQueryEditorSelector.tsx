@@ -126,7 +126,6 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
             onChange={onChangeInternal}
             onRunQuery={props.onRunQuery}
             showRawQuery={rawQuery}
-            data={data}
           />
         )}
         {editorMode === QueryEditorMode.Explain && <LokiQueryBuilderExplained query={query.expr} />}

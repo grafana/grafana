@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import { GrafanaTheme2, PanelData, QueryHint } from '@grafana/data';
 import { Button, Tooltip, useStyles2 } from '@grafana/ui';
@@ -19,26 +19,14 @@ export interface Props {
 export const LokiQueryBuilderHints = React.memo<Props>(({ datasource, query, onChange, data }) => {
   const [hints, setHints] = useState<QueryHint[]>([]);
   const styles = useStyles2(getStyles);
-  const prevQuery = useRef('');
 
   useEffect(() => {
-    const expr = lokiQueryModeller.renderQuery(query);
-
-    const getHints = async () => {
-      // Run only if query changed
-      if (prevQuery.current === expr) {
-        return;
-      } else {
-        const lokiQuery = { expr, refId: 'data-samples' };
-        prevQuery.current = expr;
-        const sampleData = await datasource.getDataSamples(lokiQuery);
-        const hints = datasource.getQueryHints(lokiQuery, sampleData).filter((hint) => hint.fix?.action);
-        setHints(hints);
-      }
-    };
-
-    getHints().catch(console.error);
-  }, [datasource, query, onChange, data, styles.hint]);
+    const lokiQuery = { expr: lokiQueryModeller.renderQuery(query), refId: 'data-samples' };
+    if (data?.series.length) {
+      const hints = datasource.getQueryHints(lokiQuery, data?.series ?? []).filter((hint) => hint.fix?.action);
+      setHints(hints);
+    }
+  }, [datasource, query, data]);
 
   return (
     <>

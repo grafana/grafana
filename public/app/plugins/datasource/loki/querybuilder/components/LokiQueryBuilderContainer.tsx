@@ -18,7 +18,6 @@ export interface Props {
   onChange: (update: LokiQuery) => void;
   onRunQuery: () => void;
   showRawQuery: boolean;
-  data?: PanelData;
 }
 
 export interface State {
@@ -30,7 +29,7 @@ export interface State {
  * This component is here just to contain the translation logic between string query and the visual query builder model.
  */
 export function LokiQueryBuilderContainer(props: Props) {
-  const { query, onChange, onRunQuery, datasource, showRawQuery, data } = props;
+  const { query, onChange, onRunQuery, datasource, showRawQuery } = props;
   const [state, dispatch] = useReducer(stateSlice.reducer, {
     expr: query.expr,
     // Use initial visual query only if query.expr is empty string
@@ -65,7 +64,6 @@ export function LokiQueryBuilderContainer(props: Props) {
         datasource={datasource}
         onChange={onVisQueryChange}
         onRunQuery={onRunQuery}
-        data={data}
       />
       {showRawQuery && <QueryPreview query={query.expr} />}
     </>

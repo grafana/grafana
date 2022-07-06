@@ -34,11 +34,13 @@ import {
   rangeUtil,
   toUtc,
   QueryHint,
+  getDefaultTimeRange,
 } from '@grafana/data';
 import { FetchError, config, DataSourceWithBackend } from '@grafana/runtime';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import { queryLogsVolume } from 'app/core/logsModel';
 import { convertToWebSocketUrl } from 'app/core/utils/explore';
+import { defaultTimeRange } from 'app/extensions/reports/state/reducers';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
@@ -363,7 +365,9 @@ export class LokiDatasource
       maxLines: 10,
     };
 
-    const request = makeRequest(lokiLogsQuery, this.timeSrv.timeRange(), CoreApp.Explore, 'log-samples');
+    // For samples, we use defaultTimeRange (now-1h/now) so queries are small and fast
+    const timeRange = getDefaultTimeRange();
+    const request = makeRequest(lokiLogsQuery, timeRange, CoreApp.Explore, 'log-samples');
     return await lastValueFrom(this.query(request).pipe(switchMap((res) => of(res.data))));
   }
 
