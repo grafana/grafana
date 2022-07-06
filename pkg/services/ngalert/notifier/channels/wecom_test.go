@@ -79,7 +79,7 @@ func TestWeComNotifier(t *testing.T) {
 		}, {
 			name: "Custom title and message with multiple alerts",
 			settings: `{
-				"url": "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=db0e4533-aa2a-4385-8a24-2a7b6be72d20",
+				"url": "http://localhost",
 				"message": "{{ len .Alerts.Firing }} alerts are firing, {{ len .Alerts.Resolved }} are resolved",
 				"title":"This notification is {{ .Status }}!"
 			}`,
