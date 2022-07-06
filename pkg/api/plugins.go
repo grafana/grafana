@@ -122,8 +122,8 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 		return response.Error(http.StatusNotFound, "Plugin not found, no installed plugin with that id", nil)
 	}
 
-	// TODO challenge this:
-	// we might need different permissions given this endpoint is used to load the plugin and to get the settings.
+	// In a first iteration, we only have one permission for app plugins.
+	// We will need a different permission to allow users to configure the plugin without needing access to it.
 	if plugin.IsApp() {
 		hasAccess := accesscontrol.HasAccess(hs.AccessControl, c)
 		if !hasAccess(accesscontrol.ReqSignedIn,
