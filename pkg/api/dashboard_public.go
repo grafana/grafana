@@ -19,7 +19,7 @@ import (
 func (hs *HTTPServer) GetPublicDashboard(c *models.ReqContext) response.Response {
 	accessToken := web.Params(c.Req)[":accessToken"]
 
-	dash, err := hs.dashboardService.GetPublicDashboard(c.Req.Context(), accessToken)
+	dash, err := hs.DashboardService.GetPublicDashboard(c.Req.Context(), accessToken)
 	if err != nil {
 		return handleDashboardErr(http.StatusInternalServerError, "Failed to get public dashboard", err)
 	}
@@ -47,7 +47,7 @@ func (hs *HTTPServer) GetPublicDashboard(c *models.ReqContext) response.Response
 
 // gets public dashboard configuration for dashboard
 func (hs *HTTPServer) GetPublicDashboardConfig(c *models.ReqContext) response.Response {
-	pdc, err := hs.dashboardService.GetPublicDashboardConfig(c.Req.Context(), c.OrgId, web.Params(c.Req)[":uid"])
+	pdc, err := hs.DashboardService.GetPublicDashboardConfig(c.Req.Context(), c.OrgId, web.Params(c.Req)[":uid"])
 	if err != nil {
 		return handleDashboardErr(http.StatusInternalServerError, "Failed to get public dashboard config", err)
 	}
@@ -71,7 +71,7 @@ func (hs *HTTPServer) SavePublicDashboardConfig(c *models.ReqContext) response.R
 		PublicDashboard: pubdash,
 	}
 
-	pubdash, err := hs.dashboardService.SavePublicDashboardConfig(c.Req.Context(), &dto)
+	pubdash, err := hs.DashboardService.SavePublicDashboardConfig(c.Req.Context(), &dto)
 	if err != nil {
 		return handleDashboardErr(http.StatusInternalServerError, "Failed to save public dashboard configuration", err)
 	}
@@ -87,17 +87,17 @@ func (hs *HTTPServer) QueryPublicDashboard(c *models.ReqContext) response.Respon
 		return response.Error(http.StatusBadRequest, "invalid panel ID", err)
 	}
 
-	dashboard, err := hs.dashboardService.GetPublicDashboard(c.Req.Context(), web.Params(c.Req)[":accessToken"])
+	dashboard, err := hs.DashboardService.GetPublicDashboard(c.Req.Context(), web.Params(c.Req)[":accessToken"])
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "could not fetch dashboard", err)
 	}
 
-	publicDashboard, err := hs.dashboardService.GetPublicDashboardConfig(c.Req.Context(), dashboard.OrgId, dashboard.Uid)
+	publicDashboard, err := hs.DashboardService.GetPublicDashboardConfig(c.Req.Context(), dashboard.OrgId, dashboard.Uid)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "could not fetch public dashboard", err)
 	}
 
-	reqDTO, err := hs.dashboardService.BuildPublicDashboardMetricRequest(
+	reqDTO, err := hs.DashboardService.BuildPublicDashboardMetricRequest(
 		c.Req.Context(),
 		dashboard,
 		publicDashboard,

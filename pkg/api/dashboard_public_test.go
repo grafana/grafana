@@ -38,7 +38,7 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 		dashSvc := dashboards.NewFakeDashboardService(t)
 		dashSvc.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).
 			Return(&models.Dashboard{}, nil).Maybe()
-		sc.hs.dashboardService = dashSvc
+		sc.hs.DashboardService = dashSvc
 
 		setInitCtxSignedInViewer(sc.initCtx)
 		response := callAPI(
@@ -97,7 +97,7 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 			dashSvc := dashboards.NewFakeDashboardService(t)
 			dashSvc.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).
 				Return(test.publicDashboardResult, test.publicDashboardErr)
-			sc.hs.dashboardService = dashSvc
+			sc.hs.DashboardService = dashSvc
 
 			setInitCtxSignedInViewer(sc.initCtx)
 			response := callAPI(
@@ -170,7 +170,7 @@ func TestAPIGetPublicDashboardConfig(t *testing.T) {
 			dashSvc := dashboards.NewFakeDashboardService(t)
 			dashSvc.On("GetPublicDashboardConfig", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
 				Return(test.PublicDashboardResult, test.PublicDashboardError)
-			sc.hs.dashboardService = dashSvc
+			sc.hs.DashboardService = dashSvc
 
 			setInitCtxSignedInViewer(sc.initCtx)
 			response := callAPI(
@@ -229,7 +229,7 @@ func TestApiSavePublicDashboardConfig(t *testing.T) {
 			dashSvc := dashboards.NewFakeDashboardService(t)
 			dashSvc.On("SavePublicDashboardConfig", mock.Anything, mock.AnythingOfType("*dashboards.SavePublicDashboardConfigDTO")).
 				Return(&models.PublicDashboard{IsEnabled: true}, test.saveDashboardError)
-			sc.hs.dashboardService = dashSvc
+			sc.hs.DashboardService = dashSvc
 
 			setInitCtxSignedInViewer(sc.initCtx)
 			response := callAPI(
@@ -298,7 +298,7 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 		return SetupAPITestServer(t, func(hs *HTTPServer) {
 			hs.queryDataService = qds
 			hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards, enabled)
-			hs.dashboardService = fakeDashboardService
+			hs.DashboardService = fakeDashboardService
 		}), fakeDashboardService
 	}
 
@@ -593,7 +593,7 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 		},
 	}
 
-	pubdash, err := scenario.hs.dashboardService.SavePublicDashboardConfig(context.Background(), savePubDashboardCmd)
+	pubdash, err := scenario.hs.DashboardService.SavePublicDashboardConfig(context.Background(), savePubDashboardCmd)
 	require.NoError(t, err)
 
 	response := callAPI(
