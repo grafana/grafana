@@ -71,6 +71,10 @@ func (mock *ProvisioningServiceMock) ProvisionDashboards(ctx context.Context) er
 	return nil
 }
 
+func (mock *ProvisioningServiceMock) ProvisionAlertRules(ctx context.Context) error {
+	return nil
+}
+
 func (mock *ProvisioningServiceMock) GetDashboardProvisionerResolvedPath(name string) string {
 	mock.Calls.GetDashboardProvisionerResolvedPath = append(mock.Calls.GetDashboardProvisionerResolvedPath, name)
 	if mock.GetDashboardProvisionerResolvedPathFunc != nil {
