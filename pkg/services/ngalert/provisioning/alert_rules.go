@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/util"
@@ -87,6 +88,32 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule model
 		return models.AlertRule{}, err
 	}
 	return rule, nil
+}
+
+func (service *AlertRuleService) GetRuleGroup(ctx context.Context, orgID int64, folder, group string) (definitions.AlertRuleGroup, error) {
+	q := models.ListAlertRulesQuery{
+		OrgID:         orgID,
+		NamespaceUIDs: []string{folder},
+		RuleGroup:     group,
+	}
+	if err := service.ruleStore.ListAlertRules(ctx, &q); err != nil {
+		return definitions.AlertRuleGroup{}, err
+	}
+	if len(q.Result) == 0 {
+		return definitions.AlertRuleGroup{}, store.ErrAlertRuleGroupNotFound
+	}
+	res := definitions.AlertRuleGroup{
+		Title:     q.Result[0].RuleGroup,
+		FolderUID: q.Result[0].NamespaceUID,
+		Interval:  q.Result[0].IntervalSeconds,
+		Rules:     []models.AlertRule{},
+	}
+	for _, r := range q.Result {
+		if r != nil {
+			res.Rules = append(res.Rules, *r)
+		}
+	}
+	return res, nil
 }
 
 // UpdateRuleGroup will update the interval for all rules in the group.

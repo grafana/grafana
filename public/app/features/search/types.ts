@@ -1,9 +1,6 @@
-import { Dispatch } from 'react';
 import { Action } from 'redux';
 
 import { SelectableValue, WithAccessControlMetadata } from '@grafana/data';
-
-import { FolderInfo } from '../../types';
 
 export enum DashboardSearchItemType {
   DashDB = 'dash-db',
@@ -56,18 +53,8 @@ export interface DashboardSectionItem {
 
 export interface DashboardSearchHit extends DashboardSectionItem, DashboardSection, WithAccessControlMetadata {}
 
-export interface DashboardTag {
-  term: string;
-  count: number;
-}
-
 export interface SearchAction extends Action {
   payload?: any;
-}
-
-export interface UidsToDelete {
-  folders: string[];
-  dashboards: string[];
 }
 
 export interface DashboardQuery {
@@ -84,22 +71,7 @@ export interface DashboardQuery {
   layout: SearchLayout;
 }
 
-export type SearchReducer<S> = [S, Dispatch<SearchAction>];
-interface UseSearchParams {
-  queryParsing?: boolean;
-  searchCallback?: (folderUid: string | undefined) => any;
-  folderUid?: string;
-}
-
-export type UseSearch = <S>(
-  query: DashboardQuery,
-  reducer: SearchReducer<S>,
-  params: UseSearchParams
-) => { state: S; dispatch: Dispatch<SearchAction>; onToggleSection: (section: DashboardSection) => void };
-
 export type OnToggleChecked = (item: DashboardSectionItem | DashboardSection) => void;
-export type OnDeleteItems = (folders: string[], dashboards: string[]) => void;
-export type OnMoveItems = (selectedDashboards: DashboardSectionItem[], folder: FolderInfo | null) => void;
 
 export enum SearchLayout {
   List = 'list',

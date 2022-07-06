@@ -3,7 +3,6 @@ import React from 'react';
 import { Provider } from 'react-redux';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 
-import { NavModel } from '@grafana/data';
 import { configureStore } from 'app/store/configureStore';
 import { Invitee, OrgUser } from 'app/types';
 
@@ -25,14 +24,6 @@ jest.mock('app/core/core', () => ({
 const setup = (propOverrides?: object) => {
   const store = configureStore();
   const props: Props = {
-    navModel: {
-      main: {
-        text: 'Configuration',
-      },
-      node: {
-        text: 'Users',
-      },
-    } as NavModel,
     users: [] as OrgUser[],
     invitees: [] as Invitee[],
     searchQuery: '',

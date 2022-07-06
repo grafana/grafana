@@ -24,7 +24,7 @@ export class TimeSrv {
   time: any;
   refreshTimer: any;
   refresh: any;
-  previousAutoRefresh: any;
+  autoRefreshPaused = false;
   oldRefresh: string | null | undefined;
   timeModel?: TimeModel;
   timeAtLoad: any;
@@ -232,7 +232,7 @@ export class TimeSrv {
 
     this.refreshTimer = setTimeout(() => {
       this.startNextRefreshTimer(intervalMs);
-      this.refreshTimeModel();
+      !this.autoRefreshPaused && this.refreshTimeModel();
     }, intervalMs);
 
     const refresh = this.contextSrv.getValidInterval(interval);
@@ -250,7 +250,7 @@ export class TimeSrv {
     this.refreshTimer = setTimeout(() => {
       this.startNextRefreshTimer(afterMs);
       if (this.contextSrv.isGrafanaVisible()) {
-        this.refreshTimeModel();
+        !this.autoRefreshPaused && this.refreshTimeModel();
       } else {
         this.autoRefreshBlocked = true;
       }
@@ -264,13 +264,13 @@ export class TimeSrv {
   // store timeModel refresh value and pause auto-refresh in some places
   // i.e panel edit
   pauseAutoRefresh() {
-    this.previousAutoRefresh = this.timeModel?.refresh;
-    this.setAutoRefresh('');
+    this.autoRefreshPaused = true;
   }
 
   // resume auto-refresh based on old dashboard refresh property
   resumeAutoRefresh() {
-    this.setAutoRefresh(this.previousAutoRefresh);
+    this.autoRefreshPaused = false;
+    this.refreshTimeModel();
   }
 
   setTime(time: RawTimeRange, updateUrl = true) {

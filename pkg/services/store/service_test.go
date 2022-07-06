@@ -63,7 +63,7 @@ func TestUpload(t *testing.T) {
 	request := UploadRequest{
 		EntityType: EntityTypeImage,
 		Contents:   make([]byte, 0),
-		Path:       "upload/myFile.jpg",
+		Path:       "resources/myFile.jpg",
 		MimeType:   "image/jpg",
 	}
 	err = s.Upload(context.Background(), dummyUser, &request)

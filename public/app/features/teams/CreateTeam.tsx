@@ -1,24 +1,16 @@
 import React, { PureComponent } from 'react';
-import { connect } from 'react-redux';
 
-import { NavModel } from '@grafana/data';
 import { getBackendSrv, locationService } from '@grafana/runtime';
 import { Button, Form, Field, Input, FieldSet } from '@grafana/ui';
-import Page from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
-import { getNavModel } from 'app/core/selectors/navModel';
-import { StoreState } from 'app/types';
-
-export interface Props {
-  navModel: NavModel;
-}
 
 interface TeamDTO {
   name: string;
   email: string;
 }
 
-export class CreateTeam extends PureComponent<Props> {
+export class CreateTeam extends PureComponent {
   create = async (formModel: TeamDTO) => {
     const result = await getBackendSrv().post('/api/teams', formModel);
     if (result.teamId) {
@@ -27,10 +19,8 @@ export class CreateTeam extends PureComponent<Props> {
     }
   };
   render() {
-    const { navModel } = this.props;
-
     return (
-      <Page navModel={navModel}>
+      <Page navId="teams">
         <Page.Contents>
           <Form onSubmit={this.create}>
             {({ register, errors }) => (
@@ -58,10 +48,4 @@ export class CreateTeam extends PureComponent<Props> {
   }
 }
 
-function mapStateToProps(state: StoreState) {
-  return {
-    navModel: getNavModel(state.navIndex, 'teams'),
-  };
-}
-
-export default connect(mapStateToProps)(CreateTeam);
+export default CreateTeam;
