@@ -17,7 +17,6 @@ export interface VizTooltipContainerProps extends HTMLAttributes<HTMLDivElement>
   offset: { x: number; y: number };
   children?: React.ReactNode;
   allowPointerEvents?: boolean;
-  onClose?: () => void;
 }
 
 /**
@@ -29,7 +28,6 @@ export const VizTooltipContainer: React.FC<VizTooltipContainerProps> = ({
   children,
   allowPointerEvents = false,
   className,
-  onClose,
   ...otherProps
 }) => {
   const tooltipRef = useRef<HTMLDivElement>(null);

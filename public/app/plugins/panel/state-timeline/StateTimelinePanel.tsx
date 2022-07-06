@@ -189,7 +189,6 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
                           position={{ x: coords.viewport.x, y: coords.viewport.y }}
                           offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}
                           allowPointerEvents={isToolTipOpen.current}
-                          onClose={onCloseToolTip}
                         >
                           {renderCustomTooltip(alignedFrame, focusedSeriesIdx, focusedPointIdx, () => {
                             startAnnotating({ coords: { plotCanvas: coords.canvas, viewport: coords.viewport } });
@@ -208,7 +207,6 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
                     position={{ x: coords.viewport.x, y: coords.viewport.y }}
                     offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}
                     allowPointerEvents={isToolTipOpen.current}
-                    onClose={onCloseToolTip}
                   >
                     {renderCustomTooltip(alignedFrame, focusedSeriesIdx, focusedPointIdx)}
                   </VizTooltipContainer>
