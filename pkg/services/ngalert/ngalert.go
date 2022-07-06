@@ -143,6 +143,7 @@ func (ng *AlertNG) init() error {
 		AdminConfigPollInterval: ng.Cfg.UnifiedAlerting.AdminConfigPollInterval,
 		DisabledOrgs:            ng.Cfg.UnifiedAlerting.DisabledOrgs,
 		MinRuleInterval:         ng.Cfg.UnifiedAlerting.MinInterval,
+		DisableGrafanaFolder:    ng.Cfg.UnifiedAlerting.ReservedLabels.IsGrafanaFolderDisabled(),
 	}
 
 	appUrl, err := url.Parse(ng.Cfg.AppURL)

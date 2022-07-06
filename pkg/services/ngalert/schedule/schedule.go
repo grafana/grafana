@@ -89,7 +89,8 @@ type schedule struct {
 
 	stateManager *state.Manager
 
-	appURL *url.URL
+	appURL               *url.URL
+	disableGrafanaFolder bool
 
 	multiOrgNotifier *notifier.MultiOrgAlertmanager
 	metrics          *metrics.Scheduler
@@ -131,6 +132,7 @@ type SchedulerCfg struct {
 	AdminConfigPollInterval time.Duration
 	DisabledOrgs            map[int64]struct{}
 	MinRuleInterval         time.Duration
+	DisableGrafanaFolder    bool
 }
 
 // NewScheduler returns a new schedule.
@@ -154,6 +156,7 @@ func NewScheduler(cfg SchedulerCfg, appURL *url.URL, stateManager *state.Manager
 		multiOrgNotifier:        cfg.MultiOrgNotifier,
 		metrics:                 cfg.Metrics,
 		appURL:                  appURL,
+		disableGrafanaFolder:    cfg.DisableGrafanaFolder,
 		stateManager:            stateManager,
 		sendAlertsTo:            map[int64]ngmodels.AlertmanagersChoice{},
 		senders:                 map[int64]*sender.Sender{},
@@ -600,18 +603,20 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			OrgId:   key.OrgID,
 		}
 
-		folder, err := sch.ruleStore.GetNamespaceByUID(ctx, q.Result.NamespaceUID, q.Result.OrgID, user)
-		if err != nil {
-			logger.Error("failed to fetch alert rule namespace", "err", err)
-			return nil, err
-		}
+		if !sch.disableGrafanaFolder {
+			folder, err := sch.ruleStore.GetNamespaceByUID(ctx, q.Result.NamespaceUID, q.Result.OrgID, user)
+			if err != nil {
+				logger.Error("failed to fetch alert rule namespace", "err", err)
+				return nil, err
+			}
 
-		if q.Result.Labels == nil {
-			q.Result.Labels = make(map[string]string)
-		} else if val, ok := q.Result.Labels[ngmodels.FolderTitleLabel]; ok {
-			logger.Warn("alert rule contains protected label, value will be overwritten", "label", ngmodels.FolderTitleLabel, "value", val)
+			if q.Result.Labels == nil {
+				q.Result.Labels = make(map[string]string)
+			} else if val, ok := q.Result.Labels[ngmodels.FolderTitleLabel]; ok {
+				logger.Warn("alert rule contains protected label, value will be overwritten", "label", ngmodels.FolderTitleLabel, "value", val)
+			}
+			q.Result.Labels[ngmodels.FolderTitleLabel] = folder.Title
 		}
-		q.Result.Labels[ngmodels.FolderTitleLabel] = folder.Title
 
 		return q.Result, nil
 	}
@@ -740,6 +745,9 @@ func (sch *schedule) saveAlertStates(ctx context.Context, states []*state.State)
 
 // folderUpdateHandler listens for folder update events and updates all rules in the given folder.
 func (sch *schedule) folderUpdateHandler(ctx context.Context, evt *events.FolderUpdated) error {
+	if sch.disableGrafanaFolder {
+		return nil
+	}
 	return sch.UpdateAlertRulesByNamespaceUID(ctx, evt.OrgID, evt.UID)
 }
 

@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/prometheus/alertmanager/cluster"
@@ -81,6 +82,7 @@ type UnifiedAlertingSettings struct {
 	// DefaultRuleEvaluationInterval default interval between evaluations of a rule.
 	DefaultRuleEvaluationInterval time.Duration
 	Screenshots                   UnifiedAlertingScreenshotSettings
+	ReservedLabels                UnifiedAlertingReservedLabelSettings
 }
 
 type UnifiedAlertingScreenshotSettings struct {
@@ -89,10 +91,20 @@ type UnifiedAlertingScreenshotSettings struct {
 	UploadExternalImageStorage bool
 }
 
+type UnifiedAlertingReservedLabelSettings struct {
+	DisabledLabels map[string]struct{}
+}
+
 // IsEnabled returns true if UnifiedAlertingSettings.Enabled is either nil or true.
 // It hides the implementation details of the Enabled and simplifies its usage.
 func (u *UnifiedAlertingSettings) IsEnabled() bool {
 	return u.Enabled == nil || *u.Enabled
+}
+
+// IsGrafanaFolderDisabled returns true if UnifiedAlertingReservedLabelSettings.DisabledLabels contains the grafana_folder reserved label.
+func (u *UnifiedAlertingReservedLabelSettings) IsGrafanaFolderDisabled() bool {
+	_, ok := u.DisabledLabels[models.FolderTitleLabel]
+	return ok
 }
 
 // readUnifiedAlertingEnabledSettings reads the settings for unified alerting.
@@ -272,6 +284,15 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfgScreenshots.MaxConcurrentScreenshots = screenshots.Key("max_concurrent_screenshots").MustInt64(screenshotsDefaultMaxConcurrent)
 	uaCfgScreenshots.UploadExternalImageStorage = screenshots.Key("upload_external_image_storage").MustBool(screenshotsDefaultUploadImageStorage)
 	uaCfg.Screenshots = uaCfgScreenshots
+
+	reservedLabels := iniFile.Section("unified_alerting.reserved_labels")
+	uaCfgReservedLabels := UnifiedAlertingReservedLabelSettings{
+		DisabledLabels: make(map[string]struct{}),
+	}
+	for _, label := range util.SplitString(reservedLabels.Key("disabled_labels").MustString("")) {
+		uaCfgReservedLabels.DisabledLabels[label] = struct{}{}
+	}
+	uaCfg.ReservedLabels = uaCfgReservedLabels
 
 	cfg.UnifiedAlerting = uaCfg
 	return nil
