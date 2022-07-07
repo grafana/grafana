@@ -9357,10 +9357,6 @@ exports[`better eslint`] = {
       [51, 16, 33, "Do not use any type assertions.", "3887101060"],
       [67, 21, 212, "Do not use any type assertions.", "2864317161"]
     ],
-    "public/app/plugins/datasource/mssql/config_ctrl.ts:2211349046": [
-      [10, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [19, 22, 3, "Unexpected any. Specify a different type.", "193409811"]
-    ],
     "public/app/plugins/datasource/mssql/datasource.ts:1854407228": [
       [13, 6, 3, "Unexpected any. Specify a different type.", "193409811"],
       [14, 8, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -9790,14 +9786,6 @@ exports[`better eslint`] = {
       [4, 26, 3, "Unexpected any. Specify a different type.", "193409811"],
       [4, 32, 3, "Unexpected any. Specify a different type.", "193409811"],
       [13, 27, 3, "Unexpected any. Specify a different type.", "193409811"]
-    ],
-    "public/app/plugins/datasource/postgres/types.ts:982290925": [
-      [4, 10, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [5, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [6, 11, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [7, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [8, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [30, 11, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/plugins/datasource/prometheus/components/PromExploreExtraField.test.tsx:3562942415": [
       [11, 15, 3, "Unexpected any. Specify a different type.", "193409811"]

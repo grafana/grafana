@@ -127,7 +127,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
           <TLSSecretsConfig
             showCACert={jsonData.tlsAuthWithCACert}
             editorProps={props}
-            labelWidthSSLDetails={25}
+            labelWidth={25}
           ></TLSSecretsConfig>
         </FieldSet>
       ) : null}

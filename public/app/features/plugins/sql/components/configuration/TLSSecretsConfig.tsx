@@ -14,17 +14,17 @@ export interface Props<T> {
   editorProps: DataSourcePluginOptionsEditorProps<T>;
   showCACert?: boolean;
   secureJsonFields?: KeyValue<Boolean>;
-  labelWidthSSLDetails?: number;
+  labelWidth?: number;
 }
 
 export const TLSSecretsConfig = <T extends DataSourceJsonData>(props: Props<T>) => {
-  const { labelWidthSSLDetails, editorProps, showCACert } = props;
+  const { labelWidth, editorProps, showCACert } = props;
   const { secureJsonFields } = editorProps.options;
   return (
     <>
       <InlineField
         tooltip={<span>To authenticate with an TLS/SSL client certificate, provide the client certificate here.</span>}
-        labelWidth={labelWidthSSLDetails}
+        labelWidth={labelWidth}
         label="TLS/SSL Client Certificate"
       >
         <SecretTextArea
@@ -41,7 +41,7 @@ export const TLSSecretsConfig = <T extends DataSourceJsonData>(props: Props<T>) 
       {showCACert ? (
         <InlineField
           tooltip={<span>If the selected TLS/SSL mode requires a server root certificate, provide it here.</span>}
-          labelWidth={labelWidthSSLDetails}
+          labelWidth={labelWidth}
           label="TLS/SSL Root Certificate"
         >
           <SecretTextArea
@@ -59,7 +59,7 @@ export const TLSSecretsConfig = <T extends DataSourceJsonData>(props: Props<T>) 
 
       <InlineField
         tooltip={<span>To authenticate with a client TLS/SSL certificate, provide the key here.</span>}
-        labelWidth={labelWidthSSLDetails}
+        labelWidth={labelWidth}
         label="TLS/SSL Client Key"
       >
         <SecretTextArea
