@@ -47,25 +47,26 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, org
 		IsServiceAccount: true,
 	}
 
-	newuser, err := s.sqlStore.CreateUser(ctx, cmd)
-	if err != nil {
-		if errors.Is(err, models.ErrUserAlreadyExists) {
-			return nil, ErrServiceAccountAlreadyExists
-		}
-		return nil, fmt.Errorf("failed to create service account: %w", err)
-	}
+	sa := &serviceaccounts.ServiceAccountDTO{}
 
-	sa := &serviceaccounts.ServiceAccountDTO{
-		Id:         newuser.ID,
-		Name:       newuser.Name,
-		Login:      newuser.Login,
-		OrgId:      newuser.OrgID,
-		Tokens:     0,
-		IsDisabled: newuser.IsDisabled,
-	}
-	// If the role is specified for service account, update it accordingly
-	if saForm.Role != nil {
-		err = s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err = s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		newuser, err := s.sqlStore.CreateUser(ctx, cmd)
+		if err != nil {
+			if errors.Is(err, models.ErrUserAlreadyExists) {
+				return ErrServiceAccountAlreadyExists
+			}
+			return fmt.Errorf("failed to create service account: %w", err)
+		}
+		sa = &serviceaccounts.ServiceAccountDTO{
+			Id:         newuser.ID,
+			Name:       newuser.Name,
+			Login:      newuser.Login,
+			OrgId:      newuser.OrgID,
+			Tokens:     0,
+			IsDisabled: newuser.IsDisabled,
+		}
+		// If the role is specified for service account, update it accordingly
+		if saForm.Role != nil {
 			updateTime := time.Now()
 			var orgUser models.OrgUser
 			orgUser.Role = *saForm.Role
@@ -75,12 +76,11 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, org
 				return err
 			}
 			sa.Role = string(*saForm.Role)
+		}
+		return nil
+	})
 
-			return nil
-		})
-	}
-
-	return sa, nil
+	return sa, err
 }
 
 // UpdateServiceAccount updates service account

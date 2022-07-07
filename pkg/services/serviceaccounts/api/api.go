@@ -84,8 +84,15 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *models.ReqContext) respon
 		return response.Error(http.StatusBadRequest, "Bad request data", err)
 	}
 
-	if status, err := api.validateRole(cmd.Role, &c.OrgRole); err != nil {
-		return response.Error(status, err.Error(), err)
+	if err := api.validateRole(cmd.Role, &c.OrgRole); err != nil {
+		switch {
+		case errors.Is(err, serviceaccounts.ErrServiceAccountInvalidRole):
+			return response.Error(http.StatusBadRequest, err.Error(), err)
+		case errors.Is(err, serviceaccounts.ErrServiceAccountRolePrivilegeDenied):
+			return response.Error(http.StatusForbidden, err.Error(), err)
+		default:
+			return response.Error(http.StatusInternalServerError, "failed to create service account", err)
+		}
 	}
 
 	serviceAccount, err := api.store.CreateServiceAccount(c.Req.Context(), c.OrgId, &cmd)
@@ -142,8 +149,15 @@ func (api *ServiceAccountsAPI) UpdateServiceAccount(c *models.ReqContext) respon
 		return response.Error(http.StatusBadRequest, "Bad request data", err)
 	}
 
-	if status, err := api.validateRole(cmd.Role, &c.OrgRole); err != nil {
-		return response.Error(status, err.Error(), err)
+	if err := api.validateRole(cmd.Role, &c.OrgRole); err != nil {
+		switch {
+		case errors.Is(err, serviceaccounts.ErrServiceAccountInvalidRole):
+			return response.Error(http.StatusBadRequest, err.Error(), err)
+		case errors.Is(err, serviceaccounts.ErrServiceAccountRolePrivilegeDenied):
+			return response.Error(http.StatusForbidden, err.Error(), err)
+		default:
+			return response.Error(http.StatusInternalServerError, "failed to update service account", err)
+		}
 	}
 
 	resp, err := api.store.UpdateServiceAccount(c.Req.Context(), c.OrgId, scopeID, &cmd)
@@ -169,14 +183,14 @@ func (api *ServiceAccountsAPI) UpdateServiceAccount(c *models.ReqContext) respon
 	})
 }
 
-func (api *ServiceAccountsAPI) validateRole(r *models.RoleType, orgRole *models.RoleType) (int, error) {
+func (api *ServiceAccountsAPI) validateRole(r *models.RoleType, orgRole *models.RoleType) error {
 	if r != nil && !r.IsValid() {
-		return http.StatusBadRequest, serviceaccounts.ErrServiceAccountInvalidRole
+		return serviceaccounts.ErrServiceAccountInvalidRole
 	}
 	if r != nil && !orgRole.Includes(*r) {
-		return http.StatusForbidden, serviceaccounts.ErrServiceAccountRolePrivilegeDenied
+		return serviceaccounts.ErrServiceAccountRolePrivilegeDenied
 	}
-	return -1, nil
+	return nil
 }
 
 // DELETE /api/serviceaccounts/:serviceAccountId
