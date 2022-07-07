@@ -976,18 +976,18 @@ describe('exitViewPanel', () => {
 });
 
 describe('exitPanelEditor', () => {
-  function getTestContext(setPreviousAutoRefresh = false) {
+  function getTestContext(pauseAutoRefresh = false) {
     const panel: any = { destroy: jest.fn() };
     const dashboard = new DashboardModel({});
-    const timeSrvMock = {
+    const timeSrvMock = ({
       pauseAutoRefresh: jest.fn(),
       resumeAutoRefresh: jest.fn(),
       setAutoRefresh: jest.fn(),
-    } as unknown as TimeSrv;
+    } as unknown) as TimeSrv;
     dashboard.startRefresh = jest.fn();
     dashboard.panelInEdit = panel;
-    if (setPreviousAutoRefresh) {
-      timeSrvMock.previousAutoRefresh = '5s';
+    if (pauseAutoRefresh) {
+      timeSrvMock.autoRefreshPaused = true;
     }
     setTimeSrv(timeSrvMock);
     return { dashboard, panel, timeSrvMock };
@@ -1029,10 +1029,10 @@ describe('exitPanelEditor', () => {
 describe('initEditPanel', () => {
   function getTestContext() {
     const dashboard = new DashboardModel({});
-    const timeSrvMock = {
+    const timeSrvMock = ({
       pauseAutoRefresh: jest.fn(),
       resumeAutoRefresh: jest.fn(),
-    } as unknown as TimeSrv;
+    } as unknown) as TimeSrv;
     setTimeSrv(timeSrvMock);
     return { dashboard, timeSrvMock };
   }

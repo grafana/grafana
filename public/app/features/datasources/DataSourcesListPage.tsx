@@ -3,7 +3,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { IconName } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import Page from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
 import { contextSrv } from 'app/core/core';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -57,8 +57,15 @@ export class DataSourcesListPage extends PureComponent<Props> {
   }
 
   render() {
-    const { dataSources, dataSourcesCount, navModel, layoutMode, searchQuery, setDataSourcesSearchQuery, hasFetched } =
-      this.props;
+    const {
+      dataSources,
+      dataSourcesCount,
+      navModel,
+      layoutMode,
+      searchQuery,
+      setDataSourcesSearchQuery,
+      hasFetched,
+    } = this.props;
 
     const canCreateDataSource = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);
 

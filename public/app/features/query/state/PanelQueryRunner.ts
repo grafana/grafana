@@ -283,7 +283,7 @@ export class PanelQueryRunner {
     const dataSupport = this.dataConfigSource.getDataSupport();
 
     if (dataSupport.alertStates || dataSupport.annotations) {
-      const panel = this.dataConfigSource as unknown as PanelModel;
+      const panel = (this.dataConfigSource as unknown) as PanelModel;
       panelData = mergePanelAndDashData(observable, getDashboardQueryRunner().getResult(panel.id));
     }
 
@@ -362,7 +362,7 @@ async function getDataSource(
   publicDashboardAccessToken?: string
 ): Promise<DataSourceApi> {
   if (publicDashboardAccessToken) {
-    return new PublicDashboardDataSource();
+    return new PublicDashboardDataSource(datasource);
   }
 
   if (datasource && (datasource as any).query) {

@@ -29,12 +29,16 @@ describe('DashboardRow', () => {
     expect(row).not.toHaveClass('dashboard-row--collapsed');
   });
 
+  it('Should collapse when the panel is collapsed', async () => {
+    const panel = new PanelModel({ collapsed: true });
+    render(<DashboardRow panel={panel} dashboard={dashboardMock} />);
+    const row = screen.getByTestId('dashboard-row-container');
+    expect(row).toHaveClass('dashboard-row--collapsed');
+  });
+
   it('Should collapse after clicking title', async () => {
     render(<DashboardRow panel={panel} dashboard={dashboardMock} />);
     await userEvent.click(screen.getByTestId('data-testid dashboard-row-title-'));
-
-    const row = screen.getByTestId('dashboard-row-container');
-    expect(row).toHaveClass('dashboard-row--collapsed');
     expect(dashboardMock.toggleRow.mock.calls).toHaveLength(1);
   });
 
