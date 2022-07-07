@@ -725,7 +725,7 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 	}
 
 	// key will allow name or uid
-	lookup, err := loadDatasourceLookup(ctx, orgID, l.sql)
+	lookup, err := LoadDatasourceLookup(ctx, orgID, l.sql)
 	if err != nil {
 		return dashboards, err
 	}
@@ -821,6 +821,37 @@ type datasourceQueryResult struct {
 	IsDefault bool   `xorm:"is_default"`
 }
 
+func createDatasourceLookup(rows []*datasourceQueryResult) extract.DatasourceLookup {
+	byUID := make(map[string]*extract.DataSourceRef, 50)
+	byName := make(map[string]*extract.DataSourceRef, 50)
+	byType := make(map[string][]extract.DataSourceRef, 50)
+	var defaultDS *extract.DataSourceRef
+
+	for _, row := range rows {
+		ref := &extract.DataSourceRef{
+			UID:  row.UID,
+			Type: row.Type,
+		}
+		byUID[row.UID] = ref
+		byName[row.Name] = ref
+		if row.IsDefault {
+			defaultDS = ref
+		}
+
+		if _, ok := byType[row.Type]; !ok {
+			byType[row.Type] = make([]extract.DataSourceRef, 5)
+		}
+		byType[row.Type] = append(byType[row.Type], *ref)
+	}
+
+	return &dsLookup{
+		byName:    byName,
+		byUID:     byUID,
+		byType:    byType,
+		defaultDS: defaultDS,
+	}
+}
+
 type dsLookup struct {
 	byName    map[string]*extract.DataSourceRef
 	byUID     map[string]*extract.DataSourceRef
@@ -859,14 +890,10 @@ func (d *dsLookup) ByType(dsType string) []extract.DataSourceRef {
 	return ds
 }
 
-func loadDatasourceLookup(ctx context.Context, orgID int64, sql *sqlstore.SQLStore) (extract.DatasourceLookup, error) {
-	byUID := make(map[string]*extract.DataSourceRef, 50)
-	byName := make(map[string]*extract.DataSourceRef, 50)
-	byType := make(map[string][]extract.DataSourceRef, 50)
-	var defaultDS *extract.DataSourceRef
+func LoadDatasourceLookup(ctx context.Context, orgID int64, sql *sqlstore.SQLStore) (extract.DatasourceLookup, error) {
+	rows := make([]*datasourceQueryResult, 0)
 
-	err := sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		rows := make([]*datasourceQueryResult, 0)
+	if err := sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		sess.Table("data_source").
 			Where("org_id = ?", orgID).
 			Cols("uid", "name", "type", "is_default")
@@ -876,34 +903,10 @@ func loadDatasourceLookup(ctx context.Context, orgID int64, sql *sqlstore.SQLSto
 			return err
 		}
 
-		for _, row := range rows {
-			ds := &extract.DataSourceRef{
-				UID:  row.UID,
-				Type: row.Type,
-			}
-			byUID[row.UID] = ds
-			byName[row.Name] = ds
-			if row.IsDefault {
-				defaultDS = ds
-			}
-
-			if _, ok := byType[ds.Type]; !ok {
-				byType[ds.Type] = make([]extract.DataSourceRef, 5)
-			}
-			byType[ds.Type] = append(byType[ds.Type], *ds)
-		}
-
 		return nil
-	})
-	if err != nil {
+	}); err != nil {
 		return nil, err
 	}
 
-	// Lookup by UID or name
-	return &dsLookup{
-		byName:    byName,
-		byUID:     byUID,
-		byType:    byType,
-		defaultDS: defaultDS,
-	}, err
+	return createDatasourceLookup(rows), nil
 }

@@ -1,17 +1,17 @@
 package export
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"sort"
 
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/services/searchV2/extract"
 )
 
-type dsLookup func(ref *extract.DataSourceRef) *extract.DataSourceRef
-
-func exportDataSources(helper *commitHelper, job *gitExportJob) (dsLookup, error) {
+func exportDataSources(helper *commitHelper, job *gitExportJob) (extract.DatasourceLookup, error) {
 	cmd := &datasources.GetDataSourcesQuery{
 		OrgId: job.orgID,
 	}
@@ -24,15 +24,7 @@ func exportDataSources(helper *commitHelper, job *gitExportJob) (dsLookup, error
 		return cmd.Result[i].Created.After(cmd.Result[j].Created)
 	})
 
-	byUID := make(map[string]*extract.DataSourceRef, len(cmd.Result))
-	byName := make(map[string]*extract.DataSourceRef, len(cmd.Result))
 	for _, ds := range cmd.Result {
-		ref := &extract.DataSourceRef{
-			UID:  ds.Uid,
-			Type: ds.Type,
-		}
-		byUID[ds.Uid] = ref
-		byName[ds.Name] = ref
 		ds.OrgId = 0
 		ds.Version = 0
 
@@ -51,22 +43,5 @@ func exportDataSources(helper *commitHelper, job *gitExportJob) (dsLookup, error
 		}
 	}
 
-	// Return the lookup function
-	return func(ref *extract.DataSourceRef) *extract.DataSourceRef {
-		if ref == nil || ref.UID == "" {
-			return &extract.DataSourceRef{
-				UID:  "default.uid",
-				Type: "default.type",
-			}
-		}
-		v, ok := byUID[ref.UID]
-		if ok {
-			return v
-		}
-		v, ok = byName[ref.UID]
-		if ok {
-			return v
-		}
-		return nil
-	}, nil
+	return searchV2.LoadDatasourceLookup(context.Background(), helper.orgID, job.sql)
 }

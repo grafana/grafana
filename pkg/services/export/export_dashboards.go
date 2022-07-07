@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-func exportDashboards(helper *commitHelper, job *gitExportJob, lookup dsLookup) error {
+func exportDashboards(helper *commitHelper, job *gitExportJob, lookup extract.DatasourceLookup) error {
 	alias := make(map[string]string, 100)
 	ids := make(map[int64]string, 100)
 	folders := make(map[int64]string, 100)
