@@ -15,6 +15,7 @@ import {
   ScopedVars,
 } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import { SpanBarOptions } from '@jaegertracing/jaeger-ui-components';
 import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
 import { serializeParams } from 'app/core/utils/fetch';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -32,6 +33,7 @@ export interface JaegerJsonData extends DataSourceJsonData {
 export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData> {
   uploadedJson: string | ArrayBuffer | null = null;
   nodeGraph?: NodeGraphOptions;
+  spanBar?: SpanBarOptions;
   constructor(
     private instanceSettings: DataSourceInstanceSettings<JaegerJsonData>,
     private readonly timeSrv: TimeSrv = getTimeSrv(),

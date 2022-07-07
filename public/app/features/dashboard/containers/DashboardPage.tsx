@@ -5,7 +5,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { CustomScrollbar, stylesFactory, Themeable2, withTheme2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { Branding } from 'app/core/components/Branding/Branding';
@@ -387,7 +387,8 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
  * Styles
  */
 export const getStyles = stylesFactory((theme: GrafanaTheme2, kioskMode: KioskMode) => {
-  const contentPadding = kioskMode !== KioskMode.Full ? theme.spacing(0, 2, 2) : theme.spacing(2);
+  const contentPadding =
+    kioskMode === KioskMode.Full || config.featureToggles.topnav ? theme.spacing(2) : theme.spacing(0, 2, 2);
   return {
     dashboardContainer: css`
       width: 100%;

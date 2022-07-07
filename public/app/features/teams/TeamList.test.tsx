@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 
-import { NavModel } from '@grafana/data';
 import { contextSrv, User } from 'app/core/services/context_srv';
 
 import { OrgRole, Team } from '../../types';
@@ -20,14 +19,6 @@ jest.mock('app/core/config', () => {
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
-    navModel: {
-      main: {
-        text: 'Configuration',
-      },
-      node: {
-        text: 'Team List',
-      },
-    } as NavModel,
     teams: [] as Team[],
     loadTeams: jest.fn(),
     deleteTeam: jest.fn(),
