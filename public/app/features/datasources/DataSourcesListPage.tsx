@@ -1,5 +1,5 @@
-import React, { PureComponent } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 
 import { IconName } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
@@ -10,35 +10,9 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState, AccessControlAction } from 'app/types';
 
 import DataSourcesList from './DataSourcesList';
+import { DataSourcesListHeader } from './DataSourcesListHeader';
 import { loadDataSources } from './state/actions';
-import { setDataSourcesLayoutMode, setDataSourcesSearchQuery } from './state/reducers';
-import {
-  getDataSources,
-  getDataSourcesCount,
-  getDataSourcesLayoutMode,
-  getDataSourcesSearchQuery,
-} from './state/selectors';
-
-function mapStateToProps(state: StoreState) {
-  return {
-    navModel: getNavModel(state.navIndex, 'datasources'),
-    dataSources: getDataSources(state.dataSources),
-    layoutMode: getDataSourcesLayoutMode(state.dataSources),
-    dataSourcesCount: getDataSourcesCount(state.dataSources),
-    searchQuery: getDataSourcesSearchQuery(state.dataSources),
-    hasFetched: state.dataSources.hasFetched,
-  };
-}
-
-const mapDispatchToProps = {
-  loadDataSources,
-  setDataSourcesSearchQuery,
-  setDataSourcesLayoutMode,
-};
-
-const connector = connect(mapStateToProps, mapDispatchToProps);
-
-export type Props = ConnectedProps<typeof connector>;
+import { getDataSourcesCount } from './state/selectors';
 
 const emptyListModel = {
   title: 'No data sources defined',
@@ -51,48 +25,38 @@ const emptyListModel = {
   proTipTarget: '_blank',
 };
 
-export class DataSourcesListPage extends PureComponent<Props> {
-  componentDidMount() {
-    this.props.loadDataSources();
-  }
+export const DataSourcesListPage = () => {
+  const dispatch = useDispatch();
+  const dataSourcesCount = useSelector(({ dataSources }: StoreState) => getDataSourcesCount(dataSources));
+  const hasFetched = useSelector(({ dataSources }: StoreState) => dataSources.hasFetched);
+  const navModel = useSelector(({ navIndex }: StoreState) => getNavModel(navIndex, 'datasources'));
+  const canCreateDataSource = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);
+  const emptyList = {
+    ...emptyListModel,
+    buttonDisabled: !canCreateDataSource,
+  };
 
-  render() {
-    const { dataSources, dataSourcesCount, navModel, layoutMode, searchQuery, setDataSourcesSearchQuery, hasFetched } =
-      this.props;
+  useEffect(() => {
+    if (!hasFetched) {
+      dispatch(loadDataSources());
+    }
+  }, [dispatch, hasFetched]);
 
-    const canCreateDataSource = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);
+  return (
+    <Page navModel={navModel}>
+      <Page.Contents isLoading={!hasFetched}>
+        <>
+          {hasFetched && dataSourcesCount === 0 && <EmptyListCTA {...emptyList} />}
+          {hasFetched && dataSourcesCount > 0 && (
+            <>
+              <DataSourcesListHeader />
+              <DataSourcesList key="list" />
+            </>
+          )}
+        </>
+      </Page.Contents>
+    </Page>
+  );
+};
 
-    const linkButton = {
-      href: 'datasources/new',
-      title: 'Add data source',
-      disabled: !canCreateDataSource,
-    };
-
-    const emptyList = {
-      ...emptyListModel,
-      buttonDisabled: !canCreateDataSource,
-    };
-
-    return (
-      <Page navModel={navModel}>
-        <Page.Contents isLoading={!hasFetched}>
-          <>
-            {hasFetched && dataSourcesCount === 0 && <EmptyListCTA {...emptyList} />}
-            {hasFetched &&
-              dataSourcesCount > 0 && [
-                <PageActionBar
-                  searchQuery={searchQuery}
-                  setSearchQuery={(query) => setDataSourcesSearchQuery(query)}
-                  linkButton={linkButton}
-                  key="action-bar"
-                />,
-                <DataSourcesList dataSources={dataSources} layoutMode={layoutMode} key="list" />,
-              ]}
-          </>
-        </Page.Contents>
-      </Page>
-    );
-  }
-}
-
-export default connector(DataSourcesListPage);
+export default DataSourcesListPage;
