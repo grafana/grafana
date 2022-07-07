@@ -29,6 +29,7 @@ func ProvideServiceAccountsService(
 	serviceAccountsStore serviceaccounts.Store,
 	permissionService accesscontrol.ServiceAccountPermissionsService,
 ) (*ServiceAccountsService, error) {
+	database.InitMetrics()
 	s := &ServiceAccountsService{
 		store: serviceAccountsStore,
 		log:   log.New("serviceaccounts"),
@@ -44,6 +45,11 @@ func ProvideServiceAccountsService(
 	serviceaccountsAPI.RegisterAPIEndpoints()
 
 	return s, nil
+}
+
+func (sa *ServiceAccountsService) Run(ctx context.Context) error {
+	sa.log.Debug("Started Service Account Metrics collection service")
+	return sa.store.RunMetricsCollection(ctx)
 }
 
 func (sa *ServiceAccountsService) CreateServiceAccount(ctx context.Context, orgID int64, name string) (*serviceaccounts.ServiceAccountDTO, error) {

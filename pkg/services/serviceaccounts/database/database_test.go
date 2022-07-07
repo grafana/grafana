@@ -13,11 +13,27 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestStore_CreateServiceAccount(t *testing.T) {
+// Service Account should not create an org on its own
+func TestStore_CreateServiceAccountOrgNonExistant(t *testing.T) {
 	_, store := setupTestDatabase(t)
 	t.Run("create service account", func(t *testing.T) {
 		serviceAccountName := "new Service Account"
 		serviceAccountOrgId := int64(1)
+
+		_, err := store.CreateServiceAccount(context.Background(), serviceAccountOrgId, serviceAccountName)
+		require.Error(t, err)
+	})
+}
+
+func TestStore_CreateServiceAccount(t *testing.T) {
+	_, store := setupTestDatabase(t)
+	orgQuery := &models.CreateOrgCommand{Name: sqlstore.MainOrgName}
+	err := store.sqlStore.CreateOrg(context.Background(), orgQuery)
+	require.NoError(t, err)
+
+	t.Run("create service account", func(t *testing.T) {
+		serviceAccountName := "new Service Account"
+		serviceAccountOrgId := orgQuery.Result.Id
 
 		saDTO, err := store.CreateServiceAccount(context.Background(), serviceAccountOrgId, serviceAccountName)
 		require.NoError(t, err)

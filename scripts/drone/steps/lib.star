@@ -1,6 +1,6 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v2.9.50'
+grabpl_version = 'v2.9.52'
 build_image = 'grafana/build-container:1.5.7'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
@@ -367,7 +367,7 @@ def upload_cdn_step(edition, ver_mode, trigger=None):
             'PRERELEASE_BUCKET': from_secret(prerelease_bucket)
         },
         'commands': [
-            './bin/grabpl upload-cdn --edition {} --src-bucket "{}"{}'.format(edition, bucket, src_dir),
+            './bin/grabpl upload-cdn --edition {}'.format(edition),
         ],
     }
     if trigger and ver_mode in ("release-branch", "main"):
@@ -477,15 +477,13 @@ def build_frontend_docs_step(edition):
     }
 
 
-def build_plugins_step(edition, sign=False):
-    if sign:
+def build_plugins_step(edition, ver_mode):
+    if ver_mode!='pr':
         env = {
             'GRAFANA_API_KEY': from_secret('grafana_api_key'),
         }
-        sign_args = ' --sign --signing-admin'
     else:
         env = None
-        sign_args = ''
     return {
         'name': 'build-plugins',
         'image': build_image,
@@ -496,7 +494,7 @@ def build_plugins_step(edition, sign=False):
         ],
         'commands': [
             # TODO: Use percentage for num jobs
-            './bin/grabpl build-plugins --jobs 8 --edition {}{}'.format(edition, sign_args),
+            './bin/grabpl build-plugins --jobs 8 --edition {}'.format(edition),
         ],
     }
 
@@ -978,13 +976,12 @@ def upload_packages_step(edition, ver_mode, trigger=None):
         return None
 
     if ver_mode == 'release':
-        packages_bucket = '$${{PRERELEASE_BUCKET}}/artifacts/downloads{}'.format(enterprise2_suffix(edition))
-        cmd = './bin/grabpl upload-packages --edition {} --packages-bucket {}'.format(edition, packages_bucket)
+        cmd = './bin/grabpl upload-packages --edition {}'.format(edition)
     elif edition == 'enterprise2':
-        cmd = './bin/grabpl upload-packages --edition {} --packages-bucket grafana-downloads-enterprise2'.format(
+        cmd = './bin/grabpl upload-packages --edition {}'.format(
             edition)
     else:
-        cmd = './bin/grabpl upload-packages --edition {} --packages-bucket grafana-downloads'.format(edition)
+        cmd = './bin/grabpl upload-packages --edition {}'.format(edition)
 
     deps = []
     if edition in 'enterprise2' or not end_to_end_tests_deps(edition):
@@ -1173,6 +1170,18 @@ def verify_gen_cue_step(edition):
             '# It is required that code generated from Thema/CUE be committed and in sync with its inputs.',
             '# The following command will fail if running code generators produces any diff in output.',
             'CODEGEN_VERIFY=1 make gen-cue',
+        ],
+    }
+
+def artifacts_page_step():
+    return {
+        'name': 'artifacts-page',
+        'image': build_image,
+        'depends_on': [
+            'grabpl',
+        ],
+        'commands': [
+            './bin/grabpl artifacts-page',
         ],
     }
 
