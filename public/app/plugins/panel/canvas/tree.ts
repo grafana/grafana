@@ -1,3 +1,5 @@
+import { CSSProperties } from 'react';
+
 import { ElementState } from '../../../features/canvas/runtime/element';
 import { FrameState } from '../../../features/canvas/runtime/frame';
 import { RootElement } from '../../../features/canvas/runtime/root';
@@ -14,19 +16,7 @@ export interface TreeElement {
   selectable?: boolean;
   children?: TreeElement[];
   dataRef: ElementState | FrameState;
-  style?: any;
-}
-
-export function reorderElements(src: FlatElement, dest: FlatElement, elements: any[]) {
-  const result = Array.from(elements);
-
-  const srcIndex = elements.indexOf(src);
-  const destIndex = elements.indexOf(dest);
-
-  const [removed] = result.splice(srcIndex, 1);
-  result.splice(destIndex, 0, removed);
-
-  return result;
+  style?: CSSProperties;
 }
 
 export function getTreeData(root?: RootElement | FrameState, selection?: string[], selectedColor?: string) {

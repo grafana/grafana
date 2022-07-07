@@ -1,12 +1,11 @@
-import { css } from '@emotion/css';
 import { Global } from '@emotion/react';
 import Tree from 'rc-tree';
 import React, { Key, PureComponent } from 'react';
 import SVG from 'react-inlinesvg';
 
-import { GrafanaTheme, StandardEditorProps } from '@grafana/data';
+import { StandardEditorProps } from '@grafana/data';
 import { config } from '@grafana/runtime/src';
-import { getTheme, stylesFactory } from '@grafana/ui';
+import { getTheme } from '@grafana/ui';
 
 import { ElementState } from '../../../../features/canvas/runtime/element';
 import { FrameState } from '../../../../features/canvas/runtime/frame';
@@ -14,7 +13,7 @@ import { RootElement } from '../../../../features/canvas/runtime/root';
 import { getGlobalStyles } from '../globalStyles';
 import { PanelOptions } from '../models.gen';
 import { getTreeData, TreeElement } from '../tree';
-import { LayerActionID } from '../types';
+import { DragNode, DropNode, LayerActionID } from '../types';
 import { doSelect } from '../utils';
 
 import { TreeViewEditorProps } from './treeViewEditor';
@@ -40,7 +39,6 @@ export class TreeNavigationEditor extends PureComponent<Props, State> {
   globalCSS = getGlobalStyles(config.theme);
   settings = this.props.item.settings;
   theme = getTheme();
-  styles = getStyles(this.theme);
   rootElements = this.props.item?.settings?.scene.root.elements;
   selectedBgColor = this.theme.colors.border1;
 
@@ -57,7 +55,7 @@ export class TreeNavigationEditor extends PureComponent<Props, State> {
     return true;
   };
 
-  onDrop = (info: any) => {
+  onDrop = (info: { node: DropNode; dragNode: DragNode; dropPosition: number; dropToGap: boolean }) => {
     const destKey = info.node.key;
     const srcKey = info.dragNode.key;
     const destPos = info.node.pos.split('-');
@@ -66,7 +64,11 @@ export class TreeNavigationEditor extends PureComponent<Props, State> {
     const srcEl = info.dragNode.dataRef;
     const destEl = info.node.dataRef;
 
-    const loop = (data: TreeElement[], key: number, callback: any) => {
+    const loop = (
+      data: TreeElement[],
+      key: number,
+      callback: { (item: TreeElement, index: number, arr: TreeElement[]): void }
+    ) => {
       data.forEach((item, index, arr) => {
         if (item.key === key) {
           callback(item, index, arr);
@@ -96,7 +98,7 @@ export class TreeNavigationEditor extends PureComponent<Props, State> {
       // Drop on the gap (insert before or insert after)
       let ar;
       let i: number;
-      loop(data, destKey, (item: TreeElement, index: number, arr: any[]) => {
+      loop(data, destKey, (item: TreeElement, index: number, arr: TreeElement[]) => {
         ar = arr;
         i = index;
       });
@@ -114,36 +116,56 @@ export class TreeNavigationEditor extends PureComponent<Props, State> {
       treeData: data,
     });
 
-    this.reorderElements(srcEl, destEl);
+    this.reorderElements(srcEl, destEl, info.dropToGap, destPosition);
   };
 
-  reorderElements = (src: ElementState, dest: ElementState) => {
-    if (dest instanceof FrameState) {
-      if (src.parent === dest) {
-        // same Frame parent
-        src.parent?.reorderTree(src, dest, true);
+  // @TODO refactor and re-test cases
+  reorderElements = (src: ElementState, dest: ElementState, dragToGap: boolean, destPosition: number) => {
+    if (dragToGap) {
+      if (destPosition === -1) {
+        // top of the tree
+        if (src.parent instanceof FrameState) {
+          if (dest.parent) {
+            this.updateElements(src, dest.parent, dest.parent.elements.length);
+            src.updateData(dest.parent.scene.context);
+          }
+        } else {
+          dest.parent?.reorderTree(src, dest, true);
+        }
       } else {
-        this.updateElements(src, dest);
-        src.updateData(dest.scene.context);
+        if (dest.parent) {
+          this.updateElements(src, dest.parent, dest.parent.elements.indexOf(dest));
+          src.updateData(dest.parent.scene.context);
+        }
       }
-    } else if (src.parent === dest.parent) {
-      src.parent?.reorderTree(src, dest);
     } else {
-      if (dest.parent) {
-        this.updateElements(src, dest.parent);
-        src.updateData(dest.parent.scene.context);
+      if (dest instanceof FrameState) {
+        if (src.parent === dest) {
+          // same Frame parent
+          src.parent?.reorderTree(src, dest, true);
+        } else {
+          this.updateElements(src, dest);
+          src.updateData(dest.scene.context);
+        }
+      } else if (src.parent === dest.parent) {
+        src.parent?.reorderTree(src, dest);
+      } else {
+        if (dest.parent) {
+          this.updateElements(src, dest.parent);
+          src.updateData(dest.parent.scene.context);
+        }
       }
     }
   };
 
-  updateElements = (src: ElementState, dest: FrameState | RootElement) => {
+  updateElements = (src: ElementState, dest: FrameState | RootElement, idx: number | null = null) => {
     src.parent?.doAction(LayerActionID.Delete, src);
     src.parent = dest;
 
     const elementContainer = src.div?.getBoundingClientRect();
     src.setPlacementFromConstraint(elementContainer, dest.div?.getBoundingClientRect());
 
-    const destIndex = dest.elements.length - 1;
+    const destIndex = idx ?? dest.elements.length - 1;
     dest.elements.splice(destIndex, 0, src);
     dest.scene.save();
 
@@ -200,19 +222,3 @@ export class TreeNavigationEditor extends PureComponent<Props, State> {
     );
   }
 }
-
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  return {
-    treeNodeHeader: css`
-      cursor: pointer;
-      font-size: 14px;
-
-      &:hover {
-        background-color: ${theme.colors.border1};
-      }
-    `,
-    selected: css`
-      background-color: ${theme.colors.border1};
-    `,
-  };
-});
