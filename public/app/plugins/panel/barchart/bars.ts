@@ -307,11 +307,16 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       qt.add(barRect);
 
       if (showValue !== VisibilityMode.Never) {
+        const raw = rawValue(seriesIdx, dataIdx)!;
+        let divider = 1;
+
+        if (pctStacked && alignedTotals![seriesIdx][dataIdx]!) {
+          divider = alignedTotals![seriesIdx][dataIdx]!;
+        }
+
+        const v = divider === 0 ? 0 : raw / divider;
         // Format Values and calculate label offsets
-        const text = formatValue(
-          seriesIdx,
-          rawValue(seriesIdx, dataIdx)! / (pctStacked ? alignedTotals![seriesIdx][dataIdx]! : 1)
-        );
+        const text = formatValue(seriesIdx, v);
         labelOffset = Math.min(labelOffset, Math.round(LABEL_OFFSET_FACTOR * (isXHorizontal ? wid : hgt)));
 
         if (labels[dataIdx] === undefined) {
