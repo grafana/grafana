@@ -106,7 +106,7 @@ Authorization: Basic YWRtaW46YWRtaW4=
 {
   "name": "grafana",
   "role": "Viewer",
-  "is_disabled" : "false"
+  "isDisabled" : false
 }
 ```
 
