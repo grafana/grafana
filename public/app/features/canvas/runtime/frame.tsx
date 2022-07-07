@@ -189,7 +189,7 @@ export class FrameState extends ElementState {
 
   render() {
     return (
-      <div key={this.UID} ref={this.initElement} style={{ overflow: 'hidden' }}>
+      <div key={this.UID} ref={this.initElement}>
         {this.elements.map((v) => v.render())}
       </div>
     );
