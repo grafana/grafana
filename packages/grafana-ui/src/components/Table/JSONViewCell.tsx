@@ -27,7 +27,7 @@ export function JSONViewCell(props: TableCellProps): JSX.Element {
     displayValue = JSON.stringify(value, null, ' ');
   }
 
-  const hasLinks = getCellLinks(field, row)?.length;
+  const hasLinks = Boolean(getCellLinks(field, row)?.length);
 
   return (
     <div {...cellProps} className={inspectEnabled ? tableStyles.cellContainerNoOverflow : tableStyles.cellContainer}>

@@ -451,7 +451,7 @@ export class DashboardModel implements TimeModel {
 
       const rowPanels = panel.panels ?? [];
       for (const rowPanel of rowPanels) {
-        yield rowPanel as PanelModel;
+        yield rowPanel;
       }
     }
   }
@@ -1113,6 +1113,10 @@ export class DashboardModel implements TimeModel {
     if (shouldUpdateGridPositionLayout) {
       this.events.publish(new DashboardPanelsChangedEvent());
     }
+  }
+
+  getDefaultTime() {
+    return this.originalTime;
   }
 
   private getPanelRepeatVariable(panel: PanelModel) {

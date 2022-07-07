@@ -123,7 +123,7 @@ func (d *DashboardStore) HasEditPermissionInFolders(ctx context.Context, query *
 	})
 }
 
-func (d *DashboardStore) HasAdminPermissionInFolders(ctx context.Context, query *models.HasAdminPermissionInFoldersQuery) error {
+func (d *DashboardStore) HasAdminPermissionInDashboardsOrFolders(ctx context.Context, query *models.HasAdminPermissionInDashboardsOrFoldersQuery) error {
 	return d.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		if query.SignedInUser.HasRole(models.ROLE_ADMIN) {
 			query.Result = true
@@ -131,7 +131,7 @@ func (d *DashboardStore) HasAdminPermissionInFolders(ctx context.Context, query 
 		}
 
 		builder := &sqlstore.SQLBuilder{}
-		builder.Write("SELECT COUNT(dashboard.id) AS count FROM dashboard WHERE dashboard.org_id = ? AND dashboard.is_folder = ?", query.SignedInUser.OrgId, d.dialect.BooleanStr(true))
+		builder.Write("SELECT COUNT(dashboard.id) AS count FROM dashboard WHERE dashboard.org_id = ?", query.SignedInUser.OrgId)
 		builder.WriteDashboardPermissionFilter(query.SignedInUser, models.PERMISSION_ADMIN)
 
 		type folderCount struct {

@@ -380,7 +380,7 @@ async function getDataSource(
   publicDashboardAccessToken?: string
 ): Promise<DataSourceApi> {
   if (publicDashboardAccessToken) {
-    return new PublicDashboardDataSource();
+    return new PublicDashboardDataSource(datasource);
   }
 
   if (datasource && (datasource as any).query) {
