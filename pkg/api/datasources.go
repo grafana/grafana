@@ -449,11 +449,11 @@ func (hs *HTTPServer) CreateCorrelation(c *models.ReqContext) response.Response 
 		if errors.Is(err, datasources.ErrDatasourceIsReadOnly) {
 			return response.Error(http.StatusForbidden, "Data source is read only", nil)
 		}
-		if errors.Is(err, datasources.ErrCorrelationExists) {
-			return response.Error(http.StatusConflict, fmt.Sprintf("Correlation to %s already exists", cmd.TargetUID), nil)
+		if errors.Is(err, datasources.ErrCorrelationUidExists) {
+			return response.Error(http.StatusConflict, fmt.Sprintf("Correlation with uid %s already exists", cmd.Uid), nil)
 		}
 
-		return response.Error(http.StatusInternalServerError, "Failed to query datasources", err)
+		return response.Error(http.StatusInternalServerError, "Failed to add correlation", err)
 	}
 
 	// TODO: maybe this?

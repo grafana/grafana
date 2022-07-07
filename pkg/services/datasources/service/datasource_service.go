@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type Service struct {
@@ -271,13 +272,33 @@ func (s *Service) CreateCorrelation(ctx context.Context, cmd *datasources.Create
 			return err
 		}
 
-		for _, correlation := range ds.Correlations {
-			if correlation.Target == cmd.TargetUID {
-				return datasources.ErrCorrelationExists
+		if cmd.Uid != "" {
+			for _, correlation := range ds.Correlations {
+				if correlation.Target == cmd.Uid {
+					return datasources.ErrCorrelationUidExists
+				}
+			}
+		} else {
+			uidMap := make(map[string]bool)
+			for _, correlation := range ds.Correlations {
+				uidMap[correlation.Uid] = true
+			}
+
+			for i := 0; i < 10; i++ {
+				uid := util.GenerateShortUID()
+				if exists := uidMap[uid]; !exists {
+					cmd.Uid = uid
+					break
+				}
+			}
+
+			if cmd.Uid == "" {
+				return datasources.ErrCorrelationFailedGenerateUniqueUid
 			}
 		}
 
 		newCorrelation := datasources.Correlation{
+			Uid:         cmd.Uid,
 			Target:      cmd.TargetUID,
 			Label:       cmd.Label,
 			Description: cmd.Description,

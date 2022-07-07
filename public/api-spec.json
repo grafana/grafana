@@ -9054,6 +9054,9 @@
         "target": {
           "type": "string"
         },
+        "uid": {
+          "type": "string"
+        },
         "version": {
           "type": "integer",
           "format": "int64"
@@ -9239,7 +9242,7 @@
           "$ref": "#/definitions/ScheduleDTO"
         },
         "state": {
-          "type": "string"
+          "$ref": "#/definitions/State"
         },
         "templateVars": {
           "type": "object"
@@ -10790,6 +10793,9 @@
           "description": "From Start time in epoch timestamps in milliseconds or relative using Grafana time units.",
           "type": "string",
           "example": "now-1h"
+        },
+        "publicDashboardAccessToken": {
+          "type": "string"
         },
         "queries": {
           "description": "queries.refId – Specifies an identifier of the query. Is optional and default to “A”.\nqueries.datasourceId – Specifies the data source to be queried. Each query in the request must have an unique datasourceId.\nqueries.maxDataPoints - Species maximum amount of data points that dashboard panel can render. Is optional and default to 100.\nqueries.intervalMs - Specifies the time interval in milliseconds of time series. Is optional and defaults to 1000.",

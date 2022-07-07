@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/provisioning/values"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // ConfigVersion is used to figure out which API version a config uses.
@@ -42,7 +43,7 @@ type upsertDataSourceFromConfig struct {
 	BasicAuthUser   string
 	WithCredentials bool
 	IsDefault       bool
-	Correlations    []datasources.Correlation
+	Correlations    []interface{}
 	JSONData        map[string]interface{}
 	SecureJSONData  map[string]string
 	Editable        bool
@@ -123,18 +124,6 @@ func (cfg *configsV1) mapToDatasourceFromConfig(apiVersion int64) *configs {
 	}
 
 	for _, ds := range cfg.Datasources {
-		correlations := make([]datasources.Correlation, 0)
-		for _, v := range ds.Correlations.Value() {
-			field, ok := v.(map[string]interface{})
-
-			if ok {
-				correlations = append(correlations, datasources.Correlation{
-					Target:      field["targetUid"].(string),
-					Description: field["description"].(string),
-					Label:       field["label"].(string),
-				})
-			}
-		}
 
 		r.Datasources = append(r.Datasources, &upsertDataSourceFromConfig{
 			OrgID:           ds.OrgID.Value(),
@@ -148,7 +137,7 @@ func (cfg *configsV1) mapToDatasourceFromConfig(apiVersion int64) *configs {
 			BasicAuthUser:   ds.BasicAuthUser.Value(),
 			WithCredentials: ds.WithCredentials.Value(),
 			IsDefault:       ds.IsDefault.Value(),
-			Correlations:    correlations,
+			Correlations:    ds.Correlations.Value(),
 			JSONData:        ds.JSONData.Value(),
 			SecureJSONData:  ds.SecureJSONData.Value(),
 			Editable:        ds.Editable.Value(),
@@ -177,18 +166,6 @@ func (cfg *configsV0) mapToDatasourceFromConfig(apiVersion int64) *configs {
 	}
 
 	for _, ds := range cfg.Datasources {
-		correlations := make([]datasources.Correlation, 0)
-		for _, v := range ds.Correlations {
-			field, ok := v.(map[string]interface{})
-
-			if ok {
-				correlations = append(correlations, datasources.Correlation{
-					Target:      field["targetUid"].(string),
-					Description: field["description"].(string),
-					Label:       field["label"].(string),
-				})
-			}
-		}
 
 		r.Datasources = append(r.Datasources, &upsertDataSourceFromConfig{
 			OrgID:           ds.OrgID,
@@ -202,7 +179,7 @@ func (cfg *configsV0) mapToDatasourceFromConfig(apiVersion int64) *configs {
 			BasicAuthUser:   ds.BasicAuthUser,
 			WithCredentials: ds.WithCredentials,
 			IsDefault:       ds.IsDefault,
-			Correlations:    correlations,
+			Correlations:    ds.Correlations,
 			JSONData:        ds.JSONData,
 			SecureJSONData:  ds.SecureJSONData,
 			Editable:        ds.Editable,
@@ -240,7 +217,7 @@ func createInsertCommand(ds *upsertDataSourceFromConfig) *datasources.AddDataSou
 		BasicAuthUser:   ds.BasicAuthUser,
 		WithCredentials: ds.WithCredentials,
 		IsDefault:       ds.IsDefault,
-		Correlations:    ds.Correlations,
+		Correlations:    makeCorrelations(ds.Correlations),
 		JsonData:        jsonData,
 		SecureJsonData:  ds.SecureJSONData,
 		ReadOnly:        !ds.Editable,
@@ -251,6 +228,35 @@ func createInsertCommand(ds *upsertDataSourceFromConfig) *datasources.AddDataSou
 		cmd.Uid = safeUIDFromName(cmd.Name)
 	}
 	return cmd
+}
+
+func makeCorrelations(correlations []interface{}) []datasources.Correlation {
+	ret := make([]datasources.Correlation, 0)
+	uidMap := make(map[string]bool)
+
+	for _, v := range correlations {
+		if field, ok := v.(map[string]interface{}); ok {
+
+			uid := ""
+			for i := 0; i < 10; i++ {
+				newUid := util.GenerateShortUID()
+				if exists := uidMap[newUid]; !exists {
+					uid = newUid
+					uidMap[uid] = true
+					break
+				}
+			}
+
+			ret = append(ret, datasources.Correlation{
+				Uid:         uid,
+				Target:      field["targetUid"].(string),
+				Description: field["description"].(string),
+				Label:       field["label"].(string),
+			})
+		}
+	}
+
+	return ret
 }
 
 func safeUIDFromName(name string) string {
@@ -282,7 +288,7 @@ func createUpdateCommand(ds *upsertDataSourceFromConfig, id int64) *datasources.
 		BasicAuthUser:   ds.BasicAuthUser,
 		WithCredentials: ds.WithCredentials,
 		IsDefault:       ds.IsDefault,
-		Correlations:    ds.Correlations,
+		Correlations:    makeCorrelations(ds.Correlations),
 		JsonData:        jsonData,
 		SecureJsonData:  ds.SecureJSONData,
 		ReadOnly:        !ds.Editable,

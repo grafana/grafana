@@ -31,6 +31,7 @@ const (
 type DsAccess string
 
 type Correlation struct {
+	Uid         string `json:"uid"`
 	Target      string `json:"target"`
 	Label       string `json:"label,omitempty"`
 	Description string `json:"description,omitempty"`
@@ -40,6 +41,7 @@ type Correlation struct {
 // in the data_source table. It's not part of the Correlation model but needed when editing correlations to handle
 // concurrent edits.
 type CorrelationDTO struct {
+	Uid         string `json:"uid"`
 	Target      string `json:"target"`
 	Label       string `json:"label,omitempty"`
 	Description string `json:"description,omitempty"`
@@ -175,6 +177,7 @@ type CreateCorrelationCommand struct {
 	Description string `json:"description"`
 	Version     int    `json:"version"`
 
+	Uid       string         `json:"-"`
 	SourceUID string         `json:"-"`
 	OrgID     int64          `json:"-"`
 	Result    CorrelationDTO `json:"-"`
@@ -183,7 +186,7 @@ type CreateCorrelationCommand struct {
 // UpdateCorrelationsCommand updates a correlation
 type UpdateCorrelationsCommand struct {
 	SourceUID    string
-	TargetUID    string
+	Uid          string
 	Correlations []Correlation
 	OrgId        int64
 
