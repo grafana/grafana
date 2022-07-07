@@ -95,7 +95,7 @@ export function getParserPositions(query: string): Position[] {
 }
 
 /**
- * Parse the string and get all LabelParser positions in the query.
+ * Parse the string and get all Line filter positions in the query.
  * @param query
  */
 function getLineFiltersPositions(query: string): Position[] {
