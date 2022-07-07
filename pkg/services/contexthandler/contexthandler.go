@@ -464,6 +464,7 @@ func (h *ContextHandler) initContextWithRenderAuth(reqContext *models.ReqContext
 		OrgRole: models.RoleType(renderUser.OrgRole),
 	}
 
+	// UserID can be 0 for background tasks and, in this case, there is no user info to retrieve
 	if renderUser.UserID != 0 {
 		query := models.GetSignedInUserQuery{UserId: renderUser.UserID, OrgId: renderUser.OrgID}
 		if err := h.SQLStore.GetSignedInUserWithCacheCtx(ctx, &query); err == nil {
