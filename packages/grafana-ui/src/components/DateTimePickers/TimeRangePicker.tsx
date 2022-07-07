@@ -117,7 +117,7 @@ export function UnthemedTimeRangePicker(props: TimeRangePickerProps): ReactEleme
         </ToolbarButton>
       </Tooltip>
       {isOpen && (
-        <FocusScope contain autoFocus restoreFocus>
+        <FocusScope contain autoFocus>
           <section ref={ref} {...overlayProps} {...dialogProps}>
             <TimePickerContent
               timeZone={timeZone}
