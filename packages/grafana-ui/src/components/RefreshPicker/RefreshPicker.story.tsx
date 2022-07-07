@@ -18,27 +18,25 @@ export default {
     docs: {
       page: mdx,
     },
+    controls: {
+      sort: 'alpha',
+    },
   },
   args: {
     isLoading: false,
     isLive: false,
     width: 'auto',
     text: 'Run query',
-    tooltip: 'Run query',
+    tooltip: 'My tooltip text goes here',
     value: '1h',
-  },
-  argTypes: {
-    intervals: {
-      control: {
-        type: 'select',
-      },
-    },
+    primary: false,
+    noIntervalPicker: false,
+    intervals: ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d'],
   },
 };
 
 export const Examples: Story<Props> = (args) => {
   const [, updateArgs] = useArgs();
-  const intervals = ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d'];
   const onIntervalChanged = (interval: string) => {
     action('onIntervalChanged fired')(interval);
     updateArgs({ value: interval });
@@ -54,7 +52,7 @@ export const Examples: Story<Props> = (args) => {
       value={args.value}
       text={args.text}
       isLoading={args.isLoading}
-      intervals={intervals}
+      intervals={args.intervals}
       width={args.width}
       onIntervalChanged={onIntervalChanged}
       onRefresh={onRefresh}
