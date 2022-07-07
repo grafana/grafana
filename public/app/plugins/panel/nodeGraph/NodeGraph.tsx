@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import React, { memo, MouseEvent, MutableRefObject, useCallback, useMemo, useState } from 'react';
+import React, { memo, MouseEvent, MutableRefObject, useCallback, useEffect, useMemo, useState } from 'react';
 import useMeasure from 'react-use/lib/useMeasure';
 
 import { DataFrame, GrafanaTheme2, LinkModel } from '@grafana/data';
@@ -120,10 +120,6 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
   const [measureRef, { width, height }] = useMeasure();
   const [config, setConfig] = useState<Config>(defaultConfig);
 
-  // We need hover state here because for nodes we also highlight edges and for edges have labels separate to make
-  // sure they are visible on top of everything else
-  const { nodeHover, setNodeHover, clearNodeHover, edgeHover, setEdgeHover, clearEdgeHover } = useHover();
-
   const firstNodesDataFrame = nodesDataFrames[0];
   const firstEdgesDataFrame = edgesDataFrames[0];
 
@@ -135,6 +131,35 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
     () => processNodes(firstNodesDataFrame, firstEdgesDataFrame, theme),
     [firstEdgesDataFrame, firstNodesDataFrame, theme]
   );
+
+  // We need hover state here because for nodes we also highlight edges and for edges have labels separate to make
+  // sure they are visible on top of everything else
+  const { nodeHover, setNodeHover, clearNodeHover, edgeHover, setEdgeHover, clearEdgeHover } = useHover();
+  const [hoveringIds, setHoveringIds] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    let linked: Set<string> = new Set();
+    if (nodeHover) {
+      const node = processed.nodes.find((node) => node.id === nodeHover);
+      if (node) {
+        // Find connected nodes via connected edges
+        const edges = processed.edges.filter((edge) => edge.source === node.id || edge.target === node.id);
+        linked = new Set(
+          edges.flatMap((edge) =>
+            processed.nodes.filter((n) => edge.source === n.id || edge.target === n.id).map((n) => n.id)
+          )
+        );
+      }
+    } else if (edgeHover) {
+      const edge = processed.edges.find((edge) => edge.id === edgeHover);
+      if (edge) {
+        // Find connecting nodes
+        linked = new Set(
+          processed.nodes.filter((node) => edge.source === node.id || edge.target === node.id).map((node) => node.id)
+        );
+      }
+    }
+    setHoveringIds(linked);
+  }, [nodeHover, edgeHover, processed]);
 
   // This is used for navigation from grid to graph view. This node will be centered and briefly highlighted.
   const [focusedNodeId, setFocusedNodeId] = useState<string>();
@@ -216,7 +241,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
               onMouseEnter={setNodeHover}
               onMouseLeave={clearNodeHover}
               onClick={onNodeOpen}
-              hoveringId={nodeHover || highlightId}
+              hoveringIds={[...hoveringIds] || [highlightId]}
             />
 
             <Markers markers={markers || []} onClick={setFocused} />
@@ -274,14 +299,16 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
   );
 }
 
-// These components are here as a perf optimisation to prevent going through all nodes and edges on every pan/zoom.
+// Active -> emphasized, inactive -> de-emphasized, and default -> normal styling
+export type HoverState = 'active' | 'inactive' | 'default';
 
+// These components are here as a perf optimisation to prevent going through all nodes and edges on every pan/zoom.
 interface NodesProps {
   nodes: NodeDatum[];
   onMouseEnter: (id: string) => void;
   onMouseLeave: (id: string) => void;
   onClick: (event: MouseEvent<SVGElement>, node: NodeDatum) => void;
-  hoveringId?: string;
+  hoveringIds?: string[];
 }
 const Nodes = memo(function Nodes(props: NodesProps) {
   return (
@@ -293,7 +320,13 @@ const Nodes = memo(function Nodes(props: NodesProps) {
           onMouseEnter={props.onMouseEnter}
           onMouseLeave={props.onMouseLeave}
           onClick={props.onClick}
-          hovering={props.hoveringId === n.id}
+          hovering={
+            !props.hoveringIds || props.hoveringIds.length === 0
+              ? 'default'
+              : props.hoveringIds?.includes(n.id)
+              ? 'active'
+              : 'inactive'
+          }
         />
       ))}
     </>
