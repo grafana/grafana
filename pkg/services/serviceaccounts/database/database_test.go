@@ -17,9 +17,16 @@ func TestStore_CreateServiceAccount(t *testing.T) {
 	_, store := setupTestDatabase(t)
 	t.Run("create service account", func(t *testing.T) {
 		serviceAccountName := "new Service Account"
+		serviceAccountRole := models.ROLE_ADMIN
 		serviceAccountOrgId := int64(1)
+		isDisabled := true
+		saForm := serviceaccounts.CreateServiceAccountForm{
+			Name:       serviceAccountName,
+			Role:       &serviceAccountRole,
+			IsDisabled: &isDisabled,
+		}
 
-		saDTO, err := store.CreateServiceAccount(context.Background(), serviceAccountOrgId, serviceAccountName)
+		saDTO, err := store.CreateServiceAccount(context.Background(), serviceAccountOrgId, &saForm)
 		require.NoError(t, err)
 		assert.Equal(t, "sa-new-service-account", saDTO.Login)
 		assert.Equal(t, serviceAccountName, saDTO.Name)
@@ -30,6 +37,8 @@ func TestStore_CreateServiceAccount(t *testing.T) {
 		assert.Equal(t, "sa-new-service-account", retrieved.Login)
 		assert.Equal(t, serviceAccountName, retrieved.Name)
 		assert.Equal(t, serviceAccountOrgId, retrieved.OrgId)
+		assert.Equal(t, string(serviceAccountRole), retrieved.Role)
+		assert.True(t, retrieved.IsDisabled)
 
 		retrievedId, err := store.RetrieveServiceAccountIdByName(context.Background(), serviceAccountOrgId, serviceAccountName)
 		require.NoError(t, err)
