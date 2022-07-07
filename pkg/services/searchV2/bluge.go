@@ -603,10 +603,6 @@ func doSearchQuery(
 		if q.Explain {
 			if isMatchAllQuery {
 				fScore.Append(float64(fieldLen + q.From))
-
-				// HACK, just for helping test paging issue
-				current := fName.At(fieldLen)
-				fName.Set(fieldLen, fmt.Sprintf("[%d/%d] %s", q.From, fieldLen, current))
 			} else {
 				fScore.Append(match.Score)
 			}

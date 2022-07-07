@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 import { DataFrame } from '@grafana/data';
-import { CodeEditor, TabsBar, Tab, Modal, ModalTabsHeader, TabContent } from '@grafana/ui';
+import { CodeEditor, Modal, ModalTabsHeader, TabContent } from '@grafana/ui';
 import { DataHoverView } from 'app/plugins/panel/geomap/components/DataHoverView';
 
 export interface Props {
@@ -16,7 +16,7 @@ const tabs = [
   { label: 'Fields', value: 'fields' },
 ];
 
-export function ExplainScorePopup({ name, explain, frame, row }: Props): JSX.Element {
+export function ExplainScorePopup({ name, explain, frame, row }: Props) {
   const [isOpen, setOpen] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState('score');
 
