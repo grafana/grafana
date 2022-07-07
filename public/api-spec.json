@@ -4046,18 +4046,18 @@
         "operationId": "createCorrelation",
         "parameters": [
           {
-            "type": "string",
-            "name": "uid",
-            "in": "path",
-            "required": true
-          },
-          {
             "name": "Body",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/CreateCorrelationCommand"
             }
+          },
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -9041,7 +9041,8 @@
         }
       }
     },
-    "Correlation": {
+    "CorrelationDTO": {
+      "description": "CorrelationDTO extends Correlation by adding `Version`, which is persisted and read from the `version` column\nin the data_source table. It's not part of the Correlation model but needed when editing correlations to handle\nconcurrent edits.",
       "type": "object",
       "properties": {
         "description": {
@@ -9052,6 +9053,10 @@
         },
         "target": {
           "type": "string"
+        },
+        "version": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -9102,6 +9107,10 @@
         },
         "targetUid": {
           "type": "string"
+        },
+        "version": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -12818,7 +12827,7 @@
         "required": ["correlation", "message"],
         "properties": {
           "correlation": {
-            "$ref": "#/definitions/Correlation"
+            "$ref": "#/definitions/CorrelationDTO"
           },
           "message": {
             "description": "Message Message of the created correlation.",

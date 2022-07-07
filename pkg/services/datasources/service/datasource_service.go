@@ -285,12 +285,19 @@ func (s *Service) CreateCorrelation(ctx context.Context, cmd *datasources.Create
 
 		ds.Correlations = append(ds.Correlations, newCorrelation)
 
-		if err = s.SQLStore.UpdateCorrelations(ctx, &datasources.UpdateCorrelationsCommand{
+		updateCmd := &datasources.UpdateCorrelationsCommand{
 			SourceUID:    ds.Uid,
 			OrgId:        cmd.OrgID,
 			Correlations: ds.Correlations,
-		}); err == nil {
-			cmd.Result = newCorrelation
+			Version:      cmd.Version,
+		}
+		if err = s.SQLStore.UpdateCorrelations(ctx, updateCmd); err == nil {
+			cmd.Result = datasources.CorrelationDTO{
+				Target:      newCorrelation.Target,
+				Description: newCorrelation.Description,
+				Label:       newCorrelation.Label,
+				Version:     updateCmd.Version,
+			}
 		}
 
 		return err

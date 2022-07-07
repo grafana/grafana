@@ -379,7 +379,7 @@ type DatasourceProxyGETcallsParams struct {
 }
 
 // swagger:parameters datasourceProxyDELETEByUIDcalls
-// swagger:parameters checkDatasourceHealth fetchDatasourceResources createCorrelation
+// swagger:parameters checkDatasourceHealth fetchDatasourceResources
 type DatasourceUID struct {
 	// in:path
 	// required:true
@@ -498,6 +498,9 @@ type CreateCorrelationParams struct {
 	// in:body
 	// required:true
 	Body datasources.CreateCorrelationCommand
+	// in:path
+	// required:true
+	DatasourceUID string `json:"uid"`
 }
 
 // swagger:response getDatasourcesResponse
@@ -575,7 +578,7 @@ type CreateCorrelationResponse struct {
 	Body struct {
 		// Correlation properties
 		// required: true
-		Correlation datasources.Correlation `json:"correlation"`
+		Correlation datasources.CorrelationDTO `json:"correlation"`
 
 		// Message Message of the created correlation.
 		// required: true

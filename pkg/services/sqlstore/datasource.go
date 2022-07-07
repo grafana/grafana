@@ -295,18 +295,30 @@ func (ss *SQLStore) UpdateCorrelations(ctx context.Context, cmd *datasources.Upd
 		ds := &datasources.DataSource{
 			Correlations: cmd.Correlations,
 			Updated:      time.Now(),
+			Version:      cmd.Version + 1,
 		}
 
-		// TODO: should we also check for version here instead (like UpdateDatasource)?
-		affected, err := sess.Where("uid=? and org_id=?", cmd.SourceUID, cmd.OrgId).Omit("json_data").Update(ds)
+		updateSession := sess.Omit("json_data")
+
+		if cmd.Version != 0 {
+			// the reason we allow cmd.version > db.version is make it possible for people to force
+			// updates to datasources using the datasource.yaml file without knowing exactly what version
+			// a datasource have in the db.
+			updateSession = sess.Where("uid=? and org_id=? and version < ?", cmd.SourceUID, cmd.OrgId, ds.Version)
+		} else {
+			updateSession = sess.Where("uid=? and org_id=?", cmd.SourceUID, cmd.OrgId)
+		}
+		affected, err := updateSession.Update(ds)
+
 		if err != nil {
 			return err
 		}
 
 		if affected == 0 {
-			return datasources.ErrDataSourceNotFound
+			return datasources.ErrDataSourceUpdatingOldVersion
 		}
 
+		cmd.Version = ds.Version
 		cmd.Result = cmd.Correlations
 		return err
 	})

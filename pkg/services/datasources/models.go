@@ -36,6 +36,16 @@ type Correlation struct {
 	Description string `json:"description,omitempty"`
 }
 
+// CorrelationDTO extends Correlation by adding `Version`, which is persisted and read from the `version` column
+// in the data_source table. It's not part of the Correlation model but needed when editing correlations to handle
+// concurrent edits.
+type CorrelationDTO struct {
+	Target      string `json:"target"`
+	Label       string `json:"label,omitempty"`
+	Description string `json:"description,omitempty"`
+	Version     int    `json:"version,omitempty"`
+}
+
 type DataSource struct {
 	Id      int64 `json:"id"`
 	OrgId   int64 `json:"orgId"`
@@ -127,7 +137,7 @@ type UpdateDataSourceCommand struct {
 	BasicAuthUser   string            `json:"basicAuthUser"`
 	WithCredentials bool              `json:"withCredentials"`
 	IsDefault       bool              `json:"isDefault"`
-	Correlations    []Correlation     `json:"correlations"`
+	Correlations    []Correlation     `json:"-"`
 	JsonData        *simplejson.Json  `json:"jsonData"`
 	SecureJsonData  map[string]string `json:"secureJsonData"`
 	Version         int               `json:"version"`
@@ -163,10 +173,11 @@ type CreateCorrelationCommand struct {
 	TargetUID   string `json:"targetUid" binding:"Required"`
 	Label       string `json:"label"`
 	Description string `json:"description"`
+	Version     int    `json:"version"`
 
-	SourceUID string      `json:"-"`
-	OrgID     int64       `json:"-"`
-	Result    Correlation `json:"-"`
+	SourceUID string         `json:"-"`
+	OrgID     int64          `json:"-"`
+	Result    CorrelationDTO `json:"-"`
 }
 
 // UpdateCorrelationsCommand updates a correlation
@@ -175,7 +186,9 @@ type UpdateCorrelationsCommand struct {
 	TargetUID    string
 	Correlations []Correlation
 	OrgId        int64
-	Result       []Correlation
+
+	Version int
+	Result  []Correlation
 }
 
 // Function for updating secrets along with datasources, to ensure atomicity
