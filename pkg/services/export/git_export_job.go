@@ -184,9 +184,7 @@ func (e *gitExportJob) doOrgExportWithHistory(helper *commitHelper) error {
 		}
 	}
 
-	// Run all the simple exporters
 	exporters := []simpleExporter{}
-
 	if include.Auth {
 		exporters = append(exporters, dumpAuthTables)
 	}
@@ -196,15 +194,17 @@ func (e *gitExportJob) doOrgExportWithHistory(helper *commitHelper) error {
 			exportSystemPreferences,
 			exportSystemStars,
 			exportSystemPlaylists,
-			exportAnnotations,
 			exportKVStore,
 			exportLive)
 	}
 
-	// This needs a real admin user to use the interfaces (and decrypt)
-	// if include.Snapshots {
-	// 	exporters = append(exporters, exportSnapshots)
-	// }
+	if include.Anno {
+		exporters = append(exporters, exportAnnotations)
+	}
+
+	if include.Snapshots {
+		exporters = append(exporters, exportSnapshots)
+	}
 
 	for _, fn := range exporters {
 		err = fn(helper, e)

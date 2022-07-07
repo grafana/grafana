@@ -27,6 +27,7 @@ interface ExportInclude {
   dash: boolean;
   services: boolean;
   usage: boolean;
+  anno: boolean;
   snapshots: boolean;
 }
 
@@ -45,7 +46,8 @@ const includAll: ExportInclude = {
   dash: true,
   services: true,
   usage: true,
-  snapshots: true,
+  anno: true,
+  snapshots: false, // will fail until we have a real user
 };
 
 const defaultJob: ExportJob = {

@@ -25,6 +25,7 @@ type ExportConfig struct {
 		Dash      bool `json:"dash"`
 		Services  bool `json:"services"`
 		Usage     bool `json:"usage"`
+		Anno      bool `json:"anno"`
 		Snapshots bool `json:"snapshots"`
 	} `json:"include"`
 
