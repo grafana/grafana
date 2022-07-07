@@ -13,9 +13,6 @@ import (
 	"sort"
 	"strings"
 
-	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/datasources"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -24,6 +21,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager/installer"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -38,7 +37,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 	// When using access control, should be able to list all data sources installed:
 	//  * anyone that can create a data source
 	//  * anyone that can install a plugin
-	// Fallback to only letting admins list non-core plugins
+	// Org Admins should be able to list non-core plugins
 	// TODO what about toggle a non core plugin? Should they get the list?
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	if !hasAccess(ac.ReqOrgAdmin, ac.EvalAny(
