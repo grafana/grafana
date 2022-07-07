@@ -601,7 +601,7 @@ func doSearchQuery(
 		}
 
 		if q.Explain {
-			if isMatchAllQuery || true {
+			if isMatchAllQuery {
 				fScore.Append(float64(fieldLen + q.From))
 
 				// HACK, just for helping test paging issue
