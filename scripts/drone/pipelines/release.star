@@ -180,7 +180,7 @@ def get_steps(edition, ver_mode):
         build_backend_step(edition=edition, ver_mode=ver_mode),
         build_frontend_step(edition=edition, ver_mode=ver_mode),
         build_frontend_package_step(edition=edition, ver_mode=ver_mode),
-        build_plugins_step(edition=edition, sign=True),
+        build_plugins_step(edition=edition, ver_mode=ver_mode),
     ]
 
     integration_test_steps = [
@@ -394,11 +394,13 @@ def publish_packages_pipeline():
     }
     oss_steps = [
         download_grabpl_step(),
+        gen_version_step(ver_mode='release'),
         store_packages_step(edition='oss', ver_mode='release'),
     ]
 
     enterprise_steps = [
         download_grabpl_step(),
+        gen_version_step(ver_mode='release'),
         store_packages_step(edition='enterprise', ver_mode='release'),
     ]
     deps = [
