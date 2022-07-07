@@ -4,26 +4,9 @@ import React, { CSSProperties } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import { SceneObjectBase } from './SceneObjectBase';
-import { SceneComponentProps } from './types';
+import { SceneObjectBase } from '../core/SceneObjectBase';
 
-export function SceneComponentEditWrapper<T extends SceneObjectBase<any>>({
-  model,
-  isEditing,
-}: SceneComponentProps<T>) {
-  const Component = (model as any).constructor['Component'] ?? EmptyRenderer;
-  const inner = <Component model={model} isEditing={isEditing} />;
-
-  model.useMount();
-
-  if (!isEditing) {
-    return inner;
-  }
-
-  return <SceneComponentEditingWrapper model={model}>{inner}</SceneComponentEditingWrapper>;
-}
-
-export function SceneComponentEditingWrapper<T extends SceneObjectBase<any>>({
+export function SceneComponentEditingWrapper<T extends SceneObjectBase>({
   model,
   children,
 }: {
@@ -76,7 +59,3 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
-
-function EmptyRenderer<T>(_: SceneComponentProps<T>): React.ReactElement | null {
-  return null;
-}
