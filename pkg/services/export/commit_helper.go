@@ -70,6 +70,10 @@ func (ch *commitHelper) add(opts commitOptions) error {
 		return fmt.Errorf("stop requested")
 	}
 
+	if len(opts.body) < 1 {
+		return nil // nothing to commit
+	}
+
 	user, ok := ch.users[opts.userID]
 	if !ok {
 		user = &userInfo{
