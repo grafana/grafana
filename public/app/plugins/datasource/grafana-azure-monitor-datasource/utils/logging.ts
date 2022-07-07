@@ -12,13 +12,12 @@ export const getAzureMonitorEvent = (target: AzureMonitorQuery) => {
         alias: !!target.azureMonitor?.alias,
         top: !!target.azureMonitor?.top,
       };
-      break;
     case AzureQueryType.LogAnalytics:
       return {
         ...commonProps,
         format: target.azureLogAnalytics?.resultFormat,
       };
-      break;
+    default:
+      return commonProps;
   }
-  return commonProps;
 };

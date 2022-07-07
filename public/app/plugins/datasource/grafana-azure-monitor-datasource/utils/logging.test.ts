@@ -35,7 +35,6 @@ describe('AzureMonitor: logging', () => {
     };
     expect(getAzureMonitorEvent(query)).toEqual({
       query_type: AzureQueryType.LogAnalytics,
-      complexity: 4,
       format: 'table',
     });
   });
@@ -50,7 +49,6 @@ describe('AzureMonitor: logging', () => {
     };
     expect(getAzureMonitorEvent(query)).toEqual({
       query_type: AzureQueryType.AzureResourceGraph,
-      complexity: 1,
     });
   });
 });
