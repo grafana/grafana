@@ -40,7 +40,7 @@ func stateToPostableAlert(alertState *state.State, appURL *url.URL) *models.Post
 	}
 
 	if alertState.Image != nil {
-		nA[ngModels.ScreenshotTokenAnnotation] = alertState.Image.Token
+		nA[ngModels.ImageTokenAnnotation] = alertState.Image.Token
 	}
 
 	var urlStr string

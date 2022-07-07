@@ -20,11 +20,6 @@ var (
 			State:       FeatureStateStable,
 		},
 		{
-			Name:        "serviceAccounts",
-			Description: "support service accounts",
-			State:       FeatureStateBeta,
-		},
-		{
 			Name:        "database_metrics",
 			Description: "Add prometheus metrics for database tables",
 			State:       FeatureStateStable,
@@ -102,10 +97,9 @@ var (
 			RequiresDevMode: true,
 		},
 		{
-			Name:            "publicDashboards",
-			Description:     "enables public access to dashboards",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
+			Name:        "publicDashboards",
+			Description: "enables public access to dashboards",
+			State:       FeatureStateAlpha,
 		},
 		{
 			Name:        "lokiLive",
@@ -184,11 +178,6 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:        "savedItems",
-			Description: "Enable Saved Items in the navbar.",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:        "cloudWatchDynamicLabels",
 			Description: "Use dynamic labels instead of alias patterns in CloudWatch datasource",
 			State:       FeatureStateStable,
@@ -235,6 +224,12 @@ var (
 		{
 			Name:         "canvasPanelNesting",
 			Description:  "Allow elements nesting",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:         "scenes",
+			Description:  "Experimental framework to build interactive dashboards",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 		},

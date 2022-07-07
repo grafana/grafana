@@ -35,7 +35,7 @@ import {
   Themeable2,
 } from '@grafana/ui';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
-import { dedupLogRows, filterLogLevels } from 'app/core/logs_model';
+import { dedupLogRows, filterLogLevels } from 'app/core/logsModel';
 import store from 'app/core/store';
 import { ExploreId } from 'app/types/explore';
 

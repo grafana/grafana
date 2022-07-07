@@ -32,6 +32,7 @@ load(
     'verify_gen_cue_step',
     'test_a11y_frontend_step',
     'enterprise_downstream_step',
+    'betterer_frontend_step',
 )
 
 load(
@@ -79,6 +80,7 @@ def pr_test_frontend():
     ]
     test_steps = [
         lint_frontend_step(),
+        betterer_frontend_step(),
         test_frontend_step(),
     ]
     return pipeline(
@@ -121,10 +123,10 @@ def pr_pipelines(edition):
     ]
     build_steps = [
         enterprise_downstream_step(edition=edition, ver_mode=ver_mode),
-        build_backend_step(edition=edition, ver_mode=ver_mode, variants=variants),
+        build_backend_step(edition=edition, ver_mode=ver_mode),
         build_frontend_step(edition=edition, ver_mode=ver_mode),
         build_frontend_package_step(edition=edition, ver_mode=ver_mode),
-        build_plugins_step(edition=edition),
+        build_plugins_step(edition=edition, ver_mode=ver_mode),
     ]
     integration_test_steps = [
         postgres_integration_tests_step(edition=edition, ver_mode=ver_mode),

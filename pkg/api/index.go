@@ -151,9 +151,6 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 }
 
 func enableServiceAccount(hs *HTTPServer, c *models.ReqContext) bool {
-	if !hs.Features.IsEnabled(featuremgmt.FlagServiceAccounts) {
-		return false
-	}
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	return hasAccess(ac.ReqOrgAdmin, serviceAccountAccessEvaluator)
 }
@@ -166,21 +163,20 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	navTree := []*dtos.NavLink{}
 
-	if hs.Features.IsEnabled(featuremgmt.FlagSavedItems) {
-		starredItemsLinks, err := hs.buildStarredItemsNavLinks(c, prefs)
-		if err != nil {
-			return nil, err
-		}
-
-		navTree = append(navTree, &dtos.NavLink{
-			Text:       "Starred",
-			Id:         "starred",
-			Icon:       "star",
-			SortWeight: dtos.WeightSavedItems,
-			Section:    dtos.NavSectionCore,
-			Children:   starredItemsLinks,
-		})
+	starredItemsLinks, err := hs.buildStarredItemsNavLinks(c, prefs)
+	if err != nil {
+		return nil, err
 	}
+
+	navTree = append(navTree, &dtos.NavLink{
+		Text:           "Starred",
+		Id:             "starred",
+		Icon:           "star",
+		SortWeight:     dtos.WeightSavedItems,
+		Section:        dtos.NavSectionCore,
+		Children:       starredItemsLinks,
+		EmptyMessageId: "starred-empty",
+	})
 
 	dashboardChildLinks := hs.buildDashboardNavLinks(c, hasEditPerm)
 
@@ -298,7 +294,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 			Url:         hs.Cfg.AppSubURL + "/org/apikeys",
 		})
 	}
-	// needs both feature flag and migration to be able to show service accounts
+
 	if enableServiceAccount(hs, c) {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "Service accounts",
@@ -411,7 +407,7 @@ func (hs *HTTPServer) buildStarredItemsNavLinks(c *models.ReqContext, prefs *pre
 			Id:    dashboardId,
 			OrgId: c.OrgId,
 		}
-		err := hs.dashboardService.GetDashboard(c.Req.Context(), query)
+		err := hs.DashboardService.GetDashboard(c.Req.Context(), query)
 		if err == nil {
 			starredDashboards = append(starredDashboards, query.Result)
 		}
@@ -460,6 +456,15 @@ func (hs *HTTPServer) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm b
 			Id:   "library-panels",
 			Url:  hs.Cfg.AppSubURL + "/library-panels",
 			Icon: "library-panel",
+		})
+	}
+
+	if hs.Features.IsEnabled(featuremgmt.FlagScenes) {
+		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
+			Text: "Scenes",
+			Id:   "scenes",
+			Url:  hs.Cfg.AppSubURL + "/scenes",
+			Icon: "apps",
 		})
 	}
 
@@ -651,6 +656,16 @@ func (hs *HTTPServer) buildAdminNavLinks(c *models.ReqContext) []*dtos.NavLink {
 		})
 	}
 
+	if hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionSettingsRead)) && hs.Features.IsEnabled(featuremgmt.FlagStorage) {
+		adminNavLinks = append(adminNavLinks, &dtos.NavLink{
+			Text:        "Storage",
+			Id:          "storage",
+			Description: "Manage file storage",
+			Icon:        "cube",
+			Url:         hs.Cfg.AppSubURL + "/admin/storage",
+		})
+	}
+
 	if hs.Cfg.LDAPEnabled && hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionLDAPStatusRead)) {
 		adminNavLinks = append(adminNavLinks, &dtos.NavLink{
 			Text: "LDAP", Id: "ldap", Url: hs.Cfg.AppSubURL + "/admin/ldap", Icon: "book",
@@ -668,7 +683,7 @@ func (hs *HTTPServer) buildAdminNavLinks(c *models.ReqContext) []*dtos.NavLink {
 
 func (hs *HTTPServer) editorInAnyFolder(c *models.ReqContext) bool {
 	hasEditPermissionInFoldersQuery := models.HasEditPermissionInFoldersQuery{SignedInUser: c.SignedInUser}
-	if err := hs.dashboardService.HasEditPermissionInFolders(c.Req.Context(), &hasEditPermissionInFoldersQuery); err != nil {
+	if err := hs.DashboardService.HasEditPermissionInFolders(c.Req.Context(), &hasEditPermissionInFoldersQuery); err != nil {
 		return false
 	}
 	return hasEditPermissionInFoldersQuery.Result

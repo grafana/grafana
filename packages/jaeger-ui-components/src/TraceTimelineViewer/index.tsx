@@ -21,6 +21,7 @@ import { stylesFactory, withTheme2 } from '@grafana/ui';
 import { Accessors } from '../ScrollManager';
 import { autoColor } from '../Theme';
 import { merge as mergeShortcuts } from '../keyboard-shortcuts';
+import { SpanBarOptions } from '../settings/SpanBarSettings';
 import { SpanLinkFunc, TNil } from '../types';
 import TTraceTimeline from '../types/TTraceTimeline';
 import { TraceSpan, Trace, TraceLog, TraceKeyValuePair, TraceLink, TraceSpanReference } from '../types/trace';
@@ -75,6 +76,7 @@ type TProps = TExtractUiFindFromStateReturn & {
   scrollToFirstVisibleSpan: () => void;
   traceTimeline: TTraceTimeline;
   trace: Trace;
+  spanBarOptions: SpanBarOptions | undefined;
   updateNextViewRangeTime: (update: ViewRangeTimeUpdate) => void;
   updateViewRangeTime: TUpdateViewRangeTimeFunction;
   viewRange: ViewRange;

@@ -24,6 +24,7 @@ type ProvisioningApiForkingService interface {
 	RouteDeleteMuteTiming(*models.ReqContext) response.Response
 	RouteDeleteTemplate(*models.ReqContext) response.Response
 	RouteGetAlertRule(*models.ReqContext) response.Response
+	RouteGetAlertRuleGroup(*models.ReqContext) response.Response
 	RouteGetContactpoints(*models.ReqContext) response.Response
 	RouteGetMuteTiming(*models.ReqContext) response.Response
 	RouteGetMuteTimings(*models.ReqContext) response.Response
@@ -60,6 +61,11 @@ func (f *ForkedProvisioningApi) RouteDeleteTemplate(ctx *models.ReqContext) resp
 func (f *ForkedProvisioningApi) RouteGetAlertRule(ctx *models.ReqContext) response.Response {
 	uIDParam := web.Params(ctx.Req)[":UID"]
 	return f.forkRouteGetAlertRule(ctx, uIDParam)
+}
+func (f *ForkedProvisioningApi) RouteGetAlertRuleGroup(ctx *models.ReqContext) response.Response {
+	folderUIDParam := web.Params(ctx.Req)[":FolderUID"]
+	groupParam := web.Params(ctx.Req)[":Group"]
+	return f.forkRouteGetAlertRuleGroup(ctx, folderUIDParam, groupParam)
 }
 func (f *ForkedProvisioningApi) RouteGetContactpoints(ctx *models.ReqContext) response.Response {
 	return f.forkRouteGetContactpoints(ctx)
@@ -113,7 +119,7 @@ func (f *ForkedProvisioningApi) RoutePutAlertRule(ctx *models.ReqContext) respon
 func (f *ForkedProvisioningApi) RoutePutAlertRuleGroup(ctx *models.ReqContext) response.Response {
 	folderUIDParam := web.Params(ctx.Req)[":FolderUID"]
 	groupParam := web.Params(ctx.Req)[":Group"]
-	conf := apimodels.AlertRuleGroup{}
+	conf := apimodels.AlertRuleGroupMetadata{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
@@ -200,6 +206,16 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingServi
 				http.MethodGet,
 				"/api/v1/provisioning/alert-rules/{UID}",
 				srv.RouteGetAlertRule,
+				m,
+			),
+		)
+		group.Get(
+			toMacaronPath("/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}"),
+			api.authorize(http.MethodGet, "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}",
+				srv.RouteGetAlertRuleGroup,
 				m,
 			),
 		)

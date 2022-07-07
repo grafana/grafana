@@ -3,6 +3,8 @@ package models
 import (
 	"errors"
 	"time"
+
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 // Typed errors
@@ -18,61 +20,6 @@ type Password string
 
 func (p Password) IsWeak() bool {
 	return len(p) <= 4
-}
-
-type User struct {
-	Id            int64
-	Version       int
-	Email         string
-	Name          string
-	Login         string
-	Password      string
-	Salt          string
-	Rands         string
-	Company       string
-	EmailVerified bool
-	Theme         string
-	HelpFlags1    HelpFlags1
-	IsDisabled    bool
-
-	IsAdmin          bool
-	IsServiceAccount bool
-	OrgId            int64
-
-	Created    time.Time
-	Updated    time.Time
-	LastSeenAt time.Time
-}
-
-func (u *User) NameOrFallback() string {
-	if u.Name != "" {
-		return u.Name
-	}
-	if u.Login != "" {
-		return u.Login
-	}
-	return u.Email
-}
-
-// ---------------------
-// COMMANDS
-
-type CreateUserCommand struct {
-	Email            string
-	Login            string
-	Name             string
-	Company          string
-	OrgId            int64
-	OrgName          string
-	Password         string
-	EmailVerified    bool
-	IsAdmin          bool
-	IsDisabled       bool
-	SkipOrgSetup     bool
-	DefaultOrgRole   string
-	IsServiceAccount bool
-
-	Result User
 }
 
 type UpdateUserCommand struct {
@@ -115,17 +62,17 @@ type SetUsingOrgCommand struct {
 
 type GetUserByLoginQuery struct {
 	LoginOrEmail string
-	Result       *User
+	Result       *user.User
 }
 
 type GetUserByEmailQuery struct {
 	Email  string
-	Result *User
+	Result *user.User
 }
 
 type GetUserByIdQuery struct {
 	Id     int64
-	Result *User
+	Result *user.User
 }
 
 type GetSignedInUserQuery struct {

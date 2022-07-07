@@ -3450,43 +3450,6 @@ exports[`better eslint`] = {
     "public/app/core/history/richHistoryLocalStorageUtils.ts:708464706": [
       [59, 99, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/core/logs_model.test.ts:47944319": [
-      [34, 32, 132, "Do not use any type assertions.", "3240026221"],
-      [41, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [46, 32, 250, "Do not use any type assertions.", "1056401323"],
-      [59, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [77, 32, 255, "Do not use any type assertions.", "3910157567"],
-      [90, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [108, 32, 255, "Do not use any type assertions.", "3910157567"],
-      [121, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [131, 32, 146, "Do not use any type assertions.", "4042945873"],
-      [141, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [159, 32, 245, "Do not use any type assertions.", "1219087628"],
-      [172, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [181, 32, 399, "Do not use any type assertions.", "951740236"],
-      [202, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [214, 22, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [223, 32, 17, "Do not use any type assertions.", "3976469210"],
-      [1085, 32, 96, "Do not use any type assertions.", "2446954905"],
-      [1088, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [1096, 32, 96, "Do not use any type assertions.", "2446954905"],
-      [1099, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [1146, 14, 152, "Do not use any type assertions.", "1058688753"],
-      [1146, 14, 117, "Do not use any type assertions.", "2244099206"]
-    ],
-    "public/app/core/logs_model.ts:1903332011": [
-      [113, 23, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [114, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [461, 21, 196, "Do not use any type assertions.", "842163811"],
-      [462, 24, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [462, 35, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [466, 31, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [610, 27, 17, "Do not use any type assertions.", "1830153619"],
-      [611, 30, 17, "Do not use any type assertions.", "1830153619"],
-      [664, 31, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [664, 36, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [685, 26, 68, "Do not use any type assertions.", "1746242431"]
-    ],
     "public/app/core/mod_defs.d.ts:305963360": [
       [1, 12, 3, "Unexpected any. Specify a different type.", "193409811"],
       [6, 12, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -5455,12 +5418,8 @@ exports[`better eslint`] = {
     "public/app/features/datasources/DataSourceDashboards.tsx:3932611556": [
       [49, 16, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/datasources/DataSourcesListPage.test.tsx:368182366": [
-      [19, 17, 26, "Do not use any type assertions.", "3994646623"],
-      [22, 14, 126, "Do not use any type assertions.", "1409469672"]
-    ],
-    "public/app/features/datasources/DataSourcesListPage.tsx:247845505": [
-      [44, 14, 22, "Do not use any type assertions.", "2167463294"]
+    "public/app/features/datasources/DataSourcesListPage.test.tsx:3726518198": [
+      [32, 19, 26, "Do not use any type assertions.", "3994646623"]
     ],
     "public/app/features/datasources/__mocks__/dataSourcesMocks.ts:1217473343": [
       [23, 9, 35, "Do not use any type assertions.", "2095437639"]
@@ -6778,17 +6737,6 @@ exports[`better eslint`] = {
     "public/app/features/sandbox/TestStuffPage.tsx:3698683147": [
       [134, 30, 29, "Do not use any type assertions.", "3195381622"]
     ],
-    "public/app/features/search/components/DashboardSearch.test.tsx:3245889886": [
-      [18, 23, 33, "Do not use any type assertions.", "2540133228"],
-      [30, 15, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [72, 14, 130, "Do not use any type assertions.", "3429995880"],
-      [75, 10, 3, "Unexpected any. Specify a different type.", "193409811"]
-    ],
-    "public/app/features/search/components/MoveToFolderModal.tsx:3435881653": [
-      [31, 21, 48, "Do not use any type assertions.", "646093117"],
-      [31, 93, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [64, 51, 15, "Do not use any type assertions.", "3135191849"]
-    ],
     "public/app/features/search/components/SearchCard.tsx:417509806": [
       [20, 36, 3, "Unexpected any. Specify a different type.", "193409811"],
       [116, 37, 32, "Do not use any type assertions.", "1966145380"],
@@ -6796,18 +6744,6 @@ exports[`better eslint`] = {
     ],
     "public/app/features/search/components/SearchItem.tsx:1278234167": [
       [15, 35, 3, "Unexpected any. Specify a different type.", "193409811"]
-    ],
-    "public/app/features/search/components/SearchResults.tsx:4264592788": [
-      [19, 35, 3, "Unexpected any. Specify a different type.", "193409811"]
-    ],
-    "public/app/features/search/hooks/useDashboardSearch.ts:2034499138": [
-      [61, 28, 32, "Do not use any type assertions.", "327142118"]
-    ],
-    "public/app/features/search/hooks/useManageDashboards.test.ts:3293235715": [
-      [31, 45, 41, "Do not use any type assertions.", "3856094708"],
-      [31, 45, 15, "Do not use any type assertions.", "363922340"],
-      [33, 43, 31, "Do not use any type assertions.", "2087413285"],
-      [33, 43, 13, "Do not use any type assertions.", "2146830713"]
     ],
     "public/app/features/search/hooks/useSearchKeyboardSelection.ts:877924082": [
       [87, 24, 42, "Do not use any type assertions.", "3335657801"]
@@ -6847,25 +6783,6 @@ exports[`better eslint`] = {
       [48, 32, 21, "Do not use any type assertions.", "3454251755"],
       [48, 50, 3, "Unexpected any. Specify a different type.", "193409811"],
       [127, 15, 56, "Do not use any type assertions.", "1375039711"]
-    ],
-    "public/app/features/search/reducers/dashboardSearch.test.ts:1813679195": [
-      [5, 66, 17, "Do not use any type assertions.", "3518965757"],
-      [5, 78, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [8, 42, 9, "Do not use any type assertions.", "3692209159"],
-      [8, 48, 3, "Unexpected any. Specify a different type.", "193409811"]
-    ],
-    "public/app/features/search/reducers/manageDashboards.test.ts:2083873033": [
-      [11, 26, 9, "Do not use any type assertions.", "3692209159"],
-      [11, 32, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [16, 43, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [17, 43, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [17, 77, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [23, 44, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [24, 44, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [24, 78, 3, "Unexpected any. Specify a different type.", "193409811"]
-    ],
-    "public/app/features/search/reducers/manageDashboards.ts:4114284001": [
-      [81, 11, 24, "Do not use any type assertions.", "1870559034"]
     ],
     "public/app/features/search/service/bluge.ts:59496993": [
       [21, 15, 68, "Do not use any type assertions.", "2766474629"],
@@ -12534,6 +12451,83 @@ exports[`better eslint`] = {
       [130, 16, 3, "Unexpected any. Specify a different type.", "193409811"],
       [151, 38, 3, "Unexpected any. Specify a different type.", "193409811"],
       [162, 29, 3, "Unexpected any. Specify a different type.", "193409811"]
+    ]
+  }`
+};
+
+exports[`no undocumented stories`] = {
+  value: `{
+    "packages/grafana-ui/src/components/ButtonCascader/ButtonCascader.story.tsx:5381": [
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
+    ],
+    "packages/grafana-ui/src/components/ColorPicker/ColorPickerPopover.story.tsx:5381": [
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
+    ],
+    "packages/grafana-ui/src/components/ColorPicker/NamedColorsPalette.story.tsx:5381": [
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
+    ],
+    "packages/grafana-ui/src/components/ColorPicker/SpectrumPalette.story.tsx:5381": [
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
+    ],
+    "packages/grafana-ui/src/components/DateTimePickers/RelativeTimeRangePicker/RelativeTimeRangePicker.story.tsx:5381": [
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
+    ],
+    "packages/grafana-ui/src/components/DateTimePickers/TimeOfDayPicker.story.tsx:5381": [
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
+    ],
+    "packages/grafana-ui/src/components/DateTimePickers/TimeRangePicker.story.tsx:5381": [
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
+    ],
+    "packages/grafana-ui/src/components/DateTimePickers/TimeZonePicker.story.tsx:5381": [
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
+    ],
+    "packages/grafana-ui/src/components/DateTimePickers/WeekStartPicker.story.tsx:5381": [
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
+    ],
+    "packages/grafana-ui/src/components/PageLayout/PageToolbar.story.tsx:5381": [
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
+    ],
+    "packages/grafana-ui/src/components/PanelChrome/PanelChrome.story.tsx:5381": [
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
+    ],
+    "packages/grafana-ui/src/components/QueryField/QueryField.story.tsx:5381": [
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
+    ],
+    "packages/grafana-ui/src/components/RefreshPicker/RefreshPicker.story.tsx:5381": [
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
+    ],
+    "packages/grafana-ui/src/components/SecretTextArea/SecretTextArea.story.tsx:5381": [
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
+    ],
+    "packages/grafana-ui/src/components/Segment/Segment.story.tsx:5381": [
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
+    ],
+    "packages/grafana-ui/src/components/Segment/SegmentAsync.story.tsx:5381": [
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
+    ],
+    "packages/grafana-ui/src/components/Segment/SegmentInput.story.tsx:5381": [
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
+    ],
+    "packages/grafana-ui/src/components/StatsPicker/StatsPicker.story.tsx:5381": [
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
+    ],
+    "packages/grafana-ui/src/components/Tabs/Tabs.story.tsx:5381": [
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
+    ],
+    "packages/grafana-ui/src/components/ThemeDemos/ThemeDemo.story.tsx:5381": [
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
+    ],
+    "packages/grafana-ui/src/components/Typography/Typography.story.tsx:5381": [
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
+    ],
+    "packages/grafana-ui/src/components/VizLayout/VizLayout.story.tsx:5381": [
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
+    ],
+    "packages/grafana-ui/src/components/VizLegend/VizLegend.story.tsx:5381": [
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
+    ],
+    "packages/grafana-ui/src/components/VizTooltip/SeriesTable.story.tsx:5381": [
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ]
   }`
 };

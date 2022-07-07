@@ -15,7 +15,7 @@ title: What's new in Grafana v8.3
 weight: -33
 ---
 
-# What’s new in Grafana v8.3
+# What's new in Grafana v8.3
 
 Grafana 8.3 is an exciting release for Grafana Labs. This release includes the new Candlestick Panel, a new visualization suggestions engine and, for enterprise users, Recorded Queries.
 

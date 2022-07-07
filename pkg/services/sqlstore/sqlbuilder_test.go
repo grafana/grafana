@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -190,11 +191,11 @@ func test(t *testing.T, dashboardProps DashboardProps, dashboardPermission *Dash
 	})
 }
 
-func createDummyUser(t *testing.T, sqlStore *SQLStore) *models.User {
+func createDummyUser(t *testing.T, sqlStore *SQLStore) *user.User {
 	t.Helper()
 
 	uid := strconv.Itoa(rand.Intn(9999999))
-	createUserCmd := models.CreateUserCommand{
+	createUserCmd := user.CreateUserCommand{
 		Email:          uid + "@example.com",
 		Login:          uid,
 		Name:           uid,
@@ -262,12 +263,12 @@ func createDummyACL(t *testing.T, sqlStore *SQLStore, dashboardPermission *Dashb
 		DashboardID: dashboardID,
 	}
 
-	var user *models.User
+	var user *user.User
 	if dashboardPermission.User {
 		t.Logf("Creating user")
 		user = createDummyUser(t, sqlStore)
 
-		acl.UserID = user.Id
+		acl.UserID = user.ID
 	}
 
 	if dashboardPermission.Team {
@@ -275,9 +276,9 @@ func createDummyACL(t *testing.T, sqlStore *SQLStore, dashboardPermission *Dashb
 		team := createDummyTeam(t, sqlStore)
 		if search.UserFromACL {
 			user = createDummyUser(t, sqlStore)
-			err := sqlStore.AddTeamMember(user.Id, 1, team.Id, false, 0)
+			err := sqlStore.AddTeamMember(user.ID, 1, team.Id, false, 0)
 			require.NoError(t, err)
-			t.Logf("Created team member with ID %d", user.Id)
+			t.Logf("Created team member with ID %d", user.ID)
 		}
 
 		acl.TeamID = team.Id
@@ -290,7 +291,7 @@ func createDummyACL(t *testing.T, sqlStore *SQLStore, dashboardPermission *Dashb
 	err := updateDashboardAcl(t, sqlStore, dashboardID, acl)
 	require.NoError(t, err)
 	if user != nil {
-		return user.Id
+		return user.ID
 	}
 	return 0
 }

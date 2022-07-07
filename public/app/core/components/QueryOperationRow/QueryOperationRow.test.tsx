@@ -1,56 +1,44 @@
-import { mount, shallow } from 'enzyme';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { act } from 'react-dom/test-utils';
 
-import { QueryOperationRow } from './QueryOperationRow';
+import { QueryOperationRow, QueryOperationRowProps } from './QueryOperationRow';
+
+const setup = (propOverrides?: Partial<QueryOperationRowProps>) => {
+  const props: QueryOperationRowProps = {
+    title: 'test-title',
+    headerElement: '',
+    index: 0,
+    id: 'test-id',
+    children: <div>children</div>,
+    ...propOverrides,
+  };
+  return render(<QueryOperationRow {...props}></QueryOperationRow>);
+};
 
 describe('QueryOperationRow', () => {
-  it('renders', () => {
-    expect(() =>
-      shallow(
-        <QueryOperationRow id="test-id" index={0}>
-          <div>Test</div>
-        </QueryOperationRow>
-      )
-    ).not.toThrow();
+  it('renders without exploding', () => {
+    expect(() => setup()).not.toThrow();
+  });
+
+  it('renders the component content', () => {
+    setup();
+    expect(screen.getByText(/^test-title$/)).toBeInTheDocument();
   });
 
   describe('callbacks', () => {
-    it('should not call onOpen when component is shallowed', async () => {
-      const onOpenSpy = jest.fn();
-      // @ts-ignore strict null error, you shouldn't use promise like approach with act but I don't know what the intention is here
-      await act(async () => {
-        shallow(
-          <QueryOperationRow onOpen={onOpenSpy} id="test-id" index={0}>
-            <div>Test</div>
-          </QueryOperationRow>
-        );
-      });
-      expect(onOpenSpy).not.toBeCalled();
-    });
-
     it('should call onOpen when row is opened and onClose when row is collapsed', async () => {
       const onOpenSpy = jest.fn();
       const onCloseSpy = jest.fn();
-      const wrapper = mount(
-        <QueryOperationRow title="title" onOpen={onOpenSpy} onClose={onCloseSpy} isOpen={false} id="test-id" index={0}>
-          <div>Test</div>
-        </QueryOperationRow>
-      );
-      const titleEl = wrapper.find({ 'aria-label': 'Query operation row title' });
-      expect(titleEl).toHaveLength(1);
+      setup({ isOpen: false, onOpen: onOpenSpy, onClose: onCloseSpy });
 
-      // @ts-ignore strict null error, you shouldn't use promise like approach with act but I don't know what the intention is here
-      await act(async () => {
-        // open
-        titleEl.first().simulate('click');
-      });
+      const queryRow = screen.getByText(/^test-title$/);
+      expect(queryRow).toBeInTheDocument();
 
-      // @ts-ignore strict null error, you shouldn't use promise like approach with act but I don't know what the intention is here
-      await act(async () => {
-        // close
-        titleEl.first().simulate('click');
-      });
+      // open row on click
+      await userEvent.click(queryRow);
+      // close row on click
+      await userEvent.click(queryRow);
 
       expect(onOpenSpy).toBeCalledTimes(1);
       expect(onCloseSpy).toBeCalledTimes(1);
@@ -59,40 +47,26 @@ describe('QueryOperationRow', () => {
 
   describe('headerElement rendering', () => {
     it('should render headerElement provided as element', () => {
-      const title = <div aria-label="test title">Test</div>;
-      const wrapper = mount(
-        <QueryOperationRow headerElement={title} id="test-id" index={0}>
-          <div>Test</div>
-        </QueryOperationRow>
-      );
+      const title = <div aria-label="test title">test-header-element</div>;
+      setup({ headerElement: title, id: 'test-id', index: 0 });
 
-      const titleEl = wrapper.find({ 'aria-label': 'test title' });
-      expect(titleEl).toHaveLength(1);
+      expect(screen.getByText(/^test-header-element$/)).toBeInTheDocument();
     });
 
     it('should render headerElement provided as function', () => {
-      const title = () => <div aria-label="test title">Test</div>;
-      const wrapper = mount(
-        <QueryOperationRow headerElement={title} id="test-id" index={0}>
-          <div>Test</div>
-        </QueryOperationRow>
-      );
+      const title = () => <div aria-label="test title">test-function-header</div>;
+      setup({ headerElement: title, id: 'test-id', index: 0 });
 
-      const titleEl = wrapper.find({ 'aria-label': 'test title' });
-      expect(titleEl).toHaveLength(1);
+      expect(screen.getByText(/^test-function-header$/)).toBeInTheDocument();
     });
 
     it('should expose api to headerElement rendered as function', () => {
       const propsSpy = jest.fn();
-      const title = (props: any) => {
+      const title = (props: Partial<QueryOperationRowProps>) => {
         propsSpy(props);
         return <div aria-label="test title">Test</div>;
       };
-      shallow(
-        <QueryOperationRow headerElement={title} id="test-id" index={0}>
-          <div>Test</div>
-        </QueryOperationRow>
-      );
+      setup({ headerElement: title, id: 'test-id', index: 0 });
 
       expect(Object.keys(propsSpy.mock.calls[0][0])).toContain('isOpen');
     });
@@ -100,40 +74,27 @@ describe('QueryOperationRow', () => {
 
   describe('actions rendering', () => {
     it('should render actions provided as element', () => {
-      const actions = <div aria-label="test actions">Test</div>;
-      const wrapper = mount(
-        <QueryOperationRow actions={actions} id="test-id" index={0}>
-          <div>Test</div>
-        </QueryOperationRow>
-      );
+      const actions = <div aria-label="test actions">test-actions</div>;
+      setup({ actions: actions, id: 'test-id', index: 0 });
 
-      const actionsEl = wrapper.find({ 'aria-label': 'test actions' });
-      expect(actionsEl).toHaveLength(1);
+      expect(screen.getByText(/^test-actions$/)).toBeInTheDocument();
     });
     it('should render actions provided as function', () => {
-      const actions = () => <div aria-label="test actions">Test</div>;
-      const wrapper = mount(
-        <QueryOperationRow actions={actions} id="test-id" index={0}>
-          <div>Test</div>
-        </QueryOperationRow>
-      );
+      const actions = () => <div aria-label="test actions">test-actions</div>;
+      setup({ actions: actions, id: 'test-id', index: 0 });
 
-      const actionsEl = wrapper.find({ 'aria-label': 'test actions' });
-      expect(actionsEl).toHaveLength(1);
+      expect(screen.getByText(/^test-actions$/)).toBeInTheDocument();
     });
 
     it('should expose api to title rendered as function', () => {
       const propsSpy = jest.fn();
-      const actions = (props: any) => {
+      const actions = (props: Partial<QueryOperationRowProps>) => {
         propsSpy(props);
-        return <div aria-label="test actions">Test</div>;
+        return <div aria-label="test actions">test-actions</div>;
       };
-      shallow(
-        <QueryOperationRow actions={actions} id="test-id" index={0}>
-          <div>Test</div>
-        </QueryOperationRow>
-      );
+      setup({ actions: actions, id: 'test-id', index: 0 });
 
+      expect(screen.getByText(/^test-actions$/)).toBeInTheDocument();
       expect(Object.keys(propsSpy.mock.calls[0][0])).toEqual(['isOpen', 'onOpen', 'onClose']);
     });
   });
