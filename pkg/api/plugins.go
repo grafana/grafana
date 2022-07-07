@@ -32,18 +32,30 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 	typeFilter := c.Query("type")
 	enabledFilter := c.Query("enabled")
 	embeddedFilter := c.Query("embedded")
+	// "" => no filter
+	// "0" => filter out core plugins
+	// "1" => filter out non-core plugins
 	coreFilter := c.Query("core")
+
+	hasAccess := ac.HasAccess(hs.AccessControl, c)
 
 	// When using access control, should be able to list all data sources installed:
 	//  * anyone that can create a data source
 	//  * anyone that can install a plugin
-	// Org Admins should be able to list non-core plugins
+	// Fallback: Organization or Server Admins should be able to list non-core plugins
 	// TODO what about toggle a non core plugin? Should they get the list?
-	hasAccess := ac.HasAccess(hs.AccessControl, c)
-	if !hasAccess(ac.ReqOrgAdmin, ac.EvalAny(
+	canListNonCorePlugins := hasAccess(ac.ReqOrgOrServerAdmin, ac.EvalAny(
 		ac.EvalPermission(plugins.ActionIntall),
 		ac.EvalPermission(datasources.ActionCreate)),
-	) && !c.HasRole(models.ROLE_ADMIN) {
+	)
+
+	// Request to filter out core plugins and cannot see non-core ones => early return empty list
+	if !canListNonCorePlugins && coreFilter == "0" {
+		return response.JSON(http.StatusOK, []dtos.PluginList{})
+	}
+
+	// Force filtering non-core plugins
+	if !canListNonCorePlugins {
 		coreFilter = "1"
 	}
 
