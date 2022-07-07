@@ -4791,3 +4791,8 @@ get:
   path: infra/data/ci/grafana/releng/artifacts-uploader-service-account
 kind: secret
 name: gcp_upload_artifacts_key
+---
+kind: signature
+hmac: ec563f30c3aa398768ee9399bc2f6f50533da9b53c19d1c8b10a96277a42070c
+
+...
