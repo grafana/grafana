@@ -126,6 +126,11 @@ func (s *httpStorage) Read(c *models.ReqContext) response.Response {
 	if err != nil {
 		return response.Error(400, "cannot call read", err)
 	}
+
+	if file == nil || file.Contents == nil {
+		return response.Error(404, "file does not exist", err)
+	}
+
 	// set the correct content type for svg
 	if strings.HasSuffix(path, ".svg") {
 		c.Resp.Header().Set("Content-Type", "image/svg+xml")
