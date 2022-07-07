@@ -6,19 +6,21 @@ import { Resizable, ResizeCallbackData } from 'react-resizable';
 import { Dimensions2D, GrafanaTheme2 } from '@grafana/data';
 import { IconButton, Portal, useStyles2 } from '@grafana/ui';
 import store from 'app/core/store';
+import { Scene } from 'app/features/canvas/runtime/scene';
 
 import { InlineEditBody } from './InlineEditBody';
 
 type Props = {
   onClose?: () => void;
   id: number;
+  scene: Scene;
 };
 
 const OFFSET_X = 10;
 const OFFSET_Y = 32;
 
-export const InlineEdit = ({ onClose, id }: Props) => {
-  const parentPanel = document.querySelector(`[data-panelid="${id}"]`)!.getBoundingClientRect();
+export const InlineEdit = ({ onClose, id, scene }: Props) => {
+  const root = scene.root.div!.getBoundingClientRect();
   const windowHeight = window.innerHeight;
   const windowWidth = window.innerWidth;
   const ref = useRef<HTMLDivElement>(null);
@@ -26,8 +28,8 @@ export const InlineEdit = ({ onClose, id }: Props) => {
   const inlineEditKey = 'inlineEditPanel' + id.toString();
 
   const defaultMeasurements = { width: 350, height: 400 };
-  const defaultX = parentPanel.x + parentPanel.width - defaultMeasurements.width - OFFSET_X;
-  const defaultY = parentPanel.y + OFFSET_Y;
+  const defaultX = root.x + root.width - defaultMeasurements.width - OFFSET_X;
+  const defaultY = root.y + OFFSET_Y;
 
   const savedPlacement = store.getObject(inlineEditKey, {
     x: defaultX,
