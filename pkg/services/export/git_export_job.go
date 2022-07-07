@@ -175,9 +175,13 @@ func (e *gitExportJob) doOrgExportWithHistory(helper *commitHelper) error {
 	if include.Dash {
 		exporters = append(exporters, exportDashboards)
 
-		if true {
+		if include.DashThumbs {
 			exporters = append(exporters, exportDashboardThumbnails)
 		}
+	}
+
+	if include.Alerts {
+		exporters = append(exporters, exportAlerts)
 	}
 
 	if include.DS {
@@ -186,6 +190,10 @@ func (e *gitExportJob) doOrgExportWithHistory(helper *commitHelper) error {
 
 	if include.Auth {
 		exporters = append(exporters, dumpAuthTables)
+	}
+
+	if include.Usage {
+		exporters = append(exporters, exportUsage)
 	}
 
 	if include.Services {
