@@ -7745,10 +7745,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "13"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "14"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "15"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "16"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "17"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "18"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "19"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "16"]
     ],
     "public/app/plugins/datasource/influxdb/specs/influx_query_model.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -10629,9 +10626,6 @@ exports[`no undocumented stories`] = {
       [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
     "packages/grafana-ui/src/components/QueryField/QueryField.story.tsx:5381": [
-      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
-    ],
-    "packages/grafana-ui/src/components/RefreshPicker/RefreshPicker.story.tsx:5381": [
       [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
     "packages/grafana-ui/src/components/SecretInput/SecretInput.story.tsx:5381": [
