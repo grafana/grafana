@@ -15,10 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var (
-	ServiceAccountFeatureToggleNotFound = "FeatureToggle serviceAccounts not found, try adding it to your custom.ini"
-)
-
 type ServiceAccountsService struct {
 	store serviceaccounts.Store
 	log   log.Logger
@@ -55,8 +51,8 @@ func (sa *ServiceAccountsService) Run(ctx context.Context) error {
 	return sa.store.RunMetricsCollection(ctx)
 }
 
-func (sa *ServiceAccountsService) CreateServiceAccount(ctx context.Context, orgID int64, name string) (*serviceaccounts.ServiceAccountDTO, error) {
-	return sa.store.CreateServiceAccount(ctx, orgID, name)
+func (sa *ServiceAccountsService) CreateServiceAccount(ctx context.Context, orgID int64, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
+	return sa.store.CreateServiceAccount(ctx, orgID, saForm)
 }
 
 func (sa *ServiceAccountsService) DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error {
