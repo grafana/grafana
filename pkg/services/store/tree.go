@@ -85,7 +85,7 @@ func (t *nestedTree) GetFile(ctx context.Context, orgId int64, path string) (*fi
 	return root.Get(ctx, path)
 }
 
-func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string) (*data.Frame, error) {
+func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string) (*StorageListFrame, error) {
 	if path == "" || path == "/" {
 		t.assureOrgIsInitialized(orgId)
 
@@ -102,13 +102,13 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string) (
 		readOnly := data.NewFieldFromFieldType(data.FieldTypeBool, count)
 		builtIn := data.NewFieldFromFieldType(data.FieldTypeBool, count)
 		mtype := data.NewFieldFromFieldType(data.FieldTypeString, count)
-		title.Name = "title"
-		names.Name = "name"
-		descr.Name = "description"
-		mtype.Name = "mediaType"
-		types.Name = "storageType"
-		readOnly.Name = "readOnly"
-		builtIn.Name = "builtIn"
+		title.Name = titleListFrameField
+		names.Name = nameListFrameField
+		descr.Name = descriptionListFrameField
+		mtype.Name = mediaTypeListFrameField
+		types.Name = storageTypeListFrameField
+		readOnly.Name = readOnlyListFrameField
+		builtIn.Name = builtInListFrameField
 		for _, f := range t.rootsByOrgId[ac.GlobalOrgID] {
 			meta := f.Meta()
 			names.Set(idx, meta.Config.Prefix)
@@ -138,7 +138,7 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string) (
 		frame.SetMeta(&data.FrameMeta{
 			Type: data.FrameTypeDirectoryListing,
 		})
-		return frame, nil
+		return &StorageListFrame{frame}, nil
 	}
 
 	root, path := t.getRoot(orgId, path)
@@ -160,9 +160,9 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string) (
 	names := data.NewFieldFromFieldType(data.FieldTypeString, count)
 	mtype := data.NewFieldFromFieldType(data.FieldTypeString, count)
 	fsize := data.NewFieldFromFieldType(data.FieldTypeInt64, count)
-	names.Name = "name"
-	mtype.Name = "mediaType"
-	fsize.Name = "size"
+	names.Name = nameListFrameField
+	mtype.Name = mediaTypeListFrameField
+	fsize.Name = sizeListFrameField
 	fsize.Config = &data.FieldConfig{
 		Unit: "bytes",
 	}
@@ -178,5 +178,5 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string) (
 			"HasMore": listResponse.HasMore,
 		},
 	})
-	return frame, nil
+	return &StorageListFrame{frame}, nil
 }
