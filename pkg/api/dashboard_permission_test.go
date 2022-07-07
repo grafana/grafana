@@ -39,7 +39,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 			Cfg:      settings,
 			SQLStore: mockSQLStore,
 			Features: features,
-			dashboardService: dashboardservice.ProvideDashboardService(
+			DashboardService: dashboardservice.ProvideDashboardService(
 				settings, dashboardStore, nil, features, folderPermissions, dashboardPermissions, ac,
 			),
 			AccessControl: accesscontrolmock.New().WithDisabled(),
