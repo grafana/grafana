@@ -42,12 +42,13 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 	// When using access control, should be able to list all data sources installed:
 	//  * anyone that can create a data source
 	//  * anyone that can install a plugin
-	// Fallback: Organization or Server Admins should be able to list non-core plugins
+	// Organization or Server Admins should be able to list non-core plugins
+	// (to fix once RBAC covers everything related to GetPluginList)
 	// TODO what about toggle a non core plugin? Should they get the list?
 	canListNonCorePlugins := hasAccess(ac.ReqOrgOrServerAdmin, ac.EvalAny(
 		ac.EvalPermission(plugins.ActionIntall),
 		ac.EvalPermission(datasources.ActionCreate)),
-	)
+	) || c.HasRole(models.ROLE_ADMIN) || c.IsGrafanaAdmin
 
 	// Request to filter out core plugins and cannot see non-core ones => early return empty list
 	if !canListNonCorePlugins && coreFilter == "0" {
