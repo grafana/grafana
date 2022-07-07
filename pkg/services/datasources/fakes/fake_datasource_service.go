@@ -105,7 +105,12 @@ func (s *FakeDataSourceService) CreateCorrelation(ctx context.Context, cmd *data
 
 			datasource.Correlations = append(datasource.Correlations, newCorrelation)
 
-			cmd.Result = newCorrelation
+			cmd.Result = datasources.CorrelationDTO{
+				Target:      newCorrelation.Target,
+				Description: newCorrelation.Description,
+				Label:       newCorrelation.Label,
+				Version:     cmd.Version + 1,
+			}
 			return nil
 		}
 	}
