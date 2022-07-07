@@ -121,15 +121,13 @@ async function doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
     }
   }
 
-  const view = new DataFrameView<DashboardQueryResult>(first);
-  return {
-    totalRows: meta.count ?? first.length,
-    view,
-    loadMoreItems: async (startIndex: number, stopIndex: number): Promise<void> => {
-      console.log('LOAD NEXT PAGE', { startIndex, stopIndex, length: view.dataFrame.length });
+  let loadMax = 0;
+  let pending: Promise<void> | undefined = undefined;
+  const getNextPage = async () => {
+    while (loadMax > view.dataFrame.length) {
       const from = view.dataFrame.length;
-      const limit = stopIndex - from;
-      if (limit < 0) {
+      console.log('Load NEXT PAGE', { from, loadMax });
+      if (from >= meta.count) {
         return;
       }
       const frame = (
@@ -141,7 +139,7 @@ async function doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
                 search: {
                   ...(target?.search ?? {}),
                   from,
-                  limit: Math.min(limit, nextPageSizes),
+                  limit: nextPageSizes,
                 },
                 refId: 'Page',
                 facet: undefined,
@@ -175,7 +173,22 @@ async function doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
           meta.locationInfo[key] = value;
         }
       }
-      return;
+    }
+    console.log('Done', { loadMax });
+    pending = undefined;
+  };
+
+  const view = new DataFrameView<DashboardQueryResult>(first);
+  return {
+    totalRows: meta.count ?? first.length,
+    view,
+    loadMoreItems: async (startIndex: number, stopIndex: number): Promise<void> => {
+      console.log('Request NEXT PAGE', { startIndex, stopIndex, length: view.dataFrame.length });
+      loadMax = Math.max(loadMax, stopIndex);
+      if (!pending) {
+        pending = getNextPage();
+      }
+      return pending;
     },
     isItemLoaded: (index: number): boolean => {
       return index < view.dataFrame.length;
