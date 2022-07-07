@@ -2,10 +2,9 @@ import React, { useEffect } from 'react';
 
 import { SceneComponentEditingWrapper } from '../editor/SceneComponentEditWrapper';
 
-import { SceneObjectBase } from './SceneObjectBase';
-import { SceneComponentProps } from './types';
+import { SceneComponentProps, SceneObject } from './types';
 
-export function SceneComponentWrapper<T extends SceneObjectBase>({ model, isEditing }: SceneComponentProps<T>) {
+export function SceneComponentWrapper<T extends SceneObject>({ model, isEditing }: SceneComponentProps<T>) {
   const Component = (model as any).constructor['Component'] ?? EmptyRenderer;
   const inner = <Component model={model} isEditing={isEditing} />;
 

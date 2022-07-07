@@ -4,9 +4,9 @@ import React, { CSSProperties } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import { SceneObjectBase } from '../core/SceneObjectBase';
+import { SceneObject } from '../core/types';
 
-export function SceneComponentEditingWrapper<T extends SceneObjectBase>({
+export function SceneComponentEditingWrapper<T extends SceneObject>({
   model,
   children,
 }: {
