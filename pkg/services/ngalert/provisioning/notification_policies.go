@@ -116,6 +116,10 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 	return nil
 }
 
+func (nps *NotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
+	return definitions.Route{}, nil
+}
+
 func (nps *NotificationPolicyService) receiversToMap(records []*definitions.PostableApiReceiver) (map[string]struct{}, error) {
 	receivers := map[string]struct{}{}
 	for _, receiver := range records {
