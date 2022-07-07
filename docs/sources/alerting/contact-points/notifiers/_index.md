@@ -39,4 +39,4 @@ The following table lists the notifiers (contact point types) supported by Grafa
 | [VictorOps](https://help.victorops.com/)        | `victorops`               | Supported            | Supported                                                                                                |
 | [Webhook](#webhook)                             | `webhook`                 | Supported            | Supported ([different format](https://prometheus.io/docs/alerting/latest/configuration/#webhook_config)) |
 | [WeCom](#wecom)                                 | `wecom`                   | Supported            | N/A                                                                                                      |
-| [Zenduty](https://www.zenduty.com/)             | `webhook`                 | Supported            | N/A                                                                                                      |
+| [Zenduty](https://www.zenduty.com/)             | `webhook`                 | Supported            | N/A                                                                                                      |                                       |
