@@ -125,6 +125,9 @@ pkg/cmd/grafana-server/__debug_bin
 /packages/**/.rpt2_cache
 /packages/**/tsdoc-metadata.json
 
+# Ignore go local build dependencies
+/scripts/go/bin/**
+
 # Ignore compilation stats from `yarn stats`
 compilation-stats.json
 
@@ -164,3 +167,5 @@ public/locales/_build/
 public/locales/**/*.js
 
 deployment_tools_config.json
+
+.betterer.cache

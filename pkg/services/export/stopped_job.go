@@ -17,3 +17,5 @@ func (e *stoppedJob) getStatus() ExportStatus {
 func (e *stoppedJob) getConfig() ExportConfig {
 	return ExportConfig{}
 }
+
+func (e *stoppedJob) requestStop() {}

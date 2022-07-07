@@ -101,6 +101,7 @@ export class CloudWatchDatasource
 
   tracingDataSourceUid?: string;
   logsTimeout: string;
+  defaultLogGroups: string[];
 
   type = 'cloudwatch';
   standardStatistics = ['Average', 'Maximum', 'Minimum', 'Sum', 'SampleCount'];
@@ -127,6 +128,7 @@ export class CloudWatchDatasource
     this.languageProvider = new CloudWatchLanguageProvider(this);
     this.tracingDataSourceUid = instanceSettings.jsonData.tracingDatasourceUid;
     this.logsTimeout = instanceSettings.jsonData.logsTimeout || '15m';
+    this.defaultLogGroups = instanceSettings.jsonData.defaultLogGroups || [];
     this.sqlCompletionItemProvider = new SQLCompletionItemProvider(this, this.templateSrv);
     this.metricMathCompletionItemProvider = new MetricMathCompletionItemProvider(this, this.templateSrv);
     this.variables = new CloudWatchVariableSupport(this);
@@ -176,7 +178,14 @@ export class CloudWatchDatasource
     logQueries: CloudWatchLogsQuery[],
     options: DataQueryRequest<CloudWatchQuery>
   ): Observable<DataQueryResponse> => {
-    const validLogQueries = logQueries.filter((item) => item.logGroupNames?.length);
+    const queryParams = logQueries.map((target: CloudWatchLogsQuery) => ({
+      queryString: target.expression || '',
+      refId: target.refId,
+      logGroupNames: target.logGroupNames || this.defaultLogGroups,
+      region: this.replace(this.getActualRegion(target.region), options.scopedVars, true, 'region'),
+    }));
+
+    const validLogQueries = queryParams.filter((item) => item.logGroupNames?.length);
     if (logQueries.length > validLogQueries.length) {
       return of({ data: [], error: { message: 'Log group is required' } });
     }
@@ -185,13 +194,6 @@ export class CloudWatchDatasource
     if (isEmpty(validLogQueries)) {
       return of({ data: [], state: LoadingState.Done });
     }
-
-    const queryParams = logQueries.map((target: CloudWatchLogsQuery) => ({
-      queryString: target.expression || '',
-      refId: target.refId,
-      logGroupNames: target.logGroupNames,
-      region: this.replace(this.getActualRegion(target.region), options.scopedVars, true, 'region'),
-    }));
 
     const startTime = new Date();
     const timeoutFunc = () => {
@@ -237,7 +239,7 @@ export class CloudWatchDatasource
               options,
               this.timeSrv.timeRange(),
               this.replace.bind(this),
-              this.getVariableValue.bind(this),
+              this.expandVariableToArray.bind(this),
               this.getActualRegion.bind(this),
               this.tracingDataSourceUid
             );
@@ -650,7 +652,7 @@ export class CloudWatchDatasource
             if (Array.isArray(anyQuery[fieldName])) {
               anyQuery[fieldName] = anyQuery[fieldName].flatMap((val: string) => {
                 if (fieldName === 'logGroupNames') {
-                  return this.getVariableValue(val, options.scopedVars || {});
+                  return this.expandVariableToArray(val, options.scopedVars || {});
                 }
                 return this.replace(val, options.scopedVars, true, fieldName);
               });
@@ -851,22 +853,20 @@ export class CloudWatchDatasource
         return { ...result, [key]: null };
       }
 
-      const newValues = this.getVariableValue(value, scopedVars);
+      const newValues = this.expandVariableToArray(value, scopedVars);
       return { ...result, [key]: newValues };
     }, {});
   }
 
   // get the value for a given template variable
-  getVariableValue(value: string, scopedVars: ScopedVars): string[] {
+  expandVariableToArray(value: string, scopedVars: ScopedVars): string[] {
     const variableName = this.templateSrv.getVariableName(value);
     const valueVar = this.templateSrv.getVariables().find(({ name }) => {
       return name === variableName;
     });
     if (variableName && valueVar) {
       if ((valueVar as unknown as VariableWithMultiSupport).multi) {
-        // rebuild the variable name to handle old migrated queries
-        const values = this.templateSrv.replace('$' + variableName, scopedVars, 'pipe').split('|');
-        return values;
+        return this.templateSrv.replace(value, scopedVars, 'pipe').split('|');
       }
       return [this.templateSrv.replace(value, scopedVars)];
     }
@@ -881,7 +881,7 @@ export class CloudWatchDatasource
       }
       const initialVal: string[] = [];
       const newValues = values.reduce((result, value) => {
-        const vals = this.getVariableValue(value, {});
+        const vals = this.expandVariableToArray(value, {});
         return [...result, ...vals];
       }, initialVal);
       return { ...result, [key]: newValues };

@@ -5,7 +5,7 @@ import { useHistory } from 'react-router-dom';
 import { NavModel } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { Form, Button, Input, Field } from '@grafana/ui';
-import Page from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 
 import { getNavModel } from '../../core/selectors/navModel';
 import { StoreState } from '../../types';

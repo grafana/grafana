@@ -41,7 +41,8 @@ load(
     'upload_cdn_step',
     'verify_gen_cue_step',
     'publish_images_step',
-    'trigger_oss'
+    'trigger_oss',
+    'artifacts_page_step'
 )
 
 load(
@@ -158,7 +159,7 @@ def get_steps(edition, ver_mode):
         identify_runner_step(),
         download_grabpl_step(),
         gen_version_step(ver_mode),
-        verify_gen_cue_step(),
+        verify_gen_cue_step(edition),
         wire_install_step(),
         yarn_install_step(),
     ]
@@ -180,7 +181,7 @@ def get_steps(edition, ver_mode):
         build_backend_step(edition=edition, ver_mode=ver_mode),
         build_frontend_step(edition=edition, ver_mode=ver_mode),
         build_frontend_package_step(edition=edition, ver_mode=ver_mode),
-        build_plugins_step(edition=edition, sign=True),
+        build_plugins_step(edition=edition, ver_mode=ver_mode),
     ]
 
     integration_test_steps = [
@@ -192,7 +193,6 @@ def get_steps(edition, ver_mode):
         test_steps.extend([
             lint_backend_step(edition=edition2),
             test_backend_step(edition=edition2),
-            test_backend_integration_step(edition=edition2),
         ])
         build_steps.extend([
             build_backend_step(edition=edition2, ver_mode=ver_mode, variants=['linux-amd64']),
@@ -272,7 +272,7 @@ def get_oss_pipelines(trigger, ver_mode):
             ),
             pipeline(
                 name='{}-oss-integration-tests'.format(ver_mode), edition=edition, trigger=trigger, services=services,
-                steps=[download_grabpl_step(), identify_runner_step(), verify_gen_cue_step(), wire_install_step(), ] + integration_test_steps,
+                steps=[download_grabpl_step(), identify_runner_step(), verify_gen_cue_step(edition), wire_install_step(), ] + integration_test_steps,
                 volumes=volumes,
             )
         ])
@@ -304,12 +304,9 @@ def get_enterprise_pipelines(trigger, ver_mode):
         clone_enterprise_step(ver_mode),
         init_enterprise_step(ver_mode)
     ]
-    for step in [wire_install_step(), yarn_install_step(), gen_version_step(ver_mode), verify_gen_cue_step()]:
+    for step in [wire_install_step(), yarn_install_step(), gen_version_step(ver_mode), verify_gen_cue_step(edition)]:
         step.update(deps_on_clone_enterprise_step)
         init_steps.extend([step])
-
-    for step in integration_test_steps:
-        step.update(deps_on_clone_enterprise_step)
 
     windows_pipeline = pipeline(
         name='{}-enterprise-windows'.format(ver_mode), edition=edition, trigger=trigger,
@@ -334,7 +331,7 @@ def get_enterprise_pipelines(trigger, ver_mode):
             ),
             pipeline(
                 name='{}-enterprise-integration-tests'.format(ver_mode), edition=edition, trigger=trigger, services=services,
-                steps=[download_grabpl_step(), identify_runner_step(), clone_enterprise_step(ver_mode), init_enterprise_step(ver_mode),] + integration_test_steps + [redis_integration_tests_step(), memcached_integration_tests_step()],
+                steps=[download_grabpl_step(), identify_runner_step(), clone_enterprise_step(ver_mode), init_enterprise_step(ver_mode), verify_gen_cue_step(edition), wire_install_step()] + integration_test_steps + [redis_integration_tests_step(), memcached_integration_tests_step()],
                 volumes=volumes,
             ),
         ])
@@ -398,11 +395,13 @@ def publish_packages_pipeline():
     }
     oss_steps = [
         download_grabpl_step(),
+        gen_version_step(ver_mode='release'),
         store_packages_step(edition='oss', ver_mode='release'),
     ]
 
     enterprise_steps = [
         download_grabpl_step(),
+        gen_version_step(ver_mode='release'),
         store_packages_step(edition='enterprise', ver_mode='release'),
     ]
     deps = [
@@ -432,6 +431,13 @@ def publish_npm_pipelines(mode):
     return [pipeline(
         name='publish-npm-packages-{}'.format(mode), trigger=trigger, steps = steps, edition="all"
     )]
+
+def artifacts_page_pipeline():
+    trigger = {
+        'event': ['promote'],
+        'target': 'security',
+    }
+    return [pipeline(name='publish-artifacts-page', trigger=trigger, steps = [download_grabpl_step(), artifacts_page_step()], edition="all")]
 
 def release_pipelines(ver_mode='release', trigger=None):
     # 'enterprise' edition services contain both OSS and enterprise services

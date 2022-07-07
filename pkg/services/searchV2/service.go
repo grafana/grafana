@@ -3,6 +3,7 @@ package searchV2
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -25,8 +26,9 @@ type StandardSearchService struct {
 	ac   accesscontrol.AccessControl
 
 	logger         log.Logger
-	dashboardIndex *dashboardIndex
+	dashboardIndex *searchIndex
 	extender       DashboardIndexExtender
+	reIndexCh      chan struct{}
 }
 
 func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore store.EntityEventsService, ac accesscontrol.AccessControl) SearchService {
@@ -39,14 +41,15 @@ func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore s
 			sql: sql,
 			ac:  ac,
 		},
-		dashboardIndex: newDashboardIndex(
+		dashboardIndex: newSearchIndex(
 			newSQLDashboardLoader(sql),
 			entityEventStore,
 			extender.GetDocumentExtender(),
 			newFolderIDLookup(sql),
 		),
-		logger:   log.New("searchV2"),
-		extender: extender,
+		logger:    log.New("searchV2"),
+		extender:  extender,
+		reIndexCh: make(chan struct{}, 1),
 	}
 	return s
 }
@@ -59,7 +62,24 @@ func (s *StandardSearchService) IsDisabled() bool {
 }
 
 func (s *StandardSearchService) Run(ctx context.Context) error {
-	return s.dashboardIndex.run(ctx)
+	orgQuery := &models.SearchOrgsQuery{}
+	err := s.sql.SearchOrgs(ctx, orgQuery)
+	if err != nil {
+		return fmt.Errorf("can't get org list: %w", err)
+	}
+	orgIDs := make([]int64, 0, len(orgQuery.Result))
+	for _, org := range orgQuery.Result {
+		orgIDs = append(orgIDs, org.Id)
+	}
+	return s.dashboardIndex.run(ctx, orgIDs, s.reIndexCh)
+}
+
+func (s *StandardSearchService) TriggerReIndex() {
+	select {
+	case s.reIndexCh <- struct{}{}:
+	default:
+		// channel is full => re-index will happen soon anyway.
+	}
 }
 
 func (s *StandardSearchService) RegisterDashboardIndexExtender(ext DashboardIndexExtender) {
@@ -143,14 +163,17 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 		return rsp
 	}
 
-	reader, ok := s.dashboardIndex.getOrgReader(orgID)
-	if !ok {
-		go func() {
-			s.dashboardIndex.buildSignals <- orgID
-		}()
-		rsp.Error = errors.New("search index is not ready, try again later")
+	index, err := s.dashboardIndex.getOrCreateOrgIndex(ctx, orgID)
+	if err != nil {
+		rsp.Error = err
 		return rsp
 	}
 
-	return doSearchQuery(ctx, s.logger, reader, filter, q, s.extender.GetQueryExtender(q), s.cfg.AppSubURL)
+	err = s.dashboardIndex.sync(ctx)
+	if err != nil {
+		rsp.Error = err
+		return rsp
+	}
+
+	return doSearchQuery(ctx, s.logger, index, filter, q, s.extender.GetQueryExtender(q), s.cfg.AppSubURL)
 }

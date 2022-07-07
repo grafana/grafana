@@ -45,7 +45,8 @@ Follow these instructions if you are a Grafana Server Admin.
 1. In the organization list, click the name of the organization that you want to change.
 1. In **Name**, enter the new organization name.
 1. Click **Update**.
-   {{< /docs/list >}}
+
+{{< /docs/list >}}
 
 #### Organization Admin change organization name
 
@@ -56,7 +57,8 @@ If you are an Organization Admin, follow these steps:
 
 1. In **Organization name**, enter the new name.
 1. Click **Update organization name**.
-   {{< /docs/list >}}
+
+{{< /docs/list >}}
 
 ### Change team name or email
 
@@ -125,8 +127,9 @@ Organization and team administrators can change the UI theme for all users in a 
 {{< docs/shared "manage-users/view-team-list.md" >}}
 
 1. Click on the team that you want to change the UI theme for and then navigate to the **Settings** tab.
-   {{< docs/shared "preferences/select-ui-theme-list.md" >}}
-   {{< /docs/list >}}
+
+{{< docs/shared "preferences/select-ui-theme-list.md" >}}
+{{< /docs/list >}}
 
 ### Change your personal UI theme
 
@@ -164,8 +167,9 @@ Organization administrators and team administrators can choose a default timezon
 {{< docs/shared "manage-users/view-team-list.md" >}}
 
 1. Click on the team you that you want to change the timezone for and then navigate to the **Settings** tab.
-   {{< docs/shared "preferences/select-timezone-list.md" >}}
-   {{< /docs/list >}}
+
+{{< docs/shared "preferences/select-timezone-list.md" >}}
+{{< /docs/list >}}
 
 ### Set your personal timezone
 
@@ -231,8 +235,9 @@ Organization administrators and Team Admins can choose a home dashboard for a te
 {{< docs/shared "manage-users/view-team-list.md" >}}
 
 1. Click on the team that you want to change the home dashboard for and then navigate to the **Settings** tab.
-   {{< docs/shared "preferences/select-home-dashboard-list.md" >}}
-   {{< /docs/list >}}
+
+{{< docs/shared "preferences/select-home-dashboard-list.md" >}}
+{{< /docs/list >}}
 
 ### Set your personal home dashboard
 

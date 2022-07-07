@@ -1,32 +1,54 @@
 import { catchError, Observable, of, switchMap } from 'rxjs';
 
-import { DataQuery, DataQueryRequest, DataQueryResponse, DataSourceApi, PluginMeta } from '@grafana/data';
+import {
+  DataQuery,
+  DataQueryRequest,
+  DataQueryResponse,
+  DataSourceApi,
+  DataSourceRef,
+  PluginMeta,
+} from '@grafana/data';
 import { BackendDataSourceResponse, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
 
+export const PUBLIC_DATASOURCE = '-- Public --';
+
 export class PublicDashboardDataSource extends DataSourceApi<any> {
-  constructor() {
+  constructor(datasource: DataSourceRef | string | DataSourceApi | null) {
     super({
       name: 'public-ds',
-      id: 1,
+      id: 0,
       type: 'public-ds',
       meta: {} as PluginMeta,
-      uid: '1',
+      uid: PublicDashboardDataSource.resolveUid(datasource),
       jsonData: {},
       access: 'proxy',
     });
+
+    this.interval = '1min';
+  }
+
+  /**
+   * Get the datasource uid based on the many types a datasource can be.
+   */
+  private static resolveUid(datasource: DataSourceRef | string | DataSourceApi | null): string {
+    if (typeof datasource === 'string') {
+      return datasource;
+    }
+
+    return datasource?.uid ?? PUBLIC_DATASOURCE;
   }
 
   /**
    * Ideally final -- any other implementation may not work as expected
    */
   query(request: DataQueryRequest<any>): Observable<DataQueryResponse> {
-    const { intervalMs, maxDataPoints, range, requestId, publicDashboardUid, panelId } = request;
+    const { intervalMs, maxDataPoints, range, requestId, publicDashboardAccessToken, panelId } = request;
     let targets = request.targets;
 
     const queries = targets.map((q) => {
       return {
         ...q,
-        publicDashboardUid,
+        publicDashboardAccessToken,
         intervalMs,
         maxDataPoints,
       };
@@ -37,7 +59,7 @@ export class PublicDashboardDataSource extends DataSourceApi<any> {
       return of({ data: [] });
     }
 
-    const body: any = { queries, publicDashboardUid, panelId };
+    const body: any = { queries, publicDashboardAccessToken, panelId };
 
     if (range) {
       body.range = range;
@@ -47,7 +69,7 @@ export class PublicDashboardDataSource extends DataSourceApi<any> {
 
     return getBackendSrv()
       .fetch<BackendDataSourceResponse>({
-        url: `/api/public/dashboards/${publicDashboardUid}/panels/${panelId}/query`,
+        url: `/api/public/dashboards/${publicDashboardAccessToken}/panels/${panelId}/query`,
         method: 'POST',
         data: body,
         requestId,

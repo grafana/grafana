@@ -84,6 +84,16 @@ This is a configuration for the Loki search query type.
 
 -- **Data source -** The Loki instance in which you want to search traces. You must configure derived fields in the Loki instance.
 
+### Span bar label
+
+You can configure the span bar label. The span bar label allows you add additional information to the span bar row.
+
+Select one of the following four options. The default selection is Duration.
+
+- **None -** Do not show any additional information on the span bar row.
+- **Duration -** Show the span duration on the span bar row.
+- **Tag -** Show the span tag on the span bar row. Note: You will also need to specify the tag key to use to get the tag value. For example, `span.kind`.
+
 ## Query traces
 
 You can query and display traces from Tempo via [Explore]({{< relref "../explore/" >}}).
@@ -205,7 +215,7 @@ To display the APM table:
 1. Select the **Service Graph** query type and run the query.
 1. (Optional): filter your results.
 
-Note: The metric traces_spanmetrics_calls_total is used to display the name, rate & error rate columns and traces_spanmetrics_duration_seconds_bucket is used to display the duration column (these metrics will need to exist in your Prometheus datasource).
+Note: The metric traces_spanmetrics_calls_total is used to display the name, rate & error rate columns and traces_spanmetrics_latency_bucket is used to display the duration column (these metrics will need to exist in your Prometheus datasource).
 
 Click a row in the rate, error rate, or duration columns to open a query in Prometheus with the span name of that row automatically set in the query. Click a row in the links column to open a query in Tempo with the span name of that row automatically set in the query.
 
