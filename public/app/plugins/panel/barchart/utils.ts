@@ -15,7 +15,6 @@ import {
   reduceField,
   VizOrientation,
 } from '@grafana/data';
-import { convertFieldType } from '@grafana/data/src/transformations/transformers/convertFieldType';
 import { maybeSortFrame } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import {
   AxisPlacement,
@@ -343,17 +342,13 @@ export function prepareBarChartDisplayValues(
     if (!xField) {
       return { warn: 'Configured x field not found' };
     }
-
-    if (xField.type === FieldType.number) {
-      xField = convertFieldType(xField, { destinationType: FieldType.string });
-    }
   }
 
   let stringField: Field | undefined = undefined;
   let timeField: Field | undefined = undefined;
   let fields: Field[] = [];
   for (const field of frame.fields) {
-    if (field.name === xField?.name) {
+    if (field === xField) {
       continue;
     }
 
