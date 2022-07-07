@@ -31,7 +31,7 @@ Instead of encrypting all secrets with a single key, Grafana uses a set of keys 
 encrypt them. These data encryption keys are themselves encrypted with a single key encryption key (KEK), configured
 through the `secret_key` attribute in your
 [Grafana configuration]({{< relref "../../configure-grafana/#secret_key" >}}) or with a
-[KMS integration](#kms-integration).
+[KMS integration](#encrypting-your-database-with-a-key-from-a-key-management-system-kms).
 
 ## Implicit breaking change
 
@@ -82,7 +82,7 @@ a Grafana version earlier than Grafana v9.0 after an unsuccessful upgrade.
 ## Re-encrypt data keys
 
 Used to re-encrypt data keys encrypted with a specific key encryption key (KEK). It can be used to either re-encrypt
-existing data keys with a new key encryption key version (see [KMS integration](#kms-integration) rotation) or to
+existing data keys with a new key encryption key version (see [KMS integration](#encrypting-your-database-with-a-key-from-a-key-management-system-kms) rotation) or to
 re-encrypt them with a completely different key encryption key.
 
 > **Note:** This operation is available through Grafana CLI by running `grafana-cli admin secrets-migration re-encrypt-data-keys`
