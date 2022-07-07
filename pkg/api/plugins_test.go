@@ -44,8 +44,8 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 			action, testCase.expectedHTTPStatus, testCase.pluginAdminEnabled, testCase.pluginAdminExternalManageEnabled)
 	}
 
-	pm := &fakePluginManager{
-		plugins: make(map[string]fakePlugin),
+	ps := fakePluginStore{
+		plugins: make(map[string]plugins.PluginDTO),
 	}
 	for _, tc := range tcs {
 		srv := SetupAPITestServer(t, func(hs *HTTPServer) {
@@ -53,7 +53,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 				PluginAdminEnabled:               tc.pluginAdminEnabled,
 				PluginAdminExternalManageEnabled: tc.pluginAdminExternalManageEnabled,
 			}
-			hs.pluginManager = pm
+			hs.pluginStore = ps
 		})
 
 		t.Run(testName("Install", tc), func(t *testing.T) {
@@ -70,7 +70,14 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 			require.Equal(t, tc.expectedHTTPStatus, resp.StatusCode)
 
 			if tc.expectedHTTPStatus == 200 {
-				require.Equal(t, fakePlugin{pluginID: "test", version: "1.0.2"}, pm.plugins["test"])
+				require.Equal(t, plugins.PluginDTO{
+					JSONData: plugins.JSONData{
+						ID: "test",
+						Info: plugins.Info{
+							Version: "1.0.2",
+						},
+					},
+				}, ps.plugins["test"])
 			}
 		})
 
@@ -88,7 +95,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 			require.Equal(t, tc.expectedHTTPStatus, resp.StatusCode)
 
 			if tc.expectedHTTPStatus == 200 {
-				require.Empty(t, pm.plugins)
+				require.Empty(t, ps.plugins)
 			}
 		})
 	}
