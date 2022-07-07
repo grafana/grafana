@@ -45,9 +45,6 @@ export class PublicDashboardDataSource extends DataSourceApi<any> {
     return datasource?.uid ?? PUBLIC_DATASOURCE;
   }
 
-  /**
-   * Get the datasource uid based on the many types a datasource can be.
-   */
   private static isMixedDatasource(datasource: DataSourceRef | string | DataSourceApi | null): boolean {
     if (typeof datasource === 'string' || datasource === null) {
       return false;
