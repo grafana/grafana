@@ -41,12 +41,7 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
     doSelect(item.settings, info.node.dataRef);
   };
 
-  const allowDrop = (info: any) => {
-    if (!info.dropNode.children) {
-      if (info.dropPosition === 0) {
-        return false;
-      }
-    }
+  const allowDrop = () => {
     return true;
   };
 
