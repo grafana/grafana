@@ -29,6 +29,23 @@ func TestContactPointService(t *testing.T) {
 		require.Equal(t, "email receiver", cps[0].Name)
 	})
 
+	t.Run("service filters contact points by name", func(t *testing.T) {
+		sut := createContactPointServiceSut(secretsService)
+		newCp := createTestContactPoint()
+		_, err := sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		q := ContactPointQuery{
+			OrgID: 1,
+			Name:  "email receiver",
+		}
+		cps, err := sut.GetContactPoints(context.Background(), q)
+		require.NoError(t, err)
+
+		require.Len(t, cps, 1)
+		require.Equal(t, "email receiver", cps[0].Name)
+	})
+
 	t.Run("service stitches contact point into org's AM config", func(t *testing.T) {
 		sut := createContactPointServiceSut(secretsService)
 		newCp := createTestContactPoint()

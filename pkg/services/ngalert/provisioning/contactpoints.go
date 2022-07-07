@@ -50,6 +50,10 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactP
 	}
 	contactPoints := []apimodels.EmbeddedContactPoint{}
 	for _, contactPoint := range revision.cfg.GetGrafanaReceiverMap() {
+		if q.Name != "" && contactPoint.Name != q.Name {
+			continue
+		}
+
 		embeddedContactPoint := apimodels.EmbeddedContactPoint{
 			UID:                   contactPoint.UID,
 			Type:                  contactPoint.Type,
@@ -71,6 +75,7 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactP
 			}
 			embeddedContactPoint.Settings.Set(k, apimodels.RedactedValue)
 		}
+
 		contactPoints = append(contactPoints, embeddedContactPoint)
 	}
 	sort.SliceStable(contactPoints, func(i, j int) bool {
