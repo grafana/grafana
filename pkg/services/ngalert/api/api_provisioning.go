@@ -85,6 +85,10 @@ func (srv *ProvisioningSrv) RoutePutPolicyTree(c *models.ReqContext, tree defini
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "policies updated"})
 }
 
+func (srv *ProvisioningSrv) RouteResetPolicyTree(c *models.ReqContext) response.Response {
+	return response.Error(http.StatusInternalServerError, "not implemented", nil)
+}
+
 func (srv *ProvisioningSrv) RouteGetContactPoints(c *models.ReqContext) response.Response {
 	cps, err := srv.contactPointService.GetContactPoints(c.Req.Context(), c.OrgId)
 	if err != nil {
