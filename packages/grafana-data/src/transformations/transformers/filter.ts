@@ -27,23 +27,20 @@ export const filterFieldsTransformer: DataTransformerInfo<FilterOptions> = {
       return source.pipe(noopTransformer.operator({}, replace));
     }
 
-    if (options.include !== undefined) {
-      if (typeof options.include.options === 'string') {
-        options.include.options = replace ? replace(options.include?.options) : options.include?.options;
-      } else if (typeof options.include.options.pattern === 'string') {
-        options.include.options.pattern = replace
-          ? replace(options.include?.options.pattern)
-          : options.include?.options.pattern;
-      }
+    if (typeof options.include?.options === 'string') {
+      options.include.options = replace ? replace(options.include?.options) : options.include?.options;
+    } else if (typeof options.include?.options?.pattern === 'string') {
+      options.include.options.pattern = replace
+        ? replace(options.include?.options.pattern)
+        : options.include?.options.pattern;
     }
-    if (options.exclude !== undefined) {
-      if (typeof options.exclude.options === 'string') {
-        options.exclude.options = replace ? replace(options.exclude?.options) : options.exclude?.options;
-      } else if (typeof options.exclude.options.pattern === 'string') {
-        options.exclude.options.pattern = replace
-          ? replace(options.exclude?.options.pattern)
-          : options.exclude?.options.pattern;
-      }
+
+    if (typeof options.exclude?.options === 'string') {
+      options.exclude.options = replace ? replace(options.exclude?.options) : options.exclude?.options;
+    } else if (typeof options.exclude?.options?.pattern === 'string') {
+      options.exclude.options.pattern = replace
+        ? replace(options.exclude?.options.pattern)
+        : options.exclude?.options.pattern;
     }
 
     return source.pipe(
