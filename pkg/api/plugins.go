@@ -13,7 +13,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -35,10 +35,16 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 	embeddedFilter := c.Query("embedded")
 	coreFilter := c.Query("core")
 
-	// When using access control anyone that can create a data source should be able to list all data sources installed
+	// When using access control, should be able to list all data sources installed:
+	//  * anyone that can create a data source
+	//  * anyone that can install a plugin
 	// Fallback to only letting admins list non-core plugins
-	hasAccess := accesscontrol.HasAccess(hs.AccessControl, c)
-	if !hasAccess(accesscontrol.ReqOrgAdmin, accesscontrol.EvalPermission(datasources.ActionCreate)) && !c.HasRole(models.ROLE_ADMIN) {
+	// TODO what about toggle a non core plugin? Should they get the list?
+	hasAccess := ac.HasAccess(hs.AccessControl, c)
+	if !hasAccess(ac.ReqOrgAdmin, ac.EvalAny(
+		ac.EvalPermission(plugins.ActionIntall),
+		ac.EvalPermission(datasources.ActionCreate)),
+	) && !c.HasRole(models.ROLE_ADMIN) {
 		coreFilter = "1"
 	}
 
@@ -143,9 +149,9 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 	// In a first iteration, we only have one permission for app plugins.
 	// We will need a different permission to allow users to configure the plugin without needing access to it.
 	if plugin.IsApp() {
-		hasAccess := accesscontrol.HasAccess(hs.AccessControl, c)
-		if !hasAccess(accesscontrol.ReqSignedIn,
-			accesscontrol.EvalPermission(plugins.ActionAppAccess, plugins.ScopeProvider.GetResourceScope(plugin.ID))) {
+		hasAccess := ac.HasAccess(hs.AccessControl, c)
+		if !hasAccess(ac.ReqSignedIn,
+			ac.EvalPermission(plugins.ActionAppAccess, plugins.ScopeProvider.GetResourceScope(plugin.ID))) {
 			return response.Error(http.StatusForbidden, "Access Denied", nil)
 		}
 	}
