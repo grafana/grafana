@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/org"
 
@@ -33,12 +34,26 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 	typeFilter := c.Query("type")
 	enabledFilter := c.Query("enabled")
 	embeddedFilter := c.Query("embedded")
+	// "" => no filter
+	// "0" => filter out core plugins
+	// "1" => filter out non-core plugins
 	coreFilter := c.Query("core")
 
+	hasAccess := ac.HasAccess(hs.AccessControl, c)
+
 	// When using access control anyone that can create a data source should be able to list all data sources installed
-	// Fallback to only letting admins list non-core plugins
-	hasAccess := accesscontrol.HasAccess(hs.AccessControl, c)
-	if !hasAccess(accesscontrol.ReqOrgAdmin, accesscontrol.EvalPermission(datasources.ActionCreate)) && !c.HasRole(org.RoleAdmin) {
+	// Organization Admins & Server Admins should be able to list plugins
+	// (to fix once RBAC covers everything related to GetPluginList)
+	canListNonCorePlugins := hasAccess(ac.ReqOrgOrServerAdmin, ac.EvalPermission(datasources.ActionCreate)) ||
+		c.HasRole(org.RoleAdmin) || c.IsGrafanaAdmin
+
+	// Request to filter out core plugins and cannot see non-core ones => early return empty list
+	if !canListNonCorePlugins && coreFilter == "0" {
+		return response.JSON(http.StatusOK, []dtos.PluginList{})
+	}
+
+	// Force filtering non-core plugins
+	if !canListNonCorePlugins {
 		coreFilter = "1"
 	}
 
