@@ -124,7 +124,6 @@ func (cfg *configsV1) mapToDatasourceFromConfig(apiVersion int64) *configs {
 	}
 
 	for _, ds := range cfg.Datasources {
-
 		r.Datasources = append(r.Datasources, &upsertDataSourceFromConfig{
 			OrgID:           ds.OrgID.Value(),
 			Name:            ds.Name.Value(),
@@ -166,7 +165,6 @@ func (cfg *configsV0) mapToDatasourceFromConfig(apiVersion int64) *configs {
 	}
 
 	for _, ds := range cfg.Datasources {
-
 		r.Datasources = append(r.Datasources, &upsertDataSourceFromConfig{
 			OrgID:           ds.OrgID,
 			Name:            ds.Name,
@@ -236,7 +234,6 @@ func makeCorrelations(correlations []interface{}) []datasources.Correlation {
 
 	for _, v := range correlations {
 		if field, ok := v.(map[string]interface{}); ok {
-
 			uid := ""
 			for i := 0; i < 10; i++ {
 				newUid := util.GenerateShortUID()
