@@ -52,7 +52,7 @@ func ProvideServiceAccountsService(
 
 func (sa *ServiceAccountsService) Run(ctx context.Context) error {
 	sa.log.Debug("Started Service Account Metrics collection service")
-	return sa.store.RunMetricsCollection(context.Background())
+	return sa.store.RunMetricsCollection(ctx)
 }
 
 func (sa *ServiceAccountsService) CreateServiceAccount(ctx context.Context, orgID int64, name string) (*serviceaccounts.ServiceAccountDTO, error) {
