@@ -16,11 +16,11 @@ import {
   SLOQuery,
   ValueTypes,
 } from '../../types';
-import { Project } from '../index';
 
 import { MQLQueryEditor } from './../MQLQueryEditor';
 import { AliasBy } from './AliasBy';
 import { GraphPeriod } from './GraphPeriod';
+import { Project } from './Project';
 import { VisualMetricQueryEditor } from './VisualMetricQueryEditor';
 
 export interface Props {
