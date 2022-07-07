@@ -1,23 +1,20 @@
 package export
 
 import (
-	"context"
 	"fmt"
 	"path/filepath"
 	"sort"
 
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/searchV2"
-	"github.com/grafana/grafana/pkg/services/searchV2/extract"
 )
 
-func exportDataSources(helper *commitHelper, job *gitExportJob) (extract.DatasourceLookup, error) {
+func exportDataSources(helper *commitHelper, job *gitExportJob) error {
 	cmd := &datasources.GetDataSourcesQuery{
 		OrgId: job.orgID,
 	}
 	err := job.sql.GetDataSources(helper.ctx, cmd)
 	if err != nil {
-		return nil, err
+		return nil
 	}
 
 	sort.SliceStable(cmd.Result, func(i, j int) bool {
@@ -27,6 +24,9 @@ func exportDataSources(helper *commitHelper, job *gitExportJob) (extract.Datasou
 	for _, ds := range cmd.Result {
 		ds.OrgId = 0
 		ds.Version = 0
+		ds.SecureJsonData = map[string][]byte{
+			"TODO": []byte("XXX"),
+		}
 
 		err := helper.add(commitOptions{
 			body: []commitBody{
@@ -39,9 +39,9 @@ func exportDataSources(helper *commitHelper, job *gitExportJob) (extract.Datasou
 			comment: fmt.Sprintf("Add datasource: %s", ds.Name),
 		})
 		if err != nil {
-			return nil, err
+			return err
 		}
 	}
 
-	return searchV2.LoadDatasourceLookup(context.Background(), helper.orgID, job.sql)
+	return nil
 }

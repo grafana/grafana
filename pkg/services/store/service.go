@@ -48,9 +48,14 @@ type StorageService interface {
 	sanitizeUploadRequest(ctx context.Context, user *models.SignedInUser, req *UploadRequest, storagePath string) (*filestorage.UpsertFileCommand, error)
 }
 
+type storageServiceConfig struct {
+	allowUnsanitizedSvgUpload bool
+}
+
 type standardStorageService struct {
 	sql  *sqlstore.SQLStore
 	tree *nestedTree
+	cfg  storageServiceConfig
 }
 
 func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles, cfg *setting.Cfg) StorageService {
@@ -83,6 +88,9 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 
 	s := newStandardStorageService(globalRoots, initializeOrgStorages)
 	s.sql = sql
+	s.cfg = storageServiceConfig{
+		allowUnsanitizedSvgUpload: false,
+	}
 	return s
 }
 

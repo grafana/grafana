@@ -4,8 +4,8 @@ import { QueryBuilderLabelFilter } from '../prometheus/querybuilder/shared/types
 
 import { LokiQueryModeller } from './querybuilder/LokiQueryModeller';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
-import { LokiVisualQuery } from './querybuilder/types';
 
+type Position = { from: number; to: number };
 /**
  * Adds label filter to existing query. Useful for query modification for example for ad hoc filters.
  *
@@ -39,22 +39,36 @@ export function addLabelToQuery(query: string, key: string, operator: string, va
   }
 }
 
-type StreamSelectorPosition = { from: number; to: number; query: LokiVisualQuery };
-type PipelineStagePosition = { from: number; to: number };
+/**
+ * Adds parser to existing query. Useful for query modification for hints.
+ * It uses LogQL parser to find instances of stream selectors or line filters and adds parser after them.
+ *
+ * @param query
+ * @param parser
+ */
+export function addParserToQuery(query: string, parser: string): string {
+  const lineFilterPositions = getLineFiltersPositions(query);
+
+  if (lineFilterPositions.length) {
+    return addParser(query, lineFilterPositions, parser);
+  } else {
+    const streamSelectorPositions = getStreamSelectorPositions(query);
+    return addParser(query, streamSelectorPositions, parser);
+  }
+}
 
 /**
  * Parse the string and get all Selector positions in the query together with parsed representation of the
  * selector.
  * @param query
  */
-function getStreamSelectorPositions(query: string): StreamSelectorPosition[] {
+function getStreamSelectorPositions(query: string): Position[] {
   const tree = parser.parse(query);
-  const positions: StreamSelectorPosition[] = [];
+  const positions: Position[] = [];
   tree.iterate({
     enter: (type, from, to, get): false | void => {
       if (type.name === 'Selector') {
-        const visQuery = buildVisualQueryFromString(query.substring(from, to));
-        positions.push({ query: visQuery.query, from, to });
+        positions.push({ from, to });
         return false;
       }
     },
@@ -66,12 +80,30 @@ function getStreamSelectorPositions(query: string): StreamSelectorPosition[] {
  * Parse the string and get all LabelParser positions in the query.
  * @param query
  */
-function getParserPositions(query: string): PipelineStagePosition[] {
+export function getParserPositions(query: string): Position[] {
   const tree = parser.parse(query);
-  const positions: PipelineStagePosition[] = [];
+  const positions: Position[] = [];
   tree.iterate({
     enter: (type, from, to, get): false | void => {
       if (type.name === 'LabelParser') {
+        positions.push({ from, to });
+        return false;
+      }
+    },
+  });
+  return positions;
+}
+
+/**
+ * Parse the string and get all Line filter positions in the query.
+ * @param query
+ */
+function getLineFiltersPositions(query: string): Position[] {
+  const tree = parser.parse(query);
+  const positions: Position[] = [];
+  tree.iterate({
+    enter: (type, from, to, get): false | void => {
+      if (type.name === 'LineFilters') {
         positions.push({ from, to });
         return false;
       }
@@ -93,7 +125,7 @@ function toLabelFilter(key: string, value: string, operator: string): QueryBuild
  */
 function addFilterToStreamSelector(
   query: string,
-  vectorSelectorPositions: StreamSelectorPosition[],
+  vectorSelectorPositions: Position[],
   filter: QueryBuilderLabelFilter
 ): string {
   const modeller = new LokiQueryModeller();
@@ -108,12 +140,13 @@ function addFilterToStreamSelector(
 
     const start = query.substring(prev, match.from);
     const end = isLast ? query.substring(match.to) : '';
+    const matchVisQuery = buildVisualQueryFromString(query.substring(match.from, match.to));
 
-    if (!labelExists(match.query.labels, filter)) {
+    if (!labelExists(matchVisQuery.query.labels, filter)) {
       // We don't want to add duplicate labels.
-      match.query.labels.push(filter);
+      matchVisQuery.query.labels.push(filter);
     }
-    const newLabels = modeller.renderQuery(match.query);
+    const newLabels = modeller.renderQuery(matchVisQuery.query);
     newQuery += start + newLabels + end;
     prev = match.to;
   }
@@ -126,11 +159,7 @@ function addFilterToStreamSelector(
  * @param parserPositions
  * @param filter
  */
-function addFilterAsLabelFilter(
-  query: string,
-  parserPositions: PipelineStagePosition[],
-  filter: QueryBuilderLabelFilter
-): string {
+function addFilterAsLabelFilter(query: string, parserPositions: Position[], filter: QueryBuilderLabelFilter): string {
   let newQuery = '';
   let prev = 0;
 
@@ -144,6 +173,31 @@ function addFilterAsLabelFilter(
 
     const labelFilter = ` | ${filter.label}${filter.op}\`${filter.value}\``;
     newQuery += start + labelFilter + end;
+    prev = match.to;
+  }
+  return newQuery;
+}
+
+/**
+ * Add parser after line filter or stream selector
+ * @param query
+ * @param queryPartPositions
+ * @param parser
+ */
+function addParser(query: string, queryPartPositions: Position[], parser: string): string {
+  let newQuery = '';
+  let prev = 0;
+
+  for (let i = 0; i < queryPartPositions.length; i++) {
+    // Splice on a string for each matched vector selector
+    const match = queryPartPositions[i];
+    const isLast = i === queryPartPositions.length - 1;
+
+    const start = query.substring(prev, match.to);
+    const end = isLast ? query.substring(match.to) : '';
+
+    // Add parser
+    newQuery += start + ` | ${parser}` + end;
     prev = match.to;
   }
   return newQuery;
