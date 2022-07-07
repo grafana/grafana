@@ -34,12 +34,17 @@ func NewContactPointService(store AMConfigStore, encryptionService secrets.Servi
 	}
 }
 
-func (ecp *ContactPointService) GetContactPoints(ctx context.Context, orgID int64) ([]apimodels.EmbeddedContactPoint, error) {
-	revision, err := getLastConfiguration(ctx, orgID, ecp.amStore)
+type ContactPointQuery struct {
+	Name  string
+	OrgID int64
+}
+
+func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactPointQuery) ([]apimodels.EmbeddedContactPoint, error) {
+	revision, err := getLastConfiguration(ctx, q.OrgID, ecp.amStore)
 	if err != nil {
 		return nil, err
 	}
-	provenances, err := ecp.provenanceStore.GetProvenances(ctx, orgID, "contactPoint")
+	provenances, err := ecp.provenanceStore.GetProvenances(ctx, q.OrgID, "contactPoint")
 	if err != nil {
 		return nil, err
 	}
