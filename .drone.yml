@@ -1503,7 +1503,7 @@ steps:
   - ./bin/grabpl store-packages --edition oss --gcp-key /tmp/gcpkey.json --build-id
     ${DRONE_BUILD_NUMBER}
   depends_on:
-  - grabpl
+  - gen-version
   environment:
     GCP_KEY:
       from_secret: gcp_key
@@ -3333,7 +3333,7 @@ steps:
   - ./bin/grabpl store-packages --edition oss --packages-bucket grafana-downloads
     --gcp-key /tmp/gcpkey.json ${DRONE_TAG}
   depends_on:
-  - grabpl
+  - gen-version
   environment:
     GCP_KEY:
       from_secret: gcp_key
@@ -3387,7 +3387,7 @@ steps:
   - ./bin/grabpl store-packages --edition enterprise --packages-bucket grafana-downloads
     --gcp-key /tmp/gcpkey.json ${DRONE_TAG}
   depends_on:
-  - grabpl
+  - gen-version
   environment:
     GCP_KEY:
       from_secret: gcp_key
@@ -4843,6 +4843,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 0135b400f98ec7b242dd29aebe848db0055edfe64af2f2dd589d0d8384bb2f17
+hmac: 74b8d8bd1c224fb4b1eb263d989588095bd9001519bebbe9a4fc5a9aa924aa41
 
 ...
