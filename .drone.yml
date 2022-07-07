@@ -1490,6 +1490,12 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
+  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
+  depends_on:
+  - grabpl
+  image: grafana/build-container:1.5.7
+  name: gen-version
+- commands:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.15
   name: identify-runner
@@ -4793,6 +4799,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: ec563f30c3aa398768ee9399bc2f6f50533da9b53c19d1c8b10a96277a42070c
+hmac: b885bb4e5374691a66b4fa8c6f53cdcebeef573895ea629d4e8b0af715573cea
 
 ...
