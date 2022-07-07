@@ -142,7 +142,7 @@ func exportDashboards(helper *commitHelper, job *gitExportJob, lookup dsLookup) 
 
 		rows := make([]*dashVersionResult, 0, len(ids))
 
-		if job.cfg.IncludeHistory {
+		if job.cfg.KeepHistory {
 			sess.Table("dashboard_version").
 				Join("INNER", "dashboard", "dashboard.id = dashboard_version.dashboard_id").
 				Where("org_id = ?", job.orgID).

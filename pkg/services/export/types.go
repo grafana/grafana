@@ -17,8 +17,16 @@ type ExportStatus struct {
 type ExportConfig struct {
 	Format            string `json:"format"`
 	GeneralFolderPath string `json:"generalFolderPath"`
-	IncludeHistory    bool   `json:"includeHistory"`
-	ExcludeDashboards bool   `json:"excludeDashboards"`
+	KeepHistory       bool   `json:"history"`
+
+	Include struct {
+		Auth      bool `json:"auth"`
+		DS        bool `json:"ds"`
+		Dash      bool `json:"dash"`
+		Services  bool `json:"services"`
+		Usage     bool `json:"usage"`
+		Snapshots bool `json:"snapshots"`
+	} `json:"include"`
 
 	// Depends on the format
 	Git GitExportConfig `json:"git"`

@@ -21,20 +21,38 @@ interface ExportStatusMessage {
   status: string;
 }
 
+interface ExportInclude {
+  auth: boolean;
+  ds: boolean;
+  dash: boolean;
+  services: boolean;
+  usage: boolean;
+  snapshots: boolean;
+}
+
 interface ExportJob {
   format: 'git';
   generalFolderPath: string;
-  includeHistory: boolean;
-  excludeDashboards: boolean;
+  history: boolean;
+  include: ExportInclude;
 
   git?: {};
 }
 
+const includAll: ExportInclude = {
+  auth: true,
+  ds: true,
+  dash: true,
+  services: true,
+  usage: true,
+  snapshots: true,
+};
+
 const defaultJob: ExportJob = {
   format: 'git',
   generalFolderPath: 'general',
-  includeHistory: true,
-  excludeDashboards: false,
+  history: true,
+  include: includAll,
   git: {},
 };
 
@@ -45,7 +63,7 @@ interface Props {
 export const ExportView = ({ onPathChange }: Props) => {
   const [status, setStatus] = useState<ExportStatusMessage>();
   const [rawBody, setBody] = useLocalStorage<ExportJob>(EXPORT_LOCAL_STORAGE_KEY, defaultJob);
-  const body = { ...defaultJob, ...rawBody };
+  const body = { ...defaultJob, ...rawBody, include: { ...includAll, ...rawBody?.include } };
 
   const doStart = () => {
     getBackendSrv().post('/api/admin/export', body);
@@ -97,7 +115,7 @@ export const ExportView = ({ onPathChange }: Props) => {
         <div>
           <h3>Export grafana instance</h3>
           <CodeEditor
-            height={200}
+            height={275}
             value={JSON.stringify(body, null, 2) ?? ''}
             showLineNumbers={false}
             readOnly={false}

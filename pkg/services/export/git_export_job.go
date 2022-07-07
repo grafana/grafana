@@ -171,12 +171,13 @@ func (e *gitExportJob) doExportWithHistory() error {
 }
 
 func (e *gitExportJob) doOrgExportWithHistory(helper *commitHelper) error {
-	lookup, err := exportDataSources(helper, e)
+	include := e.cfg.Include
+	lookup, err := exportDataSources(helper, e, include.DS)
 	if err != nil {
 		return err
 	}
 
-	if !e.cfg.ExcludeDashboards {
+	if include.Dash {
 		err = exportDashboards(helper, e, lookup)
 		if err != nil {
 			return err
@@ -184,21 +185,26 @@ func (e *gitExportJob) doOrgExportWithHistory(helper *commitHelper) error {
 	}
 
 	// Run all the simple exporters
-	exporters := []simpleExporter{
-		dumpAuthTables,
-		exportFiles,
-		exportSystemPreferences,
-		exportSystemStars,
-		exportSystemPlaylists,
-		exportAnnotations,
-		exportKVStore,
-		exportLive,
+	exporters := []simpleExporter{}
+
+	if include.Auth {
+		exporters = append(exporters, dumpAuthTables)
+	}
+
+	if include.Services {
+		exporters = append(exporters, exportFiles,
+			exportSystemPreferences,
+			exportSystemStars,
+			exportSystemPlaylists,
+			exportAnnotations,
+			exportKVStore,
+			exportLive)
 	}
 
 	// This needs a real admin user to use the interfaces (and decrypt)
-	if false {
-		exporters = append(exporters, exportSnapshots)
-	}
+	// if include.Snapshots {
+	// 	exporters = append(exporters, exportSnapshots)
+	// }
 
 	for _, fn := range exporters {
 		err = fn(helper, e)
