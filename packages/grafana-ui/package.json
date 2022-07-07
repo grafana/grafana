@@ -110,6 +110,7 @@
     "@storybook/addons": "6.4.21",
     "@storybook/api": "6.4.21",
     "@storybook/builder-webpack5": "6.4.21",
+    "@storybook/client-api": "6.4.21",
     "@storybook/components": "6.4.21",
     "@storybook/core-events": "6.4.21",
     "@storybook/manager-webpack5": "6.4.21",

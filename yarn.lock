@@ -4801,14 +4801,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/lezer-logql@npm:^0.0.12":
-  version: 0.0.12
-  resolution: "@grafana/lezer-logql@npm:0.0.12"
+"@grafana/lezer-logql@npm:^0.0.13":
+  version: 0.0.13
+  resolution: "@grafana/lezer-logql@npm:0.0.13"
   dependencies:
     lezer: ^0.13.5
   peerDependencies:
     "@lezer/lr": ^0.15.8
-  checksum: d28780b41a97b69a427390ef746e09a131e6a151be0894763e5cfe26fa16ae37fa5fe7409ea956f5e29974a5966162318a51bcd47422e9a3e609ca43340bbdcb
+  checksum: 417ab91c4fa8317789435bafbadd0bc24a6b9d8494a87614f14dc8cbe5f05bf94f529eadc0b2643ff71a3a3fee45cbf588538d8224abe2f4134ff5cc2c2b0055
   languageName: node
   linkType: hard
 
@@ -5034,6 +5034,7 @@ __metadata:
     "@storybook/addons": 6.4.21
     "@storybook/api": 6.4.21
     "@storybook/builder-webpack5": 6.4.21
+    "@storybook/client-api": 6.4.21
     "@storybook/components": 6.4.21
     "@storybook/core-events": 6.4.21
     "@storybook/manager-webpack5": 6.4.21
@@ -20952,7 +20953,7 @@ __metadata:
     "@grafana/eslint-config": 4.0.0
     "@grafana/experimental": ^0.0.2-canary.32
     "@grafana/google-sdk": 0.0.3
-    "@grafana/lezer-logql": ^0.0.12
+    "@grafana/lezer-logql": ^0.0.13
     "@grafana/runtime": "workspace:*"
     "@grafana/schema": "workspace:*"
     "@grafana/slate-react": 0.22.10-grafana
