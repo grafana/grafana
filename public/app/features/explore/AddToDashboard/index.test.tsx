@@ -194,7 +194,7 @@ describe('AddToDashboardButton', () => {
           const openSpy = jest.spyOn(global, 'open').mockReturnValue(true);
 
           jest.spyOn(backendSrv, 'getDashboardByUid').mockResolvedValue({
-            dashboard: { templating: { list: [] }, title: 'Dashboard Title', uid: 'someUid' },
+            dashboard: { templating: { list: [] }, id: 1, title: 'Dashboard Title', uid: 'someUid' },
             meta: {},
           });
           jest.spyOn(backendSrv, 'search').mockResolvedValue([
@@ -237,7 +237,7 @@ describe('AddToDashboardButton', () => {
           const pushSpy = jest.spyOn(locationService, 'push');
 
           jest.spyOn(backendSrv, 'getDashboardByUid').mockResolvedValue({
-            dashboard: { templating: { list: [] }, title: 'Dashboard Title', uid: 'someUid' },
+            dashboard: { templating: { list: [] }, id: 1, title: 'Dashboard Title', uid: 'someUid' },
             meta: {},
           });
           jest.spyOn(backendSrv, 'search').mockResolvedValue([

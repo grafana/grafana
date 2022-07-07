@@ -4,7 +4,9 @@ export interface UserPreferencesDTO {
   timezone: TimeZone;
   weekStart: string;
   locale: string;
-  homeDashboardId: number;
+  // Deprecated in favor of homeDashboardUID
+  homeDashboardId?: number;
+  homeDashboardUID?: string;
   theme: string;
   queryHistory: {
     homeTab: '' | 'query' | 'starred';

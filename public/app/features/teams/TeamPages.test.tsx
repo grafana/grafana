@@ -107,6 +107,7 @@ describe('Render', () => {
       pageName: 'settings',
       preferences: {
         homeDashboardId: 1,
+        homeDashboardUID: 'home-dashboard',
         theme: 'Default',
         timezone: 'Default',
       },
@@ -132,6 +133,7 @@ describe('when feature toggle editorsCanAdmin is turned on', () => {
       pageName: 'settings',
       preferences: {
         homeDashboardId: 1,
+        homeDashboardUID: 'home-dashboard',
         theme: 'Default',
         timezone: 'Default',
       },

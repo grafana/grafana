@@ -53,6 +53,7 @@ describe('addPanelToDashboard', () => {
     const existingPanel = { prop: 'this should be kept' };
     jest.spyOn(backendSrv, 'getDashboardByUid').mockResolvedValue({
       dashboard: {
+        id: 1,
         templating: { list: [] },
         title: 'Previous panels should not be removed',
         uid: 'someUid',
