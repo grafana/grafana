@@ -177,14 +177,18 @@ func (e *gitExportJob) doOrgExportWithHistory(helper *commitHelper) error {
 		return err
 	}
 
+	exporters := []simpleExporter{}
 	if include.Dash {
 		err = exportDashboards(helper, e, lookup)
 		if err != nil {
 			return err
 		}
+
+		if true {
+			exporters = append(exporters, exportDashboardThumbnails)
+		}
 	}
 
-	exporters := []simpleExporter{}
 	if include.Auth {
 		exporters = append(exporters, dumpAuthTables)
 	}
@@ -195,6 +199,7 @@ func (e *gitExportJob) doOrgExportWithHistory(helper *commitHelper) error {
 			exportSystemStars,
 			exportSystemPlaylists,
 			exportKVStore,
+			exportSystemShortURL,
 			exportLive)
 	}
 

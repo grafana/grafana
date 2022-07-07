@@ -25,6 +25,8 @@ func dumpAuthTables(helper *commitHelper, job *gitExportJob) error {
 			"permission",
 		}
 
+		//rows, err := sess.DB().QueryContext(helper.ctx, "SELECT * FROM user")
+
 		for _, table := range tables {
 			switch table {
 			case "permission":
