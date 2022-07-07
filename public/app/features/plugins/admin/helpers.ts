@@ -181,7 +181,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     updatedAt: remote?.updatedAt || local?.info.updated || '',
     installedVersion,
     error: error?.errorCode,
-    // TODO<what happens for remote plugins?>
+    // Only local plugins have access control metadata
     accessControl: local?.accessControl,
   };
 }

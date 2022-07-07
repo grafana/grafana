@@ -43,7 +43,6 @@ const ADMIN_ROUTES = [
 ];
 
 export function getRoutes(): RouteDescriptor[] {
-  // TODO maybe write a hasAnyAccess?
   if (
     contextSrv.hasAccess(AccessControlAction.PluginsInstall, isGrafanaAdmin()) ||
     contextSrv.hasAccess(AccessControlAction.PluginsToggle, isGrafanaAdmin())

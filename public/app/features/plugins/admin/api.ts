@@ -29,7 +29,6 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
 }
 
 export async function getRemotePlugins(): Promise<RemotePlugin[]> {
-  // TODO I think we cannot do anything about these
   const { items: remotePlugins }: { items: RemotePlugin[] } = await getBackendSrv().get(`${GCOM_API_ROOT}/plugins`);
 
   return remotePlugins.filter(isRemotePluginVisible);
