@@ -56,6 +56,79 @@ const (
   "schemaVersion": 35
 }`
 
+	dashboardWithMixedDatasource = `
+{
+  "panels": [
+    {
+	  "datasource": {
+		"type": "datasource",
+		"uid": "-- Mixed --"
+	  },
+      "id": 1,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "abc123"
+          },
+          "exemplar": true,
+          "expr": "go_goroutines{job=\"$job\"}",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Panel Title",
+      "type": "timeseries"
+    },
+    {
+	  "datasource": {
+		"type": "prometheus",
+		"uid": "_yxMP8Ynk"
+	  },
+      "id": 2,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "_yxMP8Ynk"
+          },
+          "exemplar": true,
+          "expr": "go_goroutines{job=\"$job\"}",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Panel Title",
+      "type": "timeseries"
+    },
+    {
+	  "datasource": {
+		"type": "prometheus",
+		"uid": "_yxMP8Ynk"
+	  },
+      "id": 3,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "_yxMP8Ynk"
+          },
+          "exemplar": true,
+          "expr": "go_goroutines{job=\"$job\"}",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Panel Title",
+      "type": "timeseries"
+    }
+  ],
+  "schemaVersion": 35
+}`
+
 	dashboardWithDuplicateDatasources = `
 {
   "panels": [
@@ -155,6 +228,16 @@ const (
 func TestGetUniqueDashboardDatasourceUids(t *testing.T) {
 	t.Run("can get unique datasource ids from dashboard", func(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(dashboardWithDuplicateDatasources))
+		require.NoError(t, err)
+
+		uids := GetUniqueDashboardDatasourceUids(json)
+		require.Len(t, uids, 2)
+		require.Equal(t, "abc123", uids[0])
+		require.Equal(t, "_yxMP8Ynk", uids[1])
+	})
+
+	t.Run("can get unique datasource ids from dashboard with a mixed datasource", func(t *testing.T) {
+		json, err := simplejson.NewJson([]byte(dashboardWithMixedDatasource))
 		require.NoError(t, err)
 
 		uids := GetUniqueDashboardDatasourceUids(json)
