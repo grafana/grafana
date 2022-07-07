@@ -1,5 +1,5 @@
 import { size } from 'lodash';
-import { Observable } from 'rxjs';
+import { Observable, from, isObservable } from 'rxjs';
 
 import {
   AbsoluteTimeRange,
@@ -8,6 +8,7 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   DataSourceApi,
+  DataSourceJsonData,
   dateTimeFormat,
   dateTimeFormatTimeAgo,
   FieldCache,
@@ -106,13 +107,20 @@ export function filterLogLevels(logRows: LogRowModel[], hiddenLogLevels: Set<Log
   });
 }
 
+interface Series {
+  lastTs: number | null;
+  datapoints: Array<[number, number]>;
+  target: LogLevel;
+  color: string;
+}
+
 export function makeDataFramesForLogs(sortedRows: LogRowModel[], bucketSize: number): DataFrame[] {
   // currently interval is rangeMs / resolution, which is too low for showing series as bars.
   // Should be solved higher up the chain when executing queries & interval calculated and not here but this is a temporary fix.
 
   // Graph time series by log level
-  const seriesByLevel: any = {};
-  const seriesList: any[] = [];
+  const seriesByLevel: Record<string, Series> = {};
+  const seriesList: Series[] = [];
 
   for (const row of sortedRows) {
     let series = seriesByLevel[row.logLevel];
@@ -459,12 +467,13 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   }
 
   const limits = logSeries.filter((series) => series.meta && series.meta.limit);
-  const limitValue = Object.values(
-    limits.reduce((acc: any, elem: any) => {
-      acc[elem.refId] = elem.meta.limit;
-      return acc;
-    }, {})
-  ).reduce((acc: number, elem: any) => (acc += elem), 0) as number;
+  const lastLimitPerRef = limits.reduce<Record<string, number>>((acc, elem) => {
+    acc[elem.refId ?? ''] = elem.meta?.limit ?? 0;
+
+    return acc;
+  }, {});
+
+  const limitValue = Object.values(lastLimitPerRef).reduce((acc, elem) => (acc += elem), 0);
 
   if (limitValue > 0) {
     meta.push({
@@ -598,6 +607,7 @@ export function aggregateRawLogsVolume(
   extractLevel: (dataFrame: DataFrame) => LogLevel
 ): DataFrame[] {
   const logsVolumeByLevelMap: Partial<Record<LogLevel, DataFrame[]>> = {};
+
   rawLogsVolume.forEach((dataFrame) => {
     const level = extractLevel(dataFrame);
     if (!logsVolumeByLevelMap[level]) {
@@ -661,10 +671,10 @@ type LogsVolumeQueryOptions<T extends DataQuery> = {
 /**
  * Creates an observable, which makes requests to get logs volume and aggregates results.
  */
-export function queryLogsVolume<T extends DataQuery>(
-  datasource: DataSourceApi<T, any, any>,
-  logsVolumeRequest: DataQueryRequest<T>,
-  options: LogsVolumeQueryOptions<T>
+export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataSourceJsonData>(
+  datasource: DataSourceApi<TQuery, TOptions>,
+  logsVolumeRequest: DataQueryRequest<TQuery>,
+  options: LogsVolumeQueryOptions<TQuery>
 ): Observable<DataQueryResponse> {
   const timespan = options.range.to.valueOf() - options.range.from.valueOf();
   const intervalInfo = getIntervalInfo(logsVolumeRequest.scopedVars, timespan);
@@ -683,7 +693,10 @@ export function queryLogsVolume<T extends DataQuery>(
       data: [],
     });
 
-    const subscription = (datasource.query(logsVolumeRequest) as Observable<DataQueryResponse>).subscribe({
+    const queryResponse = datasource.query(logsVolumeRequest);
+    const queryObservable = isObservable(queryResponse) ? queryResponse : from(queryResponse);
+
+    const subscription = queryObservable.subscribe({
       complete: () => {
         const aggregatedLogsVolume = aggregateRawLogsVolume(rawLogsVolume, options.extractLevel);
         if (aggregatedLogsVolume[0]) {

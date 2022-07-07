@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/framework/coremodel/registry"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -18,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/framework/coremodel/registry"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -139,7 +139,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			SQLStore:                mockSQLStore,
 			AccessControl:           accesscontrolmock.New(),
 			Features:                featuremgmt.WithFeatures(),
-			dashboardService:        dashboardService,
+			DashboardService:        dashboardService,
 			dashboardVersionService: fakeDashboardVersionService,
 		}
 		hs.CoremodelStaticRegistry, hs.CoremodelRegistry = setupDashboardCoremodel(t)
@@ -259,7 +259,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			LibraryElementService:   &mockLibraryElementService{},
 			SQLStore:                mockSQLStore,
 			AccessControl:           accesscontrolmock.New(),
-			dashboardService:        dashboardService,
+			DashboardService:        dashboardService,
 			dashboardVersionService: fakeDashboardVersionService,
 		}
 		hs.CoremodelStaticRegistry, hs.CoremodelRegistry = setupDashboardCoremodel(t)
@@ -679,24 +679,24 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				SaveError          error
 				ExpectedStatusCode int
 			}{
-				{SaveError: models.ErrDashboardNotFound, ExpectedStatusCode: 404},
-				{SaveError: models.ErrFolderNotFound, ExpectedStatusCode: 400},
-				{SaveError: models.ErrDashboardWithSameUIDExists, ExpectedStatusCode: 400},
-				{SaveError: models.ErrDashboardWithSameNameInFolderExists, ExpectedStatusCode: 412},
-				{SaveError: models.ErrDashboardVersionMismatch, ExpectedStatusCode: 412},
-				{SaveError: models.ErrDashboardTitleEmpty, ExpectedStatusCode: 400},
-				{SaveError: models.ErrDashboardFolderCannotHaveParent, ExpectedStatusCode: 400},
+				{SaveError: dashboards.ErrDashboardNotFound, ExpectedStatusCode: 404},
+				{SaveError: dashboards.ErrFolderNotFound, ExpectedStatusCode: 400},
+				{SaveError: dashboards.ErrDashboardWithSameUIDExists, ExpectedStatusCode: 400},
+				{SaveError: dashboards.ErrDashboardWithSameNameInFolderExists, ExpectedStatusCode: 412},
+				{SaveError: dashboards.ErrDashboardVersionMismatch, ExpectedStatusCode: 412},
+				{SaveError: dashboards.ErrDashboardTitleEmpty, ExpectedStatusCode: 400},
+				{SaveError: dashboards.ErrDashboardFolderCannotHaveParent, ExpectedStatusCode: 400},
 				{SaveError: alerting.ValidationError{Reason: "Mu"}, ExpectedStatusCode: 422},
-				{SaveError: models.ErrDashboardFailedGenerateUniqueUid, ExpectedStatusCode: 500},
-				{SaveError: models.ErrDashboardTypeMismatch, ExpectedStatusCode: 400},
-				{SaveError: models.ErrDashboardFolderWithSameNameAsDashboard, ExpectedStatusCode: 400},
-				{SaveError: models.ErrDashboardWithSameNameAsFolder, ExpectedStatusCode: 400},
-				{SaveError: models.ErrDashboardFolderNameExists, ExpectedStatusCode: 400},
-				{SaveError: models.ErrDashboardUpdateAccessDenied, ExpectedStatusCode: 403},
-				{SaveError: models.ErrDashboardInvalidUid, ExpectedStatusCode: 400},
-				{SaveError: models.ErrDashboardUidTooLong, ExpectedStatusCode: 400},
-				{SaveError: models.ErrDashboardCannotSaveProvisionedDashboard, ExpectedStatusCode: 400},
-				{SaveError: models.UpdatePluginDashboardError{PluginId: "plug"}, ExpectedStatusCode: 412},
+				{SaveError: dashboards.ErrDashboardFailedGenerateUniqueUid, ExpectedStatusCode: 500},
+				{SaveError: dashboards.ErrDashboardTypeMismatch, ExpectedStatusCode: 400},
+				{SaveError: dashboards.ErrDashboardFolderWithSameNameAsDashboard, ExpectedStatusCode: 400},
+				{SaveError: dashboards.ErrDashboardWithSameNameAsFolder, ExpectedStatusCode: 400},
+				{SaveError: dashboards.ErrDashboardFolderNameExists, ExpectedStatusCode: 400},
+				{SaveError: dashboards.ErrDashboardUpdateAccessDenied, ExpectedStatusCode: 403},
+				{SaveError: dashboards.ErrDashboardInvalidUid, ExpectedStatusCode: 400},
+				{SaveError: dashboards.ErrDashboardUidTooLong, ExpectedStatusCode: 400},
+				{SaveError: dashboards.ErrDashboardCannotSaveProvisionedDashboard, ExpectedStatusCode: 400},
+				{SaveError: dashboards.UpdatePluginDashboardError{PluginId: "plug"}, ExpectedStatusCode: 412},
 			}
 
 			cmd := models.SaveDashboardCommand{
@@ -900,7 +900,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				dashboardProvisioningService: mockDashboardProvisioningService{},
 				SQLStore:                     mockSQLStore,
 				AccessControl:                accesscontrolmock.New(),
-				dashboardService:             dashboardService,
+				DashboardService:             dashboardService,
 			}
 			hs.CoremodelStaticRegistry, hs.CoremodelRegistry = setupDashboardCoremodel(t)
 			hs.callGetDashboard(sc)
@@ -954,7 +954,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 			cfg, dashboardStore, nil, features,
 			folderPermissions, dashboardPermissions, ac,
 		),
-		dashboardService: dashboardService,
+		DashboardService: dashboardService,
 	}
 	hs.CoremodelStaticRegistry, hs.CoremodelRegistry = setupDashboardCoremodel(t)
 
@@ -986,7 +986,7 @@ func (hs *HTTPServer) callGetDashboardVersions(sc *scenarioContext) {
 
 func (hs *HTTPServer) callDeleteDashboardByUID(t *testing.T,
 	sc *scenarioContext, mockDashboard *dashboards.FakeDashboardService) {
-	hs.dashboardService = mockDashboard
+	hs.DashboardService = mockDashboard
 	sc.handlerFunc = hs.DeleteDashboardByUID
 	sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 }
@@ -1018,7 +1018,7 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 			pluginStore:           &fakePluginStore{},
 			LibraryPanelService:   &mockLibraryPanelService{},
 			LibraryElementService: &mockLibraryElementService{},
-			dashboardService:      dashboardService,
+			DashboardService:      dashboardService,
 			folderService:         folderService,
 			Features:              featuremgmt.WithFeatures(),
 		}
@@ -1088,7 +1088,7 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 			QuotaService:            &quota.QuotaService{Cfg: cfg},
 			LibraryPanelService:     &mockLibraryPanelService{},
 			LibraryElementService:   &mockLibraryElementService{},
-			dashboardService:        mock,
+			DashboardService:        mock,
 			SQLStore:                sqlStore,
 			Features:                featuremgmt.WithFeatures(),
 			dashboardVersionService: fakeDashboardVersionService,

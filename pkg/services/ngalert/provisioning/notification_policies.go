@@ -16,7 +16,8 @@ type NotificationPolicyService struct {
 	log             log.Logger
 }
 
-func NewNotificationPolicyService(am AMConfigStore, prov ProvisioningStore, xact TransactionManager, log log.Logger) *NotificationPolicyService {
+func NewNotificationPolicyService(am AMConfigStore, prov ProvisioningStore,
+	xact TransactionManager, log log.Logger) *NotificationPolicyService {
 	return &NotificationPolicyService{
 		amStore:         am,
 		provenanceStore: prov,
@@ -63,9 +64,25 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 	if err != nil {
 		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
+
 	revision, err := getLastConfiguration(ctx, orgID, nps.amStore)
 	if err != nil {
 		return err
+	}
+
+	receivers, err := nps.receiversToMap(revision.cfg.AlertmanagerConfig.Receivers)
+	err = tree.ValidateReceivers(receivers)
+	if err != nil {
+		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
+	}
+
+	muteTimes := map[string]struct{}{}
+	for _, mt := range revision.cfg.AlertmanagerConfig.MuteTimeIntervals {
+		muteTimes[mt.Name] = struct{}{}
+	}
+	err = tree.ValidateMuteTimes(muteTimes)
+	if err != nil {
+		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
 	revision.cfg.AlertmanagerConfig.Config.Route = &tree
@@ -97,4 +114,12 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 	}
 
 	return nil
+}
+
+func (nps *NotificationPolicyService) receiversToMap(records []*definitions.PostableApiReceiver) (map[string]struct{}, error) {
+	receivers := map[string]struct{}{}
+	for _, receiver := range records {
+		receivers[receiver.Name] = struct{}{}
+	}
+	return receivers, nil
 }

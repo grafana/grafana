@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	publicdashboardsapi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -28,7 +29,7 @@ func (hs *HTTPServer) registerRoutes() {
 	reqGrafanaAdmin := middleware.ReqGrafanaAdmin
 	reqEditorRole := middleware.ReqEditorRole
 	reqOrgAdmin := middleware.ReqOrgAdmin
-	reqOrgAdminFolderAdminOrTeamAdmin := middleware.OrgAdminFolderAdminOrTeamAdmin(hs.SQLStore, hs.dashboardService)
+	reqOrgAdminDashOrFolderAdminOrTeamAdmin := middleware.OrgAdminDashOrFolderAdminOrTeamAdmin(hs.SQLStore, hs.DashboardService)
 	reqCanAccessTeams := middleware.AdminOrEditorAndFeatureEnabled(hs.Cfg.EditorsCanAdmin)
 	reqSnapshotPublicModeOrSignedIn := middleware.SnapshotPublicModeOrSignedIn(hs.Cfg)
 	redirectFromLegacyPanelEditURL := middleware.RedirectFromLegacyPanelEditURL(hs.Cfg)
@@ -75,6 +76,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/admin/orgs", authorizeInOrg(reqGrafanaAdmin, ac.UseGlobalOrg, orgsAccessEvaluator), hs.Index)
 	r.Get("/admin/orgs/edit/:id", authorizeInOrg(reqGrafanaAdmin, ac.UseGlobalOrg, orgsAccessEvaluator), hs.Index)
 	r.Get("/admin/stats", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionServerStatsRead)), hs.Index)
+	r.Get("/admin/storage/*", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin/ldap", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionLDAPStatusRead)), hs.Index)
 	r.Get("/styleguide", reqSignedIn, hs.Index)
 
@@ -101,6 +103,10 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/dashboards/", reqSignedIn, hs.Index)
 	r.Get("/dashboards/*", reqSignedIn, hs.Index)
 	r.Get("/goto/:uid", reqSignedIn, hs.redirectFromShortURL, hs.Index)
+
+	if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
+		r.Get("/public-dashboards/:accessToken", publicdashboardsapi.SetPublicDashboardFlag(), hs.Index)
+	}
 
 	r.Get("/explore", authorize(func(c *models.ReqContext) {
 		if f, ok := reqSignedIn.(func(c *models.ReqContext)); ok {
@@ -261,7 +267,7 @@ func (hs *HTTPServer) registerRoutes() {
 					ac.EvalPermission(dashboards.ActionDashboardsPermissionsWrite),
 				)
 			}
-			orgRoute.Get("/users/lookup", authorize(reqOrgAdminFolderAdminOrTeamAdmin, lookupEvaluator()), routing.Wrap(hs.GetOrgUsersForCurrentOrgLookup))
+			orgRoute.Get("/users/lookup", authorize(reqOrgAdminDashOrFolderAdminOrTeamAdmin, lookupEvaluator()), routing.Wrap(hs.GetOrgUsersForCurrentOrgLookup))
 		})
 
 		// create new org
@@ -332,10 +338,12 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Any("/plugins/:pluginId/resources/*", hs.CallResource)
 		apiRoute.Get("/plugins/errors", routing.Wrap(hs.GetPluginErrorsList))
 
-		apiRoute.Group("/plugins", func(pluginRoute routing.RouteRegister) {
-			pluginRoute.Post("/:pluginId/install", routing.Wrap(hs.InstallPlugin))
-			pluginRoute.Post("/:pluginId/uninstall", routing.Wrap(hs.UninstallPlugin))
-		}, reqGrafanaAdmin)
+		if hs.Cfg.PluginAdminEnabled && !hs.Cfg.PluginAdminExternalManageEnabled {
+			apiRoute.Group("/plugins", func(pluginRoute routing.RouteRegister) {
+				pluginRoute.Post("/:pluginId/install", routing.Wrap(hs.InstallPlugin))
+				pluginRoute.Post("/:pluginId/uninstall", routing.Wrap(hs.UninstallPlugin))
+			}, reqGrafanaAdmin)
+		}
 
 		apiRoute.Group("/plugins", func(pluginRoute routing.RouteRegister) {
 			pluginRoute.Get("/:pluginId/dashboards/", routing.Wrap(hs.GetPluginDashboards))
@@ -393,11 +401,6 @@ func (hs *HTTPServer) registerRoutes() {
 			})
 
 			dashboardRoute.Group("/uid/:uid", func(dashUidRoute routing.RouteRegister) {
-				if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
-					dashUidRoute.Get("/public-config", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.GetPublicDashboardConfig))
-					dashUidRoute.Post("/public-config", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.SavePublicDashboardConfig))
-				}
-
 				if hs.ThumbService != nil {
 					dashUidRoute.Get("/img/:kind/:theme", hs.ThumbService.GetImage)
 					if hs.Features.IsEnabled(featuremgmt.FlagDashboardPreviewsAdmin) {
@@ -600,7 +603,7 @@ func (hs *HTTPServer) registerRoutes() {
 	// grafana.net proxy
 	r.Any("/api/gnet/*", reqSignedIn, hs.ProxyGnetRequest)
 
-	// Gravatar service.
+	// Gravatar service
 	r.Get("/avatar/:hash", hs.AvatarCacheServer.Handler)
 
 	// Snapshots
@@ -609,13 +612,6 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/api/snapshots/:key", routing.Wrap(hs.GetDashboardSnapshot))
 	r.Get("/api/snapshots-delete/:deleteKey", reqSnapshotPublicModeOrSignedIn, routing.Wrap(hs.DeleteDashboardSnapshotByDeleteKey))
 	r.Delete("/api/snapshots/:key", reqEditorRole, routing.Wrap(hs.DeleteDashboardSnapshot))
-
-	// Public API
-	if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
-		r.Get("/public-dashboards/:accessToken", middleware.SetPublicDashboardFlag(), hs.Index)
-		r.Get("/api/public/dashboards/:accessToken", routing.Wrap(hs.GetPublicDashboard))
-		r.Post("/api/public/dashboards/:accessToken/panels/:panelId/query", routing.Wrap(hs.QueryPublicDashboard))
-	}
 
 	// Frontend logs
 	sourceMapStore := frontendlogging.NewSourceMapStore(hs.Cfg, hs.pluginStaticRouteResolver, frontendlogging.ReadSourceMapFromFS)

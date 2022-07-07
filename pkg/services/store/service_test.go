@@ -43,15 +43,15 @@ func TestListFiles(t *testing.T) {
 	frame, err := store.List(context.Background(), dummyUser, "public/testdata")
 	require.NoError(t, err)
 
-	experimental.CheckGoldenJSONFrame(t, "testdata", "public_testdata.golden", frame, true)
+	experimental.CheckGoldenJSONFrame(t, "testdata", "public_testdata.golden", frame.Frame, true)
 
 	file, err := store.Read(context.Background(), dummyUser, "public/testdata/js_libraries.csv")
 	require.NoError(t, err)
 	require.NotNil(t, file)
 
-	frame, err = testdatasource.LoadCsvContent(bytes.NewReader(file.Contents), file.Name)
+	testDsFrame, err := testdatasource.LoadCsvContent(bytes.NewReader(file.Contents), file.Name)
 	require.NoError(t, err)
-	experimental.CheckGoldenJSONFrame(t, "testdata", "public_testdata_js_libraries.golden", frame, true)
+	experimental.CheckGoldenJSONFrame(t, "testdata", "public_testdata_js_libraries.golden", testDsFrame, true)
 }
 
 func TestUpload(t *testing.T) {
@@ -63,7 +63,7 @@ func TestUpload(t *testing.T) {
 	request := UploadRequest{
 		EntityType: EntityTypeImage,
 		Contents:   make([]byte, 0),
-		Path:       "upload/myFile.jpg",
+		Path:       "resources/myFile.jpg",
 		MimeType:   "image/jpg",
 	}
 	err = s.Upload(context.Background(), dummyUser, &request)
