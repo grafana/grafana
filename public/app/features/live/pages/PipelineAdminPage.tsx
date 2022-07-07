@@ -2,7 +2,7 @@ import React, { useEffect, useState, ChangeEvent } from 'react';
 
 import { getBackendSrv } from '@grafana/runtime';
 import { Input } from '@grafana/ui';
-import Page from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 
 import { AddNewRule } from './AddNewRule';
