@@ -13,7 +13,7 @@ import { SecretInput } from '@grafana/ui/src/components/SecretInput/SecretInput'
 import { ConnectionLimits } from 'app/features/plugins/sql/components/configuration/ConnectionLimits';
 import { TLSSecretsConfig } from 'app/features/plugins/sql/components/configuration/TLSSecretsConfig';
 
-import { PostgresOptions } from '../types';
+import { PostgresOptions, PostgresTLSMethods, PostgresTLSModes } from '../types';
 
 export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<PostgresOptions>) => {
   const { options, onOptionsChange } = props;
@@ -22,18 +22,6 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
   const onResetPassword = () => {
     updateDatasourcePluginResetOption(props, 'password');
   };
-
-  enum PostgresTLSModes {
-    disable = 'disable',
-    require = 'require',
-    verifyCA = 'verify-ca',
-    verifyFull = 'verify-full',
-  }
-
-  enum PostgresTLSMethods {
-    filePath = 'file-path',
-    fileContent = 'file-content',
-  }
 
   const tlsModes: Array<SelectableValue<PostgresTLSModes>> = [
     { value: PostgresTLSModes.disable, label: 'disable' },
@@ -154,7 +142,7 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
       {options.jsonData.sslmode !== 'disable' ? (
         <FieldSet label="TLS/SSL Auth Details">
           {options.jsonData.tlsConfigurationMethod === PostgresTLSMethods.fileContent ? (
-            <TLSSecretsConfig editorProps={props} labelWidthSSLDetails={labelWidthSSLDetails}></TLSSecretsConfig>
+            <TLSSecretsConfig editorProps={props} labelWidth={labelWidthSSLDetails}></TLSSecretsConfig>
           ) : (
             <>
               <InlineField
