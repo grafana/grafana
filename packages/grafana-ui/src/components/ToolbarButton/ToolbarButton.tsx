@@ -37,7 +37,7 @@ type CommonProps = {
 
 export type ToolbarButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
 
-export type ToolbarButtonVariant = 'default' | 'primary' | 'destructive' | 'active' | 'toolbar';
+export type ToolbarButtonVariant = 'default' | 'primary' | 'destructive' | 'active';
 
 export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
   (
@@ -126,6 +126,26 @@ function renderIcon(icon: IconName | React.ReactNode) {
 const getStyles = (theme: GrafanaTheme2) => {
   const primaryVariant = getPropertiesForVariant(theme, 'primary', 'solid');
   const destructiveVariant = getPropertiesForVariant(theme, 'destructive', 'solid');
+  console.log('theme', theme);
+  const defaultOld = css`
+    color: ${theme.colors.text.secondary};
+    background-color: ${theme.colors.background.primary};
+
+    &:hover {
+      color: ${theme.colors.text.primary};
+      background: ${theme.colors.background.secondary};
+    }
+  `;
+  const defaultTopNav = css`
+    color: ${theme.colors.text.secondary};
+    background-color: transparent;
+    border: none;
+
+    &:hover {
+      color: ${theme.colors.text.primary};
+      background: ${theme.colors.background.secondary};
+    }
+  `;
 
   return {
     button: css`
@@ -172,26 +192,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         }
       }
     `,
-    default: css`
-      color: ${theme.colors.text.secondary};
-      background-color: ${theme.colors.background.primary};
-
-      &:hover {
-        color: ${theme.colors.text.primary};
-        background: ${theme.colors.background.secondary};
-      }
-    `,
-    toolbar: css`
-      color: ${theme.colors.text.secondary};
-      background-color: transparent;
-      border: none;
-
-      &:hover {
-        color: ${theme.colors.text.primary};
-        background: ${theme.colors.background.secondary};
-      }
-    `,
-
+    default: theme.flags.topnav ? defaultTopNav : defaultOld,
     active: css`
       color: ${theme.v1.palette.orangeDark};
       border-color: ${theme.v1.palette.orangeDark};

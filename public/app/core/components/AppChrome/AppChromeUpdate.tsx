@@ -6,7 +6,7 @@ import { appChromeService } from './AppChromeService';
 
 export interface AppChromeUpdateProps {
   pageNav?: NavModelItem;
-  actions?: React.ReactNode;
+  actions?: React.ReactNode[];
 }
 /**
  * This needs to be moved to @grafana/ui or runtime.

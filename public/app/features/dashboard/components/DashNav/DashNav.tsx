@@ -4,9 +4,8 @@ import { useLocation } from 'react-router-dom';
 
 import { locationUtil, textUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { ButtonGroup, ModalsController, PageToolbar, useForceUpdate } from '@grafana/ui';
+import { ButtonGroup, ModalsController, ToolbarButton, PageToolbar, useForceUpdate } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
-import { NavToolbarButton } from 'app/core/components/AppChrome/NavToolbarButton';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbarSeparator';
 import config from 'app/core/config';
 import { toggleKioskMode } from 'app/core/navigation/kiosk';
@@ -111,7 +110,7 @@ export const DashNav = React.memo<Props>((props) => {
     return playlistSrv.isPlaying;
   };
 
-  const renderLeftActionsButton = () => {
+  const renderLeftActions = () => {
     const { dashboard, kioskMode } = props;
     const { canStar, canShare, isStarred } = dashboard.meta;
     const buttons: ReactNode[] = [];
@@ -182,9 +181,9 @@ export const DashNav = React.memo<Props>((props) => {
   const renderPlaylistControls = () => {
     return (
       <ButtonGroup key="playlist-buttons">
-        <NavToolbarButton tooltip="Go to previous dashboard" icon="backward" onClick={onPlaylistPrev} narrow />
-        <NavToolbarButton onClick={onPlaylistStop}>Stop playlist</NavToolbarButton>
-        <NavToolbarButton tooltip="Go to next dashboard" icon="forward" onClick={onPlaylistNext} narrow />
+        <ToolbarButton tooltip="Go to previous dashboard" icon="backward" onClick={onPlaylistPrev} narrow />
+        <ToolbarButton onClick={onPlaylistStop}>Stop playlist</ToolbarButton>
+        <ToolbarButton tooltip="Go to next dashboard" icon="forward" onClick={onPlaylistNext} narrow />
       </ButtonGroup>
     );
   };
@@ -201,14 +200,14 @@ export const DashNav = React.memo<Props>((props) => {
     );
   };
 
-  const renderRightActionsButton = () => {
+  const renderRightActions = () => {
     const { dashboard, onAddPanel, isFullscreen, kioskMode } = props;
     const { canSave, canEdit, showSettings } = dashboard.meta;
     const { snapshot } = dashboard;
     const snapshotUrl = snapshot && snapshot.originalUrl;
     const buttons: ReactNode[] = [];
     const tvButton = (
-      <NavToolbarButton tooltip="Cycle view mode" icon="monitor" onClick={onToggleTVMode} key="tv-button" />
+      <ToolbarButton tooltip="Cycle view mode" icon="monitor" onClick={onToggleTVMode} key="tv-button" />
     );
 
     if (isPlaylistRunning()) {
@@ -220,16 +219,14 @@ export const DashNav = React.memo<Props>((props) => {
     }
 
     if (canEdit && !isFullscreen) {
-      buttons.push(
-        <NavToolbarButton tooltip="Add panel" icon="panel-add" onClick={onAddPanel} key="button-panel-add" />
-      );
+      buttons.push(<ToolbarButton tooltip="Add panel" icon="panel-add" onClick={onAddPanel} key="button-panel-add" />);
     }
 
     if (canSave && !isFullscreen) {
       buttons.push(
         <ModalsController key="button-save">
           {({ showModal, hideModal }) => (
-            <NavToolbarButton
+            <ToolbarButton
               tooltip="Save dashboard"
               icon="save"
               onClick={() => {
@@ -246,7 +243,7 @@ export const DashNav = React.memo<Props>((props) => {
 
     if (snapshotUrl) {
       buttons.push(
-        <NavToolbarButton
+        <ToolbarButton
           tooltip="Open original dashboard"
           onClick={() => gotoSnapshotOrigin(snapshotUrl)}
           icon="link"
@@ -257,7 +254,7 @@ export const DashNav = React.memo<Props>((props) => {
 
     if (showSettings) {
       buttons.push(
-        <NavToolbarButton tooltip="Dashboard settings" icon="cog" onClick={onOpenSettings} key="button-settings" />
+        <ToolbarButton tooltip="Dashboard settings" icon="cog" onClick={onOpenSettings} key="button-settings" />
       );
     }
 
@@ -278,16 +275,18 @@ export const DashNav = React.memo<Props>((props) => {
   const titleHref = locationUtil.getUrlForPartial(location, { search: 'open' });
   const parentHref = locationUtil.getUrlForPartial(location, { search: 'open', folder: 'current' });
   const onGoBack = isFullscreen ? onClose : undefined;
-  const actions = (
-    <>
-      {renderLeftActionsButton()}
-      <NavToolbarSeparator leftActionsSeparator />
-      {renderRightActionsButton()}
-    </>
-  );
 
   if (config.featureToggles.topnav) {
-    return <AppChromeUpdate pageNav={{ text: title }} actions={actions} />;
+    return (
+      <AppChromeUpdate
+        pageNav={{ text: title }}
+        actions={[
+          ...renderLeftActions(),
+          <NavToolbarSeparator leftActionsSeparator key="left-sep" />,
+          ...renderRightActions(),
+        ]}
+      />
+    );
   }
 
   return (
@@ -298,8 +297,9 @@ export const DashNav = React.memo<Props>((props) => {
       titleHref={titleHref}
       parentHref={parentHref}
       onGoBack={onGoBack}
+      leftItems={renderLeftActions()}
     >
-      {actions}
+      {renderRightActions()}
     </PageToolbar>
   );
 });

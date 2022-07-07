@@ -16,8 +16,8 @@ export function NavToolbarSeparator({ leftActionsSeparator }: Props) {
     return <div className={styles.leftActionsSeparator} />;
   }
 
-  if (!config.featureToggles.topnav) {
-    <div className={styles.line}></div>;
+  if (config.featureToggles.topnav) {
+    return <div className={styles.line} />;
   }
 
   return null;
@@ -30,9 +30,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexGrow: 1,
     }),
     line: css({
-      width: 2,
+      width: 1,
       backgroundColor: theme.colors.border.medium,
-      height: '100%',
+      height: 24,
     }),
   };
 };
