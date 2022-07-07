@@ -77,6 +77,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 			continue
 		}
 
+		// filter out built in plugins
 		if pluginDef.BuiltIn {
 			continue
 		}
