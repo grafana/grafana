@@ -3,7 +3,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import { useMount } from 'react-use';
 
 import { NavModel } from '@grafana/data';
-import Page from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState } from 'app/types';
 
