@@ -26,7 +26,7 @@ type StandardSearchService struct {
 	ac   accesscontrol.AccessControl
 
 	logger         log.Logger
-	dashboardIndex *dashboardIndex
+	dashboardIndex *searchIndex
 	extender       DashboardIndexExtender
 	reIndexCh      chan struct{}
 }
@@ -41,7 +41,7 @@ func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore s
 			sql: sql,
 			ac:  ac,
 		},
-		dashboardIndex: newDashboardIndex(
+		dashboardIndex: newSearchIndex(
 			newSQLDashboardLoader(sql),
 			entityEventStore,
 			extender.GetDocumentExtender(),
@@ -163,7 +163,7 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 		return rsp
 	}
 
-	reader, err := s.dashboardIndex.getOrCreateReader(ctx, orgID)
+	index, err := s.dashboardIndex.getOrCreateOrgIndex(ctx, orgID)
 	if err != nil {
 		rsp.Error = err
 		return rsp
@@ -175,5 +175,5 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 		return rsp
 	}
 
-	return doSearchQuery(ctx, s.logger, reader, filter, q, s.extender.GetQueryExtender(q), s.cfg.AppSubURL)
+	return doSearchQuery(ctx, s.logger, index, filter, q, s.extender.GetQueryExtender(q), s.cfg.AppSubURL)
 }

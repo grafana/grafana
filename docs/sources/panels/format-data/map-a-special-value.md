@@ -10,12 +10,6 @@ weight: 50
 
 Map a special value when you want to format uncommon, boolean, or empty values.
 
-## Before you begin
-
-- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel/" >}}).
-
-**To map a special value**:
-
 1. Edit the panel for which you want to map a special value.
 1. In panel display options, locate the **Value mappings** section and click **Add value mappings**.
 1. Click **Add a new mapping** and then select **Special**.

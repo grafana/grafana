@@ -1,4 +1,4 @@
-package secretsmigrations
+package migrator
 
 import (
 	"context"
@@ -6,10 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/runner"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/services/encryption"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -288,50 +285,4 @@ func (s alertingSecret) rollback(
 	}
 
 	return anyFailure
-}
-
-func RollBackSecrets(_ utils.CommandLine, runner runner.Runner) error {
-	if runner.Features.IsEnabled(featuremgmt.FlagDisableEnvelopeEncryption) {
-		logger.Warn("Envelope encryption is not enabled, quitting...")
-		return nil
-	}
-
-	toRollback := []interface {
-		rollback(context.Context, *manager.SecretsService, encryption.Internal, *sqlstore.SQLStore, string) bool
-	}{
-		simpleSecret{tableName: "dashboard_snapshot", columnName: "dashboard_encrypted"},
-		b64Secret{simpleSecret: simpleSecret{tableName: "user_auth", columnName: "o_auth_access_token"}, encoding: base64.StdEncoding},
-		b64Secret{simpleSecret: simpleSecret{tableName: "user_auth", columnName: "o_auth_refresh_token"}, encoding: base64.StdEncoding},
-		b64Secret{simpleSecret: simpleSecret{tableName: "user_auth", columnName: "o_auth_token_type"}, encoding: base64.StdEncoding},
-		b64Secret{simpleSecret: simpleSecret{tableName: "secrets", columnName: "value"}, hasUpdatedColumn: true, encoding: base64.RawStdEncoding},
-		jsonSecret{tableName: "data_source"},
-		jsonSecret{tableName: "plugin_setting"},
-		alertingSecret{},
-	}
-
-	var anyFailure bool
-	ctx := context.Background()
-
-	for _, r := range toRollback {
-		if failed := r.rollback(
-			ctx,
-			runner.SecretsService,
-			runner.EncryptionService,
-			runner.SQLStore,
-			runner.Cfg.SecretKey,
-		); failed {
-			anyFailure = true
-		}
-	}
-
-	if anyFailure {
-		logger.Warn("Some errors happened, not cleaning up data keys table...")
-		return nil
-	}
-
-	if _, sqlErr := runner.SQLStore.NewSession(ctx).Exec("DELETE FROM data_keys"); sqlErr != nil {
-		logger.Warn("Error while cleaning up data keys table...", "error", sqlErr)
-	}
-
-	return nil
 }
