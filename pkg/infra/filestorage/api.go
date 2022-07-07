@@ -27,7 +27,7 @@ var (
 )
 
 func ValidatePath(path string) error {
-	if !filepath.IsAbs(path) {
+	if !strings.HasPrefix(path, Delimiter) {
 		return ErrRelativePath
 	}
 
@@ -39,7 +39,8 @@ func ValidatePath(path string) error {
 		return ErrPathEndsWithDelimiter
 	}
 
-	if filepath.Clean(path) != path {
+	// apply `ToSlash` to replace OS-specific separators introduced by the Clean() function
+	if filepath.ToSlash(filepath.Clean(path)) != path {
 		return ErrNonCanonicalPath
 	}
 

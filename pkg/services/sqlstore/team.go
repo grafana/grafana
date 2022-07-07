@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 )
 
 type TeamStore interface {
@@ -528,17 +529,25 @@ func (ss *SQLStore) GetTeamMembers(ctx context.Context, query *models.GetTeamMem
 	// If the signed in user is not set no member will be returned
 	if !ac.IsDisabled(ss.Cfg) {
 		sqlID := fmt.Sprintf("%s.%s", ss.engine.Dialect().Quote("user"), ss.engine.Dialect().Quote("id"))
+		var filter ac.SQLFilter
 		*acFilter, err = ac.Filter(query.SignedInUser, sqlID, "users:id:", ac.ActionOrgUsersRead)
 		if err != nil {
 			return err
 		}
+
+		filter, err = ac.Filter(query.SignedInUser, sqlID, "serviceaccounts:id:", serviceaccounts.ActionRead)
+		if err != nil {
+			return err
+		}
+		acFilter.Where = fmt.Sprintf("(%s OR %s)", acFilter.Where, filter.Where)
+		acFilter.Args = append(acFilter.Args, filter.Args...)
 	}
 
 	return ss.getTeamMembers(ctx, query, acFilter)
 }
 
 // getTeamMembers return a list of members for the specified team
-func (ss *SQLStore) getTeamMembers(ctx context.Context, query *models.GetTeamMembersQuery, acUserFilter *ac.SQLFilter) error {
+func (ss *SQLStore) getTeamMembers(ctx context.Context, query *models.GetTeamMembersQuery, acFilter *ac.SQLFilter) error {
 	return ss.WithDbSession(ctx, func(dbSess *DBSession) error {
 		query.Result = make([]*models.TeamMemberDTO, 0)
 		sess := dbSess.Table("team_member")
@@ -546,11 +555,8 @@ func (ss *SQLStore) getTeamMembers(ctx context.Context, query *models.GetTeamMem
 			fmt.Sprintf("team_member.user_id=%s.%s", ss.Dialect.Quote("user"), ss.Dialect.Quote("id")),
 		)
 
-		// explicitly check for serviceaccounts
-		sess.Where(fmt.Sprintf("%s.is_service_account=?", ss.Dialect.Quote("user")), ss.Dialect.BooleanStr(false))
-
-		if acUserFilter != nil {
-			sess.Where(acUserFilter.Where, acUserFilter.Args...)
+		if acFilter != nil {
+			sess.Where(acFilter.Where, acFilter.Args...)
 		}
 
 		// Join with only most recent auth module

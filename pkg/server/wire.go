@@ -75,6 +75,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/preference/prefimpl"
+	"github.com/grafana/grafana/pkg/services/publicdashboards"
+	publicdashboardsApi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
+	publicdashboardsStore "github.com/grafana/grafana/pkg/services/publicdashboards/database"
+	publicdashboardsService "github.com/grafana/grafana/pkg/services/publicdashboards/service"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/queryhistory"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -94,6 +98,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/star/starimpl"
 	"github.com/grafana/grafana/pkg/services/store"
+  "github.com/grafana/grafana/pkg/services/store/sanitizer"
 	"github.com/grafana/grafana/pkg/services/teamguardian"
 	teamguardianDatabase "github.com/grafana/grafana/pkg/services/teamguardian/database"
 	teamguardianManager "github.com/grafana/grafana/pkg/services/teamguardian/manager"
@@ -255,6 +260,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(alerting.DashAlertExtractor), new(*alerting.DashAlertExtractorService)),
 	comments.ProvideService,
 	guardian.ProvideService,
+	sanitizer.ProvideService,
 	secretsStore.ProvideService,
 	avatar.ProvideAvatarCacheServer,
 	authproxy.ProvideAuthProxy,
@@ -271,6 +277,11 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(accesscontrol.DashboardPermissionsService), new(*ossaccesscontrol.DashboardPermissionsService)),
 	starimpl.ProvideService,
 	dashverimpl.ProvideService,
+	publicdashboardsService.ProvideService,
+	wire.Bind(new(publicdashboards.Service), new(*publicdashboardsService.PublicDashboardServiceImpl)),
+	publicdashboardsStore.ProvideStore,
+	wire.Bind(new(publicdashboards.Store), new(*publicdashboardsStore.PublicDashboardStoreImpl)),
+	publicdashboardsApi.ProvideApi,
 	userimpl.ProvideService,
 	orgimpl.ProvideService,
 )
