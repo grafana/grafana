@@ -1,4 +1,4 @@
-import { addLabelToQuery } from './addToQuery';
+import { addLabelToQuery, addParserToQuery } from './addToQuery';
 
 describe('addLabelToQuery()', () => {
   it('should add label to simple query', () => {
@@ -150,6 +150,30 @@ describe('addLabelToQuery()', () => {
       expect(addLabelToQuery('{foo="bar"} | logfmt | line_format "{{status}}"', 'bar', '=', 'baz')).toBe(
         '{foo="bar"} | logfmt | bar=`baz` | line_format "{{status}}"'
       );
+    });
+  });
+});
+
+describe('addParserToQuery', () => {
+  describe('when line filters', () => {
+    it('should add parser after line filter', () => {
+      expect(addParserToQuery('{job="grafana"} |= "error"', 'logfmt')).toBe('{job="grafana"} |= "error" | logfmt');
+    });
+
+    it('should add parser after multiple line filter', () => {
+      expect(addParserToQuery('{job="grafana"} |= "error" |= "info" |= "debug"', 'logfmt')).toBe(
+        '{job="grafana"} |= "error" |= "info" |= "debug" | logfmt'
+      );
+    });
+  });
+
+  describe('when no line filters', () => {
+    it('should add parser after log stream selector in logs query', () => {
+      expect(addParserToQuery('{job="grafana"}', 'logfmt')).toBe('{job="grafana"} | logfmt');
+    });
+
+    it('should add parser after log stream selector in metric query', () => {
+      expect(addParserToQuery('rate({job="grafana"} [5m])', 'logfmt')).toBe('rate({job="grafana"} | logfmt [5m])');
     });
   });
 });
