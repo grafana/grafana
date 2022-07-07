@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/api"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
