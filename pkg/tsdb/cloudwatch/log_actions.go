@@ -199,7 +199,6 @@ func (e *cloudWatchExecutor) handleGetLogEvents(ctx context.Context, logsClient 
 
 func (e *cloudWatchExecutor) handleDescribeLogGroups(ctx context.Context,
 	logsClient cloudwatchlogsiface.CloudWatchLogsAPI, parameters LogQueryJson) (*data.Frame, error) {
-
 	if parameters.Limit != nil && *parameters.Limit != 0 {
 		logGroupDefaultLimit = *parameters.Limit
 	}
