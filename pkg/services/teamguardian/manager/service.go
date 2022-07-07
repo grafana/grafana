@@ -44,3 +44,7 @@ func (s *Service) CanAdmin(ctx context.Context, orgId int64, teamId int64, user 
 
 	return models.ErrNotAllowedToUpdateTeam
 }
+
+func (s *Service) DeleteByUser(ctx context.Context, userID int64) error {
+	return s.store.DeleteByUser(ctx, userID)
+}

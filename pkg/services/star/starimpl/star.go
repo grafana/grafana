@@ -40,3 +40,7 @@ func (s *Service) IsStarredByUser(ctx context.Context, query *star.IsStarredByUs
 func (s *Service) GetByUser(ctx context.Context, cmd *star.GetUserStarsQuery) (*star.GetUserStarsResult, error) {
 	return s.store.List(ctx, cmd)
 }
+
+func (s *Service) DeleteByUser(ctx context.Context, userID int64) error {
+	return s.store.DeleteByUser(ctx, userID)
+}

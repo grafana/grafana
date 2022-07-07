@@ -14,6 +14,7 @@ type store interface {
 	List(context.Context, *pref.Preference) ([]*pref.Preference, error)
 	Insert(context.Context, *pref.Preference) (int64, error)
 	Update(context.Context, *pref.Preference) error
+	DeleteByUser(context.Context, int64) error
 }
 
 type sqlStore struct {
@@ -85,4 +86,12 @@ func (s *sqlStore) Insert(ctx context.Context, cmd *pref.Preference) (int64, err
 		return err
 	})
 	return ID, err
+}
+
+func (s *sqlStore) DeleteByUser(ctx context.Context, userID int64) error {
+	return s.db.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		var rawSQL = "DELETE FROM preferences WHERE user_id = ?"
+		_, err := dbSession.Exec(rawSQL, userID)
+		return err
+	})
 }

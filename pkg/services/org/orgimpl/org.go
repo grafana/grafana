@@ -76,3 +76,7 @@ func (s *Service) GetIDForNewUser(ctx context.Context, cmd org.GetOrgIDForNewUse
 func (s *Service) InsertUser(ctx context.Context, orguser *org.OrgUser) (int64, error) {
 	return s.store.InsertUser(ctx, orguser)
 }
+
+func (s *Service) DeleteUser(ctx context.Context, userID int64) error {
+	return s.store.DeleteUser(ctx, userID)
+}
