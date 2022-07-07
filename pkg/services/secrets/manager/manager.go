@@ -34,9 +34,9 @@ type SecretsService struct {
 	mtx          sync.Mutex
 	dataKeyCache *dataKeyCache
 
-	pOnce     sync.Once
-	provider  kmsproviders.Service
-	providers map[secrets.ProviderID]secrets.Provider
+	pOnce               sync.Once
+	providers           map[secrets.ProviderID]secrets.Provider
+	kmsProvidersService kmsproviders.Service
 
 	currentProviderID secrets.ProviderID
 
@@ -45,7 +45,7 @@ type SecretsService struct {
 
 func ProvideSecretsService(
 	store secrets.Store,
-	provider kmsproviders.Service,
+	kmsProvidersService kmsproviders.Service,
 	enc encryption.Internal,
 	settings setting.Provider,
 	features featuremgmt.FeatureToggles,
@@ -58,15 +58,15 @@ func ProvideSecretsService(
 	))
 
 	s := &SecretsService{
-		store:             store,
-		enc:               enc,
-		settings:          settings,
-		usageStats:        usageStats,
-		provider:          provider,
-		dataKeyCache:      newDataKeyCache(ttl),
-		currentProviderID: currentProviderID,
-		features:          features,
-		log:               log.New("secrets"),
+		store:               store,
+		enc:                 enc,
+		settings:            settings,
+		usageStats:          usageStats,
+		kmsProvidersService: kmsProvidersService,
+		dataKeyCache:        newDataKeyCache(ttl),
+		currentProviderID:   currentProviderID,
+		features:            features,
+		log:                 log.New("secrets"),
 	}
 
 	enabled := !features.IsEnabled(featuremgmt.FlagDisableEnvelopeEncryption)
@@ -95,7 +95,7 @@ func ProvideSecretsService(
 
 func (s *SecretsService) InitProviders() (err error) {
 	s.pOnce.Do(func() {
-		s.providers, err = s.provider.Provide()
+		s.providers, err = s.kmsProvidersService.Provide()
 	})
 
 	return
