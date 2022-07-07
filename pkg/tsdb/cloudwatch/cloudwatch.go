@@ -72,6 +72,7 @@ const (
 
 	alertMaxAttempts = 8
 	alertPollPeriod  = 1000 * time.Millisecond
+	logsQueryMode    = "Logs"
 )
 
 var plog = log.New("tsdb.cloudwatch")
@@ -349,7 +350,7 @@ func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDa
 		return nil, err
 	}
 	_, fromAlert := req.Headers["FromAlert"]
-	isLogAlertQuery := fromAlert && model.QueryMode == "Logs"
+	isLogAlertQuery := fromAlert && model.QueryMode == logsQueryMode
 
 	if isLogAlertQuery {
 		return e.executeLogAlertQuery(ctx, req)
