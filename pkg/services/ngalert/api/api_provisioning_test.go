@@ -44,6 +44,15 @@ func TestProvisioningApi(t *testing.T) {
 			require.Equal(t, 202, response.Status())
 		})
 
+		t.Run("successful DELETE returns 202", func(t *testing.T) {
+			sut := createProvisioningSrvSut(t)
+			rc := createTestRequestCtx()
+
+			response := sut.RouteResetPolicyTree(&rc)
+
+			require.Equal(t, 202, response.Status())
+		})
+
 		t.Run("when new policy tree is invalid", func(t *testing.T) {
 			t.Run("PUT returns 400", func(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
@@ -101,6 +110,18 @@ func TestProvisioningApi(t *testing.T) {
 				tree := definitions.Route{}
 
 				response := sut.RoutePutPolicyTree(&rc, tree)
+
+				require.Equal(t, 500, response.Status())
+				require.NotEmpty(t, response.Body())
+				require.Contains(t, string(response.Body()), "something went wrong")
+			})
+
+			t.Run("DELETE returns 500", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				sut.policies = &fakeFailingNotificationPolicyService{}
+				rc := createTestRequestCtx()
+
+				response := sut.RouteResetPolicyTree(&rc)
 
 				require.Equal(t, 500, response.Status())
 				require.NotEmpty(t, response.Body())
