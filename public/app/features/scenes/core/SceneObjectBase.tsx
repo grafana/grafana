@@ -204,7 +204,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
     }
 
     // Clone layout children
-    const layout = (this.state as any) as SceneLayoutState;
+    const layout = this.state as any as SceneLayoutState;
     if (layout.children) {
       const newChildren: SceneObjectList = [];
       for (const child of layout.children) {

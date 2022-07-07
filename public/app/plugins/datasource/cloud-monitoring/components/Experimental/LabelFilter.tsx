@@ -35,10 +35,10 @@ export const LabelFilter: FunctionComponent<Props> = ({
   variableOptionGroup,
 }) => {
   const filters: Filter[] = useMemo(() => stringArrayToFilters(filterArray), [filterArray]);
-  const options = useMemo(() => [variableOptionGroup, ...labelsToGroupedOptions(Object.keys(labels))], [
-    labels,
-    variableOptionGroup,
-  ]);
+  const options = useMemo(
+    () => [variableOptionGroup, ...labelsToGroupedOptions(Object.keys(labels))],
+    [labels, variableOptionGroup]
+  );
 
   const getOptions = ({ key = '', value = '' }: Partial<Filter>) => {
     // Add the current key and value as options if they are manually entered

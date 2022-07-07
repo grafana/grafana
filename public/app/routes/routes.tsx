@@ -161,9 +161,10 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/explore',
       pageClass: 'page-explore',
       roles: () =>
-        contextSrv.evaluatePermission(() => (config.viewersCanEdit ? [] : ['Editor', 'Admin']), [
-          AccessControlAction.DataSourcesExplore,
-        ]),
+        contextSrv.evaluatePermission(
+          () => (config.viewersCanEdit ? [] : ['Editor', 'Admin']),
+          [AccessControlAction.DataSourcesExplore]
+        ),
       component: SafeDynamicImport(() =>
         config.exploreEnabled
           ? import(/* webpackChunkName: "explore" */ 'app/features/explore/Wrapper')
@@ -231,27 +232,28 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/org/teams',
       roles: () =>
-        contextSrv.evaluatePermission(() => (config.editorsCanAdmin ? ['Editor', 'Admin'] : ['Admin']), [
-          AccessControlAction.ActionTeamsRead,
-          AccessControlAction.ActionTeamsCreate,
-        ]),
+        contextSrv.evaluatePermission(
+          () => (config.editorsCanAdmin ? ['Editor', 'Admin'] : ['Admin']),
+          [AccessControlAction.ActionTeamsRead, AccessControlAction.ActionTeamsCreate]
+        ),
       component: SafeDynamicImport(() => import(/* webpackChunkName: "TeamList" */ 'app/features/teams/TeamList')),
     },
     {
       path: '/org/teams/new',
       roles: () =>
-        contextSrv.evaluatePermission(() => (config.editorsCanAdmin ? ['Editor', 'Admin'] : ['Admin']), [
-          AccessControlAction.ActionTeamsCreate,
-        ]),
+        contextSrv.evaluatePermission(
+          () => (config.editorsCanAdmin ? ['Editor', 'Admin'] : ['Admin']),
+          [AccessControlAction.ActionTeamsCreate]
+        ),
       component: SafeDynamicImport(() => import(/* webpackChunkName: "CreateTeam" */ 'app/features/teams/CreateTeam')),
     },
     {
       path: '/org/teams/edit/:id/:page?',
       roles: () =>
-        contextSrv.evaluatePermission(() => (config.editorsCanAdmin ? ['Editor', 'Admin'] : ['Admin']), [
-          AccessControlAction.ActionTeamsRead,
-          AccessControlAction.ActionTeamsCreate,
-        ]),
+        contextSrv.evaluatePermission(
+          () => (config.editorsCanAdmin ? ['Editor', 'Admin'] : ['Admin']),
+          [AccessControlAction.ActionTeamsRead, AccessControlAction.ActionTeamsCreate]
+        ),
       component: SafeDynamicImport(() => import(/* webpackChunkName: "TeamPages" */ 'app/features/teams/TeamPages')),
     },
     // ADMIN
