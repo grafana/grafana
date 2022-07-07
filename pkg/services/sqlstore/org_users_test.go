@@ -200,7 +200,7 @@ func TestSQLStore_AddOrgUser(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	require.Equal(t, saFound.OrgID, int64(orgID))
+	require.Equal(t, saFound.OrgID, orgID)
 }
 
 func TestSQLStore_RemoveOrgUser(t *testing.T) {

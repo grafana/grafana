@@ -103,6 +103,7 @@ type AddOrgUserCommand struct {
 	OrgId  int64 `json:"-"`
 	UserId int64 `json:"-"`
 
+	// internal use: avoid adding service accounts to orgs via user routes
 	AllowAddingServiceAccount bool `json:"-"`
 }
 
