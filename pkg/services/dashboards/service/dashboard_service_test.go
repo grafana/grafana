@@ -124,7 +124,6 @@ func TestIntegrationDashboardService(t *testing.T) {
 					} else {
 						setting.AlertingEnabled = &origAlertingEnabledVal
 					}
-
 				})
 
 				fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything).Return(true, nil).Once()
