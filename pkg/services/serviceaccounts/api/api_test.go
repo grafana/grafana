@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -126,7 +127,7 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			serviceAccountRequestScenario(t, http.MethodPost, serviceAccountPath, testUser, func(httpmethod string, endpoint string, user *tests.TestUser) {
-				server, _ := setupTestServer(t, &svcmock, routing.NewRouteRegister(), tc.acmock, store, saStore)
+				server, api := setupTestServer(t, &svcmock, routing.NewRouteRegister(), tc.acmock, store, saStore)
 				marshalled, err := json.Marshal(tc.body)
 				require.NoError(t, err)
 
@@ -142,9 +143,25 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 				require.Equal(t, tc.expectedCode, actualCode, actualBody)
 
 				if actualCode == http.StatusCreated {
-					assert.NotEmpty(t, actualBody["id"])
-					assert.Equal(t, tc.body["name"], actualBody["name"].(string))
-					assert.Equal(t, tc.wantID, actualBody["login"].(string))
+					sa := serviceaccounts.ServiceAccountDTO{}
+					err = json.Unmarshal(actual.Body.Bytes(), &sa)
+					require.NoError(t, err)
+					assert.NotZero(t, sa.Id)
+					assert.Equal(t, tc.body["name"], sa.Name)
+					assert.Equal(t, tc.wantID, sa.Login)
+					tempUser := &models.SignedInUser{
+						OrgId: 1,
+						Permissions: map[int64]map[string][]string{
+							1: {
+								serviceaccounts.ActionRead: []string{serviceaccounts.ScopeAll},
+							},
+						},
+					}
+					perms, err := api.permissionService.GetPermissions(context.Background(), tempUser, strconv.FormatInt(sa.Id, 10))
+					assert.NoError(t, err)
+					assert.Equal(t, 1, len(perms), "should have added managed permissions for SA creator")
+					assert.Equal(t, int64(1), perms[0].ID)
+					assert.Equal(t, int64(1), perms[0].UserId)
 				} else if actualCode == http.StatusBadRequest {
 					assert.Contains(t, tc.wantError, actualBody["error"].(string))
 				}
@@ -239,6 +256,7 @@ func setupTestServer(t *testing.T, svc *tests.ServiceAccountMock,
 	m := web.New()
 	signedUser := &models.SignedInUser{
 		OrgId:   1,
+		UserId:  1,
 		OrgRole: models.ROLE_VIEWER,
 	}
 
