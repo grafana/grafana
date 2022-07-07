@@ -22,7 +22,7 @@ export const SliderValueEditor: React.FC<FieldConfigEditorProps<number, SliderFi
   const min = settings?.min || 0;
   const max = settings?.max || 100;
   const step = settings?.step;
-  const marks = settings?.marks;
+  const marks = settings?.marks || { [min]: min, [max]: max };
   const included = settings?.included;
   const ariaLabelForHandle = settings?.ariaLabelForHandle;
 
@@ -134,8 +134,10 @@ const getStylesSlider = (theme: GrafanaTheme2, width: number) => {
   return {
     numberInputWrapper: css`
       margin-left: 10px;
+      max-height: 32px;
       max-width: ${width}px;
       min-width: ${width}px;
+      overflow: visible;
       width: 100%;
     `,
   };
