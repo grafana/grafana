@@ -10404,9 +10404,6 @@ exports[`no undocumented stories`] = {
     "packages/grafana-ui/src/components/QueryField/QueryField.story.tsx:5381": [
       [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
-    "packages/grafana-ui/src/components/RefreshPicker/RefreshPicker.story.tsx:5381": [
-      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
-    ],
     "packages/grafana-ui/src/components/SecretTextArea/SecretTextArea.story.tsx:5381": [
       [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
