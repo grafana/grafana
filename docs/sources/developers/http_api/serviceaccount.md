@@ -105,7 +105,8 @@ Authorization: Basic YWRtaW46YWRtaW4=
 
 {
   "name": "grafana",
-  "role": "Admin",
+  "role": "Viewer",
+  "isDisabled" : false
 }
 ```
 
@@ -131,7 +132,7 @@ Content-Type: application/json
 }
 ```
 
-## Get single serviceaccount by Id
+## Get a service account by ID
 
 `GET /api/serviceaccounts/:id`
 

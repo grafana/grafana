@@ -32,17 +32,25 @@ func NewServiceAccountsStore(store *sqlstore.SQLStore, kvStore kvstore.KVStore) 
 }
 
 // CreateServiceAccount creates service account
-func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, orgId int64, name string) (*serviceaccounts.ServiceAccountDTO, error) {
-	generatedLogin := "sa-" + strings.ToLower(name)
+func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, orgId int64, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
+	generatedLogin := "sa-" + strings.ToLower(saForm.Name)
 	generatedLogin = strings.ReplaceAll(generatedLogin, " ", "-")
-
+	isDisabled := false
+	role := models.ROLE_VIEWER
+	if saForm.IsDisabled != nil {
+		isDisabled = *saForm.IsDisabled
+	}
+	if saForm.Role != nil {
+		role = *saForm.Role
+	}
 	var newSA *user.User
 	createErr := s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) (err error) {
 		var errUser error
 		newSA, errUser = s.sqlStore.CreateUser(ctx, user.CreateUserCommand{
 			Login:            generatedLogin,
 			OrgID:            orgId,
-			Name:             name,
+			Name:             saForm.Name,
+			IsDisabled:       isDisabled,
 			IsServiceAccount: true,
 			SkipOrgSetup:     true,
 		})
@@ -51,7 +59,7 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, org
 		}
 
 		errAddOrgUser := s.sqlStore.AddOrgUser(ctx, &models.AddOrgUserCommand{
-			Role:                      models.ROLE_VIEWER,
+			Role:                      role,
 			OrgId:                     orgId,
 			UserId:                    newSA.ID,
 			AllowAddingServiceAccount: true,
@@ -72,11 +80,13 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, org
 	}
 
 	return &serviceaccounts.ServiceAccountDTO{
-		Id:     newSA.ID,
-		Name:   newSA.Name,
-		Login:  newSA.Login,
-		OrgId:  newSA.OrgID,
-		Tokens: 0,
+		Id:         newSA.ID,
+		Name:       newSA.Name,
+		Login:      newSA.Login,
+		OrgId:      newSA.OrgID,
+		Tokens:     0,
+		Role:       string(role),
+		IsDisabled: isDisabled,
 	}, nil
 }
 
