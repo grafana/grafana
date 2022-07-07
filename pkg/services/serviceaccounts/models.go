@@ -24,7 +24,9 @@ type ServiceAccount struct {
 }
 
 type CreateServiceAccountForm struct {
-	Name string `json:"name" binding:"Required"`
+	Name       string           `json:"name" binding:"Required"`
+	Role       *models.RoleType `json:"role"`
+	IsDisabled *bool            `json:"isDisabled"`
 }
 
 type UpdateServiceAccountForm struct {

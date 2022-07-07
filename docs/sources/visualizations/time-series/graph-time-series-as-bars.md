@@ -18,9 +18,7 @@ This section explains how to use Time series field options to visualize time ser
 
 For more information about the time series visualization, refer to [Time series]({{< relref "_index.md" >}}).
 
-## Create the panel
-
-1. [Add a panel]({{< relref "../../panels/working-with-panels/add-panel/" >}}).
+1. [Create a dashboard and add a panel]({{< relref "../../dashboards/add-organize-panels/#create-a-dashboard-and-add-a-panel" >}}).
 1. Select the **Time series** visualization.
 1. In the Panel editor side pane, click **Graph styles** to expand it.
 1. In Style, click **Bars**.

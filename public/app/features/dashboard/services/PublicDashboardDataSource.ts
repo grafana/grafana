@@ -1,19 +1,41 @@
 import { catchError, Observable, of, switchMap } from 'rxjs';
 
-import { DataQuery, DataQueryRequest, DataQueryResponse, DataSourceApi, PluginMeta } from '@grafana/data';
+import {
+  DataQuery,
+  DataQueryRequest,
+  DataQueryResponse,
+  DataSourceApi,
+  DataSourceRef,
+  PluginMeta,
+} from '@grafana/data';
 import { BackendDataSourceResponse, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
 
+export const PUBLIC_DATASOURCE = '-- Public --';
+
 export class PublicDashboardDataSource extends DataSourceApi<any> {
-  constructor() {
+  constructor(datasource: DataSourceRef | string | DataSourceApi | null) {
     super({
       name: 'public-ds',
-      id: 1,
+      id: 0,
       type: 'public-ds',
       meta: {} as PluginMeta,
-      uid: '1',
+      uid: PublicDashboardDataSource.resolveUid(datasource),
       jsonData: {},
       access: 'proxy',
     });
+
+    this.interval = '1min';
+  }
+
+  /**
+   * Get the datasource uid based on the many types a datasource can be.
+   */
+  private static resolveUid(datasource: DataSourceRef | string | DataSourceApi | null): string {
+    if (typeof datasource === 'string') {
+      return datasource;
+    }
+
+    return datasource?.uid ?? PUBLIC_DATASOURCE;
   }
 
   /**

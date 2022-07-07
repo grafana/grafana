@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import {
   AnnotationEvent,
+  AnnotationQueryRequest,
   ArrayVector,
   DataFrame,
   DataQueryError,
@@ -21,7 +22,6 @@ import {
   TIME_SERIES_TIME_FIELD_NAME,
   TIME_SERIES_VALUE_FIELD_NAME,
   TimeSeries,
-  AnnotationQueryRequest,
 } from '@grafana/data';
 import {
   BackendDataSourceResponse,
@@ -368,7 +368,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       const target: InfluxQuery = {
         refId: 'metricFindQuery',
         datasource: this.getRef(),
-        query: this.templateSrv.replace(options.annotation.query ?? ''),
+        query: this.templateSrv.replace(options.annotation.query ?? '', undefined, 'regex'),
         rawQuery: true,
       };
 
@@ -426,7 +426,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         return {
           ...query,
           datasource: this.getRef(),
-          query: this.templateSrv.replace(query.query ?? '', scopedVars), // The raw query text
+          query: this.templateSrv.replace(query.query ?? '', scopedVars, 'regex'), // The raw query text
         };
       }
 
@@ -475,7 +475,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
     return {
       ...expandedQuery,
-      query: this.templateSrv.replace(query.query ?? '', rest), // The raw query text
+      query: this.templateSrv.replace(query.query ?? '', rest, 'regex'), // The raw query text
       alias: this.templateSrv.replace(query.alias ?? '', scopedVars),
       limit: this.templateSrv.replace(query.limit?.toString() ?? '', scopedVars, 'regex'),
       measurement: this.templateSrv.replace(query.measurement ?? '', scopedVars, 'regex'),

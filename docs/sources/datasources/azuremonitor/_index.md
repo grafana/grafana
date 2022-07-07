@@ -103,7 +103,7 @@ Further documentation on multi-dimensional metrics is available [here](https://d
 
 #### Supported Azure Monitor metrics
 
-Not all metrics returned by the Azure Monitor Metrics API have values. To make it easier for you when building a query, the Grafana data source has a list of supported metrics and ignores metrics which will never have values. This list is updated regularly as new services and metrics are added to the Azure cloud. For more information about the list of metrics, refer to [current supported namespaces](https://github.com/grafana/grafana/blob/main/public/app/plugins/datasource/grafana-azure-monitor-datasource/azure_monitor/supported_namespaces.ts).
+Not all metrics returned by the Azure Monitor Metrics API have values. To make it easier for you when building a query, the Grafana data source has a list of supported metrics and ignores metrics which will never have values. This list is updated regularly as new services and metrics are added to the Azure cloud. For more information about the list of metrics, refer to [current supported namespaces](https://github.com/grafana/grafana/blob/main/public/app/plugins/datasource/grafana-azure-monitor-datasource/azureMetadata/metricNamespaces.ts).
 
 ### Querying Azure Monitor Logs
 

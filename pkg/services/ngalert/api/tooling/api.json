@@ -308,7 +308,7 @@
    ],
    "type": "object"
   },
-  "AlertRuleGroup": {
+  "AlertRuleGroupMetadata": {
    "properties": {
     "interval": {
      "format": "int64",
@@ -469,30 +469,6 @@
     "$ref": "#/definitions/EmbeddedContactPoint"
    },
    "type": "array"
-  },
-  "DashboardAclUpdateItem": {
-   "properties": {
-    "permission": {
-     "$ref": "#/definitions/PermissionType"
-    },
-    "role": {
-     "enum": [
-      "Viewer",
-      "Editor",
-      "Admin"
-     ],
-     "type": "string"
-    },
-    "teamId": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "userId": {
-     "format": "int64",
-     "type": "integer"
-    }
-   },
-   "type": "object"
   },
   "DateTime": {
    "description": "DateTime is a time but it serializes to ISO8601 format with millis\nIt knows how to read 3 different variations of a RFC3339 date time.\nMost APIs we encounter want either millisecond or second precision times.\nThis just tries to make it worry-free.",
@@ -1336,48 +1312,6 @@
    },
    "type": "array"
   },
-  "MetricRequest": {
-   "properties": {
-    "debug": {
-     "type": "boolean"
-    },
-    "from": {
-     "description": "From Start time in epoch timestamps in milliseconds or relative using Grafana time units.",
-     "example": "now-1h",
-     "type": "string"
-    },
-    "queries": {
-     "description": "queries.refId – Specifies an identifier of the query. Is optional and default to “A”.\nqueries.datasourceId – Specifies the data source to be queried. Each query in the request must have an unique datasourceId.\nqueries.maxDataPoints - Species maximum amount of data points that dashboard panel can render. Is optional and default to 100.\nqueries.intervalMs - Specifies the time interval in milliseconds of time series. Is optional and defaults to 1000.",
-     "example": [
-      {
-       "datasource": {
-        "uid": "PD8C576611E62080A"
-       },
-       "format": "table",
-       "intervalMs": 86400000,
-       "maxDataPoints": 1092,
-       "rawSql": "SELECT 1 as valueOne, 2 as valueTwo",
-       "refId": "A"
-      }
-     ],
-     "items": {
-      "$ref": "#/definitions/Json"
-     },
-     "type": "array"
-    },
-    "to": {
-     "description": "To End time in epoch timestamps in milliseconds or relative using Grafana time units.",
-     "example": "now",
-     "type": "string"
-    }
-   },
-   "required": [
-    "from",
-    "to",
-    "queries"
-   ],
-   "type": "object"
-  },
   "MonthRange": {
    "properties": {
     "Begin": {
@@ -1422,34 +1356,6 @@
      "$ref": "#/definitions/GettableRuleGroupConfig"
     },
     "type": "array"
-   },
-   "type": "object"
-  },
-  "NavLink": {
-   "properties": {
-    "id": {
-     "type": "string"
-    },
-    "target": {
-     "type": "string"
-    },
-    "text": {
-     "type": "string"
-    },
-    "url": {
-     "type": "string"
-    }
-   },
-   "type": "object"
-  },
-  "NavbarPreference": {
-   "properties": {
-    "savedItems": {
-     "items": {
-      "$ref": "#/definitions/NavLink"
-     },
-     "type": "array"
-    }
    },
    "type": "object"
   },
@@ -1668,52 +1574,8 @@
    },
    "type": "object"
   },
-  "PatchPrefsCmd": {
-   "properties": {
-    "homeDashboardId": {
-     "default": 0,
-     "description": "The numerical :id of a favorited dashboard",
-     "format": "int64",
-     "type": "integer"
-    },
-    "homeDashboardUID": {
-     "type": "string"
-    },
-    "locale": {
-     "type": "string"
-    },
-    "navbar": {
-     "$ref": "#/definitions/NavbarPreference"
-    },
-    "queryHistory": {
-     "$ref": "#/definitions/QueryHistoryPreference"
-    },
-    "theme": {
-     "enum": [
-      "light",
-      "dark"
-     ],
-     "type": "string"
-    },
-    "timezone": {
-     "enum": [
-      "utc",
-      "browser"
-     ],
-     "type": "string"
-    },
-    "weekStart": {
-     "type": "string"
-    }
-   },
-   "type": "object"
-  },
   "PermissionDenied": {
    "type": "object"
-  },
-  "PermissionType": {
-   "format": "int64",
-   "type": "integer"
   },
   "Point": {
    "properties": {
@@ -2032,14 +1894,6 @@
     },
     "user_key": {
      "$ref": "#/definitions/Secret"
-    }
-   },
-   "type": "object"
-  },
-  "QueryHistoryPreference": {
-   "properties": {
-    "homeTab": {
-     "type": "string"
     }
    },
    "type": "object"
@@ -2738,6 +2592,7 @@
    "type": "object"
   },
   "URL": {
+   "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
    "properties": {
     "ForceQuery": {
      "type": "boolean"
@@ -2770,58 +2625,7 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-   "title": "URL is a custom URL type that allows validation at configuration load time.",
-   "type": "object"
-  },
-  "UpdateDashboardAclCommand": {
-   "properties": {
-    "items": {
-     "items": {
-      "$ref": "#/definitions/DashboardAclUpdateItem"
-     },
-     "type": "array"
-    }
-   },
-   "type": "object"
-  },
-  "UpdatePrefsCmd": {
-   "properties": {
-    "homeDashboardId": {
-     "default": 0,
-     "description": "The numerical :id of a favorited dashboard",
-     "format": "int64",
-     "type": "integer"
-    },
-    "homeDashboardUID": {
-     "type": "string"
-    },
-    "locale": {
-     "type": "string"
-    },
-    "navbar": {
-     "$ref": "#/definitions/NavbarPreference"
-    },
-    "queryHistory": {
-     "$ref": "#/definitions/QueryHistoryPreference"
-    },
-    "theme": {
-     "enum": [
-      "light",
-      "dark"
-     ],
-     "type": "string"
-    },
-    "timezone": {
-     "enum": [
-      "utc",
-      "browser"
-     ],
-     "type": "string"
-    },
-    "weekStart": {
-     "type": "string"
-    }
-   },
+   "title": "A URL represents a parsed URL (technically, a URI reference).",
    "type": "object"
   },
   "Userinfo": {
@@ -2991,7 +2795,6 @@
    "type": "object"
   },
   "alertGroup": {
-   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -3015,7 +2818,6 @@
    "type": "object"
   },
   "alertGroups": {
-   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
@@ -3123,6 +2925,7 @@
    "$ref": "#/definitions/Duration"
   },
   "gettableAlert": {
+   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -3184,7 +2987,6 @@
    "type": "array"
   },
   "gettableSilence": {
-   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3344,7 +3146,6 @@
    "type": "array"
   },
   "postableSilence": {
-   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3382,6 +3183,7 @@
    "type": "object"
   },
   "receiver": {
+   "description": "Receiver receiver",
    "properties": {
     "name": {
      "description": "name",
@@ -3730,6 +3532,35 @@
    }
   },
   "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
+   "get": {
+    "operationId": "RouteGetAlertRuleGroup",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "FolderUID",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "in": "path",
+      "name": "Group",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "responses": {
+     "200": {
+      "$ref": "#/responses/AlertRuleGroup"
+     },
+     "404": {
+      "description": " Not found."
+     }
+    },
+    "summary": "Get a rule group.",
+    "tags": [
+     "provisioning"
+    ]
+   },
    "put": {
     "consumes": [
      "application/json"
@@ -3752,15 +3583,15 @@
       "in": "body",
       "name": "Body",
       "schema": {
-       "$ref": "#/definitions/AlertRuleGroup"
+       "$ref": "#/definitions/AlertRuleGroupMetadata"
       }
      }
     ],
     "responses": {
      "200": {
-      "description": "AlertRuleGroup",
+      "description": "AlertRuleGroupMetadata",
       "schema": {
-       "$ref": "#/definitions/AlertRuleGroup"
+       "$ref": "#/definitions/AlertRuleGroupMetadata"
       }
      },
      "400": {
