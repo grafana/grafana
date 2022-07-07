@@ -16,15 +16,7 @@ export const getAzureMonitorEvent = (target: AzureMonitorQuery) => {
     case AzureQueryType.LogAnalytics:
       return {
         ...commonProps,
-        complexity: target.azureLogAnalytics?.query?.match(/\|/g)?.length,
         format: target.azureLogAnalytics?.resultFormat,
-      };
-      break;
-
-    case AzureQueryType.AzureResourceGraph:
-      return {
-        ...commonProps,
-        complexity: target.azureResourceGraph?.query?.match(/\|/g)?.length,
       };
       break;
   }
