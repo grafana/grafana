@@ -35,8 +35,8 @@ export function NavToolbar({
       <Breadcrumbs sectionNav={sectionNav} pageNav={pageNav} />
       <div className={styles.actions}>
         {actions}
-        <NavToolbarSeparator />
-        <ToolbarButton onClick={onToggleSearchBar} narrow>
+        {actions && <NavToolbarSeparator />}
+        <ToolbarButton onClick={onToggleSearchBar} narrow tooltip="Toggle top search bar">
           <Icon name={searchBarHidden ? 'angle-down' : 'angle-up'} size="xl" />
         </ToolbarButton>
       </div>
@@ -62,6 +62,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       flexWrap: 'nowrap',
+      justifyContent: 'flex-end',
       paddingLeft: theme.spacing(1),
       flexGrow: 1,
       gap: theme.spacing(0.5),
