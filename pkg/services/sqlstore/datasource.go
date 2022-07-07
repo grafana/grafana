@@ -304,9 +304,9 @@ func (ss *SQLStore) UpdateCorrelations(ctx context.Context, cmd *datasources.Upd
 			// the reason we allow cmd.version > db.version is make it possible for people to force
 			// updates to datasources using the datasource.yaml file without knowing exactly what version
 			// a datasource have in the db.
-			updateSession = sess.Where("uid=? and org_id=? and version < ?", cmd.SourceUID, cmd.OrgId, ds.Version)
+			updateSession = updateSession.Where("uid=? and org_id=? and version < ?", cmd.SourceUID, cmd.OrgId, ds.Version)
 		} else {
-			updateSession = sess.Where("uid=? and org_id=?", cmd.SourceUID, cmd.OrgId)
+			updateSession = updateSession.Where("uid=? and org_id=?", cmd.SourceUID, cmd.OrgId)
 		}
 		affected, err := updateSession.Update(ds)
 
