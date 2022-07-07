@@ -11,7 +11,7 @@ import (
 
 type dsLookup func(ref *extract.DataSourceRef) *extract.DataSourceRef
 
-func exportDataSources(helper *commitHelper, job *gitExportJob) (dsLookup, error) {
+func exportDataSources(helper *commitHelper, job *gitExportJob, save bool) (dsLookup, error) {
 	cmd := &datasources.GetDataSourcesQuery{
 		OrgId: job.orgID,
 	}
@@ -33,8 +33,15 @@ func exportDataSources(helper *commitHelper, job *gitExportJob) (dsLookup, error
 		}
 		byUID[ds.Uid] = ref
 		byName[ds.Name] = ref
+		if !save {
+			continue
+		}
+
 		ds.OrgId = 0
 		ds.Version = 0
+		ds.SecureJsonData = map[string][]byte{
+			"TODO": []byte("secret store lookup"),
+		}
 
 		err := helper.add(commitOptions{
 			body: []commitBody{
