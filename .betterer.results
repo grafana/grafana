@@ -11323,8 +11323,8 @@ exports[`no undocumented stories`] = {
       [197, 15, 18, "Do not use any type assertions.", "3407005619"],
       [200, 15, 18, "Do not use any type assertions.", "516790078"]
     ],
-    "public/app/plugins/panel/canvas/CanvasContextMenu.tsx:2767170725": [
-      [31, 33, 47, "Do not use any type assertions.", "3512730894"]
+    "public/app/plugins/panel/canvas/CanvasContextMenu.tsx:374198363": [
+      [35, 33, 47, "Do not use any type assertions.", "3512730894"]
     ],
     "public/app/plugins/panel/canvas/CanvasPanel.tsx:1106212612": [
       [39, 31, 18, "Do not use any type assertions.", "3890263992"],
