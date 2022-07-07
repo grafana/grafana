@@ -104,7 +104,7 @@ func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, rm p
 			},
 			{
 				name:             SvgSanitization,
-				semverConstraint: ">= 3.4.0", // TODO: change after new IR release
+				semverConstraint: ">= 3.5.0",
 			},
 		},
 		Cfg:                   cfg,
