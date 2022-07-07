@@ -362,7 +362,7 @@ export class LokiDatasource
       maxLines: 10,
     };
 
-    // For samples, we use defaultTimeRange (now-1h/now) so queries are small and fast
+    // For samples, we use defaultTimeRange (now-6h/now) and limit od 10 lines so queries are small and fast
     const timeRange = getDefaultTimeRange();
     const request = makeRequest(lokiLogsQuery, timeRange, CoreApp.Explore, 'log-samples');
     return await lastValueFrom(this.query(request).pipe(switchMap((res) => of(res.data))));

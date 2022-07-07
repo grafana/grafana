@@ -12,7 +12,7 @@ export function getQueryHints(query: string, series: DataFrame[]): QueryHint[] {
     if (hasJSON && !queryWithParser) {
       hints.push({
         type: 'ADD_JSON_PARSER',
-        label: 'Selected log stream selector has JSON formatted logs. ',
+        label: 'Selected log stream selector has JSON formatted logs.',
         fix: {
           label: 'Consider using JSON parser.',
           action: {
@@ -26,7 +26,7 @@ export function getQueryHints(query: string, series: DataFrame[]): QueryHint[] {
     if (hasLogfmt && !queryWithParser) {
       hints.push({
         type: 'ADD_LOGFMT_PARSER',
-        label: 'Selected log stream selector has logfmt formatted logs. ',
+        label: 'Selected log stream selector has logfmt formatted logs.',
         fix: {
           label: 'Consider using logfmt parser.',
           action: {

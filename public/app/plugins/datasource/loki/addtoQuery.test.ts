@@ -155,19 +155,19 @@ describe('addLabelToQuery()', () => {
 });
 
 describe('addParserToQuery', () => {
-  describe('when line filters', () => {
+  describe('when query had line filter', () => {
     it('should add parser after line filter', () => {
       expect(addParserToQuery('{job="grafana"} |= "error"', 'logfmt')).toBe('{job="grafana"} |= "error" | logfmt');
     });
 
-    it('should add parser after multiple line filter', () => {
+    it('should add parser after multiple line filters', () => {
       expect(addParserToQuery('{job="grafana"} |= "error" |= "info" |= "debug"', 'logfmt')).toBe(
         '{job="grafana"} |= "error" |= "info" |= "debug" | logfmt'
       );
     });
   });
 
-  describe('when no line filters', () => {
+  describe('when query has no line filters', () => {
     it('should add parser after log stream selector in logs query', () => {
       expect(addParserToQuery('{job="grafana"}', 'logfmt')).toBe('{job="grafana"} | logfmt');
     });
