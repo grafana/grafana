@@ -1,17 +1,16 @@
 // Libraries
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
 // Types
-import { DataSourceSettings, LayoutMode } from '@grafana/data';
+import { DataSourceSettings } from '@grafana/data';
 import { Card, Tag, useStyles } from '@grafana/ui';
 
-export interface Props {
+export type Props = {
   dataSources: DataSourceSettings[];
-  layoutMode: LayoutMode;
-}
+};
 
-export const DataSourcesList: FC<Props> = ({ dataSources, layoutMode }) => {
+export const DataSourcesList = ({ dataSources }: Props) => {
   const styles = useStyles(getStyles);
 
   return (
