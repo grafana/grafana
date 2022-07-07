@@ -142,7 +142,7 @@ func TestAlertingTicker(t *testing.T) {
 	mockedClock := clock.NewMock()
 	baseInterval := time.Second
 
-	notifier := &schedule.FakeAlertsSender{}
+	notifier := &schedule.AlertsSenderMock{}
 	notifier.EXPECT().Send(mock.Anything, mock.Anything).Return(nil)
 
 	schedCfg := schedule.SchedulerCfg{
