@@ -32,29 +32,50 @@ func NewServiceAccountsStore(store *sqlstore.SQLStore, kvStore kvstore.KVStore) 
 }
 
 // CreateServiceAccount creates service account
-func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, orgId int64, name string) (saDTO *serviceaccounts.ServiceAccountDTO, err error) {
+func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, orgId int64, name string) (*serviceaccounts.ServiceAccountDTO, error) {
 	generatedLogin := "sa-" + strings.ToLower(name)
 	generatedLogin = strings.ReplaceAll(generatedLogin, " ", "-")
-	cmd := user.CreateUserCommand{
-		Login:            generatedLogin,
-		OrgID:            orgId,
-		Name:             name,
-		IsServiceAccount: true,
-	}
 
-	newuser, err := s.sqlStore.CreateUser(ctx, cmd)
-	if err != nil {
-		if errors.Is(err, models.ErrUserAlreadyExists) {
+	var newSA *user.User
+	createErr := s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) (err error) {
+		var errUser error
+		newSA, errUser = s.sqlStore.CreateUser(ctx, user.CreateUserCommand{
+			Login:            generatedLogin,
+			OrgID:            orgId,
+			Name:             name,
+			IsServiceAccount: true,
+			SkipOrgSetup:     true,
+		})
+		if errUser != nil {
+			return errUser
+		}
+
+		errAddOrgUser := s.sqlStore.AddOrgUser(ctx, &models.AddOrgUserCommand{
+			Role:                      models.ROLE_VIEWER,
+			OrgId:                     orgId,
+			UserId:                    newSA.ID,
+			AllowAddingServiceAccount: true,
+		})
+		if errAddOrgUser != nil {
+			return errAddOrgUser
+		}
+
+		return nil
+	})
+
+	if createErr != nil {
+		if errors.Is(createErr, models.ErrUserAlreadyExists) {
 			return nil, ErrServiceAccountAlreadyExists
 		}
-		return nil, fmt.Errorf("failed to create service account: %w", err)
+
+		return nil, fmt.Errorf("failed to create service account: %w", createErr)
 	}
 
 	return &serviceaccounts.ServiceAccountDTO{
-		Id:     newuser.ID,
-		Name:   newuser.Name,
-		Login:  newuser.Login,
-		OrgId:  newuser.OrgID,
+		Id:     newSA.ID,
+		Name:   newSA.Name,
+		Login:  newSA.Login,
+		OrgId:  newSA.OrgID,
 		Tokens: 0,
 	}, nil
 }
