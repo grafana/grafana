@@ -6,10 +6,10 @@ import SVG from 'react-inlinesvg';
 import { StandardEditorProps } from '@grafana/data';
 import { config } from '@grafana/runtime/src';
 import { getTheme } from '@grafana/ui';
+import { ElementState } from 'app/features/canvas/runtime/element';
+import { FrameState } from 'app/features/canvas/runtime/frame';
+import { RootElement } from 'app/features/canvas/runtime/root';
 
-import { ElementState } from '../../../../features/canvas/runtime/element';
-import { FrameState } from '../../../../features/canvas/runtime/frame';
-import { RootElement } from '../../../../features/canvas/runtime/root';
 import { getGlobalStyles } from '../globalStyles';
 import { PanelOptions } from '../models.gen';
 import { getTreeData, TreeElement } from '../tree';
@@ -36,7 +36,7 @@ export class TreeNavigationEditor extends PureComponent<Props, State> {
     };
   }
 
-  globalCSS = getGlobalStyles(config.theme);
+  globalCSS = getGlobalStyles(config.theme2);
   settings = this.props.item.settings;
   theme = getTheme();
   rootElements = this.props.item?.settings?.scene.root.elements;

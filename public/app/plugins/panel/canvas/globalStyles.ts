@@ -1,8 +1,8 @@
 import { css } from '@emotion/react';
 
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-export function getGlobalStyles(theme: GrafanaTheme) {
+export function getGlobalStyles(theme: GrafanaTheme2) {
   return css`
     .moveable-control-box {
       z-index: 999;
@@ -35,7 +35,7 @@ export function getGlobalStyles(theme: GrafanaTheme) {
         }
 
         &:hover {
-          background-color: ${theme.colors.border1};
+          background-color: ${theme.colors.background.secondary};
         }
 
         &.dragging {
@@ -57,7 +57,7 @@ export function getGlobalStyles(theme: GrafanaTheme) {
           }
         }
         &.drop-target {
-          border: 1px solid ${theme.colors.formInputBorder};
+          border: 1px solid ${theme.colors.border.strong};
           & ~ .rc-tree-treenode {
             border-left: none;
           }
