@@ -426,6 +426,16 @@ describe('templateSrv', () => {
       const result = _templateSrv.formatValue("'test\n", 'raw');
       expect(result).toBe("'test\n");
     });
+
+    it('single value and pipeline should render the string value processed by all functions in turn', () => {
+      const result = _templateSrv.formatValue('Test Value"', 'json|percentencode');
+      expect(result).toBe('%22Test%20Value%5C%22%22');
+    });
+
+    it('multi value and pipeline should render the string value processed by all functions in turn', () => {
+      const result = _templateSrv.formatValue(['test', 'test"2'], 'json|percentencode');
+      expect(result).toBe('%5B%22test%22%2C%22test%5C%222%22%5D');
+    });
   });
 
   describe('can check if variable exists', () => {
