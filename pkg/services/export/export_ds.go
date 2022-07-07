@@ -37,7 +37,7 @@ func exportDataSources(helper *commitHelper, job *gitExportJob) (dsLookup, error
 		ds.Version = 0
 
 		ds.SecureJsonData = make(map[string][]byte)
-		ds.SecureJsonData["TODO"] = []byte("lookup into secrete store")
+		ds.SecureJsonData["TODO"] = []byte("secret store lookup")
 
 		err := helper.add(commitOptions{
 			body: []commitBody{

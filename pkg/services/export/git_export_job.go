@@ -191,6 +191,8 @@ func (e *gitExportJob) doOrgExportWithHistory(helper *commitHelper) error {
 		exportSystemStars,
 		exportSystemPlaylists,
 		exportAnnotations,
+		exportKVStore,
+		exportLive,
 	}
 
 	// This needs a real admin user to use the interfaces (and decrypt)

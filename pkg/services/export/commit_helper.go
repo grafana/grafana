@@ -70,6 +70,18 @@ func (ch *commitHelper) add(opts commitOptions) error {
 		return fmt.Errorf("stop requested")
 	}
 
+	user, ok := ch.users[opts.userID]
+	if !ok {
+		user = &userInfo{
+			Name:  "admin",
+			Email: "admin@unknown.org",
+		}
+	}
+	sig := user.getAuthor()
+	if opts.when.Unix() > 100 {
+		sig.When = opts.when
+	}
+
 	for _, b := range opts.body {
 		if !strings.HasPrefix(b.fpath, ch.orgDir) {
 			return fmt.Errorf("invalid path, must be within the root folder")
@@ -93,6 +105,10 @@ func (ch *commitHelper) add(opts commitOptions) error {
 		if err != nil {
 			return err
 		}
+		err = os.Chtimes(b.fpath, sig.When, sig.When)
+		if err != nil {
+			return err
+		}
 
 		sub := b.fpath[len(ch.workDir)+1:]
 		_, err = ch.work.Add(sub)
@@ -104,18 +120,6 @@ func (ch *commitHelper) add(opts commitOptions) error {
 			fmt.Printf("STATUS: %+v\n", status)
 			return fmt.Errorf("unable to add file: %s (%d)", sub, len(b.body))
 		}
-	}
-
-	user, ok := ch.users[opts.userID]
-	if !ok {
-		user = &userInfo{
-			Name:  "admin",
-			Email: "admin@unknown.org",
-		}
-	}
-	sig := user.getAuthor()
-	if opts.when.Unix() > 100 {
-		sig.When = opts.when
 	}
 
 	copts := &git.CommitOptions{
