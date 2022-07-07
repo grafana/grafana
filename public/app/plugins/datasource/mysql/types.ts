@@ -9,10 +9,10 @@ export interface MysqlQueryForInterpolation {
 }
 
 export interface MySQLOptions extends DataSourceJsonData, SQLConnectionLimits {
-  tlsAuth: boolean | undefined;
-  tlsAuthWithCACert: boolean | undefined;
-  timezone: string | number | readonly string[] | undefined;
-  tlsSkipVerify: any;
+  tlsAuth: boolean;
+  tlsAuthWithCACert: boolean;
+  timezone: string;
+  tlsSkipVerify: boolean;
   user: string;
   database: string;
   url: string;
