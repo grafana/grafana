@@ -19,6 +19,18 @@ export function addLegendOptions<T extends OptionsWithLegend>(
         options: [
           { value: LegendDisplayMode.List, label: 'List' },
           { value: LegendDisplayMode.Table, label: 'Table' },
+        ],
+      },
+    })
+    .addRadio({
+      path: 'legend.showLegend',
+      name: 'Show legend',
+      category: ['Legend'],
+      description: '',
+      defaultValue: LegendDisplayMode.List,
+      settings: {
+        options: [
+          { value: LegendDisplayMode.List, label: 'Visible' },
           { value: LegendDisplayMode.Hidden, label: 'Hidden' },
         ],
       },
