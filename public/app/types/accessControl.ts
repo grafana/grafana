@@ -66,6 +66,8 @@ export enum AccessControlAction {
   ActionTeamsRolesAdd = 'teams.roles:add',
   ActionTeamsRolesRemove = 'teams.roles:remove',
   ActionUserRolesList = 'users.roles:read',
+  ActionUserRolesAdd = 'users.roles:add',
+  ActionUserRolesRemove = 'users.roles:remove',
 
   DashboardsRead = 'dashboards:read',
   DashboardsWrite = 'dashboards:write',
