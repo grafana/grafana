@@ -22,7 +22,6 @@ type gitExportJob struct {
 	logger                    log.Logger
 	sql                       *sqlstore.SQLStore
 	dashboardsnapshotsService dashboardsnapshots.Service
-	orgID                     int64
 	rootDir                   string
 
 	statusMu    sync.Mutex
@@ -40,7 +39,6 @@ func startGitExportJob(cfg ExportConfig, sql *sqlstore.SQLStore, dashboardsnapsh
 		cfg:                       cfg,
 		sql:                       sql,
 		dashboardsnapshotsService: dashboardsnapshotsService,
-		orgID:                     orgID,
 		rootDir:                   rootDir,
 		broadcaster:               broadcaster,
 		status: ExportStatus{
