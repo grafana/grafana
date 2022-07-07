@@ -133,6 +133,7 @@ type Calls struct {
 }
 
 type ServiceAccountsStoreMock struct {
+	serviceaccounts.Store
 	Calls Calls
 }
 
