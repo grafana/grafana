@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	publicdashboardsapi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -102,6 +103,10 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/dashboards/", reqSignedIn, hs.Index)
 	r.Get("/dashboards/*", reqSignedIn, hs.Index)
 	r.Get("/goto/:uid", reqSignedIn, hs.redirectFromShortURL, hs.Index)
+
+	if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
+		r.Get("/public-dashboards/:accessToken", publicdashboardsapi.SetPublicDashboardFlag(), hs.Index)
+	}
 
 	r.Get("/explore", authorize(func(c *models.ReqContext) {
 		if f, ok := reqSignedIn.(func(c *models.ReqContext)); ok {
@@ -391,11 +396,6 @@ func (hs *HTTPServer) registerRoutes() {
 			})
 
 			dashboardRoute.Group("/uid/:uid", func(dashUidRoute routing.RouteRegister) {
-				if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
-					dashUidRoute.Get("/public-config", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.GetPublicDashboardConfig))
-					dashUidRoute.Post("/public-config", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.SavePublicDashboardConfig))
-				}
-
 				if hs.ThumbService != nil {
 					dashUidRoute.Get("/img/:kind/:theme", hs.ThumbService.GetImage)
 					if hs.Features.IsEnabled(featuremgmt.FlagDashboardPreviewsAdmin) {
@@ -598,7 +598,7 @@ func (hs *HTTPServer) registerRoutes() {
 	// grafana.net proxy
 	r.Any("/api/gnet/*", reqSignedIn, hs.ProxyGnetRequest)
 
-	// Gravatar service.
+	// Gravatar service
 	r.Get("/avatar/:hash", hs.AvatarCacheServer.Handler)
 
 	// Snapshots
@@ -607,13 +607,6 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/api/snapshots/:key", routing.Wrap(hs.GetDashboardSnapshot))
 	r.Get("/api/snapshots-delete/:deleteKey", reqSnapshotPublicModeOrSignedIn, routing.Wrap(hs.DeleteDashboardSnapshotByDeleteKey))
 	r.Delete("/api/snapshots/:key", reqEditorRole, routing.Wrap(hs.DeleteDashboardSnapshot))
-
-	// Public API
-	if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
-		r.Get("/public-dashboards/:accessToken", middleware.SetPublicDashboardFlag(), hs.Index)
-		r.Get("/api/public/dashboards/:accessToken", routing.Wrap(hs.GetPublicDashboard))
-		r.Post("/api/public/dashboards/:accessToken/panels/:panelId/query", routing.Wrap(hs.QueryPublicDashboard))
-	}
 
 	// Frontend logs
 	sourceMapStore := frontendlogging.NewSourceMapStore(hs.Cfg, hs.pluginStaticRouteResolver, frontendlogging.ReadSourceMapFromFS)

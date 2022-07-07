@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { EditorField, EditorRow } from '@grafana/experimental';
 import { Select } from '@grafana/ui';
 
-import { QueryEditorRow } from '..';
-import { SELECT_WIDTH } from '../../constants';
 import CloudMonitoringDatasource from '../../datasource';
 import { SLOQuery } from '../../types';
 
@@ -37,18 +36,20 @@ export const Service: React.FC<Props> = ({ refId, query, templateVariableOptions
   }, [datasource, projectName, templateVariableOptions]);
 
   return (
-    <QueryEditorRow label="Service" htmlFor={`${refId}-slo-service`}>
-      <Select
-        inputId={`${refId}-slo-service`}
-        width={SELECT_WIDTH}
-        allowCustomValue
-        value={query?.serviceId && { value: query?.serviceId, label: query?.serviceName || query?.serviceId }}
-        placeholder="Select service"
-        options={services}
-        onChange={({ value: serviceId = '', label: serviceName = '' }) =>
-          onChange({ ...query, serviceId, serviceName, sloId: '' })
-        }
-      />
-    </QueryEditorRow>
+    <EditorRow>
+      <EditorField label="Service">
+        <Select
+          inputId={`${refId}-slo-service`}
+          width="auto"
+          allowCustomValue
+          value={query?.serviceId && { value: query?.serviceId, label: query?.serviceName || query?.serviceId }}
+          placeholder="Select service"
+          options={services}
+          onChange={({ value: serviceId = '', label: serviceName = '' }) =>
+            onChange({ ...query, serviceId, serviceName, sloId: '' })
+          }
+        />
+      </EditorField>
+    </EditorRow>
   );
 };
