@@ -25,6 +25,9 @@ type ExportService interface {
 
 	// Read raw file contents out of the store
 	HandleRequestExport(c *models.ReqContext) response.Response
+
+	// Cancel any running export
+	HandleRequestStop(c *models.ReqContext) response.Response
 }
 
 type StandardExport struct {
@@ -59,6 +62,15 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 func (ex *StandardExport) HandleGetStatus(c *models.ReqContext) response.Response {
 	ex.mutex.Lock()
 	defer ex.mutex.Unlock()
+
+	return response.JSON(http.StatusOK, ex.exportJob.getStatus())
+}
+
+func (ex *StandardExport) HandleRequestStop(c *models.ReqContext) response.Response {
+	ex.mutex.Lock()
+	defer ex.mutex.Unlock()
+
+	ex.exportJob.requestStop()
 
 	return response.JSON(http.StatusOK, ex.exportJob.getStatus())
 }
