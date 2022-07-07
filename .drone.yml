@@ -3414,6 +3414,38 @@ volumes:
 ---
 depends_on: []
 kind: pipeline
+name: publish-artifacts-page
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.52/grabpl
+  - chmod +x bin/grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: grabpl
+- commands:
+  - ./bin/grabpl artifacts-page
+  depends_on:
+  - grabpl
+  image: grafana/build-container:1.5.7
+  name: artifacts-page
+trigger:
+  event:
+  - promote
+  target: security
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+depends_on: []
+kind: pipeline
 name: release-branch-oss-build-e2e-publish
 node:
   type: no-parallel
@@ -4811,6 +4843,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 02df03be213abe0242b1c47e0e57cecd1ec3b2572d1f214afb55ef3a94c99750
+hmac: 0135b400f98ec7b242dd29aebe848db0055edfe64af2f2dd589d0d8384bb2f17
 
 ...
