@@ -2,12 +2,11 @@ import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { getTimeZone, GrafanaTheme2, NavModel } from '@grafana/data';
+import { getTimeZone, GrafanaTheme2 } from '@grafana/data';
 import { Button, ConfirmModal, IconButton, useStyles2 } from '@grafana/ui';
-import Page from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { getNavModel } from 'app/core/selectors/navModel';
 import { AccessControlAction, ApiKey, Role, ServiceAccountDTO, StoreState } from 'app/types';
 
 import { CreateTokenModal, ServiceAccountToken } from './components/CreateTokenModal';
@@ -24,7 +23,6 @@ import {
 } from './state/actionsServiceAccountPage';
 
 interface OwnProps extends GrafanaRouteComponentProps<{ id: string }> {
-  navModel: NavModel;
   serviceAccount?: ServiceAccountDTO;
   tokens: ApiKey[];
   isLoading: boolean;
@@ -34,7 +32,6 @@ interface OwnProps extends GrafanaRouteComponentProps<{ id: string }> {
 
 function mapStateToProps(state: StoreState) {
   return {
-    navModel: getNavModel(state.navIndex, 'serviceaccounts'),
     serviceAccount: state.serviceAccountProfile.serviceAccount,
     tokens: state.serviceAccountProfile.tokens,
     isLoading: state.serviceAccountProfile.isLoading,
@@ -58,7 +55,6 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 export type Props = OwnProps & ConnectedProps<typeof connector>;
 
 export const ServiceAccountPageUnconnected = ({
-  navModel,
   match,
   serviceAccount,
   tokens,
@@ -131,7 +127,7 @@ export const ServiceAccountPageUnconnected = ({
   };
 
   return (
-    <Page navModel={navModel}>
+    <Page navId="serviceaccounts">
       <Page.Contents isLoading={isLoading}>
         {serviceAccount && (
           <div className={styles.headerContainer}>

@@ -15,7 +15,7 @@ title: What's new in Grafana v8.5
 weight: -33
 ---
 
-# What’s new in Grafana v8.5
+# What's new in Grafana v8.5
 
 We’re excited to announce Grafana v8.5, with a variety of improvements that focus on Grafana’s usability, performance, and security.
 
