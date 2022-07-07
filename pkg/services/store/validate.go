@@ -24,7 +24,7 @@ var (
 		".gif":  {"image/gif": true},
 		".png":  {"image/png": true},
 		".webp": {"image/webp": true},
-		".svg":  {"text/xml; charset=utf-8": true, "text/plain; charset=utf-8": true},
+		".svg":  {"text/xml; charset=utf-8": true, "text/plain; charset=utf-8": true, "image/svg+xml": true},
 	}
 )
 
