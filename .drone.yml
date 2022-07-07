@@ -3324,6 +3324,12 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
+  - ./bin/grabpl gen-version ${DRONE_TAG}
+  depends_on:
+  - grabpl
+  image: grafana/build-container:1.5.7
+  name: gen-version
+- commands:
   - ./bin/grabpl store-packages --edition oss --packages-bucket grafana-downloads
     --gcp-key /tmp/gcpkey.json ${DRONE_TAG}
   depends_on:
@@ -3372,6 +3378,12 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
+  - ./bin/grabpl gen-version ${DRONE_TAG}
+  depends_on:
+  - grabpl
+  image: grafana/build-container:1.5.7
+  name: gen-version
+- commands:
   - ./bin/grabpl store-packages --edition enterprise --packages-bucket grafana-downloads
     --gcp-key /tmp/gcpkey.json ${DRONE_TAG}
   depends_on:
@@ -3394,6 +3406,38 @@ trigger:
   - promote
   target:
   - public
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+depends_on: []
+kind: pipeline
+name: publish-artifacts-page
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.52/grabpl
+  - chmod +x bin/grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: grabpl
+- commands:
+  - ./bin/grabpl artifacts-page
+  depends_on:
+  - grabpl
+  image: grafana/build-container:1.5.7
+  name: artifacts-page
+trigger:
+  event:
+  - promote
+  target: security
 type: docker
 volumes:
 - host:
@@ -4799,6 +4843,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: b885bb4e5374691a66b4fa8c6f53cdcebeef573895ea629d4e8b0af715573cea
+hmac: 0135b400f98ec7b242dd29aebe848db0055edfe64af2f2dd589d0d8384bb2f17
 
 ...

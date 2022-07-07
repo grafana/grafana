@@ -17,21 +17,19 @@ export class Scene extends SceneObjectBase<SceneState> {
   static Component = SceneRenderer;
   urlSyncManager?: UrlSyncManager;
 
-  onMount() {
-    super.onMount();
+  activate() {
+    super.activate();
     this.urlSyncManager = new UrlSyncManager(this);
   }
 
-  onUnmount() {
-    super.onUnmount();
+  deactivate() {
+    super.deactivate();
     this.urlSyncManager!.cleanUp();
   }
 }
 
 function SceneRenderer({ model }: SceneComponentProps<Scene>) {
   const { title, layout, actions = [], isEditing, $editor } = model.useState();
-
-  console.log('render scene');
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', flex: '1 1 0', minHeight: 0 }}>
