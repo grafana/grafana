@@ -41,7 +41,8 @@ load(
     'upload_cdn_step',
     'verify_gen_cue_step',
     'test_a11y_frontend_step',
-    'trigger_oss'
+    'trigger_oss',
+    'betterer_frontend_step'
 )
 
 load(
@@ -82,6 +83,7 @@ def main_test_frontend():
     ]
     test_steps = [
         lint_frontend_step(),
+        betterer_frontend_step(),
         test_frontend_step(),
     ]
     return pipeline(
@@ -124,7 +126,7 @@ def get_steps(edition):
         build_backend_step(edition=edition, ver_mode=ver_mode),
         build_frontend_step(edition=edition, ver_mode=ver_mode),
         build_frontend_package_step(edition=edition, ver_mode=ver_mode),
-        build_plugins_step(edition=edition, sign=True),
+        build_plugins_step(edition=edition, ver_mode=ver_mode),
     ]
     integration_test_steps = [
         postgres_integration_tests_step(edition=edition, ver_mode=ver_mode),

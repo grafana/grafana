@@ -62,6 +62,8 @@ import (
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsettings/service"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/provisioning"
+
+	publicdashboardsApi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/queryhistory"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -69,6 +71,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	secretsKV "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -132,6 +135,7 @@ type HTTPServer struct {
 	Listener                     net.Listener
 	EncryptionService            encryption.Internal
 	SecretsService               secrets.Service
+	remoteSecretsCheck           secretsKV.UseRemoteSecretsPluginCheck
 	DataSourcesService           datasources.DataSourceService
 	cleanUpService               *cleanup.CleanUpService
 	tracer                       tracing.Tracer
@@ -146,7 +150,7 @@ type HTTPServer struct {
 	authenticator                loginpkg.Authenticator
 	teamPermissionsService       accesscontrol.TeamPermissionsService
 	NotificationService          *notifications.NotificationService
-	dashboardService             dashboards.DashboardService
+	DashboardService             dashboards.DashboardService
 	dashboardProvisioningService dashboards.DashboardProvisioningService
 	folderService                dashboards.FolderService
 	DatasourcePermissionsService permissions.DatasourcePermissionsService
@@ -161,10 +165,12 @@ type HTTPServer struct {
 	folderPermissionsService     accesscontrol.FolderPermissionsService
 	dashboardPermissionsService  accesscontrol.DashboardPermissionsService
 	dashboardVersionService      dashver.Service
+	PublicDashboardsApi          *publicdashboardsApi.Api
 	starService                  star.Service
 	CoremodelRegistry            *registry.Generic
 	CoremodelStaticRegistry      *registry.Static
 	kvStore                      kvstore.KVStore
+	secretsMigrator              secrets.Migrator
 }
 
 type ServerOptions struct {
@@ -199,7 +205,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	teamsPermissionsService accesscontrol.TeamPermissionsService, folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
 	starService star.Service, csrfService csrf.Service, coremodelRegistry *registry.Generic, coremodelStaticRegistry *registry.Static,
-	kvStore kvstore.KVStore,
+	kvStore kvstore.KVStore, secretsMigrator secrets.Migrator, remoteSecretsCheck secretsKV.UseRemoteSecretsPluginCheck, publicDashboardsApi *publicdashboardsApi.Api,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -254,6 +260,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		SocialService:                socialService,
 		EncryptionService:            encryptionService,
 		SecretsService:               secretsService,
+		remoteSecretsCheck:           remoteSecretsCheck,
 		DataSourcesService:           dataSourcesService,
 		searchUsersService:           searchUsersService,
 		ldapGroups:                   ldapGroups,
@@ -263,7 +270,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		authInfoService:              authInfoService,
 		authenticator:                authenticator,
 		NotificationService:          notificationService,
-		dashboardService:             dashboardService,
+		DashboardService:             dashboardService,
 		dashboardProvisioningService: dashboardProvisioningService,
 		folderService:                folderService,
 		DatasourcePermissionsService: datasourcePermissionsService,
@@ -283,6 +290,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		CoremodelRegistry:            coremodelRegistry,
 		CoremodelStaticRegistry:      coremodelStaticRegistry,
 		kvStore:                      kvStore,
+		PublicDashboardsApi:          publicDashboardsApi,
+		secretsMigrator:              secretsMigrator,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")

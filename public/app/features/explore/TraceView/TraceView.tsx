@@ -18,7 +18,13 @@ import {
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
-import { Trace, TracePageHeader, TraceTimelineViewer, TTraceTimeline } from '@jaegertracing/jaeger-ui-components';
+import {
+  SpanBarOptionsData,
+  Trace,
+  TracePageHeader,
+  TraceTimelineViewer,
+  TTraceTimeline,
+} from '@jaegertracing/jaeger-ui-components';
 import { TraceToLogsData } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { TraceToMetricsData } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -118,6 +124,7 @@ export function TraceView(props: Props) {
   const instanceSettings = getDatasourceSrv().getInstanceSettings(datasource?.name);
   const traceToLogsOptions = (instanceSettings?.jsonData as TraceToLogsData)?.tracesToLogs;
   const traceToMetricsOptions = (instanceSettings?.jsonData as TraceToMetricsData)?.tracesToMetrics;
+  const spanBarOptions: SpanBarOptionsData | undefined = instanceSettings?.jsonData;
 
   const createSpanLink = useMemo(
     () =>
@@ -155,6 +162,7 @@ export function TraceView(props: Props) {
             scrollToFirstVisibleSpan={noop}
             findMatchesIDs={spanFindMatches}
             trace={traceProp}
+            spanBarOptions={spanBarOptions?.spanBar}
             traceTimeline={traceTimeline}
             updateNextViewRangeTime={updateNextViewRangeTime}
             updateViewRangeTime={updateViewRangeTime}
