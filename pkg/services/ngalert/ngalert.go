@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
@@ -130,21 +129,16 @@ func (ng *AlertNG) init() error {
 	}
 
 	schedCfg := schedule.SchedulerCfg{
-		C:                       clock.New(),
-		BaseInterval:            ng.Cfg.UnifiedAlerting.BaseInterval,
-		Logger:                  ng.Log,
-		MaxAttempts:             ng.Cfg.UnifiedAlerting.MaxAttempts,
-		Evaluator:               eval.NewEvaluator(ng.Cfg, ng.Log, ng.DataSourceCache, ng.SecretsService, ng.ExpressionService),
-		InstanceStore:           store,
-		RuleStore:               store,
-		AdminConfigStore:        store,
-		OrgStore:                store,
-		MultiOrgNotifier:        ng.MultiOrgAlertmanager,
-		Metrics:                 ng.Metrics.GetSchedulerMetrics(),
-		AdminConfigPollInterval: ng.Cfg.UnifiedAlerting.AdminConfigPollInterval,
-		DisabledOrgs:            ng.Cfg.UnifiedAlerting.DisabledOrgs,
-		MinRuleInterval:         ng.Cfg.UnifiedAlerting.MinInterval,
-		DisableGrafanaFolder:    ng.Cfg.UnifiedAlerting.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel),
+		Cfg:              ng.Cfg.UnifiedAlerting,
+		C:                clock.New(),
+		Logger:           ng.Log,
+		Evaluator:        eval.NewEvaluator(ng.Cfg, ng.Log, ng.DataSourceCache, ng.SecretsService, ng.ExpressionService),
+		InstanceStore:    store,
+		RuleStore:        store,
+		AdminConfigStore: store,
+		OrgStore:         store,
+		MultiOrgNotifier: ng.MultiOrgAlertmanager,
+		Metrics:          ng.Metrics.GetSchedulerMetrics(),
 	}
 
 	appUrl, err := url.Parse(ng.Cfg.AppURL)

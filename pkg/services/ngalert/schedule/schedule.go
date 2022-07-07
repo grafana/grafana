@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/benbjohnson/clock"
 	"golang.org/x/sync/errgroup"
@@ -116,34 +117,29 @@ type schedule struct {
 
 // SchedulerCfg is the scheduler configuration.
 type SchedulerCfg struct {
-	C                       clock.Clock
-	BaseInterval            time.Duration
-	Logger                  log.Logger
-	EvalAppliedFunc         func(ngmodels.AlertRuleKey, time.Time)
-	MaxAttempts             int64
-	StopAppliedFunc         func(ngmodels.AlertRuleKey)
-	Evaluator               eval.Evaluator
-	RuleStore               store.RuleStore
-	OrgStore                store.OrgStore
-	InstanceStore           store.InstanceStore
-	AdminConfigStore        store.AdminConfigurationStore
-	MultiOrgNotifier        *notifier.MultiOrgAlertmanager
-	Metrics                 *metrics.Scheduler
-	AdminConfigPollInterval time.Duration
-	DisabledOrgs            map[int64]struct{}
-	MinRuleInterval         time.Duration
-	DisableGrafanaFolder    bool
+	Cfg              setting.UnifiedAlertingSettings
+	C                clock.Clock
+	Logger           log.Logger
+	EvalAppliedFunc  func(ngmodels.AlertRuleKey, time.Time)
+	StopAppliedFunc  func(ngmodels.AlertRuleKey)
+	Evaluator        eval.Evaluator
+	RuleStore        store.RuleStore
+	OrgStore         store.OrgStore
+	InstanceStore    store.InstanceStore
+	AdminConfigStore store.AdminConfigurationStore
+	MultiOrgNotifier *notifier.MultiOrgAlertmanager
+	Metrics          *metrics.Scheduler
 }
 
 // NewScheduler returns a new schedule.
 func NewScheduler(cfg SchedulerCfg, appURL *url.URL, stateManager *state.Manager, bus bus.Bus) *schedule {
-	ticker := alerting.NewTicker(cfg.C, cfg.BaseInterval, cfg.Metrics.Ticker)
+	ticker := alerting.NewTicker(cfg.C, cfg.Cfg.BaseInterval, cfg.Metrics.Ticker)
 
 	sch := schedule{
 		registry:                alertRuleInfoRegistry{alertRuleInfo: make(map[ngmodels.AlertRuleKey]*alertRuleInfo)},
-		maxAttempts:             cfg.MaxAttempts,
+		maxAttempts:             cfg.Cfg.MaxAttempts,
 		clock:                   cfg.C,
-		baseInterval:            cfg.BaseInterval,
+		baseInterval:            cfg.Cfg.BaseInterval,
 		log:                     cfg.Logger,
 		ticker:                  ticker,
 		evalAppliedFunc:         cfg.EvalAppliedFunc,
@@ -156,14 +152,14 @@ func NewScheduler(cfg SchedulerCfg, appURL *url.URL, stateManager *state.Manager
 		multiOrgNotifier:        cfg.MultiOrgNotifier,
 		metrics:                 cfg.Metrics,
 		appURL:                  appURL,
-		disableGrafanaFolder:    cfg.DisableGrafanaFolder,
+		disableGrafanaFolder:    cfg.Cfg.ReservedLabels.IsReservedLabelDisabled(ngmodels.FolderTitleLabel),
 		stateManager:            stateManager,
 		sendAlertsTo:            map[int64]ngmodels.AlertmanagersChoice{},
 		senders:                 map[int64]*sender.Sender{},
 		sendersCfgHash:          map[int64]string{},
-		adminConfigPollInterval: cfg.AdminConfigPollInterval,
-		disabledOrgs:            cfg.DisabledOrgs,
-		minRuleInterval:         cfg.MinRuleInterval,
+		adminConfigPollInterval: cfg.Cfg.AdminConfigPollInterval,
+		disabledOrgs:            cfg.Cfg.DisabledOrgs,
+		minRuleInterval:         cfg.Cfg.MinInterval,
 		schedulableAlertRules:   schedulableAlertRulesRegistry{rules: make(map[ngmodels.AlertRuleKey]*ngmodels.SchedulableAlertRule)},
 		bus:                     bus,
 	}
@@ -754,9 +750,9 @@ func (sch *schedule) folderUpdateHandler(ctx context.Context, evt *events.Folder
 // overrideCfg is only used on tests.
 func (sch *schedule) overrideCfg(cfg SchedulerCfg) {
 	sch.clock = cfg.C
-	sch.baseInterval = cfg.BaseInterval
+	sch.baseInterval = cfg.Cfg.BaseInterval
 	sch.ticker.Stop()
-	sch.ticker = alerting.NewTicker(cfg.C, cfg.BaseInterval, cfg.Metrics.Ticker)
+	sch.ticker = alerting.NewTicker(cfg.C, cfg.Cfg.BaseInterval, cfg.Metrics.Ticker)
 	sch.evalAppliedFunc = cfg.EvalAppliedFunc
 	sch.stopAppliedFunc = cfg.StopAppliedFunc
 }
