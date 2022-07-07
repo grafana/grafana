@@ -23,14 +23,6 @@ const setup = (propOverrides: Partial<Props>) => {
   const updateServiceAccountMock = jest.fn();
 
   const props: Props = {
-    navModel: {
-      main: {
-        text: 'Configuration',
-      },
-      node: {
-        text: 'Service accounts',
-      },
-    },
     serviceAccount: {} as ServiceAccountDTO,
     tokens: [],
     builtInRoles: {},

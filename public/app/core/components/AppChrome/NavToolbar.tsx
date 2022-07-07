@@ -5,22 +5,22 @@ import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { IconButton, ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { Breadcrumbs } from './Breadcrumbs';
-import { TopNavProps } from './TopNavUpdate';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
 
-export interface Props extends TopNavProps {
+export interface Props {
   onToggleSearchBar(): void;
   onToggleMegaMenu(): void;
   searchBarHidden?: boolean;
   sectionNav: NavModelItem;
-  subNav?: NavModelItem;
+  pageNav?: NavModelItem;
+  actions: React.ReactNode;
 }
 
 export function NavToolbar({
   actions,
   searchBarHidden,
   sectionNav,
-  subNav,
+  pageNav,
   onToggleMegaMenu,
   onToggleSearchBar,
 }: Props) {
@@ -31,7 +31,7 @@ export function NavToolbar({
       <div className={styles.menuButton}>
         <IconButton name="bars" tooltip="Toggle menu" tooltipPlacement="bottom" size="xl" onClick={onToggleMegaMenu} />
       </div>
-      <Breadcrumbs sectionNav={sectionNav} subNav={subNav} />
+      <Breadcrumbs sectionNav={sectionNav} pageNav={pageNav} />
       <div className={styles.leftActions}></div>
       <div className={styles.rightActions}>
         {actions}
