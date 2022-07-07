@@ -90,7 +90,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2, isHorizontal: bool
     sliderInput: css`
       display: flex;
       flex-direction: row;
-      align-items: start;
+      align-items: center;
       width: 100%;
     `,
     sliderInputVertical: css`
