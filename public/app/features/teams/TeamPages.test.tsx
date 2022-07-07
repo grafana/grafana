@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
 
-import { NavModel, createTheme } from '@grafana/data';
+import { createTheme } from '@grafana/data';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { User } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
@@ -68,7 +68,7 @@ const setup = (propOverrides?: object) => {
         },
       } as any,
     }),
-    navModel: { node: {}, main: {} } as NavModel,
+    pageNav: { text: 'Cool team ' },
     teamId: 1,
     loadTeam: jest.fn(),
     loadTeamMembers: jest.fn(),

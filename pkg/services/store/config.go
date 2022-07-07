@@ -1,9 +1,10 @@
 package store
 
 type RootStorageConfig struct {
-	Type   string `json:"type"`
-	Prefix string `json:"prefix"`
-	Name   string `json:"name"`
+	Type        string `json:"type"`
+	Prefix      string `json:"prefix"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
 
 	// Depending on type, these will be configured
 	Disk *StorageLocalDiskConfig `json:"disk,omitempty"`

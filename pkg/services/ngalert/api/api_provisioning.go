@@ -54,6 +54,7 @@ type AlertRuleService interface {
 	CreateAlertRule(ctx context.Context, rule alerting_models.AlertRule, provenance alerting_models.Provenance) (alerting_models.AlertRule, error)
 	UpdateAlertRule(ctx context.Context, rule alerting_models.AlertRule, provenance alerting_models.Provenance) (alerting_models.AlertRule, error)
 	DeleteAlertRule(ctx context.Context, orgID int64, ruleUID string, provenance alerting_models.Provenance) error
+	GetRuleGroup(ctx context.Context, orgID int64, folder, group string) (definitions.AlertRuleGroup, error)
 	UpdateRuleGroup(ctx context.Context, orgID int64, folderUID, rulegroup string, interval int64) error
 }
 
@@ -284,7 +285,18 @@ func (srv *ProvisioningSrv) RouteDeleteAlertRule(c *models.ReqContext, UID strin
 	return response.JSON(http.StatusNoContent, "")
 }
 
-func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *models.ReqContext, ag definitions.AlertRuleGroup, folderUID string, group string) response.Response {
+func (srv *ProvisioningSrv) RouteGetAlertRuleGroup(c *models.ReqContext, folder string, group string) response.Response {
+	g, err := srv.alertRules.GetRuleGroup(c.Req.Context(), c.OrgId, folder, group)
+	if err != nil {
+		if errors.Is(err, store.ErrAlertRuleGroupNotFound) {
+			return ErrResp(http.StatusNotFound, err, "")
+		}
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+	return response.JSON(http.StatusOK, g)
+}
+
+func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *models.ReqContext, ag definitions.AlertRuleGroupMetadata, folderUID string, group string) response.Response {
 	err := srv.alertRules.UpdateRuleGroup(c.Req.Context(), c.OrgId, folderUID, group, ag.Interval)
 	if err != nil {
 		if errors.Is(err, store.ErrOptimisticLock) {
