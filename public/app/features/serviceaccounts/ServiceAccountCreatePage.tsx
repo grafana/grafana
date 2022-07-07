@@ -1,34 +1,24 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { connect } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 
-import { NavModel } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { Form, Button, Input, Field } from '@grafana/ui';
-import Page from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchBuiltinRoles, fetchRoleOptions, updateUserRoles } from 'app/core/components/RolePicker/api';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, OrgRole, Role, ServiceAccountCreateApiResponse, ServiceAccountDTO } from 'app/types';
 
-import { getNavModel } from '../../core/selectors/navModel';
-import { StoreState } from '../../types';
 import { OrgRolePicker } from '../admin/OrgRolePicker';
 
-export interface Props {
-  navModel: NavModel;
-}
-
-const mapStateToProps = (state: StoreState) => ({
-  navModel: getNavModel(state.navIndex, 'serviceaccounts'),
-});
+export interface Props {}
 
 const createServiceAccount = async (sa: ServiceAccountDTO) => getBackendSrv().post('/api/serviceaccounts/', sa);
 
 const updateServiceAccount = async (id: number, sa: ServiceAccountDTO) =>
   getBackendSrv().patch(`/api/serviceaccounts/${id}`, sa);
 
-export const ServiceAccountCreatePageUnconnected = ({ navModel }: Props): JSX.Element => {
+export const ServiceAccountCreatePage = ({}: Props): JSX.Element => {
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
   const [builtinRoles, setBuiltinRoles] = useState<{ [key: string]: Role[] }>({});
   const [pendingRoles, setPendingRoles] = useState<Role[]>([]);
@@ -109,7 +99,7 @@ export const ServiceAccountCreatePageUnconnected = ({ navModel }: Props): JSX.El
   };
 
   return (
-    <Page navModel={navModel}>
+    <Page navId="serviceaccounts">
       <Page.Contents>
         <h1>Create service account</h1>
         <Form onSubmit={onSubmit} validateOn="onSubmit">
@@ -152,4 +142,4 @@ export const ServiceAccountCreatePageUnconnected = ({ navModel }: Props): JSX.El
   );
 };
 
-export default connect(mapStateToProps)(ServiceAccountCreatePageUnconnected);
+export default ServiceAccountCreatePage;
