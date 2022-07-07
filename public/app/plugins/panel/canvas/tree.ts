@@ -1,8 +1,8 @@
 import { CSSProperties } from 'react';
 
-import { ElementState } from '../../../features/canvas/runtime/element';
-import { FrameState } from '../../../features/canvas/runtime/frame';
-import { RootElement } from '../../../features/canvas/runtime/root';
+import { ElementState } from 'app/features/canvas/runtime/element';
+import { FrameState } from 'app/features/canvas/runtime/frame';
+import { RootElement } from 'app/features/canvas/runtime/root';
 
 export interface FlatElement {
   node: ElementState;
