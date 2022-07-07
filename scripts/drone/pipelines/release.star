@@ -41,7 +41,8 @@ load(
     'upload_cdn_step',
     'verify_gen_cue_step',
     'publish_images_step',
-    'trigger_oss'
+    'trigger_oss',
+    'artifacts_page_step'
 )
 
 load(
@@ -430,6 +431,13 @@ def publish_npm_pipelines(mode):
     return [pipeline(
         name='publish-npm-packages-{}'.format(mode), trigger=trigger, steps = steps, edition="all"
     )]
+
+def artifacts_page_pipeline():
+    trigger = {
+        'event': ['promote'],
+        'target': 'security',
+    }
+    return [pipeline(name='publish-artifacts-page', trigger=trigger, steps = [download_grabpl_step(), artifacts_page_step()], edition="all")]
 
 def release_pipelines(ver_mode='release', trigger=None):
     # 'enterprise' edition services contain both OSS and enterprise services

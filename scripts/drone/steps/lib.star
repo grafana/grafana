@@ -1173,6 +1173,18 @@ def verify_gen_cue_step(edition):
         ],
     }
 
+def artifacts_page_step():
+    return {
+        'name': 'artifacts-page',
+        'image': build_image,
+        'depends_on': [
+            'grabpl',
+        ],
+        'commands': [
+            './bin/grabpl artifacts-page',
+        ],
+    }
+
 def end_to_end_tests_deps(edition):
     if disable_tests:
         return []
