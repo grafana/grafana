@@ -20,7 +20,7 @@ export const OutsideRangePlugin: React.FC<ThresholdControlsPluginProps> = ({ con
     });
 
     config.addHook('setScale', (u) => {
-      setTimeValues(u.data?.[0] ?? []);
+      setTimeValues((u.data?.[0] as number[]) ?? []);
       setTimeRange(u.scales['x'] ?? undefined);
     });
   }, [config]);
