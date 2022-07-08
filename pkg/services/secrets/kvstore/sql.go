@@ -31,6 +31,8 @@ type cachedDecrypted struct {
 
 var b64 = base64.RawStdEncoding
 
+// TODO LND Write a test for this implementation
+
 // Get an item from the store
 func (kv *secretsKVStoreSQL) Get(ctx context.Context, orgId int64, namespace string, typ string) (string, bool, error) {
 	item := Item{
@@ -222,4 +224,18 @@ func (kv *secretsKVStoreSQL) Rename(ctx context.Context, orgId int64, namespace 
 
 		return err
 	})
+}
+
+// GetAll this returns all the secrets stored in the database. This is not part of the kvstore interface as we
+// only need it for migration from sql to plugin at this moment
+func (kv *secretsKVStoreSQL) GetAll(ctx context.Context) ([]Item, error) {
+	// TODO LND should we do this for a certain orgId?
+	var items []Item
+	err := kv.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		return dbSession.Find(&items)
+	})
+	if err != nil {
+		kv.log.Debug("error getting all the items", "err", err)
+	}
+	return items, err
 }

@@ -2,6 +2,7 @@ package migrations
 
 import (
 	"context"
+	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"reflect"
 	"time"
 
@@ -25,16 +26,20 @@ type SecretMigrationServiceImpl struct {
 func ProvideSecretMigrationService(
 	serverLockService *serverlock.ServerLockService,
 	dataSourceSecretMigrationService *datasources.DataSourceSecretMigrationService,
+	pluginSecretMigrationService *kvstore.PluginSecretMigrationService,
 ) *SecretMigrationServiceImpl {
 	return &SecretMigrationServiceImpl{
 		ServerLockService: serverLockService,
 		Services: []SecretMigrationService{
 			dataSourceSecretMigrationService,
+			// migration from unified secrets to plugin secrets, if enabled.
+			// pluginMigrationService should always be the last one
+			pluginSecretMigrationService,
 		},
 	}
 }
 
-// Run migration services. This will block until all services have exited.
+// Migrate Run migration services. This will block until all services have exited.
 func (s *SecretMigrationServiceImpl) Migrate(ctx context.Context) error {
 	// Start migration services.
 	return s.ServerLockService.LockAndExecute(ctx, "migrate secrets to unified secrets", time.Minute*10, func(context.Context) {
