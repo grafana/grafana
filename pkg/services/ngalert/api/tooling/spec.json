@@ -1940,7 +1940,10 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/AlertRuleGroup"
+            "description": "AlertRuleGroup",
+            "schema": {
+              "$ref": "#/definitions/AlertRuleGroup"
+            }
           },
           "404": {
             "description": " Not found."
@@ -2577,161 +2580,114 @@
     },
     "AlertRule": {
       "type": "object",
-      "required": [
-        "orgID",
-        "folderUID",
-        "ruleGroup",
-        "title",
-        "condition",
-        "data",
-        "noDataState",
-        "execErrState",
-        "for"
-      ],
+      "title": "AlertRule is the model for alert rules in unified alerting.",
       "properties": {
-        "annotations": {
+        "Annotations": {
           "type": "object",
           "additionalProperties": {
             "type": "string"
-          },
-          "x-go-name": "Annotations",
-          "example": {
-            "runbook_url": "https://supercoolrunbook.com/page/13"
           }
         },
-        "condition": {
-          "type": "string",
-          "x-go-name": "Condition",
-          "example": "A"
+        "Condition": {
+          "type": "string"
         },
-        "data": {
+        "DashboardUID": {
+          "type": "string"
+        },
+        "Data": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/AlertQuery"
-          },
-          "x-go-name": "Data",
-          "example": [
-            {
-              "datasourceUid": "-100",
-              "model": {
-                "conditions": [
-                  {
-                    "evaluator": {
-                      "params": [
-                        0,
-                        0
-                      ],
-                      "type": "gt"
-                    },
-                    "operator": {
-                      "type": "and"
-                    },
-                    "query": {
-                      "params": []
-                    },
-                    "reducer": {
-                      "params": [],
-                      "type": "avg"
-                    },
-                    "type": "query"
-                  }
-                ],
-                "datasource": {
-                  "type": "__expr__",
-                  "uid": "__expr__"
-                },
-                "expression": "1 == 1",
-                "hide": false,
-                "intervalMs": 1000,
-                "maxDataPoints": 43200,
-                "refId": "A",
-                "type": "math"
-              },
-              "queryType": "",
-              "refId": "A",
-              "relativeTimeRange": {
-                "from": 0,
-                "to": 0
-              }
-            }
-          ]
+          }
         },
-        "execErrState": {
-          "description": "\nAlerting AlertingErrState\nError ErrorErrState\nOK OkErrState",
+        "ExecErrState": {
           "type": "string",
           "enum": [
             "Alerting",
             "Error",
             "OK"
           ],
-          "x-go-enum-desc": "Alerting AlertingErrState\nError ErrorErrState\nOK OkErrState",
-          "x-go-name": "ExecErrState"
+          "x-go-enum-desc": "Alerting AlertingErrState\nError ErrorErrState\nOK OkErrState"
         },
-        "folderUID": {
-          "type": "string",
-          "x-go-name": "FolderUID",
-          "example": "project_x"
-        },
-        "for": {
+        "For": {
           "$ref": "#/definitions/Duration"
         },
-        "id": {
+        "ID": {
           "type": "integer",
-          "format": "int64",
-          "x-go-name": "ID"
+          "format": "int64"
         },
-        "labels": {
+        "IntervalSeconds": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "Labels": {
           "type": "object",
           "additionalProperties": {
             "type": "string"
-          },
-          "x-go-name": "Labels",
-          "example": {
-            "team": "sre-team-1"
           }
         },
-        "noDataState": {
-          "description": "\nAlerting Alerting\nNoData NoData\nOK OK",
+        "NamespaceUID": {
+          "type": "string"
+        },
+        "NoDataState": {
           "type": "string",
           "enum": [
             "Alerting",
             "NoData",
             "OK"
           ],
-          "x-go-enum-desc": "Alerting Alerting\nNoData NoData\nOK OK",
-          "x-go-name": "NoDataState"
+          "x-go-enum-desc": "Alerting Alerting\nNoData NoData\nOK OK"
         },
-        "orgID": {
+        "OrgID": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "PanelID": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "RuleGroup": {
+          "type": "string"
+        },
+        "Title": {
+          "type": "string"
+        },
+        "UID": {
+          "type": "string"
+        },
+        "Updated": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "Version": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/models"
+    },
+    "AlertRuleGroup": {
+      "type": "object",
+      "properties": {
+        "folderUid": {
+          "type": "string",
+          "x-go-name": "FolderUID"
+        },
+        "interval": {
           "type": "integer",
           "format": "int64",
-          "x-go-name": "OrgID"
+          "x-go-name": "Interval"
         },
-        "provenance": {
-          "$ref": "#/definitions/Provenance"
-        },
-        "ruleGroup": {
-          "type": "string",
-          "maxLength": 190,
-          "minLength": 1,
-          "x-go-name": "RuleGroup",
-          "example": "eval_group_1"
+        "rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AlertRule"
+          },
+          "x-go-name": "Rules"
         },
         "title": {
           "type": "string",
-          "maxLength": 190,
-          "minLength": 1,
-          "x-go-name": "Title",
-          "example": "Always firing"
-        },
-        "uid": {
-          "type": "string",
-          "x-go-name": "UID"
-        },
-        "updated": {
-          "type": "string",
-          "format": "date-time",
-          "x-go-name": "Updated",
-          "readOnly": true
+          "x-go-name": "Title"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -5526,8 +5482,9 @@
       "x-go-package": "github.com/prometheus/alertmanager/timeinterval"
     },
     "URL": {
+      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
       "type": "object",
-      "title": "URL is a custom URL type that allows validation at configuration load time.",
+      "title": "A URL represents a parsed URL (technically, a URI reference).",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -5560,7 +5517,7 @@
           "$ref": "#/definitions/Userinfo"
         }
       },
-      "x-go-package": "github.com/prometheus/common/config"
+      "x-go-package": "net/url"
     },
     "Userinfo": {
       "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
@@ -6039,12 +5996,11 @@
       "$ref": "#/definitions/gettableSilence"
     },
     "gettableSilences": {
+      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
       },
-      "x-go-name": "GettableSilences",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/gettableSilences"
     },
     "labelSet": {
@@ -6174,7 +6130,6 @@
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "postableSilence": {
-      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",
@@ -6215,6 +6170,8 @@
           "x-go-name": "StartsAt"
         }
       },
+      "x-go-name": "PostableSilence",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/postableSilence"
     },
     "receiver": {
