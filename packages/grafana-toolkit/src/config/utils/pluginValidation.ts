@@ -36,3 +36,12 @@ export const getPluginJson = (path: string): PluginMeta => {
 
   return pluginJson as PluginMeta;
 };
+
+export const isValidRootUrl = (rootUrl: string): boolean => {
+  try {
+    new URL(rootUrl);
+    return true;
+  } catch (err) {
+    return false;
+  }
+};
