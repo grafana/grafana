@@ -21,7 +21,7 @@ export function GetStartedWithApp({ plugin }: Props): React.ReactElement | null 
   }
 
   // Enforce RBAC
-  if (!contextSrv.hasAccessInMetadata(AccessControlAction.PluginsToggle, plugin, true)) {
+  if (!contextSrv.hasAccessInMetadata(AccessControlAction.PluginsSettingsWrite, plugin, true)) {
     return null;
   }
 

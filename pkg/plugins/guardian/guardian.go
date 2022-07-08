@@ -75,7 +75,7 @@ func (g *guardian) CanList(pluginID string) bool {
 	hasAccess, err := g.acc.Evaluate(g.ctx, g.user, ac.EvalAny(
 		ac.EvalPermission(plugins.ActionIntall),
 		ac.EvalPermission(datasources.ActionCreate),
-		ac.EvalPermission(plugins.ActionToggle, plugins.ScopeProvider.GetResourceScope(pluginID)),
+		ac.EvalPermission(plugins.ActionSettingsWrite, plugins.ScopeProvider.GetResourceScope(pluginID)),
 	))
 	if err != nil {
 		logger.Warn("failed to evaluate user permissions", "user", g.user.Login, "plugin", pluginID, "error", err)

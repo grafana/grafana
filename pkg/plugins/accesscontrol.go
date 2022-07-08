@@ -7,8 +7,8 @@ import (
 
 const (
 	// Plugins actions
-	ActionIntall = "plugins:install"
-	ActionToggle = "plugins:toggle"
+	ActionIntall        = "plugins:install"
+	ActionSettingsWrite = "plugins.settings:write"
 
 	// App Plugins actions
 	ActionAppAccess = "plugins.app:access"
@@ -17,14 +17,14 @@ const (
 var (
 	ScopeProvider = ac.NewScopeProvider("plugins")
 	// Protects access to the Configuration > Plugins page
-	// FIXME: In another iteration we'll add a settings permission check as well
-	ConfigurationAccessEvaluator = ac.EvalPermission(ActionToggle)
+	// FIXME: In another iteration we'll add a read settings permission check as well
+	ConfigurationAccessEvaluator = ac.EvalPermission(ActionSettingsWrite)
 
 	// Protects access to the Server Admin > Plugins page
-	// FIXME: In another iteration we'll add a settings permission check as well
+	// FIXME: In another iteration we'll add a read settings permission check as well
 	AdminAccessEvaluator = ac.EvalAny(
 		ac.EvalPermission(ActionIntall),
-		ac.EvalPermission(ActionToggle),
+		ac.EvalPermission(ActionSettingsWrite),
 	)
 )
 
@@ -48,7 +48,7 @@ func DeclareRBACRoles(acService ac.AccessControl) error {
 			Description: "Enable and disable plugins, view and edit plugins' settings",
 			Group:       "Plugins",
 			Permissions: []ac.Permission{
-				{Action: ActionToggle, Scope: ScopeProvider.GetResourceAllScope()},
+				{Action: ActionSettingsWrite, Scope: ScopeProvider.GetResourceAllScope()},
 			},
 		},
 		Grants: []string{string(models.ROLE_ADMIN)},
@@ -61,7 +61,7 @@ func DeclareRBACRoles(acService ac.AccessControl) error {
 			Group:       "Plugins",
 			Permissions: []ac.Permission{
 				{Action: ActionIntall},
-				{Action: ActionToggle, Scope: ScopeProvider.GetResourceAllScope()},
+				{Action: ActionSettingsWrite, Scope: ScopeProvider.GetResourceAllScope()},
 			},
 		},
 		Grants: []string{ac.RoleGrafanaAdmin},
