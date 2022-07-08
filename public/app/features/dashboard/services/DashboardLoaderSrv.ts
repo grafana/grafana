@@ -8,6 +8,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import kbn from 'app/core/utils/kbn';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { getGrafanaStorage } from 'app/features/storage/storage';
 import { DashboardRoutes } from 'app/types';
 
 import { appEvents } from '../../../core/core';
@@ -31,7 +32,7 @@ export class DashboardLoaderSrv {
     };
   }
 
-  loadDashboard(type: UrlQueryValue, slug: any, uid: any) {
+  loadDashboard(type: UrlQueryValue, slug: string, uid: string) {
     let promise;
 
     if (type === 'script') {
@@ -52,15 +53,7 @@ export class DashboardLoaderSrv {
           return this._dashboardLoadFailed('Public Dashboard Not found', true);
         });
     } else if (type === DashboardRoutes.Path) {
-      // explore dashboards as code
-      promise = backendSrv.getDashboardFromStorage(slug).then((result: any) => {
-        // Force everythign to match the request path
-        result.meta.slug = slug;
-        result.meta.uid = slug;
-        result.dashboard.uid = slug;
-        delete result.dashboard.id; // remove the internal ID
-        return result;
-      });
+      promise = getGrafanaStorage().getDashboard(slug);
     } else {
       promise = backendSrv
         .getDashboardByUid(uid)
@@ -76,7 +69,7 @@ export class DashboardLoaderSrv {
         });
     }
 
-    promise.then((result: any) => {
+    promise.then((result) => {
       if (result.meta.dashboardNotFound !== true) {
         impressionSrv.addDashboardImpression(result.dashboard.id);
       }

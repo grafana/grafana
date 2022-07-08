@@ -18,7 +18,7 @@ import { ExportView } from './ExportView';
 import { FileView } from './FileView';
 import { FolderView } from './FolderView';
 import { RootView } from './RootView';
-import { getGrafanaStorage } from './helper';
+import { getGrafanaStorage } from './storage';
 import { StorageView } from './types';
 
 interface RouteParams {

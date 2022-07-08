@@ -17,7 +17,7 @@ export interface DashboardMeta {
   canShare?: boolean;
   canStar?: boolean;
   canAdmin?: boolean;
-  url?: string;
+  slug?: string;
   folderId?: number;
   folderUid?: string;
   canMakeEditable?: boolean;

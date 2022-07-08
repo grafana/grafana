@@ -5,7 +5,7 @@ import SVG from 'react-inlinesvg';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, ButtonGroup, Field, FileDropzone, useStyles2 } from '@grafana/ui';
 
-import { getGrafanaStorage } from './helper';
+import { getGrafanaStorage } from './storage';
 import { UploadReponse } from './types';
 
 interface Props {
