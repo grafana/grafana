@@ -1,4 +1,6 @@
 import { DataFrame, FieldType, getParser, Labels, LogsParsers } from '@grafana/data';
+import { consoleSandbox } from '@sentry/utils';
+import { initialTextBoxVariableModelState } from 'app/features/variables/textbox/reducer';
 
 export function dataFrameHasLokiError(frame: DataFrame): boolean {
   const labelSets: Labels[] = frame.fields.find((f) => f.name === 'labels')?.values.toArray() ?? [];
@@ -26,4 +28,15 @@ export function extractLogParserFromDataFrame(frame: DataFrame): { hasLogfmt: bo
   });
 
   return { hasLogfmt, hasJSON };
+}
+
+export function extractHasErrorLabelFromDataFrame(frame: DataFrame): boolean {
+  const labelField = frame.fields.find((field) => field.name === 'labels' && field.type === FieldType.other);
+  if (labelField == null) {
+    return false;
+  }
+
+  const labels: { [key: string]: string }[] = labelField.values.toArray();
+  const hasErrorLabel = labels.find((label) => label['__error__']);
+  return !!hasErrorLabel;
 }
