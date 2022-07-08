@@ -37,7 +37,7 @@ export class UsersActionBar extends PureComponent<Props> {
       { label: 'Users', value: 'users' },
       { label: `Pending Invites (${pendingInvitesCount})`, value: 'invites' },
     ];
-    const canAddToOrg : boolean =
+    const canAddToOrg: boolean =
       contextSrv.hasAccess(AccessControlAction.UsersCreate, canInvite) ||
       contextSrv.hasAccess(AccessControlAction.OrgUsersAdd, canInvite);
 
