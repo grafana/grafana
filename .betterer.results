@@ -6054,9 +6054,6 @@ exports[`better eslint`] = {
     "public/app/features/transformers/utils.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/features/users/UsersActionBar.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "public/app/features/users/__mocks__/userMocks.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
@@ -9702,11 +9699,10 @@ exports[`better eslint`] = {
     "public/app/plugins/panel/histogram/Histogram.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Do not use any type assertions.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Do not use any type assertions.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"]
+      [0, 0, 0, "Do not use any type assertions.", "2"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
+      [0, 0, 0, "Do not use any type assertions.", "4"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "5"]
     ],
     "public/app/plugins/panel/icon/IconPanel.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],

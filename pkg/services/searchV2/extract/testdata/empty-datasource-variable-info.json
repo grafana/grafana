@@ -1,0 +1,21 @@
+{
+  "id": 209,
+  "title": "ds-variables",
+  "tags": null,
+  "templateVars": [
+    "sqllite"
+  ],
+  "panels": [
+    {
+      "id": 1,
+      "title": "usersss!",
+      "type": "table",
+      "pluginVersion": "9.1.0-pre"
+    }
+  ],
+  "schemaVersion": 36,
+  "linkCount": 0,
+  "timeFrom": "now-6h",
+  "timeTo": "now",
+  "timezone": ""
+}
