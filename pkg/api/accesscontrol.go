@@ -429,6 +429,13 @@ var orgsCreateAccessEvaluator = ac.EvalAll(
 	ac.EvalPermission(ActionOrgsCreate),
 )
 
+// usersInviteEvaluator is used to protect the "Configuration > Users > Invite" page access
+// accessible to org admins and server admins by default
+var usersInviteEvaluator = ac.EvalAny(
+	ac.EvalPermission(ac.ActionUsersCreate),
+	ac.EvalPermission(ac.ActionOrgUsersAdd),
+)
+
 // teamsAccessEvaluator is used to protect the "Configuration > Teams" page access
 // grants access to a user when they can either create teams or can read and update a team
 var teamsAccessEvaluator = ac.EvalAny(
@@ -456,7 +463,10 @@ var teamsEditAccessEvaluator = ac.EvalAll(
 var apiKeyAccessEvaluator = ac.EvalPermission(ac.ActionAPIKeyRead)
 
 // serviceAccountAccessEvaluator is used to protect the "Configuration > Service accounts" page access
-var serviceAccountAccessEvaluator = ac.EvalPermission(serviceaccounts.ActionRead)
+var serviceAccountAccessEvaluator = ac.EvalAny(
+	ac.EvalPermission(serviceaccounts.ActionRead),
+	ac.EvalPermission(serviceaccounts.ActionCreate),
+)
 
 // Metadata helpers
 // getAccessControlMetadata returns the accesscontrol metadata associated with a given resource

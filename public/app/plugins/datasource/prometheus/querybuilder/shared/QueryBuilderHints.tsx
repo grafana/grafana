@@ -3,29 +3,38 @@ import React, { useState, useEffect } from 'react';
 
 import { GrafanaTheme2, PanelData, QueryHint } from '@grafana/data';
 import { Button, Tooltip, useStyles2 } from '@grafana/ui';
+import { LokiDatasource } from 'app/plugins/datasource/loki/datasource';
 
 import { PrometheusDatasource } from '../../datasource';
-import { promQueryModeller } from '../PromQueryModeller';
-import { buildVisualQueryFromString } from '../parsing';
-import { PromVisualQuery } from '../types';
 
-export interface Props {
-  query: PromVisualQuery;
-  datasource: PrometheusDatasource;
-  onChange: (update: PromVisualQuery) => void;
+import { LokiAndPromQueryModellerBase, PromLokiVisualQuery } from './LokiAndPromQueryModellerBase';
+
+export interface Props<T extends PromLokiVisualQuery> {
+  query: T;
+  datasource: PrometheusDatasource | LokiDatasource;
+  queryModeller: LokiAndPromQueryModellerBase;
+  buildVisualQueryFromString: (expr: string) => { query: T };
+  onChange: (update: T) => void;
   data?: PanelData;
 }
 
-export const PromQueryBuilderHints = React.memo<Props>(({ datasource, query, onChange, data }) => {
+export const QueryBuilderHints = <T extends PromLokiVisualQuery>({
+  datasource,
+  query: visualQuery,
+  onChange,
+  data,
+  queryModeller,
+  buildVisualQueryFromString,
+}: Props<T>) => {
   const [hints, setHints] = useState<QueryHint[]>([]);
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
-    const promQuery = { expr: promQueryModeller.renderQuery(query), refId: '' };
+    const query = { expr: queryModeller.renderQuery(visualQuery), refId: '' };
     // For now show only actionable hints
-    const hints = datasource.getQueryHints(promQuery, data?.series || []).filter((hint) => hint.fix?.action);
+    const hints = datasource.getQueryHints(query, data?.series || []).filter((hint) => hint.fix?.action);
     setHints(hints);
-  }, [datasource, query, onChange, data, styles.hint]);
+  }, [datasource, visualQuery, data, queryModeller]);
 
   return (
     <>
@@ -36,10 +45,10 @@ export const PromQueryBuilderHints = React.memo<Props>(({ datasource, query, onC
               <Tooltip content={`${hint.label} ${hint.fix?.label}`} key={hint.type}>
                 <Button
                   onClick={() => {
-                    const promQuery = { expr: promQueryModeller.renderQuery(query), refId: '' };
-                    const newPromQuery = datasource.modifyQuery(promQuery, hint!.fix!.action);
-                    const visualQuery = buildVisualQueryFromString(newPromQuery.expr);
-                    return onChange(visualQuery.query);
+                    const query = { expr: queryModeller.renderQuery(visualQuery), refId: '' };
+                    const newQuery = datasource.modifyQuery(query, hint!.fix!.action);
+                    const newVisualQuery = buildVisualQueryFromString(newQuery.expr);
+                    return onChange(newVisualQuery.query);
                   }}
                   fill="outline"
                   size="sm"
@@ -54,16 +63,15 @@ export const PromQueryBuilderHints = React.memo<Props>(({ datasource, query, onC
       )}
     </>
   );
-});
+};
 
-PromQueryBuilderHints.displayName = 'PromQueryBuilderHints';
+QueryBuilderHints.displayName = 'QueryBuilderHints';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css`
       display: flex;
-      margin-bottom: ${theme.spacing(1)};
-      align-items: center;
+      align-items: start;
     `,
     hint: css`
       margin-right: ${theme.spacing(1)};

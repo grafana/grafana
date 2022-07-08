@@ -60,7 +60,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/datasources/edit/*", authorize(reqOrgAdmin, datasources.EditPageAccess), hs.Index)
 	r.Get("/org/users", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionOrgUsersRead)), hs.Index)
 	r.Get("/org/users/new", reqOrgAdmin, hs.Index)
-	r.Get("/org/users/invite", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionUsersCreate)), hs.Index)
+	r.Get("/org/users/invite", authorize(reqOrgAdmin, usersInviteEvaluator), hs.Index)
 	r.Get("/org/teams", authorize(reqCanAccessTeams, ac.EvalPermission(ac.ActionTeamsRead)), hs.Index)
 	r.Get("/org/teams/edit/*", authorize(reqCanAccessTeams, teamsEditAccessEvaluator), hs.Index)
 	r.Get("/org/teams/new", authorize(reqCanAccessTeams, ac.EvalPermission(ac.ActionTeamsCreate)), hs.Index)
@@ -247,7 +247,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 			// invites
 			orgRoute.Get("/invites", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionUsersCreate)), routing.Wrap(hs.GetPendingOrgInvites))
-			orgRoute.Post("/invites", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionUsersCreate)), quota("user"), routing.Wrap(hs.AddOrgInvite))
+			orgRoute.Post("/invites", authorize(reqOrgAdmin, usersInviteEvaluator), quota("user"), routing.Wrap(hs.AddOrgInvite))
 			orgRoute.Patch("/invites/:code/revoke", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionUsersCreate)), routing.Wrap(hs.RevokeInvite))
 
 			// prefs
@@ -563,6 +563,7 @@ func (hs *HTTPServer) registerRoutes() {
 		if hs.Features.IsEnabled(featuremgmt.FlagExport) {
 			adminRoute.Get("/export", reqGrafanaAdmin, routing.Wrap(hs.ExportService.HandleGetStatus))
 			adminRoute.Post("/export", reqGrafanaAdmin, routing.Wrap(hs.ExportService.HandleRequestExport))
+			adminRoute.Post("/export/stop", reqGrafanaAdmin, routing.Wrap(hs.ExportService.HandleRequestStop))
 		}
 
 		adminRoute.Post("/encryption/rotate-data-keys", reqGrafanaAdmin, routing.Wrap(hs.AdminRotateDataEncryptionKeys))
