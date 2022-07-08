@@ -387,7 +387,7 @@ func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, req *back
 		model.QueryString = model.Expression
 
 		region := model.Region
-		if model.Region != "" || region == defaultRegion {
+		if model.Region == "" || region == defaultRegion {
 			dsInfo, err := e.getDSInfo(req.PluginContext)
 			if err != nil {
 				return nil, err
