@@ -5,12 +5,18 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"path/filepath"
 	"strings"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
+	"golang.org/x/sync/errgroup"
 )
 
 var errFileTooBig = response.Error(400, "Please limit file uploaded under 1MB", errors.New("file is too big"))
@@ -21,6 +27,9 @@ type HTTPStorageService interface {
 	Read(c *models.ReqContext) response.Response
 	Delete(c *models.ReqContext) response.Response
 	Upload(c *models.ReqContext) response.Response
+
+	// Dashboard/Folder hack
+	GetDashboard(c *models.ReqContext, path string) (*dtos.DashboardFullWithMeta, error)
 }
 
 type httpStorage struct {
@@ -50,6 +59,121 @@ func UploadErrorToStatusCode(err error) int {
 	default:
 		return 500
 	}
+}
+
+func (s *httpStorage) GetDashboard(c *models.ReqContext, path string) (*dtos.DashboardFullWithMeta, error) {
+	// TODO: permission check!
+	if strings.HasSuffix(path, ".json") {
+		return nil, fmt.Errorf("invalid path, must not include .json")
+	}
+
+	var file *filestorage.File
+	var frame *data.Frame
+	g, ctx := errgroup.WithContext(c.Req.Context())
+
+	g.Go(func() error {
+		f, err := s.store.Read(ctx, c.SignedInUser, path+".json")
+		file = f
+		return err
+	})
+	g.Go(func() error {
+		f, err := s.store.List(ctx, c.SignedInUser, path)
+		frame = f.Frame
+		return err
+	})
+
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
+
+	if file == nil {
+		if frame != nil {
+			return getFolderDashboard(path, frame)
+		}
+		return nil, errors.New("failed to load dashboard")
+	}
+
+	js, err := simplejson.NewJson(file.Contents)
+	if err != nil {
+		return nil, err
+	}
+
+	return &dtos.DashboardFullWithMeta{
+		Dashboard: js,
+		Meta: dtos.DashboardMeta{
+			CanSave: true,
+			CanEdit: true,
+			CanStar: true,
+			Slug:    path,
+		},
+	}, nil
+}
+
+func getFolderDashboard(path string, frame *data.Frame) (*dtos.DashboardFullWithMeta, error) {
+	dash := models.NewDashboard(path)
+
+	var fname *data.Field
+	var ftype *data.Field
+	var ftitle *data.Field
+	for _, f := range frame.Fields {
+		if f.Name == "title" {
+			ftitle = f
+		}
+		if f.Name == "mediaType" {
+			ftype = f
+		}
+		if f.Name == "name" {
+			fname = f
+		}
+	}
+
+	if fname == nil || ftype == nil {
+		return nil, nil
+	}
+
+	count := fname.Len()
+	if count < 1 {
+		return nil, nil
+	}
+
+	names := data.NewFieldFromFieldType(data.FieldTypeString, count)
+	paths := data.NewFieldFromFieldType(data.FieldTypeString, count)
+	names.Name = "name"
+	paths.Name = "path"
+
+	for i := 0; i < count; i++ {
+		name := fmt.Sprintf("%v", fname.At(i))
+		name = strings.TrimSuffix(name, ".json")
+		paths.Set(i, filestorage.Join(path, name))
+		names.Set(i, name)
+
+		if ftitle != nil {
+			names.Set(i, ftitle.At(i))
+		}
+	}
+	f2 := data.NewFrame("", names, paths, ftype)
+	frame.SetMeta(&data.FrameMeta{
+		Type: data.FrameTypeDirectoryListing,
+	})
+
+	// HACK alert... stick the listing in the first panel
+	panel := map[string]interface{}{
+		"__listing": f2,
+	}
+	arr := []interface{}{panel}
+	dash.Data.Set("panels", arr)
+
+	return &dtos.DashboardFullWithMeta{
+		Dashboard: dash.Data,
+		Meta: dtos.DashboardMeta{
+			Slug:        path,
+			FolderUid:   path,
+			CanSave:     false,
+			CanEdit:     false,
+			IsFolder:    true,
+			FolderTitle: filepath.Base(path),
+		},
+	}, nil
 }
 
 func (s *httpStorage) Upload(c *models.ReqContext) response.Response {

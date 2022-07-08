@@ -153,6 +153,12 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       document.title = dashboard.title + ' - ' + Branding.AppTitle;
     }
 
+    // in folder browse view we need the dashboard to reload on change
+    if (match.path === '/g/:slug*' && prevProps.match.params.slug !== match.params.slug) {
+      this.initDashboard();
+      return;
+    }
+
     if (
       prevProps.match.params.uid !== match.params.uid ||
       (routeReloadCounter !== undefined && this.forceRouteReloadCounter !== routeReloadCounter)
@@ -328,6 +334,10 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
     if (!dashboard) {
       return <DashboardLoading initPhase={this.props.initPhase} />;
+    }
+
+    if (dashboard.meta.isFolder) {
+      return <div>TODO: foler view</div>;
     }
 
     const inspectPanel = this.getInspectPanel();

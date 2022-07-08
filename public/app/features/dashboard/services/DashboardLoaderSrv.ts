@@ -8,6 +8,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import kbn from 'app/core/utils/kbn';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { DashboardRoutes } from 'app/types';
 
 import { appEvents } from '../../../core/core';
 
@@ -50,6 +51,16 @@ export class DashboardLoaderSrv {
         .catch(() => {
           return this._dashboardLoadFailed('Public Dashboard Not found', true);
         });
+    } else if (type === DashboardRoutes.Path) {
+      // explore dashboards as code
+      promise = backendSrv.getDashboardByPath(slug).then((result: any) => {
+        // Force everythign to match the request path
+        result.meta.slug = slug;
+        result.meta.uid = slug;
+        result.dashboard.uid = slug;
+        delete result.dashboard.id; // remove the internal ID
+        return result;
+      });
     } else {
       promise = backendSrv
         .getDashboardByUid(uid)

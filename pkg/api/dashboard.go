@@ -72,7 +72,23 @@ func (hs *HTTPServer) TrimDashboard(c *models.ReqContext) response.Response {
 }
 
 func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
-	uid := web.Params(c.Req)[":uid"]
+	params := web.Params(c.Req)
+	path, ok := params["*"] // path based endpoint
+	uid := params[":uid"]
+
+	// Check for path based UIDs (from file systems)
+	if ok || uid == "" {
+		dto, err := hs.StorageService.GetDashboard(c, path)
+		if err != nil {
+			return response.Error(500, "error getting path dashboard", err)
+		}
+		if dto != nil {
+			c.TimeRequest(metrics.MApiDashboardGet)
+			return response.JSON(200, dto)
+		}
+		uid = path // assume the path is acutally UID
+	}
+
 	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgId, 0, uid)
 	if rsp != nil {
 		return rsp
