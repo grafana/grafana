@@ -115,7 +115,7 @@ func newStandardStorageService(sql *sqlstore.SQLStore, globalRoots []storageRunt
 		sql:  sql,
 		tree: res,
 		cfg: storageServiceConfig{
-			allowUnsanitizedSvgUpload: false
+			allowUnsanitizedSvgUpload: false,
 		},
 	}
 }
