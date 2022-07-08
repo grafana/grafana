@@ -334,46 +334,34 @@ export function join(tables: AlignedData[], nullModes?: number[][]) {
   return data;
 }
 
-// Test a few samples to see if the values are ascending
+// Quick test if the first and last points look to be ascending
 // Only exported for tests
-export function isLikelyAscendingVector(data: Vector, samples = 50) {
-  const len = data.length;
+export function isLikelyAscendingVector(data: Vector): boolean {
+  let first: any = undefined;
 
-  // empty or single value
-  if (len <= 1) {
-    return true;
-  }
-
-  // skip leading & trailing nullish
-  let firstIdx = 0;
-  let lastIdx = len - 1;
-
-  while (firstIdx <= lastIdx && data.get(firstIdx) == null) {
-    firstIdx++;
-  }
-
-  while (lastIdx >= firstIdx && data.get(lastIdx) == null) {
-    lastIdx--;
-  }
-
-  // all nullish or one value surrounded by nullish
-  if (lastIdx <= firstIdx) {
-    return true;
-  }
-
-  const stride = Math.max(1, Math.floor((lastIdx - firstIdx + 1) / samples));
-
-  for (let prevVal = data.get(firstIdx), i = firstIdx + stride; i <= lastIdx; i += stride) {
-    const v = data.get(i);
-
+  for (let idx = 0; idx < data.length; idx++) {
+    const v = data.get(idx);
     if (v != null) {
-      if (v <= prevVal) {
-        return false;
+      if (first != null) {
+        if (first > v) {
+          return false; // descending
+        }
+        break;
       }
-
-      prevVal = v;
+      first = v;
     }
   }
 
-  return true;
+  let idx = data.length - 1;
+  while (idx >= 0) {
+    const v = data.get(idx--);
+    if (v != null) {
+      if (first > v) {
+        return false;
+      }
+      return true;
+    }
+  }
+
+  return true; // only one non-null point
 }
