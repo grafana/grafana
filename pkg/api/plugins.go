@@ -20,9 +20,9 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/guardian"
 	"github.com/grafana/grafana/pkg/plugins/manager/installer"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -37,32 +37,12 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 	// "1" => filter out non-core plugins
 	coreFilter := c.Query("core")
 
-	hasAccess := ac.HasAccess(hs.AccessControl, c)
-
-	// When using access control, should be able to list all data sources installed:
-	//  * anyone that can create a data source
-	//  * anyone that can install a plugin
-	// Organization or Server Admins should be able to list non-core plugins
-	// (to fix once RBAC covers everything related to GetPluginList)
-	// TODO what about toggle a non core plugin? Should they get the list?
-	canListNonCorePlugins := hasAccess(ac.ReqOrgOrServerAdmin, ac.EvalAny(
-		ac.EvalPermission(plugins.ActionIntall),
-		ac.EvalPermission(datasources.ActionCreate)),
-	) || c.HasRole(models.ROLE_ADMIN) || c.IsGrafanaAdmin
-
-	// Request to filter out core plugins and cannot see non-core ones => early return empty list
-	if !canListNonCorePlugins && coreFilter == "0" {
-		return response.JSON(http.StatusOK, []dtos.PluginList{})
-	}
-
-	// Force filtering non-core plugins
-	if !canListNonCorePlugins {
-		coreFilter = "1"
-	}
+	nonCoreGuard := guardian.New(c.Req.Context(), hs.AccessControl, c.SignedInUser)
+	canListNonCorePlugins := nonCoreGuard.CanListAll()
 
 	pluginSettingsMap, err := hs.pluginSettings(c.Req.Context(), c.OrgId)
 	if err != nil {
-		return response.Error(500, "Failed to get list of plugins", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get list of plugins", err)
 	}
 
 	// Filter plugins
@@ -77,6 +57,11 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 
 		// filter out core plugins
 		if (coreFilter == "0" && pluginDef.IsCorePlugin()) || (coreFilter == "1" && !pluginDef.IsCorePlugin()) {
+			continue
+		}
+
+		// filter out non-core plugins on permissions
+		if !pluginDef.IsCorePlugin() && !canListNonCorePlugins && !nonCoreGuard.CanList(pluginDef.ID) {
 			continue
 		}
 
