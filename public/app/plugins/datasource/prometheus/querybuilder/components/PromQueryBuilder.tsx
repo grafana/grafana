@@ -133,9 +133,7 @@ async function getMetrics(
     await datasource.languageProvider.loadMetricsMetadata();
   }
 
-  // Error handling for https://github.com/grafana/support-escalations/issues/2985
-  // Metrics metadata returns undefined on cloud grafana and breaks
-  // when mapping metrics to metadata
+  // Error handling for when metrics metadata returns as undefined
   if (!datasource.languageProvider.metricsMetadata) {
     datasource.languageProvider.metricsMetadata = {};
   }
