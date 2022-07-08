@@ -76,6 +76,7 @@ func (hs *HTTPServer) getProfileNode(c *models.ReqContext) *dtos.NavLink {
 }
 
 func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error) {
+	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	enabledPlugins, err := hs.enabledPlugins(c.Req.Context(), c.OrgId)
 	if err != nil {
 		return nil, err
@@ -84,6 +85,11 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 	appLinks := []*dtos.NavLink{}
 	for _, plugin := range enabledPlugins[plugins.App] {
 		if !plugin.Pinned {
+			continue
+		}
+
+		if !hasAccess(ac.ReqSignedIn,
+			ac.EvalPermission(plugins.ActionAppAccess, plugins.ScopeProvider.GetResourceScope(plugin.ID))) {
 			continue
 		}
 
@@ -456,6 +462,15 @@ func (hs *HTTPServer) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm b
 			Id:   "library-panels",
 			Url:  hs.Cfg.AppSubURL + "/library-panels",
 			Icon: "library-panel",
+		})
+	}
+
+	if hs.Features.IsEnabled(featuremgmt.FlagScenes) {
+		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
+			Text: "Scenes",
+			Id:   "scenes",
+			Url:  hs.Cfg.AppSubURL + "/scenes",
+			Icon: "apps",
 		})
 	}
 
