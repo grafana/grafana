@@ -2196,6 +2196,25 @@
             }
           }
         }
+      },
+      "delete": {
+        "consumes": [
+          "application/json"
+        ],
+        "tags": [
+          "provisioning",
+          "stable"
+        ],
+        "summary": "Clears the notification policy tree.",
+        "operationId": "RouteResetPolicyTree",
+        "responses": {
+          "202": {
+            "description": "Ack",
+            "schema": {
+              "$ref": "#/definitions/Ack"
+            }
+          }
+        }
       }
     },
     "/api/v1/provisioning/templates": {
@@ -6130,6 +6149,7 @@
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "postableSilence": {
+      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",
