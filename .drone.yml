@@ -1,6 +1,49 @@
 ---
 depends_on: []
 kind: pipeline
+name: pr-verify-drone
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.15
+  name: identify-runner
+- commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.52/grabpl
+  - chmod +x bin/grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: grabpl
+- commands:
+  - ./bin/grabpl verify-drone
+  depends_on:
+  - grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: lint-drone
+trigger:
+  event:
+  - pull_request
+  paths:
+    exclude:
+    - docs/**
+    - '*.md'
+    include:
+    - scripts/drone/**
+    - .drone.yml
+    - .drone.star
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+depends_on: []
+kind: pipeline
 name: pr-test-frontend
 node:
   type: no-parallel
@@ -116,12 +159,6 @@ steps:
   - verify-gen-cue
   image: grafana/build-container:1.5.7
   name: wire-install
-- commands:
-  - ./bin/grabpl verify-drone
-  depends_on:
-  - grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: lint-drone
 - commands:
   - |-
     echo -e "unknwon
@@ -4843,6 +4880,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 74b8d8bd1c224fb4b1eb263d989588095bd9001519bebbe9a4fc5a9aa924aa41
+hmac: 55383abbbc205824d35aa689a0e00f374e74520d77dc387e354b063e4ade0869
 
 ...

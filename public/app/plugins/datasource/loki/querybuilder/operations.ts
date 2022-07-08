@@ -284,7 +284,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       name: 'Label filter expression',
       params: [
         { name: 'Label', type: 'string' },
-        { name: 'Operator', type: 'string', options: ['=', '!=', '>', '<', '>=', '<='] },
+        { name: 'Operator', type: 'string', options: ['=', '!=', ' =~', '!~', '>', '<', '>=', '<='] },
         { name: 'Value', type: 'string' },
       ],
       defaultParams: ['', '=', ''],
