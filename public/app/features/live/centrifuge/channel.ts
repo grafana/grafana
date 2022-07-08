@@ -86,32 +86,38 @@ export class CentrifugeLiveChannel<T = any> {
         this.currentStatus.timestamp = Date.now();
         this.sendStatus();
       }
-    }).on('error', (ctx: SubscriptionErrorContext) => {
-      this.currentStatus.timestamp = Date.now();
-      this.currentStatus.error = ctx.error.message;
-      this.sendStatus();
-    }).on('subscribed', (ctx: SubscribedContext) => {
-      this.currentStatus.timestamp = Date.now();
-      this.currentStatus.state = LiveChannelConnectionState.Connected;
-      delete this.currentStatus.error;
+    })
+      .on('error', (ctx: SubscriptionErrorContext) => {
+        this.currentStatus.timestamp = Date.now();
+        this.currentStatus.error = ctx.error.message;
+        this.sendStatus();
+      })
+      .on('subscribed', (ctx: SubscribedContext) => {
+        this.currentStatus.timestamp = Date.now();
+        this.currentStatus.state = LiveChannelConnectionState.Connected;
+        delete this.currentStatus.error;
 
-      if (ctx.data?.schema) {
-        this.lastMessageWithSchema = ctx.data as DataFrameJSON;
-      }
-      this.sendStatus(ctx.data);
-    }).on('unsubscribed', (ctx: UnsubscribedContext) => {
-      this.currentStatus.timestamp = Date.now();
-      this.currentStatus.state = LiveChannelConnectionState.Disconnected;
-      this.sendStatus();
-    }).on('subscribing', (ctx: UnsubscribedContext) => {
-      this.currentStatus.timestamp = Date.now();
-      this.currentStatus.state = LiveChannelConnectionState.Disconnected;
-      this.sendStatus();
-    }).on('join', (ctx: JoinContext) => {
-      this.stream.next({ type: LiveChannelEventType.Join, user: ctx.info.user });
-    }).on('leave', (ctx: LeaveContext) => {
-      this.stream.next({ type: LiveChannelEventType.Leave, user: ctx.info.user });
-    });
+        if (ctx.data?.schema) {
+          this.lastMessageWithSchema = ctx.data as DataFrameJSON;
+        }
+        this.sendStatus(ctx.data);
+      })
+      .on('unsubscribed', (ctx: UnsubscribedContext) => {
+        this.currentStatus.timestamp = Date.now();
+        this.currentStatus.state = LiveChannelConnectionState.Disconnected;
+        this.sendStatus();
+      })
+      .on('subscribing', (ctx: UnsubscribedContext) => {
+        this.currentStatus.timestamp = Date.now();
+        this.currentStatus.state = LiveChannelConnectionState.Disconnected;
+        this.sendStatus();
+      })
+      .on('join', (ctx: JoinContext) => {
+        this.stream.next({ type: LiveChannelEventType.Join, user: ctx.info.user });
+      })
+      .on('leave', (ctx: LeaveContext) => {
+        this.stream.next({ type: LiveChannelEventType.Leave, user: ctx.info.user });
+      });
   }
 
   private sendStatus(message?: any) {

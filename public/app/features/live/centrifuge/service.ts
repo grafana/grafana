@@ -1,4 +1,4 @@
-import {Centrifuge, State} from 'centrifuge';
+import { Centrifuge, State } from 'centrifuge';
 import { BehaviorSubject, Observable, share, startWith } from 'rxjs';
 
 import {
@@ -147,7 +147,7 @@ export class CentrifugeService implements CentrifugeSrv {
       await this.connectionBlocker;
     }
     const subscription = this.centrifuge.newSubscription(channel.id, {
-      data: channel.addr.data
+      data: channel.addr.data,
     });
     channel.subscription = subscription;
     channel.initalize();
