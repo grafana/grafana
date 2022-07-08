@@ -73,8 +73,7 @@ func TestIntegrationPlaylistDataAccess(t *testing.T) {
 	t.Run("Delete playlist that doesn't exist", func(t *testing.T) {
 		deleteQuery := models.DeletePlaylistCommand{UID: "654312", OrgId: 1}
 		err := ss.DeletePlaylist(context.Background(), &deleteQuery)
-		require.Error(t, err)
-		require.ErrorIs(t, err, models.ErrPlaylistNotFound)
+		require.NoError(t, err)
 	})
 
 	t.Run("Delete playlist with invalid command yields error", func(t *testing.T) {

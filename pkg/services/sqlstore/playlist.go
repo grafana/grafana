@@ -54,6 +54,7 @@ func (ss *SQLStore) UpdatePlaylist(ctx context.Context, cmd *models.UpdatePlayli
 
 		existingPlaylist := models.Playlist{UID: cmd.UID, OrgId: cmd.OrgId}
 		_, err := sess.Get(&existingPlaylist)
+
 		if err != nil {
 			return err
 		}
@@ -120,10 +121,7 @@ func (ss *SQLStore) DeletePlaylist(ctx context.Context, cmd *models.DeletePlayli
 
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		playlist := models.Playlist{UID: cmd.UID, OrgId: cmd.OrgId}
-		exists, err := sess.Get(&playlist)
-		if !exists {
-			return models.ErrPlaylistNotFound
-		}
+		_, err := sess.Get(&playlist)
 		if err != nil {
 			return err
 		}
