@@ -107,7 +107,6 @@ def pr_test_backend():
         wire_install_step(),
     ]
     test_steps = [
-        lint_drone_step(),
         codespell_step(),
         shellcheck_step(),
         lint_backend_step(edition="oss"),
