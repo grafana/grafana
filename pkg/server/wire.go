@@ -276,6 +276,7 @@ var wireBasicSet = wire.NewSet(
 	userimpl.ProvideService,
 	orgimpl.ProvideService,
 	datasourceservice.ProvideDataSourceMigrationService,
+	secretsStore.ProvidePluginSecretMigrationService,
 	secretsMigrations.ProvideSecretMigrationService,
 	wire.Bind(new(secretsMigrations.SecretMigrationService), new(*secretsMigrations.SecretMigrationServiceImpl)),
 )
