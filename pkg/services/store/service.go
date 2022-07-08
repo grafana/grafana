@@ -26,6 +26,9 @@ var ErrFileAlreadyExists = errors.New("file exists")
 
 const RootPublicStatic = "public-static"
 const RootResources = "resources"
+const RootSystem = "system"
+
+const SystemBrandingStorage = "system/branding"
 
 const MAX_UPLOAD_SIZE = 3 * 1024 * 1024 // 3MB
 
@@ -96,6 +99,13 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 					setDescription("Upload custom resource files"))
 		}
 
+		storages = append(storages,
+			newSQLStorage(RootSystem,
+				"System",
+				&StorageSQLConfig{orgId: orgId},
+				sql,
+			).setBuiltin(true).setDescription("Grafana system storage"))
+
 		return storages
 	}
 
@@ -157,20 +167,32 @@ type UploadRequest struct {
 
 func storageSupportsMutatingOperations(path string) bool {
 	// TODO: this is temporary - make it rbac-driven
-	return strings.HasPrefix(path, RootResources+"/") || path == RootResources
+	return strings.HasPrefix(path, RootResources+"/") || path == RootResources || path == RootSystem || strings.HasPrefix(path, RootSystem+"/")
+}
+
+func getStorage(path string) string {
+	switch {
+	case strings.HasPrefix(path, RootSystem):
+		return RootSystem
+	case strings.HasPrefix(path, RootResources):
+		return RootResources
+	default:
+		return ""
+	}
 }
 
 func (s *standardStorageService) Upload(ctx context.Context, user *models.SignedInUser, req *UploadRequest) error {
-	upload, _ := s.tree.getRoot(getOrgId(user), RootResources)
-	if upload == nil {
-		return ErrUploadFeatureDisabled
-	}
-
 	if !storageSupportsMutatingOperations(req.Path) {
 		return ErrUnsupportedStorage
 	}
 
-	storagePath := strings.TrimPrefix(req.Path, RootResources)
+	storage := getStorage(req.Path)
+	upload, _ := s.tree.getRoot(getOrgId(user), storage)
+	if upload == nil {
+		return ErrUploadFeatureDisabled
+	}
+
+	storagePath := strings.TrimPrefix(req.Path, storage)
 	validationResult := s.validateUploadRequest(ctx, user, req, storagePath)
 	if !validationResult.ok {
 		grafanaStorageLogger.Warn("file upload validation failed", "filetype", req.MimeType, "path", req.Path, "reason", validationResult.reason)
@@ -206,16 +228,18 @@ func (s *standardStorageService) Upload(ctx context.Context, user *models.Signed
 }
 
 func (s *standardStorageService) DeleteFolder(ctx context.Context, user *models.SignedInUser, cmd *DeleteFolderCmd) error {
-	resources, _ := s.tree.getRoot(getOrgId(user), RootResources)
-	if resources == nil {
-		return fmt.Errorf("resources storage is not enabled")
-	}
-
 	if !storageSupportsMutatingOperations(cmd.Path) {
 		return ErrUnsupportedStorage
 	}
 
-	storagePath := strings.TrimPrefix(cmd.Path, RootResources)
+	storage := getStorage(cmd.Path)
+
+	resources, _ := s.tree.getRoot(getOrgId(user), storage)
+	if resources == nil {
+		return fmt.Errorf("storage %s is not enabled", storage)
+	}
+
+	storagePath := strings.TrimPrefix(cmd.Path, storage)
 	if storagePath == "" {
 		storagePath = filestorage.Delimiter
 	}
@@ -227,12 +251,14 @@ func (s *standardStorageService) CreateFolder(ctx context.Context, user *models.
 		return ErrUnsupportedStorage
 	}
 
-	resources, _ := s.tree.getRoot(getOrgId(user), RootResources)
+	storage := getStorage(cmd.Path)
+
+	resources, _ := s.tree.getRoot(getOrgId(user), storage)
 	if resources == nil {
-		return fmt.Errorf("resources storage is not enabled")
+		return fmt.Errorf("storage %s is not enabled", storage)
 	}
 
-	storagePath := strings.TrimPrefix(cmd.Path, RootResources)
+	storagePath := strings.TrimPrefix(cmd.Path, storage)
 	err := resources.CreateFolder(ctx, storagePath)
 	if err != nil {
 		return err
@@ -245,12 +271,14 @@ func (s *standardStorageService) Delete(ctx context.Context, user *models.Signed
 		return ErrUnsupportedStorage
 	}
 
-	resources, _ := s.tree.getRoot(getOrgId(user), RootResources)
+	storage := getStorage(path)
+
+	resources, _ := s.tree.getRoot(getOrgId(user), storage)
 	if resources == nil {
-		return fmt.Errorf("resources storage is not enabled")
+		return fmt.Errorf("storage %s is not enabled", storage)
 	}
 
-	storagePath := strings.TrimPrefix(path, RootResources)
+	storagePath := strings.TrimPrefix(path, storage)
 	err := resources.Delete(ctx, storagePath)
 	if err != nil {
 		return err
