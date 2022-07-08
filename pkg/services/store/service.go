@@ -216,6 +216,9 @@ func (s *standardStorageService) DeleteFolder(ctx context.Context, user *models.
 	}
 
 	storagePath := strings.TrimPrefix(cmd.Path, RootResources)
+	if storagePath == "" {
+		storagePath = filestorage.Delimiter
+	}
 	return resources.DeleteFolder(ctx, storagePath, &filestorage.DeleteFolderOptions{Force: true})
 }
 

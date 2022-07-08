@@ -487,7 +487,7 @@ func (s dbFileStorage) DeleteFolder(ctx context.Context, folderPath string, opti
 	lowerFolderPath := strings.ToLower(folderPath)
 	if lowerFolderPath == "" || lowerFolderPath == Delimiter {
 		lowerFolderPath = Delimiter
-	} else {
+	} else if !strings.HasSuffix(lowerFolderPath, Delimiter) {
 		lowerFolderPath = lowerFolderPath + Delimiter
 	}
 
