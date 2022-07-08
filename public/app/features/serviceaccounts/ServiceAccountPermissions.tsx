@@ -9,7 +9,7 @@ type ServiceAccountPermissionsProps = {
   serviceAccount: ServiceAccountDTO;
 };
 
-const ServiceAccountPermissions = (props: ServiceAccountPermissionsProps) => {
+export const ServiceAccountPermissions = (props: ServiceAccountPermissionsProps) => {
   const canSetPermissions = contextSrv.hasPermissionInMetadata(
     AccessControlAction.ServiceAccountsPermissionsWrite,
     props.serviceAccount
@@ -26,5 +26,3 @@ const ServiceAccountPermissions = (props: ServiceAccountPermissionsProps) => {
     />
   );
 };
-
-export default ServiceAccountPermissions;

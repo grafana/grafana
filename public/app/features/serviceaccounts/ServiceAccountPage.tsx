@@ -9,7 +9,7 @@ import { contextSrv } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { AccessControlAction, ApiKey, Role, ServiceAccountDTO, StoreState } from 'app/types';
 
-import ServiceAccountPermissions from './ServiceAccountPermissions';
+import { ServiceAccountPermissions } from './ServiceAccountPermissions';
 import { CreateTokenModal, ServiceAccountToken } from './components/CreateTokenModal';
 import { ServiceAccountProfile } from './components/ServiceAccountProfile';
 import { ServiceAccountTokensTable } from './components/ServiceAccountTokensTable';
