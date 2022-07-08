@@ -30,8 +30,8 @@ func TestIntegrationPlaylistDataAccess(t *testing.T) {
 			err = ss.GetPlaylist(context.Background(), get)
 			require.NoError(t, err)
 			require.NotNil(t, get.Result)
-			require.Equal(t, get.Result.Name,  "NYC office")
-			require.Equal(t, get.Result.Interval,  "10m")
+			require.Equal(t, get.Result.Name, "NYC office")
+			require.Equal(t, get.Result.Interval, "10m")
 		})
 
 		t.Run("Can get playlist items", func(t *testing.T) {
