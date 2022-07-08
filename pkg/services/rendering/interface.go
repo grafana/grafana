@@ -62,6 +62,15 @@ type ErrorOpts struct {
 	ErrorRenderUnavailable bool
 }
 
+type SanitizeSVGRequest struct {
+	Filename string
+	Content  []byte
+}
+
+type SanitizeSVGResponse struct {
+	Sanitized []byte
+}
+
 type CSVOpts struct {
 	TimeoutOpts
 	AuthOpts
@@ -83,6 +92,7 @@ type RenderCSVResult struct {
 
 type renderFunc func(ctx context.Context, renderKey string, options Opts) (*RenderResult, error)
 type renderCSVFunc func(ctx context.Context, renderKey string, options CSVOpts) (*RenderCSVResult, error)
+type sanitizeFunc func(ctx context.Context, req *SanitizeSVGRequest) (*SanitizeSVGResponse, error)
 
 type renderKeyProvider interface {
 	get(ctx context.Context, opts AuthOpts) (string, error)
@@ -114,4 +124,5 @@ type Service interface {
 	GetRenderUser(ctx context.Context, key string) (*RenderUser, bool)
 	HasCapability(capability CapabilityName) (CapabilitySupportRequestResult, error)
 	CreateRenderingSession(ctx context.Context, authOpts AuthOpts, sessionOpts SessionOpts) (Session, error)
+	SanitizeSVG(ctx context.Context, req *SanitizeSVGRequest) (*SanitizeSVGResponse, error)
 }

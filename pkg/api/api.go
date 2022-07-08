@@ -9,10 +9,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	publicdashboardsapi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -28,7 +30,7 @@ func (hs *HTTPServer) registerRoutes() {
 	reqGrafanaAdmin := middleware.ReqGrafanaAdmin
 	reqEditorRole := middleware.ReqEditorRole
 	reqOrgAdmin := middleware.ReqOrgAdmin
-	reqOrgAdminDashOrFolderAdminOrTeamAdmin := middleware.OrgAdminDashOrFolderAdminOrTeamAdmin(hs.SQLStore, hs.dashboardService)
+	reqOrgAdminDashOrFolderAdminOrTeamAdmin := middleware.OrgAdminDashOrFolderAdminOrTeamAdmin(hs.SQLStore, hs.DashboardService)
 	reqCanAccessTeams := middleware.AdminOrEditorAndFeatureEnabled(hs.Cfg.EditorsCanAdmin)
 	reqSnapshotPublicModeOrSignedIn := middleware.SnapshotPublicModeOrSignedIn(hs.Cfg)
 	redirectFromLegacyPanelEditURL := middleware.RedirectFromLegacyPanelEditURL(hs.Cfg)
@@ -58,7 +60,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/datasources/edit/*", authorize(reqOrgAdmin, datasources.EditPageAccess), hs.Index)
 	r.Get("/org/users", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionOrgUsersRead)), hs.Index)
 	r.Get("/org/users/new", reqOrgAdmin, hs.Index)
-	r.Get("/org/users/invite", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionUsersCreate)), hs.Index)
+	r.Get("/org/users/invite", authorize(reqOrgAdmin, usersInviteEvaluator), hs.Index)
 	r.Get("/org/teams", authorize(reqCanAccessTeams, ac.EvalPermission(ac.ActionTeamsRead)), hs.Index)
 	r.Get("/org/teams/edit/*", authorize(reqCanAccessTeams, teamsEditAccessEvaluator), hs.Index)
 	r.Get("/org/teams/new", authorize(reqCanAccessTeams, ac.EvalPermission(ac.ActionTeamsCreate)), hs.Index)
@@ -87,8 +89,10 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/plugins/:id/", reqSignedIn, hs.Index)
 	r.Get("/plugins/:id/edit", reqSignedIn, hs.Index) // deprecated
 	r.Get("/plugins/:id/page/:page", reqSignedIn, hs.Index)
-	r.Get("/a/:id/*", reqSignedIn, hs.Index) // App Root Page
-	r.Get("/a/:id", reqSignedIn, hs.Index)
+	// App Root Page
+	appPluginIDScope := plugins.ScopeProvider.GetResourceScope(":id")
+	r.Get("/a/:id/*", authorize(reqSignedIn, ac.EvalPermission(plugins.ActionAppAccess, appPluginIDScope)), hs.Index)
+	r.Get("/a/:id", authorize(reqSignedIn, ac.EvalPermission(plugins.ActionAppAccess, appPluginIDScope)), hs.Index)
 
 	r.Get("/d/:uid/:slug", reqSignedIn, redirectFromLegacyPanelEditURL, hs.Index)
 	r.Get("/d/:uid", reqSignedIn, redirectFromLegacyPanelEditURL, hs.Index)
@@ -102,6 +106,10 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/dashboards/", reqSignedIn, hs.Index)
 	r.Get("/dashboards/*", reqSignedIn, hs.Index)
 	r.Get("/goto/:uid", reqSignedIn, hs.redirectFromShortURL, hs.Index)
+
+	if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
+		r.Get("/public-dashboards/:accessToken", publicdashboardsapi.SetPublicDashboardFlag(), hs.Index)
+	}
 
 	r.Get("/explore", authorize(func(c *models.ReqContext) {
 		if f, ok := reqSignedIn.(func(c *models.ReqContext)); ok {
@@ -239,7 +247,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 			// invites
 			orgRoute.Get("/invites", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionUsersCreate)), routing.Wrap(hs.GetPendingOrgInvites))
-			orgRoute.Post("/invites", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionUsersCreate)), quota("user"), routing.Wrap(hs.AddOrgInvite))
+			orgRoute.Post("/invites", authorize(reqOrgAdmin, usersInviteEvaluator), quota("user"), routing.Wrap(hs.AddOrgInvite))
 			orgRoute.Patch("/invites/:code/revoke", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionUsersCreate)), routing.Wrap(hs.RevokeInvite))
 
 			// prefs
@@ -320,12 +328,13 @@ func (hs *HTTPServer) registerRoutes() {
 			datasourceRoute.Get("/id/:name", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionIDRead, nameScope)), routing.Wrap(hs.GetDataSourceIdByName))
 		})
 
+		pluginIDScope := plugins.ScopeProvider.GetResourceScope(":pluginId")
 		apiRoute.Get("/plugins", routing.Wrap(hs.GetPluginList))
-		apiRoute.Get("/plugins/:pluginId/settings", routing.Wrap(hs.GetPluginSettingByID))
+		apiRoute.Get("/plugins/:pluginId/settings", routing.Wrap(hs.GetPluginSettingByID)) // RBAC check performed in handler for App Plugins
 		apiRoute.Get("/plugins/:pluginId/markdown/:name", routing.Wrap(hs.GetPluginMarkdown))
 		apiRoute.Get("/plugins/:pluginId/health", routing.Wrap(hs.CheckHealth))
-		apiRoute.Any("/plugins/:pluginId/resources", hs.CallResource)
-		apiRoute.Any("/plugins/:pluginId/resources/*", hs.CallResource)
+		apiRoute.Any("/plugins/:pluginId/resources", authorize(reqSignedIn, ac.EvalPermission(plugins.ActionAppAccess, pluginIDScope)), hs.CallResource)
+		apiRoute.Any("/plugins/:pluginId/resources/*", authorize(reqSignedIn, ac.EvalPermission(plugins.ActionAppAccess, pluginIDScope)), hs.CallResource)
 		apiRoute.Get("/plugins/errors", routing.Wrap(hs.GetPluginErrorsList))
 
 		if hs.Cfg.PluginAdminEnabled && !hs.Cfg.PluginAdminExternalManageEnabled {
@@ -391,11 +400,6 @@ func (hs *HTTPServer) registerRoutes() {
 			})
 
 			dashboardRoute.Group("/uid/:uid", func(dashUidRoute routing.RouteRegister) {
-				if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
-					dashUidRoute.Get("/public-config", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.GetPublicDashboardConfig))
-					dashUidRoute.Post("/public-config", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.SavePublicDashboardConfig))
-				}
-
 				if hs.ThumbService != nil {
 					dashUidRoute.Get("/img/:kind/:theme", hs.ThumbService.GetImage)
 					if hs.Features.IsEnabled(featuremgmt.FlagDashboardPreviewsAdmin) {
@@ -559,6 +563,7 @@ func (hs *HTTPServer) registerRoutes() {
 		if hs.Features.IsEnabled(featuremgmt.FlagExport) {
 			adminRoute.Get("/export", reqGrafanaAdmin, routing.Wrap(hs.ExportService.HandleGetStatus))
 			adminRoute.Post("/export", reqGrafanaAdmin, routing.Wrap(hs.ExportService.HandleRequestExport))
+			adminRoute.Post("/export/stop", reqGrafanaAdmin, routing.Wrap(hs.ExportService.HandleRequestStop))
 		}
 
 		adminRoute.Post("/encryption/rotate-data-keys", reqGrafanaAdmin, routing.Wrap(hs.AdminRotateDataEncryptionKeys))
@@ -598,7 +603,7 @@ func (hs *HTTPServer) registerRoutes() {
 	// grafana.net proxy
 	r.Any("/api/gnet/*", reqSignedIn, hs.ProxyGnetRequest)
 
-	// Gravatar service.
+	// Gravatar service
 	r.Get("/avatar/:hash", hs.AvatarCacheServer.Handler)
 
 	// Snapshots
@@ -607,13 +612,6 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/api/snapshots/:key", routing.Wrap(hs.GetDashboardSnapshot))
 	r.Get("/api/snapshots-delete/:deleteKey", reqSnapshotPublicModeOrSignedIn, routing.Wrap(hs.DeleteDashboardSnapshotByDeleteKey))
 	r.Delete("/api/snapshots/:key", reqEditorRole, routing.Wrap(hs.DeleteDashboardSnapshot))
-
-	// Public API
-	if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
-		r.Get("/public-dashboards/:accessToken", middleware.SetPublicDashboardFlag(), hs.Index)
-		r.Get("/api/public/dashboards/:accessToken", routing.Wrap(hs.GetPublicDashboard))
-		r.Post("/api/public/dashboards/:accessToken/panels/:panelId/query", routing.Wrap(hs.QueryPublicDashboard))
-	}
 
 	// Frontend logs
 	sourceMapStore := frontendlogging.NewSourceMapStore(hs.Cfg, hs.pluginStaticRouteResolver, frontendlogging.ReadSourceMapFromFS)

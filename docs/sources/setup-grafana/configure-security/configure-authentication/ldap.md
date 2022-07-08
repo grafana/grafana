@@ -72,6 +72,9 @@ bind_dn = "cn=admin,dc=grafana,dc=org"
 # If the password contains # or ; you have to wrap it with triple quotes. Ex """#password;"""
 bind_password = "grafana"
 
+# Timeout in seconds. Applies to each host specified in the 'host' entry (space separated).
+timeout = 10
+
 # User search filter, for example "(cn=%s)" or "(sAMAccountName=%s)" or "(uid=%s)"
 # Allow login from email or username, example "(|(sAMAccountName=%s)(userPrincipalName=%s))"
 search_filter = "(cn=%s)"
