@@ -165,7 +165,6 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
     imageCellLink: css`
       cursor: pointer;
       overflow: hidden;
-      width: 100%;
       height: 100%;
     `,
     headerFilter: css`

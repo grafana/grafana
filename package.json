@@ -72,9 +72,6 @@
     ],
     "*pkg/**/*.go": [
       "gofmt -w -s"
-    ],
-    "*.star": [
-      "make drone"
     ]
   },
   "devDependencies": {
@@ -217,7 +214,6 @@
     "mutationobserver-shim": "0.3.7",
     "ngtemplate-loader": "2.1.0",
     "node-notifier": "10.0.1",
-    "nodemon": "2.0.16",
     "postcss": "8.4.14",
     "postcss-loader": "7.0.0",
     "postcss-reporter": "7.0.5",
@@ -259,7 +255,7 @@
     "@grafana/e2e-selectors": "workspace:*",
     "@grafana/experimental": "^0.0.2-canary.32",
     "@grafana/google-sdk": "0.0.3",
-    "@grafana/lezer-logql": "^0.0.12",
+    "@grafana/lezer-logql": "^0.0.13",
     "@grafana/runtime": "workspace:*",
     "@grafana/schema": "workspace:*",
     "@grafana/slate-react": "0.22.10-grafana",
@@ -404,10 +400,10 @@
   "resolutions": {
     "underscore": "1.13.3",
     "@types/slate": "0.47.2",
-    "@microsoft/api-extractor-model": "7.20.3",
+    "@microsoft/api-extractor-model": "7.21.0",
     "@rushstack/node-core-library": "3.49.0",
     "@rushstack/rig-package": "0.3.11",
-    "@rushstack/ts-command-line": "4.11.0",
+    "@rushstack/ts-command-line": "4.12.1",
     "@storybook/react/webpack": "5.73.0",
     "node-fetch": "2.6.7"
   },

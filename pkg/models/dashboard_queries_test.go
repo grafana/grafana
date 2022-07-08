@@ -56,6 +56,152 @@ const (
   "schemaVersion": 35
 }`
 
+	dashboardWithMixedDatasource = `
+{
+  "panels": [
+    {
+	  "datasource": {
+		"type": "datasource",
+		"uid": "-- Mixed --"
+	  },
+      "id": 1,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "abc123"
+          },
+          "exemplar": true,
+          "expr": "go_goroutines{job=\"$job\"}",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Panel Title",
+      "type": "timeseries"
+    },
+    {
+	  "datasource": {
+		"type": "prometheus",
+		"uid": "_yxMP8Ynk"
+	  },
+      "id": 2,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "_yxMP8Ynk"
+          },
+          "exemplar": true,
+          "expr": "go_goroutines{job=\"$job\"}",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Panel Title",
+      "type": "timeseries"
+    },
+    {
+	  "datasource": {
+		"type": "prometheus",
+		"uid": "_yxMP8Ynk"
+	  },
+      "id": 3,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "_yxMP8Ynk"
+          },
+          "exemplar": true,
+          "expr": "go_goroutines{job=\"$job\"}",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Panel Title",
+      "type": "timeseries"
+    }
+  ],
+  "schemaVersion": 35
+}`
+
+	dashboardWithDuplicateDatasources = `
+{
+  "panels": [
+    {
+	  "datasource": {
+		"type": "prometheus",
+		"uid": "abc123"
+	  },
+      "id": 1,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "abc123"
+          },
+          "exemplar": true,
+          "expr": "go_goroutines{job=\"$job\"}",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Panel Title",
+      "type": "timeseries"
+    },
+    {
+	  "datasource": {
+		"type": "prometheus",
+		"uid": "_yxMP8Ynk"
+	  },
+      "id": 2,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "_yxMP8Ynk"
+          },
+          "exemplar": true,
+          "expr": "go_goroutines{job=\"$job\"}",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Panel Title",
+      "type": "timeseries"
+    },
+    {
+	  "datasource": {
+		"type": "prometheus",
+		"uid": "_yxMP8Ynk"
+	  },
+      "id": 3,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "_yxMP8Ynk"
+          },
+          "exemplar": true,
+          "expr": "go_goroutines{job=\"$job\"}",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Panel Title",
+      "type": "timeseries"
+    }
+  ],
+  "schemaVersion": 35
+}`
+
 	oldStyleDashboard = `
 {
   "panels": [
@@ -79,12 +225,42 @@ const (
 }`
 )
 
-func TestGetQueriesFromDashboard(t *testing.T) {
+func TestGetUniqueDashboardDatasourceUids(t *testing.T) {
+	t.Run("can get unique datasource ids from dashboard", func(t *testing.T) {
+		json, err := simplejson.NewJson([]byte(dashboardWithDuplicateDatasources))
+		require.NoError(t, err)
+
+		uids := GetUniqueDashboardDatasourceUids(json)
+		require.Len(t, uids, 2)
+		require.Equal(t, "abc123", uids[0])
+		require.Equal(t, "_yxMP8Ynk", uids[1])
+	})
+
+	t.Run("can get unique datasource ids from dashboard with a mixed datasource", func(t *testing.T) {
+		json, err := simplejson.NewJson([]byte(dashboardWithMixedDatasource))
+		require.NoError(t, err)
+
+		uids := GetUniqueDashboardDatasourceUids(json)
+		require.Len(t, uids, 2)
+		require.Equal(t, "abc123", uids[0])
+		require.Equal(t, "_yxMP8Ynk", uids[1])
+	})
+
+	t.Run("can get no datasource uids from empty dashboard", func(t *testing.T) {
+		json, err := simplejson.NewJson([]byte(`{"panels": {}}`))
+		require.NoError(t, err)
+
+		uids := GetUniqueDashboardDatasourceUids(json)
+		require.Len(t, uids, 0)
+	})
+}
+
+func TestGroupQueriesByPanelId(t *testing.T) {
 	t.Run("can extract no queries from empty dashboard", func(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(`{"panels": {}}`))
 		require.NoError(t, err)
 
-		queries := GetQueriesFromDashboard(json)
+		queries := GroupQueriesByPanelId(json)
 		require.Len(t, queries, 0)
 	})
 
@@ -92,7 +268,7 @@ func TestGetQueriesFromDashboard(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(dashboardWithNoQueries))
 		require.NoError(t, err)
 
-		queries := GetQueriesFromDashboard(json)
+		queries := GroupQueriesByPanelId(json)
 		require.Len(t, queries, 1)
 		require.Contains(t, queries, int64(2))
 		require.Len(t, queries[2], 0)
@@ -102,7 +278,7 @@ func TestGetQueriesFromDashboard(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(dashboardWithQueries))
 		require.NoError(t, err)
 
-		queries := GetQueriesFromDashboard(json)
+		queries := GroupQueriesByPanelId(json)
 		require.Len(t, queries, 1)
 		require.Contains(t, queries, int64(2))
 		require.Len(t, queries[2], 2)
@@ -138,7 +314,7 @@ func TestGetQueriesFromDashboard(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(oldStyleDashboard))
 		require.NoError(t, err)
 
-		queries := GetQueriesFromDashboard(json)
+		queries := GroupQueriesByPanelId(json)
 		require.Len(t, queries, 1)
 		require.Contains(t, queries, int64(2))
 		require.Len(t, queries[2], 1)
