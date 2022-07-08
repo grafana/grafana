@@ -560,7 +560,7 @@ func (s dbFileStorage) DeleteFolder(ctx context.Context, folderPath string, opti
 				return fmt.Errorf("failed to roll back transaction due to error: %s: %w", rollErr, err)
 			}
 
-			return fmt.Errorf("dupa %s", err.Error())
+			return err
 		}
 
 		s.log.Info("Force deleted folder", "path", folderPath, "deletedFilesCount", deletedFilesCount, "deletedMetaCount", deletedMetaCount)
