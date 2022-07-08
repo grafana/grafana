@@ -2,9 +2,68 @@ package database
 
 import (
 	"context"
+	"sync"
+	"time"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/prometheus/client_golang/prometheus"
 )
+
+const (
+	ExporterName              = "grafana"
+	metricsCollectionInterval = time.Minute * 30
+)
+
+var (
+	// MStatTotalServiceAccounts is a metric gauge for total number of service accounts
+	MStatTotalServiceAccounts prometheus.Gauge
+
+	// MStatTotalServiceAccountTokens is a metric gauge for total number of service account tokens
+	MStatTotalServiceAccountTokens prometheus.Gauge
+
+	once        sync.Once
+	Initialised bool = false
+)
+
+func InitMetrics() {
+	once.Do(func() {
+		MStatTotalServiceAccounts = prometheus.NewGauge(prometheus.GaugeOpts{
+			Name:      "stat_total_service_accounts",
+			Help:      "total amount of service accounts",
+			Namespace: ExporterName,
+		})
+
+		MStatTotalServiceAccountTokens = prometheus.NewGauge(prometheus.GaugeOpts{
+			Name:      "stat_total_service_account_tokens",
+			Help:      "total amount of service account tokens",
+			Namespace: ExporterName,
+		})
+
+		prometheus.MustRegister(
+			MStatTotalServiceAccounts,
+			MStatTotalServiceAccountTokens,
+		)
+	})
+}
+
+func (s *ServiceAccountsStoreImpl) RunMetricsCollection(ctx context.Context) error {
+	if _, err := s.GetUsageMetrics(ctx); err != nil {
+		s.log.Warn("Failed to get usage metrics", "error", err.Error())
+	}
+	updateStatsTicker := time.NewTicker(metricsCollectionInterval)
+	defer updateStatsTicker.Stop()
+
+	for {
+		select {
+		case <-updateStatsTicker.C:
+			if _, err := s.GetUsageMetrics(ctx); err != nil {
+				s.log.Warn("Failed to get usage metrics", "error", err.Error())
+			}
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
+}
 
 func (s *ServiceAccountsStoreImpl) GetUsageMetrics(ctx context.Context) (map[string]interface{}, error) {
 	stats := map[string]interface{}{}
@@ -38,6 +97,9 @@ func (s *ServiceAccountsStoreImpl) GetUsageMetrics(ctx context.Context) (map[str
 	stats["stats.serviceaccounts.count"] = sqlStats.ServiceAccounts
 	stats["stats.serviceaccounts.tokens.count"] = sqlStats.Tokens
 	stats["stats.serviceaccounts.in_teams.count"] = sqlStats.InTeams
+
+	MStatTotalServiceAccountTokens.Set(float64(sqlStats.Tokens))
+	MStatTotalServiceAccounts.Set(float64(sqlStats.ServiceAccounts))
 
 	return stats, nil
 }
