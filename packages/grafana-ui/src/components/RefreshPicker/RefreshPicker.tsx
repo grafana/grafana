@@ -1,5 +1,3 @@
-import { i18n, MessageDescriptor } from '@lingui/core';
-import { t, defineMessage } from '@lingui/macro';
 import formatDuration from 'date-fns/formatDuration';
 import React, { PureComponent } from 'react';
 
