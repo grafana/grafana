@@ -97,10 +97,9 @@ var (
 			RequiresDevMode: true,
 		},
 		{
-			Name:            "publicDashboards",
-			Description:     "enables public access to dashboards",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
+			Name:        "publicDashboards",
+			Description: "enables public access to dashboards",
+			State:       FeatureStateAlpha,
 		},
 		{
 			Name:        "lokiLive",
@@ -225,6 +224,12 @@ var (
 		{
 			Name:         "canvasPanelNesting",
 			Description:  "Allow elements nesting",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:         "scenes",
+			Description:  "Experimental framework to build interactive dashboards",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 		},

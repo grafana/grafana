@@ -6,9 +6,10 @@ import (
 	"time"
 
 	gokitlog "github.com/go-kit/log"
-	"github.com/grafana/grafana/pkg/infra/log/level"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/require"
+
+	"github.com/go-kit/log/level"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestLogger(t *testing.T) {
@@ -33,42 +34,48 @@ func TestLogger(t *testing.T) {
 		log3.Error("hello 3 again")
 
 		require.Len(t, ctx.loggedArgs, 5)
-		require.Len(t, ctx.loggedArgs[0], 4)
+		require.Len(t, ctx.loggedArgs[0], 6)
 		require.Equal(t, "logger", ctx.loggedArgs[0][0].(string))
 		require.Equal(t, "one", ctx.loggedArgs[0][1].(string))
-		require.Equal(t, "msg", ctx.loggedArgs[0][2].(string))
-		require.Equal(t, "hello 1", ctx.loggedArgs[0][3].(string))
+		require.Equal(t, "t", ctx.loggedArgs[0][2].(string))
+		require.Equal(t, ctx.mockedTime.Format(time.RFC3339Nano), ctx.loggedArgs[0][3].(fmt.Stringer).String())
+		require.Equal(t, "msg", ctx.loggedArgs[0][4].(string))
+		require.Equal(t, "hello 1", ctx.loggedArgs[0][5].(string))
 
-		require.Len(t, ctx.loggedArgs[1], 4)
+		require.Len(t, ctx.loggedArgs[1], 6)
 		require.Equal(t, "logger", ctx.loggedArgs[1][0].(string))
 		require.Equal(t, "two", ctx.loggedArgs[1][1].(string))
-		require.Equal(t, "msg", ctx.loggedArgs[1][2].(string))
-		require.Equal(t, "hello 2", ctx.loggedArgs[1][3].(string))
+		require.Equal(t, "t", ctx.loggedArgs[0][2].(string))
+		require.Equal(t, ctx.mockedTime.Format(time.RFC3339Nano), ctx.loggedArgs[0][3].(fmt.Stringer).String())
+		require.Equal(t, "msg", ctx.loggedArgs[1][4].(string))
+		require.Equal(t, "hello 2", ctx.loggedArgs[1][5].(string))
 
 		require.Len(t, ctx.loggedArgs[2], 8)
 		require.Equal(t, "logger", ctx.loggedArgs[2][0].(string))
 		require.Equal(t, "three", ctx.loggedArgs[2][1].(string))
 		require.Equal(t, "t", ctx.loggedArgs[2][2].(string))
-		require.Equal(t, ctx.mockedTime.Format("2006-01-02T15:04:05.99-0700"), ctx.loggedArgs[2][3].(fmt.Stringer).String())
-		require.Equal(t, "lvl", ctx.loggedArgs[2][4].(string))
+		require.Equal(t, ctx.mockedTime.Format(time.RFC3339Nano), ctx.loggedArgs[2][3].(fmt.Stringer).String())
+		require.Equal(t, level.Key().(string), ctx.loggedArgs[2][4].(string))
 		require.Equal(t, level.ErrorValue(), ctx.loggedArgs[2][5].(level.Value))
 		require.Equal(t, "msg", ctx.loggedArgs[2][6].(string))
 		require.Equal(t, "hello 3", ctx.loggedArgs[2][7].(string))
 
-		require.Len(t, ctx.loggedArgs[3], 6)
+		require.Len(t, ctx.loggedArgs[3], 8)
 		require.Equal(t, "logger", ctx.loggedArgs[3][0].(string))
 		require.Equal(t, "three", ctx.loggedArgs[3][1].(string))
 		require.Equal(t, "key", ctx.loggedArgs[3][2].(string))
 		require.Equal(t, "value", ctx.loggedArgs[3][3].(string))
-		require.Equal(t, "msg", ctx.loggedArgs[3][4].(string))
-		require.Equal(t, "hello 4", ctx.loggedArgs[3][5].(string))
+		require.Equal(t, "t", ctx.loggedArgs[3][4].(string))
+		require.Equal(t, ctx.mockedTime.Format(time.RFC3339Nano), ctx.loggedArgs[3][5].(fmt.Stringer).String())
+		require.Equal(t, "msg", ctx.loggedArgs[3][6].(string))
+		require.Equal(t, "hello 4", ctx.loggedArgs[3][7].(string))
 
 		require.Len(t, ctx.loggedArgs[4], 8)
 		require.Equal(t, "logger", ctx.loggedArgs[4][0].(string))
 		require.Equal(t, "three", ctx.loggedArgs[4][1].(string))
 		require.Equal(t, "t", ctx.loggedArgs[4][2].(string))
-		require.Equal(t, ctx.mockedTime.Format("2006-01-02T15:04:05.99-0700"), ctx.loggedArgs[4][3].(fmt.Stringer).String())
-		require.Equal(t, "lvl", ctx.loggedArgs[4][4].(string))
+		require.Equal(t, ctx.mockedTime.Format(time.RFC3339Nano), ctx.loggedArgs[4][3].(fmt.Stringer).String())
+		require.Equal(t, level.Key().(string), ctx.loggedArgs[4][4].(string))
 		require.Equal(t, level.ErrorValue(), ctx.loggedArgs[4][5].(level.Value))
 		require.Equal(t, "msg", ctx.loggedArgs[4][6].(string))
 		require.Equal(t, "hello 3 again", ctx.loggedArgs[4][7].(string))
@@ -117,8 +124,8 @@ func TestWithPrefix(t *testing.T) {
 		require.Equal(t, "k1", args[2].(string))
 		require.Equal(t, "v1", args[3].(string))
 		require.Equal(t, "t", args[4].(string))
-		require.Equal(t, ctx.mockedTime.Format("2006-01-02T15:04:05.99-0700"), args[5].(fmt.Stringer).String())
-		require.Equal(t, "lvl", args[6].(string))
+		require.Equal(t, ctx.mockedTime.Format(time.RFC3339Nano), args[5].(fmt.Stringer).String())
+		require.Equal(t, level.Key().(string), args[6].(string))
 		require.Equal(t, level.InfoValue(), args[7].(level.Value))
 		require.Equal(t, "msg", args[8].(string))
 		require.Equal(t, "hello", args[9].(string))
@@ -138,8 +145,8 @@ func TestWithSuffix(t *testing.T) {
 		require.Equal(t, "logger", args[0].(string))
 		require.Equal(t, "test", args[1].(string))
 		require.Equal(t, "t", args[2].(string))
-		require.Equal(t, ctx.mockedTime.Format("2006-01-02T15:04:05.99-0700"), args[3].(fmt.Stringer).String())
-		require.Equal(t, "lvl", args[4].(string))
+		require.Equal(t, ctx.mockedTime.Format(time.RFC3339Nano), args[3].(fmt.Stringer).String())
+		require.Equal(t, level.Key().(string), args[4].(string))
 		require.Equal(t, level.InfoValue(), args[5].(level.Value))
 		require.Equal(t, "msg", args[6].(string))
 		require.Equal(t, "hello", args[7].(string))

@@ -222,7 +222,7 @@ func (hs *thumbService) GetImage(c *models.ReqContext) {
 		Kind:         models.ThumbnailKindDefault,
 	})
 
-	if errors.Is(err, models.ErrDashboardThumbnailNotFound) {
+	if errors.Is(err, dashboards.ErrDashboardThumbnailNotFound) {
 		c.Resp.WriteHeader(404)
 		return
 	}

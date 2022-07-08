@@ -1893,6 +1893,39 @@
       }
     },
     "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
+      "get": {
+        "tags": [
+          "provisioning",
+          "stable"
+        ],
+        "summary": "Get a rule group.",
+        "operationId": "RouteGetAlertRuleGroup",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "FolderUID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "Group",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "AlertRuleGroup",
+            "schema": {
+              "$ref": "#/definitions/AlertRuleGroup"
+            }
+          },
+          "404": {
+            "description": " Not found."
+          }
+        }
+      },
       "put": {
         "consumes": [
           "application/json"
@@ -1920,15 +1953,15 @@
             "name": "Body",
             "in": "body",
             "schema": {
-              "$ref": "#/definitions/AlertRuleGroup"
+              "$ref": "#/definitions/AlertRuleGroupMetadata"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "AlertRuleGroup",
+            "description": "AlertRuleGroupMetadata",
             "schema": {
-              "$ref": "#/definitions/AlertRuleGroup"
+              "$ref": "#/definitions/AlertRuleGroupMetadata"
             }
           },
           "400": {
@@ -2488,83 +2521,27 @@
     },
     "AlertRule": {
       "type": "object",
-      "required": [
-        "orgID",
-        "folderUID",
-        "ruleGroup",
-        "title",
-        "condition",
-        "data",
-        "noDataState",
-        "execErrState",
-        "for"
-      ],
+      "title": "AlertRule is the model for alert rules in unified alerting.",
       "properties": {
-        "annotations": {
+        "Annotations": {
           "type": "object",
           "additionalProperties": {
             "type": "string"
-          },
-          "example": {
-            "runbook_url": "https://supercoolrunbook.com/page/13"
           }
         },
-        "condition": {
-          "type": "string",
-          "example": "A"
+        "Condition": {
+          "type": "string"
         },
-        "data": {
+        "DashboardUID": {
+          "type": "string"
+        },
+        "Data": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/AlertQuery"
-          },
-          "example": [
-            {
-              "datasourceUid": "-100",
-              "model": {
-                "conditions": [
-                  {
-                    "evaluator": {
-                      "params": [
-                        0,
-                        0
-                      ],
-                      "type": "gt"
-                    },
-                    "operator": {
-                      "type": "and"
-                    },
-                    "query": {
-                      "params": []
-                    },
-                    "reducer": {
-                      "params": [],
-                      "type": "avg"
-                    },
-                    "type": "query"
-                  }
-                ],
-                "datasource": {
-                  "type": "__expr__",
-                  "uid": "__expr__"
-                },
-                "expression": "1 == 1",
-                "hide": false,
-                "intervalMs": 1000,
-                "maxDataPoints": 43200,
-                "refId": "A",
-                "type": "math"
-              },
-              "queryType": "",
-              "refId": "A",
-              "relativeTimeRange": {
-                "from": 0,
-                "to": 0
-              }
-            }
-          ]
+          }
         },
-        "execErrState": {
+        "ExecErrState": {
           "type": "string",
           "enum": [
             "Alerting",
@@ -2572,27 +2549,27 @@
             "OK"
           ]
         },
-        "folderUID": {
-          "type": "string",
-          "example": "project_x"
-        },
-        "for": {
+        "For": {
           "$ref": "#/definitions/Duration"
         },
-        "id": {
+        "ID": {
           "type": "integer",
           "format": "int64"
         },
-        "labels": {
+        "IntervalSeconds": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "Labels": {
           "type": "object",
           "additionalProperties": {
             "type": "string"
-          },
-          "example": {
-            "team": "sre-team-1"
           }
         },
-        "noDataState": {
+        "NamespaceUID": {
+          "type": "string"
+        },
+        "NoDataState": {
           "type": "string",
           "enum": [
             "Alerting",
@@ -2600,36 +2577,59 @@
             "OK"
           ]
         },
-        "orgID": {
+        "OrgID": {
           "type": "integer",
           "format": "int64"
         },
-        "provenance": {
-          "$ref": "#/definitions/Provenance"
+        "PanelID": {
+          "type": "integer",
+          "format": "int64"
         },
-        "ruleGroup": {
-          "type": "string",
-          "maxLength": 190,
-          "minLength": 1,
-          "example": "eval_group_1"
-        },
-        "title": {
-          "type": "string",
-          "maxLength": 190,
-          "minLength": 1,
-          "example": "Always firing"
-        },
-        "uid": {
+        "RuleGroup": {
           "type": "string"
         },
-        "updated": {
+        "RuleGroupIndex": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "Title": {
+          "type": "string"
+        },
+        "UID": {
+          "type": "string"
+        },
+        "Updated": {
           "type": "string",
-          "format": "date-time",
-          "readOnly": true
+          "format": "date-time"
+        },
+        "Version": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
     "AlertRuleGroup": {
+      "type": "object",
+      "properties": {
+        "folderUid": {
+          "type": "string"
+        },
+        "interval": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AlertRule"
+          }
+        },
+        "title": {
+          "type": "string"
+        }
+      }
+    },
+    "AlertRuleGroupMetadata": {
       "type": "object",
       "properties": {
         "interval": {
@@ -2789,101 +2789,6 @@
       "type": "array",
       "items": {
         "$ref": "#/definitions/EmbeddedContactPoint"
-      }
-    },
-    "CreateDashboardSnapshotCommand": {
-      "type": "object",
-      "required": [
-        "dashboard"
-      ],
-      "properties": {
-        "Result": {
-          "$ref": "#/definitions/DashboardSnapshot"
-        },
-        "dashboard": {
-          "$ref": "#/definitions/Json"
-        },
-        "deleteKey": {
-          "description": "Unique key used to delete the snapshot. It is different from the `key` so that only the creator can delete the snapshot. Required if `external` is `true`.",
-          "type": "string"
-        },
-        "expires": {
-          "description": "When the snapshot should expire in seconds in seconds. Default is never to expire.",
-          "type": "integer",
-          "format": "int64",
-          "default": 0
-        },
-        "external": {
-          "description": "these are passed when storing an external snapshot ref\nSave the snapshot on an external server rather than locally.",
-          "type": "boolean",
-          "default": false
-        },
-        "key": {
-          "description": "Define the unique key. Required if `external` is `true`.",
-          "type": "string"
-        },
-        "name": {
-          "description": "Snapshot name",
-          "type": "string"
-        }
-      }
-    },
-    "DashboardSnapshot": {
-      "description": "DashboardSnapshot model",
-      "type": "object",
-      "properties": {
-        "Created": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "Dashboard": {
-          "$ref": "#/definitions/Json"
-        },
-        "DashboardEncrypted": {
-          "type": "array",
-          "items": {
-            "type": "integer",
-            "format": "uint8"
-          }
-        },
-        "DeleteKey": {
-          "type": "string"
-        },
-        "Expires": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "External": {
-          "type": "boolean"
-        },
-        "ExternalDeleteUrl": {
-          "type": "string"
-        },
-        "ExternalUrl": {
-          "type": "string"
-        },
-        "Id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Key": {
-          "type": "string"
-        },
-        "Name": {
-          "type": "string"
-        },
-        "OrgId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Updated": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "UserId": {
-          "type": "integer",
-          "format": "int64"
-        }
       }
     },
     "DateTime": {
@@ -5012,9 +4917,8 @@
       }
     },
     "URL": {
-      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
       "type": "object",
-      "title": "A URL represents a parsed URL (technically, a URI reference).",
+      "title": "URL is a custom URL type that allows validation at configuration load time.",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -5348,6 +5252,7 @@
       "$ref": "#/definitions/Duration"
     },
     "gettableAlert": {
+      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
@@ -5411,6 +5316,7 @@
       "$ref": "#/definitions/gettableAlerts"
     },
     "gettableSilence": {
+      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",

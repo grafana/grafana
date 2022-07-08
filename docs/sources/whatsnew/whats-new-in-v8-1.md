@@ -15,7 +15,7 @@ title: What's new in Grafana v8.1
 weight: -33
 ---
 
-# What’s new in Grafana v8.1
+# What's new in Grafana v8.1
 
 > **Note:** This topic will be updated frequently between now and the final release.
 
