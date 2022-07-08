@@ -64,12 +64,23 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
     {
       id: LokiOperationId.Json,
       name: 'Json',
-      params: [],
+      params: [
+        {
+          name: 'Expression',
+          type: 'string',
+          restParam: true,
+          optional: true,
+          minWidth: 18,
+          placeholder: 'server="servers[0]"',
+          description:
+            'Using expressions with your json parser will extract only the specified json fields to labels. You can specify one or more expressions in this way. All expressions must be quoted.',
+        },
+      ],
       defaultParams: [],
       alternativesKey: 'format',
       category: LokiVisualQueryOperationCategory.Formats,
       orderRank: LokiOperationOrder.LineFormats,
-      renderer: pipelineRenderer,
+      renderer: (model, def, innerExpr) => `${innerExpr} | json ${model.params.join(', ')}`.trim(),
       addOperationHandler: addLokiOperation,
     },
     {
