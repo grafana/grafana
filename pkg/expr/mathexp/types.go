@@ -43,7 +43,7 @@ type Value interface {
 type Scalar struct{ Frame *data.Frame }
 
 // Type returns the Value type and allows it to fulfill the Value interface.
-func (s Scalar) Type() parse.ReturnType { return parse.TypeNoData }
+func (s Scalar) Type() parse.ReturnType { return parse.TypeScalar }
 
 // Value returns the actual value allows it to fulfill the Value interface.
 func (s Scalar) Value() interface{} { return s }

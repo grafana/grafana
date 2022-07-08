@@ -249,7 +249,7 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (m
 			frame := qr.Frames[0]
 			// Handle Untyped NoData
 			if len(frame.Fields) == 0 {
-				return mathexp.Results{Values: mathexp.Values{mathexp.NoData{frame}}}, nil
+				return mathexp.Results{Values: mathexp.Values{mathexp.NoData{Frame: frame}}}, nil
 			}
 
 			// Handle Numeric Table
