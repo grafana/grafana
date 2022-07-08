@@ -417,12 +417,12 @@ export class Scene {
     });
   };
 
-  // @TODO refactor and re-test cases
   reorderElements = (src: ElementState, dest: ElementState, dragToGap: boolean, destPosition: number) => {
     if (dragToGap) {
       if (destPosition === -1) {
         // top of the tree
         if (src.parent instanceof FrameState) {
+          // move outside the frame
           if (dest.parent) {
             this.updateElements(src, dest.parent, dest.parent.elements.length);
             src.updateData(dest.parent.scene.context);
@@ -439,7 +439,7 @@ export class Scene {
     } else {
       if (dest instanceof FrameState) {
         if (src.parent === dest) {
-          // same Frame parent
+          // same frame parent
           src.parent?.reorderTree(src, dest, true);
         } else {
           this.updateElements(src, dest);
@@ -456,7 +456,7 @@ export class Scene {
     }
   };
 
-  updateElements = (src: ElementState, dest: FrameState | RootElement, idx: number | null = null) => {
+  private updateElements = (src: ElementState, dest: FrameState | RootElement, idx: number | null = null) => {
     src.parent?.doAction(LayerActionID.Delete, src);
     src.parent = dest;
 
