@@ -554,7 +554,6 @@ func (s dbFileStorage) DeleteFolder(ctx context.Context, folderPath string, opti
 	})
 
 	return err
-
 }
 
 func (s dbFileStorage) close() error {

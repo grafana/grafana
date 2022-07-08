@@ -80,7 +80,6 @@ func TestShouldUploadWhenNoFileAlreadyExists(t *testing.T) {
 		MimeType:   "image/jpg",
 	})
 	require.NoError(t, err)
-
 }
 
 func TestShouldFailUploadWhenFileAlreadyExists(t *testing.T) {
