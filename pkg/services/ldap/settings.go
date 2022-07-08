@@ -163,7 +163,7 @@ func readConfig(configFile string) (*Config, error) {
 				groupMap.OrgId = 1
 			}
 		}
-		
+
 		// set default timeout if unspecified
 		if server.Timeout == 0 {
 			server.Timeout = defaultTimeout
