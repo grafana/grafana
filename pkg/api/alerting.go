@@ -507,8 +507,8 @@ func (hs *HTTPServer) NotificationTest(c *models.ReqContext) response.Response {
 }
 
 // POST /api/alerts/:alertId/pause
-func (hs *HTTPServer) PauseAlert(ngalertEnabled bool) func(c *models.ReqContext) response.Response {
-	if ngalertEnabled {
+func (hs *HTTPServer) PauseAlert(legacyAlertingEnabled *bool) func(c *models.ReqContext) response.Response {
+	if legacyAlertingEnabled == nil || !*legacyAlertingEnabled {
 		return func(_ *models.ReqContext) response.Response {
 			return response.Error(http.StatusBadRequest, "legacy alerting is disabled, so this call has no effect.", nil)
 		}
@@ -575,8 +575,8 @@ func (hs *HTTPServer) PauseAlert(ngalertEnabled bool) func(c *models.ReqContext)
 }
 
 // POST /api/admin/pause-all-alerts
-func (hs *HTTPServer) PauseAllAlerts(ngalertEnabled bool) func(c *models.ReqContext) response.Response {
-	if ngalertEnabled {
+func (hs *HTTPServer) PauseAllAlerts(legacyAlertingEnabled *bool) func(c *models.ReqContext) response.Response {
+	if legacyAlertingEnabled == nil || !*legacyAlertingEnabled {
 		return func(_ *models.ReqContext) response.Response {
 			return response.Error(http.StatusBadRequest, "legacy alerting is disabled, so this call has no effect.", nil)
 		}
