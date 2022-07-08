@@ -77,7 +77,7 @@ function processInputs(dashboardJson: any): ThunkResult<void> {
   };
 }
 
-function processElements(dashboardJson?: { __elements?: LibraryElementExport[] }): ThunkResult<void> {
+function processElements(dashboardJson?: { __elements?: Record<string, LibraryElementExport> }): ThunkResult<void> {
   return async function (dispatch) {
     if (!dashboardJson || !dashboardJson.__elements) {
       return;
@@ -85,7 +85,7 @@ function processElements(dashboardJson?: { __elements?: LibraryElementExport[] }
 
     const libraryPanelInputs: LibraryPanelInput[] = [];
 
-    for (const element of dashboardJson.__elements) {
+    for (const element of Object.values(dashboardJson.__elements)) {
       if (element.kind !== LibraryElementKind.Panel) {
         continue;
       }
@@ -110,7 +110,7 @@ function processElements(dashboardJson?: { __elements?: LibraryElementExport[] }
 
       try {
         const panelInDb = await getLibraryPanel(uid, true);
-        input.state = LibraryPanelInputState.Exits;
+        input.state = LibraryPanelInputState.Exists;
         input.model = panelInDb;
       } catch (e: any) {
         if (e.status !== 404) {

@@ -11,7 +11,7 @@ export const ImageCell: FC<TableCellProps> = (props) => {
 
   const displayValue = field.display!(cell.value);
 
-  const hasLinks = getCellLinks(field, row)?.length;
+  const hasLinks = Boolean(getCellLinks(field, row)?.length);
 
   return (
     <div {...cellProps} className={tableStyles.cellContainer}>

@@ -223,11 +223,12 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Role: ac.RoleDTO{
 			Name:        "fixed:teams:creator",
 			DisplayName: "Team creator",
-			Description: "Create teams and read organisation users (required to manage the created teams).",
+			Description: "Create teams and read organisation users and service accounts (required to manage the created teams).",
 			Group:       "Teams",
 			Permissions: []ac.Permission{
 				{Action: ac.ActionTeamsCreate},
 				{Action: ac.ActionOrgUsersRead, Scope: ac.ScopeUsersAll},
+				{Action: serviceaccounts.ActionRead, Scope: serviceaccounts.ScopeAll},
 			},
 		},
 		Grants: teamCreatorGrants,
@@ -449,7 +450,10 @@ var teamsEditAccessEvaluator = ac.EvalAll(
 var apiKeyAccessEvaluator = ac.EvalPermission(ac.ActionAPIKeyRead)
 
 // serviceAccountAccessEvaluator is used to protect the "Configuration > Service accounts" page access
-var serviceAccountAccessEvaluator = ac.EvalPermission(serviceaccounts.ActionRead)
+var serviceAccountAccessEvaluator = ac.EvalAny(
+	ac.EvalPermission(serviceaccounts.ActionRead),
+	ac.EvalPermission(serviceaccounts.ActionCreate),
+)
 
 // Metadata helpers
 // getAccessControlMetadata returns the accesscontrol metadata associated with a given resource

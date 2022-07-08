@@ -179,8 +179,8 @@ export class GraphiteDatasource
 
   query(options: DataQueryRequest<GraphiteQuery>): Observable<DataQueryResponse> {
     const graphOptions = {
-      from: this.translateTime(options.range.raw.from, false, options.timezone),
-      until: this.translateTime(options.range.raw.to, true, options.timezone),
+      from: this.translateTime(options.range.from, false, options.timezone),
+      until: this.translateTime(options.range.to, true, options.timezone),
       targets: options.targets,
       format: (options as any).format,
       cacheTimeout: options.cacheTimeout || this.cacheTimeout,

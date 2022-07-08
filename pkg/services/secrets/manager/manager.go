@@ -34,7 +34,10 @@ type SecretsService struct {
 	mtx          sync.Mutex
 	dataKeyCache *dataKeyCache
 
-	providers         map[secrets.ProviderID]secrets.Provider
+	pOnce               sync.Once
+	providers           map[secrets.ProviderID]secrets.Provider
+	kmsProvidersService kmsproviders.Service
+
 	currentProviderID secrets.ProviderID
 
 	log log.Logger
@@ -48,44 +51,54 @@ func ProvideSecretsService(
 	features featuremgmt.FeatureToggles,
 	usageStats usagestats.Service,
 ) (*SecretsService, error) {
-	providers, err := kmsProvidersService.Provide()
-	if err != nil {
-		return nil, err
-	}
+	ttl := settings.KeyValue("security.encryption", "data_keys_cache_ttl").MustDuration(15 * time.Minute)
 
-	logger := log.New("secrets")
-	enabled := !features.IsEnabled(featuremgmt.FlagDisableEnvelopeEncryption)
 	currentProviderID := kmsproviders.NormalizeProviderID(secrets.ProviderID(
 		settings.KeyValue("security", "encryption_provider").MustString(kmsproviders.Default),
 	))
 
-	if _, ok := providers[currentProviderID]; enabled && !ok {
+	s := &SecretsService{
+		store:               store,
+		enc:                 enc,
+		settings:            settings,
+		usageStats:          usageStats,
+		kmsProvidersService: kmsProvidersService,
+		dataKeyCache:        newDataKeyCache(ttl),
+		currentProviderID:   currentProviderID,
+		features:            features,
+		log:                 log.New("secrets"),
+	}
+
+	enabled := !features.IsEnabled(featuremgmt.FlagDisableEnvelopeEncryption)
+
+	if enabled {
+		err := s.InitProviders()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if _, ok := s.providers[currentProviderID]; enabled && !ok {
 		return nil, fmt.Errorf("missing configuration for current encryption provider %s", currentProviderID)
 	}
 
 	if !enabled && currentProviderID != kmsproviders.Default {
-		logger.Warn("Changing encryption provider requires enabling envelope encryption feature")
+		s.log.Warn("Changing encryption provider requires enabling envelope encryption feature")
 	}
 
-	logger.Info("Envelope encryption state", "enabled", enabled, "current provider", currentProviderID)
-
-	ttl := settings.KeyValue("security.encryption", "data_keys_cache_ttl").MustDuration(15 * time.Minute)
-
-	s := &SecretsService{
-		store:             store,
-		enc:               enc,
-		settings:          settings,
-		usageStats:        usageStats,
-		providers:         providers,
-		dataKeyCache:      newDataKeyCache(ttl),
-		currentProviderID: currentProviderID,
-		features:          features,
-		log:               logger,
-	}
+	s.log.Info("Envelope encryption state", "enabled", enabled, "current provider", currentProviderID)
 
 	s.registerUsageMetrics()
 
 	return s, nil
+}
+
+func (s *SecretsService) InitProviders() (err error) {
+	s.pOnce.Do(func() {
+		s.providers, err = s.kmsProvidersService.Provide()
+	})
+
+	return
 }
 
 func (s *SecretsService) registerUsageMetrics() {

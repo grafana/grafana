@@ -173,7 +173,7 @@ func (s *Service) createRequest(ctx context.Context, dsInfo *models.DatasourceIn
 
 	params := req.URL.Query()
 	params.Set("db", dsInfo.Database)
-	params.Set("epoch", "s")
+	params.Set("epoch", "ms")
 
 	if httpMode == "GET" {
 		params.Set("q", query)
