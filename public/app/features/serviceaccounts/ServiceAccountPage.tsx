@@ -9,6 +9,7 @@ import { contextSrv } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { AccessControlAction, ApiKey, Role, ServiceAccountDTO, StoreState } from 'app/types';
 
+import { ServiceAccountPermissions } from './ServiceAccountPermissions';
 import { CreateTokenModal, ServiceAccountToken } from './components/CreateTokenModal';
 import { ServiceAccountProfile } from './components/ServiceAccountProfile';
 import { ServiceAccountTokensTable } from './components/ServiceAccountTokensTable';
@@ -79,6 +80,11 @@ export const ServiceAccountPageUnconnected = ({
     !contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite) || serviceAccount.isDisabled;
 
   const ableToWrite = contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite);
+  const canReadPermissions = contextSrv.hasAccessInMetadata(
+    AccessControlAction.ServiceAccountsPermissionsRead,
+    serviceAccount!,
+    false
+  );
 
   useEffect(() => {
     loadServiceAccount(serviceAccountId);
@@ -186,7 +192,7 @@ export const ServiceAccountPageUnconnected = ({
             />
           )}
           <div className={styles.tokensListHeader}>
-            <h4>Tokens</h4>
+            <h3>Tokens</h3>
             <Button onClick={() => setIsTokenModalOpen(true)} disabled={tokenActionsDisabled}>
               Add service account token
             </Button>
@@ -199,6 +205,7 @@ export const ServiceAccountPageUnconnected = ({
               tokenActionsDisabled={tokenActionsDisabled}
             />
           )}
+          {canReadPermissions && <ServiceAccountPermissions serviceAccount={serviceAccount} />}
         </div>
         <ConfirmModal
           isOpen={isDeleteModalOpen}
