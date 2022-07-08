@@ -86,7 +86,7 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 			c.TimeRequest(metrics.MApiDashboardGet)
 			return response.JSON(200, dto)
 		}
-		uid = path // assume the path is acutally UID
+		uid = path // assume the path is actually UID
 	}
 
 	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgId, 0, uid)
