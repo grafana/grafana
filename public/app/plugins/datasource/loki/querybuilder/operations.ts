@@ -82,6 +82,8 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       orderRank: LokiOperationOrder.LineFormats,
       renderer: (model, def, innerExpr) => `${innerExpr} | json ${model.params.join(', ')}`.trim(),
       addOperationHandler: addLokiOperation,
+      explainHandler: () =>
+        `This will extract keys and values from a [json](https://grafana.com/docs/loki/latest/logql/log_queries/#json) formatted log line as labels. The extracted labels can be used in label filter expressions and used as values for a range aggregation via the unwrap operation.`,
     },
     {
       id: LokiOperationId.Logfmt,
